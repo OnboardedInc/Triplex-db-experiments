@@ -1,0 +1,32 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 73331 "CX-VA01-0314-evaluator", pid 513 "CX-P2B-R2-build", pid 2675 "CX-VA01-0314-g0-datomic", pid 93882 "CX-K01-R13-smoke"
+{
+  "head": "731e10e4075715c65c10f2ce720de2d3dcee9b1a",
+  "slot": null,
+  "engines": false,
+  "steps": [
+    {
+      "name": "host",
+      "status": 0,
+      "cmd": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "/Users/sam/projects/triplex-db-2/node_modules/vitest/vitest.mjs",
+        "run",
+        "--configLoader",
+        "native",
+        "--config",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-fd01/lab/verify/FD01/round3/vitest.config.mjs",
+        "--reporter=json",
+        "--outputFile=/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/round3-30e5e9a4-fa9e-4baa-9ed9-42897738d375/baseline-host.json"
+      ]
+    },
+    {
+      "name": "bench",
+      "status": 0,
+      "cmd": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "--test",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/round3-30e5e9a4-fa9e-4baa-9ed9-42897738d375/subject/lab/bench/test/bench.test.ts"
+      ]
+    }
+  ]
+}

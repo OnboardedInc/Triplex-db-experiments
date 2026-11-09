@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 9: start dates move (TARGETS 6 row 9). Spec and golden only.
 //
 // Each moved placement's start date shifts forward or back by 1 to 14 days, effective in valid time from

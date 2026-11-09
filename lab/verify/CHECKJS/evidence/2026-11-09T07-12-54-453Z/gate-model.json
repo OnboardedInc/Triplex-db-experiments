@@ -1,0 +1,3068 @@
+[
+  {
+    "lane": "xtdb",
+    "before": {
+      "result": {
+        "build": {
+          "manifestSha256": "build"
+        },
+        "counts": {
+          "executed": 79,
+          "pass": 79,
+          "fail": 0,
+          "skip": 0,
+          "expectedSkip": 0,
+          "unexpectedSkip": 0
+        },
+        "unexpectedSkips": [],
+        "fixtures": {
+          "mock": true
+        },
+        "packet": {
+          "sha256": "packet"
+        },
+        "scope": "full"
+      },
+      "steps": [
+        {
+          "name": "build",
+          "command": "pnpm",
+          "args": [
+            "build"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "build.stdout",
+          "stderr": "build.stderr"
+        },
+        {
+          "name": "typecheck",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "--filter",
+            "testkit",
+            "--filter",
+            "xtdb",
+            "--filter",
+            "qualification",
+            "typecheck"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "typecheck.stdout",
+          "stderr": "typecheck.stderr"
+        },
+        {
+          "name": "vitest-core",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-core.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-core.stdout",
+          "stderr": "vitest-core.stderr"
+        },
+        {
+          "name": "vitest-testkit",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "testkit",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-testkit.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-testkit.stdout",
+          "stderr": "vitest-testkit.stderr"
+        },
+        {
+          "name": "vitest-xtdb",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "xtdb",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-xtdb.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-xtdb.stdout",
+          "stderr": "vitest-xtdb.stderr"
+        },
+        {
+          "name": "vitest-qualification",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qualification",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qualification.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qualification.stdout",
+          "stderr": "vitest-qualification.stderr"
+        },
+        {
+          "name": "node-test-qualification",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "../../qualification/compare.test.mjs",
+            "load/dispatch.test.ts",
+            "load/model.test.ts"
+          ],
+          "options": {
+            "cwd": "/mock/packages/qualification",
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "node-test-qualification.stdout",
+          "stderr": "node-test-qualification.stderr"
+        },
+        {
+          "name": "node-test-engine-cases",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "qualification/workloads/test_engine_cases.mjs"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-engine-cases.stdout",
+          "stderr": "node-test-engine-cases.stderr"
+        },
+        {
+          "name": "node-test-ns-bench",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "lab/bench/test/bench.test.ts"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-ns-bench.stdout",
+          "stderr": "node-test-ns-bench.stderr"
+        },
+        {
+          "name": "oracle-validate-workloads",
+          "command": "python3",
+          "args": [
+            "-B",
+            "qualification/workloads/validate_workloads.py"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "oracle-validate-workloads.stdout",
+          "stderr": "oracle-validate-workloads.stderr"
+        },
+        {
+          "name": "oracle-unittest",
+          "command": "python3",
+          "args": [
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_event_oracles"
+          ],
+          "options": {
+            "cwd": "/mock/qualification/workloads"
+          },
+          "code": 0,
+          "stdout": "oracle-unittest.stdout",
+          "stderr": "oracle-unittest.stderr"
+        }
+      ],
+      "reasons": [],
+      "failures": [],
+      "stored": [
+        {
+          "file": "vitest-core.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-testkit.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-xtdb.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qualification.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-xtdb.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-xtdb.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stderr",
+          "role": "raw-outcome"
+        }
+      ],
+      "writes": [
+        {
+          "file": "observed-skips.json",
+          "text": "{\n  \"core\": [],\n  \"testkit\": [],\n  \"xtdb\": [],\n  \"qualification\": []\n}\n"
+        }
+      ],
+      "verdict": {
+        "verdict": "PASS",
+        "reasons": []
+      }
+    },
+    "after": {
+      "result": {
+        "build": {
+          "manifestSha256": "build"
+        },
+        "counts": {
+          "executed": 79,
+          "pass": 79,
+          "fail": 0,
+          "skip": 0,
+          "expectedSkip": 0,
+          "unexpectedSkip": 0
+        },
+        "unexpectedSkips": [],
+        "fixtures": {
+          "mock": true
+        },
+        "packet": {
+          "sha256": "packet"
+        },
+        "scope": "full"
+      },
+      "steps": [
+        {
+          "name": "build",
+          "command": "pnpm",
+          "args": [
+            "build"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "build.stdout",
+          "stderr": "build.stderr"
+        },
+        {
+          "name": "lab-checkjs",
+          "command": "node",
+          "args": [
+            "lab/bin/checkjs.mjs"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "lab-checkjs.stdout",
+          "stderr": "lab-checkjs.stderr"
+        },
+        {
+          "name": "typecheck",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "--filter",
+            "testkit",
+            "--filter",
+            "xtdb",
+            "--filter",
+            "qualification",
+            "typecheck"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "typecheck.stdout",
+          "stderr": "typecheck.stderr"
+        },
+        {
+          "name": "vitest-core",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-core.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-core.stdout",
+          "stderr": "vitest-core.stderr"
+        },
+        {
+          "name": "vitest-testkit",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "testkit",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-testkit.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-testkit.stdout",
+          "stderr": "vitest-testkit.stderr"
+        },
+        {
+          "name": "vitest-xtdb",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "xtdb",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-xtdb.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-xtdb.stdout",
+          "stderr": "vitest-xtdb.stderr"
+        },
+        {
+          "name": "vitest-qualification",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qualification",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qualification.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qualification.stdout",
+          "stderr": "vitest-qualification.stderr"
+        },
+        {
+          "name": "node-test-qualification",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "../../qualification/compare.test.mjs",
+            "load/dispatch.test.ts",
+            "load/model.test.ts"
+          ],
+          "options": {
+            "cwd": "/mock/packages/qualification",
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "node-test-qualification.stdout",
+          "stderr": "node-test-qualification.stderr"
+        },
+        {
+          "name": "node-test-engine-cases",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "qualification/workloads/test_engine_cases.mjs"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-engine-cases.stdout",
+          "stderr": "node-test-engine-cases.stderr"
+        },
+        {
+          "name": "node-test-ns-bench",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "lab/bench/test/bench.test.ts"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-ns-bench.stdout",
+          "stderr": "node-test-ns-bench.stderr"
+        },
+        {
+          "name": "oracle-validate-workloads",
+          "command": "python3",
+          "args": [
+            "-B",
+            "qualification/workloads/validate_workloads.py"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "oracle-validate-workloads.stdout",
+          "stderr": "oracle-validate-workloads.stderr"
+        },
+        {
+          "name": "oracle-unittest",
+          "command": "python3",
+          "args": [
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_event_oracles"
+          ],
+          "options": {
+            "cwd": "/mock/qualification/workloads"
+          },
+          "code": 0,
+          "stdout": "oracle-unittest.stdout",
+          "stderr": "oracle-unittest.stderr"
+        }
+      ],
+      "reasons": [],
+      "failures": [],
+      "stored": [
+        {
+          "file": "vitest-core.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-testkit.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-xtdb.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qualification.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-xtdb.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-xtdb.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stderr",
+          "role": "raw-outcome"
+        }
+      ],
+      "writes": [
+        {
+          "file": "observed-skips.json",
+          "text": "{\n  \"core\": [],\n  \"testkit\": [],\n  \"xtdb\": [],\n  \"qualification\": []\n}\n"
+        }
+      ],
+      "verdict": {
+        "verdict": "PASS",
+        "reasons": []
+      }
+    },
+    "rejected": {
+      "result": {
+        "build": {
+          "manifestSha256": "build"
+        },
+        "counts": {
+          "executed": 79,
+          "pass": 79,
+          "fail": 0,
+          "skip": 0,
+          "expectedSkip": 0,
+          "unexpectedSkip": 0
+        },
+        "unexpectedSkips": [],
+        "fixtures": {
+          "mock": true
+        },
+        "packet": {
+          "sha256": "packet"
+        },
+        "scope": "full"
+      },
+      "steps": [
+        {
+          "name": "build",
+          "command": "pnpm",
+          "args": [
+            "build"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "build.stdout",
+          "stderr": "build.stderr"
+        },
+        {
+          "name": "lab-checkjs",
+          "command": "node",
+          "args": [
+            "lab/bin/checkjs.mjs"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 1,
+          "stdout": "lab-checkjs.stdout",
+          "stderr": "lab-checkjs.stderr",
+          "tail": "mock first failure"
+        },
+        {
+          "name": "typecheck",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "--filter",
+            "testkit",
+            "--filter",
+            "xtdb",
+            "--filter",
+            "qualification",
+            "typecheck"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "typecheck.stdout",
+          "stderr": "typecheck.stderr"
+        },
+        {
+          "name": "vitest-core",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-core.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-core.stdout",
+          "stderr": "vitest-core.stderr"
+        },
+        {
+          "name": "vitest-testkit",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "testkit",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-testkit.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-testkit.stdout",
+          "stderr": "vitest-testkit.stderr"
+        },
+        {
+          "name": "vitest-xtdb",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "xtdb",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-xtdb.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-xtdb.stdout",
+          "stderr": "vitest-xtdb.stderr"
+        },
+        {
+          "name": "vitest-qualification",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qualification",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qualification.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qualification.stdout",
+          "stderr": "vitest-qualification.stderr"
+        },
+        {
+          "name": "node-test-qualification",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "../../qualification/compare.test.mjs",
+            "load/dispatch.test.ts",
+            "load/model.test.ts"
+          ],
+          "options": {
+            "cwd": "/mock/packages/qualification",
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "node-test-qualification.stdout",
+          "stderr": "node-test-qualification.stderr"
+        },
+        {
+          "name": "node-test-engine-cases",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "qualification/workloads/test_engine_cases.mjs"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-engine-cases.stdout",
+          "stderr": "node-test-engine-cases.stderr"
+        },
+        {
+          "name": "node-test-ns-bench",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "lab/bench/test/bench.test.ts"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-ns-bench.stdout",
+          "stderr": "node-test-ns-bench.stderr"
+        },
+        {
+          "name": "oracle-validate-workloads",
+          "command": "python3",
+          "args": [
+            "-B",
+            "qualification/workloads/validate_workloads.py"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "oracle-validate-workloads.stdout",
+          "stderr": "oracle-validate-workloads.stderr"
+        },
+        {
+          "name": "oracle-unittest",
+          "command": "python3",
+          "args": [
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_event_oracles"
+          ],
+          "options": {
+            "cwd": "/mock/qualification/workloads"
+          },
+          "code": 0,
+          "stdout": "oracle-unittest.stdout",
+          "stderr": "oracle-unittest.stderr"
+        }
+      ],
+      "reasons": [
+        "lab checkJs failed (exit 1)"
+      ],
+      "failures": [
+        {
+          "step": "lab-checkjs",
+          "tail": "mock first failure"
+        }
+      ],
+      "stored": [
+        {
+          "file": "vitest-core.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-testkit.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-xtdb.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qualification.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-xtdb.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-xtdb.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stderr",
+          "role": "raw-outcome"
+        }
+      ],
+      "writes": [
+        {
+          "file": "observed-skips.json",
+          "text": "{\n  \"core\": [],\n  \"testkit\": [],\n  \"xtdb\": [],\n  \"qualification\": []\n}\n"
+        }
+      ],
+      "verdict": {
+        "verdict": "FAIL",
+        "reasons": [
+          "lab checkJs failed (exit 1)"
+        ]
+      }
+    },
+    "inheritedFailures": [
+      "build",
+      "typecheck",
+      "vitest-core",
+      "vitest-testkit",
+      "vitest-xtdb",
+      "vitest-qualification",
+      "node-test-qualification",
+      "node-test-engine-cases",
+      "node-test-ns-bench",
+      "oracle-validate-workloads",
+      "oracle-unittest"
+    ]
+  },
+  {
+    "lane": "qlever",
+    "before": {
+      "result": {
+        "build": {
+          "manifestSha256": "build"
+        },
+        "counts": {
+          "executed": 79,
+          "pass": 79,
+          "fail": 0,
+          "skip": 0,
+          "expectedSkip": 0,
+          "unexpectedSkip": 0
+        },
+        "unexpectedSkips": [],
+        "fixtures": {
+          "mock": true
+        },
+        "packet": {
+          "sha256": "packet"
+        },
+        "scope": "full"
+      },
+      "steps": [
+        {
+          "name": "build",
+          "command": "pnpm",
+          "args": [
+            "build"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "build.stdout",
+          "stderr": "build.stderr"
+        },
+        {
+          "name": "typecheck",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "--filter",
+            "testkit",
+            "--filter",
+            "qlever",
+            "--filter",
+            "qualification",
+            "typecheck"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "typecheck.stdout",
+          "stderr": "typecheck.stderr"
+        },
+        {
+          "name": "vitest-core",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-core.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-core.stdout",
+          "stderr": "vitest-core.stderr"
+        },
+        {
+          "name": "vitest-testkit",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "testkit",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-testkit.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-testkit.stdout",
+          "stderr": "vitest-testkit.stderr"
+        },
+        {
+          "name": "vitest-qlever",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qlever",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qlever.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qlever.stdout",
+          "stderr": "vitest-qlever.stderr"
+        },
+        {
+          "name": "vitest-qualification",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qualification",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qualification.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qualification.stdout",
+          "stderr": "vitest-qualification.stderr"
+        },
+        {
+          "name": "node-test-qualification",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "../../qualification/compare.test.mjs",
+            "load/dispatch.test.ts",
+            "load/model.test.ts"
+          ],
+          "options": {
+            "cwd": "/mock/packages/qualification",
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "node-test-qualification.stdout",
+          "stderr": "node-test-qualification.stderr"
+        },
+        {
+          "name": "node-test-engine-cases",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "qualification/workloads/test_engine_cases.mjs"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-engine-cases.stdout",
+          "stderr": "node-test-engine-cases.stderr"
+        },
+        {
+          "name": "node-test-ns-bench",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "lab/bench/test/bench.test.ts"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-ns-bench.stdout",
+          "stderr": "node-test-ns-bench.stderr"
+        },
+        {
+          "name": "oracle-validate-workloads",
+          "command": "python3",
+          "args": [
+            "-B",
+            "qualification/workloads/validate_workloads.py"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "oracle-validate-workloads.stdout",
+          "stderr": "oracle-validate-workloads.stderr"
+        },
+        {
+          "name": "oracle-unittest",
+          "command": "python3",
+          "args": [
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_event_oracles"
+          ],
+          "options": {
+            "cwd": "/mock/qualification/workloads"
+          },
+          "code": 0,
+          "stdout": "oracle-unittest.stdout",
+          "stderr": "oracle-unittest.stderr"
+        }
+      ],
+      "reasons": [],
+      "failures": [],
+      "stored": [
+        {
+          "file": "vitest-core.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-testkit.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qlever.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qualification.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qlever.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qlever.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stderr",
+          "role": "raw-outcome"
+        }
+      ],
+      "writes": [
+        {
+          "file": "observed-skips.json",
+          "text": "{\n  \"core\": [],\n  \"testkit\": [],\n  \"qlever\": [],\n  \"qualification\": []\n}\n"
+        }
+      ],
+      "verdict": {
+        "verdict": "PASS",
+        "reasons": []
+      }
+    },
+    "after": {
+      "result": {
+        "build": {
+          "manifestSha256": "build"
+        },
+        "counts": {
+          "executed": 79,
+          "pass": 79,
+          "fail": 0,
+          "skip": 0,
+          "expectedSkip": 0,
+          "unexpectedSkip": 0
+        },
+        "unexpectedSkips": [],
+        "fixtures": {
+          "mock": true
+        },
+        "packet": {
+          "sha256": "packet"
+        },
+        "scope": "full"
+      },
+      "steps": [
+        {
+          "name": "build",
+          "command": "pnpm",
+          "args": [
+            "build"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "build.stdout",
+          "stderr": "build.stderr"
+        },
+        {
+          "name": "lab-checkjs",
+          "command": "node",
+          "args": [
+            "lab/bin/checkjs.mjs"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "lab-checkjs.stdout",
+          "stderr": "lab-checkjs.stderr"
+        },
+        {
+          "name": "typecheck",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "--filter",
+            "testkit",
+            "--filter",
+            "qlever",
+            "--filter",
+            "qualification",
+            "typecheck"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "typecheck.stdout",
+          "stderr": "typecheck.stderr"
+        },
+        {
+          "name": "vitest-core",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-core.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-core.stdout",
+          "stderr": "vitest-core.stderr"
+        },
+        {
+          "name": "vitest-testkit",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "testkit",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-testkit.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-testkit.stdout",
+          "stderr": "vitest-testkit.stderr"
+        },
+        {
+          "name": "vitest-qlever",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qlever",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qlever.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qlever.stdout",
+          "stderr": "vitest-qlever.stderr"
+        },
+        {
+          "name": "vitest-qualification",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qualification",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qualification.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qualification.stdout",
+          "stderr": "vitest-qualification.stderr"
+        },
+        {
+          "name": "node-test-qualification",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "../../qualification/compare.test.mjs",
+            "load/dispatch.test.ts",
+            "load/model.test.ts"
+          ],
+          "options": {
+            "cwd": "/mock/packages/qualification",
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "node-test-qualification.stdout",
+          "stderr": "node-test-qualification.stderr"
+        },
+        {
+          "name": "node-test-engine-cases",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "qualification/workloads/test_engine_cases.mjs"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-engine-cases.stdout",
+          "stderr": "node-test-engine-cases.stderr"
+        },
+        {
+          "name": "node-test-ns-bench",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "lab/bench/test/bench.test.ts"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-ns-bench.stdout",
+          "stderr": "node-test-ns-bench.stderr"
+        },
+        {
+          "name": "oracle-validate-workloads",
+          "command": "python3",
+          "args": [
+            "-B",
+            "qualification/workloads/validate_workloads.py"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "oracle-validate-workloads.stdout",
+          "stderr": "oracle-validate-workloads.stderr"
+        },
+        {
+          "name": "oracle-unittest",
+          "command": "python3",
+          "args": [
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_event_oracles"
+          ],
+          "options": {
+            "cwd": "/mock/qualification/workloads"
+          },
+          "code": 0,
+          "stdout": "oracle-unittest.stdout",
+          "stderr": "oracle-unittest.stderr"
+        }
+      ],
+      "reasons": [],
+      "failures": [],
+      "stored": [
+        {
+          "file": "vitest-core.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-testkit.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qlever.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qualification.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qlever.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qlever.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stderr",
+          "role": "raw-outcome"
+        }
+      ],
+      "writes": [
+        {
+          "file": "observed-skips.json",
+          "text": "{\n  \"core\": [],\n  \"testkit\": [],\n  \"qlever\": [],\n  \"qualification\": []\n}\n"
+        }
+      ],
+      "verdict": {
+        "verdict": "PASS",
+        "reasons": []
+      }
+    },
+    "rejected": {
+      "result": {
+        "build": {
+          "manifestSha256": "build"
+        },
+        "counts": {
+          "executed": 79,
+          "pass": 79,
+          "fail": 0,
+          "skip": 0,
+          "expectedSkip": 0,
+          "unexpectedSkip": 0
+        },
+        "unexpectedSkips": [],
+        "fixtures": {
+          "mock": true
+        },
+        "packet": {
+          "sha256": "packet"
+        },
+        "scope": "full"
+      },
+      "steps": [
+        {
+          "name": "build",
+          "command": "pnpm",
+          "args": [
+            "build"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "build.stdout",
+          "stderr": "build.stderr"
+        },
+        {
+          "name": "lab-checkjs",
+          "command": "node",
+          "args": [
+            "lab/bin/checkjs.mjs"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 1,
+          "stdout": "lab-checkjs.stdout",
+          "stderr": "lab-checkjs.stderr",
+          "tail": "mock first failure"
+        },
+        {
+          "name": "typecheck",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "--filter",
+            "testkit",
+            "--filter",
+            "qlever",
+            "--filter",
+            "qualification",
+            "typecheck"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "typecheck.stdout",
+          "stderr": "typecheck.stderr"
+        },
+        {
+          "name": "vitest-core",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-core.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-core.stdout",
+          "stderr": "vitest-core.stderr"
+        },
+        {
+          "name": "vitest-testkit",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "testkit",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-testkit.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-testkit.stdout",
+          "stderr": "vitest-testkit.stderr"
+        },
+        {
+          "name": "vitest-qlever",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qlever",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qlever.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qlever.stdout",
+          "stderr": "vitest-qlever.stderr"
+        },
+        {
+          "name": "vitest-qualification",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qualification",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qualification.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qualification.stdout",
+          "stderr": "vitest-qualification.stderr"
+        },
+        {
+          "name": "node-test-qualification",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "../../qualification/compare.test.mjs",
+            "load/dispatch.test.ts",
+            "load/model.test.ts"
+          ],
+          "options": {
+            "cwd": "/mock/packages/qualification",
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "node-test-qualification.stdout",
+          "stderr": "node-test-qualification.stderr"
+        },
+        {
+          "name": "node-test-engine-cases",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "qualification/workloads/test_engine_cases.mjs"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-engine-cases.stdout",
+          "stderr": "node-test-engine-cases.stderr"
+        },
+        {
+          "name": "node-test-ns-bench",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "lab/bench/test/bench.test.ts"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-ns-bench.stdout",
+          "stderr": "node-test-ns-bench.stderr"
+        },
+        {
+          "name": "oracle-validate-workloads",
+          "command": "python3",
+          "args": [
+            "-B",
+            "qualification/workloads/validate_workloads.py"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "oracle-validate-workloads.stdout",
+          "stderr": "oracle-validate-workloads.stderr"
+        },
+        {
+          "name": "oracle-unittest",
+          "command": "python3",
+          "args": [
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_event_oracles"
+          ],
+          "options": {
+            "cwd": "/mock/qualification/workloads"
+          },
+          "code": 0,
+          "stdout": "oracle-unittest.stdout",
+          "stderr": "oracle-unittest.stderr"
+        }
+      ],
+      "reasons": [
+        "lab checkJs failed (exit 1)"
+      ],
+      "failures": [
+        {
+          "step": "lab-checkjs",
+          "tail": "mock first failure"
+        }
+      ],
+      "stored": [
+        {
+          "file": "vitest-core.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-testkit.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qlever.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qualification.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qlever.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qlever.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stderr",
+          "role": "raw-outcome"
+        }
+      ],
+      "writes": [
+        {
+          "file": "observed-skips.json",
+          "text": "{\n  \"core\": [],\n  \"testkit\": [],\n  \"qlever\": [],\n  \"qualification\": []\n}\n"
+        }
+      ],
+      "verdict": {
+        "verdict": "FAIL",
+        "reasons": [
+          "lab checkJs failed (exit 1)"
+        ]
+      }
+    },
+    "inheritedFailures": [
+      "build",
+      "typecheck",
+      "vitest-core",
+      "vitest-testkit",
+      "vitest-qlever",
+      "vitest-qualification",
+      "node-test-qualification",
+      "node-test-engine-cases",
+      "node-test-ns-bench",
+      "oracle-validate-workloads",
+      "oracle-unittest"
+    ]
+  },
+  {
+    "lane": "datomic",
+    "before": {
+      "result": {
+        "build": {
+          "manifestSha256": "build"
+        },
+        "counts": {
+          "executed": 79,
+          "pass": 79,
+          "fail": 0,
+          "skip": 0,
+          "expectedSkip": 0,
+          "unexpectedSkip": 0
+        },
+        "unexpectedSkips": [],
+        "fixtures": {
+          "mock": true
+        },
+        "packet": {
+          "sha256": "packet"
+        },
+        "scope": "full"
+      },
+      "steps": [
+        {
+          "name": "build",
+          "command": "pnpm",
+          "args": [
+            "build"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "build.stdout",
+          "stderr": "build.stderr"
+        },
+        {
+          "name": "typecheck",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "--filter",
+            "testkit",
+            "--filter",
+            "datomic",
+            "--filter",
+            "qualification",
+            "typecheck"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "typecheck.stdout",
+          "stderr": "typecheck.stderr"
+        },
+        {
+          "name": "vitest-core",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-core.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-core.stdout",
+          "stderr": "vitest-core.stderr"
+        },
+        {
+          "name": "vitest-testkit",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "testkit",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-testkit.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-testkit.stdout",
+          "stderr": "vitest-testkit.stderr"
+        },
+        {
+          "name": "vitest-datomic",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "datomic",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-datomic.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-datomic.stdout",
+          "stderr": "vitest-datomic.stderr"
+        },
+        {
+          "name": "vitest-qualification",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qualification",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qualification.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qualification.stdout",
+          "stderr": "vitest-qualification.stderr"
+        },
+        {
+          "name": "node-test-qualification",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "../../qualification/compare.test.mjs",
+            "load/dispatch.test.ts",
+            "load/model.test.ts"
+          ],
+          "options": {
+            "cwd": "/mock/packages/qualification",
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "node-test-qualification.stdout",
+          "stderr": "node-test-qualification.stderr"
+        },
+        {
+          "name": "node-test-engine-cases",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "qualification/workloads/test_engine_cases.mjs"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-engine-cases.stdout",
+          "stderr": "node-test-engine-cases.stderr"
+        },
+        {
+          "name": "node-test-ns-bench",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "lab/bench/test/bench.test.ts"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-ns-bench.stdout",
+          "stderr": "node-test-ns-bench.stderr"
+        },
+        {
+          "name": "oracle-validate-workloads",
+          "command": "python3",
+          "args": [
+            "-B",
+            "qualification/workloads/validate_workloads.py"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "oracle-validate-workloads.stdout",
+          "stderr": "oracle-validate-workloads.stderr"
+        },
+        {
+          "name": "oracle-unittest",
+          "command": "python3",
+          "args": [
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_event_oracles"
+          ],
+          "options": {
+            "cwd": "/mock/qualification/workloads"
+          },
+          "code": 0,
+          "stdout": "oracle-unittest.stdout",
+          "stderr": "oracle-unittest.stderr"
+        }
+      ],
+      "reasons": [],
+      "failures": [],
+      "stored": [
+        {
+          "file": "vitest-core.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-testkit.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-datomic.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qualification.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-datomic.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-datomic.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stderr",
+          "role": "raw-outcome"
+        }
+      ],
+      "writes": [
+        {
+          "file": "observed-skips.json",
+          "text": "{\n  \"core\": [],\n  \"testkit\": [],\n  \"datomic\": [],\n  \"qualification\": []\n}\n"
+        }
+      ],
+      "verdict": {
+        "verdict": "PASS",
+        "reasons": []
+      }
+    },
+    "after": {
+      "result": {
+        "build": {
+          "manifestSha256": "build"
+        },
+        "counts": {
+          "executed": 79,
+          "pass": 79,
+          "fail": 0,
+          "skip": 0,
+          "expectedSkip": 0,
+          "unexpectedSkip": 0
+        },
+        "unexpectedSkips": [],
+        "fixtures": {
+          "mock": true
+        },
+        "packet": {
+          "sha256": "packet"
+        },
+        "scope": "full"
+      },
+      "steps": [
+        {
+          "name": "build",
+          "command": "pnpm",
+          "args": [
+            "build"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "build.stdout",
+          "stderr": "build.stderr"
+        },
+        {
+          "name": "lab-checkjs",
+          "command": "node",
+          "args": [
+            "lab/bin/checkjs.mjs"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "lab-checkjs.stdout",
+          "stderr": "lab-checkjs.stderr"
+        },
+        {
+          "name": "typecheck",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "--filter",
+            "testkit",
+            "--filter",
+            "datomic",
+            "--filter",
+            "qualification",
+            "typecheck"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "typecheck.stdout",
+          "stderr": "typecheck.stderr"
+        },
+        {
+          "name": "vitest-core",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-core.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-core.stdout",
+          "stderr": "vitest-core.stderr"
+        },
+        {
+          "name": "vitest-testkit",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "testkit",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-testkit.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-testkit.stdout",
+          "stderr": "vitest-testkit.stderr"
+        },
+        {
+          "name": "vitest-datomic",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "datomic",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-datomic.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-datomic.stdout",
+          "stderr": "vitest-datomic.stderr"
+        },
+        {
+          "name": "vitest-qualification",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qualification",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qualification.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qualification.stdout",
+          "stderr": "vitest-qualification.stderr"
+        },
+        {
+          "name": "node-test-qualification",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "../../qualification/compare.test.mjs",
+            "load/dispatch.test.ts",
+            "load/model.test.ts"
+          ],
+          "options": {
+            "cwd": "/mock/packages/qualification",
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "node-test-qualification.stdout",
+          "stderr": "node-test-qualification.stderr"
+        },
+        {
+          "name": "node-test-engine-cases",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "qualification/workloads/test_engine_cases.mjs"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-engine-cases.stdout",
+          "stderr": "node-test-engine-cases.stderr"
+        },
+        {
+          "name": "node-test-ns-bench",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "lab/bench/test/bench.test.ts"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-ns-bench.stdout",
+          "stderr": "node-test-ns-bench.stderr"
+        },
+        {
+          "name": "oracle-validate-workloads",
+          "command": "python3",
+          "args": [
+            "-B",
+            "qualification/workloads/validate_workloads.py"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "oracle-validate-workloads.stdout",
+          "stderr": "oracle-validate-workloads.stderr"
+        },
+        {
+          "name": "oracle-unittest",
+          "command": "python3",
+          "args": [
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_event_oracles"
+          ],
+          "options": {
+            "cwd": "/mock/qualification/workloads"
+          },
+          "code": 0,
+          "stdout": "oracle-unittest.stdout",
+          "stderr": "oracle-unittest.stderr"
+        }
+      ],
+      "reasons": [],
+      "failures": [],
+      "stored": [
+        {
+          "file": "vitest-core.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-testkit.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-datomic.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qualification.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-datomic.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-datomic.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stderr",
+          "role": "raw-outcome"
+        }
+      ],
+      "writes": [
+        {
+          "file": "observed-skips.json",
+          "text": "{\n  \"core\": [],\n  \"testkit\": [],\n  \"datomic\": [],\n  \"qualification\": []\n}\n"
+        }
+      ],
+      "verdict": {
+        "verdict": "PASS",
+        "reasons": []
+      }
+    },
+    "rejected": {
+      "result": {
+        "build": {
+          "manifestSha256": "build"
+        },
+        "counts": {
+          "executed": 79,
+          "pass": 79,
+          "fail": 0,
+          "skip": 0,
+          "expectedSkip": 0,
+          "unexpectedSkip": 0
+        },
+        "unexpectedSkips": [],
+        "fixtures": {
+          "mock": true
+        },
+        "packet": {
+          "sha256": "packet"
+        },
+        "scope": "full"
+      },
+      "steps": [
+        {
+          "name": "build",
+          "command": "pnpm",
+          "args": [
+            "build"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "build.stdout",
+          "stderr": "build.stderr"
+        },
+        {
+          "name": "lab-checkjs",
+          "command": "node",
+          "args": [
+            "lab/bin/checkjs.mjs"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 1,
+          "stdout": "lab-checkjs.stdout",
+          "stderr": "lab-checkjs.stderr",
+          "tail": "mock first failure"
+        },
+        {
+          "name": "typecheck",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "--filter",
+            "testkit",
+            "--filter",
+            "datomic",
+            "--filter",
+            "qualification",
+            "typecheck"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "typecheck.stdout",
+          "stderr": "typecheck.stderr"
+        },
+        {
+          "name": "vitest-core",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "core",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-core.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-core.stdout",
+          "stderr": "vitest-core.stderr"
+        },
+        {
+          "name": "vitest-testkit",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "testkit",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-testkit.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-testkit.stdout",
+          "stderr": "vitest-testkit.stderr"
+        },
+        {
+          "name": "vitest-datomic",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "datomic",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-datomic.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-datomic.stdout",
+          "stderr": "vitest-datomic.stderr"
+        },
+        {
+          "name": "vitest-qualification",
+          "command": "pnpm",
+          "args": [
+            "--filter",
+            "qualification",
+            "exec",
+            "vitest",
+            "run",
+            "--reporter=json",
+            "--outputFile=vitest-qualification.json"
+          ],
+          "options": {
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "vitest-qualification.stdout",
+          "stderr": "vitest-qualification.stderr"
+        },
+        {
+          "name": "node-test-qualification",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "../../qualification/compare.test.mjs",
+            "load/dispatch.test.ts",
+            "load/model.test.ts"
+          ],
+          "options": {
+            "cwd": "/mock/packages/qualification",
+            "heavy": true
+          },
+          "code": 0,
+          "stdout": "node-test-qualification.stdout",
+          "stderr": "node-test-qualification.stderr"
+        },
+        {
+          "name": "node-test-engine-cases",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "qualification/workloads/test_engine_cases.mjs"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-engine-cases.stdout",
+          "stderr": "node-test-engine-cases.stderr"
+        },
+        {
+          "name": "node-test-ns-bench",
+          "command": "node",
+          "args": [
+            "--test",
+            "--test-reporter=tap",
+            "lab/bench/test/bench.test.ts"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "node-test-ns-bench.stdout",
+          "stderr": "node-test-ns-bench.stderr"
+        },
+        {
+          "name": "oracle-validate-workloads",
+          "command": "python3",
+          "args": [
+            "-B",
+            "qualification/workloads/validate_workloads.py"
+          ],
+          "options": {},
+          "code": 0,
+          "stdout": "oracle-validate-workloads.stdout",
+          "stderr": "oracle-validate-workloads.stderr"
+        },
+        {
+          "name": "oracle-unittest",
+          "command": "python3",
+          "args": [
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_event_oracles"
+          ],
+          "options": {
+            "cwd": "/mock/qualification/workloads"
+          },
+          "code": 0,
+          "stdout": "oracle-unittest.stdout",
+          "stderr": "oracle-unittest.stderr"
+        }
+      ],
+      "reasons": [
+        "lab checkJs failed (exit 1)"
+      ],
+      "failures": [
+        {
+          "step": "lab-checkjs",
+          "tail": "mock first failure"
+        }
+      ],
+      "stored": [
+        {
+          "file": "vitest-core.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-testkit.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-datomic.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "vitest-qualification.json",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/lab-checkjs.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/typecheck.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-core.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-testkit.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-datomic.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-datomic.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/vitest-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-qualification.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-engine-cases.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/node-test-ns-bench.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-validate-workloads.stderr",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stdout",
+          "role": "raw-outcome"
+        },
+        {
+          "file": "/mock/oracle-unittest.stderr",
+          "role": "raw-outcome"
+        }
+      ],
+      "writes": [
+        {
+          "file": "observed-skips.json",
+          "text": "{\n  \"core\": [],\n  \"testkit\": [],\n  \"datomic\": [],\n  \"qualification\": []\n}\n"
+        }
+      ],
+      "verdict": {
+        "verdict": "FAIL",
+        "reasons": [
+          "lab checkJs failed (exit 1)"
+        ]
+      }
+    },
+    "inheritedFailures": [
+      "build",
+      "typecheck",
+      "vitest-core",
+      "vitest-testkit",
+      "vitest-datomic",
+      "vitest-qualification",
+      "node-test-qualification",
+      "node-test-engine-cases",
+      "node-test-ns-bench",
+      "oracle-validate-workloads",
+      "oracle-unittest"
+    ]
+  }
+]

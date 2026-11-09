@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-W02] Why: an exact inventory preserves every contract case, including blocked schedules.
 // Rejected: dropping unsupported cases from the denominator or hand-editing the contract pin.
 import fs from 'node:fs';

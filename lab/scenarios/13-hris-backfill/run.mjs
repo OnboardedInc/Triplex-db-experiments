@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; runtime-validated nullable values; unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 13: HRIS backfill through the bulk lane (TARGETS 6 row 13). Spec and golden only.
 // Bulk commands carry `batch` facts for many subjects each (the bulk lane is the one place commands span
 // subjects); each batch has its own commandId so per-batch receipts and retries are exact.

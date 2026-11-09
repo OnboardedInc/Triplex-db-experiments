@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Run a public contract check with create-only evidence and source-drift detection.
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";

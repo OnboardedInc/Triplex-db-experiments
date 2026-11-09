@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Offline reader contract tests. Synthetic inputs are never engine evidence.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";

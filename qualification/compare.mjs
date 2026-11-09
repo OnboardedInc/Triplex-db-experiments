@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Compare public workload receipts. Native probes and replay are not competitors.
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";

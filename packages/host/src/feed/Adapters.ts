@@ -269,14 +269,64 @@ export function journalChangeFeed(
     },
   };
 }
-export function datomicChangeFeed(source: string): ChangeFeed {
+// [EXP-DF01] Why: the durable cursor is the next inclusive Datomic t, not a Triplex position.
+// Rejected: report-queue offsets (lost on peer restart) and dense synthetic positions (Q89d).
+export interface DatomicLogPage {
+  readonly database: string;
+  readonly fromT: string;
+  readonly nextT: string;
+  readonly rows: readonly (
+    | { readonly t: string; readonly kind: "skipped"; readonly reason: "non-triplex" }
+    | { readonly t: string; readonly kind: "commit"; readonly transaction: FeedTransaction }
+  )[];
+}
+export function datomicChangeFeed(
+  source: string,
+  options?: {
+    readonly database: string;
+    readonly stream: string;
+    readonly epoch: string;
+    readonly read: (fromT: string, limit: number) => Promise<DatomicLogPage>;
+  },
+): ChangeFeed {
   return {
     source,
     arm: "candidate",
-    poll: async () => {
-      throw new Error(
-        "FeedUnavailable: Datomic log route pending EXP-DF01; use journalChangeFeed as A0-control",
-      );
+    poll: async (cursor, limit = 1000) => {
+      assertFeedCursor(source, cursor);
+      if (!options) throw new Error("FeedUnavailable: Datomic log reader required");
+      const natural = (s: string) => typeof s === "string" && /^(0|[1-9][0-9]*)$/.test(s);
+      if (!natural(cursor.token) || !Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
+        throw new Error("Invalid Datomic feed request");
+      const page = await options.read(cursor.token, limit);
+      if (
+        page.database !== options.database ||
+        page.fromT !== cursor.token ||
+        !natural(page.nextT) ||
+        page.rows.length > limit
+      )
+        throw new Error("Datomic log page binding mismatch");
+      let prior = BigInt(cursor.token) - 1n;
+      const entries: FeedEntry[] = [];
+      for (const row of page.rows) {
+        if (!natural(row.t) || BigInt(row.t) <= prior || BigInt(row.t) < BigInt(cursor.token))
+          throw new Error("Datomic log order violation");
+        prior = BigInt(row.t);
+        if (row.kind === "skipped") {
+          if (row.reason !== "non-triplex") throw new Error("Unknown Datomic skip reason");
+        } else if (row.kind === "commit") {
+          entries.push({
+            stream: options.stream,
+            epoch: options.epoch,
+            offset: row.t,
+            kind: "commit",
+            transactions: [row.transaction],
+          });
+        } else throw new Error("Unknown Datomic log resolution");
+      }
+      if (page.nextT !== (page.rows.length ? String(prior + 1n) : cursor.token))
+        throw new Error("Datomic log checkpoint mismatch");
+      return checked(entries, { source, token: page.nextT });
     },
   };
 }

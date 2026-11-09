@@ -1,3 +1,4 @@
+import { assertDurableFlush } from "./DurableFlush.js";
 import { DatabaseSync } from "node:sqlite";
 import { createHash } from "node:crypto";
 import {
@@ -12,10 +13,12 @@ import {
 // [EXP-FD01] Why: Q98b moves durability off the source's serial writer; Q84a supplies host durability.
 // Rejected: JSONL effects plus a separate checkpoint (the X3 after-effect crash duplicates effects).
 export class SqliteConsumerStore implements ConsumerStore {
+  readonly durability: ReturnType<typeof assertDurableFlush>;
   protected readonly db: DatabaseSync;
   private readonly lock: DatabaseSync;
   constructor(file: string) {
     if (!file || file === ":memory:") throw new Error("ConsumerStore requires a durable host file");
+    this.durability = assertDurableFlush(file);
     this.db = new DatabaseSync(file);
     this.lock = new DatabaseSync(file + ".lock");
     try {

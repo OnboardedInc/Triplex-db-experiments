@@ -1,0 +1,500 @@
+# EXP-NSR — NS driver / candidate split
+
+Builder: CX-NSR. Branch: exp/NSR-bench-split. Base: d523f632 (EXP-P3M).
+
+North star: every P1–P5 cell needs measurements captured by trusted driver code, outside candidate processes (Q86a).
+Goals and bars: lab/SCOPE.md, lab/NORTH-STAR.md, lab/TARGETS.md. Design: R44 sections 2, 3.4–3.5, 5.1, B1/B7;
+pending Q100a/d/f/m. This report describes builder checks, not independent promotion or NS qualification.
+
+## Implementation
+
+- `lab/bench/ns-driver/driver.mjs`: trusted scheduled offers (ACK-independent), 256 closed reader loops by default,
+  RYOW, P4 pulls, pinned sweep pulls, captured request bases, answer hashes and sampled bytes, event-loop hiccup meter.
+- `rpc.mjs`, `schema.json`: ns-sut/1, one UTF-8 JSON line per TCP connection; exact envelopes, method/role/run/request
+  binding, 1 MiB request and 16 MiB response limits, nesting cap, typed candidate errors and request timeout.
+- `events.mjs`: fresh exclusive output directory, append-only HMAC-chained chunks, sequence and prior-HMAC continuity,
+  run/source/input/slot binding and terminal seal. `controlEvent` emits hook notifications without any Docker access.
+- `check-imports.mjs`, `build.mjs`: TypeScript-AST import-closure traversal, dynamic execution/import refusal, realpath
+  boundary checks, package-free bundle copy and content manifest. The frozen trace generator remains the same source.
+- P3M pure measurement moved to `ns-driver/p3.mjs`, with evaluator-owned FD01 validators in `feed.mjs`. The original
+  monolith retains its public API through re-exports, plus candidate adapters/source recorder in `lib/p3.mjs`.
+- `packages/qualification/workloads/ns-sut.ts`: long-lived broker/readers/consumer role server. Candidate provider
+  loading happens only there. Role startup/shutdown and RPC transport are exercised in separate OS processes.
+- Linux FD01 clock identity is now `{bootId, timeNs, primitive: CLOCK_MONOTONIC}`; hostname is absent. macOS keeps
+  its distinct boot-bound diagnostic clock. Both equality implementations reject cross-boot/time-namespace comparisons.
+- `assertDurableFlush`: Linux refuses tmpfs, overlay and unknown filesystem/device paths; requires a recognized
+  filesystem, barriers, readable block-device cache mode and successful real fsync calibration. ConsumerStore invokes
+  it before opening SQLite; NS broker entry invokes it before loading its provider. Calibration reports guest-flush
+  durability with host power-loss explicitly unqualified.
+
+## Boundaries and remaining integration
+
+The split runner is deliberately DIAGNOSTIC and refuses live qualification. G03 owns hardened VM containers, separate
+volumes/cgroups, role images, observer brackets and live resource admission. CR-NS owns independent recomputation.
+The P3M sidecar timestamps remain CR and cannot become trusted publication evidence here.
+
+`openNsRole(role, config)` is the candidate provider interface. The committed provider is an offline parity fixture,
+not a newly qualified live lane composition. The fixture consumer gets feed pages over broker RPC; its source/metadata
+file access is Mac diagnostic scaffolding, not the VM volume layout. A live provider must supply native lane commit,
+read, feed and consumer behavior. The baseline contains no SQL01 `packages/broker` source; this change guards the NS
+broker entry, and does not claim to change an absent SQL01 store constructor.
+
+Linux refusal and two-hostname checks use mocked OS probes on this Mac; an actual Linux tmpfs startup and device flush
+calibration are not verified. No engine slot, Docker lifecycle, deployment, acceptance-contract edit or production run.
+
+## Gates and evidence
+
+Builder checks completed; results below. Durable evidence root:
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-NSR/`.
+
+First attempts remain: `offline-1.log` records sandbox refusal of `sysctl kern.bootsessionuuid` (eight failed checks,
+three passed); `clock-flush-1.log` records two invalid ESM spy attempts. New attempts use distinct directories/logs.
+The mocks were corrected to module-factory mocks; clock-dependent offline commands are rerun with boot-identity access.
+`offline-2.log`: 11/11 checks passed, including seeded split/monolith equality, actual candidate role processes,
+256 distinct completed fixture loops, P3M delay/negative fixtures, and raw feed contents. `clock-flush-2.log`: 2/2
+mocked Linux identity/refusal checks passed. These are builder observations, not independently verified promotion.
+
+G0 first attempt `G0-qlever-20261109T072300Z-84a267` completed FAIL: 1203 passed, 12 failed, 71 expected skips.
+The initial pnpm shim duplicated the store option on the gate's build argv (pnpm reported `filepath.startsWith is
+not a function`); its missing QLever/qualification builds and sandbox boot-identity failures remain in the receipt.
+The initial module-spy failures are retained in that attempt. The shim is corrected to add the owned store only when
+it is absent. The first receipt is retained unchanged.
+
+## PASS / verdict / receipt audit (rule 9a)
+
+1. **`runNS` result and HR seal (`driver.mjs`, `events.mjs`)**: emits only DIAGNOSTIC. Content is captured from actual
+   RPC bytes and hashed, chunks are chained and keyed; freshness is exclusive directories/files and fresh request IDs;
+   binding is the supplied attempt/source/input/slot tuple in every chunk. These bindings are caller-supplied and need
+   evaluator validation; no candidate reply, seal or diagnostic result is an NS PASS.
+2. **Moved `auditP3` (`p3.mjs`)**: checks byte-equivalent feed contents against a source prefix, complete resolutions,
+   publication inventory, positions, receipt identities, checkpoint, samples and observed readers. Freshness checks
+   runId and window instants; binding checks source/stream and publication/transaction coordinates. Its positive fields
+   remain P3M offline/CR diagnostic arithmetic, never observer evidence. The monolith's existing OFFLINE-PASS/MEASURED
+   receipt writer remains in `p3-driver.mjs`; no new qualification PASS route was added.
+3. **`readerLevel`**: positive reader level requires per-second distinct completed loops for 99% of seconds and relay
+   agreement within 10%, against supplied window bounds. The caller must bind retained HR/TO events to the attempt;
+   absence of relay data fails. `runNS` does not turn requested loops or short fixture completions into qualified L256.
+4. **Import manifest / bundle**: AST closure checks content and realpaths; files are read in the current invocation,
+   hashed and copied to a fresh destination. This is a static dependency gate, not semantic acceptance.
+5. **Durability admission**: actual startup checks occur before SQLite/provider opens, using the selected path's
+   filesystem/mount/device and a fresh fsync probe; typed refusal precedes volatile store creation. A successful
+   preflight is a guest flush-path observation, not proof of host power-loss durability.
+6. **Builder tests and G0**: test assertions compare observed content and deliberately changed controls in fresh
+   attempts. Existing G0 machinery binds builds/inputs and retains raw outputs. Builder results do not self-certify
+   promotion; independent review remains required.
+
+7. **Final evidence manifest / copied-object summary**: each SHA256SUMS entry was produced from retained file bytes
+   and read back in the same invocation; every one of the final G0 receipt's 44 object references was checked against
+   the copied CAS bytes. Freshness is the completed attempt's retained paths, not a reused PASS summary. Binding is
+   the original receipt/run ID, its tested source c194baf7 and the explicit durable-root relative path. The manifest
+   asserts preservation only; it does not upgrade any failed attempt or diagnostic into semantic acceptance.
+
+## Contract / pins
+
+No lab/acceptance file is edited. `pin-changes.json` lists changed paths found in contract pin dictionaries; currently empty. Final gate outcomes follow below.
+P3M final-head check currently still resolves to d523f632; no newer P3M commit was available at the last check.
+
+## Final builder result
+
+Source tested: `c194baf7` (implementation `74111638`). Final evidence/report commit changes no runtime source.
+
+| Check                                                                           | Result                                                                 | Receipt / durable evidence                                       |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Static driver closure, copied bundle import                                     | Eight evaluator files; no candidate package path; copied entry loads   | `bundle-c194baf7.json`, `bundle-c194baf7/manifest.json`          |
+| Split / P3M diagnostic parity and P3M negative gates                            | 11 passed, 0 failed                                                    | `offline-2.log`, `attempt-2/`, `p3m-attempt-2/`                  |
+| Two mocked Linux hostnames and volatile-filesystem refusal                      | 2 passed, 0 failed                                                     | `clock-flush-2.log`                                              |
+| Final G0 (includes 2048 deterministic RPC envelope mutations and all NSR tests) | **PASS: 1220 passed, 0 failed, 71 expected skips, 0 unexpected skips** | `lab/runs/G0/G0-qlever-20261109T073657Z-30e916.json`, `g0-3.log` |
+| Formatting / lint of new and changed implementation files                       | Passed                                                                 | Builder invocation; no runtime source changes after G0           |
+| Offline package check                                                           | FAIL: CLI tarball lacks unbuilt `package/dist/index.js`                | `pack-1.log`, `pack/`                                            |
+
+The second G0 attempt, `G0-qlever-20261109T073033Z-9a41f5`, had 1219 passes and one failure: the qualification
+suite imported the not-yet-built XTDB dist package. `xtdb-build.log` retains that dependency build. The third attempt
+reran the complete G0 on the same source and passed; the second receipt is also retained unchanged.
+
+The final G0 is runKind **diagnostic**, scope **full**, with no engine slot. It is a complete builder G0, not an NS
+performance/semantic qualification or independent promotion. Its host suite passed all 22 tests. Production durability,
+Linux device calibration and VM placement remain unverified. The offline package check was run as required and did not
+reach a clean consumer install; no package-readiness claim is made.
+
+`SHA256SUMS` and `EVIDENCE.md` index the durable evidence root. Raw G0 outputs and their content-addressed objects are
+copied under `repository-runs/`; every object bound by the final receipt was checked after copying. Test-owned temporary
+artifacts from earlier gate attempts were recovered under `recovered-temp/`. No raw evidence over 1 MB is committed.
+
+Changed contract-pinned paths: **none** (`pin-changes.json` is empty). The current contract's
+`writerTrace.generator.frozen.sha256` is null, so equality with a frozen pin cannot yet be asserted. The bundle proposes
+the unchanged generator source hash `201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4`; the contract
+builder must pin it with DRIVER_PIN in the next contract version. `lab/acceptance/` remains byte-unchanged.
+
+The last P3M-head check still returned `d523f632`; it is already an ancestor of this branch. There was no newer final
+P3M head to merge. The orchestrator must incorporate later P3M fixes if that branch advances after this handoff.
+
+Open integration: native lane `openNsRole` providers (this change supplies the RPC entry and parity provider), actual
+Linux tmpfs/device startup tests, SQL01 constructor-level guarding when its absent source is integrated, G03 hardened
+VM placement/observer wiring and CR-NS qualification. The P5 path here drives pinned pulls only; evaluation/outbox
+publication is not an accepted P5 result. These limits are not hidden by the passing offline gates.
+
+## Round 2 — review F1, F2, F3
+
+Review: `verify/NSR` at `4c8b02fc`, reviewing `05c26355`. North star: oracle-checkable P1 answers and trustworthy
+P1–P5 evidence boundaries. Scope/targets remain `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`.
+
+**F1 fixed.** New evaluator-owned `answer.mjs` defines `answer-canonical/1`; its complete specification is in the
+ns-sut/1 schema. It recursively emits sorted object keys, preserves array order, and hashes UTF-8 canonical JSON
+of the parsed application answer, excluding the RPC envelope. `answerSha256` is now this canonical digest;
+`rawWireSha256` independently retains the hash of the original received RPC line. Every read retains the complete
+snapshot of the driver-sent request and its canonical `requestKey`: subject, configured shape including hops,
+basis, route and all additional fields are preserved, with no projection onto only subject/basis. `rpcMethod`
+records the actual method. RYOW, P4 and sweep pulls use the same recording path.
+
+Sampling is explicit in the HMAC-protected `answer-policy` event: `answer-sampling/1` retains the first answer and
+every 16th zero-based sequence in **each loop**, with a validated configurable interval; all non-loop pulls retain
+answers. Sampled rows include parsed answer, canonical bytes and raw response bytes. Every row, including
+unsampled loop-1 rows, retains both digests and the full request. Sampling is independent of candidate content.
+
+**F2 fixed.** The import gate now rejects module/worker/VM/process loader capabilities at their import boundary,
+so renamed createRequire and worker imports cannot disappear from the graph. It rejects global require aliases,
+import-equals, dynamic imports, indexed function invocation, reflective constructor access and unapproved process
+APIs. Node builtins are restricted to the driver's actual data/clock/hash/TCP needs; crypto/util/perf exports are
+restricted too. The sole child-process exception is the exact literal boot-ID sysctl invocation in clock.mjs,
+with its fixed argv and encoding-only options. File reads are data inputs, not executable runtime imports. This
+remains a conservative gate for evaluator-authored code, not a general JavaScript security sandbox.
+
+**F3 fixed.** Linux admission resolves an existing database filename with realpath and classifies **that target**,
+including file-level filesystem mounts. A durable-directory symlink into modeled tmpfs now fails typed. Durable
+symlinks are also conservatively refused. Existing WAL/SHM/journal/lock paths are resolved and refused if linked
+or on a mismatched filesystem; dangling links fail typed. A new database still uses its resolved parent until
+SQLite creates it. This is path-level preflight on the private volume, not a claim of race-free inode reservation
+against a concurrent path replacer, nor proof of host power-loss durability.
+
+The review's `probes.mjs` was copied to `lab/verify/NSR/probes.mjs` and its controls adapted to require refusal and
+independent canonical recomputation. Exact original probes and durability test are retained under `round2/`.
+The new negative answer is deliberately placed in an **unsampled loop-1 read**. An independent canonical encoder
+and fixture oracle recompute from normal retained HR evidence and reject it; the driver itself still reports
+DIAGNOSTIC and does not claim to perform B5's semantic qualification.
+
+### Round 2 gates
+
+All commands used heavy.mjs, Node 24 and the owned pnpm store; no engine slot or Docker operation.
+Durable evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-NSR/round2/`.
+
+| Check                                                       | Fresh builder result                                                                                                                                  | Evidence                                                            |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Changed host package build and declaration/type generation  | Passed                                                                                                                                                | `final-1.log`                                                       |
+| Clock and modeled Linux target/refusal tests                | 4 passed, 0 failed                                                                                                                                    | `final-1.log`; `nsr-target.test.ts`                                 |
+| Copied review probes                                        | Both original loader cases refused; 11 direct/loading controls refused; copied nine-file bundle loads                                                 | `final-1.log`, `final-probes/`                                      |
+| F1 controls                                                 | Equal semantic answers compare equal across RPC IDs; raw-wire hashes remain distinct; changed unsampled loop-1 answer fails independent recomputation | `final-probes/` retained HR events, policy and independent captures |
+| NSR/P3M parity, caps, canonical encoding and planted delays | 12 passed, 0 failed                                                                                                                                   | `final-1.log`, `final-nsr/`, `final-p3m/`                           |
+| Formatting and lint                                         | Passed for changed implementation/test files                                                                                                          | Builder invocation                                                  |
+
+The earlier `offline-1.log` passed 12 tests plus probes; `host-1.log` passed the initial three source controls.
+The final run adds the database-file/sidecar control and rebuilds the changed public host dist before parity.
+`source-hashes.json` retains the final source hashes, final host dist hashes, review provenance and a byte check
+against every file in the successful probe's copied bundle. The round 1 1220-test full G0 remains historical;
+a full G0 and package consumer/release check were **not rerun** in round 2. The review established that the earlier
+missing CLI entry was build setup, rather than an NSR regression.
+
+### Round 2 PASS / verdict / receipt audit
+
+1. **Canonical read observations** (`answer.mjs`, `driver.mjs`): capture only validated parsed answer bytes and a
+   pre-send snapshot of the complete request; raw bytes are separately hashed. New RPC IDs and per-loop sequence
+   numbers establish fresh observations, bound by the existing run/source/input/slot HMAC chunks. A digest is an
+   observation, not a semantic PASS; oracle recomputation still supplies the independent expected content.
+2. **Sampling policy**: policy is written before loops, with a validated interval; each sampled flag follows its
+   actual loop sequence and is checked by the independent probe. No candidate-selected or loop-0-only coverage.
+3. **Import gate**: positive closure manifests contain actual current file hashes; runtime loader capabilities
+   fail closed before fixture execution. The copied bundle is loaded fresh. The negative controls check no marker
+   was produced. Source/bundle hashes bind the exact closure, without claiming an all-purpose code sandbox.
+4. **Durability preflight**: actual resolved target/sidecar paths determine classification, with typed refusal of
+   modeled volatile files. Fresh real symlinks/files and explicit Linux mocks exercise the check. The result binds
+   targetPath and the existing filesystem/device observations; no actual Linux startup or TOCTOU proof is inferred.
+5. **Copied review probe assertions**: independent expected canonical fixture content is compared with every
+   retained read digest and full request, using fresh UUID attempts and raw TCP data. The nonzero-loop mutation
+   is rejected by recomputation, not accepted as a receipt. Source closure and supplied offline-no-slot binding
+   remain explicit; the fixture's input hash is a label, not a production input attestation.
+6. **Round 2 evidence manifest**: hashes are computed from retained bytes and read back after the completed final
+   attempt; paths/source-hashes bind each file and the tested source. Preservation does not promote DIAGNOSTIC
+   or prior historical checks into qualification.
+
+Changed contract-pinned paths: **none**, enumerated in `round2/pin-changes.json`. No lab/acceptance bytes changed.
+Actual Linux tmpfs/device startup, race-free new-file reservation, hardened VM wiring and native providers remain
+unverified. P3M still has no newer head than d523f632 at the final check. These checks are builder evidence for the
+three review fixes, awaiting independent review, with no NS qualification/promotion claim.
+
+## Round 3 — closed executable artifact and complete storage-device checks
+
+Review: `verify/NSR` at `7173e1c1`, reviewing `76e6efd0`. F1 remains closed. North star: trustworthy P1–P5 driver
+execution and durability evidence, under `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`. Round 3 supersedes
+round 2's claim that reflective loader spellings were closed by its AST checker.
+
+### F2: implementation
+
+The loader-name blacklist is removed. `compile.mjs` invokes the already installed, lockfile-pinned **esbuild
+0.23.1** dependency of tsx. Its actual resolved `metafile.inputs` define the source graph; every input is
+realpath-checked and any `packages/` or outside-root file fails the build. Exactly one JavaScript output is
+required, with only explicitly enumerated Node builtin externals. `checkImports` is now a compatibility wrapper
+around this bundler graph, not a hand-built AST graph. Unresolved computed/reflective loading is a runtime
+refusal, rather than a static-name claim.
+
+`buildDriver` emits **one executable `driver.mjs`**, the raw bundler `metafile.json`, manifest, and two separate
+trusted enforcement/bootstrap scripts. `ns-driver-bundle/2` records the actual artifact SHA256, source hashes,
+metafile SHA256, bundler version and hashes of those support scripts. The driver artifact from the final
+review-probe attempt is `ae4dccc256283d8d3078016f5efaa80b8dcaaf8c1869fb84747c6705882761f0`.
+No source files are imported from a copied repository tree at runtime.
+
+The generated `launch-artifact.mjs` verifies the artifact, mandatory support scripts, raw metafile hash and
+external-module inventory. It starts Node 24 with **`--permission`, no child-process or worker permission**,
+exact artifact/config/key read grants and driver-output-only writes. The mandatory synchronous
+`module.registerHooks` guard permits only the hash-checked single executable file and the builtin imports
+listed by the bundler. File/data modules outside that runtime graph are refused, including imports produced
+by destructured/aliased Function constructors. The guard verifies itself and the executable again in the
+restricted process. The direct source runner refuses execution without the guard; HR `driver-runtime` records
+the actual artifact hash and permission state.
+
+On macOS the trusted launcher obtains boot identity before starting the restricted child and passes it as
+data, preserving the clock domain without granting subprocess creation to the driver. Inputs/output must use
+canonical, separate paths. The launcher refuses lexically overlapping file/directory grants, rather than
+broadening filesystem access. In the VM the artifact/bootstrap volume must remain evaluator-owned/read-only;
+this is a trusted-driver execution policy, not a claim to sandbox arbitrary hostile operator-supplied code.
+
+### F3: implementation
+
+After realpath, the guard checks the **directory, existing main database, WAL, SHM, journal and lock file**.
+Each path gets its own filesystem, most-specific mount, barrier-policy and actual `stat.dev` observation.
+All must match the directory's device, inode-device value and mount ID. Volatile filesystems, disabled barriers,
+unknown layouts and **all separate file mounts** are refused before calibration, even when both filesystems
+are ext4 or the file mount is on the same device. This conservative private-volume layout avoids calibrating
+an unrelated parent device. The newly opened probe descriptor is also checked with `fstat.dev` and its resolved
+mount before any measured fsync. Returned observations include `storagePaths` and `calibrationDevice`.
+
+The review's fixed-device DB EIO case and nobarrier WAL case now fail before any calibration fsync. The direct
+EIO and direct-WAL controls remain active. Additional controls cover SHM cross-device placement, same-device
+file mounts, volatile directories, actual durable hard links, tmpfs file mounts and original symlink cases.
+These are modeled Linux probes over real Mac files. No actual Linux mount/device qualification is inferred.
+Existing path-replacement/new-file reservation limitations remain; this round does not claim a race-free
+SQLite descriptor handoff.
+
+### Fresh round 3 checks and retained attempts
+
+Durable evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-NSR/round3/`.
+The exact reviewer sources are copied under `round3/` beside this report. Adapted executable controls live in
+`lab/verify/NSR/round3/artifact-controls.mjs`; the modeled mount regressions are
+`packages/host/test/feed/nsr-mounts.test.ts`. The runtime controls are included in `nsr.test.mjs`, so G0's existing
+NSR test entry exercises them automatically.
+
+| Check                                              | Fresh builder result                                                                                                                                     | Evidence                                                                           |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Changed host build plus declarations               | Passed                                                                                                                                                   | `attempt-2.log`                                                                    |
+| Clock / target / full mount-device source controls | **9 passed, 0 failed**                                                                                                                                   | `attempt-3.log`, `mount-controls-3/`                                               |
+| Runtime artifact controls                          | One resolved candidate input refused by bundler; eight executable loader variants refused at runtime; normal artifact loads and altered artifact refused | `final-binding.log`, `final-probes-2/`; ten controls also rerun by final NSR suite |
+| Guarded NSR/P3M regression suite                   | **14 passed, 0 failed**                                                                                                                                  | `final-regressions.log`, `final-nsr-3/`, `final-p3m-3/`                            |
+| F1 preservation                                    | Equal canonical answers across IDs; unsampled loop-1 mutation rejected by independent recomputation; separate raw-wire hashes                            | `final-binding.log`, retained normal HR/captures under `final-probes-2/`           |
+| Artifact/metafile/bootstrap and source readback    | Byte hashes match final executed artifact, raw bundler metadata, support scripts and current source                                                      | `source-hashes.json`                                                               |
+| Formatting / lint                                  | Passed for changed implementation/test files                                                                                                             | Builder invocation                                                                 |
+
+Retained first attempts are not relabeled: `host-1.log` had 8 passes and one failure because mountinfo was read
+before typed tmpfs refusal on the Mac mock; the volatile-filesystem check now runs first. `artifact-1.log` and
+`attempt-2.log` exposed output-directory read denial in Node 24 when a `<uuid>.key` file grant overlapped an
+output directory named `<uuid>`. A wildcard did not repair that overlap. The fixture key is now `key-<uuid>`;
+the launcher checks for and refuses overlapping input/output grants without granting their shared parent.
+`attempt-3.log` then passed normal execution, 12 earlier regressions and all nine source controls.
+`final-runtime.log` passed 13 tests including direct-source refusal; `final-binding.log` adds artifact/metafile
+and support-file binding checks. `final-regressions.log` passes all 14 after adding those executable controls to
+the normal NSR suite. Each attempt uses fresh directories and retains its original outcome.
+
+No full G0 or package-consumer/release run was repeated. The older 1220-test G0 remains historical. No engine
+slot, Docker operation, network service outside fixture TCP endpoints, deployment, merge or push. Actual Linux
+permission/clock startup and mount calibration, hardened VM wiring and native providers remain unverified.
+
+### Round 3 PASS / verdict / receipt audit
+
+1. **`compileDriver` / `checkImports`:** the graph comes from the bundler's actual metafile, not inferred call
+   names. Resolved input realpaths and output imports are checked; observed source/output bytes are hashed in
+   this invocation. The manifest binds actual executable bytes and compiler version. No static claim is made
+   that reflective/computed source has been enumerated: the restricted runtime handles that case.
+2. **`buildDriver`:** a fresh exclusive output directory and files prevent stale artifact adoption. Actual code,
+   raw metadata and copied bootstrap bytes determine the hashes; final readback compares executed artifacts
+   with their manifest and current source. This is artifact eligibility, not semantic NS acceptance.
+3. **`launchArtifact` / runtime guard:** actual manifest, artifact, metadata and support bytes must match before
+   a fresh child starts. The child verifies native permission state, its guard and entry bytes; each runtime
+   resolution/load is checked against the artifact/builtin graph. Kernel permission checks block workers,
+   children and outside-file reads. Exit zero means execution completed, not that NS semantics passed.
+4. **HR runtime observation:** the guard installs an immutable artifact-hash observation in the fresh process;
+   the driver records it with actual child/worker permission observations in the existing HMAC-bound run
+   events. The supplied source/input/slot tuple is still evaluator-owned; this does not invent an engine slot
+   or turn a DIAGNOSTIC result into acceptance.
+5. **Storage admission:** content checks cover each resolved existing storage path's filesystem/device/mount
+   and barriers, then the actual probe descriptor/device before fsync. Observations are made at this startup;
+   paths, roles and calibration device are returned. Modeled Linux tests explicitly keep their mocked status,
+   and do not assert physical power-loss safety or a race-free subsequent SQLite open.
+6. **Review regressions / canonical recomputation:** fresh UUID fixtures contain real candidate files and a
+   writable marker destination; the bundler or actual restricted run refuses them with the expected graph/
+   permission error and no marker. An intact artifact executes, then changed executable bytes are refused.
+   Independent expected answer bytes still reject the unsampled changed read using full retained request keys.
+   Each result binds fresh paths, artifact digest and explicit offline-no-slot inputs; no NS PASS is emitted.
+7. **Evidence retention:** `source-hashes.json` compares current source, compiler output, metafile and support
+   bytes to the completed attempts. Round 3 SHA256SUMS is generated from retained bytes and read back; this
+   asserts preservation only. Earlier failures and diagnostic P3M receipts retain their original status.
+
+Changed contract-pinned paths: **none** (`round3/pin-changes.json`). `lab/acceptance/` is unchanged; no frozen
+DRIVER_PIN is invented. Downstream runner integration must use manifest v2's generated launcher rather than
+invoke the source or copied entry directly. Independent review of these fixes remains required.
+
+## Round 4 — filesystem boundary (CX-NSR)
+
+Responds to independent review `verify/NSR f6a9571c`,
+`lab/verify/NSR/VERIFY-round3.md` in the reviewer worktree. That review closes F3's stable-layout startup
+checks and shows why round 3's module guard cannot establish F2: vm can evaluate readable text and code in
+one process can replace its own module hook. The previous round's hook-based containment claim is superseded
+by this round's filesystem boundary. F1 and F3 code are unchanged.
+
+### Implementation and G03 handoff
+
+The generated launcher now stages a fresh flat runtime directory from the verified closed artifact, plus
+explicit evaluator config and a fixed-size run key. It never copies the repository, packages, node_modules,
+or arbitrary config-referenced files. A candidate/dependency key path or non-32-byte input remains external
+and unreadable. The layout contains the closed entry, secondary module guard, startup audit, manifests,
+config, optional run key and inventory. Each file has a SHA256 in an external layout receipt, including the
+inventory itself. The child receives the inventory digest as an external anchor. See
+[`round4/LAYOUT.md`](round4/LAYOUT.md) for the exact layout, launch flags and G03 volume handoff.
+
+The child runs Node 24 with only the layout readable. A separate fresh output directory is write-only.
+Startup enumerates and hashes the actual files, refuses extra files/directories, candidate/dependency paths,
+symlinks, modified/missing bytes, an altered inventory, and extra read grants. It actually attempts reads of
+the original config/key/artifact and output paths and requires permission denials. Thus future output cannot
+become readable candidate code. The trusted launcher checks output freshness before granting write access;
+HR files retain exclusive creation. Linux clock identity is captured by the trusted parent in the namespace
+inherited by the child, avoiding additional /proc read grants. Mac remains DIAGNOSTIC.
+
+The in-process module hook remains, explicitly labeled **secondary**, with no claim that it can stop
+arbitrary evaluation of readable data or prevent replacement by code already in the process. Config and key
+are trusted evaluator data, not candidate authority to add grants. The offline layout does not itself build
+or prove an actual G03 image: integration must place it in the separate trusted driver box built from the
+evaluator commit, with the pinned Node base and no candidate or repository mounts.
+
+### Fresh checks and retained attempts
+
+Evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-NSR/round4/`.
+Exact reviewer exploit source is retained as `round4/reviewer-artifacts.original.mjs`; executable adaptations
+are `lab/verify/NSR/round4/filesystem-controls.mjs`, called by the normal NSR test suite. The three vm/replaced
+hook cases must report **ERR_ACCESS_DENIED / FileSystemRead naming the actual candidate file**, and no marker,
+regardless of the secondary hook. Six additional controls reject an extra file, candidate directory, symlink,
+changed data, altered inventory and an extra external read grant. An intact layout executes normally; receipt
+hashes are independently read back.
+
+Final result and evidence inventory are recorded in `round4/EVIDENCE.md`. Attempt 1 retains the sandbox
+`sysctl` failures (5 passing, 10 failing tests). Attempt 2 ran outside that sandbox restriction: existing NSR,
+RPC, canonical answer, split/monolith parity and P3M checks passed, as did the filesystem controls, but the
+suite retained a stale expected control count (8 versus 3). It remains a failed attempt. Attempt 3 was
+cancelled while waiting (no test output directory) after repeated admission misses; only this task's own
+waiter was stopped. Attempt 4 uses the helper's supported `--poll-ms 100`, the unchanged four-slot cap, fresh
+directories and the corrected count, including the extra-read-grant control.
+
+No full G0 or package-consumer run is repeated; prior G0 remains historical. No Docker, engine slot, actual
+Linux run, VM/container build, native provider qualification, deployment, merge or push. F3's previously
+reported later-WAL/open race limitation is unchanged. Separate review of this round is still required.
+
+### Round 4 PASS / verdict / receipt audit
+
+1. **Bundler graph / artifact build (`compileDriver`, `checkImports`, `buildDriver`):** unchanged graph checks
+   use resolved input realpaths, exact source/output bytes and actual esbuild metadata from this invocation.
+   Fresh exclusive build outputs bind code, metadata, support bytes and compiler version. Added audit support
+   is hash-bound like the guard/launcher. This establishes artifact eligibility, not NS semantic acceptance.
+2. **Layout construction (`launchArtifact`):** reads and verifies manifest, metadata, artifact and support
+   bytes before copying only declared files into a newly created UUID directory. Actual copied config/key
+   and code bytes determine the inventory. The external receipt binds the full file list, inventory digest,
+   source config digest, executable digest, output path and Node version. It records construction only, not
+   successful execution. The config carries the evaluator's run/source/input/slot tuple; no real slot is
+   invented for these offline runs. Output must actually be empty and resolve to the intended directory.
+3. **Runtime layout audit (`layout-audit.mjs`):** in a fresh permission-restricted child, checks actual native
+   permission state and the single exact read grant; verifies the external inventory anchor and enumerates
+   actual files with content hashes. Candidate paths, symlinks, missing/extra/changed files fail. External
+   paths must produce actual permission denials. Its observation binds the inventory and artifact digests
+   to that execution; this is filesystem eligibility, not a semantic PASS or power-loss durability claim.
+4. **Secondary hook / driver / HR (`runtime-guard.mjs`, `runNS`, `Events`):** the guard still checks actual
+   manifest/entry/guard bytes and graph resolution in the fresh process, but is replaceable and is not the
+   boundary. Existing driver runtime and HMAC observations bind the executable, measured request/answer
+   bytes, full request keys, sequence and exact run/source/input/slot tuple. Output freshness is established
+   by the trusted launcher before the write-only child starts, and chunks remain exclusively created.
+   Canonical-answer behavior and DIAGNOSTIC labels are preserved; no NS acceptance is emitted.
+5. **Regression assertions (`filesystem-controls.mjs`, NSR/P3M tests, prior artifact controls):** fresh real
+   candidate bytes and marker paths are created per attempt. The three review exploits require the exact
+   permission failure on that candidate and absence of execution; secondary-hook failures alone do not
+   pass those controls. Tamper controls alter the actual layout/grants and require the specific refusal.
+   Baseline execution and actual receipt hashes are checked independently. Existing parity compares exact
+   accounting/feed contents, and planted-delay tests check expected measured values and negative controls.
+6. **Retention / report:** final source and support hashes are compared with executed layouts/artifacts;
+   retained files are SHA256-indexed and read back. Failed attempts stay failed, old evidence stays
+   historical, and checksums assert preservation only. Results are scoped to this Mac offline attempt.
+
+Changed contract-pinned paths: **none** (`round4/pin-changes.json`). `lab/acceptance/` is unchanged. No contract
+version, frozen DRIVER_PIN, or production runtime receipt is claimed.
+
+## Round 5 — exact write grant and minimal environment (CX-NSR)
+
+Responds to review `verify/NSR-r4 01020eae`, `VERIFY-round4.md` in `verify-nsr5`. North star: correctness
+of the trusted P1–P5 evaluator boundary under the authoritative lab scope/targets. The review confirms the
+round 3 readable-text cases now fail with actual permission denials, and identifies two medium defects:
+a legal `out*` path widens writes through Node's pattern syntax, and the child receives the host PATH.
+
+The launcher rejects `*` anywhere in either interpolated filesystem grant path, including parent components.
+It creates the canonical output leaf exclusively for each launch (existing empty directories are refused),
+and grants `--allow-fs-write=<exact-output>` with no wildcard. The startup audit checks the actual write
+flags and denied parent scope as well as reads. Existing fixture callers now leave output creation to the
+launcher; round 4's direct audit controls supply the same exact write flag and recorded environment.
+
+The child starts with empty PATH, the five base layout variables (including PATH), and only the applicable
+clock variables. Mac additionally gets an explicitly derived CoreFoundation text-encoding setting: a first fresh run
+showed macOS adds this host-derived variable even with an explicit spawn environment. We now set its value
+explicitly from the runtime UID, record it, and audit its exact value. A second attempt showed macOS
+replaces a conflicting generic UID setting; that failed attempt is retained too. No host PATH, parent sentinel or other parent variables are
+copied. Receipts record the entire supplied environment, every permission grant with its reason, and the
+trusted executable/base, stdio and RPC exceptions. [`round5/PERMISSIONS.md`](round5/PERMISSIONS.md) answers the
+reviewer's open question with the complete grant and environment ledger and the limits of native runtime
+closure. The Mac Node/base exception remains explicit; this change does not invent a whole-OS file closure
+claim or alter acceptance.
+
+Fresh controls in `lab/verify/NSR/round5/envelope-controls.mjs`, included in the normal NSR test suite, inspect
+the actual child's environment/argv/CWD, compare them with the receipt, verify exact expected bytes inside
+output, require `ERR_ACCESS_DENIED / FileSystemWrite` on the actual sibling marker path, and require no
+outside marker. They reject output reuse, literal/parent output stars, a layout-parent star, an altered
+write grant, an undeclared environment key and host PATH. Existing read-layout/vm/replaced-hook controls,
+RPC fuzz/caps, canonical answer checks, HR binding, split/monolith accounting/feed parity and P3M delay gates
+are retained. Final attempt 3 passed **16 tests, 0 failed**, including eight new envelope controls.
+Attempts 1 and 2 each retained **12 passed, 4 failed** while the strict environment check caught the Mac
+runtime additions described above. All runs used heavy admission with more than 5 GiB free. See
+`round5/EVIDENCE.md` for exact commands, attempts and durable checksums; 15 final layout receipts and
+20 final source/lock hashes were independently read back.
+
+### Round 5 PASS / verdict / receipt audit
+
+1. **Artifact eligibility/build:** existing compile/import-closure and artifact/support hash checks remain.
+   Actual resolved source/output bytes and metadata from this invocation determine the fresh artifact;
+   changed launcher/audit support is included in its hashes. No semantic NS PASS is emitted.
+2. **Launcher layout receipt (`launchArtifact`):** verifies actual artifact/metadata/support bytes, rejects
+   wildcard grant paths before creating the output, and exclusively creates the fresh output leaf. Actual
+   copied layout bytes determine its inventory/hash. The receipt binds the executable digest, source config
+   digest, layout/output paths, Node version, exact fresh environment, grants/reasons and runtime exceptions.
+   Its config/inventory carries the evaluator's run/source/input/slot inputs; offline tests invent no slot.
+   Receipt creation records construction, not successful execution or production acceptance.
+3. **Startup audit (`layout-audit.mjs`):** in the actual fresh child, checks native permission state, exact
+   read/write flags, no pattern syntax, denied parent write scope, exact environment keys, empty PATH and
+   canonical Mac runtime setting. Existing inventory anchor/enumeration/content checks and actual denied reads
+   remain. The observation binds this execution's inventory and artifact; checks apply before driver code.
+4. **Regression judgments (`envelope-controls.mjs` and existing suites):** fresh source/config/artifacts and
+   real sibling marker paths bind each attempt. Positive output content, actual permission class/resource,
+   absence of outside marker, actual child env/argv/CWD and receipt equality are required. Mutated-grant/env
+   cases require their specific audit error, not arbitrary failure. Existing read-layout cases still require
+   the candidate pathname's actual read denial; parity/delay checks compare expected observed values. Raw
+   results and receipts stay tied to this attempt and explicit offline-no-slot config.
+5. **Driver/HR and secondary guard:** unchanged semantic/event paths retain request/answer bytes/digests,
+   HMAC sequence and run/source/input/slot bindings. Freshness now comes from exclusive launcher output
+   creation, with exclusive chunk writes. The hook remains secondary and replaceable. Successful process
+   exit or a correct launch envelope does not establish NS semantic acceptance.
+6. **Evidence retention/report:** final executed artifact/support/layout bytes are compared with current
+   source and their recorded hashes. SHA256SUMS hashes retained bytes and is read back; this asserts retention
+   only. First failures remain failures, previous evidence remains historical, and Mac diagnostic results do
+   not become Linux/container/engine qualification.
+
+No full G0, package-consumer run, actual Linux/G03/VM/container execution, native-open retrace, engine slot,
+Docker operation, provider qualification, merge or push. Changed acceptance pins: **none**
+(`round5/pin-changes.json`); `lab/acceptance/` remains unchanged. Independent review is still required.

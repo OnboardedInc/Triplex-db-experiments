@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; Node overloads over dynamic option/result unions. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {assertEntryBinding}from'./entry.mjs';

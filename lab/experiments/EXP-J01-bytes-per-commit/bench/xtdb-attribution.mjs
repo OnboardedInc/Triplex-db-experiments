@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 XTDB attribution: bytes of source log per Triplex command, by source.
 //
 // 1. Commits real commands (1, 10, 10, 10, 50 facts, each with a commandId) through the Triplex runtime

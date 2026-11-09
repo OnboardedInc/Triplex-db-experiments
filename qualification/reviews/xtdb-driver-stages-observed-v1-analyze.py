@@ -48,7 +48,15 @@ assert terminal["cleanup"]["groupGone"] is True
 outputs = {entry["path"]: entry for entry in terminal["outputs"]}
 for name in ["events.jsonl", "report.json", "xtdb-driver-trace.jsonl"]:
     assert sha(ARTIFACTS / name) == outputs["artifacts/" + name]["sha256"]
+# [EXP-QNODELAY] Why: the fixed recipe name alone does not exclude QLever input.
+# Rejected: computing timings before checking the report's declared backend/path.
+def require_xtdb_report(report):
+    if report.get("backend") != "xtdb" or not str(report.get("queryPath", "")).startswith("xtdb-"):
+        raise ValueError("This historical driver attribution supports XTDB receipts only")
+
+
 report = read(ARTIFACTS / "report.json")
+require_xtdb_report(report)
 events = lines(ARTIFACTS / "events.jsonl")
 trace = lines(ARTIFACTS / "xtdb-driver-trace.jsonl")
 origin = report["clock"]["monotonicOrigin"]

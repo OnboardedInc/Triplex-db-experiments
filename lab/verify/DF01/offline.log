@@ -1,0 +1,30 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 11250 "CX-P5B-R2-B0-10k", pid 13226 "CX-P2B-R3-ordered-matrices", pid 11942 "CX-VDF01-secondary", pid 9504 "CX-A01-0314-R3-G0-Q"
+[lab] heavy: waiting for one of 4 slots; held by pid 11250 "CX-P5B-R2-B0-10k", pid 13226 "CX-P2B-R3-ordered-matrices", pid 11942 "CX-VDF01-secondary", pid 9504 "CX-A01-0314-R3-G0-Q"
+[lab] heavy: waiting for one of 4 slots; held by pid 11250 "CX-P5B-R2-B0-10k", pid 13226 "CX-P2B-R3-ordered-matrices", pid 11942 "CX-VDF01-secondary", pid 9504 "CX-A01-0314-R3-G0-Q"
+[lab] heavy: waiting for one of 4 slots; held by pid 11250 "CX-P5B-R2-B0-10k", pid 13226 "CX-P2B-R3-ordered-matrices", pid 16359 "CX-RT01-r6-matrices-plans", pid 9504 "CX-A01-0314-R3-G0-Q"
+03:05:25.164 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+03:05:25.169 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @1308ms to org.eclipse.jetty.util.log.Slf4jLog
+Original DF01 suite (fresh):
+
+Testing triplex.gateway.feed-test
+
+Ran 7 tests containing 32 assertions.
+0 failures, 0 errors.
+CX-VDF01 adversarial suite (desired behavior):
+
+Testing offline-verify
+{"probe":"restart-empty-queue","observed":{"equal":true,"created":2,"removed":2}}
+{"probe":"inside-skipped-range","observed":{"fromT":"102","nextT":"104","rows":[{"t":"103","kind":"skipped","reason":"non-triplex"}]}}
+{"probe":"notification-lost","observed":{"elapsedMs":154.04775,"nextT":"106"}}
+{"probe":"delayed-old-report","observed":{"page":{"fromT":"105","nextT":"105","rows":[]},"elapsedMs":0.227166,"visibleT":105,"events":[{"event":"capture-db","cut":100,"read":1},{"event":"old-report-enqueued","t":100},{"event":"capture-db","cut":100,"read":2},{"event":"new-db-published","t":105}]}}
+
+FAIL in (delayed-old-report-must-not-finish-empty-before-deadline) (offline_verify.clj:129)
+A stale notification must not end an empty long-poll before its deadline
+expected: (or (seq (:rows page)) (>= elapsed 1900))
+  actual: false
+{"probe":"different-txInstant","observed":{"t":"100","kind":"commit","transaction":{"positions":["3","7"],"txIds":["tx3","tx7"],"operationId":"op7","commandIds":["cmd7"],"changes":[{"op":"assert","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"3"}],"stamp":"7000","stampStatus":"decided"}}}
+{"probe":"excision-wire-equality","observed":{"equal":true,"bytes":687}}
+
+Ran 6 tests containing 119 assertions.
+1 failures, 0 errors.
+{"probe":"test-counts","observed":{"baseline":{"test":7,"pass":32,"fail":0,"error":0,"type":"summary"},"adversarial":{"test":6,"pass":118,"fail":1,"error":0,"type":"summary"}}}

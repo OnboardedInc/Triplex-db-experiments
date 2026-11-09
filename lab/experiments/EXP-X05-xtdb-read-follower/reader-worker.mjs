@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; test doubles or mutable containers inferred from their initial shape. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-X05 reader worker: closed-loop pinned pulls against one node (follower or writer) for one window.
 //
 // [EXP-X05] Why worker threads: the writer runs on the main thread and its latency is the measurement;

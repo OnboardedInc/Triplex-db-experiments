@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; unannotated bigint arithmetic or intentional JavaScript boolean/number coercion. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Authored/unexecuted offline controls. No backend or service is imported. */
 import assert from 'node:assert/strict';
 import test from 'node:test';

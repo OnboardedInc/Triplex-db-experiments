@@ -1,0 +1,15 @@
+{
+  "name": "engine-dormant",
+  "args": [
+    "--import",
+    "./lab/verify/CHECKJS/overlay.mjs",
+    "lab/bin/checkjs.mjs"
+  ],
+  "env": {
+    "CHECKJS_REVIEW_TARGET": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/bin/engine.mjs",
+    "CHECKJS_REVIEW_MUTATION": "append"
+  },
+  "status": 1,
+  "signal": null,
+  "error": null
+}

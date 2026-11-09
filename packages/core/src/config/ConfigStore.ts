@@ -15,6 +15,7 @@ import type {
   DatalogQueryError,
   ReadError,
   TransactionConflictError,
+  InvalidTripleError,
   WriteError,
 } from "../errors/index.js";
 import { Triples } from "../store/Triples.js";
@@ -79,6 +80,7 @@ export type LoadError = ReadError | CorruptConfigStoreError;
 export type CommitError =
   | LoadError
   | WriteError
+  | InvalidTripleError
   | TransactionConflictError
   | CommandAlreadyCommittedError
   | ConstraintViolationError
@@ -110,6 +112,7 @@ export interface ConfigStoreService {
     InMemoryConfigStore.ConfigSnapshot,
     | LoadError
     | WriteError
+    | InvalidTripleError
     | TransactionConflictError
     | CommandAlreadyCommittedError
     | ConstraintViolationError

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 probe 1: is a source-log record the plain sum of its statements (SQL text plus the Arrow
 // IPC argument bytes XTDB shows in xt.source_log_msgs.tx_ops), or is it compressed? Submits three
 // hand-built transactions on one connection, finds each record by SHOW LATEST_SUBMITTED_TX, sizes it

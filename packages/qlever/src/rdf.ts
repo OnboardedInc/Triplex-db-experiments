@@ -1,3 +1,10 @@
+import {
+  decodeValueColumns,
+  assertValueInDomain,
+  ValueDomains,
+  storedValueDomain,
+  type ValueDomain,
+} from "@triplex-build/triplex/runtime";
 import { integer, type TripleValue } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 
@@ -127,7 +134,8 @@ export const canonicalJson = (value: unknown): string => {
   };
   return go(value);
 };
-export const packValue = (value: TripleValue) => {
+export const packValue = (value: TripleValue, domain: ValueDomain = ValueDomains.qlever) => {
+  assertValueInDomain(value, domain);
   const row = {
     value_type: value.type,
     value_string: null as string | null,
@@ -189,13 +197,20 @@ export const decodeRow = (json: string): TripleRow => {
   for (const column of numericColumns)
     if (parsed[column] !== null && parsed[column] !== undefined) {
       const value = Number(parsed[column]);
-      if (!Number.isFinite(value)) throw new TypeError(`Invalid ${column}`);
+      if (
+        !Number.isFinite(value) &&
+        !["value_number", "value_datetime", "value_boolean"].includes(column)
+      )
+        throw new TypeError(`Invalid ${column}`);
       parsed[column] = value;
     }
   for (const column of ["recorded_position", "retracted_position"])
     if (parsed[column] !== null && !Number.isSafeInteger(parsed[column]))
       throw new TypeError(`Unsafe ${column}`);
-  if (parsed["value_type"] === "integer") integer(String(parsed["value_string"]));
+  decodeValueColumns(
+    parsed as unknown as TripleRow,
+    storedValueDomain(ValueDomains.qlever, String(parsed["attribute"])),
+  );
   return parsed as unknown as TripleRow;
 };
 /**

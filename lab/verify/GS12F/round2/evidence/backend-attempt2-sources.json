@@ -1,0 +1,8 @@
+{
+  "lab/verify/GS12F/round2/independent.test.ts": "e56e5217008526f063860ffb784bccb7a9e24273d6d563b48acfe97d13ac6d9e",
+  "lab/verify/GS12F/round2/backend-boundaries.test.ts": "bec37f8efce4c5c10c91bd3b8a8b4e4c3b056431f4d3bbae3219b723ce4e5bda",
+  "lab/verify/GS12F/round2/original-probes.test.ts": "1e74001af070cc5bb5b3f3cae95ef96869f8c61d2b84aaae0cfead98672b6485",
+  "lab/verify/GS12F/round2/foundationdb-stub.ts": "18e7f61334d32eda2ed83419a0e227faee52d1ce7d1941fa796839922f0b1994",
+  "lab/verify/GS12F/round2/backend.config.ts": "dbf9702e0d410566ea79dbf0afd4ff86743f095f9142af76016ee4c9b8a3c461",
+  "lab/verify/GS12F/round2/vitest.config.ts": "192de1192689d5b40dec1af1573f1741745c10a10295caf6de31979542cfddd6"
+}

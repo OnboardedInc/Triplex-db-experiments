@@ -1,3 +1,5 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { randomUUID } from "node:crypto";
 import { copyFile, mkdir, stat, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
@@ -133,7 +135,8 @@ const receiptPreserved =
     (fact) => fact.value.type === "number" && fact.value.value === 1.0000000000000002,
   );
 const allOrNone = [0, 160001].includes(afterPublication) && afterRestart === afterPublication;
-const artifact = {
+const artifact = qleverLatencyReceipt({ writer: "triplex-qlever-cancel-restart/1",
+  qleverConnectionMode: qleverConnectionModeOf(),
   run,
   version: "QLever0.6.0/6c5861a",
   profile: "4GiB4CPU",
@@ -156,7 +159,7 @@ const artifact = {
   restartOutput: restart.stdout,
   claim:
     "native cancellation observed by active registry and completed HTTP outcome; clean container restart only, no power-loss/fsync claim",
-};
+});
 const path = `qualification/evidence/qlever-cancel-restart-${run}.json`;
 await writeFile(path, JSON.stringify(artifact, null, 2) + "\n");
 console.log(JSON.stringify({ path, ...artifact }, null, 2));

@@ -1,0 +1,162 @@
+// @ts-nocheck -- [CX-A01-040] Why: this review control is imported by current NSR regressions and uses runtime-created fixtures. Binding errors remain checked. Rejected: excluding an executed dependency.
+// [CX-VNSR-R3] Why: execute the requested loader routes under the exact generated launcher, including code read through its data grants. Rejected: accepting only build-time graph checks or a missing marker after an unrelated syntax error.
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import { randomUUID, randomBytes, createHash } from "node:crypto";
+import { buildDriver } from "../../../bench/ns-driver/build.mjs";
+import { launchArtifact } from "../../../bench/ns-driver/launch-artifact.mjs";
+export async function runFilesystemControls(output) {
+  fs.mkdirSync(output, { recursive: true });
+  const cases = ["vm-file-text-readable", "replace-hook-file-module", "replace-hook-data-module"];
+  const results = [];
+  for (const kind of cases) {
+    const root = path.join(output, kind);
+    fs.mkdirSync(path.join(root, "packages"), { recursive: true });
+    const out = path.join(root, "run-output");
+    const marker = path.join(out, "candidate-ran");
+    const candidate = path.join(root, "packages", "candidate.mjs");
+    const candidateBody = `process.getBuiltinModule('fs').writeFileSync(${JSON.stringify(marker)},'candidate executed');\n`;
+    fs.writeFileSync(candidate, candidateBody);
+    const url = pathToFileURL(candidate).href;
+    const dataURL = "data:text/javascript," + encodeURIComponent(candidateBody);
+    let keyFile = path.join(root, "key");
+    fs.writeFileSync(keyFile, randomBytes(32));
+    if (
+      [
+        "constructor-readable-file",
+        "vm-file-text-readable",
+        "replace-hook-file-module",
+        "replace-hook-data-module",
+      ].includes(kind)
+    )
+      keyFile = candidate;
+    const header = `import fs from 'node:fs'; const config=JSON.parse(fs.readFileSync(process.argv[2],'utf8')); `;
+    const hookPrelude = `const mod=process.getBuiltinModule('module'); const fs=process.getBuiltinModule('fs'); const config=JSON.parse(fs.readFileSync(process.argv[2],'utf8')); `;
+    const target = kind === "replace-hook-data-module" ? dataURL : url;
+    const source = {
+      "static-import": `import './packages/candidate.mjs';`,
+      constructor: `const {constructor:Compile}=function(){}; await Compile(${JSON.stringify("return import(" + JSON.stringify(url) + ")")})();`,
+      "constructor-readable-file": `const {constructor:Compile}=function(){}; await Compile(${JSON.stringify("return import(" + JSON.stringify(url) + ")")})();`,
+      "createRequire-alias": `import {createRequire as cr} from 'node:module'; const load=cr(import.meta.url); load(${JSON.stringify(candidate)});`,
+      "destructured-worker": `const {Worker:Launch}=await import('node:worker_threads'); new Launch(${JSON.stringify(candidate)});`,
+      "computed-data-import": `const target=${JSON.stringify(dataURL)}; await import(target);`,
+      "vm-module-availability": `import vm from 'node:vm'; console.log(JSON.stringify({Module:typeof vm.Module,SourceTextModule:typeof vm.SourceTextModule,permission:!!process.permission}));`,
+      "vm-file-text-denied": `${header} import vm from 'node:vm'; vm.runInThisContext(fs.readFileSync(${JSON.stringify(candidate)},'utf8'),{filename:${JSON.stringify(candidate)}});`,
+      "vm-file-text-readable": `${header} import vm from 'node:vm'; vm.runInThisContext(fs.readFileSync(config.keyFile,'utf8'),{filename:config.keyFile});`,
+      "process-dlopen": `process.dlopen({exports:{}},${JSON.stringify(path.join(root, "packages/fake.node"))});`,
+      "child-node": `import {spawnSync as launch} from 'node:child_process'; const result=launch(process.execPath,[${JSON.stringify(candidate)}]); if(result.error) throw result.error; if(result.status!==0) throw Error('child failed');`,
+      "replace-hook-file-module": `${hookPrelude} const target=${JSON.stringify(target)}; mod.registerHooks({ resolve(s,c,next){if(s===target)return {url:target,shortCircuit:true}; return next(s,c);}, load(u,c,next){if(u===target)return {format:'module',source:fs.readFileSync(config.keyFile,'utf8'),shortCircuit:true}; return next(u,c);} }); await import(target);`,
+      "replace-hook-data-module": `${hookPrelude} const target=${JSON.stringify(target)}; mod.registerHooks({ resolve(s,c,next){if(s===target)return {url:target,shortCircuit:true}; return next(s,c);}, load(u,c,next){if(u===target)return {format:'module',source:fs.readFileSync(config.keyFile,'utf8'),shortCircuit:true}; return next(u,c);} }); await import(target);`,
+    }[kind];
+    const entry = path.join(root, "entry.mjs");
+    fs.writeFileSync(entry, source);
+    fs.writeFileSync(
+      path.join(root, "packages/fake.node"),
+      "non-native fixture; permission must reject before native loading",
+    );
+    const configFile = path.join(root, "config.json");
+    fs.writeFileSync(configFile, JSON.stringify({ keyFile, output: out }));
+    let manifest;
+    try {
+      manifest = buildDriver(path.join(root, "artifact"), root, entry);
+    } catch (error) {
+      assert.equal(kind, "static-import", error.stack);
+      assert.match(error.message, /candidate\/outside/);
+      results.push({ kind, refusedAt: "resolved-bundler-input", error: error.message });
+      continue;
+    }
+    assert.ok(Object.keys(manifest.files).every((p) => !p.split(path.sep).includes("packages")));
+    const actual = fs.readFileSync(path.join(root, "artifact/driver.mjs"));
+    assert.equal(createHash("sha256").update(actual).digest("hex"), manifest.bundleSha256);
+    const result = await launchArtifact(path.join(root, "artifact"), configFile);
+    const executed = fs.existsSync(marker);
+    if (kind === "vm-module-availability") {
+      assert.equal(result.code, 0, result.stderr);
+      assert.equal(executed, false);
+    } else {
+      assert.notEqual(result.code, 0, kind + " unexpectedly ran");
+      assert.equal(executed, false);
+      assert.match(result.stderr, /ERR_ACCESS_DENIED/, kind + ": " + result.stderr);
+    }
+    assert.match(result.stderr, /FileSystemRead/);
+    assert.ok(result.stderr.includes(candidate), result.stderr);
+    assert.ok(result.layoutReceipt);
+    const row = {
+      kind,
+      candidateExecuted: executed,
+      manifestInputs: Object.keys(manifest.files),
+      externals: manifest.externals,
+      bundleSha256: manifest.bundleSha256,
+      ...result,
+    };
+    results.push(row);
+  }
+  // [EXP-NSR-R4] Why: inventory eligibility must inspect the actual readable files, not just trust a generated receipt. Rejected: positive-only launcher tests.
+  const root = path.join(output, "inventory-" + randomUUID());
+  fs.mkdirSync(root);
+  fs.writeFileSync(path.join(root, "entry.mjs"), 'console.log("layout baseline")');
+  fs.writeFileSync(path.join(root, "key"), randomBytes(32));
+  fs.writeFileSync(
+    path.join(root, "config.json"),
+    JSON.stringify({ keyFile: path.join(root, "key"), output: path.join(root, "output") }),
+  );
+  const artifact = path.join(root, "artifact");
+  buildDriver(artifact, root, path.join(root, "entry.mjs"));
+  const baseline = await launchArtifact(artifact, path.join(root, "config.json"));
+  assert.equal(baseline.code, 0, baseline.stderr);
+  const receipt = baseline.layoutReceipt,
+    layout = receipt.layout;
+  for (const [name, digest] of Object.entries(receipt.files))
+    assert.equal(
+      createHash("sha256")
+        .update(fs.readFileSync(path.join(layout, name)))
+        .digest("hex"),
+      digest,
+    );
+  for (const kind of [
+    "extra-file",
+    "candidate-directory",
+    "symlink",
+    "changed-data",
+    "inventory-anchor",
+    "extra-read-grant",
+  ]) {
+    const key = fs.readFileSync(path.join(layout, "run-key"));
+    const inventory = fs.readFileSync(path.join(layout, "inventory.json"));
+    if (kind === "extra-file") fs.writeFileSync(path.join(layout, "unrecorded"), "candidate text");
+    if (kind === "candidate-directory") fs.mkdirSync(path.join(layout, "packages"));
+    if (kind === "symlink") fs.symlinkSync(path.join(root, "key"), path.join(layout, "link"));
+    if (kind === "changed-data") fs.writeFileSync(path.join(layout, "run-key"), randomBytes(32));
+    if (kind === "inventory-anchor") fs.appendFileSync(path.join(layout, "inventory.json"), " ");
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--permission",
+        "--allow-fs-read=" + layout,
+        "--allow-fs-write=" + receipt.output,
+        ...(kind === "extra-read-grant" ? ["--allow-fs-read=" + path.join(root, "key")] : []),
+        path.join(layout, "layout-audit.mjs"),
+      ],
+      {
+        encoding: "utf8",
+        cwd: layout,
+        env: receipt.environment,
+      },
+    );
+    assert.notEqual(result.status, 0, kind);
+    assert.match(result.stderr, /NSR (unrecorded|candidate|inventory|excess)/, result.stderr);
+    results.push({ kind, code: result.status, stderr: result.stderr, receipt });
+    for (const name of ["unrecorded", "packages", "link"])
+      fs.rmSync(path.join(layout, name), { force: true, recursive: true });
+    fs.writeFileSync(path.join(layout, "run-key"), key);
+    fs.writeFileSync(path.join(layout, "inventory.json"), inventory);
+  }
+  fs.writeFileSync(
+    path.join(output, "results.json"),
+    JSON.stringify({ target: "round4-filesystem", results }, null, 2),
+  );
+  return results;
+}

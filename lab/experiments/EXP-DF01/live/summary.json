@@ -1,0 +1,29 @@
+{
+  "label": "DIAGNOSTIC",
+  "result": "DIAGNOSTIC-FAIL",
+  "firstFailure": "conformance fixture rejected before feed audit",
+  "sourceHead": "4c72ed2724b42c651c45b6b87ddc43a6d5a2d627",
+  "imageId": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf",
+  "containerId": "153875a537aa083d4b6f2ac3cd45a18be5cabb6999a270b4f9dffb85308cc605",
+  "gatewaySourceSha256": "60f7138040043a1cffb2ee79764775560a71bf4f49fccdb82469d1df99f9ca16",
+  "holder": "CX-DF01-live",
+  "volume": "tx2-datomic-dev-data",
+  "observedCommandExitCodes": {
+    "build": 0,
+    "up": 0,
+    "conformance": 1,
+    "down": 0,
+    "fstrim": 0,
+    "docker-context": 0
+  },
+  "unrun": [
+    "excision",
+    "peer restart and log-only resume",
+    "non-Triplex skipped",
+    "real report-queue deadline cases",
+    "G1"
+  ],
+  "durable": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DF01/live-attempt-001",
+  "indexedAt": "2026-11-09T09:43:25.271995+00:00",
+  "builtAssetsNote": "Post-attempt byte retention; no before/after execution-stability claim."
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "adversarial.test.ts",
+    "identicalTranspiledSyntaxTree": false,
+    "beforeSha256": "10c04e245515b30a37eaa15295a82ce18273ac7cdcb8c18c68b75f68cf0e0a9f",
+    "afterSha256": "37aefc1a67f77f5afd40009ab4a4e39658f39abd2769e1a4de465de42fa51307"
+  },
+  {
+    "name": "controls.test.ts",
+    "identicalTranspiledSyntaxTree": true,
+    "beforeSha256": "1269a19c78a0ee96ac1d965ba5e003da11d2ae030ad70718e95dcb5c489cef7a",
+    "afterSha256": "1269a19c78a0ee96ac1d965ba5e003da11d2ae030ad70718e95dcb5c489cef7a"
+  }
+]

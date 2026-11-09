@@ -1,0 +1,37 @@
+[
+  {
+    "path": "packages/qlever/experiments/native-entry.ts",
+    "previousSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+    "sha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d",
+    "baseCommit": "f3ed62112028440389710a86fbf5c82c2f91afda",
+    "diff": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-packages__qlever__experiments__native-entry.ts.diff",
+    "diffSha256": "7b656f2155a25e2380497824889fd2d3f50f1afb55b282bc38c80a3e271df97c",
+    "hunks": [
+      {
+        "header": "@@ -1,3 +1,5 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Transport receipt metadata only; no query, data, schedule, or default transport change."
+      },
+      {
+        "header": "@@ -95,7 +97,8 @@ const counterContract = {",
+        "changesMeasuredWorkload": false,
+        "reason": "Transport receipt metadata only; no query, data, schedule, or default transport change."
+      },
+      {
+        "header": "@@ -116,7 +119,7 @@ const report: Record<string, any> = {",
+        "changesMeasuredWorkload": false,
+        "reason": "Transport receipt metadata only; no query, data, schedule, or default transport change."
+      },
+      {
+        "header": "@@ -405,7 +408,8 @@ try {",
+        "changesMeasuredWorkload": false,
+        "reason": "Transport receipt metadata only; no query, data, schedule, or default transport change."
+      },
+      {
+        "header": "@@ -413,7 +417,7 @@ try {",
+        "changesMeasuredWorkload": false,
+        "reason": "Transport receipt metadata only; no query, data, schedule, or default transport change."
+      }
+    ]
+  }
+]

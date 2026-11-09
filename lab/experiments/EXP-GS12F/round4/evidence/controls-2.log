@@ -1,0 +1,35 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 31953 "CX-P5A-R3-final3", pid 32769 "CX-GS12F-R4-XTDB-live", pid 3546 "CX-VP2Q-4-R10-matrices", pid 33369 "CX-VRT01-probe"
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../../vitest.workspace-aliases" without a file extension (lab/experiments/EXP-GS12F/round4/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f
+
+ ❯ lab/experiments/EXP-GS12F/round4/physical.test.ts (4 tests | 1 failed) 51ms
+   × FDB real wrapper commits admitted endpoints; oversized META/journal/index writes fail before its write callback 43ms
+(node:33705) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/experiments/EXP-GS12F/round4/physical.test.ts > FDB real wrapper commits admitted endpoints; oversized META/journal/index writes fail before its write callback
+InvalidTripleError: Value is outside foundationdb/kv's exact storage domain
+ ❯ OnFailureImpl.~effect/Effect/failureCont packages/core/src/kv/layers/valueAdmission.ts:91:64
+
+ ❯ ExitPrimitive.~effect/Effect/evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/core.ts:607:20
+ ❯ FiberImpl.runLoop node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:5683:9
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:5761:19
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:5780:5
+ ❯ Object.runPromise node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/ManagedRuntime.ts:394:50
+ ❯ lab/experiments/EXP-GS12F/round4/physical.test.ts:45:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 54 passed (55)
+   Start at  22:44:04
+   Duration  7.78s (tests 86%, import 12%, transform 2%)
+

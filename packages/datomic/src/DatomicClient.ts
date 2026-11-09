@@ -1,3 +1,4 @@
+import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
@@ -34,6 +35,16 @@ export interface DatomicBasis {
   position: TaggedValue;
   recordedAt: null;
   schemaHash: string;
+}
+
+export interface DatomicLogPage {
+  readonly database: string;
+  readonly fromT: string;
+  readonly nextT: string;
+  readonly rows: readonly (
+    | { readonly t: string; readonly kind: "skipped"; readonly reason: "non-triplex" }
+    | { readonly t: string; readonly kind: "commit"; readonly transaction: FeedTransaction }
+  )[];
 }
 
 // [EXP-DA00] Why: 256 readers plus writers must not queue on the HTTP agent (R16). Rejected: default pool limits.
@@ -180,6 +191,55 @@ export class DatomicClient {
       position,
     });
     return result.txId;
+  }
+  // [EXP-DF01] Why: explicit t and bounded waits preserve restart replay through the native log.
+  // Rejected: feeding Triplex positions to tx-range or using txInstant for the record stamp.
+  async log(db: string, fromT: string, limit = 1000, waitMs = 0): Promise<DatomicLogPage> {
+    if (
+      !/^(?:s-[a-f0-9]{32}|s2-[A-Za-z0-9_-]+)$/.test(db) ||
+      typeof fromT !== "string" ||
+      !/^(0|[1-9][0-9]*)$/.test(fromT) ||
+      BigInt(fromT) > 9223372036854775807n ||
+      !Number.isSafeInteger(limit) ||
+      limit < 1 ||
+      limit > 1000 ||
+      !Number.isSafeInteger(waitMs) ||
+      waitMs < 0 ||
+      waitMs > 30000
+    )
+      throw new TypeError("Invalid Datomic log request");
+    const page = await this.request<DatomicLogPage>(
+      "GET",
+      `/v1/db/${db}/log?fromT=${fromT}&limit=${limit}&waitMs=${waitMs}`,
+      undefined,
+      Math.max(this.timeoutMs, waitMs + 2000),
+    );
+    if (
+      page.database !== db ||
+      page.fromT !== fromT ||
+      !Array.isArray(page.rows) ||
+      page.rows.length > limit
+    )
+      throw new TypeError("Datomic log response binding mismatch");
+    let prior = BigInt(fromT) - 1n;
+    for (const row of page.rows) {
+      if (typeof row.t !== "string" || !/^(0|[1-9][0-9]*)$/.test(row.t) || BigInt(row.t) <= prior)
+        throw new TypeError("Datomic log response order mismatch");
+      prior = BigInt(row.t);
+      if (row.kind === "commit")
+        validateFeedEntry({
+          stream: db,
+          epoch: "0",
+          offset: row.t,
+          kind: "commit",
+          transactions: [row.transaction],
+        });
+      else if (row.kind !== "skipped" || row.reason !== "non-triplex")
+        throw new TypeError("Unknown Datomic log resolution");
+    }
+    if (page.nextT !== (page.rows.length ? String(prior + 1n) : fromT))
+      throw new TypeError("Datomic log response checkpoint mismatch");
+    return page;
   }
   async basis(db: string): Promise<DatomicBasis> {
     if (!/^(?:s-[a-f0-9]{32}|s2-[A-Za-z0-9_-]+)$/.test(db))

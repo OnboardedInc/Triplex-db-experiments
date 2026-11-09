@@ -1,0 +1,58 @@
+// [EXP-P2Q] Why: check the actual mutated native factory and a compiler-checked consumer, not a helper-only approximation.
+// Rejected: marker membership from a foreign constructor as evidence of native policy execution.
+import fs from 'node:fs';
+import ts from 'typescript';
+import { expect,it,vi } from 'vitest';
+import { DatabaseScope } from '@triplex-build/triplex/runtime';
+import { makeQleverNativeQueries,isQleverNativeRead,round10NativeSymbol } from '../../../../packages/qlever/src/native/NativeQueries.js';
+import { invoke } from '../../../../packages/qlever/src/round10Consumer.js';
+import * as policy from '../../../../packages/qlever/src/broker/snapshot.js';
+import { markerQuery } from '../../../../packages/qlever/src/broker/sparql.js';
+import { graphIri } from '../../../../packages/qlever/src/rdf.js';
+import { ModelReplica,REPO,writeJson,openRt,freshDir,ops,attempt } from './harness.js';
+it('round10 real native symbol mutation retains its type and either refuses or fails private provenance',async()=>{
+ const config=ts.getParsedCommandLineOfConfigFile(`${REPO}/lab/verify/P2Q/tsconfig.round10.json`,{},ts.sys as any)!;
+ const program=ts.createProgram(config.fileNames,config.options),checker=program.getTypeChecker();
+ const native=program.getSourceFile(`${REPO}/packages/qlever/src/native/NativeQueries.ts`)!;
+ const consumer=program.getSourceFile(`${REPO}/packages/qlever/src/round10Consumer.ts`)!;
+ const diagnostics=[...program.getSemanticDiagnostics(native),...program.getSemanticDiagnostics(consumer)].map(d=>ts.flattenDiagnosticMessageText(d.messageText,'\n'));
+ expect(diagnostics).toEqual([]);
+ const factory=native.statements.filter(ts.isVariableStatement).flatMap(n=>[...n.declarationList.declarations]).find(d=>d.name.getText(native)==='makeQleverNativeQueries')!;
+ const properties=checker.getPropertiesOfType(checker.getTypeAtLocation(factory).getCallSignatures()[0]!.getReturnType());
+ const symbolProperties=properties.filter(p=>p.name.includes('round10NativeSymbol'));
+ expect(symbolProperties).toHaveLength(1);
+ const scope=DatabaseScope.test(`round10-real:${crypto.randomUUID()}`),replica=new ModelReplica(graphIri(scope));
+ const rt=await openRt(freshDir('round10-real'),scope,replica,{}, {basisWaitMs:40});
+ try{
+  await rt.run(rt.triples.transact(ops('s:r10',1,'first')));expect(await rt.broker.drain(5000)).toBe(true);
+  const published=(await replica.query(markerQuery(scope)))[0]!;const replicaObserved=Number(published.brokerPosition.value);expect(rt.broker.head()).toBe(2048);expect(replicaObserved).toBe(rt.broker.durable().lsn*1024+1023);
+  // [EXP-P2Q] Why: the model answers broker metadata syntax; bridge the equivalent native alias from the real published quads.
+  // Rejected: inventing an observed position (would not bind the refusal to the actual replica).
+  const client={query:async(s:string)=>s.startsWith('SELECT ?position')? (await replica.query(markerQuery(scope))).map(m=>({position:m.brokerPosition,incarnation:m.brokerIncarnation})):replica.query(s),update:replica.update.bind(replica),command:async()=>({}),cancel:async()=>{},close:async()=>{}};
+  const facade=makeQleverNativeQueries(client,scope,{awaitBasisMs:40});
+  const expectedKeys=properties.map(p=>p.name.includes('round10NativeSymbol')?round10NativeSymbol:p.name);
+  expect(new Set(Reflect.ownKeys(facade))).toEqual(new Set(expectedKeys));
+  const bytes=fs.readFileSync(`${REPO}/lab/verify/P2Q/tests/round9-construction.test.ts`,'utf8');
+  const source=ts.createSourceFile('guard.ts',bytes,ts.ScriptTarget.Latest,true);
+  const declaration=source.statements.filter(ts.isVariableStatement).flatMap(s=>[...s.declarationList.declarations]).find(d=>d.name.getText(source)==='inspect')!;
+  const inspect=Function(ts.transpile(`const ${declaration.getText(source)}; return inspect;`))();
+  const gate=vi.spyOn(policy,'awaitSnapshotBasis'),mask=vi.spyOn(policy,'snapshotRows');
+  try{
+   const outcome=await attempt(rt,invoke(facade));
+   const foreign=process.env.P2Q_VARIANT==='foreign';
+   let guardError:string|null=null;try{inspect(facade,[],isQleverNativeRead)}catch(error){guardError=String(error)}
+   if(foreign){
+    expect(outcome.ok).toBe(true);expect(outcome.value).toEqual({rows:[]});
+    expect(gate.mock.calls).toHaveLength(0);expect(mask.mock.calls).toHaveLength(0);
+    expect(isQleverNativeRead(facade[round10NativeSymbol])).toBe(false);
+    expect(()=>inspect(facade,[],isQleverNativeRead)).toThrow('unconstructed read: Symbol(round10NativeRead)');
+   }else{
+    expect(typeof facade[round10NativeSymbol]).toBe('function');expect(isQleverNativeRead(facade[round10NativeSymbol])).toBe(true);
+    expect(()=>inspect(facade,[],isQleverNativeRead)).not.toThrow();
+    expect(outcome.ok).toBe(false);expect(outcome.error).toMatchObject({reason:'basis-not-reached',required:6144,observed:replicaObserved,replica:'the QLever replica'});
+    expect(gate.mock.calls.length).toBeGreaterThan(0);
+   }
+   writeJson('round10-native-mutation.json',{variant:process.env.P2Q_VARIANT,diagnostics,typedKeys:expectedKeys.map(String),runtimeKeys:Reflect.ownKeys(facade).map(String),required:6144,observed:2048,replicaObserved,foreignRejected:foreign,privateReadQualified:isQleverNativeRead(facade[round10NativeSymbol]),guardError,gateCalls:gate.mock.calls.length,maskCalls:mask.mock.calls.length,outcome});
+  }finally{gate.mockRestore();mask.mockRestore()}
+ }finally{await rt.dispose();await rt.broker.close()}
+});

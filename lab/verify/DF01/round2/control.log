@@ -1,0 +1,42 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 21092 "CX-VA01-0314-R3-mutations", pid 21091 "CX-VA01-0314-R3-g0-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 21092 "CX-VA01-0314-R3-mutations", pid 21091 "CX-VA01-0314-R3-g0-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 22351 "G0-xtdb-20261109T082321Z-f33e39 typecheck", pid 21091 "CX-VA01-0314-R3-g0-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 22351 "G0-xtdb-20261109T082321Z-f33e39 vitest-testkit", pid 21091 "CX-VA01-0314-R3-g0-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 22351 "G0-xtdb-20261109T082321Z-f33e39 vitest-xtdb", pid 21091 "CX-VA01-0314-R3-g0-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 60537 "CX-VDF01-r2-candidate-2", pid 57634 "CX-PACK-round2-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 42834 "CX-VCRNS-round2-original", pid 57634 "CX-PACK-round2-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 42834 "CX-VCRNS-round2-original", pid 57634 "CX-PACK-round2-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 42834 "CX-VCRNS-round2-original", pid 57634 "CX-PACK-round2-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 42834 "CX-VCRNS-round2-original", pid 57634 "CX-PACK-round2-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 42834 "CX-VCRNS-round2-original", pid 57634 "CX-PACK-round2-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 42834 "CX-VCRNS-round2-original", pid 57634 "CX-PACK-round2-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 74634 "CX-VA01-0314-R3-g0-datomic", pid 57634 "CX-PACK-round2-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 74634 "CX-VA01-0314-R3-g0-datomic", pid 4800 "CX-P2B-R3-async-default-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 74634 "CX-VA01-0314-R3-g0-datomic", pid 4800 "CX-P2B-R3-async-default-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 87003 "CX-VDF01-r2-candidate-3", pid 4800 "CX-P2B-R3-async-default-gates"
+03:35:53.742 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+03:35:53.747 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @1178ms to org.eclipse.jetty.util.log.Slf4jLog
+Original DF01 suite (fresh):
+
+Testing triplex.gateway.feed-test
+
+Ran 7 tests containing 32 assertions.
+0 failures, 0 errors.
+CX-VDF01 adversarial suite (desired behavior):
+
+Testing offline-verify
+{"probe":"restart-empty-queue","observed":{"equal":true,"created":2,"removed":2}}
+{"probe":"inside-skipped-range","observed":{"fromT":"102","nextT":"104","rows":[{"t":"103","kind":"skipped","reason":"non-triplex"}]}}
+{"probe":"notification-lost","observed":{"elapsedMs":152.937125,"nextT":"106"}}
+{"probe":"delayed-old-report","observed":{"page":{"fromT":"105","nextT":"105","rows":[]},"elapsedMs":0.537542,"visibleT":105,"events":[{"event":"capture-db","cut":100,"read":1},{"event":"old-report-enqueued","t":100},{"event":"capture-db","cut":100,"read":2},{"event":"new-db-published","t":105}]}}
+
+FAIL in (delayed-old-report-must-not-finish-empty-before-deadline) (offline_verify.clj:129)
+A stale notification must not end an empty long-poll before its deadline
+expected: (or (seq (:rows page)) (>= elapsed 1900))
+  actual: false
+{"probe":"different-txInstant","observed":{"t":"100","kind":"commit","transaction":{"positions":["3","7"],"txIds":["tx3","tx7"],"operationId":"op7","commandIds":["cmd7"],"changes":[{"op":"assert","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"3"}],"stamp":"7000","stampStatus":"decided"}}}
+{"probe":"excision-wire-equality","observed":{"equal":true,"bytes":687}}
+
+Ran 6 tests containing 119 assertions.
+1 failures, 0 errors.
+{"probe":"test-counts","observed":{"baseline":{"test":7,"pass":32,"fail":0,"error":0,"type":"summary"},"adversarial":{"test":6,"pass":118,"fail":1,"error":0,"type":"summary"}}}

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** SOURCE ONLY. Future materializer must copy this and client-outcomes.mjs
  * inside each newly generated private package's probes/owned-client-v1/ before
  * public self-reference imports can run. No current SDK/test import occurred.

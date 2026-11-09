@@ -1,0 +1,9 @@
+{
+  "value": {
+    "type": "datetime",
+    "value": 0.5
+  },
+  "admittedByTable": false,
+  "packed": "typed rejection",
+  "physicalColumn": "BIGINT"
+}

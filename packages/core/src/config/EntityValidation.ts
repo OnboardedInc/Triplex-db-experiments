@@ -16,6 +16,7 @@ import type {
   DatalogQueryError,
   ReadError,
   TransactionConflictError,
+  InvalidTripleError,
   WriteError,
 } from "../errors/index.js";
 import { Triples } from "../store/Triples.js";
@@ -184,6 +185,7 @@ export class InvalidEntitySchemaError extends Data.TaggedError("InvalidEntitySch
 export type RevalidateError =
   | ReadError
   | WriteError
+  | InvalidTripleError
   | TransactionConflictError
   | CommandAlreadyCommittedError
   | ConstraintViolationError

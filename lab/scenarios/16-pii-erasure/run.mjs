@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 16: PII erasure request (TARGETS 6 row 16; semantics in TARGETS 7 and RULINGS Q24). Spec and golden only.
 //
 // The erasure request is a command that records the request on the subject's erasure-ledger entity; the

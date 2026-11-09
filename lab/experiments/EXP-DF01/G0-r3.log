@@ -1,0 +1,4 @@
+[lab] G0-datomic-20261109T074216Z-bab2d9: raw output runs/G0/G0-datomic-20261109T074216Z-bab2d9
+FAIL G0 datomic scope=full executed=1279 pass=1278 fail=1 skip=66
+  reason: 1 failed tests
+receipt: lab/runs/G0/G0-datomic-20261109T074216Z-bab2d9.json

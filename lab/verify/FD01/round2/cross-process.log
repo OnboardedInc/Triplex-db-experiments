@@ -1,0 +1,18 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 17254 "CX-P5A-A1-G0", pid 30636 "CX-A01-0314-mutations", pid 70701 "CX-A01-0314-evaluator-final", pid 40222 "CX-VFD01-R2-baseline"
+{
+  "published": {
+    "atMonoMs": 297.671542,
+    "originMs": 1794203550612.462,
+    "hostNs": "833880972815250"
+  },
+  "completed": {
+    "atMonoMs": 420.024291,
+    "originMs": 1794203550892.475,
+    "hostNs": "833881375180625"
+  },
+  "reportedLagMs": 122.35274900000002,
+  "commonHostClockLagMs": 402.365375,
+  "reportedUnderBar": true,
+  "trueUnderBar": false,
+  "note": "Two real local Node processes; no wall-clock adjustment or engine. Relative performance clocks share a label but not an origin."
+}

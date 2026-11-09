@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; recursive helper inference; recursive callback inference. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-RQ01] Why: receipts bind this process to its actual shared heavy admission and source bytes.
 // Rejected: descriptive holder labels alone (can survive a copied/stale receipt).
 import fs from "node:fs";

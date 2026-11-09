@@ -1,0 +1,35 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../../vitest.workspace-aliases" without a file extension (lab/experiments/EXP-GS12F/round4/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f
+
+(node:27542) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ lab/experiments/EXP-GS12F/round4/independent.test.ts (7 tests | 1 failed) 24ms
+   × PostgreSQL admits fractional datetimes only if its physical value column can retain them 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/experiments/EXP-GS12F/round4/independent.test.ts > PostgreSQL admits fractional datetimes only if its physical value column can retain them
+InvalidTripleError: Value is outside postgres's exact storage domain
+ ❯ invalid packages/core/src/ValueDomain.ts:104:5
+    102| export const invalidValue = (value: unknown, d: ValueDomain): InvalidT…
+    103|   const invalid = () =>
+    104|     new InvalidTripleError({
+       |     ^
+    105|       field: "value",
+    106|       value,
+ ❯ invalidValue packages/core/src/ValueDomain.ts:162:18
+ ❯ assertValueInDomain packages/core/src/ValueDomain.ts:191:17
+ ❯ packValue packages/sql/src/queries.ts:21:3
+ ❯ lab/experiments/EXP-GS12F/round4/independent.test.ts:297:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 34 passed (35)
+   Start at  22:38:16
+   Duration  6.45s (tests 85%, import 9%, transform 6%)
+

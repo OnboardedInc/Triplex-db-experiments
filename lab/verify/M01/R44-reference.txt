@@ -1,0 +1,57 @@
+437: 7. **Schedule.** Crash runs are separate from lag runs: at least 3 injections per point (T-FAULT-REPS), 9 per crash run, on the same
+438:    frozen trace with 256 readers; catch-up lag after each restart is reported, not barred. The broker's own crash points (C2-*,
+439:    CS-FAULT) reuse steps 3 to 5 with the broker container and are not on the P3 path.
+440:
+441: ### 5.4 The PAIR-0 hook (EXP-M01, exp/M01-paired-measurement)
+442:
+443: | M01 piece `[S]` (45a6fd40) | Under G03 |
+444: | --- | --- |
+445: | `lab/bench/duet.ts` coordinator, barrier directory, absolute start | the evaluator starts two arms; both drivers take one absolute CLOCK_MONOTONIC start instant from their plans (one kernel, so no barrier directory) |
+446: | `lib/rounds.ts` `--round-plan`, per-round commitAll and commitCensored, open-loop read probe | inside the trusted driver; per-round histograms are E1 and E2 subsets with round ids |
+447: | `lib/noise.ts` host sampler and "read-only VM agent over one colima ssh session" | host sampler stays in the evaluator on the Mac; the VM agent moves into the observer container (PSI, cgroup `cpu.stat` of every container on the arm cpusets, neighbor CPU); calibration spins in the observer and on the host; hiccup meters in driver and observer |
+448: | `lib/paired.ts`, `lib/pair-analysis.ts` | run in claim.mjs from retained per-round data (Q67f) |
+449: | PAIR gate in gate.mjs, measurement lease, cpuset regime | the lease is taken by claim.mjs (step 1); gate.mjs's PAIR route becomes a refusal-only adapter under the single grant |
+450:
+451: `measure_pair()` runs a duet for comparative claims. A new `measure_single()` runs one arm with sequential A/A grading for absolute bars
+452: (Q99b, Q100k). Both feed the same window grade.
+453:
+454: ### 5.5 What each G03 round adds
+455:
+456: | Round | Adds | Offline or slot |
+457: | --- | --- | --- |
+458: | 5 | `Box.service` (long-lived candidate role containers), `Box.driver`, state and output volumes, observer start with volume mounts, preflight additions, the NS step sequence of 5.2, raw event export, contract field proposals (`run.ns`, DRIVER_PIN, nsLayout, ns-sut/1, feed-entry/1) | offline in VM containers with an in-memory replica, then one exclusive slot run at 1k |
+459: | 6 | the fault injector of 5.3 and fault-witness/1 production; the broker crash points through the same path | offline with planted consumers |
+460: | 7 | `admitExecutedAttempt`, the single grant of round4/grant-audit.md; `measure_pair` and `measure_single`; window grade in the receipt | offline, then the registered-slot run R43 step 10 |
+461:
+462: ## 6. Decision 5: GREEN windows on a shared host (Q60)
+463:
+464: ### 6.1 The situation
+465:
+466: The host is shared with Sam's default colima VM (4 vCPU, his Onboarded stack) and other heavy jobs; STATE records load 12 to 13 on 12
+467: cores, 36 GiB with about 14 GiB compressed, swap near 96% (R22 table). R25 saw zero-reader runs 1.6x apart minutes apart. The lab can
+468: quiet its own jobs (Q60h lease freezes pool admission and takes every heavy token) but not Sam's VM. Q60's host half (may acceptance
+469: windows pause it) has waited for Sam since 2026-11-07.
+470:
+471: ### 6.2 The grading rule for a single-arm run
+472:
+473: 1. **Signals** (R22 section 4.1, pre-registered): host swap growth and pageouts, compressor activity, VM PSI cpu, memory and io, throttled
+474:    periods per arm (cpuset regime), neighbor CPU on any arm cpuset, calibration drift (post over pre spin minimum in [0.85, 1.18]),
+475:    interference index, hiccup overshoot (driver and observer), driver ELU. Applied per round of 150 s, decided before outcomes are seen,
+476:    logged by rule id.
+477: 2. **Sequential A/A** (new for single-arm runs): rounds of equal burst phase on the same arm; `d_k = ln(p50_k / p50_{k-1})` of commit
+478:    latency; s_d against R22's limits (0.28 at 12 rounds for a 1.25 target) as provisional values until M01's A/A duet calibrates a
+479:    sequential limit. Different trace segments enlarge s_d, so this errs toward non-GREEN.
+480: 3. **Grade:** GREEN when no round breaks a hard rule, at most one third of rounds are excluded, and s_d is within the limit; AMBER when
+481:    only soft rules fire; RED otherwise.
+482:
+483: ### 6.3 What the run does when the window is not GREEN
+484:
+485: | When | Action | Receipt |
+486: | --- | --- | --- |
+487: | Pre-flight (3 rounds) not GREEN | do not start the measured window; release the lease; defer 30 minutes; retry up to 3 times | none counted; a HOST-NOT-QUIET record with the signals |
+488: | Three deferrals failed | stop; the orchestrator reports to Sam with the signal record (this is the evidence Q100-S1 asks him to weigh) | HOST-NOT-QUIET |
+489: | Window turns AMBER or RED mid-run | finish the run (correctness evidence is still valuable); exclude rounds by rule | timing bars "unjudged"; count bars judged (Q100k) |
+490: | More than a third of rounds excluded | window INVALID for timing | timing bars unjudged; the run does not count toward T-RUNS for timing bars |
+491: | Any of the above | an unjudged or INVALID-for-timing receipt is not a failed acceptance receipt for VA12 (Q100k), so noise never blocks a key and profile | |
+517: | Q100k (orchestrator; refines Q60e, Q99b) | **Windows for single-arm NS runs:** GREEN needs R22's pre-registered signal rules (hard rules unbroken, at most a third of rounds excluded) and sequential A/A rounds of equal burst phase on the same arm within R22's s_d limits, provisional until M01 calibrates a sequential limit. Timing bars are judged only in GREEN windows; count bars (gaps, order, duplicates, accounting, prefix, affected set, crash outcomes) in any window. Acceptance starts only after a GREEN pre-flight; three failed deferrals of 30 minutes stop with HOST-NOT-QUIET. An unjudged or timing-INVALID receipt is not a failed acceptance receipt under VA12. No threshold changes | Q60e; VA12; R22 4; R44 6 |
+518: | Q100l (orchestrator) | **NS runs with 256 readers are single-arm on this VM.** A per-arm layout needs six CPUs (engine 2, broker 1, consumer 1, readers 1, trusted processes 1) and about 7 GiB, so a duet does not fit six CPUs and 11 GiB; Q86f's shared core per arm would put readers on the broker's core, which R42 measured at 227 ms commit p50. Comparative NS claims (duets against A0 or A/A duets) run only at reduced reader levels and stay DIAGNOSTIC for the 256-reader bars until the VM grows; absolute bars use Q99b and Q100k. The lab states this limit plainly | Q86f; Q99b; R42 3.2; SCOPE 3.2; R44 2.3 |

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project; runtime-populated records, optional option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Canonical fake-only helper controls; does not import either SDK worker. */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';

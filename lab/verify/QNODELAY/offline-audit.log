@@ -1,0 +1,198 @@
+{
+  "verifiedChecksums": 115,
+  "attempts": [
+    {
+      "attempt": "attempt1",
+      "sha256": "c52c9eaa0569e974e8381990849828448681edb1f4682795872d5b4fd82b2170",
+      "completed": false,
+      "error": "Error: wrong content at 0/16/-5",
+      "samples": 1,
+      "summaries": []
+    },
+    {
+      "attempt": "attempt2",
+      "sha256": "10ab1352882c64d7c070db53e24ab27cc2c3b69d8400d8f2f56776a1888491b5",
+      "completed": true,
+      "samples": 520,
+      "summaries": [
+        {
+          "key": "keep-alive/16",
+          "n": 120,
+          "p50Ms": 6.656708999999864,
+          "p99Ms": 54.14108299999998,
+          "stalls": 60
+        },
+        {
+          "key": "keep-alive/all",
+          "n": 240,
+          "p50Ms": 7.660334000000148,
+          "p99Ms": 55.2475,
+          "stalls": 120
+        },
+        {
+          "key": "keep-alive/2048",
+          "n": 120,
+          "p50Ms": 7.660334000000148,
+          "p99Ms": 55.27149999999983,
+          "stalls": 60
+        },
+        {
+          "key": "per-request/16",
+          "n": 120,
+          "p50Ms": 1.6063749999998436,
+          "p99Ms": 3.166874999999891,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/all",
+          "n": 240,
+          "p50Ms": 1.7585000000003674,
+          "p99Ms": 3.166874999999891,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/2048",
+          "n": 120,
+          "p50Ms": 1.9427089999999225,
+          "p99Ms": 2.6477500000000873,
+          "stalls": 0
+        }
+      ]
+    },
+    {
+      "attempt": "attempt3",
+      "sha256": "2d88835591a8cf904fea46a1e00b03ef0d39a87e186c0e299f066b4a2dbc85a1",
+      "completed": true,
+      "samples": 520,
+      "summaries": [
+        {
+          "key": "keep-alive/16",
+          "n": 120,
+          "p50Ms": 7.748250000000098,
+          "p99Ms": 53.320708000000195,
+          "stalls": 60
+        },
+        {
+          "key": "keep-alive/all",
+          "n": 240,
+          "p50Ms": 8.069667000000209,
+          "p99Ms": 53.0932499999999,
+          "stalls": 120
+        },
+        {
+          "key": "keep-alive/2048",
+          "n": 120,
+          "p50Ms": 8.069667000000209,
+          "p99Ms": 52.36670800000002,
+          "stalls": 60
+        },
+        {
+          "key": "per-request/16",
+          "n": 120,
+          "p50Ms": 2.475750000000062,
+          "p99Ms": 3.5379579999998896,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/all",
+          "n": 240,
+          "p50Ms": 2.653417000000445,
+          "p99Ms": 3.841957999999977,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/2048",
+          "n": 120,
+          "p50Ms": 2.8060000000004948,
+          "p99Ms": 3.8447500000002037,
+          "stalls": 0
+        }
+      ]
+    },
+    {
+      "attempt": "attempt4",
+      "sha256": "b850a42dd32638e797a30954c8ff2cc4f7141fee00b38fd16e7b7bf6e25a136b",
+      "completed": true,
+      "samples": 520,
+      "summaries": [
+        {
+          "key": "keep-alive/16",
+          "n": 120,
+          "p50Ms": 15.946042000000034,
+          "p99Ms": 52.09704200000033,
+          "stalls": 60
+        },
+        {
+          "key": "keep-alive/all",
+          "n": 240,
+          "p50Ms": 15.946042000000034,
+          "p99Ms": 59.05662500000108,
+          "stalls": 120
+        },
+        {
+          "key": "keep-alive/2048",
+          "n": 120,
+          "p50Ms": 14.16295799999989,
+          "p99Ms": 59.395166000000245,
+          "stalls": 60
+        },
+        {
+          "key": "per-request/16",
+          "n": 120,
+          "p50Ms": 4.037000000000262,
+          "p99Ms": 7.279333000000406,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/all",
+          "n": 240,
+          "p50Ms": 4.233249999999316,
+          "p99Ms": 7.869083000000501,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/2048",
+          "n": 120,
+          "p50Ms": 4.621583000000101,
+          "p99Ms": 7.869083000000501,
+          "stalls": 0
+        }
+      ]
+    }
+  ],
+  "pins": [
+    {
+      "acceptanceFile": "lab/acceptance/obligations.json",
+      "line": 15266,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "new": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "context": "    \"CS-ENTRY\": {\n      \"status\": \"EXISTS\",\n      \"source\": \"packages/xtdb/experiments/native-entry.ts and packages/qlever/experiments/native-entry.ts\",\n      \"requiredTags\": [\n        \"all\",\n        \"read-only\",\n        \"safe-parameters\""
+    },
+    {
+      "acceptanceFile": "lab/acceptance/obligations.json",
+      "line": 15288,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "new": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "context": "        },\n        {\n          \"path\": \"packages/qlever/experiments/native-entry.ts\",\n          \"sha256\": \"c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f\"\n        }\n      ],\n      \"note\": null"
+    },
+    {
+      "acceptanceFile": "lab/acceptance/obligations.json",
+      "line": 16780,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "new": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "context": "      },\n      {\n        \"path\": \"packages/qlever/experiments/native-entry.ts\",\n        \"sha256\": \"c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f\"\n      }\n    ],\n    \"CS-STR\": ["
+    },
+    {
+      "acceptanceFile": "lab/acceptance/obligations.json",
+      "line": 21747,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "new": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "context": "      \"contracts\": [],\n      \"sources\": [\n        \"packages/qlever/experiments/native-entry.ts unavailable-cut-and-preaborted-query-reject\"\n      ],\n      \"grounding\": \"grounded\",\n      \"notes\": null,\n      \"layer\": null,"
+    }
+  ],
+  "acceptanceChanged": []
+}

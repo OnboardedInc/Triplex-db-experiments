@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; dynamic record keys. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-001: per-task language accounting from a G2 receipt (cases[].languages, answerLanguages, languageClass)
 // and the raw report's queryTrace (step kinds). Usage: node langs.mjs <receipt.json> <g2-report.json>
 import fs from 'node:fs';

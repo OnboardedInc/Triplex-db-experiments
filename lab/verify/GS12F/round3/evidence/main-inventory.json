@@ -1,0 +1,64 @@
+{
+  "main": "e4850f801b8a7771a94e1b3394ecc5ddf24efb5f",
+  "adapterPaths": [
+    "packages/cloudflare/src/storage/CloudflareAdapter.ts",
+    "packages/core/src/kv/kv/InMemoryKvBackend.ts",
+    "packages/duckdb/src/effect-storage.ts",
+    "packages/foundationdb/src/FdbKvBackend.ts",
+    "packages/postgres/src/PostgresqlAdapter.ts",
+    "packages/qlever/src/QleverStorageAdapter.ts",
+    "packages/sqlite/src/SqliteAdapter.ts",
+    "packages/xtdb/src/XtdbStorageAdapter.ts"
+  ],
+  "worldTypes": {
+    "date": {
+      "json": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "yearMin": 2000,
+      "yearMax": 2099,
+      "note": "real proleptic Gregorian date"
+    },
+    "instant": {
+      "json": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{6}Z$",
+      "yearMin": 2000,
+      "yearMax": 2099,
+      "note": "UTC, microseconds, hour 00-23, minute 00-59, second 00-59"
+    },
+    "cents": {
+      "json": "integer",
+      "min": 0,
+      "max": 9007199254740991
+    },
+    "minutes": {
+      "json": "integer",
+      "min": 0,
+      "max": 10080
+    },
+    "boolean": {
+      "json": "boolean"
+    },
+    "text": {
+      "json": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "charMin": 32,
+      "charMax": 126
+    },
+    "enum": {
+      "json": "string"
+    },
+    "ref": {
+      "json": "string"
+    },
+    "erased": {
+      "json": "object",
+      "keys": [
+        "erasedAt"
+      ],
+      "erasedAt": "instant",
+      "allowedOn": "pii attributes only"
+    }
+  },
+  "mainHasDatomicPackage": false
+}

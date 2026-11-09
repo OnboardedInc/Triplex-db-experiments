@@ -1,0 +1,12 @@
+{
+  "label": "DIAGNOSTIC",
+  "at": "2026-11-09T09:39:00.642660+00:00",
+  "head": "4c72ed2724b42c651c45b6b87ddc43a6d5a2d627",
+  "hostAvailableBytes": 11935240192,
+  "minimumFreeBytes": 5368709120,
+  "buildContextBytes": 307200000,
+  "conservativeAdditionalBytes": 5368709120,
+  "slotsSha256": "3cd5463b6fda8af3653057e74ae287a34f1ad1478fa173e98f5ceaefc8e5c225",
+  "holder": "CX-DF01-live",
+  "volume": "tx2-datomic-dev-data"
+}

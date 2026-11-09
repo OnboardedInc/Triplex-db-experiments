@@ -6,6 +6,9 @@
  * handle, keeping their in-memory datom cache coherent.
  */
 
+import { ValueDomains } from "../../ValueDomain.js";
+import { admitKvTransaction } from "./valueAdmission.js";
+import { withValidAssertValues } from "../../store/validateValues.js";
 import { Effect, Layer, Option, Stream } from "effect";
 import type { Triple, TripleInput, TripleId, EntityId, TransactOp } from "../../Triple.js";
 import type { TripleValue } from "../../Value.js";
@@ -20,8 +23,8 @@ import {
 import type { QueryDebugInfo, QueryMetrics, QueryResult } from "../../storage/QueryExecutor.js";
 import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
 import {
+  InvalidTripleError,
   WriteError,
-  UnsupportedValueTypeError,
   ReadError,
   CommandAlreadyCommittedError,
   TransactionConflictError,
@@ -252,7 +255,11 @@ const makeKvMetrics = (query: DatalogQuery): QueryMetrics => ({
 });
 
 /** Adapt a backend transaction to the interface consumed by KvTripleStore. */
-const transactionBackend = (tx: KvTransaction): KvBackendService => ({
+const transactionBackend = (
+  tx: KvTransaction,
+  valueDomain = ValueDomains.memory,
+): KvBackendService => ({
+  valueDomain,
   get: tx.get,
   set: tx.set,
   delete: tx.delete,
@@ -355,7 +362,7 @@ const makeKvTriplesService = Effect.gen(function* () {
       ]).pipe(
         Effect.map((result) => result.triples[0]!),
         Effect.mapError((cause) =>
-          cause instanceof WriteError
+          cause instanceof WriteError || cause instanceof InvalidTripleError
             ? cause
             : new WriteError({ message: "Failed to assert triple", cause }),
         ),
@@ -377,7 +384,7 @@ const makeKvTriplesService = Effect.gen(function* () {
       ).pipe(
         Effect.map((result) => result.triples),
         Effect.mapError((cause) =>
-          cause instanceof WriteError
+          cause instanceof WriteError || cause instanceof InvalidTripleError
             ? cause
             : new WriteError({ message: "Failed to assert triple batch", cause }),
         ),
@@ -420,18 +427,16 @@ const makeKvTriplesService = Effect.gen(function* () {
         ),
       ),
 
-    transact: (transactService = (operations: readonly TransactOp[], meta?: TransactionMeta) =>
-      kvBackend
-        .transact((tx) => {
-          const transactionStore = createKvTripleStore(transactionBackend(tx));
+    transact: (transactService = (operations: readonly TransactOp[], meta?: TransactionMeta) => {
+      let subject: unknown = operations.find((op) => op.op === "assert")?.value;
+      return admitKvTransaction(
+        kvBackend,
+        runtime,
+        (tx, runtime) => {
+          const transactionStore = createKvTripleStore(
+            transactionBackend(tx, kvBackend.valueDomain),
+          );
           return Effect.gen(function* () {
-            if (
-              operations.some(
-                (operation) => operation.op === "assert" && operation.value.type === "integer",
-              )
-            ) {
-              return yield* Effect.fail(new UnsupportedValueTypeError("KV runtime", "integer"));
-            }
             if (!isSystemWriteAuthorized(meta)) {
               const reserved = reservedAssertError(operations);
               if (reserved) return yield* Effect.fail(reserved);
@@ -536,6 +541,7 @@ const makeKvTriplesService = Effect.gen(function* () {
             for (const op of operations) {
               switch (op.op) {
                 case "assert": {
+                  subject = op.value;
                   const datom = tripleInputToDatom(
                     {
                       entityId: op.entityId,
@@ -567,6 +573,7 @@ const makeKvTriplesService = Effect.gen(function* () {
                     });
                     if (reserved) return yield* Effect.fail(reserved);
                   }
+                  subject = current?.value;
                   const ok = yield* transactionStore.retract(op.id, now, txId, position);
                   if (!ok && preconditionIds.has(op.id)) {
                     return yield* Effect.fail(
@@ -603,6 +610,7 @@ const makeKvTriplesService = Effect.gen(function* () {
                     }
                   }
                   for (const datom of datoms) {
+                    subject = datom.value;
                     const ok = yield* transactionStore.retract(datom.tripleId, now, txId, position);
                     if (ok) {
                       retractedCount++;
@@ -618,6 +626,13 @@ const makeKvTriplesService = Effect.gen(function* () {
 
             if (!isJournalSuppressed(meta)) {
               for (const input of metadataInputs(txId, position, now, meta, changes)) {
+                subject =
+                  input.value.type === "json" &&
+                  input.value.value &&
+                  typeof input.value.value === "object" &&
+                  "value" in input.value.value
+                    ? input.value.value.value
+                    : input.value;
                 yield* transactionStore.assert(
                   tripleInputToDatom(input, yield* runtime.nextTripleId, txId, now, position),
                 );
@@ -632,18 +647,23 @@ const makeKvTriplesService = Effect.gen(function* () {
               retracted: retractedCount,
             } satisfies TransactionResult;
           });
-        })
-        .pipe(
-          Effect.ensuring(Effect.sync(() => hexaStore.clearCache())),
-          Effect.catch((e) =>
-            e instanceof WriteError ||
-            e instanceof TransactionConflictError ||
-            e instanceof CommandAlreadyCommittedError ||
-            e instanceof ConstraintViolationError
-              ? Effect.fail(e)
-              : Effect.fail(new WriteError({ message: `Transact failed: ${String(e)}`, cause: e })),
-          ),
-        )),
+        },
+        () => subject,
+      ).pipe(
+        Effect.ensuring(Effect.sync(() => hexaStore.clearCache())),
+        Effect.catch((e) =>
+          e instanceof InvalidTripleError ||
+          e instanceof WriteError ||
+          e instanceof TransactionConflictError ||
+          e instanceof CommandAlreadyCommittedError ||
+          e instanceof ConstraintViolationError
+            ? Effect.fail(e)
+            : Effect.fail(new WriteError({ message: `Transact failed: ${String(e)}`, cause: e })),
+        ),
+        (effect) =>
+          withValidAssertValues(operations, effect, kvBackend.valueDomain ?? ValueDomains.memory),
+      );
+    }),
 
     // === Triple-level reads ================================================
 

@@ -48,6 +48,7 @@ catalog:
   turbo: 2.8.20
   typescript: 6.0.2
   ulidx: 2.4.1
+  undici: 7.29.1
   vite: 8.2.2
   vitepress: 2.0.0-alpha.18
   vitest: 5.0.4

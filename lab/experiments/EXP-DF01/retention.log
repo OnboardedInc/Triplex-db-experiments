@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 14605 "CX-A01-0314-R3-evaluator", pid 13226 "CX-P2B-R3-ordered-matrices", pid 14637 "CX-A01-0314-R3-G0-X", pid 14590 "CX-A01-0314-R3-mutations"
+{"durableFiles": 546, "localFiles": 30, "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DF01"}

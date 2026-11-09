@@ -1,3 +1,5 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Actual writer-pair invariant and row-level partial-pair admission.
  * Two owned retired rows are damaged in opposite directions, keeping aggregate
  * predicate counts equal. A local per-row guard must still reject both.
@@ -25,7 +27,8 @@ const runId = randomUUID(),
 const accessToken = labQleverAccessToken();
 const client = makeQleverClient(url, { accessToken }),
   native = makeQleverNativeQueries(client, scope);
-const report: Record<string, any> = {
+const report: Record<string, any> = qleverLatencyReceipt({
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-paired-retirement-admission/1",
   scope,
   status: "RUNNING",
@@ -38,7 +41,7 @@ const report: Record<string, any> = {
     "Two opposite partial rows retain equal global field counts; equality of totals is not accepted as a row-pair proof.",
     "No scale, throughput, write-crash or power-loss claim.",
   ],
-};
+});
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 save();
 const originalFetch = globalThis.fetch;

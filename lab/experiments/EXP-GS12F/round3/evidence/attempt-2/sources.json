@@ -1,0 +1,203 @@
+{
+  "startedAtUnix": 1794193489.8798761,
+  "baseHead": "5610572e01514fd770f3049d5fe1f53ae6096fac",
+  "reviewCommit": "6bab84e",
+  "offlineOnly": true,
+  "physicalSlot": null,
+  "sourceFiles": [
+    {
+      "path": ".changeset/gs12f-exact-value-domains.md",
+      "oldBase8d098718": null,
+      "currentSha256": "78569d0254cd4054ab85f8430a2600e7bf05b9d99fc7a777be2ed7eca57cc0d7"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round3/README.md",
+      "oldBase8d098718": null,
+      "currentSha256": "83fc2db96c032ae6792c6a877b99aa5f50b92b4f7826b33d68263b936f60a910"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round3/adversarial.test.ts.original.txt",
+      "oldBase8d098718": null,
+      "currentSha256": "bfbd174aeadb7774c069ca9f57d843c6895215543e7b2078887e80af36758b11"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round3/capture.py",
+      "oldBase8d098718": null,
+      "currentSha256": "d8d6978984a6c45650de7c4164e747e1cab1425ec7d984da1d46844232c2d51f"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round3/controls.test.ts.original.txt",
+      "oldBase8d098718": null,
+      "currentSha256": "d9439caef147b15e81073533a933444c041626f7d8164d0e0f5f753143c26dc5"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round3/gates.sh",
+      "oldBase8d098718": null,
+      "currentSha256": "bb79088aff2724a8027abb6c4adc371be30ce131cf38428001ce0c796fd96025"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round3/qa-controls.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "d9439caef147b15e81073533a933444c041626f7d8164d0e0f5f753143c26dc5"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round3/qa-probes.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "264298c31ff8dc895161a509e6fe0e54314cc1b1d9574ddf1896d2c76ad45fd6"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round3/vitest.config.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "c0ebdd5bce0794c94d263ec53cd1b5c14f3f6a5677e7f56000148a4d2c792a68"
+    },
+    {
+      "path": "packages/cloudflare/src/adapter-support.ts",
+      "oldBase8d098718": "6a7629040dc827fd9b99ced9ddb054e94c55138d3fdb2abd21e9bfa88c84f360",
+      "currentSha256": "06609b03d8a7540e5c7e2761f2c6e25472f2fa12aac12ed9b857bf102f51a2f8"
+    },
+    {
+      "path": "packages/cloudflare/src/storage/CloudflareAdapter.ts",
+      "oldBase8d098718": "27b698a2baf645e976c58f9186c9d92d955cc9c26ae834a862c2dad5b711f59d",
+      "currentSha256": "a3df73049dddb3f5d0aae65379e8b93c9f27c7af2acecf05a02222f14fa889fe"
+    },
+    {
+      "path": "packages/core/src/ValueDomain.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "89b0f8c1bf9c6c72fac43da03e4c47c96362757c48f7a0fe8fcb7608a0203d21"
+    },
+    {
+      "path": "packages/core/src/kv/hexastore/KvTripleStore.ts",
+      "oldBase8d098718": "0d4e96309facb7720c29a152c1307e8dac7b9e660a2c815b261477341bfb74b3",
+      "currentSha256": "ca0550d1b98eca77ee3b5586cb579b84d2df6ad4521517590ee6ea31630739a2"
+    },
+    {
+      "path": "packages/core/src/kv/hexastore/scan.ts",
+      "oldBase8d098718": "523afb07ad10d33d18d54f82435d88f3219d86d3a08ef494b56685b8ba45beee",
+      "currentSha256": "162f1694a96792361daf44f40bbf4998270d06fc638c0c01b6ce9e29b45df39e"
+    },
+    {
+      "path": "packages/core/src/kv/hexastore/tuple.ts",
+      "oldBase8d098718": "b04adabfb3614e5ae23d92a177face2532eb812b6032ca9d51a83731d5b60963",
+      "currentSha256": "191e26a88d39ba45f27b15ee2d1840e02a323ff39a22b0bfbfe8c0d3a6732099"
+    },
+    {
+      "path": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "oldBase8d098718": "d97c302ee63e068cd3b475e2f41707210b1d5ace2a965e18c9ad19b211cde7bd",
+      "currentSha256": "de55fd4f7079de4b89ee24c88bee1819fb5c1ddf64061c2559d1b30714ced504"
+    },
+    {
+      "path": "packages/core/src/runtime/index.ts",
+      "oldBase8d098718": "1e887d771e6359355d252a527b49a20401ff8db610b6c4ecaab94ec5e4e39375",
+      "currentSha256": "ff6b626e1f4ff9694f1cb4f34f6d190bb3f2ba2e69599afe850a2b8ce4209177"
+    },
+    {
+      "path": "packages/core/src/storage/StorageAdapter.ts",
+      "oldBase8d098718": "36c9ca889cc75ab87a58a92deb3ab67f227f6c16b8eabfe73149e03058dbb683",
+      "currentSha256": "29b502e8444950f27970a48bdb2e3801bb964ecd9c64e20db2b0333dc911336d"
+    },
+    {
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "oldBase8d098718": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+      "currentSha256": "c51eab698fd566873285a30afe285ec67bc4ac367298188a8d0f48ba65406a66"
+    },
+    {
+      "path": "packages/core/src/store/validateValues.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "616d7f4478dc0cb2e09dd46265dc06ee7b7b6cca3001fb1c7d55eefc34c8454e"
+    },
+    {
+      "path": "packages/core/test/integer.test.ts",
+      "oldBase8d098718": "84727db728fffcd99df53a7020343161d6366f130a259ae5bd6ee199bf6cb6f8",
+      "currentSha256": "dca27deda65c5dee6fd954dd31f6fc79cdc38c14ced787750e7c39c9c5e1d725"
+    },
+    {
+      "path": "packages/duckdb/src/effect-storage.ts",
+      "oldBase8d098718": "ffbc6d6b500b69bc22f795a60285afb1d8bea41c8c3a7b100abd832fc0e25962",
+      "currentSha256": "cdab50462bc9a563d7316b57c8a16fa0f3e5d69111fd4a0637f14f2f37f383c7"
+    },
+    {
+      "path": "packages/duckdb/src/public-backend.mjs",
+      "oldBase8d098718": "ab23f7fed23866c175f6294278758fcfd3f5063eab55fb0d5dbabe2c36076334",
+      "currentSha256": "55daa6a085269c7d834720637997eec857682c5a6f131cb199a6e2d6a43423e8"
+    },
+    {
+      "path": "packages/duckdb/test/value-boundary.test.mjs",
+      "oldBase8d098718": "532bdce15c2e64663ec6a5d46fd7d361ee17cec1bc1da4651cfeecd7230d4e4c",
+      "currentSha256": "719796541638d908b39d01c273a4c98d1b0829fe3009e702b2b394517063f304"
+    },
+    {
+      "path": "packages/postgres/src/PostgresqlAdapter.ts",
+      "oldBase8d098718": "dfabe4e405922f56b8ac4755bf02e40d8d006a3424d1e9ca01188646a6aba90e",
+      "currentSha256": "5f5606e26d3d270d14285849a1804282b8305cd7ec15b0666113a42e6ed9b18b"
+    },
+    {
+      "path": "packages/qlever/src/QleverStorageAdapter.ts",
+      "oldBase8d098718": "8cefbcc631375c196663232fd726dad147a153cbd1cc72a9c7f2b33ec0df9ab0",
+      "currentSha256": "0c9b63fdfd37e2a7758c5dbc3906ca835e4e30728754292d9546876c0a921af0"
+    },
+    {
+      "path": "packages/qlever/src/rdf.ts",
+      "oldBase8d098718": "829ba773bbbf9455ada8d10f37ed8ae1f327a82a007748a69ea7070a925e5494",
+      "currentSha256": "b04f44241e03f2a54e90e360c9d4333e2794aa2e5e3568d5b4f07cf364d5ab63"
+    },
+    {
+      "path": "packages/qlever/test/outcomes.test.ts",
+      "oldBase8d098718": "fd1a3c5251496d7bf211c5237cbdc1c8382abd46527cd4b43d71b71b13ad94f8",
+      "currentSha256": "6a593d4333700d5c2517e7ba89fea621c09dcd433bc336484cec319ed0881e74"
+    },
+    {
+      "path": "packages/qlever/test/query.test.ts",
+      "oldBase8d098718": "1e160f73db4c1db1cdf1367470cbd3b35f22015a83281b8a1e308e111a11d7f7",
+      "currentSha256": "8cd5d57df4506ed8c60feddd907e03ef64b6f1ef1f66000312dafad8c4edd20d"
+    },
+    {
+      "path": "packages/qlever/test/storage.test.ts",
+      "oldBase8d098718": "b37569ac18da9d4a7251cb6ca3840fdbb7e8bb1ec1bc1cec2b1bc9f3ec5196e6",
+      "currentSha256": "da6cd867c540121c8c0dced668b09ea65d0da46bf146837375a2819e12ce334a"
+    },
+    {
+      "path": "packages/qlever/test/value-limits-offline.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "789a1d6d2ad2e3bea90b732a2844de7cc68e7f8b8f89a2e7b75838d39a416a96"
+    },
+    {
+      "path": "packages/sql/src/queries.ts",
+      "oldBase8d098718": "a5f085c74875ef467fcff844ac16c4f5fb4906b338f905083e1c018be0329a4d",
+      "currentSha256": "c5c4a30d4109cbdf3ecd301253e191c8db700f277580ad891cc05b14d1eece01"
+    },
+    {
+      "path": "packages/sqlite/src/SqliteAdapter.ts",
+      "oldBase8d098718": "f70dc5ea3c971d22f618407ea4ae398cbe669c914647654e7f07b97a2146ef3b",
+      "currentSha256": "36284aa6505508c208dd2eb015690f7070f843dd5a5e9609f62d9fc02560d632"
+    },
+    {
+      "path": "packages/testkit/src/valueLimits.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "76b062fe7577b95576bf41a67adb22c9a0f6861021ccbe083a7b5536baf63d4d"
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "oldBase8d098718": "5a9b4d63a8754e974c4a270610880f3c5199a525354255ff6bf0b9c9a2d6a58e",
+      "currentSha256": "f7bab4aa68237b200d6280223d0dd1999e0ee25219202aace03f42a2f645e132"
+    },
+    {
+      "path": "packages/xtdb/src/codecs.ts",
+      "oldBase8d098718": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+      "currentSha256": "50001612da0432b82d857f0888d9ea5481064db90562149ef60e44443cd079e7"
+    },
+    {
+      "path": "test/integration/test/value-domains.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "84d14e560d830ced6659d7cd11e7db0450eb009ad1fea73a00b6100b4fb509da"
+    }
+  ],
+  "publishedPinDrift": [
+    {
+      "path": "packages/testkit/src/index.ts",
+      "publishedSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "currentSha256": "432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6",
+      "hashField": "sha256"
+    }
+  ],
+  "acceptanceUnchangedSinceRound2": true
+}

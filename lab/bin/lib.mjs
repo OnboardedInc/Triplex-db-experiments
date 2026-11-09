@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Shared helpers for lab/bin (EXP-000). Node 22 built-ins and the docker CLI only.
 // [EXP-000] Why: thin scripts, no daemon, mkdir locks; at most 10 agents and 3 heavy slots.
 // Rejected: the homebase controller in qualification/devloop (queue, scheduler, quota mount,
@@ -27,7 +28,8 @@ export const OBJECTS = path.join(REPO, 'runs/objects');
 // Other worktrees then see a config-hash mismatch on the slot and fail closed, which is intended.
 // Rejected: always reading the worktree (each worktree would recreate the shared residents).
 export const CONFIG_DIR = process.env.TX2_CONFIG_DIR ? path.resolve(process.env.TX2_CONFIG_DIR) : MAIN;
-export const SLOTS_FILE = path.join(CONFIG_DIR, 'lab/config/slots.json');
+// [EXP-M01R] Why: paired CPU placement is opt-in; default slot hashes stay unchanged. Rejected: changing shared s1/s3 defaults.
+export const SLOTS_FILE = process.env.TX2_SLOTS_FILE ? path.resolve(process.env.TX2_SLOTS_FILE) : path.join(CONFIG_DIR, 'lab/config/slots.json');
 
 export const now = () => new Date().toISOString();
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -382,7 +384,7 @@ export function gitBuffer(args) {
 }
 
 // Untracked files under these roots are executed inputs and are hashed and stored.
-export const SOURCE_ROOTS = ['packages', 'qualification', 'lab/bin', 'lab/config', 'vitest.workspace-aliases.ts', 'tsconfig.base.json', 'tsconfig.node.json', 'package.json', 'pnpm-workspace.yaml', 'pnpm-lock.yaml', 'turbo.json'];
+export const SOURCE_ROOTS = ['packages', 'qualification', 'lab/bin', 'lab/config', 'lab/receipts', 'vitest.workspace-aliases.ts', 'tsconfig.base.json', 'tsconfig.node.json', 'package.json', 'pnpm-workspace.yaml', 'pnpm-lock.yaml', 'turbo.json'];
 const SECRET = /(token|secret|credential|\.pem$|\.key$|\.env)/i;
 
 /**

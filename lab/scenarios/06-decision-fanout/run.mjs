@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 6: one recruiter decision, 50 workers, with GS.06b (a work location's minimum wage changes).
 // Spec and golden only.
 import { BT, VALUE, ents, scenarioStream } from '../lib/gen.mjs';

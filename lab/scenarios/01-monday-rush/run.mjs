@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 1: Monday onboarding rush (TARGETS 6 row 1). Spec and golden only; not yet run by the GS gate.
 import { BT, T, scenarioStream } from '../lib/gen.mjs';
 

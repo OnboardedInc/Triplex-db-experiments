@@ -15,7 +15,7 @@ while (args[0] === '--filter') { args.shift(); filters.push(args.shift()); }
 let result;
 if (args[0] === 'exec') {
   if (filters.length !== 1 || args[1] !== 'vitest') throw new Error('Only filtered Vitest exec is supported');
-  const dirs = { '@triplex-build/triplex': 'core', '@triplex-build/triplex-testkit': 'testkit', '@triplex-build/triplex-xtdb': 'xtdb', '@triplex-build/triplex-qualification': 'qualification', '@triplex-build/triplex-datomic': 'datomic' };
+  const dirs = { '@triplex-build/triplex': 'core', '@triplex-build/triplex-testkit': 'testkit', '@triplex-build/triplex-xtdb': 'xtdb', '@triplex-build/triplex-qualification': 'qualification', '@triplex-build/triplex-datomic': 'datomic', '@triplex-build/triplex-qlever': 'qlever' };
   if (!dirs[filters[0]]) throw new Error('Unknown package');
   result = spawnSync(path.join(root, 'node_modules/.bin/vitest'), args.slice(2), { cwd: path.join(root, 'packages', dirs[filters[0]]), stdio: 'inherit' });
 } else if (args[0] === '--version') {
@@ -23,7 +23,7 @@ if (args[0] === 'exec') {
 } else {
   // pnpm's recursive run also rejects store-dir: execute the unchanged declared scripts.
   if (!['build', 'typecheck'].includes(args[0])) throw new Error('Unexpected command');
-  const packages = ['core', 'testkit', 'xtdb', 'datomic', 'qualification'].map(dir => ({ dir: path.join(root, 'packages', dir), pkg: JSON.parse(fs.readFileSync(path.join(root, 'packages', dir, 'package.json'), 'utf8')) }));
+  const packages = ['core', 'testkit', 'xtdb', 'datomic', 'qlever', 'qualification'].map(dir => ({ dir: path.join(root, 'packages', dir), pkg: JSON.parse(fs.readFileSync(path.join(root, 'packages', dir, 'package.json'), 'utf8')) }));
   for (const {dir, pkg} of packages.filter(({pkg}) => filters.includes(pkg.name))) {
     result = spawnSync('/bin/sh', ['-c', pkg.scripts[args[0]]], { cwd: dir, stdio: 'inherit', env: {...process.env, PATH: [path.join(dir, 'node_modules/.bin'), path.join(root, 'node_modules/.bin'), process.env.PATH].join(':')} });
     if (result.error || result.status !== 0) break;

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; runtime-populated records, option bags, or branch-specific union members; success/failure state guarantees assignment before the success-only access; runtime-guarded iterable values. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { createHash } from "node:crypto";
 import { readFile, mkdir, mkdtemp, rmdir } from "node:fs/promises";
 import { tmpdir } from "node:os";

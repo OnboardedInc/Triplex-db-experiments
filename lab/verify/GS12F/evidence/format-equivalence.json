@@ -1,0 +1,14 @@
+[
+  {
+    "name": "adversarial.test.ts",
+    "identicalTranspiledJavaScript": false,
+    "beforeSha256": "df63a57041659d7be8553689ffa38971aff07a2b0dbdfa7fc3c40d97dd264e3e",
+    "afterSha256": "2c539a4d03bb45e64282a1682f5801d8b00d682bf99fd873b7880e8f45901a38"
+  },
+  {
+    "name": "controls.test.ts",
+    "identicalTranspiledJavaScript": true,
+    "beforeSha256": "37319b5b10dcc671a266745d870111cf1299776087929cecbf0abab92542e0ee",
+    "afterSha256": "37319b5b10dcc671a266745d870111cf1299776087929cecbf0abab92542e0ee"
+  }
+]

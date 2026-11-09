@@ -1,0 +1,32 @@
+{
+  "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/clock-aa423d45-dd24-4b9a-82bd-d6ae3273e2f3",
+  "sources": {
+    "lab/bench/lib/feed.ts": "a67ea5c2953b8c277480634b0cb8ac4c2b334c9b72022555793a41b9f73f4f00",
+    "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+    "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+    "packages/core/src/feed/index.ts": "5a6ea4636fb424f857946831304ce8233318e730487224651c99f82df5646cdf",
+    "packages/host/src/feed/ConsumerStore.ts": "5622f27010ec76b32276567bd0078b8a9476f67731042de30dd1d5dbfdc26b12",
+    "packages/host/src/feed/Adapters.ts": "12d7e445bf9119524fa0d731aabc21aa5b88ce27a65acbfc68b006e1fdf91cdb",
+    "lab/verify/FD01/clock-probe.mjs": "c2a894c499f0c46ad0221d297f54a0ff60546f75ac62112e1b3cd59074c32a87",
+    "lab/verify/FD01/source-hook.mjs": "32ae466bcff1eb7e73ce88bb0c8827eff732ed2aa280bb7a9245679bfaeda04e"
+  },
+  "clocks": {
+    "publishedAtMonoMs": 100,
+    "durableAtMonoMs": 400,
+    "decidedStampAsMs": 399
+  },
+  "lags": [
+    {
+      "at": 101,
+      "lagMs": 1,
+      "lagFromAckMs": 299
+    }
+  ],
+  "arm": "A0-control",
+  "publicationLagMs": 300,
+  "reportedLagMs": 1,
+  "note": "A0 is explicitly diagnostic; this demonstrates that the requested Q98d negative check is absent, not that a production P3 receipt was accepted.",
+  "sourceUnchanged": true
+}
+(node:95624) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

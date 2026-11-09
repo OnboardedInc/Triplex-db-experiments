@@ -1,0 +1,280 @@
+{
+  "id": "ae2240cd-eede-40af-980a-b4ad34831d59",
+  "startedAt": "2026-11-09T05:54:01.203Z",
+  "classification": "OFFLINE SOURCE-EXACT READER UNIT WITH MOCKED CONTROLLER/IO; not a verified real attempt",
+  "reader": "qualification/reviews/load-observations-independent.mjs",
+  "readerSha256": "7e1fefa29edb9f7e47f2ab8eedcc2eeb66bf00651a340d56d275eff7f74178e9",
+  "observations": [
+    {
+      "label": "modeless-qlever",
+      "manifest": {
+        "queryPath": "qlever-native",
+        "command": {
+          "argv": [
+            "node",
+            "fixture",
+            "--spec",
+            "spec.json",
+            "--fixture",
+            "fixture.json",
+            "--oracle",
+            "oracle.json",
+            "--instance",
+            "0"
+          ]
+        },
+        "inputs": [
+          {
+            "path": "spec.json",
+            "sha256": "41f87722847d6635cccac9f50c3e8b919fccdc93f528603f595605b400d1435b"
+          },
+          {
+            "path": "fixture.json",
+            "sha256": "84b7a0b418893ccc116723bcd6568707bff6bef95597529e82fdfb674c00b2c7"
+          },
+          {
+            "path": "oracle.json",
+            "sha256": "1f2df5e1a8dd79e54c23d5e4bd56d8e72db42e933d6e515d7d8e4515738fda73"
+          }
+        ],
+        "evidence": {
+          "events": "events.ndjson"
+        },
+        "profile": {
+          "startMilliseconds": 0,
+          "endMilliseconds": 1000,
+          "requiredClasses": [
+            "point-current"
+          ],
+          "clients": 1
+        }
+      },
+      "events": [
+        {
+          "type": "read",
+          "ok": true,
+          "startedMs": 0,
+          "finishedMs": 10,
+          "probe": 0,
+          "knownPosition": "1",
+          "taskClass": "point-current",
+          "paramsSha256": "79cb4c92ff3f85fe2280c7e16a6a1b36bf2597e1b6959ba2dbf56ce7780e0bc5",
+          "basis": {
+            "scope": "fixture",
+            "knownPosition": "1",
+            "validAt": 1
+          },
+          "resultJson": "[[\"fixture:name:0:v0\"]]",
+          "resultSha256": "ff2952ca4d760cb58c61faf72bcbb78906732782bfac0de04d550b3fea37bf61",
+          "oracleKey": "fixture"
+        }
+      ],
+      "result": {
+        "format": "triplex-independent-load-observation-rehash/1",
+        "at": "2026-11-09T05:54:01.204Z",
+        "reviewer": "duckdb-independent-verifier",
+        "reference": "fixture/0001",
+        "terminalStatus": "SYNTHETIC-FIXTURE-NOT-VERIFIED",
+        "terminalSha256": "2b9cc4a9db471dbe900f09fbe469af30efdd8a740f938e325120903fb274339d",
+        "rawEventsSha256": "d6b37de32cd40cb1fa1fa307570f62dae679060a7a14da41cf62febbdb229213",
+        "profile": {
+          "startMilliseconds": 0,
+          "endMilliseconds": 1000,
+          "requiredClasses": [
+            "point-current"
+          ],
+          "clients": 1
+        },
+        "reads": {
+          "offered": 1,
+          "correctBodiesRecomputed": 1,
+          "errors": 0,
+          "declaredStressRejections": 0,
+          "completedInsideWindow": 1,
+          "currentHotReadsAfterCorrection": 0,
+          "finishBeforeOffer": 0
+        },
+        "writes": [],
+        "writerInsideWindow": {
+          "offered": 0,
+          "visible": 0,
+          "reconciled": 0
+        },
+        "scope": "Retained bytes, independent recipe/result/cut recomputation and declared end-to-end timestamps; no experiment status upgrade",
+        "limitations": [
+          "Failed process or read errors remain failures even when successful answers rehash correctly",
+          "This does not establish calibrated writer rate, performance gain or production latency SLA",
+          "Engine commit/index/transport phases are not independently timestamped"
+        ],
+        "timedMetrics": {
+          "population": "Offers inside the fixed window; goodput requires completion inside, latency retains successful bounded-drain calls",
+          "fixedSeconds": 1,
+          "classes": {
+            "point-current": {
+              "offered": 1,
+              "correctThroughDrain": 1,
+              "completedInsideWindow": 1,
+              "goodput": 1,
+              "p50Ms": 10,
+              "p95Ms": 10,
+              "p99Ms": 10
+            }
+          }
+        }
+      },
+      "stdout": [
+        [
+          "{\"output\":\"qualification/reviews/fixture-only.json\",\"reference\":\"fixture/0001\",\"terminal\":\"SYNTHETIC-FIXTURE-NOT-VERIFIED\",\"reads\":{\"offered\":1,\"correctBodiesRecomputed\":1,\"errors\":0,\"declaredStressRejections\":0,\"completedInsideWindow\":1,\"currentHotReadsAfterCorrection\":0,\"finishBeforeOffer\":0},\"writerInsideWindow\":{\"offered\":0,\"visible\":0,\"reconciled\":0}}"
+        ]
+      ],
+      "sharedParserImported": false
+    },
+    {
+      "label": "mixed-qlever",
+      "manifest": {
+        "queryPath": "qlever-native",
+        "command": {
+          "argv": [
+            "node",
+            "fixture",
+            "--spec",
+            "spec.json",
+            "--fixture",
+            "fixture.json",
+            "--oracle",
+            "oracle.json",
+            "--instance",
+            "0"
+          ]
+        },
+        "inputs": [
+          {
+            "path": "spec.json",
+            "sha256": "41f87722847d6635cccac9f50c3e8b919fccdc93f528603f595605b400d1435b"
+          },
+          {
+            "path": "fixture.json",
+            "sha256": "84b7a0b418893ccc116723bcd6568707bff6bef95597529e82fdfb674c00b2c7"
+          },
+          {
+            "path": "oracle.json",
+            "sha256": "1f2df5e1a8dd79e54c23d5e4bd56d8e72db42e933d6e515d7d8e4515738fda73"
+          }
+        ],
+        "evidence": {
+          "events": "events.ndjson"
+        },
+        "profile": {
+          "startMilliseconds": 0,
+          "endMilliseconds": 1000,
+          "requiredClasses": [
+            "point-current"
+          ],
+          "clients": 1
+        }
+      },
+      "events": [
+        {
+          "type": "read",
+          "ok": true,
+          "startedMs": 0,
+          "finishedMs": 10,
+          "probe": 0,
+          "knownPosition": "1",
+          "taskClass": "point-current",
+          "paramsSha256": "79cb4c92ff3f85fe2280c7e16a6a1b36bf2597e1b6959ba2dbf56ce7780e0bc5",
+          "basis": {
+            "scope": "fixture",
+            "knownPosition": "1",
+            "validAt": 1
+          },
+          "resultJson": "[[\"fixture:name:0:v0\"]]",
+          "resultSha256": "ff2952ca4d760cb58c61faf72bcbb78906732782bfac0de04d550b3fea37bf61",
+          "oracleKey": "fixture",
+          "qleverConnectionMode": "keep-alive"
+        },
+        {
+          "type": "read",
+          "ok": true,
+          "startedMs": 0,
+          "finishedMs": 2,
+          "probe": 0,
+          "knownPosition": "1",
+          "taskClass": "point-current",
+          "paramsSha256": "79cb4c92ff3f85fe2280c7e16a6a1b36bf2597e1b6959ba2dbf56ce7780e0bc5",
+          "basis": {
+            "scope": "fixture",
+            "knownPosition": "1",
+            "validAt": 1
+          },
+          "resultJson": "[[\"fixture:name:0:v0\"]]",
+          "resultSha256": "ff2952ca4d760cb58c61faf72bcbb78906732782bfac0de04d550b3fea37bf61",
+          "oracleKey": "fixture",
+          "qleverConnectionMode": "per-request"
+        }
+      ],
+      "result": {
+        "format": "triplex-independent-load-observation-rehash/1",
+        "at": "2026-11-09T05:54:01.205Z",
+        "reviewer": "duckdb-independent-verifier",
+        "reference": "fixture/0001",
+        "terminalStatus": "SYNTHETIC-FIXTURE-NOT-VERIFIED",
+        "terminalSha256": "2b9cc4a9db471dbe900f09fbe469af30efdd8a740f938e325120903fb274339d",
+        "rawEventsSha256": "415f8efc14757ad664d52e3c059c57b071500a153f221a8c2a4c08aaa0945051",
+        "profile": {
+          "startMilliseconds": 0,
+          "endMilliseconds": 1000,
+          "requiredClasses": [
+            "point-current"
+          ],
+          "clients": 1
+        },
+        "reads": {
+          "offered": 2,
+          "correctBodiesRecomputed": 2,
+          "errors": 0,
+          "declaredStressRejections": 0,
+          "completedInsideWindow": 2,
+          "currentHotReadsAfterCorrection": 0,
+          "finishBeforeOffer": 0
+        },
+        "writes": [],
+        "writerInsideWindow": {
+          "offered": 0,
+          "visible": 0,
+          "reconciled": 0
+        },
+        "scope": "Retained bytes, independent recipe/result/cut recomputation and declared end-to-end timestamps; no experiment status upgrade",
+        "limitations": [
+          "Failed process or read errors remain failures even when successful answers rehash correctly",
+          "This does not establish calibrated writer rate, performance gain or production latency SLA",
+          "Engine commit/index/transport phases are not independently timestamped"
+        ],
+        "timedMetrics": {
+          "population": "Offers inside the fixed window; goodput requires completion inside, latency retains successful bounded-drain calls",
+          "fixedSeconds": 1,
+          "classes": {
+            "point-current": {
+              "offered": 2,
+              "correctThroughDrain": 2,
+              "completedInsideWindow": 2,
+              "goodput": 2,
+              "p50Ms": 2,
+              "p95Ms": 10,
+              "p99Ms": 10
+            }
+          }
+        }
+      },
+      "stdout": [
+        [
+          "{\"output\":\"qualification/reviews/fixture-only.json\",\"reference\":\"fixture/0001\",\"terminal\":\"SYNTHETIC-FIXTURE-NOT-VERIFIED\",\"reads\":{\"offered\":2,\"correctBodiesRecomputed\":2,\"errors\":0,\"declaredStressRejections\":0,\"completedInsideWindow\":2,\"currentHotReadsAfterCorrection\":0,\"finishBeforeOffer\":0},\"writerInsideWindow\":{\"offered\":0,\"visible\":0,\"reconciled\":0}}"
+        ]
+      ],
+      "sharedParserImported": false
+    }
+  ],
+  "audit": {},
+  "runnerSha256": "fec100923a6b7d62594d24e836c8dc17c5d2957a4618d5e4fd99ad55821e629e",
+  "endedAt": "2026-11-09T05:54:01.205Z"
+}

@@ -1,0 +1,22 @@
+failed to load config from /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/core/vitest.config.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: EPERM: operation not permitted, open '/Users/sam/projects/triplex-db-2/node_modules/.vite-temp/vitest.config.ts.timestamp-1794188681664-0c29f6bbc4d8.mjs'
+    at async open (node:internal/fs/promises:639:25)
+    at async Object.writeFile (node:internal/fs/promises:1222:14)
+    at async loadConfigFromBundledFile (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:37163:3)
+    at async bundleAndLoadConfigFile (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:37015:21)
+    at async loadConfigFromFile (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:36975:42)
+    at async resolveConfig (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:36581:22)
+    at async resolveConfig (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/index.B8VfM7Mf.js:9241:25)
+    at async createVitest (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cli-api.Bx28WXzL.js:13377:17)
+    at async prepareVitest (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cli-api.Bx28WXzL.js:13772:14)
+    at async startVitest (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cli-api.Bx28WXzL.js:13690:14) {
+  errno: -1,
+  code: 'EPERM',
+  syscall: 'open',
+  path: '/Users/sam/projects/triplex-db-2/node_modules/.vite-temp/vitest.config.ts.timestamp-1794188681664-0c29f6bbc4d8.mjs'
+}
+
+
+

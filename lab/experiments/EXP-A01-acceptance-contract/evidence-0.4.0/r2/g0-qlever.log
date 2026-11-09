@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 65515 "G03-R7a-full", pid 19097 "QH1-R2-stages2", pid 47774 "CX-HS01-seed-10000"
+[lab] G0-qlever-20261109T123404Z-c62ee0: raw output runs/G0/G0-qlever-20261109T123404Z-c62ee0
+PASS G0 qlever scope=full executed=1513 pass=1513 fail=0 skip=79
+receipt: lab/runs/G0/G0-qlever-20261109T123404Z-c62ee0.json
+exit 0

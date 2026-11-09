@@ -1,0 +1,35 @@
+test_all_accepted_ancestry (__main__.Contract040.test_all_accepted_ancestry) ... ok
+test_every_repin_and_hunk (__main__.Contract040.test_every_repin_and_hunk) ... ok
+test_exact_eleven_authority_rows (__main__.Contract040.test_exact_eleven_authority_rows) ... ok
+test_feed_contract_policy (__main__.Contract040.test_feed_contract_policy) ... ok
+test_image_identity_chain (__main__.Contract040.test_image_identity_chain) ... ok
+test_load_projections (__main__.Contract040.test_load_projections) ... ok
+test_no_changed_bars_or_workload (__main__.Contract040.test_no_changed_bars_or_workload) ... ok
+test_no_regression_policy (__main__.Contract040.test_no_regression_policy) ... ok
+test_original_evaluator_assertions_preserved (__main__.Contract040.test_original_evaluator_assertions_preserved) ... ok
+test_pending_rows_byte_preserved (__main__.Contract040.test_pending_rows_byte_preserved) ... ok
+test_qualification_remains_blocked (__main__.Contract040.test_qualification_remains_blocked) ... ok
+test_sparse_mapping_policy (__main__.Contract040.test_sparse_mapping_policy) ... ok
+test_version_and_all_generator_checks (__main__.Contract040.test_version_and_all_generator_checks) ... FAIL
+
+======================================================================
+FAIL: test_version_and_all_generator_checks (__main__.Contract040.test_version_and_all_generator_checks)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-040/lab/experiments/EXP-A01-acceptance-contract/regressions/test040.py", line 24, in test_version_and_all_generator_checks
+    self.assertEqual(C[name](), [], name)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ["Q45a: pinned O-REPLAY files differ from [73 chars]s']"] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+"Q45a: pinned O-REPLAY files differ from the tree: ['lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs']"
+
++ []
+- ['Q45a: pinned O-REPLAY files differ from the tree: '
+-  "['lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs']"] : validate
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.610s
+
+FAILED (failures=1)

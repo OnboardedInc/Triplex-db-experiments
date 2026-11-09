@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project; runtime-populated records, optional option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Proposed admitted pure oracle gate. No oracle/test import in this runner. */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';

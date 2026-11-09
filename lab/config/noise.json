@@ -1,0 +1,66 @@
+{
+  "format": "tx2-noise/1",
+  "status": "provisional: R22 section 4 thresholds, to be reset at the 90th percentile of the signals that predict the A/A spread after a 7-day passive recording (R22 section 4, open question 11)",
+  "source": "lab/research/R22-noise-robust-benchmarking.md sections 2, 3, 4, 7; RULINGS-PENDING Q60a-i",
+  "sampling": { "cadenceS": 10, "hostTopEveryS": 30 },
+  "rounds": { "min": 8, "default": 12, "max": 24, "looks": [8, 12, 18, 24], "lookLevel": 0.982, "level": 0.95, "boots": 2000, "aaEvery": 6, "preflightAA": 3, "bootSeed": 1 },
+  "claims": { "superiority": 1.25, "holdP50": 1.1, "holdP99": 1.15 },
+  "p99Floor": { "commandsPerArm": 25000, "usableRounds": 8 },
+  "aaCheck": { "trials": 200, "boots": 500, "seed": 11 },
+  "series": {
+    "screening-b180": {
+      "note": "Q60g: a burst every 180 s so every P2/P3 round holds about 3,300 commands; a new comparison series (TARGETS 2.1 item 5); acceptance keeps the frozen trace",
+      "traceParams": { "burstPeriodS": 180, "firstBurstAtS": 42 },
+      "round": { "periodS": 180, "measuredFromS": 12, "measuredS": 150, "settleS": 2, "calibS": 10 },
+      "warmupPeriods": 1
+    },
+    "screening-r4": {
+      "note": "R22 section 7 alternative, not yet ruled: 4x the steady rate and no bursts (about 660 commands per 150 s; 16+ rounds at rho 0.8); for an engine whose burst queue censors the p50 under screening-b180",
+      "traceParams": { "steadyFactsPerS": 60, "burstMultiplier": 1 },
+      "round": { "periodS": 180, "measuredFromS": 12, "measuredS": 150, "settleS": 2, "calibS": 10 },
+      "warmupPeriods": 1
+    },
+    "frozen-p600": {
+      "note": "the frozen TARGETS 2.1 trace; a round per 600 s burst period (about 2 h per 12-round decision, R22 section 7)",
+      "traceParams": {},
+      "round": { "periodS": 600, "measuredFromS": 102, "measuredS": 150, "settleS": 2, "calibS": 10 },
+      "warmupPeriods": 1
+    }
+  },
+  "calibration": {
+    "note": "fixed integer work, about 20 ms per unit on this host (node xorshift) and VM (python LCG), measured 2026-11-07; reference = min of the first 5 runs (R22 section 4.3)",
+    "units": 20,
+    "hostUnitIterations": 12000000,
+    "vmUnitIterations": 300000,
+    "referenceRuns": 5
+  },
+  "hiccup": { "sleepMs": 1 },
+  "partition": { "note": "R22 section 3: arms on disjoint cpusets; partitioned = no non-arm container's effective cpuset intersects an arm's" },
+  "rules": [
+    { "id": "signals-missing", "signal": "signals.missing", "class": "hard", "excludeAbove": 0, "note": "fail closed: a round without host, VM or arm counters cannot be cleared" },
+    { "id": "host-mem-pressure-critical", "signal": "host.pressureLevelMax", "class": "hard", "excludeAbove": 3, "note": "kern.memorystatus_vm_pressure_level 4 = CRITICAL (1 normal, 2 warn); ambient 2" },
+    { "id": "host-pageouts", "signal": "host.pageoutsDelta", "class": "hard", "excludeAbove": 20000, "note": "swap growth: pageouts rising by more than 20,000 pages in a round" },
+    { "id": "vm-psi-cpu-some", "signal": "vm.psi.cpuSomeShare", "class": "soft", "amberAbove": 0.4, "excludeAbove": 0.6, "note": "ambient 22 to 25% (R22), 41% on 2026-11-07 23:59Z" },
+    { "id": "vm-psi-mem-full", "signal": "vm.psi.memFullShare", "class": "hard", "excludeAbove": 0.01 },
+    { "id": "vm-psi-io-some", "signal": "vm.psi.ioSomeShare", "class": "soft", "excludeAbove": 0.1 },
+    { "id": "arm-throttled", "signal": "arms.throttledShareMax", "class": "hard-in-cpuset-regime", "excludeAbove": 0.05, "note": "77% of periods throttled on the busiest quota slot (R22 section 3)" },
+    { "id": "arm-oom-kill", "signal": "arms.oomKillDelta", "class": "hard", "excludeAbove": 0 },
+    { "id": "arm-restart", "signal": "arms.restarts", "class": "hard", "excludeAbove": 0 },
+    { "id": "arm-memory-max-events", "signal": "arms.memMaxEventsDelta", "class": "hard", "excludeAbove": 50 },
+    { "id": "neighbor-cpu", "signal": "neighbors.maxCoresOnArmCpus", "class": "hard-after-partition", "excludeAbove": 0.25, "note": "a non-arm container on an arm's cpuset; recorded, not applied, while the VM is not partitioned" },
+    { "id": "calib-drift-host", "signal": "calib.hostDrift", "class": "hard", "excludeOutside": [0.85, 1.18], "note": "post/pre minimum of the host spin" },
+    { "id": "calib-drift-vm", "signal": "calib.vmDrift", "class": "hard", "excludeOutside": [0.85, 1.18], "note": "post/pre minimum of the VM spin" },
+    { "id": "calib-interference", "signal": "calib.interferenceMax", "class": "hard", "excludeAbove": 2.0, "note": "p50/min of a spin; ambient 1.1 to 1.36" },
+    { "id": "hiccup", "signal": "hiccup.maxMs", "class": "hard", "excludeAbove": 100, "note": "1 ms sleep overshoot in either driver or the VM; ambient max 4 to 9 ms per 4 s" },
+    { "id": "client-elu", "signal": "client.eluMax", "class": "hard", "excludeAbove": 0.9, "note": "a driver's main event loop saturated in the round" },
+    { "id": "host-load", "signal": "host.loadAvg1", "class": "record", "note": "11 to 15 on 12 cores; never discriminates here" },
+    { "id": "host-cpu-idle", "signal": "host.cpuIdlePct", "class": "record" },
+    { "id": "host-swap-used", "signal": "host.swapUsedBytes", "class": "record" },
+    { "id": "host-decompressions", "signal": "host.decompressionsDelta", "class": "record", "note": "calibrate during the recording week" },
+    { "id": "vm-steal", "signal": "vm.stealShare", "class": "record", "note": "always 0 under Virtualization.framework (R22 finding 3)" },
+    { "id": "vm-load", "signal": "vm.loadAvg1", "class": "record" },
+    { "id": "neighbor-cpu-total", "signal": "neighbors.totalCores", "class": "record" },
+    { "id": "hiccup-vm", "signal": "hiccup.vmMaxMs", "class": "record", "note": "the VM part of rule hiccup" },
+    { "id": "hiccup-driver", "signal": "hiccup.driverMaxMs", "class": "record", "note": "the drivers' part of rule hiccup" }
+  ]
+}

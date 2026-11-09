@@ -99,6 +99,9 @@ catalogs:
     ulidx:
       specifier: 2.4.1
       version: 2.4.1
+    undici:
+      specifier: 7.29.1
+      version: 7.29.1
     vite:
       specifier: 8.2.2
       version: 8.2.2
@@ -567,10 +570,19 @@ importers:
       '@triplex-build/triplex':
         specifier: workspace:^
         version: link:../core
+      better-sqlite3:
+        specifier: 12.10.0
+        version: 12.10.0
+      undici:
+        specifier: 'catalog:'
+        version: 7.29.1
     devDependencies:
       '@triplex-build/triplex-testkit':
         specifier: workspace:^
         version: link:../testkit
+      '@types/better-sqlite3':
+        specifier: 'catalog:'
+        version: 7.6.13
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1

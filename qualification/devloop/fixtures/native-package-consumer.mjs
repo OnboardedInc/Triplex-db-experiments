@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 import { readFileSync,writeFileSync } from 'node:fs';
 import { join,resolve } from 'node:path';

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 11: plan impact preview (TARGETS 6 row 11; common basis with GS.10 in 6.1 item 4). Spec and golden only.
 //
 // Same world as GS.10 (releases R1 and R2, account on R1), but R2 is never activated: "who gains work" under

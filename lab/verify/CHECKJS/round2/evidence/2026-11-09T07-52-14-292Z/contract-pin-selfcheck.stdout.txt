@@ -1,0 +1,39 @@
+TAP version 13
+# Subtest: admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+not ok 1 - admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+  ---
+  duration_ms: 2.52575
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-s6MxKa/lab/bin/test/claim.test.mjs:80:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the contract self-check itself reports admission errors
+    + actual - expected
+    
+    + [
+    +   "Q45a: pinned O-REPLAY files differ from the tree: ['lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs']"
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: "Q45a: pinned O-REPLAY files differ from the tree: ['lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs']"
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-s6MxKa/lab/bin/test/claim.test.mjs:81:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 113212.38575

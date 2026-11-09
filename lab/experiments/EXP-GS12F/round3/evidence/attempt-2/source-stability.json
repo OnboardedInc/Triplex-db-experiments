@@ -1,0 +1,8 @@
+{
+  "sourceManifest": "lab/experiments/EXP-GS12F/round3/evidence/attempt-2/sources.json",
+  "changedDuringAttempt": [
+    "packages/core/src/ValueDomain.ts",
+    "packages/core/src/kv/hexastore/KvTripleStore.ts",
+    "packages/duckdb/src/public-backend.mjs"
+  ]
+}

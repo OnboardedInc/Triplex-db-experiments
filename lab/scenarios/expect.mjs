@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; unannotated destructured parameters; dynamic record keys. Binding errors remain checked by lab/bin/checkjs.mjs.
 // node lab/scenarios/expect.mjs [--scenarios all|2,3] [--rungs 10k[,smoke]] [--world] [--check]
 //
 // Writes the golden expectations: lab/scenarios/<NN-slug>/expected-<rung>.json per scenario and

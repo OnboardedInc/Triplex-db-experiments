@@ -1,3 +1,10 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; runtime callback/availability guards not inferred. Binding errors remain checked by lab/bin/checkjs.mjs.
+import {
+  decodeValueColumns,
+  assertValueInDomain,
+  ValueDomains,
+  storedValueDomain,
+} from "@triplex-build/triplex/runtime";
 import { createHash } from "node:crypto";
 import {
   MAX_STATEMENT_PARAMETERS,
@@ -68,63 +75,12 @@ const position = (v) => {
     fail("POSITION", "Expected safe nonnegative commit position");
   return v;
 };
-function jsonCopy(v, seen = new Set(), budget = { n: 0 }, depth = 0) {
-  if (++budget.n > 100000 || depth > 64) fail("JSON_LIMIT", "JSON logical admission exceeded");
-  if (v === null || typeof v === "boolean") return v;
-  if (typeof v === "number") return finite(v);
-  if (typeof v === "string") {
-    if (!v.isWellFormed()) fail("JSON", "Malformed JSON text");
-    return v;
-  }
-  if (typeof v !== "object" || seen.has(v)) fail("JSON", "Unsupported JSON value");
-  const array = Array.isArray(v),
-    proto = Object.getPrototypeOf(v);
-  if (array ? proto !== Array.prototype : ![Object.prototype, null].includes(proto))
-    fail("JSON", "Expected ordinary JSON data");
-  const ds = Object.getOwnPropertyDescriptors(v);
-  for (const k of Reflect.ownKeys(ds))
-    if (
-      typeof k !== "string" ||
-      !own(ds[k], "value") ||
-      (!ds[k].enumerable && !(array && k === "length"))
-    )
-      fail("JSON", "Unsupported JSON property");
-  seen.add(v);
-  try {
-    if (array) {
-      const n = ds.length.value;
-      if (Object.keys(ds).length !== n + 1) fail("JSON", "Sparse/decorated array");
-      const out = [];
-      for (let i = 0; i < n; i++) {
-        if (!own(ds, i)) fail("JSON", "Sparse JSON");
-        out.push(jsonCopy(ds[i].value, seen, budget, depth + 1));
-      }
-      return out;
-    }
-    const out = Object.create(null);
-    for (const k of Object.keys(ds)) {
-      if (!k.isWellFormed()) fail("JSON", "Malformed key");
-      Object.defineProperty(out, k, {
-        value: jsonCopy(ds[k].value, seen, budget, depth + 1),
-        enumerable: true,
-      });
-    }
-    return out;
-  } finally {
-    seen.delete(v);
-  }
-}
 const int64 = (value) => {
-  if (
-    typeof value !== "string" ||
-    !/^(0|-[1-9]\d*|[1-9]\d*)$/.test(value) ||
-    BigInt(value) < -9223372036854775808n ||
-    BigInt(value) > 9223372036854775807n
-  )
-    fail("INTEGER", "Expected canonical signed int64");
+  assertValueInDomain({ type: "integer", value }, ValueDomains.duckdb);
   return value;
 };
-function pack(value) {
+function pack(value, domain = ValueDomains.duckdb) {
+  assertValueInDomain(value, domain);
   if (!value || typeof value !== "object") fail("VALUE", "Expected typed value");
   const out = {
     value_type: value.type,
@@ -137,7 +93,7 @@ function pack(value) {
   switch (value.type) {
     case "string":
     case "ref":
-      out.value_string = text(value.value, value.type === "ref");
+      out.value_string = text(value.value);
       break;
     case "integer":
       out.value_string = int64(value.value);
@@ -153,7 +109,7 @@ function pack(value) {
       out.value_boolean = value.value ? 1 : 0;
       break;
     case "json":
-      out.value_json = JSON.stringify(jsonCopy(value.value));
+      out.value_json = JSON.stringify(value.value);
       break;
     case "blob": {
       const size = position(value.size);
@@ -168,13 +124,12 @@ function pack(value) {
     default:
       fail("VALUE", "Unsupported public tag");
   }
-  if (out.value_json !== null) text(out.value_json);
   return out;
 }
 /** @internal Public input ownership and shape only; physical storage conversion is separate. */
 export function buildRow(input, txId, timestamp, id, pos) {
   if (!input || typeof input !== "object") fail("INPUT", "Expected TripleInput");
-  const value = pack(input.value),
+  const value = pack(input.value, storedValueDomain(ValueDomains.duckdb, input.attribute)),
     from = instant(input.validFrom ?? timestamp),
     to = input.validTo == null ? null : instant(input.validTo);
   if (to !== null && to <= from) fail("INTERVAL", "Expected nonempty valid interval");
@@ -322,10 +277,7 @@ function validateRow(row) {
   if (row.value_number !== null) finite(row.value_number);
   if (row.value_datetime !== null) finite(row.value_datetime);
   if (row.value_boolean !== null) ensure(row.value_boolean === 0 || row.value_boolean === 1);
-  if (row.value_json !== null) {
-    text(row.value_json);
-    jsonCopy(JSON.parse(row.value_json));
-  }
+  decodeValueColumns(row, storedValueDomain(ValueDomains.duckdb, row.attribute));
   ensure(
     (row.retracted_at === null && row.retracted_position === null && row.retract_tx_id === null) ||
       (row.retracted_at !== null &&
@@ -360,7 +312,9 @@ export class PublicDuckDBBackend {
     const { signal, onAdmission } = options;
     if (signal !== undefined && !(signal instanceof AbortSignal))
       return Promise.reject(new TypeError("signal must be an AbortSignal"));
-    let resolveOperation, rejectOperation, phase = "queued";
+    let resolveOperation,
+      rejectOperation,
+      phase = "queued";
     const result = new Promise((resolve, reject) => {
       resolveOperation = resolve;
       rejectOperation = reject;
@@ -400,7 +354,10 @@ export class PublicDuckDBBackend {
         rejectOperation(error);
       }
     });
-    this.#tail = op.then(() => undefined, () => undefined);
+    this.#tail = op.then(
+      () => undefined,
+      () => undefined,
+    );
     if (signal?.aborted) withdraw();
     else signal?.addEventListener("abort", withdraw, { once: true });
     return result;
@@ -785,33 +742,37 @@ export class PublicDuckDBBackend {
   }
 
   withTransaction(work, options = {}) {
-    return this.#enqueue(async () => {
-      await this.#port.assertResourceProfile();
-      let result;
-      try {
-        result = await this.#owner.transaction(async (tx) => {
-          const holder = this.#session(tx);
-          try {
-            return await work(holder.session);
-          } finally {
-            holder.invalidate();
-          }
-        });
-      } catch (primary) {
+    return this.#enqueue(
+      async () => {
+        await this.#port.assertResourceProfile();
+        let result;
         try {
-          await this.#port.activateOwnership();
-        } catch (cleanup) {
-          throw new AggregateError(
-            [primary, cleanup],
-            "Public transaction and ownership reconciliation failed",
-            { cause: primary },
-          );
+          result = await this.#owner.transaction(async (tx) => {
+            const holder = this.#session(tx);
+            try {
+              return await work(holder.session);
+            } finally {
+              holder.invalidate();
+            }
+          });
+        } catch (primary) {
+          try {
+            await this.#port.activateOwnership();
+          } catch (cleanup) {
+            throw new AggregateError(
+              [primary, cleanup],
+              "Public transaction and ownership reconciliation failed",
+              { cause: primary },
+            );
+          }
+          throw primary;
         }
-        throw primary;
-      }
-      await this.#port.activateOwnership();
-      return result.value;
-    }, false, options);
+        await this.#port.activateOwnership();
+        return result.value;
+      },
+      false,
+      options,
+    );
   }
   read(work) {
     return this.withTransaction(work);
@@ -833,10 +794,19 @@ export class PublicDuckDBBackend {
         rejectWork = j;
       });
     work.catch(() => undefined);
-    const completion = this.withTransaction(async (session) => {
-      resolveStarted(session);
-      return work;
-    }, withdrawableRead ? { onAdmission: (withdraw) => { withdrawPending = withdraw; } } : {});
+    const completion = this.withTransaction(
+      async (session) => {
+        resolveStarted(session);
+        return work;
+      },
+      withdrawableRead
+        ? {
+            onAdmission: (withdraw) => {
+              withdrawPending = withdraw;
+            },
+          }
+        : {},
+    );
     completion.catch((error) => {
       rejectStarted(error);
       if (!settled) {

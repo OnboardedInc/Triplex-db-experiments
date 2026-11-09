@@ -1,0 +1,197 @@
+[
+  {
+    "path": "lab/bench/audit-traffic.ts",
+    "oldSha256": "8d5befd54d0fec8aced3b73e7b42c03e1976376ff82045af967f97cabf587c3e",
+    "newSha256": "70b4bfa752f80daee64e29f916e2c94b47d298cb49995956f7a1ba5c6db8281e"
+  },
+  {
+    "path": "lab/bench/driver.ts",
+    "oldSha256": "f46c44cfc3f14a311a6cdd685999e6435b044625b6acd20412a6588817ac3a00",
+    "newSha256": "aa890937e238dd6967575803a067f18c6a9a74cd86c7aa8ac177d4836beaa7c9"
+  },
+  {
+    "path": "lab/bench/round2.ts",
+    "oldSha256": "ccc65b86583b4e5dc7c73ec727967d01a01846330cec1a5ccc01afdbe04fa64f",
+    "newSha256": "28ea18ee838736315023f8cab31ead5f3065042b927a7395bf7551f2998ad419"
+  },
+  {
+    "path": "lab/bench/summarize.mjs",
+    "oldSha256": "9cd16dbaa1556d00f749bd78e25bf1103a834e6ee21a1c10996af7825fbab6a2",
+    "newSha256": "514e481ed341cc60c8d35e71c1f585ee49f401a66822d178d0a5120bac450998"
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "oldSha256": "1b34b524a74b337ff6e8d53edb1bc5ebf4b5b77ffbcac10627c5bb5753c09d81",
+    "newSha256": "6a51621bbd927a3a5d715d0ec3be1c9ae6157945c2b32202f5664016f532178d"
+  },
+  {
+    "path": "lab/bin/scorecard.mjs",
+    "oldSha256": "dcbacaf346247de19b1a7e777ac76bb5333b5797310b119e19390906a445a2c7",
+    "newSha256": "764b7ea2fcc1481df0cf51abc992b8c205f74a80cb6ca3433416ec709e083bcf"
+  },
+  {
+    "path": "lab/bin/status.mjs",
+    "oldSha256": "7d7144d154e678d7ec6bbc3d2c1a625b1f7f8955fc5edd4072eaa0b1a5a44097",
+    "newSha256": "f5f8c8b65e4c661e5c79e1ead67602a0cd6eabe33837edd30238d4db132cc703"
+  },
+  {
+    "path": "lab/experiments/EXP-002-qlever-baseline/qlever-log-latency.mjs",
+    "oldSha256": "3303b3a79a54af72ce0c82679c1fcee0ef94323804b7b7e89acd517b3f3d80da",
+    "newSha256": "e12cbb18b1c23bbbab304b7200d032af637b42f93fad83ea96cc4fe0bf06311a"
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/summarize-timing.mjs",
+    "oldSha256": "4ae49239011148037c90456f9ecaeeef11cd9c553e348b7d9fb54cb599a72398",
+    "newSha256": "c8e5e48c1f7e9d1c87d361350f698a2fcc9ec8440623d9adc2bf7b405dd7b168"
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/equivalence-diff.mjs",
+    "oldSha256": "214dc19708a2523cd44154ad5d1efd2df0b5b6c6b767a996c222e9a89b8a698f",
+    "newSha256": "e16a9ae50bae12775d6ebea7f514b410b6550773302442e8603d907e38c0cb2c"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/final-audit.mjs",
+    "oldSha256": "05e43d5ba917318f39b35d418172b371614ff415ef35c95ee5ba74630b313c99",
+    "newSha256": "9761c7714ebb7a83bd768a0dce06d731a7c14757c3c7a26a564a11e47715a5cb"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/grid.mjs",
+    "oldSha256": "33faff5613583ba77e47c5f3723a2d37db08254632b781a3ff5b52c49aed46dd",
+    "newSha256": "4bfac4f2e4c9b0aaf869f561b2dc910d6ddb42d804a613ccab8a661c43eeec70"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/p4-sample.ts",
+    "oldSha256": "38314a8ee0a49f6eaeb6389709ece7b4efd5b881e23a9d33c8d32c091f9905eb",
+    "newSha256": "8a04fafd7efa047db89169741a237a78ed4cfad2ec9e5b91ca02596171e3ecf0"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/summarize.mjs",
+    "oldSha256": "f3e61fe4ad7a44957c64dbe2baca0755f7d5f5500d72175ea9ebffb7292e0836",
+    "newSha256": "c69863a2edbcdcf80cf4949b6cb65a2df3e9182ba63896334b9e23b7218567be"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/summary-cell.mjs",
+    "oldSha256": "a66a9f62da55a8a559a766f6a786d02ca445f10e71d0ea2660b6578d099d2b2f",
+    "newSha256": "28adb9851d96616941f6d232d4014285094b14a473aacec943eecfbe0f97d005"
+  },
+  {
+    "path": "lab/experiments/EXP-QNODELAY/round2/receipts.test.ts",
+    "oldSha256": "4c6c91e2ba1522102c944787a46d891de5785fdf4690478686bda0fb816a0b63",
+    "newSha256": "9391d57b328647d813cd712dcf1c209305d8c796a1c645aa5633311867194f06"
+  },
+  {
+    "path": "lab/receipts/latency.mjs",
+    "oldSha256": "9233cdb970cf4f8777e94805739f8c8b0cd607f61dcb970f04c9c5c4b4d3a664",
+    "newSha256": "164b5f5d21de3359d4dfc3ebf569e10ee64fc04b36eb79e4362b73a84f808d9c"
+  },
+  {
+    "path": "lab/receipts/latency_reader.py",
+    "oldSha256": "1789cc12969e738096ef2a0d04a0b5bf26badbfcfa05ef25482555a789fdc05e",
+    "newSha256": "8016857a7ca37d3b862472ea188eb005ec85df6cf71661b659530ef36364f78c"
+  },
+  {
+    "path": "lab/receipts/parse-cli.mjs",
+    "oldSha256": "2b2b69bcc82a33103e01bcba6cc60c4b653a4a7c2907dae4c6ec72095bdf6478",
+    "newSha256": "f326befab4642ebf986e7ebce47ba7fa134bd6c6a1e7935ddab677a344909e99"
+  },
+  {
+    "path": "lab/receipts/parse.ts",
+    "oldSha256": "ebb41e13d8fc71a9070d94ff8da07b6001cda70fbb19386d5c43695697590712",
+    "newSha256": "3fd729972e66482b2acd3a7341e0967c0f99d8a78cb66b7c195315e0fedbfa1e"
+  },
+  {
+    "path": "lab/receipts/parser.test.mjs",
+    "oldSha256": "9f3298c9f994456d81fd7f25ad85d69e068ef4ec883165ef1691ca1f633eaf6c",
+    "newSha256": "99cb6c5dbfa52c8fbb31fdef517bce8912ec6f1568db799f9dc14519351deae0"
+  },
+  {
+    "path": "lab/receipts/reader-inventory.json",
+    "oldSha256": "d5d25b0bdf85dc97bb2473a5a48d12c1af5c20cee262f68e1a83e870b61dfd16",
+    "newSha256": "44a7f161fbf94f41a171e520287177a6086c0f47486491361edb6ce460163725"
+  },
+  {
+    "path": "lab/receipts/readers.mjs",
+    "oldSha256": "2050545ebcd142909fe84fc11731de65d1dab3c1ec51abd8e5af2e513998cc98",
+    "newSha256": "2ece0ed437ee4ff6e89194badd8a1d5860b167074aa5cc916e801a69489b9786"
+  },
+  {
+    "path": "lab/receipts/readers.test.mjs",
+    "oldSha256": "d1161d9d66003214348b306fa63e4c18437241f0a558b27d5e1f32d431175fe9",
+    "newSha256": "0b35b3106c8b4128cb5d1ac795a88e3c6c4cb82532d650bd5e146c1fcf0ebb63"
+  },
+  {
+    "path": "lab/receipts/typecheck.ts",
+    "oldSha256": "0a49928eb469d5bb01906d470f5b640ce5f183438f7f8ee40ad2cea046a7f74d",
+    "newSha256": "ab5605c0d7eb11d9b15d15e7ee6fbe1959a6c4aa501174e4645bd2a98af16d9a"
+  },
+  {
+    "path": "lab/scenarios/lib/policy.mjs",
+    "oldSha256": "08ed40635c8b0621dc25e44fdf70ba9b9cd0f4ad778489a146a98fe487df1a2f",
+    "newSha256": "ae133e91d9d91d3cf4a7ed4c8e093afaea8e103ed8c0e6183ef0502d26242fa7"
+  },
+  {
+    "path": "lab/scenarios/v2/offline.test.ts",
+    "oldSha256": "f66b412663ade028d0a9d2da2e886f43072fd6dff8d68be1c05bd998c942bc14",
+    "newSha256": "f945d295877fdd1daeb699eef31b65744065e2c2350cdbc1787d84c755f3d1bf"
+  },
+  {
+    "path": "packages/qlever/experiments/cancel-restart.ts",
+    "oldSha256": "fe0d7569346c4db27635a44fe7541db1efc264505803ab3b721e154a0881ba0d",
+    "newSha256": "eede256223e57f44dcb54548bc12d96a075105e43d19d1f09b412b811b5a6a92"
+  },
+  {
+    "path": "packages/qualification/experiments/verify-feasibility-contract.ts",
+    "oldSha256": "932fde7c5691dac798dbcc1f8a287b7fad44252059b100ab954c7577bab27cf9",
+    "newSha256": "429f4ee1c3d46388180e692c7fc2ccf95f7820fa5d8cf53e252eb5bd46062848"
+  },
+  {
+    "path": "packages/qualification/load/inspect-trial.mjs",
+    "oldSha256": "580cb5ea8e9b88259ef4786bf53594369f1f5e2ab3ca7815b8295c98e816a637",
+    "newSha256": "28196e62b618607e4ffd507e094da2dd1573fb8bfa3752d7707216706b63d1b4"
+  },
+  {
+    "path": "packages/qualification/load/runner.ts",
+    "oldSha256": "88bd6b76eecc8296c0c8d007dde5c38a08cc64d3e90846b4ee6955e59f45fb75",
+    "newSha256": "e2cab3012c178b7fddd91f1a0d09e733a7f25cdb9376da726b819b57ec9fe621"
+  },
+  {
+    "path": "packages/qualification/load/verify-run.mjs",
+    "oldSha256": "5434678d83454fac83d34e116d562b9b187c29f74961ab7882903ca9142ae61f",
+    "newSha256": "932993909988d1bb75fe4a32ae6ea42f4c7676f48ec1dce50bc5a43a71ccf534"
+  },
+  {
+    "path": "packages/qualification/workloads/scale-loader.ts",
+    "oldSha256": "701d890af91f81a5991210539101813548fbf71115772492469cf1dbd426f46e",
+    "newSha256": "4a095c5233f09e38d6f3e7ebb490072716f191af3a01a5ee869d01db58d5d3c8"
+  },
+  {
+    "path": "packages/qualification/workloads/verify-qlever-recovery.ts",
+    "oldSha256": "94326d009f33518fd8b86a31e4c71c812b90db4040f19626ea57b26ab1d3a6b7",
+    "newSha256": "e5c37c76cf9b0ace5707fea542734d87d6492f4dc14c04990b8edf743d384682"
+  },
+  {
+    "path": "packages/qualification/workloads/verify-scale.ts",
+    "oldSha256": "a4d50b1d16a2ea9ac158f0d93e72aef80a23f153c4c950b7381b7ed94d245291",
+    "newSha256": "77c7879c15a632800271913583f6f4eeb04d0b981f71ac51a9efbcdf068b1bcd"
+  },
+  {
+    "path": "qualification/devloop/compare.mjs",
+    "oldSha256": "15b239f4616a6a8f4b4f5f63bd48f99099dd4f3d7ae7163cdf367009d123efd7",
+    "newSha256": "46f116cca69c76b7afebf9bd56d6a3d1f5353cea6da6cce9c0e984d2f92a61d3"
+  },
+  {
+    "path": "qualification/reviews/load-observations-independent.mjs",
+    "oldSha256": "7e1fefa29edb9f7e47f2ab8eedcc2eeb66bf00651a340d56d275eff7f74178e9",
+    "newSha256": "7cc157f3534dc7e39c1965cf81c688d61fb35086c733a3430fc215ce6943cfd4"
+  },
+  {
+    "path": "qualification/reviews/xtdb-driver-stages-observed-v1-analyze.py",
+    "oldSha256": "e9d151d6f51ab38c3c2e1260ada58b320a39c12c6d736f658c0592a2601f5cc8",
+    "newSha256": "352442dc8ff84308a7024c0c8bf87109326529a3e46ee1e71f44ea714c83d894"
+  },
+  {
+    "path": "qualification/reviews/xtdb-writer-visibility-independent.mjs",
+    "oldSha256": "a45608a5e03d3c068a77feb8adb3e1b1e8073a5d4c0415c3a83e8d89620f8f41",
+    "newSha256": "23a8041c61cec7f8d63f4935dd8415a5d119e0bd21a0879b7558a561ab3468a8"
+  }
+]

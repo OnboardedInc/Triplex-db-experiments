@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-X05: after a follower (re)start, wait until its latest completed tx equals the writer's; print timings.
 import { connect, sleep } from './common.mjs';
 

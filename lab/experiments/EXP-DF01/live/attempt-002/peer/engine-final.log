@@ -1,0 +1,3 @@
+/usr/bin/taskset
+Launching with Java options -server -Xms640m -Xmx640m  -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError
+System started

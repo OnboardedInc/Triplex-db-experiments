@@ -129,7 +129,13 @@ describe("QLever compact commit encoding (EXP-J01)", () => {
     const readers: string[] = [];
     for (const file of files) {
       if (file === writer) continue;
-      const text = readFileSync(file, "utf8");
+      // [CX-INT-Q] Why: the broker masks JSON row properties and writes claim metadata;
+      // neither consumes the omitted fact RDF channels. Rejected: excluding broker files wholesale (would hide new query readers).
+      let text = readFileSync(file, "utf8");
+      if (file.endsWith("/broker/snapshot.ts"))
+        text = text.replace(/"(?:recorded_position|retracted_position)" in/g, "");
+      if (file.endsWith("/broker/sparql.ts"))
+        text = text.replace('["recorded_at", String(claim.timestamp)]', "");
       for (const channel of UNREAD_CHANNELS)
         for (const spelling of [`"${channel}"`, `'${channel}'`, `field:${channel}>`])
           if (text.includes(spelling)) readers.push(`${path.relative(root, file)}: ${spelling}`);

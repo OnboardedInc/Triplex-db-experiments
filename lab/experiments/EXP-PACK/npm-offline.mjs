@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
+// [EXP-PACK] Why: seed a new attempt cache from retained registry bytes and force offline
+// resolution. Rejected: reusing a consumer/node_modules (would conceal install defects).
+import { cpSync, mkdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+
+const cache = readFileSync(".npmrc", "utf8")
+  .trim()
+  .replace(/^cache=/, "");
+mkdirSync(cache, { recursive: true });
+cpSync(join(process.env.CX_VPACK_CACHE, "_cacache"), join(cache, "_cacache"), { recursive: true });
+console.log("[EXP-PACK] npm offline; fresh consumer; seeded registry cache only");
+const result = spawnSync(process.env.CX_VPACK_NPM, process.argv.slice(2), {
+  stdio: "inherit",
+  env: { ...process.env, npm_config_offline: "true", npm_config_update_notifier: "false" },
+});
+if (result.error) throw result.error;
+process.exit(result.status ?? 1);

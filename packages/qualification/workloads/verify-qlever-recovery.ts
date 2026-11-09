@@ -1,3 +1,4 @@
+import { readLatencyRun } from "../../../lab/receipts/parse.ts";
 /** Independent read-only checks of acknowledged data predating the OOM waves. */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -32,12 +33,12 @@ const inputs = {
     "qualification/evidence/qlever-cancel-restart-ab62c5a3-b727-47a9-8f57-bf5f5f175ba8.json",
 };
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
-const oldRun = JSON.parse(read(inputs.workloadRun));
+const oldRun = readLatencyRun(path.join(root, inputs.workloadRun), { lane: "qlever" }).unwrap().data;
 const events = JSON.parse(read(inputs.events)).workloads.find(
   (workload: any) => workload.id === "17",
 ).events;
 const oldFunnel = oldRun.workloads.find((workload: any) => workload.id === "17");
-const sentinel = JSON.parse(read(inputs.sentinel));
+const sentinel = readLatencyRun(path.join(root, inputs.sentinel), { lane: "qlever" }).unwrap().data;
 const scalarStart = read(inputs.scalarLog)
   .split("\n")
   .flatMap((line) => {

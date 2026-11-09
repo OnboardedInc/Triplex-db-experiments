@@ -1,0 +1,113 @@
+{
+  "testedSource": "109100f565a425f04919a2553ce5551c7c97b994",
+  "mainIncluded": "35ae3fa006c3420fa7e591e667c2a14bc2637770",
+  "sourceHashesStable": true,
+  "contractTests": 24,
+  "evaluatorPass": 108,
+  "mutationCatalog": 608,
+  "mutationsCaught": 520,
+  "retiredAnchors": 88,
+  "g0": [
+    {
+      "lane": "xtdb",
+      "runId": "G0-xtdb-20261109T075058Z-c85519",
+      "counts": {
+        "executed": 1223,
+        "pass": 1223,
+        "fail": 0,
+        "skip": 140,
+        "expectedSkip": 140,
+        "unexpectedSkip": 0
+      },
+      "sourceTreeId": "32f59770af8e9b0e9967a21bf2b5b9c9dca5bbea42750ee7a3029f73c08f9152",
+      "objects": 41,
+      "builtFiles": 586,
+      "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round3/g0/G0-xtdb-20261109T075058Z-c85519",
+      "capturedAtEpoch": 1794211057.382453,
+      "startedAt": 1794210658.539
+    },
+    {
+      "lane": "datomic",
+      "runId": "G0-datomic-20261109T075746Z-9bb305",
+      "counts": {
+        "executed": 1277,
+        "pass": 1277,
+        "fail": 0,
+        "skip": 66,
+        "expectedSkip": 66,
+        "unexpectedSkip": 0
+      },
+      "sourceTreeId": "32f59770af8e9b0e9967a21bf2b5b9c9dca5bbea42750ee7a3029f73c08f9152",
+      "objects": 48,
+      "builtFiles": 548,
+      "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round3/g0/G0-datomic-20261109T075746Z-9bb305",
+      "capturedAtEpoch": 1794211165.153059,
+      "startedAt": 1794211066.691
+    },
+    {
+      "lane": "qlever",
+      "runId": "G0-qlever-20261109T080108Z-2e5350",
+      "counts": {
+        "executed": 1415,
+        "pass": 1415,
+        "fail": 0,
+        "skip": 79,
+        "expectedSkip": 79,
+        "unexpectedSkip": 0
+      },
+      "sourceTreeId": "32f59770af8e9b0e9967a21bf2b5b9c9dca5bbea42750ee7a3029f73c08f9152",
+      "objects": 41,
+      "builtFiles": 628,
+      "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round3/g0/G0-qlever-20261109T080108Z-2e5350",
+      "capturedAtEpoch": 1794211710.111795,
+      "startedAt": 1794211268.881
+    }
+  ],
+  "runs": [
+    {
+      "label": "r3-verify-final",
+      "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r3-verify-final-c6d799ff-c967-4547-9f6c-66f83330ac04/receipt.json",
+      "sha256": "c07e6ae7feb82ba186381a4ca76e1737e9e1b70ce81a882632a241589fd4e8a0"
+    },
+    {
+      "label": "r3-contract-tests-final",
+      "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r3-contract-tests-final-b33bbc18-b443-4517-ab24-1e26e24cc8e2/receipt.json",
+      "sha256": "368a0cd138a628050d12a9ea1e5d4b7856ff6ef07df06b21362a75c7f9a23ad3"
+    },
+    {
+      "label": "r3-evaluator-final",
+      "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r3-evaluator-final-558bff51-d424-44f6-a161-e4b065ba8ff9/receipt.json",
+      "sha256": "c626ea10525365cf39fafd2dddcf143c89b3dd36cf1fd91394e72d0f75c255be"
+    }
+  ],
+  "focusedDatomicTests": 19,
+  "integrationDomainTests": {
+    "result": "FAIL",
+    "pass": 38,
+    "fail": 1,
+    "datomicCasesPassed": 4,
+    "failure": "test/value-domains.test.ts > memory accepted endpoints survive journal, callback, get and receipt without conversion",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r3-integration-last-final-230abbee-bd70-4f65-816d-ecc5f37dfdbd/receipt.json",
+    "sha256": "921c48c2eded5e47fa4b0e283517e44d2f6545ae9bcbedf46dd1da456113134e"
+  },
+  "runtimeTypeFixture": "tsc exit zero with missing-domain expected error consumed",
+  "movedActivePins": [
+    {
+      "path": "lab/acceptance/RULINGS-PENDING.md",
+      "oldSha256": "a68a15db304eebadd1a05d34b363fc957d95e805d68a627326fd59edb8a3a237",
+      "sha256": "9ff9fc9a0041d271205e2a019d57e53c23cfba9b392e60d68e1a256df6f71f3c",
+      "currentReferencedHashes": [
+        "9ff9fc9a0041d271205e2a019d57e53c23cfba9b392e60d68e1a256df6f71f3c"
+      ]
+    },
+    {
+      "path": "lab/acceptance/build_contract.py",
+      "oldSha256": "6f533cc044d3620dafdd4e96b57a7fd5b71bd8179abb7ca93daeaf1af7c87639",
+      "sha256": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6",
+      "currentReferencedHashes": [
+        "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6"
+      ]
+    }
+  ],
+  "noIndependentPromotion": true
+}

@@ -34,3 +34,7 @@ human is watching this run. Your role and task follow after these rules.
 10. **Report.** Write your full report to the report path your task names (or, if none, `REPORT-<your id>.md` at the root of your
     worktree, committed), then end with a short final message: result, head commit, evidence paths, open questions. State plainly
     what you did not do or could not verify.
+
+10. **Docker context (2026-11-09).** Sam's default colima VM is stopped (ruling Q106b), so the `colima` docker context no longer exists.
+    After any colima command, do not run `docker context use colima`; leave the global context as `default` and never set it to
+    `colima-triplex2`. Reach the lab VM only with DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock through lab/bin/engine.mjs.

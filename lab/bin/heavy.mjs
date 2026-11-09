@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/bin/heavy.mjs [--label TEXT] -- <cmd...>
 // At most 4 concurrent heavy local commands (typecheck, full test runs) across all agents and
 // worktrees (PLAN section 7). Waits with a visible message, then runs the command.

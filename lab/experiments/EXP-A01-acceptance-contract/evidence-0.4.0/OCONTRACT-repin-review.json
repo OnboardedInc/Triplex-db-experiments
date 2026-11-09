@@ -1,0 +1,51 @@
+{
+  "format": "triplex-db-2/ocontract-repin-review/1",
+  "finding": "VERIFY-0.4.0 F1 (commit 4d487ce5)",
+  "roundBaseHead": "4fa6192cf3b90ecc0f6f75ca018914d9590dd1eb",
+  "stage": [
+    {
+      "path": "lab/acceptance/oracle-contract.json",
+      "previousSha256": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
+      "sha256": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266",
+      "baseCommit": "f3ed62112028440389710a86fbf5c82c2f91afda",
+      "diff": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/OCONTRACT-oracle-contract.json.diff",
+      "diffSha256": "d97a0c4d91bfc0119e6094a68934b9ca8a622aff66c0552f52668f5ac3e98441",
+      "hunks": [
+        {
+          "header": "@@ -58,7 +58,7 @@",
+          "changesMeasuredWorkload": false,
+          "reason": "Datomic image identity in the composition-identity projection only (DF01 gateway image); no query, data, writer schedule or threshold change. It changes the expected O-CONTRACT answer of cases that compare the Datomic image digest, and new measurements are needed on the new image (DF01-image-review.json)."
+        }
+      ]
+    }
+  ],
+  "buildContractPy": {
+    "path": "lab/acceptance/build_contract.py",
+    "previousRunnerSha256": "653cec719e6f7f8964b00aca1f8ba1b40325e7b645153743059b0df3674a87db",
+    "diffBase": "4fa6192c",
+    "note": "This file is itself an O-CONTRACT runner file, so its pin changes with every edit and is computed, not written as a literal. None of these hunks touch contract_oracle_answer, contract_oracle_projection or any data the runner answers from; the measured workload is unchanged.",
+    "hunks": [
+      {
+        "header": "@@ -5845,2 +5845 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Removes the early pin assignment that ran before DATOMIC_IMAGE_040; replaced by a comment. Generator wiring only."
+      },
+      {
+        "header": "@@ -6460,0 +6460,26 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Adds o_contract_runner_hashes, the late pin assignment, PIN_STAGE_OCONTRACT and checks_pin_OCONTRACT. Generator pin computation and check only."
+      },
+      {
+        "header": "@@ -6466,0 +6492 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Calls checks_pin_OCONTRACT from main. Check wiring only."
+      },
+      {
+        "header": "@@ -6515,0 +6542,2 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Cross-checks artifacts.oracle-contract.json against oracleRunners.O-CONTRACT.sha256. Check only."
+      }
+    ]
+  },
+  "history": "The stale runner pin was committed in DF01 merge f3ed6211 and stayed through 4fa6192c. Those reviewed commits are not rewritten; the re-pin lands in this round's own commit, and checks_pin_OCONTRACT plus the O-CONTRACT mutations make a repeat fail at generation."
+}

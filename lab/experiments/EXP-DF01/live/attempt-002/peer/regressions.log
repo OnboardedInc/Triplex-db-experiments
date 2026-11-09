@@ -1,0 +1,21 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 40937 "CX-HS01-evaluator", pid 39400 "CX-P2B-R3-corrected-maintenance", pid 62548 "CX-CRNS-r4-final1"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 40937 "CX-HS01-evaluator", pid 39400 "CX-P2B-R3-corrected-maintenance", pid 62548 "CX-CRNS-r4-final1"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 40937 "CX-HS01-evaluator", pid 39400 "CX-P2B-R3-corrected-maintenance", pid 62548 "CX-CRNS-r4-final1"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 40937 "CX-HS01-evaluator", pid 39400 "CX-P2B-R3-corrected-maintenance", pid 62548 "CX-CRNS-r4-final1"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 40937 "CX-HS01-evaluator", pid 39400 "CX-P2B-R3-corrected-maintenance", pid 62548 "CX-CRNS-r4-final1"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 40937 "CX-HS01-evaluator", pid 39400 "CX-P2B-R3-corrected-maintenance", pid 62548 "CX-CRNS-r4-final1"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 1196 "CX-HS01-valid-frame-probe", pid 39400 "CX-P2B-R3-corrected-maintenance", pid 62548 "CX-CRNS-r4-final1"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 1196 "CX-HS01-valid-frame-probe", pid 39400 "CX-P2B-R3-corrected-maintenance", pid 62548 "CX-CRNS-r4-final1"
+
+> @triplex-build/triplex-datomic@0.1.0 test /Users/sam/projects/triplex-db-2/.claude/worktrees/df01/packages/datomic
+> vitest run --bail\=1
+
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/df01/packages/datomic
+
+
+ Test Files  6 passed (6)
+      Tests  117 passed (117)
+   Start at  04:56:12
+   Duration  52.20s (tests 97%, import 2%, transform 1%)
+

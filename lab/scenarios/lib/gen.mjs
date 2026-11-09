@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/scenarios/lib/gen.mjs: seeded, deterministic command streams for the GS scenarios (TARGETS section 6).
 //
 // [EXP-W01] Why: one generator shared by every scenario, so the same seed gives the same bytes for the

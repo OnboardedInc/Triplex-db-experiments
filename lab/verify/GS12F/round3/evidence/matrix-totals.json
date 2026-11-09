@@ -1,0 +1,20 @@
+{
+  "legacy": {
+    "legacyVectors": 199,
+    "policyRejected": 9,
+    "accepted": 190,
+    "rejected": 253,
+    "publicRejected": 759,
+    "callbacks": 0,
+    "claims": 0
+  },
+  "current": {
+    "legacyVectors": 0,
+    "policyRejected": 0,
+    "accepted": 196,
+    "rejected": 257,
+    "publicRejected": 771,
+    "callbacks": 0,
+    "claims": 0
+  }
+}

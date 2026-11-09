@@ -1,0 +1,2642 @@
+{
+  "hashes": {
+    "examples/config-explorer/smoke.mjs": "dc8f034738c5f2bd8acb4f7b93a0da7c9880ef81a5ac33abe8001f6d92713b1c",
+    "experiments/qlever-native-count-inventory-v1/runner.mjs": "93a3abc7513cf7c1c17c2ba5e3c419ec6550566b51a84439f26179712bede1b6",
+    "experiments/qlever-native-fault-preflight-v1/runner.mjs": "5342fea4f458701a9d6561856f46a760c129f0c194b36045a03b4cdb11ebc043",
+    "experiments/qlever-native-fault-preflight-v2/runner.mjs": "4d48a31bebdc080b592ff3a91ba3ab26fce67164ab395565c6abf1b8cf99604c",
+    "experiments/qlever-native-fault-v2/controller_bridge.mjs": "bea10e3e9fd66e447d19beed8155a24a447a592be819d786c39dd104a3f6d40d",
+    "experiments/qlever-native-fault-v2/controller_checks.mjs": "75b1a64dae830b8769780aed698e6fd5f5ae1d438a2c54ab5d6e5f3f3b0c0367",
+    "experiments/qlever-native-page-sample-v1/runner.mjs": "c4aaf3a2b1b07a36e86b8ba1ad2b0c8da6f91e38bc8c9916646d24c461ec9fd4",
+    "experiments/qlever-native-page-sample-v2/runner.mjs": "56960dc9ca288067f8d34b60b9d16ab7a554e6dfce0e9a103f5d2645da482131",
+    "experiments/qlever-wide/independent-oracle.mjs": "9265533b339406c0edfa725ae0af3407e3329e18f6e0c9418e7c81f2cb91dcc7",
+    "lab/bench/summarize.mjs": "8085e05aba3e851a87da3e2d53d8882e9e2b920551dbc8f234935c609ea4cd43",
+    "lab/bench/wait-slot.mjs": "4ad4784618eda18b28ca17995fed3a47c7d3101e3bb5494db42aa47d03ce1a4f",
+    "lab/bin/agent.mjs": "873d2ce146f14d40926c952eee94147182dbd4adc5e0a2e08612e83dd3364649",
+    "lab/bin/checkjs.mjs": "c78dee3dfd52a64e65b26d55b9939dd8eabb88ee7672a60ab8b05dc824ef81ba",
+    "lab/bin/claim.mjs": "ca714f5c756399e16b4c2dbe336f3cfea91e5661edb0d7d28672270d33d38b78",
+    "lab/bin/datomic-context.mjs": "4dc30f3ed52ea6791e7b2a2635bcd7977e69a93f848539b9d67bafd441dd3611",
+    "lab/bin/engine.mjs": "96c7590c8ab35e21490bded2d45f0bbd65a723c0ce4e2c6bec8e876e12012acc",
+    "lab/bin/gate.mjs": "a934c613174d7d00d57d287184073c38ac56a5ae20fad163432b973bf777f21f",
+    "lab/bin/heavy-lock.mjs": "d0d442e9ca8fc4e7022fbcfa3404523ed823b64f59eb116fc66e06e1f703b052",
+    "lab/bin/heavy.mjs": "c4154d0da53ef639422c6fcb652429682d48cc7450babd34fca80b66057c8ae9",
+    "lab/bin/lib.mjs": "0288c5f586e57127dc302c7b6bc3ddf6e4ca6cdceb96ffdbf037787dd7672298",
+    "lab/bin/receipt.mjs": "7e9a4600866ea476e99ab9d6496b945192f6f12be7a285450b71ea93c5b4eb51",
+    "lab/bin/scorecard.mjs": "1331d908e15db4ffb4c8785e3b285416051d7cfc9f04418a18315129acaf3a2d",
+    "lab/bin/status.mjs": "89eed8943a6fac5247e86f07fa42a4b86d0f8b3bb9fdf016b591090f4034940d",
+    "lab/bin/test/checkjs-overlay.mjs": "fd1828bd253f02537811e749ba841c5c1be16547bd9146bba93f82665f12604b",
+    "lab/bin/test/checkjs.test.mjs": "760a7da02ed885fd2071848ff96f908ec85016635cf40ee680bc60b3bc86c039",
+    "lab/bin/test/claim-fixtures.mjs": "debcc0deb877912639cebdc2d107bb391397d5334f724676751ede18d7b52c89",
+    "lab/bin/test/claim-round2.test.mjs": "4a5c65d1d26fd71996f8a0f6e8b765608d628abb74e69fbd7a4bf2348a22edc7",
+    "lab/bin/test/claim.test.mjs": "b8352b989fcf5857cb8f4a4a3d3766ed1f61f46ba6b0760f8568060f3b8f819f",
+    "lab/bin/test/datomic-context.test.mjs": "71f7cc4e2bbed96341041c2338f384615000ca3be175e9d32ad0f94122c92831",
+    "lab/bin/test/lab.test.mjs": "aa78da91d1e7bbf7b68e74bd34ccea0cacfc13be56086e99285a73065a278e7b",
+    "lab/experiments/EXP-001-xtdb-baseline/task-languages.mjs": "2c9c84f7ca299cdb8cb209346b917477ec9f621337968720bf250068890d4998",
+    "lab/experiments/EXP-002-qlever-baseline/qlever-log-latency.mjs": "165fa651216e67b1d95a225ae0cffc20092707f222a25213d8dfbd2b485af46a",
+    "lab/experiments/EXP-A01-acceptance-contract/regressions/merge0313-round2.test.mjs": "e1f85c4cb7be86533b460b030dff1b567017efcc179de975502ec44eb5680df0",
+    "lab/experiments/EXP-A01-acceptance-contract/regressions/screening0312.test.mjs": "6973d65e718947aaed942ea43b16d1e733b7f16124ade0b65e18f81be2edebfa",
+    "lab/experiments/EXP-A01-acceptance-contract/regressions/screening0313.test.mjs": "ec5830867cbb425e14a52ebae89eb6e5dcddbe9ab3e4674d8cbe3a58047ff750",
+    "lab/experiments/EXP-C8-read-only-frontier/round-timing.mjs": "4bf618eb6c86dfed278c66220b2c0cdb871e1ecc0d0f247312c047dd8e740ada",
+    "lab/experiments/EXP-C8-read-only-frontier/round2/capture-source.mjs": "27956af6b00bb54d8e0bd06ce4a6c74530548f1096daf8276b866e6d40438e98",
+    "lab/experiments/EXP-C8-read-only-frontier/round2/run-checks.mjs": "738056f74bcd998e5ec40c71f339cfbd834e654ccc40cadac47c81057b1c0c61",
+    "lab/experiments/EXP-C8-read-only-frontier/round3/capture-source.mjs": "2cdb086444cf40bb06cee1bdfc70b29f7930c67abe57b9ab219ad34f874e6260",
+    "lab/experiments/EXP-C8-read-only-frontier/round3/run-checks.mjs": "04a4aa1e8ae497c8ae259f7dd0ec014548cf4ad13b9ceb337d8238c89c6f0e94",
+    "lab/experiments/EXP-C8-read-only-frontier/round3/run-offline.mjs": "129de9427a430700ab9a620c74a14333f76369ed5b3b6c2fee57a3628bfc6212",
+    "lab/experiments/EXP-C8-read-only-frontier/summarize-timing.mjs": "ae24cb9ad7dba8504d46d73580a05db4d75de3b5a7e7c5411c487895f2316aed",
+    "lab/experiments/EXP-CHECKJS/round2/verify.mjs": "32f5ead2fd832fb568ae4942787af2e986b168e893dfd4767562f2683b2e9e9a",
+    "lab/experiments/EXP-CHECKJS/verify.mjs": "1c71a961f455cf5c70eb06bfe0b53b2cf51ee1f7512c89b09c7bec885a1408a9",
+    "lab/experiments/EXP-D01b-w0-kernel/receipts/mutation-112/mutate.mjs": "0c4bcfbd2942d8606df8399d521de7bb24111cce2644ecd03fc54b5516a6c7f3",
+    "lab/experiments/EXP-DA00-datomic-bringup/live-client-smoke.mjs": "8c4b18e0c5c6a02573bb3c579987326ec75e61acd2dbca7012b4dbbeebea4427",
+    "lab/experiments/EXP-DA00-datomic-bringup/measure.mjs": "28854f3479264ff7457b81b92d0bac7a23a42d1c5add4da82b22e7eced0b4a7d",
+    "lab/experiments/EXP-DA01-datomic-adapter/consumer-check-2.mjs": "748767608af48fb2f95279c9318bfcc4f2186e7fc823b109ea9c439c6f299cde",
+    "lab/experiments/EXP-DA01-datomic-adapter/consumer-check-3.mjs": "3321d07f35929adda821a2b814209f65b5ca31f8fb04bdd28ea0130b4c137313",
+    "lab/experiments/EXP-DA01-datomic-adapter/consumer-check.mjs": "8482dd7cfba35ae03ee9667b40d0f02abb655abc90cbfc0fcc18924e8e6a5c95",
+    "lab/experiments/EXP-DA01-datomic-adapter/diagnose-suite-after-cap.mjs": "b0f9a6aeee0390fee77cd9ab84d47f35d0f290e82de190acadea001a428f2f8d",
+    "lab/experiments/EXP-DA01-datomic-adapter/diagnose-suite-after-order.mjs": "80dae56680ae071446b8331404cc47daa68fd490455e53321e95c245695b4b14",
+    "lab/experiments/EXP-DA01-datomic-adapter/diagnose-suite.mjs": "c61c8b1147a2798a0b571cfaefc9e8ccf837c9e8094b355f83d94faab047afba",
+    "lab/experiments/EXP-DA01-datomic-adapter/evidence-manifest-final.mjs": "2ec36a4a16fe65a69bc64da3dbc089c2aec39750a5ba7adfc5ede2f50b0bad0d",
+    "lab/experiments/EXP-DA01-datomic-adapter/evidence-manifest.mjs": "f66ab03e8b77107cc974d78294d1dc29b5b8732d9aaaf17cf00ff897f6c61159",
+    "lab/experiments/EXP-DA01-datomic-adapter/finalize-evidence-final.mjs": "0863a8b05e1dbf48fe2c222d7c764ed859f7c17c71f87c41df25f299d9540765",
+    "lab/experiments/EXP-DA01-datomic-adapter/finalize-evidence.mjs": "0c17092a852f05306d03b7013fba55849eb53521f8ace7eba2069c0c3227cde4",
+    "lab/experiments/EXP-DA01-datomic-adapter/measure.mjs": "5fcf6fbee0f9ae799d94fea5f6b7b40b38a801fe75f08985401eff6af4316cea",
+    "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-2/smoke.mjs": "d44a86d9c25cd6f39ff88bc29935c23d313b22dd69dd781fd9b32d7d6414681f",
+    "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke-image6.mjs": "eedc0bd7496a24bddeed8adb2ed611c26d2b8650e4bd093641f826796be83aac",
+    "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke-image7.mjs": "e3b7afb10972e225e25e73779a528ef66e6076e29d42550d9a4d3d7cefb2bd25",
+    "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke.mjs": "d44a86d9c25cd6f39ff88bc29935c23d313b22dd69dd781fd9b32d7d6414681f",
+    "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer/smoke.mjs": "d44a86d9c25cd6f39ff88bc29935c23d313b22dd69dd781fd9b32d7d6414681f",
+    "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/measure-image4.mjs": "9972b5d9011131e1820c412666c20be11906c8d4c2135c2ab7ecccb694321994",
+    "lab/experiments/EXP-DA01/round2/collect.mjs": "c2c5e34d86675322a10cfa2b0b607f54e8605faec7ee2c4e397d7c576bd17ec5",
+    "lab/experiments/EXP-DA01/round2/manifest.mjs": "240a0ff2f646103a23c865e9a9e12374c35c201ff6f2a276cbaeaa28e3d3f858",
+    "lab/experiments/EXP-DA01/round3/collect.mjs": "d45f54ccceb0be95f47ba85f29c6c48e41db79daaef5ebbff36b685d739ab9e5",
+    "lab/experiments/EXP-DA01/round3/deploy.mjs": "7f0fc647af41893543a8e9f5c900c992639851c4587280684dae9e7784d66191",
+    "lab/experiments/EXP-DA01/round3/manifest.mjs": "87317fcda0637285a4cd3aad99513e7d59beafabd6ad31b4121ddc24edc680f9",
+    "lab/experiments/EXP-DA01/round3/pack-check.mjs": "b261a8c9b5e5f75aeb60ff0d6e9c45f91c52a763ef7f67e4dd4d5dc0afabfadf",
+    "lab/experiments/EXP-DA01/round3/packed-exports.mjs": "52fa09158f5ec2a7acbb5fb13aa5a1063c4143bb9645d2813b42bd107b6a8b8b",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/Branded.js": "202deb52fed11b0be98b5a5fdc33505a1d8f845d7dc162ba6fddcbc40bc8acaa",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/Constraint.js": "0f99a34a7adf46262f70ccc2a8b61d2228319c72a0a2dbb5460ffdac804bf574",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/EntityPage.js": "d1b4fd09e2cfcaf666f7cfccec6a3bcef01e8c22ab1c30b9972d906bafff6432",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/Error.js": "6c317159a1182015dff6f7aee02607c39760626095460e1bd98074a6c633b30e",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/Pagination.js": "33753e83aec05bd866acb15f5940fb69a7c2c80641cdbf1f8ed1d3d18694ffe3",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/Temporal.js": "24ab17cb3d5a4b547c7cccd55b32c4653a84a966d7d45baaa5ecbf41c7a71deb",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/Triple.js": "4209082373c1b3ae1a84cf036b8daa863cab67906542b2f0a659bc1643a65134",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/Value.js": "136d3cf1b78df7a24a5a26604414137652d642ad1051fad824cba721b4a59dad",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/_virtual/_rolldown/runtime.js": "1b10431e13b4eb349c329aba7d2beb6e6c224de569eac52966731c8239a941c9",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/Attribute.js": "4aedff0d291469880db4702745744657fa159058b0058236df3a3b7710e8074f",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/BoolExpr.js": "1b1bb4f2273879e96ee78fb1e89963610d20d919db0b02440be39a2c9e9a5d41",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/Catalog.js": "0a27d6f64ce0b68e33b8b9435e9272c8073ca930c0ba2386091c9466998c1e9f",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/ConfigNode.js": "fecf82103afb76d8dd5639345f5e423b7c24484d435d92e5b32783c56730d20a",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/ConfigRuntime.js": "05ddc46c9d59aefc3beede1df13506b38c0872a11483fef63dab24a5b7725c69",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/ConfigStore.js": "19f59fff44ce3c922487d9238210b50353a21d66cd0a3deffc9be3e25d4a4ca8",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/Entity.js": "bf1c697ae18ca57e975a5c9082baf70bb14c6768353384c3cbf78ff2f873eb22",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/EntityType.js": "2c6c03dd9e95c47932bfc1f5857ab17e1237ed9be4ed453d31f7019c275ab93c",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/EntityValidation.js": "670dd79e10f69e0d26b963b99139a92917166fcb5ee596a4a79a0d2dd72a7dd1",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/Evaluate.js": "fa52803a5fdb939d2608f827a4b8f9ecc37cb1737d2ec801864dac381535753f",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/GraphConstraint.js": "98e3a13f52272e56811606aa1609655f3b79f2303adde881db372178b1eae362",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/InMemoryConfigStore.js": "c60b22f91ce6cdee8027b44eecae0e44b843bd8b5d79360273b1a8c8a4f0b5cc",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/Reactor.js": "5732f44bb5d27ddbfa9752d1e25fc8c8a1bc4cfa3b9207b1969f7a3c309c72dd",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/TypeExpr.js": "0f74f8bec8937b032207c4cc47bff2bee16f3a538e16beb79c24b3a840254db8",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/TypeSchema.js": "81a7f52b3105c50d1be4af209d92121bf7e7bcdede1b91ccc98cab7bc97b1c01",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/TypeSubsumption.js": "798521a8a64d2c1e0aaa37c6c5d1bd36ccf18978055e9769f64137b45b27ed0f",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/World.js": "ece4511e4e793c5dc948cd20a51ecd68843b3c63e862860917f608a3d3ae0360",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/config/index.js": "f4333f960d47d01c46e3bfcea3b401c38290e991c44dd66040890ff1284437aa",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/content/CanonicalJson.js": "5119d6bdbb7e5c5daa60185e16da28a71f57cbe1713fbb78472296b58297f62f",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/content/ContentId.js": "e7313cfe840ded65d40dfc90d7c42c122b2cef32924d338e184871e1955fcf2e",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/content/Sha256.js": "21ce04be7ec7557a53ef310343dd7bf3dca8d08cfa73bd8bd91dfbf05e4500e6",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/content/index.js": "caf7233e751f0d881d67efc07b62e6945d16fbd0cbbdc6fb2f4fd6fa1e200858",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/datalog/compiler.js": "f75f35fb93ea576dbb47d99b6e918effc6baef6d0aa1ed2eadfb88249f024483",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/datalog/index.js": "4c8bcebbee1f4779d1b11d5fb317bfd98bd2e6ed855e96f67474070bc98906a3",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/datalog/schema.js": "77cefc3c97ed0ba79380f86caa02f3589c40f1270a97b4a389209314140686a5",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/datalog/types.js": "c95a84aed993a081b2ca56419e09635531d0066a4d606b8861f4bd64c3b8103d",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/datalog/validation.js": "29a965c23d058aed16cc84fa633be8d4b5b814fb4a7c55fcbed63b645cb0d940",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/datalog/wrapper.js": "1dbc5af675a96641c2a9a0d864194902bee77f01eeabc6a19a62c984e89764a8",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/derivation/Derivation.js": "0baea1149823674da68cbd781ead539e44ee0e5cbc15bd65dc2f68ae1735c7b0",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/derivation/Materialization.js": "ea69187e6695c556be9f165f52a3ba9d18c3ac920495def64bcb561b220730a1",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/derivation/Overlay.js": "6c5eed3bdfeb36b1561da0840d63dcfb8aa0369229f6c984684de5d229e17467",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/derivation/index.js": "6210a30ee7a07cf8d1b8c88f96537d8c5ee23368b2c29ca5f32ae4ce76346e14",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/dialects/index.js": "80784705fd5fe1ec96be34997b9df6a58f1c959be7ed9ce1015d4f34aac556e7",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/dialects/postgresql.js": "9512b2beba23c398fa83616a37e4f539384e2530f3bf1ac7b442918bd28b22ee",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/dialects/sqlite.js": "3af7674b49dbbef656d9f7c8922995952a6d8f57fca365381293f17a2ef33bb0",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/dialects/types.js": "90ca0326f78d587fdd78cf1c1b3ac30af2bb7553ee0a449386943fdf237c6302",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/entity/Descriptors.js": "57f84545de4208b84cccb4b3b0450cdbd96fcbeae3beb6e8c5762f5e1518d201",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/entity/EntityCodec.js": "32ea766bffef3ebe98649d1c2916ae76b877a84755a32624841cd1ff646b4f65",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/entity/Errors.js": "8934d8d03b3b2d4aa095e6406cdd25f05456979cb2a3fbd3d7c354a2f4ae7b8d",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/entity/Model.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/entity/PhysicalNames.js": "31ff797a1cf6b5e92d55ab3a82fde74956a566475eb6552efb4cc3f428706d6f",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/entity/Plan.js": "011e9abdb8a12b11a69d6f0db60d17a8df3062882c1e2c34dcd6cdd21d0bc556",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/entity/ProjectionSpec.js": "2236bf09ccafd84c9079ea45f1b495998d5c2842644c5f289afc3ad78b395af2",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/entity/Repository.js": "c8b80fa991bc175309cb16d15940dbe807806e567e2bcf5e534c1ba0b9e52910",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/entity/index.js": "71c9d9bb884bf66a88cf2395a8a5d7b79c9f849ecf4685cb7f6cdf5df61c307e",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/errors/index.js": "5df58797bdd29ae1aff4962289c76e143dd08aa5d51f9df63d679065900b14fb",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/index.js": "58fe9072ed1d383387835600a7131d345005c95a630b75323cc32b1812140103",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/internal.js": "bf07d1363b0556316fe9109babb92376d15cf0c12a620c9dc486dfb665b3d638",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/datalog/executor.js": "5b161e50a992bbf8af3657395df559dab7a92dd0ae44cbf9778f08885593d8b5",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/datalog/index.js": "0814752382f2cee48056909799211a97957a9fb8b2ec7af25960943e35a261b8",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/datalog/pattern.js": "ea09f9f477fd435571e1ccd4095381687e5d0690ac280a64ed0b6771bc472248",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/datalog/predicate.js": "6f94bfa2ebd8cb7d45e3de678e6c2646c808645e632bbc6ffddd16caa67b83bd",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/datalog/types.js": "b6e5c0cc2d2fa042fd21ed73b093059342fd0c74362e02fc77bf36a4c035d978",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/hexastore/KvTripleStore.js": "ef08618b809ef7b0acf44c583c7814ff15547c325551f2c89adb75f6e4be55e3",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/hexastore/index.js": "b6dd54cd9df2158c3be0441b1e634f37eaa41dddf3e448b05e6eb066cdad033e",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/hexastore/indexes.js": "80c1e8573a4796a686b3a1e75003cf2ac86f6b6eb01d0e08b35599496748539a",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/hexastore/scan.js": "899d33c3800dd62e5e523b9e7f89aadd369ad4d2a72ebebc46edccf41230bd29",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/hexastore/tuple.js": "e97451f2a993ce94aafb3b8032b635aa92f6e2296e73b8aad245ae60bff95d06",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/index.js": "ef51ac49dba183097299b46e52eb5894697c5415bdea27cffc35ef7872c7b44f",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/kv/InMemoryKvBackend.js": "4f1909eb57ad50f2d5dad9814dea2af8678ad9d11eee3d2b017312b19449545f",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/kv/KvBackend.js": "70843f4fecb0d78b5b0d28648e0bd8f191c9862a2e282348346154cd445f5d72",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/kv/encoding.js": "43ec9869ee31e4285c69c08e9af38f77f38fe4847760647ab5b269937a251720",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/kv/index.js": "84c9a9b6ddcd03f1f6ed08df6eee51cfbc139c5805ba4a37f9631840fa6edea6",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/layers/KvTriplesLive.js": "d9a28fa812a92c5509de2a183c9e67b57c1f05d1fc2cdd89a4189a1b2d77db55",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/kv/layers/index.js": "9f2c7f14f396b45da79186d2686e0d4bc7d2d26419ad4a176366f613523a9651",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/native/NativeQuery.js": "24c10e296a96ee81d25bc8ccdabdda52b52906ed566c44a4a7830ecf7f772362",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/operational/ConsumerCheckpoint.js": "c0a96030aee564fcaf9a8bf5a383a2d981c0e58da7bc3138991aa2f8d9ed0a10",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/operational/index.js": "c88d859a959ea897f779a59ba23121d5a1354e5f49aabd414912d58faea7d457",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/params.js": "1f4cb3e565242726f5591e421eee68b978ddefd3aefa4ad8932f7099d3d9537b",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/runtime/Capabilities.js": "1349fd2b1553e1e9a602a270c9d6fa751deca0faab84b503c14c84f9578c66a8",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/runtime/DatabaseScope.js": "27ac0916e3e3aee6bb4fbbcaebcc1ae595e63cdf23cfb55fc818b9e7baa86f3f",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/runtime/Runtime.js": "3976442e7408a5ef658eead6dab0b9a091cf4e14886f9b0645924ee0a3113d86",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/runtime/index.js": "a558ff64b66dc0ca51688a94ec35f5659c03fa56c3fb3153e6a4c6e1cffdaf2c",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/snapshots/EntitySnapshotsCapability.js": "c0b360c99a0de333b321af0b8d8fc8ab278c9219c22f3e13815f85a8a7d0bb13",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/snapshots/SnapshotService.js": "aac3ee8746891ec46bf9b1448a5861f6711ad8a090b75cc345ae1bb9bde22a73",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/snapshots/SnapshotServiceLive.js": "2da76d5277fee562dc0104d5b58a99a75b0704309d2745abd608fec093a8cd65",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/snapshots/canonical.js": "ca9aa32e7e1ee48343c0fdc7601f9ffe80f0b5e6294e4ff53c02d7a28fa9db04",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/snapshots/index.js": "6012ddd23e880021a933abe236aebe0829d7678d5654d5dd7d1e9a9230dd8823",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/storage/QueryExecutor.js": "d6648179977cc9ae6f4fb58ac29b0df9fe053e966f082a33d03e9cdac748a9d0",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/storage/StorageAdapter.js": "182d82d5e909f49778a0fd0245aa6751949545fee20b1ca0ea5ef20199b10cdf",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/storage/types.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/ChangeEmissionCapability.js": "36e5b9f11aeb6fdb6d1b6b019c6e70ab51e2f4d712552b4495ce387950699667",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/ChangeEmitter.js": "50ca1ee7892ca96bff07b5106c9e6ca200c4d981c67b7a399514f28756b1da8e",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/DatabaseManager.js": "41c3406c9e70eda2e53c9919793a53dda72c827bcc3a55284f7ca37a3c5a4d05",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/DatabaseRegistry.js": "9829904220c975bfbb266e62987d0639b933a000a951c434eb7783a7522e3114",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/RuntimeServices.js": "05b6d0a4b6e0f1b2f65b11a0d5d401802830a554a90f7872d339b93fc09f9b05",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/StoreCapability.js": "cb309f3d6ddc521f6eb3309504bbe67b0c0c012f841955dff361cb83214188f2",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/TripleStoreRuntime.js": "25b1b1e67c8d3fc4c80e6c0c7090ee078c018ba9fdcabc56eb1b95d2becb0a65",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/Triples.js": "fd8c377c39d3cf3afbf4b1f647b5d0fc1cdadc8554e3e8be7c4d51deb50e1c53",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/TriplesLive.js": "dea28c7d29fe072dc933d875e943a71a4bc92f087045f5bd042a15feda825bc6",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/entityTransactionHistory.js": "e292689c2a1f35e839f4b7d7a5609de4cad0f0963c163950647286d64caafda3",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/systemNamespace.js": "9d040976755d2e107cd7f9004d8c5e479d6b10c558d24613937cea5eed8c8464",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/transactionMetadata.js": "605e92a86e18d3faac5796f7e7ed6c5bebb730aa5542dbfdca73c907d690c8dd",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/store/writeEventUtils.js": "20258f12a21b828841a84a90b9ae05134f1855affd39782dd07b58507278c0bb",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/subscriptions/SubscriptionManager.js": "fc357da43288d9542b8657ea0193bb2082a5455a8d1ac2114755050ac245ce39",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/subscriptions/SyncHub.js": "8e85bfe7e08f7c29f87c3389ca2865ceefe80165948d9c09867d0390fcd5bffa",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/subscriptions/TopicTree.js": "77aea4ef83a64a210b7e82e0ea7808fbd162f5e72a848ec7e9d330376e6a6ac4",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/subscriptions/extract-dependencies.js": "cd4a4a6f6390cef31ccc66c212766e9b4e22acff471418d4638ef720fce4e491",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/subscriptions/index.js": "fced03489d04e40ed4d769ed7b8e44e0efddffc5ca24726ca40930cb160b5fb7",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/subscriptions/invalidation.js": "935a9639a2563c1a1e9f74d4a34687748f3bb889d354da67e91da504939fc2ed",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/subscriptions/query-hash.js": "091d023bf9e852ac5034389b3123d2c053751d973a89887d1ff5d42c86aba17d",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/subscriptions/types.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/types/Pattern.js": "099799cadbdde946546ea9041bc8600d564552c633b937dee399f4dad04120f5",
+    "lab/experiments/EXP-DA01/round3/packed-exports/core/package/dist/utils/id.js": "442bd3ad0d64cacc8e91382d9f7ddc6f7c08651993afb105ffc06b5cb6ac3a87",
+    "lab/experiments/EXP-DA01/round3/packed-exports/smoke.mjs": "9011669598169ff6e7d755c668bb9c862c7ba819ddaf3328662806619e7b2cf6",
+    "lab/experiments/EXP-DA01/round3/packed-exports/testkit/package/dist/index.js": "e6cf762205ac81649705a5de6b736f2145c50f161ea54a92d751b943645a5255",
+    "lab/experiments/EXP-DA01/round3/packed-exports/testkit/package/dist/routeEquivalence.js": "8dd539762429ff89519191040993e927db0f169c2f92d3c21664457738ff5afa",
+    "lab/experiments/EXP-DA01/round3/packed-exports/testkit/package/dist/routeHistory.js": "cf3f742d06ebdf74f6e438b8b411af164582564337bfab604c656aeb1594f678",
+    "lab/experiments/EXP-DA01/round4/collect.mjs": "4d20b58e0488f038d4bddc14b8d05e4896173299a4333df3f1207ad690958728",
+    "lab/experiments/EXP-DA01/round4/deploy.mjs": "7f0fc647af41893543a8e9f5c900c992639851c4587280684dae9e7784d66191",
+    "lab/experiments/EXP-DA01/round4/finalize.mjs": "646b755ca90d64b8c5c1b87ef3fad6c5b6213ec15434b996f293fde41869a8ea",
+    "lab/experiments/EXP-DA01/round4/live.mjs": "e0aa5cc10df9536aa7b24a77c058759e7c60c198ec85b9ccbf11ac46bd87a17a",
+    "lab/experiments/EXP-DA01/round4/manifest.mjs": "87317fcda0637285a4cd3aad99513e7d59beafabd6ad31b4121ddc24edc680f9",
+    "lab/experiments/EXP-DA01/round4/reviewer/native-repro-local.mjs": "d620408ef2cc2f9593ae57caa1a6ddb186c235065c16847b01e4008ae7c4547a",
+    "lab/experiments/EXP-DA01/round4/reviewer/native-repro.mjs": "61aa08ec196979431adff82a4ca144af03775c520ac925ccd13ceeb8f9a78c20",
+    "lab/experiments/EXP-DA01/round5/collect.mjs": "4cdf13a87fe550180029c2d8e3c53f25a131aea28c4b50f44cbff54994b201ed",
+    "lab/experiments/EXP-DA01/round5/deploy.mjs": "7f0fc647af41893543a8e9f5c900c992639851c4587280684dae9e7784d66191",
+    "lab/experiments/EXP-DA01/round5/finalize.mjs": "646b755ca90d64b8c5c1b87ef3fad6c5b6213ec15434b996f293fde41869a8ea",
+    "lab/experiments/EXP-DA01/round5/live.mjs": "e0aa5cc10df9536aa7b24a77c058759e7c60c198ec85b9ccbf11ac46bd87a17a",
+    "lab/experiments/EXP-DA01/round5/manifest.mjs": "87317fcda0637285a4cd3aad99513e7d59beafabd6ad31b4121ddc24edc680f9",
+    "lab/experiments/EXP-DA01/round5/reviewer/native-repro-local.mjs": "6e79edfe9510f3490777d70ae9c8528d6a3cbf26240fd905508a6932016bfd7a",
+    "lab/experiments/EXP-DA01/round5/reviewer/native-repro.mjs": "bf8301ec27625dabad9cc9c090d32704985cf24111228953287406b388307fd2",
+    "lab/experiments/EXP-E01-claim-evaluator/reference-replay.mjs": "aa99ffab02a48c4ec875b499cd186163c9d29332256006d47b779c5399d94105",
+    "lab/experiments/EXP-J01-bytes-per-commit/bench/equivalence-diff.mjs": "35570c198582a66b628e70c5dd256b0e2dc2e6ce89c0542ddcf7f580d188e718",
+    "lab/experiments/EXP-J01-bytes-per-commit/bench/journal-equivalence.mjs": "7265ff7b8a0979c3be0e11c333a824caf319dd1eea951df075732868ab3a138b",
+    "lab/experiments/EXP-J01-bytes-per-commit/bench/lib.mjs": "e262b0eb6f64290095dee992f659885e12f8bb8e08cd27ab40fb8086ffb5a4e5",
+    "lab/experiments/EXP-J01-bytes-per-commit/bench/qlever-attribution.mjs": "d1e83bc5b5a75aecdff4c9c635bf45a46be9d21c91f0a9c2f6aba89c804d3077",
+    "lab/experiments/EXP-J01-bytes-per-commit/bench/service.mjs": "05d69ecc14e0484934ae8fb3939c91431bdea7c9764e9c608e05daddb63c1bb7",
+    "lab/experiments/EXP-J01-bytes-per-commit/bench/show.mjs": "efa839ffd14a96a6bb75a28fc2bd31a02b0fc3a590538be9cf1809ff2ac2a3e1",
+    "lab/experiments/EXP-J01-bytes-per-commit/bench/xtdb-attribution.mjs": "e9da4ffd63bccd93fdbe90015192c0bad5008c95ec48acea183190471c7fa218",
+    "lab/experiments/EXP-J01-bytes-per-commit/bench/xtdb-replay.mjs": "c19bbe800bfcc5b3b09d24d69d6b4db9721d082299e162bbfc99a7c9f9a8f3bf",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p0-log-columns.mjs": "03493f7da669e979300865c9b16a5f80712d73d59a63c9148b43a43f09918902",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p1-record-shape.mjs": "4f6d2ccf72d882ff007634235d21113a3e685c71f3854242c8a298f32d0174e1",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p10-qlever-designs.mjs": "59c7a00226ada151c15e0304b66af839f6e6866b0b45a633171ea3dbdeea6400",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p11-constraint-rerun.mjs": "f6c8035f29522a0d31837d4e1c859f793e36b4e335641b152ca5c0749b54f904",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p12-json-array.mjs": "099e143dc003de23498758ced4adfff9ba855bab9b0460c3f602cb16510ff996",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p3-xtdb-structure.mjs": "dec1b7304a192e36ab2f20e8d2494559ebe0bb0990d65f1042a2fe21015b1197",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p4-literal-equality.mjs": "922e01678225b143731e1f916b70718136b96d9f1e3ad345306fde7ce00209c4",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p5-array-param.mjs": "f3ee72bcd1c79e3dd9289dc10e3ad10ab30c970857bfd2fc81fdc1758e6e1b10",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p6-p2x-reconstruction.mjs": "a26e6d73b4a67ba474a64a91b688dcb6a1d39d3385d88ab74b9dbf9c1c0ff36d",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p7-xtdb-designs.mjs": "c2eee48f73188d2fde978890a9e9129815296159bc17cb48c650ae88b3c5e147",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p8-dev-scan.mjs": "5fcb0157e67caa7d8a50cde689b9256e4786579fe6d7f30e6f3eae86f6b0496f",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p9-g1-mode-proof.mjs": "705d22f1ce0d0472ae19d8404fa9940f60bd510ff22cdec1265490e2e9aa5be1",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/abort-audit.mjs": "d4dcec40972968c50aea31208429a0de28e5ab7a6aec0eafb4447583b38a7bec",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/abort-trace-audit.mjs": "0646b21e2cea8aa15583f96eb223e8c29b24e2d315e55a4241a288791645dc89",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/analysis.mjs": "c1ed334f41ac3fe04054e5ffd84f8100b8b428614e265e012237b9035bfbb57a",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/analysis.test.mjs": "46a762c42e8ffe47644f7b9054ac9729ee284a2bf8f71027759f5d20703d90fb",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/audit-bare.mjs": "830e1834ce621a8ae34691444ffaebde39b0aafaf31ab2fdad5e0a545b340a61",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/bare.mjs": "4895b77089020a104355c3e5bd0f36c91b9cc4ef986a742cba9e1841a5847a11",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/candidate-live.mjs": "646bf09c3e09cdae61ec3776a83f7f750bde131effb415770b1726176b30680e",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/candidate.mjs": "5e3048b663fd2770804cada6b10bee44a6c0130fa292656d193456aa4fb986e3",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/candidate.test.mjs": "9a62f85a8fb0d4967fbe654cbe143662703fff59af82a9dd0224a817ae68b2de",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/g1-path-proof.mjs": "89c270866c1be36baa8fae824439d9a9a3039308c642b2eeaa5fd5aa891a7b9d",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/observe.mjs": "82d8f102833cc58b5e98450ebca11a63cb01b7465241f80aa0d5e47c15e2df2a",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/preload.mjs": "563589d9f7f4069917a1b1adc70ad78a2797b5eb5f75bcd2af5f7ff5acaa1278",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/readers.mjs": "af52f244c6a1c1cc5ffe37cfb950c32e8dbaf6535eae5805da5acf34102b91e8",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/runtime.mjs": "1dc3eca4d300fd68180566e2d6c6d7c5a521fcf65d304b4900111d6cec2a194d",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/service.mjs": "380330acfe8602e28c0581725ee780dec403daee70e18e53f78a0b88bb18937d",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/trace-run.mjs": "8fe078ba7b3930550dc68b1acf783b4bd6aa517de858704eb93f1732f10f6767",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/trace.mjs": "f2cac318ec646cd4566714b2340c293629e114c0635c9f04c01af5c1918609c0",
+    "lab/experiments/EXP-P2X2-xtdb-commit-floor/wire.mjs": "a7f0c641457cee33ef712f1bb40f343820009dc770edcc919a7b51403c452ea2",
+    "lab/experiments/EXP-QG1-qlever-generations/delta-count.mjs": "4d9654eb3d231310f0e831e58077e201df4b656595e59e93cc923ed4577061c2",
+    "lab/experiments/EXP-QG1-qlever-generations/delta-count.test.mjs": "1b3f40978c6370a1c92380e7fe42025e23ecae0e7a92cebcb273a41c3a8b37ef",
+    "lab/experiments/EXP-QG1-qlever-generations/engine-options.test.mjs": "835c50db5f028f2f1f8db3fc95caf37bce5c79c73cc42fcd3f0b4f16d4a50482",
+    "lab/experiments/EXP-QG1-qlever-generations/final-audit.mjs": "dd486ed6b51e8ff188fc0d665983a813eaf9cf72f987f8c5e81d0ffc3a8a2e36",
+    "lab/experiments/EXP-QG1-qlever-generations/grid.mjs": "aab95914fd90ecdca666e3dcf65fd63404a2dbc287fa45e06fe4995b828f9844",
+    "lab/experiments/EXP-QG1-qlever-generations/lint-updates.mjs": "c9b673a4157e4aa15852431cb2b312b48bc08bc39d7f7fc1bf09a4cf85b50920",
+    "lab/experiments/EXP-QG1-qlever-generations/prepare-base.mjs": "22403260aba67138e5b2328c295cda905ad77591c7be0fc5fe08076ef6c5cdcc",
+    "lab/experiments/EXP-QG1-qlever-generations/probe.mjs": "0b7904d165f859b14d6f4480ca51ae65362dfff41dd8629ab86fb67a1f3d6c1c",
+    "lab/experiments/EXP-QG1-qlever-generations/summarize.mjs": "913e6be4d7b3ab68ce29c9e997c38913b7ae3eccce2843f897c4551534e56a63",
+    "lab/experiments/EXP-RQ01/attempt-io.mjs": "4d645d625efe8e83e8ef331dad2d7f2c6636c0b70d2f9e45c6fdbb30b4487f77",
+    "lab/experiments/EXP-RQ01/coverage.mjs": "5b6c23bda80c293e97ed57eab47c8e600e010ee5a14e5deae6041eb374db7381",
+    "lab/experiments/EXP-RQ01/evidence/round2-package-smoke-controller.mjs": "aa8dc0c6b44c19028e9855b40f76b6cc64bad86b8ff066faa4c923055972e0fc",
+    "lab/experiments/EXP-RQ01/gate.mjs": "47f7d23bd820ec090a438d8296229507b1229463126303c535fcd93ec8fd0ae8",
+    "lab/experiments/EXP-RQ01/package-smoke.mjs": "64eb95b3dc6581fb6df6a980aee258279390a84b2576022a60db60dbe46cfa87",
+    "lab/experiments/EXP-RQ01/retention-probe.mjs": "40266f7f42818b518e6a40b506b2210174b2fd8aceebf0ac642a731da7337fce",
+    "lab/experiments/EXP-RQ01/reviewer-round1/empty-without-flag.mjs": "7ee47a711fc8a9b9d909caf4e8e96e512e3a7742dcc4b8af2a965bf1ea4cc8ab",
+    "lab/experiments/EXP-RQ01/reviewer-round1/review.mjs": "0cd76a626dd6d3c21340f688077f01594b912e5f22d5cd84eaa4d89544f389bd",
+    "lab/experiments/EXP-RQ01/reviewer-round2/boundary.mjs": "46637eca658248fa45d3ce93f95e61d8f40ede49d447176471510509d9c3a6c5",
+    "lab/experiments/EXP-RQ01/reviewer-round2/probe.mjs": "d52cc677acc34053d8bb1f1f75226a9046294c045f2b908423fac33a748fbdfb",
+    "lab/experiments/EXP-RQ01/round4.mjs": "1a4820ed83d7714d3b58a79b134d339f14fbb391c3bb264e77f8c7c197d6dbf5",
+    "lab/experiments/EXP-W02/build-public.mjs": "f9c774490b158988da599f61c4d1c43d8599d99d769d55c76f6a09f2ae9d6a29",
+    "lab/experiments/EXP-W02/check-offline.mjs": "a0bcd5082f2801b437f074c5c74eb85066dafee0c37146f0d2529465cd2af651",
+    "lab/experiments/EXP-W02/check-round3.mjs": "5570b5dffd120c4ff621f80c51a6a7694a0f142f6655686bc67728ad16214233",
+    "lab/experiments/EXP-X02-xtql-parity/q79e/run-probes.mjs": "8c2c13a9fd37d385f57acc514d714b6657f236ccfda34c246ec79dfb5b8e54d9",
+    "lab/experiments/EXP-X02-xtql-parity/round3/run-probes.mjs": "51de2322e9da1ef2c7846d941ffe741d931ce608462ebd4bab532d906edc474f",
+    "lab/experiments/EXP-X02-xtql-parity/round4/run-probes.mjs": "775d731ef2abf3e0d92c7bd4679200db8cc71669884925cb5e10f7e78f6480da",
+    "lab/experiments/EXP-X05-xtdb-read-follower/catchup.mjs": "0dcc8aee52f759bfcc131634d2330c503a3a63dcdc10bce371a26fd975d4c4e2",
+    "lab/experiments/EXP-X05-xtdb-read-follower/common.mjs": "1ee5de3ac3931ec55764386bf206bb43f410406e6923e0c1ee4863c6f290afb2",
+    "lab/experiments/EXP-X05-xtdb-read-follower/driver.mjs": "2931820ceca149c4363895afbdefce5b9d4aecf5b6d723580ea95da3d64abb59",
+    "lab/experiments/EXP-X05-xtdb-read-follower/guard-live.mjs": "76f7af223b1ff643f910cb24b99fc00880493118ecd99c98138909d1de56d628",
+    "lab/experiments/EXP-X05-xtdb-read-follower/reader-worker.mjs": "a2194d571576ec5c048741c76135d5b1436dbb2f7ffa31e81c2f788e261cf4b2",
+    "lab/experiments/EXP-X05-xtdb-read-follower/test/x05.test.mjs": "1c0777c2a6660727c8de8479547b57cb08098b3cd951ba8fe58c7df0678a6706",
+    "lab/experiments/INT-XCJ/evidence/round4/run-live.mjs": "04a0d6b0cad65d1fdddb3fed4f99407e551b08eb11c312e92f78bf8f05d9b68c",
+    "lab/experiments/INT-XCJ/evidence/round5/run-live.mjs": "3c804814975f015c499e77e4d3da7d54426e7b664d66956d3384bdbb50d64565",
+    "lab/falsifiers/wire/domain.mjs": "77203ed114f163f9475cecef4b197cbe0a841bddce42e8998957cba73ce4673a",
+    "lab/falsifiers/wire/lib.mjs": "e9d63cf193ee38e0e442aed8c62ab59daf88ce0eaf89d24ff9cb2675fcb6d1be",
+    "lab/falsifiers/wire/run.mjs": "8ff3ea53f1c83d7b17f5aa8f7204c793854ea97565b68df86e1cfd9f59054617",
+    "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28",
+    "lab/research/R3-artifacts/physical-names.mjs": "fe4d58ffa10b2abcfe3442e646e7bd352ed2699a2d34cf9a1b8f5b067ec54762",
+    "lab/scenarios/01-monday-rush/run.mjs": "c03b38a424c5710bfea47c61a2c31cb6c06bf541e17ebb37ec75b20b732f31e9",
+    "lab/scenarios/02-form-submit/run.mjs": "f7f4da5917caeea430eea0fa1907596862160891de7f019dbd70ae21280f32c5",
+    "lab/scenarios/03-webhook-storm/run.mjs": "69e7c99fb1dfb8a1a028aab89556c561a815d459c774420dfc5e230c34637ad1",
+    "lab/scenarios/04-lost-ack-restart/run.mjs": "75aee2ee0d6cafbd76e45933797922a3699b0cc70339ca71863659071c2ae561",
+    "lab/scenarios/05-background-check-burst/run.mjs": "a612f7848bc0ddd7aba2349a2095882c2964abb21d91d7834f6afa1c6546907a",
+    "lab/scenarios/06-decision-fanout/run.mjs": "2338b73d5bfc4e0b0657a494df7907d711637cd4d5b08df218126cbcb5c98e65",
+    "lab/scenarios/07-two-reviewers/run.mjs": "57630d222196f1a2ca5b3acab9425f46e3483b57fc0e50a717eb178eb85f7095",
+    "lab/scenarios/08-address-since-october/run.mjs": "cab545e7d46ec71484533a31efb08d83c2cf6d61c070f2313a39d70673924b15",
+    "lab/scenarios/09-start-dates-move/run.mjs": "f7311535bbdeec00a8dd466c84ce3904d7398f2c4a4933cb8d06edc14cfe974c",
+    "lab/scenarios/10-release-activation/run.mjs": "d88fba564ff1ec31b6cb57977ea901cb77419646a1b1a9fb3f62d79735aae08c",
+    "lab/scenarios/11-plan-impact-preview/run.mjs": "98a20472f601b15f517fe5d6cbf4ceeb045f8546abb0b7a397e1b43b7b819cb7",
+    "lab/scenarios/12-audit-march-3/check-patch.mjs": "982fb0b7b592fb1202d1b8888e21dcc2cb2cabdbd7770d4354ba501648198748",
+    "lab/scenarios/12-audit-march-3/run.mjs": "48ad1752fb87d1e11aec9c5f8a7ae3fa88ce8bf50758a61f5e7837fcf1cb00bf",
+    "lab/scenarios/13-hris-backfill/run.mjs": "e574b0cabb31a74b216b5807b1e4f9e470c26fc8ba90103356ca8f724e3feed9",
+    "lab/scenarios/14-account-factory/run.mjs": "7eaf3705583d1087eff8e3601449d7f5a952e59994d06b092fa702e61519293d",
+    "lab/scenarios/15-tenant-mix/run.mjs": "678de62ea8f2505b065fed77e0efe4d8554ab12122ceeb6a235bcb3173f2d771",
+    "lab/scenarios/16-pii-erasure/run.mjs": "89c8159320618509f622e16da72b6a98e1382e4eda1898db98f6cb6be6efa171",
+    "lab/scenarios/17-agent-proposals/run.mjs": "2e3dfc05e8fd77f77355c4bc554e0f02ab8453ce7634a1838182f17b1eb910d7",
+    "lab/scenarios/18-recruiter-dashboards/run.mjs": "638a8636a7f8b5b9642c8c8ebb4567cc3a036ad23024610660588d54dcf4c764",
+    "lab/scenarios/19-feed-consumer-crash/run.mjs": "32b7bc6254de2f9412033416fd81b32f8d5d4ec16031f7b7a9ecc99a61a12f77",
+    "lab/scenarios/20-midnight-expiry/run.mjs": "d409e8f7e565dd672315e19252384c1cbe7199352ec106ed2ef1cf7076164e48",
+    "lab/scenarios/expect.mjs": "a08eead3db38236b787aab1e2634a7eb13be51acbf09f54c1976561cc011ca20",
+    "lab/scenarios/legacy.mjs": "207993565c6a4985d769ac0f029027da612aa79557c6d222ce23606702949965",
+    "lab/scenarios/lib/composition.mjs": "f1b6c2671abb443d425a291101fa8158ac97cc5a84c5e26df94a4d89826ce7b3",
+    "lab/scenarios/lib/diagnostics.mjs": "b62987b5f9f1b3661bb6faec349f29a63f792a13c1a8d45e043141008a122398",
+    "lab/scenarios/lib/domain.mjs": "ca5ebca034358ec3dcb82df2f20bcd64a6053b13194536a13ac6b9c206d72f9d",
+    "lab/scenarios/lib/gen.mjs": "f97ac01ab722e870276b6689afdb747901dfec04ebc5e26ba424574b9d9df7d7",
+    "lab/scenarios/lib/oracle.mjs": "b9565e35d604e140035e6a9532737f6cf54f44245d4f932e85a4d2f939c307a3",
+    "lab/scenarios/lib/policy.mjs": "210ce5d180bd104e9b88c892ccb6a68ea6cac0ba2550924a077cdddf3b96719e",
+    "lab/scenarios/lib/runner.mjs": "aadcc731f9b59a41b30987687127ef53c39cee2b98b9ffb1382f9080ae9d7346",
+    "lab/scenarios/lib/runner.test.mjs": "e21df25b84c5d9c3b2638956c62733c25d173b23244a3ebd4fdd5db333de4bb9",
+    "lab/scenarios/lib/triplex.mjs": "1822fa84048ed04ceb6aaa0a46f40c0be980f08e49ef35b3d659568bd7a253bd",
+    "lab/scenarios/run.mjs": "5e1d02b4ab957724f5c5426aa3760dbc9fc0349a54935a48ebb2a3e8d518837d",
+    "lab/scenarios/v2/cases.mjs": "b8def2f1129f7969aaa8ea107f1d10da69f19e9dbdbc69180dd69933f34db0ad",
+    "lab/verify/C8/run-offline.mjs": "b30691ed3d98cfb2f58b64c8f65951f31489db34e742daa037c81e65857eec26",
+    "packages/core/bench/config/scale.mjs": "f3e7eda32ccf28bcbc02e22b50d492a37ba410e22e7c1161d9f9add8988b88c2",
+    "packages/core/bench/config/typecheck-budget.mjs": "8a8a8c241a90a58e26e05072465975dbe376a1fcbb521a6076bd9b06c3dc8e78",
+    "packages/duckdb/experiments/build-core.mjs": "dfa1780086c4fcf6b3617e5ac585cc2aeaddc0ec0530ccf3d00fa3111ddda131",
+    "packages/duckdb/experiments/build-owner.mjs": "590c2c8361dfa371438b6c9d70862b3cd14d03a965dec8f72c00e48a7e092921",
+    "packages/duckdb/experiments/copy-assets.mjs": "e24bfbcf23ec56b8479b3546fa6ac8b8de5aa717c87e6e4338cb2c9c2a26b0ca",
+    "packages/duckdb/experiments/prepare-public-read-stage-job.mjs": "f831238d4ea8d58e21267dd2e7978288746517b87f86d1cec97a3c5a94990773",
+    "packages/duckdb/experiments/prepare-public-read-withdrawal-job.mjs": "d5bb5d90d7d47992a023a8309a73c750e169ef978400159a16c17f27249cd145",
+    "packages/duckdb/experiments/prepare-sdk-job.mjs": "db965c173404bcf85cf16b6cecae89f7fc930b46a3dc95ddfdb79a41dbe5d52f",
+    "packages/duckdb/experiments/prepare-withdrawal-build-job.mjs": "a9f2bfec4f11477d8aca057014b5a6918c9d894e7489da712a2da166933ed517",
+    "packages/duckdb/experiments/prepare-withdrawal-unit-job.mjs": "7c9c7ece2a04c6bae28d253b1987c5c9a29a7aa97512aae6ae33dc8bd21bc4a8",
+    "packages/duckdb/experiments/public-read-stage-preload.mjs": "faf57e8ce2f8696366b2cf8c9006ee914a2f758f40a9b3944362a0b2e14fe444",
+    "packages/duckdb/experiments/public-read-stages.mjs": "42026d7894d99d03030032541ce51e4af22f8330266982f42a0c4a8adcc18c6b",
+    "packages/duckdb/experiments/public-read-withdrawal.mjs": "db18447d4f069dda4b71c6ee8c333479cf5b5e928c8d04a9cb04c6ed03077fc6",
+    "packages/duckdb/experiments/withdrawal-build-checks.mjs": "600cc2398228646c5440c798a33b9ddd04c8076c998c7f5c1c49785fa76f7f8a",
+    "packages/duckdb/experiments/withdrawal-unit-checks.mjs": "0ede6a0832bff0847c08a6c53e720fc85dab440a982d4c179015098382046620",
+    "packages/duckdb/src/native-duckdb-port.mjs": "c6429304697a6672c05e69c3834549618a0485634c8dd19491a8ab85ec487548",
+    "packages/duckdb/src/public-backend.mjs": "481aab7e7358e0a1e0b049e3e384339582e5243cada7e84bb924102be4e31706",
+    "packages/duckdb/src/query-result-boundary.mjs": "3af5bc6df63881a8c2689ce71a18aaf6407229495482b2545264ca2d42e338a0",
+    "packages/duckdb/src/transaction-owner.mjs": "aed0d5131907caedd2c88adc3abd7ca26a2f1039c549ea1aa33b80e8181c986d",
+    "packages/duckdb/test/decimal-transport.test.mjs": "fcb39985c2e9c69b90ae52fb1c9e7a4a2ce6ea7fe90b3751258209058f51e29a",
+    "packages/duckdb/test/observer-admission.test.mjs": "a50ecf7d2fd0fd30de48c889da8dd5c62102e4bc1e946a4c204db825012ee766",
+    "packages/duckdb/test/queue-withdrawal.test.mjs": "b14bc188212166c6cdebbc39627798709cb0865963b31375fec6ab915b6f8592",
+    "packages/duckdb/test/value-boundary.test.mjs": "69301038c4a752031d1ba0aa65c2d66ee94e8685a38d1e5f8351c1599d04b9c3",
+    "packages/qualification/experiments/configured-entities-v1/components.mjs": "2cfea69243a8de4324404e23da1bc024f2a3990eff4ad1669409397dc839216a",
+    "packages/qualification/experiments/configured-entities-v1/prepare-components.mjs": "2b1089a4fd100510d241e461cb2fe4ccf18ac2b482ec34d3ced60491b4dc2796",
+    "packages/qualification/experiments/configured-entities-v1/recipe.mjs": "b6efc8b2a2d8ce2031f8b662e3d1c5445c6adfdbc22b49f63e5369e20adb3464",
+    "packages/qualification/experiments/configured-entities-v1/recipe.test.mjs": "cf1c6a240bd2c03b7b4f5d43808c9ef5d4b269a0cd7b292f2e54fc4e2a4473ff",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v1/growth.mjs": "dac000ffc83ed28794f619f51e4eeb9d804009ed02840f4a556b21493ec839e8",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v1/prepare.mjs": "cb100e29cf7ad742f1ad69a75e43b9121d41720881a6215e71406dba8ba506e8",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v1/worker.mjs": "3390090d0e88f80f994c2535d7e248be600ef6329fdd2b8702d55ebb58fb3def",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/codec-components.mjs": "e5af636de310fd853c4b4d2aa91640c1dc6510a6870fd112e82cd8f5629f3c51",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/codec-schema.mjs": "a6facbce5701764eb7d78669dbdacb2213618add4794f11cfaf277b5d0879532",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/codec-schema.test.mjs": "07d1ff171dd687b265099f883c7313dea8c4cb6485a0eb57f53aaab7bd80d99d",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/growth.mjs": "dac000ffc83ed28794f619f51e4eeb9d804009ed02840f4a556b21493ec839e8",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/prepare-codec-components.mjs": "5bf2a5aaf7f5311fb73d0b40d0bb8e05538ad4f6bbb6294fe4e2d3db63575895",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/prepare.mjs": "59039579bcae37b62668b2092d84e7c832bfd9e4a854eee8d3ee606ecec7b4a7",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/worker.mjs": "564b4e331f0c9584b9cd573bcd33d79d2f749b7e1d4e2ce7a86f04a7c1fad0ae",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/codec-schema.mjs": "a6facbce5701764eb7d78669dbdacb2213618add4794f11cfaf277b5d0879532",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/codec-schema.test.mjs": "07d1ff171dd687b265099f883c7313dea8c4cb6485a0eb57f53aaab7bd80d99d",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/entry-components.mjs": "ada6d7b0a0a7b48923dec5deb3f52c1a31ca36223dd9a588fc9ab220bf1d70f7",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/entry.mjs": "388977b23785d1af9f16fca6c77eda90b1b25990d6a226f6e7a0315ed13ce8ff",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/entry.test.mjs": "c592ff2baaf97b94ab639c74ec50cc82c139d554c0a8a97e82bd6fba2b38090c",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/growth.mjs": "dac000ffc83ed28794f619f51e4eeb9d804009ed02840f4a556b21493ec839e8",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/prepare-entry-components.mjs": "7526d6add25e78baf001edda3561a95ec3b84eaf506902164520f7f45894a181",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/prepare.mjs": "aa8fee7d3a7766c8a599993e3beb4f95056c75d47966923731f0bbe0865c7f7d",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/worker.mjs": "6b49d922718a3b9e4cd1a35e1f75cd69377a4f97ee537082a9ccbd5efeecfa83",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/codec-schema.mjs": "a6facbce5701764eb7d78669dbdacb2213618add4794f11cfaf277b5d0879532",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/codec-schema.test.mjs": "07d1ff171dd687b265099f883c7313dea8c4cb6485a0eb57f53aaab7bd80d99d",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/entry-components.mjs": "1a83a43a9fa9f8fe1ad719d9aa2da2e6ef303e6a3cd9e5683b1ca63093da51b8",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/entry.mjs": "9d5b2121aac7d1a6a10f654550c59baf2d6df96230d37f2ad391f2428e513ced",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/entry.test.mjs": "0c1440205f9df0109947d3658ff0832972243137f4411fbf914594e8acba7213",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/growth.mjs": "dac000ffc83ed28794f619f51e4eeb9d804009ed02840f4a556b21493ec839e8",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/prepare-entry-components.mjs": "1418e28a1abca23ea8a02c4230c34c0289403ecd4a2a47106bd7ff3fb157724d",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/prepare.mjs": "fd2d4ea60051dc9c7b9ea86852125dd7041a04be9ed95b0ed0872127dec53798",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/required-evidence.mjs": "30e0cb184395a9c407760d353adcf854a2f7e518d6290f44ba3425ce4a58233e",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/required-evidence.test.mjs": "a51235298d06a2b9413bd660a7411750bc956b1d3a70020b40ff92ae52012160",
+    "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/worker.mjs": "d93f2e4b2fbd7271f645d9fcde35c98e9e3795b5f589e5199adedccfe7b89987",
+    "packages/qualification/load/inspect-trial.mjs": "1154249690b4e7aef4ccaa8b8d7c4645584de9bc39ab31012dd0d0d507f2963b",
+    "packages/qualification/load/prepare-job.mjs": "1cec7457cdcf4d5243662c7a800d31e3443a220af3f0a7b5b1d0319646a71af5",
+    "packages/qualification/load/verify-run.mjs": "78da12b1ffe92303c7790df1a352ba6fc6223be5384f4347a5be3ad020f08507",
+    "packages/qualification/workloads/prepare-native-job.mjs": "f7d7f12a4cbd64d1dc4d5e52a9d0342891f6a36b2c7d8fde8a5a88087e994ac5",
+    "packages/testkit/test/route-equivalence-review.test.mjs": "3a54d3f9492f93184896e53eb7eba797fb8d698ce960e9d26745bcf5c575d14d",
+    "packages/xtdb/experiments/attribution/cohort-contract.mjs": "2db5b5fdc8380e11066d9e9f83993a5fec9cdac234d8bf2204629456aacbf59d",
+    "packages/xtdb/experiments/attribution/cohort-contract.test.mjs": "ec857ec3c8fa5d5393fbd1f52819654bf2df2886e6963ec3c28570138eaedaf2",
+    "packages/xtdb/experiments/attribution/driver-wrapper.mjs": "27ff3e36de5fe610578c250be8e57b073c2faabb01e0c1e7a556097a6e8b0e0e",
+    "packages/xtdb/experiments/attribution/isolated-load-entry.mjs": "6d10a81d99573eebd10ad89643d5e80865813af0ff7f3420ffd3a27ca4ff7447",
+    "packages/xtdb/experiments/attribution/observe-postgres.mjs": "5066abae8537a1fe799d50584b57e1d6cde99e5d7edcafcd09e799324af58f89",
+    "packages/xtdb/experiments/attribution/observe-postgres.test.mjs": "a485130fff5449f015831798839703f122a6856c8069162548c617e448756bd9",
+    "packages/xtdb/experiments/attribution/prepare-observed-entry.mjs": "cb72ce058e239db88a88d3bb24e50739d64f01e77286a42c9d674c68baef4f96",
+    "packages/xtdb/experiments/attribution/prepare-observed-load.mjs": "ebd5d39ab41cc24c91b6543bc7be2e19c54c807d8be386f85bdcdef8590897e1",
+    "packages/xtdb/experiments/attribution/register.mjs": "3d9346103e688f27244ecfef2ccbb4c861d4c79cc75932ca097c0ac1151df74e",
+    "packages/xtdb/experiments/attribution/trace-session.mjs": "3b681fb5efd39f247d9a64e660387aabbef2f90b0a5ecd8b4ed5e38f3351490a",
+    "packages/xtdb/experiments/attribution/verify-isolated-cohort.mjs": "dae73955bf3084a0d8b4637c44c0c2aedd5ec0541d233061ff45c2aa008150c4",
+    "packages/xtdb/experiments/attribution/verify-trace.mjs": "f88740ad8325fe5c4a28a0961ec227c8285812f6e4470f1950e4f1313f8a5519",
+    "packages/xtdb/experiments/prepare-native-entry-job.mjs": "04d6f7a852c04855274e713582e8c55c80a2d9aab49ec4a533d43a9751804811",
+    "packages/xtdb/experiments/prepare-native-f64-job.mjs": "19b04b80f0a166341b4c8f8986b21d71d9e5557e86d4aacd8e2b8e568bc30144",
+    "packages/xtdb/experiments/recovery.mjs": "596580271bbc946e48a5aea819115470e7e38a7fc07b6970919a89aa038096e4",
+    "packages/xtdb/experiments/transport.mjs": "1a26215aae0520d7f1e144db25be2fcd07470ef72d16ff26d123583a99e0abf9",
+    "qualification/adapter/scale-fixture.mjs": "f131644c169b56d328a39fcdd5c49e0372d08444638886ed34a880854a041388",
+    "qualification/capacity/configured-entities-v1/oracle.mjs": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94",
+    "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs": "bbd656760719b67a3435419121b0b7df909a99ea9c1aba22d85ea1363cb6b08f",
+    "qualification/capacity/historical-assertion-metadata-v1/oracle.test.mjs": "c2603da7057c879464726b4a048a209de1eef06c58f808c885baa7454ac1fee7",
+    "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs": "5ce6612714b2b7742c46e0599617d472b4bf18a352806e5d44a44577878c9649",
+    "qualification/capacity/historical-assertion-metadata-v2/oracle.test.mjs": "0fd54c311f3fbc821ab7c5950b6fdfb186212eeea84ceb9edaac02c0ae799f3e",
+    "qualification/capacity/historical-assertion-metadata-v2/prepare.mjs": "c2ff05b1de691228c46740a2d74f6a1d9cf8b3884c265a2014f9c3fb3a89aba6",
+    "qualification/capacity/historical-assertion-metadata-v2/run.mjs": "da1c3edcf6f7905b4ccd5f3b4e76ce1234df7941b0a1c9a8e4dc2844172b6cd0",
+    "qualification/compare.mjs": "4d526b724dff6a6cb5ee48ed1e8fd527fca8dbdba45b6c8e4d1bf66826da986f",
+    "qualification/compare.test.mjs": "2bd8ad63b898fc44765337f79527b34f84cba519ae2cc6f3e56a0cbd6a3aeb1b",
+    "qualification/devloop/compare.mjs": "426ffd6e185209a02855c637676484e92ad71f0116b9fecb6964709612e5bb7e",
+    "qualification/devloop/evidence.mjs": "401e0e9483971f25783f3fefecac5934c7d32ab7da254b2d3a18c8615bc62d50",
+    "qualification/devloop/executor.mjs": "dcca25f7ef5a4b2f7b4aa0eadc890db4561186a0f74c93a36e9565a65541c827",
+    "qualification/devloop/fixtures/controller-child.mjs": "8ceef509da6db4ae6f6d36dd16aeb3a792c241afcc90f149142f1053dffbc1f3",
+    "qualification/devloop/fixtures/logical-fixture.mjs": "4561711c8d80f704ed494fb600c6938d5163f000934f2711ce373b4d7bf071dd",
+    "qualification/devloop/fixtures/native-package-consumer.mjs": "a95380e05b94bc7329c0fb36c99501b96a65b52c288f6e8dcceb8a5df8184fc9",
+    "qualification/devloop/fixtures/process-identity-probe.mjs": "0337117764a8fa9fd4ea6e580454064c9387bef88a22ae80b27b67b2ef1fba84",
+    "qualification/devloop/io.mjs": "901bcff69fa6dfd57a46763b138018c522c22558bf266f9deed68076595901a7",
+    "qualification/devloop/migration.mjs": "a33460cd69fe4f342b3c6245228bf573473c1876848eaf1135c802ba5508efb1",
+    "qualification/devloop/preimages.mjs": "13dbc587c06159b9eeb729bf6e2f167ee36f86de06d4e78e232846c9fed447a6",
+    "qualification/devloop/recipes/prepare-public-regression.mjs": "56eb5ea0372b260abd52d5d629651ed116681959e10cec05d61daaf0ec02dfcf",
+    "qualification/devloop/recipes/public-regressions.mjs": "e1de085d05c18a8d0509ec55531b4e6db5bc8e0bf29372c1cd44b1f4496e519e",
+    "qualification/devloop/scheduler.mjs": "bd804d52ae8d25cb22c61979f7be43e9a37229f4afc628b1402e3d84768f5c97",
+    "qualification/devloop/state.mjs": "3c5aa3b2c2b66236778324b853d5031102b5328c1000e9fe06f90a60b3541501",
+    "qualification/devloop/test/controller.test.mjs": "f83b083d3a6708c0635326146aed295ffb5ac2a4e130b3fc6b85ff4eb6a4123a",
+    "qualification/devloop/test/integrity.test.mjs": "b99048e403938f4ded3ef89947d10ace6e8cebe4659851a12f6d5f2cc0172472",
+    "qualification/devloop/test/migration.test.mjs": "4d8faf588751ff3f69d92a26c50c27eeceb99d2d35231b6b971fa5664dcba56b",
+    "qualification/devloop/test/preimages.test.mjs": "a61761e3a6cdcac25ff20517fa98783636357466be57248ae659119d0d56ac1a",
+    "qualification/devloop/test/prepared-stopped.test.mjs": "6fd0d2c7a3b0daa36b1b7d09cfceb3897bbe0cb5cb65ab5104a6e48f562485f4",
+    "qualification/devloop/test/process-identity.test.mjs": "c1bc0ea7d2ffd965e56030c826f58bac1d2b8759bb0d587bc7c0ad7e69812cc3",
+    "qualification/devloop/worker.mjs": "d644e47bc45d72857383a4a4d7eaeef70f1677d26a3a081cd5b2dc8a0b733f27",
+    "qualification/extensions/qlever-wrapper-repair-v1/build-v2.mjs": "f3c5db3d2768cfd05e5c8f8612174da18c76be0075da7adfd1139d81e4e61d40",
+    "qualification/extensions/qlever-wrapper-repair-v1/build.mjs": "c4ad585e551e7272223728b8c603c9e5f47c75dabeddd2b134465a73e4455415",
+    "qualification/extensions/qlever-wrapper-repair-v1/lowercase-support.mjs": "9331e490e296a925ebfd7508502647bbd359590e93908c6324ae188fe3b83948",
+    "qualification/extensions/qlever-wrapper-repair-v1/lowercase-support.test.mjs": "d2b783f0fe1a3a4ff5aa89f5306655b63be886ebc1b8c88ea1791873ad4492b8",
+    "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.mjs": "1364b594f4a6b5d63c542ef0973f809a13a678106e880324119e99d3d7c4e5c6",
+    "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.test.mjs": "efad5660fb92588e6a7b7684ac4561a48bf85045b6346cfe4dc343b5f80afc31",
+    "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/sdk-observation.test.mjs": "c72e8063dfbaa3a27d987351903f0f0eef3d8c4d7ddd85ce84d0352a9ab3023e",
+    "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/client-outcomes.mjs": "98a72aecc845b479c5cd0d87e6a502e361c2f6c4bfd8dab89dbe4a90a4d9f166",
+    "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/client-outcomes.test.mjs": "981065636fbdcb0135e20373034b2651be2723bcff1ba966e6681e56337029ac",
+    "qualification/extensions/qlever-wrapper-repair-v1/prepare-build-v2.mjs": "855fa84ed616ad27870be372942dc7ef36d88e32d597bf67a71655efea3ed00a",
+    "qualification/extensions/qlever-wrapper-repair-v1/prepare-build-v3.mjs": "71ae71332723b83b041bd52c0cd87cb72927cabb9c409c6a70ebe95212f4bbf5",
+    "qualification/extensions/qlever-wrapper-repair-v1/prepare-build.mjs": "d30df36df1f5057a38d8635bf25d6ff21f28977b71e082690fc2e26d03b11e1a",
+    "qualification/extensions/qlever-wrapper-repair-v1/prepare-components-v2.mjs": "af4e1ba0bb19170ac289ef219fd762cdbba168c23148e0b04e8e82195a0e7a20",
+    "qualification/extensions/qlever-wrapper-repair-v1/prepare-runtime.mjs": "5a7035203c7b62582a185aed78fa66735d9b8cf5c202e6916f0f9495e1f258bf",
+    "qualification/extensions/qlever-wrapper-repair-v1/runtime-components-v2.mjs": "ec9384488f9359eaae9e92dbfc176c78cee4cd0388f08a080b22d865a7133def",
+    "qualification/extensions/qlever-wrapper-repair-v1/runtime-components.mjs": "2344100a8bdcc4387cbe2156fa39a062de74ae335c5b06c1e7cf717e035372e9",
+    "qualification/extensions/qlever-wrapper-repair-v1/runtime-noemit.mjs": "bacb4ecc167902df59f019005357b94d77c397c5abb9a4bfeb6fbb5a17fd5690",
+    "qualification/extensions/qlever-wrapper-repair-v1/runtime-runner.mjs": "afa870731b10d88641e2624039945dfdf5f58921a4d159d5288bd1c508467491",
+    "qualification/extensions/string-order-v1/component-runner.mjs": "c9b7d83730365ab1ac009feff5545efe97f4c83b4a32bbc68ddbfeb5fda73255",
+    "qualification/extensions/string-order-v1/prepare.mjs": "4e2c15f238d511aee6c0f778ab65130773f9542c241d2db6551175f3ca7f08ba",
+    "qualification/extensions/string-order-v1/probe-support.mjs": "ebb999bf74c0b15192f7bf597a2ef21c39ea48a23849da71ac741f1d80c21437",
+    "qualification/extensions/string-order-v1/probe-support.test.mjs": "d63df74b4055d6090659417e3bdd9c855d66c7318819045db5b810f5f40f4d4b",
+    "qualification/extensions/string-order-v1/runner.mjs": "431d31c31cd9529f8abc0b077c6bd102fcf3307b4149d6b0edde0fcafffd9104",
+    "qualification/extensions/string-order-v1/type-runner.mjs": "8e2a0ec07edd84a7e0734cb6e82da6317abadc11ae86ce532ae5ec258d0371fb",
+    "qualification/maintenance-jobs/reconcile-controller-publication.mjs": "4a20dbcf4096560f61bc951661a3c2c6388ddc3c3099314ec6d44d05e7ca5a83",
+    "qualification/reviews/canonical-queue-review.mjs": "a6423faf98b5d5c7c7c92549655741d252a75d232c9a7f6abe0f991950fff327",
+    "qualification/reviews/compare-hardening-review.mjs": "89157112d378fae5ed8f0ec969acc55d16696b8233cd763a60598cc2e8cf4f48",
+    "qualification/reviews/failure-artifact-review.mjs": "3b2585489dd8e8cdc42ef466ec1e3b7a86c57007c9fc8f4a969530b0535b713f",
+    "qualification/reviews/load-observations-independent.mjs": "0f19971073fdcd2dbc46980393acebfd853bad48e4cb3f507ca4cce82db2c408",
+    "qualification/reviews/native-packet-final-independent.mjs": "ba6efd8f67ef52021ba1d5a37d1d560f6e49958777fc6399524be1557f1ac071",
+    "qualification/reviews/preimage-review.mjs": "d061126c3d8283cbdd2de78431f9f16182b5e0ac1e599ed732d9563c945bf838",
+    "qualification/reviews/qlever-controller-review.mjs": "a3ac8b59ea9b21dd6f290af66ce6ee9e29f1276f0431768c1fd67cd05a7ca53b",
+    "qualification/reviews/qlever-public-string-v5-independent-check-v2.mjs": "32c43f987b88a52bc8c658dd3f4948dc27bf669c90a0c33d61b969b3f93875e0",
+    "qualification/reviews/qlever-public-string-v5-independent-check.mjs": "432ef51d9b14f7d04c5e51f67b3530ad7dd43635990f4c123744218c4b1bf18a",
+    "qualification/reviews/qlever-public-string-v6-independent-check.mjs": "03b3247d340cd96b3e2ec07dd0e860e4c97628a74d160af348b7311f7beeb7af",
+    "qualification/reviews/qlever-public-string-v6-terminal-independent.mjs": "a04581744e0fa2c43d27238dc14c3987a5533d8060b54b22935ce53b73bc6fe7",
+    "qualification/reviews/qlever-wrapper-lowercase-v1-actual-independent.mjs": "488134943f94c9d6421cfff397b35f4f0bc7f6d3b598c1192e5369ba6ed0ac33",
+    "qualification/reviews/qlever-wrapper-mixed-v1-actual-independent.mjs": "637ce6f11021f6cbd77f7953ff2783827eef1b5ae1d123dba3a3a68d4817ede4",
+    "qualification/reviews/qlever-wrapper-runtime-v1-source-independent.mjs": "79bef3ed9e7ec08bbc3977533a1b3ff84a09db4fb1b6dbafa1fd4c6feeda30d9",
+    "qualification/reviews/qlever-wrapper-sdk-build-v3-actual-independent.mjs": "47871b65df898145346b21ecc43d9a7c465596185f8587a3b6293d582850b4cc",
+    "qualification/reviews/qlever-wrapper-text-lowering-v1-actual-independent.mjs": "4528edd72785628c125c804f9f79742be6f736d624893d96a2a093efbf420b51",
+    "qualification/reviews/required-owner-review.mjs": "a9fd30c135a2c9137daf334f9a9744881b3b123ba35b3a25ecb250a76557ad3a",
+    "qualification/reviews/sidecar-migration-review.mjs": "a3828600f9fd4a0ffca8ede8c8ade90ed215e88f4bf95cd9b5af214072d9e818",
+    "qualification/reviews/xtdb-point-query-shape-independent.mjs": "30641626d7fa2e6500cfb7e1c7d9ed98460dc603ba2a25616694c27ded225bda",
+    "qualification/reviews/xtdb-signed-zero-independent.mjs": "e7550d548ecef15793e2277ee4fd1c9b189d4f16c630611c4f8ad114a6a7a323",
+    "qualification/reviews/xtdb-writer-visibility-independent.mjs": "f4beb6a43ab2e0c71b9cd558004509a1433636af6ee04f293685e8db3cc0c7bf",
+    "qualification/workloads/access_cases.mjs": "2f13a7388ebdbb5ac8a4509422c5cae99d3fda3398f7dc93e11c2fc291aac3b8",
+    "qualification/workloads/containment_cases.mjs": "cf16dd3d45cf6af9ff8c5c342ee1f50b134457946c042cfe246dbf7e1fd8883f",
+    "qualification/workloads/dependency_cases.mjs": "cc4c0469802ae98cb33bec12757237dbb8767a5dc58a0acf0281051bc504ed13",
+    "qualification/workloads/engine_cases.mjs": "1727a26e563e754aec2db85f3a7700e0eaeedfdd1721750be7e96cf03a4d35dd",
+    "qualification/workloads/funnel_cases.mjs": "2b3874146265a979ff7c99f3a0d3c29ed64d5b951b3a0b9bea24dbf039f7cad9",
+    "qualification/workloads/interval_join_cases.mjs": "c1bce169ce966aac92f04834cc9581864e15ef7c3f46352ad8b62b9ff768318d",
+    "qualification/workloads/recall_cases.mjs": "46b9401b75776f3fa9f4d4aa330f2cfc1ae723f30018b7f14973ac98bb025035",
+    "qualification/workloads/run_three_engines.mjs": "d9cde046b16cd8e61e69ca60baa6f99f7fb8cfeabf0d8f3a8193bf6144f7fd26",
+    "qualification/workloads/support_cases.mjs": "3e09071d2d0846ce7134a2d63650e70bb60d312cebe9375013fd1b5c86e4bd89",
+    "qualification/workloads/test_engine_cases.mjs": "310d646614811875084bff065d07eac6b6b6f7b00af77b310d1a3b6a331dad80",
+    "qualification/workloads/training_cases.mjs": "5ccf76e264e9c759f5bdaeba9e5f72cd9c888ebe8efa5ec88e30e5e9c8fa7389",
+    "qualification/workloads/uptime_cases.mjs": "e0cddd83549808bb4680ce138a59efa6b23ad597ed622a6f832d30b7e6800264",
+    "qualification/workloads/webhook_cases.mjs": "8fcc54a333c0fce094134f031b892bb4ad2f1aaf44cfdad21fdd87363e64585c",
+    "scripts/check-llms.mjs": "517b6ee48cc6582494c1b82d61734e1c6f4e80ad1b736f15782739d946850bb5",
+    "scripts/check-markdown-code.mjs": "f3582091cc8d2c58b0be81e96fb1b652a68556e75ff43f66a926925a83a7e5eb",
+    "scripts/check-packages.mjs": "2188b3834956885449580c8fa21724ac3ac0fd4ad9bbc8d763b99bc993cbbb9c",
+    "scripts/generate-xtdb-lexer.mjs": "38235ff78920c2e3e049a2f3585d6e5778cee875a38cf1c5ffedcf3f2552f72d",
+    "scripts/triplex-candidate-watch.mjs": "9d04e9c1d141a4b20bc497d5f051351531bd8144e01e21e63d6df3f9f8f3e585",
+    "scripts/triplex-devloop.mjs": "ff92cc0ee46f8bf777f96be800f9c3d006e27d5bd07b79adbd793a06b285d739",
+    "scripts/triplex-qualification.mjs": "65c702ecf8aa491efe41438eb60b14ea0c5db12b38958b2f08015273fb448eb5",
+    "scripts/triplex-resources.mjs": "c73451b389d62b882f8b946e77168a8e9f30a78579051c1315c07a409e9e0b66",
+    "scripts/xtdb-budget-runner.mjs": "27036198e6c0d8a849a563a15ff8edc36d9d3b09e432dfff7830c6f815b4445d",
+    "scripts/xtdb-qualification.mjs": "c61367189fa52d2518be7bcedb20c3f386b35dcb41d74495dce8b2f9e1096fa8",
+    "scripts/xtdb-resources.mjs": "2e79ec4e2b42a7a833ad73d58d3a9a4cc818b18b4e4129f31538a2ec90f184bb",
+    "tools/bootstrap/maintenance-readiness.mjs": "9e87f031f67e1f0cb0552e6f685894be3e85c7635805c8cb7c7bf940e3bc327d",
+    "vendor/duckdb-temporal/research/roadmap/iteration-01/probes/language-semantics.mjs": "a4fcb8ecf037f308e254bd6c9fc5dcb55db0ff447e6cdfc219ce50ec29ded21b",
+    "vendor/duckdb-temporal/research/roadmap/iteration-01/test-prep/browser-contract/run-contract.mjs": "c9dacac5bd30ae6f85b11fa74328bd903b7f690f1352b83b5752e0bcde40b10e",
+    "vendor/duckdb-temporal/research/roadmap/iteration-03/checkpoints/catalog-authority-20261031-0735/api-review/source-hash-checker.js": "a5e9d39a8c2e7651e05d580dd9fe1332de211ea382b782096b0e5c6665801f45",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-aggregate.mjs": "586f5898f4df0e49ccb3f839abddd476ac4400d2baecab8f62102be280d6c80f",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-compat-write.mjs": "6453d6578e95d10dcca3c837a42845aa52d68eafbdb4f80cad9b9847e21f8d16",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-control.mjs": "09f907239de7edcb5b81773ac87d40cf54bef9a832c018b074628f9793176f02",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-count.mjs": "0114b0bedd5baa160fb7d77402db546331637fc073f1a3b105746a8c8ef01bbd",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-entity.mjs": "488f4178d1ac54acd0045d8e0e087789e0c2d7f142190ee5143a2453dc04ef48",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-identity-count.mjs": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-join.mjs": "5d821301ea497b87f75d0939efdbeaf6007e911c29d1004e2b15c4aac4bc7679",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-reference.mjs": "34e7a5b021d87f0cd6d296cad356219b9ab46601130ee823ac5d7d8faa15ff97",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-scan.mjs": "aa8c1301ec3ec68bddd92dd794a322afa50c73bc4970a919920438964832dcf5",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-schema-views.mjs": "4084ee111d4b2dd31ea0c8e40fe9ff655d9518224784bf8aaccb91faa73c813a",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-schema.mjs": "5c0455c1f483f45b360342080f51f29df531929a2272a8fd558ee7a80aaadef2",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-store-query.mjs": "05d71361848bef7928344816a9998c097649c6553e04428be48c0e753bdf6d50",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-transport.mjs": "5bc55c9424c4a78ec7f560bd5f9e322685320716095353d0bcefedadd7743010",
+    "vendor/duckdb-temporal/runtime/adapter/benchmark-write.mjs": "436331732ac82e7378e61b789b840224781ad0d463ce0d120d2e72db6ef2d694",
+    "vendor/duckdb-temporal/runtime/adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "vendor/duckdb-temporal/runtime/adapter/crash-fixture.mjs": "43e2856343c3680ec7838924109866cfa9172b1bce0d1a184f38820604c16f29",
+    "vendor/duckdb-temporal/runtime/adapter/crash-native-command.mjs": "44e33d6d587a82752e9ad9d52917bf64e1c852204898ff3dce5d5548a10867a3",
+    "vendor/duckdb-temporal/runtime/adapter/evaluator-profile-fixture.mjs": "811653b6e8ee2e8c87cef69f0599cef0b1ecf637fbc212158bdc4773233952a8",
+    "vendor/duckdb-temporal/runtime/adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "vendor/duckdb-temporal/runtime/adapter/native-duckdb-port.mjs": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+    "vendor/duckdb-temporal/runtime/adapter/owned-duckdb-port.mjs": "65caca13d12022265bb0b45f9d9e69459871e6ab5f986ff84fe29c3958483ae8",
+    "vendor/duckdb-temporal/runtime/adapter/profile-public-read-phases.mjs": "ecbb19d43deaaab75c6aa38526abed0d4763cc4072ffa40b2a57ce3a51ea58a0",
+    "vendor/duckdb-temporal/runtime/adapter/profile-read-plan.mjs": "f03a33a2842b2af062f886dc3b961cc5b3ed44fd0e250ad5a6bf71155ebafa8d",
+    "vendor/duckdb-temporal/runtime/adapter/public-backend.mjs": "c763e86f4faf7c35de9c166813d590603321b2b7617022b6263e5f8df5c395bf",
+    "vendor/duckdb-temporal/runtime/adapter/query-result-boundary.mjs": "c9673b3a01a84bfe526459f05d456a740665dae0a719167f03deaf5167bd1947",
+    "vendor/duckdb-temporal/runtime/adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "vendor/duckdb-temporal/runtime/adapter/shared-fixture.mjs": "da4205aaa1c153a2ac2e8fe9df63f8dcc7909eebd1c3b7cd1b71a90e0edd23f5",
+    "vendor/duckdb-temporal/runtime/adapter/test-all-cut-store.mjs": "358d473e1820d8a0cbc23f0972e6cc545e6b7580925619bebf42d59dd9dbc036",
+    "vendor/duckdb-temporal/runtime/adapter/test-all-cut-unique.mjs": "6b2fe871a3f39f8728dd777c8304a87b636d37d8750a885cf3c0a832a266af59",
+    "vendor/duckdb-temporal/runtime/adapter/test-current-unique.mjs": "92a44f94568990a1406e58e5e9a47292f5127d54ece341adc0d59998679cede2",
+    "vendor/duckdb-temporal/runtime/adapter/test-evaluator-profile.mjs": "640d3c8fde753c7d5497c0df5ac2b3faf4b5a8589b41195f24126d3d12ca33b9",
+    "vendor/duckdb-temporal/runtime/adapter/test-identity-count.mjs": "2f13f15b4c1b227dd617779b3346aa0ba26fba80e2246adf2604dc5936f2378a",
+    "vendor/duckdb-temporal/runtime/adapter/test-json-blob-upgrade.mjs": "db96074314aa1eb12578a1a85a8bf23362a3de1da51cb90a34760acaeb0b57a4",
+    "vendor/duckdb-temporal/runtime/adapter/test-owned-query.mjs": "cc18672c70af5cfb5b01b48a10b4aef8c150e004c63a959038ff77963823e144",
+    "vendor/duckdb-temporal/runtime/adapter/test-owner-activation.mjs": "fd7f5273bc80a61aec4932c94efe1a0f8357c68323deea5249ac3ccf6f20ddcd",
+    "vendor/duckdb-temporal/runtime/adapter/test-owner-probe.mjs": "d7dee4920d6eede98b1cc4ca36a764e885f9e81f855a3be5373384f98cf48107",
+    "vendor/duckdb-temporal/runtime/adapter/test-owner-usage.mjs": "0236394b2bb84623e121caec04212161c53640f7dd330f157e0b806752ae75ad",
+    "vendor/duckdb-temporal/runtime/adapter/test-presence-upgrade.mjs": "5d9cb043244950b28afb34f04ea21f72b172f382a43fc4c1f4604744aeb3332a",
+    "vendor/duckdb-temporal/runtime/adapter/test-read-provenance.mjs": "7e692fd8ec02d83f1e8d95bd3caa4ae55ec6e8fc3d12b0b8975842b8b5377a15",
+    "vendor/duckdb-temporal/runtime/adapter/test-scale-fixture.mjs": "a5e64edf7ccb15b4ceb36cf123cd1ea6494bcd46533892fb8f57dad84fb83d31",
+    "vendor/duckdb-temporal/runtime/adapter/test-single-owner-native.mjs": "d4f1077fb3cd38604c27d7c0cf8d82a0301951bdd2c667c6b2226f190f05fa30",
+    "vendor/duckdb-temporal/runtime/adapter/test-streaming-source.mjs": "dee1efe50c9fd92b3540246279aaa2982bb8c9a66eaa5b1834d1a5bc4829651c",
+    "vendor/duckdb-temporal/runtime/adapter/test-uniqueness-upgrade.mjs": "77988cd991b995632b65c98102a2f446b364cf13208add5fac3f0eb1939edaa6",
+    "vendor/duckdb-temporal/runtime/adapter/transaction-owner.mjs": "4d1de7e32e298a39c4dd19a9d26f93045b1f575c1da2f3135c77507d5fa03c8b",
+    "vendor/duckdb-temporal/runtime/adapter/verify-expanded-upgrade.mjs": "2dc06366fc46ec895ce44d8da97f5fa5e4a2fec87fe9acbbcc49d462053d26b1",
+    "vendor/duckdb-temporal/runtime/evidence/coverage-command-profile-first-failure-20261106-raw/executed-source-patch-profile-sql.mjs": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24",
+    "vendor/duckdb-temporal/runtime/evidence/coverage-command-profile-first-failure-20261106-raw/executed-source-profile-reference-coverage-command.mjs": "a20527876b422faa68c855e63c02acc48373f37720e3ba524cf398d364804e3a",
+    "vendor/duckdb-temporal/runtime/evidence/coverage-command-profile-pair-20261106-raw/executed-source-patch-profile-sql.mjs": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24",
+    "vendor/duckdb-temporal/runtime/evidence/coverage-command-profile-pair-20261106-raw/executed-source-profile-reference-coverage-command.mjs": "10788933c609e755673e633ebf3ed0790a092a0d2c4b79c7349ff1e811d0b813",
+    "vendor/duckdb-temporal/runtime/evidence/native-reference-identity-growth-pair-first-20261106-raw/pair/baseline/growth.mjs": "643199d98ab50536c27143b0fcd737438f54f7058979d06c8fe56adcf9167cb0",
+    "vendor/duckdb-temporal/runtime/evidence/native-reference-identity-growth-pair-first-20261106-raw/pair/candidate/growth.mjs": "fc101d61c97edcfaab4742884e58db899f2ef124241adb70d27bffd74f070b8f",
+    "vendor/duckdb-temporal/runtime/evidence/presence-profile-first-success-20261106-raw/executed-driver-1706.mjs": "7ae1a740181033e58add024d441c964d86e5956857b44ef09f7cf178cc45b57e",
+    "vendor/duckdb-temporal/runtime/evidence/sdk-query-admission-v2-20261105/baseline-light-128.mjs": "7fd9387c8b58dd36c81e021261e6c5a79cd36a2cd0a2a89b1e3b6ca13cb80937",
+    "vendor/duckdb-temporal/runtime/workloads/access_cases.mjs": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+    "vendor/duckdb-temporal/runtime/workloads/containment_cases.mjs": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd",
+    "vendor/duckdb-temporal/runtime/workloads/dependency_cases.mjs": "faaa7ef47c4112ff06d69d1f888b373be48587cbc00f340e8f72cdfb842fe261",
+    "vendor/duckdb-temporal/runtime/workloads/engine_cases.mjs": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50",
+    "vendor/duckdb-temporal/runtime/workloads/funnel_cases.mjs": "ce3bf3ee86bb8db657ed3a643b8515bea309232d6db86dd96e76a18e7cbb2faa",
+    "vendor/duckdb-temporal/runtime/workloads/interval_join_cases.mjs": "8155ee3655fa8c8be4d20d90e6523cf1448e47aef4fdae45723833ae93eeed85",
+    "vendor/duckdb-temporal/runtime/workloads/recall_cases.mjs": "261247cc646e5eab3bf8c6bcdf84404f4b6b9cda07b885c94ca3d7a3906ac99c",
+    "vendor/duckdb-temporal/runtime/workloads/run_three_engines.mjs": "001df67ddac5d1242ec681dc46926f95908ee883a19fa5173e88ab45aa48c5a5",
+    "vendor/duckdb-temporal/runtime/workloads/support_cases.mjs": "3114043605a922218ae3fe1feeb4949d280f4dbe5e24d98159a8a691c5cebc02",
+    "vendor/duckdb-temporal/runtime/workloads/test_engine_cases.mjs": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a",
+    "vendor/duckdb-temporal/runtime/workloads/training_cases.mjs": "1474e7fd1ace7d18906d347de2a515149880542086e59feaf8cbcc0ffd1bd076",
+    "vendor/duckdb-temporal/runtime/workloads/uptime_cases.mjs": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9",
+    "vendor/duckdb-temporal/runtime/workloads/webhook_cases.mjs": "084549364af26a6efdf472e521e1a1a8fde7c08389e96810816da43d3d151e54",
+    "lab/tsconfig.checkjs.json": "0b21105b9755479329f55ba47e485bd0129bd5bbbde90a781f5f4feaeea8a6f5",
+    "lab/checkjs-exclusions.json": "53576ee42c18841065e2d13cd6e4bf780a9a86d9cd37479db4cec21a88b91e1e",
+    "lab/acceptance/obligations.json": "417145f38a4bd0f17853a986f78ac7783aef4ba08ee5274620bfed5886194af0"
+  },
+  "dependencies": [
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es5.d.ts",
+      "sha256": "bcd24271a113971ba9eb71ff8cb01bc6b0f872a85c23fdbe5d93065b375933cd"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.d.ts",
+      "sha256": "3f88bedbeb09c6f5a6645cb24c7c55f1aa22d19ae96c8e6959cbd8b85a707bc6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2016.d.ts",
+      "sha256": "7fe93b39b810eadd916be8db880dd7f0f7012a5cc6ffb62de8f62a2117fa6f1f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2017.d.ts",
+      "sha256": "bb0074cc08b84a2374af33d8bf044b80851ccc9e719a5e202eacf40db2c31600"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2018.d.ts",
+      "sha256": "1a7daebe4f45fb03d9ec53d60008fbf9ac45a697fdc89e4ce218bc94b94f94d6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2019.d.ts",
+      "sha256": "f94b133a3cb14a288803be545ac2683e0d0ff6661bcd37e31aaaec54fc382aed"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2020.d.ts",
+      "sha256": "f59d0650799f8782fd74cf73c19223730c6d1b9198671b1c5b3a38e1188b5953"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2021.d.ts",
+      "sha256": "8a15b4607d9a499e2dbeed9ec0d3c0d7372c850b2d5f1fb259e8f6d41d468a84"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2022.d.ts",
+      "sha256": "26e0fe14baee4e127f4365d1ae0b276f400562e45e19e35fd2d4c296684715e6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2023.d.ts",
+      "sha256": "1e9332c23e9a907175e0ffc6a49e236f97b48838cc8aec9ce7e4cec21e544b65"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2024.d.ts",
+      "sha256": "3753fbc1113dc511214802a2342280a8b284ab9094f6420e7aa171e868679f91"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2025.d.ts",
+      "sha256": "999ca32883495a866aa5737fe1babc764a469e4cde6ee6b136a4b9ae68853e4b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.d.ts",
+      "sha256": "17f13ecb98cbc39243f2eee1f16d45cd8ec4706b03ee314f1915f1a8b42f6984"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.core.d.ts",
+      "sha256": "eadcffda2aa84802c73938e589b9e58248d74c59cb7fcbca6474e3435ac15504"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.collection.d.ts",
+      "sha256": "105ba8ff7ba746404fe1a2e189d1d3d2e0eb29a08c18dded791af02f29fb4711"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.generator.d.ts",
+      "sha256": "00343ca5b2e3d48fa5df1db6e32ea2a59afab09590274a6cccb1dbae82e60c7c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.iterable.d.ts",
+      "sha256": "ebd9f816d4002697cb2864bea1f0b70a103124e18a8cd9645eeccc09bdf80ab4"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.promise.d.ts",
+      "sha256": "2c1afac30a01772cd2a9a298a7ce7706b5892e447bb46bdbeef720f7b5da77ad"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.proxy.d.ts",
+      "sha256": "7b0225f483e4fa685625ebe43dd584bb7973bbd84e66a6ba7bbe175ee1048b4f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.reflect.d.ts",
+      "sha256": "c0a4b8ac6ce74679c1da2b3795296f5896e31c38e888469a8e0f99dc3305de60"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.symbol.d.ts",
+      "sha256": "3084a7b5f569088e0146533a00830e206565de65cae2239509168b11434cd84f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts",
+      "sha256": "c5079c53f0f141a0698faa903e76cb41cd664e3efb01cc17a5c46ec2eb0bef42"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2016.array.include.d.ts",
+      "sha256": "32cafbc484dea6b0ab62cf8473182bbcb23020d70845b406f80b7526f38ae862"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2016.intl.d.ts",
+      "sha256": "fca4cdcb6d6c5ef18a869003d02c9f0fd95df8cfaf6eb431cd3376bc034cad36"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2017.arraybuffer.d.ts",
+      "sha256": "b93ec88115de9a9dc1b602291b85baf825c85666bf25985cc5f698073892b467"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2017.date.d.ts",
+      "sha256": "f5c06dcc3fe849fcb297c247865a161f995cc29de7aa823afdd75aaaddc1419b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2017.object.d.ts",
+      "sha256": "b77e16112127a4b169ef0b8c3a4d730edf459c5f25fe52d5e436a6919206c4d7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2017.sharedmemory.d.ts",
+      "sha256": "fbffd9337146eff822c7c00acbb78b01ea7ea23987f6c961eba689349e744f8c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2017.string.d.ts",
+      "sha256": "a995c0e49b721312f74fdfb89e4ba29bd9824c770bbb4021d74d2bf560e4c6bd"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2017.intl.d.ts",
+      "sha256": "c7b3542146734342e440a84b213384bfa188835537ddbda50d30766f0593aff9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2017.typedarrays.d.ts",
+      "sha256": "ce6180fa19b1cccd07ee7f7dbb9a367ac19c0ed160573e4686425060b6df7f57"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2018.asyncgenerator.d.ts",
+      "sha256": "3f02e2476bccb9dbe21280d6090f0df17d2f66b74711489415a8aa4df73c9675"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2018.asynciterable.d.ts",
+      "sha256": "45e3ab34c1c013c8ab2dc1ba4c80c780744b13b5676800ae2e3be27ae862c40c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2018.intl.d.ts",
+      "sha256": "805c86f6cca8d7702a62a844856dbaa2a3fd2abef0536e65d48732441dde5b5b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2018.promise.d.ts",
+      "sha256": "e42e397f1a5a77994f0185fd1466520691456c772d06bf843e5084ceb879a0ad"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2018.regexp.d.ts",
+      "sha256": "f4c2b41f90c95b1c532ecc874bd3c111865793b23aebcc1c3cbbabcd5d76ffb0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2019.array.d.ts",
+      "sha256": "ab26191cfad5b66afa11b8bf935ef1cd88fabfcb28d30b2dfa6fad877d050332"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2019.object.d.ts",
+      "sha256": "2088bc26531e38fb05eedac2951480db5309f6be3fa4a08d2221abb0f5b4200d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2019.string.d.ts",
+      "sha256": "cb9d366c425fea79716a8fb3af0d78e6b22ebbab3bd64d25063b42dc9f531c1e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2019.symbol.d.ts",
+      "sha256": "500934a8089c26d57ebdb688fc9757389bb6207a3c8f0674d68efa900d2abb34"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2019.intl.d.ts",
+      "sha256": "689da16f46e647cef0d64b0def88910e818a5877ca5379ede156ca3afb780ac3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2020.bigint.d.ts",
+      "sha256": "bc21cc8b6fee4f4c2440d08035b7ea3c06b3511314c8bab6bef7a92de58a2593"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2020.date.d.ts",
+      "sha256": "7ca53d13d2957003abb47922a71866ba7cb2068f8d154877c596d63c359fed25"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2020.promise.d.ts",
+      "sha256": "54725f8c4df3d900cb4dac84b64689ce29548da0b4e9b7c2de61d41c79293611"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2020.sharedmemory.d.ts",
+      "sha256": "e5594bc3076ac29e6c1ebda77939bc4c8833de72f654b6e376862c0473199323"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2020.string.d.ts",
+      "sha256": "2f3eb332c2d73e729f3364fcc0c2b375e72a121e8157d25a82d67a138c83a95c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2020.symbol.wellknown.d.ts",
+      "sha256": "6f4427f9642ce8d500970e4e69d1397f64072ab73b97e476b4002a646ac743b1"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2020.intl.d.ts",
+      "sha256": "48915f327cd1dea4d7bd358d9dc7732f58f9e1626a29cc0c05c8c692419d9bb7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2020.number.d.ts",
+      "sha256": "b7bf9377723203b5a6a4b920164df22d56a43f593269ba6ae1fdc97774b68855"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2021.promise.d.ts",
+      "sha256": "db9709688f82c9e5f65a119c64d835f906efe5f559d08b11642d56eb85b79357"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2021.string.d.ts",
+      "sha256": "4b25b8c874acd1a4cf8444c3617e037d444d19080ac9f634b405583fd10ce1f7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2021.weakref.d.ts",
+      "sha256": "37be57d7c90cf1f8112ee2636a068d8fd181289f82b744160ec56a7dc158a9f5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2021.intl.d.ts",
+      "sha256": "a917a49ac94cd26b754ab84e113369a75d1a47a710661d7cd25e961cc797065f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2022.array.d.ts",
+      "sha256": "6d3261badeb7843d157ef3e6f5d1427d0eeb0af0cf9df84a62cfd29fd47ac86e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2022.error.d.ts",
+      "sha256": "195daca651dde22f2167ac0d0a05e215308119a3100f5e6268e8317d05a92526"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2022.intl.d.ts",
+      "sha256": "8b11e4285cd2bb164a4dc09248bdec69e9842517db4ca47c1ba913011e44ff2f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2022.object.d.ts",
+      "sha256": "0508571a52475e245b02bc50fa1394065a0a3d05277fbf5120c3784b85651799"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2022.string.d.ts",
+      "sha256": "8f9af488f510c3015af3cc8c267a9e9d96c4dd38a1fdff0e11dc5a544711415b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2022.regexp.d.ts",
+      "sha256": "fc611fea8d30ea72c6bbfb599c9b4d393ce22e2f5bfef2172534781e7d138104"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2023.array.d.ts",
+      "sha256": "0bd714129fca875f7d4c477a1a392200b0bcd13fb2e80928cd334b63830ea047"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2023.collection.d.ts",
+      "sha256": "e2c9037ae6cd2c52d80ceef0b3c5ffdb488627d71529cf4f63776daf11161c9a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2023.intl.d.ts",
+      "sha256": "135d5cf4d345f59f1a9caadfafcd858d3d9cc68290db616cc85797224448cccc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2024.arraybuffer.d.ts",
+      "sha256": "bc238c3f81c2984751932b6aab223cd5b830e0ac6cad76389e5e9d2ffc03287d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2024.collection.d.ts",
+      "sha256": "4a07f9b76d361f572620927e5735b77d6d2101c23cdd94383eb5b706e7b36357"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2024.object.d.ts",
+      "sha256": "7c4e8dc6ab834cc6baa0227e030606d29e3e8449a9f67cdf5605ea5493c4db29"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2024.promise.d.ts",
+      "sha256": "de7ba0fd02e06cd9a5bd4ab441ed0e122735786e67dde1e849cced1cd8b46b78"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2024.regexp.d.ts",
+      "sha256": "6148e4e88d720a06855071c3db02069434142a8332cf9c182cda551adedf3156"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2024.sharedmemory.d.ts",
+      "sha256": "d63dba625b108316a40c95a4425f8d4294e0deeccfd6c7e59d819efa19e23409"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2024.string.d.ts",
+      "sha256": "0568d6befee03dd435bed4fc25c4e46865b24bdcb8c563fdc21f580a2c301904"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2025.collection.d.ts",
+      "sha256": "30d62269b05b584741f19a5369852d5d34895aa2ac4fd948956f886d15f9cc0d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2025.float16.d.ts",
+      "sha256": "f128dae7c44d8f35ee42e0a437000a57c9f06cc04f8b4fb42eebf44954d53dc8"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2025.intl.d.ts",
+      "sha256": "ffbe6d7b295306b2ba88030f65b74c107d8d99bdcf596ea99c62a02f606108b0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2025.iterator.d.ts",
+      "sha256": "996fb27b15277369c68a4ba46ed138b4e9e839a02fb4ec756f7997629242fd9f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2025.promise.d.ts",
+      "sha256": "79b712591b270d4778c89706ca2cfc56ddb8c3f895840e477388f1710dc5eda9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.es2025.regexp.d.ts",
+      "sha256": "20884846cef428b992b9bd032e70a4ef88e349263f63aeddf04dda837a7dba26"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.array.d.ts",
+      "sha256": "5fcab789c73a97cd43828ee3cc94a61264cf24d4c44472ce64ced0e0f148bdb2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.collection.d.ts",
+      "sha256": "db59a81f070c1880ad645b2c0275022baa6a0c4f0acdc58d29d349c6efcf0903"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.date.d.ts",
+      "sha256": "673294292640f5722b700e7d814e17aaf7d93f83a48a2c9b38f33cbc940ad8b0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.decorators.d.ts",
+      "sha256": "d786b48f934cbca483b3c6d0a798cb43bbb4ada283e76fb22c28e53ae05b9e69"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.disposable.d.ts",
+      "sha256": "1ecb8e347cb6b2a8927c09b86263663289418df375f5e68e11a0ae683776978f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.error.d.ts",
+      "sha256": "142efd4ce210576f777dc34df121777be89eda476942d6d6663b03dcb53be3ff"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.intl.d.ts",
+      "sha256": "379bc41580c2d774f82e828c70308f24a005b490c25ba34d679d84bcf05c3d9d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.sharedmemory.d.ts",
+      "sha256": "ed484fb2aa8a1a23d0277056ec3336e0a0b52f9b8d6a961f338a642faf43235d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.temporal.d.ts",
+      "sha256": "4ffedae1d1c2d53fdbca1c96d3c7dda544281f7d262f99b6880634f8fd8d9820"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.esnext.typedarrays.d.ts",
+      "sha256": "83a730b125d477dd264df8ba479afab27a3dae7152b005c214ab94dc7ee44fd3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.decorators.d.ts",
+      "sha256": "1ce14b81c5cc821994aa8ec1d42b220dd41b27fcc06373bce3958af7421b77d4"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/lib.decorators.legacy.d.ts",
+      "sha256": "b3a048b3e9302ef9a34ef4ebb9aecfb28b66abb3bce577206a79fee559c230da"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/typescript.d.ts",
+      "sha256": "c967e03c8dbb4770f7e2f0b71b5d13593de679a41cc2b60266c4b69f1342a263"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Types.d.ts",
+      "sha256": "4159beaf9445d7b9942e44a595917d058021162f6f731e913a5fec48a0c7e7e7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/HKT.d.ts",
+      "sha256": "0267f6335f1013c53921e8cf7f6677ef813693b548c7f42a8b6c0e217625163f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Function.d.ts",
+      "sha256": "f3acae8510da25c4e941bd85506eaaf945ac58b78e803ffc5b5f4b56b7757c7e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Ordering.d.ts",
+      "sha256": "9dcdd9800b8b05ad5729b34d9225ec353460ee5763f995b5c439b4bdcc9d81c2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Order.d.ts",
+      "sha256": "bb4b09943b169fe2e4eeeed43056382ddd85f6385f42e02437eefdf00521bcfc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Combiner.d.ts",
+      "sha256": "ce1b8c0f87a0404512f967d4b1e89d8442c765c4407d7904ed1ea7467d89034a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Reducer.d.ts",
+      "sha256": "1e2ceb148c0cdede7ed50463fae03f51b199ab3e7b769c343a74c568759c3510"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Equivalence.d.ts",
+      "sha256": "635fd78303b202bd1ecea48b4b0b74e241dc969f490116667b43c6cb46707fa0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Predicate.d.ts",
+      "sha256": "bc712433e89e58d36bdc447227e7500854fda77f378410875c0cb8e9803b10c2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Inspectable.d.ts",
+      "sha256": "68825518d7e42fc8a9fa5f931cb050f15a88bdfa5b5140f8d583c90d74bb760f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Pipeable.d.ts",
+      "sha256": "bc148a72b480c5ee634d720a211f6db3c4d0cf57fe8fff85ab2c0ea6e14ae488"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Unify.d.ts",
+      "sha256": "cdf31eee912503a4746f83f542d46f4b74e6c277bd842ef726eba9db7bca9abe"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Utils.d.ts",
+      "sha256": "4967105ca66bed313305fec1010aa4a8ebdd9d76343526303d02bede8c0bc6c2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Result.d.ts",
+      "sha256": "0467cba6681de5c3ffe2e53238e1aab00b56a0e3edfb505eb0f0b4259433b91e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Filter.d.ts",
+      "sha256": "a17ab1ad0d39e10821373458cfc617e450efef5e624fdcdcf4ff16f93beb0410"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Option.d.ts",
+      "sha256": "8316bb522f845a47ca6de18ec0423395199c6448e1243e810d196b7449839cbd"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Record.d.ts",
+      "sha256": "0671a4762dd5606f1866785fce5d6ed0406157d54f98f556927606a4ea9f8428"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Array.d.ts",
+      "sha256": "125c19909b422e1746914314f349d823d4b771bd80e66d339efccb26e8e1e3a1"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Hash.d.ts",
+      "sha256": "394d4f71147f8db18659eb74e322acda0f88d1060108e7d76330168c5ce40524"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Equal.d.ts",
+      "sha256": "8c0127a9fd09d3ec5e91d47501a1228ba7940ad8aa7c8344c7bbe206b0ba32ce"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Context.d.ts",
+      "sha256": "a95365f0513d3a86768c4b0d1c42b67a3a7c812d431595faa8103b51c66555e3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Exit.d.ts",
+      "sha256": "ea4ee2d5e533e8033279065e49d6cd2408574308840b34d8e737de6948c9b752"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/LogLevel.d.ts",
+      "sha256": "d6c7b4e59fb54e96d6c9f35eccf223b6672cbec1e650e77af2fd5a8582beac6a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Duration.d.ts",
+      "sha256": "8c0cc23387a90fa61fc4f97ac4e5e123bce7fc7f32bf5e1213256021aedc4186"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/NonEmptyIterable.d.ts",
+      "sha256": "00fadc583bdc7f95b37bd3dab6e60af942dd5462474b51be63d0d6c9a67f09a1"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Chunk.d.ts",
+      "sha256": "c418886ddf62852b78946bccf26c96052ec1c58db828dbbe050c493aa50a515a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Deferred.d.ts",
+      "sha256": "69fe9798ecd63c9c1495a1982e593ded300d4723b6557aae903ad4da3150ba9c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Latch.d.ts",
+      "sha256": "d97823b4e6fcfaaaf16976c0909d6197659a9bb723bcb3f9b3d2b745a9806855"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/MutableList.d.ts",
+      "sha256": "3d39f7afb1b77a51a8a3278cc9757f64325469ffe14ba812fb6bfc512bf53ce5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/MutableRef.d.ts",
+      "sha256": "cbff36d1666eb8a0b2af6fdcb6a314aa363b523efd92f9f17296cfe01e538c5c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Scope.d.ts",
+      "sha256": "edcd8e79c5bed3038b53f7146332caec7a2fd1765760b74e46545f808fcc0474"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/PubSub.d.ts",
+      "sha256": "081a16fe59beb6f3c7fa001e7b2463a640f54ee098ec9d0311d60134c56285fd"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Pull.d.ts",
+      "sha256": "e119a9421f90330e4fc752a4c342949478a95ff1f2988283802f37a1811fa6c2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Scheduler.d.ts",
+      "sha256": "7b0c70caacfeae853e4dba12043d208fd2f819d2c89ea8482d1f1f9c1b72d23a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Queue.d.ts",
+      "sha256": "20978db7b79c84c066c63fc5133f849c1bcbe2139bea5cd84d6ef5e6fbd4453a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/DateTime.d.ts",
+      "sha256": "1e62e596d08b4adce78e749194fb6b9032aa1328d9c319dc55a8eef4fccdb09b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Cron.d.ts",
+      "sha256": "3c6fd570c49ece5bf9c42727880cb4dd3567e81ac6b48031593379ff5805c128"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Schedule.d.ts",
+      "sha256": "90b745bd58fd52c88f8994e3edaca8e7c8146cbed35170fdc0b5f31cca859a41"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Take.d.ts",
+      "sha256": "5aee837d31ca35e4678528de2ce3d1cbbc33c1ebc204bda7d5d200d67682e4dd"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Tracer.d.ts",
+      "sha256": "713d6ce4a6627632323a1716f67b0a3c3e545482b9b6b020b83813cc0db35855"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Channel.d.ts",
+      "sha256": "8693b30c688b6cc860014a42c149203410a6c0a8d53a6e050ae76265f5500a46"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/BigDecimal.d.ts",
+      "sha256": "02e707c6957bb03ca3b853cd7f748c9917954b159c201bea2f034b302612eeaf"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Differ.d.ts",
+      "sha256": "275eaac82533847df7063a7d947258f4f661401a110a97060af37c021c569e22"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Formatter.d.ts",
+      "sha256": "2bc39b3001e3cb46338294ee681b4e444da661b99dd5a921e50f947713067c9f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Graph.d.ts",
+      "sha256": "b14e462d6ff04a23ba310ae9d68264b15e76d948b23958513da3c55f2ea0c8f5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/HashMap.d.ts",
+      "sha256": "36871d1d75ce3f3c11cd2ae355d28407875c47667eeb3e0ac0f3611a132a1060"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/HashSet.d.ts",
+      "sha256": "1219a5708a2d57dc5fd27a36a721a1dee96619cce9ab2ba2ff69833e4a37b669"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Data.d.ts",
+      "sha256": "05d36be2286c1514b5da58ca7422f92c284145750839cffbebb78199257b6cfa"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/http/Cookies.d.ts",
+      "sha256": "e2ca86720c91b8a97322efbdcd29c6c68e97d3addc385d0bba3549814c80191f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Redactable.d.ts",
+      "sha256": "9615804ca8db17c3497ce3a57609ff92e3053c530674b3c965acf0cb5d9c9bc3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Redacted.d.ts",
+      "sha256": "81d8ab5e28d5e39609cd2ce45a88bbc0e7b5cdb7558a99f2758719a62239d06b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/http/Headers.d.ts",
+      "sha256": "99a1ef8a1d797d36b4b0d3d2cb3f80c8ca274874f4b7961ab741531fbb7f59a2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/http/UrlParams.d.ts",
+      "sha256": "4f3e54ac7900448f953462c183222ae4ac42e2a62a361a003c0007ba916ae16f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/schemaError.d.ts",
+      "sha256": "3253de840fc8e72fe0498893659893b3ea134fc8b03f82ede5e90bb0f0fb62cb"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/JsonPatch.d.ts",
+      "sha256": "9fd9cc054fce66b2f5814d808a1e212d080e036c252895d672f74932a4f5c6c8"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/JsonSchema.d.ts",
+      "sha256": "0789e45a54de7c5d0b0da2a92932ed00b5e7ffb6c6c8635f2fa891179a61aa5c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/net/NetAddress.d.ts",
+      "sha256": "303cd305a3e74ef86bd55683eda2c15c49ebd8cb78fabfab4372d9d61d336c5c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/net/Host.d.ts",
+      "sha256": "c5f3c05c76d5ab6034383d131084073dfdcd4a50b1ab6c4877cc51d129dce363"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/net/Dns.d.ts",
+      "sha256": "51a49e813111f9f1932056ed641a5bdaa0b61daca083b89ceddcdf62f33f0a23"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/net/IpInterface.d.ts",
+      "sha256": "dcf81e7d967b64f084908c8bc02b070a0916cffb2cb707d263f9039b0431971d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/net/IpNetwork.d.ts",
+      "sha256": "5f9186044e48b0c9a6c8b693fe2a4c7c06f761f99de98c45c0f8e9ad612b9532"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/StandardSchema.d.ts",
+      "sha256": "bd93f9565109133014cc9d7e7f8ebb702086d934e11488e41df455b0c1b745f5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/SchemaIssue.d.ts",
+      "sha256": "0ca2e64bed333dbdeeae13a9269071b27648108772ccc99d761dc69e717e623e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/SchemaGetter.d.ts",
+      "sha256": "dedef255f63b545d5ed0e363a42f1624f25ac5d487bd94a80f168781df106343"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/SchemaTransformation.d.ts",
+      "sha256": "92524ff632eadcf9f885de43439c70e64aec665b56cd3d12c39f38f007ed9f3e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/SchemaAST.d.ts",
+      "sha256": "b65e86370811e2f307ad308028fdb2200c13953b6350f7ae5b100735b850b15f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Optic.d.ts",
+      "sha256": "f682406fcd0de4e8e55957df104f6ae86de04caf6fb21fc1b3c16af4ebac91e4"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/SchemaParser.d.ts",
+      "sha256": "7ce207918858fa3d719f80490dfdc1c1f6ab1fddb95ec196c2a7a3586be5182f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/SchemaRepresentation.d.ts",
+      "sha256": "0a1bbde2392ac7724443c7332316cb4ccc7694405e70eefee01165e65a447615"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Struct.d.ts",
+      "sha256": "8964f822ef38ae5e5a5d9112b58a73a56914f445af5993d19175e50d5799e372"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Schema.d.ts",
+      "sha256": "bee68570cead34f849e610a3cdd9ef2b01a11dcbacd0910d9e4aa34eadb26c19"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Brand.d.ts",
+      "sha256": "e40619a2c3c10c88f46d64d31b0cfc4aabb078e717b8e0dbf0c57b2c6fa30fb0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/ByteSize.d.ts",
+      "sha256": "a5f1791e82298b5959b4859c4eb41ff44b52d8ecaadca222b4a6264a16fbf40c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/ExecutionPlan.d.ts",
+      "sha256": "e8b05159a4424d900d835193e0cec00f5f97e889528a85c6dd1629ec68c53571"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Sink.d.ts",
+      "sha256": "d33695861881890dffc57f8252cca6dc7dfd3552fd193d543eaad0ca23cf8e64"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Stream.d.ts",
+      "sha256": "c0f254c8db95317cbf759457163ba3fae9e4924e3bed9574ba66bc4f59c2e326"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Layer.d.ts",
+      "sha256": "f40c5671d8a806d13bc21429cb86519d876f78b4801a06dd6695e3406fb2a12c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Metric.d.ts",
+      "sha256": "39c97a9547948cdaaf2d60a91bb5aab74c2d0bbc9af4689dcdebbe8958598245"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/PlatformError.d.ts",
+      "sha256": "644d657fca9488a2db9e49fd40d68f5d04bc5e36356823d35d09d7ab061c60c0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/FileSystem.d.ts",
+      "sha256": "58fc6f69a2e987dc250c0adc6e524b8d31fae62fed62350b24317ef7717b4d50"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Logger.d.ts",
+      "sha256": "2ea6ce978c691df7ae8dde5228aca474ae667d0a92eefb850a600e00c6b80ddf"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/References.d.ts",
+      "sha256": "cac5c56dbbcbdaf43e942c04db29399234dce2819d5763380598a11aff7dc0f8"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Fiber.d.ts",
+      "sha256": "d424bd0234377304cc3b12a8e0bd9387a77b04b85538575924c6ce501818f8f7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Cause.d.ts",
+      "sha256": "da70f659f2b296695368ceddbbb965e1c4a8a8e05802d96d36967f82722f9cc6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Clock.d.ts",
+      "sha256": "1ea828f3d5ca5c3dafe2c4d451a62cb3ba1570e8e80dbcedda27283a735169e5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Request.d.ts",
+      "sha256": "743c39f277fede7e10316f38ae1dc74011b29efb630d2916956aa0fcbbf0975f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/MutableHashMap.d.ts",
+      "sha256": "0dcee23e26dfd8d4a13b1e93ceaa40c90aa0f3d277bd6d8636b3205801aefd05"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Cache.d.ts",
+      "sha256": "081d233900ac077dbda4c97f77880a475ab04b9384565aee3b67506ff226ae76"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/PrimaryKey.d.ts",
+      "sha256": "db006ae71944aebd3164d2b2483545a1f53d83429239078b457685be88b93f8a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/reactivity/Reactivity.d.ts",
+      "sha256": "6f784ad9c39f05fcae3173bd752e430c04fe6ddc066cc6ab81b643d9709f4d66"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Semaphore.d.ts",
+      "sha256": "2a83efb61275a87eb068dc81ecd4156306b01425408720f2bf79b511ba5cad1e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/sql/SqlError.d.ts",
+      "sha256": "a9f759301c387a78629b0c03bc1646f80d51fa6d00b16456840fc9bb56c6afed"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/sql/SqlConnection.d.ts",
+      "sha256": "1712180b8bc9765d852f41c33f53af7b1b0501021bed10d09fd81a08238da485"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/sql/Statement.d.ts",
+      "sha256": "0c2eebbea42b2f1c57c3619286f9c633903583bab058600ba7332a4bc5e87196"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/sql/SqlClient.d.ts",
+      "sha256": "16653c8441c081c770378a01ab326213ae964d88e60330679768ebf879076951"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Path.d.ts",
+      "sha256": "292f67c0734e9e60ad42aad2b9690669ceeca94b4fe08c517f90b5252df5ba2c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/persistence/KeyValueStore.d.ts",
+      "sha256": "16e982c1079c20f7b344f521885e31cebf55e54ac05b9a523402904d041e521c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/persistence/Redis.d.ts",
+      "sha256": "2078c900fd4a17539d89ff4bbb6537d04c47e6fd89b3295a2ac2fc2e66a2ded9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/persistence/Persistence.d.ts",
+      "sha256": "9a0f6769c95241065b538d7024741b26b7f2a65c2aac15f4cf031a9741f01c54"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/persistence/Persistable.d.ts",
+      "sha256": "a3609a8ec71432ab80eb213937d21daa92b9df3bdf71670ba9d873fb9a7f26f7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/RequestResolver.d.ts",
+      "sha256": "787a06edd33f1c17d58ee65e1630159db215f9cba73c14fbe8046f294001edb5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxRef.d.ts",
+      "sha256": "b9bf56df30b4fd58aa97960d1b643fad16c27fe8972d87f368cd4c601d0f9807"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Effect.d.ts",
+      "sha256": "47b27d4e84b97bbe3721f6b4e6c3a25cafca3b01c09864098b5d2f67d364ad91"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/arbitrary/runner.d.ts",
+      "sha256": "a11ed8e52e105efe28bda7551c5aa2e93db7fa02b0157f251ae09cc481a0ce5b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Arbitrary.d.ts",
+      "sha256": "472b3645948b1eb9fc35f70189aaa4b0f44e51844a7e48bf0856e7d0b1e7cbcd"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/BigInt.d.ts",
+      "sha256": "9b18f9aa924ad70bc16ca8355da0af76e124b4729c56d94d6a56611e127da5d0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Boolean.d.ts",
+      "sha256": "c7217b61eed822d64fb2e4b891111d13f8a4a61649492159f16e2e85cbb4af22"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/ChannelSchema.d.ts",
+      "sha256": "d5efe51f60208287ed71ee731f1239254028cf2ddd997f5f7faf729adf3910a0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/ConfigProvider.d.ts",
+      "sha256": "4af9c0e1952f8388dbca6474b5c27907cec23f5e2e0353479b2cb40e342ddb1e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Config.d.ts",
+      "sha256": "ff6b879355580345429d17389eb9e334698aa830d26c20b8e1e0ef93023d89ec"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Console.d.ts",
+      "sha256": "ca4f55931220a397791221e372182478b752b3a7a01642ae19d54b54b2d9164c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Crypto.d.ts",
+      "sha256": "493907629fb5943d0abd726aad70eeaac96b2dc4e3ce23e9a9d3f29b53c2fcde"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Effectable.d.ts",
+      "sha256": "545a08cb11fbff569fbe115054d5baa800ad139a0fa4dda8f98ee9c82e6dba71"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/ErrorReporter.d.ts",
+      "sha256": "1758646019744ceed25239d7af2aee55488fbd913f0f393d98dc96850daf0f31"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/FiberHandle.d.ts",
+      "sha256": "1eea47f89caa01cefac7647dae56d786dca11cfc202ba5bbb903fd9a36977c9f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/FiberMap.d.ts",
+      "sha256": "7e189a5cb88ad52e65c0fb7fa8bbe0904f8d7e33747f9a7abf694dcce0101b37"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/FiberSet.d.ts",
+      "sha256": "53405b4c00442a934332d3032b190e06eb2273d83a6516c6406c828a540b6280"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/HashRing.d.ts",
+      "sha256": "de4f08455841a0e5a3584e10a9653db0f80b73782aa0664160187b80db4ea0ae"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Iterable.d.ts",
+      "sha256": "7ac3adbdded2ef9385a4a44fca1674feac2fe3cef2b7a446d7df7773a3f9077d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/JsonPointer.d.ts",
+      "sha256": "ac58365c43d346b3b8d20e3ced776df061a2fad9807946ddb4c8d48697fc958a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/RcMap.d.ts",
+      "sha256": "feaadbadafd2ba583e221f39c3ddc9de70da594296fb55cd4655a9893bd74801"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/LayerMap.d.ts",
+      "sha256": "c5f3b3803b8809c23b894747cd7c00950b185d5b66ed423692bbdccbd05d040e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/RcRef.d.ts",
+      "sha256": "0579c355318732f5e1ad125569e3a4ab3a5f473cd11705ba67080db9d2a7f37c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/LayerRef.d.ts",
+      "sha256": "87f0a3cecbcd62f19a706e841473a58becf9a9c8aad7466200030954c980fd62"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/ManagedRuntime.d.ts",
+      "sha256": "dfb0a1eef59a8ccb9f87555abb8db0819c6c13cdb4089082c24b238d61b60473"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Match.d.ts",
+      "sha256": "fb25e689d453630ef61dd3845e4232952ec9d90c1fc055496d566aa7dbdfe6c0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/MutableHashSet.d.ts",
+      "sha256": "9ae37271fb44da1e0bc11230885f93517b9a44a803483d09ddf18c3f17e0381d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Newtype.d.ts",
+      "sha256": "e645d1ba3857f895477b1be0777f3f1d1b78d0877a3fec4ed13b17a2b04eaf1d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Number.d.ts",
+      "sha256": "7a9d22892acbbca10ef6e174aee7e5445b51933d8131570c4f0b29de87171a0c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/PartitionedSemaphore.d.ts",
+      "sha256": "d60379339604c7872859305e6ca8862a12431b43907a21dbbc15aa77274798a0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Pool.d.ts",
+      "sha256": "70cacea5624be310cd68d5f9fe9b1e84c5b1355021e54dfe4e842686c88a1c53"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Random.d.ts",
+      "sha256": "6c4d4524b9cda3a6e2001d1cc5124bc5b384f5f4286b5bb4d03a3602507a37fd"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Ref.d.ts",
+      "sha256": "2be52bec055168edd150d2fdf8a64aa46d24a4e2055dde45b3cf744d388fad9a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/RegExp.d.ts",
+      "sha256": "8d1dafb3a78f4ea2798c6df13992bf255d20a9c76a7e56540a3f16619532e72a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/SynchronizedRef.d.ts",
+      "sha256": "9092888d6de2d358cff180df797cd370ad113b42c00525a241670165af05becd"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/ScopedRef.d.ts",
+      "sha256": "a7f1587f869062cf349d47a353fc16d675eaf2735d5f0b0e8d5f37d007e6426c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Resource.d.ts",
+      "sha256": "1e75475aa25041aaea34723ae682a1f7bb87d0850d477fb52aa11207988b2187"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Runtime.d.ts",
+      "sha256": "9299f7b5c6b59330fa0c85a9f156fd24f6617104cca2613d40fa00b02046fe3c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/ScopedCache.d.ts",
+      "sha256": "2527567dabda601c3e284cee8cb261c4e902029cbb4874d892885e78629a0aae"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Stdio.d.ts",
+      "sha256": "4fe0e76811cf13d58c6fbebd4c3bf66c78c8e14bd90d9261e1e7b90dde470105"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/String.d.ts",
+      "sha256": "1d36dba902364505285875a79ad8d556e64e9f496e6c80529ed68e8be9da6c7c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/SubscriptionRef.d.ts",
+      "sha256": "a52add88ea3c64af4dc1d380d4889850ba360c0fe78aea3b9b9548ed4bac743a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Symbol.d.ts",
+      "sha256": "4ce6f260f4969b2408c4e172d0a56ba855d4461093862d59f34050f1557ec191"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Terminal.d.ts",
+      "sha256": "8f049d46188b8c572f27eaa1fe574b90497cca71ffde61f948f105cb499f6f80"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Trie.d.ts",
+      "sha256": "b7b3dcb6838c389b53ec755902ab5c45f13ad565c07e1d3dacdad2d49efeaa5a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Tuple.d.ts",
+      "sha256": "87179eb20c46d1f375aea1ebe36becbac78ceb3b4313ee5cf861aeb8497fa971"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxChunk.d.ts",
+      "sha256": "55de9e331ac5acd76d1c3510339a5a0c08334162ed96fb7027f9c4e3f611b083"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxDeferred.d.ts",
+      "sha256": "fd649a78d5be93e70abc9335e9e7dc9f885735867aab19b90e64800c8031040d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxHashMap.d.ts",
+      "sha256": "6928b86d731d37b365b99dd94788835b6eddfeeaef7bf6e9a64d6942bc0e555e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxHashSet.d.ts",
+      "sha256": "5c8e094ad279a21b1ed590e4e9c69d3a0e6510075c21a17f92e558c6cf665df7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxPriorityQueue.d.ts",
+      "sha256": "ab7c11709880d9691065702c1ca7cba42683ef9d7d2180227ada17c732296244"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxQueue.d.ts",
+      "sha256": "acf7b145d6196ec7761ab713d0e0410033d59b2207af5a28685f0d042bdc5094"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxPubSub.d.ts",
+      "sha256": "7b15d552c5f8c568c66c5a53ee8f7b88bbdbf89ead0e2938ccaa31f8c71bda3d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxReentrantLock.d.ts",
+      "sha256": "498a352ed3b2692ec5615165470759892b529c435521d9812cca53d852986543"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxSemaphore.d.ts",
+      "sha256": "c9568e7e6c593f35b77566921ca34b0d5d3ea33e8aa028bc02c9d8c8456f830c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/TxSubscriptionRef.d.ts",
+      "sha256": "f1f421a07529e51794f3ab46b326bdd6eaf35143510cd080f3c03df014a1772f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/UndefinedOr.d.ts",
+      "sha256": "a32ae72ba6fa4f04b2f724ac2e9bfbc15fa648709d4a79268f094d074709407f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Version.d.ts",
+      "sha256": "c77fff822e37d7ae01c65d4f89bd0cbc503ab22c2895c33b2ec5c7bd109b78ba"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/index.d.ts",
+      "sha256": "d758a0a01f7bac11c8ba576c501ab1fc5277753e7a20b2717ef1bdc5ce4ca065"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/Branded.d.ts",
+      "sha256": "af83d342d1ec08da476095a6feb1531f3331396f33317227734ad6592d682285"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/Triple.d.ts",
+      "sha256": "aa140e6ed6f090a5cd5bd806bbf22c381ff9c3666335ed967f6d9d5cf70e3923"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/Temporal.d.ts",
+      "sha256": "7a9662a5f0c4c2832ef22312656c9b3b5823932aa7625322c16712d99b2fa0af"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/Error.d.ts",
+      "sha256": "96d509143ad9eb359361ddebcf36cd45e08fe08c08c6ec703ded7dfd83a5cbe4"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/Value.d.ts",
+      "sha256": "9d796899c3467499aa0f8beb8a3970f8f6b1e8d73114df3c75bf238603022f74"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/content/CanonicalJson.d.ts",
+      "sha256": "42d4abbf7c32888277c062ca83b7b5e71aacc45fa4bd48c2baa92df4b86bed0a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/Constraint.d.ts",
+      "sha256": "09ba0c948fda0d47332329d4d76815e78db5406f5f601874dade492ef6ffc7bb"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/errors/index.d.ts",
+      "sha256": "767a5bfa41a747fbc375ef508411f2ec50b3e3e1b8daf75453503b98a96f8e2d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/datalog/schema.d.ts",
+      "sha256": "6ff2637df480e083ae956f89c48aa5b7705a4edbf2cae12637e34a94624c9675"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/Pagination.d.ts",
+      "sha256": "32b1e2821485f9c6acd5b88940a8232e0d0730fc221e54c7f99ab2b9e6e411d0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/storage/QueryExecutor.d.ts",
+      "sha256": "1b6c4dae502579b29d47bbaf02c005bc16de815cf839523778ccedff9d3e2520"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/datalog/validation.d.ts",
+      "sha256": "746068622ce8b0dff46025c03484144f021ae8ea4995175339df9eac97b5c168"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/ChangeEmitter.d.ts",
+      "sha256": "9ff2d7bd112e32f007bfd11ec4a9b90e71f1c6a48bdc67ff2077574fda309e4f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/content/ContentId.d.ts",
+      "sha256": "80c13f05e1e499a8d86253e053eec92a30be543d8ef8d71a6e2c0ad2ca28c1a6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/snapshots/canonical.d.ts",
+      "sha256": "cc71de459e8676b4fe1b2563459a567a27abf7efd4e04815ae62cc0bbd2f92c9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/snapshots/SnapshotService.d.ts",
+      "sha256": "b124c5e75bf2e7b189db78601577ea7cd6333003e813ff4ec986b0dfcfabadcf"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/kv/KvBackend.d.ts",
+      "sha256": "f34ade9aa01528b3ef3c260b604ad75b09f37e83bed98bd7bd882bf5ed16e2d6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/RuntimeServices.d.ts",
+      "sha256": "1c65762318b1cd658271656160a430461158333a524a56e8fabaf4c82ff9d17f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/TripleStoreRuntime.d.ts",
+      "sha256": "0897ac722a9435cede6968473309bb899a1e01e91717b01de0b00f53b934c62a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/types/Pattern.d.ts",
+      "sha256": "e3cc5c1acd1d87e8025fe11364065fb60b172319014d20ee13d4c9a685ab4941"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/storage/types.d.ts",
+      "sha256": "489c6bd6f911476f1e52bfaee76dc07875d2b8ca672fe4b6e03d1beb2b107e5e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/EntityPage.d.ts",
+      "sha256": "ec48fdc3fa085c4205c5f1e9f7291046e17f67d3a2b512b7aa50ae5370c9ac77"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/Triples.d.ts",
+      "sha256": "c6c4eebf0675947f0f81527970a96afa2947de577577838e52814cba3ec2ec6d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/storage/StorageAdapter.d.ts",
+      "sha256": "e3ac16eaf653aed079ec8a4d6b698b4e97cd157fa3096ac2d1b40524848b42fc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/StoreCapability.d.ts",
+      "sha256": "0a99e95df96fc2b972427014ad9d645d51d042e9866ae16827f88a2a7f518687"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/runtime/DatabaseScope.d.ts",
+      "sha256": "f50bcd0dd3e6f32ac9409b8ca9e16d09d68e738cc62590f6dadb316b68cb3390"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/TypeExpr.d.ts",
+      "sha256": "b284084b951d7e733a61bbc726a67fb876392a5987d43cd5575994d57934548b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/native/NativeQuery.d.ts",
+      "sha256": "f8b61ad45744ce74d8a615e2b4376bc3adcccbe93ea512317466e77126aef171"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/runtime/Capabilities.d.ts",
+      "sha256": "92815be4c8f25227a5e763f31bb6d1139e4452940d83a8632cc90776b88e8eac"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/runtime/Runtime.d.ts",
+      "sha256": "fcc02131d636e8f0dd8ab970c7b1ad6aab05d10e9c655a1fd818ec311baae9d3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/runtime/index.d.ts",
+      "sha256": "38e5337bb1fedba7695cc46a95088441910c849b3d913dab56b0cf768dd33f63"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/testkit/src/route-history-grammar.ts",
+      "sha256": "1db28c3e695f6c827dd814210a8a5f7a882aa1677fff6815c70e0d118baea934"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/content/Sha256.d.ts",
+      "sha256": "3a4c4948d5839b8bd7c995455f3c64082195cbd893ce4de65dc323820b988fe9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/content/index.d.ts",
+      "sha256": "a0ea87a8028ea4f7dc86591b1f18c02c6d3bd8f0c0aac31f01409f7383b52c10"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/testkit/src/route-coverage.ts",
+      "sha256": "9e53f647ec7862c62c4831279a075a09ea5176d78e7e7afe149da837c26261f3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/testkit/src/route-equivalence.ts",
+      "sha256": "723399315a33500832e215b1a79085d8c449d1ecb99e2254e2e23a33013b6505"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/testkit/src/offline-route-fixtures.ts",
+      "sha256": "e6ca91277f7ef4e70888983f86e68727e02e43fa3046c221fa27f35eaa09d37c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/datalog/types.d.ts",
+      "sha256": "81f13a8fb13cefb26baba13e9475c2228a83b83f6b4e0ceaec1f4bf3efb3380e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/subscriptions/types.d.ts",
+      "sha256": "7002ddb9df07e9771e835f8e12041b05352beab31c90ee701985fdb3050822db"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/subscriptions/SyncHub.d.ts",
+      "sha256": "466abb29b70ea7dad389026aac66ffe902b6010cebcf0932c40d8c0c31520c9d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/subscriptions/SubscriptionManager.d.ts",
+      "sha256": "80165e8198db948029591966d986719632f9c6425635251ac40a83d3cea8cdd7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/DatabaseManager.d.ts",
+      "sha256": "92f99166e94be9f05e3225e1a3320aca5b95012a55d3dab8a8e42968c4221f6f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/layers/KvTriplesLive.d.ts",
+      "sha256": "3325b53ab034666447eab034f059facd1dfad5515cd2b40d338994b539ba43af"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/index.d.ts",
+      "sha256": "4f85d521f0402671fc960bd08acd429cccd3665090602c4bdd1850ca898ed411"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/duckdb/src/owned-duckdb-port.d.mts",
+      "sha256": "f868579314b8c54314ff34da28e0ee0468ac3ee1cdd7c61e18190a6d711ea277"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/duckdb/src/native-duckdb-port.d.mts",
+      "sha256": "fb437d9486d3df1108508cfefa0b9f194d6c1ae23b4647b149f8ff466ba0369b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/duckdb/src/effect-storage.ts",
+      "sha256": "ffbc6d6b500b69bc22f795a60285afb1d8bea41c8c3a7b100abd832fc0e25962"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/duckdb/src/public-backend.d.mts",
+      "sha256": "08ed59a8642744381b4c93453805bb5e6eece9669b773d573442c93b914945a1"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/duckdb/src/query-result-boundary.d.mts",
+      "sha256": "aac2cc3cb1123c05afe8ceada20df279c23a0ca389939623e36e9234a1e73204"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/ConfigNode.d.ts",
+      "sha256": "c02997c1993f71ab3fa5f19ba0df8ae12f2fd3a730ef94c4351a54ec05310584"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/Attribute.d.ts",
+      "sha256": "5b9ed03e736a4562197e3d84443ce25801fbb130cb42fb66ab39acd4815bafab"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/BoolExpr.d.ts",
+      "sha256": "a10d3d16df1f7a535d0491ff3ee780cd240635d413084da65630318df65369af"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/Catalog.d.ts",
+      "sha256": "7cb84e56c63f3df73b47fd87f626ef61dc07ea5c5bc9f418690707b7d7340281"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/InMemoryConfigStore.d.ts",
+      "sha256": "28bccd17becfc908cd63a174a1022acc0645a1b2cf7c9a1287419f7045207fac"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/ConfigStore.d.ts",
+      "sha256": "3cf69050f0a4fa8b6cb06c7311bac1d5eff8e04d158721c3f13f7d2fad20e9fe"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/World.d.ts",
+      "sha256": "44ae56e1ce593e9369a4a498237ed346ed03b726caa9b9fcf8d9e327a1e15504"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/Evaluate.d.ts",
+      "sha256": "39eea8e2b5120084ce3b8dfd0ab9a12ef7d74b3dd550ca38895be0adf1045726"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/ConfigRuntime.d.ts",
+      "sha256": "9cc5eb2e44fbfd9024a55bf732bfdcc8571865a00ec13321398d760b983b3208"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/Entity.d.ts",
+      "sha256": "6bd3e6c1de6dd346b7d4a508b4fa0ffd7c5d1941833f122602457c9187f4f9ac"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/GraphConstraint.d.ts",
+      "sha256": "a4102d74c8a4a726559839ff5b588911fe97dcb4634dfae582826f1e0f7bae1f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/EntityType.d.ts",
+      "sha256": "104321be759ffb7d83e94a615479b49db7380252ce3d05e99aa676f4db778abc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/EntityValidation.d.ts",
+      "sha256": "e2de6203d93cbc141dad71dbdee28ebb5af6510559983174aa6d30835a0b900b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/Reactor.d.ts",
+      "sha256": "9a934e3ab992af856a90c794ea4a0ef8dceeb56d86d3a209f39ef63a1dfabd58"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/TypeSchema.d.ts",
+      "sha256": "5b2170c82fba0f5cbded7e5a3046a54676405858ab1eceab03e121ff5869e886"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/TypeSubsumption.d.ts",
+      "sha256": "acc76ea129611c47bc959ecf1a82f4d8d807361571226c8fe737adae7811d2d0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/config/index.d.ts",
+      "sha256": "02e01fe9709236211e7e8c9039444b67af9135fb22c15f0ad64a7013604dbd18"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/dialects/types.d.ts",
+      "sha256": "100bff2dea152d5feec0e110c5b90a028cc3c972fde03aa626c021ecd8203900"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/datalog/compiler.d.ts",
+      "sha256": "ba10415c88a6515f2eb06d44d3de764d77fccc6e232141bdf008bb7d6c5ac37e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/datalog/wrapper.d.ts",
+      "sha256": "ef1034901eca8ef452c43b1db7b3e8dd3f204cf63050d86385d2c88e69bf31f2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/datalog/index.d.ts",
+      "sha256": "6c35bc26db2cc2ecfcf44e9ee5a5d8fd4521139f7308f2709648edaa625d3eb5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qualification/dist/index.d.ts",
+      "sha256": "6bc81204f88f360e50905cd423e6d5c3cc5a79db5fcc4db140e83dee54ca4dcc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/qualification/load/model.ts",
+      "sha256": "c975528695a66e965b9bc63429db7cb172b1dcd4929b3bb0d82968e02e356764"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/qualification/load/schema.ts",
+      "sha256": "906a976c85824d3258f2de513013e4ec6e89507707f7b0d5e426463a6a32cad3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/optional-runtime-types.d.ts",
+      "sha256": "6b099a9e91a928830d0fb5cd684e83295e744bb6863bfe6d76f43ee4359c040a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/tinybench@6.2.2/node_modules/tinybench/dist/index.d.ts",
+      "sha256": "392cfb301c32b346b9e519412c0e137c7769e861e9315fc90b15acee38b62547"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/config.d.QBNYCgFU.d.ts",
+      "sha256": "cdcced99c921c651feb245ac08300520a49e5c8aba0d980d8b7ad61312db735b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/types/hmrPayload.d.ts",
+      "sha256": "64ccfe7dcbcad9b8a661a042ecb2309e41b9ab957f7b8cd070b05583a7821a13"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/moduleRunnerTransport.d.ts",
+      "sha256": "c911b3bd083dade8fdb7775261aa25feae695d562a3b11209650b47be90043fc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/types/customEvent.d.ts",
+      "sha256": "98580d6ed68c9cee7f956685abbb6502d70bd92f48175ac807ae6c5e254fadc6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/types/hot.d.ts",
+      "sha256": "4e003c868b0d8f8ad200b96cbc653e18e513fa23e1c19c4fe3cc25d4394efc47"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/module-runner.d.ts",
+      "sha256": "046271de66ae07ca543f79eba0de19f342b78e759b597929159b2392e0a7ac87"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/rpc.d.Cft1biqy.d.ts",
+      "sha256": "dc1ba9578b49d66ae26927b6ce62e3796e295f87d78d092645afe416a1382818"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/environment.d.BY56MoGs.d.ts",
+      "sha256": "62d5a74f9fe6967e36c86bb99e98b337bb5ea010fc820204058ba6dd31d76cc2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/worker.d.BH-r1bPu.d.ts",
+      "sha256": "b2c3155317bd1541fd548729c1b1226155fc9cbf493cab2ce69dfaef77bc6ce6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/browser.d.FGQ9_rK6.d.ts",
+      "sha256": "022c64ffd21008457427d9ba910c81a653775ad7c36d890f7a4b75151034a959"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/task-utils.d.PFh2BV6Q.d.ts",
+      "sha256": "0bb393b3ff2115443530b3b97f9711074050888968cb2dfc3840664f2791401b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@vitest+mocker@5.0.4_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/@vitest/mocker/dist/registry.d-xLx_FoyF.d.ts",
+      "sha256": "8d4ea2431523a42682a9f2efb2ae662aa42a39983c9d40a19257b2445f50450e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@vitest+mocker@5.0.4_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/@vitest/mocker/dist/index.d-D4wtotQw.d.ts",
+      "sha256": "29738162d88967e51557276cba80552cb8d2a4c823873b7f1531244860f0d178"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@vitest+mocker@5.0.4_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/@vitest/mocker/dist/index.d.ts",
+      "sha256": "fc07122b30042636bbf689305c75a764d6e3c2eeb75cd1033c96a6a7dc9e6e3f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/evaluatedModules.d.BxJ5omdx.d.ts",
+      "sha256": "b413fbc6658fe2774f8bf9a15cf4c53e586fc38a2d5256b3b9647da242c14389"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/expect-type@1.4.0/node_modules/expect-type/dist/utils.d.ts",
+      "sha256": "dd51e53752b310bd20c9b1a87bbf12b1fe2be7fe40f505b43199496481096275"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/expect-type@1.4.0/node_modules/expect-type/dist/overloads.d.ts",
+      "sha256": "a87be4662442b3feeffc331ecafe6b36cafd08727e2d7f2425a5099577e7fd18"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/expect-type@1.4.0/node_modules/expect-type/dist/branding.d.ts",
+      "sha256": "cd4cd9220a1ba793bc935e76d8e5481c110a90d9868ae7866a182ee71cdb6abb"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/expect-type@1.4.0/node_modules/expect-type/dist/messages.d.ts",
+      "sha256": "0a7fb8619b10bc05fd933ca9ac1c8b2ab2220be7a57b57565c3ac158595494ef"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/expect-type@1.4.0/node_modules/expect-type/dist/index.d.ts",
+      "sha256": "c4a5f91feb9c5a6b2a91089d959c38391b79a961db3b9cc73b8877d57ad7dcdc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+deep-eql@4.0.2/node_modules/@types/deep-eql/index.d.ts",
+      "sha256": "427fe2004642504828c1476d0af4270e6ad4db6de78c0b5da3e4c5ca95052a99"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/assertion-error@2.0.1/node_modules/assertion-error/index.d.ts",
+      "sha256": "2eeffcee5c1661ddca53353929558037b8cf305ffb86a803512982f99bcab50d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+chai@5.2.3/node_modules/@types/chai/index.d.ts",
+      "sha256": "9afb4cb864d297e4092a79ee2871b5d3143ea14153f62ef0bb04ede25f432030"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/index.d.ts",
+      "sha256": "e7f7f7f328f7cc0a9ce1e16d72180967d0f09bfe79c10401b0e9ddfb9b84f3d4"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/qualification/load/dispatch.ts",
+      "sha256": "a37577301b8a494583e491bb9a036604eecb8a0dae7aebcb45530a6a8823c87a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/packages/qualification/load/runner.ts",
+      "sha256": "2aa3febdccdaba14afb63b3339272364859e0f93de10e2abc784257ada9f4cc2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/XtdbClient.d.ts",
+      "sha256": "4707b31c6cd12d9fba8cacd50a3ab191ac86910f8461317588e9633cc50df0ba"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/dialects/sqlite.d.ts",
+      "sha256": "98405aaa46bf2b96e29b2e08cf83718ad18af3be0d8cac38cc19cd67510a20cf"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/utils/id.d.ts",
+      "sha256": "968e810183298b37d3b02c07b6416ac4ff6d697ae5ef86ff566285af69f6ddc0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/TriplesLive.d.ts",
+      "sha256": "89e749fca8a162a7adec070163649ce25d6a360ac2ab5210415580500af460f0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/DatabaseRegistry.d.ts",
+      "sha256": "6ace154242a0516c47a2c908091d25e9c91946ce77195df4753bcdeb8dc19a82"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/writeEventUtils.d.ts",
+      "sha256": "b681ab552e4c03106e0e8576bd56ae2cab551c5d319ec3d61ccff2162b0fb423"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/store/ChangeEmissionCapability.d.ts",
+      "sha256": "d7558ab3cdbcfaefd68909c113422994f949c6b6fb2af48e21caccb6a398b0a2"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/snapshots/SnapshotServiceLive.d.ts",
+      "sha256": "c65483fcdbeb7a4711d207a9455b9a60f8b4b981c4d2073032a37496fc0b57b1"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/snapshots/EntitySnapshotsCapability.d.ts",
+      "sha256": "a645215b58961170cda4eae510616a59f38c35a37b8a312b60281b9887f01f5b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/params.d.ts",
+      "sha256": "4e0856aa021749b0f588244d04c81627c51f60e91bc4ff65df2f32313f9c9ae0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/kv/InMemoryKvBackend.d.ts",
+      "sha256": "7fb1ed94e06789e659dd59c3bff63a333ec26b4f9b560cee3659b4cd21b682f9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/kv/encoding.d.ts",
+      "sha256": "62118929120a31bc67cf85d1e7ee40991244fc1fc0a27e22308951cc83f2509d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/hexastore/tuple.d.ts",
+      "sha256": "e4cc3e5ecaa9b874d5dd4d4f852c9ddfd1312dcef58bdaedddade3551acb094a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/hexastore/indexes.d.ts",
+      "sha256": "cac4ec6bc08a2c91cf1e3e8f96efa4a241a480ceb3406daa71ff9a3762ad0e72"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/hexastore/scan.d.ts",
+      "sha256": "8f03efd4961161bb36e668fd2097d36e2dfad9188ac8b4ce2be88aa7ed575e64"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/hexastore/KvTripleStore.d.ts",
+      "sha256": "09f7b83b3720b7ab5f84bf862a7dca23349271fd24a0cc1ac7601b11bde9208b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/datalog/types.d.ts",
+      "sha256": "3a2c12edb803ca4d59c19e07c1d433aa8241109f8890bedb45edbd82f928f9a8"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/datalog/pattern.d.ts",
+      "sha256": "6e4761b8c3b17e1dadd3cb8b968ea68aa62feb25c74bb041e2d68101a4dda052"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/datalog/predicate.d.ts",
+      "sha256": "a9830df31874ed91199b5e7efedfb7a584951362507c5760cf8725492eff1b95"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/kv/datalog/executor.d.ts",
+      "sha256": "2af0ca99267c670725c3303a8e1ba169173f4c22917e6443a2c8acdf9afd6f4e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/core/dist/internal.d.ts",
+      "sha256": "6e61f64c9428226cf3903d420e167b6968e1f775ddfe96c421c5c3db33547e1c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/query/compiler.d.ts",
+      "sha256": "73ce4425e8ae1f98ff8173538c6c7b1eef20466ad643d97a22f41c1346f07010"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/XtdbQueryExecutor.d.ts",
+      "sha256": "42ed029db11d6a47044128d40e5af9f5f100bfd04a6cc8301c81498d1a011b2c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/XtdbStorageAdapter.d.ts",
+      "sha256": "8d15882cccdf4f52219110a313d99447a549e0f901548810c22b9f69336b81dc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/TemporalQueries.d.ts",
+      "sha256": "23df3658fb6bb6eb48071f01cc36f137e579ae766ab8356e0b47831a3a026b67"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/MaintainedQueries.d.ts",
+      "sha256": "1c731bbdca07563f5b74bdb541a2beb933222800ecd642a2902b1ea64b9069b7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/Operations.d.ts",
+      "sha256": "b8c0a9fd45e4b924177bf878d6d58d702d88441b40224b332fd786755aa6f14a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/native/Sources.d.ts",
+      "sha256": "c7ff7f7304a213405f28cb845842a465e5a1a57487e30eaab382413f4e0ac7f5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/native/Reachability.d.ts",
+      "sha256": "5a23c91e14cb9a2bd697198f5a73783850f63b3df6b1e5d72b55258c266106e5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/native/NativeQueries.d.ts",
+      "sha256": "6ef0ab1a5a499c6aab8b2dc279b0c97b1e85bb8094c45aea7959f225ce56a4e3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/xtdb/dist/index.d.ts",
+      "sha256": "e82cf07b0b4d0524779dd1c489061f3ea8c8331b25623f4ee354f17121c50ac0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/QleverClient.d.ts",
+      "sha256": "6916e7465cc0fed609e4cb32c41cd514587df71689e5699dccaf1ecce2106685"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/ScalarSource.d.ts",
+      "sha256": "9af245df73f198ed7844fd960339c3f5040396d9c1884dcb8dc2d692cc5dfeac"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/FamilyDomains.d.ts",
+      "sha256": "c6bd35a243a50cfeea8d9fb9f44983ed8274f840885f7a18117da8c528674819"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/compiler.d.ts",
+      "sha256": "28cc71e550b1eb06c93dfc8bbb7b1635a0ddfe7c33001736fe8a123bd9271e42"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/QleverQueryExecutor.d.ts",
+      "sha256": "23e2ba9dd299f06bf260bd29f0b1d8827d1dfdaebbee7af924e27e20021a6bf0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/QleverStorageAdapter.d.ts",
+      "sha256": "272f844c57f57309524475d8f4680a35dad89c3d28cdd6c0d2455c65a67a4846"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/TemporalQueries.d.ts",
+      "sha256": "b0a644c32a2c5fc2d8a38a970d6208c0b7b8a6e48addede9612b66d1a36603a6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/Operations.d.ts",
+      "sha256": "bd5691c8d61a4d4a31ef3a7fea803b91fe90a8a99d76c02f9bcd4c66a7fbf1e9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/native/NativeContext.d.ts",
+      "sha256": "8cced87cd40abdfdd6fa9caa8a774bb29cb396d39e3dab3e0372b74bc5d89f94"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/native/BasisRelations.d.ts",
+      "sha256": "d9e3c86681a0c07a0bc5b260966d5cd2ee6a49a6be143784cb6684bc60076713"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/native/NativeQueries.d.ts",
+      "sha256": "e8a83fedb9ddc6def4512bc7721492363684b100e50586ffc237aa08ded32644"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/packages/qlever/dist/index.d.ts",
+      "sha256": "83d8b45965c2557067caa78b31ca41ead19ea707763414e25dba94071459805b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/compatibility/iterators.d.ts",
+      "sha256": "d153a11543fd884b596587ccd97aebbeed950b26933ee000f94009f1ab142848"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/globals.typedarray.d.ts",
+      "sha256": "0ccdaa19852d25ecd84eec365c3bfa16e7859cadecf6e9ca6d0dbbbee439743f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/buffer.buffer.d.ts",
+      "sha256": "cc2110f7decca6bfb9392e30421cfa1436479e4a6756e8fec6cbc22625d4f881"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/globals.d.ts",
+      "sha256": "096116f8fedc1765d5bd6ef360c257b4a9048e5415054b3bf3c41b07f8951b0b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/abortcontroller.d.ts",
+      "sha256": "e5e01375c9e124a83b52ee4b3244ed1a4d214a6cfb54ac73e164a823a4a7860a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/blob.d.ts",
+      "sha256": "f90ae2bbce1505e67f2f6502392e318f5714bae82d2d969185c4a6cecc8af2fc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/console.d.ts",
+      "sha256": "4b58e207b93a8f1c88bbf2a95ddc686ac83962b13830fe8ad3f404ffc7051fb4"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/crypto.d.ts",
+      "sha256": "1fefabcb2b06736a66d2904074d56268753654805e829989a46a0161cd8412c5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/domexception.d.ts",
+      "sha256": "9798340ffb0d067d69b1ae5b32faa17ab31b82466a3fc00d8f2f2df0c8554aaa"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/encoding.d.ts",
+      "sha256": "c18a99f01eb788d849ad032b31cafd49de0b19e083fe775370834c5675d7df8e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/events.d.ts",
+      "sha256": "5247874c2a23b9a62d178ae84f2db6a1d54e6c9a2e7e057e178cc5eea13757fc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/utility.d.ts",
+      "sha256": "cdcf9ea426ad970f96ac930cd176d5c69c6c24eebd9fc580e1572d6c6a88f62c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/header.d.ts",
+      "sha256": "23cd712e2ce083d68afe69224587438e5914b457b8acf87073c22494d706a3d0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/readable.d.ts",
+      "sha256": "156a859e21ef3244d13afeeba4e49760a6afa035c149dda52f0c45ea8903b338"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/fetch.d.ts",
+      "sha256": "10ec5e82144dfac6f04fa5d1d6c11763b3e4dbbac6d99101427219ab3e2ae887"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/formdata.d.ts",
+      "sha256": "615754924717c0b1e293e083b83503c0a872717ad5aa60ed7f1a699eb1b4ea5c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/connector.d.ts",
+      "sha256": "14e9acf826baba0ef4b5665704084896e7bcc06f65a9ab13af7e93d27d6b7069"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/client-stats.d.ts",
+      "sha256": "68834d631c8838c715f225509cfc3927913b9cc7a4870460b5b60c8dbdb99baf"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/client.d.ts",
+      "sha256": "21adf13435b9b748529c8cedf80f884e5130b9684188120a686cd2b26a2059c7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/errors.d.ts",
+      "sha256": "eec76bf6b9346f3f95fa402621b889489e96930e72295b0369022f332e9b4a6a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/dispatcher.d.ts",
+      "sha256": "0ecd58f413f9bc3b7d4383eae31b0c8fc576985cd7404d6f99f8c643543ade74"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/global-dispatcher.d.ts",
+      "sha256": "ea6bc8de8b59f90a7a3960005fd01988f98fd0784e14bc6922dde2e93305ec7d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/global-origin.d.ts",
+      "sha256": "36107995674b29284a115e21a0618c4c2751b32a8766dd4cb3ba740308b16d59"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/pool-stats.d.ts",
+      "sha256": "914a0ae30d96d71915fc519ccb4efbf2b62c0ddfb3a3fc6129151076bc01dc60"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/pool.d.ts",
+      "sha256": "9c32412007b5662fd34a8eb04292fb5314ec370d7016d1c2fb8aa193c807fe22"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/handlers.d.ts",
+      "sha256": "7fd1b31fd35876b0aa650811c25ec2c97a3c6387e5473eb18004bed86cdd76b6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/balanced-pool.d.ts",
+      "sha256": "4d327f7d72ad0918275cea3eee49a6a8dc8114ae1d5b7f3f5d0774de75f7439a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/round-robin-pool.d.ts",
+      "sha256": "6ebe8ebb8659aaa9d1acbf3710d7dae3e923e97610238b9511c25dc39023a166"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/h2c-client.d.ts",
+      "sha256": "e85d7f8068f6a26710bff0cc8c0fc5e47f71089c3780fbede05857331d2ddec9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/agent.d.ts",
+      "sha256": "7befaf0e76b5671be1d47b77fcc65f2b0aad91cc26529df1904f4a7c46d216e9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/mock-interceptor.d.ts",
+      "sha256": "0a60a292b89ca7218b8616f78e5bbd1c96b87e048849469cccb4355e98af959a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/mock-call-history.d.ts",
+      "sha256": "0b6e25234b4eec6ed96ab138d96eb70b135690d7dd01f3dd8a8ab291c35a683a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/mock-agent.d.ts",
+      "sha256": "9666f2f84b985b62400d2e5ab0adae9ff44de9b2a34803c2c5bd3c8325b17dc0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/mock-client.d.ts",
+      "sha256": "40cd35c95e9cf22cfa5bd84e96408b6fcbca55295f4ff822390abb11afbc3dca"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/mock-pool.d.ts",
+      "sha256": "b1616b8959bf557feb16369c6124a97a0e74ed6f49d1df73bb4b9ddf68acf3f3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/snapshot-agent.d.ts",
+      "sha256": "5b03a034c72146b61573aab280f295b015b9168470f2df05f6080a2122f9b4df"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/mock-errors.d.ts",
+      "sha256": "40b463c6766ca1b689bfcc46d26b5e295954f32ad43e37ee6953c0a677e4ae2b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/proxy-agent.d.ts",
+      "sha256": "249b9cab7f5d628b71308c7d9bb0a808b50b091e640ba3ed6e2d0516f4a8d91d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/socks5-proxy-agent.d.ts",
+      "sha256": "d33ce35e3f9cfcc1d94eca415bdd3bde94d5b153ffdd33e6c4455c029986c630"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/env-http-proxy-agent.d.ts",
+      "sha256": "80aae6afc67faa5ac0b32b5b8bc8cc9f7fa299cff15cf09cc2e11fd28c6ae29e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/retry-handler.d.ts",
+      "sha256": "f473cd2288991ff3221165dcf73cd5d24da30391f87e85b3dd4d0450c787a391"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/retry-agent.d.ts",
+      "sha256": "499e5b055a5aba1e1998f7311a6c441a369831c70905cc565ceac93c28083d53"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/api.d.ts",
+      "sha256": "8aee8b6d4f9f62cf3776cda1305fb18763e2aade7e13cea5bbe699112df85214"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/cache-interceptor.d.ts",
+      "sha256": "98498b101803bb3dde9f76a56e65c14b75db1cc8bec5f4db72be541570f74fc5"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/interceptors.d.ts",
+      "sha256": "4dc59f6e1dbf3d5f66660fceabe6c174d3261b37b696ae1854f0dbaf255fc753"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/util.d.ts",
+      "sha256": "5d0375ca7310efb77e3ef18d068d53784faf62705e0ad04569597ae0e755c401"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/cookies.d.ts",
+      "sha256": "59af37caec41ecf7b2e76059c9672a49e682c1a2aa6f9d7dc78878f53aa284d6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/patch.d.ts",
+      "sha256": "addf417b9eb3f938fddf8d81e96393a165e4be0d4a8b6402292f9c634b1cb00d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/websocket.d.ts",
+      "sha256": "436d7b4543b340b0f3eef4310d524242e41369b9652aa9c70428767c4dcac455"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/eventsource.d.ts",
+      "sha256": "adf27937dba6af9f08a68c5b1d3fce0ca7d4b960c57e6d6c844e7d1a8e53adae"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/diagnostics-channel.d.ts",
+      "sha256": "12950411eeab8563b349cb7959543d92d8d02c289ed893d78499a19becb5a8cc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/content-type.d.ts",
+      "sha256": "2e85db9e6fd73cfa3d7f28e0ab6b55417ea18931423bd47b409a96e4a169e8e6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/cache.d.ts",
+      "sha256": "c46e079fe54c76f95c67fb89081b3e399da2c7d109e7dca8e4b58d83e332e605"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici-types@7.24.6/node_modules/undici-types/index.d.ts",
+      "sha256": "114f493b30f364255290472111b5a4791d5902c308645670cd0401429cbc6930"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/fetch.d.ts",
+      "sha256": "c3f5289820990ab66b70c7fb5b63cb674001009ff84b13de40619619a9c8175f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/importmeta.d.ts",
+      "sha256": "b3275d55fac10b799c9546804126239baf020d220136163f763b55a74e50e750"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/messaging.d.ts",
+      "sha256": "fa68a0a3b7cb32c00e39ee3cd31f8f15b80cac97dce51b6ee7fc14a1e8deb30b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/navigator.d.ts",
+      "sha256": "1cf059eaf468efcc649f8cf6075d3cb98e9a35a0fe9c44419ec3d2f5428d7123"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/performance.d.ts",
+      "sha256": "6c36e755bced82df7fb6ce8169265d0a7bb046ab4e2cb6d0da0cb72b22033e89"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/storage.d.ts",
+      "sha256": "e7721c4f69f93c91360c26a0a84ee885997d748237ef78ef665b153e622b36c1"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/streams.d.ts",
+      "sha256": "7a93de4ff8a63bafe62ba86b89af1df0ccb5e40bb85b0c67d6bbcfdcf96bf3d4"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/timers.d.ts",
+      "sha256": "90e85f9bc549dfe2b5749b45fe734144e96cd5d04b38eae244028794e142a77e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/web-globals/url.d.ts",
+      "sha256": "e0a5deeb610b2a50a6350bd23df6490036a1773a8a71d70f2f9549ab009e67ee"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/assert.d.ts",
+      "sha256": "d2ae155afe8a01cc0ae612d99117cf8ef16692ba7c4366590156fdec1bcf2d8c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/assert/strict.d.ts",
+      "sha256": "3f5e5d9be35913db9fea42a63f3df0b7e3c8703b97670a2125587b4dbbd56d7c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/async_hooks.d.ts",
+      "sha256": "c8b8968311ec4e5e97b7b5fb8a65efaba455db9bdcfd7fff7fb15f6e317bfba0"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/buffer.d.ts",
+      "sha256": "57c23df0b5f7a8e26363a3849b0bc7763f6b241207157c8e40089d1df4116f35"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/child_process.d.ts",
+      "sha256": "3b8bc0c17b54081b0878673989216229e575d67a10874e84566a21025a2461ee"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/cluster.d.ts",
+      "sha256": "5b0db5a58b73498792a29bfebc333438e61906fef75da898b410e24e52229e6f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/console.d.ts",
+      "sha256": "dbe055b2b29a7bab2c1ca8f259436306adb43f469dca7e639a02cd3695d3f621"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/constants.d.ts",
+      "sha256": "1678b04557dca52feab73cc67610918a7f5e25bfdba3e7fa081acd625d93106d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/crypto.d.ts",
+      "sha256": "aecbf1d9e6a18dab7d92ef8a89a1444b47e1eb6134cb2bb776a26d55ff58c29a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/dgram.d.ts",
+      "sha256": "2ea729503db9793f2691162fec3dd1118cab62e96d025f8eeb376d43ec293395"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/diagnostics_channel.d.ts",
+      "sha256": "9ec87fea42b92894b0f209931a880789d43c3397d09dd99c631ae40a2f7071d1"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/dns.d.ts",
+      "sha256": "c68e88cdfadfb6c8ba5fc38e58a3a166b0beae77b1f05b7d921150a32a5ffb8d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/dns/promises.d.ts",
+      "sha256": "2bc7aa4fba46df0bd495425a7c8201437a7d465f83854fac859df2d67f664df3"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/domain.d.ts",
+      "sha256": "41d17e1ad9a002feb11c8cdd2777e5bbc0cdb1e3f595d237e4dded0b6949983b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/events.d.ts",
+      "sha256": "1fede9296beac11ce8e6b425396a1791f64341f2be85deebb6286faf6e16306e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/fs.d.ts",
+      "sha256": "ce697b6a251d9cad53998c7fd3098072df883b525ec45d83530e434dc6d80dc6"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/fs/promises.d.ts",
+      "sha256": "719412f054e6ecc35489462c9a21bab0323d173a7d04e55b0ace4b5d86fbeb07"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/http.d.ts",
+      "sha256": "0eb5d0cbf09de5d34542b977fd6a933bb2e0817bffe8e1a541b2f1ad1b9af1ff"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/http2.d.ts",
+      "sha256": "fac3e88881b35d3a757ed891ac912b2674792c25e2a1a74e1f5fbc72d19a9792"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/https.d.ts",
+      "sha256": "2c2bdaa1d8ead9f68628d6d9d250e46ee8e81aa4898b4769a36956ae15e060fe"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/inspector.d.ts",
+      "sha256": "c32c840c62d8bd7aeb3147aa6754cd2d922b990a6b6634530cb2ebdce5adc8e9"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/inspector.generated.d.ts",
+      "sha256": "5ff4433a2deae4f85ab1377e90a7554ce6b47ae51c69a84ca30a6e22fae85834"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/inspector/promises.d.ts",
+      "sha256": "82b91e4e42e6c41bc7fc1b6c2dc5eba6a2ba98375eb1f210e6ff6bba2d54177e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/module.d.ts",
+      "sha256": "c1fa52b3d014001e8662fa2669d90ea15373958a288e3b83a3b621733d25292a"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/net.d.ts",
+      "sha256": "cbed824fec91efefc7bbdcb8b43d1a531fdbebd0e2ef19481501ff365a93cb70"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/buffer@6.0.3/node_modules/buffer/index.d.ts",
+      "sha256": "4967529644e391115ca5592184d4b63980569adf60ee685f968fd59ab1557188"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/os.d.ts",
+      "sha256": "d0716593b3f2b0451bcf0c24cfa86dec2235c325c89f201934248b7c742715fc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/path.d.ts",
+      "sha256": "ec501101c2a96133a6c695f934c8f6642149cc728571b29cbb7b770984c1088e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/path/posix.d.ts",
+      "sha256": "b214ebcf76c51b115453f69729ee8aa7b7f8eccdae2a922b568a45c2d7ff52f7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/path/win32.d.ts",
+      "sha256": "429c9cdfa7d126255779efd7e6d9057ced2d69c81859bbab32073bad52e9ba76"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/perf_hooks.d.ts",
+      "sha256": "2991bca2cc0f0628a278df2a2ccdb8d6cbcb700f3761abbed62bba137d5b1790"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/process.d.ts",
+      "sha256": "5e66972e83eb4dc7123939bf816e6cbd9ad81af5552db1cab84e6bd9c64d2ecc"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/punycode.d.ts",
+      "sha256": "230763250f20449fa7b3c9273e1967adb0023dc890d4be1553faca658ee65971"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/querystring.d.ts",
+      "sha256": "c3e9078b60cb329d1221f5878e88cecfa3e74460550e605a58fcfb41a66029ff"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/quic.d.ts",
+      "sha256": "8413d0641f293aed551c7464615b770d34a02dedede889b9591172287d68e773"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/readline.d.ts",
+      "sha256": "0ea59f7d3e51440baa64f429253759b106cfcbaf51e474cae606e02265b37cf8"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/readline/promises.d.ts",
+      "sha256": "bc18a1991ba681f03e13285fa1d7b99b03b67ee671b7bc936254467177543890"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/repl.d.ts",
+      "sha256": "1b241e24f3227d078c06aeda6e050187ad59a4e591f4467abed44d92b084e08d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/sea.d.ts",
+      "sha256": "fa94bbf532b7af8f394b95fa310980d6e20bd2d4c871c6a6cb9f70f03750a44b"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/sqlite.d.ts",
+      "sha256": "7fde0e1be5c8be204ffbf428abfcf01da2eb0f130e1bc3f539eb7275f4fd1f58"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/stream.d.ts",
+      "sha256": "e284328553df5f425a5d33d36a0c3fa66b46af9d097cad6f4d2e8696dfdeb0f1"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/stream/consumers.d.ts",
+      "sha256": "7fa2214bb0d64701bc6f9ce8cde2fd2ff8c571e0b23065fa04a8a5a6beb91511"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/stream/iter.d.ts",
+      "sha256": "f36b3fbe2be150a9ca140da48593f21e6a8172004f92ddc549b43efec39f3e54"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/stream/promises.d.ts",
+      "sha256": "f1c93e046fb3d9b7f8249629f4b63dc068dd839b824dd0aa39a5e68476dc9420"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/stream/web.d.ts",
+      "sha256": "016b29bf4926b80255a108c53a1451717350059da04fcae64d1075f5e93bbb39"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/string_decoder.d.ts",
+      "sha256": "841983e39bd4cbb463be385e92fda11057cab368bf27100a801c492f1d86cbaa"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/test.d.ts",
+      "sha256": "1c4f139ade4f6ebf45463505f8155173e5d7a5305e50e0aae0a5e712d6ff3b48"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/test/reporters.d.ts",
+      "sha256": "e16b319e5aca1031168de823c4946ff8e29629c4c8cc0ec0fcfe2a8ab2155043"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/timers.d.ts",
+      "sha256": "e4156ddb25aa0e3b5303d372f26957b36778f0f6bbd4326359269873295e3058"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/timers/promises.d.ts",
+      "sha256": "cc1b433a84cae05ddc5672d4823170af78606ad21ecef60dbc4570190cbf1357"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/tls.d.ts",
+      "sha256": "9d3821bc75c59577e52643324cec92fc2145642e8d17cf7ee07a3181f21d985d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/trace_events.d.ts",
+      "sha256": "7f78cfb2b343838612c192cb251746e3a7c62ac7675726a47e130d9b213f6580"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/tty.d.ts",
+      "sha256": "201db9cf1687fab1adf5282fcba861f382b32303dc4f67c89d59655e78a25461"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/url.d.ts",
+      "sha256": "2c3c5c0f54055e87640f5d233716fd889f3034fc7911d603b642369b0dbeb2a7"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/util.d.ts",
+      "sha256": "0a20eaf2e4b1e3c1e1f87f7bccb0c936375b23b022baeea750519b7c9bc6ce83"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/util/types.d.ts",
+      "sha256": "b484ec11ba00e3a2235562a41898d55372ccabe607986c6fa4f4aba72093749f"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/v8.d.ts",
+      "sha256": "a16b91b27bd6b706c687c88cbc8a7d4ee98e5ed6043026d6b84bda923c0aed67"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/vm.d.ts",
+      "sha256": "1c9e5b1a17b1fc9b3711fb36e0690421261ab2880f15b145155b5b2ba2ab6c2d"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/wasi.d.ts",
+      "sha256": "99ab6d0d660ce4d21efb52288a39fd35bb3f556980ec5463b1ae8f304a3bbc85"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/worker_threads.d.ts",
+      "sha256": "6eeded8c7e352be6e0efb83f4935ec752513c4d22043b52522b90849a49a3a11"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/zlib.d.ts",
+      "sha256": "6c1ad90050ffbb151cacc68e2d06ea1a26a945659391e32651f5d42b86fd7f2c"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/zlib/iter.d.ts",
+      "sha256": "afa1c49f8e559e413d57343339db857d2a8159435cf9cf7d4deb41718fff1b88"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/@types+node@25.9.1/node_modules/@types/node/index.d.ts",
+      "sha256": "6953d7597831d0860c7034cf4f0419687d263b6b98a4b32e37ce6d49615c36e2"
+    }
+  ]
+}
