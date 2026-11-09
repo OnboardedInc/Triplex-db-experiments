@@ -1,0 +1,82 @@
+{
+  "format": "p2q-receipt/1",
+  "id": "P2Q-service-A0-20261107T215923Z-ccba97",
+  "kind": "service-A0",
+  "writtenAt": "2026-11-07T21:59:23.757Z",
+  "mode": "service",
+  "slot": "dev",
+  "startedAt": "2026-11-07T21:53:36.496Z",
+  "identity": {
+    "gitHead": "2b73620cec828380812edf86639cd3b1ba52e66c",
+    "dirty": true,
+    "diffSha256": "474d9191d58c4ccb06c2969d450b72d3c076805902e81e935fb7cd89c5a9138b",
+    "distSha256": "317ca1ecfdd5a17db3d6743fdc3314ccd8c0a07f2d2e74982409293db168d925",
+    "engineImage": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "endpoint": "http://127.0.0.1:7070",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        12.07,
+        12.8,
+        12.19
+      ],
+      "freeBytes": 14317854720
+    }
+  },
+  "hostLoadAfter": [
+    11.02,
+    12.08,
+    12.1
+  ],
+  "arm": "A0",
+  "armLabel": "A0: default adapter, marker guard, ACK after QLever publication, fetch (keep-alive) client",
+  "scope": "p2q-service-A0-5b9daa99-7ad5-4d72-b950-40fc249307d6",
+  "label": "dev-delta-2.27M",
+  "n": 30,
+  "facts": 10,
+  "band": "5-10",
+  "warmupDropped": 3,
+  "ackMs": {
+    "n": 27,
+    "p50": 7433.1,
+    "p90": 9936.7,
+    "p99": 11635.7,
+    "max": 11635.7,
+    "mean": 7576.7
+  },
+  "ryowReadMs": {
+    "n": 27,
+    "p50": 3922.9,
+    "p90": 4443.9,
+    "p99": 4592.3,
+    "max": 4592.3,
+    "mean": 3942.5
+  },
+  "ryow": {
+    "trials": 30,
+    "hits": 30,
+    "routes": {
+      "": 30
+    }
+  },
+  "delta": {
+    "before": null,
+    "first": 2307292,
+    "last": 2330951
+  },
+  "publication": {
+    "updates": 30,
+    "updateMs": {
+      "n": 30,
+      "p50": 5753,
+      "p90": 8198.6,
+      "p99": 10303.4,
+      "max": 10303.4,
+      "mean": 6138
+    },
+    "updateErrors": 0
+  },
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-P2Q-qlever-log-broker/P2Q-service-A0-20261107T215923Z-ccba97.raw.json",
+  "rawSha256": "965c15bd4a94cb687e21d96ec3b13f9c5cdcfbe81f28c8af3f811a7a2d3e254d"
+}

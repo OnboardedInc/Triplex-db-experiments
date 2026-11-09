@@ -1,0 +1,182 @@
+[
+  {
+    "round": 0,
+    "acked": 32,
+    "unknown": 8,
+    "unknownCommitted": 1,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 1,
+    "acked": 40,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 2,
+    "acked": 48,
+    "unknown": 8,
+    "unknownCommitted": 1,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 3,
+    "acked": 49,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 4,
+    "acked": 72,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 5,
+    "acked": 72,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 6,
+    "acked": 81,
+    "unknown": 8,
+    "unknownCommitted": 7,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 7,
+    "acked": 80,
+    "unknown": 8,
+    "unknownCommitted": 1,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 8,
+    "acked": 97,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 9,
+    "acked": 113,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 10,
+    "acked": 112,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 11,
+    "acked": 113,
+    "unknown": 8,
+    "unknownCommitted": 7,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 12,
+    "acked": 128,
+    "unknown": 8,
+    "unknownCommitted": 1,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 13,
+    "acked": 137,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 14,
+    "acked": 137,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 15,
+    "acked": 144,
+    "unknown": 8,
+    "unknownCommitted": 1,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 16,
+    "acked": 160,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 17,
+    "acked": 161,
+    "unknown": 8,
+    "unknownCommitted": 7,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 18,
+    "acked": 184,
+    "unknown": 8,
+    "unknownCommitted": 1,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  },
+  {
+    "round": 19,
+    "acked": 185,
+    "unknown": 8,
+    "unknownCommitted": 0,
+    "lost": [],
+    "recovery": "clean-end",
+    "unexpected": []
+  }
+]

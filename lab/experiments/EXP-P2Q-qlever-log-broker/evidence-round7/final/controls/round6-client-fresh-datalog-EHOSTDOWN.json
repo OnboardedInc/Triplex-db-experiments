@@ -1,0 +1,29 @@
+{
+  "code": "EHOSTDOWN",
+  "kind": "fresh",
+  "surface": "datalog",
+  "endpoint": "http://127.0.0.1:64396",
+  "injected": 1,
+  "uv": [
+    -64,
+    [
+      "EHOSTDOWN",
+      "host is down"
+    ]
+  ],
+  "injection": "synthetic errno on the real client-owned net.Socket; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: opaque",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "Error",
+      "code": "EHOSTDOWN",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

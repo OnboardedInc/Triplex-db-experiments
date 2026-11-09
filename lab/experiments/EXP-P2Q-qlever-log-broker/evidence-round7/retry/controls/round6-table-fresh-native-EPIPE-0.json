@@ -1,0 +1,31 @@
+{
+  "code": "EPIPE",
+  "transport": true,
+  "depth": 0,
+  "kind": "fresh",
+  "surface": "native",
+  "endpoint": "http://127.0.0.1:49240",
+  "injected": 1,
+  "uv": [
+    -32,
+    [
+      "EPIPE",
+      "broken pipe"
+    ]
+  ],
+  "injection": "one synthetic code after connection establishment with the response held open; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for native reads: Error: opaque",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "Error",
+      "code": "EPIPE",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

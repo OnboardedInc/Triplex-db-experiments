@@ -1,0 +1,16 @@
+{
+  "route": "getByEntities",
+  "transaction": false,
+  "headBefore": 2048,
+  "future": 6144,
+  "headAfter": 2048,
+  "elapsedMs": 41.20962499999996,
+  "ok": false,
+  "error": {
+    "tag": "ReadError",
+    "reason": "basis-not-reached",
+    "required": 6144,
+    "observed": 3071,
+    "message": "Basis 6144 is not available on the broker's resolved prefix for repository reads (observed 3071 after 41 ms)"
+  }
+}

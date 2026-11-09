@@ -1,0 +1,12 @@
+{
+  "first": 2048,
+  "pin": 3072,
+  "pendingResults": [
+    {
+      "?v": "second-0"
+    },
+    {
+      "?v": "staged-0"
+    }
+  ]
+}

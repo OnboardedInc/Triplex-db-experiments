@@ -1,0 +1,12 @@
+{
+  "perlGoneMs": 12,
+  "secondProcess": "opened",
+  "ackedA": 52,
+  "ackedB": 64,
+  "recovery": {
+    "outcome": "refused:Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/runs/broker/V-P2Q/lock-sigint-f42945a2-a0e1-45f7-9278-8b7262e06b2f/",
+    "lost": 0,
+    "lostSample": [],
+    "broken": []
+  }
+}

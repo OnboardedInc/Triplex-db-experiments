@@ -1,0 +1,11 @@
+{
+  "committed": 1,
+  "failures": [
+    {
+      "tag": "WriteError",
+      "reason": "serialization-conflict",
+      "ctor": "QleverBrokerConflict",
+      "message": "Broker compare-and-set conflict (subject s:x)"
+    }
+  ]
+}

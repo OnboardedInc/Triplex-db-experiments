@@ -1,0 +1,5 @@
+{
+  "tag": "ReadError",
+  "message": "QLever read failed",
+  "cause": "Error: connect ECONNREFUSED 127.0.0.1:7070 (model replica down)"
+}

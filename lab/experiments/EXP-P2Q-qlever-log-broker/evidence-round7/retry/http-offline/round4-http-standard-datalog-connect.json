@@ -1,0 +1,41 @@
+{
+  "timing": "connect",
+  "kind": "standard",
+  "surface": "datalog",
+  "events": [],
+  "answers": 0,
+  "forwarded": 0,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "required": 1024,
+    "observed": 2048,
+    "replica": "the QLever replica",
+    "surface": "datalog",
+    "code": null,
+    "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: fetch failed",
+    "cause": {
+      "name": "TypeError",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": null,
+      "message": "fetch failed",
+      "cause": {
+        "name": "Error",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": "ECONNREFUSED",
+        "message": "connect ECONNREFUSED 127.0.0.1:50587",
+        "cause": null
+      }
+    }
+  }
+}

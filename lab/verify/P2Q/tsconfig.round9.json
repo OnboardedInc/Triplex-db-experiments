@@ -1,0 +1,15 @@
+{
+  "extends": "../../../tsconfig.node.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../../..",
+    "paths": {
+      "@triplex-build/triplex": ["../../../packages/core/src/index.ts"],
+      "@triplex-build/triplex/runtime": ["../../../packages/core/src/runtime/index.ts"],
+      "@triplex-build/triplex/datalog": ["../../../packages/core/src/datalog/index.ts"],
+      "@triplex-build/triplex/internal": ["../../../packages/core/src/internal.ts"],
+      "@triplex-build/triplex/config": ["../../../packages/core/src/config/index.ts"]
+    }
+  },
+  "include": ["../../../packages/qlever/src/**/*.ts", "types/round9.ts"]
+}

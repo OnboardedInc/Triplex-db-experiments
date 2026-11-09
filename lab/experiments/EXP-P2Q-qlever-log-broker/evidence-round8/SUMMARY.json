@@ -1,0 +1,133 @@
+{
+  "attemptId": "bce03806-71a9-4952-9550-cef8888b6cac",
+  "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+  "heavySlot": {
+    "path": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/3/owner.json",
+    "owner": {
+      "pid": 5700,
+      "label": "CX-P2Q-R8-retry",
+      "at": "2026-11-09T01:15:26.329Z"
+    },
+    "sha256": "06f2e075ca9d58ae62b85cf5cf66fc6a559ce5d7aecb552e53711b7b3d1ffb17"
+  },
+  "gates": [
+    {
+      "gate": "earlier-offline",
+      "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+      "exitCode": 0,
+      "startedAt": 1794186926.444798,
+      "finishedAt": 1794186935.764032,
+      "sourceStillMatches": true,
+      "heavySlotStillMatches": true,
+      "contentMatches": true,
+      "passed": 802,
+      "total": 816
+    },
+    {
+      "gate": "new-offline",
+      "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+      "exitCode": 0,
+      "startedAt": 1794186935.805368,
+      "finishedAt": 1794186938.4089239,
+      "sourceStillMatches": true,
+      "heavySlotStillMatches": true,
+      "contentMatches": true,
+      "passed": 12,
+      "total": 18
+    },
+    {
+      "gate": "foundation",
+      "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+      "exitCode": 0,
+      "startedAt": 1794186938.426473,
+      "finishedAt": 1794187049.798058,
+      "sourceStillMatches": true,
+      "heavySlotStillMatches": true,
+      "contentMatches": true,
+      "passed": 42,
+      "total": 42
+    },
+    {
+      "gate": "package",
+      "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+      "exitCode": 0,
+      "startedAt": 1794187049.856277,
+      "finishedAt": 1794187065.1879559,
+      "sourceStillMatches": true,
+      "heavySlotStillMatches": true,
+      "contentMatches": true,
+      "passed": 224,
+      "total": 250
+    },
+    {
+      "gate": "core-focused",
+      "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+      "exitCode": 0,
+      "startedAt": 1794187065.2400892,
+      "finishedAt": 1794187066.245312,
+      "sourceStillMatches": true,
+      "heavySlotStillMatches": true,
+      "contentMatches": true,
+      "passed": 28,
+      "total": 28
+    },
+    {
+      "gate": "qlever-typecheck",
+      "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+      "exitCode": 0,
+      "startedAt": 1794187066.260167,
+      "finishedAt": 1794187067.834552,
+      "sourceStillMatches": true,
+      "heavySlotStillMatches": true,
+      "contentMatches": true,
+      "passed": null,
+      "total": null
+    },
+    {
+      "gate": "core-typecheck",
+      "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+      "exitCode": 0,
+      "startedAt": 1794187067.849246,
+      "finishedAt": 1794187069.788654,
+      "sourceStillMatches": true,
+      "heavySlotStillMatches": true,
+      "contentMatches": true,
+      "passed": null,
+      "total": null
+    },
+    {
+      "gate": "new-live",
+      "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+      "exitCode": 0,
+      "startedAt": 1794187069.80438,
+      "finishedAt": 1794187458.727967,
+      "sourceStillMatches": true,
+      "heavySlotStillMatches": true,
+      "contentMatches": true,
+      "passed": 7,
+      "total": 14
+    },
+    {
+      "gate": "earlier-live",
+      "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+      "exitCode": 0,
+      "startedAt": 1794187458.795419,
+      "finishedAt": 1794187670.747863,
+      "sourceStillMatches": true,
+      "heavySlotStillMatches": true,
+      "contentMatches": true,
+      "passed": 14,
+      "total": 46
+    }
+  ],
+  "contentCounts": {
+    "offlineSnapshotByteComparisons": 39,
+    "liveSnapshotByteComparisons": 65,
+    "futurePublicCases": 26,
+    "policyRouteChecks": 48,
+    "liveHttpCases": 12
+  },
+  "accepted": true,
+  "scope": "P2Q default-off correctness only; independent review pending",
+  "summarizedAt": 1794188013.2610838
+}

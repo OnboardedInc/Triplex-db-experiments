@@ -1,0 +1,23 @@
+{
+  "outcome": "no-answer-after-3s",
+  "escapedUnhandledRejections": [
+    "Error: simulated crash between fsync and watermark"
+  ],
+  "watermarkBefore": {
+    "epoch": 1,
+    "lsn": 2,
+    "position": 2048
+  },
+  "watermarkOnDiskAfterCrash": {
+    "epoch": 1,
+    "lsn": 2,
+    "position": 2048
+  },
+  "frameInLog": true,
+  "watermarkAfterReopen": {
+    "epoch": 2,
+    "lsn": 4,
+    "position": 3072
+  },
+  "resend": "CommandAlreadyCommittedError"
+}

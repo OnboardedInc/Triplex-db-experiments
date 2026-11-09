@@ -1,0 +1,26 @@
+{
+  "retractingCommitDuringOutage": "committed",
+  "results": [
+    {
+      "p": 2048,
+      "ok": true,
+      "route": "log",
+      "equal": true,
+      "error": "undefined:"
+    },
+    {
+      "p": 3072,
+      "ok": true,
+      "route": "log",
+      "equal": true,
+      "error": "undefined:"
+    },
+    {
+      "p": 4096,
+      "ok": true,
+      "route": "log",
+      "equal": true,
+      "error": "undefined:"
+    }
+  ]
+}

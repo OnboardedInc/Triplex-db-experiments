@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.round9-final.json",
+  "include": [
+    "../../../packages/qlever/src/**/*.ts",
+    "types/round9.ts",
+    "types/round9-policy.ts",
+    "types/round10.ts"
+  ]
+}

@@ -1,0 +1,68 @@
+[
+  {
+    "label": "fresh adapter, no basis (current read)",
+    "requests": [
+      "rows"
+    ],
+    "ok": true,
+    "ms": 3
+  },
+  {
+    "label": "fresh adapter, basis 7 <= published 10, observed 0",
+    "basis": 7,
+    "requests": [
+      "position",
+      "rows"
+    ],
+    "ok": true,
+    "ms": 0
+  },
+  {
+    "label": "again basis 7, observed now 10",
+    "basis": 7,
+    "requests": [
+      "rows"
+    ],
+    "ok": true,
+    "ms": 0
+  },
+  {
+    "label": "basis 10 == observed",
+    "basis": 10,
+    "requests": [
+      "rows"
+    ],
+    "ok": true,
+    "ms": 0
+  },
+  {
+    "label": "basis 15 above observed, published 20",
+    "basis": 15,
+    "requests": [
+      "position",
+      "rows"
+    ],
+    "ok": true,
+    "ms": 0
+  },
+  {
+    "label": "basis 25 above published 20",
+    "basis": 25,
+    "requests": [
+      "position"
+    ],
+    "ok": false,
+    "error": "ReadError:basis-not-available",
+    "ms": 0
+  },
+  {
+    "label": "basis 25 again",
+    "basis": 25,
+    "requests": [
+      "position"
+    ],
+    "ok": false,
+    "error": "ReadError:basis-not-available",
+    "ms": 0
+  }
+]

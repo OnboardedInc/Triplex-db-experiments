@@ -1,0 +1,31 @@
+{
+  "code": "EAI_SERVICE",
+  "transport": true,
+  "depth": 0,
+  "kind": "fresh",
+  "surface": "datalog",
+  "endpoint": "http://127.0.0.1:49509",
+  "injected": 1,
+  "uv": [
+    -3010,
+    [
+      "EAI_SERVICE",
+      "service not available for socket type"
+    ]
+  ],
+  "injection": "one synthetic code after connection establishment with the response held open; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: opaque",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "Error",
+      "code": "EAI_SERVICE",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

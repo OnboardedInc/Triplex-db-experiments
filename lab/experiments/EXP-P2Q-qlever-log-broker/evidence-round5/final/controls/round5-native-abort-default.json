@@ -1,0 +1,12 @@
+{
+  "expectedUnreachable": true,
+  "error": {
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "message": "QLever replica the QLever replica is unreachable for native reads: AbortError: This operation was aborted",
+    "required": 1024,
+    "observed": 2048,
+    "replica": "the QLever replica"
+  },
+  "preservesCause": true
+}

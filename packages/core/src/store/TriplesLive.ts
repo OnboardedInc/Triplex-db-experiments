@@ -19,6 +19,7 @@ import {
   type QueryOptions,
   type PagedQueryOptions,
 } from "./Triples.js";
+import { createReadConstructor, exactReadService } from "../storage/ReadSurface.js";
 import { StorageAdapter } from "../storage/StorageAdapter.js";
 import { QueryExecutor } from "../storage/QueryExecutor.js";
 import type {
@@ -47,7 +48,7 @@ import {
   ConstraintViolationError,
   PaginationCursorError,
 } from "../errors/index.js";
-import { unsafe } from "../Branded.js";
+import { unsafe, type TransactionId } from "../Branded.js";
 import * as Constraint from "../Constraint.js";
 import { TripleStoreRuntime } from "./TripleStoreRuntime.js";
 import {
@@ -66,7 +67,7 @@ import {
   reservedAssertError,
   reservedWriteError,
 } from "./systemNamespace.js";
-import { resolveTemporalBasis } from "../Temporal.js";
+import { resolveTemporalBasis, type ResolvedTemporalBasis } from "../Temporal.js";
 import { TxAttributes } from "../utils/id.js";
 import { finishPagination, preparePagination, wrapDatalogQuery } from "../Pagination.js";
 import { transactionsForEntity } from "./entityTransactionHistory.js";
@@ -138,9 +139,10 @@ const rowToTriple = (row: TripleRow): Triple => {
 // Triples Layer using StorageAdapter + QueryExecutor
 // =============================================================================
 
-export const TriplesLive = Layer.effect(
-  Triples,
-  Effect.gen(function* () {
+const readConstructor = createReadConstructor();
+export const isTriplesRead = readConstructor.isRead;
+
+const makeTriplesServices = Effect.gen(function* () {
     const adapter = yield* StorageAdapter;
     const executor = yield* QueryExecutor;
     const runtime = yield* TripleStoreRuntime;
@@ -268,8 +270,7 @@ export const TriplesLive = Layer.effect(
             // Internal authorization symbols are capabilities, not serialized data.
             meta: meta === undefined ? undefined : { ...meta, ...structuredClone(meta) },
           }),
-          catch: (cause) =>
-            new WriteError({ message: "Cannot snapshot transaction command", cause }),
+        catch: (cause) => new WriteError({ message: "Cannot snapshot transaction command", cause }),
         }),
         ({ operations, meta }) =>
           adapter.withTransaction(
@@ -631,10 +632,14 @@ export const TriplesLive = Layer.effect(
         return rows.map(rowToTriple);
       });
 
-    const transaction: TriplesService["transaction"] = (txId) =>
+    // [EXP-P2Q] Why: both the journal index and envelope must use the named snapshot cut.
+    // Rejected: loading indexed envelopes at latest (a later metadata retirement changes an old page).
+    const transactionAtBasis = (txId: TransactionId, basis?: ResolvedTemporalBasis) =>
       adapter
-        .query({ entityId: unsafe.entityId(txId), entityType: "_Transaction" })
+        .query({ entityId: unsafe.entityId(txId), entityType: "_Transaction" }, basis)
         .pipe(Effect.map((rows) => transactionRecordFromTriples(txId, rows.map(rowToTriple))));
+
+    const transaction: TriplesService["transaction"] = (txId) => transactionAtBasis(txId);
 
     const transactionByCommand: TriplesService["transactionByCommand"] = (commandId) =>
       adapter
@@ -676,7 +681,18 @@ export const TriplesLive = Layer.effect(
 
     const entityTransactions: TriplesService["transactionsForEntity"] = (entityId, request) =>
       transactionsForEntity(
-        { currentPosition: adapter.currentCommitPosition, query: queryAll, transaction },
+        {
+          currentPosition: adapter.currentCommitPosition,
+          query: queryAll,
+          queryAtPosition: (query, recordedPosition) =>
+            Effect.gen(function* () {
+              const validAt = yield* now;
+              return yield* executor.execute(query, false, { validAt, recordedPosition });
+            }),
+          transaction,
+          transactionAtPosition: (txId, recordedPosition) =>
+          Effect.flatMap(now, (validAt) => transactionAtBasis(txId, { validAt, recordedPosition })),
+        },
         entityId,
         request,
       );
@@ -761,33 +777,54 @@ export const TriplesLive = Layer.effect(
         Effect.withSpan("triples.explainPage"),
       );
 
-    return {
-      assert: assert_,
-      assertBatch,
-      retract,
-      retractByPattern,
-      transact,
-      get,
-      entity,
-      entities,
-      entityPage,
-      match,
-      history,
-      transaction,
-      transactionByCommand,
-      transactions,
-      transactionsForEntity: entityTransactions,
-      currentPosition: adapter.currentCommitPosition,
-      dependencyState: (attributes, basis) =>
+  const implicit = () => undefined;
+  const reads = readConstructor.snapshot({
+    get: { run: get, basis: implicit, rawHistory: false },
+    entity: { run: entity, basis: implicit, rawHistory: false },
+    entities: { run: entities, basis: implicit, rawHistory: false },
+    entityPage: { run: entityPage, basis: implicit, rawHistory: false },
+    match: { run: match, basis: implicit, rawHistory: false },
+    history: { run: history, basis: implicit, rawHistory: true },
+    transaction: { run: transaction, basis: implicit, rawHistory: false },
+    transactionByCommand: { run: transactionByCommand, basis: implicit, rawHistory: false },
+    transactions: { run: transactions, basis: implicit, rawHistory: false },
+    query: { run: query, basis: implicit, rawHistory: false },
+    queryPage: { run: queryPage, basis: implicit, rawHistory: false },
+    queryAll: { run: queryAll, basis: implicit, rawHistory: false },
+    transactionsForEntity: {
+      run: entityTransactions,
+      basis: (_entityId: unknown, request?: { snapshotPosition?: number }) =>
+        request?.snapshotPosition === undefined ? undefined : { validAt: 0, recordedPosition: request.snapshotPosition },
+      rawHistory: false,
+    },
+    dependencyState: {
+      run: (attributes: Parameters<TriplesService["dependencyState"]>[0], basis?: Parameters<TriplesService["dependencyState"]>[1]) =>
         Effect.gen(function* () {
           const resolved = resolveTemporalBasis(basis, yield* now);
           return yield* adapter.dependencyState(attributes, resolved);
         }),
-      query,
-      queryPage,
-      queryAll,
+      basis: implicit, rawHistory: false,
+    },
+  }, adapter.snapshotReadPolicy ?? { wrap: (effect) => effect });
+  reads satisfies Omit<TriplesService,
+    "assert" | "assertBatch" | "retract" | "retractByPattern" | "transact" |
+    "currentPosition" | "explain" | "explainPage">;
+  const service = exactReadService<TriplesService>()({
+    ...reads,
+    assert: assert_,
+    assertBatch,
+    retract,
+    retractByPattern,
+    transact,
+    currentPosition: adapter.currentCommitPosition,
       explain,
       explainPage,
-    } satisfies TriplesService;
-  }),
+  });
+  return { reads, service };
+});
+
+export type TriplesConstructedReads = Effect.Success<typeof makeTriplesServices>["reads"];
+export const TriplesLive = Layer.effect(
+  Triples,
+  Effect.map(makeTriplesServices, ({ service }) => service),
 );

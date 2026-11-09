@@ -1,0 +1,99 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a56ab43df1f0e0ef7/lab/verify/P2Q
+
+
+<--- Last few GCs --->
+
+[44851:0x7aa40c000]    98380 ms: Mark-Compact 4006.6 (4130.6) -> 3991.4 (4131.1) MB, pooled: 1 MB, 822.79 / 0.00 ms  (average mu = 0.051, current mu = 0.009) allocation failure; scavenge might not succeed
+[44851:0x7aa40c000]    99193 ms: Mark-Compact 4007.1 (4131.1) -> 3991.9 (4131.9) MB, pooled: 0 MB, 803.17 / 0.00 ms  (average mu = 0.033, current mu = 0.012) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0x102daf750 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/Users/sam/.hermes/node/bin/node]
+ 2: 0x102f8b464 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/Users/sam/.hermes/node/bin/node]
+ 3: 0x10319aa78 v8::internal::Heap::stack() [/Users/sam/.hermes/node/bin/node]
+ 4: 0x1031b0e94 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1::operator()() const [/Users/sam/.hermes/node/bin/node]
+ 5: 0x1031b0728 void heap::base::Stack::SetMarkerAndCallbackImpl<v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1>(heap::base::Stack*, void*, void const*) [/Users/sam/.hermes/node/bin/node]
+ 6: 0x10396c384 PushAllRegistersAndIterateStack [/Users/sam/.hermes/node/bin/node]
+ 7: 0x103198c38 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/Users/sam/.hermes/node/bin/node]
+ 8: 0x10318d40c v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/sam/.hermes/node/bin/node]
+ 9: 0x10318dc44 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/sam/.hermes/node/bin/node]
+10: 0x103170f30 v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/Users/sam/.hermes/node/bin/node]
+11: 0x10358d390 v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [/Users/sam/.hermes/node/bin/node]
+12: 0x103a51df4 Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit [/Users/sam/.hermes/node/bin/node]
+13: 0x10e488b94 
+14: 0x10e50d0f0 
+15: 0x1039bac0c Builtins_JSEntryTrampoline [/Users/sam/.hermes/node/bin/node]
+16: 0x1039ba8f4 Builtins_JSEntry [/Users/sam/.hermes/node/bin/node]
+17: 0x1030f2864 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/sam/.hermes/node/bin/node]
+18: 0x1030f21c0 v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) [/Users/sam/.hermes/node/bin/node]
+19: 0x102fa141c v8::Function::Call(v8::Local<v8::Context>, v8::Local<v8::Value>, int, v8::Local<v8::Value>*) [/Users/sam/.hermes/node/bin/node]
+20: 0x102cb1650 node::PrepareStackTraceCallback(v8::Local<v8::Context>, v8::Local<v8::Value>, v8::Local<v8::Array>) [/Users/sam/.hermes/node/bin/node]
+21: 0x10311ae44 v8::internal::ErrorUtils::FormatStackTrace(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSObject>, v8::internal::Handle<v8::internal::Object>) [/Users/sam/.hermes/node/bin/node]
+22: 0x10311f710 v8::internal::ErrorUtils::GetFormattedStack(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSObject>) [/Users/sam/.hermes/node/bin/node]
+23: 0x102fdb26c v8::internal::Accessors::ErrorStackGetter(v8::FunctionCallbackInfo<v8::Value> const&) [/Users/sam/.hermes/node/bin/node]
+24: 0x1039bf0f4 Builtins_CallApiCallbackOptimizedNoProfiling [/Users/sam/.hermes/node/bin/node]
+25: 0x10e538534 
+26: 0x10e525688 
+27: 0x1039e95f8 Builtins_RunMicrotasks [/Users/sam/.hermes/node/bin/node]
+28: 0x1039baaf4 Builtins_JSRunMicrotasksEntry [/Users/sam/.hermes/node/bin/node]
+29: 0x1030f2824 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/sam/.hermes/node/bin/node]
+30: 0x1030f30cc v8::internal::(anonymous namespace)::InvokeWithTryCatch(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/sam/.hermes/node/bin/node]
+31: 0x1030f3204 v8::internal::Execution::TryRunMicrotasks(v8::internal::Isolate*, v8::internal::MicrotaskQueue*) [/Users/sam/.hermes/node/bin/node]
+32: 0x103120484 v8::internal::MicrotaskQueue::RunMicrotasks(v8::internal::Isolate*) [/Users/sam/.hermes/node/bin/node]
+33: 0x103120c08 v8::internal::MicrotaskQueue::PerformCheckpoint(v8::Isolate*) [/Users/sam/.hermes/node/bin/node]
+34: 0x1039bf0f4 Builtins_CallApiCallbackOptimizedNoProfiling [/Users/sam/.hermes/node/bin/node]
+35: 0x10e513214 
+36: 0x1039bac0c Builtins_JSEntryTrampoline [/Users/sam/.hermes/node/bin/node]
+37: 0x1039ba8f4 Builtins_JSEntry [/Users/sam/.hermes/node/bin/node]
+38: 0x1030f2864 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/sam/.hermes/node/bin/node]
+39: 0x1030f21c0 v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) [/Users/sam/.hermes/node/bin/node]
+40: 0x102fa141c v8::Function::Call(v8::Local<v8::Context>, v8::Local<v8::Value>, int, v8::Local<v8::Value>*) [/Users/sam/.hermes/node/bin/node]
+41: 0x102cae940 node::InternalCallbackScope::Close() [/Users/sam/.hermes/node/bin/node]
+42: 0x102caeb70 node::InternalMakeCallback(node::Environment*, v8::Local<v8::Object>, v8::Local<v8::Object>, v8::Local<v8::Function>, int, v8::Local<v8::Value>*, node::async_context, v8::Local<v8::Value>) [/Users/sam/.hermes/node/bin/node]
+43: 0x102cc17e4 node::AsyncWrap::MakeCallback(v8::Local<v8::Function>, int, v8::Local<v8::Value>*) [/Users/sam/.hermes/node/bin/node]
+44: 0x102ec7314 node::StreamBase::CallJSOnreadMethod(long, v8::Local<v8::ArrayBuffer>, unsigned long, node::StreamBase::StreamBaseJSChecks) [/Users/sam/.hermes/node/bin/node]
+45: 0x102ec8aa0 node::EmitToJSStreamListener::OnStreamRead(long, uv_buf_t const&) [/Users/sam/.hermes/node/bin/node]
+46: 0x102ecce2c node::LibuvStreamWrap::OnUvRead(long, uv_buf_t const*) [/Users/sam/.hermes/node/bin/node]
+47: 0x102ecd55c node::LibuvStreamWrap::ReadStart()::$_1::__invoke(uv_stream_s*, long, uv_buf_t const*) [/Users/sam/.hermes/node/bin/node]
+48: 0x1039a3928 uv__stream_io [/Users/sam/.hermes/node/bin/node]
+49: 0x1039abf50 uv__io_poll [/Users/sam/.hermes/node/bin/node]
+50: 0x103998300 uv_run [/Users/sam/.hermes/node/bin/node]
+51: 0x102caf394 node::SpinEventLoopInternal(node::Environment*) [/Users/sam/.hermes/node/bin/node]
+52: 0x102df9af4 node::NodeMainInstance::Run() [/Users/sam/.hermes/node/bin/node]
+53: 0x102d6a8b8 node::Start(int, char**) [/Users/sam/.hermes/node/bin/node]
+54: 0x1859afe00 start [/usr/lib/dyld]
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Worker forks emitted error.
+ ❯ EventEmitter.onTaskError ../../../node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/index.B8VfM7Mf.js:5893:21
+ ❯ EventEmitter.emit ../../../node:events:519:28
+ ❯ ChildProcess.emitUnexpectedExit ../../../node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/index.B8VfM7Mf.js:5368:22
+ ❯ ChildProcess.emit ../../../node:events:519:28
+ ❯ Process.ChildProcess._handle.onexit ../../../node:internal/child_process:293:12
+
+Caused by: Error: Worker exited unexpectedly with signal SIGABRT during started state while running test file /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a56ab43df1f0e0ef7/lab/verify/P2Q/tests/round6-codes.test.ts
+ ❯ ChildProcess.emitUnexpectedExit ../../../node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/index.B8VfM7Mf.js:5366:33
+ ❯ ChildProcess.emit ../../../node:events:519:28
+ ❯ Process.ChildProcess._handle.onexit ../../../node:internal/child_process:293:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  3 passed (4)
+      Tests  722 passed (763)
+     Errors  1 error
+   Start at  18:32:38
+   Duration  101.50s (import 64%, tests 25%, transform 11%, worker 1%)
+

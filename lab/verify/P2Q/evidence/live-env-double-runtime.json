@@ -1,0 +1,24 @@
+{
+  "bOpenErrors": [
+    "Error: Replica fence failed: marker {\"position\":3071,\"epoch\":1}"
+  ],
+  "acked": {
+    "a1": 2048,
+    "b1": 5120,
+    "a2": 3072,
+    "b2": 6144
+  },
+  "reopen": {
+    "opened": true,
+    "recovery": "torn-tail",
+    "survived": {
+      "env-a1": true,
+      "env-b1": true,
+      "env-a2": false,
+      "env-b2": false
+    }
+  },
+  "brokenFiles": [
+    "broken-lsn6-1794095666697.bin"
+  ]
+}

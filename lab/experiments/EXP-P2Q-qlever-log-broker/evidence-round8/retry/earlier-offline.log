@@ -1,0 +1,26 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a56ab43df1f0e0ef7/lab/verify/P2Q
+
+ ✓ tests/round7-basis.test.ts (4 tests | 2 skipped) 3859ms
+   ✓ round7 offline all entry points refuse future cuts, including absent entities and empty inputs 3449ms
+   ✓ round7 repository preserves earlier and pinned cuts across staged insertion/retraction and a newer global head 410ms
+ ✓ tests/round6-codes.test.ts (664 tests) 1010ms
+ ✓ tests/round7-q89c.test.ts (6 tests) 585ms
+ ✓ tests/round4.test.ts (42 tests | 12 skipped) 492ms
+ ✓ tests/round6.test.ts (28 tests) 334ms
+ ✓ tests/round5.test.ts (70 tests) 104ms
+ ✓ tests/round7-q89c-empty.test.ts (1 test) 107ms
+ ✓ tests/round5-delta.test.ts (1 test) 44ms
+
+ Test Files  8 passed (8)
+      Tests  802 passed | 14 skipped (816)
+   Start at  20:15:26
+   Duration  9.01s (tests 77%, import 21%, transform 2%)
+
+    Isolate  8 workers spawned · ~65ms startup each (spawn + environment, per file)
+             at least ~457ms faster with isolate: false — reuses workers across files instead of one per file
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a56ab43df1f0e0ef7/lab/experiments/EXP-P2Q-qlever-log-broker/evidence-round8/retry/earlier-offline-vitest.json

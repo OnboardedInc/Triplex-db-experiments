@@ -1,3 +1,5 @@
+import { createReadConstructor } from "@triplex-build/triplex/runtime";
+import { awaitSnapshotBasis } from "../broker/snapshot.js";
 import { Effect } from "effect";
 import { readOnlyQleverClient } from "../ReadOnlyClient.js";
 import type { TypeExpr } from "@triplex-build/triplex/config";
@@ -24,6 +26,7 @@ import {
   type QleverNativeEntity,
 } from "./NativeContext.js";
 import { resolveQleverNativeRelations, type QleverNativeRelation } from "./BasisRelations.js";
+import { BasisNotAvailable, ReplicaUnavailable, isUnreachable } from "../broker/errors.js";
 
 const scalar = (type: TypeExpr.TypeExpr, term: SparqlTerm): unknown => {
   if (type._tag === "Constrained") return scalar(type.base, term);
@@ -67,10 +70,23 @@ const declaredRow = (type: TypeExpr.TypeExpr, row: SparqlBinding): unknown => {
   );
 };
 
+const readConstructor = createReadConstructor();
+export const isQleverNativeRead = readConstructor.isRead;
+
 export interface QleverNativeQueryOptions {
   readonly maxResponseBytes?: number;
   readonly defaultTimeoutMs?: number;
   readonly defaultMaxRows?: number;
+  /**
+   * EXP-P2Q broker mode (default absent: A0 behaviour unchanged). A basis token above the replica's published
+   * position is waited for up to this many milliseconds (RULINGS Q58a `after`), then fails with a typed
+   * BasisNotAvailable instead of an immediate RangeError; an unreachable replica fails with ReplicaUnavailable.
+   * A native read takes several requests, so the source read records the replica's (position, incarnation) and
+   * is repeated after the answer: another incarnation (the broker fenced and replayed in between) or a position
+   * below the basis refuses the answer (V-P2Q M3, C2, N2; RULINGS Q67c, Q72b). Every broker-mode wiring passes
+   * `BROKER_NATIVE_AWAIT_BASIS_MS` (RULINGS Q72g) until the core native facade exists.
+   */
+  readonly awaitBasisMs?: number;
 }
 export interface QleverNativeRelationContext extends QleverNativeContext {
   readonly relation: (
@@ -85,12 +101,23 @@ export interface QleverNativeRelationOptions extends NativeReadOptions {
   readonly relationStrategy?: "single-read" | "rounds";
 }
 
+/** RULINGS Q72g: the native deadline every broker-mode wiring passes (the Q58a default). */
+export const BROKER_NATIVE_AWAIT_BASIS_MS = 2_000;
+
 /** Public schema-aware native SPARQL. No Datalog AST or compiler is invoked. */
 const nativeQueries = (
   client: QleverClient,
   scope: DatabaseScope,
   defaults: QleverNativeQueryOptions = {},
 ) => {
+  // [EXP-P2Q] Why: environment-selected broker runtimes also construct native facades separately.
+  // Rejected: fixing individual experiment callers (new callers could silently omit the 2s gate).
+  defaults = {
+    ...(process.env["QLEVER_COMMIT_PATH"] === "broker"
+      ? { awaitBasisMs: BROKER_NATIVE_AWAIT_BASIS_MS }
+      : {}),
+    ...defaults,
+  };
   // The shared resolver validates the structured scope before any native I/O.
   resolveNativeReadBasis({ scope, currentPosition: 0, now: 0 });
   const run = (
@@ -123,9 +150,55 @@ const nativeQueries = (
           signal.throwIfAborted();
           const request = { signal, timeoutMs, maxResponseBytes };
           const steps: NativeQueryStep[] = [];
-          const sourceQuery = `SELECT ?position WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position } }`;
+          const gated = defaults.awaitBasisMs !== undefined;
+          const sourceQuery = gated
+            ? `SELECT ?position ?incarnation WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position OPTIONAL { ${metaIri} ${fieldIri("broker_incarnation")} ?incarnation } } }`
+            : `SELECT ?position WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position } }`;
+          let incarnation = "";
+          let observed = 0;
+          let required = options.basis?.recordedPosition ?? 0;
+          // [EXP-P2Q] Why: answer/relation requests can fail after a successful basis probe.
+          // Rejected: classifying the whole run (builder/validation errors are not replica outages).
+          const replicaQuery: QleverClient["query"] = async (sparql, requestOptions) => {
+            try {
+              return await client.query(sparql, requestOptions);
+            } catch (cause) {
+              if (gated && !(cause instanceof ReadError) && isUnreachable(cause))
+                throw new ReplicaUnavailable({
+                  required,
+                  observed,
+                  replica: "the QLever replica",
+                  surface: "native",
+                  cause,
+                });
+              throw cause;
+            }
+          };
+          const readSource = async () => {
+            const positions = await replicaQuery(sourceQuery, request);
+            const text = positions[0]?.["position"]?.value ?? "0";
+            if (positions.length > 1 || !/^(0|[1-9][0-9]*)$/.test(text))
+              throw new TypeError("Invalid native source-position metadata");
+            incarnation = positions[0]?.["incarnation"]?.value ?? "";
+            observed = Number(text);
+            return observed;
+          };
           const sourceStarted = performance.now();
-          const positions = await client.query(sourceQuery, request);
+          let current = await readSource();
+          let before = incarnation;
+          const requested = options.basis?.recordedPosition;
+          if (gated && (requested === undefined || Number.isSafeInteger(requested))) {
+            current = await awaitSnapshotBasis({
+              required: requested ?? current,
+              observed: current,
+              refresh: readSource,
+              waitMs: defaults.awaitBasisMs!,
+              started: sourceStarted,
+              replica: "the QLever replica",
+              surface: "native",
+            });
+            before = incarnation;
+          }
           steps.push({
             phase: "source-cut",
             language: "sparql-1.1",
@@ -133,19 +206,17 @@ const nativeQueries = (
             parameters: [],
             elapsedMs: performance.now() - sourceStarted,
           });
-          const text = positions[0]?.["position"]?.value ?? "0";
-          if (positions.length > 1 || !/^(0|[1-9][0-9]*)$/.test(text))
-            throw new TypeError("Invalid native source-position metadata");
           const basis = resolveNativeReadBasis({
             scope,
             options,
-            currentPosition: Number(text),
+            currentPosition: current,
             now: Date.now(),
           });
+          required = basis.recordedPosition;
           // [EXP-C8] Read-only: frontier rounds at this one basis, closure inlined as VALUES.
           const working = relations
             ? await resolveQleverNativeRelations(
-                client,
+                { ...client, query: replicaQuery },
                 basis,
                 relations,
                 parameters,
@@ -163,7 +234,7 @@ const nativeQueries = (
             if (typeof query !== "string" || !query.trim())
               throw new TypeError("The native builder must return SPARQL query text");
             const queryStarted = performance.now();
-            const rawRows = await client.query(query, request);
+            const rawRows = await replicaQuery(query, request);
             steps.push({
               phase: "answer",
               language: "sparql-1.1",
@@ -173,11 +244,28 @@ const nativeQueries = (
             });
             if (rawRows.length > maxRows)
               throw new RangeError(`Native SELECT exceeds maxRows=${maxRows}; no partial result`);
+            if (gated) {
+              const after = await readSource();
+              if (incarnation !== before || after !== current || after < basis.recordedPosition)
+                throw new BasisNotAvailable({
+                  required: basis.recordedPosition,
+                  observed: after,
+                  replica:
+                    incarnation !== before
+                      ? `the QLever replica (reset during the read: incarnation ${before || "none"} became ${incarnation || "none"})`
+                      : "the QLever replica (went backwards during the read)",
+                  surface: "native",
+                  waitedMs: performance.now() - sourceStarted,
+                });
+            }
             return { basis, query, rawRows, steps };
           }
         },
         catch: (cause) =>
-          new ReadError({ message: `QLever native SELECT failed: ${String(cause)}`, cause }),
+          // Only the broker-mode typed errors pass through; every A0 failure is wrapped exactly as before.
+          cause instanceof BasisNotAvailable || cause instanceof ReplicaUnavailable
+            ? cause
+            : new ReadError({ message: `QLever native SELECT failed: ${String(cause)}`, cause }),
       });
       const preparedRows = yield* Effect.try(() =>
         executed.rawRows.map((row) => declaredRow(contract.row, row)),
@@ -205,28 +293,32 @@ const nativeQueries = (
           : new ReadError({ message: "Invalid QLever native query contract or result", cause }),
       ),
     );
-  return {
-    select: (
-      contract: NativeQueryContract,
-      input: unknown,
-      build: QleverNativeBuilder,
-      options?: NativeReadOptions,
-    ) => run(contract, input, build, options),
-    selectWithRelations: (
-      contract: NativeQueryContract,
-      input: unknown,
-      relations: readonly QleverNativeRelation[],
-      build: (context: QleverNativeRelationContext, parameters: unknown) => string,
-      options?: QleverNativeRelationOptions,
-    ) =>
-      run(
-        contract,
-        input,
-        (context, parameters) => build(context as QleverNativeRelationContext, parameters),
-        options,
-        relations,
-      ),
-  };
+  return readConstructor.dispatch(
+    {
+      select: (
+        contract: NativeQueryContract,
+        input: unknown,
+        build: QleverNativeBuilder,
+        options?: NativeReadOptions,
+      ) => [contract, input, build, options] as const,
+      selectWithRelations: (
+        contract: NativeQueryContract,
+        input: unknown,
+        relations: readonly QleverNativeRelation[],
+        build: (context: QleverNativeRelationContext, parameters: unknown) => string,
+        options?: QleverNativeRelationOptions,
+      ) =>
+        [
+          contract,
+          input,
+          (context: QleverNativeContext, parameters: unknown) =>
+            build(context as QleverNativeRelationContext, parameters),
+          options,
+          relations,
+        ] as const,
+    },
+    (...args: Parameters<typeof run>) => run(...args),
+  );
 };
 
 export type QleverNativeQueries = ReturnType<typeof makeQleverNativeQueries>;

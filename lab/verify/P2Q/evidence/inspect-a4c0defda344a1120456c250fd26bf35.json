@@ -1,0 +1,98 @@
+{
+  "target": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/runs/broker/V-P2Q/env-60ae5972-76a9-42eb-b1bb-bf549c150e2d/a4c0defda344a1120456c250fd26bf35",
+  "bytes": 7996,
+  "scan": {
+    "status": "torn-tail",
+    "detail": "header crc or chain mismatch",
+    "validEnd": 4152,
+    "frames": 4
+  },
+  "framesByRawReader": [
+    {
+      "lsn": 1,
+      "epoch": 1,
+      "kind": 2,
+      "offset": 32
+    },
+    {
+      "lsn": 2,
+      "epoch": 1,
+      "kind": 1,
+      "offset": 170
+    },
+    {
+      "lsn": 3,
+      "epoch": 2,
+      "kind": 2,
+      "offset": 2092
+    },
+    {
+      "lsn": 4,
+      "epoch": 2,
+      "kind": 1,
+      "offset": 2230
+    },
+    {
+      "lsn": 3,
+      "epoch": 1,
+      "kind": 1,
+      "offset": 4152
+    },
+    {
+      "lsn": 5,
+      "epoch": 2,
+      "kind": 1,
+      "offset": 6074
+    }
+  ],
+  "members": [
+    {
+      "lsn": 2,
+      "commandIds": [
+        "env-a1"
+      ]
+    },
+    {
+      "lsn": 4,
+      "commandIds": [
+        "env-b1"
+      ]
+    },
+    {
+      "lsn": 3,
+      "commandIds": [
+        "env-a2"
+      ]
+    },
+    {
+      "lsn": 5,
+      "commandIds": [
+        "env-b2"
+      ]
+    }
+  ],
+  "opened": {
+    "recovery": "torn-tail",
+    "aborted": [
+      5
+    ],
+    "claims": [
+      [
+        "env-a1",
+        true
+      ],
+      [
+        "env-b1",
+        true
+      ],
+      [
+        "env-a2",
+        false
+      ],
+      [
+        "env-b2",
+        false
+      ]
+    ]
+  }
+}

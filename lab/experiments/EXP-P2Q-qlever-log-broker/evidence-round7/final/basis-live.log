@@ -1,0 +1,40 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a56ab43df1f0e0ef7/lab/verify/P2Q
+
+ ❯ tests/round7-basis.test.ts (4 tests | 2 failed | 2 skipped) 26554ms
+   ❯ round7 live exact basis (2)
+     × standard all routes and historical Datalog with pending writes 13848ms
+     × fresh all routes and historical Datalog with pending writes 12706ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round7-basis.test.ts > round7 live exact basis > standard all routes and historical Datalog with pending writes
+ FAIL  tests/round7-basis.test.ts > round7 live exact basis > fresh all routes and historical Datalog with pending writes
+AssertionError: expected +0 to be 4095 // Object.is equality
+
+- Expected
++ Received
+
+- 4095
++ 0
+
+ ❯ futureChecks tests/round7-basis.test.ts:127:34
+    125|           });
+    126|           const isNative = route.startsWith("select");
+    127|           expect(error.observed).toBe(
+       |                                  ^
+    128|             transaction && !isNative
+    129|               ? pin
+ ❯ tests/round7-basis.test.ts:258:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 skipped (4)
+   Start at  19:10:10
+   Duration  26.85s (tests 99%, import 1%)
+

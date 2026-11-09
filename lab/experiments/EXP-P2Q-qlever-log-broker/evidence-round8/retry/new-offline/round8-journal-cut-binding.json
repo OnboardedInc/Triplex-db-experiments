@@ -1,0 +1,13 @@
+{
+  "calledPosition": 6144,
+  "error": {
+    "message": "Basis 6144 is not available on test pin for datalog reads (observed 2048 after 40 ms)",
+    "_tag": "ReadError",
+    "reason": "basis-not-reached",
+    "required": 6144,
+    "observed": 2048,
+    "replica": "test pin",
+    "surface": "datalog",
+    "waitedMs": 40
+  }
+}

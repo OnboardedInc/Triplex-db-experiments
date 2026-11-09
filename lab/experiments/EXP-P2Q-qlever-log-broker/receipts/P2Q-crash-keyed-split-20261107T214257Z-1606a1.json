@@ -1,0 +1,56 @@
+{
+  "format": "p2q-receipt/1",
+  "id": "P2Q-crash-keyed-split-20261107T214257Z-1606a1",
+  "kind": "crash-keyed-split",
+  "writtenAt": "2026-11-07T21:42:57.042Z",
+  "mode": "crash",
+  "slot": "dev",
+  "startedAt": "2026-11-07T21:42:55.085Z",
+  "identity": {
+    "gitHead": "4d0430ac638f00e297402f19a2f3a8518307547e",
+    "dirty": true,
+    "diffSha256": "7098fd2e34a43ea89d6185d8d7eef31dabc56f47e84bf2c481b0022e54938849",
+    "distSha256": "38ae3357bcbf96cd3881176fa19c03c1b8b430749094660da6760351e01ea00c",
+    "engineImage": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "endpoint": null,
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        12.19,
+        10.65,
+        11.26
+      ],
+      "freeBytes": 14573187072
+    }
+  },
+  "hostLoadAfter": [
+    12.19,
+    10.65,
+    11.26
+  ],
+  "arm": "keyed-split",
+  "variant": "keyed-split",
+  "keyed": true,
+  "durability": "split",
+  "scope": "p2q-crash-keyed-split-5d8d3339-4feb-4eb9-98d4-d663399a2b49",
+  "commits": 400,
+  "injected": {
+    "before-effect": 34,
+    "after-effect-before-checkpoint": 33,
+    "after-checkpoint": 33
+  },
+  "injectedTotal": 100,
+  "restarts": 101,
+  "committedEffects": 400,
+  "durableEffects": 400,
+  "gaps": 0,
+  "extras": 0,
+  "visibleDuplicates": 0,
+  "replayedEffects": 136,
+  "orderViolations": 0,
+  "gapSample": [],
+  "replayAttempts": 136,
+  "rawPath": null,
+  "rawSha256": null
+}

@@ -1,0 +1,8 @@
+{
+  "expected": false,
+  "observed": false,
+  "elapsedMs": 0.016374999999982265,
+  "boundary": "mixed errors have no unambiguous single transport cause",
+  "name": "AggregateError",
+  "message": "all candidates failed"
+}

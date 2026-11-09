@@ -1,0 +1,19 @@
+{
+  "checkedAt": 1794188013.0679638,
+  "head": "3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f",
+  "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a56ab43df1f0e0ef7",
+  "sourceScript": "lab/experiments/EXP-P2Q-qlever-log-broker/cleanup-round8.py",
+  "sourceScriptSha256": "a3f256f52adf17da827700e3bee7bd0d0496eb65099e6440365f8e0c65aab5f1",
+  "processListSha256": "147c0954ff05e4faa6b2d6beca89c34383723094004068c3576861bffed2fed9",
+  "ownActiveMatchingTestHeavyProcesses": [],
+  "recordedLockFiles": 642,
+  "distinctRecordedOwnerPids": 55,
+  "liveRecordedLockOwners": [],
+  "engineLifecycleActions": [],
+  "exclusiveEngineSlotsTaken": 0,
+  "heavySlot": null,
+  "operation": "read-only process/owned-artifact observation; no heavy job or engine reservation claimed",
+  "hostFreeBytes": 6749147136,
+  "stateRetention": "runs/broker/CX-P2Q-R8-*",
+  "supplementalRetirementReadbackSha256": "9739ef38832dd3d8da25e36ab2c46f2f69a26da14648711566a62d076f3146dc"
+}
