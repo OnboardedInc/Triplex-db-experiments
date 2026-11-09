@@ -1,0 +1,1 @@
+{"schema":"fault-witness/1","obligation":"NS.P3","case":"NS-P3-CRASH","mode":"normal","rep":1,"faultPointId":"after-effect","injectedAt":100,"lastWitnessedTransition":"recovered","eventsSha256":"919413ecac57ba3fd11b26d039b2846b0eea6bd60689410b33d62b57f682965a"}

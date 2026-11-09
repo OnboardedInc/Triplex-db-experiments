@@ -1,0 +1,1 @@
+{"schema":"fault-witness/1","obligation":"NS.P3","case":"FIXTURE-before-effect","mode":"normal","rep":1,"faultPointId":"FIXTURE-before-effect","injectedAt":100,"lastWitnessedTransition":"recovered","eventsSha256":"ee98df6abc5ea8af73ca50a41473534001b51d27ea1cc3f9a1372bbe705ce248"}

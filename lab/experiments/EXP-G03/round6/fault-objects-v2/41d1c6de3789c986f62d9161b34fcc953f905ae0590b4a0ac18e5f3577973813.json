@@ -1,0 +1,1 @@
+{"schema":"fault-witness/1","obligation":"C2","case":"FIXTURE-C2-registered-fixture-point","mode":"normal","rep":1,"faultPointId":"FIXTURE-C2-registered-fixture-point","injectedAt":100,"lastWitnessedTransition":"recovered","eventsSha256":"87d665f54c212953ba639c9f5d42b984c3933ed2270f9af1887ad236b9a4bb48"}

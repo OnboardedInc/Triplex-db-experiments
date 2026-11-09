@@ -1,0 +1,119 @@
+{
+  "binding": {
+    "runId": "5783c3dd-40b6-4903-ab39-6d2cddd9f0eb",
+    "sourceCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "evaluatorCommit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "inputsSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "slot": "OFFLINE-SYNTHETIC"
+  },
+  "status": "DIAGNOSTIC",
+  "qualification": false,
+  "handshakes": 9,
+  "counts": {
+    "before-effect": 3,
+    "after-effect": 3,
+    "after-checkpoint": 3
+  },
+  "witnesses": [
+    {
+      "schema": "fault-witness/1",
+      "obligation": "NS.P3",
+      "case": "FIXTURE-before-effect",
+      "mode": "normal",
+      "rep": 1,
+      "faultPointId": "FIXTURE-before-effect",
+      "injectedAt": 100,
+      "lastWitnessedTransition": "recovered",
+      "eventsSha256": "ee98df6abc5ea8af73ca50a41473534001b51d27ea1cc3f9a1372bbe705ce248"
+    },
+    {
+      "schema": "fault-witness/1",
+      "obligation": "NS.P3",
+      "case": "FIXTURE-before-effect",
+      "mode": "normal",
+      "rep": 2,
+      "faultPointId": "FIXTURE-before-effect",
+      "injectedAt": 103,
+      "lastWitnessedTransition": "recovered",
+      "eventsSha256": "c139eba0b7a4438f4727f86e772bb52a4930776be224a5379c934c9ac4665120"
+    },
+    {
+      "schema": "fault-witness/1",
+      "obligation": "NS.P3",
+      "case": "FIXTURE-before-effect",
+      "mode": "normal",
+      "rep": 3,
+      "faultPointId": "FIXTURE-before-effect",
+      "injectedAt": 106,
+      "lastWitnessedTransition": "recovered",
+      "eventsSha256": "dc6809d786cd38d6ef8f7de3b055e444a6f87d4966371a1023321abf7e9ef97d"
+    },
+    {
+      "schema": "fault-witness/1",
+      "obligation": "NS.P3",
+      "case": "FIXTURE-after-effect",
+      "mode": "normal",
+      "rep": 1,
+      "faultPointId": "FIXTURE-after-effect",
+      "injectedAt": 109,
+      "lastWitnessedTransition": "recovered",
+      "eventsSha256": "5253a8444794b858c0997c2e10f2132b12c355085625faa658fdab664e9dee16"
+    },
+    {
+      "schema": "fault-witness/1",
+      "obligation": "NS.P3",
+      "case": "FIXTURE-after-effect",
+      "mode": "normal",
+      "rep": 2,
+      "faultPointId": "FIXTURE-after-effect",
+      "injectedAt": 112,
+      "lastWitnessedTransition": "recovered",
+      "eventsSha256": "f07f0ad798c3ffef65fed7cb42951c44ae1872976984c800d998c08cd3fd16a5"
+    },
+    {
+      "schema": "fault-witness/1",
+      "obligation": "NS.P3",
+      "case": "FIXTURE-after-effect",
+      "mode": "normal",
+      "rep": 3,
+      "faultPointId": "FIXTURE-after-effect",
+      "injectedAt": 115,
+      "lastWitnessedTransition": "recovered",
+      "eventsSha256": "174eb70a402291d954e4b25b3585405a60c537efd20c9f8d40d41c9529443563"
+    },
+    {
+      "schema": "fault-witness/1",
+      "obligation": "NS.P3",
+      "case": "FIXTURE-after-checkpoint",
+      "mode": "normal",
+      "rep": 1,
+      "faultPointId": "FIXTURE-after-checkpoint",
+      "injectedAt": 118,
+      "lastWitnessedTransition": "recovered",
+      "eventsSha256": "2001493fc6cf4ea391e42ca34e3378df578bf601a782f10eab927e4f475a2ae7"
+    },
+    {
+      "schema": "fault-witness/1",
+      "obligation": "NS.P3",
+      "case": "FIXTURE-after-checkpoint",
+      "mode": "normal",
+      "rep": 2,
+      "faultPointId": "FIXTURE-after-checkpoint",
+      "injectedAt": 121,
+      "lastWitnessedTransition": "recovered",
+      "eventsSha256": "293aabbd8c9a899c83053b824f6a6d5967d28a52d50b0abf8a4252e61717e795"
+    },
+    {
+      "schema": "fault-witness/1",
+      "obligation": "NS.P3",
+      "case": "FIXTURE-after-checkpoint",
+      "mode": "normal",
+      "rep": 3,
+      "faultPointId": "FIXTURE-after-checkpoint",
+      "injectedAt": 124,
+      "lastWitnessedTransition": "recovered",
+      "eventsSha256": "17fe95b126fc7f28891a68096b375958951e9b1c6c135dde195099093f48f66c"
+    }
+  ]
+}

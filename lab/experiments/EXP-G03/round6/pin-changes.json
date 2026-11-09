@@ -11,13 +11,13 @@
     {
       "path": "lab/bench/ns-driver/fault.mjs",
       "oldSha256": null,
-      "newSha256": "f1951fc1d21bf94fd8fa65b755594464eacffa46459667eea39bab9692e20e72",
+      "newSha256": "44e055f8beedc683a38d5e42b85f46110270e8d76b768fac761b7bc298752bfe",
       "contractInputPin": null
     },
     {
       "path": "lab/bench/ns-driver/launch-artifact.mjs",
       "oldSha256": "8c0df9b11ddbedba4d69b5c9daa288db6373c95f25b6fbe1806fbe1fe68a2e94",
-      "newSha256": "da7681f7bb4db37cd64be198c44cb0f87fa44c1d05c92af0a09477511b39df83",
+      "newSha256": "2c64786ae1ef7a47ee98a74cc5b24b317acebfaf3e09a11da3cd8889605f776e",
       "contractInputPin": null
     },
     {
@@ -45,33 +45,39 @@
       "contractInputPin": null
     },
     {
+      "path": "lab/bin/claim.mjs",
+      "oldSha256": "3bff869d0dcc376d26b18ea4b1034098a03ea72643bab423a40b26a4f277bf31",
+      "newSha256": "bb819d29c56fc49514bed41f1d69d3db43a6edf86176f4cf766dee93f1567c7f",
+      "contractInputPin": null
+    },
+    {
       "path": "lab/bin/ns-fault-box.mjs",
       "oldSha256": null,
-      "newSha256": "bd1023da6f5193987f3bc5f3eace9c1dccfde6005c2ebf2f510cbad4ea4b461d",
+      "newSha256": "267948648a17ff2b31a626a0dccf0ef70261cbfeafc5d8251f85f21023bab7f7",
       "contractInputPin": null
     },
     {
       "path": "lab/bin/ns-fault.mjs",
       "oldSha256": null,
-      "newSha256": "1a7234aacf84e43cfc6df4a3c0f7a420ef0170624a40dff79f2690b450424afa",
+      "newSha256": "0242d0f3d13ea5f3b543e34e6bd5f4836ac65a8740d3f87be6299f6fae82301c",
       "contractInputPin": null
     },
     {
       "path": "lab/bin/ns-run.mjs",
       "oldSha256": "3a30cbf67465cb14faf6d698840fead0155abbc1c324ddd8134436d1f1a99ce6",
-      "newSha256": "7cc5648f49f9bd0ae9152bb49be83d4621edc997f1951d9dcc22bb3e6b3efee2",
+      "newSha256": "8ba7f0dd3868ff4f70b5e8957ee07e698bcd0b6ec1dcd6e96ba4813838d862d5",
       "contractInputPin": null
     },
     {
       "path": "lab/experiments/EXP-G03/ns/contract-proposal.json",
       "oldSha256": "5c4fd196df613e697498bc818297d6f59fb07e2dd988558abe6ae740955e1f03",
-      "newSha256": "f40152cd508d31d7ff30c70a0f3ca03b342c23e4a0561982bd8747118f534251",
+      "newSha256": "f3092706538591273cecacbeb0975b269e5547776d8e06d907c3e9e2425de7a1",
       "contractInputPin": null
     },
     {
       "path": "lab/experiments/EXP-G03/ns/fault.test.mjs",
       "oldSha256": null,
-      "newSha256": "6ed653ba8fb7823b6a40e47158028d996a94fde6b56bb22e77f39fdefa2d8d5c",
+      "newSha256": "2088117f93c58aeabd09b8558c4dfbcc2a1d27529654a57c5a5329d94929aae1",
       "contractInputPin": null
     },
     {
@@ -80,5 +86,7 @@
       "newSha256": "91b8bc7922619c1c40c747c25aa5db5059cf1ea62fdeaa1dc40483a778ed2c34",
       "contractInputPin": null
     }
-  ]
+  ],
+  "testedSource": "67d39f4b",
+  "evaluatorTestedSource": "9fd35406"
 }

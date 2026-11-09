@@ -1,0 +1,48 @@
+{
+  "fixtureInventories": [
+    {
+      "holder": "CX-G03-r3-integrity-aaa98759",
+      "exitCode": 0,
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-claim-abbbb895",
+      "exitCode": 0,
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-0bcac005",
+      "exitCode": 0,
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-claim-9660ed0a",
+      "exitCode": 0,
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    }
+  ],
+  "fstrim": {
+    "command": "colima ssh -p triplex2 -- sudo fstrim -av",
+    "exitCode": 0,
+    "receipt": "fstrim.txt"
+  },
+  "dockerContext": {
+    "command": "docker context use colima",
+    "exitCode": 1,
+    "reason": "colima context absent; only colima-triplex2 and default listed",
+    "observedContext": "default",
+    "DOCKER_HOST": "unix:///Users/sam/.colima/triplex2/docker.sock",
+    "changedContextMetadata": false,
+    "touchedDefaultVM": false
+  },
+  "exclusiveSlotUsed": false,
+  "residentsParked": false
+}

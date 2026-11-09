@@ -1,0 +1,66 @@
+{
+  "experiment": "EXP-G03",
+  "round": 6,
+  "status": "DIAGNOSTIC; no qualification grant",
+  "mergeMain": "1b40aeba83272d4625be714bed1206d5f9086175",
+  "mergeCommit": "3afa747cdf806ff09af93dfd185901656803fa36",
+  "evaluatorTestedCommit": "9fd354061e9bc0570a34985cb65d40af3c111dc9",
+  "nsTestedCommit": "67d39f4b8a3443047b4b9390d90d646b2280a505",
+  "recordedAtUtc": "2026-11-09T12:07:28.288649+00:00",
+  "results": {
+    "fullCommittedSuite": {
+      "receipt": "committed-suites-2.tap",
+      "passed": 242,
+      "failed": 0,
+      "skipped": 0,
+      "evaluatorFixtures": 108,
+      "poolBox": 37,
+      "NS": 50,
+      "faultProducerBeforeCasePinRefinement": 47,
+      "durationMs": 2235787.377
+    },
+    "finalNSComponents": {
+      "receipt": "final-ns-suites.tap",
+      "passed": 135,
+      "failed": 0,
+      "skipped": 0,
+      "NS": 50,
+      "poolBox": 37,
+      "fault": 48
+    },
+    "contractVerify": {
+      "receipt": "contract-verify-final.txt",
+      "byteIdentical": true,
+      "acceptanceEqualsMergedMain": true
+    },
+    "protectedEvaluatorClosure": "evaluator-closure.txt",
+    "firstCommittedAttempt": {
+      "receipt": "committed-suites.tap",
+      "passed": 205,
+      "failedSuiteFiles": 2,
+      "cause": "missing datomic-context.mjs in protected clone; fixed, no assertion weakened"
+    }
+  },
+  "faultEvidence": {
+    "primary": "fault-objects-v2/nine-injections.json",
+    "verification": "fault-link-verification.json",
+    "witnesses": 9,
+    "linkedSnapshots": 18,
+    "perPoint": 3,
+    "identity": "explicit OFFLINE-SYNTHETIC slot and fixture commit sentinels; not engine execution identities",
+    "superseded": "fault-objects/ retains initial diagnostic producer with hook-label IDs/caller-outcome metadata corrected in v2"
+  },
+  "cleanup": "cleanup.json",
+  "pinChanges": "pin-changes.json",
+  "runbook": "RUNBOOK.md",
+  "limitations": [
+    "No exclusive slot or 1k run; no resident parking",
+    "No live NS fault/paused-cgroup/restart smoke this offline round; ordinary contained evaluator kill proofs did execute",
+    "Production replay normalizer and broker C2 coordinator/point plan still require pinned integration; default refuses",
+    "Legacy qualify fault-case path remains fail-closed pending the NS grant integration",
+    "docker context use colima failed because colima context is absent; private DOCKER_HOST retained; no default VM touched"
+  ],
+  "evidencePolicy": "All round6 retained files below 1 MB and raw directories below 5 MB; no bulky evidence export required",
+  "verificationScript": "verify-evidence.mjs",
+  "verificationReceipt": "evidence-verification.json"
+}
