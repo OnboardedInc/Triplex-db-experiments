@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-P3M] Why: a standalone NS P3 window can bind native lane hooks without silently using the A0 journal.
 // Rejected: enabling a candidate in the legacy NS driver whose publication hook is not wired.
 import fs from "node:fs";

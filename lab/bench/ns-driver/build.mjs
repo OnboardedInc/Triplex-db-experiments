@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-NSR-R3] Why: publish one executable artifact plus its mandatory hash-checked runtime launcher, retaining the bundler's own metafile. Rejected: a source-directory copy described as a closed bundle.
 import fs from "node:fs";
 import path from "node:path";

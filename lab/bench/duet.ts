@@ -1,6 +1,7 @@
+#!/usr/bin/env node
+// [CX-A01-040] Why: validate the full NS report bytes before paired analysis. Rejected: adopting raw modeless timing reports.
 import { readLatencyRun } from "../receipts/parse.ts";
 import { requireQleverConnectionMode } from "../receipts/latency.mjs";
-#!/usr/bin/env node
 /**
  * PAIR-0 duet coordinator (EXP-M01; R22 section 7; RULINGS Q60a-h). Normally run by `node lab/bin/gate.mjs PAIR`,
  * which takes the measurement lease, binds both slots' identity and cgroup values, and writes the receipt.

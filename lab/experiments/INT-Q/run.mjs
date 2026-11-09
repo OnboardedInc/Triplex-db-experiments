@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [CX-INT-Q] Why: preserve fresh command output bound to the exact committed and working bytes.
 // Rejected: generating PASS from exit zero (semantic assertions and separate review remain required).
 import fs from 'node:fs';

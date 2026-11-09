@@ -64,3 +64,21 @@ Durable command output root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/C
 ## Limits and handoff
 
 This is builder integration and offline verification, not independent reviewer acceptance of 0.4.0. DF01 live dev-storage findings remain DIAGNOSTIC. P3 has no newly qualified live measurement, O-DOMAIN dependency closure, production observer or qualification pins. No live PAIR/no-regression run, real engine G1/G2, acceptance claim, publication, push or main-branch merge is performed. Q98j and all listed pending questions remain with their owners.
+
+## Integration gate corrections after the first committed evaluator
+
+`00589f842b99fe78fa9d2aff865d6b6202e8c2a6` passed the required evaluator **108/108**, zero failures/skips/cancellations/todo (`evaluator-attempt1.tap`). Further G0 integration exposed failures that were corrected afterward; a new committed-tree evaluator run will bind the corrected source as well.
+
+CHECKJS's accepted list predates the other integrations. Added the newly integrated operational roots; retained accepted review artifacts use exact archival exclusions. Three NSR reviewer modules actually imported by current regressions are included, not excluded. The final count is **440 checked roots**. Seventy type-noise directives preserve binding-name checking; `checkjs-comment-proof.json` proves printer-equivalent executable code for each file against 00589f84. A parser-result type assertion in the feasibility verifier emits byte-identical JavaScript (`feasibility-type-proof.json`). No acceptance source pin changed in this follow-up. The duet's parser imports are below its shebang; the initial placement above it caused a real syntax error and is corrected.
+
+First G0 receipts remain failures:
+
+- XTDB `G0-xtdb-20261109T104608Z-c3ecdc`: 1,267 pass, 16 fail, 140 skip. CHECKJS failed, macOS boot-identity reads were sandbox-denied, and the duet shebang syntax failed the noise test module.
+- Datomic `G0-datomic-20261109T105000Z-e204ff`: 1,330 pass, 14 fail, 66 skip. Same static/sandbox limitations; the source also changed during this diagnostic attempt. Its receipt is not adopted as qualified evidence.
+- The first-attempt scheduler was stopped after Datomic to avoid scheduling another known sandbox-limited QLever attempt. Its active gate finished and released its own grant.
+- `checkjs-attempt1` through `checkjs-attempt4` preserve diagnostics. **checkjs-attempt5 passed** with 440 roots and no diagnostics or suppressed binding errors.
+- `merge-check-attempt2.tap`: parser/reader checks passed; overall 59/60 because CHECKJS root coverage was still missing. The next combined attempt follows the coverage correction.
+- `mutations-inherited.log` is an optional aborted old-suite attempt, **NO VERDICT**: its source snapshot became obsolete during integration. The exact last temporary generator was retained as `inherited-mutation-aborted-source.py`; the own wrapper was terminated, no matching generator process remained, and its temporary worktree file was removed. The 34 new ruling/re-pin controls are the completed mutation gate.
+- `pack-attempt1.log` records admission waiting only. That queued wrapper was stopped before execution to prevent simultaneous worktree dist rebuilds with G0; no packaging result was produced.
+
+The final G0 attempts run with the permissions needed for the host boot-identity read. They still run offline, through the heavy semaphore, with the explicit owned pnpm-store wrapper. No clock source is mocked and no engine service is contacted.

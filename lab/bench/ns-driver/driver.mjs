@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 export { generateTrace, traceDigest } from "../lib/trace.ts";
 export { auditP3, lagSample, distribution } from "./p3.mjs";
 // [EXP-NSR] Why: all offers and closed loops live on the trusted side of RPC; candidate code can only return bytes. Rejected: candidate provider imports or worker callbacks in the driver.

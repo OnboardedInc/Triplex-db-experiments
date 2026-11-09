@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-NSR] Why: evaluator-owned FD01 validators preserve content checks without executing candidate code. Rejected: runtime package imports.
 const natural = (s) => {
   if (typeof s !== "string" || !/^(0|[1-9][0-9]*)$/.test(s))

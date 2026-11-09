@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: this review control is imported by current NSR regressions and uses runtime-created fixtures. Binding errors remain checked. Rejected: excluding an executed dependency.
 // [EXP-NSR-R5] Why: inspect the real child environment and write results, including the review's literal-star path. Rejected: checking only the launcher's requested options.
 import assert from "node:assert/strict";
 import fs from "node:fs";

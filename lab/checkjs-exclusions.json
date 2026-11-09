@@ -35,6 +35,510 @@
       "reason": "Generated DA01 round3 packed-consumer capture, retained with its historical package output. Current pack checking enters scripts/check-packages.mjs; do not annotate captured evidence."
     },
     {
+      "path": "lab/experiments/EXP-NSR/round2/review-probes.original.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/experiments/EXP-NSR/round3/review-probes.original.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/experiments/EXP-NSR/round4/reviewer-artifacts.original.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/CHECKJS/admission.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/CHECKJS/overlay.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/CHECKJS/review.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/CHECKJS/round2/review-attempt1.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/CHECKJS/round2/review.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/audit-historical.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/index-evidence.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/index-round2.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/index-round3.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/round3/candidate-1/run-round3.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/round3/candidate-2/run-round3.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/round3/control-1/run-round3.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/round3/control-2/run-round3.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/run-deadline-cut.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/run-offline.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/run-round2.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/run-round3.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/run-secondary.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/DF01/secondary-attempt-1/run-secondary.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/clock-probe.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/duplicate-probe.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/mutant-hook.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/mutant.config.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/mutate.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/probe.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round2/atomic-child.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round2/cross-process.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round2/disk-guard.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round2/hook.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round2/package-probe.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round2/probes.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round2/record.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round2/vitest.config.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round3/atomic-child.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round3/baseline.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round3/cross-process.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round3/disk-guard.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round3/hook.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round3/participant.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round3/probes.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round3/record.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/round3/vitest.config.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/seal.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/source-hook.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/split-child.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/trace.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/FD01/vitest.config.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/GS12F/check-format-structure.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/INT-Q/run.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/M01/compare.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/M01/compat-probe.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/M01/prepare-baseline.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/M01/round2/challenge.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/M01/round2/clean-check.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/M01/run-offline.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/audit-evidence.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/build.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/mutate-feed.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/pack-cli.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/probes.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/retain.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round2/audit.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round2/checks.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round2/probes.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round2/retain.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round3/reviewer-artifacts.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round3/reviewer-audit.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round3/reviewer-checks.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round3/reviewer-retain.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round4-review/retain.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round4-review/review.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round4-review/round3-cases.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round5-review/retain.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/NSR/round5-review/review.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P2Q/recompute/amplification.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P2Q/recompute/diffsha.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P2Q/recompute/distcheck.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P2Q/recompute/dump.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P2Q/recompute/identity.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P2Q/recompute/logaudit.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P2Q/recompute/receiptonly.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P2Q/recompute/recompute.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P2Q/scripts/q55d-lag.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P3M/evidence.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P3M/probes.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P3M/provider.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P3M/record-lock.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/P3M/run.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/PACK/cache-retention-round2.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/PACK/inject-declaration.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/PACK/npm-offline.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/PACK/review-round2.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/PACK/review.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/PACK/verify-hashes-round2.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/audit.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/common.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/live.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/receipt-coverage.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/bootstrap.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/check-writers-path-adapted.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/check-writers-path-adapted2.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/common.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/error-leaks.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/evidence-audit.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/live.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/receipt-coverage.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/resolve.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/transport.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round2/vitest.config.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round3/audit.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round3/extended.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round3/review-attempt1.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round3/review.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round4/extra.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round4/reader-unit.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round4/review.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round5/notes.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round5/review-attempt1.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round5/review.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/round5/seal.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/QNODELAY/transport.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/SQL01/gate.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
+      "path": "lab/verify/SQL01/kill.mjs",
+      "reason": "CX-A01-040: immutable accepted review/reproduction artifact, retained with its source/evidence hashes; not an operational gate entry point. Fresh operational modules are checked separately."
+    },
+    {
       "path": "vendor/duckdb-temporal/research/roadmap/iteration-01/probes/language-semantics.mjs",
       "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
     },

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-PACK] Why: reversible independent fixtures against the unchanged gate, with
 // each observation tied to fresh bytes. Adapted from verify/PACK c71ec6d6; fixed gaps now must fail. Rejected: mocking pnpm/build (cannot prove freshness).
 import { createHash } from "node:crypto";

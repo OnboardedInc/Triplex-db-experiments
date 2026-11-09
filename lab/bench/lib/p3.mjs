@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-P3M] Why: R41 E3 measures the native feed against a source-owned prefix, before ACK reconciliation.
 // Rejected: transactions() and an ACK-derived expected set (both omit published lost-ACK commits).
 import { createRequire } from "node:module";

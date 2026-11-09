@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-QNODELAY] Why: reader entry points/imports, including aliased IO, require a
 // reviewed parser boundary. Rejected: discovering files by latency field spelling.
 import { test } from "node:test";

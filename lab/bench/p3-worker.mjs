@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-P3M] Why: durable feed IO has its own worker, distinct from closed-loop read clients (R41 E3).
 // Rejected: Promise-wrapping synchronous SQLite on the reader event loop.
 import { parentPort, workerData } from "node:worker_threads";

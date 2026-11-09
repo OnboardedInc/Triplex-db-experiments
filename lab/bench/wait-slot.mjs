@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // node lab/bench/wait-slot.mjs --after EXP-X05 [--need-gib 3.5] [--slots 1] [--lane xtdb] [--every-s 180] [--max-h 12]
 // Polls `lab/bin/engine.mjs status` until the named predecessor has held a slot and released it (its
 // containers and reservations are gone) and the pool admits `--slots` more slots of --need-gib each, with at least

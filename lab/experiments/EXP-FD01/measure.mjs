@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-FD01] Why: measure the host durable write separately from publication-clock feed lag (Q98c/d).
 // Rejected: calling a decided wall-clock stamp a publication instant, or labelling zero readers L256.
 import fs from "node:fs";

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: this review control is imported by current NSR regressions and uses runtime-created fixtures. Binding errors remain checked. Rejected: excluding an executed dependency.
 // [CX-VNSR-R3] Why: execute the requested loader routes under the exact generated launcher, including code read through its data grants. Rejected: accepting only build-time graph checks or a missing marker after an unrelated syntax error.
 import assert from "node:assert/strict";
 import fs from "node:fs";

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-NSR-R4] Why: module hooks are replaceable by code in this process; filesystem permissions are the boundary. Rejected: claiming this secondary check prevents evaluation of readable text.
 // [EXP-NSR-R3] Why: unresolved computed or reflective imports must fail during execution even when absent from the bundler graph. Rejected: treating build-time resolution alone as runtime containment.
 import fs from "node:fs";

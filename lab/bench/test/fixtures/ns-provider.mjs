@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-NSR] Why: identical P3M source/trace is exercised over RPC with isolated candidate roles. Rejected: a second hand-written ledger whose equality only checks itself.
 import { prepare, openReader, openFeed } from "./p3-source.mjs";
 import { adapter, host, core, positions, lagSample } from "../../lib/p3.mjs";

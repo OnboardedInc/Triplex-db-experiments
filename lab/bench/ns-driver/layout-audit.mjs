@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-NSR-R4] Why: check actual readable layout bytes against an external inventory anchor before driver execution. Rejected: trusting a file list without enumerating its runtime filesystem.
 import fs from "node:fs";
 import path from "node:path";

@@ -159,7 +159,7 @@
       "role": "reader",
       "boundaries": 1,
       "reason": "CX-A01-040: M01 full NS driver reports are read through readLatencyRun at their actual paths with expected lane and connection mode; partial round barriers and pair recomputation use M01-owned histograms, not historical QLever latency receipts.",
-      "sha256": "33acb68aa052933f7f5adfd02f81e1cc1793666bb715d404419e93ee4c589b1b"
+      "sha256": "315084bf55a91dbcc21760ee0049ace9f176db893a5bc643e999415366cc9904"
     },
     {
       "path": "lab/bench/lib/bulk.ts",
@@ -243,7 +243,7 @@
       "path": "lab/bench/lib/p3.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "06b58a46633e47d9f6b1be82aff1146bf9c8492d57870600676b3e3fd97ad0ac"
+      "sha256": "0163af4d49b7d3feb795b836c34d668e3e0c657c7dc7be1642cf281a97a44fdd"
     },
     {
       "path": "lab/bench/lib/pair-analysis.ts",
@@ -405,91 +405,91 @@
       "path": "lab/bench/ns-driver/answer.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "d744b212d526223bdf62de0f60a26bb01c6d1ab6cf192b7a846ba9876c8743bf"
+      "sha256": "aff08c2edd0fa257735622b61ed559a5737425f748961ef6e3966412c930be9d"
     },
     {
       "path": "lab/bench/ns-driver/build.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "f40e8d7d7ee52b8409265502d1a5cae7729b46985db289cdd5eb053830aefd25"
+      "sha256": "e781a3f0ec3e3e0fccf4630652b788102093e09a711848fb43bc4bdb5548928f"
     },
     {
       "path": "lab/bench/ns-driver/check-imports.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "c5b43c35058ed7427275a6f26e37d28407e861d29d882cb40b16bd45318ea77b"
+      "sha256": "87c979d823708429d757819f86bdd788e6f4851c3125dfa5b138d52cd12a90bb"
     },
     {
       "path": "lab/bench/ns-driver/clock.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "93dd437482c0c74f0360752dad7e80a690ba49cfcce55b51d8a8a3376ecdabcb"
+      "sha256": "6ea0974b4527e4171408c3fb9a40e49cc05882cf4df199ae66477449e8911719"
     },
     {
       "path": "lab/bench/ns-driver/compile.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "557dde75b83432c5b69d7f581db0b02a9839b481963d96a23663554281dd29c9"
+      "sha256": "1a5f65e5a4b6d32cd398a9d39a7fb0f3c0ff045248c23c11cb3f7fde5099efe0"
     },
     {
       "path": "lab/bench/ns-driver/driver.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "066ead521702a0a19bfe5559728b58aa95f94c47ae2d221750f1bc894090fe75"
+      "sha256": "87e8114fc19912a2b4482ce0f621ff8f87fa53e5d8f7ab0e4bea5b004ad11da0"
     },
     {
       "path": "lab/bench/ns-driver/events.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "f84870ea91908e1b0730cddaf8eced4e23161f30394c93ce34bda9af2f375d6c"
+      "sha256": "9a6f95bc12680f97eb22c0d90708aee2ff13d7cd593c82be655e60637f38decf"
     },
     {
       "path": "lab/bench/ns-driver/feed.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "182ec068f629800a8e3a710367bc652970b34318eeffd4770787a73b8e14f266"
+      "sha256": "4dccc6129d9815b12a4410ff89408a5087807b0592c6820553b9f1cdb1a4eca1"
     },
     {
       "path": "lab/bench/ns-driver/launch-artifact.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "665e9cc39e5817970e6bc01eb2fe5c29669026935b7de5c30e046fde180741ce"
+      "sha256": "860e7b9b5fc561e10ccf7bff2a6cee3baee31c35c1c038ee2040c935216b6aed"
     },
     {
       "path": "lab/bench/ns-driver/layout-audit.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "79b4a6c4d34964b017d9b639e62f2e5fc37b7941cf06ed10755fe32ad31dacc1"
+      "sha256": "3a387c568f7def83c9b2282bcae4a3f629b94142bce3ef516d6cb6761fb5fdfe"
     },
     {
       "path": "lab/bench/ns-driver/p3.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "d94c50333ca09009cf14abfefa1903585fc40671facd4de747dcd4c593a7b48b"
+      "sha256": "a4feceae900ba9856f8d2a5f2f6bbab429dd9d8a9b7a1ce65dd0c2758e679f4a"
     },
     {
       "path": "lab/bench/ns-driver/rpc.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "cc0239a5ad194873f4e2458184cbd06c2b135ad7f094fcda82144eb4563469c2"
+      "sha256": "e6245331ffd6878d980b506cd2dd72444c35da53b84b884a31910e57089c94e6"
     },
     {
       "path": "lab/bench/ns-driver/runtime-guard.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "9511c10d94f3aade3495284135186daf0e679446ec61a42f56c41e42b4c3824e"
+      "sha256": "2d4ead03d43e2a232aed7bdbc6afe8f45a9ef86c54f6940c908b7659fac13de0"
     },
     {
       "path": "lab/bench/p3-driver.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "657aabd96fad71ecb9add61c9d54993d2ebf40a6533b188f702f66c22c873373"
+      "sha256": "4f94d3e44c0dc8d4686674ba5cf94dd1abfb6bda8925b745793440a727fec242"
     },
     {
       "path": "lab/bench/p3-worker.mjs",
       "role": "non-reader",
       "reason": "Accepted identity-only feed protocol, driver, consumer or store; feed events are a separate diagnostic protocol, not QLever latency-receipt ingestion.",
-      "sha256": "72e87c73352853f307836bce42cb372206917497419f1950cdaf70242d3ced1d"
+      "sha256": "2dab2e74c1929979e5d51ef78c23d2250f0fcb9d483aaa0d4b77c5b56f17c69d"
     },
     {
       "path": "lab/bench/qlever-bulk-seed.ts",
@@ -512,7 +512,7 @@
     },
     {
       "path": "lab/bench/summarize.mjs",
-      "sha256": "514e481ed341cc60c8d35e71c1f585ee49f401a66822d178d0a5120bac450998",
+      "sha256": "be188049152a9fc2907339f365bce9702db15ea6993f5b9a8753e1c5980e4a2d",
       "role": "reader",
       "boundaries": 1,
       "reason": "Consumes persisted timing receipts or a receipt argument at a gate/comparison boundary; shared parser validates before use."
@@ -527,13 +527,13 @@
       "path": "lab/bench/test/fixtures/ns-provider.mjs",
       "role": "non-reader",
       "reason": "Accepted offline regression/fixture code; synthetic protocol or semantic expectations, not a production QLever timing population.",
-      "sha256": "c6be98bd33e843fde25bfbba7a1b5bb44e851b27ece5948018901868126c171f"
+      "sha256": "63a5150719e6263638209fe50bad6cc79a7c186122378573133deb38f804a251"
     },
     {
       "path": "lab/bench/test/fixtures/p3-source.mjs",
       "role": "non-reader",
       "reason": "Accepted offline regression/fixture code; synthetic protocol or semantic expectations, not a production QLever timing population.",
-      "sha256": "cde07d8800e9b35065451e8c3afdf1b6eda93225c87f27b0bc46c65041d5d3e7"
+      "sha256": "b190dd0b176e923839585999ad2ee2e8a3ac4a2882e96e28483d4070c6445dda"
     },
     {
       "path": "lab/bench/test/noise.test.ts",
@@ -545,14 +545,14 @@
       "path": "lab/bench/test/nsr.test.mjs",
       "role": "non-reader",
       "reason": "Accepted offline regression/fixture code; synthetic protocol or semantic expectations, not a production QLever timing population.",
-      "sha256": "6e510dcd414f5144fd97b6c48cda5efcd315057deae3a8d333576913bb3ef46a"
+      "sha256": "8d465ddc07f4bfa0bb73a69fa2ece8ca410211f11e1e98912dd2bae3ee18ffae"
     },
     {
       "path": "lab/bench/test/p3.test.mjs",
       "role": "non-reader",
       "reason": "Accepted offline regression/fixture code; synthetic protocol or semantic expectations, not a production QLever timing population.",
       "exemption": "Offline synthetic identity-feed and malformed-event regression fixtures; latency strings test protocol refusals, never adopt QLever latency results.",
-      "sha256": "0160772febc934969a352a2d8142c943a8eb9342738f06b0b647c8286a1ccc48"
+      "sha256": "c9f4ba8783eb96a3a1149f650bb530a617022ade1e32b6ac0ef7266cecf9fde0"
     },
     {
       "path": "lab/bench/test/p5-g6.stacked.ts",
@@ -592,7 +592,7 @@
     },
     {
       "path": "lab/bench/wait-slot.mjs",
-      "sha256": "2c86757da27c67c2ee0cc9678d08c381bced02e2ad8843d2f1ad417d53afad39",
+      "sha256": "6c94a1d6c3df776017c9615accc9db0901fa43213e78e781a875d914944a6556",
       "role": "non-reader",
       "reason": "Reviewed import/entry-point graph: source/config/data, live query result, in-memory calculation or writer; no external QLever timing receipt read."
     },
@@ -606,7 +606,7 @@
       "path": "lab/bin/check-packages.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "f556e34af0bbc5316070a373c0fc874cdc67a608711306b08dab01075b730ec6"
+      "sha256": "08396b5d436edc3a39bfaaba964f11fdf7172a3222252e4560362f3d78615888"
     },
     {
       "path": "lab/bin/checkjs.mjs",
@@ -748,7 +748,7 @@
       "path": "lab/experiments/EXP-A01-acceptance-contract/bin/run0314.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "af7f268846e03bef1fb1b959cdc8ca7ca52e2b7b55ff92c7a9cee95ffebe7109"
+      "sha256": "74bf4ba638ac6b436d33dfc4ffc549036e085a4f54e369f331325bde62351db7"
     },
     {
       "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/capture-g0.py",
@@ -1283,19 +1283,19 @@
       "path": "lab/experiments/EXP-DF01/live/check-fixture.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "a072a996eb6e7138e307daf5ce7231ce83f206898c75228ea9889cfefbbc3e95"
+      "sha256": "d0d8b8df7865b92d4d13bc623d7a48cc9708682582eea5c2125a4e3a037e6891"
     },
     {
       "path": "lab/experiments/EXP-DF01/live/conformance.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "ae7c720c57e216161a8aad1a8ae83e43b3ab5d8c60fb43d974509bb7480708dc"
+      "sha256": "20c2e990da1aefa21e0b3e628a1e05d1b29c687e4617770da64dfbefe97a2d58"
     },
     {
       "path": "lab/experiments/EXP-DF01/live/fixture.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "a402db22612cfd12080c7ad1165225443479c2a910e3d70edec8990272dffce4"
+      "sha256": "32e713a177055d31df0441c17791d3623fc068b8a6cac48d222d15b4b890aaa2"
     },
     {
       "path": "lab/experiments/EXP-DF01/live/index-attempt-002.py",
@@ -1325,7 +1325,7 @@
       "path": "lab/experiments/EXP-DF01/round2/run-offline.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "8e19bbe489d11e9c0f07cfa49a75789e790dfc4d8ba48149f4de084c438a8f36"
+      "sha256": "5c33ae565d5ae91b98d3688bdabe3b594b5a601a5bff39c6b9382c0e41bce102"
     },
     {
       "path": "lab/experiments/EXP-DF01/round3/index-evidence.py",
@@ -1337,13 +1337,13 @@
       "path": "lab/experiments/EXP-DF01/round3/run-offline.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "8271ee256451602ac757dfcab672f05d3fa72fbfb43e002f87a4dc559fe91c10"
+      "sha256": "3b9503f88972caf606430ee68bc39c1ae23b24832c6cb5bf14bc14291825ef10"
     },
     {
       "path": "lab/experiments/EXP-DF01/run-clojure.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "4003c5a099467fdf38dab898df2ecb1f68ecff6917875c09f01ddecfb53b83ac"
+      "sha256": "67ff7b27660be3b5cfd23582cba6dd38a8370049cb4763811688943cf28e0f7a"
     },
     {
       "path": "lab/experiments/EXP-E01-claim-evaluator/reference-replay.mjs",
@@ -1355,97 +1355,97 @@
       "path": "lab/experiments/EXP-FD01/measure.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "217e8205dc8a200894add761d65c562f8660cc2bbe66af7f6e4a8c182e189d02"
+      "sha256": "151bafaa52130841441989a5c5f82f33e56a51b754a523ca1bf7108b8f8b8439"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/check-mutant.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "68a0d50f13187c651f9e3506bb8e265ae71e3d688c1c93ec0e3b4219f853fca3"
+      "sha256": "97a31b468506e615f3a299ddf5771792b0cbbc8c09bea5b6ce474eec76b9c45b"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/clock-probe.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "5548a875295f203748759002479a1595e740e170fafa80a1cb65cfa8cfbc0de0"
+      "sha256": "b0c9215b452885edb7b8278715f6ac389a2156a7c9601bbe828ca7529c9a1495"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/mutant-hook.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "022b9625cee5da15b3b258512ffb6d0a4e06b0c64992405db254caeecd5b90ad"
+      "sha256": "a5f09722505193d32a7f69a2a7cbcc0544b5ec88d1778dd4d8983ea4bbdb3198"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/reviewer-probes/clock-probe.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "c2a894c499f0c46ad0221d297f54a0ff60546f75ac62112e1b3cd59074c32a87"
+      "sha256": "151568e34e128100a42e9e88ee9facb0e9487c935a4d899dbae3f541d0782304"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/reviewer-probes/duplicate-probe.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "6e31e1e22953fbbb2092427901b69838204c8cbf76a4bb268d771656d291beaa"
+      "sha256": "16e456fbe815814258c7b7fbc57e11d36c225cb2e5068bd1d1161b29a0e011fa"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/reviewer-probes/mutant-hook.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "7159feaa064d68157eb2641ef422747c695048040b0462b2b37b03851eebc402"
+      "sha256": "4fad0cd6d2d60de3d2c0c6dcfa9b6057a4cda926e01e69036db0120a0681e4a0"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/reviewer-probes/mutate.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "1e564fcecdf6b03856c2051c248b43e0edc9f7851ba24b9d28f2cd0e8d864025"
+      "sha256": "d284519fa86a7f9bde8dd15bec141d879e23b532851c0701dfd35a8f01bcf946"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/reviewer-probes/probe.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "f8abbf65b31f0cbb60a4e7721cd2e2d4a2d80c6d879da4b359f13895cbc3b256"
+      "sha256": "d02954e48d3cee3fc86645d72ca22504126f02a86cd976ed91abd42386a030ac"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/reviewer-probes/source-hook.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "32ae466bcff1eb7e73ce88bb0c8827eff732ed2aa280bb7a9245679bfaeda04e"
+      "sha256": "15b16d6defa7d0da56126e08cb221e336f02d3c97ece7414964967b9d6636d60"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/reviewer-probes/split-child.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "4afa629ba8fc21a2ef9de34d98f603b50e8e4d070f4388cfe0445a7d8ade9f43"
+      "sha256": "7830a3df331d91581d0207d113b4233245a2ef24d1005dcfeed3087d525a1c5f"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/reviewer-probes/trace.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "f59e15c5d8a0b29bf98ce0ee2ad2f7e1bb21f6f436e4e65ba9787c4c7d9881bf"
+      "sha256": "55e9b89650ce54bc7f3a5062ccce621c1dda0723643734eb034f2ed18b2a7c46"
     },
     {
       "path": "lab/experiments/EXP-FD01/round2/source-hook.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "cc29c3ad54cae304e37844351100c3570cc70ff281316004172ecea3d8df82ff"
+      "sha256": "bb0c5bd00f3898115ebbb214a3f5f90fd5cb3e1273d328c99c975022764488e9"
     },
     {
       "path": "lab/experiments/EXP-FD01/round3/cross-process.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "37d79b637cee449de197ba59e784cb9da9f9b18d6c789189fecc70e3893f63f4"
+      "sha256": "5848c03ea562087302bb10f3ef950dfb5a649139a3812365f149f925bf727fd3"
     },
     {
       "path": "lab/experiments/EXP-FD01/round3/reviewer-probes/cross-process.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "b815f359f9d2481be16b2b60ae647b26ed9d5b52144af980fa334b6dcba01568"
+      "sha256": "c1e1af8f8e8f3615ceb5270f938e9ab21c87ff414fb9d271ac2de627cff53461"
     },
     {
       "path": "lab/experiments/EXP-FD01/verify.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "ac17a85106dde78c53f09469ccd5e5d8cb274698bbe56976fc7fefde5129ecbc"
+      "sha256": "0370c909e4d1953d43a03b828595ccf41bc7dbb4dfd4e97f9d7c24326e2026e0"
     },
     {
       "path": "lab/experiments/EXP-GS12F/capture-round2.py",
@@ -1734,25 +1734,25 @@
       "path": "lab/experiments/EXP-P2Q-qlever-log-broker/bench/lib.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "82bfdc89e3d375b4768487caf8d21ff480e351a454a1133d24208c7e056d90fd"
+      "sha256": "1d4cdf21ad1203e87edb8cf0756c376d2d62c708d8a28e39919fda342a655651"
     },
     {
       "path": "lab/experiments/EXP-P2Q-qlever-log-broker/bench/run.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "f1bbddc3b61a30cc3fc9b38d272dae42500d5367c86f153d86eb3d057c3977da"
+      "sha256": "82d7d910c6d0178b710f9b7496b459dce9bab97bdd6942b3b1cc873ab463ab58"
     },
     {
       "path": "lab/experiments/EXP-P2Q-qlever-log-broker/bench/trace.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e"
+      "sha256": "9eac7cfddbafa8ccc9996e2169842f2d03b6674ca0d2c7798f71d02798608493"
     },
     {
       "path": "lab/experiments/EXP-P2Q-qlever-log-broker/bench/wait-engine.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "a716c0ee56ae4cd4e6ba954ce29d2814706056f33e37317d92cb12217805be10"
+      "sha256": "6279e63305c5724db57618835c629bb14091cb9f8f99769ce44857e9dded0e6c"
     },
     {
       "path": "lab/experiments/EXP-P2Q-qlever-log-broker/cleanup-round8.py",
@@ -1872,13 +1872,13 @@
       "path": "lab/experiments/EXP-P2Q-qlever-log-broker/runtime-equality-round9.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "e4d57504155a654ee71e83cebfe5c9e8c746cdba154fdcc980680d873ec8de0b"
+      "sha256": "24c9d31c1c5231597f8b822c19a5bab91b3b0f7fdbf17305a72d800a82e079e8"
     },
     {
       "path": "lab/experiments/EXP-P2Q-qlever-log-broker/scratch-round10.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "37d9ba36899fae49040946743404cd0956ea3b073b4e58f89c833e142bb48af9"
+      "sha256": "0942b7076aaf1b0f7961722dd5a3f89ec909afd21f9c8572c7b733dd57aa4477"
     },
     {
       "path": "lab/experiments/EXP-P2Q-qlever-log-broker/seal-round9.py",
@@ -2028,25 +2028,25 @@
       "path": "lab/experiments/EXP-P3M/verify.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "77bb642935131e7c9aea8ac5ef8456f5d160588b1e2379334d76bab334f9bd48"
+      "sha256": "abf81feb54da8cc7a65919b6fbab8685ef1baa4d47d204e65e244711603c7b96"
     },
     {
       "path": "lab/experiments/EXP-PACK/inject-declaration.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "2a0a93f89581b96e6c4f5d406fd9c4d19529069d41bdb68fb34eb935be5862c0"
+      "sha256": "1054fc81eddd97ac67984d1bb02b0f3490846ad77eab00a23bf5ec63991a4229"
     },
     {
       "path": "lab/experiments/EXP-PACK/npm-offline.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "529809c3958689e69aee67a2b2da82a71b4c68d31907d9c506f4ada43e1f39dd"
+      "sha256": "292b072a2d4fbc4e6155f91b3742819629c4dd951828f665c5bf5e771521915a"
     },
     {
       "path": "lab/experiments/EXP-PACK/regressions.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "119b0da79479efbc226fd35afe0bef22aa2d81d9f088653361123f2d519e7882"
+      "sha256": "02b88284abec014f541a9f8a74126e65c698a23a9d5ffe441e9287871b1df37a"
     },
     {
       "path": "lab/experiments/EXP-QG1-qlever-generations/delta-count.mjs",
@@ -2124,7 +2124,7 @@
     },
     {
       "path": "lab/experiments/EXP-QG1-qlever-generations/summary-cell.mjs",
-      "sha256": "28adb9851d96616941f6d232d4014285094b14a473aacec943eecfbe0f97d005",
+      "sha256": "50b4b9082945230b0db0196fe4aaa31bc0a7b184d927abe418a4ddf9277a87ac",
       "role": "reader",
       "boundaries": 2,
       "reason": "Consumes persisted timing receipts or a receipt argument at a gate/comparison boundary; shared parser validates before use."
@@ -2211,13 +2211,13 @@
       "path": "lab/experiments/EXP-SQL01/flip-wal.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "10af81ee0504a871db8eeb7161e445673158dbdb2f891f1af91f5533f280a4f8"
+      "sha256": "08650265467ca8c2e06141c73fa0c8d4b135d802774192548a9d447ea150de3c"
     },
     {
       "path": "lab/experiments/EXP-SQL01/kill-test.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "13bc1cec9364a6d7278f00a8bb55b21edf9bfc39acf476ef12dffb19881ddd51"
+      "sha256": "fdfcf7e99af395c9934cf70cbee45dc879625482189c288cf9944ffbc7b1923f"
     },
     {
       "path": "lab/experiments/EXP-SQL01/kill-writer.ts",
@@ -2235,13 +2235,13 @@
       "path": "lab/experiments/EXP-SQL01/run-gate.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "e92910c2c8a437dc78716100b63a80464716bc551f7a8b5a5bc185304920da9a"
+      "sha256": "f0373260d6d061a4074dbd8425b9cd0a7894b48e31134ebce644b570a059628a"
     },
     {
       "path": "lab/experiments/EXP-SQL01/seal-round2.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "32194e11b9a9742cd5008ee74edd256c94cfd08b53a91e8ea0faa7cac94755b5"
+      "sha256": "a8ad65d059458b947af122bfb71b65354339bdb76ef6c13792847d64bcda3c71"
     },
     {
       "path": "lab/experiments/EXP-W02/build-public.mjs",
@@ -2571,7 +2571,7 @@
       "path": "lab/experiments/INT-Q/run.mjs",
       "role": "non-reader",
       "reason": "Accepted integration source: package/semantic implementation, configuration, contract generator or own-process measurement code; no retained QLever timing receipt ingestion.",
-      "sha256": "a21764fd1f23acd554b608cd0735b6b7b8ec8c88597f588b74dcbcbc1e45e742"
+      "sha256": "c4b699b1537a769e6b0628e8ed353fd1bb6ba0b33ee5aa18e9ef0d825934ca52"
     },
     {
       "path": "lab/experiments/INT-Q/seal-evidence.py",
@@ -2821,13 +2821,13 @@
     },
     {
       "path": "lab/receipts/latency.mjs",
-      "sha256": "164b5f5d21de3359d4dfc3ebf569e10ee64fc04b36eb79e4362b73a84f808d9c",
+      "sha256": "ec40d741b82aa20b67784fe52c9785992511f20361d55bf8260e149b42f02fba",
       "role": "non-reader",
       "reason": "Current writer metadata constructor and mode accessor over already validated objects; no receipt path IO."
     },
     {
       "path": "lab/receipts/parse-cli.mjs",
-      "sha256": "f326befab4642ebf986e7ebce47ba7fa134bd6c6a1e7935ddab677a344909e99",
+      "sha256": "3b766b602ee7ed3981dd9d89c12da04a23f61e34772a6d105ce00305341c6e13",
       "role": "schema",
       "reason": "Shared TS schema or adapter; no independent validation policy."
     },
@@ -2839,20 +2839,20 @@
     },
     {
       "path": "lab/receipts/parser.test.mjs",
-      "sha256": "99cb6c5dbfa52c8fbb31fdef517bce8912ec6f1568db799f9dc14519351deae0",
+      "sha256": "33157d2965be9cda87271c73177f3ad3f304de7248ebdf3f693ea28b219630d3",
       "role": "non-reader",
       "reason": "Offline/source or semantic fixture; no external QLever timing receipt promoted to a comparison.",
       "exemption": "FIXTURE: synthetic offline refusal/source guard tests; no retained engine population accepted."
     },
     {
       "path": "lab/receipts/readers.mjs",
-      "sha256": "2ece0ed437ee4ff6e89194badd8a1d5860b167074aa5cc916e801a69489b9786",
+      "sha256": "3b93faa5c8ca6f56a3c25850fe7aff65b6186c166a4f28d3cbe662a0db880196",
       "role": "non-reader",
       "reason": "Reviewed import/entry-point graph: source/config/data, live query result, in-memory calculation or writer; no external QLever timing receipt read."
     },
     {
       "path": "lab/receipts/readers.test.mjs",
-      "sha256": "0b35b3106c8b4128cb5d1ac795a88e3c6c4cb82532d650bd5e146c1fcf0ebb63",
+      "sha256": "414563775340ad24a5feb62dd94deefe80cf1a1a73eb99281f1c39edb0f32ff4",
       "role": "non-reader",
       "reason": "Offline/source or semantic fixture; no external QLever timing receipt promoted to a comparison.",
       "exemption": "FIXTURE: synthetic offline refusal/source guard tests; no retained engine population accepted."
@@ -3985,7 +3985,7 @@
       "path": "lab/verify/NSR/round3/artifact-controls.mjs",
       "role": "non-reader",
       "reason": "Accepted independent review harness or retained review-source preimage; never an operational gate input.",
-      "sha256": "e6cee21379966de7a78ba5b84cf4098da71e9eff42364bbacca74a9ee158d6e9"
+      "sha256": "5ad37ca448fd07e6fc7d9c773603a24de3d03fdcc9ab602af7b1b1450f6496db"
     },
     {
       "path": "lab/verify/NSR/round3/reviewer-artifacts.mjs",
@@ -4045,7 +4045,7 @@
       "path": "lab/verify/NSR/round4/filesystem-controls.mjs",
       "role": "non-reader",
       "reason": "Accepted independent review harness or retained review-source preimage; never an operational gate input.",
-      "sha256": "677c7e72d2c35e625782890ad0752ede42fb975f2dba575e1d80b3a3562f6fcc"
+      "sha256": "cf788ec483ba0ba07803dad4995d42ae30b8f1212af9241b05d814e64b730f88"
     },
     {
       "path": "lab/verify/NSR/round5-review/retain.mjs",
@@ -4063,7 +4063,7 @@
       "path": "lab/verify/NSR/round5/envelope-controls.mjs",
       "role": "non-reader",
       "reason": "Accepted independent review harness or retained review-source preimage; never an operational gate input.",
-      "sha256": "ec189bf7e57842180cbd2f78f1ab4e252ed2cc1ded655860d90cfd76c72a5e62"
+      "sha256": "037b33610d5a40736b153c9a7941a2738bcdb501adac4b55a7bbd72c128470ed"
     },
     {
       "path": "lab/verify/NSR/vitest.config.ts",
@@ -7665,7 +7665,7 @@
     },
     {
       "path": "packages/qualification/experiments/verify-feasibility-contract.ts",
-      "sha256": "429f4ee1c3d46388180e692c7fc2ccf95f7820fa5d8cf53e252eb5bd46062848",
+      "sha256": "247210384f8cd67f7fcac19abb61b9bfc330c3f06060c4f946b9b801d65d891f",
       "role": "reader",
       "reason": "Fixed-rate feasibility verdict consumes report and event paths; validates both typed runs and their common mode before checking outcomes.",
       "boundaries": 2

@@ -11,7 +11,8 @@ import path from "node:path";
 export async function verifyRate16Feasibility(directory: string): Promise<boolean> {
   const reportRun = readLatencyRun(path.join(directory, "report.json"), { lane: "qlever", expectedWriter: "triplex-public-load-run/1" }).unwrap();
   const eventRun = readLatencyRun(path.join(directory, "events.jsonl"), { lane: "qlever", encoding: "ndjson", expectedWriter: "triplex-public-load-event/1", expectedMode: reportRun.transportMode }).unwrap();
-  const report = reportRun.data;
+  // [CX-A01-040] Why: the registered report parser checked this object envelope. Rejected: bypassing the parser for an untyped JSON read.
+  const report = reportRun.data as Record<string, any>;
   const reads: any[] = [], writes: any[] = [];
   for (const event of eventRun.records) {
     if (event.type === "read") reads.push(event);

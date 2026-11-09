@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // EXP-P2X writer trace: a minimal generator for TARGETS 2 and 2.1 (frozen; the sha256 of this file and
 // the seed are bound in every receipt, so a change to either starts a new comparison series).
 // Why not EXP-N01's generator: at exp/N01-northstar-bench 7a85944 it draws subjects uniformly and puts

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-NSR] Why: candidate bytes are R6 input; bound allocation, nesting, identities and time. Rejected: uncapped readline or candidate deserialization hooks.
 import net from "node:net";
 import { TextDecoder } from "node:util";

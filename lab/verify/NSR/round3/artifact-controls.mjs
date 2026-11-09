@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: this review control is imported by current NSR regressions and uses runtime-created fixtures. Binding errors remain checked. Rejected: excluding an executed dependency.
 // [EXP-NSR-R3] Why: execute the review's constructor and aliased-loader variations under actual artifact enforcement. Rejected: another static spelling test without runtime observations.
 import assert from "node:assert/strict";
 import fs from "node:fs";
