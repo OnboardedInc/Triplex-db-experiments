@@ -137,7 +137,9 @@ those rulings. The F1 pre-fix fixture likewise intentionally produces violations
 `evidence/lint-r1.log`: zero warnings/errors on the five added TypeScript files.
 `evidence/format-r1.log`: eight changed TypeScript/README/Changeset files pass
 format checking. The final XTDB expectation was formatted after its adjustment.
-`git diff --check` passes.
+The source/documentation diff check passes with raw evidence logs excluded.
+Raw tool output is retained verbatim, including trailing whitespace reported by
+an unrestricted staged diff check; the evidence was not rewritten for style.
 
 Full root package verification was attempted and **did not pass**:
 `evidence/pack-r1.log` retains pnpm pack's rejection of bare `--store-dir`.
@@ -161,3 +163,6 @@ or pushed. All heavy commands used `lab/bin/heavy.mjs`; one early focused tsc
 invocation ran directly before the wrapper-only gate was assembled and also
 exited zero. This report and the retained failing attempts are part of the local
 builder commit; a separate adversarial reviewer still needs to review it.
+
+Implementation commit: `4c176f09`. This report clarification changes no tested
+source. The source-stable r5 receipt and package smoke remain applicable.
