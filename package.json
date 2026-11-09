@@ -30,6 +30,7 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint .",
+    "lab:check": "node lab/bin/heavy.mjs --label lab-checkjs -- node lab/bin/checkjs.mjs",
     "pack:check": "node scripts/check-packages.mjs",
     "release:publish": "pnpm build && pnpm pack:check && changeset publish",
     "release:canary": "changeset version --snapshot next && pnpm install --lockfile-only && pnpm build && pnpm pack:check && changeset publish --tag next --no-git-tag",
@@ -39,7 +40,7 @@
     "test:foundationdb:integration": "pnpm --filter @triplex-build/triplex-foundationdb test:integration",
     "test:postgres:integration": "pnpm --filter @triplex-build/triplex-postgres test:integration",
     "test:watch": "turbo watch test",
-    "typecheck": "tsc --noEmit -p tsconfig.alchemy.json && turbo run typecheck"
+    "typecheck": "pnpm lab:check && tsc --noEmit -p tsconfig.alchemy.json && turbo run typecheck"
   },
   "devDependencies": {
     "@changesets/cli": "catalog:",

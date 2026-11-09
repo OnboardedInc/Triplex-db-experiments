@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated lock label and runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Heavy-command semaphore shared by heavy.mjs and gate.mjs (EXP-000).
 import fs from 'node:fs';
 import path from 'node:path';

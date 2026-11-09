@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/bin/status.mjs [--ref main | (working tree)] [--tree SOURCE-TREE-ID] [--json]
 // Evaluates the obligations lab/bin gates can produce receipts for (G1.found.unchanged44,
 // PKT.full142) against lab/acceptance/obligations.json, per ACCEPTANCE.md 5.1 (V1-V16) and 5.3.

@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 
 const args = process.argv.slice(2);
+/** @param {string} k @param {string} d */
 const opt = (k, d) => (args.includes(`--${k}`) ? args[args.indexOf(`--${k}`) + 1] : d);
 const after = opt('after', 'EXP-X05');
 const need = Number(opt('need-gib', '3.5'));

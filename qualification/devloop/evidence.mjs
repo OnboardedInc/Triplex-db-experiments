@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { assert, atomicJson, exists, fileTree, hashFile, now, ownedPath, readJson } from './io.mjs';

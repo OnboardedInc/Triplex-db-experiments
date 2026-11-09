@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Independent analytical/replay oracle: Node builtins only, no recipe/SDK import. */
 import assert from 'node:assert/strict';
 const valid = n => assert(Number.isSafeInteger(n) && n >= 1 && n <= 10_000_000, 'ENTITY_COUNT');

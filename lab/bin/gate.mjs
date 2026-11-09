@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/bin/gate.mjs <G0|G1|G2|G4|GS> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
 //   [--profile default|bounded|f1 (QLever query-plan profile)] [--planner-budget N (QLever, set+restore)]
@@ -238,6 +239,10 @@ function tapOutcome(run, name, file, counts) {
 async function gateG0(run) {
   const result = {};
   result.build = await build(run);
+  // [EXP-CHECKJS] Why: importing JS leaves dormant name errors unchecked. Rejected:
+  // package-only tsc (does not include the lab's evidence-producing JavaScript).
+  const checkjs = await run.step('lab-checkjs', 'node', ['lab/bin/checkjs.mjs'], { heavy: true });
+  if (checkjs.code !== 0) { run.reason(`lab checkJs failed (exit ${checkjs.code})`); run.failure({ step: 'lab-checkjs', tail: checkjs.tail }); }
   const pkgs = lanePackages(run.lane, run.gate);
   const typecheck = await run.step('typecheck', 'pnpm', [...pkgs.flatMap(p => ['--filter', PACKAGES[p].filter]), 'typecheck'], { heavy: true });
   if (typecheck.code !== 0) { run.reason(`typecheck failed (exit ${typecheck.code})`); run.failure({ step: 'typecheck', tail: typecheck.tail }); }

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/bin/scorecard.mjs [--ref main] [--dry-run]
 // Rebuilds the G0-G2 rows of the "Gates by lane" table in lab/SCORECARD.md from the newest
 // committed receipt per gate/lane on <ref> (default main). The goal table and the G3-G7 rows are
