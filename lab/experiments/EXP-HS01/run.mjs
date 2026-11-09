@@ -68,6 +68,7 @@ const child = spawn(command[0], command.slice(1), {
     ...process.env,
     npm_config_store_dir: "/Users/sam/projects/triplex-db-2/.pnpm-store",
     HS01_RESULT: path.join(dir, "measurements.json"),
+    VHS01_OUT: dir,
     V_P2Q_OUT: path.join(dir, "p2q"),
     SQL01_ATTEMPT: label,
   },

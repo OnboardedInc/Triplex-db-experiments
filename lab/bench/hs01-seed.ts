@@ -72,12 +72,17 @@ const floor = 5 * 1024 ** 3,
   };
 if (free() < floor + (N === 1000 ? 700000000 : 1400000000))
   throw Error("RESOURCE-ABORT: need 1.4 GB plus 5 GiB before seeding");
-const scope = "hs01:" + randomUUID(),
+// [EXP-HS01-R3] Why: HS01_JOURNAL=records stores each transaction's journal as one record (R47, OFF by default; Sam's Q107-S is pending).
+// HS01_SCOPE fixes the deterministic id seed so an OFF and an ON seed of the same workload hold identical logical rows and can be compared
+// row for row. HS01_IDS labels the id shape in the manifest. Rejected: a random scope for comparison seeds (ids would differ per run).
+const JOURNAL_RECORDS = process.env.HS01_JOURNAL === "records";
+const scope = process.env.HS01_SCOPE ?? "hs01:" + randomUUID(),
   broker = await q.HostBroker.open({
     dir: path.join(out, "store"),
     scopeKey: scope,
     minFreeBytes: floor,
     frameRetention: { tailBytes: TAIL_BYTES },
+    ...(JOURNAL_RECORDS ? { journalRecords: true } : {}),
   });
 const log = (broker as any).log,
   detached: any = {
@@ -328,6 +333,25 @@ try {
       .prepare("SELECT count(*) n,coalesce(sum(end-offset),0) bytes FROM frames")
       .get(),
     freelist = db.pragma("freelist_count", { simple: true }),
+    recordTables = {
+      records: (db.prepare("SELECT count(*) n FROM jrec").get() as any).n,
+      explicitChangeLists: (
+        db.prepare("SELECT count(*) n FROM jrec WHERE rf IS NOT NULL").get() as any
+      ).n,
+      verbatimJournalRows: (db.prepare("SELECT count(*) n FROM journal").get() as any).n,
+      journalIdClasses: db
+        .prepare("SELECT typeof(jt) kind,count(*) n FROM jrec GROUP BY kind")
+        .all(),
+      entkeyRows: (db.prepare("SELECT count(*) n FROM entkey").get() as any).n,
+      entkeyCollidingKeys: (
+        db
+          .prepare("SELECT count(*) n FROM (SELECT h FROM entkey GROUP BY h HAVING count(*)>1)")
+          .get() as any
+      ).n,
+      refValueClasses: db
+        .prepare("SELECT typeof(v) kind,count(*) n FROM facts WHERE t=5 GROUP BY kind")
+        .all(),
+    },
     fallback = db
       .prepare(
         "SELECT sum(n) n FROM (SELECT count(*) n FROM facts WHERE x IS NOT NULL UNION ALL SELECT count(*) FROM history WHERE x IS NOT NULL UNION ALL SELECT count(*) FROM journal WHERE x IS NOT NULL)",
@@ -372,8 +396,19 @@ try {
       bytesPerAssertion: 259,
       logical10k: 1200000000,
       round2: { bytesPerAssertion: 235, range: [220, 250], logical10k: 1050000000 },
+      // R3-PREDICTIONS.md (committed before any round 3 measurement): 10k bytes per asserted fact by (ids, journal option).
+      round3: {
+        "w0-deterministic": { off: 205.4, on: 118.7 },
+        "ulid-shaped": { off: 296.5, on: 149 },
+      },
     },
     retention: { tailBytes: TAIL_BYTES, framesKept, freelist },
+    round3: {
+      journalRecords: JOURNAL_RECORDS,
+      ids: process.env.HS01_IDS ?? "w0-deterministic",
+      scope,
+      recordTables: recordTables,
+    },
     idClasses,
     journalRefClasses,
     headSlots,

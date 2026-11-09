@@ -99,4 +99,101 @@ const encodeRow=(r,c)=>{
  try{if(unsafe||!sameRow(r,decodeRow(s,c)))s.x=verbatim(r);}catch{s.x=verbatim(r);}
  return s;
 };
+
+// [EXP-HS01-R3] Why: better-sqlite3 binds a JS number as an 8-byte REAL in the untyped value column. An integral number within the signed
+// 64-bit range is bound as INTEGER (1 to 8 bytes; interned refs and booleans become 1 to 3 bytes) and comes back as the same JS number:
+// every integral double below 2^63 is exactly an int64, and better-sqlite3 returns int64 as the nearest double, which is that double.
+// -0, NaN, infinities, fractions and values of 2^63 or more stay REAL, so no value changes (Q105b: no silent precision loss).
+// Rejected: BigInt for every number (a REAL value would read back as an INTEGER and change its storage class for any other reader).
+const bindV=s=>{const v=s.v;return typeof v==='number'&&Number.isInteger(v)&&!Object.is(v,-0)&&v>=-9223372036854775808&&v<9223372036854775808?BigInt(v):v;};
+const sameId=(a,b)=>Buffer.isBuffer(a)||Buffer.isBuffer(b)?Buffer.isBuffer(a)&&Buffer.isBuffer(b)&&a.equals(b):typeof a==='string'||typeof b==='string'?a===b:BigInt(a)===BigInt(b);
+// Stored-row order of the (e, id) key: integer ids, then TEXT ids (by UTF-8 bytes), then BLOB ids (by bytes), exactly as SQLite compares them.
+const idClass=x=>typeof x==='string'?1:Buffer.isBuffer(x)?2:0;
+const compareStored=(a,b)=>{
+ if(a.e!==b.e)return a.e<b.e?-1:1;
+ const p=idClass(a.id),q=idClass(b.id);
+ if(p!==q)return p-q;
+ if(p===0){const x=BigInt(a.id),y=BigInt(b.id);return x<y?-1:x>y?1:0;}
+ return p===1?Buffer.compare(Buffer.from(a.id),Buffer.from(b.id)):Buffer.compare(a.id,b.id);
+};
+// [EXP-HS01-R3] Why: R47 journal record. The id k places after a stored id, in the id's own storage class: an integer id steps its tail
+// (same head slot, same tail width), a 16-byte blob steps its 128-bit value. Any other form, or a step leaving the class, has no successor,
+// so a transaction using it keeps verbatim rows. Rejected: stepping logical strings (the generators differ: base 36 versus Crockford).
+const idAdd=(x,k,c)=>{
+ if(typeof x==='bigint'||typeof x==='number'){
+  const v=BigInt(x),slot=v%BigInt(HEAD_SLOTS),tail=(v-slot)/BigInt(HEAD_SLOTS)+BigInt(k);
+  if(slot===0n||tail<0n||tail>=BigInt(TAIL_LIMIT))return undefined;
+  const key=c.name('hds',Number(slot)),len=Number(key.slice(key.indexOf('/')+1));
+  return tail>=36n**BigInt(len)?undefined:tail*BigInt(HEAD_SLOTS)+slot;
+ }
+ if(Buffer.isBuffer(x)&&x.length===16){
+  const n=(x.readBigUInt64BE(0)<<64n|x.readBigUInt64BE(8))+BigInt(k);
+  if(n<0n||n>=1n<<128n)return undefined;
+  const b=Buffer.alloc(16);b.writeBigUInt64BE(n>>64n);b.writeBigUInt64BE(n&((1n<<64n)-1n),8);return b;
+ }
+ return undefined;
+};
+const sameField=(a,b)=>Buffer.isBuffer(a)||Buffer.isBuffer(b)?sameId(a,b):typeof a==='bigint'||typeof b==='bigint'?(typeof a!=='string'&&typeof b!=='string'&&a!==null&&b!==null&&BigInt(a)===BigInt(b)):Object.is(a,b);
+const jrecFields=['e','id','a','pos','t','v','vf','vto','c','y','sv','x','rpos'];
+const jrecNames={pos:':_tx/position',inst:':_tx/instant',actor:':_tx/actor',cmd:':_tx/command-id',cor:':_tx/correlation-id',cau:':_tx/causation-id',cfg:':_tx/config-snapshot',ce:':_tx/changed-entity',ch:':_tx/change'};
+const jrecExtra=[['cor','cor'],['cau','cau'],['cfg','cfg']];
+// Rebuild every stored-row struct of one transaction's journal from its record. Throws when a name, id or target is missing.
+const jrecSynth=(rec,c)=>{
+ const tx=c.tx(rec.pos),y=c.look('strs','_Transaction');
+ if(!tx||y===undefined)throw Error('Journal record cannot be expanded');
+ const j0=rec.jh===0?Buffer.from(rec.jt):BigInt(rec.jt)*BigInt(HEAD_SLOTS)+BigInt(rec.jh),out=[];
+ const push=(name,t,v)=>{
+  const a=c.look('attrs',name),id=out.length?idAdd(j0,out.length,c):j0;
+  if(a===undefined||id===undefined)throw Error('Journal record cannot be expanded');
+  out.push({e:tx.tx,id,a,pos:rec.pos,t,v,vf:rec.vf,vto:null,c:null,y,sv:null,x:null,rpos:null});
+ };
+ if(!(rec.f&1))push(jrecNames.pos,8,null);
+ if(!(rec.f&2))push(jrecNames.inst,9,null);
+ if(rec.ac!=null)push(jrecNames.actor,0,c.name('strs',rec.ac));
+ if(rec.cm!=null)push(jrecNames.cmd,0,rec.cm);
+ if(rec.ex!=null){const x=JSON.parse(rec.ex);for(const [key,field] of jrecExtra)if(x[key]!==undefined)push(jrecNames[field],0,x[key]);}
+ // The change list is the run of ids just before the first journal id unless the record carries it explicitly.
+ const targets=rec.rf!=null?JSON.parse(rec.rf).map(l=>packId(l,c)):Array.from({length:rec.nc},(_,i)=>idAdd(j0,i-rec.nc,c));
+ const ents=[],seen=new Set();
+ for(const t of targets){
+  const e=t===undefined?undefined:c.ent(t);
+  if(e===undefined)throw Error('Journal record cannot be expanded');
+  if(!seen.has(e)){seen.add(e);ents.push(e);}
+ }
+ if(out.length+ents.length+targets.length!==rec.n)throw Error('Journal record cannot be expanded');
+ for(const e of ents)push(jrecNames.ce,5,e);
+ for(const t of targets)push(jrecNames.ch,7,t);
+ return out;
+};
+// Encode one new transaction's journal rows (stored-row structs, in write order) as a record, or return undefined. The record is accepted
+// only if jrecSynth reproduces EVERY column of EVERY row (Object.is for scalars, bytes for ids), so correctness never depends on the shape.
+const jrecEncode=(rows,pos,c)=>{
+ const first=rows[0];
+ if(!first)return undefined;
+ let jh,jt;
+ if(typeof first.id==='bigint'){const v=first.id,slot=v%BigInt(HEAD_SLOTS);jh=Number(slot);jt=(v-slot)/BigInt(HEAD_SLOTS);}
+ else if(Buffer.isBuffer(first.id)&&first.id.length===16){jh=0;jt=first.id;}
+ else return undefined;
+ const j0=jh===0?jt:jt*BigInt(HEAD_SLOTS)+BigInt(jh);
+ let i=0,f=0,ac=null,cm=null,nc=0,ne=0;const ex={};
+ const next=(name,t)=>{const a=c.look('attrs',name),r=rows[i];return a!==undefined&&r!==undefined&&r.a===a&&r.t===t;};
+ if(next(jrecNames.pos,8))i++;else f|=1;
+ if(next(jrecNames.inst,9))i++;else f|=2;
+ if(next(jrecNames.actor,0)&&typeof rows[i].v==='string'){ac=c.intern('strs',rows[i].v);i++;}
+ if(next(jrecNames.cmd,0)&&typeof rows[i].v==='string'){cm=rows[i].v;i++;}
+ for(const [key,field] of jrecExtra)if(next(jrecNames[field],0)&&typeof rows[i].v==='string'){ex[key]=rows[i].v;i++;}
+ while(next(jrecNames.ce,5)){ne++;i++;}
+ while(next(jrecNames.ch,7)){nc++;i++;}
+ if(i!==rows.length)return undefined;
+ let rf=null;
+ const targets=rows.slice(rows.length-nc);
+ if(!targets.every((r,k)=>{const x=idAdd(j0,k-nc,c);return x!==undefined&&sameId(r.v,x);}))rf=JSON.stringify(targets.map(r=>unpackId(r.v,c)));
+ const rec={pos,jh,jt,n:rows.length,nc,f,vf:first.vf,ac,cm,ex:Object.keys(ex).length?JSON.stringify(ex):null,rf};
+ try{
+  const out=jrecSynth(rec,c);
+  if(out.length!==rows.length)return undefined;
+  for(let k=0;k<out.length;k++)for(const key of jrecFields)if(!sameField(out[k][key],rows[k][key]))return undefined;
+ }catch{return undefined;}
+ return rec;
+};
 `;

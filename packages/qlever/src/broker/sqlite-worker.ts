@@ -10,6 +10,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const D = require(workerData.driver);
 const { file, role, seed, gateBuffer } = workerData;
+// [EXP-HS01-R3] Why: the journal record format is a writer option (Q107-S is Sam's pending decision), OFF unless the opener asks. Readers always
+// understand both forms, so a store never needs the option to be read. Rejected: an ON default (not decided) and a per-store lock-in (a store
+// written with records must stay readable and appendable with the option off).
+const journalRecords = workerData.journalRecords === true;
 const gate = new Int32Array(gateBuffer);
 let db, lock, fatal, timer, passiveTimer;
 const checkpointEvents=[], checkpointCounts={};
@@ -63,21 +67,39 @@ try {
   // [EXP-HS01] Why: round 1 stored ids without the hds head dictionary; reading them with the round 2 id codec could miss rows.
   // Rejected: silently adopting them (a later head allocation would hide an old structured id stored as TEXT or blob).
   if(q("SELECT 1 FROM sqlite_master WHERE name='ents'").get()&&!q("SELECT 1 FROM sqlite_master WHERE name='hds'").get())throw Error('Legacy broker layout v2 round 1 requires explicit migration');
+  // [EXP-HS01-R3] Why: round 2 keyed entity names with a UNIQUE name index and has no entkey table; reading it with the hash lookup would
+  // miss every existing entity and a later intern would allocate a second id for the same name. Rejected: silent adoption and an automatic
+  // migration (no tool, so a typed refusal; the refusal changes nothing in the store).
+  if(q("SELECT 1 FROM sqlite_master WHERE name='ents'").get()&&!q("SELECT 1 FROM sqlite_master WHERE name='entkey'").get())throw Error('Legacy broker layout v2 round 2 requires explicit migration');
   db.exec('CREATE TABLE IF NOT EXISTS frames(lsn INTEGER PRIMARY KEY,epoch INT NOT NULL,kind INT NOT NULL,offset INT NOT NULL,end INT NOT NULL,prev_crc INT NOT NULL,crc INT NOT NULL,payload BLOB NOT NULL,committed_at INT NOT NULL);'+
   'CREATE INDEX IF NOT EXISTS frames_commits ON frames(lsn) WHERE kind=1;'+
   'CREATE TABLE IF NOT EXISTS marker(id INTEGER PRIMARY KEY CHECK(id=1),lsn INT NOT NULL,epoch INT NOT NULL,h INT NOT NULL,position INT NOT NULL,crc INT NOT NULL,size INT NOT NULL,base_lsn INT NOT NULL,base_crc INT NOT NULL,base_end INT NOT NULL);'+
   'CREATE TABLE IF NOT EXISTS heads(subject TEXT PRIMARY KEY,pos INT NOT NULL) WITHOUT ROWID;'+
   'CREATE TABLE IF NOT EXISTS claims(command TEXT PRIMARY KEY,txId TEXT NOT NULL,position INT NOT NULL) WITHOUT ROWID;'+
   'CREATE TABLE IF NOT EXISTS operations(op TEXT PRIMARY KEY,receipt TEXT NOT NULL) WITHOUT ROWID;'+
-  'CREATE TABLE IF NOT EXISTS ents(eid INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);'+
+  // [EXP-HS01-R3] Why: the UNIQUE name index stored every entity name a second time (14.85 of 28.09 B per fact at 10k). The name->id lookup is a
+  // 32-bit FNV-1a hash key (entkey, 11 bytes per entity) verified against the name stored once in ents, so collisions cost a second candidate,
+  // never a wrong id. Rejected: WITHOUT ROWID keyed by name (the id->name direction every row decode needs would need its own index on the
+  // name again) and a wider hash (2 more bytes per entity for no verified benefit).
+  'CREATE TABLE IF NOT EXISTS ents(eid INTEGER PRIMARY KEY,name TEXT NOT NULL);'+
+  'CREATE TABLE IF NOT EXISTS entkey(h INT NOT NULL,eid INT NOT NULL,PRIMARY KEY(h,eid)) WITHOUT ROWID;'+
   'CREATE TABLE IF NOT EXISTS attrs(aid INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);'+
   'CREATE TABLE IF NOT EXISTS strs(sid INTEGER PRIMARY KEY,s TEXT NOT NULL UNIQUE);'+
   'CREATE TABLE IF NOT EXISTS hds(hid INTEGER PRIMARY KEY CHECK(hid BETWEEN 1 AND 63),name TEXT NOT NULL UNIQUE);'+
   'CREATE TABLE IF NOT EXISTS txs(pos INTEGER PRIMARY KEY,tx INT NOT NULL,at INT NOT NULL);'+
+  // [EXP-HS01-R3] Why: R47 one-record-per-transaction journal (see row-codec.ts jrecEncode). The table always exists so readers never need the
+  // option; it is empty unless the writer option is on. jh/jt are the first journal id (jh 0 = 16-byte ULID blob in jt, otherwise the head slot
+  // and the integer tail), n/nc the row and change counts, f the missing-header flags, ac/cm/ex the actor, command id and rarer headers, rf an
+  // explicit change list when the change ids are not the run just before the journal ids.
+  'CREATE TABLE IF NOT EXISTS jrec(pos INTEGER PRIMARY KEY,jh INT NOT NULL,jt NOT NULL,n INT NOT NULL,nc INT NOT NULL,f INT NOT NULL,vf INT NOT NULL,ac INT,cm TEXT,ex TEXT,rf TEXT);'+
+  'CREATE UNIQUE INDEX IF NOT EXISTS jrec_id ON jrec(jh,jt);'+
   ['facts','history','journal'].map(t=>'CREATE TABLE IF NOT EXISTS '+t+'(e INT NOT NULL,'+(t==='history'?'rpos INT NOT NULL,':'')+'id BLOB NOT NULL,a INT NOT NULL,pos INT NOT NULL,t INT NOT NULL,v,vf INT,vto INT,c INT,y INT,sv INT,x BLOB,PRIMARY KEY(e,'+(t==='history'?'rpos,':'')+'id)) WITHOUT ROWID;CREATE '+(t==='history'?'':'UNIQUE ')+'INDEX IF NOT EXISTS '+t+'_id ON '+t+'(id);').join('')+
   'CREATE TABLE IF NOT EXISTS retention(holder TEXT PRIMARY KEY,lsn INT NOT NULL,expires INT) WITHOUT ROWID;'+
   'CREATE TABLE IF NOT EXISTS epochs(epoch INTEGER PRIMARY KEY,begin_lsn INT NOT NULL,previous_epoch INT NOT NULL,aborted TEXT NOT NULL);'+
   'CREATE TABLE IF NOT EXISTS pins(token TEXT PRIMARY KEY,basis INT NOT NULL,owner TEXT NOT NULL) WITHOUT ROWID;');
+  // [EXP-HS01-R3] Why: a journal read by transaction entity needs tx -> pos; created only when records are written. Rejected: always (about
+  // 1.7 B per fact on stores that never use records).
+  if(journalRecords)db.exec('CREATE INDEX IF NOT EXISTS txs_tx ON txs(tx)');
   q('INSERT OR IGNORE INTO marker VALUES(1,0,0,0,0,?,32,0,?,32)').run(seed,seed);
   // [EXP-SQL01] Why: sync WAL frames adopted by recovery before any reader exists (R25 1.3).
   db.pragma('wal_checkpoint(PASSIVE)'); ackRead();
@@ -129,21 +151,78 @@ const checkpoint = restart => {
 const textKey=s=>Buffer.from(s,'utf8').toString('utf8')===s?s:Buffer.from(JSON.stringify(s));
 const dictCol=t=>t==='strs'?'s':'name';
 const dictId=t=>t==='ents'?'eid':t==='attrs'?'aid':t==='hds'?'hid':'sid';
-const names=new Map(), writerIds=new Map(), readerHeads=new Map();
+const names=new Map(), writerIds=new Map(), readerHeads=new Map(), readerDict=new Map();
+// [EXP-HS01-R3] Why: 32-bit FNV-1a over the UTF-16 code units of the logical name; the stored name is always compared, so it is only a key.
+const entHash=s=>{let h=0x811c9dc5;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return h|0;};
+const entFind=v=>q('SELECT e.eid id FROM entkey k JOIN ents e ON e.eid=k.eid WHERE k.h=? AND e.name=?').get(entHash(v),textKey(v))?.id;
+const entIds=list=>{const out=[];for(const v of list){const id=entFind(v);if(id!==undefined)out.push(BigInt(id));}return out;};
+// Positive-only cache of a dictionary lookup by name (attrs, strs): ids never change once allocated, absence may later change.
+const lookupName=(t,v)=>{const key=t+':'+v;let id=readerDict.get(key);if(id===undefined){id=q('SELECT '+dictId(t)+' id FROM '+t+' WHERE '+dictCol(t)+'=?').get(textKey(v))?.id;if(id!==undefined)readerDict.set(key,id);}return id;};
 // [EXP-HS01] Why: the hds table has at most 63 rows, so the writer holds all of it and never queries it again.
 if(role==='writer'&&!fatal)for(const r of q('SELECT hid,name FROM hds').all())writerIds.set('hds:'+JSON.stringify(r.name),r.hid);
 // Readers cache only positive head lookups: a head absent now may be allocated later.
 const readHid=k=>{let h=readerHeads.get(k);if(h===undefined){h=q('SELECT hid FROM hds WHERE name=?').get(k)?.hid;if(h!==undefined)readerHeads.set(k,h);}return h;};
 const name=(t,id)=>{const key=t+':'+id;if(names.has(key))return names.get(key);let v=q('SELECT '+dictCol(t)+' v FROM '+t+' WHERE '+dictId(t)+'=?').get(id)?.v;if(Buffer.isBuffer(v))v=JSON.parse(v.toString());if(v===undefined)throw Error('Missing dictionary entry');names.set(key,v);return v;};
-const storedRow=id=>{for(const t of ['facts','history','journal']){const s=q('SELECT * FROM '+t+' WHERE id=?').get(packId(id,readCodec));if(s)return decodeRow(s,readCodec);}return undefined;};
-const readCodec={name,tx:pos=>q('SELECT tx,at FROM txs WHERE pos=?').get(pos),row:storedRow,hid:readHid};
+// Raw entity id of a stored fact or history row, by its stored id form (journal rows never are change targets).
+const rawEnt=sid=>{for(const t of ['facts','history']){const x=q('SELECT e FROM '+t+' WHERE id=?').get(sid);if(x)return x.e;}return undefined;};
+// The record whose id run holds sid (jh/jt ordering is per head slot, so the nearest earlier first-id of the SAME slot is the only candidate).
+const coverOf=sid=>{
+ let jh,jt;
+ if(typeof sid==='bigint'||typeof sid==='number'){const v=BigInt(sid);jh=Number(v%64n);jt=(v-BigInt(jh))/64n;if(jh===0)return undefined;}
+ else if(Buffer.isBuffer(sid)&&sid.length===16){jh=0;jt=sid;}
+ else return undefined;
+ const rec=q('SELECT * FROM jrec WHERE jh=? AND jt<=? ORDER BY jt DESC LIMIT 1').get(jh,jt);
+ if(!rec)return undefined;
+ const at=jh===0?(BigInt('0x'+sid.toString('hex'))-BigInt('0x'+Buffer.from(rec.jt).toString('hex'))):jt-BigInt(rec.jt);
+ return at>=0n&&at<BigInt(rec.n)?rec:undefined;
+};
+const storedRow=id=>{
+ const sid=packId(id,readCodec);
+ for(const t of ['facts','history','journal']){const s=q('SELECT * FROM '+t+' WHERE id=?').get(sid);if(s)return decodeRow(s,readCodec);}
+ const rec=coverOf(sid);
+ if(rec){const s=jrecSynth(rec,readCodec).find(x=>sameId(x.id,sid));if(s)return decodeRow(s,readCodec);}
+ return undefined;
+};
+const readCodec={name,tx:pos=>q('SELECT tx,at FROM txs WHERE pos=?').get(pos),row:storedRow,hid:readHid,look:lookupName,ent:t=>rawEnt(t)};
+// [EXP-HS01-R3] Why: writer-side knowledge of whether any record exists; the coverage check on journal rows costs a seek, so it is skipped
+// on stores that never had records. Set true when a record is first written or found at open.
+let hasRecords=role==='writer'&&!fatal?!!q('SELECT 1 FROM jrec LIMIT 1').get():false;
+const journalKeys=['e','id','a','pos','t','v','vf','vto','c','y','sv','x'];
+// Turn one record back into the verbatim rows it stands for (same columns), then drop it, inside the caller's transaction.
+const expand=rec=>{
+ for(const s of jrecSynth(rec,readCodec))q('INSERT INTO journal('+journalKeys.join(',')+') VALUES('+journalKeys.map(()=>'?').join(',')+')').run(...journalKeys.map(k=>k==='v'?bindV(s):s[k]));
+ q('DELETE FROM jrec WHERE pos=?').run(rec.pos);
+};
 const prepare=a=>{
  const additions=[],local=new Map(),pendingNames=new Map(),next={},transactions=new Map(),inputRows=new Map();
  for(const t of ['ents','attrs','strs','hds'])next[t]=q('SELECT coalesce(max('+dictId(t)+'),0)+1 n FROM '+t).get().n;
- const intern=(t,v,max)=>{const key=t+':'+JSON.stringify(v);if(local.has(key))return local.get(key);if(writerIds.has(key))return writerIds.get(key);const old=t==='hds'?undefined:q('SELECT '+dictId(t)+' id FROM '+t+' WHERE '+dictCol(t)+'=?').get(textKey(v));if(!old&&max!==undefined&&next[t]>max){local.set(key,undefined);return undefined;}const id=old?.id??next[t]++;local.set(key,id);pendingNames.set(t+':'+id,v);if(!old)additions.push([t,id,v]);return id;};
+ const intern=(t,v,max)=>{const key=t+':'+JSON.stringify(v);if(local.has(key))return local.get(key);if(writerIds.has(key))return writerIds.get(key);const old=t==='hds'?undefined:t==='ents'?(e=>e===undefined?undefined:{id:e})(entFind(v)):q('SELECT '+dictId(t)+' id FROM '+t+' WHERE '+dictCol(t)+'=?').get(textKey(v));if(!old&&max!==undefined&&next[t]>max){local.set(key,undefined);return undefined;}const id=old?.id??next[t]++;local.set(key,id);pendingNames.set(t+':'+id,v);if(!old)additions.push([t,id,v]);return id;};
  for(const member of a.members)for(const r of member.rows){inputRows.set(r.id,r);if(!transactions.has(r.recorded_position)&&!readCodec.tx(r.recorded_position))transactions.set(r.recorded_position,{tx:intern('ents',r.tx_id??''),at:r.recorded_at});if(r.retracted_position!=null&&!transactions.has(r.retracted_position)&&!readCodec.tx(r.retracted_position))transactions.set(r.retracted_position,{tx:intern('ents',r.retract_tx_id??''),at:r.retracted_at});}
- const c={intern,hid:k=>intern('hds',k,63),name:(t,id)=>pendingNames.get(t+':'+id)??name(t,id),tx:pos=>transactions.get(pos)??readCodec.tx(pos),row:id=>inputRows.get(id)??storedRow(id)};
- return {additions,transactions,rows:a.members.map(member=>member.rows.map(r=>({r,s:encodeRow(r,c)})))};
+ const c={intern,hid:k=>intern('hds',k,63),name:(t,id)=>pendingNames.get(t+':'+id)??name(t,id),tx:pos=>transactions.get(pos)??readCodec.tx(pos),row:id=>inputRows.get(id)??storedRow(id),
+  // look: lookup-only (never allocates); ent: entity id of a change target, from this append first.
+  look:(t,v)=>{const key=t+':'+JSON.stringify(v);if(local.has(key))return local.get(key);if(writerIds.has(key))return writerIds.get(key);return lookupName(t,v);},
+  ent:sid=>{const r=inputRows.get(unpackId(sid,c));return r?intern('ents',r.entity_id):rawEnt(sid);}};
+ const rows=a.members.map(member=>member.rows.map(r=>({r,s:encodeRow(r,c)})));
+ // [EXP-HS01-R3] Why: group a NEW transaction's journal rows and try the one-record form; any group that is not exactly reproduced by
+ // its record (jrecEncode verifies every column) keeps verbatim rows. A group is only eligible when the position is new in this append (so no
+ // earlier row can share an id), no row of the position is a retirement or a repeated id, and every row is a plain journal row.
+ const records=new Map(),covered=new Set();
+ if(journalRecords){
+  const groups=new Map(),bad=new Set(),seen=new Set();
+  for(const member of rows)for(const x of member){
+   const dup=seen.has(x.r.id);seen.add(x.r.id);
+   if(!isJournalRow(x.r))continue;
+   const pos=x.r.recorded_position;
+   if(dup||x.r.retracted_position!=null||x.s.x!==null||!transactions.has(pos)){bad.add(pos);continue;}
+   if(!groups.has(pos))groups.set(pos,[]);groups.get(pos).push(x);
+  }
+  for(const [pos,g]of groups){
+   if(bad.has(pos))continue;
+   const rec=jrecEncode(g.map(x=>x.s),pos,c);
+   if(rec){records.set(pos,rec);for(const x of g)covered.add(x.s);}
+  }
+ }
+ return {additions,transactions,rows,records,covered};
 };
 const append = a => {
  try {
@@ -154,7 +233,7 @@ const append = a => {
   const m=marker(); if(a.lsn!==m.lsn+1 || a.prev!==m.crc)throw Error('Append chain mismatch');
   q('INSERT INTO frames VALUES(?,?,?,?,?,?,?,?,?)').run(a.lsn,a.epoch,a.kind,m.size,m.size+a.length,a.prev,a.crc,Buffer.from(a.payload),Date.now());
   if(a.kind===2){const e=JSON.parse(Buffer.from(a.payload).toString());q('INSERT INTO epochs VALUES(?,?,?,?)').run(e.epoch,a.lsn,e.previousEpoch,JSON.stringify(e.abortedLsns));}
-  for(const [t,id,v]of prepared.additions)q('INSERT OR IGNORE INTO '+t+' VALUES(?,?)').run(id,textKey(v));
+  for(const [t,id,v]of prepared.additions){q('INSERT OR IGNORE INTO '+t+' VALUES(?,?)').run(id,textKey(v));if(t==='ents')q('INSERT OR IGNORE INTO entkey VALUES(?,?)').run(entHash(v),id);}
   for(const [pos,tx]of prepared.transactions)q('INSERT OR IGNORE INTO txs VALUES(?,?,?)').run(pos,tx.tx,tx.at);
   let position=m.position,mi=0;
   for(const member of a.members) {
@@ -164,13 +243,18 @@ const append = a => {
    for(const c of member.claims){const own=member.rows.find(r=>r.tx_id===c.txId);q('INSERT INTO claims VALUES(?,?,?)').run(c.commandId,c.txId,own?.recorded_position??last);}
    for(const s of member.subjects)q('INSERT INTO heads VALUES(?,?) ON CONFLICT(subject) DO UPDATE SET pos=excluded.pos').run(s,last);
    for(const {r,s} of prepared.rows[mi++]) {
+    if(prepared.covered.has(s))continue;
     const retired=r.retracted_position!=null,t=retired?'history':isJournalRow(r)?'journal':'facts';
+    // [EXP-HS01-R3] Why: a journal row inside a stored record cannot be deleted or retired in place; expand that one record into verbatim
+    // rows first (the retirement is rare: erasure). Rejected: a retired-flag inside the record (a second source of truth for the row set).
+    if(hasRecords&&isJournalRow(r)){const rec=coverOf(s.id);if(rec)expand(rec);}
     // [EXP-HS01] Why: preserve one latest version per id, including journal retirements. Rejected: a second recent_rows copy.
     for(const other of ['facts','history','journal'])q('DELETE FROM '+other+' WHERE id=?').run(s.id);
     const keys=['e',...(retired?['rpos']:[]),'id','a','pos','t','v','vf','vto','c','y','sv','x'];
-    q('INSERT INTO '+t+'('+keys.join(',')+') VALUES('+keys.map(()=>'?').join(',')+')').run(...keys.map(k=>s[k]));
+    q('INSERT INTO '+t+'('+keys.join(',')+') VALUES('+keys.map(()=>'?').join(',')+')').run(...keys.map(k=>k==='v'?bindV(s):s[k]));
    }
   }
+  for(const [pos,x]of prepared.records){q('INSERT INTO jrec VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(pos,x.jh,x.jt,x.n,x.nc,x.f,x.vf,x.ac,x.cm,x.ex,x.rf);hasRecords=true;}
   q('UPDATE marker SET lsn=?,epoch=?,position=?,crc=?,size=? WHERE id=1').run(a.lsn,a.epoch,position,a.crc,m.size+a.length);
   return {lsn:a.lsn,epoch:a.epoch,kind:a.kind,offset:m.size,end:m.size+a.length,crc:a.crc,payload:Buffer.from(a.payload)};
  }).immediate();
@@ -181,12 +265,31 @@ const append = a => {
  if(a.lsn%25===0 && walLarge())Atomics.store(gate,2,1);return result;
  }catch(e){fatal='Write failed; fail-stop: '+String(e);throw e;}
 };
+// Journal rows held in records, as stored-row structs in record order. The selection keeps the same meaning as for the tables:
+// id = that row, entities = rows of those transaction entities, extra = the pos predicate (records carry pos).
+const recordRows = (selection,extra,args,eids) => {
+ if(!q('SELECT 1 FROM jrec LIMIT 1').get())return [];
+ const where=[], vals=[], want=selection.id!==undefined?packId(selection.id,readCodec):undefined;
+ if(want!==undefined){const rec=coverOf(want);if(!rec)return [];where.push('pos=?');vals.push(rec.pos);}
+ if(eids!==undefined){where.push('pos IN (SELECT pos FROM txs WHERE tx IN ('+eids.map(()=>'?').join(',')+'))');vals.push(...eids);}
+ if(extra){where.push(extra);vals.push(...args);}
+ const out=[];
+ for(const rec of q('SELECT * FROM jrec'+(where.length?' WHERE '+where.join(' AND '):'')+' ORDER BY pos').all(...vals))
+  for(const s of jrecSynth(rec,readCodec))if(want===undefined||sameId(s.id,want))out.push(s);
+ return out;
+};
 const rows = (table,selection,extra='',args=[]) => {
  const where=[], vals=[];
+ let eids;
  if(selection.id!==undefined){where.push('id=?');vals.push(packId(selection.id,readCodec));}
- if(selection.entities!==undefined){if(!selection.entities.length)return [];where.push('e IN (SELECT eid FROM ents WHERE name IN ('+selection.entities.map(()=>'?').join(',')+'))');vals.push(...selection.entities.map(textKey));}
+ // [EXP-HS01-R3] Why: entity names resolve through the hash lookup, then the same integer IN predicate. Rejected: an SQL join on ents.name
+ // (no name index any more).
+ if(selection.entities!==undefined){if(!selection.entities.length)return [];eids=entIds(selection.entities);if(!eids.length)return [];where.push('e IN ('+eids.map(()=>'?').join(',')+')');vals.push(...eids);}
  if(extra){where.push(extra);vals.push(...args);}
- return q('SELECT * FROM '+table+(where.length?' WHERE '+where.join(' AND '):'')).all(...vals).map(r=>decodeRow(r,readCodec));
+ let found=q('SELECT * FROM '+table+(where.length?' WHERE '+where.join(' AND '):'')).all(...vals);
+ // Records and verbatim journal rows are merged back into the table order (e, id), so the answer order is the same with or without records.
+ if(table==='journal'){const more=recordRows(selection,extra,args,eids);if(more.length)found=found.concat(more).sort(compareStored);}
+ return found.map(r=>decodeRow(r,readCodec));
 };
 const pull = a => {
  // [CX-INT-Q] Why: Q89b covers H1 itself, including direct worker requests.
@@ -221,10 +324,12 @@ const handle = (op,a) => {
  if(op==='epochs')return q('SELECT * FROM epochs ORDER BY epoch').all();
  if(op==='purgeFrames')return db.transaction(()=>{
   const m=marker();
-  // A bare number is the frame tail (older callers); an object names frames and/or bytes. Retention keeps AT LEAST both.
-  const keep=typeof a==='number'?{frames:a,bytes:Infinity}:a;
-  if(keep.frames===Infinity&&keep.bytes===Infinity)return {removed:0,anchor:m.base_lsn,bytes:0};
+  // [EXP-HS01-R3] Why: a bare number is a frame-only policy with a ZERO byte minimum, exactly what HostLog.open({frameRetention:{tailFrames:n}})
+  // normalizes to (CX-VHS01 R2-1). Round 2 gave it an infinite byte minimum, so purgeFrames(2) removed nothing. Rejected: keep the infinite
+  // byte floor (silently disables finite retention for every direct caller). An infinite frame minimum or byte minimum keeps every frame.
+  const keep=typeof a==='number'?{frames:a,bytes:0}:a;
   if(keep.frames!==Infinity&&(!Number.isSafeInteger(keep.frames)||keep.frames<0)||keep.bytes!==Infinity&&(!Number.isSafeInteger(keep.bytes)||keep.bytes<0))throw Error('Invalid frame tail');
+  if(keep.frames===Infinity||keep.bytes===Infinity)return {removed:0,anchor:m.base_lsn,bytes:0};
   const held=q('SELECT min(lsn) n FROM retention WHERE expires IS NULL OR expires>?').get(Date.now()).n;
   const ack=fs.existsSync(ackPath)?Number(fs.readFileSync(ackPath).readBigUInt64LE(0)):m.lsn;
   const floor=Math.min(held??m.lsn,m.lsn-keep.frames,m.lsn-1,ack-1);

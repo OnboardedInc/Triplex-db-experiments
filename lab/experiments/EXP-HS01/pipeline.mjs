@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 // HS01_ATTEMPT continues an earlier attempt id and HS01_ONLY (comma-separated stage labels) runs just those stages, so a
 // series interrupted by the 5 GiB disk floor resumes on the same source without repeating completed stages.
 const base = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01",
-  attempt = process.env.HS01_ATTEMPT ?? "r2-final-" + randomUUID(),
+  attempt = process.env.HS01_ATTEMPT ?? "r3-final-" + randomUUID(),
   only = process.env.HS01_ONLY?.split(",");
 const stages = [];
 const resultFile = path.join(
@@ -99,13 +99,64 @@ await run("route", [
 await run("kill80", ["node", "lab/verify/HS01/kill.mjs"]);
 fs.mkdirSync("lab/experiments/EXP-SQL01/evidence", { recursive: true });
 await run("flip", ["node", "lab/experiments/EXP-SQL01/flip-wal.mjs"]);
-for (const N of [1000, 10000])
-  await run("seed-" + N, [
-    "node_modules/.bin/tsx",
-    "lab/bench/hs01-seed.ts",
-    path.join(base, attempt + "-w0-" + N),
-    String(N),
-  ]);
+// [EXP-HS01-R3] Why: the reviewer's round 2 test (a byte-identical copy of CX-VHS01's lab/verify/HS01/round2/review.test.ts) runs against the
+// final source, and the abrupt-stop schedule runs a second time with the journal record option ON.
+await run("review-r2", [
+  "node_modules/.bin/vitest",
+  "run",
+  "--config",
+  "lab/verify/HS01/round2/vitest.config.ts",
+]);
+await run("kill80-records", ["node", "lab/verify/HS01/kill.mjs"], true, {
+  HS01_JOURNAL_RECORDS: "1",
+});
+// Seeds, one store at a time (disk): W0 ids at 1k and 10k, journal option OFF then ON with the SAME deterministic scope so both stores
+// hold the same logical rows; each 10k store is digested row by row (records expanded), archived and removed. Then the ULID-shaped diagnostic.
+const SCOPE = "hs01:r3-shared-scope";
+const seedPair = async (ids, sizes, extra = {}) => {
+  for (const N of sizes)
+    for (const mode of ["off", "on"]) {
+      const out = path.join(base, attempt + "-" + ids + "-" + N + "-" + mode);
+      const env = {
+        HS01_SCOPE: SCOPE,
+        HS01_IDS: ids,
+        ...(mode === "on" ? { HS01_JOURNAL: "records" } : {}),
+        ...extra,
+      };
+      await run(
+        "seed-" + ids + "-" + N + "-" + mode,
+        ["node_modules/.bin/tsx", "lab/bench/hs01-seed.ts", out, String(N)],
+        true,
+        env,
+      );
+      if (N === 10000) {
+        await run("digest-" + ids + "-" + N + "-" + mode, [
+          "node_modules/.bin/tsx",
+          "lab/bench/hs01-digest.ts",
+          path.join(out, "store/broker.db"),
+          path.join(out, "digest.json"),
+        ]);
+        await run(
+          "archive-" + ids + "-" + N + "-" + mode,
+          ["node", "lab/experiments/EXP-HS01/archive-store.mjs", out],
+          false,
+        );
+      }
+    }
+};
+await seedPair("w0", [1000, 10000]);
+const patchState = path.join(base, attempt + "-ulid-patch.json");
+await run(
+  "ulid-patch-apply",
+  ["node", "lab/bench/hs01-ulid-patch.mjs", "apply", patchState],
+  false,
+);
+await seedPair("ulid", [10000]);
+await run(
+  "ulid-patch-restore",
+  ["node", "lab/bench/hs01-ulid-patch.mjs", "restore", patchState],
+  false,
+);
 // [EXP-HS01] Why: reproduce the lab pack inventory, building only its declared packages in dependency order.
 // Rejected: root turbo build (would include the out-of-scope DuckDB and independent UI applications).
 const buildPack = String.raw`
@@ -129,6 +180,9 @@ await run("lint", [
   "packages/qlever/src/broker",
   "lab/verify/HS01",
   "lab/bench/hs01-seed.ts",
+  "lab/bench/hs01-digest.ts",
+  "lab/bench/hs01-ulid-patch.mjs",
+  "lab/bench/hs01-terms.mjs",
   "lab/experiments/EXP-HS01",
   "--deny-warnings",
 ]);

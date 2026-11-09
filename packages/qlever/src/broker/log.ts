@@ -205,6 +205,7 @@ const connect = (
   role: string,
   gateBuffer: SharedArrayBuffer,
   requireFullFsync = false,
+  journalRecords = false,
 ) =>
   new Connection(
     new Worker(sqliteWorker, {
@@ -217,7 +218,7 @@ const connect = (
           !arg.startsWith("--input-type=") &&
           args[i - 1] !== "--input-type",
       ),
-      workerData: { file, role, seed, driver, gateBuffer, requireFullFsync },
+      workerData: { file, role, seed, driver, gateBuffer, requireFullFsync, journalRecords },
     }),
   );
 const hostStores = new WeakMap<HostLog, Connection>();
@@ -266,6 +267,11 @@ export class HostLog {
       readonly requireFullFsync?: boolean;
       readonly takeover?: boolean;
       readonly frameRetention?: FrameRetention;
+      /**
+       * [EXP-HS01-R3] Write each new transaction's journal as one compact record (R47) instead of one row per journal triple. OFF by
+       * default: Sam's decision Q107-S is pending. Readers handle both forms, so the option only affects what this writer stores.
+       */
+      readonly journalRecords?: boolean;
     } = {},
   ): Promise<OpenedLog> {
     const requested = options.frameRetention ?? {};
@@ -294,7 +300,13 @@ export class HostLog {
       throw new BrokerLogError("Broker log volume below free-space floor");
     const file = path.join(dir, "broker.db"),
       gate = new SharedArrayBuffer(12),
-      writer = connect(file, "writer", gate, options.requireFullFsync);
+      writer = connect(
+        file,
+        "writer",
+        gate,
+        options.requireFullFsync,
+        options.journalRecords === true,
+      );
     const connections = [writer];
     try {
       const init = await writer.request<{ marker: AnchoredSnapshot; calibrationMs: number }>(

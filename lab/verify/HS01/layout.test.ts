@@ -71,7 +71,7 @@ const row = (i: number, pos = 2048): TripleRow =>
     schema_version: 1,
     tx_id: "tx:" + pos,
   }) as TripleRow;
-const codec = new Function("Buffer", rowCodec + "return {encodeRow,decodeRow,deriveChange};")(
+const codec = new Function("Buffer", rowCodec + "return {encodeRow,decodeRow,deriveChange,bindV};")(
   Buffer,
 );
 let rng = 21991;
@@ -212,7 +212,7 @@ describe("EXP-HS01", () => {
       }
       const s = codec.encodeRow(r, c);
       storage.exec("DELETE FROM codec");
-      insert.run(...fields.map((k) => s[k]));
+      insert.run(...fields.map((k) => (k === "v" ? codec.bindV(s) : s[k])));
       const stored = select.get();
       idClasses[
         typeof stored.id === "number" ? "integer" : Buffer.isBuffer(stored.id) ? "blob" : "text"

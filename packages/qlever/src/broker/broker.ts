@@ -142,6 +142,8 @@ export interface HostBrokerOptions {
   readonly applyTimeoutMs?: number;
   readonly minFreeBytes?: number;
   readonly frameRetention?: FrameRetention;
+  /** [EXP-HS01-R3] Store each transaction's journal as one record (R47). OFF by default (Sam's decision Q107-S is pending). */
+  readonly journalRecords?: boolean;
   readonly requireFullFsync?: boolean;
   /** Start the applier on open (default true when a replica is given). */
   readonly autoApply?: boolean;
@@ -269,6 +271,7 @@ export class HostBroker {
         ? {}
         : { requireFullFsync: options.requireFullFsync }),
       ...(options.frameRetention === undefined ? {} : { frameRetention: options.frameRetention }),
+      ...(options.journalRecords === undefined ? {} : { journalRecords: options.journalRecords }),
       ...(options.takeover === undefined ? {} : { takeover: options.takeover }),
     });
     try {

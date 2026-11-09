@@ -1,0 +1,406 @@
+/** [EXP-HS01-R3] Test-only reference: the round 2 worker (git a9ebe759: row-codec.ts and sqlite-worker.ts, byte-for-byte except the export wiring).
+ * Why: round 3 answers must equal round 2 answers; the round 2 worker is the independent reference. Rejected: re-deriving expectations from round 3 code.
+ */
+/** [EXP-HS01] Why: identical codec bytes in source and packed eval workers.
+ * Rejected: worker source imports (unavailable to CommonJS eval in packed consumers).
+ * Mechanism: R45 5.2 C/D, verified compact rows with verbatim fallback.
+ */
+const rowCodecR2 = String.raw`
+const kinds=['string','number','boolean','datetime','json','ref','integer'];
+const channel=t=>t==='ref'||t==='integer'?'value_string':'value_'+t;
+const alphabet='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+// [EXP-HS01] Why: R2 id codec. Core's deterministic generator emits <8 base-36 hash chars><18 base-36 counter chars>; storing
+// that as 26 TEXT bytes cost 27 bytes in the row and 27 in the id index. A structured id becomes ONE SQLite INTEGER:
+// tailValue*64+headSlot, where headSlot names (head chars, tail length) in the bounded hds dictionary (63 slots). Decode
+// is by storage class: integer = structured, 16-byte blob = canonical Crockford ULID, text = anything else.
+// Rejected: a global id dictionary (unbounded growth for random ids), a surrogate row id (loses entity clustering, R45 5.3),
+// and base-36 to a minimal big-endian blob (17 bytes, saves only 9 of 27 and ignores the constant hash head).
+const HEAD_SLOTS=64,TAIL_LIMIT=2**43;
+const structured=/^([0-9A-Z]{8})([0-9A-Z]{1,18})$/;
+const crockford=/^[0-7][0-9A-HJKMNP-TV-Z]{25}$/;
+// c.hid(key) returns the slot for "<head>/<tail length>" or undefined (writer: allocates while a slot is free).
+// Any id that does not match, does not round-trip, or finds no slot stays as before (ULID blob or TEXT): only bytes change.
+const packId=(s,c)=>{
+ if(typeof s!=='string')return s;
+ const m=structured.exec(s);
+ if(m&&c){
+  const v=parseInt(m[2],36);
+  if(Number.isSafeInteger(v)&&v<TAIL_LIMIT&&v.toString(36).toUpperCase().padStart(m[2].length,'0')===m[2]){
+   const h=c.hid(m[1]+'/'+m[2].length);
+   // BigInt binds as SQLite INTEGER; a JS number would be stored as an 8-byte REAL in this untyped column.
+   if(h!==undefined)return BigInt(v)*BigInt(HEAD_SLOTS)+BigInt(h);
+  }
+ }
+ // [EXP-HS01] Why: SQLite TEXT rewrites a lone surrogate to U+FFFD, so two different ids could collide in the unique id index.
+ // Such ids are kept as a tag byte plus UTF-16LE code units (odd length, never the 16 bytes of a ULID). Rejected: TEXT.
+ if(Buffer.from(s,'utf8').toString('utf8')!==s)return Buffer.concat([Buffer.from([1]),Buffer.from(s,'utf16le')]);
+ if(!crockford.test(s))return s;
+ let n=0n;for(const ch of s)n=n*32n+BigInt(alphabet.indexOf(ch));
+ const b=Buffer.alloc(16);b.writeBigUInt64BE(n>>64n);b.writeBigUInt64BE(n&((1n<<64n)-1n),8);return b;
+};
+const unpackId=(b,c)=>{
+ if(typeof b==='bigint')b=Number(b);
+ if(typeof b==='number'){
+  const h=b%HEAD_SLOTS,key=c.name('hds',h),at=key.indexOf('/');
+  return key.slice(0,at)+((b-h)/HEAD_SLOTS).toString(36).toUpperCase().padStart(Number(key.slice(at+1)),'0');
+ }
+ if(!Buffer.isBuffer(b))return b;
+ if(b.length!==16)return b.subarray(1).toString('utf16le');
+ let n=b.readBigUInt64BE(0)<<64n|b.readBigUInt64BE(8),s='';
+ for(let i=0;i<26;i++){s=alphabet[Number(n&31n)]+s;n>>=5n;}return s;
+};
+// [EXP-HS01] Why: JSON alone loses -0 and own undefined columns. Rejected: a lossy verbatim fallback.
+// The envelope retains full JSON and exceptional scalar tags; no fact value is interned.
+const verbatim=r=>Buffer.from(JSON.stringify({row:r,special:Object.keys(r).filter(k=>r[k]===undefined||typeof r[k]==='number'&&(!Number.isFinite(r[k])||Object.is(r[k],-0))).map(k=>[k,r[k]===undefined?'undefined':Object.is(r[k],-0)?'-0':String(r[k])])}));
+const unverb=b=>{const x=JSON.parse(Buffer.from(b).toString());for(const [k,v]of x.special)x.row[k]=v==='undefined'?undefined:v==='-0'?-0:Number(v);return x.row;};
+const sameRow=(a,b)=>Object.keys(a).length===Object.keys(b).length&&Object.keys(a).every(k=>Object.hasOwn(b,k)&&Object.is(a[k],b[k]));
+const isJournalRow=r=>r.entity_type==='_Transaction'&&r.entity_id===r.tx_id;
+// [EXP-HS01] Why: assertions may later retire; derive only immutable assertion columns and this change's tx.
+// Rejected: copying the target's current retirement tuple into an earlier journal entry.
+const deriveChange=(r,target)=>{
+ const op=r.recorded_position===target.recorded_position?'assert':'retract';
+ let value=target[channel(target.value_type)];
+ if(target.value_type==='json')value=JSON.parse(value);
+ if(target.value_type==='boolean')value=!!value;
+ return JSON.stringify({op,tripleId:target.id,entityId:target.entity_id,attribute:target.attribute,
+ ...(target.entity_type===null?{}:{entityType:target.entity_type}),value:{type:target.value_type,value},
+ validFrom:target.valid_from,...(target.valid_to===null?{}:{validTo:target.valid_to}),recordedAt:target.recorded_at,
+ ...(op==='retract'?{retractedAt:r.recorded_at}:{}),...(target.tx_id===null?{}:{assertionTxId:target.tx_id}),
+ ...(op==='retract'?{retractionTxId:r.tx_id}:{})});
+};
+const decodeRow=(s,c)=>{
+ if(s.x!==null)return unverb(s.x);
+ const tx=c.tx(s.pos),rt=s.rpos==null?null:c.tx(s.rpos);
+ if(!tx||s.rpos!=null&&!rt)throw Error('Missing row transaction');
+ let type=kinds[s.t],value=s.v;
+ if(s.t===8){type='number';value=s.pos;}
+ if(s.t===9){type='datetime';value=tx.at;}
+ const r={id:unpackId(s.id,c),entity_id:c.name('ents',s.e),attribute:c.name('attrs',s.a),value_type:type,
+ value_string:null,value_number:null,value_boolean:null,value_datetime:null,value_json:null,
+ recorded_at:tx.at,recorded_position:s.pos,valid_from:tx.at+s.vf,valid_to:s.vto,created_by:s.c===null?null:c.name('strs',s.c),
+ retracted_at:rt?.at??null,retracted_position:s.rpos??null,retract_tx_id:rt?c.name('ents',rt.tx):null,
+ entity_type:s.y===null?null:c.name('strs',s.y),schema_version:s.sv??1,tx_id:c.name('ents',tx.tx)};
+ if(s.t===7){
+  r.value_type='json';const target=c.row(unpackId(s.v,c));
+  if(!target)throw Error('Missing journal reference');r.value_json=deriveChange(r,target);
+ }else r[channel(type)]=type==='ref'?c.name('ents',value):value;
+ return r;
+};
+const encodeRow=(r,c)=>{
+ const s={e:c.intern('ents',r.entity_id),id:packId(r.id,c),a:c.intern('attrs',r.attribute),pos:r.recorded_position,
+ t:kinds.indexOf(r.value_type),v:r[channel(r.value_type)]??null,vf:r.valid_from-r.recorded_at,vto:r.valid_to??null,
+ c:r.created_by==null?null:c.intern('strs',r.created_by),y:r.entity_type==null?null:c.intern('strs',r.entity_type),sv:r.schema_version===1?null:r.schema_version??null,x:null,rpos:r.retracted_position??null};
+ if(r.value_type==='ref')s.v=c.intern('ents',s.v);
+ if(isJournalRow(r)){
+  if(r.attribute===':_tx/position'&&Object.is(r.value_number,r.recorded_position)){s.t=8;s.v=null;}
+  if(r.attribute===':_tx/instant'&&Object.is(r.value_datetime,r.recorded_at)){s.t=9;s.v=null;}
+  if(r.attribute===':_tx/change')try{const id=JSON.parse(r.value_json).tripleId,target=c.row(id);if(target&&deriveChange(r,target)===r.value_json){s.t=7;s.v=packId(id,c);}}catch{}
+ }
+ // [EXP-HS01] Why: SQLite normalizes -0, NaN and malformed UTF-8 after JS encoding.
+ // Rejected: checking only the pre-bind object (would miss storage conversion).
+ const unsafe=Object.values(r).some(v=>typeof v==='number'&&(Object.is(v,-0)||!Number.isFinite(v))||typeof v==='string'&&Buffer.from(v,'utf8').toString('utf8')!==v);
+ try{if(unsafe||!sameRow(r,decodeRow(s,c)))s.x=verbatim(r);}catch{s.x=verbatim(r);}
+ return s;
+};
+`;
+
+/** [EXP-SQL01] Why: an embedded JS worker boots from both tsx source and built ESM without a TS loader.
+ * Rejected: source-path workers (break packed consumers and test subprocesses). Mechanism: R25 sections 5-7.
+ */
+
+export const sqliteWorker = String.raw`
+${rowCodecR2}
+const { parentPort, workerData } = require('node:worker_threads');
+const fs = require('node:fs');
+const path = require('node:path');
+const D = require(workerData.driver);
+const { file, role, seed, gateBuffer } = workerData;
+const gate = new Int32Array(gateBuffer);
+let db, lock, fatal, timer, passiveTimer;
+const checkpointEvents=[], checkpointCounts={};
+const checkpointStatus=()=>({counts:{...checkpointCounts},events:[...checkpointEvents]});
+const recordCheckpoint=(mode,outcome,start,result={})=>{
+ checkpointCounts[outcome]=(checkpointCounts[outcome]??0)+1;
+ checkpointEvents.push({at:Date.now(),mode,outcome,ms:performance.now()-start,...result});
+ if(checkpointEvents.length>128)checkpointEvents.shift();
+};
+const statements = new Map();
+const q = sql => { let s=statements.get(sql); if(!s) statements.set(sql,s=db.prepare(sql)); return s; };
+const publicMarker = m => ({lsn:m.lsn,epoch:m.epoch,h:m.h,position:m.position,crc:m.crc,size:m.size});
+const marker = () => q('SELECT lsn,epoch,h,position,crc,size,base_lsn,base_crc,base_end FROM marker WHERE id=1').get();
+const durablePragmas = d => {
+ d.pragma('synchronous=FULL'); d.pragma('fullfsync=ON'); d.pragma('checkpoint_fullfsync=ON');
+ d.pragma('wal_autocheckpoint=0'); d.pragma('journal_size_limit=16777216');
+};
+const crc32 = (b, seed=0) => { let c=(seed ^ 0xffffffff)>>>0; for(const v of b){c ^= v;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0x82f63b78:0);}return (c ^ 0xffffffff)>>>0; };
+const ackPath = path.join(path.dirname(file),'ACKED');
+const ackRead = () => {
+ if(!fs.existsSync(ackPath)) return;
+ const b=fs.readFileSync(ackPath); if(b.length!==32 || crc32(b.subarray(0,28))!==b.readUInt32LE(28)) throw Error('ACKED sidecar corrupt; refusing to start');
+ const lsn=Number(b.readBigUInt64LE(0)), crc=b.readUInt32LE(24);
+ const f=q('SELECT crc FROM frames WHERE lsn=?').get(lsn);
+ if(!f || f.crc!==crc || marker().lsn<lsn) throw Error('ACKED names a lost acknowledged frame; refusing to start');
+};
+const calibrate = () => {
+ const f=path.join(path.dirname(file),'.sqlite-calibration-'+role), d=new D(f);
+ durablePragmas(d); d.exec('CREATE TABLE IF NOT EXISTS calibration(n);');
+ const times=[]; for(let i=0;i<12;i++){const t=performance.now();d.exec('INSERT INTO calibration VALUES(1)');times.push(performance.now()-t);} d.close();
+ fs.rmSync(f,{force:true}); times.sort((a,b)=>a-b); return times[6];
+};
+let calibrationMs=0;
+try {
+ if(role==='writer') {
+  lock=new D(path.join(path.dirname(file),'broker.lock'),{timeout:0}); durablePragmas(lock);
+  lock.pragma('locking_mode=EXCLUSIVE'); lock.exec('BEGIN EXCLUSIVE; COMMIT');
+ }
+ db=new D(file,{readonly:role==='reader',fileMustExist:role!=='writer',timeout:5000});
+ const version=db.prepare('SELECT sqlite_version() v').get().v.split('.').map(Number);
+ if(version[0]<3 || (version[0]===3 && (version[1]<51 || (version[1]===51 && version[2]<3)))) throw Error('SQLite >= 3.51.3 required');
+ db.pragma('fullfsync=ON'); db.pragma('checkpoint_fullfsync=ON');
+ if(role!=='reader') {
+  durablePragmas(db); db.pragma('journal_mode=WAL');
+  calibrationMs=calibrate();
+  if(workerData.requireFullFsync && process.platform==='darwin' && calibrationMs<1) throw Error('F_FULLFSYNC calibration below 1 ms');
+ }
+ if(role==='writer') {
+  // [EXP-HS01] Why: v1 has different semantics; reject rather than silently adopt or migrate. Rejected: CREATE IF NOT EXISTS over legacy tables.
+  if(q("SELECT 1 FROM sqlite_master WHERE name='live_rows'").get())throw Error('Legacy broker layout v1 requires explicit migration');
+  // [EXP-HS01] Why: round 1 stored ids without the hds head dictionary; reading them with the round 2 id codec could miss rows.
+  // Rejected: silently adopting them (a later head allocation would hide an old structured id stored as TEXT or blob).
+  if(q("SELECT 1 FROM sqlite_master WHERE name='ents'").get()&&!q("SELECT 1 FROM sqlite_master WHERE name='hds'").get())throw Error('Legacy broker layout v2 round 1 requires explicit migration');
+  db.exec('CREATE TABLE IF NOT EXISTS frames(lsn INTEGER PRIMARY KEY,epoch INT NOT NULL,kind INT NOT NULL,offset INT NOT NULL,end INT NOT NULL,prev_crc INT NOT NULL,crc INT NOT NULL,payload BLOB NOT NULL,committed_at INT NOT NULL);'+
+  'CREATE INDEX IF NOT EXISTS frames_commits ON frames(lsn) WHERE kind=1;'+
+  'CREATE TABLE IF NOT EXISTS marker(id INTEGER PRIMARY KEY CHECK(id=1),lsn INT NOT NULL,epoch INT NOT NULL,h INT NOT NULL,position INT NOT NULL,crc INT NOT NULL,size INT NOT NULL,base_lsn INT NOT NULL,base_crc INT NOT NULL,base_end INT NOT NULL);'+
+  'CREATE TABLE IF NOT EXISTS heads(subject TEXT PRIMARY KEY,pos INT NOT NULL) WITHOUT ROWID;'+
+  'CREATE TABLE IF NOT EXISTS claims(command TEXT PRIMARY KEY,txId TEXT NOT NULL,position INT NOT NULL) WITHOUT ROWID;'+
+  'CREATE TABLE IF NOT EXISTS operations(op TEXT PRIMARY KEY,receipt TEXT NOT NULL) WITHOUT ROWID;'+
+  'CREATE TABLE IF NOT EXISTS ents(eid INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);'+
+  'CREATE TABLE IF NOT EXISTS attrs(aid INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);'+
+  'CREATE TABLE IF NOT EXISTS strs(sid INTEGER PRIMARY KEY,s TEXT NOT NULL UNIQUE);'+
+  'CREATE TABLE IF NOT EXISTS hds(hid INTEGER PRIMARY KEY CHECK(hid BETWEEN 1 AND 63),name TEXT NOT NULL UNIQUE);'+
+  'CREATE TABLE IF NOT EXISTS txs(pos INTEGER PRIMARY KEY,tx INT NOT NULL,at INT NOT NULL);'+
+  ['facts','history','journal'].map(t=>'CREATE TABLE IF NOT EXISTS '+t+'(e INT NOT NULL,'+(t==='history'?'rpos INT NOT NULL,':'')+'id BLOB NOT NULL,a INT NOT NULL,pos INT NOT NULL,t INT NOT NULL,v,vf INT,vto INT,c INT,y INT,sv INT,x BLOB,PRIMARY KEY(e,'+(t==='history'?'rpos,':'')+'id)) WITHOUT ROWID;CREATE '+(t==='history'?'':'UNIQUE ')+'INDEX IF NOT EXISTS '+t+'_id ON '+t+'(id);').join('')+
+  'CREATE TABLE IF NOT EXISTS retention(holder TEXT PRIMARY KEY,lsn INT NOT NULL,expires INT) WITHOUT ROWID;'+
+  'CREATE TABLE IF NOT EXISTS epochs(epoch INTEGER PRIMARY KEY,begin_lsn INT NOT NULL,previous_epoch INT NOT NULL,aborted TEXT NOT NULL);'+
+  'CREATE TABLE IF NOT EXISTS pins(token TEXT PRIMARY KEY,basis INT NOT NULL,owner TEXT NOT NULL) WITHOUT ROWID;');
+  q('INSERT OR IGNORE INTO marker VALUES(1,0,0,0,0,?,32,0,?,32)').run(seed,seed);
+  // [EXP-SQL01] Why: sync WAL frames adopted by recovery before any reader exists (R25 1.3).
+  db.pragma('wal_checkpoint(PASSIVE)'); ackRead();
+  db.exec('DELETE FROM pins');
+ }
+ if(role==='checkpointer') {
+  // [EXP-SQL01] Why: even a separate RESTART connection can hold the writer lock while waiting on a reader.
+  // Rejected: a 100 ms busy handler on either ACK or checkpoint connection (reader-dependent commit delay).
+  db.pragma('busy_timeout=0');
+  timer=setInterval(()=>{if(Atomics.exchange(gate,2,0))checkpoint(true);},100);
+  passiveTimer=setInterval(()=>checkpoint(walLarge()),4000);
+ }
+} catch(e) { fatal=String(e); }
+const frames = (from,upto,maxBytes,maxFrames=Number.MAX_SAFE_INTEGER) => {
+ const m=marker();if(from.nextLsn<=m.base_lsn)throw Error('FEED_RETENTION_EXPIRED:'+JSON.stringify({requested:from.nextLsn-1,retainedFrom:m.base_lsn}));
+ let bytes=0,out=[],prev=from.seed,next=from.nextLsn,offset=from.offset;
+ for(const f of q('SELECT * FROM frames WHERE lsn>=? AND lsn<=? ORDER BY lsn').iterate(next,upto)) {
+  if(out.length>=maxFrames || (out.length && bytes+f.end-f.offset>maxBytes))break;
+  if(f.prev_crc!==prev || f.lsn!==next || f.offset!==offset)throw Error('Feed chain/cursor mismatch');
+  // Frame CRC is independently checked in HostLog.open and readFramesFrom using encodeFrame.
+  out.push(f);prev=f.crc;next=f.lsn+1;offset=f.end;bytes+=f.end-f.offset;
+ }
+ return {frames:out,next:{offset,seed:prev,nextLsn:next}};
+};
+const walLarge = () => fs.existsSync(file+'-wal') && fs.statSync(file+'-wal').size>64*1024*1024;
+const checkpoint = restart => {
+ const start=performance.now(), mode=restart?'RESTART':'PASSIVE';
+ try {
+  if(restart) {
+   Atomics.store(gate,0,1);
+   // [EXP-SQL01] Why: wait only on this maintenance thread, before acquiring SQLite locks.
+   // Rejected: calling RESTART with active readers (can wait holding the writer lock, R25 finding 6).
+   const deadline=performance.now()+20;
+   while(Atomics.load(gate,1)>0 && performance.now()<deadline)Atomics.wait(gate,1,Atomics.load(gate,1),1);
+   if(Atomics.load(gate,1)>0){recordCheckpoint(mode,'readers-busy',start);return checkpointStatus();}
+  }
+  const passive=db.pragma('wal_checkpoint(PASSIVE)')[0];
+  if(passive.busy || passive.log!==passive.checkpointed) {
+   recordCheckpoint(mode,'incomplete',start,passive);return checkpointStatus();
+  }
+  const result=restart?db.pragma('wal_checkpoint(RESTART)')[0]:passive;
+  recordCheckpoint(mode,result.busy?'busy':'complete',start,result);
+ }catch(e){recordCheckpoint(mode,'error',start,{error:String(e)});}
+ finally{if(restart){Atomics.store(gate,0,0);Atomics.notify(gate,0);}}
+ return checkpointStatus();
+};
+// [EXP-HS01] Why: dictionary names may contain lone surrogates; BLOB preserves those exact UTF-16 strings.
+// Rejected: SQLite TEXT replacement of invalid UTF-8 (aliases distinct names).
+const textKey=s=>Buffer.from(s,'utf8').toString('utf8')===s?s:Buffer.from(JSON.stringify(s));
+const dictCol=t=>t==='strs'?'s':'name';
+const dictId=t=>t==='ents'?'eid':t==='attrs'?'aid':t==='hds'?'hid':'sid';
+const names=new Map(), writerIds=new Map(), readerHeads=new Map();
+// [EXP-HS01] Why: the hds table has at most 63 rows, so the writer holds all of it and never queries it again.
+if(role==='writer'&&!fatal)for(const r of q('SELECT hid,name FROM hds').all())writerIds.set('hds:'+JSON.stringify(r.name),r.hid);
+// Readers cache only positive head lookups: a head absent now may be allocated later.
+const readHid=k=>{let h=readerHeads.get(k);if(h===undefined){h=q('SELECT hid FROM hds WHERE name=?').get(k)?.hid;if(h!==undefined)readerHeads.set(k,h);}return h;};
+const name=(t,id)=>{const key=t+':'+id;if(names.has(key))return names.get(key);let v=q('SELECT '+dictCol(t)+' v FROM '+t+' WHERE '+dictId(t)+'=?').get(id)?.v;if(Buffer.isBuffer(v))v=JSON.parse(v.toString());if(v===undefined)throw Error('Missing dictionary entry');names.set(key,v);return v;};
+const storedRow=id=>{for(const t of ['facts','history','journal']){const s=q('SELECT * FROM '+t+' WHERE id=?').get(packId(id,readCodec));if(s)return decodeRow(s,readCodec);}return undefined;};
+const readCodec={name,tx:pos=>q('SELECT tx,at FROM txs WHERE pos=?').get(pos),row:storedRow,hid:readHid};
+const prepare=a=>{
+ const additions=[],local=new Map(),pendingNames=new Map(),next={},transactions=new Map(),inputRows=new Map();
+ for(const t of ['ents','attrs','strs','hds'])next[t]=q('SELECT coalesce(max('+dictId(t)+'),0)+1 n FROM '+t).get().n;
+ const intern=(t,v,max)=>{const key=t+':'+JSON.stringify(v);if(local.has(key))return local.get(key);if(writerIds.has(key))return writerIds.get(key);const old=t==='hds'?undefined:q('SELECT '+dictId(t)+' id FROM '+t+' WHERE '+dictCol(t)+'=?').get(textKey(v));if(!old&&max!==undefined&&next[t]>max){local.set(key,undefined);return undefined;}const id=old?.id??next[t]++;local.set(key,id);pendingNames.set(t+':'+id,v);if(!old)additions.push([t,id,v]);return id;};
+ for(const member of a.members)for(const r of member.rows){inputRows.set(r.id,r);if(!transactions.has(r.recorded_position)&&!readCodec.tx(r.recorded_position))transactions.set(r.recorded_position,{tx:intern('ents',r.tx_id??''),at:r.recorded_at});if(r.retracted_position!=null&&!transactions.has(r.retracted_position)&&!readCodec.tx(r.retracted_position))transactions.set(r.retracted_position,{tx:intern('ents',r.retract_tx_id??''),at:r.retracted_at});}
+ const c={intern,hid:k=>intern('hds',k,63),name:(t,id)=>pendingNames.get(t+':'+id)??name(t,id),tx:pos=>transactions.get(pos)??readCodec.tx(pos),row:id=>inputRows.get(id)??storedRow(id)};
+ return {additions,transactions,rows:a.members.map(member=>member.rows.map(r=>({r,s:encodeRow(r,c)})))};
+};
+const append = a => {
+ try {
+ const prepared=prepare(a);
+ // [EXP-SQL01] Why: acquire the writer lock before the marker read; maintenance may concurrently RESTART.
+ // Rejected: deferred read-to-write upgrade (SQLITE_BUSY can bypass busy_timeout and fail-stop commits).
+ const result=db.transaction(()=>{
+  const m=marker(); if(a.lsn!==m.lsn+1 || a.prev!==m.crc)throw Error('Append chain mismatch');
+  q('INSERT INTO frames VALUES(?,?,?,?,?,?,?,?,?)').run(a.lsn,a.epoch,a.kind,m.size,m.size+a.length,a.prev,a.crc,Buffer.from(a.payload),Date.now());
+  if(a.kind===2){const e=JSON.parse(Buffer.from(a.payload).toString());q('INSERT INTO epochs VALUES(?,?,?,?)').run(e.epoch,a.lsn,e.previousEpoch,JSON.stringify(e.abortedLsns));}
+  for(const [t,id,v]of prepared.additions)q('INSERT OR IGNORE INTO '+t+' VALUES(?,?)').run(id,textKey(v));
+  for(const [pos,tx]of prepared.transactions)q('INSERT OR IGNORE INTO txs VALUES(?,?,?)').run(pos,tx.tx,tx.at);
+  let position=m.position,mi=0;
+  for(const member of a.members) {
+   const last=member.positions[member.positions.length-1];position=Math.max(position,last);
+   q('INSERT INTO operations VALUES(?,?)').run(member.operationId,JSON.stringify({lsn:a.lsn,epoch:a.epoch,positions:member.positions}));
+   // [EXP-HS01] Why: a nested claim resolves its own transaction ordinal (P5B R2). Rejected: the member's last ordinal.
+   for(const c of member.claims){const own=member.rows.find(r=>r.tx_id===c.txId);q('INSERT INTO claims VALUES(?,?,?)').run(c.commandId,c.txId,own?.recorded_position??last);}
+   for(const s of member.subjects)q('INSERT INTO heads VALUES(?,?) ON CONFLICT(subject) DO UPDATE SET pos=excluded.pos').run(s,last);
+   for(const {r,s} of prepared.rows[mi++]) {
+    const retired=r.retracted_position!=null,t=retired?'history':isJournalRow(r)?'journal':'facts';
+    // [EXP-HS01] Why: preserve one latest version per id, including journal retirements. Rejected: a second recent_rows copy.
+    for(const other of ['facts','history','journal'])q('DELETE FROM '+other+' WHERE id=?').run(s.id);
+    const keys=['e',...(retired?['rpos']:[]),'id','a','pos','t','v','vf','vto','c','y','sv','x'];
+    q('INSERT INTO '+t+'('+keys.join(',')+') VALUES('+keys.map(()=>'?').join(',')+')').run(...keys.map(k=>s[k]));
+   }
+  }
+  q('UPDATE marker SET lsn=?,epoch=?,position=?,crc=?,size=? WHERE id=1').run(a.lsn,a.epoch,position,a.crc,m.size+a.length);
+  return {lsn:a.lsn,epoch:a.epoch,kind:a.kind,offset:m.size,end:m.size+a.length,crc:a.crc,payload:Buffer.from(a.payload)};
+ }).immediate();
+ // [EXP-HS01] Why: publish writer dictionary cache only after SQLite commits. Rejected: keeping provisional ids from failed transactions.
+ for(const [t,id,v]of prepared.additions)writerIds.set(t+':'+JSON.stringify(v),id);
+ // [EXP-SQL01] Why: ACK only signals maintenance; it never waits for readers or runs a checkpoint.
+ // Rejected: synchronous gateCheckpoint after commit (the pinned-reader regression adds 100 ms).
+ if(a.lsn%25===0 && walLarge())Atomics.store(gate,2,1);return result;
+ }catch(e){fatal='Write failed; fail-stop: '+String(e);throw e;}
+};
+const rows = (table,selection,extra='',args=[]) => {
+ const where=[], vals=[];
+ if(selection.id!==undefined){where.push('id=?');vals.push(packId(selection.id,readCodec));}
+ if(selection.entities!==undefined){if(!selection.entities.length)return [];where.push('e IN (SELECT eid FROM ents WHERE name IN ('+selection.entities.map(()=>'?').join(',')+'))');vals.push(...selection.entities.map(textKey));}
+ if(extra){where.push(extra);vals.push(...args);}
+ return q('SELECT * FROM '+table+(where.length?' WHERE '+where.join(' AND '):'')).all(...vals).map(r=>decodeRow(r,readCodec));
+};
+const pull = a => {
+ // [CX-INT-Q] Why: Q89b covers H1 itself, including direct worker requests.
+ // Rejected: an eligible:false empty answer (Q89c requires typed refusal at the RPC boundary).
+ if(a.recordedAt!==undefined)throw Error('H1_RECORD_TIME_UNSUPPORTED');
+ const m=marker(), b=a.basis;
+ if(!Number.isSafeInteger(b)||b<0)throw Error('Invalid basis');
+ if(b<m.h || b>m.lsn*1024+1023)return {snapshot:publicMarker(m),basis:b,eligible:false,rows:[]};
+ const out=rows('facts',a.selection,'pos<=?',[b]).concat(rows('journal',a.selection,'pos<=?',[b]),rows('history',a.selection,'rpos>? AND pos<=?',[b,b]));
+ return {snapshot:publicMarker(m),basis:b,eligible:true,rows:out};
+};
+const handle = (op,a) => {
+ if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();lock?.close();return;}
+ if(fatal)throw Error(fatal);
+ if(op==='checkpoint' || op==='checkpointStatus'){
+  if(role!=='checkpointer')throw Error('Maintenance requires checkpointer connection');
+  return op==='checkpoint'?checkpoint(true):checkpointStatus();
+ }
+ if(op==='init')return {marker:marker(),calibrationMs};
+ if(op==='append')return append(a);
+ if(op==='ack'){
+  const m=marker();if(a.lsn!==m.lsn||a.epoch!==m.epoch||a.position!==m.position)throw Error('Publication marker mismatch');
+  const b=Buffer.alloc(32);b.writeBigUInt64LE(BigInt(m.lsn),0);b.writeBigUInt64LE(BigInt(m.epoch),8);b.writeBigUInt64LE(BigInt(m.position),16);b.writeUInt32LE(m.crc,24);b.writeUInt32LE(crc32(b.subarray(0,28)),28);
+  fs.writeFileSync(ackPath+'.tmp',b);fs.renameSync(ackPath+'.tmp',ackPath);return;
+ }
+ if(op==='retain'){
+  const m=marker();if(!Number.isSafeInteger(a.lsn)||a.lsn<m.base_lsn||a.lsn>m.lsn||!a.holder||a.ttlMs!==undefined&&(!Number.isFinite(a.ttlMs)||a.ttlMs<=0))throw Error('Invalid retention holder');
+  q('INSERT INTO retention VALUES(?,?,?) ON CONFLICT(holder) DO UPDATE SET lsn=excluded.lsn,expires=excluded.expires').run(a.holder,a.lsn,a.ttlMs===undefined?null:Date.now()+a.ttlMs);return;
+ }
+ if(op==='release'){q('DELETE FROM retention WHERE holder=?').run(a);return;}
+ if(op==='frameHeaders')return q('SELECT lsn,kind FROM frames ORDER BY lsn').all();
+ if(op==='epochs')return q('SELECT * FROM epochs ORDER BY epoch').all();
+ if(op==='purgeFrames')return db.transaction(()=>{
+  const m=marker();
+  // A bare number is the frame tail (older callers); an object names frames and/or bytes. Retention keeps AT LEAST both.
+  const keep=typeof a==='number'?{frames:a,bytes:Infinity}:a;
+  if(keep.frames===Infinity&&keep.bytes===Infinity)return {removed:0,anchor:m.base_lsn,bytes:0};
+  if(keep.frames!==Infinity&&(!Number.isSafeInteger(keep.frames)||keep.frames<0)||keep.bytes!==Infinity&&(!Number.isSafeInteger(keep.bytes)||keep.bytes<0))throw Error('Invalid frame tail');
+  const held=q('SELECT min(lsn) n FROM retention WHERE expires IS NULL OR expires>?').get(Date.now()).n;
+  const ack=fs.existsSync(ackPath)?Number(fs.readFileSync(ackPath).readBigUInt64LE(0)):m.lsn;
+  const floor=Math.min(held??m.lsn,m.lsn-keep.frames,m.lsn-1,ack-1);
+  let bytes=0,last,removed=0;
+  for(const f of q('SELECT lsn,crc,end,offset FROM frames WHERE lsn<=? ORDER BY lsn LIMIT 16').all(floor)){
+   // The newest keep.bytes bytes stay: purging through f leaves m.size-f.end bytes (m.size is the end offset of the last frame).
+   if(m.size-f.end<keep.bytes)break;
+   // [EXP-HS01] Why: the first eligible frame is always taken, so a legal frame larger than the 16 MiB work budget cannot become
+   // an immovable prefix (CX-VHS01 finding 1). Work per call is 16 MiB plus at most one frame (<= 256 MiB payload + 36 bytes).
+   // Rejected: capping frames at write (would refuse values the format and the 1 MiB value limit admit) and a skip-and-resume
+   // scheme (the anchor is one contiguous prefix; a frame cannot be partly purged).
+   if(removed&&bytes+f.end-f.offset>16*1024*1024)break;
+   bytes+=f.end-f.offset;last=f;removed++;
+  }
+  // [EXP-HS01] Why: deletion and anchor publish atomically. Rejected: anchoring in a later transaction (restart loses its chain).
+  if(last){q('DELETE FROM frames WHERE lsn<=?').run(last.lsn);q('UPDATE marker SET base_lsn=?,base_crc=?,base_end=? WHERE id=1').run(last.lsn,last.crc,last.end);}
+  return {removed,anchor:last?.lsn??m.base_lsn,bytes};
+ }).immediate();
+ // [EXP-HS01] Why: anchors are internal recovery metadata; preserve existing marker/pull result shapes. Rejected: stripping extra fields only in equivalence tests.
+ if(op==='anchor')return marker();
+ if(op==='marker')return publicMarker(marker());
+ if(op==='frames')return frames(a.from,a.upto,a.maxBytes);
+ if(op==='after'){
+  if(a.after<marker().base_lsn)throw Error('FEED_RETENTION_EXPIRED:'+JSON.stringify({requested:a.after,retainedFrom:marker().base_lsn}));
+  // [EXP-SQL01] Why: epoch-only prefixes must not consume the commit batch budget.
+  // Rejected: limiting all frame kinds (repeated restarts can retry an empty page forever).
+  const out=[];let bytes=0;
+  for(const f of q('SELECT * FROM frames WHERE kind=1 AND lsn>? ORDER BY lsn LIMIT ?').iterate(a.after,a.maxFrames??Number.MAX_SAFE_INTEGER)){
+   if(out.length && bytes+f.end-f.offset>a.maxBytes)break;
+   out.push(f);bytes+=f.end-f.offset;
+  }
+  return out;
+ }
+ if(op==='operation'){const r=q('SELECT receipt FROM operations WHERE op=?').get(a);return r?JSON.parse(r.receipt):undefined;}
+ if(op==='claim')return q('SELECT txId,position FROM claims WHERE command=?').get(a);
+ if(op==='head')return q('SELECT pos FROM heads WHERE subject=?').get(a)?.pos??0;
+ if(op==='readback')return a.map(storedRow).filter(Boolean);
+ if(op==='recent')return rows('facts',a.selection,'pos>=?',[(a.after+1)*1024]).concat(rows('journal',a.selection,'pos>=?',[(a.after+1)*1024]),rows('history',a.selection,'rpos>=?',[(a.after+1)*1024]));
+ if(op==='pin') {
+  const m=marker();if(!Number.isSafeInteger(a.basis)||a.basis<m.h||a.basis>m.lsn*1024+1023)throw Error('Cannot pin unavailable basis');
+  q('INSERT INTO pins VALUES(?,?,?)').run(a.token,a.basis,a.owner);return;
+ }
+ if(op==='unpin'){q('DELETE FROM pins WHERE token=?').run(a);return;}
+ if(op==='purge')return db.transaction(()=>{
+  const m=marker();if(!Number.isSafeInteger(a)||a<m.h||a>m.lsn*1024+1023)throw Error('Invalid horizon');
+  const min=q('SELECT min(basis) b FROM pins').get().b;const h=Math.min(a,min??a);
+  q('UPDATE marker SET h=? WHERE id=1').run(h);
+  // [EXP-HS01] Why: H limits eligibility, not durable history. Rejected: deleting the only retired version.
+  return {h,removed:0};
+ }).immediate();
+ if(op==='pull')return pull(a);
+ throw Error('Unknown SQLite request '+op);
+};
+parentPort.on('message',message=>{
+ const {op,args,response,signal}=message;
+ let result;
+ try {
+  if(role==='reader') {
+   while(Atomics.load(gate,0)===1)Atomics.wait(gate,0,1,100);
+   Atomics.add(gate,1,1);
+   // [EXP-SQL01] Why: recheck entry so maintenance cannot miss a reader at the gate boundary.
+   // Rejected: a single pre-entry check (races the checkpointer closing the gate).
+   if(Atomics.load(gate,0)===1){Atomics.sub(gate,1,1);while(Atomics.load(gate,0)===1)Atomics.wait(gate,0,1,100);Atomics.add(gate,1,1);}
+   try {
+    if(fatal)throw Error(fatal);
+    db.exec('BEGIN');marker();result=handle(op,args);if(op!=='close')db.exec('COMMIT');
+   }catch(e){try{db.exec('ROLLBACK');}catch{}throw e;}
+   finally{Atomics.sub(gate,1,1);Atomics.notify(gate,1);}
+  } else result=handle(op,args);
+  response.postMessage({result});
+ }catch(e){response.postMessage({error:String(e)});}
+ finally{response.close();if(signal){Atomics.store(new Int32Array(signal),0,1);Atomics.notify(new Int32Array(signal),0);}}
+});
+`;

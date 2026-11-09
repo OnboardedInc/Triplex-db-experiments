@@ -11,6 +11,9 @@ const acks = new Map(),
   feedSeen = [],
   errors = [];
 let cursor = null;
+// [EXP-HS01-R3] Why: HS01_JOURNAL_RECORDS=1 adds a stop inside the append transaction right after a journal record row is written, and
+// every operation carries a journal (see kill-child.ts). Rejected: a separate schedule file (the default schedule must stay as it was).
+const records = process.env.HS01_JOURNAL_RECORDS === "1";
 const modes = [
   "before-append",
   "inflight",
@@ -19,6 +22,7 @@ const modes = [
   "acked",
   "purge",
   "dictionary-growth",
+  ...(records ? ["record-write"] : []),
 ];
 for (let cycle = 0; cycle <= 80; cycle++) {
   const mode = cycle === 80 ? "verify" : modes[cycle % modes.length];
@@ -80,12 +84,19 @@ for (let cycle = 0; cycle <= 80; cycle++) {
                   .toUpperCase()
                   .padStart(18, "0"),
           ).sort();
+          // Records mode: the transaction's journal (4 headers, one changed entity, 9 or 10 changes) must read back whole, with the same ids.
+          const base = opCycle * 1_000_000 + opIndex * 100,
+            journal = Array.from(
+              { length: 5 + (opIndex % 2 === 0 ? 9 : 10) },
+              (_, k) => "K1LLHEAD" + (base + 9 + k).toString(36).toUpperCase().padStart(18, "0"),
+            ).sort();
           if (
             !r ||
             r.receipt.positions[0] !== pos ||
             r.claim?.position !== pos ||
             !r.eligible ||
-            JSON.stringify(r.rows) !== JSON.stringify(expected)
+            JSON.stringify(r.rows) !== JSON.stringify(expected) ||
+            (records && JSON.stringify(r.journal) !== JSON.stringify(journal))
           )
             errors.push({ cycle, op, pos, recovered: r });
         }
@@ -95,7 +106,7 @@ for (let cycle = 0; cycle <= 80; cycle++) {
       if (x.event === "acked") acks.set(x.op, x.position);
       if (x.event === "barrier") {
         barrier = x.point;
-        if (["inflight", "purge", "dictionary-growth"].includes(mode))
+        if (["inflight", "purge", "dictionary-growth", "record-write"].includes(mode))
           setTimeout(() => child.kill("SIGKILL"), Math.floor(cycle / 5) % 6);
         else child.kill("SIGKILL");
       }
@@ -145,5 +156,6 @@ console.log(
     feedDuplicates: duplicates.length,
     feedMissing: missing.length,
     root,
+    journalRecords: records,
   }),
 );
