@@ -13,10 +13,17 @@ const original = (http.Agent.prototype as any).addRequest;
 const counts: Record<string, { operations: number; failed: number; requests: number }> = {};
 export async function countHttp<T>(kind: string, run: () => Promise<T>): Promise<T> {
   const active = { requests: 0 };
-  const row = counts[kind] ??= { operations: 0, failed: 0, requests: 0 };
+  const row = (counts[kind] ??= { operations: 0, failed: 0, requests: 0 });
   row.operations++;
-  try { return await context.run(active, run); }
-  catch (e) { row.failed++; throw e; }
-  finally { row.requests += active.requests; }
+  try {
+    return await context.run(active, run);
+  } catch (e) {
+    row.failed++;
+    throw e;
+  } finally {
+    row.requests += active.requests;
+  }
 }
-export function httpCounts() { return structuredClone(counts); }
+export function httpCounts() {
+  return structuredClone(counts);
+}

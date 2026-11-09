@@ -54,7 +54,8 @@ import { RoundBook, type ClientStats, type RoundRecord } from "./lib/rounds.ts";
 
 const argv = process.argv.slice(2);
 const opt = (name: string, fallback?: string) => {
-  const i = argv.indexOf(`--${name}`);
+  // [DX-H1] Why: explicit flags override wrapper defaults. Rejected: first occurrence (silently ignores development limits).
+  const i = argv.lastIndexOf(`--${name}`);
   return i >= 0 ? argv[i + 1] : fallback;
 };
 const flag = (name: string) => argv.includes(`--${name}`);
