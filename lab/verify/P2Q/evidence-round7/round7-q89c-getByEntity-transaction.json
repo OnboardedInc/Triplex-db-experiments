@@ -1,0 +1,11 @@
+{
+  "route": "getByEntity",
+  "transaction": true,
+  "headBefore": 2048,
+  "future": 6144,
+  "headAfter": 2048,
+  "elapsedMs": 0.5132079999999632,
+  "ok": true,
+  "rows": 1,
+  "error": null
+}

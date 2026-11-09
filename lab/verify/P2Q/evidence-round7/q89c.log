@@ -1,0 +1,36 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round7-q89c.test.ts (6 tests | 3 failed) 491ms
+   ❯ round7 Q89c future repository basis refuses typed (6)
+     × getByEntity transaction=true 62ms
+     × getByEntities transaction=true 57ms
+     × query transaction=true 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round7-q89c.test.ts > round7 Q89c future repository basis refuses typed > getByEntity transaction=true
+ FAIL  tests/round7-q89c.test.ts > round7 Q89c future repository basis refuses typed > getByEntities transaction=true
+ FAIL  tests/round7-q89c.test.ts > round7 Q89c future repository basis refuses typed > query transaction=true
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/round7-q89c.test.ts:24:26
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  18:53:17
+   Duration  916ms (tests 59%, import 30%, transform 11%)
+

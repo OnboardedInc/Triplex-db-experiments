@@ -1,0 +1,43 @@
+{
+  "code": "EAI_NONAME",
+  "transport": true,
+  "depth": 1,
+  "kind": "standard",
+  "surface": "datalog",
+  "endpoint": "http://127.0.0.1:58695",
+  "injected": 1,
+  "uv": [
+    -3008,
+    [
+      "EAI_NONAME",
+      "unknown node or service"
+    ]
+  ],
+  "injection": "one synthetic code after connection establishment with the response held open; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: fetch failed",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "fetch failed",
+      "reason": null
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "opaque",
+      "reason": null
+    },
+    {
+      "name": "Error",
+      "code": "EAI_NONAME",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

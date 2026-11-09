@@ -1,0 +1,31 @@
+{
+  "code": "EAI_AGAIN",
+  "transport": true,
+  "depth": 0,
+  "kind": "fresh",
+  "surface": "native",
+  "endpoint": "http://127.0.0.1:58561",
+  "injected": 1,
+  "uv": [
+    -3001,
+    [
+      "EAI_AGAIN",
+      "temporary failure"
+    ]
+  ],
+  "injection": "one synthetic code after connection establishment with the response held open; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for native reads: Error: opaque",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "Error",
+      "code": "EAI_AGAIN",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

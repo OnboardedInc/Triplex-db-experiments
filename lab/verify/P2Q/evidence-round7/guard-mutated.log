@@ -1,0 +1,14 @@
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cac.DTXWs6Ni.js:405
+          throw new CACError(`Unknown option \`${name.length > 1 ? `--${name}` : `-${name}`}\``);
+                ^
+
+CACError: Unknown option `--setupFiles`
+    at Command.checkUnknownOptions (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cac.DTXWs6Ni.js:405:17)
+    at CAC.runMatchedCommand (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cac.DTXWs6Ni.js:605:13)
+    at CAC.parse (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cac.DTXWs6Ni.js:546:12)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/cli.js:10:13
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2

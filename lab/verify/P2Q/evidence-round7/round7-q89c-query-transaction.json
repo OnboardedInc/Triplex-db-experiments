@@ -1,0 +1,11 @@
+{
+  "route": "query",
+  "transaction": true,
+  "headBefore": 2048,
+  "future": 6144,
+  "headAfter": 2048,
+  "elapsedMs": 0.40887499999996635,
+  "ok": true,
+  "rows": 1,
+  "error": null
+}

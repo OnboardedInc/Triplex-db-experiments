@@ -1,0 +1,25 @@
+{
+  "unchanged": true,
+  "dependencies": [
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/undici@7.29.0/node_modules/undici/lib/core/errors.js",
+      "expected": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481",
+      "observed": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/undici@7.29.1/node_modules/undici/lib/core/errors.js",
+      "expected": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481",
+      "observed": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/undici@8.11.2/node_modules/undici/lib/core/errors.js",
+      "expected": "47c1e438402a802f5132da4a2084e1294ad3fd1496f8f7b47117292165c17fd9",
+      "observed": "47c1e438402a802f5132da4a2084e1294ad3fd1496f8f7b47117292165c17fd9"
+    },
+    {
+      "file": "Node bundled lib/core/errors.js",
+      "expected": "f434760a2e87dbcd596d02a936535c927e403b1945b8e4ba4c406cb4ffd3a658",
+      "observed": "f434760a2e87dbcd596d02a936535c927e403b1945b8e4ba4c406cb4ffd3a658"
+    }
+  ]
+}

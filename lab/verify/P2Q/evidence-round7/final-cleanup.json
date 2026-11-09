@@ -1,0 +1,10 @@
+{
+  "at": "2026-11-09T00:01:48.825Z",
+  "fixtureProcesses": [],
+  "retained": [
+    "lab/verify/P2Q/state-round7",
+    "lab/verify/P2Q/evidence-round7"
+  ],
+  "engineLifecycle": "none",
+  "productDrift": ""
+}

@@ -1,0 +1,7 @@
+{
+  "expected": false,
+  "observed": false,
+  "elapsedMs": 0.0009579999999971278,
+  "name": "TypeError",
+  "message": "Cannot decode the connection field"
+}
