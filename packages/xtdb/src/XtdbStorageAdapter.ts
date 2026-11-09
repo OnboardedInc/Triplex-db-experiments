@@ -1,4 +1,4 @@
-import { ValueDomains } from "@triplex-build/triplex/runtime";
+import { ValueDomains, storedValueDomain } from "@triplex-build/triplex/runtime";
 import { randomUUID } from "node:crypto";
 import { Effect, Exit, Semaphore } from "effect";
 import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -515,7 +515,7 @@ export const makeXtdbStorageAdapter = (
             id,
             entity_id: input.entityId,
             attribute: input.attribute,
-            ...packValue(input.value),
+            ...packValue(input.value, storedValueDomain(ValueDomains.xtdb, input.attribute)),
             recorded_at: timestamp,
             recorded_position: position,
             valid_from: input.validFrom ?? timestamp,

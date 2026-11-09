@@ -10,8 +10,24 @@ export interface ValueDomain {
   readonly decimal: { readonly precision: number; readonly scale: number } | null;
   readonly string: { readonly maxUtf8Bytes: number; readonly allowNul: boolean };
   readonly number: { readonly min: number; readonly max: number; readonly negativeZero: boolean };
-  readonly datetime: { readonly min: number; readonly max: number };
-  readonly json: { readonly maxDepth: number };
+  readonly datetime: {
+    readonly min: number;
+    readonly max: number;
+    readonly integerMilliseconds: boolean;
+  };
+  readonly storage: {
+    readonly maxKeyBytes: number;
+    readonly maxValueBytes: number;
+    readonly maxMutationBytes: number;
+    readonly mutationOverheadBytes: number;
+    readonly subspaceBytes: number;
+  } | null;
+  readonly json: {
+    readonly maxDepth: number;
+    readonly maxArrayHoles: 0;
+    readonly journalDepthAllowance: number;
+  };
+  readonly sources: readonly string[];
   readonly blob: { readonly minSize: number; readonly maxSize: number };
 }
 const allKinds = [
@@ -33,10 +49,53 @@ const domain = (id: string, integer: ValueDomain["integer"], negativeZero = fals
     decimal: null,
     // [EXP-GS12F-R3] Why: freeze a portable admission limit, not an inferred physical engine ceiling.
     // Rejected: unbounded strings (no finite boundary to verify; PostgreSQL cannot transport NUL).
-    string: Object.freeze({ maxUtf8Bytes: 1048576, allowNul: false }),
+    string: Object.freeze({
+      maxUtf8Bytes: id === "foundationdb/kv" ? 4096 : 1048576,
+      allowNul: false,
+    }),
     number: Object.freeze({ min: -Number.MAX_VALUE, max: Number.MAX_VALUE, negativeZero }),
-    datetime: Object.freeze({ min: -8640000000000000, max: 8640000000000000 }),
-    json: Object.freeze({ maxDepth: 128 }),
+    datetime: Object.freeze({
+      min: -8640000000000000,
+      max: 8640000000000000,
+      integerMilliseconds: id === "postgres",
+    }),
+    storage:
+      id === "foundationdb/kv"
+        ? Object.freeze({
+            maxKeyBytes: 10000,
+            maxValueBytes: 100000,
+            maxMutationBytes: 8000000,
+            mutationOverheadBytes: 64,
+            subspaceBytes: 0,
+          })
+        : null,
+    json: Object.freeze({ maxDepth: 128, maxArrayHoles: 0, journalDepthAllowance: 16 }),
+    sources: Object.freeze(
+      id === "foundationdb/kv"
+        ? [
+            "packages/foundationdb/src/FdbKvBackend.ts:DEFAULT_MAX_VALUE_BYTES",
+            "https://apple.github.io/foundationdb/known-limitations.html",
+          ]
+        : id === "postgres"
+          ? [
+              "packages/sql/src/schema.ts:TRIPLES_TABLE_DDL",
+              "https://www.postgresql.org/docs/13/datatype-numeric.html",
+            ]
+          : id === "xtdb"
+            ? [
+                "packages/xtdb/src/codecs.ts:packValue",
+                "packages/xtdb/src/XtdbStorageAdapter.ts:insert",
+              ]
+            : id === "qlever"
+              ? ["packages/qlever/src/rdf.ts:packValue"]
+              : id === "duckdb"
+                ? ["packages/duckdb/src/public-backend.mjs:buildRow"]
+                : id === "cloudflare"
+                  ? ["packages/cloudflare/src/adapter-support.ts:packValue"]
+                  : id === "sqlite"
+                    ? ["packages/sql/src/queries.ts:packValue", "packages/sqlite/src/schema.ts"]
+                    : ["packages/core/src/kv/hexastore/KvTripleStore.ts:serializeDatom"],
+    ),
     blob: Object.freeze({ minSize: 0, maxSize: Number.MAX_SAFE_INTEGER }),
   });
 /** One catalog consumed by transaction preflight and codecs, never by contract generation. */
@@ -75,11 +134,19 @@ const losslessJson = (root: unknown, d: ValueDomain): boolean => {
     seen.add(v);
     try {
       const keys = Reflect.ownKeys(v);
-      if (array && keys.length !== v.length + 1) return false;
+      if (array && v.length - (keys.length - 1) !== d.json.maxArrayHoles) return false;
       for (const key of keys) {
         if (array && key === "length") continue;
         if (typeof key !== "string" || !text(key, d)) return false;
-        if (array && !/^(?:0|[1-9]\d*)$/.test(key)) return false;
+        // [EXP-GS12F-R4] Why: numeric-looking non-index properties can disguise a missing array element.
+        // Rejected: count plus digits-only grammar (4294967295 is not an array index).
+        if (
+          array &&
+          (!/^(?:0|[1-9]\d*)$/.test(key) ||
+            Number(key) >= v.length ||
+            !Number.isSafeInteger(Number(key)))
+        )
+          return false;
         const descriptor = Object.getOwnPropertyDescriptor(v, key)!;
         if (
           !descriptor.enumerable ||
@@ -152,7 +219,8 @@ export const invalidValue = (value: unknown, d: ValueDomain): InvalidTripleError
           !Number.isFinite(value.value) ||
           Object.is(value.value, -0) ||
           value.value < d.datetime.min ||
-          value.value > d.datetime.max
+          value.value > d.datetime.max ||
+          (d.datetime.integerMilliseconds && !Number.isInteger(value.value))
         )
           return invalid();
         break;
@@ -172,6 +240,8 @@ export const invalidValue = (value: unknown, d: ValueDomain): InvalidTripleError
           return invalid();
         break;
     }
+    if (d.storage && encoder.encode(JSON.stringify(value)).length > d.storage.maxValueBytes)
+      return invalid();
     return undefined;
   } catch {
     return invalid();
@@ -190,7 +260,13 @@ export function assertValueInDomain(
 // Rejected: rejecting a valid max-depth value late while encoding its generated change envelope.
 export const storedValueDomain = (domain: ValueDomain, attribute: string): ValueDomain =>
   attribute.startsWith(":_tx/")
-    ? { ...domain, json: { maxDepth: domain.json.maxDepth + 16 } }
+    ? {
+        ...domain,
+        json: {
+          ...domain.json,
+          maxDepth: domain.json.maxDepth + domain.json.journalDepthAllowance,
+        },
+      }
     : domain;
 
 /** Decode value columns without constructor normalization, then enforce the same storage domain. */

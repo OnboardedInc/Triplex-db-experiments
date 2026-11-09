@@ -99,6 +99,9 @@ export const valueLimitCases = [
     name: "GS12F W0 wire kinds retain exact boundary representations",
     run: Effect.gen(function* () {
       const triples = yield* Triples;
+      const adapter = yield* Effect.serviceOption(StorageAdapter);
+      const integerMilliseconds =
+        adapter._tag === "Some" && adapter.value.valueDomain?.datetime.integerMilliseconds;
       const entityId = EntityId.make("gs12f:world");
       // W0/schema.json limits belong to domain validation. Values just outside those limits
       // remain representable storage values: preserve them instead of silently clamping.
@@ -130,7 +133,7 @@ export const valueLimitCases = [
           Date.UTC(2000, 0, 1),
           Date.UTC(2099, 11, 31, 23, 59, 59, 999),
           Date.UTC(2100, 0, 1),
-          0.5,
+          ...(integerMilliseconds ? [] : [0.5]),
         ].map(datetime),
         boolean(false),
         boolean(true),

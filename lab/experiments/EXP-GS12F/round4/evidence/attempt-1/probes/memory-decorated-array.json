@@ -1,0 +1,9 @@
+[
+  {
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "receipt": "undefined",
+    "typed": true
+  }
+]

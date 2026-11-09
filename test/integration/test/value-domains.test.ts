@@ -8,6 +8,7 @@ import {
   type TripleValue,
 } from "@triplex-build/triplex";
 import {
+  storedValueDomain,
   ValueDomains,
   decodeValueColumns,
   StorageAdapter,
@@ -77,10 +78,12 @@ const valid = (d: ValueDomain): TripleValue[] => [
     type: "number" as const,
     value,
   })),
-  ...[d.datetime.min, d.datetime.max, 0, 0.5].map((value) => ({
-    type: "datetime" as const,
-    value,
-  })),
+  ...[d.datetime.min, d.datetime.max, 0, ...(d.datetime.integerMilliseconds ? [] : [0.5])].map(
+    (value) => ({
+      type: "datetime" as const,
+      value,
+    }),
+  ),
   {
     type: "blob",
     value: "x".repeat(d.string.maxUtf8Bytes),
@@ -128,7 +131,14 @@ const invalid = (d: ValueDomain): unknown[] => {
       { type: "ref", value },
     ]),
     ...[Infinity, -Infinity, NaN, -0].map((value) => ({ type: "number", value })),
-    ...[d.datetime.min - 1, d.datetime.max + 1, NaN, Infinity, -0].map((value) => ({
+    ...[
+      d.datetime.min - 1,
+      d.datetime.max + 1,
+      NaN,
+      Infinity,
+      -0,
+      ...(d.datetime.integerMilliseconds ? [0.5, -0.5, Number.MIN_VALUE, 1.0000000000000002] : []),
+    ].map((value) => ({
       type: "datetime",
       value,
     })),
@@ -176,7 +186,9 @@ const invalid = (d: ValueDomain): unknown[] => {
 };
 const codecs: Record<keyof typeof ValueDomains, (v: TripleValue) => TripleValue> = {
   memory: (v) => deserializeDatom(serializeDatom(datom(v))).value,
-  foundationdb: (v) => deserializeDatom(serializeDatom(datom(v))).value,
+  foundationdb: (v) =>
+    deserializeDatom(serializeDatom(datom(v), ValueDomains.foundationdb), ValueDomains.foundationdb)
+      .value,
   xtdb: (v) => decodeValueColumns(decodeAssertionRow(row(v, xtdb)), ValueDomains.xtdb),
   qlever: (v) => decodeValueColumns(decodeRow(encodeRow(row(v, qlever))), ValueDomains.qlever),
   sqlite: (v) =>
@@ -339,3 +351,50 @@ it("read codecs reject nonfinite numeric payloads with the catalog error type", 
     expect(() => decodeValueColumns(invalidRow, domain)).toThrow(InvalidTripleError);
   }
 });
+
+// [EXP-GS12F-R4] Why: generated journals have a separate, finite envelope allowance on every codec.
+// Rejected: testing only public depth 128 (it missed XTDB's actual journal insertion path).
+for (const key of Object.keys(ValueDomains) as (keyof typeof ValueDomains)[]) {
+  it(`${key}: dense arrays and stored journal depth agree with the table`, () => {
+    const d = ValueDomains[key];
+    expect(d.json.maxArrayHoles).toBe(0);
+    expect(d.json.journalDepthAllowance).toBe(16);
+    const stored = storedValueDomain(d, ":_tx/change");
+    const roundTrip = (v: TripleValue) => {
+      if (key === "memory" || key === "foundationdb")
+        return deserializeDatom(serializeDatom({ ...datom(v), attribute: ":_tx/change" }, d), d)
+          .value;
+      const pack =
+        key === "xtdb" ? xtdb : key === "qlever" ? qlever : key === "cloudflare" ? cloudflare : sql;
+      const r = { ...row(v, (x) => pack(x, stored)), attribute: ":_tx/change" };
+      if (key === "xtdb") return decodeValueColumns(decodeAssertionRow(r), stored);
+      if (key === "qlever") return decodeValueColumns(decodeRow(encodeRow(r)), stored);
+      if (key === "duckdb")
+        return decodeValueColumns(
+          buildRow(
+            { entityId: EntityId.make("bound:entity"), attribute: ":_tx/change", value: v },
+            "t",
+            1,
+            "f",
+            1,
+          ),
+          stored,
+        );
+      return decodeValueColumns(r, stored);
+    };
+    let at: unknown = null;
+    for (let i = 0; i < stored.json.maxDepth; i++) at = [at];
+    expect(roundTrip({ type: "json", value: at })).toStrictEqual({ type: "json", value: at });
+    expect(() => roundTrip({ type: "json", value: [at] })).toThrow(InvalidTripleError);
+    expect(codecs[key]({ type: "json", value: [null] })).toStrictEqual({
+      type: "json",
+      value: [null],
+    });
+    for (const property of ["4294967295", "9007199254740993", "01", "-0"]) {
+      const hole: any[] = [];
+      hole.length = 1;
+      Object.defineProperty(hole, property, { value: 7, enumerable: true });
+      expect(() => codecs[key]({ type: "json", value: hole })).toThrow(InvalidTripleError);
+    }
+  });
+}

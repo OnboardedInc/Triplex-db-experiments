@@ -1,0 +1,12 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../../vitest.workspace-aliases" without a file extension (lab/experiments/EXP-GS12F/round4/live.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:47:23
+   Duration  58.08s (tests 99%, transform 1%)
+

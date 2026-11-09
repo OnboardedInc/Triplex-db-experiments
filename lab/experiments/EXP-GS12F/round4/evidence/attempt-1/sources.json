@@ -1,0 +1,149 @@
+{
+  "startedAtUnix": 1794196035.1383748,
+  "baseHead": "811a42a8adb356320b09128d173f752ccdc348f9",
+  "reviewCommit": "baad2f3",
+  "offlineOnly": false,
+  "liveEngine": "shared xtdb-dev port 5470; identity in container-before/after.txt",
+  "physicalSlot": null,
+  "sourceFiles": [
+    {
+      "path": ".changeset/gs12f-exact-value-domains.md",
+      "oldBase8d098718": null,
+      "currentSha256": "2ff1f9de3485ff6118386de8c9e7d30468beb7f4043b00ee0b40d6b32a91a294"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/backend-boundaries.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "2032808cbdee3d89c629e2370ff149cbf3b12f2f2df0fe07683897285543583f"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/backend-boundaries.test.ts.original.txt",
+      "oldBase8d098718": null,
+      "currentSha256": "bec37f8efce4c5c10c91bd3b8a8b4e4c3b056431f4d3bbae3219b723ce4e5bda"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/capture.py",
+      "oldBase8d098718": null,
+      "currentSha256": "e406ef33ddef11dfc718a236cdfe06153c66baf6daa7c2394a35f7be732a1a1c"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/foundationdb-stub.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "fd7a6aef11e53d4c612e3d85ed75b021abd609de7c3d8810d981586d4bc476bc"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/foundationdb-stub.ts.original.txt",
+      "oldBase8d098718": null,
+      "currentSha256": "18e7f61334d32eda2ed83419a0e227faee52d1ce7d1941fa796839922f0b1994"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/gates.sh",
+      "oldBase8d098718": null,
+      "currentSha256": "735b74a4ff064b97526d93a5262df617d532037cbc702a86134dabe606f12729"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/independent.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "1e23888a2ff902d9d6c1297b87c5b732befad00f2c73f11a71b246d5780fda69"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/independent.test.ts.original.txt",
+      "oldBase8d098718": null,
+      "currentSha256": "e56e5217008526f063860ffb784bccb7a9e24273d6d563b48acfe97d13ac6d9e"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/live-control.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "50e7f53b31973271ab9af8dff18b7bedfffcfad0c4b3ed77747287cef97db17c"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/live.config.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "53d7de3b932d854ddbcfc8144389612860a81246593dc28f477bcae1fd2bf9c2"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/live.test.ts.original.txt",
+      "oldBase8d098718": null,
+      "currentSha256": "c0a2f6fcca12d6a6b7fff1649cad42b4ddff9108582353f3dcc4d5318083f369"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/matrix.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "a7a21efab0faed1fd6c8e7988235469d5d92a5ba624792e8c39446c7e6dc1b8a"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/matrix.test.ts.original.txt",
+      "oldBase8d098718": null,
+      "currentSha256": "bf950d196a21d7acb7225b649df0f41b57a0ae4208651e0d89c025ec63540711"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/physical.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "94d09c1cccde36faabc6c4e67b4db8a13689e2944998e7c9d47b59a8c6840fa8"
+    },
+    {
+      "path": "lab/experiments/EXP-GS12F/round4/vitest.config.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "b33718905d598af98684d8f149aac7777c473935ca510ec55f5a311ae343d920"
+    },
+    {
+      "path": "packages/core/src/ValueDomain.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "17d29b7595850073067ac69c79be4b30cbe78a709ddf9e61574861fb4ab4e5fe"
+    },
+    {
+      "path": "packages/core/src/kv/hexastore/KvTripleStore.ts",
+      "oldBase8d098718": "0d4e96309facb7720c29a152c1307e8dac7b9e660a2c815b261477341bfb74b3",
+      "currentSha256": "3c98bb221e8c8916c8ffc0a91de74c4cbc804137b9471d052f5e51f698d48d04"
+    },
+    {
+      "path": "packages/core/src/kv/kv/KvBackend.ts",
+      "oldBase8d098718": "af3d550c9b98b5839dcff62ff1054632e86f299c6e56110a9e4fc4b19d994644",
+      "currentSha256": "48e4ef3fd2045d5ddeb6654a14ca3d092896a808ead2c5ac24f790cf78410427"
+    },
+    {
+      "path": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "oldBase8d098718": "d97c302ee63e068cd3b475e2f41707210b1d5ace2a965e18c9ad19b211cde7bd",
+      "currentSha256": "44fb68b94810f2d0b662f2a2f409c19f1a0ee0500c7cb9f1b01d29b4433b2e6d"
+    },
+    {
+      "path": "packages/core/src/kv/layers/valueAdmission.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "0d1716ea10a195d7b914ebafe17a207761e6005a6ebdca6314e25804b3342893"
+    },
+    {
+      "path": "packages/core/test/kv/layers/value-admission.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "0ba7e21dd1cca65ff2609e69e6b5b11949622873a9d6699e518ed91a6b057b8b"
+    },
+    {
+      "path": "packages/foundationdb/src/FdbKvBackend.ts",
+      "oldBase8d098718": "8a85a430e988f3dfa198f0cef7a2dbd09aadb54b9953060d61b193aff8339026",
+      "currentSha256": "66531862cb20ba248df48ecfda3f5dd1f53496ba65b12656e6cc4575e555aab1"
+    },
+    {
+      "path": "packages/testkit/src/valueLimits.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "a271f04ed09cfdfe388d140c5de8feabf4c423331479a7687372443aaec5532a"
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "oldBase8d098718": "5a9b4d63a8754e974c4a270610880f3c5199a525354255ff6bf0b9c9a2d6a58e",
+      "currentSha256": "9eeed8e4e096b9245350780ccbfc99cff562a82d9097d6633a9d77b6b0dc5377"
+    },
+    {
+      "path": "test/integration/test/value-domains.test.ts",
+      "oldBase8d098718": null,
+      "currentSha256": "2bd14dfffdbc38efe49d639e77f783f7a5716a01e8f8a73362f3fae1f7d0de44"
+    }
+  ],
+  "publishedPinDrift": [
+    {
+      "path": "packages/testkit/src/index.ts",
+      "publishedSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "currentSha256": "432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6",
+      "hashField": "sha256"
+    }
+  ],
+  "acceptanceUnchangedSinceRound3": true
+}
