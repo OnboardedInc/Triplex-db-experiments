@@ -1,0 +1,35 @@
+{
+  "review": "CX-VFD01-round2",
+  "reviewedHead": "b60cce1e5acd3f9bf3a3ae4f697271867692eac2",
+  "generatedAt": "2026-11-09T05:58:25.954Z",
+  "base": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/round2-a98211df-51b4-4de0-8b71-5feaf66dc6a9",
+  "engines": false,
+  "slot": null,
+  "verdict": "FIX-FIRST",
+  "baseline": {
+    "passed": 13,
+    "failed": 0,
+    "start": 1794203375910
+  },
+  "atomicStops": 25,
+  "lockRefusals": 1,
+  "clock": {
+    "reportedLagMs": 122.35274900000002,
+    "commonHostClockLagMs": 402.365375
+  },
+  "peers": {
+    "tarballs": 13,
+    "effectVersion": "4.0.3",
+    "consumerVersion": "4.0.3",
+    "missingMetadataReproduced": true,
+    "successfulInstallVerified": false
+  },
+  "sourceUnchanged": true,
+  "acceptanceUnchanged": true,
+  "limitations": [
+    "Source observer not integrated",
+    "Cross-process clocks share a label but not an origin",
+    "Offline strict install positive control stopped at reviewer npm prepare failure; corrected runner unexecuted after disk limit",
+    "Start-time guard added after runs; final clock wrapper admission below disk threshold is disclosed in report"
+  ]
+}
