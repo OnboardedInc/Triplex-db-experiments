@@ -1,0 +1,20 @@
+{
+  "completedAt": "2026-11-09T07:13:23.816Z",
+  "reviewed": "3575785aff5ab36bc92eee6131f4b5b0ffe83c5d",
+  "sourceUnchanged": true,
+  "checks": [
+    "printer",
+    "coverage",
+    "baseline",
+    "engine-dormant",
+    "engine-original-missing-import",
+    "gs-omitted",
+    "gs-cases-omitted",
+    "gate-model",
+    "regression-tests",
+    "admission",
+    "root-scripts"
+  ],
+  "verdict": "FIX-FIRST",
+  "finding": "GS JavaScript entry point and case manifest are outside the checker program"
+}
