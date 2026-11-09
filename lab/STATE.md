@@ -483,3 +483,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 G03 round 7c complete (Sonnet, 67844167; code 87c86a10, rule 10 fix 733daf5c): full 285/285, NS 177/177 (also after the
   exclusive.mjs fix), evaluator 108 with no tamper refusal, --verify. Pins moved: box.mjs (protected closure), ns-run.mjs, smoke.mjs,
   exclusive.mjs; re-pin in 0.4.1 with the 7a driver bundle. In review (CX-VG03-56 round 3).
+- 2026-11-09 SAM DECIDED (b8c3e1ff): Q107-S = option C on every lane (journal change/changed-entity triples stay stored and queryable;
+  way 2 must work today; misses caused by journal cost become reported misses with a TODO). HS01's one-record journal stays OFF and is
+  informational only. VM resize approved: 8 CPU / 20 GiB / 100 GiB, to run after OBS01 round 15 (live witness) finishes and before
+  calibration. Sam is finding host disk space.
