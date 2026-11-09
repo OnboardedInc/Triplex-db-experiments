@@ -2,7 +2,7 @@
 // Rejected: re-running completeFixture after a mutation (would derive trusted floors from the changed observation).
 import { fixture, p4Sequential, ladder, refreshWal, h, clone } from '../fixture.mjs';
 import { canonText } from '../../../bin/claim.mjs';
-import { completeSegment, readerRows, reseal } from '../../../bin/test/ns-round2-fixture.mjs';
+import { completeSegment, readerRows, reseal, attachIndependentCrash, calibration } from '../../../bin/test/ns-round2-fixture.mjs';
 
 export { fixture, p4Sequential, refreshWal, h, clone, readerRows };
 
@@ -18,7 +18,7 @@ export function positiveP1() {
   e.mainSegmentId = 'L256'; e.ladder = ladder();
   Object.assign(e.ladder.find(w => w.id === e.mainSegmentId), { startNs: e.window.startNs, endNs: e.window.endNs, reads: clone(e.reads), readers: clone(e.readers) });
   e.maintenance = [{ atNs: '1500000000' }];
-  return f;
+  return attachIndependentCrash(f);
 }
 
 export const regressions = [
@@ -73,7 +73,7 @@ export function firstSecondOnly(segment) {
 }
 
 export function positiveP5() {
-  const f = fixture(), e = f.raw.events, t = f.trusted;
+  const f = fixture({attemptId:'CX-VCRNS-R2-P5',drainEndNs:'103000000000',releaseSha256:h('frozen-release')}), e = f.raw.events, t = f.trusted;
   t.priorities = ['P3', 'P5']; t.activationCommandId = 'cmd1';
   t.releaseSha256 = h('frozen-release'); t.commands.cmd1.releaseSha256 = t.releaseSha256;
   const subjects = Array.from({ length: 100000 }, (_, i) => `s${i}`);
@@ -94,9 +94,8 @@ export function positiveP5() {
   const inputsSha256 = h(canonText({ sweepPlan, subjectListSha256: t.subjectListSha256, minimumSamples: t.minimumSamples }));
   e.window.drainEndNs = '103000000000';
   f.raw.binding.inputsSha256 = inputsSha256; f.raw.binding.attemptId = 'CX-VCRNS-R2-P5'; t.binding = clone(f.raw.binding);
-  const cr = JSON.parse(t.crashRun.bundle.payload), ct = { ...t.crashRun.trusted };
-  cr.binding.inputsSha256 = inputsSha256; cr.binding.attemptId = 'CX-VCRNS-R2-P5-crash';
-  cr.events.faults.forEach(w => { w.binding = clone(cr.binding); });
-  ct.binding = clone(cr.binding); t.crashRun = reseal(cr, ct);
-  return f;
+  t.calibrationP5=trafficCalibration();
+  return attachIndependentCrash(f);
 }
+
+export function trafficCalibration(){return calibration(1,'P5',{traceSegment:'frozen-traffic',offerScheduleSha256:h('frozen-traffic-schedule'),sweepOfferOffsetsNs:Array.from({length:100},(_,i)=>String(i*1000000000))});}

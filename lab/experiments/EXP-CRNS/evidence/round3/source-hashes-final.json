@@ -1,0 +1,9 @@
+{
+  "path": "lab/bin/claim.mjs",
+  "round": 3,
+  "oldSha256": "0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892",
+  "intermediateCommit": "933b11f2d80e50579f46751040fc785937e84826",
+  "intermediateSha256": "1958810e9deb4ece3f3151c1d7268aa626d645cc3cd61012d784a79b0609d9a6",
+  "newSha256": "fb9af98bc6b96888f1e64206cf9315dfac419893986b23dfea9a7512d26560d9",
+  "contractHashMatches": []
+}

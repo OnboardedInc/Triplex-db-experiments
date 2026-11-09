@@ -1,0 +1,349 @@
+TAP version 13
+# Subtest: C0 round 2 baseline is RECOMPUTED with resume and met
+ok 1 - C0 round 2 baseline is RECOMPUTED with resume and met
+  ---
+  duration_ms: 10.496708
+  type: 'test'
+  ...
+# Subtest: V-O7 crash companion whose 9 witnesses crash at t=0 (before any traffic) and all cite one 1-transaction range is refused
+not ok 2 - V-O7 crash companion whose 9 witnesses crash at t=0 (before any traffic) and all cite one 1-transaction range is refused # TODO accepted: witness anchors are not tied to crash time, fault point or distinct ranges
+  ---
+  duration_ms: 3.653667
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:131:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    resume from crashes that hit an idle consumer; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    accepted (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:112:37)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:136:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: V-O6 P3 only: 4 reader loops whose every answer is wrong satisfy "lag with readers running"
+not ok 3 - V-O6 P3 only: 4 reader loops whose every answer is wrong satisfy "lag with readers running" # TODO accepted: E2 correctness runs only when P1/P4/P5 is requested
+  ---
+  duration_ms: 4.523625
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:140:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    readers answered garbage; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    accepted (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:112:37)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:143:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: V-O6c P3 only: publication deferred past window end is invisible when the lag minimum is below the in-window count
+not ok 4 - V-O6c P3 only: publication deferred past window end is invisible when the lag minimum is below the in-window count # TODO accepted: minimumSamples.lag is any positive integer; nothing ties it to the scheduled in-window count
+  ---
+  duration_ms: 3.90725
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:145:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    c2 published 1.5 s late, outside the lag window; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    accepted (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:112:37)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:149:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: V-O6c control: same deferral with lag minimum = commit count is refused LAG-SAMPLES-SHORT
+ok 5 - V-O6c control: same deferral with lag minimum = commit count is refused LAG-SAMPLES-SHORT
+  ---
+  duration_ms: 3.759875
+  type: 'test'
+  ...
+# Subtest: V-O2 an oracle-invalid command (kind invalid) that the candidate commits and ACKs is refused
+not ok 6 - V-O2 an oracle-invalid command (kind invalid) that the candidate commits and ACKs is refused # TODO accepted: nothing refuses an invalid command that publishes
+  ---
+  duration_ms: 4.012375
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:158:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    invalid c1 committed; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    accepted (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:112:37)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:161:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: V-O2b P2: a command published before it was offered (pre-applied frozen trace) gets ~0 ms latency and is refused
+not ok 7 - V-O2b P2: a command published before it was offered (pre-applied frozen trace) gets ~0 ms latency and is refused # TODO accepted: publication before scheduledAtNs is clamped, not refused (queue clamp at the finished<scheduled branch)
+  ---
+  duration_ms: 4.790125
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:163:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    commit published 9 ms before its offer; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    accepted (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:112:37)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:171:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: V-O3 a kind=duplicate retry answered with a typed error (unique eventId) is refused IDEMPOTENCY-RECEIPT-MISMATCH
+ok 8 - V-O3 a kind=duplicate retry answered with a typed error (unique eventId) is refused IDEMPOTENCY-RECEIPT-MISMATCH
+  ---
+  duration_ms: 3.367625
+  type: 'test'
+  ...
+# Subtest: V-O1 a duplicate signal offered under a fresh commandId commits twice (same subject, same attribute) and is refused
+not ok 9 - V-O1 a duplicate signal offered under a fresh commandId commits twice (same subject, same attribute) and is refused # TODO accepted: one commit per commandId only; logical duplicates need the driver to reuse the id
+  ---
+  duration_ms: 5.168084
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:183:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    duplicate applied twice; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    accepted (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:112:37)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:186:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: V-O4 duplicate effect under a whitespace-variant consumer label is refused CONSUMER-IDENTITY-MISMATCH
+ok 10 - V-O4 duplicate effect under a whitespace-variant consumer label is refused CONSUMER-IDENTITY-MISMATCH
+  ---
+  duration_ms: 3.853
+  type: 'test'
+  ...
+# Subtest: V-O5/O17 two in-flight commands for one subject commit in reverse of their offer order
+not ok 11 - V-O5/O17 two in-flight commands for one subject commit in reverse of their offer order # TODO accepted: commit order is never compared with offer order per subject (needs a ruling)
+  ---
+  duration_ms: 3.014667
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:196:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    c0 offered first, c1 committed first; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    accepted (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:112:37)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:202:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: V-O10 a decimal-string basis against coordinate-object positions gives the oracle an empty prefix
+not ok 12 - V-O10 a decimal-string basis against coordinate-object positions gives the oracle an empty prefix # TODO accepted: nsPrefix compares stream "" with the real stream, so every transaction is clipped away
+  ---
+  duration_ms: 8.347208
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:206:1'
+  failureType: 'testCodeFailure'
+  error: 'transactions visible to oracle: 0'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:211:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: V-O13 depth-10 pulls answered with the depth-1 answer are refused P4-HISTORY-ANSWER-MISMATCH
+ok 13 - V-O13 depth-10 pulls answered with the depth-1 answer are refused P4-HISTORY-ANSWER-MISMATCH
+  ---
+  duration_ms: 7.889041
+  type: 'test'
+  ...
+# Subtest: V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms at 256 and 1024 readers pass
+not ok 14 - V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms at 256 and 1024 readers pass # TODO accepted: the absolute floor equals the P2 bar, so a candidate can inflate its baseline up to 50 ms
+  ---
+  duration_ms: 9.189209
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:223:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:226:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during the sweep pass
+not ok 15 - V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during the sweep pass # TODO accepted: same floor-equals-bar residual for P5
+  ---
+  duration_ms: 1.461041
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:228:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"met":true,"baseline":{"readP99Ms":0.1,"writerP99Ms":49},"sweep":{"readP99Ms":0.1,"writerP99Ms":73}}
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:233:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: NF2 a crash-only bundle evaluated as a primary returns RECOMPUTED with lag null
+not ok 16 - NF2 a crash-only bundle evaluated as a primary returns RECOMPUTED with lag null # TODO design: RECOMPUTED no longer implies a judged run; any consumer reading status instead of bars.P3.met mis-grants
+  ---
+  duration_ms: 2.331333
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:237:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected "actual" to be strictly unequal to:
+    
+    'RECOMPUTED'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'RECOMPUTED'
+  actual: 'RECOMPUTED'
+  operator: 'notStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round2.test.mjs:241:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 11
+# duration_ms 160.50975

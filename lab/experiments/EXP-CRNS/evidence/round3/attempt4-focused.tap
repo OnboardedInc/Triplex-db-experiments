@@ -1,0 +1,886 @@
+TAP version 13
+# Subtest: R01/O27 positive P1 has main segment, hot-set and straddle evidence; removing any floor refuses
+ok 1 - R01/O27 positive P1 has main segment, hot-set and straddle evidence; removing any floor refuses
+  ---
+  duration_ms: 345.329042
+  type: 'test'
+  ...
+# Subtest: O19 source-normalized consumer rows must equal a new decode of retained WAL bytes
+ok 2 - O19 source-normalized consumer rows must equal a new decode of retained WAL bytes
+  ---
+  duration_ms: 13.4935
+  type: 'test'
+  ...
+# Subtest: R06/O20 each committed position needs source and consumer CR records
+ok 3 - R06/O20 each committed position needs source and consumer CR records
+  ---
+  duration_ms: 27.621417
+  type: 'test'
+  ...
+# Subtest: O21 sample minima come from trusted frozen schedule; no missing P3/P2 floor can pass
+ok 4 - O21 sample minima come from trusted frozen schedule; no missing P3/P2 floor can pass
+  ---
+  duration_ms: 38.01675
+  type: 'test'
+  ...
+# Subtest: O23 repeated offer or read event id refuses on P3-only too
+ok 5 - O23 repeated offer or read event id refuses on P3-only too
+  ---
+  duration_ms: 42.353833
+  type: 'test'
+  ...
+# Subtest: O26 fixed consumer/epoch identities cannot split the correct affected set
+ok 6 - O26 fixed consumer/epoch identities cannot split the correct affected set
+  ---
+  duration_ms: 5.559125
+  type: 'test'
+  ...
+# Subtest: O28 every pinned role must record its clock domain; omitted or duplicated roles refuse
+ok 7 - O28 every pinned role must record its clock domain; omitted or duplicated roles refuse
+  ---
+  duration_ms: 16.505
+  type: 'test'
+  ...
+# Subtest: O18/O25 broker storage never bypasses the evaluator source decoder or source storage pin
+ok 8 - O18/O25 broker storage never bypasses the evaluator source decoder or source storage pin
+  ---
+  duration_ms: 22.239125
+  type: 'test'
+  ...
+# Subtest: O17 a consistently rewritten source+delivery+WAL still mismatches the frozen command digest
+ok 9 - O17 a consistently rewritten source+delivery+WAL still mismatches the frozen command digest
+  ---
+  duration_ms: 23.847291
+  type: 'test'
+  ...
+# Subtest: lost ACK is resolved by a later original receipt without copying a receipt onto the original attempt
+ok 10 - lost ACK is resolved by a later original receipt without copying a receipt onto the original attempt
+  ---
+  duration_ms: 27.385083
+  type: 'test'
+  ...
+# Subtest: O29 P4 baseline and P5 baseline have absolute latency floors as well as ratios
+ok 11 - O29 P4 baseline and P5 baseline have absolute latency floors as well as ratios
+  ---
+  duration_ms: 11.116125
+  type: 'test'
+  ...
+# Subtest: O13 history correctness refuses a wrong answer even with matching latency and independent IO counters
+ok 12 - O13 history correctness refuses a wrong answer even with matching latency and independent IO counters
+  ---
+  duration_ms: 98.185333
+  type: 'test'
+  ...
+# Subtest: O27 largest P4 bucket bar is pinned and enforced
+ok 13 - O27 largest P4 bucket bar is pinned and enforced
+  ---
+  duration_ms: 95.609333
+  type: 'test'
+  ...
+# Subtest: O15 activation position, release hash and output durability are required before sweep arithmetic
+ok 14 - O15 activation position, release hash and output durability are required before sweep arithmetic
+  ---
+  duration_ms: 896.722834
+  type: 'test'
+  ...
+# Subtest: O17 full command digests, distinct from identity-only change digests, must match retained decoded command bytes
+ok 15 - O17 full command digests, distinct from identity-only change digests, must match retained decoded command bytes
+  ---
+  duration_ms: 25.115083
+  type: 'test'
+  ...
+# Subtest: R02 resolved abort/seal frontiers are legal; only mapped prefix checkpoints may advance
+ok 16 - R02 resolved abort/seal frontiers are legal; only mapped prefix checkpoints may advance
+  ---
+  duration_ms: 54.19575
+  type: 'test'
+  ...
+# Subtest: NF1 every reader counted as P3/P2 load must answer correctly at its requested basis
+ok 17 - NF1 every reader counted as P3/P2 load must answer correctly at its requested basis
+  ---
+  duration_ms: 57.711209
+  type: 'test'
+  ...
+# Subtest: NF2 witness times and injection ids must identify distinct planned in-traffic crashes
+ok 18 - NF2 witness times and injection ids must identify distinct planned in-traffic crashes
+  ---
+  duration_ms: 97.951458
+  type: 'test'
+  ...
+# Subtest: NF2 checkpoint/recovery brackets and decoded fault-point snapshots bind each crash
+ok 19 - NF2 checkpoint/recovery brackets and decoded fault-point snapshots bind each crash
+  ---
+  duration_ms: 44.889125
+  type: 'test'
+  ...
+# Subtest: NF3 pre-applied frozen commands refuse publication before the first offer
+ok 20 - NF3 pre-applied frozen commands refuse publication before the first offer
+  ---
+  duration_ms: 17.949875
+  type: 'test'
+  ...
+# Subtest: NF4 oracle-invalid published commands refuse even with an otherwise valid receipt
+ok 21 - NF4 oracle-invalid published commands refuse even with an otherwise valid receipt
+  ---
+  duration_ms: 28.550542
+  type: 'test'
+  ...
+# Subtest: NF5 lag population is frozen schedule membership; delayed publication remains infinite lag
+ok 22 - NF5 lag population is frozen schedule membership; delayed publication remains infinite lag
+  ---
+  duration_ms: 48.780958
+  type: 'test'
+  ...
+# Subtest: NF6 candidate baselines cannot inflate the independent calibration budget up to the absolute bar
+ok 23 - NF6 candidate baselines cannot inflate the independent calibration budget up to the absolute bar
+  ---
+  duration_ms: 19.211541
+  type: 'test'
+  ...
+# Subtest: NF7 crash-only status cannot be read as a whole-P3 grant
+ok 24 - NF7 crash-only status cannot be read as a whole-P3 grant
+  ---
+  duration_ms: 14.042667
+  type: 'test'
+  ...
+# Subtest: NF8 regenerating observed synthetic bytes after a forgery never regenerates fixture pins
+ok 25 - NF8 regenerating observed synthetic bytes after a forgery never regenerates fixture pins
+  ---
+  duration_ms: 25.589667
+  type: 'test'
+  ...
+# Subtest: NF9 every companion setting and its exact attempt identity is pinned
+ok 26 - NF9 every companion setting and its exact attempt identity is pinned
+  ---
+  duration_ms: 73.403917
+  type: 'test'
+  ...
+# Subtest: NF10 a duplicate or lost-ACK retry must name an earlier attempt of the same command
+ok 27 - NF10 a duplicate or lost-ACK retry must name an earlier attempt of the same command
+  ---
+  duration_ms: 45.157375
+  type: 'test'
+  ...
+# Subtest: NF11 per-subject source order cannot reverse first-offer order
+ok 28 - NF11 per-subject source order cannot reverse first-offer order
+  ---
+  duration_ms: 13.694333
+  type: 'test'
+  ...
+# Subtest: N01 full-sweep traffic coverage is required at every declared one-second sample period
+ok 29 - N01 full-sweep traffic coverage is required at every declared one-second sample period
+  ---
+  duration_ms: 2033.513459
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F1: LAG-START-CR
+ok 30 - CX-CRNS-F1: LAG-START-CR
+  ---
+  duration_ms: 49.638166
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F2: BRACKET-INVALID
+ok 31 - CX-CRNS-F2: BRACKET-INVALID
+  ---
+  duration_ms: 11.311667
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F3: OBS-UNAUTHENTICATED
+ok 32 - CX-CRNS-F3: OBS-UNAUTHENTICATED
+  ---
+  duration_ms: 4.840125
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F4: NS-P3-EVERY-POSITION-ACCOUNTED
+ok 33 - CX-CRNS-F4: NS-P3-EVERY-POSITION-ACCOUNTED
+  ---
+  duration_ms: 19.73075
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F5: PREFIX-NOT-FROM-SOURCE
+ok 34 - CX-CRNS-F5: PREFIX-NOT-FROM-SOURCE
+  ---
+  duration_ms: 7.023291
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F6: LOST-ACKED-COMMIT
+ok 35 - CX-CRNS-F6: LOST-ACKED-COMMIT
+  ---
+  duration_ms: 16.421125
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F7: NS-P3-ORDER-VIOLATIONS-MAX
+ok 36 - CX-CRNS-F7: NS-P3-ORDER-VIOLATIONS-MAX
+  ---
+  duration_ms: 13.261625
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F8: NS-P3-ORDER-VIOLATIONS-MAX
+ok 37 - CX-CRNS-F8: NS-P3-ORDER-VIOLATIONS-MAX
+  ---
+  duration_ms: 49.132917
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F9: NS-P3-VISIBLE-DUP-EFFECTS-MAX
+ok 38 - CX-CRNS-F9: NS-P3-VISIBLE-DUP-EFFECTS-MAX
+  ---
+  duration_ms: 15.56375
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F10: NS-P3-DOMAIN-AFFECTED-SET
+ok 39 - CX-CRNS-F10: NS-P3-DOMAIN-AFFECTED-SET
+  ---
+  duration_ms: 19.612583
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F11: TAMPER
+ok 40 - CX-CRNS-F11: TAMPER
+  ---
+  duration_ms: 17.480334
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F12: NS-P3-GAPS-MAX
+ok 41 - CX-CRNS-F12: NS-P3-GAPS-MAX
+  ---
+  duration_ms: 36.409667
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F13: READER-LEVEL-MISMATCH
+ok 42 - CX-CRNS-F13: READER-LEVEL-MISMATCH
+  ---
+  duration_ms: 31.536333
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F14: CLOCK-DOMAIN-MISMATCH
+ok 43 - CX-CRNS-F14: CLOCK-DOMAIN-MISMATCH
+  ---
+  duration_ms: 16.329792
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F15: NS-P3-EVERY-POSITION-ACCOUNTED
+ok 44 - CX-CRNS-F15: NS-P3-EVERY-POSITION-ACCOUNTED
+  ---
+  duration_ms: 27.096709
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F16: DRIVER-NOT-PINNED
+ok 45 - CX-CRNS-F16: DRIVER-NOT-PINNED
+  ---
+  duration_ms: 10.124458
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F17: FAULT-WITNESS-INVALID
+ok 46 - CX-CRNS-F17: FAULT-WITNESS-INVALID
+  ---
+  duration_ms: 7.512333
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F18: RAW-EVENTS-MISSING
+ok 47 - CX-CRNS-F18: RAW-EVENTS-MISSING
+  ---
+  duration_ms: 7.709875
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F19: TIMING-UNJUDGED
+ok 48 - CX-CRNS-F19: TIMING-UNJUDGED
+  ---
+  duration_ms: 16.4905
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F20: CR-INCONSISTENT
+ok 49 - CX-CRNS-F20: CR-INCONSISTENT
+  ---
+  duration_ms: 17.919625
+  type: 'test'
+  ...
+# Subtest: P3 evaluator runs the real O-DOMAIN child at every committed position
+ok 50 - P3 evaluator runs the real O-DOMAIN child at every committed position
+  ---
+  duration_ms: 783.987
+  type: 'test'
+  ...
+# Subtest: exact nearest rank, including huge clocks, duplicates and boundaries
+ok 51 - exact nearest rank, including huge clocks, duplicates and boundaries
+  ---
+  duration_ms: 0.176333
+  type: 'test'
+  ...
+# Subtest: range consistency property: all permutations within a transaction preserve validity; each out-of-range insertion is found
+ok 52 - range consistency property: all permutations within a transaction preserve validity; each out-of-range insertion is found
+  ---
+  duration_ms: 11.798333
+  type: 'test'
+  ...
+# Subtest: duplicate property: committed insertion multiset counts every repeat, ignoring delete/reinsert and row ordering
+ok 53 - duplicate property: committed insertion multiset counts every repeat, ignoring delete/reinsert and row ordering
+  ---
+  duration_ms: 17.077834
+  type: 'test'
+  ...
+# Subtest: authenticated bytes, witnessed head, attempt, source, slot, input and encoding all bind
+ok 54 - authenticated bytes, witnessed head, attempt, source, slot, input and encoding all bind
+  ---
+  duration_ms: 34.9515
+  type: 'test'
+  ...
+# Subtest: missing WAL is not estimable; value-bearing feed entries are refused
+ok 55 - missing WAL is not estimable; value-bearing feed entries are refused
+  ---
+  duration_ms: 8.105667
+  type: 'test'
+  ...
+# Subtest: Q99b A0 rung is diagnostic; comparative and promotion still require equal rung paired controls
+ok 56 - Q99b A0 rung is diagnostic; comparative and promotion still require equal rung paired controls
+  ---
+  duration_ms: 2.088916
+  type: 'test'
+  ...
+# Subtest: P3M retained raw samples reproduce bench numbers but cannot establish R44 acceptance
+ok 57 - P3M retained raw samples reproduce bench numbers but cannot establish R44 acceptance
+  ---
+  duration_ms: 2.779167
+  type: 'test'
+  ...
+# Subtest: F3 variations: broken intermediate chain, invalid chunk HMAC and unwitnessed head
+ok 58 - F3 variations: broken intermediate chain, invalid chunk HMAC and unwitnessed head
+  ---
+  duration_ms: 13.744333
+  type: 'test'
+  ...
+# Subtest: P2 full raw bands, publication ACK order, progress and idempotency
+ok 59 - P2 full raw bands, publication ACK order, progress and idempotency
+  ---
+  duration_ms: 71.446583
+  type: 'test'
+  ...
+# Subtest: P1 ladder recomputes matched raw goodput, writer ratios and post-stress recovery
+ok 60 - P1 ladder recomputes matched raw goodput, writer ratios and post-stress recovery
+  ---
+  duration_ms: 22.630625
+  type: 'test'
+  ...
+# Subtest: P4 1000 matched subjects compare depth 1/3/10 latency and bytes with exact 1.1 boundary
+ok 61 - P4 1000 matched subjects compare depth 1/3/10 latency and bytes with exact 1.1 boundary
+  ---
+  duration_ms: 42.158542
+  type: 'test'
+  ...
+# Subtest: P5 raw matched live read and writer ratios; a summary alone cannot satisfy it
+ok 62 - P5 raw matched live read and writer ratios; a summary alone cannot satisfy it
+  ---
+  duration_ms: 1.755209
+  type: 'test'
+  ...
+# Subtest: P5 evaluates every one of 100k subjects at activation basis against evaluator oracle
+ok 63 - P5 evaluates every one of 100k subjects at activation basis against evaluator oracle
+  ---
+  duration_ms: 1169.152125
+  type: 'test'
+  ...
+# Subtest: source broker header, payload and CRC chain are checked from bytes
+ok 64 - source broker header, payload and CRC chain are checked from bytes
+  ---
+  duration_ms: 1.135291
+  type: 'test'
+  ...
+# Subtest: crash counts remain judged; replay witnesses must be unique and byte exact; lag is unjudged
+ok 65 - crash counts remain judged; replay witnesses must be unique and byte exact; lag is unjudged
+  ---
+  duration_ms: 13.218625
+  type: 'test'
+  ...
+# Subtest: P4 full current-pull mix and resource counters feed arithmetic; wrong mix is refused
+ok 66 - P4 full current-pull mix and resource counters feed arithmetic; wrong mix is refused
+  ---
+  duration_ms: 55.524292
+  type: 'test'
+  ...
+# Subtest: C0 round 2 baseline is RECOMPUTED with resume and met
+ok 67 - C0 round 2 baseline is RECOMPUTED with resume and met
+  ---
+  duration_ms: 20.998208
+  type: 'test'
+  ...
+# Subtest: V-O7 crash companion whose 9 witnesses crash at t=0 (before any traffic) and all cite one 1-transaction range is refused
+ok 68 - V-O7 crash companion whose 9 witnesses crash at t=0 (before any traffic) and all cite one 1-transaction range is refused
+  ---
+  duration_ms: 3.323
+  type: 'test'
+  ...
+# Subtest: V-O6 P3 only: 4 reader loops whose every answer is wrong satisfy "lag with readers running"
+ok 69 - V-O6 P3 only: 4 reader loops whose every answer is wrong satisfy "lag with readers running"
+  ---
+  duration_ms: 10.929792
+  type: 'test'
+  ...
+# Subtest: V-O6c P3 only: publication deferred past window end is invisible when the lag minimum is below the in-window count
+ok 70 - V-O6c P3 only: publication deferred past window end is invisible when the lag minimum is below the in-window count
+  ---
+  duration_ms: 3.314459
+  type: 'test'
+  ...
+# Subtest: V-O6c control: same deferral with lag minimum = commit count is refused LAG-SAMPLES-SHORT
+ok 71 - V-O6c control: same deferral with lag minimum = commit count is refused LAG-SAMPLES-SHORT
+  ---
+  duration_ms: 9.627167
+  type: 'test'
+  ...
+# Subtest: V-O2 an oracle-invalid command (kind invalid) that the candidate commits and ACKs is refused
+ok 72 - V-O2 an oracle-invalid command (kind invalid) that the candidate commits and ACKs is refused
+  ---
+  duration_ms: 7.224291
+  type: 'test'
+  ...
+# Subtest: V-O2b P2: a command published before it was offered (pre-applied frozen trace) gets ~0 ms latency and is refused
+ok 73 - V-O2b P2: a command published before it was offered (pre-applied frozen trace) gets ~0 ms latency and is refused
+  ---
+  duration_ms: 9.458375
+  type: 'test'
+  ...
+# Subtest: V-O3 a kind=duplicate retry answered with a typed error (unique eventId) is refused IDEMPOTENCY-RECEIPT-MISMATCH
+ok 74 - V-O3 a kind=duplicate retry answered with a typed error (unique eventId) is refused IDEMPOTENCY-RECEIPT-MISMATCH
+  ---
+  duration_ms: 6.887792
+  type: 'test'
+  ...
+# Subtest: V-O1 a duplicate signal offered under a fresh commandId commits twice (same subject, same attribute) and is refused
+ok 75 - V-O1 a duplicate signal offered under a fresh commandId commits twice (same subject, same attribute) and is refused
+  ---
+  duration_ms: 7.982208
+  type: 'test'
+  ...
+# Subtest: V-O4 duplicate effect under a whitespace-variant consumer label is refused CONSUMER-IDENTITY-MISMATCH
+ok 76 - V-O4 duplicate effect under a whitespace-variant consumer label is refused CONSUMER-IDENTITY-MISMATCH
+  ---
+  duration_ms: 7.110958
+  type: 'test'
+  ...
+# Subtest: V-O5/O17 two in-flight commands for one subject commit in reverse of their offer order
+ok 77 - V-O5/O17 two in-flight commands for one subject commit in reverse of their offer order
+  ---
+  duration_ms: 10.288666
+  type: 'test'
+  ...
+# Subtest: V-O10 a decimal-string basis against coordinate-object positions gives the oracle an empty prefix
+ok 78 - V-O10 a decimal-string basis against coordinate-object positions gives the oracle an empty prefix
+  ---
+  duration_ms: 23.984375
+  type: 'test'
+  ...
+# Subtest: V-O13 depth-10 pulls answered with the depth-1 answer are refused P4-HISTORY-ANSWER-MISMATCH
+ok 79 - V-O13 depth-10 pulls answered with the depth-1 answer are refused P4-HISTORY-ANSWER-MISMATCH
+  ---
+  duration_ms: 11.55875
+  type: 'test'
+  ...
+# Subtest: V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms at 256 and 1024 readers pass
+ok 80 - V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms at 256 and 1024 readers pass
+  ---
+  duration_ms: 18.223792
+  type: 'test'
+  ...
+# Subtest: V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during the sweep pass
+ok 81 - V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during the sweep pass
+  ---
+  duration_ms: 0.3605
+  type: 'test'
+  ...
+# Subtest: NF2 a crash-only bundle evaluated as a primary returns RECOMPUTED with lag null
+ok 82 - NF2 a crash-only bundle evaluated as a primary returns RECOMPUTED with lag null
+  ---
+  duration_ms: 4.584708
+  type: 'test'
+  ...
+# Subtest: B0 baseline world is RECOMPUTED for P3 and P3+P2 (fixture sanity)
+ok 83 - B0 baseline world is RECOMPUTED for P3 and P3+P2 (fixture sanity)
+  ---
+  duration_ms: 28.376333
+  type: 'test'
+  ...
+# Subtest: B1 removing WAL/CR/resume floors refuses
+ok 84 - B1 removing WAL/CR/resume floors refuses
+  ---
+  duration_ms: 19.831834
+  type: 'test'
+  ...
+# Subtest: R1 truncated chunk chain is refused
+ok 85 - R1 truncated chunk chain is refused
+  ---
+  duration_ms: 4.172708
+  type: 'test'
+  ...
+# Subtest: R2 receipt to a different tx on retry is refused (IDEMPOTENCY-RECEIPT-MISMATCH)
+ok 86 - R2 receipt to a different tx on retry is refused (IDEMPOTENCY-RECEIPT-MISMATCH)
+  ---
+  duration_ms: 8.958708
+  type: 'test'
+  ...
+# Subtest: R3 ACK before source bracket L is refused when P2 is requested
+ok 87 - R3 ACK before source bracket L is refused when P2 is requested
+  ---
+  duration_ms: 8.610292
+  type: 'test'
+  ...
+# Subtest: R4 duplicate effect row with identical key is refused
+ok 88 - R4 duplicate effect row with identical key is refused
+  ---
+  duration_ms: 5.901
+  type: 'test'
+  ...
+# Subtest: O1 P2/P3: the same command committed twice in the source (retry not idempotent) is refused
+ok 89 - O1 P2/P3: the same command committed twice in the source (retry not idempotent) is refused
+  ---
+  duration_ms: 8.913625
+  type: 'test'
+  ...
+# Subtest: O2 P2: typed error ACKed in 1 ms while the command commits 400 ms later is refused
+ok 90 - O2 P2: typed error ACKed in 1 ms while the command commits 400 ms later is refused
+  ---
+  duration_ms: 8.383333
+  type: 'test'
+  ...
+# Subtest: O3 P2: a duplicate retry answered with a typed error instead of the original receipt is refused
+ok 91 - O3 P2: a duplicate retry answered with a typed error instead of the original receipt is refused
+  ---
+  duration_ms: 6.651791
+  type: 'test'
+  ...
+# Subtest: O4 P3: a second visible effect for the same (position, subject) under a different epoch label is refused
+ok 92 - O4 P3: a second visible effect for the same (position, subject) under a different epoch label is refused
+  ---
+  duration_ms: 21.668667
+  type: 'test'
+  ...
+# Subtest: O4 P3: a second visible effect for the same (position, subject) under a different consumer label is refused
+ok 93 - O4 P3: a second visible effect for the same (position, subject) under a different consumer label is refused
+  ---
+  duration_ms: 13.316916
+  type: 'test'
+  ...
+# Subtest: O5 P3: source entry order (offset) contradicting cursor order (position) is refused
+ok 94 - O5 P3: source entry order (offset) contradicting cursor order (position) is refused
+  ---
+  duration_ms: 10.706875
+  type: 'test'
+  ...
+# Subtest: O5b P3: a position whose coordinates disagree with its entry (offset 0 entry, position offset 999) is refused
+ok 95 - O5b P3: a position whose coordinates disagree with its entry (offset 0 entry, position offset 999) is refused
+  ---
+  duration_ms: 6.208625
+  type: 'test'
+  ...
+# Subtest: O6a P3 only: candidate typed-rejects 2 of 3 valid commands, tiny feed passes P3
+ok 96 - O6a P3 only: candidate typed-rejects 2 of 3 valid commands, tiny feed passes P3
+  ---
+  duration_ms: 3.302125
+  type: 'test'
+  ...
+# Subtest: O6b P3 only: ACK before publication (lag start moved late by hiding the commit from the source store) is refused
+ok 97 - O6b P3 only: ACK before publication (lag start moved late by hiding the commit from the source store) is refused
+  ---
+  duration_ms: 5.664541
+  type: 'test'
+  ...
+# Subtest: O7 P3: a RECOMPUTED result carries resume-from-checkpoint evidence
+ok 98 - O7 P3: a RECOMPUTED result carries resume-from-checkpoint evidence
+  ---
+  duration_ms: 16.22275
+  type: 'test'
+  ...
+# Subtest: O8 P3: fault witnesses that each replay one arbitrary entry (not from the checkpoint) are refused as FAULT-WITNESS-INVALID
+ok 99 - O8 P3: fault witnesses that each replay one arbitrary entry (not from the checkpoint) are refused as FAULT-WITNESS-INVALID
+  ---
+  duration_ms: 6.509417
+  type: 'test'
+  ...
+# Subtest: O9 P3: a commit published after window end that never reaches the consumer durable record is refused
+ok 100 - O9 P3: a commit published after window end that never reaches the consumer durable record is refused
+  ---
+  duration_ms: 5.042334
+  type: 'test'
+  ...
+# Subtest: O12 P3: lag "with 256 readers" accepted while reads[] is empty and readers[] only claims loop ids
+ok 101 - O12 P3: lag "with 256 readers" accepted while reads[] is empty and readers[] only claims loop ids
+  ---
+  duration_ms: 5.306625
+  type: 'test'
+  ...
+# Subtest: O16 oracle "prefix" stops at the position being evaluated
+ok 102 - O16 oracle "prefix" stops at the position being evaluated
+  ---
+  duration_ms: 1.915959
+  type: 'test'
+  ...
+# Subtest: O17 P2/P3: committed change subject differing from the offered command subject is refused
+ok 103 - O17 P2/P3: committed change subject differing from the offered command subject is refused
+  ---
+  duration_ms: 5.3325
+  type: 'test'
+  ...
+# Subtest: O18/O25 broker-frame/2: self-made CRC frames whose bytes are unrelated to the entries bypass verifySource and are refused
+ok 104 - O18/O25 broker-frame/2: self-made CRC frames whose bytes are unrelated to the entries bypass verifySource and are refused
+  ---
+  duration_ms: 16.546791
+  type: 'test'
+  ...
+# Subtest: O22 P2: ACK inside a 150 ms wide publication bracket is accepted as merely undecided
+ok 105 - O22 P2: ACK inside a 150 ms wide publication bracket is accepted as merely undecided
+  ---
+  duration_ms: 4.750125
+  type: 'test'
+  ...
+# Subtest: L0 ladder fixture sanity: met
+ok 106 - L0 ladder fixture sanity: met
+  ---
+  duration_ms: 21.62875
+  type: 'test'
+  ...
+# Subtest: O10 P1: a hops-6 read answered with the hops-3 answer is a violation
+ok 107 - O10 P1: a hops-6 read answered with the hops-3 answer is a violation
+  ---
+  duration_ms: 16.593125
+  type: 'test'
+  ...
+# Subtest: O11 P1: a "1024-reader" window whose reads all come from one loop is refused
+ok 108 - O11 P1: a "1024-reader" window whose reads all come from one loop is refused
+  ---
+  duration_ms: 5.929917
+  type: 'test'
+  ...
+# Subtest: O24 P1: recovery window matched although neither the 1024 window nor the recovery window has an id
+ok 109 - O24 P1: recovery window matched although neither the 1024 window nor the recovery window has an id
+  ---
+  duration_ms: 0.891875
+  type: 'test'
+  ...
+# Subtest: O29a P1: writer p99 at 256 readers of 120 ms passes because the zero-reader baseline was slowed to 100 ms
+ok 110 - O29a P1: writer p99 at 256 readers of 120 ms passes because the zero-reader baseline was slowed to 100 ms
+  ---
+  duration_ms: 8.255292
+  type: 'test'
+  ...
+# Subtest: O13 P4: history-flatness pulls without any answer check are refused
+ok 111 - O13 P4: history-flatness pulls without any answer check are refused
+  ---
+  duration_ms: 12.418458
+  type: 'test'
+  ...
+# Subtest: O14 P5: the "during sweep" traffic segment may be a byte copy of the baseline
+ok 112 - O14 P5: the "during sweep" traffic segment may be a byte copy of the baseline
+  ---
+  duration_ms: 1.047
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C01: positive P3 fixture still recomputes
+ok 113 - CX-VCRNS-C01: positive P3 fixture still recomputes
+  ---
+  duration_ms: 52.55975
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C02: exact nearest rank for n=1..151, all percentiles, ties and huge integers
+ok 114 - CX-VCRNS-C02: exact nearest rank for n=1..151, all percentiles, ties and huge integers
+  ---
+  duration_ms: 225.521
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C03: atomic row reordering is range consistent, WAL transaction reordering is refused
+ok 115 - CX-VCRNS-C03: atomic row reordering is range consistent, WAL transaction reordering is refused
+  ---
+  duration_ms: 82.312875
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C04: candidate timestamps and filtered lag summary do not affect observer-derived quantiles
+ok 116 - CX-VCRNS-C04: candidate timestamps and filtered lag summary do not affect observer-derived quantiles
+  ---
+  duration_ms: 41.666291
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C05: evaluator digest rejects candidate encoding even after authentic resealing
+ok 117 - CX-VCRNS-C05: evaluator digest rejects candidate encoding even after authentic resealing
+  ---
+  duration_ms: 18.584042
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C06: deleting one consumer lag observation cannot filter the p99 sample
+ok 118 - CX-VCRNS-C06: deleting one consumer lag observation cannot filter the p99 sample
+  ---
+  duration_ms: 15.195583
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C07: reader declaration cannot replace measured E8 and relay agreement
+ok 119 - CX-VCRNS-C07: reader declaration cannot replace measured E8 and relay agreement
+  ---
+  duration_ms: 67.329583
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C08: missing event stream properties refuse
+ok 120 - CX-VCRNS-C08: missing event stream properties refuse
+  ---
+  duration_ms: 71.647542
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C09: empty essential P3 source, WAL and observation streams refuse
+ok 121 - CX-VCRNS-C09: empty essential P3 source, WAL and observation streams refuse
+  ---
+  duration_ms: 73.475709
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C10: HMAC/head bindings are evaluator-owned, not candidate declarations
+ok 122 - CX-VCRNS-C10: HMAC/head bindings are evaluator-owned, not candidate declarations
+  ---
+  duration_ms: 8.956209
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C11: empty main P1 reads are allowed today (observation control for R01)
+ok 123 - CX-VCRNS-C11: empty main P1 reads are allowed today (observation control for R01)
+  ---
+  duration_ms: 20.71625
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C12: exact 250ms boundary and enormous monotonic origins
+ok 124 - CX-VCRNS-C12: exact 250ms boundary and enormous monotonic origins
+  ---
+  duration_ms: 117.180458
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C13: empty auxiliary P1 writer, P4 history and P5 traffic samples refuse or fail their bar
+ok 125 - CX-VCRNS-C13: empty auxiliary P1 writer, P4 history and P5 traffic samples refuse or fail their bar
+  ---
+  duration_ms: 78.666959
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C14: no lag samples leave timing unjudged instead of passing a null quantile
+ok 126 - CX-VCRNS-C14: no lag samples leave timing unjudged instead of passing a null quantile
+  ---
+  duration_ms: 45.910125
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C15: A0 rung record remains pending and cannot turn comparative mismatch into acceptance
+ok 127 - CX-VCRNS-C15: A0 rung record remains pending and cannot turn comparative mismatch into acceptance
+  ---
+  duration_ms: 7.63525
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-C16: sequential, in-window single-client P4 events meet arithmetic bars
+ok 128 - CX-VCRNS-C16: sequential, in-window single-client P4 events meet arithmetic bars
+  ---
+  duration_ms: 121.369167
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R01: requested P1 must refuse an empty main E2 stream
+ok 129 - CX-VCRNS-R01: requested P1 must refuse an empty main E2 stream
+  ---
+  duration_ms: 18.19225
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R02: P3 must reject a checkpoint beyond the observed source prefix
+ok 130 - CX-VCRNS-R02: P3 must reject a checkpoint beyond the observed source prefix
+  ---
+  duration_ms: 19.417667
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R03: P3 must not pool different consumer/epoch keys into one correct affected set
+ok 131 - CX-VCRNS-R03: P3 must not pool different consumer/epoch keys into one correct affected set
+  ---
+  duration_ms: 37.827666
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R04: P4 must refuse pulls wholly outside its throughput measurement window
+ok 132 - CX-VCRNS-R04: P4 must refuse pulls wholly outside its throughput measurement window
+  ---
+  duration_ms: 89.348584
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R05: P4 single client must not count 2200 overlapping requests as a closed loop
+ok 133 - CX-VCRNS-R05: P4 single client must not count 2200 overlapping requests as a closed loop
+  ---
+  duration_ms: 101.109458
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R06: source/consumer CR cross-checks cannot be silently omitted
+ok 134 - CX-VCRNS-R06: source/consumer CR cross-checks cannot be silently omitted
+  ---
+  duration_ms: 46.459583
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R01: refusal is content-specific after a valid control
+ok 135 - CX-VCRNS-R2-R01: refusal is content-specific after a valid control
+  ---
+  duration_ms: 106.637167
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R02: refusal is content-specific after a valid control
+ok 136 - CX-VCRNS-R2-R02: refusal is content-specific after a valid control
+  ---
+  duration_ms: 65.750834
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R03-epoch: refusal is content-specific after a valid control
+ok 137 - CX-VCRNS-R2-R03-epoch: refusal is content-specific after a valid control
+  ---
+  duration_ms: 32.430792
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R03-consumer: refusal is content-specific after a valid control
+ok 138 - CX-VCRNS-R2-R03-consumer: refusal is content-specific after a valid control
+  ---
+  duration_ms: 50.714458
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R04: refusal is content-specific after a valid control
+ok 139 - CX-VCRNS-R2-R04: refusal is content-specific after a valid control
+  ---
+  duration_ms: 157.680625
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R05: refusal is content-specific after a valid control
+ok 140 - CX-VCRNS-R2-R05: refusal is content-specific after a valid control
+  ---
+  duration_ms: 192.6065
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R06: refusal is content-specific after a valid control
+ok 141 - CX-VCRNS-R2-R06: refusal is content-specific after a valid control
+  ---
+  duration_ms: 32.542667
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-C01: missing raw streams and decoder/configuration floors refuse
+ok 142 - CX-VCRNS-R2-C01: missing raw streams and decoder/configuration floors refuse
+  ---
+  duration_ms: 201.823041
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-C02: full P5 live interval meets the arithmetic control
+ok 143 - CX-VCRNS-R2-C02: full P5 live interval meets the arithmetic control
+  ---
+  duration_ms: 854.400042
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-C03: missing 99 seconds is detected when the full interval is used
+ok 144 - CX-VCRNS-R2-C03: missing 99 seconds is detected when the full interval is used
+  ---
+  duration_ms: 10.191875
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-C04: fully empty P5 live read/writer streams cannot meet the floor
+ok 145 - CX-VCRNS-R2-C04: fully empty P5 live read/writer streams cannot meet the floor
+  ---
+  duration_ms: 52.187458
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-N01: P5 must refuse live evidence for only one second of a pinned 100-second sweep
+ok 146 - CX-VCRNS-R2-N01: P5 must refuse live evidence for only one second of a pinned 100-second sweep
+  ---
+  duration_ms: 718.398334
+  type: 'test'
+  ...
+1..146
+# tests 146
+# suites 0
+# pass 146
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2780.602667

@@ -1,4 +1,4 @@
-import { completeFixture, completeSegment, readerRows } from '../../bin/test/ns-round2-fixture.mjs';
+import { completeFixture, completeSegment, readerRows, frozenFixtureTrace, attachIndependentCrash, historyCalibration, calibration, brokerFixture } from '../../bin/test/ns-round2-fixture.mjs';
 // Opus adversarial review of recomputeNS (exp/CRNS-recompute at 2f299bfa). Run: node --test lab/verify/CRNS-opus/
 // Each forgery test asserts the behaviour a sound evaluator needs (REFUSED). Forgeries the code currently accepts are
 // were preserved unchanged at 255bf136; round 2 now makes every forgery a required regression.
@@ -30,6 +30,7 @@ function seal(raw) {
  * offers: default one per first-seen command, receipt to its first commit, ACK 4 ms after schedule.
  */
 function world({ commits, offers, priorities = ['P3'], mutate } = {}) {
+  const frozen=frozenFixtureTrace('opus');
   commits ??= [0, 1, 2].map(i => ({ cmds: [`c${i}`], subjects: [`s${i}`] }));
   const entries = [], sourceBrackets = [], consumerBrackets = [], txs = [], effects = [], affected = [], deliveries = [];
   const firstCommit = new Map();
@@ -67,10 +68,7 @@ function world({ commits, offers, priorities = ['P3'], mutate } = {}) {
   const trusted = { key: KEY, binding: BINDING, driver: DRIVER, encodingSha256: NS_ENCODING_SHA256, clockDomain: CLOCK, readerLevel: 1, priorities,
     domainAffected: ({ transaction }) => [...new Set(transaction.changes.map(c => c.entity))],
     gradeWindow: () => 'GREEN', verifySource: () => true, commandValid: () => true, ryow: () => true, steadyRate: 100 };
-  completeFixture({raw,trusted});
-  for (const o of raw.events.offers) { const tx = raw.events.source.entries.flatMap(x=>x.transactions).find(tx=>tx.commandIds.includes(o.commandId));
-    const digest=nsCommandSha256(tx.changes.map(c=>({...c,entity:o.subject}))); trusted.commands[o.commandId].changesSha256=digest; o.commandSha256=digest;
-  }
+  completeFixture({raw,trusted},frozen);
   mutate?.(raw.events, trusted);
   return { raw, trusted };
 }
@@ -171,16 +169,12 @@ test('O7 P3: a RECOMPUTED result carries resume-from-checkpoint evidence', () =>
   const w = world(); delete w.trusted.crashRun; assert.equal(run(w).status, 'REFUSED');
 });
 test('O8 P3: fault witnesses that each replay one arbitrary entry (not from the checkpoint) are refused as FAULT-WITNESS-INVALID', () => {
-  const w = world({ mutate: e => {
-    let n = 0;
-    for (const point of ['before-effect', 'after-effect', 'after-checkpoint']) for (let k = 0; k < 3; k++) {
-      const events = [{ transition: 'cgroup-gone', t: t(START + 10n * MS), n: n++ }];
-      e.faults.push({ format: 'fault-witness/1', binding: BINDING, faultPointId: point, events, eventsSha256: H(canonText(events)),
-        replay: [{ offset: '2', digest: e.consumer.deliveries[2].digest }] });
-    }
-  } });
-  const r = run(w);
-  assert.ok(codes(r).includes('FAULT-WITNESS-INVALID'), `reasons: ${codes(r)}`);
+  const w=world(), companion=w.trusted.crashRun;
+  assert.equal(recomputeNS(companion.bundle,companion.trusted).status,'CRASH-RECOMPUTED');
+  const bad={raw:JSON.parse(companion.bundle.payload),trusted:companion.trusted};
+  bad.raw.events.faults[0].replay=structuredClone(bad.raw.events.consumer.transactions.at(-1).deliveries);
+  const r=run(bad);assert.ok(codes(r).includes('FAULT-WITNESS-INVALID'));assert.ok(r.reasons.some(x=>/replay disagrees/.test(x.detail)));
+
 });
 
 // ------------------------------------------------------------------ O9 positions outside the measured window
@@ -207,7 +201,7 @@ test('O16 oracle "prefix" stops at the position being evaluated', () => {
 // ------------------------------------------------------------------ O17 source content vs offered command
 test('O17 P2/P3: committed change subject differing from the offered command subject is refused', () => {
   const w = world({ priorities: ['P3', 'P2'], commits: [{ cmds: ['c0'], subjects: ['zzz'] }, { cmds: ['c1'], subjects: ['s1'] }, { cmds: ['c2'], subjects: ['s2'] }] });
-  refused(run(w), 'offer subject s0, committed change on zzz');
+  const r=run(w);refused(r,'offer subject s0, committed change on zzz');assert.ok(codes(r).includes('SOURCE-CONTENT-MISMATCH'));
 });
 
 // ------------------------------------------------------------------ O18 / O25 broker frames
@@ -220,13 +214,11 @@ function frame(lsn, epoch, prev, payload) {
   return { frame: { offset: String(lsn), hex: buf.toString('hex') }, crc };
 }
 test('O18/O25 broker-frame/2: self-made CRC frames whose bytes are unrelated to the entries bypass verifySource and are refused', () => {
-  const w = world({ mutate: (e, tr) => {
-    tr.verifySource = () => false; // the evaluator would refuse this source if asked
-    let prev = 7; const frames = [];
-    for (let i = 0; i < 3; i++) { const f = frame(i, 1, prev, 'not-the-entry'); frames.push(f.frame); prev = f.crc; }
-    Object.assign(e.source, { storage: 'broker-frame/2', frames, initialCrc: 7, finalCrc: prev });
-  } });
-  refused(run(w), 'frames unrelated to entries');
+  const w=brokerFixture(world());assert.equal(run(w).status,'RECOMPUTED',JSON.stringify(codes(run(w))));
+  let prev=7;const frames=[];for(let i=1;i<=3;i++){const f=frame(i,1,prev,'not-the-entry');frames.push(f.frame);prev=f.crc;}
+  Object.assign(w.raw.events.source,{frames,initialCrc:7,finalCrc:prev});
+  const r=run(w);refused(r,'frames unrelated to entries');assert.ok(codes(r).includes('SOURCE-NOT-VERIFIED'));
+
 });
 
 // ------------------------------------------------------------------ O22 ACK inside a wide bracket
@@ -262,9 +254,9 @@ function ladder({ hopsSecond = false, recoveryIds = true, baseWriterMs = 4 } = {
   return windows;
 }
 const replayRead = read => H(`p@${read.requestedBasis}/hops${read.hops}`);
-test('L0 ladder fixture sanity: met', () => { assert.equal(nsP1Ladder(ladder(), replayRead, []).met, true); });
+test('L0 ladder fixture sanity: met', () => { assert.equal(nsP1Ladder(ladder(), replayRead, [], calibration(4,'P1',{phase:'steady',traceSegment:'seg',offerScheduleSha256:H('sched')})).met, true); });
 test('O10 P1: a hops-6 read answered with the hops-3 answer is a violation', () => {
-  const r = nsP1Ladder(ladder({ hopsSecond: true }), replayRead, []);
+  const r = nsP1Ladder(ladder({ hopsSecond: true }), replayRead, [], calibration(4,'P1',{phase:'steady',traceSegment:'seg',offerScheduleSha256:H('sched')}));
   assert.equal(r.met, false);
 });
 test('O11 P1: a "1024-reader" window whose reads all come from one loop is refused', () => {
@@ -281,15 +273,18 @@ test('O29a P1: writer p99 at 256 readers of 120 ms passes because the zero-reade
 
 // ------------------------------------------------------------------ P4 history (O13)
 test('O13 P4: history-flatness pulls without any answer check are refused', () => {
-  const pulls = [];
-  for (const depth of [1, 3, 10]) for (let i = 0; i < 1000; i++) pulls.push({ depth, subject: `s${i}`, sentAtNs: '0', receivedAtNs: t(MS), bytesRead: '100' });
-  assert.throws(() => nsP4History(pulls));
+  const pulls=[];for(const depth of [1,3,10])for(let i=0;i<1000;i++)pulls.push({readId:`h-${depth}-${i}`,depth,subject:`s${i}`,shape:'pull-current',requestedBasis:String(depth),echoedBasis:String(depth),sentAtNs:'0',receivedAtNs:'1000000',answerSha256:H(`depth-${depth}`)});
+  const resources=[1,3,10].map(depth=>({depth,startNs:'0',endNs:'2000000',ioReadStartBytes:'0',ioReadEndBytes:'100'}));
+  const oracle=r=>H(`depth-${r.depth}`);assert.equal(nsP4History(pulls,oracle,[],resources,historyCalibration()).met,true);
+  pulls.find(p=>p.depth===10).answerSha256=H('depth-1');assert.throws(()=>nsP4History(pulls,oracle,[],resources,historyCalibration()),error=>error.code==='P4-HISTORY-ANSWER-MISMATCH');
+
 });
 
 // ------------------------------------------------------------------ P5 traffic (O14)
 test('O14 P5: the "during sweep" traffic segment may be a byte copy of the baseline', () => {
-  const seg = { phase: 'steady', traceSegment: 'seg', offerScheduleSha256: H('s'), startNs: '0', endNs: t(1_000_000_000n),
-    reads: [{ sentAtNs: t(MS), receivedAtNs: t(2n * MS) }], offers: [{ scheduledAtNs: t(MS), ackAtNs: t(5n * MS) }] };
-  const r = nsP5Traffic({ baseline: seg, sweep: structuredClone(seg) });
-  assert.equal(r.met, false);
+  const make=(id,startNs,endNs)=>completeSegment({id,level:64,phase:'steady',traceSegment:'seg',offerScheduleSha256:H('s'),startNs,endNs,offers:[{scheduledAtNs:startNs,ackAtNs:String(BigInt(startNs)+1000000n)}]});
+  const baseline=make('b','0','1000000000'),during=make('s','1000000000','2000000000'),sweep={startNs:'1000000000',endNs:'2000000000'},cal=calibration(1,'P5',{traceSegment:'seg',offerScheduleSha256:H('s')});
+  assert.equal(nsP5Traffic({baseline,sweep:during},sweep,()=>H('correct'),[],cal).met,true);
+  const r=nsP5Traffic({baseline,sweep:structuredClone(baseline)},sweep,()=>H('correct'),[],cal);assert.equal(r.met,false);assert.equal(r.reason,'P5-LIVE-TRAFFIC-NOT-VERIFIED');
+
 });

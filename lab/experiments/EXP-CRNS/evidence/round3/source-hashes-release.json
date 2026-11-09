@@ -1,0 +1,7 @@
+{
+  "path": "lab/bin/claim.mjs",
+  "round": 3,
+  "oldSha256": "0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892",
+  "newSha256": "e689373eff850daf511b95423c9b88f545979595b4445abcad7d6a52de178c46",
+  "contractHashMatches": []
+}

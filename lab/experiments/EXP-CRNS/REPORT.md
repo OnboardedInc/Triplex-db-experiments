@@ -232,3 +232,150 @@ Final receipt audit addition (rule 9a): `evidence/round2/verification.json` reco
 actual heavy-limited command above. Freshness is this new round2/final-attempt1 output, not the retained historical/reviewer TAP;
 binding is the exact implementation/test hashes and explicit offline/no-acceptance scope. SHA256SUMS readback checks the committed
 artifacts; it is an integrity manifest, not an NS verdict or independent reviewer receipt.
+
+# Round 3: re-review fixes (CX-CRNS)
+
+North star: correct P1–P5 evidence throughout the measured workload. Scope/targets remain SCOPE/NORTH-STAR/TARGETS. No acceptance
+file, package/dependency, engine, box, slot or VM change. Opus re-review files were committed **unchanged first** at `e328de31`.
+Codex input: `verify/CRNS` `0d298c89`, VERIFY-round2.md (R01–R06 fixed, N01 still HIGH). Reviewer historical TAP is retained.
+
+## Finding-to-fix table
+
+| Re-review finding | Fix | Required regression |
+| --- | --- | --- |
+| Codex N01, P5 missing 99 seconds | Denominator is the full verified sweep; exact interval, pinned 1-second sampling, each period has 64 correct readers and writer offers match the frozen full-sweep schedule | copied round2 N01/C02/C03 controls; new round3 N01 includes a missing final second and missing writer period |
+| High 1 / V-O6: garbage readers count as P3/P2 load | Always oracle-check every counted main read and echoed basis for all priority sets | required V-O6; new NF1 |
+| High 2 / V-O7: crashes before traffic/unrelated resume range | Unique planned injection/time; crash inside traffic; before-U <= crash < recovery-L; decoded point snapshot and exact WAL/source range | required V-O7; NF2 time/id/bracket/snapshot variants |
+| High 3 / V-O2b: source published before offer | Refuse PUBLISHED-BEFORE-OFFER against the first attempt; no queue clamp for pre-applied commands | required V-O2b; NF3 |
+| High 4 / V-O2: invalid command committed | Refuse INVALID-COMMAND-PUBLISHED even with a valid-looking receipt | required V-O2; NF4 |
+| Medium 5 / V-O6c: arbitrary lag minimum | Frozen scheduled valid-command population; outside-window publication remains infinite lag; minimum map must match frozen counts | required V-O6c/control; NF5 |
+| Medium 6 / V-O29,V-O14: baseline inflation below absolute bars | Pin a prior/A0 calibration record; compare observed baseline with actual raw prior budget before ratios, for P1/P4/P5 | required V-O29/V-O14; NF6 and P4 sub-bar variant |
+| Medium 7 / NF2: crash-only RECOMPUTED looks like grant | Separate CRASH-RECOMPUTED status; lag:null, composite met:false; only that status can establish a primary companion | required crash-only NF2; own NF7 |
+| Medium 8: fixture pins derived from observations | Immutable separately authored builder/Opus trace profiles exist before judged source construction; no observed entries/rows used for expected pins | NF8 calls completeFixture after corruption and confirms unchanged pins plus SOURCE-CONTENT-MISMATCH |
+| Medium 9: weak/unpinned companion context | Pin crashAttemptId; every context field equal except key/head, attempt id and primary wrapper; no shared mutable context snapshots | NF9 reader/identity/command/minimum/oracle/attempt variants |
+| Low 10 / V-O1: duplicate under fresh logical id | Every duplicate/retry requires a strictly earlier attempt with identical commandId | required V-O1/V-O3; NF10 |
+| Low 11 / V-O5/O17: reversed subject offer order | Conservative refusal of reversed first-offer order; proposed ruling recorded below | required V-O5/O17; NF11 |
+| Low 12 / V-O10: mismatched basis form empties prefix | Refuse BASIS-FORM-MISMATCH before oracle invocation | required V-O10 |
+| Low 13: old tests pass for unrelated failures | Complete valid inputs and exact own refusal codes for O8/O13/O14/O17/O18, with positive controls | revised five round-1 tests; reasons-audit-attempt2.txt |
+
+The 16 Opus variants now have no TODO flag. The five old regressions specifically require: O8 FAULT-WITNESS-INVALID with a
+range-content detail (not absent fields); O13 P4-HISTORY-ANSWER-MISMATCH; O14 P5-LIVE-TRAFFIC-NOT-VERIFIED with full interval and
+calibration supplied; O17 SOURCE-CONTENT-MISMATCH against independently fixed content; O18 SOURCE-NOT-VERIFIED from an actual
+synthetic broker-frame decoder after a RECOMPUTED control (not the storage pin). The reasons-audit script is refreshed from those
+current tests, not its former stale fixture copy. Its original pre-edit form is preserved at e328de31.
+
+## Design amendments and integration boundaries
+
+- Lag population changes from observed source-L membership to frozen scheduled valid commands. Late publication is retained as
+  infinity, not omitted. The contract builder must amend R44/Q100e/Q100p semantics and pin the complete trace preimage/attempt plans.
+- P5 coverage is the entire sweep, with complete declared sampling periods; no auxiliary-subwindow inference. Baselines are from
+  independently pinned A0/calibration raw records per Q99b. Missing authority/calibration/sampling input refuses.
+- Crash-only status and the composite primary result are separate. Named fault-point proof uses absent/uncommitted/committed
+  snapshot state consistent with one atomic consumer transaction. The review's example of committed effects without a committed
+  checkpoint cannot hold for FD01; this implementation does not weaken atomicity to manufacture that observation. Production
+  inability to see uncommitted effects remains an explicit refusal/residual, not a passing hook label.
+- Conservative per-subject first-offer-order refusal is a proposed amended ruling, not an assertion that the existing contract
+  already rules on concurrent open-loop commands. A different policy needs an approved explicit plan; unknown ordering cannot pass.
+- Production source/WAL/fault snapshot decoders, collector, oracle copies and calibration authority must still be independently
+  pinned/qualified. Synthetic byte codecs and constant prior-calibration inputs are tests only. No acceptance path is enabled.
+
+## Round 3 PASS/verdict audit (before implementation commit)
+
+1. `nsTraceAttempt` and scheduled lag selection: content matches immutable frozen command/schedule/window preimages and attempt;
+   traceSha256 is in the exact authenticated binding. Samples cannot be reduced by source timing or a supplied small number.
+   Source/slot/input/build/driver/clock binding and fresh witnessed head remain mandatory.
+2. `nsOtherPriorities` reader correctness, command validity, first-offer publication, retry origin and subject order: compares
+   observed bytes/times to oracle/request/receipt and frozen ids before arithmetic can grant a bar; source prefix is clipped.
+   Every priority set runs these checks under the same exact authenticated attempt.
+3. Fault loop and `nsSameCompanionContext`: actual unique injection and cgroup events, in-traffic times, consumer brackets,
+   decoded point snapshots, source/WAL anchors and complete replay agree. Frozen injections/attempt id and all context settings
+   bind the scope; a distinct attempt is independently re-evaluated, never a copied result or best-of-N supplied verdict.
+4. Result status: clean crash data produces CRASH-RECOMPUTED only, lag remains null and composite met false. Primary RECOMPUTED
+   still needs every source/read/count/lag check and a valid pinned companion. Missing bar values cannot imply met.
+5. `nsCalibration`, P4 history calibration and P5 traffic: actual content-addressed prior raw samples match expected authority
+   binding and GREEN record. Current workloads/phases/sample subjects match; current baselines cannot inflate past that budget.
+   Records are trusted prior authority inputs, explicitly distinct from fresh run measurements; they are never relabelled fresh.
+   Current timing/counts remain from this attempt. P5's full interval, every reader sampling period and exact planned writer schedule are checked.
+6. Test fixture and assertion sites: expected trace/identity/content/schedule/calibration objects are authored independently of
+   judged source/rows. The separate crash trace has its own events and scoped witnesses; context snapshots retain no shared mutable
+   pin objects. Every forgery test is required and the five named older tests assert their exact code. Fresh test output is builder
+   verification only. Preserved reviewer TAP and first failed fixture-transition runs remain historical, never accepted as fresh.
+7. Updated reasons-audit script: executes current required assertions, records actual reasons, and exits nonzero on any failed
+   assertion. Attempt 1 failed on a stale generated audit copy (P4 calibration argument), is retained, and attempt 2 uses the fixed
+   current test source. It is a code-specific diagnostic, not an NS receipt or independent review verdict.
+
+Original `admitCore`/`qualifyClaim` decision sites and `lab/acceptance/` remain unchanged. Final execution results and hashes follow
+only after evaluator bytes are committed for Q75a. No live/production acceptance or independent reviewer ACCEPT is claimed.
+
+Round 3 evaluator hash: `lab/bin/claim.mjs`, old `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`, new `1958810e9deb4ece3f3151c1d7268aa626d645cc3cd61012d784a79b0609d9a6`. No old evaluator hash occurs as a content pin in obligations/load-contract; no acceptance file was changed. Re-pinning remains with the contract builder.
+
+Round 3 checkpoint follow-up, audited before the next source commit: the first source-bound run at 933b11f2 passed 255/255
+(exit 0, final-attempt1.tap). Inspection then justified two additional NF2 content checks: a witness must name the **latest**
+consumer checkpoint visible by its crash time, and the crash must lie inside actual observed reader and writer spans (not only
+E9's interval). The independent crash fixture now records reader activity at both ends of that span. The added NF2 regression
+keeps all other evidence valid and proves stale snapshots and ended reader traffic each refuse FAULT-WITNESS-INVALID. Freshness,
+source/slot/input and planned injection binding are the same as audit item 3. The first passing run is retained as covering its
+old exact source; it is not claimed as verification of these added bytes. The 148-test focused suite passes; both full evaluator
+suites will be rerun after this source is committed.
+
+Final round 3 evaluator hash after the checkpoint follow-up: `fb9af98bc6b96888f1e64206cf9315dfac419893986b23dfea9a7512d26560d9` (old pre-round-3 hash `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`). No acceptance pins were edited.
+
+
+Additional interpretation limits: PUBLISHED-BEFORE-OFFER deliberately uses the review's conservative L < first-send refusal.
+A legitimate publication bracket straddling the offer can therefore be refused as insufficient timing proof; this is not a claim
+that L alone proves an early actual publication. Observer/driver planning must provide usable brackets, or the amended ruling
+must specify a stronger independent publication proof. Calibration records must be registry/authority-pinned prior inputs;
+self-hashing a record supplied by a candidate does not make it trusted. Pure helpers cannot establish that provenance by themselves.
+R44 now carries an explicitly proposed round 3 amendment note; acceptance files remain untouched.
+
+
+Frozen-writer-schedule reconciliation, audited before the final source commit: TARGETS section 2.1 specifies Poisson arrivals,
+so valid empty writer seconds must not be rejected. P5 now matches actual writer offers against the independently pinned complete
+relative-offset schedule in its calibration/plan record, rather than requiring a write in every second. Reader evidence still
+covers every one-second sampling period throughout the verified sweep. The new N01 control includes 98 empty writer periods,
+passes when its two planned offers are present, and refuses P5-WRITER-COVERAGE-SHORT after one is removed. This is content checked
+against an immutable prior input pin under the same run binding; it introduces no writer throughput target. The run at 1b9fefbd
+passed 256/256 (exit 0, final-attempt2.tap) before this correction; those bytes are not claimed as the final new source. The
+149-test focused suite passes; fresh source-bound final verification follows after commit.
+
+Final scheduled-writer correction hash: `lab/bin/claim.mjs`, old pre-round-3 `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`, new `e689373eff850daf511b95423c9b88f545979595b4445abcad7d6a52de178c46`. Acceptance remains unchanged.
+
+
+## Round 3 final verification and handoff
+
+Final tested implementation commit: `97450c878008cde8ae91c9a4b1aa8777292ffdd1`. Evaluator integrity was clean before the run.
+The final report/evidence commit leaves those evaluator and test bytes unchanged.
+
+```sh
+node lab/bin/heavy.mjs --label CX-CRNS-r3-final3 -- node --test \
+  lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs \
+  lab/bin/test/claim-ns.test.mjs lab/bin/test/claim-ns-round2.test.mjs \
+  lab/bin/test/claim-ns-round3.test.mjs lab/verify/CRNS/review.test.mjs \
+  lab/verify/CRNS/round2/review.test.mjs \
+  lab/verify/CRNS-opus/forgeries.test.mjs lab/verify/CRNS-opus/forgeries-round2.test.mjs
+```
+
+**Exit 0: 257/257 passed, zero failed/cancelled/skipped/todo; 219.719 seconds.** This includes both untouched original evaluator
+suites (108), all earlier 105 CR-NS tests, all 16 required Opus re-review variants, all 12 copied Codex re-review controls/N01, and
+16 additional round 3 cases. All former test cases remain covered; positive fixtures now use separately frozen expectations.
+The fresh reasons audit (`reasons-audit-attempt4.txt`) ran all 30 current round-1 reviewer assertions with no failure and includes
+the five property-specific refusals. Their complete-input positive controls run in the same assertion file.
+
+Evidence: `evidence/round3/final-attempt3.tap`, `verification.json`, `reasons-audit-attempt4.txt` and
+`source-hashes-release.json`. Earlier failed fixture transitions/audit and the two passing intermediate full runs remain retained
+with their exact source versions and explicit rerun reasons above; none is retroactively adopted as final-source evidence.
+Syntax, whitespace, unchanged acceptance files, evaluator integrity and source-hash readback were checked. Every evidence file is
+below 1MB and the whole retained evidence directory below 5MB. The current SHA256SUMS is refreshed; the named round1/round2
+manifests remain explicitly historical for their commits.
+
+Final receipt audit (rule 9a): `verification.json` checks the actual terminal count/failure content and records the observed exit
+0, exact heavy command, current source/test hashes, final implementation commit and fresh log digest. The tested bytes and the
+new attempt, not a prior receipt, bind the result. Its explicit scope is offline builder verification; source/slot/input ids in
+synthetic fixtures are test ids, and the receipt cannot be consumed as an NS acceptance or independent reviewer grant.
+
+Result: the Codex N01, all four high findings, five medium findings, four low findings and five stale-reason regressions are mapped
+to fixes and required tests above. No acceptance file was edited and no NS acceptance cell was closed. No Docker/engine/slot,
+live VM/production workload, production decoder/collector/oracle qualification, full package check, merge or push was performed.
+The branch is ready for separate independent round 3 review. Contract amendments/pins, the conservative concurrency/timing choices,
+production evidence adapters and A0/calibration authority admission remain with their owners; no human clarification was needed
+for this offline builder round.

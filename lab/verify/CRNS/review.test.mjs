@@ -1,3 +1,4 @@
+import {calibration, attachIndependentCrash, shiftFrozenFixture} from '../../bin/test/ns-round2-fixture.mjs';
 // [CX-VCRNS] Why: assert the required evaluator behavior on fresh, authenticated fixture mutations.
 // Rejected: accepting RECOMPUTED as proof of safety (the counterexamples below expose missing content checks).
 import assert from 'node:assert/strict';
@@ -85,7 +86,7 @@ test('CX-VCRNS-C10: HMAC/head bindings are evaluator-owned, not candidate declar
 
 test('CX-VCRNS-C11: empty main P1 reads are allowed today (observation control for R01)', () => {
   assert.equal(p1().raw.events.reads.length, 0);
-  assert.equal(nsP1Ladder(ladder(), () => h('correct'), []).met, true);
+  assert.equal(nsP1Ladder(ladder(), () => h('correct'), [], calibration()).met, true);
 });
 
 test('CX-VCRNS-C12: exact 250ms boundary and enormous monotonic origins', () => {
@@ -104,14 +105,14 @@ test('CX-VCRNS-C12: exact 250ms boundary and enormous monotonic origins', () => 
       ]));
       return value;
     };
-    f.raw.events = shift(f.raw.events);
+    f.raw.events = shift(f.raw.events); shiftFrozenFixture(f,2n**100n);
     assert.deepEqual(run(f), expected);
   }
 });
 
 test('CX-VCRNS-C13: empty auxiliary P1 writer, P4 history and P5 traffic samples refuse or fail their bar', () => {
   const windows = ladder(); windows[0].offers = [];
-  assert.equal(nsP1Ladder(windows, () => h('correct'), []).met, false);
+  assert.equal(nsP1Ladder(windows, () => h('correct'), [], calibration()).met, false);
   const f = p4Sequential(); f.raw.events.historyPulls = [];
   assert.ok(codes(run(f)).includes('P4-HISTORY-NOT-VERIFIED'));
   for (const name of ['reads', 'offers']) {
@@ -129,8 +130,8 @@ test('CX-VCRNS-C14: no lag samples leave timing unjudged instead of passing a nu
   for (const b of f.raw.events.sourceBrackets) b.L = '0';
   const r = run(f);
   assert.equal(r.status, 'REFUSED');
-  assert.equal(r.bars.P3.lag, null);
-  assert.ok(codes(r).includes('TIMING-UNJUDGED'));
+  assert.equal(r.bars.P3.lag, false);
+  assert.ok(codes(r).includes('LAG-SAMPLES-SHORT'));
 });
 
 test('CX-VCRNS-C15: A0 rung record remains pending and cannot turn comparative mismatch into acceptance', () => {

@@ -156,3 +156,63 @@ whole-P3 grant. `trusted.crashRun={bundle,trusted}` is re-evaluated, never a sup
 source/slot/input identities, and no recursive companion. A primary result's `bars.P3.resume` requires that companion to recompute
 cleanly. `bars.P3.met` additionally needs the primary GREEN lag bar and all source/content/evidence checks. Bare faults:[] with
 no independently recomputed companion cannot grant P3.
+
+## Round 3: trace, load, crash and baseline binding (supersedes conflicting prior text)
+
+`binding` now pins `traceSha256` and `crashAttemptId`. `trusted.frozenTrace` is an independently authored immutable trace preimage;
+its canonical hash must equal traceSha256. It contains `commands` and `attempts[attemptId]` with the exact offered event/command ids,
+scheduled times, content hashes, measured/drain window and (for crash attempts) planned `injections[]`. It must come from frozen
+inputs before candidate observations, never be reconstructed from observed source entries. The expected command validity/hash
+pins must agree with this trace. The main and companion are separate planned attempts of that same preimage.
+
+Lag population consists of **unique oracle-valid command ids scheduled inside the window**, not positions whose observed L happens
+to lie inside it. Every such published position contributes a sample; publication outside the window contributes infinity and
+LAG-SAMPLES-SHORT. A lower caller-provided minimum cannot remove the sample. `minimumSamples.lag` is an attempt-id map equal to
+these frozen populations; mismatch refuses LAG-POPULATION-UNBOUND. Commands with no committed position are still refused by the
+unconditional source progress check. All reader answers and echoed bases are checked in every priority set whenever readerLevel
+is positive; instant garbage answers cannot count as P2/P3 load.
+
+A committed oracle-invalid command refuses INVALID-COMMAND-PUBLISHED. Publication L earlier than the first attempt's sentAtNs
+refuses PUBLISHED-BEFORE-OFFER. Legitimate later retries use response completion in queue accounting, never the earlier original
+publication. Every duplicate/lost-ACK retry has an earlier attempt with the same commandId; a new logical id is not a retry.
+Different basis/position representations refuse BASIS-FORM-MISMATCH before invoking the oracle, rather than silently emptying
+its prefix. Pending an amended ruling for concurrent per-subject offers, a reversal of first-offer order refuses
+SUBJECT-OFFER-ORDER-MISMATCH; it cannot close an ordered-subject case by assuming commutativity.
+
+Every crash witness requires a planned unique `injectionId` also present on its single cgroup-gone event. The crash time is unique
+and inside the measured traffic window. Its before-checkpoint consumer bracket U is <= crash, and recovery bracket L is > crash.
+Replay remains exactly the anchored source and WAL range. `pageFrontier` agrees with the planned injection. The required
+`normalizeFault(witness,binding)` decodes the retained `snapshotHex`/production snapshot and returns
+`{injectionId, checkpoint, pageFrontier, effectState}`. Before-effect has absent effects; after-effect has **uncommitted** effects
+and the old checkpoint; after-checkpoint has committed effects at the already checkpointed page. This preserves FD01's atomic
+single-transaction model: committed effects with an uncommitted checkpoint would contradict it. For after-checkpoint the page
+frontier is the before-crash committed frontier; recovery resumes with its successor. The R44 residual remains: a production
+observer unable to distinguish absent from uncommitted in-memory effects must refuse the named point or provide additional
+independently reviewed evidence. A candidate hook label alone is insufficient.
+
+A clean crash-only result has status **CRASH-RECOMPUTED**, lag:null and met:false. A primary run accepts resume only from that
+separately recomputed status. The exact companion attempt is pinned in binding. All companion context fields must match the
+primary, including functions by reference, except key/head, binding.attemptId and the primary-only crashRun wrapper; every other
+binding field is equal. The fixture companion has its own ten-commit traffic/source/WAL trace and nine distinct injections and
+ranges. It is not a copy of the primary. Production trust functions and captured state still require evaluator code pinning,
+immutable inputs and independent adapter verification.
+
+Baseline ratios now require independently pinned **ns-calibration/1** authority records. The context fields are calibrationP1,
+calibrationP4 and calibrationP5. Each carries an exact `pinSha256`, expectedBinding (attempt/source/slot/inputs), and a canonical
+payload matching that pin and binding, with a GREEN grade and named priority. The future contract/A0/calibration registry owns
+these pins; a candidate-supplied record or a pin derived from the baseline being judged is never an authority. P1/P5 records
+contain raw matched prior segments; P4 records contain the exact 1,000-subject history baseline and observer IO counters.
+Recomputed current baselines cannot exceed that independently recorded writer/history budget even when both would lie below the
+absolute bar. Absolute guards and ratios remain alongside this check; no numeric target is loosened.
+
+P5 during-sweep start/end equal the complete evaluator-verified sweep start/end. Its calibration record pins samplingPeriodNs;
+the supported E8 representation is one-second periods. Every period of the whole sweep must contain measured 64-loop correct
+completions. Writer offers must exactly cover the independently frozen full-sweep schedule in the authority record
+(`payload.sweepOfferOffsetsNs`, relative to sweep start), including legitimate empty Poisson periods. There is no invented
+one-write-per-second minimum. Missing a reader period or a planned writer offer refuses; a self-selected one-second segment
+cannot stand for a 100-second sweep. Baseline remains outside the sweep and must match the independently pinned calibration/workload.
+
+Crash checkpoint consistency also requires maximality: no later source position may have a consumer bracket U <= crash time
+than the declared before-crash checkpoint. The crash lies between observed reader activity on both sides, and writer offers on
+both sides, as well as inside E9. Thus an idle/end-of-traffic interval or a stale but historically valid checkpoint cannot prove
+resume. The extra activity and brackets remain authenticated observations, not a candidate hook assertion.
