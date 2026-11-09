@@ -1,0 +1,3086 @@
+[
+  {
+    "id": 118,
+    "name": "bpf_jiffies64",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n%time = call i64 inttoptr (i64 118 to i64 ()*)()",
+    "result": {
+      "pass": true,
+      "reasons": [],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": []
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "compiled program reads another clock: bpf_jiffies64#118 x1 (outside the chosen section, line 76)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15
+      },
+      "forbidden": [
+        "bpf_jiffies64#118 x1 (outside the chosen section, line 76)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "e1e7d2542aedeefb8ea14b5b2f0ed2d3c993ffd46a8d432e6e6496fa2dca10b3",
+      "compiledBytes": 2169,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 118,
+    "name": "bpf_jiffies64",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n  99: call 118",
+    "result": {
+      "pass": true,
+      "reasons": [],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": []
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "probe section s_probe_15 is incomplete: it does not end with an exit instruction (ended by eof)",
+          "compiled program reads another clock: bpf_jiffies64#118 x1 (section s_probe_15)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 4,
+          "complete": false,
+          "calls": {
+            "bpf_ktime_get_ns": 1,
+            "bpf_jiffies64": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15,
+        "bpf_jiffies64": 1
+      },
+      "forbidden": [
+        "bpf_jiffies64#118 x1 (section s_probe_15)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "12b8142773975c7205044476aa4de38da0bff94c70f2fbc7d1299115253ee3e9",
+      "compiledBytes": 2135,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 118,
+    "name": "bpf_jiffies64",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n  99: (85) call bpf_jiffies64#118",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled dump names a forbidden clock helper: bpf_jiffies64 (first at dump line 76)"
+      ],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": [
+          {
+            "token": "bpf_jiffies64",
+            "line": 76
+          }
+        ]
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "probe section s_probe_15 is incomplete: it does not end with an exit instruction (ended by eof)",
+          "clock helper named in the compiled output: bpf_jiffies64",
+          "compiled program reads another clock: bpf_jiffies64#118 x1 (section s_probe_15)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 4,
+          "complete": false,
+          "calls": {
+            "bpf_ktime_get_ns": 1,
+            "bpf_jiffies64": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15,
+        "bpf_jiffies64": 1
+      },
+      "forbidden": [
+        "bpf_jiffies64#118 x1 (section s_probe_15)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "8641e7c3e5c54ad16ce0937e7ccb20cb589e0de7f8343f69870e68f510f11561",
+      "compiledBytes": 2154,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 125,
+    "name": "bpf_ktime_get_boot_ns",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n%time = call i64 inttoptr (i64 125 to i64 ()*)()",
+    "result": {
+      "pass": true,
+      "reasons": [],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": []
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "compiled program reads another clock: bpf_ktime_get_boot_ns#125 x1 (outside the chosen section, line 76)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15
+      },
+      "forbidden": [
+        "bpf_ktime_get_boot_ns#125 x1 (outside the chosen section, line 76)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "0e1b4293bb6cfdd7a4fe88cc4340136e3795aeac07e158a9fedaacfba03ae2c9",
+      "compiledBytes": 2169,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 125,
+    "name": "bpf_ktime_get_boot_ns",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n  99: call 125",
+    "result": {
+      "pass": true,
+      "reasons": [],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": []
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "probe section s_probe_15 is incomplete: it does not end with an exit instruction (ended by eof)",
+          "compiled program reads another clock: bpf_ktime_get_boot_ns#125 x1 (section s_probe_15)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 4,
+          "complete": false,
+          "calls": {
+            "bpf_ktime_get_ns": 1,
+            "bpf_ktime_get_boot_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15,
+        "bpf_ktime_get_boot_ns": 1
+      },
+      "forbidden": [
+        "bpf_ktime_get_boot_ns#125 x1 (section s_probe_15)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "8b3a14626287f97fdf1e9a71ecaa19f1dda4143fa8949fe9970f5df97a1b2f83",
+      "compiledBytes": 2135,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 125,
+    "name": "bpf_ktime_get_boot_ns",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n  99: (85) call bpf_ktime_get_boot_ns#125",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled dump names a forbidden clock helper: bpf_ktime_get_boot_ns, ktime_get_boot (first at dump line 76)"
+      ],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": [
+          {
+            "token": "bpf_ktime_get_boot_ns",
+            "line": 76
+          },
+          {
+            "token": "ktime_get_boot",
+            "line": 76
+          }
+        ]
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "probe section s_probe_15 is incomplete: it does not end with an exit instruction (ended by eof)",
+          "clock helper named in the compiled output: bpf_ktime_get_boot_ns",
+          "compiled program reads another clock: bpf_ktime_get_boot_ns#125 x1 (section s_probe_15)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 4,
+          "complete": false,
+          "calls": {
+            "bpf_ktime_get_ns": 1,
+            "bpf_ktime_get_boot_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15,
+        "bpf_ktime_get_boot_ns": 1
+      },
+      "forbidden": [
+        "bpf_ktime_get_boot_ns#125 x1 (section s_probe_15)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "e5ef1cc44dc142a54e4355fe59b4e355d030863b053e7f278518a4779cc539da",
+      "compiledBytes": 2162,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 160,
+    "name": "bpf_ktime_get_coarse_ns",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n%time = call i64 inttoptr (i64 160 to i64 ()*)()",
+    "result": {
+      "pass": true,
+      "reasons": [],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": []
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "compiled program reads another clock: bpf_ktime_get_coarse_ns#160 x1 (outside the chosen section, line 76)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15
+      },
+      "forbidden": [
+        "bpf_ktime_get_coarse_ns#160 x1 (outside the chosen section, line 76)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "8d397ae00a6f046ea3c8fbb98603c243b7c52409ecd751648b853d8d3b5ea193",
+      "compiledBytes": 2169,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 160,
+    "name": "bpf_ktime_get_coarse_ns",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n  99: call 160",
+    "result": {
+      "pass": true,
+      "reasons": [],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": []
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "probe section s_probe_15 is incomplete: it does not end with an exit instruction (ended by eof)",
+          "compiled program reads another clock: bpf_ktime_get_coarse_ns#160 x1 (section s_probe_15)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 4,
+          "complete": false,
+          "calls": {
+            "bpf_ktime_get_ns": 1,
+            "bpf_ktime_get_coarse_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15,
+        "bpf_ktime_get_coarse_ns": 1
+      },
+      "forbidden": [
+        "bpf_ktime_get_coarse_ns#160 x1 (section s_probe_15)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "6c9da0e1edf4b213f38120e4bcac80c90f63cfaf2d76f6de79a8905389d57eb1",
+      "compiledBytes": 2135,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 160,
+    "name": "bpf_ktime_get_coarse_ns",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n  99: (85) call bpf_ktime_get_coarse_ns#160",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled dump names a forbidden clock helper: bpf_ktime_get_coarse_ns (first at dump line 76)"
+      ],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": [
+          {
+            "token": "bpf_ktime_get_coarse_ns",
+            "line": 76
+          }
+        ]
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "probe section s_probe_15 is incomplete: it does not end with an exit instruction (ended by eof)",
+          "clock helper named in the compiled output: bpf_ktime_get_coarse_ns",
+          "compiled program reads another clock: bpf_ktime_get_coarse_ns#160 x1 (section s_probe_15)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 4,
+          "complete": false,
+          "calls": {
+            "bpf_ktime_get_ns": 1,
+            "bpf_ktime_get_coarse_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15,
+        "bpf_ktime_get_coarse_ns": 1
+      },
+      "forbidden": [
+        "bpf_ktime_get_coarse_ns#160 x1 (section s_probe_15)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "602fc784ef484a69dd43ec5fddce311e7f71cd5e5023fb4caa2ead3c9304aea0",
+      "compiledBytes": 2164,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 208,
+    "name": "bpf_ktime_get_tai_ns",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n%time = call i64 inttoptr (i64 208 to i64 ()*)()",
+    "result": {
+      "pass": true,
+      "reasons": [],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": []
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "compiled program reads another clock: bpf_ktime_get_tai_ns#208 x1 (outside the chosen section, line 76)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15
+      },
+      "forbidden": [
+        "bpf_ktime_get_tai_ns#208 x1 (outside the chosen section, line 76)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "dee4a082ad7cd7bf581d12f42c3412d8f78fc2c8a0152fbe8e35ae099ba8bdd7",
+      "compiledBytes": 2169,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 208,
+    "name": "bpf_ktime_get_tai_ns",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n  99: call 208",
+    "result": {
+      "pass": true,
+      "reasons": [],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": []
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "probe section s_probe_15 is incomplete: it does not end with an exit instruction (ended by eof)",
+          "compiled program reads another clock: bpf_ktime_get_tai_ns#208 x1 (section s_probe_15)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 4,
+          "complete": false,
+          "calls": {
+            "bpf_ktime_get_ns": 1,
+            "bpf_ktime_get_tai_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15,
+        "bpf_ktime_get_tai_ns": 1
+      },
+      "forbidden": [
+        "bpf_ktime_get_tai_ns#208 x1 (section s_probe_15)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "2bce0f35e997ba9aeaf419a8914eb37efd91d6c39d19880ed4e7b9a962ef1d89",
+      "compiledBytes": 2135,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  },
+  {
+    "id": 208,
+    "name": "bpf_ktime_get_tai_ns",
+    "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 05 00 00 00\tcall 5\n  2:\t95 00 00 00 00 00 00 00\texit\n\n  99: (85) call bpf_ktime_get_tai_ns#208",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled dump names a forbidden clock helper: bpf_ktime_get_tai_ns (first at dump line 76)"
+      ],
+      "gate": {
+        "checks": [
+          "source hash binding",
+          "static source check: only nsecs(monotonic)",
+          "bpftrace version exactly v0.20.2",
+          "all four processes exit 0 cleanly",
+          "non-empty compiled dump",
+          "no forbidden clock helper name token in the dump"
+        ],
+        "forbiddenTokens": [
+          "bpf_ktime_get_boot_ns",
+          "ktime_get_boot",
+          "bpf_ktime_get_coarse_ns",
+          "bpf_ktime_get_tai_ns",
+          "bpf_jiffies64",
+          "BPF_FUNC_ktime_get_boot_ns",
+          "BPF_FUNC_ktime_get_coarse_ns",
+          "BPF_FUNC_ktime_get_tai_ns",
+          "BPF_FUNC_jiffies64"
+        ],
+        "forbiddenTokenHits": [
+          {
+            "token": "bpf_ktime_get_tai_ns",
+            "line": 76
+          }
+        ]
+      },
+      "diagnostic": {
+        "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+        "pass": false,
+        "reasons": [
+          "probe section s_probe_15 is incomplete: it does not end with an exit instruction (ended by eof)",
+          "clock helper named in the compiled output: bpf_ktime_get_tai_ns",
+          "compiled program reads another clock: bpf_ktime_get_tai_ns#208 x1 (section s_probe_15)"
+        ],
+        "adopted": true
+      },
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [
+        {
+          "name": "s_probe_1",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_2",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_3",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_4",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_5",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_6",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_7",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_8",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_9",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_10",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_11",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_12",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_13",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_14",
+          "instructions": 3,
+          "complete": true,
+          "calls": {
+            "bpf_ktime_get_ns": 1
+          }
+        },
+        {
+          "name": "s_probe_15",
+          "instructions": 4,
+          "complete": false,
+          "calls": {
+            "bpf_ktime_get_ns": 1,
+            "bpf_ktime_get_tai_ns": 1
+          }
+        }
+      ],
+      "monotonicCalls": 15,
+      "helperCalls": {
+        "bpf_ktime_get_ns": 15,
+        "bpf_ktime_get_tai_ns": 1
+      },
+      "forbidden": [
+        "bpf_ktime_get_tai_ns#208 x1 (section s_probe_15)"
+      ],
+      "unparsedCalls": [],
+      "compiledSha256": "5d0c5fbbd7af3e736fbfeba78ce9da963c1a5b121dedad1f3dee49bc1bcacc57",
+      "compiledBytes": 2161,
+      "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+    }
+  }
+]

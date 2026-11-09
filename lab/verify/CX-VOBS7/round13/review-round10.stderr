@@ -1,0 +1,9 @@
+test_file_sync_exactness_and_interval_boundaries (review_round10.Independent.test_file_sync_exactness_and_interval_boundaries) ... ok
+test_multiple_acks_keep_both_proven_and_unproven_codes (review_round10.Independent.test_multiple_acks_keep_both_proven_and_unproven_codes) ... ok
+test_w0_wrong_clock_can_pass_with_small_offset_or_transport_delay (review_round10.Independent.test_w0_wrong_clock_can_pass_with_small_offset_or_transport_delay) ... ok
+test_wal_tail_without_timestamp_must_not_be_silently_excluded (review_round10.Independent.test_wal_tail_without_timestamp_must_not_be_silently_excluded) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.067s
+
+OK

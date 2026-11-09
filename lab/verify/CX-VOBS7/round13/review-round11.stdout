@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: controls: a complete successful constructed dump passes, empty and wholly unknown dumps refuse
+ok 1 - controls: a complete successful constructed dump passes, empty and wholly unknown dumps refuse
+  ---
+  duration_ms: 9.086958
+  type: 'test'
+  ...
+# Subtest: controls: declared forbidden helper ids and names refuse in recognised forms
+ok 2 - controls: declared forbidden helper ids and names refuse in recognised forms
+  ---
+  duration_ms: 7.535458
+  type: 'test'
+  ...
+# Subtest: controls: exact version and matching source hashes are required
+ok 3 - controls: exact version and matching source hashes are required
+  ---
+  duration_ms: 2.890375
+  type: 'test'
+  ...
+# Subtest: A: a nonzero or missing compile exit status must refuse even after printing valid IR
+ok 4 - A: a nonzero or missing compile exit status must refuse even after printing valid IR
+  ---
+  duration_ms: 2.461125
+  type: 'test'
+  ...
+# Subtest: A: a partly recognised dump must not ignore a numeric forbidden helper call
+ok 5 - A: a partly recognised dump must not ignore a numeric forbidden helper call
+  ---
+  duration_ms: 1.28825
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 90.957958

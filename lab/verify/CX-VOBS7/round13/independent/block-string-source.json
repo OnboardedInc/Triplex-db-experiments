@@ -1,0 +1,731 @@
+{
+  "provenance": "CONSTRUCTED source/BTF and neutral dump controls, offline only; W0 engine facts are stand-ins; crafted dump defects are outside this verdict",
+  "rows": [
+    {
+      "statement": "@review_clock = nsecs;",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  printf(\"/*\"); @review_clock = nsecs; printf(\"*/\");\n\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "sourceSha256": "e175e87efef6d777f76815805f832528e48dc851d1e5295b74b2c18146efc001",
+      "sites": {
+        "monotonic": 15,
+        "other": []
+      },
+      "pass": true,
+      "reasons": [],
+      "w0Pass": true,
+      "diagnosticPass": true,
+      "fullProof": {
+        "pass": true,
+        "reasons": [],
+        "gate": {
+          "checks": [
+            "source hash binding",
+            "static source check: only nsecs(monotonic)",
+            "bpftrace version exactly v0.20.2",
+            "all four processes exit 0 cleanly",
+            "non-empty compiled dump",
+            "no forbidden clock helper name token in the dump"
+          ],
+          "forbiddenTokens": [
+            "bpf_ktime_get_boot_ns",
+            "ktime_get_boot",
+            "bpf_ktime_get_coarse_ns",
+            "bpf_ktime_get_tai_ns",
+            "bpf_jiffies64",
+            "BPF_FUNC_ktime_get_boot_ns",
+            "BPF_FUNC_ktime_get_coarse_ns",
+            "BPF_FUNC_ktime_get_tai_ns",
+            "BPF_FUNC_jiffies64"
+          ],
+          "forbiddenTokenHits": []
+        },
+        "diagnostic": {
+          "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+          "pass": true,
+          "reasons": [],
+          "adopted": true
+        },
+        "flags": [
+          "-d",
+          "all"
+        ],
+        "version": "bpftrace v0.20.2",
+        "sourceSha256": "e175e87efef6d777f76815805f832528e48dc851d1e5295b74b2c18146efc001",
+        "expectedSourceSha256": "e175e87efef6d777f76815805f832528e48dc851d1e5295b74b2c18146efc001",
+        "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+        "processes": {
+          "version": {
+            "ok": true
+          },
+          "hash": {
+            "ok": true
+          },
+          "btf": {
+            "ok": true
+          },
+          "compile": {
+            "ok": true
+          }
+        },
+        "sourceMonotonicSites": 15,
+        "sourceProbes": 15,
+        "sourceHelperNeeds": [
+          "bpf_get_current_cgroup_id",
+          "bpf_get_current_pid_tgid",
+          "bpf_get_smp_processor_id",
+          "bpf_ktime_get_ns",
+          "bpf_map_delete_elem",
+          "bpf_map_lookup_elem",
+          "bpf_map_update_elem",
+          "bpf_perf_event_output",
+          "bpf_probe_read",
+          "bpf_probe_read_kernel",
+          "bpf_ringbuf_discard",
+          "bpf_ringbuf_output",
+          "bpf_ringbuf_reserve",
+          "bpf_ringbuf_submit"
+        ],
+        "allowList": [
+          "bpf_ktime_get_ns",
+          "bpf_map_lookup_elem",
+          "bpf_map_update_elem",
+          "bpf_map_delete_elem",
+          "bpf_get_smp_processor_id",
+          "bpf_get_current_pid_tgid",
+          "bpf_get_current_cgroup_id",
+          "bpf_perf_event_output",
+          "bpf_ringbuf_output",
+          "bpf_ringbuf_reserve",
+          "bpf_ringbuf_submit",
+          "bpf_ringbuf_discard",
+          "bpf_probe_read_kernel",
+          "bpf_probe_read"
+        ],
+        "helperIds": {
+          "bpf_ktime_get_ns": 5,
+          "bpf_jiffies64": 118,
+          "bpf_ktime_get_boot_ns": 125,
+          "bpf_ktime_get_coarse_ns": 160,
+          "bpf_ktime_get_tai_ns": 208,
+          "bpf_map_lookup_elem": 1,
+          "bpf_map_update_elem": 2,
+          "bpf_map_delete_elem": 3,
+          "bpf_get_smp_processor_id": 8,
+          "bpf_get_current_pid_tgid": 14,
+          "bpf_get_current_cgroup_id": 80,
+          "bpf_perf_event_output": 25,
+          "bpf_ringbuf_output": 130,
+          "bpf_ringbuf_reserve": 131,
+          "bpf_ringbuf_submit": 132,
+          "bpf_ringbuf_discard": 133,
+          "bpf_probe_read_kernel": 113,
+          "bpf_probe_read": 4
+        },
+        "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+        "btfBytes": 1004,
+        "btfEnum": "ENUM",
+        "referenceNote": [],
+        "sections": [
+          {
+            "name": "s_probe_1",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_2",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_3",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_4",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_5",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_6",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_7",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_8",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_9",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_10",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_11",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_12",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_13",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_14",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_15",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          }
+        ],
+        "monotonicCalls": 15,
+        "helperCalls": {
+          "bpf_map_lookup_elem": 15,
+          "bpf_ktime_get_ns": 15,
+          "bpf_get_smp_processor_id": 15
+        },
+        "forbidden": [],
+        "unparsedCalls": [],
+        "compiledSha256": "f62b1597f16d83c14a4fcc8e99232ec5c0a9750482d6e3d6bf64dfe0d44aed57",
+        "compiledBytes": 3200,
+        "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+      },
+      "fullW0": {
+        "pass": true,
+        "reasons": [],
+        "checks": {
+          "clock": {
+            "pass": true,
+            "reasons": [],
+            "gate": {
+              "checks": [
+                "source hash binding",
+                "static source check: only nsecs(monotonic)",
+                "bpftrace version exactly v0.20.2",
+                "all four processes exit 0 cleanly",
+                "non-empty compiled dump",
+                "no forbidden clock helper name token in the dump"
+              ],
+              "forbiddenTokens": [
+                "bpf_ktime_get_boot_ns",
+                "ktime_get_boot",
+                "bpf_ktime_get_coarse_ns",
+                "bpf_ktime_get_tai_ns",
+                "bpf_jiffies64",
+                "BPF_FUNC_ktime_get_boot_ns",
+                "BPF_FUNC_ktime_get_coarse_ns",
+                "BPF_FUNC_ktime_get_tai_ns",
+                "BPF_FUNC_jiffies64"
+              ],
+              "forbiddenTokenHits": []
+            },
+            "diagnostic": {
+              "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+              "pass": true,
+              "reasons": [],
+              "adopted": true
+            },
+            "flags": [
+              "-d",
+              "all"
+            ],
+            "version": "bpftrace v0.20.2",
+            "sourceSha256": "e175e87efef6d777f76815805f832528e48dc851d1e5295b74b2c18146efc001",
+            "expectedSourceSha256": "e175e87efef6d777f76815805f832528e48dc851d1e5295b74b2c18146efc001",
+            "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+            "processes": {
+              "version": {
+                "ok": true
+              },
+              "hash": {
+                "ok": true
+              },
+              "btf": {
+                "ok": true
+              },
+              "compile": {
+                "ok": true
+              }
+            },
+            "sourceMonotonicSites": 15,
+            "sourceProbes": 15,
+            "sourceHelperNeeds": [
+              "bpf_get_current_cgroup_id",
+              "bpf_get_current_pid_tgid",
+              "bpf_get_smp_processor_id",
+              "bpf_ktime_get_ns",
+              "bpf_map_delete_elem",
+              "bpf_map_lookup_elem",
+              "bpf_map_update_elem",
+              "bpf_perf_event_output",
+              "bpf_probe_read",
+              "bpf_probe_read_kernel",
+              "bpf_ringbuf_discard",
+              "bpf_ringbuf_output",
+              "bpf_ringbuf_reserve",
+              "bpf_ringbuf_submit"
+            ],
+            "allowList": [
+              "bpf_ktime_get_ns",
+              "bpf_map_lookup_elem",
+              "bpf_map_update_elem",
+              "bpf_map_delete_elem",
+              "bpf_get_smp_processor_id",
+              "bpf_get_current_pid_tgid",
+              "bpf_get_current_cgroup_id",
+              "bpf_perf_event_output",
+              "bpf_ringbuf_output",
+              "bpf_ringbuf_reserve",
+              "bpf_ringbuf_submit",
+              "bpf_ringbuf_discard",
+              "bpf_probe_read_kernel",
+              "bpf_probe_read"
+            ],
+            "helperIds": {
+              "bpf_ktime_get_ns": 5,
+              "bpf_jiffies64": 118,
+              "bpf_ktime_get_boot_ns": 125,
+              "bpf_ktime_get_coarse_ns": 160,
+              "bpf_ktime_get_tai_ns": 208,
+              "bpf_map_lookup_elem": 1,
+              "bpf_map_update_elem": 2,
+              "bpf_map_delete_elem": 3,
+              "bpf_get_smp_processor_id": 8,
+              "bpf_get_current_pid_tgid": 14,
+              "bpf_get_current_cgroup_id": 80,
+              "bpf_perf_event_output": 25,
+              "bpf_ringbuf_output": 130,
+              "bpf_ringbuf_reserve": 131,
+              "bpf_ringbuf_submit": 132,
+              "bpf_ringbuf_discard": 133,
+              "bpf_probe_read_kernel": 113,
+              "bpf_probe_read": 4
+            },
+            "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+            "btfBytes": 1004,
+            "btfEnum": "ENUM",
+            "referenceNote": [],
+            "sections": [
+              {
+                "name": "s_probe_1",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_2",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_3",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_4",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_5",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_6",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_7",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_8",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_9",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_10",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_11",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_12",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_13",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_14",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              },
+              {
+                "name": "s_probe_15",
+                "instructions": 5,
+                "complete": true,
+                "calls": {
+                  "bpf_map_lookup_elem": 1,
+                  "bpf_ktime_get_ns": 1,
+                  "bpf_get_smp_processor_id": 1
+                }
+              }
+            ],
+            "monotonicCalls": 15,
+            "helperCalls": {
+              "bpf_map_lookup_elem": 15,
+              "bpf_ktime_get_ns": 15,
+              "bpf_get_smp_processor_id": 15
+            },
+            "forbidden": [],
+            "unparsedCalls": [],
+            "compiledSha256": "f62b1597f16d83c14a4fcc8e99232ec5c0a9750482d6e3d6bf64dfe0d44aed57",
+            "compiledBytes": 3200,
+            "claim": "the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)"
+          },
+          "clockTransport": {
+            "pass": true,
+            "status": "INCONCLUSIVE",
+            "reasons": [],
+            "detail": {
+              "status": "INCONCLUSIVE",
+              "pass": false,
+              "reasons": [
+                "clock identity not established by observation: separation of CLOCK_BOOTTIME from CLOCK_MONOTONIC (-1 ns) is not larger than the measured uncertainty (100900000 ns)"
+              ],
+              "toleranceNs": 100000000,
+              "slackNs": 1000000,
+              "samples": 20,
+              "minHopNs": 100000,
+              "maxHopNs": 100000,
+              "probeBootMinusMonotonicNs": 0,
+              "separationNs": -1,
+              "uncertaintyNs": 100900000,
+              "readBracketNs": 1
+            }
+          },
+          "perf": {
+            "pass": true,
+            "paranoid": 4,
+            "reasons": []
+          },
+          "memory": {
+            "pass": true,
+            "reasons": [],
+            "peakBytes": 94371840,
+            "oomKills": 0,
+            "capBytes": 268435456,
+            "headroomFraction": 0.8
+          },
+          "ext4": {
+            "pass": true,
+            "reasons": []
+          },
+          "mapKeys": {
+            "pass": true,
+            "configured": 65536,
+            "floor": 16384,
+            "reasons": []
+          },
+          "attach": {
+            "pass": true,
+            "reasons": []
+          }
+        },
+        "clockIdentity": {
+          "provenBy": "compiled program",
+          "program": true,
+          "observational": "INCONCLUSIVE"
+        }
+      }
+    },
+    {
+      "statement": "@review_clock = nsecs();",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  printf(\"/*\"); @review_clock = nsecs(); printf(\"*/\");\n\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "sourceSha256": "47916f67f23dcbb575f55411a5b1c210770f8220d98b1a98c9f6ede9de44bdce",
+      "sites": {
+        "monotonic": 15,
+        "other": []
+      },
+      "pass": true,
+      "reasons": [],
+      "w0Pass": true,
+      "diagnosticPass": true
+    },
+    {
+      "statement": "@review_clock = nsecs(boot);",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  printf(\"/*\"); @review_clock = nsecs(boot); printf(\"*/\");\n\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "sourceSha256": "04bcbf5156aa6930bdd4d2b097ba89fcdbbe23e5ec3098c2a167603fc33d239a",
+      "sites": {
+        "monotonic": 15,
+        "other": []
+      },
+      "pass": true,
+      "reasons": [],
+      "w0Pass": true,
+      "diagnosticPass": true
+    },
+    {
+      "statement": "@review_clock = nsecs(tai);",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  printf(\"/*\"); @review_clock = nsecs(tai); printf(\"*/\");\n\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "sourceSha256": "67e1178961f2be182852e803850c56ec3037fed6da660ece43d09993eab392cd",
+      "sites": {
+        "monotonic": 15,
+        "other": []
+      },
+      "pass": true,
+      "reasons": [],
+      "w0Pass": true,
+      "diagnosticPass": true
+    },
+    {
+      "statement": "@review_clock = nsecs(sw_tai);",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  printf(\"/*\"); @review_clock = nsecs(sw_tai); printf(\"*/\");\n\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "sourceSha256": "a311d1a849e7e3e7da31e1263896bc3c688b3b3d260dd89b8e1d23ec88da8ccf",
+      "sites": {
+        "monotonic": 15,
+        "other": []
+      },
+      "pass": true,
+      "reasons": [],
+      "w0Pass": true,
+      "diagnosticPass": true
+    },
+    {
+      "statement": "@review_clock = elapsed;",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  printf(\"/*\"); @review_clock = elapsed; printf(\"*/\");\n\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "sourceSha256": "3d077b147b35dfd537ba51695a884bc711baeed8baf1611123f3371bceab9c03",
+      "sites": {
+        "monotonic": 15,
+        "other": []
+      },
+      "pass": true,
+      "reasons": [],
+      "w0Pass": true,
+      "diagnosticPass": true
+    },
+    {
+      "statement": "@review_clock = jiffies;",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  printf(\"/*\"); @review_clock = jiffies; printf(\"*/\");\n\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "sourceSha256": "e631d615097ab985d9a881914076653944b9116fe874f5319cb1f73c7ba5edb6",
+      "sites": {
+        "monotonic": 15,
+        "other": []
+      },
+      "pass": true,
+      "reasons": [],
+      "w0Pass": true,
+      "diagnosticPass": true
+    },
+    {
+      "statement": "time(\"%H\");",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  printf(\"/*\"); time(\"%H\"); printf(\"*/\");\n\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "sourceSha256": "3297f2d76dd8833f778792ea6fdfaa06752a02e405c8c0dadbaabcf50c65ca55",
+      "sites": {
+        "monotonic": 15,
+        "other": []
+      },
+      "pass": true,
+      "reasons": [],
+      "w0Pass": true,
+      "diagnosticPass": true
+    },
+    {
+      "statement": "printf(\"%s\", strftime(\"%H\", nsecs(monotonic)));",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  printf(\"/*\"); printf(\"%s\", strftime(\"%H\", nsecs(monotonic))); printf(\"*/\");\n\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "sourceSha256": "101c3ba133ff577f345e08df73a58e80e41ff39524d7a2f7770dd39c0063aca5",
+      "sites": {
+        "monotonic": 15,
+        "other": []
+      },
+      "pass": true,
+      "reasons": [],
+      "w0Pass": true,
+      "diagnosticPass": true
+    }
+  ]
+}

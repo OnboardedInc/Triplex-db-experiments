@@ -1,0 +1,40 @@
+{
+  "oldHead": "2741ea3bbf800f3ded5c8798ffdc3ee59462851e",
+  "reviewedHead": "b167510f0890e68b803288573228119073738784",
+  "paths": [
+    {
+      "path": "lab/verify/CX-VOBS7/review_round11.mjs",
+      "oldSha256": "b4973a961114c8f3afc8634c871c2caaea26265b0fee4faab6fbd3fc74024e69",
+      "newSha256": "fccb599b25878c090b3817ffb57940a8eac754e666578b089955548cd0b426fc",
+      "numberedExpectationChanges": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "path": "lab/verify/CX-VOBS7/review_round12.mjs",
+      "oldSha256": "5167c7be9d05f1eff107d3173c4f091c934568f003168e56a0c7e0eef16ca60d",
+      "newSha256": "b867f5a53f59f5e554bb075390e4c3238c7cffdce39482243281d7680bb75945",
+      "numberedExpectationChanges": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "path": "lab/verify/CX-VOBS7/replay_round11_for_round12.mjs",
+      "oldSha256": "0d23c63fb1f43e2c163ec6b057c98b0b26b0778cdceb78ee004351790cd891ca",
+      "newSha256": "3d31cf9d93b727eb2cc83bba9bc24d9d2a9a07344545eda6a2e66422f94096c7",
+      "numberedExpectationChanges": []
+    }
+  ],
+  "diffSha256": "aeb6128d8f470e8c9a1fc3f9244c36b042e7e5329cc043a389aa96e603f9f109",
+  "classification": "manual full-diff review: unchanged fixture inputs, eleven numbered gate/diagnostic expectation changes per Q109a",
+  "builderGeneratedReplayOnlyOutputPathDiffers": true
+}
