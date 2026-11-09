@@ -6,7 +6,8 @@
  "dumpFileSha256": "b35312b41cb000e625dfcd15c748a7a4e9db98a0226e26d1f67dd67621a94309",
  "dumpFileBytes": 229093,
  "dumpFileLayout": "\"--- stdout ---\\n\" + stdout + \"\\n--- stderr ---\\n\" + stderr + \"\\n\", exactly as the harness wrote and hashed it (dumpFileSha256 in W0.json)",
- "stdoutSha256": "eb8a358396d41018094ffcb000c3cc6bd42f9c5f3d1e0dc6e91505da2889e7b4",
+ "extraction": "stdout = the bytes between \"--- stdout ---\\n\" and \"\\n--- stderr ---\\n\"; stderr = the bytes after that delimiter up to, not including, the final \"\\n\" of the file (regex ^--- stdout ---\\n([\\s\\S]*)\\n--- stderr ---\\n([\\s\\S]*)\\n$); both hashes below are of exactly those bytes (UTF-8)",
+ "stdoutSha256": "5823294d42a77d6c500eb89a89c1fffa42816d8c2a35acaec5b5c551672d0b8e",
  "compiledSha256_scanned_by_verdict": "73c9cb2b647070cf788be0dea42851372901fac5b63a8075ae122c86285cf1b3",
  "pinnedProgramSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
  "bpftraceVersion": "bpftrace v0.20.2",
@@ -38,13 +39,27 @@
  "enumFileSha256": "feed90ef25c4b6afaa7b61e3b28d28bf351a07cd010c72cee4ffb44866619d19",
  "btfSha256": "70d2c194ac86837df6584464f3d890a1ff7fbf6dd786daed508546f0447cff87",
  "structuredParserDiagnostic": {
-  "pass": false,
-  "reasonCount": 745,
-  "firstReasons": [
-   "compiled program section not found: no \"Disassembly of section\" start marker in the dump",
-   "UNPARSED-CALL outside a chosen section at dump line 30: call-like line with no recognised helper form: call: printf :: type[none, ctx: 0]",
-   "UNPARSED-CALL outside a chosen section at dump line 32: call-like line with no recognised helper form: call: nsecs :: type[none, ctx: 0]"
-  ],
-  "summary": "sections [], helperCalls {}, monotonicCalls 0: the round 12 parser looks for \"Disassembly of section\" BPF text, which 0.20.2 -d does not print, and reads each AST line \"call: printf/nsecs/delete ::\" as an UNPARSED-CALL; it never reached the IR calls. Gating verdict (Q109a) is unaffected: it passed on source check, identity, clean exits and zero forbidden name tokens."
- }
+  "round": 16,
+  "pass": true,
+  "format": "llvm-ir",
+  "summary": "the round 16 IR reader (lab/bin/ir-dump.mjs) passes on this dump: 1 module, 15 probe functions each bound to its source block, 15 bpf_ktime_get_ns calls = 15 nsecs(monotonic) source sites = 15 AST nsecs calls, nine allow-listed helpers, four allow-listed intrinsics, no unparsed call. Still DIAGNOSTIC (Q109a).",
+  "round15Verdict": {
+   "pass": false,
+   "reasonCount": 745,
+   "firstReasons": [
+    "compiled program section not found: no \"Disassembly of section\" start marker in the dump",
+    "UNPARSED-CALL outside a chosen section at dump line 30: call-like line with no recognised helper form: call: printf :: type[none, ctx: 0]",
+    "UNPARSED-CALL outside a chosen section at dump line 32: call-like line with no recognised helper form: call: nsecs :: type[none, ctx: 0]"
+   ],
+   "summary": "sections [], helperCalls {}, monotonicCalls 0: the round 12 parser looks for \"Disassembly of section\" BPF text, which 0.20.2 -d does not print, and reads each AST line \"call: printf/nsecs/delete ::\" as an UNPARSED-CALL; it never reached the IR calls. Gating verdict (Q109a) is unaffected: it passed on source check, identity, clean exits and zero forbidden name tokens."
+  }
+ },
+ "stdoutBytes": 228829,
+ "stderrSha256": "bf5b24d4573e147920c5b72f7ac08c5a83402e3e8d31bd48f8801efc51ce74dc",
+ "stderrBytes": 232,
+ "hashesCovered": "dumpFileSha256 = whole file; stdoutSha256 and stderrSha256 = the two extracted parts; compiledSha256_scanned_by_verdict = stdout + \"\\n\" + stderr as the W0 verdict joined them",
+ "corrections": [
+  "round 16: stdoutSha256 was recorded as eb8a358396d41018094ffcb000c3cc6bd42f9c5f3d1e0dc6e91505da2889e7b4 in round 15, which hashed text that is not the documented extraction (review R15-N1); the corrected value is the hash of the 228,829-byte stdout and equals flag-check/c-d.out. stderrSha256 added."
+ ],
+ "irReader": "lab/bin/ir-dump.mjs reads this file (round 16); lab/observer/test_round16.mjs checks the hashes above before judging the parser"
 }

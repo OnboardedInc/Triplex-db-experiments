@@ -1796,7 +1796,7 @@ Gating items (Q109a) all pass: static source check (15 `nsecs(monotonic)` sites,
 | Clock transport check | `INCONCLUSIVE` (separation -1.7 to -12 us against about 100 ms uncertainty); not a pass, not a block, as designed |
 | Attach session (200 FULL commits) | judged clean: codes `[]`, mismatches `[]` |
 
-**Golden dump:** `lab/observer/golden/vm_syncwitness.bpftrace-0.20.2-d.dump.txt`, 229,093 B, **sha256 `b35312b41cb000e625dfcd15c748a7a4e9db98a0226e26d1f67dd67621a94309`** (equals `dumpFileSha256` in `W0.json`; the layout is `--- stdout ---`, stdout, `--- stderr ---`, stderr, as hashed by the harness; stdout alone `eb8a3583...e7b4`; the text the verdict scanned `73c9cb2b...1b3`). The [8 CPU] re-check produced the **same dump hash and the same BTF hash**. Exact command and counts: `golden/MANIFEST.json`:
+**Golden dump:** `lab/observer/golden/vm_syncwitness.bpftrace-0.20.2-d.dump.txt`, 229,093 B, **sha256 `b35312b41cb000e625dfcd15c748a7a4e9db98a0226e26d1f67dd67621a94309`** (equals `dumpFileSha256` in `W0.json`; the layout is `--- stdout ---`, stdout, `--- stderr ---`, stderr, as hashed by the harness; stdout alone `5823294d...2b8` (228,829 B; corrected in round 16: this paragraph first said `eb8a3583...e7b4`, a hash of text that is not the documented extraction, review R15-N1); stderr alone `bf5b24d4...74dc` (232 B); the text the verdict scanned `73c9cb2b...1b3`). The [8 CPU] re-check produced the **same dump hash and the same BTF hash**. Exact command and counts: `golden/MANIFEST.json`:
 `bpftrace -d /program/vm_syncwitness.bt 1 2 3 4` in the pinned image under `--cap-drop ALL --cap-add BPF --cap-add PERFMON --ulimit memlock=-1:-1`, entrypoint `bpftrace`, `BPFTRACE_MAX_MAP_KEYS=65536`, read-only `/sys/kernel/btf` and `/sys/kernel/tracing`, the `.bt` mounted read-only, the `harden()` options of `vm-observer.mjs`, `docker start -a`, 120 s kill.
 **Structured parser diagnostic verdict on the golden dump: `pass: false`, 745 reasons, no gating effect (Q109a).** It reports `no "Disassembly of section" start marker`, then one `UNPARSED-CALL` for each AST line such as `call: printf :: type[none, ctx: 0]` and `call: nsecs ...`; `sections: []`, `helperCalls: {}`, `monotonicCalls: 0`. The parser never reached the LLVM IR calls. The reviewer deciding whether to promote the parser to gating needs a parser for the IR form (`call i64 inttoptr (i64 N to ptr)(...)` inside the 15 `define`s), not for BPF disassembly: 0.20.2 does not print the latter.
 
@@ -1817,12 +1817,12 @@ Gating items (Q109a) all pass: static source check (15 `nsecs(monotonic)` sites,
 
 ### W2: per-commit kernel cost (R48 estimate 5 to 60 us; gate p99 <= 100 us). PASS in all three runs
 
-Cost = `run_time_ns` delta over `run_cnt` delta of the witness's BPF programs (`kernel.bpf_stats_enabled=1` for the window, restored), divided by the commits in each 20 ms interval; "p99" is nearest-rank over those interval means (an interval holds 24 to 48 commits, so this is a p99 of 20 ms averages, not of single commits). 15.36 to 15.39 program runs per commit in all runs.
+Cost per interval = the `run_time_ns` delta of the witness's BPF programs (`kernel.bpf_stats_enabled=1` for the window, restored) divided by the **number of commits in that interval** (`run_cnt` is a separate statistic, reported only as program runs per commit; round 16 correction of R15-N2: this sentence first said the division was by the `run_cnt` delta). Percentiles are nearest-rank (the ceil(q*n)-th ordered interval mean) in every column, and the "p99" is over those interval means (intervals hold 9 to 52, 3 to 35 and 1 to 29 commits in the three runs, not 24 to 48), so it is a p99 of roughly 20 ms averages, not of single commits. 15.36 to 15.39 program runs per commit in all runs.
 
 | Run | VM | Intervals / commits | Weighted mean per commit | Median | p90 | Max interval = p99 | Per program run |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `w1w2-attempt1` | [6 CPU / 12 GiB] | 10 / 421 | **20.9 us** | 20.5 | 22.7 | 28.3 us | 1,358 ns |
-| `w2-attempt2` (host load 7.4 to 8, 4 heavy slots held) | [6 CPU / 12 GiB] | 51 / 818 | 33.8 us | 32.3 | 51.0 | 81.2 us | 2,198 ns |
+| `w2-attempt2` (host load 7.4 to 8, 4 heavy slots held) | [6 CPU / 12 GiB] | 51 / 818 | 33.8 us | 32.3 | 52.4 (corrected from 51.0, R15-N2) | 81.2 us | 2,198 ns |
 | `resized/w0w2-attempt1` | [8 CPU / 20 GiB] | 40 / 764 | **25.9 us** | 25.0 | 33.3 | 53.2 us | 1,686 ns |
 
 **Answer: about 21 to 34 us added kernel time per commit (weighted mean), inside the R48 estimate; the worst 20 ms interval reached 81 us under load, still under the 100 us gate.** The spread between runs is host contention, so these are diagnostic. The writer p99 ABBA overhead report was not run (not gated).

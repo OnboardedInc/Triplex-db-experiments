@@ -30,6 +30,7 @@
 // dropping it (its output is the evidence a reviewer needs to promote it later).
 import {createHash} from 'node:crypto';
 import {deriveHelperIds} from './btf-helpers.mjs';
+import {parseIrDump} from './ir-dump.mjs';
 
 export const BPFTRACE_VERSION='0.20.2';
 /** The ONE flag set W0 relies on to make bpftrace emit its compiled program.
@@ -144,6 +145,17 @@ export function sourceProbes(source){
   if(depth===0)head+=ch;
  }
  return probes.filter(Boolean);
+}
+
+/** [EXP-OBS01-R16] Per top-level block of the .bt source: its header and its number of nsecs(monotonic) reads (the binding the IR dump reader checks function by function). */
+export function sourceProbeBlocks(source){
+ const code=lexBt(source).code,blocks=[];let depth=0,head='',body='';
+ for(const ch of code){
+  if(ch==='{'){if(depth===0){blocks.push({head:head.trim(),body:''});body='';}else body+=ch;depth+=1;head='';continue;}
+  if(ch==='}'){depth-=1;if(depth===0)blocks.at(-1).body=body;else body+=ch;continue;}
+  if(depth===0)head+=ch;else body+=ch;
+ }
+ return blocks.filter(b=>b.head).map(b=>({head:b.head,monotonic:(b.body.match(/\bnsecs\s*\(\s*monotonic\s*\)/g)??[]).length}));
 }
 
 /** Helpers the source can need, from its constructs; `unmodeled` lists constructs that would call a helper this derivation does not model (the proof then refuses). */
@@ -298,10 +310,21 @@ export function clockPrimitiveVerdict(facts,{version=BPFTRACE_VERSION}={}){
  const derived=deriveHelperIds(facts?.btf?.bytes,REQUIRED_HELPER_NAMES);
  if(!failures.btf)for(const reason of derived.reasons)diag.push(reason);
  const ids=derived.ok&&!failures.btf?derived.ids:null,nameById=new Map(ids?Object.entries(ids).map(([n,i])=>[i,n]):[]);
- const result={sections:[],calls:{},forbidden:[],unparsed:[],monotonicCalls:0};
+ const result={sections:[],calls:{},forbidden:[],unparsed:[],monotonicCalls:0,format:null,ir:null};
  // the structured parse is adopted only from a run where all four processes completed (A1) and only with ids from the kernel; otherwise it is not attempted
  const adopt=Object.values(failures).every(f=>!f)&&ids!==null&&text.length>0;
  if(adopt){
+  // [EXP-OBS01-R16] The real 0.20.2 `-d` dump is AST + one LLVM IR module (no disassembly): it is read by ir-dump.mjs. A dump that carries the legacy `Disassembly of section` markers
+  // (the constructed samples of rounds 11 to 14 and their reviewer fixtures) still goes through the legacy reader below. Both are diagnostic only.
+  const legacy=text.split(/\r?\n/).some(l=>SECTION_START.test(l)),useIr=!legacy&&/^; ModuleID = /m.test(String(compiled.stdout??''));
+  if(useIr){
+   const ir=parseIrDump(compiled.stdout,{nameById,allowedNames:ALLOWED_HELPER_NAMES,isClockName,monotonicName:MONOTONIC_HELPER.name,probes:sourceProbeBlocks(facts?.sourceText??''),monotonicSites:sites.monotonic,stderr:compiled.stderr});
+   result.format='llvm-ir';result.ir={modules:ir.modules,functions:ir.functions.length,intrinsics:ir.intrinsics,astNsecs:ir.astNsecs};
+   for(const r of ir.reasons)diag.push(r);
+   result.sections=ir.functions.map(f=>({name:f.name,probe:f.probe,calls:f.calls,ktime:f.ktime}));result.calls=ir.calls;result.monotonicCalls=ir.ktimeCalls;result.forbidden.push(...ir.forbidden);result.unparsed.push(...ir.unparsed);
+   for(const m of text.matchAll(/\bbpf_[a-z0-9_]+\b/g))if(m[0]!==MONOTONIC_HELPER.name&&isClockName(m[0]))diag.push('clock helper named in the compiled output: '+m[0]);
+  }
+  else{
   const {sections,problems:sectionProblems}=extractSections(text);
   for(const p of sectionProblems)diag.push(p);
   if(!sections.length)diag.push('compiled program section not found: no "Disassembly of section" start marker in the dump');
@@ -341,13 +364,14 @@ export function clockPrimitiveVerdict(facts,{version=BPFTRACE_VERSION}={}){
   if(result.forbidden.length)diag.push('compiled program reads another clock: '+[...new Set(result.forbidden)].join(', '));
   // secondary sanity check only: completeness never comes from this count
   if(sections.length&&result.monotonicCalls<sites.monotonic)diag.push('compiled program has fewer bpf_ktime_get_ns calls ('+result.monotonicCalls+') than the '+sites.monotonic+' nsecs(monotonic) sites in the source');
+  }
  }
  else diag.push('structured parse not attempted: '+(Object.values(failures).some(Boolean)?'a process did not complete':ids===null?'no helper ids from the kernel BTF':'the dump is empty'));
  if(ids!==null){const note=[];for(const [id,name] of REFERENCE_CLOCK_IDS)if(ids[name]!==id)note.push(name+': kernel '+ids[name]+', reference '+id);result.referenceNote=note;}
  const claim='the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)';
  return {pass:bad.length===0,reasons:bad,gate:{checks:['source hash binding','static source check: only nsecs(monotonic)','bpftrace version exactly v'+version,'all four processes exit 0 cleanly','non-empty compiled dump','no forbidden clock helper name token in the dump'],
    forbiddenTokens:FORBIDDEN_CLOCK_TOKENS,forbiddenTokenHits:tokens},
-  diagnostic:{role:'DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0',pass:diag.length===0,reasons:diag,adopted:adopt},
+  diagnostic:{role:'DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0',pass:diag.length===0,reasons:diag,adopted:adopt,format:result.format,ir:result.ir},
   flags:COMPILE_FLAGS,version:String(facts?.versionOutput??'').trim(),sourceSha256:facts?.mountedSourceSha256??null,expectedSourceSha256:facts?.expectedSourceSha256??null,
   representation:DUMP_STAGE_NOTE,processes:Object.fromEntries(Object.entries(failures).map(([k,v])=>[k,v?{ok:false,reason:v}:{ok:true}])),
   sourceMonotonicSites:sites.monotonic,sourceProbes:probes.length,sourceHelperNeeds:needs.needs,allowList:ALLOWED_HELPER_NAMES,
