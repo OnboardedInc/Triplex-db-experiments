@@ -1,3 +1,4 @@
+import { parseLatencyReceipt, parseLatencyReceipts } from "../../receipts/parse.ts";
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
@@ -21,13 +22,13 @@ for (const arm of ["M", "U"]) {
     binding.sources["grid.mjs"],
     sha(fs.readFileSync(path.join(root, "source-attempt2/grid.mjs"))),
   );
-  const list = json(path.join(dir, "summary.json"));
+  const list = parseLatencyReceipts(json(path.join(dir, "summary.json")), { lane: "qlever", source: dir });
   assert.equal(list.length, 8);
   for (const c of list) {
     assert.equal(c.binding.containerId, binding.containerId);
     assert.equal(c.c8.status, 0);
     assert.equal(c.p4.status, 0);
-    const p4 = json(path.join(dir, `${c.label}-p4.json`));
+    const p4 = parseLatencyReceipt(json(path.join(dir, `${c.label}-p4.json`)), { lane: "qlever", source: c.label });
     assert.equal(p4.sample.length, 20);
     assert.ok(p4.sample.every((x) => x.contentEqual && x.expectedSha256 === x.actualSha256));
     comparisons += 20;
@@ -42,11 +43,13 @@ for (const arm of ["M", "U"]) {
     cells++;
   }
   const f = json(path.join(dir, "f05.json"));
+  parseLatencyReceipt(f.before, { lane: "qlever", source: "F05 before" });
+  parseLatencyReceipt(f.after, { lane: "qlever", source: "F05 after" });
   assert.deepEqual(f.before.data.res, [['"after"']]);
   assert.deepEqual(f.after.data.res, [['"after"']]);
   assert.ok(f.before.id < f.after.id);
   for (const r of [f.before, f.after]) {
-    const meta = json(path.join(dir, `${r.id}.request.json`)),
+    const meta = parseLatencyReceipt(json(path.join(dir, `${r.id}.request.json`)), { lane: "qlever", source: r.id }),
       raw = fs.readFileSync(path.join(dir, `${r.id}.response`));
     assert.equal(meta.status, 200);
     assert.equal(meta.sha256, sha(raw));

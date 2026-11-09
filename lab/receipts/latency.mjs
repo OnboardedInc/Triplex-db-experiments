@@ -1,3 +1,4 @@
+import { parseLatencyReceipt } from "./parse.ts";
 // @ts-check
 // [EXP-QNODELAY] Why: timing writers must provide actual transport metadata before
 // serialization, including JS harnesses. Rejected: optional fields or inferring
@@ -39,9 +40,5 @@ export function connectionModeForBackend(backend) {
 }
 /** @param {{ lane?: string, backend?: string, queryPath?: string, qleverConnectionMode?: unknown }} receipt @returns {QleverConnectionMode | null} */
 export function recordedConnectionMode(receipt) {
-  const lane = receipt.lane ?? receipt.backend ?? receipt.queryPath;
-  if (lane === undefined) throw new TypeError("timing input must identify its backend");
-  return lane.startsWith("qlever")
-    ? requireQleverConnectionMode(receipt.qleverConnectionMode)
-    : null;
+  return parseLatencyReceipt(receipt).qleverConnectionMode;
 }

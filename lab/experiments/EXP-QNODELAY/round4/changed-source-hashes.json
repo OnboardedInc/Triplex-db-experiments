@@ -1,0 +1,147 @@
+[
+  {
+    "path": "lab/bench/audit-traffic.ts",
+    "oldSha256": "e5c36ca4a5b5d9403a0c86d6401762b0458b8a96ec705779ede8b0b0009855a0",
+    "newSha256": "8d5befd54d0fec8aced3b73e7b42c03e1976376ff82045af967f97cabf587c3e"
+  },
+  {
+    "path": "lab/bench/driver.ts",
+    "oldSha256": "c8c9a38f931980e4d1922f316fd18efe8bd71542291728586955a6bebb19d179",
+    "newSha256": "f46c44cfc3f14a311a6cdd685999e6435b044625b6acd20412a6588817ac3a00"
+  },
+  {
+    "path": "lab/bench/round2.ts",
+    "oldSha256": "dedf9f14eed4fc77278f85a55a0de426435e4df371b329b627b0c19e7e6975e4",
+    "newSha256": "ccc65b86583b4e5dc7c73ec727967d01a01846330cec1a5ccc01afdbe04fa64f"
+  },
+  {
+    "path": "lab/bench/summarize.mjs",
+    "oldSha256": "fffffebd5e9c2253c63019cdbbd474e08bb3a57a7cd855dc8193294d64c77259",
+    "newSha256": "9cd16dbaa1556d00f749bd78e25bf1103a834e6ee21a1c10996af7825fbab6a2"
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "oldSha256": "dc374e1de7916c27b78b3ec38611a12fd9329db45819607e587b6115ba4e58f8",
+    "newSha256": "1b34b524a74b337ff6e8d53edb1bc5ebf4b5b77ffbcac10627c5bb5753c09d81"
+  },
+  {
+    "path": "lab/bin/scorecard.mjs",
+    "oldSha256": "c8e632a3c353b5897ef2a82b7d9ee9484702fb3d222963e251c63186f439029e",
+    "newSha256": "dcbacaf346247de19b1a7e777ac76bb5333b5797310b119e19390906a445a2c7"
+  },
+  {
+    "path": "lab/bin/status.mjs",
+    "oldSha256": "643c8a34fedeb7e90cb5d04e153187171b4643dfe250772b6b1eabfedc2ebc2b",
+    "newSha256": "7d7144d154e678d7ec6bbc3d2c1a625b1f7f8955fc5edd4072eaa0b1a5a44097"
+  },
+  {
+    "path": "lab/experiments/EXP-002-qlever-baseline/qlever-log-latency.mjs",
+    "oldSha256": "cfc340860df6fc7c0f58eaccaf9efa7836043ca485b4d3574ca96013784cbdb0",
+    "newSha256": "3303b3a79a54af72ce0c82679c1fcee0ef94323804b7b7e89acd517b3f3d80da"
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/summarize-timing.mjs",
+    "oldSha256": "2f9f8d686d8f883bc9b1b9e650f6f8110bd667ad18e1080fb4b120c31b7ae0c3",
+    "newSha256": "4ae49239011148037c90456f9ecaeeef11cd9c553e348b7d9fb54cb599a72398"
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/equivalence-diff.mjs",
+    "oldSha256": "c4704a9493ca62e7657ba53a5dde0f24dde8b625fd0a35beb91154bc673cfdb4",
+    "newSha256": "214dc19708a2523cd44154ad5d1efd2df0b5b6c6b767a996c222e9a89b8a698f"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/final-audit.mjs",
+    "oldSha256": "2d796c2155a506c28e3092d46140d61ad5681e0ef2ce85bd604a7ef39cb96835",
+    "newSha256": "05e43d5ba917318f39b35d418172b371614ff415ef35c95ee5ba74630b313c99"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/summarize.mjs",
+    "oldSha256": "3a627747588b87f61bee0f44517a48308073e2c5c9246f6c3b9255f9c59ef9a4",
+    "newSha256": "f3e61fe4ad7a44957c64dbe2baca0755f7d5f5500d72175ea9ebffb7292e0836"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/summary-cell.mjs",
+    "oldSha256": "ecb3e429ee208cc3b74433c672725be0d392c4d9d292aff3ee0c53185f105371",
+    "newSha256": "a66a9f62da55a8a559a766f6a786d02ca445f10e71d0ea2660b6578d099d2b2f"
+  },
+  {
+    "path": "lab/receipts/check-writers.mjs",
+    "oldSha256": "a3fa153ebaea2a1feef6187e30303623f6cdd6f4f957b9bfc05c12dc827658d0",
+    "newSha256": null
+  },
+  {
+    "path": "lab/receipts/coverage.mjs",
+    "oldSha256": "71daf51b7b1b3d39736e8755ab5149d1b6a983de1bab84902684f1f001aaac99",
+    "newSha256": null
+  },
+  {
+    "path": "lab/receipts/coverage.test.mjs",
+    "oldSha256": "e57b93cf171d7609668e96cf3c0190286af6e80ecaec7000eaf1997db51e2a11",
+    "newSha256": null
+  },
+  {
+    "path": "lab/receipts/latency.mjs",
+    "oldSha256": "98fa210e2e90d71fd22ac785aa332b23d646fd8e76aec3c81337fc76217524d8",
+    "newSha256": "9233cdb970cf4f8777e94805739f8c8b0cd607f61dcb970f04c9c5c4b4d3a664"
+  },
+  {
+    "path": "lab/receipts/source-inventory.json",
+    "oldSha256": "5280a2902320569a153a3141b495ad3a5d92c2a743f83ce821fa88a7faa9d998",
+    "newSha256": null
+  },
+  {
+    "path": "lab/receipts/tsconfig.json",
+    "oldSha256": "b371ab6ee0600ca0aa8b19cf6d3f5d34a8a252209ded5f8d58787789ff5b695f",
+    "newSha256": "31f3e285c8e64e0106be546d5d47ea379201356af5a93e60f470a3c23e1691d0"
+  },
+  {
+    "path": "lab/research/R35-probes/prof.py",
+    "oldSha256": "cef08aca2a242d0a823b5b71837d370106075440aea36e31bb2f988a4d0ec164",
+    "newSha256": "ca6999fa61836083f5079ac28053b2e9151a5db4d5e21d5c9a91602e1bafd6b3"
+  },
+  {
+    "path": "lab/scenarios/lib/policy.mjs",
+    "oldSha256": "a3ab097e68cbf42be090038cae79f0a26b9111c48cd761f82566f8c0280e6f3a",
+    "newSha256": "08ed40635c8b0621dc25e44fdf70ba9b9cd0f4ad778489a146a98fe487df1a2f"
+  },
+  {
+    "path": "lab/scenarios/v2/offline.test.ts",
+    "oldSha256": "3bebd84597cc0ecdc64f5892a59510ea7a8e8f554612e0cba63b91f23044307f",
+    "newSha256": "f66b412663ade028d0a9d2da2e886f43072fd6dff8d68be1c05bd998c942bc14"
+  },
+  {
+    "path": "package.json",
+    "oldSha256": "98cd8124236602f1a357251cffdb9d3cc096bf682af205c88830bba34ce6ac8b",
+    "newSha256": "f7da1f5ff11d8a32371f67091e8144b3959efaec27cb2549fbf5dbf0a5d68569"
+  },
+  {
+    "path": "packages/qualification/load/inspect-trial.mjs",
+    "oldSha256": "2ce58066e609c448fd930fa38d6fcbb432381c489735500834a809b7d8bbafbc",
+    "newSha256": "580cb5ea8e9b88259ef4786bf53594369f1f5e2ab3ca7815b8295c98e816a637"
+  },
+  {
+    "path": "packages/qualification/load/verify-run.mjs",
+    "oldSha256": "a766eedae903443c3bbee7b039c87edeff2512d725e89715396ee8dcd3526683",
+    "newSha256": "5434678d83454fac83d34e116d562b9b187c29f74961ab7882903ca9142ae61f"
+  },
+  {
+    "path": "packages/qualification/workloads/scale-loader.ts",
+    "oldSha256": "43ac07507bfae0ea7f819c2a4d67cb63d5c846eb49207c522f23b031b3041ae9",
+    "newSha256": "701d890af91f81a5991210539101813548fbf71115772492469cf1dbd426f46e"
+  },
+  {
+    "path": "packages/qualification/workloads/verify-qlever-recovery.ts",
+    "oldSha256": "6cc2355eca3f49e4cedafef04875c6f9e6ff20d0152791e12ef3d8ac9a279eca",
+    "newSha256": "94326d009f33518fd8b86a31e4c71c812b90db4040f19626ea57b26ab1d3a6b7"
+  },
+  {
+    "path": "packages/qualification/workloads/verify-scale.ts",
+    "oldSha256": "fe02b3271014c1ea0c7aa69b7c64dec07d01be6bce113a3d41bc901351b820e5",
+    "newSha256": "a4d50b1d16a2ea9ac158f0d93e72aef80a23f153c4c950b7381b7ed94d245291"
+  },
+  {
+    "path": "qualification/devloop/compare.mjs",
+    "oldSha256": "e3c9d9b7d37f14ce51d19d6b7826428ec3cd6d00021310473e8ecddef2a7df10",
+    "newSha256": "15b239f4616a6a8f4b4f5f63bd48f99099dd4f3d7ae7163cdf367009d123efd7"
+  }
+]

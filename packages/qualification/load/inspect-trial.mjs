@@ -1,3 +1,4 @@
+import { parseLatencyReceipt } from "../../../lab/receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../../../lab/receipts/latency.mjs";
 /** Inspect failed diagnostic trials without converting them into acceptance. */
 import assert from "node:assert/strict";
@@ -35,7 +36,7 @@ for await (const line of createInterface({
   crlfDelay: Infinity,
 })) {
   if (!line.trim()) continue;
-  const event = JSON.parse(line);
+  const event = parseLatencyReceipt(line, { lane: manifest.queryPath, source: manifest.evidence.events });
   if (manifest.queryPath.startsWith("qlever")) {
     const mode = requireQleverConnectionMode(event.qleverConnectionMode);
     if (qleverConnectionMode !== null && qleverConnectionMode !== mode) throw new TypeError("mixed timing event modes");
