@@ -1,3 +1,4 @@
+import { constructReadDispatch } from "@triplex-build/triplex/runtime";
 import { awaitSnapshotBasis } from "../broker/snapshot.js";
 import { Effect } from "effect";
 import type { TypeExpr } from "@triplex-build/triplex/config";
@@ -292,28 +293,32 @@ export const makeQleverNativeQueries = (
           : new ReadError({ message: "Invalid QLever native query contract or result", cause }),
       ),
     );
-  return {
-    select: (
-      contract: NativeQueryContract,
-      input: unknown,
-      build: QleverNativeBuilder,
-      options?: NativeReadOptions,
-    ) => run(contract, input, build, options),
-    selectWithRelations: (
-      contract: NativeQueryContract,
-      input: unknown,
-      relations: readonly QleverNativeRelation[],
-      build: (context: QleverNativeRelationContext, parameters: unknown) => string,
-      options?: QleverNativeRelationOptions,
-    ) =>
-      run(
-        contract,
-        input,
-        (context, parameters) => build(context as QleverNativeRelationContext, parameters),
-        options,
-        relations,
-      ),
-  };
+  return constructReadDispatch(
+    {
+      select: (
+        contract: NativeQueryContract,
+        input: unknown,
+        build: QleverNativeBuilder,
+        options?: NativeReadOptions,
+      ) => [contract, input, build, options] as const,
+      selectWithRelations: (
+        contract: NativeQueryContract,
+        input: unknown,
+        relations: readonly QleverNativeRelation[],
+        build: (context: QleverNativeRelationContext, parameters: unknown) => string,
+        options?: QleverNativeRelationOptions,
+      ) =>
+        [
+          contract,
+          input,
+          (context: QleverNativeContext, parameters: unknown) =>
+            build(context as QleverNativeRelationContext, parameters),
+          options,
+          relations,
+        ] as const,
+    },
+    (...args: Parameters<typeof run>) => run(...args),
+  );
 };
 
 export type QleverNativeQueries = ReturnType<typeof makeQleverNativeQueries>;

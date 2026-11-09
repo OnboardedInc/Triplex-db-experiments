@@ -1,3 +1,4 @@
+import { constructReadDispatch, exactReadService } from "@triplex-build/triplex/runtime";
 import { Effect } from "effect";
 import {
   assertDatalogQuery,
@@ -496,10 +497,17 @@ export const makeQleverQueryExecutor = (
       },
       catch: fail,
     });
-  return {
-    execute: (query, debug = false, basis) => run(query, debug, basis),
-    executePage: (query, debug = false, basis, cursor) => run(query, debug, basis, cursor),
+  const reads = constructReadDispatch(
+    {
+      execute: (...args: Parameters<QueryExecutorService["execute"]>) => args,
+      executePage: (...args: Parameters<QueryExecutorService["executePage"]>) => args,
+    },
+    (...args: Parameters<typeof run>) => run(...args),
+  );
+  reads satisfies Omit<QueryExecutorService, "explain" | "explainPage">;
+  return exactReadService<QueryExecutorService>()({
+    ...reads,
     explain,
     explainPage: explain,
-  };
+  });
 };

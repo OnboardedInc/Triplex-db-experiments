@@ -61,3 +61,12 @@ export {
   nativeEvidenceValue,
   nativeAttributeKey,
 } from "../native/NativeQuery.js";
+
+export {
+  constructSnapshotReads,
+  constructReadDispatch,
+  constructReadSurface,
+  isConstructedRead,
+  exactReadService,
+  type SnapshotReadPolicy,
+} from "../storage/ReadSurface.js";

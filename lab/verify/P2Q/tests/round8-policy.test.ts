@@ -14,17 +14,16 @@ import { makeQleverNativeQueries } from "../../../../packages/qlever/src/native/
 import { ModelReplica, openRt, freshDir, ops, attempt, at, writeJson, REPO } from "./harness.js";
 
 const members = (file: string, name: string) => {
-  const source = ts.createSourceFile(
-    file,
-    fs.readFileSync(`${REPO}/${file}`, "utf8"),
-    ts.ScriptTarget.Latest,
-    true,
-  );
+  const program = ts.createProgram([`${REPO}/${file}`], { noResolve: true, skipLibCheck: true });
+  const source = program.getSourceFile(`${REPO}/${file}`)!;
   const declaration = source.statements.find(
     (node) => ts.isInterfaceDeclaration(node) && node.name.text === name,
-  ) as ts.InterfaceDeclaration;
-  expect(declaration).toBeDefined();
-  return declaration.members.map((member) => (member.name as ts.Identifier).text).sort();
+  )!;
+  const checker = program.getTypeChecker();
+  return checker
+    .getPropertiesOfType(checker.getTypeAtLocation(declaration))
+    .map((symbol) => symbol.name)
+    .sort();
 };
 const contracts = {
   StorageAdapterService: {
@@ -33,6 +32,7 @@ const contracts = {
     introspection: ["currentCommitPosition"],
     mutation: [
       "supportedValueTypes",
+      "snapshotReadPolicy",
       "validateConstraints",
       "withTransaction",
       "nextCommitPosition",

@@ -1,3 +1,8 @@
+import {
+  constructSnapshotReads,
+  exactReadService,
+  type SnapshotReadPolicy,
+} from "@triplex-build/triplex/runtime";
 /**
  * QLever storage adapter whose source of truth is the host broker (EXP-P2Q candidate, behind
  * `makeQleverStorageAdapter(..., { broker })`; the default A0 path is unchanged).
@@ -45,7 +50,7 @@ import {
 } from "../rdf.js";
 import { BrokerFailed, type HostBroker, type ReplicaSnapshot } from "./broker.js";
 import { markerFields } from "./sparql.js";
-import { awaitSnapshotBasis, snapshotRows } from "./snapshot.js";
+import { awaitSnapshotBasis, snapshotRows, maskSnapshotResult } from "./snapshot.js";
 import { ReplicaUnavailable, isUnreachable, type BasisSurface } from "./errors.js";
 
 export type BrokerReadRoute = "replica" | "overlay" | "log";
@@ -94,18 +99,27 @@ interface State {
   priors: Map<string, TripleRow>;
   reads: { entities: Set<string>; scopeWide: boolean };
 }
-const Transactions = Context.Reference<ReadonlyMap<symbol, State>>("triplex/qlever/broker-transactions", {
+const Transactions = Context.Reference<ReadonlyMap<symbol, State>>(
+  "triplex/qlever/broker-transactions",
+  {
   defaultValue: () => new Map(),
-});
+  },
+);
 
 /** Same pattern semantics as the A0 adapter's `matches`. */
 const matches = (row: TripleRow, pattern: QueryPattern) =>
-  (pattern.entityId === undefined || isPatternVariable(pattern.entityId) || row.entity_id === pattern.entityId) &&
-  (pattern.attribute === undefined || isPatternVariable(pattern.attribute) || row.attribute === pattern.attribute) &&
+  (pattern.entityId === undefined ||
+    isPatternVariable(pattern.entityId) ||
+    row.entity_id === pattern.entityId) &&
+  (pattern.attribute === undefined ||
+    isPatternVariable(pattern.attribute) ||
+    row.attribute === pattern.attribute) &&
   (pattern.entityType === undefined || row.entity_type === pattern.entityType) &&
   (pattern.value === undefined ||
     isPatternVariable(pattern.value) ||
-    Object.entries(packValue(pattern.value)).every(([key, value]) => row[key as keyof TripleRow] === value));
+    Object.entries(packValue(pattern.value)).every(
+      ([key, value]) => row[key as keyof TripleRow] === value,
+    ));
 
 /**
  * Kernel visibility at position B (A0's `visible` with the recorded position always named). A retraction
@@ -153,8 +167,13 @@ const stagedView = (row: TripleRow): TripleRow => {
     : row;
 };
 /** Bind placeholder positions in a callback's result (P2X `bindPositions`, TransactionResult shape). */
-const bindPositions = (value: unknown, positions: ReadonlyMap<number, number>, depth = 0): unknown => {
-  if (positions.size === 0 || depth > 3 || value === null || typeof value !== "object") return value;
+const bindPositions = (
+  value: unknown,
+  positions: ReadonlyMap<number, number>,
+  depth = 0,
+): unknown => {
+  if (positions.size === 0 || depth > 3 || value === null || typeof value !== "object")
+    return value;
   if (Array.isArray(value)) {
     const bound = value.map((item) => bindPositions(item, positions, depth + 1));
     return bound.some((item, i) => item !== value[i]) ? bound : value;
@@ -177,7 +196,12 @@ export class QleverBrokerConflict extends WriteError {
 
 export interface QleverBrokerStorageAdapterService extends StorageAdapterService {
   readonly sourceView: Effect.Effect<
-    { readonly sourcePosition: number; readonly pendingPosition: number; readonly rows: readonly TripleRow[] } | undefined
+    | {
+        readonly sourcePosition: number;
+        readonly pendingPosition: number;
+        readonly rows: readonly TripleRow[];
+      }
+    | undefined
   >;
   readonly broker: HostBroker;
   /** Basis for queries outside a transaction: waits for the replica (Datalog has no overlay merge). */
@@ -212,8 +236,13 @@ export const makeQleverBrokerStorageAdapter = (
   ) => {
     const b = requested ?? sourceK ?? broker.head();
     if (sourceK === undefined) await broker.awaitResolved(b, basisWaitMs, surface);
-    else await awaitSnapshotBasis({
-      required: b, observed: sourceK, refresh: () => sourceK, waitMs: basisWaitMs, surface,
+    else
+      await awaitSnapshotBasis({
+        required: b,
+        observed: sourceK,
+        refresh: () => sourceK,
+        waitMs: basisWaitMs,
+        surface,
       replica: "the transaction snapshot",
     });
     return b;
@@ -238,23 +267,32 @@ export const makeQleverBrokerStorageAdapter = (
       if (entities?.length === 0) return snapshotRows([], b, basis, history);
       if (state) {
         // CAS read set (module comment item 5).
-        if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId)) state.reads.entities.add(pattern.entityId);
-        else if (entities !== undefined) for (const entity of entities) state.reads.entities.add(entity);
+        if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId))
+          state.reads.entities.add(pattern.entityId);
+        else if (entities !== undefined)
+          for (const entity of entities) state.reads.entities.add(entity);
         else if (id === undefined) state.reads.scopeWide = true;
       }
       const clauses = [`?subject ${f("_row")} ?row .`];
       if (id !== undefined) clauses.push(`VALUES ?subject { ${assertionIri(id)} }`);
-      const exact = (column: string, value: string) => clauses.push(`?subject ${f(column)} ${lit(value)} .`);
-      if (entities) clauses.push(`VALUES ?entity { ${entities.map(lit).join(" ")} } ?subject ${f("entity_id")} ?entity .`);
-      if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId)) exact("entity_id", pattern.entityId);
-      if (pattern.attribute !== undefined && !isPatternVariable(pattern.attribute)) exact("attribute", pattern.attribute);
+      const exact = (column: string, value: string) =>
+        clauses.push(`?subject ${f(column)} ${lit(value)} .`);
+      if (entities)
+        clauses.push(
+          `VALUES ?entity { ${entities.map(lit).join(" ")} } ?subject ${f("entity_id")} ?entity .`,
+        );
+      if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId))
+        exact("entity_id", pattern.entityId);
+      if (pattern.attribute !== undefined && !isPatternVariable(pattern.attribute))
+        exact("attribute", pattern.attribute);
       if (pattern.entityType !== undefined) exact("entity_type", pattern.entityType);
       if (pattern.value !== undefined && !isPatternVariable(pattern.value))
         for (const [column, value] of Object.entries(packValue(pattern.value)))
           if (value !== null)
             exact(
               column === "value_number" || column === "value_datetime" ? `${column}_order` : column,
-              typeof value === "number" && (column === "value_number" || column === "value_datetime")
+              typeof value === "number" &&
+                (column === "value_number" || column === "value_datetime")
                 ? order(value)
                 : String(value),
             );
@@ -313,7 +351,14 @@ export const makeQleverBrokerStorageAdapter = (
         }
       }
       routes[route]++;
-      options.onRead?.({ route, basis: b, replicaPosition: marker, rows: byId.size, ms: performance.now() - t0, staged: state !== undefined });
+      options.onRead?.({
+        route,
+        basis: b,
+        replicaPosition: marker,
+        rows: byId.size,
+        ms: performance.now() - t0,
+        staged: state !== undefined,
+      });
       if (state && id !== undefined) {
         const found = byId.get(id) ?? state.rows.get(id);
         if (found) state.reads.entities.add(found.entity_id);
@@ -333,8 +378,9 @@ export const makeQleverBrokerStorageAdapter = (
           )
             out.set(rowId, row);
         }
-      return snapshotRows([...out.values()], b, basis, history)
-        .toSorted((a, b2) => a.recorded_at - b2.recorded_at || a.id.localeCompare(b2.id));
+      return snapshotRows([...out.values()], b, basis, history).toSorted(
+        (a, b2) => a.recorded_at - b2.recorded_at || a.id.localeCompare(b2.id),
+      );
     });
 
   const persist = (state: State, operationId: string, attemptId: string) =>
@@ -389,9 +435,16 @@ export const makeQleverBrokerStorageAdapter = (
               claims: new Map(parent.claims),
               newIds: new Set(parent.newIds),
               priors: new Map(parent.priors),
-              reads: { entities: new Set(parent.reads.entities), scopeWide: parent.reads.scopeWide },
+              reads: {
+                entities: new Set(parent.reads.entities),
+                scopeWide: parent.reads.scopeWide,
+              },
             };
-            const snapshot = { placeholders: parent.placeholders.length, rows: parent.rows, claims: parent.claims };
+            const snapshot = {
+              placeholders: parent.placeholders.length,
+              rows: parent.rows,
+              claims: parent.claims,
+            };
             const context = new Map(states);
             context.set(key, child);
             const result = yield* Effect.provideService(effect, Transactions, context);
@@ -401,7 +454,9 @@ export const makeQleverBrokerStorageAdapter = (
               parent.claims !== snapshot.claims
             )
               return yield* Effect.fail(
-                new QleverBrokerConflict({ message: "Concurrent nested QLever callbacks changed the savepoint" }),
+                new QleverBrokerConflict({
+                  message: "Concurrent nested QLever callbacks changed the savepoint",
+                }),
               );
             parent.placeholders = child.placeholders;
             parent.rows = child.rows;
@@ -424,14 +479,19 @@ export const makeQleverBrokerStorageAdapter = (
           context.set(key, state);
           const result = yield* Effect.provideService(effect, Transactions, context);
           if (!state.rows.size && !state.claims.size) return result;
-          const exit = yield* Effect.exit(Effect.uninterruptible(persist(state, operationId, randomUUID())));
+          const exit = yield* Effect.exit(
+            Effect.uninterruptible(persist(state, operationId, randomUUID())),
+          );
           if (Exit.isSuccess(exit)) return bindPositions(result, exit.value) as A;
           return yield* Effect.failCause(exit.cause).pipe(
             Effect.catch((error) =>
               error instanceof QleverBrokerConflict &&
               transactionOptions?.replaySafe === true &&
               retry < (options.maxRetries ?? 12)
-                ? Effect.andThen(Effect.sleep(`${Math.min(50, retry * 2)} millis`), attempt(retry + 1))
+                ? Effect.andThen(
+                    Effect.sleep(`${Math.min(50, retry * 2)} millis`),
+                    attempt(retry + 1),
+                  )
                 : Effect.fail(error),
             ),
           );
@@ -485,7 +545,10 @@ export const makeQleverBrokerStorageAdapter = (
    * the deadline and ask again, then typed failure.
    */
   const dependencyState: StorageAdapterService["dependencyState"] = (attributes, basis) =>
-    Effect.flatMap(current, (state) => Effect.tryPromise({ catch: typed("dependency-state"), try: async (signal) => {
+    Effect.flatMap(current, (state) =>
+      Effect.tryPromise({
+        catch: typed("dependency-state"),
+        try: async (signal) => {
           const started = performance.now();
           const b = await readBasis(state?.sourceK, basis.recordedPosition, "dependency-state");
           if (attributes.length === 0) return { sourcePosition: 0 };
@@ -502,7 +565,12 @@ export const makeQleverBrokerStorageAdapter = (
           const cached = broker.replicaPosition();
           if (cached < b) {
             const touched = broker.overlay(cached, {}, (row) => wanted.has(row.attribute));
-            if (touched === undefined || touched.length > 0) await broker.awaitReplica(b, Math.max(0, basisWaitMs - (performance.now() - started)), "dependency-state");
+            if (touched === undefined || touched.length > 0)
+              await broker.awaitReplica(
+                b,
+                Math.max(0, basisWaitMs - (performance.now() - started)),
+                "dependency-state",
+              );
           }
           for (;;) {
             const rows = await client.query(sparql, { signal });
@@ -524,17 +592,30 @@ export const makeQleverBrokerStorageAdapter = (
               };
             const remaining = basisWaitMs - (performance.now() - started);
             if (remaining <= 0)
-              await awaitSnapshotBasis({ required: b, observed, refresh: () => observed, waitMs: basisWaitMs,
-                started, replica: "the QLever replica", surface: "dependency-state" });
+              await awaitSnapshotBasis({
+                required: b,
+                observed,
+                refresh: () => observed,
+                waitMs: basisWaitMs,
+                started,
+                replica: "the QLever replica",
+                surface: "dependency-state",
+              });
             await broker.awaitReplica(b, remaining, "dependency-state");
           }
-        } }));
+        },
+      }),
+    );
 
   const resolveQueryBasis: BasisGate = Object.assign(
     async (requested: number | undefined) => {
       const started = performance.now();
       const b = await readBasis(undefined, requested, "datalog");
-      return broker.openSnapshot(b, Math.max(0, basisWaitMs - (performance.now() - started)), "datalog");
+      return broker.openSnapshot(
+        b,
+        Math.max(0, basisWaitMs - (performance.now() - started)),
+        "datalog",
+      );
     },
     {
       inTransaction: async (sourceK: number, requested?: number) =>
@@ -543,8 +624,53 @@ export const makeQleverBrokerStorageAdapter = (
     },
   );
 
-  return {
-    supportedValueTypes: ["string", "number", "integer", "boolean", "datetime", "ref", "json", "blob"],
+  const snapshotReadPolicy: SnapshotReadPolicy = {
+    wrap: (effect, basis, rawHistory = false) =>
+      Effect.gen(function* () {
+        const state = yield* current;
+        const b = yield* Effect.tryPromise({
+          try: () => readBasis(state?.sourceK, basis?.recordedPosition, "repository"),
+          catch: (cause) =>
+            cause instanceof ReadError
+              ? cause
+              : new ReadError({ message: "QLever read failed", cause }),
+        });
+        const result = yield* effect;
+        return maskSnapshotResult(result, b, basis, rawHistory);
+      }),
+  };
+  const implicit = () => undefined;
+  const explicit = (_first: unknown, basis?: ResolvedTemporalBasis) => basis;
+  const reads = constructSnapshotReads({
+    getById: { run: (id: string) => Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null), basis: implicit, rawHistory: false },
+    getByEntity: { run: (entityId: string, basis?: ResolvedTemporalBasis) => queryRows({ entityId }, basis), basis: explicit, rawHistory: false },
+    getByEntities: {
+      run: (ids: readonly string[], basis?: ResolvedTemporalBasis) => Effect.map(
+        queryRows({}, basis, false, undefined, [...new Set(ids)]),
+        (rows) => new Map([...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)]))),
+      basis: explicit, rawHistory: false,
+    },
+    query: { run: (pattern: QueryPattern, basis?: ResolvedTemporalBasis) => queryRows(pattern, basis), basis: explicit, rawHistory: false },
+    history: { run: (entityId: string) => queryRows({ entityId }, undefined, true), basis: implicit, rawHistory: true },
+    dependencyState: { run: dependencyState, basis: explicit, rawHistory: false },
+  }, snapshotReadPolicy);
+  reads satisfies Omit<StorageAdapterService,
+    "supportedValueTypes" | "snapshotReadPolicy" | "validateConstraints" | "withTransaction" |
+    "nextCommitPosition" | "currentCommitPosition" | "claimCommand" | "insert" | "batchInsert" |
+    "retract" | "initialize" | "close">;
+  return exactReadService<QleverBrokerStorageAdapterService>()({
+    ...reads,
+    snapshotReadPolicy,
+    supportedValueTypes: [
+      "string",
+      "number",
+      "integer",
+      "boolean",
+      "datetime",
+      "ref",
+      "json",
+      "blob",
+    ],
     broker,
     routes,
     resolveQueryBasis,
@@ -554,7 +680,9 @@ export const makeQleverBrokerStorageAdapter = (
       // so a transaction that used it is guarded scope-wide (any commit after sourceK conflicts).
       state.reads.scopeWide = true;
       // The executor inlines staged rows; give them A0's K+1.. positions so its basis tests behave as on A0.
-      const local = new Map(state.placeholders.map((placeholder, i) => [placeholder, state.sourceK + 1 + i]));
+      const local = new Map(
+        state.placeholders.map((placeholder, i) => [placeholder, state.sourceK + 1 + i]),
+      );
       const pending = state.sourceK + Math.max(1, state.placeholders.length);
       return {
         sourcePosition: state.sourceK,
@@ -563,7 +691,9 @@ export const makeQleverBrokerStorageAdapter = (
           ...row,
           recorded_position: local.get(row.recorded_position) ?? row.recorded_position,
           retracted_position:
-            row.retracted_position === null ? null : (local.get(row.retracted_position) ?? row.retracted_position),
+            row.retracted_position === null
+              ? null
+              : (local.get(row.retracted_position) ?? row.retracted_position),
         })),
       };
     }),
@@ -595,36 +725,40 @@ export const makeQleverBrokerStorageAdapter = (
     batchInsert: (inputs, txId, timestamp, ids, position) =>
       inputs.length !== ids.length
         ? Effect.fail(new WriteError({ message: "Assertion identity count mismatch" }))
-        : Effect.forEach(inputs, (input, index) => insert(input, txId, timestamp, ids[index]!, position)),
+        : Effect.forEach(inputs, (input, index) =>
+            insert(input, txId, timestamp, ids[index]!, position),
+          ),
     retract: (id, timestamp, txId, position) =>
       Effect.gen(function* () {
         const state = yield* required;
         const row = (yield* queryRows({}, undefined, false, id).pipe(
-          Effect.mapError((cause) => new WriteError({ message: "Cannot read retraction target", cause })),
+          Effect.mapError(
+            (cause) => new WriteError({ message: "Cannot read retraction target", cause }),
+          ),
         ))[0];
         if (!row) return false;
         if (!state.rows.has(id)) state.priors.set(id, row);
-        state.rows.set(id, { ...row, retracted_at: timestamp, retracted_position: position, retract_tx_id: txId });
+        state.rows.set(id, {
+          ...row,
+          retracted_at: timestamp,
+          retracted_position: position,
+          retract_tx_id: txId,
+        });
         return true;
       }),
-    getById: (id) => Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null),
-    getByEntity: (entityId, basis) => queryRows({ entityId }, basis),
-    getByEntities: (ids, basis) =>
-      Effect.map(
-        queryRows({}, basis, false, undefined, [...new Set(ids)]),
-        (rows) => new Map([...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)])),
-      ),
-    query: (pattern, basis) => queryRows(pattern, basis),
-    history: (entityId) => queryRows({ entityId }, undefined, true),
-    dependencyState,
     initialize: () =>
       Effect.tryPromise({
         try: async () => {
           await client.query("SELECT ?s WHERE { ?s ?p ?o } LIMIT 1");
         },
         catch: (cause) =>
-          new MigrationError({ version: 1, name: "qlever-native", message: "Cannot access QLever RDF server", cause }),
+          new MigrationError({
+            version: 1,
+            name: "qlever-native",
+            message: "Cannot access QLever RDF server",
+            cause,
+          }),
       }),
     close: () => Effect.void,
+  } satisfies QleverBrokerStorageAdapterService);
   };
-};
