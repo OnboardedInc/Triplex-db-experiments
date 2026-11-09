@@ -117,7 +117,7 @@ test('witness profile accepts only CAP_BPF + CAP_PERFMON, private namespaces and
 test('witness create arguments carry the exact profile and the pinned program with its directory pair', () => {
   const args = witness.witnessCreateArgs({ name: 'tx2-sw-x', holder: 'h', image: 'sha256:' + 'c'.repeat(64), cpu: 5, volume: 'sw-run', dirs: [[266338305, 77]] });
   const text = args.join(' ');
-  for (const needle of ['-e BPFTRACE_MAX_MAP_KEYS=65536', '--cap-drop ALL', '--cap-add BPF', '--cap-add PERFMON', '--network none', '--read-only', 'no-new-privileges', '--entrypoint bpftrace', '--memory 268435456', '-o /witness/trace.txt', 'vm_syncwitness.bt:/program/vm_syncwitness.bt:ro', '266338305 77 266338305 77'])assert.ok(text.includes(needle), needle);
+  for (const needle of ['-e BPFTRACE_MAX_MAP_KEYS=65536', '--cap-drop ALL', '--cap-add BPF', '--cap-add PERFMON', '--network none', '--read-only', 'no-new-privileges', '--entrypoint sh', 'exec bpftrace -q -B none', '--memory 268435456', '> /witness/trace.txt', 'vm_syncwitness.bt:/program/vm_syncwitness.bt:ro', '266338305 77 266338305 77'])assert.ok(text.includes(needle), needle);
   assert.equal(args.filter(a => a === '--cap-add').length, 2);
   assert.ok(!args.includes('--privileged') && !args.includes('--pid') && !text.includes('docker.sock'));
   assert.throws(() => witness.witnessCreateArgs({ name: 'n', holder: 'h', image: 'sha256:' + 'c'.repeat(64), cpu: 5, volume: 'v', dirs: [] }));
