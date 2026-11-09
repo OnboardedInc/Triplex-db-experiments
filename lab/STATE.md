@@ -296,3 +296,15 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   and the unidentified ~/.hermes node runtime (it is running QH1's tsx) are never stopped.
 - Protocol v2 (e6c8a812): new builders are Sonnet 5.5 high via the Agent tool; Codex reviewers high; Opus planners high. Sam's decisions
   of 2026-11-09 recorded as Q106a-g (lab/research/SAM-decisions-2026-11-09.md).
+- 2026-11-09 disk guidance for Sam (asked how much to reclaim): free 11 GiB of 460 GiB. Needs for larger datasets: the broker store at the
+  measured 509 B/fact is about 23 GB at 100k (W0 447 facts/subject) plus its seed intent log (about 24 GB at 100k per R45, compressible);
+  an XTDB 100k volume 8-20 GB (R34); the triplex2 VM disk is capped at 60 GiB and would need raising for 100k residents; evidence grows
+  about 10-20 GB per busy day before compression; the 5 GiB guard and a 10 GiB working margin. **Minimum to test 100k one lane at a time:
+  about 60 GiB free. Comfortable for 100k on several lanes plus evidence: about 150 GiB free.** Known large items outside the lab's control:
+  ~/.codex 23 GB (Codex session history), Sam's stopped default colima disk 15 GB, ~/Library 62 GB.
+- HS01 review (verify/HS01 656f8a67) FIX-FIRST on one finding (a frame over 16 MiB stalls finite retention); 51,000 read comparisons,
+  4,240 codec round trips, four recovery schedules and a fresh 1k seed passed. HS01 round 2 is the first Sonnet high builder: the retention
+  fix, byte-budget frame retention, compact base-36 ids.
+- Option to raise next (no action yet): with the default VM stopped, the Mac has 12 CPUs / 36 GiB; the triplex2 VM is 6 CPU / 12 GiB.
+  Raising it (for example 10 CPU / 24 GiB, disk 120 GiB) would fit a 256-reader duet (Q100l) and 100k residents, but it restarts the VM
+  and changes the pool sizes that slots.json pins, so it needs a contract step and a quiet moment.
