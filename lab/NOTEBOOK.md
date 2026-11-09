@@ -1970,3 +1970,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **5d1ee8f9:** 140 tests pass; a 10-second in-memory diagnostic with 256 readers checked 194,153 reads with no content, receipt, feed-order, resume or clock errors. Read p99 9.80 ms; feed lag p99 35.23 ms.
 - **But** offer-to-ACK for 5-10 facts was p50 45.94 / p99 82.45 ms (9 commits), against p50 <= 10 / p99 <= 50 ms. P2Q measured p50 5.9 ms offline on lane Q.
 - **Hypothesis:** 256 readers sharing the broker's event loop. Round 2 splits latency by stage on one clock, varies reader count and placement, and raises the sample to 200 commits per band before any live XTDB run.
+
+## 2026-11-09: RT01 round A accepted offline
+
+- **verify/RT01 7222e7e9:** F7 fixed through Temporal.journalBasis(P), an explicit all-valid-time mode bound to a position and used by every journal, command and feed read, including KV. Five fresh cases with 40 clock samples match O-REPLAY 0.5.0; 55 explicit-valid-time cuts still filter correctly; public inputs cannot set the internal all-valid-time flag.
+- **Pack gate:** fails on the out-of-scope DuckDB package's declarations, not on RT01. Pack qualification for lab packages needs its own gate.
+- **Next:** live G2 and G6 on a slot; contract 0.4.0 after 0.3.14.
