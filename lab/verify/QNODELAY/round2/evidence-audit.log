@@ -1,0 +1,152 @@
+{
+  "id": "9914ec12-78ed-45d4-b87f-57222141533d",
+  "startedAt": "2026-11-09T04:37:10.713Z",
+  "node": "v22.23.2",
+  "head": "5c240a0a9c4884c8bfcbc93dc660e9e4411f2deb",
+  "sources": {
+    "packages/qlever/src/QleverClient.ts": "27c6228887c9484c7c9c4ef69e84889431a200b9ef083c4d68952e5e98f17de2",
+    "lab/verify/QNODELAY/round2/bootstrap.mjs": "575ccd46fc15e59851b6916843eed38743c0294be5cd115fed668d6d3bb4dd4d",
+    "lab/verify/QNODELAY/round2/resolve.mjs": "1496df6a87d5472fa4b2c4d4bd7a6ba64fe489fab641e0ad71988e40ffd6e48a",
+    "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici@7.29.1/node_modules/undici/index.js": "dca95e2bbf4bae18325a4e5d9c887427a8a63a1345ed92a46f1067360dec0ffa",
+    "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici@7.29.1/node_modules/undici/package.json": "10e55f4adb6a43e72823ea235ff6a0c777db1ef68e3a1c810f0246e1b9332d8b",
+    "lab/verify/QNODELAY/round2/common.mjs": "14e3b9cfac09b5226a759b57814de66d1467a8bee0da1ca1c15281d6c56d0aa0",
+    "lab/verify/QNODELAY/round2/evidence-audit.mjs": "3405b7065f10ec25e934b6a92c65fb06502235a463ccfffb4bcc95d5b5867a95",
+    "pnpm-lock.yaml": "488f85f72970c9f71c573728fa91a9fff2b83c617ab4f63a6ee1396efb44f1fa",
+    "packages/qlever/package.json": "fd2c793cc5fbec18595751ec39a69babe991c31270abddf2326a018c8f09329e"
+  },
+  "classification": "BYTE AND ARITHMETIC AUDIT; historical builder diagnostic kept separate from fresh reviewer attempt",
+  "checksums": 172,
+  "sourceCopies": 45,
+  "timings": [
+    {
+      "kind": "historical-builder-round2",
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/round2/live1/result.json",
+      "rawSha256": "0f0394502270a9cd05fa5bf39b2e53c0d3be13dff387156234f2c640f7c115de",
+      "samples": 520,
+      "summary": {
+        "keep-alive": {
+          "n": 240,
+          "p50": 13.671624999999949,
+          "p99": 49.35758399999986,
+          "stalls": 120
+        },
+        "per-request": {
+          "n": 240,
+          "p50": 4.347374999999374,
+          "p99": 7.760790999999699,
+          "stalls": 0
+        }
+      }
+    },
+    {
+      "kind": "fresh-reviewer-round2",
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round2/attempt1/result.json",
+      "rawSha256": "ac62bbb112e7b47d093712d1234c8b8a3dd841cb432a56d5ce1a7b6d2674adf5",
+      "samples": 1572,
+      "summary": {
+        "keep-alive": {
+          "n": 256,
+          "p50": 13.190291000000002,
+          "p99": 47.77037499999983,
+          "stalls": 128
+        },
+        "per-request": {
+          "n": 256,
+          "p50": 3.5093750000005457,
+          "p99": 8.625332999999955,
+          "stalls": 0
+        }
+      }
+    }
+  ],
+  "pinReferences": [
+    {
+      "file": "lab/acceptance/ACCEPTANCE.md",
+      "line": 1842,
+      "path": "package.json",
+      "old": "e65e8f8be2a05d2b440af87c03a7daf6781e42704e5a17319a14d666fd1c37b5",
+      "new": "42af3d15466d018f882833a254b9dcb6504477c6ae46e4c9701c46d336c2cd2f"
+    },
+    {
+      "file": "lab/acceptance/ACCEPTANCE.md",
+      "line": 1329,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "new": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    },
+    {
+      "file": "lab/acceptance/ACCEPTANCE.md",
+      "line": 2402,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "new": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    },
+    {
+      "file": "lab/acceptance/build_contract.py",
+      "line": 1428,
+      "path": "package.json",
+      "old": "e65e8f8be2a05d2b440af87c03a7daf6781e42704e5a17319a14d666fd1c37b5",
+      "new": "42af3d15466d018f882833a254b9dcb6504477c6ae46e4c9701c46d336c2cd2f"
+    },
+    {
+      "file": "lab/acceptance/build_contract.py",
+      "line": 2298,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "new": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    },
+    {
+      "file": "lab/acceptance/build_contract.py",
+      "line": 2621,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "new": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    },
+    {
+      "file": "lab/acceptance/obligations.json",
+      "line": 3915,
+      "path": "package.json",
+      "old": "e65e8f8be2a05d2b440af87c03a7daf6781e42704e5a17319a14d666fd1c37b5",
+      "new": "42af3d15466d018f882833a254b9dcb6504477c6ae46e4c9701c46d336c2cd2f"
+    },
+    {
+      "file": "lab/acceptance/obligations.json",
+      "line": 15266,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "new": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    },
+    {
+      "file": "lab/acceptance/obligations.json",
+      "line": 15288,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "new": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    },
+    {
+      "file": "lab/acceptance/obligations.json",
+      "line": 16780,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "new": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    },
+    {
+      "file": "lab/acceptance/obligations.json",
+      "line": 21747,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "new": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    }
+  ],
+  "undiciPreimages": {
+    "files": 210
+  },
+  "matrix": {
+    "passed": 42,
+    "failed": 0,
+    "sha256": "acd8236957e6c7abb4db60e5070e503015dd0c9fe67e607b19047d03c6b65571"
+  },
+  "catalogModePairsEqual": 236,
+  "sourcesUnchanged": true,
+  "endedAt": "2026-11-09T04:37:10.883Z"
+}
