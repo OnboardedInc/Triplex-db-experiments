@@ -1,0 +1,244 @@
+{
+  "reviewer": "CX-VQH1",
+  "round": 4,
+  "builderHead": "febcd098",
+  "productCommit": "365fe1886bf173b792dea19d08640db8bd0e0421",
+  "reviewedMergeCommit": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1",
+  "createdAt": "2026-11-09T18:12:04.095954+00:00",
+  "kind": "offline-review-command-index",
+  "attempts": [
+    {
+      "label": "r4-build-core",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-build-core-ea57a2dd-9af2-4fb5-b0a6-2f818febf884",
+      "command": [
+        "sh",
+        "-c",
+        "cd packages/core && ../../node_modules/.bin/tsdown"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:01:45.053Z",
+      "end": "2026-11-09T18:01:51.123Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "f0422b40837a283a1c847e8853f168fe14e5088304c2c908fbb948b103c3af63"
+    },
+    {
+      "label": "r4-contract-verify",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-contract-verify-55491067-d2d5-4280-a720-0e5dbecbeab7",
+      "command": [
+        "python3",
+        "-I",
+        "lab/acceptance/build_contract.py",
+        "--verify"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:01:45.054Z",
+      "end": "2026-11-09T18:01:46.294Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "72e8c1df15ee45a9ff792ff6e7c44937bea5197208323d2b09d8ac385cd03861"
+    },
+    {
+      "label": "r4-core",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-core-cb3a486c-16e5-4e79-aad5-400eb68136da",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/core",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=2",
+        "--no-file-parallelism"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:01:45.052Z",
+      "end": "2026-11-09T18:02:11.855Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "76b921ee767e662e2b68867a771dbab89f80beede4c931edeec898502fa1a1d2"
+    },
+    {
+      "label": "r4-evaluator",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-evaluator-36293680-8849-4dfa-8579-81d753c27514",
+      "command": [
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:01:45.054Z",
+      "end": "2026-11-09T18:04:42.742Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "23314417da6b0b60e297805c348450bcb04b1fb0e1eea756283ae140619c95a2"
+    },
+    {
+      "label": "r4-evidence-audit",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-evidence-audit-713e5b57-7d22-4402-8c4a-09771861a892",
+      "command": [
+        "node",
+        "lab/verify/QH1/round4-audit.mjs"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:06:53.171Z",
+      "end": "2026-11-09T18:06:54.015Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "2ac09b6216292c0ff1d5b1b7a2848acb7cfe674789a8c84136e18da672b8fdca"
+    },
+    {
+      "label": "r4-mutants",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-mutants-3d2754e1-bc6d-434b-b1d1-48ae917cdfb8",
+      "command": [
+        "node",
+        "lab/experiments/EXP-QH1/mutants.mjs"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:02:24.899Z",
+      "end": "2026-11-09T18:02:33.022Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "r4-prefix-control",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-prefix-control-94fa0779-eedb-4796-98b0-730f02fbea1a",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/round4-prefix.config.ts"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:06:53.171Z",
+      "end": "2026-11-09T18:07:01.693Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "1aabe265fa29c6807883d6e12d14bd556f58af9c8f8919920e8880d3b8a9869c"
+    },
+    {
+      "label": "r4-qh1",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-qh1-6a1fbd8b-2b36-4ae1-9e39-54ef3d5df762",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "--exclude",
+        "**/writer.test.ts",
+        "--exclude",
+        "**/review-adversarial.test.ts"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:02:24.900Z",
+      "end": "2026-11-09T18:03:11.400Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "f3675bc2071c3e7f7f9e32ae63e6a65fc6c019d3690c1433d60d9841d095ad3a"
+    },
+    {
+      "label": "r4-qh1-final",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-qh1-final-f0af3635-abbb-49f2-9031-3e02e76d2b2c",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "--exclude",
+        "**/writer.test.ts",
+        "--exclude",
+        "**/review-adversarial.test.ts"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:08:03.160Z",
+      "end": "2026-11-09T18:09:02.922Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "9767ec983761af94eba9f42594b1e3efeb1d8c53dfa19edcefaabb160132ca21"
+    },
+    {
+      "label": "r4-qlever",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-qlever-eff48bb1-8935-49a4-8e3d-8159d86dd746",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/qlever",
+        "--config",
+        "vitest.config.ts"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:02:24.899Z",
+      "end": "2026-11-09T18:03:40.979Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "b6d5af3551ed5e692280609b7639ae773618133ed97c6cdaa59fe18657cbf72d"
+    },
+    {
+      "label": "r4-reviewer",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/r4-reviewer-9ac2e41e-4dc5-4b33-9e70-85f3d4782c19",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "round4-review.test.ts"
+      ],
+      "head": "fcefd62b6c9ce0548983a03cf4e9dfac7a852aad",
+      "tree": "d61e10f4caedbf7642c683d04d562dbe27fe46a1",
+      "start": "2026-11-09T18:05:08.053Z",
+      "end": "2026-11-09T18:05:10.583Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "d9b94650f5c87c09be6935a23b26fcc757faa58379a0e32b208395cf34c09ad5"
+    }
+  ],
+  "notes": "Command exits are observations. r4-prefix-control is an expected semantic failure control. The three native-adapter tests reproduce defects using offline native-response fixtures. See VERIFY-round4.md.",
+  "builderEvidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/QH1-R4"
+}
