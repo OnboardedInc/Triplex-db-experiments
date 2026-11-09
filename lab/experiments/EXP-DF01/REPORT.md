@@ -431,3 +431,79 @@ this changes only the lab fixture/driver/test/evidence; the earlier G0 remains h
 No merge, push, deployment, package publication, acceptance edit, subagent or test retry occurred. Remaining work is independent
 review of these diagnostic receipts, any specifically measured physical deadline interleaving needed beyond the disclosed
 logical-clock cases, and qualification on a production-capable storage profile before making production claims.
+
+## Round 4 — R47-c: Datomic feed changes are application changes
+
+**Result: journal facts no longer appear as feed changes; real-peer and fake-peer regressions, FD01 conformance and fresh full G0 PASS.**
+Builder base `dcc8322d`; code commit `1959eed4`. North star: P3 on lane D (an ordered, resumable feed of application changes).
+Source: R47 sections 3 and 10, pending ruling Q107c (a Datomic feed change is an application change; journal facts are excluded as on
+the broker and P2X). Offline only; the Datomic dev slot stayed parked and no Docker or engine command ran.
+
+### The defect, reproduced
+`project` in `feed.clj` turned every `:f/asserted-in` and `:f/retracted-in` datom of a Triplex transaction into a change. A core
+transaction also writes its journal as ordinary facts (entity `_tx/...`, type `_Transaction`: `:_tx/position`, `:_tx/command-id`,
+`:_tx/changed-entity`, `:_tx/change`), so each transaction's feed entry listed them. With the old source the new real-peer test fails
+as predicted: the first commit lists four journal facts (`:_tx/position`, `:_tx/changed-entity`, `:_tx/change`, `:_tx/command-id` on
+`_tx/t1`) before the application changes (`round4/before.log`, 11 failures across the three new tests).
+
+### The fix and how journal facts are decided
+A fact is a journal fact exactly when **its stored entity type is `_Transaction` and its subject is the fact's own transaction id**.
+This is the same predicate as `isJournalRow` in the broker feed (`qlever/src/broker/feed.ts:81`) and in P2X (`XtdbStorageAdapter.ts:149`),
+so the three feeds agree.
+
+- **Type comes from the schema.** `:f/entity-type` is a schema attribute (`schema.clj`) that `storage.clj` writes from the row's
+  `entity_type`; `storage/raw-row` returns it again as `entity_type`. Core reserves the type (`isReservedEntityType`), so a user write
+  cannot carry it.
+- **No string prefix is tested.** Neither the subject id nor the attribute key is inspected for `_tx`, so a user attribute such as
+  `_txNote`, a user attribute spelled `:_tx/change` on an `Order`, and a user entity `_tx/custom` of type `Label` are still changes.
+- **Own tx id** is rebuilt as `raw-row` does: `:f/tx-id` if stored, else the asserting transaction's annotation id (`:f/asserted-in`
+  then `:triplex.tx/id`), nothing when `:f/null-tx-id` is set.
+- **Position, ids and stamp are computed from all facts of the member, journal included**, and only `changes` is filtered. The broker takes
+  `txIds` from any own-position row and `positions` from the member, so a journal fact that carries its own earlier position (a member
+  group) still contributes that position, and a retract-only or journal-only commit keeps its position and id. The stamp is still the
+  annotation `:triplex.tx/recorded-at` (never `:db/txInstant`, Q90c). Non-Triplex transactions are still listed `skipped`.
+- Rejected: a `_tx/` or `:_tx/` prefix test (a user attribute can share it); dropping journal datoms before computing positions and
+  ids (loses the position of a member whose only trace is a journal row).
+
+`fact-change` now takes the entity (not `db`/`eid`); it had no other caller. No TypeScript interface, cursor or the recorded page
+changed: the regenerated `recorded-page.json` is byte-identical (sha256 `94a90f55…b8aa`).
+
+### Regressions (`feed_test.clj`, 3 new tests, 28 new assertions)
+| Test | What it proves |
+| --- | --- |
+| `journal-predicate` | pure cases: type and id match; explicit row tx id wins; user entity `_tx/...` with a non-journal type, a user attribute `_txNote`, a subject that differs from the tx id, `:f/null-tx-id`, and a missing type are all not journal facts |
+| `journal-facts-are-not-changes-fake-peer` | fake peer: only application changes (including `_txNote`); a journal fact's own position still appears in `positions`; a journal-only commit has `changes: []` with positions kept; a retract-only commit keeps position `8` and its tx id; non-Triplex still `skipped` |
+| `journal-facts-are-not-changes-real-peer` | **real Datomic peer on `datomic:mem://`** through `storage/commit!` and `feed/log-page`: (1) a Triplex transaction with four application facts (`status`, `_txNote`, `_tx/custom label`, a user `:_tx/change` on an `Order`) and four journal facts and a claim: the entry has exactly the four application changes, `commandIds ["cmd-1"]`, stamp `1000`; (2) a retract-only commit: one retract, position `2`, id `_tx/t2`, stamp `2000`; (3) a journal-only commit: no changes, position `3`; (4) a member whose journal rows carry position `4` inside the commit at `5`: positions `["4","5"]`, one change; the scope and schema transactions stay `skipped`; a second read is identical |
+
+### Gates (all fresh, this attempt)
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| Gateway suite, old source with a no-op shim | **FAIL as expected**: 15 tests / 111 assertions, 11 failures, 0 errors | `round4/before.log` |
+| Gateway suite, new source | **15 tests / 111 assertions, 0 failures, 0 errors** (was 12 / 83) | `round4/after.log` |
+| Round 2 and 3 reviewer probes, unchanged and run against the new source | 22 tests / 236 assertions, 0 failures, 0 errors | `round4/probes.log` (output in scratch) |
+| FD01 conformance on the Datomic adapter: `host/test/feed/datomic.test.ts` and `feed.test.ts` | **16/16 passed, 0 failed, 0 pending**; one worker, file parallelism off. The Datomic adapter test runs the unchanged audit, resume, gap-mutation (`M-FEED-GAP`) and SQLite replay checks against the recorded page | `round4/focused-tests.json`, `focused.log` |
+| G0 `G0-datomic-20261109T115608Z-47785a` | **PASS: 1,279/1,279, 0 failures, 66 expected skips, 0 unexpected skips**; `previous` = `G0-datomic-20261109T090324Z-69ac4b`; receipt head `1959eed4`, source diff 0 bytes (only untracked `round4/` dirty) | `lab/runs/G0/G0-datomic-20261109T115608Z-47785a.json`, `round4/G0-r4.log`, durable raw copy |
+
+G0 ran through `heavy.mjs` (it queued behind four other holders for about 1 h; host free disk was 7.3 GiB). The Clojure and TypeScript
+runs are light and ran directly, as in rounds 2 and 3. No timeout, skip policy or assertion was changed.
+
+### Round-4 PASS / verdict / receipt audit (rule 9a)
+| Place | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| New `feed_test.clj` assertions and exit status | expected tuples are written by hand from the input rows (positions, ids, stamp, attribute and assertion ids), not read from the feed | new `datomic:mem://` database, scope name and process each run; `before.log` shows the same assertions failing on the old source | actual `storage/commit!` and `feed/log-page` on the real peer, current gateway sources; `run-clojure.mjs` hashes sources, vendor JARs and JVM before and after |
+| `before.log` / `after.log` | counts and failing assertions come from the child process output | separate processes; the old-source run used `git show HEAD:` bytes plus a one-line `journal-fact?` shim that was never committed | the shim run is a negative control only and is not a PASS |
+| Round 2 and 3 probes (`round3/run-offline.mjs`) | unchanged reviewer expectations on identity, stamp, excision, resume, skipped and deadline cuts | fresh JVM, fresh output directory | probe files untouched; runner hashes the current gateway sources |
+| Focused TypeScript conformance | existing FD01 audits, gap mutation, replay and readback against `recorded-page.json` | fresh vitest process; the page was regenerated by this round's Clojure run | page sha256 equals the committed one, so the test reads exactly what the new gateway projects for the unchanged fake pages. Journal exclusion is covered by the Clojure real-peer test, not by this fixture |
+| G0 receipt | existing gate checks: complete executed set, zero unexpected skips, oracle content, build and input hashes | new run id, builds and tests executed in this attempt | source-tree identity in the receipt: head `1959eed4`, `diffBytes` 0 for the source scope |
+| Retention | durable copy, `SHA256SUMS` and `round4/DURABLE-SHA256SUMS` | copies made after the run and hashed from the copies | receipt copy hash equals the repo receipt |
+
+### Pins and limits
+`round4/SOURCE-SHA256.tsv` lists both modified source paths with old and new sha256. Neither is named in `lab/acceptance`
+(0 mentions) and **no `lab/acceptance/` file was edited**. Durable raw G0 output and logs: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DF01-R4/`
+(`SHA256SUMS`). Nothing over 1 MB is committed.
+
+Not verified: a live Datomic dev-storage peer (parked); real transactor-written journal data from a core build (the real-peer test
+writes journal rows in the shape core's `metadataInputs` produces, through the gateway's own `commit!`, not through core); `:_tx/instant`
+and change JSON v2 (RT01, Q90e); behavior for rows without `:f/entity-type` written before the attribute existed (such facts are
+treated as application facts, as the broker treats a row without the type). The same-predicate claim for P2X and the broker comes from
+reading their `isJournalRow` source, not from running them. Q107c remains a pending orchestrator ruling.

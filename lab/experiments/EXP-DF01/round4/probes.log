@@ -1,0 +1,69 @@
+06:52:18.590 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+06:52:18.599 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @2511ms to org.eclipse.jetty.util.log.Slf4jLog
+
+Testing triplex.gateway.feed-test
+06:52:20.087 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.095 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.832, :phase :end, :pid 18066, :tid 1}
+06:52:20.110 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.119 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.156, :phase :end, :pid 18066, :tid 1}
+06:52:20.130 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.162 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 30.4, :phase :end, :pid 18066, :tid 1}
+06:52:20.172 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.182 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0926, :phase :end, :pid 18066, :tid 1}
+06:52:20.185 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.206 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 9.73, :phase :end, :pid 18066, :tid 1}
+06:52:20.212 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.216 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0608, :phase :end, :pid 18066, :tid 1}
+06:52:20.219 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.222 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0676, :phase :end, :pid 18066, :tid 1}
+06:52:20.223 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.228 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 2.98, :phase :end, :pid 18066, :tid 1}
+06:52:20.237 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.239 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0639, :phase :end, :pid 18066, :tid 1}
+06:52:20.239 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.239 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0141, :phase :end, :pid 18066, :tid 1}
+06:52:20.240 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.242 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0419, :phase :end, :pid 18066, :tid 1}
+06:52:20.243 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.247 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0474, :phase :end, :pid 18066, :tid 1}
+06:52:20.247 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.250 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.039, :phase :end, :pid 18066, :tid 1}
+06:52:20.252 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.255 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0244, :phase :end, :pid 18066, :tid 1}
+06:52:20.256 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.256 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0102, :phase :end, :pid 18066, :tid 1}
+06:52:20.256 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.261 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0378, :phase :end, :pid 18066, :tid 1}
+06:52:20.265 [main] INFO datomic.process-monitor -- {:event :metrics/initializing, :metricsCallback clojure.core/identity, :phase :begin, :pid 18066, :tid 1}
+06:52:20.267 [main] INFO datomic.process-monitor -- {:event :metrics/initializing, :metricsCallback clojure.core/identity, :msec 0.271, :phase :end, :pid 18066, :tid 1}
+06:52:20.268 [main] INFO datomic.process-monitor -- {:metrics/started clojure.core/identity, :pid 18066, :tid 1}
+06:52:20.268 [clojure-agent-send-off-pool-1] INFO datomic.domain -- {:event :cache/create, :cache-bytes 134217728, :pid 18066, :tid 35}
+06:52:20.274 [clojure-agent-send-off-pool-1] INFO datomic.process-monitor -- {:DbAddFulltextMsec {:lo 0, :hi 30, :sum 41, :count 16}, :AvailableMB 197.0, :ObjectCacheCount 0, :event :metrics, :pid 18066, :tid 35}
+06:52:20.277 [clojure-agent-send-off-pool-1] DEBUG datomic.process-monitor -- {:event :metrics/report, :phase :begin, :pid 18066, :tid 35}
+06:52:20.277 [clojure-agent-send-off-pool-1] DEBUG datomic.process-monitor -- {:event :metrics/report, :msec 0.198, :phase :end, :pid 18066, :tid 35}
+06:52:20.286 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.289 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0983, :phase :end, :pid 18066, :tid 1}
+06:52:20.303 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.303 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0239, :phase :end, :pid 18066, :tid 1}
+06:52:20.312 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.316 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0653, :phase :end, :pid 18066, :tid 1}
+06:52:20.321 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.325 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0755, :phase :end, :pid 18066, :tid 1}
+06:52:20.328 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.330 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.029, :phase :end, :pid 18066, :tid 1}
+06:52:20.333 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 18066, :tid 1}
+06:52:20.335 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0583, :phase :end, :pid 18066, :tid 1}
+
+Testing offline-verify
+{"probe":"restart-empty-queue","observed":{"equal":true,"created":2,"removed":2}}
+{"probe":"inside-skipped-range","observed":{"fromT":"102","nextT":"104","rows":[{"t":"103","kind":"skipped","reason":"non-triplex"}]}}
+{"probe":"notification-lost","observed":{"elapsedMs":152.507792,"nextT":"106"}}
+{"probe":"delayed-old-report","observed":{"page":{"fromT":"105","nextT":"106","rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}],"stamp":"9000","stampStatus":"decided"}}]},"elapsedMs":0.852958,"visibleT":105,"events":[{"event":"capture-db","cut":100,"read":1},{"event":"old-report-enqueued","t":100},{"event":"capture-db","cut":100,"read":2},{"event":"new-db-published","t":105},{"event":"capture-db","cut":105,"read":3}]}}
+{"probe":"different-txInstant","observed":{"t":"100","kind":"commit","transaction":{"positions":["3","7"],"txIds":["tx3","tx7"],"operationId":"op7","commandIds":["cmd7"],"changes":[{"op":"assert","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"3"}],"stamp":"7000","stampStatus":"decided"}}}
+{"probe":"excision-wire-equality","observed":{"equal":true,"bytes":687}}
+
+Testing deadline-cut-verify
+{"probe":"predeadline-publication-old-cut","observed":{"leadMinMs":0.986125,"leadMaxMs":1.022166,"captures":[100,100,105],"visibleT":105,"elapsedMs":104.207667,"page":{"fromT":"105","nextT":"106","rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}],"stamp":"9000","stampStatus":"decided"}}]}}}
+
+Ran 22 tests containing 236 assertions.
+0 failures, 0 errors.

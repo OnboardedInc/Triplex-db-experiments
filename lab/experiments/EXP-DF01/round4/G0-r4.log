@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 2802 "CX-QH1-candidate-G0-G5"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 2802 "CX-QH1-candidate-G0-G5"
+[lab] G0-datomic-20261109T115608Z-47785a: raw output runs/G0/G0-datomic-20261109T115608Z-47785a
+PASS G0 datomic scope=full executed=1279 pass=1279 fail=0 skip=66
+receipt: lab/runs/G0/G0-datomic-20261109T115608Z-47785a.json
+exit 0
