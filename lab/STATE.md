@@ -362,3 +362,37 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 QH1 round 2 (173831eb, Sonnet, measurement only): round 1 3,122 us/pull (320/CPU-s), R46 shape with all fields 1,248 (801),
   bar 1,100. QH1 round 3 (Sonnet) builds the five ranked changes with O-REPLAY 100k equality, RQ01, P2 ratio <= 1.10x gates per step and
   an explicit REAL-value round-trip test (Q105b). Round 2 itself not separately reviewed (measurement only); round 3 gets the review.
+- 2026-11-09 contract 0.4.0 ACCEPT (verify/A01-040 ca4870a5; F1/F2 closed; historical Q45a breach at f3ed6211 documented, nothing relied on
+  it). Merged to main e09c2ff4: --verify byte-identical as its own step, evaluator 108/108 on the committed merge. Next contract: 0.4.1
+  (P2B, CR-NS, DF01 r4, HS01, RT01, G03 r5-7 incl. driver bundle re-pin, OBS01 r6-10, R43-a pins, Q106a-g).
+- 2026-11-09 G03 round 7a (Sonnet, 9c4b68aa, code ef1a9216): F1 final readbacks and periods are the last record of the observer HMAC
+  chain, seal.json rebuilt from authenticated values; F2 runBoxedNS builds its own terminal record from docker exec status and the fault
+  injector, and refuses before replay. Suite 268/268, NS 160/160, evaluator 108/108, --verify passes. Driver bundle hash moved (re-pin in
+  0.4.1). In review (CX-VG03-56). Round 7b (R48 witness integration) waits for OBS01 round 10 to be accepted, so it builds on the fixed
+  witness.
+- 2026-11-09 OBS01 round 10 (Sonnet, 1f7d412b): F1-F5 fixed offline (PUBLICATION-SPLIT, coverage-checked detach, W1 full code set, one
+  shared WitnessScan for W3, syncfs interval with DURABILITY-UNPROVEN), all timestamps nsecs(monotonic), W0 clock/perf_event_paranoid/
+  memory/ext4/map-key checks coded, Dockerfile written unbuilt (libbsd0 version needs a build arg). Python 72, Node 21, reviewer fixtures
+  11/11. Nothing ran in the VM; no real bpftrace has parsed the .bt files. In review (CX-VOBS7 round 2), including whether a 100 ms clock
+  tolerance can catch a boot-time clock on a fresh VM.
+- 2026-11-09 OBS01 round 10 review FIX-FIRST (CX-VOBS7, e696c828): R10-F1 untimed WAL tails dropped from coverage instead of refusing;
+  R10-F2 one proven early ACK hides another ACK's DURABILITY-UNPROVEN; R10-F3 W0's clock check cannot tell boot time from monotonic when
+  suspend time is near zero (a fresh VM). The 15 timestamps themselves are confirmed nsecs(monotonic). Orchestrator decision on F3: prove
+  the clock from the compiled program (bpftrace's own dump: monotonic helper only), keep observation as a transport sanity check that
+  reports INCONCLUSIVE when the clocks are not separable. Round 11 (Sonnet) running.
+- 2026-11-09 HS01 round 2 (Sonnet, a9ebe759): 217.06 B/fact at 10k W0 (G9 passes), 308.09 with ULID ids (diagnostic). In review
+  (CX-VHS01 round 2). P5B round 3 (Sonnet) merges main and HS01, seeds 10k, screens B0-B2; no 100k. HS01 round 3 (R47 journal record,
+  entity dictionary, integer binds) waits for the review. Removed 15 finished worktrees (receipts from int-q and verify-a01-0314 copied to
+  evidence/worktree-leftovers/); free 15 GiB.
+- 2026-11-09 DI01 built (CX-DI01, the last Codex builder; 7ae302bc, code 96b9a259): eight offline gates and the readback audit pass,
+  438,140 trace positions, 900 crash trials. pack:check incomplete (offline consumer install ERESOLVE effect@undefined; branch predates
+  the PACK fix on main). In review (CX-VDI01, verify/DI01), including a main merge to settle the pack gate. All builders are Sonnet now.
+- 2026-11-09 OBS01 round 11 (Sonnet, 44607c6d): R10-F1..F3 fixed offline (WAL tails timed, ACKs classified independently, clock proven
+  from the compiled program via lab/bin/clock-proof.mjs with `-d all`; observation is CONSISTENT/INCONCLUSIVE/INCONSISTENT only).
+  Python 92, Node 25, reviewer fixtures 15/15. The bpftrace dump flag and output format are unobserved until W0. In review (CX-VOBS7
+  round 3) with findings split into "must fix before W0" and "settled only by W0 output, already fail-closed"; the second class does not
+  block ACCEPT-OFFLINE. Further offline rounds have diminishing value; the next real information is W0, which needs Sam's download OK.
+- 2026-11-09 DI01 review FIX-FIRST (CX-VDI01, verify/DI01 3bc7bd11; merge with main aa34513a): one medium finding, reference-basis
+  refusals are plain Error objects, not typed. Verified: all 438,140 delivery digests, fresh 900 crash trials, evaluator 108 and lab PACK
+  on the merged tree (root pack:check fails only on the excluded DuckDB tarball). Real backend retention expiry not exercised. DI01 round 2
+  (Sonnet) merges main and adds a shared tagged BasisNotAvailable refusal.
