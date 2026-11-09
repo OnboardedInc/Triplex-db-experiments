@@ -14,6 +14,7 @@ import type { RuleRelations } from "./recursion.js";
 export type QueryBasis = {
   readonly recordedAt?: number;
   readonly recordedPosition?: number;
+  readonly allValidTime?: true;
   readonly validAt: number;
 };
 

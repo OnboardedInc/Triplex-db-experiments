@@ -68,7 +68,7 @@ import {
   reservedAssertError,
   reservedWriteError,
 } from "./systemNamespace.js";
-import { resolveTemporalBasis } from "../Temporal.js";
+import { journalBasis, resolveTemporalBasis } from "../Temporal.js";
 import { TxAttributes } from "../utils/id.js";
 import { finishPagination, preparePagination, wrapDatalogQuery } from "../Pagination.js";
 import { transactionsForEntity } from "./entityTransactionHistory.js";
@@ -678,21 +678,33 @@ export const TriplesLive = Layer.effect(
         return rows.map(rowToTriple);
       });
 
+    // [EXP-RT01] Why: every journal lookup uses a committed position and all valid time. Rejected: sharing ordinary clock-resolved business reads.
+    const journalRows = (pattern: Parameters<typeof adapter.query>[0], position?: number) =>
+      Effect.gen(function* () {
+        const cut =
+          position ??
+          (adapter.currentCut
+            ? (yield* adapter.currentCut()).position
+            : yield* adapter.currentCommitPosition());
+        return yield* adapter.query(pattern, journalBasis(cut));
+      });
+
     const transaction: TriplesService["transaction"] = (txId) =>
-      adapter
-        .query({ entityId: unsafe.entityId(txId), entityType: "_Transaction" })
-        .pipe(Effect.map((rows) => transactionRecordFromTriples(txId, rows.map(rowToTriple))));
+      journalRows({ entityId: unsafe.entityId(txId), entityType: "_Transaction" }).pipe(
+        Effect.map((rows) => transactionRecordFromTriples(txId, rows.map(rowToTriple))),
+      );
 
     const transactionByCommand: TriplesService["transactionByCommand"] = (commandId) =>
-      adapter
-        .query({ attribute: TxAttributes.COMMAND_ID, value: { type: "string", value: commandId } })
-        .pipe(
-          Effect.flatMap((rows) =>
-            rows[0] === undefined
-              ? Effect.succeed(null)
-              : transaction(unsafe.transactionId(rows[0].entity_id)),
-          ),
-        );
+      journalRows({
+        attribute: TxAttributes.COMMAND_ID,
+        value: { type: "string", value: commandId },
+      }).pipe(
+        Effect.flatMap((rows) =>
+          rows[0] === undefined
+            ? Effect.succeed(null)
+            : transaction(unsafe.transactionId(rows[0].entity_id)),
+        ),
+      );
 
     const transactions: TriplesService["transactions"] = (request = {}) => {
       const after = request.after ?? 0;
@@ -707,7 +719,7 @@ export const TriplesLive = Layer.effect(
           new ReadError({ message: "Transaction page limit must be between 1 and 1000" }),
         );
       }
-      return adapter.query({ entityType: "_Transaction" }).pipe(
+      return journalRows({ entityType: "_Transaction" }).pipe(
         Effect.map((rows) => {
           const page = transactionRecordsFromTriples(rows.map(rowToTriple))
             .filter((record) => record.position > after)
@@ -722,27 +734,25 @@ export const TriplesLive = Layer.effect(
     };
 
     const entityTransactions: TriplesService["transactionsForEntity"] = (entityId, request) =>
-      Effect.flatMap(now, (validAt) =>
-        transactionsForEntity(
-          {
-            currentPosition: () =>
-              adapter.currentCut
-                ? Effect.map(adapter.currentCut(), (cut) => cut.position)
-                : adapter.currentCommitPosition(),
-            query: (q, snapshotPosition) =>
-              executor.execute(q, false, { validAt, recordedPosition: snapshotPosition }),
-            transaction: (txId, snapshotPosition) =>
-              Effect.gen(function* () {
-                const rows = yield* adapter.query(
-                  { entityId: unsafe.entityId(txId), entityType: "_Transaction" },
-                  { validAt, recordedPosition: snapshotPosition },
-                );
-                return transactionRecordFromTriples(txId, rows.map(rowToTriple));
-              }),
-          },
-          entityId,
-          request,
-        ),
+      transactionsForEntity(
+        {
+          currentPosition: () =>
+            adapter.currentCut
+              ? Effect.map(adapter.currentCut(), (cut) => cut.position)
+              : adapter.currentCommitPosition(),
+          query: (q, snapshotPosition) =>
+            executor.execute(q, false, journalBasis(snapshotPosition)),
+          transaction: (txId, snapshotPosition) =>
+            Effect.gen(function* () {
+              const rows = yield* journalRows(
+                { entityId: unsafe.entityId(txId), entityType: "_Transaction" },
+                snapshotPosition,
+              );
+              return transactionRecordFromTriples(txId, rows.map(rowToTriple));
+            }),
+        },
+        entityId,
+        request,
       );
 
     // =========================================================================

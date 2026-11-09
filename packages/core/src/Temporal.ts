@@ -19,6 +19,8 @@ export interface ResolvedTemporalBasis {
   readonly recordedAt?: number;
   /** Internal exact commit cut used by snapshot-stable pagination. */
   readonly recordedPosition?: number;
+  /** Internal journal reads omit business-time predicates, retaining the record cut. */
+  readonly allValidTime?: true;
   readonly validAt: number;
 }
 
@@ -53,3 +55,10 @@ export const resolveTemporalBasis = (
     validAt: basis?.validAt ?? now,
   };
 };
+
+// [EXP-RT01] Why: journal metadata is an immutable record log even when stagedAt is ahead of the reader. Rejected: a sentinel clock (still a valid-time predicate).
+export const journalBasis = (recordedPosition: number): ResolvedTemporalBasis => ({
+  allValidTime: true,
+  validAt: 0,
+  recordedPosition,
+});

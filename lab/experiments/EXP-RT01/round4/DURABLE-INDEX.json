@@ -1,0 +1,16 @@
+{
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/round4",
+  "files": 94,
+  "bytes": 1511616,
+  "attempts": [
+    "attempt1",
+    "packages1",
+    "packages2",
+    "packages3"
+  ],
+  "adopted": [
+    "packages3",
+    "attempt1"
+  ],
+  "retention": "All first failures retained; no raw output committed"
+}

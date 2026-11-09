@@ -504,6 +504,7 @@ export const makeSqliteAdapter = (config: SqliteAdapterConfig = {}) =>
           | {
               readonly recordedAt?: number;
               readonly recordedPosition?: number;
+              readonly allValidTime?: true;
               readonly validAt: number;
             }
           | undefined,
@@ -536,8 +537,10 @@ export const makeSqliteAdapter = (config: SqliteAdapterConfig = {}) =>
         } else if (basis.recordedAt !== undefined) {
           params.push(basis.recordedAt, basis.recordedAt);
         }
-        conditions.push("valid_from <= ?", "(valid_to IS NULL OR valid_to > ?)");
-        params.push(basis.validAt, basis.validAt);
+        if (!basis.allValidTime) {
+          conditions.push("valid_from <= ?", "(valid_to IS NULL OR valid_to > ?)");
+          params.push(basis.validAt, basis.validAt);
+        }
         return conditions;
       };
 

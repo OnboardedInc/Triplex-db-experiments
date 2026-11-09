@@ -501,7 +501,7 @@ export function makeCloudflareAdapter(ctx: DOState): SqlStorageAdapterService {
           conditions.push("recorded_at <= ?", "(retracted_at IS NULL OR retracted_at > ?)");
           params.push(basis.recordedAt, basis.recordedAt);
         }
-        if (basis !== undefined) {
+        if (basis !== undefined && !basis.allValidTime) {
           conditions.push("valid_from <= ?", "(valid_to IS NULL OR valid_to > ?)");
           params.push(basis.validAt, basis.validAt);
         }
