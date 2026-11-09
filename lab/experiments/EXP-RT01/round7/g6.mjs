@@ -11,7 +11,7 @@ import {noiseSession} from "./window.mjs";
 import { wireProxy } from "../live2/wire.mjs";
 const root = path.resolve(import.meta.dirname, "../../../.."),
   base = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live2/baseline";
-const out = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/round7/g6-attempt1";
+const out = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live4/g6-attempt1";
 assert.ok(!fs.existsSync(out));
 fs.mkdirSync(out, { recursive: true });
 const sha = (b) => createHash("sha256").update(b).digest("hex"),
@@ -24,7 +24,7 @@ const baseline = JSON.parse(fs.readFileSync(path.join(base, "identity.json")));
 assert.ok(baseline.phases.every((p) => p.exit === 0));
 const g2 = JSON.parse(
   fs.readFileSync(
-    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/round7/g2-attempt1/execution.json",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live4/g2-attempt1/execution.json",
   ),
 );
 assert.equal(g2.live.exit, 0);
@@ -97,7 +97,7 @@ function diskBudget() {
 }
 async function runtime(arm, encoding, size, label) {
   const m = modules[arm],
-    scope = `rt01-g6-r7:${label}:${encoding}:${size}:${arm}`;
+    scope = `rt01-g6-live4:${label}:${encoding}:${size}:${arm}`;
   const inner = m.client.makeXtdbClient(wire.url, {
     maxConnections: 1,
     transactionTimeoutMs: 30000,
@@ -378,7 +378,8 @@ try {
   const frozen=freezeRule(path.join(out,"AA-RULE-BEFORE-B.json"),calibration,identity);
   rule=frozen.rule;const ruleHash=frozen.sha256;
   event({kind:"rule-frozen",sha256:ruleHash,contexts:rule.contexts,timingEligible:rule.timingEligible});
-  assert.ok(rule.timingEligible,"TIMING_INVALID: Q100k preflight not GREEN; no B samples permitted");
+  // [EXP-RT01] Why: live4 explicitly continues non-GREEN windows as unjudged observations. Rejected: promoting missing or excluded A/A variance to a judged band.
+  event({kind:"preflight-grades-recorded",timingEligible:rule.timingEligible});
   for (const history of [0, 10000])
     for (const encoding of ["a0", "compact"])
       for (const size of [10, 5]) {
@@ -446,7 +447,9 @@ try {
           path.join(out, `point-${history}-${encoding}-${size}.json`),
           JSON.stringify(point, null, 2) + "\n",
         );
-        assert.equal(verdict.result,"WITHIN_BAND",`${verdict.result}: G6 ${stage}: ${JSON.stringify(verdict.metrics)}`);
+        assert.notEqual(verdict.result,"FAIL",`G6 judged regression ${stage}: ${JSON.stringify(verdict.metrics)}`);
+        assert.ok(["WITHIN_BAND","UNJUDGED"].includes(verdict.result),`unexpected G6 result ${verdict.result}`);
+        event({kind:"point-complete",history,encoding,size,result:verdict.result,windowGrade:window.windowGrade});
         await a.inner.close();
         await b.inner.close();
       }
@@ -476,7 +479,7 @@ try {
         calibration,
         points,
         failure,
-        timingOutcome:failure ? (failure.error.includes("TIMING_INVALID") ? "TIMING_INVALID" : "FAIL") : "WITHIN_BAND",
+        timingOutcome:failure ? (failure.error.includes("TIMING_INVALID") ? "TIMING_INVALID" : "FAIL") : points.some(p=>p.verdict.result==="UNJUDGED") ? "UNJUDGED" : "WITHIN_BAND",
         startedFromG2Build: g2.build,
       },
       null,
@@ -487,4 +490,5 @@ try {
   if (JSON.stringify(before) !== JSON.stringify(after))
     throw Error("source changed during benchmark");
 }
-if (failure) process.exitCode = failure.error.includes("TIMING_INVALID") ? 3 : 1;
+if (failure) process.exitCode = 1;
+else if(points.some(p=>p.verdict.result==="UNJUDGED"))process.exitCode=3;

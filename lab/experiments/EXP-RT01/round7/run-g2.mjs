@@ -5,7 +5,7 @@ import { spawnSync, execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 const root = path.resolve(import.meta.dirname, "../../../.."),
   out =
-    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/round7/" +
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live4/" +
     (process.env.RT01_DIAGNOSTIC === "1" ? "diagnostic1" : "g2-attempt1");
 assert.ok(!fs.existsSync(out));
 fs.mkdirSync(out, { recursive: true });

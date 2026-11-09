@@ -52,12 +52,12 @@ test("missing active signal cannot clear the window",() => {
 test("shared unpartitioned VM remains AMBER, timing INVALID",() => {
   const c=contexts();for(const r of c[0].rounds)r.noise.partitioned=false;
   const r=makeRule(c,identity);assert.equal(r.contexts[0].window.windowGrade.grade,"AMBER");
-  assert.equal(judge(r,{encoding:"a0",size:10,A:xs(),B:xs(1000,10),window}).result,"TIMING_INVALID");
+  assert.equal(judge(r,{encoding:"a0",size:10,A:xs(),B:xs(1000,10),window}).result,"UNJUDGED");
 });
 test("point noise hard failure cannot reuse GREEN preflight",() => {
   const r=rule(),n=noise("point");n.signals["arms.oomKillDelta"]=1;
   const w=gradePoint(r,"a0",10,n);assert.equal(w.timingEligible,false);
-  assert.equal(judge(r,{encoding:"a0",size:10,A:xs(),B:xs(),window:w}).result,"TIMING_INVALID");
+  assert.equal(judge(r,{encoding:"a0",size:10,A:xs(),B:xs(),window:w}).result,"UNJUDGED");
 });
 test("unknown point signals unjudged",() => {const n=noise("point");n.signals["vm.psi.cpuSomeShare"]=null;assert.equal(gradePoint(rule(),"a0",10,n).timingEligible,false);});
 test("point cannot substitute stale pre-rule noise",() => {assert.throws(()=>gradePoint(rule(),"a0",10,noise("old-control")));});
@@ -71,4 +71,15 @@ test("freeze exclusive before B, exact source binding and byte edits refused",()
     fs.writeFileSync(file,bytes);const edited=JSON.parse(bytes);edited.contexts[0].metrics.p50.band=100;
     fs.writeFileSync(file,JSON.stringify(edited));assert.throws(()=>loadRule(file,digest(fs.readFileSync(file)),identity));
   } finally {fs.rmSync(dir,{recursive:true});}
+});
+
+test("one non-GREEN context cannot suppress another GREEN context",()=>{
+  const c=contexts();for(const r of c[0].rounds)r.noise.partitioned=false;
+  const rule=makeRule(c,identity);assert.equal(rule.timingEligible,false);
+  assert.equal(judge(rule,{encoding:"compact",size:5,A:xs(),B:xs(1000,10),window}).result,"FAIL");
+});
+test("non-GREEN point keeps quantiles/denominators with explicitly unjudged bars",()=>{
+  const r=rule();const v=judge(r,{encoding:"a0",size:10,A:xs(),B:xs(1000,10),window:{timingEligible:false,windowGrade:{grade:"AMBER"}}});
+  assert.equal(v.result,"UNJUDGED");assert.equal(v.A.n,1000);assert.equal(v.B.n,1000);
+  assert.equal(v.metrics.p99.result,"UNJUDGED_WINDOW");assert.equal(v.metrics.p99.ratio,10);
 });

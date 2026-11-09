@@ -5,12 +5,12 @@ import { sd, mean, t975 } from "./m01/paired.ts";
 import { analyseSingleWindow } from "./m01/single-analysis.ts";
 import config from "./m01/noise.json" with { type: "json" };
 
-export const policy = Object.freeze({ version: "rt01-q104a/1", aaRounds: 4, samplesPerArm: 1000,
+export const policy = Object.freeze({ version: "rt01-q104a/2", aaRounds: 4, samplesPerArm: 1000,
   blockSize: 500, safety: 1.5, level: 0.95, timingGrade: "GREEN",
   band: "exp(abs(mean(d)) + t975(k-1)*1.5*s_d*sqrt(1+1/k))-1; d=ln(q_right/q_left)",
   p99: "n>=1000 per arm; no small-n point-quantile judgement and no per-command bootstrap",
   grade: "M01 single-q100k; four same-arm/equal-phase observations give three adjacent ratios",
-  nonGreen: "TIMING_INVALID; no performance PASS or regression; stop before B or at first invalid point",
+  nonGreen: "UNJUDGED timing bars; record observed metrics and window grade, continue to the next point; never PASS or FAIL",
   comparison: "strict B/A > 1+band is regression; equality is within band; first failure stops; no retries" });
 export const digest = (value) => createHash("sha256").update(typeof value === "string" || Buffer.isBuffer(value) ? value : JSON.stringify(value)).digest("hex");
 export function quantile(xs, q) {
@@ -71,8 +71,11 @@ export function judge(rule,{encoding,size,A,B,window}) {
   assert.equal(rule.schema,policy.version);
   const context=rule.contexts.find((c) => c.encoding===encoding && c.size===size);
   assert.ok(context);
-  if(!rule.timingEligible || !window.timingEligible) return {result:"TIMING_INVALID",windowGrade:window.windowGrade};
   const a=stats(A),b=stats(B),metrics={};
+  // [EXP-RT01] Why: the live4 dispatch requires every non-GREEN point to remain unjudged and continue; another context's grade cannot invalidate a GREEN context. Rejected: stopping before B or labeling noisy observations as a timing PASS/FAIL.
+  if(!context.window.timingEligible || !window.timingEligible || Object.values(context.metrics).some((m)=>m.band===null))
+    return {result:"UNJUDGED",A:a,B:b,windowGrade:window.windowGrade,
+      metrics:Object.fromEntries(["p50","p99"].map(m=>[m,{ratio:b[m]/a[m],band:context.metrics[m].band,nA:a.n,nB:b.n,result:"UNJUDGED_WINDOW"}]))};
   for(const metric of ["p50","p99"]) {
     const floor=metric==="p50" ? 150 : policy.samplesPerArm;
     metrics[metric]={ratio:b[metric]/a[metric],band:context.metrics[metric].band,nA:a.n,nB:b.n,

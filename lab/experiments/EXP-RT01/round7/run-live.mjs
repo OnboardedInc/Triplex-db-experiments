@@ -3,7 +3,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 const root = path.resolve(import.meta.dirname, "../../../.."),
-  raw = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/round7",
+  raw = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live4",
   out = path.join(raw, "live-attempt1");
 assert.ok(!fs.existsSync(out));
 fs.mkdirSync(out, { recursive: true });
@@ -42,7 +42,8 @@ const ownedDuringAttempt =
   currentOwner?.holder === "CX-RT01" &&
   currentOwner?.experiment === "EXP-RT01";
 let acquired = admission.exit === 0 && ownedDuringAttempt,
-  failure = acquired ? null : "admission stopped";
+  failure = acquired ? null : "admission stopped",
+  timingOutcome="NOT_RUN";
 try {
   if (acquired) {
     fs.copyFileSync(
@@ -57,7 +58,8 @@ try {
     if (g2.exit !== 0) failure = "G2 first failure";
     else {
       const g6 = run("g6", process.execPath, ["--experimental-strip-types", path.join(import.meta.dirname, "g6.mjs")], 21600000);
-      if (g6.exit !== 0) failure = g6.exit === 3 ? "G6 TIMING_INVALID (unjudged)" : "G6 first failure";
+      timingOutcome=g6.exit===3 ? "UNJUDGED" : g6.exit===0 ? "WITHIN_BAND" : "STOPPED";
+      if (![0,3].includes(g6.exit)) failure = "G6 first failure";
     }
   }
 } finally {
@@ -85,7 +87,7 @@ try {
   }
   fs.writeFileSync(
     path.join(out, "execution.json"),
-    JSON.stringify({ acquired, ownedDuringAttempt, ownerExistedBefore, phases, failure }, null, 2) +
+    JSON.stringify({ acquired, ownedDuringAttempt, ownerExistedBefore, phases, failure, timingOutcome }, null, 2) +
       "\n",
   );
 }
