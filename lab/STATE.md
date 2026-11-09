@@ -524,3 +524,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   Cloudflare, non-broker QLever) still read per level on the reach fallback and can mix cuts (untested). Needs review (CX-VQH1) in the
   CLI session; P4N round 1 merges it.
 - 2026-11-09 Sam asked why SQLite/Postgres/DuckDB/Cloudflare came up. Scope check (lab/SCOPE.md): three lanes only, XTDB, QLever, Datomic; DuckDB lane explicitly out. SQLite matters only as the broker's host store inside the lanes. The QH1 round 4 follow-up is narrowed to the XTDB, Datomic and non-broker QLever adapters; inherited adapters get no work beyond typecheck.
+- 2026-11-09 G03 round 7c review FIX-FIRST (CX-VG03-56; draft committed by the orchestrator on verify/G03-r6 because the Codex content
+  filter stopped the reviewer at its final environment step; not relaunched per Sam's no-new-agents instruction). F3 and F4 closed in the
+  offline model. F5 medium: the stage-10 terminal write happens before the retention guard, so an I/O error there lets box.close() delete
+  the evidence volumes. F6 low: a JSON `null` control envelope throws in the stream callback instead of failing through the rejection path.
+  F7 low: partial control streams are re-encoded before the "raw" export. No candidate-caused bypass shown. Next (CLI): G03 round 7d fixes.
