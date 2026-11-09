@@ -475,3 +475,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   A/A, >= 5,000 pulls per arm, bootstrap lower bound. Orchestrator decisions: build (a)+(e) now on the QH1 branch; (c') only if (a)+(e)
   misses 1,320 in a GREEN window; if (c') is needed, current.db is a derived cache and is reported separately from G9's source-store bytes
   (pending ruling, to put to Sam with the numbers). Two builder rounds maximum.
+- 2026-11-09 QH1 review FIX-FIRST (CX-VQH1, verify/QH1 23506fdb): F1 High, Triples.reach's level-by-level fallback reads the broker
+  head per level, so a commit between levels returns a graph that existed at no commit (reproduced with public writes; also with H1 on
+  and record-time fallback at same-timestamp commits). Step 4b unguarded names found safe; REAL precision ok; P2 reading supported but
+  not a non-regression proof (settling it needs tens of thousands of commits per arm with live readers). QH1 round 4 (Sonnet, worktree
+  qh1-fix) pins one record position per pull; P4N round 1 merges the fix when it lands.
