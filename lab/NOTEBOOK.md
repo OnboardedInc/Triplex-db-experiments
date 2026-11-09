@@ -1895,3 +1895,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
   encodings, each time by making the rule general (byte coverage per physical range, decoding as a closure with a REFUSED bound).
 - **Open:** CPU and time bounds on large base64 inputs (a diagnostic was interrupted); live erasure qualification waits for ER01-C to exist.
 - **Next for erasure:** ER01-C (the core) after RT01 round A merges; the scanners stay on exp/OBS01-observer until then.
+
+## 2026-11-09 05:23Z: EXP-P2X2 closes the native XTDB commit path for P2; lane X goes through the broker
+- **Preregistered rule (R39 4.5):** native is closed if F3 p50 > 6 ms or F5 p50 > 20 ms or engine resolve > 7 ms per commit.
+  **Measured:** F3 p50 7.68 ms, F5 fresh 33.00 ms. **Q96d:** lane X's P2 candidate is XTDB behind the broker (EXP-P2B); the native
+  per-subject arm stays as a comparison. This is the first time the lab closed a path with a rule written before the run.
+- Aged F6, F7 to F9 and strict no-wait checks are still open; an independent review reads the receipts. Slot and volume released; K01's live
+  rerun took the slot next.
