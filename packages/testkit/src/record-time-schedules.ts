@@ -73,7 +73,7 @@ export const makeA0RecordTimeSuite = (
     ),
   );
   let sequence = 0;
-  const write = (entity = `schedule:${++sequence}`) =>
+  const write = (entity = `schedule:${++sequence}`, entityType = "RecordTime") =>
     Effect.flatMap(Triples, (t) =>
       t.transact([
         {
@@ -81,7 +81,7 @@ export const makeA0RecordTimeSuite = (
           entityId: EntityId.make(entity),
           attribute: ":rt/value",
           value: string("value"),
-          entityType: "RecordTime",
+          entityType,
         },
       ]),
     );
@@ -165,14 +165,14 @@ export const makeA0RecordTimeSuite = (
       );
       const pendingPage = yield* Effect.forkChild(
         t.entityPage({
-          entityType: "RecordTime",
-          limit: 200,
+          entityType: "RecordTimeRelease",
+          limit: 1,
           basis: { recordedAt: target, validAt: r.stagedAt },
         }),
       );
       yield* Effect.sleep("50 millis");
       clock.set(r.stagedAt);
-      const next = yield* write("rt:release");
+      const next = yield* write("rt:release", "RecordTimeRelease");
       const rows = yield* Fiber.join(pending);
       const page = yield* Fiber.join(pendingPage);
       yield* require(next.instant === target &&
