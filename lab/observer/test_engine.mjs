@@ -114,6 +114,14 @@ test('witness profile accepts only CAP_BPF + CAP_PERFMON, private namespaces and
   refused({ Mounts: [{ Type: 'bind', Destination: '/sys/kernel/btf', RW: true }] }, /read-only/);
   refused({ Mounts: [{ Type: 'bind', Destination: '/var/run/docker.sock', RW: true }] }, /unexpected mount/);
 });
+test('round 16: with stdout the witness argv has no file redirect (W4 streams it to the host) and keeps the same capabilities, mounts and limits', () => {
+  const base = { name: 'tx2-sw-x', holder: 'h', image: 'sha256:' + 'c'.repeat(64), cpu: 5, volume: 'sw-run', dirs: [[266338305, 77]] };
+  const file = witness.witnessCreateArgs(base), out = witness.witnessCreateArgs({ ...base, stdout: true });
+  assert.ok(file.join(' ').includes('> /witness/trace.txt')); assert.ok(!out.join(' ').includes('> /witness/trace.txt'));
+  assert.ok(out.includes('exec bpftrace -q -B none "$@"'));
+  assert.deepEqual(out.filter(a => a !== 'exec bpftrace -q -B none "$@"'), file.filter(a => a !== 'exec bpftrace -q -B none "$@" > /witness/trace.txt'));
+  assert.deepEqual(witness.verifyWitnessProfile({ HostConfig: { CapAdd: ['BPF', 'PERFMON'], CapDrop: ['ALL'], ReadonlyRootfs: true, NetworkMode: 'none', SecurityOpt: ['no-new-privileges'], Memory: 268435456 }, Mounts: [], Config: { Image: base.image, Env: ['BPFTRACE_MAX_MAP_KEYS=65536', 'BPFTRACE_PERF_RB_PAGES=1024'] } }, { volume: 'sw-run' }), []);
+});
 test('witness create arguments carry the exact profile and the pinned program with its directory pair', () => {
   const args = witness.witnessCreateArgs({ name: 'tx2-sw-x', holder: 'h', image: 'sha256:' + 'c'.repeat(64), cpu: 5, volume: 'sw-run', dirs: [[266338305, 77]] });
   const text = args.join(' ');

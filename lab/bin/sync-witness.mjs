@@ -74,7 +74,7 @@ export function verifyWitnessProfile(doc,{volume}={}){
 }
 
 /** Create arguments for the witness (pure). `dirs` are [kernelDev, dirInode] pairs; one pair is repeated when only one directory is witnessed. */
-export function witnessCreateArgs({name,holder,image,cpu,volume,dirs,perfPages=PERF_RB_PAGES,mapKeys=MAP_KEYS}){
+export function witnessCreateArgs({name,holder,image,cpu,volume,dirs,perfPages=PERF_RB_PAGES,mapKeys=MAP_KEYS,stdout=false}){
  if(!Array.isArray(dirs)||!dirs.length||dirs.length>2||dirs.some(d=>d.length!==2||d.some(v=>!Number.isSafeInteger(v)||v<0)))fail('USAGE','one or two [kernel dev, directory inode] pairs required');
  if(!Number.isSafeInteger(mapKeys)||mapKeys<MAP_KEYS_FLOOR||mapKeys>MAP_KEYS_CEILING)fail('USAGE','BPFTRACE_MAX_MAP_KEYS must be between '+MAP_KEYS_FLOOR+' and '+MAP_KEYS_CEILING);
  const pair=[dirs[0],dirs[1]??dirs[0]];
@@ -85,7 +85,9 @@ export function witnessCreateArgs({name,holder,image,cpu,volume,dirs,perfPages=P
   // bpftrace argv runs under `sh -c 'exec bpftrace ... > /witness/trace.txt'`: `exec` keeps bpftrace as PID 1 (SIGINT still reaches it) and the record is in the file when BEGIN runs.
   // Rejected: waiting for the END flush (the attach check would run after the writer); a longer wait (the buffer fills only at its own size); reading the container's stdout instead of a file
   // (the trace must live on the witness volume for the sealed bundle).
-  ['-c','exec bpftrace -q -B none "$@" > /witness/trace.txt','sh','/program/vm_syncwitness.bt',...pair.flat().map(String)]);
+  // [EXP-OBS01-R16] Why: W4 crashes the guest, which loses unsynced page cache, so a trace file inside the guest cannot be the record. With `stdout` the same bpftrace argv writes to standard output and the host
+  // reads it through `docker start -a`; every record is on the host by the time the guest dies, except those still in flight. Rejected: a trace file synced by the witness (the witness must not sync: it would change what it measures).
+  ['-c',stdout?'exec bpftrace -q -B none "$@"':'exec bpftrace -q -B none "$@" > /witness/trace.txt','sh','/program/vm_syncwitness.bt',...pair.flat().map(String)]);
 }
 
 /** Q108a start condition: no exclusive slot is held and the pool/disk guard of vmAvailable holds. Pure over a ledger and the running list. */
@@ -488,7 +490,90 @@ async function windowABBA(ctx,options){
   claim:'writer commit latency with the witness off and on, judged under Q104a (>= 1,000 commits per arm, >= 3 A/A rounds, block bootstrap); the verdict (analysis.verdict) is a report, never a gate (R48 9.1 W2)'};
 }
 
-async function windowW4(){fail('REFUSED','W4 is not implemented yet');}
+const W4_COLLECT="import base64,json,os;d='/data/store';print(json.dumps({n:base64.b64encode(open(os.path.join(d,n),'rb').read()).decode() for n in ('broker.db','broker.db-wal') if os.path.exists(os.path.join(d,n))}))";
+const dockerUp=()=>spawnSync('docker',['-H',SOCK,'info'],{encoding:'utf8',timeout:15000}).status===0;
+const colimaRunning=()=>spawnSync('colima',['status','-p','triplex2'],{encoding:'utf8',timeout:30000}).status===0;
+async function waitContent(file,test,ms,what){const until=Date.now()+ms;for(;;){const text=fs.existsSync(file)?fs.readFileSync(file,'utf8'):'';if(test(text))return text;if(Date.now()>until)fail('REFUSED','timeout waiting for '+what);await sleep(50);}}
+const ackLines=text=>(text.match(/^A\|/gm)??[]).length;
+
+/**
+ * [EXP-OBS01-R16] W4 (R48 9.1): guest crashes with a planted FULL and a planted OFF writer, the witness attached, and the host collecting both streams. Ten trials alternate FULL, OFF, FULL, ...
+ * (a FULL fsync commits the ext4 journal, which can also write out an OFF neighbour's data, so the two writers never share a trial). Each trial: fresh volume and store directory; the witness
+ * (standard output streamed to the host); the writer (standard output streamed to the host); after 2.5 to 3.5 s and at least 100 ACK lines, `echo b > /proc/sysrq-trigger` in the guest (immediate reboot,
+ * no sync, no unmount); wait for the guest, restart the VM through colima if it stayed down; read the store files back from the volume; judge on the host (vm_w4_judge.py).
+ * Pass (R48): every witnessed commit survives and at least one unwitnessed OFF commit is lost across the trials; otherwise the class premise of Q100r is reopened.
+ * A guest crash kills EVERY container in the VM, so a real run refuses unless no other container is running (the residents tx2-xtdb-dev and tx2-qlever-dev must be parked by the orchestrator first, rule 3).
+ * option w4-rehearsal: the same pipeline with a SIGKILL of the writer instead of the crash; it exercises streaming, collection and judging and is never a W4 result (pass is always false).
+ * options: w4-trials (default 10, even and at least 2).
+ * Rejected: crashing with another team's containers running; both writers in one trial; a trace file inside the guest as the record; `colima stop` as the crash (it is an orderly shutdown).
+ */
+async function windowW4(ctx,options){
+ const trials=Number(options['w4-trials']??10),rehearsal=Boolean(options['w4-rehearsal']);
+ if(!Number.isInteger(trials)||trials<2||trials%2)fail('USAGE','--w4-trials must be an even integer of at least 2');
+ const rows=[];
+ for(let i=1;i<=trials;i++)rows.push(await w4Trial(ctx,{index:i,mode:i%2?'full':'off',rehearsal}));
+ const file=path.join(ctx.out,'w4','trials.json');atomicJson(file,rows.map(r=>({mode:r.mode,...r.judge})));
+ const agg=py(path.join(SRC,'vm_w4_judge.py'),'aggregate',file),aggregate=JSON.parse(agg.stdout||'null');
+ return {window:'W4',rehearsal,trials:rows.map(r=>({index:r.index,mode:r.mode,crashed:r.crashed,bootChanged:r.bootChanged,recoverMs:r.recoverMs,judge:r.judge,pass:r.pass})),aggregate,pass:!rehearsal&&Boolean(aggregate?.pass),
+  claim:rehearsal?'REHEARSAL of the W4 pipeline (writer SIGKILL, no guest crash): not a W4 result':'guest crash (sysrq b) with planted FULL and OFF writers: every witnessed commit survives; at least one unwitnessed OFF commit is lost'};
+}
+async function w4Trial(ctx,{index,mode,rehearsal}){
+ const {config,holder,python,bpftrace,out,nonce}=ctx,tag=`${nonce}-w4-${index}`,volume=`tx2-sw-${tag}-data`,witnessVolume=`tx2-sw-${tag}-witness`;
+ const dir=path.join(out,'w4',String(index).padStart(2,'0')+'-'+mode);fs.mkdirSync(dir,{recursive:true});
+ const names={witness:`tx2-sw-w4w-${tag}`,writer:`tx2-sw-w4x-${tag}`},made=[],volumes=[],children=[],result={index,mode,rehearsal,crashed:false};
+ const files={trace:path.join(dir,'trace.txt'),writer:path.join(dir,'writer.txt'),witnessErr:path.join(dir,'witness-stderr.txt'),writerErr:path.join(dir,'writer-stderr.txt')};
+ const others=()=>docker(['ps','--format','{{.Names}}']).split('\n').filter(n=>n&&n!==names.witness&&n!==names.writer);
+ try{
+  if(!rehearsal&&others().length)fail('REFUSED','W4 needs a VM with no other running container (a guest crash kills them all, residents included); running: '+others().join(', '));
+  for(const v of [volume,witnessVolume]){docker(['volume','create','--label',`tx2.holder=${holder}`,'--label',`tx2.run=${tag}`,v]);volumes.push(v);}
+  const store=await makeStoreDir(config,holder,python,volume);result.dir=store;
+  await reserve(config,names.witness,holder,5);made.push(names.witness);
+  docker(witnessCreateArgs({name:names.witness,holder,image:bpftrace,cpu:5,volume:witnessVolume,dirs:[store],stdout:true}));
+  const profile=verifyWitnessProfile(inspect(names.witness),{volume:witnessVolume});result.profileViolations=profile;if(profile.length)fail('REFUSED','witness profile: '+profile.join('; '));
+  children.push(spawn('docker',['-H',SOCK,'start','-a',names.witness],{stdio:['ignore',fs.openSync(files.trace,'w'),fs.openSync(files.witnessErr,'w')]}));
+  await waitContent(files.trace,t=>t.includes('SW1|B|'),30000,'the witness attach record');
+  await reserve(config,names.writer,holder,4);made.push(names.writer);
+  docker(harden(names.writer,holder,python,4,['--cgroupns','host','--user','10001:10001','-v',volume+':/data','-v',SRC+':/code:ro'],['python3','-B','-u','/code/vm_w4_writer.py','--mode',mode,'--dir','/data/store']));
+  children.push(spawn('docker',['-H',SOCK,'start','-a',names.writer],{stdio:['ignore',fs.openSync(files.writer,'w'),fs.openSync(files.writerErr,'w')]}));
+  await waitContent(files.writer,t=>t.startsWith('R|')&&t.includes('\n'),30000,'the writer ready line');
+  const writerDoc=inspect(names.writer);result.writerId=writerDoc.Id;result.writerCgroupId=vmCgroupId(writerDoc.Id);
+  const hold=2500+((index*173)%1000),t0=Date.now();
+  await waitContent(files.writer,t=>Date.now()-t0>=hold&&ackLines(t)>=100,90000,'100 writer ACK lines');
+  result.acksBeforeCrash=ackLines(fs.readFileSync(files.writer,'utf8'));result.bootIdBefore=vm(['cat','/proc/sys/kernel/random/boot_id']).stdout.trim();
+  if(rehearsal){docker(['kill','--signal','KILL',names.writer]);await sleep(500);docker(['kill','--signal','KILL',names.witness]);}
+  else{
+   const sysrq=Number(vm(['cat','/proc/sys/kernel/sysrq']).stdout.trim());result.sysrq=sysrq;
+   if(!Number.isInteger(sysrq)||!(sysrq===1||(sysrq&128)))fail('REFUSED','kernel.sysrq does not allow the reboot key (b): '+sysrq);
+   const late=others();if(late.length)fail('REFUSED','another container started before the crash: '+late.join(', '));
+   result.crashAtWallMs=Date.now();result.crashed=true;
+   spawn('colima',['ssh','-p','triplex2','--','sudo','sh','-c','echo b > /proc/sysrq-trigger'],{stdio:'ignore'}).on('error',()=>{});
+   // [EXP-OBS01-R16] Why: the guest may reboot in place or the VM may stop (Virtualization.framework treats a guest reset as a stop). Wait for Docker to disappear, then for it to answer; if colima reports the VM
+   // stopped, start it WITHOUT activating its docker context (rule 10: the global context stays `default`). Rejected: assuming either behaviour.
+   let down=false;for(let i=0;i<240;i++){if(!dockerUp()){down=true;break;}await sleep(250);}
+   result.vmWentDown=down;const r0=Date.now();let started=false;
+   for(;;){
+    if(dockerUp())break;
+    if(Date.now()-r0>900000)fail('REFUSED','the VM did not come back within 15 minutes of the crash');
+    if(!started&&Date.now()-r0>45000&&!colimaRunning()){started=true;result.colimaStart=spawnSync('colima',['start','-p','triplex2','--activate=false'],{encoding:'utf8',timeout:600000}).status;}
+    await sleep(2000);
+   }
+   for(let i=0;i<60&&vm(['true']).status!==0;i++)await sleep(1000);
+   result.recoverMs=Date.now()-r0;result.bootIdAfter=vm(['cat','/proc/sys/kernel/random/boot_id']).stdout.trim();result.bootChanged=Boolean(result.bootIdAfter&&result.bootIdAfter!==result.bootIdBefore);
+   if(!result.bootChanged)fail('REFUSED','the guest boot id did not change: the crash did not happen');
+   spawnSync('docker',['context','use','default'],{encoding:'utf8'});
+  }
+  for(const child of children)try{child.kill('SIGKILL');}catch{}
+  const collected=JSON.parse(await helper(config,holder,python,5,['-v',volume+':/data:ro'],['python3','-B','-c',W4_COLLECT]));
+  for(const [name,b64] of Object.entries(collected))fs.writeFileSync(path.join(dir,name),Buffer.from(b64,'base64'));
+  const judged=py(path.join(SRC,'vm_w4_judge.py'),dir,mode,String(result.writerCgroupId));
+  result.judge=judged.stdout.trim()?JSON.parse(judged.stdout):{pass:false,problems:[judged.stderr.trim().slice(0,300)]};result.pass=judged.status===0;
+ }finally{
+  for(const child of children)try{child.kill('SIGKILL');}catch{}
+  try{for(const name of made.reverse())await remove(name,holder);for(const v of volumes)if(docker(['volume','inspect',v],{allowFail:true}))docker(['volume','rm',v]);}catch(error){result.cleanupError=String(error);}
+  atomicJson(path.join(dir,'RESULT.json'),result);
+ }
+ return result;
+}
 
 /** engine.mjs witness-vm-status | witness-vm-probe --out DIR --image PYTHON_DIGEST --bpftrace-image BPFTRACE_DIGEST [--windows W0,W1,W2,W3] */
 export async function witnessCommand(config,command,options){
