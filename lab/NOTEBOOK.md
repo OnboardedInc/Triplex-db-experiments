@@ -1597,3 +1597,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
   investigates. **Learning:** shared residents drift in size; live controls need the resident's triple count in every receipt.
 - **Contract 0.3.12 FIX-FIRST:** O-OBS's registry hashed its review report instead of the original brief (Q59c). Everything else passed.
 - **K01 round 5:** 209 offline tests pass, plus a PASS audit listing every observation-to-PASS path; review round 4 audits that list.
+
+## 2026-11-09 00:20Z: R33 designs record time at decision; the oracle half starts first, from a separate builder
+- **R33 (Opus high, 882 lines, source only):** one integer-microsecond stamp per transaction, max(previous + 1, clock) in decision order,
+  public value stamp/1000 so no type changes; omitted validFrom uses a new stagedAt. A read at T above the latest decided stamp waits 2 s
+  then fails typed; at or below it can never change, which closes D-C1. Per lane: broker in commitGroup, both A0s on the client under their
+  CAS, P2X from the engine stamp after probe p9, Datomic on the peer under :db/cas. Ruled Q90a-g.
+- **Order:** O-REPLAY 0.5.0 (CX-O06) starts now and reads only R33 section 4.3, so the oracle stays independent of the product change.
+  RT01's core rounds start from main after RQ01 merges; each lane branch takes its part after it merges main; contract 0.4.0 compiles it all.
+- **For Sam (Q89g):** how a caller names one exact commit in the public API: (A) no new field, (B) a raw position, (C) an opaque
+  scope-checked snapshot token. R33 recommends C. After Q90a, recordedAt: receipt.instant already pins one commit exactly.

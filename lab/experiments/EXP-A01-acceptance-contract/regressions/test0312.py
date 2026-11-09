@@ -31,7 +31,7 @@ class Contract0312(unittest.TestCase):
             self.assertEqual(before[rid], after[rid], rid)
 
     def test_other_pending_rows_unchanged(self):
-        before = rows(original('lab/acceptance/RULINGS-PENDING.md', '95db6153').decode())
+        before = rows(original('lab/acceptance/RULINGS-PENDING.md', 'b31ec942').decode())
         after = rows((ACC / 'RULINGS-PENDING.md').read_text())
         self.assertEqual(after, {k: v for k, v in before.items() if k not in D['RULES_0312']})
         self.assertEqual(DOC['pendingRulings']['authority'], 'none')
