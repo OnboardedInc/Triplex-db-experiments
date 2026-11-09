@@ -35,7 +35,24 @@
       "newWholeHashReferenced": false
     }
   ],
-  "movedPins": [],
+  "movedPins": [
+    {
+      "path": "lab/acceptance/RULINGS-PENDING.md",
+      "oldSha256": "a68a15db304eebadd1a05d34b363fc957d95e805d68a627326fd59edb8a3a237",
+      "sha256": "9ff9fc9a0041d271205e2a019d57e53c23cfba9b392e60d68e1a256df6f71f3c",
+      "currentReferencedHashes": [
+        "9ff9fc9a0041d271205e2a019d57e53c23cfba9b392e60d68e1a256df6f71f3c"
+      ]
+    },
+    {
+      "path": "lab/acceptance/build_contract.py",
+      "oldSha256": "6f533cc044d3620dafdd4e96b57a7fd5b71bd8179abb7ca93daeaf1af7c87639",
+      "sha256": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6",
+      "currentReferencedHashes": [
+        "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6"
+      ]
+    }
+  ],
   "mainMerged": "b47d103629ace165ebe254f1565015662901e1ee",
   "activePins": {
     "lab/NORTH-STAR.md": [
@@ -48,7 +65,7 @@
       "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95"
     ],
     "lab/acceptance/RULINGS-PENDING.md": [
-      "0f0437f04ff27d2aa7b17f402d14a0cc9cc63fd8e5ef07f2954b3accccbeef97"
+      "9ff9fc9a0041d271205e2a019d57e53c23cfba9b392e60d68e1a256df6f71f3c"
     ],
     "lab/acceptance/RULINGS.md": [
       "35e26650b2467850234e0679aaea50335e1e662df3e25c8347462e2b4174d698"
