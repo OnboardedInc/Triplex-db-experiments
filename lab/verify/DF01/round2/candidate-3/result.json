@@ -1,0 +1,14 @@
+{
+  "candidate": "0f6c28c08daf9d370d2370eca8d152931b0ac512",
+  "slot": null,
+  "startedAt": "2026-11-09T08:35:48.474Z",
+  "finishedAt": "2026-11-09T08:35:51.664Z",
+  "code": 1,
+  "signal": null,
+  "error": null,
+  "outputs": {
+    "projected-page.json": "94a90f55bdde3c5f7576ccde79c0e397983291bf805ac0af2274d2b24f80b8aa",
+    "before-excision.json": "888e93c19dd44fcc02d060a0f08120c2eba6099fd03f9123769ba42890c452e5",
+    "after-excision.json": "888e93c19dd44fcc02d060a0f08120c2eba6099fd03f9123769ba42890c452e5"
+  }
+}
