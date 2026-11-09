@@ -1,0 +1,1 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 33289 "CX-RT01-final-error-union", pid 67604 "CX-QG1-phase1-attempt3"

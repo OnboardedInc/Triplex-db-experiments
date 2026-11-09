@@ -1,0 +1,36 @@
+baseline datomic: 66 matched, 4 blocked, 0 failed
+baseline qlever: 66 matched, 4 blocked, 0 failed
+{"mutation":"wrong-current","injected":1,"id":"GS-01","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-02","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-03","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{"supersession":"BLOCKED-W0-1.2"}}
+{"mutation":"wrong-current","injected":1,"id":"GS-04","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":12,"details":{"lostAck":{"first":2,"resolved":2,"retry":"CommandAlreadyCommittedError"}}}
+{"mutation":"wrong-current","injected":1,"id":"GS-05","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-06","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":14,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-07","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":11,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-08","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-09","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-10","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":14,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-11","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":14,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-12","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-13","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-14","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-15","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":0,"id":"GS-16","status":"BLOCKED","reason":"memory/source API has no physical erasure, rebuild/restore or crypto-shredding capability","claims":[],"checks":6,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-17","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-18","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-19","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-current","injected":1,"id":"GS-20","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"lost-commit","injected":1,"id":"GS-01","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"lost-commit","injected":1,"id":"GS-04","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":12,"details":{"lostAck":{"first":2,"resolved":2,"retry":"CommandAlreadyCommittedError"}}}
+{"mutation":"lost-commit","injected":2,"id":"GS-07","status":"FAIL","reason":"AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:","claims":[],"checks":6,"details":{}}
+{"mutation":"lost-commit","injected":1,"id":"GS-08","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":14,"details":{}}
+{"mutation":"lost-commit","injected":1,"id":"GS-12","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":14,"details":{}}
+{"mutation":"lost-commit","injected":1,"id":"GS-13","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"lost-commit","injected":1,"id":"GS-17","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-basis","injected":1,"id":"GS-08","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-basis","injected":1,"id":"GS-12","status":"FAIL","reason":"Error: state:pl:p: observed content differs","claims":[],"checks":10,"details":{}}
+{"mutation":"wrong-basis","injected":2,"id":"GS-10","status":"OFFLINE-MATCH","claims":[],"checks":28,"details":{"basis":{"recordedPosition":1,"validAt":1793793600000}}}
+{"mutation":"wrong-basis","injected":2,"id":"GS-11","status":"OFFLINE-MATCH","claims":[],"checks":28,"details":{"basis":{"recordedPosition":1,"validAt":1793793600000}}}
+{"mutation":"wrong-basis","injected":2,"id":"GS-10-11-COMMON-BASIS","status":"OFFLINE-MATCH","claims":[],"checks":28,"details":{"basis":{"recordedPosition":1,"validAt":1793793600000}}}
+{"mutation":"duplicate-effect","injected":2,"id":"GS-19B-OUTBOX-CRASH","status":"FAIL","reason":"Error: exactly-once-visible-effects: observed content differs","claims":[],"checks":15,"details":{}}
+{"complete":true,"raw":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VW02/2026-11-09T02-54-35-214Z-f27887","mutations":33,"sourceUnchanged":true}

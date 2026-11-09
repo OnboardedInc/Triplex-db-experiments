@@ -1,0 +1,6 @@
+types: exit 0
+unit: exit 1
+admission: exit 0
+goldens: exit 0
+manifest: exit 0
+adversarial: exit 0

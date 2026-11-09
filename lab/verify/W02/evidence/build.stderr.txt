@@ -1,0 +1,11 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+[33m[PLUGIN_TIMINGS] Warning:[0m Your build spent significant time in plugins. Here is a breakdown:
+  - tsdown:deps (44%)
+  - rolldown-plugin-dts:generate (34%)
+  - rolldown-plugin-dts:resolver (17%)
+See https://rolldown.rs/options/checks#plugintimings for more details.
+

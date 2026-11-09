@@ -1,0 +1,316 @@
+TAP version 13
+# Subtest: pool admits the two dev engines when only they run
+ok 1 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 0.683291
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 2 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 0.496458
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 3 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.067708
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 4 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.064541
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 5 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.120208
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 6 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 0.339125
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 7 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 226.828917
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] heavy: waiting for one of 2 slots; held by pid 31106 "a", pid 31106 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 8 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 573.16
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 9 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 0.712209
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 10 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 126.385667
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 11 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 3.326541
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 12 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.324708
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 13 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.196834
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 14 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.264333
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 15 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 0.793583
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 16 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.483583
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 17 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.218125
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 18 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.301292
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 19 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 4.044625
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 20 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.176625
+  type: 'test'
+  ...
+# Subtest: queued writer waits for replacement runtime after a restart
+ok 21 - queued writer waits for replacement runtime after a restart
+  ---
+  duration_ms: 3.765083
+  type: 'test'
+  ...
+# Subtest: missing assertion reference is blocked and never submitted to the engine
+ok 22 - missing assertion reference is blocked and never submitted to the engine
+  ---
+  duration_ms: 0.897167
+  type: 'test'
+  ...
+# Subtest: generic I/O errors do not assert engine timeout or semantic success
+ok 23 - generic I/O errors do not assert engine timeout or semantic success
+  ---
+  duration_ms: 0.376916
+  type: 'test'
+  ...
+# Subtest: GS01 next task is checked at the submit receipt; old basis remains unchanged
+ok 24 - GS01 next task is checked at the submit receipt; old basis remains unchanged
+  ---
+  duration_ms: 450.790875
+  type: 'test'
+  ...
+# Subtest: GS05 changed subject background obligation clears and negative witness stays unchanged
+ok 25 - GS05 changed subject background obligation clears and negative witness stays unchanged
+  ---
+  duration_ms: 529.955334
+  type: 'test'
+  ...
+# Subtest: GS06 exact two-hop affected set is persisted with checkpoint and all subjects rerun
+ok 26 - GS06 exact two-hop affected set is persisted with checkpoint and all subjects rerun
+  ---
+  duration_ms: 601.63525
+  type: 'test'
+  ...
+# Subtest: GS09 obligations move and persisted next boundary recomputes
+ok 27 - GS09 obligations move and persisted next boundary recomputes
+  ---
+  duration_ms: 458.6615
+  type: 'test'
+  ...
+# Subtest: GS17 agent proposal cannot resolve I9; a subsequent human decision can
+ok 28 - GS17 agent proposal cannot resolve I9; a subsequent human decision can
+  ---
+  duration_ms: 238.97475
+  type: 'test'
+  ...
+# Subtest: GS18 persisted overdue projection has stable paging at a named basis during writes
+ok 29 - GS18 persisted overdue projection has stable paging at a named basis during writes
+  ---
+  duration_ms: 715.106
+  type: 'test'
+  ...
+# Subtest: state comparator rejects changed memory value rather than agreeing on the same wrong world
+ok 30 - state comparator rejects changed memory value rather than agreeing on the same wrong world
+  ---
+  duration_ms: 72.265167
+  type: 'test'
+  ...
+# Subtest: an invalid tail operation rejects atomically before a position or first assertion is published
+ok 31 - an invalid tail operation rejects atomically before a position or first assertion is published
+  ---
+  duration_ms: 68.47
+  type: 'test'
+  ...
+# Subtest: a valid command rejected by the source fails even when the old-position snapshot still matches
+ok 32 - a valid command rejected by the source fails even when the old-position snapshot still matches
+  ---
+  duration_ms: 67.5065
+  type: 'test'
+  ...
+# Subtest: offline consumer fault executes and resumes: before-effect
+ok 33 - offline consumer fault executes and resumes: before-effect
+  ---
+  duration_ms: 572.609166
+  type: 'test'
+  ...
+# Subtest: offline consumer fault executes and resumes: after-effect-before-checkpoint
+ok 34 - offline consumer fault executes and resumes: after-effect-before-checkpoint
+  ---
+  duration_ms: 603.483917
+  type: 'test'
+  ...
+# Subtest: offline consumer fault executes and resumes: after-checkpoint
+ok 35 - offline consumer fault executes and resumes: after-checkpoint
+  ---
+  duration_ms: 494.49975
+  type: 'test'
+  ...
+# Subtest: offline consumer fault executes and resumes: after-enqueue-before-delivery
+ok 36 - offline consumer fault executes and resumes: after-enqueue-before-delivery
+  ---
+  duration_ms: 480.381625
+  type: 'test'
+  ...
+# Subtest: lost ACK after publication resolves original receipt after client replacement
+ok 37 - lost ACK after publication resolves original receipt after client replacement
+  ---
+  duration_ms: 80.265792
+  type: 'test'
+  ...
+# Subtest: offline maintenance rebuild does real replay work, pins old reads and routes stale index to source
+ok 38 - offline maintenance rebuild does real replay work, pins old reads and routes stale index to source
+  ---
+  duration_ms: 81.838333
+  type: 'test'
+  ...
+# Subtest: D lane selection opens D, records receipts and reopens the same source
+ok 39 - D lane selection opens D, records receipts and reopens the same source
+  ---
+  duration_ms: 3.742417
+  type: 'test'
+  ...
+# Subtest: Q broker factory receives explicit selection and fresh base/delta observations are bound in receipt
+not ok 40 - Q broker factory receives explicit selection and fresh base/delta observations are bound in receipt
+  ---
+  duration_ms: 0.725833
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-w02/lab/scenarios/v2/lanes.test.ts:21:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, lstat '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-w02/runs'"
+  code: 'ENOENT'
+  stack: |-
+    Object.realpathSync (node:fs:2791:29)
+    brokerEnv (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-w02/lab/scenarios/lib/policy.mjs:9:51)
+    openScenarioLane (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-w02/lab/scenarios/v2/lanes.ts:26:15)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-w02/lab/scenarios/v2/lanes.test.ts:23:22)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: D/Q portable read adapter passes position to storage and refuses a future row
+ok 41 - D/Q portable read adapter passes position to storage and refuses a future row
+  ---
+  duration_ms: 0.727167
+  type: 'test'
+  ...
+# Subtest: CS-GS has exactly the contract denominator with 40 nonempty witness selectors
+ok 42 - CS-GS has exactly the contract denominator with 40 nonempty witness selectors
+  ---
+  duration_ms: 25.222375
+  type: 'test'
+  ...
+# Subtest: all 20 streams are deterministic, W0 vocabulary only, and include a complete burst
+ok 43 - all 20 streams are deterministic, W0 vocabulary only, and include a complete burst
+  ---
+  duration_ms: 1196.254917
+  type: 'test'
+  ...
+# Subtest: short or nonfinite windows cannot silently remove the burst
+ok 44 - short or nonfinite windows cannot silently remove the burst
+  ---
+  duration_ms: 0.326791
+  type: 'test'
+  ...
+# Subtest: all four domain operations execute independent case bytes
+ok 45 - all four domain operations execute independent case bytes
+  ---
+  duration_ms: 217.353375
+  type: 'test'
+  ...
+# Subtest: domain claim rejects prose, wrong content, stale run and missing named claim coverage
+ok 46 - domain claim rejects prose, wrong content, stale run and missing named claim coverage
+  ---
+  duration_ms: 124.240708
+  type: 'test'
+  ...
+# Subtest: qualification refuses legacy world, old contract and delta-only QLever
+ok 47 - qualification refuses legacy world, old contract and delta-only QLever
+  ---
+  duration_ms: 0.243792
+  type: 'test'
+  ...
+# Subtest: QLever broker path is explicit, owned and selected
+ok 48 - QLever broker path is explicit, owned and selected
+  ---
+  duration_ms: 0.395541
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 47
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3580.052958
