@@ -249,5 +249,8 @@ export class BasisNotAvailable extends Data.TaggedError("BasisNotAvailable")<{
   readonly surface: string;
   readonly message: string;
 }> {
-  readonly reason = "record-time-not-reached";
+  readonly reason =
+    this.axis === "recordedAt"
+      ? ("record-time-not-reached" as const)
+      : ("position-not-reached" as const);
 }

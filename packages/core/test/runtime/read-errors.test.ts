@@ -26,4 +26,13 @@ it("preserves discriminated catchTag handlers for normal and basis read failures
   ).toBe("recordedAt");
   expect(new ReadError({ message: "normal" })._tag).toBe("ReadError");
   expect(ReadError.name).toBe("ReadError");
+  const position = new BasisNotAvailable({
+    axis: "recordedPosition",
+    required: 2,
+    observed: 1,
+    waitedMs: 0,
+    surface: "test",
+    message: "future",
+  });
+  expect(position.reason).toBe("position-not-reached");
 });
