@@ -44,7 +44,7 @@ calibration are not verified. No engine slot, Docker lifecycle, deployment, acce
 
 ## Gates and evidence
 
-Builder checks in progress; completed results below. Durable evidence root:
+Builder checks completed; results below. Durable evidence root:
 `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-NSR/`.
 
 First attempts remain: `offline-1.log` records sandbox refusal of `sysctl kern.bootsessionuuid` (eight failed checks,
@@ -58,7 +58,7 @@ G0 first attempt `G0-qlever-20261109T072300Z-84a267` completed FAIL: 1203 passed
 The initial pnpm shim duplicated the store option on the gate's build argv (pnpm reported `filepath.startsWith is
 not a function`); its missing QLever/qualification builds and sandbox boot-identity failures remain in the receipt.
 The initial module-spy failures are retained in that attempt. The shim is corrected to add the owned store only when
-it is absent. A fresh source-bound G0 follows this fix. The first receipt is retained unchanged.
+it is absent. The first receipt is retained unchanged.
 
 ## PASS / verdict / receipt audit (rule 9a)
 
@@ -83,7 +83,52 @@ it is absent. A fresh source-bound G0 follows this fix. The first receipt is ret
    attempts. Existing G0 machinery binds builds/inputs and retains raw outputs. Builder results do not self-certify
    promotion; independent review remains required.
 
+7. **Final evidence manifest / copied-object summary**: each SHA256SUMS entry was produced from retained file bytes
+   and read back in the same invocation; every one of the final G0 receipt's 44 object references was checked against
+   the copied CAS bytes. Freshness is the completed attempt's retained paths, not a reused PASS summary. Binding is
+   the original receipt/run ID, its tested source c194baf7 and the explicit durable-root relative path. The manifest
+   asserts preservation only; it does not upgrade any failed attempt or diagnostic into semantic acceptance.
+
 ## Contract / pins
 
 No lab/acceptance file is edited. `pin-changes.json` lists changed paths found in contract pin dictionaries; currently empty. Final gate outcomes follow below.
 P3M final-head check currently still resolves to d523f632; no newer P3M commit was available at the last check.
+
+## Final builder result
+
+Source tested: `c194baf7` (implementation `74111638`). Final evidence/report commit changes no runtime source.
+
+| Check                                                                           | Result                                                                 | Receipt / durable evidence                                       |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Static driver closure, copied bundle import                                     | Eight evaluator files; no candidate package path; copied entry loads   | `bundle-c194baf7.json`, `bundle-c194baf7/manifest.json`          |
+| Split / P3M diagnostic parity and P3M negative gates                            | 11 passed, 0 failed                                                    | `offline-2.log`, `attempt-2/`, `p3m-attempt-2/`                  |
+| Two mocked Linux hostnames and volatile-filesystem refusal                      | 2 passed, 0 failed                                                     | `clock-flush-2.log`                                              |
+| Final G0 (includes 2048 deterministic RPC envelope mutations and all NSR tests) | **PASS: 1220 passed, 0 failed, 71 expected skips, 0 unexpected skips** | `lab/runs/G0/G0-qlever-20261109T073657Z-30e916.json`, `g0-3.log` |
+| Formatting / lint of new and changed implementation files                       | Passed                                                                 | Builder invocation; no runtime source changes after G0           |
+| Offline package check                                                           | FAIL: CLI tarball lacks unbuilt `package/dist/index.js`                | `pack-1.log`, `pack/`                                            |
+
+The second G0 attempt, `G0-qlever-20261109T073033Z-9a41f5`, had 1219 passes and one failure: the qualification
+suite imported the not-yet-built XTDB dist package. `xtdb-build.log` retains that dependency build. The third attempt
+reran the complete G0 on the same source and passed; the second receipt is also retained unchanged.
+
+The final G0 is runKind **diagnostic**, scope **full**, with no engine slot. It is a complete builder G0, not an NS
+performance/semantic qualification or independent promotion. Its host suite passed all 22 tests. Production durability,
+Linux device calibration and VM placement remain unverified. The offline package check was run as required and did not
+reach a clean consumer install; no package-readiness claim is made.
+
+`SHA256SUMS` and `EVIDENCE.md` index the durable evidence root. Raw G0 outputs and their content-addressed objects are
+copied under `repository-runs/`; every object bound by the final receipt was checked after copying. Test-owned temporary
+artifacts from earlier gate attempts were recovered under `recovered-temp/`. No raw evidence over 1 MB is committed.
+
+Changed contract-pinned paths: **none** (`pin-changes.json` is empty). The current contract's
+`writerTrace.generator.frozen.sha256` is null, so equality with a frozen pin cannot yet be asserted. The bundle proposes
+the unchanged generator source hash `201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4`; the contract
+builder must pin it with DRIVER_PIN in the next contract version. `lab/acceptance/` remains byte-unchanged.
+
+The last P3M-head check still returned `d523f632`; it is already an ancestor of this branch. There was no newer final
+P3M head to merge. The orchestrator must incorporate later P3M fixes if that branch advances after this handoff.
+
+Open integration: native lane `openNsRole` providers (this change supplies the RPC entry and parity provider), actual
+Linux tmpfs/device startup tests, SQL01 constructor-level guarding when its absent source is integrated, G03 hardened
+VM placement/observer wiring and CR-NS qualification. The P5 path here drives pinned pulls only; evaluation/outbox
+publication is not an accepted P5 result. These limits are not hidden by the passing offline gates.
