@@ -1,0 +1,11 @@
+== 2026-11-09T18:30:03Z
+8
+MemTotal:       20436420 kB
+MemAvailable:   18209756 kB
+6.8.0-117-generic
+b7f89e25-afdd-4e77-aa7b-25dab9353649
+/dev/root        19G  1.2G   18G   7% /
+/dev/vdb1        99G   27G   67G  29% /mnt/lima-colima-triplex2
+PROFILE     STATUS     ARCH       CPUS    MEMORY    DISK      RUNTIME    ADDRESS
+default     Stopped    aarch64    4       6GiB      30GiB     docker     
+triplex2    Running    aarch64    8       20GiB     100GiB    docker     

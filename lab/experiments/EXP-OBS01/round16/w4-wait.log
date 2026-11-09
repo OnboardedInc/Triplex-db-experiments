@@ -1,0 +1,16 @@
+2026-11-09T18:38:38Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:38:53Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:39:08Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:39:23Z running=2 quiet=0 tx2-sw-writer-7c01d580-abba-aa2-1 tx2-qlever-dev 
+2026-11-09T18:39:38Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:39:54Z running=2 quiet=0 tx2-sw-witness-7c01d580-abba-ab3-B2 tx2-qlever-dev 
+2026-11-09T18:40:09Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:40:24Z running=2 quiet=0 tx2-qlever-dev 
+2026-11-09T18:40:39Z running=2 quiet=0 tx2-g03-eeb03491b28bb9a0-case-2c0888-proof tx2-qlever-dev 
+2026-11-09T18:40:54Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:41:09Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:41:24Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:41:39Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:41:54Z running=1 quiet=0 tx2-qlever-dev 
+2026-11-09T18:42:09Z running=2 quiet=0 tx2-g03-eeb03491b28bb9a0-case-4d8b94-proof tx2-qlever-dev 
+waiter stopped by the builder at 2026-11-09T18:42:12Z without a quiet window

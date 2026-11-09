@@ -1,0 +1,385 @@
+{
+  "window": "ABBA",
+  "commitsPerArm": 2000,
+  "abbaRounds": 3,
+  "aaRounds": 3,
+  "order": [
+    "aa1-1",
+    "aa1-2",
+    "ab1-A1",
+    "ab1-B1",
+    "ab1-B2",
+    "ab1-A2",
+    "aa2-1",
+    "aa2-2",
+    "ab2-A1",
+    "ab2-B1",
+    "ab2-B2",
+    "ab2-A2",
+    "aa3-1",
+    "aa3-2",
+    "ab3-A1",
+    "ab3-B1",
+    "ab3-B2",
+    "ab3-A2"
+  ],
+  "arms": [
+    {
+      "label": "aa1-1",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "aa1-2",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "ab1-A1",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "ab1-B1",
+      "kind": "B",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": {
+        "status": 0,
+        "stdout": "{\"attachNs\":10893426545466,\"cpus\":1,\"detachNs\":10896023602040,\"events\":14439,\"lostEvents\":0}",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "ab1-B2",
+      "kind": "B",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": {
+        "status": 0,
+        "stdout": "{\"attachNs\":10898127641492,\"cpus\":1,\"detachNs\":10900739695094,\"events\":14478,\"lostEvents\":0}",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "ab1-A2",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "aa2-1",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "aa2-2",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "ab2-A1",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "ab2-B1",
+      "kind": "B",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": {
+        "status": 0,
+        "stdout": "{\"attachNs\":10911676423659,\"cpus\":1,\"detachNs\":10914477512715,\"events\":14467,\"lostEvents\":0}",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "ab2-B2",
+      "kind": "B",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": {
+        "status": 0,
+        "stdout": "{\"attachNs\":10916615404673,\"cpus\":1,\"detachNs\":10919309859059,\"events\":14478,\"lostEvents\":0}",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "ab2-A2",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "aa3-1",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "aa3-2",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "ab3-A1",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    },
+    {
+      "label": "ab3-B1",
+      "kind": "B",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": {
+        "status": 0,
+        "stdout": "{\"attachNs\":10929772090008,\"cpus\":1,\"detachNs\":10932509588139,\"events\":14488,\"lostEvents\":0}",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "ab3-B2",
+      "kind": "B",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": {
+        "status": 0,
+        "stdout": "{\"attachNs\":10934668612868,\"cpus\":1,\"detachNs\":10937477753112,\"events\":14485,\"lostEvents\":0}",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "ab3-A2",
+      "kind": "A",
+      "n": 2000,
+      "pass": true,
+      "streamCheck": null
+    }
+  ],
+  "analysis": {
+    "target": 0.05,
+    "block": 50,
+    "boots": 2000,
+    "seed": 16,
+    "minCommits": 1000,
+    "arms": {
+      "aa1-1": {
+        "n": 2000,
+        "p50": 298046,
+        "p90": 427923,
+        "p99": 663758,
+        "max": 3853592,
+        "mean": 330361.5775
+      },
+      "aa1-2": {
+        "n": 2000,
+        "p50": 256587,
+        "p90": 319129,
+        "p99": 630634,
+        "max": 3240959,
+        "mean": 281322.0105
+      },
+      "aa2-1": {
+        "n": 2000,
+        "p50": 281378,
+        "p90": 401380,
+        "p99": 952804,
+        "max": 2885079,
+        "mean": 319901.1515
+      },
+      "aa2-2": {
+        "n": 2000,
+        "p50": 286212,
+        "p90": 541299,
+        "p99": 1078306,
+        "max": 3719590,
+        "mean": 354605.201
+      },
+      "aa3-1": {
+        "n": 2000,
+        "p50": 275379,
+        "p90": 368130,
+        "p99": 808511,
+        "max": 3285375,
+        "mean": 306666.102
+      },
+      "aa3-2": {
+        "n": 2000,
+        "p50": 353505,
+        "p90": 531673,
+        "p99": 1328267,
+        "max": 3676880,
+        "mean": 396028.863
+      },
+      "ab1-A1": {
+        "n": 2000,
+        "p50": 279503,
+        "p90": 473756,
+        "p99": 1047764,
+        "max": 3234750,
+        "mean": 341622.4335
+      },
+      "ab1-B1": {
+        "n": 2000,
+        "p50": 290795,
+        "p90": 487840,
+        "p99": 915471,
+        "max": 2889246,
+        "mean": 350490.3635
+      },
+      "ab1-B2": {
+        "n": 2000,
+        "p50": 310837,
+        "p90": 425423,
+        "p99": 1166890,
+        "max": 3977885,
+        "mean": 351682.116
+      },
+      "ab1-A2": {
+        "n": 2000,
+        "p50": 275878,
+        "p90": 337088,
+        "p99": 528507,
+        "max": 3268209,
+        "mean": 294877.0865
+      },
+      "ab2-A1": {
+        "n": 2000,
+        "p50": 353921,
+        "p90": 592674,
+        "p99": 1267142,
+        "max": 3058248,
+        "mean": 402862.835
+      },
+      "ab2-B1": {
+        "n": 2000,
+        "p50": 307421,
+        "p90": 466048,
+        "p99": 838427,
+        "max": 3344626,
+        "mean": 356780.3975
+      },
+      "ab2-B2": {
+        "n": 2000,
+        "p50": 303378,
+        "p90": 432839,
+        "p99": 920845,
+        "max": 3861466,
+        "mean": 345147.9355
+      },
+      "ab2-A2": {
+        "n": 2000,
+        "p50": 285629,
+        "p90": 425006,
+        "p99": 1033305,
+        "max": 4086011,
+        "mean": 334222.224
+      },
+      "ab3-A1": {
+        "n": 2000,
+        "p50": 286504,
+        "p90": 446672,
+        "p99": 940637,
+        "max": 3091747,
+        "mean": 333460.412
+      },
+      "ab3-B1": {
+        "n": 2000,
+        "p50": 301795,
+        "p90": 436589,
+        "p99": 1144139,
+        "max": 3855424,
+        "mean": 347473.559
+      },
+      "ab3-B2": {
+        "n": 2000,
+        "p50": 297545,
+        "p90": 409380,
+        "p99": 1009221,
+        "max": 3217124,
+        "mean": 337159.5955
+      },
+      "ab3-A2": {
+        "n": 2000,
+        "p50": 285920,
+        "p90": 481423,
+        "p99": 1098389,
+        "max": 5460819,
+        "mean": 353453.0615
+      }
+    },
+    "verdict": "INCONCLUSIVE",
+    "detail": "the A/A band (75.0%) is not smaller than the effect to resolve (5%): this setup cannot see a 5% writer p99 change",
+    "reasons": [],
+    "aa": {
+      "ratios": [
+        0.950096270026124,
+        1.1317185906020546,
+        1.6428558176697658
+      ],
+      "sdLog": 0.279702543991444,
+      "band": 0.7496313139254975,
+      "rule": "band = max(max |A2/A1 - 1| over A/A rounds, exp(2 s_d) - 1)"
+    },
+    "ba": {
+      "perRound": [
+        {
+          "round": 1,
+          "p99": 1.3123638967522604,
+          "p50": 1.0941753742390652
+        },
+        {
+          "round": 2,
+          "p99": 0.8231644735271815,
+          "p50": 1.0169511869831955
+        },
+        {
+          "round": 3,
+          "p99": 1.011479890015696,
+          "p50": 1.0470109502436298
+        }
+      ],
+      "pooled": {
+        "p99": 0.9482640653050164,
+        "p50": 1.054822104730496,
+        "mean": 1.0137034414886932
+      },
+      "ci95": {
+        "p99": [
+          0.7740301680377003,
+          1.2083616222185058
+        ],
+        "p50": [
+          1.0366322467203366,
+          1.072889645959528
+        ],
+        "mean": [
+          0.9750123702335586,
+          1.0520504164301725
+        ]
+      },
+      "rule": "B/A = p99 of the pooled witness-on arms / p99 of the pooled witness-off arms; 95% interval from 2000 circular block bootstraps (block 50) of every arm"
+    }
+  },
+  "pass": true,
+  "claim": "writer commit latency with the witness off and on, judged under Q104a (>= 1,000 commits per arm, >= 3 A/A rounds, block bootstrap); the verdict (analysis.verdict) is a report, never a gate (R48 9.1 W2)"
+}

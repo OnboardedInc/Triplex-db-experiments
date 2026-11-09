@@ -1889,7 +1889,7 @@ Builder Claude Sonnet 5.5, from `exp/OBS01-observer` at `a1343b5e` (round 15 rev
 | Item | Result |
 | --- | --- |
 | (1) R15-N1, R15-N2 | fixed (below) |
-| (2) IR dump reader | written, passes on the real golden, refuses 60+ crafted variants; diagnostic only |
+| (2) IR dump reader | written, passes on the real golden, refuses the crafted variants listed below; diagnostic only |
 | (3) W1 on the resized VM | **PASS 11/11**, every mode's whole refusal set matched |
 | (4a) writer-p99 ABBA | **INCONCLUSIVE** in both attempts: the A/A band (129% and 75%) does not resolve a 5% effect |
 | (4b) W4 | implemented, offline-tested, rehearsed through the whole host pipeline; **NOT RUN as a guest crash**: `tx2-qlever-dev` (a shared resident, rule 3) was running and the harness refuses |
@@ -1911,7 +1911,7 @@ On the golden dump it reports: 1 module, 15 probe functions each matching its so
 
 ### (4a) Writer-p99 ABBA under Q104a: INCONCLUSIVE (two attempts, both kept)
 
-Method (`lab/bin/abba.mjs`, unit-tested on constructed series): per round an A/A pair (witness off, witness off) and an ABBA group (A1 B1 B2 A2); arms are fresh volumes with the round 6 writer (`vm_fixture.py`, ten-row FULL commits, CPU 4), B arms have the witness on CPU 5 and must pass the zero-loss stream check (all 12 B arms did: 0 lost events); **2,000 commits per arm, 3 A/A rounds and 3 ABBA rounds = 18 arms and 36,000 commits per attempt**. Band = max(widest A/A deviation of the p99 ratio, exp(2 s_d) - 1); B/A p99 with a 95% circular block bootstrap (block 50, 2,000 draws, seed 16); the effect to resolve is Q100r's 5%. The three possible calls are OVERHEAD-RESOLVED (lower bound above 1 + band), NO-OVERHEAD-ABOVE-TARGET (upper bound below 1.05 and band below 5%) and INCONCLUSIVE.
+Method (`lab/bin/abba.mjs`, unit-tested on constructed series): per round an A/A pair (witness off, witness off) and an ABBA group (A1 B1 B2 A2); arms are fresh volumes with the round 6 writer (`vm_fixture.py`, ten-row FULL commits, CPU 4), B arms have the witness on CPU 5 and must pass the zero-loss stream check (all 6 B arms of each attempt did: 0 lost events); **2,000 commits per arm, 3 A/A rounds and 3 ABBA rounds = 18 arms and 36,000 commits per attempt**. Band = max(widest A/A deviation of the p99 ratio, exp(2 s_d) - 1); B/A p99 with a 95% circular block bootstrap (block 50, 2,000 draws, seed 16); the effect to resolve is Q100r's 5%. The three possible calls are OVERHEAD-RESOLVED (lower bound above 1 + band), NO-OVERHEAD-ABOVE-TARGET (upper bound below 1.05 and band below 5%) and INCONCLUSIVE.
 
 | | Attempt 1 (`abba-attempt1`) | Attempt 2 (`abba-attempt2`) |
 | --- | --- | --- |

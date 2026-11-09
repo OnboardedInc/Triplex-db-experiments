@@ -1,0 +1,45 @@
+=== 2026-11-09T18:27:08Z
+host: load averages: 13.29 14.37 12.86
+vm: 0.97 1.19 1.02 3/228 822549 cpus=8
+heavy: P5N-R1; G03-R7D; CX-VQH1-r5-evaluator; CX-VQH1-r5-qlever; 
+containers: tx2-g03-7fea39d92dca6341-case-f50b06 tx2-qlever-dev 
+=== 2026-11-09T18:27:29Z
+host: load averages: 12.84 14.20 12.83
+vm: 0.85 1.15 1.01 1/227 824944 cpus=8
+heavy: P5N-R1; G03-R7D; CX-VQH1-r5-evaluator; CX-VQH1-r5-qlever; 
+containers: tx2-qlever-dev 
+=== 2026-11-09T18:27:50Z
+host: load averages: 12.65 14.06 12.81
+vm: 0.87 1.12 1.00 1/239 827614 cpus=8
+heavy: OBS01-W; G03-R7D; CX-VQH1-r5-evaluator; CX-VQH1-r5-qlever; 
+containers: tx2-sw-writer-15487d0c-full tx2-sw-witness-15487d0c-full tx2-qlever-dev 
+=== 2026-11-09T18:28:11Z
+host: load averages: 14.73 14.48 12.99
+vm: 1.30 1.21 1.04 2/235 829485 cpus=8
+heavy: OBS01-W; G03-R7D; CX-VQH1-r5-evaluator; CX-VQH1-r5-qh1; 
+containers: tx2-sw-witness-15487d0c-normal tx2-qlever-dev 
+=== 2026-11-09T18:28:33Z
+host: load averages: 14.58 14.48 13.03
+vm: 1.45 1.26 1.06 1/234 832618 cpus=8
+heavy: OBS01-W; G03-R7D; P5N-R1; CX-VQH1-r5-qh1; 
+containers: tx2-qlever-dev 
+=== 2026-11-09T18:28:54Z
+host: load averages: 13.40 14.25 12.99
+vm: 2.54 1.53 1.15 4/243 835945 cpus=8
+heavy: OBS01-W; G03-R7D; P5N-R1; CX-VQH1-r5-qh1; 
+containers: tx2-g03-7fea39d92dca6341-case-d19387-proof tx2-qlever-dev 
+=== 2026-11-09T18:29:15Z
+host: load averages: 12.18 13.91 12.90
+vm: 2.29 1.55 1.17 1/270 839501 cpus=8
+heavy: OBS01-W; G03-R7D; P5N-R1; 
+containers: tx2-sw-writer-15487d0c-neighbor-sync tx2-sw-neighbor-15487d0c-neighbor-sync tx2-sw-witness-15487d0c-neighbor-sync tx2-qlever-dev 
+=== 2026-11-09T18:29:36Z
+host: load averages: 10.56 13.43 12.75
+vm: 1.72 1.47 1.15 1/234 842145 cpus=8
+heavy: G03-R7D; P5N-R1; 
+containers: tx2-qlever-dev 
+=== 2026-11-09T18:29:57Z
+host: load averages: 9.35 12.96 12.59
+vm: 1.30 1.39 1.13 1/234 842977 cpus=8
+heavy: G03-R7D; P5N-R1; 
+containers: tx2-qlever-dev 

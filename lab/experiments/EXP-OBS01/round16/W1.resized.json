@@ -1,0 +1,106 @@
+{
+  "window": "W1",
+  "modes": [
+    {
+      "mode": "full",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[],\"globalCodes\":[],\"mismatches\":[],\"primary\":null,\"problems\":[]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "off",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[\"SYNC-MISSING\"],\"globalCodes\":[],\"mismatches\":[],\"primary\":\"SYNC-MISSING\",\"problems\":[\"SYNC-MISSING: 1000 of 1000 commits\"]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "normal",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[\"ACK-BEFORE-DURABLE\"],\"globalCodes\":[],\"mismatches\":[],\"primary\":\"ACK-BEFORE-DURABLE\",\"problems\":[\"ACK-BEFORE-DURABLE: 1000 of 1000 commits\"]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "full-then-off",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[\"SYNC-MISSING\"],\"globalCodes\":[],\"mismatches\":[],\"primary\":\"SYNC-MISSING\",\"problems\":[\"SYNC-MISSING: 500 of 1000 commits\"]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "ack-early",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[\"ACK-BEFORE-DURABLE\"],\"globalCodes\":[],\"mismatches\":[],\"primary\":\"ACK-BEFORE-DURABLE\",\"problems\":[\"ACK-BEFORE-DURABLE: 1000 of 1000 commits\"]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "sync-before-write",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[\"SYNC-MISSING\",\"ACK-BEFORE-DURABLE\"],\"globalCodes\":[],\"mismatches\":[],\"primary\":\"SYNC-MISSING\",\"problems\":[\"ACK-BEFORE-DURABLE: 999 of 1000 commits\",\"SYNC-MISSING: 1 of 1000 commits\"]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "sync-other-file",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[\"SYNC-MISSING\"],\"globalCodes\":[],\"mismatches\":[],\"primary\":\"SYNC-MISSING\",\"problems\":[\"SYNC-MISSING: 1000 of 1000 commits\"]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "range-only",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[\"SYNC-MISSING\"],\"globalCodes\":[],\"mismatches\":[],\"primary\":\"SYNC-MISSING\",\"problems\":[\"SYNC-MISSING: 1000 of 1000 commits\"]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "syncfs",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[],\"globalCodes\":[],\"mismatches\":[],\"primary\":null,\"problems\":[]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "mmap",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[\"UNWITNESSED-WRITE\",\"SYNC-MISSING\"],\"globalCodes\":[\"UNWITNESSED-WRITE\"],\"mismatches\":[],\"primary\":\"UNWITNESSED-WRITE\",\"problems\":[\"UNWITNESSED-WRITE: ext4_page_mkwrite on a bound inode (mmap write)\",\"UNWITNESSED-WRITE: WAL bytes from 0 to 12726712 reached the file without a traced write\",\"SYNC-MISSING: 1000 of 1000 commits\"]}",
+        "stderr": ""
+      }
+    },
+    {
+      "mode": "neighbor-sync",
+      "pass": true,
+      "judge": {
+        "status": 0,
+        "stdout": "{\"codes\":[\"SYNC-MISSING\"],\"globalCodes\":[],\"mismatches\":[],\"primary\":\"SYNC-MISSING\",\"problems\":[\"SYNC-MISSING: 1000 of 1000 commits\"]}",
+        "stderr": ""
+      }
+    }
+  ],
+  "pass": true,
+  "note": "sync-before-write expects ACK-BEFORE-DURABLE for commits 1..n-1 and SYNC-MISSING for the last (vm_planted_writer.expected); R48 4.3 lists SYNC-MISSING"
+}

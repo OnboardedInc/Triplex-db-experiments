@@ -1,0 +1,76 @@
+{
+  "window": "W4",
+  "rehearsal": true,
+  "trials": [
+    {
+      "index": 1,
+      "mode": "full",
+      "crashed": false,
+      "judge": {
+        "acked": 5299,
+        "ackedLostCount": 0,
+        "lastAcked": 5299,
+        "lastSurvived": 5300,
+        "marker": 5300,
+        "mode": "full",
+        "pass": true,
+        "problems": [],
+        "survived": 5300,
+        "syncsCredited": 5309,
+        "traceDetached": false,
+        "traceEvents": 38340,
+        "unwitnessedAcked": 0,
+        "unwitnessedLostCount": 0,
+        "witnessProblems": [],
+        "witnessed": 5299,
+        "witnessedLost": [],
+        "witnessedLostCount": 0
+      },
+      "pass": true
+    },
+    {
+      "index": 2,
+      "mode": "off",
+      "crashed": false,
+      "judge": {
+        "acked": 21167,
+        "ackedLostCount": 0,
+        "lastAcked": 21167,
+        "lastSurvived": 21167,
+        "marker": 21167,
+        "mode": "off",
+        "pass": true,
+        "problems": [],
+        "survived": 21167,
+        "syncsCredited": 8,
+        "traceDetached": false,
+        "traceEvents": 131525,
+        "unwitnessedAcked": 21167,
+        "unwitnessedLostCount": 0,
+        "witnessProblems": [
+          "SYNC-MISSING: 21167 of 21167 commits"
+        ],
+        "witnessed": 0,
+        "witnessedLost": [],
+        "witnessedLostCount": 0
+      },
+      "pass": true
+    }
+  ],
+  "aggregate": {
+    "full": 1,
+    "fullAckedLost": 0,
+    "off": 1,
+    "offUnwitnessedLost": 0,
+    "pass": false,
+    "premiseHolds": false,
+    "reasons": [
+      "only 2 of 10 crash trials completed",
+      "no unwitnessed OFF commit was lost: the class premise (Q100r) is reopened"
+    ],
+    "trials": 2,
+    "witnessedLost": 0
+  },
+  "pass": false,
+  "claim": "REHEARSAL of the W4 pipeline (writer SIGKILL, no guest crash): not a W4 result"
+}
