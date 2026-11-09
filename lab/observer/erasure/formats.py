@@ -1,8 +1,11 @@
-"""Bounded format decoders and byte partitions for ER01-S round 2."""
+"""Bounded format decoders and physical-byte partitions for ER01-S."""
 import base64
 import gzip
 import hashlib
 import json
+import re
+import quopri
+from urllib.parse import unquote_to_bytes
 import struct
 import zlib
 
@@ -219,7 +222,14 @@ def sqlite_database(raw):
     # Zero fill is searched too; nonzero residual/free bytes remain explicitly unparsed.
     marked.extend(zero_ranges(raw, 0, len(raw)))
     report = byte_partition(raw, [] if errors else marked, errors + ['SQLite residual/free bytes need historical record reconstruction'])
-    report.update(format='sqlite/3', encoding=encoding, pageSize=size, overflowPages=sorted(overflow_pages), freelistPages=sorted(free_pages))
+    page_images = []
+    for low in range(0, len(raw), size):
+        body = raw[low:low + size]
+        partition = byte_partition(body, [(max(a, low) - low, min(b, low + size) - low)
+            for a, b in report['parsedRanges'] if max(a, low) < min(b, low + size)], errors)
+        page_images.append({'pageNumber': low // size + 1, 'physicalRange': [low, low + size],
+            'bodySha256': hashlib.sha256(body).hexdigest(), 'coverage': partition})
+    report.update(format='sqlite/4', encoding=encoding, pageSize=size, overflowPages=sorted(overflow_pages), freelistPages=sorted(free_pages), pageImages=page_images)
     return blobs, rows, report
 
 
@@ -248,7 +258,53 @@ def sqlite_wal(raw, main):
     views, records, marked, reasons = [], [], [(0, 32)], []
     image = bytearray(main)
     frames = []
-    previous_pages, historical_pointers = {}, []
+    previous_pages, historical_pointers, physical_images = {}, [], []
+    decode_work = 0
+    def cover_snapshot():
+        nonlocal frames, decode_work
+        if not frames: return
+        snapshot = bytes(image)
+        decode_work += len(snapshot)
+        if decode_work > MAX_DECODED * 16:
+            raise ValueError('WAL physical-image decode budget exceeded')
+        found_blobs, found_rows, coverage = sqlite_database(snapshot)
+        views.extend(found_blobs); records.extend(found_rows)
+        # [EXP-ER01-S-R3] Why: each frame owns its bytes even when its page is superseded.
+        # Rejected: projecting the final logical page's partition onto an earlier physical body.
+        for offset, page_number in frames:
+            low, high = (page_number - 1) * size, page_number * size
+            current = snapshot[low:high]
+            observed = raw[offset + 24:offset + 24 + size]
+            if current != observed:
+                raise ValueError('physical WAL image differs from decoded snapshot')
+            prior = previous_pages.get(page_number)
+            origin = 100 if page_number == 1 else 0
+            if prior is not None and len(current) == size and current[origin] == prior[origin] and current[origin] in (2, 5, 10, 13):
+                header_size = 12 if current[origin] in (2, 5) else 8
+                old_count = int.from_bytes(prior[origin + 3:origin + 5], 'big')
+                new_count = int.from_bytes(current[origin + 3:origin + 5], 'big')
+                a, b = origin + header_size + new_count * 2, origin + header_size + old_count * 2
+                content_start = int.from_bytes(current[origin + 5:origin + 7], 'big') or 65536
+                if old_count > new_count and b <= content_start and current[a:b] == prior[a:b]:
+                    marked.append((offset + 24 + a, offset + 24 + b))
+                    historical_pointers.append([offset + 24 + a, offset + 24 + b])
+            own_ranges = []
+            for a, b in coverage['parsedRanges']:
+                left, right = max(a, low), min(b, high)
+                if left < right:
+                    interval = (offset + 24 + left - low, offset + 24 + right - low)
+                    marked.append(interval); own_ranges.append(list(interval))
+            physical_images.append({'frameOffset': offset, 'pageNumber': page_number,
+                'bodyRange': [offset + 24, offset + 24 + size],
+                'bodySha256': hashlib.sha256(observed).hexdigest(),
+                'snapshotSha256': hashlib.sha256(snapshot).hexdigest(), 'parsedRanges': own_ranges})
+        for number in range(1, len(snapshot) // size + 1):
+            low, high = (number - 1) * size, number * size
+            if any(a <= low and high <= b for a, b in coverage['parsedRanges']):
+                previous_pages[number] = snapshot[low:high]
+            else:
+                previous_pages.pop(number, None)
+        frames = []
     for at in range(32, len(raw), size + 24):
         header, body = raw[at:at + 24], raw[at + 24:at + 24 + size]
         number, commit = struct.unpack('>II', header[:8])
@@ -257,6 +313,8 @@ def sqlite_wal(raw, main):
         pair = checksum(header[:8] + body, pair)
         if pair != struct.unpack('>II', header[16:24]):
             raise ValueError('WAL frame checksum mismatch')
+        if any(page == number for _, page in frames):
+            cover_snapshot()
         if len(image) < number * size:
             image.extend(bytes(number * size - len(image)))
         image[(number - 1) * size:number * size] = body
@@ -265,40 +323,24 @@ def sqlite_wal(raw, main):
         if commit:
             if commit > MAX_DECODED // size:
                 raise ValueError('WAL commit size exceeds decode budget')
-            snapshot = bytes(image[:commit * size])
-            found_blobs, found_rows, coverage = sqlite_database(snapshot)
-            views.extend(found_blobs); records.extend(found_rows)
-            for offset, page_number in frames:
-                low, high = (page_number - 1) * size, page_number * size
-                current = snapshot[low:high]
-                prior = previous_pages.get(page_number)
-                origin = 100 if page_number == 1 else 0
-                # [EXP-ER01-S-R2] Why: DELETE can leave a prior pointer in the now-unused array.
-                # Rejected: exempting arbitrary nonzero free bytes without a decoded historical witness.
-                if prior is not None and len(current) == size and current[origin] == prior[origin] and current[origin] in (2, 5, 10, 13):
-                    header_size = 12 if current[origin] in (2, 5) else 8
-                    old_count = int.from_bytes(prior[origin + 3:origin + 5], 'big')
-                    new_count = int.from_bytes(current[origin + 3:origin + 5], 'big')
-                    a, b = origin + header_size + new_count * 2, origin + header_size + old_count * 2
-                    content_start = int.from_bytes(current[origin + 5:origin + 7], 'big') or 65536
-                    if old_count > new_count and b <= content_start and current[a:b] == prior[a:b]:
-                        marked.append((offset + 24 + a, offset + 24 + b))
-                        historical_pointers.append([offset + 24 + a, offset + 24 + b])
-                for a, b in coverage['parsedRanges']:
-                    left, right = max(a, low), min(b, high)
-                    if left < right:
-                        marked.append((offset + 24 + left - low, offset + 24 + right - low))
-            for number in range(1, len(snapshot) // size + 1):
-                low, high = (number - 1) * size, number * size
-                if any(a <= low and high <= b for a, b in coverage['parsedRanges']):
-                    previous_pages[number] = snapshot[low:high]
-                else:
-                    previous_pages.pop(number, None)
-            frames = []
+            cover_snapshot()
+            image = image[:commit * size]
     if frames:
         reasons.append('uncommitted WAL page images lack complete snapshot')
     report = byte_partition(raw, marked, reasons + ['WAL page residuals were not decoded'])
-    report.update(format='sqlite-wal/3', pageSize=size, historicalCellPointerRanges=historical_pointers)
+    observed_images = {entry['frameOffset']: entry for entry in physical_images}
+    for offset in range(32, len(raw), size + 24):
+        body = raw[offset + 24:offset + 24 + size]
+        entry = observed_images.get(offset)
+        if entry is None:
+            entry = {'frameOffset': offset, 'pageNumber': int.from_bytes(raw[offset:offset + 4], 'big'),
+                'bodyRange': [offset + 24, offset + 24 + size], 'bodySha256': hashlib.sha256(body).hexdigest(),
+                'snapshotSha256': None, 'parsedRanges': []}
+            physical_images.append(entry)
+        entry['coverage'] = byte_partition(body, [(max(a, offset + 24) - offset - 24, min(b, offset + 24 + size) - offset - 24)
+            for a, b in report['parsedRanges'] if max(a, offset + 24) < min(b, offset + 24 + size)], reasons)
+    report.update(format='sqlite-wal/4', pageSize=size, historicalCellPointerRanges=historical_pointers,
+        physicalImages=sorted(physical_images, key=lambda entry: entry['frameOffset']))
     return views, records, report
 
 
@@ -424,46 +466,85 @@ def postgres_toast(raw, declarations):
 
 
 def supplemental_views(raw):
-    """Only adds searchable bytes/records; never qualifies opaque input as parsed."""
+    """Bounded additive closure: parsing and escaping never replace physical bytes."""
     blobs, values, issues = [], [], []
+    seen, queue, total = {raw}, [(raw, 0)], len(raw)
     decoder = json.JSONDecoder()
-    texts = [raw.decode('utf8', errors='ignore')]
-    for codec in ('utf-16le', 'utf-16be'):
-        for shift in (0, 1):
-            texts.append(raw[shift:].decode(codec, errors='ignore'))
-    budget = 0
-    for text in texts:
-        for at, char in enumerate(text):
-            if char not in '{[': continue
-            budget += 1
-            if budget > 20000:
-                issues.append('supplemental JSON candidate budget exceeded'); break
-            try:
-                value, _ = decoder.raw_decode(text[at:])
-            except (ValueError, RecursionError): continue
-            values.append(value)
-            if isinstance(value, list) and len(value) == 60 and all(type(v) is int and 0 <= v <= 255 for v in value):
-                blobs.append(bytes(value))
-            if isinstance(value, list) and value and all(isinstance(v, str) for v in value):
+    candidates = 0
+    def add(value, depth):
+        nonlocal total
+        if isinstance(value, str):
+            try: value = value.encode('utf8')
+            except UnicodeError:
+                issues.append('unresolved Unicode surrogate in escaping view'); return
+        if value in seen: return
+        if depth > 32 or len(seen) >= 4096 or total + len(value) > MAX_DECODED * 4:
+            issues.append('escaping view recursion/byte budget exceeded'); return
+        seen.add(value); total += len(value)
+        blobs.append(value); queue.append((value, depth))
+    def leaves(value, depth):
+        if depth > 64:
+            issues.append('JSON leaf nesting budget exceeded'); return
+        if isinstance(value, str): add(value, level + 1)
+        elif isinstance(value, dict):
+            for key, child in value.items():
+                add(key, level + 1); leaves(child, depth + 1)
+        elif isinstance(value, list):
+            if len(value) == 60 and all(type(v) is int and 0 <= v <= 255 for v in value):
+                add(bytes(value), level + 1)
+            if value and all(isinstance(v, str) for v in value):
                 try:
                     combined = b''.join(base64.b64decode(v + '=' * (-len(v) % 4), altchars=b'-_', validate=True) for v in value)
-                    if len(combined) <= MAX_DECODED: blobs.append(combined)
-                except ValueError: pass
-    offset = 0
-    while True:
-        at = raw.find(b'\x1f\x8b\x08', offset)
-        if at < 0: break
-        offset = at + 3
-        try:
-            engine = zlib.decompressobj(31)
-            data = engine.decompress(raw[at:], MAX_DECODED + 1)
-            if len(data) > MAX_DECODED or not engine.eof:
-                issues.append('gzip decode incomplete/budget exceeded')
-            else:
-                blobs.append(data)
-        except zlib.error:
-            issues.append('invalid embedded gzip stream')
-    return blobs, values, issues
+                    add(combined, level + 1)
+                except (ValueError, UnicodeError): pass
+            for child in value: leaves(child, depth + 1)
+    # [EXP-ER01-S-R3] Why: string leaves and nested escapes can carry values or usable keys.
+    # Rejected: treating successful container parsing as proof all semantic views were searched.
+    escape = re.compile(r"\\(?:u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|x[0-9a-fA-F]{2}|[0-7]{1,3}|[abfnrtv\\'\"/])")
+    def unescape(match):
+        token = match.group(0)[1:]
+        if token[0] in 'uUx': return chr(int(token[1:], 16))
+        if token[0] in '01234567': return chr(int(token, 8))
+        return {'a':'\a','b':'\b','f':'\f','n':'\n','r':'\r','t':'\t','v':'\v'}.get(token, token)
+    for data, level in queue:
+        texts = [data.decode('utf8', errors='ignore')]
+        for codec in ('utf-16le', 'utf-16be', 'utf-32le', 'utf-32be'):
+            for shift in range(4 if '32' in codec else 2): texts.append(data[shift:].decode(codec, errors='ignore'))
+        for text in texts:
+            for at, char in enumerate(text):
+                if char not in '{["': continue
+                candidates += 1
+                if candidates > 20000:
+                    issues.append('supplemental JSON candidate budget exceeded'); break
+                try: value, _ = decoder.raw_decode(text[at:])
+                except (ValueError, RecursionError): continue
+                values.append(value); leaves(value, 0)
+            if escape.search(text):
+                try:
+                    decoded = escape.sub(unescape, text)
+                    # JSON surrogate pairs denote one scalar; lone surrogates are unresolved.
+                    decoded = decoded.encode('utf-16le', 'surrogatepass').decode('utf-16le')
+                    add(decoded, level + 1)
+                except (ValueError, UnicodeError):
+                    issues.append('invalid backslash/Unicode escaping view')
+        if re.search(rb'%[0-9a-fA-F]{2}', data):
+            add(unquote_to_bytes(data), level + 1)
+            if b'+' in data: add(unquote_to_bytes(data.replace(b'+', b' ')), level + 1)
+        if re.search(rb'=(?:[0-9a-fA-F]{2}|\r?\n)', data):
+            add(quopri.decodestring(data), level + 1)
+        offset = 0
+        while True:
+            at = data.find(b'\x1f\x8b\x08', offset)
+            if at < 0: break
+            offset = at + 3
+            try:
+                engine = zlib.decompressobj(31)
+                decoded = engine.decompress(data[at:], MAX_DECODED + 1)
+                if len(decoded) > MAX_DECODED or not engine.eof:
+                    issues.append('gzip decode incomplete/budget exceeded')
+                else: add(decoded, level + 1)
+            except zlib.error: issues.append('invalid embedded gzip stream')
+    return blobs, values, sorted(set(issues))
 
 
 def fixture_records(raw):

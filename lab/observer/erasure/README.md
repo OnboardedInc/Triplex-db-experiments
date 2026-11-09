@@ -45,3 +45,13 @@ node lab/bin/heavy.mjs --label CX-OBS01-ER01S-R2 -- python3 -B lab/observer/eras
 ```
 
 The runner freezes/hashes its sources, executes both test suites, replays all **31 exact retained reviewer inputs**, checks independent overflow/decryption findings and coverage partitions, rejects source drift, and retains full logs/raw/parsers/results with SHA256SUMS. Retained QA is explicitly historical input with a newly executed parser, not fresh source collection. `qa_round1/` holds verbatim review generators/proofs; their intentional old false-PASS assertions are not the new gate. Large artifacts stay under `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/`.
+
+Round 3: WAL coverage is bound to each physical frame body and its decoded prefix
+snapshot, with per-frame offsets and hashes. A repeated page flushes the prior
+snapshot before replacement; unresolved historical dependencies remain unparsed.
+Additive search views follow JSON string leaves (including Unicode surrogate
+pairs), URL percent encoding, backslash escapes and quoted-printable recursively.
+The 32-layer/4096-view/64-MiB view budgets refuse unresolved searches. Raw bytes
+remain searchable independently. `run_round3.py` also replays the reviewer's exact
+14 new scenarios and second-block FSST control, alongside the previous 31 cases.
+These are offline fixtures and historical replays, not erasure acceptance.

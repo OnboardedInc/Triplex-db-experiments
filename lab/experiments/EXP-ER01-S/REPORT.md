@@ -197,3 +197,89 @@ No `lab/acceptance/` file or contract version was changed. Searching the accepta
 ## Round 2 remaining limits
 
 No live engine, SUT erasure operation, engine/VM configuration, product schema/AAD, concurrent snapshot qualification, independent verifier recollection or four-scan semantic O-OBS promotion was performed. No merge/push. Native Postgres heap/pg_wal, unknown Datomic/XTDB codecs and unreconstructed freed records remain REFUSED with their ranges; they are not silently counted as proved erased. Supported profile budgets and external-pointer/TOAST descriptors must be evaluator-owned. A production schema needs its own pinned adapters and fresh controls. Root/WAL/source integrity refusals are distinct from authenticated evidence that a key still opens.
+
+## Round 3 — physical WAL images and escaping views
+
+**North star:** the erasure correctness floor in SCOPE §2.3 and TARGETS §7 item 9, under the fixed NORTH-STAR; R38 §4.1 P/C/K/D and Q82d require searching the actual retained copies, with matched controls. Offline only. Candidate base `4750d83b64d8b098ea0cad41dd47893e1a6fab26`; review `verify/ER01-S` at `b816ae2`. The review and its three scripts/index/manifests are copied verbatim into `lab/observer/erasure/qa_round2/`.
+
+### Changes and actual findings
+
+`sqlite_wal` now decodes each prefix before a repeated page replaces its body, and at commits. Coverage is projected only onto the exact observed body: equality with the decoded snapshot is checked first. Each main-file page and each WAL frame has its own physical range, SHA256 and partition; uncommitted or unreconstructable images remain unparsed. Historical pointer accounting still needs a previously decoded matching witness. No logical page's last image can qualify different bytes in an older frame. Decode work is bounded at 256 MiB of snapshots; exhaustion refuses.
+
+Supplemental views now search recursive JSON scalar/string leaves, including object keys, Unicode escapes and surrogate pairs, URL percent encoding, backslash Unicode/hex/octal/simple escapes, and quoted-printable. UTF-8/16LE/16BE/32LE/32BE text views feed the same closure. The original bytes are always retained; decoded views add findings and key candidates. A 32-layer, 4096-view, 64-MiB closure budget, JSON candidate/nesting budgets, invalid surrogate and incomplete gzip refusals prevent a truncated search from qualifying PASS. These views never grant physical parsing coverage. The same closure runs over reconstructed SQLite/TOAST records, not just contiguous file bytes. Existing D candidate enumeration consumes all added views before authenticated opening.
+
+New tests exercise P/K/D through each of JSON Unicode, URL, backslash, quoted-printable and a nested combination. The K/D fresh-wrapper control includes its exact key identity/tenant/epoch record and independently authenticates the expected plaintext with the copied reviewer decryptor. Additional tests cover scalar JSON, surrogate pairs, UTF encodings, and recursion exhaustion. The 14 exact review scenarios, all original inputs/SQL/decrypt proofs and the two-block FSST control are copied with complete manifest readback into durable evidence. Replay binds those manifests to the copied review INDEX hashes, not merely a self-reported scenario hash. It also verifies every physical WAL body hash/range/partition against the exact captured bytes.
+
+| Exact retained review scenario | Re-screen | Meaning |
+| --- | --- | --- |
+| nominal | PASS | Fully decoded positive control; fixture only. |
+| two-overflow-pages | FAIL | Reassembled protected value found in SQLite main and WAL. |
+| superseded-committed-wal | FAIL | Historical committed payload found. |
+| superseded-within-commit-wal | FAIL | Older physical payload found; rotate P has 2 protected hits. |
+| freelist-page | REFUSED | Leakage found; residual freelist bytes remain unparsed. |
+| toast-pglz | FAIL | Reassembled/decompressed protected value found. |
+| xtdb-buffer-block | REFUSED | Gzip search finds protected value; native opaque block not qualified. |
+| qlever-vocabulary-word | FAIL | Decoded FSST word contains the protected value. |
+| base64-json-log | FAIL | Protected representation found. |
+| escaped-base64-json-log | FAIL | Unescaped representation found. |
+| escaped-base64-json-sqlite | FAIL | Native SQLite string then JSON view finds protected value. |
+| hex-key-separate-envelope | FAIL | Key and exact authenticated target open found. |
+| encoded-key hex | FAIL | K finds decoded wrapper; D opens exact target. |
+| encoded-key base64 | FAIL | K finds decoded wrapper; D opens exact target. |
+
+Both escaped-key D opens match the independent plaintext SHA256 `46a1c6b9a5a79261bc641c26b1ec664b0b0eee9d554c806dbeb28b65e4ce1711`, while the live control also opens. The separate second-block control finds the exact marker at global index 1,048,576 among 1,048,578 decoded word/copies; missing second codebook refuses. It is a direct decoder/native-layout fixture, not a new IndexBuilder claim.
+
+### Gate history and retained evidence
+
+`diagnostic01` is retained FAILED: 8 format tests passed; the new scanner test expected K to identify a freshly rewrapped *bare* box without its key identity. K's new-version matching requires that identity, whereas D independently tries bare boxes against known bindings. That test was corrected to retain the explicit fresh key record; the exact reviewer bare hex/base64 cases remain unchanged and are separately required to FAIL and open. This scope distinction remains: K is known-byte/identified-record search, while D tests unlabelled candidate boxes cryptographically. No aggregate erasure PASS relies on K alone.
+
+`diagnostic02` passed 8 format tests, 27 scanner tests, all 31 previous exact QA cases, all 14 new cases, and the second-block control. The final run additionally pins original review manifest identities, checks every replayed physical WAL partition, and tests UTF-32 escaping views. All runs are offline and use the heavy wrapper; free disk was above 5 GiB at submission and checked again at runner entry. The earlier 31 aggregates remain REFUSED for unsupported legacy layouts, with the old overflow findings and actual key opens still required, not discarded.
+
+Reproduce with a new empty output path, after checking disk:
+
+```sh
+df -k .
+node lab/bin/heavy.mjs --label CX-OBS01-ER01S-R3 -- python3 -B lab/observer/erasure/run_round3.py /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round3/new-attempt
+```
+
+### Round 3 PASS/verdict/receipt audit (9a)
+
+| Site converting observations into a result | Content check | Freshness check | Exact binding check |
+| --- | --- | --- | --- |
+| `status` / `qualified_status` in scanners.py | Internal candidate only; each caller below supplies measured findings/controls, and helper refuses any unparsed relevant byte. | Requires all three analyzed phases. | Exact relevant inventory and location; D includes every key/decrypt-role source. |
+| `scan_p` | All raw/reconstructed/escaping views searched for exact protected forms; same decoder must find matched twin. | Controls required in every attempt phase. | P needle SHA and provenance equal exact EI/D assertion, value kind and inventory location. |
+| `scan_c` | Exact EI envelope forms and per-location append/remove policy; before envelope control required. | Same bound before/shred/rotate windows. | Native source, envelope/context bytes, source and inventory hash checked. |
+| `scan_k` | Exact known key forms plus decoded identified fresh wrapper versions; matched wrapped/epoch controls. | Before positives and each relevant post phase checked. | Tenant/key-id/epoch and exact physical location; D separately verifies key authority bindings. |
+| `scan_d` / decrypt.mjs | Every discovered box tried; AES-GCM authentication, padding and expected plaintext SHA required; live control must open; invalid authority/coverage refuses. | This execution's supplied phases; before canary opens; retained historical bytes explicitly labeled replay. | Pinned Node and decryptor bytes, exact root/epoch/key-id/tenant/AAD/EI envelope; changed root inventory refuses. |
+| `normalize_erasure` aggregate | No PASS if any scan refuses/fails; incomplete coverage cannot yield a positive secondary findingStatus. | `decode_capture` checks finite ordered clocks, phase windows/nonces, no duplicate/missing phases. | Exact run/source/stream/container/slot/case and every path/codec/size/SHA, full stable-file flags and EI bytes. |
+| SQLite/TOAST/FSST coverage inputs | Physical partition complements and raw search everywhere; WAL checks checksums/salts and exact frame-to-snapshot body equality; escaping only adds views and decoder limits refuse. | Every retained physical version is analyzed, never replaced by a later version's partition. | Per-file/page/frame hashes and byte offsets; correct historical overflow context or explicit unparsed ranges. Decoder sources frozen in parser. |
+| Unit assertions in test_formats.py/test_scanners.py | Native SQL readback, exact seeded bytes, decoder negatives, authenticated plaintext, controls, 77 nominal scans, blind FSST refusal, binding negatives and bundle tamper checks. | Fresh random fixture attempt and real execution of suites. | Frozen evaluator specification/parser/runtime, exact files and source hashes; synthetic scope explicit. |
+| `replay_qa_round2.py` | All 31 exact retained cases checked; no unsafe aggregate PASS; original overflow hits/key opens required. | New execution over explicitly historical synthetic captures. | Original raw hashes, case/run identities, full partitions and unchanged source pins. |
+| `replay_qa_round3.py` | 14 exact cases: nominal PASS, all negatives not PASS, requested scan findings and both escaped-key opens required; exact FSST marker and missing dictionary refusal. | New frozen parser subprocess for each historical input; no claim of new engine acquisition. | Review-pinned full manifest readback, captured raw hashes, exact run/case, per-frame byte partitions, correct FSST index/copies and marker digest. |
+| `run_round3.py` gate PASS | Both suites and both replay tools exit successfully only after their substantive assertions above. | New empty attempt directory, execution timestamps, >=5-GiB entry guard. | Every source preimage retained and hash checked again before PASS; exact runtime/parser pins retained in outputs. |
+| Retention/index/manifest report | Complete file-set/hash/size readback, final source pins and exact copied reviewer files compared. It records fixture-gate status, never engine erasure acceptance. | New immutable attempt paths; failed run retained. | Durable root, per-file SHA256, manifest SHA, head/base identity and source paths recorded. |
+
+### Round 3 limits
+
+No system-under-test code, live engine, Docker/VM changes, slot, live erasure, acceptance contract edit, merge or push. No new native PG server/XTDB codec qualification, physical freed-block proof, concurrent acquisition, scale timing or four-scan O-OBS semantic promotion. Unknown layouts continue to REFUSE. Escaping support is bounded and enumerated above, not a claim to decode arbitrary encryption/custom languages. Independent review is still required.
+
+### Round 3 final receipt and pin movements (9b/9c)
+
+Final `final01`: **PASS**, 8 format + 27 scanner tests, 31 previous + 14 new historical cases, second-block FSST control. Complete readback: 2939 files, 64035556 bytes. Manifest SHA256 `653d726214aa86d68a3be406f517f53c0e5c5366bddd6f73d34970dbb0312974`. [Index](round3/INDEX.json), [checksums](round3/SHA256SUMS), [readback tool](round3/retain.py). Bulky raw files are only in `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round3`; all three attempts remain retained.
+
+No acceptance file/contract version changed; searches of both worktree and main acceptance directories found no explicit pin to a modified erasure path. The evaluator source pins below move from `4750d83`; historical parsers/preimages remain unchanged, with newly compiled parsers in new paths.
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/observer/erasure/README.md` | `17affaa2e2bf522baf29d638333371ec79eabaf26c3e2e3d0522db29a3b2f7ea` | `468c677a86c1f28499c66b92201e705e1d4b7c3f4d1082317cbadf2f7a7b643a` |
+| `lab/observer/erasure/formats.py` | `f906ef710cc4202d80466d5f97570e5345ac06294d3d48b9c987dabc87ccad08` | `97f6c6c846b330109c89f39a3e36fb87baed9da0da26b1fa7bbc7b21332e74c9` |
+| `lab/observer/erasure/qa_round2/INDEX.json` | new path | `70f0ab1d0271d22f03aa86c46202ddd2a02aa29cedaca07863ebb7c7ab6dca3c` |
+| `lab/observer/erasure/qa_round2/SHA256SUMS` | new path | `c2cf6c65eeb500802193a1c358b3758950d15b904a1846f029ce639721dde5ac` |
+| `lab/observer/erasure/qa_round2/VERIFY-round2.md` | new path | `30bf189e29467c0e3837e39a76f0a5ed80652d3302a8e9411fbcd0fd20c48687` |
+| `lab/observer/erasure/qa_round2/encoded_key.py` | new path | `766180b907c50d7c628d82177d88eb319e1ed720463db0c53779b67a354727e0` |
+| `lab/observer/erasure/qa_round2/probe.py` | new path | `18cb268f176bda0aa49ca6d869582c8ec9951a052ed9f47355929265e7f7d2ba` |
+| `lab/observer/erasure/qa_round2/validate.py` | new path | `f1f24fbe5ceb154229db508e396e82c0dfa0fc8db73370f7345e02d724ba254f` |
+| `lab/observer/erasure/replay_qa_round3.py` | new path | `3f89fb69e1b0df836a64b8064dc4cc1daca8f745547270025cf041d89529d5f8` |
+| `lab/observer/erasure/run_round3.py` | new path | `3cee69f28c77b8afeffe8503fe19d71073ab67762453e00cb1192a9a00060285` |
+| `lab/observer/erasure/test_formats.py` | `8364c2a4b3be55bc1e5d4f20df0f76ecc99b3784471e43337581e475df66eedd` | `5546892ad443c2d1594fcc3355f0d66fd8e6e68c9fb1526ab1339abb565c9446` |
+| `lab/observer/erasure/test_scanners.py` | `016512cc73f61c61933ceb6943ec2c4e1c0e7bbe84a01808b953ec9034efae30` | `709a16ea0e626020e04a0f1b0a409e1f0707e47449418ab6ef96ab5d4708acb9` |

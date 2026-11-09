@@ -342,6 +342,39 @@ class Scanners(unittest.TestCase):
                 self.assertEqual(k['status'],'FAIL',k)
                 self.assertTrue(any(row.get('newVersions') for row in k['observations']['rotate']))
 
+    def test_escaping_layers_feed_plaintext_key_and_decrypt_searches(self):
+        from fixtures import fixture_record_file
+        from formats import fixture_records
+        material = {'root': self.payloads['before']['root'].decode(),
+                    'key': json.loads(self.payloads['before']['keys-backup'])['rows'][1],
+                    'epoch': json.loads(self.payloads['before']['kms-records'])['rows'][1],
+                    'envelope': self.spec['envelopes'][0]}
+        proof = json.loads(subprocess.check_output(['node', str(HERE / 'qa_round1/rewrap.mjs')], input=packed(material)))
+        self.assertEqual(proof['independentlyOpenedSha256'], self.spec['envelopes'][0]['plainSha256'])
+        encoders = {
+            'json-unicode': lambda value: b'INFO event={"value":"' + b''.join(('\\u%04x'%b).encode() for b in value) + b'"}',
+            'url': lambda value: b''.join(('%%%02X'%b).encode() for b in value),
+            'backslash': lambda value: b''.join(('\\x%02x'%b).encode() for b in value),
+            'quoted-printable': lambda value: b''.join(('=%02X'%b).encode() for b in value),
+        }
+        encoders['nested'] = lambda value: encoders['url'](encoders['quoted-printable'](encoders['json-unicode'](value)))
+        for layer, encode in encoders.items():
+            with self.subTest(layer=layer):
+                changed = copy.deepcopy(self.payloads)
+                for file, value in (('host-log', self.spec['plain']['target'].encode()),
+                                    ('d-keys-heap', packed(proof['row']))):
+                    blobs, _, _ = fixture_records(changed['rotate'][file])
+                    changed['rotate'][file] = fixture_record_file(blobs + [encode(value)])
+                result = self.normalize(payloads=changed)
+                p = self.verdict(result, 'P', 'host-log')
+                self.assertEqual(p['status'], 'FAIL', p)
+                self.assertGreater(p['observations']['rotate']['protectedHits'], 0)
+                k = self.verdict(result, 'K', 'd-keys-heap')
+                self.assertEqual(k['status'], 'FAIL', k)
+                d = self.verdict(result, 'D', 'all-declared-key-copies')
+                self.assertEqual(d['status'], 'FAIL', d)
+                self.assertTrue(d['observations']['rotate'][0]['opened'])
+
     def test_d_wrong_root_incomplete_backup_and_unsupported_store_refuse(self):
         for mutation in ('root', 'backup', 'format', 'row'):
             with self.subTest(mutation=mutation):
