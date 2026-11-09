@@ -1,4 +1,4 @@
-import { parseLatencyReceipt, parseLatencyReceipts } from "../../receipts/parse.ts";
+import { readLatencyRun } from "../../receipts/parse.ts";
 import { summarizeGridCell } from "./summary-cell.mjs";
 import { qleverLatencyReceipt, requireQleverConnectionMode } from "../../receipts/latency.mjs";
 import fs from "node:fs";
@@ -10,12 +10,11 @@ const cells = [];
 for (const arm of ["M", "U"]) {
   const dir = path.join(root, `grid-${arm}-attempt2`);
   if (!fs.existsSync(path.join(dir, "summary.json"))) continue;
-  for (const cell of parseLatencyReceipts(fs.readFileSync(path.join(dir, "summary.json")), { lane: "qlever", source: dir })) {
-    let p4 = null;
-    try {
-      p4 = parseLatencyReceipt(fs.readFileSync(path.join(dir, `${cell.label}-p4.json`)), { lane: "qlever", source: cell.label });
-    } catch {}
-    cells.push(summarizeGridCell(arm, cell, p4));
+  const cellFile = path.join(dir, "summary.json");
+  const grid = readLatencyRun(cellFile, { lane: "qlever", expectedWriter: "qg1-cell/1" }).unwrap();
+  for (const [entry, cell] of grid.records.entries()) {
+    const p4File = path.join(dir, `${cell.label}-p4.json`);
+    cells.push(summarizeGridCell(arm, cellFile, fs.existsSync(p4File) ? p4File : null, entry));
   }
 }
 const qleverConnectionMode = requireQleverConnectionMode(cells[0]?.qleverConnectionMode);

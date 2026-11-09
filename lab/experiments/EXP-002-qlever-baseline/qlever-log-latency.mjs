@@ -4,8 +4,7 @@
 // the log. Diagnostic for North-star P2 (small commit latency) and P1 (reads while writes run); it is
 // single-client gate traffic, not a concurrency benchmark.
 // Usage: node qlever-log-latency.mjs [--connection-mode EXPECTED] [--since ISO] [--until ISO] < mode-bearing-log-receipt.json
-import fs from 'node:fs';
-import { parseLatencyReceipt } from "../../receipts/parse.ts";
+import { readLatencyRun } from "../../receipts/parse.ts";
 import { qleverLatencyReceipt, requireQleverConnectionMode } from '../../receipts/latency.mjs';
 
 const args = process.argv.slice(2);
@@ -13,7 +12,7 @@ const opt = name => (args.includes(name) ? args[args.indexOf(name) + 1] : undefi
 const since = opt('--since'), until = opt('--until');
 // [EXP-QNODELAY] Why: raw log text has no transport identity. Rejected: a CLI
 // attribution that could add metadata to mode-less observations before comparison.
-const receipt = parseLatencyReceipt(fs.readFileSync(0), { lane: "qlever", source: "server-log receipt" });
+const receipt = readLatencyRun("/dev/stdin", { lane: "qlever", expectedWriter: "qlever-server-log/1" }).unwrap().data;
 const qleverConnectionMode = receipt.qleverConnectionMode;
 if (opt('--connection-mode') !== undefined && requireQleverConnectionMode(opt('--connection-mode')) !== qleverConnectionMode)
   throw new TypeError("expected mode differs from server-log receipt");

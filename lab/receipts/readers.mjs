@@ -47,20 +47,24 @@ export function readerSources(root) {
       }
     }
   }
-  for (const tree of ["lab", "packages"]) if (fs.existsSync(path.join(root, tree))) visit(tree);
-  // [EXP-QNODELAY] Why: the load verifier calls this shared external aggregator.
-  // Rejected: checking only its caller after aggregation already consumed bytes.
-  const external = "qualification/devloop/compare.mjs";
-  if (fs.existsSync(path.join(root, external))) {
-    const text = fs.readFileSync(path.join(root, external), "utf8");
-    result.push({
-      path: external,
-      sha256: hashSource(text),
-      imports: importsOf(external, text),
-      text,
-    });
-  }
+  for (const tree of ["lab", "packages", "qualification"])
+    if (fs.existsSync(path.join(root, tree))) visit(tree);
   return result.sort((a, b) => a.path.localeCompare(b.path));
+}
+// [EXP-QNODELAY] Why: retained event directories and timing JSON keys reveal
+// readers outside the former tree exception. Rejected: the historical reviewer
+// label as proof that a generic manifest reader excludes QLever.
+export function receiptReadCandidate(source) {
+  return (
+    /^(?:lab|packages|qualification)\//.test(source.path) &&
+    /(?:qualification\/evidence\/qlever|evidence\.events|events\.(?:ndjson|jsonl)|summary\.json|\.request\.json|receipt\.json)/.test(
+      source.text,
+    ) &&
+    /(?:startedMs|finishedMs|coldMs|warmMs|p99Ms|p50Ms|latencyMs)/.test(source.text) &&
+    /(?:readFile|readJson|createReadStream|read_text|read_bytes|json\.load|\bcat\b|\bopen\(|\bload\()/.test(
+      source.text,
+    )
+  );
 }
 export function auditReaders(sources, inventory) {
   const failures = [];
@@ -75,6 +79,12 @@ export function auditReaders(sources, inventory) {
       failures.push(`${source.path}: input-boundary review is stale`);
     if (!entry.reason || !["reader", "schema", "non-reader"].includes(entry.role))
       failures.push(`${source.path}: reader classification missing`);
+    if (
+      receiptReadCandidate(source) &&
+      !["reader", "schema"].includes(entry.role) &&
+      !entry.exemption
+    )
+      failures.push(`${source.path}: QLever receipt path/JSON-key reader requires readLatencyRun`);
     if (entry.role === "reader") {
       if (source.path.endsWith(".py")) {
         if (
@@ -95,16 +105,13 @@ export function auditReaders(sources, inventory) {
         const ast = ts.createSourceFile(source.path, source.text, ts.ScriptTarget.Latest, true);
         let calls = 0;
         const walk = (n) => {
-          if (
-            ts.isCallExpression(n) &&
-            ["parseLatencyReceipt", "parseLatencyReceipts"].includes(n.expression.getText(ast))
-          )
+          if (ts.isCallExpression(n) && ["readLatencyRun"].includes(n.expression.getText(ast)))
             calls++;
           ts.forEachChild(n, walk);
         };
         walk(ast);
         if (calls < entry.boundaries)
-          failures.push(`${source.path}: receipt parser boundary removed`);
+          failures.push(`${source.path}: receipt path-reader boundary removed`);
       }
     }
     reviewed.delete(source.path);
@@ -116,5 +123,9 @@ export function auditReaders(sources, inventory) {
   // [EXP-QNODELAY] Why: retain import graph evidence for reader classification.
   // Rejected: using timing-field spellings to remove source from review.
   const graph = Object.fromEntries(sources.map((s) => [s.path, s.imports]));
-  return { failures, graph };
+  return {
+    failures,
+    graph,
+    receiptCandidates: sources.filter(receiptReadCandidate).map((s) => s.path),
+  };
 }

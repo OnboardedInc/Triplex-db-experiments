@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { parseLatencyReceipt } from "../receipts/parse.ts";
+import { readLatencyRun } from "../receipts/parse.ts";
 // lab/bin/scorecard.mjs [--ref main] [--dry-run]
 // Rebuilds the G0-G2 rows of the "Gates by lane" table in lab/SCORECARD.md from the newest
 // committed receipt per gate/lane on <ref> (default main). The goal table and the G3-G7 rows are
@@ -36,7 +36,7 @@ main(async () => {
   const newest = {};
   for (const file of files) {
     let receipt;
-    try { receipt = parseLatencyReceipt(git(['show', `${ref}:${file}`]), { source: file }); } catch { continue; }
+    try { receipt = readLatencyRun(file, { ref }).unwrap().data; } catch { continue; }
     if (receipt.format !== 'tx2-gate-receipt/1') continue;
     const key = `${receipt.gate}/${receipt.lane}`;
     if (!newest[key] || receipt.startedAt > newest[key].receipt.startedAt) newest[key] = { receipt, file };

@@ -1,4 +1,4 @@
-import { parseLatencyReceipt } from "../../receipts/parse.ts";
+import { readLatencyRun } from "../../receipts/parse.ts";
 // [EXP-W02] Why: all three lanes share the GS floor; unqualified metadata cannot grant admission.
 // Rejected: assuming a health probe, directory string or a delta-only count proves world content.
 import path from 'node:path';
@@ -15,8 +15,8 @@ export function brokerEnv(lane, directory, root) {
     throw Error('GS broker directory must remain inside runs/ (including symlink targets)');
   return { QLEVER_COMMIT_PATH: 'broker', QLEVER_BROKER_DIR: dir };
 }
-export function gsRefusals(report, contractVersion) {
-  parseLatencyReceipt(report, { source: "GS report" });
+export function gsRefusals(receiptPath, contractVersion) {
+  const report = readLatencyRun(receiptPath).unwrap().data;
   const reasons = [];
   if (!/^0\.(?:[4-9]|[1-9]\d+)\./.test(contractVersion ?? '')) reasons.push('Q94e: pre-0.4.0 GS evidence is DIAGNOSTIC');
   if (report.generator !== 'W02/1') reasons.push('Q94b/c: W0 v2 live generator not active');

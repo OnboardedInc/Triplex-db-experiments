@@ -59,7 +59,7 @@ async function req(params, accept = "application/qlever-results+json") {
   });
   const raw = await r.text();
   fs.writeFileSync(path.join(out, `${id}.response`), raw);
-  save(`${id}.request.json`, qleverLatencyReceipt({
+  save(`${id}.request.json`, qleverLatencyReceipt({ writer: "qg1-request/1",
     qleverConnectionMode: "keep-alive",
     at,
     params,
@@ -74,7 +74,7 @@ async function req(params, accept = "application/qlever-results+json") {
     data = null;
   }
   if (r.status !== 200) throw Error(`request ${id} HTTP ${r.status}: ${raw.slice(0, 300)}`);
-  return qleverLatencyReceipt({ qleverConnectionMode: "keep-alive", id, ms: performance.now() - t, data });
+  return qleverLatencyReceipt({ writer: "qg1-request/1", qleverConnectionMode: "keep-alive", id, ms: performance.now() - t, data });
 }
 const seed = JSON.parse(fs.readFileSync(`${seedDir}/manifest.json`));
 const graph = seed.seedManifest.graphIri;
@@ -163,7 +163,7 @@ async function measure(label) {
     for (const cache of ["cold", "warm"]) {
       if (cache === "cold") await req({ cmd: "clear-cache" });
       const r = await req({ query });
-      results[name].push(qleverLatencyReceipt({
+      results[name].push(qleverLatencyReceipt({ writer: "qg1-sample/1",
         qleverConnectionMode: r.qleverConnectionMode,
         cache,
         id: r.id,
@@ -213,7 +213,7 @@ async function measure(label) {
   );
   fs.writeFileSync(`${out}/${label}-p4.log`, (p4.stdout ?? "") + (p4.stderr ?? ""));
   const after = await state(label + "-after");
-  const summary = qleverLatencyReceipt({
+  const summary = qleverLatencyReceipt({ writer: "qg1-cell/1",
     qleverConnectionMode: "keep-alive",
     label,
     arm,
@@ -221,7 +221,7 @@ async function measure(label) {
     before,
     after,
     results,
-    p4: qleverLatencyReceipt({ qleverConnectionMode: requireQleverConnectionMode(env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive"), status: p4.status, signal: p4.signal, error: p4.error?.message }),
+    p4: { connectionMode: requireQleverConnectionMode(env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive"), status: p4.status, signal: p4.signal, error: p4.error?.message },
     c8: {
       status: control.status,
       signal: control.signal,
@@ -295,7 +295,7 @@ const before = await req({ query: queries.join });
 const rebuilt = await req({ cmd: "rebuild-index" });
 const after = await req({ query: queries.join });
 const f05after = await req({ query: f05query });
-save("f05.json", {
+save("f05.json", qleverLatencyReceipt({ writer: "qg1-f05/1", qleverConnectionMode: "keep-alive",
   before: f05before,
   after: f05after,
   expected: "after",
@@ -304,7 +304,7 @@ save("f05.json", {
     f05after.data?.res?.length === 1 &&
     f05after.data.res[0][0] === '"after"',
   verdict: "DIAGNOSTIC: literal guarded update/rebuild sample only",
-});
+}));
 save("rebuild.json", {
   before,
   rebuilt,

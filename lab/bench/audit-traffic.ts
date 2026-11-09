@@ -1,4 +1,4 @@
-import { parseLatencyReceipt } from "../receipts/parse.ts";
+import { readLatencyRun } from "../receipts/parse.ts";
 import { latencyReceipt, recordedConnectionMode } from "../receipts/latency.mjs";
 /** [EXP-P5-R2] Why: audit the retained event bytes and matched-window samples independently of transported summary fields. Rejected: accepting a summary flag or legacy short trace digest. */
 import fs from "node:fs";
@@ -6,8 +6,7 @@ import { createHash } from "node:crypto";
 import { generateTrace } from "./lib/trace.ts";
 const [file, out] = process.argv.slice(2);
 if (!file || !out || fs.existsSync(out)) throw new Error("fresh report/output required");
-const bytes = fs.readFileSync(file),
-  report = parseLatencyReceipt(bytes, { source: file });
+const inputRun = readLatencyRun(file).unwrap(), report = inputRun.data;
 if (report.status !== "OFFLINE-CHECKS-COMPLETE" || !report.traffic?.rounds?.length)
   throw new Error("completed traffic run required");
 const hash = (b: string | Buffer) => createHash("sha256").update(b).digest("hex");
@@ -22,13 +21,9 @@ const encode = (v: any): string =>
           .join(",") +
         "}"
       : JSON.stringify(v);
-const load = (p: string) =>
-  fs
-    .readFileSync(p, "utf8")
-    .trim()
-    .split("\n")
-    .filter(Boolean)
-    .map((s) => report.lane === "qlever" ? parseLatencyReceipt(s, { lane: report.lane, source: p }) : JSON.parse(s));
+const load = (p: string) => report.lane === "qlever"
+  ? readLatencyRun(p, { lane: "qlever", encoding: "ndjson", expectedMode: inputRun.transportMode }).unwrap().records
+  : fs.readFileSync(p, "utf8").split("\n").filter(Boolean).map((s) => JSON.parse(s));
 const p99 = (a: number[]) =>
   a.length ? [...a].sort((a, b) => a - b)[Math.ceil(a.length * 0.99) - 1]! : null;
 const rounds = [];
@@ -113,7 +108,7 @@ fs.writeFileSync(
       qleverConnectionMode: recordedConnectionMode(report),
       status: "OFFLINE-SAMPLES-MATCH",
       acceptance: false,
-      reportSha256: hash(bytes),
+      reportSha256: inputRun.source.sha256,
       auditSourceSha256: hash(fs.readFileSync(new URL(import.meta.url))),
       rounds,
     }),

@@ -1,7 +1,8 @@
-// [EXP-QNODELAY] Why: Python delegates receipt validation to the exact TS schema.
-// Rejected: a second Python validator that could drift from the comparison gate.
-import fs from "node:fs";
-import { parseLatencyReceipt } from "./parse.ts";
-const lane = process.argv[2] ?? "qlever";
-const receipt = parseLatencyReceipt(fs.readFileSync(0), { lane, source: "stdin" });
-process.stdout.write(JSON.stringify(receipt));
+// [EXP-QNODELAY] Why: Python and JS share path IO and schema/mode binding.
+// Rejected: a Python pre-read or independent receipt validator.
+import { readLatencyRun } from "./parse.ts";
+const result = readLatencyRun(process.argv[2], { lane: process.argv[3] ?? "qlever" });
+if (!result.ok) {
+  process.stderr.write(JSON.stringify(result.refusal));
+  process.exitCode = 1;
+} else process.stdout.write(JSON.stringify(result.run));

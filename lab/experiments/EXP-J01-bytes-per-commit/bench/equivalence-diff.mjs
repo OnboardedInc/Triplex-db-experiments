@@ -1,10 +1,9 @@
-import { parseLatencyReceipt } from "../../../receipts/parse.ts";
+import { readLatencyRun } from "../../../receipts/parse.ts";
 // EXP-J01: where two arms of a journal-equivalence raw file differ, surface by surface.
 // Usage: node equivalence-diff.mjs <raw.json> [surface]
-import fs from 'node:fs';
 
 const [file, only] = process.argv.slice(2);
-const arms = parseLatencyReceipt(fs.readFileSync(file), { source: file }).raw;
+const arms = readLatencyRun(file).unwrap().data.raw;
 const parsed = arms.map((a) => ({ encoding: a.encoding, reads: JSON.parse(a.reads) }));
 for (const surface of Object.keys(parsed[0].reads)) {
   if (only && surface !== only) continue;

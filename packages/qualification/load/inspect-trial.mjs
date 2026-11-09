@@ -1,10 +1,8 @@
-import { parseLatencyReceipt } from "../../../lab/receipts/parse.ts";
-import { latencyReceipt, requireQleverConnectionMode } from "../../../lab/receipts/latency.mjs";
+import { readLatencyRun } from "../../../lab/receipts/parse.ts";
+import { latencyReceipt } from "../../../lab/receipts/latency.mjs";
 /** Inspect failed diagnostic trials without converting them into acceptance. */
 import assert from "node:assert/strict";
-import { createReadStream } from "node:fs";
 import { writeFile } from "node:fs/promises";
-import { createInterface } from "node:readline";
 import path from "node:path";
 import { openContext, readState, loadJobManifest } from "../../../qualification/devloop/state.mjs";
 import { verifyAttempt } from "../../../qualification/devloop/evidence.mjs";
@@ -27,21 +25,11 @@ const duration = manifest.profile.endMilliseconds,
   errors = {},
   service = [],
   queue = [];
-let qleverConnectionMode = null;
 let reads = 0,
   failedReads = 0,
   declaredRejects = 0;
-for await (const line of createInterface({
-  input: createReadStream(path.join(directory, manifest.evidence.events)),
-  crlfDelay: Infinity,
-})) {
-  if (!line.trim()) continue;
-  const event = parseLatencyReceipt(line, { lane: manifest.queryPath, source: manifest.evidence.events });
-  if (manifest.queryPath.startsWith("qlever")) {
-    const mode = requireQleverConnectionMode(event.qleverConnectionMode);
-    if (qleverConnectionMode !== null && qleverConnectionMode !== mode) throw new TypeError("mixed timing event modes");
-    qleverConnectionMode = mode;
-  }
+const timingRun = readLatencyRun(path.join(directory, manifest.evidence.events), { lane: manifest.queryPath, encoding: "ndjson", expectedWriter: "triplex-public-load-event/1" }).unwrap();
+for (const event of timingRun.records) {
   if (event.type === "read") {
     assert(
       Number.isFinite(event.startedMs) &&
@@ -89,7 +77,7 @@ const percentile = (values, fraction) => {
 };
 const visibleInside = writes.filter((event) => event.visibleMs <= duration).length;
 const result = latencyReceipt({
-  qleverConnectionMode: qleverConnectionMode,
+  qleverConnectionMode: timingRun.transportMode,
   format: "triplex-diagnostic-load-inspection/1",
   at: new Date().toISOString(),
   reference: option("--run"),

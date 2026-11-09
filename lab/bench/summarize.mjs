@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-import { parseLatencyReceipt } from "../receipts/parse.ts";
+import { readLatencyRun } from "../receipts/parse.ts";
 // node lab/bench/summarize.mjs <ns-report.json | NS receipt.json>: one line per bar plus correctness, for humans.
-import fs from 'node:fs';
 import { latencyReceipt } from '../receipts/latency.mjs';
-const doc = parseLatencyReceipt(fs.readFileSync(process.argv[2]), { source: process.argv[2] });
+const doc = readLatencyRun(process.argv[2]).unwrap().data;
 const r = doc.format?.startsWith('tx2-gate-receipt') ? { ...doc.ns, priorities: Object.fromEntries(Object.entries(doc.ns?.bars ?? {}).map(([k, v]) => [k, { bars: v }])) } : doc;
 const mode = latencyReceipt({ qleverConnectionMode: doc.qleverConnectionMode }).qleverConnectionMode;
 const emit = (...args) => console.log(`qleverConnectionMode=${mode ?? "not-applicable"}`, ...args);

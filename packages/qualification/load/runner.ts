@@ -440,7 +440,7 @@ async function load(): Promise<void> {
   const emit = (event: Record<string, unknown>, fd = eventFd) => {
     const line =
       JSON.stringify(
-        latencyReceipt({ ...event, qleverConnectionMode: connectionModeForBackend(backend.name) }),
+        latencyReceipt({ writer: "triplex-public-load-event/1", ...event, qleverConnectionMode: connectionModeForBackend(backend.name) }),
       ) + "\n";
     bytes += Buffer.byteLength(line);
     assert(bytes <= maximumEventBytes, "Raw observation byte budget exhausted");
