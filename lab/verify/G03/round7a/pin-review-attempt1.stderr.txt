@@ -1,0 +1,31 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 66313 "CX-VG03-56-R7A-full", pid 62897 "QH1-R3", pid 66115 "CX-HS01-r2-ulid-diag10k"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 66313 "CX-VG03-56-R7A-full", pid 62897 "QH1-R3", pid 66115 "CX-HS01-r2-ulid-diag10k"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 66313 "CX-VG03-56-R7A-full", pid 61469 "CX-VOBS7-round10", pid 66115 "CX-HS01-r2-ulid-diag10k"
+/Users/sam/projects/triplex-db-2/node_modules/.pnpm/esbuild@0.23.1/node_modules/esbuild/lib/main.js:2119
+    let error = new Error(`Build failed with 1 error:
+                ^
+
+Error: Build failed with 1 error:
+error: Cannot use plugins in synchronous API calls
+    at fakeBuildError (/Users/sam/projects/triplex-db-2/node_modules/.pnpm/esbuild@0.23.1/node_modules/esbuild/lib/main.js:2119:17)
+    at validateBuildSyncOptions (/Users/sam/projects/triplex-db-2/node_modules/.pnpm/esbuild@0.23.1/node_modules/esbuild/lib/main.js:2129:46)
+    at Object.buildSync (/Users/sam/projects/triplex-db-2/node_modules/.pnpm/esbuild@0.23.1/node_modules/esbuild/lib/main.js:2155:7)
+    at Object.buildSync (/Users/sam/projects/triplex-db-2/node_modules/.pnpm/esbuild@0.23.1/node_modules/esbuild/lib/main.js:1886:32)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-g03-56/lab/verify/G03/round7a/pin-review.mjs:15:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  errors: [
+    {
+      id: '',
+      pluginName: '',
+      text: 'Cannot use plugins in synchronous API calls',
+      location: null,
+      notes: [],
+      detail: undefined
+    }
+  ],
+  warnings: []
+}
+
+Node.js v22.23.2

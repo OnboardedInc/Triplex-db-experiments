@@ -1,0 +1,12 @@
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-g03-56/lab/bin/ns-run.mjs:30
+ if(!last||seq<2)throw Error('observer final record missing');
+                       ^
+
+Error: observer final record missing
+    at verifyObserver (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-g03-56/lab/bin/ns-run.mjs:30:24)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-g03-56/lab/verify/G03/review-round6-original.mjs:22:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2

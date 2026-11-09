@@ -1,0 +1,73 @@
+{
+  "review": "CX-VG03-56-R7A",
+  "sourceCommit": "ef1a9216",
+  "sourceSha256": "93f2267c8e9682bfc9f922be332b288f1be5be94a17bdbf8400c72f17f897ef4",
+  "scope": "exact coordinator source; trusted Box/transport model; no Docker or candidate execution",
+  "results": [
+    {
+      "mode": "nonzero",
+      "error": "DRIVER-EXIT-NONZERO status=7",
+      "capturedFiles": 6,
+      "captureDigestsMatch": true,
+      "terminal": {
+        "schema": "ns-terminal/1",
+        "runId": "eda82356b08a7ab41a10f7157cbd6216",
+        "source": "coordinator-exec",
+        "driverExit": 7,
+        "faultFinish": {
+          "ok": true
+        }
+      },
+      "invalidHrNotParsed": true,
+      "lastStage": 12,
+      "qualification": false
+    },
+    {
+      "mode": "null-exit",
+      "error": "DRIVER-EXIT-NONZERO status=null",
+      "capturedFiles": 6,
+      "captureDigestsMatch": true,
+      "terminal": {
+        "schema": "ns-terminal/1",
+        "runId": "caed17bdc24a215079f36efab8bf6771",
+        "source": "coordinator-exec",
+        "driverExit": null,
+        "faultFinish": {
+          "ok": true
+        }
+      },
+      "invalidHrNotParsed": true,
+      "lastStage": 12,
+      "qualification": false
+    },
+    {
+      "mode": "finish-failure",
+      "error": "DRIVER-HOOK-FAILURE FAULT-NOT-EXERCISED",
+      "capturedFiles": 6,
+      "captureDigestsMatch": true,
+      "terminal": {
+        "schema": "ns-terminal/1",
+        "runId": "835dc2f522a09b2509378294dc4cba64",
+        "source": "coordinator-exec",
+        "driverExit": 0,
+        "faultFinish": {
+          "ok": false,
+          "error": "FAULT-NOT-EXERCISED"
+        }
+      },
+      "invalidHrNotParsed": true,
+      "lastStage": 12,
+      "qualification": false
+    },
+    {
+      "mode": "stream-failure",
+      "error": "FAULT-NOT-EXERCISED",
+      "rawExportExists": false,
+      "lastStage": 9,
+      "finishReached": false,
+      "realBoxExecControl": true,
+      "realFaultInjector": true,
+      "qualification": false
+    }
+  ]
+}

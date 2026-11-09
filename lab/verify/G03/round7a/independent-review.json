@@ -1,0 +1,161 @@
+{
+  "review": "CX-VG03-56-R7A",
+  "reviewedCode": "ef1a9216",
+  "runId": "19ccc6d3-0d94-465b-b5c9-de3e19987f23",
+  "scope": "offline integrity controls; no semantic qualification",
+  "results": [
+    {
+      "name": "fresh authentic three-record control",
+      "accepted": true
+    },
+    {
+      "name": "seal field removed: schema",
+      "refused": true
+    },
+    {
+      "name": "seal field changed: schema",
+      "refused": true
+    },
+    {
+      "name": "seal field removed: runId",
+      "refused": true
+    },
+    {
+      "name": "seal field changed: runId",
+      "refused": true
+    },
+    {
+      "name": "seal field removed: chunks",
+      "refused": true
+    },
+    {
+      "name": "seal field changed: chunks",
+      "refused": true
+    },
+    {
+      "name": "seal field removed: head",
+      "refused": true
+    },
+    {
+      "name": "seal field changed: head",
+      "refused": true
+    },
+    {
+      "name": "seal field removed: domain",
+      "refused": true
+    },
+    {
+      "name": "seal field changed: domain",
+      "refused": true
+    },
+    {
+      "name": "seal field removed: final",
+      "refused": true
+    },
+    {
+      "name": "seal field changed: final",
+      "refused": true
+    },
+    {
+      "name": "seal field removed: periodNs",
+      "refused": true
+    },
+    {
+      "name": "seal field changed: periodNs",
+      "refused": true
+    },
+    {
+      "name": "unkeyed digest cannot replace final HMAC",
+      "refused": true
+    },
+    {
+      "name": "entire chain re-signed with foreign key",
+      "refused": true
+    },
+    {
+      "name": "unsigned final edit with matching seal copy",
+      "refused": true
+    },
+    {
+      "name": "reordered captured records and adjusted convenience head",
+      "refused": true
+    },
+    {
+      "name": "truncated final with matching head/count",
+      "refused": true
+    },
+    {
+      "name": "validly signed second final",
+      "refused": true
+    },
+    {
+      "name": "validly signed poll after final",
+      "refused": true
+    },
+    {
+      "name": "validly signed final before polls",
+      "refused": true
+    },
+    {
+      "name": "validly signed clock-domain change",
+      "refused": true
+    },
+    {
+      "name": "F4 initial null clock domain followed by a valid different domain is accepted",
+      "accepted": true,
+      "firstRecordDomain": null,
+      "returnedDomain": {
+        "bootId": "7a064e31-8ca0-47a5-926f-d2de8d786302",
+        "primitive": "CLOCK_MONOTONIC",
+        "offsets": {
+          "monotonic": [
+            "0",
+            "0"
+          ],
+          "boottime": [
+            "0",
+            "0"
+          ]
+        }
+      },
+      "authenticatedMalformedProducerFixture": true
+    },
+    {
+      "name": "freshness rejects other attempt",
+      "refused": true
+    },
+    {
+      "name": "terminal rejects before event access undefined",
+      "refused": true
+    },
+    {
+      "name": "terminal rejects before event access {\"schema\":\"ns-terminal/1\",\"runId\":\"19ccc6d3-0d94-465b-b5c9-de3e19987f23\",\"source\":\"coordinator-exec\",\"driverExit\":7,\"faultFinish\":{\"ok\":true}}",
+      "refused": true
+    },
+    {
+      "name": "terminal rejects before event access {\"schema\":\"ns-terminal/1\",\"runId\":\"19ccc6d3-0d94-465b-b5c9-de3e19987f23\",\"source\":\"coordinator-exec\",\"driverExit\":null,\"faultFinish\":{\"ok\":true}}",
+      "refused": true
+    },
+    {
+      "name": "terminal rejects before event access {\"schema\":\"ns-terminal/1\",\"runId\":\"19ccc6d3-0d94-465b-b5c9-de3e19987f23\",\"source\":\"coordinator-exec\",\"driverExit\":0,\"faultFinish\":{\"ok\":false,\"error\":\"stream-failure\"}}",
+      "refused": true
+    },
+    {
+      "name": "byte-identical original reproduction refuses",
+      "exit": 1,
+      "sourceSha256": "1a96c46fa79e33016885519d58a8e1f37d76daf94a0ae81e13d2c6d7d88a2917",
+      "reason": "observer final record missing"
+    },
+    {
+      "name": "builder inverted control accepts only refusals",
+      "exit": 0
+    },
+    {
+      "name": "inverted control fails with exact old driver bytes",
+      "failedAsExpected": true,
+      "oldDriverSha256": "b7fda0b06a410976d12261614a989c2f4a7549bd42be3afdc9f1a44c1eec3abe",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ null\n- 'OFFLINE-PLANTED-HOOK-FAILURE'\n",
+      "implementationChanged": false
+    }
+  ]
+}

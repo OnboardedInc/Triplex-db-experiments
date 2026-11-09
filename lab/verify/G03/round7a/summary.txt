@@ -1,0 +1,34 @@
+{
+  "verdict": "FIX-FIRST",
+  "qualification": false,
+  "checks": [
+    {
+      "name": "full-attempt1",
+      "exit": 0,
+      "pass": 268
+    },
+    {
+      "name": "ns-attempt1",
+      "exit": 0,
+      "pass": 160
+    },
+    {
+      "name": "evaluator-attempt1",
+      "exit": 0,
+      "pass": 108
+    }
+  ],
+  "holdersGone": 4,
+  "traces": [
+    {
+      "run": "full-attempt1",
+      "files": 27,
+      "bytes": 1897764
+    },
+    {
+      "run": "evaluator-attempt1",
+      "files": 27,
+      "bytes": 1897764
+    }
+  ]
+}

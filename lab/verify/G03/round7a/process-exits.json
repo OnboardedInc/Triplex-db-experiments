@@ -1,0 +1,13 @@
+{
+  "full-attempt1": 0,
+  "ns-attempt1": 0,
+  "evaluator-attempt1": 0,
+  "contract-verify": 0,
+  "pin-review": 0,
+  "pin-review-attempt1": 1,
+  "original-reproduction": 1,
+  "inverted-reproduction": 0,
+  "independent-review": 0,
+  "coordinator-review": 0,
+  "note": "Actual exec session/subprocess outcomes observed by the reviewer; original reproduction exit 1 is the expected refusal, pin attempt 1 is the retained reviewer-tool API error."
+}

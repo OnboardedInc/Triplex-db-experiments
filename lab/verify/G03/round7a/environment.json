@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-09T13:16:07.782Z",
+  "head": "3a8cdeb7ef5f344cdcfb220d9012400f81307672",
+  "diskFreeBytes": 10292219904,
+  "dockerHost": "unix:///Users/sam/.colima/triplex2/docker.sock",
+  "configuredDockerContext": "default",
+  "reviewedCode": "ef1a9216",
+  "reviewedReport": "9c4b68aa"
+}

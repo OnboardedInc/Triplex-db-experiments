@@ -1,0 +1,76 @@
+{
+  "review": "CX-VG03-56-R7A",
+  "sourceCommit": "ef1a9216",
+  "sourceSha256": "93f2267c8e9682bfc9f922be332b288f1be5be94a17bdbf8400c72f17f897ef4",
+  "scope": "exact coordinator source; trusted Box/transport model; no Docker or candidate execution",
+  "results": [
+    {
+      "mode": "nonzero",
+      "error": "DRIVER-EXIT-NONZERO status=7",
+      "capturedFiles": 6,
+      "captureDigestsMatch": true,
+      "terminal": {
+        "schema": "ns-terminal/1",
+        "runId": "2c5bc0c2c473a9317d667b173690e7c3",
+        "source": "coordinator-exec",
+        "driverExit": 7,
+        "faultFinish": {
+          "ok": true
+        }
+      },
+      "invalidHrNotParsed": true,
+      "lastStage": 12,
+      "qualification": false
+    },
+    {
+      "mode": "null-exit",
+      "error": "DRIVER-EXIT-NONZERO status=null",
+      "capturedFiles": 6,
+      "captureDigestsMatch": true,
+      "terminal": {
+        "schema": "ns-terminal/1",
+        "runId": "04943c9de90fcbe66ead0e781c543336",
+        "source": "coordinator-exec",
+        "driverExit": null,
+        "faultFinish": {
+          "ok": true
+        }
+      },
+      "invalidHrNotParsed": true,
+      "lastStage": 12,
+      "qualification": false
+    },
+    {
+      "mode": "finish-failure",
+      "error": "DRIVER-HOOK-FAILURE FAULT-NOT-EXERCISED",
+      "capturedFiles": 6,
+      "captureDigestsMatch": true,
+      "terminal": {
+        "schema": "ns-terminal/1",
+        "runId": "8d03dd70f506d692e80673bb6d74ea78",
+        "source": "coordinator-exec",
+        "driverExit": 0,
+        "faultFinish": {
+          "ok": false,
+          "error": "FAULT-NOT-EXERCISED"
+        }
+      },
+      "invalidHrNotParsed": true,
+      "lastStage": 12,
+      "qualification": false
+    },
+    {
+      "mode": "stream-failure",
+      "error": "FAULT-POINT-DR-CONTRADICTION",
+      "rawExportExists": false,
+      "lastStage": 9,
+      "finishReached": false,
+      "realBoxExecControl": true,
+      "realFaultInjector": true,
+      "validDriverHook": "before-effect",
+      "pausedCheckpoint": 1,
+      "expectedCheckpoint": 0,
+      "qualification": false
+    }
+  ]
+}

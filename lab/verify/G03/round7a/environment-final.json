@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-09T13:59:23.337Z",
+  "diskFreeBytes": 11699458048,
+  "dockerHost": "unix:///Users/sam/.colima/triplex2/docker.sock",
+  "configuredDockerContext": "default",
+  "noResidentLifecycleChanges": true
+}

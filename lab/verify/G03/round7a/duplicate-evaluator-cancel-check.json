@@ -1,0 +1,10 @@
+{
+  "at": "2026-11-09T13:41:18.829Z",
+  "cancelled": false,
+  "reason": "Cancellation precondition refused: duplicate became admitted before the cancellation check; in-flight run left to finish.",
+  "owner": {
+    "pid": 97115,
+    "label": "CX-VG03-56-R7A-evaluator",
+    "at": "2026-11-09T13:24:03.601Z"
+  }
+}

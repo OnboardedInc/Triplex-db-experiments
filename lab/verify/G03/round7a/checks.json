@@ -1,0 +1,163 @@
+{
+  "review": "CX-VG03-56-R7A",
+  "at": "2026-11-09T13:57:58.510Z",
+  "verdict": "FIX-FIRST",
+  "qualification": false,
+  "reviewedCode": "ef1a9216",
+  "reviewedReport": "9c4b68aa",
+  "testedCommit": "3a8cdeb7ef5f344cdcfb220d9012400f81307672",
+  "currentHead": "3a8cdeb7ef5f344cdcfb220d9012400f81307672",
+  "reviewedSourceUnchanged": true,
+  "checks": [
+    {
+      "name": "full-attempt1",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VG03-56-R7A-full",
+        "--",
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bin/test/box.test.mjs",
+        "lab/bin/test/box-policy.test.mjs",
+        "lab/experiments/EXP-G03/ns/offline.test.mjs",
+        "lab/experiments/EXP-G03/ns/fault.test.mjs",
+        "lab/experiments/EXP-G03/ns/round7a.test.mjs"
+      ],
+      "exit": 0,
+      "tests": 268,
+      "pass": 268,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "tapSha256": "b710b103ba563e9e11dca274c83eb0597b1294a919e32dd308d26fc4407a1a2d",
+      "durationMs": 2146677.527208
+    },
+    {
+      "name": "ns-attempt1",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VG03-56-R7A-ns",
+        "--",
+        "node",
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bin/test/box.test.mjs",
+        "lab/bin/test/box-policy.test.mjs",
+        "lab/experiments/EXP-G03/ns/offline.test.mjs",
+        "lab/experiments/EXP-G03/ns/fault.test.mjs",
+        "lab/experiments/EXP-G03/ns/round7a.test.mjs"
+      ],
+      "exit": 0,
+      "tests": 160,
+      "pass": 160,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "tapSha256": "cbd21a255bfa266de7306008d4e60efb2a8f9b2fcbda360cb336fb4c7f887882",
+      "durationMs": 1081.278333
+    },
+    {
+      "name": "evaluator-attempt1",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VG03-56-R7A-evaluator",
+        "--",
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs"
+      ],
+      "exit": 0,
+      "tests": 108,
+      "pass": 108,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "tapSha256": "6ba640c6e73dd3e58b4d66ecc535a18d8f2a921878cb9964499085ff855ad244",
+      "durationMs": 1922186.190458
+    }
+  ],
+  "contract": {
+    "exit": 0,
+    "byteIdentical": true
+  },
+  "pins": {
+    "exit": 0,
+    "changedDirectPins": [],
+    "changedEvaluatorClosure": [],
+    "driverBundle": {
+      "oldSha256": "5eb712168844efa6d09d4f6606828138b965c1be8f67ce79345d7e3a9e92edd2",
+      "newSha256": "21d3fd1e486f14a2e4bc470e0654973d3b36ae7ec4d3263eab274bf7db00a235",
+      "bundler": {
+        "name": "esbuild",
+        "version": "0.23.1"
+      },
+      "oldSourceSha256": "b7fda0b06a410976d12261614a989c2f4a7549bd42be3afdc9f1a44c1eec3abe",
+      "newSourceSha256": "687061d04c64e2a12becd8f28cb7787840842724739352c71c39847df102c8bb",
+      "allOtherInputs": "current unchanged reviewed dependency files; old entry substituted by an esbuild onLoad plugin only",
+      "reportExplicitlyRequiresRepin": true
+    }
+  },
+  "traces": [
+    {
+      "run": "full-attempt1",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-56/round7a/full-attempt1",
+      "files": 27,
+      "bytes": 1897764,
+      "manifestSha256": "e635aff9f65f840857e8be15081b336411058b1475ef69b9eede24c1cac076e6"
+    },
+    {
+      "run": "evaluator-attempt1",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-56/round7a/evaluator-attempt1",
+      "files": 27,
+      "bytes": 1897764,
+      "manifestSha256": "cb1ec5a48fef0516e8e08fa16b08d010da2dd214950ed0af43ffd8f631d4dbe2"
+    }
+  ],
+  "inventories": [
+    {
+      "holder": "CX-G03-r3-claim-040cde8d",
+      "run": "r3-claim-040cde8d",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-claim-2741abaa",
+      "run": "r3-claim-2741abaa",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-0e1af2a8",
+      "run": "r3-integrity-0e1af2a8",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-e2c88569",
+      "run": "r3-integrity-e2c88569",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    }
+  ],
+  "remainingFindings": [
+    "F3 control-stream rejection skips terminal/raw export",
+    "F4 null initial domain bypasses constant-domain check"
+  ]
+}

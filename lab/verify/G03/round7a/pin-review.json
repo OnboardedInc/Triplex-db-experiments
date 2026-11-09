@@ -1,0 +1,47 @@
+{
+  "review": "CX-VG03-56-R7A",
+  "reviewedCode": "ef1a9216",
+  "head": "3a8cdeb7ef5f344cdcfb220d9012400f81307672",
+  "acceptanceUnchanged": true,
+  "changedDirectPins": [],
+  "changedEvaluatorClosure": [],
+  "sourceHashPairs": [
+    {
+      "path": "lab/bench/ns-driver/driver.mjs",
+      "oldSha256": "b7fda0b06a410976d12261614a989c2f4a7549bd42be3afdc9f1a44c1eec3abe",
+      "newSha256": "687061d04c64e2a12becd8f28cb7787840842724739352c71c39847df102c8bb",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bin/ns-run.mjs",
+      "oldSha256": "8ba7f0dd3868ff4f70b5e8957ee07e698bcd0b6ec1dcd6e96ba4813838d862d5",
+      "newSha256": "93f2267c8e9682bfc9f922be332b288f1be5be94a17bdbf8400c72f17f897ef4",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/experiments/EXP-G03/ns/observer.py",
+      "oldSha256": "a5fb217a8ebecdde5ad52e8550e3dbe19d9ce8d491dc3a7aad073cfd1f18f735",
+      "newSha256": "d89731b984a0b4dc978d9721fcec58b3f68764e3a4ca84290940b991bdcb8aaa",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/experiments/EXP-G03/ns/smoke.mjs",
+      "oldSha256": "683d7e3a87cf62eabf1029ceaf7d120dd1fb314b20bcab9b0e9b65a41499bb9b",
+      "newSha256": "7ac90c5d7fe4cb6056308bba41ea9344f307363afdd72d0b17a181584816bd7b",
+      "contractInputPin": null
+    }
+  ],
+  "driverBundle": {
+    "oldSha256": "5eb712168844efa6d09d4f6606828138b965c1be8f67ce79345d7e3a9e92edd2",
+    "newSha256": "21d3fd1e486f14a2e4bc470e0654973d3b36ae7ec4d3263eab274bf7db00a235",
+    "bundler": {
+      "name": "esbuild",
+      "version": "0.23.1"
+    },
+    "oldSourceSha256": "b7fda0b06a410976d12261614a989c2f4a7549bd42be3afdc9f1a44c1eec3abe",
+    "newSourceSha256": "687061d04c64e2a12becd8f28cb7787840842724739352c71c39847df102c8bb",
+    "allOtherInputs": "current unchanged reviewed dependency files; old entry substituted by an esbuild onLoad plugin only",
+    "reportExplicitlyRequiresRepin": true
+  },
+  "qualification": false
+}
