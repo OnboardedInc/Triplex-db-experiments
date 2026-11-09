@@ -9,8 +9,8 @@
 (defn prepare! [file]
   (ensure! (not (.exists (java.io.File. file))) "Refuse existing live evidence")
   (let [scope (str "[\"triplex-scope-v1\",\"test\",\"df01\",\"" (UUID/randomUUID) "\",0]")
-        created (main/create-scope! main/base-uri scope) db (:db created)
-        conn (main/connection (str main/base-uri db))
+        created (main/create-scope! main/uri-template scope) db (:db created)
+        conn (main/connection (main/db-uri db))
         report @(d/transact conn [{:db/id "datomic.tx" :triplex.tx/position 1 :triplex.tx/id "df01-tx"
                                   :triplex.tx/operation-id "df01-op" :triplex.tx/recorded-at 7000.0}
                                  {:db/id "subject" :triplex.entity/id "subject"}
@@ -40,13 +40,13 @@
     (println (pr-str {:stage "prepared" :db db :evidence file}))))
 (defn resume! [file]
   (let [{:keys [scope db fromT page gatewaySource]} (edn/read-string (slurp file))
-        conn (main/connection (str main/base-uri db))
+        conn (main/connection (main/db-uri db))
         _ (ensure! (= gatewaySource (System/getenv "GATEWAY_SOURCE_SHA256")) "Resume source differs from prepare")
         _ @(d/sync conn)
         resumed (feed/log-page conn {"fromT" fromT})]
     (ensure! (= page resumed) "Restart replay bytes changed")
     (spit (str file ".resumed.edn") (pr-str resumed))
-    (let [deleted (main/delete-scope! main/base-uri scope)]
+    (let [deleted (main/delete-scope! main/uri-template scope)]
       (ensure! (:deleted deleted) "Scratch database cleanup failed")
       (println (pr-str {:stage "resumed" :db db :deleted (:deleted deleted)})))))
 (defn -main [stage file]
