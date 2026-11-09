@@ -1,0 +1,41 @@
+{
+  "head": "bf1894912e3fb4495a5bce7faba8f1eebf8906e8",
+  "at": "2026-11-09T01:32:40.190Z",
+  "disk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 1653997,
+    "bavail": 1653997,
+    "files": 78098097,
+    "ffree": 66159880
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/verify/K01/run-g0-review.mjs": "8d4ac1340b38981b2d4d502bd7e845e3ca92a4c600de67df52950f868c7ba667",
+    "lab/bench/clone-check.ts": "dcab0fecc0d466386e37a196141c7b79e3d312146c67242ba3092964c1995df5",
+    "lab/bin/test/lab.test.mjs": "ec15951a758117fd9fa79ee9a0435ff70088d96cb5e1b69576419cdb9bc88c26",
+    "lab/bench/test/bench.test.ts": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424",
+    "lab/bench/lib/g0.ts": "f26ada16b5f03316eb005eb94adc29a07ad0257f1426b6ec5f56fd433ff7deb4",
+    "lab/bench/lib/g0-xtdb.ts": "2bb7703d3c56450105b9e3ba7c39ebb8e210488bdde858c87de71b29bd52549c",
+    "lab/bench/lib/bulk.ts": "30fb15038aa0c945e631db948308a230034d85f90f188556c5a5f59b1e4cb920",
+    "lab/bench/driver.ts": "2c5ee868e2c1f77e902aed8e8ca471991014f6deea3a1b2333f8662973c60490",
+    "lab/bench/xtdb-seed.ts": "5fd8bd45abd10ca45f932479acf95d6114b593f63498a5e22dd4cc7cc467eaf0",
+    "lab/bin/engine.mjs": "1447cbd2db4a51af353d96e234d17e39c4c0510f6ca7995f569e38780fd697cf",
+    "lab/bin/lib.mjs": "08da34d2f927a64099f2c42c2dbb3ab83e2862b879465e2f4e692c4327efd406",
+    "lab/bench/test/g0.test.ts": "dd4144644179c32a14cf67fc0be9d32fe17fb021ddd85f9cd1969a83d26f6fe5",
+    "lab/verify/K01/g0-review.test.mjs": "6c05bc111f3b3d039eb5c5257b72085fcb935d9d83ce0378f53075469607adb7"
+  },
+  "runs": [
+    {
+      "label": "g0-review",
+      "args": [
+        "--test",
+        "lab/verify/K01/g0-review.test.mjs"
+      ],
+      "status": 1,
+      "signal": null,
+      "sha256": "d4f05ce438ee2b21a06d5b7530c61c565cb806f2e29a43afb129b400f7b0482d"
+    }
+  ]
+}

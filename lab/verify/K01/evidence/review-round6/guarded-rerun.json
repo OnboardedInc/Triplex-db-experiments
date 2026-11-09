@@ -1,0 +1,6 @@
+{
+  "outcome": "REFUSED_BEFORE_TESTS",
+  "reason": "The runner correctly refused because g0-review-run.json still existed after copying the first attempt into initial-23. No child tests ran. All prior raw artifacts were byte-compared with the archive before clearing only the active receipt path for the next attempt.",
+  "observedError": "retain the prior attempt before rerunning",
+  "exit": 1
+}

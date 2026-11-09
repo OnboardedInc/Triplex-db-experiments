@@ -1,0 +1,29 @@
+[
+  {
+    "label": "full-staged-whitespace",
+    "args": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "label": "authored-whitespace",
+    "args": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      "lab/verify/K01",
+      ":(exclude)lab/verify/K01/evidence/**"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

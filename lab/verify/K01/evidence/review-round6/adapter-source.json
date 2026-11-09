@@ -1,0 +1,374 @@
+[
+  {
+    "file": "packages/xtdb/src/XtdbStorageAdapter.ts",
+    "sha256": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+    "excerpt": [
+      {
+        "line": 215,
+        "text": "    for (let i = 0; i < rows.length; i += 200) {"
+      },
+      {
+        "line": 216,
+        "text": "      statements.push("
+      },
+      {
+        "line": 217,
+        "text": "        insertStatement("
+      },
+      {
+        "line": 218,
+        "text": "          \"tx_assertions\","
+      },
+      {
+        "line": 219,
+        "text": "          [\"_id\", \"scope_key\", ...assertionColumns, \"value_identity\"],"
+      },
+      {
+        "line": 220,
+        "text": "          rows"
+      },
+      {
+        "line": 221,
+        "text": "            .slice(i, i + 200)"
+      },
+      {
+        "line": 222,
+        "text": "            .map((row) => ["
+      },
+      {
+        "line": 223,
+        "text": "              JSON.stringify([scopeKey, row.id]),"
+      },
+      {
+        "line": 224,
+        "text": "              scopeKey,"
+      },
+      {
+        "line": 225,
+        "text": "              ...assertionColumns.map((column) => row[column]),"
+      },
+      {
+        "line": 226,
+        "text": "              canonicalJson(assertionValue(row)),"
+      },
+      {
+        "line": 227,
+        "text": "            ]),"
+      },
+      {
+        "line": 228,
+        "text": "        ),"
+      },
+      {
+        "line": 229,
+        "text": "      );"
+      },
+      {
+        "line": 230,
+        "text": "    }"
+      }
+    ],
+    "reviewedAtHead": "bf1894912e3fb4495a5bce7faba8f1eebf8906e8",
+    "builderBlobSha256": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560"
+  },
+  {
+    "file": "packages/xtdb/src/ConstraintValidation.ts",
+    "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+    "excerpt": [
+      {
+        "line": 7,
+        "text": "const columns = ["
+      },
+      {
+        "line": 8,
+        "text": "  \"id\","
+      },
+      {
+        "line": 9,
+        "text": "  \"entity_id\","
+      },
+      {
+        "line": 10,
+        "text": "  \"attribute\","
+      },
+      {
+        "line": 11,
+        "text": "  \"entity_type\","
+      },
+      {
+        "line": 12,
+        "text": "  \"valid_from\","
+      },
+      {
+        "line": 13,
+        "text": "  \"valid_to\","
+      },
+      {
+        "line": 14,
+        "text": "  \"value_type\","
+      },
+      {
+        "line": 15,
+        "text": "  \"value_string\","
+      },
+      {
+        "line": 16,
+        "text": "  \"value_number\","
+      },
+      {
+        "line": 17,
+        "text": "  \"value_boolean\","
+      },
+      {
+        "line": 18,
+        "text": "  \"value_datetime\","
+      },
+      {
+        "line": 19,
+        "text": "  \"value_json\","
+      },
+      {
+        "line": 20,
+        "text": "  \"value_identity\","
+      },
+      {
+        "line": 21,
+        "text": "];"
+      }
+    ],
+    "reviewedAtHead": "bf1894912e3fb4495a5bce7faba8f1eebf8906e8",
+    "builderBlobSha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29"
+  },
+  {
+    "file": "packages/xtdb/src/ConstraintValidation.ts",
+    "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+    "excerpt": [
+      {
+        "line": 152,
+        "text": "  } else {"
+      },
+      {
+        "line": 153,
+        "text": "    definitions.push("
+      },
+      {
+        "line": 154,
+        "text": "      `${claims} AS (SELECT v.* FROM ${visible} v JOIN ${subjects} s ON s.boundary = v.boundary AND s.entity_id = v.entity_id WHERE v.attribute = ${literal(rule.attribute)})`,"
+      },
+      {
+        "line": 155,
+        "text": "    );"
+      },
+      {
+        "line": 156,
+        "text": "    if (rule._tag === \"Unique\") {"
+      },
+      {
+        "line": 157,
+        "text": "      definitions.push("
+      },
+      {
+        "line": 158,
+        "text": "        `distinct_${claims} AS (SELECT DISTINCT boundary, entity_id, value_identity FROM ${claims})`,"
+      },
+      {
+        "line": 159,
+        "text": "      );"
+      },
+      {
+        "line": 160,
+        "text": "      definitions.push("
+      },
+      {
+        "line": 161,
+        "text": "        `${counts} AS (SELECT boundary, value_identity, COUNT(*) AS actual, ARRAY_AGG(entity_id ORDER BY entity_id) AS claimants FROM distinct_${claims} GROUP BY boundary, value_identity)`,"
+      },
+      {
+        "line": 162,
+        "text": "      );"
+      },
+      {
+        "line": 163,
+        "text": "      definitions.push("
+      },
+      {
+        "line": 164,
+        "text": "        `${violations} AS (SELECT c.boundary, c.entity_id, n.actual, c.value_identity, CAST(NULL AS TEXT) AS value_type, CAST(NULL AS TEXT) AS value_string, n.claimants FROM distinct_${claims} c JOIN ${counts} n ON n.boundary = c.boundary AND n.value_identity = c.value_identity WHERE n.actual > 1)`,"
+      },
+      {
+        "line": 165,
+        "text": "      );"
+      }
+    ],
+    "reviewedAtHead": "bf1894912e3fb4495a5bce7faba8f1eebf8906e8",
+    "builderBlobSha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29"
+  },
+  {
+    "file": "packages/xtdb/src/ConstraintValidation.ts",
+    "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+    "excerpt": [
+      {
+        "line": 192,
+        "text": "  // Existing pre-key scopes remain correct through the portable oracle. Do not"
+      },
+      {
+        "line": 193,
+        "text": "  // silently equate differently spelled JSON or rewrite their user payloads."
+      },
+      {
+        "line": 194,
+        "text": "  const deadline = {"
+      },
+      {
+        "line": 195,
+        "text": "    timeoutMs: options.timeoutMs ?? 30_000,"
+      },
+      {
+        "line": 196,
+        "text": "    ...(options.signal === undefined ? {} : { signal: options.signal }),"
+      },
+      {
+        "line": 197,
+        "text": "  };"
+      },
+      {
+        "line": 198,
+        "text": "  const oldRows = await client.query("
+      },
+      {
+        "line": 199,
+        "text": "    \"SELECT id FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND recorded_position <= ? AND (retracted_position IS NULL OR retracted_position > ?) AND value_identity IS NULL LIMIT 1\","
+      },
+      {
+        "line": 200,
+        "text": "    [scopeKey, state.sourceK, state.sourceK],"
+      },
+      {
+        "line": 201,
+        "text": "    undefined,"
+      },
+      {
+        "line": 202,
+        "text": "    deadline,"
+      },
+      {
+        "line": 203,
+        "text": "  );"
+      },
+      {
+        "line": 204,
+        "text": "  if (oldRows.length) return undefined;"
+      }
+    ],
+    "reviewedAtHead": "bf1894912e3fb4495a5bce7faba8f1eebf8906e8",
+    "builderBlobSha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29"
+  },
+  {
+    "file": "packages/xtdb/src/XtdbClient.ts",
+    "sha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+    "excerpt": [
+      {
+        "line": 90,
+        "text": "  work: (signal: AbortSignal) => Promise<A>,"
+      },
+      {
+        "line": 91,
+        "text": "  options?: XtdbQueryOptions,"
+      },
+      {
+        "line": 92,
+        "text": "): Promise<A> => {"
+      },
+      {
+        "line": 93,
+        "text": "  const controller = new AbortController();"
+      },
+      {
+        "line": 94,
+        "text": "  const signal ="
+      },
+      {
+        "line": 95,
+        "text": "    options?.signal === undefined"
+      },
+      {
+        "line": 96,
+        "text": "      ? controller.signal"
+      },
+      {
+        "line": 97,
+        "text": "      : AbortSignal.any([controller.signal, options.signal]);"
+      },
+      {
+        "line": 98,
+        "text": "  signal.throwIfAborted();"
+      },
+      {
+        "line": 99,
+        "text": "  let timer: ReturnType<typeof setTimeout> | undefined;"
+      },
+      {
+        "line": 100,
+        "text": "  let handler: (() => void) | undefined;"
+      },
+      {
+        "line": 101,
+        "text": "  try {"
+      },
+      {
+        "line": 102,
+        "text": "    const interrupted = new Promise<never>((_resolve, reject) => {"
+      },
+      {
+        "line": 103,
+        "text": "      handler = () => reject(signal.reason ?? new Error(\"XTDB operation canceled\"));"
+      },
+      {
+        "line": 104,
+        "text": "      signal.addEventListener(\"abort\", handler, { once: true });"
+      },
+      {
+        "line": 105,
+        "text": "    });"
+      },
+      {
+        "line": 106,
+        "text": "    if (options?.timeoutMs !== undefined)"
+      },
+      {
+        "line": 107,
+        "text": "      timer = setTimeout("
+      },
+      {
+        "line": 108,
+        "text": "        () => controller.abort(new Error(\"XTDB operation deadline exceeded\")),"
+      },
+      {
+        "line": 109,
+        "text": "        options.timeoutMs,"
+      },
+      {
+        "line": 110,
+        "text": "      );"
+      },
+      {
+        "line": 111,
+        "text": "    return await Promise.race([work(signal), interrupted]);"
+      },
+      {
+        "line": 112,
+        "text": "  } finally {"
+      },
+      {
+        "line": 113,
+        "text": "    if (timer !== undefined) clearTimeout(timer);"
+      },
+      {
+        "line": 114,
+        "text": "    if (handler !== undefined) signal.removeEventListener(\"abort\", handler);"
+      }
+    ],
+    "reviewedAtHead": "bf1894912e3fb4495a5bce7faba8f1eebf8906e8",
+    "builderBlobSha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c"
+  }
+]

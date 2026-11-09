@@ -1,0 +1,2748 @@
+[
+  {
+    "kind": "changed-clone",
+    "variant": "row",
+    "pin": {
+      "scope": "fixture-seed",
+      "position": 2,
+      "world": "N01",
+      "counts": {
+        "tx_assertions": 2,
+        "tx_claims": 2,
+        "tx_attempts": 2,
+        "tx_meta": 1
+      },
+      "format": "tx2-g0/1",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+    },
+    "before": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "after": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "different",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "error": "G0 content mismatch",
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "changed-clone",
+    "variant": "retraction",
+    "pin": {
+      "scope": "fixture-seed",
+      "position": 2,
+      "world": "N01",
+      "counts": {
+        "tx_assertions": 2,
+        "tx_claims": 2,
+        "tx_attempts": 2,
+        "tx_meta": 1
+      },
+      "format": "tx2-g0/1",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+    },
+    "before": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "after": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": 2,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "error": "G0 content mismatch",
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "changed-clone",
+    "variant": "valid-time",
+    "pin": {
+      "scope": "fixture-seed",
+      "position": 2,
+      "world": "N01",
+      "counts": {
+        "tx_assertions": 2,
+        "tx_claims": 2,
+        "tx_attempts": 2,
+        "tx_meta": 1
+      },
+      "format": "tx2-g0/1",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+    },
+    "before": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "after": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": 150,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "error": "G0 content mismatch",
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "changed-clone",
+    "variant": "count",
+    "pin": {
+      "scope": "fixture-seed",
+      "position": 2,
+      "world": "N01",
+      "counts": {
+        "tx_assertions": 2,
+        "tx_claims": 2,
+        "tx_attempts": 2,
+        "tx_meta": 1
+      },
+      "format": "tx2-g0/1",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+    },
+    "before": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "after": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "error": "G0 count mismatch: tx_assertions",
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "changed-clone",
+    "variant": "claim",
+    "pin": {
+      "scope": "fixture-seed",
+      "position": 2,
+      "world": "N01",
+      "counts": {
+        "tx_assertions": 2,
+        "tx_claims": 2,
+        "tx_attempts": 2,
+        "tx_meta": 1
+      },
+      "format": "tx2-g0/1",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+    },
+    "before": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "after": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "other-command",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "error": "G0 content mismatch",
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "changed-clone",
+    "variant": "attempt-position",
+    "pin": {
+      "scope": "fixture-seed",
+      "position": 2,
+      "world": "N01",
+      "counts": {
+        "tx_assertions": 2,
+        "tx_claims": 2,
+        "tx_attempts": 2,
+        "tx_meta": 1
+      },
+      "format": "tx2-g0/1",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+    },
+    "before": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "after": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 2
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "error": "G0 content mismatch",
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "changed-clone",
+    "variant": "duplicate-substitution",
+    "pin": {
+      "scope": "fixture-seed",
+      "position": 2,
+      "world": "N01",
+      "counts": {
+        "tx_assertions": 2,
+        "tx_claims": 2,
+        "tx_attempts": 2,
+        "tx_meta": 1
+      },
+      "format": "tx2-g0/1",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+    },
+    "before": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "after": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "error": "G0 content mismatch",
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "changed-clone",
+    "variant": "missing-column",
+    "pin": {
+      "scope": "fixture-seed",
+      "position": 2,
+      "world": "N01",
+      "counts": {
+        "tx_assertions": 2,
+        "tx_claims": 2,
+        "tx_attempts": 2,
+        "tx_meta": 1
+      },
+      "format": "tx2-g0/1",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+    },
+    "before": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "after": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "error": "G0 missing field: value_type",
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "changed-clone",
+    "variant": "value-identity",
+    "pin": {
+      "scope": "fixture-seed",
+      "position": 2,
+      "world": "N01",
+      "counts": {
+        "tx_assertions": 2,
+        "tx_claims": 2,
+        "tx_attempts": 2,
+        "tx_meta": 1
+      },
+      "format": "tx2-g0/1",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+    },
+    "before": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "after": {
+      "tx_assertions": [
+        {
+          "entity_id": "subject-0",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 1,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"different\"}",
+          "id": "random-0",
+          "recorded_at": 1000
+        },
+        {
+          "entity_id": "subject-1",
+          "attribute": "memberKey",
+          "value_type": "string",
+          "value_string": "shared",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "valid_from": 100,
+          "valid_to": null,
+          "recorded_position": 2,
+          "retracted_position": null,
+          "entity_type": "member",
+          "schema_version": 1,
+          "value_identity": "{\"type\":\"string\",\"value\":\"shared\"}",
+          "id": "random-1",
+          "recorded_at": 1001
+        }
+      ],
+      "tx_claims": [
+        {
+          "command_id": "seed-1",
+          "position": 1
+        },
+        {
+          "command_id": "seed-2",
+          "position": 2
+        }
+      ],
+      "tx_attempts": [
+        {
+          "position": 1
+        },
+        {
+          "position": 2
+        }
+      ],
+      "tx_meta": [
+        {
+          "scope_key": "fixture-seed",
+          "position": 2
+        }
+      ]
+    },
+    "result": {
+      "gate": "G0",
+      "status": "PASS",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8",
+      "endpoint": "measured-fixture-endpoint",
+      "checkedAt": "2026-11-09T01:32:40.292Z"
+    },
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "positive",
+    "result": {
+      "gate": "G0",
+      "status": "PASS",
+      "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8",
+      "endpoint": "measured-fixture-endpoint",
+      "checkedAt": "2026-11-09T01:32:40.294Z"
+    },
+    "calls": [
+      [
+        "scopes",
+        false
+      ],
+      [
+        "count",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_assertions",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_claims",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_attempts",
+        "fixture-seed",
+        false
+      ],
+      [
+        "count",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scan",
+        "tx_meta",
+        "fixture-seed",
+        false
+      ],
+      [
+        "scopes",
+        false
+      ]
+    ]
+  },
+  {
+    "kind": "deadline",
+    "reader": "scopes",
+    "elapsedMs": 27,
+    "aborted": true
+  },
+  {
+    "kind": "deadline",
+    "reader": "count",
+    "elapsedMs": 26,
+    "aborted": true
+  },
+  {
+    "kind": "deadline",
+    "reader": "scan",
+    "elapsedMs": 26,
+    "aborted": true
+  },
+  {
+    "kind": "publication",
+    "variant": "matching",
+    "published": true,
+    "events": [
+      [
+        "docker",
+        "volume",
+        "ls",
+        "--filter",
+        "name=^tx2-golden-xtdb-12345678$",
+        "--format",
+        "{{.Name}}"
+      ],
+      [
+        "recipe"
+      ],
+      [
+        "stop",
+        0
+      ],
+      [
+        "docker",
+        "volume",
+        "create",
+        "--label",
+        "tx2.managed-by=lab/bin/engine.mjs",
+        "--label",
+        "tx2.golden=1",
+        "tx2-golden-xtdb-12345678"
+      ],
+      [
+        "start",
+        1
+      ],
+      [
+        "layout",
+        1,
+        null
+      ],
+      [
+        "G0",
+        1,
+        "measured-fixture-endpoint"
+      ],
+      [
+        "stop",
+        1
+      ],
+      [
+        "start",
+        2
+      ],
+      [
+        "health",
+        2
+      ],
+      [
+        "layout",
+        2,
+        {
+          "L": "layout-1",
+          "T": 9
+        }
+      ],
+      [
+        "G0",
+        2,
+        "measured-fixture-endpoint"
+      ]
+    ],
+    "record": {
+      "format": "tx2-xtdb-golden/2",
+      "key": "key",
+      "keyInputs": {},
+      "volume": "tx2-golden-xtdb-12345678",
+      "treeSha256": "matching-tree",
+      "g0": {
+        "scope": "fixture-seed",
+        "position": 2,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 2,
+          "tx_claims": 2,
+          "tx_attempts": 2,
+          "tx_meta": 1
+        },
+        "format": "tx2-g0/1",
+        "D": "79e9ad1940f6ee0d378ac21886b22ac604bf59752803e08ad1d00f53c0a0c5e8"
+      },
+      "manifest": {
+        "path": "manifest.json",
+        "sha256": "manifest-hash"
+      },
+      "diagnostics": {
+        "diagnostics": {
+          "stop": {
+            "status": 1,
+            "stderr": "missing Log4j lines"
+          }
+        }
+      },
+      "L": "layout-1",
+      "T": 9,
+      "qualifiedAt": "2026-11-09T01:32:40.376Z"
+    }
+  },
+  {
+    "kind": "publication",
+    "variant": "first-D-differs",
+    "published": false,
+    "error": "G0 content mismatch",
+    "events": [
+      [
+        "docker",
+        "volume",
+        "ls",
+        "--filter",
+        "name=^tx2-golden-xtdb-12345678$",
+        "--format",
+        "{{.Name}}"
+      ],
+      [
+        "recipe"
+      ],
+      [
+        "stop",
+        0
+      ],
+      [
+        "docker",
+        "volume",
+        "create",
+        "--label",
+        "tx2.managed-by=lab/bin/engine.mjs",
+        "--label",
+        "tx2.golden=1",
+        "tx2-golden-xtdb-12345678"
+      ],
+      [
+        "start",
+        1
+      ],
+      [
+        "layout",
+        1,
+        null
+      ],
+      [
+        "G0",
+        1,
+        "measured-fixture-endpoint"
+      ]
+    ]
+  },
+  {
+    "kind": "publication",
+    "variant": "second-D-differs",
+    "published": false,
+    "error": "G0 content mismatch",
+    "events": [
+      [
+        "docker",
+        "volume",
+        "ls",
+        "--filter",
+        "name=^tx2-golden-xtdb-12345678$",
+        "--format",
+        "{{.Name}}"
+      ],
+      [
+        "recipe"
+      ],
+      [
+        "stop",
+        0
+      ],
+      [
+        "docker",
+        "volume",
+        "create",
+        "--label",
+        "tx2.managed-by=lab/bin/engine.mjs",
+        "--label",
+        "tx2.golden=1",
+        "tx2-golden-xtdb-12345678"
+      ],
+      [
+        "start",
+        1
+      ],
+      [
+        "layout",
+        1,
+        null
+      ],
+      [
+        "G0",
+        1,
+        "measured-fixture-endpoint"
+      ],
+      [
+        "stop",
+        1
+      ],
+      [
+        "start",
+        2
+      ],
+      [
+        "health",
+        2
+      ],
+      [
+        "layout",
+        2,
+        {
+          "L": "layout-1",
+          "T": 9
+        }
+      ],
+      [
+        "G0",
+        2,
+        "measured-fixture-endpoint"
+      ]
+    ]
+  },
+  {
+    "kind": "publication",
+    "variant": "second-L-differs",
+    "published": false,
+    "error": "layout/T refusal",
+    "events": [
+      [
+        "docker",
+        "volume",
+        "ls",
+        "--filter",
+        "name=^tx2-golden-xtdb-12345678$",
+        "--format",
+        "{{.Name}}"
+      ],
+      [
+        "recipe"
+      ],
+      [
+        "stop",
+        0
+      ],
+      [
+        "docker",
+        "volume",
+        "create",
+        "--label",
+        "tx2.managed-by=lab/bin/engine.mjs",
+        "--label",
+        "tx2.golden=1",
+        "tx2-golden-xtdb-12345678"
+      ],
+      [
+        "start",
+        1
+      ],
+      [
+        "layout",
+        1,
+        null
+      ],
+      [
+        "G0",
+        1,
+        "measured-fixture-endpoint"
+      ],
+      [
+        "stop",
+        1
+      ],
+      [
+        "start",
+        2
+      ],
+      [
+        "health",
+        2
+      ],
+      [
+        "layout",
+        2,
+        {
+          "L": "layout-1",
+          "T": 9
+        }
+      ]
+    ]
+  },
+  {
+    "kind": "publication",
+    "variant": "second-T-differs",
+    "published": false,
+    "error": "layout/T refusal",
+    "events": [
+      [
+        "docker",
+        "volume",
+        "ls",
+        "--filter",
+        "name=^tx2-golden-xtdb-12345678$",
+        "--format",
+        "{{.Name}}"
+      ],
+      [
+        "recipe"
+      ],
+      [
+        "stop",
+        0
+      ],
+      [
+        "docker",
+        "volume",
+        "create",
+        "--label",
+        "tx2.managed-by=lab/bin/engine.mjs",
+        "--label",
+        "tx2.golden=1",
+        "tx2-golden-xtdb-12345678"
+      ],
+      [
+        "start",
+        1
+      ],
+      [
+        "layout",
+        1,
+        null
+      ],
+      [
+        "G0",
+        1,
+        "measured-fixture-endpoint"
+      ],
+      [
+        "stop",
+        1
+      ],
+      [
+        "start",
+        2
+      ],
+      [
+        "health",
+        2
+      ],
+      [
+        "layout",
+        2,
+        {
+          "L": "layout-1",
+          "T": 9
+        }
+      ]
+    ]
+  },
+  {
+    "kind": "publication",
+    "variant": "recipe-fails",
+    "published": false,
+    "error": "freeze recipe failed or timed out",
+    "events": [
+      [
+        "docker",
+        "volume",
+        "ls",
+        "--filter",
+        "name=^tx2-golden-xtdb-12345678$",
+        "--format",
+        "{{.Name}}"
+      ],
+      [
+        "recipe"
+      ]
+    ]
+  }
+]

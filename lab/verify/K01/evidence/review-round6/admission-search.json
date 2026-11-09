@@ -1,0 +1,260 @@
+{
+  "note": "Manual disposition in report; search matches are not an exhaustive proof.",
+  "matches": [
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 166,
+      "text": "fail('ENGINE', `${info.container} not ready after ${timeoutMs / 1000}s (${last?.why})`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 217,
+      "text": "const ready = await waitReady(info, 60_000);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 218,
+      "text": "process.stderr.write(`[lab] ${info.container} already running (${ready.why})\\n`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 263,
+      "text": "const ready = await waitReady(info);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 266,
+      "text": "if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now() });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 268,
+      "text": "process.stderr.write(`[lab] ${info.container} ready (${ready.why}); cap ${fmtBytes(info.memBytes)}, ${info.cpus} CPU, config ${eff.sha256.slice(0, 12)}\\n`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 319,
+      "text": "* the shared dev resident); the writer is ready (R19 1.7: LOG and REPLICA_LOG must exist first); the"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 321,
+      "text": "* not overlap when either is pinned (R19 1.6); volumeGuard passes; the pool admits its memory cap."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 332,
+      "text": "const ready = writer?.State.Running ? await probe(info) : null;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 333,
+      "text": "if (!ready?.ok) fail('REFUSED', `writer ${info.container} is not ready (${ready?.why ?? 'not running'}); R19 1.7: start the follower after the writer has created its logs`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 347,
+      "text": "process.stderr.write(`[lab] ${fol.container} already running (${again.why})\\n`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 373,
+      "text": "if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now() });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 375,
+      "text": "process.stderr.write(`[lab] ${fol.container} ready (${up.why}); follows ${info.container} on ${eff.effective.volume}; cap ${fmtBytes(fol.memBytes)}, ${fol.cpus} CPU${fol.cpusetCpus ? ` on ${fol.cpusetCpus}` : ''}, config ${eff.sha256.slice(0, 12)}\\n`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 411,
+      "text": "const ready = c?.running ? await probe(info) : null;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 414,
+      "text": "state: c ? `${c.status}${c.health ? '/' + c.health : ''}` : '-', ready: ready ? (ready.ok ? 'READY' : 'NOT-READY ' + ready.why) : '-',"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 422,
+      "text": "const fready = f.running ? await probe(fol) : null;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 425,
+      "text": "ready: fready ? (fready.ok ? 'READY' : 'NOT-READY ' + fready.why) : '-', mem: stats[fol.container] ? fmtBytes(stats[fol.container].memBytes) : '-',"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 560,
+      "text": "const diagnostics = {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 569,
+      "text": "diagnostics.logs = docker([\"logs\", \"--tail\", \"100\", info.container], {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 574,
+      "text": "return diagnostics;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 669,
+      "text": "if (fs.existsSync(file)) fail(\"REFUSED\", \"golden record already exists\");"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 680,
+      "text": "fail(\"REFUSED\", \"golden volume already exists\");"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 695,
+      "text": "const diagnostics = await stopSlot(config, info, opts);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 731,
+      "text": "diagnostics,"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 741,
+      "text": "// [EXP-K01-R7] Why: publication follows two actual clone starts reproducing D and L. Rejected: checking only the source/reference or publishing a persisted readiness PASS."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 744,
+      "text": "JSON.stringify({ ...record, ...layout, qualifiedAt: now() }, null, 2) + \"\\n\","
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 748,
+      "text": "`[K01] published ${file}; kept golden ${volume} (${volumeBytes(config, volume)} bytes); qualification clone remains in ${info.volume}\\n`,"
+    },
+    {
+      "file": "lab/bench/lib/g0.ts",
+      "line": 1,
+      "text": "// [EXP-K01-R7] Why: Q93 gives admission only to a fresh in-process content read against a pre-freeze pin. Rejected: transported process booleans, diagnostic equality and owner certificates."
+    },
+    {
+      "file": "lab/bench/lib/g0.ts",
+      "line": 166,
+      "text": "export async function admitG0("
+    },
+    {
+      "file": "lab/bench/lib/g0.ts",
+      "line": 184,
+      "text": "status: \"PASS\" as const,"
+    },
+    {
+      "file": "lab/bench/lib/g0-xtdb.ts",
+      "line": 5,
+      "text": "admitG0,"
+    },
+    {
+      "file": "lab/bench/lib/g0-xtdb.ts",
+      "line": 112,
+      "text": "return await admitG0(logicalReader(h.reader, h.scopeKey, m.scope), pin, expectedN01(m));"
+    },
+    {
+      "file": "lab/bench/lib/g0-xtdb.ts",
+      "line": 160,
+      "text": "const ready = [\"started\", \"alive\"].every("
+    },
+    {
+      "file": "lab/bench/lib/g0-xtdb.ts",
+      "line": 178,
+      "text": "if (ready) break;"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 28,
+      "text": "// [EXP-K01-R7] Why: provenance is descriptive; only this driver's G0 can admit reuse. Rejected: owner-file readiness and certificate reads."
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 30,
+      "text": "return !m ? {kind:\"transact\",seededBy:\"driver\"} : {kind:m.lane===\"xtdb\"?\"seed-manifest\":\"bulk-index\",seededBy:\"unverified\",manifest:manifestFile};"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 203,
+      "text": "/** STRADDLE_HORIZON_MS: a split read only waits for a frozen-trace command already queued or due this soon. */"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 258,
+      "text": "// [EXP-K01-R7] Why: G0 reads this writer's endpoint in this measuring process before workers/warm-up exist. Rejected: accepting any prior process verdict or diagnostic."
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 280,
+      "text": "report.seedPath={...seedPath,seededBy:record?\"clone\":\"seed-writer\",G0,golden:record?.key??null};"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 293,
+      "text": "seededBy: report.seedPath.seededBy, plannedSubjects: rungSubjects, seededSubjects: N, complete: seed.complete, commands: seed.commands, assertions: seed.assertions,"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 335,
+      "text": "worker.on(\"message\", (m: any) => { if (m.type === \"ready\") resolve(); else if (m.type === \"error\") reject(new Error(`reader worker ${w}: ${m.message}`)); });"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 344,
+      "text": "log(`readers: ${workers.length} worker threads ready`);"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 446,
+      "text": "else if (res.tag === \"CommandAlreadyCommittedError\" && res.error?.transactionId === orig.receipt.txId) how = \"already-committed-original\";"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 498,
+      "text": "// ---------------------------------------------------------------- probe10 (P2 diagnostic only)"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 546,
+      "text": "// [EXP-N01 A0 finding] Commands already handed to the store keep committing after the queue empties (they can"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 888,
+      "text": "const dupOk = dupConsidered.filter((r) => r.result === \"already-committed-original\" || r.result === \"resolved-by-command\").length;"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 899,
+      "text": "probe10Diagnostic: { note: \"diagnostic only (TARGETS 1.1 P2 item 2); overlay stream, not part of any bar\", commit: probeHist.summary() },"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 908,
+      "text": "bar(\"NS-P2 every oracle-valid trace command published\", `${progress.validPublished}/${progress.validOffered}`, \"all\", progress.validOffered > 0 && progress.validPublished === progress.validOffered),"
+    },
+    {
+      "file": "lab/bench/driver.ts",
+      "line": 994,
+      "text": "bar(\"NS-P5 wall s for 100k subjects incl. evaluation and publication\", null, \"<= 100\", false, `fetch-only diagnostic: ${(100_000 / Math.max(rate, 1e-9)).toFixed(0)} s extrapolated`),"
+    },
+    {
+      "file": "lab/bench/xtdb-seed.ts",
+      "line": 119,
+      "text": "// [EXP-K01-R7] Why: D is pinned after the last seed commit and before any freeze step, independently of process diagnostics. Rejected: deriving D from the frozen copy."
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 44,
+      "text": "diagnosticOnly: true,"
+    }
+  ]
+}

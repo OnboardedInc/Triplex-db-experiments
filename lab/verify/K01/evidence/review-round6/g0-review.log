@@ -1,0 +1,159 @@
+TAP version 13
+# Subtest: independent changed clone refuses: row
+ok 1 - independent changed clone refuses: row
+  ---
+  duration_ms: 1.957666
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: retraction
+ok 2 - independent changed clone refuses: retraction
+  ---
+  duration_ms: 0.436125
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: valid-time
+ok 3 - independent changed clone refuses: valid-time
+  ---
+  duration_ms: 0.841625
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: count
+ok 4 - independent changed clone refuses: count
+  ---
+  duration_ms: 0.239417
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: claim
+ok 5 - independent changed clone refuses: claim
+  ---
+  duration_ms: 0.495916
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: attempt-position
+ok 6 - independent changed clone refuses: attempt-position
+  ---
+  duration_ms: 0.424666
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: duplicate-substitution
+ok 7 - independent changed clone refuses: duplicate-substitution
+  ---
+  duration_ms: 0.312917
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: missing-column
+ok 8 - independent changed clone refuses: missing-column
+  ---
+  duration_ms: 0.19925
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: value-identity
+not ok 9 - independent changed clone refuses: value-identity
+  ---
+  duration_ms: 1.664333
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/g0-review.test.mjs:25:152'
+  failureType: 'testCodeFailure'
+  error: 'changed logical content must be refused by the only granting gate'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/g0-review.test.mjs:38:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: unchanged content reordered with different random IDs still reads anew and admits
+ok 10 - unchanged content reordered with different random IDs still reads anew and admits
+  ---
+  duration_ms: 0.7165
+  type: 'test'
+  ...
+# Subtest: G0 deadline covers hung scopes
+ok 11 - G0 deadline covers hung scopes
+  ---
+  duration_ms: 27.411333
+  type: 'test'
+  ...
+# Subtest: G0 deadline covers hung count
+ok 12 - G0 deadline covers hung count
+  ---
+  duration_ms: 26.057083
+  type: 'test'
+  ...
+# Subtest: G0 deadline covers hung scan
+ok 13 - G0 deadline covers hung scan
+  ---
+  duration_ms: 26.985334
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_assertions scan
+ok 14 - independent count cannot stand in for a partial tx_assertions scan
+  ---
+  duration_ms: 0.408958
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_claims scan
+ok 15 - independent count cannot stand in for a partial tx_claims scan
+  ---
+  duration_ms: 0.195125
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_attempts scan
+ok 16 - independent count cannot stand in for a partial tx_attempts scan
+  ---
+  duration_ms: 0.179125
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_meta scan
+ok 17 - independent count cannot stand in for a partial tx_meta scan
+  ---
+  duration_ms: 0.121709
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: matching
+ok 18 - golden publishes only after two content and layout starts: matching
+  ---
+  duration_ms: 2.627875
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: first-D-differs
+ok 19 - golden publishes only after two content and layout starts: first-D-differs
+  ---
+  duration_ms: 1.785083
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: second-D-differs
+ok 20 - golden publishes only after two content and layout starts: second-D-differs
+  ---
+  duration_ms: 0.903875
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: second-L-differs
+ok 21 - golden publishes only after two content and layout starts: second-L-differs
+  ---
+  duration_ms: 0.908333
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: second-T-differs
+ok 22 - golden publishes only after two content and layout starts: second-T-differs
+  ---
+  duration_ms: 0.978083
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: recipe-fails
+ok 23 - golden publishes only after two content and layout starts: recipe-fails
+  ---
+  duration_ms: 0.643584
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 22
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 173.00775
