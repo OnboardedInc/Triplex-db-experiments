@@ -2885,3 +2885,6 @@ export function runtimeConformance(
       : runtime.layer({ ...baseOptions, capabilities });
   return makeTriplesConformanceSuite().pipe(Effect.provide(layer));
 }
+
+export * from "./route-equivalence.js";
+export * from "./offline-route-fixtures.js";
