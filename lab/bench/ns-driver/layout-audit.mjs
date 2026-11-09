@@ -10,6 +10,34 @@ if (!process.permission || !root || process.permission.has("fs.read", path.dirna
 const readGrants = process.execArgv.filter((arg) => arg.startsWith("--allow-fs-read"));
 if (readGrants.length !== 1 || readGrants[0] !== "--allow-fs-read=" + root)
   throw Error("NSR excess filesystem read grant");
+// [EXP-NSR-R5] Why: validate the actual write and environment envelopes too. Rejected: checking only read flags while an output pattern widens writes.
+const output = process.env.NSR_FRESH_OUTPUT;
+const writeGrants = process.execArgv.filter((arg) => arg.startsWith("--allow-fs-write"));
+if (
+  [root, output].some((p) => !p || p.includes("*")) ||
+  writeGrants.length !== 1 ||
+  writeGrants[0] !== "--allow-fs-write=" + output ||
+  process.permission.has("fs.write", path.dirname(output))
+)
+  throw Error("NSR excess filesystem write grant");
+const envKeys = [
+  "PATH",
+  "NSR_BUNDLE_MANIFEST",
+  "NSR_LAYOUT_SHA256",
+  "NSR_LAYOUT_ROOT",
+  "NSR_FRESH_OUTPUT",
+  ...(process.platform === "darwin"
+    ? ["NSR_DARWIN_BOOT_ID", "__CF_USER_TEXT_ENCODING"]
+    : ["NSR_LINUX_CLOCK"]),
+].sort();
+if (
+  process.env.PATH !== "" ||
+  (process.platform === "darwin" &&
+    process.env.__CF_USER_TEXT_ENCODING !==
+      `0x${process.getuid().toString(16).toUpperCase()}:0x0:0x0`) ||
+  Object.keys(process.env).sort().join() !== envKeys.join()
+)
+  throw Error("NSR excess runtime environment");
 const bytes = fs.readFileSync(path.join(root, "inventory.json"));
 if (sha(bytes) !== process.env.NSR_LAYOUT_SHA256) throw Error("NSR inventory anchor mismatch");
 const inventory = JSON.parse(bytes);

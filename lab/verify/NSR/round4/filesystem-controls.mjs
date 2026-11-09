@@ -15,7 +15,6 @@ export async function runFilesystemControls(output) {
     const root = path.join(output, kind);
     fs.mkdirSync(path.join(root, "packages"), { recursive: true });
     const out = path.join(root, "run-output");
-    fs.mkdirSync(out);
     const marker = path.join(out, "candidate-ran");
     const candidate = path.join(root, "packages", "candidate.mjs");
     const candidateBody = `process.getBuiltinModule('fs').writeFileSync(${JSON.stringify(marker)},'candidate executed');\n`;
@@ -136,17 +135,14 @@ export async function runFilesystemControls(output) {
       [
         "--permission",
         "--allow-fs-read=" + layout,
+        "--allow-fs-write=" + receipt.output,
         ...(kind === "extra-read-grant" ? ["--allow-fs-read=" + path.join(root, "key")] : []),
         path.join(layout, "layout-audit.mjs"),
       ],
       {
         encoding: "utf8",
         cwd: layout,
-        env: {
-          NSR_LAYOUT_ROOT: layout,
-          NSR_LAYOUT_SHA256: receipt.inventorySha256,
-          NSR_FRESH_OUTPUT: receipt.output,
-        },
+        env: receipt.environment,
       },
     );
     assert.notEqual(result.status, 0, kind);

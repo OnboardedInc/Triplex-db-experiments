@@ -428,3 +428,73 @@ reported later-WAL/open race limitation is unchanged. Separate review of this ro
 
 Changed contract-pinned paths: **none** (`round4/pin-changes.json`). `lab/acceptance/` is unchanged. No contract
 version, frozen DRIVER_PIN, or production runtime receipt is claimed.
+
+## Round 5 — exact write grant and minimal environment (CX-NSR)
+
+Responds to review `verify/NSR-r4 01020eae`, `VERIFY-round4.md` in `verify-nsr5`. North star: correctness
+of the trusted P1–P5 evaluator boundary under the authoritative lab scope/targets. The review confirms the
+round 3 readable-text cases now fail with actual permission denials, and identifies two medium defects:
+a legal `out*` path widens writes through Node's pattern syntax, and the child receives the host PATH.
+
+The launcher rejects `*` anywhere in either interpolated filesystem grant path, including parent components.
+It creates the canonical output leaf exclusively for each launch (existing empty directories are refused),
+and grants `--allow-fs-write=<exact-output>` with no wildcard. The startup audit checks the actual write
+flags and denied parent scope as well as reads. Existing fixture callers now leave output creation to the
+launcher; round 4's direct audit controls supply the same exact write flag and recorded environment.
+
+The child starts with empty PATH, the five base layout variables (including PATH), and only the applicable
+clock variables. Mac additionally gets an explicitly derived CoreFoundation text-encoding setting: a first fresh run
+showed macOS adds this host-derived variable even with an explicit spawn environment. We now set its value
+explicitly from the runtime UID, record it, and audit its exact value. A second attempt showed macOS
+replaces a conflicting generic UID setting; that failed attempt is retained too. No host PATH, parent sentinel or other parent variables are
+copied. Receipts record the entire supplied environment, every permission grant with its reason, and the
+trusted executable/base, stdio and RPC exceptions. [`round5/PERMISSIONS.md`](round5/PERMISSIONS.md) answers the
+reviewer's open question with the complete grant and environment ledger and the limits of native runtime
+closure. The Mac Node/base exception remains explicit; this change does not invent a whole-OS file closure
+claim or alter acceptance.
+
+Fresh controls in `lab/verify/NSR/round5/envelope-controls.mjs`, included in the normal NSR test suite, inspect
+the actual child's environment/argv/CWD, compare them with the receipt, verify exact expected bytes inside
+output, require `ERR_ACCESS_DENIED / FileSystemWrite` on the actual sibling marker path, and require no
+outside marker. They reject output reuse, literal/parent output stars, a layout-parent star, an altered
+write grant, an undeclared environment key and host PATH. Existing read-layout/vm/replaced-hook controls,
+RPC fuzz/caps, canonical answer checks, HR binding, split/monolith accounting/feed parity and P3M delay gates
+are retained. Final attempt 3 passed **16 tests, 0 failed**, including eight new envelope controls.
+Attempts 1 and 2 each retained **12 passed, 4 failed** while the strict environment check caught the Mac
+runtime additions described above. All runs used heavy admission with more than 5 GiB free. See
+`round5/EVIDENCE.md` for exact commands, attempts and durable checksums; 15 final layout receipts and
+20 final source/lock hashes were independently read back.
+
+### Round 5 PASS / verdict / receipt audit
+
+1. **Artifact eligibility/build:** existing compile/import-closure and artifact/support hash checks remain.
+   Actual resolved source/output bytes and metadata from this invocation determine the fresh artifact;
+   changed launcher/audit support is included in its hashes. No semantic NS PASS is emitted.
+2. **Launcher layout receipt (`launchArtifact`):** verifies actual artifact/metadata/support bytes, rejects
+   wildcard grant paths before creating the output, and exclusively creates the fresh output leaf. Actual
+   copied layout bytes determine its inventory/hash. The receipt binds the executable digest, source config
+   digest, layout/output paths, Node version, exact fresh environment, grants/reasons and runtime exceptions.
+   Its config/inventory carries the evaluator's run/source/input/slot inputs; offline tests invent no slot.
+   Receipt creation records construction, not successful execution or production acceptance.
+3. **Startup audit (`layout-audit.mjs`):** in the actual fresh child, checks native permission state, exact
+   read/write flags, no pattern syntax, denied parent write scope, exact environment keys, empty PATH and
+   canonical Mac runtime setting. Existing inventory anchor/enumeration/content checks and actual denied reads
+   remain. The observation binds this execution's inventory and artifact; checks apply before driver code.
+4. **Regression judgments (`envelope-controls.mjs` and existing suites):** fresh source/config/artifacts and
+   real sibling marker paths bind each attempt. Positive output content, actual permission class/resource,
+   absence of outside marker, actual child env/argv/CWD and receipt equality are required. Mutated-grant/env
+   cases require their specific audit error, not arbitrary failure. Existing read-layout cases still require
+   the candidate pathname's actual read denial; parity/delay checks compare expected observed values. Raw
+   results and receipts stay tied to this attempt and explicit offline-no-slot config.
+5. **Driver/HR and secondary guard:** unchanged semantic/event paths retain request/answer bytes/digests,
+   HMAC sequence and run/source/input/slot bindings. Freshness now comes from exclusive launcher output
+   creation, with exclusive chunk writes. The hook remains secondary and replaceable. Successful process
+   exit or a correct launch envelope does not establish NS semantic acceptance.
+6. **Evidence retention/report:** final executed artifact/support/layout bytes are compared with current
+   source and their recorded hashes. SHA256SUMS hashes retained bytes and is read back; this asserts retention
+   only. First failures remain failures, previous evidence remains historical, and Mac diagnostic results do
+   not become Linux/container/engine qualification.
+
+No full G0, package-consumer run, actual Linux/G03/VM/container execution, native-open retrace, engine slot,
+Docker operation, provider qualification, merge or push. Changed acceptance pins: **none**
+(`round5/pin-changes.json`); `lab/acceptance/` remains unchanged. Independent review is still required.

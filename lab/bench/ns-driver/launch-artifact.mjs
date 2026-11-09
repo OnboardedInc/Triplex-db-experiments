@@ -42,7 +42,11 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
   }
   const config = JSON.parse(fs.readFileSync(configFile, "utf8"));
   const output = path.resolve(config.output);
-  fs.mkdirSync(output, { recursive: true });
+  // [EXP-NSR-R5] Why: Node interprets stars in grant paths as patterns, including parent components. Rejected: appending a wildcard to an unchecked evaluator path.
+  if ([output, path.dirname(bundle)].some((p) => p.includes("*")))
+    throw Error("NSR wildcard permission path refused");
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.mkdirSync(output);
   if (fs.realpathSync(output) !== output) throw Error("Driver output symlink refused");
   if (fs.readdirSync(output).length) throw Error("Driver output not fresh");
   // [EXP-NSR-R4] Why: candidate text must be unreadable even to vm or a replacement hook. Rejected: an in-process module policy as the isolation boundary.
@@ -81,9 +85,48 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
   });
   fs.writeFileSync(path.join(layout, "inventory.json"), inventory, { flag: "wx" });
   const inventorySha256 = sha(inventory);
+  // [EXP-NSR-R5] Why: absolute Node execution needs no host executable search path or inherited environment. Rejected: forwarding PATH while relying on denied subprocess creation.
+  const env = {
+    PATH: "",
+    NSR_BUNDLE_MANIFEST: path.join(layout, "manifest.json"),
+    NSR_LAYOUT_SHA256: inventorySha256,
+    NSR_LAYOUT_ROOT: layout,
+    NSR_FRESH_OUTPUT: output,
+  };
+  // [EXP-NSR-R5] Why: macOS supplies the current runtime UID in its text-encoding setting even over a conflicting value. Rejected: an unrecorded addition or inheriting arbitrary host environment.
+  if (os.platform() === "darwin")
+    env.__CF_USER_TEXT_ENCODING = `0x${process.getuid().toString(16).toUpperCase()}:0x0:0x0`;
+  if (os.platform() === "darwin")
+    env.NSR_DARWIN_BOOT_ID = execFileSync("/usr/sbin/sysctl", ["-n", "kern.bootsessionuuid"], {
+      encoding: "utf8",
+    }).trim();
+  else if (os.platform() === "linux")
+    env.NSR_LINUX_CLOCK = JSON.stringify({
+      bootId: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
+      timeNs: String(fs.statSync("/proc/self/ns/time", { bigint: true }).ino),
+      primitive: "CLOCK_MONOTONIC",
+    });
+  const permissions = [
+    {
+      flag: "--allow-fs-read=" + layout,
+      reason: "Read the closed artifact, audit, manifests and declared evaluator data only",
+    },
+    {
+      flag: "--allow-fs-write=" + output,
+      reason: "Create HR chunks and seal in this exclusively created, write-only output directory",
+    },
+  ];
   const receipt = {
     schema: "ns-driver-layout-receipt/1",
     nodeVersion: process.version,
+    environment: env,
+    permissions,
+    runtimeExceptions: {
+      executable: process.execPath,
+      base: "Trusted Node executable, dynamic libraries and native OS runtime; separately pinned G03 base required",
+      stdio: ["ignore (/dev/null)", "pipe (observations)", "pipe (audit/errors)"],
+      network: "Candidate RPC TCP sockets; Node permission model does not restrict network",
+    },
     isolation:
       "Node filesystem permissions; closed layout; write-only output; module hook secondary",
     layout,
@@ -98,8 +141,7 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
   });
   const args = [
     "--permission",
-    "--allow-fs-read=" + layout,
-    "--allow-fs-write=" + output + "/*",
+    ...permissions.map((p) => p.flag),
     "--import",
     pathToFileURL(path.join(layout, "layout-audit.mjs")).href,
     "--import",
@@ -107,31 +149,10 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
     path.join(layout, m.entry),
     path.join(layout, "config.json"),
   ];
-  const boot =
-    os.platform() === "darwin"
-      ? execFileSync("/usr/sbin/sysctl", ["-n", "kern.bootsessionuuid"], {
-          encoding: "utf8",
-        }).trim()
-      : "";
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, args, {
       cwd: layout,
-      env: {
-        PATH: process.env.PATH,
-        NSR_BUNDLE_MANIFEST: path.join(layout, "manifest.json"),
-        NSR_LAYOUT_SHA256: inventorySha256,
-        NSR_LAYOUT_ROOT: layout,
-        NSR_FRESH_OUTPUT: output,
-        NSR_LINUX_CLOCK:
-          os.platform() === "linux"
-            ? JSON.stringify({
-                bootId: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
-                timeNs: String(fs.statSync("/proc/self/ns/time", { bigint: true }).ino),
-                primitive: "CLOCK_MONOTONIC",
-              })
-            : "",
-        NSR_DARWIN_BOOT_ID: boot,
-      },
+      env,
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "",
