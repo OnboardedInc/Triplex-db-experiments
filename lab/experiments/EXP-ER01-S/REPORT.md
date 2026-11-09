@@ -283,3 +283,95 @@ No acceptance file/contract version changed; searches of both worktree and main 
 | `lab/observer/erasure/run_round3.py` | new path | `3cee69f28c77b8afeffe8503fe19d71073ab67762453e00cb1192a9a00060285` |
 | `lab/observer/erasure/test_formats.py` | `8364c2a4b3be55bc1e5d4f20df0f76ecc99b3784471e43337581e475df66eedd` | `5546892ad443c2d1594fcc3355f0d66fd8e6e68c9fb1526ab1339abb565c9446` |
 | `lab/observer/erasure/test_scanners.py` | `016512cc73f61c61933ceb6943ec2c4e1c0e7bbe84a01808b953ec9034efae30` | `709a16ea0e626020e04a0f1b0a409e1f0707e47449418ab6ef96ab5d4708acb9` |
+
+## Round 4 — inverse encoding closure (R3-F1)
+
+**North star:** erasure correctness under SCOPE §2.3, TARGETS §7 item 9, NORTH-STAR and R38 §4.1/Q82d/Q95g. This remains evaluator-owned observer code, offline only. Base `bb90dfcdbeca8e6f13d2ecdef31f4de5a03ac847`; review `verify/ER01-S` `9a6e894`. The review, three reproducer scripts, index and manifests are copied verbatim to `lab/observer/erasure/qa_round3/`. Its 16 complete scenario inputs, outputs and independent SQL/decrypt proofs are copied to durable evidence with manifest identity checked against that review index.
+
+### Implementation and decoder boundary
+
+All supported scalar decoders now run over every queued view, and every genuinely new result re-enters the same queue: base64, base64url (padded/unpadded, canonical spelling, folded text and individual tokens), hex, JSON object/scalar/string leaves, Unicode/backslash escapes, URL encoding, quoted-printable, gzip, recognized SQLite images and fixture records, length prefixes and byte-array varints. Backslash hex/octal/simple escapes also produce a byte-preserving view: interpreting UTF-8 octets only as Latin-1 Unicode had changed their meaning. Original physical bytes and earlier findings are never removed. Native SQLite/WAL/TOAST/FSST container parsers seed the same closure with reconstructed values; known encoded WAL requires its exact evaluator-bound main-file context, otherwise REFUSED.
+
+The declared default depth is **32 decoder transformations** per closure seed, with 4096 distinct views, 64 MiB of accumulated view bytes, and the existing JSON/gzip budgets. A duplicate result does not exhaust depth. A decoder producing a genuinely new view beyond a bound records an error; `analyze_files` marks the full originating physical file range unparsed and all relevant scans REFUSE. This is conservative range attribution, not a claim to map decoded offsets one-to-one onto compressed/escaped bytes. Already discovered findings and authenticated opens remain available. Physical container values are additionally seeded independently, but any exhaustion on an earlier path still refuses the entire source, so reseeding cannot bypass the limit.
+
+Native parsing of an alternative view does not grant coverage to the original bytes. Whole-container escape transformations can change length/checksum fields; those search-only alternatives are distinct from actual structural child payloads. The physical native parser still qualifies every physical range, and recognized independent nested native inputs require their own complete decoder/context. Unknown native profiles remain REFUSED; this change does not qualify arbitrary custom encodings or missing FSST dictionaries.
+
+Tests cover the 225 ordered pairs of 15 scalar/native framing and Unicode layers with an ASCII marker, plus 64 ordered pairs of eight scalar layers with an emoji/UTF-8 marker and folded base64. These exercise both orders, including repeated same-layer compositions. Depth tests check an incomplete closure directly and require full-normalizer REFUSED with explicit source ranges under a reduced pinned test limit. Existing native SQLite, overflow/WAL, TOAST, missing-FSST, source-binding, authenticated-decrypt, and historical controls remain required. The 16 new reviewer replays require actual recovered plaintext/envelope/key findings and authenticated opens, rather than only accepting non-PASS.
+
+### Exact review re-screen
+
+| Retained scenario | Result | Evidence interpretation |
+| --- | --- | --- |
+| nominal | PASS | Fully decoded fixture control. |
+| base64-of-json-escaped-plaintext | FAIL | Decoded protected plaintext found. |
+| base64-json-escaped-native-sqlite | FAIL | SQLite value plus inverse closure finds plaintext. |
+| base64-json-escaped-envelope | FAIL | Rotate encoded envelope now found; first review diagnostic already failed through shred. |
+| hex-inside-url-encoded-string | FAIL | Original correctly detected ordering remains detected. |
+| hex-of-url-encoded-string | FAIL | Reverse ordering now decoded and found. |
+| base64-json-escaped-usable-key | FAIL | K finds wrapper; D authenticates target opening. |
+| url-encoded-hex-usable-key | FAIL | Existing inverse ordering still finds/opens. |
+| plaintext-split-across-wal-frames | FAIL | Native reconstructed value found. |
+| plaintext-superseded-split-frames | FAIL | Superseded physical value found. |
+| usable-key-envelope-superseded-commit | FAIL | Exact envelope recovered and target opens. |
+| usable-key-envelope-superseded-frame | FAIL | Same-commit historical copy recovered and target opens. |
+| removed-key-envelope-superseded-frame | PASS | Allowed append-only ciphertext; target stays closed, live control opens. |
+| layered-envelope-both-post-phases | FAIL | Encoded target envelope found after both shred and rotate. |
+| base64-identified-fresh-key-record | FAIL | Complete fresh identified row recovered; K finds new version and D opens target. |
+| native-envelope-remove-policy | FAIL | Native SQLite H1 policy unchanged; encoded envelope found after both post phases. |
+
+The seven former aggregate false-PASS reproductions now produce FAIL, not a blanket refusal. The two legitimate PASS controls stay PASS. Exact independently expected target plaintext SHA256 is `a98e35a56e2295ae452f71fe45d23626188202cd7624cf6171ee0a8d0af508b4`; retained exact envelopes, wrapper/row identities and independent decrypt proofs bind the findings to this synthetic run. All 31 oldest legacy aggregates remain REFUSED for unsupported layouts with their positive findings/opens preserved. The following 14 cases retain their earlier one PASS / 11 FAIL / two REFUSED distribution, and the second-block FSST marker/refusal control remains required.
+
+### Attempt history and reproduction
+
+`diagnostic01` is retained FAILED. Its new pair matrix found byte-escape Unicode/octet confusion, invalid synthetic record combinations using non-UTF-8 payloads outside the fixture's 60-byte binary-box profile, and an overly exact depth expectation that ignored other valid decoder branches. Byte-preserving escaping was added; the matrix uses valid ASCII native record payloads and adds a separate UTF-8 scalar matrix; depth qualification tests closure completion rather than assuming only the intended decoding path exists. `diagnostic02` passed 37 unit tests and all 61 retained scenarios plus the FSST control. Later frozen runs add folded/individual-token base64, full-normalizer range refusal, UTF-8 pair coverage and nested-WAL binding checks; their exact statuses and manifests are indexed below. First attempts are not removed.
+
+Check disk >=5 GiB, then use a new empty durable output path:
+
+```sh
+df -k .
+node lab/bin/heavy.mjs --label CX-OBS01-ER01S-R4 -- python3 -B lab/observer/erasure/run_round4.py /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round4/new-attempt
+```
+
+### Round 4 PASS/verdict/receipt audit (9a)
+
+| Result-producing site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `status` / `qualified_status` | Candidate status only after caller checks below; any unparsed relevant range refuses. | All three analyzed attempt phases required. | Exact location/inventory; D includes all key stores/backups/authority/root roles. |
+| `scan_p` | Searches exact protected forms across original/native/closure views; same decoder must find matched twin. | Positive control required per phase; no earlier attempt substituted. | P digest, assertion/value kind and provenance equal EI/D case; exact physical inventory/source bytes. |
+| `scan_c` | Exact native envelope bytes/forms and declared retention; before envelope control required. | Bound before/shred/rotate windows. | EI source/envelope/context and actual location's remove/append policy. |
+| `scan_k` | Known wrapper/epoch bytes plus identified fresh versions from closure-decoded rows; matched controls. | Before controls and all relevant post phases checked. | Exact key id/tenant/epoch and source location; fresh row metadata is retained. |
+| `scan_d` / decrypt.mjs | Tries all discovered candidate boxes; AES-GCM/padding/expected plaintext digests and live-control opening required; incomplete candidates/authority refuse. | New execution over this capture's phase inputs; before target opening checked. | Pinned Node/decryptor, exact root/epoch/key id/tenant/AAD/EI envelope and plaintext hash. |
+| `normalize_erasure` | No aggregate PASS if any location/scan fails or refuses; unparsed findings never become PASS. | Ordered finite clocks/windows/nonces, complete unique phases. | Exact run/source/stream/container/slot/case, inventory paths/codecs/size/SHA/stability flags and EI bytes. |
+| `supplemental_views` / `analyze_files` coverage inputs | Every new decoder result re-enters closure; duplicates retained once; exhaustion marks full origin unparsed; raw and all earlier views still searched. | Derived only from the current physical phase bytes. | Codec/runtime source frozen in normalizer; per-file hashes/ranges, native contexts and phase-specific descriptors retained. These helpers do not independently emit PASS. |
+| Unit assertions | Exact seeded markers across ordered pairs, control/decrypt digests, physical native readback, blind-FSST refusal, depth and source-binding negatives. | Fresh random offline fixture execution; smaller depth is explicitly a test-only pinned override. | Frozen specification, source/runtime pins, exact bytes and actual normalizer range records. |
+| Earlier 31/14 replays + second FSST block | Required old overflow hits/key opens; exact second-block marker and missing-dictionary refusal; legitimate nominal control checks. | New execution over explicitly historical synthetic bytes. | Review-pinned manifests/raw hashes, run/case/parser/runtime identities and physical WAL partitions. |
+| `replay_qa_round4.py` | All 16 cases require expected statuses, positive P/C/K findings and D opens; native remove-policy both post phases checked. | New parser subprocess per exact retained capture; no live recollection claim. | Full copied review manifest identity/file-set/SHA readback; exact raw/case/run/parser and decoded expected identities. |
+| `run_round4.py` gate PASS | Both unit suites and all three replays must satisfy substantive assertions. | New immutable attempt directory/timestamps; disk guard at entry. | Every observer source preimage copied, SHA checked again before gate PASS; normalizer/runtime pins saved. |
+| Retention/index/manifest receipt | Complete source/evidence readback and copied reviewer equality; records offline gate results only. | New attempt paths; failures preserved. | Exact manifest identities, confined unique file set, per-file SHA/size, final source pins and candidate base. |
+
+### Round 4 limits
+
+No SUT erasure code, live engine, Docker/VM changes, slots, package installation, acceptance edit, merge or push. No new native PG-server/XTDB codec, physical freed-block or concurrent-acquisition qualification, scale timing or semantic four-scan O-OBS promotion. External authentication and independently acquired live bytes remain required. K's arbitrary fresh *unidentified* boxes still rely on D's cryptographic enumeration; identified fresh records are directly tested here. Independent adversarial review remains outstanding.
+
+Round 4 additional attempt notes: `final01` passed 39 tests and all 61 replays before the last context/Unicode refinements. `final02` is retained FAILED because a decoded individual folded-base64 line can carry an incomplete surrogate even though the joined view recovers the exact marker. That case now requires the positive finding and permits only the explicit Unicode refusal, never PASS from the unresolved view. `final03` is retained FAILED for missing intermediate NUL-bearing UTF-16/32 views. `final04` is retained FAILED for two shifted Unicode interpretations that dropped a trailing byte and produced malformed native headers. Exact re-encoding is now required before adding a recognized Unicode scalar view; dictionary containers retain their declared structural decoder. Recognized Unicode text requires BOM or NUL-lane/printable evidence; arbitrary binary bytes are not asserted to be Unicode text. `final05` passed all 39 tests and the 31 oldest cases, then correctly stopped on a false-refusal regression in the later nominal fixture: a whole-WAL search-only escape view changed frame length, and was mistakenly treated as a new independent WAL source. WAL prefixes now use the same physical-container versus derived-view distinction as SQLite/record containers. `final06` is the final frozen qualification attempt, with its actual result and complete readback below. No first-failure artifact was replaced.
+
+### Round 4 final receipt and pin movements (9b/9c)
+
+Final `final06`: **PASS**, 11 format + 28 scanner tests, 45 previous + 16 new historical cases, second-block FSST control. Complete readback: 6026 files, 87357788 bytes. Manifest SHA256 `4db02d81b17a6fd313d3de20c70b539c86302d13fecbb4db33d510f7270d2cd5`. [Index](round4/INDEX.json), [checksums](round4/SHA256SUMS), [readback tool](round4/retain.py). Bulky raw files are only in `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round4`; all attempts remain retained.
+
+No acceptance file/contract version changed; searches of both worktree and main acceptance directories found no explicit pin to a modified erasure path. The evaluator source pins below move from `bb90dfcd`; historical parsers/preimages remain unchanged, with newly compiled parsers in new paths.
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/observer/erasure/README.md` | `468c677a86c1f28499c66b92201e705e1d4b7c3f4d1082317cbadf2f7a7b643a` | `bac7ddd94ef1a23cbe7b1910687c5412ceef51c8c604cb49af3e6079678586fa` |
+| `lab/observer/erasure/formats.py` | `97f6c6c846b330109c89f39a3e36fb87baed9da0da26b1fa7bbc7b21332e74c9` | `96adc38c719a35de0477af599b6895c41e974a1e54a68abb9d8ee8ab3cfb1ecc` |
+| `lab/observer/erasure/qa_round3/INDEX.json` | new path | `32ad2d492ac5816acdd189de589e3df5a547a48962957d36f657017f5cf3f7a8` |
+| `lab/observer/erasure/qa_round3/SHA256SUMS` | new path | `f7be4a2c5d03355786509773f7b36ea29ec5aa85b267abd6c24dc4bb7a10bed2` |
+| `lab/observer/erasure/qa_round3/VERIFY-round3.md` | new path | `04953ca5dc9050193e23884e068950ab62351828c831478940efc534fc44a2b1` |
+| `lab/observer/erasure/qa_round3/finish.py` | new path | `50f590dc4b7507a091304afd3a075083bb00ebf128bfd076f73571e2a9c8c105` |
+| `lab/observer/erasure/qa_round3/native_envelope.py` | new path | `fe0daeb13b94aa55f565512c4b2b44c42c840b6f4970d48805ca61690108fbee` |
+| `lab/observer/erasure/qa_round3/probe.py` | new path | `cd76cd05d954cac9128ba2e092c986031b2f60084b4dca90525c4920b3fbf1cd` |
+| `lab/observer/erasure/replay_qa_round4.py` | new path | `bb13f6f256d174206616e51273447cc341fa2266e65019de21ae827149b3845b` |
+| `lab/observer/erasure/run_round4.py` | new path | `5daf52b4264cf90e3d3faaa76922511cd538d99fedd7bef81224633a2b42f430` |
+| `lab/observer/erasure/test_formats.py` | `5546892ad443c2d1594fcc3355f0d66fd8e6e68c9fb1526ab1339abb565c9446` | `e3a920f452dd5593d2edfc7034cfaf5f7fe0af830ffab9fc4c54a2d8e5e7ef36` |
+| `lab/observer/erasure/test_scanners.py` | `709a16ea0e626020e04a0f1b0a409e1f0707e47449418ab6ef96ab5d4708acb9` | `dd984897ab40d18dda1aa2952f11917a11088ee59ef2318651d7352539e61312` |

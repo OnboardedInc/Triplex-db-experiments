@@ -55,3 +55,13 @@ The 32-layer/4096-view/64-MiB view budgets refuse unresolved searches. Raw bytes
 remain searchable independently. `run_round3.py` also replays the reviewer's exact
 14 new scenarios and second-block FSST control, alongside the previous 31 cases.
 These are offline fixtures and historical replays, not erasure acceptance.
+
+Round 4 adds inverse scalar base64/base64url (including folded text) and hex to
+that same closure. Every resulting view re-enters escaping, scalar, gzip and
+recognized native SQLite/fixture-record/length-prefix/byte-varint decoders. Native
+SQLite/WAL, FSST and TOAST container decoders continue to seed the closure with
+all reconstructed values. The default depth limit is 32 transformations; only
+attempting to add a genuinely new view beyond the limit causes refusal. A budget
+refusal conservatively marks the full originating physical file range unparsed;
+original bytes and all findings produced before exhaustion remain available.
+`run_round4.py` qualifies ordered layer pairs and all 61 retained QA scenarios.
