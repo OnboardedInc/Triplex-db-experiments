@@ -1958,3 +1958,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 
 - **verify/QNODELAY 813fcf4e:** the stall result reproduces offline (120/240 keep-alive versus 0/240 no-delay); keep-alive stays default. Three medium gaps: one reader skips the parser (R4-F1), malformed but labeled timings reach EXP-QG1's summaries (R4-F2), and per-event mode does not bind a run's mode, so compare.mjs can merge both modes (R4-F3).
 - **Lesson:** a shared parser of metadata is not a shared reader of data. Round 5 makes one function the only way to read QLever latency data, returning a typed run with one mode, plus a test that fails on any other access. This is the fifth round of receipt hardening; the measured finding has been stable since round 2, so later rounds are limited to the reviewer's named findings.
+
+## 2026-11-09: K01 live round 12: count fix confirmed live, next stop is a lazily created table
+
+- **Confirmed live (3d334592):** tx_assertions COUNT = 61,384 on the engine, captured before cleanup, matching the source-derived expectation exactly.
+- **Next failure:** G0 queried tx_native_relation_attempts, which the adapter declares but XTDB 2 creates only on first insert; this seed never writes it.
+- **Lesson:** each full live run has found exactly one new G0 assumption about the engine (union integer type, journal rows, lazy table creation). Round 13 runs a small diagnostic smoke run that records every failure in order instead of stopping at the first, then fixes them all offline, before the next full run. Absence of a table is checked through the catalog, never by catching a planning error.
