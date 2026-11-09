@@ -3,7 +3,7 @@
 set -euo pipefail
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
-[[ "$prefix" =~ ^tx2-dxh1-[a-z0-9-]+$ ]] || { echo "DX-H1 owns only tx2-dxh1-* prefixes" >&2; exit 2; }
+[[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX spike stack requires a tx2-dx* prefix" >&2; exit 2; }
 tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src=
 while (($#)); do
   case "$1" in
