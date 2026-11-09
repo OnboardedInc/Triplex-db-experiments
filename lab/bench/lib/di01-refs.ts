@@ -1,32 +1,15 @@
-import { Data } from "effect";
-import type {
-  ReferenceReader,
-  ReferenceRow,
-  DependencyPlan,
-  DependencyPath,
+import {
+  BasisNotAvailable,
+  type ReferenceReader,
+  type ReferenceRow,
+  type DependencyPlan,
+  type DependencyPath,
 } from "../../../packages/host/dist/feed/index.js";
 import type { CompositionHandle } from "./composition.ts";
 import { W0, visibleRows, factValue, type WorldRow } from "./w0-world.ts";
 
-// [EXP-DI01] Why: one shared tagged refusal for every reference-basis guard, so callers classify by _tag and fields, not prose (CX-VDI01 F1). Backend-provided typed expiration errors are not wrapped; they propagate unchanged. Rejected: retrying at a newer position (the index would derive from a different basis than the page's, silently).
-export class BasisNotAvailable extends Data.TaggedError("BasisNotAvailable")<{
-  readonly reason: "head-moved" | "reported-basis-mismatch" | "row-outside-basis";
-  readonly requested: { readonly position: number; readonly validAt: number };
-  /** Source head observed by the storage guard, when the guard observed one. */
-  readonly availableHead?: number;
-  /** Basis the memory composition reported serving, when it reported one. */
-  readonly reportedBasis?: {
-    readonly position?: number;
-    readonly validAt?: number;
-  };
-  /** Oldest retained position, only where the backend reports one (none of the shipped readers' backends do today). */
-  readonly retentionFloor?: number;
-  readonly detail?: string;
-}> {
-  override get message() {
-    return `BasisNotAvailable: ${this.reason} (requested position ${this.requested.position})`;
-  }
-}
+// [EXP-DI01] Why: the shared tagged refusal now lives in the host package's feed exports (the consumer raises it too, R2-F1); re-exported so lab callers keep one import. Rejected: a second lab-local class (two tags to classify).
+export { BasisNotAvailable };
 const wanted = new Set(["location", "jurisdiction", "documents", "decisions", "p5/activation"]);
 const refsOf = (rows: readonly WorldRow[], entities: readonly string[]): ReferenceRow[] =>
   rows

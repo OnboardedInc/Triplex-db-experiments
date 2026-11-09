@@ -141,3 +141,28 @@ Builder: Claude Sonnet 5.5, offline. Base `7ae302bc`; main `7fd55aac` (contains 
 **Rule 9a audit.** This round adds no PASS, receipt or verdict producer. The only new checks are test assertions: (1) refusal tests compare the thrown object's class, tag, reason and numeric fields with the requested and fixture-set values (content), run in this attempt on freshly created temp databases (freshness), and the reader under test is the shipped `di01-refs.ts` with a fake source whose head and rows the test sets, so the observed refusal is tied to that input (binding); (2) the unchanged-state assertions compare the full dependency, effect, affected and checkpoint snapshot, taken before the refusal and after reopen, field by field with `deepEqual`; (3) retry success asserts the checkpoint token and the reach answer, not merely absence of an error. Existing DI01 receipts and evidence were not regenerated and are not changed by this round.
 
 **What did not run.** Live X/Q/D retention or reference reads (no real backend raised an expiry; the expiry error in tests is injected, so only propagation is shown); fresh 10k trace, 900-trial crash matrix, 100k lag benchmark and feed-binding re-reads (the consumer is untouched; only a bench-side helper changed); root `pnpm pack:check` (known DuckDB failure, outside the lab gate); G0; the reviewer's `verify/DI01` tests; independent re-review of this round.
+
+## Round 3 (CX-VDI01 R2-F1, FIX-FIRST)
+
+Builder: Claude Sonnet 5.5, offline. Code commit `16216de6` on `c4aeb4cb`. Durable evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DI01-R3/` (pack log and artifacts).
+
+**Finding.** `DependencyIndex.prepare` still threw a plain `Error("Pinned reference reader returned invalid basis")` when a reader reported the right basis but returned a row at a later position (or a retracted, unrequested, out-of-valid-time row).
+
+**Divergence from round 2.** `BasisNotAvailable` moved from `lab/bench/lib/di01-refs.ts` to `packages/host/src/feed/DependencyIndex.ts`, exported through the existing `feed/index.ts` `export *` (no change to `index.ts`), because the host must not import a lab helper. `di01-refs.ts` now imports it from the host feed exports and re-exports it, so lab callers and the reviewer's probes keep one import path; there is a single class and tag. Added optional field `observedRow {entity, attribute, position, retractedPosition?, validFrom, validTo?}` for the offending row. All five row conditions in `prepare` raise `reason: "row-outside-basis"` with `requested {position, validAt}`, `observedRow` and a `detail` that distinguishes an unrequested entity. The check still runs in `prepare`, before the transaction opens; reader errors are not caught, so backend error identity is preserved; nothing continues at a newer position. No consumer algorithm, schema or ConsumerStore change. `lab/bench/di01.test.ts` asserted the old message (`/invalid basis/`); it now asserts the tag and reason.
+
+**Tests** (`lab/bench/di01-refusal.test.ts`, +2; DI01 suites now 18/18): the reviewer's R2 GAP case inverted through the consumer (memory reader reports the requested basis, row at position 2 for a position-1 page): tagged error with requested `{1, V}` and `observedRow` position 2; checkpoint and all dependency tables, effects and affected rows equal the pre-refusal snapshot, also after close and reopen; with the row at position 1 the identical page succeeds (checkpoint 1, reach answer `pl:a`). A second case covers retracted, unrequested, future-valid-from, bounded valid-to and position-0 rows (each tagged, checkpoint null) and a backend error thrown by `readRefs` keeping its identity. The reviewer's own R2 GAP test asserts the old plain-`Error` behavior and is expected to fail now; it was not run here.
+
+**Gates on commit `16216de6`** (host `dist` rebuilt first):
+
+| Gate | Result |
+| --- | --- |
+| `python3 -I lab/acceptance/build_contract.py --verify` (own step) | exit 0, second regeneration byte-identical; `lab/acceptance` not edited |
+| `node --import tsx --test lab/bench/di01*.test.ts` | 18/18 passed |
+| Lab PACK gate (offline npm shim, cache from `CX-VA01-040`) | PASS: 12 tarballs, clean consumer install, entry-point and CLI checks. First attempt retained as `pack-attempt1*`: my wrapper resolved `npm` to the offline shim, which recursed into itself, and I killed it; it is not a code failure. |
+| Evaluator `claim.test.mjs` + `claim-round2.test.mjs` | 108 passed, 0 failed, 0 skipped; run on `cb22f6be` (report commit; code identical to `16216de6`); log `evidence/CX-DI01-R3/evaluator.log` |
+
+**Pins.** `ConsumerStore.ts` and `feed/index.ts` hashes are unchanged from round 2 (`22ef8081…`, `944a7073…`). `DependencyIndex.ts` is the only host source changed; it is not a pinned acceptance path (`--verify` passes unchanged).
+
+**Rule 9a audit.** No PASS, verdict or receipt producer added or changed. New assertions: (content) tag, reason, requested basis and observed row coordinates compared with the fixture's actual values; (freshness) fresh temp databases per test; (binding) the consumer under test is the shipped `DependencyIndex` and `memoryReferenceReader`, the offending row is the one the test's reader returned; unchanged-state is a full-snapshot `deepEqual` before refusal and after reopen; retry asserts checkpoint token and reach answer.
+
+**What did not run.** Live X/Q/D reads or real retention expiry; fresh 10k trace, crash matrix, lag benchmark and feed-binding re-reads (consumer algorithm unchanged); G0; root `pnpm pack:check`; reviewer's verify/DI01 tests; independent re-review.

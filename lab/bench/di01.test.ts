@@ -101,7 +101,10 @@ test("failed pinned reads, invalid time references and deriver exceptions leave 
       { entity: "pl:a", attribute: "location", value: "loc:a", position: 2, validFrom: V_W0 },
     ],
   });
-  await assert.rejects(invalid.consume(null, page), /invalid basis/);
+  await assert.rejects(
+    invalid.consume(null, page),
+    (e: any) => e._tag === "BasisNotAvailable" && e.reason === "row-outside-basis",
+  );
   const future = r.add([["pl:a", "location", "loc:b"]], V_W0 + 1);
   await assert.rejects(invalid.consume(null, future), /fixed-valid-time/);
   invalid.close();

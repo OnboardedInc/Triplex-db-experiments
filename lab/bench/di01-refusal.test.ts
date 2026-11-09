@@ -281,3 +281,78 @@ test("a memory-reader refusal leaves the index unchanged across reopen and the s
   assert.equal(d.checkpoint("c")!.token, "1");
   d.close();
 });
+
+test("a reader that reports the requested basis but returns a row at a later position is refused by the consumer with the tagged error, state unchanged after reopen, same page then succeeds", async () => {
+  let future = true;
+  const reader = memoryReferenceReader({
+    sweepPage: async (_: any, basis: any) => ({
+      reportedBasis: basis,
+      rows: [
+        {
+          entityId: "pl:a",
+          attribute: "location",
+          value: triplexValue("location", "loc:a"),
+          position: future ? 2 : 1,
+          validFrom: V_W0,
+        },
+      ],
+    }),
+  } as any);
+  const file = path.join(dir, "future-row.db");
+  const r = new Replay();
+  const p1 = r.add([["pl:a", "location", "loc:a"]], V_W0);
+  let d = open(file, reader);
+  const before = snap(d);
+  await assert.rejects(d.consume(null, p1), (e: any) => {
+    refused(e, "row-outside-basis");
+    assert.deepEqual(e.requested, { position: 1, validAt: V_W0 });
+    assert.deepEqual(e.observedRow, {
+      entity: "pl:a",
+      attribute: "location",
+      position: 2,
+      validFrom: V_W0,
+    });
+    return true;
+  });
+  assert.deepEqual(snap(d), before);
+  assert.equal(d.checkpoint("c"), null);
+  d.close();
+  d = open(file, reader);
+  assert.deepEqual(snap(d), before);
+  future = false;
+  await d.consume(null, p1);
+  assert.equal(d.checkpoint("c")!.token, "1");
+  assert.deepEqual(d.reach([["loc:a", "jurisdiction"]], W0.R1.hash), ["pl:a"]);
+  d.close();
+});
+
+test("consumer row validation refuses retracted, unrequested and out-of-valid-time rows with the tagged error and keeps a backend error's identity", async () => {
+  const mk = (row: any) =>
+    open(path.join(dir, `bad-${Math.random().toString(36).slice(2)}.db`), async () => [row]);
+  const base = {
+    entity: "pl:a",
+    attribute: "location",
+    value: "loc:a",
+    position: 1,
+    validFrom: V_W0,
+  };
+  const page = () => new Replay().add([["pl:a", "location", "loc:a"]], V_W0);
+  for (const bad of [
+    { ...base, retractedPosition: 1 },
+    { ...base, entity: "pl:zzz" },
+    { ...base, validFrom: V_W0 + 1 },
+    { ...base, validTo: V_W0 + 5 },
+    { ...base, position: 0 },
+  ]) {
+    const d = mk(bad);
+    await assert.rejects(d.consume(null, page()), (e: any) => refused(e, "row-outside-basis"));
+    assert.equal(d.checkpoint("c"), null);
+    d.close();
+  }
+  const original = Object.assign(new Error("expired"), { _tag: "RetentionExpired" });
+  const d = open(path.join(dir, "backend.db"), async () => {
+    throw original;
+  });
+  await assert.rejects(d.consume(null, page()), (e: any) => e === original);
+  d.close();
+});
