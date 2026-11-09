@@ -308,3 +308,14 @@ Original `admitCore`/`qualifyClaim` decision sites and `lab/acceptance/` remain 
 only after evaluator bytes are committed for Q75a. No live/production acceptance or independent reviewer ACCEPT is claimed.
 
 Round 3 evaluator hash: `lab/bin/claim.mjs`, old `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`, new `1958810e9deb4ece3f3151c1d7268aa626d645cc3cd61012d784a79b0609d9a6`. No old evaluator hash occurs as a content pin in obligations/load-contract; no acceptance file was changed. Re-pinning remains with the contract builder.
+
+Round 3 checkpoint follow-up, audited before the next source commit: the first source-bound run at 933b11f2 passed 255/255
+(exit 0, final-attempt1.tap). Inspection then justified two additional NF2 content checks: a witness must name the **latest**
+consumer checkpoint visible by its crash time, and the crash must lie inside actual observed reader and writer spans (not only
+E9's interval). The independent crash fixture now records reader activity at both ends of that span. The added NF2 regression
+keeps all other evidence valid and proves stale snapshots and ended reader traffic each refuse FAULT-WITNESS-INVALID. Freshness,
+source/slot/input and planned injection binding are the same as audit item 3. The first passing run is retained as covering its
+old exact source; it is not claimed as verification of these added bytes. The 148-test focused suite passes; both full evaluator
+suites will be rerun after this source is committed.
+
+Final round 3 evaluator hash after the checkpoint follow-up: `fb9af98bc6b96888f1e64206cf9315dfac419893986b23dfea9a7512d26560d9` (old pre-round-3 hash `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`). No acceptance pins were edited.

@@ -90,7 +90,9 @@ export function attachIndependentCrash(f) {
     const snapshot={injectionId:inj.injectionId,checkpoint:String(i+1),pageFrontier:inj.pageFrontier,effectState:{'before-effect':'absent','after-effect':'uncommitted','after-checkpoint':'committed'}[inj.faultPointId]};
     return {format:'fault-witness/1',binding,...inj,events,eventsSha256:h(canonText(events)),snapshotHex:Buffer.from(canonText(snapshot)).toString('hex'),beforeTransaction:i,recoveryTransaction:i+1,checkpointOffset:String(i+1),recoveryOffset:String(i+2),replay:structuredClone(transactions[i+1].deliveries)};
   });
-  const reads=readsFor(plan.window,tr.readerLevel),ct=Object.fromEntries(Object.entries(tr).filter(([k])=>k!=='crashRun').map(([k,v])=>[k,typeof v==='function'?v:structuredClone(v)]));ct.binding=binding;
+  const reads=readsFor(plan.window,tr.readerLevel);
+  for(const r of [...reads]) {const at=BigInt(plan.window.endNs)-1000000n+BigInt(r.loop)*100n;reads.push({...r,readId:r.readId+'-tail',sentAtNs:String(at),receivedAtNs:String(at+100000n)});}
+  const ct=Object.fromEntries(Object.entries(tr).filter(([k])=>k!=='crashRun').map(([k,v])=>[k,typeof v==='function'?v:structuredClone(v)]));ct.binding=binding;
   const raw={format:'ns-events/1',binding,driver:tr.driver,events:{clockDomain:tr.clockDomain,clockDomains:tr.roles.map(role=>({role,domain:tr.clockDomain})),lagStart:'observer-bracket',window:plan.window,source,sourceBrackets,consumerBrackets,consumer,offers,reads,readers:readerRows(reads,plan.window),faults,noise:{grade:'GREEN'},crossChecks:sourceBrackets.flatMap((b,i)=>[{role:'source',position:b.position,atNs:b.L},{role:'consumer',position:b.position,atNs:consumerBrackets[i].U}])}};
   tr.crashRun=reseal(raw,ct);return f;
 }

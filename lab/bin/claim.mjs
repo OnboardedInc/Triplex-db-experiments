@@ -1932,6 +1932,7 @@ export function recomputeNS(bundle, trusted) {
       nsAssert(f.format === 'fault-witness/1' && same(f.binding, raw.binding) && nsHash(f.eventsSha256) && f.eventsSha256 === sha256(canonText(f.events)) && !witnessHashes.has(f.eventsSha256) && f.events?.some(x => x.transition === 'cgroup-gone' && nsTime(x.t) <= drain), 'FAULT-WITNESS-INVALID');
       const gone=f.events.filter(x=>x.transition==='cgroup-gone');
       nsAssert(gone.length===1 && nsTime(gone[0].t)>=start && nsTime(gone[0].t)<end && !crashTimes.has(gone[0].t) && nsText(f.injectionId) && !injectionIds.has(f.injectionId), 'FAULT-WITNESS-INVALID', 'crash not distinct/in traffic');
+      nsAssert(e.offers.some(o=>nsTime(o.sentAtNs)<nsTime(gone[0].t)) && e.offers.some(o=>nsTime(o.sentAtNs)>nsTime(gone[0].t)) && e.reads.some(r=>nsTime(r.receivedAtNs)<nsTime(gone[0].t)) && e.reads.some(r=>nsTime(r.sentAtNs)>nsTime(gone[0].t)), 'FAULT-WITNESS-INVALID','crash outside active reader/writer span');
       const injection=trace.injections?.find(x=>x.injectionId===f.injectionId);
       nsAssert(injection && injection.faultPointId===f.faultPointId && same(injection.pageFrontier,f.pageFrontier) && gone[0].injectionId===f.injectionId, 'FAULT-WITNESS-INVALID', 'injection not in frozen crash plan');
       crashTimes.add(gone[0].t); injectionIds.add(f.injectionId);
@@ -1943,6 +1944,7 @@ export function recomputeNS(bundle, trusted) {
       nsAssert(nsPos(beforeFrontier)[2] === checkpoint && nsPos(afterFrontier)[2] === BigInt(f.recoveryOffset), 'FAULT-WITNESS-INVALID', 'checkpoint anchors disagree with WAL');
       const beforeBracket=consumerBrackets.get(canonText(beforeFrontier)), afterBracket=consumerBrackets.get(canonText(afterFrontier));
       nsAssert(beforeBracket && afterBracket && nsTime(beforeBracket.U)<=nsTime(gone[0].t) && nsTime(afterBracket.L)>nsTime(gone[0].t), 'FAULT-WITNESS-INVALID', 'checkpoint/recovery not bound to crash time');
+      nsAssert([...consumerBrackets.values()].filter(b=>nsTime(b.U)<=nsTime(gone[0].t)).every(b=>nsComparePosition(b.position,beforeFrontier)<=0), 'FAULT-WITNESS-INVALID', 'checkpoint is stale at crash time');
       const snapshot=trusted.normalizeFault?.(f,raw.binding);
       const expectedState={'before-effect':'absent','after-effect':'uncommitted','after-checkpoint':'committed'}[f.faultPointId];
       nsAssert(snapshot && snapshot.injectionId===f.injectionId && same(snapshot.checkpoint,beforeFrontier) && same(snapshot.pageFrontier,f.pageFrontier) && snapshot.effectState===expectedState && same(f.pageFrontier,f.faultPointId==='after-checkpoint'?beforeFrontier:afterFrontier), 'FAULT-WITNESS-INVALID', 'fault-point snapshot disagrees');

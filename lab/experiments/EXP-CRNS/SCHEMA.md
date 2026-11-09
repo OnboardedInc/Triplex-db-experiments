@@ -209,3 +209,8 @@ P5 during-sweep start/end equal the complete evaluator-verified sweep start/end.
 the supported E8 representation is one-second periods. Every period of the whole sweep must contain measured 64-loop correct
 completions **and** writer offers. Missing even one period refuses; a self-selected one-second segment cannot stand for a
 100-second sweep. Baseline remains outside the sweep and must match the independently pinned calibration/workload.
+
+Crash checkpoint consistency also requires maximality: no later source position may have a consumer bracket U <= crash time
+than the declared before-crash checkpoint. The crash lies between observed reader activity on both sides, and writer offers on
+both sides, as well as inside E9. Thus an idle/end-of-traffic interval or a stale but historically valid checkpoint cannot prove
+resume. The extra activity and brackets remain authenticated observations, not a candidate hook assertion.

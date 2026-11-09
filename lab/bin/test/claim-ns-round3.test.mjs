@@ -62,3 +62,8 @@ test('NF6 P4 history baseline cannot inflate below its absolute bars to hide dep
  f.raw.events.historyResources.forEach(r=>r.endNs='5000000');f.raw.events.historyPulls.forEach(p=>p.receivedAtNs=p.depth===1?'4000000':'4400000');
  const r=refuse(f,'P4-HISTORY-BAR');assert.equal(r.measurements.P4.history.reason,'BASELINE-INFLATED');
 });
+
+test('NF2 crash checkpoint is latest visible and lies within actual reader/writer traffic span',()=>{
+ const f=fixture();mutantCrash(f,e=>{const f=e.faults[1];f.beforeTransaction=0;f.checkpointOffset='1';f.replay=e.consumer.transactions.slice(1,3).flatMap(t=>t.deliveries);const s=JSON.parse(Buffer.from(f.snapshotHex,'hex').toString());s.checkpoint='1';f.snapshotHex=Buffer.from(canonText(s)).toString('hex');});let c=f.trusted.crashRun;let r=recomputeNS(c.bundle,c.trusted);assert.ok(r.reasons.some(x=>x.code==='FAULT-WITNESS-INVALID'&&/stale/.test(x.detail)),canonText(r));
+ const g=fixture();mutantCrash(g,e=>{e.reads=e.reads.filter(r=>!r.readId.endsWith('-tail'));});c=g.trusted.crashRun;r=recomputeNS(c.bundle,c.trusted);assert.ok(r.reasons.some(x=>x.code==='FAULT-WITNESS-INVALID'&&/active reader/.test(x.detail)),canonText(r));
+});

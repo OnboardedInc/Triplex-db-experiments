@@ -127,11 +127,12 @@ test('C0 round 2 baseline is RECOMPUTED with resume and met', () => {
 
 // ------------------------------------------------------------------ O7/O8 variant: resume witness not bound to the crash
 test('V-O7 crash companion whose 9 witnesses crash at t=0 (before any traffic) and all cite one 1-transaction range is refused', () => {
-  const w = world();
-  crashCompanion(w, (c, e) => ({ beforeTransaction: -1, recoveryTransaction: 0, checkpointOffset: null, recoveryOffset: e.source.entries[0].offset, replay: structuredClone(c.transactions[0].deliveries) }));
-  const r = run(w);
-  assert.equal(r.bars.P3.resume, false);
-  accepted(r, 'resume from crashes that hit an idle consumer');
+  const w=world(),c=w.trusted.crashRun,raw=JSON.parse(c.bundle.payload);
+  for(const f of raw.events.faults){f.events[0].t='0';f.eventsSha256=H(canonText(f.events));}
+  w.trusted.crashRun=reseal(raw,c.trusted);
+  const bad=recomputeNS(w.trusted.crashRun.bundle,w.trusted.crashRun.trusted);assert.ok(codes(bad).includes('FAULT-WITNESS-INVALID'));
+  const r=run(w);assert.equal(r.bars.P3.resume,false);accepted(r,'resume from crashes before traffic');
+
 });
 
 // ------------------------------------------------------------------ O6/O12 variant: readers that do no real work
