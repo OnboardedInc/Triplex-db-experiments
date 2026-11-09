@@ -4,7 +4,7 @@ import { createInterface } from "node:readline";
 import { createGunzip } from "node:zlib";
 import { randomUUID, createHash } from "node:crypto";
 import { memoryComposition } from "./lib/memory.ts";
-import { fingerprintSweep } from "./lib/w0-fingerprint.ts";
+import { freezeMemoryG0, fingerprintSweep } from "./lib/w0-fingerprint.ts";
 import { recoverSweep } from "./lib/sweep-recovery.ts";
 import { runMemoryRounds } from "./lib/w0-rounds.ts";
 import { W0, V_W0, sha256 } from "./lib/w0-world.ts";
@@ -33,7 +33,7 @@ const report: any = {
   status: "RUNNING",
   sources: {},
 };
-for (const f of fs.readdirSync("lab/bench/lib").filter((f) => f.endsWith(".ts")))
+for (const f of fs.readdirSync("lab/bench/lib").filter((f) => /\.(ts|py)$/.test(f)))
   report.sources[f] = sha256(fs.readFileSync("lab/bench/lib/" + f));
 report.entrySourceSha256 = sha256(fs.readFileSync(new URL(import.meta.url)));
 report.runtime = { node: process.version, lockSha256: sha256(fs.readFileSync("pnpm-lock.yaml")) };
@@ -74,7 +74,7 @@ try {
     expected,
     counts: prior.seed.counts,
   };
-  report.g0 = await fingerprintSweep(admission);
+  report.g0 = await fingerprintSweep({ ...admission, pin: await freezeMemoryG0(comp, admission) });
   save();
   console.error("[P5 R2] ten actual controller process stops");
   const activation = await comp.transact(

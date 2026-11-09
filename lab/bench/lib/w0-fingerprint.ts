@@ -1,7 +1,15 @@
-import { performance } from "node:perf_hooks";
 import { createHash } from "node:crypto";
 import { W0, canonical, worldOf, reachableRows, w0Basis, type PositionBasis } from "./w0-world.ts";
 import type { CompositionHandle } from "./composition.ts";
+import {
+  admitG0,
+  readG0,
+  fields,
+  type Pin,
+  type Reader,
+  type Expected,
+  type W0Check,
+} from "./g0.ts";
 import { loadW0Pins } from "./evaluate.ts";
 export interface W0Fingerprint {
   basisTx: number;
@@ -17,6 +25,7 @@ export interface FingerprintInput {
   counts: Record<string, number>;
   deadlineMs?: number;
   signal?: AbortSignal;
+  pin?: Pin;
 }
 export class FingerprintRefusal extends Error {
   readonly _tag = "FingerprintRefusal";
@@ -32,11 +41,9 @@ export async function readW0Fingerprint(
   basis: PositionBasis,
   signal: AbortSignal,
   observePage?: (records: readonly any[], page: number) => void,
-  deadline = Infinity,
 ): Promise<W0Fingerprint> {
   const check = () => {
     signal.throwIfAborted();
-    if (performance.now() >= deadline) throw new FingerprintRefusal("read deadline");
   };
   check();
   W0.rung(N);
@@ -106,80 +113,104 @@ const openDefault: OpenFingerprintReader = async (endpoint, scope) => {
       : await (await import("./composition.ts")).openComposition("public", "xtdb", scope);
   return { endpoint: comp.backend.url, scope, comp, close: () => comp.close() };
 };
+// [EXP-P5-R3] Why: one admission coordinator owns D and W0 comparison; this module only streams the subordinate world component. Rejected: a second snapshot-only admission digest (F1).
+export function w0Check(
+  comp: CompositionHandle,
+  input: FingerprintInput,
+  observer?: FingerprintReader["observePage"],
+): W0Check {
+  return {
+    N: input.expected.N,
+    oracle: {
+      rung: { N: input.expected.N },
+      seed: "W0-pop-1",
+      sources: { binding: "pre-pinned P5 expectation" },
+      invalidWorlds: [],
+      fingerprint: input.expected,
+    },
+    read: (signal) => readW0Fingerprint(comp, input.expected.N, input.basis, signal, observer),
+  };
+}
+export async function freezeMemoryG0(
+  comp: CompositionHandle,
+  input: FingerprintInput,
+): Promise<Pin> {
+  if (!comp.g0Reader) throw new FingerprintRefusal("full-content reader required");
+  const reader = comp.g0Reader(input.scope),
+    counts: Record<string, number> = {};
+  for (const t of Object.keys(fields))
+    counts[t] = await reader.count(t, input.scope, new AbortController().signal);
+  return readG0(
+    reader,
+    { scope: input.scope, position: input.basis.position, world: "W0", counts },
+    w0Check(comp, input),
+    input.deadlineMs,
+  );
+}
 export async function fingerprintSweep(
   input: FingerprintInput,
   open: OpenFingerprintReader = openDefault,
 ) {
-  const ms = input.deadlineMs ?? 600_000;
-  if (
-    !Number.isFinite(ms) ||
-    ms <= 0 ||
-    !input.endpoint ||
-    !input.scope ||
-    !Number.isSafeInteger(input.expected?.N) ||
-    input.expected.N < 50 ||
-    input.expected.basisTx !== input.basis.position ||
-    !Number.isSafeInteger(input.expected.facts) ||
-    input.expected.facts < 1 ||
-    ![input.expected.worlds, input.expected.R2].every((d) => /^sha256:[0-9a-f]{64}$/.test(d)) ||
-    !Object.keys(input.counts).length ||
-    Object.values(input.counts).some((n) => !Number.isSafeInteger(n) || n < 0)
-  )
-    throw new FingerprintRefusal("invalid pre-pinned expectation");
-  const controller = new AbortController(),
-    signal = input.signal ? AbortSignal.any([controller.signal, input.signal]) : controller.signal;
-  const deadline = performance.now() + ms;
-  let timer: ReturnType<typeof setTimeout>;
-  let reader: FingerprintReader | undefined;
-  const work = async () => {
-    reader = await open(input.endpoint, input.scope);
-    if (reader.endpoint !== input.endpoint || reader.scope !== input.scope)
+  let h: FingerprintReader | undefined, native: { close(): Promise<void> } | undefined;
+  try {
+    if (!input.pin) throw new FingerprintRefusal("pre-freeze full-content pin required");
+    if (input.signal?.aborted) throw new FingerprintRefusal("aborted");
+    h = await open(input.endpoint, input.scope);
+    if (
+      h.endpoint !== input.endpoint ||
+      h.scope !== input.scope ||
+      h.comp.backend.url !== input.endpoint
+    )
       throw new FingerprintRefusal("endpoint/scope binding mismatch");
-    const counts = async () => {
-      const actual = await reader!.comp.storeCounts();
-      for (const [k, v] of Object.entries(input.counts))
-        if (actual[k] !== v) throw new FingerprintRefusal("count mismatch: " + k);
+    let reader: Reader;
+    if (h.comp.g0Reader) reader = h.comp.g0Reader(input.pin.scope);
+    else {
+      const g = await (await import("./g0-xtdb.ts")).openG0(input.endpoint);
+      native = g;
+      reader = {
+        ...g.reader,
+        scopes: async (signal) =>
+          (await g.reader.scopes(signal)).map((r) => ({
+            ...r,
+            scope_key: r.scope_key === g.scopeKey(input.scope) ? input.pin!.scope : r.scope_key,
+          })),
+        scan: (t, _s, signal) => g.reader.scan(t, input.scope, signal),
+        count: (t, _s, signal) => g.reader.count(t, input.scope, signal),
+      };
+    }
+    if (reader.endpoint !== input.endpoint)
+      throw new FingerprintRefusal("full-content reader endpoint binding mismatch");
+    const expected: Expected = {
+      scope: input.pin.scope,
+      position: input.basis.position,
+      world: "W0",
+      counts: input.pin.counts,
     };
-    await counts();
-    const observed = await readW0Fingerprint(
-      reader.comp,
-      input.expected.N,
-      input.basis,
-      signal,
-      reader.observePage,
-      deadline,
-    );
-    await counts();
-    for (const k of ["basisTx", "facts", "worlds", "R2"] as const)
-      if (observed[k] !== input.expected[k]) throw new FingerprintRefusal("content mismatch: " + k);
-    signal.throwIfAborted();
-    if (performance.now() >= deadline) throw new FingerprintRefusal("read deadline");
-    // [EXP-P5-R2] Why: only this complete fresh content comparison grants; process/readiness diagnostics are never inputs. Rejected: accepting an old PASS or matching copy hash (Q93a).
+    const checked = w0Check(h.comp, input, h.observePage);
+    if (input.signal) {
+      const read = checked.read;
+      checked.read = (s) => read(AbortSignal.any([s, input.signal!]));
+    }
+    const counts = await h.comp.storeCounts();
+    for (const [k, v] of Object.entries(input.counts))
+      if (counts[k] !== v) throw new FingerprintRefusal("count mismatch: " + k);
+    const admission = await admitG0(reader, input.pin, expected, checked, input.deadlineMs);
+    const endCounts = await h.comp.storeCounts();
+    for (const [k, v] of Object.entries(input.counts))
+      if (endCounts[k] !== v) throw new FingerprintRefusal("end count mismatch: " + k);
     return {
       status: "complete-and-matching" as const,
       endpoint: input.endpoint,
       scope: input.scope,
       basis: input.basis,
-      observed,
+      observed: input.pin.w0,
+      counts: { start: counts, end: endCounts },
+      admission,
     };
-  };
-  try {
-    return await Promise.race([
-      work(),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => {
-          controller.abort();
-          reject(new FingerprintRefusal("read deadline"));
-        }, ms);
-        signal.addEventListener("abort", () => reject(new FingerprintRefusal("aborted")), {
-          once: true,
-        });
-      }),
-    ]);
   } catch (e) {
     throw e instanceof FingerprintRefusal ? e : new FingerprintRefusal(String(e));
   } finally {
-    clearTimeout(timer!);
-    if (reader) await reader.close();
+    await h?.close();
+    await native?.close();
   }
 }

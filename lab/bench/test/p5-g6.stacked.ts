@@ -2,6 +2,8 @@
  * North star: P5 correctness at named P; scope/targets are lab/SCOPE.md, NORTH-STAR.md, TARGETS.md.
  * This qualifies memory sweep routing only; engine maintenance remains a live qualification gap.
  */
+import { loadReplayPin } from "../lib/evaluate.ts";
+import { DomainOracle } from "../lib/w0-gates.ts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
@@ -13,6 +15,25 @@ const api: any = await import(testkitUrl);
 if (!api.runRouteEquivalence)
   throw new Error("G6 requires EXP-RQ01 built testkit; this is a stacked commit");
 
+async function independentRun(options: any) {
+  await loadReplayPin();
+  const replay = new DomainOracle("./w0-replay.py", JSON.stringify);
+  try {
+    return await api.runRouteEquivalence({
+      ...options,
+      reference: {
+        name: "O-REPLAY incremental Engine/plan/apply + views",
+        answer: async (history: any, request: any, contract: any) => {
+          const result = JSON.parse(await replay.call("route", { history, request, contract }));
+          if (result.refusal) throw new api.RouteRefusal(result.refusal, "oracle future basis");
+          return result;
+        },
+      },
+    });
+  } finally {
+    replay.close();
+  }
+}
 function fixture() {
   const base = api.makeOfflineRouteFixture("xtdb");
   let instant = 0;
@@ -172,7 +193,7 @@ for (const seed of [1, 42, 890])
     const requests = api
       .generateRouteBases(h)
       .filter((r: any) => ["P", "T", "TP"].includes(api.routeShape(r)));
-    const result = await api.runRouteEquivalence({
+    const result = await independentRun({
       fixture: fixture(),
       history: h,
       requests,
@@ -202,7 +223,7 @@ for (const mutation of ["wrong-value", "fail-open"])
             },
       );
     const history = api.generateRouteHistory(42);
-    const result = await api.runRouteEquivalence({
+    const result = await independentRun({
       fixture: { ...original, routes },
       history,
       requests: api.generateRouteBases(history).filter((r: any) => api.routeShape(r) === "P"),

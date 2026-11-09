@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { performance } from "node:perf_hooks";
 import { memoryComposition } from "../lib/memory.ts";
 import { W0, V_W0, triplexValue } from "../lib/w0-world.ts";
-import { readW0Fingerprint, fingerprintSweep } from "../lib/w0-fingerprint.ts";
+import { freezeMemoryG0, readW0Fingerprint, fingerprintSweep } from "../lib/w0-fingerprint.ts";
 test("CPU-bound fingerprint work cannot grant after its elapsed deadline", async () => {
   const scope = randomUUID(),
     comp = memoryComposition("xtdb", scope);
@@ -19,7 +19,7 @@ test("CPU-bound fingerprint work cannot grant after its elapsed deadline", async
           validFrom: 0,
         },
       ],
-      {},
+      { commandId: "deadline-" + i },
     );
   const basis = { position: 50, validAt: V_W0 },
     expected = {
@@ -27,9 +27,16 @@ test("CPU-bound fingerprint work cannot grant after its elapsed deadline", async
       N: 50,
     },
     counts = await comp.storeCounts();
+  const pin = await freezeMemoryG0(comp, {
+    endpoint: `memory://${scope}`,
+    scope,
+    basis,
+    expected,
+    counts,
+  });
   await assert.rejects(
     fingerprintSweep(
-      { endpoint: `memory://${scope}`, scope, basis, expected, counts, deadlineMs: 1 },
+      { endpoint: `memory://${scope}`, scope, basis, expected, counts, pin, deadlineMs: 1 },
       async () => ({
         endpoint: `memory://${scope}`,
         scope,

@@ -1,3 +1,4 @@
+import { CountLedger } from "./w0-counts.ts";
 import { DomainOracle, wireRecord, emptyWireState } from "./w0-gates.ts";
 import { fork } from "node:child_process";
 import { Rng, seedOf } from "./rng.ts";
@@ -23,6 +24,7 @@ export async function recoverSweep(o: {
     count = o.stops ?? 10;
   if (pages < count || count < 1)
     throw new Error("G4 needs enough distinct pages for process stops");
+  const ledger = new CountLedger(await o.comp.storeCounts());
   const oracle = new DomainOracle();
   let expectedState: any = emptyWireState();
   const rng = new Rng(seedOf(o.seed));
@@ -112,6 +114,9 @@ export async function recoverSweep(o: {
               throw new Error("G4 delivery bytes differ from independent reference");
             if (value.retry) retries++;
             else {
+              if (!value.operations || !value.receipt)
+                throw Error("G9 missing publication receipt");
+              ledger.add(value.operations, value.receipt);
               publications++;
               for (const d of value.deliveries) {
                 const key = d.id + ":" + d.seq;
@@ -175,6 +180,7 @@ export async function recoverSweep(o: {
         canonical([...expectedDeliveries.entries()].sort())
     )
       throw new Error("G4 first publications/delivery coverage mismatch");
+    const counts = await ledger.finish(o.comp);
     // [EXP-P5-R2] Why: actual abrupt controller exits, unchanged owner, persisted page cursor and byte-equal outputs establish restart behavior. Rejected: caught callbacks pretending to be a process stop.
     return {
       status: "PASS" as const,
@@ -192,6 +198,7 @@ export async function recoverSweep(o: {
       complete: true,
       referencePublication: false,
       referenceCounts,
+      counts,
       oracle: "fresh O-DOMAIN publish; reference never writes the outbox",
     };
   } finally {

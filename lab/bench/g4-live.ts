@@ -5,7 +5,7 @@ import { createInterface } from "node:readline";
 import { createGunzip } from "node:zlib";
 import { randomUUID, createHash } from "node:crypto";
 import { memoryComposition } from "./lib/memory.ts";
-import { fingerprintSweep } from "./lib/w0-fingerprint.ts";
+import { freezeMemoryG0, fingerprintSweep } from "./lib/w0-fingerprint.ts";
 import { recoverSweep } from "./lib/sweep-recovery.ts";
 import { subjectList } from "./lib/sweep.ts";
 import { W0, V_W0, sha256 } from "./lib/w0-world.ts";
@@ -13,7 +13,9 @@ const [input, output] = process.argv.slice(2);
 if (
   !input ||
   !output ||
-  !path.resolve(output).startsWith(path.resolve("runs") + path.sep) ||
+  ![path.resolve("runs"), "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A"].some((root) =>
+    path.resolve(output).startsWith(root + path.sep),
+  ) ||
   fs.existsSync(output)
 )
   throw new Error("fresh owned output required");
@@ -24,7 +26,7 @@ const prior = JSON.parse(fs.readFileSync(input, "utf8")),
 const sources = Object.fromEntries(
   fs
     .readdirSync("lab/bench/lib")
-    .filter((f) => f.endsWith(".ts"))
+    .filter((f) => /\.(ts|py)$/.test(f))
     .map((f) => [f, sha256(fs.readFileSync("lab/bench/lib/" + f))]),
 );
 const report: any = {
@@ -59,12 +61,16 @@ try {
   }
   if (hash.digest("hex") !== prior.seed.logSha256) throw new Error("seed bytes differ");
   const basis0 = { position: prior.seed.basis.tx, validAt: V_W0 };
-  report.g0 = await fingerprintSweep({
+  const admissionInput = {
     endpoint: `memory://${scope}`,
     scope,
     basis: basis0,
     expected: { ...prior.seed.fingerprint, N: prior.N },
     counts: prior.seed.counts,
+  };
+  report.g0 = await fingerprintSweep({
+    ...admissionInput,
+    pin: await freezeMemoryG0(comp, admissionInput),
   });
   const activation = await comp.transact(
     [
