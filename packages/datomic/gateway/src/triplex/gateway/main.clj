@@ -50,7 +50,7 @@
     (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))
     ;; [EXP-DA00] Why: releasing the last mem peer may destroy it before delete. Rejected: release-first (selftest-3 returned false).
     (let [deleted (d/delete-database uri)]
-      (.clear ^java.util.concurrent.ConcurrentHashMap reach/ids)
+      (reach/forget! name)
       (when-let [conn (@connections uri)] (d/release conn) (swap! connections dissoc uri))
         {:db name :deleted deleted})))
 (defn basis [base name]
@@ -62,6 +62,8 @@
        :position (codec/encode-value "long" (:triplex.scope/position entity))
        :recordedAt nil :schemaHash (:triplex.scope/schema-hash entity)})))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
+(defn timed [start response]
+  (assoc-in response [:headers "x-tx2-gateway-micros"] (str (quot (- (System/nanoTime) start) 1000))))
 (defn request-json [body]
   (when-not body (codec/invalid "Missing JSON body"))
   (let [bytes (.readNBytes ^java.io.InputStream body 4194305)]
@@ -86,22 +88,22 @@
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
         (response 200 (assoc (feed/log-page (connection (db-uri name)) params) :database name)))
       (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
-      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) db-uri (db-uri name)]
-        (try (response 200 (storage/commit! (connection db-uri) (sync-db db-uri) input))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime) db-uri (db-uri name)]
+        (try (timed start (response 200 (storage/commit! (connection db-uri) (sync-db db-uri) input)))
              (finally (when (get input "release") (storage/release! name (get input "handle"))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
-      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)]
-        (response 200 (storage/begin-command! name (sync-db (db-uri name)) input)))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)]
+        (timed start (response 200 (storage/begin-command! name (sync-db (db-uri name)) input))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/reach" uri))
-      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
             conn (connection (db-uri name))
             db (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
                  (get input "basisWaitMs")
                  (fn [remaining] (if-let [t (get input "basisT")]
                                    (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
                                    (d/db conn))))]
-        {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
-         :body (reach/response conn db input)})
+        (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
+         :body (reach/response name db input)}))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name)
             input (when (= request-method :post) (request-json body))

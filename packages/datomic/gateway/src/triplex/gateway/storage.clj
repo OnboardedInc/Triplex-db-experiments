@@ -160,7 +160,9 @@
       {:status "committed" :position (codec/encode-value "long" p) :t (codec/encode-value "long" (d/tx->t (:db/id entity)))}
       {:status "absent"}) {:status "absent"}))
 (defn head-position [db]
-  (:triplex.scope/position (d/entity db (d/q '[:find ?s . :where [?s :triplex.scope/key]] db))))
+  (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))
+        ^datomic.Datom position (first (d/datoms db :eavt (.e scope) :triplex.scope/position))]
+    (.v position)))
 (defn unavailable! [message]
   (throw (ex-info message {:status 409 :code "BasisNotAvailable"})))
 ;; [EXP-DA01] Why: future cuts must wait for publication, never silently answer from the head (Q89c/d). Rejected: treating P >= head as latest.
