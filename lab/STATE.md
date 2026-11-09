@@ -260,3 +260,10 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   live_rows, which R45 may change; QH1 starts on the new layout. RT01 live G6 waits for host disk above 10 GiB (7.8 GiB now).
 - 2026-11-09 EXP-PACK merged (3d9dca59; verify/PACK d4a7d225): the lab pack gate lists packages from the pnpm workspace, imports every
   public entry point in a fresh process, and reports DuckDB as out of scope. Builders and reviewers use it instead of check-packages.mjs.
+- 2026-11-09 disk rule addition: large stores in evidence that a report has already analyzed are compressed in place (tar | zstd, verified
+  with zstd -t and a hash of the main file after extraction, original hashes in ORIGINAL-SHA256SUMS.txt, a COMPRESSED.txt note), never
+  deleted. P5B's 10k store and seed (11.8 GB) became a 372 MB archive; host free went from 6.7 to 18 GiB. P2X2's node_modules copies were
+  archived the same way. Slot queue now: RT01 live G6 (running), then DF01 live on datomic-dev (DF01 ACCEPT-OFFLINE, verify/DF01
+  c98bbff8), then the M01 A/A calibration window, OBS01, P3 screening per Q99d.
+- NSR F2 moved from in-process loader guards to a filesystem boundary (round 4): the driver's runtime layout holds only the closed
+  artifact, enforced offline with Node's permission model.
