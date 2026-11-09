@@ -1,6 +1,11 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": { "rootDir": "../..", "noEmit": true },
-  "include": ["runtime.types.ts", "runtime.test.ts", "read-basis-scope.types.ts"],
+  "include": [
+    "runtime.types.ts",
+    "read-errors.test.ts",
+    "runtime.test.ts",
+    "read-basis-scope.types.ts"
+  ],
   "exclude": []
 }

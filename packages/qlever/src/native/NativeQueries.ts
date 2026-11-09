@@ -4,6 +4,7 @@ import { readOnlyQleverClient } from "../ReadOnlyClient.js";
 import type { TypeExpr } from "@triplex-build/triplex/config";
 import {
   ReadError,
+  BasisNotAvailable,
   decodeNativeParameters,
   decodeNativeRows,
   nativeEvidenceValue,
@@ -211,7 +212,7 @@ const nativeQueries = (
       };
     }).pipe(
       Effect.mapError((cause) =>
-        cause instanceof ReadError
+        cause instanceof BasisNotAvailable || cause instanceof ReadError
           ? cause
           : new ReadError({ message: "Invalid QLever native query contract or result", cause }),
       ),

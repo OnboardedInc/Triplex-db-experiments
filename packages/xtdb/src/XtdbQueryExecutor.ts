@@ -4,6 +4,7 @@ import { readOnlyXtdbClient, readPathBase } from "./ReadOnlyClient.js";
 import {
   QueryExecutor,
   ReadError,
+  BasisNotAvailable,
   DatalogValidationError,
   UnboundVariableError,
   type QueryExecutorService,
@@ -24,6 +25,7 @@ import { CurrentTransactions } from "./TransactionContext.js";
 import { clientWithOverlay } from "./query/overlay.js";
 
 const failure = (cause: unknown) =>
+  cause instanceof BasisNotAvailable ||
   cause instanceof ReadError ||
   cause instanceof DatalogValidationError ||
   cause instanceof UnboundVariableError

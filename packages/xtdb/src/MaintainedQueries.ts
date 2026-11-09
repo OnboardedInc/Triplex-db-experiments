@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readOnlyXtdbClient } from "./ReadOnlyClient.js";
 import { Effect } from "effect";
 import type { DatalogQuery } from "@triplex-build/triplex/datalog";
-import { ReadError, type QueryContext } from "@triplex-build/triplex/runtime";
+import { ReadError, BasisNotAvailable, type QueryContext } from "@triplex-build/triplex/runtime";
 import type { XtdbClient } from "./XtdbClient.js";
 import { canonicalJson } from "./codecs.js";
 import { compileXtdb, type QueryBasis } from "./query/compiler.js";
@@ -252,7 +252,7 @@ const maintainedQueries = (client: XtdbClient, scopeKey: string) => {
     };
   };
   const failure = (cause: unknown) =>
-    cause instanceof ReadError
+    cause instanceof BasisNotAvailable || cause instanceof ReadError
       ? cause
       : new ReadError({ message: "XTDB maintained query failed", cause });
 

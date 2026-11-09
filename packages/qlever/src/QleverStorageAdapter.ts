@@ -6,6 +6,7 @@ import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/tr
 import {
   WriteError,
   ReadError,
+  BasisNotAvailable,
   MigrationError,
   TransactionOutcomeUnknown,
   type StorageAdapterService,
@@ -100,7 +101,7 @@ export const makeQleverStorageAdapter = (
     Effect.tryPromise({
       try: thunk,
       catch: (cause) =>
-        cause instanceof ReadError
+        cause instanceof BasisNotAvailable || cause instanceof ReadError
           ? cause
           : new ReadError({ message: "QLever read failed", cause }),
     });

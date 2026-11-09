@@ -10,6 +10,7 @@ import {
   type QueryPattern,
   WriteError,
   ReadError,
+  BasisNotAvailable,
   MigrationError,
   TransactionOutcomeUnknown,
 } from "@triplex-build/triplex/runtime";
@@ -168,7 +169,9 @@ export const makeXtdbStorageAdapter = (
     Effect.tryPromise({
       try: thunk,
       catch: (cause) =>
-        cause instanceof ReadError ? cause : new ReadError({ message: "XTDB read failed", cause }),
+        cause instanceof BasisNotAvailable || cause instanceof ReadError
+          ? cause
+          : new ReadError({ message: "XTDB read failed", cause }),
     });
   const currentCut = () => read((signal) => readXtdbCut(client, scopeKey, signal));
   const committedPosition = () => Effect.map(currentCut(), (cut) => cut.position);

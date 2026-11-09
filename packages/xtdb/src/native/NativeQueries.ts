@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { readOnlyXtdbClient } from "../ReadOnlyClient.js";
 import {
   ReadError,
+  BasisNotAvailable,
   decodeNativeParameters,
   decodeNativeRows,
   nativeEvidenceValue,
@@ -176,7 +177,7 @@ const nativeQueries = (client: XtdbClient, scope: DatabaseScope) => {
       };
     }).pipe(
       Effect.mapError((cause) =>
-        cause instanceof ReadError
+        cause instanceof BasisNotAvailable || cause instanceof ReadError
           ? cause
           : new ReadError({ message: "Invalid XTDB native query contract or result", cause }),
       ),

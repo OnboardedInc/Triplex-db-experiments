@@ -101,12 +101,13 @@ export class ConstraintViolationError extends Data.TaggedError("ConstraintViolat
 }> {}
 
 // Read operation errors
-export class ReadError extends Data.Error<{
+const NormalReadError = class ReadError extends Data.TaggedError("ReadError")<{
   readonly message: string;
   readonly cause?: unknown;
-}> {
-  readonly _tag: "ReadError" | "BasisNotAvailable" = "ReadError";
-}
+}> {};
+// [EXP-RT01] Why: preserve normal catchTag narrowing and add a separately discriminated basis failure. Rejected: a union-valued tag on the existing class (narrows ReadError handlers to never).
+export const ReadError = NormalReadError;
+export type ReadError = InstanceType<typeof NormalReadError> | BasisNotAvailable;
 
 export class EntityNotFoundError extends Data.TaggedError("EntityNotFoundError")<{
   readonly entityId: EntityId;
@@ -239,28 +240,13 @@ export type TripleStoreError =
   | MigrationError;
 
 /** A named cut has not become available on this read surface. */
-export class BasisNotAvailable extends ReadError {
-  override readonly _tag = "BasisNotAvailable" as const;
+export class BasisNotAvailable extends Data.TaggedError("BasisNotAvailable")<{
   readonly axis: "recordedPosition" | "recordedAt";
   readonly required: number;
   readonly observed: number;
   readonly waitedMs: number;
   readonly surface: string;
+  readonly message: string;
+}> {
   readonly reason = "record-time-not-reached";
-  constructor(input: {
-    axis: "recordedPosition" | "recordedAt";
-    required: number;
-    observed: number;
-    waitedMs: number;
-    surface: string;
-    message: string;
-  }) {
-    super(input);
-    Object.assign(this, input);
-    this.axis = input.axis;
-    this.required = input.required;
-    this.observed = input.observed;
-    this.waitedMs = input.waitedMs;
-    this.surface = input.surface;
-  }
 }

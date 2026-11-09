@@ -6,6 +6,7 @@ import {
   assertWrappedQuery,
   DatalogValidationError,
   ReadError,
+  BasisNotAvailable,
   UnboundVariableError,
   type QueryExecutorService,
   type QueryMetrics,
@@ -48,7 +49,10 @@ export interface QleverQueryOptions {
   readonly scalarOrderPlan?: "live";
 }
 const fail = (cause: unknown) =>
-  cause instanceof ReadError || cause instanceof DatalogValidationError || cause instanceof UnboundVariableError
+  cause instanceof BasisNotAvailable ||
+  cause instanceof ReadError ||
+  cause instanceof DatalogValidationError ||
+  cause instanceof UnboundVariableError
     ? cause
     : new ReadError({ message: `QLever Datalog execution failed: ${String(cause)}`, cause });
 const safeCount = (value: string | undefined): number => {

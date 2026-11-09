@@ -6,6 +6,7 @@ import {
   assertDatalogQuery,
   DatalogValidationError,
   ReadError,
+  BasisNotAvailable,
   type QueryContext,
 } from "@triplex-build/triplex/runtime";
 import type { QleverClient } from "./QleverClient.js";
@@ -202,7 +203,9 @@ const temporalQueries = (
         );
       },
       catch: (cause) =>
-        cause instanceof ReadError || cause instanceof DatalogValidationError
+        cause instanceof BasisNotAvailable ||
+        cause instanceof ReadError ||
+        cause instanceof DatalogValidationError
           ? cause
           : new ReadError({ message: "QLever interval query failed", cause }),
     }),

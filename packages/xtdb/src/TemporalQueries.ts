@@ -5,6 +5,7 @@ import type { DatalogQuery } from "@triplex-build/triplex/datalog";
 import {
   DatalogValidationError,
   ReadError,
+  BasisNotAvailable,
   type QueryContext,
 } from "@triplex-build/triplex/runtime";
 import type { XtdbClient } from "./XtdbClient.js";
@@ -233,7 +234,11 @@ const temporalQueries = (client: XtdbClient, scopeKey: string) => ({
         }));
       },
       catch: (cause) =>
-        cause instanceof ReadError || cause instanceof DatalogValidationError || cause instanceof ReadError
+        cause instanceof BasisNotAvailable ||
+        cause instanceof ReadError ||
+        cause instanceof DatalogValidationError ||
+        cause instanceof BasisNotAvailable ||
+        cause instanceof ReadError
           ? cause
           : new ReadError({ message: "XTDB interval query failed", cause }),
     }),
