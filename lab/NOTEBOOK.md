@@ -1926,3 +1926,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
 
 - **P2X2 ACCEPT (verify/P2X2 4155fda7), merged in 795aef4c.** F3 p50/p99 7.68/21.81 ms and F5 fresh 33.00/63.26 ms reproduce, and all 338 evidence hashes match. The native lane X P2 path stays closed (Q96d); lane X P2 now depends on EXP-P2B (XTDB behind the broker). Open: reader/full-trace, aged F6, strict no-wait. An irreducible indexer floor is not established.
 - **RT01 round 3 review: F4-F6 fixed, F7 high.** Entity-journal pages at a fixed snapshotPosition filter by the runtime clock (validAt = now against validFrom = stagedAt), so a backward clock empties a committed page. **Lesson:** a position-bound read must not take any clock input; the journal read path needs its own all-valid-time cut. CX-RT01 round 4 fixes it at one choke point, KV analogue included.
+
+## 2026-11-09: K01 round 12 diagnosis: G0's own expectation was wrong
+
+- **Cause (aec5a715):** G0 treated the seed's business assertion count (26,635) as the count of all tx_assertions rows. The public writer also stores the transaction journal there: 4 base rows per command, plus one changed-entity row per distinct entity per command, plus one change row per change. That gives 34,749 journal rows and 61,384 rows in total for the round 11 seed. No seed bug.
+- **What is still unknown:** the deleted volume's actual count was never captured, so an engine-side difference on top of this is not ruled out; the live rerun settles it.
+- **Lesson:** an expected count must come from the same rows the writer stores, journal included. A business-level count is a different quantity, even when the two share a table name. The live G0 refusal did its job: it stopped the run instead of admitting it.
+- **Next:** CX-VK01 reviews the fix offline; then the K01 live rerun (LIVE-round12) re-enters the scale window queue. P5 A1, which is running now, also admits through G0 and may stop on the same symptom.
