@@ -25,7 +25,7 @@ import {
  *    are guarded per subject; any other read escalates the commit to the scope-wide guard.
  */
 import { AsyncLocalStorage } from "node:async_hooks";
-import { H1DictionaryStale, h1Entity, h1EntityOf, h1Rows, type H1Dictionary, type H1Tuple } from "./h1.js";
+import { h1Entity, h1Rows, wholePullTuples, type H1Tuple } from "./h1.js";
 import { H1SnapshotExpired } from "./log.js";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Exit } from "effect";
@@ -245,19 +245,19 @@ export const makeQleverBrokerStorageAdapter = (
     readonly rows: Map<string, H1Tuple[]>;
     readonly known: Set<string>;
     readonly owners: Set<string>;
-    readonly dict: H1Dictionary;
   };
   const loadPrefetch = async (b: number, roots: readonly string[]): Promise<Prefetch> => {
-    const { answer, tuples, dictionary } = await broker.h1PullAt(b, roots, options.onPull !== undefined);
+    const answer = await broker.wholePullAt(b, roots, options.onPull !== undefined);
+    const tuples = wholePullTuples(answer);
     options.onPull?.({ ...answer.counters, rows: tuples.length });
     const rows = new Map<string, H1Tuple[]>();
     for (const tuple of tuples) {
-      const entity = h1EntityOf(tuple, dictionary);
+      const entity = tuple[14]?.row.entity_id ?? tuple[2];
       const bucket = rows.get(entity);
       if (bucket) bucket.push(tuple);
       else rows.set(entity, [tuple]);
     }
-    return { rows, known: new Set(answer.entities), owners: new Set(answer.owners), dict: dictionary };
+    return { rows, known: new Set(answer.entities), owners: new Set(answer.owners) };
   };
   const unresolved = (all: Prefetch, id: string) =>
     !all.rows.has(id) && !all.known.has(id) && !all.owners.has(id.split("/")[0]!);
@@ -766,18 +766,16 @@ export const makeQleverBrokerStorageAdapter = (
                   for (const id of extra.owners) all.owners.add(id);
                 }
                 const selected = [...new Set(ids)].flatMap((id) => all.rows.get(id) ?? []);
-                const decoded = h1Rows(selected, basis, all.dict);
+                const decoded = h1Rows(selected, basis);
                 return new Map(ids.map((id) => [id, decoded.get(id) ?? []]));
               },
               catch: (cause) =>
-                cause instanceof H1SnapshotExpired || cause instanceof H1DictionaryStale
+                cause instanceof H1SnapshotExpired
                   ? cause
                   : new ReadError({ message: "H1 pull failed", cause }),
             }).pipe(
               Effect.catch((error) =>
-                error instanceof H1SnapshotExpired || error instanceof H1DictionaryStale
-                  ? Effect.succeed(undefined)
-                  : Effect.fail(error),
+                error instanceof H1SnapshotExpired ? Effect.succeed(undefined) : Effect.fail(error),
               ),
             );
             if (answer) {
@@ -829,7 +827,7 @@ export const makeQleverBrokerStorageAdapter = (
                   for (const id of level) {
                     const tuples = all.rows.get(id);
                     if (tuples === undefined) continue;
-                    const body = h1Entity(tuples, basis, all.dict);
+                    const body = h1Entity(tuples, basis);
                     for (const t of body) {
                       triples.push(t);
                       if (t.value.type === "ref" && !seen.has(t.value.value)) {
@@ -843,14 +841,12 @@ export const makeQleverBrokerStorageAdapter = (
                 return { triples, hops };
               },
               catch: (cause) =>
-                cause instanceof H1SnapshotExpired || cause instanceof H1DictionaryStale
+                cause instanceof H1SnapshotExpired
                   ? cause
                   : new ReadError({ message: "H1 pull failed", cause }),
             }).pipe(
               Effect.catch((error) =>
-                error instanceof H1SnapshotExpired || error instanceof H1DictionaryStale
-                  ? Effect.succeed(undefined)
-                  : Effect.fail(error),
+                error instanceof H1SnapshotExpired ? Effect.succeed(undefined) : Effect.fail(error),
               ),
             );
             if (answer) {

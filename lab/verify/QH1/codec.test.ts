@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import { it, expect } from "vitest";
 import { HostLog } from "../../../packages/qlever/src/broker/log.js";
-import { h1Rows } from "../../../packages/qlever/src/broker/h1.js";
+import { h1Rows, wholePullTuples } from "../../../packages/qlever/src/broker/h1.js";
 import { decodeValueColumns, ValueDomains } from "../../../packages/core/src/ValueDomain.js";
 import { row, append, fresh, base } from "./helpers.js";
 it("G4c: 100000 persisted values preserve exact payloads or the same typed rejection", async () => {
@@ -77,15 +77,16 @@ it("G4c: 100000 persisted values preserve exact payloads or the same typed rejec
       await append(log, rows);
     }
     for (let k = 0; k < 400; k++) {
-      const { tuples, dictionary } = await log.h1Pull(101798, ["s:" + k]);
+      const answer = await log.wholePull(101798, ["s:" + k]);
+      const tuples = wholePullTuples(answer);
       expect(tuples.length).toBe(250);
       for (const t of tuples) {
-        const normal = outcome(() => [...h1Rows([t], { validAt: 100 }, dictionary).values()][0]![0]!.value);
+        const normal = outcome(() => [...h1Rows([t], { validAt: 100 }).values()][0]![0]!.value);
         if (normal.error) rejected++;
-        const id = t[12]?.row.id ?? (t[0] ? undefined : t[1]);
+        const id = t[14]?.row.id ?? (t[0] ? undefined : t[1]);
         // Tuple ids are also checked against the row route's exact decoded ids.
         const decoded = normal.value
-          ? [...h1Rows([t], { validAt: 100 }, dictionary).values()][0]![0]
+          ? [...h1Rows([t], { validAt: 100 }).values()][0]![0]
           : undefined;
         const sourceId = decoded?.id ?? id;
         const reference = sourceId ? expected.get(sourceId) : undefined;
@@ -102,7 +103,7 @@ it("G4c: 100000 persisted values preserve exact payloads or the same typed rejec
         const r = canonical[j]!;
         // SQL and row routes have the same owner/e/id order for this single live entity.
         const actual = outcome(
-          () => [...h1Rows([tuples[j]], { validAt: 100 }, dictionary).values()][0]![0]!.value,
+          () => [...h1Rows([tuples[j]], { validAt: 100 }).values()][0]![0]!.value,
         );
         expect(actual).toEqual(expected.get(r.id));
       }

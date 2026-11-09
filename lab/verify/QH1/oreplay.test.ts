@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 import { Option } from "effect";
 import { expect, it } from "vitest";
 import { sqliteWorker } from "../../../packages/qlever/src/broker/sqlite-worker.js";
-import { H1Dictionary, h1Rows, resolveDictionary, wholePullTuples } from "../../../packages/qlever/src/broker/h1.js";
+import { h1Rows, wholePullTuples } from "../../../packages/qlever/src/broker/h1.js";
 import { openWorker } from "./worker-client.js";
 import { row, base } from "./helpers.js";
 const canonical = (x: any): string => JSON.stringify(normal(x));
@@ -210,7 +210,6 @@ it("G4: 100000 sampled H1w pulls have zero differences against fresh O-REPLAY", 
         for (const v of [100, 200])
           reference.set(`${root}|${p}|${v}`, oraclePull("s:" + root, p, v));
     const count = Number(process.env.QH1_PULLS ?? 100000);
-    const dictionary = new H1Dictionary();
     const observedCuts = new Set<string>();
     let seed = 8901,
       compared = 0;
@@ -221,11 +220,7 @@ it("G4: 100000 sampled H1w pulls have zero differences against fresh O-REPLAY", 
         v = i % 2 ? 100 : 200;
       const answer = await client.call("wholePull", { basis: p * 1024, roots: ["s:" + root] });
       // Owner fetch is a superset: reconstruct reach through the per-hop API semantics.
-      const tuples = wholePullTuples(answer);
-      await resolveDictionary(dictionary, tuples, `${answer.snapshot.epoch}:${answer.schema}`, (r) =>
-        client.call("names", r),
-      );
-      const observed = [...h1Rows(tuples, { validAt: v }, dictionary).values()].flat();
+      const observed = [...h1Rows(wholePullTuples(answer), { validAt: v }).values()].flat();
       const byEntity = new Map<string, any[]>();
       for (const t of observed) {
         const a = byEntity.get(t.entityId) ?? [];

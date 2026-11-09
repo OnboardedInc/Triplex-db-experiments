@@ -9,7 +9,7 @@ import { makeQleverBrokerStorageAdapter } from "../../../packages/qlever/src/bro
 import { makeQleverQueryExecutor } from "../../../packages/qlever/src/QleverQueryExecutor.js";
 import { fresh, append, row } from "./helpers.js";
 import { HostLog } from "../../../packages/qlever/src/broker/log.js";
-import { h1Rows } from "../../../packages/qlever/src/broker/h1.js";
+import { h1Rows, wholePullTuples } from "../../../packages/qlever/src/broker/h1.js";
 it("public T.entities uses one prefetch operation for a whole pull and preserves duplicate input semantics", async () => {
   const broker = await HostBroker.open({ dir: fresh(), scopeKey: "QH1-public", minFreeBytes: 0 });
   let pulls = 0,
@@ -119,8 +119,8 @@ it("verbatim fallback preserves non-UTF8 dictionary names and exact timestamp do
   };
   try {
     await append(log, [r]);
-    const { tuples, dictionary } = await log.h1Pull(2048, [r.entity_id]);
-    const t = [...h1Rows(tuples, { validAt: 2000 }, dictionary).values()][0]![0]!;
+    const answer = await log.wholePull(2048, [r.entity_id]);
+    const t = [...h1Rows(wholePullTuples(answer), { validAt: 2000 }).values()][0]![0]!;
     expect(t.entityId).toBe(r.entity_id);
     expect(t.attribute).toBe(r.attribute);
     expect(t.recordedAt).toBe(r.recorded_at);

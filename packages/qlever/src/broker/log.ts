@@ -11,7 +11,6 @@ import { FrameKind, encodeFrame, encodeSegmentHeader, segmentSeed } from "./fram
 import { decodeCommitGroup } from "./frames.js";
 import { sqliteWorker } from "./sqlite-worker.js";
 import { ReadError } from "@triplex-build/triplex/runtime";
-import { H1Dictionary, resolveDictionary, wholePullTuples } from "./h1.js";
 
 export type H1Basis = number | { readonly recordedPosition: number; readonly recordedAt?: number };
 export class H1BasisUnsupported extends ReadError {
@@ -535,21 +534,6 @@ export class HostLog {
         ]),
       ),
     );
-  }
-  /** Names for dictionary ids, cached for this store (see H1Dictionary for the invalidation key). */
-  readonly dictionary = new H1Dictionary();
-  async names(request: import("./h1.js").NamesRequest) {
-    if (this.closed) throw new BrokerLogError("Broker log is closed");
-    return this.pool[this.readerIndex++ % this.pool.length]!.request<import("./h1.js").NamesAnswer>("names", request);
-  }
-  /** One whole pull with every id resolved against the cache (misses cost one extra reader request). */
-  async h1Pull(basis: number, roots: readonly string[], bytes = false) {
-    const answer = await this.wholePull(basis, roots, bytes);
-    const tuples = wholePullTuples(answer);
-    await resolveDictionary(this.dictionary, tuples, `${answer.snapshot.epoch}:${answer.schema}`, (request) =>
-      this.names(request),
-    );
-    return { answer, tuples, dictionary: this.dictionary };
   }
   async wholePull(basis: number, roots: readonly string[], bytes = false) {
     if (this.closed) throw new BrokerLogError("Broker log is closed");
