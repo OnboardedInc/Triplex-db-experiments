@@ -1,5 +1,7 @@
 # EXP-HS01: broker host store layout
 
+> **Round 2 (CX-HS01, Claude Sonnet 5.5 builder) appended at the end of this file.** Round 1's text below is unchanged history. Round 2 measures G9 at **217.06 B per asserted fact, 0.970 GB at 10k: PASS** on the W0 profile (**308.09 B with production-shaped ULID ids: over the 300 B bar**), fixes the CX-VHS01 finding, retains frames by bytes and stores structured ids as integers.
+
 **Implemented; G9 storage target failed. Not promoted.** The complete 10k W0 seed is content-verified with zero codec fallbacks, but uses **2,274,734,080 logical bytes (2.275 GB), 509.08 B per asserted fact**. The bars are 1.4 GB and 300 B. Independent review remains pending.
 
 Builder CX-HS01; branch `exp/HS01-host-store-layout`; base `257d4d20`, contract 0.3.14. Frozen tested product commit: **`13ce4978`**. Subsequent report/index/pin-audit changes are evidence metadata only. Final source-frozen series: `final-67ab6c55-599b-4c53-917f-9d39f88b1035`. All 18 execution receipts in that series have `sourceStillMatches:true`; its route timeout and size failure remain failures in the original controller output. A separate unchanged-source route rerun passed.
@@ -140,3 +142,148 @@ Expanded pin audit: **247 pinned paths scanned, zero changed pinned paths**. The
 G9 fails despite verified contents. The next experiment/brief must reconcile the measured row/index representation and 1,024-frame tail with the 300 B/fact budget. No threshold, retention rule or id rule was changed to obtain a PASS. No 100k run was admitted: the 10k result is outside the required 15% of 259 B/fact, and no target-scale result is claimed. No new history-depth flatness or P1/P4/P5 acceptance run, erasure qualification, production deployment, package publication, main merge or push occurred. No container lifecycle/VM change or exclusive engine slot was taken. The separate G12 live diagnostic was not run without the orchestrator slot.
 
 For ER01-Q, derived journal changes reduce one value copy, but physical deletion of a referenced fact must preserve a tombstone or rematerialize the change first. This is a follow-up integration constraint, not an erasure qualification. Independent review remains necessary; this builder report does not promote the branch.
+
+---
+
+# Round 2 (EXP-HS01 R2): retention fix, byte retention, compact ids
+
+**Result: G9 PASS at 10k on the W0 profile: 969,883,648 logical bytes (0.970 GB), 217.06 B per asserted fact.** Bars: 1.4 GB and 300 B. Round 1 measured 509.08 B. Independent review of round 2 is still required. One caveat decides how far this carries: the W0 seed uses core's deterministic id generator, whose ids store as 4-byte integers. Production uses real ULIDs, which store as 16-byte blobs; the same 10k seed with ULID-shaped ids measures **308.09 B per fact (1.377 GB): under the 1.4 GB bar, 2.7% over the 300 B bar**. See "What the 217 B figure does and does not say".
+
+Builder CX-HS01 round 2; branch `exp/HS01-host-store-layout`; started from `2f7b42d6`. Product commits: `dfddd916` (code) and `e81c16df` (tests). `535459e2` changes only a test and the pipeline (`git diff e81c16df 535459e2 -- packages` is empty). North star: P5 and P4 (bytes per fact, working set) with the P1/P2 recovery floor; correctness first. The journal format was not changed (R47). Predictions were committed before any round 2 measurement: [R2-PREDICTIONS.md](R2-PREDICTIONS.md) (commit `dfddd916`).
+
+## 1. The review finding: legal frames larger than 16 MiB stalled finite retention
+
+**Decision: retention makes progress for any legal frame size. It does not cap frames at write.**
+
+| | |
+| --- | --- |
+| Cause | `purgeFrames` broke out of its loop when the next frame would cross 16 MiB of work, including when that frame was the first eligible one. One 18 MB frame (twenty 900,000-byte values, each under the 1 MiB string limit) became an immovable prefix; every later frame stayed too. |
+| Fix | The first eligible frame in a call is always taken; later frames still stop at the 16 frames / 16 MiB budget. Deletion and anchor move stay one transaction, the anchor stays a contiguous prefix, holders, the last frame and the ACKED frame stay protected. |
+| New work bound | 16 MiB plus at most one frame. The format allows a 256 MiB payload (`MAX_PAYLOAD`), so one purge call can delete about 256 MiB. R45's "16 MiB per call" bound is therefore restated, not kept. |
+| Measured cost | A frame of exactly the format limit (268,435,492 bytes with header and trailer): **append 1,112 ms, purge call 83.9 ms, reopen 437 ms**, one call removes the whole frame. Frames at 16 MiB - 1, 16 MiB, 16 MiB + 1, 16 MiB + 36 and 17 MiB purge in 5.0 to 5.9 ms. |
+| Why not a cap at write | The format admits these frames and the reviewer warned against refusing previously admissible values. A typed refusal would also be a behavior change for every lane that writes groups through this log. |
+| Why not partial reclamation | The anchor is one contiguous prefix with one CRC and offset; a frame cannot be half purged without a second anchor kind. |
+
+Regression: the reviewer's reproduction is in `lab/verify/HS01/retention.test.ts` ("CX-VHS01 reproduction"). It fails on the round 1 worker (`expected 1 to be greater than or equal to 2`, run on the old source) and passes on the fix. Boundary cases at and around 16 MiB include the 36 header/trailer bytes and assert each call's work (`bytes <= 16 MiB` or exactly one frame). Writer progress and recovery: after the largest-frame purge the store reopens and verifies from the anchor.
+
+## 2. Retention by bytes
+
+`frameRetention: { tailFrames?, tailBytes? }` (exported type `FrameRetention`). Retention keeps **at least** the newest `tailFrames` frames and **at least** the newest `tailBytes` bytes of frames; with both, the larger set; a missing one counts as 0 when the other is given. **Neither given keeps every frame (the default, as before)**, so frame-replay oracles run unchanged. Purging through frame f is allowed only while `marker.size - f.end >= tailBytes`. The CRC anchor, `FeedRetentionExpired {requested, retainedFrom}`, holders, the last frame and the ACKED frame are unchanged. A bare number sent to the worker's `purgeFrames` still means a frame count.
+
+**G9 seed budget: `tailBytes = 64 MiB` (R45 5.4's forecast tail).** This is a lab setting in `lab/bench/hs01-seed.ts`, not a product default. The 10k seed retained **110 frames / 67,969,168 bytes** (anchor 6685, head 6795) instead of 1,024 frames / 625.99 MB. Frames plus index fell from 140.10 to **15.25 B per fact**.
+
+Tests: the smallest suffix of at least `tailBytes` is kept (10 frames at 1,000,000 bytes of 100,000-byte frames; 11 at 1,000,001), 0 and 1 keep only the last frame, `tailFrames` and `tailBytes` combine as a maximum, `{tailFrames: Infinity}` keeps all, a holder bounds byte retention, invalid values (negative, fractional, NaN, above 2^53) are refused with `BrokerLogError`. **Pinned reads at an old position stay exact after byte-retention purges, across reopen**: a pin at the assertion's position sees the retired version after 40 purged frames (anchor beyond the replacement), and the position after sees only the replacement; a below-anchor feed cursor throws `FeedRetentionExpired`.
+
+## 3. Compact ids
+
+Ids are stored in one untyped column, by storage class:
+
+| Class | Form | Applies to |
+| --- | --- | --- |
+| INTEGER | `tailValue * 64 + slot`, 1 to 8 bytes, 4 bytes below 2^25 triples | ids shaped `<8 chars of 0-9A-Z><1 to 18 chars of 0-9A-Z>` whose tail is below 2^43 and re-encodes exactly (`toString(36)`, upper case, left-padded to its length); the slot names `<head>/<tail length>` in a new dictionary table `hds` of at most 63 rows |
+| BLOB, 16 bytes | canonical Crockford ULID, as in round 1 | production ULIDs; also tried after the integer form |
+| BLOB, odd length | tag byte 1 plus UTF-16LE code units | ids that are not well-formed UTF-8 (lone surrogates). SQLite TEXT turns a lone surrogate into U+FFFD, so two different ids could collide in the unique id index. This was a latent round 1 defect for such ids |
+| TEXT | the id itself | everything else, including a structured id when the 63 slots are full |
+
+Decode is by storage class and ids keep their exact text at the API. Reads by id compute the same form with a lookup-only slot map: a head found in `hds` was necessarily allocated at its first use, so no row can have been stored as TEXT under it (slots are never freed). The journal's `:_tx/change` reference uses the same encoder. Binding uses `BigInt`, because better-sqlite3 binds a JS number as an 8-byte REAL in an untyped column (checked: `5` was stored as REAL). A round 1 layout 2 store (tables without `hds`) is refused with `BrokerLogError`, like v1.
+
+Rejected: a global id dictionary (unbounded growth for random ids); a surrogate integer row id (loses entity clustering, R45 5.3); base 36 to a minimal big-endian blob (17 bytes, saves 9 of 27, ignores the constant hash head).
+
+Property test (`id-codec.test.ts`): 300,000 generated ids plus 28 named edge cases, deterministic generator (mulberry32). Every id satisfies `unpack(pack(id)) === id`, a reader-side lookup reaches the writer's stored value, the row read back by that lookup is the row written, the stored values of distinct ids are distinct, integers are safe integers, escape blobs have odd length. Inputs cover canonical ULIDs, random base 36, lengths 0 to 39, lowercase and punctuation, 90 heads against 63 slots (so some fall back), tails around 2^43, widths 1 to 18, numeric-looking text, lone surrogates. Round-trip is through a real SQLite table with the same untyped `id` column. G6 and G7 now mix ULID-like, structured, other-width and noncanonical ids (G7 storage classes: 54,901 integer, 31,372 blob, 13,727 text); G6 compares every read with the v1 worker's exact ids.
+
+## 4. Gates rerun on the final source
+
+Evidence series `r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4` in the durable root. Product source is identical for all stages (packages unchanged between `e81c16df` and `535459e2`). Every receipt has `sourceStillMatches:true`.
+
+| Gate | Result |
+| --- | --- |
+| G1 build / checks | Core, testkit, QLever and W0 build and typecheck; changed-source lint 0 warnings, format clean, `git diff --check` clean |
+| G2 package / G0 | QLever package **257 pass / 29 expected skips** (unchanged); G0 QLever **1,415 pass / 79 skips**; G0 XTDB **1,223 pass / 140 skips**. One G0 XTDB attempt on `535459e2` failed 1 of 1,223: core `Reactor.test.ts` "cost tracks the change, not the population" (a timing ratio, 11.5 vs 5.4, on a host where four heavy slots were held by other jobs; core is untouched). It is retained; the immediate rerun and the earlier run on `e81c16df` both pass 1,223 |
+| G3 SQL01 | **11/11**, on `e81c16df` and again on `535459e2` |
+| G4 P2Q | **873 passed / 22 skipped**, same exclusions as round 1; storage controls **5 passed / 3 filtered** |
+| G5 route harness | **93/93** |
+| G6 layout equivalence | **50,000** generated v1/v2 worker reads, **zero mismatches**, with the mixed id classes |
+| G7 codec property | **100,000** rows through SQLite, every own field exact; **15,508 fallbacks (15.508%)**, the same pathological sample as round 1, and the structured-id classes above |
+| G8 recovery | Holders, tail, byte retention, typed expiry, reopen verification of retained frames only (1.09 GB written, 1.08 GB purged, 2 frames / 8.39 MB verified, RSS growth 8.67 MB), mid-WAL corruption refuses startup (flip-wal). **80 whole-process stops including abrupt stops during `purgeFrames` (byte-retention path) and in-transaction dictionary growth: 255 ACKed operations, zero lost; 297 feed positions, zero missing, zero duplicated.** Stop schedule ids now use the structured-integer form |
+| G9 bytes | **PASS**: complete 1k and 10k seeds, content verified (section 5) |
+| G10 diagnostics | See section 6. No timing acceptance claimed |
+| G11 pack / evaluator | Lab pack gate: **12 tarballs**, clean consumer, import, smoke and CLI checks. Evaluator **108/108**, zero failed, skipped or cancelled |
+| G12 live | **Not run** (no orchestrator slot requested; same as round 1) |
+
+## 5. G9: bytes at 1k and 10k, predictions beside measurements
+
+Denominator: submitted user assertions (4,468,284 at 10k, 442,410 at 1k), journal rows excluded. 10k: 434,768 commands, 1,954 retractions, 6,794 groups, **969,883,648 logical bytes** (`page_count x page_size`), zero free pages, **zero codec fallbacks**, integers for all 4,466,330 fact ids, 1,954 history ids, 8,100,092 journal ids and 4,470,238 journal references; one head slot of 63 used (`000SQKS9/18`). The seed ran 1,173 s (round 1: 1,109 s). Free space 12.48 GiB at start, 11.03 GiB at the end. The 10k seed preflight and per-group checks kept the 5 GiB floor.
+
+| Measure | Prediction (written first) | Measured | Round 1 |
+| --- | ---: | ---: | ---: |
+| 10k B per asserted fact | 235 (range 220 to 250) | **217.06** | 509.08 |
+| 10k logical bytes | 1.05 GB | **0.970 GB** | 2.275 GB |
+| 1k B per asserted fact | 365 (358 to 372) | **352.91** | 1,239.69 |
+| Frames + index at 10k | -125 B per fact (to about 15) | **15.25** (-124.85) | 140.10 |
+| Ids as integers at 10k | -146 to -160 B per fact | **-166.96** | not applicable |
+
+Both bars are met with margin: 217 against 300 B (28% under), 0.970 against 1.4 GB. The frame prediction was exact. The id saving came in 4% above the top of its range (page overhead per id copy was larger than my 15%), so the total landed 1.3% below the low end of the stated range. R45's forecast for this layout was 259 B; the measurement is 16% under it.
+
+10k dbstat per object, round 1 against round 2 (decimal MB, B per fact):
+
+| Component | R1 B/fact | R2 MB | R2 B/fact |
+| --- | ---: | ---: | ---: |
+| facts + id index | 107.37 | 253.104 | 56.64 |
+| history + id index | 0.05 | 0.135 | 0.03 |
+| journal + id index | 213.77 | 435.859 | 97.55 |
+| entity dictionary + unique index | 28.09 | 125.493 | 28.09 |
+| attribute/type/actor/head dictionaries | 0.00 | 0.025 | 0.01 |
+| transaction dictionary | 1.94 | 8.675 | 1.94 |
+| heads, claims, operations | 17.55 | 78.434 | 17.55 |
+| retained frames + index | 140.10 | 68.137 | 15.25 |
+| marker, pins, retention, epochs, schema | 0.00 | 0.020 | 0.00 |
+| free pages | 0.21 | 0 | 0 |
+| **Total logical** | **509.08** | **969.884** | **217.06** |
+
+What is left (217 B): journal 97.55 (45%), facts 56.64, entity dictionary 28.09, heads/claims/operations 17.55, frames 15.25. The next levers, none done: the journal record (R47, est. 150 to 195 B before this round's id saving), the entity dictionary (its unique index stores every name a second time, 14.85 of 28.09 B), numeric references and booleans (bound as 8-byte REAL in the untyped value column).
+
+### What the 217 B figure does and does not say
+
+1. **Id shape.** W0 seeds with core's deterministic generator, so triple ids are `<hash><counter>` and all store as 4-byte integers. Production `IdGeneratorLive` makes ULIDs (ulidx), 16-byte blobs, 12 bytes per id copy more than the integer form, 6.63 copies per fact. Same seed, same source, ULID-shaped triple ids (the deterministic generator temporarily patched in `packages/core/dist` for the run, restored and hash-checked afterwards): **1k 444.71 B per fact** (predicted 443 from the arithmetic) and **10k 308.09 B per fact, 1,376,653,312 bytes** (all 4,466,330 fact ids, 1,954 history ids, 8,100,092 journal ids and 4,470,238 references as 16-byte blobs; frames 15.25 B unchanged; the seed's own verdict for that run is FAIL on the 300 B bar, PASS on 1.4 GB). On production-shaped ids the 300 B bar is missed by about 8 B per fact; the arithmetic predicted 309.7. Both numbers are diagnostics, not the G9 verdict, which is defined on the W0 seed.
+2. Retention was 64 MiB, a seed setting. A replica holder (conservatively LSN 0 until a durable replica base exists, round 1) keeps every frame, as before; for lane Q with an attached replica the frame cost stays at the unpurged figure until QLever generations give the replica a base.
+3. 100k was not run and is not claimed. Arithmetic only: 217 B x 44.5M facts is about 9.7 GB, plus about 13 B per fact once counters pass 2^25 and integers take 6 bytes.
+
+## 6. Diagnostics (G10), not acceptance
+
+Host shared with other heavy jobs (four slots usually held by others), sequential runs.
+
+| Diagnostic | Round 1 | Round 2 |
+| --- | ---: | ---: |
+| SQL01 schedule, commit p50 v2/v1 | 19.40 / 20.53 ms (0.945) | 18.03 / 21.65 ms (0.833) |
+| SQL01 schedule, commit p99 v2/v1 | 99.59 / 123.88 ms (0.804) | 96.18 / 105.83 ms (0.909) |
+| 10k BFS, first touch: SQLite cache pages (single instrumented reader) | 3,289 pages | **2,385 pages (-27%)** |
+| 10k BFS, SQLite-cache bytes per pull | 44,905.8 | **32,563.2** |
+| 10k BFS, warm repeat: pages | 0 | 0 |
+| 10k BFS wall (seed readback, worker pool): first touch / warm | 1287.6 / 679.7 ms | 1247.8 / 1057.0 ms |
+
+The instrumented single-reader pass measures 1,002 ms first touch and 780 ms warm. The worker-pool warm repeat was slower than round 1 (1,057 against 680 ms) on a loaded host; one id decode costs about 0.11 us more as an integer than as text (0.308 against 0.194 us per row, microbench), about 15 ms across the 133,294 rows of a pass, so the codec explains about 15 of the 377 ms. No P4 timing claim is made; EXP-QH1 owns P4 acceptance.
+
+## 7. PASS / verdict / receipt audit (round 2)
+
+| New result-producing path | Content check | Freshness | Binding / limits |
+| --- | --- | --- | --- |
+| `purgeFrames` selection (worker) | Frame `end`, `offset` and `marker.size` from the transaction's own reads; holders, ACKED and last frame bound the floor | Current writer transaction | Persisted anchor and marker; produces no verdict by itself |
+| `retention.test.ts` regressions | Retained frame count, bytes and first LSN read through an independent read-only SQLite connection, not the worker; each frame's `end - offset` asserted equal to the requested size before purging; pinned reads compared by id, value and retracted position on the original and the reopened store | New store per case, new frames | Boundary sizes include the 36 header/trailer bytes; the largest-frame case records `full:true` (it uses 64 MiB when under 768 MiB headroom and says `full:false`) |
+| `id-codec.test.ts` | Exact string equality after a SQLite round trip, lookup returns the written row, injectivity over all stored values, storage class per id | In-memory database, deterministic generator | Evaluates the same `rowCodec` source the worker embeds; worker path covered by G6/G7/G8, seeds and the stop schedule, not by this test |
+| G6 / G7 (changed fixtures) | v1 worker bytes as independent reference for 50,000 reads; every own field with `Object.is`; id storage-class floors asserted | New stores, deterministic stream | Retained round 1 fixtures otherwise unchanged |
+| Stop schedule | Expected ids recomputed from the operation name by a recipe in `kill.mjs`, compared with ids read back after SIGKILL; ACKs held by the parent | 80 new stops | Original/instrumented worker hashes unchanged (barrier text matched exactly) |
+| Seed `SEEDED-CONTENT-VERIFIED` and `sizeVerdict` | Unchanged from round 1: full assertion columns, retirement tuples, claims, native ordering; both size bars; stable build hashes. New manifest fields (`idClasses`, `headSlots`, `retention`) are observed from the final database | This attempt only | Predictions in the manifest are recorded, never read by the verdict |
+| `pipeline.mjs` resume (`HS01_ATTEMPT`, `HS01_ONLY`) | None: it only selects stages | Fresh receipts per stage | Receipts keep their own head and source hashes; the series spans two heads with identical packages |
+| Execution receipts | Exit code and raw log hash only; **exit 0 is execution evidence, never semantic acceptance** | Unique directory per attempt | Source inventory before and after each stage |
+
+## 8. Provenance, failures and what was not verified
+
+- **Disk.** Free space was 6.4 GiB at the start of this round (the brief expected about 11), fell to 4.39 GiB during the first pipeline run from other jobs' use, and recovered to about 12 GiB later. While it was under 5 GiB, `run.mjs` refused every stage (receipts empty, retained). The stages were rerun after recovery with `HS01_ONLY`. The first `hs01` stage attempt on `e81c16df` failed only because the largest-frame test refused to cross the floor; it is retained, and the test now reduces its payload when headroom is short and records it. The 10k seed ran with 12.48 GiB free.
+- **Cleanup.** I deleted only my own first 1k development seed (`r2-dev1-w0-1000`, its numbers matched the final 1k to 0.04 B). A removal of my test stores under `runs/HS01` was blocked by the harness's safety check and was not retried another way; about 32 MB of throwaway test stores remain in the worktree `runs/` (gitignored).
+- **Not done:** G12 live; 100k; a 10k seed with ULID ids is a diagnostic only; power-loss qualification; erasure qualification; deployment, publication, merge, push. No `lab/acceptance` change (see pins).
+- **Compatibility:** a round 1 layout 2 store is refused (typed `BrokerLogError`), as v1 is; no migration tool.
+- **ER01-Q:** unchanged constraint; ids as integers are exactly reversible, so physical deletion of a referenced fact still needs a tombstone for the journal reference.
+
+Pin audit: `git diff 257d4d20 -- lab/acceptance` is empty; all 59 lines of `lab/acceptance/pins/*SHA256SUMS` match the working tree; none of the changed paths (`packages/qlever/src/broker`, `lab/verify/HS01`, `lab/bench/hs01-seed.ts`, `lab/experiments/EXP-HS01`) appears in any acceptance file. **Zero changed pinned paths, so no old/new hash pairs.** (Round 1 scanned 247 pinned paths by a broader method that I did not reproduce; this check is the pins directory plus the acceptance diff.)
+
+Evidence: durable root `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/`, series `r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-*` (seeds in `-w0-1000` and `-w0-10000`, cache observer output in the 10k directory), `r2-g10`, `r2-ulid-diag-w0-1000`, `r2-ulid-diag-w0-10000`, `r2-cache-observer-10k-*`, `r2-g10-sql01-baseline-*`. [evidence-r2.json](evidence-r2.json) indexes every attempt (command, head, exit, source stability, receipt hash). [SHA256SUMS-r2](SHA256SUMS-r2) seals the durable manifest and key receipts; from this repository's root check `SHA256SUMS-r2` lines (`evidence-r2.json` here, the durable manifest in the durable root), then from the durable root run `shasum -a 256 -c SHA256SUMS-r2.durable`. The manifest covers 9,420 files; its 11 `LINK:` lines record symlink targets (pack consumer links, not followed) and `shasum` reports exactly those as improperly formatted.
