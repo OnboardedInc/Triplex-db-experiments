@@ -243,3 +243,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 QNODELAY ACCEPT (verify/QNODELAY 1f59d223, scoped to R4-F1..F3; replay 120/240 vs 0/240; keep-alive default). Queued for a
   default-off merge in the next contract after 0.3.14 (0.4.0). P5 round B (CX-P5B) starts on contract/0.3.14 with round A merged: host
   store screening B0-B2 per R34 6, diagnostic; P5 A1 on native XTDB is demoted per R43.
+- 2026-11-09 EXP-CRNS built (2f299bfa; 145 tests incl. F1-F20 and both evaluator suites); CX-VCRNS reviewing. Queued for the next free
+  agent slot: the Opus review of CRNS's forgery list against R44 4.4, given the code and not R44's conclusions (R44 8.2 row R1).
