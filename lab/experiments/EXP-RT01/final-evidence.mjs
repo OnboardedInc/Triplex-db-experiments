@@ -3,32 +3,34 @@ import fs from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 const root = path.resolve(import.meta.dirname, "../../..");
 const dir = path.join(import.meta.dirname, "evidence");
+const suffix = process.argv[2] ?? "terminal";
 const jobs = [
   [
-    "unit-terminal",
+    `unit-${suffix}`,
     process.execPath,
-    ["lab/experiments/EXP-RT01/run-gates.mjs", "offline-final-source"],
+    ["lab/experiments/EXP-RT01/run-gates.mjs", `offline-${suffix}`],
   ],
-  ["changed-pack", process.execPath, ["lab/experiments/EXP-RT01/pack-changed.mjs"]],
+  [`changed-pack-${suffix}`, process.execPath, ["lab/experiments/EXP-RT01/pack-changed.mjs"]],
   [
-    "latency-terminal",
+    `latency-${suffix}`,
     process.execPath,
     ["lab/experiments/EXP-RT01/run-microbench.mjs", "--adapter"],
   ],
   [
-    "probes-terminal",
+    `probes-${suffix}`,
     path.join(root, "node_modules/.bin/tsx"),
     ["lab/experiments/EXP-RT01/live-probes.ts"],
   ],
   [
-    "declarations-terminal",
+    `declarations-${suffix}`,
     process.execPath,
-    ["lab/experiments/EXP-RT01/declaration-diff.mjs", "terminal"],
+    ["lab/experiments/EXP-RT01/declaration-diff.mjs", suffix],
   ],
-  ["contract-terminal", "python3", ["lab/acceptance/build_contract.py", "--verify"]],
+  [`contract-${suffix}`, "python3", ["lab/acceptance/build_contract.py", "--verify"]],
 ];
 const phases = [];
 for (const [name, command, args] of jobs) {
+  if (process.argv.includes("--after-unit") && name.startsWith("unit-")) continue;
   const started = new Date().toISOString();
   const r = spawnSync(command, args, {
     cwd: root,
@@ -50,6 +52,6 @@ for (const [name, command, args] of jobs) {
   });
   console.log(`${name}: ${r.status}`);
 }
-await fs.writeFile(path.join(dir, "terminal-phases.json"), JSON.stringify(phases, null, 2) + "\n");
+await fs.writeFile(path.join(dir, `${suffix}-phases.json`), JSON.stringify(phases, null, 2) + "\n");
 // [EXP-RT01] Why: record every outcome, including expected pin drift; never reinterpret a nonzero gate as PASS.
 process.exitCode = phases.some((phase) => phase.exit !== 0) ? 1 : 0;
