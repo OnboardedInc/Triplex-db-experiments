@@ -1879,3 +1879,85 @@ No `lab/acceptance` path pins any changed file (checked with grep); the contract
 - **W4** (guest crash) is not implemented. The writer-p99 ABBA overhead comparison was not run. W1 was not re-run on the resized VM. The structured parser was not promoted or changed. No NS workload, no other image, no host power-loss durability, no reader/relay/driver domain: this round is probe windows only and does not accept the witness for NS claims.
 - W3 did not run the per-commit judge or record witness memory under load; W2/W3 were taken with other heavy jobs running.
 - Not verified: why `ext4Tracepoints` directory tests are false; whether `-B none` plus a shell PID 1 changes witness CPU in a way a long NS run would notice (W3 CPU was 1.7% to 2.5% with it).
+
+## Round 16: IR dump reader, resized W1, writer-p99 ABBA, W4
+
+Builder Claude Sonnet 5.5, from `exp/OBS01-observer` at `a1343b5e` (round 15 review `VERIFY-round15.md`, ACCEPT-OFFLINE-LIVE-W0-W3). Docker only through the triplex2 socket; the docker context stayed `default`; no pull, download or install; heavy steps one at a time through `heavy.mjs --label OBS01-W`. Durable evidence (out of git): `/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-W/r16/`; small results in git: `lab/experiments/EXP-OBS01/round16/`. VM during every live step: **8 CPU / 20 GiB** (`vm-facts-w1.txt`: `MemTotal 20436420 kB`, kernel `6.8.0-117-generic`, boot id recorded). Offline suites at the final head: `test_vm` 14, `test_syncwitness` 18, `test_round10` 40, `test_round11` 20, `test_w4` 8 (Python); `test_engine` 26, `test_round12` 25, `test_round16` 11, `test_abba` 7 (Node); reviewer fixtures of rounds 11 to 14 still pass 5/8/5/5 (their re-written evidence files were restored with `git checkout`).
+
+### Summary
+
+| Item | Result |
+| --- | --- |
+| (1) R15-N1, R15-N2 | fixed (below) |
+| (2) IR dump reader | written, passes on the real golden, refuses 60+ crafted variants; diagnostic only |
+| (3) W1 on the resized VM | **PASS 11/11**, every mode's whole refusal set matched |
+| (4a) writer-p99 ABBA | **INCONCLUSIVE** in both attempts: the A/A band (129% and 75%) does not resolve a 5% effect |
+| (4b) W4 | implemented, offline-tested, rehearsed through the whole host pipeline; **NOT RUN as a guest crash**: `tx2-qlever-dev` (a shared resident, rule 3) was running and the harness refuses |
+
+### (1) The reviewer's two low corrections
+
+- **R15-N1.** `golden/MANIFEST.json` now states the extraction rule and hashes all three parts: `dumpFileSha256` (`b35312b4...4309`), `stdoutSha256` = `5823294d42a77d6c500eb89a89c1fffa42816d8c2a35acaec5b5c551672d0b8e` (228,829 bytes, equals `flag-check/c-d.out`), `stderrSha256` = `bf5b24d4573e147920c5b72f7ac08c5a83402e3e8d31bd48f8801efc51ce74dc` (232 bytes), plus byte counts; the wrong round-15 value `eb8a3583...e7b4` is recorded under `corrections`. `test_round16.mjs` extracts stdout and stderr by the documented regex and asserts every hash in the manifest (and the enum and pinned program hashes) before any parser is judged. The round 15 REPORT paragraph carries the corrected value.
+- **R15-N2.** The round 15 W2 text now says the interval cost is `run_time_ns` delta divided by the commits in the interval (not by `run_cnt`), uses nearest-rank percentiles in every column (the `w2-attempt2` p90 is **52.4 us**, not 51.0) and gives the real interval sizes (9 to 52, 3 to 35 and 1 to 29 commits).
+
+### (2) The IR dump reader (`lab/bin/ir-dump.mjs`, diagnostic under Q109a)
+
+It reads what 0.20.2 `-d` prints. Checks (each a reason string, never an exception): exactly one `; ModuleID` module (`-dd`'s two modules are refused); every `call: nsecs` of the last AST has an `identifier: monotonic` child and their count equals the source's `nsecs(monotonic)` sites; every `define` is closed and bound to one source probe (`fentry`/`fexit` print as `kfunc`/`kretfunc`) whose block has the same number of `bpf_ktime_get_ns` calls; every call line is one direct call, either `inttoptr (i64 N to ptr)` (with `tail`/`notail` prefixes) or an allow-listed intrinsic (`llvm.lifetime.start.p0`, `llvm.lifetime.end.p0`, `llvm.bpf.pseudo`, `llvm.memset.p0.i64`); a register callee, inline asm, a named function, an unknown intrinsic, `invoke`, `callbr`, a bitcast or non-constant `inttoptr`, a hex id, the old `i64 ()*` spelling, two call tokens on one line and call text outside a probe function are all UNPARSED-CALL; every id must be in the kernel `bpf_func_id` enum and on the allow-list; any clock helper other than `bpf_ktime_get_ns` is refused; no `ERROR` line in stderr. `clockPrimitiveVerdict` calls it for a dump with a module and keeps the round 12 disassembly reader for dumps with `Disassembly of section` markers (the constructed fixtures); `pass` is unchanged.
+
+On the golden dump it reports: 1 module, 15 probe functions each matching its source block, **15 `bpf_ktime_get_ns` calls = 15 source sites = 15 AST calls**, nine helpers (map lookup 66, map update 25, map delete 13, ktime 15, smp_processor_id 24, pid_tgid 43, cgroup_id 8, probe_read_kernel 18, ringbuf_output 22), the four allowed intrinsics, no unparsed call, no forbidden helper; **diagnostic `pass: true`** (round 15: false with 745 reasons). `test_round16.mjs` (11 tests) checks: the golden hashes; the golden passes and its per-probe counts equal `sourceProbeBlocks`; `-dd`/empty/AST-only dumps refuse; every other-clock id (118, 125, 160, 208) in a crafted call, as a replaced ktime call and as a tail call, refuses while the gate still passes (no name token, as Q109a says); too many or too few ktime calls, a non-monotonic AST node and a missing AST child refuse; 13 call forms refuse; calls outside a function refuse; ids outside the enum or allow-list, a missing, renamed, duplicated or truncated function and a half dump refuse; an stderr `ERROR` line refuses; comments and `tail call` of an allowed helper do not refuse.
+
+### (3) W1 on the resized VM: PASS 11/11
+
+`r16/w1-resized/W1.json`, 1,000 commits per mode, all `mismatches: []`: `full` and `syncfs` raise nothing; `normal` and `ack-early` `ACK-BEFORE-DURABLE`; `off`, `full-then-off`, `sync-other-file`, `range-only`, `neighbor-sync` `SYNC-MISSING`; `sync-before-write` `ACK-BEFORE-DURABLE` + `SYNC-MISSING` (primary `SYNC-MISSING`); `mmap` `UNWITNESSED-WRITE` + `SYNC-MISSING`. Identical to the 6-CPU run of round 15. Environment binding: `vm-facts-w1.txt` records `nproc 8`, `MemTotal 20436420 kB`, kernel, boot id and `colima list` right after the run.
+
+### (4a) Writer-p99 ABBA under Q104a: INCONCLUSIVE (two attempts, both kept)
+
+Method (`lab/bin/abba.mjs`, unit-tested on constructed series): per round an A/A pair (witness off, witness off) and an ABBA group (A1 B1 B2 A2); arms are fresh volumes with the round 6 writer (`vm_fixture.py`, ten-row FULL commits, CPU 4), B arms have the witness on CPU 5 and must pass the zero-loss stream check (all 12 B arms did: 0 lost events); **2,000 commits per arm, 3 A/A rounds and 3 ABBA rounds = 18 arms and 36,000 commits per attempt**. Band = max(widest A/A deviation of the p99 ratio, exp(2 s_d) - 1); B/A p99 with a 95% circular block bootstrap (block 50, 2,000 draws, seed 16); the effect to resolve is Q100r's 5%. The three possible calls are OVERHEAD-RESOLVED (lower bound above 1 + band), NO-OVERHEAD-ABOVE-TARGET (upper bound below 1.05 and band below 5%) and INCONCLUSIVE.
+
+| | Attempt 1 (`abba-attempt1`) | Attempt 2 (`abba-attempt2`) |
+| --- | --- | --- |
+| Conditions | host load 5 to 15, four heavy slots held, p99 per arm 1.2 to 36 ms | host load 5 to 15, p99 per arm 0.5 to 1.3 ms |
+| A/A p99 ratios (A2/A1) | 0.577, 0.728, 0.325 | 0.950, 1.132, 1.643 |
+| A/A band | **129.4%** | **75.0%** |
+| B/A p99 per ABBA round | 1.19, 0.95, 2.18 | 1.31, 0.82, 1.01 |
+| B/A p99 pooled, 95% interval | 1.136, [0.967, 1.302] | 0.948, [0.774, 1.208] |
+| B/A p50 / mean pooled (informational) | 1.250 / 1.242 | 1.055 / 1.014 |
+| Verdict | **INCONCLUSIVE**: band not below 5% | **INCONCLUSIVE**: band not below 5% |
+
+**Answer: this VM, writer and host load cannot resolve a 5% writer p99 change at 2,000 commits per arm; the comparison is reported as inconclusive and nothing is claimed about the witness's effect on writer latency.** What can be said: the pooled B/A p99 intervals contain 1.0 in both attempts; the kernel-side cost per commit (W2, 21 to 34 us weighted mean, 25.9 us on the resized VM) is the number R48 asked to rely on. A resolving design needs a quieter host (or many more commits per arm so a nearest-rank p99 stops being the 20th highest sample); the A/A rounds, not the B arms, are what failed to settle.
+
+### (4b) W4: not run as a guest crash
+
+- **Built:** `windowW4` in `lab/bin/sync-witness.mjs` (`--windows W4 [--w4-trials 10] [--w4-rehearsal]`), `lab/observer/vm_w4_writer.py` (planted FULL or OFF writer streaming one ACK line per commit with its WAL size), `lab/observer/vm_w4_judge.py` (host judge, same per-commit rule as W1, partial-trace tolerant), `witnessCreateArgs({stdout:true})` (the witness output streams to the host instead of a guest file that a crash would lose). Ten trials alternate FULL and OFF (a FULL fsync commits the ext4 journal and can write out an OFF neighbour's data, so they never share a trial); per trial: guest `sync` first, fresh volume, witness attached, writer started, crash after 2.5 to 3.5 s and at least 100 ACK lines (`echo b > /proc/sysrq-trigger`, `kernel.sysrq` is 176), wait for the guest (the harness restarts the VM with `colima start -p triplex2 --activate=false` if it stays down and checks the boot id changed), read the store back with `docker cp`, judge on the host. Pass (R48 9.1): every witnessed commit survives and at least one unwitnessed OFF commit is lost across the trials, else the class premise of Q100r is reopened. `test_w4.py` (8 tests, real SQLite stores and constructed traces): a witnessed-but-lost commit, an OFF commit that is witnessed, a foreign-cgroup sync, a wrong directory, a missing start record, a broken ACK sequence, a partial last line and every branch of the aggregate rule.
+- **Rehearsal (`r16/w4-rehearsal3`, SIGKILL of the writer instead of a crash; never a W4 result):** FULL trial: 5,299 ACKs, **5,299 witnessed**, 5,300 present in the store, 0 lost; OFF trial: 21,167 ACKs, 0 witnessed, all present (nothing was lost because there was no crash). It exercised the host streams, `docker cp` collection and the judge. Two earlier rehearsals refused on harness bugs that were fixed: the collecting helper could not read the writer's 0600 files with every capability dropped, then overflowed the 64 MB output buffer on an OFF writer's 100 MB WAL (now `docker cp` from a created container; the OFF writer is paced with `--pace-us 500`).
+- **Refusal of the real run (`r16/w4-real-refusal`):** `W4 needs a VM with no other running container (a guest crash kills them all, residents included); running: tx2-qlever-dev`. A guest crash kills every container in the VM: it would stop `tx2-qlever-dev` (which rule 3 forbids me to stop) and any other builder's or reviewer's engine work. A bounded wait for a window with no running container (`r16/w4-wait.log`, 45 minutes, 90 s of quiet required) found none. **Needed from the orchestrator:** park `tx2-qlever-dev` and keep the VM free of other containers for about 15 minutes, then `node lab/bin/heavy.mjs --label OBS01-W -- node lab/bin/engine.mjs witness-vm-probe --out <new dir> --image sha256:e48f59cdba69... --bpftrace-image sha256:06f6223590f5... --windows W4` (command in VM.md).
+- **Not verified:** whether the guest reboots in place or the VM stops after `sysrq b`; the recovery path (`colima start --activate=false`) is written but never executed; whether a FULL witnessed commit that is still in flight to the host at the crash can be mistaken for unwitnessed (it is counted as unwitnessed, the conservative side).
+
+### Divergences
+
+1. W4 is not a result (above). 2. ABBA is inconclusive twice; a third attempt was not made so as not to select a favourable one. 3. `witnessSession` gained a `noWitness` plan flag (A arms); the B arms use the unchanged witness path. 4. The IR reader is stricter than the legacy one on purpose (equality of ktime counts, per-function binding, AST cross-check). 5. W2's cost numbers of round 15 are unchanged; only their description was corrected. 6. The reviewer fixtures of rounds 11 to 14 rewrite tracked evidence files when run; I restored them with `git checkout -- lab/verify`.
+
+### Rule 9a audit
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| IR reader inside `clockPrimitiveVerdict` (diagnostic, never gating) | every call line of the optimised IR is accounted for; per-function and total ktime counts equal source and AST; helper ids from the kernel enum are allow-listed | dump from this W0 window's compile run | `compiledSha256`/`dumpFileSha256`, the source hash, the kernel BTF hash; the test binds the parser to the golden file's recorded hashes |
+| `test_round16.mjs` golden hash test | whole file, stdout, stderr, scanned text, pinned source, enum file hashes recomputed from the stored bytes | recomputed on each run | `MANIFEST.json` values (fixed in git) |
+| ABBA analysis | nearest-rank p99 of the samples; A/A band; block-bootstrap interval; verdict from the Q104a rule | samples recorded in this window by writers started after the arm's witness (B) or with none (A) | arm directories `abba/<label>/samples.json`, the zero-loss stream check of each B arm; `INCONCLUSIVE` is the reported verdict, no gate |
+| W1 compare (unchanged) | whole refusal set, primary, run-level codes, every commit | fresh session per mode on the resized VM | planted writer, store directory, cgroup id, `vm-facts-w1.txt` |
+| W4 judge (not run live) | per-commit D from the received partial trace compared with the commits present after recovery | rehearsal only; a live run would take the trace and files from the same trial | writer (dev, WAL inode) and directory bound in the trace's start record; writer cgroup id read before the crash |
+
+### Moved source hashes (old at `a1343b5e`)
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/clock-proof.mjs` | `2b3c7086785969c8779cd133d0c84264eb982d11cd6f6e89a48cb2c85c13c69b` | `8bcd335dc80416154b12fcb67c515b8f073a4db1be60630557056b7f9d782adb` |
+| `lab/bin/sync-witness.mjs` | `3b9f9778df54b3a0df16f33d4a5e14af8b42f23aef201dc67fb617c695a101e4` | `65d5efc97172618399287fa539bb0b4e25cae64e0460b740a0983d8f348d6bd9` |
+| `lab/observer/test_engine.mjs` | `5c83c99211872fd392f8ad2054cdf650e6786141958eee4c734d1bd3dccb8fed` | `f1d68283c541a8c874fcbf802e49d1a6d5dca526a5106244e99ae4e2e7a0dbdb` |
+| `lab/observer/VM.md` | `f8a6df6d4b90588acdfa309613bc701e2af0014db08f86277b7edb393e181ef0` | `5873b886120ce1638a0cbeb0f76d6ff624bc92c063bd437030abe71855361bd2` |
+| `lab/observer/golden/MANIFEST.json` | `52f4f7b7ab3600ddb4ee9ea91e98830b4ca321fd93a64a6b29d37ba55a08a3c9` | `b76761a0d05b2f7d6145b05d1c0644774c039b6d2454c4b4bd59f8fb9ce1e72b` |
+
+New files: `lab/bin/ir-dump.mjs`, `lab/bin/abba.mjs`, `lab/observer/test_round16.mjs`, `test_abba.mjs`, `test_w4.py`, `vm_w4_writer.py`, `vm_w4_judge.py`. No `lab/acceptance` path pins any of them; `vm_syncwitness.bt` is unchanged (`e68cd5cb...b248`).
+
+### What did not run
+
+The W4 guest crash (and therefore the recovery path); a resolving ABBA; W2 and W3 were not repeated; no NS workload or host power-loss test.
