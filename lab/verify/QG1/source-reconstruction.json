@@ -1,0 +1,8 @@
+{
+  "sourceLog": "/Users/sam/Claude/Projects/triplex-db-2/agents/CX-QG1/codex-2026-11-09T02-29-38-409Z.log",
+  "sourceLogSha256": "14d3d8c6ea56ed541b1b53ebf1b2db57368c87da832bb3e2d0c57c85ccd4d2c0",
+  "commandLine": 5325,
+  "recoveredSourceSha256": "5b486ae9b5ac86422f383860e223bb8e8c236c99aac68feea26c0a89c6438036",
+  "receiptSha256": "6a83c43a775dcaaaad1f8c08f4baa79721dbac4a256578beedd0392bf58e40d6",
+  "result": "Logged heredoc bytes match observed phase-0 source hash; recovered, not original Git proof."
+}

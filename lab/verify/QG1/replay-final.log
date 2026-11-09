@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 91298 "CX-OBS01-ER01S-R2-final03", pid 91484 "CX-VW02-round2", pid 90462 "CX-RT01-TERMINAL", pid 92291 "CX-P5A-R3-traffic4"
+inventory matched 1389
+M 8 cells, injections and persisted counts verified
+U 8 cells, injections and persisted counts verified
+retained-byte replay completed

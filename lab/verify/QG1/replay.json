@@ -1,0 +1,1036 @@
+{
+  "started": "2026-11-09T03:19:44.922419+00:00",
+  "reviewer": "CX-VQG1",
+  "subjectCommit": "2fb0a49119440b14c93dde7f0ad4b994d70cd4c0",
+  "evidence": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QG1",
+  "scriptSha256": "42a19705bbeb1027ffdd0a5e27b4e479afc1f2647eb2690625d6ae0bca737d78",
+  "inputHashes": {
+    "lab/experiments/EXP-QG1-qlever-generations/SHA256SUMS": "51a9a8d1bda29662f04069e4f1a4b85c2c1e49a93071dba048731f5a1a21fc5b",
+    "lab/verify/QG1/expected.json": "4abab22be2ed702a1b7a9a9a53e3fe5fa05eaba80390264a844cfec4c8c21250",
+    "lab/verify/QG1/expected.mjs": "3879e2f39d419770e66441b24992cacf5acf330c0827ec231cc70ff66a2dbe13",
+    "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+    "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+    "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+    "packages/qualification/test/c8-reads-never-write.test.ts": "8cb52fd1f2c7c042b6ed89e4356c1b0eb3f19bb8c1952c69227d039d4c92f8c0"
+  },
+  "inventory": {
+    "matched": 1389,
+    "bytes": 595586134,
+    "unlisted": []
+  },
+  "rawPairsVerified": {
+    "phase0-attempt1": 37,
+    "grid-M-attempt2": 260,
+    "grid-U-attempt2": 260
+  },
+  "phase0SourceBinding": {
+    "receiptHash": "5b486ae9b5ac86422f383860e223bb8e8c236c99aac68feea26c0a89c6438036",
+    "retainedHash": "6cd71e8ab680db17c2dca39fbb2b7e6944bef398d25cc6e6b57a7f248f2feb71",
+    "exactRetainedPreimageMatches": false
+  },
+  "phase0": {
+    "samples": [
+      {
+        "query": "discover",
+        "beforeId": 4,
+        "afterId": 22,
+        "rows": 3,
+        "canonicalSha256": "c3d109ee24e99ba4843d9a0404b2790ca2053048b3fd40196788af6888e1436f",
+        "orderedRowsEqual": true
+      },
+      {
+        "query": "base",
+        "beforeId": 6,
+        "afterId": 24,
+        "rows": 1,
+        "canonicalSha256": "00751803015f3302b842b736336830417eb4ef193ca128ae999814894b3da7f7",
+        "orderedRowsEqual": true
+      },
+      {
+        "query": "c8base",
+        "beforeId": 8,
+        "afterId": 26,
+        "rows": 5,
+        "canonicalSha256": "2f03e2a721cbac6c2e76e9d6f5b849f4381369972d17e709f7ae82e4ed8602f0",
+        "orderedRowsEqual": true
+      },
+      {
+        "query": "c8edge",
+        "beforeId": 10,
+        "afterId": 28,
+        "rows": 5,
+        "canonicalSha256": "2f03e2a721cbac6c2e76e9d6f5b849f4381369972d17e709f7ae82e4ed8602f0",
+        "orderedRowsEqual": true
+      },
+      {
+        "query": "point",
+        "beforeId": 12,
+        "afterId": 30,
+        "rows": 1,
+        "canonicalSha256": "842a37bf742e32466f4307941f379508c3c1472a18c79d7278a1f7a0332597d7",
+        "orderedRowsEqual": true
+      },
+      {
+        "query": "optional",
+        "beforeId": 14,
+        "afterId": 32,
+        "rows": 1,
+        "canonicalSha256": "206eac6d549f9d82cda44f6814e994f56df02c01d4b9b7ea270f0323a566bac4",
+        "orderedRowsEqual": true
+      },
+      {
+        "query": "predicate",
+        "beforeId": 16,
+        "afterId": 34,
+        "rows": 2,
+        "canonicalSha256": "15bff2a99c937ebf03245482929fc7d614e23888a61886aee2875595a5a77179",
+        "orderedRowsEqual": true
+      },
+      {
+        "query": "object",
+        "beforeId": 18,
+        "afterId": 36,
+        "rows": 1,
+        "canonicalSha256": "4a1510b78fe1745c68a65bbec2cde9d9926806ba1fd913bcc0f152aee7eef025",
+        "orderedRowsEqual": true
+      }
+    ],
+    "copiedDelta": {
+      "deleted": 38058,
+      "inserted": 1901135,
+      "total": 1939193,
+      "words": 274321,
+      "bytes": 124297135
+    },
+    "containerId": "d0908bba7cd9f0e6210057e53a8eb267487701ede9863a751b11b53f939d3692",
+    "rebuildMs": 5308.9841670000005
+  },
+  "cells": [
+    {
+      "arm": "M",
+      "label": "N0",
+      "before": 0,
+      "after": 26501,
+      "injectedCumulative": 0,
+      "coldJoinMs": 13.329875000001266,
+      "coldBaseMs": 7.23791700000038,
+      "p4MaxMs": 273.0657500000002,
+      "p4P50Ms": 166.29999999999995,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "M",
+      "label": "N10000",
+      "before": 36518,
+      "after": 62397,
+      "injectedCumulative": 10017,
+      "coldJoinMs": 15.899333000001207,
+      "coldBaseMs": 5.360124999999243,
+      "p4MaxMs": 277.55583299999995,
+      "p4P50Ms": 176.5256250000001,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "M",
+      "label": "N30000",
+      "before": 82389,
+      "after": 104536,
+      "injectedCumulative": 30009,
+      "coldJoinMs": 15.649541999999201,
+      "coldBaseMs": 5.765542000001005,
+      "p4MaxMs": 308.83862500000004,
+      "p4P50Ms": 181.57495800000004,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "M",
+      "label": "N100000",
+      "before": 174529,
+      "after": 194810,
+      "injectedCumulative": 100002,
+      "coldJoinMs": 17.561541999995825,
+      "coldBaseMs": 5.111333000008017,
+      "p4MaxMs": 311.25600000000003,
+      "p4P50Ms": 184.9672499999997,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "M",
+      "label": "N300000",
+      "before": 394814,
+      "after": 405765,
+      "injectedCumulative": 300006,
+      "coldJoinMs": 30.38804100001289,
+      "coldBaseMs": 5.668208999995841,
+      "p4MaxMs": 384.46324999999996,
+      "p4P50Ms": 254.04345899999998,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "M",
+      "label": "N1000000",
+      "before": 1105779,
+      "after": 1111132,
+      "injectedCumulative": 1000020,
+      "coldJoinMs": 91.04787499998929,
+      "coldBaseMs": 7.881916000013007,
+      "p4MaxMs": 517.9905839999999,
+      "p4P50Ms": 372.7942499999999,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "M",
+      "label": "N1500000",
+      "before": 1611121,
+      "after": 1615230,
+      "injectedCumulative": 1500009,
+      "coldJoinMs": 181.61774999997579,
+      "coldBaseMs": 13.72520899999654,
+      "p4MaxMs": 796.3121249999999,
+      "p4P50Ms": 445.25575000000026,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "M",
+      "label": "rebuilt",
+      "before": 0,
+      "after": 26501,
+      "injectedCumulative": 1500009,
+      "coldJoinMs": 31.896375000011176,
+      "coldBaseMs": 11.791375000029802,
+      "p4MaxMs": 296.6797079999999,
+      "p4P50Ms": 210.2307090000004,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "U",
+      "label": "N0",
+      "before": 0,
+      "after": 27745,
+      "injectedCumulative": 0,
+      "coldJoinMs": 12.537709000000177,
+      "coldBaseMs": 8.015459000000192,
+      "p4MaxMs": 289.01520800000026,
+      "p4P50Ms": 178.1647499999999,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "U",
+      "label": "N10000",
+      "before": 37762,
+      "after": 62397,
+      "injectedCumulative": 10017,
+      "coldJoinMs": 17.209875000000466,
+      "coldBaseMs": 8.522624999997788,
+      "p4MaxMs": 353.541416,
+      "p4P50Ms": 177.06179100000008,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "U",
+      "label": "N30000",
+      "before": 82389,
+      "after": 102048,
+      "injectedCumulative": 30009,
+      "coldJoinMs": 19.32633299999725,
+      "coldBaseMs": 7.9496670000007725,
+      "p4MaxMs": 294.68399999999997,
+      "p4P50Ms": 181.57883400000014,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "U",
+      "label": "N100000",
+      "before": 172041,
+      "after": 186102,
+      "injectedCumulative": 100002,
+      "coldJoinMs": 26.847290999998222,
+      "coldBaseMs": 14.149459000007482,
+      "p4MaxMs": 568.6065420000004,
+      "p4P50Ms": 310.6105419999999,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "U",
+      "label": "N300000",
+      "before": 386106,
+      "after": 400789,
+      "injectedCumulative": 300006,
+      "coldJoinMs": 39.31270899999072,
+      "coldBaseMs": 8.969166000024416,
+      "p4MaxMs": 346.89158299999997,
+      "p4P50Ms": 193.13233300000002,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "U",
+      "label": "N1000000",
+      "before": 1100803,
+      "after": 1108022,
+      "injectedCumulative": 1000020,
+      "coldJoinMs": 34.37629200000083,
+      "coldBaseMs": 8.868874999985565,
+      "p4MaxMs": 333.562459,
+      "p4P50Ms": 190.7662079999999,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "U",
+      "label": "N1500000",
+      "before": 1608011,
+      "after": 1613364,
+      "injectedCumulative": 1500009,
+      "coldJoinMs": 59.14374999998836,
+      "coldBaseMs": 22.270707999996375,
+      "p4MaxMs": 371.16887499999996,
+      "p4P50Ms": 200.01645800000006,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    },
+    {
+      "arm": "U",
+      "label": "rebuilt",
+      "before": 0,
+      "after": 28989,
+      "injectedCumulative": 1500009,
+      "coldJoinMs": 14.242708000005223,
+      "coldBaseMs": 5.313665999972727,
+      "p4MaxMs": 262.841542,
+      "p4P50Ms": 156.22895799999992,
+      "pairedC8Rows": [
+        0,
+        0
+      ]
+    }
+  ],
+  "injectionsM": [
+    {
+      "id": 25,
+      "triples": 10017,
+      "cumulative": 10017
+    },
+    {
+      "id": 50,
+      "triples": 19992,
+      "cumulative": 30009
+    },
+    {
+      "id": 75,
+      "triples": 25011,
+      "cumulative": 55020
+    },
+    {
+      "id": 76,
+      "triples": 25011,
+      "cumulative": 80031
+    },
+    {
+      "id": 77,
+      "triples": 19971,
+      "cumulative": 100002
+    },
+    {
+      "id": 102,
+      "triples": 25011,
+      "cumulative": 125013
+    },
+    {
+      "id": 103,
+      "triples": 25011,
+      "cumulative": 150024
+    },
+    {
+      "id": 104,
+      "triples": 25011,
+      "cumulative": 175035
+    },
+    {
+      "id": 105,
+      "triples": 25011,
+      "cumulative": 200046
+    },
+    {
+      "id": 106,
+      "triples": 25011,
+      "cumulative": 225057
+    },
+    {
+      "id": 107,
+      "triples": 25011,
+      "cumulative": 250068
+    },
+    {
+      "id": 108,
+      "triples": 25011,
+      "cumulative": 275079
+    },
+    {
+      "id": 109,
+      "triples": 24927,
+      "cumulative": 300006
+    },
+    {
+      "id": 134,
+      "triples": 25011,
+      "cumulative": 325017
+    },
+    {
+      "id": 135,
+      "triples": 25011,
+      "cumulative": 350028
+    },
+    {
+      "id": 136,
+      "triples": 25011,
+      "cumulative": 375039
+    },
+    {
+      "id": 137,
+      "triples": 25011,
+      "cumulative": 400050
+    },
+    {
+      "id": 138,
+      "triples": 25011,
+      "cumulative": 425061
+    },
+    {
+      "id": 139,
+      "triples": 25011,
+      "cumulative": 450072
+    },
+    {
+      "id": 140,
+      "triples": 25011,
+      "cumulative": 475083
+    },
+    {
+      "id": 141,
+      "triples": 25011,
+      "cumulative": 500094
+    },
+    {
+      "id": 142,
+      "triples": 25011,
+      "cumulative": 525105
+    },
+    {
+      "id": 143,
+      "triples": 25011,
+      "cumulative": 550116
+    },
+    {
+      "id": 144,
+      "triples": 25011,
+      "cumulative": 575127
+    },
+    {
+      "id": 145,
+      "triples": 25011,
+      "cumulative": 600138
+    },
+    {
+      "id": 146,
+      "triples": 25011,
+      "cumulative": 625149
+    },
+    {
+      "id": 147,
+      "triples": 25011,
+      "cumulative": 650160
+    },
+    {
+      "id": 148,
+      "triples": 25011,
+      "cumulative": 675171
+    },
+    {
+      "id": 149,
+      "triples": 25011,
+      "cumulative": 700182
+    },
+    {
+      "id": 150,
+      "triples": 25011,
+      "cumulative": 725193
+    },
+    {
+      "id": 151,
+      "triples": 25011,
+      "cumulative": 750204
+    },
+    {
+      "id": 152,
+      "triples": 25011,
+      "cumulative": 775215
+    },
+    {
+      "id": 153,
+      "triples": 25011,
+      "cumulative": 800226
+    },
+    {
+      "id": 154,
+      "triples": 25011,
+      "cumulative": 825237
+    },
+    {
+      "id": 155,
+      "triples": 25011,
+      "cumulative": 850248
+    },
+    {
+      "id": 156,
+      "triples": 25011,
+      "cumulative": 875259
+    },
+    {
+      "id": 157,
+      "triples": 25011,
+      "cumulative": 900270
+    },
+    {
+      "id": 158,
+      "triples": 25011,
+      "cumulative": 925281
+    },
+    {
+      "id": 159,
+      "triples": 25011,
+      "cumulative": 950292
+    },
+    {
+      "id": 160,
+      "triples": 25011,
+      "cumulative": 975303
+    },
+    {
+      "id": 161,
+      "triples": 24717,
+      "cumulative": 1000020
+    },
+    {
+      "id": 186,
+      "triples": 25011,
+      "cumulative": 1025031
+    },
+    {
+      "id": 187,
+      "triples": 25011,
+      "cumulative": 1050042
+    },
+    {
+      "id": 188,
+      "triples": 25011,
+      "cumulative": 1075053
+    },
+    {
+      "id": 189,
+      "triples": 25011,
+      "cumulative": 1100064
+    },
+    {
+      "id": 190,
+      "triples": 25011,
+      "cumulative": 1125075
+    },
+    {
+      "id": 191,
+      "triples": 25011,
+      "cumulative": 1150086
+    },
+    {
+      "id": 192,
+      "triples": 25011,
+      "cumulative": 1175097
+    },
+    {
+      "id": 193,
+      "triples": 25011,
+      "cumulative": 1200108
+    },
+    {
+      "id": 194,
+      "triples": 25011,
+      "cumulative": 1225119
+    },
+    {
+      "id": 195,
+      "triples": 25011,
+      "cumulative": 1250130
+    },
+    {
+      "id": 196,
+      "triples": 25011,
+      "cumulative": 1275141
+    },
+    {
+      "id": 197,
+      "triples": 25011,
+      "cumulative": 1300152
+    },
+    {
+      "id": 198,
+      "triples": 25011,
+      "cumulative": 1325163
+    },
+    {
+      "id": 199,
+      "triples": 25011,
+      "cumulative": 1350174
+    },
+    {
+      "id": 200,
+      "triples": 25011,
+      "cumulative": 1375185
+    },
+    {
+      "id": 201,
+      "triples": 25011,
+      "cumulative": 1400196
+    },
+    {
+      "id": 202,
+      "triples": 25011,
+      "cumulative": 1425207
+    },
+    {
+      "id": 203,
+      "triples": 25011,
+      "cumulative": 1450218
+    },
+    {
+      "id": 204,
+      "triples": 25011,
+      "cumulative": 1475229
+    },
+    {
+      "id": 205,
+      "triples": 24780,
+      "cumulative": 1500009
+    }
+  ],
+  "injectionsU": [
+    {
+      "id": 25,
+      "triples": 10017,
+      "cumulative": 10017
+    },
+    {
+      "id": 50,
+      "triples": 19992,
+      "cumulative": 30009
+    },
+    {
+      "id": 75,
+      "triples": 25011,
+      "cumulative": 55020
+    },
+    {
+      "id": 76,
+      "triples": 25011,
+      "cumulative": 80031
+    },
+    {
+      "id": 77,
+      "triples": 19971,
+      "cumulative": 100002
+    },
+    {
+      "id": 102,
+      "triples": 25011,
+      "cumulative": 125013
+    },
+    {
+      "id": 103,
+      "triples": 25011,
+      "cumulative": 150024
+    },
+    {
+      "id": 104,
+      "triples": 25011,
+      "cumulative": 175035
+    },
+    {
+      "id": 105,
+      "triples": 25011,
+      "cumulative": 200046
+    },
+    {
+      "id": 106,
+      "triples": 25011,
+      "cumulative": 225057
+    },
+    {
+      "id": 107,
+      "triples": 25011,
+      "cumulative": 250068
+    },
+    {
+      "id": 108,
+      "triples": 25011,
+      "cumulative": 275079
+    },
+    {
+      "id": 109,
+      "triples": 24927,
+      "cumulative": 300006
+    },
+    {
+      "id": 134,
+      "triples": 25011,
+      "cumulative": 325017
+    },
+    {
+      "id": 135,
+      "triples": 25011,
+      "cumulative": 350028
+    },
+    {
+      "id": 136,
+      "triples": 25011,
+      "cumulative": 375039
+    },
+    {
+      "id": 137,
+      "triples": 25011,
+      "cumulative": 400050
+    },
+    {
+      "id": 138,
+      "triples": 25011,
+      "cumulative": 425061
+    },
+    {
+      "id": 139,
+      "triples": 25011,
+      "cumulative": 450072
+    },
+    {
+      "id": 140,
+      "triples": 25011,
+      "cumulative": 475083
+    },
+    {
+      "id": 141,
+      "triples": 25011,
+      "cumulative": 500094
+    },
+    {
+      "id": 142,
+      "triples": 25011,
+      "cumulative": 525105
+    },
+    {
+      "id": 143,
+      "triples": 25011,
+      "cumulative": 550116
+    },
+    {
+      "id": 144,
+      "triples": 25011,
+      "cumulative": 575127
+    },
+    {
+      "id": 145,
+      "triples": 25011,
+      "cumulative": 600138
+    },
+    {
+      "id": 146,
+      "triples": 25011,
+      "cumulative": 625149
+    },
+    {
+      "id": 147,
+      "triples": 25011,
+      "cumulative": 650160
+    },
+    {
+      "id": 148,
+      "triples": 25011,
+      "cumulative": 675171
+    },
+    {
+      "id": 149,
+      "triples": 25011,
+      "cumulative": 700182
+    },
+    {
+      "id": 150,
+      "triples": 25011,
+      "cumulative": 725193
+    },
+    {
+      "id": 151,
+      "triples": 25011,
+      "cumulative": 750204
+    },
+    {
+      "id": 152,
+      "triples": 25011,
+      "cumulative": 775215
+    },
+    {
+      "id": 153,
+      "triples": 25011,
+      "cumulative": 800226
+    },
+    {
+      "id": 154,
+      "triples": 25011,
+      "cumulative": 825237
+    },
+    {
+      "id": 155,
+      "triples": 25011,
+      "cumulative": 850248
+    },
+    {
+      "id": 156,
+      "triples": 25011,
+      "cumulative": 875259
+    },
+    {
+      "id": 157,
+      "triples": 25011,
+      "cumulative": 900270
+    },
+    {
+      "id": 158,
+      "triples": 25011,
+      "cumulative": 925281
+    },
+    {
+      "id": 159,
+      "triples": 25011,
+      "cumulative": 950292
+    },
+    {
+      "id": 160,
+      "triples": 25011,
+      "cumulative": 975303
+    },
+    {
+      "id": 161,
+      "triples": 24717,
+      "cumulative": 1000020
+    },
+    {
+      "id": 186,
+      "triples": 25011,
+      "cumulative": 1025031
+    },
+    {
+      "id": 187,
+      "triples": 25011,
+      "cumulative": 1050042
+    },
+    {
+      "id": 188,
+      "triples": 25011,
+      "cumulative": 1075053
+    },
+    {
+      "id": 189,
+      "triples": 25011,
+      "cumulative": 1100064
+    },
+    {
+      "id": 190,
+      "triples": 25011,
+      "cumulative": 1125075
+    },
+    {
+      "id": 191,
+      "triples": 25011,
+      "cumulative": 1150086
+    },
+    {
+      "id": 192,
+      "triples": 25011,
+      "cumulative": 1175097
+    },
+    {
+      "id": 193,
+      "triples": 25011,
+      "cumulative": 1200108
+    },
+    {
+      "id": 194,
+      "triples": 25011,
+      "cumulative": 1225119
+    },
+    {
+      "id": 195,
+      "triples": 25011,
+      "cumulative": 1250130
+    },
+    {
+      "id": 196,
+      "triples": 25011,
+      "cumulative": 1275141
+    },
+    {
+      "id": 197,
+      "triples": 25011,
+      "cumulative": 1300152
+    },
+    {
+      "id": 198,
+      "triples": 25011,
+      "cumulative": 1325163
+    },
+    {
+      "id": 199,
+      "triples": 25011,
+      "cumulative": 1350174
+    },
+    {
+      "id": 200,
+      "triples": 25011,
+      "cumulative": 1375185
+    },
+    {
+      "id": 201,
+      "triples": 25011,
+      "cumulative": 1400196
+    },
+    {
+      "id": 202,
+      "triples": 25011,
+      "cumulative": 1425207
+    },
+    {
+      "id": 203,
+      "triples": 25011,
+      "cumulative": 1450218
+    },
+    {
+      "id": 204,
+      "triples": 25011,
+      "cumulative": 1475229
+    },
+    {
+      "id": 205,
+      "triples": 24780,
+      "cumulative": 1500009
+    }
+  ],
+  "fits": {
+    "M/join": {
+      "n": 7,
+      "interceptMs": 4.2337968385587885,
+      "slopeMsPerMillionDelta": 98.63218364244275,
+      "rSquared": 0.9512966606894621,
+      "descriptiveSlopeSE": 9.980562751314961,
+      "nominal95CI": [
+        72.97632868404204,
+        124.28803860084346
+      ]
+    },
+    "M/base": {
+      "n": 7,
+      "interceptMs": 5.197725734612291,
+      "slopeMsPerMillionDelta": 4.2189538956369,
+      "rSquared": 0.7601512802027988,
+      "descriptiveSlopeSE": 1.059835503915296,
+      "nominal95CI": [
+        1.4945598263113102,
+        6.94334796496249
+      ]
+    },
+    "U/join": {
+      "n": 7,
+      "interceptMs": 18.686721697636557,
+      "slopeMsPerMillionDelta": 23.012792938798636,
+      "rSquared": 0.802707437910503,
+      "descriptiveSlopeSE": 5.102241847705084,
+      "nominal95CI": [
+        9.897061885441206,
+        36.12852399215607
+      ]
+    },
+    "U/base": {
+      "n": 7,
+      "interceptMs": 8.289870461509807,
+      "slopeMsPerMillionDelta": 6.116380494487322,
+      "rSquared": 0.5175702259661276,
+      "descriptiveSlopeSE": 2.6408388576812194,
+      "nominal95CI": [
+        -0.6721123379685823,
+        12.904873326943225
+      ]
+    }
+  },
+  "screening": {
+    "M": {
+      "baselineMax": 273.0657500000002,
+      "limit": 300.3723250000003,
+      "isolatedPassingDeltas": [
+        0,
+        36518
+      ],
+      "maxSampleCandidate": 36518,
+      "firstSampleFailure": 82389,
+      "iidProbabilitySampleMaxAtLeastPopulationP99": 0.18209306240276923
+    },
+    "U": {
+      "baselineMax": 289.01520800000026,
+      "limit": 317.9167288000003,
+      "isolatedPassingDeltas": [
+        0,
+        82389
+      ],
+      "maxSampleCandidate": 82389,
+      "firstSampleFailure": 37762,
+      "iidProbabilitySampleMaxAtLeastPopulationP99": 0.18209306240276923
+    }
+  },
+  "finished": "2026-11-09T03:19:50.471183+00:00",
+  "result": "RETAINED-BYTE CHECKS COMPLETED; no production threshold or live rerun"
+}

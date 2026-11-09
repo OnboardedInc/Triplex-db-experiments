@@ -1,0 +1,14 @@
+CX-VQG1 offline replay attempt 1 (2026-11-09 UTC).
+Inventory: 1,389 retained checksums matched before the first assertion stopped.
+Stopped at replay.py phase-0 source-preimage comparison:
+  assert receipt['source']['probe'] == sha((e/'source-attempt1/probe.mjs').read_bytes())
+AssertionError
+
+Observed receipt hash:
+  5b486ae9b5ac86422f383860e223bb8e8c236c99aac68feea26c0a89c6438036
+All three retained probe.mjs source copies hash to:
+  6cd71e8ab680db17c2dca39fbb2b7e6944bef398d25cc6e6b57a7f248f2feb71
+
+No replay.json was emitted. Reason for attempt 2: record this source-binding
+limitation explicitly, then independently check raw answers without pretending the
+retained formatted source is the measured preimage. No builder evidence changed.

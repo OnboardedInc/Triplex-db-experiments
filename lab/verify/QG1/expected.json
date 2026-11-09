@@ -1,0 +1,106 @@
+{
+  "manifestSubjects": 3950,
+  "basis": 426,
+  "expected": [
+    {
+      "subject": 38,
+      "count": 127,
+      "sha256": "69e5140da2c1ff42146d66ae93991263a52ff7a91de970d4a48e99854a9937d5"
+    },
+    {
+      "subject": 96,
+      "count": 172,
+      "sha256": "e918c108c44464103672cba821917e978594d7e5cb6e0d64c28cdcc8434a2e18"
+    },
+    {
+      "subject": 269,
+      "count": 667,
+      "sha256": "beb3981adb05c0e9830e57f4957c7f998da5074c5d06b540b4843dd00a2e256f"
+    },
+    {
+      "subject": 331,
+      "count": 352,
+      "sha256": "8640a17f2e91eb97bdbf02c07b4cb39d45aa387d3fe8fb262a0613d005294c1f"
+    },
+    {
+      "subject": 620,
+      "count": 715,
+      "sha256": "06e7ee29502f38d11a5ce136e435589018c7dbb6cfafab437c8be7754c52076b"
+    },
+    {
+      "subject": 774,
+      "count": 1072,
+      "sha256": "2fc741651c5a7b8e619d2681b05b0e42d6c011a9da4ce8322fbe69b6c74745f3"
+    },
+    {
+      "subject": 1112,
+      "count": 572,
+      "sha256": "8b12d1a5299717d126f71ce1ef6bbcf009f90e5f01635c3599dcbeeeba7f694a"
+    },
+    {
+      "subject": 1276,
+      "count": 177,
+      "sha256": "788b7e23aa72257c30e2cca8dd72d54f6a04aaa64f787338130935c4f86e5fb1"
+    },
+    {
+      "subject": 1492,
+      "count": 442,
+      "sha256": "8e66bca51b32b1877266bb63eab376eb1f0dbaab2b4c238fce1754869ef6dc2b"
+    },
+    {
+      "subject": 1558,
+      "count": 1242,
+      "sha256": "9094081f2635d6fe7556dabb181807d760ce6253ce6ac25c318a5e36fc66e2fb"
+    },
+    {
+      "subject": 1901,
+      "count": 560,
+      "sha256": "16b523d3d830c4bafe459837a8ebeea10632a62e09bfaaf64a81fd314720aa09"
+    },
+    {
+      "subject": 2022,
+      "count": 105,
+      "sha256": "053f6b0fc614b32efdee30d7ff27b265b5bd07e383bc438179133a141935158b"
+    },
+    {
+      "subject": 2400,
+      "count": 120,
+      "sha256": "aa71d27c81310f434693d19ce3e6996713f02ad54324473c1b75822c4fb0142f"
+    },
+    {
+      "subject": 2695,
+      "count": 452,
+      "sha256": "ba2bb978ff70b0883cda20fcfab7c484ff5e580e2929b0ea9e851ab760d03c98"
+    },
+    {
+      "subject": 2768,
+      "count": 1072,
+      "sha256": "155a19690a9ce0a6db1f00aa50196cba084ebcc6c295a1feb523fd460a2fde1e"
+    },
+    {
+      "subject": 2806,
+      "count": 120,
+      "sha256": "90e61b057a14d50de7fa8a69ea9c1fa2942ec28167ebe747a1417ff0b1488e19"
+    },
+    {
+      "subject": 2882,
+      "count": 150,
+      "sha256": "c74e5b231e31ce8dde09b612bf9270540667867ca900ceae10ac6a141a4fbfb1"
+    },
+    {
+      "subject": 3319,
+      "count": 182,
+      "sha256": "94cca5e0cf63a1ec6d2f230774683d2e0ae010aac2ddd5b1d11099d389427f7e"
+    },
+    {
+      "subject": 3679,
+      "count": 177,
+      "sha256": "3c80a8c3fbbf2022fad0e948693ff3ed819bad6201661ad032f3707eb329e214"
+    },
+    {
+      "subject": 3803,
+      "count": 335,
+      "sha256": "2ec174a6f1b0ac0779cf57c310824297ea5990f2884e8f47021958a53e5faeec"
+    }
+  ]
+}
