@@ -1,0 +1,927 @@
+{
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01",
+  "series": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b",
+  "files": 9615,
+  "attempts": {
+    "r3-dev-ulid-1000-off": {
+      "seed": 1000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "DIAGNOSTIC",
+      "assertions": 442410,
+      "logicalBytes": 190894080,
+      "bytesPerAssertion": 431.4868108767885,
+      "manifestSha256": "cc65c844737814117071402c1dfd52eddd1caebd50b155ae8e92eaf0c9f3f89a"
+    },
+    "r3-dev-ulid-1000-on": {
+      "seed": 1000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "DIAGNOSTIC",
+      "assertions": 442410,
+      "logicalBytes": 125366272,
+      "bytesPerAssertion": 283.3712438688095,
+      "manifestSha256": "3902c5744557e1c64b66b52035723f7166c1d995a72da3c23e8f05ca56607033"
+    },
+    "r3-dev-w0-1000-off": {
+      "seed": 1000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "DIAGNOSTIC",
+      "assertions": 442410,
+      "logicalBytes": 150396928,
+      "bytesPerAssertion": 339.9492054881219,
+      "manifestSha256": "027d55febab05e677de9a8f470acea2ab0a45112ad40ecb1c04c84b552bc2418"
+    },
+    "r3-dev-w0-1000-on": {
+      "seed": 1000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "DIAGNOSTIC",
+      "assertions": 442410,
+      "logicalBytes": 111849472,
+      "bytesPerAssertion": 252.81858909156665,
+      "manifestSha256": "2d20f586894272acc6228e692d39cdadbb24edef89a44ed34f01a6d08587542e"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-archive-ulid-10000-off-faaa31b2-ec76-4be4-836d-ed079d9aa4ed": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-archive-ulid-10000-off",
+      "command": [
+        "node",
+        "lab/experiments/EXP-HS01/archive-store.mjs",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-off"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:00:39.616Z",
+      "end": "2026-11-09T17:00:47.591Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "3d40be62b721a4601e75abd15547940c92b81a867c9ee9ecc4e007cc54cc7768"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-archive-ulid-10000-on-34960e87-6f1f-4bf7-825b-efe301d0fccc": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-archive-ulid-10000-on",
+      "command": [
+        "node",
+        "lab/experiments/EXP-HS01/archive-store.mjs",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-on"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:21:13.226Z",
+      "end": "2026-11-09T17:21:17.222Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "f84ae7ffc776cbe90b6c18dca53ffd56ec3df91bfd0c310c7824c23554dd55f9"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-archive-w0-10000-off-d3ca1bfe-bbd6-40b2-90c1-6a092948016b": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-archive-w0-10000-off",
+      "command": [
+        "node",
+        "lab/experiments/EXP-HS01/archive-store.mjs",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-off"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T16:16:37.907Z",
+      "end": "2026-11-09T16:16:43.542Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "013d6c5d6cfcc494d0799e9b7d9544d933962f9c04507e544cf9ed182949e129"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-archive-w0-10000-on-0ae83928-d0bd-42c7-ab2a-de2d9f7b88f7": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-archive-w0-10000-on",
+      "command": [
+        "node",
+        "lab/experiments/EXP-HS01/archive-store.mjs",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-on"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T16:37:13.168Z",
+      "end": "2026-11-09T16:37:17.080Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "fd2f50997523f6d8466d48f7400bc2683bea709d403a2d402d9efba2db5bce01"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-build-b019b9e4-7372-434d-b385-f02a18505740": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-build",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-build",
+        "--",
+        "node",
+        "lab/experiments/EXP-HS01/build.mjs"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T14:33:17.616Z",
+      "end": "2026-11-09T14:33:34.276Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "b6d2ac0dc31a3fd31f31eba644c061854d000e23560628beea9e7560c008ec55"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-diff-check-5a0f9218-cf99-4931-a09b-23de6be2c65a": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-diff-check",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-diff-check",
+        "--",
+        "git",
+        "diff",
+        "--check"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:25:34.775Z",
+      "end": "2026-11-09T17:25:34.862Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "377700d955728d259e589a236c5bf5012f4f5ebf301915c8240aaf20efc3a949"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-digest-ulid-10000-off-915e59b7-6cdf-4b65-928e-4bc363b64af9": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-digest-ulid-10000-off",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-digest-ulid-10000-off",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-digest.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-off/store/broker.db",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-off/digest.json"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T16:58:05.760Z",
+      "end": "2026-11-09T17:00:39.346Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "24dfa224e71a3f9688bc6163a451c450d676ae19099c0b66266aa79858c64fbd"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-digest-ulid-10000-on-422d1b77-5a0f-43ea-b08b-6d7fe3a5317a": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-digest-ulid-10000-on",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-digest-ulid-10000-on",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-digest.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-on/store/broker.db",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-on/digest.json"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:18:33.802Z",
+      "end": "2026-11-09T17:21:12.949Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "761d17a7f09a1d4d424ea51eec6bda12b4359cc4d5f2d1b6345db06b3f7d888d"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-digest-w0-10000-off-0a65b20b-5ba9-41ca-92e4-866c49ccafac": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-digest-w0-10000-off",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-digest-w0-10000-off",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-digest.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-off/store/broker.db",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-off/digest.json"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T16:14:37.593Z",
+      "end": "2026-11-09T16:16:37.631Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "8ffd976af202f147805bb83953bdb277f70f1739074edb358b4483343736adb4"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-digest-w0-10000-on-c2b7d308-ca52-4028-9222-85fa8710a7b6": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-digest-w0-10000-on",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-digest-w0-10000-on",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-digest.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-on/store/broker.db",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-on/digest.json"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T16:34:50.724Z",
+      "end": "2026-11-09T16:37:12.843Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "e277b295191f4ef5ef4177dbe0cde591289c2ee5eaaef986c3d5c83d865a4cf7"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-evaluator-e4bd5b7f-31a0-4036-96ad-a2f0932c6627": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-evaluator",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-evaluator",
+        "--",
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:22:23.646Z",
+      "end": "2026-11-09T17:25:33.755Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "e27eb8023c53d97e57f14ad4f9ca0b1c3eef31b10bd3a717f5c6c53c4e3dd799"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-flip-bd151ccc-0110-44a9-81f5-0c00feb18914": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-flip",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-flip",
+        "--",
+        "node",
+        "lab/experiments/EXP-SQL01/flip-wal.mjs"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:29:01.974Z",
+      "end": "2026-11-09T15:32:47.047Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "5ab2be9c1cd4d793ffd954266cdce74e9d637ef3ac7efbc86011598f1682be04"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-format-058fc6f2-489b-4962-9f90-1784276f9635": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-format",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-format",
+        "--",
+        "node_modules/.bin/oxfmt",
+        "--check",
+        "lab/bench/hs01-digest.ts",
+        "lab/bench/hs01-seed.ts",
+        "lab/bench/hs01-terms.mjs",
+        "lab/bench/hs01-ulid-patch.mjs",
+        "lab/experiments/EXP-HS01/archive-store.mjs",
+        "lab/experiments/EXP-HS01/build.mjs",
+        "lab/experiments/EXP-HS01/pipeline.mjs",
+        "lab/experiments/EXP-HS01/run.mjs",
+        "lab/experiments/EXP-HS01/seal-r2.mjs",
+        "lab/verify/HS01/id-codec.test.ts",
+        "lab/verify/HS01/journal.test.ts",
+        "lab/verify/HS01/kill-child.ts",
+        "lab/verify/HS01/kill.mjs",
+        "lab/verify/HS01/layout.test.ts",
+        "lab/verify/HS01/retention.test.ts",
+        "lab/verify/HS01/round2/review.test.ts",
+        "lab/verify/HS01/round2/vitest.config.ts",
+        "lab/verify/HS01/round3.test.ts",
+        "lab/verify/HS01/v1-worker.ts",
+        "lab/verify/HS01/v2-worker.ts",
+        "lab/verify/HS01/vitest.config.ts",
+        "lab/verify/P2Q/tests/round8-policy.test.ts",
+        "packages/qlever/src/broker/broker.ts",
+        "packages/qlever/src/broker/log.ts",
+        "packages/qlever/src/broker/row-codec.ts",
+        "packages/qlever/src/broker/sqlite-worker.ts",
+        "packages/qlever/src/index.ts"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:25:34.392Z",
+      "end": "2026-11-09T17:25:34.636Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "dd4646f3dabe89fd9514f4501cc4d7539af0766f760cdb1f286fdbd9bf72b280"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-g0-qlever-cabe9856-79e7-44fc-b832-7772f5da8661": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-g0-qlever",
+      "command": [
+        "node",
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "qlever",
+        "--exp",
+        "EXP-HS01"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:43:58.137Z",
+      "end": "2026-11-09T15:47:31.847Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "52af9d7e65394f42920f4c5df37237a5242c436d87596aa6530fc2879a4b51cc"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-g0-xtdb-4af81c1a-0228-4b7e-af0b-c5135901dabe": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-g0-xtdb",
+      "command": [
+        "node",
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "xtdb",
+        "--exp",
+        "EXP-HS01"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:42:31.920Z",
+      "end": "2026-11-09T15:43:57.778Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "a437e5ff527b7a0c4c23bfc530fc7779866f513ffe3232020a9188a28a1c3c0b"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-g0-xtdb-658e58d4-f934-470a-a36c-071ac0b97362": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-g0-xtdb",
+      "command": [
+        "node",
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "xtdb",
+        "--exp",
+        "EXP-HS01"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:14:22.140Z",
+      "end": "2026-11-09T15:27:07.902Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "33c876b6e2aef55ef63ee050b1728704894c9a5f9c9a73d2c140338cc7a79559"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-hs01-504b811e-4341-4174-8813-64762282627f": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-hs01",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-hs01",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/vitest.config.ts"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T14:33:34.498Z",
+      "end": "2026-11-09T14:35:47.904Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "d6382d36115bfd3a4d8d548638d203c7f154ae7fe0e5c5f0f97a2fafa9b5735a"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-kill80-11c96216-92b5-44db-9071-be7df77c3ff3": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-kill80",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-kill80",
+        "--",
+        "node",
+        "lab/verify/HS01/kill.mjs"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:14:22.069Z",
+      "end": "2026-11-09T15:29:00.999Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "c725aea51de97ae6071d51cc9f0c7c7f3708991f510da3316ffa106bfeeb704f"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-kill80-records-5e1381fe-6d6b-467f-9aed-1fd721c39798": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-kill80-records",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-kill80-records",
+        "--",
+        "node",
+        "lab/verify/HS01/kill.mjs"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:54:15.401Z",
+      "end": "2026-11-09T15:56:03.300Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "5c71e130bdeed5248ddb904d1a80ebae73f07c7818992d3733ccaa4f29e70323"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-lint-e849f938-5f92-45c2-a3e6-a2158855a321": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-lint",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-lint",
+        "--",
+        "node_modules/.bin/oxlint",
+        "packages/qlever/src/broker",
+        "lab/verify/HS01",
+        "lab/bench/hs01-seed.ts",
+        "lab/bench/hs01-digest.ts",
+        "lab/bench/hs01-ulid-patch.mjs",
+        "lab/bench/hs01-terms.mjs",
+        "lab/experiments/EXP-HS01",
+        "--deny-warnings"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:25:34.010Z",
+      "end": "2026-11-09T17:25:34.190Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "a8d1e810c04cdf57db5e19fed4e004db5ad107b9fbc23353bb5e231a7836531e"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-p2q-12b8d7b0-4d51-40ff-8a1b-6bcfbe5e2503": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-p2q",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-p2q",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/P2Q/vitest.config.ts",
+        "--exclude",
+        "**/live/**",
+        "--exclude",
+        "**/check1-*",
+        "--exclude",
+        "**/check2-ack*",
+        "--exclude",
+        "**/check4-feed*",
+        "--exclude",
+        "**/round10-types*",
+        "--exclude",
+        "**/round10-public-type*",
+        "-t",
+        "^(?!.*a burned LSN)"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:49:34.352Z",
+      "end": "2026-11-09T15:52:14.119Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "a180334e77ccf46f5e672d0d5d0b96b4e10a3c21c3ac8c2b5671993c07d9d89e"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-pack-23f32098-503a-47e0-83d6-f65cffbcf269": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-pack",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-pack",
+        "--",
+        "node",
+        "lab/bin/check-packages.mjs"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:21:38.275Z",
+      "end": "2026-11-09T17:22:23.489Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "9514f6002e39ca77eb5400f9537f57cc48e9bcb532006272014b282b58a4af93"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-pack-build-3d91ce8c-350d-4f9c-b2ce-4dcd7bf65d35": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-pack-build",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-pack-build",
+        "--",
+        "node",
+        "--input-type=module",
+        "-e",
+        "\nimport fs from 'node:fs';import path from 'node:path';import {execFileSync}from 'node:child_process';\nconst root=process.cwd(),exclude=JSON.parse(fs.readFileSync('lab/config/pack-exclusions.json')),items=new Map();\nfor(const e of fs.readdirSync('packages')){const p=path.join('packages',e,'package.json');if(!fs.existsSync(p))continue;const m=JSON.parse(fs.readFileSync(p));if(!exclude[m.name])items.set(m.name,{dir:path.dirname(p),m});}\nconst done=new Set();function build(name){if(done.has(name))return;const x=items.get(name);for(const dep of Object.keys({...x.m.dependencies,...x.m.devDependencies}))if(items.has(dep))build(dep);execFileSync('/bin/sh',['-c',x.m.scripts.build],{cwd:x.dir,env:{...process.env,PATH:path.join(root,'node_modules/.bin')+':'+process.env.PATH},stdio:'inherit'});done.add(name);}for(const name of items.keys())build(name);\n"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:21:17.539Z",
+      "end": "2026-11-09T17:21:38.031Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "22d14f85654bf7ed665aee63562406462252e86312f63649998ace27bfb725bf"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-review-r2-36865b56-70c7-4e84-941f-51a879e76e06": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-review-r2",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-review-r2",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/round2/vitest.config.ts"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:54:05.220Z",
+      "end": "2026-11-09T15:54:15.201Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "cf29dea8222d65429401f307500fc1f729b53cf772d66b685a189b7f2954b9fd"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-route-d081f398-fca7-4735-a192-973b2f536ab8": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-route",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-route",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/testkit",
+        "--maxWorkers",
+        "1",
+        "--no-file-parallelism"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:52:28.099Z",
+      "end": "2026-11-09T15:54:04.896Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "42d5e4b455b5eba020197914d1e247aedf93818f553ade8fb835272306b4fcd0"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-ulid-10000-off-4b6aed60-79c5-4db6-bd3f-e71295b2ebeb": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-ulid-10000-off",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-seed-ulid-10000-off",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-seed.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-off",
+        "10000"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T16:37:17.461Z",
+      "end": "2026-11-09T16:58:05.472Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "4ee191a2169a479b29295c029445447bb4169cf8aed8b2e3f9899ca7a929f733"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-ulid-10000-on-07405538-fef5-45cb-9d46-268d96b50245": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-ulid-10000-on",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-seed-ulid-10000-on",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-seed.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-on",
+        "10000"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:00:47.723Z",
+      "end": "2026-11-09T17:18:33.540Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "adad75b4e0375aec75e6a6589be155f8ee75dce9a78d83767580abc817852c76"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-w0-1000-off-793ebef0-b6a9-4c77-8da7-bf16ec3df7f9": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-w0-1000-off",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-seed-w0-1000-off",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-seed.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-1000-off",
+        "1000"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:14:22.071Z",
+      "end": "2026-11-09T15:27:06.230Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "7e898283f919fd2c4b936e9cd6e1e691d8c84d1316263d934e854c9ac20ba6fd"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-w0-1000-on-08e82842-63ad-4ff8-92a8-2206585d44fd": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-w0-1000-on",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-seed-w0-1000-on",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-seed.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-1000-on",
+        "1000"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:27:06.927Z",
+      "end": "2026-11-09T15:31:00.421Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "fcc9e65a954407ac958c7551517940606770bb544c3e958cde6697d0df4dcd63"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-w0-10000-off-1c4343ac-abab-49b0-b16e-9cce09401641": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-w0-10000-off",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-seed-w0-10000-off",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-seed.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-off",
+        "10000"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:56:03.607Z",
+      "end": "2026-11-09T16:14:37.285Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "f012c1bd8f20041df301d78b9fb37f39c8ee165359bcd3b8cf81888ad5149721"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-w0-10000-on-34b883d1-c52f-4e8c-86ae-67f333fea13c": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-seed-w0-10000-on",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-seed-w0-10000-on",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-seed.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-on",
+        "10000"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T16:16:43.699Z",
+      "end": "2026-11-09T16:34:50.397Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "a89bf4c7bd2155ac7c17c768b2705f21d013432f32d4f20396531af88b791d93"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-sql01-1ecbc724-b218-4128-a274-f70340d4e35f": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-sql01",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-sql01",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/SQL01/vitest.config.ts"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:47:32.170Z",
+      "end": "2026-11-09T15:49:34.059Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "9325b591aa97ca4f8980fbfebd8a9346a26d89a95a1c1023a9eef90a929b973b"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-sql01-7b3a43d8-5e47-4cff-a2d0-1da6b12cd585": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-sql01",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-sql01",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/SQL01/vitest.config.ts"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:25:52.327Z",
+      "end": "2026-11-09T17:27:29.690Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "2a2fbdc408a8c0606329ce9f653004a8417c8d362bebbbecb72668fd8cfaeac2"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-storage-fa9a77f3-6f42-4af9-ab17-a9ae9737f3b0": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-storage",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-storage",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/P2Q/vitest.config.ts",
+        "check2-ack.test.ts",
+        "check4-feed.test.ts",
+        "check5-q31c.test.ts",
+        "-t",
+        "sequential resend|two transactions that read|100 crashes per variant|nested transacts|rejects|ordinal"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T15:52:14.418Z",
+      "end": "2026-11-09T15:52:27.708Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "38bf0ad74888155ff7791a5aef5cdec27e81dac07b81f97964a28fb560552c89"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-off": {
+      "seed": 10000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "PASS",
+      "assertions": 4468284,
+      "logicalBytes": 1317703680,
+      "bytesPerAssertion": 294.9015058129698,
+      "manifestSha256": "f2eb34bc5feae21a9f27a988cac842618026f9be2488abfbc399c21d8b4bd159"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-10000-on": {
+      "seed": 10000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "PASS",
+      "assertions": 4468284,
+      "logicalBytes": 651255808,
+      "bytesPerAssertion": 145.75076427550263,
+      "manifestSha256": "84be96474da724d9c0130434575e0c2dab06f1b2bfec3b35621c32ac2d4108f3"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-patch-apply-5f935628-0a9a-4dbf-a77a-8b538c6f5728": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-patch-apply",
+      "command": [
+        "node",
+        "lab/bench/hs01-ulid-patch.mjs",
+        "apply",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-patch.json"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T16:37:17.256Z",
+      "end": "2026-11-09T16:37:17.311Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "e5b7cbfd6320764677a3ef13e72fd4a1c287c060611e3615ae571234b16ebd25"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-patch-restore-5bf2ea95-8cc5-4a90-8af0-091816a165a4": {
+      "label": "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-patch-restore",
+      "command": [
+        "node",
+        "lab/bench/hs01-ulid-patch.mjs",
+        "restore",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-ulid-patch.json"
+      ],
+      "head": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+      "start": "2026-11-09T17:21:17.357Z",
+      "end": "2026-11-09T17:21:17.406Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "dcd44478efcf7a994b762611f720cc21ede5596d5663aff9738dbf2e48bab08a"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-1000-off": {
+      "seed": 1000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "DIAGNOSTIC",
+      "assertions": 442410,
+      "logicalBytes": 150347776,
+      "bytesPerAssertion": 339.83810492529557,
+      "manifestSha256": "7b7832af91e6ae985b6495157cb7e246bc43bc63cb7e5ce82364625438fbd0f7"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-1000-on": {
+      "seed": 1000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "DIAGNOSTIC",
+      "assertions": 442410,
+      "logicalBytes": 111808512,
+      "bytesPerAssertion": 252.72600528921137,
+      "manifestSha256": "3ea27d4646b2f571f6b196f6524dd63d416b7731899967d2d6d2ac0d19e2c3a0"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-off": {
+      "seed": 10000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "PASS",
+      "assertions": 4468284,
+      "logicalBytes": 910467072,
+      "bytesPerAssertion": 203.76213150283195,
+      "manifestSha256": "898a0272be423cbfab85c6f703e6cce56499107b744ad8d19451e716fec110a0"
+    },
+    "r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b-w0-10000-on": {
+      "seed": 10000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "PASS",
+      "assertions": 4468284,
+      "logicalBytes": 515506176,
+      "bytesPerAssertion": 115.37005615578597,
+      "manifestSha256": "954d5a4084090c798f6851667553414cc6fe3e0170018a0b738bcba36edca5a4"
+    }
+  },
+  "verification": "cd durableRoot; shasum -a 256 -c /absolute/path/to/repo/lab/experiments/EXP-HS01/SHA256SUMS-r3 (the durable manifest line); then shasum -a 256 -c SHA256SUMS-r3.durable"
+}

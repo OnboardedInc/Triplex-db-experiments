@@ -1,5 +1,7 @@
 # EXP-HS01: broker host store layout
 
+> **Round 3 (CX-HS01, Claude Sonnet 5.5 builder) is appended at the end of this file** (section "Round 3"). It measures the option-off layout at **203.76 B per asserted fact, 0.910 GB at 10k on W0 ids** and **294.90 B with ULID-shaped ids**; the journal-record option (off by default; informational only after Sam's Q107-S decision) measures 115.37 and 145.75.
+
 > **Round 2 (CX-HS01, Claude Sonnet 5.5 builder) appended at the end of this file.** Round 1's text below is unchanged history. Round 2 measures G9 at **217.06 B per asserted fact, 0.970 GB at 10k: PASS** on the W0 profile (**308.09 B with production-shaped ULID ids: over the 300 B bar**), fixes the CX-VHS01 finding, retains frames by bytes and stores structured ids as integers.
 
 **Implemented; G9 storage target failed. Not promoted.** The complete 10k W0 seed is content-verified with zero codec fallbacks, but uses **2,274,734,080 logical bytes (2.275 GB), 509.08 B per asserted fact**. The bars are 1.4 GB and 300 B. Independent review remains pending.
@@ -287,3 +289,115 @@ The instrumented single-reader pass measures 1,002 ms first touch and 780 ms war
 Pin audit: `git diff 257d4d20 -- lab/acceptance` is empty; all 59 lines of `lab/acceptance/pins/*SHA256SUMS` match the working tree; none of the changed paths (`packages/qlever/src/broker`, `lab/verify/HS01`, `lab/bench/hs01-seed.ts`, `lab/experiments/EXP-HS01`) appears in any acceptance file. **Zero changed pinned paths, so no old/new hash pairs.** (Round 1 scanned 247 pinned paths by a broader method that I did not reproduce; this check is the pins directory plus the acceptance diff.)
 
 Evidence: durable root `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/`, series `r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-*` (seeds in `-w0-1000` and `-w0-10000`, cache observer output in the 10k directory), `r2-g10`, `r2-ulid-diag-w0-1000`, `r2-ulid-diag-w0-10000`, `r2-cache-observer-10k-*`, `r2-g10-sql01-baseline-*`. [evidence-r2.json](evidence-r2.json) indexes every attempt (command, head, exit, source stability, receipt hash). [SHA256SUMS-r2](SHA256SUMS-r2) seals the durable manifest and key receipts; from this repository's root check `SHA256SUMS-r2` lines (`evidence-r2.json` here, the durable manifest in the durable root), then from the durable root run `shasum -a 256 -c SHA256SUMS-r2.durable`. The manifest covers 9,420 files; its 11 `LINK:` lines record symlink targets (pack consumer links, not followed) and `shasum` reports exactly those as improperly formatted.
+
+
+---
+
+# Round 3
+
+Builder CX-HS01 round 3 (Claude Sonnet 5.5); branch `exp/HS01-host-store-layout`, started from `a9ebe759`. Predictions were committed before any round 3 measurement: [R3-PREDICTIONS.md](R3-PREDICTIONS.md) (commit `8af82321`). Product, tests and tools under test: commit **`afafa7aa`**; every later commit changes only this report and evidence indexes. North star: P5 and P4 (bytes per fact, working set) with the P1/P2 recovery floor and exact answers as the floor.
+
+**Sam decided Q107-S: option C on every lane. `:_tx/change` and `:_tx/changed-entity` stay stored and queryable as ordinary triples.** The one-record journal is therefore built behind an option that is **OFF by default** and is **informational only: it is not a candidate for acceptance.** The G9 verdict and every gate below use the option-off layout (the journal-record gates and the option-on numbers are labelled as such).
+
+## R3.0 Result
+
+| 10k, B per asserted fact (4,468,284 facts) | Round 2 | Round 3, journal option OFF (the verdict layout) | Round 3, option ON (informational only) |
+| --- | ---: | ---: | ---: |
+| W0 deterministic ids | 217.06 (0.970 GB) | **203.76 (0.910 GB): G9 PASS** (bars 300 B, 1.4 GB) | 115.37 (0.516 GB) |
+| ULID-shaped ids (diagnostic) | 308.09 (1.377 GB) | **294.90 (1.318 GB)**: under the 300 B bar by 5.1 B | 145.75 (0.651 GB) |
+| Predicted (R3-PREDICTIONS.md) W0 / ULID | | 205.4 / 296.5 | 118.7 / 149 |
+
+All four seeds are complete (`SEEDED-CONTENT-VERIFIED`, zero codec fallbacks, 434,768 commands, 1,954 retractions, 110 retained frames / 67,966,858 bytes). The W0 pair and the ULID pair were seeded with the same deterministic scope, and **a row-by-row digest of every fact, history and journal row (records expanded) is identical between OFF and ON** for both id shapes: facts 4,466,330, history 1,954, journal 8,100,092 rows (W0 digests `ee075f08...`, `5ac77656...`, `11b441f6...`; ULID `689b2b19...`, `8133acf9...`, `1a600d43...`). All 8,100,092 journal rows of each ON store came from 434,768 records (1,954 with an explicit change list, exactly the transactions with a retraction), zero verbatim journal rows.
+
+Per term (decimal B per fact; `lab/bench/hs01-terms.mjs` over each manifest's dbstat):
+
+| Term | Round 2 W0 | R3 W0 OFF | R3 W0 ON | R3 ULID OFF | R3 ULID ON |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| facts + id index | 56.64 | 54.66 | 54.66 | 82.42 | 82.42 |
+| journal rows + id index | 97.55 | 94.98 | 0.00 | 158.38 | 0.00 |
+| journal records + their indexes (`jrec`, `jrec_id`, `txs_tx`) | 0 | 0.00 | 6.56 | 0.00 | 9.20 |
+| entity dictionary + lookup (was `ents` + unique name index) | 28.09 | 19.34 | 19.34 | 19.30 | 19.30 |
+| heads, claims, operations | 17.55 | 17.55 | 17.55 | 17.55 | 17.56 |
+| retained frames + index | 15.25 | 15.25 | 15.25 | 15.25 | 15.25 |
+| transaction dictionary | 1.94 | 1.94 | 1.94 | 1.94 | 1.94 |
+| history, small dictionaries, schema | 0.04 | 0.04 | 0.04 | 0.05 | 0.05 |
+| free pages | 0.00 | 0.00 | 0.03 | 0.00 | 0.01 |
+| **Total** | **217.06** | **203.76** | **115.37** | **294.90** | **145.75** |
+
+Predictions beside measurements: entity dictionary predicted 20.8, measured 19.34 (1.90M entities; the hash key costs about 11 B per entity plus page fill, less than my 17.5); facts predicted 54.7, measured 54.66 (the ref saving of 1.9 B was exact); journal rows OFF predicted 95.2 (97.55 less 2.4 for refs), measured 94.98; record tables predicted 8.5 (W0), measured 6.56 (67 B per transaction against my 85: the cell was smaller than estimated and the `txs_tx` index entry narrower); ULID ON records predicted 10.9, measured 9.20. Totals: W0 OFF -1.6 B under prediction (0.8%), W0 ON -3.3 B (2.8%), ULID OFF -1.6 B (0.5%), ULID ON -3.3 B (2.2%); every measured total sits inside its predicted range.
+
+Divergences from the predictions text, stated plainly: (1) R3-PREDICTIONS.md's per-term sentence says the journal term goes 97.55 to "90.9 (OFF)"; that figure is wrong (it subtracted the entity-ref saving of 1.9+2.4 and then 2.4 again). The totals in the same file used -2.4 and are right; the measured journal term (94.98) matches the totals arithmetic. (2) The record tables came in 1.9 B under (W0) and 1.7 B under (ULID) the prediction. (3) Option ON on ULID ids needed no fallback: the seed's ULID patch makes ids consecutive inside a transaction (a monotonic factory inside one millisecond), so **the fallback rate for a clock tick inside a transaction's journal ids is not measured at 10k**; a tick there sends that transaction to verbatim rows (the journal test covers the behavior, with a gap inside the journal ids, at the cost of about 55 B per row for that transaction).
+
+The ULID patch (`lab/bench/hs01-ulid-patch.mjs`) replaces core's deterministic id line in `packages/core/dist` only for the ULID seeds, saves the original, restores it and checks the hash: original and restored sha256 `05b6d0a4b6e0f1b2f65b11a0d5d401802830a554a90f7872d339b93fc09f9b05` (state file `r3-final-...-ulid-patch.json` in the durable root). No core source changed.
+
+## R3.1 R2-1: numeric `purgeFrames` (finding from CX-VHS01 round 2)
+
+A bare number is now the frame-only policy with a zero byte minimum, the same normalization `HostLog.open({frameRetention:{tailFrames:n}})` uses. Round 2 mapped it to `{frames:n, bytes:Infinity}`, so no finite number purged anything. An infinite frame or byte minimum keeps every frame; negative, fractional, NaN and above-2^53 values still throw before that early return. Tests (`round3.test.ts`): numeric 0, 1, 2 and Infinity against `{frames:n, bytes:0}` in three scenarios (ACKED at the head, a slow holder at LSN 5, ACKED behind the head) give identical call results and anchors, finite policies move the anchor, the anchor never passes the holder or ACKED-1, Infinity keeps everything; and `HostLog.open({frameRetention:{tailFrames:n}})` and the numeric worker request retire the same prefix (n = 0, 1, 2, 5). The reviewer's own test file is run unchanged as a gate: byte-identical copy `lab/verify/HS01/round2/review.test.ts` (sha256 `1432a2d7ab10fc6dfaaf1b7708ea3edaae4fdb039504bbb081f8928552282735`, with its `vitest.config.ts` `4df19672ad1a1db2f32dad577811211a46007f12e72d5cb5e4ca7d968d807643`): **6 of 6 pass**, including "legacy numeric purge request still means a frame count".
+
+## R3.2 Entity dictionary stored once
+
+`ents(eid INTEGER PRIMARY KEY, name TEXT NOT NULL)` lost its `UNIQUE` index. Name to id goes through `entkey(h INT, eid INT, PRIMARY KEY(h,eid)) WITHOUT ROWID`, `h` being 32-bit FNV-1a over the UTF-16 code units of the logical name. Every lookup joins to `ents` and compares the stored name, so a collision yields another candidate row and never a wrong id; the writer's `intern` uses the same verified lookup. An `entities` selection resolves names to ids first, then uses an integer `IN` list (the old form was a subquery on the name index). Ids are still allocated sequentially, so row order is unchanged. At 10k: 1,900,994 entities, **288 hash keys shared by more than one name** (402 in the ULID run, which holds different names), all resolved correctly (the digest reads every row).
+
+Rejected: WITHOUT ROWID keyed by name (every row decode needs id to name, which would need its own index on the name again); a 48-bit hash (2 more bytes per entity, no verified benefit); an expression index (needs a registered SQL function on every reader and breaks tools that open the file).
+
+Test: searches for real FNV-1a collisions among generated names (found), appends rows for them and for lone-surrogate, empty and astral names, and asserts distinct ids, each entity pulls exactly its own rows, answers identical to the round 2 worker, a repeated append reuses the ids, `entkey` holds the colliding keys, `ents` has no duplicate names and no index.
+
+## R3.3 Numeric values bound as INTEGER
+
+`bindV` binds an integral JS number in `[-2^63, 2^63)` (not -0) as a BigInt, so SQLite stores a 1 to 8 byte INTEGER instead of an 8-byte REAL: this covers interned refs and booleans, and also `number` and `datetime` values when integral (W0 has none of those two kinds, so no byte effect). Fractions, values of 2^63 or more, infinities, NaN and -0 bind as before (the last four already take the verbatim envelope). Exactness: every integral double below 2^63 is exactly an int64, and better-sqlite3 returns an int64 as the nearest double, which is that double. Measured: all 1,466,123 fact refs stored as INTEGER at 10k. Test (`round3.test.ts`): kinds number, datetime, boolean and ref over 31 values (0, 1, -1, 127, 128, 2^15, 2^31, 2^40, 2^53-1, 2^53, 2^53+2, -2^53, 2^62, 2^63-1024, -2^63, 2^63, -2^63-2048, 1e300, +-MAX_VALUE, MIN_VALUE, 5e-324, EPSILON, 0.1, -0.5, 1.5, 2^53+1, +-Infinity, NaN, -0): every column of every row read through the worker is `Object.is`-equal to what was written, round 2 and round 3 answers are identical, and SQL checks that no integral REAL within int64 remains in a non-verbatim number row and that every stored ref and boolean is INTEGER. The G7 property test binds through `bindV` as well (same 100,000-row stream, 15,508 fallbacks as before).
+
+## R3.4 Journal record (option `journalRecords`, OFF by default; informational)
+
+Per R47: with the option on, one `jrec` row per transaction replaces that transaction's journal rows: `pos` (rowid; the transaction entity and instant come from `txs`), the first journal id (`jh` head slot or 0 for a ULID blob, `jt` tail or the blob), row and change counts, a flag for absent position/instant rows, the `valid_from` offset, actor (a `strs` id), command id, a JSON object for correlation, causation and config snapshot, and `rf`, an explicit change list used only when the change ids are not the run immediately before the journal ids. Derived on read: the position and instant values, the changed-entity rows (distinct entities of the change targets, in order) and the change JSON (the existing `deriveChange`).
+
+Correctness does not rest on the shape: on write, `jrecEncode` builds the record and `jrecSynth` expands it; the record is stored only if every column of every synthesized row equals the written row (`Object.is` for scalars, bytes for ids). Anything else keeps verbatim rows in `journal`. Eligible only: a position new in the append, with no retired row or repeated id among its rows. Readers always understand both forms; `rows()` merges verbatim and synthesized journal rows back into `(e, id)` order, so answers and their order are unchanged. Reads by id use the unique `(jh, jt)` index (nearest earlier first id of the same head slot); reads by transaction entity use `txs(tx)`, created only when the option is on. Retiring a journal row inside a record first expands that one record into verbatim rows in the same SQLite transaction. A store written with records stays readable and appendable with the option off and the other way round (tested through reopen). Not changed: frames (they still carry every journal row), core, the adapter, the public API.
+
+Rejected: a retired flag inside the record (a second source of truth for which rows exist); stepping logical id strings (generators differ: base 36 against Crockford, so steps are taken in the stored form); one record per frame member; making it the default.
+
+Tests (`journal.test.ts`): core-shaped transactions with every header combination, retractions, replacements, all value kinds, valid-from offsets, nested groups, gaps in the change run (explicit list), gaps inside the journal ids and TEXT ids (verbatim), no-change transactions and journal-row retirements, over structured, ULID and mixed ids. The same appends go to the round 2 worker, round 3 OFF and round 3 ON; all answers (about 70 selections at 40 bases, `recent`, `readback`) must be identical as JSON including order: **21,119 reads per id mode, zero differences**, and the record count must equal the generator's eligible count minus expanded records exactly (140 of 146). Negative controls: reversing the changed-entity order in the decoder failed write-time verification and the count assertion; removing the merge sort failed the read comparison. Reopen test: records written, store reopened with the option off (verbatim rows appended), reopened ON again; answers stay equal to round 2.
+
+## R3.5 Gates (journal option OFF unless a row says otherwise)
+
+Series `r3-final-f7afc1d0-0ccb-4e23-9582-b90be0771d8b` in the durable root; every receipt has `sourceStillMatches:true`; tests ran at `afafa7aa`.
+
+| Gate | Result |
+| --- | --- |
+| Build, typecheck | core, testkit, qlever and W0 build and typecheck; lint 0 warnings on the changed set; oxfmt clean; `git diff --check` clean |
+| HS01 suite (G6, G7, G8 retention, round 3 and journal tests) | **26 of 26 pass** (5 files). G6: **50,000 generated reads against the round 1 worker, zero mismatches**; G7: 100,000 rows, every own field exact, 15,508 fallbacks (the same sample); id storage classes 54,901 integer / 31,372 blob / 13,727 text |
+| G8 recovery, default layout | 80 whole-process stops including stops inside `purgeFrames` and inside dictionary growth (the barrier now sits after the `entkey` insert): **251 ACKed operations, zero lost; 296 feed positions, zero missing, zero duplicated** |
+| G8 recovery, option ON (informational) | same schedule with real journals and an added stop inside the append transaction right after a `jrec` row: 250 ACKed, zero lost, 289 feed positions, zero missing or duplicated; every operation's journal read back whole |
+| Reviewer's round 2 test (R2-1) | **6 of 6 pass** (byte-identical copy) |
+| Evaluator | **108 of 108**, zero failed, skipped or cancelled |
+| Lab pack | 12 tarballs verified, clean consumer install |
+| G0 QLever | **1,415 pass / 79 expected skips**, no unexpected skip |
+| G0 XTDB | **1,223 pass / 140 expected skips**, no unexpected skip |
+| SQL01 | **11 of 11** |
+| P2Q matrix / storage controls / route harness | 873 pass, 22 skipped (same exclusions) / 5 pass, 3 filtered / **93 of 93** |
+| G9 | W0 OFF **PASS** (203.76 B, 0.910 GB); ULID OFF 294.90 B (diagnostic, under the bars) |
+| Layout refusal | A round 2 layout store (built by the round 2 worker) is refused by `HostLog.open` with `BrokerLogError` "Legacy broker layout v2 round 2 requires explicit migration"; its `sqlite_master` is unchanged (no `entkey`, no `jrec`). No migration is provided (none stated or tested) |
+
+## R3.6 PASS / verdict / receipt audit (round 3, rule 9a)
+
+| Result-producing path | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `round3.test.ts` purge, dictionary, numeric, refusal tests | Independent SQLite reads (`dbstat`-free): anchors from the marker, storage classes from `typeof(v)`, `Object.is` on every column, round 2 worker answers as the reference | New stores per case (`r3-` directories) | The round 2 reference worker is a byte copy of git `a9ebe759` (`v2-worker.ts`); the refusal test builds its store with that worker |
+| `journal.test.ts` | Whole-answer JSON equality of ON, OFF and round 2 workers, exact record count against the generator's own labels | New stores per test | The same append objects feed all three workers; counts read from SQLite |
+| Reviewer's copy `round2/review.test.ts` | The reviewer's assertions, unchanged | Fresh run in this series | File sha256 above; a copy, not the reviewer's receipt |
+| `hs01-seed.ts` verdict and manifest | Unchanged content verification (full assertion columns, retirement tuples, claims); new `round3.recordTables`, `idClasses` observed from the final database | This attempt only | Seed scope fixed per pair; build hashes compared before and after (`buildsStillMatch`); predictions are recorded and never read by the verdict |
+| `hs01-digest.ts` OFF versus ON | SHA-256 of every decoded row (records expanded by the worker's own decoder), XOR-combined, counts per class | Read from each store after its seed | Both stores seeded with `HS01_SCOPE=hs01:r3-shared-scope`; digests, counts and store file hashes (`ORIGINAL-SHA256SUMS.txt`) recorded; the decoder is shared with the worker, so equal digests prove record expansion equals verbatim storage, not that the decoder is right (round 2 readback and the 26 tests are the independent check) |
+| `archive-store.mjs` | Restores the compressed store and compares its sha256 with the original's before deleting the raw file | Per store | Original hash in `ORIGINAL-SHA256SUMS.txt` |
+| `kill.mjs` (default and records) | ACKs held by the parent, ids recomputed from the operation name, journal ids recomputed in records mode, feed positions | 80 new stops per run | Instrumented worker barrier text must match exactly (the guard throws on drift; the dictionary and record barrier strings were updated for this round) |
+| `run.mjs` / `pipeline.mjs` receipts | Exit code and raw log hash only; **exit 0 is execution evidence, never acceptance** | Unique directory per attempt | Source inventory before and after each stage |
+| `seal-r3.mjs` | Integrity and index only | After all writers finished | `SHA256SUMS-r3` covers 9,615 durable files / 46 attempts |
+
+Pin audit: `git diff 257d4d20 -- lab/acceptance` is empty; all 59 lines of `lab/acceptance/pins/*SHA256SUMS*` match the working tree; none of the changed paths appears in any acceptance file. **Zero changed pinned paths, so no old/new hash pairs.**
+
+## R3.7 Failures, provenance, what did not run
+
+- **Failed attempts retained, not overwritten.** (1) The first G0 XTDB attempt on this head failed 2 of 1,223 (testkit `route-equivalence-round3` timeouts of 5 s and 60 s) while four heavy slots were held by other jobs and three of my own stages ran in parallel; those tests touch no broker code (they passed on the rerun, G0 XTDB 1,223/1,223). (2) The first SQL01 attempt failed 1 of 11 with `ECONNREFUSED 127.0.0.1:7070`: the Mac was reset and the shared `tx2-qlever-dev` resident was down; I started it through `engine.mjs up --lane qlever --slot dev --holder CX-HS01-r3` (the sanctioned lifecycle, `tx2-xtdb-dev` left as it was) and the rerun passed 11/11. (3) The sequential pipeline was stopped by me while queued for a heavy slot and relaunched as parallel stage groups; the host crash then interrupted G0 QLever, the reviewer-test stage and the first W0 10k seed attempt before their receipts (their directories have no receipt and were redone; no partially written store was trusted: the 10k seeds in this report all started after the crash).
+- **Not run:** G10 commit-latency and cache diagnostics (no timing claim is made for round 3), G12 live, 100k, power-loss and OS qualification, erasure qualification, a clock tick inside a transaction's journal ids at 10k (see R3.0), any other lane. No merge, push or promotion.
+- **Compatibility:** a round 2 layout store is refused with a typed error; no migration tool. The option can be switched on or off per open without touching existing stores.
+- **Disk:** free space stayed above 12 GiB for the final series (85 GiB at the seeds). The 10k stores were compressed after their digest (zstd -3, original sha256 recorded) and the raw files removed; development 1k seeds (`r3-dev-*`) are kept.
+- **Pin hash changes:** none.
+
+Evidence: durable root `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/` (`r3-final-...` directories: seeds `-w0-10000-off|on`, `-ulid-10000-off|on`, `-w0-1000-off|on`, digests, compressed stores, per-stage receipts and logs; `r3-dev-*`). [evidence-r3.json](evidence-r3.json) indexes every attempt; [SHA256SUMS-r3](SHA256SUMS-r3) seals the durable manifest `SHA256SUMS-r3.durable`.
