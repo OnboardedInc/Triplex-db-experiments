@@ -1,0 +1,716 @@
+{
+  "seed": 29,
+  "head": 51,
+  "bases": [
+    {
+      "validAt": 50,
+      "recordedPosition": 40
+    },
+    {
+      "validAt": 50,
+      "recordedPosition": 0
+    },
+    {
+      "validAt": 50,
+      "recordedPosition": 1
+    },
+    {
+      "validAt": 50,
+      "recordedPosition": 2
+    },
+    {
+      "validAt": 50,
+      "recordedPosition": 7
+    },
+    {
+      "validAt": 50,
+      "recordedPosition": 11
+    },
+    {
+      "validAt": 50,
+      "recordedPosition": 19
+    },
+    {
+      "validAt": 0,
+      "recordedPosition": 40
+    },
+    {
+      "validAt": 150,
+      "recordedPosition": 40
+    },
+    {
+      "validAt": 50,
+      "recordedAt": 110
+    },
+    {
+      "validAt": 50,
+      "recordedAt": 110,
+      "recordedPosition": 40
+    }
+  ],
+  "trace": [
+    {
+      "requested": "source",
+      "actual": "source",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 0
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 0
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 0
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 0
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 0
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 0
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 0
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 0
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 1
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 1
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 1
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 1
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 1
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 1
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 1
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 1
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 2
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 2
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 2
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 2
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 2
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 2
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 2
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 2
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 7
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 7
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 7
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 7
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 7
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 7
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 7
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 7
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 11
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 11
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 11
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 11
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 11
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 11
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 19
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 19
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 19
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 19
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 19
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 19
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 19
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 50,
+        "recordedPosition": 19
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 0,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 0,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 0,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 0,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 0,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 0,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 0,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 0,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 150,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 150,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 150,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 150,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 150,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 150,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 150,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "live",
+      "actual": "live",
+      "basis": {
+        "validAt": 150,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "source",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "source",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "source",
+      "actual": "as-of",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "held",
+      "actual": "held",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110,
+        "recordedPosition": 40
+      }
+    },
+    {
+      "requested": "staged",
+      "actual": "staged",
+      "basis": {
+        "validAt": 50,
+        "recordedAt": 110,
+        "recordedPosition": 40
+      }
+    }
+  ],
+  "completed": false
+}

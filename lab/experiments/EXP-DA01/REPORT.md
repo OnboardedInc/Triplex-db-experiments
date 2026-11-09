@@ -572,3 +572,194 @@ After both gates finish, three declaration files still differ from the live-run
 hashes; two of the initially observed five return to their earlier bytes during
 subsequent builds. The final three differences and rebuilt bytes are recorded in
 `SUMMARY.json` and `rebuilt-declarations/`, under the declaration-only audit rule.
+
+## Round 5 — one canonical query for proof and execution (CX-DA01)
+
+Review `85dfc54` confirms original F1 closed but identifies R2-F1: repeated vector
+sections let the first-section classifier disagree with Datomic's later-section
+interpretation. The original reproduction and semantic regression source are
+copied under `round5/reviewer/`, with an import-only local adaptation. A fresh
+pre-deploy execution reproduces the exact before-40 / after-30 error for duplicate
+`:where` and conflicting duplicate `:in`; history retains 40. This characterizes
+the old resident, not acceptance of the fix.
+
+`canonical.clj` now parses exactly one EDN value and produces one canonical map.
+Repeated `:where` clauses merge, identical `:in`/`:find` repetitions normalize,
+conflicting bindings/projections refuse, and `:with` bindings deduplicate. All
+supported nested logical clauses normalize recursively. Classification and
+`d/query` consume that same map; original surface syntax never reaches the Peer.
+The first-section helper and separate raw-query function scan are removed.
+Unknown sections and unsupported forms refuse with typed `InvalidValue` before
+execution. Native `%` rules, native pull projections and native rule invocations
+remain outside this existing closed gateway contract; the parser explicitly
+refuses them rather than trying to classify an unnormalized body/pattern. Triplex
+binary rules still execute via bounded frontier rounds, and optional projections
+still use pinned history pulls. No new native-query feature is claimed.
+
+The generated regressions cover equivalent vector/map/list-valued layouts,
+repeated sections, reordered data clauses, variable aliases and nested logical
+bodies. They assert the actual reported route and complete assertion IDs against
+history. Supported self-recursive Triplex rule definitions, including reversed definition order,
+exercise the frontier path. Ambiguous input/source aliases, conflicting `:find`,
+unsupported nested native rules/pulls and trailing queries must refuse. The
+required G1 fixture retains these observations in its existing six hashed files;
+no expected test count or skip list changes.
+
+First failure is retained: the initial JVM selftest exposed my parser loop
+mistaking an exhausted lazy sequence for another section (9 tests, 178 assertions,
+1 failure / 14 errors). The corrected loop terminates on `(seq remaining)`.
+The failed-image context, image, selftest and restore logs remain; both restart
+windows preserve the dev volume and restore READY. Only subsequent successful
+runs can qualify the corrected code.
+
+### Round 5 PASS / verdict / receipt audit (preamble 9a)
+
+Written before committing the changed observation/verdict producers:
+
+1. **Canonical parser / native route result.** Content: validated section merging,
+   recursive normalization, fixed actual input bindings, only supported projections
+   and clauses, one complete EDN value; classification and Peer execute the same
+   map. Freshness: each request parses its own body, with no cached classification.
+   Binding: the returned route comes from the same map/db/basis passed through the
+   shared eligibility guard; it is not a PASS or an answer-eligibility flag.
+2. **JVM generated canonical properties.** Content: normalization equality and
+   idempotence plus expected route for generated aliases/section layouts; malformed
+   and unsupported inputs must produce `InvalidValue`. Existing actual Peer tests
+   continue to run. Freshness: new selftest invocation in the current image; the
+   failed invocation is separate. Binding: engine's verified fresh context, exact
+   locally pinned image and actual selftest output; no old assertion total is
+   adopted as a fresh result.
+3. **`canonical-query-properties.ts` assertions.** Content: complete sorted IDs
+   equal history, eligible answers report the same history/live route, ineligible
+   live cuts produce `BasisNotAvailable`; nested Triplex rules return the same IDs;
+   unsupported/ambiguous surfaces produce actual HTTP 400 / `InvalidValue`.
+   Freshness: the enclosing UUID fixture's real assertions and ten retirements,
+   before/after phases in this attempt. Binding: every observation retains seed,
+   surface EDN or rule seed, phase/cut/basis, expected IDs and actual response or
+   error; G1 hashes this helper as well as the route fixture and matrix helper.
+4. **Existing matrix / required G1 fixture and verdict.** Content: unchanged full
+   O-REPLAY comparisons, 936 matrix observations, then all generated properties;
+   any assertion failure fails the one mandatory live test. G1 still requires one
+   actual test pass, no pending/failing tests, exact six evidence files, stable
+   built exports and resident. Freshness: new UUID scope and oracle directory for
+   each gate. Binding: source preimages, actual endpoint/slot owner, resident and
+   built-file manifests and hashed raw observations. No new G0 skip is added.
+5. **`round5/live.mjs` validation.** Content: actual JSON report's complete executed
+   denominator, zero failure/pending, exact matching successful scope deletes,
+   stable source/runtime/build hashes and owner/container/health during execution.
+   Freshness: exclusively created log, absent output requirement, current UUID
+   scopes/times. Binding: exact command/source/built hashes, current image ID and
+   slot owner; a saved raw receipt alone is not PASS, only final `validated:true`
+   follows the assertions. Later declaration-only rebuilds are separately recorded
+   as in round 4; source/runtime drift is refused.
+6. **Reviewer characterization.** Content: actual repeated-section 40/30 bytes,
+   history-40 and literal-refusal controls, actual successful delete. Freshness:
+   one new UUID and sequential writes. Binding: copied review source and import
+   adaptation hash, source/owner/old gateway identity and complete request/response
+   bytes. `findingReproduced` is a defect characterization, never acceptance.
+7. **Round-5 collector / final index.** Content: exact final-source G0, linked G1
+   reruns, full denominators, cleanup, oracle/matrix/property observations, actual
+   first failure and corrected JVM result, retained proof bodies and resident
+   image. Freshness: exact implementation head and this round's attempts; all
+   previous reports remain historical. Binding: rehashed gate evidence and current
+   helper/oracle/runtime bytes, verified context inputs/image/source identity,
+   actual retained database readbacks, and final path/length/SHA index. Only
+   declaration files may differ after subsequent gate builds, with both hashes
+   recorded and rebuilt bytes retained; no runtime drift is accepted.
+
+The first live suite is retained as `round5/live-first.*`: 117/118 passed, with the
+new generated rule fixture rejected by core semantic validation because `inner`
+and `outer` lacked required non-recursive base definitions. This is a fixture
+error, not a parser acceptance result. The corrected generated rule chains give
+each named rule its required base plus the nested rule definition. Native
+canonical surfaces reached before that failure matched their routes and IDs;
+only a full subsequent successful run qualifies the property fixture.
+
+`live-second.*` retains a second fixture rejection (117/118): merely supplying
+bases does not make cross-rule composition supported. Inspection of core
+`validateRules` confirms the public contract permits base definitions plus the
+specific binary self-recursive pattern, and explicitly excludes cross-rule calls.
+The final generator uses that supported self-recursive shape with aliased
+variables and reversed base/recursive definition order. Its matrix subjects have
+self edges, so expected closure is exactly the history subject/ID set. This tests
+canonicalization across nested rule rounds; it does not claim new cross-rule
+composition support. The previously described generated multi-name chains were
+fixture attempts and did not produce qualifying results. No core contract is
+relaxed to make the test pass.
+
+Final implementation head: `1c3739edb1d0e88bf46bbdd022de17f80b3a8ba4` (parser
+implementation `9d9cd988`, followed by the two retained fixture corrections).
+The final standalone live validation passes **118/118**, no failures/pending,
+with **18/18 matching successful database deletes**. It includes the unchanged
+936-observation matrix and **570 generated observations**: 480 native equivalent
+surface/basis/phase cases, 40 supported self-recursive rule cases, and 50 actual
+unsupported/ambiguous-input refusals. Native cases inspect the actual reported
+route and exact IDs; they do not infer success from HTTP status or counts alone.
+The JVM corrected-image selftest passes **9 tests / 2484 assertions**.
+
+Final locally built image:
+`sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf`.
+Gateway source hash:
+`ebddb75ea2e100bb041459130017a2dd39f516bdee58ea37b9fd782f5fd11c92`.
+Build-input hash: `ff1b91d51131c8860e732fb23cea7acdd24f5356b03c31dab105b4730bedaf34`;
+source-input hash: `41e6e2521b666b94e19492637f2a84428c43cc2eef200294cd772ab3688ed163`.
+Each fresh context has 812 verified inputs, including the new canonical parser.
+Both image/context receipts and restart windows are retained; volume retention
+and READY are checked again during collection.
+
+| Fresh gate | Result | Previous |
+| --- | --- | --- |
+| `G0-datomic-20261109T014236Z-c1644d` | PASS, 1095/1095 executed, 62 expected skips, zero unexpected | `G0-datomic-20261109T011153Z-d9516d` |
+| `G1-datomic-20261109T014110Z-21ed97` | PASS, full unchanged suite + 44 current / 44 reopen; required route/oracle/property fixture passes | `G1-datomic-20261109T011231Z-5c906f` |
+| `G1-datomic-20261109T015019Z-b44fce` | PASS, full unchanged suite + 88 executions and the fresh required oracle/matrix/property fixture | `G1-datomic-20261109T014110Z-21ed97` |
+
+All three gate receipts bind implementation `1c3739ed`, zero executed-source diff
+bytes, and no modified/untracked executed source. Each G1 deletes its 89
+conformance databases and one route-fixture database. The six hashed route files
+per G1 include the unchanged O-REPLAY row comparisons, 936 matrix outcomes and
+570 generated properties. G0's expected skips are unchanged. Optional Git stash
+snapshot creation logs `could not write index` in G0 and the repeat G1; no stash
+proof is claimed. Actual source/diff/build binding checks remain mandatory.
+
+Evidence is in [`round5/`](round5/): original review reproduction/regression source,
+fresh wrong-answer characterization, both verified image/context receipts, both
+restart/selftest windows, both failed live fixture attempts, final live receipt,
+complete gate receipts/raw outputs, oracle/property journals, retained database
+readbacks and final resident state. The collector requires complete current
+outcomes and real cleanup, rehashes the bound evidence, and records declaration-only
+changes after later gate builds as in round 4; runtime/source drift refuses.
+`FILES.json` and `manifest-validation.json` check retained lengths and SHA values.
+
+Open action: independent review of canonical parsing and generated equivalence
+regressions. Builder evidence does not constitute independent review or merge
+permission. No root `pnpm check`, pack/fresh-consumer check, production storage or
+durability qualification, crash/process-stop experiment, scale/performance run,
+authentication/isolation/erasure qualification, Q89a/Q90 record-time redesign,
+merge, push or publication was performed. Q88a dev-storage DIAGNOSTIC and
+default-off acceptance remain. Native `%` rule composition, pull patterns and
+non-variable projections deliberately refuse; binary self-recursive Triplex
+rules and optional projections retain their existing supported paths.
+
+Collection succeeded against the exact final implementation head: current-source
+G0 and both linked G1 receipts, each 570-property journal, both failed live cleanup
+receipts, both verified contexts and final live/runtime identity all check out.
+The final live run fingerprints 707 source/built files, unchanged during its
+invocation. Three later core declaration/declaration-map files differ after gate
+builds (`Capabilities.d.ts`, `TriplesLive.d.ts`, `TriplesLive.d.ts.map`); their old
+and rebuilt hashes are in `SUMMARY.json`, with rebuilt bytes retained. No source
+or runtime JavaScript differs; original earlier declaration bytes are not claimed
+reconstructible from this packet.
+
+Both retained DA00 databases still return their original position-zero / t=1001 /
+schema-hash basis receipts. Final resident: READY, owner EXP-DA01, image pinned
+above, retained `tx2-datomic-dev-data` volume. No exclusive slot was acquired; no
+other resident was stopped or recreated. Host free bytes at collection were
+7,648,542,720. Every heavy run was submitted after a current check above 5 GiB;
+admission briefly approached that floor, then host free space recovered. No
+retained evidence, build context, image or other lane's data was removed for space.
+
+Final evidence index validation passes: **138 indexed files, 29,612,946 bytes,
+zero missing files and zero SHA/length mismatches**. `FILES.json` excludes itself
+and the collector/manifest generation logs; those logs are retained separately.
+The index and exact ignored declaration artifacts are included in the commit,
+with indexed-file Git coverage checked before and after staging.

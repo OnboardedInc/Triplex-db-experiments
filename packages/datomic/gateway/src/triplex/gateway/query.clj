@@ -1,5 +1,5 @@
 (ns triplex.gateway.query
-  (:require [datomic.api :as d] [clojure.edn :as edn] [triplex.gateway.codec :as codec]
+  (:require [datomic.api :as d] [triplex.gateway.canonical :as canonical] [triplex.gateway.codec :as codec]
             [triplex.gateway.storage :as storage]))
 
 ;; [EXP-DA01] Why: scalar channels preserve Triplex families without numeric text coercion. Rejected: native recursive rules and unrestricted classpath functions.
@@ -19,18 +19,9 @@
       ">" (and same (number? a) (> a b)) ">=" (and same (number? a) (>= a b))
       "<" (and same (number? a) (< a b)) "<=" (and same (number? a) (<= a b)) false)))
 (defn transaction-id [db eid] (:tx_id (storage/row db eid)))
-(def allowed '#{triplex.gateway.query/transaction-id triplex.gateway.query/scalar triplex.gateway.query/visible triplex.gateway.query/compare-op ground})
-(defn check-query! [q]
-  (doseq [form (tree-seq coll? seq q)]
-    (when (and (seq? form) (symbol? (first form)) (not (contains? '#{not-join or-join and} (first form)))
-               (not (allowed (first form))))
-      (codec/invalid "Query function is not allowlisted"))))
-(defn query-section [query section]
-  (if (map? query) (get query section)
-    (take-while (complement keyword?) (rest (drop-while #(not= section %) query)))))
 (defn query-route [query]
   ;; [EXP-DA01] Why: only proven history attributes may bypass live eligibility; variable, numeric, lookup-ref and omitted attributes can select :f/live indirectly (V-DA01 F1). Rejected: enumerating ground/ident spellings, which leaves equivalent bindings open.
-  (let [where (query-section query :where)
+  (let [where (:where query)
         safe-clause? (fn safe-clause? [clause]
                        (cond
                          (seq? clause) (case (first clause)
@@ -50,15 +41,12 @@
 (defn encode [v]
   (codec/encode-value (cond (integer? v) "long" (number? v) "double" (boolean? v) "bool" :else "string") v))
 (defn run [name current input]
-  (let [query (edn/read-string {:readers {} :default (fn [& _] (codec/invalid "Tagged EDN is not allowed"))} (get input "edn"))
-        _ (check-query! query)
-        ;; [EXP-DA01] Why: the route proof treats $rules as an in-memory relation, so authored :in must never alias it to the database argument. Rejected: trusting source names while accepting arbitrary binding order.
-        _ (when-not (= '[$ $rules] (vec (query-section query :in)))
-            (codec/invalid "Query inputs must be $ and $rules, in that order"))
+  (let [query (canonical/parse (get input "edn"))
         timeout (long (get input "timeoutMs" 5000))
         _ (when-not (<= 1 timeout 30000) (codec/invalid "Query timeout out of bounds"))
         db (storage/read-db name current input)
-        _ (storage/assert-subject-route! db (get input "basis") (query-route query))
+        route (query-route query)
+        _ (storage/assert-subject-route! db (get input "basis") route)
         result (d/query {:query query :args [db (get input "relations" [])] :timeout timeout})]
     (when (> (count result) 100000) (codec/invalid "Query row budget exceeded"))
-    {:rows (mapv #(mapv encode %) result)}))
+    {:route (if (= route :f/live) "live" "history") :rows (mapv #(mapv encode %) result)}))
