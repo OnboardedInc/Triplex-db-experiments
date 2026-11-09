@@ -1,0 +1,8 @@
+{
+  "mode": "full",
+  "pass": false,
+  "problems": [
+    "TRACE-INCOMPLETE: F2 TRACE-INCOMPLETE: event after detach (detach timestamp precedes a received event); detach before attach; lost events: CPU 0 final count None != 40 records received"
+  ],
+  "refusal": "TRACE-INCOMPLETE"
+}

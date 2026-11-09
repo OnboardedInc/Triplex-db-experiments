@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: recompute complete ABBA analyses from all 36 recorded arms
+ok 1 - recompute complete ABBA analyses from all 36 recorded arms
+  ---
+  duration_ms: 12977.6895
+  type: 'test'
+  ...
+# Subtest: golden independently counts every helper/intrinsic and diagnostic binding refuses redistribution
+ok 2 - golden independently counts every helper/intrinsic and diagnostic binding refuses redistribution
+  ---
+  duration_ms: 27.7755
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13118.814584

@@ -1,0 +1,5942 @@
+[
+  {
+    "counts": [
+      null,
+      null,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      null,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      0,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      19,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      20,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      21,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      null,
+      40,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      null,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      0,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      19,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      20,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      21,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      0,
+      40,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      null,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      0,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      19,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      20,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      21,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      19,
+      40,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      null,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      0,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      19,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": true,
+    "pass": true,
+    "refusal": null
+  },
+  {
+    "counts": [
+      20,
+      20,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": true,
+    "pass": true,
+    "refusal": null
+  },
+  {
+    "counts": [
+      20,
+      20,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": true,
+    "pass": true,
+    "refusal": null
+  },
+  {
+    "counts": [
+      20,
+      20,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": true,
+    "pass": true,
+    "refusal": null
+  },
+  {
+    "counts": [
+      20,
+      20,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      20,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      21,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      20,
+      40,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      null,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      0,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      19,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      20,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      21,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      21,
+      40,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      null,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      0,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      19,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      20,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      21,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      null
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      null
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      null
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      null
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      null
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      0
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      0
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      0
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      0
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      0
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      1
+    ],
+    "detach": 9,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      1
+    ],
+    "detach": 10,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      1
+    ],
+    "detach": 304,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      1
+    ],
+    "detach": 305,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  {
+    "counts": [
+      40,
+      40,
+      1
+    ],
+    "detach": 400,
+    "expectedAccepted": false,
+    "pass": false,
+    "refusal": "TRACE-INCOMPLETE"
+  }
+]

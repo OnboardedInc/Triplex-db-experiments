@@ -1,0 +1,14 @@
+test_R16_F1_an_internal_sequence_gap_must_refuse (test_round17_review.Round17Review.test_R16_F1_an_internal_sequence_gap_must_refuse) ... ok
+test_R16_F1_lost_sync_hides_a_witnessed_commit_that_did_not_survive (test_round17_review.Round17Review.test_R16_F1_lost_sync_hides_a_witnessed_commit_that_did_not_survive) ... ok
+test_R16_F1_regressed_sequence_time_must_refuse (test_round17_review.Round17Review.test_R16_F1_regressed_sequence_time_must_refuse) ... ok
+test_R16_F2_failed_WAL_collection_cannot_be_counted_as_crash_loss (test_round17_review.Round17Review.test_R16_F2_failed_WAL_collection_cannot_be_counted_as_crash_loss) ... ok
+test_R17_F1_backwards_detach_timestamp_must_refuse (test_round17_review.Round17Review.test_R17_F1_backwards_detach_timestamp_must_refuse) ... ok
+test_R17_F1_completed_end_counters_prove_a_missing_tail_event (test_round17_review.Round17Review.test_R17_F1_completed_end_counters_prove_a_missing_tail_event) ... ok
+test_R17_F2_present_zero_byte_WAL_is_distinct_from_a_failed_copy (test_round17_review.Round17Review.test_R17_F2_present_zero_byte_WAL_is_distinct_from_a_failed_copy) ... ok
+test_refusals_have_no_counts_and_never_contribute_even_with_stale_counts (test_round17_review.Round17Review.test_refusals_have_no_counts_and_never_contribute_even_with_stale_counts) ... ok
+test_valid_prefix_control (test_round17_review.Round17Review.test_valid_prefix_control) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.083s
+
+OK

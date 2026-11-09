@@ -1,0 +1,8 @@
+{
+  "mode": "full",
+  "pass": false,
+  "problems": [
+    "TRACE-INCOMPLETE: F2 TRACE-INCOMPLETE: CPU 0 time regressed within its sequence"
+  ],
+  "refusal": "TRACE-INCOMPLETE"
+}

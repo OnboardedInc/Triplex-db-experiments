@@ -1,0 +1,7 @@
+test_R17_F1_final_counter_loss_cannot_complete_an_aggregate_PASS (test_round17_pipeline.Pipeline.test_R17_F1_final_counter_loss_cannot_complete_an_aggregate_PASS) ... ok
+test_R17_F2_CLI_accepts_a_present_exactly_receipted_zero_byte_WAL (test_round17_pipeline.Pipeline.test_R17_F2_CLI_accepts_a_present_exactly_receipted_zero_byte_WAL) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.077s
+
+OK

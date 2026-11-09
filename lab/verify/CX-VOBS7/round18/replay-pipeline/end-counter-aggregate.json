@@ -1,0 +1,55 @@
+{
+  "aggregate": {
+    "counted": 5,
+    "full": 0,
+    "fullAckedLost": 0,
+    "off": 5,
+    "offUnwitnessedLost": 100,
+    "pass": false,
+    "premiseHolds": true,
+    "reasons": [
+      "refused trial(s), counted as no evidence either way: #1 TRACE-INCOMPLETE, #3 TRACE-INCOMPLETE, #5 TRACE-INCOMPLETE, #7 TRACE-INCOMPLETE, #9 TRACE-INCOMPLETE",
+      "only 5 of 10 crash trials gave evidence",
+      "both a FULL and an OFF writer are required"
+    ],
+    "refused": 5,
+    "trials": 10,
+    "witnessedLost": 0
+  },
+  "claim": "constructed 10-trial boundary fixture; FULL trace has a received final count proving the last sync is missing",
+  "full": {
+    "collection": "verified",
+    "mode": "full",
+    "pass": false,
+    "problems": [
+      "TRACE-INCOMPLETE: F2 TRACE-INCOMPLETE: lost events: CPU 0 final count 40 != 39 records received"
+    ],
+    "refusal": "TRACE-INCOMPLETE",
+    "walAbsentConfirmed": false
+  },
+  "off": {
+    "acked": 20,
+    "ackedLostCount": 20,
+    "collection": "verified",
+    "lastAcked": 20,
+    "lastSurvived": 0,
+    "marker": 0,
+    "mode": "off",
+    "pass": true,
+    "problems": [],
+    "survived": 0,
+    "syncsCredited": 0,
+    "traceDetached": false,
+    "traceEvents": 20,
+    "unwitnessedAcked": 20,
+    "unwitnessedLostCount": 20,
+    "walAbsentConfirmed": true,
+    "witnessProblems": [
+      "SYNC-MISSING: 20 of 20 commits"
+    ],
+    "witnessed": 0,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  },
+  "removed": "SW1|F|0|40|301|305|4242|4112|183655921|183655918|0|0"
+}

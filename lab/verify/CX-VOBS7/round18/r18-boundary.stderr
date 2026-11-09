@@ -1,0 +1,10 @@
+test_END_grammar_and_partial_count_refuse (__main__.Round18.test_END_grammar_and_partial_count_refuse) ... ok
+test_empty_trace_END_bounds_and_zero_count (__main__.Round18.test_empty_trace_END_bounds_and_zero_count) ... ok
+test_no_END_each_received_prefix_remains_judged (__main__.Round18.test_no_END_each_received_prefix_remains_judged) ... ok
+test_present_empty_missing_and_absent_WAL_are_distinct (__main__.Round18.test_present_empty_missing_and_absent_WAL_are_distinct) ... ok
+test_two_CPU_count_and_detach_matrix (__main__.Round18.test_two_CPU_count_and_detach_matrix) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.302s
+
+OK

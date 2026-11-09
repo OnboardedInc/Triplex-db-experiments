@@ -1,0 +1,57 @@
+{
+  "directVerification": [
+    true,
+    null,
+    null,
+    false
+  ],
+  "judge": {
+    "acked": 20,
+    "ackedLostCount": 20,
+    "collection": "verified",
+    "lastAcked": 20,
+    "lastSurvived": 0,
+    "marker": 0,
+    "mode": "off",
+    "pass": true,
+    "problems": [],
+    "survived": 0,
+    "syncsCredited": 0,
+    "traceDetached": false,
+    "traceEvents": 20,
+    "unwitnessedAcked": 20,
+    "unwitnessedLostCount": 20,
+    "walAbsentConfirmed": false,
+    "witnessProblems": [
+      "SYNC-MISSING: 20 of 20 commits"
+    ],
+    "witnessed": 0,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  },
+  "receipt": {
+    "copy": {
+      "broker.db": true,
+      "broker.db-wal": true
+    },
+    "format": "w4-collection/1",
+    "receipt": {
+      "files": {
+        "broker.db": {
+          "sha256": "58ac720396aef6875fa9caa2f48736121ca8ce0398db4e76a88714a7d9ad30c4",
+          "size": 16384
+        },
+        "broker.db-wal": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      },
+      "format": "w4-receipt/1",
+      "listing": [
+        "broker.db",
+        "broker.db-wal"
+      ]
+    },
+    "receiptError": null
+  }
+}

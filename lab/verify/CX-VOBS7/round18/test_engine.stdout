@@ -1,0 +1,166 @@
+TAP version 13
+# Subtest: resident binding ignores mount order but refuses restart, config or mount changes
+ok 1 - resident binding ignores mount order but refuses restart, config or mount changes
+  ---
+  duration_ms: 12.394791
+  type: 'test'
+  ...
+# Subtest: requires disjoint CPU pinning
+ok 2 - requires disjoint CPU pinning
+  ---
+  duration_ms: 1.929459
+  type: 'test'
+  ...
+# Subtest: requires evaluator key, immutable image and safe identities
+ok 3 - requires evaluator key, immutable image and safe identities
+  ---
+  duration_ms: 3.218458
+  type: 'test'
+  ...
+# Subtest: output budget is bounded before admission
+ok 4 - output budget is bounded before admission
+  ---
+  duration_ms: 4.661541
+  type: 'test'
+  ...
+# Subtest: XTDB completed transaction source and host sources are collected
+ok 5 - XTDB completed transaction source and host sources are collected
+  ---
+  duration_ms: 1.616916
+  type: 'test'
+  ...
+# Subtest: Datomic plans independent thread and callback samples
+ok 6 - Datomic plans independent thread and callback samples
+  ---
+  duration_ms: 2.61825
+  type: 'test'
+  ...
+# Subtest: protected clock ports are refused
+ok 7 - protected clock ports are refused
+  ---
+  duration_ms: 0.858666
+  type: 'test'
+  ...
+# Subtest: QLever profile is opt-in and resident script remains unchanged
+ok 8 - QLever profile is opt-in and resident script remains unchanged
+  ---
+  duration_ms: 4.539625
+  type: 'test'
+  ...
+# Subtest: follower effective config keeps its own JVM settings without observer logging
+ok 9 - follower effective config keeps its own JVM settings without observer logging
+  ---
+  duration_ms: 1.083792
+  type: 'test'
+  ...
+# Subtest: witness profile accepts only CAP_BPF + CAP_PERFMON, private namespaces and the run volume
+ok 10 - witness profile accepts only CAP_BPF + CAP_PERFMON, private namespaces and the run volume
+  ---
+  duration_ms: 1.349625
+  type: 'test'
+  ...
+# Subtest: round 16: with stdout the witness argv has no file redirect (W4 streams it to the host) and keeps the same capabilities, mounts and limits
+ok 11 - round 16: with stdout the witness argv has no file redirect (W4 streams it to the host) and keeps the same capabilities, mounts and limits
+  ---
+  duration_ms: 0.487292
+  type: 'test'
+  ...
+# Subtest: witness create arguments carry the exact profile and the pinned program with its directory pair
+ok 12 - witness create arguments carry the exact profile and the pinned program with its directory pair
+  ---
+  duration_ms: 0.159209
+  type: 'test'
+  ...
+# Subtest: kernel dev encoding matches the Python normalizer vectors
+ok 13 - kernel dev encoding matches the Python normalizer vectors
+  ---
+  duration_ms: 0.10525
+  type: 'test'
+  ...
+# Subtest: exclusive slot holders block the witness window and the cost gate uses per-commit counter deltas
+ok 14 - exclusive slot holders block the witness window and the cost gate uses per-commit counter deltas
+  ---
+  duration_ms: 0.870375
+  type: 'test'
+  ...
+# Subtest: map keys are explicit, bounded, recorded in the create arguments and refused when low
+ok 15 - map keys are explicit, bounded, recorded in the create arguments and refused when low
+  ---
+  duration_ms: 0.67175
+  type: 'test'
+  ...
+# Subtest: clock transport check: CONSISTENT only when monotonic fits and boot is excluded; INCONSISTENT on a contradiction; otherwise INCONCLUSIVE (never a pass)
+ok 16 - clock transport check: CONSISTENT only when monotonic fits and boot is excluded; INCONSISTENT on a contradiction; otherwise INCONCLUSIVE (never a pass)
+  ---
+  duration_ms: 2.657292
+  type: 'test'
+  ...
+# Subtest: clock transport check: a separation not larger than the uncertainty is INCONCLUSIVE, including a boot substitution (R10-F3 shapes)
+ok 17 - clock transport check: a separation not larger than the uncertainty is INCONCLUSIVE, including a boot substitution (R10-F3 shapes)
+  ---
+  duration_ms: 0.731708
+  type: 'test'
+  ...
+# Subtest: the clock helper really stamps receipt time and its output feeds the transport check (child stands in for the bpftrace container)
+ok 18 - the clock helper really stamps receipt time and its output feeds the transport check (child stands in for the bpftrace container)
+  ---
+  duration_ms: 306.324834
+  type: 'test'
+  ...
+# Subtest: perf_event_paranoid is recorded and a failed attach with only CAP_PERFMON refuses naming the level
+ok 19 - perf_event_paranoid is recorded and a failed attach with only CAP_PERFMON refuses naming the level
+  ---
+  duration_ms: 0.271083
+  type: 'test'
+  ...
+# Subtest: peak witness memory is checked against the 256 MiB cap with stated headroom and OOM kills refuse
+ok 20 - peak witness memory is checked against the 256 MiB cap with stated headroom and OOM kills refuse
+  ---
+  duration_ms: 0.191792
+  type: 'test'
+  ...
+# Subtest: ext4 built in: a module BTF file or an unresolved probe refuses
+ok 21 - ext4 built in: a module BTF file or an unresolved probe refuses
+  ---
+  duration_ms: 0.243167
+  type: 'test'
+  ...
+# Subtest: compiled-program parser reads helper calls in the IR (old and opaque-pointer forms), disassembly and verifier forms [constructed samples]
+ok 22 - compiled-program parser reads helper calls in the IR (old and opaque-pointer forms), disassembly and verifier forms [constructed samples]
+  ---
+  duration_ms: 0.591292
+  type: 'test'
+  ...
+# Subtest: clock primitive step passes only on the pinned program, exact bpftrace version and a complete, allow-listed, monotonic-only compiled program [constructed samples]
+ok 23 - clock primitive step passes only on the pinned program, exact bpftrace version and a complete, allow-listed, monotonic-only compiled program [constructed samples]
+  ---
+  duration_ms: 52.705792
+  type: 'test'
+  ...
+# Subtest: the real program sources pass or fail the source-side check as designed
+ok 24 - the real program sources pass or fail the source-side check as designed
+  ---
+  duration_ms: 1.034708
+  type: 'test'
+  ...
+# Subtest: W0 passes its clock step only on the program proof; an observational result never substitutes and only a contradiction blocks
+ok 25 - W0 passes its clock step only on the program proof; an observational result never substitutes and only a contradiction blocks
+  ---
+  duration_ms: 19.025333
+  type: 'test'
+  ...
+# Subtest: the trace program and the clock probe use only nsecs(monotonic) and the Dockerfile is pinned (static)
+ok 26 - the trace program and the clock probe use only nsecs(monotonic) and the Dockerfile is pinned (static)
+  ---
+  duration_ms: 0.559292
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 26
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 639.78425

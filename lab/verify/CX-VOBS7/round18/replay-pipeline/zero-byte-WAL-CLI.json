@@ -1,0 +1,70 @@
+{
+  "argv": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "-B",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/vm_w4_judge.py",
+    "/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tmpziuzt8jf/cli",
+    "off",
+    "4242"
+  ],
+  "exit": 0,
+  "inputSha256": {
+    "broker.db": "58ac720396aef6875fa9caa2f48736121ca8ce0398db4e76a88714a7d9ad30c4",
+    "broker.db-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "collection.json": "3604f87cacb79ffe2f0ad2b22cc8580e3dc62eab7f97fb0297c91ca1989dc362",
+    "trace.txt": "a56349fd01dab89df9a2de62221472f822a71c4527e7cb33eade448fbcf02939",
+    "witness-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "writer.txt": "0833666a68383b7a4b8be143830d3a67ed5478488a7041203c02c01da94d9d17"
+  },
+  "receipt": {
+    "copy": {
+      "broker.db": true,
+      "broker.db-wal": true
+    },
+    "format": "w4-collection/1",
+    "receipt": {
+      "files": {
+        "broker.db": {
+          "sha256": "58ac720396aef6875fa9caa2f48736121ca8ce0398db4e76a88714a7d9ad30c4",
+          "size": 16384
+        },
+        "broker.db-wal": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      },
+      "format": "w4-receipt/1",
+      "listing": [
+        "broker.db",
+        "broker.db-wal"
+      ]
+    },
+    "receiptError": null
+  },
+  "startedNs": 1794251851365148000,
+  "stderr": "",
+  "stdout": {
+    "acked": 20,
+    "ackedLostCount": 20,
+    "collection": "verified",
+    "lastAcked": 20,
+    "lastSurvived": 0,
+    "marker": 0,
+    "mode": "off",
+    "pass": true,
+    "problems": [],
+    "survived": 0,
+    "syncsCredited": 0,
+    "traceDetached": false,
+    "traceEvents": 20,
+    "unwitnessedAcked": 20,
+    "unwitnessedLostCount": 20,
+    "walAbsentConfirmed": false,
+    "witnessProblems": [
+      "SYNC-MISSING: 20 of 20 commits"
+    ],
+    "witnessed": 0,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  }
+}
