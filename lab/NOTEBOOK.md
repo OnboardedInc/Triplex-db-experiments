@@ -2071,3 +2071,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **3d23d208:** round A merged (21 conflicts listed), sweep workers and retention leases added, 10 SQLite and 33 harness tests pass. The preflight stopped correctly: W0's first reference position is 1, and the broker's first commit is 2048 (LSN * 1024 + ordinal; LSN 1 is the epoch frame). First-command ACK took 7.133 ms.
 - **Ruling Q101a (pending):** positions need not be equal; the seed manifest binds an order-preserving map from reference to native positions, and every consumer translates through it. Lane D's position-to-t map (Q89d) is the same idea.
 - **Lesson:** "receipt position equals reference position" held on XTDB by accident of dense numbering. Any assumption that one engine's identifiers equal the oracle's needs an explicit map.
+
+## 2026-11-09: CR-NS review FIX-FIRST: six ways the evaluator could grant a PASS it should not
+
+- **verify/CRNS 93d2af9c:** the original 145 tests pass, but six reviewer regressions fail: P1 accepts an empty read stream (R01); a checkpoint can advance beyond every source position (R02); the affected-set check pools consumer and epoch identities (R03); P4 throughput counts reads outside its window (R04); a loop label stands in for single-client execution (R05); removing every CR event skips the cross-check requirement (R06).
+- **Pattern:** four of six are "absence passes": an empty stream, a missing CR event, an unbounded window. **Lesson:** every bar needs a minimum-evidence floor (non-empty, inside the window, per identity) checked before its arithmetic.
+- **Next:** CX-CRNS round 2 waits for the independent Opus forgery review, still running, so one round fixes both sets.
