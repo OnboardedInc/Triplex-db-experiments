@@ -342,15 +342,35 @@ Sam, 2026-11-10: Kafka image download approved, VM stays at 8 CPUs. `apache/kafk
 `.claude/worktrees/xn-s2`, prompt `.../prompts/XN-S2.md`) tests one XTDB write node plus one read node on a Kafka log, engine only,
 lowest lock priority.
 
+## DX-B7 and XN-S2 results (2026-11-10 13:30 UTC)
+
+**DX-B7** (branch `exp/DX-B7-read-gateway` head 08300758, **not merged here; DX-B8 merges it**; report `b7/REPORT.md` on that
+branch). Built: arrival-order admission with a separate feed permit, session generations without a response-wide lock, a
+byte-bounded parsed-entity cache keyed by (entity, revision), a report-queue consumer with notified waits, a revision memo per
+cut. Result: throughput targets missed (256 readers 986 pulls/s, p99 516 ms, 824 pulls per gateway CPU-second, with keep-awake);
+admission alone cut p99 at 256 readers from 515 to 214 ms at equal throughput; quiet feed lag p99 16.8 and 13.6 ms (met); the 2 s
+feed outliers did not reproduce. Lean suite and the 300-scenario differential were not run on its last commit.
+**Its profile is the finding:** with both caches at zero misses the gateway's CPU is still in `filter_retractions` (`eat_past`,
+`skip`), `take_while` and boxed number comparison, which is `select-db` walking the scope entity's replaced position and replaced
+maximum record time on every pull. That is cause 1 above, now seen on the read side.
+
+**DX-B8 before-measurement** (unchanged code): fill rate 625 commits/s at 7,650 commits, 286 at 23,000, 77 at 97,000, 59 at
+98,500. Cause 1 confirmed on the write side.
+
+**XN-S2**: the local XTDB image has no Kafka module (`Unknown type '!Kafka'`; known types `!DirectMirror, !InMemory, !Local,
+!Postgres`). Nothing measured. Resumed without downloads to test whether two nodes can share a log through `!Postgres` with the
+local Postgres image. If not, lane X needs `ghcr.io/xtdb/xtdb-aws:2.2.0` and an S3-compatible store image (Sam's call).
+
+**keep-awake helper**: the first version's `start` matched itself and started nothing; fixed (commit a323c667). Whether the
+busy loops cost throughput under load is open: DX-B8 measures everything without and with.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-B7 | Read gateway: admission, (entity, revision) cache, no session lock, waits by notification | `exp/DX-B7-read-gateway`, `.claude/worktrees/dx-b7` | `.../prompts/DX-B7.md` |
-| DX-B8 | Head position without a per-commit replaced value; audit of all such values | `exp/DX-B8-head-lookup`, `.claude/worktrees/dx-b8` | `.../prompts/DX-B8.md` |
-| DX-H6 | P5 sweep stage budgets, pipeline, oracle outside the timed path, ordered seeding with commits in flight, 10,000-subject seed and sweep | `exp/DX-H6-sweep-cost`, `.claude/worktrees/dx-h6` | `.../prompts/DX-H6.md` |
+| DX-B8 (resumed 13:26 UTC) | Owns the whole package now: merge DX-B7, finish the head fix, all gates on both layouts, commit `DX-B8 fix:`; measure commits and pulls on a 50,000-commit scope, frozen and moving basis, without and with keep-awake; if still short, a revision map fed by the report queue so a current pull makes no Datomic call | `exp/DX-B8-head-lookup`, `.claude/worktrees/dx-b8` | `.../prompts/DX-B8-resume1.md` |
+| DX-H6 | P5 sweep stage budgets, pipeline, oracle outside the timed path, ordered seeding with commits in flight, 10,000-subject seed and sweep (four steps committed, measuring) | `exp/DX-H6-sweep-cost`, `.claude/worktrees/dx-h6` | `.../prompts/DX-H6.md` |
+| XN-S2 (resumed 12:58 UTC) | Two XTDB nodes on a Postgres-backed log, engine only, no downloads | `spike/XN-S2`, `.claude/worktrees/xn-s2` | `.../prompts/XN-S2-resume1.md` |
 
-All share the measurement lock with the orchestrator. Launched with `nohup`; watchers on `lab/agents/ledger.jsonl` exit events.
-
-After these: merge (B7 and B8 both touch `reach.clj`, `storage.clj`, `main.clj`: resolve by hand); paired north-star run at 2,000
-and 10,000 subjects; XTDB read-replica spike on Kafka (lane X); 100,000-subject seed and sweep; one independent review, receipts.
+After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
+keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
