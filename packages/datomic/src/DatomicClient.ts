@@ -119,6 +119,7 @@ export class DatomicClient {
     path: string,
     body?: unknown,
     timeoutMs = this.timeoutMs,
+    onSent?: () => void,
   ): Promise<T> {
     const started = performance.now();
     // [EXP-DX1] Why: a known commit t lets lagging peers wait locally; no transactor round trip.
@@ -209,6 +210,10 @@ export class DatomicClient {
       req.on("error", (error) =>
         reject(new DatomicTransportError(error.message, { cause: error })),
       );
+      if (onSent) {
+        req.once("finish", onSent);
+        req.once("error", onSent);
+      }
       req.end(bytes);
     });
   }
@@ -409,6 +414,7 @@ export class DatomicClient {
       handle?: string;
       release?: boolean;
     },
+    onSent?: () => void,
   ): Promise<unknown> {
     const encodeStart = performance.now();
     const body = {
@@ -417,7 +423,15 @@ export class DatomicClient {
       rowTexts: Object.fromEntries(
         input.rows
           .filter((r) => input.newIds.includes(r.id))
-          .map((r) => [r.id, encodeRowText({ ...r, retracted_at: null, retracted_position: null, retract_tx_id: null })]),
+          .map((r) => [
+            r.id,
+            encodeRowText({
+              ...r,
+              retracted_at: null,
+              retracted_position: null,
+              retract_tx_id: null,
+            }),
+          ]),
       ),
     };
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
@@ -425,7 +439,7 @@ export class DatomicClient {
       t?: TaggedValue;
       position?: TaggedValue;
       delta?: number;
-    }>("POST", `/v1/db/${db}/transact`, body);
+    }>("POST", `/v1/db/${db}/transact`, body, this.timeoutMs, onSent);
     if (response.t && response.position) {
       const p = validateTagged(response.position);
       const position = Number(p.v);

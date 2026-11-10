@@ -270,6 +270,16 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
     it("queries the speculative delta through native Datalog", async () =>
       withStore(async (a, client, scope) => {
         const q = makeDatomicQueryExecutor(client, scope);
+        if (process.env.DATOMIC_TEST_LAYOUT === "lean") {
+          await expect(
+            Effect.runPromise(
+              q.execute({ find: ["?v"], where: [["subject", ":value", "?v"]] }, false, {
+                validAt: 2,
+              }),
+            ),
+          ).rejects.toMatchObject({ code: "LayoutUnsupported", route: "q" });
+          return;
+        }
         await Effect.runPromise(
           a.withTransaction(
             Effect.gen(function* () {

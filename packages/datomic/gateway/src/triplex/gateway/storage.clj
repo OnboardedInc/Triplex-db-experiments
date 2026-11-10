@@ -200,6 +200,8 @@
         (loop []
           (when (and (< @state (dec sequence)) (< (System/nanoTime) deadline))
             (.wait ^Object state 1) (recur)))
+        (when (< @state (dec sequence)) (stats/bump! [:commitOrder :timeouts] 1))
+        (when (<= sequence @state) (stats/bump! [:commitOrder :late] 1))
         (let [future (d/transact-async conn data)]
           (swap! state max sequence) (.notifyAll ^Object state) future)))
     (d/transact-async conn data)))
@@ -230,9 +232,9 @@
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
 (defn operation [db id]
-  (if-let [entity (d/entity db [:triplex.tx/operation-id id])]
-    (if-let [p (:triplex.tx/position entity)]
-      {:status "committed" :position (codec/encode-value "long" p) :t (codec/encode-value "long" (d/tx->t (:db/id entity)))}
+  (if-let [entity (d/entid db [:triplex.tx/operation-id id])]
+    (if-let [p (value db entity :triplex.tx/position)]
+      {:status "committed" :position (codec/encode-value "long" p) :t (codec/encode-value "long" (d/tx->t entity))}
       {:status "absent"}) {:status "absent"}))
 (defn head-position
   ([db]
@@ -266,8 +268,7 @@
       (when (> p head) (unavailable! "Requested position is beyond the available snapshot"))
       (if (= p head) db
         (let [tx (if (zero? p)
-                   (:tx (first (d/datoms db :avet :triplex.scope/key
-                             (d/q '[:find ?s . :where [_ :triplex.scope/key ?s]] db))))
+                   (:tx (first (d/datoms db :aevt :triplex.scope/key)))
                    (:e (first (d/index-range db :triplex.tx/position p nil))))]
           (when-not tx (unavailable! "No physical transaction covers the requested position"))
           (d/as-of db (d/tx->t tx)))))))
@@ -375,7 +376,8 @@
             _ (assert-subject-route! db basis (if (= route "live") :f/live :f/subject))
             _ (when (and (= route "live") history) (unavailable! "Position-retired route cannot enumerate history"))
             _ (await-position db (get basis "recordedPosition") (get input "basisWaitMs") (fn [_] db))]
-        {:route (if (= route "live") "live" "source") :basis basis
+        {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
+                      (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
          :subjectAttribute (str (if (= route "live") :f/live :f/subject))
          :rows (mapv #(wire-row (mask-retirement % basis))
                      (filter (fn [row]

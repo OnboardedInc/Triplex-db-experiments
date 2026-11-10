@@ -11,23 +11,53 @@ import { DatomicLayoutUnsupported } from "../src/readErrors.js";
 describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("lean unsupported routes", () => {
   it("returns explicit q/log conflicts and preserves born-retired history", async () => {
     const c = new DatomicClient(process.env.DATOMIC_GATEWAY_URL ?? "http://127.0.0.1:8505", 30000);
-    const scope = DatabaseScope.test(`b5-unsupported-${randomUUID()}`), a = makeDatomicStorageAdapter(c, scope, {layout: "lean"});
+    const scope = DatabaseScope.test(`b5-unsupported-${randomUUID()}`),
+      a = makeDatomicStorageAdapter(c, scope, { layout: "lean" });
     try {
       await Effect.runPromise(a.initialize());
-      const {db} = await c.create(scope);
+      const { db } = await c.create(scope);
       const q = makeDatomicQueryExecutor(c, scope);
-      await expect(Effect.runPromise(q.execute({find: ["?e"], where: [["?e", ":a", "?v"]]}, false, {validAt: 0}))).rejects.toBeInstanceOf(DatomicLayoutUnsupported);
-      await expect(c.log(db, "0")).rejects.toMatchObject({status: 409, code: "LayoutUnsupported", route: "log"});
-      await Effect.runPromise(a.withTransaction(Effect.gen(function* () {
-        const p = yield* a.nextCommitPosition();
-        yield* a.insert({entityId: "e", attribute: ":a", value: {type: "string", value: "value"}}, "tx", 1, "born-dead", p);
-        expect(yield* a.getByEntity("e")).toHaveLength(1);
-        yield* a.retract("born-dead", 2, "retire", p);
-        expect(yield* a.getByEntity("e")).toHaveLength(0);
-      })));
+      await expect(
+        Effect.runPromise(
+          q.execute({ find: ["?e"], where: [["?e", ":a", "?v"]] }, false, { validAt: 0 }),
+        ),
+      ).rejects.toBeInstanceOf(DatomicLayoutUnsupported);
+      await expect(c.log(db, "0")).rejects.toMatchObject({
+        status: 409,
+        code: "LayoutUnsupported",
+        route: "log",
+      });
+      await Effect.runPromise(
+        a.withTransaction(
+          Effect.gen(function* () {
+            const p = yield* a.nextCommitPosition();
+            yield* a.insert(
+              { entityId: "e", attribute: ":a", value: { type: "string", value: "value" } },
+              "tx",
+              1,
+              "born-dead",
+              p,
+            );
+            expect(yield* a.getByEntity("e")).toHaveLength(1);
+            yield* a.retract("born-dead", 2, "retire", p);
+            expect(yield* a.getByEntity("e")).toHaveLength(0);
+          }),
+        ),
+      );
       expect(await Effect.runPromise(a.getByEntity("e"))).toEqual([]);
-      expect(await Effect.runPromise(a.history("e"))).toMatchObject([{id: "born-dead", recorded_at: 1, retracted_at: 2, retracted_position: 1, retract_tx_id: "retire"}]);
-      expect((await Effect.runPromise(a.getReachRows!("e", {validAt: 10})))!).toEqual([]);
-    } finally { await c.delete(scope); c.close(); }
+      expect(await Effect.runPromise(a.history("e"))).toMatchObject([
+        {
+          id: "born-dead",
+          recorded_at: 1,
+          retracted_at: 2,
+          retracted_position: 1,
+          retract_tx_id: "retire",
+        },
+      ]);
+      expect((await Effect.runPromise(a.getReachRows!("e", { validAt: 10 })))!).toEqual([]);
+    } finally {
+      await c.delete(scope);
+      c.close();
+    }
   });
 });

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# [DX-B5-L6] Why: CPU 0-4 stacks exist only under the bounded global window, and cleanup precedes unlock.
+# Rejected: returning a resident measured stack to CPU 5 between phases while releasing ownership.
+set -euo pipefail
+layout=${1:?lean or legacy}
+[[ $layout == lean || $layout == legacy ]] || exit 2
+prefix="tx2-dxb5-measure-$layout-$(date +%s)"
+lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
+while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
+started=$(date +%s)
+printf '{"id":"DX-B5","prefix":"%s","layout":"%s"}\n' "$prefix" "$layout" > "$lock/owner.json"
+cleanup() {
+  bash lab/experiments/EXP-DX1/b5/down.sh "$prefix" --volumes
+  export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
+  if [[ -z $(docker ps -a --filter "name=$prefix-" -q) && -z $(docker network ls --filter "name=$prefix-" -q) && -z $(docker volume ls --filter "name=$prefix-" -q) ]]; then
+    rm "$lock/owner.json"
+    rmdir "$lock"
+  else echo "cleanup unverified; lock retained" >&2; fi
+}
+trap cleanup EXIT
+DX5_TX_HEAP=2g DX5_TX_MEMORY=3g DX5_GW_HEAP=1g bash lab/experiments/EXP-DX1/b5/up.sh "$prefix" --cpus-tx 0,1 --cpus-pg 0 --cpus-gw-write 2 --cpus-gw-read 3,4
+# macOS has no timeout utility by default: a bounded node supervisor retains the actual exit status.
+DX_B5_REMAINING=$((840-$(date +%s)+started)) DX5_PREFIX="$prefix" DX_B5_LOCK_HELD=1 TRIPLEX_DATOMIC_LAYOUT="$layout" node --import tsx --input-type=module <<'JS'
+import {spawn} from 'node:child_process';
+const child=spawn(process.execPath,['--import','tsx','lab/experiments/EXP-DX1/b5/bench.mjs'],{stdio:'inherit',env:process.env});
+const timer=setTimeout(()=>child.kill('SIGTERM'),Math.max(1,Number(process.env.DX_B5_REMAINING))*1000);
+child.on('exit',(code)=>{clearTimeout(timer);process.exitCode=code??124;});
+JS

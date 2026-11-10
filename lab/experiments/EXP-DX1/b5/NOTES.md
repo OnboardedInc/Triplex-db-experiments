@@ -1,0 +1,7 @@
+# DX-B5 retained failure notes
+
+- Initial pnpm exec rejected `--store-dir`; no network attempt occurred. Offline installation had already succeeded with zero downloads.
+- Initial native L0 run: 162 passed, 5 failed. Three ordering-related failures were corrected by excluding unsafe SPI callbacks from clock ordering; the raw replay-safe fixed-clock case needed a narrower public-journal clock promise. The inherited untyped-journal row decoder failure was also reproduced.
+- Initial lean run: 25 passed, 8 failed. Unsupported native q cases require layout-specific rejection assertions, not expected query values. The supported row route metadata needed the same held/staged/as-of labels as legacy.
+- First 300-scenario attempt: transactor container tx2-dxb5-dev3-tx was observed exited, OOMKilled=true, exit 137, after running two native suites concurrently. No semantic conclusion is drawn from its interrupted prefix. Replacement functional profile keeps Xmx1g, raises only the cgroup limit from 1.5 GiB to 2 GiB, and avoids concurrent large native suites.
+- New W0 test first failed at import because W0 dist was absent, then failed its one-request assertion because its fixture used invalid public transaction IDs (`tx`/`tx2`), causing the existing branded decoder to decline. Corrected fixture uses valid `_tx/` IDs. Subsequent native comparison passes on both layouts: 64 roots, shared entity deduplication, past/head positions, exact rows/order, exactly one HTTP request per page.

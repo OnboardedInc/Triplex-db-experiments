@@ -109,8 +109,16 @@ export function reachResponse(
 
 // [DX-B5-L4] Why: reuse the identical traversal and filtering order for triples and physical rows.
 // Rejected: a second traversal whose valid-time or BFS ordering could drift.
-export function reachRowsResponse(root: string, entities: ReadonlyMap<string, CachedEntity>, basis: ResolvedTemporalBasis) {
-  const byId = new Map([...entities.values()].flatMap((entity) => entity.storedRows.map((row) => [row.id, row] as const)));
+export function reachRowsResponse(
+  root: string,
+  entities: ReadonlyMap<string, CachedEntity>,
+  basis: ResolvedTemporalBasis,
+) {
+  const byId = new Map(
+    [...entities.values()].flatMap((entity) =>
+      entity.storedRows.map((row) => [row.id, row] as const),
+    ),
+  );
   return reachResponse(root, entities, basis).triples.map((triple) => {
     const row = byId.get(triple.id);
     if (!row) throw new TypeError("Missing stored reach row");

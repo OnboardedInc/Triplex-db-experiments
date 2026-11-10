@@ -83,14 +83,14 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   [[ "$file" != postgres-table.sql ]] || db=datomic
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$attempt/sql/$file" > "$attempt/sql/$file.log"
 done
-docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "$tx" --memory 1500m --memory-swap 1500m \
-  -e "JAVA_OPTS=-Xms256m -Xmx1g" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
+docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "$tx" --memory "${DX5_TX_MEMORY:-2g}" --memory-swap "${DX5_TX_MEMORY:-2g}" \
+  -e "JAVA_OPTS=-Xms256m -Xmx${DX5_TX_HEAP:-1g}" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # A ready transactor is checked by gateway health, which creates and syncs a real SQL database.
 for role in w r; do
   if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 1500m --memory-swap 1500m \
-    -p "127.0.0.1:$port:8080" -e "JAVA_OPTS=-Xms256m -Xmx768m" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    -p "127.0.0.1:$port:8080" -e "JAVA_OPTS=-Xms256m -Xmx${DX5_GW_HEAP:-768m}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -v "$src:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false

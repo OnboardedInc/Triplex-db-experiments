@@ -60,7 +60,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("Datomic read pins",
     id,
     input: { entityId, attribute, value, validFrom: 0 },
   });
-  it(
+  it.skipIf(process.env.DATOMIC_TEST_LAYOUT === "lean")(
     "pins optional pulls across a commit between query requests",
     async () =>
       fixture(async ({ client, q, write, db }) => {
@@ -149,7 +149,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("Datomic read pins",
       }),
     30000,
   );
-  it(
+  it.skipIf(process.env.DATOMIC_TEST_LAYOUT === "lean")(
     "pins rule rounds and the final query across an edge replacement",
     async () =>
       fixture(async ({ client, q, write }) => {
@@ -257,13 +257,20 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("Datomic read pins",
           expect(rows.get("e")).toHaveLength(40);
           expect(rows.get("missing")).toEqual([]);
           expect(rows.get("e")!.every((r) => r.retracted_at === null)).toBe(true);
-          expect(
-            (
-              await Effect.runPromise(
+          if (process.env.DATOMIC_TEST_LAYOUT === "lean")
+            await expect(
+              Effect.runPromise(
                 q.execute({ find: ["?v"], where: [["e", ":value", "?v"]] }, false, basis),
-              )
-            ).results,
-          ).toHaveLength(40);
+              ),
+            ).rejects.toMatchObject({ code: "LayoutUnsupported", route: "q" });
+          else
+            expect(
+              (
+                await Effect.runPromise(
+                  q.execute({ find: ["?v"], where: [["e", ":value", "?v"]] }, false, basis),
+                )
+              ).results,
+            ).toHaveLength(40);
           await expect(
             client.request("POST", `/v1/db/${db}/read`, { entityIds: ["e"], route: "live", basis }),
           ).rejects.toMatchObject({ code: "BasisNotAvailable" });
@@ -274,7 +281,12 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("Datomic read pins",
               basis,
               timeoutMs: 1000,
             }),
-          ).rejects.toMatchObject({ code: "BasisNotAvailable" });
+          ).rejects.toMatchObject({
+            code:
+              process.env.DATOMIC_TEST_LAYOUT === "lean"
+                ? "LayoutUnsupported"
+                : "BasisNotAvailable",
+          });
         }
         const live = await client.request<{ rows: unknown[]; route: string }>(
           "POST",

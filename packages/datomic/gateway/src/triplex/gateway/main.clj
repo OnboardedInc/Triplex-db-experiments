@@ -3,7 +3,7 @@
             [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
-(set! *warn-on-reflection* true)
+(set! *warn-on-reflection* false)
 
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
 ;; [DX-H1] Why: SQL storage places the database before the JDBC query. Rejected: suffix concatenation (dev-only).
@@ -20,7 +20,7 @@
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
                      (when (= result ::timeout) (throw (ex-info "Sync deadline exceeded" {:status 503 :code "SyncTimeout"}))) result))
 (def scope-name scope/name-for)
-(defn stored-scope [db] (when (d/entid db :triplex.scope/key) (d/q '[:find ?s . :where [_ :triplex.scope/key ?s]] db)))
+(defn stored-scope [db] (when (d/entid db :triplex.scope/key) (:v (first (d/datoms db :aevt :triplex.scope/key)))))
 (defn assert-scope [db scope]
   (when-let [existing (stored-scope db)]
     (when-not (= existing scope) (throw (ex-info "Database name collision" {:status 409 :code "ScopeCollision"})))))
@@ -59,10 +59,10 @@
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
   (let [db (d/db (connection (db-uri name))) scope (stored-scope db)]
     (when-not scope (throw (ex-info "Scope not initialized" {:status 409 :code "ScopeUninitialized"})))
-    (let [entity (d/entity db [:triplex.scope/key scope])]
+    (let [entity (d/entid db [:triplex.scope/key scope])]
       {:t (codec/encode-value "long" (d/basis-t db))
-       :position (codec/encode-value "long" (:triplex.scope/position entity))
-       :recordedAt nil :schemaHash (:triplex.scope/schema-hash entity)})))
+       :position (codec/encode-value "long" (storage/value db entity :triplex.scope/position))
+       :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)})))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
@@ -163,8 +163,8 @@
             "q" (do (when (lean/enabled? (or db (storage/held-db name (get input "handle")))) (lean/unsupported! "q")) (query/run name db input))
             "operation" (storage/operation db id)
             "claim" (let [cut (storage/at-position db (get input "position"))
-                          claim (d/entity cut [:triplex.claim/command-id (get input "commandId")])]
-                      {:txId (:triplex.claim/tx-id claim)}))))
+                          claim (d/entid cut [:triplex.claim/command-id (get input "commandId")])]
+                      {:txId (when claim (storage/value cut claim :triplex.claim/tx-id))}))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (:maximum (ex-data e)) :route (:route (ex-data e))}))))

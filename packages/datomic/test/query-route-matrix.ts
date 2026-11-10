@@ -13,6 +13,16 @@ export async function queryRouteMatrix(
   scope: string,
   record: (observation: unknown) => void,
 ) {
+  if (process.env.DATOMIC_TEST_LAYOUT === "lean") {
+    await expect(
+      client.request("POST", `/v1/db/${db}/q`, {
+        edn: "[:find ?e :where [?e :f/id _]]",
+        relations: [],
+      }),
+    ).rejects.toMatchObject({ code: "LayoutUnsupported", status: 409, route: "q" });
+    record({ route: "q", layout: "lean", code: "LayoutUnsupported" });
+    return;
+  }
   const a = makeDatomicStorageAdapter(client, scope),
     q = makeDatomicQueryExecutor(client, scope);
   let first = 0,

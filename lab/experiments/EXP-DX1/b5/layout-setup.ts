@@ -4,7 +4,7 @@ import { DatomicClient } from "../../../../packages/datomic/src/DatomicClient.js
 // Rejected: environment-dependent production defaults (legacy must remain the default).
 if (process.env.DATOMIC_TEST_LAYOUT === "lean") {
   const create = DatomicClient.prototype.create;
-  vi.spyOn(DatomicClient.prototype, "create").mockImplementation(function(scope, layout) {
-    return create.call(this, scope, layout === "lean" ? layout : "lean");
+  vi.spyOn(DatomicClient.prototype, "create").mockImplementation(function (scope, layout) {
+    return create.call(this, scope, layout ?? "lean");
   });
 }
