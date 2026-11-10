@@ -97,7 +97,9 @@ try{
   const claims=await cs[0].query('SELECT COUNT(*) AS n FROM xn_claim WHERE _id LIKE $1',[text(`${scope}-%`)]);
   const docs=await cs[0].query('SELECT COUNT(*) AS n FROM xn_ent WHERE _id LIKE $1',[text(`${scope}-%`)]);
   const heads=await cs[0].query('SELECT SUM(pos) AS n FROM xn_head WHERE _id LIKE $1',[text(`${scope}-%`)]);
-  const checks={claims,docs,heads,offered:observed.offered,acknowledged:observed.n,errors:observed.errors,readers:observed.readerResults};save(`${observed.name}-content`,checks);
-  if(observed.errors.length||observed.n!==observed.offered||Number(claims[0].n)!==observed.n+201||Number(docs[0].n)!==3*(observed.n+200)||Number(heads[0].n)!==observed.n+200||observed.readerResults.reduce((n,r)=>n+r.clients,0)!==observed.readerCount||(process.env.LAG==='1'&&observed.lagSamples.length!==observed.n))throw Error('postflight content/count check failed');
+  // [XN-S2-LIVE] Why: compare every stored payload in this unique scope, outside timing. Rejected: counts alone as proof of document bytes.
+  const bad=await cs[0].query("SELECT COUNT(*) AS n FROM xn_ent WHERE _id LIKE $1 AND (doc IS NULL OR NOT ((_id LIKE '%-0' AND doc=$2) OR (_id LIKE '%-1' AND doc=$3) OR (_id LIKE '%-2' AND doc=$4)))",[text(`${scope}-%`),...payload.map(text)]);
+  const checks={claims,docs,heads,bad,offered:observed.offered,acknowledged:observed.n,errors:observed.errors,readers:observed.readerResults};save(`${observed.name}-content`,checks);
+  if(observed.errors.length||observed.n!==observed.offered||Number(bad[0]?.n)!==0||Number(claims[0].n)!==observed.n+201||Number(docs[0].n)!==3*(observed.n+200)||Number(heads[0].n)!==observed.n+200||observed.readerResults.reduce((n,r)=>n+r.clients,0)!==observed.readerCount||(process.env.LAG==='1'&&observed.lagSamples.length!==observed.n))throw Error('postflight content/count check failed');
  }else throw Error('mode');
 }finally{for(const w of workers)await w.terminate();for(const c of cs)c.close()}

@@ -40,12 +40,14 @@ for window in sorted(ROOT.iterdir()):
     assert x['n']==x['offered']==len(x['samples']) and not x['errors']
     check=load(window/'driver'/(x['name']+'-content.json'))
     assert not check['errors'] and int(check['claims'][0]['n'])==x['n']+201 and int(check['docs'][0]['n'])==3*(x['n']+200) and int(check['heads'][0]['n'])==x['n']+200
+    if not window.name.startswith('control-'):assert int(check['bad'][0]['n'])==0,'stored payload mismatch'
     assert sum(r['clients'] for r in x['readerResults'])==x['readerCount'] and all(r['n']>0 for r in x['readerResults'])
     if x['lagSamples']:assert len(x['lagSamples'])==x['n']
    elif x['name'].startswith('read-'):
     assert x['n']==len(x['samples']) and len({s['i'] for s in x['samples']})==x['n']
     if x.get('writerResult'):
      w=x['writerResult'];assert w['offered']==w['acknowledged']>0 and not w['errors'] and int(w['claims'][0]['n'])==w['acknowledged']+1 and int(w['docs'][0]['n'])==w['acknowledged']*3
+     assert int(w['bad'][0]['n'])==0,'background payload mismatch'
    elif x['name'].startswith('closed-'):
     assert x['n']==len(x['samples'])
     check=load(window/'driver'/(x['name']+'-content.json'));assert check['content'] and check['scope']==x['scope']

@@ -16,6 +16,7 @@ async function run(){
  await Promise.all(jobs);
  const claims=await cs[0].query('SELECT COUNT(*) AS n FROM xn_claim WHERE _id LIKE $1',[text(scope+'-%')]);
  const docs=await cs[0].query('SELECT COUNT(*) AS n FROM xn_ent WHERE _id LIKE $1',[text(scope+'-%')]);
- if(errors.length||samples.length!==i||Number(claims[0].n)!==i+1||Number(docs[0].n)!==i*3)throw Error('background writer content failure');
- parentPort.postMessage({scope,rate:workerData.rate,offered:i,acknowledged:samples.length,elapsedMs:performance.now()-start,latency:summary(samples.map(s=>s.ms)),errors,samples,claims,docs});for(const c of cs)c.close();
+ const bad=await cs[0].query("SELECT COUNT(*) AS n FROM xn_ent WHERE _id LIKE $1 AND (doc IS NULL OR NOT ((_id LIKE '%-0' AND doc=$2) OR (_id LIKE '%-1' AND doc=$3) OR (_id LIKE '%-2' AND doc=$4)))",[text(scope+'-%'),...[3000,200,4000].map(n=>text('w'.repeat(n)))]);
+ if(errors.length||samples.length!==i||Number(bad[0]?.n)!==0||Number(claims[0].n)!==i+1||Number(docs[0].n)!==i*3)throw Error('background writer content failure');
+ parentPort.postMessage({scope,rate:workerData.rate,offered:i,acknowledged:samples.length,elapsedMs:performance.now()-start,latency:summary(samples.map(s=>s.ms)),errors,samples,claims,docs,bad});for(const c of cs)c.close();
 }
