@@ -228,12 +228,40 @@ container inside the VM.
 
 - Clock replays under contention: 58 (16 clients, one process, shared CPU), 77 (4 processes); 0 when isolated.
 
-## Orchestrator run in progress
+## Orchestrator runs on the lean layout inside the VM (2,000 subjects, 20 s levels; `lab/experiments/EXP-DX1/h3/attempt.sh medium`)
 
-Medium NS run on a lean scope inside the VM: `tx2-dxh3-om1`, 2,000 subjects, 256 readers, Postgres CPU 0, transactor 0-1 (heap 3 GB,
-object cache 1 GB, index threshold 256m/1g), write gateway CPUs 2-3 and read gateway 4-5 (heap 2 GB, G1), driver CPUs 6-7,
-`TX2_ENGINE_CPUS=6`. Wrapper: `lab/experiments/EXP-DX1/h3/attempt.sh` with `DX_*` environment variables (see commit 9d9b06de).
-Output: `~/Claude/Projects/triplex-db-2/evidence/DX-H3/tx2-dxh3-om1/`.
+Evidence: `~/Claude/Projects/triplex-db-2/evidence/DX-H3/tx2-dxh3-om{1,2,3}/driver/ns-report.json`. om1 died (driver container
+out of memory at 4 GB). Gateways: 2 GB heap, G1. Transactor heap 3 GB, object cache 1 GB.
+
+| Measure | om2: engine 6 CPUs (write gateway 2, read gateway 2), driver 2 CPUs | om3: engine 4 CPUs (transactor 0-1, Postgres 0, write gateway 1, read gateway 2-3), driver 4 CPUs | Bar |
+| --- | --- | --- | --- |
+| Status, oracle | DONE, O-REPLAY PASS | DONE, O-REPLAY PASS | - |
+| Reads correct | 608,841 of 608,841 | 729,751 of 729,761: **6 stale, 4 errors** | 0 violations |
+| P3 (gaps, order, duplicates, resume, crash points) | all pass; lag p99 at L256 53 ms | all pass; lag p99 47 ms | 250 ms |
+| P4 mix pull p50 / p99 | 0.88 / 3.6 ms | pass | 5 / 25 ms |
+| P4 pulls/s per engine core | 938 (client saturated, 6 quota cores); 3,457 per used core | **1,661**; 3,743 per used core | 1,100 |
+| P4 history p99 depth 10 / depth 1 | 1.43 (p50 1.09) | 1.18 (p50 1.06) | 1.1 |
+| L1 read p50 / p99 | 0.36 / 1.3 ms | 0.35 / 1.2 ms | - |
+| L64 goodput; read p50 / p99 | 5,631/s; 7.3 / 29 ms | 6,645/s; 5.6 / 41 ms | - |
+| L256 goodput vs L64; read p99 | 0.44; 430 ms (client saturated) | 0.64; 340 ms (read gateway at 196% of 2 CPUs, client 0.86) | >= 1.0; 100 ms |
+| Commit, lone commits at L1 | p50 33 ms (17 commits) | p50 36 ms | 10 / 50 |
+| Commit bands, steady | 5-10 facts p50 13.8 ms, p99 70 ms | p50 14.3 ms, p99 79 ms | 10 / 50 |
+| Commit bands, burst (overlaps L256, L1024) | p50 84 ms, p99 5.3 s (client saturated) | p50 45 ms, p99 680 ms (driver main thread 0.53-0.76 busy) | 10 / 50 |
+| P2 accounting, duplicates, lost ACKs, read-your-own-write | all pass | all pass | - |
+| P5 live read / writer p99 during the fetch-only sweep vs before | 1.17 / 0.46 | - | 1.5 |
+
+Findings that drive the next round:
+
+1. **Stale reads on the read peer (om3, kind `stale`).** A read at a receipt's record time is answered by a peer that has not received
+   that commit yet. Fix in DX-B6 finding 5: strictly increasing record times, and a peer whose maximum record time is below the
+   basis waits (then syncs once). om2 had none because its driver was slower.
+2. **A lone commit takes 30 to 36 ms in the driver** against 7.5 ms back to back in the bench. DX-B6 finding 1 (breakdown and fix);
+   DX-H4 step 4 (the driver's own share).
+3. **The driver's main thread is the writer's bottleneck in the burst.** DX-H4 step 5.
+4. **Reference misses cost a full pull** (2.7% of pulls at 64 readers) and the client caches are unbounded. DX-B6 findings 2 and 3.
+5. Harness: maintenance events are mis-attributed per window; history depth is measured before Datomic has indexed; no matched
+   zero-reader baseline. DX-H4 steps 1 to 3.
+6. CPU plan that keeps the client unsaturated up to L64 and passes P4 per core: engine 4 CPUs, driver 4 CPUs with 3 reader threads.
 
 ## P5 arithmetic to keep in mind
 
@@ -246,6 +274,12 @@ commands per second).
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
+| DX-B6 | Package gaps: lone-commit latency, reference misses, cache byte budget, strict record times and the peer watermark wait (stale reads), the two failing tests | `exp/DX-B6-package-gaps`, `.claude/worktrees/dx-b6` | `.../prompts/DX-B6.md` |
+| DX-H4 | Driver verdicts: maintenance attribution, index before depth phases, matched zero-reader pair, per-commit breakdown, writer thread; paired runs at 2,000 and 10k | `exp/DX-H4-driver-verdicts`, `.claude/worktrees/dx-h4` | `.../prompts/DX-H4.md` |
+| DX-H5 | P5 for real: W0 seed on lean in the VM, sealed seed volumes, activation with gates and live traffic at 1k and 10k, the 100k arithmetic | `exp/DX-H5-p5-in-vm`, `.claude/worktrees/dx-h5` | `.../prompts/DX-H5.md` |
 
-After these: merge; run NS at 10k on a lean scope in the VM mode; seed W0 and run P5 with the lean page reader; then the asynchronous
-reifier for native Datalog on lean scopes; then one independent review and receipts.
+All three share the measurement lock; a container may exist only while its owner holds the lock. These three were launched with
+`nohup`; the orchestrator watches `lab/agents/ledger.jsonl` for their exit events.
+
+After these: merge; paired 10k NS run on lean; P5 follow-up from DX-H5's ranking; asynchronous reifier for native Datalog on lean;
+one independent review and receipts.
