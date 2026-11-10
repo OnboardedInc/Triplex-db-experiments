@@ -303,15 +303,46 @@ Orchestrator reading of the tables (hypotheses, each with the test that settles 
 4. **P4 per quota core is measured at the best ladder level, which neither side saturates.** The bar divides goodput by the 4
    quota cores (TARGETS section 1.1 P4 item 3), so the engine has to reach 4,400 pulls/s. It only can if item 2 is fixed.
 
+## DX-B6 and DX-H5 merged (2026-11-10 12:00 UTC); three causes found; three agents launched
+
+**DX-B6** (merge 2870c42b, report `b6/REPORT.md`): cold commits make one HTTP call instead of two; missing references repair
+with a `need` request (zero full retries in 10,240 concurrent pulls); client caches bounded by bytes; the two failing tests pass;
+record times strictly increase and a second peer waits for the record-time watermark (40,000 cross-peer answers correct).
+Open: one commit per second still p50 24.9 ms against 4.7 ms back-to-back; 256 frozen-basis readers 2,100 pulls/s at p99 526 ms
+with the read gateway at 1.98 of 2 cores.
+
+**DX-H5** (merge 47d2b0a9, report `h5/REPORT.md`): W0 activation on 1,000 subjects with every gate passing took 58.6 s, 30.7 s
+and 31.8 s with 1, 4 and 8 workers (32 subjects/s against 1,000 needed). Per 1,000 subjects: read and decode 6.69 CPU s, world
+build 5.53, kernel 0.33, Python oracle 4.36, serialised verify, build and commit 24.9 s of wall. Seed 208 commands/s in reference
+order; the 10,000-subject seed slowed from 210 to 115 commands/s and did not finish in 43 minutes. Sealed seed volume kept:
+`tx2-dxh5-seed-1000-pg-data` (654 MB).
+
+Orchestrator's reading (2026-11-10), three causes that between them cover every remaining miss:
+
+1. **A hot value.** `:triplex.scope/position` is replaced by every commit. Reading it merges Datomic's in-memory index and
+   cancels every replaced pair since the last index job (`MergeIter` / `filter_retractions`, seen in the transactor's thread
+   dumps under `commit.clj:24`). The commit function reads it, and so does every pull (`select-db`), every journal page and every
+   1 ms wait iteration. Cost grows with commits since the last index job. Agent **DX-B8** removes it.
+2. **The read gateway serves 256 CPU-bound requests on 512 threads over 2 cores, re-reads every row of every entity on every
+   pull, and holds a per-session lock across serialisation.** Agent **DX-B7** adds admission in arrival order, an entity cache
+   keyed by (entity, revision), removes the lock and replaces 1 ms sleep polls with notification.
+3. **The P5 sweep spends its time moving data, not evaluating.** Agent **DX-H6** takes the stages to a budget of about 1.5 CPU s
+   per 1,000 subjects, moves the oracle out of the timed path (still every subject), pipelines publication and seeds in reference
+   order with many commits in flight.
+
+Still to settle by the orchestrator: whether an idle vCPU makes sparse work slow (`vm-wake/run.sh`, queued behind the lock).
+
+Sam, 2026-11-10: Kafka image download approved (`apache/kafka:4.1.1`, queued behind the lock), VM stays at 8 CPUs.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-B6 | Package gaps: lone-commit latency, reference misses, cache byte budget, strict record times and the peer watermark wait (stale reads), the two failing tests | `exp/DX-B6-package-gaps`, `.claude/worktrees/dx-b6` | `.../prompts/DX-B6.md` |
-| DX-H5 | P5 for real: W0 seed on lean in the VM, sealed seed volumes, activation with gates and live traffic at 1k and 10k, the 100k arithmetic | `exp/DX-H5-p5-in-vm`, `.claude/worktrees/dx-h5` | `.../prompts/DX-H5.md` |
+| DX-B7 | Read gateway: admission, (entity, revision) cache, no session lock, waits by notification | `exp/DX-B7-read-gateway`, `.claude/worktrees/dx-b7` | `.../prompts/DX-B7.md` |
+| DX-B8 | Head position without a per-commit replaced value; audit of all such values | `exp/DX-B8-head-lookup`, `.claude/worktrees/dx-b8` | `.../prompts/DX-B8.md` |
+| DX-H6 | P5 sweep stage budgets, pipeline, oracle outside the timed path, ordered seeding with commits in flight, 10,000-subject seed and sweep | `exp/DX-H6-sweep-cost`, `.claude/worktrees/dx-h6` | `.../prompts/DX-H6.md` |
 
-DX-H4 finished and is merged (see above). The agents share the measurement lock; a container may exist only while its owner holds the lock. These three were launched with
-`nohup`; the orchestrator watches `lab/agents/ledger.jsonl` for their exit events.
+All share the measurement lock with the orchestrator. Launched with `nohup`; watchers on `lab/agents/ledger.jsonl` exit events.
 
-After these: merge; paired 10k NS run on lean; P5 follow-up from DX-H5's ranking; asynchronous reifier for native Datalog on lean;
-one independent review and receipts.
+After these: merge (B7 and B8 both touch `reach.clj`, `storage.clj`, `main.clj`: resolve by hand); paired north-star run at 2,000
+and 10,000 subjects; XTDB read-replica spike on Kafka (lane X); 100,000-subject seed and sweep; one independent review, receipts.
