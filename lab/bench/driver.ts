@@ -702,12 +702,13 @@ async function run() {
     report.phases = phases;
     save();
   }
-  if (config.zeroReaders && config.matchDurationS) {
+  if (config.matchDurationS) {
     const until = traceStart + config.matchDurationS * 1000;
     if (now() < until) {
       const entry: any = { idx: phases.length, name: "tail", readers: 0, measured: false, start: now(), traceStartS: (now() - traceStart) / 1000 };
       phases.push(entry);
-      log(`phase tail: matching the ladder run's trace length (${config.matchDurationS}s)`);
+      setReaders(entry.idx, 0, "mixed");
+      log(`phase tail: matching both arms to the fixed trace length (${config.matchDurationS}s)`);
       await sleep(until - now());
       entry.end = now();
       entry.traceEndS = (entry.end - traceStart) / 1000;

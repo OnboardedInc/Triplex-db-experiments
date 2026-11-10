@@ -24,8 +24,14 @@ export async function requestIndex(
   waitMs: number,
 ) {
   const driverRequestedAtMs = now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const event = await client.request("POST", `/v2/db/${database}/request-index`, { waitMs });
+    const event: any = await Promise.race([
+      client.request("POST", `/v2/db/${database}/request-index`, { waitMs }),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(Error(`request-index exceeded ${waitMs} ms`)), waitMs);
+      }),
+    ]);
     if (
       event.database !== database ||
       typeof event.job !== "string" ||
@@ -55,5 +61,7 @@ export async function requestIndex(
       driverCompletedAtMs: now(),
       error: String(error),
     };
+  } finally {
+    clearTimeout(timer);
   }
 }

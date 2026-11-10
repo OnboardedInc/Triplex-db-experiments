@@ -14,7 +14,7 @@ if [[ $kind == pair ]]; then
   mkdir -p "$root/$prefix-ladder/input"
   cp "$baseline" "$root/$prefix-ladder/input/ns-writes.jsonl"
   cp "$root/$prefix-zero/driver/ns-report.json" "$root/$prefix-ladder/input/ns-report.json"
-  bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl"
+  bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl" --match-duration-s "$duration"
   exit
 fi
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
