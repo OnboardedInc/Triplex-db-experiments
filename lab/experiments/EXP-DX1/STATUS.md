@@ -496,12 +496,39 @@ maintenance (index, storage GC, observed quiescence, `VACUUM FULL`, checkpoint, 
    report says otherwise.
 3. DX-B9 continues in the package (step A gates, then strict commit order, publication cost, row pages).
 
+## First 10,000-subject paired run `tx2-dxh4-q1` (2026-11-10 20:45 to 21:25 UTC, head 46c0fd1c): correct, and driver-limited
+
+Tables `lab/experiments/EXP-DX1/h4/tx2-dxh4-q1-TABLES.md`. Host: borderline quiet at the start (other processes 147%, load 9.3),
+busy at the end (other processes 991%, swap 22.7 GB): the lab's own agents (builds, test gates) were the noise. Treat latencies
+as upper bounds.
+
+1. **Correct at this rung: 699,920 of 699,920 reads, oracle PASS, receipt consistency PASS** (DX-H3's old blob failure is gone).
+2. Met: zero violations; goodput 256 against 64 (1.07); writer p99 ratio at 256 (0.71); writer wait; every P3 bar including feed
+   lag p99 at 256 readers (68 ms); P4 pull p50 1.3 ms and p99 5.6 ms; sweep-against-live ratios.
+3. Missed: read p99 at 256 readers 627 ms; P2 at 256 readers p50 33.8 ms and p99 256 ms; P4 per quota core 402; goodput 1024
+   against 256 (0.84) and writer ratio at 1,024 (2.63); history flatness 1.1007 against 1.1; recovery not computed.
+4. **The load generator is the limit:** reader threads 0.93 to 0.97 busy at 1,350 to 1,600 pulls/s from 64 readers up, flagged
+   "client saturated". That is about 1.9 ms of driver CPU per pull against 0.37 ms on a 2,000-subject scope, with 1.24 to 1.37
+   HTTP requests per pull (repairs for evicted entities). Agent DX-H7 owns this.
+5. Commit tails of 1 to 2 s appear in burst windows even with zero readers (L16 window: 1.6 s). Host, or the index job that
+   every window requests on a 10,000-subject scope with the transactor sharing 2 CPUs: not separated yet.
+6. Feed lag p99 2.1 s at 1 reader and 3.4 s at 16 readers (not judged bars). Still unexplained; the agents' own feed consumer
+   never shows it.
+
+**DX-B9 was stopped after four hours without a commit** (it built evidence-binding apparatus around one measurement). Its
+finding stands: with alternating arms the second gateway fix is within 5 to 10% of the first, so the earlier twofold "regression"
+was the host. Its uncommitted gateway fix and its drafts for strict commit order are saved as d2568d78 on `exp/DX-B9-walls`.
+New rule in every brief: evidence is the raw command output, no manifests or audits, reports of at most 60 lines.
+
+**Verdict runs need the agents idle too:** their builds and test gates are what made the host busy during both paired runs.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-N1 | Native (no VM) mode for the lane D stack and load generator; matched VM-against-native comparison | `exp/DX-N1-native`, `.claude/worktrees/dx-n1` | `.../prompts/DX-N1.md` |
-| DX-B9 | A: alternating-arm verdict on `da77a50a` and fix; B: strict per-client commit order (seed at 1,000 commands/s in reference order); C: publication commit cost; D: row pages from the cache and a compact form | `exp/DX-B9-walls`, `.claude/worktrees/dx-b9` | `.../prompts/DX-B9.md` |
+| DX-B10 | Gate and commit DX-B9's gateway fix; strict per-client commit order with tests; W0 seed at window 32 with the fingerprint | `exp/DX-B10-order` (from `exp/DX-B9-walls`), `.claude/worktrees/dx-b10` | `.../prompts/DX-B10.md` |
+| DX-H7 | Load-generator CPU per pull at 10,000 subjects: profile, cache budgets, shared decode, cheaper exact verification; target 6,000 verified pulls/s | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
