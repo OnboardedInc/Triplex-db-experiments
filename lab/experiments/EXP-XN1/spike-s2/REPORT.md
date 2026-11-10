@@ -1,4 +1,4 @@
-Q1: unmeasured (XTDB Kafka module absent); Q2: unmeasured; Q3: unmeasured; Q4: mechanism documented, cost unmeasured; Q5: idle broker 0.040 cores, 290–295 MiB memory (382 MiB startup peak); loaded cost and added commit latency unmeasured. All performance bars remain unmeasured.
+Postgres-backed log: unavailable in this image (`!Postgres` is an external-source remote; `log: !Postgres` is rejected). Q1–Q4 remain unmeasured; Q5 retains only the prior Kafka idle floor (0.040 cores, 290–295 MiB). All performance bars remain unmeasured.
 
 # XN-S2: Kafka-backed second XTDB node, engine-only spike
 
@@ -183,3 +183,103 @@ The jar indexer only extracts class entries/service text; it emits no module-sup
 Removed volumes: `tx2-xns2-inspect-data`, `tx2-xns2-config-data`, `tx2-xns2-kafka-data`, `tx2-xns2-kafka-secrets`, `tx2-xns2-kafka-config`. Maximum observed broker data was about 21 MB, well below 5 GB; the two XTDB probe volumes held no database workload. Containers `tx2-xns2-inspect`, `tx2-xns2-config`, `tx2-xns2-kafka` are gone. No task network was created. Post-cleanup prefix listings are empty. Both owned locks were removed after stopping keep-awake; other parties' locks were never removed. Host free space was about 40 GiB before the runs.
 
 No `lab/acceptance/` files were edited and no pinned path changed hash; only new `spike-s2/**` files were changed. No package code, lab tools, downloads, ports, shared residents, global Docker context, colima lifecycle, or main-checkout files were changed. No Triplex gates, scale benchmark, recovery test, actual Kafka transaction, two-node replication, token content test, or loaded performance comparison could be verified. The open prerequisite is supplying a Kafka-capable XTDB runtime and choosing available shared storage before dispatching the measurement again.
+
+
+## Postgres-backed log
+
+Continuation requested 2026-11-10. The preceding report body is preserved as the initial Kafka investigation; this section adds the jar/serializer investigation. Same P1/P2/P3/P4 goals and authority. **No Postgres-backed XTDB shared log exists in the shipped local image. I stopped after establishing that fact, as instructed.** No Postgres server, writer/read-node stack, or Q1/Q3/Q2/Q5/Q4 load sequence was started in this continuation.
+
+### What `!Postgres` means
+
+The shipped `xtdb/postgres.clj` describes itself as the configuration surface for the “Postgres external source” and calls Postgres an upstream. This is a bundled resource from the copied jar, not a web source. `postgres-jar.py` decoded classfile constant pools for the Postgres/log/storage classes and extracted relevant bundled resources. The 1,080,894-byte class index stays outside Git.
+
+The shipped JVM independently reported these interfaces, methods and serialization descriptors (`attempt2/introspect.log`, exit 0):
+
+| Class | Actual interface / role |
+| --- | --- |
+| `xtdb.postgres.PostgresRemote.Factory` | `xtdb.api.Remote.Factory<PostgresRemote>`; `open()` returns `PostgresRemote` connection coordinates |
+| `xtdb.postgres.PostgresRemote` | `xtdb.api.Remote`; getters for upstream hostname/port/database/username/password; not a log |
+| `xtdb.postgres.PostgresSource.Factory` | `xtdb.api.tx.ExternalSource.Factory`; opens an external source using the remotes map |
+| `xtdb.postgres.PostgresSource` | `xtdb.api.tx.ExternalSource`; methods include initial snapshot, streaming changes, WAL lag and durable LSN |
+| `xtdb.api.log.Log.Factory` | separate interface requiring `openSourceLog`, `openReplicaLog`, and read-only log open methods |
+| `InMemoryLog.Factory`, `LocalLog.Factory` | implement `Log.Factory`; these are the core log factory classes registered by `Log.Factory.Companion` |
+
+The jar registers `PostgresRemote.Registration` under `Remote.Registration` and `PostgresSource.Factory.Registration` under `ExternalSource.Registration`. It supplies no `META-INF/services/xtdb.api.log.Log$Registration` extension registration. `Log.Factory.Companion` class constants show the built-in InMemory/Local registrations and extension ServiceLoader path, not a Postgres factory. The Postgres module is `xtdb-postgres-source`; it supplies upstream ingestion and a DirectMirror indexer, not XTDB's source/replica log implementation. No bundled Postgres YAML/docs examples were found; `xtdb/postgres.clj` and the serializers supplied the configuration evidence.
+
+**YAML remote fields:** `hostname`, `database`, `username`, `password` are required; `port` is optional and the runtime constructor confirmed its default is **5432**. `statusInterval` is a class property marked transient and is absent from the serialized fields. The Clojure helper uses `:host`, whereas the YAML serializer uses `hostname`.
+
+```yaml
+remotes:
+  pg: !Postgres
+    hostname: tx2-xns2-pg
+    port: 5432
+    database: xtdb
+    username: client
+    password: lab-only
+```
+
+This describes an upstream connection; it does not select a log. The separate `PostgresSource.Factory` serializer has four required fields: `remote`, `slotName`, `publicationName`, `indexer`. Its class constants include the missing/wrong-remote errors telling an external source to resolve a `!Postgres` entry under `remotes:`. An external Postgres source is not a mechanism by which two XTDB nodes share acknowledged XTDB commits. I did not test external-source ingestion or propose it as a substitute.
+
+### Fresh parser results and the misleading known-types list
+
+All five fresh parser attempts exited **1**, without opening a database or contacting Postgres. Fixtures are committed under `postgres-config/`; raw logs, container IDs and complete final inspections are in `postgres-log/attempt2/`.
+
+| Fixture | Observed result |
+| --- | --- |
+| `log: !XNUnknown {}` | Unknown type at `log`; lists `!DirectMirror, !InMemory, !Local, !Postgres` |
+| `storage: !XNUnknown {}` | Unknown type at `storage`; lists `!InMemory, !Local, !Remote` |
+| `remotes: {pg: !Postgres {}}` | `MissingFieldException`: `[hostname, database, username, password]` required for `!Postgres` |
+| Complete Postgres remote above, then `log: !Postgres` with `remote: pg`, and `storage: !Local` | **Unknown type `!Postgres` at `log`**, despite also listing it among known types |
+| `storage: !Remote` with `objectStore: !XNUnknown {}` | Unknown type at `storage.objectStore`; repeats `!DirectMirror, !InMemory, !Local, !Postgres` |
+
+The decisive exact error is:
+
+```text
+InvalidPropertyValueException at log on line 8, column 6: Value for 'log' is invalid: Unknown type '!Postgres'. Known types are: !DirectMirror, !InMemory, !Local, !Postgres
+```
+
+The refusal is in `com.charleskorn.kaml.YamlPolymorphicInput.throwIfUnknownPolymorphicTypeException` (`YamlPolymorphicInput.kt:120`), called while deserializing `log`; the cause says the `!Postgres` serializer is absent from the requested polymorphic scope of `Factory`. The broad-looking known-types text is therefore **not a scope-valid capability list**. The same list appears for unrelated requested factory scopes. A registered remote tag alone cannot establish a registered log tag.
+
+The actual shipped log implementations are **`!InMemory` and `!Local`**, established by the separate log factory API/registration contents, not by trusting that message's extra names. InMemory is process-local; Local is filesystem-backed and the previously measured unsupported shared-file read-only follower remains a separate, unreliable topology. There is no Postgres log factory to open even once, so this is not a two-node contention or storage-sharing failure.
+
+Storage's own serializer recognizes **`!InMemory`, `!Local`, `!Remote`**. Remote requires an `ObjectStore.Factory`; the jar index identified its API but no supplied XTDB object-store provider/registration. The nested error's broad known-types list must not be treated as such a provider. Local storage can be mounted on a shared Docker volume for an unsupported diagnostic topology, but storage cannot supply the absent shared-log backend. No shared-storage or object-store runtime was started after the log prerequisite failed.
+
+### Measurements, commands, failures and cleanup
+
+| Question | New Postgres-log measurements | Status |
+| --- | --- | --- |
+| Q1 writer isolation / commit p50/p99 | none; no accepted Postgres log configuration | unmeasured |
+| Q3 ACK-to-read-node visibility | none; no commits or read node | unmeasured |
+| Q2 point/large/past-basis read ladder | none | unmeasured |
+| Q5 Postgres log CPU/memory/commit overhead | none; no Postgres server | unmeasured; prior Kafka idle number is not a Postgres number |
+| Q4 wait-token/exact-basis cost | none | unmeasured |
+
+Source for attempt 1: `e378f452`; source for attempt 2: **`5c4d52dc0e70c67acd8374a037ef5da084c95b86`**, with exact script, Clojure and fixture hashes in each attempt's `source-binding.json`. The cached jar is from the initial immutable image, and fresh image inspections confirm that same SHA256 image is still selected. No source, package, engine, broker or tooling was downloaded.
+
+```sh
+python3 lab/experiments/EXP-XN1/spike-s2/postgres-jar.py > /Users/sam/Claude/Projects/triplex-db-2/evidence/XN-S2/postgres-log/class-constants-excerpt.txt
+node lab/bin/heavy.mjs --label XN-S2-postgres-probe-attempt2 -- bash lab/experiments/EXP-XN1/spike-s2/postgres-probe.sh
+python3 lab/experiments/EXP-XN1/spike-s2/postgres-check.py
+bash -n lab/experiments/EXP-XN1/spike-s2/postgres-probe.sh
+```
+
+Attempt 1 held the lock **13:02:29–13:02:30 UTC**, then failed because the local Kafka image has no `javap`; its broker was never started. `javap.txt`, container creation ID, images and source binding are retained. The host's Java command is also a stub with no runtime, so the successor uses the shipped XTDB JVM and Clojure reflection, without installing tooling. Attempt 2 held the lock **13:28:42–13:28:52 UTC** (10 seconds at recorded resolution), well below ten minutes and well beyond the required two-minute rest. No measurement overlapped another holder.
+
+Both new starts returned **`already-running`**, so **neither hold called keep-awake stop**. `keepAwake: true`; the runner only stops when its own start says `started …`. Old initial-run artifacts and commands above retain their historical behavior; those scripts were not rerun in this continuation.
+
+An initial offline indexer check rejected the last parser's fractional-second finish against the shell's whole-second end time. `indexer-first-check.txt` retains that finding. The indexer now respects the recorded precision by bounding finishes below the following second; the raw logs and runtime inspections were unchanged and no engine was rerun. `postgres-check.py` then checked all parser messages, expected exit codes, exact container IDs, immutable image, source hashes, CPU/memory/port caps, timing and keeper ownership before writing `observation-index.json`. This is a diagnostic index, not an acceptance receipt.
+
+Preamble 9a audit for this continuation:
+
+| Conclusion/output | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| Remote/source ownership and keys in report | bundled source, class constants, JVM interfaces and serializer fields, default port | fresh successful introspection; static bytes from unchanged immutable image | original jar checksum, fresh image IDs, introspection container ID and source hashes |
+| No shipped Postgres log in report | actual `log: !Postgres` rejection, separate factory API and no log extension registration | new attempt's parser log and exit 1, not the earlier Kafka failure | complete committed remote/log fixture, exact image/container and start/finish inspection |
+| `postgres-check.py` observation index | checks each specific message and process status; introspection fields and interfaces | requires this hold's timestamps (allowing recorded second resolution), minimum rest, new container starts | creation IDs, image IDs, fixture/runner hashes, resource caps, keeper start/stop ownership |
+| Cleanup below | empty task-prefix lists | new post-run observation timestamp | only `tx2-xns2-*` resources queried |
+
+The classfile extractor only lists bytes/strings and emits no support verdict. Shell exit zero means the collection loop completed, not that any node worked. No semantic PASS, acceptance receipt, contract or promotion was emitted. No pinned path changed; `lab/acceptance/`, packages and lab tools were untouched.
+
+Removed containers: `tx2-xns2-pg-bytecode`, `tx2-xns2-pg-introspect`, `tx2-xns2-pg-parse`. Removed volumes: `tx2-xns2-pg-bytecode-data`, `tx2-xns2-pg-bytecode-config`, `tx2-xns2-pg-bytecode-secrets`, `tx2-xns2-pg-introspect-data`, `tx2-xns2-pg-parse-data`. No network was created. Post-run task-prefix container, volume and network lists are empty. No shared resident, other holder's resource, global Docker context, colima lifecycle or published port was touched. The only substantial temporary container copy was the approximately 93 MB jar, below the 5 GB retained-volume cap; no database workload was seeded.
+
+New evidence: **`/Users/sam/Claude/Projects/triplex-db-2/evidence/XN-S2/postgres-log/`**, indexed in `EVIDENCE.md` and `SHA256SUMS-postgres`. The original `SHA256SUMS` remains valid for the original 43 files. All 48 new evidence files (1,224,662 bytes), plus the original 43 files, passed checksum verification through the heavy wrapper. The observation checker and evidence index are committed at `fcdd2200`. The report is again committed last. The open prerequisite for the original two-node experiment remains an actual shared-log implementation (such as the missing Kafka module/image); the local Postgres server image does not supply that XTDB integration.
