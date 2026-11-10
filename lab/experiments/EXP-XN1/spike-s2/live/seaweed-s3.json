@@ -1,0 +1,20 @@
+{
+  "identities": [
+    {
+      "name": "local-spike",
+      "credentials": [
+        {
+          "accessKey": "[access-key-removed]",
+          "secretKey": "[secret-key-removed]"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "List",
+        "Tagging",
+        "Write"
+      ]
+    }
+  ]
+}
