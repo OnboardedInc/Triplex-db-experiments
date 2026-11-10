@@ -27,7 +27,7 @@ cleanup() {
  rc=$?; trap - EXIT TERM INT
  [[ -z $timer ]] || kill "$timer" 2>/dev/null || true
  for role in gw-w gw-r tx pg; do docker logs --timestamps "$prefix-$role" > "$out/$role.log" 2>&1 || true; done
- for role in driver health cgroups extract tools-extract copy; do docker rm -f "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
+ for role in driver health cgroups extract tools-extract copy runtime-check; do docker rm -f "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
  for role in gw-r gw-w tx pg; do docker stop -t 30 "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
  bash lab/experiments/EXP-DX1/stack/down.sh "$prefix" --volumes >> "$out/cleanup.log" 2>&1
  for v in driver tools; do docker volume rm "$prefix-$v" >> "$out/cleanup.log" 2>&1 || true; done
@@ -52,9 +52,12 @@ docker stats --no-stream --format '{{json .}}' > "$out/stats-before.jsonl"
 # Local images only: combine the local Python runtime with Node's executable/shared libraries on an owned volume.
 docker image inspect python:3.13-slim node:22.23.2-bookworm-slim > "$out/tool-images.json"
 docker volume create "$prefix-tools" >/dev/null
-docker create --pull never --name "$prefix-tools-extract" -v "$prefix-tools:/tool" node:22.23.2-bookworm-slim sh -c 'cp /usr/local/bin/node /tool/node; cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 /tool/' >/dev/null
+docker create --pull never --name "$prefix-tools-extract" -v "$prefix-tools:/tool" node:22.23.2-bookworm-slim sh -c 'cp /usr/local/bin/node /tool/node; cp /usr/lib/*-linux-gnu/libstdc++.so.6 /usr/lib/*-linux-gnu/libgcc_s.so.1 /tool/' >/dev/null
 docker start -a "$prefix-tools-extract"
 docker rm "$prefix-tools-extract" >/dev/null
+# [DX-H5] Why: prove the local ARM64/x86 runtime pairing before paying for JVM startup.
+# Rejected: architecture-specific library paths and a first check inside the measured driver.
+docker run --rm --pull never --name "$prefix-runtime-check" -v "$prefix-tools:/tool:ro" -e LD_LIBRARY_PATH=/tool python:3.13-slim /tool/node -e 'console.log(process.version,process.arch);console.log(require("child_process").execFileSync("python3",["--version"],{encoding:"utf8"}))' > "$out/runtime-check.txt"
 if [[ -n ${DXH5_SEED_VOLUME:-} ]]; then
  [[ $DXH5_SEED_VOLUME =~ ^tx2-dxh5-seed-[0-9]+-pg-data$ ]] || exit 2
  docker volume inspect "$DXH5_SEED_VOLUME" > "$out/seed-volume.json"

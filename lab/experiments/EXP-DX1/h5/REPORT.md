@@ -55,3 +55,8 @@ Evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5/`. Bulky 
 ## 100,000 in 100 seconds
 
 The required flow is roughly 44 million rows/100 seconds = 440,000 rows/s and roughly 13 GB/100 seconds = 130 MB/s before repeated protocol fields. Per-stage CPU requirements and the three ranked changes must be derived from fresh H5 measurements; they are pending rather than substituted from H2's old layout/tunnel numbers.
+
+### Retained setup failures
+
+- `tx2-dxh5-smoke1`: queued shell script was edited while waiting; parsing failed just after successful lock mkdir and before its held flag/owner write. Its misleading exit-zero cleanup artifact is not adopted as success. Empty lock inode 185511787, timestamp 06:21:18 UTC, matched this attempt's 06:21:19 exit; after repeated empty observations only `rmdir` removed it. `empty-lock-recovery.json` records the evidence. All owned container/network/volume inventories were empty.
+- `tx2-dxh5-smoke2`: local Node image is ARM64; hardcoded x86 library-copy paths failed before stack startup. Cleanup inventories are empty and exit is one. Replacement copies libraries from the local architecture's `*-linux-gnu` directory and checks both runtimes before creating the Datomic stack.
