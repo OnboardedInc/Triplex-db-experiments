@@ -137,6 +137,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
                       yield* s.adapter.withTransaction(
                         Effect.gen(function* () {
                           const p2 = yield* s.adapter.nextCommitPosition();
+                          if (s === legacy) positions.push(p2);
                           // A retirement at the interior logical position requires a marker, even though the physical tx ends later.
                           yield* s.adapter.retract(
                             "r1-1",
