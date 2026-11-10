@@ -172,7 +172,80 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("indexed journals", 
       c.close();
     }
   });
-  it("keeps command lookups indexed after timestamp regression while the feed declines", async () => {
+  // [DX-B6-5] Why: a sole logical journal can precede an unjournaled tail in its physical commit.
+  // Rejected: assuming a single journal always equals the physical endpoint.
+  it("filters a single interior journal at its resume cursor", async () => {
+    const c = client(),
+      s = await setup(c);
+    let receipt: any;
+    try {
+      await s.fast.runPromise(
+        s.a.withTransaction(
+          Effect.gen(function* () {
+            receipt = yield* s.t.transact([op(1)]);
+            const p = yield* s.a.nextCommitPosition();
+            yield* s.a.insert(
+              {
+                entityId: "maintenance",
+                attribute: ":test/value",
+                value: { type: "string", value: "tail" },
+              },
+              "tail",
+              receipt.instant + 1,
+              "tail-row",
+              p,
+            );
+          }),
+        ),
+      );
+      for (const after of [0, receipt.position, receipt.position + 1]) {
+        expect(await Effect.runPromise(s.a.getTransactionsAfter!(after, 100))).toBeDefined();
+        const actual = await s.fast.runPromise(s.t.transactions({ after, limit: 100 }));
+        expect(actual).toEqual(
+          await s.fallback.runPromise(s.oracle.transactions({ after, limit: 100 })),
+        );
+        expect(actual.transactions).toHaveLength(after === 0 ? 1 : 0);
+      }
+    } finally {
+      await s.close();
+      c.close();
+    }
+  });
+  // [DX-B6-5] Why: a satisfied record time cannot bypass a still-future position.
+  // Rejected: checking only the record-time watermark on journal requests with both pins.
+  it("waits for position before applying the journal record-time barrier", async () => {
+    const c = client(),
+      s = await setup(c);
+    try {
+      const receipt = await s.fast.runPromise(s.t.transact([op(1)]));
+      const db = (await c.create(s.scope)).db;
+      await expect(
+        c.request("POST", `/v2/db/${db}/transactions`, {
+          after: 0,
+          limit: 1,
+          basis: { recordedAt: receipt.instant, recordedPosition: receipt.position + 1 },
+          basisWaitMs: 1,
+        }),
+      ).rejects.toMatchObject({ code: "BasisNotAvailable" });
+      const later = await s.fast.runPromise(s.t.transact([op(2)]));
+      const page = await c.request<{ transactions: [string, number, string[]][] }>(
+        "POST",
+        `/v2/db/${db}/transactions`,
+        { after: 0, limit: 100, basis: { recordedAt: receipt.instant } },
+      );
+      expect(page.transactions.map(([txId]) => txId)).toEqual([receipt.txId]);
+      const latest = await c.request<{ transactions: [string, number, string[]][] }>(
+        "POST",
+        `/v2/db/${db}/transactions`,
+        { after: 0, limit: 100, basis: { recordedAt: later.instant } },
+      );
+      expect(latest.transactions.map(([txId]) => txId)).toEqual([receipt.txId, later.txId]);
+    } finally {
+      await s.close();
+      c.close();
+    }
+  });
+  it("keeps position feeds and command lookups exact after timestamp regression", async () => {
     const c = client(),
       s = await setup(c);
     try {
@@ -200,7 +273,10 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("indexed journals", 
           ),
         );
       }
-      expect(await Effect.runPromise(s.a.getTransactionsAfter!(0, 100))).toBeUndefined();
+      expect(await Effect.runPromise(s.a.getTransactionsAfter!(0, 100))).toBeDefined();
+      expect(await s.fast.runPromise(s.t.transactions())).toEqual(
+        await s.fallback.runPromise(s.oracle.transactions()),
+      );
       expect(await Effect.runPromise(s.a.getTransactionIdByCommand!("known"))).toBe(receipt.txId);
       const spy = vi.spyOn(c, "request");
       const actual = await s.fast.runPromise(s.t.transactionByCommand("known"));

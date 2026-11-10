@@ -66,3 +66,16 @@ it("waits for the actual socket send rather than request construction", async ()
   await Promise.all([a, b]);
   expect(seen).toHaveLength(2);
 });
+
+// [DX-B6-5] Why: a conflict maximum advances the very next replay without wall-clock waiting.
+// Rejected: 50 ms catch-up sleeps (logical clocks can be arbitrarily ahead).
+it("issues unique scope instants and catches up immediately", async () => {
+  const { issueInstant, observeInstant } = await import("../src/CommitOrder.js");
+  const scope = `clock-${Math.random()}`;
+  expect(issueInstant(scope, 100)).toBe(100);
+  expect(issueInstant(scope, 100)).toBe(101);
+  expect(issueInstant(scope, 90)).toBe(102);
+  observeInstant(scope, 10000);
+  expect(issueInstant(scope, 100)).toBe(10001);
+  expect(issueInstant(`${scope}-other`, 100)).toBe(100);
+});

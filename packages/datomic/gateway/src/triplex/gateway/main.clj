@@ -139,7 +139,8 @@
                  (get input "basisWaitMs")
                  (fn [remaining] (if-let [t (get input "basisT")]
                                    (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
-                                   (d/db conn)))) initial)]
+                                   (d/db conn)))) initial)
+            db (storage/await-record-time name conn db input)]
         (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
          :body (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) )}))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
@@ -153,7 +154,8 @@
                    (get input "basisWaitMs")
                    (fn [remaining] (if-let [t (get input "basisT")]
                                      (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
-                                     (d/db conn)))))]
+                                     (d/db conn)))))
+            db (when conn (storage/await-record-time name conn db input))]
         (response 200
           (case action
             "snapshot" (storage/begin! name db)

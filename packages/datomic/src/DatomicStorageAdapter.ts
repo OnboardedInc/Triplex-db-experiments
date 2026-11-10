@@ -1,13 +1,19 @@
-import { registerCommit, endCommit, sendCommit, commitClientId } from "./CommitOrder.js";
+import {
+  registerCommit,
+  endCommit,
+  sendCommit,
+  commitClientId,
+  issueInstant,
+  observeInstant,
+} from "./CommitOrder.js";
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
-import { decodeRowText } from "./rowText.js";
-import { RowCache } from "./RowCache.js";
+import { decodeRowText, encodeRowText } from "./rowText.js";
 import { validateTagged } from "./codec.js";
 import { decodeEntity } from "./reach.js";
 import { reachResponse, reachRowsResponse, reachRowIndex } from "./reach.js";
 import { readFailure } from "./readErrors.js";
 import { randomUUID } from "node:crypto";
-import { Effect, Exit, Option, Semaphore } from "effect";
+import { Effect, Exit, Semaphore } from "effect";
 import { type ResolvedTemporalBasis } from "@triplex-build/triplex";
 import {
   type StorageAdapterService,
@@ -54,8 +60,18 @@ export const makeDatomicStorageAdapter = (
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
   let lastSeenPosition = 0;
-  const cache = new RowCache();
+  const prefix = `${db}\0`;
+  const cache = {
+    get: (id: string) => client.rowCache.get(prefix + id),
+    has: (id: string) => client.rowCache.has(prefix + id),
+    set: (id: string, row: TripleRow) => client.rowCache.set(prefix + id, row),
+    delete: (id: string) => client.rowCache.delete(prefix + id),
+    clear: () => client.rowCache.deleteWhere((key) => key.startsWith(prefix)),
+  };
   const remember = (row: TripleRow) => {
+    // [DX-B6-1] Why: immutable journal bodies evicted subject preconditions during seed, adding a snapshot HTTP call to lone commits.
+    // Rejected: raising the 32 MiB budget (unbounded client memory caused the original driver failure).
+    if (row.entity_type === "_Transaction") return;
     cache.set(row.id, {
       ...row,
       retracted_at: null,
@@ -72,10 +88,17 @@ export const makeDatomicStorageAdapter = (
   const admission = Semaphore.makeUnsafe(1);
   const current = Effect.map(CurrentTransactions, (transactions) => transactions.get(key));
   const read = <A>(thunk: (signal: AbortSignal) => Promise<A>): Effect.Effect<A, ReadError> =>
-    Effect.tryPromise({
-      try: thunk,
-      catch: (cause) => readFailure(cause, "Datomic read failed"),
-    });
+    client.onCommit
+      ? Effect.flatMap(current, (state) =>
+          Effect.tryPromise({
+            try: (signal) => client.observeRequests(state?.diagnostic, () => thunk(signal)),
+            catch: (cause) => readFailure(cause, "Datomic read failed"),
+          }),
+        )
+      : Effect.tryPromise({
+          try: thunk,
+          catch: (cause) => readFailure(cause, "Datomic read failed"),
+        });
   const committedPosition = () =>
     read(async () => {
       const result = await client.basis(db);
@@ -243,32 +266,45 @@ export const makeDatomicStorageAdapter = (
           state.submitted = true;
           const ticket = state.order?.ticket ?? registerCommit(-Infinity);
           if (state.order) state.order.ticket = ticket;
+          if (state.diagnostic) {
+            state.diagnostic.ready = performance.now();
+            state.diagnostic.transactionIds = [
+              ...new Set(
+                [...state.rows.values()]
+                  .filter((row) => row.entity_type === "_Transaction")
+                  .map((row) => row.entity_id),
+              ),
+            ];
+          }
           const ack = await bounded(
-            sendCommit(ticket, (sendSequence, sent) =>
-              client.transact(db, {
-                onSent: sent,
-                clientId: commitClientId,
-                sendSequence,
-                // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
-                // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
-                replaySafe:
-                  state.replaySafe === true &&
-                  [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
-                sourceK: state.optimistic ? null : state.sourceK,
-                position: state.position,
-                span: state.position - state.sourceK,
-                entities: [...state.entities],
-                live: [...state.live],
-                scopeWide: state.scopeWide,
-                operationId,
-                attemptId,
-                rows: [...state.rows.values()],
-                newIds: [...state.newIds],
-                claims: [...state.claims.values()],
-                ...(state.optimistic ? {} : { handle: state.handle }),
-                release: true,
-              }),
-            ),
+            sendCommit(ticket, (sendSequence, sent) => {
+              if (state.diagnostic) state.diagnostic.released = performance.now();
+              return client.observeRequests(state.diagnostic, () =>
+                client.transact(db, {
+                  onSent: sent,
+                  clientId: commitClientId,
+                  sendSequence,
+                  // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
+                  // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
+                  replaySafe:
+                    state.replaySafe === true &&
+                    [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
+                  sourceK: state.optimistic ? null : state.sourceK,
+                  position: state.position,
+                  span: state.position - state.sourceK,
+                  entities: [...state.entities],
+                  live: [...state.live],
+                  scopeWide: state.scopeWide,
+                  operationId,
+                  attemptId,
+                  rows: [...state.rows.values()],
+                  newIds: [...state.newIds],
+                  claims: [...state.claims.values()],
+                  ...(state.optimistic ? {} : { handle: state.handle }),
+                  release: true,
+                }),
+              );
+            }),
           );
           // [EXP-DX1] Why: a bound transaction ACK is already a receipt; resolve only ambiguous ACKs.
           // Rejected: unconditional operation lookup (adds a third HTTP request).
@@ -307,13 +343,7 @@ export const makeDatomicStorageAdapter = (
               client.commitDiagnostics.conflicts++;
               if (error.code === "ClockConflict") {
                 client.commitDiagnostics.clockReplays++;
-                const deadline = Date.now() + 50;
-                while (
-                  error.maximum !== undefined &&
-                  Date.now() <= error.maximum &&
-                  Date.now() < deadline
-                )
-                  await new Promise((resolve) => setTimeout(resolve, 1));
+                if (error.maximum !== undefined) observeInstant(scopeKey, error.maximum);
               }
               throw new DatomicSerializationConflict({
                 message: "Datomic source changed while staging the transaction",
@@ -326,7 +356,9 @@ export const makeDatomicStorageAdapter = (
         }
         do {
           try {
-            const receipt = await bounded(client.operation(db, operationId));
+            const receipt = await bounded(
+              client.observeRequests(state.diagnostic, () => client.operation(db, operationId)),
+            );
             if (receipt.status === "committed") {
               const p = Number(validateTagged(receipt.position).v);
               if (!Number.isSafeInteger(p) || p < state.position - state.sourceK)
@@ -363,6 +395,18 @@ export const makeDatomicStorageAdapter = (
   ): Effect.Effect<A, E | WriteError> =>
     Effect.suspend(() => {
       const operationId = randomUUID();
+      const diagnostic: import("./DatomicClient.js").DatomicCommitSample | undefined =
+        client.onCommit
+          ? {
+              operationId,
+              transactionIds: [],
+              httpCalls: 0,
+              replays: 0,
+              started: performance.now(),
+              returned: 0,
+              attempts: [] as import("./DatomicClient.js").DatomicCommitAttempt[],
+            }
+          : undefined;
       const attempt = (retry: number, forceSnapshot = false): Effect.Effect<A, E | WriteError> =>
         Effect.gen(function* () {
           const transactions = yield* CurrentTransactions;
@@ -378,6 +422,7 @@ export const makeDatomicStorageAdapter = (
               client,
               scopeKey,
               order: parent.order,
+              diagnostic: parent.diagnostic,
               replaySafe: parent.replaySafe,
               sourceK: parent.sourceK,
               handle: parent.handle,
@@ -430,6 +475,17 @@ export const makeDatomicStorageAdapter = (
             parent.newIds = child.newIds;
             return result;
           }
+          const observation: import("./DatomicClient.js").DatomicCommitAttempt | undefined =
+            diagnostic
+              ? {
+                  firstAdapterCall: performance.now(),
+                  optimistic: false,
+                  begin: false,
+                  httpCalls: 0,
+                  requests: [],
+                }
+              : undefined;
+          if (observation) diagnostic!.attempts.push(observation);
           const hint = transactionOptions?.hint;
           const optimistic =
             options.optimisticCommits !== false &&
@@ -437,25 +493,31 @@ export const makeDatomicStorageAdapter = (
             transactionOptions?.replaySafe === true &&
             hint !== undefined &&
             (hint.tripleIds ?? []).every((id) => cache.has(id));
+          if (observation) {
+            observation.optimistic = optimistic;
+            observation.begin = !optimistic;
+          }
           if (optimistic) client.commitDiagnostics.optimisticAttempts++;
           const snapshot = yield* read<{
             handle: string;
             position: number;
             prefetch?: NonNullable<TransactionState["prefetch"]>;
           }>(() =>
-            optimistic
-              ? Promise.resolve({
-                  handle: "",
-                  position: lastSeenPosition,
-                  prefetch: {
-                    ...(hint?.commandId === undefined ? {} : { commandId: hint.commandId }),
-                    claim: null,
-                    rows: new Map((hint?.tripleIds ?? []).map((id) => [id, cached(id)!])),
-                  },
-                })
-              : transactionOptions?.hint === undefined
-                ? client.begin(db)
-                : client.beginCommand(db, transactionOptions.hint),
+            client.observeRequests(observation, () =>
+              optimistic
+                ? Promise.resolve({
+                    handle: "",
+                    position: lastSeenPosition,
+                    prefetch: {
+                      ...(hint?.commandId === undefined ? {} : { commandId: hint.commandId }),
+                      claim: null,
+                      rows: new Map((hint?.tripleIds ?? []).map((id) => [id, cached(id)!])),
+                    },
+                  })
+                : transactionOptions?.hint === undefined
+                  ? client.begin(db)
+                  : client.beginCommand(db, transactionOptions.hint),
+            ),
           ).pipe(
             Effect.mapError(
               (cause) => new WriteError({ message: "Cannot acquire Datomic source cut", cause }),
@@ -466,6 +528,7 @@ export const makeDatomicStorageAdapter = (
             client,
             scopeKey,
             order: {},
+            diagnostic: observation,
             replaySafe: transactionOptions?.replaySafe === true,
             optimistic,
             restart: { needed: false },
@@ -509,7 +572,9 @@ export const makeDatomicStorageAdapter = (
                     ? Math.max(32, maxRetries)
                     : maxRetries)
                   ? Effect.andThen(
-                      Effect.sleep(`${Math.min(50, retry * 2 + 1)} millis`),
+                      Effect.sleep(
+                        `${error.cause instanceof DatomicHttpError && error.cause.code === "ClockConflict" ? 0 : Math.min(50, retry * 2 + 1)} millis`,
+                      ),
                       Effect.suspend(() => {
                         client.commitDiagnostics.replays++;
                         for (const id of hint?.tripleIds ?? []) cache.delete(id);
@@ -534,7 +599,9 @@ export const makeDatomicStorageAdapter = (
               Effect.promise(() =>
                 state.submitted || optimistic
                   ? Promise.resolve()
-                  : client.release(db, snapshot.handle),
+                  : client.observeRequests(state.diagnostic, () =>
+                      client.release(db, snapshot.handle),
+                    ),
               ).pipe(Effect.ignore),
             ),
           );
@@ -543,6 +610,18 @@ export const makeDatomicStorageAdapter = (
         parent !== undefined || options.admissionQueue !== true
           ? attempt(0)
           : Semaphore.withPermits(admission, 1)(attempt(0)),
+      ).pipe(
+        Effect.tap(() =>
+          Effect.sync(() => {
+            if (diagnostic && diagnostic.attempts.length) {
+              diagnostic.returned = performance.now();
+              diagnostic.httpCalls = diagnostic.attempts.reduce((n, a) => n + a.httpCalls, 0);
+              diagnostic.replays = Math.max(0, diagnostic.attempts.length - 1);
+              diagnostic.transactionIds = diagnostic.attempts.at(-1)?.transactionIds ?? [];
+              client.onCommit?.(diagnostic);
+            }
+          }),
+        ),
       );
     });
 
@@ -621,9 +700,16 @@ export const makeDatomicStorageAdapter = (
           return result.transactions.map(([txId, position, rows]) => {
             // [DX-B4-T1] Why: portable feed enumeration includes only typed journal rows, even after SPI writes.
             // Rejected: including unrelated rows merely because they share a journal entity ID.
-            const triples = decodeEntity(txId, position, rows).rows.filter(
-              (t) => Option.isSome(t.entityType) && t.entityType.value === "_Transaction",
-            );
+            // [DX-B6-4] Why: unrelated SPI rows may contain non-journal tx IDs.
+            // Rejected: decoding branded journal fields before selecting the entity type.
+            const journalRows = rows
+              .map(decodeRowText)
+              .filter((row) => row.entity_type === "_Transaction");
+            const triples = decodeEntity(
+              txId,
+              position,
+              journalRows.map((row) => encodeRowText(row)),
+            ).rows;
             if (triples.some((t) => t.entityId !== txId))
               throw new TypeError("Journal binding mismatch");
             return { txId, triples };
@@ -735,6 +821,16 @@ export const makeDatomicStorageAdapter = (
       Effect.flatMap(current, (state) =>
         state === undefined ? committedPosition() : Effect.succeed(undefined),
       ),
+    transactionInstant: (now) =>
+      Effect.gen(function* () {
+        const state = yield* requireTransaction;
+        const instant = issueInstant(scopeKey, now);
+        // [DX-B6-5] Why: register before this fiber yields; nested journals share the first ticket.
+        // Rejected: first-insert registration (timestamp order can invert).
+        if (state.replaySafe && state.order && !state.order.ticket)
+          state.order.ticket = registerCommit(instant);
+        return instant;
+      }),
     claimCommand: (commandId, txId, timestamp) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;

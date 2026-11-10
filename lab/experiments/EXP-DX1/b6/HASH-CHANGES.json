@@ -1,0 +1,173 @@
+{
+  "base": "66c40d5b5cd723da48ffd344ac6644bd00ed0fae",
+  "changes": [
+    {
+      "path": "lab/experiments/EXP-DX1/stack/run-in-vm.sh",
+      "oldSha256": "423aefe424ef40bafea0e6645a789d24a36ac6da9ab12850c7cf56b31ba6d7a1",
+      "newSha256": "6dacf5a8844b415fb1a051b6b6ecacdbcbe41041e59a94b02e5e1e966df53056",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/core/src/storage/StorageAdapter.ts",
+      "oldSha256": "052139c721413c6f20d3f586738032c1aa6eb68df11ccdfa7844297f86664318",
+      "newSha256": "fb6155914a48005c39e18a0ff003d7d10cd1b825355b0feb591d8f3b7005e2c0",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "oldSha256": "2e6d796512bcdf56b8efbcda0e05871be7b9b4997feab1311233a8fae30925ee",
+      "newSha256": "a8689683a3c104bda967614762502624cac196749406a1a21cef781a89305d95",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/README.md",
+      "oldSha256": "e07ebec9e84533a71839d9d958e2672d08fc6394a0883b0331ab0d89821a5269",
+      "newSha256": "5bba891659fdc6f9e1ef0556a694c7d282805c952624be428114dcde95391979",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/commit.clj",
+      "oldSha256": "4be7a38904470393815bc967c1f3030a0608183d810efdef1f51f15847fbdb32",
+      "newSha256": "64e4bc9ec48e120fa6913c4d1fc07947ca15c4215479064714bf5b04cd288d89",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/journal.clj",
+      "oldSha256": "48c6f3125633b25bb6be4de97528d90d810016946d275eaff670dbc1f10827dd",
+      "newSha256": "c236749f3d740c22f13fbe4bc68c02e14841f561c24486c2c80be720daeaa084",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+      "oldSha256": "a97dfa2898bbadcb9e4828a3675af849d11293776b38c8a174407b2065ecb61b",
+      "newSha256": "6cbe793ef16a0a132ab1227fd7a0dec8b58e1f7f37ade3ed99f8b9610fe5251b",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/reach.clj",
+      "oldSha256": "dd0fde0e9f81521153b2cb4788bc6e409e4c207c653ef2689df7c676ce802b12",
+      "newSha256": "2f1fd8c50e28f14da60f985997729aaab909f3fe50d3f4229394526f223f8137",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/storage.clj",
+      "oldSha256": "04f396824b753562db4d48c8956164adc400787f9f96c75fb1c15acc0d249ec4",
+      "newSha256": "8b8230c25d94c6d595171f1089e78a88d2496cabf064daba181064fb966c43eb",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/src/ByteCache.ts",
+      "oldSha256": null,
+      "newSha256": "dedd872c000733e871dcc43ac12a8177ae1850e6559271afc5e37933b74892a7",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/src/CommitOrder.ts",
+      "oldSha256": "bca129d6a56367f1fd5d03ed7b32a664665aee9fc21a5f30459326e5c39a519f",
+      "newSha256": "d699cf3cce08d597c07c00a168108f56437ff7c086b0155367f14d190a52b0c3",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/src/DatomicClient.ts",
+      "oldSha256": "6ca860db3a3fb3edd11fb247a9dfb8cf61fb74b58cdbe38bed4dc4bc5d4ca623",
+      "newSha256": "93ac7ff39fbd53d3803cf6ea7a61b50cc5a7062521035e915029c44483fe218c",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/src/DatomicStorageAdapter.ts",
+      "oldSha256": "260a88507eb22062eb37f45a867d6389a8bcf6f4b5ad35072af9e8d0170d0cb3",
+      "newSha256": "b3c4e038f410ce61fa5d1d7f9d17f0dd1bdbd4c25ef0602aceb1971e7941a7b4",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/src/RowCache.ts",
+      "oldSha256": "be01a1599aa4b113767cebd3289edcc0464e061823973c8de6cbd16223657060",
+      "newSha256": "9582d8c5179e59a2fd6cad62734ec9c4e417a04c2d6242d5507c9374f3f4ffa0",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/src/TransactionContext.ts",
+      "oldSha256": "1f5556dc6e32886c0fe5c7eb2ea1da9cdfa70560bc825d336404b3d94d8d2060",
+      "newSha256": "69fab7655ff18968506fdfc11e2e3dedc53e2289dd03bd5fed0cf218e6ef4e37",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/src/index.ts",
+      "oldSha256": "d5db9477d21e76a5bb4e3188f8b9036522a3e2159bbac5417680cc4e91dd5ca0",
+      "newSha256": "adaa8aaadf192c041ef5a8d6e0f96cee1205f50bbda3a6a7cda3e599557e85ff",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/CommitOrder.test.ts",
+      "oldSha256": "54aed51047a0b77c206888e5724844c5c6195a60054371a627d8e22ff4f8adb3",
+      "newSha256": "3f266d1649ec619496ca42a6a2547cc70227cea98873e3fa45bcd507d10938c6",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/adapter.test.ts",
+      "oldSha256": "9ec91868a5ca6f68c185c5b46a04303c4b5d80f95cd5c6e88cc0da904ad0447d",
+      "newSha256": "15064187839b77c70be4216e8aa3dcd46f6eedd4cc17d6455dad496956ec52c2",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/byte-cache.test.ts",
+      "oldSha256": null,
+      "newSha256": "7a9d7cd0d75380d3350511d5325af2d1b378d2cd22191cfb1c7008cee399e8b9",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/cache-budget.test.ts",
+      "oldSha256": null,
+      "newSha256": "2a817b214ac5ffe37164d67cfc85d8e32a1661add27fd090d2ef427074f7eca5",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/clock-order.test.ts",
+      "oldSha256": "834204e4b9f0d0f8f55aef22cf688de63ebd33f42043181daa5cea194825d859",
+      "newSha256": "2d9f56a1e676d919b221e43ff8bd5f384b8641a95a47e9338c74f2378e9ceffe",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/commit-observation.test.ts",
+      "oldSha256": null,
+      "newSha256": "0e090203d781fdb33ea9b45e46e46d06b51881d8fcb456ac80d0dfbb51adc10a",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/concurrent-commits.test.ts",
+      "oldSha256": "0d84dad87845639e71f703179cd143c56fac6e5589cf3231ccca5522537c2aad",
+      "newSha256": "79663b7d3ec893b1497c90ead6e558fd717c82a47b3f055eea67a3266f1c7fb1",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/journal-fast.test.ts",
+      "oldSha256": "2408ce1ea5ae2cd9a56802353460e9eaa6a6994d6a44bec7917c90c18ca805ed",
+      "newSha256": "f2ad25fea9d3fdc3a17a0a8d1ce493f8f7d78c26dfa941b75cfee4e9a3272ea7",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/layout-differential.test.ts",
+      "oldSha256": "e03b45e54b48e2d4589a5a418dcbff73d1ef7f3e043e834f7210227bca8215d5",
+      "newSha256": "7fa5041e6979b14213efe99cb64053d10b73a6a7077c05fc16bdcb6bf7cede04",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/reach-repair.test.ts",
+      "oldSha256": null,
+      "newSha256": "602bfd0ac7f9b8e0570ffef8ea2e772a6c246fdc97955edc9b4f77fad870e10c",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/reach.test.ts",
+      "oldSha256": "90efa1ccc21d7b4bd1e9b522692e7ae0acbcdcfcfe93ba50ed32a1cb786ab8e9",
+      "newSha256": "6bcf4654d227935aa74689e0ca69841d08ff71e3a52a6b1aa4118235725df633",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/record-time-peer.test.ts",
+      "oldSha256": null,
+      "newSha256": "6e1d3ba329f14c6adcc18ce189a7e5e2824f9fcee169a852087a3152b24ac2a3",
+      "acceptanceReferences": []
+    }
+  ]
+}

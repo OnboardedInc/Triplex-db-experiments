@@ -1,0 +1,53 @@
+{
+  "purpose": "artifact integrity only; no semantic verdict",
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B6",
+  "files": 15145,
+  "bytes": 168061218,
+  "readbackFiles": 15145,
+  "fullManifest": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B6/SHA256SUMS.full",
+  "fullManifestSha256": "1a936b0bd491e3ffe714160e2f8f3d4ddc89c24607ef2d7b563bfe8291eb4c58",
+  "vmCopies": [
+    {
+      "b6": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B6/tx2-dxb6-lone-b/driver/lone-commit.json",
+      "sha256": "bff562639ab313d342c9f29a0cc9984a8ea2378de9700f47667328881cabaa49",
+      "identicalOriginals": [
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/tx2-dxb6-lone-b/driver/lone-commit.json"
+      ]
+    },
+    {
+      "b6": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B6/tx2-dxb6-lone-b/driver/pull-load.json",
+      "sha256": "e89ac963b8e2d2f27d7c08a4e61d454b74dc32aa59ee3dac70ea2a0807a9a961",
+      "identicalOriginals": [
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/tx2-dxb6-lone-b/driver/pull-load.json"
+      ]
+    },
+    {
+      "b6": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B6/tx2-dxb6-lone-c/driver/lone-commit.json",
+      "sha256": "7c58c31fce4314b5f08f057f02ef271704f22b749d7d7a99f4b584af8999907d",
+      "identicalOriginals": [
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/tx2-dxb6-lone-c/driver/lone-commit.json"
+      ]
+    },
+    {
+      "b6": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B6/tx2-dxb6-lone-c/driver/pull-load.json",
+      "sha256": "c1d515fb1db34a483aa0efb85f3ee376cbf54e53e06a5dc003efd30c810c5b3a",
+      "identicalOriginals": [
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/tx2-dxb6-lone-c/driver/pull-load.json"
+      ]
+    },
+    {
+      "b6": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B6/tx2-dxb6-lone-d/driver/lone-commit.json",
+      "sha256": "33d02d1fbe3df4eb1413d7fa9d9e4587c29f5629b27aaea4182715bf75f77f5f",
+      "identicalOriginals": [
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/tx2-dxb6-lone-d/driver/lone-commit.json"
+      ]
+    },
+    {
+      "b6": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B6/tx2-dxb6-lone-d/driver/pull-load.json",
+      "sha256": "a762319e9404fa86f52ed0e301a84c749dcaadd7b7063879a1c0f9e79acbea40",
+      "identicalOriginals": [
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/tx2-dxb6-lone-d/driver/pull-load.json"
+      ]
+    }
+  ]
+}

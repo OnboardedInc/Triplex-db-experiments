@@ -20,6 +20,8 @@ import type { Rule as ConstraintRule, ViolationAt } from "../Constraint.js";
  * StorageAdapterService - Backend-agnostic storage primitives
  */
 export interface StorageAdapterService {
+  // [DX-B6-5] Why: one issued instant must name a final cut. Rejected: tied wall-clock instants.
+  readonly transactionInstant?: (now: number) => Effect.Effect<number, WriteError>;
   // [DX-B4-T1] Why: indexed journal pages avoid a whole-store poll. Rejected: requiring every backend to implement it.
   readonly getTransactionsAfter?: (
     after: number,

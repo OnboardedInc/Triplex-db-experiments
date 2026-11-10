@@ -217,7 +217,7 @@
 ;; [DX-B5-L0] Why: HTTP connections can overtake ordered client sends; serialize submission only.
 ;; Rejected: waiting for the transaction result under this monitor (queues acknowledgements).
 (def submissions (atom {}))
-(defn submit! [conn data input]
+(defn submit! [conn data input timeline]
   (if-let [client (get input "clientId")]
     (let [sequence (get input "sendSequence")
           _ (when-not (and (string? client) (<= 1 (count client) 64) (integer? sequence) (pos? sequence))
@@ -231,20 +231,28 @@
             (.wait ^Object state 1) (recur)))
         (when (< @state (dec sequence)) (stats/bump! [:commitOrder :timeouts] 1))
         (when (<= sequence @state) (stats/bump! [:commitOrder :late] 1))
-        (let [future (d/transact-async conn data)]
+        (let [_ (swap! timeline assoc :predecessorReady (System/nanoTime))
+              future (d/transact-async conn data)
+              _ (swap! timeline assoc :submitted (System/nanoTime))]
           (swap! state max sequence) (.notifyAll ^Object state) future)))
-    (d/transact-async conn data)))
+    (do (swap! timeline assoc :predecessorReady (System/nanoTime))
+        (let [future (d/transact-async conn data)] (swap! timeline assoc :submitted (System/nanoTime)) future))))
 (defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
-    (let [data (tx-data db input (:scope (reach/config name db)))
+    (let [parsed (System/nanoTime)
+          data (tx-data db input (:scope (reach/config name db)))
           start (System/nanoTime)
-          report (deref (submit! conn data input) 5000 ::timeout)
-          transact-micros (quot (- (System/nanoTime) start) 1000)]
+          timeline (atom {:requestParsed parsed :payloadPrepared start})
+          report (deref (submit! conn data input timeline) 5000 ::timeout)
+          completed (System/nanoTime)
+          transact-micros (quot (- completed start) 1000)]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
        :transactMicros transact-micros
+       :timeline (into {} (map (fn [[k v]] [k (/ (- v parsed) 1000.0)])
+                              (assoc @timeline :completed completed :responsePrepared (System/nanoTime))))
        :operationId (get input "operationId")
        :position (codec/encode-value "long" (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report)))))
        :delta (- (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report)))) (get input "position"))
@@ -436,3 +444,22 @@
                          (when-let [eid (d/entid db [:f/id id])]
                            (let [r (row db eid)] (when (visible? r nil false) r)))) ids)))})
       (catch Exception e (release! name (:handle snapshot)) (throw e)))))
+
+;; [DX-B6-5] Why: an ahead record time cannot prove peer freshness. Rejected: serving a stale local cut.
+(defn await-record-time [name conn db input]
+  (let [r (get-in input ["basis" "recordedAt"])
+        maximum (fn [db] (or (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/max-recorded-at) Double/NEGATIVE_INFINITY))]
+    (if (or (nil? r) (get input "handle") (<= r (maximum db))) db
+      (let [wait-ms (get input "basisWaitMs" 50)
+            _ (when-not (and (number? wait-ms) (<= 0 wait-ms 2000))
+                (throw (ex-info "Invalid basisWaitMs" {:status 400})))
+            deadline (+ (System/nanoTime) (* wait-ms 1000000))]
+        (stats/bump! [:recordTimeWaits] 1)
+        (loop [db db]
+          (cond (<= r (maximum db)) db
+                (< (System/nanoTime) deadline) (do (Thread/sleep 1) (recur (d/db conn)))
+                :else (do (stats/bump! [:recordTimeSyncs] 1)
+                          (let [synced (deref (d/sync conn) 2000 ::timeout)]
+                            (when (= ::timeout synced)
+                              (throw (ex-info "Record-time sync timed out" {:status 503 :code "BasisNotAvailable"})))
+                            synced))))))))

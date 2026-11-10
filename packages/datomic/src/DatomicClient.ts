@@ -1,3 +1,5 @@
+import { ByteCache } from "./ByteCache.js";
+import { RowCache, estimateRowBytes } from "./RowCache.js";
 import { randomUUID } from "node:crypto";
 import { decodeEntity, type CachedEntity, type ReachWire } from "./reach.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
@@ -56,8 +58,14 @@ export interface DatomicLogPage {
 // [EXP-DA00] Why: 256 readers plus writers must not queue on the HTTP agent (R16). Rejected: default pool limits.
 export interface DatomicRequestSample {
   readonly path: string;
+  readonly operationId?: string | undefined;
+  readonly status: number;
   readonly started: number;
   readonly finished: number;
+  readonly written: number;
+  readonly headers: number;
+  readonly reusedSocket: boolean;
+  readonly gatewayTimeline?: unknown;
   readonly responseBytes: number;
   readonly requestBytes: number;
   readonly serializeMicros: number;
@@ -68,11 +76,43 @@ export interface DatomicRequestSample {
   readonly datoms?: number;
   readonly position?: number;
 }
+export interface DatomicCommitAttempt {
+  firstAdapterCall: number;
+  optimistic: boolean;
+  begin: boolean;
+  httpCalls: number;
+  requests: DatomicRequestSample[];
+  transactionIds?: string[];
+  ready?: number;
+  released?: number;
+}
+export interface DatomicCommitSample {
+  operationId: string;
+  transactionIds: string[];
+  httpCalls: number;
+  replays: number;
+  started: number;
+  returned: number;
+  attempts: DatomicCommitAttempt[];
+}
 export class DatomicClient {
   // [DX-B2-N3] Why: opt-in transport observations measure real calls without a second HTTP request.
   // Rejected: inferring gateway CPU or transact time from client wall latency.
   onRequest?: (sample: DatomicRequestSample) => void;
+  onCommit?: (sample: DatomicCommitSample) => void;
   readonly agent: http.Agent;
+  private activeObservation: DatomicCommitAttempt | undefined;
+  // [DX-B6-1] Why: capture request attribution synchronously before the transport yields.
+  // Rejected: a mutable callback spanning an await (concurrent fibers would borrow each other's observations).
+  observeRequests<A>(observation: DatomicCommitAttempt | undefined, call: () => A): A {
+    const previous = this.activeObservation;
+    this.activeObservation = observation;
+    try {
+      return call();
+    } finally {
+      this.activeObservation = previous;
+    }
+  }
   readonly commitDiagnostics = {
     beginDecodeMicros: 0,
     transactEncodeMicros: 0,
@@ -86,10 +126,16 @@ export class DatomicClient {
   private readonly sentCallbacks = new Map<string, () => void>();
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
-  readonly reachCache = new Map<string, Map<string, CachedEntity>>();
+  readonly reachCache: ByteCache<CachedEntity>;
+  readonly rowCache: RowCache;
   forceFullReach = false;
   readonly reachDiagnostics = {
     refMisses: 0,
+    waits: 0,
+    waitHits: 0,
+    needRequests: 0,
+    needEntities: 0,
+    fullRetries: 0,
     resets: 0,
     faults: 0,
     declines: {} as Record<string, number>,
@@ -99,7 +145,19 @@ export class DatomicClient {
     endpoint: string,
     readonly timeoutMs = 5000,
     readonly maxResponseBytes = 64 * 1024 ** 2,
+    readonly cacheOptions: {
+      readonly entityCacheBytes?: number;
+      readonly rowCacheBytes?: number;
+    } = {},
   ) {
+    this.reachCache = new ByteCache(
+      cacheOptions.entityCacheBytes ?? 128 * 1024 ** 2,
+      (entity) => 256 + entity.storedRows.reduce((n, row) => n + 3 * estimateRowBytes(row), 0),
+    );
+    this.rowCache = new RowCache(
+      Number.MAX_SAFE_INTEGER,
+      cacheOptions.rowCacheBytes ?? 32 * 1024 ** 2,
+    );
     if (
       !Number.isSafeInteger(timeoutMs) ||
       timeoutMs <= 0 ||
@@ -114,6 +172,8 @@ export class DatomicClient {
   }
   readonly rowObservers = new Set<(db: string, row: TripleRow) => void>();
   close(): void {
+    this.reachCache.clear();
+    this.rowCache.clear();
     this.layouts.clear();
     this.rowObservers.clear();
     this.agent.destroy();
@@ -126,6 +186,13 @@ export class DatomicClient {
     onSent?: () => void,
   ): Promise<T> {
     const started = performance.now();
+    const observation = this.activeObservation;
+    const operationId =
+      body &&
+      typeof body === "object" &&
+      typeof (body as { operationId?: unknown }).operationId === "string"
+        ? (body as { operationId: string }).operationId
+        : undefined;
     // [DX-B5-L0] Why: legacy request wrappers forward four arguments; recover the callback from the bound operation.
     // Rejected: requiring every instrumentation wrapper to forward a new positional argument.
     if (!onSent && path.endsWith("/transact") && body && typeof body === "object") {
@@ -147,6 +214,8 @@ export class DatomicClient {
     const bytes = body === undefined ? undefined : Buffer.from(stringifyExact(body));
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     return new Promise<T>((resolve, reject) => {
+      let written = NaN,
+        headers = NaN;
       const req = http.request(
         new URL(path, this.endpoint),
         {
@@ -160,6 +229,7 @@ export class DatomicClient {
           },
         },
         (res) => {
+          headers = performance.now();
           const chunks: Buffer[] = [];
           let size = 0;
           res.on("data", (chunk: Buffer) => {
@@ -178,6 +248,32 @@ export class DatomicClient {
                 unknown
               >;
               const status = res.statusCode ?? 0;
+              const sample: DatomicRequestSample | undefined =
+                observation || this.onRequest
+                  ? {
+                      path,
+                      operationId,
+                      status,
+                      started,
+                      finished: performance.now(),
+                      written,
+                      headers,
+                      reusedSocket: req.reusedSocket,
+                      gatewayTimeline: data["timeline"],
+                      responseBytes: size,
+                      requestBytes: bytes?.length ?? 0,
+                      serializeMicros,
+                      parseMicros: Number(res.headers["x-tx2-request-parse-micros"] ?? NaN),
+                      gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
+                      transactMicros: Number(data["transactMicros"] ?? NaN),
+                      waited: res.headers["x-tx2-waited"] === "true",
+                      ...(typeof data["datoms"] === "number" ? { datoms: data["datoms"] } : {}),
+                      ...(data["position"] && typeof data["position"] === "object"
+                        ? { position: Number((data["position"] as TaggedValue).v) }
+                        : {}),
+                    }
+                  : undefined;
+              if (sample) observation?.requests.push(sample);
               if (status < 200 || status >= 300)
                 reject(
                   new DatomicHttpError(
@@ -189,22 +285,7 @@ export class DatomicClient {
                   ),
                 );
               else {
-                this.onRequest?.({
-                  path,
-                  started,
-                  finished: performance.now(),
-                  responseBytes: size,
-                  requestBytes: bytes?.length ?? 0,
-                  serializeMicros,
-                  parseMicros: Number(res.headers["x-tx2-request-parse-micros"] ?? NaN),
-                  gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
-                  transactMicros: Number(data["transactMicros"] ?? NaN),
-                  waited: res.headers["x-tx2-waited"] === "true",
-                  ...(typeof data["datoms"] === "number" ? { datoms: data["datoms"] } : {}),
-                  ...(data["position"] && typeof data["position"] === "object"
-                    ? { position: Number((data["position"] as TaggedValue).v) }
-                    : {}),
-                });
+                if (sample) this.onRequest?.(sample);
                 resolve(data as T);
               }
             } catch (error) {
@@ -213,6 +294,7 @@ export class DatomicClient {
           });
         },
       );
+      if (observation) observation.httpCalls++;
       const timer = setTimeout(
         () => req.destroy(new Error("Gateway deadline exceeded")),
         timeoutMs,
@@ -221,6 +303,9 @@ export class DatomicClient {
       req.on("error", (error) =>
         reject(new DatomicTransportError(error.message, { cause: error })),
       );
+      req.once("finish", () => {
+        written = performance.now();
+      });
       if (onSent) {
         req.once("finish", onSent);
         req.once("error", onSent);
@@ -230,16 +315,36 @@ export class DatomicClient {
   }
   // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
   // Rejected: accepting a missing reference as an empty entity.
+  private readonly reachInflight = new Set<Promise<void>>();
   async reachEntities(
     db: string,
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage = false,
   ) {
-    if ([...this.reachCache.values()].reduce((n, cache) => n + cache.size, 0) > 500000) {
-      this.reachSession = randomUUID();
-      this.reachCache.clear();
+    const older = [...this.reachInflight];
+    let ingested!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      ingested = resolve;
+    });
+    this.reachInflight.add(ready);
+    try {
+      return await this.fetchReachEntities(db, roots, basis, rowPage, older, ingested);
+    } finally {
+      ingested();
+      this.reachInflight.delete(ready);
     }
+  }
+  // [DX-B6-2] Why: wait only for inline ingestion, never for another pull's repair.
+  // Rejected: awaiting whole pulls (crossed references can deadlock).
+  private async fetchReachEntities(
+    db: string,
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
+    rowPage: boolean,
+    older: readonly Promise<void>[],
+    ingested: () => void,
+  ) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const response = await this.request<ReachWire>(
         "POST",
@@ -269,13 +374,13 @@ export class DatomicClient {
           response.closures.length !== roots.length
         )
           throw new TypeError("Reach response basis/shape mismatch");
-        let cache = this.reachCache.get(db);
-        if (!cache) {
-          cache = new Map();
-          this.reachCache.set(db, cache);
-        }
+        const prefix = `${db}\0`;
+        const cache = {
+          get: (id: string) => this.reachCache.get(prefix + id),
+          set: (id: string, entity: CachedEntity) => this.reachCache.set(prefix + id, entity),
+        };
         if (response.reset) {
-          cache.clear();
+          this.reachCache.deleteWhere((key) => key.startsWith(prefix));
           this.reachDiagnostics.resets++;
         }
         const entities = new Map<string, CachedEntity>();
@@ -302,12 +407,69 @@ export class DatomicClient {
           if (!decoded || decoded.rev !== rev) missed = true;
           else entities.set(id, decoded);
         }
+        ingested();
         if (missed) {
-          if (attempt === 0) {
-            this.reachDiagnostics.refMisses++;
-            continue;
+          this.reachDiagnostics.refMisses++;
+          const references = response.entities.filter(
+            (e) => Array.isArray(e) && e.length === 2,
+          ) as [string, number][];
+          const missing = () =>
+            references.filter(([id, rev]) => {
+              const found = cache!.get(id);
+              if (found?.rev === rev) {
+                entities.set(id, found);
+                return false;
+              }
+              return true;
+            });
+          if (older.length) {
+            this.reachDiagnostics.waits++;
+            await Promise.allSettled(older);
+            if (!missing().length) this.reachDiagnostics.waitHits++;
           }
-          throw new TypeError("Full reach response has unresolved references");
+          const need = missing();
+          if (need.length && attempt === 0) {
+            this.reachDiagnostics.needRequests++;
+            this.reachDiagnostics.needEntities += need.length;
+            try {
+              const repair = await this.request<ReachWire>("POST", `/v2/db/${db}/reach-many`, {
+                roots,
+                need: need.map(([id]) => id),
+                session: this.reachSession,
+                basis: { ...basis, recordedPosition: response.position },
+                ...(rowPage ? { rowPage: true } : {}),
+              });
+              if (
+                repair.declined ||
+                repair.position !== response.position ||
+                repair.t !== response.t ||
+                !Array.isArray(repair.entities) ||
+                repair.entities.length !== need.length
+              )
+                throw new TypeError("Repair basis/coverage mismatch");
+              const expected = new Map(need);
+              for (const entry of repair.entities) {
+                if (
+                  !Array.isArray(entry) ||
+                  entry.length !== 3 ||
+                  expected.get(entry[0]) !== entry[1] ||
+                  !Array.isArray(entry[2])
+                )
+                  throw new TypeError("Repair entity/revision mismatch");
+                const decoded = decodeEntity(entry[0], entry[1], entry[2], (row) => {
+                  for (const observe of this.rowObservers) observe(db, row);
+                });
+                expected.delete(entry[0]);
+                entities.set(entry[0], decoded);
+                cache.set(entry[0], decoded);
+              }
+              if (expected.size) throw new TypeError("Incomplete repair");
+            } catch {
+              this.reachDiagnostics.fullRetries++;
+              continue;
+            }
+          } else if (need.length)
+            throw new TypeError("Full reach response has unresolved references");
         }
         response.closures.forEach(([root, ids], i) => {
           if (

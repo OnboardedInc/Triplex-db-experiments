@@ -15,9 +15,9 @@ import { makeDatomicQueryExecutor } from "../src/DatomicQueryExecutor.js";
 // [DX-B5-L3] Why: compare observable answers, order and temporal metadata against an independent physical layout.
 // Rejected: comparing counts, accepting declines as equivalence, or using nondeterministic assertion identities.
 describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", () => {
-  // [DX-B5-L3] Why: compare the inherited typed error on regular scopes, independently of irregular-cut fixtures.
-  // Rejected: broadening legacy read behavior to fix an unrelated journal decoder edge.
-  it("preserves legacy's typed untyped-journal error on both layouts", async () => {
+  // [DX-B6-4] Why: both layouts must filter the same untyped SPI neighbors.
+  // Rejected: counting a decoder failure as journal parity.
+  it("filters untyped journal neighbors before branded decoding on both layouts", async () => {
     const client = new DatomicClient(process.env.DATOMIC_GATEWAY_URL ?? "http://127.0.0.1:8505");
     const outcomes = [];
     try {
@@ -70,17 +70,15 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
             entity_type: null,
             tx_id: "spi",
           });
-          const outcome = await Effect.runPromise(
-            Effect.match(adapter.getTransactionsAfter!(0, 10), {
-              onFailure: (e) => ({
-                _tag: e._tag,
-                message: e.message,
-                cause: e.cause instanceof Error ? e.cause.message : String(e.cause),
-              }),
-              onSuccess: () => ({ _tag: "UnexpectedSuccess", message: "", cause: "" }),
-            }),
-          );
-          expect(outcome).toMatchObject({ _tag: "ReadError", cause: "Schema validation failed" });
+          const page = await Effect.runPromise(adapter.getTransactionsAfter!(0, 10));
+          expect(page).toHaveLength(1);
+          expect(page![0]!.txId).toBe(receipt.txId);
+          expect(page![0]!.triples.some((t) => t.id === "untyped-journal")).toBe(false);
+          expect(page![0]!.triples.length).toBeGreaterThan(0);
+          const outcome = page![0]!.triples.map((t) => ({
+            attribute: t.attribute,
+            value: t.value,
+          }));
           outcomes.push(outcome);
         } finally {
           await runtime.dispose();
@@ -98,8 +96,10 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
     let seed = 0x19870219,
       comparisons = 0,
       fast = 0,
-      rowClosures = 0;
+      rowClosures = 0,
+      randomDraws = 0;
     const rand = () => {
+      randomDraws++;
       seed ^= seed << 13;
       seed ^= seed >>> 17;
       seed ^= seed << 5;
@@ -112,6 +112,19 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
     };
     try {
       const firstScenario = Number(process.env.DX_B5_SCENARIO_START ?? 0);
+      // [DX-B6] Why: split the unchanged 300-case corpus across 15-minute windows without restarting its RNG stream.
+      // Rejected: independent batch seeds (would silently replace scenarios 100..299).
+      const drawsPerScenario =
+        6 * 4 * 3 + [2, 5, 7].reduce((n, positions) => n + positions + 7 + positions, 0);
+      if (
+        !Number.isSafeInteger(firstScenario) ||
+        firstScenario < 0 ||
+        !Number.isSafeInteger(count) ||
+        count < 1
+      )
+        throw new RangeError("Invalid differential range");
+      for (let skipped = 0; skipped < firstScenario * drawsPerScenario; skipped++) rand();
+      const inputRandomState = seed;
       for (let scenario = firstScenario; scenario < firstScenario + count; scenario++) {
         const stores = await Promise.all(
           (["legacy", "lean"] as const).map(async (layout) => {
@@ -351,6 +364,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
             ),
           );
           equal(duplicate[0], duplicate[1]);
+          expect(randomDraws).toBe((scenario + 1) * drawsPerScenario);
         } finally {
           for (const s of stores) {
             await s.runtime.dispose();
@@ -360,7 +374,19 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
       }
       expect(fast).toBeGreaterThan(0);
       expect(rowClosures).toBe(fast);
-      console.log(JSON.stringify({ scenarios: count, comparisons, fast, rowClosures }));
+      console.log(
+        JSON.stringify({
+          firstScenario,
+          scenarios: count,
+          inputRandomState,
+          finalRandomState: seed,
+          randomDraws,
+          drawsPerScenario,
+          comparisons,
+          fast,
+          rowClosures,
+        }),
+      );
     } finally {
       c.close();
     }
