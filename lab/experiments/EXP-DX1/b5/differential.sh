@@ -4,7 +4,7 @@
 set -euo pipefail
 prefix="tx2-dxb5-differential-$(date +%s)"
 guard=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5/functional-active
-mkdir "$guard"
+if [[ ${DX_B5_GUARD_HELD:-0} != 1 ]]; then mkdir "$guard"; fi
 cleanup() { bash lab/experiments/EXP-DX1/b5/down.sh "$prefix" --volumes; rmdir "$guard"; }
 trap cleanup EXIT
 bash lab/experiments/EXP-DX1/b5/up.sh "$prefix"

@@ -395,6 +395,15 @@ async function main() {
         correctionRate: 0.01,
       },
     });
+    let shapeCaptured = false;
+    const originalTransact = w.client.transact.bind(w.client);
+    w.client.transact = (...args) => {
+      if (!shapeCaptured) {
+        shapeCaptured = true;
+        raw("benchmark-commit-input", args[1]);
+      }
+      return originalTransact(...args);
+    };
     const commitOne = async (subject, scheduled = performance.now()) => {
       const event = {
         ...trace[sequence % trace.length],

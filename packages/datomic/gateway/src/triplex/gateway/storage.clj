@@ -388,7 +388,9 @@
                                               (let [v (get pattern key)]
                                                 (or (nil? v) (.startsWith ^String (str v) "?") (= v (get row column)))))
                                             [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]])))
-                             (lean/rows name db input)))}))))
+                             ;; [DX-B5-L2] Why: an explicit imported row position cannot move its physical publication into an older snapshot.
+                             ;; Rejected: filtering full head history only by row position (differs from legacy read-db).
+                             (lean/rows name (at-position db (get basis "recordedPosition")) input)))}))))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).

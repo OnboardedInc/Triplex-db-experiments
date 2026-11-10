@@ -57,12 +57,18 @@
                            (= :triplex/retract (first op))
                            (let [[_ entity id] op e (d/entid db [:triplex.entity/id entity])
                                  suffix (str (format "%04x" (.length ^String id)) id)
-                                 text (some (fn [datom]
-                                              (let [v (:v datom)]
-                                                (when (and (= e (:e datom)) (= row-a (:a datom))
-                                                           (or (.startsWith ^String v (str "2" suffix))
-                                                               (.startsWith ^String v (str "1" suffix)))) v)))
-                                            (d/datoms db :eavt e row-a))]
+                                 ;; [DX-B5-L1] Why: a hot subject's other rows must not make stamp retirement linear.
+                                 ;; Rejected: scanning every row on the touched entity; legacy retains its original path.
+                                 text (if lean
+                                        (let [prefix (str "2" suffix) datom (first (d/seek-datoms db :eavt e row-a prefix))]
+                                          (when (and datom (= e (:e datom)) (= row-a (:a datom))
+                                                     (.startsWith ^String (:v datom) prefix)) (:v datom)))
+                                        (some (fn [datom]
+                                                (let [v (:v datom)]
+                                                  (when (and (= e (:e datom)) (= row-a (:a datom))
+                                                             (or (.startsWith ^String v (str "2" suffix))
+                                                                 (.startsWith ^String v (str "1" suffix)))) v)))
+                                              (d/datoms db :eavt e row-a)))]
                              (when (and (nil? text) (not (value e :triplex.entity/row-overflow)))
                                (throw (ex-info "Missing live row datom" {})))
                              (if text [[:db/retract e :triplex.entity/row text]] []))

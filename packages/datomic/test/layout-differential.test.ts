@@ -118,6 +118,21 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
                         p,
                       );
                     }
+                    if (commit === 2 && scenario % 11 === 0) {
+                      yield* s.adapter.insert(
+                        {
+                          entityId: "e0",
+                          entityType: "_Test",
+                          attribute: "a0",
+                          value: { type: "string", value: "imported explicit position" },
+                          validFrom: 0,
+                        },
+                        "_tx/00000000000000000000000079",
+                        timestamp,
+                        "imported",
+                        0,
+                      );
+                    }
                     if (commit === 3)
                       yield* s.adapter.withTransaction(
                         Effect.gen(function* () {
@@ -149,6 +164,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
             if (commit % 2 !== 1) continue;
             const bases = [
               { validAt: 100 },
+              { validAt: 100, recordedPosition: 0 },
               ...positions.map((recordedPosition) => ({
                 validAt: [0, 100, 299, 300][rand() % 4]!,
                 recordedPosition,
