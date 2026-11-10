@@ -26,7 +26,13 @@ images=json.loads((ROOT/'images.json').read_text()); ids={tag:i['Id'] for i in i
 def run(args,timeout=60,check=True):
     commands.append(args)
     remaining=timeout if cleaning else max(1,limit-(time.time()-started))
-    p=subprocess.run(args,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=min(timeout,remaining))
+    try:
+        p=subprocess.run(args,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=min(timeout,remaining))
+    except subprocess.TimeoutExpired as e:
+        raw=e.stdout or b''
+        if isinstance(raw,bytes):raw=raw.decode('utf8',errors='replace')
+        (out/('timeout-'+str(len(commands))+'.txt')).write_text(str(args)+'\n'+raw)
+        raise
     if p.returncode and check: raise RuntimeError(str(args)+'\n'+p.stdout)
     return p
 
@@ -37,7 +43,7 @@ def create(name,image,args,command):
     names.append(name)
 def start(name): docker('start',name)
 def envargs(extra=None):
-    env={'OUT':'/driver','WRITE_URL':'postgres://xtdb:xtdb@tx2-xns2-write:5432/xtdb','READ_URL':('postgres://xtdb:xtdb@tx2-xns2-read:5432/xtdb' if profile=='two' else 'postgres://xtdb:xtdb@tx2-xns2-write:5432/xtdb'),'KEEP_AWAKE':'1' if armed else '0','CGROUPS':json.dumps(cgroups)}
+    env={'WINDOW_MS':'45000','OUT':'/driver','WRITE_URL':'postgres://xtdb:xtdb@tx2-xns2-write:5432/xtdb','READ_URL':('postgres://xtdb:xtdb@tx2-xns2-read:5432/xtdb' if profile=='two' else 'postgres://xtdb:xtdb@tx2-xns2-write:5432/xtdb'),'KEEP_AWAKE':'1' if armed else '0','CGROUPS':json.dumps(cgroups)}
     env.update(extra or {});return [x for k,v in env.items() for x in ['-e',k+'='+str(v)]]
 def execute(script,*args,extra=None,timeout=180):
     p=docker('exec',*envargs(extra),driver,'node','/src/'+script,*map(str,args),timeout=timeout,check=False)
@@ -96,7 +102,7 @@ try:
         if p.is_file():shutil.copyfile(p,out/'sources'/p.name);source['files'][p.name]=hashlib.sha256(p.read_bytes()).hexdigest()
     shutil.copyfile(KEEP,out/'sources'/'keep-awake-fixed.sh');source['files']['keep-awake-fixed.sh']=hashlib.sha256(KEEP.read_bytes()).hexdigest()
     save('source.json',source)
-    if STAGE=='two-off' and all(list(ROOT.glob(stage+'-*/completed.json')) for stage in ['control-commits','control-reads']):
+    if STAGE=='q1' and all(list(ROOT.glob(stage+'-*/completed.json')) for stage in ['control-commits','control-reads']):
         retired=[]
         for volume in ['tx2-xns2-live-control','tx2-xns2-control-driver']:
             proof=docker('volume','inspect',volume,check=False)

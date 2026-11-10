@@ -57,10 +57,11 @@ try{
   const rate=Number(arg),readerCount=Number(readArg),positions=Array(200).fill(0);
   // Warm all writer sockets and the indexer with successful commands outside the timed window.
   for(let i=0;i<200;i++){const s=i%200;await commit(cs[i%16],`${scope}-warm${i}`,`${scope}-s${s}`,positions[s]++);}
-  for(let w=0;w<(readerCount?4:0);w++){
+  // [XN-S2-LIVE] Why: all 256 clients still warm 100 checked pulls, without serial worker admission exhausting the hold. Rejected: reducing per-client warmup.
+  await Promise.all(Array.from({length:readerCount?4:0},async()=>{
    const worker=new Worker(new URL('./reader-worker.mjs',import.meta.url),{workerData:{clients:readerCount/4}});workers.push(worker);worker.on('error',e=>workerErrors.push(e.message));
    await new Promise((resolve,reject)=>{worker.once('message',resolve);worker.once('error',reject)});
-  }
+  }));
   const observed=await measured(`open-${shape}-${phase}-${rate}-r${readerCount}`,async()=>{
    const samples=[],errors=[];let seed=914511;
    const rng=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return (seed+.5)/4294967296};

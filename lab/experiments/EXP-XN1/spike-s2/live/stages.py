@@ -34,17 +34,13 @@ elif STAGE=='topology':
     execute('proof.mjs','restarted',timeout=45);bind()
     execute('write.mjs','correct','one',PHASE,timeout=30)
     if docker('exec',driver,'test','-f','/driver/history.json',check=False).returncode!=0:execute('write.mjs','history','one','fresh',timeout=540)
-elif STAGE=='two-off':
-    keeper(False)
+elif STAGE=='q1':
     if docker('exec',driver,'test','-f','/driver/topology-restarted.json',check=False).returncode!=0:raise RuntimeError('topology proof missing')
-    execute('write.mjs','correct','one',PHASE,timeout=30)
-    for rate in [15,55]:
-        for readers in [0,16,64,256]:execute('write.mjs','open','one',PHASE,rate,readers,timeout=110)
-elif STAGE=='two-on':
-    keeper(True)
-    execute('write.mjs','correct','one',PHASE,timeout=30)
-    for rate in [15,55]:
-        for readers in [0,16,64,256]:execute('write.mjs','open','one',PHASE,rate,readers,timeout=110)
+    for on in [False,True]:
+        keeper(on)
+        execute('write.mjs','correct','one',PHASE+('-on' if on else '-off'),timeout=30)
+        for rate in [15,55]:
+            for readers in [0,16,64,256]:execute('write.mjs','open','one',PHASE+('-on' if on else '-off'),rate,readers,timeout=110)
 elif STAGE=='lag':
     for on in [False,True]:
         keeper(on)
