@@ -90,6 +90,11 @@ export class DatomicClient {
   forceFullReach = false;
   readonly reachDiagnostics = {
     refMisses: 0,
+    waits: 0,
+    waitHits: 0,
+    needRequests: 0,
+    needEntities: 0,
+    fullRetries: 0,
     resets: 0,
     faults: 0,
     declines: {} as Record<string, number>,
@@ -230,11 +235,35 @@ export class DatomicClient {
   }
   // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
   // Rejected: accepting a missing reference as an empty entity.
+  private readonly reachInflight = new Set<Promise<void>>();
   async reachEntities(
     db: string,
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage = false,
+  ) {
+    const older = [...this.reachInflight];
+    let ingested!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      ingested = resolve;
+    });
+    this.reachInflight.add(ready);
+    try {
+      return await this.fetchReachEntities(db, roots, basis, rowPage, older, ingested);
+    } finally {
+      ingested();
+      this.reachInflight.delete(ready);
+    }
+  }
+  // [DX-B6-2] Why: wait only for inline ingestion, never for another pull's repair.
+  // Rejected: awaiting whole pulls (crossed references can deadlock).
+  private async fetchReachEntities(
+    db: string,
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
+    rowPage: boolean,
+    older: readonly Promise<void>[],
+    ingested: () => void,
   ) {
     if ([...this.reachCache.values()].reduce((n, cache) => n + cache.size, 0) > 500000) {
       this.reachSession = randomUUID();
@@ -302,12 +331,69 @@ export class DatomicClient {
           if (!decoded || decoded.rev !== rev) missed = true;
           else entities.set(id, decoded);
         }
+        ingested();
         if (missed) {
-          if (attempt === 0) {
-            this.reachDiagnostics.refMisses++;
-            continue;
+          this.reachDiagnostics.refMisses++;
+          const references = response.entities.filter(
+            (e) => Array.isArray(e) && e.length === 2,
+          ) as [string, number][];
+          const missing = () =>
+            references.filter(([id, rev]) => {
+              const found = cache!.get(id);
+              if (found?.rev === rev) {
+                entities.set(id, found);
+                return false;
+              }
+              return true;
+            });
+          if (older.length) {
+            this.reachDiagnostics.waits++;
+            await Promise.allSettled(older);
+            if (!missing().length) this.reachDiagnostics.waitHits++;
           }
-          throw new TypeError("Full reach response has unresolved references");
+          const need = missing();
+          if (need.length && attempt === 0) {
+            this.reachDiagnostics.needRequests++;
+            this.reachDiagnostics.needEntities += need.length;
+            try {
+              const repair = await this.request<ReachWire>("POST", `/v2/db/${db}/reach-many`, {
+                roots,
+                need: need.map(([id]) => id),
+                session: this.reachSession,
+                basis: { ...basis, recordedPosition: response.position },
+                ...(rowPage ? { rowPage: true } : {}),
+              });
+              if (
+                repair.declined ||
+                repair.position !== response.position ||
+                repair.t !== response.t ||
+                !Array.isArray(repair.entities) ||
+                repair.entities.length !== need.length
+              )
+                throw new TypeError("Repair basis/coverage mismatch");
+              const expected = new Map(need);
+              for (const entry of repair.entities) {
+                if (
+                  !Array.isArray(entry) ||
+                  entry.length !== 3 ||
+                  expected.get(entry[0]) !== entry[1] ||
+                  !Array.isArray(entry[2])
+                )
+                  throw new TypeError("Repair entity/revision mismatch");
+                const decoded = decodeEntity(entry[0], entry[1], entry[2], (row) => {
+                  for (const observe of this.rowObservers) observe(db, row);
+                });
+                expected.delete(entry[0]);
+                entities.set(entry[0], decoded);
+                cache.set(entry[0], decoded);
+              }
+              if (expected.size) throw new TypeError("Incomplete repair");
+            } catch {
+              this.reachDiagnostics.fullRetries++;
+              continue;
+            }
+          } else if (need.length)
+            throw new TypeError("Full reach response has unresolved references");
         }
         response.closures.forEach(([root, ids], i) => {
           if (

@@ -271,7 +271,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("irregular SPI posit
 // [DX-B2-N2] Why: exercise revision changes, concurrent reference delivery and reset recovery against actual fallback bytes.
 // Rejected: endpoint status checks (cannot detect a stale shared row).
 describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("revision cache transitions", () => {
-  it("keeps shared changes, retraction-only commits, old cuts and 50 concurrent cold pulls exact", async () => {
+  it("keeps shared changes, retraction-only commits, old cuts and 20 rounds of 256 concurrent cold pulls exact", async () => {
     const client = new DatomicClient(
       process.env["DATOMIC_GATEWAY_URL"] ?? "http://127.0.0.1:8490",
       20000,
@@ -397,14 +397,23 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("revision cache tran
         StorageAdapter.reachBy((ids) => triples.entities(ids as never, { validAt: 0 }), "root"),
       );
       const beforeConcurrent = client.reachDiagnostics.refMisses;
-      const concurrent = await Promise.all(
-        Array.from({ length: 50 }, () =>
-          Effect.runPromise(a.getReachTriples!("root", { validAt: 0 })),
-        ),
-      );
-      concurrent.forEach((result) => expect(result).toEqual(expected));
+      // [DX-B6-2] Why: repeat cold session races, while keeping Mac tunnel connections below 64.
+      // Rejected: 256 published-port sockets (Lima overload invalidates the test).
+      client.agent.maxSockets = 64;
+      client.agent.maxTotalSockets = 64;
+      for (let round = 0; round < 20; round++) {
+        client.reachCache.clear();
+        client.reachSession = randomUUID();
+        const concurrent = await Promise.all(
+          Array.from({ length: 256 }, () =>
+            Effect.runPromise(a.getReachTriples!("root", { validAt: 0 })),
+          ),
+        );
+        concurrent.forEach((result) => expect(result).toEqual(expected));
+      }
+      expect(client.reachDiagnostics.fullRetries).toBe(0);
       const transitions = {
-        concurrentPulls: 50,
+        concurrentPulls: 5120,
         concurrentRefMisses: client.reachDiagnostics.refMisses - beforeConcurrent,
         refMisses: client.reachDiagnostics.refMisses,
         resets: client.reachDiagnostics.resets,
@@ -420,5 +429,5 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("revision cache tran
       await client.delete(scope);
       client.close();
     }
-  }, 60000);
+  }, 180000);
 });
