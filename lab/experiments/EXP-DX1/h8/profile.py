@@ -7,7 +7,9 @@ def events(file):
     with (gzip.open(file, "rt") if file.suffix == ".gz" else file.open()) as stream:
         buffer = ""
         while True:
-            buffer += stream.read(65536)
+            part = stream.read(65536)
+            if not part: raise ValueError("JFR events array missing")
+            buffer += part
             match = re.search(r'"events"\s*:\s*\[', buffer)
             if match:
                 buffer = buffer[match.end():]; break

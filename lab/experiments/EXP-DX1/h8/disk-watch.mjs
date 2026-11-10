@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
-// [DX-H8] Why: active and retained volumes share the 20 GB cap; stop well before it, retaining abort evidence.
+// [DX-H8] Why: active and retained volumes share the 12 GB cap; stop well before it, retaining abort evidence.
 // Rejected: checking only a sealed volume after a long seed has already consumed its budget.
 const prefix=process.argv[2];if(!/^tx2-dxh8-[a-z0-9-]+$/.test(prefix??''))throw Error('owned prefix required');
 const root='/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H8/'+prefix;

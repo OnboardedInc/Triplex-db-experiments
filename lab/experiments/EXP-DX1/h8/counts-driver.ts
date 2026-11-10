@@ -1,3 +1,4 @@
+import { previewCosts } from "./preview-cost.ts";
 import { publicationMatrix } from "./publication-matrix.ts";
 import fs from "node:fs";
 import path from "node:path";
@@ -29,7 +30,7 @@ export async function runCountsDriver(argv: string[]) {
     const close = comp.close;
     comp.storeCounts = bulk.count;
     comp.close = async () => {
-      bulk.close();
+      await bulk.close();
       await close();
     };
     return comp;
@@ -42,6 +43,10 @@ export async function runCountsDriver(argv: string[]) {
     if (result.N === 1000 && argv.includes("--publication-matrix"))
       result.publicationMatrix = await publicationMatrix(result, path.dirname(output));
     fs.writeFileSync(output, JSON.stringify(result, null, 2) + "\n");
+    if (argv.includes("--measure-preview"))
+      await previewCosts(result, path.dirname(output), () =>
+        fs.writeFileSync(output, JSON.stringify(result, null, 2) + "\n"),
+      );
     return result;
   } finally {
     COMPOSITIONS.reach = original;

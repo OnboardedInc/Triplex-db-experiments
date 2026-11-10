@@ -12,7 +12,7 @@ done
 shift
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
-evidence=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H8/$prefix
+evidence=${DX_DRIVER_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H8/$prefix}
 mkdir -p "$evidence/driver" "$evidence/oracle-bridge"
 bridge_pid=
 docker image inspect node:22.23.2-bookworm-slim >/dev/null

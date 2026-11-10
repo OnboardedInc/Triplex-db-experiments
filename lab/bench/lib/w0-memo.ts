@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import type { CompositionHandle } from "./composition.ts";
-import { W0, canonical, sha256, w0Basis, isReference, type PositionBasis } from "./w0-world.ts";
+import { canonical, sha256, w0Basis, isReference, type PositionBasis } from "./w0-world.ts";
 
 export interface PreviewMemo {
   version: 1;
@@ -103,7 +103,7 @@ export async function selectMemo(o: {
   // [DX-H8] Why: consume the complete ordered interval through B1, excluding later transactions.
   // Rejected: stopping on an empty page before B1 or counting only the last writer's subjects.
   while (after < o.basis.position) {
-    const page = await o.comp.feedPage(after, 100);
+    const page = await o.comp.feedPage(after, Math.min(100, o.basis.position - after));
     if (!page.transactions.length) throw Error("memo change feed ended before B1");
     for (const tx of page.transactions) {
       if (tx.position > o.basis.position) break;

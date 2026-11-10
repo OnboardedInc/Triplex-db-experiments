@@ -18,7 +18,7 @@ const owns = () => {
 if (!owns()) throw Error("this attempt must own measurement lease");
 const began = fs.statSync(file).mtimeMs;
 const leaseMs=Number(process.env.DXH8_LEASE_MS ?? 900000);
-if(![900000,4200000].includes(leaseMs))throw Error("15 or 45 minute lease only");
+if(![900000,4200000].includes(leaseMs))throw Error("15 or 70 minute lease only");
 const record = {
   classification: "OWNED-LEASE-DEADLINE-NOT-SEMANTIC-VERDICT",
   prefix,

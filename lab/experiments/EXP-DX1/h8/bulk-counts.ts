@@ -1,3 +1,4 @@
+import { prepareJournalReader } from "../../../bench/lib/w0-journal-pool.ts";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
@@ -26,6 +27,7 @@ export async function openBulkCounts(comp: CompositionHandle) {
     if (created.db !== "s2-" + Buffer.from(scope).toString("base64url"))
       throw Error("bulk count database binding mismatch");
     const stats: any[] = [];
+    let journal: Awaited<ReturnType<typeof prepareJournalReader>> | undefined;
     const histories = (entities: readonly string[], position: number) =>
       client.rows(created.db, {
         entityIds: entities,
@@ -40,30 +42,16 @@ export async function openBulkCounts(comp: CompositionHandle) {
         const start = performance.now(),
           position = await comp.currentPosition();
         if (!Number.isSafeInteger(position) || position < 0) throw Error("invalid count basis");
-        const entities = new Set<string>();
-        let after = 0;
-        while (after < position) {
-          const page = await comp.feedPage(after, 1000);
-          if (!page.transactions.length) throw Error("bulk count journal gap");
-          for (const tx of page.transactions) {
-            if (
-              tx.position !== after + 1 ||
-              tx.position > position ||
-              !tx.txId ||
-              !Array.isArray(tx.changes)
-            )
-              throw Error("bulk count journal identity/gap");
-            after = tx.position;
-            for (const change of tx.changes) {
-              if (typeof change.entityId !== "string")
-                throw Error("bulk count missing entity identity");
-              entities.add(change.entityId);
-            }
-          }
-        }
+        journal ??= await prepareJournalReader({
+          comp,
+          composition: "reach",
+          lane: "datomic",
+          scope: comp.scopeName!,
+        });
+        const enumeration = await journal.scan({ position, entities: true });
         const enumerationWallMs = performance.now() - start;
         const historyStarted = performance.now();
-        const ids = [...entities];
+        const ids: string[] = enumeration.entities;
         let assertions = 0,
           retired = 0,
           requests = 0;
@@ -108,7 +96,10 @@ export async function openBulkCounts(comp: CompositionHandle) {
         console.error("[H8 counts] " + JSON.stringify(stats.at(-1)));
         return result;
       },
-      close: () => client.close(),
+      close: async () => {
+        client.close();
+        await journal?.close();
+      },
     };
   } catch (error) {
     client.close();

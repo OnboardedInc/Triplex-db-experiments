@@ -9,6 +9,14 @@ export DX_STACK_EVIDENCE=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H8
 out=$DX_STACK_EVIDENCE/$prefix; mkdir -p "$out"
 [[ ! -e $out/exit.json ]] || { echo 'fresh prefix required'; exit 2; }
 
+# [DX-H8] Why: a previously sealed seed is retained across tasks; refuse its namespace before installing destructive cleanup.
+# Rejected: volume-create on an existing name followed by cleanup that could remove a retained fixture.
+for resource in volume network; do
+ if [[ $resource == volume ]]; then existing=$(docker volume ls --filter "name=^$prefix-" --format '{{.Name}}'); else existing=$(docker network ls --filter "name=^$prefix-" --format '{{.Name}}'); fi
+ [[ -z $existing ]] || { echo "existing owned-prefix $resource; refuse reuse"; exit 2; }
+done
+[[ -z $(docker ps -a --filter "name=^/$prefix-" --format '{{.Names}}') ]] || { echo 'existing container prefix; refuse reuse'; exit 2; }
+
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 keep_seed=false
 held=false; timer=; guard=; watcher=
@@ -32,7 +40,7 @@ cleanup() {
  done
  for role in tx gw-w; do
    if [[ -s $out/$role.jfr ]]; then
-     docker run --rm --pull never --name "$prefix-profile" --network none -v "$out:/recording:ro" --entrypoint /opt/java/openjdk/bin/jfr tx2-datomic:1.0.7745-da00 print --json --events jdk.ExecutionSample,jdk.NativeMethodSample /recording/$role.jfr > "$out/$role-samples.json" 2> "$out/$role-jfr-error.txt" || true
+     docker run --rm --pull never --name "$prefix-profile" --network none -v "$out:/recording:ro" --entrypoint /opt/java/openjdk/bin/jfr tx2-datomic:1.0.7745-da00 print --json --events jdk.ExecutionSample,jdk.NativeMethodSample /recording/$role.jfr 2> "$out/$role-jfr-error.txt" | gzip -1 -n > "$out/$role-samples.json.gz" || true
    fi
  done
  if [[ $keep_seed == true ]]; then
@@ -46,6 +54,7 @@ cleanup() {
  docker volume ls --filter "name=$prefix" --format '{{.Name}}' > "$out/remaining-volumes.txt"
  expected_volume=; [[ $keep_seed != true ]] || expected_volume="$prefix-pg-data"
  if [[ -s $out/remaining-containers.txt || -s $out/remaining-networks.txt || $(cat "$out/remaining-volumes.txt") != "$expected_volume" ]]; then echo 'cleanup incomplete; lock retained'; exit 1; fi
+ if [[ $kind == seed && -d $out/driver ]]; then for f in "$out"/driver/preview-[0-9]*.json; do [[ ! -f $f ]] || gzip -1 -n "$f"; done; fi
  rm -rf "runs/DX-H8-stage/$prefix"
  printf '{"exit":%s,"finishedAt":"%s"}\n' "$rc" "$(date -u +%FT%TZ)" > "$out/exit.json"
  if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
@@ -73,6 +82,38 @@ docker rm "$prefix-tools-extract" >/dev/null
 # [DX-H8] Why: prove the local ARM64/x86 runtime pairing before paying for JVM startup.
 # Rejected: architecture-specific library paths and a first check inside the measured driver.
 docker run --rm --pull never --name "$prefix-runtime-check" --network none -v "$prefix-tools:/tool:ro" -v "$PWD:$PWD:ro" -w "$PWD" -e LD_LIBRARY_PATH=/tool python:3.13-slim /tool/node --experimental-strip-types --input-type=module -e 'import {execFileSync} from "node:child_process";console.log(process.version,process.arch);console.log(execFileSync("python3",["--version"],{encoding:"utf8"}));await import("./lab/bench/w0-driver.ts");console.log("W0 public imports ready")' > "$out/runtime-check.txt"
+export DX_TX_HEAP=3g DX_TX_MEMORY=4g DX_GW_WRITE_MEMORY=3g DX_GW_READ_MEMORY=3g DX_PG_MEMORY=2g DX_OBJECT_CACHE=1g DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
+if [[ ${DXH8_PREFLIGHT:-false} == true ]]; then
+ [[ $kind == seed && $prefix == tx2-dxh8-seed-10000 ]] || exit 2
+ preflight_root=$DX_STACK_EVIDENCE/preflight
+ preflight=$preflight_root/$prefix
+ mkdir -p "$preflight"
+ # [DX-H8] Why: qualify the fresh parallel journal/history transport and measure fallback before spending a long seed hold.
+ # Rejected: discovering a transport incompatibility only after 434k serial seed commands.
+ docker volume create "$prefix-pg-data" >/dev/null
+ docker run --rm --pull never --name "$prefix-copy" -v tx2-dxh5-seed-1000-pg-data:/from:ro -v "$prefix-pg-data:/to" postgres:17-alpine sh -c 'cp -a /from/. /to/'
+ DXH8_RESTORE=true DX_STACK_EVIDENCE=$preflight_root bash lab/experiments/EXP-DX1/h8/up.sh "$prefix" --no-publish --cpus-pg 0 --cpus-tx 0,1 --cpus-gw-write 1 --cpus-gw-read 2,3 \
+  --tx-java-opts '-Xms1g -Xmx3g' --gw-java-opts '-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g' \
+  --pg-settings '-c shared_buffers=512MB -c max_wal_size=2GB -c checkpoint_timeout=30min' > "$preflight/up.log" 2>&1
+ DX_DRIVER_EVIDENCE=$preflight DX_DRIVER_ENV='TRIPLEX_DATOMIC_LAYOUT=lean TX2_W0_COUNT_CONCURRENCY=64 TX2_SWEEP_STRICT=1' \
+ bash lab/experiments/EXP-DX1/h8/run-in-vm.sh "$prefix" --cpus 4,5,6,7 --memory 8g -- \
+  node --experimental-strip-types lab/experiments/EXP-DX1/h8/observe-counts.mjs --world w0 --lane datomic --composition reach --output runs/DX-H8-vm/receipt.json \
+  --rung 1000 --scope dxh5-w0-1000-v1 --seed-receipt /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5/tx2-dxh5-seed1000b/driver/receipt.json \
+  --seed-mapper 95781c05db68757c31e4ba218dfcb40a4fa7e957f25c9fdd0da1999ede33f79e --workers 4 --live --baseline-s 30 --live-warmup-s 15 --discard-seed-log > "$preflight/driver.log" 2>&1
+ python3 - "$preflight/driver/receipt.json" <<'PYVALID'
+import json,sys
+r=json.load(open(sys.argv[1])); assert r['N']==1000 and r['scope']=='dxh5-w0-1000-v1'
+assert all(r['gates'][k]['status']=='PASS' for k in ['G0','G1','G2','G3','G5','G7','G9'])
+assert r['gates']['G4']['resumeComplete']
+print(json.dumps({'phase':'fresh-fallback-validation','ackMs':r['sweep']['activationToLastAckMs'],'gates':r['gates'],'counts':r['bulkCountObservations']}))
+PYVALID
+ for role in gw-r gw-w tx pg; do docker logs "$prefix-$role" > "$preflight/$role.log" 2>&1 || true; done
+ for role in gw-r gw-w tx; do docker update --restart=no "$prefix-$role" >/dev/null; docker exec "$prefix-$role" sh -c 'for f in /proc/[0-9]*/comm; do read n < "$f" || continue; if [ "$n" = java ]; then p=${f#/proc/}; p=${p%/comm}; kill -TERM "$p"; fi; done' || true; done
+ for role in gw-r gw-w tx pg; do docker stop -t 30 "$prefix-$role" >/dev/null; done
+ bash lab/experiments/EXP-DX1/stack/down.sh "$prefix" --volumes
+ docker volume rm "$prefix-driver" >/dev/null
+ unset DXH8_RESTORE
+fi
 if [[ -n ${DXH8_SEED_VOLUME:-} ]]; then
  [[ $DXH8_SEED_VOLUME == tx2-dxh5-seed-1000-pg-data || $DXH8_SEED_VOLUME == tx2-dxh8-seed-10000-pg-data ]] || exit 2
  docker volume inspect "$DXH8_SEED_VOLUME" > "$out/seed-volume.json"
@@ -81,9 +122,12 @@ if [[ -n ${DXH8_SEED_VOLUME:-} ]]; then
  export DXH8_RESTORE=true
 fi
 export DX_TX_HEAP=3g DX_TX_MEMORY=4g DX_GW_WRITE_MEMORY=3g DX_GW_READ_MEMORY=3g DX_PG_MEMORY=2g DX_OBJECT_CACHE=1g DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
+tx_profile='-XX:StartFlightRecording=filename=/tmp/h8.jfr,settings=profile,dumponexit=true'
+gw_profile=$tx_profile
+[[ $kind != seed ]] || { tx_profile=; gw_profile=; }
 bash lab/experiments/EXP-DX1/h8/up.sh "$prefix" --no-publish --cpus-pg 0 --cpus-tx 0,1 --cpus-gw-write 1 --cpus-gw-read 2,3 \
- --tx-java-opts '-Xms1g -Xmx3g -XX:StartFlightRecording=filename=/tmp/h8.jfr,settings=profile,dumponexit=true' \
- --gw-java-opts '-XX:StartFlightRecording=filename=/tmp/h8.jfr,settings=profile,dumponexit=true -Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g' \
+ --tx-java-opts "-Xms1g -Xmx3g $tx_profile" \
+ --gw-java-opts "$gw_profile -Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g" \
  --pg-settings '-c shared_buffers=512MB -c max_wal_size=2GB -c checkpoint_timeout=30min' > "$out/up.log" 2>&1
 docker stats --no-stream --format '{{json .}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" > "$out/stats-owned.jsonl"
 export DX_DRIVER_ENV="TRIPLEX_DATOMIC_LAYOUT=lean TX2_W0_COUNT_CONCURRENCY=64 TX2_SWEEP_STRICT=1"

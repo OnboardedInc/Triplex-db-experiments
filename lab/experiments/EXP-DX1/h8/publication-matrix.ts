@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { openComposition } from "../../../bench/lib/composition.ts";
-import { W0, w0Basis } from "../../../bench/lib/w0-world.ts";
+import { w0Basis } from "../../../bench/lib/w0-world.ts";
 // [DX-H8] Why: repeat the same verified outputs at a later basis to isolate publication from world fetching.
 // Rejected: synthetic datoms or clearing persisted outbox state to make larger frames look cheaper.
 export async function publicationMatrix(report: any, dir: string) {

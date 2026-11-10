@@ -166,6 +166,7 @@ export async function publishRecords(
           (commitEndCpu.user - buildEndCpu.user + commitEndCpu.system - buildEndCpu.system) / 1000,
         publishCommitMs: commit.wallMs,
         publishRequests: commit.requests,
+        publishFailures: commit.value.failedRequests,
         publishDatoms: commit.value.datomSamples ? commit.value.datoms : null,
         publishGatewayMicros: commit.value.gatewayHeaders ? commit.value.gatewayMicros : null,
       },
