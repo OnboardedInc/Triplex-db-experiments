@@ -84,4 +84,4 @@ extra=(); [[ -z ${DX_GW_JAVA_OPTS:-} ]] || extra+=(--gw-java-opts "$DX_GW_JAVA_O
 [[ -z ${DX_PG_SETTINGS:-} ]] || extra+=(--pg-settings "$DX_PG_SETTINGS")
 bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
 bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
- --lane datomic --composition reach --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "$DX_STACK_EVIDENCE/oracle" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1
+ --lane datomic --composition reach --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1

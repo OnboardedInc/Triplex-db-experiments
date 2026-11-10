@@ -32,6 +32,7 @@ import { Worker } from "node:worker_threads";
 import { openComposition, type CompositionHandle, type Receipt } from "./lib/composition.ts";
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
+import { SideThread } from "./lib/side-thread.ts";
 import { commitBreakdown } from "./lib/commit-breakdown.ts";
 import { completedMaintenanceInWindow, requestIndex } from "./lib/maintenance.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
@@ -274,7 +275,7 @@ function straddleCandidate(): { subject: number; seq: number } {
   return { subject: job.key, seq: job.ev.seq };
 }
 const overlayCount: Record<string, number> = {};
-let feed: FeedConsumer | null = null;
+let feed: FeedConsumer | SideThread | null = null;
 let feedWind: { target: number; checkpointAtStop: number; inFlightAtFeedTarget: number } | null = null;
 const lateGrowth: { cmd: any; v: number; pending: Promise<any> }[] = [];
 let coordinate: (position: number) => any = (position) => ({ stream: "unknown", epoch: 0, offset: position, ordinal: 0 });
@@ -413,7 +414,8 @@ async function run() {
     acked.push({ instant: receipt.instant, position: receipt.position, txId: receipt.txId, at });
     latestInstant = Math.max(latestInstant, receipt.instant);
     if (subject >= 0) lastWriteAt.set(subject, at);
-    feed?.ackArrived(receipt.position);
+    if (feed instanceof SideThread) feed.ack(receipt.position, { instant: receipt.instant, ackAt: at, subject, ...info, subjects: info.subjects ?? [subject] });
+    else feed?.ackArrived(receipt.position);
     return at;
   };
   const publicationTimes = new Map<number, any>();
@@ -476,7 +478,7 @@ async function run() {
     if (oracleRecordSet.has(ev.subject))
       recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
     if (ev.stream === "background") {
-      const p = ryow(aux, ev.subject, receipt);
+      const p = feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; records.push(row); }) : ryow(aux, ev.subject, receipt);
       ryowPending.add(p);
       void p.finally(() => ryowPending.delete(p));
     }
@@ -486,7 +488,10 @@ async function run() {
     const orig = original.get(job.ev.seq);
     if (!orig) { resends.push({ seq: job.ev.seq, result: "original-not-committed" }); out.outcome = "resend-of-uncommitted"; return; }
     out.attempts = 1;
+    out.transactCalledAt = now();
     const res = await writer.transact(orig.operations, orig.meta);
+    out.transactReturnedAt = now();
+    out.ackPublishedAt = now();
     let how = "mismatch";
     if (res.ok) how = "COMMITTED-AGAIN";
     else if (res.tag === "CommandAlreadyCommittedError" && res.error?.transactionId === orig.receipt.txId) how = "already-committed-original";
@@ -542,6 +547,13 @@ async function run() {
   const publicationSource = JSON.stringify({ route: "A0-control", dir: rawDir, epoch: `${scopeName}#0` });
   const publicationWriter = publicationClock ? openPublicationWriter(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock) : null;
   const publicationReader = publicationWriter ? openPublicationReader(path.join(rawDir, "publication.db")) : null;
+  if (!pairPlan && lane === "datomic" && config.composition !== "memory") {
+    feed = new SideThread({dir:rawDir,epoch:`${scopeName}#0`,startAfter:seed.lastPosition,
+      lane,composition:config.composition,scope:scopeName,publication:!!publicationWriter,
+      crashes:crashPlan,publicationWaitMs:5000,pollTimeoutMs:120_000},log);
+    feed.dir=rawDir;
+    await feed.ready;
+  } else {
   feed = pairPlan ? null : new FeedConsumer({
     publicationWaitMs: lane === "datomic" ? 5000 : 0,
     // [DX-H3] Why: match the existing 120-second final feed catch-up budget. Rejected: 30 seconds (censored a small poll that the earlier run completed).
@@ -551,6 +563,7 @@ async function run() {
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
     open: () => openComposition(config.composition, lane, scopeName), log, crashes: crashPlan,
   });
+  }
   if (publicationWriter) observeDatomicPublication((position, operationId, diagnostics) => {
     const publicationStartedAt = now();
     publicationWriter.publish(feed!.publicationKey(position), operationId);
@@ -757,6 +770,7 @@ async function run() {
   await aux.close().catch(() => {});
   await growthComp.close().catch(() => {});
   await probeComp?.close().catch(() => {});
+  if (feed instanceof SideThread) { report.sideThread = { elu: feed.elus }; await feed.close(); }
   observeDatomicPublication(undefined);
   publicationReader?.close();
   publicationWriter?.close();
