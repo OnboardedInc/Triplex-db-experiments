@@ -270,15 +270,47 @@ second read, decoded and evaluated, about 13 GB of row JSON. That needs several 
 the 8-CPU VM also has to carry live traffic during the sweep. Seeding 100k is 4.3 million commands (about 3 to 4 hours at 300 to 400
 commands per second).
 
+## DX-H4 merged (2026-11-10 08:45 UTC, merge e5150d6c): paired run at 2,000 subjects, and what the tables say
+
+Report `lab/experiments/EXP-DX1/h4/REPORT.md`, tables `h4/tx2-dxh4-s6-TABLES.md`, evidence
+`~/Claude/Projects/triplex-db-2/evidence/DX-H4/tx2-dxh4-s6-{ladder,zero}`. 960,817 of 960,817 reads correct, oracle PASS,
+maintenance event in every window, history p99 ratio 0.963, goodput 256/64 1.08. The 10k pair was not run (lock contention).
+
+Misses: read p99 at L256 659 ms (bar 100); writer p99 ratio at 256 2.60 (bar 1.25, matched baseline); P2 at L256 p50 25 ms and
+p99 274 ms; steady band p50 18.6 ms; lone commits at L1 p50 36 ms; P3 lag p99 at L256 520 ms; P4 903 pulls/s per quota core
+(bar 1,100); recovery unjudged (30 s window); P5 is fetch-only in this driver.
+
+Orchestrator reading of the tables (hypotheses, each with the test that settles it):
+
+1. **Sparse work is slow on this VM, dense work is fast.** Commit p50 is 36 ms at L1, 30 ms at L4 and 13.6 ms at L16; it falls
+   as the machine gets busier. DX-B6 measured back-to-back commits at p50 4.7 ms and one per second at 25 to 34 ms, with every
+   component about 10x slower in the sparse case, including command construction in the driver (9.2 ms against 0.07 ms), which
+   never touches Datomic. Feed lag p99 is 2,088 ms at L1 and 14 ms at L16. Hypothesis: an idle vCPU under the macOS hypervisor
+   takes milliseconds to wake, so every hop of a sparse commit pays a wake. Test: `lab/experiments/EXP-DX1/vm-wake/run.sh` with
+   and without `--spin` (no containers; fixed pure-CPU unit after a sleep). If confirmed, the lone-commit and steady-band misses
+   are a property of the test bed, and the remedy is a VM setting (idle polling), recorded in every receipt. The 2 s feed lag at
+   L1 and L4 still needs its own check: it looks like a long-poll that fell to its timeout.
+2. **The read gateway loses efficiency under concurrency.** L4: 3,611 pulls/s on 1.18 engine cores in total (3,061 per used
+   core). L1024 phase (256 readers, quiet writer): 3,593 pulls/s with the read gateway at 188% of its 2 CPUs (about 1,900 per
+   core). L256 (burst): 2,167 pulls/s at 183% (about 1,180 per core). Closed-loop arithmetic: 256 readers with read p99 under
+   100 ms needs about 5,000 pulls/s or more; 2 read-gateway CPUs at the L4 efficiency would give about 6,000. So P1 read p99, P4
+   per quota core and P3 lag at L256 (the feed shares the saturated read gateway) all depend on one thing: why a pull costs 2 to
+   3 times more CPU at 256 readers than at 4. Test: JFR and GC log on the read gateway at L4 and L256, and `--cpu-prof` on one
+   reader worker. No download needed, JFR ships with the JVM.
+3. **The driver is close to its own CPU limit.** Three reader workers at ELU 0.83 to 0.86, plus main, side and probe workers, on
+   4 CPUs. Writer latency is measured inside that container, so the writer p99 ratio at 256 includes client contention. Remedy
+   candidates: cheaper verification per read, or more VM CPUs (Sam's call; the Mac has 12 cores, the VM has 8).
+4. **P4 per quota core is measured at the best ladder level, which neither side saturates.** The bar divides goodput by the 4
+   quota cores (TARGETS section 1.1 P4 item 3), so the engine has to reach 4,400 pulls/s. It only can if item 2 is fixed.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-B6 | Package gaps: lone-commit latency, reference misses, cache byte budget, strict record times and the peer watermark wait (stale reads), the two failing tests | `exp/DX-B6-package-gaps`, `.claude/worktrees/dx-b6` | `.../prompts/DX-B6.md` |
-| DX-H4 | Driver verdicts: maintenance attribution, index before depth phases, matched zero-reader pair, per-commit breakdown, writer thread; paired runs at 2,000 and 10k | `exp/DX-H4-driver-verdicts`, `.claude/worktrees/dx-h4` | `.../prompts/DX-H4.md` |
 | DX-H5 | P5 for real: W0 seed on lean in the VM, sealed seed volumes, activation with gates and live traffic at 1k and 10k, the 100k arithmetic | `exp/DX-H5-p5-in-vm`, `.claude/worktrees/dx-h5` | `.../prompts/DX-H5.md` |
 
-All three share the measurement lock; a container may exist only while its owner holds the lock. These three were launched with
+DX-H4 finished and is merged (see above). The agents share the measurement lock; a container may exist only while its owner holds the lock. These three were launched with
 `nohup`; the orchestrator watches `lab/agents/ledger.jsonl` for their exit events.
 
 After these: merge; paired 10k NS run on lean; P5 follow-up from DX-H5's ranking; asynchronous reifier for native Datalog on lean;
