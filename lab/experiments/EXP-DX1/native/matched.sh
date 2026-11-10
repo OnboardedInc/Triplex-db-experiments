@@ -70,6 +70,11 @@ for repeat in 1 2; do
    run=$NATIVE/runs/$arm_prefix
    for ((i=0;i<240;i++)); do [[ ! -f $run/ready.json ]] || break; kill -0 "$supervisor" 2>/dev/null || exit 1; sleep 1; done
    [[ -f $run/ready.json ]] || exit 1
+   python3 - "$run/ready.json" "$DX_STACK_EVIDENCE/$prefix-vm-$repeat/stack.json" <<'PYVERIFY'
+import json,sys
+native=json.load(open(sys.argv[1])); vm=json.load(open(sys.argv[2]))
+assert native['originalGatewaySourceHash']==vm['gatewaySourceSha256'], 'gateway business source differs between matched arms'
+PYVERIFY
    export DATOMIC_URL=http://127.0.0.1:28403 DATOMIC_READ_URLS=http://127.0.0.1:28404 TRIPLEX_DATOMIC_LAYOUT=lean
    export DX_N1_OUTPUT=$run/driver
    export TX2_NATIVE_PIDS=$(python3 -c 'import json,sys; print(json.dumps({k:v["pid"] for k,v in json.load(open(sys.argv[1]))["pids"].items()}))' "$run/ready.json")

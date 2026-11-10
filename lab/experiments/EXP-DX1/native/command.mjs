@@ -1,5 +1,6 @@
 // [DX-N1] Why: bound the entire owned client group, including vitest workers. Rejected: signalling only pnpm.
-import {spawn} from 'node:child_process';
+import {spawn,execFileSync} from 'node:child_process';
+if(process.platform==='darwin')execFileSync('/usr/sbin/taskpolicy',['-B','-p',String(process.pid)]);
 const child=spawn(process.argv[2],process.argv.slice(3),{stdio:'inherit',detached:true});
 let stopping=false,timer;
 function stop(){if(stopping)return;stopping=true;try{process.kill(-child.pid,'SIGTERM')}catch{};timer=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL')}catch{}},2000);}

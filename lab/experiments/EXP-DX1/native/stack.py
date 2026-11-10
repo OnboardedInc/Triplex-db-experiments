@@ -42,6 +42,7 @@ def down(keep=False):
 
 if mode=='down':down('--keep' in sys.argv);sys.exit()
 assert sys.platform=='darwin','native arm requires macOS'
+subprocess.run(['/usr/sbin/taskpolicy','-B','-p',str(os.getpid())],check=True)
 run.mkdir(parents=True,exist_ok=False)
 java=next(TOOLS.glob('jdk-21*/Contents/Home/bin/java'))
 pg=TOOLS/'postgres/bin'; datomic=TOOLS/'datomic'
@@ -85,11 +86,11 @@ try:
  src=run/'gateway';shutil.copytree(REPO/'packages/datomic/gateway',src)
  shutil.copy(REPO/'packages/datomic/src/codec-spec.json',src/'codec-spec.json')
  hashes=lambda:{str(p.relative_to(src)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(src.rglob('*')) if p.is_file()}
- original=hashes(); main=src/'src/triplex/gateway/main.clj'; text=main.read_text()
+ original=hashes(); original_hash=hashlib.sha256(json.dumps(original,sort_keys=True,separators=(',',':')).encode()).hexdigest(); main=src/'src/triplex/gateway/main.clj'; text=main.read_text()
  old='{:port 8080 :host "0.0.0.0"';assert text.count(old)==1
  main.write_text(text.replace(old,'{:port (Integer/parseInt (System/getenv "DX_NATIVE_GATEWAY_PORT")) :host "127.0.0.1"'))
  adapted=hashes(); gh=hashlib.sha256(json.dumps(adapted,sort_keys=True,separators=(',',':')).encode()).hexdigest()
- (run/'gateway-files.json').write_text(json.dumps(dict(original=original,native=adapted,nativeHash=gh),indent=2))
+ (run/'gateway-files.json').write_text(json.dumps(dict(original=original,originalHash=original_hash,native=adapted,nativeHash=gh),indent=2))
  (run/'tx-data').mkdir(); (run/'socket').mkdir()
  command([pg/'initdb','-D',run/'pg-data','-U','postgres','--auth=trust','--no-locale','--encoding=UTF8'])
  pgargs=[pg/'postgres','-D',run/'pg-data','-h','127.0.0.1','-p',str(base),'-k','','-c','shared_buffers=512MB','-c','max_wal_size=8GB','-c','checkpoint_timeout=30min','-c','wal_buffers=64MB','-c','fsync=on','-c','synchronous_commit=on','-c','full_page_writes=on']
@@ -117,7 +118,7 @@ try:
  assert all(durability[k]=='on' for k in ['fsync','synchronous_commit','full_page_writes'])
  (run/'durability.json').write_text(json.dumps(durability,indent=2))
  (run/'policy.txt').write_text(command(['ps','-o','pid,ppid,stat,ni,flags,command','-p',','.join(str(c.pid) for c in children)]))
- ready=dict(prefix=prefix,variant=variant,keepAwake=False,writeUrl=f'http://127.0.0.1:{base+3}',readUrl=f'http://127.0.0.1:{base+4}',gatewaySourceHash=gh,durability=durability,cpuDenominator='used process CPU cores; no quota',pids={r:json.loads((run/(r+'.pid.json')).read_text()) for r in ['pg','tx','gw-w','gw-r']})
+ ready=dict(prefix=prefix,variant=variant,keepAwake=False,writeUrl=f'http://127.0.0.1:{base+3}',readUrl=f'http://127.0.0.1:{base+4}',gatewaySourceHash=gh,originalGatewaySourceHash=original_hash,durability=durability,cpuDenominator='used process CPU cores; no quota',pids={r:json.loads((run/(r+'.pid.json')).read_text()) for r in ['pg','tx','gw-w','gw-r']})
  (run/'ready.json').write_text(json.dumps(ready,indent=2));print(json.dumps(ready),flush=True)
  tick=0
  while True:
