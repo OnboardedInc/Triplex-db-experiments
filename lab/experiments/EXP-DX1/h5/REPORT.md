@@ -35,7 +35,7 @@ Restored scopes use live clock/fresh IDs for new writes: reopening with the dete
 
 ## Sweep and gates
 
-All completed 1k configurations use page size 64, 64 uniform current-position live readers, identical frozen writer offers, a 60-second baseline, and a fresh clone of the sealed seed. Each is one trial. Four workers was selected for 10k by observed goodput, retaining its writer-bound miss.
+All completed 1k configurations use page size 64, 64 uniform current-position live readers, identical frozen writer offers, a 60-second baseline, and a fresh clone of the sealed seed. Each is one trial. Eight workers was selected for 10k: it was fastest among the observed configurations whose read and writer ratios both met 1.5. The earlier four-worker waiting launcher was canceled before admission; its source and cancellation observation remain retained. No measurement result was discarded.
 
 | Subjects |    Workers | Sweep wall s | Subjects/s | ACKed pages | Exact coverage | Read p99 ratio | Writer p99 ratio |
 | -------: | ---------: | -----------: | ---------: | ----------: | -------------: | -------------: | ---------------: |
@@ -129,7 +129,7 @@ bash lab/experiments/EXP-DX1/h5/sweep-after-cache-gate.sh 4 tx2-dxh5-w4b
 bash lab/experiments/EXP-DX1/h5/sweep-after-cache-gate.sh 8 tx2-dxh5-w8b
 node lab/bin/heavy.mjs --label DX-H5-history1 -- bash lab/experiments/EXP-DX1/h5/attempt-counts.sh history tx2-dxh5-history1
 node lab/bin/heavy.mjs --label DX-H5-seed10000a -- bash lab/experiments/EXP-DX1/h5/attempt-counts.sh seed tx2-dxh5-seed10000a --rung 10000 --scope dxh5-w0-10000-v1 --g0-only
-bash lab/experiments/EXP-DX1/h5/sweep10000.sh
+bash lab/experiments/EXP-DX1/h5/sweep10000-bounded.sh
 node lab/experiments/EXP-DX1/h5/analyze.mjs /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5
 node lab/experiments/EXP-DX1/h5/pages.mjs /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5
 ```
