@@ -106,6 +106,7 @@ export class FeedConsumer {
   private lastStamp = new Map<number, number>();
   counts = {
     pages: 0,
+    pollErrors: 0,
     entries: 0,
     deliveries: 0,
     redeliveries: 0,
@@ -228,6 +229,7 @@ export class FeedConsumer {
   recoverDelayMs = 2000;
 
   private async consume(handle: CompositionHandle) {
+    let firstFailureAt: number | undefined;
     while (!this.stopping) {
       let page;
       let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -240,12 +242,20 @@ export class FeedConsumer {
           timeout = setTimeout(() => reject(timeoutError), this.pollTimeoutMs);
         })]) : await pending;
       } catch (error) {
+        this.counts.pollErrors++;
+        if (this.counts.pollErrors <= 3 || this.counts.pollErrors % 10 === 0) this.log(`feed: poll error ${this.counts.pollErrors} at checkpoint ${this.checkpoint}: ${String(error)}`);
         if (error === timeoutError) throw error;
+        // [DX-H3] Why: repeated failed calls can each finish before the per-call deadline yet never deliver a page.
+        // Rejected: retrying forever and hiding the underlying source error from the final report.
+        const failedAt = performance.now();
+        firstFailureAt ??= failedAt;
+        if (this.pollTimeoutMs > 0 && failedAt - firstFailureAt >= this.pollTimeoutMs) throw new Error(`Feed polling repeatedly failed for ${Math.round(failedAt - firstFailureAt)} ms at checkpoint ${this.checkpoint}. Last error: ${String(error)}`);
         await new Promise((r) => setTimeout(r, 100));
         continue;
       } finally {
         clearTimeout(timeout);
       }
+      firstFailureAt = undefined;
       this.counts.pages++;
       const txs = page.transactions;
       if (!txs.length) {

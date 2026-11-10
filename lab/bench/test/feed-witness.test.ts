@@ -106,3 +106,39 @@ test("a stalled source poll fails instead of leaving final reporting blocked", a
     fs.rmSync(dir, { recursive: true });
   }
 });
+
+test("repeated source failures retain their error and fail finalization without advancing", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dxh3-retry-"));
+  let closed = false;
+  const logs: string[] = [];
+  const feed = new FeedConsumer({
+    dir,
+    epoch: "retry",
+    startAfter: 0,
+    now: Date.now,
+    pollTimeoutMs: 20,
+    commitOf: () => undefined,
+    open: async () =>
+      ({
+        feedPage: async () => {
+          throw Error("source-read-failure");
+        },
+        close: async () => {
+          closed = true;
+        },
+      }) as any,
+    log: (l) => logs.push(l),
+    crashes: [],
+  });
+  try {
+    await assert.rejects(feed.run(), /Feed polling repeatedly failed.*source-read-failure/);
+    assert.equal(closed, true);
+    assert.equal(feed.checkpoint, 0);
+    assert.equal(feed.counts.durableWrites, 0);
+    assert.ok(feed.counts.pollErrors >= 2);
+    assert.ok(logs.some((l) => l.includes("source-read-failure")));
+  } finally {
+    feed.close();
+    fs.rmSync(dir, { recursive: true });
+  }
+});
