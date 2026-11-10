@@ -83,3 +83,7 @@ Each attempt retains the exact executable sources rather than relying on a later
 16. `node lab/bin/heavy.mjs --label DX-S4-final-audit -- python3 .../final-audit.py` finalizes syntax checks, the actual
     parent heavy permit, empty owned Docker inventories, source hashes, removal names and the complete durable manifest.
     It makes no independent semantic or production acceptance claim.
+17. The final audit initially waited unadmitted behind four live heavy-slot owners. Their PID-only process check is retained
+    in `final-audit-heavy-process-check.json`. Its own pending process was restarted with the canonical runner's documented
+    `--poll-ms 100` setup-starvation option; the four-slot limit and other owners were left unchanged. The retry observation
+    is `final-audit-admission-retry.json`.
