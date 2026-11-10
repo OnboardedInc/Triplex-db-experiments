@@ -168,6 +168,7 @@ await sleep(30000);
 level(0, -1);
 await sleep(1500);
 for (const [phase, readers] of [64, 256].entries()) {
+  const cpuStart = process.cpuUsage();
   const first = telemetry.length,
     from = performance.timeOrigin + performance.now();
   if (phase === 0) workers[0]!.postMessage({ type: "profile-start" });
@@ -175,6 +176,7 @@ for (const [phase, readers] of [64, 256].entries()) {
   await sleep(30000);
   level(0, phase);
   const to = performance.timeOrigin + performance.now();
+  const cpuUsed = process.cpuUsage(cpuStart);
   await sleep(1500);
   if (phase === 0) workers[0]!.postMessage({ type: "profile-stop" });
   const rows = records.filter((r) => r[R.phase] === phase && r[R.start] >= from && r[R.start] < to);
@@ -199,6 +201,7 @@ for (const [phase, readers] of [64, 256].entries()) {
       to,
       pulls: rows.length,
       pullsPerS: rows.length / ((to - from) / 1000),
+      processCpuMsPerPull: (cpuUsed.user + cpuUsed.system) / 1000 / rows.length,
       p99: lat[Math.floor(lat.length * 0.99)],
       errors,
       violations,
