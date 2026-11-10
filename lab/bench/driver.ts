@@ -145,7 +145,7 @@ const log = (line: string) => {
   process.stderr.write(text + "\n");
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
-const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
+const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 
 const report: Record<string, any> = latencyReceipt({
   format: "tx2-ns-report/2",
@@ -780,6 +780,8 @@ async function run() {
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
   report.finalPosition = finalPosition === null ? null : coordinate(finalPosition);
+  if (feed && feed.uncheckedIntents) finalizationErrors.push(`${feed.uncheckedIntents} feed intent checks still lack ACK metadata`);
+  if (ryowPending.size) finalizationErrors.push(`${ryowPending.size} read-your-own-write pulls did not finish`);
   report.finalizationErrors = finalizationErrors;
   report.positionCoordinates = "TARGETS 4.1 item 3: (stream, epoch, offset, ordinal); Triplex gives one dense position per scope and one engine transaction per transact, so offset = position and ordinal = 0";
   report.maintenance = maintenance;

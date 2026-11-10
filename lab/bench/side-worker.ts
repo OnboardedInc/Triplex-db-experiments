@@ -23,7 +23,7 @@ const timer = setInterval(()=>{
 },1000);
 function snapshot() {
  return {checkpoint:feed.checkpoint,counts:feed.counts,firstSeen:feed.firstSeen,lags:feed.lags,
-  crashes:feed.crashReport(),duplicates:feed.visibleDuplicateEffects()};
+  uncheckedIntents:feed.uncheckedIntents, crashes:feed.crashReport(),duplicates:feed.visibleDuplicateEffects()};
 }
 port!.on('message',async m=>{
  try {
@@ -37,7 +37,6 @@ port!.on('message',async m=>{
   }
   if(m.type==='ryow') {
    const {subject,receipt,basis,start}=m;
-   const t=performance.now();
    let row;
    try {
     const pr=await aux.pull(ids.placement(subject),basis);const o=observe(pr);

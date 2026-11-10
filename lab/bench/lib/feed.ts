@@ -105,6 +105,8 @@ export class FeedConsumer {
   readonly pendingLag = new Map<number, number>();
   private readonly durableKnown = new Set<number>();
   private lastStamp = new Map<number, number>();
+  private pendingIntent = new Map<number, { tx: any; subjects: number[] }>();
+  get uncheckedIntents() { return this.pendingIntent.size; }
   counts = {
     pages: 0,
     pollErrors: 0,
@@ -293,23 +295,10 @@ export class FeedConsumer {
             this.lastStamp.set(subject, stamp);
           }
         }
-        const info = this.commitOf(tx.position);
-        if (info && !first) {
-          const expected = [...info.subjects].sort((x, y) => x - y);
-          if (a.subjects.length !== expected.length || a.subjects.some((s, k) => s !== expected[k]))
-            this.counts.affectedMismatches++;
-          if (info.correction) {
-            this.counts.corrections++;
-            if (
-              (tx.changes ?? []).some(
-                (c: any) =>
-                  c.op === "assert" &&
-                  c.attribute === ":worker/address" &&
-                  c.validFrom === info.correctionValidFrom,
-              )
-            )
-              this.counts.correctionRangeReported++;
-          }
+        if (!first) {
+          const info = this.commitOf(tx.position);
+          if (info) this.checkIntent(tx, a.subjects, info);
+          else this.pendingIntent.set(tx.position, { tx, subjects: a.subjects });
         }
         for (const s of a.subjects) {
           const key = `${this.name}|${this.epoch}|${tx.position}|${s}`;
@@ -391,8 +380,21 @@ export class FeedConsumer {
       this.maybeCrash("after-checkpoint");
     }
   }
+  // [DX-H4] Why: feed and ACK now arrive on independent threads; every intent still gets checked.
+  // Rejected: skipping affected-set/correction checks when the feed wins the race.
+  private checkIntent(tx: any, subjects: number[], info: CommitInfo) {
+    const expected = [...info.subjects].sort((x, y) => x - y);
+    if (subjects.length !== expected.length || subjects.some((s, k) => s !== expected[k])) this.counts.affectedMismatches++;
+    if (info.correction) {
+      this.counts.corrections++;
+      if ((tx.changes ?? []).some((c: any) => c.op === "assert" && c.attribute === ":worker/address" && c.validFrom === info.correctionValidFrom)) this.counts.correctionRangeReported++;
+    }
+  }
   /** The driver calls this when an ACK arrives for a position the consumer already made durable. */
   ackArrived(position: number) {
+    const pending = this.pendingIntent.get(position);
+    const infoNow = this.commitOf(position);
+    if (pending && infoNow) { this.checkIntent(pending.tx, pending.subjects, infoNow); this.pendingIntent.delete(position); }
     const durableAt = this.pendingLag.get(position);
     if (durableAt === undefined) return;
     this.pendingLag.delete(position);

@@ -3,15 +3,15 @@ import { Worker } from 'node:worker_threads';
 // Rejected: replacing feed correctness with worker exit status.
 export class SideThread {
   readonly name='dependency-index'; readonly epoch:string;
-  checkpoint=0; counts:any={}; firstSeen=new Map(); lags:any[]=[]; crashes:any[]=[]; duplicates=0;
+  checkpoint=0; counts:any={}; firstSeen=new Map(); lags:any[]=[]; crashes:any[]=[]; duplicates=0; uncheckedIntents=0;
   elus:any[]=[];
   private worker:Worker; private serial=0; private pending=new Map<number,any>();
   private done:Promise<void>; ready:Promise<void>;
   constructor(cfg:any,log:(s:string)=>void) {
     this.epoch=cfg.epoch;this.checkpoint=cfg.startAfter;
     this.worker=new Worker(new URL('../side-worker.ts',import.meta.url),{workerData:cfg});
-    let readyResolve:any,doneResolve:any,doneReject:any;
-    this.ready=new Promise(r=>readyResolve=r);
+    let readyResolve:any,readyReject:any,doneResolve:any,doneReject:any;
+    this.ready=new Promise((r,j)=>{readyResolve=r;readyReject=j;});
     this.done=new Promise((r,j)=>{doneResolve=r;doneReject=j;});
     void this.done.catch(()=>{});
     this.worker.on('message',m=>{
@@ -21,7 +21,7 @@ export class SideThread {
       if(m.type==='done'){Object.assign(this,m.snapshot);if(m.error)doneReject(Error(m.error));else doneResolve();}
       if(m.type==='reply'){const p=this.pending.get(m.id);this.pending.delete(m.id);if(m.error)p?.reject(Error(m.error));else p?.resolve(m.value);}
     });
-    this.worker.on('error',e=>{doneReject(e);for(const p of this.pending.values())p.reject(e);});
+    this.worker.on('error',e=>{readyReject(e);doneReject(e);for(const p of this.pending.values())p.reject(e);});
     this.worker.on('exit',code=>{if(code)doneReject(Error(`side worker exited ${code}`));});
   }
   private rpc(type:string,args:any):Promise<any>{const id=++this.serial;return new Promise((resolve,reject)=>{this.pending.set(id,{resolve,reject});this.worker.postMessage({type,id,...args});});}
