@@ -2,9 +2,10 @@
 # [DX-H3] Why: cleanup precedes measurement-lock release. Rejected: abandoned engines outside a lease.
 set -euo pipefail
 kind=${1:?functional|medium|real}; prefix=${2:?prefix}; shift 2
-[[ $prefix =~ ^tx2-dxh3-[a-z0-9-]+$ ]] || exit 2
+[[ $prefix =~ ^tx2-dx[a-z0-9-]+$ ]] || exit 2
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
-export DX_STACK_EVIDENCE=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3
+agent=$(printf '%s' "$prefix" | cut -d- -f2 | tr '[:lower:]' '[:upper:]' | sed 's/^DX/DX-/')
+export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/$agent}
 out=$DX_STACK_EVIDENCE/$prefix; mkdir -p "$out"
 printf '%s\n' "$kind" "$prefix" "$@" > "$out/arguments.txt"
 git rev-parse HEAD > "$out/head.txt"
@@ -47,9 +48,9 @@ assert shutil.disk_usage('.').free>=5*1024**3, 'less than 5 GiB host disk free'
 PY2
 }
 check_resources before
-if [[ $kind != functional ]]; then
+if [[ $kind =~ ^(functional|medium|real)$ ]]; then
   while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
-  held=true; printf '{"id":"DX-H3","prefix":"%s","kind":"%s"}\n' "$prefix" "$kind" > "$lock/owner.json"
+  held=true; printf '{"id":"DX-H4","prefix":"%s","kind":"%s"}\n' "$prefix" "$kind" > "$lock/owner.json"
 fi
 trap cleanup EXIT
 check_resources admitted
