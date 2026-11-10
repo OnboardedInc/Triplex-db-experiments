@@ -91,11 +91,13 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
           rowIds: string[];
         }[] = [];
         let conflicts = 0,
-          begins = 0;
+          begins = 0,
+          resolutions = 0;
         for (const h of s.handles) {
           const request = h.client.request.bind(h.client);
           h.client.request = async (...args: Parameters<typeof request>) => {
             if (args[1].endsWith("/begin")) begins++;
+            if (args[1].includes("/operation/")) resolutions++;
             try {
               return await request(...args);
             } catch (e) {
@@ -154,6 +156,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         );
         expect(conflicts).toBe(0);
         expect(begins).toBe(3200);
+        expect(resolutions).toBe(0);
         seen.sort((a, b) => a.position - b.position);
         expect(seen.map((x) => x.position)).toEqual(
           Array.from({ length: 3200 }, (_, i) => seeded.position + i + 1),
@@ -418,5 +421,61 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         await s.close();
       }
     }, 60000);
+    it("returns final public nested receipt positions after an unrelated concurrent commit", async () => {
+      const s = await setup(2),
+        [a, b] = s.handles;
+      try {
+        let between = 0;
+        const receipts = await Effect.runPromise(
+          a!.adapter.withTransaction(
+            Effect.gen(function* () {
+              const first = yield* a!.triples.transact(
+                [
+                  {
+                    op: "assert",
+                    entityId: EntityId.make("nested-public"),
+                    attribute: ":nested/one" as any,
+                    value: { type: "string", value: "one" },
+                  },
+                ],
+                { commandId: "nested-public-one" },
+              );
+              const second = yield* a!.triples.transact(
+                [
+                  {
+                    op: "assert",
+                    entityId: EntityId.make("nested-public"),
+                    attribute: ":nested/two" as any,
+                    value: { type: "string", value: "two" },
+                  },
+                ],
+                { commandId: "nested-public-two" },
+              );
+              between = (yield* Effect.promise(() =>
+                b!.runtime.runPromise(
+                  b!.triples.transact([
+                    {
+                      op: "assert",
+                      entityId: EntityId.make("unrelated-public"),
+                      attribute: ":nested/other" as any,
+                      value: { type: "string", value: "other" },
+                    },
+                  ]),
+                ),
+              )).position;
+              return [first, second];
+            }),
+          ),
+        );
+        expect(receipts.map((r) => r.position)).toEqual([between + 1, between + 2]);
+        for (const receipt of receipts) {
+          const stored = await a!.runtime.runPromise(a!.triples.transaction(receipt.txId));
+          expect(stored!.position).toBe(receipt.position);
+          expect(receipt.position).toBe(stored!.position);
+        }
+      } finally {
+        await s.close();
+      }
+    }, 30000);
   },
 );

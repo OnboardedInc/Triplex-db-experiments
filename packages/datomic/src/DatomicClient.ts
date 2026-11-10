@@ -413,11 +413,11 @@ export class DatomicClient {
       ),
     };
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
-    const response = await this.request<{ t?: TaggedValue; position?: TaggedValue }>(
-      "POST",
-      `/v1/db/${db}/transact`,
-      body,
-    );
+    const response = await this.request<{
+      t?: TaggedValue;
+      position?: TaggedValue;
+      delta?: number;
+    }>("POST", `/v1/db/${db}/transact`, body);
     if (response.t && response.position) {
       const p = validateTagged(response.position);
       const position = Number(p.v);
@@ -428,7 +428,8 @@ export class DatomicClient {
         position < 0 ||
         t.t !== "long" ||
         BigInt(t.v) < 0n ||
-        position !== input.position
+        !Number.isSafeInteger(response.delta) ||
+        position - input.position !== response.delta
       )
         throw new TypeError("Commit basis mismatch");
       this.lastCommit = { db, position, t: String(t.v) };

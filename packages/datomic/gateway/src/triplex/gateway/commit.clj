@@ -5,9 +5,10 @@
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
 (def code
   '(letfn [(value [e a] (:v (first (d/datoms db :eavt e a))))
+           (digits [p] (let [s (str p)] (str (subs "0000000000000000" (count s)) s)))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
      (let [{:keys [scope source provisional span live entities scope-wide ops times irregular position-irregular]} payload
-           h (value scope :triplex.scope/position) final (+ h span) delta (- final provisional)
+           h (value scope :triplex.scope/position) final (+ h span) final-digits (digits final) delta (- final provisional)
            lower (- provisional span)
            shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))
            row-a (d/entid db :triplex.entity/row)]
@@ -25,12 +26,10 @@
                    (and (instance? java.util.List x) (= :triplex/position (first x))) (shifted (second x))
                    (and (instance? java.util.List x) (= :triplex/double-position (first x))) (double (shifted (second x)))
                    (and (instance? java.util.List x) (= :triplex/row (first x)))
-                   (let [[_ text p] x]
+                   (let [[_ text p offset] x]
                      (if (and (not= 0 delta) (< lower p (inc provisional)))
-                       (let [start (+ 5 (Integer/parseInt (subs text 1 5) 16))
-                             ref-size (Integer/parseInt (subs text (+ start 32) (+ start 36)) 16)
-                             offset (+ start 36 ref-size 3)]
-                         (str (subs text 0 offset) (format "%016d" (+ p delta)) (subs text (+ offset 16)))) text))
+                       (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
+                            (subs text (+ offset 16))) text))
                    (instance? java.util.Map x) (into {} (map (fn [[k v]] [k (replace-value v)]) x))
                    (instance? java.util.List x) (mapv replace-value x)
                    :else x))]

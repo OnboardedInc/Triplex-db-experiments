@@ -76,8 +76,8 @@
   ([db input scope]
    (let [rows (mapv decode-row (get input "rows")) new-ids (set (get input "newIds"))
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
-         source (get input "sourceK") position (safe-position (get input "position"))
-         span (or (get input "span") (when source (- position source)))
+         source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
+         span (safe-position (or (get input "span") (when source (- position source))))
          lower (- position span) claims (get input "claims") sample (or (first fresh) (first old))
          metadata {:position position
                    :recorded-at (cond (seq fresh) (:recorded_at sample) (seq old) (:retracted_at sample)
@@ -106,7 +106,8 @@
                                (codec/invalid "Missing or mismatched row text"))
                              [(if (> (.length ^String text) 8000)
                                 [:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]
-                                [:db/add (str "e:" (:entity_id row)) :triplex.entity/row [:triplex/row text (:recorded_position row)]])]))) fresh)
+                                [:db/add (str "e:" (:entity_id row)) :triplex.entity/row [:triplex/row text (:recorded_position row)
+                                  (+ 44 (.length ^String (:id row)) (if (= "ref" (:value_type row)) (.length ^String (:value_string row)) 0))]])]))) fresh)
                (mapcat (fn [row]
                          (when-not (:retracted_at row) (codec/invalid "Invalid retraction"))
                          (let [eid [:f/id (:id row)] subject [:triplex.entity/id (:entity_id row)]]

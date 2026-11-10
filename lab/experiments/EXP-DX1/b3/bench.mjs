@@ -273,6 +273,16 @@ async function main() {
     w = await handle("http://127.0.0.1:8499", scope);
     r = await handle("http://127.0.0.1:8500", scope);
     const db = (await w.client.create(scope)).db;
+    if (process.env.DX3_EXPECT_JSON_INDEX === "false") {
+      // [DX-B3-M5] Why: verify the measured database's actual schema, not just the schema source text.
+      // Rejected: labelling an index change from a file hash without reading the database.
+      const observed = await w.client.request("POST", `/v1/db/${db}/q`, {
+        edn: "[:find ?e :in $ $rules :where [?e :db/ident :f.v/json] (not [?e :db/index true])]",
+        relations: [],
+      });
+      assert.equal(observed.rows.length, 1);
+      report.jsonIndexDisabled = { database: db, witness: observed.rows };
+    }
     let writeRequestCount = 0;
     const writeRequest = w.client.request.bind(w.client);
     w.client.request = (...args) => {

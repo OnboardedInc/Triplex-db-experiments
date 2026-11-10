@@ -1,4 +1,5 @@
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
+import { RowCache } from "./RowCache.js";
 import { validateTagged } from "./codec.js";
 import { reachResponse } from "./reach.js";
 import { readFailure } from "./readErrors.js";
@@ -47,29 +48,20 @@ export const makeDatomicStorageAdapter = (
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
   let lastSeenPosition = 0;
-  const cache = new Map<string, TripleRow>();
+  const cache = new RowCache();
   const remember = (row: TripleRow) => {
-    cache.delete(row.id);
     cache.set(row.id, {
       ...row,
       retracted_at: null,
       retracted_position: null,
       retract_tx_id: null,
     });
-    if (cache.size > 100000) cache.delete(cache.keys().next().value!);
   };
   const observe = (name: string, row: TripleRow) => {
     if (name === db) remember(row);
   };
   client.rowObservers.add(observe);
-  const cached = (id: string) => {
-    const row = cache.get(id);
-    if (row) {
-      cache.delete(id);
-      cache.set(id, row);
-    }
-    return row;
-  };
+  const cached = (id: string) => cache.get(id);
   const finalPositions = new Map<string, number>();
   const admission = Semaphore.makeUnsafe(1);
   const current = Effect.map(CurrentTransactions, (transactions) => transactions.get(key));
@@ -173,15 +165,20 @@ export const makeDatomicStorageAdapter = (
     lastSeenPosition = Math.max(lastSeenPosition, position);
     for (const claim of state.claims.values()) finalPositions.set(claim.txId, position);
     for (const [id, row] of state.rows) {
-      const next = {
-        ...row,
-        recorded_position: state.newIds.has(id)
-          ? shift(row.recorded_position)
-          : row.recorded_position,
-        retracted_position: row.retracted_position === null ? null : shift(row.retracted_position),
-      };
-      if (state.newIds.has(id) && row.attribute === ":_tx/position")
-        next.value_number = next.recorded_position;
+      let next = row;
+      if (delta !== 0) {
+        next = {
+          ...row,
+          recorded_position: state.newIds.has(id)
+            ? shift(row.recorded_position)
+            : row.recorded_position,
+          retracted_position:
+            row.retracted_position === null ? null : shift(row.retracted_position),
+          ...(state.newIds.has(id) && row.attribute === ":_tx/position"
+            ? { value_number: shift(row.recorded_position) }
+            : {}),
+        };
+      }
       state.rows.set(id, next);
       if (state.newIds.has(id)) {
         if (row.tx_id) finalPositions.set(row.tx_id, next.recorded_position);
@@ -189,7 +186,6 @@ export const makeDatomicStorageAdapter = (
       }
     }
     state.position = position;
-    while (finalPositions.size > 100000) finalPositions.delete(finalPositions.keys().next().value!);
   };
 
   const persist = (
@@ -585,9 +581,15 @@ export const makeDatomicStorageAdapter = (
         }),
       ),
     currentCommitPosition: () =>
-      Effect.flatMap(current, (state) =>
-        state === undefined ? committedPosition() : Effect.succeed(state.position),
-      ),
+      Effect.flatMap(current, (state) => {
+        if (state?.optimistic) {
+          state.restart.needed = true;
+          return Effect.fail(
+            new DatomicOptimisticRestart({ message: "The current position requires a snapshot" }),
+          );
+        }
+        return state === undefined ? committedPosition() : Effect.succeed(state.position);
+      }),
     // [EXP-QH1-R5] Why: outside a transaction the gateway syncs a fresh database value for each request that carries no handle, so a
     // multi-level pull would read each level from a different value. One basis read at the pull's start gives the logical commit
     // position; every level then sends it as basis.recordedPosition and the gateway answers from `at-position` (d/as-of the first
