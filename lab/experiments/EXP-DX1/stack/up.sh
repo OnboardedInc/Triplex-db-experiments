@@ -93,7 +93,7 @@ for role in w r; do
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
   if [[ $role == w ]]; then mem=${DX_GW_WRITE_MEMORY:-1500m}; heap=${DX_GW_WRITE_HEAP:-1g}; else mem=${DX_GW_READ_MEMORY:-1500m}; heap=${DX_GW_READ_HEAP:-1g}; fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
-    "${ports[@]}" -e "JAVA_OPTS=-Xms256m -Xmx$heap" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx$heap" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -v "$src:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false

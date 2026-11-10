@@ -16,14 +16,13 @@ evidence=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/$prefix
 mkdir -p "$evidence/driver"
 docker image inspect node:22.23.2-bookworm-slim >/dev/null
 docker volume create "$prefix-driver" >/dev/null
-cgroups=
-for role in pg tx gw-w gw-r; do
-  name=$prefix-$role
-  # Docker exec resolves the host cgroup path without mounting the socket in the driver.
-  cg=$(docker exec "$name" cat /proc/self/cgroup | sed -n 's/^0:://p')
-  [[ $cg == /* && $cg != / && $cg != *..* ]] || { echo "unusable cgroup: $name $cg" >&2; exit 1; }
-  cgroups+=${cgroups:+,}"$name=/sys/fs/cgroup$cg"
-done
+ids=$(docker inspect --format '{{.Name}}={{.Id}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r")
+# [DX-H3] Why: engine cgroup namespaces expose only /; resolve IDs against the host cgroup mount.
+# Rejected: assuming a systemd layout or mounting the Docker socket in the measuring client.
+cgroups=$(docker run --rm --pull never --name "$prefix-cgroups" --cgroupns host -v /sys/fs/cgroup:/sys/fs/cgroup:ro node:22.23.2-bookworm-slim node -e '
+const fs=require("fs"); const rows=process.argv[1].trim().split("\n");
+function find(root,id,depth=0) { if(depth>5)return; for(const d of fs.readdirSync(root,{withFileTypes:true})) {if(!d.isDirectory())continue; const p=root+"/"+d.name;if(d.name.includes(id)&&fs.existsSync(p+"/cpu.stat"))return p;const r=find(p,id,depth+1);if(r)return r;}}
+console.log(rows.map(row=>{const [name,id]=row.split("=");const p=find("/sys/fs/cgroup",id);if(!p)throw Error("cgroup missing "+name);return name.replace(/^\//,"")+"="+p}).join(","));' "$ids")
 cleanup() {
   rc=$?
   trap - EXIT
