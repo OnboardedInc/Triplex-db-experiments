@@ -16,6 +16,13 @@ cleanup() {
   docker ps -a --filter "name=$prefix" --format '{{.Names}}' > "$root/$prefix-cleanup.txt"
   docker volume ls --filter "name=$prefix" --format '{{.Name}}' >> "$root/$prefix-cleanup.txt"
   docker network ls --filter "name=$prefix" --format '{{.Name}}' >> "$root/$prefix-cleanup.txt"
+  if [[ -s "$root/$prefix-cleanup.txt" ]]; then
+    echo "Owned resources remain; retain lock for explicit cleanup" >&2; exit 1
+  fi
+  python3 - "$lock/owner.json" "$$" <<'PYOWNER'
+import json,sys
+owner=json.load(open(sys.argv[1]));assert owner['id']=='DX-B6' and owner['pid']==int(sys.argv[2])
+PYOWNER
   rm "$lock/owner.json"; rmdir "$lock"
   exit "$rc"
 }

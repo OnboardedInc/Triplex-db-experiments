@@ -69,6 +69,9 @@ export const makeDatomicStorageAdapter = (
     clear: () => client.rowCache.deleteWhere((key) => key.startsWith(prefix)),
   };
   const remember = (row: TripleRow) => {
+    // [DX-B6-1] Why: immutable journal bodies evicted subject preconditions during seed, adding a snapshot HTTP call to lone commits.
+    // Rejected: raising the 32 MiB budget (unbounded client memory caused the original driver failure).
+    if (row.entity_type === "_Transaction") return;
     cache.set(row.id, {
       ...row,
       retracted_at: null,
