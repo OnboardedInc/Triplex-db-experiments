@@ -5,7 +5,7 @@ export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 out=/Users/sam/Claude/Projects/triplex-db-2/evidence/XN-S2
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 # [XN-S2] Why: enforce the task's two-minute rest before asking for another hold. Rejected: relying on caller timing.
-while ! node -e 'const fs=require("node:fs"); const p=process.argv[1]; process.exit(!fs.existsSync(p)||Date.now()-Date.parse(fs.readFileSync(p,"utf8"))>=120000?0:1)' "$out/inspection-window-ended.txt"; do sleep 5; done
+while ! node -e 'const fs=require("node:fs"); const p=process.argv[1]; process.exit(!fs.existsSync(p)||Date.now()-Date.parse(fs.readFileSync(p,"utf8").trim())>=120000?0:1)' "$out/inspection-window-ended.txt"; do sleep 5; done
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 printf '{"id":"XN-S2","pid":%s}\n' "$$" > "$lock/owner.json"
 cleanup() {
