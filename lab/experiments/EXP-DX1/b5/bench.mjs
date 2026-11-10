@@ -680,10 +680,10 @@ async function main() {
         const portable = portableSweep(handleOf(wh));
         const seeded = await seedW0({currentPosition: () => wh.runtime.runPromise(wh.adapter.currentCommitPosition()),
           transact: async (ops, meta) => ({ok: true, value: await wh.runtime.runPromise(wh.triples.transact(ops, meta))}),
-          storeCounts: () => portable.counts()}, 64, `${dir}/w0-page-seed.ndjson`);
+          storeCounts: () => portable.counts()}, 100, `${dir}/w0-page-seed.ndjson`);
         rh = await handle("http://127.0.0.1:8506", pageScope);
         const selected = await publicSweep("datomic", handleOf(rh));
-        const subjects = subjectList(64), basis = {position: seeded.basis.tx, validAt: V_W0};
+        const subjects = subjectList(100).slice(0, 64), basis = {position: seeded.basis.tx, validAt: V_W0};
         const expected = await portable.page(subjects, basis);
         let requests = 0; rh.client.onRequest = () => requests++;
         const start = performance.now(), page = await selected.page(subjects, basis), elapsedMs = performance.now() - start;

@@ -119,9 +119,15 @@
   (try
     (let [[db position t] (select-db name current (get input "basis"))
           cfg (config name current) valid (double (get-in input ["basis" "validAt"]))
-          roots (get input "roots") entities (LinkedHashMap.) closures (ArrayList.) counts (long-array 1)
+          roots (get input "roots")
+          row-page? (true? (get input "rowPage"))
+          entity-limit (if row-page? 50000 5000)
+          entities (LinkedHashMap.) closures (ArrayList.) counts (long-array 1)
           ^ConcurrentHashMap remembered (session-map name (get input "session")) out (StringBuilder. 65536)]
       (when-not (and (vector? roots) (<= 1 (count roots) 5000)) (decline! "roots"))
+      ;; [DX-B5-L5] Why: 64 real W0 subjects exceed 10k answer entities; legacy triple requests retain their bound.
+      ;; Rejected: silently falling back to many requests for a normal W0 page, or unbounded batch graphs.
+      (when (and row-page? (> (count roots) 64)) (decline! "row-page-roots"))
       (doseq [root roots]
         (when-not (string? root) (decline! "root"))
         (let [queue (ArrayDeque.) seen (HashSet.) order (ArrayList.)]
@@ -131,7 +137,7 @@
                   entry (or (.get entities id)
                             (let [value (read-entity name db cfg id valid counts)]
                               (.put entities id value)
-                              (when (> (.size entities) 5000) (decline! "entity-budget")) value))
+                              (when (> (.size entities) entity-limit) (decline! "entity-budget")) value))
                   ^ArrayList refs (nth entry 3) it (.iterator refs)]
               (.add order id)
               (while (.hasNext it)

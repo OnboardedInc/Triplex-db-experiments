@@ -46,7 +46,8 @@
       @(d/transact conn schema/schema)
       @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))
     (commit/install! conn scope)
-    {:db name :created created :schemaHash schema/schema-hash}))
+    (cond-> {:db name :created created :schemaHash schema/schema-hash}
+      (lean/enabled? (d/db conn)) (assoc :layout "lean"))))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (db-uri name)]
     (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))

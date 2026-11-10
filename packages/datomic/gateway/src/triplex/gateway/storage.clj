@@ -21,6 +21,35 @@
       (throw (ex-info "Snapshot expired or belongs to another database" {:status 409 :code "SnapshotExpired"})))
     (:db entry)))
 (defn decode-row [row] (into {} (map (fn [[k v]] [(keyword k) (when (some? v) (codec/decode-value v))]) row)))
+;; [DX-B5-L6] Why: fresh lean rows already carry every column in their canonical text.
+;; Rejected: decoding a second full tagged map per row after the client encoded both copies.
+(defn input-rows [input lean new-ids]
+  (if-not (= "texts" (get input "rowMode"))
+    (mapv decode-row (get input "rows"))
+    (do
+      (when-not lean (codec/invalid "Compact row mode requires a lean scope"))
+      (let [order (get input "rowOrder") texts (get input "rowTexts")
+            retired (mapv decode-row (get input "rows"))
+            by-id (into {} (map (juxt :id identity) retired))]
+        (when-not (and (vector? order) (every? string? order) (map? texts)
+                       (= (count order) (count (set order)))
+                       (= (count retired) (count by-id))
+                       (= new-ids (set (keys texts)))
+                       (= (set order) (set (concat new-ids (keys by-id))))
+                       (every? #(and (string? (:id %)) (string? (:entity_id %))
+                                     (some? (:retracted_at %)) (some? (:retracted_position %))
+                                     (string? (:retract_tx_id %))) retired))
+          (codec/invalid "Invalid compact row identities or retirements"))
+        (mapv (fn [id]
+                (if (new-ids id)
+                  (let [text (get texts id) _ (when-not (string? text) (codec/invalid "Missing compact row text"))
+                        row (update (lean/decode text) :recorded_at double) retirement (get by-id id)]
+                    (when-not (and (= id (:id row))
+                                   (or (nil? retirement) (and (= (:entity_id row) (:entity_id retirement))
+                                                              (= (:entity_type row) (:entity_type retirement)))))
+                      (codec/invalid "Compact row binding mismatch"))
+                    (merge row (select-keys retirement [:retracted_at :retracted_position :retract_tx_id])))
+                  (get by-id id))) order)))))
 (def long-fields #{:recorded_position :retracted_position :schema_version})
 (defn wire-row [row]
   (into {} (map (fn [[k v]] [(name k) (when (some? v) (codec/encode-value (cond (long-fields k) "long" (number? v) "double" :else "string") v))]) row)))
@@ -78,7 +107,7 @@
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
-   (let [lean (lean? db) rows (mapv decode-row (get input "rows")) new-ids (set (get input "newIds"))
+   (let [lean (lean? db) new-ids (set (get input "newIds")) rows (input-rows input lean new-ids)
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
          span (safe-position (or (get input "span") (when source (- position source))))

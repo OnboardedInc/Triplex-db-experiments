@@ -34,6 +34,7 @@ export interface DatomicDatabase {
   db: string;
   created: boolean;
   schemaHash: string;
+  layout?: "lean" | "legacy";
 }
 export interface DatomicBasis {
   t: TaggedValue;
@@ -81,6 +82,7 @@ export class DatomicClient {
     replays: 0,
     clockReplays: 0,
   };
+  private readonly layouts = new Map<string, "lean" | "legacy">();
   private readonly sentCallbacks = new Map<string, () => void>();
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
@@ -112,6 +114,7 @@ export class DatomicClient {
   }
   readonly rowObservers = new Set<(db: string, row: TripleRow) => void>();
   close(): void {
+    this.layouts.clear();
     this.rowObservers.clear();
     this.agent.destroy();
   }
@@ -227,7 +230,12 @@ export class DatomicClient {
   }
   // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
   // Rejected: accepting a missing reference as an empty entity.
-  async reachEntities(db: string, roots: readonly string[], basis: ResolvedTemporalBasis) {
+  async reachEntities(
+    db: string,
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
+    rowPage = false,
+  ) {
     if ([...this.reachCache.values()].reduce((n, cache) => n + cache.size, 0) > 500000) {
       this.reachSession = randomUUID();
       this.reachCache.clear();
@@ -239,6 +247,7 @@ export class DatomicClient {
         {
           ...(roots.length === 1 ? { root: roots[0] } : { roots }),
           basis,
+          ...(rowPage ? { rowPage: true } : {}),
           session: this.reachSession,
           ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
         },
@@ -321,8 +330,12 @@ export class DatomicClient {
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");
   }
-  create(scope: string, layout: "lean" | "legacy" = "legacy"): Promise<DatomicDatabase> {
-    return this.request("POST", "/v1/db/create", { scope, layout });
+  async create(scope: string, layout: "lean" | "legacy" = "legacy"): Promise<DatomicDatabase> {
+    const result = await this.request<DatomicDatabase>("POST", "/v1/db/create", { scope, layout });
+    // [DX-B5-L6] Why: compact writes follow the actual immutable scope layout, including a reopened scope.
+    // Rejected: trusting only the requested layout (could compact a pre-existing legacy scope).
+    this.layouts.set(result.db, result.layout === "lean" ? "lean" : "legacy");
+    return result;
   }
   delete(scope: string): Promise<{ db: string; deleted: boolean }> {
     return this.request("POST", "/v1/db/delete", { scope });
@@ -430,9 +443,27 @@ export class DatomicClient {
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
     const { onSent: inputSent, ...wireInput } = input;
     onSent ??= inputSent;
+    const compact = this.layouts.get(db) === "lean";
+    const retirementColumns = [
+      "id",
+      "entity_id",
+      "entity_type",
+      "retracted_at",
+      "retracted_position",
+      "retract_tx_id",
+    ];
+    const rows = compact
+      ? input.rows
+          .filter((row) => row.retracted_at !== null)
+          .map((row) => {
+            const encoded = encodeRow(row);
+            return Object.fromEntries(retirementColumns.map((column) => [column, encoded[column]]));
+          })
+      : input.rows.map(encodeRow);
     const body = {
       ...wireInput,
-      rows: input.rows.map(encodeRow),
+      rows,
+      ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
       rowTexts: Object.fromEntries(
         input.rows
           .filter((r) => input.newIds.includes(r.id))

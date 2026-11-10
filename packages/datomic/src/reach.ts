@@ -109,16 +109,21 @@ export function reachResponse(
 
 // [DX-B5-L4] Why: reuse the identical traversal and filtering order for triples and physical rows.
 // Rejected: a second traversal whose valid-time or BFS ordering could drift.
-export function reachRowsResponse(
-  root: string,
-  entities: ReadonlyMap<string, CachedEntity>,
-  basis: ResolvedTemporalBasis,
-) {
-  const byId = new Map(
+// [DX-B5-L4] Why: a batch builds this index once, not once for each root in its shared graph.
+// Rejected: O(roots * union rows) tuple/Map allocation (508 ms in the first 64-root diagnostic).
+export function reachRowIndex(entities: ReadonlyMap<string, CachedEntity>) {
+  return new Map(
     [...entities.values()].flatMap((entity) =>
       entity.storedRows.map((row) => [row.id, row] as const),
     ),
   );
+}
+export function reachRowsResponse(
+  root: string,
+  entities: ReadonlyMap<string, CachedEntity>,
+  basis: ResolvedTemporalBasis,
+  byId: ReadonlyMap<string, TripleRow> = reachRowIndex(entities),
+) {
   return reachResponse(root, entities, basis).triples.map((triple) => {
     const row = byId.get(triple.id);
     if (!row) throw new TypeError("Missing stored reach row");

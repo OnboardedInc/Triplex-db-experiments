@@ -1,67 +1,106 @@
-# DX-B5 — lean layout (work in progress)
+# DX-B5 — opt-in Datomic lean layout
 
-North star: P2 small atomic commits and P5 seed throughput, retaining exact P1/P4 cuts (`lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`).
+Status: implementation complete through L5; current-source compact differential passed; full suites, real W0 gate and final L6 comparison are running. This report records developer evidence, not an acceptance-contract promotion. Legacy is still the default and existing scopes are never converted. `lab/acceptance/` is unchanged.
 
-## L0 checkpoint
+## Implementation by milestone
 
-Implemented process-wide timestamp registration and ordered HTTP sends (ACKs still overlap), per-client sequenced gateway `d/transact-async` submission with a 20 ms predecessor wait, transactor rejection of replay-safe clock regressions, typed ClockConflict transport, bounded clock catch-up and existing callback replay. Low-level non-replay-safe commits retain irregular-scope behavior. Registration is shared across nested savepoints; aborted callbacks release their registration.
+| Milestone | Built | Evidence/status |
+| --- | --- | --- |
+| L0 | Process-wide timestamp registration, send ordering released at HTTP `finish`, gateway per-client sequence submission (20 ms bound), typed clock conflict and bounded replay | Isolated 16-client × 200-command gate: 3,200 exact receipts, zero clock replays/declines/send regressions. Four independent processes × 500 commands: 2,000 exact receipts, 162 clock replays, zero declines; each receipt's record-time pull equals fallback. Under shared CPU-5 contention the full lean suite observed 171 clock replays, zero send regressions/declines and exact answers. The expected zero one-process replay count is therefore not universal. |
+| L1 | Immutable rows-version 3 selection, indexed row text, retirement markers, serial-point identity/live checks, row-only writes plus unchanged entity/transaction/scope/claim metadata | Native commit/claim/CAS/lost-ACK/nested/identity tests exercised both layouts; full-suite limitations below. |
+| L2 | Exact native row cut/history readers; ID/entity/list/pattern/scans, staged reads, begin prefetch, reach, transactions and command lookup | Legacy reader remains in place. Lean explicitly rejects only native `q` and old `log`. |
+| L3 | 300 seeded differential scenarios with deterministic identities/clocks and ordered full answers | Pre-compact final run: 95,028 comparisons, 5,664 accepted fast cuts and 5,664 raw-row closures, 249.91 s. All three semantic mutants fail content assertions. Current compact rerun also passes all the same denominators in 235.62 s. |
+| L4 | Optional `getReachRows` / `getReachRowsMany` core adapter members; immutable decoded rows cached next to triples | Row-for-row portable closure comparison on both layouts; conservative malformed-coverage decline. Other adapters compile unchanged. |
+| L5 | Datomic W0 reader uses one batch raw-row reach, reconstructs global BFS order/dedup and preserves actual recorded positions | Small native 64-root page test passes on both layouts. Actual 200-subject H2-world comparison is running after fixing the real page budget. |
+| L6 | B3-derived measurements, source/hash/stack binding, raw outputs, one bounded lock around lean and legacy comparison, verified owned cleanup | First partial lean run below; final corrected comparison pending. |
 
-Offline suite: 132 pass, 35 native tests skipped. Native complete suite is running on the owned CPU-5 SQL-storage stack, ports 8505/8506, transactor Xmx1g and gateway Xmx768m. No milestone acceptance or performance PASS is claimed. The first typecheck found an exact-optional state member error; fixed before rerun. The first build command used an unsupported pnpm exec option; retained failure, rerun using local binary succeeded.
+The gateway hot readers use native index APIs, not `d/q`, `d/entity` or `d/pull`. Responses on reach/journal hot paths remain hand-written. Reflection warnings stay disabled.
 
-Observation-to-verdict audit: `CommitOrder.test.ts` asserts actual send order, equal-clock registration order, overlapping unacknowledged sends and cancellation unblock on newly constructed queue entries. Existing integration tests use fresh UUID scopes and read back exact positions/content. These are developer checks, not acceptance receipts. No new PASS/receipt emitter exists. Native results, multiprocess gate and timing remain pending.
+## Layout and compatibility details
 
-Evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5/` (stack source preimages, SQL configuration, exact container IDs, image IDs, durability settings); initial logs also in parent `evidence/DX-B5-*.log`.
+A new live application row adds one `:triplex.entity/row` datom, no fact entity and no `:f/*`; a ref target without its own rows gets no entity. Existing entity IDs/revisions, transaction attributes, scope position/max clock, claims, operation IDs and conflict checks remain. Existing row IDs remain reserved through Datomic history, matching legacy identity behavior after retirement.
 
-`lab/acceptance/` is unchanged. Final hash inventory and cleanup pending. L1–L6 not yet complete.
+The compact lean transport sends each new row once as canonical text, plus only retirement columns for retired rows and an explicit input row-order list. The gateway validates identities/order/text binding and normalizes the decoded record timestamp to Datomic's double type. It selects this protocol only from the actual immutable create response; requesting lean while reopening a legacy scope retains the legacy payload. This is a transport optimization; stored row text and legacy protocol are unchanged.
 
-## L1/L2 implementation checkpoint
+The raw-row batch request has an explicit 64-root/50,000-entity bound; normal triple reach retains its existing 5,000-entity bound. Both retain the existing 100,000-row bound. A real W0 page includes over 10,000 answer entities, so the original bound would silently force the portable fallback. Raw rows share one decoded ID index per batch rather than rebuilding it per root.
 
-Added immutable rows-version 3 selection, indexed row values, a retirement-marker attribute, lean row-only assertions and retractions, serial-point live-ID conflicts and uniqueness seeks. Legacy remains the default; existing scopes are never converted. Lean readers use immutable cuts when eligible and native Datomic row history otherwise, including explicit retirement markers and interior logical cuts. Begin prefetch, entity/entity-list/id/pattern scans and history dispatch through the same visibility/masking rules. Reach, journal and command routes admit version 3. Native `q` and old `log` explicitly return HTTP 409 LayoutUnsupported; a typed ReadError subclass retains route identity.
+Routes returning HTTP 409 `{"code":"LayoutUnsupported","route":"..."}` on lean scopes: **`q`** (native Datalog) and **`log`** (older feed). The adapter surfaces these as typed `ReadError` with route identity. The row-pattern query route, transaction feed and command lookup are implemented on lean.
 
-One deterministic differential smoke passed against a native SQL-storage stack. The final 300-scenario run and the parameterized lean integration suites are in flight. No L1/L2 gate acceptance is claimed yet.
+## Design deviations and retained failures
 
-Design deviations found during implementation:
+- Datomic coalesces assertion and retraction in one physical transaction. A born-retired row therefore retains its row text plus retirement marker; cut/reach exclude it and history reconstructs it. Ordinary retirement retracts the row datom. Explicit nested/import retirement fields use the prescribed marker, including empty transaction IDs and signed-zero time.
+- Ordered registration applies to replay-safe callbacks; unsafe SPI callbacks can await another transaction with a fixed imported timestamp and would deadlock if ordered. Clock rejection requires the callback's public journal, which proves replay re-reads its runtime clock. Other SPI callbacks retain legacy irregular-scope behavior. Timestamps and journal values are never rewritten.
+- Clock conflicts have a separate minimum 32-retry budget; CAS retains its configured retry budget. The 50 ms catch-up wait is per replay, not permission to alter clocks.
+- The inherited B4 journal reader tried to decode untyped SPI rows as branded public triples before filtering. Filtering those rows before decoding preserves the portable result and avoids the inherited invalid-ID exception.
+- Imports with logical position zero still obey their physical publication cut; history is bounded by the physical database before applying logical visibility.
+- The indexing-duration test compares VM wall time with host monotonic elapsed time plus 5 ms. It remains unchanged and failed under shared CPU contention by about 4–10 ms. The known `preserves signed zero and int64 bounds` domain failure also remains. Neither is relabelled as passing.
+- First differential attempt OOM-killed a 1.5 GiB transactor container while large suites overlapped. Replacement functional runs are sequential, keep Xmx1g, and use a 2 GiB container limit. Gateways keep Xmx768m. Initial OOM, transport-fixture/import errors and all failed reruns remain in evidence.
+- First compact native attempt rejected an integral JSON record timestamp as the wrong Datomic double type; corrected at compact decode and rerun on a new stack.
+- First L6 attempt stopped late because `W0.rung(64)` is invalid (N must be a positive multiple of 50). The corrected fixture seeds N=100 and reads its first 64 subjects. No legacy result or full matrix is inferred from that failed attempt.
 
-- Datomic coalesces an assertion and retirement in the same physical transaction. To preserve the existing adapter's born-retired history, lean keeps that row text plus a marker; cut/reach readers exclude marked retained rows. This exception is required for nested/staged semantics. Ordinary old-row retirement still retracts its row datom.
-- Ordered timestamp registration applies to replay-safe callbacks. Unsafe SPI callbacks can deliberately stage fixed timestamps and await another commit; ordering those would deadlock existing savepoint tests. Clock rejection is narrower still: a replay-safe callback must contain a public journal before the adapter promises that replay will re-read the runtime clock. Raw SPI import timestamps cannot advance by callback replay. Non-public callbacks retain the existing irregular flag behavior.
+The captured benchmark commit has 26 new rows, one retired row and three touched entities. Static counting of the transaction function for that regular source-bound command gives **32 native index API reads**: 26 identity-history range seeks, one live-ID range seek, one retirement-marker seek, one exact entity-row retirement seek, two scope-value reads and one existing-entity revision read. There are additionally five entity identity resolutions (three touched entities, retirement subject and journal absence) and one or two cached attribute-ID resolutions. These are API calls, not measured physical disk I/Os; Datomic internals/upserts are not instrumented. The marker seek is required for the born-retired exception. The exact captured input and source are retained.
 
-Observation audit additions: the differential test compares ordered full row answers and metadata from fresh UUID scopes with identical row IDs and seeded public runtimes, not just counts. It compares receipt positions and public journals; row-closure assertions compare genuine cached TripleRows with getByEntities rows. Native stack source is copied before startup and health binds that source hash. The passing smoke is diagnostic developer evidence, not a contract PASS. First failures remain in durable logs.
+## Validation
 
-## L3/L4/L5 implementation checkpoint
+Evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5/`.
 
-The differential generator contains 300 deterministic scenarios, patterned on the existing reach generator, plus explicit interior-position retirement markers, retraction-only commits, shared timestamps, irregular SPI history, seeded public journals/claims and duplicate commands. It compares all storage read families and full row closures. The first full attempt was interrupted by an OOM-killed 1.5 GiB transactor container while two native suites ran concurrently. No completed 300-scenario verdict is inferred. The replacement retains Xmx1g, raises only the container limit to 2 GiB, and runs the differential gate alone.
+| Run | Result |
+| --- | --- |
+| `offline-compact.log` | 143 pass, 40 native skips / 183; includes touched core tests |
+| `compact-unit.log` | 2 compact/legacy wire-selection fixtures pass |
+| `SDK-final.log` | 101 pass: client, queue, real held-ACK old-wrapper compatibility, malformed coverage |
+| `compact-build.log`, `compact-types.log` | Package/dependency build and typecheck succeed |
+| `adapters.log` | 12 Turbo tasks pass across nine adapter/core typecheck targets |
+| `compact-bench-types.log` | Focused changed benchmark modules typecheck |
+| `compact-equivalence2.log` | 300 scenarios, 95,028 comparisons, 5,664 fast cuts/closures; passes in 235.62 s |
+| `final-equivalence.log` | 300 scenarios, 95,028 full comparisons, 5,664 fast cuts/row closures; then three content-failing mutants |
+| `final-lean2.log` | 173 pass, 2 fail, 2 intentional native-q skips / 177; known domain failure and unchanged cross-clock timing assertion |
+| `final-legacy.log` | Historical pre-clock-budget run: 174 pass, 3 fail / 177; domain, timing and old exhausted-clock-retry failure. Current-source rerun pending. |
 
-Added optional getReachRows/Many to the core adapter interface; other adapters remain unchanged. The Datomic entity cache retains immutable decoded TripleRows beside Triples. Row closures reuse the existing traversal/order. The W0 Datomic branch in w0-public uses one reach-many request per page and reconstructs portable page-wide BFS order, deduplicating shared entities while retaining genuine recorded positions. A new 64-subject page comparison exercises the actual new branch (the old H2 helper remains a portable fallback).
+The differential compares getById, entity/list reads, entity/attribute/entity-type patterns, dependencyState, history, reach, transaction feed, command lookup and receipt positions. It includes past/future/bounded valid times, equal record times, retract/reassert, retraction-only commits, nested two-position transactions, explicit imported positions, irregular scopes, duplicate commands and born-retired rows. Bases include head, every earlier physical endpoint, an interior position, before/at/between commit record times, and valid boundaries. Order and full metadata must match. Mutants independently replace marker retirement position with transaction position, remove the cut valid-time filter, and treat irregular scopes as regular; every accepted mutant result requires a healthy newly started gateway and an actual assertion difference, not a startup/transport failure.
 
-Native unsupported-route/born-retired smoke passed on the replacement stack. The first W0 test import failed because W0 dist had not yet been built; the offline W0 build has now run. Native lean suite first pass: 25 passed / 8 failed, including the known int64-domain failure, explicit unsupported-q cases, a route-label mismatch, a clock-retry exhaustion during concurrent CPU-5 load, and the inherited B4 untyped-journal decoder bug. Route labels and filtering untyped journal rows before branded Triple decoding have been corrected; no successful final-suite claim yet.
+No root-wide `pnpm check`, pack consumer or external backend acceptance is claimed. The package pack script is not used because its unmodified installer can attempt network access; this task permits no downloads. Broad bench typecheck retains unrelated audit-traffic/round2 errors; the changed modules pass their focused check.
 
-## Fresh gate results (before final sealing)
+## L6 — retained first partial attempt
 
-- Differential native run `diff300-2.log`: **300 scenarios, 84,000 ordered answer comparisons, 5,400 accepted fast cuts and 5,400 physical-row closure comparisons; passed** in 250.71 s. This is a developer equivalence gate, not independent acceptance.
-- Both-layout 64-subject page test `page5.log`: two tests passed, exact row order/content at past and head cuts, one HTTP request per page.
-- Native four-process clock gate `clock4-2.log`: 2,000 commands from four processes, 162 clock replays, zero record-time fast declines, every receipt's IDs found in its exact fallback cut. Passed. Replay count exceeds the initial expectation of a few under the CPU-5 development profile.
-- Nine requested adapter/core typechecks: 12 Turbo tasks successful (`adapters.log`). No other adapter source changed.
-- Lean supported-suite pass `lean-final1.log`: 31 passed, two native-q tests explicitly skipped, two failures (known int64-domain case and one-process ordering). Other q scenarios now assert LayoutUnsupported while retaining row assertions.
-- The ordering diagnosis captured zero client timestamp-send regressions but three native clock replays in one 3,200-command run. The send boundary was corrected from request construction to the actual HTTP socket `finish` event. ACKs still overlap. Fresh socket-boundary test/client checks: 98 passed before adding the dedicated delayed-flush case. The strict native one-process rerun is pending.
+Source/build copy: `source-final-9c5e496e/`. Stack: `tx2-dxb5-measure-pair-1794280959`; CPU 0–4 held under measurement lock; durable PostgreSQL + transactor and split write/read gateways. Results: `bench-1794282248414-b4d95250-f1fe-4d8d-b2fe-3f14bff884c2/result.json`. This predates compact transport, the shared row index and real-page bound. It is partial diagnostic evidence, not the completed comparison.
 
-The inherited B4 untyped journal row failure is fixed by filtering physical row metadata before constructing branded Triples, retaining the same typed-journal result. Legacy stored facts are unchanged.
+| Metric | Lean observed | Requested bar |
+| --- | ---: | ---: |
+| Datoms/10-fact command p50 / p90 / p99 | 48 / 48 / 48 | about 45 |
+| Serial commit p50 / p90 / p99, ms (3k warm + 3k timed) | 6.448 / 8.282 / 15.732 | p50 ≤5 |
+| Native transact p50 / p90 / p99, ms | 2.995 / 4.091 / 10.572 | diagnostic |
+| 55/s ×60s burst 1 p50 / p99, ms | 12.950 / 38.385 | ≤10 / ≤50 |
+| Burst 2 p50 / p99, ms | 12.888 / 41.428 | ≤10 / ≤50 |
+| Burst 3 p50 / p99, ms | 12.511 / 35.118 | ≤10 / ≤50 |
+| 55/s +32 readers p50 / p99, ms | 10.412 / 74.087 | ≤10 / ≤50 |
+| Single pull p50 / p99, ms (20k warm +20k timed) | 1.617 / 5.794 | diagnostic |
+| Single pull / read-gateway CPU-second | 1,189.59 | diagnostic |
+| 32-reader pull p50 / p99, ms | 4.148 / 37.875 | diagnostic |
+| 32-reader pulls / read-gateway CPU-second | 2,601.48 | diagnostic |
+| NS seed 1 writer, commands / facts per second | 84.58 / 3,450.47 | diagnostic |
+| NS seed 8 writers | 203.00 / 8,281.96 | diagnostic |
+| NS seed 32 writers | 228.89 / 9,338.15 | ≥400 commands/s |
+| Raw NS graph page, 64 roots | 508.91 ms, 1 HTTP, 24,564 rows | not substituted for W0 |
+| RYOW | 2,000 exact checks; p50 5.821 / p99 21.738 ms | diagnostic |
 
-The corrected strict one-process gate `order-finish1.log` passed in 125.96 s: **3,200 commands, 16 clients, zero clock replays, zero declines**, exact positions plus exact getByEntities-based fallback rows at every receipt's record time. The process send-order diagnostic also recorded zero timestamp regressions. Three semantic mutants were rejected by actual assertion differences (`mutants.log` and `mutants/*/test.log`): ignoring an explicit retirement position, removing the lean valid-time predicate, and treating an irregular lean scope as regular. Each mutant used a freshly started, healthy native stack, and each owned stack was removed.
+Each seed is the complete 2,000-subject NS command plan, 2,039 commands / 83,185 facts including shared batches. Baseline legacy and true W0 are pending in the corrected run. The first cleanup receipt verifies saved container IDs, successful removal and empty fresh container/network/volume inventories before releasing the owned lock.
 
-The L6 wrapper is queued on the shared measurement lock. The lock is currently held by another measured lab run (its implementation uses an empty lock directory); it has not been removed or adopted. The wrapper creates no stack until it acquires the lock. Initial logs formerly named `evidence/DX-B5-*.log` have been retained under `evidence/DX-B5/initial-logs/`.
+## Observation-to-verdict audit
 
-The final offline suite passed 139 tests with 40 native cases explicitly skipped (`offline-final.log`). The broad bench typecheck retains pre-existing diagnostics in audit-traffic/round2 and initially exposed missing inference in the new page reader. The page reader now supplies its physical-row return type through the existing built core runtime entry point; the focused bench typecheck passes (`focused-bench-types2.log`). The original missing XTDB build was generated from unchanged source before the focused check.
+No acceptance PASS, promotion or contract receipt is emitted. Before committing developer verdicts, the following are the complete observation-to-verdict sites introduced or changed here:
 
-Expanded final differential run `diff300-final.log`: **300 scenarios, 84,000 comparisons, 5,400 accepted fast cuts and 5,400 row-closure checks; passed** in 315.71 s. This run includes populated entity-type patterns, empty retirement IDs and born-retired rows, and exercises the final history-based identity reservation. The fresh CPU-5 stack was removed before clearing the private functional guard.
+1. `CommitOrder.test.ts`, `send-wrapper.test.ts`, `compact.test.ts`, `client.test.ts`, `reach-rows-fault.test.ts`, and row-text/identity tests: assertions inspect exact new fixture bytes/order/typed errors. Fixtures are newly constructed or use fresh native UUID scopes; the real transport fixture binds its own loopback server and held ACK. Offline checks do not claim a native slot.
+2. `concurrent-commits.test.ts`, `clock-order.test.ts` / `clock-worker.mts`: actual receipts/positions, scope regularity, per-receipt record-time fast response and row fallback equality; UUID scope/process identity and owned fresh stack bind this attempt. Clock counts are reported rather than inferred from exit zero.
+3. `layout-differential.test.ts`: deep full ordered equality and nonzero fast/closure denominators; seeded IDs/clock and newly created legacy/lean scopes; actual native source copied/indexed at startup. No prior artifact is read as a current observation.
+4. `reach.test.ts`, route/read-pin/journal/adapter tests and `w0-reader.test.ts`: source-selected native response content, metadata and actual HTTP counts; fresh scope fixtures and exact basis; stack health/source hash records bind native runs. Unsupported q cases assert the typed rejection or explicitly skip the incompatible native-query-only scenario.
+5. `mutants.sh`: requires startup health, fresh isolated copied gateway source, an actual content assertion failure and successful owned cleanup. A transport failure cannot count as mutant rejection.
+6. `bench.mjs`: stores raw observations, exact RYOW/page content comparisons and request counts; fresh UUID output/scope, captured input/source/build hashes, measured stack IDs/CPU/configuration and current lock bind the attempt. Bars are assessed from actual distributions, not `passed:true` or process exit. Failed/partial runs retain their error.
+7. `cleanup-measurement.py`: checks saved/current container identity, actual removal status, successful fresh empty inventories and exact lock owner before unlock. It is resource cleanup evidence only; it cannot declare semantic acceptance.
+8. `hash-inventory.py`, evidence SHA256SUMS/index and this report: hash actual source/evidence bytes and retain old hashes from the recorded baseline; readback verifies manifests. These establish binding/integrity, not semantic correctness or completeness.
 
-Full lean suite `final-lean2.log`: **173 passed, 2 failed, 2 intentionally skipped / 177**, including seven touched core tests. The failures are the declared int64-domain case and the unchanged indexing-duration cross-clock assertion. The expanded 16-client gate completed all 3,200 commands with **171 clock replays, zero send-timestamp regressions, zero fast declines and exact record-time fallback rows**. This does not meet the initial expectation of zero replays under contention; the earlier isolated gate observed zero. The two intentionally skipped cases require native Datalog, which lean explicitly does not implement; other native-q tests assert the typed unsupported result. The first final legacy run predates the separate clock budget and had 174 pass / 3 fail (known domain, cross-clock timing, exhausted clock retries); it is retained and needs a focused current-source rerun.
+## Scope, pins, cleanup and remaining work
 
-Final expanded mutant rerun `mutants-final.log`: all three again fail content assertions. The targeted mutation run starts at scenario 1 (no born-retired fixture obscuring the intended marker mutant); the full 300-scenario run uses the default start of 0. Each mutated gateway source tree and its native test log remain retained. The outer ad-hoc zsh wrapper used the reserved name `status` after the completed mutants, so it failed to clear its private functional guard; actual empty Docker container/network/volume readbacks were checked before manually removing that owned guard. No measurement lock was released by that recovery.
+Only `packages/datomic/**`, the two authorized benchmark edits, the optional core adapter members and `b5/**` are changed. No generated dist is committed, no dependency changes/downloads, no acceptance edits, no push/merge/deploy. Full old/new source hashes and acceptance-reference checks are in `HASH-CHANGES.json`; 31 changed source paths, with zero old hashes mentioned in acceptance. The inventory found no changed old hash or path referenced by acceptance pins.
 
-The L6 runner now measures a genuine 64-subject W0 seed through the existing `seedW0` command plan, then calls the actual optimized `publicSweep` page reader on the read peer, comparing every returned row with the portable page and requiring one HTTP request. The earlier `rowPage` step is separately labelled a raw NS-world reach page, not substituted for the W0 page.
-
-The final exact-position denominator now includes every nested physical endpoint as an earlier basis. `final-equivalence.log`: **300 scenarios, 95,028 comparisons, 5,664 accepted fast cuts and 5,664 row closures**, passed in 249.91 s, followed by all three content-rejecting mutants against that gateway. This includes explicit imported logical positions and position zero while preserving physical publication cuts.
-
-The measurement cleanup helper checks saved container IDs before removal, records actual removal status and fresh resource inventories, requires all inventory commands to succeed, and releases only a lock whose owner prefix matches this attempt. Unknown daemon state or identity mismatch retains the lock. This is cleanup evidence only, not semantic acceptance.
-
-Final SDK transport/fault checks `SDK-final.log`: **101 passed** across the real held-ACK wrapper test, malformed graph-coverage fallback, HTTP client and send-order fixtures. The package and dependency build/typecheck passes four Turbo tasks (`SDK-final-build.log`). The row getters now conservatively decline the same malformed graph coverage as the triple getter, retaining typed Effect behavior. The updated README describes immutable opt-in layout selection, unsupported routes, raw-row hooks and the separate clock retry budget.
+Owned resource cleanup and final source/evidence sealing are pending the final gate/measurement stack. The default Docker context, shared residents, other agents' locks/containers and forbidden ports were not altered. This work does not qualify P5 at 100k subjects, scale at 10m entities/100m facts, or production acceptance. The inherited lab publication observer can still reject shifted ACK positions under concurrent public-driver use; fixing its validation is outside the owned files.
