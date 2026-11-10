@@ -33,6 +33,7 @@ import { openComposition, type CompositionHandle, type Receipt } from "./lib/com
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
+import { historyDepthsComplete, observeFinalHead } from "./lib/completion.ts";
 import { observeDatomicPublication } from "./lib/datomic-publication.ts";
 import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
@@ -729,7 +730,8 @@ async function run() {
     replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
     await replayHandle.close().catch(() => {});
   }
-  const finalPosition = await writer.currentPosition();
+  const finalizationErrors: string[] = [];
+  const finalPosition = await observeFinalHead(() => writer.currentPosition(), finalizationErrors);
   samplersOn = false;
   clearInterval(eluTimer);
   const maintenance = await maintenanceEvents(traceStart);
@@ -746,12 +748,13 @@ async function run() {
 
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
-  report.finalPosition = coordinate(finalPosition);
+  report.finalPosition = finalPosition === null ? null : coordinate(finalPosition);
+  report.finalizationErrors = finalizationErrors;
   report.positionCoordinates = "TARGETS 4.1 item 3: (stream, epoch, offset, ordinal); Triplex gives one dense position per scope and one engine transaction per transact, so offset = position and ordinal = 0";
   report.maintenance = maintenance;
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
   else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
-  report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : runOracle(finalPosition, lastAcked);
+  report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : finalPosition === null ? { status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) } : runOracle(finalPosition, lastAcked);
   // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
   // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
   const pullCalls = records.filter(r => r[R.error] === null).map(r => r[R.roundTrips]);
@@ -764,7 +767,13 @@ async function run() {
     report.invalidReasons = [...(report.invalidReasons ?? []), `Feed consumer failed: ${String(feedFailure)}`];
     process.exitCode = 1;
   }
-  report.status = feedFailure ? "ERROR" : "DONE";
+  const incompleteHistory = !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
+  if (incompleteHistory) finalizationErrors.push("Required history depths 3 and 10 were not reached on the complete sample");
+  if (finalizationErrors.length) {
+    report.invalidReasons = [...(report.invalidReasons ?? []), ...finalizationErrors];
+    process.exitCode = 1;
+  }
+  report.status = feedFailure || finalizationErrors.length ? "ERROR" : "DONE";
   report.endedAt = new Date().toISOString();
   fs.writeFileSync(path.join(rawDir, "ns-log.txt"), logLines.join("\n") + "\n");
   save();
@@ -1213,14 +1222,14 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const quotaRate = best && engineCpus ? best.goodputPerS / engineCpus : null;
   const p4 = {
     weightedMix: mix ? { read: mix.read, buckets: mix.buckets } : null,
-    history: { sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
+    history: { eligibleForDepthComparison: historyDepthsComplete(ctx.phases.filter((p) => p.history).map((p) => p.history), ctx.historyList.length), sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
     throughput: { bestLevel: best?.phase ?? null, goodputPerS: best?.goodputPerS ?? null, engineCpuQuotaCores: engineCpus, pullsPerSPerQuotaCore: quotaRate, engineCpuPercentMean: best?.engine.cpuPercentMean ?? null, pullsPerSPerUsedCore: best?.engine.cpuPercentMean ? best.goodputPerS / (best.engine.cpuPercentMean / 100) : null, hostClientCpu: cpu, hostBrokerCpu: "none in this composition (no broker process)" },
     bars: [
       bar("NS-P4 weighted-mix pull p50 ms", mix?.read.p50Ms ?? null, "<= 5", mix?.read.p50Ms != null ? mix.read.p50Ms <= 5 : null),
       bar("NS-P4 weighted-mix pull p99 ms", mix?.read.p99Ms ?? null, "<= 25", mix?.read.p99Ms != null ? mix.read.p99Ms <= 25 : null),
       bar("NS-P4 largest bucket p99 ms (provisional)", largest?.p99Ms ?? null, "<= 50", largest?.p99Ms != null ? largest.p99Ms <= 50 : null),
       bar("NS-P4 pulls/s per engine core (CPU quota)", quotaRate, ">= 1100", quotaRate !== null ? quotaRate >= 1100 : null),
-      bar("NS-P4 history flatness p99 depth10 / depth1", ratio(h10?.read.p99Ms, h1?.read.p99Ms), "<= 1.1", ratio(h10?.read.p99Ms, h1?.read.p99Ms) !== null ? ratio(h10?.read.p99Ms, h1?.read.p99Ms)! <= 1.1 : null),
+      bar("NS-P4 history flatness p99 depth10 / depth1", ratio(h10?.read.p99Ms, h1?.read.p99Ms), "<= 1.1", ratio(h10?.read.p99Ms, h1?.read.p99Ms) !== null ? historyDepthsComplete(ctx.phases.filter((p) => p.history).map((p) => p.history), ctx.historyList.length) && ratio(h10?.read.p99Ms, h1?.read.p99Ms)! <= 1.1 : null, "requires complete growth to depths 3 and 10 on the full sample"),
       bar("NS-P4 history flatness bytes read depth10 / depth1", null, "<= 1.1", null, "engine bytes read are not measured (seam); client-observed bytes are reported"),
     ],
   };
