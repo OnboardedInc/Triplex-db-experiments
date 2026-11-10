@@ -75,9 +75,9 @@ export async function publishRecords(
     retry: false,
     timing: {
       buildOutboxMs,
-      buildOutboxCpuMs:
+      buildOutboxMainThreadIntervalCpuMs:
         (buildEndCpu.user - buildCpu.user + buildEndCpu.system - buildCpu.system) / 1000,
-      publishCommitCpuMs:
+      publishCommitMainThreadIntervalCpuMs:
         (commitEndCpu.user - buildEndCpu.user + commitEndCpu.system - buildEndCpu.system) / 1000,
       publishCommitMs: commit.wallMs,
       publishRequests: commit.requests,

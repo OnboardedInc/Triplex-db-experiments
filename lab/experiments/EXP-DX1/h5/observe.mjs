@@ -18,16 +18,37 @@ const ownPath = fs
   ?.slice(3);
 if (ownPath && fs.existsSync("/sys/fs/cgroup" + ownPath + "/cpu.stat"))
   entries.push(["driver-with-oracle", "/sys/fs/cgroup" + ownPath]);
+// [DX-H5] Why: an OOM or throttled read must retain resource observations even without a final receipt.
+// Rejected: diagnosing every abrupt client exit as a transport failure.
+const optional = (p) => {
+  try {
+    return fs.readFileSync(p, "utf8");
+  } catch {
+    return null;
+  }
+};
 const sample = () =>
   fs.appendFileSync(
     out + "/cgroups.ndjson",
     JSON.stringify({
       atMs: Date.now(),
       peers: Object.fromEntries(
-        entries.map(([k, p]) => [k, fs.readFileSync(p + "/cpu.stat", "utf8")]),
+        entries.map(([name, p]) => [name, fs.readFileSync(p + "/cpu.stat", "utf8")]),
+      ),
+      resources: Object.fromEntries(
+        entries.map(([name, p]) => [
+          name,
+          {
+            memoryCurrent: optional(p + "/memory.current"),
+            memoryPeak: optional(p + "/memory.peak"),
+            memoryEvents: optional(p + "/memory.events"),
+            io: optional(p + "/io.stat"),
+          },
+        ]),
       ),
     }) + "\n",
   );
+
 sample();
 const timer = setInterval(sample, 1000);
 const child = spawn(

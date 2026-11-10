@@ -35,3 +35,27 @@ test("concurrent request samples retain operation-local byte, gateway and datom 
     await new Promise<void>((r) => server.close(() => r()));
   }
 });
+
+test("HTTP attempt count retains an error response omitted by successful samples", async () => {
+  const server = http.createServer((req, res) => {
+    res.statusCode = req.url === "/bad" ? 500 : 200;
+    res.end(
+      JSON.stringify(
+        req.url === "/bad" ? { code: "expected", message: "test failure" } : { ok: true },
+      ),
+    );
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const client = new DatomicClient("http://127.0.0.1:" + (server.address() as any).port);
+  try {
+    const observed = await measureW0Http(async () => {
+      await assert.rejects(client.request("GET", "/bad"));
+      await client.request("GET", "/ok");
+    });
+    assert.equal(observed.requests, 2);
+    assert.equal(observed.successfulRequestSamples, 1);
+  } finally {
+    client.close();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});

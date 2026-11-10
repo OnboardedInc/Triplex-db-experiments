@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { inspect } from "node:util";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import { openComposition } from "../../../bench/lib/composition.ts";
@@ -18,7 +19,25 @@ const scope = "dxh5-equivalence-" + randomUUID(),
   h = await openTriples("datomic", scope);
 const out = "runs/DX-H5-vm";
 fs.mkdirSync(out, { recursive: true });
-const report: any = { scope, N: 200, status: "RUNNING", comparisons: [] };
+const sources = Object.fromEntries(
+  [
+    "lab/experiments/EXP-DX1/h5/equivalence.ts",
+    "lab/bench/lib/w0-public.ts",
+    "lab/bench/lib/w0-datomic-reader.ts",
+    "lab/bench/lib/w0-seed.ts",
+    "lab/bench/lib/w0-http.ts",
+    "lab/bench/lib/http-counts.ts",
+    "lab/bench/lib/composition.ts",
+    "lab/bench/lib/triplex.ts",
+    "lab/bench/lib/w0-world.ts",
+    "packages/datomic/dist/index.js",
+    "packages/datomic/dist/DatomicClient.js",
+    "packages/datomic/dist/DatomicStorageAdapter.js",
+    "packages/datomic/dist/reach.js",
+    "packages/w0/dist/index.js",
+  ].map((file) => [file, sha256(fs.readFileSync(file))]),
+);
+const report: any = { scope, N: 200, status: "RUNNING", comparisons: [], sources };
 try {
   const seed = await seedW0(comp, 200, out + "/seed.ndjson");
   const mutation = await comp.transact(
@@ -58,10 +77,13 @@ try {
         contentSha256: sha256(sorted(expected.rows)),
       });
     }
+  for (const [file, hash] of Object.entries(sources))
+    if (sha256(fs.readFileSync(file)) !== hash)
+      throw Error("source changed during equivalence: " + file);
   report.status = "MATCH";
 } catch (e) {
   report.status = "FAIL";
-  report.error = String((e as Error).stack);
+  report.error = inspect(e, { depth: 12 });
   throw e;
 } finally {
   fs.writeFileSync(out + "/equivalence.json", JSON.stringify(report, null, 2) + "\n");

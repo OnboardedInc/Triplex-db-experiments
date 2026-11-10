@@ -33,6 +33,8 @@ port.on("message", async (msg) => {
   }
   if (msg.type !== "page") return;
   try {
+    const workerReceivedEpochMs = performance.timeOrigin + performance.now();
+    const pageCpuStarted = process.threadCpuUsage();
     const pageStartCpu = cgroups();
     const start = performance.eventLoopUtilization();
     const cpu = () => (process as any).threadCpuUsage?.() ?? process.cpuUsage();
@@ -56,12 +58,16 @@ port.on("message", async (msg) => {
     let decodeCpu = 0,
       kernelCpu = 0;
     const result: any[] = [];
+    const indexStart = performance.now(),
+      indexCpuStart = cpu();
     const byEntity = new Map<string, any[]>();
     for (const row of page.rows) {
       const a = byEntity.get(row.entityId) ?? [];
       a.push(row);
       byEntity.set(row.entityId, a);
     }
+    const indexWallMs = performance.now() - indexStart,
+      indexCpu = diff(indexCpuStart, cpu());
     for (const subject of msg.subjects) {
       c = cpu();
       let wall = performance.now();
@@ -76,7 +82,11 @@ port.on("message", async (msg) => {
       if ("error" in r) throw new Error(subject + ": " + r.error);
       result.push({ subject, world, output: r.output, record: r.record });
     }
+    const encodeStarted = performance.now(),
+      encodeCpuStarted = cpu();
     const bytes = new TextEncoder().encode(canonical(result));
+    const resultEncodeWallMs = performance.now() - encodeStarted,
+      resultEncodeCpu = diff(encodeCpuStarted, cpu());
     port.postMessage(
       {
         type: "result",
@@ -86,6 +96,10 @@ port.on("message", async (msg) => {
         epoch: page.epoch,
         timing: {
           readWallMs,
+          workerDispatchWaitMs: workerReceivedEpochMs - msg.dispatchedAtEpochMs,
+          workerReceivedEpochMs,
+          indexWallMs,
+          resultEncodeWallMs,
           readRequests: measured?.requests ?? page.timing?.readRequests ?? null,
           responseBytes: measured?.responseBytes ?? null,
           gatewayMicros: measured?.gatewayHeaders ? measured.gatewayMicros : null,
@@ -93,7 +107,14 @@ port.on("message", async (msg) => {
           decodeWallMs,
           evaluateWallMs,
         },
-        cpu: { read: readCpu, decode: decodeCpu, kernel: kernelCpu },
+        cpu: {
+          read: readCpu,
+          decode: decodeCpu,
+          kernel: kernelCpu,
+          index: indexCpu,
+          resultEncode: resultEncodeCpu,
+          total: diff(pageCpuStarted, cpu()),
+        },
         cgroupIntervalMicros: Object.fromEntries(
           Object.entries(cgroups()).map(([name, value]) => [name, value - pageStartCpu[name]]),
         ),

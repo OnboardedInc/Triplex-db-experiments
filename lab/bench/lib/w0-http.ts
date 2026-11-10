@@ -1,3 +1,4 @@
+import { measureHttp } from "./http-counts.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { DatomicClient } from "../../../packages/datomic/dist/index.js";
 // [DX-H5] Why: use the existing public request observer to attribute bytes/service/datoms per page.
@@ -51,6 +52,13 @@ export async function measureW0Http<T>(run: () => Promise<T>) {
     wireParseMicros: 0,
     wireSerializeMicros: 0,
   };
-  const value = await context.run(active, run);
-  return { value, ...active };
+  const counted = await context.run(active, () => measureHttp(run));
+  // [DX-H5] Why: successful response samples omit errors; Agent counts retain every actual HTTP attempt.
+  // Rejected: granting a one-request verdict from only successful observer callbacks.
+  return {
+    ...active,
+    successfulRequestSamples: active.requests,
+    requests: counted.requests,
+    value: counted.value,
+  };
 }

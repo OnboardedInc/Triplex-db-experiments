@@ -295,7 +295,23 @@ export async function runW0Driver(argv: string[]) {
       throw new Error("G3 insufficient positive mutation witnesses");
     const coverage = new Set<string>(),
       published = new Map<string, any>();
+    // [DX-H5] Why: Python reconcile CPU is production-path gate cost inside the same VM/cgroup.
+    // Rejected: treating oracle wall time as client JS CPU or assuming it costs nothing.
+    const oracleCpuNs = () => {
+      try {
+        const value = Number(
+          fs.readFileSync(`/proc/${oracle.child.pid}/schedstat`, "utf8").trim().split(/\s+/)[0],
+        );
+        return Number.isFinite(value) && value > 0 ? value : null;
+      } catch {
+        return null;
+      }
+    };
+    const threadCpuMs = (start: NodeJS.CpuUsage, end: NodeJS.CpuUsage) =>
+      (end.user - start.user + end.system - start.system) / 1000;
     const activationPage = async (records: readonly any[], page: number) => {
+      const verificationCpuStart = process.threadCpuUsage(),
+        oracleCpuStart = oracleCpuNs();
       const verifyStart = performance.now();
       fs.writeFileSync(path.join(dir, `activation-${page}.json`), canonical(records));
       const original = JSON.parse(fs.readFileSync(path.join(dir, `preview-${page}.json`), "utf8"));
@@ -319,10 +335,12 @@ export async function runW0Driver(argv: string[]) {
         }),
       );
       const verificationBeforeMs = performance.now() - verifyStart;
+      const verificationCpuBeforePublish = process.threadCpuUsage();
       const publishStart = performance.now();
       const actual: any = await comp.publishOutbox(evaluations);
       const publicationWallMs = performance.now() - publishStart;
-      const verifyAfter = performance.now();
+      const verifyAfter = performance.now(),
+        verificationCpuAfterPublish = process.threadCpuUsage();
       equalBytes(
         "G5 deliveries",
         canonical(deliveriesWire(actual.deliveries)),
@@ -334,8 +352,16 @@ export async function runW0Driver(argv: string[]) {
         if (published.has(key)) throw new Error("duplicate visible delivery");
         published.set(key, d);
       }
+      const verificationOracleCpuEnd = oracleCpuNs();
       return {
         verificationMs: verificationBeforeMs + performance.now() - verifyAfter,
+        verificationMainThreadIntervalCpuMs:
+          threadCpuMs(verificationCpuStart, verificationCpuBeforePublish) +
+          threadCpuMs(verificationCpuAfterPublish, process.threadCpuUsage()),
+        verificationOracleCpuMs:
+          oracleCpuStart === null || verificationOracleCpuEnd === null
+            ? null
+            : (verificationOracleCpuEnd - oracleCpuStart) / 1e6,
         publicationWallMs,
         ...(actual.timing ?? {}),
       };
