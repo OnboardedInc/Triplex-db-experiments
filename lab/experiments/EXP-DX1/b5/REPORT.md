@@ -1,110 +1,140 @@
 # DX-B5 — opt-in Datomic lean layout
 
-Status: L0–L5 implemented, with the inherited untyped-journal edge retained under the strict legacy-compatibility constraint. Final differential/error-parity and mutant reruns are running; L6 is partial and its corrected comparison is blocked on another agent’s measurement lock. This report records developer evidence, not an acceptance-contract promotion. Legacy is still the default and existing scopes are never converted. `lab/acceptance/` is unchanged.
+L0–L5 are implemented. The 300-scenario differential and real W0 page comparisons pass. L6 is measured on the prescribed B3 command distribution, including a same-stack legacy baseline; the performance bars are **not all met**. Final whole-package and mutant reruns are in flight. No acceptance PASS, scorecard promotion or contract change is claimed.
 
-## Implementation by milestone
+Legacy remains the default; existing scopes are never converted. The final source preserves the inherited untyped-journal error, because the task permits only D0 behavior changes on legacy scopes. That existing edge blocks a fully green package suite in addition to the declared signed-zero/int64 domain failure.
 
-| Milestone | Built | Evidence/status |
+## Milestones
+
+| Milestone | Built and checked | Status |
 | --- | --- | --- |
-| L0 | Process-wide timestamp registration, send ordering released at HTTP `finish`, gateway per-client sequence submission (20 ms bound), typed clock conflict and bounded replay | Isolated 16-client × 200-command gate: 3,200 exact receipts, zero clock replays/declines/send regressions. Four independent processes × 500 commands: 2,000 exact receipts, 162 clock replays, zero declines; each receipt's record-time pull equals fallback. Under shared CPU-5 contention the full lean suite observed 171 clock replays, zero send regressions/declines and exact answers. The expected zero one-process replay count is therefore not universal. |
-| L1 | Immutable rows-version 3 selection, indexed row text, retirement markers, serial-point identity/live checks, row-only writes plus unchanged entity/transaction/scope/claim metadata | Native commit/claim/CAS/lost-ACK/nested/identity tests exercised both layouts; full-suite limitations below. |
-| L2 | Exact native row cut/history readers; ID/entity/list/pattern/scans, staged reads, begin prefetch, reach, transactions and command lookup | Legacy reader remains in place. Lean explicitly rejects only native `q` and old `log`. |
-| L3 | 300 seeded differential scenarios with deterministic identities/clocks and ordered full answers | Pre-compact final run: 95,028 comparisons, 5,664 accepted fast cuts and 5,664 raw-row closures, 249.91 s. All three semantic mutants fail content assertions. Current compact rerun also passes all the same denominators in 235.62 s. |
-| L4 | Optional `getReachRows` / `getReachRowsMany` core adapter members; immutable decoded rows cached next to triples | Row-for-row portable closure comparison on both layouts; conservative malformed-coverage decline. Other adapters compile unchanged. |
-| L5 | Datomic W0 reader uses one batch raw-row reach, reconstructs global BFS order/dedup and preserves actual recorded positions | Small native 64-root page test passes on both layouts. Real H2 N=200 comparison passes on both layouts: four pages × two cuts each, exact portable content and one actual reach HTTP request per page. |
-| L6 | B3-derived measurements, source/hash/stack binding, raw outputs, one bounded lock around lean and legacy comparison, verified owned cleanup | First partial lean run below; final corrected comparison pending. |
+| L0 | Process-wide timestamp registration; HTTP-send order released at socket `finish`; gateway per-client sequence submission with a 20 ms predecessor bound; typed clock conflict, bounded catch-up and callback replay | 16 clients ×200 commands have exact positions, regular scopes, zero send regressions/fast declines and per-receipt record-time equality with fallback. Isolated run: zero clock replays; shared CPU-5 runs: 60 lean /5 legacy. Four processes ×500 commands previously passed with 162 clock replays and zero declines; final both-layout reruns pending. Zero one-process replays is not universal under contention. |
+| L1 | Immutable rows-version 3; indexed row text; row-only assertions/retractions; retirement markers; serial-point identity/live checks; unchanged entity/revision, transaction, scope, claim and operation metadata | Commit, duplicate, claim, CAS, lost-ACK and nested tests exercised both layouts. Known domain failure remains. |
+| L2 | Exact native cut/history readers for ID/entity/list/pattern/scans, staged reads, begin prefetch, reach, transactions and command lookup | Row equivalence passes. Native `q` and old `log` explicitly reject lean. Existing untyped-journal edge remains a typed error on both layouts; its original success-expecting test therefore remains a blocker. |
+| L3 | 300 seeded scenarios; ordered full values, metadata, positions and public journals; three semantic mutants | Final production source: **95,028 comparisons, 5,664 fast cuts and 5,664 raw-row closure checks**, 378.61 s; separate regular-scope typed-error parity passes. Previous three-mutant runs reject all three by content; strengthened final rerun pending. |
+| L4 | Optional `getReachRows` / `getReachRowsMany`; decoded immutable rows cached next to triples; conservative malformed-coverage decline | Full rows equal getByEntities-based closures on both layouts; other adapters compile unchanged. |
+| L5 | One batch raw-row reach per Datomic page; global BFS ordering/dedup; genuine recorded positions | Real H2 N=200 world passes on both layouts: 8,290 seed commands each, four pages ×two cuts each, exact portable content and **one actual reach HTTP request per page**. |
+| L6 | Source/build/stack-bound B3-derived runner; raw observations; bounded lock and proven owned cleanup | Prescribed matrix complete. Serial/median, loaded-tail and seed-rate bars remain unmet; tables below. |
 
-The gateway hot readers use native index APIs, not `d/q`, `d/entity` or `d/pull`. Responses on reach/journal hot paths remain hand-written. Reflection warnings stay disabled.
+Production SDK/gateway source was frozen at `5e70772972ff5d184b8944be6a214946bfeee299`. The corrected benchmark source is `c21134fcac4a36ffd13e2b8f63153ff760c7a2c2`; its only subsequent production-independent change restored B3's original command-size distribution. Complete source/build copies are retained in `source-final-5e707729/` and `source-final-c21134fc/`, each with a byte-indexed CAPTURE.json. Later test changes strengthen observation checks, not runtime behavior.
 
-## Layout and compatibility details
+## L6 — prescribed B3 distribution
 
-A new live application row adds one `:triplex.entity/row` datom, no fact entity and no `:f/*`; a ref target without its own rows gets no entity. Existing entity IDs/revisions, transaction attributes, scope position/max clock, claims, operation IDs and conflict checks remain. Existing row IDs remain reserved through Datomic history, matching legacy identity behavior after retirement.
+Stack `tx2-dxb5-measure-pair-1794286658`, one lock hold, lean first then a fresh legacy scope. PostgreSQL is durable (fsync, synchronous_commit and full_page_writes read back); transactor CPUs 0,1, PostgreSQL CPU 0, write peer CPU 2, read peer CPUs 3,4. Transactor Xmx2g/container 3g; gateways Xmx1g/container 1500m. This is the B3 profile; no S3 report exists on this branch. Source, local image IDs, exact container IDs, CPU/memory settings, source/build hashes and actual PostgreSQL settings are in the attempt files. No downloads.
 
-The compact lean transport sends each new row once as canonical text, plus only retirement columns for retired rows and an explicit input row-order list. The gateway validates identities/order/text binding and normalizes the decoded record timestamp to Datomic's double type. It selects this protocol only from the actual immutable create response; requesting lean while reopening a legacy scope retains the legacy payload. This is a transport optimization; stored row text and legacy protocol are unchanged.
+The command trace is unchanged B3 sizing: 60% 5–10 facts, 30% 11–25, 10% 26–50. Both layouts use the same source, seeded NS world, trace and Poisson arrival sequence. Each burst offers 3,291 commands at nominal 55/s over 60 s. All four lean bursts and the legacy burst have zero conflicts/replays. Serial phases each have 3,000 warm-up and 3,000 timed commits.
 
-The raw-row batch request has an explicit 64-root/50,000-entity bound; normal triple reach retains its existing 5,000-entity bound. Both retain the existing 100,000-row bound. A real W0 page includes over 10,000 answer entities, so the original bound would silently force the portable fallback. Raw rows share one decoded ID index per batch rather than rebuilding it per root.
+| Serial metric | Lean | Legacy | Requested bar |
+| --- | ---: | ---: | --- |
+| Datoms/commit p50 /p90 /p99 | **48 /82 /124** | **251 /540 /898** | About 45 for a 10-fact probe; exact probe below |
+| Commit p50 /p90 /p99, ms | **7.493 /13.103 /23.306** | **9.885 /18.500 /32.520** | Lean p50 ≤5: unmet |
+| Native transact p50 /p90 /p99, ms | 3.105 /5.306 /15.416 | 4.011 /7.484 /18.572 | Diagnostic |
+| Observed HTTP calls/commit | 1.0077 | 1.0077 | Includes occasional additional calls; no claim every observed commit is exactly one call |
 
-Routes returning HTTP 409 `{"code":"LayoutUnsupported","route":"..."}` on lean scopes: **`q`** (native Datalog) and **`log`** (older feed). The adapter surfaces these as typed `ReadError` with route identity. The row-pattern query route, transaction feed and command lookup are implemented on lean.
+At the median the physical datom count is 5.23× smaller; p90 and p99 counts are 6.59× and 7.24× smaller. These are observed transaction-datom distributions, not physical I/O counts or a production-scale memory qualification.
 
-## Design deviations and retained failures
+| Burst | Layout | p50 ms | p99 ms | Count >50 ms | Bar ≤10 /≤50 ms |
+| --- | --- | ---: | ---: | ---: | --- |
+| No readers, run 1 | Lean | 14.243 | 41.302 | 4 | Median unmet; tail below bar |
+| No readers, run 2 | Lean | 14.185 | 40.032 | 4 | Median unmet; tail below bar |
+| No readers, run 3 | Lean | 14.204 | 41.242 | 12 | Median unmet; tail below bar |
+| 32 readers | Lean | 10.762 | 67.823 | 71 | Both unmet |
+| Same unloaded burst | Legacy | 16.847 | 56.210 | 57 | Comparison only |
 
-- Datomic coalesces assertion and retraction in one physical transaction. A born-retired row therefore retains its row text plus retirement marker; cut/reach exclude it and history reconstructs it. Ordinary retirement retracts the row datom. Explicit nested/import retirement fields use the prescribed marker, including empty transaction IDs and signed-zero time.
-- Ordered registration applies to replay-safe callbacks; unsafe SPI callbacks can await another transaction with a fixed imported timestamp and would deadlock if ordered. Clock rejection requires the callback's public journal, which proves replay re-reads its runtime clock. Other SPI callbacks retain legacy irregular-scope behavior. Timestamps and journal values are never rewritten.
-- Clock conflicts have a separate minimum 32-retry budget; CAS retains its configured retry budget. The 50 ms catch-up wait is per replay, not permission to alter clocks.
-- The inherited B4 journal reader decodes untyped SPI rows before filtering; a raw `tx_id: "spi"` causes a typed ReadError. An initial helper correction filtered those rows first, but the final scope audit reverted it: the hard constraint permits only D0 behavior changes on legacy scopes. This existing edge therefore remains on both layouts. The final differential explicitly compares this typed error as well as successful answers. The earlier full-suite results below predate that narrow rollback; they cannot establish that the final tree has only the declared domain failure. A separately authorized journal fix is needed for the existing untyped-journal test.
-- Imports with logical position zero still obey their physical publication cut; history is bounded by the physical database before applying logical visibility.
-- The indexing-duration test compares VM wall time with host monotonic elapsed time plus 5 ms. It remains unchanged and failed under shared CPU contention by about 4–10 ms. The known `preserves signed zero and int64 bounds` domain failure also remains. Neither is relabelled as passing.
-- First differential attempt OOM-killed a 1.5 GiB transactor container while large suites overlapped. Replacement functional runs are sequential, keep Xmx1g, and use a 2 GiB container limit. Gateways keep Xmx768m. Initial OOM, transport-fixture/import errors and all failed reruns remain in evidence.
-- First real H2 W0 comparison could not import the unbuilt qualification dist; the unchanged dependency was built locally with no downloads before a fresh-stack rerun.
-- First compact native attempt rejected an integral JSON record timestamp as the wrong Datomic double type; corrected at compact decode and rerun on a new stack.
-- First L6 attempt stopped late because `W0.rung(64)` is invalid (N must be a positive multiple of 50). The corrected fixture seeds N=100 and reads its first 64 subjects. No legacy result or full matrix is inferred from that failed attempt.
+Legacy repeats one unloaded burst and the full serial phase in the same stack/session; three legacy repetitions and a reader-loaded legacy burst were not run. No historical B3 number is substituted for this baseline. The before/after order was not randomized and no A/A calibration or independent acceptance review is claimed.
 
-The captured benchmark commit has 26 new rows, one retired row and three touched entities. Static counting of the transaction function for that regular source-bound command gives **32 native index API reads**: 26 identity-history range seeks, one live-ID range seek, one retirement-marker seek, one exact entity-row retirement seek, two scope-value reads and one existing-entity revision read. There are additionally five entity identity resolutions (three touched entities, retirement subject and journal absence) and one or two cached attribute-ID resolutions. These are API calls, not measured physical disk I/Os; Datomic internals/upserts are not instrumented. The marker seek is required for the born-retired exception. The exact captured input and source are retained.
+| Pull/read metric | Lean observed |
+| --- | ---: |
+| Single client, 20k warm +20k timed, p50 /p99 ms | 2.227 /7.005 |
+| Single-client pulls/read-gateway CPU-second | 858.94 |
+| 32 readers, 30 s, count | 149,400 |
+| 32-reader pull p50 /p99 ms | 4.216 /38.722 |
+| 32-reader pulls/read-gateway CPU-second | 2,525.41 |
+| RYOW | 2,000 exact checks; p50 6.131 /p99 24.248 ms |
+| Real W0 page: first 64 subjects of N=100 | **777.473 ms; 1 HTTP; 32,570 rows**, exactly equal to portable page |
+| Raw NS graph page, separately labelled | 476.413 ms; 1 HTTP; 31,615 rows; 64 roots |
 
-## Validation
+| NS seed writers | Commands | Facts | Commands/s | Facts/s |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 2,039 | 83,185 | 97.17 | 3,964.26 |
+| 8 | 2,039 | 83,185 | 264.82 | 10,803.90 |
+| 32 | 2,039 | 83,185 | **288.97** | 11,789.29 |
 
-Evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5/`.
+Each seed runs the complete 2,000-subject NS command plan through public Triples.transact, including 39 shared batches. The ≥400 commands/s bar is unmet. These are acknowledged workload throughput diagnostics, not full P5 stored-world/fingerprint acceptance at 100k subjects.
 
-| Run | Result |
+Primary results under the durable evidence root:
+
+- `bench-1794286683427-16848fcf-7368-4966-9128-27cff468948c/`: lean result.json, raw observations, exact runner and metric streams.
+- `bench-1794287297825-4e72050f-0ccb-4987-b954-31352d5f93bf/`: same-stack legacy baseline.
+- `banded-measurement-table.md`: tables derived from those raw results by analyze-results.py.
+- `cleanup-tx2-dxb5-measure-pair-1794286658-1794287475215944000.json`: exit zero, exact saved/current container identity, actual removals and successful empty inventories before lock release. Hold lasted about 13m37s, below 15 minutes.
+
+## Fixed-size probe and retained failed attempts
+
+The completed earlier fixed-10 matrix on source 5e707729 is retained in `bench-1794285688683-6bf9ac35-e014-4064-a255-a0b72eae27e9/` (lean) and `bench-1794286290006-5e62d1f2-9424-4eed-b5b7-762ee07e2e02/` (legacy). Its ten-fact probe wrote **48/48/48** datoms versus legacy **251/252/252**. `final-measurement-table.md` indexes its other diagnostics. Final audit found that forcing ten facts had removed B3's larger commands; the prescribed matrix above was rerun with the original distribution. Fixed-size tails are not relabelled as B3 target results.
+
+That captured 10-fact command has 26 new rows, one retired row and three touched entities. Static counting of the regular source-bound transaction function gives **32 native index API reads**: 26 identity-history range seeks, one live-ID range seek, one retirement-marker seek, one exact entity-row retirement seek, two scope-value reads and one existing-entity revision read. Additionally there are five entity identity resolutions (three touched entities, retirement subject and journal absence), and one or two cached attribute-ID resolutions. These are API calls, not measured physical disk seeks; native internal/upsert work is not instrumented.
+
+The first partial measurement (`bench-1794282248414-b4d95250-f1fe-4d8d-b2fe-3f14bff884c2/`, source 9c5e496e) stopped late at an invalid W0 fixture: W0.rung(64) requires a positive multiple of 50. It has no legacy result; nothing is inferred from the missing phases. The corrected fixture seeds N=100 and selects its first 64 subjects. Its successful cleanup receipt and `partial-measurement-table.md` remain retained.
+
+Other first failures are retained: initial unsupported pnpm-exec option (offline install itself succeeded with zero downloads), an OOM-killed 1.5 GiB transactor container when large suites overlapped, missing local qualification dist on first real W0 import, and a compact-row integral JSON timestamp rejected by Datomic's double attribute. The corrected compact parser casts the record timestamp to double; replacement functional runs are sequential, with Xmx1g transactor/container 2g and Xmx768m gateways. No failed attempt is replaced or adopted as a semantic success.
+
+## Design, compatibility and deviations
+
+A live lean application row is one row-text datom: no fact entity, no :f/* and no entity for a rowless ref target. The immutable rows-version 3 header selects lean; rows-version 2 remains legacy. Cut readers use eligible immutable db values and valid time; general readers reconstruct assertion/retraction history and exact retirement fields from markers or retracting transaction metadata. Physical publication cuts precede logical filtering, including explicit imported position zero. Existing row IDs stay reserved through native history, matching legacy.
+
+Datomic coalesces an assertion and retraction in one physical transaction. A born-retired row therefore retains its row text plus a marker; cut/reach exclude it and history reconstructs it. Ordinary retirement retracts the row datom. This necessary exception is covered by the differential. Markers preserve explicit nested/import retirement positions/times/IDs, including empty IDs and signed zero.
+
+Ordered registration applies to replay-safe callbacks; unsafe SPI callbacks can await another fixed-clock transaction and would deadlock if ordered. Clock rejection requires the callback's public journal, which establishes that replay re-reads the runtime clock. Other SPI callbacks retain legacy irregular behavior. Timestamps and journal values are never rewritten. Clock retries have a separate minimum budget of 32; CAS retains maxRetries. Catch-up waits at most 50 ms per replay.
+
+The lean compact transport sends fresh rows once as canonical text, retirement columns for retired rows, and explicit input order. The gateway validates identity/order/text bindings. Selection follows the actual immutable create response: reopening legacy while requesting lean retains the legacy wire payload. No controlled causal speedup is claimed for compact transport alone.
+
+Raw-row batch reach is bounded to 64 roots/50,000 entities, retaining the 100,000-row cap. Ordinary triple reach retains its 5,000-entity cap. A real W0 page exceeds 10k answer entities; the earlier cap forced portable fallback. One decoded ID index is shared across roots. This is a bounded extension, not an unbounded graph route.
+
+**LayoutUnsupported routes on lean: `q` (native Datalog) and `log` (older feed), only.** Both return HTTP 409 with code and route; the adapter surfaces typed ReadError with route identity. Row-pattern query, transaction feed and command lookup are implemented. Hot gateway row readers use native indexes, not d/q, d/entity or d/pull; reflection warnings remain off and hot responses are hand-written.
+
+The inherited B4 journal reader decodes untyped SPI rows before filtering; a raw tx_id `spi` causes branded Schema validation failed. An initial helper correction filtered first, then final scope audit reverted it to honor the hard legacy constraint. Both layouts now preserve the typed ReadError. A separately authorized journal fix is needed for the existing success-expecting test. The new error-parity witness reads back the actual untyped stored row and requires the exact schema-error cause, so a transport failure cannot satisfy it.
+
+## Verification and evidence
+
+Durable evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5/`. Bulky raw output stays there; final SHA256SUMS/index sealing pending the running gates.
+
+| Gate | Result |
 | --- | --- |
-| `offline-compact.log` | 143 pass, 40 native skips / 183; includes touched core tests |
-| `compact-unit.log` | 2 compact/legacy wire-selection fixtures pass |
-| `SDK-final.log` | 101 pass: client, queue, real held-ACK old-wrapper compatibility, malformed coverage |
-| `compact-build.log`, `compact-types.log` | Package/dependency build and typecheck succeed |
-| `adapters.log` | 12 Turbo tasks pass across nine adapter/core typecheck targets |
-| `compact-bench-types.log` | Focused changed benchmark modules typecheck |
-| `compact-equivalence2.log` | 300 scenarios, 95,028 comparisons, 5,664 fast cuts/closures; passes in 235.62 s |
-| `final-equivalence.log` | 300 scenarios, 95,028 full comparisons, 5,664 fast cuts/row closures; then three content-failing mutants |
-| `real-W0-legacy-suite.log` | Real N=200 H2 worlds, lean and legacy each: 8 exact page comparisons and 8 actual single-request pages; 8,290 seed commands each |
-| `compact-full-legacy.log` | Before helper rollback: 180 pass, one declared domain failure / 181; indexing timing passes; 5 clock replays, zero send regressions/declines |
-| `compact-full-lean.log` | Before helper rollback: 178 pass, one declared domain failure, two intentional native-q skips / 181; indexing-duration assertion passes; one-process clock replays 60, zero send regressions/declines |
-| `final-lean2.log` | 173 pass, 2 fail, 2 intentional native-q skips / 177; known domain failure and unchanged cross-clock timing assertion |
-| `final-legacy.log` | Historical pre-clock-budget run: 174 pass, 3 fail / 177; domain, timing and old exhausted-clock-retry failure. Current full legacy rerun is recorded above. |
+| `legacy-parity-differential2.log` | Final runtime: 300 scenarios, 95,028 comparisons, 5,664 fast cuts/closures, plus regular-scope typed-error parity; two tests pass |
+| `source-final-suites-mutants.log` | Strengthened row-byte/schema-cause parity passes; whole suites and final mutants in flight |
+| `real-W0-legacy-suite.log` | Real H2 N=200 reader comparison passes on both layouts, eight one-request pages each |
+| `final-source-offline.log` | 143 pass, 41 native skips /184, including touched core tests |
+| `final-source-types.log` | Final package source typecheck passes |
+| `adapters.log` | Nine adapter/core typecheck targets, 12 Turbo tasks pass |
+| `compact-bench-types.log` | Changed benchmark modules pass focused typecheck |
+| `legacy-parity-build.log` | Final runtime/dependency builds pass; generated dist is not committed |
+| `touched-lint.log`, `touched-format.log` | Zero lint errors (seven existing/spike warnings); touched package/core TS formatting passes |
+| Earlier full suites | Before the journal rollback: legacy 180 pass/one declared failure; lean 178 pass/one declared failure/two native-q skips, each /181. These are historical, not final-tree green claims. |
 
-The differential compares getById, entity/list reads, entity/attribute/entity-type patterns, dependencyState, history, reach, transaction feed, command lookup and receipt positions. It includes past/future/bounded valid times, equal record times, retract/reassert, retraction-only commits, nested two-position transactions, explicit imported positions, irregular scopes, duplicate commands and born-retired rows. Bases include head, every earlier physical endpoint, an interior position, before/at/between commit record times, and valid boundaries. Order and full metadata must match. Mutants independently replace marker retirement position with transaction position, remove the cut valid-time filter, and treat irregular scopes as regular; every accepted mutant result requires a healthy newly started gateway and an actual assertion difference, not a startup/transport failure.
+The differential compares ordered getById/entity/entities/history/pattern/dependencyState results, reach and raw closures, transaction feed, command lookup and receipt positions. It includes valid-time boundaries, equal record times, retract/reassert, retraction-only commits, nested two-position commits, explicit imported positions, irregular SPI scopes, duplicate commands and born-retired rows. Bases include head, every earlier endpoint, an interior position, before/at/between commit times and valid boundaries. The separate regular-scope witness compares the same inherited typed error on both layouts.
 
-Lint has zero errors (seven existing/spike warnings); the touched package/core TS files pass formatting. No root-wide `pnpm check`, pack consumer or external backend acceptance is claimed. The package pack script is not used because its unmodified installer can attempt network access; this task permits no downloads. Broad bench typecheck retains unrelated audit-traffic/round2 errors; the changed modules pass their focused check.
+Mutants replace marker retirement position with transaction position, remove valid-time filtering, and treat irregular scopes as regular. Each must reach a fresh healthy gateway and fail an actual content assertion; startup, transport and timeout failures cannot count. Earlier all-three rejections are retained in final-equivalence.log and mutants-final.log; final source rerun pending.
 
-## L6 — fixed-size diagnostics; prescribed distribution rerun pending
-
-Source/build copy: `source-final-9c5e496e/`. Stack: `tx2-dxb5-measure-pair-1794280959`; CPU 0–4 held under measurement lock; durable PostgreSQL + transactor and split write/read gateways. Results: `bench-1794282248414-b4d95250-f1fe-4d8d-b2fe-3f14bff884c2/result.json`. This predates compact transport, the shared row index and real-page bound. It is partial fixed-10 diagnostic evidence, not the prescribed B3-distribution comparison. A second fixed-10 run completed the entire lean matrix and same-stack legacy baseline on source 5e707729; its raw results are retained in final-measurement-table.md. Final audit found the ten-fact override was inappropriate for comparing B3 tail behavior. The default now preserves the original banded trace (60% 5–10, 30% 11–25, 10% 26–50 facts); fixed size is an explicitly labelled optional probe. The prescribed matrix is being rerun. No fixed-size tail is relabelled as the variable-distribution target result.
-
-| Metric | Lean observed | Requested bar |
-| --- | ---: | ---: |
-| Datoms/10-fact command p50 / p90 / p99 | 48 / 48 / 48 | about 45 |
-| Serial commit p50 / p90 / p99, ms (3k warm + 3k timed) | 6.448 / 8.282 / 15.732 | p50 ≤5 |
-| Native transact p50 / p90 / p99, ms | 2.995 / 4.091 / 10.572 | diagnostic |
-| 55/s ×60s burst 1 p50 / p99, ms | 12.950 / 38.385 | ≤10 / ≤50 |
-| Burst 2 p50 / p99, ms | 12.888 / 41.428 | ≤10 / ≤50 |
-| Burst 3 p50 / p99, ms | 12.511 / 35.118 | ≤10 / ≤50 |
-| 55/s +32 readers p50 / p99, ms | 10.412 / 74.087 | ≤10 / ≤50 |
-| Single pull p50 / p99, ms (20k warm +20k timed) | 1.617 / 5.794 | diagnostic |
-| Single pull / read-gateway CPU-second | 1,189.59 | diagnostic |
-| 32-reader pull p50 / p99, ms | 4.148 / 37.875 | diagnostic |
-| 32-reader pulls / read-gateway CPU-second | 2,601.48 | diagnostic |
-| NS seed 1 writer, commands / facts per second | 84.58 / 3,450.47 | diagnostic |
-| NS seed 8 writers | 203.00 / 8,281.96 | diagnostic |
-| NS seed 32 writers | 228.89 / 9,338.15 | ≥400 commands/s |
-| Raw NS graph page, 64 roots | 508.91 ms, 1 HTTP, 24,564 rows | not substituted for W0 |
-| RYOW | 2,000 exact checks; p50 5.821 / p99 21.738 ms | diagnostic |
-
-Each seed is the complete 2,000-subject NS command plan, 2,039 commands / 83,185 facts including shared batches. Baseline legacy and true W0 are pending in the corrected run. The first cleanup receipt verifies saved container IDs, successful removal and empty fresh container/network/volume inventories before releasing the owned lock.
+No root pnpm check, pack consumer, release, large P5 world, 10m-entity/100m-fact run, maintenance, crash recovery acceptance or independent review is claimed. The pack script can attempt network installation; it was not run under the no-download constraint. Broad benchmark typecheck retains unrelated audit-traffic/round2 diagnostics; changed modules pass the focused check. The inherited lab publication observer can still reject shifted ACK positions under concurrent public-driver use; its validation is outside the owned files.
 
 ## Observation-to-verdict audit
 
-No acceptance PASS, promotion or contract receipt is emitted. Before committing developer verdicts, the following are the complete observation-to-verdict sites introduced or changed here:
+No acceptance PASS/receipt or promotion is emitted. The complete introduced/changed developer-verdict sites are:
 
-1. `CommitOrder.test.ts`, `send-wrapper.test.ts`, `compact.test.ts`, `client.test.ts`, `reach-rows-fault.test.ts`, and row-text/identity tests: assertions inspect exact new fixture bytes/order/typed errors. Fixtures are newly constructed or use fresh native UUID scopes; the real transport fixture binds its own loopback server and held ACK. Offline checks do not claim a native slot.
-2. `concurrent-commits.test.ts`, `clock-order.test.ts` / `clock-worker.mts`: actual receipts/positions, scope regularity, per-receipt record-time fast response and row fallback equality; UUID scope/process identity and owned fresh stack bind this attempt. Clock counts are reported rather than inferred from exit zero.
-3. `layout-differential.test.ts`: deep full ordered equality and nonzero fast/closure denominators; seeded IDs/clock and newly created legacy/lean scopes; actual native source copied/indexed at startup. No prior artifact is read as a current observation.
-4. `reach.test.ts`, route/read-pin/journal/adapter tests and `w0-reader.test.ts`: source-selected native response content, metadata and actual HTTP counts; fresh scope fixtures and exact basis; stack health/source hash records bind native runs. Unsupported q cases assert the typed rejection or explicitly skip the incompatible native-query-only scenario.
-5. `mutants.sh`: requires startup health, fresh isolated copied gateway source, an actual content assertion failure and successful owned cleanup. A transport failure cannot count as mutant rejection.
-6. `bench.mjs`: stores raw observations, exact RYOW/page content comparisons and request counts; fresh UUID output/scope, captured input/source/build hashes, measured stack IDs/CPU/configuration and current lock bind the attempt. Bars are assessed from actual distributions, not `passed:true` or process exit. Failed/partial runs retain their error.
-7. `cleanup-measurement.py`: checks saved/current container identity, actual removal status, successful fresh empty inventories and exact lock owner before unlock. It is resource cleanup evidence only; it cannot declare semantic acceptance.
-8. `hash-inventory.py`, evidence SHA256SUMS/index and this report: hash actual source/evidence bytes and retain old hashes from the recorded baseline; readback verifies manifests. `analyze-results.py` renders retained raw distributions with attempt head/stack/error labels; it does not emit acceptance. These establish binding/integrity, not semantic correctness or completeness.
+1. CommitOrder, held-ACK wrapper, compact/client, row-codec, raw-coverage and identity tests inspect actual new fixture bytes/order/typed errors. Real HTTP fixtures bind their own loopback server; native fixtures use fresh UUID scopes. Offline checks claim no native slot.
+2. Concurrent and distributed-clock tests inspect actual receipts, positions, regularity and per-receipt record-time fast/fallback equality. Fresh scopes/processes and saved owned stack source/IDs bind the attempt; observed clock counts are reported.
+3. layout-differential.test.ts checks deep ordered full values/metadata and nonzero fast/closure denominators on paired fresh scopes with deterministic IDs/clock. Its retained-error witness reads actual stored bytes and requires the expected branded schema-error cause. Prior artifacts are never loaded as current observations.
+4. Reach, route, journal, read-pin, adapter and real W0 tests inspect exact content, metadata and actual request counts at named bases. Fresh native source copies/health hashes and scope IDs bind them. Native-query-only tests are explicitly skipped on lean or assert typed unsupported, not counted as supported queries.
+5. mutants.sh requires a new healthy source-mutated stack, an actual assertion mismatch and successful owned cleanup; generic nonzero exit is insufficient.
+6. bench.mjs retains raw current-attempt distributions, exact RYOW/page comparisons, source/build hashes, stack/CPU/durability identities, fresh UUID scopes and lock ownership. Missing/failed phases retain their errors. Banded and fixed-size results remain distinct; no emitted boolean is semantic acceptance.
+7. cleanup-measurement.py checks saved/current container IDs, actual removals, successful fresh empty inventories and exact lock owner before release. Functional cleanup likewise requires successful fresh empty inventories. Cleanup cannot declare semantic correctness.
+8. hash-inventory.py, analyze-results.py, evidence SHA256SUMS/index and this report bind actual retained bytes and labelled attempt identities. Manifest readback checks every source file. Tables/hashes establish observations/integrity, not acceptance or completeness.
 
-## Scope, pins, cleanup and remaining work
+## Pins, scope and remaining work
 
-Only `packages/datomic/**`, the two authorized benchmark edits, the optional core adapter members and `b5/**` are changed. No generated dist is committed, no dependency changes/downloads, no acceptance edits, no push/merge/deploy. Full old/new source hashes and acceptance-reference checks are in `HASH-CHANGES.json`; 31 changed source paths, with zero old hashes mentioned in acceptance. The inventory found no changed old hash or path referenced by acceptance pins.
+Only packages/datomic, the two authorized benchmark edits, the optional core adapter members and b5 files changed. No dependency changes, generated dist commits, acceptance edits, push, merge or deployment. `HASH-CHANGES.json` lists every changed source path with old/new SHA-256 against the pre-DX-B5 baseline. Previous/final inventory currently lists 31 source paths with zero old hashes or exact paths mentioned in acceptance; final refresh pending. There are therefore no directly referenced pinned-file hash changes to list; the conservative full inventory is supplied for the contract builder.
 
-Owned resource cleanup and final source/evidence sealing are pending the final gate/measurement stack. The default Docker context, shared residents, other agents' locks/containers and forbidden ports were not altered. This work does not qualify P5 at 100k subjects, scale at 10m entities/100m facts, or production acceptance. The inherited lab publication observer can still reject shifted ACK positions under concurrent public-driver use; fixing its validation is outside the owned files.
+Final functional cleanup/readback and evidence sealing are pending the running suites. All measurement attempts have already removed their owned stacks and released only their own lock after verified cleanup. Shared residents, foreign locks/containers, default Docker context and forbidden ports were not changed.
+
+Open work: the unmet performance bars; the declared domain failure and inherited journal test versus strict legacy compatibility; the lab publication-observer shifted-ACK blocker; and full downstream P1–P5/scale qualification. This report does not turn diagnostic counts or focused passing gates into those broader outcomes.

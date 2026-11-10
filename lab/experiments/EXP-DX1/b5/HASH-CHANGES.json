@@ -95,7 +95,7 @@
     {
       "path": "packages/datomic/src/DatomicStorageAdapter.ts",
       "oldSha256": "f37364cbefdb3290c9f0f3f3eec01e9cc79442b0e571d01aebf8157bb9bdf833",
-      "newSha256": "48e2ea4fa6dafc14cf08932e049a7784f39430b61c604d86d11b40057ab0199d",
+      "newSha256": "260a88507eb22062eb37f45a867d6389a8bcf6f4b5ad35072af9e8d0170d0cb3",
       "acceptancePathMentions": [],
       "acceptanceOldHashMatches": []
     },
@@ -172,7 +172,7 @@
     {
       "path": "packages/datomic/test/layout-differential.test.ts",
       "oldSha256": null,
-      "newSha256": "4092220614424051556036d3a6aa28e5deff90452427ef68c14b0f8d58b8c985",
+      "newSha256": "e03b45e54b48e2d4589a5a418dcbff73d1ef7f3e043e834f7210227bca8215d5",
       "acceptancePathMentions": [],
       "acceptanceOldHashMatches": []
     },

@@ -65,13 +65,22 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
               }),
             ),
           );
+          expect(await Effect.runPromise(adapter.getById("untyped-journal"))).toMatchObject({
+            entity_id: receipt.txId,
+            entity_type: null,
+            tx_id: "spi",
+          });
           const outcome = await Effect.runPromise(
             Effect.match(adapter.getTransactionsAfter!(0, 10), {
-              onFailure: (e) => ({ _tag: e._tag, message: e.message }),
-              onSuccess: () => ({ _tag: "UnexpectedSuccess", message: "" }),
+              onFailure: (e) => ({
+                _tag: e._tag,
+                message: e.message,
+                cause: e.cause instanceof Error ? e.cause.message : String(e.cause),
+              }),
+              onSuccess: () => ({ _tag: "UnexpectedSuccess", message: "", cause: "" }),
             }),
           );
-          expect(outcome).toMatchObject({ _tag: "ReadError" });
+          expect(outcome).toMatchObject({ _tag: "ReadError", cause: "Schema validation failed" });
           outcomes.push(outcome);
         } finally {
           await runtime.dispose();
