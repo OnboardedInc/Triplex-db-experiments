@@ -33,7 +33,12 @@ export function saveMemo(file: string, memo: PreviewMemo) {
 }
 export function loadMemo(file: string): PreviewMemo | undefined {
   if (!fs.existsSync(file)) return undefined;
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (e) {
+    if (e instanceof SyntaxError) return undefined;
+    throw e;
+  }
 }
 export async function selectMemo(o: {
   comp: CompositionHandle;
@@ -47,13 +52,20 @@ export async function selectMemo(o: {
   const reused = new Map<string, any>(),
     affected = new Set<string>();
   const memo = o.memo;
+  const sameBasis = (a: any, b: PositionBasis) =>
+    a?.position === b.position && a?.validAt === b.validAt;
+  const sameOutputBasis = (a: any, b: PositionBasis) =>
+    a?.tx === b.position && a?.validTime === w0Basis(b).validTime;
   const valid =
     memo?.version === 1 &&
     memo.scope === o.scope &&
     memo.releaseHash === o.releaseHash &&
-    canonical(memo.basis) === canonical(o.previewBasis) &&
+    sameBasis(memo.basis, o.previewBasis) &&
     memo.basis.validAt === o.basis.validAt &&
-    memo.basis.position <= o.basis.position;
+    memo.basis.position <= o.basis.position &&
+    !!memo.entries &&
+    typeof memo.entries === "object" &&
+    !Array.isArray(memo.entries);
   if (!valid)
     return {
       reused,
@@ -69,9 +81,9 @@ export async function selectMemo(o: {
       !r ||
       r.subject !== subject ||
       r.releaseHash !== o.releaseHash ||
-      canonical(r.basis) !== canonical(memo.basis) ||
-      canonical(r.output?.basis) !== canonical(w0Basis(memo.basis)) ||
-      canonical(r.record?.basis) !== canonical(w0Basis(memo.basis)) ||
+      !sameBasis(r.basis, memo.basis) ||
+      !sameOutputBasis(r.output?.basis, memo.basis) ||
+      !sameOutputBasis(r.record?.basis, memo.basis) ||
       r.output?.release !== o.releaseHash ||
       r.record?.release !== o.releaseHash ||
       r.output?.subject !== subject ||

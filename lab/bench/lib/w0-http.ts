@@ -7,6 +7,7 @@ import { DatomicClient } from "../../../packages/datomic/dist/index.js";
 const context = new AsyncLocalStorage<{
   requests: number;
   responseBytes: number;
+  requestBytes: number;
   gatewayMicros: number;
   gatewayHeaders: number;
   datoms: number;
@@ -26,6 +27,7 @@ DatomicClient.prototype.request = function (...args: any[]) {
       if (!active) return;
       active.requests++;
       active.responseBytes += sample.responseBytes;
+      active.requestBytes += sample.requestBytes ?? 0;
       if (Number.isFinite(sample.gatewayMicros)) {
         active.gatewayMicros += sample.gatewayMicros;
         active.gatewayHeaders++;
@@ -46,6 +48,7 @@ export async function measureW0Http<T>(run: () => Promise<T>) {
   const active = {
     requests: 0,
     responseBytes: 0,
+    requestBytes: 0,
     gatewayMicros: 0,
     gatewayHeaders: 0,
     datoms: 0,

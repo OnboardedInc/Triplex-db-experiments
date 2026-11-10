@@ -75,6 +75,7 @@ export interface SweepOptions {
   afterTimedStart?: () => Promise<void>;
   reused?: Map<string, any>;
   pageSize?: number;
+  captureClosure?: boolean;
 }
 export async function runW0Sweep(o: SweepOptions) {
   if (
@@ -242,6 +243,7 @@ export async function runW0Sweep(o: SweepOptions) {
               id: pageIndex,
               dispatchedAtEpochMs: performance.timeOrigin + performance.now(),
               subjects,
+              captureClosure: o.captureClosure,
               reused: subjects.map((s) => o.reused?.get(s)).filter(Boolean),
               basis: o.basis,
               release: o.release ?? "R2",

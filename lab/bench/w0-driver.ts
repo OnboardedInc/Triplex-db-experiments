@@ -248,6 +248,72 @@ export async function runW0Driver(argv: string[]) {
       return report;
     }
     if (useMemo) {
+      if (argv.includes("--measure-preview")) {
+        const liveOptions = {
+          comp,
+          composition,
+          lane,
+          scope,
+          N,
+          dir,
+          seed: "DX-H2-frozen-v1",
+          offsetS: 0,
+          warmupMs: 15000,
+        };
+        traffic = await startW0Live({ ...liveOptions, id: attempt + ":preview-baseline" });
+        await new Promise((r) => setTimeout(r, 15000));
+        const baseline = await traffic.stop();
+        traffic = undefined;
+        report.previewCosts = [];
+        for (const previewWorkers of [2, 4]) {
+          const captured: Record<string, any> = {};
+          const result = await runW0Sweep({
+            comp,
+            composition,
+            lane,
+            scope,
+            subjects,
+            basis: b0,
+            sweepId: attempt + ":preview:" + previewWorkers,
+            cursor: path.join(dir, `preview-cursor-${previewWorkers}.json`),
+            workers: previewWorkers,
+            captureClosure: true,
+            beforeTimedWindow: async () => {
+              traffic = await startW0Live({
+                ...liveOptions,
+                id: attempt + ":preview:" + previewWorkers,
+              });
+            },
+            onPage: async (records) => {
+              for (const r of records) {
+                equalBytes(
+                  "H8 preview output",
+                  W0.outputJson(r.output),
+                  W0.outputJson(memo.entries[r.subject].output),
+                );
+                equalBytes(
+                  "H8 preview record",
+                  canonical(r.record),
+                  canonical(memo.entries[r.subject].record),
+                );
+                captured[r.subject] = { ...r, releaseHash: W0.R2.hash, basis: b0 };
+              }
+            },
+          });
+          const live = await traffic!.stop();
+          traffic = undefined;
+          report.previewCosts.push({
+            workers: previewWorkers,
+            wallMs: result.wallMs,
+            live,
+            baseline,
+            matched: matchW0Live(baseline, live),
+            totals: result.totals,
+          });
+          if (Object.keys(captured).length !== N) throw Error("preview incomplete");
+          memo.entries = captured;
+        }
+      }
       saveMemo(path.join(dir, "preview-memo.json"), memo);
       // [DX-H8] Why: exercise real writer changes before B1 and a shared location fan-out.
       // Rejected: an all-cache-hit activation on an unchanged seed.

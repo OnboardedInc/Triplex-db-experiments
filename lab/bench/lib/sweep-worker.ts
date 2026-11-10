@@ -1,8 +1,9 @@
+import { readW0Pages } from "./w0-pages.ts";
 import { measureW0Http } from "./w0-http.ts";
 import fs from "node:fs";
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
-import { canonical, worldSha256, reachableRows, worldOf } from "./w0-world.ts";
+import { canonical, worldSha256, reachableRows, worldOf, isReference } from "./w0-world.ts";
 import { evaluateW0, loadW0Pins } from "./evaluate.ts";
 import { openComposition } from "./composition.ts";
 const comp =
@@ -47,15 +48,7 @@ port.on("message", async (msg) => {
     let page: any = { rows: [], position: msg.basis.position, epoch: "memo" };
     if (freshSubjects.length) {
       if (comp) {
-        measured = await measureW0Http(async () => {
-          let combined: any;
-          for (let offset = 0; offset < freshSubjects.length; offset += 64) {
-            const p = await comp.sweepPage(freshSubjects.slice(offset, offset + 64), msg.basis);
-            if (combined && p.epoch !== combined.epoch) throw Error("chunk epoch changed");
-            combined = combined ? { ...p, rows: combined.rows.concat(p.rows) } : p;
-          }
-          return combined;
-        });
+        measured = await measureW0Http(() => readW0Pages(comp, freshSubjects, msg.basis));
         page = measured.value;
       } else
         page = await new Promise<any>((resolve) => {
@@ -99,7 +92,24 @@ port.on("message", async (msg) => {
       if ("error" in r) throw new Error(subject + ": " + r.error);
       // [DX-H6] Why: only outputs and a binding digest cross threads; preview worlds remain durable for full post-ACK verification.
       // Rejected: canonicalizing and transferring every fact a second time.
-      result.push({ subject, worldSha256: worldSha256(world), output: r.output, record: r.record });
+      const closure = msg.captureClosure
+        ? [
+            ...new Set([
+              subject,
+              ...world.facts.map((f) => f.e),
+              ...world.facts
+                .filter((f) => isReference(f.a) && typeof f.v === "string")
+                .map((f) => f.v),
+            ]),
+          ].sort()
+        : undefined;
+      result.push({
+        subject,
+        worldSha256: worldSha256(world),
+        output: r.output,
+        record: r.record,
+        ...(closure ? { closure } : {}),
+      });
     }
     const encodeStarted = performance.now(),
       encodeCpuStarted = cpu();

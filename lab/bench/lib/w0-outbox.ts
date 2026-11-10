@@ -53,7 +53,9 @@ export async function publishRecords(
     const cpuNow = () => process.threadCpuUsage();
     const buildCpu = cpuNow();
     const commandId = "p5:outbox:" + sha256(canonical(records));
+    const commandLookupStart = performance.now();
     const existing = await comp.transactionByCommand(commandId);
+    const commandLookupMs = performance.now() - commandLookupStart;
     if (!existing.ok) throw new Error(existing.tag);
     const recover = (triples: readonly any[]) =>
       triples
@@ -76,6 +78,7 @@ export async function publishRecords(
       deliveries: any[] = [];
     // [DX-H6] Why: all persisted subject states share one page snapshot, with the same TripleLive CAS at commit.
     // Rejected: one sequential reach request per subject (64 round trips before each publication).
+    const stateReadStart = performance.now();
     const statePosition = await comp.currentPosition();
     // [DX-H8] Why: the 64-root reach limit constrains reads, not the atomic publication frame.
     // Rejected: a >64-root request (gateway decline), or one state request per subject.
@@ -91,6 +94,8 @@ export async function publishRecords(
         states.set(row.entityId, list);
       }
     }
+    const stateReadMs = performance.now() - stateReadStart;
+    const foldStart = performance.now();
     for (const record of records) {
       const entityId = "p5:outbox:" + record.subject;
       const old = { triples: states.get(entityId) ?? [] };
@@ -136,6 +141,12 @@ export async function publishRecords(
       retry: false,
       timing: {
         buildOutboxMs,
+        commandLookupMs,
+        stateReadMs,
+        stateFoldMs: buildOutboxMs - (foldStart - buildStart),
+        publishRequestBytes: commit.value.requestBytes,
+        publishWireParseMicros: commit.value.wireParseMicros,
+        publishWireSerializeMicros: commit.value.wireSerializeMicros,
         publishCapacityWaitMs,
         publicationLimit,
         buildOutboxMainThreadIntervalCpuMs:
