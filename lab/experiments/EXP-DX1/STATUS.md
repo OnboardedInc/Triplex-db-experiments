@@ -451,12 +451,39 @@ and after; no keep-awake.
 lock; 155 volumes and 16 images intact; docker context restored to `colima`; data disk remounted with `discard` (must be
 repeated after any restart). Log `~/Claude/Projects/triplex-db-2/evidence/ORCH-vm-resize/resize.log`.
 
+## DX-S4 storage anatomy (first part merged 2026-11-10 18:26 UTC; report `lab/experiments/EXP-DX1/s4/REPORT.md`, script `s4/footprint.sh`)
+
+Same 442,410 assertion payloads (1,000 W0 subjects, 42,775 commands), write-ahead log excluded everywhere:
+
+| Form | Bytes | Per assertion |
+| --- | --- | --- |
+| JSON lines, xz / gzip | 1.6 MB / 3.5 MB | 3.7 / 7.8 |
+| Packed typed cells plus dictionary (raw, not a database) | 50.6 MB | 114 |
+| JSON lines, raw | 89.7 MB | 203 |
+| **Lane D Datomic after index, storage GC and `VACUUM FULL`** | **139.7 MB** | **316** |
+| Plain Postgres typed table with 3 indexes | 150.8 MB | 341 |
+| Lane D Datomic as sealed (no maintenance) | 286.5 MB | 648 |
+
+1. **Half of the Datomic table was reclaimable garbage** (superseded index segments still live as key-value rows: 82,227 rows
+   down to 12,343). Current and history row digests were identical before and after.
+2. Maintained Datomic, which also carries history, journals, claims and receipts, is about level with a bare Postgres table.
+3. **Journal change objects are 75% of all row text** (363.6 MB of text against 122.1 MB for subject rows, before compression).
+4. The write-ahead log (335.5 MB as sealed) is a setting: 134 MB with smaller retention.
+5. Per W0 subject, maintained: 140 KB of table, 170 KB of non-log volume. **100,000 subjects is about 14 to 17 GB**, not 65.
+6. W0 text is very repetitive (xz 55 times smaller), so a compressed columnar store should be far smaller; not yet measured.
+7. Not yet measured (agent resumed for them): XTDB footprint, the cost of the by-value index on row text, binary rows in
+   Datomic, the journal's physical share, QLever.
+
+Proposed metric (Sam to rank): stopped volume bytes excluding the physical write-ahead log, per W0 subject, after the reference
+maintenance (index, storage GC, observed quiescence, `VACUUM FULL`, checkpoint, clean stop). Today: 170 KB per subject maintained,
+318 KB as sealed.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-B9 | A: alternating-arm verdict on `da77a50a` and fix; B: strict per-client commit order (seed at 1,000 commands/s in reference order); C: publication commit cost; D: row pages from the cache and a compact form | `exp/DX-B9-walls`, `.claude/worktrees/dx-b9` | `.../prompts/DX-B9.md` |
-| DX-S4 | Storage anatomy: what the 290 MB per 1,000 subjects is made of, Datomic variants, the same rows in XTDB, plain Postgres and compressed JSON, `footprint.sh` | `spike/DX-S4-storage`, `.claude/worktrees/dx-s4` | `.../prompts/DX-S4.md` |
+| DX-S4 (resumed 18:25 UTC) | XTDB footprint, Datomic declaration variants (by-value index, binary rows, journal share), QLever if time | `spike/DX-S4-storage`, `.claude/worktrees/dx-s4` | `.../prompts/DX-S4-resume1.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
