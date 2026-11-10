@@ -48,7 +48,25 @@ if p.exists():wait=120-(datetime.datetime.now(datetime.timezone.utc)-datetime.da
 print(max(0,math.ceil(wait)))
 PYREST
 }
+here=$(cd "$(dirname "$0")" && pwd)
 while true; do
+ if [[ ! -d $lock && $(rest_remaining) == 0 ]]; then
+  # [DX-S4] Why: record the requested host sample before each hold. Rejected: interpreting missing ps/sysctl fields as a quiet host.
+  quiet_rc=0
+  sh "$here/host-quiet.sh" > "$out/host-quiet.json" 2> "$out/host-quiet.stderr" || quiet_rc=$?
+  printf '%s\n' "$quiet_rc" > "$out/host-quiet.exit"
+  python3 - "$out/host-quiet.json" <<'PYQUIET'
+import json,sys
+x=json.load(open(sys.argv[1]));assert isinstance(x['otherCpuPercent'],(int,float)) and isinstance(x['swapUsedMB'],(int,float))
+PYQUIET
+  df -k /System/Volumes/Data > "$out/df-before-hold.txt"
+  python3 - "$out/df-before-hold.txt" <<'PYDISK'
+import sys
+assert int(open(sys.argv[1]).read().splitlines()[-1].split()[3])*1024 >= 15*1024**3,'Data volume below 15 GiB free'
+PYDISK
+ else
+  sleep 5; continue
+ fi
  if mkdir "$lock" 2>/dev/null; then
   if [[ $(rest_remaining) == 0 ]]; then break; fi
   rmdir "$lock"
@@ -74,6 +92,7 @@ git rev-parse HEAD > "$out/source-head.txt"
    case $c in
     *-pg) path=/var/lib/postgresql/data;;
     *-xtdb) path=/var/lib/xtdb;;
+    *-indexer|*-qlever) path=/data;;
     *) continue;;
    esac
    k=$(docker exec "$c" du -sk "$path" 2>/dev/null | awk '{print $1}') || k=0
@@ -85,9 +104,9 @@ git rev-parse HEAD > "$out/source-head.txt"
 ) & timer=$!
 python3 - "$out" <<'PY'
 import shutil,json,datetime,pathlib,sys
-free=shutil.disk_usage('.').free
-pathlib.Path(sys.argv[1],'admission.json').write_text(json.dumps({'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'free_bytes':free,'minimum_free_bytes':5*1024**3,'admitted':free>=5*1024**3})+'\n')
-assert free>=5*1024**3, 'host disk under 5 GiB'
+free=int(__import__('subprocess').check_output(['df','-k','/System/Volumes/Data'],text=True).splitlines()[-1].split()[3])*1024
+pathlib.Path(sys.argv[1],'admission.json').write_text(json.dumps({'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'free_bytes':free,'minimum_free_bytes':15*1024**3,'admitted':free>=15*1024**3})+'\n')
+assert free>=15*1024**3, 'host disk under 15 GiB'
 PY
 docker image inspect postgres:17-alpine > "$out/images.json"
 # [DX-S4] Why: execute the retained controller preimages, not mutable working files. Rejected: source hashes without the actual source bytes used.

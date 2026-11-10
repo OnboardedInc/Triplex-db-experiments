@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # [DX-S4] Why: local log/storage are both counted after flush and observed idle compaction. Rejected: counting only compressed Arrow files.
 set -euo pipefail
+layout=${1:-rows}; [[ $layout == rows || $layout == entities ]] || exit 2
+driver=xtdb.mjs; [[ $layout != entities ]] || driver=xtdb-entities.mjs
 p=$S4_PREFIX; out=$S4_EVIDENCE/$p; here=$(cd "$(dirname "$0")" && pwd)
 python3 "$here/check-input.py" "$S4_INPUT" > "$out/input-check.json"
 docker image inspect ghcr.io/xtdb/xtdb:2.2.0 node:22.23.2-bookworm-slim > "$out/xtdb-images.json"
@@ -10,7 +12,7 @@ docker run -d --pull never --name "$p-xtdb" --network "$p-net" --memory 4g -e JD
 ready=false
 for i in {1..90}; do if docker exec "$p-xtdb" wget -qO- http://127.0.0.1:8080/healthz/alive > "$out/health.json" 2>/dev/null; then ready=true;break;fi;sleep 1;done
 $ready || exit 1
-docker run --pull never --name "$p-driver" --network "$p-net" --memory 2g -e "S4_PREFIX=$p" -v "$here:/s4:ro" -v "$S4_INPUT:/input:ro" node:22.23.2-bookworm-slim node /s4/xtdb.mjs > "$out/driver.jsonl" 2> "$out/driver.stderr"
+docker run --pull never --name "$p-driver" --network "$p-net" --memory 2g -e "S4_PREFIX=$p" -v "$here:/s4:ro" -v "$S4_INPUT:/input:ro" node:22.23.2-bookworm-slim node "/s4/$driver" > "$out/driver.jsonl" 2> "$out/driver.stderr"
 docker inspect "$p-xtdb" "$p-driver" > "$out/containers.json"
 docker exec "$p-xtdb" wget -qO- --post-data= http://127.0.0.1:8080/system/finish-block > "$out/finish-block.json"
 # Stable no-work queue observations after the flush, retained rather than inferred from elapsed time.

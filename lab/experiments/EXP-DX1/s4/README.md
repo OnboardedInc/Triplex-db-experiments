@@ -42,7 +42,7 @@ S4_INPUT=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S4/input-all \
 Replace each example prefix with a fresh lowercase name. Variants: `a` indexed row text, `b` unindexed row text,
 `c` H6 eight-cell metadata-dropping projection, `c-full` lossless 17-cell row array, `d` dictionary-coded typed bytes,
 `e` per-entity aggregate rewritten with each command, `e-nohistory` the same with `:db/noHistory`, and
-`f` indexed row text plus a copy per journal. Binary variants include their dictionary in the database.
+`f` indexed row text plus the actual native journal row texts. Binary variants include their dictionary in the database.
 
 **`e-nohistory` changes historical query guarantees.** Removing the row index requires replacement lookup and
 identity checks. No variant is a ready-to-use gateway layout. **The H6 wire projection removes metadata and changes full-row answers without a replacement metadata channel.**
@@ -76,3 +76,46 @@ acceptance. The public `footprint.sh` also delegates through the frozen launcher
 
 The complete canonical JSONL is 89,655,069 bytes. The original 97,654,944-byte gateway responses include wrappers and repeated
 shared rows and cover current data; choose the intended export denominator explicitly. The script reports it as caller supplied.
+
+## Continuation: native journals and stricter admission
+
+Before every new hold the frozen controller runs the exact `lane/d-native:lab/bin/host-quiet.sh` copy retained here,
+records its JSON and exit status, and requires `df -k /System/Volumes/Data` to show at least **15 GiB** free.
+A nonquiet host sample is retained and does not authorize timing claims. The ten-minute hold and two-minute rest still apply.
+
+For the physical journal comparison, export the actual native journal rows, then prepare their command-aligned input
+outside the measurement hold:
+
+```sh
+S4_INPUT=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S4/input-all \
+  bash lab/experiments/EXP-DX1/s4/launch.sh tx2-dxs4-unique-journal batch.sh journals
+node lab/bin/heavy.mjs --label DX-S4-journal-input -- \
+  python3 lab/experiments/EXP-DX1/s4/journal-input.py prepare \
+  /absolute/path/to/tx2-dxs4-unique-journal-journals /absolute/path/to/new-journal-input \
+  /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S4/input-all
+S4_INPUT=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S4/input-all \
+S4_JOURNAL=/absolute/path/to/new-journal-input \
+  bash lab/experiments/EXP-DX1/s4/launch.sh tx2-dxs4-unique-f batch.sh f
+```
+
+Variant `f` now requires **real journal row texts**, including their change objects and envelopes. It no longer manufactures
+literal copies of the subject rows. The preparation verifies all native bytes, census totals and command alignment.
+The native export and prepared journal input remain in durable evidence; their hashes are bound to the trial.
+
+`batch.sh xtdb-entities` optionally measures nested 17-cell arrays in one XTDB document per domain entity, preserving all
+assertion payloads. This changes the native query shape and is not a complete gateway implementation.
+
+For the optional QLever measurement, `prepare-qlever.mjs INPUT-DIR NEW-OUTPUT-DIR` runs through `heavy.mjs` outside the
+measurement hold. It adapts the exact full `a0` channels from the retained `qlever-rdf-source.txt`, verifies that `_row`
+reconstructs every canonical payload, and binds input, mapping and generated stream hashes. The indexer canonicalizes
+Turtle integer shorthand to strict N-Quads typed literals and records the exact indexed stream hash.
+
+```sh
+S4_INPUT=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S4/input-all \
+S4_QLEVER_INPUT=/absolute/path/to/prepared-rdf \
+  bash lab/experiments/EXP-DX1/s4/launch.sh tx2-dxs4-unique-q batch.sh qlever
+```
+
+The local QLever image is pinned by image ID, with `--pull never`. A completed builder alone is insufficient: the driver
+reads every `_row` over SPARQL and compares all payload cells before clean stop and index `du`. This is an immutable bare
+assertion index; it omits the separate source-of-truth log and full gateway write/feed/history protocol.

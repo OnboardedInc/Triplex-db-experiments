@@ -11,6 +11,12 @@ if [[ $mode == clone ]]; then
  pg_alias=(--network-alias "$pg_host");tx_alias=(--network-alias "$tx_host")
 fi
 if [[ $mode == variant ]]; then python3 "$here/check-input.py" "$S4_INPUT" > "$out/input-check.json"; fi
+journal_mount=()
+if [[ $variant == f ]]; then
+ : "${S4_JOURNAL:?real prepared native journal corpus required}"
+ python3 "$here/journal-input.py" check "$S4_JOURNAL" > "$out/journal-input-check.json"
+ journal_mount=(-v "$S4_JOURNAL:/journals:ro")
+fi
 docker image inspect tx2-datomic:1.0.7745-da00 > "$out/datomic-image.json"
 docker network create "$p-net" >/dev/null
 docker volume create "$p-pg-data" >/dev/null
@@ -55,7 +61,7 @@ docker cp "$p-tx:/opt/datomic/log" "$out/transactor-initial-logs" > "$out/log-co
 base="datomic:sql://?jdbc:postgresql://$pg_host:5432/datomic?user=datomic&password=datomic"
 docker inspect "$p-pg" "$p-tx" > "$out/containers-before.json"
 peer_rc=0
-docker run --pull never --name "$p-peer" --network "$p-net" --memory 3g -e DATOMIC_JAVA_OPTS='-Xms128m -Xmx2g' -e DATOMIC_EXT_CLASSPATH=/s4 -v "$here:/s4:ro" -v "$S4_INPUT:/input:ro" -v "$out:/attempt" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m s4 "$mode" "$base" "$variant" > "$out/peer.jsonl" 2> "$out/peer.stderr" || peer_rc=$?
+docker run --pull never --name "$p-peer" --network "$p-net" --memory 3g -e DATOMIC_JAVA_OPTS='-Xms128m -Xmx2g' -e DATOMIC_EXT_CLASSPATH=/s4 ${journal_mount[@]+"${journal_mount[@]}"} -v "$here:/s4:ro" -v "$S4_INPUT:/input:ro" -v "$out:/attempt" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m s4 "$mode" "$base" "$variant" > "$out/peer.jsonl" 2> "$out/peer.stderr" || peer_rc=$?
 docker cp "$p-tx:/opt/datomic/log" "$out/transactor-final-logs" >> "$out/log-copy.txt" 2>&1 || true
 if [[ $peer_rc != 0 ]]; then report=$(sed -n 's|^/tmp/clojure-[0-9]*.edn$|&|p' "$out/peer.stderr"); [[ -z $report ]] || docker cp "$p-peer:$report" "$out/peer-error.edn"; exit "$peer_rc"; fi
 docker inspect "$p-pg" "$p-tx" "$p-peer" > "$out/containers.json"

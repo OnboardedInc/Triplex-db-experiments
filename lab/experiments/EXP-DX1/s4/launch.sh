@@ -7,7 +7,7 @@ here=$(cd "$(dirname "$0")" && pwd);repo=$(cd "$here/../../../.." && pwd)
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 python3 - <<'PY'
 import shutil
-assert shutil.disk_usage('.').free>=5*1024**3,'host disk under 5 GiB'
+assert shutil.disk_usage('.').free>=15*1024**3,'host disk under 15 GiB'
 PY
 # [DX-S4] Why: a new prefix must not adopt or remove pre-existing resources. Rejected: relying on idempotent docker volume create to prove freshness.
 [[ -z $(docker ps -a --filter "name=^/${prefix}-" -q) ]] || exit 2
