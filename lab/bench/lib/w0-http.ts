@@ -8,6 +8,7 @@ const context = new AsyncLocalStorage<{
   requests: number;
   responseBytes: number;
   requestBytes: number;
+  maxRequestBytes: number;
   gatewayMicros: number;
   gatewayHeaders: number;
   datoms: number;
@@ -28,6 +29,7 @@ DatomicClient.prototype.request = function (...args: any[]) {
       active.requests++;
       active.responseBytes += sample.responseBytes;
       active.requestBytes += sample.requestBytes ?? 0;
+      active.maxRequestBytes = Math.max(active.maxRequestBytes, sample.requestBytes ?? 0);
       if (Number.isFinite(sample.gatewayMicros)) {
         active.gatewayMicros += sample.gatewayMicros;
         active.gatewayHeaders++;
@@ -49,6 +51,7 @@ export async function measureW0Http<T>(run: () => Promise<T>) {
     requests: 0,
     responseBytes: 0,
     requestBytes: 0,
+    maxRequestBytes: 0,
     gatewayMicros: 0,
     gatewayHeaders: 0,
     datoms: 0,

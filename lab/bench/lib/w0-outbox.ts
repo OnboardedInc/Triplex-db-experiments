@@ -145,6 +145,7 @@ export async function publishRecords(
         stateReadMs,
         stateFoldMs: buildOutboxMs - (foldStart - buildStart),
         publishRequestBytes: commit.value.requestBytes,
+        publishMaxRequestBytes: commit.value.maxRequestBytes,
         publishWireParseMicros: commit.value.wireParseMicros,
         publishWireSerializeMicros: commit.value.wireSerializeMicros,
         publishCapacityWaitMs,

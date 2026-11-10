@@ -25,7 +25,7 @@ cleanup() {
    mkdir -p "$out/driver"; docker cp "$prefix-driver:/driver/." "$out/driver/" >> "$out/cleanup.log" 2>&1 || true
  fi
  for role in driver health cgroups extract tools-extract copy runtime-check budget; do docker rm -f "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
- for role in gw-r gw-w; do docker exec "$prefix-$role" sh -c 'for f in /proc/[0-9]*/comm; do read n < "$f" || continue; if [ "$n" = java ]; then p=${f#/proc/}; p=${p%/comm}; kill -TERM "$p"; fi; done' >> "$out/cleanup.log" 2>&1 || true; done
+ for role in gw-r gw-w tx; do docker update --restart=no "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; docker exec "$prefix-$role" sh -c 'for f in /proc/[0-9]*/comm; do read n < "$f" || continue; if [ "$n" = java ]; then p=${f#/proc/}; p=${p%/comm}; kill -TERM "$p"; fi; done' >> "$out/cleanup.log" 2>&1 || true; done
  for role in gw-r gw-w tx pg; do docker stop -t 30 "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
  for role in tx gw-w; do
    docker cp "$prefix-$role:/tmp/h8.jfr" "$out/$role.jfr" >> "$out/cleanup.log" 2>&1 || true
@@ -104,7 +104,7 @@ PYSUM
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc "SELECT json_build_object('database_bytes',pg_database_size(current_database()),'tables',(SELECT json_agg(t) FROM (SELECT relname,pg_relation_size(relid) AS table_bytes,pg_indexes_size(relid) AS index_bytes,pg_total_relation_size(relid) AS total_bytes FROM pg_catalog.pg_statio_user_tables) t),'wal_bytes',(SELECT COALESCE(sum(size),0) FROM pg_ls_waldir()));" > "$out/postgres-sizes.json"
 if [[ $kind == seed ]]; then
  n=$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["status"]=="G0-PASS"; print(r["N"])' "$out/driver/receipt.json")
- for role in gw-r gw-w; do docker exec "$prefix-$role" sh -c 'for f in /proc/[0-9]*/comm; do read n < "$f" || continue; if [ "$n" = java ]; then p=${f#/proc/}; p=${p%/comm}; kill -TERM "$p"; fi; done' >> "$out/seal.log" 2>&1 || true; done
+ for role in gw-r gw-w tx; do docker update --restart=no "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; docker exec "$prefix-$role" sh -c 'for f in /proc/[0-9]*/comm; do read n < "$f" || continue; if [ "$n" = java ]; then p=${f#/proc/}; p=${p%/comm}; kill -TERM "$p"; fi; done' >> "$out/seal.log" 2>&1 || true; done
  for role in gw-r gw-w tx pg; do docker stop -t 30 "$prefix-$role" >> "$out/seal.log"; done
  [[ $(docker inspect --format '{{.State.ExitCode}}' "$prefix-pg") == 0 ]] || { echo "Postgres did not stop cleanly"; exit 1; }
  docker run --rm --pull never --name "$prefix-copy" -v "$prefix-pg-data:/from:ro" postgres:17-alpine sh -c 'du -sk /from; du -sk /from/pg_wal; du -sk /from/base' > "$out/stopped-volume-kib.txt"

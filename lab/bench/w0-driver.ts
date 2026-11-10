@@ -632,6 +632,7 @@ export async function runW0Driver(argv: string[]) {
         // [DX-H6] Why: all oracle work stays after the last ACK; publisher batches state and pipelines ordered submissions.
         // Rejected: serial oracle/build/ACK on the evaluation worker's critical path.
         fs.writeFileSync(path.join(dir, `activation-${page}.json`), canonical(records));
+        const publicationStartedAtEpochMs = performance.timeOrigin + performance.now();
         const actual: any = await comp.publishOutbox(records.map((r) => r.record));
         const publicationAckAtEpochMs = performance.timeOrigin + performance.now();
         // [DX-H6] Why: W0 canonical bytes contain business integers; telemetry contains fractional durations.
@@ -640,7 +641,7 @@ export async function runW0Driver(argv: string[]) {
           path.join(dir, `publication-${page}.json`),
           encodePublicationEvidence(actual),
         );
-        return { publicationAckAtEpochMs, ...(actual.timing ?? {}) };
+        return { publicationStartedAtEpochMs, publicationAckAtEpochMs, ...(actual.timing ?? {}) };
       },
     });
     if (traffic) {

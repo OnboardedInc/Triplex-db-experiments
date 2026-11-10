@@ -4,7 +4,7 @@ import collections, datetime, json, pathlib, sys
 root = pathlib.Path(sys.argv[1])
 r = json.loads((root / 'driver/receipt.json').read_text())
 metrics = r.get('sweep', {}).get('metrics', [])
-intervals = [(m['timing']['publicationAckAtEpochMs'] - m['timing']['publishCommitMs'], m['timing']['publicationAckAtEpochMs']) for m in metrics if 'publishCommitMs' in m['timing']]
+intervals = [(m['timing'].get('publicationStartedAtEpochMs', m['timing']['publicationAckAtEpochMs'] - m['timing']['publishCommitMs']), m['timing']['publicationAckAtEpochMs']) for m in metrics if 'publishCommitMs' in m['timing']]
 for role in ['tx', 'gw-w']:
     f = root / (role + '-samples.json')
     if not f.exists():
@@ -16,7 +16,7 @@ for role in ['tx', 'gw-w']:
         if not any(a <= at <= b for a, b in intervals): continue
         selected += 1
         for frame in (v.get('stackTrace') or {}).get('frames', []):
-            method = frame['method']; typ = method.get('type') or {}; name = typ.get('name', '').replace('/', '.')
+            method = frame.get('method') or {}; typ = method.get('type') or {}; name = typ.get('name', '').replace('/', '.')
             if name.startswith('triplex.gateway'):
                 counts[name + '.' + method['name'] + ':' + str(frame.get('lineNumber'))] += 1
                 attributed += 1; break
