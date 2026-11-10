@@ -24,30 +24,39 @@
 (defn assert-scope [db scope]
   (when-let [existing (stored-scope db)]
     (when-not (= existing scope) (throw (ex-info "Database name collision" {:status 409 :code "ScopeCollision"})))))
-(defn initialize-scope! [uri scope layout]
+(defn initialize-scope!
+  ;; [DX-B8] Why: direct legacy gateway fixtures still exercise the old scope-CAS contract.
+  ;; Rejected: silently marking an existing scope v2 during schema installation.
+  ([uri scope] (initialize-scope! uri scope "legacy" false))
+  ([uri scope layout] (initialize-scope! uri scope layout true))
+  ([uri scope layout head-v2]
   ;; [EXP-DA01] Why: a stale first opener must never reset a writer's position. Rejected: check-then-upsert of the scope header (concurrent initialization race).
   (try
     @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
-        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version (if (= layout "lean") 3 2) :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}])
+        (cond-> {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version (if (= layout "lean") 3 2) :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}
+          head-v2 (assoc :triplex.scope/head-version 2))])
     (catch Exception e
       (let [current (sync-db uri)]
         (assert-scope current scope)
-        (when-not (stored-scope current) (throw e))))))
-(defn create-scope! [base scope layout]
+        (when-not (stored-scope current) (throw e)))))))
+(defn create-scope!
+  ([base scope] (create-scope! base scope "legacy" false))
+  ([base scope layout] (create-scope! base scope layout true))
+  ([base scope layout head-v2]
   (when-not (#{"legacy" "lean"} layout) (codec/invalid "Unknown layout"))
   (let [name (scope-name scope) uri (db-uri name) created (d/create-database uri) conn (connection uri)]
     (assert-scope (sync-db uri) scope)
     (when-not (stored-scope (sync-db uri))
       @(d/transact conn schema/schema)
       (assert-scope (sync-db uri) scope)
-      (initialize-scope! uri scope layout))
+      (initialize-scope! uri scope layout head-v2))
     (when-not (= schema/schema-hash (:triplex.scope/schema-hash (d/entity (sync-db uri) [:triplex.scope/key scope])))
       @(d/transact conn schema/schema)
       @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))
     (commit/install! conn scope)
     (cond-> {:db name :created created :schemaHash schema/schema-hash}
-      (lean/enabled? (d/db conn)) (assoc :layout "lean"))))
+      (lean/enabled? (d/db conn)) (assoc :layout "lean")))))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (db-uri name)]
     (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))

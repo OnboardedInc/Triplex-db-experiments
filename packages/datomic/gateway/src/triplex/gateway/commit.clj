@@ -5,6 +5,13 @@
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
 (def code
   '(letfn [(value [e a] (:v (first (d/datoms db :eavt e a))))
+           ;; [DX-B8] Why: immutable transaction values avoid the per-commit scope retraction merge.
+           ;; Rejected: a peer-cached head (allocation must remain atomic on the transactor).
+           (newest-commit []
+             (let [tx (d/t->tx (d/basis-t db))]
+               (if (some? (value tx :triplex.tx/position)) tx
+                 (:db/id (first (d/index-pull db {:index :avet :selector [:db/id]
+                                                  :start [:triplex.tx/position Long/MAX_VALUE] :reverse true}))))))
            (digits [p] (let [s (str p)] (str (subs "0000000000000000" (count s)) s)))
            (row-id [id]
              (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
@@ -21,7 +28,10 @@
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
      (let [{:keys [scope source provisional span lean live entities scope-wide ops times replay-safe irregular position-irregular journal-entities]} payload
-           h (value scope :triplex.scope/position) final (+ h span) final-digits (digits final) delta (- final provisional)
+           head-v2 (= 2 (value scope :triplex.scope/head-version))
+           latest (when head-v2 (newest-commit))
+           h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
+                 (value scope :triplex.scope/position)) final (+ h span) final-digits (digits final) delta (- final provisional)
            lower (- provisional span)
            shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))
            row-a (d/entid db :triplex.entity/row)]
@@ -73,8 +83,9 @@
                                (throw (ex-info "Missing live row datom" {})))
                              (if text [[:db/retract e :triplex.entity/row text]] []))
                            :else [(replace-value op)])) ops)
-               prior (value scope :triplex.scope/max-recorded-at)
-               maximum (when (seq times) (reduce max (or prior (first times)) times))
+               prior (if head-v2 (when latest (value latest :triplex.tx/max-recorded-at))
+                         (value scope :triplex.scope/max-recorded-at))
+               maximum (if (seq times) (reduce max (or prior (first times)) times) (when head-v2 prior))
                _ (when (and replay-safe prior (some #(<= % prior) times))
                    (throw (ex-info (str "TRIPLEX_CLOCK " prior) {:maximum prior})))
                irregular (or irregular
@@ -82,9 +93,12 @@
                                   (or (some #(not= (first times) %) times)
                                       (and prior (some #(< % prior) times)))))]
            (vec (concat prepared
-                        [[:db/add scope :triplex.scope/position final]]
-                        (when maximum [[:db/add scope :triplex.scope/max-recorded-at maximum]
-                                       [:db/add "datomic.tx" :triplex.tx/max-recorded-at maximum]])
+                        (when-not head-v2 [[:db/add scope :triplex.scope/position final]])
+                        ;; [DX-B8] Why: carry the prefix maximum even for commits without row timestamps.
+                        ;; Rejected: reading scope/max-recorded-at (the second hot cardinality-one datom).
+                        (when maximum
+                          (concat (when-not head-v2 [[:db/add scope :triplex.scope/max-recorded-at maximum]])
+                                  [[:db/add "datomic.tx" :triplex.tx/max-recorded-at maximum]]))
                         ;; [DX-B4-T1] Why: append-only eligibility is decided at the serial point, including a lagging optimistic peer.
                         ;; Rejected: trusting a pre-transaction entity-absence observation.
                         (when (some #(d/entid db [:triplex.entity/id %]) journal-entities)

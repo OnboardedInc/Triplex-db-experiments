@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.scope :as scope] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -275,13 +275,9 @@
       {:status "absent"}) {:status "absent"}))
 (defn head-position
   ([db]
-   (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))
-         ^datomic.Datom position (first (d/datoms db :eavt (.e scope) :triplex.scope/position))]
-     (.v position)))
+   (scope/head-position db (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([name db]
-   (let [cfg (reach/config name db)
-         ^datomic.Datom position (first (d/datoms db :eavt (:scope cfg) (:position cfg)))]
-     (.v position))))
+   (scope/head-position db (:scope (reach/config name db)))))
 (defn unavailable! [message]
   (throw (ex-info message {:status 409 :code "BasisNotAvailable"})))
 ;; [EXP-DA01] Why: future cuts must wait for publication, never silently answer from the head (Q89c/d). Rejected: treating P >= head as latest.

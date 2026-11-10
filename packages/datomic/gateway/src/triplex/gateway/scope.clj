@@ -1,5 +1,5 @@
 (ns triplex.gateway.scope
-  (:require [clojure.data.json :as json] [clojure.string :as str] [triplex.gateway.codec :as codec])
+  (:require [datomic.api] [clojure.data.json :as json] [clojure.string :as str] [triplex.gateway.codec :as codec])
   (:import [java.util Base64]))
 
 ;; [EXP-DA01] Why: match JSON.stringify including lone UTF-16 surrogates and its whitespace contract. Rejected: hashing (irreversible) and JVM JSON defaults (different escaping).
@@ -31,3 +31,24 @@
   (when-not (re-matches #"s2-[A-Za-z0-9_-]+" name) (codec/invalid "Invalid encoded scope name"))
   (let [scope (String. (.decode (Base64/getUrlDecoder) (subs name 3)) "UTF-8")]
     (when-not (= name (name-for scope)) (codec/invalid "Noncanonical encoded scope name")) scope))
+
+;; [DX-B8] Why: commit transactions are immutable, so a head seek never cancels scope-position retractions.
+;; Rejected: reverse EAVT on a cardinality-one scope value (still merges its retired datoms).
+(defn value [db e a] (:v (first (datomic.api/datoms db :eavt e a))))
+(defn head-v2? [db e] (and (datomic.api/entid db :triplex.scope/head-version)
+       (= 2 (value db e :triplex.scope/head-version))))
+(defn newest-commit [db]
+  (let [tx (datomic.api/t->tx (datomic.api/basis-t db))]
+    (if (some? (value db tx :triplex.tx/position)) tx
+      ;; [DX-B8] Why: schema/marker transactions can follow a commit; reverse AVET skips them in one seek.
+      ;; Rejected: scanning transaction history backwards (unbounded marker suffix).
+      (:db/id (first (datomic.api/index-pull db {:index :avet :selector [:db/id]
+                                                :start [:triplex.tx/position Long/MAX_VALUE] :reverse true}))))))
+(defn head-position [db e]
+  (if (head-v2? db e)
+    (or (when-let [tx (newest-commit db)] (value db tx :triplex.tx/position)) 0)
+    (value db e :triplex.scope/position)))
+(defn max-recorded-at [db e]
+  (if (head-v2? db e)
+    (when-let [tx (newest-commit db)] (value db tx :triplex.tx/max-recorded-at))
+    (value db e :triplex.scope/max-recorded-at)))

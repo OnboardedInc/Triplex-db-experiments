@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [datomic.api :as d])
+  (:require [datomic.api :as d] [triplex.gateway.scope :as scope])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap]))
 (set! *warn-on-reflection* false)
 
@@ -39,14 +39,14 @@
           (.putIfAbsent cache id eid) eid))))
 (defn select-db [name db basis]
   (let [cfg (config name db) header (long-array 4)
-        it (.iterator ^Iterable (d/datoms db :eavt (:scope cfg)))
-        p (get basis "recordedPosition") r (get basis "recordedAt")]
-    (while (.hasNext it)
-      (let [^datomic.Datom datom (.next it) a (.a datom)]
-        (cond (= a (:position cfg)) (aset header 0 (long (.v datom)))
-              (= a (:version cfg)) (aset header 1 (long (.v datom)))
-              (= a (:irregular cfg)) (when (.v datom) (aset header 2 1))
-              (= a (:position-regular cfg)) (when (.v datom) (aset header 3 1)))))
+        p (get basis "recordedPosition") r (get basis "recordedAt")
+        value (fn [a] (:v (first (d/datoms db :eavt (:scope cfg) a))))]
+    ;; [DX-B8] Why: read only the stable eligibility attributes, never walk a scope's hot legacy values.
+    ;; Rejected: a full scope-entity iterator (merges unrelated position and clock retractions).
+    (aset header 0 (long (scope/head-position db (:scope cfg))))
+    (aset header 1 (long (or (value (:version cfg)) 0)))
+    (when (value (:irregular cfg)) (aset header 2 1))
+    (when (value (:position-regular cfg)) (aset header 3 1))
     (when-not (#{2 3} (aget header 1)) (decline! "rows-version"))
     ;; [DX-B3-M3] Why: parallel commits can reorder timestamps while positions remain an exact prefix.
     ;; Rejected: declining position-only/current pulls after a timestamp regression (needless history scans).
