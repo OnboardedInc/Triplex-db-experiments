@@ -104,3 +104,10 @@ Sam, verbatim (the `/goal` he set after upgrading the CLI and switching the orch
 | Background agents | Codex `gpt-6.1-sol` at medium only (`agent.mjs --role builder`). No Sonnet or Opus subagents. |
 | Protocol | Fast-forward mode: `lab/PROTOCOL.md` section 0b. |
 | Diagnosis and jump design | `lab/research/R51-fast-forward-diagnosis.md`. |
+
+## 2026-11-10 about 12:00 UTC: Kafka image and VM size (verbatim)
+
+> You can do the kafka image download, don't add more cores to vm for now
+
+Orchestrator reading: one Kafka image may be pulled into the triplex2 VM to test XTDB read replicas (lane X). The VM stays at
+8 CPUs, 20 GiB, 100 GiB. No other download is covered.
