@@ -471,8 +471,13 @@ Same 442,410 assertion payloads (1,000 W0 subjects, 42,775 commands), write-ahea
 4. The write-ahead log (335.5 MB as sealed) is a setting: 134 MB with smaller retention.
 5. Per W0 subject, maintained: 140 KB of table, 170 KB of non-log volume. **100,000 subjects is about 14 to 17 GB**, not 65.
 6. W0 text is very repetitive (xz 55 times smaller), so a compressed columnar store should be far smaller; not yet measured.
-7. Not yet measured (agent resumed for them): XTDB footprint, the cost of the by-value index on row text, binary rows in
-   Datomic, the journal's physical share, QLever.
+7. Second part (merged 20:25 UTC): Datomic rows only, maintained: packed binary 27.4 MB (62 bytes per assertion), unindexed
+   strings 34.8 MB (79), indexed strings as today 42.5 MB (96); rows plus the real journal 126.3 MB (286), so **the feed journal
+   is about 84 MB, 60% of the lane's maintained bytes**, and the by-value index about 8 MB. **XTDB 2.2.0: 702.7 MB one document
+   per assertion (storage 471.8 MB, logs 230.9 MB), 628.7 MB one document per entity**, compactor idle but level-0 files still on
+   disk, so not necessarily its minimum.
+8. Sam, 2026-11-10: storage footprint is a guard metric (`lab/TARGETS.md`), no further size work now, and **no QLever work of any
+   kind**. No QLever index was built; the 1.9 GB prepared input was removed.
 
 Proposed metric (Sam to rank): stopped volume bytes excluding the physical write-ahead log, per W0 subject, after the reference
 maintenance (index, storage GC, observed quiescence, `VACUUM FULL`, checkpoint, clean stop). Today: 170 KB per subject maintained,
@@ -483,7 +488,6 @@ maintenance (index, storage GC, observed quiescence, `VACUUM FULL`, checkpoint, 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-B9 | A: alternating-arm verdict on `da77a50a` and fix; B: strict per-client commit order (seed at 1,000 commands/s in reference order); C: publication commit cost; D: row pages from the cache and a compact form | `exp/DX-B9-walls`, `.claude/worktrees/dx-b9` | `.../prompts/DX-B9.md` |
-| DX-S4 (resumed 18:25 UTC) | XTDB footprint, Datomic declaration variants (by-value index, binary rows, journal share), QLever if time | `spike/DX-S4-storage`, `.claude/worktrees/dx-s4` | `.../prompts/DX-S4-resume1.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
