@@ -176,3 +176,15 @@ cached. Reads promote entries in the LRU; evictions retain the session and repai
 missing references with a basis-bound `need` request. `client.reachCache.bytes`,
 `client.rowCache.bytes`, their `peakBytes`/`evictions`, and
 `client.reachDiagnostics` expose the retained estimates and protocol paths.
+
+### Commit observations
+
+Set `client.onCommit` before executing writes to observe adapter start/return,
+transaction IDs, operation ID, HTTP call count, replay count and every attempt's
+optimistic/begin flags, staging/order timestamps and HTTP observations. Each
+request observation carries socket `finish`, response headers, parsed-response
+time, status, byte counts, reuse and the gateway phase timeline. Attribution is
+captured synchronously when each HTTP request is created, so overlapping commits
+retain their own observations. Callbacks are off by default; the client retains
+no completed-commit history. `client.onRequest` remains the successful-request
+callback; commit observations also include parsed conflict responses.

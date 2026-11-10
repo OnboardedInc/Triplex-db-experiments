@@ -88,10 +88,17 @@ export const makeDatomicStorageAdapter = (
   const admission = Semaphore.makeUnsafe(1);
   const current = Effect.map(CurrentTransactions, (transactions) => transactions.get(key));
   const read = <A>(thunk: (signal: AbortSignal) => Promise<A>): Effect.Effect<A, ReadError> =>
-    Effect.tryPromise({
-      try: thunk,
-      catch: (cause) => readFailure(cause, "Datomic read failed"),
-    });
+    client.onCommit
+      ? Effect.flatMap(current, (state) =>
+          Effect.tryPromise({
+            try: (signal) => client.observeRequests(state?.diagnostic, () => thunk(signal)),
+            catch: (cause) => readFailure(cause, "Datomic read failed"),
+          }),
+        )
+      : Effect.tryPromise({
+          try: thunk,
+          catch: (cause) => readFailure(cause, "Datomic read failed"),
+        });
   const committedPosition = () =>
     read(async () => {
       const result = await client.basis(db);
@@ -259,33 +266,44 @@ export const makeDatomicStorageAdapter = (
           state.submitted = true;
           const ticket = state.order?.ticket ?? registerCommit(-Infinity);
           if (state.order) state.order.ticket = ticket;
-          if (state.diagnostic) state.diagnostic.ready = performance.now();
+          if (state.diagnostic) {
+            state.diagnostic.ready = performance.now();
+            state.diagnostic.transactionIds = [
+              ...new Set(
+                [...state.rows.values()]
+                  .filter((row) => row.entity_type === "_Transaction")
+                  .map((row) => row.entity_id),
+              ),
+            ];
+          }
           const ack = await bounded(
             sendCommit(ticket, (sendSequence, sent) => {
               if (state.diagnostic) state.diagnostic.released = performance.now();
-              return client.transact(db, {
-                onSent: sent,
-                clientId: commitClientId,
-                sendSequence,
-                // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
-                // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
-                replaySafe:
-                  state.replaySafe === true &&
-                  [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
-                sourceK: state.optimistic ? null : state.sourceK,
-                position: state.position,
-                span: state.position - state.sourceK,
-                entities: [...state.entities],
-                live: [...state.live],
-                scopeWide: state.scopeWide,
-                operationId,
-                attemptId,
-                rows: [...state.rows.values()],
-                newIds: [...state.newIds],
-                claims: [...state.claims.values()],
-                ...(state.optimistic ? {} : { handle: state.handle }),
-                release: true,
-              });
+              return client.observeRequests(state.diagnostic, () =>
+                client.transact(db, {
+                  onSent: sent,
+                  clientId: commitClientId,
+                  sendSequence,
+                  // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
+                  // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
+                  replaySafe:
+                    state.replaySafe === true &&
+                    [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
+                  sourceK: state.optimistic ? null : state.sourceK,
+                  position: state.position,
+                  span: state.position - state.sourceK,
+                  entities: [...state.entities],
+                  live: [...state.live],
+                  scopeWide: state.scopeWide,
+                  operationId,
+                  attemptId,
+                  rows: [...state.rows.values()],
+                  newIds: [...state.newIds],
+                  claims: [...state.claims.values()],
+                  ...(state.optimistic ? {} : { handle: state.handle }),
+                  release: true,
+                }),
+              );
             }),
           );
           // [EXP-DX1] Why: a bound transaction ACK is already a receipt; resolve only ambiguous ACKs.
@@ -338,7 +356,9 @@ export const makeDatomicStorageAdapter = (
         }
         do {
           try {
-            const receipt = await bounded(client.operation(db, operationId));
+            const receipt = await bounded(
+              client.observeRequests(state.diagnostic, () => client.operation(db, operationId)),
+            );
             if (receipt.status === "committed") {
               const p = Number(validateTagged(receipt.position).v);
               if (!Number.isSafeInteger(p) || p < state.position - state.sourceK)
@@ -375,13 +395,18 @@ export const makeDatomicStorageAdapter = (
   ): Effect.Effect<A, E | WriteError> =>
     Effect.suspend(() => {
       const operationId = randomUUID();
-      const diagnostic = client.onCommit
-        ? {
-            started: performance.now(),
-            returned: 0,
-            attempts: [] as import("./DatomicClient.js").DatomicCommitAttempt[],
-          }
-        : undefined;
+      const diagnostic: import("./DatomicClient.js").DatomicCommitSample | undefined =
+        client.onCommit
+          ? {
+              operationId,
+              transactionIds: [],
+              httpCalls: 0,
+              replays: 0,
+              started: performance.now(),
+              returned: 0,
+              attempts: [] as import("./DatomicClient.js").DatomicCommitAttempt[],
+            }
+          : undefined;
       const attempt = (retry: number, forceSnapshot = false): Effect.Effect<A, E | WriteError> =>
         Effect.gen(function* () {
           const transactions = yield* CurrentTransactions;
@@ -397,6 +422,7 @@ export const makeDatomicStorageAdapter = (
               client,
               scopeKey,
               order: parent.order,
+              diagnostic: parent.diagnostic,
               replaySafe: parent.replaySafe,
               sourceK: parent.sourceK,
               handle: parent.handle,
@@ -449,9 +475,16 @@ export const makeDatomicStorageAdapter = (
             parent.newIds = child.newIds;
             return result;
           }
-          const observation = diagnostic
-            ? { firstAdapterCall: performance.now(), optimistic: false, begin: false }
-            : undefined;
+          const observation: import("./DatomicClient.js").DatomicCommitAttempt | undefined =
+            diagnostic
+              ? {
+                  firstAdapterCall: performance.now(),
+                  optimistic: false,
+                  begin: false,
+                  httpCalls: 0,
+                  requests: [],
+                }
+              : undefined;
           if (observation) diagnostic!.attempts.push(observation);
           const hint = transactionOptions?.hint;
           const optimistic =
@@ -470,19 +503,21 @@ export const makeDatomicStorageAdapter = (
             position: number;
             prefetch?: NonNullable<TransactionState["prefetch"]>;
           }>(() =>
-            optimistic
-              ? Promise.resolve({
-                  handle: "",
-                  position: lastSeenPosition,
-                  prefetch: {
-                    ...(hint?.commandId === undefined ? {} : { commandId: hint.commandId }),
-                    claim: null,
-                    rows: new Map((hint?.tripleIds ?? []).map((id) => [id, cached(id)!])),
-                  },
-                })
-              : transactionOptions?.hint === undefined
-                ? client.begin(db)
-                : client.beginCommand(db, transactionOptions.hint),
+            client.observeRequests(observation, () =>
+              optimistic
+                ? Promise.resolve({
+                    handle: "",
+                    position: lastSeenPosition,
+                    prefetch: {
+                      ...(hint?.commandId === undefined ? {} : { commandId: hint.commandId }),
+                      claim: null,
+                      rows: new Map((hint?.tripleIds ?? []).map((id) => [id, cached(id)!])),
+                    },
+                  })
+                : transactionOptions?.hint === undefined
+                  ? client.begin(db)
+                  : client.beginCommand(db, transactionOptions.hint),
+            ),
           ).pipe(
             Effect.mapError(
               (cause) => new WriteError({ message: "Cannot acquire Datomic source cut", cause }),
@@ -564,7 +599,9 @@ export const makeDatomicStorageAdapter = (
               Effect.promise(() =>
                 state.submitted || optimistic
                   ? Promise.resolve()
-                  : client.release(db, snapshot.handle),
+                  : client.observeRequests(state.diagnostic, () =>
+                      client.release(db, snapshot.handle),
+                    ),
               ).pipe(Effect.ignore),
             ),
           );
@@ -578,6 +615,9 @@ export const makeDatomicStorageAdapter = (
           Effect.sync(() => {
             if (diagnostic && diagnostic.attempts.length) {
               diagnostic.returned = performance.now();
+              diagnostic.httpCalls = diagnostic.attempts.reduce((n, a) => n + a.httpCalls, 0);
+              diagnostic.replays = Math.max(0, diagnostic.attempts.length - 1);
+              diagnostic.transactionIds = diagnostic.attempts.at(-1)?.transactionIds ?? [];
               client.onCommit?.(diagnostic);
             }
           }),

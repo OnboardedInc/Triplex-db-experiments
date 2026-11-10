@@ -58,6 +58,8 @@ export interface DatomicLogPage {
 // [EXP-DA00] Why: 256 readers plus writers must not queue on the HTTP agent (R16). Rejected: default pool limits.
 export interface DatomicRequestSample {
   readonly path: string;
+  readonly operationId?: string | undefined;
+  readonly status: number;
   readonly started: number;
   readonly finished: number;
   readonly written: number;
@@ -78,10 +80,17 @@ export interface DatomicCommitAttempt {
   firstAdapterCall: number;
   optimistic: boolean;
   begin: boolean;
+  httpCalls: number;
+  requests: DatomicRequestSample[];
+  transactionIds?: string[];
   ready?: number;
   released?: number;
 }
 export interface DatomicCommitSample {
+  operationId: string;
+  transactionIds: string[];
+  httpCalls: number;
+  replays: number;
   started: number;
   returned: number;
   attempts: DatomicCommitAttempt[];
@@ -92,6 +101,18 @@ export class DatomicClient {
   onRequest?: (sample: DatomicRequestSample) => void;
   onCommit?: (sample: DatomicCommitSample) => void;
   readonly agent: http.Agent;
+  private activeObservation: DatomicCommitAttempt | undefined;
+  // [DX-B6-1] Why: capture request attribution synchronously before the transport yields.
+  // Rejected: a mutable callback spanning an await (concurrent fibers would borrow each other's observations).
+  observeRequests<A>(observation: DatomicCommitAttempt | undefined, call: () => A): A {
+    const previous = this.activeObservation;
+    this.activeObservation = observation;
+    try {
+      return call();
+    } finally {
+      this.activeObservation = previous;
+    }
+  }
   readonly commitDiagnostics = {
     beginDecodeMicros: 0,
     transactEncodeMicros: 0,
@@ -165,6 +186,13 @@ export class DatomicClient {
     onSent?: () => void,
   ): Promise<T> {
     const started = performance.now();
+    const observation = this.activeObservation;
+    const operationId =
+      body &&
+      typeof body === "object" &&
+      typeof (body as { operationId?: unknown }).operationId === "string"
+        ? (body as { operationId: string }).operationId
+        : undefined;
     // [DX-B5-L0] Why: legacy request wrappers forward four arguments; recover the callback from the bound operation.
     // Rejected: requiring every instrumentation wrapper to forward a new positional argument.
     if (!onSent && path.endsWith("/transact") && body && typeof body === "object") {
@@ -220,6 +248,32 @@ export class DatomicClient {
                 unknown
               >;
               const status = res.statusCode ?? 0;
+              const sample: DatomicRequestSample | undefined =
+                observation || this.onRequest
+                  ? {
+                      path,
+                      operationId,
+                      status,
+                      started,
+                      finished: performance.now(),
+                      written,
+                      headers,
+                      reusedSocket: req.reusedSocket,
+                      gatewayTimeline: data["timeline"],
+                      responseBytes: size,
+                      requestBytes: bytes?.length ?? 0,
+                      serializeMicros,
+                      parseMicros: Number(res.headers["x-tx2-request-parse-micros"] ?? NaN),
+                      gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
+                      transactMicros: Number(data["transactMicros"] ?? NaN),
+                      waited: res.headers["x-tx2-waited"] === "true",
+                      ...(typeof data["datoms"] === "number" ? { datoms: data["datoms"] } : {}),
+                      ...(data["position"] && typeof data["position"] === "object"
+                        ? { position: Number((data["position"] as TaggedValue).v) }
+                        : {}),
+                    }
+                  : undefined;
+              if (sample) observation?.requests.push(sample);
               if (status < 200 || status >= 300)
                 reject(
                   new DatomicHttpError(
@@ -231,26 +285,7 @@ export class DatomicClient {
                   ),
                 );
               else {
-                this.onRequest?.({
-                  path,
-                  started,
-                  finished: performance.now(),
-                  written,
-                  headers,
-                  reusedSocket: req.reusedSocket,
-                  gatewayTimeline: data["timeline"],
-                  responseBytes: size,
-                  requestBytes: bytes?.length ?? 0,
-                  serializeMicros,
-                  parseMicros: Number(res.headers["x-tx2-request-parse-micros"] ?? NaN),
-                  gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
-                  transactMicros: Number(data["transactMicros"] ?? NaN),
-                  waited: res.headers["x-tx2-waited"] === "true",
-                  ...(typeof data["datoms"] === "number" ? { datoms: data["datoms"] } : {}),
-                  ...(data["position"] && typeof data["position"] === "object"
-                    ? { position: Number((data["position"] as TaggedValue).v) }
-                    : {}),
-                });
+                if (sample) this.onRequest?.(sample);
                 resolve(data as T);
               }
             } catch (error) {
@@ -259,6 +294,7 @@ export class DatomicClient {
           });
         },
       );
+      if (observation) observation.httpCalls++;
       const timer = setTimeout(
         () => req.destroy(new Error("Gateway deadline exceeded")),
         timeoutMs,
