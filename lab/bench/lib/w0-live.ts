@@ -52,6 +52,10 @@ export async function startW0Live(o: {
           w.on("message", (m) => {
             if (m.type === "ready") resolve();
             if (m.type === "failure") {
+              fs.writeSync(
+                log,
+                JSON.stringify({ kind: "failure", worker, at: now(), error: m.error }) + "\n",
+              );
               failed = Error(m.error);
               reject(failed);
             }

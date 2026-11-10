@@ -1,4 +1,5 @@
 import { parentPort, workerData } from "node:worker_threads";
+import { inspect } from "node:util";
 import { openComposition } from "./composition.ts";
 import { W0, V_W0 } from "./w0-world.ts";
 import { Rng, seedOf } from "./rng.ts";
@@ -32,7 +33,9 @@ try {
     }),
   );
 } catch (error) {
-  port.postMessage({ type: "failure", error: String(error) });
+  // [DX-H2] Why: preserve the adapter's nested transport cause after the first live-reader failure.
+  // Rejected: String(error) (erases ReadError.cause and prevents diagnosis from retained evidence).
+  port.postMessage({ type: "failure", error: inspect(error, { depth: 8 }) });
 } finally {
   await comp.close();
   port.close();
