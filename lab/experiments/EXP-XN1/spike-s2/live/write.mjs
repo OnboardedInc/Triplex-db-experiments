@@ -17,7 +17,8 @@ function command(id,subj,expected,docPrefix=id){
  return [p('BEGIN READ WRITE'),...guards,p(`INSERT INTO xn_ent (_id,doc) VALUES ${rows.join(',')}`,params),p('INSERT INTO xn_head (_id,pos) VALUES ($1,$2)',[text(subj),int(expected+1)]),p('INSERT INTO xn_claim (_id) VALUES ($1)',[text(id)]),p('COMMIT SYNC')];
 }
 const cs=await Promise.all(Array.from({length:mode==='open'?16:1},()=>Wire.connect(url)));
-async function init(n){await cs[0].batch([p('BEGIN READ WRITE'),p('INSERT INTO xn_claim (_id) VALUES ($1)',[text(`${scope}-seedclaim`)]),p('COMMIT SYNC')]);for(let i=0;i<n;i++)await cs[0].batch([p('BEGIN READ WRITE'),p('INSERT INTO xn_head (_id,pos) VALUES ($1,0)',[text(`${scope}-s${i}`)]),p('COMMIT SYNC')]);}
+console.log('writer-connected',mode,scope,cs.length);
+async function init(n){await cs[0].batch([p('BEGIN READ WRITE'),p('INSERT INTO xn_claim (_id) VALUES ($1)',[text(`${scope}-seedclaim`)]),p('COMMIT SYNC')]);for(let i=0;i<n;i++){await cs[0].batch([p('BEGIN READ WRITE'),p('INSERT INTO xn_head (_id,pos) VALUES ($1,0)',[text(`${scope}-s${i}`)]),p('COMMIT SYNC')]);if(i%50===0)console.log('init-progress',scope,i)}console.log('init-done',scope);}
 async function commit(c,id,subj,expected,docPrefix=id){const w=c.writes;const result=await c.batch(command(id,subj,expected,docPrefix));if(c.writes-w!==1||!result.at(-1).commands.some(s=>s.startsWith('COMMIT')))throw Error('missing COMMIT response');}
 let workers=[],workerErrors=[];
 try{
@@ -67,6 +68,7 @@ try{
   const rate=Number(arg),readerCount=Number(readArg),positions=Array(200).fill(0);
   // Warm all writer sockets and the indexer with successful commands outside the timed window.
   for(let i=0;i<200;i++){const s=i%200;await commit(cs[i%16],`${scope}-warm${i}`,`${scope}-s${s}`,positions[s]++);}
+  console.log('writer-warm-done',scope);
   // [XN-S2-LIVE] Why: all 256 clients still warm 100 checked pulls, without serial worker admission exhausting the hold. Rejected: reducing per-client warmup.
   await Promise.all(Array.from({length:readerCount?4:0},async()=>{
    const worker=new Worker(new URL('./reader-worker.mjs',import.meta.url),{workerData:{clients:readerCount/4}});workers.push(worker);worker.on('error',e=>workerErrors.push(e.message));

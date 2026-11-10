@@ -53,6 +53,10 @@ elif STAGE=='lag':
         keeper(on)
         for rate in [15,55]:
             for readers in [0,256]:execute('write.mjs','open','one',PHASE+('-on' if on else '-off'),rate,readers,extra={'LAG':'1'},timeout=110)
+elif STAGE=='diagnose':
+    keeper(False)
+    execute('read-probe.mjs',timeout=30)
+    execute('write.mjs','open','one',PHASE,15,16,timeout=180)
 elif STAGE=='reads':
     keeper(True)
     for kind in ['a','c','e','f']:
