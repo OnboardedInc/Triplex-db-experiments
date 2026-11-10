@@ -22,4 +22,14 @@ for i in 0 1 2; do
   printf '%s\n' "$code" > "$root/$prefix-diff-$((i*100)).exit-code"
   [[ $code == 0 ]] || status=1
 done
+if [[ $status == 0 ]]; then
+  node --input-type=module - "$root/$prefix-diff-stats.json" <<'JS'
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const response=await fetch(process.env.DATOMIC_URL+'/v2/admin/scan-stats');assert.ok(response.ok);
+const stats=await response.json();fs.writeFileSync(process.argv[2],JSON.stringify(stats));
+if(process.env.B7_EXPECT_VERIFY==='true'){
+ const c=stats.entityCache;assert.equal(c.verify,true);assert.ok(c.hits>0);assert.ok(c.verified>=c.hits);assert.equal(c.verificationErrors,0);assert.ok(c.bytes<=c.budgetBytes);
+}
+JS
+fi
 exit "$status"

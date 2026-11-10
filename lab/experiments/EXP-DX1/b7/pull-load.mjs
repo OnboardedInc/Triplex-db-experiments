@@ -4,7 +4,7 @@ import fs from "node:fs";
 import { mixed, remember } from "./mixed.mjs";
 import { performance } from "node:perf_hooks";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { Worker, isMainThread, parentPort, workerData } from "node:worker_threads";
 import { Layer, ManagedRuntime } from "effect";
 import { Triples } from "../../../../packages/core/dist/index.js";
@@ -106,6 +106,32 @@ if (!isMainThread) {
     workers = [];
   const states = new Map();
   const report = { diagnostic: true, scope, subjects, phases: {} };
+  const originalRequest = w.client.request.bind(w.client);
+  let seedRequests = 0;
+  // [DX-B7] Why: retain exact serialized seed inputs and parsed ACK coordinates before timing starts.
+  // Rejected: trying to reconstruct a deleted frozen basis from a later source hash.
+  fs.writeFileSync("/driver/seed-requests.ndjson", "", { flag: "wx" });
+  fs.writeFileSync("/driver/seed-acks.ndjson", "", { flag: "wx" });
+  w.client.request = async (...args) => {
+    const [method, path, input] = args;
+    if (method !== "POST" || !path.endsWith("/transact")) return originalRequest(...args);
+    const index = seedRequests++;
+    fs.appendFileSync(
+      "/driver/seed-requests.ndjson",
+      JSON.stringify({ index, method, path, body: JSON.stringify(input) }) + "\n",
+    );
+    try {
+      const result = await originalRequest(...args);
+      fs.appendFileSync("/driver/seed-acks.ndjson", JSON.stringify({ index, result }) + "\n");
+      return result;
+    } catch (error) {
+      fs.appendFileSync(
+        "/driver/seed-acks.ndjson",
+        JSON.stringify({ index, error: String(error) }) + "\n",
+      );
+      throw error;
+    }
+  };
   const save = () => fs.writeFileSync("/driver/pull-load.json", JSON.stringify(report));
   try {
     const shared = Array.from({ length: accounts }, (_, a) => sharedFacts(a)).flat();
@@ -135,6 +161,38 @@ if (!isMainThread) {
       instant = rows[0].recordedAt;
       remember(states, rows);
     }
+    w.client.request = originalRequest;
+    const { db } = await w.client.create(scope, "lean");
+    const basis = await w.client.request("GET", `/v1/db/${db}/basis`);
+    const finalSeedAck = JSON.parse(
+      fs.readFileSync("/driver/seed-acks.ndjson", "utf8").trim().split("\n").at(-1),
+    ).result;
+    assert.equal(basis.t.v, finalSeedAck.t.v, "frozen native t must equal the final seed ACK");
+    assert.equal(
+      basis.position.v,
+      finalSeedAck.position.v,
+      "frozen position must equal the final seed ACK",
+    );
+    report.basis = {
+      recordedAt: instant,
+      position: Number(basis.position.v),
+      t: basis.t.v,
+      validAtPolicy: "Date.now() per pull; seeded intervals are open-ended",
+    };
+    report.seed = {
+      subjects,
+      accounts,
+      requests: seedRequests,
+      files: Object.fromEntries(
+        ["seed-requests.ndjson", "seed-acks.ndjson"].map((name) => {
+          const data = fs.readFileSync("/driver/" + name);
+          return [
+            name,
+            { bytes: data.length, sha256: createHash("sha256").update(data).digest("hex") },
+          ];
+        }),
+      ),
+    };
     const once = (worker) =>
       new Promise((resolve, reject) => {
         worker.once("message", resolve);
@@ -156,6 +214,11 @@ if (!isMainThread) {
     for (const [mode, readers] of JSON.parse(
       process.env.B7_PHASES || '[["random",4],["random",256]]',
     )) {
+      const gatewayCacheBefore = (
+        await (
+          await fetch(process.env.DATOMIC_READ_URLS.split(",")[0] + "/v2/admin/scan-stats")
+        ).json()
+      ).entityCache;
       const driverCpuBefore = process.cpuUsage(),
         before = cpu(),
         start = performance.now(),
@@ -174,7 +237,14 @@ if (!isMainThread) {
         calls = samples.reduce((n, s) => n + s.calls, 0),
         bytes = samples.reduce((n, s) => n + s.bytes, 0),
         cpuSeconds = (cpu() - before) / 1e6;
+      const gatewayCacheAfter = (
+        await (
+          await fetch(process.env.DATOMIC_READ_URLS.split(",")[0] + "/v2/admin/scan-stats")
+        ).json()
+      ).entityCache;
       report.phases[`${mode}-${readers}`] = {
+        gatewayCacheBefore,
+        gatewayCacheAfter,
         driverCpu: process.cpuUsage(driverCpuBefore),
         startedAt,
         finishedAt: new Date().toISOString(),

@@ -1,6 +1,6 @@
 (ns triplex.gateway.reach
   (:require [datomic.api :as d] [triplex.gateway.admission :as admission])
-  (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap]))
+  (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger]))
 (set! *warn-on-reflection* false)
 
 ;; [DX-B2-N1] Why: immutable datoms and cached numeric identifiers keep the reach path at index cost.
@@ -69,6 +69,19 @@
 (def ^ConcurrentHashMap sessions (ConcurrentHashMap.))
 (def session-entry-limit
   (min 1000000 (Long/parseLong (or (System/getenv "TX2_REACH_SESSION_ENTRIES") "1000000"))))
+;; [DX-B7-S2] Why: a reset replaces a generation; in-flight builders keep their immutable map identity.
+;; Rejected: clear under a response-wide monitor (serializes all concurrent pulls in a session).
+(defn session-generation [] {:entries (ConcurrentHashMap.) :slots (AtomicInteger. 0)})
+(defn remember! [generation eid rev]
+  (let [^ConcurrentHashMap entries (:entries generation) ^AtomicInteger slots (:slots generation)]
+    (if (.containsKey entries eid) (.put entries eid rev)
+      (loop []
+        (let [n (.get slots)]
+          (when (< n session-entry-limit)
+            (if (.compareAndSet slots n (inc n))
+              (when (some? (.putIfAbsent entries eid rev))
+                (.decrementAndGet slots) (.put entries eid rev))
+              (recur))))))))
 (defn session-map [name session]
   (when session
     (when-not (and (string? session) (<= 1 (.length ^String session) 64)) (decline! "session"))
@@ -76,7 +89,7 @@
                                 (let [m (LinkedHashMap. 64 0.75 true)] (or (.putIfAbsent sessions name m) m)))]
       (locking lru
         (or (.get lru session)
-            (let [m (ConcurrentHashMap.)]
+            (let [m (atom (session-generation))]
               (when (>= (.size lru) 64)
                 (let [it (.iterator (.keySet lru))] (.next it) (.remove it)))
               (.put lru session m) m))))))
@@ -125,7 +138,9 @@
           row-page? (true? (get input "rowPage"))
           entity-limit (if row-page? 50000 5000)
           entities (LinkedHashMap.) closures (ArrayList.) counts (long-array 1)
-          ^ConcurrentHashMap remembered (session-map name (get input "session")) out (StringBuilder. 65536)]
+          session-state (session-map name (get input "session"))
+          generation (when session-state @session-state)
+          ^ConcurrentHashMap remembered (:entries generation) out (StringBuilder. 65536)]
       (when-not (and (vector? roots) (<= 1 (count roots) (if need 50000 5000))) (decline! "roots"))
       ;; [DX-B5-L5] Why: 64 real W0 subjects exceed 10k answer entities; legacy triple requests retain their bound.
       ;; Rejected: silently falling back to many requests for a normal W0 page, or unbounded batch graphs.
@@ -145,7 +160,6 @@
               (while (.hasNext it)
                 (let [ref (.next it)] (when (.add seen ref) (.add queue ref))))))
           (.add closures [root order])))
-      (locking (or remembered out)
       (let [new-count (long-array 1) reset (and remembered
             (do (let [it (.iterator (.values entities))]
                   (while (.hasNext it)
@@ -153,8 +167,11 @@
                       (when (and eid (not (.containsKey remembered eid)))
                         (aset new-count 0 (inc (aget new-count 0)))))))
                 (> (+ (.size remembered) (aget new-count 0)) session-entry-limit)))
+            generation (if reset
+                         (let [next (session-generation)]
+                           (if (compare-and-set! session-state generation next) next @session-state)) generation)
+            ^ConcurrentHashMap remembered (:entries generation)
             full (or need reset (true? (get input "full")))]
-        (when reset (.clear remembered))
         (.append out "{\"position\":") (.append out (long position))
         (.append out ",\"t\":\"") (.append out (long t))
         (.append out "\",\"reset\":") (.append out (boolean reset)) (.append out ",\"entities\":[")
@@ -176,7 +193,7 @@
                         (.append out text (int (+ ref-start ref-size 1)) (.length text))))))
                 (.append out \])
                 ;; Overflow pages are entirely inline and leave the bounded map empty.
-                (when (and remembered eid (<= (.size entities) session-entry-limit)) (.put remembered eid rev)))
+                (when (and remembered eid (<= (.size entities) session-entry-limit)) (remember! generation eid rev)))
               (.append out \]))))
         (.append out "],\"closures\":[")
         (let [it (.iterator closures) n (long-array 1)]
@@ -185,7 +202,7 @@
               (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
               (.append out \[) (append-string! out (nth entry 0)) (.append out \,)
               (append-strings! out (nth entry 1)) (.append out \]))))
-        (.append out "]}") (.toString out))))
+        (.append out "]}") (.toString out)))
     (catch clojure.lang.ExceptionInfo e
       (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))
 

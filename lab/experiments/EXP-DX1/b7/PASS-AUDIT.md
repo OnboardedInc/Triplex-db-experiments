@@ -14,3 +14,9 @@ Step 1, before commit:
 Baseline B's gateway preimage stayed unchanged and was staged before execution. Harness-only edits occurred during stack startup;
 both initial and during-run captures are retained. Its gateway profile is usable; the complete executed harness-byte binding is
 partial, so it is a diagnostic comparator. Baseline A's zero-byte JFR remains a failed profile attempt.
+
+Step 2, before commit:
+
+- `concurrent-session-generations` checks exact fixture rows, revision, named position/t and closure coverage for all 5,120 responses under forced two-entry resets. Every future is awaited and its completion asserted before the verdict; the old generation's entries remain intact and the current map stays within its cap. Fresh mem databases and captured staged sources bind the helper's result.
+- Both complete 21-test native layout suites exited successfully in fresh owned stacks. The 300-case differential union passed the same range/RNG/content checks as step 1. Source hashes match the executed gateway capture.
+- Performance counters remain diagnostic: step 2 missed its targets. Initial step-0/1/2 probes did not persist the exact frozen R/t in their result file; do not claim complete input replay for those. Subsequent probes retain seed request JSON, parsed ACK coordinates and an ACK-matched frozen basis.

@@ -1,6 +1,6 @@
 (ns triplex.gateway.selftest
   (:require [clojure.test :refer :all] [clojure.data.json :as json] [datomic.api :as d]
-            [triplex.gateway.reach :as reach] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
+            [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
 
  ;; [DX-B7] Why: old selftests predate mandatory row texts and the explicit layout/name parameters.
 ;; Rejected: bypassing the current commit API or removing the existing signed-zero/speculative assertions.
@@ -205,6 +205,53 @@
                 "{:find [?id] :in [$ $rules] :where [[?f :f/id ?id]] :unknown []}"]]
     (try (canonical/parse text) (is false "Unsupported/ambiguous query must refuse")
          (catch clojure.lang.ExceptionInfo e (is (= "InvalidValue" (:code (ex-data e))))))))
+
+;; [DX-B7-S2] Why: force generation rotation while concurrent responses and repairs use the same session.
+;; Rejected: only testing a million-entry session that never resets, or checking only response counts.
+(deftest concurrent-session-generations
+  (let [scope "[\"triplex-scope-v1\",\"test\",\"b7\",\"session-reset\",0]"
+        name (:db (gateway/create-scope! "datomic:mem://" scope "legacy")) uri (gateway/db-uri name)
+        conn (gateway/connection uri)
+        rows (vec (mapcat (fn [i]
+                           [{:id (str "r" i) :entity_id (str "root-" i) :attribute ":v" :value_type "ref"
+                             :value_string (str "leaf-" i) :recorded_at 10.0 :recorded_position 1 :valid_from 0.0 :schema_version 1 :tx_id "tx1"}
+                            {:id (str "l" i) :entity_id (str "leaf-" i) :attribute ":v" :value_type "string"
+                             :value_string (str "value-" i) :recorded_at 10.0 :recorded_position 1 :valid_from 0.0 :schema_version 1 :tx_id "tx1"}]) (range 4)))
+        expected (into {} (map (fn [r] (let [text (row-text r)]
+                                        [(:entity_id r) [(json/read-str (subs text (.indexOf ^String text "[")))]])) rows))]
+    (try
+      (storage/commit! name conn (gateway/sync-db uri)
+        (row-input {"sourceK" 0 "position" 1 "operationId" "b7-session-seed"
+                    "rows" (mapv storage/wire-row rows) "newIds" (mapv :id rows) "claims" []}))
+      (with-redefs [reach/session-entry-limit 2 admission/reads (java.util.concurrent.Semaphore. 2 true)]
+        (let [db (gateway/sync-db uri) basis {"validAt" 10.0 "recordedPosition" 1}
+              input #(hash-map "roots" [%] "basis" basis "session" "b7-rotations")
+              _ (reach/response name db (input "root-0"))
+              state (reach/session-map name "b7-rotations") old @state
+              old-entries (into {} (:entries old))]
+          (doseq [round (range 20)]
+            (let [requests (mapv (fn [i]
+                                   (future
+                                     (let [root (str "root-" (mod (+ i round) 4))
+                                           body (json/read-str (reach/response name db (input root)))]
+                                       (is (= 1 (get body "position")))
+                                       (is (= (str (d/basis-t db)) (get body "t")))
+                                       (is (= #{root (str "leaf-" (mod (+ i round) 4))} (set (map first (get body "entities")))))
+                                       (is (= [[root [root (str "leaf-" (mod (+ i round) 4))]]] (get body "closures")))
+                                       (is (= 2 (count (get body "entities"))))
+                                       (doseq [entity (get body "entities")]
+                                         (let [[id rev inline] entity
+                                               repaired (when-not inline
+                                                          (json/read-str (reach/response name db (assoc (input root) "need" [id]))))
+                                               entry (if inline entity (first (get repaired "entities")))]
+                                           (is (= 1 rev))
+                                           (is (= [id 1 (expected id)] entry))))))) (range 256))]
+              (doseq [request requests] (is (not= ::timeout (deref request 30000 ::timeout))))))
+          (is (= old-entries (into {} (:entries old))) "An old generation is never cleared under its in-flight builders")
+          (is (not (identical? old @state)))
+          (is (<= (.size ^java.util.concurrent.ConcurrentHashMap (:entries @state)) 2))
+          (println (json/write-str {:sessionResetRounds 20 :concurrentResponses 5120 :entryLimit 2}))))
+      (finally (gateway/delete-scope! "datomic:mem://" scope)))))
 
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]

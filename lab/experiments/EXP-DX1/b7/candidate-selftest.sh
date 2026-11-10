@@ -13,7 +13,7 @@ export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 image=$(docker inspect --format '{{.Image}}' "$prefix-gw-w")
 source="$root/$name-source"
 mkdir "$source"
-cp -R lab/experiments/EXP-DX1/b7/candidate/. "$source/"
+cp -R "${3:-lab/experiments/EXP-DX1/b7/candidate}/." "$source/"
 cp packages/datomic/src/codec-spec.json "$source/codec-spec.json"
 python3 - "$source" <<'PY'
 from pathlib import Path

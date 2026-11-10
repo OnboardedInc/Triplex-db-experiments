@@ -312,7 +312,7 @@
 (defn read-db [name current input]
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
-               (if-let [staged (get input "staged")] (:db-after (d/with held (tx-data held staged))) held))
+               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(d/with held (tx-data held staged)))) held))
              current)
         p (get-in input ["basis" "recordedPosition"])]
     ;; [EXP-DA01] Why: a held value cannot advance even if another writer commits; refuse future requests against that exact pin. Rejected: replacing a held db with a newer one mid-query.
@@ -406,7 +406,7 @@
 (defn read-rows [name current input]
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
-               (if-let [staged (get input "staged")] (:db-after (d/with held (tx-data held staged))) held)) current)]
+               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(d/with held (tx-data held staged)))) held)) current)]
     (if-not (lean/enabled? db) (legacy-read-rows name current input)
       (let [basis (get input "basis") history (get input "history") route (get input "route" "history")
             pattern (get input "pattern") entities (when-let [ids (get input "entityIds")] (set ids))
