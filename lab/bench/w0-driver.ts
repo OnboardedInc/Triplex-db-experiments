@@ -612,6 +612,8 @@ export async function runW0Driver(argv: string[]) {
       reused,
       afterTimedStart: useMemo
         ? async () => {
+            const selectionStarted = performance.now(),
+              selectionCpuStart = process.threadCpuUsage();
             const selection = await selectMemo({
               comp,
               memo: loadMemo(path.join(dir, "preview-memo.json")),
@@ -622,7 +624,13 @@ export async function runW0Driver(argv: string[]) {
               subjects,
             });
             for (const [s, r] of selection.reused) reused.set(s, r);
-            report.memo = { ...selection, reused: selection.reused.size };
+            const selectionCpu = process.threadCpuUsage(selectionCpuStart);
+            report.memo = {
+              ...selection,
+              reused: selection.reused.size,
+              selectionWallMs: performance.now() - selectionStarted,
+              selectionCpuMs: (selectionCpu.user + selectionCpu.system) / 1000,
+            };
             if (selection.affected.length < Math.ceil(N / 100) || selection.largestFanout < 2)
               throw Error("H8 insufficient changes/fan-out");
           }

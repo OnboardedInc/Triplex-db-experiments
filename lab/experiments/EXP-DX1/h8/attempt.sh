@@ -44,7 +44,8 @@ cleanup() {
  docker ps -a --filter "name=$prefix" --format '{{.Names}}' > "$out/remaining-containers.txt"
  docker network ls --filter "name=$prefix" --format '{{.Name}}' > "$out/remaining-networks.txt"
  docker volume ls --filter "name=$prefix" --format '{{.Name}}' > "$out/remaining-volumes.txt"
- if [[ -s $out/remaining-containers.txt || -s $out/remaining-networks.txt || ( $keep_seed != true && -s $out/remaining-volumes.txt ) ]]; then echo 'cleanup incomplete; lock retained'; exit 1; fi
+ expected_volume=; [[ $keep_seed != true ]] || expected_volume="$prefix-pg-data"
+ if [[ -s $out/remaining-containers.txt || -s $out/remaining-networks.txt || $(cat "$out/remaining-volumes.txt") != "$expected_volume" ]]; then echo 'cleanup incomplete; lock retained'; exit 1; fi
  rm -rf "runs/DX-H8-stage/$prefix"
  printf '{"exit":%s,"finishedAt":"%s"}\n' "$rc" "$(date -u +%FT%TZ)" > "$out/exit.json"
  if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi

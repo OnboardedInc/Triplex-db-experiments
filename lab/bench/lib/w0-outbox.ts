@@ -1,3 +1,4 @@
+import { readW0Pages } from "./w0-pages.ts";
 import { measureHttp } from "./http-counts.ts";
 import { measureW0Http } from "./w0-http.ts";
 import type { CompositionHandle } from "./composition.ts";
@@ -83,16 +84,16 @@ export async function publishRecords(
     // [DX-H8] Why: the 64-root reach limit constrains reads, not the atomic publication frame.
     // Rejected: a >64-root request (gateway decline), or one state request per subject.
     const states = new Map<string, any[]>();
-    for (let offset = 0; offset < records.length; offset += 64) {
-      const statePage = await comp.sweepPage(
-        records.slice(offset, offset + 64).map((r) => "p5:outbox:" + r.subject),
-        { position: statePosition, validAt: V_PUBLIC },
-      );
-      for (const row of statePage.rows) {
-        const list = states.get(row.entityId) ?? [];
-        list.push(row);
-        states.set(row.entityId, list);
-      }
+    const stateSubjects = records.map((r) => "p5:outbox:" + r.subject);
+    const stateBasis = { position: statePosition, validAt: V_PUBLIC };
+    const statePage =
+      records.length <= 64
+        ? await comp.sweepPage(stateSubjects, stateBasis)
+        : await readW0Pages(comp, stateSubjects, stateBasis);
+    for (const row of statePage.rows) {
+      const list = states.get(row.entityId) ?? [];
+      list.push(row);
+      states.set(row.entityId, list);
     }
     const stateReadMs = performance.now() - stateReadStart;
     const foldStart = performance.now();
