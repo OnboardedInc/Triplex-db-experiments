@@ -8,6 +8,16 @@ const entries = (process.env.TX2_ENGINE_CGROUPS ?? "")
   .split(",")
   .filter(Boolean)
   .map((x) => x.split("="));
+// [DX-H5] Why: the driver cgroup includes worker threads and the independent Python oracle.
+// Rejected: treating main-thread CPU as the entire client/evaluation cost.
+const ownPath = fs
+  .readFileSync("/proc/self/cgroup", "utf8")
+  .trim()
+  .split("\n")
+  .find((line) => line.startsWith("0::"))
+  ?.slice(3);
+if (ownPath && fs.existsSync("/sys/fs/cgroup" + ownPath + "/cpu.stat"))
+  entries.push(["driver-with-oracle", "/sys/fs/cgroup" + ownPath]);
 const sample = () =>
   fs.appendFileSync(
     out + "/cgroups.ndjson",

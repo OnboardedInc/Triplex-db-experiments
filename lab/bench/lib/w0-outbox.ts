@@ -9,6 +9,8 @@ export async function publishRecords(
   if (records.length > 64 || new Set(records.map((r) => r.subject)).size !== records.length)
     throw new Error("outbox frame must contain <=64 distinct subjects");
   const buildStart = performance.now();
+  const cpuNow = () => process.threadCpuUsage();
+  const buildCpu = cpuNow();
   const commandId = "p5:outbox:" + sha256(canonical(records));
   const existing = await comp.transactionByCommand(commandId);
   if (!existing.ok) throw new Error(existing.tag);
@@ -59,11 +61,13 @@ export async function publishRecords(
   }
   // [EXP-P5] Why: state, per-item sequence and deliveries commit in the same frame with command-id deduplication. Rejected: updating an in-memory outbox before ACK (loses work on resume).
   const buildOutboxMs = performance.now() - buildStart;
+  const buildEndCpu = cpuNow();
   const commit = await measureHttp(() =>
     measureW0Http(() =>
       comp.transact(operations, { commandId, actor: "p5-publisher", preconditions }),
     ),
   );
+  const commitEndCpu = cpuNow();
   const r = commit.value.value;
   if (!r.ok) throw new Error("outbox publication failed: " + r.tag);
   return {
@@ -71,6 +75,10 @@ export async function publishRecords(
     retry: false,
     timing: {
       buildOutboxMs,
+      buildOutboxCpuMs:
+        (buildEndCpu.user - buildCpu.user + buildEndCpu.system - buildCpu.system) / 1000,
+      publishCommitCpuMs:
+        (commitEndCpu.user - buildEndCpu.user + commitEndCpu.system - buildEndCpu.system) / 1000,
       publishCommitMs: commit.wallMs,
       publishRequests: commit.requests,
       publishDatoms: commit.value.datomSamples ? commit.value.datoms : null,
