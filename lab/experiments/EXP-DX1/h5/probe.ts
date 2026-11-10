@@ -10,6 +10,10 @@ process.env.TX2_P5_CLOCK_START = String(V_W0);
 const N = Number(process.argv[2] ?? "1000"),
   out = "runs/DX-H5-vm";
 fs.mkdirSync(out, { recursive: true });
+// [DX-H5] Why: elapsed telemetry may be fractional; W0 canonicalPlain correctly rejects fractional business numbers.
+// Rejected: weakening W0 canonical serialization or rounding domain values to make an observation log work.
+const observationJson = (value: unknown) =>
+  JSON.stringify(value, (_key, v) => (typeof v === "bigint" ? v.toString() : v));
 const reports: any[] = [];
 for (const concurrency of [1, 8, 16, 32]) {
   const scope = "dxh5-probe-" + concurrency + "-" + randomUUID(),
@@ -51,7 +55,7 @@ for (const concurrency of [1, 8, 16, 32]) {
       const begun = performance.timeOrigin + performance.now();
       fs.writeSync(
         log,
-        canonical({ kind: "command", reference: c.position, operations, begun }) + "\n",
+        observationJson({ kind: "command", reference: c.position, operations, begun }) + "\n",
       );
       inFlight++;
       peakInFlight = Math.max(peakInFlight, inFlight);
@@ -71,7 +75,7 @@ for (const concurrency of [1, 8, 16, 32]) {
       commands++;
       fs.writeSync(
         log,
-        canonical({
+        observationJson({
           kind: "ack",
           reference: c.position,
           receipt: r.value,
