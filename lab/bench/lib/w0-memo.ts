@@ -74,7 +74,7 @@ export async function selectMemo(o: {
       largestFanout: 0,
       fallback: true,
     };
-  const dependencies = new Map<string, Set<string>>();
+  const validEntries: any[] = [];
   for (const subject of o.subjects) {
     const r = memo.entries[subject];
     if (
@@ -96,11 +96,7 @@ export async function selectMemo(o: {
       affected.add(subject);
       continue;
     }
-    for (const entity of r.closure) {
-      const subjects = dependencies.get(entity) ?? new Set<string>();
-      subjects.add(subject);
-      dependencies.set(entity, subjects);
-    }
+    validEntries.push(r);
   }
   const changed = new Set<string>();
   let after = memo.basis.position;
@@ -120,12 +116,20 @@ export async function selectMemo(o: {
       }
     }
   }
-  let largestFanout = 0;
-  for (const entity of changed) {
-    const subjects = dependencies.get(entity);
-    largestFanout = Math.max(largestFanout, subjects?.size ?? 0);
-    for (const subject of subjects ?? []) affected.add(subject);
+  // [DX-H8] Why: one activation needs only membership in its changed set, not a reverse Set for every unchanged entity.
+  // Rejected: allocating 145k dependency sets per 1k subjects (404 ms measured controller CPU).
+  const fanouts = new Map<string, number>();
+  for (const r of validEntries) {
+    let matches: Set<string> | undefined;
+    for (const entity of r.closure)
+      if (changed.has(entity) && !matches?.has(entity)) {
+        (matches ??= new Set()).add(entity);
+        affected.add(r.subject);
+        fanouts.set(entity, (fanouts.get(entity) ?? 0) + 1);
+      }
   }
+  let largestFanout = 0;
+  for (const count of fanouts.values()) largestFanout = Math.max(largestFanout, count);
   // [DX-H8] Why: W0 uses tx only to validate fact positions and label output/record basis; time and release stay fixed.
   // Rejected: retaining B0 labels or reusing when valid time changes (time rules could change without a write).
   const basis = w0Basis(o.basis);

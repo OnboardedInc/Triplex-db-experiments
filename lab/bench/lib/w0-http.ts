@@ -1,7 +1,7 @@
 import "./w0-cache.ts";
 import { measureHttp } from "./http-counts.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { DatomicClient } from "../../../packages/datomic/dist/index.js";
+import { DatomicClient, stringifyExact } from "../../../packages/datomic/dist/index.js";
 // [DX-H5] Why: use the existing public request observer to attribute bytes/service/datoms per page.
 // Rejected: parsing each response a second time or subtracting global live-traffic counters.
 const context = new AsyncLocalStorage<{
@@ -15,6 +15,7 @@ const context = new AsyncLocalStorage<{
   datomSamples: number;
   wireParseMicros: number;
   wireSerializeMicros: number;
+  failedRequests: { path: string; bytes: number; error: string }[];
 }>();
 const original = DatomicClient.prototype.request;
 const installed = new WeakSet<object>();
@@ -44,7 +45,18 @@ DatomicClient.prototype.request = function (...args: any[]) {
       if (Number.isFinite(sample.parseMicros)) active.wireParseMicros += sample.parseMicros;
     };
   }
-  return (original as any).apply(this, args);
+  return (original as any).apply(this, args).catch((error: any) => {
+    const active = context.getStore();
+    // [DX-H8] Why: onRequest omits errors; retain the exact codec size of a rejected body without slowing successful requests.
+    // Rejected: calling a 1024-subject rejection an unknown failure with no request-size observation.
+    if (active)
+      active.failedRequests.push({
+        path: args[1],
+        bytes: args[2] === undefined ? 0 : Buffer.byteLength(stringifyExact(args[2])),
+        error: String(error),
+      });
+    throw error;
+  });
 };
 export async function measureW0Http<T>(run: () => Promise<T>) {
   const active = {
@@ -58,6 +70,7 @@ export async function measureW0Http<T>(run: () => Promise<T>) {
     datomSamples: 0,
     wireParseMicros: 0,
     wireSerializeMicros: 0,
+    failedRequests: [] as { path: string; bytes: number; error: string }[],
   };
   const counted = await context.run(active, () => measureHttp(run));
   // [DX-H5] Why: successful response samples omit errors; Agent counts retain every actual HTTP attempt.

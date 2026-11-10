@@ -13,7 +13,7 @@ export async function publicationMatrix(report: any, dir: string) {
         JSON.parse(fs.readFileSync(path.join(dir, `activation-${m.page}.json`), "utf8")),
       );
     const observations = [];
-    for (const size of [64, 256, 1024]) {
+    for (const size of [64, 256, 512, 1024]) {
       const basis = w0Basis({
         position: await comp.currentPosition(),
         validAt: report.activation.basis.validAt,
@@ -23,7 +23,27 @@ export async function publicationMatrix(report: any, dir: string) {
           .slice(offset, offset + size)
           .map((r: any) => ({ ...r.record, basis }));
         const startedAtEpochMs = performance.timeOrigin + performance.now();
-        const result: any = await comp.publishOutbox(batch);
+        let result: any;
+        try {
+          result = await comp.publishOutbox(batch);
+        } catch (error: any) {
+          const observation = {
+            mode: "steady-republication-after-verified-activation",
+            size,
+            subjects: batch.length,
+            startedAtEpochMs,
+            rejectedAtEpochMs: performance.timeOrigin + performance.now(),
+            error: String(error.stack ?? error),
+          };
+          fs.appendFileSync(
+            path.join(dir, "publication-matrix.ndjson"),
+            JSON.stringify(observation) + "\n",
+          );
+          console.error("[H8 publication rejection] " + JSON.stringify(observation));
+          observations.push(observation);
+          if (!String(error).includes("Request too large")) throw error;
+          break;
+        }
         const ackAtEpochMs = performance.timeOrigin + performance.now();
         if (result.retry || result.deliveries.length)
           throw Error("matrix must ACK a fresh command without duplicate effects");
@@ -37,6 +57,10 @@ export async function publicationMatrix(report: any, dir: string) {
           ...result.timing,
         };
         observations.push(observation);
+        fs.appendFileSync(
+          path.join(dir, "publication-matrix.ndjson"),
+          JSON.stringify(observation) + "\n",
+        );
         console.log("[H8 publication] " + JSON.stringify(observation));
       }
     }

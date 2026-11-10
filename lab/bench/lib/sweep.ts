@@ -88,7 +88,7 @@ export async function runW0Sweep(o: SweepOptions) {
   )
     throw new Error("invalid worker count or subject list");
   const pageSize = o.pageSize ?? 64;
-  if (![64, 256, 1024].includes(pageSize)) throw Error("invalid sweep publication size");
+  if (![64, 256, 512, 1024].includes(pageSize)) throw Error("invalid sweep publication size");
   const binding = {
     sweepId: o.sweepId,
     basis: o.basis,

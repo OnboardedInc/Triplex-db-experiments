@@ -1,3 +1,4 @@
+import { inspect } from "node:util";
 import { readW0Pages } from "./w0-pages.ts";
 import { measureHttp } from "./http-counts.ts";
 import { measureW0Http } from "./w0-http.ts";
@@ -136,7 +137,15 @@ export async function publishRecords(
     const commit = await committing;
     const commitEndCpu = cpuNow();
     const r = commit.value.value;
-    if (!r.ok) throw new Error("outbox publication failed: " + r.tag);
+    if (!r.ok)
+      throw new Error(
+        "outbox publication failed: " +
+          r.tag +
+          " " +
+          inspect(r.error, { depth: 8 }) +
+          " HTTP " +
+          JSON.stringify(commit.value.failedRequests),
+      );
     return {
       deliveries,
       retry: false,

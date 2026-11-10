@@ -7,7 +7,19 @@ import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 export async function openBulkCounts(comp: CompositionHandle) {
   if (!comp.scopeName || comp.backend.name !== "datomic")
     throw Error("bulk counts require scoped Datomic");
-  const client = new DatomicClient(comp.backend.url, 35000);
+  const endpoint = process.env.DATOMIC_READ_URLS?.split(",")[0]?.trim() || comp.backend.url;
+  const batchSize = Number(process.env.DXH8_COUNT_BATCH ?? "1024");
+  const concurrency = Number(process.env.DXH8_COUNT_READS ?? "4");
+  if (
+    ![256, 1024, 4096].includes(batchSize) ||
+    !Number.isInteger(concurrency) ||
+    concurrency < 1 ||
+    concurrency > 4
+  )
+    throw Error("invalid bounded history count transport");
+  // [DX-H8] Why: full fresh counts took 80–124 s/1k on the one-CPU write peer; the two-CPU read peer is idle here.
+  // Rejected: caching old counts or deriving them from journal changes (would weaken the independent stored-history check).
+  const client = new DatomicClient(endpoint, 35000);
   try {
     const scope = String(runtimeApi.DatabaseScope.test(comp.scopeName));
     const created = await client.create(scope);
@@ -23,6 +35,7 @@ export async function openBulkCounts(comp: CompositionHandle) {
     return {
       histories,
       stats,
+      mode: `full-history-public-batch-${batchSize}-concurrency-${concurrency}`,
       count: async () => {
         const start = performance.now(),
           position = await comp.currentPosition();
@@ -48,25 +61,35 @@ export async function openBulkCounts(comp: CompositionHandle) {
             }
           }
         }
+        const enumerationWallMs = performance.now() - start;
+        const historyStarted = performance.now();
         const ids = [...entities];
         let assertions = 0,
           retired = 0,
           requests = 0;
-        for (let offset = 0; offset < ids.length; offset += 256) {
-          const chunk = ids.slice(offset, offset + 256),
-            allowed = new Set(chunk),
-            rows = await histories(chunk, position);
-          requests++;
-          for (const row of rows) {
-            if (
-              !allowed.has(row.entity_id) ||
-              !Number.isSafeInteger(row.recorded_position) ||
-              row.recorded_position > position
-            )
-              throw Error("bulk history escaped source cut/entities");
-            assertions++;
-            if (row.retracted_position != null) retired++;
+        for (let offset = 0; offset < ids.length; offset += batchSize * concurrency) {
+          const reads = [];
+          for (
+            let start = offset;
+            start < Math.min(ids.length, offset + batchSize * concurrency);
+            start += batchSize
+          ) {
+            const chunk = ids.slice(start, start + batchSize),
+              allowed = new Set(chunk);
+            requests++;
+            reads.push(histories(chunk, position).then((rows) => ({ rows, allowed })));
           }
+          for (const { rows, allowed } of await Promise.all(reads))
+            for (const row of rows) {
+              if (
+                !allowed.has(row.entity_id) ||
+                !Number.isSafeInteger(row.recorded_position) ||
+                row.recorded_position > position
+              )
+                throw Error("bulk history escaped source cut/entities");
+              assertions++;
+              if (row.retracted_position != null) retired++;
+            }
         }
         if ((await comp.currentPosition()) !== position)
           throw Error("store changed during bulk count");
@@ -75,8 +98,14 @@ export async function openBulkCounts(comp: CompositionHandle) {
           result,
           entities: ids.length,
           historyRequests: requests,
+          endpoint,
+          batchSize,
+          concurrency,
+          enumerationWallMs,
+          historyWallMs: performance.now() - historyStarted,
           wallMs: performance.now() - start,
         });
+        console.error("[H8 counts] " + JSON.stringify(stats.at(-1)));
         return result;
       },
       close: () => client.close(),

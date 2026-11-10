@@ -36,15 +36,12 @@ export async function runCountsDriver(argv: string[]) {
   };
   try {
     const result = await runW0Driver(argv);
-    result.countMode = "full-history-public-batch-256";
+    result.countMode = counters[0]?.mode;
     result.bulkCountObservations = counters.flatMap((c) => c.stats);
     fs.writeFileSync(output, JSON.stringify(result, null, 2) + "\n");
-    if (
-      result.N === 1000 &&
-      argv.includes("--stored-preview") &&
-      argv[argv.indexOf("--publish-size") + 1] === "64"
-    )
-      await publicationMatrix(result, path.dirname(output));
+    if (result.N === 1000 && argv.includes("--publication-matrix"))
+      result.publicationMatrix = await publicationMatrix(result, path.dirname(output));
+    fs.writeFileSync(output, JSON.stringify(result, null, 2) + "\n");
     return result;
   } finally {
     COMPOSITIONS.reach = original;

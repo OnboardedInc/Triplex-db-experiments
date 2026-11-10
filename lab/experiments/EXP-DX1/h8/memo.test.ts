@@ -1,3 +1,4 @@
+import { prepareMemoSelection } from "../../../bench/lib/w0-memo-pool.ts";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
@@ -65,6 +66,21 @@ test("stored preview: shared fanout, empty targets, new edges, time/release/miss
       subjects,
     };
     const selected = await selectMemo(options);
+    const selector = await prepareMemoSelection({
+      ...options,
+      file,
+      composition: "memory",
+      lane: "xtdb",
+    });
+    try {
+      const threaded = await selector.select();
+      assert.deepEqual(threaded.affected, selected.affected);
+      assert.equal(threaded.largestFanout, selected.largestFanout);
+      assert.equal(canonical([...threaded.reused]), canonical([...selected.reused]));
+      assert.ok(threaded.workerCpuMs > 0);
+    } finally {
+      await selector.close();
+    }
     assert.ok(selected.largestFanout > 1);
     assert.ok(selected.reused.size > 0);
     for (const s of subjects)

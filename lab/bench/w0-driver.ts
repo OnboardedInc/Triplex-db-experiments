@@ -1,4 +1,5 @@
-import { memoEntry, saveMemo, loadMemo, selectMemo, type PreviewMemo } from "./lib/w0-memo.ts";
+import { prepareMemoSelection } from "./lib/w0-memo-pool.ts";
+import { memoEntry, saveMemo, type PreviewMemo } from "./lib/w0-memo.ts";
 import { encodePublicationEvidence } from "./lib/w0-outbox.ts";
 import { startW0Live, matchW0Live } from "./lib/w0-live.ts";
 import { measurementLease } from "./lib/w0-lease.ts";
@@ -119,6 +120,7 @@ export async function runW0Driver(argv: string[]) {
   report.pins = await loadW0Pins();
   const lease = await measurementLease();
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
+  let memoSelector: Awaited<ReturnType<typeof prepareMemoSelection>> | undefined;
   const comp = await openComposition(composition, lane, scope),
     oracle = new DomainOracle();
   const subjects = subjectList(N),
@@ -206,7 +208,7 @@ export async function runW0Driver(argv: string[]) {
       entries: {},
     };
     const useMemo = argv.includes("--stored-preview");
-    const publicationSize = useMemo ? Number(opt("publish-size", "1024")) : 64;
+    const publicationSize = useMemo ? Number(opt("publish-size", "512")) : 64;
     const gate = await fingerprintSweep(
       {
         endpoint: comp.backend.url,
@@ -593,6 +595,20 @@ export async function runW0Driver(argv: string[]) {
     };
     console.error("[P5] preparing sweep workers before live baseline");
     const cursor = path.join(dir, "activation-cursor.json");
+    if (useMemo) {
+      memoSelector = await prepareMemoSelection({
+        comp,
+        composition,
+        lane,
+        scope,
+        file: path.join(dir, "preview-memo.json"),
+        releaseHash: W0.R2.hash,
+        previewBasis: b0,
+        basis,
+        subjects,
+      });
+      report.memoWorkerStartupMs = memoSelector.startupMs;
+    }
     const reused = new Map<string, any>();
     report.sweep = await runW0Sweep({
       comp,
@@ -614,15 +630,7 @@ export async function runW0Driver(argv: string[]) {
         ? async () => {
             const selectionStarted = performance.now(),
               selectionCpuStart = process.threadCpuUsage();
-            const selection = await selectMemo({
-              comp,
-              memo: loadMemo(path.join(dir, "preview-memo.json")),
-              scope,
-              releaseHash: W0.R2.hash,
-              previewBasis: b0,
-              basis,
-              subjects,
-            });
+            const selection = await memoSelector!.select();
             for (const [s, r] of selection.reused) reused.set(s, r);
             const selectionCpu = process.threadCpuUsage(selectionCpuStart);
             report.memo = {
@@ -712,7 +720,8 @@ export async function runW0Driver(argv: string[]) {
       const f = await comp.feedPage(position, lane === "datomic" ? 100 : 1000);
       if (!f.transactions.length) break;
       for (const tx of f.transactions) {
-        fs.appendFileSync(path.join(dir, "stored-journal.ndjson"), canonical(tx) + "\n");
+        if (!argv.includes("--discard-seed-log") || tx.position > report.seed.basis.tx)
+          fs.appendFileSync(path.join(dir, "stored-journal.ndjson"), canonical(tx) + "\n");
         position = tx.position;
         for (const c of tx.changes) {
           if (c.op === "assert") assertions++;
@@ -786,6 +795,7 @@ export async function runW0Driver(argv: string[]) {
         report.trafficError = String(e);
       }
     }
+    await memoSelector?.close();
     lease.release();
     report.measurementHolds = lease.holds;
     oracle.close();

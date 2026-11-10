@@ -1,16 +1,40 @@
 # [DX-H8] Why: assign a sampled stack to its first gateway frame within the actual publication ACK interval.
 # Rejected: attributing startup/seed samples to publication, or inventing exclusive CPU from elapsed wall.
-import collections, datetime, json, pathlib, sys
+import collections, datetime, json, pathlib, sys, re, gzip
+
+def events(file):
+    decoder = json.JSONDecoder()
+    with (gzip.open(file, "rt") if file.suffix == ".gz" else file.open()) as stream:
+        buffer = ""
+        while True:
+            buffer += stream.read(65536)
+            match = re.search(r'"events"\s*:\s*\[', buffer)
+            if match:
+                buffer = buffer[match.end():]; break
+            if len(buffer) > 1000000: raise ValueError("JFR events array missing")
+        while True:
+            buffer = buffer.lstrip()
+            if buffer.startswith(","): buffer = buffer[1:].lstrip()
+            if buffer.startswith("]"): return
+            try: event, end = decoder.raw_decode(buffer)
+            except json.JSONDecodeError:
+                part = stream.read(65536)
+                if not part: raise
+                buffer += part; continue
+            yield event
+            buffer = buffer[end:]
+
 root = pathlib.Path(sys.argv[1])
 r = json.loads((root / 'driver/receipt.json').read_text())
 metrics = r.get('sweep', {}).get('metrics', [])
 intervals = [(m['timing'].get('publicationStartedAtEpochMs', m['timing']['publicationAckAtEpochMs'] - m['timing']['publishCommitMs']), m['timing']['publicationAckAtEpochMs']) for m in metrics if 'publishCommitMs' in m['timing']]
 for role in ['tx', 'gw-w']:
     f = root / (role + '-samples.json')
+    if not f.exists(): f = f.with_suffix(f.suffix + '.gz')
     if not f.exists():
         print(role, 'NO RECORDING'); continue
-    data = json.loads(f.read_text()); counts = collections.Counter(); selected = 0; attributed = 0
-    for event in data['recording']['events']:
+    counts = collections.Counter(); selected = 0; attributed = 0
+    for event in events(f):
         v = event['values']
         at = datetime.datetime.fromisoformat(v['startTime'].replace('Z', '+00:00')).timestamp() * 1000
         if not any(a <= at <= b for a, b in intervals): continue
