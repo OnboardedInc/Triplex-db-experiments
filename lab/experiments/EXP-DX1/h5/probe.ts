@@ -3,7 +3,7 @@ import { inspect } from "node:util";
 import { randomUUID } from "node:crypto";
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { seedCommands } from "../../../bench/lib/w0-seed.ts";
-import { W0, V_W0, many, triplexValue, canonical } from "../../../bench/lib/w0-world.ts";
+import { W0, V_W0, many, triplexValue } from "../../../bench/lib/w0-world.ts";
 // [DX-H5] Why: measure genuine public command concurrency without pretending reordered tx values are W0.
 // Rejected: changing oracle/reference positions to match an easier concurrent population.
 process.env.TX2_P5_CLOCK_START = String(V_W0);
