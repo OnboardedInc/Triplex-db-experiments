@@ -4,9 +4,10 @@ set -euo pipefail
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
-tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src=
+tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true
 while (($#)); do
   case "$1" in
+    --no-publish) publish=false; shift; continue;;
     --cpus-tx) tx=$2;; --cpus-pg) pg=$2;;
     --cpus-gw-write) gw_w=$2;; --cpus-gw-read) gw_r=$2;;
     --gateway-src) src=$2;; --port-write) port_w=$2;; --port-read) port_r=$2;;
@@ -61,13 +62,13 @@ import pathlib,sys
 root=pathlib.Path(sys.argv[1]); prefix=sys.argv[2]
 settings={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx',
 'sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic','sql-user':'datomic','sql-password':'datomic',
-'memory-index-threshold':'128m','memory-index-max':'512m','object-cache-max':'128m'}
+'memory-index-threshold':__import__('os').environ.get('DX_INDEX_THRESHOLD','128m'),'memory-index-max':__import__('os').environ.get('DX_INDEX_MAX','512m'),'object-cache-max':__import__('os').environ.get('DX_OBJECT_CACHE','128m')}
 lines=[line for line in (root/'template.properties').read_text().splitlines() if line.partition('=')[0].strip() not in settings]
 (root/'sql.properties').write_text('\n'.join(lines)+'\n'+'\n'.join(k+'='+v for k,v in settings.items())+'\n')
 PY
 docker network create "$prefix-net" >/dev/null
 docker volume create "$prefix-pg-data" >/dev/null
-docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus "$pg" --memory 512m --memory-swap 512m \
+docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus "$pg" --memory "${DX_PG_MEMORY:-512m}" --memory-swap "${DX_PG_MEMORY:-512m}" \
   -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" postgres:17-alpine >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
@@ -83,19 +84,23 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   [[ "$file" != postgres-table.sql ]] || db=datomic
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$attempt/sql/$file" > "$attempt/sql/$file.log"
 done
-docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "$tx" --memory 3g --memory-swap 3g \
-  -e "JAVA_OPTS=-Xms256m -Xmx2g" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
+docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "$tx" --memory "${DX_TX_MEMORY:-3g}" --memory-swap "${DX_TX_MEMORY:-3g}" \
+  -e "JAVA_OPTS=-Xms256m -Xmx${DX_TX_HEAP:-2g}" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # A ready transactor is checked by gateway health, which creates and syncs a real SQL database.
 for role in w r; do
   if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
-  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 1500m --memory-swap 1500m \
-    -p "127.0.0.1:$port:8080" -e "JAVA_OPTS=-Xms256m -Xmx1g" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+  ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
+  if [[ $role == w ]]; then mem=${DX_GW_WRITE_MEMORY:-1500m}; heap=${DX_GW_WRITE_HEAP:-1g}; else mem=${DX_GW_READ_MEMORY:-1500m}; heap=${DX_GW_READ_HEAP:-1g}; fi
+  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
+    "${ports[@]}" -e "JAVA_OPTS=-Xms256m -Xmx$heap" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -v "$src:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false
   for ((i=0;i<180;i++)); do
-    if curl -fsS "http://127.0.0.1:$port/health" > "$attempt/health-$role.json" 2>/dev/null; then ok=true; break; fi
+    if [[ $publish == false ]]; then
+      if docker run --rm --pull never --name "$prefix-health" --network "$prefix-net" node:22.23.2-bookworm-slim node -e "fetch('http://$prefix-gw-$role:8080/health').then(async r=>{if(!r.ok)process.exit(1); console.log(await r.text())}).catch(()=>process.exit(1))" > "$attempt/health-$role.json" 2>/dev/null; then ok=true; break; fi
+    elif curl -fsS "http://127.0.0.1:$port/health" > "$attempt/health-$role.json" 2>/dev/null; then ok=true; break; fi
     sleep 1
   done
   if [[ $ok != true ]]; then docker logs "$prefix-gw-$role" > "$attempt/gateway-$role.log" 2>&1; echo "gateway $role failed; see $attempt" >&2; exit 1; fi

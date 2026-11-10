@@ -163,6 +163,8 @@ const slots = JSON.parse(fs.readFileSync(path.join(REPO, "lab/config/slots.json"
 const container = process.env["TX2_ENGINE_CONTAINER"] ?? null;
 const containers = lane === "datomic" ? container?.split(",").map(s => s.trim()).filter(Boolean) ?? [] : container ? [container] : [];
 const workerHttpCounts: any[] = [];
+const cgroupPaths = Object.fromEntries((process.env["TX2_ENGINE_CGROUPS"] ?? "").split(",").filter(Boolean).map(s => { const i = s.indexOf("="); if (i < 1) throw Error("invalid TX2_ENGINE_CGROUPS"); return [s.slice(0, i), s.slice(i + 1)]; }));
+const cgroupPrevious = new Map<string, { wall: number; usage: number }>();
 const engineCpus = Number(process.env["TX2_ENGINE_CPUS"] ?? "0") || null;
 const engineSamples: { t: number; cpuPercent: number; memBytes: number; containers: Record<string, { cpuPercent: number; memBytes: number }> }[] = [];
 const watermarkSamples: { t: number; marks: Record<string, number> }[] = [];
@@ -177,6 +179,24 @@ const parseBytes = (text: string) => {
 async function engineSampler() {
   while (samplersOn && container) {
     const t = now();
+    if (Object.keys(cgroupPaths).length) {
+      // [DX-H3] Why: cpu.stat measures each engine without a Docker CLI or socket in the client. Rejected: host polling (SSH apparatus).
+      const byContainer: Record<string, { cpuPercent: number; memBytes: number }> = {};
+      for (const name of containers) {
+        const dir = cgroupPaths[name];
+        if (!dir) throw Error(`missing engine cgroup ${name}`);
+        const stat = await fs.promises.readFile(path.join(dir, "cpu.stat"), "utf8");
+        const usage = Number(/^usage_usec (\d+)$/m.exec(stat)?.[1]);
+        const memBytes = Number(await fs.promises.readFile(path.join(dir, "memory.current"), "utf8"));
+        const wall = performance.now(), prev = cgroupPrevious.get(name);
+        if (!Number.isFinite(usage) || !Number.isFinite(memBytes)) throw Error(`invalid cgroup sample ${name}`);
+        cgroupPrevious.set(name, { wall, usage });
+        if (prev) byContainer[name] = { cpuPercent: (usage - prev.usage) / ((wall - prev.wall) * 10), memBytes };
+      }
+      if (Object.keys(byContainer).length === containers.length) engineSamples.push({ t, cpuPercent: Object.values(byContainer).reduce((s, r) => s + r.cpuPercent, 0), memBytes: Object.values(byContainer).reduce((s, r) => s + r.memBytes, 0), containers: byContainer });
+      await sleep(1000);
+      continue;
+    }
     const out = await docker(["stats", "--no-stream", "--format", "{{json .}}", ...containers], 15_000);
     try {
       const rows = out!.trim().split("\n").map(line => JSON.parse(line));
@@ -944,7 +964,7 @@ async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt) 
 async function maintenanceEvents(traceStart: number) {
   // [DX-H1] Why: indexing needs an explicit source-bound job hook; log words alone do not prove completion.
   // Rejected: treating arbitrary "index" log lines as a P1 maintenance witness.
-  if (lane === "datomic") return { source: "write gateway /v2/db/{db}/request-index", events: datomicMaintenanceJobs, trigger: "one request-index/sync-index job per P1 level; incomplete jobs never count" };
+  if (lane === "datomic") return { source: "write gateway /v2/db/{db}/request-index", events: datomicMaintenanceJobs, trigger: "one request-index/sync-index job per P1 level; incomplete jobs never count", logs: Object.keys(cgroupPaths).length ? "not collected in VM mode" : "not collected" };
   if (!container) return { source: null, events: [] as { t: number; line: string }[], note: "no TX2_ENGINE_CONTAINER: maintenance evidence not collected" };
   const since = new Date(traceStart - 1000).toISOString();
   const text = (await docker(["logs", "--timestamps", "--since", since, container], 60_000)) ?? "";

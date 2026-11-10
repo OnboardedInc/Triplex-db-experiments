@@ -11,7 +11,7 @@ test("Datomic publication observes a bound result before the caller ACK and refu
     async transact(_db: string, input: any) {
       order.push("result");
       if (input.reject) throw Error("transport");
-      return { position: { t: "long", v: String(input.returned ?? input.position) } };
+      return { operationId: input.returnedId ?? input.operationId, delta: input.delta ?? 0, position: { t: "long", v: String(input.returned ?? input.position) } };
     }
   }
   installDatomicPublication({ DatomicClient: Client });
@@ -29,11 +29,13 @@ test("Datomic publication observes a bound result before the caller ACK and refu
       new Client().transact("db", { position: 7, returned: 8, operationId: "op" }),
       /binding mismatch/,
     );
+    await new Client().transact("db", { position: 5, returned: 7, delta: 2, operationId: "op" });
+    await assert.rejects(new Client().transact("db", { position: 7, returnedId: "other", operationId: "op" }), /binding mismatch/);
     await assert.rejects(
       new Client().transact("db", { position: 7, reject: true, operationId: "op" }),
       /transport/,
     );
-    assert.equal(order.filter((s) => s === "publication").length, 1);
+    assert.equal(order.filter((s) => s === "publication").length, 2);
   } finally {
     observeDatomicPublication(undefined);
   }
