@@ -800,8 +800,8 @@ async function run() {
     report.invalidReasons = [...(report.invalidReasons ?? []), `Feed consumer failed: ${String(feedFailure)}`];
     process.exitCode = 1;
   }
-  const incompleteHistory = !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
-  if (incompleteHistory) finalizationErrors.push("Required history depths 3 and 10 were not reached on the complete sample");
+  const incompleteHistory = !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
+  if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");
   if (finalizationErrors.length) {
     report.invalidReasons = [...(report.invalidReasons ?? []), ...finalizationErrors];
     process.exitCode = 1;
@@ -1351,6 +1351,7 @@ function loadBaselineWrites(): any[] | null {
   return readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
 }
 function matchedBaseline(rows: any[], fromOffset: number, toOffset: number) {
+  if (!(report.matchedBaseline?.offeredUntilTraceS * 1000 >= toOffset)) return {commits:0,p50Ms:null,p99Ms:null,invalid:"zero-reader trace does not cover this entire window"};
   const h = new Histogram();
   for (const w of rows) if (w.offsetMs >= fromOffset && w.offsetMs < toOffset && w.outcome === "committed") h.recordMs(w.latencyMs);
   return { commits: h.count, p50Ms: h.percentileMs(50), p99Ms: h.percentileMs(99) };
