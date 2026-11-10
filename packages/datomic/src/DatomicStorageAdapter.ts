@@ -507,7 +507,10 @@ export const makeDatomicStorageAdapter = (
               Effect.catch((error) =>
                 error instanceof DatomicSerializationConflict &&
                 transactionOptions?.replaySafe === true &&
-                retry < maxRetries
+                retry <
+                  (error.cause instanceof DatomicHttpError && error.cause.code === "ClockConflict"
+                    ? Math.max(32, maxRetries)
+                    : maxRetries)
                   ? Effect.andThen(
                       Effect.sleep(`${Math.min(50, retry * 2 + 1)} millis`),
                       Effect.suspend(() => {

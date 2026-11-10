@@ -19,7 +19,7 @@ export async function publicSweep(
         const storage = handle.storage;
         if (!storage?.getReachRowsMany) return portable.page(subjects, basis);
         requirePosition(basis, Number.MAX_SAFE_INTEGER);
-        const closures = await handle.run(storage.getReachRowsMany(subjects, {
+        const closures = await handle.run<readonly (readonly import("../../../packages/core/dist/runtime/index.js").TripleRow[])[] | undefined>(storage.getReachRowsMany(subjects, {
           recordedPosition: basis.position, validAt: basis.validAt,
         }));
         if (!closures) return portable.page(subjects, basis);
