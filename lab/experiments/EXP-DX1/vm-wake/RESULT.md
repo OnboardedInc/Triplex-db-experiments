@@ -70,3 +70,21 @@ DX-B7's `step4-pull-c`, which used the fixed copy. The probe table above is unaf
 Consequence: sparse-traffic latencies on this test bed carry a wake penalty of roughly 8 to 10 ms per hop that a Linux server
 does not have; dense and loaded numbers do not. Host memory matters too: on 2026-11-10 the Mac had 18 to 28 GB of swap in use
 (36 GB RAM, this VM has 20 GiB), which adds noise to every timing.
+
+## In-container idle loops: fine on the probe, harmful in the real stack (2026-11-10 22:45 UTC). Keep-awake is closed.
+
+`helper-ab3.sh` (one container alone on its CPU, loop inside it): dense 3,085 units without, 2,830 to 2,870 with (about 8% cost);
+sleep overshoot 5.1 ms without, 0.08 ms with. `quiet/wake-ab.sh w1` (the writer trace at 10,000 subjects, zero readers, loops in
+every container; evidence `~/Claude/Projects/triplex-db-2/evidence/DX-H4/tx2-dxh4-w1-{plain,loops}`; host busy in both arms):
+
+| Arm | Steady (about 2 commits/s) p50 / p90 / p99 ms | Burst (55 commits/s) p50 / p90 / p99 / max ms | Burst commits over 400 ms |
+| --- | --- | --- | --- |
+| No loops | 31.2 / 54.2 / 98.8 | 11.4 / 29.6 / 94.2 / 241.7 | 0 of 3,280 |
+| Loops in every container | 55.5 / 150.6 / 426.2 | 123.9 / 529.6 / 1,576 / 2,960 | 483 of 3,280 |
+
+Why: the idle policy is only honoured inside one cgroup. The engine's containers share CPUs (Postgres and the transactor on
+CPU 0, the transactor and the write gateway on CPU 1), so a container whose only runnable thread is its idle loop still takes
+its group's share of that CPU from its neighbour. (Postgres's image also has no `chrt -i`, so it got no loop and lost CPU 0 to
+the transactor's.) All 8 vCPUs busy also exceeds the 6 performance cores. **No keep-awake variant is used. The wake penalty is
+a property of this test bed: it inflates commit latency whenever commits are more than a few milliseconds apart.**
+The no-loops arm is also the current baseline for commits at 10,000 subjects with zero readers; this burst had no stall.
