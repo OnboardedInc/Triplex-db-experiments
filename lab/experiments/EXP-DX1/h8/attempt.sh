@@ -93,6 +93,7 @@ elif [[ $kind == equivalence || $kind == probe || $kind == history ]]; then
 else
  command=(node --experimental-strip-types lab/experiments/EXP-DX1/h8/observe-counts.mjs --world w0 --lane datomic --composition reach --output runs/DX-H8-vm/receipt.json "$@")
 fi
+[[ $kind != seed ]] || command+=(--discard-seed-log)
 node lab/experiments/EXP-DX1/h8/disk-watch.mjs "$prefix" > "$out/disk-watch.log" 2>&1 & watcher=$!
 bash lab/experiments/EXP-DX1/h8/run-in-vm.sh "$prefix" --cpus 4,5,6,7 --memory 8g -- "${command[@]}" > "$out/driver.log" 2>&1
 [[ ! -e $out/resource-abort.json ]] || exit 1

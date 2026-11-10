@@ -165,6 +165,7 @@ export async function runW0Driver(argv: string[]) {
         lease.checkpoint,
         Number(opt("seed-concurrency", "1")),
         Number(opt("seed-warmup-commands", "0")),
+        !argv.includes("--discard-seed-log"),
       );
     save();
     await lease.checkpoint(true);

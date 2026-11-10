@@ -98,6 +98,7 @@ export async function seedW0(
   checkpoint?: () => Promise<void>,
   concurrency = 1,
   serialPrefix = 0,
+  retainCommandLog = true,
 ) {
   // [DX-H5] Why: W0's immutable fingerprint includes reference commit positions.
   // Rejected: silently accepting reordered concurrent seed commands as the reference world.
@@ -108,7 +109,9 @@ export async function seedW0(
   if ((await comp.currentPosition()) !== 0) throw new Error("W0 seed requires fresh scope");
   const seedStarted = performance.now();
   const Rseed = W0.rung(N);
-  const fd = fs.openSync(logFile, "wx"),
+  // [DX-H8] Why: large seeds retain counts/fingerprint and failures, without multi-GB per-command copies.
+  // Rejected: retaining a full seed command log under the 12 GB volume and 1 GB evidence limits.
+  const fd = retainCommandLog ? fs.openSync(logFile, "wx") : undefined,
     latest = new Map<string, string>();
   let assertions = 0,
     retractions = 0,
@@ -142,7 +145,7 @@ export async function seedW0(
     retractions += operations.length - c.rows.length;
     position = c.position;
     const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
-    fs.writeSync(fd, line);
+    if (fd !== undefined) fs.writeSync(fd, line);
     commandsHash.update(line);
     if (position % 1000 === 0)
       console.error(
@@ -207,7 +210,7 @@ export async function seedW0(
           )
           .join("\n") + "\n",
       );
-    fs.closeSync(fd);
+    if (fd !== undefined) fs.closeSync(fd);
   }
   const R = W0.rung(N),
     basis = W0.populationBasis(R);
