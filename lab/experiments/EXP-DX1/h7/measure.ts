@@ -224,3 +224,11 @@ await writer.close();
 for (const w of workers) w.postMessage({ type: "stop" });
 await Promise.all(stopped);
 for (const w of workers) await w.terminate();
+let allErrors=0,allViolations=0;
+for(const row of records){
+  if(row[R.error]){allErrors++;continue;}
+  const e=model.expected(row[R.subject],row[R.recordedAt],row[R.validAt]);
+  if(e.digest!==row[R.digest]||e.stamp!==row[R.stamp]||e.facts!==row[R.facts])allViolations++;
+}
+console.log(JSON.stringify({stage,allReads:records.length,allErrors,allViolations}));
+if(allErrors||allViolations)process.exitCode=1;

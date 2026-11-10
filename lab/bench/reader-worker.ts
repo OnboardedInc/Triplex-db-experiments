@@ -169,7 +169,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   let elu = performance.eventLoopUtilization();
   const flush = setInterval(() => {
     const next = performance.eventLoopUtilization();
-    port.postMessage({ type: "elu", t: nowAbs(), elu: performance.eventLoopUtilization(next, elu).utilization, activeMs: performance.eventLoopUtilization(next, elu).active, threadCpuMs: threadCpuMs(), diagnostics: readerDiagnostics(), memory: process.memoryUsage(), running });
+    port.postMessage({ type: "elu", t: nowAbs(), elu: performance.eventLoopUtilization(next, elu).utilization, activeMs: performance.eventLoopUtilization(next, elu).active, threadCpuMs: threadCpuMs(), httpCounts: httpCounts(), diagnostics: readerDiagnostics(), memory: process.memoryUsage(), running });
     elu = next;
     if (records.length || samples.length) {
       port.postMessage({ type: "reads", records, samples });
