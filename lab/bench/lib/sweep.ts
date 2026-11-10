@@ -72,6 +72,9 @@ export interface SweepOptions {
   controller?: Controller;
   beforePublish?: () => Promise<void>;
   beforeTimedWindow?: () => Promise<void>;
+  afterTimedStart?: () => Promise<void>;
+  reused?: Map<string, any>;
+  pageSize?: number;
 }
 export async function runW0Sweep(o: SweepOptions) {
   if (
@@ -82,13 +85,15 @@ export async function runW0Sweep(o: SweepOptions) {
     canonical([...o.subjects].sort()) !== canonical(o.subjects)
   )
     throw new Error("invalid worker count or subject list");
+  const pageSize = o.pageSize ?? 64;
+  if (![64, 256, 1024].includes(pageSize)) throw Error("invalid sweep publication size");
   const binding = {
     sweepId: o.sweepId,
     basis: o.basis,
     listSha256: subjectHash(o.subjects),
     release: o.release ?? null,
     activations: o.activations ?? null,
-    pageSize: 64,
+    pageSize,
     scope: o.scope,
   };
   let published: number[] = [];
@@ -98,16 +103,17 @@ export async function runW0Sweep(o: SweepOptions) {
       canonical(c.binding) !== canonical(binding) ||
       !Array.isArray(c.published) ||
       c.published.some(
-        (x: any) => !Number.isInteger(x) || x < 0 || x >= Math.ceil(o.subjects.length / 64),
+        (x: any) => !Number.isInteger(x) || x < 0 || x >= Math.ceil(o.subjects.length / pageSize),
       ) ||
       new Set(c.published).size !== c.published.length
     )
       throw new Error("cursor binding/shape mismatch");
     published = c.published;
   }
-  const remaining = Array.from({ length: Math.ceil(o.subjects.length / 64) }, (_, i) => i).filter(
-    (i) => !published.includes(i),
-  );
+  const remaining = Array.from(
+    { length: Math.ceil(o.subjects.length / pageSize) },
+    (_, i) => i,
+  ).filter((i) => !published.includes(i));
   let completed = 0,
     index = 0;
   const metrics: any[] = [];
@@ -201,6 +207,7 @@ export async function runW0Sweep(o: SweepOptions) {
           try {
             await o.beforeTimedWindow?.();
             sweepStarted = performance.now();
+            await o.afterTimedStart?.();
             start();
           } catch (error) {
             fail(error);
@@ -226,7 +233,7 @@ export async function runW0Sweep(o: SweepOptions) {
           const assignedAtMs = performance.now() - sweepStarted;
           const workerCpuStart = process.cpuUsage();
           const pageIndex = remaining[index++]!,
-            subjects = o.subjects.slice(pageIndex * 64, (pageIndex + 1) * 64);
+            subjects = o.subjects.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
           const page: any = await new Promise((res, rej) => {
             resolve = res;
             reject = rej;
@@ -235,6 +242,7 @@ export async function runW0Sweep(o: SweepOptions) {
               id: pageIndex,
               dispatchedAtEpochMs: performance.timeOrigin + performance.now(),
               subjects,
+              reused: subjects.map((s) => o.reused?.get(s)).filter(Boolean),
               basis: o.basis,
               release: o.release ?? "R2",
               activations: o.activations,
@@ -246,9 +254,9 @@ export async function runW0Sweep(o: SweepOptions) {
             typeof page.epoch !== "string"
           )
             throw new Error("G7 missing/ineligible page snapshot");
-          if (epoch !== undefined && page.epoch !== epoch)
+          if (!page.fromMemo && epoch !== undefined && page.epoch !== epoch)
             throw new Error("G7 epoch changed; resume requires fresh read");
-          epoch = page.epoch;
+          if (!page.fromMemo) epoch = page.epoch;
           const decodeStart = performance.now(),
             controllerCpuStart = process.threadCpuUsage();
           const records = JSON.parse(new TextDecoder().decode(page.bytes));
@@ -350,7 +358,7 @@ export async function runW0Sweep(o: SweepOptions) {
       ),
       published,
       metrics,
-      complete: published.length === Math.ceil(o.subjects.length / 64),
+      complete: published.length === Math.ceil(o.subjects.length / pageSize),
       controller: CONTROLLER,
     };
   } finally {

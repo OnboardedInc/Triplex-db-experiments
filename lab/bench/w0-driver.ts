@@ -1,3 +1,4 @@
+import { memoEntry, saveMemo, loadMemo, selectMemo, type PreviewMemo } from "./lib/w0-memo.ts";
 import { encodePublicationEvidence } from "./lib/w0-outbox.ts";
 import { startW0Live, matchW0Live } from "./lib/w0-live.ts";
 import { measurementLease } from "./lib/w0-lease.ts";
@@ -10,7 +11,7 @@ import { promisify } from "node:util";
 import { openComposition } from "./lib/composition.ts";
 import { loadW0Pins } from "./lib/evaluate.ts";
 import { seedW0 } from "./lib/w0-seed.ts";
-import { fingerprintSweep } from "./lib/w0-fingerprint.ts";
+import { fingerprintSweep, readW0Fingerprint } from "./lib/w0-fingerprint.ts";
 import { runW0Sweep, subjectList } from "./lib/sweep.ts";
 import { W0, V_W0, canonical, sha256, triplexValue, worldOf } from "./lib/w0-world.ts";
 import {
@@ -196,6 +197,15 @@ export async function runW0Driver(argv: string[]) {
     const b0 = { position: report.seed.basis.tx, validAt: V_W0 };
     console.error("[P5] G0 preview sweep");
     const previewMetrics: any[] = [];
+    const memo: PreviewMemo = {
+      version: 1,
+      scope,
+      releaseHash: W0.R2.hash,
+      basis: b0,
+      entries: {},
+    };
+    const useMemo = argv.includes("--stored-preview");
+    const publicationSize = useMemo ? Number(opt("publish-size", "1024")) : 64;
     const gate = await fingerprintSweep(
       {
         endpoint: comp.backend.url,
@@ -212,6 +222,7 @@ export async function runW0Driver(argv: string[]) {
         observePage: (records, page, metrics) => {
           fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records));
           previewMetrics.push({ page, ...metrics });
+          for (const r of records) memo.entries[r.subject] = memoEntry(r, b0, W0.R2.hash);
         },
       }),
     );
@@ -236,6 +247,57 @@ export async function runW0Driver(argv: string[]) {
       report.limitations.push("Activation and screening rounds not requested");
       return report;
     }
+    if (useMemo) {
+      saveMemo(path.join(dir, "preview-memo.json"), memo);
+      // [DX-H8] Why: exercise real writer changes before B1 and a shared location fan-out.
+      // Rejected: an all-cache-hit activation on an unchanged seed.
+      traffic = await startW0Live({
+        comp,
+        composition,
+        lane,
+        scope,
+        N,
+        dir,
+        id: attempt + ":between",
+        seed: "DX-H2-frozen-v1",
+        offsetS: 0,
+      });
+      await new Promise((r) => setTimeout(r, 15000));
+      report.between = await traffic.stop();
+      traffic = undefined;
+      const locations = new Map<string, number>();
+      for (const r of Object.values(memo.entries))
+        for (const e of r.closure)
+          if (e.startsWith("loc:")) locations.set(e, (locations.get(e) ?? 0) + 1);
+      // Population IDs are opaque: identify locations from the actual reference facts.
+      if (!locations.size)
+        for (let p = 0; p < Math.ceil(N / 64); p++) {
+          for (const r of JSON.parse(fs.readFileSync(path.join(dir, `preview-${p}.json`), "utf8")))
+            for (const f of r.world.facts)
+              if (f.e === r.subject && f.a === "location")
+                locations.set(f.v, (locations.get(f.v) ?? 0) + 1);
+        }
+      const [location, fanout] = [...locations].sort((a, b) => b[1] - a[1])[0]!;
+      const old = (
+        await comp.sweepPage([location], { position: await comp.currentPosition(), validAt: V_W0 })
+      ).rows.filter((r) => r.entityId === location && r.attribute === "localMinWageCents");
+      const shared = await comp.transact(
+        [
+          ...old.map((r) => ({ op: "retract", id: r.id })),
+          {
+            op: "assert",
+            entityId: location,
+            attribute: "localMinWageCents",
+            value: triplexValue("localMinWageCents", 2500),
+            validFrom: V_W0,
+          },
+        ],
+        { commandId: attempt + ":shared-location" },
+      );
+      if (!shared.ok) throw Error("shared mutation failed");
+      report.sharedChange = { location, fanout, position: shared.value.position };
+    }
+    const activationHead = await comp.currentPosition();
     const activation = await comp.transact(
       [
         {
@@ -248,11 +310,21 @@ export async function runW0Driver(argv: string[]) {
       ],
       { commandId: attempt + ":activate" },
     );
-    if (!activation.ok || activation.value.position !== b0.position + 1)
+    if (!activation.ok || activation.value.position !== activationHead + 1)
       throw new Error("activation position mismatch");
     const basis = { position: activation.value.position, validAt: V_W0 },
       activations = [{ tx: basis.position, from: W0.POPULATION_VALID_TIME, release: W0.R2.hash }];
     report.activation = { receipt: activation.value, basis };
+    const fullB1 = new Map<string, any>();
+    if (useMemo) {
+      // [DX-H8] Why: the full B1 path is an independent execution of every subject, used only after ACK for equality.
+      // Rejected: comparing reused entries to themselves or checking just changed subjects.
+      await readW0Fingerprint(comp, N, basis, new AbortController().signal, (records, page) => {
+        fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records));
+        for (const r of records) fullB1.set(r.subject, r);
+      });
+    }
+
     // Mutations are retroactive so valid-time visibility cannot make this a false position-cut test.
     const mutationSubjects: string[] = [];
     for (let p = 0; p < Math.ceil(N / 64) && mutationSubjects.length < Math.ceil(N / 100); p++) {
@@ -336,10 +408,20 @@ export async function runW0Driver(argv: string[]) {
         oracleCpuStart = oracleCpuNs();
       const verifyStart = performance.now();
 
-      const original = JSON.parse(fs.readFileSync(path.join(dir, `preview-${page}.json`), "utf8"));
+      const original = useMemo
+        ? records.map((r) => fullB1.get(r.subject))
+        : JSON.parse(fs.readFileSync(path.join(dir, `preview-${page}.json`), "utf8"));
       const oracleRecords: any[] = [];
       for (let i = 0; i < records.length; i++) {
         const r = records[i]!;
+        if (useMemo) {
+          equalBytes(
+            "H8 full B1 output",
+            W0.outputJson(r.output),
+            W0.outputJson(original[i].output),
+          );
+          equalBytes("H8 full B1 record", canonical(r.record), canonical(original[i].record));
+        }
         equalBytes("G1 pinned world digest", r.worldSha256, sha256(canonical(original[i].world)));
         const expectedOutput = await oracle.call("reconcile", {
           world: original[i].world,
@@ -444,6 +526,7 @@ export async function runW0Driver(argv: string[]) {
     };
     console.error("[P5] preparing sweep workers before live baseline");
     const cursor = path.join(dir, "activation-cursor.json");
+    const reused = new Map<string, any>();
     report.sweep = await runW0Sweep({
       comp,
       composition,
@@ -457,6 +540,25 @@ export async function runW0Driver(argv: string[]) {
       activations,
       metricsFile: path.join(dir, "activation-pages.ndjson"),
       beforeTimedWindow,
+      pageSize: publicationSize,
+      reused,
+      afterTimedStart: useMemo
+        ? async () => {
+            const selection = await selectMemo({
+              comp,
+              memo: loadMemo(path.join(dir, "preview-memo.json")),
+              scope,
+              releaseHash: W0.R2.hash,
+              previewBasis: b0,
+              basis,
+              subjects,
+            });
+            for (const [s, r] of selection.reused) reused.set(s, r);
+            report.memo = { ...selection, reused: selection.reused.size };
+            if (selection.affected.length < Math.ceil(N / 100) || selection.largestFanout < 2)
+              throw Error("H8 insufficient changes/fan-out");
+          }
+        : undefined,
       onPage: async (records, page) => {
         traffic?.check();
         // [DX-H6] Why: all oracle work stays after the last ACK; publisher batches state and pipelines ordered submissions.
@@ -548,6 +650,7 @@ export async function runW0Driver(argv: string[]) {
     report.gates.G9 = { status: "PASS", end };
     // Resume cursor no-op: persisted pages must not publish again. Abrupt process-stop coverage is a separate gate.
     const resumed = await runW0Sweep({
+      pageSize: publicationSize,
       comp,
       composition,
       lane,

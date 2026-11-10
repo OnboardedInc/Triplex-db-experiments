@@ -41,15 +41,28 @@ port.on("message", async (msg) => {
     const diff = (a: any, b: any) => (b.user - a.user + b.system - a.system) / 1e6;
     let c = cpu();
     const readStart = performance.now();
-    const measured = comp
-      ? await measureW0Http(() => comp.sweepPage(msg.subjects, msg.basis))
-      : null;
-    const page = measured
-      ? measured.value
-      : await new Promise<any>((resolve) => {
-          pending.set(msg.id, resolve);
-          port.postMessage({ type: "read", id: msg.id, subjects: msg.subjects, basis: msg.basis });
+    const reused = new Map<string, any>((msg.reused ?? []).map((r: any) => [r.subject, r]));
+    const freshSubjects = msg.subjects.filter((s: string) => !reused.has(s));
+    let measured: any = null;
+    let page: any = { rows: [], position: msg.basis.position, epoch: "memo" };
+    if (freshSubjects.length) {
+      if (comp) {
+        measured = await measureW0Http(async () => {
+          let combined: any;
+          for (let offset = 0; offset < freshSubjects.length; offset += 64) {
+            const p = await comp.sweepPage(freshSubjects.slice(offset, offset + 64), msg.basis);
+            if (combined && p.epoch !== combined.epoch) throw Error("chunk epoch changed");
+            combined = combined ? { ...p, rows: combined.rows.concat(p.rows) } : p;
+          }
+          return combined;
         });
+        page = measured.value;
+      } else
+        page = await new Promise<any>((resolve) => {
+          pending.set(msg.id, resolve);
+          port.postMessage({ type: "read", id: msg.id, subjects: freshSubjects, basis: msg.basis });
+        });
+    }
     if (page.error) throw new Error(page.error);
     const readWallMs = performance.now() - readStart;
     const readCpu = diff(c, cpu());
@@ -69,6 +82,10 @@ port.on("message", async (msg) => {
     const indexWallMs = performance.now() - indexStart,
       indexCpu = diff(indexCpuStart, cpu());
     for (const subject of msg.subjects) {
+      if (reused.has(subject)) {
+        result.push(reused.get(subject));
+        continue;
+      }
       c = cpu();
       let wall = performance.now();
       const world = worldOf(subject, reachableRows([subject], page.rows, byEntity));
@@ -96,6 +113,7 @@ port.on("message", async (msg) => {
         bytes: bytes.buffer,
         position: page.position,
         epoch: page.epoch,
+        fromMemo: !freshSubjects.length,
         timing: {
           readWallMs,
           workerDispatchWaitMs: workerReceivedEpochMs - msg.dispatchedAtEpochMs,

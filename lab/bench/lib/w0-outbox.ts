@@ -30,8 +30,8 @@ export async function publishRecords(
   comp: CompositionHandle,
   records: readonly W0.EvaluationRecord[],
 ) {
-  if (records.length > 64 || new Set(records.map((r) => r.subject)).size !== records.length)
-    throw new Error("outbox frame must contain <=64 distinct subjects");
+  if (records.length > 1024 || new Set(records.map((r) => r.subject)).size !== records.length)
+    throw new Error("outbox frame must contain <=1024 distinct subjects");
   // [DX-H6] Why: prepare disjoint pages concurrently, then submit in invocation order without waiting for prior ACKs.
   // Rejected: serial state reads/build/ACK across all pages.
   const previousSubmission = submissionTails.get(comp) ?? Promise.resolve();
@@ -77,15 +77,19 @@ export async function publishRecords(
     // [DX-H6] Why: all persisted subject states share one page snapshot, with the same TripleLive CAS at commit.
     // Rejected: one sequential reach request per subject (64 round trips before each publication).
     const statePosition = await comp.currentPosition();
-    const statePage = await comp.sweepPage(
-      records.map((r) => "p5:outbox:" + r.subject),
-      { position: statePosition, validAt: V_PUBLIC },
-    );
+    // [DX-H8] Why: the 64-root reach limit constrains reads, not the atomic publication frame.
+    // Rejected: a >64-root request (gateway decline), or one state request per subject.
     const states = new Map<string, any[]>();
-    for (const row of statePage.rows) {
-      const list = states.get(row.entityId) ?? [];
-      list.push(row);
-      states.set(row.entityId, list);
+    for (let offset = 0; offset < records.length; offset += 64) {
+      const statePage = await comp.sweepPage(
+        records.slice(offset, offset + 64).map((r) => "p5:outbox:" + r.subject),
+        { position: statePosition, validAt: V_PUBLIC },
+      );
+      for (const row of statePage.rows) {
+        const list = states.get(row.entityId) ?? [];
+        list.push(row);
+        states.set(row.entityId, list);
+      }
     }
     for (const record of records) {
       const entityId = "p5:outbox:" + record.subject;
