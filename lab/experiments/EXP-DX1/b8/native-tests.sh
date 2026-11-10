@@ -10,6 +10,7 @@ out=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B8/native-artifacts/$pre
 mkdir -p "$out"
 status=0
 suites=(dxb8.head-test triplex.gateway.selftest dxb8.feed-test-main)
+if [[ ${B8_RECENT_TESTS:-0} == 1 ]]; then suites+=(triplex.gateway.recent-test dxb8.lifecycle-test dxb8.hot-test); fi
 if [[ ${B8_NATIVE_FOCUSED:-} == 1 ]]; then suites=(dxb8.head-test dxb8.feed-test-main); fi
 for suite in "${suites[@]}"; do
  uri='datomic:mem://{db}'

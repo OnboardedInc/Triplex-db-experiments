@@ -30,7 +30,7 @@ export function remember(states, rows) {
     }
   }
 }
-export async function mixed({ w, feed, scope, states, workers, once, initialPosition, newest }) {
+export async function mixed({ w, feed, scope, states, workers, once, initialPosition, newest, readCpu }) {
   let seed = 0x19870219,
     seq = 0,
     cursor = initialPosition,
@@ -150,7 +150,7 @@ export async function mixed({ w, feed, scope, states, workers, once, initialPosi
         entries: w.client.rowCache.size,
         evictions: w.client.rowCache.evictions,
       };
-      const eluStart = performance.eventLoopUtilization();
+      const eluStart = performance.eventLoopUtilization(), driverCpuStart = process.cpuUsage(), gatewayCpuStart = readCpu?.();
       const startedAt = new Date().toISOString();
       const duration = Number(process.env.B8_MIXED_DURATION_MS || 60000),
         start = performance.now(),
@@ -212,6 +212,8 @@ export async function mixed({ w, feed, scope, states, workers, once, initialPosi
       }
       phases[name] = {
         startedAt, finishedAt: new Date().toISOString(),
+        driverCpu: process.cpuUsage(driverCpuStart),
+        readGatewayCpuSeconds: readCpu ? (readCpu()-gatewayCpuStart)/1e6 : undefined,
         basisPolicy: "atomic newest acknowledged receipt position per pull",
         driverMainUtilisation: performance.eventLoopUtilization(eluStart).utilization,
         writerCacheBefore,
