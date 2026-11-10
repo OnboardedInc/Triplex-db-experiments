@@ -44,7 +44,7 @@ async function withDatomicFixture(
   let position = 0;
   const rows = new Map<string, WireRow>();
   const claims = new Map<string, string>();
-  const operations = new Set<string>();
+  const operations = new Map<string, number>();
   const server = http.createServer(async (req, res) => {
     let raw = "";
     for await (const chunk of req) raw += chunk;
@@ -71,9 +71,22 @@ async function withDatomicFixture(
       for (const row of input.rows) rows.set(decodeRow(row).id, row);
       for (const claim of input.claims) claims.set(claim.commandId, claim.txId);
       position = input.position;
-      operations.add(input.operationId);
+      operations.set(input.operationId, position);
+      answer = {
+        operationId: input.operationId,
+        position: { t: "long", v: String(position) },
+        t: { t: "long", v: String(position) },
+        datoms: input.rows.length,
+        delta: 0,
+      };
     } else if (req.url!.includes("/operation/"))
-      answer = { status: operations.has(route!) ? "committed" : "absent" };
+      answer = operations.has(route!)
+        ? {
+            status: "committed",
+            position: { t: "long", v: String(operations.get(route!)) },
+            t: { t: "long", v: String(operations.get(route!)) },
+          }
+        : { status: "absent" };
     else if (route === "read") {
       const all = new Map(rows);
       for (const row of input.staged?.rows ?? []) all.set(decodeRow(row).id, row);

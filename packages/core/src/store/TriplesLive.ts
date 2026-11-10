@@ -497,7 +497,24 @@ const makeTriplesServices = Effect.gen(function* () {
               },
             },
           ),
-      ).pipe((effect) => withValidAssertValues(operations, effect, valueDomain));
+      ).pipe(
+        Effect.map((result) => {
+          const final = adapter.committedPosition?.(result.txId);
+          if (final !== undefined) return { ...result, position: final };
+          if (!adapter.committedPosition) return result;
+          // [DX-B3-M2] Why: nested receipts exist before the outer transaction assigns final positions.
+          // Rejected: retaining their provisional number after the outer commit shifts the span.
+          let position = result.position;
+          return {
+            ...result,
+            get position() {
+              position = adapter.committedPosition?.(result.txId) ?? position;
+              return position;
+            },
+          };
+        }),
+        (effect) => withValidAssertValues(operations, effect, valueDomain),
+      );
 
     const retract = (id: TripleId): Effect.Effect<void, WriteError> =>
       transact([{ op: "retract", id }]).pipe(

@@ -1,6 +1,6 @@
 (ns triplex.gateway.main
   (:require [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
-            [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
+            [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
 (set! *warn-on-reflection* true)
@@ -29,7 +29,7 @@
   (try
     @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
-        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/rows-version 2 :triplex.scope/schema-hash schema/schema-hash}])
+        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version 2 :triplex.scope/schema-hash schema/schema-hash}])
     (catch Exception e
       (let [current (sync-db uri)]
         (assert-scope current scope)
@@ -44,6 +44,7 @@
     (when-not (= schema/schema-hash (:triplex.scope/schema-hash (d/entity (sync-db uri) [:triplex.scope/key scope])))
       @(d/transact conn schema/schema)
       @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))
+    (commit/install! conn scope)
     {:db name :created created :schemaHash schema/schema-hash}))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (db-uri name)]

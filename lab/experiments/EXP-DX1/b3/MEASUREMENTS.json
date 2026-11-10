@@ -1,0 +1,143 @@
+{
+  "diagnostic": true,
+  "head": "bd96a75204f96f741512d2a762bb1599febc7ab6",
+  "sourceSnapshot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B3/m5-source-20261109-192133",
+  "run": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B3/bench-1794270094390-083990e2-6dc5-4146-b347-eb15cfcf3c0a",
+  "jsonIndexDisabled": {
+    "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJEWC1CMy01Mjc4OTk1OS1lODRiLTRjZDktOTg3Mi1jMzVjYzI1MzA5NWYiLDBd",
+    "witness": [
+      [
+        {
+          "t": "long",
+          "v": "108"
+        }
+      ]
+    ]
+  },
+  "steps": {
+    "seed": {
+      "facts": 83185,
+      "elapsedMs": 38588.231959,
+      "factsPerSecond": 2155.7087880636163,
+      "commits": 2000
+    },
+    "commits": {
+      "n": 3000,
+      "p50": 8.169999999998254,
+      "p90": 15.626166000001831,
+      "p99": 34.129375000004075,
+      "warmup": 3000,
+      "datoms": {
+        "n": 3000,
+        "p50": 249,
+        "p90": 538,
+        "p99": 896
+      },
+      "httpCallsPerCommit": 1.0076666666666667,
+      "breakdown": {
+        "beforeMs": {
+          "n": 3000,
+          "p50": 0,
+          "p90": 0,
+          "p99": 0
+        },
+        "beginWallMs": {
+          "n": 3000,
+          "p50": 0,
+          "p90": 0,
+          "p99": 0
+        },
+        "beginGatewayMs": {
+          "n": 3000,
+          "p50": 0,
+          "p90": 0,
+          "p99": 0
+        },
+        "stagingMs": {
+          "n": 3000,
+          "p50": 1.304082999995444,
+          "p90": 2.704875000010361,
+          "p99": 4.461916999993264
+        },
+        "transactWallMs": {
+          "n": 3000,
+          "p50": 6.62599999998929,
+          "p90": 12.25458300000173,
+          "p99": 31.525125000000116
+        },
+        "transactGatewayMs": {
+          "n": 3000,
+          "p50": 4.977,
+          "p90": 9.226,
+          "p99": 29.433
+        },
+        "datomicTransactMs": {
+          "n": 3000,
+          "p50": 4.534,
+          "p90": 8.262,
+          "p99": 28.309
+        },
+        "afterMs": {
+          "n": 3000,
+          "p50": 0.16058299998985603,
+          "p90": 0.23025000000779983,
+          "p99": 0.31329099999857135
+        }
+      }
+    },
+    "openLoop": {
+      "n": 3291,
+      "p50": 14.152217057417147,
+      "p90": 27.79060924197256,
+      "p99": 481.9183910841821,
+      "offered": 3291,
+      "offeredRate": 55,
+      "windowMs": 60000,
+      "maxQueueLength": 47,
+      "maxInFlight": 32,
+      "httpCallsPerCommit": 1.00820419325433,
+      "conflicts": 0,
+      "replays": 0,
+      "elapsedMs": 60114.177333000014
+    },
+    "openLoopWithReaders": {
+      "n": 3291,
+      "p50": 17.915414905844955,
+      "p90": 59.025862370210234,
+      "p99": 583.6159170364845,
+      "offered": 3291,
+      "offeredRate": 55,
+      "windowMs": 60000,
+      "maxQueueLength": 46,
+      "maxInFlight": 32,
+      "httpCallsPerCommit": 1.00820419325433,
+      "conflicts": 0,
+      "replays": 0,
+      "elapsedMs": 60530.71545799999,
+      "p99Ratio": 1.2110264472860464
+    },
+    "ryow": {
+      "n": 2000,
+      "p50": 4.632125000003725,
+      "p90": 16.304583000019193,
+      "p99": 41.41220799999428,
+      "visible": 2000,
+      "waited": 13
+    }
+  },
+  "diagnostics": {
+    "write": {
+      "refMisses": 0,
+      "resets": 0,
+      "faults": 0,
+      "declines": {}
+    },
+    "read": {
+      "refMisses": 0,
+      "resets": 0,
+      "faults": 0,
+      "declines": {}
+    }
+  },
+  "cleanup": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B3/CLEANUP.json"
+}

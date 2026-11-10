@@ -106,7 +106,7 @@ it("sends basisT only for its own acknowledged database and position", async () 
     res.end(
       JSON.stringify(
         req.url!.endsWith("transact")
-          ? { t: { t: "long", v: "1001" }, position: { t: "long", v: "1" } }
+          ? { t: { t: "long", v: "1001" }, position: { t: "long", v: "1" }, delta: 0 }
           : { rows: [] },
       ),
     );
@@ -136,5 +136,47 @@ it("sends basisT only for its own acknowledged database and position", async () 
     client.close();
     server.closeAllConnections();
     server.close();
+  }
+});
+
+// [DX-B3-M4] Why: final positions are assigned after staging; a valid shifted ACK must remain a one-call commit.
+// Rejected: final === provisional (silently added an operation-resolution request in the first M4 bursts).
+it("accepts the transactor's shifted final position and rejects an inconsistent delta", async () => {
+  let delta = 6;
+  const server = http.createServer(async (req, res) => {
+    for await (const _chunk of req) {
+      void _chunk;
+    }
+    res.setHeader("Content-Type", "application/json");
+    res.end(
+      JSON.stringify({ t: { t: "long", v: "1001" }, position: { t: "long", v: "7" }, delta }),
+    );
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const client = new DatomicClient(
+    `http://127.0.0.1:${(server.address() as import("node:net").AddressInfo).port}`,
+    1000,
+  );
+  const input = {
+    sourceK: 0,
+    position: 1,
+    operationId: "shifted",
+    attemptId: "fresh",
+    rows: [],
+    newIds: [],
+    claims: [],
+  };
+  try {
+    expect(await client.transact("s2-shift", input)).toMatchObject({
+      position: { v: "7" },
+      delta: 6,
+    });
+    delta = 5;
+    await expect(client.transact("s2-shift", input)).rejects.toThrow("Commit basis mismatch");
+  } finally {
+    client.close();
+    server.close();
+    await once(server, "close");
   }
 });

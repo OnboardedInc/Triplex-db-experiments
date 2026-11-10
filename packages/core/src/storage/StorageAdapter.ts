@@ -20,6 +20,9 @@ import type { Rule as ConstraintRule, ViolationAt } from "../Constraint.js";
  * StorageAdapterService - Backend-agnostic storage primitives
  */
 export interface StorageAdapterService {
+  // [DX-B3-M2] Why: a transactor may allocate the final position after staging.
+  // Rejected: returning the provisional position as a committed receipt.
+  readonly committedPosition?: (txId: string) => number | undefined;
   // [EXP-QH1] Why: a columnar store can decode directly to Triples without a second row materialization.
   // Rejected: a new public pull API; undefined retains the normal read path, including transactions/history.
   readonly getEntityTriples?: (

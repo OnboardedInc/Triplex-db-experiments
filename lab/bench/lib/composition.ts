@@ -138,7 +138,7 @@ export async function reachPull(h: Pick<TriplesHandle, "triples" | "run">, root:
 }
 
 async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "broker-h1" | "reach" = "public"): Promise<CompositionHandle> {
-  const h: TriplesHandle = variant === "broker-h1" ? await (await import("./broker-h1.ts")).openBrokerH1(scope) : await openTriples(lane, scope, (variant === "public-queued" || variant === "reach") ? { admissionQueue: true } : undefined);
+  const h: TriplesHandle = variant === "broker-h1" ? await (await import("./broker-h1.ts")).openBrokerH1(scope) : await openTriples(lane, scope, (lane !== "datomic" && (variant === "public-queued" || variant === "reach")) ? { admissionQueue: true } : undefined);
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   const outcome = async <A>(effect: any): Promise<Outcome<A>> => {

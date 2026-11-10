@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow } from "../src/protocol.js";
-import { encodeRowText, decodeRowText } from "../src/rowText.js";
+import { encodeRowText, decodeRowText, decodeRowTextColumns } from "../src/rowText.js";
 import { validateTagged } from "../src/codec.js";
 import { packValue } from "../src/rows.js";
 
@@ -56,7 +56,8 @@ it("round trips 10,000 random live rows exactly like the tagged row codec", () =
             : { type: "number", value: i % 2 ? 0 : Number.MIN_VALUE },
       ),
     );
-    expect(decodeRowText(encodeRowText(row))).toEqual(decodeRow(encodeRow(row)));
+    for (const version of ["1", "2"] as const)
+      expect(decodeRowText(encodeRowText(row, version))).toEqual(decodeRow(encodeRow(row)));
   }
 });
 it("uses every accepted row-compatible codec vector and rejects invalid domains", () => {
@@ -92,7 +93,8 @@ it("uses every accepted row-compatible codec vector and rejects invalid domains"
               : { type: "string", value: tag.v as string },
         ),
       };
-      expect(decodeRowText(encodeRowText(row))).toEqual(decodeRow(encodeRow(row)));
+      for (const version of ["1", "2"] as const)
+        expect(decodeRowText(encodeRowText(row, version))).toEqual(decodeRow(encodeRow(row)));
     }
   }
   for (const value of [Infinity, NaN])
@@ -131,7 +133,8 @@ it("round trips every value family and preserves decoder rejection", () => {
   ] as const;
   for (const value of values) {
     const row = { ...base(), ...packValue(value as Parameters<typeof packValue>[0]) };
-    expect(decodeRowText(encodeRowText(row))).toEqual(decodeRow(encodeRow(row)));
+    for (const version of ["1", "2"] as const)
+      expect(decodeRowText(encodeRowText(row, version))).toEqual(decodeRow(encodeRow(row)));
   }
   for (const patch of [
     { value_type: "number", value_number: -0 },
@@ -152,4 +155,41 @@ it("round trips every value family and preserves decoder rejection", () => {
     expect(() => decodeRow(encodeRow(row))).toThrow();
     expect(() => encodeRowText(row)).toThrow();
   }
+});
+
+// [DX-B3-M1] Why: the transactor patches only the fixed-width position, including journal values.
+// Rejected: parsing and serializing row JSON inside the transactor.
+it("patches the position digits without changing the row body", () => {
+  for (const attribute of [":a", ":_tx/position"]) {
+    const row = { ...base(), attribute, value_number: 1 };
+    const text = encodeRowText(row);
+    const offset = text.indexOf('["') + 2;
+    expect(text.slice(offset, offset + 16)).toBe("0000000000000001");
+    const decoded = decodeRowText(
+      text.slice(0, offset) + "0000000000000123" + text.slice(offset + 16),
+    );
+    expect(decoded.recorded_position).toBe(123);
+    expect(decoded.value_number).toBe(attribute === ":_tx/position" ? 123 : 1);
+  }
+});
+
+it("keeps a sixteen-digit version 1 id distinct from the version 2 position", () => {
+  const row = { ...base(), id: "0000000000000123" };
+  expect(decodeRowText(encodeRowText(row, "1"))).toEqual(row);
+});
+
+it("rejects inconsistent journal position values before encoding", () => {
+  expect(() =>
+    encodeRowText({ ...base(), attribute: ":_tx/position", value_number: 123 }),
+  ).toThrow();
+  expect(() => encodeRowText({ ...base(), recorded_position: -1 })).toThrow();
+});
+
+it("rejects malformed modern wire positions and non-null journal placeholders", () => {
+  const text = encodeRowText({ ...base(), attribute: ":_tx/position", value_number: 1 });
+  const values = JSON.parse(text.slice(text.indexOf('["')));
+  for (const p of [1, "1", "000000000000000x"])
+    expect(() => decodeRowTextColumns([p, ...values.slice(1)], "2")).toThrow();
+  values[6] = 1;
+  expect(() => decodeRowTextColumns(values, "2")).toThrow();
 });

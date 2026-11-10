@@ -22,8 +22,10 @@ three strings nonempty under JavaScript trim, and a nonnegative safe integer.
 Whitespace variants, string generations, blank identity fields and other tuple
 versions are refused. Legacy hash names remain readable for retained DA00 proofs;
 new create/delete operations use the reversible names. Each scope has its own database. Writes
-stage in a fiber-local callback and publish through one scope-CAS transaction;
-only explicitly replay-safe callbacks retry conflicts. Operation IDs resolve
+stage in a fiber-local callback and publish through the installed `:triplex/commit`
+transaction function. Datomic allocates the final position and checks live row IDs
+and per-entity revisions at its serial point. Unconfined reads retain scope-wide
+snapshot validation; only explicitly replay-safe callbacks retry conflicts. Operation IDs resolve
 lost acknowledgements. An unresolved outcome returns `TransactionOutcomeUnknown`.
 
 Datalog patterns, predicates and existence filters execute in the Peer with an
@@ -111,3 +113,25 @@ explicitly `pending-RT01` because the common stamp contract requires an integer.
 The route refuses `:f/erased-in` events pending ER01-D's erasure-sequence annotation.
 Offline qualification and the parked-peer runbook are in
 `lab/experiments/EXP-DF01/`; offline results do not qualify real excision or P3 lag.
+
+## Optimistic commits (DX-B3 lab path)
+
+A replay-safe transaction with cached hinted rows can stage and commit in one HTTP
+request. The adapter keeps at most 100,000 immutable rows in an LRU, validates their
+liveness in the transactor, and returns the transactor's final receipt position.
+Cache misses use snapshot prefetch; entity-state, pattern, history, Datalog and
+other unsupported optimistic reads restart through a snapshot before submission.
+Conflicts evict the hinted rows and replay through snapshot prefetch so duplicate
+commands and stale preconditions retain their original typed outcomes. Ambiguous
+ACKs resolve by operation ID. `optimisticCommits: false` retains the two-call path;
+`admissionQueue` remains opt-in and is disabled for the Datomic NS composition.
+
+Row text version 2 puts the zero-padded 16-digit position at the front of the JSON
+array and marks journal position rows, allowing exact fixed-offset position shifts.
+Version 1 text remains readable. Timestamp regression retains the sticky irregular
+flag and disables record-time reach. New scopes separately prove position regularity,
+so current and exact physical-position reach can continue after timestamp reordering;
+out-of-span positions clear that proof, and older unproven scopes remain conservative.
+
+These changes are a lab experiment. See `lab/experiments/EXP-DX1/b3/REPORT.md` for
+fresh gates, diagnostic measurements, limitations and retained failures.

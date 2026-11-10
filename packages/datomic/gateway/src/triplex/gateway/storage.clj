@@ -64,89 +64,73 @@
            (when (:created_by row) {:f/created-by (:created_by row)})
            (when (:entity_type row) {:f/entity-type (:entity_type row)}) value)))
  ;; [EXP-DX1] Why: live row datoms are exact write-time wire values. Rejected: rebuilding values on every pull.
-(defn row-prefix [^String id] (str "1" (format "%04x" (.length id)) id))
+(defn row-prefix [^String id] (str "2" (format "%04x" (.length id)) id))
 (defn row-datom [db eid ^String prefix]
   (let [datom (first (d/seek-datoms db :eavt eid :triplex.entity/row prefix))]
     (when (and datom (= eid (:e datom)) (= (d/entid db :triplex.entity/row) (:a datom))
                (.startsWith ^String (:v datom) prefix)) (:v datom))))
-(defn row-updates [db rows new-ids texts scope source position]
-  (let [out (java.util.ArrayList.) times (java.util.ArrayList.) prior (:triplex.scope/max-recorded-at (d/entity db scope))
-        irregular (volatile! false)]
-    (doseq [row rows]
-      (let [fresh (contains? new-ids (:id row)) stamp (if fresh (:recorded_at row) (:retracted_at row))]
-        (when fresh
-          (.add times (double (:recorded_at row)))
-          (when (or (<= (:recorded_position row) source) (> (:recorded_position row) position)) (vreset! irregular true)))
-        (when (some? (:retracted_at row))
-          (.add times (double (:retracted_at row)))
-          (when (or (<= (:retracted_position row) source) (> (:retracted_position row) position)) (vreset! irregular true)))
-        (if fresh
-          (when (nil? (:retracted_at row))
-            (let [text (get texts (:id row)) prefix (row-prefix (:id row))]
-              (when-not (and (string? text) (.startsWith ^String text prefix)) (codec/invalid "Missing or mismatched row text"))
-              (.add out (if (or (> (.length ^String text) 8000) (and (= "ref" (:value_type row)) (= "" (:value_string row))))
-                          [:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]
-                          [:db/add (str "e:" (:entity_id row)) :triplex.entity/row text]))))
-          (let [eid (d/entid db [:triplex.entity/id (:entity_id row)]) text (row-datom db eid (row-prefix (:id row)))]
-            (when (and (= 2 (:triplex.scope/rows-version (d/entity db scope)))
-                       (not (:triplex.entity/row-overflow (d/entity db eid))) (nil? text))
-              (codec/invalid "Missing live row datom"))
-            (when text (.add out [:db/retract eid :triplex.entity/row text]))))))
-    ;; [DX-B2-N2] Why: retractions change the complete row set too. Rejected: assertion-only revisions (stale cache hits).
-    (doseq [entity (distinct (map :entity_id rows))]
-      (.add out [:db/add (or (d/entid db [:triplex.entity/id entity]) (str "e:" entity)) :triplex.entity/rev position]))
-    (when (pos? (.size times))
-      (let [first-time (double (.get times 0)) maximum (volatile! (double (or prior first-time)))]
-        (doseq [time times]
-          (let [v (double time)]
-            (when (or (not= v first-time) (and prior (< v (double prior)))) (vreset! irregular true))
-            (vswap! maximum max v)))
-        (.add out [:db/add scope :triplex.scope/max-recorded-at @maximum])
-        (.add out [:db/add "datomic.tx" :triplex.tx/max-recorded-at @maximum])))
-    (when @irregular (.add out [:db/add scope :triplex.scope/irregular true]))
-    out))
+ ;; [DX-B3-M2] Why: prepare all row encoding and fact maps off the transactor's serial point.
+;; Rejected: resolving row retractions in the gateway (stale exact row text after another commit).
 (defn tx-data
-  ([db input]
-   (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))]
-     (tx-data db input (.e scope))))
+  ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
-  (let [rows (mapv decode-row (get input "rows")) new-ids (set (get input "newIds"))
-        fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
-        source (safe-position (get input "sourceK")) position (safe-position (get input "position"))
-        claims (get input "claims")
-        sample (or (first fresh) (first old))
-        ;; [EXP-DA01] Why: claims-only and position-only commits still require complete tx annotations. Rejected: deriving metadata only from assertion rows (loses claim receipts).
-        metadata {:position position
-                  :recorded-at (cond (seq fresh) (:recorded_at sample) (seq old) (:retracted_at sample)
-                                     (seq claims) (get (first claims) "timestamp") :else (double (System/currentTimeMillis)))
-                  :id (cond (seq fresh) (:tx_id sample) (seq old) (:retract_tx_id sample)
-                            (seq claims) (get (first claims) "txId") :else (get input "operationId"))}]
-    (when-not (> position source) (codec/invalid "Commit position must advance"))
-    (vec (remove nil? (concat [[:db/cas scope :triplex.scope/position source position]
-                  {:db/id "datomic.tx" :triplex.tx/position position
-                   :triplex.tx/operation-id (get input "operationId")
-                   :triplex.tx/id (or (:id metadata) "") :triplex.tx/recorded-at (finite! (:recorded-at metadata))}]
-                 (upserts fresh) (map #(fact-map % metadata) fresh)
-                 (row-updates db rows new-ids (get input "rowTexts") scope source position)
-                 (mapcat (fn [row]
-                           (let [eid (d/entid db [:f/id (:id row)]) entity (when eid (d/entity db eid))]
-                             (when-not (and eid (:f/live entity) (:retracted_at row)) (codec/invalid "Invalid retraction"))
-                             [[:db/retract eid :f/live (:db/id (:f/subject entity))]
-                              [:db/add eid :f/retracted-in "datomic.tx"]
-                              [:db/add eid :f/retracted-at (finite! (:retracted_at row))]
-                              [:db/add eid :f/retracted-position (safe-position (:retracted_position row))]
-                              [:db/add eid :f/retract-tx-id (:retract_tx_id row)]
-                              (when (negative-zero? (:retracted_at row)) [:db/add eid :f/negative-zero :retracted_at]) ])) old)
-                 (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
-                                  :triplex.claim/command-id (get claim "commandId")
-                                  :triplex.claim/tx "datomic.tx"
-                                  :triplex.claim/tx-id (get claim "txId")}) claims)))))))
+   (let [rows (mapv decode-row (get input "rows")) new-ids (set (get input "newIds"))
+         fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
+         source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
+         span (safe-position (or (get input "span") (when source (- position source))))
+         lower (- position span) claims (get input "claims") sample (or (first fresh) (first old))
+         metadata {:position position
+                   :recorded-at (cond (seq fresh) (:recorded_at sample) (seq old) (:retracted_at sample)
+                                      (seq claims) (get (first claims) "timestamp") :else (double (System/currentTimeMillis)))
+                   :id (cond (seq fresh) (:tx_id sample) (seq old) (:retract_tx_id sample)
+                             (seq claims) (get (first claims) "txId") :else (get input "operationId"))}
+         marker (fn [p] [:triplex/position (safe-position p)])
+         times (vec (mapcat (fn [row] (concat (when (new-ids (:id row)) [(:recorded_at row)])
+                                             (when (:retracted_at row) [(:retracted_at row)]))) rows))
+         irregular (boolean (some (fn [p] (not (< lower p (inc position))))
+                                  (concat (map :recorded_position fresh) (keep :retracted_position rows))))
+         ops (vec (remove nil? (concat
+               [{:db/id "datomic.tx" :triplex.tx/position (marker position)
+                 :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
+                 :triplex.tx/recorded-at (finite! (:recorded-at metadata))}]
+               (upserts fresh)
+               (map (fn [row]
+                      (cond-> (fact-map row metadata)
+                        (not= (:recorded_position row) position) (assoc :f/position (marker (:recorded_position row)))
+                        (= ":_tx/position" (:attribute row)) (assoc :f.v/double [:triplex/double-position (:recorded_position row)])
+                        (:retracted_position row) (assoc :f/retracted-position (marker (:retracted_position row))))) fresh)
+               (mapcat (fn [row]
+                         (when (nil? (:retracted_at row))
+                           (let [text (get-in input ["rowTexts" (:id row)])]
+                             (when-not (and (string? text) (.startsWith ^String text (row-prefix (:id row))))
+                               (codec/invalid "Missing or mismatched row text"))
+                             [(if (> (.length ^String text) 8000)
+                                [:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]
+                                [:db/add (str "e:" (:entity_id row)) :triplex.entity/row [:triplex/row text (:recorded_position row)
+                                  (+ 44 (.length ^String (:id row)) (if (= "ref" (:value_type row)) (.length ^String (:value_string row)) 0))]])]))) fresh)
+               (mapcat (fn [row]
+                         (when-not (:retracted_at row) (codec/invalid "Invalid retraction"))
+                         (let [eid [:f/id (:id row)] subject [:triplex.entity/id (:entity_id row)]]
+                           [[:triplex/retract (:entity_id row) (:id row)]
+                            [:db/retract eid :f/live subject]
+                            [:db/add eid :f/retracted-in "datomic.tx"]
+                            [:db/add eid :f/retracted-at (finite! (:retracted_at row))]
+                            [:db/add eid :f/retracted-position (marker (:retracted_position row))]
+                            [:db/add eid :f/retract-tx-id (:retract_tx_id row)]
+                            (when (negative-zero? (:retracted_at row)) [:db/add eid :f/negative-zero :retracted_at])])) old)
+               (map (fn [entity] [:db/add (str "e:" entity) :triplex.entity/rev (marker position)]) (distinct (map :entity_id rows)))
+               ;; Existing-only subjects need their identity tempids too (retractions can contain no assertions).
+               (map (fn [entity] {:db/id (str "e:" entity) :triplex.entity/id entity}) (distinct (map :entity_id old)))
+               (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
+                                :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
+                                :triplex.claim/tx-id (get claim "txId")}) claims))))]
+     [[:triplex/commit {:scope scope :source source :provisional position :span span
+                       :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
+                       :live (vec (distinct (concat (get input "live" []) (map :id old))))
+                       :ops ops :times times :irregular irregular :position-irregular irregular}]])))
 (defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
-  (let [scope (:scope (reach/config name db))]
-    (when-not (= (:triplex.scope/position (d/entity db scope)) (get input "sourceK"))
-      (throw (ex-info "Source cut changed" {:status 409 :code "CasConflict"}))))
   (try
     (let [data (tx-data db input (:scope (reach/config name db)))
           start (System/nanoTime)
@@ -156,13 +140,15 @@
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
        :transactMicros transact-micros
        :operationId (get input "operationId")
-       :position (codec/encode-value "long" (get input "position")) :datoms (count (:tx-data report))})
+       :position (codec/encode-value "long" (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report)))))
+       :delta (- (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report)))) (get input "position"))
+       :datoms (count (:tx-data report))})
     (catch Exception e
       (let [text (str e)]
         (when (= "OutcomeUnknown" (:code (ex-data e))) (throw e))
         (throw (ex-info (.getMessage e)
-                       {:status (if (re-find #"cas-failed|unique-conflict" text) 409 400)
-                        :code (cond (re-find #"cas-failed|triplex.tx/position" text) "CasConflict"
+                       {:status (if (re-find #"TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
+                        :code (cond (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
