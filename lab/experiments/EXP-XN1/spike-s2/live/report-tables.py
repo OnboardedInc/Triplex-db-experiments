@@ -23,7 +23,9 @@ for on in [False,True]:
 head=[]
 if all(q1):
  head.append(f"Q1 worst 256/0 p99 {max(ratios):.2f}× ({status(max(ratios)<=1.25)}); worst p50/p99 {max(r['latency']['p50'] for r in q1):.2f}/{max(r['latency']['p99'] for r in q1):.2f} ms ({status(all(r['latency']['p50']<=10 and r['latency']['p99']<=50 for r in q1))})")
-else:head.append(f"Q1 {sum(r is not None for r in q1)}/16 cases; full bars unmeasured")
+else:
+ observed=[r for r in q1 if r]
+ head.append(f"Q1 {len(observed)}/16 cases; measured worst p50/p99 {max(r['latency']['p50'] for r in observed):.2f}/{max(r['latency']['p99'] for r in observed):.2f} ms (P2 {status(all(r['latency']['p50']<=10 and r['latency']['p99']<=50 for r in observed))} in measured cases), 256/0 ratio unmeasured" if observed else 'Q1 unmeasured')
 if len(reads)==12:
  peak=max(r['latency']['p99'] for r in reads if r['clients']==256)
  p4=min(r['pullsPerSecond']/4 for r in reads if r['clients']==256)
@@ -32,7 +34,8 @@ if len(reads)==12:
 else:head.append(f'Q2 {len(reads)}/12 cases; full bars unmeasured')
 head.append(f"Q3 worst visibility p99 {max(r['lag']['p99'] for r in lag):.2f} ms ({status(all(r['lag']['p99']<=250 for r in lag))})" if all(lag) else f"Q3 {sum(r is not None for r in lag)}/8 cases; lag bar unmeasured")
 head.append(f"Q4 await+pull p99 {wait['latency']['p99']:.2f} ms, exact-basis values verified" if wait else 'Q4 exact-basis mechanism verified; cost unmeasured')
-head.append('Q5 component CPU/memory measured below; no separate Kafka-only latency attribution' if any(q1) else 'Q5 loaded component cost unmeasured')
+loaded=[r for r in q1 if r]
+head.append(f"Q5 Kafka {max(r['cpuSeconds']['tx2-xns2-kafka']/(r['elapsedMs']/1000) for r in loaded):.3f} cores / {max(r['memory']['tx2-xns2-kafka']['current']/1048576 for r in loaded):.1f} MiB in measured cases; no separate cost bar" if loaded else 'Q5 loaded component cost unmeasured')
 out=['## Same-day single-node controls','', 'All timing pairs below are p50 / p99 milliseconds. These controls use the AWS image and a Local log/storage, not the earlier standalone image.','', '| Keeper | Offered/s | Same-node readers | AWS Local p50 / p99 | Historical S1 p50 / p99 |','| --- | ---: | ---: | ---: | ---: |']
 for on in [False,True]:
  for rate,n in [(15,0),(55,0),(55,16)]:
