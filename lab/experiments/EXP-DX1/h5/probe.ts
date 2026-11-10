@@ -6,7 +6,7 @@ import { W0, V_W0, many, triplexValue, canonical } from "../../../bench/lib/w0-w
 // [DX-H5] Why: measure genuine public command concurrency without pretending reordered tx values are W0.
 // Rejected: changing oracle/reference positions to match an easier concurrent population.
 process.env.TX2_P5_CLOCK_START = String(V_W0);
-const N = 200,
+const N = Number(process.argv[2] ?? "1000"),
   out = "runs/DX-H5-vm";
 fs.mkdirSync(out, { recursive: true });
 const reports: any[] = [];
@@ -17,7 +17,8 @@ for (const concurrency of [1, 8, 16, 32]) {
   const latest = new Map<string, string>(),
     positions = new Set<number>();
   let reordered = 0,
-    commands = 0;
+    commands = 0,
+    highest = 0;
   const start = performance.now();
   try {
     const R = W0.rung(N),
@@ -48,6 +49,7 @@ for (const concurrency of [1, 8, 16, 32]) {
       if (!r.ok) throw Error(c.position + ":" + r.tag);
       if (positions.has(r.value.position)) throw Error("duplicate committed position");
       positions.add(r.value.position);
+      highest = Math.max(highest, r.value.position);
       if (r.value.position !== c.position) reordered++;
       for (const t of r.value.triples)
         if (!many.has(t.attribute)) latest.set(t.entityId + "\0" + t.attribute, t.id);
@@ -75,7 +77,7 @@ for (const concurrency of [1, 8, 16, 32]) {
       }),
     );
     const wallMs = performance.now() - start;
-    if (positions.size !== W0.populationBasis(R).tx || Math.max(...positions) !== positions.size)
+    if (positions.size !== W0.populationBasis(R).tx || highest !== positions.size)
       throw Error("coverage gap");
     reports.push({
       N,
