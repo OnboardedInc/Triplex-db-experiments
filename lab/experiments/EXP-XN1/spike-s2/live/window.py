@@ -96,7 +96,7 @@ try:
         if p.is_file():shutil.copyfile(p,out/'sources'/p.name);source['files'][p.name]=hashlib.sha256(p.read_bytes()).hexdigest()
     shutil.copyfile(KEEP,out/'sources'/'keep-awake-fixed.sh');source['files']['keep-awake-fixed.sh']=hashlib.sha256(KEEP.read_bytes()).hexdigest()
     save('source.json',source)
-    if STAGE=='two-off' and all(list(ROOT.glob(stage+'-*/completed.json')) for stage in ['control-off','control-on','control-reads']):
+    if STAGE=='two-off' and all(list(ROOT.glob(stage+'-*/completed.json')) for stage in ['control-commits','control-reads']):
         retired=[]
         for volume in ['tx2-xns2-live-control','tx2-xns2-control-driver']:
             proof=docker('volume','inspect',volume,check=False)

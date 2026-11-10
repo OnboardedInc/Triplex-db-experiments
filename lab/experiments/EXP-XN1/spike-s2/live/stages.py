@@ -1,14 +1,15 @@
 # [XN-S2-LIVE] Why: freeze stage order and cohorts before admission. Rejected: selecting only fast windows after seeing results.
-if STAGE=='control-off':
+if STAGE=='control-commits':
+    for arm in ['off','on']:
+        nested=dict(globals(),STAGE='control-'+arm,PHASE=PHASE+'-'+arm)
+        exec((out/'sources'/'stages.py').read_text(),nested)
+elif STAGE=='control-off':
     keeper(False)
     if docker('exec',driver,'test','-f','/driver/seed.json',check=False).returncode!=0:
         execute('read.mjs','seed',timeout=120)
     if docker('exec',driver,'test','-f','/driver/history.json',check=False).returncode!=0:
         execute('write.mjs','history','one','fresh',timeout=240)
-    for shape in ['one','two']:
-        execute('write.mjs','correct',shape,PHASE,timeout=30)
-        execute('write.mjs','closed',shape,PHASE+'-fresh','1000',timeout=60)
-        execute('write.mjs','closed',shape,PHASE+'-aged','1000',timeout=60)
+    for shape in ['one','two']:execute('write.mjs','correct',shape,PHASE,timeout=30)
     for rate,readers in [(15,0),(55,0),(55,16)]:execute('write.mjs','open','one',PHASE,rate,readers,timeout=100)
 elif STAGE=='control-on':
     keeper(True)
@@ -54,4 +55,5 @@ elif STAGE=='reads':
     for kind in ['a','c','e','f']:
         for readers in [16,64,256]:execute('read.mjs','read',PHASE,kind,readers,extra={'READ_N':'20000','READ_WRITER_RATE':'55'},timeout=180)
     execute('wait.mjs',timeout=100)
+    execute('metrics.mjs','final',timeout=30)
 else:raise RuntimeError('unknown stage '+STAGE)
