@@ -12,65 +12,7 @@ export async function publicSweep(
   feedPage?: (after: number, limit: number) => Promise<{ transactions: readonly any[] }>,
 ) {
   if (lane === "datomic") {
-    const portable = (await import("./w0-datomic-reader.ts")).datomicW0Sweep(handle, feedPage);
-    return {
-      ...portable,
-      page: async (subjects: readonly string[], basis: PositionBasis) => {
-        const storage = handle.storage;
-        if (!storage?.getReachRowsMany) return portable.page(subjects, basis);
-        requirePosition(basis, Number.MAX_SAFE_INTEGER);
-        const closures = await handle.run<
-          | readonly (readonly import("../../../packages/core/dist/runtime/index.js").TripleRow[])[]
-          | undefined
-        >(
-          storage.getReachRowsMany(subjects, {
-            recordedPosition: basis.position,
-            validAt: basis.validAt,
-          }),
-        );
-        if (!closures) return portable.page(subjects, basis);
-        // [DX-B5-L5] Why: preserve portable page-wide BFS order while deduplicating shared entities.
-        // Rejected: flattening per-root closures (duplicates shared facts and changes row order).
-        const entities = new Map<string, Map<string, any>>();
-        for (const closure of closures)
-          for (const row of closure) {
-            let entity = entities.get(row.entity_id);
-            if (!entity) entities.set(row.entity_id, (entity = new Map()));
-            entity.set(row.id, row);
-          }
-        const seen = new Set(subjects),
-          rows: WorldRow[] = [];
-        let frontier = [...subjects];
-        while (frontier.length) {
-          const next: string[] = [];
-          for (const id of frontier)
-            for (const row of entities.get(id)?.values() ?? []) {
-              const value = decode(row);
-              rows.push({
-                id: row.id,
-                entityId: row.entity_id,
-                attribute: row.attribute,
-                value,
-                position: row.recorded_position,
-                validFrom: row.valid_from,
-                ...(row.valid_to === null ? {} : { validTo: row.valid_to }),
-              });
-              if (value.type === "ref" && !seen.has(value.value)) {
-                seen.add(value.value);
-                next.push(value.value);
-              }
-            }
-          frontier = next;
-        }
-        return {
-          rows,
-          reportedBasis: { ...basis },
-          position: basis.position,
-          epoch: String(handle.scope),
-          roundTrips: 1,
-        };
-      },
-    };
+    return (await import("./w0-datomic-reader.ts")).datomicW0Sweep(handle, feedPage);
   }
   if (lane !== "xtdb") return portableSweep(handle);
   const api = await import("../../../packages/xtdb/dist/index.js");
