@@ -1,32 +1,17 @@
-Hypothesis NOT YET ESTABLISHED. O1–O5 pending; this is a live work report, not a verdict.
+Hypothesis CONFIRMED. M1–M4 pending fresh paired measurements; no completed integration verdict yet.
 
-North star: P1/P4 pull CPU, P2 commit latency, P3 feed waits and P5 growing seeds. Goals and authority: `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`; fast-forward protocol 0b.
+The unchanged implementation slowed from 625 to 59 fill commits/s by 98,500 commits. At heads 1,000 / 50,000 its trace p50 was 8.103 / 10.522 ms, goodput 106.46 / 90.97 commits/s, and read CPU 0.521 / 3.770 ms per pull (7.24 times). A fresh transactor dump shows retraction filtering under the stored function's scope-position lookup. These original observations were without keep-awake; they establish the growing-cost mechanism, not a paired environmental comparison.
 
-## Integration boundary requiring dispatch clarification
+DX-B7's four commits are retained in merge `96676785`; WIP checkpoint is `23514af9`. Its cache/notification/admission implementation is integrated. The three formerly shared reads now call version-aware helpers in `storage/begin!`, `storage/await-record-time`, and `main/basis`. `select-db` reads only exact stable eligibility attributes rather than iterating the scope entity. Journal and notification predicates use the shared head helper. Production newest-commit helpers use direct cut transaction metadata then reverse AEVT bounded by that transaction, including `as-of-t` for historical values. This replaces the proposed reverse AVET fallback because AVET cannot seek to a historical entity cut before filtering future commits.
 
-The three expressions in `required-integration.patch` are necessary to preserve snapshot/basis/record-time answers once scope position/max-recorded-at stop moving. They are in `storage/begin!`, `storage/await-record-time`, and `main/basis`, outside the task's explicitly owned functions. They remain unchanged in this worktree. I asked for permission for those expressions and prepared an isolated proposed integration source under durable evidence; testing it will be labelled as overlay testing. DX-B7 can apply those expressions to its owned functions. No unrelated request handling or wait-loop rewrite is needed.
-
-**Do not deploy or merge the unfinished working tree as a completed fix.** It currently marks new HTTP scopes v2 while those three legacy readers are pending integration. I will leave the final committed source safe if dispatch clarification does not arrive.
-
-## Current evidence
-
-Durable root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B8/`.
-
-- `before-source/`: actual unchanged gateway, TypeScript source/build and dependency preimages at base `53fcf4f289b257a7c26a630a3c6b447ff926b516`.
-- `unit.log`: 111 engine-free tests passed.
-- `package-no-engine.log`: first broader run, W0 dist missing; retained failure.
-- `support-build.log`: support packages built without downloads.
-- `package-no-engine-rerun.log`: 144 passed, 46 skipped (native tests), exit 0.
-- `typecheck.log`: Datomic TypeScript check, exit 0.
-- `before-a-v2.log`: first engine attempt failed in raw fill encoding (`schema_version:null`); fixed runner uses zero. No measured point was produced. Cleanup was 32 seconds, no containers/network left; owned Postgres volume retained for retry.
-- `before-b.log`: queued corrected unchanged-code attempt.
+Durable evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B8/`. Raw failures remain; their replacement attempts have fresh names and captured source copies. No acceptance contract was edited.
 
 ## Hot-value audit
 
-| Value/read | Existing frequency | Change/proposed integration |
+| Value/read | Existing frequency | Integrated change |
 | --- | --- | --- |
-| Scope position | Replaced every commit; read in stored function, snapshots, basis, waits, journal and pull header | v2 reads immutable tx/position; v1 stays legacy. Snapshot/basis substitutions are in companion patch. |
-| Scope maximum record time | Replaced as row timestamps advance; stored function plus record-time wait | v2 carries the prefix maximum on every commit transaction, including timestamp-free commits; wait expression is in companion patch. |
+| Scope position | Replaced every commit; read in stored function, snapshots, basis, waits, journal and pull header | v2 reads immutable tx/position; v1 stays legacy. Snapshot/basis substitutions are applied to the actual gateway. |
+| Scope maximum record time | Replaced as row timestamps advance; stored function plus record-time wait | v2 carries the prefix maximum on every commit transaction, including timestamp-free commits; wait expression uses the same version-aware helper. |
 | position-regular | true at creation, false once on irregular positions | Keep sticky proof and exact targeted read. |
 | irregular, feed-irregular | sticky false/absent to true | Keep; repeated same-value assertions do not replace values. |
 | Scope key/bootstrap/row/feed versions | Written at creation | Keep; stable targeted lookups. |
@@ -36,26 +21,27 @@ Durable root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B8/`.
 | journal compatibility checks | Targeted stable version/flag lookups | Keep. |
 | feed_live CAS fixture | Legacy manually authored transaction | Keep on explicit legacy arity; new transaction-function commits are v2 only when enabled. |
 
-## Algorithm and compatibility
 
-The v2 newest-commit helper checks the basis transaction's immutable position first. A schema/marker basis falls back to reverse AVET `index-pull`, bounded by `[:triplex.tx/position Long/MAX_VALUE]`. Transaction position is already the final logical position of its span. The same helper shape executes inside the stored function; actual engine callability is pending. Prefix clock maxima must be carried even across commits with no row timestamps. Old scopes are never automatically migrated or marked v2 when their schema/function is installed.
+## Integration gates completed
 
-A pre-B8 gateway cannot understand a v2 scope: its old snapshot/basis readers would report the immutable bootstrap value. A rolling fleet that includes those binaries must keep v1 scopes until all serving/writing gateways understand v2. No compatibility with an unmodified old writer on a v2 scope is claimed.
+Integrated-v1 production source: base legacy 23 files /179 tests passed; lean 23 files /177 passed,2 expected LayoutUnsupported skips. The remaining four long files passed all nine tests on each layout, including all 200 reach scenarios, 16 writers ×200 commands, 500 conflicting-row races, four processes ×500 clock-ordered commands and 5,000 cross-peer record-time commits /10,000 answers. Final native-v2: 29 head assertions, 53,715 selftest assertions,85 feed assertions, all zero failures/errors. Typecheck and build passed.
 
-## Remaining
+All 300 verified differential scenarios passed: 95,028 comparisons,5,664 fast row-closure comparisons, final RNG state -1699957524. Cache stats:15,878 parsed hits,17,102 revision hits,32,980 verifications,zero mismatches. `GATES.json` and durable `integrated-gate-union.json` bind the union to exact source hashes and completed attempts. Base attempt's three old-storage fixture failures remain retained; its package slice passed. Final native-v2 changes only concurrent-initialization and database-lifecycle fixtures to explicit legacy creation, preserving every assertion; all other production source bytes match v1. The added head test checks a historical marker cut and exact bounded AEVT seek. Full lease held716 seconds and cleaned up.
 
-Unchanged growth measurements; engine validation of reverse index-pull and semantic suites; source-bound fix commit; changed growth measurements; optional W0 fingerprint; final hash/pin audit and owned-volume removal. No acceptance files edited, no merge/push/publish performed.
+## PASS audit
 
-## WIP commit audit (continued dispatch, 2026-11-10)
+No benchmark helper promotes acceptance. Load assertions compare actual ACK positions, feed tx IDs/positions, zero decline/fault/full-retry counters, and response-bound measured bytes; all samples and exact scope/input coordinates are retained under a fresh attempt. `native-tests.sh` uses actual Clojure test assertions and nonzero failure exits against the immutable gateway source mounted for that attempt. `parallel-gates.sh` records each process exit separately; its verified differential check reads fresh cache stats from that attempt's gateway and requires verification enabled, positive hits, verified >= hits+revisionHits, zero errors and bounded bytes. Existing B7 cache-check assertion sites are audited in `b7/PASS-AUDIT.md` and `b7/KEY-AUDIT.md`; none is weakened. Cleanup receipts report only observed lifecycle state, have semanticVerdict:null, and bind exact prefix/holder/attempt. `verify-gates.py` is the only new gate-union verdict site: it checks actual assertion counts, complete expected suite summaries, every shard's zero exit, the original contiguous RNG states/draw counts/comparison denominators, fresh cache verification stats and bounded sockets. It binds each attempt to its fresh prefix, four distinct container IDs, the observed gateway manifest hash and immutable source preimages; current production hashes must match those preimages. Its cleanup checks require observed empty resources and a <=900-second lease. The known failed base native slice is never relabelled passing; its expected exit1 is explicit and replaced by the separately successful native-v2 slice. `harness-smoke.mjs` asserts fake-peer schedule/ACK/cut/feed control flow only and prints that it is not a database gate; its fresh local fake inputs never enter correctness or performance denominators. Final report will list paired numbers, missing targets, commands and removals.
 
-This commit preserves incomplete work before merging DX-B7; it is not a promotion or completion claim.
 
-- `growth.mjs` computes diagnostic measurements only: actual successful SDK calls, returned positions validated by DatomicClient, fresh UUID scope, actual gateway health/source identity and owned-stack/cgroup manifests. It emits no semantic PASS. Two original-code points exist (1k/50k); 250k/500k are absent.
-- `window.sh`/`up.sh` readiness checks compare actual gateway source hash, actual durability settings and container identities. Cleanup checks fresh inventories against the exact owner PID and explicitly declares retained PostgreSQL volumes; no cleanup exit is a semantic verdict. The first cleanup schema's `inventoryEmpty` excludes its separately indexed retained volume; later receipts name active resources explicitly.
-- `stage.py` hashes copied bytes into a newly created directory, labels the integration overlay, and binds copied runner/patch/source bytes to the base revision. Hashes establish identity, not correctness.
-- `native-tests.sh`, `base-gates.sh`, `suite.sh`, and the lean wrappers report actual assertion-runner outcomes from fresh processes/scopes and the source-bound stack. Nonzero native components remain nonzero even when package tests pass. Original selftest/feed fixture failures and interrupted lean reach remain failures/incomplete.
-- `dxb8/head_test.clj` checks exact span heads, marker fallback, historical views, clock maxima and scope-datom history content on the SQL engine; 27 assertions passed in the latest run. `head-version.test.ts` checks actual receipt/snapshot/basis positions and held-row content on both layouts. Neither is a full-package verdict.
-- `gateway-fixtures.patch` is a proposed fixture/probe update only, not applied in the worktree: it retains behavioural assertions and adds three explicit scan-rejection checks. Its current proposed source has not completed the full gate set.
-- No M1–M4, O1–O5 completeness, fingerprint, independent acceptance or release PASS is claimed. All old failed attempts are retained.
+## Compatibility
 
-Continued dispatch now authorizes all `packages/datomic/**`; next steps are commit this WIP, merge DX-B7, apply integration, fix/rerun the complete gates, and measure paired keep-awake variants.
+Scopes with no head-version marker retain scope/position and scope/max-recorded-at semantics and writes. New HTTP-created scopes,
+including both physical layouts, receive head-version 2 once at creation; a later schema/function installation never migrates an
+existing scope. The legacy direct two-argument factory remains for the explicitly legacy CAS/live-feed fixtures. A v2 transaction
+stores its final span position and prefix record-time maximum exactly once on its own transaction entity. Sticky eligibility flags,
+entity conflict checks, identity/replay checks, journals and LayoutUnsupported behavior stay in the original atomic transaction.
+
+An upgraded gateway can serve either scope version. An old gateway cannot safely serve a new v2 scope: it would read the stale
+initial scope position and an old installed transaction function could replace the serial allocator. Deployment therefore requires
+upgrading all gateways before routing new v2 scopes to a mixed fleet; this change does not claim backwards compatibility for old
+binaries reading newly versioned scopes. Old scopes are deliberately not silently optimized.

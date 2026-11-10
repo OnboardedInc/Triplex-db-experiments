@@ -38,12 +38,12 @@
 (defn head-v2? [db e] (and (datomic.api/entid db :triplex.scope/head-version)
        (= 2 (value db e :triplex.scope/head-version))))
 (defn newest-commit [db]
-  (let [tx (datomic.api/t->tx (datomic.api/basis-t db))]
+  (let [tx (datomic.api/t->tx (or (datomic.api/as-of-t db) (datomic.api/basis-t db)))]
     (if (some? (value db tx :triplex.tx/position)) tx
-      ;; [DX-B8] Why: schema/marker transactions can follow a commit; reverse AVET skips them in one seek.
-      ;; Rejected: scanning transaction history backwards (unbounded marker suffix).
-      (:db/id (first (datomic.api/index-pull db {:index :avet :selector [:db/id]
-                                                :start [:triplex.tx/position Long/MAX_VALUE] :reverse true}))))))
+      ;; [DX-B8] Why: AEVT orders immutable transaction entities by t, and the cut bounds historical seeks.
+      ;; Rejected: reverse AVET (an as-of value can filter every later commit before reaching its cut).
+      (let [datom (first (datomic.api/rseek-datoms db :aevt :triplex.tx/position tx))]
+        (when (and datom (= (:a datom) (datomic.api/entid db :triplex.tx/position))) (:e datom))))))
 (defn head-position [db e]
   (if (head-v2? db e)
     (or (when-let [tx (newest-commit db)] (value db tx :triplex.tx/position)) 0)

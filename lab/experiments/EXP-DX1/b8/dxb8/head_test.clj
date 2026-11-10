@@ -4,7 +4,7 @@
             [triplex.gateway.storage :as storage] [triplex.gateway.schema :as schema] [triplex.gateway.commit :as commit] [triplex.gateway.reach :as reach]))
 
 ;; [DX-B8] Why: exercise the actual stored function on empty, span, marker and legacy cuts.
-;; Rejected: mocking reverse index-pull (would miss transactor API restrictions).
+;; Rejected: mocking reverse index seeks (would miss transactor API restrictions).
 (defn commit! [conn e span times replay-safe]
   @(d/transact conn [[:triplex/commit {:scope e :source nil :provisional span :span span
                                       :lean true :live [] :entities [] :ops [{:db/id "datomic.tx" :triplex.tx/position [:triplex/position span]}]
@@ -20,11 +20,18 @@
         (is (= 100.0 (scope/max-recorded-at first-db e)))
         (is (= 0 (scope/value first-db e :triplex.scope/position)))
         (is (nil? (scope/value first-db e :triplex.scope/max-recorded-at)))
-        ;; A non-commit basis must take reverse AVET, on the peer and in the stored function.
+        ;; A non-commit basis must take reverse AEVT, on the peer and in the stored function.
         @(d/transact conn [[:db/add e :triplex.scope/feed-irregular true]])
         (is (= 4 (storage/head-position name (d/db conn))))
         (is (= 4 (second (reach/select-db name (d/db conn) nil))))
         (let [second-report (commit! conn e 3 [] true) second-db (:db-after second-report)]
+          (let [marker-t (dec (d/basis-t second-db)) cut (d/as-of second-db marker-t)
+                original d/rseek-datoms calls (atom [])]
+            (with-redefs [d/rseek-datoms (fn [db index & components]
+                                         (swap! calls conj [index components])
+                                         (apply original db index components))]
+              (is (= 4 (storage/head-position name cut)))
+              (is (= [[:aevt (list :triplex.tx/position (d/t->tx marker-t))]] @calls))))
           (is (= 7 (storage/head-position name second-db)))
           (is (= 100.0 (scope/max-recorded-at second-db e)))
           (is (= 4 (storage/head-position name first-db)))

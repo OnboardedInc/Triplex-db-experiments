@@ -38,6 +38,8 @@
         (when (= "bigdec" (get wire "t")) (is (= (.scale value) (.scale again))))))))
 
 ;; [EXP-DA01] Why: deterministic reviewer interleaving on actual Peer transactions. Rejected: sequential late-create alone (does not prove both creators overlap).
+;; [DX-B8] Why: this fixture advances the legacy scope attribute directly, so opt into its legacy storage contract.
+;; Rejected: changing its expected public head (would weaken the initialization race assertion).
 (deftest concurrent-initialization
   (let [base "datomic:mem://" scope "[\"triplex-scope-v1\",\"test\",\"verifier\",\"da01-race\",1]"
         paused (promise) release (promise) slow-thread (atom nil) transact d/transact]
@@ -46,10 +48,10 @@
         (deliver paused true)
         (when-not (deref release 10000 false) (throw (Exception. "Release timeout"))))
       (transact conn tx))]
-      (let [slow (future (reset! slow-thread (Thread/currentThread)) (gateway/create-scope! base scope "legacy"))]
+      (let [slow (future (reset! slow-thread (Thread/currentThread)) (gateway/create-scope! base scope "legacy" false))]
         (try
           (is (deref paused 10000 false))
-          (let [fast (gateway/create-scope! base scope "legacy") name (:db fast) conn (gateway/connection (str base name))]
+          (let [fast (gateway/create-scope! base scope "legacy" false) name (:db fast) conn (gateway/connection (str base name))]
             @(d/transact conn [{:triplex.scope/key scope :triplex.scope/position 7}])
             (deliver release true)
             (let [late (deref slow 10000 ::timeout)]
@@ -67,19 +69,19 @@
       (is (:deleted (gateway/delete-scope! "datomic:mem://" text))))))
 (deftest database-lifecycle
   (let [base "datomic:mem://" scope "[\"triplex-scope-v1\",\"test\",\"tenant\",\"da00\",1]"
-        result (gateway/create-scope! base scope "legacy") name (:db result) db (d/db (gateway/connection (str base name)))]
+        result (gateway/create-scope! base scope "legacy" false) name (:db result) db (d/db (gateway/connection (str base name)))]
     (is (= schema/schema-hash (:schemaHash result)))
     (is (= scope (gateway/stored-scope db)))
     (is (= :db.type/long (:db/valueType (d/entity db :triplex.tx/position))) )
-    (is (false? (:created (gateway/create-scope! base scope "legacy"))))
+    (is (false? (:created (gateway/create-scope! base scope "legacy" false))))
     (is (= {"t" "long" "v" "0"} (:position (gateway/basis base name))))
     @(d/transact (gateway/connection (str base name)) [{:triplex.scope/key scope :triplex.scope/position 7}])
-    (is (false? (:created (gateway/create-scope! base scope "legacy"))))
+    (is (false? (:created (gateway/create-scope! base scope "legacy" false))))
     (is (= {"t" "long" "v" "7"} (:position (gateway/basis base name))))
     ;; [EXP-DA01] Why: replay the actual late initializer transaction after a writer advances. Rejected: sequential create alone (never enters its stale initialization branch).
-    (gateway/initialize-scope! (str base name) scope "legacy")
+    (gateway/initialize-scope! (str base name) scope "legacy" false)
     (is (= {"t" "long" "v" "7"} (:position (gateway/basis base name))))
-    (is (thrown? Exception (gateway/initialize-scope! (str base name) "different-scope" "legacy")))
+    (is (thrown? Exception (gateway/initialize-scope! (str base name) "different-scope" "legacy" false)))
     (is (thrown? Exception (gateway/assert-scope db "other")))
     (is (:deleted (gateway/delete-scope! base scope)))
     (is (thrown? Exception (gateway/scope-name "[\"triplex-scope-v1\",\"test\",\"t\",\"d\",\"1\"]")))))

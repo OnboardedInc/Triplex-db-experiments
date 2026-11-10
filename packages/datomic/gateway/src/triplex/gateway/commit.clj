@@ -10,8 +10,10 @@
            (newest-commit []
              (let [tx (d/t->tx (d/basis-t db))]
                (if (some? (value tx :triplex.tx/position)) tx
-                 (:db/id (first (d/index-pull db {:index :avet :selector [:db/id]
-                                                  :start [:triplex.tx/position Long/MAX_VALUE] :reverse true}))))))
+                 ;; [DX-B8] Why: one AEVT seek skips any suffix of non-commit transactions.
+                 ;; Rejected: walking the log backwards (unbounded marker suffix).
+                 (let [datom (first (d/rseek-datoms db :aevt :triplex.tx/position tx))]
+                   (when (and datom (= (:a datom) (d/entid db :triplex.tx/position))) (:e datom))))))
            (digits [p] (let [s (str p)] (str (subs "0000000000000000" (count s)) s)))
            (row-id [id]
              (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
