@@ -26,6 +26,7 @@ const sources = Object.fromEntries(
     "lab/bench/lib/w0-datomic-reader.ts",
     "lab/bench/lib/w0-seed.ts",
     "lab/bench/lib/w0-http.ts",
+    "lab/bench/lib/w0-cache.ts",
     "lab/bench/lib/http-counts.ts",
     "lab/bench/lib/composition.ts",
     "lab/bench/lib/triplex.ts",
@@ -37,7 +38,14 @@ const sources = Object.fromEntries(
     "packages/w0/dist/index.js",
   ].map((file) => [file, sha256(fs.readFileSync(file))]),
 );
-const report: any = { scope, N: 200, status: "RUNNING", comparisons: [], sources };
+const report: any = {
+  scope,
+  N: 200,
+  status: "RUNNING",
+  comparisons: [],
+  sources,
+  cacheMaxEntities: Number(process.env.TX2_W0_CACHE_MAX_ENTITIES ?? "0"),
+};
 try {
   const seed = await seedW0(comp, 200, out + "/seed.ndjson");
   const mutation = await comp.transact(

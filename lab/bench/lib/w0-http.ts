@@ -1,3 +1,4 @@
+import "./w0-cache.ts";
 import { measureHttp } from "./http-counts.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { DatomicClient } from "../../../packages/datomic/dist/index.js";

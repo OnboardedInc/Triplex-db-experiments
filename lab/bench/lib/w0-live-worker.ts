@@ -1,3 +1,4 @@
+import "./w0-cache.ts";
 import { parentPort, workerData } from "node:worker_threads";
 import { inspect } from "node:util";
 import { openComposition } from "./composition.ts";
