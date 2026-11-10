@@ -111,3 +111,18 @@ Sam, verbatim (the `/goal` he set after upgrading the CLI and switching the orch
 
 Orchestrator reading: one Kafka image may be pulled into the triplex2 VM to test XTDB read replicas (lane X). The VM stays at
 8 CPUs, 20 GiB, 100 GiB. No other download is covered.
+
+## 2026-11-10 13:50 UTC: standing permission to download, with a disk budget (verbatim)
+
+> Yeah you can download anything from here on out. You can take up to half of my remaining disk space. You have standing permission to download anything up to that amount as you need. Please go do that and that's for any lane not just the lanes that you wanted. Not just for the XTDB lane but for any lanes. You can use up to half of my remaining space on my disk as of right now.
+
+Orchestrator reading:
+
+1. Downloads no longer need a per-item approval, for any lane.
+2. **Budget: 19.0 GiB in total.** The Mac's data volume had 39,917,840 KiB free (38.07 GiB) at 2026-11-10 13:51 UTC
+   (`df -k /System/Volumes/Data`); half is 19.03 GiB. Every download is logged with its size in
+   `~/Claude/Projects/triplex-db-2/evidence/ORCH-downloads/` and summed in `lab/DOWNLOADS.md`.
+3. Unchanged: no email, name or other personal detail goes to any website or registry (pulls are anonymous); nothing under
+   `/Users/sam/projects/triplex-db`; the VM stays at 8 CPUs.
+4. The Mac has only 38 GiB free in total, so data the lab generates (seed volumes inside the VM's disk image) must also stay
+   small. That is not part of the download budget but it is the same disk.
