@@ -522,11 +522,33 @@ New rule in every brief: evidence is the raw command output, no manifests or aud
 
 **Verdict runs need the agents idle too:** their builds and test gates are what made the host busy during both paired runs.
 
+## 2026-11-10 21:55 UTC: Sam ended the native mode and asked for larger jumps
+
+DX-N1 stopped, branch `exp/DX-N1-native` unmerged, its tools and runs removed, nothing of it running.
+
+Orchestrator's measurement on `tx2-dxh4-q1-zero` (10,000 subjects, zero readers, `driver/ns-writes.jsonl`): transact call to
+return p50 16.7 ms overall; **22 to 35 ms at the steady rate of about 2 commits/s, 11 to 20 ms inside the 55/s bursts**, against
+3 ms back-to-back, so the p50 bar of 10 ms is being decided by per-hop wake cost on this VM, not by commit work. **Each burst has
+one stall**: 20:53:46.7 to 49.3 UTC (31 commits, worst 1,253 ms) and 21:03:41.6 to 45.9 UTC (62 commits, worst 1,751 ms); no index
+job was requested, no Postgres checkpoint logged. Queued A/B `vm-wake/helper-ab3.sh`: an idle-priority loop **inside** the
+measured container (same cgroup), which is the one keep-awake variant not yet tried.
+
+The jumps now in flight:
+
+1. **P5: activation from a stored preview** (DX-H8). Preview evaluates the release for every subject in the background at a
+   pinned basis; activation reads the change feed since then, re-evaluates only affected subjects, takes the rest from the
+   memo, and publishes everything in large commits. Every subject is still compared with the full sweep (at 1,000) and with the
+   oracle. Without a preview, activation is the full sweep (223 subjects/s today).
+2. **Load generator at 10,000 subjects** (DX-H7): 1.9 ms of driver CPU per pull down to 0.4 ms.
+3. **Strict per-client commit order** (DX-B10), for seeding and pipelined publication.
+4. **Measurement** (DX-M1): the burst stall and the per-hop split of a steady-rate commit.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-N1 | Native (no VM) mode for the lane D stack and load generator; matched VM-against-native comparison | `exp/DX-N1-native`, `.claude/worktrees/dx-n1` | `.../prompts/DX-N1.md` |
+| DX-H8 | P5 jump: preview memo, feed-driven re-evaluation, coalesced publication; publication profile; seal a 10,000-subject W0 seed; 10,000-subject activation | `exp/DX-H8-preview-activation`, `.claude/worktrees/dx-h8` | `.../prompts/DX-H8.md` |
+| DX-M1 | Measurement only: cause of the 1 to 2 s stall in every burst; per-hop split of a steady-rate commit | `exp/DX-M1-stall`, `.claude/worktrees/dx-m1` | `.../prompts/DX-M1.md` |
 | DX-B10 | Gate and commit DX-B9's gateway fix; strict per-client commit order with tests; W0 seed at window 32 with the fingerprint | `exp/DX-B10-order` (from `exp/DX-B9-walls`), `.claude/worktrees/dx-b10` | `.../prompts/DX-B10.md` |
 | DX-H7 | Load-generator CPU per pull at 10,000 subjects: profile, cache budgets, shared decode, cheaper exact verification; target 6,000 verified pulls/s | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7.md` |
 
