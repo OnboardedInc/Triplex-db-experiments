@@ -1,0 +1,34 @@
+# [XN-S2-LIVE] Why: serializer keys read from the shipped AWS jar; retain a real shared log and shared object store.
+server:
+  host: 0.0.0.0
+  port: 5432
+  numThreads: 300
+remotes:
+  kafkaCluster: !Kafka
+    bootstrapServers: tx2-xns2-kafka:9092
+    propertiesMap:
+      max.request.size: "8388608"
+      max.partition.fetch.bytes: "8388608"
+      linger.ms: "0"
+  minio: !S3
+    accessKey: [access-key-removed]
+    secretKey: [secret-key-removed]
+log: !Kafka
+  cluster: kafkaCluster
+  topic: tx2-xns2-source
+  autoCreateTopic: true
+storage: !Remote
+  objectStore: !S3
+    remote: minio
+    region: us-east-1
+    bucket: tx2-xns2-data
+    endpoint: http://tx2-xns2-s3:9000
+    pathStyleAccessEnabled: true
+diskCache:
+  path: /var/lib/xtdb/cache
+  maxSizeBytes: 268435456
+memoryCache:
+  maxSizeBytes: 536870912
+healthz:
+  host: 0.0.0.0
+  port: 8080
