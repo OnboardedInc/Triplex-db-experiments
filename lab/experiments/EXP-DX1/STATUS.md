@@ -561,13 +561,30 @@ Also: an idle-priority loop **inside** the measured container removes the wake p
 (`vm-wake/helper-ab3.sh`: dense 3,085 against 2,830 to 2,870 units; sleep overshoot 5.1 ms against 0.08 ms). The A/B on the
 real writer trace at 10,000 subjects is running (`quiet/wake-ab.sh w1`).
 
+## DX-M1 measurement (merged 2026-11-10 23:11 UTC, report `lab/experiments/EXP-DX1/m1/REPORT.md`): where commit time and tails come from at 10,000 subjects
+
+1. **A burst stall (772 ms) is a G1 mixed-collection pause of 381 ms in the write gateway** (one CPU, 2 GiB heap), followed by a
+   409 and a retry. Transactor pause in the same second 44 ms. No index job, no Postgres slow statement, checkpoint, lock wait or
+   throttling, no swap I/O in the VM. The original 1 to 2 s stalls were not reproduced; pre-indexing does not remove the tail.
+2. **At 10,000 subjects every commit makes two HTTP calls** (`/begin` plus the commit) because the writer's 32 MiB row cache no
+   longer holds the predecessor stamps (9,185 missing). Dense commit median is therefore 6.4 ms, not 3.1.
+3. **One commit per second 24.3 ms against 6.4 ms back-to-back; every phase is 3 to 4 times slower when sparse** (gateway native
+   future 10.2 against 3.2 ms, staging with `/begin` 6.8 against 1.2, socket to headers 13.3 against 4.3). The Postgres INSERT is
+   0.19 ms. This is the wake penalty spread over the hops.
+4. `quiet/wake-ab.sh w1` baseline at the same rung (zero readers): steady p50 31.2 ms, burst p50 11.4 and p99 94 ms. In-container
+   keep-awake loops made it far worse (burst p50 124 ms); keep-awake is closed (`vm-wake/RESULT.md`).
+
+Follow-ups: DX-M1 resumed for collector arms on the write gateway and transactor (G1 as is, generational ZGC, small-footprint
+G1, write gateway on its own CPU), alternating. A predecessor-stamp cache for the writer (one HTTP call per commit at any scope
+size) goes to whoever next owns `RowCache.ts` (DX-H7 is in it now).
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-H8 | P5 jump: preview memo, feed-driven re-evaluation, coalesced publication; publication profile; seal a 10,000-subject W0 seed; 10,000-subject activation | `exp/DX-H8-preview-activation`, `.claude/worktrees/dx-h8` | `.../prompts/DX-H8.md` |
 | DX-R1 | Local copy of current facts in the runtime (bootstrap, follow the feed, freeze), release evaluation from it for one and several candidates, publish only changed outputs; equality gates against the gateway and the full sweep | `exp/DX-R1-replica`, `.claude/worktrees/dx-r1` | `.../prompts/DX-R1.md` |
-| DX-M1 | Measurement only: cause of the 1 to 2 s stall in every burst; per-hop split of a steady-rate commit | `exp/DX-M1-stall`, `.claude/worktrees/dx-m1` | `.../prompts/DX-M1.md` |
+| DX-M1 (resumed 23:11 UTC) | Collector arms for the write path, alternating: longest pause under 20 ms through the burst | `exp/DX-M1-stall`, `.claude/worktrees/dx-m1` | `.../prompts/DX-M1-resume1.md` |
 | DX-B10 | Gate and commit DX-B9's gateway fix; strict per-client commit order with tests; W0 seed at window 32 with the fingerprint | `exp/DX-B10-order` (from `exp/DX-B9-walls`), `.claude/worktrees/dx-b10` | `.../prompts/DX-B10.md` |
 | DX-H7 | Load-generator CPU per pull at 10,000 subjects: profile, cache budgets, shared decode, cheaper exact verification; target 6,000 verified pulls/s | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7.md` |
 
