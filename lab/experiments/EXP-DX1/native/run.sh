@@ -11,6 +11,7 @@ if [[ $kind == pair ]]; then
 fi
 [[ $kind =~ ^(real|medium|tests|smoke)$ ]] || exit 2
 cd "$REPO"; resources
+[[ ! -e $NATIVE/runs/$prefix ]] || { echo "use a fresh prefix; run already exists" >&2; exit 2; }
 mkdir -p "$EVIDENCE" "$NATIVE/runs"
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 held=false; supervisor=; driver=; timer=
@@ -57,7 +58,7 @@ mkdir "$run/driver"
 git rev-parse HEAD > "$run/head.txt"
 python3 "$HERE/bind.py" "$run"
 if [[ $kind == tests ]]; then
-  /usr/sbin/taskpolicy -d default -t 0 -l 0 node "$HERE/command.mjs" pnpm --store-dir /Users/sam/projects/triplex-db-2/.pnpm-store --filter @triplex-build/triplex-datomic exec vitest run test/reach.test.ts test/reach-repair.test.ts test/journal-fast.test.ts test/record-time-peer.test.ts test/concurrent-commits.test.ts test/adapter.test.ts test/commit-observation.test.ts test/layout-differential.test.ts > "$run/driver.log" 2>&1 &
+  /usr/sbin/taskpolicy -d default -t 0 -l 0 node "$HERE/command.mjs" "$REPO/node_modules/.bin/vitest" run --config lab/experiments/EXP-DX1/b5/vitest.config.ts packages/datomic/test/reach.test.ts packages/datomic/test/reach-repair.test.ts packages/datomic/test/journal-fast.test.ts packages/datomic/test/record-time-peer.test.ts packages/datomic/test/concurrent-commits.test.ts packages/datomic/test/adapter.test.ts packages/datomic/test/commit-observation.test.ts packages/datomic/test/layout-differential.test.ts > "$run/driver.log" 2>&1 &
 elif [[ $kind == smoke ]]; then
   /usr/sbin/taskpolicy -d default -t 0 -l 0 node "$HERE/command.mjs" node --experimental-strip-types "$HERE/smoke.mjs" > "$run/driver.log" 2>&1 &
 else

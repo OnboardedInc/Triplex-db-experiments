@@ -4,7 +4,9 @@
 import { execFile } from "node:child_process";
 export class NativeCpuSampler {
   private previous = new Map<number, { identity: string; cpuMs: number; wall: number }>();
-  constructor(private roots: Record<string, number>) {
+  private roots: Record<string, number>;
+  constructor(roots: Record<string, number>) {
+    this.roots = roots;
     if (process.platform !== "darwin") throw Error("TX2_NATIVE_PIDS requires macOS");
     if (Object.values(roots).some(p => !Number.isSafeInteger(p) || p <= 1)) throw Error("invalid native PID");
   }

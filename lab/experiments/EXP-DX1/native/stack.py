@@ -113,7 +113,12 @@ try:
  (run/'policy.txt').write_text(command(['ps','-o','pid,ppid,stat,ni,flags,command','-p',','.join(str(c.pid) for c in children)]))
  ready=dict(prefix=prefix,variant=variant,keepAwake=False,writeUrl=f'http://127.0.0.1:{base+3}',readUrl=f'http://127.0.0.1:{base+4}',gatewaySourceHash=gh,durability=durability,cpuDenominator='used process CPU cores; no quota',pids={r:json.loads((run/(r+'.pid.json')).read_text()) for r in ['pg','tx','gw-w','gw-r']})
  (run/'ready.json').write_text(json.dumps(ready,indent=2));print(json.dumps(ready),flush=True)
+ tick=0
  while True:
+  tick+=1
+  if tick%10==0:
+   kb=int(command(['du','-sk',ROOT/'runs']).split()[0])
+   if kb*1024>=6000000000:raise RuntimeError('native/runs reached 6 GB cap')
   for c in children:
    if c.poll() is not None:raise RuntimeError('engine exited')
   time.sleep(1)
