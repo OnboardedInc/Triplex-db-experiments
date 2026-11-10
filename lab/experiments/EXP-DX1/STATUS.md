@@ -543,11 +543,30 @@ The jumps now in flight:
 3. **Strict per-client commit order** (DX-B10), for seeding and pipelined publication.
 4. **Measurement** (DX-M1): the burst stall and the per-hop split of a steady-rate commit.
 
+## 2026-11-10 22:30 UTC: P5 design settled with Sam (local copy), publication scope narrowed
+
+Sam's concern: several people edit the ontology at once with different previews, so stored previews of outputs go stale
+whenever anyone's release goes live. Agreed direction (verbatim in `lab/research/SAM-decisions-2026-11-09.md`):
+
+1. **The runtime keeps a compact local copy of every entity's current rows, bootstrapped once and kept current by the change
+   feed; a release is evaluated for every subject from that copy, with no fetch.** Kernel cost is 0.33 CPU s per 1,000 subjects;
+   the 7.8 s of gateway time and 1.6 CPU s of decode per 1,000 are what the copy removes. Several candidate releases run over
+   the same copy in one pass. Agent **DX-R1** builds it (`packages/datomic/src/replica/`, `lab/bench/lib/w0-replica*.ts`).
+2. **Publication is of changed outputs in ordinary commits**, not 100,000 results at once (Sam: "The publishes won't be huge
+   chunks"). A release that changes most subjects may publish more slowly.
+3. DX-H8's stored-preview activation (committed dad67907 on its branch) stays as a comparison point; its publication profile,
+   batch-size measurements and the sealed 10,000-subject seed are used by both designs.
+
+Also: an idle-priority loop **inside** the measured container removes the wake penalty at about 8% dense cost on the probe
+(`vm-wake/helper-ab3.sh`: dense 3,085 against 2,830 to 2,870 units; sleep overshoot 5.1 ms against 0.08 ms). The A/B on the
+real writer trace at 10,000 subjects is running (`quiet/wake-ab.sh w1`).
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-H8 | P5 jump: preview memo, feed-driven re-evaluation, coalesced publication; publication profile; seal a 10,000-subject W0 seed; 10,000-subject activation | `exp/DX-H8-preview-activation`, `.claude/worktrees/dx-h8` | `.../prompts/DX-H8.md` |
+| DX-R1 | Local copy of current facts in the runtime (bootstrap, follow the feed, freeze), release evaluation from it for one and several candidates, publish only changed outputs; equality gates against the gateway and the full sweep | `exp/DX-R1-replica`, `.claude/worktrees/dx-r1` | `.../prompts/DX-R1.md` |
 | DX-M1 | Measurement only: cause of the 1 to 2 s stall in every burst; per-hop split of a steady-rate commit | `exp/DX-M1-stall`, `.claude/worktrees/dx-m1` | `.../prompts/DX-M1.md` |
 | DX-B10 | Gate and commit DX-B9's gateway fix; strict per-client commit order with tests; W0 seed at window 32 with the fingerprint | `exp/DX-B10-order` (from `exp/DX-B9-walls`), `.claude/worktrees/dx-b10` | `.../prompts/DX-B10.md` |
 | DX-H7 | Load-generator CPU per pull at 10,000 subjects: profile, cache budgets, shared decode, cheaper exact verification; target 6,000 verified pulls/s | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7.md` |
