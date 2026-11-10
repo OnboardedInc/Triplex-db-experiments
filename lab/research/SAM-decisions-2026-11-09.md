@@ -175,3 +175,12 @@ Orchestrator reading: (1) lane D continues; (2) **verdict runs go straight to th
 no longer a step** (agents may still use small scopes for alternating-arm diagnostics); (3) "IDV" is XTDB (Sam, 2026-11-09), read
 here as XTDB being next after Datomic; (4) Sam is willing to provide a Linux machine, his own or rented; the orchestrator's
 recommendation is in the chat reply of the same time and nothing is rented without him doing it.
+
+## 2026-11-10 about 21:40 UTC: end the native mode; be more ambitious (verbatim)
+
+> No no, let's not do the no-VM mode. I don't care about that. You can end that. I just want to keep experimenting. If you're not doing giant jumps towards getting this to work on Datomic, you need to figure out how to be more ambitious to get us there. No small iterations unless you're super confident in them.
+> Or you're trying to do measuring to figure out new experiments. That's fine too.
+
+Orchestrator reading: DX-N1 stopped, its branch `exp/DX-N1-native` is not merged, its downloaded tools and run directories under
+`~/Claude/Projects/triplex-db-2/native/` are removed, no process of its is running. Work is either a large design jump for lane D
+or a measurement that decides the next jump. Small iterations only where the outcome is near certain.
