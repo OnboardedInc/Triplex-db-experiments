@@ -38,7 +38,11 @@ cleanup() {
  # [DX-M1] Why: raw logs are evidence, compression bounds retained disk. Rejected: source snapshots or audit manifests.
  python3 - "$out" <<'PY'
 import pathlib,gzip,sys
-for p in pathlib.Path(sys.argv[1]).rglob('*'):
+root=pathlib.Path(sys.argv[1])
+(root/'gateway-files.json').unlink(missing_ok=True)
+(root/'config/template.properties').unlink(missing_ok=True)
+for setup in (root/'sql').glob('*.sql'): setup.unlink()
+for p in root.rglob('*'):
  if p.is_file() and p.suffix in ['.log','.jsonl','.jfr']:
   with p.open('rb') as i,gzip.open(str(p)+'.gz','wb') as o:
    while b:=i.read(1<<20):o.write(b)
