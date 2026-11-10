@@ -385,6 +385,11 @@ async function main() {
     }
     let concurrent = false;
     let sequence = 100000;
+    // [DX-B5-L6] Why: prescribed tails use B3's original 5–50 fact bands; a fixed-size probe is separate.
+    // Rejected: replacing every trace event with ten facts and comparing its tails with the B3 distribution.
+    const fixedFacts = process.env.DX_B5_FIXED_FACTS === undefined ? undefined : Number(process.env.DX_B5_FIXED_FACTS);
+    assert.ok(fixedFacts === undefined || (Number.isSafeInteger(fixedFacts) && fixedFacts >= 1 && fixedFacts <= 50));
+    report.commandShape = fixedFacts === undefined ? "DX-B3-banded-trace" : `fixed-${fixedFacts}`;
     const trace = generateTrace({
       seed: "DX-B2-shapes",
       subjects: 200,
@@ -412,7 +417,7 @@ async function main() {
       const event = {
         ...trace[sequence % trace.length],
         subject,
-        facts: 10,
+        ...(fixedFacts === undefined ? {} : { facts: fixedFacts }),
         seq: sequence++,
         stream: "DX-B5",
       };

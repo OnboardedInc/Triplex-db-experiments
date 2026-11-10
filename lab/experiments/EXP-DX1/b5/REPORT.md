@@ -65,9 +65,9 @@ The differential compares getById, entity/list reads, entity/attribute/entity-ty
 
 Lint has zero errors (seven existing/spike warnings); the touched package/core TS files pass formatting. No root-wide `pnpm check`, pack consumer or external backend acceptance is claimed. The package pack script is not used because its unmodified installer can attempt network access; this task permits no downloads. Broad bench typecheck retains unrelated audit-traffic/round2 errors; the changed modules pass their focused check.
 
-## L6 — retained first partial attempt
+## L6 — fixed-size diagnostics; prescribed distribution rerun pending
 
-Source/build copy: `source-final-9c5e496e/`. Stack: `tx2-dxb5-measure-pair-1794280959`; CPU 0–4 held under measurement lock; durable PostgreSQL + transactor and split write/read gateways. Results: `bench-1794282248414-b4d95250-f1fe-4d8d-b2fe-3f14bff884c2/result.json`. This predates compact transport, the shared row index and real-page bound. It is partial diagnostic evidence, not the completed comparison.
+Source/build copy: `source-final-9c5e496e/`. Stack: `tx2-dxb5-measure-pair-1794280959`; CPU 0–4 held under measurement lock; durable PostgreSQL + transactor and split write/read gateways. Results: `bench-1794282248414-b4d95250-f1fe-4d8d-b2fe-3f14bff884c2/result.json`. This predates compact transport, the shared row index and real-page bound. It is partial fixed-10 diagnostic evidence, not the prescribed B3-distribution comparison. A second fixed-10 run completed the entire lean matrix and same-stack legacy baseline on source 5e707729; its raw results are retained in final-measurement-table.md. Final audit found the ten-fact override was inappropriate for comparing B3 tail behavior. The default now preserves the original banded trace (60% 5–10, 30% 11–25, 10% 26–50 facts); fixed size is an explicitly labelled optional probe. The prescribed matrix is being rerun. No fixed-size tail is relabelled as the variable-distribution target result.
 
 | Metric | Lean observed | Requested bar |
 | --- | ---: | ---: |
