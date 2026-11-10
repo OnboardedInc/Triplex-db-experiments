@@ -81,7 +81,7 @@ def ready(name):
 
 def node(name,cpus,volume,config):
     create(name,ids['ghcr.io/xtdb/xtdb-aws:2.2.0'],['--cpuset-cpus',cpus,'--memory','3584m','--memory-swap','3584m','-v',volume+':/var/lib/xtdb','-e','JDK_JAVA_OPTIONS=-Xmx2g -XX:MaxDirectMemorySize=1g','-e','AWS_ACCESS_KEY_ID='+creds['accessKey'],'-e','AWS_SECRET_ACCESS_KEY='+creds['secretKey'],'-e','AWS_REGION=us-east-1','-e','AWS_EC2_METADATA_DISABLED=true'],['-f','/tmp/config.yaml'])
-    docker('cp',BASE/config,name+':/tmp/config.yaml');start(name);engine.append(name)
+    docker('cp',out/'sources'/config,name+':/tmp/config.yaml');start(name);engine.append(name)
 
 def bind():
     states=json.loads(docker('inspect',*engine,driver).stdout)
@@ -111,7 +111,7 @@ try:
         save('retired-control-volumes.json',retired)
     docker('network','create','--internal','tx2-xns2-net')
     create(driver,ids['node:22.23.2-bookworm-slim'],['--cpuset-cpus','4-7','--memory','2g','--memory-swap','2g','--cgroupns','host','-v','/sys/fs/cgroup:/sys/fs/cgroup:ro','-v',driver+':/driver','-w','/src'],['sleep','infinity'])
-    docker('cp',str(BASE)+'/.',driver+':/src/');start(driver)
+    docker('cp',str(out/'sources')+'/.',driver+':/src/');start(driver)
     if profile=='two':
         kafka=['--hostname','tx2-xns2-kafka','--cpuset-cpus','0','--memory','1g','--memory-swap','1g']
         for part,path in [('data','/var/lib/kafka/data'),('secrets','/etc/kafka/secrets'),('config','/mnt/shared/config')]: kafka+=['-v','tx2-xns2-live-kafka-'+part+':'+path]

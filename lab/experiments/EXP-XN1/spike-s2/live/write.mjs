@@ -27,6 +27,8 @@ try{
   const original=await cs[0].query('SELECT _id,doc FROM xn_ent WHERE _id IN ($1,$2,$3)',[0,1,2].map(i=>text(`${id}-${i}`)));
   const originalContent=original.length===3&&original.every(r=>r.doc===payload[Number(r._id.at(-1))]);
   if(!originalContent)throw Error('successful command payload mismatch');
+  const bad=await cs[0].query("SELECT COUNT(*) AS n FROM xn_ent WHERE _id LIKE $1 AND (doc IS NULL OR NOT ((_id LIKE '%-0' AND doc=$2) OR (_id LIKE '%-1' AND doc=$3) OR (_id LIKE '%-2' AND doc=$4)))",[text(`${scope}-%`),...payload.map(text)]);
+  if(Number(bad[0]?.n)!==0)throw Error('scope payload comparison mismatch');
   const out=[];
   for(const [label,cmd,expected] of [['duplicate',id,1],['stale',`${scope}-stale`,0]]){
    const docPrefix=`${scope}-${label}-attempt`;
