@@ -13,9 +13,14 @@ shift
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 evidence=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/$prefix
-mkdir -p "$evidence/driver"
+mkdir -p "$evidence/driver" "$evidence/oracle-bridge"
+bridge_pid=
 docker image inspect node:22.23.2-bookworm-slim >/dev/null
 docker volume create "$prefix-driver" >/dev/null
+# Refuse host port forwarding in this mode, even for a pre-existing caller stack.
+for role in gw-w gw-r; do
+  [[ $(docker inspect --format '{{len .HostConfig.PortBindings}}' "$prefix-$role") == 0 ]] || { echo "VM mode requires up.sh --no-publish" >&2; exit 1; }
+done
 ids=$(docker inspect --format '{{.Name}}={{.Id}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r")
 # [DX-H3] Why: engine cgroup namespaces expose only /; resolve IDs against the host cgroup mount.
 # Rejected: assuming a systemd layout or mounting the Docker socket in the measuring client.
@@ -26,6 +31,7 @@ console.log(rows.map(row=>{const [name,id]=row.split("=");const p=find("/sys/fs/
 cleanup() {
   rc=$?
   trap - EXIT
+  [[ -z $bridge_pid ]] || kill "$bridge_pid" 2>/dev/null || true
   # Copy even after command failure; retain container and volume if copy fails.
   docker cp "$prefix-driver:/driver/." "$evidence/driver/" || exit 1
   docker rm -f "$prefix-driver" >/dev/null
@@ -37,8 +43,13 @@ docker create --pull never --name "$prefix-driver" --network "$prefix-net" --cpu
   --cgroupns host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v "$repo:$repo" \
   -v /Users/sam/Claude/Projects/triplex-db-2/evidence:/Users/sam/Claude/Projects/triplex-db-2/evidence \
   -v "$prefix-driver:/driver" -v "$prefix-driver:$repo/runs/DX-H3-vm" -w "$repo" \
+  -e "TX2_ORACLE_BRIDGE=$evidence/oracle-bridge" \
   -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" \
   -e "TX2_ENGINE_CONTAINER=$prefix-pg,$prefix-tx,$prefix-gw-w,$prefix-gw-r" \
   -e "TX2_ENGINE_CGROUPS=$cgroups" -e "TX2_ENGINE_CPUS=${TX2_ENGINE_CPUS:-1}" \
   node:22.23.2-bookworm-slim "$@" >/dev/null
+docker inspect "$prefix-driver" > "$evidence/driver-container.json"
+printf '%s\n' "$cgroups" > "$evidence/cgroups.txt"
+node "$repo/lab/experiments/EXP-DX1/h3/oracle-bridge.mjs" server "$evidence/oracle-bridge" &
+bridge_pid=$!
 docker start -a "$prefix-driver"

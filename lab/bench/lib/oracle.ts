@@ -79,7 +79,10 @@ export function checkWithOracle(opts: { oracleRoot: string; dir: string; caseDoc
   const started = Date.now();
   let exitCode = 0;
   try {
-    execFileSync("python3", ["-I", cli, caseFile, "-o", outFile], { stdio: ["ignore", "ignore", "pipe"], maxBuffer: 64 << 20, timeout: 900_000 });
+    const bridge = process.env["TX2_ORACLE_BRIDGE"];
+    // [DX-H3] Why: keep the frozen Python oracle when the local VM image lacks Python.
+    // Rejected: reimplementing its semantics in the harness or changing expected bytes.
+    execFileSync(bridge ? process.execPath : "python3", [...(bridge ? [path.resolve("lab/experiments/EXP-DX1/h3/oracle-bridge.mjs"), "client", bridge] : []), "-I", cli, caseFile, "-o", outFile], { stdio: ["ignore", "ignore", "pipe"], maxBuffer: 64 << 20, timeout: 900_000 });
   } catch (error: any) {
     exitCode = error.status ?? -1;
     if (!fs.existsSync(outFile)) return { status: "ORACLE-ERROR", exitCode, stderr: String(error.stderr ?? error.message).slice(0, 2000), reads: 0, mismatches: [] as any[] };
