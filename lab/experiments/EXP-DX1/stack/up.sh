@@ -5,10 +5,18 @@ prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-wri
 shift
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
 tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src=
+# [DX-S3] Why: tune placement, heap and durable storage without changing existing callers.
+# Rejected: replacing defaults globally (would change other agents' measurements).
+pg_mem=512m tx_mem=3g gw_mem=1500m tx_java='-Xms256m -Xmx2g' gw_java=''
+index_threshold=128m index_max=512m object_cache=128m pg_settings=''
 while (($#)); do
   case "$1" in
     --cpus-tx) tx=$2;; --cpus-pg) pg=$2;;
     --cpus-gw-write) gw_w=$2;; --cpus-gw-read) gw_r=$2;;
+    --pg-memory) pg_mem=$2;; --tx-memory) tx_mem=$2;; --gw-memory) gw_mem=$2;;
+    --tx-java-opts) tx_java=$2;; --gw-java-opts) gw_java=$2;;
+    --memory-index-threshold) index_threshold=$2;; --memory-index-max) index_max=$2;;
+    --object-cache-max) object_cache=$2;; --pg-settings) pg_settings=$2;;
     --gateway-src) src=$2;; --port-write) port_w=$2;; --port-read) port_r=$2;;
     *) echo "unknown option $1" >&2; exit 2;;
   esac
@@ -56,19 +64,19 @@ done
 docker cp "$prefix-extract:/opt/datomic/config/samples/sql-transactor-template.properties" "$attempt/config/template.properties"
 docker rm "$prefix-extract" >/dev/null
 trap - EXIT
-python3 - "$attempt/config" "$prefix" <<'PY'
+python3 - "$attempt/config" "$prefix" "$index_threshold" "$index_max" "$object_cache" <<'PY'
 import pathlib,sys
 root=pathlib.Path(sys.argv[1]); prefix=sys.argv[2]
 settings={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx',
 'sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic','sql-user':'datomic','sql-password':'datomic',
-'memory-index-threshold':'128m','memory-index-max':'512m','object-cache-max':'128m'}
+'memory-index-threshold':sys.argv[3],'memory-index-max':sys.argv[4],'object-cache-max':sys.argv[5]}
 lines=[line for line in (root/'template.properties').read_text().splitlines() if line.partition('=')[0].strip() not in settings]
 (root/'sql.properties').write_text('\n'.join(lines)+'\n'+'\n'.join(k+'='+v for k,v in settings.items())+'\n')
 PY
 docker network create "$prefix-net" >/dev/null
 docker volume create "$prefix-pg-data" >/dev/null
-docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus "$pg" --memory 512m --memory-swap 512m \
-  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" postgres:17-alpine >/dev/null
+docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
+  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" postgres:17-alpine postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
 ready=false
@@ -83,14 +91,14 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   [[ "$file" != postgres-table.sql ]] || db=datomic
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$attempt/sql/$file" > "$attempt/sql/$file.log"
 done
-docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "$tx" --memory 3g --memory-swap 3g \
-  -e "JAVA_OPTS=-Xms256m -Xmx2g" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
+docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
+  -e "JAVA_OPTS=$tx_java" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # A ready transactor is checked by gateway health, which creates and syncs a real SQL database.
 for role in w r; do
   if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
-  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 1500m --memory-swap 1500m \
-    -p "127.0.0.1:$port:8080" -e "JAVA_OPTS=-Xms256m -Xmx1g" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory "$gw_mem" --memory-swap "$gw_mem" \
+    -p "127.0.0.1:$port:8080" -e "JAVA_OPTS=-Xms256m -Xmx1g" -e "DATOMIC_JAVA_OPTS=$gw_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -v "$src:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false
