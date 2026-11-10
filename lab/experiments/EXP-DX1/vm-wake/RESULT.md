@@ -1,9 +1,8 @@
 # VM wake latency: result and instruction (orchestrator, 2026-11-10 12:22 UTC)
 
-**Instruction for anyone measuring in the triplex2 VM: while you hold the measurement lock, run
-`lab/experiments/EXP-DX1/vm-wake/keep-awake.sh start` before the measurement and `keep-awake.sh stop` before you release the lock
-(put the stop in your exit trap). Write `"keepAwake": true` into the run's receipt or report. If you compare with an earlier run,
-say that the earlier run had no keep-awake.**
+**Instruction for anyone measuring in the triplex2 VM (revised 2026-11-10 17:10 UTC): do NOT run `keep-awake.sh`. Measure
+with no helper and write `"keepAwake": false`. The wake penalty below is real and inflates latencies of sparse work (anything
+that waits tens of milliseconds between steps); say so next to any sparse-traffic number. See "Why keep-awake was withdrawn".**
 
 ## What was measured
 
@@ -43,3 +42,31 @@ this and wrote the fixed version now in this directory (the marker is built indi
 policy and affinity and must print `running 8` and `"onePerCpu": true`). **After `start`, always run `status` and refuse to
 measure unless it shows 8 workers, one per CPU.** Runs before this correction that recorded `keepAwake: true` had none, except
 DX-B7's `step4-pull-c`, which used the fixed copy. The probe table above is unaffected: `run.sh --spin` starts its own loops.
+
+## Why keep-awake was withdrawn (2026-11-10 17:10 UTC)
+
+1. **It halves dense throughput.** DX-B8 measured the same gateway with and without the helper: 256 frozen-basis readers
+   7,973 against 3,858 pulls/s; back-to-back commit p50 3.1 against 5.6 ms. The orchestrator's A/B on a CPU-bound container
+   pinned to one CPU (`helper-ab.sh`, `helper-ab2.sh`, evidence `~/Claude/Projects/triplex-db-2/evidence/ORCH-vm-wake2/`):
+
+   | Busy loops | Dense units in 4 s | Unit after a 1 s sleep, p50 ms | Sleep overshoot p50 ms |
+   | --- | --- | --- | --- |
+   | none | 2,512 and 2,433 | 10.6 and 10.4 | 10.6 and 11.3 |
+   | 8, SCHED_IDLE in the login session's cgroup | 1,408 | 4.5 | 0.12 |
+   | 8, in a cgroup with `cpu.idle=1` | 1,143 | 3.9 | 0.11 |
+   | 6 (CPUs 0 to 5) | 1,843 | 3.1 | 0.12 |
+   | 4 (CPUs 0 to 3) | 1,625 | 2.6 | 0.12 |
+   | 1 (the measured CPU only) | 1,279 | 2.5 | 2.5 |
+
+   One busy loop on the measured CPU alone costs about half: a SCHED_IDLE task is only "idle" against tasks in its own
+   cgroup; against a container's cgroup the two groups share the CPU. The `cpu.idle=1` variant did no better in this sample
+   (host load was high; not pursued).
+2. **The host cannot keep 8 vCPUs fast anyway.** The Mac is an M3 Pro with 6 performance and 6 efficiency cores
+   (`sysctl hw.perflevel0.physicalcpu` = 6). Eight always-busy vCPUs cannot all sit on performance cores. The same limit applies
+   to any run that keeps more than 6 vCPUs busy (256 readers do).
+3. A kernel idle-polling boot parameter would avoid the scheduling competition but needs a VM restart, keeps 8 host cores at
+   100% whenever the VM is up, and still hits point 2. Not done.
+
+Consequence: sparse-traffic latencies on this test bed carry a wake penalty of roughly 8 to 10 ms per hop that a Linux server
+does not have; dense and loaded numbers do not. Host memory matters too: on 2026-11-10 the Mac had 18 to 28 GB of swap in use
+(36 GB RAM, this VM has 20 GiB), which adds noise to every timing.
