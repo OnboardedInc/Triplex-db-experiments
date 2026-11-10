@@ -21,7 +21,7 @@ Concurrency probes used separate fresh 1k scopes, preserving order within each s
 
 Eight was fastest in this single ordered series, without randomized/JIT-controlled repetition. **Faster concurrent scopes are not valid reference seeds.** The immutable O-DOMAIN fingerprint includes each fact's actual logical command position; interleaved subjects reorder it. I preserved the gate and seeded qualified scopes in exact reference order. A position-preserving batching/ordered import design would be needed to exploit concurrent preparation; no package change was implemented or assumed necessary without investigating existing transaction APIs.
 
-At roughly 42.8 commands/subject and 208.665 commands/s, 100k implies about **20,500 s / 5.7 hours in commands alone**, before count/fingerprint/sealing, if this rate held. The faster diagnostic rate implies about 3.1 hours but fails exact reference positions. Neither is a measured 100k seed time.
+The reference generator gives 434,768 commands at 10k and 4,338,757 at 100k (`reference-command-counts.json`, metadata only). At 208.665 commands/s, 100k implies about **20,793 s / 5.78 hours in commands alone**, before count/fingerprint/sealing, if this rate held. The faster diagnostic rate implies about 3.11 hours but fails exact reference positions. Neither is a measured 100k seed time.
 
 ## Reader equality and the observed memory failure
 
@@ -42,7 +42,7 @@ All completed 1k configurations use page size 64, 64 uniform current-position li
 |    1,000 |          1 |       58.593 |     17.067 |          16 |          1,000 |          1.056 |            1.425 |
 |    1,000 |          4 |       30.659 |     32.617 |          16 |          1,000 |          1.105 |        **1.810** |
 |    1,000 |          8 |       31.792 |     31.455 |          16 |          1,000 |          1.125 |            1.448 |
-|   10,000 | 4 selected |      pending |          — |           — |              — |              — |                — |
+|   10,000 | 8 selected |      pending |          — |           — |              — |              — |                — |
 
 For **each** completed 1k configuration: G0 PASS (fresh independent population and complete counts); G1 PASS (fresh O-DOMAIN fingerprint, no pre-capture trace); G2 PASS (independent reconciliation for all 1,000 subjects); G3 PASS (ten positive post-capture retroactive mutations and ten negative controls); G5 PASS (807 deliveries, independent per-frame publication fold); G7 PASS (all pages at activation position 42,776 / valid time 2026-11-04T12:00Z and exact epoch); G9 PASS (full actual stored-journal/count fold). G4 **PARTIAL**: exact coverage and completed-cursor resume pass, ten abrupt process-stop cycles absent. G6 **NOT-RUN**: separate reviewer integration needed. G8 has **no maintenance-overlap run**. No omission was promoted to PASS.
 
