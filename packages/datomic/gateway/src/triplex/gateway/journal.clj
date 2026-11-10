@@ -20,7 +20,7 @@
           _ (when-not (and (integer? limit) (<= 1 limit 1000) (integer? wait-ms) (<= 0 wait-ms 30000))
               (throw (ex-info "Invalid journal page bounds" {:status 400})))
           deadline (+ (System/nanoTime) (* wait-ms 1000000))
-          db (loop [db (storage/await-record-time name conn
+          current (loop [db (storage/await-record-time name conn
                     (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
                       (get input "basisWaitMs") (fn [_] (d/db conn))) input)]
                ;; [DX-B6-5] Why: this index is ordered by logical position, not by the physical commit's record-time cut.
@@ -28,13 +28,16 @@
                (supported! db name false)
                (if (and (pos? wait-ms) (<= (storage/head-position name db) after) (< (System/nanoTime) deadline))
                  (do (Thread/sleep 1) (recur (d/db conn))) db))
+          ;; [DX-B6-5] Why: an explicit basis selects a cut after freshness, rather than exposing later journals.
+          ;; Rejected: waiting for R and then enumerating the current head unconditionally.
+          db (if-let [basis (get input "basis")] (first (reach/select-db name current basis)) current)
           ;; Physical positions are monotonic; nested logical journals are sorted within each physical commit.
           journals (mapcat (fn [tx]
                              (let [links (vec (d/datoms db :eavt (:e tx) :triplex.tx/journals))]
                                (sort-by second
                                  (for [link links
                                        :let [e (:v link) p (value db e :triplex.journal/position)]
-                                       :when (or (= 1 (count links)) (> p after))] [e p]))))
+                                       :when (> p after)] [e p]))))
                            (d/index-range db :triplex.tx/position (inc after) nil))
           out (StringBuilder.)]
       (.append out "{\"head\":") (.append out (str (storage/head-position name db))) (.append out ",\"transactions\":[")
