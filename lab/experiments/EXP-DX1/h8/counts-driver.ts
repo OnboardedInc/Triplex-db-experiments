@@ -1,3 +1,4 @@
+import { publicationMatrix } from "./publication-matrix.ts";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,6 +39,12 @@ export async function runCountsDriver(argv: string[]) {
     result.countMode = "full-history-public-batch-256";
     result.bulkCountObservations = counters.flatMap((c) => c.stats);
     fs.writeFileSync(output, JSON.stringify(result, null, 2) + "\n");
+    if (
+      result.N === 1000 &&
+      argv.includes("--stored-preview") &&
+      argv[argv.indexOf("--publish-size") + 1] === "64"
+    )
+      await publicationMatrix(result, path.dirname(output));
     return result;
   } finally {
     COMPOSITIONS.reach = original;
