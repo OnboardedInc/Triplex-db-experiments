@@ -28,6 +28,7 @@ export function buildCase(opts: { caseId: string; commands: readonly RecordedCom
   const commands: any[] = [];
   const receipts: any[] = [];
   let lastInstant = 0;
+  const knownAssertions = new Set<string>();
   for (let p = 1; p <= opts.lastPosition; p++) {
     const c = byPosition.get(p);
     const index = commands.length;
@@ -36,6 +37,10 @@ export function buildCase(opts: { caseId: string; commands: readonly RecordedCom
       receipts.push({ command: index, outcome: "committed", txId: `internal:${p}`, position: p, instant: lastInstant });
       continue;
     }
+    // [DX-H3] Why: omitted seed/history parents make a sampled case incomplete, not an engine failure.
+    // Rejected: deleting the unknown retract from the case or accepting the sampled worlds alone.
+    for (const op of c.operations) if (op.op === "retract" && !knownAssertions.has(op.id)) throw Error(`Incomplete O-REPLAY input: assertion ${op.id} retracted at position ${p} was not recorded`);
+    for (const id of c.receipt.assertionIds) if (id) knownAssertions.add(id);
     lastInstant = Math.max(lastInstant, c.receipt.instant);
     commands.push({
       kind: "transact",
