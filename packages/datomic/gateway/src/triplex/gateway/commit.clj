@@ -79,7 +79,7 @@
                    (throw (ex-info (str "TRIPLEX_CLOCK " prior) {:maximum prior})))
                irregular (or irregular
                              (and (seq times)
-                                  (or (and (not replay-safe) (some #(not= (first times) %) times))
+                                  (or (some #(not= (first times) %) times)
                                       (and prior (some #(< % prior) times)))))]
            (vec (concat prepared
                         [[:db/add scope :triplex.scope/position final]]
