@@ -95,12 +95,13 @@ try:
  main.write_text(text.replace(old,'{:port (Integer/parseInt (System/getenv "DX_NATIVE_GATEWAY_PORT")) :host "127.0.0.1"'))
  adapted=hashes(); gh=hashlib.sha256(json.dumps(adapted,sort_keys=True,separators=(',',':')).encode()).hexdigest()
  (run/'gateway-files.json').write_text(json.dumps(dict(original=original,originalHash=original_hash,native=adapted,nativeHash=gh),indent=2))
- (run/'tx-data').mkdir(); (run/'socket').mkdir()
+ (run/'tx-data').mkdir(); (run/'tmp').mkdir(); (run/'bin').mkdir()
+ shutil.copy(datomic/'bin/logback.xml',run/'bin/logback.xml')
  command([pg/'initdb','-D',run/'pg-data','-U','postgres','--auth=trust','--no-locale','--encoding=UTF8'])
  pgargs=[pg/'postgres','-D',run/'pg-data','-h','127.0.0.1','-p',str(base),'-k','','-c','shared_buffers=512MB','-c','max_wal_size=8GB','-c','checkpoint_timeout=30min','-c','wal_buffers=64MB','-c','fsync=on','-c','synchronous_commit=on','-c','full_page_writes=on']
  if variant!='default':pgargs+=['-c','wal_sync_method='+variant]
  launch('pg',pgargs)
- waitfor(lambda:subprocess.run([str(pg/'pg_isready'),'-h','127.0.0.1','-p',str(base)],capture_output=True).returncode==0)
+ waitfor(lambda:subprocess.run([str(pg/'pg_isready'),'-h','127.0.0.1','-p',str(base),'-U','postgres'],capture_output=True).returncode==0)
  sql=[pg/'psql','-h','127.0.0.1','-p',str(base),'-U','postgres','-v','ON_ERROR_STOP=1']
  for name in ['postgres-db.sql','postgres-table.sql','postgres-user.sql']:
   out=command(sql+['-d','datomic' if name=='postgres-table.sql' else 'postgres','-f',datomic/'bin/sql'/name]);(run/(name+'.log')).write_text(out)
@@ -109,11 +110,11 @@ try:
  props='\n'.join(l for l in template.splitlines() if l.partition('=')[0].strip() not in settings)+'\n'+'\n'.join(k+'='+v for k,v in settings.items())+'\n'
  (run/'sql.properties').write_text(props)
  cp=f'{datomic}/resources:{datomic}/*:{datomic}/lib/*:{datomic}/samples/clj:{datomic}/bin:{src}/src'
- launch('tx',[java,'-server','-Xms256m','-Xmx3g','-cp',cp,'clojure.main','--main','datomic.launcher',run/'sql.properties'],cwd=run)
+ launch('tx',[java,'-server','-Djava.io.tmpdir='+str(run/'tmp'),'-Xms256m','-Xmx3g','-cp',cp,'clojure.main','--main','datomic.launcher',run/'sql.properties'],cwd=run)
  uri=f'datomic:sql://{{db}}?jdbc:postgresql://127.0.0.1:{base}/datomic?user=datomic&password=datomic'
  for role,port in [('gw-w',base+3),('gw-r',base+4)]:
   env={**os.environ,'DATOMIC_URI_TEMPLATE':uri,'GATEWAY_SOURCE_SHA256':gh,'DX_NATIVE_GATEWAY_PORT':str(port)}
-  launch(role,[java,'-server','-Xms1g','-Xmx2g','-XX:+UseG1GC','-XX:MaxGCPauseMillis=25','-Ddatomic.objectCacheMax=1g','-cp',cp,'clojure.main','-i',datomic/'bin/bridge.clj','-m','triplex.gateway.main'],env=env,cwd=run)
+  launch(role,[java,'-server','-Djava.io.tmpdir='+str(run/'tmp'),'-Dtriplex.codec.spec='+str(src/'codec-spec.json'),'-Xms1g','-Xmx2g','-XX:+UseG1GC','-XX:MaxGCPauseMillis=25','-Ddatomic.objectCacheMax=1g','-cp',cp,'clojure.main','-i',datomic/'bin/bridge.clj','-m','triplex.gateway.main'],env=env,cwd=run)
   def health():
    with urllib.request.urlopen(f'http://127.0.0.1:{port}/health',timeout=3) as r:return json.load(r)
   h=waitfor(health);assert h['gatewaySourceHash']==gh
