@@ -77,6 +77,7 @@ export class FeedConsumer {
   private readonly source: string;
   private store: InstanceType<typeof SqliteConsumerStore>;
   private readonly now: () => number;
+  private readonly pollTimeoutMs: number;
   private readonly publicationWaitMs: number;
   private readonly publicationOf?: (key: FeedPosition) => FeedPublication | undefined;
   private readonly measurement?: Measurement;
@@ -125,6 +126,7 @@ export class FeedConsumer {
     epoch: string;
     startAfter: number;
     now: () => number;
+    pollTimeoutMs?: number;
     publicationWaitMs?: number;
     publicationOf?: (key: FeedPosition) => FeedPublication | undefined;
     measurement?: Measurement;
@@ -139,6 +141,7 @@ export class FeedConsumer {
     this.commitOf = opts.commitOf;
     this.publicationOf = opts.publicationOf;
     this.publicationWaitMs = opts.publicationWaitMs ?? 0;
+    this.pollTimeoutMs = opts.pollTimeoutMs ?? 0;
     this.measurement = opts.measurement;
     this.open = opts.open;
     this.log = opts.log;
@@ -227,11 +230,21 @@ export class FeedConsumer {
   private async consume(handle: CompositionHandle) {
     while (!this.stopping) {
       let page;
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      const timeoutError = new Error(`Feed poll exceeded ${this.pollTimeoutMs} ms at checkpoint ${this.checkpoint}`);
       try {
-        page = await handle.feedPage(this.checkpoint, 1000);
-      } catch {
+        // [DX-H3] Why: a stuck source poll must produce an invalid report instead of hanging finalization.
+        // Rejected: accepting the missing page or waiting beyond the measurement lease.
+        const pending = handle.feedPage(this.checkpoint, 1000);
+        page = this.pollTimeoutMs > 0 ? await Promise.race([pending, new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => reject(timeoutError), this.pollTimeoutMs);
+        })]) : await pending;
+      } catch (error) {
+        if (error === timeoutError) throw error;
         await new Promise((r) => setTimeout(r, 100));
         continue;
+      } finally {
+        clearTimeout(timeout);
       }
       this.counts.pages++;
       const txs = page.transactions;

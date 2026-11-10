@@ -531,6 +531,7 @@ async function run() {
   const publicationReader = publicationWriter ? openPublicationReader(path.join(rawDir, "publication.db")) : null;
   feed = pairPlan ? null : new FeedConsumer({
     publicationWaitMs: lane === "datomic" ? 5000 : 0,
+    pollTimeoutMs: lane === "datomic" ? 30_000 : 0,
     dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,
     ...(publicationClock && publicationReader ? { measurement: { clock: publicationClock, records: publicationReader } } : {}),
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },

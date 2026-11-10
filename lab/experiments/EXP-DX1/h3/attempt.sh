@@ -54,9 +54,10 @@ else
   export TX2_ENGINE_CPUS=5
   cpus=(--cpus-tx 0,1 --cpus-pg 0 --cpus-gw-write 2 --cpus-gw-read 3,4)
   if [[ $kind == real ]]; then
+    export DX_DRIVER_MEMORY=5g
     export DX_TX_HEAP=4g DX_TX_MEMORY=5g DX_GW_WRITE_HEAP=2g DX_GW_WRITE_MEMORY=2500m DX_GW_READ_HEAP=3g DX_GW_READ_MEMORY=3500m DX_PG_MEMORY=2g DX_OBJECT_CACHE=1g DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
   fi
 fi
 bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" > "$out/up.log" 2>&1
-bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
+bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
  --lane datomic --composition reach --profile smoke --reader-threads 2 --oracle-root "$DX_STACK_EVIDENCE/oracle" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1

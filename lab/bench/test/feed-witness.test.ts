@@ -75,3 +75,34 @@ for (const publish of [true, false])
       fs.rmSync(dir, { recursive: true });
     }
   });
+
+test("a stalled source poll fails instead of leaving final reporting blocked", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dxh3-stall-"));
+  let closed = false;
+  const feed = new FeedConsumer({
+    dir,
+    epoch: "stall",
+    startAfter: 0,
+    now: Date.now,
+    pollTimeoutMs: 20,
+    commitOf: () => undefined,
+    open: async () =>
+      ({
+        feedPage: () => new Promise(() => {}),
+        close: async () => {
+          closed = true;
+        },
+      }) as any,
+    log: () => {},
+    crashes: [],
+  });
+  try {
+    await assert.rejects(feed.run(), /Feed poll exceeded 20 ms at checkpoint 0/);
+    assert.equal(closed, true);
+    assert.equal(feed.checkpoint, 0);
+    assert.equal(feed.counts.durableWrites, 0);
+  } finally {
+    feed.close();
+    fs.rmSync(dir, { recursive: true });
+  }
+});

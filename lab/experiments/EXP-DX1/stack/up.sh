@@ -107,7 +107,7 @@ for role in w r; do
 done
 docker inspect "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" > "$attempt/containers.json"
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc "SHOW fsync; SHOW synchronous_commit; SHOW full_page_writes; SHOW wal_sync_method;" > "$attempt/durability.txt"
-python3 - "$attempt" "$prefix" "$gateway_hash" "$port_w" "$port_r" <<'PY'
+python3 - "$attempt" "$prefix" "$gateway_hash" "$port_w" "$port_r" "$publish" <<'PY'
 import json,pathlib,sys,datetime
 root=pathlib.Path(sys.argv[1]); rows=json.loads((root/'containers.json').read_text())
 durability=dict(zip(['fsync','synchronous_commit','full_page_writes','wal_sync_method'],(root/'durability.txt').read_text().splitlines()))
@@ -116,7 +116,11 @@ for role in ['w','r']:
     assert json.loads((root/('health-'+role+'.json')).read_text())['gatewaySourceHash']==sys.argv[3]
 out={'createdAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'prefix':sys.argv[2],'gatewaySourceSha256':sys.argv[3],
 'containers':[{'name':r['Name'].lstrip('/'),'id':r['Id'],'imageId':r['Image'],'cpuset':r['HostConfig']['CpusetCpus'],'memory':r['HostConfig']['Memory']} for r in rows],
-'durability':durability,'writeUrl':'http://127.0.0.1:'+sys.argv[4],'readUrl':'http://127.0.0.1:'+sys.argv[5]}
+'durability':durability,'writeUrl':('http://'+sys.argv[2]+'-gw-w:8080') if sys.argv[6]=='false' else 'http://127.0.0.1:'+sys.argv[4],'readUrl':('http://'+sys.argv[2]+'-gw-r:8080') if sys.argv[6]=='false' else 'http://127.0.0.1:'+sys.argv[5]}
 (root/'stack.json').write_text(json.dumps(out,indent=2)+'\n')
 PY
-printf 'DATOMIC_URL=http://127.0.0.1:%s\nDATOMIC_READ_URLS=http://127.0.0.1:%s\nEvidence: %s/stack.json\n' "$port_w" "$port_r" "$attempt"
+if [[ $publish == false ]]; then
+  printf 'DATOMIC_URL=http://%s-gw-w:8080\nDATOMIC_READ_URLS=http://%s-gw-r:8080\nEvidence: %s/stack.json\n' "$prefix" "$prefix" "$attempt"
+else
+  printf 'DATOMIC_URL=http://127.0.0.1:%s\nDATOMIC_READ_URLS=http://127.0.0.1:%s\nEvidence: %s/stack.json\n' "$port_w" "$port_r" "$attempt"
+fi
