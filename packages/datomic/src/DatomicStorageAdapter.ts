@@ -8,7 +8,6 @@ import {
 } from "./CommitOrder.js";
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
 import { decodeRowText, encodeRowText } from "./rowText.js";
-import { RowCache } from "./RowCache.js";
 import { validateTagged } from "./codec.js";
 import { decodeEntity } from "./reach.js";
 import { reachResponse, reachRowsResponse, reachRowIndex } from "./reach.js";
@@ -61,7 +60,14 @@ export const makeDatomicStorageAdapter = (
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
   let lastSeenPosition = 0;
-  const cache = new RowCache();
+  const prefix = `${db}\0`;
+  const cache = {
+    get: (id: string) => client.rowCache.get(prefix + id),
+    has: (id: string) => client.rowCache.has(prefix + id),
+    set: (id: string, row: TripleRow) => client.rowCache.set(prefix + id, row),
+    delete: (id: string) => client.rowCache.delete(prefix + id),
+    clear: () => client.rowCache.deleteWhere((key) => key.startsWith(prefix)),
+  };
   const remember = (row: TripleRow) => {
     cache.set(row.id, {
       ...row,

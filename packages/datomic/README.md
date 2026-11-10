@@ -165,3 +165,14 @@ overlap, including through older instrumentation wrappers.
 
 This layout remains experimental. See `lab/experiments/EXP-DX1/b5/REPORT.md` for
 actual gate denominators, diagnostic measurements and unresolved limitations.
+
+### Client cache budgets
+
+`makeDatomicRuntime({ url, entityCacheBytes, rowCacheBytes })` bounds retained
+entity and row caches per client, shared across its scopes. Defaults are 128 MiB
+and 32 MiB. Accounting estimates UTF-16 row text, column slots and decoded entity
+objects; it is not a process RSS limit. Entries larger than their budget are not
+cached. Reads promote entries in the LRU; evictions retain the session and repair
+missing references with a basis-bound `need` request. `client.reachCache.bytes`,
+`client.rowCache.bytes`, their `peakBytes`/`evictions`, and
+`client.reachDiagnostics` expose the retained estimates and protocol paths.

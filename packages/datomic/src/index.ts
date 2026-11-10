@@ -17,6 +17,8 @@ class Connection extends Context.Service<Connection, DatomicClient>()(
 export function makeDatomicRuntime(options: {
   readonly url: string;
   readonly layout?: "lean" | "legacy";
+  readonly entityCacheBytes?: number;
+  readonly rowCacheBytes?: number;
   readonly admissionQueue?: boolean;
   readonly maxRetries?: number;
   readonly resolutionTimeoutMs?: number;
@@ -24,7 +26,7 @@ export function makeDatomicRuntime(options: {
   const connection = Layer.effect(
     Connection,
     Effect.acquireRelease(
-      Effect.sync(() => new DatomicClient(options.url, 35_000)),
+      Effect.sync(() => new DatomicClient(options.url, 35_000, 64 * 1024 ** 2, options)),
       (client) => Effect.sync(() => client.close()),
     ),
   );

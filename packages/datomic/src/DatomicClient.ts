@@ -1,3 +1,5 @@
+import { ByteCache } from "./ByteCache.js";
+import { RowCache, estimateRowBytes } from "./RowCache.js";
 import { randomUUID } from "node:crypto";
 import { decodeEntity, type CachedEntity, type ReachWire } from "./reach.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
@@ -86,7 +88,8 @@ export class DatomicClient {
   private readonly sentCallbacks = new Map<string, () => void>();
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
-  readonly reachCache = new Map<string, Map<string, CachedEntity>>();
+  readonly reachCache: ByteCache<CachedEntity>;
+  readonly rowCache: RowCache;
   forceFullReach = false;
   readonly reachDiagnostics = {
     refMisses: 0,
@@ -104,7 +107,19 @@ export class DatomicClient {
     endpoint: string,
     readonly timeoutMs = 5000,
     readonly maxResponseBytes = 64 * 1024 ** 2,
+    readonly cacheOptions: {
+      readonly entityCacheBytes?: number;
+      readonly rowCacheBytes?: number;
+    } = {},
   ) {
+    this.reachCache = new ByteCache(
+      cacheOptions.entityCacheBytes ?? 128 * 1024 ** 2,
+      (entity) => 256 + entity.storedRows.reduce((n, row) => n + 3 * estimateRowBytes(row), 0),
+    );
+    this.rowCache = new RowCache(
+      Number.MAX_SAFE_INTEGER,
+      cacheOptions.rowCacheBytes ?? 32 * 1024 ** 2,
+    );
     if (
       !Number.isSafeInteger(timeoutMs) ||
       timeoutMs <= 0 ||
@@ -119,6 +134,8 @@ export class DatomicClient {
   }
   readonly rowObservers = new Set<(db: string, row: TripleRow) => void>();
   close(): void {
+    this.reachCache.clear();
+    this.rowCache.clear();
     this.layouts.clear();
     this.rowObservers.clear();
     this.agent.destroy();
@@ -265,10 +282,6 @@ export class DatomicClient {
     older: readonly Promise<void>[],
     ingested: () => void,
   ) {
-    if ([...this.reachCache.values()].reduce((n, cache) => n + cache.size, 0) > 500000) {
-      this.reachSession = randomUUID();
-      this.reachCache.clear();
-    }
     for (let attempt = 0; attempt < 2; attempt++) {
       const response = await this.request<ReachWire>(
         "POST",
@@ -298,13 +311,13 @@ export class DatomicClient {
           response.closures.length !== roots.length
         )
           throw new TypeError("Reach response basis/shape mismatch");
-        let cache = this.reachCache.get(db);
-        if (!cache) {
-          cache = new Map();
-          this.reachCache.set(db, cache);
-        }
+        const prefix = `${db}\0`;
+        const cache = {
+          get: (id: string) => this.reachCache.get(prefix + id),
+          set: (id: string, entity: CachedEntity) => this.reachCache.set(prefix + id, entity),
+        };
         if (response.reset) {
-          cache.clear();
+          this.reachCache.deleteWhere((key) => key.startsWith(prefix));
           this.reachDiagnostics.resets++;
         }
         const entities = new Map<string, CachedEntity>();

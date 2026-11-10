@@ -1,64 +1,15 @@
 import type { TripleRow } from "@triplex-build/triplex/runtime";
-
-type Entry = { row: TripleRow; previous: Entry | null; next: Entry | null };
-// [DX-B3-M4] Why: Map.keys().next() walks deleted slots during a sustained bounded-cache workload.
-// Rejected: insertion-ordered Map eviction (first M4 measured 1.96 ms p50 after the ACK).
-export class RowCache {
-  private readonly entries = new Map<string, Entry>();
-  private oldest: Entry | null = null;
-  private newest: Entry | null = null;
-  constructor(readonly limit = 100000) {
-    if (!Number.isSafeInteger(limit) || limit < 1) throw new RangeError("Invalid row cache limit");
-  }
-  get size() {
-    return this.entries.size;
-  }
-  has(id: string) {
-    return this.entries.has(id);
-  }
-  private detach(entry: Entry) {
-    if (entry.previous) entry.previous.next = entry.next;
-    else this.oldest = entry.next;
-    if (entry.next) entry.next.previous = entry.previous;
-    else this.newest = entry.previous;
-  }
-  private promote(entry: Entry) {
-    if (this.newest === entry) return;
-    this.detach(entry);
-    entry.previous = this.newest;
-    entry.next = null;
-    if (this.newest) this.newest.next = entry;
-    else this.oldest = entry;
-    this.newest = entry;
-  }
-  get(id: string): TripleRow | undefined {
-    const entry = this.entries.get(id);
-    if (!entry) return undefined;
-    this.promote(entry);
-    return entry.row;
-  }
-  set(id: string, row: TripleRow) {
-    const existing = this.entries.get(id);
-    if (existing) {
-      existing.row = row;
-      this.promote(existing);
-      return;
-    }
-    const entry: Entry = { row, previous: this.newest, next: null };
-    if (this.newest) this.newest.next = entry;
-    else this.oldest = entry;
-    this.newest = entry;
-    this.entries.set(id, entry);
-    if (this.entries.size > this.limit) this.delete(this.oldest!.row.id);
-  }
-  delete(id: string) {
-    const entry = this.entries.get(id);
-    if (!entry) return;
-    this.detach(entry);
-    this.entries.delete(id);
-  }
-  clear() {
-    this.entries.clear();
-    this.oldest = this.newest = null;
+import { ByteCache } from "./ByteCache.js";
+// [DX-B6-3] Why: account for retained row columns, UTF-16 text and object slots.
+// Rejected: treating a 1 MB JSON row as one small cache entry.
+export const estimateRowBytes = (row: TripleRow) =>
+  256 +
+  Object.values(row).reduce<number>(
+    (n, value) => n + (typeof value === "string" ? value.length * 2 : 16),
+    0,
+  );
+export class RowCache extends ByteCache<TripleRow> {
+  constructor(limit = 100000, byteLimit = 32 * 1024 ** 2) {
+    super(byteLimit, estimateRowBytes, limit);
   }
 }
