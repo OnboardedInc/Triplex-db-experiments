@@ -116,13 +116,42 @@ Known growth issue: a hot subject's placement entity gains one ref row per comma
 If the NS run shows it matters: send entity deltas from Datomic history (`d/since`) between the revision the client holds and the
 current one.
 
+### DX-B3 (commits that do not queue; `exp/DX-B3-concurrent-commits` b40c19c5, merged; report `lab/experiments/EXP-DX1/b3/REPORT.md`)
+
+- Built: row text v2 with a shiftable 16-digit position; transaction function `:triplex/commit` assigns positions in the transactor and
+  checks conflicts per entity; one-call optimistic commit from a bounded client row cache; `committedPosition` core seam. 203 tests
+  pass (1 known failure). 16 clients x 200 commands concurrently: 0 conflicts, dense positions in transaction order.
+- Serial commit p50 8.17 ms, p99 34 ms, 1.008 HTTP calls. `d/transact` itself p50 4.5 ms at a median of 249 datoms.
+- 55/s open loop, no queue: p50 14.2 ms, p90 27.8 ms, **p99 482 ms** (83 of 3,291 over 50 ms); with 32 readers p99 584 ms (ratio 1.21).
+  The transactor log shows apply maxima of 0.67 to 0.86 s, a storage put of 0.81 s and index jobs inside the burst.
+- Reading: the client queue is gone; the remaining tail is in the engine at about 18,000 datoms per second.
+
+### First NS run on lane D (orchestrator, stack `tx2-dxo1-a`, B2 code): stopped, invalid
+
+Writer pending grew past 7,000 with the write gateway at 100% CPU and the transactor idle. Cause: core `transactions({after})` loads
+every journal row per poll and `transactionByCommand` walks every fact (`packages/core/src/store/TriplesLive.ts` 632-690). DX-B4
+fixes both. The run did not take the measurement lock and overlapped DX-B3's first M4 attempt for a few minutes.
+
+### DX-H2 (P5 harness; `exp/DX-H2-p5-harness` 5e415d98, merged; report `lab/experiments/EXP-DX1/h2/REPORT.md`)
+
+- `driver.ts --world w0 --lane datomic` runs the real activation (W0 kernel, outbox publication, oracle gates) with per-page stage
+  timing and a paired live-traffic window. A 50-subject run completed with gates G0-G3, G5, G7, G9 passing; the 1,000-subject run
+  failed on a live-reader read error after 256 subjects (cause not captured).
+- Page time is all reading through the old path: 62 to 113 s per 64-subject page, against 0.02 s evaluation and 0.1 s publication.
+- Needs from packages: reach results as rows with recorded positions (`getReachRowsMany`); indexed feed and command lookup (DX-B4).
+- W0 seeding is 43 commands per subject: 434,768 commands at 10k and 4,338,757 at 100k; at the measured 35 commands/s that is 3.5 h
+  and 34 h. Seeding throughput is a P5 blocker.
+
+## Decision (orchestrator, 2026-11-09 night): build the lean layout
+
+One datom per row (the row text) becomes the system of record in a new scope layout; every read is served from row texts and
+Datomic history; legacy layout untouched; a differential test compares the two. Reasons: burst tail and median (P2), W0 seeding
+throughput (P5), peer memory. Brief: `.../prompts/DX-B5.md`, launches when DX-B4 commits. Native Datalog over reified datoms is not
+available on lean scopes until an asynchronous reifier exists (planned after the bars).
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-B3 | Positions assigned in a transaction function, per-entity conflict checks, one-call optimistic commit, no admission queue | `exp/DX-B3-concurrent-commits`, `.claude/worktrees/dx-b3` | `.../prompts/DX-B3.md` |
-| DX-H2 | P5 measurable on lane D | `exp/DX-H2-p5-harness`, `.claude/worktrees/dx-h2` | `.../prompts/DX-H2.md` |
-
-Orchestrator run in progress: first full NS smoke on lane D at the 10k rung, composition `reach`, stack `tx2-dxo1-a` (Postgres CPU 0,
-transactor 0-1, write gateway 1, read gateway 2-4, `TX2_ENGINE_CPUS=5`), run from `.claude/worktrees/dx-b2`, output
-`~/Claude/Projects/triplex-db-2/evidence/DX-O1/ns1/`.
+| DX-B4 | Indexed change feed and command lookup, scan audit, a 10k NS run where the writer keeps up | `exp/DX-B4-indexed-feed`, `.claude/worktrees/dx-b4` | `.../prompts/DX-B4.md` |
+| DX-S3 | Attribute the burst tail (GC, index jobs, Postgres) and test configuration variants | `spike/DX-S3`, `.claude/worktrees/dx-s3` | `.../prompts/DX-S3.md` |
