@@ -71,6 +71,7 @@ export interface SweepOptions {
   afterCheckpoint?: (page: number) => Promise<void>;
   controller?: Controller;
   beforePublish?: () => Promise<void>;
+  beforeTimedWindow?: () => Promise<void>;
 }
 export async function runW0Sweep(o: SweepOptions) {
   if (
@@ -115,6 +116,7 @@ export async function runW0Sweep(o: SweepOptions) {
   const threads: Worker[] = [];
   const startupStarted = performance.now();
   let sweepStarted = startupStarted;
+  let workersReadyAt = startupStarted;
   let readyCount = 0;
   let start!: () => void, rejectStart!: (e: unknown) => void;
   const allReady = new Promise<void>((r, j) => {
@@ -193,8 +195,17 @@ export async function runW0Sweep(o: SweepOptions) {
         });
         await ready;
         if (++readyCount === o.workers) {
-          sweepStarted = performance.now();
-          start();
+          workersReadyAt = performance.now();
+          // [DX-H6] Why: a long-lived sweep pool exists before paired baseline/live traffic starts.
+          // Rejected: excluding startup from P5 wall while letting it distort the live latency arm.
+          try {
+            await o.beforeTimedWindow?.();
+            sweepStarted = performance.now();
+            start();
+          } catch (error) {
+            fail(error);
+            throw error;
+          }
         }
         await allReady;
         // [DX-H6] Why: bounded double buffering lets the next page fetch/evaluate overlap ordered publication.
@@ -207,7 +218,11 @@ export async function runW0Sweep(o: SweepOptions) {
           if (failed) throw failed;
           while (o.controller && (o.controller.limit === 0 || workerIndex >= o.controller.limit))
             await new Promise((r) => setTimeout(r, 10));
-          if (index >= remaining.length || (o.stopAfterPages !== undefined && index >= o.stopAfterPages)) break;
+          if (
+            index >= remaining.length ||
+            (o.stopAfterPages !== undefined && index >= o.stopAfterPages)
+          )
+            break;
           const assignedAtMs = performance.now() - sweepStarted;
           const workerCpuStart = process.cpuUsage();
           const pageIndex = remaining[index++]!,
@@ -310,7 +325,7 @@ export async function runW0Sweep(o: SweepOptions) {
             throw e;
           });
           activePublications.add(publishTask);
-          void publishTask.finally(()=>activePublications.delete(publishTask)).catch(() => {});
+          void publishTask.finally(() => activePublications.delete(publishTask)).catch(() => {});
           inFlight.push(publishTask);
           if (inFlight.length >= 2) await inFlight.shift();
         }
@@ -320,7 +335,8 @@ export async function runW0Sweep(o: SweepOptions) {
     return {
       activationStartedAtEpochMs: performance.timeOrigin + sweepStarted,
       workersReadyBeforeTimedWindow: true,
-      workerStartupMs: sweepStarted - startupStarted,
+      workerStartupMs: workersReadyAt - startupStarted,
+      preTimedWindowHookMs: sweepStarted - workersReadyAt,
       binding,
       wallMs: performance.now() - sweepStarted,
       subjectsPerS: o.subjects.length / ((performance.now() - sweepStarted) / 1000),

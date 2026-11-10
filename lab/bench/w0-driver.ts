@@ -411,31 +411,35 @@ export async function runW0Driver(argv: string[]) {
         ...(actual.timing ?? {}),
       };
     };
-    if (argv.includes("--live")) {
-      const options = {
-        comp,
-        composition,
-        lane,
-        scope,
-        N,
-        dir,
-        seed: opt("traffic-seed", "DX-H2-frozen-v1")!,
-        offsetS: Number(opt("traffic-offset-s", "0")),
-      };
-      console.error("[P5] no-sweep live traffic (64 readers)");
-      traffic = await startW0Live({ ...options, id: attempt + ":baseline" });
-      await new Promise((r) => setTimeout(r, Number(opt("baseline-s", "60")) * 1000));
-      report.live = {
-        baseline: await traffic.stop(),
-        note: "Sequential windows on one evolving store, same frozen generator and offset; command IDs namespaced by arm. Diagnostic ratios; no clone/A-A or statistical acceptance.",
-      };
-      traffic = undefined;
-      save();
-      await lease.checkpoint(true);
-      console.error("[P5] sweep live traffic (64 readers)");
-      traffic = await startW0Live({ ...options, id: attempt + ":sweep" });
-    }
-    console.error("[P5] activation and publication");
+    const beforeTimedWindow = async () => {
+      if (argv.includes("--live")) {
+        const options = {
+          comp,
+          composition,
+          lane,
+          scope,
+          N,
+          dir,
+          seed: opt("traffic-seed", "DX-H2-frozen-v1")!,
+          offsetS: Number(opt("traffic-offset-s", "0")),
+          warmupMs: Number(opt("live-warmup-s", "15")) * 1000,
+        };
+        console.error("[P5] no-sweep live traffic (64 readers)");
+        traffic = await startW0Live({ ...options, id: attempt + ":baseline" });
+        await new Promise((r) => setTimeout(r, Number(opt("baseline-s", "60")) * 1000));
+        report.live = {
+          baseline: await traffic.stop(),
+          note: "Sequential windows on one evolving store, same frozen generator and offset; command IDs namespaced by arm. Diagnostic ratios; no clone/A-A or statistical acceptance.",
+        };
+        traffic = undefined;
+        save();
+        await lease.checkpoint(true);
+        console.error("[P5] sweep live traffic (64 readers)");
+        traffic = await startW0Live({ ...options, id: attempt + ":sweep" });
+      }
+      console.error("[P5] activation and publication");
+    };
+    console.error("[P5] preparing sweep workers before live baseline");
     const cursor = path.join(dir, "activation-cursor.json");
     report.sweep = await runW0Sweep({
       comp,
@@ -449,6 +453,7 @@ export async function runW0Driver(argv: string[]) {
       workers,
       activations,
       metricsFile: path.join(dir, "activation-pages.ndjson"),
+      beforeTimedWindow,
       onPage: async (records, page) => {
         traffic?.check();
         // [DX-H6] Why: all oracle work stays after the last ACK; publisher batches state and pipelines ordered submissions.

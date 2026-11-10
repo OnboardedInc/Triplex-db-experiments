@@ -1,3 +1,4 @@
+import { submitReferenceCommand } from "./w0-seed-order.ts";
 import fs from "node:fs";
 import type { CompositionHandle } from "./composition.ts";
 import { W0, canonical, sha256, triplexValue, V_W0, many } from "./w0-world.ts";
@@ -118,9 +119,18 @@ export async function seedW0(
   const drain = async () => {
     const { c, operations, commandId, ack } = pending.shift()!;
     const result = await ack;
-    if (!result.ok) throw new Error(`seed ${c.position}: ${result.tag}`);
-    if (result.value.position !== c.position)
+    if (!result.ok || result.value.position !== c.position) {
+      fs.writeFileSync(
+        logFile + ".failure.json",
+        JSON.stringify(
+          { expectedPosition: c.position, commandId, operations, result },
+          (_key, value) => (typeof value === "bigint" ? value.toString() : value),
+          2,
+        ) + "\n",
+      );
+      if (!result.ok) throw new Error(`seed ${c.position}: ${result.tag}`);
       throw new Error(`reference position mismatch ${c.position} != ${result.value.position}`);
+    }
     for (const t of result.value.triples)
       if (!many.has(t.attribute)) latest.set(t.entityId + "\0" + t.attribute, t.id);
     for (const [e, a] of c.rows)
@@ -164,7 +174,10 @@ export async function seedW0(
         });
       }
       const commandId = `p5:seed:${c.position}`;
-      const ack = comp.transact(operations, { commandId, actor: "p5-seed" });
+      const { ack } = await submitReferenceCommand(comp, operations, {
+        commandId,
+        actor: "p5-seed",
+      });
       // Observe rejections immediately even if an earlier ordered ACK is still pending.
       void ack.catch(() => {});
       pending.push({ c, operations, commandId, ack });
@@ -173,7 +186,24 @@ export async function seedW0(
     }
     while (pending.length) await drain();
   } finally {
-    await Promise.allSettled(pending.map((p) => p.ack));
+    const unresolved = await Promise.allSettled(pending.map((p) => p.ack));
+    if (pending.length)
+      fs.writeFileSync(
+        logFile + ".unconsumed.ndjson",
+        pending
+          .map((p, i) =>
+            JSON.stringify(
+              {
+                expectedPosition: p.c.position,
+                commandId: p.commandId,
+                operations: p.operations,
+                outcome: unresolved[i],
+              },
+              (_key, value) => (typeof value === "bigint" ? value.toString() : value),
+            ),
+          )
+          .join("\n") + "\n",
+      );
     fs.closeSync(fd);
   }
   const R = W0.rung(N),
@@ -184,6 +214,10 @@ export async function seedW0(
   const counts = await comp.storeCounts();
   const countsWallMs = performance.now() - countsStarted;
   return {
+    submissionOrder:
+      comp.backend?.name === "datomic"
+        ? "public-onSent-before-next-reference-command"
+        : "caller-order",
     requestedInFlight: concurrency,
     peakInFlight,
     commandWallMs,

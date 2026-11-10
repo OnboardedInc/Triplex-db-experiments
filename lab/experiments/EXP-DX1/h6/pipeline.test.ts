@@ -23,6 +23,8 @@ test("pipeline publishes pages in order and resumes only ACKed pages", async () 
         worldSha256(worldOf(subject, reachableRows([subject], rows))),
       ]),
     );
+    let hookFinished = false,
+      hookCalls = 0;
     const invoked: number[] = [],
       acked: number[] = [],
       seen = new Set<string>();
@@ -38,7 +40,13 @@ test("pipeline publishes pages in order and resumes only ACKed pages", async () 
       sweepId: "unit",
       cursor: path.join(dir, "cursor.json"),
       workers: 4,
+      beforeTimedWindow: async () => {
+        hookCalls++;
+        await new Promise((r) => setTimeout(r, 20));
+        hookFinished = true;
+      },
       onPage: async (records: readonly any[], page: number) => {
+        assert.ok(hookFinished);
         invoked.push(page);
         active++;
         peak = Math.max(peak, active);
@@ -58,6 +66,8 @@ test("pipeline publishes pages in order and resumes only ACKed pages", async () 
     assert.equal(seen.size, 200);
     assert.ok(peak > 1 && peak <= 8);
     assert.equal(result.complete, true);
+    assert.equal(hookCalls, 1);
+    assert.ok(result.preTimedWindowHookMs >= 15);
     assert.equal(result.workersReadyBeforeTimedWindow, true);
     assert.equal(
       JSON.parse(fs.readFileSync(options.cursor, "utf8")).published.length,
@@ -76,12 +86,37 @@ test("pipeline publishes pages in order and resumes only ACKed pages", async () 
   }
 });
 
-test('failed publication leaves no checkpoint and rejects later pages',async()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'dxh6-failed-')), comp=await openComposition('memory','xtdb','dxh6-failure');
- try {
-  const subjects=subjectList(200), basis={position:0,validAt:V_W0};
-  const invoked:number[]=[];
-  await assert.rejects(runW0Sweep({comp,composition:'memory',lane:'xtdb',scope:'dxh6-failure',subjects,basis,sweepId:'failure',cursor:path.join(dir,'cursor.json'),workers:4,beforePublish:async()=>{throw Error('injected before publication');},onPage:async(_records,page)=>{invoked.push(page);}}),/injected before publication/);
-  assert.equal(invoked.length,0);assert.ok(!fs.existsSync(path.join(dir,'cursor.json')));
- }finally{await comp.close();fs.rmSync(dir,{recursive:true,force:true});}
+test("failed publication leaves no checkpoint and rejects later pages", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dxh6-failed-")),
+    comp = await openComposition("memory", "xtdb", "dxh6-failure");
+  try {
+    const subjects = subjectList(200),
+      basis = { position: 0, validAt: V_W0 };
+    const invoked: number[] = [];
+    await assert.rejects(
+      runW0Sweep({
+        comp,
+        composition: "memory",
+        lane: "xtdb",
+        scope: "dxh6-failure",
+        subjects,
+        basis,
+        sweepId: "failure",
+        cursor: path.join(dir, "cursor.json"),
+        workers: 4,
+        beforePublish: async () => {
+          throw Error("injected before publication");
+        },
+        onPage: async (_records, page) => {
+          invoked.push(page);
+        },
+      }),
+      /injected before publication/,
+    );
+    assert.equal(invoked.length, 0);
+    assert.ok(!fs.existsSync(path.join(dir, "cursor.json")));
+  } finally {
+    await comp.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

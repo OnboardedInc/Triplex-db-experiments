@@ -104,16 +104,35 @@ export function decodeSweepRows(
           !/^\d{16}$/.test(values[0])
         )
           throw new TypeError("Invalid sweep row columns/position");
-        for (const i of stringColumns)
-          if (values[i] !== null && typeof values[i] !== "string")
-            throw new TypeError("Invalid sweep string column");
-        for (const i of numericColumns)
-          if (
-            values[i] !== null &&
-            values[i] !== "-0" &&
-            (typeof values[i] !== "number" || !Number.isFinite(values[i]))
-          )
-            throw new TypeError("Invalid sweep numeric column");
+        // [DX-H6] Why: 99.98% of recorded rows have this fully checked primitive layout; avoid dynamic column-index loops.
+        // Rejected: assuming common null/metadata fields without checking each one.
+        const common =
+          typeof values[5] === "string" &&
+          values[6] === null &&
+          values[7] === null &&
+          values[8] === null &&
+          values[9] === null &&
+          values[12] === null &&
+          typeof values[13] === "string" &&
+          values[14] === null &&
+          typeof values[16] === "string" &&
+          typeof values[10] === "number" &&
+          Number.isFinite(values[10]) &&
+          typeof values[11] === "number" &&
+          Number.isFinite(values[11]) &&
+          Number.isSafeInteger(values[15]);
+        if (!common) {
+          for (const i of stringColumns)
+            if (values[i] !== null && typeof values[i] !== "string")
+              throw new TypeError("Invalid sweep string column");
+          for (const i of numericColumns)
+            if (
+              values[i] !== null &&
+              values[i] !== "-0" &&
+              (typeof values[i] !== "number" || !Number.isFinite(values[i]))
+            )
+              throw new TypeError("Invalid sweep numeric column");
+        }
         position = Number(values[0]);
         const schema = values[15] === "-0" ? -0 : values[15];
         if (
@@ -179,15 +198,16 @@ export function decodeSweepRows(
       if (ids instanceof Set) ids.add(rowId);
       else ids.push(rowId);
       if (from <= basis.validAt && (to === null || to > basis.validAt)) {
-        result.push({
+        const row: SweepRow = {
           id: rowId,
           entityId: entity,
           attribute,
           value,
           position,
           validFrom: from,
-          ...(to === null ? {} : { validTo: to }),
-        });
+        };
+        if (to !== null) row.validTo = to;
+        result.push(row);
       }
     }
   }
