@@ -7,3 +7,6 @@ Docker reports after the pull (uncompressed, so an upper bound on what was fetch
 | When (UTC) | What | Why | Size | Running total |
 | --- | --- | --- | --- | --- |
 | 2026-11-10 12:22 | `apache/kafka:4.1.1` | XTDB shared log (lane X) | 0.22 GiB | 0.22 GiB |
+| 2026-11-10 13:52 | `ghcr.io/xtdb/xtdb-aws:2.2.0` (`sha256:d7989bfa11f9…`) | XTDB with Kafka log and S3 storage modules (lane X) | 0.16 GiB | 0.38 GiB |
+| 2026-11-10 13:52 | `cgr.dev/chainguard/minio:latest` (`sha256:fb893e36fc36…`) | S3-compatible object store for two-node XTDB | 0.05 GiB | 0.43 GiB |
+| 2026-11-10 13:52 | `chrislusf/seaweedfs:3.97` (`sha256:bb05d66d2963…`) | fallback S3-compatible object store | 0.06 GiB | 0.49 GiB |
