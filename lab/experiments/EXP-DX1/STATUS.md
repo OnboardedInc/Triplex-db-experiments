@@ -188,12 +188,26 @@ container inside the VM.
 - Decision: the lean layout stands (5x fewer datoms cuts gateway, GC and apply work). After it lands, re-measure in the VM mode with
   the write gateway on two CPUs.
 
+### DX-H3 (driver inside the VM; `exp/DX-H3-in-vm-harness` ab50fc38, merged; report `lab/experiments/EXP-DX1/h3/REPORT.md`, every bar in `h3/REAL-TABLES.md`)
+
+- `stack/run-in-vm.sh PREFIX -- COMMAND` runs the driver in a `node:22.23.2-bookworm-slim` container on the stack network with no
+  published ports; engine CPU comes from cgroup files; SQLite files live on a Docker volume; the publication observer accepts shifted
+  positions; the oracle matcher handles reordered blob keys (fixed after the 10k run, not re-run).
+- 10k run on the **legacy layout** (not lean): complete report, verdict ERROR. 905 of 13,059 trace commands published; feed stopped at
+  position 1,036 (it declines on the irregular scope and the fallback scan hits the gateway deadline); L256 read p99 3,375 ms; P4 mix
+  p50 14.8 ms and 17 pulls/s per core; 280 model violations and 259 read errors; O-REPLAY receipt check failed on 8 blob ids.
+  Client was not saturated. These are the known legacy-layout defects (timestamp order makes the scope irregular; fat commits) plus
+  gateways running a 1 GiB heap.
+- **Gateway JVM finding (from DX-S3, confirmed while merging):** `bin/run` ignores `JAVA_OPTS` and reads `DATOMIC_JAVA_OPTS`, so every
+  gateway in every measurement so far ran with a 1 GiB heap and the Serial collector (the JVM picks Serial on one CPU). `up.sh` now
+  passes gateway heap through `DATOMIC_JAVA_OPTS`; full runs must also set `-XX:+UseG1GC` and give the write gateway two CPUs.
+- The 280 model violations must be explained on the lean rerun before any bar is trusted.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-B5 | Lean layout (one row-text datom per row as system of record), commit-order rule for record times, rows from reach, differential test against legacy | `exp/DX-B5-lean-layout`, `.claude/worktrees/dx-b5` | `.../prompts/DX-B5.md` |
-| DX-H3 | Driver inside the VM, cgroup CPU sampling, publication observer fix, first complete NS report on lane D | `exp/DX-H3-in-vm-harness`, `.claude/worktrees/dx-h3` | `.../prompts/DX-H3.md` |
 
 After these: merge; run NS at 10k on a lean scope in the VM mode; seed W0 and run P5 with the lean page reader; then the asynchronous
 reifier for native Datalog on lean scopes; then one independent review and receipts.
