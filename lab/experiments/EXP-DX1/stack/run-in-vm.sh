@@ -31,7 +31,7 @@ console.log(rows.map(row=>{const [name,id]=row.split("=");const p=find("/sys/fs/
 cleanup() {
   rc=$?
   trap - EXIT
-  [[ -z $bridge_pid ]] || kill "$bridge_pid" 2>/dev/null || true
+  if [[ -n $bridge_pid ]]; then kill "$bridge_pid" 2>/dev/null || true; wait "$bridge_pid" 2>/dev/null || true; fi
   # Copy even after command failure; retain container and volume if copy fails.
   docker cp "$prefix-driver:/driver/." "$evidence/driver/" || exit 1
   docker rm -f "$prefix-driver" >/dev/null
