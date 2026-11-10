@@ -42,7 +42,15 @@ try{
   const subj=phase.endsWith('aged')?`${JSON.parse(fs.readFileSync(`${process.env.OUT??'/driver'}/history.json`)).scope}-s0`:`${scope}-s0`;
   const base=Number((await cs[0].query('SELECT pos FROM xn_head WHERE _id=$1',[text(subj)]))[0].pos);
   for(let i=0;i<200;i++)await commit(cs[0],`${scope}-warm${i}`,subj,base+i);
-  await measured(`closed-${shape}-${phase}`,async()=>{const samples=[];const n=Number(arg);for(let i=0;i<n;i++){const t=performance.now();await commit(cs[0],`${scope}-${i}`,subj,base+i+200);samples.push({i,ms:performance.now()-t})}return {scope,shape,n,warmup:200,latency:summary(samples.map(s=>s.ms)),samples}});
+  const observed=await measured(`closed-${shape}-${phase}`,async()=>{const samples=[];const n=Number(arg);for(let i=0;i<n;i++){const t=performance.now();await commit(cs[0],`${scope}-${i}`,subj,base+i+200);samples.push({i,ms:performance.now()-t})}return {scope,shape,n,warmup:200,latency:summary(samples.map(s=>s.ms)),samples}});
+  // [XN-S2-LIVE] Why: ACK timing alone cannot establish stored content; read back this unique scope after timing. Rejected: borrowing the separate guard probe's content result.
+  const head=await cs[0].query('SELECT pos FROM xn_head WHERE _id=$1',[text(subj)]);
+  const claims=await cs[0].query('SELECT COUNT(*) AS n FROM xn_claim WHERE _id LIKE $1',[text(`${scope}-%`)]);
+  const docs=await cs[0].query('SELECT COUNT(*) AS n FROM xn_ent WHERE _id LIKE $1',[text(`${scope}-%`)]);
+  const last=await cs[0].query('SELECT _id,doc FROM xn_ent WHERE _id IN ($1,$2,$3)',[0,1,2].map(i=>text(`${scope}-${observed.n-1}-${i}`)));
+  const expected=new Map(payload.map((d,i)=>[`${scope}-${observed.n-1}-${i}`,d]));
+  const content=Number(head[0]?.pos)===base+observed.n+200&&Number(claims[0]?.n)===observed.n+200+(phase.endsWith('aged')?0:1)&&Number(docs[0]?.n)===3*(observed.n+200)&&last.length===3&&last.every(r=>r.doc===expected.get(r._id)&&expected.delete(r._id))&&expected.size===0;
+  save(`${observed.name}-content`,{scope,base,head,claims,docs,last:last.map(r=>({id:r._id,bytes:r.doc.length})),content});if(!content)throw Error('closed postflight mismatch');
  }else if(mode==='history'){
   const start=Date.now();let i=0;
   // [EXP-XN1] Why: build 20k genuine durable versions on the measured subject's head.

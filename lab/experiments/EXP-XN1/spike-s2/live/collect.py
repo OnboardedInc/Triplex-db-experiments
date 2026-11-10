@@ -46,7 +46,10 @@ for window in sorted(ROOT.iterdir()):
     assert x['n']==len(x['samples']) and len({s['i'] for s in x['samples']})==x['n']
     if x.get('writerResult'):
      w=x['writerResult'];assert w['offered']==w['acknowledged']>0 and not w['errors'] and int(w['claims'][0]['n'])==w['acknowledged']+1 and int(w['docs'][0]['n'])==w['acknowledged']*3
-   elif x['name'].startswith('closed-'):assert x['n']==len(x['samples'])
+   elif x['name'].startswith('closed-'):
+    assert x['n']==len(x['samples'])
+    check=load(window/'driver'/(x['name']+'-content.json'));assert check['content'] and check['scope']==x['scope']
+    assert int(check['head'][0]['pos'])==check['base']+x['n']+200 and int(check['docs'][0]['n'])==3*(x['n']+200)
    values=[s['awaitAndPullMs'] if x['name']=='wait-mechanism' else s['ms'] for s in x['samples']]
    q=quantiles(values)
    for key in ['p50','p99','max']:assert abs(q[key]-x['latency'][key])<1e-8,'quantiles'
