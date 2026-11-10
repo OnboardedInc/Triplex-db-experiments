@@ -20,7 +20,10 @@ export function installDatomicPublication(api: any) {
         !/^(0|[1-9][0-9]*)$/.test(result.position.v) ||
         !Number.isSafeInteger(position) ||
         position < 1 ||
-        position !== input.position ||
+        !Number.isSafeInteger(input.position) ||
+        !Number.isSafeInteger(result.delta) ||
+        position !== input.position + result.delta ||
+        result.operationId !== input.operationId ||
         typeof input.operationId !== "string" ||
         !input.operationId
       )

@@ -6,6 +6,7 @@
  */
 import { createRequire } from "node:module";
 import path from "node:path";
+import { inspect } from "node:util";
 import type { CompositionHandle } from "./composition.ts";
 import { hash2 } from "./rng.ts";
 import { accountOf, subjectOf } from "./world.ts";
@@ -77,6 +78,8 @@ export class FeedConsumer {
   private readonly source: string;
   private store: InstanceType<typeof SqliteConsumerStore>;
   private readonly now: () => number;
+  private readonly pollTimeoutMs: number;
+  private readonly publicationWaitMs: number;
   private readonly publicationOf?: (key: FeedPosition) => FeedPublication | undefined;
   private readonly measurement?: Measurement;
   private readonly commitOf: (position: number) => CommitInfo | undefined;
@@ -104,6 +107,7 @@ export class FeedConsumer {
   private lastStamp = new Map<number, number>();
   counts = {
     pages: 0,
+    pollErrors: 0,
     entries: 0,
     deliveries: 0,
     redeliveries: 0,
@@ -124,6 +128,8 @@ export class FeedConsumer {
     epoch: string;
     startAfter: number;
     now: () => number;
+    pollTimeoutMs?: number;
+    publicationWaitMs?: number;
     publicationOf?: (key: FeedPosition) => FeedPublication | undefined;
     measurement?: Measurement;
     commitOf: (p: number) => CommitInfo | undefined;
@@ -136,6 +142,8 @@ export class FeedConsumer {
     this.now = opts.now;
     this.commitOf = opts.commitOf;
     this.publicationOf = opts.publicationOf;
+    this.publicationWaitMs = opts.publicationWaitMs ?? 0;
+    this.pollTimeoutMs = opts.pollTimeoutMs ?? 0;
     this.measurement = opts.measurement;
     this.open = opts.open;
     this.log = opts.log;
@@ -222,14 +230,33 @@ export class FeedConsumer {
   recoverDelayMs = 2000;
 
   private async consume(handle: CompositionHandle) {
+    let firstFailureAt: number | undefined;
     while (!this.stopping) {
       let page;
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      const timeoutError = new Error(`Feed poll exceeded ${this.pollTimeoutMs} ms at checkpoint ${this.checkpoint}`);
       try {
-        page = await handle.feedPage(this.checkpoint, 1000);
-      } catch {
+        // [DX-H3] Why: a stuck source poll must produce an invalid report instead of hanging finalization.
+        // Rejected: accepting the missing page or waiting beyond the measurement lease.
+        const pending = handle.feedPage(this.checkpoint, 1000);
+        page = this.pollTimeoutMs > 0 ? await Promise.race([pending, new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => reject(timeoutError), this.pollTimeoutMs);
+        })]) : await pending;
+      } catch (error) {
+        this.counts.pollErrors++;
+        if (this.counts.pollErrors <= 3 || this.counts.pollErrors % 10 === 0) this.log(`feed: poll error ${this.counts.pollErrors} at checkpoint ${this.checkpoint}: ${inspect(error, { depth: 5, breakLength: Infinity }).slice(0, 6000)}`);
+        if (error === timeoutError) throw error;
+        // [DX-H3] Why: repeated failed calls can each finish before the per-call deadline yet never deliver a page.
+        // Rejected: retrying forever and hiding the underlying source error from the final report.
+        const failedAt = performance.now();
+        firstFailureAt ??= failedAt;
+        if (this.pollTimeoutMs > 0 && failedAt - firstFailureAt >= this.pollTimeoutMs) throw new Error(`Feed polling repeatedly failed for ${Math.round(failedAt - firstFailureAt)} ms at checkpoint ${this.checkpoint}. Last error: ${String(error)}`);
         await new Promise((r) => setTimeout(r, 100));
         continue;
+      } finally {
+        clearTimeout(timeout);
       }
+      firstFailureAt = undefined;
       this.counts.pages++;
       const txs = page.transactions;
       if (!txs.length) {
@@ -305,7 +332,14 @@ export class FeedConsumer {
       const publications = new Map<number, FeedPublication>();
       for (const [position] of affected) {
         const key = this.publicationKey(position);
-        const record = readProducerPublication(this.measurement.records, key);
+        // [DX-H3] Why: the journal can arrive before the writer HTTP response observer.
+        // Rejected: fabricating a timestamp at poll/ACK or accepting a missing witness.
+        const deadline = performance.now() + this.publicationWaitMs;
+        let record = readProducerPublication(this.measurement.records, key);
+        while (!record && performance.now() < deadline) {
+          await new Promise(r => setTimeout(r, 1));
+          record = readProducerPublication(this.measurement.records, key);
+        }
         const observation = this.publicationOf ? this.publicationOf(key) : record;
         publicationLagMs(observation, captureFeedInstant(this.measurement.clock, key), record);
         publications.set(position, record!);

@@ -28,6 +28,7 @@ export function buildCase(opts: { caseId: string; commands: readonly RecordedCom
   const commands: any[] = [];
   const receipts: any[] = [];
   let lastInstant = 0;
+  const knownAssertions = new Set<string>();
   for (let p = 1; p <= opts.lastPosition; p++) {
     const c = byPosition.get(p);
     const index = commands.length;
@@ -36,6 +37,10 @@ export function buildCase(opts: { caseId: string; commands: readonly RecordedCom
       receipts.push({ command: index, outcome: "committed", txId: `internal:${p}`, position: p, instant: lastInstant });
       continue;
     }
+    // [DX-H3] Why: omitted seed/history parents make a sampled case incomplete, not an engine failure.
+    // Rejected: deleting the unknown retract from the case or accepting the sampled worlds alone.
+    for (const op of c.operations) if (op.op === "retract" && !knownAssertions.has(op.id)) throw Error(`Incomplete O-REPLAY input: assertion ${op.id} retracted at position ${p} was not recorded`);
+    for (const id of c.receipt.assertionIds) if (id) knownAssertions.add(id);
     lastInstant = Math.max(lastInstant, c.receipt.instant);
     commands.push({
       kind: "transact",
@@ -79,7 +84,10 @@ export function checkWithOracle(opts: { oracleRoot: string; dir: string; caseDoc
   const started = Date.now();
   let exitCode = 0;
   try {
-    execFileSync("python3", ["-I", cli, caseFile, "-o", outFile], { stdio: ["ignore", "ignore", "pipe"], maxBuffer: 64 << 20, timeout: 900_000 });
+    const bridge = process.env["TX2_ORACLE_BRIDGE"];
+    // [DX-H3] Why: keep the frozen Python oracle when the local VM image lacks Python.
+    // Rejected: reimplementing its semantics in the harness or changing expected bytes.
+    execFileSync(bridge ? process.execPath : "python3", [...(bridge ? [path.resolve("lab/experiments/EXP-DX1/h3/oracle-bridge.mjs"), "client", bridge] : []), "-I", cli, caseFile, "-o", outFile], { stdio: ["ignore", "ignore", "pipe"], maxBuffer: 64 << 20, timeout: 900_000 });
   } catch (error: any) {
     exitCode = error.status ?? -1;
     if (!fs.existsSync(outFile)) return { status: "ORACLE-ERROR", exitCode, stderr: String(error.stderr ?? error.message).slice(0, 2000), reads: 0, mismatches: [] as any[] };

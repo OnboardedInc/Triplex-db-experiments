@@ -33,6 +33,8 @@ import { openComposition, type CompositionHandle, type Receipt } from "./lib/com
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
+import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
+import { alignAssertIds } from "./lib/receipt.ts";
 import { observeDatomicPublication } from "./lib/datomic-publication.ts";
 import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
@@ -160,9 +162,12 @@ const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\
 // ---------------------------------------------------------------- engine sampling (async; never blocks the writer)
 
 const slots = JSON.parse(fs.readFileSync(path.join(REPO, "lab/config/slots.json"), "utf8"));
-const container = process.env["TX2_ENGINE_CONTAINER"] ?? null;
+const cgroupPaths = Object.fromEntries((process.env["TX2_ENGINE_CGROUPS"] ?? "").split(",").filter(Boolean).map(s => { const i = s.indexOf("="); if (i < 1) throw Error("invalid TX2_ENGINE_CGROUPS"); return [s.slice(0, i), s.slice(i + 1)]; }));
+const container = process.env["TX2_ENGINE_CONTAINER"] ?? (Object.keys(cgroupPaths).join(",") || null);
 const containers = lane === "datomic" ? container?.split(",").map(s => s.trim()).filter(Boolean) ?? [] : container ? [container] : [];
 const workerHttpCounts: any[] = [];
+
+const cgroupPrevious = new Map<string, { wall: number; usage: number }>();
 const engineCpus = Number(process.env["TX2_ENGINE_CPUS"] ?? "0") || null;
 const engineSamples: { t: number; cpuPercent: number; memBytes: number; containers: Record<string, { cpuPercent: number; memBytes: number }> }[] = [];
 const watermarkSamples: { t: number; marks: Record<string, number> }[] = [];
@@ -177,6 +182,24 @@ const parseBytes = (text: string) => {
 async function engineSampler() {
   while (samplersOn && container) {
     const t = now();
+    if (Object.keys(cgroupPaths).length) {
+      // [DX-H3] Why: cpu.stat measures each engine without a Docker CLI or socket in the client. Rejected: host polling (SSH apparatus).
+      const byContainer: Record<string, { cpuPercent: number; memBytes: number }> = {};
+      for (const name of containers) {
+        const dir = cgroupPaths[name];
+        if (!dir) throw Error(`missing engine cgroup ${name}`);
+        const stat = await fs.promises.readFile(path.join(dir, "cpu.stat"), "utf8");
+        const usage = Number(/^usage_usec (\d+)$/m.exec(stat)?.[1]);
+        const memBytes = Number(await fs.promises.readFile(path.join(dir, "memory.current"), "utf8"));
+        const wall = performance.now(), prev = cgroupPrevious.get(name);
+        if (!Number.isFinite(usage) || !Number.isFinite(memBytes)) throw Error(`invalid cgroup sample ${name}`);
+        cgroupPrevious.set(name, { wall, usage });
+        if (prev) byContainer[name] = { cpuPercent: (usage - prev.usage) / ((wall - prev.wall) * 10), memBytes };
+      }
+      if (Object.keys(byContainer).length === containers.length) engineSamples.push({ t, cpuPercent: Object.values(byContainer).reduce((s, r) => s + r.cpuPercent, 0), memBytes: Object.values(byContainer).reduce((s, r) => s + r.memBytes, 0), containers: byContainer });
+      await sleep(1000);
+      continue;
+    }
     const out = await docker(["stats", "--no-stream", "--format", "{{json .}}", ...containers], 15_000);
     try {
       const rows = out!.trim().split("\n").map(line => JSON.parse(line));
@@ -283,12 +306,15 @@ async function run() {
   const pop = populationCounts(rungSubjects);
   const oracleSubjects = chooseSamples(rungSubjects, config.oracleSampleSubjects);
   const historySample = chooseHistorySample(rungSubjects, Math.min(config.historySample, Math.floor(rungSubjects / 10)), config.seed, accounts);
+  // [DX-H3] Why: a retained history batch retracts rows for every member, including non-read-sample subjects.
+  // Rejected: recording only sampled subjects (O-REPLAY rejected an unknown retraction at command 304).
+  const oracleRecordSet = new Set([...oracleSubjects, ...historySample]);
   log(`seed: rung ${config.rung}, ${pop.liveFactsAtSeedEnd} live facts planned (${pop.accounts} accounts, mean world ${pop.worldFacts.mean.toFixed(0)} facts)`);
   const seed = bulkManifest
     ? await seedFromManifest(bulkManifest, writer, log)
     : await seedRung({
         comp: writer, subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
-        recordSubjects: new Set(oracleSubjects), recordAccounts: new Set(oracleSubjects.map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
+        recordSubjects: oracleRecordSet, recordAccounts: new Set([...oracleRecordSet].map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
       });
   report.seedPath = bulkManifest ? { kind: "bulk-index", manifest: config.seedManifest, nqSha256: bulkManifest.nq.sha256, quads: bulkManifest.nq.quads } : { kind: "transact" };
   const N = seed.seededSubjects;
@@ -439,7 +465,7 @@ async function run() {
     model.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream });
     if (ev.stream === "background") original.set(ev.seq, { operations: cmd.operations, meta, receipt });
     out.position = receipt.position;
-    if (oracleSet.has(ev.subject))
+    if (oracleRecordSet.has(ev.subject))
       recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
     if (ev.stream === "background") {
       const p = ryow(aux, ev.subject, receipt);
@@ -509,6 +535,9 @@ async function run() {
   const publicationWriter = publicationClock ? openPublicationWriter(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock) : null;
   const publicationReader = publicationWriter ? openPublicationReader(path.join(rawDir, "publication.db")) : null;
   feed = pairPlan ? null : new FeedConsumer({
+    publicationWaitMs: lane === "datomic" ? 5000 : 0,
+    // [DX-H3] Why: match the existing 120-second final feed catch-up budget. Rejected: 30 seconds (censored a small poll that the earlier run completed).
+    pollTimeoutMs: lane === "datomic" ? 120_000 : 0,
     dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,
     ...(publicationClock && publicationReader ? { measurement: { clock: publicationClock, records: publicationReader } } : {}),
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
@@ -683,6 +712,7 @@ async function run() {
     const receipt = await resolveByCommand(late.cmd.commandId);
     if (!receipt) { log(`history growth: ${late.cmd.commandId} never committed`); continue; }
     const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1, subjects: late.cmd.perSubject.map((x: any) => x.subject) });
+    if (late.cmd.perSubject.some((x: any) => oracleRecordSet.has(x.subject))) recordedCommands.push({ commandId: late.cmd.commandId, operations: late.cmd.operations, preconditions: late.cmd.preconditions, actor: "p4-history", receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(late.cmd.operations, receipt) } });
     for (const s of late.cmd.perSubject) model.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
   }
   lateGrowth.length = 0;
@@ -701,7 +731,8 @@ async function run() {
     replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
     await replayHandle.close().catch(() => {});
   }
-  const finalPosition = await writer.currentPosition();
+  const finalizationErrors: string[] = [];
+  const finalPosition = await observeFinalHead(() => writer.currentPosition(), finalizationErrors);
   samplersOn = false;
   clearInterval(eluTimer);
   const maintenance = await maintenanceEvents(traceStart);
@@ -718,12 +749,13 @@ async function run() {
 
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
-  report.finalPosition = coordinate(finalPosition);
+  report.finalPosition = finalPosition === null ? null : coordinate(finalPosition);
+  report.finalizationErrors = finalizationErrors;
   report.positionCoordinates = "TARGETS 4.1 item 3: (stream, epoch, offset, ordinal); Triplex gives one dense position per scope and one engine transaction per transact, so offset = position and ordinal = 0";
   report.maintenance = maintenance;
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
   else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
-  report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : runOracle(finalPosition, lastAcked);
+  report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : finalPosition === null ? { status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) } : runOracle(finalPosition, lastAcked);
   // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
   // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
   const pullCalls = records.filter(r => r[R.error] === null).map(r => r[R.roundTrips]);
@@ -736,7 +768,13 @@ async function run() {
     report.invalidReasons = [...(report.invalidReasons ?? []), `Feed consumer failed: ${String(feedFailure)}`];
     process.exitCode = 1;
   }
-  report.status = feedFailure ? "ERROR" : "DONE";
+  const incompleteHistory = !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
+  if (incompleteHistory) finalizationErrors.push("Required history depths 3 and 10 were not reached on the complete sample");
+  if (finalizationErrors.length) {
+    report.invalidReasons = [...(report.invalidReasons ?? []), ...finalizationErrors];
+    process.exitCode = 1;
+  }
+  report.status = feedFailure || finalizationErrors.length ? "ERROR" : "DONE";
   report.endedAt = new Date().toISOString();
   fs.writeFileSync(path.join(rawDir, "ns-log.txt"), logLines.join("\n") + "\n");
   save();
@@ -779,7 +817,7 @@ async function run() {
           historyVersion.set(s.subject, v);
           model.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
         }
-        if (group.some((i) => oracleSet.has(i)))
+        if (group.some((i) => oracleRecordSet.has(i)))
           recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: "p4-history", receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
       }
     }
@@ -920,14 +958,6 @@ function overlapsBurst(fromS: number, toS: number, p: TraceParams) {
   for (let t = p.firstBurstAtS; t < toS; t += p.burstPeriodS) if (t + p.burstDurationS > fromS) return true;
   return false;
 }
-function alignAssertIds(operations: readonly any[], receipt: Receipt) {
-  const pool = new Map<string, string[]>();
-  for (const t of receipt.triples) {
-    const key = `${t.entityId}\u0001${t.attribute}\u0001${JSON.stringify(t.value)}`;
-    (pool.get(key) ?? pool.set(key, []).get(key)!).push(t.id);
-  }
-  return operations.map((op) => (op.op === "assert" ? (pool.get(`${op.entityId}\u0001${op.attribute}\u0001${JSON.stringify(op.value)}`)?.shift() ?? null) : null));
-}
 async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt) {
   const basis = { recordedAt: receipt.instant, validAt: Math.floor(now()) };
   const start = now();
@@ -944,7 +974,7 @@ async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt) 
 async function maintenanceEvents(traceStart: number) {
   // [DX-H1] Why: indexing needs an explicit source-bound job hook; log words alone do not prove completion.
   // Rejected: treating arbitrary "index" log lines as a P1 maintenance witness.
-  if (lane === "datomic") return { source: "write gateway /v2/db/{db}/request-index", events: datomicMaintenanceJobs, trigger: "one request-index/sync-index job per P1 level; incomplete jobs never count" };
+  if (lane === "datomic") return { source: "write gateway /v2/db/{db}/request-index", events: datomicMaintenanceJobs, trigger: "one request-index/sync-index job per P1 level; incomplete jobs never count", logs: Object.keys(cgroupPaths).length ? "not collected in VM mode" : "not collected" };
   if (!container) return { source: null, events: [] as { t: number; line: string }[], note: "no TX2_ENGINE_CONTAINER: maintenance evidence not collected" };
   const since = new Date(traceStart - 1000).toISOString();
   const text = (await docker(["logs", "--timestamps", "--since", since, container], 60_000)) ?? "";
@@ -1185,14 +1215,14 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const quotaRate = best && engineCpus ? best.goodputPerS / engineCpus : null;
   const p4 = {
     weightedMix: mix ? { read: mix.read, buckets: mix.buckets } : null,
-    history: { sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
+    history: { eligibleForDepthComparison: historyDepthsComplete(ctx.phases.filter((p) => p.history).map((p) => p.history), ctx.historyList.length), sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
     throughput: { bestLevel: best?.phase ?? null, goodputPerS: best?.goodputPerS ?? null, engineCpuQuotaCores: engineCpus, pullsPerSPerQuotaCore: quotaRate, engineCpuPercentMean: best?.engine.cpuPercentMean ?? null, pullsPerSPerUsedCore: best?.engine.cpuPercentMean ? best.goodputPerS / (best.engine.cpuPercentMean / 100) : null, hostClientCpu: cpu, hostBrokerCpu: "none in this composition (no broker process)" },
     bars: [
       bar("NS-P4 weighted-mix pull p50 ms", mix?.read.p50Ms ?? null, "<= 5", mix?.read.p50Ms != null ? mix.read.p50Ms <= 5 : null),
       bar("NS-P4 weighted-mix pull p99 ms", mix?.read.p99Ms ?? null, "<= 25", mix?.read.p99Ms != null ? mix.read.p99Ms <= 25 : null),
       bar("NS-P4 largest bucket p99 ms (provisional)", largest?.p99Ms ?? null, "<= 50", largest?.p99Ms != null ? largest.p99Ms <= 50 : null),
       bar("NS-P4 pulls/s per engine core (CPU quota)", quotaRate, ">= 1100", quotaRate !== null ? quotaRate >= 1100 : null),
-      bar("NS-P4 history flatness p99 depth10 / depth1", ratio(h10?.read.p99Ms, h1?.read.p99Ms), "<= 1.1", ratio(h10?.read.p99Ms, h1?.read.p99Ms) !== null ? ratio(h10?.read.p99Ms, h1?.read.p99Ms)! <= 1.1 : null),
+      bar("NS-P4 history flatness p99 depth10 / depth1", ratio(h10?.read.p99Ms, h1?.read.p99Ms), "<= 1.1", ratio(h10?.read.p99Ms, h1?.read.p99Ms) !== null ? historyDepthsComplete(ctx.phases.filter((p) => p.history).map((p) => p.history), ctx.historyList.length) && ratio(h10?.read.p99Ms, h1?.read.p99Ms)! <= 1.1 : null, "requires complete growth to depths 3 and 10 on the full sample"),
       bar("NS-P4 history flatness bytes read depth10 / depth1", null, "<= 1.1", null, "engine bytes read are not measured (seam); client-observed bytes are reported"),
     ],
   };
@@ -1210,15 +1240,16 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const mutatedOk = s.mutatedAfterCapture.filter((subject: number) => rows.some((x) => x.r[R.subject] === subject && x.v.ok)).length;
     const pre = L("presweep"), during = L("sweep");
     const exact = pulled.size === s.subjects && rows.length === s.subjects;
+    const mutationsCommitted = mutationsAfterCapture(s.mutationPositions, s.mutatedAfterCapture.length, s.basis.position.offset);
     p5 = {
       status: "FAIL-CLOSED (evaluate and publish seams)",
-      sweep: { ...s, pulled: rows.length, distinctSubjects: pulled.size, exactCoverage: exact, correctAtBasis: rows.filter((x) => x.v.ok).length, violations: rows.filter((x) => !x.v.ok && x.v.kind !== "error").length, errors: rows.filter((x) => x.v.kind === "error").length, pull: h.summary(), pullsPerS: rate, fetchOnlyWallFor100kS: 100_000 / Math.max(rate, 1e-9), mutatedSubjectsAtBasis: mutatedOk },
+      sweep: { ...s, mutationsCommittedAfterCapture: mutationsCommitted, pulled: rows.length, distinctSubjects: pulled.size, exactCoverage: exact, correctAtBasis: rows.filter((x) => x.v.ok).length, violations: rows.filter((x) => !x.v.ok && x.v.kind !== "error").length, errors: rows.filter((x) => x.v.kind === "error").length, pull: h.summary(), pullsPerS: rate, fetchOnlyWallFor100kS: 100_000 / Math.max(rate, 1e-9), mutatedSubjectsAtBasis: mutatedOk },
       live: { presweep: pre ? { read: pre.read, commit: pre.writer.commit } : null, duringSweep: during ? { read: during.read, commit: during.writer.commit } : null },
       bars: [
         bar("NS-P5 sweep evaluates the release (W0) and publishes through the outbox", false, "= true", false, `${EVALUATE_SEAM.reason}; ${PUBLISH_SEAM.reason}`),
         bar("NS-P5 wall s for 100k subjects incl. evaluation and publication", null, "<= 100", false, `fetch-only diagnostic: ${(100_000 / Math.max(rate, 1e-9)).toFixed(0)} s extrapolated`),
         bar("NS-P5 exact coverage", exact, "= true", exact),
-        bar("NS-P5 post-capture mutations do not leak into the sweep", `${mutatedOk}/${s.mutatedAfterCapture.length}`, "all at basis", mutatedOk === s.mutatedAfterCapture.length),
+        bar("NS-P5 post-capture mutations do not leak into the sweep", `${mutatedOk}/${s.mutatedAfterCapture.length}`, "all at basis", mutatedOk === s.mutatedAfterCapture.length && mutationsCommitted, `requires committed positions past capture; observed: ${JSON.stringify(s.mutationPositions ?? null)}`),
         bar("NS-P5 live read p99 during sweep / presweep", ratio(during?.read.p99Ms, pre?.read.p99Ms), "<= 1.5", ratio(during?.read.p99Ms, pre?.read.p99Ms) !== null ? ratio(during?.read.p99Ms, pre?.read.p99Ms)! <= 1.5 : null),
         bar("NS-P5 writer commit p99 during sweep / presweep", ratio(during?.writer.commit.p99Ms, pre?.writer.commit.p99Ms), "<= 1.5", ratio(during?.writer.commit.p99Ms, pre?.writer.commit.p99Ms) !== null ? ratio(during?.writer.commit.p99Ms, pre?.writer.commit.p99Ms)! <= 1.5 : null),
         bar("NS-P5 throttled variant overlapping compaction", null, "run", false, s.throttledVariant.reason),
