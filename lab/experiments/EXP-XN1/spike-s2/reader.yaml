@@ -1,0 +1,21 @@
+# [XN-S2] Why: R19 bundled Kafka docs specify remotes plus source/replica topics. Rejected: old bootstrapServers directly under log (pre-2.1 shape).
+server:
+  host: 0.0.0.0
+  port: 5432
+  numThreads: 300
+remotes:
+  kafkaCluster: !Kafka
+    bootstrapServers: tx2-xns2-kafka:9092
+log: !Kafka
+  cluster: kafkaCluster
+  topic: tx2-xns2-source
+  autoCreateTopic: true
+storage: !Local
+  path: /var/lib/xtdb/buffers
+memoryCache:
+  maxSizeBytes: 536870912
+healthz:
+  host: 0.0.0.0
+  port: 8080
+
+readOnlyDatabases: true
