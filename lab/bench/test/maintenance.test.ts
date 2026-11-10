@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { completedMaintenanceInWindow, requestIndex } from '../lib/maintenance.ts';
@@ -18,5 +19,17 @@ test('request job validates database/content and the 60-second response budget',
     let t=0;
     const event=await requestIndex({request:async()=>({...body,...patch})},'db','p4h10',()=>t++ ? elapsed : 0,60000);
     assert.equal(event.completed,expected);
+  }
+});
+
+test('real OM2 response list reproduces five missed windows under the mixed-clock comparison', async () => {
+  const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/dxh3-om2-maintenance.json',import.meta.url),'utf8'));
+  assert.deepEqual(fixture.windows.map((w:any)=>fixture.events.filter((e:any)=>e.phase===w.phase && e.completed && e.requestedAtMs>=w.from && e.completedAtMs<w.to).length),[1,0,0,0,0,0]);
+  for(const w of fixture.windows) {
+    const raw=fixture.events.find((e:any)=>e.phase===w.phase);
+    let n=0;
+    // Driver request/response samples are simulated; raw gateway response bytes above are recorded.
+    const event=await requestIndex({request:async()=>raw},raw.database,w.phase,()=>n++ ? w.from+5000 : w.from+1,60000);
+    assert.equal(completedMaintenanceInWindow(event,w.phase,w.from,w.to),true);
   }
 });

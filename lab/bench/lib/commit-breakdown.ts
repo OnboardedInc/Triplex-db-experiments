@@ -6,8 +6,9 @@ export function commitBreakdown(rows: any[]) {
     beforeTransact: (w: any) => w.transactCalledAt - w.scheduledAt,
     transact: (w: any) => w.transactReturnedAt - w.transactCalledAt,
     afterTransact: (w: any) => w.ackPublishedAt - w.transactReturnedAt,
+    afterAck: (w: any) => w.finishedAt - w.ackPublishedAt,
     publicationWitness: (w: any) => w.publicationDurableAt - w.publicationStartedAt,
-    driverOwn: (w: any) => w.transactCalledAt - w.scheduledAt + w.ackPublishedAt - w.transactReturnedAt + (Number.isFinite(w.publicationDurableAt) ? w.publicationDurableAt - w.publicationStartedAt : 0),
+    driverOwn: (w: any) => w.transactCalledAt - w.scheduledAt + w.finishedAt - w.transactReturnedAt + (Number.isFinite(w.publicationDurableAt) ? w.publicationDurableAt - w.publicationStartedAt : 0),
   };
   return Object.fromEntries(Object.entries(segments).map(([name, value]) => {
     const h = new Histogram();

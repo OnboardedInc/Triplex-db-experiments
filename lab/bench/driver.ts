@@ -673,7 +673,7 @@ async function run() {
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
     const indexJob = indexClient && /^L[0-9]+$/.test(spec.name) && spec.seconds ? (async () => {
       const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
-      await sleep(delay);
+      while (now() < start + delay) await sleep(Math.max(1, start + delay - now()));
       const waitMs = Math.max(1, Math.min(600000, Math.floor(spec.seconds! * 1000 - delay - 100)));
       datomicMaintenanceJobs.push(await requestIndex(indexClient, indexDb, spec.name, now, waitMs));
     })() : null;
@@ -1183,7 +1183,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     readYourOwnWrite: { pulls: ryowRows.length, correct: ryowOk, pull: ryowHist.summary(), failures: ryowRows.filter((x) => !x.v.ok).slice(0, 5).map((x) => ({ kind: x.v.kind, subject: x.r[R.subject], position: x.r[R.basisPosition] })) },
     duplicates: { resends: resends.length, considered: dupConsidered.length, returnedOriginal: dupOk },
     lostAck: { simulated: lostAck.length, returnedOriginal: lostOk, retryTags: countBy(lostAck.map((r) => r.retryTag)) },
-    breakdown: { units: "ms", note: "driverOwn includes offer queueing, post-transact ACK work and durable publication witness inside transact; medians are per-command sums, not sums of medians; all latency bars remain unchanged",
+    breakdown: { units: "ms", note: "driverOwn includes offer queueing, all post-transact completion work (including after ACK), and durable publication witness inside transact; medians are per-command sums, not sums of medians; all latency bars remain unchanged",
       byPhase: Object.fromEntries(ctx.phases.map(p => [p.name, commitBreakdown(committed.filter(w => w.scheduledAt >= p.start && w.scheduledAt < p.end))])),
       burst: commitBreakdown(committed.filter(w => w.burst)), all: commitBreakdown(committed) },
     probe10Diagnostic: { note: "diagnostic only (TARGETS 1.1 P2 item 2); overlay stream, not part of any bar", commit: probeHist.summary() },
@@ -1348,7 +1348,12 @@ function loadBaselineWrites(): any[] | null {
     throw Error("Matched baseline identity differs (zero readers, trace, subjects, composition, lane or seed)");
   report.matchedBaseline = { traceDigest: baselineReport.trace.digest, offeredUntilTraceS: baselineReport.writer?.offeredUntilTraceS,
     source: config.baselineWrites, sha256: createHash("sha256").update(fs.readFileSync(config.baselineWrites)).digest("hex") };
-  return readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
+  const rows = readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
+  if (baselineReport.status !== "DONE" || baselineReport.writer?.pendingAtEnd !== 0 ||
+      rows.some(w => w.outcome !== "committed") || baselineReport.correctness?.violations || baselineReport.correctness?.errors ||
+      JSON.stringify(baselineReport.benchSources) !== JSON.stringify(report.benchSources))
+    throw Error("Matched baseline is incomplete, incorrect or uses different harness source");
+  return rows;
 }
 function matchedBaseline(rows: any[], fromOffset: number, toOffset: number) {
   if (!(report.matchedBaseline?.offeredUntilTraceS * 1000 >= toOffset)) return {commits:0,p50Ms:null,p99Ms:null,invalid:"zero-reader trace does not cover this entire window"};

@@ -1,0 +1,97 @@
+{
+  "source": "DX-H3/tx2-dxh3-om2/driver/ns-report.json",
+  "events": [
+    {
+      "job": "d98dbbd2-69df-43c2-b6b6-3ddc7f270b14",
+      "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJucy1kYXRvbWljLWRldjIwMDAtbnNtd2E5aWhtdDhhNDciLDBd",
+      "requestedT": "28348",
+      "requestedAtMs": 1794289339355,
+      "completed": true,
+      "completedAtMs": 1794289343326,
+      "phase": "L1",
+      "t": 1794289343326
+    },
+    {
+      "job": "ada62c6a-bb30-40fe-bf63-4e957be10b1e",
+      "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJucy1kYXRvbWljLWRldjIwMDAtbnNtd2E5aWhtdDhhNDciLDBd",
+      "requestedT": "28516",
+      "requestedAtMs": 1794289359255,
+      "completed": true,
+      "completedAtMs": 1794289360399,
+      "phase": "L4",
+      "t": 1794289360399
+    },
+    {
+      "job": "72d5dc8c-f10d-46d4-94d6-3f5fec22e1d2",
+      "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJucy1kYXRvbWljLWRldjIwMDAtbnNtd2E5aWhtdDhhNDciLDBd",
+      "requestedT": "28680",
+      "requestedAtMs": 1794289379255,
+      "completed": true,
+      "completedAtMs": 1794289380424,
+      "phase": "L16",
+      "t": 1794289380424
+    },
+    {
+      "job": "08ce15f9-f018-4594-98c5-b0c437b6300e",
+      "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJucy1kYXRvbWljLWRldjIwMDAtbnNtd2E5aWhtdDhhNDciLDBd",
+      "requestedT": "28868",
+      "requestedAtMs": 1794289399255,
+      "completed": true,
+      "completedAtMs": 1794289400425,
+      "phase": "L64",
+      "t": 1794289400425
+    },
+    {
+      "job": "57c424b0-efab-4cb1-b508-e6bb75be6030",
+      "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJucy1kYXRvbWljLWRldjIwMDAtbnNtd2E5aWhtdDhhNDciLDBd",
+      "requestedT": "29032",
+      "requestedAtMs": 1794289419256,
+      "completed": true,
+      "completedAtMs": 1794289420175,
+      "phase": "L256",
+      "t": 1794289420175
+    },
+    {
+      "job": "dd52534a-0735-45a4-823c-edb02d1f9788",
+      "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJucy1kYXRvbWljLWRldjIwMDAtbnNtd2E5aWhtdDhhNDciLDBd",
+      "requestedT": "32772",
+      "requestedAtMs": 1794289439271,
+      "completed": true,
+      "completedAtMs": 1794289441791,
+      "phase": "L1024",
+      "t": 1794289441791
+    }
+  ],
+  "windows": [
+    {
+      "phase": "L1",
+      "from": 1794289339353.3123,
+      "to": 1794289357354.4736
+    },
+    {
+      "phase": "L4",
+      "from": 1794289359354.9329,
+      "to": 1794289377354.923
+    },
+    {
+      "phase": "L16",
+      "from": 1794289379355.4558,
+      "to": 1794289397355.1023
+    },
+    {
+      "phase": "L64",
+      "from": 1794289399355.6099,
+      "to": 1794289417355.4087
+    },
+    {
+      "phase": "L256",
+      "from": 1794289419355.9702,
+      "to": 1794289437362.8752
+    },
+    {
+      "phase": "L1024",
+      "from": 1794289439363.2244,
+      "to": 1794289457407.7144
+    }
+  ]
+}
