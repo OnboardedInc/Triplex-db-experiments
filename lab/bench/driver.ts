@@ -10,7 +10,7 @@ import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency
  *   node lab/bench/driver.ts --lane xtdb|qlever|datomic --rung 10k|100k|1m|10m --output runs/NS/<id>/ns-report.json
  *     [--profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline-writes FILE]
  *     [--composition public] [--seed ns-v2] [--reader-threads 4] [--seed-budget-s 3600] [--seed-batch-facts 400]
- *     [--reader-entity-cache-mib 128] [--writer-max-inflight 32] [--sweep-concurrency 16] [--oracle-root DIR]
+ *     [--reader-entity-cache-mib 640] [--no-reader-affinity] [--writer-max-inflight 32] [--sweep-concurrency 16] [--oracle-root DIR]
  *     development only: [--subjects N] [--max-readers N] [--burst-multiplier X] [--level-s S]
  *   paired rounds (EXP-M01, PAIR-0; normally started by lab/bench/duet.ts, two drivers at once):
  *     --arm A|B --round-plan FILE (--barrier-dir DIR | --start-at-abs-ms T)
@@ -97,7 +97,8 @@ const config = {
   composition: opt("composition", "public")!,
   seed: opt("seed", "ns-v2")!,
   readerThreads: Number(opt("reader-threads", "4")),
-  readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", "128")),
+  readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", lane === "datomic" ? "640" : "128")),
+  readerSubjectAffinity: lane === "datomic" && !flag("no-reader-affinity"),
   seedBudgetS: Number(opt("seed-budget-s", "3600")),
   seedBatchFacts: Number(opt("seed-batch-facts", "400")),
   writerMaxInFlight: Number(opt("writer-max-inflight", "32")),
@@ -125,12 +126,12 @@ const config = {
   barrierDir: opt("barrier-dir") ?? null,
   startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
-// [DX-H7] Why: bound aggregate retained cache estimates below half the 8 GiB client grant.
+// [DX-H7] Why: bound aggregate entity, row and key cache estimates below half the 8 GiB client grant.
 // Rejected: an unbounded per-thread cache (moves saturation to memory pressure).
 if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) || config.readerEntityCacheMiB < 1 ||
     !Number.isSafeInteger(config.readerThreads) || config.readerThreads < 1 ||
-    config.readerThreads * (config.readerEntityCacheMiB + 32) > 4096))
-  throw new Error("Reader entity + row cache budgets must total at most 4096 MiB");
+    config.readerThreads * (config.readerEntityCacheMiB + 64) > 4096))
+  throw new Error("Reader entity + row + key cache budgets must total at most 4096 MiB");
 const pairPlan: RoundPlan | null = config.roundPlan ? JSON.parse(fs.readFileSync(path.resolve(config.roundPlan), "utf8")) : null;
 if (pairPlan) {
   if (pairPlan.format !== "tx2-round-plan/1") throw new Error(`--round-plan: format ${pairPlan.format}`);
@@ -359,7 +360,7 @@ async function run() {
   log(`trace: ${events.length} events over ${traceDurationS}s, digest ${report.trace.digest}, active-set share ${report.trace.generated.activeShare.toFixed(3)}`);
 
   // ---------------------------------------------------------------- reader workers
-  const workerCfg = (w: number) => ({ entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const sweepDone = new Map<number, (v: any) => void>();

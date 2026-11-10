@@ -1,6 +1,6 @@
 import { Session } from "node:inspector";
-import { parentPort, workerData } from "node:worker_threads";
-import { startReader } from "../../../bench/reader-worker.ts";
+import { parentPort } from "node:worker_threads";
+import "../../../bench/reader-worker.ts";
 // [DX-H7] Why: an inspector session inside the worker samples that isolate, not the parent.
 // Rejected: parent --cpu-prof alone (cannot attribute reader hashing/decode).
 const session = new Session();
@@ -18,4 +18,3 @@ parentPort!.on("message", async (m) => {
     session.disconnect();
   }
 });
-await startReader(parentPort, workerData);

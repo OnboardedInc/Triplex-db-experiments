@@ -18,6 +18,7 @@ cleanup() {
   docker volume rm "$prefix-driver" >/dev/null 2>&1 || true
   remaining=$(docker ps -a --filter "name=$prefix" --format '{{.Names}}')
   [[ -z $remaining ]] || { echo "owned containers remain; retain lock: $remaining"; exit 1; }
+  rm -f lab/experiments/EXP-DX1/h7/.after-ready lab/experiments/EXP-DX1/h7/.optimized-ready
   rm -f "$lock/owner.json"; rmdir "$lock"
   exit "$rc"
 }

@@ -34,6 +34,7 @@ import { observe, type ReadRecord } from "./lib/observe.ts";
 
 type ReaderConfig = {
   entityCacheBytes?: number;
+  subjectShards?: number;
   lane: "xtdb" | "qlever" | "datomic";
   scope: string;
   composition: string;
@@ -83,7 +84,12 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       return { subject: i ?? rng.int(cfg.subjects), hotPick: false };
     }
     if (hot.length && rng.next() < 0.6) return { subject: hot[rng.int(hot.length)]!, hotPick: true };
-    return { subject: rng.int(cfg.subjects), hotPick: false };
+    // [DX-H7] Why: give uniform reads a stable per-worker hot set instead of decoding it in every isolate.
+    // Rejected: sharding hot picks (would change their distribution across recently written subjects).
+    const shards = cfg.subjectShards ?? 1;
+    const offset = cfg.worker < shards ? cfg.worker : 0;
+    const count = Math.ceil((cfg.subjects - offset) / shards);
+    return { subject: count > 0 ? offset + shards * rng.int(count) : rng.int(cfg.subjects), hotPick: false };
   }
 
   /** Returns [basis, kind (0 latest, 1 last hour, 2 past valid time), receipt position, txId]. */

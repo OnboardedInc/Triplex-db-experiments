@@ -1,6 +1,6 @@
 /** What a read observed, in the same terms the expected-state model computes. */
 import type { PullResult } from "./composition.ts";
-import { Digest } from "./rng.ts";
+import { Digest, hash2 } from "./rng.ts";
 import { memberOf } from "./world.ts";
 
 export interface Observed {
@@ -14,24 +14,74 @@ export interface Observed {
   bytes: number;
 }
 
+// [DX-H7] Why: immutable cached facts recur at many bases; hash their actual content once.
+// Rejected: ID/revision-only result caching (could hide mutations or valid-time filtering).
+type MemberPart = { a: number; b: number; bytes: number; stamp: number; stamps: number };
+const members = new WeakMap<object, MemberPart>();
+const frozenData = (v: unknown): boolean => {
+  if (v === null || typeof v !== "object") return typeof v !== "function";
+  if (!Object.isFrozen(v)) return false;
+  const prototype = Object.getPrototypeOf(v);
+  if (prototype !== Object.prototype && prototype !== Array.prototype && prototype !== null)
+    return false;
+  return Object.values(Object.getOwnPropertyDescriptors(v)).every(
+    (d) => "value" in d && frozenData(d.value),
+  );
+};
 export function observe(pr: PullResult): Observed {
   const d = new Digest();
-  let stamp = -1, stamps = 0, bytes = 0;
+  let stamp = -1,
+    stamps = 0,
+    bytes = 0;
   for (const t of pr.triples) {
-    const m = memberOf(t.entityId, t.attribute, t.value);
-    d.add(m);
-    bytes += m.length;
-    if (t.attribute === ":placement/stamp") {
-      stamps++;
-      stamp = Math.max(stamp, Number(t.value.value));
+    let part = members.get(t);
+    if (!part) {
+      const m = memberOf(t.entityId, t.attribute, t.value);
+      const [a, b] = hash2(m);
+      const isStamp = t.attribute === ":placement/stamp";
+      part = {
+        a,
+        b,
+        bytes: m.length,
+        stamp: isStamp ? Number(t.value.value) : -1,
+        stamps: isStamp ? 1 : 0,
+      };
+      // [DX-H7] Why: only member fields contribute; metadata Options need not be plain data.
+      // Rejected: shallow freezing (nested JSON can still change).
+      const descriptors = Object.getOwnPropertyDescriptors(t);
+      if (
+        Object.isFrozen(t) &&
+        ["entityId", "attribute", "value"].every(
+          (k) => descriptors[k] && "value" in descriptors[k] && frozenData(descriptors[k].value),
+        )
+      )
+        members.set(t, part);
     }
+    d.a = (d.a + part.a) >>> 0;
+    d.b = (d.b + part.b) >>> 0;
+    d.n++;
+    bytes += part.bytes;
+    stamps += part.stamps;
+    if (part.stamps) stamp = Math.max(stamp, part.stamp);
   }
   return { digest: d.hex(), stamp, stamps, facts: d.n, bytes };
 }
 
 /** Record layout shared by reader workers and the driver (arrays keep worker messages small). */
 export const R = {
-  phase: 0, subject: 1, recordedAt: 2, validAt: 3, start: 4, latency: 5, stamp: 6, facts: 7, digest: 8, bytes: 9, depth: 10, roundTrips: 11, error: 12,
+  phase: 0,
+  subject: 1,
+  recordedAt: 2,
+  validAt: 3,
+  start: 4,
+  latency: 5,
+  stamp: 6,
+  facts: 7,
+  digest: 8,
+  bytes: 9,
+  depth: 10,
+  roundTrips: 11,
+  error: 12,
   /** 0 latest receipt, 1 receipt from the last hour, 2 past valid time */
   basisKind: 13,
   /** source position of the receipt the basis names (driver-recorded) */
@@ -44,4 +94,26 @@ export const R = {
   language: 19,
   waitedMs: 20,
 } as const;
-export type ReadRecord = [number, number, number, number, number, number, number, number, string, number, number, number, string | null, number, number, number, number, number, string, string, number];
+export type ReadRecord = [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  string,
+  number,
+  number,
+  number,
+  string | null,
+  number,
+  number,
+  number,
+  number,
+  number,
+  string,
+  string,
+  number,
+];

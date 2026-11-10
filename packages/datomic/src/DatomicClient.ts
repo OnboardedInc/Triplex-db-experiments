@@ -146,6 +146,31 @@ export class DatomicClient {
     faults: 0,
     declines: {} as Record<string, number>,
   };
+  // [DX-H7] Why: parsed reference IDs repeatedly rebuilt and hashed long database-prefixed keys.
+  // Rejected: changing cache identity to an entity ID alone (cross-database collisions).
+  private reachKeyDb: string | undefined;
+  private readonly reachKeys = new Map<string, string>();
+  private reachKeyBytes = 0;
+  private reachKey(db: string, prefix: string, id: string): string {
+    if (this.reachKeyDb !== db) {
+      this.reachKeys.clear();
+      this.reachKeyBytes = 0;
+      this.reachKeyDb = db;
+    }
+    const found = this.reachKeys.get(id);
+    if (found !== undefined) return found;
+    const key = prefix + id;
+    const bytes = 128 + 2 * (id.length + key.length);
+    if (bytes <= 32 * 1024 ** 2) {
+      if (this.reachKeyBytes + bytes > 32 * 1024 ** 2) {
+        this.reachKeys.clear();
+        this.reachKeyBytes = 0;
+      }
+      this.reachKeys.set(id, key);
+      this.reachKeyBytes += bytes;
+    }
+    return key;
+  }
   private readonly endpoint: URL;
   constructor(
     endpoint: string,
@@ -178,6 +203,9 @@ export class DatomicClient {
   }
   readonly rowObservers = new Set<(db: string, row: TripleRow) => void>();
   close(): void {
+    this.reachKeys.clear();
+    this.reachKeyBytes = 0;
+    this.reachKeyDb = undefined;
     this.reachCache.clear();
     this.rowCache.clear();
     this.layouts.clear();
@@ -382,8 +410,9 @@ export class DatomicClient {
           throw new TypeError("Reach response basis/shape mismatch");
         const prefix = `${db}\0`;
         const cache = {
-          get: (id: string) => this.reachCache.get(prefix + id),
-          set: (id: string, entity: CachedEntity) => this.reachCache.set(prefix + id, entity),
+          get: (id: string) => this.reachCache.get(this.reachKey(db, prefix, id)),
+          set: (id: string, entity: CachedEntity) =>
+            this.reachCache.set(this.reachKey(db, prefix, id), entity),
         };
         if (response.reset) {
           this.reachCache.deleteWhere((key) => key.startsWith(prefix));
