@@ -203,11 +203,49 @@ container inside the VM.
   passes gateway heap through `DATOMIC_JAVA_OPTS`; full runs must also set `-XX:+UseG1GC` and give the write gateway two CPUs.
 - The 280 model violations must be explained on the lean rerun before any bar is trusted.
 
+### DX-B5 (lean layout; `exp/DX-B5-lean-layout` 087dba42, merged; report `lab/experiments/EXP-DX1/b5/REPORT.md`)
+
+- Built: scope layout `lean` (`:triplex.scope/rows-version 3`, chosen at creation, `TRIPLEX_DATOMIC_LAYOUT=lean` in the bench); a row is
+  one indexed row-text datom; cut reader (as-of) and history reader (Datomic history plus retirement markers) serve every row route;
+  record times kept in commit order (ordered send, per-client ordered submission, clock replay); `getReachRows` / `getReachRowsMany`;
+  the W0 page reader uses one call per page.
+- Exactness: 300 scenarios on both layouts, 95,028 comparisons deep-equal (5,664 through the fast cut reader); 3 mutants rejected.
+  Suites: legacy 180 pass / 2 fail, lean 178 pass / 2 fail / 2 skipped (native `q`). The two failures: the known signed-zero domain
+  test, and an inherited DX-B4 journal test that expects success for an untyped SPI row (`tx_id` "spi") where both layouts now
+  return a typed error. **Both must be fixed or explained before any PASS claim.**
+- `LayoutUnsupported` on lean: native Datalog `q` and the older `log` route only.
+- Numbers (DX-B3 stack profile, driver on the Mac through the tunnel, gateways 1 GiB heap with the Serial collector):
+
+| Measure | Lean | Legacy, same session | Bar |
+| --- | --- | --- | --- |
+| Datoms per commit p50 / p90 / p99 | 48 / 82 / 124 | 251 / 540 / 898 | - |
+| Serial commit p50 / p99; `d/transact` p50 | 7.5 / 23.3 ms; 3.1 ms | 9.9 / 32.5 ms; 4.0 ms | 10 / 50 |
+| 55/s burst, no readers (3 runs) | p50 14.2 ms, p99 40-41 ms | 16.8 / 56.2 ms | 10 / 50 |
+| 55/s burst with 32 readers | p50 10.8 ms, p99 67.8 ms | not run | 10 / 50 |
+| Pull, one client; 32 readers | p50 2.2 / p99 7.0 ms; 2,525 per read-gateway CPU-s | - | 5 / 25; 1,100 |
+| NS seed, 32 writers | 289 commands/s (11,800 facts/s) | - | - |
+| W0 page, 64 subjects | 777 ms, 1 HTTP call, 32,570 rows | 62-113 s through the old path | - |
+
+- Clock replays under contention: 58 (16 clients, one process, shared CPU), 77 (4 processes); 0 when isolated.
+
+## Orchestrator run in progress
+
+Medium NS run on a lean scope inside the VM: `tx2-dxh3-om1`, 2,000 subjects, 256 readers, Postgres CPU 0, transactor 0-1 (heap 3 GB,
+object cache 1 GB, index threshold 256m/1g), write gateway CPUs 2-3 and read gateway 4-5 (heap 2 GB, G1), driver CPUs 6-7,
+`TX2_ENGINE_CPUS=6`. Wrapper: `lab/experiments/EXP-DX1/h3/attempt.sh` with `DX_*` environment variables (see commit 9d9b06de).
+Output: `~/Claude/Projects/triplex-db-2/evidence/DX-H3/tx2-dxh3-om1/`.
+
+## P5 arithmetic to keep in mind
+
+A W0 subject has about 440 own rows (442,410 assertions per 1,000 subjects). 100,000 subjects in 100 s is about 440,000 rows per
+second read, decoded and evaluated, about 13 GB of row JSON. That needs several read-gateway cores and several client cores at once;
+the 8-CPU VM also has to carry live traffic during the sweep. Seeding 100k is 4.3 million commands (about 3 to 4 hours at 300 to 400
+commands per second).
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-B5 | Lean layout (one row-text datom per row as system of record), commit-order rule for record times, rows from reach, differential test against legacy | `exp/DX-B5-lean-layout`, `.claude/worktrees/dx-b5` | `.../prompts/DX-B5.md` |
 
 After these: merge; run NS at 10k on a lean scope in the VM mode; seed W0 and run P5 with the lean page reader; then the asynchronous
 reifier for native Datalog on lean scopes; then one independent review and receipts.
