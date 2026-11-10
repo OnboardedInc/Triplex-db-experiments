@@ -182,6 +182,8 @@ async function main() {
   const workers = new Set();
   const report = {
     diagnostic: true,
+    layout: process.env.TRIPLEX_DATOMIC_LAYOUT ?? "legacy",
+    comparisonOnly: process.env.DX_B5_COMPARE_ONLY === "1",
     scope,
     subjects,
     accounts,
@@ -365,6 +367,7 @@ async function main() {
       }
       return result;
     };
+    if (process.env.DX_B5_COMPARE_ONLY !== "1") {
     report.steps.pulls = await measured("pulls-single", async () => {
       const times = [], beginCpu = cpu();
       for (let i = 20000; i < 40000; i++) {
@@ -379,6 +382,7 @@ async function main() {
       const times = observations.flatMap(o => o.times), cpuSeconds = (cpu() - beginCpu) / 1000000;
       return {...summary(times), cpuSeconds, pullsPerCpuSecond: times.length / cpuSeconds};
     }); save();
+    }
     let concurrent = false;
     let sequence = 100000;
     const trace = generateTrace({
@@ -501,6 +505,7 @@ async function main() {
       },
     );
     save();
+    if (process.env.DX_B5_COMPARE_ONLY !== "1") {
     report.steps.rowPage = await measured("row-page", async () => {
       const position = await r.runtime.runPromise(r.adapter.currentCommitPosition());
       const first = readSamples.length, start = performance.now();
@@ -508,6 +513,7 @@ async function main() {
       assert.ok(rows && rows.length === 64);
       return {elapsedMs: performance.now() - start, httpRequests: readSamples.length - first, roots: rows.length, rows: rows.reduce((n,r) => n+r.length, 0)};
     }); save();
+    }
     const arrivalRandom = rng(0x9123),
       arrivals = [];
     for (
@@ -604,6 +610,7 @@ async function main() {
       report.steps.openLoop2 = await openLoop("step5-open-loop-2", false); save();
       report.steps.openLoop3 = await openLoop("step5-open-loop-3", false); save();
     }
+    if (process.env.DX_B5_COMPARE_ONLY !== "1") {
     report.steps.openLoopWithReaders = await openLoop("step5-with-readers", true);
     report.steps.openLoopWithReaders.p99Ratio =
       report.steps.openLoopWithReaders.p99 / report.steps.openLoop.p99;
@@ -684,6 +691,7 @@ async function main() {
         return {elapsedMs, httpRequests: requests, rows: page.rows.length, subjects: subjects.length, basis, seed: seeded};
       } finally {await rh?.close(); await wh.client.delete(pageScope); await wh.close();}
     }); save();
+    }
     report.diagnostics = { write: w.client.reachDiagnostics, read: r.client.reachDiagnostics };
     save();
     console.log(JSON.stringify({ dir, steps: report.steps }, null, 2));

@@ -81,6 +81,7 @@ export class DatomicClient {
     replays: 0,
     clockReplays: 0,
   };
+  private readonly sentCallbacks = new Map<string, () => void>();
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
   readonly reachCache = new Map<string, Map<string, CachedEntity>>();
@@ -122,6 +123,13 @@ export class DatomicClient {
     onSent?: () => void,
   ): Promise<T> {
     const started = performance.now();
+    // [DX-B5-L0] Why: legacy request wrappers forward four arguments; recover the callback from the bound operation.
+    // Rejected: requiring every instrumentation wrapper to forward a new positional argument.
+    if (!onSent && path.endsWith("/transact") && body && typeof body === "object") {
+      const operation = (body as { operationId?: unknown }).operationId;
+      if (typeof operation === "string")
+        onSent = this.sentCallbacks.get(`${path.split("/")[3]}/${operation}`);
+    }
     // [EXP-DX1] Why: a known commit t lets lagging peers wait locally; no transactor round trip.
     // Rejected: d/sync without t and the old ten-millisecond poll.
     if (body && typeof body === "object" && this.lastCommit) {
@@ -397,6 +405,7 @@ export class DatomicClient {
   async transact(
     db: string,
     input: {
+      onSent?: () => void;
       clientId?: string;
       sendSequence?: number;
       replaySafe?: boolean;
@@ -417,8 +426,12 @@ export class DatomicClient {
     onSent?: () => void,
   ): Promise<unknown> {
     const encodeStart = performance.now();
+    // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
+    // Rejected: a third-argument-only callback (the NS publication observer drops it).
+    const { onSent: inputSent, ...wireInput } = input;
+    onSent ??= inputSent;
     const body = {
-      ...input,
+      ...wireInput,
       rows: input.rows.map(encodeRow),
       rowTexts: Object.fromEntries(
         input.rows
@@ -435,11 +448,15 @@ export class DatomicClient {
       ),
     };
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
-    const response = await this.request<{
-      t?: TaggedValue;
-      position?: TaggedValue;
-      delta?: number;
-    }>("POST", `/v1/db/${db}/transact`, body, this.timeoutMs, onSent);
+    const sendKey = `${db}/${input.operationId}`;
+    if (onSent) this.sentCallbacks.set(sendKey, onSent);
+    let response: { t?: TaggedValue; position?: TaggedValue; delta?: number };
+    try {
+      response = await this.request("POST", `/v1/db/${db}/transact`, body, this.timeoutMs);
+    } finally {
+      this.sentCallbacks.delete(sendKey);
+      onSent?.();
+    }
     if (response.t && response.position) {
       const p = validateTagged(response.position);
       const position = Number(p.v);

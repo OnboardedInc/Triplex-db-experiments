@@ -18,12 +18,8 @@ done
 started=$(date +%s)
 printf '{"id":"DX-B5","prefix":"%s","layout":"%s"}\n' "$prefix" "$layout" > "$lock/owner.json"
 cleanup() {
-  bash lab/experiments/EXP-DX1/b5/down.sh "$prefix" --volumes
-  export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
-  if [[ -z $(docker ps -a --filter "name=$prefix-" -q) && -z $(docker network ls --filter "name=$prefix-" -q) && -z $(docker volume ls --filter "name=$prefix-" -q) ]]; then
-    rm "$lock/owner.json"
-    rmdir "$lock"
-  else echo "cleanup unverified; lock retained" >&2; fi
+  dxb5_result=$?
+  python3 lab/experiments/EXP-DX1/b5/cleanup-measurement.py "$prefix" "$dxb5_result"
 }
 trap cleanup EXIT
 DX5_TX_HEAP=2g DX5_TX_MEMORY=3g DX5_GW_HEAP=1g bash lab/experiments/EXP-DX1/b5/up.sh "$prefix" --cpus-tx 0,1 --cpus-pg 0 --cpus-gw-write 2 --cpus-gw-read 3,4

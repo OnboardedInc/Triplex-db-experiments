@@ -245,32 +245,29 @@ export const makeDatomicStorageAdapter = (
           if (state.order) state.order.ticket = ticket;
           const ack = await bounded(
             sendCommit(ticket, (sendSequence, sent) =>
-              client.transact(
-                db,
-                {
-                  clientId: commitClientId,
-                  sendSequence,
-                  // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
-                  // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
-                  replaySafe:
-                    state.replaySafe === true &&
-                    [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
-                  sourceK: state.optimistic ? null : state.sourceK,
-                  position: state.position,
-                  span: state.position - state.sourceK,
-                  entities: [...state.entities],
-                  live: [...state.live],
-                  scopeWide: state.scopeWide,
-                  operationId,
-                  attemptId,
-                  rows: [...state.rows.values()],
-                  newIds: [...state.newIds],
-                  claims: [...state.claims.values()],
-                  ...(state.optimistic ? {} : { handle: state.handle }),
-                  release: true,
-                },
-                sent,
-              ),
+              client.transact(db, {
+                onSent: sent,
+                clientId: commitClientId,
+                sendSequence,
+                // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
+                // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
+                replaySafe:
+                  state.replaySafe === true &&
+                  [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
+                sourceK: state.optimistic ? null : state.sourceK,
+                position: state.position,
+                span: state.position - state.sourceK,
+                entities: [...state.entities],
+                live: [...state.live],
+                scopeWide: state.scopeWide,
+                operationId,
+                attemptId,
+                rows: [...state.rows.values()],
+                newIds: [...state.newIds],
+                claims: [...state.claims.values()],
+                ...(state.optimistic ? {} : { handle: state.handle }),
+                release: true,
+              }),
             ),
           );
           // [EXP-DX1] Why: a bound transaction ACK is already a receipt; resolve only ambiguous ACKs.
