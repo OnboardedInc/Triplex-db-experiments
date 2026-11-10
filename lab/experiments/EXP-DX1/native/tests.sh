@@ -10,6 +10,7 @@ export DX1_RESULTS=$run/driver/reach-results.json DX2_TRANSITION_RESULTS=$run/dr
 files=(reach reach-repair journal-fast record-time-peer concurrent-commits adapter commit-observation layout-differential)
 case ${DX_N1_TEST_SET:-all} in
  all) ;;
+ core) files=(reach concurrent-commits);;
  remaining) files=(reach-repair journal-fast record-time-peer adapter commit-observation layout-differential);;
  layout) files=(layout-differential);;
  *) echo 'invalid DX_N1_TEST_SET' >&2; exit 2;;
