@@ -120,6 +120,10 @@ describe("packed replica", () => {
     expect(replica.world("root")).toEqual([]);
     await expect(replica.snapshotAt(1)).rejects.toThrow("unavailable");
     expect(new ReplicaSnapshot(frozen.image()).world("root")).toEqual(frozen.world("root"));
+    const shared = frozen.sharedImage();
+    expect(new ReplicaSnapshot(shared).world("root")).toEqual(frozen.world("root"));
+    expect(new ReplicaSnapshot(shared).bytes).toBe(frozen.bytes);
+    expect(shared.entities.every(([, e]) => e.buffer === shared.entities[0]![1].buffer)).toBe(true);
   });
   it("rejects gaps, rejects waiting readers and rebuilds rather than guessing", async () => {
     const f = fixture(),
@@ -167,28 +171,45 @@ describe("packed replica", () => {
     expect(r.world("root")[1]!.id).toBe("v3");
   });
   it("rebuilds automatically after a feed decline, and stops a caught-up long-poll loop", async () => {
-    const f = fixture(), original = f.source.page;
-    let pages = 0, first = true;
-    f.source.page = (...args) => { pages++; return original(...args); };
+    const f = fixture(),
+      original = f.source.page;
+    let pages = 0,
+      first = true;
+    f.source.page = (...args) => {
+      pages++;
+      return original(...args);
+    };
     const feed = f.source.feed;
-    f.source.feed = (...args) => { if (first) { first = false; return Promise.reject(new Error("declined")); } return feed(...args); };
+    f.source.feed = (...args) => {
+      if (first) {
+        first = false;
+        return Promise.reject(new Error("declined"));
+      }
+      return feed(...args);
+    };
     const r = new Replica(f.source, 0);
     expect(() => r.start()).toThrow("Bootstrap");
-    await r.bootstrap(["root"]); r.start();
+    await r.bootstrap(["root"]);
+    r.start();
     await new Promise((resolve) => setTimeout(resolve, 120));
-    await r.stop(); expect(pages).toBeGreaterThan(1); expect(r.isValid).toBe(true);
+    await r.stop();
+    expect(pages).toBeGreaterThan(1);
+    expect(r.isValid).toBe(true);
     expect(r.world("root")[1]!.value.value).toBe("before");
   });
   it("replays 2000 ordered replacements and retractions without leaking into a held snapshot", async () => {
-    const f = fixture(), r = new Replica(f.source, 0); await r.bootstrap(["root"]);
+    const f = fixture(),
+      r = new Replica(f.source, 0);
+    await r.bootstrap(["root"]);
     const original = await r.snapshotAt(1);
     for (let i = 0; i < 2000; i++) {
-      const rows = i % 3 === 0 ? [] : [row("shared", "row:" + i, { type: "string", value: String(i) }, i + 2)];
-      f.commit([["shared", rows]]); await r.followOnce();
+      const rows =
+        i % 3 === 0 ? [] : [row("shared", "row:" + i, { type: "string", value: String(i) }, i + 2)];
+      f.commit([["shared", rows]]);
+      await r.followOnce();
       expect(r.world("root").slice(1)).toEqual(rows);
     }
     expect(original.world("root")[1]!.value.value).toBe("before");
     expect(r.position).toBe(2001);
   });
-
 });

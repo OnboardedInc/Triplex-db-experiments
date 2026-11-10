@@ -37,9 +37,24 @@ export class ReplicaSnapshot {
   image(): ReplicaImage {
     return { position: this.position, validAt: this.validAt, entities: [...this.entities] };
   }
+  sharedImage(): ReplicaImage {
+    // [DX-R1] Why: 1k recorded worlds took 36s to hand thousands of SAB handles to fresh workers.
+    // Rejected: one shared buffer per entity in workerData; one packed byte copy per pass shares a single handle with all workers.
+    const buffer = new SharedArrayBuffer(this.bytes);
+    const bytes = new Uint8Array(buffer);
+    let offset = 0;
+    const entities: [string, PackedEntity][] = [];
+    for (const [id, entity] of this.entities) {
+      const byteLength = entity.byteLength ?? entity.buffer.byteLength;
+      bytes.set(new Uint8Array(entity.buffer, entity.offset ?? 0, byteLength), offset);
+      entities.push([id, { revision: entity.revision, buffer, offset, byteLength }]);
+      offset += byteLength;
+    }
+    return { position: this.position, validAt: this.validAt, entities };
+  }
   get bytes(): number {
     let n = 0;
-    for (const e of this.entities.values()) n += e.buffer.byteLength;
+    for (const e of this.entities.values()) n += e.byteLength ?? e.buffer.byteLength;
     return n;
   }
   world(subjectId: string): SweepRow[] {
@@ -70,7 +85,7 @@ export class Replica {
   }
   get bytes(): number {
     let n = 0;
-    for (const e of this.entities.values()) n += e.buffer.byteLength;
+    for (const e of this.entities.values()) n += e.byteLength ?? e.buffer.byteLength;
     return n;
   }
   private exclusive<T>(f: () => Promise<T>): Promise<T> {
@@ -184,7 +199,8 @@ export class Replica {
         this.valid = false;
         const cut = p ?? (await this.source.head());
         position(cut);
-        if (p === undefined && cut < this.watermark) throw new ReplicaInvalid("Rebuild head regressed");
+        if (p === undefined && cut < this.watermark)
+          throw new ReplicaInvalid("Rebuild head regressed");
         const unique = [...new Set(roots)];
         if (unique.length !== roots.length) throw new ReplicaInvalid("Duplicate bootstrap root");
         this.roots = unique;

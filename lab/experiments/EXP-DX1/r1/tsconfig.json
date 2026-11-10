@@ -1,0 +1,4 @@
+{
+  "extends": "../../../bench/tsconfig.json",
+  "include": ["../../../bench/lib/w0-replica*.ts", "offline.ts"]
+}

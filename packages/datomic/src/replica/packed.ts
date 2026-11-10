@@ -26,6 +26,8 @@ const untag = ([t, v]: any): any =>
 export interface PackedEntity {
   readonly revision: number;
   readonly buffer: SharedArrayBuffer;
+  readonly offset?: number;
+  readonly byteLength?: number;
 }
 export function packEntity(revision: number, rows: readonly SweepRow[]): PackedEntity {
   const dictionary: string[] = [],
@@ -78,9 +80,11 @@ export function packEntity(revision: number, rows: readonly SweepRow[]): PackedE
   return { revision, buffer };
 }
 export function unpackEntity(entityId: string, packed: PackedEntity, validAt: number): SweepRow[] {
-  const view = new DataView(packed.buffer),
+  const view = new DataView(packed.buffer, packed.offset ?? 0, packed.byteLength),
     length = view.getUint32(0, true);
-  const dictionary: string[] = JSON.parse(decoder.decode(new Uint8Array(packed.buffer, 8, length)));
+  const dictionary: string[] = JSON.parse(
+    decoder.decode(new Uint8Array(packed.buffer, (packed.offset ?? 0) + 8, length)),
+  );
   const start = Math.ceil((8 + length) / 8) * 8,
     rows: SweepRow[] = [];
   for (let i = 0; i < view.getUint32(4, true); i++) {
