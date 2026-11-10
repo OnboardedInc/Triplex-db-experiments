@@ -483,10 +483,24 @@ Proposed metric (Sam to rank): stopped volume bytes excluding the physical write
 maintenance (index, storage GC, observed quiescence, `VACUUM FULL`, checkpoint, clean stop). Today: 170 KB per subject maintained,
 318 KB as sealed.
 
+## Plan from 2026-11-10 20:40 UTC (Sam: only this Mac; verdicts at the 10,000 rung; "could it run on the Mac directly?")
+
+1. **Queued, starts by itself when the host is quiet:** `lab/experiments/EXP-DX1/quiet/run-10k-pair.sh tx2-dxh4-q1` (paired
+   north-star benchmark, `--rung 10k`, in the VM, no keep-awake, host recorded before and after). Evidence
+   `~/Claude/Projects/triplex-db-2/evidence/DX-H4/tx2-dxh4-q1-*`. Known risk at this rung: DX-H3's 10k run on older code failed the
+   oracle (receipt consistency, eight missing blob assertion identities).
+2. **Native arm:** the wake probe run natively on macOS shows no slowdown after a wake (2.2 ms against 1.7 ms back-to-back,
+   busy host) and about 3 ms of sleep overshoot, against 10 to 12 ms and 8 to 9 ms in the VM. Agent DX-N1 builds a native mode
+   (Postgres, transactor, gateways and load generator as macOS processes under `~/Claude/Projects/triplex-db-2/native/`, ports
+   28400 to 28499 on loopback) and a matched VM-against-native comparison. The VM stays the system of record until that
+   report says otherwise.
+3. DX-B9 continues in the package (step A gates, then strict commit order, publication cost, row pages).
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
+| DX-N1 | Native (no VM) mode for the lane D stack and load generator; matched VM-against-native comparison | `exp/DX-N1-native`, `.claude/worktrees/dx-n1` | `.../prompts/DX-N1.md` |
 | DX-B9 | A: alternating-arm verdict on `da77a50a` and fix; B: strict per-client commit order (seed at 1,000 commands/s in reference order); C: publication commit cost; D: row pages from the cache and a compact form | `exp/DX-B9-walls`, `.claude/worktrees/dx-b9` | `.../prompts/DX-B9.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
