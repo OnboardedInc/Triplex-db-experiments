@@ -6,7 +6,7 @@ prefix="tx2-dxb5-w0-$(date +%s)"
 trap 'bash lab/experiments/EXP-DX1/b5/down.sh "$prefix" --volumes' EXIT
 bash lab/experiments/EXP-DX1/b5/up.sh "$prefix"
 for layout in lean legacy; do
-  if [[ ${DX_B5_FULL_SUITES:-0} == 1 ]]; then
+  if [[ ${DX_B5_FULL_SUITES:-0} == 1 || ${DX_B5_FULL_SUITES:-0} == "$layout" ]]; then
     set +e
     DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL=http://127.0.0.1:8505 DATOMIC_TEST_LAYOUT="$layout" DATOMIC_ROUTE_EVIDENCE_DIR="/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5/compact-$layout-oracle" node_modules/.bin/vitest run --reporter verbose --config lab/experiments/EXP-DX1/b5/vitest.config.ts --exclude '**/layout-differential.test.ts' --exclude '**/clock-order.test.ts' packages/datomic packages/core/test/transaction-fast.test.ts packages/core/test/kv/layers/KvTriples.reach-cut.test.ts > "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5/compact-full-$layout.log" 2>&1
     dxb5_suite_code=$?

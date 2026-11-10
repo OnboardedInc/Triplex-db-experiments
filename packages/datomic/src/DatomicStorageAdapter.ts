@@ -621,11 +621,7 @@ export const makeDatomicStorageAdapter = (
           return result.transactions.map(([txId, position, rows]) => {
             // [DX-B4-T1] Why: portable feed enumeration includes only typed journal rows, even after SPI writes.
             // Rejected: including unrelated rows merely because they share a journal entity ID.
-            const triples = decodeEntity(
-              txId,
-              position,
-              rows.filter((text) => decodeRowText(text).entity_type === "_Transaction"),
-            ).rows.filter(
+            const triples = decodeEntity(txId, position, rows).rows.filter(
               (t) => Option.isSome(t.entityType) && t.entityType.value === "_Transaction",
             );
             if (triples.some((t) => t.entityId !== txId))

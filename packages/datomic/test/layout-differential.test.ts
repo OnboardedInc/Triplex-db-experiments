@@ -15,6 +15,75 @@ import { makeDatomicQueryExecutor } from "../src/DatomicQueryExecutor.js";
 // [DX-B5-L3] Why: compare observable answers, order and temporal metadata against an independent physical layout.
 // Rejected: comparing counts, accepting declines as equivalence, or using nondeterministic assertion identities.
 describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", () => {
+  // [DX-B5-L3] Why: compare the inherited typed error on regular scopes, independently of irregular-cut fixtures.
+  // Rejected: broadening legacy read behavior to fix an unrelated journal decoder edge.
+  it("preserves legacy's typed untyped-journal error on both layouts", async () => {
+    const client = new DatomicClient(process.env.DATOMIC_GATEWAY_URL ?? "http://127.0.0.1:8505");
+    const outcomes = [];
+    try {
+      for (const layout of ["legacy", "lean"] as const) {
+        const scope = DatabaseScope.test(`b5-error-${layout}-${randomUUID()}`);
+        const adapter = makeDatomicStorageAdapter(client, scope, { layout });
+        const runtime = ManagedRuntime.make(
+          Runtime.define({
+            name: "b5-error",
+            storage: Layer.succeed(StorageAdapter, adapter),
+            queries: Layer.succeed(QueryExecutor, makeDatomicQueryExecutor(client, scope)),
+          }).layer({
+            scope,
+            capabilities: Capabilities.none,
+            deterministic: { startTime: 1000, seed: "b5-error" },
+          }),
+        );
+        try {
+          const triples = await runtime.runPromise(Triples);
+          const receipt = await runtime.runPromise(
+            triples.transact([
+              {
+                op: "assert",
+                entityId: "root" as never,
+                attribute: ":public/value" as never,
+                value: { type: "string", value: "one" },
+              },
+            ]),
+          );
+          await Effect.runPromise(
+            adapter.withTransaction(
+              Effect.gen(function* () {
+                const p = yield* adapter.nextCommitPosition();
+                yield* adapter.insert(
+                  {
+                    entityId: receipt.txId,
+                    attribute: ":_tx/actor",
+                    value: { type: "string", value: "untyped" },
+                  },
+                  "spi",
+                  1000,
+                  "untyped-journal",
+                  p,
+                );
+              }),
+            ),
+          );
+          const outcome = await Effect.runPromise(
+            Effect.match(adapter.getTransactionsAfter!(0, 10), {
+              onFailure: (e) => ({ _tag: e._tag, message: e.message }),
+              onSuccess: () => ({ _tag: "UnexpectedSuccess", message: "" }),
+            }),
+          );
+          expect(outcome).toMatchObject({ _tag: "ReadError" });
+          outcomes.push(outcome);
+        } finally {
+          await runtime.dispose();
+          await client.delete(scope);
+        }
+      }
+      expect(outcomes[0]).toEqual(outcomes[1]);
+      console.log(JSON.stringify({ typedErrorParity: outcomes }));
+    } finally {
+      client.close();
+    }
+  });
   it("compares 300 deterministic scenarios across every storage read and public journal/reach", async () => {
     const c = new DatomicClient(process.env.DATOMIC_GATEWAY_URL ?? "http://127.0.0.1:8505", 30000);
     let seed = 0x19870219,
