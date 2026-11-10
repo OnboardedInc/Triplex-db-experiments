@@ -76,6 +76,7 @@ export interface SweepOptions {
   reused?: Map<string, any>;
   pageSize?: number;
   captureClosure?: boolean;
+  orderedPublication?: boolean;
 }
 export async function runW0Sweep(o: SweepOptions) {
   if (
@@ -283,7 +284,9 @@ export async function runW0Sweep(o: SweepOptions) {
             await o.beforePublish?.();
             const callbackStart = performance.now();
             const callback = o.onPage(records, pageIndex);
-            ordered.get(pageIndex)!.resolve();
+            // [DX-H8] Why: activation frames enter the source only after the previous ACK.
+            // Rejected: relying on an asynchronous SDK call boundary as proof of native commit order.
+            if (!o.orderedPublication) ordered.get(pageIndex)!.resolve();
             const callbackTiming = await callback;
             const callbackWallMs = performance.now() - callbackStart;
             // [EXP-P5] Why: only an ACKed publication advances the cursor. Rejected: advancing at evaluation (drops results on process stop).

@@ -607,6 +607,7 @@ export async function runW0Driver(argv: string[]) {
       metricsFile: path.join(dir, "activation-pages.ndjson"),
       beforeTimedWindow,
       pageSize: publicationSize,
+      orderedPublication: useMemo,
       reused,
       afterTimedStart: useMemo
         ? async () => {
