@@ -99,12 +99,8 @@ export async function seedW0(
 ) {
   // [DX-H5] Why: W0's immutable fingerprint includes reference commit positions.
   // Rejected: silently accepting reordered concurrent seed commands as the reference world.
-  if (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 32)
+  if (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 64)
     throw Error("invalid seed concurrency");
-  if (concurrency !== 1)
-    throw Error(
-      "W0 reference positions require ordered commits; concurrent seeding needs an exact-position import API",
-    );
   if ((await comp.currentPosition()) !== 0) throw new Error("W0 seed requires fresh scope");
   const seedStarted = performance.now();
   const Rseed = W0.rung(N);
@@ -114,8 +110,40 @@ export async function seedW0(
     retractions = 0,
     position = 0;
   const commandsHash = (await import("node:crypto")).createHash("sha256");
+  // [DX-H6] Why: submit the one reference stream in order, retaining bounded ACKs and scalar dependencies.
+  // Rejected: per-subject concurrent producers (their arrival positions differ from the reference).
+  const pending: { c: W0Command; operations: any[]; commandId: string; ack: Promise<any> }[] = [];
+  const pendingKeys = new Map<string, number>();
+  let peakInFlight = 0;
+  const drain = async () => {
+    const { c, operations, commandId, ack } = pending.shift()!;
+    const result = await ack;
+    if (!result.ok) throw new Error(`seed ${c.position}: ${result.tag}`);
+    if (result.value.position !== c.position)
+      throw new Error(`reference position mismatch ${c.position} != ${result.value.position}`);
+    for (const t of result.value.triples)
+      if (!many.has(t.attribute)) latest.set(t.entityId + "\0" + t.attribute, t.id);
+    for (const [e, a] of c.rows)
+      if (pendingKeys.get(e + "\0" + a) === c.position) pendingKeys.delete(e + "\0" + a);
+    assertions += c.rows.length;
+    retractions += operations.length - c.rows.length;
+    position = c.position;
+    const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
+    fs.writeSync(fd, line);
+    commandsHash.update(line);
+    if (position % 1000 === 0)
+      console.error(
+        `[DX-H6 seed] ${position} commands, ${(position / ((performance.now() - seedStarted) / 1000)).toFixed(1)} commands/s, window ${concurrency}`,
+      );
+    await checkpoint?.();
+  };
   try {
     for (const c of seedCommands(N)) {
+      while (
+        pending.length >= concurrency ||
+        c.rows.some(([e, a]) => !many.has(a) && pendingKeys.has(e + "\0" + a))
+      )
+        await drain();
       const operations: any[] = [];
       for (const [e, a, v] of c.rows) {
         const key = e + "\0" + a;
@@ -136,25 +164,16 @@ export async function seedW0(
         });
       }
       const commandId = `p5:seed:${c.position}`;
-      const result = await comp.transact(operations, { commandId, actor: "p5-seed" });
-      if (!result.ok) throw new Error(`seed ${c.position}: ${result.tag}`);
-      if (result.value.position !== c.position)
-        throw new Error(`reference position mismatch ${c.position} != ${result.value.position}`);
-      for (const t of result.value.triples)
-        if (!many.has(t.attribute)) latest.set(t.entityId + "\0" + t.attribute, t.id);
-      assertions += c.rows.length;
-      retractions += operations.length - c.rows.length;
-      position = c.position;
-      const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
-      fs.writeSync(fd, line);
-      commandsHash.update(line);
-      if (position % 1000 === 0)
-        console.error(
-          `[DX-H5 seed] ${position} commands, ${(position / ((performance.now() - seedStarted) / 1000)).toFixed(1)} commands/s`,
-        );
-      await checkpoint?.();
+      const ack = comp.transact(operations, { commandId, actor: "p5-seed" });
+      // Observe rejections immediately even if an earlier ordered ACK is still pending.
+      void ack.catch(() => {});
+      pending.push({ c, operations, commandId, ack });
+      for (const [e, a] of c.rows) if (!many.has(a)) pendingKeys.set(e + "\0" + a, c.position);
+      peakInFlight = Math.max(peakInFlight, pending.length);
     }
+    while (pending.length) await drain();
   } finally {
+    await Promise.allSettled(pending.map((p) => p.ack));
     fs.closeSync(fd);
   }
   const R = W0.rung(N),
@@ -165,6 +184,8 @@ export async function seedW0(
   const counts = await comp.storeCounts();
   const countsWallMs = performance.now() - countsStarted;
   return {
+    requestedInFlight: concurrency,
+    peakInFlight,
     commandWallMs,
     commandCommandsPerS: position / (commandWallMs / 1000),
     countsWallMs,
