@@ -5,6 +5,7 @@ import { openComposition } from "../../../bench/lib/composition.ts";
 import { openTriples } from "../../../bench/lib/triplex.ts";
 import { publicSweep, portableSweep } from "../../../bench/lib/w0-public.ts";
 import { measureW0Http } from "../../../bench/lib/w0-http.ts";
+import { measureHttp } from "../../../bench/lib/http-counts.ts";
 import { seedW0 } from "../../../bench/lib/w0-seed.ts";
 import { subjectList } from "../../../bench/lib/sweep.ts";
 import { V_W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
@@ -40,9 +41,10 @@ try {
     for (let offset = 0; offset < 200; offset += 64) {
       const subjects = subjectList(200).slice(offset, offset + 64),
         basis = { position, validAt: V_W0 };
-      const measured = await measureW0Http(() => selected.page(subjects, basis)),
+      const counted = await measureHttp(() => measureW0Http(() => selected.page(subjects, basis))),
+        measured = counted.value,
         expected = await portable.page(subjects, basis);
-      assert.equal(measured.requests, 1, "actual HTTP request count");
+      assert.equal(counted.requests, 1, "actual HTTP request count");
       assert.equal(sorted(measured.value.rows), sorted(expected.rows));
       assert.deepEqual(measured.value.reportedBasis, basis);
       report.comparisons.push({
@@ -50,7 +52,8 @@ try {
         offset,
         subjects: subjects.length,
         rows: measured.value.rows.length,
-        requests: measured.requests,
+        requests: counted.requests,
+        successfulRequestSamples: measured.requests,
         responseBytes: measured.responseBytes,
         contentSha256: sha256(sorted(expected.rows)),
       });
