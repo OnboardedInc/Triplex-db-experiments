@@ -149,9 +149,32 @@ Datomic history; legacy layout untouched; a differential test compares the two. 
 throughput (P5), peer memory. Brief: `.../prompts/DX-B5.md`, launches when DX-B4 commits. Native Datalog over reified datoms is not
 available on lean scopes until an asynchronous reifier exists (planned after the bars).
 
+### DX-B4 (indexed feed and command lookup; `exp/DX-B4-indexed-feed` d3c67ff4, merged; report `lab/experiments/EXP-DX1/b4/REPORT.md`)
+
+- Built: `getTransactionsAfter` (feed by position with long-poll) and `getTransactionIdByCommand`, with equivalence tests (700
+  accepted comparisons); scan counters at `/v2/admin/scan-stats`. After the fix a 2,000-subject NS run made 0 whole-store scans
+  (before: 3.9 million datoms enumerated) and reached all 17 phases.
+- The 10k run was interrupted at the 1,024-reader level (see infrastructure finding below). Before that, writer pending peaked at 559
+  in the burst and returned to 0 by L256. Its request samples show `d/transact` p50 247 ms during the run: the transaction function
+  reads through the transactor's 128 MB object cache, which a 10k-subject store does not fit.
+- Open: the P3 publication observer (`lab/bench/lib/datomic-publication.ts:24`) rejects shifted positions (DX-H3 fixes); the feed
+  declines on irregular scopes and concurrent commits make scopes irregular through timestamp order (DX-B5 D0 fixes).
+
+### Infrastructure finding (orchestrator, 2026-11-09 20:35 local)
+
+The Mac reaches VM ports and the Docker socket through Lima's ssh port forwarding. At 1,024 readers the ssh master died and every
+forward with it; the VM and its containers kept running. Restored without a restart: moved the stale socket file aside and ran
+`ssh -F ~/.colima/_lima/colima-triplex2/ssh.config -O forward -L <sock>:/var/run/docker.sock lima-colima-triplex2` (same form for
+ports). Consequence: every wall-clock number measured from the Mac so far includes that tunnel. From DX-H3 on, the driver runs in a
+container inside the VM.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-B4 | Indexed change feed and command lookup, scan audit, a 10k NS run where the writer keeps up | `exp/DX-B4-indexed-feed`, `.claude/worktrees/dx-b4` | `.../prompts/DX-B4.md` |
-| DX-S3 | Attribute the burst tail (GC, index jobs, Postgres) and test configuration variants | `spike/DX-S3`, `.claude/worktrees/dx-s3` | `.../prompts/DX-S3.md` |
+| DX-B5 | Lean layout (one row-text datom per row as system of record), commit-order rule for record times, rows from reach, differential test against legacy | `exp/DX-B5-lean-layout`, `.claude/worktrees/dx-b5` | `.../prompts/DX-B5.md` |
+| DX-H3 | Driver inside the VM, cgroup CPU sampling, publication observer fix, first complete NS report on lane D | `exp/DX-H3-in-vm-harness`, `.claude/worktrees/dx-h3` | `.../prompts/DX-H3.md` |
+| DX-S3 | Burst-tail attribution and configuration variants | `spike/DX-S3`, `.claude/worktrees/dx-s3` | `.../prompts/DX-S3.md` |
+
+After these: merge; run NS at 10k on a lean scope in the VM mode; seed W0 and run P5 with the lean page reader; then the asynchronous
+reifier for native Datalog on lean scopes; then one independent review and receipts.
