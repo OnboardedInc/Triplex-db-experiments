@@ -29,6 +29,8 @@ print('## P1 reader ladder and writer comparison\n')
 base=next((ph.get('stats',{}) for ph in r.get('phases',[]) if ph['name']=='baseline'),{}) or {}
 b99=base.get('writer',{}).get('commit',{}).get('p99Ms')
 table(['Phase','Readers','Read p50','Read p99','Correct/s','Writer p99','p99 / in-run zero-reader baseline','Client saturated','Per-container mean CPU %'],[[x['phase'],x['readers'],x['read'].get('p50Ms'),x['read'].get('p99Ms'),x['goodputPerS'],x['writer']['commit'].get('p99Ms'),x['writer']['commit'].get('p99Ms')/b99 if b99 and x['writer']['commit'].get('p99Ms') else None,x['client']['saturated'],j(x['engine']['containers'])] for x in p.get('P1',{}).get('ladder',[])])
+print('### Reader correctness and apparatus per level\n')
+table(['Phase','Reads','Correct','Violations','Errors','Hot share','Split counters','Maintenance jobs','Main ELU','Max worker ELU'],[[x['phase'],x['reads'],x['correct'],x['violations'],x['errors'],x['hotShare'],j(x['split']),x['maintenanceEvents'],x['client']['mainElu'],x['client']['maxWorkerElu']] for x in p.get('P1',{}).get('ladder',[])])
 print('Writer ratios above use a different in-run trace segment; the matched zero-reader baseline was not run. They cannot close P1. Medium requested cap 256 also caps the nominal L1024 phase.\n')
 print('## P4 weighted mix and history\n')
 mix=p.get('P4',{}).get('weightedMix') or {}
@@ -48,7 +50,7 @@ for ph in longest:
 table(['Phase','Elapsed s','Cgroup samples','Per-container mean CPU %'],longrows)
 print('CPU describes concurrent measured activity only; no causal attribution is inferred. Raw gateway/transactor logs are retained as `gw-w.log`, `gw-r.log`, `tx.log`.\n')
 print('## Counters, feed, fetch-only sweep, oracle and invalidity\n')
-for name,value in [('P2 duplicates',p.get('P2',{}).get('duplicates')),('P2 lost ACK',p.get('P2',{}).get('lostAck')),('P2 accounting',p.get('P2',{}).get('accounting')),('P2 progress',p.get('P2',{}).get('progress')),('P3',{k:v for k,v in p.get('P3',{}).items() if k!='bars'}),('P5',{k:v for k,v in p.get('P5',{}).items() if k!='bars'}),('correctness',r.get('correctness')),('oracle',r.get('oracle')),('client',r.get('client')),('invalidReasons',r.get('invalidReasons')),('writer',r.get('writer'))]:
+for name,value in [('P2 duplicates',p.get('P2',{}).get('duplicates')),('P2 lost ACK',p.get('P2',{}).get('lostAck')),('P2 accounting',p.get('P2',{}).get('accounting')),('P2 read-your-own-write',p.get('P2',{}).get('readYourOwnWrite')),('P2 progress',p.get('P2',{}).get('progress')),('P3',{k:v for k,v in p.get('P3',{}).items() if k!='bars'}),('P5',{k:v for k,v in p.get('P5',{}).items() if k!='bars'}),('correctness',r.get('correctness')),('oracle',r.get('oracle')),('client',r.get('client')),('invalidReasons',r.get('invalidReasons')),('writer',r.get('writer'))]:
  print(f'### {name}\n\n```json\n{json.dumps(value,indent=2)}\n```\n')
 print('Additional validity limits: smoke profile; no matched zero-reader run; any development overrides in config; direct-subject affected sets are diagnostic; P5 evaluates/publishes no W0 release; engine bytes read unmeasured. DONE means completed reporting, not all bars met.\n')
 print('## Gateway scan counters\n')
@@ -57,3 +59,14 @@ if scan.exists():
  rows=[json.loads(s) for s in scan.read_text().splitlines()]
  table(['At','Write peer','Read peer'],[[row['at'],j(row['peers'].get('w')),j(row['peers'].get('r'))] for row in ([rows[0],rows[-1]] if rows else [])])
  print('Every interval is retained in `driver/scan-stats.jsonl`; missing/error samples remain errors.\n')
+
+if scan.exists():
+ print('### Last successful gateway counter snapshots\n')
+ for role in ['w','r']:
+  good=[row for row in rows if row['peers'].get(role,{}).get('status')==200 and row['peers'].get(role,{}).get('body')]
+  if not good:
+   print(f'{role}: unavailable\n');continue
+  last=good[-1];body=json.loads(last['peers'][role]['body'])
+  print(f"{role}: last successful sample at {last['at']}; these are not final totals if later probes failed.\n")
+  table(['Counter family','Observed'],[[k,j(v)] for k,v in body.items()])
+ print('A missing late snapshot is not zero work; begun-call datoms can exceed completed per-pattern totals.\n')

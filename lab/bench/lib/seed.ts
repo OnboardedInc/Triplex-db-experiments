@@ -7,9 +7,10 @@
  * Commands are applied one at a time: concurrent commits within one XTDB runtime conflict on the
  * scope position (observed 2026-11-07, `triplex-cas-conflict`), and seeding is not what is measured.
  */
+import { alignAssertIds } from "./receipt.ts";
 import type { CompositionHandle, Receipt } from "./composition.ts";
 import { seedOps } from "./commands.ts";
-import { SEED_VALID_FROM, accountsFor, ownFacts, seedAddress, sharedFacts, versioned, ids, memberOf, type Fact } from "./world.ts";
+import { SEED_VALID_FROM, accountsFor, ownFacts, seedAddress, sharedFacts, versioned, ids, type Fact } from "./world.ts";
 import type { SubjectState } from "./commands.ts";
 
 export interface RecordedCommand {
@@ -41,14 +42,7 @@ export interface SeedResult {
 
 /** Assertion ids aligned with operations (null at retracts), matched by fact member text. */
 export function alignIds(operations: readonly any[], receipt: Receipt): (string | null)[] {
-  const byMember = new Map<string, string[]>();
-  for (const t of receipt.triples) {
-    const key = memberOf(t.entityId, t.attribute, t.value);
-    const list = byMember.get(key) ?? [];
-    list.push(t.id);
-    byMember.set(key, list);
-  }
-  return operations.map((op) => (op.op === "assert" ? (byMember.get(memberOf(op.entityId, op.attribute, op.value))?.shift() ?? null) : null));
+  return alignAssertIds(operations, receipt);
 }
 
 export async function seedRung(opts: {

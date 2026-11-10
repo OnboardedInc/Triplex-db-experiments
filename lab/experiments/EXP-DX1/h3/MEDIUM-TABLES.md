@@ -105,6 +105,17 @@ Diagnostic observations, not acceptance promotion. Source: `driver/ns-report.jso
 | L256 | 256 | 47.871 | 3915.775 | 779.371 | 30801.919 | 923.347 | False | {"tx2-dxh3-m5-pg":{"cpuPercentMean":5.470774886246095},"tx2-dxh3-m5-tx":{"cpuPercentMean":42.67227097967087},"tx2-dxh3-m5-gw-w":{"cpuPercentMean":79.55808383598443},"tx2-dxh3-m5-gw-r":{"cpuPercentMean":165.08071871934175}} |
 | L1024 | 256 | 2179.071 | 5668.863 | 78.537 | 31588.351 | 946.921 | False | {"tx2-dxh3-m5-pg":{"cpuPercentMean":7.181280423984997},"tx2-dxh3-m5-tx":{"cpuPercentMean":54.05698108623745},"tx2-dxh3-m5-gw-w":{"cpuPercentMean":99.35155314402738},"tx2-dxh3-m5-gw-r":{"cpuPercentMean":178.44445706491726}} |
 
+### Reader correctness and apparatus per level
+
+| Phase | Reads | Correct | Violations | Errors | Hot share | Split counters | Maintenance jobs | Main ELU | Max worker ELU |
+|---|---|---|---|---|---|---|---|---|---|
+| L1 | 25561 | 25561 | 0 | 0 | 0.610 | {"reads":16,"straddledATraceCommand":16,"straddledCorrect":16} | 1 | 0.049 | 0.413 |
+| L4 | 70972 | 70972 | 0 | 0 | 0.610 | {"reads":68,"straddledATraceCommand":68,"straddledCorrect":68} | 1 | 0.051 | 0.607 |
+| L16 | 92589 | 92589 | 0 | 0 | 0.613 | {"reads":359,"straddledATraceCommand":356,"straddledCorrect":356} | 1 | 0.069 | 0.737 |
+| L64 | 97357 | 97357 | 0 | 0 | 0.611 | {"reads":1126,"straddledATraceCommand":1117,"straddledCorrect":1117} | 1 | 0.064 | 0.857 |
+| L256 | 14199 | 14135 | 49 | 15 | 0.619 | {"reads":382,"straddledATraceCommand":237,"straddledCorrect":215} | 1 | 0.574 | 0.603 |
+| L1024 | 1431 | 1416 | 11 | 4 | 0.649 | {"reads":114,"straddledATraceCommand":73,"straddledCorrect":69} | 1 | 0.675 | 0.548 |
+
 Writer ratios above use a different in-run trace segment; the matched zero-reader baseline was not run. They cannot close P1. Medium requested cap 256 also caps the nominal L1024 phase.
 
 ## P4 weighted mix and history
@@ -185,6 +196,52 @@ CPU describes concurrent measured activity only; no causal attribution is inferr
   "errorTags": {
     "Unknown": 7
   }
+}
+```
+
+### P2 read-your-own-write
+
+```json
+{
+  "pulls": 2372,
+  "correct": 2333,
+  "pull": {
+    "count": 2372,
+    "minMs": 1.694,
+    "maxMs": 74922.542,
+    "meanMs": 4366.502,
+    "p50Ms": 2785.279,
+    "p90Ms": 6651.903,
+    "p99Ms": 50331.647,
+    "p999Ms": 73400.319
+  },
+  "failures": [
+    {
+      "kind": "wrong-world",
+      "subject": 1317,
+      "position": 2761
+    },
+    {
+      "kind": "wrong-world",
+      "subject": 321,
+      "position": 2773
+    },
+    {
+      "kind": "error",
+      "subject": 1252,
+      "position": 2891
+    },
+    {
+      "kind": "error",
+      "subject": 1252,
+      "position": 2902
+    },
+    {
+      "kind": "error",
+      "subject": 1252,
+      "position": 2909
+    }
+  ]
 }
 ```
 
@@ -2700,4 +2757,24 @@ Additional validity limits: smoke profile; no matched zero-reader run; any devel
 | 2026-11-10T03:02:22.071Z | {"status":200,"body":"{\"routes\":{\"post \\/v2\\/db\\/{db}\\/begin\":474,\"post \\/v2\\/db\\/{db}\\/command\":97,\"get \\/v1\\/db\\/{db}\\/operation\\/72b1aee2-4a9b-4c10-8a09-e7028c002c49\":3,\"post \\/v2\\/db\\/{db}\\/reach\":2372,\"post \\/v2\\/db\\/{db}\\/journal\":94,\"post \\/v1\\/db\\/{db}\\/read\":11659,\"post \\/v1\\/db\\/{db}\\/release\":90,\"post \\/v2\\/db\\/{db}\\/transactions\":669,\"get \\/v2\\/admin\\/scan-stats\":93,\"post \\/v1\\/db\\/create\":8,\"post \\/v2\\/db\\/{db}\\/request-index\":6,\"get \\/health\":1,\"get \\/v1\\/db\\/{db}\\/basis\":2557,\"post \\/v1\\/db\\/{db}\\/transact\":3099},\"journalDeclines\":{\"irregular\":5},\"branches\":{\"scan\":{\"calls\":5,\"datoms\":826808},\"entities\":{\"calls\":11654}},\"scanPatterns\":{\"{\\\"entityType\\\" \\\"_Transaction\\\"}\":{\"calls\":1,\"datoms\":201850,\"maxDatoms\":201850}}}"} | {"status":200,"body":"{\"routes\":{\"get \\/health\":1,\"get \\/v2\\/admin\\/scan-stats\":93,\"post \\/v1\\/db\\/create\":3,\"post \\/v2\\/db\\/{db}\\/reach\":418585,\"post \\/v1\\/db\\/{db}\\/read\":88913,\"get \\/v1\\/db\\/{db}\\/basis\":16742},\"branches\":{\"entities\":{\"calls\":88913}}}"} |
 
 Every interval is retained in `driver/scan-stats.jsonl`; missing/error samples remain errors.
+
+### Last successful gateway counter snapshots
+
+w: last successful sample at 2026-11-10T03:02:22.071Z; these are not final totals if later probes failed.
+
+| Counter family | Observed |
+|---|---|
+| routes | {"post /v2/db/{db}/begin":474,"post /v2/db/{db}/command":97,"get /v1/db/{db}/operation/72b1aee2-4a9b-4c10-8a09-e7028c002c49":3,"post /v2/db/{db}/reach":2372,"post /v2/db/{db}/journal":94,"post /v1/db/{db}/read":11659,"post /v1/db/{db}/release":90,"post /v2/db/{db}/transactions":669,"get /v2/admin/scan-stats":93,"post /v1/db/create":8,"post /v2/db/{db}/request-index":6,"get /health":1,"get /v1/db/{db}/basis":2557,"post /v1/db/{db}/transact":3099} |
+| journalDeclines | {"irregular":5} |
+| branches | {"scan":{"calls":5,"datoms":826808},"entities":{"calls":11654}} |
+| scanPatterns | {"{\"entityType\" \"_Transaction\"}":{"calls":1,"datoms":201850,"maxDatoms":201850}} |
+
+r: last successful sample at 2026-11-10T03:02:22.071Z; these are not final totals if later probes failed.
+
+| Counter family | Observed |
+|---|---|
+| routes | {"get /health":1,"get /v2/admin/scan-stats":93,"post /v1/db/create":3,"post /v2/db/{db}/reach":418585,"post /v1/db/{db}/read":88913,"get /v1/db/{db}/basis":16742} |
+| branches | {"entities":{"calls":88913}} |
+
+A missing late snapshot is not zero work; begun-call datoms can exceed completed per-pattern totals.
 

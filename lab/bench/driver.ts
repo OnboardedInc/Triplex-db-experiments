@@ -34,6 +34,7 @@ import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
+import { alignAssertIds } from "./lib/receipt.ts";
 import { observeDatomicPublication } from "./lib/datomic-publication.ts";
 import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
@@ -956,14 +957,6 @@ function sweepList(n: number, max: number): number[] {
 function overlapsBurst(fromS: number, toS: number, p: TraceParams) {
   for (let t = p.firstBurstAtS; t < toS; t += p.burstPeriodS) if (t + p.burstDurationS > fromS) return true;
   return false;
-}
-function alignAssertIds(operations: readonly any[], receipt: Receipt) {
-  const pool = new Map<string, string[]>();
-  for (const t of receipt.triples) {
-    const key = `${t.entityId}\u0001${t.attribute}\u0001${JSON.stringify(t.value)}`;
-    (pool.get(key) ?? pool.set(key, []).get(key)!).push(t.id);
-  }
-  return operations.map((op) => (op.op === "assert" ? (pool.get(`${op.entityId}\u0001${op.attribute}\u0001${JSON.stringify(op.value)}`)?.shift() ?? null) : null));
 }
 async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt) {
   const basis = { recordedAt: receipt.instant, validAt: Math.floor(now()) };
