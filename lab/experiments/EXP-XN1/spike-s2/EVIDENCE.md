@@ -45,3 +45,27 @@ Verify the new manifest as well:
 ```sh
 node lab/bin/heavy.mjs --label XN-S2-postgres-manifest-verify -- bash -c 'cd /Users/sam/Claude/Projects/triplex-db-2/evidence/XN-S2 && shasum -a 256 -c /Users/sam/projects/triplex-db-2/.claude/worktrees/xn-s2/lab/experiments/EXP-XN1/spike-s2/SHA256SUMS-postgres'
 ```
+
+## Kafka and shared-S3 continuation
+
+Subdirectory `live/`: **430 files, 135,934,471 bytes**, covered by `SHA256SUMS-live` relative to the durable root. Manifest SHA256: `4c6a79c366ad0d8c16b814beeb791bc359d3a7044a4553582d0aa70b149818ab`. All earlier manifests were freshly reread and verified as well.
+
+| Files | Meaning |
+| --- | --- |
+| `images.json`, `xtdb-aws.jar`, `aws-classes.json`, `extract-*` | Local supplied image IDs/sizes and actual shipped serializer/class inspection |
+| `topology-2/`, `topology-audit-*.json` | Real shared Kafka/MinIO proof, stopped/restarted follower identity, exact changing values at both bases, S3 objects and leader/compactor metrics; independently recomputed observation audit |
+| `control-commits-2/` | Retained history-postflight harness failure; no timing adopted |
+| `control-commits-3/` | Corrected, freshly rechecked fixture and same-day Local commit/reader-contention controls |
+| `control-reads-1/`, `control-reads-rest-1/` | Point-read controls, retained bulk timeout, and unattempted point/pinned cases resumed without rerunning complete cases |
+| `q1-*/`, `lag-*/`, `reads-*/` | Executed matrices, when present; an empty or absent directory is not measurement evidence |
+| Each window's `sources/`, `source.json`, `binding.json`, inspections, `driver/`, `commands.json`, `released.txt` | Source preimages/hashes, exact inputs/containers/cgroups, raw samples, count/byte postflights, actual commands and cleanup |
+| `collection-*.json`, `collected.json` | Immutable collection attempts and final diagnostic recomputation; no engine PASS |
+| `cleanup-*.json` | Final fresh task-prefix volume/container/network observations and volume removals |
+
+Fresh verification receipt: `live-manifest-verification.json`, SHA256 `d08a254e7619ae210a7a33c937987fbdd5cf7ea1c49ce8bda8743fd7c74f3744`. It binds all three manifest hashes, file counts and the verifier's actual source hash. It is outside the `live/` manifest to avoid a self-referential hash.
+
+```sh
+node lab/bin/heavy.mjs --label XN-S2-final-evidence -- python3 lab/experiments/EXP-XN1/spike-s2/live/finalize-evidence.py
+```
+
+`REPORT.md` states the actual completed/missing cells and limitations; this index does not promote missing or partial stages.
