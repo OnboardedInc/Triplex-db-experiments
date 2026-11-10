@@ -17,7 +17,11 @@ export async function startW0Live(o: {
   id: string;
   seed: string;
   offsetS: number;
+  warmupMs?: number;
 }) {
+  const warmupMs = o.warmupMs ?? 0;
+  if (!Number.isSafeInteger(warmupMs) || warmupMs < 0 || warmupMs > 60000)
+    throw Error("invalid live warmup");
   const reads: { started: number; ms: number }[] = [],
     commits: any[] = [],
     writes: any[] = [];
@@ -101,6 +105,7 @@ export async function startW0Live(o: {
     },
   };
   const offered: any[] = [];
+  const measurementStart = start + warmupMs;
   const writer = (async () => {
     for (const event of events) {
       while (!stopped && !failed && now() < start + event.atMs) await pause();
@@ -130,6 +135,9 @@ export async function startW0Live(o: {
     }
     await serial;
   })();
+  // [DX-H6] Why: compare warm gateway/reader windows with the same fixed generator offset in both arms.
+  // Rejected: cold first-prefix p99 as the denominator (sweep1000b baseline was 1.116 s).
+  while (now() < measurementStart && !failed) await pause();
   return {
     check: () => {
       if (failed) throw failed;
@@ -143,27 +151,37 @@ export async function startW0Live(o: {
       fs.closeSync(log);
       if (failed) throw failed;
       const summary = (samples: { started: number; ms: number }[]) => {
-        const ms = samples.filter((r) => r.started >= start && r.started < end).map((r) => r.ms);
+        const ms = samples
+          .filter((r) => r.started >= measurementStart && r.started < end)
+          .map((r) => r.ms);
         return {
           count: ms.length,
           p50: ms.length ? percentile(ms, 0.5) : null,
           p99: ms.length ? percentile(ms, 0.99) : null,
         };
       };
+      const observedOffers = offered.filter(
+        (e) => start + e.atMs >= measurementStart && start + e.atMs < end,
+      );
+      const observedWrites = writes.filter(
+        (w) => w.scheduled >= measurementStart && w.scheduled < end,
+      );
       return {
         readers: 64,
-        startedAtMs: start,
+        warmupMs,
+        generatorStartedAtMs: start,
+        startedAtMs: measurementStart,
         endedAtMs: end,
-        windowMs: end - start,
+        windowMs: end - measurementStart,
         read: summary(reads),
         commitService: summary(commits.map((c) => ({ ...c, started: c.scheduled }))),
         commit: summary(writes.map((w) => ({ started: w.scheduled, ms: w.ack - w.scheduled }))),
-        offered: offered.length,
-        acknowledged: writes.length,
-        duplicates: writes.filter((w) => w.duplicate).length,
-        lostAckOffers: offered.filter((e) => e.ackLoss).length,
-        corrections: offered.filter((e) => e.correction).length,
-        offeredTraceSha256: sha256(JSON.stringify(offered)),
+        offered: observedOffers.length,
+        acknowledged: observedWrites.length,
+        duplicates: observedWrites.filter((w) => w.duplicate).length,
+        lostAckOffers: observedOffers.filter((e) => e.ackLoss).length,
+        corrections: observedOffers.filter((e) => e.correction).length,
+        offeredTraceSha256: sha256(JSON.stringify(observedOffers)),
         generatorTraceSha256: sha256(JSON.stringify(events)),
         seed: o.seed,
         offsetS: o.offsetS,
@@ -183,6 +201,7 @@ export function matchW0Live(baseline: any, sweep: any) {
   if (
     baseline.seed !== sweep.seed ||
     baseline.offsetS !== sweep.offsetS ||
+    (baseline.warmupMs ?? 0) !== (sweep.warmupMs ?? 0) ||
     !baseline.generatorTraceSha256 ||
     baseline.generatorTraceSha256 !== sweep.generatorTraceSha256
   )

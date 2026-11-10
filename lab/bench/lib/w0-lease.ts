@@ -10,7 +10,7 @@ export async function measurementLease(onAbort?: () => Promise<void>) {
     const expected = process.env.TX2_W0_EXTERNAL_LEASE;
     const check = () => {
       const owner = JSON.parse(fs.readFileSync(lock + "/owner.json", "utf8"));
-      if (owner.id !== "DX-H5" || owner.prefix !== expected)
+      if (!["DX-H5", "DX-H6"].includes(owner.id) || owner.prefix !== expected)
         throw Error("external lease binding mismatch");
     };
     check();

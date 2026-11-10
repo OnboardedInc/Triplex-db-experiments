@@ -1,0 +1,31 @@
+--- a/packages/datomic/gateway/src/triplex/gateway/storage.clj
++++ b/packages/datomic/gateway/src/triplex/gateway/storage.clj
+@@ -11,7 +11,7 @@
+   (let [handle (str (UUID/randomUUID)) now (System/currentTimeMillis)]
+     (swap! snapshots #(assoc (into {} (filter (fn [[_ v]] (> (:expires v) now)) %)) handle
+                             {:name name :db db :expires (+ now ttl-ms)}))
+-    {:handle handle :position (codec/encode-value "long" (:v (first (d/datoms db :eavt (:scope (reach/config name db)) :triplex.scope/position))))}))
++    {:handle handle :position (codec/encode-value "long" (scope/head-position db (:scope (reach/config name db))))}))
+ (defn release! [name handle]
+   (when (= name (:name (@snapshots handle))) (swap! snapshots dissoc handle))
+   {:released true})
+@@ -444,7 +444,7 @@
+ ;; [DX-B6-5] Why: an ahead record time cannot prove peer freshness. Rejected: serving a stale local cut.
+ (defn await-record-time [name conn db input]
+   (let [r (get-in input ["basis" "recordedAt"])
+-        maximum (fn [db] (or (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/max-recorded-at) Double/NEGATIVE_INFINITY))]
++        maximum (fn [db] (or (scope/max-recorded-at db (:e (first (d/datoms db :aevt :triplex.scope/key)))) Double/NEGATIVE_INFINITY))]
+     (if (or (nil? r) (get input "handle") (<= r (maximum db))) db
+       (let [wait-ms (get input "basisWaitMs" 50)
+             _ (when-not (and (number? wait-ms) (<= 0 wait-ms 2000))
+--- a/packages/datomic/gateway/src/triplex/gateway/main.clj
++++ b/packages/datomic/gateway/src/triplex/gateway/main.clj
+@@ -71,7 +71,7 @@
+     (when-not scope (throw (ex-info "Scope not initialized" {:status 409 :code "ScopeUninitialized"})))
+     (let [entity (d/entid db [:triplex.scope/key scope])]
+       {:t (codec/encode-value "long" (d/basis-t db))
+-       :position (codec/encode-value "long" (storage/value db entity :triplex.scope/position))
++       :position (codec/encode-value "long" (storage/head-position name db))
+        :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)})))
+ (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
+ ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.

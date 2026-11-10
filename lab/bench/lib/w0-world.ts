@@ -63,6 +63,10 @@ export function visibleRows(rows: readonly WorldRow[], b: PositionBasis): WorldR
       (r.validTo === undefined || r.validTo > b.validAt),
   );
 }
+const worldDigests = new WeakMap<W0.World, string>();
+const worldBytes = new WeakMap<W0.World, string>();
+export const worldCanonical = (world: W0.World) => worldBytes.get(world) ?? canonical(world);
+export const worldSha256 = (world: W0.World) => worldDigests.get(world) ?? sha256(canonical(world));
 export function worldOf(subject: string, rows: readonly WorldRow[]): W0.World {
   // [EXP-P5] Why: whitelist snapshot fields so later retirement metadata cannot affect canonical bytes. Rejected: spreading rows (Q89i leaks).
   const facts = rows.map((r) => ({
@@ -71,8 +75,32 @@ export function worldOf(subject: string, rows: readonly WorldRow[]): W0.World {
     v: factValue(r.value),
     tx: r.position,
   }));
-  facts.sort((a, b) => Buffer.compare(Buffer.from(canonical(a)), Buffer.from(canonical(b))));
-  return { subject, facts };
+  // [DX-H6] Why: W0 canonical quote escapes every non-ASCII code unit, so keys are ASCII and string order equals byte order.
+  // Rejected: repeated generic object canonicalization and Buffer allocation inside the comparator.
+  const keyed = facts.map((fact) => ({
+    fact,
+    key:
+      '{"a":' +
+      canonical(fact.a) +
+      ',"e":' +
+      canonical(fact.e) +
+      ',"tx":' +
+      canonical(fact.tx) +
+      ',"v":' +
+      canonical(fact.v) +
+      "}",
+  }));
+  keyed.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  const world = { subject, facts: keyed.map(({ fact }) => fact) };
+  const bytes =
+    '{"facts":[' +
+    keyed.map(({ key }) => key).join(",") +
+    '],"subject":' +
+    canonical(subject) +
+    "}";
+  worldBytes.set(world, bytes);
+  worldDigests.set(world, sha256(bytes));
+  return world;
 }
 export function reachableRows(
   subjects: readonly string[],

@@ -71,6 +71,7 @@ export interface SweepOptions {
   afterCheckpoint?: (page: number) => Promise<void>;
   controller?: Controller;
   beforePublish?: () => Promise<void>;
+  beforeTimedWindow?: () => Promise<void>;
 }
 export async function runW0Sweep(o: SweepOptions) {
   if (
@@ -113,7 +114,36 @@ export async function runW0Sweep(o: SweepOptions) {
   let epoch: string | undefined;
   const pin = await o.comp.pinBasis?.(o.basis.position, "sweep:" + o.sweepId);
   const threads: Worker[] = [];
-  const sweepStarted = performance.now();
+  const startupStarted = performance.now();
+  let sweepStarted = startupStarted;
+  let workersReadyAt = startupStarted;
+  let readyCount = 0;
+  let start!: () => void, rejectStart!: (e: unknown) => void;
+  const allReady = new Promise<void>((r, j) => {
+    start = r;
+    rejectStart = j;
+  });
+  void allReady.catch(() => {});
+  const ordered = new Map<
+    number,
+    { done: Promise<void>; resolve: () => void; reject: (e: any) => void }
+  >();
+  for (const page of remaining) {
+    let resolve!: () => void, reject!: (e: any) => void;
+    const done = new Promise<void>((r, j) => {
+      resolve = r;
+      reject = j;
+    });
+    void done.catch(() => {});
+    ordered.set(page, { done, resolve, reject });
+  }
+  const activePublications = new Set<Promise<void>>();
+  let failed: unknown;
+  const fail = (error: unknown) => {
+    failed = error;
+    rejectStart(error);
+    for (const gate of ordered.values()) gate.reject(error);
+  };
   try {
     await Promise.all(
       Array.from({ length: o.workers }, async (_, workerIndex) => {
@@ -127,11 +157,29 @@ export async function runW0Sweep(o: SweepOptions) {
         });
         threads.push(worker);
         let resolve: ((v: any) => void) | undefined, reject: ((e: any) => void) | undefined;
-        worker.on("error", (e) => reject?.(e));
+        let readyResolve!: () => void, readyReject!: (e: any) => void;
+        const ready = new Promise<void>((r, j) => {
+          readyResolve = r;
+          readyReject = j;
+        });
+        worker.on("error", (e) => {
+          readyReject(e);
+          reject?.(e);
+          fail(e);
+        });
         worker.on("exit", (code) => {
-          if (code) reject?.(new Error("worker exited " + code));
+          if (code) {
+            const e = new Error("worker exited " + code);
+            readyReject(e);
+            reject?.(e);
+            fail(e);
+          }
         });
         worker.on("message", async (msg) => {
+          if (msg.type === "ready") {
+            readyResolve();
+            return;
+          }
           if (msg.type === "read") {
             try {
               worker.postMessage({
@@ -145,13 +193,36 @@ export async function runW0Sweep(o: SweepOptions) {
           } else if (msg.type === "error") reject?.(new Error(msg.error));
           else if (msg.type === "result") resolve?.(msg);
         });
+        await ready;
+        if (++readyCount === o.workers) {
+          workersReadyAt = performance.now();
+          // [DX-H6] Why: a long-lived sweep pool exists before paired baseline/live traffic starts.
+          // Rejected: excluding startup from P5 wall while letting it distort the live latency arm.
+          try {
+            await o.beforeTimedWindow?.();
+            sweepStarted = performance.now();
+            start();
+          } catch (error) {
+            fail(error);
+            throw error;
+          }
+        }
+        await allReady;
+        // [DX-H6] Why: bounded double buffering lets the next page fetch/evaluate overlap ordered publication.
+        // Rejected: retaining an unbounded ready-results queue or publishing pages out of order.
+        const inFlight: Promise<void>[] = [];
         while (
           index < remaining.length &&
-          (o.stopAfterPages === undefined || completed < o.stopAfterPages)
+          (o.stopAfterPages === undefined || index < o.stopAfterPages)
         ) {
+          if (failed) throw failed;
           while (o.controller && (o.controller.limit === 0 || workerIndex >= o.controller.limit))
             await new Promise((r) => setTimeout(r, 10));
-          if (index >= remaining.length) break;
+          if (
+            index >= remaining.length ||
+            (o.stopAfterPages !== undefined && index >= o.stopAfterPages)
+          )
+            break;
           const assignedAtMs = performance.now() - sweepStarted;
           const workerCpuStart = process.cpuUsage();
           const pageIndex = remaining[index++]!,
@@ -195,56 +266,77 @@ export async function runW0Sweep(o: SweepOptions) {
           const controllerDecodedCpu = process.threadCpuUsage(controllerCpuStart);
           const controllerDecodeCpuMs =
             (controllerDecodedCpu.user + controllerDecodedCpu.system) / 1000;
-          await o.beforePublish?.();
-          const callbackStart = performance.now();
-          const callbackTiming = await o.onPage(records, pageIndex);
-          const callbackWallMs = performance.now() - callbackStart;
-          // [EXP-P5] Why: only an ACKed publication advances the cursor. Rejected: advancing at evaluation (drops results on process stop).
-          published.push(pageIndex);
-          published.sort((a, b) => a - b);
-          fs.writeFileSync(o.cursor + ".tmp", canonical({ binding, published }));
-          fs.renameSync(o.cursor + ".tmp", o.cursor);
-          await o.afterCheckpoint?.(pageIndex);
-          metrics.push({
-            page: pageIndex,
-            subjects: subjects.length,
-            worker: workerIndex,
-            timing: {
-              ...page.timing,
-              assignedAtMs,
-              workerWaitMs: assignedAtMs,
-              completedAtMs: performance.now() - sweepStarted,
-              assignedAtEpochMs: performance.timeOrigin + sweepStarted + assignedAtMs,
-              clientProcessCpuMsOverlapping:
-                (process.cpuUsage(workerCpuStart).user + process.cpuUsage(workerCpuStart).system) /
-                1000,
-              controllerDecodeMs,
-              controllerDecodeCpuMs,
-              callbackWallMs,
-              ...(callbackTiming ?? {}),
-            },
-            cpu: page.cpu,
-            cgroupIntervalMicros: page.cgroupIntervalMicros,
-            cpuScope: page.cpuScope,
-            elu: page.elu,
-            position: page.position,
-            epoch: page.epoch,
+          const publishTask = (async () => {
+            const ordinal = remaining.indexOf(pageIndex);
+            if (ordinal > 0) await ordered.get(remaining[ordinal - 1]!)!.done;
+            if (failed) throw failed;
+            await o.beforePublish?.();
+            const callbackStart = performance.now();
+            const callback = o.onPage(records, pageIndex);
+            ordered.get(pageIndex)!.resolve();
+            const callbackTiming = await callback;
+            const callbackWallMs = performance.now() - callbackStart;
+            // [EXP-P5] Why: only an ACKed publication advances the cursor. Rejected: advancing at evaluation (drops results on process stop).
+            published.push(pageIndex);
+            published.sort((a, b) => a - b);
+            fs.writeFileSync(o.cursor + ".tmp", canonical({ binding, published }));
+            fs.renameSync(o.cursor + ".tmp", o.cursor);
+            await o.afterCheckpoint?.(pageIndex);
+            metrics.push({
+              page: pageIndex,
+              subjects: subjects.length,
+              worker: workerIndex,
+              timing: {
+                ...page.timing,
+                assignedAtMs,
+                workerWaitMs: assignedAtMs,
+                completedAtMs: performance.now() - sweepStarted,
+                assignedAtEpochMs: performance.timeOrigin + sweepStarted + assignedAtMs,
+                clientProcessCpuMsOverlapping:
+                  (process.cpuUsage(workerCpuStart).user +
+                    process.cpuUsage(workerCpuStart).system) /
+                  1000,
+                controllerDecodeMs,
+                controllerDecodeCpuMs,
+                callbackWallMs,
+                ...(callbackTiming ?? {}),
+              },
+              cpu: page.cpu,
+              cgroupIntervalMicros: page.cgroupIntervalMicros,
+              cpuScope: page.cpuScope,
+              elu: page.elu,
+              position: page.position,
+              epoch: page.epoch,
+            });
+            if (o.metricsFile)
+              fs.appendFileSync(
+                o.metricsFile,
+                JSON.stringify({
+                  sweepId: o.sweepId,
+                  scope: o.scope,
+                  basis: o.basis,
+                  ...metrics.at(-1),
+                }) + "\n",
+              );
+            completed++;
+            ordered.get(pageIndex)!.resolve();
+          })().catch((e) => {
+            fail(e);
+            throw e;
           });
-          if (o.metricsFile)
-            fs.appendFileSync(
-              o.metricsFile,
-              JSON.stringify({
-                sweepId: o.sweepId,
-                scope: o.scope,
-                basis: o.basis,
-                ...metrics.at(-1),
-              }) + "\n",
-            );
-          completed++;
+          activePublications.add(publishTask);
+          void publishTask.finally(() => activePublications.delete(publishTask)).catch(() => {});
+          inFlight.push(publishTask);
+          if (inFlight.length >= 2) await inFlight.shift();
         }
+        await Promise.all(inFlight);
       }),
     );
     return {
+      activationStartedAtEpochMs: performance.timeOrigin + sweepStarted,
+      workersReadyBeforeTimedWindow: true,
+      workerStartupMs: workersReadyAt - startupStarted,
+      preTimedWindowHookMs: sweepStarted - workersReadyAt,
       binding,
       wallMs: performance.now() - sweepStarted,
       subjectsPerS: o.subjects.length / ((performance.now() - sweepStarted) / 1000),
@@ -263,6 +355,9 @@ export async function runW0Sweep(o: SweepOptions) {
     };
   } finally {
     await Promise.all(threads.map((w) => w.terminate()));
+    // [DX-H6] Why: a failed page must not release its pin while previously submitted publications are unresolved.
+    // Rejected: abandoning in-flight ACKs during worker cleanup.
+    await Promise.allSettled(activePublications);
     await pin?.release();
   }
 }

@@ -1,3 +1,4 @@
+import { encodePublicationEvidence } from "./lib/w0-outbox.ts";
 import { startW0Live, matchW0Live } from "./lib/w0-live.ts";
 import { measurementLease } from "./lib/w0-lease.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
@@ -17,7 +18,6 @@ import {
   equalBytes,
   requireCounts,
   requireFingerprint,
-  wireRecord,
   deliveriesWire,
   emptyWireState,
 } from "./lib/w0-gates.ts";
@@ -68,6 +68,7 @@ export async function runW0Driver(argv: string[]) {
     "lab/bench/lib/w0-world.ts",
     "lab/bench/lib/w0-fingerprint.ts",
     "lab/bench/lib/w0-seed.ts",
+    "lab/bench/lib/w0-seed-order.ts",
     "lab/bench/lib/sweep.ts",
     "lab/bench/lib/sweep-worker.ts",
     "lab/bench/lib/w0-trace.ts",
@@ -88,6 +89,7 @@ export async function runW0Driver(argv: string[]) {
           "packages/datomic/dist/DatomicStorageAdapter.js",
           "packages/datomic/dist/DatomicClient.js",
           "packages/datomic/dist/reach.js",
+          "packages/datomic/dist/sweepRows.js",
         ]
       : []),
     "lab/bench/lib/w0-outbox.ts",
@@ -137,8 +139,17 @@ export async function runW0Driver(argv: string[]) {
         previous.status !== "G0-PASS"
       )
         throw Error("sealed seed binding mismatch");
-      if (previous.seed.mapper !== sha256(fs.readFileSync("lab/bench/lib/w0-seed.ts")))
-        throw Error("sealed seed mapper changed");
+      if (previous.seed.mapper !== sha256(fs.readFileSync("lab/bench/lib/w0-seed.ts"))) {
+        // [DX-H6] Why: a sealed seed may predate the submission-window optimization; explicit old hash plus fresh G0 bind its contents.
+        // Rejected: rewriting the historical seed receipt or silently accepting any mapper drift.
+        if (opt("seed-mapper") !== previous.seed.mapper)
+          throw Error("sealed seed mapper changed; exact --seed-mapper required");
+        report.seedMapperTransition = {
+          old: previous.seed.mapper,
+          current: sha256(fs.readFileSync("lab/bench/lib/w0-seed.ts")),
+          freshG0Required: true,
+        };
+      }
       report.seed = previous.seed;
       report.seedRestore = {
         receiptSha256: sha256(bytes),
@@ -152,6 +163,7 @@ export async function runW0Driver(argv: string[]) {
         path.join(dir, "seed.ndjson"),
         lease.checkpoint,
         Number(opt("seed-concurrency", "1")),
+        Number(opt("seed-warmup-commands", "0")),
       );
     save();
     await lease.checkpoint(true);
@@ -323,31 +335,57 @@ export async function runW0Driver(argv: string[]) {
       const verificationCpuStart = process.threadCpuUsage(),
         oracleCpuStart = oracleCpuNs();
       const verifyStart = performance.now();
-      fs.writeFileSync(path.join(dir, `activation-${page}.json`), canonical(records));
+
       const original = JSON.parse(fs.readFileSync(path.join(dir, `preview-${page}.json`), "utf8"));
+      const oracleRecords: any[] = [];
       for (let i = 0; i < records.length; i++) {
         const r = records[i]!;
-        equalBytes("G1 pinned world", canonical(r.world), canonical(original[i].world));
+        equalBytes("G1 pinned world digest", r.worldSha256, sha256(canonical(original[i].world)));
         const expectedOutput = await oracle.call("reconcile", {
-          world: r.world,
+          world: original[i].world,
           activations,
           basis: { tx: basis.position, validTime: W0.POPULATION_VALID_TIME },
         });
         equalBytes("G2 reconcile", W0.outputJson(r.output), expectedOutput);
+        const independentlyExpected = JSON.parse(expectedOutput);
+        // [DX-H6] Why: publication expectations come from oracle output, never the worker's record field.
+        // Rejected: feeding actual evaluation records back into the expected publish fold.
+        const expectedRecord = {
+          basis: independentlyExpected.basis,
+          release: independentlyExpected.release,
+          subject: independentlyExpected.subject,
+          workItems: independentlyExpected.workItems,
+        };
+        equalBytes(
+          "G2 record",
+          canonical({
+            ...r.record,
+            workItems: r.record.workItems.map((w: any) => ({
+              ...w,
+              payload: JSON.parse(w.payload),
+            })),
+          }),
+          canonical(expectedRecord),
+        );
+        oracleRecords.push({
+          ...expectedRecord,
+          workItems: expectedRecord.workItems.map((w: any) => ({ ...w, inputs: [] })),
+        });
         if (coverage.has(r.subject)) throw new Error("G4 duplicate evaluation");
         coverage.add(r.subject);
       }
-      const evaluations = records.map((r) => r.record);
       const expectedPublish = JSON.parse(
         await oracle.call("publish", {
           state: expectedState,
-          evaluations: evaluations.map(wireRecord),
+          evaluations: oracleRecords,
         }),
       );
       const verificationBeforeMs = performance.now() - verifyStart;
       const verificationCpuBeforePublish = process.threadCpuUsage();
       const publishStart = performance.now();
-      const actual: any = await comp.publishOutbox(evaluations);
+      const actual: any = JSON.parse(
+        fs.readFileSync(path.join(dir, `publication-${page}.json`), "utf8"),
+      );
       const publicationWallMs = performance.now() - publishStart;
       const verifyAfter = performance.now(),
         verificationCpuAfterPublish = process.threadCpuUsage();
@@ -376,33 +414,35 @@ export async function runW0Driver(argv: string[]) {
         ...(actual.timing ?? {}),
       };
     };
-    if (argv.includes("--live")) {
-      const options = {
-        comp,
-        composition,
-        lane,
-        scope,
-        N,
-        dir,
-        seed: opt("traffic-seed", "DX-H2-frozen-v1")!,
-        offsetS: Number(opt("traffic-offset-s", "0")),
-      };
-      console.error("[P5] no-sweep live traffic (64 readers)");
-      traffic = await startW0Live({ ...options, id: attempt + ":baseline" });
-      await new Promise((r) => setTimeout(r, Number(opt("baseline-s", "60")) * 1000));
-      report.live = {
-        baseline: await traffic.stop(),
-        note: "Sequential windows on one evolving store, same frozen generator and offset; command IDs namespaced by arm. Diagnostic ratios; no clone/A-A or statistical acceptance.",
-      };
-      traffic = undefined;
-      save();
-      await lease.checkpoint(true);
-      console.error("[P5] sweep live traffic (64 readers)");
-      traffic = await startW0Live({ ...options, id: attempt + ":sweep" });
-    }
-    console.error("[P5] activation and publication");
-    let publicationChain = Promise.resolve();
-    let publicationError: unknown;
+    const beforeTimedWindow = async () => {
+      if (argv.includes("--live")) {
+        const options = {
+          comp,
+          composition,
+          lane,
+          scope,
+          N,
+          dir,
+          seed: opt("traffic-seed", "DX-H2-frozen-v1")!,
+          offsetS: Number(opt("traffic-offset-s", "0")),
+          warmupMs: Number(opt("live-warmup-s", "15")) * 1000,
+        };
+        console.error("[P5] no-sweep live traffic (64 readers)");
+        traffic = await startW0Live({ ...options, id: attempt + ":baseline" });
+        await new Promise((r) => setTimeout(r, Number(opt("baseline-s", "60")) * 1000));
+        report.live = {
+          baseline: await traffic.stop(),
+          note: "Sequential windows on one evolving store, same frozen generator and offset; command IDs namespaced by arm. Diagnostic ratios; no clone/A-A or statistical acceptance.",
+        };
+        traffic = undefined;
+        save();
+        await lease.checkpoint(true);
+        console.error("[P5] sweep live traffic (64 readers)");
+        traffic = await startW0Live({ ...options, id: attempt + ":sweep" });
+      }
+      console.error("[P5] activation and publication");
+    };
+    console.error("[P5] preparing sweep workers before live baseline");
     const cursor = path.join(dir, "activation-cursor.json");
     report.sweep = await runW0Sweep({
       comp,
@@ -416,23 +456,21 @@ export async function runW0Driver(argv: string[]) {
       workers,
       activations,
       metricsFile: path.join(dir, "activation-pages.ndjson"),
-      onPage: (records, page) => {
-        const queued = performance.now();
-        const task = publicationChain.then(async () => {
-          if (publicationError) throw publicationError;
-          traffic?.check();
-          const publishQueueMs = performance.now() - queued;
-          return { publishQueueMs, ...(await activationPage(records, page)) };
-        });
-        // [DX-H2] Why: the independent publish fold follows ACK order across workers.
-        // Rejected: racing callbacks over one expected outbox state.
-        publicationChain = task.then(
-          () => {},
-          (e) => {
-            publicationError = e;
-          },
+      beforeTimedWindow,
+      onPage: async (records, page) => {
+        traffic?.check();
+        // [DX-H6] Why: all oracle work stays after the last ACK; publisher batches state and pipelines ordered submissions.
+        // Rejected: serial oracle/build/ACK on the evaluation worker's critical path.
+        fs.writeFileSync(path.join(dir, `activation-${page}.json`), canonical(records));
+        const actual: any = await comp.publishOutbox(records.map((r) => r.record));
+        const publicationAckAtEpochMs = performance.timeOrigin + performance.now();
+        // [DX-H6] Why: W0 canonical bytes contain business integers; telemetry contains fractional durations.
+        // Rejected: serializing telemetry with the integer-only W0 encoder (first VM attempt failed after ACK).
+        fs.writeFileSync(
+          path.join(dir, `publication-${page}.json`),
+          encodePublicationEvidence(actual),
         );
-        return task;
+        return { publicationAckAtEpochMs, ...(actual.timing ?? {}) };
       },
     });
     if (traffic) {
@@ -440,6 +478,22 @@ export async function runW0Driver(argv: string[]) {
       traffic = undefined;
       report.live.matched = matchW0Live(report.live.baseline, report.live.sweep);
     }
+    report.sweep.lastPublicationAckAtEpochMs = Math.max(
+      ...report.sweep.metrics.map((m: any) => m.timing.publicationAckAtEpochMs),
+    );
+    report.sweep.activationToLastAckMs =
+      report.sweep.lastPublicationAckAtEpochMs - report.sweep.activationStartedAtEpochMs;
+    report.sweep.verificationPlacement =
+      "every subject after last publication ACK; no gate PASS before comparison";
+    save();
+    for (const m of [...report.sweep.metrics].sort((a: any, b: any) => a.page - b.page)) {
+      const records = JSON.parse(
+        fs.readFileSync(path.join(dir, `activation-${m.page}.json`), "utf8"),
+      );
+      m.postAckVerification = await activationPage(records, m.page);
+    }
+    report.sweep.activationToVerificationEndMs =
+      performance.timeOrigin + performance.now() - report.sweep.activationStartedAtEpochMs;
     if (coverage.size !== N || !report.sweep.complete) throw new Error("G4 incomplete coverage");
     report.gates.G1 = {
       status: "PASS",

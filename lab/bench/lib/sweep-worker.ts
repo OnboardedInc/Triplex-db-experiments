@@ -2,7 +2,7 @@ import { measureW0Http } from "./w0-http.ts";
 import fs from "node:fs";
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
-import { canonical, reachableRows, worldOf } from "./w0-world.ts";
+import { canonical, worldSha256, reachableRows, worldOf } from "./w0-world.ts";
 import { evaluateW0, loadW0Pins } from "./evaluate.ts";
 import { openComposition } from "./composition.ts";
 const comp =
@@ -80,7 +80,9 @@ port.on("message", async (msg) => {
       kernelCpu += diff(c, cpu());
       evaluateWallMs += performance.now() - wall;
       if ("error" in r) throw new Error(subject + ": " + r.error);
-      result.push({ subject, world, output: r.output, record: r.record });
+      // [DX-H6] Why: only outputs and a binding digest cross threads; preview worlds remain durable for full post-ACK verification.
+      // Rejected: canonicalizing and transferring every fact a second time.
+      result.push({ subject, worldSha256: worldSha256(world), output: r.output, record: r.record });
     }
     const encodeStarted = performance.now(),
       encodeCpuStarted = cpu();
@@ -127,3 +129,6 @@ port.on("message", async (msg) => {
     port.postMessage({ type: "error", id: msg.id, error: String(error?.stack ?? error) });
   }
 });
+
+// [DX-H6] Why: establish runtime and pins before the activation timer starts. Rejected: charging worker startup as steady-state service.
+port.postMessage({ type: "ready" });
