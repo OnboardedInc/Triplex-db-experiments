@@ -8,4 +8,9 @@ for role in gw-r gw-w tx pg; do
   docker rm -f "$prefix-$role" >/dev/null 2>&1 || true
 done
 docker network rm "$prefix-net" >/dev/null 2>&1 || true
-if [[ ${2:-} == --volumes ]]; then docker volume rm "$prefix-pg-data"; fi
+# [DX-B5] Why: the outer exit trap may run after the owned stack was already removed before mutants.
+# Rejected: failing on a second volume removal and skipping the required fresh inventory readback.
+# Callers still require successful empty inventories; an unavailable daemon cannot establish cleanup.
+if [[ ${2:-} == --volumes ]] && docker volume inspect "$prefix-pg-data" >/dev/null 2>&1; then
+  docker volume rm "$prefix-pg-data"
+fi
