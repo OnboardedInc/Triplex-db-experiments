@@ -638,8 +638,13 @@ async function run() {
     report.phases = phases;
     save();
   } else for (const [idx, spec] of plan.entries()) {
+    // [DX-H4] Why: settle retained datoms before timing each matched history depth.
+    // Rejected: timing immediately after growth (measures live memory-index churn).
+    const historyIndex = indexClient && /^p4h(1|3|10)$/.test(spec.name)
+      ? await requestIndex(indexClient, indexDb, spec.name, now, 60_000) : null;
+    if (historyIndex) datomicMaintenanceJobs.push(historyIndex);
     const start = now();
-    const entry: any = { idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
+    const entry: any = { historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
     const indexJob = indexClient && /^L[0-9]+$/.test(spec.name) && spec.seconds ? (async () => {
@@ -651,7 +656,13 @@ async function run() {
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.sweep) entry.sweep = await runSweep(idx, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
-    else if (spec.seconds) await sleep(spec.seconds * 1000);
+    else if (spec.seconds) {
+      await sleep(spec.seconds * 1000);
+      if (!config.zeroReaders && /^p4h(1|3|10)$/.test(spec.name)) {
+        const deadline = now() + 120_000;
+        while (records.filter(r => r[R.phase] === idx && r[R.start] >= start + config.settleS * 1000 && r[R.error] === null).length < 10_000 && now() < deadline) await sleep(250);
+      }
+    }
     entry.end = now();
     await indexJob;
     entry.traceEndS = (entry.end - traceStart) / 1000;
@@ -1207,16 +1218,22 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const largest = mix?.buckets["bucket:large"];
   const phaseBytes = (s: any) => { const idx = ctx.phases.find((p) => p.name === s?.phase)?.idx; return mean(records.filter((r, k) => r[R.phase] === idx && verdicts[k]!.ok).map((r) => r[R.bytes])); };
   const quotaRate = best && engineCpus ? best.goodputPerS / engineCpus : null;
+  const historyInvalid = [h1, h3, h10].flatMap((h, i) => {
+    const phase = ctx.phases.find(p => p.name === ["p4h1", "p4h3", "p4h10"][i]);
+    return [ ...(lane === "datomic" && phase?.historyIndex?.completed !== true ? [`${phase?.name}: request-index did not complete within 60 s`] : []),
+      ...((h?.read.count ?? 0) < 10_000 ? [`${phase?.name}: fewer than 10,000 correct measured pulls`] : []) ];
+  });
+  const historyEligible = historyDepthsComplete(ctx.phases.filter(p => p.history).map(p => p.history), ctx.historyList.length) && historyInvalid.length === 0;
   const p4 = {
     weightedMix: mix ? { read: mix.read, buckets: mix.buckets } : null,
-    history: { eligibleForDepthComparison: historyDepthsComplete(ctx.phases.filter((p) => p.history).map((p) => p.history), ctx.historyList.length), sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
+    history: { eligibleForDepthComparison: historyEligible, invalid: historyInvalid, indexing: ctx.phases.filter(p => p.historyIndex).map(p => p.historyIndex), ratios: { mean: ratio(h10?.read.meanMs, h1?.read.meanMs), p50: ratio(h10?.read.p50Ms, h1?.read.p50Ms), p99: ratio(h10?.read.p99Ms, h1?.read.p99Ms) }, sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
     throughput: { bestLevel: best?.phase ?? null, goodputPerS: best?.goodputPerS ?? null, engineCpuQuotaCores: engineCpus, pullsPerSPerQuotaCore: quotaRate, engineCpuPercentMean: best?.engine.cpuPercentMean ?? null, pullsPerSPerUsedCore: best?.engine.cpuPercentMean ? best.goodputPerS / (best.engine.cpuPercentMean / 100) : null, hostClientCpu: cpu, hostBrokerCpu: "none in this composition (no broker process)" },
     bars: [
       bar("NS-P4 weighted-mix pull p50 ms", mix?.read.p50Ms ?? null, "<= 5", mix?.read.p50Ms != null ? mix.read.p50Ms <= 5 : null),
       bar("NS-P4 weighted-mix pull p99 ms", mix?.read.p99Ms ?? null, "<= 25", mix?.read.p99Ms != null ? mix.read.p99Ms <= 25 : null),
       bar("NS-P4 largest bucket p99 ms (provisional)", largest?.p99Ms ?? null, "<= 50", largest?.p99Ms != null ? largest.p99Ms <= 50 : null),
       bar("NS-P4 pulls/s per engine core (CPU quota)", quotaRate, ">= 1100", quotaRate !== null ? quotaRate >= 1100 : null),
-      bar("NS-P4 history flatness p99 depth10 / depth1", ratio(h10?.read.p99Ms, h1?.read.p99Ms), "<= 1.1", ratio(h10?.read.p99Ms, h1?.read.p99Ms) !== null ? historyDepthsComplete(ctx.phases.filter((p) => p.history).map((p) => p.history), ctx.historyList.length) && ratio(h10?.read.p99Ms, h1?.read.p99Ms)! <= 1.1 : null, "requires complete growth to depths 3 and 10 on the full sample"),
+      bar("NS-P4 history flatness p99 depth10 / depth1", ratio(h10?.read.p99Ms, h1?.read.p99Ms), "<= 1.1", ratio(h10?.read.p99Ms, h1?.read.p99Ms) !== null ? historyEligible && ratio(h10?.read.p99Ms, h1?.read.p99Ms)! <= 1.1 : null, "requires complete growth to depths 3 and 10 on the full sample"),
       bar("NS-P4 history flatness bytes read depth10 / depth1", null, "<= 1.1", null, "engine bytes read are not measured (seam); client-observed bytes are reported"),
     ],
   };
