@@ -1,0 +1,10 @@
+# DX-H5 verdict/receipt audit (implementation stage)
+
+North star: P5, measured against lab/TARGETS.md §1.1; diagnostic only, no acceptance promotion.
+
+- `w0-driver.ts`: G0 still runs independent population Python, checks oracle source bytes and compares every observed world/output fingerprint and full store counts in this attempt. Restored receipt selects scope/N/seed counts only; it cannot grant G0. G1/G2 compare fresh pinned worlds and independent per-subject reconcile bytes. G3 requires positive latest mutations after capture. G5 compares deliveries with the independently folded publication state. G7 checks basis and epoch per page. G9 folds actual stored journal changes against fresh store counts. Source bytes are rechecked at attempt end. Existing G4 PARTIAL and G6/G8 omissions remain explicit.
+- `w0-seed.ts`: reference position equality and returned ACK operations remain strict; concurrent reference seed is refused rather than changing the fingerprint. Receipt contains actual command-log digest, source digest and fresh store counts.
+- `w0-journal.ts`: default unknown-ACK refusal retained. Explicit restore mode reads actual stored indexed journal records and checks every position is dense and every transaction has an identity and changes; no reconstructed ACK changes enter G9. Full fingerprint and count checks remain necessary.
+- `sweep.ts`: unchanged cursor binding includes exact scope, basis, subject-list digest and release. ACKed publication alone advances the cursor. Worker bound extended to eight, without changing content gates.
+- `w0-http.ts`, `sweep-worker.ts`, `w0-outbox.ts`: observations only, never grant acceptance; missing diagnostics remain null. Request samples come from the public Datomic request observer in the actual operation's asynchronous context.
+- `h5/attempt.sh`: a sealed volume is copied only after a current G0-PASS receipt and stopped peers/Postgres. Restoration never establishes a PASS; every measurement reruns G0. Prefix, lock owner, local image identities, CPU/memory placement and cleanup inventories bind this attempt. The sealed copy itself remains diagnostic pending independent review.

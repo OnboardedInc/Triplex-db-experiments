@@ -95,7 +95,16 @@ export async function seedW0(
   N: number,
   logFile: string,
   checkpoint?: () => Promise<void>,
+  concurrency = 1,
 ) {
+  // [DX-H5] Why: W0's immutable fingerprint includes reference commit positions.
+  // Rejected: silently accepting reordered concurrent seed commands as the reference world.
+  if (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 32)
+    throw Error("invalid seed concurrency");
+  if (concurrency !== 1)
+    throw Error(
+      "W0 reference positions require ordered commits; concurrent seeding needs an exact-position import API",
+    );
   if ((await comp.currentPosition()) !== 0) throw new Error("W0 seed requires fresh scope");
   const seedStarted = performance.now();
   const Rseed = W0.rung(N);

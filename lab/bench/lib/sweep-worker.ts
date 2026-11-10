@@ -1,4 +1,4 @@
-import { measureHttp } from "./http-counts.ts";
+import { measureW0Http } from "./w0-http.ts";
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import { canonical, reachableRows, worldOf } from "./w0-world.ts";
@@ -24,7 +24,9 @@ port.on("message", async (msg) => {
     const diff = (a: any, b: any) => (b.user - a.user + b.system - a.system) / 1e6;
     let c = cpu();
     const readStart = performance.now();
-    const measured = comp ? await measureHttp(() => comp.sweepPage(msg.subjects, msg.basis)) : null;
+    const measured = comp
+      ? await measureW0Http(() => comp.sweepPage(msg.subjects, msg.basis))
+      : null;
     const page = measured
       ? measured.value
       : await new Promise<any>((resolve) => {
@@ -70,6 +72,9 @@ port.on("message", async (msg) => {
         timing: {
           readWallMs,
           readRequests: measured?.requests ?? page.timing?.readRequests ?? null,
+          responseBytes: measured?.responseBytes ?? null,
+          gatewayMicros: measured?.gatewayHeaders ? measured.gatewayMicros : null,
+          rows: page.rows.length,
           decodeWallMs,
           evaluateWallMs,
         },

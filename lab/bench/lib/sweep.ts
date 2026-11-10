@@ -76,7 +76,7 @@ export async function runW0Sweep(o: SweepOptions) {
   if (
     !Number.isInteger(o.workers) ||
     o.workers < 1 ||
-    o.workers > 4 ||
+    o.workers > 8 ||
     new Set(o.subjects).size !== o.subjects.length ||
     canonical([...o.subjects].sort()) !== canonical(o.subjects)
   )
@@ -152,6 +152,8 @@ export async function runW0Sweep(o: SweepOptions) {
           while (o.controller && (o.controller.limit === 0 || workerIndex >= o.controller.limit))
             await new Promise((r) => setTimeout(r, 10));
           if (index >= remaining.length) break;
+          const assignedAtMs = performance.now() - sweepStarted;
+          const workerCpuStart = process.cpuUsage();
           const pageIndex = remaining[index++]!,
             subjects = o.subjects.slice(pageIndex * 64, (pageIndex + 1) * 64);
           const page: any = await new Promise((res, rej) => {
@@ -204,6 +206,13 @@ export async function runW0Sweep(o: SweepOptions) {
             worker: workerIndex,
             timing: {
               ...page.timing,
+              assignedAtMs,
+              workerWaitMs: assignedAtMs,
+              completedAtMs: performance.now() - sweepStarted,
+              assignedAtEpochMs: performance.timeOrigin + sweepStarted + assignedAtMs,
+              clientProcessCpuMsOverlapping:
+                (process.cpuUsage(workerCpuStart).user + process.cpuUsage(workerCpuStart).system) /
+                1000,
               controllerDecodeMs,
               callbackWallMs,
               ...(callbackTiming ?? {}),

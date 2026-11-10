@@ -1,4 +1,5 @@
 import { measureHttp } from "./http-counts.ts";
+import { measureW0Http } from "./w0-http.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { W0, canonical, sha256 } from "./w0-world.ts";
 export async function publishRecords(
@@ -59,14 +60,22 @@ export async function publishRecords(
   // [EXP-P5] Why: state, per-item sequence and deliveries commit in the same frame with command-id deduplication. Rejected: updating an in-memory outbox before ACK (loses work on resume).
   const buildOutboxMs = performance.now() - buildStart;
   const commit = await measureHttp(() =>
-    comp.transact(operations, { commandId, actor: "p5-publisher", preconditions }),
+    measureW0Http(() =>
+      comp.transact(operations, { commandId, actor: "p5-publisher", preconditions }),
+    ),
   );
-  const r = commit.value;
+  const r = commit.value.value;
   if (!r.ok) throw new Error("outbox publication failed: " + r.tag);
   return {
     deliveries,
     retry: false,
-    timing: { buildOutboxMs, publishCommitMs: commit.wallMs, publishRequests: commit.requests },
+    timing: {
+      buildOutboxMs,
+      publishCommitMs: commit.wallMs,
+      publishRequests: commit.requests,
+      publishDatoms: commit.value.datomSamples ? commit.value.datoms : null,
+      publishGatewayMicros: commit.value.gatewayHeaders ? commit.value.gatewayMicros : null,
+    },
   };
 }
 const V_PUBLIC = Date.parse("2026-11-04T12:00:00Z");

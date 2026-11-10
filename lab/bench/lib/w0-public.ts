@@ -19,35 +19,56 @@ export async function publicSweep(
         const storage = handle.storage;
         if (!storage?.getReachRowsMany) return portable.page(subjects, basis);
         requirePosition(basis, Number.MAX_SAFE_INTEGER);
-        const closures = await handle.run<readonly (readonly import("../../../packages/core/dist/runtime/index.js").TripleRow[])[] | undefined>(storage.getReachRowsMany(subjects, {
-          recordedPosition: basis.position, validAt: basis.validAt,
-        }));
+        const closures = await handle.run<
+          | readonly (readonly import("../../../packages/core/dist/runtime/index.js").TripleRow[])[]
+          | undefined
+        >(
+          storage.getReachRowsMany(subjects, {
+            recordedPosition: basis.position,
+            validAt: basis.validAt,
+          }),
+        );
         if (!closures) return portable.page(subjects, basis);
         // [DX-B5-L5] Why: preserve portable page-wide BFS order while deduplicating shared entities.
         // Rejected: flattening per-root closures (duplicates shared facts and changes row order).
         const entities = new Map<string, Map<string, any>>();
-        for (const closure of closures) for (const row of closure) {
-          let entity = entities.get(row.entity_id);
-          if (!entity) entities.set(row.entity_id, entity = new Map());
-          entity.set(row.id, row);
-        }
-        const seen = new Set(subjects), rows: WorldRow[] = [];
+        for (const closure of closures)
+          for (const row of closure) {
+            let entity = entities.get(row.entity_id);
+            if (!entity) entities.set(row.entity_id, (entity = new Map()));
+            entity.set(row.id, row);
+          }
+        const seen = new Set(subjects),
+          rows: WorldRow[] = [];
         let frontier = [...subjects];
         while (frontier.length) {
           const next: string[] = [];
-          for (const id of frontier) for (const row of entities.get(id)?.values() ?? []) {
-            const value = decode(row);
-            rows.push({ id: row.id, entityId: row.entity_id, attribute: row.attribute, value,
-              position: row.recorded_position, validFrom: row.valid_from,
-              ...(row.valid_to === null ? {} : { validTo: row.valid_to }) });
-            if (value.type === "ref" && !seen.has(value.value)) {
-              seen.add(value.value); next.push(value.value);
+          for (const id of frontier)
+            for (const row of entities.get(id)?.values() ?? []) {
+              const value = decode(row);
+              rows.push({
+                id: row.id,
+                entityId: row.entity_id,
+                attribute: row.attribute,
+                value,
+                position: row.recorded_position,
+                validFrom: row.valid_from,
+                ...(row.valid_to === null ? {} : { validTo: row.valid_to }),
+              });
+              if (value.type === "ref" && !seen.has(value.value)) {
+                seen.add(value.value);
+                next.push(value.value);
+              }
             }
-          }
           frontier = next;
         }
-        return { rows, reportedBasis: { ...basis }, position: basis.position,
-          epoch: String(handle.scope), roundTrips: 1 };
+        return {
+          rows,
+          reportedBasis: { ...basis },
+          position: basis.position,
+          epoch: String(handle.scope),
+          roundTrips: 1,
+        };
       },
     };
   }
@@ -244,10 +265,15 @@ export function portableSweep(
       // [DX-H2] Why: history enumeration checks every entity, with bounded parallelism so untimed G9 setup does not dominate seeding.
       // Rejected: counting only live rows or dropping retired entities (weakens the count gate).
       const entityList = [...entities];
-      for (let offset = 0; offset < entityList.length; offset += 8) {
+      // [DX-H5] Why: bounded parallelism changes scheduling only; every stored history is still counted.
+      // Rejected: sampling entities or replacing stored counts with seed ACK totals.
+      const countConcurrency = Number(process.env.TX2_W0_COUNT_CONCURRENCY ?? "8");
+      if (!Number.isSafeInteger(countConcurrency) || countConcurrency < 1 || countConcurrency > 64)
+        throw Error("invalid count concurrency");
+      for (let offset = 0; offset < entityList.length; offset += countConcurrency) {
         const histories = await Promise.all(
           entityList
-            .slice(offset, offset + 8)
+            .slice(offset, offset + countConcurrency)
             .map((entity) => handle.run<readonly any[]>(storage.history(entity))),
         );
         for (const history of histories) {

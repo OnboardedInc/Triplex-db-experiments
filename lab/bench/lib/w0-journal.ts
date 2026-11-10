@@ -28,8 +28,24 @@ export function w0Journal(handle: Pick<TriplesHandle, "triples" | "run">) {
       )
         throw Error("invalid W0 journal page");
       const head = Number(await handle.run(handle.triples.currentPosition()));
-      if (!Number.isSafeInteger(head) || head !== ids.size || highest !== head)
-        throw Error("W0 journal has an unobserved commit or position gap");
+      if (!Number.isSafeInteger(head)) throw Error("invalid W0 journal head");
+      // [DX-H5] Why: a sealed seed has no in-process ACK registry; enumerate stored indexed journals.
+      // Rejected: rebuilding changes from seed ACK payloads (would remove independent G9 evidence).
+      if (head !== ids.size || highest !== head) {
+        if (process.env.TX2_W0_RESTORE_INDEXED_JOURNAL !== "1")
+          throw Error("W0 journal has an unobserved commit or position gap");
+        const page: any = await handle.run(handle.triples.transactions({ after, limit }));
+        const expectedLength = Math.max(0, Math.min(limit, head - after));
+        if (
+          page.transactions.length !== expectedLength ||
+          page.transactions.some(
+            (tx: any, i: number) =>
+              tx.position !== after + i + 1 || !tx.txId || !Array.isArray(tx.changes),
+          )
+        )
+          throw Error("W0 stored indexed journal gap/content mismatch");
+        return page;
+      }
       const positions = Array.from(
         { length: Math.max(0, Math.min(limit, head - after)) },
         (_, i) => after + i + 1,

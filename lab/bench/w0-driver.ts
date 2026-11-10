@@ -38,7 +38,7 @@ export async function runW0Driver(argv: string[]) {
   fs.mkdirSync(dir, { recursive: true });
   if (fs.existsSync(output)) throw new Error("attempt output already exists");
   const attempt = randomUUID(),
-    scope = "p5-" + attempt;
+    scope = opt("scope", "p5-" + attempt)!;
   const startedAt = new Date().toISOString();
   const report: any = latencyReceipt({
     format: "triplex-db-2/p5-screening/1",
@@ -90,6 +90,7 @@ export async function runW0Driver(argv: string[]) {
         ]
       : []),
     "lab/bench/lib/w0-outbox.ts",
+    "lab/bench/lib/w0-http.ts",
     "lab/bench/lib/w0-gates.ts",
     "lab/bench/lib/w0-oracle.py",
     "lab/bench/lib/trace.ts",
@@ -101,6 +102,7 @@ export async function runW0Driver(argv: string[]) {
   save();
   process.env["TX2_P5_CLOCK_START"] = String(V_W0);
   if (lane === "datomic") process.env.TX2_W0_POINT_JOURNAL = "1";
+  if (opt("seed-receipt")) process.env.TX2_W0_RESTORE_INDEXED_JOURNAL = "1";
   report.pins = await loadW0Pins();
   const lease = await measurementLease();
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
@@ -111,7 +113,34 @@ export async function runW0Driver(argv: string[]) {
   let expectedState: any = emptyWireState();
   try {
     console.error(`[P5] ${attempt} seeding ${N}`);
-    report.seed = await seedW0(comp, N, path.join(dir, "seed.ndjson"), lease.checkpoint);
+    // [DX-H5] Why: a restored seed re-runs all content/count/fingerprint gates before timing.
+    // Rejected: treating a sealed volume or historical G0 status as fresh correctness evidence.
+    const seedReceipt = opt("seed-receipt");
+    if (seedReceipt) {
+      const bytes = fs.readFileSync(seedReceipt);
+      const previous = JSON.parse(bytes.toString());
+      if (
+        previous.scope !== scope ||
+        previous.N !== N ||
+        previous.lane !== lane ||
+        previous.composition !== composition ||
+        previous.status !== "G0-PASS"
+      )
+        throw Error("sealed seed binding mismatch");
+      report.seed = previous.seed;
+      report.seedRestore = {
+        receiptSha256: sha256(bytes),
+        path: seedReceipt,
+        freshFingerprintRequired: true,
+      };
+    } else
+      report.seed = await seedW0(
+        comp,
+        N,
+        path.join(dir, "seed.ndjson"),
+        lease.checkpoint,
+        Number(opt("seed-concurrency", "1")),
+      );
     save();
     await lease.checkpoint(true);
     requireCounts(await comp.storeCounts(), report.seed.counts);
@@ -459,7 +488,7 @@ export async function runW0Driver(argv: string[]) {
     report.status = "PARTIAL";
   } catch (error: any) {
     report.status = "FAIL";
-    report.error = String(error.stack ?? error);
+    report.error = (await import("node:util")).inspect(error, { depth: 16 });
     process.exitCode = 1;
     throw error;
   } finally {
