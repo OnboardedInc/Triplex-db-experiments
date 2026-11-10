@@ -394,13 +394,51 @@ Open, from its report:
 5. Storage: 657.5 MB volume per 1,000 subjects, of which 335.5 MB is write-ahead log and 290.2 MB is Datomic data. See
    `lab/research/SAM-decisions-2026-11-09.md` (Sam's storage question) and spike DX-S4.
 
+## DX-B8 result (merged 2026-11-10 17:00 UTC, merge ebc92d6f; carries DX-B7). Cause 1 is fixed and it was the big one
+
+Report `lab/experiments/EXP-DX1/b8/REPORT.md`. Both layouts' gates and all 300 differential scenarios pass. All numbers below
+are **without keep-awake**, on a scope with about 50,000 commits and no index job requested.
+
+| Measurement | Unchanged code | After the head fix (19f5422d) | Bar |
+| --- | --- | --- | --- |
+| Back-to-back commit p50 at heads 1,000 / 50,000 / 250,000 / 500,000 | 8.1 / 10.5 / not reached / not reached ms | 6.3 / 3.1 / 3.3 / 3.2 ms | P2 p50 at most 10 ms |
+| Fill rate | 625 falling to 59 commits/s by 98,500 | about 2,100 to 2,200 commits/s, flat | |
+| Read-gateway CPU per pull at heads 1,000 / 50,000 | 0.52 / 3.77 ms | 0.14 / 0.12 ms (0.13 at 500,000) | |
+| 256 readers, frozen basis | 2,100 to 2,226 pulls/s, p99 515 ms | 7,973 pulls/s, p99 75.6 ms, 4,916 pulls per gateway CPU-second | P1 p99 at most 100 ms; P4 1,100 per engine core (7,973 / 4 = 1,993) |
+| 64 readers, frozen basis | 2,095 pulls/s | 8,848 pulls/s, p99 20.2 ms | goodput at 256 not below 64 (0.90, short) |
+| 256 readers pinned to the newest receipt, writer at 15 commits/s | not measured | 5,109 pulls/s, read p99 158.8 ms, commit p99 26 ms loaded against 48 ms quiet, feed lag p99 17.9 ms | read p99 at most 100 ms (missed); writer ratio at most 1.25; feed lag at most 250 ms |
+
+The second fix (da77a50a, a revision map fed by the transaction report queue, so a pull of unchanged entities makes no
+per-entity Datomic call) passes every gate and a racing-writer test (498,577 verified hits, zero errors), and its profile shows
+Datomic at under 6% of gateway samples. Its one performance run (3,568 pulls/s frozen, 2,658 moving) was taken while the Mac
+had under 5 GiB of disk and 24 GB of swap in use, so it is not a valid comparison; the paired north-star run re-measures it.
+Remaining gateway CPU by the profile: Clojure map lookups in `reach/read-entity`, key equality in the entity cache lookup,
+string appends.
+
+## Test-bed findings (2026-11-10 17:10 UTC)
+
+1. **keep-awake is withdrawn** (`vm-wake/RESULT.md`): it halves dense throughput. All measurements run without a helper.
+2. **The Mac is an M3 Pro with 6 performance and 6 efficiency cores; the VM has 8 vCPUs.** Any phase that keeps more than 6 vCPUs
+   busy runs partly on efficiency cores.
+3. **Disk fell to 4.4 GiB free.** Causes: the VM's data disk did not return freed blocks to macOS (28.5 GiB recovered with
+   `fstrim`; the disk is now mounted with `discard`), swap grew to 28 GB, evidence was 53 GB (compressed losslessly to 42 GB).
+   Free now: about 51 GiB.
+4. **Host memory is overcommitted**: 18 to 28 GB of swap in use on 36 GB of RAM with this VM at 20 GiB. This adds noise to every
+   timing. Sam's call whether to shrink the VM's memory or free memory elsewhere.
+
+## XN-S2 final (2026-11-10, merged): two XTDB nodes on Kafka and MinIO work; the one measured case misses P2
+
+`lab/experiments/EXP-XN1/spike-s2/REPORT.md`. A write node and a read node on `apache/kafka:4.1.1` and the Chainguard MinIO image
+start, the read node sees the writer's commits, survives a restart and catches up, and the writer keeps going while it is down.
+Measured: commits at 15/s with no readers p50 21.9 ms, p99 90.8 ms (bar 10 / 50). The loaded cases did not run (a 16-reader
+preparation stalled, then disk and time ran out). Kafka used 0.10 cores and 422 MiB. Lane X stays parked behind lane D.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-B8 (resumed 13:26 UTC) | Owns the whole package now: merge DX-B7, finish the head fix, all gates on both layouts, commit `DX-B8 fix:`; measure commits and pulls on a 50,000-commit scope, frozen and moving basis, without and with keep-awake; if still short, a revision map fed by the report queue so a current pull makes no Datomic call | `exp/DX-B8-head-lookup`, `.claude/worktrees/dx-b8` | `.../prompts/DX-B8-resume1.md` |
+| ORCH | Paired north-star run at 2,000 subjects on merge ebc92d6f, no keep-awake: `tx2-dxh4-o1` under `evidence/DX-H4/` | `lane/d-native` | |
 | DX-S4 | Storage anatomy: what the 290 MB per 1,000 subjects is made of, Datomic variants, the same rows in XTDB, plain Postgres and compressed JSON, `footprint.sh` | `spike/DX-S4-storage`, `.claude/worktrees/dx-s4` | `.../prompts/DX-S4.md` |
-| XN-S2 (resumed 13:53 UTC) | Two XTDB nodes on Kafka and a shared object store, engine only, with a same-day single-node control | `spike/XN-S2`, `.claude/worktrees/xn-s2` | `.../prompts/XN-S2-resume2.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
