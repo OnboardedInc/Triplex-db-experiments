@@ -654,15 +654,29 @@ export const makeDatomicStorageAdapter = (
       Effect.gen(function* () {
         if (yield* current) return undefined;
         const response = yield* read(() => client.reachEntities(db, [root], basis));
-        return response ? reachRowsResponse(root, response.entities, basis) : undefined;
+        if (!response) return undefined;
+        return yield* Effect.try({
+          try: () => reachRowsResponse(root, response.entities, basis),
+          catch: () => {
+            client.reachDiagnostics.faults++;
+            return undefined;
+          },
+        }).pipe(Effect.catch(() => Effect.succeed(undefined)));
       }),
     getReachRowsMany: (roots, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;
         const response = yield* read(() => client.reachEntities(db, roots, basis));
-        return response
-          ? roots.map((root) => reachRowsResponse(root, response.entities, basis))
-          : undefined;
+        if (!response) return undefined;
+        // [DX-B5-L4] Why: row getters share the triple getter's conservative malformed-coverage fallback.
+        // Rejected: turning a missing entity in a transport response into an untyped Effect defect.
+        return yield* Effect.try({
+          try: () => roots.map((root) => reachRowsResponse(root, response.entities, basis)),
+          catch: () => {
+            client.reachDiagnostics.faults++;
+            return undefined;
+          },
+        }).pipe(Effect.catch(() => Effect.succeed(undefined)));
       }),
     getReachTriples: (root, basis) =>
       Effect.gen(function* () {

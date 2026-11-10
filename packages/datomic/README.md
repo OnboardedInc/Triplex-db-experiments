@@ -135,3 +135,33 @@ out-of-span positions clear that proof, and older unproven scopes remain conserv
 
 These changes are a lab experiment. See `lab/experiments/EXP-DX1/b3/REPORT.md` for
 fresh gates, diagnostic measurements, limitations and retained failures.
+
+## Lean scopes (DX-B5 lab path)
+
+`makeDatomicRuntime({ url, layout: "lean" })` chooses row-only storage for a newly
+created scope. The default is `"legacy"`. Layout is fixed at creation; reopening a
+scope does not migrate it. The lab runtime also accepts `TRIPLEX_DATOMIC_LAYOUT`.
+
+Lean scopes keep live row-text datoms and reconstruct retirements from native
+Datomic history, with explicit markers for non-default retirement metadata.
+Assertions retired in their creating physical transaction retain a marked row so
+history is not lost. Retired assertion identities remain reserved. Native `q`
+and the older native `log` route return HTTP 409 `LayoutUnsupported`; the query
+adapter exposes `DatomicLayoutUnsupported`, a `ReadError` with its route.
+`Triples.transactions` uses the supported journal path.
+
+Optional `getReachRows` and `getReachRowsMany` expose the same ordered closure as
+fast reach while preserving each row's genuine recorded position. As with the
+triple getters, `undefined` means that the caller must use the portable path.
+Malformed graph coverage declines instead of becoming an Effect defect.
+
+Replay-safe public commits register their timestamps, order socket sends and
+sequence peer submissions. A regressing public clock produces a conflict and a
+fresh callback replay instead of making the scope irregular. Clock conflicts
+have a retry budget of `max(32, maxRetries)`; ordinary serialization conflicts
+retain `maxRetries`. Unsafe SPI callbacks retain the legacy irregular-history
+behavior. Registration ends at socket send completion, so acknowledgements still
+overlap, including through older instrumentation wrappers.
+
+This layout remains experimental. See `lab/experiments/EXP-DX1/b5/REPORT.md` for
+actual gate denominators, diagnostic measurements and unresolved limitations.
