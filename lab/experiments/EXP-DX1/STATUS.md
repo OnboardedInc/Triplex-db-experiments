@@ -368,12 +368,39 @@ busy loops cost throughput under load is open: DX-B8 measures everything without
 XTDB can be built from local images. **Lane X is parked** until Sam decides on two downloads: `ghcr.io/xtdb/xtdb-aws:2.2.0` (has the
 Kafka module) and an S3-compatible object store image. Report `lab/experiments/EXP-XN1/spike-s2/REPORT.md`.
 
+## DX-H6 result (merged 2026-11-10 15:52 UTC, merge 90012d51; it carries DX-B8's fix commit 19f5422d and DX-B7's gateway work)
+
+Report `lab/experiments/EXP-DX1/h6/REPORT.md`. Every subject's world, output and record bytes equal the old code's.
+
+| What | Before (DX-H5) | Now | Needed |
+| --- | --- | --- | --- |
+| Sweep rate, 1,000 subjects, live traffic, gates passing | 32 subjects/s | 223 subjects/s (4 workers, ratios 0.68 / 1.22); 334 subjects/s with 8 workers but live ratios 2.2 / 23 | 1,000 subjects/s |
+| Load-generator CPU per 1,000 subjects (decode, world, kernel, hand-over) | 13.0 s | 0.97 s on the Mac warm (1.45 s in a later rebuild run); 1.86 s in the VM with 4 workers | about 1.3 s |
+| Oracle | 4.36 s inside the timed path | outside it, every subject still compared before any gate says PASS | |
+| Load-generator peak memory | out of memory at 8 GiB | 1.6 GiB with the package's byte budgets | 4 GiB |
+| Serial seed rate | 174 to 208 commands/s | 259 commands/s after DX-B8's fix | 1,000 |
+| 10,000-subject seed | not finished | all 434,768 commands acknowledged in reference order (263 falling to 145 commands/s); the count and fingerprint stage hit the 43-minute guard | sealed seed |
+
+Open, from its report:
+1. **Commits in flight break reference order.** The gateway's per-client sequence is best effort with a 20 ms timeout, so a
+   window of 16 reorders (expected position 133, got 147). Needs a strict per-client sequence in the gateway. This blocks both fast
+   seeding and pipelined publication.
+2. **Publication is the next wall for P5:** 16 commits per 1,000 subjects, 2.6 to 2.8 s of summed commit wall, about 165 ms per
+   commit of 458 datoms. At 1,000 subjects/s that is 2.6 s of serial transactor time per second. Not yet profiled.
+3. **Gateway row pages:** 7.8 s of summed gateway time per 1,000 subjects (about 17 microseconds per row), on 2 cores shared
+   with 64 live readers.
+4. The seed rate still falls with size after the fix (263 to 145 commands/s over 400,000 commands). DX-B8's own measurement at
+   250,000 commits will say how flat plain commits are.
+5. Storage: 657.5 MB volume per 1,000 subjects, of which 335.5 MB is write-ahead log and 290.2 MB is Datomic data. See
+   `lab/research/SAM-decisions-2026-11-09.md` (Sam's storage question) and spike DX-S4.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-B8 (resumed 13:26 UTC) | Owns the whole package now: merge DX-B7, finish the head fix, all gates on both layouts, commit `DX-B8 fix:`; measure commits and pulls on a 50,000-commit scope, frozen and moving basis, without and with keep-awake; if still short, a revision map fed by the report queue so a current pull makes no Datomic call | `exp/DX-B8-head-lookup`, `.claude/worktrees/dx-b8` | `.../prompts/DX-B8-resume1.md` |
-| DX-H6 | P5 sweep stage budgets, pipeline, oracle outside the timed path, ordered seeding with commits in flight, 10,000-subject seed and sweep (four steps committed, measuring) | `exp/DX-H6-sweep-cost`, `.claude/worktrees/dx-h6` | `.../prompts/DX-H6.md` |
+| DX-S4 | Storage anatomy: what the 290 MB per 1,000 subjects is made of, Datomic variants, the same rows in XTDB, plain Postgres and compressed JSON, `footprint.sh` | `spike/DX-S4-storage`, `.claude/worktrees/dx-s4` | `.../prompts/DX-S4.md` |
+| XN-S2 (resumed 13:53 UTC) | Two XTDB nodes on Kafka and a shared object store, engine only, with a same-day single-node control | `spike/XN-S2`, `.claude/worktrees/xn-s2` | `.../prompts/XN-S2-resume2.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
