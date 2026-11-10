@@ -1,0 +1,3 @@
+# Derived table audit
+
+`analyze.mjs` is not a verdict producer. It copies receipt statuses and gate statuses, reads only retained completed-page metrics, distinguishes missing observations, and reports overlapping demand separately from wall time. A failed receipt remains failed; metrics from a failure remain an ACK-metric prefix, not global exact coverage. Its CPU estimates label worker thread costs separately from overlapping main-thread/live intervals and label the no-live preview's main/write-gateway calibration. A CPU projection is conditional arithmetic at the stated 440,000 input rows/s, never a fresh 100k result or acceptance PASS.
