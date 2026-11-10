@@ -2,9 +2,39 @@
 
 Diagnostic only. Existing gate statuses are copied; this analyzer grants no verdict.
 
+## tx2-dxh5-seed10000a
+
+N=10000; receipt status RUNNING; outer exit 1; sweep wall — s; — subjects/s; ACK-metric prefix null/10000. A RUNNING receipt with a nonzero outer exit is an interrupted attempt, not a live or successful trial.
+
+| Stage                          | Summed demand s | Demand s / sweep wall s | Worker thread CPU s | Input rows / CPU s | CPUs at 440k rows/s |
+| ------------------------------ | --------------: | ----------------------: | ------------------: | -----------------: | ------------------: |
+| Read and wire decode           |               — |                       — |                   — |                  — |                   — |
+| Build world and canonical sort |               — |                       — |                   — |                  — |                   — |
+| Evaluate kernel                |               — |                       — |                   — |                  — |                   — |
+| Index page rows                |               — |                       — |                   — |                  — |                   — |
+| Encode worker result           |               — |                       — |                   — |                  — |                   — |
+| Controller JSON decode         |               — |                       — |                   — |                  — |                   — |
+| Build outbox                   |               — |                       — |                   — |                  — |                   — |
+| Publish commit                 |               — |                       — |                   — |                  — |                   — |
+| Independent verification       |               — |                       — |                   — |                  — |                   — |
+
+Stage sums overlap across workers. Read includes wire/adaptor decode. Nested callback/publication timers are omitted. Main-thread interval CPU is not attributed exclusively while live work overlaps.
+
+No-live preview CPU calibration:
+
+| Stage    | CPU s | Input rows / CPU s | CPUs at 440k rows/s |
+| -------- | ----: | -----------------: | ------------------: |
+| read     |     — |                  — |                   — |
+| index    |     — |                  — |                   — |
+| decode   |     — |                  — |                   — |
+| evaluate |     — |                  — |                   — |
+| hash     |     — |                  — |                   — |
+
+Gate statuses: {}
+
 ## tx2-dxh5-seed1000b
 
-N=1000; receipt status G0-PASS; sweep wall — s; — subjects/s; ACK-metric prefix null/1000.
+N=1000; receipt status G0-PASS; outer exit 0; sweep wall — s; — subjects/s; ACK-metric prefix null/1000. A RUNNING receipt with a nonzero outer exit is an interrupted attempt, not a live or successful trial.
 
 | Stage                          | Summed demand s | Demand s / sweep wall s | Worker thread CPU s | Input rows / CPU s | CPUs at 440k rows/s |
 | ------------------------------ | --------------: | ----------------------: | ------------------: | -----------------: | ------------------: |
@@ -34,7 +64,7 @@ Gate statuses: {"G0":"PASS"}
 
 ## tx2-dxh5-w1a
 
-N=1000; receipt status RUNNING; sweep wall — s; — subjects/s; ACK-metric prefix null/1000.
+N=1000; receipt status RUNNING; outer exit 1; sweep wall — s; — subjects/s; ACK-metric prefix null/1000. A RUNNING receipt with a nonzero outer exit is an interrupted attempt, not a live or successful trial.
 
 | Stage                          | Summed demand s | Demand s / sweep wall s | Worker thread CPU s | Input rows / CPU s | CPUs at 440k rows/s |
 | ------------------------------ | --------------: | ----------------------: | ------------------: | -----------------: | ------------------: |
@@ -64,7 +94,7 @@ Gate statuses: {"G0":"PASS"}
 
 ## tx2-dxh5-w1b
 
-N=1000; receipt status PARTIAL; sweep wall 58.593 s; 17.067 subjects/s; ACK-metric prefix 1000/1000.
+N=1000; receipt status PARTIAL; outer exit 0; sweep wall 58.593 s; 17.067 subjects/s; ACK-metric prefix 1000/1000. A RUNNING receipt with a nonzero outer exit is an interrupted attempt, not a live or successful trial.
 
 | Stage                          | Summed demand s | Demand s / sweep wall s | Worker thread CPU s | Input rows / CPU s | CPUs at 440k rows/s |
 | ------------------------------ | --------------: | ----------------------: | ------------------: | -----------------: | ------------------: |
@@ -102,7 +132,7 @@ Gate statuses: {"G0":"PASS","G1":"PASS","G2":"PASS","G3":"PASS","G5":"PASS","G7"
 
 ## tx2-dxh5-w4a
 
-N=1000; receipt status RUNNING; sweep wall — s; — subjects/s; ACK-metric prefix null/1000.
+N=1000; receipt status RUNNING; outer exit 1; sweep wall — s; — subjects/s; ACK-metric prefix null/1000. A RUNNING receipt with a nonzero outer exit is an interrupted attempt, not a live or successful trial.
 
 | Stage                          | Summed demand s | Demand s / sweep wall s | Worker thread CPU s | Input rows / CPU s | CPUs at 440k rows/s |
 | ------------------------------ | --------------: | ----------------------: | ------------------: | -----------------: | ------------------: |
@@ -132,7 +162,7 @@ Gate statuses: {"G0":"PASS"}
 
 ## tx2-dxh5-w4b
 
-N=1000; receipt status PARTIAL; sweep wall 30.659 s; 32.617 subjects/s; ACK-metric prefix 1000/1000.
+N=1000; receipt status PARTIAL; outer exit 0; sweep wall 30.659 s; 32.617 subjects/s; ACK-metric prefix 1000/1000. A RUNNING receipt with a nonzero outer exit is an interrupted attempt, not a live or successful trial.
 
 | Stage                          | Summed demand s | Demand s / sweep wall s | Worker thread CPU s | Input rows / CPU s | CPUs at 440k rows/s |
 | ------------------------------ | --------------: | ----------------------: | ------------------: | -----------------: | ------------------: |
@@ -170,7 +200,7 @@ Gate statuses: {"G0":"PASS","G1":"PASS","G2":"PASS","G3":"PASS","G5":"PASS","G7"
 
 ## tx2-dxh5-w8a
 
-N=1000; receipt status RUNNING; sweep wall — s; — subjects/s; ACK-metric prefix null/1000.
+N=1000; receipt status RUNNING; outer exit 1; sweep wall — s; — subjects/s; ACK-metric prefix null/1000. A RUNNING receipt with a nonzero outer exit is an interrupted attempt, not a live or successful trial.
 
 | Stage                          | Summed demand s | Demand s / sweep wall s | Worker thread CPU s | Input rows / CPU s | CPUs at 440k rows/s |
 | ------------------------------ | --------------: | ----------------------: | ------------------: | -----------------: | ------------------: |
@@ -200,7 +230,7 @@ Gate statuses: {"G0":"PASS"}
 
 ## tx2-dxh5-w8b
 
-N=1000; receipt status PARTIAL; sweep wall 31.792 s; 31.455 subjects/s; ACK-metric prefix 1000/1000.
+N=1000; receipt status PARTIAL; outer exit 0; sweep wall 31.792 s; 31.455 subjects/s; ACK-metric prefix 1000/1000. A RUNNING receipt with a nonzero outer exit is an interrupted attempt, not a live or successful trial.
 
 | Stage                          | Summed demand s | Demand s / sweep wall s | Worker thread CPU s | Input rows / CPU s | CPUs at 440k rows/s |
 | ------------------------------ | --------------: | ----------------------: | ------------------: | -----------------: | ------------------: |

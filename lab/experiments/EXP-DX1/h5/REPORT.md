@@ -1,6 +1,6 @@
 # DX-H5: W0 activation on lean Datomic in the VM
 
-**Diagnostic, not P5 acceptance.** The 1,000-subject matrix completed with exact coverage and real work-item publication: 1 worker **58.593 s**, 4 workers **30.659 s**, 8 workers **31.792 s**. Four workers was fastest, but its writer p99 ratio **1.810** missed the 1.5 bound. All receipts remain `PARTIAL`, `acceptance:false`, with existing incomplete gates visible. The 10,000-subject attempt is running; its disposition will be appended before handoff. No 100k result is claimed.
+**Diagnostic, not P5 acceptance.** The 1,000-subject matrix completed with exact coverage and real work-item publication: 1 worker **58.593 s**, 4 workers **30.659 s**, 8 workers **31.792 s**. Four workers was fastest, but its writer p99 ratio **1.810** missed the 1.5 bound. All receipts remain `PARTIAL`, `acceptance:false`, with existing incomplete gates visible. **The 10,000-subject seed failed its bounded attempt; no 10k sweep ran.** No 100k result is claimed.
 
 Goals come from lab/SCOPE.md, NORTH-STAR.md and TARGETS.md §1.1; execution follows PROTOCOL.md §0b. No package or acceptance files were edited. Results require the separate reviewer's independent source-bound verification.
 
@@ -37,12 +37,12 @@ Restored scopes use live clock/fresh IDs for new writes: reopening with the dete
 
 All completed 1k configurations use page size 64, 64 uniform current-position live readers, identical frozen writer offers, a 60-second baseline, and a fresh clone of the sealed seed. Each is one trial. Eight workers was selected for 10k: it was fastest among the observed configurations whose read and writer ratios both met 1.5. The earlier four-worker waiting launcher was canceled before admission; its source and cancellation observation remain retained. No measurement result was discarded.
 
-| Subjects |    Workers | Sweep wall s | Subjects/s | ACKed pages | Exact coverage | Read p99 ratio | Writer p99 ratio |
-| -------: | ---------: | -----------: | ---------: | ----------: | -------------: | -------------: | ---------------: |
-|    1,000 |          1 |       58.593 |     17.067 |          16 |          1,000 |          1.056 |            1.425 |
-|    1,000 |          4 |       30.659 |     32.617 |          16 |          1,000 |          1.105 |        **1.810** |
-|    1,000 |          8 |       31.792 |     31.455 |          16 |          1,000 |          1.125 |            1.448 |
-|   10,000 | 8 selected |      pending |          — |           — |              — |              — |                — |
+| Subjects |    Workers |           Sweep wall s | Subjects/s | ACKed pages | Exact coverage | Read p99 ratio | Writer p99 ratio |
+| -------: | ---------: | ---------------------: | ---------: | ----------: | -------------: | -------------: | ---------------: |
+|    1,000 |          1 |                 58.593 |     17.067 |          16 |          1,000 |          1.056 |            1.425 |
+|    1,000 |          4 |                 30.659 |     32.617 |          16 |          1,000 |          1.105 |        **1.810** |
+|    1,000 |          8 |                 31.792 |     31.455 |          16 |          1,000 |          1.125 |            1.448 |
+|   10,000 | 8 selected | NOT-RUN: seed deadline |          — |           — |              — |              — |                — |
 
 For **each** completed 1k configuration: G0 PASS (fresh independent population and complete counts); G1 PASS (fresh O-DOMAIN fingerprint, no pre-capture trace); G2 PASS (independent reconciliation for all 1,000 subjects); G3 PASS (ten positive post-capture retroactive mutations and ten negative controls); G5 PASS (807 deliveries, independent per-frame publication fold); G7 PASS (all pages at activation position 42,776 / valid time 2026-11-04T12:00Z and exact epoch); G9 PASS (full actual stored-journal/count fold). G4 **PARTIAL**: exact coverage and completed-cursor resume pass, ten abrupt process-stop cycles absent. G6 **NOT-RUN**: separate reviewer integration needed. G8 has **no maintenance-overlap run**. No omission was promoted to PASS.
 
@@ -115,7 +115,7 @@ Every reported number used the requested placement: PG CPU 0 / 2 GiB, shared_buf
 
 Docker used only the fixed triplex2 socket, own `tx2-dxh5-*` names, local images, no downloads, no published gateway ports or colima commands. No shared residents/forbidden ports were touched. Offline frozen pnpm used the specified store. Local Node22.23.2 and Python3.13 ran in the VM. Missing host outputs were restored from local Turbo cache. Exact images, source/build hashes and stack manifests are retained per attempt.
 
-Each wrapper acquires mkdir measurement lock, retries5s, writes owner, and holds it throughout startup/seed/sweep/seal/cleanup. It releases between runs; only sealed volumes may remain without a lease. Retention is bounded30GB. Original retries reserve3minutes cleanup inside45; counts wrapper starts cleanup43m30s with90seconds reserve and signals Java inside owned container PID namespaces before stopping them. Only cleanly stopped Postgres can be sealed. Overall elapsed time exceeded the approximate four-hour timebox to finish bounded retries and attempt10k; no individual engine lease is authorized beyond45minutes.
+Each wrapper acquires mkdir measurement lock, retries5s, writes owner, and holds it throughout startup/seed/sweep/seal/cleanup. It releases between runs; only sealed volumes may remain without a lease. Retention is bounded30GB. Original retries schedule cleanup at42minutes; counts wrapper schedules it at43m30s and signals Java inside owned container PID namespaces before stopping them. During the active long seed I identified that Bash can defer its TERM trap while waiting on foreground Docker. An independent `deadline.mjs` guard was therefore started while this attempt owned the lease; it stops this exact driver at43minutes, reserves two minutes for cleanup and has a fixed-role owned-container fallback before45. Future long runs must use this guard; parent-shell TERM alone is not hard enforcement. Only cleanly stopped Postgres can be sealed. Overall elapsed time exceeded the approximate four-hour timebox to finish bounded retries and attempt10k; no individual engine lease is authorized beyond45minutes.
 
 ```sh
 pnpm install --offline --frozen-lockfile --store-dir /Users/sam/projects/triplex-db-2/.pnpm-store
@@ -130,6 +130,8 @@ bash lab/experiments/EXP-DX1/h5/sweep-after-cache-gate.sh 8 tx2-dxh5-w8b
 node lab/bin/heavy.mjs --label DX-H5-history1 -- bash lab/experiments/EXP-DX1/h5/attempt-counts.sh history tx2-dxh5-history1
 node lab/bin/heavy.mjs --label DX-H5-seed10000a -- bash lab/experiments/EXP-DX1/h5/attempt-counts.sh seed tx2-dxh5-seed10000a --rung 10000 --scope dxh5-w0-10000-v1 --g0-only
 bash lab/experiments/EXP-DX1/h5/sweep10000-bounded.sh
+# Started separately only after this seed owned its measurement lease:
+node lab/experiments/EXP-DX1/h5/deadline.mjs tx2-dxh5-seed10000a
 node lab/experiments/EXP-DX1/h5/analyze.mjs /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5
 node lab/experiments/EXP-DX1/h5/pages.mjs /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5
 ```
@@ -140,8 +142,18 @@ Ordinary per-entity history counts projected beyond the45-minute10k lease. The h
 
 ## Verification, audit and remaining gaps
 
-Focused W0/HTTP/journal/telemetry suite: **17 pass,0fail**; independent fingerprint telemetry test **1pass**; bounded-cache reference-repair test **1pass**. Targeted controller/h5 TypeScript checks passed; logs are durable. Broad bench typecheck hit pre-existing unrelated bench/optional-build errors; no full root check, pack check, package qualification,100k execution or independent acceptance review is claimed.
+Focused W0/HTTP/journal/telemetry suite: **17 pass,0fail** (including the independent fingerprint telemetry test); bounded-cache reference-repair test **1pass**; deadline ownership-refusal tests **2pass**. These are20 distinct focused tests; no gate completion is inferred from unit tests. Targeted controller/h5 TypeScript checks passed; logs are durable. Broad bench typecheck hit pre-existing unrelated bench/optional-build errors; no full root check, pack check, package qualification,100k execution or independent acceptance review is claimed.
 
 Every verdict/receipt producer's content/freshness/binding check is listed in [AUDIT.md](AUDIT.md), [CACHE-AUDIT.md](CACHE-AUDIT.md), [BULK-COUNTS-AUDIT.md](BULK-COUNTS-AUDIT.md), [PROBE-AUDIT.md](PROBE-AUDIT.md), [SWEEP-LAUNCH-AUDIT.md](SWEEP-LAUNCH-AUDIT.md), [FINGERPRINT-TEST-AUDIT.md](FINGERPRINT-TEST-AUDIT.md), [HTTP-COUNT-AUDIT.md](HTTP-COUNT-AUDIT.md) and [ANALYSIS-AUDIT.md](ANALYSIS-AUDIT.md). Analysis grants no new verdict. Acceptance-pinned paths changed: **none** ([PIN-CHANGES.json](PIN-CHANGES.json)); contract untouched. First setup failures are retained in [FAILURES.md](FAILURES.md), and OOM attempts remain separate. Source captures preserve actual preimages and timestamps without retroactively anchoring earlier diagnostics.
 
-Evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5/`. Raw journals/world/oracle/cgroup/source files stay outside git. Final evidence index/SHA256SUMS will be committed after quiescence. Preserve the qualified1k volume until the final10k disposition states retention.
+Evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5/`. Raw journals/world/oracle/cgroup/source files stay outside git. [PACKAGE-REQUESTS.md](PACKAGE-REQUESTS.md) separates the measured seed slowdown, transaction-function head-lookup hypothesis and needed supported cache API from unimplemented proposals. Final evidence index and split SHA256SUMS bind the retained bytes; see [EVIDENCE.md](EVIDENCE.md). **Keep only `tx2-dxh5-seed-1000-pg-data`** (653,885,440 bytes at sealing). No10k volume was sealed. Final own-container/network inventories are empty; no H5 measurement lease remains.
+
+## Final 10k disposition and handoff
+
+`tx2-dxh5-seed10000a` failed without reaching full population, counts or G0. Its driver began2026-11-10T09:56:26.122Z. The independent guard stopped it at10:39:03.757Z (43m00.787s after the observed lease-file mtime). Outer exit1 and empty cleanup inventories were recorded at10:39:12Z; the guard observed lease release at10:39:13.024Z, about43m10s into the lease, below45minutes. The queued eight-worker launcher then exited1 on its seed-success assertion without creating any measurement containers. Its original four-worker predecessor had already been canceled before admission (exit143).
+
+The retained1,556,481,358-byte seed command log contains **293,761 complete captured commands/ACKs of434,768 required (67.6%)**, with dense captured positions/command IDs,3,019,998 captured assert operations and1,347 retract operations, no parse errors. These are client-log observations, **not an independently verified final store head or qualified partial population**. An in-flight command outcome after driver termination is unknown. The final rounded progress line was293,000commands at115.6commands/s; early20k-command intervals were about200–217/s and the tail was markedly slower. No complete10k seed time/rate, fingerprint, preview, sweep, per-page timings, exact10k coverage or live ratios can be reported. All10k activation gates are NOT-RUN. The1k-based100k arithmetic is consequently optimistic conditional scaling, not cross-scale validation.
+
+Two SIGQUIT JVM snapshots were collected inside the owned transactor's PID namespace; this diagnostic intervention is included in seed time and happened after all1k activation runs. Guest memory/I/O snapshots and the two-sample CPU attribution are in [PACKAGE-REQUESTS.md](PACKAGE-REQUESTS.md). The processor stack inside the stored function's scope-position EAVT lookup is a concrete investigation lead, not a verified cause or proposed accepted replacement. No package code was changed and no second10k seed was started beyond the approximately four-hour task budget.
+
+Step status: **1 partial** (1k qualified/sealed, concurrency probes complete,10k incomplete); **2 complete at1k** (fresh200-subject/two-cut equality and1/4/8 matrix); **3 complete at1k** (page/CPU/bytes/gateway/datom breakdown, no10k pages); **4 complete diagnostic1k windows** (ratios and pinned-mutation gates, existing traffic limitations retained); **5 NOT-RUN** because10k seed failed; **6 complete as1k-based conditional arithmetic/ranking**, with no100k execution. Full release acceptance remains unverified.
