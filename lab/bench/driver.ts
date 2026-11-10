@@ -33,7 +33,7 @@ import { openComposition, type CompositionHandle, type Receipt } from "./lib/com
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
-import { historyDepthsComplete, observeFinalHead } from "./lib/completion.ts";
+import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
 import { observeDatomicPublication } from "./lib/datomic-publication.ts";
 import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
@@ -1247,15 +1247,16 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const mutatedOk = s.mutatedAfterCapture.filter((subject: number) => rows.some((x) => x.r[R.subject] === subject && x.v.ok)).length;
     const pre = L("presweep"), during = L("sweep");
     const exact = pulled.size === s.subjects && rows.length === s.subjects;
+    const mutationsCommitted = mutationsAfterCapture(s.mutationPositions, s.mutatedAfterCapture.length, s.basis.position.offset);
     p5 = {
       status: "FAIL-CLOSED (evaluate and publish seams)",
-      sweep: { ...s, pulled: rows.length, distinctSubjects: pulled.size, exactCoverage: exact, correctAtBasis: rows.filter((x) => x.v.ok).length, violations: rows.filter((x) => !x.v.ok && x.v.kind !== "error").length, errors: rows.filter((x) => x.v.kind === "error").length, pull: h.summary(), pullsPerS: rate, fetchOnlyWallFor100kS: 100_000 / Math.max(rate, 1e-9), mutatedSubjectsAtBasis: mutatedOk },
+      sweep: { ...s, mutationsCommittedAfterCapture: mutationsCommitted, pulled: rows.length, distinctSubjects: pulled.size, exactCoverage: exact, correctAtBasis: rows.filter((x) => x.v.ok).length, violations: rows.filter((x) => !x.v.ok && x.v.kind !== "error").length, errors: rows.filter((x) => x.v.kind === "error").length, pull: h.summary(), pullsPerS: rate, fetchOnlyWallFor100kS: 100_000 / Math.max(rate, 1e-9), mutatedSubjectsAtBasis: mutatedOk },
       live: { presweep: pre ? { read: pre.read, commit: pre.writer.commit } : null, duringSweep: during ? { read: during.read, commit: during.writer.commit } : null },
       bars: [
         bar("NS-P5 sweep evaluates the release (W0) and publishes through the outbox", false, "= true", false, `${EVALUATE_SEAM.reason}; ${PUBLISH_SEAM.reason}`),
         bar("NS-P5 wall s for 100k subjects incl. evaluation and publication", null, "<= 100", false, `fetch-only diagnostic: ${(100_000 / Math.max(rate, 1e-9)).toFixed(0)} s extrapolated`),
         bar("NS-P5 exact coverage", exact, "= true", exact),
-        bar("NS-P5 post-capture mutations do not leak into the sweep", `${mutatedOk}/${s.mutatedAfterCapture.length}`, "all at basis", mutatedOk === s.mutatedAfterCapture.length),
+        bar("NS-P5 post-capture mutations do not leak into the sweep", `${mutatedOk}/${s.mutatedAfterCapture.length}`, "all at basis", mutatedOk === s.mutatedAfterCapture.length && mutationsCommitted, `requires committed positions past capture; observed: ${JSON.stringify(s.mutationPositions ?? null)}`),
         bar("NS-P5 live read p99 during sweep / presweep", ratio(during?.read.p99Ms, pre?.read.p99Ms), "<= 1.5", ratio(during?.read.p99Ms, pre?.read.p99Ms) !== null ? ratio(during?.read.p99Ms, pre?.read.p99Ms)! <= 1.5 : null),
         bar("NS-P5 writer commit p99 during sweep / presweep", ratio(during?.writer.commit.p99Ms, pre?.writer.commit.p99Ms), "<= 1.5", ratio(during?.writer.commit.p99Ms, pre?.writer.commit.p99Ms) !== null ? ratio(during?.writer.commit.p99Ms, pre?.writer.commit.p99Ms)! <= 1.5 : null),
         bar("NS-P5 throttled variant overlapping compaction", null, "run", false, s.throttledVariant.reason),

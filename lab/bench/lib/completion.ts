@@ -7,3 +7,8 @@ export async function observeFinalHead(read: () => Promise<number>, errors: stri
   try { const head = await read(); if (!Number.isSafeInteger(head) || head < 0) throw Error('invalid source head'); return head; }
   catch (error) { errors.push(`Final source position unavailable: ${String(error)}`); return null; }
 }
+// [DX-H3] Why: unchanged sweep worlds prove no mutation isolation if none of the mutations committed.
+// Rejected: passing the post-capture check from correct worlds with missing/failed mutation receipts.
+export function mutationsAfterCapture(positions: readonly unknown[] | undefined, expected: number, captured: number): boolean {
+  return expected > 0 && positions?.length === expected && positions.every(p => typeof p === 'number' && Number.isSafeInteger(p) && p > captured);
+}
