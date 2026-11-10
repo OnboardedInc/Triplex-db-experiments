@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { NativeCpuSampler } from "./lib/native-cpu.ts";
 import { httpCounts } from "./lib/http-counts.ts";
 import { readLatencyRun } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
@@ -81,7 +82,9 @@ const profile = opt("profile", "smoke") as Profile;
 if (!(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
 const rungSubjects = devSubjects ? Number(devSubjects) : RUNGS[rung]!;
 const output = path.resolve(opt("output") ?? "");
-if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--output must be under runs/");
+const nativeRunDir = process.env["TX2_NATIVE_RUN_DIR"];
+if (nativeRunDir && !/^\/Users\/sam\/Claude\/Projects\/triplex-db-2\/native\/runs\/tx2-dxn1-[a-z0-9-]+\/driver$/.test(nativeRunDir)) throw Error("invalid native run directory");
+if (!output.startsWith(path.join(REPO, "runs") + path.sep) && !(nativeRunDir && path.dirname(output) === nativeRunDir)) throw new Error("--output must be under runs/");
 const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
@@ -167,12 +170,14 @@ const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\
 
 const slots = JSON.parse(fs.readFileSync(path.join(REPO, "lab/config/slots.json"), "utf8"));
 const cgroupPaths = Object.fromEntries((process.env["TX2_ENGINE_CGROUPS"] ?? "").split(",").filter(Boolean).map(s => { const i = s.indexOf("="); if (i < 1) throw Error("invalid TX2_ENGINE_CGROUPS"); return [s.slice(0, i), s.slice(i + 1)]; }));
-const container = process.env["TX2_ENGINE_CONTAINER"] ?? (Object.keys(cgroupPaths).join(",") || null);
+const nativePids: Record<string, number> = JSON.parse(process.env["TX2_NATIVE_PIDS"] ?? "{}");
+const nativeCpu = Object.keys(nativePids).length ? new NativeCpuSampler(nativePids) : null;
+const container = (nativeCpu ? Object.keys(nativePids).join(",") : null) ?? process.env["TX2_ENGINE_CONTAINER"] ?? (Object.keys(cgroupPaths).join(",") || null);
 const containers = lane === "datomic" ? container?.split(",").map(s => s.trim()).filter(Boolean) ?? [] : container ? [container] : [];
 const workerHttpCounts: any[] = [];
 
 const cgroupPrevious = new Map<string, { wall: number; usage: number }>();
-const engineCpus = Number(process.env["TX2_ENGINE_CPUS"] ?? "0") || null;
+const engineCpus = nativeCpu ? null : Number(process.env["TX2_ENGINE_CPUS"] ?? "0") || null;
 const engineSamples: { t: number; cpuPercent: number; memBytes: number; containers: Record<string, { cpuPercent: number; memBytes: number }> }[] = [];
 const watermarkSamples: { t: number; marks: Record<string, number> }[] = [];
 let samplersOn = true;
@@ -186,6 +191,12 @@ const parseBytes = (text: string) => {
 async function engineSampler() {
   while (samplersOn && container) {
     const t = now();
+    if (nativeCpu) {
+      const byContainer = await nativeCpu.sample();
+      engineSamples.push({ t, cpuPercent: Object.values(byContainer).reduce((s, r) => s + r.cpuPercent, 0), memBytes: Object.values(byContainer).reduce((s, r) => s + r.memBytes, 0), containers: byContainer });
+      await sleep(1000);
+      continue;
+    }
     if (Object.keys(cgroupPaths).length) {
       // [DX-H3] Why: cpu.stat measures each engine without a Docker CLI or socket in the client. Rejected: host polling (SSH apparatus).
       const byContainer: Record<string, { cpuPercent: number; memBytes: number }> = {};
@@ -1267,12 +1278,12 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const p4 = {
     weightedMix: mix ? { read: mix.read, buckets: mix.buckets } : null,
     history: { eligibleForDepthComparison: historyEligible, invalid: historyInvalid, indexing: ctx.phases.filter(p => p.historyIndex).map(p => p.historyIndex), ratios: { mean: ratio(h10?.read.meanMs, h1?.read.meanMs), p50: ratio(h10?.read.p50Ms, h1?.read.p50Ms), p99: ratio(h10?.read.p99Ms, h1?.read.p99Ms) }, sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
-    throughput: { bestLevel: best?.phase ?? null, goodputPerS: best?.goodputPerS ?? null, engineCpuQuotaCores: engineCpus, pullsPerSPerQuotaCore: quotaRate, engineCpuPercentMean: best?.engine.cpuPercentMean ?? null, pullsPerSPerUsedCore: best?.engine.cpuPercentMean ? best.goodputPerS / (best.engine.cpuPercentMean / 100) : null, hostClientCpu: cpu, hostBrokerCpu: "none in this composition (no broker process)" },
+    throughput: { cpuDenominator: nativeCpu ? "used native process CPU cores (ps time deltas, 1 s; includes live descendants; exited workers may be missed); no quota" : "engine quota cores", bestLevel: best?.phase ?? null, goodputPerS: best?.goodputPerS ?? null, engineCpuQuotaCores: engineCpus, pullsPerSPerQuotaCore: quotaRate, engineCpuPercentMean: best?.engine.cpuPercentMean ?? null, pullsPerSPerUsedCore: best?.engine.cpuPercentMean ? best.goodputPerS / (best.engine.cpuPercentMean / 100) : null, hostClientCpu: cpu, hostBrokerCpu: "none in this composition (no broker process)" },
     bars: [
       bar("NS-P4 weighted-mix pull p50 ms", mix?.read.p50Ms ?? null, "<= 5", mix?.read.p50Ms != null ? mix.read.p50Ms <= 5 : null),
       bar("NS-P4 weighted-mix pull p99 ms", mix?.read.p99Ms ?? null, "<= 25", mix?.read.p99Ms != null ? mix.read.p99Ms <= 25 : null),
       bar("NS-P4 largest bucket p99 ms (provisional)", largest?.p99Ms ?? null, "<= 50", largest?.p99Ms != null ? largest.p99Ms <= 50 : null),
-      bar("NS-P4 pulls/s per engine core (CPU quota)", quotaRate, ">= 1100", quotaRate !== null ? quotaRate >= 1100 : null),
+      ...(nativeCpu ? [] : [bar("NS-P4 pulls/s per engine core (CPU quota)", quotaRate, ">= 1100", quotaRate !== null ? quotaRate >= 1100 : null)]),
       bar("NS-P4 history flatness p99 depth10 / depth1", ratio(h10?.read.p99Ms, h1?.read.p99Ms), "<= 1.1", ratio(h10?.read.p99Ms, h1?.read.p99Ms) !== null ? historyEligible && ratio(h10?.read.p99Ms, h1?.read.p99Ms)! <= 1.1 : null, "requires complete growth to depths 3 and 10 on the full sample"),
       bar("NS-P4 history flatness bytes read depth10 / depth1", null, "<= 1.1", null, "engine bytes read are not measured (seam); client-observed bytes are reported"),
     ],
