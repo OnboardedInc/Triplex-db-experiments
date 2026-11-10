@@ -9,7 +9,7 @@
 (defn prepare! [file]
   (ensure! (not (.exists (java.io.File. file))) "Refuse existing live evidence")
   (let [scope (str "[\"triplex-scope-v1\",\"test\",\"df01\",\"" (UUID/randomUUID) "\",0]")
-        created (main/create-scope! main/uri-template scope) db (:db created)
+        created (main/create-scope! main/uri-template scope "legacy") db (:db created)
         conn (main/connection (main/db-uri db))
         report @(d/transact conn [{:db/id "datomic.tx" :triplex.tx/position 1 :triplex.tx/id "df01-tx"
                                   :triplex.tx/operation-id "df01-op" :triplex.tx/recorded-at 7000.0}

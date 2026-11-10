@@ -1,5 +1,5 @@
 (ns triplex.gateway.feed
-  (:require [datomic.api :as d] [triplex.gateway.codec :as codec])
+  (:require [datomic.api :as d] [triplex.gateway.admission :as admission] [triplex.gateway.codec :as codec])
   (:import [java.util.concurrent TimeUnit]))
 
 ;; [EXP-DF01] Why: R29/R41 E6 uses reports only as wakeups, always replaying the durable log.
@@ -95,9 +95,10 @@
     (let [watch (when (pos? wait-ms) (subscribe! conn))]
       (try
         (let [read-page (fn [start n]
+                          (admission/execute admission/journals (fn []
                           (let [db (d/db conn) end (inc (d/basis-t db))]
                             (if (>= start end) []
-                              (mapv #(project db %) (take n (d/tx-range (d/log conn) start end))))))
+                              (mapv #(project db %) (take n (d/tx-range (d/log conn) start end))))))))
               rows (poll-log from limit wait-ms read-page
                      (fn []
                        (let [signal (when watch @(:signal watch))]

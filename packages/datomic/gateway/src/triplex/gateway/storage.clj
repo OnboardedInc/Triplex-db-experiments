@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -365,8 +365,9 @@
                (and (some? (get basis "recordedAt")) (> (:retracted_at r) (get basis "recordedAt")))))
     (assoc r :retracted_at nil :retracted_position nil :retract_tx_id nil) r))
 (defn legacy-read-rows [name current input]
+  (let [db (read-db name current input)]
+    (admission/execute admission/reads (fn []
   (let [basis (get input "basis") history (get input "history")
-        db (read-db name current input)
         route (get input "route" "history")
         _ (when-not (#{"history" "live"} route) (codec/invalid "Unknown read route"))
         attribute (if (= route "live") :f/live :f/subject)
@@ -398,7 +399,7 @@
       (stats/bump! [:scanPatterns scan-key :calls] 1)
       (stats/bump! [:scanPatterns scan-key :datoms] @visited)
       (swap! stats/counts update-in [:scanPatterns scan-key :maxDatoms] (fnil max 0) @visited))
-    result))
+    result)))))
 
 ;; [DX-B5-L2] Why: retain one visibility/masking rule for both physical layouts.
 ;; Rejected: interpreting interior logical positions as physical transaction cuts.
@@ -413,6 +414,7 @@
             _ (assert-subject-route! db basis (if (= route "live") :f/live :f/subject))
             _ (when (and (= route "live") history) (unavailable! "Position-retired route cannot enumerate history"))
             _ (await-position db (get basis "recordedPosition") (get input "basisWaitMs") (fn [_] db))]
+        (admission/execute admission/reads (fn []
         {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                       (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
          :subjectAttribute (str (if (= route "live") :f/live :f/subject))
@@ -427,7 +429,7 @@
                                             [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]])))
                              ;; [DX-B5-L2] Why: an explicit imported row position cannot move its physical publication into an older snapshot.
                              ;; Rejected: filtering full head history only by row position (differs from legacy read-db).
-                             (lean/rows name (at-position db (get basis "recordedPosition")) input)))}))))
+                             (lean/rows name (at-position db (get basis "recordedPosition")) input)))}))))))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).

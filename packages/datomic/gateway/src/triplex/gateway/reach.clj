@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [datomic.api :as d])
+  (:require [datomic.api :as d] [triplex.gateway.admission :as admission])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap]))
 (set! *warn-on-reflection* false)
 
@@ -115,7 +115,7 @@
       (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
       (append-string! out (.next it))))
   (.append out \]))
-(defn response [name current input]
+(defn build-response [name current input]
   (try
     (let [[db position t] (select-db name current (get input "basis"))
           cfg (config name current) valid (double (get-in input ["basis" "validAt"]))
@@ -188,3 +188,6 @@
         (.append out "]}") (.toString out))))
     (catch clojure.lang.ExceptionInfo e
       (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))
+
+(defn response [name current input]
+  (admission/execute admission/reads #(build-response name current input)))
