@@ -1,0 +1,89 @@
+{
+  "base": "53fcf4f289b257a7c26a630a3c6b447ff926b516",
+  "files": [
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/admission.clj",
+      "oldSha256": null,
+      "newSha256": "b7b636da9307cd4c0a17acb5a30e7d2190b7ba4f2165db619141ff36041f21dc",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/commit.clj",
+      "oldSha256": "64e4bc9ec48e120fa6913c4d1fc07947ca15c4215479064714bf5b04cd288d89",
+      "newSha256": "de78f74d7fda190533af0a8423adc749e17bc68a5d4bf10760a64f94b2d3faa2",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/entity_cache.clj",
+      "oldSha256": null,
+      "newSha256": "0ff987216ef65ee85c398dbe6708dc5ba8345bab783a6403d603d2c58220ee97",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed.clj",
+      "oldSha256": "4a1e15d8150d78ca7b9a763652027ccd4c6014520ce9391dc8d7464557ce2630",
+      "newSha256": "6bd50d33f95802f0de0db942dbf901d6b9820e38cefc2786f7aeb1cddeff133b",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed_live.clj",
+      "oldSha256": "817fb0cba56df3ed60219e23abff49c8c6b18eb80099a0a4699a53f01f616954",
+      "newSha256": "3116fb316e4f7af8a1a237b0b3eef82190fd97517418f731c58e107080a342e6",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed_test.clj",
+      "oldSha256": "35508854ae2c5bd849d0a60dd44d10b03f7daa477cd8042a586cb51a62096e18",
+      "newSha256": "1b9baceaed3af1d46059cd834f5e7daec9139e4114452172daab06cc27d3f988",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/journal.clj",
+      "oldSha256": "c236749f3d740c22f13fbe4bc68c02e14841f561c24486c2c80be720daeaa084",
+      "newSha256": "df8f33cb220fcc5e5815f8a2cfe6b1f6800ebb96458c0ba6e5e576d94a804b63",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+      "oldSha256": "6cbe793ef16a0a132ab1227fd7a0dec8b58e1f7f37ade3ed99f8b9610fe5251b",
+      "newSha256": "bf884fcbd9e2b255de2a56a9eddcbbed03e2fdc425e9087aec22f9e2cbcd60b8",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/reach.clj",
+      "oldSha256": "2f1fd8c50e28f14da60f985997729aaab909f3fe50d3f4229394526f223f8137",
+      "newSha256": "32ef73bb6a1a0c923993768dfb75d30ff75f5c4fd10c1492d71124cc8b4e3006",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/schema.clj",
+      "oldSha256": "0c931d1d339df4dc13e722b4fbc55068d5964f3f844dc9b053637747af0d7e66",
+      "newSha256": "2116f76f2d85f3aeb6fa4ba15533d5dd560754ffc448117eff1a5644c38817af",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/scope.clj",
+      "oldSha256": "d0e5bd26d578fd60375b522a01c39e174ea4f1e438f7fcb32e95c8615697be12",
+      "newSha256": "f38c21761787db3d9ac6267a645cbc7dccd47fd06987f02508dc4f86367b2a45",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/selftest.clj",
+      "oldSha256": "5060884fd018d0e2d5e585d9d89b0f9d3d160dccf426122a447973c6b4720c34",
+      "newSha256": "ea057f74074a87d8b9af7ee76adafafa9ccd7b7f53472f8530769e974143923a",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/storage.clj",
+      "oldSha256": "8b8230c25d94c6d595171f1089e78a88d2496cabf064daba181064fb966c43eb",
+      "newSha256": "cc688384b341d1b56b0c7c8f0af9a3a075de7066f32a3e4c45717c65139ce1f0",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/datomic/test/head-version.test.ts",
+      "oldSha256": null,
+      "newSha256": "0a02611908ca55ea79e9733189402e2bc3f12a8a17cb2fd4c314dec713bcd4fa",
+      "acceptanceReferences": []
+    }
+  ]
+}
