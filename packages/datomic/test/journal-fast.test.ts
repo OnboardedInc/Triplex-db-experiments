@@ -172,6 +172,27 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("indexed journals", 
       c.close();
     }
   });
+  // [DX-B6-5] Why: a satisfied record time cannot bypass a still-future position.
+  // Rejected: checking only the record-time watermark on journal requests with both pins.
+  it("waits for position before applying the journal record-time barrier", async () => {
+    const c = client(),
+      s = await setup(c);
+    try {
+      const receipt = await s.fast.runPromise(s.t.transact([op(1)]));
+      const db = (await c.create(s.scope)).db;
+      await expect(
+        c.request("POST", `/v2/db/${db}/transactions`, {
+          after: 0,
+          limit: 1,
+          basis: { recordedAt: receipt.instant, recordedPosition: receipt.position + 1 },
+          basisWaitMs: 1,
+        }),
+      ).rejects.toMatchObject({ code: "BasisNotAvailable" });
+    } finally {
+      await s.close();
+      c.close();
+    }
+  });
   it("keeps position feeds and command lookups exact after timestamp regression", async () => {
     const c = client(),
       s = await setup(c);

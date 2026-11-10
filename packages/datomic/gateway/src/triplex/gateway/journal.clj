@@ -20,7 +20,9 @@
           _ (when-not (and (integer? limit) (<= 1 limit 1000) (integer? wait-ms) (<= 0 wait-ms 30000))
               (throw (ex-info "Invalid journal page bounds" {:status 400})))
           deadline (+ (System/nanoTime) (* wait-ms 1000000))
-          db (loop [db (storage/await-record-time name conn (d/db conn) input)]
+          db (loop [db (storage/await-record-time name conn
+                    (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
+                      (get input "basisWaitMs") (fn [_] (d/db conn))) input)]
                ;; [DX-B6-5] Why: this index is ordered by logical position, not by the physical commit's record-time cut.
                ;; Rejected: declining exact position feeds after multi-instant nested commits or raw timestamp regressions.
                (supported! db name false)
