@@ -123,10 +123,11 @@ try:
     else:
         node('tx2-xns2-write','0,1','tx2-xns2-live-control','local.yaml');ready('tx2-xns2-write')
     cgroups=cpugroups();bind()
+    if profile=='two' and STAGE!='topology':execute('barrier.mjs',timeout=60)
     # Stage-specific commands are prepared before admission and copied into the source manifest.
     import runpy
     stage_scope={'execute':execute,'keeper':keeper,'docker':docker,'ready':ready,'driver':driver,'profile':profile,'bind':bind,'out':out,'STAGE':STAGE,'PHASE':STAGE+'-'+attempt}
-    exec((BASE/'stages.py').read_text(),stage_scope)
+    exec((out/'sources'/'stages.py').read_text(),stage_scope)
     save('completed.json',{'stage':STAGE,'finishedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'elapsedSeconds':time.time()-started})
 except BaseException as e:
     save('failure.json',{'type':type(e).__name__,'message':str(e),'at':datetime.datetime.now(datetime.timezone.utc).isoformat()})

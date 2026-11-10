@@ -27,6 +27,7 @@ elif STAGE=='topology':
     execute('proof.mjs','await-seed',timeout=45)
     execute('proof.mjs','before',timeout=100)
     docker('stop','tx2-xns2-read',timeout=20)
+    (out/'read-stopped-inspect.json').write_text(docker('inspect','tx2-xns2-read').stdout)
     execute('proof.mjs','stopped',timeout=30)
     docker('start','tx2-xns2-read');ready('tx2-xns2-read')
     execute('proof.mjs','restarted',timeout=45);bind()

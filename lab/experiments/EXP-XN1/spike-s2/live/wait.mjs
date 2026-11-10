@@ -5,7 +5,7 @@ const w=await Wire.connect(url),r=await Wire.connect(readUrl),scope='wait-'+Date
 try{await measured('wait-mechanism',async()=>{const samples=[];let prior;
  for(let i=0;i<500;i++){
   await w.batch([{sql:'BEGIN READ WRITE'},{sql:'INSERT INTO xn_wait (_id,value) VALUES ($1,$2)',params:[text(scope),text(String(i))]},{sql:'COMMIT SYNC'}]);const ack=performance.now();
-  const token=Object.values((await w.query('SHOW AWAIT_TOKEN'))[0])[0],snapshot=Object.values((await w.query('SHOW SNAPSHOT_TOKEN'))[0])[0],clock=(await w.query('SELECT CURRENT_TIMESTAMP AS clock'))[0].clock,t=performance.now();
+  const token=(await w.query('SHOW LATEST_SUBMITTED_TX'))[0].await_token,snapshot=Object.values((await w.query('SHOW SNAPSHOT_TOKEN'))[0])[0],clock=(await w.query('SELECT CURRENT_TIMESTAMP AS clock'))[0].clock,t=performance.now();
   const rows=(await r.batch([{sql:`BEGIN READ ONLY WITH (AWAIT_TOKEN='${token}', SNAPSHOT_TOKEN='${snapshot}', CLOCK_TIME=TIMESTAMP '${clock}')`},{sql:'SELECT value FROM xn_wait WHERE _id=$1',params:[text(scope)]},{sql:'COMMIT'}]))[1].rows;
   if(rows.length!==1||rows[0].value!==String(i))throw Error('fresh wait content mismatch');
   samples.push({i,awaitAndPullMs:performance.now()-t,ackToObservedMs:performance.now()-ack,token,snapshot,clock});

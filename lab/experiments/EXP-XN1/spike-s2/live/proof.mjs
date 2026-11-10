@@ -4,7 +4,7 @@ import {Wire,text} from './wire.mjs';
 import {url,readUrl,save,dir} from './common.mjs';
 import {s3} from './s3.mjs';
 const action=process.argv[2],w=await Wire.connect(url);
-const write=async(id,value)=>{await w.batch([{sql:'BEGIN READ WRITE'},{sql:'INSERT INTO xn_probe (_id,value) VALUES ($1,$2)',params:[text(id),text(value)]},{sql:'COMMIT SYNC'}]);const token=Object.values((await w.query('SHOW AWAIT_TOKEN'))[0])[0];const snapshot=Object.values((await w.query('SHOW SNAPSHOT_TOKEN'))[0])[0];const clock=(await w.query('SELECT CURRENT_TIMESTAMP AS clock'))[0].clock;return {id,value,token,snapshot,clock}};
+const write=async(id,value)=>{await w.batch([{sql:'BEGIN READ WRITE'},{sql:'INSERT INTO xn_probe (_id,value) VALUES ($1,$2)',params:[text(id),text(value)]},{sql:'COMMIT SYNC'}]);const token=(await w.query('SHOW LATEST_SUBMITTED_TX'))[0].await_token;const snapshot=Object.values((await w.query('SHOW SNAPSHOT_TOKEN'))[0])[0];const clock=(await w.query('SELECT CURRENT_TIMESTAMP AS clock'))[0].clock;return {id,value,token,snapshot,clock}};
 const pull=async(r,p,pin=false)=>{
  const begin=`BEGIN READ ONLY WITH (AWAIT_TOKEN='${p.token}'${pin?`, SNAPSHOT_TOKEN='${p.snapshot}', CLOCK_TIME=TIMESTAMP '${p.clock}'`:''})`;
  const rows=(await r.batch([{sql:begin},{sql:'SELECT value FROM xn_probe WHERE _id=$1',params:[text(p.id)]},{sql:'COMMIT'}]))[1].rows;
@@ -17,7 +17,8 @@ try{
   const bucket=JSON.parse(fs.readFileSync(new URL('./credentials.json',import.meta.url))).bucket;
   const listing=await s3('GET',`/${bucket}`);if(listing.status!==200||!listing.body.includes('<Key>'))throw Error('no remote objects after block');save('remote-storage',{status:res.status,body,listing});
  }else if(action==='stopped'){
-  const old=JSON.parse(fs.readFileSync(`${dir}/topology-before.json`)).p;const p=await write(old.id,'while-reader-stopped');save('topology-stopped',{old,p});
+  let unavailable=false;try{const r=await Wire.connect(readUrl,{idleTimeoutMs:3000});r.close()}catch(e){unavailable=true}if(!unavailable)throw Error('read node still accepts connections while stopped');
+  const old=JSON.parse(fs.readFileSync(`${dir}/topology-before.json`)).p;const p=await write(old.id,'while-reader-stopped');save('topology-stopped',{old,p,readEndpointUnavailable:unavailable});
  }else if(action==='restarted'){
   const {old,p}=JSON.parse(fs.readFileSync(`${dir}/topology-stopped.json`));const r=await Wire.connect(readUrl);try{save('topology-restarted',{current:await pull(r,p),past:await pull(r,old,true),old,p});}finally{r.close()}
  }else if(action==='await-seed'){
