@@ -6,6 +6,7 @@
  */
 import { createRequire } from "node:module";
 import path from "node:path";
+import { inspect } from "node:util";
 import type { CompositionHandle } from "./composition.ts";
 import { hash2 } from "./rng.ts";
 import { accountOf, subjectOf } from "./world.ts";
@@ -243,7 +244,7 @@ export class FeedConsumer {
         })]) : await pending;
       } catch (error) {
         this.counts.pollErrors++;
-        if (this.counts.pollErrors <= 3 || this.counts.pollErrors % 10 === 0) this.log(`feed: poll error ${this.counts.pollErrors} at checkpoint ${this.checkpoint}: ${String(error)}`);
+        if (this.counts.pollErrors <= 3 || this.counts.pollErrors % 10 === 0) this.log(`feed: poll error ${this.counts.pollErrors} at checkpoint ${this.checkpoint}: ${inspect(error, { depth: 5, breakLength: Infinity }).slice(0, 6000)}`);
         if (error === timeoutError) throw error;
         // [DX-H3] Why: repeated failed calls can each finish before the per-call deadline yet never deliver a page.
         // Rejected: retrying forever and hiding the underlying source error from the final report.

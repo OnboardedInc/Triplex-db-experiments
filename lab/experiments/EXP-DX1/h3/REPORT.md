@@ -4,7 +4,9 @@ North star: measure P1–P5 under `lab/SCOPE.md`, `lab/NORTH-STAR.md`, and `lab/
 
 ## Current status
 
-Steps 1–4 implemented. Functional attempts `tx2-dxh3-f3` and `tx2-dxh3-f5` reached DONE through all 17 phases. Medium `m1` was stopped before its 15-minute lease expired: all phases finished, but finalization was stuck at feed checkpoint 405. Its raw evidence and empty cleanup inventories are retained. A tested source-poll deadline now fails a stalled poll rather than hanging final reporting. Medium `tx2-dxh3-m4` is queued with the complete oracle-input fix; real size remains pending. This report will be completed after those attempts.
+Steps 1–4 implemented. Functional attempts f3 and f5 reached DONE through all 17 phases. The final medium attempt `tx2-dxh3-m5` produced a complete report with 17 phases and all 48 bars, status ERROR because its feed repeatedly failed at checkpoint 488 of 3013. O-REPLAY passes: 24 sampled worlds, 1804 entity queries, zero mismatches, receipt consistency PASS. The client was not saturated by the driver rule. There were 85 model violations and 94 read errors among 419965 reads; none is treated as goodput. The complete medium tables are in [MEDIUM-TABLES.md](MEDIUM-TABLES.md). Real size remains pending.
+
+The seven medium P3 bar predicates marked MET do not establish P3: 2525 positions were unreached and the run is explicitly invalid. No promotion is claimed. All medium resources were removed before its lease was released.
 
 ## Implementation
 
@@ -82,6 +84,9 @@ The measurement configuration pins Postgres to CPU 0, transactor 0/1, write gate
 - The oracle input fix records seed/trace/history commands for the union of read-sample and history subjects, including late growth receipts. `buildCase` now rejects any retained retraction without a retained parent assertion. Its missing-parent regression passes. No oracle check, command operation, receipt, or sampled answer was removed to obtain a result. Medium and real-size native validation of this fix are pending.
 - Queued medium names `m2` and `m3` were cancelled before owning a lock or creating any Docker resource, so replacements could bind the finalized timeout and oracle-input correction. Their preflight files remain.
 
+- `m4` finished its phases but never finalized because each failed source call completed before its individual deadline and was retried forever. It was stopped and cleaned up within its lease. A regression now bounds consecutive failed calls as well as individual stalls, records poll-error counts and retains the first errors. The medium retry m5 produced the first complete medium report and an independent O-REPLAY PASS after fixing the input ancestry.
+- Real-size logging additionally retains nested error causes (bounded to 6000 characters); its cause-retention regression passed 4/4 feed tests. Medium retains only the generic source ReadError, so its underlying transport cause remains unknown.
+
 ## Remaining work
 
-Medium and real-size tables, final evidence manifest, final cleanup readbacks, and concrete blocker line references are pending execution. This is an interim status, not completion.
+Real-size execution/tables, final evidence manifest, final cleanup readbacks, and concrete blocker line references remain pending. This is an interim status, not completion.

@@ -14,9 +14,10 @@ rows=[]
 for name,priority in p.items():
  for b in priority.get('bars',[]):
   delta=''
-  m=re.fullmatch(r'(<=|>=) ([\d.]+)',b['bar'])
+  m=re.match(r'(<=|>=|=) ([\d.]+)',b['bar'])
   if b['pass'] is False and m and isinstance(b['value'],(float,int)):
-   target=float(m[2]);delta=f'{abs(b["value"]-target):.3f} '+('above' if m[1]=='<=' else 'below')+' threshold'
+   target=float(m[2]);distance=(b['value']-target) if m[1]=='<=' else (target-b['value']) if m[1]=='>=' else abs(b['value']-target)
+   delta=(f'{distance:.3f} '+('above' if m[1]=='<=' else 'below' if m[1]=='>=' else 'from')+' threshold') if distance>0 else 'qualification missing; numeric threshold met'
   rows.append([name,b['id'],j(b['value']),b['bar'],'MET' if b['pass'] is True else 'MISS' if b['pass'] is False else 'UNVERIFIED',delta,b.get('note','')])
 table(['Priority','Bar','Observed','Required','Driver verdict','Miss amount','Qualification'],rows)
 print('## Writer pending at every phase boundary\n')
@@ -36,6 +37,15 @@ table(['History / throughput field','Observed'],[[k,j(v)] for k,v in p.get('P4',
 print('## Three slowest measured read phases\n')
 slow=sorted([ph for ph in r.get('phases',[]) if ph.get('stats') and ph['stats']['read'].get('p99Ms') is not None],key=lambda ph:ph['stats']['read']['p99Ms'],reverse=True)[:3]
 table(['Phase','Read p99 ms','Engine CPU mean % by container','Client signals'],[[ph['name'],ph['stats']['read']['p99Ms'],j(ph['stats']['engine']['containers']),j(ph['stats']['client'])] for ph in slow])
+print('## Three longest phases by elapsed wall time\n')
+longest=sorted([ph for ph in r.get('phases',[]) if ph.get('end')],key=lambda ph:ph['end']-ph['start'],reverse=True)[:3]
+longrows=[]
+for ph in longest:
+ samples=[x for x in r.get('engineSamples',[]) if ph['start']<=x['t']<ph['end']]
+ names=sorted({name for x in samples for name in x['containers']})
+ means={name:sum(x['containers'][name]['cpuPercent'] for x in samples if name in x['containers'])/sum(name in x['containers'] for x in samples) for name in names}
+ longrows.append([ph['name'],(ph['end']-ph['start'])/1000,len(samples),j(means)])
+table(['Phase','Elapsed s','Cgroup samples','Per-container mean CPU %'],longrows)
 print('CPU describes concurrent measured activity only; no causal attribution is inferred. Raw gateway/transactor logs are retained as `gw-w.log`, `gw-r.log`, `tx.log`.\n')
 print('## Counters, feed, fetch-only sweep, oracle and invalidity\n')
 for name,value in [('P2 duplicates',p.get('P2',{}).get('duplicates')),('P2 lost ACK',p.get('P2',{}).get('lostAck')),('P2 accounting',p.get('P2',{}).get('accounting')),('P2 progress',p.get('P2',{}).get('progress')),('P3',{k:v for k,v in p.get('P3',{}).items() if k!='bars'}),('P5',{k:v for k,v in p.get('P5',{}).items() if k!='bars'}),('correctness',r.get('correctness')),('oracle',r.get('oracle')),('client',r.get('client')),('invalidReasons',r.get('invalidReasons')),('writer',r.get('writer'))]:

@@ -121,7 +121,7 @@ test("repeated source failures retain their error and fail finalization without 
     open: async () =>
       ({
         feedPage: async () => {
-          throw Error("source-read-failure");
+          throw new Error("source-read-failure", { cause: new Error("native-detail") });
         },
         close: async () => {
           closed = true;
@@ -137,6 +137,7 @@ test("repeated source failures retain their error and fail finalization without 
     assert.equal(feed.counts.durableWrites, 0);
     assert.ok(feed.counts.pollErrors >= 2);
     assert.ok(logs.some((l) => l.includes("source-read-failure")));
+    assert.ok(logs.some((l) => l.includes("native-detail")));
   } finally {
     feed.close();
     fs.rmSync(dir, { recursive: true });
