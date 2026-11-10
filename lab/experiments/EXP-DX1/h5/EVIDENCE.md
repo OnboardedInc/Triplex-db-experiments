@@ -29,7 +29,7 @@ Important raw paths:
 - Successful sweeps: `tx2-dxh5-w{1,4,8}b/driver/receipt.json`, `activation-pages.ndjson`, page oracle frames, actual stored journal, live traffic NDJSON and cgroups.
 - Seed: `tx2-dxh5-seed1000b/driver/{receipt.json,seed.ndjson}` and `seal.log`.
 - Seed concurrency: `tx2-dxh5-probe2/driver/probe.json` plus per-scope complete command/ACK logs.
-  -10k failure: `seed10000-final-prefix.json`, `seed10000-transactor-thread-{dump,dump-2,cpu}.json/log` (use actual filenames), guest pressure/stats, `tx2-dxh5-seed10000a/driver/seed.ndjson`, `deadline-guard.json`, original RUNNING receipt and nonzero outer exit.
+  - 10k failure: `seed10000-final-prefix.json`, `seed10000-transactor-thread-dump.log`, `seed10000-transactor-thread-dump-2.log`, `seed10000-transactor-thread-cpu.json`, guest pressure/stats, `tx2-dxh5-seed10000a/driver/seed.ndjson`, `deadline-guard.json`, original RUNNING receipt and nonzero outer exit.
 - `sweep10000-launch-exit.json` proves the queued launch refused after seed failure. `unadmitted-10k-selection.json` retains cancellation of its earlier four-worker predecessor.
 - `analysis.json`, `MEASUREMENTS.md`, `PAGES.md`, `cgroup-windows.json` are derived from retained bytes.
 - `source-types-final.json/log`, focused test logs and offline install/build logs retain validation; no root-suite or release acceptance claim.
