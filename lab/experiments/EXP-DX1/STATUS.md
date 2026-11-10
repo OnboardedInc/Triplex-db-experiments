@@ -433,11 +433,25 @@ start, the read node sees the writer's commits, survives a restart and catches u
 Measured: commits at 15/s with no readers p50 21.9 ms, p99 90.8 ms (bar 10 / 50). The loaded cases did not run (a 16-reader
 preparation stalled, then disk and time ran out). Kafka used 0.10 cores and 422 MiB. Lane X stays parked behind lane D.
 
+## Orchestrator's paired north-star run `tx2-dxh4-o1` (2026-11-10 17:13 to 17:28 UTC, merge ebc92d6f): NOT VALID as a verdict
+
+Tables `lab/experiments/EXP-DX1/h4/tx2-dxh4-o1-TABLES.md`; evidence `~/Claude/Projects/triplex-db-2/evidence/DX-H4/tx2-dxh4-o1-{zero,ladder}`.
+Correct on every read and the oracle passes, but every latency is far worse than DX-H4's `s6` run on older code: L4 1,582 pulls/s
+(was 3,611), L256 509 pulls/s with read p99 2,556 ms, burst commit p99 12 s, and the **zero-reader arm's** writer p99 in the burst
+window is 3.2 s. During the run the Mac was in a video call (call apps 77% CPU, other processes 294% CPU, load 6 to 7) with 17.6 GB of
+swap in use (`lab/bin/host-quiet.sh` said not quiet a minute after it ended). DX-B8's own harness had the same merged gateway
+at half the speed of `19f5422d` an hour earlier, also on an unhealthy host. So one of two things is true and this run cannot
+tell which: the second fix (`da77a50a`) regressed commits and pulls, or the host did it. DX-B9 step A settles it with
+alternating arms in one lock hold.
+
+New measuring rules (in DX-B9's brief, and for every later run): alternate arms inside one hold; record `host-quiet.sh` before
+and after; no keep-awake.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| ORCH | Paired north-star run at 2,000 subjects on merge ebc92d6f, no keep-awake: `tx2-dxh4-o1` under `evidence/DX-H4/` | `lane/d-native` | |
+| DX-B9 | A: alternating-arm verdict on `da77a50a` and fix; B: strict per-client commit order (seed at 1,000 commands/s in reference order); C: publication commit cost; D: row pages from the cache and a compact form | `exp/DX-B9-walls`, `.claude/worktrees/dx-b9` | `.../prompts/DX-B9.md` |
 | DX-S4 | Storage anatomy: what the 290 MB per 1,000 subjects is made of, Datomic variants, the same rows in XTDB, plain Postgres and compressed JSON, `footprint.sh` | `spike/DX-S4-storage`, `.claude/worktrees/dx-s4` | `.../prompts/DX-S4.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
