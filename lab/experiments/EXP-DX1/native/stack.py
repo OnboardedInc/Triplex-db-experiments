@@ -111,6 +111,11 @@ try:
  (run/'sql.properties').write_text(props)
  cp=f'{datomic}/resources:{datomic}/*:{datomic}/lib/*:{datomic}/samples/clj:{datomic}/bin:{src}/src'
  launch('tx',[java,'-server','-Djava.io.tmpdir='+str(run/'tmp'),'-Xms256m','-Xmx3g','-cp',cp,'clojure.main','--main','datomic.launcher',run/'sql.properties'],cwd=run)
+ # [DX-N1] Why: a launched transactor has not necessarily published its storage location yet.
+ # Rejected: starting the peer immediately (smoke3 observed read-transactor-location-failed).
+ def tx_listening():
+  with socket.create_connection(('127.0.0.1',base+1),timeout=1):return True
+ waitfor(tx_listening)
  uri=f'datomic:sql://{{db}}?jdbc:postgresql://127.0.0.1:{base}/datomic?user=datomic&password=datomic'
  for role,port in [('gw-w',base+3),('gw-r',base+4)]:
   env={**os.environ,'DATOMIC_URI_TEMPLATE':uri,'GATEWAY_SOURCE_SHA256':gh,'DX_NATIVE_GATEWAY_PORT':str(port)}
