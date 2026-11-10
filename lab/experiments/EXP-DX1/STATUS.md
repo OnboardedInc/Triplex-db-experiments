@@ -330,9 +330,17 @@ Orchestrator's reading (2026-11-10), three causes that between them cover every 
    per 1,000 subjects, moves the oracle out of the timed path (still every subject), pipelines publication and seeds in reference
    order with many commits in flight.
 
-Still to settle by the orchestrator: whether an idle vCPU makes sparse work slow (`vm-wake/run.sh`, queued behind the lock).
+4. **Settled 2026-11-10 12:22 UTC: an idle vCPU on this VM wakes 8 to 9 ms late and then runs about 5 times slower for about
+   10 ms** (`vm-wake/RESULT.md`). With one SCHED_IDLE busy loop per CPU the effect is gone. Every measurer now runs
+   `vm-wake/keep-awake.sh start` under the lock and records `keepAwake: true`. Every earlier number was taken without it; the
+   sparse-commit and steady-band misses have to be re-measured before they count as misses.
+5. The paused lane's `tx2-qlever-dev` container was removed (volume retained): its health-check query used about 370 ms of one
+   unpinned CPU every 5 s.
 
-Sam, 2026-11-10: Kafka image download approved (`apache/kafka:4.1.1`, queued behind the lock), VM stays at 8 CPUs.
+Sam, 2026-11-10: Kafka image download approved, VM stays at 8 CPUs. `apache/kafka:4.1.1` pulled 12:22 UTC
+(`sha256:0bc1bb2478f45b6cea78864df86acdc11e8df2c5172477819a4d12942cbe5d40`, 232 MB). Agent **XN-S2** (`spike/XN-S2`,
+`.claude/worktrees/xn-s2`, prompt `.../prompts/XN-S2.md`) tests one XTDB write node plus one read node on a Kafka log, engine only,
+lowest lock priority.
 
 ## Agents running now
 
