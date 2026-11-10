@@ -137,8 +137,17 @@ export async function runW0Driver(argv: string[]) {
         previous.status !== "G0-PASS"
       )
         throw Error("sealed seed binding mismatch");
-      if (previous.seed.mapper !== sha256(fs.readFileSync("lab/bench/lib/w0-seed.ts")))
-        throw Error("sealed seed mapper changed");
+      if (previous.seed.mapper !== sha256(fs.readFileSync("lab/bench/lib/w0-seed.ts"))) {
+        // [DX-H6] Why: a sealed seed may predate the submission-window optimization; explicit old hash plus fresh G0 bind its contents.
+        // Rejected: rewriting the historical seed receipt or silently accepting any mapper drift.
+        if (opt("seed-mapper") !== previous.seed.mapper)
+          throw Error("sealed seed mapper changed; exact --seed-mapper required");
+        report.seedMapperTransition = {
+          old: previous.seed.mapper,
+          current: sha256(fs.readFileSync("lab/bench/lib/w0-seed.ts")),
+          freshG0Required: true,
+        };
+      }
       report.seed = previous.seed;
       report.seedRestore = {
         receiptSha256: sha256(bytes),
@@ -323,13 +332,13 @@ export async function runW0Driver(argv: string[]) {
       const verificationCpuStart = process.threadCpuUsage(),
         oracleCpuStart = oracleCpuNs();
       const verifyStart = performance.now();
-      fs.writeFileSync(path.join(dir, `activation-${page}.json`), canonical(records));
+
       const original = JSON.parse(fs.readFileSync(path.join(dir, `preview-${page}.json`), "utf8"));
       for (let i = 0; i < records.length; i++) {
         const r = records[i]!;
-        equalBytes("G1 pinned world", canonical(r.world), canonical(original[i].world));
+        equalBytes("G1 pinned world digest", r.worldSha256, sha256(canonical(original[i].world)));
         const expectedOutput = await oracle.call("reconcile", {
-          world: r.world,
+          world: original[i].world,
           activations,
           basis: { tx: basis.position, validTime: W0.POPULATION_VALID_TIME },
         });
@@ -347,7 +356,9 @@ export async function runW0Driver(argv: string[]) {
       const verificationBeforeMs = performance.now() - verifyStart;
       const verificationCpuBeforePublish = process.threadCpuUsage();
       const publishStart = performance.now();
-      const actual: any = await comp.publishOutbox(evaluations);
+      const actual: any = JSON.parse(
+        fs.readFileSync(path.join(dir, `publication-${page}.json`), "utf8"),
+      );
       const publicationWallMs = performance.now() - publishStart;
       const verifyAfter = performance.now(),
         verificationCpuAfterPublish = process.threadCpuUsage();
@@ -401,8 +412,6 @@ export async function runW0Driver(argv: string[]) {
       traffic = await startW0Live({ ...options, id: attempt + ":sweep" });
     }
     console.error("[P5] activation and publication");
-    let publicationChain = Promise.resolve();
-    let publicationError: unknown;
     const cursor = path.join(dir, "activation-cursor.json");
     report.sweep = await runW0Sweep({
       comp,
@@ -416,23 +425,15 @@ export async function runW0Driver(argv: string[]) {
       workers,
       activations,
       metricsFile: path.join(dir, "activation-pages.ndjson"),
-      onPage: (records, page) => {
-        const queued = performance.now();
-        const task = publicationChain.then(async () => {
-          if (publicationError) throw publicationError;
-          traffic?.check();
-          const publishQueueMs = performance.now() - queued;
-          return { publishQueueMs, ...(await activationPage(records, page)) };
-        });
-        // [DX-H2] Why: the independent publish fold follows ACK order across workers.
-        // Rejected: racing callbacks over one expected outbox state.
-        publicationChain = task.then(
-          () => {},
-          (e) => {
-            publicationError = e;
-          },
-        );
-        return task;
+      onPage: async (records, page) => {
+        traffic?.check();
+        // [DX-H6] Why: all oracle work stays after the last ACK; publisher batches state and pipelines ordered submissions.
+        // Rejected: serial oracle/build/ACK on the evaluation worker's critical path.
+        fs.writeFileSync(path.join(dir, `activation-${page}.json`), canonical(records));
+        const actual: any = await comp.publishOutbox(records.map((r) => r.record));
+        const publicationAckAtEpochMs = performance.timeOrigin + performance.now();
+        fs.writeFileSync(path.join(dir, `publication-${page}.json`), canonical(actual));
+        return { publicationAckAtEpochMs, ...(actual.timing ?? {}) };
       },
     });
     if (traffic) {
@@ -440,6 +441,22 @@ export async function runW0Driver(argv: string[]) {
       traffic = undefined;
       report.live.matched = matchW0Live(report.live.baseline, report.live.sweep);
     }
+    report.sweep.lastPublicationAckAtEpochMs = Math.max(
+      ...report.sweep.metrics.map((m: any) => m.timing.publicationAckAtEpochMs),
+    );
+    report.sweep.activationToLastAckMs =
+      report.sweep.lastPublicationAckAtEpochMs - report.sweep.activationStartedAtEpochMs;
+    report.sweep.verificationPlacement =
+      "every subject after last publication ACK; no gate PASS before comparison";
+    save();
+    for (const m of [...report.sweep.metrics].sort((a: any, b: any) => a.page - b.page)) {
+      const records = JSON.parse(
+        fs.readFileSync(path.join(dir, `activation-${m.page}.json`), "utf8"),
+      );
+      m.postAckVerification = await activationPage(records, m.page);
+    }
+    report.sweep.activationToVerificationEndMs =
+      performance.timeOrigin + performance.now() - report.sweep.activationStartedAtEpochMs;
     if (coverage.size !== N || !report.sweep.complete) throw new Error("G4 incomplete coverage");
     report.gates.G1 = {
       status: "PASS",
