@@ -84,6 +84,7 @@ export interface CompositionHandle {
     epoch: string;
     roundTrips: number;
   }>;
+  w0Attributes?(subject: string, attributes: readonly string[], basis: import("./w0-world.ts").PositionBasis): Promise<readonly import("./w0-world.ts").WorldRow[]>;
   pinBasis?(position: number, owner: string): Promise<{ release(): Promise<void> }>;
   publishOutbox(
     records: readonly import("../../../packages/w0/dist/index.js").EvaluationRecord[],
@@ -173,10 +174,14 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
   const pull = (root: string, basis: Basis, between?: () => Promise<void>) => variant === "broker-h1" ? (h.storage as any).withCurrentPull(root, () => pullBody(root,basis,between)) : pullBody(root,basis,between);
   const one = { lane, role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}` };
   const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : lane === "datomic" ? "triplex-entities(datomic-datalog)" : "triplex-entities(sparql)";
-  const sweep = await (await import("./w0-public.ts")).publicSweep(lane, h);
+  const journal = lane === "datomic" && process.env.TX2_W0_POINT_JOURNAL === "1"
+    ? (await import("./w0-journal.ts")).w0Journal(h) : undefined;
+  const claims = journal ? await (await import("./w0-claims.ts")).w0Claims(h) : undefined;
+  const sweep = await (await import("./w0-public.ts")).publicSweep(lane, h, journal?.page);
   const handle: CompositionHandle = {
     scopeName: scope,
     sweepPage: sweep.page,
+    ...(journal ? { w0Attributes: (subject: string, attrs: readonly string[], basis: import("./w0-world.ts").PositionBasis) => import("./w0-public.ts").then(m => m.rootAttributeRows(h, subject, attrs, basis)) } : {}),
     storeCounts: sweep.counts,
     publishOutbox: (records) =>
       import("./w0-outbox.ts").then((m) => m.publishRecords(handle, records)),
@@ -187,13 +192,17 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     // offset = position and ordinal = 0. Epoch 0: the scope has had no epoch change.
     coordinate: (position) => ({ stream: `triplex-journal:${scope}`, epoch: 0, offset: position, ordinal: 0 }),
     backend: h.backend,
-    transact: (operations, meta) => outcome<Receipt>(T.transact(operations, meta)),
-    transactionByCommand: (id) => outcome(T.transactionByCommand(id)),
+    transact: async (operations, meta) => {
+      const result = await outcome<Receipt>(T.transact(operations, meta));
+      if (result.ok) journal?.record(result.value);
+      return result;
+    },
+    transactionByCommand: claims?.lookup ?? ((id) => outcome(T.transactionByCommand(id))),
     pull,
     sweepPull: pull,
-    feedPage: (after, limit) => h.run(T.transactions({ after, limit })),
+    feedPage: journal?.page ?? ((after, limit) => h.run(T.transactions({ after, limit }))),
     currentPosition: () => h.run(T.currentPosition()),
-    close: async () => { await sweep.close(); await h.close(); },
+    close: async () => { claims?.close(); await sweep.close(); await h.close(); },
   };
   return handle;
 }

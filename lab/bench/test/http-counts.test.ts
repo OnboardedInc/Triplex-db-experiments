@@ -55,3 +55,35 @@ test("HTTP counts follow concurrent operations and count actual Agent requests",
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
+
+test("per-page measurement includes nested HTTP operations without concurrent traffic", async () => {
+  const { measureHttp } = await import("../lib/http-counts.ts");
+  const server = http.createServer((_req, res) => res.end("ok"));
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = (server.address() as { port: number }).port;
+  const get = () =>
+    new Promise<void>((resolve, reject) => {
+      http
+        .get(`http://127.0.0.1:${port}`, (res) => {
+          res.resume();
+          res.on("end", resolve);
+        })
+        .on("error", reject);
+    });
+  try {
+    const [page, traffic] = await Promise.all([
+      measureHttp(() =>
+        countHttp("nested-publish-test", async () => {
+          await get();
+          await get();
+        }),
+      ),
+      measureHttp(get),
+    ]);
+    assert.equal(page.requests, 2);
+    assert.equal(traffic.requests, 1);
+    assert.ok(page.wallMs >= 0);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});

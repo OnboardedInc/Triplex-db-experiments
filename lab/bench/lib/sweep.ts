@@ -56,16 +56,17 @@ export const subjectHash = (subjects: readonly string[]) => sha256(canonical(sub
 export interface SweepOptions {
   comp: CompositionHandle;
   composition: string;
-  lane: "xtdb" | "qlever";
+  lane: "xtdb" | "qlever" | "datomic";
   scope: string;
   subjects: readonly string[];
   basis: PositionBasis;
   sweepId: string;
   cursor: string;
+  metricsFile?: string;
   workers: number;
   release?: string;
   activations?: readonly W0.Activation[];
-  onPage: (records: readonly any[], page: number) => Promise<void>;
+  onPage: (records: readonly any[], page: number) => Promise<void | Record<string, number>>;
   stopAfterPages?: number;
   afterCheckpoint?: (page: number) => Promise<void>;
   controller?: Controller;
@@ -112,11 +113,17 @@ export async function runW0Sweep(o: SweepOptions) {
   let epoch: string | undefined;
   const pin = await o.comp.pinBasis?.(o.basis.position, "sweep:" + o.sweepId);
   const threads: Worker[] = [];
+  const sweepStarted = performance.now();
   try {
     await Promise.all(
       Array.from({ length: o.workers }, async (_, workerIndex) => {
         const worker = new Worker(new URL("./sweep-worker.ts", import.meta.url), {
-          workerData: { composition: o.composition, lane: o.lane, scope: o.scope },
+          workerData: {
+            composition: o.composition,
+            lane: o.lane,
+            scope: o.scope,
+            worker: workerIndex,
+          },
         });
         threads.push(worker);
         let resolve: ((v: any) => void) | undefined, reject: ((e: any) => void) | undefined;
@@ -168,6 +175,7 @@ export async function runW0Sweep(o: SweepOptions) {
           if (epoch !== undefined && page.epoch !== epoch)
             throw new Error("G7 epoch changed; resume requires fresh read");
           epoch = page.epoch;
+          const decodeStart = performance.now();
           const records = JSON.parse(new TextDecoder().decode(page.bytes));
           if (
             canonical(records.map((r: any) => r.subject)) !== canonical(subjects) ||
@@ -179,8 +187,11 @@ export async function runW0Sweep(o: SweepOptions) {
             )
           )
             throw new Error("G4/G7 worker coverage or basis mismatch");
+          const controllerDecodeMs = performance.now() - decodeStart;
           await o.beforePublish?.();
-          await o.onPage(records, pageIndex);
+          const callbackStart = performance.now();
+          const callbackTiming = await o.onPage(records, pageIndex);
+          const callbackWallMs = performance.now() - callbackStart;
           // [EXP-P5] Why: only an ACKed publication advances the cursor. Rejected: advancing at evaluation (drops results on process stop).
           published.push(pageIndex);
           published.sort((a, b) => a - b);
@@ -189,18 +200,46 @@ export async function runW0Sweep(o: SweepOptions) {
           await o.afterCheckpoint?.(pageIndex);
           metrics.push({
             page: pageIndex,
+            subjects: subjects.length,
+            worker: workerIndex,
+            timing: {
+              ...page.timing,
+              controllerDecodeMs,
+              callbackWallMs,
+              ...(callbackTiming ?? {}),
+            },
             cpu: page.cpu,
             cpuScope: page.cpuScope,
             elu: page.elu,
             position: page.position,
             epoch: page.epoch,
           });
+          if (o.metricsFile)
+            fs.appendFileSync(
+              o.metricsFile,
+              JSON.stringify({
+                sweepId: o.sweepId,
+                scope: o.scope,
+                basis: o.basis,
+                ...metrics.at(-1),
+              }) + "\n",
+            );
           completed++;
         }
       }),
     );
     return {
       binding,
+      wallMs: performance.now() - sweepStarted,
+      subjectsPerS: o.subjects.length / ((performance.now() - sweepStarted) / 1000),
+      totals: metrics.reduce(
+        (sum, m) => {
+          for (const [key, value] of Object.entries(m.timing))
+            if (typeof value === "number") sum[key] = (sum[key] ?? 0) + value;
+          return sum;
+        },
+        {} as Record<string, number>,
+      ),
       published,
       metrics,
       complete: published.length === Math.ceil(o.subjects.length / 64),
