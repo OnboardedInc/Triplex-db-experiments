@@ -1,0 +1,109 @@
+{
+  "base": "66c40d5b5cd723da48ffd344ac6644bd00ed0fae",
+  "files": [
+    {
+      "path": "lab/bench/driver.ts",
+      "oldSha256": "29f7315d718de22c8542612fa50271e3f768bb4a66fd087084c203264f210d0a",
+      "newSha256": "9c42a93c4934d4700180b0a34b1e4ba621546a6f8f390c1b70ab817abe5d0154",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/lib/commit-breakdown.ts",
+      "oldSha256": null,
+      "newSha256": "ff9bfea454a51f21b271e9d99102ad3686d115a02b1bf0eaa48d5a785a29735f",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/lib/datomic-publication.ts",
+      "oldSha256": "836667faae59ef7200ae1650e328de8e0975c5baec64ad1c40d43481d677fa47",
+      "newSha256": "7e1c123f4ce3f3a2bbad47e33cc40928a6a4a0613d458fd176ae5136c59f2e34",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/lib/feed.ts",
+      "oldSha256": "c32cc216f74de6b1ddcedcb98bc2c1af221f9fd041e41527fef26d553364ae83",
+      "newSha256": "e83f66ad67a6c455d01a56ff39635f98668fdf1cfa0b5a5bf456549e7e4941c2",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/lib/maintenance.ts",
+      "oldSha256": null,
+      "newSha256": "f2b4ac767e879691d022b6bcd0be74856e8a5feee2ed372ab8d6fb5d1c30b929",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/lib/probe-thread.ts",
+      "oldSha256": null,
+      "newSha256": "b58be61617d0cc7ead9430d65e5a2433e0df46a67fb72a35cb133623953921b8",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/lib/side-thread.ts",
+      "oldSha256": null,
+      "newSha256": "cafa7dfb058f9f268188de618eb7b0eccc95343023afec939ba88d5ce808658f",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/probe-worker.ts",
+      "oldSha256": null,
+      "newSha256": "1dec2e06d99ef1ae00a4d1e3d863c424d391eda7e6ecf2a12c0a7f35bac78727",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/side-worker.ts",
+      "oldSha256": null,
+      "newSha256": "458d8175fa2c422688b62444941b5bb42af07924bce096a9c7f7fc43c18b008b",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/test/commit-breakdown.test.ts",
+      "oldSha256": null,
+      "newSha256": "218da5deb9547796f4960bab399db9c5dcb8b6b310437c28002a4a05ce3ccc9a",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/test/feed-late-intent.test.ts",
+      "oldSha256": null,
+      "newSha256": "aa99a8934987166b31ff2bf2848658a2b3a2aec5b9b5a910846158303e928050",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/test/fixtures/dxh3-om2-maintenance.json",
+      "oldSha256": null,
+      "newSha256": "d73e05bd556ab13c26d132f13e701a1e3b5d9a06f9d67e91981b955be27c5a0f",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/test/maintenance.test.ts",
+      "oldSha256": null,
+      "newSha256": "2b1ad9102d8088102c533f1b28e4deb162089ec7c0bb24352b09753ab91a3969",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/bench/test/side-route.test.ts",
+      "oldSha256": null,
+      "newSha256": "dce28a1b20b5f867b748af27a6c6f5bd6b935ecef1ed329f553f254c392dd202",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/h3/attempt.sh",
+      "oldSha256": "abb3bf27947138262b23c2108acd283fb74e920ff2d5819688492035046e81a0",
+      "newSha256": "180133a0089c529bf517b37b73069b0871e817c8495689151df190a9a4e71806",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/h4/run.sh",
+      "oldSha256": null,
+      "newSha256": "f9c9e9495125e66bb1ab633921f533ed68192f8108a32f7b50d7d97abea0c9bf",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/stack/run-in-vm.sh",
+      "oldSha256": "423aefe424ef40bafea0e6645a789d24a36ac6da9ab12850c7cf56b31ba6d7a1",
+      "newSha256": "fb619eda75e7b8a80787e03f14f4fb70854b87f4459cd41cbb1e5cb199417b0d",
+      "acceptanceReferences": []
+    }
+  ],
+  "contractChanged": false,
+  "scope": "Changed runtime, benchmark and stack inputs; reporting artifacts and checksum helpers excluded"
+}

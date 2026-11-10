@@ -32,6 +32,10 @@ import { Worker } from "node:worker_threads";
 import { openComposition, type CompositionHandle, type Receipt } from "./lib/composition.ts";
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
+import { ProbeThread } from "./lib/probe-thread.ts";
+import { SideThread } from "./lib/side-thread.ts";
+import { commitBreakdown } from "./lib/commit-breakdown.ts";
+import { completedMaintenanceInWindow, requestIndex } from "./lib/maintenance.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
 import { alignAssertIds } from "./lib/receipt.ts";
@@ -142,7 +146,7 @@ const log = (line: string) => {
   process.stderr.write(text + "\n");
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
-const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
+const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 
 const report: Record<string, any> = latencyReceipt({
   format: "tx2-ns-report/2",
@@ -272,7 +276,7 @@ function straddleCandidate(): { subject: number; seq: number } {
   return { subject: job.key, seq: job.ev.seq };
 }
 const overlayCount: Record<string, number> = {};
-let feed: FeedConsumer | null = null;
+let feed: FeedConsumer | SideThread | null = null;
 let feedWind: { target: number; checkpointAtStop: number; inFlightAtFeedTarget: number } | null = null;
 const lateGrowth: { cmd: any; v: number; pending: Promise<any> }[] = [];
 let coordinate: (position: number) => any = (position) => ({ stream: "unknown", epoch: 0, offset: position, ordinal: 0 });
@@ -411,9 +415,12 @@ async function run() {
     acked.push({ instant: receipt.instant, position: receipt.position, txId: receipt.txId, at });
     latestInstant = Math.max(latestInstant, receipt.instant);
     if (subject >= 0) lastWriteAt.set(subject, at);
-    feed?.ackArrived(receipt.position);
+    if (feed instanceof SideThread) feed.ack(receipt.position, { instant: receipt.instant, ackAt: at, subject, ...info, subjects: info.subjects ?? [subject] });
+    else feed?.ackArrived(receipt.position);
     return at;
   };
+  const publicationTimes = new Map<number, any>();
+  let probeThread: ProbeThread | null = null;
   const execute = async (job: Job) => {
     const ev = job.ev;
     const out: any = { attempts: 0, tags: [] as string[], path: "direct" };
@@ -425,7 +432,11 @@ async function run() {
     let receipt: Receipt | null = null;
     while (!receipt && out.attempts < 6) {
       out.attempts++;
-      const res = await writer.transact(cmd.operations, meta);
+      out.transactCalledAt ??= now();
+      const probeResult = ev.stream === "probe10" && probeThread ? await probeThread.transact(cmd.operations, meta) : null;
+      const res = probeResult ? probeResult.result : await writer.transact(cmd.operations, meta);
+      out.transactReturnedAt = now();
+      if (probeResult) Object.assign(out, probeResult.timing);
       if (res.ok) { receipt = res.value; break; }
       out.tags.push(res.tag);
       out.lastError = String(res.error?.message ?? "").slice(0, 300);
@@ -440,6 +451,8 @@ async function run() {
       return;
     }
     out.outcome = "committed";
+    Object.assign(out, publicationTimes.get(receipt.position));
+    publicationTimes.delete(receipt.position);
     if (ev.ackLoss) {
       const retry = await writer.transact(cmd.operations, meta);
       const resolved = await resolveByCommand(cmd.commandId);
@@ -456,6 +469,7 @@ async function run() {
       st.addressValidFrom = cmd.validRange.from;
     }
     const at = noteAck(receipt, ev.subject, { seq: ev.seq, stream: ev.stream, correction: ev.correction, correctionValidFrom: ev.correction ? cmd.validRange.from : null, stamp: cmd.newStamp });
+    out.ackPublishedAt = at;
     if (ev.stream === "background") {
       const result = { position: receipt.position, ackAt: at };
       ackedBySeq.set(ev.seq, result);
@@ -468,7 +482,7 @@ async function run() {
     if (oracleRecordSet.has(ev.subject))
       recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
     if (ev.stream === "background") {
-      const p = ryow(aux, ev.subject, receipt);
+      const p = feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; records.push(row); }) : ryow(aux, ev.subject, receipt);
       ryowPending.add(p);
       void p.finally(() => ryowPending.delete(p));
     }
@@ -478,7 +492,10 @@ async function run() {
     const orig = original.get(job.ev.seq);
     if (!orig) { resends.push({ seq: job.ev.seq, result: "original-not-committed" }); out.outcome = "resend-of-uncommitted"; return; }
     out.attempts = 1;
+    out.transactCalledAt = now();
     const res = await writer.transact(orig.operations, orig.meta);
+    out.transactReturnedAt = now();
+    out.ackPublishedAt = now();
     let how = "mismatch";
     if (res.ok) how = "COMMITTED-AGAIN";
     else if (res.tag === "CommandAlreadyCommittedError" && res.error?.transactionId === orig.receipt.txId) how = "already-committed-original";
@@ -534,6 +551,13 @@ async function run() {
   const publicationSource = JSON.stringify({ route: "A0-control", dir: rawDir, epoch: `${scopeName}#0` });
   const publicationWriter = publicationClock ? openPublicationWriter(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock) : null;
   const publicationReader = publicationWriter ? openPublicationReader(path.join(rawDir, "publication.db")) : null;
+  if (!pairPlan && lane === "datomic" && config.composition !== "memory") {
+    feed = new SideThread({dir:rawDir,epoch:`${scopeName}#0`,startAfter:seed.lastPosition,
+      lane,composition:config.composition,scope:scopeName,publication:!!publicationWriter,
+      crashes:crashPlan,publicationWaitMs:5000,pollTimeoutMs:120_000},log);
+    feed.dir=rawDir;
+    await feed.ready;
+  } else {
   feed = pairPlan ? null : new FeedConsumer({
     publicationWaitMs: lane === "datomic" ? 5000 : 0,
     // [DX-H3] Why: match the existing 120-second final feed catch-up budget. Rejected: 30 seconds (censored a small poll that the earlier run completed).
@@ -543,8 +567,17 @@ async function run() {
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
     open: () => openComposition(config.composition, lane, scopeName), log, crashes: crashPlan,
   });
-  if (publicationWriter) observeDatomicPublication((position, operationId) => publicationWriter.publish(feed!.publicationKey(position), operationId));
+  }
+  if (publicationWriter) observeDatomicPublication((position, operationId, diagnostics) => {
+    const publicationStartedAt = now();
+    publicationWriter.publish(feed!.publicationKey(position), operationId);
+    publicationTimes.set(position, { publicationStartedAt, publicationDurableAt: now(), ...(diagnostics === undefined ? {} : { diagnostics }) });
+  });
   report.publicationObserver = publicationWriter ? "DatomicClient.transact result, before Triples receipt and driver ACK; durable bound host-clock sidecar" : "not integrated";
+  if (publicationWriter && config.probe10PerS > 0 && config.composition !== "memory") {
+    probeThread = new ProbeThread({dir:rawDir,epoch:`${scopeName}#0`,lane,composition:config.composition,scope:scopeName});
+    await probeThread.ready;
+  }
   const feedTarget = setInterval(() => { if (feed) feed.lifeMaxTarget = acked.length ? acked[acked.length - 1]!.position : 0; }, 100);
   const feedDone = feed ? feed.run() : Promise.resolve();
   // [DX-H1] Why: retain a failing feed as a caught driver failure during wind-down. Rejected: an unhandled rejection that leaves status RUNNING.
@@ -637,27 +670,31 @@ async function run() {
     report.phases = phases;
     save();
   } else for (const [idx, spec] of plan.entries()) {
+    // [DX-H4] Why: settle retained datoms before timing each matched history depth.
+    // Rejected: timing immediately after growth (measures live memory-index churn).
+    const historyIndex = indexClient && /^p4h(1|3|10)$/.test(spec.name)
+      ? await requestIndex(indexClient, indexDb, spec.name, now, 60_000) : null;
+    if (historyIndex) datomicMaintenanceJobs.push(historyIndex);
     const start = now();
-    const entry: any = { idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
+    const entry: any = { historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
     const indexJob = indexClient && /^L[0-9]+$/.test(spec.name) && spec.seconds ? (async () => {
       const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
-      await sleep(delay);
+      while (now() < start + delay) await sleep(Math.max(1, start + delay - now()));
       const waitMs = Math.max(1, Math.min(600000, Math.floor(spec.seconds! * 1000 - delay - 100)));
-      try {
-        const event = await indexClient.request("POST", `/v2/db/${indexDb}/request-index`, {waitMs});
-        if (event.database !== indexDb || typeof event.job !== "string" || !/^[0-9a-f-]{36}$/.test(event.job) ||
-            !/^[0-9]+$/.test(event.requestedT) || typeof event.completed !== "boolean" ||
-            !Number.isSafeInteger(event.requestedAtMs) || (event.completed && (!Number.isSafeInteger(event.completedAtMs) || event.completedAtMs < event.requestedAtMs)))
-          throw Error("Invalid Datomic maintenance event binding");
-        datomicMaintenanceJobs.push({...event, phase:spec.name, t:event.completedAtMs});
-      } catch (error) { datomicMaintenanceJobs.push({phase:spec.name, completed:false, error:String(error)}); }
+      datomicMaintenanceJobs.push(await requestIndex(indexClient, indexDb, spec.name, now, waitMs));
     })() : null;
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.sweep) entry.sweep = await runSweep(idx, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
-    else if (spec.seconds) await sleep(spec.seconds * 1000);
+    else if (spec.seconds) {
+      await sleep(spec.seconds * 1000);
+      if (!config.zeroReaders && /^p4h(1|3|10)$/.test(spec.name)) {
+        const deadline = now() + 120_000;
+        while (records.filter(r => r[R.phase] === idx && r[R.start] >= start + config.settleS * 1000 && r[R.error] === null).length < 10_000 && now() < deadline) await sleep(250);
+      }
+    }
     entry.end = now();
     await indexJob;
     entry.traceEndS = (entry.end - traceStart) / 1000;
@@ -665,12 +702,13 @@ async function run() {
     report.phases = phases;
     save();
   }
-  if (config.zeroReaders && config.matchDurationS) {
+  if (config.matchDurationS) {
     const until = traceStart + config.matchDurationS * 1000;
     if (now() < until) {
       const entry: any = { idx: phases.length, name: "tail", readers: 0, measured: false, start: now(), traceStartS: (now() - traceStart) / 1000 };
       phases.push(entry);
-      log(`phase tail: matching the ladder run's trace length (${config.matchDurationS}s)`);
+      setReaders(entry.idx, 0, "mixed");
+      log(`phase tail: matching both arms to the fixed trace length (${config.matchDurationS}s)`);
       await sleep(until - now());
       entry.end = now();
       entry.traceEndS = (entry.end - traceStart) / 1000;
@@ -741,15 +779,19 @@ async function run() {
   await aux.close().catch(() => {});
   await growthComp.close().catch(() => {});
   await probeComp?.close().catch(() => {});
+  await probeThread?.close();
+  if (feed instanceof SideThread) { report.sideThread = { elu: feed.elus }; await feed.close(); }
   observeDatomicPublication(undefined);
   publicationReader?.close();
   publicationWriter?.close();
   log(`wind down: writer pending ${scheduler.pending}, probe pending ${probeScheduler?.pending ?? 0}, feed checkpoint ${feed?.checkpoint ?? "-"}/${lastAcked}, final position ${finalPosition}`);
-  fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify(latencyReceipt({ writer: "ns-write-event/1", qleverConnectionMode: report.qleverConnectionMode, stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome }))).join("\n") + "\n");
+  fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify(latencyReceipt({ ...w, writer: "ns-write-event/1", qleverConnectionMode: report.qleverConnectionMode, stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome }))).join("\n") + "\n");
 
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
   report.finalPosition = finalPosition === null ? null : coordinate(finalPosition);
+  if (feed && feed.uncheckedIntents) finalizationErrors.push(`${feed.uncheckedIntents} feed intent checks still lack ACK metadata`);
+  if (ryowPending.size) finalizationErrors.push(`${ryowPending.size} read-your-own-write pulls did not finish`);
   report.finalizationErrors = finalizationErrors;
   report.positionCoordinates = "TARGETS 4.1 item 3: (stream, epoch, offset, ordinal); Triplex gives one dense position per scope and one engine transaction per transact, so offset = position and ordinal = 0";
   report.maintenance = maintenance;
@@ -768,8 +810,8 @@ async function run() {
     report.invalidReasons = [...(report.invalidReasons ?? []), `Feed consumer failed: ${String(feedFailure)}`];
     process.exitCode = 1;
   }
-  const incompleteHistory = !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
-  if (incompleteHistory) finalizationErrors.push("Required history depths 3 and 10 were not reached on the complete sample");
+  const incompleteHistory = !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
+  if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");
   if (finalizationErrors.length) {
     report.invalidReasons = [...(report.invalidReasons ?? []), ...finalizationErrors];
     process.exitCode = 1;
@@ -1071,7 +1113,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const mainEluMean = mean(mainElu.filter((e) => e.t >= w.from && e.t < w.to).map((e) => e.elu));
     const eng = engineSamples.filter((e) => e.t >= w.from && e.t < w.to);
     const maxWorkerElu = workerEluMean.length ? Math.max(...workerEluMean) : null;
-    const maint = (ctx.maintenance.events ?? []).filter((e: any) => e.t >= w.from && e.t < w.to && (lane !== "datomic" || (e.completed === true && e.requestedAtMs >= w.from && e.completedAtMs < w.to))).length;
+    const maint = (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, phase.name, w.from, w.to) : e.t >= w.from && e.t < w.to).length;
     const marks = watermarkSamples.filter((s) => s.t >= w.from && s.t < w.to).map((s) => s.marks["source"] ?? 0);
     return {
       phase: phase.name, readers: phase.readers, mode: phase.mode, windowS: Math.round(secs * 10) / 10, overlapsBurst: phase.overlapsBurst,
@@ -1151,6 +1193,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     readYourOwnWrite: { pulls: ryowRows.length, correct: ryowOk, pull: ryowHist.summary(), failures: ryowRows.filter((x) => !x.v.ok).slice(0, 5).map((x) => ({ kind: x.v.kind, subject: x.r[R.subject], position: x.r[R.basisPosition] })) },
     duplicates: { resends: resends.length, considered: dupConsidered.length, returnedOriginal: dupOk },
     lostAck: { simulated: lostAck.length, returnedOriginal: lostOk, retryTags: countBy(lostAck.map((r) => r.retryTag)) },
+    breakdown: { units: "ms", note: "driverOwn includes offer queueing, all post-transact completion work (including after ACK), and durable publication witness inside transact; medians are per-command sums, not sums of medians; all latency bars remain unchanged",
+      byPhase: Object.fromEntries(ctx.phases.map(p => [p.name, commitBreakdown(committed.filter(w => w.scheduledAt >= p.start && w.scheduledAt < p.end))])),
+      burst: commitBreakdown(committed.filter(w => w.burst)), all: commitBreakdown(committed) },
     probe10Diagnostic: { note: "diagnostic only (TARGETS 1.1 P2 item 2); overlay stream, not part of any bar", commit: probeHist.summary() },
     progress,
     bars: [
@@ -1213,16 +1258,22 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const largest = mix?.buckets["bucket:large"];
   const phaseBytes = (s: any) => { const idx = ctx.phases.find((p) => p.name === s?.phase)?.idx; return mean(records.filter((r, k) => r[R.phase] === idx && verdicts[k]!.ok).map((r) => r[R.bytes])); };
   const quotaRate = best && engineCpus ? best.goodputPerS / engineCpus : null;
+  const historyInvalid = [h1, h3, h10].flatMap((h, i) => {
+    const phase = ctx.phases.find(p => p.name === ["p4h1", "p4h3", "p4h10"][i]);
+    return [ ...(lane === "datomic" && phase?.historyIndex?.completed !== true ? [`${phase?.name}: request-index did not complete within 60 s`] : []),
+      ...((h?.read.count ?? 0) < 10_000 ? [`${phase?.name}: fewer than 10,000 correct measured pulls`] : []) ];
+  });
+  const historyEligible = historyDepthsComplete(ctx.phases.filter(p => p.history).map(p => p.history), ctx.historyList.length) && historyInvalid.length === 0;
   const p4 = {
     weightedMix: mix ? { read: mix.read, buckets: mix.buckets } : null,
-    history: { eligibleForDepthComparison: historyDepthsComplete(ctx.phases.filter((p) => p.history).map((p) => p.history), ctx.historyList.length), sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
+    history: { eligibleForDepthComparison: historyEligible, invalid: historyInvalid, indexing: ctx.phases.filter(p => p.historyIndex).map(p => p.historyIndex), ratios: { mean: ratio(h10?.read.meanMs, h1?.read.meanMs), p50: ratio(h10?.read.p50Ms, h1?.read.p50Ms), p99: ratio(h10?.read.p99Ms, h1?.read.p99Ms) }, sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
     throughput: { bestLevel: best?.phase ?? null, goodputPerS: best?.goodputPerS ?? null, engineCpuQuotaCores: engineCpus, pullsPerSPerQuotaCore: quotaRate, engineCpuPercentMean: best?.engine.cpuPercentMean ?? null, pullsPerSPerUsedCore: best?.engine.cpuPercentMean ? best.goodputPerS / (best.engine.cpuPercentMean / 100) : null, hostClientCpu: cpu, hostBrokerCpu: "none in this composition (no broker process)" },
     bars: [
       bar("NS-P4 weighted-mix pull p50 ms", mix?.read.p50Ms ?? null, "<= 5", mix?.read.p50Ms != null ? mix.read.p50Ms <= 5 : null),
       bar("NS-P4 weighted-mix pull p99 ms", mix?.read.p99Ms ?? null, "<= 25", mix?.read.p99Ms != null ? mix.read.p99Ms <= 25 : null),
       bar("NS-P4 largest bucket p99 ms (provisional)", largest?.p99Ms ?? null, "<= 50", largest?.p99Ms != null ? largest.p99Ms <= 50 : null),
       bar("NS-P4 pulls/s per engine core (CPU quota)", quotaRate, ">= 1100", quotaRate !== null ? quotaRate >= 1100 : null),
-      bar("NS-P4 history flatness p99 depth10 / depth1", ratio(h10?.read.p99Ms, h1?.read.p99Ms), "<= 1.1", ratio(h10?.read.p99Ms, h1?.read.p99Ms) !== null ? historyDepthsComplete(ctx.phases.filter((p) => p.history).map((p) => p.history), ctx.historyList.length) && ratio(h10?.read.p99Ms, h1?.read.p99Ms)! <= 1.1 : null, "requires complete growth to depths 3 and 10 on the full sample"),
+      bar("NS-P4 history flatness p99 depth10 / depth1", ratio(h10?.read.p99Ms, h1?.read.p99Ms), "<= 1.1", ratio(h10?.read.p99Ms, h1?.read.p99Ms) !== null ? historyEligible && ratio(h10?.read.p99Ms, h1?.read.p99Ms)! <= 1.1 : null, "requires complete growth to depths 3 and 10 on the full sample"),
       bar("NS-P4 history flatness bytes read depth10 / depth1", null, "<= 1.1", null, "engine bytes read are not measured (seam); client-observed bytes are reported"),
     ],
   };
@@ -1260,7 +1311,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const saturated = Object.values(stats).filter((s: any) => s.client.saturated).map((s: any) => s.phase);
   const total = records.length, ok = verdicts.filter((v) => v.ok).length, errs = verdicts.filter((v) => v.kind === "error").length;
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput" };
-  report.client = { saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
+  report.client = { series: {main:mainElu,readers:workerElu},
+    burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
+    saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
   report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
   report.compositionIdentity = { ...report.composition, watermarkSamples: watermarkSamples.length, note: "image digest, config hash and slot per assignment are bound by the gate (lab/bin/gate.mjs NS)" };
@@ -1300,9 +1353,22 @@ function p2Progress(background: any[], traceStart: number) {
 }
 function loadBaselineWrites(): any[] | null {
   if (!config.baselineWrites) return null;
-  return readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
+  const baselineReport = JSON.parse(fs.readFileSync(path.join(path.dirname(config.baselineWrites), "ns-report.json"), "utf8"));
+  if (baselineReport.config?.zeroReaders !== true || baselineReport.trace?.digest !== report.trace.digest ||
+      baselineReport.config?.rungSubjects !== config.rungSubjects || baselineReport.config?.composition !== config.composition ||
+      baselineReport.config?.lane !== lane || baselineReport.config?.seed !== config.seed)
+    throw Error("Matched baseline identity differs (zero readers, trace, subjects, composition, lane or seed)");
+  report.matchedBaseline = { traceDigest: baselineReport.trace.digest, offeredUntilTraceS: baselineReport.writer?.offeredUntilTraceS,
+    source: config.baselineWrites, sha256: createHash("sha256").update(fs.readFileSync(config.baselineWrites)).digest("hex") };
+  const rows = readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
+  if (baselineReport.status !== "DONE" || baselineReport.writer?.pendingAtEnd !== 0 ||
+      rows.some(w => w.outcome !== "committed") || baselineReport.correctness?.violations || baselineReport.correctness?.errors ||
+      JSON.stringify(baselineReport.benchSources) !== JSON.stringify(report.benchSources))
+    throw Error("Matched baseline is incomplete, incorrect or uses different harness source");
+  return rows;
 }
 function matchedBaseline(rows: any[], fromOffset: number, toOffset: number) {
+  if (!(report.matchedBaseline?.offeredUntilTraceS * 1000 >= toOffset)) return {commits:0,p50Ms:null,p99Ms:null,invalid:"zero-reader trace does not cover this entire window"};
   const h = new Histogram();
   for (const w of rows) if (w.offsetMs >= fromOffset && w.offsetMs < toOffset && w.outcome === "committed") h.recordMs(w.latencyMs);
   return { commits: h.count, p50Ms: h.percentileMs(50), p99Ms: h.percentileMs(99) };

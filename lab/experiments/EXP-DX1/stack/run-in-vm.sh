@@ -3,7 +3,7 @@
 # Rejected: host load generation (one failed tunnel invalidates all endpoints).
 set -euo pipefail
 prefix=${1:?usage: run-in-vm.sh PREFIX [--cpus LIST] [--memory SIZE] -- COMMAND...}; shift
-[[ $prefix =~ ^tx2-dxh3-[a-z0-9-]+$ ]] || exit 2
+[[ $prefix =~ ^tx2-dx[a-z0-9-]+$ ]] || exit 2
 cpus=6,7 memory=3g
 while [[ ${1:-} != -- ]]; do
   case ${1:-} in --cpus) cpus=$2;; --memory) memory=$2;; *) exit 2;; esac
@@ -12,7 +12,8 @@ done
 shift
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
-evidence=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/$prefix
+agent=$(printf '%s' "$prefix" | cut -d- -f2 | tr '[:lower:]' '[:upper:]' | sed 's/^DX/DX-/')
+evidence=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/$agent}/$prefix
 mkdir -p "$evidence/driver" "$evidence/oracle-bridge"
 bridge_pid=
 docker image inspect node:22.23.2-bookworm-slim >/dev/null
