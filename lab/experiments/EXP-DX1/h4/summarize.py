@@ -29,7 +29,9 @@ print('## P1 reader ladder and writer comparison\n')
 table(['Phase','Readers','Read p50','Read p99','Correct/s','Commit p50','Commit p99','Matched zero-reader p99','Feed lag p99','Client saturated','Reader thread ELU','Main ELU','Per-container mean CPU %'],[[x['phase'],x['readers'],x['read'].get('p50Ms'),x['read'].get('p99Ms'),x['goodputPerS'],x['writer']['commit'].get('p50Ms'),x['writer']['commit'].get('p99Ms'),(x['writer'].get('matchedZeroReader') or {}).get('p99Ms'),x['feedLag'].get('p99Ms'),x['client']['saturated'],j(x['client']['workerEluMean']),x['client']['mainElu'],j(x['engine']['containers'])] for x in p.get('P1',{}).get('ladder',[])])
 print('### Reader correctness and apparatus per level\n')
 table(['Phase','Reads','Correct','Violations','Errors','Hot share','Split counters','Maintenance jobs','Main ELU','Max worker ELU'],[[x['phase'],x['reads'],x['correct'],x['violations'],x['errors'],x['hotShare'],j(x['split']),x['maintenanceEvents'],x['client']['mainElu'],x['client']['maxWorkerElu']] for x in p.get('P1',{}).get('ladder',[])])
-print('Matched baseline identity: `'+j(r.get('matchedBaseline'))+'`. A requested cap of 256 also caps the nominal L1024 phase; this is not a 1,024-reader measurement.\n')
+print('Matched baseline identity: `'+j(r.get('matchedBaseline'))+'`.\n')
+if r.get('config',{}).get('maxReaders') is not None:
+ print(f"The requested cap is {r['config']['maxReaders']} actual readers; nominal phase names do not establish a 1,024-reader measurement.\n")
 print('## P4 weighted mix and history\n')
 mix=p.get('P4',{}).get('weightedMix') or {}
 table(['Group','Latency / bytes summary'],[['weighted',j(mix.get('read'))]]+[[k,j(v)] for k,v in mix.get('buckets',{}).items()])
@@ -48,9 +50,15 @@ for ph in longest:
 table(['Phase','Elapsed s','Cgroup samples','Per-container mean CPU %'],longrows)
 print('CPU describes concurrent measured activity only; no causal attribution is inferred. Raw gateway/transactor logs are retained as `gw-w.log`, `gw-r.log`, `tx.log`.\n')
 print('## Counters, feed, fetch-only sweep, oracle and invalidity\n')
+def compact(value):
+ if isinstance(value,dict):return {k:compact(v) for k,v in value.items() if k!='series'}
+ if isinstance(value,list) and len(value)>20:return {'entries':len(value),'first':value[:3],'last':value[-3:],'full':'retained in raw ns-report.json'}
+ if isinstance(value,list):return [compact(v) for v in value]
+ return value
+print('Raw time series and full long arrays remain in the retained ns-report.json; the following counter summaries omit series and sample long arrays.\n')
 for name,value in [('P2 duplicates',p.get('P2',{}).get('duplicates')),('P2 lost ACK',p.get('P2',{}).get('lostAck')),('P2 accounting',p.get('P2',{}).get('accounting')),('P2 read-your-own-write',p.get('P2',{}).get('readYourOwnWrite')),('P2 progress',p.get('P2',{}).get('progress')),('P3',{k:v for k,v in p.get('P3',{}).items() if k!='bars'}),('P5',{k:v for k,v in p.get('P5',{}).items() if k!='bars'}),('correctness',r.get('correctness')),('oracle',r.get('oracle')),('client',r.get('client')),('invalidReasons',r.get('invalidReasons')),('writer',r.get('writer'))]:
- print(f'### {name}\n\n```json\n{json.dumps(value,indent=2)}\n```\n')
-print('Additional validity limits: smoke profile; no matched zero-reader run; any development overrides in config; direct-subject affected sets are diagnostic; P5 evaluates/publishes no W0 release; engine bytes read unmeasured. DONE means completed reporting, not all bars met.\n')
+ print(f'### {name}\n\n```json\n{json.dumps(compact(value),indent=2)}\n```\n')
+print('Additional validity limits: smoke profile; matched baseline covers the same trace windows (identity above); any development overrides in config; direct-subject affected sets are diagnostic; P5 evaluates/publishes no W0 release; engine bytes read unmeasured. DONE means completed reporting, not all bars met.\n')
 print('## Gateway scan counters\n')
 scan=root/'driver/scan-stats.jsonl'
 if scan.exists():
