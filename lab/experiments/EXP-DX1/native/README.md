@@ -43,3 +43,9 @@ rm -rf /Users/sam/Claude/Projects/triplex-db-2/native
 ```
 
 This deliberately leaves compressed evidence in `evidence/DX-N1/`.
+
+For bounded N1 windows, the existing differential corpus supports ranges without changing its RNG stream. Use
+`DX_N1_TEST_SET=remaining DX_N1_LAYOUT_COUNT=100` after a retained completed reach/concurrent run, then
+`DX_N1_TEST_SET=layout DX_N1_LAYOUT_COUNT=100 DX_N1_LAYOUT_START=100` and start `200`, each with a fresh prefix. The default
+remains all eight suites with all 300 scenarios; report the ranges and completed files rather than treating a partial run
+as a full pass.
