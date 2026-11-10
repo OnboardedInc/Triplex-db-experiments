@@ -19,6 +19,12 @@
 (defmacro fake-peer [& body]
   `(with-redefs [d/entity entity d/as-of (fn [db# _#] db#) d/t->tx (fn [^long x#] (identity x#))
                  d/entid (fn [_# id#] id#) d/q fake-q
+                 ;; [DX-B7] Why: the HTTP route now checks the database's immutable layout before exposing legacy log.
+                 ;; Rejected: stubbing the guard false; model its exact index reads and reject unexpected ones.
+                 d/datoms (fn [_# index# & components#]
+                            (cond (= [index# (vec components#)] [:aevt [:triplex.scope/key]]) [{:e 999}]
+                                  (= [index# (vec components#)] [:eavt [999 :triplex.scope/rows-version]]) [{:v 2}]
+                                  :else (throw (ex-info "Unexpected fake-peer index read" {}))))
                  d/db (constantly {}) d/basis-t (constantly 105) d/log identity
                  d/tx-range (fn [_# start# end#] (filter #(<= start# (:t %) (dec end#)) pages))]
      ~@body))
@@ -191,3 +197,11 @@
               (is (= (if (= cut 105) ["105"] []) (mapv :t (:rows page))))
               (is (= (if (= cut 105) "106" "105") (:nextT page))))))
       (is (empty? @feed/wakeups))))))
+
+;; [DX-B7] Why: the bundled bin/run flattens -e arguments; a namespace entrypoint preserves the complete test command.
+;; Rejected: relying on shell expression quoting (the first feed gate stopped with EOF before running assertions).
+(defn -main [& _]
+  (let [{:keys [fail error] :as result} (run-tests 'triplex.gateway.feed-test)]
+    (println (json/write-str result))
+    (shutdown-agents)
+    (System/exit (if (zero? (+ fail error)) 0 1))))

@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.scope :as scope] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -11,7 +11,7 @@
   (let [handle (str (UUID/randomUUID)) now (System/currentTimeMillis)]
     (swap! snapshots #(assoc (into {} (filter (fn [[_ v]] (> (:expires v) now)) %)) handle
                             {:name name :db db :expires (+ now ttl-ms)}))
-    {:handle handle :position (codec/encode-value "long" (:v (first (d/datoms db :eavt (:scope (reach/config name db)) :triplex.scope/position))))}))
+    {:handle handle :position (codec/encode-value "long" (scope/head-position db (:scope (reach/config name db))))}))
 (defn release! [name handle]
   (when (= name (:name (@snapshots handle))) (swap! snapshots dissoc handle))
   {:released true})
@@ -228,7 +228,7 @@
       (locking state
         (loop []
           (when (and (< @state (dec sequence)) (< (System/nanoTime) deadline))
-            (.wait ^Object state 1) (recur)))
+            (.wait ^Object state (max 1 (quot (+ (- deadline (System/nanoTime)) 999999) 1000000))) (recur)))
         (when (< @state (dec sequence)) (stats/bump! [:commitOrder :timeouts] 1))
         (when (<= sequence @state) (stats/bump! [:commitOrder :late] 1))
         (let [_ (swap! timeline assoc :predecessorReady (System/nanoTime))
@@ -281,19 +281,25 @@
 (defn unavailable! [message]
   (throw (ex-info message {:status 409 :code "BasisNotAvailable"})))
 ;; [EXP-DA01] Why: future cuts must wait for publication, never silently answer from the head (Q89c/d). Rejected: treating P >= head as latest.
-(defn await-position [db p wait-ms refresh]
+(defn await-position [db p wait-ms refresh & [conn]]
   (if (nil? p) db
     (let [p (safe-position p) wait-ms (or wait-ms 500)
           _ (when-not (and (integer? wait-ms) (<= 1 wait-ms 2000)) (codec/invalid "Basis wait must be 1..2000 ms"))
-          deadline (+ (System/nanoTime) (* wait-ms 1000000))]
-      (loop [current db]
-        (if (<= p (head-position current)) current
-          (let [remaining (quot (- deadline (System/nanoTime)) 1000000)]
-            (when (<= remaining 0) (unavailable! "Requested position is beyond the available snapshot"))
-            (Thread/sleep 1)
-            (let [remaining (max 1 (quot (- deadline (System/nanoTime)) 1000000)) next (refresh remaining)]
-              (when (= next ::timeout) (unavailable! "Requested position did not become available before the deadline"))
-              (recur next))))))))
+          deadline (+ (System/nanoTime) (* wait-ms 1000000))
+          ready? #(<= p (head-position %))]
+      (if (ready? db) db
+        (let [next (refresh (max 1 (quot (- deadline (System/nanoTime)) 1000000)))]
+          (when (= next ::timeout) (unavailable! "Requested position did not become available before the deadline"))
+          (let [current (cond (ready? next) next
+                              conn (feed/await-db conn ready? deadline)
+                              ;; A held db cannot advance; wait only for its deadline, never replace its cut.
+                              :else (let [remaining (- deadline (System/nanoTime)) waiter (Object.)]
+                                      (when (pos? remaining)
+                                        (locking waiter (.wait waiter (quot (+ remaining 999999) 1000000))))
+                                      (refresh 1)))]
+            (when (or (= current ::timeout) (not (ready? current)))
+              (unavailable! "Requested position is beyond the available snapshot"))
+            current))))))
 ;; [EXP-DA01] Why: sparse logical positions map to the first containing physical transaction in logarithmic index work (Q89d). Rejected: rebuilding an O(commits) host map at each basis.
 (defn at-position [db p]
   (if (nil? p) db
@@ -308,7 +314,7 @@
 (defn read-db [name current input]
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
-               (if-let [staged (get input "staged")] (:db-after (d/with held (tx-data held staged))) held))
+               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(d/with held (tx-data held staged)))) held))
              current)
         p (get-in input ["basis" "recordedPosition"])]
     ;; [EXP-DA01] Why: a held value cannot advance even if another writer commits; refuse future requests against that exact pin. Rejected: replacing a held db with a newer one mid-query.
@@ -361,8 +367,9 @@
                (and (some? (get basis "recordedAt")) (> (:retracted_at r) (get basis "recordedAt")))))
     (assoc r :retracted_at nil :retracted_position nil :retract_tx_id nil) r))
 (defn legacy-read-rows [name current input]
+  (let [db (read-db name current input)]
+    (admission/execute admission/reads (fn []
   (let [basis (get input "basis") history (get input "history")
-        db (read-db name current input)
         route (get input "route" "history")
         _ (when-not (#{"history" "live"} route) (codec/invalid "Unknown read route"))
         attribute (if (= route "live") :f/live :f/subject)
@@ -394,14 +401,14 @@
       (stats/bump! [:scanPatterns scan-key :calls] 1)
       (stats/bump! [:scanPatterns scan-key :datoms] @visited)
       (swap! stats/counts update-in [:scanPatterns scan-key :maxDatoms] (fnil max 0) @visited))
-    result))
+    result)))))
 
 ;; [DX-B5-L2] Why: retain one visibility/masking rule for both physical layouts.
 ;; Rejected: interpreting interior logical positions as physical transaction cuts.
 (defn read-rows [name current input]
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
-               (if-let [staged (get input "staged")] (:db-after (d/with held (tx-data held staged))) held)) current)]
+               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(d/with held (tx-data held staged)))) held)) current)]
     (if-not (lean/enabled? db) (legacy-read-rows name current input)
       (let [basis (get input "basis") history (get input "history") route (get input "route" "history")
             pattern (get input "pattern") entities (when-let [ids (get input "entityIds")] (set ids))
@@ -409,6 +416,7 @@
             _ (assert-subject-route! db basis (if (= route "live") :f/live :f/subject))
             _ (when (and (= route "live") history) (unavailable! "Position-retired route cannot enumerate history"))
             _ (await-position db (get basis "recordedPosition") (get input "basisWaitMs") (fn [_] db))]
+        (admission/execute admission/reads (fn []
         {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                       (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
          :subjectAttribute (str (if (= route "live") :f/live :f/subject))
@@ -423,7 +431,7 @@
                                             [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]])))
                              ;; [DX-B5-L2] Why: an explicit imported row position cannot move its physical publication into an older snapshot.
                              ;; Rejected: filtering full head history only by row position (differs from legacy read-db).
-                             (lean/rows name (at-position db (get basis "recordedPosition")) input)))}))))
+                             (lean/rows name (at-position db (get basis "recordedPosition")) input)))}))))))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).
@@ -444,18 +452,17 @@
 ;; [DX-B6-5] Why: an ahead record time cannot prove peer freshness. Rejected: serving a stale local cut.
 (defn await-record-time [name conn db input]
   (let [r (get-in input ["basis" "recordedAt"])
-        maximum (fn [db] (or (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/max-recorded-at) Double/NEGATIVE_INFINITY))]
+        maximum (fn [db] (or (scope/max-recorded-at db (:e (first (d/datoms db :aevt :triplex.scope/key)))) Double/NEGATIVE_INFINITY))]
     (if (or (nil? r) (get input "handle") (<= r (maximum db))) db
       (let [wait-ms (get input "basisWaitMs" 50)
             _ (when-not (and (number? wait-ms) (<= 0 wait-ms 2000))
                 (throw (ex-info "Invalid basisWaitMs" {:status 400})))
             deadline (+ (System/nanoTime) (* wait-ms 1000000))]
         (stats/bump! [:recordTimeWaits] 1)
-        (loop [db db]
-          (cond (<= r (maximum db)) db
-                (< (System/nanoTime) deadline) (do (Thread/sleep 1) (recur (d/db conn)))
-                :else (do (stats/bump! [:recordTimeSyncs] 1)
-                          (let [synced (deref (d/sync conn) 2000 ::timeout)]
-                            (when (= ::timeout synced)
-                              (throw (ex-info "Record-time sync timed out" {:status 503 :code "BasisNotAvailable"})))
-                            synced))))))))
+        (let [current (feed/await-db conn #(<= r (maximum %)) deadline)]
+          (if (<= r (maximum current)) current
+            (do (stats/bump! [:recordTimeSyncs] 1)
+                (let [synced (deref (d/sync conn) 2000 ::timeout)]
+                  (when (= ::timeout synced)
+                    (throw (ex-info "Record-time sync timed out" {:status 503 :code "BasisNotAvailable"})))
+                  synced))))))))
