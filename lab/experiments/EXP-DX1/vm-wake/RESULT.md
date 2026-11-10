@@ -35,3 +35,11 @@ database. Two rounds each, the orchestrator holding the lock. Evidence: `~/Claud
 
 Also removed on 2026-11-10: the paused lane's `tx2-qlever-dev` container (volume retained). Its health check ran a query every
 5 s that took about 370 ms of one unpinned CPU, on whatever CPU the kernel chose, including the measurement CPUs.
+
+## Correction, 2026-11-10 13:30 UTC: the first `keep-awake.sh` never started anything
+
+The first version's `start` matched its own SSH command line, printed `already-running` and started no busy loops. DX-B7 found
+this and wrote the fixed version now in this directory (the marker is built indirectly; `status` checks the real scheduler
+policy and affinity and must print `running 8` and `"onePerCpu": true`). **After `start`, always run `status` and refuse to
+measure unless it shows 8 workers, one per CPU.** Runs before this correction that recorded `keepAwake: true` had none, except
+DX-B7's `step4-pull-c`, which used the fixed copy. The probe table above is unaffected: `run.sh --spin` starts its own loops.
