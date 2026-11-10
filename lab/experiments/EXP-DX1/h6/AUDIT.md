@@ -39,3 +39,7 @@ The new seed calibration may use an explicitly reported 128-command serial prefi
 Publication capacity now defaults to two native frames in flight. FIFO capacity is acquired before staging a frame and released after its ACK/failure, while submission tickets preserve page order. The real publisher unit observes peak two concurrent mock ACKs and ordered state operations. The callback may queue outside capacity, and that queue wall is recorded, never removed from activation wall.
 
 Scope audit: the initial H5-derived capture wrapper's unfiltered read-only `docker stats` included the idle `tx2-qlever-dev` resident. No lifecycle or write action touched that resident. Future wrappers collect stats only for the four exact owned engine containers. Original capture evidence is retained rather than rewritten.
+
+## Evidence-only summaries
+
+`seed-curve.mjs` preserves rounded cumulative progress rates and labels reconstructed interval timing approximate. `seed-journal.mjs` runs only after the attempt exit record exists, streams every logged command/ACK identity/position, records all mismatches, and binds exact input SHA256/bytes and its own source hash. Neither emits a population, fingerprint or acceptance PASS. `manifest.mjs` streams all raw evidence hashes with bounded buffers; its file/pin inventory is an inventory, not semantic acceptance.
