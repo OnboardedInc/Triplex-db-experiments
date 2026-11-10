@@ -56,7 +56,7 @@ export async function openTriples(
     const api = await import(dist("datomic", "index.js"));
     installDatomicPublication(api);
     if (typeof api.makeDatomicRuntime !== "function") throw Error("Datomic public runtime unavailable");
-    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
+    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, ...(process.env.TRIPLEX_DATOMIC_LAYOUT ? { layout: process.env.TRIPLEX_DATOMIC_LAYOUT } : {}), ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
   })() : await qualification.loadQualificationBackend(lane);
   if (lane === "qlever" && process.env["QLEVER_COMMIT_PATH"] === "broker") {
     const api = await import(dist("qlever", "index.js"));

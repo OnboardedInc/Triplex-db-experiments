@@ -58,6 +58,16 @@ export interface StorageAdapterService {
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
   ) => Effect.Effect<readonly import("../store/Triples.js").ReachResult[] | undefined, ReadError>;
+  // [DX-B5-L4] Why: sweep kernels need each assertion's true recorded position.
+  // Rejected: reconstructing positions from Triples or assigning the requested cut to every fact.
+  readonly getReachRows?: (
+    root: string,
+    basis: ResolvedTemporalBasis,
+  ) => Effect.Effect<readonly TripleRow[] | undefined, ReadError>;
+  readonly getReachRowsMany?: (
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
+  ) => Effect.Effect<readonly (readonly TripleRow[])[] | undefined, ReadError>;
   // [EXP-QH1-R4] Why: a whole-pull read (Triples.reach) that falls back level by level must read every level at one exact record
   // position, captured once at its start. Whether the adapter has such a position to offer depends on the caller's transaction:
   // inside one, reads already use the transaction's snapshot and must still see its staged writes, which an explicit committed position

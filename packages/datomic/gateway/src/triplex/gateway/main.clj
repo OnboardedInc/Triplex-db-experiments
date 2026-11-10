@@ -1,9 +1,9 @@
 (ns triplex.gateway.main
   (:require [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
-            [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
+            [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
-(set! *warn-on-reflection* true)
+(set! *warn-on-reflection* false)
 
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
 ;; [DX-H1] Why: SQL storage places the database before the JDBC query. Rejected: suffix concatenation (dev-only).
@@ -20,32 +20,34 @@
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
                      (when (= result ::timeout) (throw (ex-info "Sync deadline exceeded" {:status 503 :code "SyncTimeout"}))) result))
 (def scope-name scope/name-for)
-(defn stored-scope [db] (when (d/entid db :triplex.scope/key) (d/q '[:find ?s . :where [_ :triplex.scope/key ?s]] db)))
+(defn stored-scope [db] (when (d/entid db :triplex.scope/key) (:v (first (d/datoms db :aevt :triplex.scope/key)))))
 (defn assert-scope [db scope]
   (when-let [existing (stored-scope db)]
     (when-not (= existing scope) (throw (ex-info "Database name collision" {:status 409 :code "ScopeCollision"})))))
-(defn initialize-scope! [uri scope]
+(defn initialize-scope! [uri scope layout]
   ;; [EXP-DA01] Why: a stale first opener must never reset a writer's position. Rejected: check-then-upsert of the scope header (concurrent initialization race).
   (try
     @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
-        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version 2 :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}])
+        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version (if (= layout "lean") 3 2) :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}])
     (catch Exception e
       (let [current (sync-db uri)]
         (assert-scope current scope)
         (when-not (stored-scope current) (throw e))))))
-(defn create-scope! [base scope]
+(defn create-scope! [base scope layout]
+  (when-not (#{"legacy" "lean"} layout) (codec/invalid "Unknown layout"))
   (let [name (scope-name scope) uri (db-uri name) created (d/create-database uri) conn (connection uri)]
     (assert-scope (sync-db uri) scope)
     (when-not (stored-scope (sync-db uri))
       @(d/transact conn schema/schema)
       (assert-scope (sync-db uri) scope)
-      (initialize-scope! uri scope))
+      (initialize-scope! uri scope layout))
     (when-not (= schema/schema-hash (:triplex.scope/schema-hash (d/entity (sync-db uri) [:triplex.scope/key scope])))
       @(d/transact conn schema/schema)
       @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))
     (commit/install! conn scope)
-    {:db name :created created :schemaHash schema/schema-hash}))
+    (cond-> {:db name :created created :schemaHash schema/schema-hash}
+      (lean/enabled? (d/db conn)) (assoc :layout "lean"))))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (db-uri name)]
     (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))
@@ -58,10 +60,10 @@
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
   (let [db (d/db (connection (db-uri name))) scope (stored-scope db)]
     (when-not scope (throw (ex-info "Scope not initialized" {:status 409 :code "ScopeUninitialized"})))
-    (let [entity (d/entity db [:triplex.scope/key scope])]
+    (let [entity (d/entid db [:triplex.scope/key scope])]
       {:t (codec/encode-value "long" (d/basis-t db))
-       :position (codec/encode-value "long" (:triplex.scope/position entity))
-       :recordedAt nil :schemaHash (:triplex.scope/schema-hash entity)})))
+       :position (codec/encode-value "long" (storage/value db entity :triplex.scope/position))
+       :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)})))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
@@ -105,7 +107,7 @@
       (do (d/db (connection (db-uri "tx2-health")))
           (response 200 {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}))
       (and (= :post request-method) (= "/v1/db/create" uri))
-      (response 200 (create-scope! uri-template (get (request-json body) "scope")))
+      (response 200 (let [input (request-json body)] (create-scope! uri-template (get input "scope") (get input "layout" "legacy"))))
       (and (= :post request-method) (= "/v1/db/delete" uri))
       (response 200 (delete-scope! uri-template (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
@@ -115,7 +117,9 @@
             params (into {} (map (fn [part] (let [[k v] (clojure.string/split part #"=" 2)]
                                              (let [^String encoded (or v "")] [k (java.net.URLDecoder/decode encoded "UTF-8")])))
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
-        (response 200 (assoc (feed/log-page (connection (db-uri name)) params) :database name)))
+        (let [conn (connection (db-uri name))]
+          (when (lean/enabled? (d/db conn)) (lean/unsupported! "log"))
+          (response 200 (assoc (feed/log-page conn params) :database name))))
       (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime) db-uri (db-uri name)]
         (try (timed start (response 200 (storage/commit! name (connection db-uri) (d/db (connection db-uri)) input)))
@@ -157,14 +161,14 @@
             "transact" (try (storage/commit! name conn db input)
                          (finally (when (get input "release") (storage/release! name (get input "handle")))))
             "read" (storage/read-rows name db input)
-            "q" (query/run name db input)
+            "q" (do (when (lean/enabled? (or db (storage/held-db name (get input "handle")))) (lean/unsupported! "q")) (query/run name db input))
             "operation" (storage/operation db id)
             "claim" (let [cut (storage/at-position db (get input "position"))
-                          claim (d/entity cut [:triplex.claim/command-id (get input "commandId")])]
-                      {:txId (:triplex.claim/tx-id claim)}))))
+                          claim (d/entid cut [:triplex.claim/command-id (get input "commandId")])]
+                      {:txId (when claim (storage/value cut claim :triplex.claim/tx-id))}))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
-                                {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e)}))))
+                                {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (:maximum (ex-data e)) :route (:route (ex-data e))}))))
 (defn -main [& _]
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.

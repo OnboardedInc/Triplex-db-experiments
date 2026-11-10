@@ -15,6 +15,7 @@ import { decodeRowText, decodeRowTextColumns } from "./rowText.js";
 
 export interface CachedEntity {
   readonly rev: number;
+  readonly storedRows: readonly TripleRow[];
   readonly rows: readonly Triple[];
 }
 export interface ReachWire {
@@ -40,12 +41,14 @@ export function decodeEntity(
   wire: unknown[],
   observe?: (row: TripleRow) => void,
 ): CachedEntity {
+  const storedRows: TripleRow[] = [];
   const rows = wire.map((values) => {
     const row =
       typeof values === "string" ? decodeRowText(values) : decodeRowTextColumns(values, "2");
     if (row.entity_id !== id) throw new TypeError("Reach entity binding mismatch");
     // Validate the value domain exactly once; retain the decoded value in the cached Triple.
     const value = decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));
+    storedRows.push(freeze(row));
     observe?.(row);
     return freeze({
       id: row.id,
@@ -66,7 +69,8 @@ export function decodeEntity(
   rows.sort((a, b) => a.recordedAt - b.recordedAt || a.id.localeCompare(b.id));
   if (new Set(rows.map((row) => row.id)).size !== rows.length || (rows.length === 0 && rev !== 0))
     throw new TypeError("Invalid reach row set");
-  return { rev, rows: Object.freeze(rows) };
+  storedRows.sort((a, b) => a.recorded_at - b.recorded_at || a.id.localeCompare(b.id));
+  return { rev, rows: Object.freeze(rows), storedRows: Object.freeze(storedRows) };
 }
 // [DX-B2-N2] Why: the core's BFS ordering depends on recordedAt/id order, not EAVT order.
 // Rejected: concatenating gateway entities in datom visit order (changes ref visitation).
@@ -101,4 +105,28 @@ export function reachResponse(
     todo = next;
   }
   return { triples, hops };
+}
+
+// [DX-B5-L4] Why: reuse the identical traversal and filtering order for triples and physical rows.
+// Rejected: a second traversal whose valid-time or BFS ordering could drift.
+// [DX-B5-L4] Why: a batch builds this index once, not once for each root in its shared graph.
+// Rejected: O(roots * union rows) tuple/Map allocation (508 ms in the first 64-root diagnostic).
+export function reachRowIndex(entities: ReadonlyMap<string, CachedEntity>) {
+  return new Map(
+    [...entities.values()].flatMap((entity) =>
+      entity.storedRows.map((row) => [row.id, row] as const),
+    ),
+  );
+}
+export function reachRowsResponse(
+  root: string,
+  entities: ReadonlyMap<string, CachedEntity>,
+  basis: ResolvedTemporalBasis,
+  byId: ReadonlyMap<string, TripleRow> = reachRowIndex(entities),
+) {
+  return reachResponse(root, entities, basis).triples.map((triple) => {
+    const row = byId.get(triple.id);
+    if (!row) throw new TypeError("Missing stored reach row");
+    return row;
+  });
 }

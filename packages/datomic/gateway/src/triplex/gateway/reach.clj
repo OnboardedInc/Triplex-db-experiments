@@ -1,7 +1,7 @@
 (ns triplex.gateway.reach
   (:require [datomic.api :as d])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap]))
-(set! *warn-on-reflection* true)
+(set! *warn-on-reflection* false)
 
 ;; [DX-B2-N1] Why: immutable datoms and cached numeric identifiers keep the reach path at index cost.
 ;; Rejected: entity maps, per-row keyword lookup and a second seek for overflow.
@@ -47,7 +47,7 @@
               (= a (:version cfg)) (aset header 1 (long (.v datom)))
               (= a (:irregular cfg)) (when (.v datom) (aset header 2 1))
               (= a (:position-regular cfg)) (when (.v datom) (aset header 3 1)))))
-    (when-not (= 2 (aget header 1)) (decline! "rows-version"))
+    (when-not (#{2 3} (aget header 1)) (decline! "rows-version"))
     ;; [DX-B3-M3] Why: parallel commits can reorder timestamps while positions remain an exact prefix.
     ;; Rejected: declining position-only/current pulls after a timestamp regression (needless history scans).
     ;; Older scopes without the explicit position proof retain the conservative fallback.
@@ -82,6 +82,8 @@
               (.put lru session m) m))))))
 (defn read-entity [name db cfg id valid ^longs counts]
   (let [valid (double valid) eid (entity-id db name id) texts (ArrayList.) refs (ArrayList.) rev (long-array 1)
+        retired (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
+                          (d/datoms db :eavt (or eid 0) :triplex.entity/retired)))
         row-a (long (:row cfg)) overflow-a (long (:overflow cfg)) rev-a (long (:rev cfg))]
     (when eid
       (let [it (.iterator ^Iterable (d/datoms db :eavt eid))]
@@ -90,7 +92,7 @@
             (cond
               (= a overflow-a) (when (.v datom) (decline! "row-overflow"))
               (= a rev-a) (aset rev 0 (long (.v datom)))
-              (= a row-a)
+              (and (= a row-a) (not (let [^String text (.v datom)] (retired (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))))
               (let [^String text (.v datom)
                     start (+ 5 (Integer/parseInt text 1 5 16))
                     ref-start (+ start 36) ref-size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)]
@@ -117,9 +119,15 @@
   (try
     (let [[db position t] (select-db name current (get input "basis"))
           cfg (config name current) valid (double (get-in input ["basis" "validAt"]))
-          roots (get input "roots") entities (LinkedHashMap.) closures (ArrayList.) counts (long-array 1)
+          roots (get input "roots")
+          row-page? (true? (get input "rowPage"))
+          entity-limit (if row-page? 50000 5000)
+          entities (LinkedHashMap.) closures (ArrayList.) counts (long-array 1)
           ^ConcurrentHashMap remembered (session-map name (get input "session")) out (StringBuilder. 65536)]
       (when-not (and (vector? roots) (<= 1 (count roots) 5000)) (decline! "roots"))
+      ;; [DX-B5-L5] Why: 64 real W0 subjects exceed 10k answer entities; legacy triple requests retain their bound.
+      ;; Rejected: silently falling back to many requests for a normal W0 page, or unbounded batch graphs.
+      (when (and row-page? (> (count roots) 64)) (decline! "row-page-roots"))
       (doseq [root roots]
         (when-not (string? root) (decline! "root"))
         (let [queue (ArrayDeque.) seen (HashSet.) order (ArrayList.)]
@@ -129,7 +137,7 @@
                   entry (or (.get entities id)
                             (let [value (read-entity name db cfg id valid counts)]
                               (.put entities id value)
-                              (when (> (.size entities) 5000) (decline! "entity-budget")) value))
+                              (when (> (.size entities) entity-limit) (decline! "entity-budget")) value))
                   ^ArrayList refs (nth entry 3) it (.iterator refs)]
               (.add order id)
               (while (.hasNext it)

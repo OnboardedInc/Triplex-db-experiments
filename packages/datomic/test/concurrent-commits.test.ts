@@ -1,3 +1,4 @@
+import { orderDiagnostics } from "../src/CommitOrder.js";
 import { randomUUID } from "node:crypto";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { describe, expect, it } from "vitest";
@@ -84,6 +85,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         );
         const seen: {
           position: number;
+          instant: number;
           txId: string;
           subject: number;
           step: number;
@@ -145,6 +147,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
               stamp++;
               seen.push({
                 position: result.position,
+                instant: result.instant,
                 txId: result.txId,
                 subject,
                 step,
@@ -155,7 +158,10 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
           }),
         );
         expect(conflicts).toBe(0);
-        expect(begins).toBe(3200);
+        // Clock retries are reported separately from subject serialization conflicts.
+        expect(begins).toBe(
+          3200 + s.handles.reduce((n, h) => n + h.client.commitDiagnostics.clockReplays, 0),
+        );
         expect(resolutions).toBe(0);
         seen.sort((a, b) => a.position - b.position);
         expect(seen.map((x) => x.position)).toEqual(
@@ -198,20 +204,74 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
             x.stampId,
           );
         }
-        const order = await h.client.request<{ rows: { v: number | string }[][] }>(
-          "POST",
-          `/v1/db/${s.db}/q`,
-          {
-            edn: "[:find ?p ?tx :in $ $rules :where [?tx :triplex.tx/position ?p]]",
-            relations: [],
-          },
+        // [DX-B5-L0] Why: every public receipt instant must retain the exact fast record-time cut.
+        // Rejected: checking only position cuts (which still work on an irregular scope).
+        for (const x of seen) {
+          const basis = { validAt: 100000, recordedAt: x.instant },
+            root = ids.placement(x.subject);
+          const fastRows = await Effect.runPromise(h.adapter.getReachRows!(root, basis));
+          expect(fastRows).toBeDefined();
+          const slowRows = [],
+            visited = new Set([root]);
+          let todo = [root];
+          while (todo.length) {
+            const map = await Effect.runPromise(h.adapter.getByEntities(todo, basis)),
+              next: string[] = [];
+            for (const entity of todo)
+              for (const row of map.get(entity) ?? []) {
+                slowRows.push(row);
+                if (row.value_type === "ref" && !visited.has(row.value_string!)) {
+                  visited.add(row.value_string!);
+                  next.push(row.value_string!);
+                }
+              }
+            todo = next;
+          }
+          expect(fastRows).toEqual(slowRows);
+        }
+        const clockReplays = s.handles.reduce(
+          (n, h) => n + h.client.commitDiagnostics.clockReplays,
+          0,
         );
-        expect(order.rows).toHaveLength(3201);
-        for (const row of order.rows.sort((a, b) => Number(a[0]!.v) - Number(b[0]!.v))) {
-          expect(BigInt(row[1]!.v)).toBeGreaterThan(priorT);
-          priorT = BigInt(row[1]!.v);
+        console.log(
+          JSON.stringify({
+            clients: 16,
+            commands: seen.length,
+            clockReplays,
+            declines: h.client.reachDiagnostics.declines,
+          }),
+        );
+
+        expect(h.client.reachDiagnostics.declines).toEqual({});
+        if (process.env.DATOMIC_TEST_LAYOUT === "lean") {
+          await expect(
+            h.client.request("POST", `/v1/db/${s.db}/q`, {
+              edn: "[:find ?e :where [?e :triplex.tx/position _]]",
+              relations: [],
+            }),
+          ).rejects.toMatchObject({ code: "LayoutUnsupported", route: "q" });
+        } else {
+          const order = await h.client.request<{ rows: { v: number | string }[][] }>(
+            "POST",
+            `/v1/db/${s.db}/q`,
+            {
+              edn: "[:find ?p ?tx :in $ $rules :where [?tx :triplex.tx/position ?p]]",
+              relations: [],
+            },
+          );
+          expect(order.rows).toHaveLength(3201);
+          for (const row of order.rows.sort((a, b) => Number(a[0]!.v) - Number(b[0]!.v))) {
+            expect(BigInt(row[1]!.v)).toBeGreaterThan(priorT);
+            priorT = BigInt(row[1]!.v);
+          }
         }
       } finally {
+        console.log(
+          JSON.stringify({
+            orderDiagnostics,
+            clocks: s.handles.map((h) => h.client.commitDiagnostics),
+          }),
+        );
         await s.close();
       }
     }, 900000);

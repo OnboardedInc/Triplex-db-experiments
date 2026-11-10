@@ -14,6 +14,8 @@ export class DatomicHttpError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    readonly maximum?: number,
+    readonly route?: string,
   ) {
     super(message);
   }
@@ -32,6 +34,7 @@ export interface DatomicDatabase {
   db: string;
   created: boolean;
   schemaHash: string;
+  layout?: "lean" | "legacy";
 }
 export interface DatomicBasis {
   t: TaggedValue;
@@ -77,7 +80,10 @@ export class DatomicClient {
     optimisticFallbacks: 0,
     conflicts: 0,
     replays: 0,
+    clockReplays: 0,
   };
+  private readonly layouts = new Map<string, "lean" | "legacy">();
+  private readonly sentCallbacks = new Map<string, () => void>();
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
   readonly reachCache = new Map<string, Map<string, CachedEntity>>();
@@ -108,6 +114,7 @@ export class DatomicClient {
   }
   readonly rowObservers = new Set<(db: string, row: TripleRow) => void>();
   close(): void {
+    this.layouts.clear();
     this.rowObservers.clear();
     this.agent.destroy();
   }
@@ -116,8 +123,16 @@ export class DatomicClient {
     path: string,
     body?: unknown,
     timeoutMs = this.timeoutMs,
+    onSent?: () => void,
   ): Promise<T> {
     const started = performance.now();
+    // [DX-B5-L0] Why: legacy request wrappers forward four arguments; recover the callback from the bound operation.
+    // Rejected: requiring every instrumentation wrapper to forward a new positional argument.
+    if (!onSent && path.endsWith("/transact") && body && typeof body === "object") {
+      const operation = (body as { operationId?: unknown }).operationId;
+      if (typeof operation === "string")
+        onSent = this.sentCallbacks.get(`${path.split("/")[3]}/${operation}`);
+    }
     // [EXP-DX1] Why: a known commit t lets lagging peers wait locally; no transactor round trip.
     // Rejected: d/sync without t and the old ten-millisecond poll.
     if (body && typeof body === "object" && this.lastCommit) {
@@ -169,6 +184,8 @@ export class DatomicClient {
                     status,
                     String(data["code"] ?? "GatewayError"),
                     String(data["message"] ?? "Gateway request failed"),
+                    typeof data["maximum"] === "number" ? data["maximum"] : undefined,
+                    typeof data["route"] === "string" ? data["route"] : undefined,
                   ),
                 );
               else {
@@ -204,12 +221,21 @@ export class DatomicClient {
       req.on("error", (error) =>
         reject(new DatomicTransportError(error.message, { cause: error })),
       );
+      if (onSent) {
+        req.once("finish", onSent);
+        req.once("error", onSent);
+      }
       req.end(bytes);
     });
   }
   // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
   // Rejected: accepting a missing reference as an empty entity.
-  async reachEntities(db: string, roots: readonly string[], basis: ResolvedTemporalBasis) {
+  async reachEntities(
+    db: string,
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
+    rowPage = false,
+  ) {
     if ([...this.reachCache.values()].reduce((n, cache) => n + cache.size, 0) > 500000) {
       this.reachSession = randomUUID();
       this.reachCache.clear();
@@ -221,6 +247,7 @@ export class DatomicClient {
         {
           ...(roots.length === 1 ? { root: roots[0] } : { roots }),
           basis,
+          ...(rowPage ? { rowPage: true } : {}),
           session: this.reachSession,
           ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
         },
@@ -303,8 +330,12 @@ export class DatomicClient {
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");
   }
-  create(scope: string): Promise<DatomicDatabase> {
-    return this.request("POST", "/v1/db/create", { scope });
+  async create(scope: string, layout: "lean" | "legacy" = "legacy"): Promise<DatomicDatabase> {
+    const result = await this.request<DatomicDatabase>("POST", "/v1/db/create", { scope, layout });
+    // [DX-B5-L6] Why: compact writes follow the actual immutable scope layout, including a reopened scope.
+    // Rejected: trusting only the requested layout (could compact a pre-existing legacy scope).
+    this.layouts.set(result.db, result.layout === "lean" ? "lean" : "legacy");
+    return result;
   }
   delete(scope: string): Promise<{ db: string; deleted: boolean }> {
     return this.request("POST", "/v1/db/delete", { scope });
@@ -387,6 +418,10 @@ export class DatomicClient {
   async transact(
     db: string,
     input: {
+      onSent?: () => void;
+      clientId?: string;
+      sendSequence?: number;
+      replaySafe?: boolean;
       sourceK: number | null;
       span?: number;
       entities?: readonly string[];
@@ -401,23 +436,58 @@ export class DatomicClient {
       handle?: string;
       release?: boolean;
     },
+    onSent?: () => void,
   ): Promise<unknown> {
     const encodeStart = performance.now();
+    // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
+    // Rejected: a third-argument-only callback (the NS publication observer drops it).
+    const { onSent: inputSent, ...wireInput } = input;
+    onSent ??= inputSent;
+    const compact = this.layouts.get(db) === "lean";
+    const retirementColumns = [
+      "id",
+      "entity_id",
+      "entity_type",
+      "retracted_at",
+      "retracted_position",
+      "retract_tx_id",
+    ];
+    const rows = compact
+      ? input.rows
+          .filter((row) => row.retracted_at !== null)
+          .map((row) => {
+            const encoded = encodeRow(row);
+            return Object.fromEntries(retirementColumns.map((column) => [column, encoded[column]]));
+          })
+      : input.rows.map(encodeRow);
     const body = {
-      ...input,
-      rows: input.rows.map(encodeRow),
+      ...wireInput,
+      rows,
+      ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
       rowTexts: Object.fromEntries(
         input.rows
-          .filter((r) => input.newIds.includes(r.id) && r.retracted_at === null)
-          .map((r) => [r.id, encodeRowText(r)]),
+          .filter((r) => input.newIds.includes(r.id))
+          .map((r) => [
+            r.id,
+            encodeRowText({
+              ...r,
+              retracted_at: null,
+              retracted_position: null,
+              retract_tx_id: null,
+            }),
+          ]),
       ),
     };
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
-    const response = await this.request<{
-      t?: TaggedValue;
-      position?: TaggedValue;
-      delta?: number;
-    }>("POST", `/v1/db/${db}/transact`, body);
+    const sendKey = `${db}/${input.operationId}`;
+    if (onSent) this.sentCallbacks.set(sendKey, onSent);
+    let response: { t?: TaggedValue; position?: TaggedValue; delta?: number };
+    try {
+      response = await this.request("POST", `/v1/db/${db}/transact`, body, this.timeoutMs);
+    } finally {
+      this.sentCallbacks.delete(sendKey);
+      onSent?.();
+    }
     if (response.t && response.position) {
       const p = validateTagged(response.position);
       const position = Number(p.v);

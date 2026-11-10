@@ -1,0 +1,11 @@
+{
+  "kind": "developer-evidence-byte-index",
+  "utc": "2026-11-10T05:31:45.973729+00:00",
+  "headBeforeIndexCommit": "8d3ff3ac6e6e1344158af6b1fb2a3324ac00f5cd",
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5",
+  "files": 4842,
+  "bytes": 632697190,
+  "manifestSha256": "a7e61ae3e2795d756c097ed4ffbeeedaf12bf41043efad3b4e96b6a60f6ec0b9",
+  "readbackFiles": 4842,
+  "limitations": "Integrity and attempt binding only; no semantic acceptance or complete source-coverage claim."
+}
