@@ -117,6 +117,12 @@ try:
  durability=json.loads(command(sql+['-d','datomic','-Atc',"SELECT json_build_object('fsync',current_setting('fsync'),'synchronous_commit',current_setting('synchronous_commit'),'wal_sync_method',current_setting('wal_sync_method'),'full_page_writes',current_setting('full_page_writes'))"]))
  assert all(durability[k]=='on' for k in ['fsync','synchronous_commit','full_page_writes'])
  (run/'durability.json').write_text(json.dumps(durability,indent=2))
+ listeners=command(['/usr/sbin/lsof','-nP','-a','-p',','.join(str(c.pid) for c in children),'-iTCP','-sTCP:LISTEN','-Fn'])
+ (run/'listeners.txt').write_text(listeners)
+ for line in listeners.splitlines():
+  if line.startswith('n'):
+   host,port=line[1:].rsplit(':',1)
+   assert host=='127.0.0.1' and 28400<=int(port)<=28499, 'unexpected listener: '+line
  (run/'policy.txt').write_text(command(['ps','-o','pid,ppid,stat,ni,flags,command','-p',','.join(str(c.pid) for c in children)]))
  ready=dict(prefix=prefix,variant=variant,keepAwake=False,writeUrl=f'http://127.0.0.1:{base+3}',readUrl=f'http://127.0.0.1:{base+4}',gatewaySourceHash=gh,originalGatewaySourceHash=original_hash,durability=durability,cpuDenominator='used process CPU cores; no quota',pids={r:json.loads((run/(r+'.pid.json')).read_text()) for r in ['pg','tx','gw-w','gw-r']})
  (run/'ready.json').write_text(json.dumps(ready,indent=2));print(json.dumps(ready),flush=True)
