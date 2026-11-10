@@ -1,7 +1,7 @@
 # XN-S2 durable evidence index
 
 Root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/XN-S2/`.
-43 files, 92,838,963 bytes. All files are covered by the adjacent `SHA256SUMS`, with paths relative to that root.
+Initial Kafka run: 43 files, 92,838,963 bytes, covered by the adjacent `SHA256SUMS`, with paths relative to that root. The Postgres continuation has its own manifest below.
 The shipped `xtdb.jar` is 92,716,839 bytes and intentionally stays outside Git. No acceptance evidence is claimed.
 
 | Files | What they establish |
@@ -25,3 +25,23 @@ node lab/bin/heavy.mjs --label XN-S2-manifest-verify -- bash -c 'cd /Users/sam/C
 ```
 
 The report contains the measured limitations and observation audit. Source files in this directory are the standalone probes; no shared engine or lab tools were modified.
+
+## Postgres-backed log continuation
+
+Subdirectory: `postgres-log/`, **48 files, 1,224,662 bytes**, covered by `SHA256SUMS-postgres` relative to the same durable root. The original manifest and original runtime evidence were preserved.
+
+| Files under `postgres-log/` | Contents |
+| --- | --- |
+| `class-constants.json`, `class-constants-excerpt.txt`, `bundled-postgres.clj`, `resource-search.json` | Shipped classfile constants and bundled source; no Postgres log or object-store extension service registration; raw class index stays outside Git |
+| `source-binding.json`, `images.json`, `bytecode-container-id.txt`, `javap.txt`, `lock-owner.json`, `window-*.txt`, `keep-awake-start.txt` | First helper attempt: missing javap, retained; no broker started; keeper already running and not stopped |
+| `attempt2/source-binding.json`, `attempt2/images.json`, `attempt2/lock-owner.json`, `attempt2/window-*.txt`, `attempt2/keep-awake-start.txt` | Actual parser/reflection attempt bound to source commit `5c4d52dc0e70c67acd8374a037ef5da084c95b86`; keeper already running and not stopped |
+| `attempt2/introspect*` | Successful shipped-JVM interface, serializer-field and default-port observations; exact container metadata |
+| `attempt2/{log-types,storage-types,remote-fields,postgres-log,object-store-types}*` | Five parser failures, logs, exit statuses, creation IDs and final container inspections |
+| `indexer-first-check.txt`, `observation-index.json` | Retained timestamp-resolution check finding, then validated diagnostic index with exact helper SHA; no acceptance verdict |
+| `cleanup-{containers,volumes,networks}.txt`, `cleanup-observed-at.txt` | Fresh empty task-prefix listings |
+
+Verify the new manifest as well:
+
+```sh
+node lab/bin/heavy.mjs --label XN-S2-postgres-manifest-verify -- bash -c 'cd /Users/sam/Claude/Projects/triplex-db-2/evidence/XN-S2 && shasum -a 256 -c /Users/sam/projects/triplex-db-2/.claude/worktrees/xn-s2/lab/experiments/EXP-XN1/spike-s2/SHA256SUMS-postgres'
+```
