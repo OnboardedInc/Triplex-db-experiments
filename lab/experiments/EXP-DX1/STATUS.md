@@ -168,13 +168,32 @@ forward with it; the VM and its containers kept running. Restored without a rest
 ports). Consequence: every wall-clock number measured from the Mac so far includes that tunnel. From DX-H3 on, the driver runs in a
 container inside the VM.
 
+### DX-S3 (burst-tail attribution and configuration; `spike/DX-S3` 50efdb38, merged; report `lab/experiments/EXP-DX1/s3/REPORT.md`)
+
+55/s open-loop burst, legacy layout (median 249 datoms per commit), load generator on the Mac through the ssh tunnel.
+
+| Variant | Burst p50 / p99, no readers (worst of 3) | With 32 readers | Over 50 ms |
+| --- | --- | --- | --- |
+| V0 as DX-B3 | 14.4 / 76.8 ms | 16.1 / 100 ms | 191 of 9,873 |
+| V1 Postgres alone on a CPU with 2 GB | 15.8 / 67.1 | 21.6 / 688 | 164 |
+| V2 = V1 + index thresholds 768m/1536m, heaps 4 GB / 2.5 GB | 17.0 / 67.8 | 15.3 / 145 | 156 |
+| V3 = V2 + ZGC | 21.1 / 178 | 25.0 / 215 | 554 |
+
+- No configuration meets 10 / 50 ms. V2 removes index jobs and checkpoints from the burst; its transactor apply p99 is 8 to 14 ms at
+  about 0.4 cores, so the transactor is not saturated. The largest pauses line up with write-gateway full GCs. ZGC is worse.
+- Latency by command size in V2: 5-10 facts (mean 207 datoms) p50 14.6 ms; 11-25 (385) 18.9 ms; 26-50 (723) 26.7 ms. That is about
+  23 microseconds per datom over the whole path plus about 10 ms fixed in the burst (serial is 7.6 to 9 ms), so the burst also
+  pays for contention outside the transactor: one CPU for the write gateway, the client, the tunnel.
+- `up.sh` gained memory, heap, threshold, JVM and Postgres flags (defaults unchanged). V2's command line is the baseline for full runs.
+- Decision: the lean layout stands (5x fewer datoms cuts gateway, GC and apply work). After it lands, re-measure in the VM mode with
+  the write gateway on two CPUs.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-B5 | Lean layout (one row-text datom per row as system of record), commit-order rule for record times, rows from reach, differential test against legacy | `exp/DX-B5-lean-layout`, `.claude/worktrees/dx-b5` | `.../prompts/DX-B5.md` |
 | DX-H3 | Driver inside the VM, cgroup CPU sampling, publication observer fix, first complete NS report on lane D | `exp/DX-H3-in-vm-harness`, `.claude/worktrees/dx-h3` | `.../prompts/DX-H3.md` |
-| DX-S3 | Burst-tail attribution and configuration variants | `spike/DX-S3`, `.claude/worktrees/dx-s3` | `.../prompts/DX-S3.md` |
 
 After these: merge; run NS at 10k on a lean scope in the VM mode; seed W0 and run P5 with the lean page reader; then the asynchronous
 reifier for native Datalog on lean scopes; then one independent review and receipts.
