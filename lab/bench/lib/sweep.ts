@@ -76,7 +76,7 @@ export async function runW0Sweep(o: SweepOptions) {
   if (
     !Number.isInteger(o.workers) ||
     o.workers < 1 ||
-    o.workers > 4 ||
+    o.workers > 8 ||
     new Set(o.subjects).size !== o.subjects.length ||
     canonical([...o.subjects].sort()) !== canonical(o.subjects)
   )
@@ -152,6 +152,8 @@ export async function runW0Sweep(o: SweepOptions) {
           while (o.controller && (o.controller.limit === 0 || workerIndex >= o.controller.limit))
             await new Promise((r) => setTimeout(r, 10));
           if (index >= remaining.length) break;
+          const assignedAtMs = performance.now() - sweepStarted;
+          const workerCpuStart = process.cpuUsage();
           const pageIndex = remaining[index++]!,
             subjects = o.subjects.slice(pageIndex * 64, (pageIndex + 1) * 64);
           const page: any = await new Promise((res, rej) => {
@@ -160,6 +162,7 @@ export async function runW0Sweep(o: SweepOptions) {
             worker.postMessage({
               type: "page",
               id: pageIndex,
+              dispatchedAtEpochMs: performance.timeOrigin + performance.now(),
               subjects,
               basis: o.basis,
               release: o.release ?? "R2",
@@ -175,7 +178,8 @@ export async function runW0Sweep(o: SweepOptions) {
           if (epoch !== undefined && page.epoch !== epoch)
             throw new Error("G7 epoch changed; resume requires fresh read");
           epoch = page.epoch;
-          const decodeStart = performance.now();
+          const decodeStart = performance.now(),
+            controllerCpuStart = process.threadCpuUsage();
           const records = JSON.parse(new TextDecoder().decode(page.bytes));
           if (
             canonical(records.map((r: any) => r.subject)) !== canonical(subjects) ||
@@ -188,6 +192,9 @@ export async function runW0Sweep(o: SweepOptions) {
           )
             throw new Error("G4/G7 worker coverage or basis mismatch");
           const controllerDecodeMs = performance.now() - decodeStart;
+          const controllerDecodedCpu = process.threadCpuUsage(controllerCpuStart);
+          const controllerDecodeCpuMs =
+            (controllerDecodedCpu.user + controllerDecodedCpu.system) / 1000;
           await o.beforePublish?.();
           const callbackStart = performance.now();
           const callbackTiming = await o.onPage(records, pageIndex);
@@ -204,11 +211,20 @@ export async function runW0Sweep(o: SweepOptions) {
             worker: workerIndex,
             timing: {
               ...page.timing,
+              assignedAtMs,
+              workerWaitMs: assignedAtMs,
+              completedAtMs: performance.now() - sweepStarted,
+              assignedAtEpochMs: performance.timeOrigin + sweepStarted + assignedAtMs,
+              clientProcessCpuMsOverlapping:
+                (process.cpuUsage(workerCpuStart).user + process.cpuUsage(workerCpuStart).system) /
+                1000,
               controllerDecodeMs,
+              controllerDecodeCpuMs,
               callbackWallMs,
               ...(callbackTiming ?? {}),
             },
             cpu: page.cpu,
+            cgroupIntervalMicros: page.cgroupIntervalMicros,
             cpuScope: page.cpuScope,
             elu: page.elu,
             position: page.position,

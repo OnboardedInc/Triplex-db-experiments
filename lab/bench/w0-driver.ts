@@ -38,7 +38,7 @@ export async function runW0Driver(argv: string[]) {
   fs.mkdirSync(dir, { recursive: true });
   if (fs.existsSync(output)) throw new Error("attempt output already exists");
   const attempt = randomUUID(),
-    scope = "p5-" + attempt;
+    scope = opt("scope", "p5-" + attempt)!;
   const startedAt = new Date().toISOString();
   const report: any = latencyReceipt({
     format: "triplex-db-2/p5-screening/1",
@@ -55,6 +55,7 @@ export async function runW0Driver(argv: string[]) {
     status: "RUNNING",
     classification: "DIAGNOSTIC",
     acceptance: false,
+    cacheMaxEntities: Number(process.env.TX2_W0_CACHE_MAX_ENTITIES ?? "0"),
     gates: {},
     limitations: [],
     sources: {},
@@ -90,6 +91,8 @@ export async function runW0Driver(argv: string[]) {
         ]
       : []),
     "lab/bench/lib/w0-outbox.ts",
+    "lab/bench/lib/w0-http.ts",
+    "lab/bench/lib/w0-cache.ts",
     "lab/bench/lib/w0-gates.ts",
     "lab/bench/lib/w0-oracle.py",
     "lab/bench/lib/trace.ts",
@@ -99,8 +102,17 @@ export async function runW0Driver(argv: string[]) {
     report.sources[f] = sha256(fs.readFileSync(f));
   const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
   save();
-  process.env["TX2_P5_CLOCK_START"] = String(V_W0);
+  // [DX-H5] Why: replaying deterministic scope IDs on a sealed store reuses seed transaction/triple IDs.
+  // Rejected: reopening the seed's deterministic generator (collides); rewriting stored IDs or positions (breaks G0).
+  if (opt("seed-receipt")) {
+    delete process.env.TX2_P5_CLOCK_START;
+    report.runtimeMode = "live-clock-fresh-ids-for-restored-scope";
+  } else {
+    process.env["TX2_P5_CLOCK_START"] = String(V_W0);
+    report.runtimeMode = "fixed-W0-seed-clock-and-ids";
+  }
   if (lane === "datomic") process.env.TX2_W0_POINT_JOURNAL = "1";
+  if (opt("seed-receipt")) process.env.TX2_W0_RESTORE_INDEXED_JOURNAL = "1";
   report.pins = await loadW0Pins();
   const lease = await measurementLease();
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
@@ -111,7 +123,36 @@ export async function runW0Driver(argv: string[]) {
   let expectedState: any = emptyWireState();
   try {
     console.error(`[P5] ${attempt} seeding ${N}`);
-    report.seed = await seedW0(comp, N, path.join(dir, "seed.ndjson"), lease.checkpoint);
+    // [DX-H5] Why: a restored seed re-runs all content/count/fingerprint gates before timing.
+    // Rejected: treating a sealed volume or historical G0 status as fresh correctness evidence.
+    const seedReceipt = opt("seed-receipt");
+    if (seedReceipt) {
+      const bytes = fs.readFileSync(seedReceipt);
+      const previous = JSON.parse(bytes.toString());
+      if (
+        previous.scope !== scope ||
+        previous.N !== N ||
+        previous.lane !== lane ||
+        previous.composition !== composition ||
+        previous.status !== "G0-PASS"
+      )
+        throw Error("sealed seed binding mismatch");
+      if (previous.seed.mapper !== sha256(fs.readFileSync("lab/bench/lib/w0-seed.ts")))
+        throw Error("sealed seed mapper changed");
+      report.seed = previous.seed;
+      report.seedRestore = {
+        receiptSha256: sha256(bytes),
+        path: seedReceipt,
+        freshFingerprintRequired: true,
+      };
+    } else
+      report.seed = await seedW0(
+        comp,
+        N,
+        path.join(dir, "seed.ndjson"),
+        lease.checkpoint,
+        Number(opt("seed-concurrency", "1")),
+      );
     save();
     await lease.checkpoint(true);
     requireCounts(await comp.storeCounts(), report.seed.counts);
@@ -142,6 +183,7 @@ export async function runW0Driver(argv: string[]) {
     };
     const b0 = { position: report.seed.basis.tx, validAt: V_W0 };
     console.error("[P5] G0 preview sweep");
+    const previewMetrics: any[] = [];
     const gate = await fingerprintSweep(
       {
         endpoint: comp.backend.url,
@@ -155,19 +197,29 @@ export async function runW0Driver(argv: string[]) {
         scope,
         comp,
         close: async () => {},
-        observePage: (records, page) =>
-          fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records)),
+        observePage: (records, page, metrics) => {
+          fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records));
+          previewMetrics.push({ page, ...metrics });
+        },
       }),
     );
     const fingerprint = gate.observed,
       count = N;
-    report.preview = { ...gate, metrics: [], cpuScope: "fingerprint-controller-process" };
+    report.preview = {
+      ...gate,
+      metrics: previewMetrics,
+      cpuScope: "main-thread-no-live-preview",
+      note: "Preview reader uses the main/write gateway; fingerprint bytes and count gates are unchanged.",
+    };
     requireFingerprint(fingerprint, expected, N);
     report.seed.fingerprint = fingerprint;
     report.gates.G0 = { status: "PASS", subjects: count, fingerprint };
     save();
     await lease.checkpoint(true);
     if (argv.includes("--g0-only")) {
+      for (const [file, hash] of Object.entries(report.sources))
+        if (sha256(fs.readFileSync(file)) !== hash)
+          throw Error("source changed before seal: " + file);
       report.status = "G0-PASS";
       report.limitations.push("Activation and screening rounds not requested");
       return report;
@@ -253,7 +305,23 @@ export async function runW0Driver(argv: string[]) {
       throw new Error("G3 insufficient positive mutation witnesses");
     const coverage = new Set<string>(),
       published = new Map<string, any>();
+    // [DX-H5] Why: Python reconcile CPU is production-path gate cost inside the same VM/cgroup.
+    // Rejected: treating oracle wall time as client JS CPU or assuming it costs nothing.
+    const oracleCpuNs = () => {
+      try {
+        const value = Number(
+          fs.readFileSync(`/proc/${oracle.child.pid}/schedstat`, "utf8").trim().split(/\s+/)[0],
+        );
+        return Number.isFinite(value) && value > 0 ? value : null;
+      } catch {
+        return null;
+      }
+    };
+    const threadCpuMs = (start: NodeJS.CpuUsage, end: NodeJS.CpuUsage) =>
+      (end.user - start.user + end.system - start.system) / 1000;
     const activationPage = async (records: readonly any[], page: number) => {
+      const verificationCpuStart = process.threadCpuUsage(),
+        oracleCpuStart = oracleCpuNs();
       const verifyStart = performance.now();
       fs.writeFileSync(path.join(dir, `activation-${page}.json`), canonical(records));
       const original = JSON.parse(fs.readFileSync(path.join(dir, `preview-${page}.json`), "utf8"));
@@ -277,10 +345,12 @@ export async function runW0Driver(argv: string[]) {
         }),
       );
       const verificationBeforeMs = performance.now() - verifyStart;
+      const verificationCpuBeforePublish = process.threadCpuUsage();
       const publishStart = performance.now();
       const actual: any = await comp.publishOutbox(evaluations);
       const publicationWallMs = performance.now() - publishStart;
-      const verifyAfter = performance.now();
+      const verifyAfter = performance.now(),
+        verificationCpuAfterPublish = process.threadCpuUsage();
       equalBytes(
         "G5 deliveries",
         canonical(deliveriesWire(actual.deliveries)),
@@ -292,8 +362,16 @@ export async function runW0Driver(argv: string[]) {
         if (published.has(key)) throw new Error("duplicate visible delivery");
         published.set(key, d);
       }
+      const verificationOracleCpuEnd = oracleCpuNs();
       return {
         verificationMs: verificationBeforeMs + performance.now() - verifyAfter,
+        verificationMainThreadIntervalCpuMs:
+          threadCpuMs(verificationCpuStart, verificationCpuBeforePublish) +
+          threadCpuMs(verificationCpuAfterPublish, process.threadCpuUsage()),
+        verificationOracleCpuMs:
+          oracleCpuStart === null || verificationOracleCpuEnd === null
+            ? null
+            : (verificationOracleCpuEnd - oracleCpuStart) / 1e6,
         publicationWallMs,
         ...(actual.timing ?? {}),
       };
@@ -459,7 +537,7 @@ export async function runW0Driver(argv: string[]) {
     report.status = "PARTIAL";
   } catch (error: any) {
     report.status = "FAIL";
-    report.error = String(error.stack ?? error);
+    report.error = (await import("node:util")).inspect(error, { depth: 16 });
     process.exitCode = 1;
     throw error;
   } finally {

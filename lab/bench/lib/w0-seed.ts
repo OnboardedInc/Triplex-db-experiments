@@ -95,7 +95,16 @@ export async function seedW0(
   N: number,
   logFile: string,
   checkpoint?: () => Promise<void>,
+  concurrency = 1,
 ) {
+  // [DX-H5] Why: W0's immutable fingerprint includes reference commit positions.
+  // Rejected: silently accepting reordered concurrent seed commands as the reference world.
+  if (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 32)
+    throw Error("invalid seed concurrency");
+  if (concurrency !== 1)
+    throw Error(
+      "W0 reference positions require ordered commits; concurrent seeding needs an exact-position import API",
+    );
   if ((await comp.currentPosition()) !== 0) throw new Error("W0 seed requires fresh scope");
   const seedStarted = performance.now();
   const Rseed = W0.rung(N);
@@ -139,6 +148,10 @@ export async function seedW0(
       const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
       fs.writeSync(fd, line);
       commandsHash.update(line);
+      if (position % 1000 === 0)
+        console.error(
+          `[DX-H5 seed] ${position} commands, ${(position / ((performance.now() - seedStarted) / 1000)).toFixed(1)} commands/s`,
+        );
       await checkpoint?.();
     }
   } finally {
@@ -147,7 +160,14 @@ export async function seedW0(
   const R = W0.rung(N),
     basis = W0.populationBasis(R);
   if (position !== basis.tx) throw new Error("population basis mismatch");
+  const commandWallMs = performance.now() - seedStarted;
+  const countsStarted = performance.now();
+  const counts = await comp.storeCounts();
+  const countsWallMs = performance.now() - countsStarted;
   return {
+    commandWallMs,
+    commandCommandsPerS: position / (commandWallMs / 1000),
+    countsWallMs,
     spec: "W0-1.1.2",
     seed: "W0-pop-1",
     N,
@@ -158,7 +178,7 @@ export async function seedW0(
     retractions,
     commands: position,
     logSha256: commandsHash.digest("hex"),
-    counts: await comp.storeCounts(),
+    counts,
     releaseHashes: [W0.R1.hash, W0.R2.hash, W0.R3.hash],
     wallMs: performance.now() - seedStarted,
     commandsPerS: position / ((performance.now() - seedStarted) / 1000),

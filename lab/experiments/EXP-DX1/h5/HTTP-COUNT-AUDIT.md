@@ -1,0 +1,3 @@
+# Page request-count verdict audit
+
+The equivalence gate counts HTTP Agent requests with the existing `measureHttp`, including attempts without successful response samples. The Datomic `onRequest` observer supplies bytes/gateway/datoms only; its successful sample count is retained separately. A MATCH still requires both exact complete row-content equality with portable and exactly one actual request per fresh page at each of the two cuts. This avoids treating a missing error sample as a missing HTTP attempt. The gate is VM source/stack-bound by its wrapper manifest and new scope; it grants no P5 acceptance.

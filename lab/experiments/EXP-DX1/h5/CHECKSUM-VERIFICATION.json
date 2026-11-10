@@ -1,0 +1,27 @@
+{
+  "classification": "NATIVE-CHECKSUM-EXIT-ONLY-NOT-SEMANTIC-ACCEPTANCE",
+  "observedExitAt": "2026-11-10T10:44:13.544194+00:00",
+  "nativeCheckExitCode": 0,
+  "filesChecked": 9768,
+  "evidenceBytesBeforeManifest": 3951238402,
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5",
+  "rawManifestSha256": "e3b37a561552260ef025fa3ce20f7f657088602e7acb4edc61abe364130cf2e1",
+  "partManifestSha256": "4574ffb74b37cd24443ba9f299d819903376e0684be8da12dd9b6a961e26754b",
+  "parts": {
+    "SHA256SUMS.part-001": {
+      "bytes": 749943,
+      "sha256": "4164e020220c8b59817f7563f9a5e31f49f60c9f6fc4b97e483ed4c16d8ee9a9"
+    },
+    "SHA256SUMS.part-002": {
+      "bytes": 749902,
+      "sha256": "054cde1eaa68949684f38d02649b0fbff91dc0f9cf22bc75552a8f6b2007d211"
+    },
+    "SHA256SUMS.part-003": {
+      "bytes": 98234,
+      "sha256": "0e1e28696d0d8e5ea50e7830a54bcee2fa3888bf063c06e6ccac5b6e8de4dd64"
+    }
+  },
+  "command": "node lab/bin/heavy.mjs --label DX-H5-native-evidence-check -- bash -c: from evidenceRoot shasum -a 256 --quiet -c <h5>/SHA256SUMS.part-*; from h5 shasum -a 256 --quiet -c SHA256SUMS",
+  "observedOutput": "empty; both native checks exited0",
+  "scope": "All recorded raw evidence bytes plus each split manifest; no G0, oracle or P5 verdict."
+}

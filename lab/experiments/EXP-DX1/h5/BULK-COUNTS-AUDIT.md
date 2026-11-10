@@ -1,0 +1,9 @@
+# Full-history transport equivalence audit
+
+`history.ts` compares every full stored history row, including metadata, retired and future-valid assertions, against the existing public StorageAdapter.history reader on a fresh 50-subject fixture at two heads. It also compares all three count fields, then rechecks its source hashes. MATCH requires exact complete row bytes and counts; it is not a P5 verdict.
+
+`bulk-counts.ts` uses the existing public DatomicClient.rows API with `history:true`, the complete stored-journal entity set, batches of 256 entity IDs and the captured position. No rows are sampled, no live-only filter is substituted and no counts are inferred by summing journal operations. Every returned row passes the existing client decoder; entity/cut bounds and the unchanged stable-head condition are checked. Journal gaps/identities are rejected. Fresh batch history rows remain the independent storage side of G9.
+
+`counts-driver.ts` invokes the original W0 controller and all its gates unchanged, replacing only main-handle count transport. It captures its own/controller helper hashes before execution and rechecks them before returning success, emits a sidecar, and adds those actual input hashes/count observations to the returned receipt. The original immutable fingerprint, pinned basis, exact coverage and O-DOMAIN comparisons are unchanged. Process failure cannot seal a G0-only result because the wrapper stops before seal on nonzero exit. No acceptance file or package code is edited.
+
+The separate counts wrapper begins cleanup at 43m30s, retains a 90-second cleanup reserve within the 45-minute grant, signals Java inside its own container PID namespace before Docker stop, and requires a zero PostgreSQL shutdown code before a sealed copy. These are owned-container cleanup operations; VM PIDs are never used as Mac process IDs.

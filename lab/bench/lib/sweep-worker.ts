@@ -1,4 +1,5 @@
-import { measureHttp } from "./http-counts.ts";
+import { measureW0Http } from "./w0-http.ts";
+import fs from "node:fs";
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import { canonical, reachableRows, worldOf } from "./w0-world.ts";
@@ -10,6 +11,19 @@ const comp =
     : await openComposition(workerData.composition, workerData.lane, workerData.scope);
 const port = parentPort!;
 const pins = await loadW0Pins();
+// [DX-H5] Why: cgroup interval deltas include concurrent pages/live traffic; preserve rather than invent attribution.
+// Rejected: calling overlapping page CPU deltas exclusive service CPU.
+const cgroups = () =>
+  Object.fromEntries(
+    (process.env.TX2_ENGINE_CGROUPS ?? "")
+      .split(",")
+      .filter(Boolean)
+      .map((entry) => {
+        const [name, path] = entry.split("=");
+        const text = fs.readFileSync(path + "/cpu.stat", "utf8");
+        return [name, Number(text.match(/^usage_usec (\d+)$/m)?.[1])];
+      }),
+  );
 const pending = new Map<number, (v: any) => void>();
 port.on("message", async (msg) => {
   if (msg.type === "rows") {
@@ -19,12 +33,17 @@ port.on("message", async (msg) => {
   }
   if (msg.type !== "page") return;
   try {
+    const workerReceivedEpochMs = performance.timeOrigin + performance.now();
+    const pageCpuStarted = process.threadCpuUsage();
+    const pageStartCpu = cgroups();
     const start = performance.eventLoopUtilization();
     const cpu = () => (process as any).threadCpuUsage?.() ?? process.cpuUsage();
     const diff = (a: any, b: any) => (b.user - a.user + b.system - a.system) / 1e6;
     let c = cpu();
     const readStart = performance.now();
-    const measured = comp ? await measureHttp(() => comp.sweepPage(msg.subjects, msg.basis)) : null;
+    const measured = comp
+      ? await measureW0Http(() => comp.sweepPage(msg.subjects, msg.basis))
+      : null;
     const page = measured
       ? measured.value
       : await new Promise<any>((resolve) => {
@@ -39,12 +58,16 @@ port.on("message", async (msg) => {
     let decodeCpu = 0,
       kernelCpu = 0;
     const result: any[] = [];
+    const indexStart = performance.now(),
+      indexCpuStart = cpu();
     const byEntity = new Map<string, any[]>();
     for (const row of page.rows) {
       const a = byEntity.get(row.entityId) ?? [];
       a.push(row);
       byEntity.set(row.entityId, a);
     }
+    const indexWallMs = performance.now() - indexStart,
+      indexCpu = diff(indexCpuStart, cpu());
     for (const subject of msg.subjects) {
       c = cpu();
       let wall = performance.now();
@@ -59,7 +82,11 @@ port.on("message", async (msg) => {
       if ("error" in r) throw new Error(subject + ": " + r.error);
       result.push({ subject, world, output: r.output, record: r.record });
     }
+    const encodeStarted = performance.now(),
+      encodeCpuStarted = cpu();
     const bytes = new TextEncoder().encode(canonical(result));
+    const resultEncodeWallMs = performance.now() - encodeStarted,
+      resultEncodeCpu = diff(encodeCpuStarted, cpu());
     port.postMessage(
       {
         type: "result",
@@ -69,11 +96,28 @@ port.on("message", async (msg) => {
         epoch: page.epoch,
         timing: {
           readWallMs,
+          workerDispatchWaitMs: workerReceivedEpochMs - msg.dispatchedAtEpochMs,
+          workerReceivedEpochMs,
+          indexWallMs,
+          resultEncodeWallMs,
           readRequests: measured?.requests ?? page.timing?.readRequests ?? null,
+          responseBytes: measured?.responseBytes ?? null,
+          gatewayMicros: measured?.gatewayHeaders ? measured.gatewayMicros : null,
+          rows: page.rows.length,
           decodeWallMs,
           evaluateWallMs,
         },
-        cpu: { read: readCpu, decode: decodeCpu, kernel: kernelCpu },
+        cpu: {
+          read: readCpu,
+          decode: decodeCpu,
+          kernel: kernelCpu,
+          index: indexCpu,
+          resultEncode: resultEncodeCpu,
+          total: diff(pageCpuStarted, cpu()),
+        },
+        cgroupIntervalMicros: Object.fromEntries(
+          Object.entries(cgroups()).map(([name, value]) => [name, value - pageStartCpu[name]]),
+        ),
         cpuScope: (process as any).threadCpuUsage ? "thread" : "process-overlapping",
         elu: performance.eventLoopUtilization(start),
       },

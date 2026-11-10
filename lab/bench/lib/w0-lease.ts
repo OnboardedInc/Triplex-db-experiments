@@ -4,6 +4,18 @@ const lock = "/Users/sam/Claude/Projects/triplex-db-2/locks/measure";
 // [DX-H2] Why: the W0 seed can take several leases; release only between acknowledged commands.
 // Rejected: holding the global measurement lock across an unbounded seed or pausing an in-flight transaction.
 export async function measurementLease(onAbort?: () => Promise<void>) {
+  // [DX-H5] Why: the VM wrapper owns a continuous lease until every container is gone.
+  // Rejected: rotating the inner lease while the stack is alive.
+  if (process.env.TX2_W0_EXTERNAL_LEASE) {
+    const expected = process.env.TX2_W0_EXTERNAL_LEASE;
+    const check = () => {
+      const owner = JSON.parse(fs.readFileSync(lock + "/owner.json", "utf8"));
+      if (owner.id !== "DX-H5" || owner.prefix !== expected)
+        throw Error("external lease binding mismatch");
+    };
+    check();
+    return { holds: [{ external: expected }], checkpoint: async () => check(), release: () => {} };
+  }
   let held = false,
     since = 0,
     timer: ReturnType<typeof setTimeout>;

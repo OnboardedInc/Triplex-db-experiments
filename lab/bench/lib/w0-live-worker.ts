@@ -1,3 +1,4 @@
+import "./w0-cache.ts";
 import { parentPort, workerData } from "node:worker_threads";
 import { inspect } from "node:util";
 import { openComposition } from "./composition.ts";
@@ -19,9 +20,18 @@ try {
         const position = await comp.currentPosition();
         const subject = W0.placementId(rng.int(workerData.N));
         const started = performance.timeOrigin + performance.now();
-        const page = await comp.sweepPage([subject], {
+        const basis = {
           position,
           validAt: V_W0 + workerData.offsetS * 1000 + performance.now() - clockStart,
+        };
+        // [DX-H5] Why: retain the failing request together with its nested adapter/transport cause.
+        // Rejected: a page-read failure with no subject/cut/endpoint to reproduce it.
+        const page = await comp.sweepPage([subject], basis).catch((cause) => {
+          throw new Error(
+            "live sweepPage request " +
+              JSON.stringify({ subjects: [subject], basis, endpoint: comp.backend.url }),
+            { cause },
+          );
         });
         if (page.position < position) throw Error("live reader returned an unavailable basis");
         port.postMessage({
