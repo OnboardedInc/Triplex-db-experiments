@@ -43,3 +43,5 @@ Scope audit: the initial H5-derived capture wrapper's unfiltered read-only `dock
 ## Evidence-only summaries
 
 `seed-curve.mjs` preserves rounded cumulative progress rates and labels reconstructed interval timing approximate. `seed-journal.mjs` runs only after the attempt exit record exists, streams every logged command/ACK identity/position, records all mismatches, and binds exact input SHA256/bytes and its own source hash. Neither emits a population, fingerprint or acceptance PASS. `manifest.mjs` streams all raw evidence hashes with bounded buffers; its file/pin inventory is an inventory, not semantic acceptance.
+
+`finalize.sh` requires the final attempt's exit record, derives receipts after settlement, inventories only H6-prefixed resources, and refuses remaining owned resources. It hashes evidence after writers have ended and independently runs `shasum -a256 -c`. Its own transient output stays outside the hashed tree to avoid self-reference. Empty inventories and matching hashes verify retention/cleanup only; they do not promote a gate or acceptance.
