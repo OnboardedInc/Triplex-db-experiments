@@ -127,9 +127,9 @@ const config = {
 };
 // [DX-H7] Why: bound aggregate retained cache estimates below half the 8 GiB client grant.
 // Rejected: an unbounded per-thread cache (moves saturation to memory pressure).
-if (!Number.isSafeInteger(config.readerEntityCacheMiB) || config.readerEntityCacheMiB < 1 ||
+if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) || config.readerEntityCacheMiB < 1 ||
     !Number.isSafeInteger(config.readerThreads) || config.readerThreads < 1 ||
-    config.readerThreads * (config.readerEntityCacheMiB + 32) > 4096)
+    config.readerThreads * (config.readerEntityCacheMiB + 32) > 4096))
   throw new Error("Reader entity + row cache budgets must total at most 4096 MiB");
 const pairPlan: RoundPlan | null = config.roundPlan ? JSON.parse(fs.readFileSync(path.resolve(config.roundPlan), "utf8")) : null;
 if (pairPlan) {
