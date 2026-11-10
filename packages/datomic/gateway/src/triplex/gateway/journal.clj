@@ -21,7 +21,9 @@
               (throw (ex-info "Invalid journal page bounds" {:status 400})))
           deadline (+ (System/nanoTime) (* wait-ms 1000000))
           db (loop [db (storage/await-record-time name conn (d/db conn) input)]
-               (supported! db name true)
+               ;; [DX-B6-5] Why: this index is ordered by logical position, not by the physical commit's record-time cut.
+               ;; Rejected: declining exact position feeds after multi-instant nested commits or raw timestamp regressions.
+               (supported! db name false)
                (if (and (pos? wait-ms) (<= (storage/head-position name db) after) (< (System/nanoTime) deadline))
                  (do (Thread/sleep 1) (recur (d/db conn))) db))
           ;; Physical positions are monotonic; nested logical journals are sorted within each physical commit.

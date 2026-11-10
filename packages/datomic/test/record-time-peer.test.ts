@@ -50,17 +50,24 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1" || !process.env.DATOMIC_
           );
           expect(receipt.instant).toBeGreaterThan(previous);
           previous = receipt.instant;
-          const answer = await Effect.runPromise(
-            read.getByEntity(`subject-${i}`, {
-              validAt: receipt.instant,
-              recordedAt: receipt.instant,
-            }),
-          );
-          expect(answer.map((r) => r.value_string)).toEqual([String(i)]);
+          const basis = { validAt: receipt.instant, recordedAt: receipt.instant };
+          // [DX-B6-5] Why: alternate which route encounters lag first; the other route must agree at the same cut.
+          // Rejected: always warming reach via a preceding row read.
+          const routes = [
+            () => read.getByEntity(`subject-${i}`, basis),
+            () => read.getReachRows!(`subject-${i}`, basis),
+          ];
+          if (i % 2) routes.reverse();
+          for (const route of routes) {
+            const answer = await Effect.runPromise(route());
+            expect(answer).toBeDefined();
+            expect(answer!.map((r) => r.value_string)).toEqual([String(i)]);
+          }
         }
         console.log(
           JSON.stringify({
             recordTimePeer: 5000,
+            readAnswers: 10000,
             stats: await reader.request("GET", "/v2/admin/scan-stats"),
           }),
         );

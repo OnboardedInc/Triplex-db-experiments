@@ -172,7 +172,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("indexed journals", 
       c.close();
     }
   });
-  it("keeps command lookups indexed after timestamp regression while the feed declines", async () => {
+  it("keeps position feeds and command lookups exact after timestamp regression", async () => {
     const c = client(),
       s = await setup(c);
     try {
@@ -200,7 +200,10 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("indexed journals", 
           ),
         );
       }
-      expect(await Effect.runPromise(s.a.getTransactionsAfter!(0, 100))).toBeUndefined();
+      expect(await Effect.runPromise(s.a.getTransactionsAfter!(0, 100))).toBeDefined();
+      expect(await s.fast.runPromise(s.t.transactions())).toEqual(
+        await s.fallback.runPromise(s.oracle.transactions()),
+      );
       expect(await Effect.runPromise(s.a.getTransactionIdByCommand!("known"))).toBe(receipt.txId);
       const spy = vi.spyOn(c, "request");
       const actual = await s.fast.runPromise(s.t.transactionByCommand("known"));

@@ -23,18 +23,19 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("byte-budget native equ
           a.withTransaction(
             Effect.gen(function* () {
               position = yield* a.nextCommitPosition();
-              yield* a.insert(
-                {
-                  entityId: `subject-${i}`,
-                  attribute: ":value",
-                  value: { type: "string", value: "x".repeat(16384) + i },
-                  validFrom: 0,
-                },
-                `_tx/${String(i).padStart(26, "0")}`,
-                1000 + i,
-                `row-${i}`,
-                position,
-              );
+              for (let j = 0; j < 8; j++)
+                yield* a.insert(
+                  {
+                    entityId: `subject-${i}`,
+                    attribute: ":value",
+                    value: { type: "string", value: "x".repeat(2048) + i + j },
+                    validFrom: 0,
+                  },
+                  `_tx/${String(i).padStart(26, "0")}`,
+                  1000 + i,
+                  `row-${i}-${j}`,
+                  position,
+                );
             }),
           ),
         );
