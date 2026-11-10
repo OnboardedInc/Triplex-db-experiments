@@ -1,0 +1,11 @@
+remotes:
+  pg: !Postgres
+    hostname: tx2-xns2-pg
+    port: 5432
+    database: xtdb
+    username: client
+    password: lab-only
+log: !Postgres
+  remote: pg
+storage: !Local
+  path: /var/lib/xtdb/buffers
