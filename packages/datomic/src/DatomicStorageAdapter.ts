@@ -13,7 +13,7 @@ import { decodeEntity } from "./reach.js";
 import { reachResponse, reachRowsResponse, reachRowIndex } from "./reach.js";
 import { readFailure } from "./readErrors.js";
 import { randomUUID } from "node:crypto";
-import { Effect, Exit, Option, Semaphore } from "effect";
+import { Effect, Exit, Semaphore } from "effect";
 import { type ResolvedTemporalBasis } from "@triplex-build/triplex";
 import {
   type StorageAdapterService,
@@ -256,9 +256,11 @@ export const makeDatomicStorageAdapter = (
           state.submitted = true;
           const ticket = state.order?.ticket ?? registerCommit(-Infinity);
           if (state.order) state.order.ticket = ticket;
+          if (state.diagnostic) state.diagnostic.ready = performance.now();
           const ack = await bounded(
-            sendCommit(ticket, (sendSequence, sent) =>
-              client.transact(db, {
+            sendCommit(ticket, (sendSequence, sent) => {
+              if (state.diagnostic) state.diagnostic.released = performance.now();
+              return client.transact(db, {
                 onSent: sent,
                 clientId: commitClientId,
                 sendSequence,
@@ -280,8 +282,8 @@ export const makeDatomicStorageAdapter = (
                 claims: [...state.claims.values()],
                 ...(state.optimistic ? {} : { handle: state.handle }),
                 release: true,
-              }),
-            ),
+              });
+            }),
           );
           // [EXP-DX1] Why: a bound transaction ACK is already a receipt; resolve only ambiguous ACKs.
           // Rejected: unconditional operation lookup (adds a third HTTP request).
@@ -370,6 +372,13 @@ export const makeDatomicStorageAdapter = (
   ): Effect.Effect<A, E | WriteError> =>
     Effect.suspend(() => {
       const operationId = randomUUID();
+      const diagnostic = client.onCommit
+        ? {
+            started: performance.now(),
+            returned: 0,
+            attempts: [] as import("./DatomicClient.js").DatomicCommitAttempt[],
+          }
+        : undefined;
       const attempt = (retry: number, forceSnapshot = false): Effect.Effect<A, E | WriteError> =>
         Effect.gen(function* () {
           const transactions = yield* CurrentTransactions;
@@ -437,6 +446,10 @@ export const makeDatomicStorageAdapter = (
             parent.newIds = child.newIds;
             return result;
           }
+          const observation = diagnostic
+            ? { firstAdapterCall: performance.now(), optimistic: false, begin: false }
+            : undefined;
+          if (observation) diagnostic!.attempts.push(observation);
           const hint = transactionOptions?.hint;
           const optimistic =
             options.optimisticCommits !== false &&
@@ -444,6 +457,10 @@ export const makeDatomicStorageAdapter = (
             transactionOptions?.replaySafe === true &&
             hint !== undefined &&
             (hint.tripleIds ?? []).every((id) => cache.has(id));
+          if (observation) {
+            observation.optimistic = optimistic;
+            observation.begin = !optimistic;
+          }
           if (optimistic) client.commitDiagnostics.optimisticAttempts++;
           const snapshot = yield* read<{
             handle: string;
@@ -473,6 +490,7 @@ export const makeDatomicStorageAdapter = (
             client,
             scopeKey,
             order: {},
+            diagnostic: observation,
             replaySafe: transactionOptions?.replaySafe === true,
             optimistic,
             restart: { needed: false },
@@ -552,6 +570,15 @@ export const makeDatomicStorageAdapter = (
         parent !== undefined || options.admissionQueue !== true
           ? attempt(0)
           : Semaphore.withPermits(admission, 1)(attempt(0)),
+      ).pipe(
+        Effect.tap(() =>
+          Effect.sync(() => {
+            if (diagnostic && diagnostic.attempts.length) {
+              diagnostic.returned = performance.now();
+              client.onCommit?.(diagnostic);
+            }
+          }),
+        ),
       );
     });
 

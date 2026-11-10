@@ -217,7 +217,7 @@
 ;; [DX-B5-L0] Why: HTTP connections can overtake ordered client sends; serialize submission only.
 ;; Rejected: waiting for the transaction result under this monitor (queues acknowledgements).
 (def submissions (atom {}))
-(defn submit! [conn data input]
+(defn submit! [conn data input timeline]
   (if-let [client (get input "clientId")]
     (let [sequence (get input "sendSequence")
           _ (when-not (and (string? client) (<= 1 (count client) 64) (integer? sequence) (pos? sequence))
@@ -231,20 +231,28 @@
             (.wait ^Object state 1) (recur)))
         (when (< @state (dec sequence)) (stats/bump! [:commitOrder :timeouts] 1))
         (when (<= sequence @state) (stats/bump! [:commitOrder :late] 1))
-        (let [future (d/transact-async conn data)]
+        (let [_ (swap! timeline assoc :predecessorReady (System/nanoTime))
+              future (d/transact-async conn data)
+              _ (swap! timeline assoc :submitted (System/nanoTime))]
           (swap! state max sequence) (.notifyAll ^Object state) future)))
-    (d/transact-async conn data)))
+    (do (swap! timeline assoc :predecessorReady (System/nanoTime))
+        (let [future (d/transact-async conn data)] (swap! timeline assoc :submitted (System/nanoTime)) future))))
 (defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
-    (let [data (tx-data db input (:scope (reach/config name db)))
+    (let [parsed (System/nanoTime)
+          data (tx-data db input (:scope (reach/config name db)))
           start (System/nanoTime)
-          report (deref (submit! conn data input) 5000 ::timeout)
-          transact-micros (quot (- (System/nanoTime) start) 1000)]
+          timeline (atom {:requestParsed parsed :payloadPrepared start})
+          report (deref (submit! conn data input timeline) 5000 ::timeout)
+          completed (System/nanoTime)
+          transact-micros (quot (- completed start) 1000)]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
        :transactMicros transact-micros
+       :timeline (into {} (map (fn [[k v]] [k (/ (- v parsed) 1000.0)])
+                              (assoc @timeline :completed completed :responsePrepared (System/nanoTime))))
        :operationId (get input "operationId")
        :position (codec/encode-value "long" (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report)))))
        :delta (- (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report)))) (get input "position"))

@@ -60,6 +60,10 @@ export interface DatomicRequestSample {
   readonly path: string;
   readonly started: number;
   readonly finished: number;
+  readonly written: number;
+  readonly headers: number;
+  readonly reusedSocket: boolean;
+  readonly gatewayTimeline?: unknown;
   readonly responseBytes: number;
   readonly requestBytes: number;
   readonly serializeMicros: number;
@@ -70,10 +74,23 @@ export interface DatomicRequestSample {
   readonly datoms?: number;
   readonly position?: number;
 }
+export interface DatomicCommitAttempt {
+  firstAdapterCall: number;
+  optimistic: boolean;
+  begin: boolean;
+  ready?: number;
+  released?: number;
+}
+export interface DatomicCommitSample {
+  started: number;
+  returned: number;
+  attempts: DatomicCommitAttempt[];
+}
 export class DatomicClient {
   // [DX-B2-N3] Why: opt-in transport observations measure real calls without a second HTTP request.
   // Rejected: inferring gateway CPU or transact time from client wall latency.
   onRequest?: (sample: DatomicRequestSample) => void;
+  onCommit?: (sample: DatomicCommitSample) => void;
   readonly agent: http.Agent;
   readonly commitDiagnostics = {
     beginDecodeMicros: 0,
@@ -169,6 +186,8 @@ export class DatomicClient {
     const bytes = body === undefined ? undefined : Buffer.from(stringifyExact(body));
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     return new Promise<T>((resolve, reject) => {
+      let written = NaN,
+        headers = NaN;
       const req = http.request(
         new URL(path, this.endpoint),
         {
@@ -182,6 +201,7 @@ export class DatomicClient {
           },
         },
         (res) => {
+          headers = performance.now();
           const chunks: Buffer[] = [];
           let size = 0;
           res.on("data", (chunk: Buffer) => {
@@ -215,6 +235,10 @@ export class DatomicClient {
                   path,
                   started,
                   finished: performance.now(),
+                  written,
+                  headers,
+                  reusedSocket: req.reusedSocket,
+                  gatewayTimeline: data["timeline"],
                   responseBytes: size,
                   requestBytes: bytes?.length ?? 0,
                   serializeMicros,
@@ -243,6 +267,9 @@ export class DatomicClient {
       req.on("error", (error) =>
         reject(new DatomicTransportError(error.message, { cause: error })),
       );
+      req.once("finish", () => {
+        written = performance.now();
+      });
       if (onSent) {
         req.once("finish", onSent);
         req.once("error", onSent);
