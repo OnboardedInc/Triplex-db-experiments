@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [datomic.api :as d] [triplex.gateway.admission :as admission])
+  (:require [datomic.api :as d] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger]))
 (set! *warn-on-reflection* false)
 
@@ -16,12 +16,12 @@
 (def ^ConcurrentHashMap ids (ConcurrentHashMap.))
 (def ^ConcurrentHashMap configs (ConcurrentHashMap.))
 (declare sessions)
-(defn forget! [name] (.remove ids name) (.remove configs name) (.remove ^ConcurrentHashMap sessions name))
+(defn forget! [name] (cache/forget! name) (.remove ids name) (.remove configs name) (.remove ^ConcurrentHashMap sessions name))
 (defn decline! [reason] (throw (ex-info reason {:declined reason})))
 (defn config [name db]
   (or (.get configs name)
       (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))
-            value {:scope (.e scope)
+            value {:cache-generation (Object.) :scope (.e scope)
                    :row (d/entid db :triplex.entity/row)
                    :overflow (d/entid db :triplex.entity/row-overflow)
                    :rev (d/entid db :triplex.entity/rev)
@@ -93,34 +93,55 @@
               (when (>= (.size lru) 64)
                 (let [it (.iterator (.keySet lru))] (.next it) (.remove it)))
               (.put lru session m) m))))))
-(defn read-entity [name db cfg id valid ^longs counts]
-  (let [valid (double valid) eid (entity-id db name id) texts (ArrayList.) refs (ArrayList.) rev (long-array 1)
+(defn parse-entity [db cfg eid revision row-limit]
+  (let [texts (ArrayList.) refs (ArrayList.) out (StringBuilder.)
         retired (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
-                          (d/datoms db :eavt (or eid 0) :triplex.entity/retired)))
-        row-a (long (:row cfg)) overflow-a (long (:overflow cfg)) rev-a (long (:rev cfg))]
-    (when eid
-      (let [it (.iterator ^Iterable (d/datoms db :eavt eid))]
-        (while (.hasNext it)
-          (let [^datomic.Datom datom (.next it) a (.a datom)]
-            (cond
-              (= a overflow-a) (when (.v datom) (decline! "row-overflow"))
-              (= a rev-a) (aset rev 0 (long (.v datom)))
-              (and (= a row-a) (not (let [^String text (.v datom)] (retired (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))))
-              (let [^String text (.v datom)
-                    start (+ 5 (Integer/parseInt text 1 5 16))
-                    ref-start (+ start 36) ref-size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)]
-                (aset counts 0 (inc (aget counts 0)))
-                (when (> (aget counts 0) 100000) (decline! "row-budget"))
+                          (d/datoms db :eavt eid :triplex.entity/retired)))
+        row-a (long (:row cfg)) overflow-a (long (:overflow cfg))
+        it (.iterator ^Iterable (d/datoms db :eavt eid))]
+    (.append out \[)
+    (while (.hasNext it)
+      (let [^datomic.Datom datom (.next it) a (.a datom)]
+        (cond
+          (= a overflow-a) (when (.v datom) (decline! "row-overflow"))
+          (= a row-a)
+          (let [^String text (.v datom) start (+ 5 (Integer/parseInt text 1 5 16))]
+            (when-not (retired (subs text 0 start))
+              (let [ref-start (+ start 36) ref-size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)]
+                (when-not (.isEmpty texts) (.append out \,))
                 (.add texts text)
-                ;; [DX-B2-N4] Why: inline rows are unfiltered; only references need valid-time decoding.
-                ;; Rejected: parsing every scalar row's double header on every cached pull.
-                (when (pos? ref-size)
-                  (let [from (bits text start) end (+ start 16)
-                        to (if (= \- (.charAt text (int end))) Double/POSITIVE_INFINITY (bits text end))]
-                    (when (and (<= from valid) (< valid to))
-                      (.add refs (.substring text (int ref-start) (int (+ ref-start ref-size)))))))))))))
-    (when (and (pos? (.size texts)) (zero? (aget rev 0))) (decline! "missing-revision"))
-    [eid (if (.isEmpty texts) 0 (aget rev 0)) texts refs]))
+                (when (> (.size texts) row-limit) (decline! "row-budget"))
+                (if (= \1 (.charAt text 0)) (append-string! out text)
+                  (.append out text (int (+ ref-start ref-size 1)) (.length text)))
+              (when (pos? (Integer/parseInt text (int (+ start 32)) (int (+ start 36)) 16))
+                (let [ref-start (+ start 36) size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
+                      from (bits text start) end (+ start 16)
+                      to (if (= \- (.charAt text (int end))) Double/POSITIVE_INFINITY (bits text end))]
+                  (.add refs [(.substring text (int ref-start) (int (+ ref-start size))) from to])))))))))
+    (when (and (pos? (.size texts)) (zero? revision)) (decline! "missing-revision"))
+    (.append out \])
+    (let [json (.toString out) texts (vec texts) refs (vec refs)]
+      {:rev (if (empty? texts) 0 revision) :texts texts :refs refs :json json
+       :bytes (+ 512 (* 2 (.length ^String json))
+                 (reduce + 0 (map #(+ 48 (* 2 (.length ^String %))) texts))
+                 (reduce + 0 (map #(+ 96 (* 2 (.length ^String (first %)))) refs)))})))
+;; [DX-B7-S3] Why: tx-data revises every changed row entity; the transactor remaps that revision atomically.
+;; Rejected: skipping the revision seek (writers and as-of cuts must select their own immutable rows).
+(defn read-entity [name db cfg id valid ^longs counts]
+  (let [eid (entity-id db name id) valid (double valid)
+        ^datomic.Datom revision (when eid (first (d/datoms db :eavt eid (:rev cfg))))
+        rev (if revision (long (.v revision)) 0)
+        value (if eid
+                (if (pos? rev)
+                  (cache/lookup [name (:connection-generation cfg) (:cache-generation cfg) eid rev] #(parse-entity db cfg eid rev (- 100000 (aget counts 0))))
+                  (parse-entity db cfg eid rev (- 100000 (aget counts 0))))
+                {:rev 0 :texts [] :refs [] :json "[]"})
+        refs (ArrayList.)]
+    (aset counts 0 (+ (aget counts 0) (count (:texts value))))
+    (when (> (aget counts 0) 100000) (decline! "row-budget"))
+    (doseq [[ref from to] (:refs value)]
+      (when (and (<= (double from) valid) (< valid (double to))) (.add refs ref)))
+    [eid (:rev value) (:texts value) refs (:json value)]))
 (defn append-strings! [^StringBuilder out ^Iterable values]
   (.append out \[)
   (let [it (.iterator values) n (long-array 1)]
@@ -128,10 +149,10 @@
       (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
       (append-string! out (.next it))))
   (.append out \]))
-(defn build-response [name current input]
+(defn build-response [name current input & [epoch]]
   (try
     (let [[db position t] (select-db name current (get input "basis"))
-          cfg (config name current) valid (double (get-in input ["basis" "validAt"]))
+          cfg (assoc (config name current) :connection-generation epoch) valid (double (get-in input ["basis" "validAt"]))
           need (get input "need")
           _ (when (and need (not (and (vector? need) (<= 1 (count need) 50000) (every? string? need) (= (count need) (count (distinct need)))))) (decline! "need"))
           roots (or need (get input "roots"))
@@ -178,20 +199,13 @@
         (let [it (.iterator (.entrySet entities)) n (long-array 1)]
           (while (.hasNext it)
             (let [^Map$Entry item (.next it) id (.getKey item) entry (.getValue item)
-                  eid (nth entry 0) rev (long (nth entry 1)) ^ArrayList texts (nth entry 2)
+                  eid (nth entry 0) rev (long (nth entry 1)) texts (nth entry 2)
                   inline (or (nil? remembered) full (nil? eid) (not= rev (.get remembered eid)))]
               (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
               (.append out \[) (append-string! out id) (.append out \,) (.append out rev)
               (when inline
-                (.append out ",[")
-                (let [rows (.iterator texts) n (long-array 1)]
-                  (while (.hasNext rows)
-                    (let [^String text (.next rows) start (+ 5 (Integer/parseInt text 1 5 16))
-                          ref-start (+ start 36) ref-size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)]
-                      (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
-                      (if (= \1 (.charAt text 0)) (append-string! out text)
-                        (.append out text (int (+ ref-start ref-size 1)) (.length text))))))
-                (.append out \])
+                (.append out \,)
+                (let [^String fragment (nth entry 4)] (.append out fragment))
                 ;; Overflow pages are entirely inline and leave the bounded map empty.
                 (when (and remembered eid (<= (.size entities) session-entry-limit)) (remember! generation eid rev)))
               (.append out \]))))
@@ -206,5 +220,7 @@
     (catch clojure.lang.ExceptionInfo e
       (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))
 
-(defn response [name current input]
-  (admission/execute admission/reads #(build-response name current input)))
+(defn response
+  ([name current input] (response name current input nil))
+  ([name current input epoch]
+   (admission/execute admission/reads #(build-response name current input epoch))))

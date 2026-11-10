@@ -1,6 +1,6 @@
 (ns triplex.gateway.main
   (:require [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
-            [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
+            [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -12,11 +12,15 @@
 (def connections (atom {}))
  ;; [EXP-DX1] Why: opening a connection must not introduce a no-argument sync on a read route.
 ;; Rejected: lazy initial sync inside connection (a cold read would contact the transactor).
-(defn connection [uri]
+ ;; [DX-B7-S3] Why: bind every cached read to its connection generation, even when delete/recreate races an old response.
+;; Rejected: database name or a lazily recreated config token alone (an old request can republish either).
+(defn connection-view [uri]
   (or (@connections uri)
       (locking connections
         (or (@connections uri)
-            (let [conn (d/connect uri)] (swap! connections assoc uri conn) conn)))))
+            (let [conn (d/connect uri) view {:conn conn :generation (Object.)}]
+              (swap! connections assoc uri view) view)))))
+(defn connection [uri] (:conn (connection-view uri)))
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
                      (when (= result ::timeout) (throw (ex-info "Sync deadline exceeded" {:status 503 :code "SyncTimeout"}))) result))
 (def scope-name scope/name-for)
@@ -54,7 +58,7 @@
     ;; [EXP-DA00] Why: releasing the last mem peer may destroy it before delete. Rejected: release-first (selftest-3 returned false).
     (let [deleted (d/delete-database uri)]
       (reach/forget! name)
-      (when-let [conn (@connections uri)] (d/release conn) (swap! connections dissoc uri))
+      (when-let [view (@connections uri)] (let [conn (:conn view)] (d/release conn) (swap! connections dissoc uri)))
         {:db name :deleted deleted})))
 (defn basis [base name]
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
@@ -92,7 +96,7 @@
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
     (cond
-      (= uri "/v2/admin/scan-stats") (response 200 @stats/counts)
+      (= uri "/v2/admin/scan-stats") (response 200 (assoc @stats/counts :entityCache (entity-cache/stats)))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
@@ -132,7 +136,7 @@
         (timed start (response 200 (storage/begin-command! name (d/db (connection (db-uri name))) input))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(reach|reach-many)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
-            conn (connection (db-uri name))
+            view (connection-view (db-uri name)) conn (:conn view)
             initial (d/db conn) p (get-in input ["basis" "recordedPosition"])
             waited (and (some? p) (> p (storage/head-position name initial)))
             db (if waited (storage/await-position initial p
@@ -142,7 +146,7 @@
                                    (d/db conn)))) initial)
             db (storage/await-record-time name conn db input)]
         (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
-         :body (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) )}))
+         :body (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view))}))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name)
             input (when (= request-method :post) (request-json body))

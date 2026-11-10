@@ -28,7 +28,7 @@ import fs from 'node:fs';import assert from 'node:assert/strict';
 const response=await fetch(process.env.DATOMIC_URL+'/v2/admin/scan-stats');assert.ok(response.ok);
 const stats=await response.json();fs.writeFileSync(process.argv[2],JSON.stringify(stats));
 if(process.env.B7_EXPECT_VERIFY==='true'){
- const c=stats.entityCache;assert.equal(c.verify,true);assert.ok(c.hits>0);assert.ok(c.verified>=c.hits);assert.equal(c.verificationErrors,0);assert.ok(c.bytes<=c.budgetBytes);
+ const c=stats.entityCache;assert.equal(c.verify,true);assert.ok(c.hits>0);assert.ok(c.verified>=c.hits+(c.revisionHits??0));assert.equal(c.verificationErrors,0);assert.ok(c.bytes<=c.budgetBytes);
 }
 JS
 fi

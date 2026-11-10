@@ -12,3 +12,5 @@ North star: P1 concurrent pinned reads, P2 writer isolation, P3 notifications, P
 Next: finish step 2 gates and commit. For step 3 apply candidate `reach.clj`, `entity_cache.clj` and selftest, but construct `main.clj`
 from the current package with the connection-generation transformation; candidate main already contains step 4 notification calls.
 Then run the VM matrix and full gates with `B7_DIFF_VERIFY=true`. Apply notification files only for step 4. The full report is committed last.
+
+Step 3: full native suites and all 300 verifier-enabled differential scenarios passed. Parsed cache alone misses throughput; JFR still ranks revision-index iterators highest. Step 4 candidate adds exact-selected-cut revision memoization within the same total budget, alongside notification waits.

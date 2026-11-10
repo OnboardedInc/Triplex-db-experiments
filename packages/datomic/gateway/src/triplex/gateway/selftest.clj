@@ -1,6 +1,6 @@
 (ns triplex.gateway.selftest
   (:require [clojure.test :refer :all] [clojure.data.json :as json] [datomic.api :as d]
-            [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
+            [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
 
  ;; [DX-B7] Why: old selftests predate mandatory row texts and the explicit layout/name parameters.
 ;; Rejected: bypassing the current commit API or removing the existing signed-zero/speculative assertions.
@@ -206,6 +206,51 @@
     (try (canonical/parse text) (is false "Unsupported/ambiguous query must refuse")
          (catch clojure.lang.ExceptionInfo e (is (= "InvalidValue" (:code (ex-data e))))))))
 
+ ;; [DX-B7-S3] Why: verification must detect two visible row sets with one revision on both layouts.
+;; Rejected: comparing cache counts only, or exercising only ordinary revision-incrementing commits.
+(deftest parsed-revision-cache-verification
+  (doseq [layout ["legacy" "lean"]]
+    (let [scope (str "[\"triplex-scope-v1\",\"test\",\"b7\",\"cache-" layout "\",0]")
+          name (:db (gateway/create-scope! "datomic:mem://" scope layout))
+          uri (gateway/db-uri name) conn (gateway/connection uri)
+          row {:id "b7-live" :entity_id "root" :attribute ":v" :value_type "string"
+               :value_string "line\nΩ" :recorded_at 10.0 :recorded_position 1 :valid_from 0.0 :schema_version 1 :tx_id "tx1"}]
+      (try
+        (storage/commit! name conn (gateway/sync-db uri)
+          (row-input {"sourceK" 0 "position" 1 "operationId" "b7-original"
+                      "rows" [(storage/wire-row row)] "newIds" ["b7-live"] "claims" []}))
+        (with-redefs [entity-cache/verify-enabled true]
+          (let [db (gateway/sync-db uri) cfg (reach/config name db)
+                first-answer (reach/read-entity name db cfg "root" 10.0 (long-array 1))
+                cached (reach/read-entity name db cfg "root" 10.0 (long-array 1))
+                eid (d/entid db [:triplex.entity/id "root"])]
+            (is (= first-answer cached))
+            (is (pos? (:verified (entity-cache/stats))))
+            ;; Deliberately bypass the gateway's revision invariant as a negative fixture.
+            @(d/transact conn [[:db/add eid :triplex.entity/row (row-text (assoc row :id "b7-extra" :value_string "different"))]])
+            (let [changed (gateway/sync-db uri)]
+              (is (= 1 (storage/value changed eid :triplex.entity/rev)))
+              (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Different entity bytes"
+                    (reach/read-entity name changed cfg "root" 10.0 (long-array 1)))))))
+        (finally (gateway/delete-scope! "datomic:mem://" scope))))))
+
+;; [DX-B7-S3] Why: byte eviction and oversize bypass must be exercised independently of a warm fixture's size.
+;; Rejected: declaring a byte bound from an entry count or silently retaining oversize entries.
+(deftest parsed-cache-byte-budget
+  (let [name "b7-budget" key #(vector name % 1) value #(hash-map :bytes 600 :texts [%] :json (str %))]
+    (try
+      (with-redefs [entity-cache/budget 1024 entity-cache/verify-enabled true]
+        (is (= (value "a") (entity-cache/lookup (key 1) #(value "a"))))
+        (is (= (value "b") (entity-cache/lookup (key 2) #(value "b"))))
+        (is (<= (:bytes (entity-cache/stats)) 1024))
+        (is (nil? (.get entity-cache/entries (key 1))))
+        (is (= (value "b") (entity-cache/lookup (key 2) #(value "b"))))
+        (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Different entity bytes"
+              (entity-cache/lookup (key 2) #(value "wrong"))))
+        (entity-cache/lookup (key 3) #(assoc (value "large") :bytes 2048))
+        (is (nil? (.get entity-cache/entries (key 3)))))
+      (finally (entity-cache/forget! name)))))
+
 ;; [DX-B7-S2] Why: force generation rotation while concurrent responses and repairs use the same session.
 ;; Rejected: only testing a million-entry session that never resets, or checking only response counts.
 (deftest concurrent-session-generations
@@ -251,6 +296,36 @@
           (is (not (identical? old @state)))
           (is (<= (.size ^java.util.concurrent.ConcurrentHashMap (:entries @state)) 2))
           (println (json/write-str {:sessionResetRounds 20 :concurrentResponses 5120 :entryLimit 2}))))
+      (finally (gateway/delete-scope! "datomic:mem://" scope)))))
+
+ ;; [DX-B7-S3] Why: a late old-generation cache insertion must not poison a recreated database with the same eid/revision.
+;; Rejected: relying on database names or lazy config recreation for identity.
+(deftest cache-connection-generations
+  (let [scope "[\"triplex-scope-v1\",\"test\",\"b7\",\"connection-generation\",0]"
+        name (:db (gateway/create-scope! "datomic:mem://" scope "legacy")) uri (gateway/db-uri name)
+        old-view (gateway/connection-view uri)
+        row {:id "b7-generation" :entity_id "root" :attribute ":v" :value_type "string" :value_string "before"
+             :recorded_at 10.0 :recorded_position 1 :valid_from 0.0 :schema_version 1 :tx_id "tx1"}
+        seed! (fn [view row] (storage/commit! name (:conn view) (gateway/sync-db uri)
+                              (row-input {"sourceK" 0 "position" 1 "operationId" "generation-seed"
+                                          "rows" [(storage/wire-row row)] "newIds" [(:id row)] "claims" []})))]
+    (try
+      (seed! old-view row)
+      (let [old-db (gateway/sync-db uri) cfg (reach/config name old-db) eid (d/entid old-db [:triplex.entity/id "root"])
+            old-value (reach/parse-entity old-db cfg eid 1 100000)]
+        (gateway/delete-scope! "datomic:mem://" scope)
+        (gateway/create-scope! "datomic:mem://" scope "legacy")
+        (let [view (gateway/connection-view uri) row (assoc row :value_string "after")]
+          (is (not (identical? (:generation old-view) (:generation view))))
+          (seed! view row)
+          (let [db (gateway/sync-db uri) cfg (reach/config name db)
+                expected (json/read-str (subs (row-text row) (.indexOf ^String (row-text row) "[")))]
+            ;; [DX-B7-S3] Why: model the late builder after config removal, with an intentionally old parsed value.
+            ;; Rejected: only checking that a token changed without observing the resulting answer bytes.
+            (with-redefs [reach/parse-entity (fn [& _] old-value) entity-cache/verify-enabled false]
+              (reach/read-entity name db (assoc cfg :connection-generation (:generation old-view)) "root" 10.0 (long-array 1)))
+            (let [body (json/read-str (reach/response name db {"roots" ["root"] "basis" {"validAt" 10.0} "full" true} (:generation view)))]
+              (is (= [["root" 1 [expected]]] (get body "entities")))))))
       (finally (gateway/delete-scope! "datomic:mem://" scope)))))
 
 (defn -main [& _]
