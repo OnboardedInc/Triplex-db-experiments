@@ -447,6 +447,10 @@ alternating arms in one lock hold.
 New measuring rules (in DX-B9's brief, and for every later run): alternate arms inside one hold; record `host-quiet.sh` before
 and after; no keep-awake.
 
+**VM resized 2026-11-10 17:49 UTC (Sam approved): 8 CPU, 16 GiB (was 20), 100 GiB.** Restart took 26 s under the measurement
+lock; 155 volumes and 16 images intact; docker context restored to `colima`; data disk remounted with `discard` (must be
+repeated after any restart). Log `~/Claude/Projects/triplex-db-2/evidence/ORCH-vm-resize/resize.log`.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
