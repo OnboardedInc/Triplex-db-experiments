@@ -41,9 +41,9 @@ elif STAGE=='topology':
     execute('proof.mjs','restarted',timeout=45);bind()
     execute('write.mjs','correct','one',PHASE,timeout=30)
     if docker('exec',driver,'test','-f','/driver/history.json',check=False).returncode!=0:execute('write.mjs','history','one','fresh',timeout=540)
-elif STAGE=='q1':
+elif STAGE in ['q1','q1-off','q1-on']:
     if docker('exec',driver,'test','-f','/driver/topology-restarted.json',check=False).returncode!=0:raise RuntimeError('topology proof missing')
-    for on in [False,True]:
+    for on in ([False,True] if STAGE=='q1' else [STAGE=='q1-on']):
         keeper(on)
         execute('write.mjs','correct','one',PHASE+('-on' if on else '-off'),timeout=30)
         for rate in [15,55]:

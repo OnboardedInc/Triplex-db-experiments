@@ -33,7 +33,8 @@ node lab/bin/heavy.mjs --label XN-S2-control-commits2 -- python3 lab/experiments
 node lab/bin/heavy.mjs --label XN-S2-control-commits3 -- python3 lab/experiments/EXP-XN1/spike-s2/live/window.py control-commits 3
 node lab/bin/heavy.mjs --label XN-S2-control-reads1 -- python3 lab/experiments/EXP-XN1/spike-s2/live/window.py control-reads 1
 node lab/bin/heavy.mjs --label XN-S2-control-reads-rest1 -- python3 lab/experiments/EXP-XN1/spike-s2/live/window.py control-reads-rest 1
-node lab/bin/heavy.mjs --label XN-S2-q1 -- python3 lab/experiments/EXP-XN1/spike-s2/live/window.py q1 1
+node lab/bin/heavy.mjs --label XN-S2-q1-off -- python3 lab/experiments/EXP-XN1/spike-s2/live/window.py q1-off 1
+node lab/bin/heavy.mjs --label XN-S2-q1-on -- python3 lab/experiments/EXP-XN1/spike-s2/live/window.py q1-on 1
 node lab/bin/heavy.mjs --label XN-S2-lag -- python3 lab/experiments/EXP-XN1/spike-s2/live/window.py lag 1
 node lab/bin/heavy.mjs --label XN-S2-reads -- python3 lab/experiments/EXP-XN1/spike-s2/live/window.py reads 1
 python3 lab/experiments/EXP-XN1/spike-s2/live/audit-topology.py

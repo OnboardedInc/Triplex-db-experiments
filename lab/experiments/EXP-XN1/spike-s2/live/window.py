@@ -102,11 +102,11 @@ try:
         if p.is_file():shutil.copyfile(p,out/'sources'/p.name);source['files'][p.name]=hashlib.sha256(p.read_bytes()).hexdigest()
     shutil.copyfile(KEEP,out/'sources'/'keep-awake-fixed.sh');source['files']['keep-awake-fixed.sh']=hashlib.sha256(KEEP.read_bytes()).hexdigest()
     save('source.json',source)
-    if STAGE=='q1' and all(list(ROOT.glob(stage+'-*/completed.json')) for stage in ['control-commits','control-reads']):
+    if STAGE in ['q1','q1-off','q1-on'] and all(list(ROOT.glob(stage+'-*/completed.json')) for stage in ['control-commits','control-reads']):
         retired=[]
         for volume in ['tx2-xns2-live-control','tx2-xns2-control-driver']:
             proof=docker('volume','inspect',volume,check=False)
-            result=docker('volume','rm',volume,check=False)
+            result=docker('volume','rm',volume,check=False) if proof.returncode==0 else proof
             retired.append({'volume':volume,'inspect':proof.stdout,'removeExit':result.returncode,'removeOutput':result.stdout})
         save('retired-control-volumes.json',retired)
     docker('network','create','--internal','tx2-xns2-net')
