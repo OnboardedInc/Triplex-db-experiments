@@ -80,6 +80,7 @@ out+=['','The difference includes Kafka, S3, remote topology and the extra node;
 if wait:
  raw=json.loads((ROOT/wait['path']).read_text());out.append(f"| ACK to verified response, including three metadata RPCs | {wait['n']} | {fmt(raw['ackToObserved']['p50'])} / {fmt(raw['ackToObserved']['p99'])} | unmeasured |")
 out+=['','The await+pull timer starts after obtaining token/snapshot/clock; ACK-to-observed includes those three writer metadata calls. The probe performs 500 sequential updates and fresh pinned reads, checking every value, and checks the previous exact value every 50 updates. It does not isolate the internal wait component. The Q2 current/past rows above measure the per-pull pinned query cost under load.','']
+out.append((BASE/'report-notes.md').read_text())
 report=BASE.parent/'REPORT.md';text=report.read_text();start=text.index('<!-- CURRENT-TABLES -->');end=text.index('## Blockers found on the way',start)
 text=text[:start]+'<!-- CURRENT-TABLES -->\n\n'+'\n'.join(out)+'\n'+text[end:]
 text='; '.join(head)+'.\n'+text[text.index('\n'):]
