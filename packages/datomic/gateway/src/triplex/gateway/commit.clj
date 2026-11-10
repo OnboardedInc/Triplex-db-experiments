@@ -7,7 +7,7 @@
   '(letfn [(value [e a] (:v (first (d/datoms db :eavt e a))))
            (digits [p] (let [s (str p)] (str (subs "0000000000000000" (count s)) s)))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span live entities scope-wide ops times irregular position-irregular journal-entities]} payload
+     (let [{:keys [scope source provisional span live entities scope-wide ops times replay-safe irregular position-irregular journal-entities]} payload
            h (value scope :triplex.scope/position) final (+ h span) final-digits (digits final) delta (- final provisional)
            lower (- provisional span)
            shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))
@@ -50,6 +50,8 @@
                            [(replace-value op)])) ops)
                prior (value scope :triplex.scope/max-recorded-at)
                maximum (when (seq times) (reduce max (or prior (first times)) times))
+               _ (when (and replay-safe prior (some #(< % prior) times))
+                   (throw (ex-info (str "TRIPLEX_CLOCK " prior) {:maximum prior})))
                irregular (or irregular
                              (and (seq times)
                                   (or (some #(not= (first times) %) times)

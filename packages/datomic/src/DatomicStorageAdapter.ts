@@ -1,3 +1,4 @@
+import { registerCommit, endCommit, sendCommit, commitClientId } from "./CommitOrder.js";
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
 import { decodeRowText } from "./rowText.js";
 import { RowCache } from "./RowCache.js";
@@ -32,6 +33,7 @@ import {
 } from "./TransactionContext.js";
 
 export class DatomicSerializationConflict extends WriteError {
+  readonly maximum?: number;
   readonly reason = "serialization-conflict" as const;
 }
 
@@ -239,7 +241,10 @@ export const makeDatomicStorageAdapter = (
         try {
           state.submitted = true;
           const ack = await bounded(
-            client.transact(db, {
+            sendCommit(state.order?.ticket ?? registerCommit(-Infinity), (sendSequence) => client.transact(db, {
+              clientId: commitClientId,
+              sendSequence,
+              replaySafe: state.replaySafe === true,
               sourceK: state.optimistic ? null : state.sourceK,
               position: state.position,
               span: state.position - state.sourceK,
@@ -253,7 +258,7 @@ export const makeDatomicStorageAdapter = (
               claims: [...state.claims.values()],
               ...(state.optimistic ? {} : { handle: state.handle }),
               release: true,
-            }),
+            })),
           );
           // [EXP-DX1] Why: a bound transaction ACK is already a receipt; resolve only ambiguous ACKs.
           // Rejected: unconditional operation lookup (adds a third HTTP request).
@@ -288,8 +293,14 @@ export const makeDatomicStorageAdapter = (
             error.status < 500 &&
             error.code !== "OperationDuplicate"
           ) {
-            if (["CasConflict", "CommandConflict"].includes(error.code)) {
+            if (["CasConflict", "CommandConflict", "ClockConflict"].includes(error.code)) {
               client.commitDiagnostics.conflicts++;
+              if (error.code === "ClockConflict") {
+                client.commitDiagnostics.clockReplays++;
+                const deadline = Date.now() + 50;
+                while (error.maximum !== undefined && Date.now() <= error.maximum && Date.now() < deadline)
+                  await new Promise((resolve) => setTimeout(resolve, 1));
+              }
               throw new DatomicSerializationConflict({
                 message: "Datomic source changed while staging the transaction",
                 cause: error,
@@ -352,6 +363,8 @@ export const makeDatomicStorageAdapter = (
             const child: TransactionState = {
               client,
               scopeKey,
+              order: parent.order,
+              replaySafe: parent.replaySafe,
               sourceK: parent.sourceK,
               handle: parent.handle,
               ...(parent.prefetch === undefined ? {} : { prefetch: parent.prefetch }),
@@ -438,6 +451,8 @@ export const makeDatomicStorageAdapter = (
           const state: TransactionState = {
             client,
             scopeKey,
+            order: {},
+            replaySafe: transactionOptions?.replaySafe === true,
             optimistic,
             restart: { needed: false },
             sourceK,
@@ -477,7 +492,7 @@ export const makeDatomicStorageAdapter = (
                 transactionOptions?.replaySafe === true &&
                 retry < maxRetries
                   ? Effect.andThen(
-                      Effect.sleep(`${Math.min(50, retry * 2)} millis`),
+                      Effect.sleep(`${Math.min(50, retry * 2 + 1)} millis`),
                       Effect.suspend(() => {
                         client.commitDiagnostics.replays++;
                         for (const id of hint?.tripleIds ?? []) cache.delete(id);
@@ -491,10 +506,14 @@ export const makeDatomicStorageAdapter = (
             Effect.catch((error) =>
               state.restart.needed && optimistic
                 ? Effect.suspend(() => {
+                    endCommit(state.order?.ticket);
                     client.commitDiagnostics.optimisticFallbacks++;
                     return attempt(retry, true);
                   })
                 : Effect.fail(error),
+            ),
+            Effect.ensuring(
+              Effect.sync(() => endCommit(state.order?.ticket)),
             ),
             Effect.ensuring(
               Effect.promise(() =>
@@ -517,6 +536,7 @@ export const makeDatomicStorageAdapter = (
       const state = yield* requireTransaction;
       return yield* Effect.try({
         try: () => {
+          if (state.order && !state.order.ticket) state.order.ticket = registerCommit(timestamp);
           const row: TripleRow = {
             id,
             entity_id: input.entityId,
@@ -671,6 +691,7 @@ export const makeDatomicStorageAdapter = (
     claimCommand: (commandId, txId, timestamp) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
+        if (state.order && !state.order.ticket) state.order.ticket = registerCommit(timestamp);
         const pending = state.claims.get(commandId);
         if (pending !== undefined) return pending.txId;
         if (state.optimistic && state.prefetch?.commandId !== commandId) {
@@ -700,6 +721,7 @@ export const makeDatomicStorageAdapter = (
     retract: (id, timestamp, txId, position) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
+        if (state.order && !state.order.ticket) state.order.ticket = registerCommit(timestamp);
         const row = (yield* queryRows({}, undefined, false, id).pipe(
           Effect.mapError(
             (cause) => new WriteError({ message: "Cannot read retraction target", cause }),

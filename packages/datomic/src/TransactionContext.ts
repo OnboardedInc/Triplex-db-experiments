@@ -10,6 +10,8 @@ export interface DatomicClaim {
   readonly timestamp: number;
 }
 export interface TransactionState {
+  readonly order?: { ticket?: import("./CommitOrder.js").OrderedCommit } | undefined;
+  readonly replaySafe?: boolean | undefined;
   readonly client: DatomicClient;
   readonly scopeKey: string;
   readonly sourceK: number;

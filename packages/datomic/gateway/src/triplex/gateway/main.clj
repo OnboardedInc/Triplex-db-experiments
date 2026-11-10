@@ -164,7 +164,7 @@
                       {:txId (:triplex.claim/tx-id claim)}))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
-                                {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e)}))))
+                                {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (:maximum (ex-data e))}))))
 (defn -main [& _]
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.

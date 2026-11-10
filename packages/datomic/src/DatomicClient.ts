@@ -14,6 +14,7 @@ export class DatomicHttpError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    readonly maximum?: number,
   ) {
     super(message);
   }
@@ -77,6 +78,7 @@ export class DatomicClient {
     optimisticFallbacks: 0,
     conflicts: 0,
     replays: 0,
+    clockReplays: 0,
   };
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
@@ -169,6 +171,7 @@ export class DatomicClient {
                     status,
                     String(data["code"] ?? "GatewayError"),
                     String(data["message"] ?? "Gateway request failed"),
+                    typeof data["maximum"] === "number" ? data["maximum"] : undefined,
                   ),
                 );
               else {
@@ -387,6 +390,9 @@ export class DatomicClient {
   async transact(
     db: string,
     input: {
+      clientId?: string;
+      sendSequence?: number;
+      replaySafe?: boolean;
       sourceK: number | null;
       span?: number;
       entities?: readonly string[];

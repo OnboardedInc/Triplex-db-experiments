@@ -157,15 +157,33 @@
      [[:triplex/commit {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
-                       :ops ops :times times :irregular irregular :position-irregular irregular
+                       :ops ops :times times :replay-safe (true? (get input "replaySafe")) :irregular irregular :position-irregular irregular
                        :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}]])))
+;; [DX-B5-L0] Why: HTTP connections can overtake ordered client sends; serialize submission only.
+;; Rejected: waiting for the transaction result under this monitor (queues acknowledgements).
+(def submissions (atom {}))
+(defn submit! [conn data input]
+  (if-let [client (get input "clientId")]
+    (let [sequence (get input "sendSequence")
+          _ (when-not (and (string? client) (<= 1 (count client) 64) (integer? sequence) (pos? sequence))
+              (codec/invalid "Invalid send sequence"))
+          state (or (@submissions client)
+                    (get (swap! submissions #(if (contains? % client) % (assoc % client (atom 0)))) client))
+          deadline (+ (System/nanoTime) 20000000)]
+      (locking state
+        (loop []
+          (when (and (< @state (dec sequence)) (< (System/nanoTime) deadline))
+            (.wait ^Object state 1) (recur)))
+        (let [future (d/transact-async conn data)]
+          (swap! state max sequence) (.notifyAll ^Object state) future)))
+    (d/transact-async conn data)))
 (defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
     (let [data (tx-data db input (:scope (reach/config name db)))
           start (System/nanoTime)
-          report (deref (d/transact conn data) 5000 ::timeout)
+          report (deref (submit! conn data input) 5000 ::timeout)
           transact-micros (quot (- (System/nanoTime) start) 1000)]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
@@ -178,8 +196,10 @@
       (let [text (str e)]
         (when (= "OutcomeUnknown" (:code (ex-data e))) (throw e))
         (throw (ex-info (.getMessage e)
-                       {:status (if (re-find #"TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
-                        :code (cond (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
+                       {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
+                        :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
+                        :code (cond (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
+                                    (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
