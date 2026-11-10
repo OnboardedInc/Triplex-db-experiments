@@ -97,8 +97,11 @@
                ;; Rejected: using only tx/id (drops nested transacts at interior cursors).
                (mapcat (fn [[entity rs]]
                          (let [existing (d/entid db [:triplex.entity/id entity])
-                               position-row (first (filter #(= ":_tx/position" (:attribute %)) rs))]
-                           (if (and position-row (nil? existing))
+                               position-row (first (filter #(= ":_tx/position" (:attribute %)) rs))
+                               instant-row (first (filter #(= ":_tx/instant" (:attribute %)) rs))
+                               commands (filter #(= ":_tx/command-id" (:attribute %)) rs)
+                               claims-valid (every? (fn [r] (some #(and (= entity (get % "txId")) (= (:value_string r) (get % "commandId"))) claims)) commands)]
+                           (if (and position-row (= "datetime" (:value_type instant-row)) claims-valid (nil? existing))
                              [[:db/add "datomic.tx" :triplex.tx/journals (str "e:" entity)]
                               [:db/add (str "e:" entity) :triplex.journal/position (marker (:recorded_position position-row))]]
                              [[:db/add scope :triplex.scope/feed-irregular true]])))
@@ -279,8 +282,10 @@
                   :else (map :e (if (= route "live") (d/datoms db :aevt :f/live) (d/datoms db :avet :f/id))))
         branch (cond id "id" (some? entities) "entities" (get pattern "entityId") "entity" :else "scan")
         _ (stats/bump! [:branches branch :calls] 1)
-        rows (map #(do (when (= branch "scan") (stats/bump! [:branches branch :datoms] 1)) (row db %)) ids)]
-    {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
+        visited (volatile! 0)
+        scan-key (pr-str (select-keys pattern ["attribute" "entityType"]))
+        rows (map #(do (when (= branch "scan") (vswap! visited inc) (stats/bump! [:branches branch :datoms] 1)) (row db %)) ids)
+        result {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                   (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source")
      :basis basis :subjectAttribute (str attribute)
      :rows (mapv #(wire-row (mask-retirement % basis))
@@ -289,7 +294,12 @@
                                      (or (nil? entities) (some #{(:entity_id r)} entities))
                                      (every? (fn [[k field]] (or (nil? (get pattern k)) (.startsWith ^String (str (get pattern k)) "?")
                                                                (= (get pattern k) (get r field))))
-                                             [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]]))) rows))}))
+                                             [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]]))) rows))}]
+    (when (= branch "scan")
+      (stats/bump! [:scanPatterns scan-key :calls] 1)
+      (stats/bump! [:scanPatterns scan-key :datoms] @visited)
+      (swap! stats/counts update-in [:scanPatterns scan-key :maxDatoms] (fnil max 0) @visited))
+    result))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).

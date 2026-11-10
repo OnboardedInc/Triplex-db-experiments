@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Effect, Layer, ManagedRuntime } from "effect";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Attribute, EntityId, Triples } from "@triplex-build/triplex";
 import {
   Capabilities,
@@ -98,6 +98,26 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("indexed journals", 
                 s.t.transact(operations, n % 2 ? undefined : { commandId }),
               );
           }
+          // [DX-B4-T1] Why: maintenance/SPI writes can consume a physical position without a journal.
+          // Rejected: counting each physical commit as one public transaction record.
+          await Effect.runPromise(
+            s.a.withTransaction(
+              Effect.gen(function* () {
+                const p = yield* s.a.nextCommitPosition();
+                yield* s.a.insert(
+                  {
+                    entityId: "maintenance",
+                    attribute: ":test/value",
+                    value: { type: "string", value: "unjournaled" },
+                  },
+                  "maintenance",
+                  1000,
+                  "maintenance-row",
+                  p,
+                );
+              }),
+            ),
+          );
           const head = await s.fast.runPromise(s.t.currentPosition());
           for (const after of [0, 1, 2, 3, head, head + 3, rand() % (head + 1)]) {
             const limit = 1 + (rand() % 4);
@@ -116,10 +136,86 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("indexed journals", 
         }
       }
       expect(fastAnswers).toBe(700);
+      console.log(
+        JSON.stringify({ scopes: 100, acceptedFeedPages: fastAnswers, commandComparisons: 600 }),
+      );
     } finally {
       c.close();
     }
   }, 300000);
+  it("declines modified journals and preserves the fallback record", async () => {
+    const c = client(),
+      s = await setup(c);
+    try {
+      const receipt = await s.fast.runPromise(s.t.transact([op(1)], { commandId: "retired" }));
+      const rows = await Effect.runPromise(
+        s.a.query({ entityId: receipt.txId, entityType: "_Transaction" }),
+      );
+      const instant = rows.find((r) => r.attribute === ":_tx/instant")!;
+      await Effect.runPromise(
+        s.a.withTransaction(
+          Effect.gen(function* () {
+            const p = yield* s.a.nextCommitPosition();
+            yield* s.a.retract(instant.id, 1000, "retirement", p);
+          }),
+        ),
+      );
+      expect(await Effect.runPromise(s.a.getTransactionsAfter!(0, 100))).toBeUndefined();
+      expect(await s.fast.runPromise(s.t.transactions())).toEqual(
+        await s.fallback.runPromise(s.oracle.transactions()),
+      );
+      expect(await s.fast.runPromise(s.t.transactionByCommand("retired"))).toEqual(
+        await s.fallback.runPromise(s.oracle.transactionByCommand("retired")),
+      );
+    } finally {
+      await s.close();
+      c.close();
+    }
+  });
+  it("keeps command lookups indexed after timestamp regression while the feed declines", async () => {
+    const c = client(),
+      s = await setup(c);
+    try {
+      const receipt = await s.fast.runPromise(s.t.transact([op(1)], { commandId: "known" }));
+      for (const [id, time] of [
+        ["later", 2000],
+        ["earlier", 1000],
+      ] as const) {
+        await Effect.runPromise(
+          s.a.withTransaction(
+            Effect.gen(function* () {
+              const p = yield* s.a.nextCommitPosition();
+              yield* s.a.insert(
+                {
+                  entityId: "clock",
+                  attribute: ":test/clock",
+                  value: { type: "string", value: id },
+                },
+                id,
+                time,
+                id,
+                p,
+              );
+            }),
+          ),
+        );
+      }
+      expect(await Effect.runPromise(s.a.getTransactionsAfter!(0, 100))).toBeUndefined();
+      expect(await Effect.runPromise(s.a.getTransactionIdByCommand!("known"))).toBe(receipt.txId);
+      const spy = vi.spyOn(c, "request");
+      const actual = await s.fast.runPromise(s.t.transactionByCommand("known"));
+      expect(spy.mock.calls.map((call) => call[1].split("/").at(-1))).toEqual([
+        "command",
+        "journal",
+      ]);
+      spy.mockRestore();
+      expect(actual).toEqual(await s.fallback.runPromise(s.oracle.transactionByCommand("known")));
+      expect(await s.fast.runPromise(s.t.transactionByCommand("unknown"))).toBeNull();
+    } finally {
+      await s.close();
+      c.close();
+    }
+  });
   it("long polls wake promptly on publication and time out empty", async () => {
     const c = client(),
       s = await setup(c);
