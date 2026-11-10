@@ -144,3 +144,19 @@ resident memory (transactor heap 3 GiB, two gateways with 2 GiB heaps, Postgres,
 the guest would have almost no page cache left at peak, which would hurt Postgres and so the testing; 16 GiB keeps 2.5 to 4 GiB
 of cache. The VM process held all 20 GiB on the host, so this returns 4 GiB to macOS. CPUs stay at 8, disk at 100 GiB. Done with
 the measurement lock held so no agent's containers were running.
+
+## 2026-11-10 about 20:15 UTC: no QLever work; storage size is a guard metric (verbatim, pasted by Sam)
+
+> Don't do anything with Qlever. That doesn't need to be measured. We're just working on XTDB and the Atomic. I think this should be a sixth priority. That's the goal but we can do it later and it should be something that we optimize for last. Everything else should be a higher priority than it.
+>
+> Maybe then you don't put it as a sixth priority but I think it could be a sixth-priority-something. You shouldn't sacrifice any of the other metrics for size. We just need to keep the size the same or go down while the other ones get better. Maybe that should be a guard metric.
+>
+> Sounds good though. It's good to know. It seems like it's not important to keep going smaller because it says that a maintained Atomic is about the same level as a bare Postgres table, which is great. Sounds good to me for now.
+
+Orchestrator reading ("the Atomic" is Datomic):
+
+1. **No QLever work of any kind, including measurement.** Only lane D (Datomic) and lane X (XTDB).
+2. **Storage footprint is a guard metric, ranked below P1 to P5.** Rule: it must stay the same or go down while the five
+   priorities improve; no priority is ever traded for size; it is optimised last. It is not a sixth ranked priority and
+   `lab/NORTH-STAR.md` is unchanged. Definition and today's value are in `lab/TARGETS.md`, "Guard metric: storage footprint".
+3. No further size reduction work for now: maintained Datomic is about level with a bare Postgres table.

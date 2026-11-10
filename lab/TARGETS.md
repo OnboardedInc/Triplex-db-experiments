@@ -291,3 +291,18 @@ for Onboarded's real world definition; it is not a product feature of Triplex.
    results, cursors and explain. Both sides of a comparison replace erased values with their markers before comparing.
 9. **Key-destruction evidence:** for crypto-shredding, the lane's inventory must show that every surviving copy of a protected value
    (and of anything derived from it) is encrypted only under the destroyed key; deleting some key is not evidence.
+
+## Guard metric: storage footprint (Sam, 2026-11-10)
+
+Not one of the five priorities and ranked below all of them. **Rule: the footprint stays the same or goes down while P1 to P5
+improve; no priority is traded for size; it is optimised last.** Sam's words are in `lab/research/SAM-decisions-2026-11-09.md`.
+
+1. **Definition:** bytes of the stopped storage volume excluding the physical write-ahead log, per W0 subject, after the
+   reference maintenance (requested indexing completed, storage garbage collection requested and observed quiescent,
+   `VACUUM FULL`, checkpoint, clean stop). Table bytes, write-ahead log bytes and counts of current rows, historical assertions
+   and native datoms are reported next to it. For XTDB the logical log counts as data.
+2. **How to measure:** `lab/experiments/EXP-DX1/s4/footprint.sh <stopped-volume>` (spike DX-S4).
+3. **Baseline, lane D lean layout, 1,000 W0 subjects (42,775 commands, 442,410 assertions), 2026-11-10:** 170 KB per subject
+   maintained (table 139.7 MB, 316 bytes per assertion); 318 KB per subject as sealed without maintenance.
+4. **Use:** every receipt that claims a priority reports the footprint from the same build; a change that raises the maintained
+   footprint needs a stated reason and Sam's word.
