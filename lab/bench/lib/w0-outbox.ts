@@ -127,3 +127,8 @@ function reviveState(s: any): W0.OutboxState {
     subjects: s.subjects.map((i: any) => ({ ...i, basis: { ...i.basis, tx: BigInt(i.basis.tx) } })),
   };
 }
+
+// [DX-H6] Why: semantic evidence uses W0 canonical integers; fractional telemetry belongs only in page metrics.
+// Rejected: canonicalizing the entire publication response (failed the first VM attempt after real ACKs).
+export const encodePublicationEvidence = (actual: { deliveries: readonly any[]; retry: boolean }) =>
+  canonical({ deliveries: actual.deliveries, retry: actual.retry });

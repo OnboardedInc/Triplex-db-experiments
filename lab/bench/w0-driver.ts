@@ -1,3 +1,4 @@
+import { encodePublicationEvidence } from "./lib/w0-outbox.ts";
 import { startW0Live, matchW0Live } from "./lib/w0-live.ts";
 import { measurementLease } from "./lib/w0-lease.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
@@ -17,7 +18,6 @@ import {
   equalBytes,
   requireCounts,
   requireFingerprint,
-  wireRecord,
   deliveriesWire,
   emptyWireState,
 } from "./lib/w0-gates.ts";
@@ -334,6 +334,7 @@ export async function runW0Driver(argv: string[]) {
       const verifyStart = performance.now();
 
       const original = JSON.parse(fs.readFileSync(path.join(dir, `preview-${page}.json`), "utf8"));
+      const oracleRecords: any[] = [];
       for (let i = 0; i < records.length; i++) {
         const r = records[i]!;
         equalBytes("G1 pinned world digest", r.worldSha256, sha256(canonical(original[i].world)));
@@ -343,14 +344,37 @@ export async function runW0Driver(argv: string[]) {
           basis: { tx: basis.position, validTime: W0.POPULATION_VALID_TIME },
         });
         equalBytes("G2 reconcile", W0.outputJson(r.output), expectedOutput);
+        const independentlyExpected = JSON.parse(expectedOutput);
+        // [DX-H6] Why: publication expectations come from oracle output, never the worker's record field.
+        // Rejected: feeding actual evaluation records back into the expected publish fold.
+        const expectedRecord = {
+          basis: independentlyExpected.basis,
+          release: independentlyExpected.release,
+          subject: independentlyExpected.subject,
+          workItems: independentlyExpected.workItems,
+        };
+        equalBytes(
+          "G2 record",
+          canonical({
+            ...r.record,
+            workItems: r.record.workItems.map((w: any) => ({
+              ...w,
+              payload: JSON.parse(w.payload),
+            })),
+          }),
+          canonical(expectedRecord),
+        );
+        oracleRecords.push({
+          ...expectedRecord,
+          workItems: expectedRecord.workItems.map((w: any) => ({ ...w, inputs: [] })),
+        });
         if (coverage.has(r.subject)) throw new Error("G4 duplicate evaluation");
         coverage.add(r.subject);
       }
-      const evaluations = records.map((r) => r.record);
       const expectedPublish = JSON.parse(
         await oracle.call("publish", {
           state: expectedState,
-          evaluations: evaluations.map(wireRecord),
+          evaluations: oracleRecords,
         }),
       );
       const verificationBeforeMs = performance.now() - verifyStart;
@@ -432,7 +456,12 @@ export async function runW0Driver(argv: string[]) {
         fs.writeFileSync(path.join(dir, `activation-${page}.json`), canonical(records));
         const actual: any = await comp.publishOutbox(records.map((r) => r.record));
         const publicationAckAtEpochMs = performance.timeOrigin + performance.now();
-        fs.writeFileSync(path.join(dir, `publication-${page}.json`), canonical(actual));
+        // [DX-H6] Why: W0 canonical bytes contain business integers; telemetry contains fractional durations.
+        // Rejected: serializing telemetry with the integer-only W0 encoder (first VM attempt failed after ACK).
+        fs.writeFileSync(
+          path.join(dir, `publication-${page}.json`),
+          encodePublicationEvidence(actual),
+        );
         return { publicationAckAtEpochMs, ...(actual.timing ?? {}) };
       },
     });

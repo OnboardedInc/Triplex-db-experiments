@@ -13,3 +13,11 @@ North star: P5 activation with P1/P2 preserved. All new measurements are diagnos
 - `attempt*.sh`: only a fresh G0-PASS controller receipt can seal; stopped PostgreSQL exit must be zero, no overwrite, aggregate volume cap enforced. `attempt.sh` only retains a qualified 10k sealed seed. Inventories must be empty before releasing the lease. Cleanup/deadline records never grant semantic PASS.
 
 The final report lists actual executions, remaining gaps and changed acceptance-pinned hashes. This audit describes code checks, not independent review.
+
+## Retry and seed-probe additions
+
+- `encodePublicationEvidence`: serializes only ACK-returned semantic deliveries/retry. It rejects business floats and retains integer canonical bytes; timing stays in separate metrics. This emits evidence, not PASS. The regression uses the actual fractional-duration failure shape.
+- `w0-driver.ts` retry: G2 additionally compares the full normalized actual evaluation record to the independently expected O-DOMAIN output record. G5 receives records derived from those expected outputs, not the worker's actual record. Every comparison still happens after the last ACK and before gate promotion.
+- `seed-probe.ts`: each window has a fresh UUID scope and fresh driver volume, exact ACK positions, complete store counts and full stored-world fingerprint versus a freshly run independently source-checked population oracle. Every window must MATCH and source hashes must remain unchanged before aggregate MATCH. It is N=50 calibration, not the required N=1,000/10,000 qualification. Raw command logs remain durable outside git.
+
+Build/submission failures reject waiting publication tickets. An ACK failure can occur after later pages were already submitted; these in-flight outcomes settle during cleanup and are not promoted to a semantic PASS.
