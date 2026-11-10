@@ -160,3 +160,18 @@ Orchestrator reading ("the Atomic" is Datomic):
    priorities improve; no priority is ever traded for size; it is optimised last. It is not a sixth ranked priority and
    `lab/NORTH-STAR.md` is unchanged. Definition and today's value are in `lab/TARGETS.md`, "Guard metric: storage footprint".
 3. No further size reduction work for now: maintained Datomic is about level with a bare Postgres table.
+
+## 2026-11-10 about 20:40 UTC: keep going on Datomic; skip the 2,000 rung; a Linux machine (verbatim, pasted by Sam)
+
+> Okay yeah, then let's keep going on Datomic. It looks like we are really close. [...] We basically are just missing on P5. P2 and P1 were really close, right? We're very close. What do you think is missing? What are the most risky things to check next? I can get you back the machine in a little bit but just answer me that first.
+
+> Also I kind of wanted to maybe skip to 100,000 or, I guess, skip to the 10,000 per second and skip the 2,000 per second. Then IDV would be the best thing.
+>
+> I have a Linux machine we can maybe use later to test this. Or is there a cheap way to get a Linux machine in the cloud that I can get via an API and a credit card to run these tests?
+>
+> I think I'd rather skip beyond 2,000 to go straight to 10 and see how we can fix that. If I could get you a Linux machine in the cloud, like an ideal one, what do you think I should do? How fast can we get it if I have a credit card?
+
+Orchestrator reading: (1) lane D continues; (2) **verdict runs go straight to the 10,000-subject rung; the 2,000-subject rung is
+no longer a step** (agents may still use small scopes for alternating-arm diagnostics); (3) "IDV" is XTDB (Sam, 2026-11-09), read
+here as XTDB being next after Datomic; (4) Sam is willing to provide a Linux machine, his own or rented; the orchestrator's
+recommendation is in the chat reply of the same time and nothing is rented without him doing it.
