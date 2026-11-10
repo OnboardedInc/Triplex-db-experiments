@@ -631,7 +631,11 @@ export async function runW0Driver(argv: string[]) {
               selectionWallMs: performance.now() - selectionStarted,
               selectionCpuMs: (selectionCpu.user + selectionCpu.system) / 1000,
             };
-            if (selection.affected.length < Math.ceil(N / 100) || selection.largestFanout < 2)
+            if (
+              selection.affected.length < Math.ceil(N / 100) ||
+              report.sharedChange.fanout < 2 ||
+              report.between.acknowledged < 1
+            )
               throw Error("H8 insufficient changes/fan-out");
           }
         : undefined,
