@@ -13,6 +13,14 @@ import json,sys
 open(sys.argv[1],'w').write(json.dumps(sys.argv[2:],indent=2)+'\n')
 PY
 git rev-parse HEAD > "$out/head.txt"
+python3 - "$out/source-build-hashes.json" <<'PYHASH'
+import subprocess,pathlib,sys,hashlib,json
+files=subprocess.check_output(['git','ls-files','lab/bench','lab/experiments/EXP-DX1/h5','packages/datomic','packages/core','pnpm-lock.yaml'],text=True).splitlines()
+files += [str(p) for d in ['datomic','core','host','qualification','w0','xtdb','qlever','sql'] for p in pathlib.Path('packages/'+d+'/dist').rglob('*') if p.is_file()]
+rows={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in sorted(set(files)) if pathlib.Path(p).is_file()}
+pathlib.Path(sys.argv[1]).write_text(json.dumps(rows,indent=2)+'\n')
+PYHASH
+
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 held=false; timer=
 cleanup() {

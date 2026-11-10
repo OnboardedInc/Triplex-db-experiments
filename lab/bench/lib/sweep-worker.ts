@@ -1,4 +1,5 @@
 import { measureW0Http } from "./w0-http.ts";
+import fs from "node:fs";
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import { canonical, reachableRows, worldOf } from "./w0-world.ts";
@@ -10,6 +11,19 @@ const comp =
     : await openComposition(workerData.composition, workerData.lane, workerData.scope);
 const port = parentPort!;
 const pins = await loadW0Pins();
+// [DX-H5] Why: cgroup interval deltas include concurrent pages/live traffic; preserve rather than invent attribution.
+// Rejected: calling overlapping page CPU deltas exclusive service CPU.
+const cgroups = () =>
+  Object.fromEntries(
+    (process.env.TX2_ENGINE_CGROUPS ?? "")
+      .split(",")
+      .filter(Boolean)
+      .map((entry) => {
+        const [name, path] = entry.split("=");
+        const text = fs.readFileSync(path + "/cpu.stat", "utf8");
+        return [name, Number(text.match(/^usage_usec (\d+)$/m)?.[1])];
+      }),
+  );
 const pending = new Map<number, (v: any) => void>();
 port.on("message", async (msg) => {
   if (msg.type === "rows") {
@@ -19,6 +33,7 @@ port.on("message", async (msg) => {
   }
   if (msg.type !== "page") return;
   try {
+    const pageStartCpu = cgroups();
     const start = performance.eventLoopUtilization();
     const cpu = () => (process as any).threadCpuUsage?.() ?? process.cpuUsage();
     const diff = (a: any, b: any) => (b.user - a.user + b.system - a.system) / 1e6;
@@ -79,6 +94,9 @@ port.on("message", async (msg) => {
           evaluateWallMs,
         },
         cpu: { read: readCpu, decode: decodeCpu, kernel: kernelCpu },
+        cgroupIntervalMicros: Object.fromEntries(
+          Object.entries(cgroups()).map(([name, value]) => [name, value - pageStartCpu[name]]),
+        ),
         cpuScope: (process as any).threadCpuUsage ? "thread" : "process-overlapping",
         elu: performance.eventLoopUtilization(start),
       },

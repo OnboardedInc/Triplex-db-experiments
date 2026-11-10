@@ -218,6 +218,7 @@ export async function runW0Sweep(o: SweepOptions) {
               ...(callbackTiming ?? {}),
             },
             cpu: page.cpu,
+            cgroupIntervalMicros: page.cgroupIntervalMicros,
             cpuScope: page.cpuScope,
             elu: page.elu,
             position: page.position,

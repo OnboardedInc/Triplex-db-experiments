@@ -127,6 +127,8 @@ export async function runW0Driver(argv: string[]) {
         previous.status !== "G0-PASS"
       )
         throw Error("sealed seed binding mismatch");
+      if (previous.seed.mapper !== sha256(fs.readFileSync("lab/bench/lib/w0-seed.ts")))
+        throw Error("sealed seed mapper changed");
       report.seed = previous.seed;
       report.seedRestore = {
         receiptSha256: sha256(bytes),
@@ -197,6 +199,9 @@ export async function runW0Driver(argv: string[]) {
     save();
     await lease.checkpoint(true);
     if (argv.includes("--g0-only")) {
+      for (const [file, hash] of Object.entries(report.sources))
+        if (sha256(fs.readFileSync(file)) !== hash)
+          throw Error("source changed before seal: " + file);
       report.status = "G0-PASS";
       report.limitations.push("Activation and screening rounds not requested");
       return report;
