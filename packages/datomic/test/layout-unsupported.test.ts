@@ -54,6 +54,45 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("lean unsupported route
           retract_tx_id: "retire",
         },
       ]);
+      await Effect.runPromise(
+        a.withTransaction(
+          Effect.gen(function* () {
+            const p = yield* a.nextCommitPosition();
+            yield* a.insert(
+              { entityId: "empty", attribute: ":a", value: { type: "string", value: "v" } },
+              "tx",
+              3,
+              "empty-id",
+              p,
+            );
+          }),
+        ),
+      );
+      await Effect.runPromise(
+        a.withTransaction(
+          Effect.gen(function* () {
+            const p = yield* a.nextCommitPosition();
+            yield* a.retract("empty-id", 4, "", p);
+          }),
+        ),
+      );
+      expect((await Effect.runPromise(a.history("empty")))[0]!.retract_tx_id).toBe("");
+      await expect(
+        Effect.runPromise(
+          a.withTransaction(
+            Effect.gen(function* () {
+              const p = yield* a.nextCommitPosition();
+              yield* a.insert(
+                { entityId: "other", attribute: ":a", value: { type: "string", value: "changed" } },
+                "tx",
+                5,
+                "empty-id",
+                p,
+              );
+            }),
+          ),
+        ),
+      ).rejects.toBeDefined();
       expect((await Effect.runPromise(a.getReachRows!("e", { validAt: 10 })))!).toEqual([]);
     } finally {
       await c.delete(scope);

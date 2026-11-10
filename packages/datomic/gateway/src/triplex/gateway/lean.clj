@@ -38,11 +38,11 @@
                marker (let [start (.length ^String (prefix (:id row)))]
                         (assoc row :retracted_position (Long/parseLong marker start (+ start 16) 10)
                                    :retracted_at (reach/bits marker (+ start 16))
-                                   :retract_tx_id (not-empty (subs marker (+ start 32)))))
+                                   :retract_tx_id (subs marker (+ start 32))))
                retired (let [tx (:tx retired)]
                          (assoc row :retracted_at (value db tx :triplex.tx/recorded-at)
                                     :retracted_position (value db tx :triplex.tx/position)
-                                    :retract_tx_id (not-empty (value db tx :triplex.tx/id))))
+                                    :retract_tx_id (value db tx :triplex.tx/id)))
                :else row))) grouped)))
 (defn live-texts [db eid]
   (let [retired (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))

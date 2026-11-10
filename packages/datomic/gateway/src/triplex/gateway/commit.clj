@@ -13,6 +13,12 @@
                  (let [marker (first (d/seek-datoms db :eavt (:e datom) :triplex.entity/retired prefix))]
                    (when-not (and marker (= (:a marker) (d/entid db :triplex.entity/retired))
                                   (.startsWith ^String (:v marker) prefix)) datom)))))
+           ;; [DX-B5-L1] Why: legacy assertion identities remain reserved after retirement.
+           ;; Rejected: accepting a reused retired ID (history would contain two incompatible rows for one identity).
+           (identity-row [id]
+             (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
+                   datom (first (d/index-range (d/history db) :triplex.entity/row prefix nil))]
+               (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
      (let [{:keys [scope source provisional span lean live entities scope-wide ops times replay-safe irregular position-irregular journal-entities]} payload
            h (value scope :triplex.scope/position) final (+ h span) final-digits (digits final) delta (- final provisional)
@@ -46,7 +52,7 @@
                            (= :triplex/assert (first op))
                            (let [[_ entity a text] op raw (second text)
                                  id (subs raw 5 (+ 5 (Integer/parseInt raw 1 5 16)))]
-                             (when (row-id id) (throw (ex-info "TRIPLEX_IDENTITY f/id" {})))
+                             (when (identity-row id) (throw (ex-info "TRIPLEX_IDENTITY f/id" {})))
                              [(replace-value [:db/add entity a text])])
                            (= :triplex/retract (first op))
                            (let [[_ entity id] op e (d/entid db [:triplex.entity/id entity])
