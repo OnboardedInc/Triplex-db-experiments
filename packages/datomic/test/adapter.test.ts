@@ -5,6 +5,7 @@ import {
   DatabaseScope,
   TransactionOutcomeUnknown,
   WriteError,
+  InvalidTripleError,
 } from "@triplex-build/triplex/runtime";
 import { makeDatomicQueryExecutor } from "../src/DatomicQueryExecutor.js";
 import { DatomicClient } from "../src/DatomicClient.js";
@@ -189,17 +190,16 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
           "tx-original",
         );
       }));
-    it("preserves signed zero and int64 bounds and rejects noncanonical integers", async () =>
-      withStore(async (a, client, scope) => {
-        await Effect.runPromise(a.withTransaction(insert(a, "negative-zero", -0)));
-        expect(
-          Object.is((await Effect.runPromise(a.getById("negative-zero")))?.value_number, -0),
-        ).toBe(true);
-        const q = makeDatomicQueryExecutor(client, scope);
-        const projected = await Effect.runPromise(
-          q.execute({ find: ["?v"], where: [["subject", ":value", "?v"]] }, false, { validAt: 2 }),
+    it("rejects signed zero, preserves int64 bounds and rejects noncanonical integers", async () =>
+      withStore(async (a) => {
+        // [DX-B6-4] Why: the declared Datomic domain rejects negative zero before transport.
+        // Rejected: silently converting it to +0 to satisfy a stale pre-domain test.
+        const error = await Effect.runPromise(
+          a.withTransaction(insert(a, "negative-zero", -0)).pipe(Effect.flip),
         );
-        expect(Object.is(projected.results[0]?.["?v"], -0)).toBe(true);
+        expect(error).toBeInstanceOf(InvalidTripleError);
+        expect(error).toMatchObject({ _tag: "InvalidTripleError" });
+        expect(await Effect.runPromise(a.getById("negative-zero"))).toBeNull();
         for (const value of ["-9223372036854775808", "9223372036854775807"]) {
           await Effect.runPromise(
             a.withTransaction(
@@ -238,7 +238,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
               )
               .pipe(Effect.flip),
           );
-          expect(error).toBeInstanceOf(WriteError);
+          expect(error).toBeInstanceOf(InvalidTripleError);
         }
       }));
     it("replays one safe callback after a concurrent scope conflict", async () =>

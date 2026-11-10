@@ -15,9 +15,9 @@ import { makeDatomicQueryExecutor } from "../src/DatomicQueryExecutor.js";
 // [DX-B5-L3] Why: compare observable answers, order and temporal metadata against an independent physical layout.
 // Rejected: comparing counts, accepting declines as equivalence, or using nondeterministic assertion identities.
 describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", () => {
-  // [DX-B5-L3] Why: compare the inherited typed error on regular scopes, independently of irregular-cut fixtures.
-  // Rejected: broadening legacy read behavior to fix an unrelated journal decoder edge.
-  it("preserves legacy's typed untyped-journal error on both layouts", async () => {
+  // [DX-B6-4] Why: both layouts must filter the same untyped SPI neighbors.
+  // Rejected: counting a decoder failure as journal parity.
+  it("filters untyped journal neighbors before branded decoding on both layouts", async () => {
     const client = new DatomicClient(process.env.DATOMIC_GATEWAY_URL ?? "http://127.0.0.1:8505");
     const outcomes = [];
     try {
@@ -70,17 +70,15 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
             entity_type: null,
             tx_id: "spi",
           });
-          const outcome = await Effect.runPromise(
-            Effect.match(adapter.getTransactionsAfter!(0, 10), {
-              onFailure: (e) => ({
-                _tag: e._tag,
-                message: e.message,
-                cause: e.cause instanceof Error ? e.cause.message : String(e.cause),
-              }),
-              onSuccess: () => ({ _tag: "UnexpectedSuccess", message: "", cause: "" }),
-            }),
-          );
-          expect(outcome).toMatchObject({ _tag: "ReadError", cause: "Schema validation failed" });
+          const page = await Effect.runPromise(adapter.getTransactionsAfter!(0, 10));
+          expect(page).toHaveLength(1);
+          expect(page![0]!.txId).toBe(receipt.txId);
+          expect(page![0]!.triples.some((t) => t.id === "untyped-journal")).toBe(false);
+          expect(page![0]!.triples.length).toBeGreaterThan(0);
+          const outcome = page![0]!.triples.map((t) => ({
+            attribute: t.attribute,
+            value: t.value,
+          }));
           outcomes.push(outcome);
         } finally {
           await runtime.dispose();

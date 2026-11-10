@@ -7,7 +7,7 @@ import {
   observeInstant,
 } from "./CommitOrder.js";
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
-import { decodeRowText } from "./rowText.js";
+import { decodeRowText, encodeRowText } from "./rowText.js";
 import { RowCache } from "./RowCache.js";
 import { validateTagged } from "./codec.js";
 import { decodeEntity } from "./reach.js";
@@ -624,9 +624,16 @@ export const makeDatomicStorageAdapter = (
           return result.transactions.map(([txId, position, rows]) => {
             // [DX-B4-T1] Why: portable feed enumeration includes only typed journal rows, even after SPI writes.
             // Rejected: including unrelated rows merely because they share a journal entity ID.
-            const triples = decodeEntity(txId, position, rows).rows.filter(
-              (t) => Option.isSome(t.entityType) && t.entityType.value === "_Transaction",
-            );
+            // [DX-B6-4] Why: unrelated SPI rows may contain non-journal tx IDs.
+            // Rejected: decoding branded journal fields before selecting the entity type.
+            const journalRows = rows
+              .map(decodeRowText)
+              .filter((row) => row.entity_type === "_Transaction");
+            const triples = decodeEntity(
+              txId,
+              position,
+              journalRows.map((row) => encodeRowText(row)),
+            ).rows;
             if (triples.some((t) => t.entityId !== txId))
               throw new TypeError("Journal binding mismatch");
             return { txId, triples };
