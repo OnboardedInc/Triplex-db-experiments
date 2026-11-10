@@ -35,7 +35,9 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("row-datom reach equ
     try {
       for (let scenario = 0; scenario < 200; scenario++) {
         const scope = DatabaseScope.test(`dx1-${randomUUID()}`);
-        const a = makeDatomicStorageAdapter(client, scope);
+        const a = makeDatomicStorageAdapter(client, scope, {
+          layout: process.env.TRIPLEX_DATOMIC_LAYOUT === "lean" ? "lean" : "legacy",
+        });
         let oracleBasis: ResolvedTemporalBasis | undefined;
         const oracleAdapter = {
           ...a,
@@ -50,7 +52,12 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("row-datom reach equ
           }).layer({ scope, capabilities: Capabilities.none }),
         );
         await Effect.runPromise(a.initialize());
-        const db = (await client.create(scope)).db;
+        const db = (
+          await client.create(
+            scope,
+            process.env.TRIPLEX_DATOMIC_LAYOUT === "lean" ? "lean" : "legacy",
+          )
+        ).db;
         const triples = await runtime.runPromise(Triples);
         const ids: string[] = [];
         const positions: number[] = [];
@@ -142,7 +149,9 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("row-datom reach equ
               const fresh = new DatomicClient(
                 process.env["DATOMIC_GATEWAY_URL"] ?? "http://127.0.0.1:8490",
               );
-              const freshAdapter = makeDatomicStorageAdapter(fresh, scope);
+              const freshAdapter = makeDatomicStorageAdapter(fresh, scope, {
+                layout: process.env.TRIPLEX_DATOMIC_LAYOUT === "lean" ? "lean" : "legacy",
+              });
               let inline;
               try {
                 inline = await Effect.runPromise(freshAdapter.getReachTriples!(root, basis));
@@ -223,7 +232,9 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("irregular SPI posit
     try {
       for (const mode of ["lower", "upper", "retirement"]) {
         const scope = DatabaseScope.test(`dx1-irregular-${randomUUID()}`);
-        const a = makeDatomicStorageAdapter(client, scope);
+        const a = makeDatomicStorageAdapter(client, scope, {
+          layout: process.env.TRIPLEX_DATOMIC_LAYOUT === "lean" ? "lean" : "legacy",
+        });
         try {
           await Effect.runPromise(a.initialize());
           await Effect.runPromise(
@@ -277,7 +288,9 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("revision cache tran
       20000,
     );
     const scope = DatabaseScope.test(`dx2-cache-${randomUUID()}`);
-    const a = makeDatomicStorageAdapter(client, scope);
+    const a = makeDatomicStorageAdapter(client, scope, {
+      layout: process.env.TRIPLEX_DATOMIC_LAYOUT === "lean" ? "lean" : "legacy",
+    });
     let oracleBasis: ResolvedTemporalBasis | undefined;
     const runtime = ManagedRuntime.make(
       Runtime.define({

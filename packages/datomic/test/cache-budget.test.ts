@@ -14,7 +14,9 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("byte-budget native equ
       rowCacheBytes: budget,
     });
     const scope = DatabaseScope.test(`b6-cache-${randomUUID()}`);
-    const a = makeDatomicStorageAdapter(client, scope);
+    const a = makeDatomicStorageAdapter(client, scope, {
+      layout: process.env.TRIPLEX_DATOMIC_LAYOUT === "lean" ? "lean" : "legacy",
+    });
     try {
       await Effect.runPromise(a.initialize());
       let position = 0;

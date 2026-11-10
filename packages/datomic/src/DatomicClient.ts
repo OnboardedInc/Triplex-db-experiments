@@ -130,6 +130,12 @@ export class DatomicClient {
   readonly rowCache: RowCache;
   forceFullReach = false;
   readonly reachDiagnostics = {
+    inlineEntities: 0,
+    referenceEntities: 0,
+    referenceHits: 0,
+    referenceMisses: 0,
+    decodedRows: 0,
+    decodedTextBytes: 0,
     refMisses: 0,
     waits: 0,
     waitHits: 0,
@@ -399,11 +405,18 @@ export class DatomicClient {
           let decoded: CachedEntity | undefined;
           if (entity.length === 3) {
             if (!Array.isArray(entity[2])) throw new TypeError("Invalid inline entity");
+            this.reachDiagnostics.inlineEntities++;
+            this.countReachDecode(entity[2]);
             decoded = decodeEntity(id, rev, entity[2], (row) => {
               for (const observe of this.rowObservers) observe(db, row);
             });
             cache.set(id, decoded);
-          } else decoded = cache.get(id);
+          } else {
+            this.reachDiagnostics.referenceEntities++;
+            decoded = cache.get(id);
+            if (decoded?.rev === rev) this.reachDiagnostics.referenceHits++;
+            else this.reachDiagnostics.referenceMisses++;
+          }
           if (!decoded || decoded.rev !== rev) missed = true;
           else entities.set(id, decoded);
         }
@@ -456,6 +469,7 @@ export class DatomicClient {
                   !Array.isArray(entry[2])
                 )
                   throw new TypeError("Repair entity/revision mismatch");
+                this.countReachDecode(entry[2]);
                 const decoded = decodeEntity(entry[0], entry[1], entry[2], (row) => {
                   for (const observe of this.rowObservers) observe(db, row);
                 });
@@ -488,6 +502,18 @@ export class DatomicClient {
       }
     }
     return undefined;
+  }
+  // [DX-H7] Why: distinguish decode churn from verification CPU without serializing rows again.
+  // Rejected: JSON.stringify telemetry (adds the CPU cost being measured).
+  private countReachDecode(rows: unknown[]) {
+    this.reachDiagnostics.decodedRows += rows.length;
+    for (const row of rows) {
+      if (typeof row === "string") this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(row);
+      else if (Array.isArray(row))
+        for (const value of row)
+          if (typeof value === "string")
+            this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(value);
+    }
   }
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");
