@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 prefix=${1:?prefix}; shift
+[[ $prefix =~ ^tx2-dxb6-[a-z0-9-]+$ ]] || exit 2
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 root=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B6
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 mkdir -p "$root"
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
-printf '{"id":"DX-B6","pid":%d}\n' $$ > "$lock/owner.json"
+lease_started=$(date +%s)
+printf '{"id":"DX-B6","pid":%d,"startedAtSeconds":%d}\n' $$ "$lease_started" > "$lock/owner.json"
 cleanup() {
   rc=${1:-$?}
   trap - EXIT
@@ -23,6 +25,11 @@ cleanup() {
 import json,sys
 owner=json.load(open(sys.argv[1]));assert owner['id']=='DX-B6' and owner['pid']==int(sys.argv[2])
 PYOWNER
+  python3 - "$root/$prefix-cleanup.txt" "$root/$prefix-cleanup.json" "$prefix" "$lease_started" "$rc" <<'PYCLEAN'
+import pathlib,json,sys,time
+inventory=pathlib.Path(sys.argv[1]);assert inventory.read_text()==''
+pathlib.Path(sys.argv[2]).write_text(json.dumps({'prefix':sys.argv[3],'inventory':str(inventory),'inventoryEmpty':True,'heldSeconds':int(time.time())-int(sys.argv[4]),'childExitCode':int(sys.argv[5]),'purpose':'execution and cleanup only; no semantic verdict'},indent=2)+'\n')
+PYCLEAN
   rm "$lock/owner.json"; rmdir "$lock"
   exit "$rc"
 }
@@ -32,6 +39,7 @@ trap cleanup EXIT
 finish() { result=$?; kill "$watchdog" 2>/dev/null || true; cleanup "$result"; }
 trap finish EXIT
 export DX_STACK_EVIDENCE="$root"
+if [[ ${B6_PREBUILD:-} == 1 ]]; then node_modules/.bin/turbo run build --filter=@triplex-build/triplex-datomic...; fi
 python3 lab/experiments/EXP-DX1/b6/capture.py "$root/$prefix-source"
 started=$(date +%s)
 publish=(--no-publish); if [[ ${B6_HOST_GATES:-} == 1 ]]; then publish=(--port-write 8516 --port-read 8517); fi

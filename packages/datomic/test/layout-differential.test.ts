@@ -96,8 +96,10 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
     let seed = 0x19870219,
       comparisons = 0,
       fast = 0,
-      rowClosures = 0;
+      rowClosures = 0,
+      randomDraws = 0;
     const rand = () => {
+      randomDraws++;
       seed ^= seed << 13;
       seed ^= seed >>> 17;
       seed ^= seed << 5;
@@ -110,6 +112,19 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
     };
     try {
       const firstScenario = Number(process.env.DX_B5_SCENARIO_START ?? 0);
+      // [DX-B6] Why: split the unchanged 300-case corpus across 15-minute windows without restarting its RNG stream.
+      // Rejected: independent batch seeds (would silently replace scenarios 100..299).
+      const drawsPerScenario =
+        6 * 4 * 3 + [2, 5, 7].reduce((n, positions) => n + positions + 7 + positions, 0);
+      if (
+        !Number.isSafeInteger(firstScenario) ||
+        firstScenario < 0 ||
+        !Number.isSafeInteger(count) ||
+        count < 1
+      )
+        throw new RangeError("Invalid differential range");
+      for (let skipped = 0; skipped < firstScenario * drawsPerScenario; skipped++) rand();
+      const inputRandomState = seed;
       for (let scenario = firstScenario; scenario < firstScenario + count; scenario++) {
         const stores = await Promise.all(
           (["legacy", "lean"] as const).map(async (layout) => {
@@ -349,6 +364,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
             ),
           );
           equal(duplicate[0], duplicate[1]);
+          expect(randomDraws).toBe((scenario + 1) * drawsPerScenario);
         } finally {
           for (const s of stores) {
             await s.runtime.dispose();
@@ -358,7 +374,19 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
       }
       expect(fast).toBeGreaterThan(0);
       expect(rowClosures).toBe(fast);
-      console.log(JSON.stringify({ scenarios: count, comparisons, fast, rowClosures }));
+      console.log(
+        JSON.stringify({
+          firstScenario,
+          scenarios: count,
+          inputRandomState,
+          finalRandomState: seed,
+          randomDraws,
+          drawsPerScenario,
+          comparisons,
+          fast,
+          rowClosures,
+        }),
+      );
     } finally {
       c.close();
     }
