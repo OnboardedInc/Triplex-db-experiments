@@ -1,0 +1,4 @@
+{
+  "extends": "../../../bench/tsconfig.json",
+  "include": ["../../../bench/w0-driver.ts", "*.ts"]
+}
