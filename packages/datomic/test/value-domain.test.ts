@@ -51,7 +51,9 @@ async function withDatomicFixture(
     const input = raw ? JSON.parse(raw) : {};
     const route = req.url!.split("/").at(-1);
     let answer: unknown = {};
-    if (route === "begin")
+    // [DX-B4-T2] Why: this legacy fixture intentionally exercises portable reads. Rejected: inventing native journal proof in a mock.
+    if (["transactions", "command", "journal"].includes(route!)) answer = {declined:"fixture"};
+    else if (route === "begin")
       answer = {
         handle: "fixture",
         position: { t: "long", v: String(position) },

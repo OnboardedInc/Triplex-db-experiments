@@ -1,6 +1,8 @@
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
+import { decodeRowText } from "./rowText.js";
 import { RowCache } from "./RowCache.js";
 import { validateTagged } from "./codec.js";
+import { decodeEntity } from "./reach.js";
 import { reachResponse } from "./reach.js";
 import { readFailure } from "./readErrors.js";
 import { randomUUID } from "node:crypto";
@@ -41,6 +43,7 @@ export const makeDatomicStorageAdapter = (
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
     readonly optimisticCommits?: boolean;
+    readonly indexedJournalReads?: boolean;
   } = {},
 ): StorageAdapterService => {
   const key = Symbol(scopeKey);
@@ -125,6 +128,26 @@ export const makeDatomicStorageAdapter = (
         if (row && state) state.entities.add(row.entity_id);
         else if (state) state.scopeWide = true;
         return row && (history || visibleAt(row)) && matchesPattern(row, pattern) ? [row] : [];
+      }
+      // [DX-B4-T2] Why: receipt bodies already have exact row datoms. Rejected: reconstructing each journal fact through entity maps.
+      if (
+        options.indexedJournalReads !== false &&
+        !state &&
+        !history &&
+        basis === undefined &&
+        pattern.entityType === "_Transaction" &&
+        pattern.entityId
+      ) {
+        const direct = yield* read(() =>
+          client.request<{ declined?: string; rows: string[] }>("POST", `/v2/db/${db}/journal`, {
+            txId: pattern.entityId,
+          }),
+        );
+        if (!direct.declined)
+          return direct.rows
+            .map(decodeRowText)
+            .filter((row) => matchesPattern(row, pattern))
+            .sort((a, b) => a.recorded_at - b.recorded_at || a.id.localeCompare(b.id));
       }
       const rows = yield* read(() =>
         client.rows(db, {
@@ -543,6 +566,46 @@ export const makeDatomicStorageAdapter = (
     ],
     withTransaction,
     atomicReach: true,
+    // [DX-B4-T1] Why: staged reads retain the portable snapshot overlay. Rejected: exposing committed head inside a transaction.
+    getTransactionsAfter: (after, limit, waitMs = 0) =>
+      Effect.gen(function* () {
+        if (yield* current) return undefined;
+        return yield* read(async () => {
+          const result = await client.request<{
+            declined?: string;
+            head: number;
+            transactions: [string, number, string[]][];
+          }>(
+            "POST",
+            `/v2/db/${db}/transactions`,
+            { after, limit, waitMs },
+            Math.max(30_000, waitMs + 5000),
+          );
+          if (result.declined) return undefined;
+          return result.transactions.map(([txId, position, rows]) => {
+            const triples = decodeEntity(txId, position, rows).rows;
+            if (triples.some((t) => t.entityId !== txId))
+              throw new TypeError("Journal binding mismatch");
+            return { txId, triples };
+          });
+        });
+      }),
+    // [DX-B4-T2] Why: unique committed claims are invisible until publication. Rejected: a client-side claim cache.
+    getTransactionIdByCommand: (commandId) =>
+      Effect.gen(function* () {
+        if (yield* current) return undefined;
+        return yield* read(async () => {
+          const result = await client.request<{ declined?: string; txId: string | null }>(
+            "POST",
+            `/v2/db/${db}/command`,
+            { commandId },
+          );
+          if (result.declined) return undefined;
+          if (result.txId !== null && typeof result.txId !== "string")
+            throw new TypeError("Invalid command lookup");
+          return result.txId;
+        });
+      }),
     getReachTriples: (root, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;

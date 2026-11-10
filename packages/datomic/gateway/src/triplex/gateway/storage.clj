@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* true)
@@ -93,6 +93,19 @@
                [{:db/id "datomic.tx" :triplex.tx/position (marker position)
                  :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
                  :triplex.tx/recorded-at (finite! (:recorded-at metadata))}]
+               ;; [DX-B4-T1] Why: one physical commit can contain several logical journals.
+               ;; Rejected: using only tx/id (drops nested transacts at interior cursors).
+               (mapcat (fn [[entity rs]]
+                         (let [existing (d/entid db [:triplex.entity/id entity])
+                               position-row (first (filter #(= ":_tx/position" (:attribute %)) rs))]
+                           (if (and position-row (nil? existing))
+                             [[:db/add "datomic.tx" :triplex.tx/journals (str "e:" entity)]
+                              [:db/add (str "e:" entity) :triplex.journal/position (marker (:recorded_position position-row))]]
+                             [[:db/add scope :triplex.scope/feed-irregular true]])))
+                       (group-by :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh)))
+               ;; Retiring or extending a published journal invalidates the append-only proof.
+               (when (some #(= "_Transaction" (:entity_type %)) old)
+                 [[:db/add scope :triplex.scope/feed-irregular true]])
                (upserts fresh)
                (map (fn [row]
                       (cond-> (fact-map row metadata)
@@ -264,7 +277,9 @@
                   (get pattern "entityId") (subject-ids (get pattern "entityId"))
                   ;; [EXP-DA01] Why: refs have VAET and AEVT but no AVET without an explicit index; whole live scans must enumerate the actual attribute index. Rejected: a shape-dependent attribute-not-indexed failure hidden by subject-only fixtures.
                   :else (map :e (if (= route "live") (d/datoms db :aevt :f/live) (d/datoms db :avet :f/id))))
-        rows (map #(row db %) ids)]
+        branch (cond id "id" (some? entities) "entities" (get pattern "entityId") "entity" :else "scan")
+        _ (stats/bump! [:branches branch :calls] 1)
+        rows (map #(do (when (= branch "scan") (stats/bump! [:branches branch :datoms] 1)) (row db %)) ids)]
     {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                   (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source")
      :basis basis :subjectAttribute (str attribute)

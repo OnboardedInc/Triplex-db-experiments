@@ -9,7 +9,11 @@
   (cond-> {:db/ident ident :db/valueType type :db/cardinality :db.cardinality/one}
     unique (assoc :db/unique unique) indexed (assoc :db/index true)))
 (def schema
-  [(assoc (attr :triplex.entity/row :db.type/string) :db/cardinality :db.cardinality/many)
+  [(attr :triplex.scope/feed-version :db.type/long)
+   (attr :triplex.scope/feed-irregular :db.type/boolean)
+   (attr :triplex.journal/position :db.type/long)
+   (assoc (attr :triplex.tx/journals :db.type/ref) :db/cardinality :db.cardinality/many)
+   (assoc (attr :triplex.entity/row :db.type/string) :db/cardinality :db.cardinality/many)
    (attr :triplex.scope/rows-version :db.type/long)
    (attr :triplex.scope/position-regular :db.type/boolean)
    (attr :triplex.scope/irregular :db.type/boolean)
