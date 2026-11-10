@@ -92,6 +92,8 @@ export function decodeRowTextColumns(values: unknown, version?: "1" | "2"): Trip
   const modern =
     version === "2" ||
     (version === undefined && typeof values[0] === "string" && /^\d{16}$/.test(values[0]));
+  if (modern && (typeof values[0] !== "string" || !/^\d{16}$/.test(values[0])))
+    throw new TypeError("Invalid fixed-width row position");
   const columns = modern ? rowTextColumns : legacyColumns;
   const row: Record<string, unknown> = {
     retracted_at: null,
@@ -109,8 +111,10 @@ export function decodeRowTextColumns(values: unknown, version?: "1" | "2"): Trip
       row[c] = v;
     }
   });
-  if (modern && row["attribute"] === ":_tx/position")
+  if (modern && row["attribute"] === ":_tx/position") {
+    if (row["value_number"] !== null) throw new TypeError("Journal position payload must be null");
     row["value_number"] = row["recorded_position"];
+  }
   for (const c of ["recorded_position", "schema_version"])
     if (!Number.isSafeInteger(row[c])) throw new RangeError(`Unsafe ${c}`);
   for (const c of ["id", "entity_id", "attribute", "value_type"])

@@ -88,6 +88,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
           subject: number;
           step: number;
           stampId: string;
+          rowIds: string[];
         }[] = [];
         let conflicts = 0,
           begins = 0;
@@ -140,7 +141,14 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
               );
               stampId = result.triples.find((t) => t.attribute === ":placement/stamp")!.id;
               stamp++;
-              seen.push({ position: result.position, txId: result.txId, subject, step, stampId });
+              seen.push({
+                position: result.position,
+                txId: result.txId,
+                subject,
+                step,
+                stampId,
+                rowIds: result.triples.map((t) => t.id),
+              });
             }
           }),
         );
@@ -150,6 +158,26 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         expect(seen.map((x) => x.position)).toEqual(
           Array.from({ length: 3200 }, (_, i) => seeded.position + i + 1),
         );
+        for (let subject = 0; subject < 16; subject++) {
+          const commits = seen.filter((x) => x.subject === subject).sort((a, b) => a.step - b.step);
+          const expected = new Map(commits.flatMap((x) => x.rowIds.map((id) => [id, x] as const)));
+          const rows = await h.client.rows(s.db, {
+            history: true,
+            entityIds: [
+              ids.placement(subject),
+              ...commits.map((x) => ids.event(subject, subject * 200 + x.step)),
+            ],
+          });
+          const observed = rows.filter((row) => expected.has(row.id));
+          expect(observed).toHaveLength(1000);
+          for (const row of observed) {
+            const commit = expected.get(row.id)!;
+            expect(row.recorded_position).toBe(commit.position);
+            expect(row.tx_id).toBe(commit.txId);
+            if (row.id === commit.stampId && commit.step < 199)
+              expect(row.retracted_position).toBe(commits[commit.step + 1]!.position);
+          }
+        }
         let priorT = -1n;
         for (const x of seen) {
           const rows = await h.client.rows(s.db, { entityIds: [x.txId], history: true });
@@ -175,6 +203,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
             relations: [],
           },
         );
+        expect(order.rows).toHaveLength(3201);
         for (const row of order.rows.sort((a, b) => Number(a[0]!.v) - Number(b[0]!.v))) {
           expect(BigInt(row[1]!.v)).toBeGreaterThan(priorT);
           priorT = BigInt(row[1]!.v);
@@ -349,6 +378,42 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
           ),
         );
         expect(callbacks).toBe(2);
+        let absenceCallbacks = 0;
+        await Effect.runPromise(
+          a!.adapter.withTransaction(
+            Effect.gen(function* () {
+              absenceCallbacks++;
+              expect(yield* a!.adapter.getById("missing-prefetched-row")).toBeNull();
+              if (absenceCallbacks === 1)
+                yield* Effect.promise(() =>
+                  b!.runtime.runPromise(
+                    b!.triples.transact([
+                      {
+                        op: "assert",
+                        entityId: EntityId.make("absence-interloper"),
+                        attribute: ":other/value" as any,
+                        value: { type: "string", value: "new" },
+                      },
+                    ]),
+                  ),
+                );
+              const p = yield* a!.adapter.nextCommitPosition();
+              yield* a!.adapter.insert(
+                {
+                  entityId: "absence",
+                  attribute: ":pattern/value",
+                  value: { type: "string", value: "written" },
+                },
+                "absence-tx",
+                300,
+                "absence-row",
+                p,
+              );
+            }),
+            { replaySafe: true, hint: { tripleIds: ["missing-prefetched-row"] } },
+          ),
+        );
+        expect(absenceCallbacks).toBe(2);
       } finally {
         await s.close();
       }

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow } from "../src/protocol.js";
-import { encodeRowText, decodeRowText } from "../src/rowText.js";
+import { encodeRowText, decodeRowText, decodeRowTextColumns } from "../src/rowText.js";
 import { validateTagged } from "../src/codec.js";
 import { packValue } from "../src/rows.js";
 
@@ -183,4 +183,13 @@ it("rejects inconsistent journal position values before encoding", () => {
     encodeRowText({ ...base(), attribute: ":_tx/position", value_number: 123 }),
   ).toThrow();
   expect(() => encodeRowText({ ...base(), recorded_position: -1 })).toThrow();
+});
+
+it("rejects malformed modern wire positions and non-null journal placeholders", () => {
+  const text = encodeRowText({ ...base(), attribute: ":_tx/position", value_number: 1 });
+  const values = JSON.parse(text.slice(text.indexOf('["')));
+  for (const p of [1, "1", "000000000000000x"])
+    expect(() => decodeRowTextColumns([p, ...values.slice(1)], "2")).toThrow();
+  values[6] = 1;
+  expect(() => decodeRowTextColumns(values, "2")).toThrow();
 });

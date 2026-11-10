@@ -131,6 +131,7 @@ export const makeDatomicStorageAdapter = (
       ) {
         const row = state.rows.get(id) ?? state.prefetch?.rows.get(id);
         if (row && state) state.entities.add(row.entity_id);
+        else if (state) state.scopeWide = true;
         return row && (history || visibleAt(row)) && matchesPattern(row, pattern) ? [row] : [];
       }
       const rows = yield* read(() =>
