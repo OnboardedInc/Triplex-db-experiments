@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import { spawn } from "node:child_process";
 import { Worker } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import { openComposition } from "../../../bench/lib/composition.ts";
@@ -10,7 +9,7 @@ import { generateTrace } from "../../../bench/lib/trace.ts";
 import { buildTraceCommand } from "../../../bench/lib/commands.ts";
 import { partsOf } from "../../../bench/lib/model.ts";
 import { ids } from "../../../bench/lib/world.ts";
-const stage = process.env.DX_H7_ENTITY_BYTES === "retry-before" ? "before-corrected" : process.argv[2] ?? "before";
+const stage = process.argv[2] ?? "before";
 const statePath = "/driver/seed.json";
 const subjects = 10000,
   threads = 3;
@@ -66,7 +65,7 @@ for (let w = 0; w < threads; w++) {
       sampleSubjects: [],
       oracleRate: 0,
       splitShare: 0,
-      entityCacheBytes: Number((stage === "before-corrected" ? undefined : process.env.DX_H7_ENTITY_BYTES) ?? 128 * 1024 ** 2),
+      entityCacheBytes: Number(process.env.DX_H7_ENTITY_BYTES ?? 128 * 1024 ** 2),
     },
   });
   workers.push(worker);
@@ -204,7 +203,6 @@ for (const [phase, readers] of [64, 256].entries()) {
       pulls: rows.length,
       pullsPerS: (rows.length - errors - violations) / ((to - from) / 1000),
       verifiedPulls: rows.length - errors - violations,
-      coordinatorRss: Number(process.env.DX_H7_COORDINATOR_RSS ?? 0),
       processCpuMsPerPull: (cpuUsed.user + cpuUsed.system) / 1000 / rows.length,
       p99: lat[Math.floor(lat.length * 0.99)],
       errors,
@@ -231,27 +229,16 @@ await writer.close();
 for (const w of workers) w.postMessage({ type: "stop" });
 await Promise.all(stopped);
 for (const w of workers) await w.terminate();
-let allErrors=0,allViolations=0;
-for(const row of records){
-  if(row[R.error]){allErrors++;continue;}
-  const e=model.expected(row[R.subject],row[R.recordedAt],row[R.validAt]);
-  if(e.digest!==row[R.digest]||e.stamp!==row[R.stamp]||e.facts!==row[R.facts])allViolations++;
+let allErrors = 0,
+  allViolations = 0;
+for (const row of records) {
+  if (row[R.error]) {
+    allErrors++;
+    continue;
+  }
+  const e = model.expected(row[R.subject], row[R.recordedAt], row[R.validAt]);
+  if (e.digest !== row[R.digest] || e.stamp !== row[R.stamp] || e.facts !== row[R.facts])
+    allViolations++;
 }
-console.log(JSON.stringify({stage,allReads:records.length,allErrors,allViolations}));
-if(allErrors||allViolations)process.exitCode=1;
-
-// [DX-H7] Why: repeat the invalid duplicate-start diagnostic under this same lease before optimization.
-// Rejected: treating the first doubled-reader arm as the requested L64/L256 baseline.
-if(stage === "before-corrected" && !allErrors && !allViolations) {
-  console.log("DX-H7 CORRECTED BEFORE COMPLETE; waiting for optimized-ready");
-  const marker="lab/experiments/EXP-DX1/h7/.optimized-ready";
-  while(!fs.existsSync(marker))await sleep(100);
-  const coordinatorRss=process.memoryUsage().rss;
-  const code=await new Promise<number>(resolve=>{
-    const child=spawn(process.execPath,["--experimental-strip-types",import.meta.filename,"after"],{
-      stdio:"inherit",env:{...process.env,DX_H7_ENTITY_BYTES:fs.readFileSync(marker,"utf8").trim(),DX_H7_COORDINATOR_RSS:String(coordinatorRss)},
-    });
-    child.on("exit",c=>resolve(c??1));
-  });
-  process.exitCode=code;
-}
+console.log(JSON.stringify({ stage, allReads: records.length, allErrors, allViolations }));
+if (allErrors || allViolations) process.exitCode = 1;

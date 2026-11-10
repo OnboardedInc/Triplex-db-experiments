@@ -3,7 +3,8 @@
 # Rejected: a surviving stack between arms (would outlive its measurement lease).
 set -euo pipefail
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
-prefix=tx2-dxh7-q1
+prefix=${DX_H7_PREFIX:-tx2-dxh7-q1}
+[[ $prefix == tx2-dxh7-* ]] || exit 2
 repo=$PWD
 root=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H7
 export DX_STACK_EVIDENCE="$root/setup"

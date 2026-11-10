@@ -48,14 +48,15 @@ export function observe(pr: PullResult): Observed {
       };
       // [DX-H7] Why: only member fields contribute; metadata Options need not be plain data.
       // Rejected: shallow freezing (nested JSON can still change).
-      const descriptors = Object.getOwnPropertyDescriptors(t);
-      if (
-        Object.isFrozen(t) &&
-        ["entityId", "attribute", "value"].every(
-          (k) => descriptors[k] && "value" in descriptors[k] && frozenData(descriptors[k].value),
+      if (Object.isFrozen(t)) {
+        const descriptors = Object.getOwnPropertyDescriptors(t);
+        if (
+          ["entityId", "attribute", "value"].every(
+            (k) => descriptors[k] && "value" in descriptors[k] && frozenData(descriptors[k].value),
+          )
         )
-      )
-        members.set(t, part);
+          members.set(t, part);
+      }
     }
     d.a = (d.a + part.a) >>> 0;
     d.b = (d.b + part.b) >>> 0;
