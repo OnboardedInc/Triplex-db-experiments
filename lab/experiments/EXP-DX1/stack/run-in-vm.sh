@@ -38,6 +38,8 @@ cleanup() {
   exit "$rc"
 }
 trap cleanup EXIT
+# [orchestrator] Why: the layout and similar driver settings are environment variables. DX_DRIVER_ENV is a space-separated NAME=VALUE list.
+extra_env=(); for kv in ${DX_DRIVER_ENV:-}; do extra_env+=(-e "$kv"); done
 # The lexical output remains under runs/; that directory is a real Docker volume during execution.
 docker create --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus "$cpus" --memory "$memory" --memory-swap "$memory" \
   --cgroupns host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v "$repo:$repo" \
@@ -47,6 +49,7 @@ docker create --pull never --name "$prefix-driver" --network "$prefix-net" --cpu
   -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" \
   -e "TX2_ENGINE_CONTAINER=$prefix-pg,$prefix-tx,$prefix-gw-w,$prefix-gw-r" \
   -e "TX2_ENGINE_CGROUPS=$cgroups" -e "TX2_ENGINE_CPUS=${TX2_ENGINE_CPUS:-1}" \
+  ${extra_env[@]+"${extra_env[@]}"} \
   node:22.23.2-bookworm-slim "$@" >/dev/null
 docker inspect "$prefix-driver" > "$evidence/driver-container.json"
 printf '%s\n' "$cgroups" > "$evidence/cgroups.txt"

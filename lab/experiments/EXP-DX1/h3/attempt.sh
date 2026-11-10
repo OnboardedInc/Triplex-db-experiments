@@ -57,13 +57,16 @@ if [[ $kind == functional ]]; then
   export DX_TX_HEAP=1g DX_TX_MEMORY=1500m DX_GW_WRITE_HEAP=768m DX_GW_READ_HEAP=768m TX2_ENGINE_CPUS=1
   cpus=(--cpus-tx 6 --cpus-pg 6 --cpus-gw-write 6 --cpus-gw-read 6)
 else
-  export TX2_ENGINE_CPUS=5
-  cpus=(--cpus-tx 0,1 --cpus-pg 0 --cpus-gw-write 2 --cpus-gw-read 3,4)
+  # [orchestrator] Why: placement, heaps and JVM options vary between runs; every value has DX-H3's value as its default.
+  export TX2_ENGINE_CPUS=${DX_ENGINE_CPUS:-5}
+  cpus=(--cpus-tx "${DX_CPUS_TX:-0,1}" --cpus-pg "${DX_CPUS_PG:-0}" --cpus-gw-write "${DX_CPUS_GW_WRITE:-2}" --cpus-gw-read "${DX_CPUS_GW_READ:-3,4}")
   if [[ $kind == real ]]; then
-    export DX_DRIVER_MEMORY=5g
-    export DX_TX_HEAP=4g DX_TX_MEMORY=5g DX_GW_WRITE_HEAP=2g DX_GW_WRITE_MEMORY=2500m DX_GW_READ_HEAP=3g DX_GW_READ_MEMORY=3500m DX_PG_MEMORY=2g DX_OBJECT_CACHE=1g DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
+    export DX_DRIVER_MEMORY=${DX_DRIVER_MEMORY:-5g}
+    export DX_TX_HEAP=${DX_TX_HEAP:-4g} DX_TX_MEMORY=${DX_TX_MEMORY:-5g} DX_GW_WRITE_HEAP=${DX_GW_WRITE_HEAP:-2g} DX_GW_WRITE_MEMORY=${DX_GW_WRITE_MEMORY:-2500m} DX_GW_READ_HEAP=${DX_GW_READ_HEAP:-3g} DX_GW_READ_MEMORY=${DX_GW_READ_MEMORY:-3500m} DX_PG_MEMORY=${DX_PG_MEMORY:-2g} DX_OBJECT_CACHE=${DX_OBJECT_CACHE:-1g} DX_INDEX_THRESHOLD=${DX_INDEX_THRESHOLD:-256m} DX_INDEX_MAX=${DX_INDEX_MAX:-1g}
   fi
 fi
-bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" > "$out/up.log" 2>&1
-bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
- --lane datomic --composition reach --profile smoke --reader-threads 2 --oracle-root "$DX_STACK_EVIDENCE/oracle" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1
+extra=(); [[ -z ${DX_GW_JAVA_OPTS:-} ]] || extra+=(--gw-java-opts "$DX_GW_JAVA_OPTS")
+[[ -z ${DX_PG_SETTINGS:-} ]] || extra+=(--pg-settings "$DX_PG_SETTINGS")
+bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
+bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
+ --lane datomic --composition reach --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "$DX_STACK_EVIDENCE/oracle" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1
