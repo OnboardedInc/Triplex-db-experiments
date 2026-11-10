@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+# [DX-S4] Why: publish explicit denominators for both allocated volume and table bytes. Rejected: a single ambiguous bytes-per-row number.
+import json,pathlib,sys,datetime
+p=pathlib.Path(sys.argv[1]);d=json.loads((p/'sql.json').read_text());r=d['relations'][0]
+s,c,n,e=map(int,sys.argv[2:6]);clone_du=[int(line.split()[0])*1024 for line in (p/'stopped-du.txt').read_text().splitlines()]
+du=[int(line.split()[0])*1024 for line in (p/'clone.txt').read_text().splitlines()[:2]]
+a={'classification':'DIAGNOSTIC-NOT-ACCEPTANCE','observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'source_volume':sys.argv[6],'clone_container_id':(p/'pg-id.txt').read_text().strip(),'wal_bytes':du[1],'clone_stopped_wal_bytes':clone_du[1],'clone_stopped_volume_bytes':clone_du[0],'volume_allocated_bytes':du[0],'non_wal_volume_bytes':du[0]-du[1],'table':r,'kvs':d['kvs'],'counts':{'subjects':s,'commands':c,'rows':n,'canonical_export_bytes':e},'table_bytes_per_subject':r['total_bytes']/s,'table_bytes_per_command':r['total_bytes']/c,'table_bytes_per_row':r['total_bytes']/n,'table_to_export_ratio':r['total_bytes']/e,'non_wal_bytes_per_subject':(du[0]-du[1])/s,'non_wal_bytes_per_command':(du[0]-du[1])/c,'non_wal_bytes_per_row':(du[0]-du[1])/n,'non_wal_to_export_ratio':(du[0]-du[1])/e,'counts_are_user_supplied':True,'maintenance':'physical bytes from cleanly stopped source; SQL from fresh clone before clean stop; no vacuum or Datomic maintenance','sql_evidence':str(p/'sql.json'),'du_evidence':str(p/'clone.txt'),'clone_du_evidence':str(p/'stopped-du.txt')}
+(p/'footprint.json').write_text(json.dumps(a,indent=2)+'\n');print(json.dumps(a))
