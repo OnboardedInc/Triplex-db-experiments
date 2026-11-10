@@ -11,7 +11,8 @@ const runtime = ManagedRuntime.make(Runtime.define({name:'DX-N1', storage:Layer.
 try {
  const triples = await runtime.runPromise(Triples);
  const receipt = await runtime.runPromise(triples.transact([{op:'assert',entityId:'s1',attribute:':native/value',value:{type:'string',value:'native-roundtrip'},validFrom:0}],{commandId:randomUUID()}));
- const rows = await runtime.runPromise(triples.reach('s1',{validAt:Date.now(),recordedAt:receipt.instant}));
+ const observed = await runtime.runPromise(triples.reach('s1',{validAt:Date.now(),recordedAt:receipt.instant}));
+ const rows=observed.triples;
  assert.equal(rows.length,1); assert.deepEqual(rows[0].value,{type:'string',value:'native-roundtrip'});
  console.log(JSON.stringify({diagnostic:true,receipt,rows}));
 } finally {await runtime.dispose();await client.delete(scope);client.close();}

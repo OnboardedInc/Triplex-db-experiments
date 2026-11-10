@@ -59,7 +59,7 @@ mkdir "$run/driver"
 git rev-parse HEAD > "$run/head.txt"
 python3 "$HERE/bind.py" "$run"
 if [[ $kind == tests ]]; then
-  /usr/sbin/taskpolicy -d default -t 0 -l 0 node "$HERE/command.mjs" "$REPO/node_modules/.bin/vitest" run --reporter=default --reporter=json --outputFile "$run/driver/tests.json" --config lab/experiments/EXP-DX1/b5/vitest.config.ts packages/datomic/test/reach.test.ts packages/datomic/test/reach-repair.test.ts packages/datomic/test/journal-fast.test.ts packages/datomic/test/record-time-peer.test.ts packages/datomic/test/concurrent-commits.test.ts packages/datomic/test/adapter.test.ts packages/datomic/test/commit-observation.test.ts packages/datomic/test/layout-differential.test.ts > "$run/driver.log" 2>&1 &
+  /usr/sbin/taskpolicy -d default -t 0 -l 0 node "$HERE/command.mjs" bash "$HERE/tests.sh" "$run" > "$run/driver.log" 2>&1 &
 elif [[ $kind == micro ]]; then
   python3 "$HERE/prepare-matched.py"
   export DX_N1_OUTPUT=$run/driver
