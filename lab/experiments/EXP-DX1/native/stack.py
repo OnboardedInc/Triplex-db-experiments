@@ -69,7 +69,11 @@ def launch(role,args,env=None,cwd=None):
  return p
 
 def command(args):
- return subprocess.run(list(map(str,args)),check=True,capture_output=True,text=True).stdout
+ p=subprocess.run(list(map(str,args)),capture_output=True,text=True)
+ if p.returncode:
+  with open(run/'command-failures.jsonl','a') as f:f.write(json.dumps(dict(argv=list(map(str,args)),code=p.returncode,stdout=p.stdout,stderr=p.stderr))+'\n')
+  raise RuntimeError(p.stderr.strip() or ('command failed: '+str(args)))
+ return p.stdout
 
 def waitfor(fn,seconds=180):
  for _ in range(seconds):
