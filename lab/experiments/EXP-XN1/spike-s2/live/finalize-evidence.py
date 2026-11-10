@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # [XN-S2-LIVE] Why: keep all bulky raw evidence external, then verify every indexed byte from disk after collection/cleanup. Rejected: committing jars or trusting a manifest without rereading its targets.
-import datetime,hashlib,json,pathlib,subprocess
+import datetime,hashlib,json,pathlib,shutil,subprocess
 BASE=pathlib.Path(__file__).resolve().parent
 ROOT=pathlib.Path('/Users/sam/Claude/Projects/triplex-db-2/evidence/XN-S2')
+if shutil.disk_usage(ROOT).free<5*1024**3:raise SystemExit('host disk floor; no fingerprint started')
 def sha(p):
  h=hashlib.sha256()
  with p.open('rb') as f:
