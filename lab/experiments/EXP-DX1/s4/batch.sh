@@ -9,7 +9,7 @@ PY
 )
 overall=0
 for item in "$@"; do
- min=180; [[ $item != postgres ]] || min=45; [[ $item != xtdb ]] || min=180
+ min=240; [[ $item != postgres ]] || min=45; [[ $item != journals ]] || min=45; [[ $item != xtdb ]] || min=180
  if (( $(date +%s)+min > end )); then printf '%s\n' "$item" >> "$root/not-started.txt"; continue; fi
  p=$base-$item;out=$S4_EVIDENCE/$p;mkdir -p "$out"
  cp "$S4_INPUT/summary.json" "$out/input-summary.json"
@@ -17,7 +17,10 @@ for item in "$@"; do
  date -u +%FT%TZ > "$out/started.txt"
  rc=0
  case $item in
+  qlever) S4_PREFIX=$p bash "$here/qlever.sh" > "$out/stdout.log" 2> "$out/stderr.log" || rc=$?;;
+  journals) S4_PREFIX=$p bash "$here/export-journals.sh" > "$out/stdout.log" 2> "$out/stderr.log" || rc=$?;;
   postgres) S4_PREFIX=$p bash "$here/postgres.sh" > "$out/stdout.log" 2> "$out/stderr.log" || rc=$?;;
+  xtdb-entities) S4_PREFIX=$p bash "$here/xtdb.sh" entities > "$out/stdout.log" 2> "$out/stderr.log" || rc=$?;;
   xtdb) S4_PREFIX=$p bash "$here/xtdb.sh" > "$out/stdout.log" 2> "$out/stderr.log" || rc=$?;;
   a|b|c|c-full|d|e|e-nohistory|f) S4_PREFIX=$p bash "$here/datomic.sh" variant "$item" > "$out/stdout.log" 2> "$out/stderr.log" || rc=$?;;
   *) echo 'unknown item' >&2;exit 2;;

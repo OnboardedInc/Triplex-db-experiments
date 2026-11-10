@@ -87,12 +87,15 @@
           (d/datoms db :aevt :s4/row))
        sorted-values (sort values)]
   {:rows (count values) :sha256 (digest (clojure.string/join "\n" sorted-values))
-   :dictionary-sha256 (when (= variant "d")
-    (digest (clojure.string/join "\n"
-     (sort (map (fn [x]
-       (let [id (:v (first (d/datoms db :eavt (:e x) :s4/id)))]
-        (digest (str id "\n" (String. ^bytes (:v x) "UTF-8"))))
-      (d/datoms db :aevt :s4/dictionary)))))))}))
+   ;; [DX-S4] Why: enumerate dictionary datoms explicitly; cont6 caught map receiving only a function and yielding a transducer. Rejected: trusting compilation without exercising the binary proof branch.
+   :dictionary-sha256
+   (when (= variant "d")
+    (digest
+     (clojure.string/join "\n"
+      (sort
+       (for [x (d/datoms db :aevt :s4/dictionary)]
+        (let [id (:v (first (d/datoms db :eavt (:e x) :s4/id)))]
+         (digest (str id "\n" (String. ^bytes (:v x) "UTF-8")))))))))}))
 ;; [DX-S4] Why: reproduce H6 gateway-floor.mjs eight-cell projection exactly for its size-only variant. Rejected: calling metadata removal lossless.
 (defn compact-projection [text]
  (let [r (json/read-str text) kind (nth r 4)
@@ -137,7 +140,8 @@
       (let [dict (json/read r)]
        (doseq [[i chunk] (map-indexed vector (partition-all 1000 dict))]
         @(d/transact conn [{:s4/id (str "dictionary/" i) :s4/dictionary (.getBytes (json/write-str chunk :escape-slash false) "UTF-8")}])))))
-    (with-open [reader (io/reader "/input/variants.jsonl")]
+    (with-open [reader (io/reader "/input/variants.jsonl")
+                journal-reader (io/reader (if (= variant "f") "/journals/variants.jsonl" (java.io.StringReader. ""))) ]
      (doseq [line (line-seq reader)]
       (let [[position rows] (json/read-str line)
             entities (group-by first rows)
@@ -146,15 +150,23 @@
                (if grouped
                 (let [all (get (swap! states update id (fnil into []) values) id)] {:s4/id id :s4/row (json/write-str all :escape-slash false)})
                 {:s4/id id :s4/row values}))) entities)
-            maps (if (= variant "f") (conj maps {:s4/id (str "journal/" position) :s4/row (mapv second rows)}) maps)]
+            ;; [DX-S4] Why: f must use the actual journal change objects/envelopes from this sealed clone. Rejected: a literal second copy (different compression and size).
+            maps (if (= variant "f")
+                   (let [[journal-position journal-rows] (json/read-str (.readLine ^java.io.BufferedReader journal-reader))]
+                    (when (not= position journal-position) (throw (ex-info "journal command mismatch" {:subject position :journal journal-position})))
+                    (into maps (map (fn [[id rr]] {:s4/id id :s4/row (mapv second rr)}) (group-by first journal-rows)))) maps)]
        @(d/transact conn maps)
        (swap! n + (count rows)); (swap! txs inc)
        (swap! txs inc)
-       (when (zero? (mod @txs 1000)) (emit {:event "progress" :variant variant :commands @txs :rows @n})))))
+       (when (zero? (mod @txs 1000)) (emit {:event "progress" :variant variant :commands @txs :rows @n}))))
+     (when (and (= variant "f") (.readLine ^java.io.BufferedReader journal-reader)) (throw (ex-info "extra journal command" {}))))
     (emit {:event "loaded" :variant variant :commands @txs :rows @n :basis-t (d/basis-t (d/db conn))})
     (maintain conn)
     (emit {:event "value-proof" :variant variant :proof (value-proof (d/db conn) variant)})
     (emit {:event "census-final" :variant variant :census (census (d/db conn))})
     (d/release conn))
    (throw (ex-info "unknown mode" {:mode mode}))))
- (shutdown-agents))
+ ;; [DX-S4] Why: scratch creation retained a non-daemon Artemis notifier after shutdown-agents alone (cont4 thread dump). Rejected: blessing a hung peer or forcing a success exit.
+ (emit {:event "peer-shutdown-begin"})
+ (d/shutdown true)
+ (emit {:event "peer-shutdown-complete"}))

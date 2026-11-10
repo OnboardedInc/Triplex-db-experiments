@@ -44,3 +44,46 @@ No `pnpm install`, package build, product test suite, package publication, merge
 14. Final source checks and complete durable-evidence SHA256 inventory ran through `heavy.mjs --label DX-S4-final-audit`.
     The final inventory checks all `tx2-dxs4-*` container/volume/network names, not only the latest attempt.
     No owned runtime resource remains; removal logs are retained per attempt.
+
+## Continued spike
+
+All continuation commands used `S4_INPUT=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S4/input-all`.
+The launcher now records the vendored `lane/d-native:lab/bin/host-quiet.sh` JSON before each hold and refuses admission
+when `df -k /System/Volumes/Data` is below 15 GiB free. `continuation-vm.json` records 8 CPUs / 16,732,614,656 memory bytes.
+
+1. `bash .../launch.sh tx2-dxs4-cont1 batch.sh xtdb`: pre-hold refusal from a threshold typo (115 rather than 15 GiB),
+   no lock/container. Corrected with a fresh prefix.
+2. `bash .../launch.sh tx2-dxs4-cont2 batch.sh xtdb`: successful full row-document XTDB footprint, exact readback,
+   explicit finish-block, twelve idle samples, clean stop and cleanup.
+3. `cont3` was cancelled before admission when preflight caught the journal namespace filename. Frozen bytes retained.
+4. `bash .../launch.sh tx2-dxs4-cont4 batch.sh journals a b d`: native journal export completed; a replay/maintenance
+   emitted its digest but retained a non-daemon notifier at process exit. `docker exec tx2-dxs4-cont4-a-peer kill -3 10`
+   produced the retained Java thread dump (guest PID only, inside the exact owned container). The own heavy PID was sent
+   SIGTERM to invoke the hold's cleanup trap. No a footprint was adopted from that attempt.
+5. `node lab/bin/heavy.mjs --label DX-S4-native-journal-input -- python3 .../journal-input.py prepare .../tx2-dxs4-cont4-journals .../journals-real .../input-all`:
+   completed the byte/census/command-aligned real-journal preparation outside the measurement hold.
+6. After adding `datomic.api/shutdown true`, `bash .../launch.sh tx2-dxs4-cont5 batch.sh a b`: both completed.
+7. `bash .../launch.sh tx2-dxs4-cont6 batch.sh d`: failed the dictionary proof expression after loading/indexing; no footprint.
+8. With `S4_JOURNAL=.../journals-real`, `bash .../launch.sh tx2-dxs4-cont7 batch.sh f`: completed the actual-journal comparison.
+9. `bash .../launch.sh tx2-dxs4-cont8 batch.sh d`: corrected dictionary proof matched all row and dictionary bytes; completed.
+10. `bash .../launch.sh tx2-dxs4-cont9 batch.sh xtdb-entities`: optional nested-entity layout.
+11. `node lab/bin/heavy.mjs --label DX-S4-qlever-input -- node .../prepare-qlever.mjs .../input-all .../qlever-input`:
+    full a0 lane RDF preparation, outside the hold; original/adapted mapping source hashes retained.
+12. `bash .../launch.sh tx2-dxs4-cont10 batch.sh e e-nohistory`: optional aggregate/history comparisons.
+
+Every `...` above expands to `lab/experiments/EXP-DX1/s4/` for code or the durable DX-S4 evidence root for data.
+Each attempt retains the exact executable sources rather than relying on a later working-tree state.
+13. `cont9` failed SQL parsing on reserved column `rows` before loading. `bash .../launch.sh tx2-dxs4-cont11 batch.sh xtdb-entities`
+    retried with `fact_rows`, verified every nested payload cell, observed compactor idle and stopped/measured/removed the volume.
+14. The aggregate e case completed. `e-nohistory` was recorded in `cont10/not-started.txt` because fewer than 240 seconds
+    remained; it was not called a failure or a result.
+15. With `S4_QLEVER_INPUT=.../qlever-input`, `bash .../launch.sh tx2-dxs4-cont12 batch.sh qlever` remained unadmitted.
+    It was cancelled at the continuation timebox before any container/hold; the exact pending process and full heavy-pool
+    observation are in `cancelled-before-admission.json`. No QLever index footprint was produced.
+16. `node lab/bin/heavy.mjs --label DX-S4-final-audit -- python3 .../final-audit.py` finalizes syntax checks, the actual
+    parent heavy permit, empty owned Docker inventories, source hashes, removal names and the complete durable manifest.
+    It makes no independent semantic or production acceptance claim.
+17. The final audit initially waited unadmitted behind four live heavy-slot owners. Their PID-only process check is retained
+    in `final-audit-heavy-process-check.json`. Its own pending process was restarted with the canonical runner's documented
+    `--poll-ms 100` setup-starvation option; the four-slot limit and other owners were left unchanged. The retry observation
+    is `final-audit-admission-retry.json`.

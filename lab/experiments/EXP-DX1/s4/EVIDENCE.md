@@ -25,3 +25,27 @@ Bulky evidence is intentionally outside git. Retain all first failures and raw f
 The report distinguishes logical text bytes, SQL relation allocation and stopped-volume allocated `du` bytes.
 It does not infer a semantic PASS from exit status, queued work or a partial load. Final checked-in sources may include
 safety fixes made after earlier attempts; each attempt's source copies, rather than the final files, identify what executed.
+
+## Continuation
+
+| Directory/file | Meaning |
+| --- | --- |
+| `tx2-dxs4-cont2-xtdb/` | Complete row-document XTDB result, exact payload readback, flush/idle samples, stopped `du` |
+| `tx2-dxs4-cont4-journals/`, `journals-real/` | Native journal export, byte/census proof and command-aligned input |
+| `tx2-dxs4-cont4-a/` | Retained notifier-shutdown hang and Java thread dump; no footprint |
+| `tx2-dxs4-cont5-{a,b}/` | Completed indexed/unindexed string comparisons |
+| `tx2-dxs4-cont6-d/` | Failed dictionary verifier expression; no footprint |
+| `tx2-dxs4-cont7-f/` | Actual native journal-row isolation, full 1,243,023-value proof |
+| `tx2-dxs4-cont8-d/` | Corrected binary/dictionary comparison |
+| `tx2-dxs4-cont9-xtdb-entities/` | Reserved-column parse failure before load |
+| `tx2-dxs4-cont11-xtdb-entities/` | Completed nested entity-document XTDB result |
+| `tx2-dxs4-cont10-e/` | Completed aggregate rewrite with retained native history |
+| `tx2-dxs4-cont10/not-started.txt` | Explicitly unstarted noHistory case |
+| `qlever-input/` | Complete reversible full a0 RDF projection, 11,961,132 triples; not native-index evidence |
+| `tx2-dxs4-cont12/` | QLever cancellation before admission; no native footprint |
+| `continuation-vm.json`, `continuation-waits.jsonl` | Raw VM and scheduler observations |
+| `continuation-final-audit.json` | Final source syntax/hash checks, exact heavy permit and empty owned-resource inventory |
+
+`cont1` retains its pre-hold threshold-typo refusal; `cont3` retains cancellation before admission for the journal namespace
+filename fix. Journal preparation deleted only its owned temporary SQLite sorting database after verifying the durable
+native export and grouped output; both source and final input remain. No software or image was downloaded.
