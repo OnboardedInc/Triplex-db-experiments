@@ -15,6 +15,7 @@ export class DatomicHttpError extends Error {
     readonly code: string,
     message: string,
     readonly maximum?: number,
+    readonly route?: string,
   ) {
     super(message);
   }
@@ -172,6 +173,7 @@ export class DatomicClient {
                     String(data["code"] ?? "GatewayError"),
                     String(data["message"] ?? "Gateway request failed"),
                     typeof data["maximum"] === "number" ? data["maximum"] : undefined,
+                    typeof data["route"] === "string" ? data["route"] : undefined,
                   ),
                 );
               else {
@@ -306,8 +308,8 @@ export class DatomicClient {
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");
   }
-  create(scope: string): Promise<DatomicDatabase> {
-    return this.request("POST", "/v1/db/create", { scope });
+  create(scope: string, layout: "lean" | "legacy" = "legacy"): Promise<DatomicDatabase> {
+    return this.request("POST", "/v1/db/create", { scope, layout });
   }
   delete(scope: string): Promise<{ db: string; deleted: boolean }> {
     return this.request("POST", "/v1/db/delete", { scope });
@@ -414,8 +416,8 @@ export class DatomicClient {
       rows: input.rows.map(encodeRow),
       rowTexts: Object.fromEntries(
         input.rows
-          .filter((r) => input.newIds.includes(r.id) && r.retracted_at === null)
-          .map((r) => [r.id, encodeRowText(r)]),
+          .filter((r) => input.newIds.includes(r.id))
+          .map((r) => [r.id, encodeRowText({ ...r, retracted_at: null, retracted_position: null, retract_tx_id: null })]),
       ),
     };
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;

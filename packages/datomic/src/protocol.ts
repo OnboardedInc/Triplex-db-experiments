@@ -58,8 +58,8 @@ export const stagedInput = (state: TransactionState) => ({
   newIds: [...state.newIds],
   rowTexts: Object.fromEntries(
     [...state.rows.values()]
-      .filter((r) => state.newIds.has(r.id) && r.retracted_at === null)
-      .map((r) => [r.id, encodeRowText(r)]),
+      .filter((r) => state.newIds.has(r.id))
+      .map((r) => [r.id, encodeRowText({ ...r, retracted_at: null, retracted_position: null, retract_tx_id: null })]),
   ),
   claims: [...state.claims.values()],
 });

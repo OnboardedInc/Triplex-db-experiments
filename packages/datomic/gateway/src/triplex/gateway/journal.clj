@@ -6,7 +6,7 @@
 (defn value [db e a] (:v (first (d/datoms db :eavt e a))))
 (defn supported! [db name time-order?]
   (let [scope (:scope (reach/config name db))]
-    (when-not (= 2 (value db scope :triplex.scope/rows-version)) (reach/decline! "rows-version"))
+    (when-not (#{2 3} (value db scope :triplex.scope/rows-version)) (reach/decline! "rows-version"))
     (when-not (= 2 (value db scope :triplex.scope/feed-version)) (reach/decline! "feed-version"))
     (when (or (and time-order? (value db scope :triplex.scope/irregular)) (value db scope :triplex.scope/feed-irregular))
       (reach/decline! "irregular"))))

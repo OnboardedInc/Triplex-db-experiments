@@ -4,7 +4,7 @@ import { decodeRowText } from "./rowText.js";
 import { RowCache } from "./RowCache.js";
 import { validateTagged } from "./codec.js";
 import { decodeEntity } from "./reach.js";
-import { reachResponse } from "./reach.js";
+import { reachResponse, reachRowsResponse } from "./reach.js";
 import { readFailure } from "./readErrors.js";
 import { randomUUID } from "node:crypto";
 import { Effect, Exit, Option, Semaphore } from "effect";
@@ -41,6 +41,7 @@ export const makeDatomicStorageAdapter = (
   client: DatomicClient,
   scopeKey: string,
   options: {
+    readonly layout?: "lean" | "legacy";
     readonly maxRetries?: number;
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
@@ -244,7 +245,9 @@ export const makeDatomicStorageAdapter = (
             sendCommit(state.order?.ticket ?? registerCommit(-Infinity), (sendSequence) => client.transact(db, {
               clientId: commitClientId,
               sendSequence,
-              replaySafe: state.replaySafe === true,
+              // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
+              // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
+              replaySafe: state.replaySafe === true && [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
               sourceK: state.optimistic ? null : state.sourceK,
               position: state.position,
               span: state.position - state.sourceK,
@@ -536,7 +539,7 @@ export const makeDatomicStorageAdapter = (
       const state = yield* requireTransaction;
       return yield* Effect.try({
         try: () => {
-          if (state.order && !state.order.ticket) state.order.ticket = registerCommit(timestamp);
+          if (state.replaySafe && state.order && !state.order.ticket) state.order.ticket = registerCommit(timestamp);
           const row: TripleRow = {
             id,
             entity_id: input.entityId,
@@ -630,6 +633,18 @@ export const makeDatomicStorageAdapter = (
           return result.txId;
         });
       }),
+    getReachRows: (root, basis) =>
+      Effect.gen(function* () {
+        if (yield* current) return undefined;
+        const response = yield* read(() => client.reachEntities(db, [root], basis));
+        return response ? reachRowsResponse(root, response.entities, basis) : undefined;
+      }),
+    getReachRowsMany: (roots, basis) =>
+      Effect.gen(function* () {
+        if (yield* current) return undefined;
+        const response = yield* read(() => client.reachEntities(db, roots, basis));
+        return response ? roots.map((root) => reachRowsResponse(root, response.entities, basis)) : undefined;
+      }),
     getReachTriples: (root, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;
@@ -691,7 +706,7 @@ export const makeDatomicStorageAdapter = (
     claimCommand: (commandId, txId, timestamp) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
-        if (state.order && !state.order.ticket) state.order.ticket = registerCommit(timestamp);
+        if (state.replaySafe && state.order && !state.order.ticket) state.order.ticket = registerCommit(timestamp);
         const pending = state.claims.get(commandId);
         if (pending !== undefined) return pending.txId;
         if (state.optimistic && state.prefetch?.commandId !== commandId) {
@@ -721,7 +736,7 @@ export const makeDatomicStorageAdapter = (
     retract: (id, timestamp, txId, position) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
-        if (state.order && !state.order.ticket) state.order.ticket = registerCommit(timestamp);
+        if (state.replaySafe && state.order && !state.order.ticket) state.order.ticket = registerCommit(timestamp);
         const row = (yield* queryRows({}, undefined, false, id).pipe(
           Effect.mapError(
             (cause) => new WriteError({ message: "Cannot read retraction target", cause }),
@@ -791,7 +806,7 @@ export const makeDatomicStorageAdapter = (
     initialize: () =>
       Effect.tryPromise({
         try: async () => {
-          await client.create(scopeKey);
+          await client.create(scopeKey, options.layout);
         },
         catch: (cause) =>
           new MigrationError({

@@ -13,3 +13,16 @@ Observation-to-verdict audit: `CommitOrder.test.ts` asserts actual send order, e
 Evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5/` (stack source preimages, SQL configuration, exact container IDs, image IDs, durability settings); initial logs also in parent `evidence/DX-B5-*.log`.
 
 `lab/acceptance/` is unchanged. Final hash inventory and cleanup pending. L1–L6 not yet complete.
+
+## L1/L2 implementation checkpoint
+
+Added immutable rows-version 3 selection, indexed row values, a retirement-marker attribute, lean row-only assertions and retractions, serial-point live-ID conflicts and uniqueness seeks. Legacy remains the default; existing scopes are never converted. Lean readers use immutable cuts when eligible and native Datomic row history otherwise, including explicit retirement markers and interior logical cuts. Begin prefetch, entity/entity-list/id/pattern scans and history dispatch through the same visibility/masking rules. Reach, journal and command routes admit version 3. Native `q` and old `log` explicitly return HTTP 409 LayoutUnsupported; a typed ReadError subclass retains route identity.
+
+One deterministic differential smoke passed against a native SQL-storage stack. The final 300-scenario run and the parameterized lean integration suites are in flight. No L1/L2 gate acceptance is claimed yet.
+
+Design deviations found during implementation:
+
+- Datomic coalesces an assertion and retirement in the same physical transaction. To preserve the existing adapter's born-retired history, lean keeps that row text plus a marker; cut/reach readers exclude marked retained rows. This exception is required for nested/staged semantics. Ordinary old-row retirement still retracts its row datom.
+- Ordered timestamp registration applies to replay-safe callbacks. Unsafe SPI callbacks can deliberately stage fixed timestamps and await another commit; ordering those would deadlock existing savepoint tests. Clock rejection is narrower still: a replay-safe callback must contain a public journal before the adapter promises that replay will re-read the runtime clock. Raw SPI import timestamps cannot advance by callback replay. Non-public callbacks retain the existing irregular flag behavior.
+
+Observation audit additions: the differential test compares ordered full row answers and metadata from fresh UUID scopes with identical row IDs and seeded public runtimes, not just counts. It compares receipt positions and public journals; row-closure assertions compare genuine cached TripleRows with getByEntities rows. Native stack source is copied before startup and health binds that source hash. The passing smoke is diagnostic developer evidence, not a contract PASS. First failures remain in durable logs.
