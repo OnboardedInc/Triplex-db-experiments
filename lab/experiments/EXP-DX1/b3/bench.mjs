@@ -277,7 +277,7 @@ async function main() {
       // [DX-B3-M5] Why: verify the measured database's actual schema, not just the schema source text.
       // Rejected: labelling an index change from a file hash without reading the database.
       const observed = await w.client.request("POST", `/v1/db/${db}/q`, {
-        edn: "[:find ?e :in $ $rules :where [?e :db/ident :f.v/json] (not [?e :db/index true])]",
+        edn: "[:find ?e :in $ $rules :where [?e :db/ident :f.v/json] (not-join [?e] [?e :db/index true])]",
         relations: [],
       });
       assert.equal(observed.rows.length, 1);
