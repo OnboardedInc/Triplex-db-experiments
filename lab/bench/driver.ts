@@ -160,10 +160,11 @@ const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\
 // ---------------------------------------------------------------- engine sampling (async; never blocks the writer)
 
 const slots = JSON.parse(fs.readFileSync(path.join(REPO, "lab/config/slots.json"), "utf8"));
-const container = process.env["TX2_ENGINE_CONTAINER"] ?? null;
+const cgroupPaths = Object.fromEntries((process.env["TX2_ENGINE_CGROUPS"] ?? "").split(",").filter(Boolean).map(s => { const i = s.indexOf("="); if (i < 1) throw Error("invalid TX2_ENGINE_CGROUPS"); return [s.slice(0, i), s.slice(i + 1)]; }));
+const container = process.env["TX2_ENGINE_CONTAINER"] ?? (Object.keys(cgroupPaths).join(",") || null);
 const containers = lane === "datomic" ? container?.split(",").map(s => s.trim()).filter(Boolean) ?? [] : container ? [container] : [];
 const workerHttpCounts: any[] = [];
-const cgroupPaths = Object.fromEntries((process.env["TX2_ENGINE_CGROUPS"] ?? "").split(",").filter(Boolean).map(s => { const i = s.indexOf("="); if (i < 1) throw Error("invalid TX2_ENGINE_CGROUPS"); return [s.slice(0, i), s.slice(i + 1)]; }));
+
 const cgroupPrevious = new Map<string, { wall: number; usage: number }>();
 const engineCpus = Number(process.env["TX2_ENGINE_CPUS"] ?? "0") || null;
 const engineSamples: { t: number; cpuPercent: number; memBytes: number; containers: Record<string, { cpuPercent: number; memBytes: number }> }[] = [];
