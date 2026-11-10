@@ -29,3 +29,13 @@ Build/submission failures reject waiting publication tickets. An ACK failure can
 - `w0-seed-order.ts` wraps the public client method only to chain its existing `onSent` callback for the exact scope database/command claim. It changes no command, callback, cache policy or ACK result. Outside pending reference submissions it is a direct pass-through. A delayed-send/delayed-ACK unit test proves multiple ACKs remain in flight. Real source-bound position/fingerprint probes, not this test, decide seed qualification. This is a submission-order bridge, not the removed cache wrapper.
 - `attempt-seed.sh` adds VM free-space observations and reserves active-plus-copy volume space plus 3.5 GB for driver/tools before sealing. Its resource observer stops after the database is cleanly stopped, before the bounded sealed copy. It retains only a fresh G0-qualified 10k seed; no resource or cleanup record creates semantic PASS.
 - `gateway-floor.mjs` is a parse-only projection diagnostic bound to recorded bytes; it neither implements a gateway nor grants equivalence/performance acceptance. `analyze.mjs` derives observations only and preserves failed attempts.
+
+## Post-DX-B8 attempt settings
+
+The task-authorized merge imports `exp/DX-B8-head-lookup` at `19f5422d` (including its B7 gateway work); no H6-authored gateway changes or acceptance changes are made. The package is rebuilt and the 1k fingerprint is rerun before 10k.
+
+The new seed calibration may use an explicitly reported 128-command serial prefix, included in command wall/rate, before the requested in-flight window. It changes scheduling only; all ACK positions and the complete independent fingerprint must still match. Gateway scan-stats are captured read-only before/after each own-container probe to expose ordering timeouts/late submissions. A serial fallback remains available; no failed window qualifies.
+
+Publication capacity now defaults to two native frames in flight. FIFO capacity is acquired before staging a frame and released after its ACK/failure, while submission tickets preserve page order. The real publisher unit observes peak two concurrent mock ACKs and ordered state operations. The callback may queue outside capacity, and that queue wall is recorded, never removed from activation wall.
+
+Scope audit: the initial H5-derived capture wrapper's unfiltered read-only `docker stats` included the idle `tx2-qlever-dev` resident. No lifecycle or write action touched that resident. Future wrappers collect stats only for the four exact owned engine containers. Original capture evidence is retained rather than rewritten.

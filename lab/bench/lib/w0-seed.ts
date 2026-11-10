@@ -97,11 +97,14 @@ export async function seedW0(
   logFile: string,
   checkpoint?: () => Promise<void>,
   concurrency = 1,
+  serialPrefix = 0,
 ) {
   // [DX-H5] Why: W0's immutable fingerprint includes reference commit positions.
   // Rejected: silently accepting reordered concurrent seed commands as the reference world.
   if (!Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 64)
     throw Error("invalid seed concurrency");
+  if (!Number.isSafeInteger(serialPrefix) || serialPrefix < 0)
+    throw Error("invalid serial seed prefix");
   if ((await comp.currentPosition()) !== 0) throw new Error("W0 seed requires fresh scope");
   const seedStarted = performance.now();
   const Rseed = W0.rung(N);
@@ -150,7 +153,7 @@ export async function seedW0(
   try {
     for (const c of seedCommands(N)) {
       while (
-        pending.length >= concurrency ||
+        pending.length >= (c.position <= serialPrefix ? 1 : concurrency) ||
         c.rows.some(([e, a]) => !many.has(a) && pendingKeys.has(e + "\0" + a))
       )
         await drain();
@@ -218,6 +221,7 @@ export async function seedW0(
       comp.backend?.name === "datomic"
         ? "public-onSent-before-next-reference-command"
         : "caller-order",
+    serialPrefix,
     requestedInFlight: concurrency,
     peakInFlight,
     commandWallMs,

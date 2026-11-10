@@ -7,7 +7,7 @@ import { seedW0 } from "../../../bench/lib/w0-seed.ts";
 import { canonical } from "../../../bench/lib/w0-world.ts";
 // [DX-H6] Why: delayed ACKs exercise bounded pipelining, ordered submissions and scalar replacement dependencies.
 // Rejected: a test that checks only the requested window setting.
-async function run(window: number) {
+async function run(window: number, prefix = 0) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dxh6-seed-"));
   let position = 0,
     active = 0,
@@ -38,7 +38,7 @@ async function run(window: number) {
     },
   };
   try {
-    const r = await seedW0(comp, 50, path.join(dir, "commands.ndjson"), undefined, window);
+    const r = await seedW0(comp, 50, path.join(dir, "commands.ndjson"), undefined, window, prefix);
     return { submissions, peak, r };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -47,7 +47,7 @@ async function run(window: number) {
 test("windows preserve the exact reference stream and replacement ids", async () => {
   const baseline = await run(1);
   for (const window of [16, 32, 64]) {
-    const actual = await run(window);
+    const actual = await run(window, 128);
     assert.equal(canonical(actual.submissions), canonical(baseline.submissions));
     assert.ok(actual.peak > 1 && actual.peak <= window);
     assert.equal(actual.r.commands, baseline.r.commands);

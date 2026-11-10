@@ -68,6 +68,7 @@ export async function runW0Driver(argv: string[]) {
     "lab/bench/lib/w0-world.ts",
     "lab/bench/lib/w0-fingerprint.ts",
     "lab/bench/lib/w0-seed.ts",
+    "lab/bench/lib/w0-seed-order.ts",
     "lab/bench/lib/sweep.ts",
     "lab/bench/lib/sweep-worker.ts",
     "lab/bench/lib/w0-trace.ts",
@@ -88,6 +89,7 @@ export async function runW0Driver(argv: string[]) {
           "packages/datomic/dist/DatomicStorageAdapter.js",
           "packages/datomic/dist/DatomicClient.js",
           "packages/datomic/dist/reach.js",
+          "packages/datomic/dist/sweepRows.js",
         ]
       : []),
     "lab/bench/lib/w0-outbox.ts",
@@ -161,6 +163,7 @@ export async function runW0Driver(argv: string[]) {
         path.join(dir, "seed.ndjson"),
         lease.checkpoint,
         Number(opt("seed-concurrency", "1")),
+        Number(opt("seed-warmup-commands", "0")),
       );
     save();
     await lease.checkpoint(true);

@@ -1,3 +1,4 @@
+import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -17,6 +18,7 @@ const sources = Object.fromEntries(
   [
     "lab/experiments/EXP-DX1/h6/seed-probe.ts",
     "lab/bench/lib/w0-seed.ts",
+    "lab/bench/lib/w0-seed-order.ts",
     "lab/bench/lib/w0-public.ts",
     "lab/bench/lib/w0-datomic-reader.ts",
     "packages/datomic/dist/index.js",
@@ -39,8 +41,13 @@ try {
       comp = await openComposition("reach", "datomic", scope),
       bulk = await openBulkCounts(comp);
     comp.storeCounts = bulk.count;
+    const telemetry = new DatomicClient(comp.backend.url, 35000);
     try {
-      const seed = await seedW0(comp, 50, `${out}/seed-w${window}.ndjson`, undefined, window);
+      fs.writeFileSync(
+        `${out}/stats-w${window}-before.json`,
+        JSON.stringify(await telemetry.request("GET", "/v2/admin/scan-stats"), null, 2) + "\n",
+      );
+      const seed = await seedW0(comp, 50, `${out}/seed-w${window}.ndjson`, undefined, window, 128);
       execFileSync("python3", [
         "-I",
         "lab/oracles/domain/cli.py",
@@ -65,6 +72,14 @@ try {
       report.windows.push({ scope, window, seed, observed, status: "MATCH" });
       save();
     } finally {
+      try {
+        fs.writeFileSync(
+          `${out}/stats-w${window}-after.json`,
+          JSON.stringify(await telemetry.request("GET", "/v2/admin/scan-stats"), null, 2) + "\n",
+        );
+      } finally {
+        telemetry.close();
+      }
       bulk.close();
       await comp.close();
     }

@@ -59,7 +59,7 @@ python3 - <<'PY'
 import shutil
 assert shutil.disk_usage('.').free >= 5*1024**3, 'host disk under 5GiB'
 PY
-docker stats --no-stream --format '{{json .}}' > "$out/stats-before.jsonl"
+: > "$out/stats-before.jsonl"
 # Local images only: combine the local Python runtime with Node's executable/shared libraries on an owned volume.
 docker image inspect python:3.13-slim node:22.23.2-bookworm-slim > "$out/tool-images.json"
 docker volume create "$prefix-tools" >/dev/null
@@ -80,6 +80,7 @@ export DX_TX_HEAP=3g DX_TX_MEMORY=4g DX_GW_WRITE_MEMORY=3g DX_GW_READ_MEMORY=3g 
 bash lab/experiments/EXP-DX1/h6/up.sh "$prefix" --no-publish --cpus-pg 0 --cpus-tx 0,1 --cpus-gw-write 1 --cpus-gw-read 2,3 \
  --gw-java-opts '-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g' \
  --pg-settings '-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min' > "$out/up.log" 2>&1
+docker stats --no-stream --format '{{json .}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" > "$out/stats-owned.jsonl"
 export DX_DRIVER_ENV="TRIPLEX_DATOMIC_LAYOUT=lean TX2_W0_COUNT_CONCURRENCY=64 TX2_SWEEP_STRICT=1"
 if [[ $kind == seed-probe ]]; then
  command=(node --experimental-strip-types lab/experiments/EXP-DX1/h6/seed-probe.ts)
