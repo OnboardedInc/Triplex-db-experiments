@@ -55,3 +55,15 @@ export function sendCommit<A>(
     drain();
   });
 }
+
+// [DX-B6-5] Why: all clients for one scope share timestamp issuance and ticket registration.
+// Rejected: per-client clocks (cross-client ties survive).
+const issued = new Map<string, number>();
+export function observeInstant(scope: string, maximum: number) {
+  issued.set(scope, Math.max(issued.get(scope) ?? -Infinity, maximum));
+}
+export function issueInstant(scope: string, now: number) {
+  const instant = Math.max(now, (issued.get(scope) ?? -Infinity) + 1);
+  observeInstant(scope, instant);
+  return instant;
+}

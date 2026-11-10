@@ -164,6 +164,9 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         );
         expect(resolutions).toBe(0);
         seen.sort((a, b) => a.position - b.position);
+        expect(new Set(seen.map((r) => r.instant)).size).toBe(seen.length);
+        for (let i = 1; i < seen.length; i++)
+          expect(seen[i]!.instant).toBeGreaterThan(seen[i - 1]!.instant);
         expect(seen.map((x) => x.position)).toEqual(
           Array.from({ length: 3200 }, (_, i) => seeded.position + i + 1),
         );

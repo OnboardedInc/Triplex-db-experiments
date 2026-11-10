@@ -20,7 +20,7 @@
           _ (when-not (and (integer? limit) (<= 1 limit 1000) (integer? wait-ms) (<= 0 wait-ms 30000))
               (throw (ex-info "Invalid journal page bounds" {:status 400})))
           deadline (+ (System/nanoTime) (* wait-ms 1000000))
-          db (loop [db (d/db conn)]
+          db (loop [db (storage/await-record-time name conn (d/db conn) input)]
                (supported! db name true)
                (if (and (pos? wait-ms) (<= (storage/head-position name db) after) (< (System/nanoTime) deadline))
                  (do (Thread/sleep 1) (recur (d/db conn))) db))

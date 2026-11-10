@@ -436,3 +436,22 @@
                          (when-let [eid (d/entid db [:f/id id])]
                            (let [r (row db eid)] (when (visible? r nil false) r)))) ids)))})
       (catch Exception e (release! name (:handle snapshot)) (throw e)))))
+
+;; [DX-B6-5] Why: an ahead record time cannot prove peer freshness. Rejected: serving a stale local cut.
+(defn await-record-time [name conn db input]
+  (let [r (get-in input ["basis" "recordedAt"])
+        maximum (fn [db] (or (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/max-recorded-at) Double/NEGATIVE_INFINITY))]
+    (if (or (nil? r) (get input "handle") (<= r (maximum db))) db
+      (let [wait-ms (get input "basisWaitMs" 50)
+            _ (when-not (and (number? wait-ms) (<= 0 wait-ms 2000))
+                (throw (ex-info "Invalid basisWaitMs" {:status 400})))
+            deadline (+ (System/nanoTime) (* wait-ms 1000000))]
+        (stats/bump! [:recordTimeWaits] 1)
+        (loop [db db]
+          (cond (<= r (maximum db)) db
+                (< (System/nanoTime) deadline) (do (Thread/sleep 1) (recur (d/db conn)))
+                :else (do (stats/bump! [:recordTimeSyncs] 1)
+                          (let [synced (deref (d/sync conn) 2000 ::timeout)]
+                            (when (= ::timeout synced)
+                              (throw (ex-info "Record-time sync timed out" {:status 503 :code "BasisNotAvailable"})))
+                            synced))))))))

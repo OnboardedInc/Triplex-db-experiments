@@ -10,11 +10,7 @@
  * The same service owns storage mutations and query execution.
  */
 
-import {
-  decodeValueColumns,
-  storedValueDomain,
-  type ValueDomain,
-} from "../ValueDomain.js";
+import { decodeValueColumns, storedValueDomain, type ValueDomain } from "../ValueDomain.js";
 import { withValidAssertValues } from "./validateValues.js";
 import { Effect, Layer, Option } from "effect";
 import {
@@ -116,348 +112,268 @@ const readConstructor = createReadConstructor();
 export const isTriplesRead = readConstructor.isRead;
 
 const makeTriplesServices = Effect.gen(function* () {
-    const adapter = yield* StorageAdapter;
-    // [CX-A01-0314-R2] Why: the required adapter domain is the write/read authority. Rejected: guessing a domain from supported kinds (range and envelope limits differ).
-    const valueDomain = adapter.valueDomain;
-    const rowToTriple = rowDecoder(valueDomain);
-    const executor = yield* QueryExecutor;
-    const runtime = yield* TripleStoreRuntime;
-    const now = runtime.now;
-    const nextTripleId = runtime.nextTripleId;
-    const nextTxId = runtime.nextTxId;
+  const adapter = yield* StorageAdapter;
+  // [CX-A01-0314-R2] Why: the required adapter domain is the write/read authority. Rejected: guessing a domain from supported kinds (range and envelope limits differ).
+  const valueDomain = adapter.valueDomain;
+  const rowToTriple = rowDecoder(valueDomain);
+  const executor = yield* QueryExecutor;
+  const runtime = yield* TripleStoreRuntime;
+  const now = runtime.now;
+  const nextTripleId = runtime.nextTripleId;
+  const nextTxId = runtime.nextTxId;
 
-    // Initialize storage (creates tables, indexes, etc.)
-    yield* adapter.initialize();
+  // Initialize storage (creates tables, indexes, etc.)
+  yield* adapter.initialize();
 
-    // =========================================================================
-    // Write Operations
-    // =========================================================================
+  // =========================================================================
+  // Write Operations
+  // =========================================================================
 
-    const assert_ = (input: TripleInput): Effect.Effect<Triple, WriteError | InvalidTripleError> =>
-      transact([
-        {
-          op: "assert",
-          entityId: input.entityId,
-          attribute: input.attribute,
-          value: input.value,
-          entityType: input.entityType,
-          createdBy: input.createdBy,
-          validFrom: input.validFrom,
-          validTo: input.validTo,
-        },
-      ]).pipe(
-        Effect.map((result) => result.triples[0]!),
-        Effect.mapError((cause) =>
-          cause instanceof WriteError || cause instanceof InvalidTripleError
-            ? cause
-            : new WriteError({ message: "Failed to assert triple", cause }),
-        ),
-      );
+  const assert_ = (input: TripleInput): Effect.Effect<Triple, WriteError | InvalidTripleError> =>
+    transact([
+      {
+        op: "assert",
+        entityId: input.entityId,
+        attribute: input.attribute,
+        value: input.value,
+        entityType: input.entityType,
+        createdBy: input.createdBy,
+        validFrom: input.validFrom,
+        validTo: input.validTo,
+      },
+    ]).pipe(
+      Effect.map((result) => result.triples[0]!),
+      Effect.mapError((cause) =>
+        cause instanceof WriteError || cause instanceof InvalidTripleError
+          ? cause
+          : new WriteError({ message: "Failed to assert triple", cause }),
+      ),
+    );
 
-    const assertBatch = (
-      inputs: readonly TripleInput[],
-    ): Effect.Effect<readonly Triple[], WriteError | InvalidTripleError> => {
-      if (inputs.length === 0) return Effect.succeed([]);
+  const assertBatch = (
+    inputs: readonly TripleInput[],
+  ): Effect.Effect<readonly Triple[], WriteError | InvalidTripleError> => {
+    if (inputs.length === 0) return Effect.succeed([]);
 
-      return transact(
-        inputs.map((input) => ({
-          op: "assert" as const,
-          entityId: input.entityId,
-          attribute: input.attribute,
-          value: input.value,
-          entityType: input.entityType,
-          createdBy: input.createdBy,
-          validFrom: input.validFrom,
-          validTo: input.validTo,
-        })),
-      ).pipe(
-        Effect.map((result) => result.triples),
-        Effect.mapError((cause) =>
-          cause instanceof WriteError || cause instanceof InvalidTripleError
-            ? cause
-            : new WriteError({ message: "Failed to assert triple batch", cause }),
-        ),
-      );
-    };
+    return transact(
+      inputs.map((input) => ({
+        op: "assert" as const,
+        entityId: input.entityId,
+        attribute: input.attribute,
+        value: input.value,
+        entityType: input.entityType,
+        createdBy: input.createdBy,
+        validFrom: input.validFrom,
+        validTo: input.validTo,
+      })),
+    ).pipe(
+      Effect.map((result) => result.triples),
+      Effect.mapError((cause) =>
+        cause instanceof WriteError || cause instanceof InvalidTripleError
+          ? cause
+          : new WriteError({ message: "Failed to assert triple batch", cause }),
+      ),
+    );
+  };
 
-    /**
-     * Flush a batch of consecutive assert ops using adapter.batchInsert().
-     * Falls back to a single adapter.insert() for batches of 1.
-     */
-    const flushAssertBatch = (
-      assertOps: readonly TransactOp[],
-      txId: string,
-      timestamp: number,
-      position: number,
-      actor?: string,
-    ): Effect.Effect<Triple[], WriteError | InvalidTripleError> =>
-      Effect.gen(function* () {
-        if (assertOps.length === 0) return [];
+  /**
+   * Flush a batch of consecutive assert ops using adapter.batchInsert().
+   * Falls back to a single adapter.insert() for batches of 1.
+   */
+  const flushAssertBatch = (
+    assertOps: readonly TransactOp[],
+    txId: string,
+    timestamp: number,
+    position: number,
+    actor?: string,
+  ): Effect.Effect<Triple[], WriteError | InvalidTripleError> =>
+    Effect.gen(function* () {
+      if (assertOps.length === 0) return [];
 
-        const inputs: TripleInput[] = assertOps.map((op) => {
-          if (op.op !== "assert") throw new Error("unreachable");
-          return {
-            entityId: op.entityId,
-            attribute: op.attribute,
-            value: op.value,
-            entityType: op.entityType,
-            createdBy: op.createdBy ?? actor,
-            validFrom: op.validFrom,
-            validTo: op.validTo,
-          };
-        });
-
-        if (inputs.length === 1) {
-          const row = yield* adapter.insert(
-            inputs[0]!,
-            txId,
-            timestamp,
-            yield* nextTripleId,
-            position,
-          );
-          return [rowToTriple(row)];
-        }
-
-        const rows = yield* adapter.batchInsert(
-          inputs,
-          txId,
-          timestamp,
-          yield* Effect.all(inputs.map(() => nextTripleId)),
-          position,
-        );
-        return rows.map(rowToTriple);
+      const inputs: TripleInput[] = assertOps.map((op) => {
+        if (op.op !== "assert") throw new Error("unreachable");
+        return {
+          entityId: op.entityId,
+          attribute: op.attribute,
+          value: op.value,
+          entityType: op.entityType,
+          createdBy: op.createdBy ?? actor,
+          validFrom: op.validFrom,
+          validTo: op.validTo,
+        };
       });
 
-    const transact = (
-      operations: readonly TransactOp[],
-      meta?: TransactionMeta,
-    ): Effect.Effect<
-      TransactionResult,
-      | WriteError
-      | ReadError
-      | TransactionConflictError
-      | CommandAlreadyCommittedError
-      | ConstraintViolationError
-      | InvalidTripleError
-    > =>
-      Effect.flatMap(
-        Effect.try({
-          try: () => ({
-            operations: structuredClone(operations),
-            // Internal authorization symbols are capabilities, not serialized data.
-            meta: meta === undefined ? undefined : { ...meta, ...structuredClone(meta) },
-          }),
-        catch: (cause) => new WriteError({ message: "Cannot snapshot transaction command", cause }),
+      if (inputs.length === 1) {
+        const row = yield* adapter.insert(
+          inputs[0]!,
+          txId,
+          timestamp,
+          yield* nextTripleId,
+          position,
+        );
+        return [rowToTriple(row)];
+      }
+
+      const rows = yield* adapter.batchInsert(
+        inputs,
+        txId,
+        timestamp,
+        yield* Effect.all(inputs.map(() => nextTripleId)),
+        position,
+      );
+      return rows.map(rowToTriple);
+    });
+
+  const transact = (
+    operations: readonly TransactOp[],
+    meta?: TransactionMeta,
+  ): Effect.Effect<
+    TransactionResult,
+    | WriteError
+    | ReadError
+    | TransactionConflictError
+    | CommandAlreadyCommittedError
+    | ConstraintViolationError
+    | InvalidTripleError
+  > =>
+    Effect.flatMap(
+      Effect.try({
+        try: () => ({
+          operations: structuredClone(operations),
+          // Internal authorization symbols are capabilities, not serialized data.
+          meta: meta === undefined ? undefined : { ...meta, ...structuredClone(meta) },
         }),
-        ({ operations, meta }) =>
-          adapter.withTransaction(
-            Effect.gen(function* () {
-              if (!isSystemWriteAuthorized(meta)) {
-                const reserved = reservedAssertError(operations);
-                if (reserved) return yield* Effect.fail(reserved);
-              }
-              const invalidCondition = validatePreconditions(operations, meta);
-              if (invalidCondition) {
+        catch: (cause) => new WriteError({ message: "Cannot snapshot transaction command", cause }),
+      }),
+      ({ operations, meta }) =>
+        adapter.withTransaction(
+          Effect.gen(function* () {
+            if (!isSystemWriteAuthorized(meta)) {
+              const reserved = reservedAssertError(operations);
+              if (reserved) return yield* Effect.fail(reserved);
+            }
+            const invalidCondition = validatePreconditions(operations, meta);
+            if (invalidCondition) {
+              return yield* Effect.fail(
+                new WriteError({
+                  message: `Transaction precondition ${invalidCondition} must have a matching retract operation`,
+                }),
+              );
+            }
+            if (invalidCommandId(meta) !== undefined) {
+              return yield* Effect.fail(
+                new WriteError({
+                  message: "Command ID must contain between 1 and 1024 characters",
+                }),
+              );
+            }
+            const txId = yield* nextTxId;
+            const wallTime = yield* now;
+            const timestamp = adapter.transactionInstant
+              ? yield* adapter.transactionInstant(wallTime)
+              : wallTime;
+            if (meta?.commandId !== undefined) {
+              const originalTransactionId = yield* adapter.claimCommand(
+                meta.commandId,
+                txId,
+                timestamp,
+              );
+              if (originalTransactionId !== null) {
                 return yield* Effect.fail(
-                  new WriteError({
-                    message: `Transaction precondition ${invalidCondition} must have a matching retract operation`,
+                  new CommandAlreadyCommittedError({
+                    commandId: meta.commandId,
+                    transactionId: unsafe.transactionId(originalTransactionId),
+                    message: `Command ${meta.commandId} already committed as ${originalTransactionId}`,
                   }),
                 );
               }
-              if (invalidCommandId(meta) !== undefined) {
+            }
+            const position = yield* adapter.nextCommitPosition();
+            const actor = meta?.actor;
+            const preconditionIds = livePreconditionIds(meta);
+
+            for (const condition of entityStatePreconditions(meta)) {
+              const actual = (yield* adapter.getByEntity(condition.entityId))
+                .map((row) => row.id)
+                .sort();
+              const expected = [...condition.tripleIds].sort();
+              if (
+                actual.length !== expected.length ||
+                actual.some((id, index) => id !== expected[index])
+              ) {
                 return yield* Effect.fail(
-                  new WriteError({
-                    message: "Command ID must contain between 1 and 1024 characters",
+                  new TransactionConflictError({
+                    entityId: condition.entityId,
+                    message: `Expected entity ${condition.entityId} to have the observed fact set, but another transaction changed it`,
                   }),
                 );
               }
-              const txId = yield* nextTxId;
-              const timestamp = yield* now;
-              if (meta?.commandId !== undefined) {
-                const originalTransactionId = yield* adapter.claimCommand(
-                  meta.commandId,
-                  txId,
-                  timestamp,
-                );
-                if (originalTransactionId !== null) {
-                  return yield* Effect.fail(
-                    new CommandAlreadyCommittedError({
-                      commandId: meta.commandId,
-                      transactionId: unsafe.transactionId(originalTransactionId),
-                      message: `Command ${meta.commandId} already committed as ${originalTransactionId}`,
-                    }),
-                  );
-                }
-              }
-              const position = yield* adapter.nextCommitPosition();
-              const actor = meta?.actor;
-              const preconditionIds = livePreconditionIds(meta);
+            }
 
-              for (const condition of entityStatePreconditions(meta)) {
-                const actual = (yield* adapter.getByEntity(condition.entityId))
-                  .map((row) => row.id)
-                  .sort();
-                const expected = [...condition.tripleIds].sort();
-                if (
-                  actual.length !== expected.length ||
-                  actual.some((id, index) => id !== expected[index])
-                ) {
-                  return yield* Effect.fail(
-                    new TransactionConflictError({
-                      entityId: condition.entityId,
-                      message: `Expected entity ${condition.entityId} to have the observed fact set, but another transaction changed it`,
-                    }),
-                  );
-                }
-              }
-
-              if (meta?.enforce !== undefined) {
-                const constraints = meta.enforce.constraints;
-                const pushed =
-                  adapter.validateConstraints === undefined
-                    ? undefined
-                    : yield* adapter.validateConstraints({
-                        operations,
-                        constraints,
-                        instant: timestamp,
-                      });
-                const violations =
-                  pushed ??
-                  (yield* Effect.gen(function* () {
-                    const current = yield* Constraint.loadRelevantFacts(constraints, operations, {
-                      byEntityType: (entityType) =>
-                        adapter
-                          .query({ entityType })
-                          .pipe(Effect.map((rows) => rows.map(rowToTriple))),
-                      byEntities: (entityIds) =>
-                        adapter
-                          .getByEntities(entityIds)
-                          .pipe(
-                            Effect.map((rows) =>
-                              entityIds.flatMap((entityId) =>
-                                (rows.get(entityId) ?? []).map(rowToTriple),
-                              ),
-                            ),
-                          ),
-                    });
-                    return yield* Constraint.newlyViolated(
-                      current,
+            if (meta?.enforce !== undefined) {
+              const constraints = meta.enforce.constraints;
+              const pushed =
+                adapter.validateConstraints === undefined
+                  ? undefined
+                  : yield* adapter.validateConstraints({
                       operations,
                       constraints,
-                      timestamp,
-                    ).pipe(
-                      Effect.mapError(
-                        (cause) =>
-                          new WriteError({
-                            message: `Constraint evaluation failed: ${cause.message}`,
-                            cause,
-                          }),
-                      ),
-                    );
-                  }));
-                if (violations.length > 0) {
-                  return yield* Effect.fail(
-                    new ConstraintViolationError({
-                      violations,
-                      message: `Transaction would introduce or worsen ${violations.length} graph constraint violation${violations.length === 1 ? "" : "s"}`,
-                    }),
-                  );
-                }
-              }
-
-              const triples: Triple[] = [];
-              const changes: import("./Triples.js").TransactionChange[] = [];
-              let retractedCount = 0;
-
-              let pendingAsserts: TransactOp[] = [];
-
-              for (const op of operations) {
-                if (op.op === "assert") {
-                  pendingAsserts.push(op);
-                  continue;
-                }
-
-                if (pendingAsserts.length > 0) {
-                  const batch = yield* flushAssertBatch(
-                    pendingAsserts,
-                    txId,
+                      instant: timestamp,
+                    });
+              const violations =
+                pushed ??
+                (yield* Effect.gen(function* () {
+                  const current = yield* Constraint.loadRelevantFacts(constraints, operations, {
+                    byEntityType: (entityType) =>
+                      adapter
+                        .query({ entityType })
+                        .pipe(Effect.map((rows) => rows.map(rowToTriple))),
+                    byEntities: (entityIds) =>
+                      adapter
+                        .getByEntities(entityIds)
+                        .pipe(
+                          Effect.map((rows) =>
+                            entityIds.flatMap((entityId) =>
+                              (rows.get(entityId) ?? []).map(rowToTriple),
+                            ),
+                          ),
+                        ),
+                  });
+                  return yield* Constraint.newlyViolated(
+                    current,
+                    operations,
+                    constraints,
                     timestamp,
-                    position,
-                    actor,
-                  );
-                  triples.push(...batch);
-                  changes.push(
-                    ...batch.map((triple) =>
-                      transactionChangeFromTriple("assert", triple, txId, timestamp),
+                  ).pipe(
+                    Effect.mapError(
+                      (cause) =>
+                        new WriteError({
+                          message: `Constraint evaluation failed: ${cause.message}`,
+                          cause,
+                        }),
                     ),
                   );
-                  pendingAsserts = [];
-                }
+                }));
+              if (violations.length > 0) {
+                return yield* Effect.fail(
+                  new ConstraintViolationError({
+                    violations,
+                    message: `Transaction would introduce or worsen ${violations.length} graph constraint violation${violations.length === 1 ? "" : "s"}`,
+                  }),
+                );
+              }
+            }
 
-                switch (op.op) {
-                  case "retract": {
-                    const current = yield* adapter.getById(op.id as string);
-                    if (current && !isSystemWriteAuthorized(meta)) {
-                      const reserved = reservedWriteError({
-                        entityId: current.entity_id,
-                        attribute: current.attribute,
-                        entityType: current.entity_type ?? undefined,
-                      });
-                      if (reserved) return yield* Effect.fail(reserved);
-                    }
-                    const didRetract = yield* adapter.retract(
-                      op.id as string,
-                      timestamp,
-                      txId,
-                      position,
-                    );
-                    if (!didRetract && preconditionIds.has(op.id as string)) {
-                      return yield* Effect.fail(
-                        new TransactionConflictError({
-                          tripleId: op.id,
-                          message: `Expected live triple ${op.id}, but another transaction changed it`,
-                        }),
-                      );
-                    }
-                    if (didRetract) {
-                      retractedCount++;
-                      if (current) {
-                        changes.push(
-                          transactionChangeFromTriple(
-                            "retract",
-                            rowToTriple(current),
-                            txId,
-                            timestamp,
-                          ),
-                        );
-                      }
-                    }
-                    break;
-                  }
-                  case "retract-pattern": {
-                    const pattern = queryToPattern(op.pattern);
-                    const matched = yield* adapter.query(pattern);
-                    if (!isSystemWriteAuthorized(meta)) {
-                      for (const row of matched) {
-                        const reserved = reservedWriteError({
-                          entityId: row.entity_id,
-                          attribute: row.attribute,
-                          entityType: row.entity_type ?? undefined,
-                        });
-                        if (reserved) return yield* Effect.fail(reserved);
-                      }
-                    }
-                    for (const row of matched) {
-                      if (yield* adapter.retract(row.id, timestamp, txId, position)) {
-                        retractedCount++;
-                        changes.push(
-                          transactionChangeFromTriple("retract", rowToTriple(row), txId, timestamp),
-                        );
-                      }
-                    }
-                    break;
-                  }
-                }
+            const triples: Triple[] = [];
+            const changes: import("./Triples.js").TransactionChange[] = [];
+            let retractedCount = 0;
+
+            let pendingAsserts: TransactOp[] = [];
+
+            for (const op of operations) {
+              if (op.op === "assert") {
+                pendingAsserts.push(op);
+                continue;
               }
 
               if (pendingAsserts.length > 0) {
@@ -474,389 +390,501 @@ const makeTriplesServices = Effect.gen(function* () {
                     transactionChangeFromTriple("assert", triple, txId, timestamp),
                   ),
                 );
+                pendingAsserts = [];
               }
 
-              if (!isJournalSuppressed(meta)) {
-                for (const input of metadataInputs(txId, position, timestamp, meta, changes)) {
-                  yield* adapter.insert(input, txId, timestamp, yield* nextTripleId, position);
+              switch (op.op) {
+                case "retract": {
+                  const current = yield* adapter.getById(op.id as string);
+                  if (current && !isSystemWriteAuthorized(meta)) {
+                    const reserved = reservedWriteError({
+                      entityId: current.entity_id,
+                      attribute: current.attribute,
+                      entityType: current.entity_type ?? undefined,
+                    });
+                    if (reserved) return yield* Effect.fail(reserved);
+                  }
+                  const didRetract = yield* adapter.retract(
+                    op.id as string,
+                    timestamp,
+                    txId,
+                    position,
+                  );
+                  if (!didRetract && preconditionIds.has(op.id as string)) {
+                    return yield* Effect.fail(
+                      new TransactionConflictError({
+                        tripleId: op.id,
+                        message: `Expected live triple ${op.id}, but another transaction changed it`,
+                      }),
+                    );
+                  }
+                  if (didRetract) {
+                    retractedCount++;
+                    if (current) {
+                      changes.push(
+                        transactionChangeFromTriple(
+                          "retract",
+                          rowToTriple(current),
+                          txId,
+                          timestamp,
+                        ),
+                      );
+                    }
+                  }
+                  break;
+                }
+                case "retract-pattern": {
+                  const pattern = queryToPattern(op.pattern);
+                  const matched = yield* adapter.query(pattern);
+                  if (!isSystemWriteAuthorized(meta)) {
+                    for (const row of matched) {
+                      const reserved = reservedWriteError({
+                        entityId: row.entity_id,
+                        attribute: row.attribute,
+                        entityType: row.entity_type ?? undefined,
+                      });
+                      if (reserved) return yield* Effect.fail(reserved);
+                    }
+                  }
+                  for (const row of matched) {
+                    if (yield* adapter.retract(row.id, timestamp, txId, position)) {
+                      retractedCount++;
+                      changes.push(
+                        transactionChangeFromTriple("retract", rowToTriple(row), txId, timestamp),
+                      );
+                    }
+                  }
+                  break;
                 }
               }
-
-              return { txId, position, instant: timestamp, triples, retracted: retractedCount };
-            }),
-            {
-              replaySafe: true,
-              // [EXP-DX1] Why: one snapshot prefetch answers claim and all known retraction/precondition reads.
-              // Rejected: repeated claim/by-id round trips for an already described command.
-              hint: {
-                ...(meta?.commandId === undefined ? {} : { commandId: meta.commandId }),
-                tripleIds: [...new Set([
-                  ...operations.flatMap(op => op.op === "retract" ? [op.id] : []),
-                  ...(meta?.preconditions ?? []).flatMap(condition => condition._tag === "TripleLive" ? [condition.id] : [...condition.tripleIds]),
-                ])],
-              },
-            },
-          ),
-      ).pipe(
-        Effect.map((result) => {
-          const final = adapter.committedPosition?.(result.txId);
-          if (final !== undefined) return { ...result, position: final };
-          if (!adapter.committedPosition) return result;
-          // [DX-B3-M2] Why: nested receipts exist before the outer transaction assigns final positions.
-          // Rejected: retaining their provisional number after the outer commit shifts the span.
-          let position = result.position;
-          return {
-            ...result,
-            get position() {
-              position = adapter.committedPosition?.(result.txId) ?? position;
-              return position;
-            },
-          };
-        }),
-        (effect) => withValidAssertValues(operations, effect, valueDomain),
-      );
-
-    const retract = (id: TripleId): Effect.Effect<void, WriteError> =>
-      transact([{ op: "retract", id }]).pipe(
-        Effect.flatMap((result) =>
-          result.retracted === 1
-            ? Effect.void
-            : Effect.fail(
-                new WriteError({ message: `Triple not found or already retracted: ${id}` }),
-              ),
-        ),
-        Effect.mapError((cause) =>
-          cause instanceof WriteError
-            ? cause
-            : new WriteError({ message: `Failed to retract triple: ${id}`, cause }),
-        ),
-      );
-
-    const retractByPattern = (pattern: Pattern): Effect.Effect<number, WriteError | ReadError> =>
-      transact([
-        {
-          op: "retract-pattern",
-          pattern: {
-            ...(typeof pattern.entityId === "string" ? { entityId: pattern.entityId } : {}),
-            ...(typeof pattern.attribute === "string" ? { attribute: pattern.attribute } : {}),
-            ...(pattern.value && !("_tag" in pattern.value) ? { value: pattern.value } : {}),
-            ...(pattern.entityType ? { entityType: pattern.entityType } : {}),
-          },
-        },
-      ]).pipe(
-        Effect.map((result) => result.retracted),
-        Effect.mapError((cause) =>
-          cause instanceof WriteError || cause instanceof ReadError
-            ? cause
-            : new WriteError({ message: "Failed to retract by pattern", cause }),
-        ),
-      );
-
-    // =========================================================================
-    // Triple-level Reads
-    // =========================================================================
-
-    const get = (id: TripleId): Effect.Effect<Triple | null, ReadError> =>
-      Effect.gen(function* () {
-        const row = yield* adapter.getById(id);
-        return row ? rowToTriple(row) : null;
-      });
-
-    const entity: TriplesService["entity"] = (entityId, basis) =>
-      Effect.gen(function* () {
-        const resolved = resolveTemporalBasis(basis, yield* now);
-        const decoded = yield* (adapter.getEntityTriples?.([entityId], resolved) ?? Effect.succeed(undefined));
-        if (decoded) return decoded.get(entityId) ?? [];
-        const rows = yield* adapter.getByEntity(entityId, resolved);
-        return rows.map(rowToTriple);
-      });
-
-    const entitiesAt = (entityIds: readonly EntityId[], resolved: ResolvedTemporalBasis) =>
-      Effect.gen(function* () {
-        const decoded = yield* (adapter.getEntityTriples?.(entityIds, resolved) ?? Effect.succeed(undefined));
-        if (decoded) return entityIds.map((id) => decoded.get(id) ?? []);
-        const rows = yield* adapter.getByEntities(entityIds, resolved);
-        return entityIds.map((id) => (rows.get(id) ?? []).map(rowToTriple));
-      });
-
-    const entities: TriplesService["entities"] = (entityIds, basis) =>
-      Effect.gen(function* () {
-        const resolved = resolveTemporalBasis(basis, yield* now);
-        return yield* entitiesAt(entityIds, resolved);
-      });
-
-    // [EXP-QH1-R3] Why: one resolved basis and one Effect run for the whole closure; the adapter may answer it in one operation.
-    // Rejected: resolving the clock per level (a long pull could straddle two valid-time instants).
-    // [EXP-QH1-R4] Why: the exact record position is captured once, before the direct attempt, and rides in the resolved basis through
-    // the direct attempt and every fallback level, so a commit between levels yields the whole old or the whole new graph (a
-    // commit-cut pull). The adapter decides whether it has a position to offer (none inside a transaction, whose reads already use
-    // the transaction's snapshot and must see its staged writes); without one the read is unpinned, as before.
-    // Rejected: a per-pull lock (blocks writers, P1); pinning only in the fallback (the direct attempt can decline after reading, and
-    // the fallback would then start from a later head than the one the caller's call began at); pinning by recordedAt (two commits
-    // can share one timestamp, so a timestamp does not name one cut); pinning by currentCommitPosition (hides staged rows).
-    const reach: TriplesService["reach"] = (root, basis) =>
-      Effect.gen(function* () {
-        const resolvedNow = resolveTemporalBasis(basis, yield* now);
-        // [EXP-DX1] Why: atomic adapters choose their immutable cut in the pull request.
-        // Rejected: unconditional preflight (turns a one-call pull into two).
-        if (adapter.atomicReach && adapter.getReachTriples) {
-          const direct = yield* adapter.getReachTriples(root, resolvedNow);
-          if (direct) return direct;
-        }
-        const pinned = yield* (adapter.pullPosition?.() ?? Effect.succeed(undefined));
-        const resolved: ResolvedTemporalBasis =
-          pinned === undefined || resolvedNow.recordedPosition !== undefined ? resolvedNow : { ...resolvedNow, recordedPosition: pinned };
-        const direct = yield* (!adapter.atomicReach ? (adapter.getReachTriples?.(root, resolved) ?? Effect.succeed(undefined)) : Effect.succeed(undefined));
-        if (direct) return direct;
-        return yield* reachBy((ids) => entitiesAt(ids as readonly EntityId[], resolved), root);
-      });
-
-    const entityPage: TriplesService["entityPage"] = (request) =>
-      Effect.gen(function* () {
-        const currentTime = yield* now;
-        const recordedPosition = yield* adapter.currentCommitPosition();
-        const prepared = yield* Effect.try({
-          try: () =>
-            prepareEntityPage({
-              request,
-              now: currentTime,
-              recordedPosition,
-              scope: runtime.scope,
-            }),
-          catch: (cause) =>
-            cause instanceof PaginationCursorError
-              ? cause
-              : new PaginationCursorError({
-                  reason: "malformed",
-                  message: `Failed to prepare entity page: ${String(cause)}`,
-                  cause,
-                }),
-        });
-        const facts = yield* adapter.query({ entityType: request.entityType }, prepared.basis);
-        const ids = [...new Set(facts.map((row) => row.entity_id))]
-          .sort()
-          .filter((id) => prepared.after === undefined || id > prepared.after);
-        const selected = ids.slice(0, prepared.limit);
-        const rows = yield* adapter.getByEntities(selected, prepared.basis);
-        return {
-          entities: selected.map((id) => (rows.get(id) ?? []).map(rowToTriple)),
-          snapshot: prepared.basis,
-          ...(ids.length > prepared.limit
-            ? { nextCursor: encodeEntityPageCursor(prepared, selected.at(-1)!) }
-            : {}),
-        };
-      });
-
-    const match: TriplesService["match"] = (pattern, basis) =>
-      Effect.gen(function* () {
-        const resolved = resolveTemporalBasis(basis, yield* now);
-        const rows = yield* adapter.query(pattern, resolved);
-        return rows.map(rowToTriple);
-      });
-
-    const history = (entityId: EntityId): Effect.Effect<readonly Triple[], ReadError> =>
-      Effect.gen(function* () {
-        const rows = yield* adapter.history(entityId);
-        return rows.map(rowToTriple);
-      });
-
-    // [EXP-P2Q] Why: both the journal index and envelope must use the named snapshot cut.
-    // Rejected: loading indexed envelopes at latest (a later metadata retirement changes an old page).
-    const transactionAtBasis = (txId: TransactionId, basis?: ResolvedTemporalBasis) =>
-      adapter
-        .query({ entityId: unsafe.entityId(txId), entityType: "_Transaction" }, basis)
-        .pipe(Effect.map((rows) => transactionRecordFromTriples(txId, rows.map(rowToTriple))));
-
-    const transaction: TriplesService["transaction"] = (txId) => transactionAtBasis(txId);
-
-    // [DX-B4-T2] Why: undefined declines; null is an exact absence. Rejected: treating absence as a scan request.
-    const transactionByCommand: TriplesService["transactionByCommand"] = (commandId) =>
-      Effect.gen(function* () {
-        const direct = yield* (
-          adapter.getTransactionIdByCommand?.(commandId) ?? Effect.succeed(undefined)
-        );
-        if (direct !== undefined)
-          return direct === null ? null : yield* transaction(unsafe.transactionId(direct));
-        return yield* adapter
-          .query({ attribute: TxAttributes.COMMAND_ID, value: { type: "string", value: commandId } })
-          .pipe(
-            Effect.flatMap((rows) =>
-              rows[0] === undefined
-                ? Effect.succeed(null)
-                : transaction(unsafe.transactionId(rows[0].entity_id)),
-            ),
-          );
-      });
-
-    const transactions: TriplesService["transactions"] = (request = {}) => {
-      const after = request.after ?? 0;
-      const limit = request.limit ?? 100;
-      if (!Number.isSafeInteger(after) || after < 0) {
-        return Effect.fail(
-          new ReadError({ message: "Transaction cursor must be a non-negative integer" }),
-        );
-      }
-      if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1_000) {
-        return Effect.fail(
-          new ReadError({ message: "Transaction page limit must be between 1 and 1000" }),
-        );
-      }
-      const waitMs = request.waitMs ?? 0;
-      if (!Number.isSafeInteger(waitMs) || waitMs < 0 || waitMs > 30_000)
-        return Effect.fail(
-          new ReadError({ message: "Transaction wait must be between 0 and 30000 ms" }),
-        );
-      // [DX-B4-T1] Why: reuse journal decoding and cursor bounds for either source. Rejected: trusting a fast page's cursor.
-      return Effect.gen(function* () {
-        const direct = yield* (
-          adapter.getTransactionsAfter?.(after, limit, waitMs) ?? Effect.succeed(undefined)
-        );
-        const records =
-          direct === undefined
-            ? transactionRecordsFromTriples(
-                (yield* adapter.query({ entityType: "_Transaction" })).map(rowToTriple),
-              )
-            : direct.flatMap(({ txId, triples }) => {
-                const record = transactionRecordFromTriples(unsafe.transactionId(txId), triples);
-                return record ? [record] : [];
-              });
-        const page = records.filter((record) => record.position > after).slice(0, limit);
-        const last = page.at(-1);
-        return { transactions: page, ...(last ? { next: last.position } : {}) };
-      });
-    };
-
-    const entityTransactions: TriplesService["transactionsForEntity"] = (entityId, request) =>
-      transactionsForEntity(
-        {
-          currentPosition: adapter.currentCommitPosition,
-          query: queryAll,
-          queryAtPosition: (query, recordedPosition) =>
-            Effect.gen(function* () {
-              const validAt = yield* now;
-              return yield* executor.execute(query, false, { validAt, recordedPosition });
-            }),
-          transaction,
-          transactionAtPosition: (txId, recordedPosition) =>
-          Effect.flatMap(now, (validAt) => transactionAtBasis(txId, { validAt, recordedPosition })),
-        },
-        entityId,
-        request,
-      );
-
-    // =========================================================================
-    // Datalog Reads (via QueryExecutor)
-    // =========================================================================
-
-    const queryAll = (q: DatalogQuery, options?: QueryOptions) =>
-      Effect.gen(function* () {
-        const includeBasis = options?.includeBasis === true;
-        const basis = {
-          ...resolveTemporalBasis(options?.basis, yield* now),
-          ...(includeBasis ? { recordedPosition: yield* adapter.currentCommitPosition() } : {}),
-        };
-        const result = yield* executor.execute(q, options?.debug ?? false, basis);
-        return includeBasis
-          ? {
-              ...result,
-              basis: { ...basis, scope: runtime.scope, recordedPosition: basis.recordedPosition! },
             }
-          : result;
-      }).pipe(Effect.withSpan("triples.query"));
 
-    const queryPage = (q: WrappedQuery, options?: QueryOptions) =>
-      Effect.gen(function* () {
-        const query = yield* validateWrappedQuery(q);
-        const currentTime = yield* now;
-        const recordedPosition = yield* adapter.currentCommitPosition();
-        const prepared = yield* Effect.try({
-          try: () =>
-            preparePagination({
-              query,
-              ...(options?.basis === undefined ? {} : { basis: options.basis }),
-              now: currentTime,
-              recordedPosition,
-              scope: runtime.scope,
-            }),
-          catch: (cause) =>
-            cause instanceof PaginationCursorError
-              ? cause
-              : new PaginationCursorError({
-                  reason: "malformed",
-                  message: `Failed to prepare pagination: ${String(cause)}`,
-                  cause,
-                }),
-        });
-        const result = yield* executor.executePage(
-          prepared.query,
-          options?.debug ?? false,
-          prepared.basis,
-          prepared.cursorValues,
+            if (pendingAsserts.length > 0) {
+              const batch = yield* flushAssertBatch(
+                pendingAsserts,
+                txId,
+                timestamp,
+                position,
+                actor,
+              );
+              triples.push(...batch);
+              changes.push(
+                ...batch.map((triple) =>
+                  transactionChangeFromTriple("assert", triple, txId, timestamp),
+                ),
+              );
+            }
+
+            if (!isJournalSuppressed(meta)) {
+              for (const input of metadataInputs(txId, position, timestamp, meta, changes)) {
+                yield* adapter.insert(input, txId, timestamp, yield* nextTripleId, position);
+              }
+            }
+
+            return { txId, position, instant: timestamp, triples, retracted: retractedCount };
+          }),
+          {
+            replaySafe: true,
+            // [EXP-DX1] Why: one snapshot prefetch answers claim and all known retraction/precondition reads.
+            // Rejected: repeated claim/by-id round trips for an already described command.
+            hint: {
+              ...(meta?.commandId === undefined ? {} : { commandId: meta.commandId }),
+              tripleIds: [
+                ...new Set([
+                  ...operations.flatMap((op) => (op.op === "retract" ? [op.id] : [])),
+                  ...(meta?.preconditions ?? []).flatMap((condition) =>
+                    condition._tag === "TripleLive" ? [condition.id] : [...condition.tripleIds],
+                  ),
+                ]),
+              ],
+            },
+          },
+        ),
+    ).pipe(
+      Effect.map((result) => {
+        const final = adapter.committedPosition?.(result.txId);
+        if (final !== undefined) return { ...result, position: final };
+        if (!adapter.committedPosition) return result;
+        // [DX-B3-M2] Why: nested receipts exist before the outer transaction assigns final positions.
+        // Rejected: retaining their provisional number after the outer commit shifts the span.
+        let position = result.position;
+        return {
+          ...result,
+          get position() {
+            position = adapter.committedPosition?.(result.txId) ?? position;
+            return position;
+          },
+        };
+      }),
+      (effect) => withValidAssertValues(operations, effect, valueDomain),
+    );
+
+  const retract = (id: TripleId): Effect.Effect<void, WriteError> =>
+    transact([{ op: "retract", id }]).pipe(
+      Effect.flatMap((result) =>
+        result.retracted === 1
+          ? Effect.void
+          : Effect.fail(
+              new WriteError({ message: `Triple not found or already retracted: ${id}` }),
+            ),
+      ),
+      Effect.mapError((cause) =>
+        cause instanceof WriteError
+          ? cause
+          : new WriteError({ message: `Failed to retract triple: ${id}`, cause }),
+      ),
+    );
+
+  const retractByPattern = (pattern: Pattern): Effect.Effect<number, WriteError | ReadError> =>
+    transact([
+      {
+        op: "retract-pattern",
+        pattern: {
+          ...(typeof pattern.entityId === "string" ? { entityId: pattern.entityId } : {}),
+          ...(typeof pattern.attribute === "string" ? { attribute: pattern.attribute } : {}),
+          ...(pattern.value && !("_tag" in pattern.value) ? { value: pattern.value } : {}),
+          ...(pattern.entityType ? { entityType: pattern.entityType } : {}),
+        },
+      },
+    ]).pipe(
+      Effect.map((result) => result.retracted),
+      Effect.mapError((cause) =>
+        cause instanceof WriteError || cause instanceof ReadError
+          ? cause
+          : new WriteError({ message: "Failed to retract by pattern", cause }),
+      ),
+    );
+
+  // =========================================================================
+  // Triple-level Reads
+  // =========================================================================
+
+  const get = (id: TripleId): Effect.Effect<Triple | null, ReadError> =>
+    Effect.gen(function* () {
+      const row = yield* adapter.getById(id);
+      return row ? rowToTriple(row) : null;
+    });
+
+  const entity: TriplesService["entity"] = (entityId, basis) =>
+    Effect.gen(function* () {
+      const resolved = resolveTemporalBasis(basis, yield* now);
+      const decoded = yield* (
+        adapter.getEntityTriples?.([entityId], resolved) ?? Effect.succeed(undefined)
+      );
+      if (decoded) return decoded.get(entityId) ?? [];
+      const rows = yield* adapter.getByEntity(entityId, resolved);
+      return rows.map(rowToTriple);
+    });
+
+  const entitiesAt = (entityIds: readonly EntityId[], resolved: ResolvedTemporalBasis) =>
+    Effect.gen(function* () {
+      const decoded = yield* (
+        adapter.getEntityTriples?.(entityIds, resolved) ?? Effect.succeed(undefined)
+      );
+      if (decoded) return entityIds.map((id) => decoded.get(id) ?? []);
+      const rows = yield* adapter.getByEntities(entityIds, resolved);
+      return entityIds.map((id) => (rows.get(id) ?? []).map(rowToTriple));
+    });
+
+  const entities: TriplesService["entities"] = (entityIds, basis) =>
+    Effect.gen(function* () {
+      const resolved = resolveTemporalBasis(basis, yield* now);
+      return yield* entitiesAt(entityIds, resolved);
+    });
+
+  // [EXP-QH1-R3] Why: one resolved basis and one Effect run for the whole closure; the adapter may answer it in one operation.
+  // Rejected: resolving the clock per level (a long pull could straddle two valid-time instants).
+  // [EXP-QH1-R4] Why: the exact record position is captured once, before the direct attempt, and rides in the resolved basis through
+  // the direct attempt and every fallback level, so a commit between levels yields the whole old or the whole new graph (a
+  // commit-cut pull). The adapter decides whether it has a position to offer (none inside a transaction, whose reads already use
+  // the transaction's snapshot and must see its staged writes); without one the read is unpinned, as before.
+  // Rejected: a per-pull lock (blocks writers, P1); pinning only in the fallback (the direct attempt can decline after reading, and
+  // the fallback would then start from a later head than the one the caller's call began at); pinning by recordedAt (two commits
+  // can share one timestamp, so a timestamp does not name one cut); pinning by currentCommitPosition (hides staged rows).
+  const reach: TriplesService["reach"] = (root, basis) =>
+    Effect.gen(function* () {
+      const resolvedNow = resolveTemporalBasis(basis, yield* now);
+      // [EXP-DX1] Why: atomic adapters choose their immutable cut in the pull request.
+      // Rejected: unconditional preflight (turns a one-call pull into two).
+      if (adapter.atomicReach && adapter.getReachTriples) {
+        const direct = yield* adapter.getReachTriples(root, resolvedNow);
+        if (direct) return direct;
+      }
+      const pinned = yield* adapter.pullPosition?.() ?? Effect.succeed(undefined);
+      const resolved: ResolvedTemporalBasis =
+        pinned === undefined || resolvedNow.recordedPosition !== undefined
+          ? resolvedNow
+          : { ...resolvedNow, recordedPosition: pinned };
+      const direct = yield* !adapter.atomicReach
+        ? (adapter.getReachTriples?.(root, resolved) ?? Effect.succeed(undefined))
+        : Effect.succeed(undefined);
+      if (direct) return direct;
+      return yield* reachBy((ids) => entitiesAt(ids as readonly EntityId[], resolved), root);
+    });
+
+  const entityPage: TriplesService["entityPage"] = (request) =>
+    Effect.gen(function* () {
+      const currentTime = yield* now;
+      const recordedPosition = yield* adapter.currentCommitPosition();
+      const prepared = yield* Effect.try({
+        try: () =>
+          prepareEntityPage({
+            request,
+            now: currentTime,
+            recordedPosition,
+            scope: runtime.scope,
+          }),
+        catch: (cause) =>
+          cause instanceof PaginationCursorError
+            ? cause
+            : new PaginationCursorError({
+                reason: "malformed",
+                message: `Failed to prepare entity page: ${String(cause)}`,
+                cause,
+              }),
+      });
+      const facts = yield* adapter.query({ entityType: request.entityType }, prepared.basis);
+      const ids = [...new Set(facts.map((row) => row.entity_id))]
+        .sort()
+        .filter((id) => prepared.after === undefined || id > prepared.after);
+      const selected = ids.slice(0, prepared.limit);
+      const rows = yield* adapter.getByEntities(selected, prepared.basis);
+      return {
+        entities: selected.map((id) => (rows.get(id) ?? []).map(rowToTriple)),
+        snapshot: prepared.basis,
+        ...(ids.length > prepared.limit
+          ? { nextCursor: encodeEntityPageCursor(prepared, selected.at(-1)!) }
+          : {}),
+      };
+    });
+
+  const match: TriplesService["match"] = (pattern, basis) =>
+    Effect.gen(function* () {
+      const resolved = resolveTemporalBasis(basis, yield* now);
+      const rows = yield* adapter.query(pattern, resolved);
+      return rows.map(rowToTriple);
+    });
+
+  const history = (entityId: EntityId): Effect.Effect<readonly Triple[], ReadError> =>
+    Effect.gen(function* () {
+      const rows = yield* adapter.history(entityId);
+      return rows.map(rowToTriple);
+    });
+
+  // [EXP-P2Q] Why: both the journal index and envelope must use the named snapshot cut.
+  // Rejected: loading indexed envelopes at latest (a later metadata retirement changes an old page).
+  const transactionAtBasis = (txId: TransactionId, basis?: ResolvedTemporalBasis) =>
+    adapter
+      .query({ entityId: unsafe.entityId(txId), entityType: "_Transaction" }, basis)
+      .pipe(Effect.map((rows) => transactionRecordFromTriples(txId, rows.map(rowToTriple))));
+
+  const transaction: TriplesService["transaction"] = (txId) => transactionAtBasis(txId);
+
+  // [DX-B4-T2] Why: undefined declines; null is an exact absence. Rejected: treating absence as a scan request.
+  const transactionByCommand: TriplesService["transactionByCommand"] = (commandId) =>
+    Effect.gen(function* () {
+      const direct = yield* (
+        adapter.getTransactionIdByCommand?.(commandId) ?? Effect.succeed(undefined)
+      );
+      if (direct !== undefined)
+        return direct === null ? null : yield* transaction(unsafe.transactionId(direct));
+      return yield* adapter
+        .query({ attribute: TxAttributes.COMMAND_ID, value: { type: "string", value: commandId } })
+        .pipe(
+          Effect.flatMap((rows) =>
+            rows[0] === undefined
+              ? Effect.succeed(null)
+              : transaction(unsafe.transactionId(rows[0].entity_id)),
+          ),
         );
-        const answer = finishPagination(prepared, result);
-        return options?.includeBasis
-          ? { ...answer, basis: { ...prepared.basis, scope: runtime.scope } }
-          : answer;
-      }).pipe(Effect.withSpan("triples.queryPage"));
+    });
 
-    const query = (q: DatalogQuery, options?: PagedQueryOptions) =>
-      validateDatalogQuery(q).pipe(
-        Effect.flatMap((validated) => queryPage(wrapDatalogQuery(validated, options), options)),
+  const transactions: TriplesService["transactions"] = (request = {}) => {
+    const after = request.after ?? 0;
+    const limit = request.limit ?? 100;
+    if (!Number.isSafeInteger(after) || after < 0) {
+      return Effect.fail(
+        new ReadError({ message: "Transaction cursor must be a non-negative integer" }),
       );
+    }
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1_000) {
+      return Effect.fail(
+        new ReadError({ message: "Transaction page limit must be between 1 and 1000" }),
+      );
+    }
+    const waitMs = request.waitMs ?? 0;
+    if (!Number.isSafeInteger(waitMs) || waitMs < 0 || waitMs > 30_000)
+      return Effect.fail(
+        new ReadError({ message: "Transaction wait must be between 0 and 30000 ms" }),
+      );
+    // [DX-B4-T1] Why: reuse journal decoding and cursor bounds for either source. Rejected: trusting a fast page's cursor.
+    return Effect.gen(function* () {
+      const direct = yield* (
+        adapter.getTransactionsAfter?.(after, limit, waitMs) ?? Effect.succeed(undefined)
+      );
+      const records =
+        direct === undefined
+          ? transactionRecordsFromTriples(
+              (yield* adapter.query({ entityType: "_Transaction" })).map(rowToTriple),
+            )
+          : direct.flatMap(({ txId, triples }) => {
+              const record = transactionRecordFromTriples(unsafe.transactionId(txId), triples);
+              return record ? [record] : [];
+            });
+      const page = records.filter((record) => record.position > after).slice(0, limit);
+      const last = page.at(-1);
+      return { transactions: page, ...(last ? { next: last.position } : {}) };
+    });
+  };
 
-    const explain = (q: DatalogQuery) =>
-      executor.explain(q).pipe(
-        Effect.mapError((error) =>
-          error instanceof DatalogValidationError || error instanceof UnboundVariableError
-            ? error
-            : new DatalogError({ message: error.message, cause: error.cause }),
-        ),
-        Effect.withSpan("triples.explain"),
-      );
+  const entityTransactions: TriplesService["transactionsForEntity"] = (entityId, request) =>
+    transactionsForEntity(
+      {
+        currentPosition: adapter.currentCommitPosition,
+        query: queryAll,
+        queryAtPosition: (query, recordedPosition) =>
+          Effect.gen(function* () {
+            const validAt = yield* now;
+            return yield* executor.execute(query, false, { validAt, recordedPosition });
+          }),
+        transaction,
+        transactionAtPosition: (txId, recordedPosition) =>
+          Effect.flatMap(now, (validAt) => transactionAtBasis(txId, { validAt, recordedPosition })),
+      },
+      entityId,
+      request,
+    );
 
-    const explainPage = (q: WrappedQuery) =>
-      executor.explainPage(q).pipe(
-        Effect.mapError((error) =>
-          error instanceof DatalogValidationError || error instanceof UnboundVariableError
-            ? error
-            : new DatalogError({ message: error.message, cause: error.cause }),
-        ),
-        Effect.withSpan("triples.explainPage"),
+  // =========================================================================
+  // Datalog Reads (via QueryExecutor)
+  // =========================================================================
+
+  const queryAll = (q: DatalogQuery, options?: QueryOptions) =>
+    Effect.gen(function* () {
+      const includeBasis = options?.includeBasis === true;
+      const basis = {
+        ...resolveTemporalBasis(options?.basis, yield* now),
+        ...(includeBasis ? { recordedPosition: yield* adapter.currentCommitPosition() } : {}),
+      };
+      const result = yield* executor.execute(q, options?.debug ?? false, basis);
+      return includeBasis
+        ? {
+            ...result,
+            basis: { ...basis, scope: runtime.scope, recordedPosition: basis.recordedPosition! },
+          }
+        : result;
+    }).pipe(Effect.withSpan("triples.query"));
+
+  const queryPage = (q: WrappedQuery, options?: QueryOptions) =>
+    Effect.gen(function* () {
+      const query = yield* validateWrappedQuery(q);
+      const currentTime = yield* now;
+      const recordedPosition = yield* adapter.currentCommitPosition();
+      const prepared = yield* Effect.try({
+        try: () =>
+          preparePagination({
+            query,
+            ...(options?.basis === undefined ? {} : { basis: options.basis }),
+            now: currentTime,
+            recordedPosition,
+            scope: runtime.scope,
+          }),
+        catch: (cause) =>
+          cause instanceof PaginationCursorError
+            ? cause
+            : new PaginationCursorError({
+                reason: "malformed",
+                message: `Failed to prepare pagination: ${String(cause)}`,
+                cause,
+              }),
+      });
+      const result = yield* executor.executePage(
+        prepared.query,
+        options?.debug ?? false,
+        prepared.basis,
+        prepared.cursorValues,
       );
+      const answer = finishPagination(prepared, result);
+      return options?.includeBasis
+        ? { ...answer, basis: { ...prepared.basis, scope: runtime.scope } }
+        : answer;
+    }).pipe(Effect.withSpan("triples.queryPage"));
+
+  const query = (q: DatalogQuery, options?: PagedQueryOptions) =>
+    validateDatalogQuery(q).pipe(
+      Effect.flatMap((validated) => queryPage(wrapDatalogQuery(validated, options), options)),
+    );
+
+  const explain = (q: DatalogQuery) =>
+    executor.explain(q).pipe(
+      Effect.mapError((error) =>
+        error instanceof DatalogValidationError || error instanceof UnboundVariableError
+          ? error
+          : new DatalogError({ message: error.message, cause: error.cause }),
+      ),
+      Effect.withSpan("triples.explain"),
+    );
+
+  const explainPage = (q: WrappedQuery) =>
+    executor.explainPage(q).pipe(
+      Effect.mapError((error) =>
+        error instanceof DatalogValidationError || error instanceof UnboundVariableError
+          ? error
+          : new DatalogError({ message: error.message, cause: error.cause }),
+      ),
+      Effect.withSpan("triples.explainPage"),
+    );
 
   const implicit = () => undefined;
-  const reads = readConstructor.snapshot({
-    get: { run: get, basis: implicit, rawHistory: false },
-    entity: { run: entity, basis: implicit, rawHistory: false },
-    entities: { run: entities, basis: implicit, rawHistory: false },
-    reach: { run: reach, basis: implicit, rawHistory: false },
-    entityPage: { run: entityPage, basis: implicit, rawHistory: false },
-    match: { run: match, basis: implicit, rawHistory: false },
-    history: { run: history, basis: implicit, rawHistory: true },
-    transaction: { run: transaction, basis: implicit, rawHistory: false },
-    transactionByCommand: { run: transactionByCommand, basis: implicit, rawHistory: false },
-    transactions: { run: transactions, basis: implicit, rawHistory: false },
-    query: { run: query, basis: implicit, rawHistory: false },
-    queryPage: { run: queryPage, basis: implicit, rawHistory: false },
-    queryAll: { run: queryAll, basis: implicit, rawHistory: false },
-    transactionsForEntity: {
-      run: entityTransactions,
-      basis: (_entityId: unknown, request?: { snapshotPosition?: number }) =>
-        request?.snapshotPosition === undefined ? undefined : { validAt: 0, recordedPosition: request.snapshotPosition },
-      rawHistory: false,
+  const reads = readConstructor.snapshot(
+    {
+      get: { run: get, basis: implicit, rawHistory: false },
+      entity: { run: entity, basis: implicit, rawHistory: false },
+      entities: { run: entities, basis: implicit, rawHistory: false },
+      reach: { run: reach, basis: implicit, rawHistory: false },
+      entityPage: { run: entityPage, basis: implicit, rawHistory: false },
+      match: { run: match, basis: implicit, rawHistory: false },
+      history: { run: history, basis: implicit, rawHistory: true },
+      transaction: { run: transaction, basis: implicit, rawHistory: false },
+      transactionByCommand: { run: transactionByCommand, basis: implicit, rawHistory: false },
+      transactions: { run: transactions, basis: implicit, rawHistory: false },
+      query: { run: query, basis: implicit, rawHistory: false },
+      queryPage: { run: queryPage, basis: implicit, rawHistory: false },
+      queryAll: { run: queryAll, basis: implicit, rawHistory: false },
+      transactionsForEntity: {
+        run: entityTransactions,
+        basis: (_entityId: unknown, request?: { snapshotPosition?: number }) =>
+          request?.snapshotPosition === undefined
+            ? undefined
+            : { validAt: 0, recordedPosition: request.snapshotPosition },
+        rawHistory: false,
+      },
+      dependencyState: {
+        run: (
+          attributes: Parameters<TriplesService["dependencyState"]>[0],
+          basis?: Parameters<TriplesService["dependencyState"]>[1],
+        ) =>
+          Effect.gen(function* () {
+            const resolved = resolveTemporalBasis(basis, yield* now);
+            return yield* adapter.dependencyState(attributes, resolved);
+          }),
+        basis: implicit,
+        rawHistory: false,
+      },
     },
-    dependencyState: {
-      run: (attributes: Parameters<TriplesService["dependencyState"]>[0], basis?: Parameters<TriplesService["dependencyState"]>[1]) =>
-        Effect.gen(function* () {
-          const resolved = resolveTemporalBasis(basis, yield* now);
-          return yield* adapter.dependencyState(attributes, resolved);
-        }),
-      basis: implicit, rawHistory: false,
-    },
-  }, adapter.snapshotReadPolicy ?? { wrap: (effect) => effect });
-  reads satisfies Omit<TriplesService,
-    "assert" | "assertBatch" | "retract" | "retractByPattern" | "transact" |
-    "currentPosition" | "explain" | "explainPage">;
+    adapter.snapshotReadPolicy ?? { wrap: (effect) => effect },
+  );
+  reads satisfies Omit<
+    TriplesService,
+    | "assert"
+    | "assertBatch"
+    | "retract"
+    | "retractByPattern"
+    | "transact"
+    | "currentPosition"
+    | "explain"
+    | "explainPage"
+  >;
   const service = exactReadService<TriplesService>()({
     ...reads,
     assert: assert_,
@@ -865,8 +893,8 @@ const makeTriplesServices = Effect.gen(function* () {
     retractByPattern,
     transact,
     currentPosition: adapter.currentCommitPosition,
-      explain,
-      explainPage,
+    explain,
+    explainPage,
   });
   return { reads, service };
 });

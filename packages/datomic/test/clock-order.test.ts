@@ -33,6 +33,10 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("distributed clock orde
       );
       const receipts = workers.flatMap((w) => w.receipts);
       expect(receipts).toHaveLength(2000);
+      receipts.sort((a, b) => a.position - b.position);
+      expect(new Set(receipts.map((r) => r.instant)).size).toBe(receipts.length);
+      for (let i = 1; i < receipts.length; i++)
+        expect(receipts[i]!.instant).toBeGreaterThan(receipts[i - 1]!.instant);
       expect(new Set(receipts.map((r) => r.position)).size).toBe(2000);
       for (const worker of workers)
         for (const receipt of worker.receipts) {

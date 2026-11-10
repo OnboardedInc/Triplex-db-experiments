@@ -75,11 +75,11 @@
                            :else [(replace-value op)])) ops)
                prior (value scope :triplex.scope/max-recorded-at)
                maximum (when (seq times) (reduce max (or prior (first times)) times))
-               _ (when (and replay-safe prior (some #(< % prior) times))
+               _ (when (and replay-safe prior (some #(<= % prior) times))
                    (throw (ex-info (str "TRIPLEX_CLOCK " prior) {:maximum prior})))
                irregular (or irregular
                              (and (seq times)
-                                  (or (some #(not= (first times) %) times)
+                                  (or (and (not replay-safe) (some #(not= (first times) %) times))
                                       (and prior (some #(< % prior) times)))))]
            (vec (concat prepared
                         [[:db/add scope :triplex.scope/position final]]

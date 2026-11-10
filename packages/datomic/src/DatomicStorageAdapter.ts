@@ -1,4 +1,11 @@
-import { registerCommit, endCommit, sendCommit, commitClientId } from "./CommitOrder.js";
+import {
+  registerCommit,
+  endCommit,
+  sendCommit,
+  commitClientId,
+  issueInstant,
+  observeInstant,
+} from "./CommitOrder.js";
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
 import { decodeRowText } from "./rowText.js";
 import { RowCache } from "./RowCache.js";
@@ -307,13 +314,7 @@ export const makeDatomicStorageAdapter = (
               client.commitDiagnostics.conflicts++;
               if (error.code === "ClockConflict") {
                 client.commitDiagnostics.clockReplays++;
-                const deadline = Date.now() + 50;
-                while (
-                  error.maximum !== undefined &&
-                  Date.now() <= error.maximum &&
-                  Date.now() < deadline
-                )
-                  await new Promise((resolve) => setTimeout(resolve, 1));
+                if (error.maximum !== undefined) observeInstant(scopeKey, error.maximum);
               }
               throw new DatomicSerializationConflict({
                 message: "Datomic source changed while staging the transaction",
@@ -509,7 +510,9 @@ export const makeDatomicStorageAdapter = (
                     ? Math.max(32, maxRetries)
                     : maxRetries)
                   ? Effect.andThen(
-                      Effect.sleep(`${Math.min(50, retry * 2 + 1)} millis`),
+                      Effect.sleep(
+                        `${error.cause instanceof DatomicHttpError && error.cause.code === "ClockConflict" ? 0 : Math.min(50, retry * 2 + 1)} millis`,
+                      ),
                       Effect.suspend(() => {
                         client.commitDiagnostics.replays++;
                         for (const id of hint?.tripleIds ?? []) cache.delete(id);
@@ -735,6 +738,16 @@ export const makeDatomicStorageAdapter = (
       Effect.flatMap(current, (state) =>
         state === undefined ? committedPosition() : Effect.succeed(undefined),
       ),
+    transactionInstant: (now) =>
+      Effect.gen(function* () {
+        const state = yield* requireTransaction;
+        const instant = issueInstant(scopeKey, now);
+        // [DX-B6-5] Why: register before this fiber yields; nested journals share the first ticket.
+        // Rejected: first-insert registration (timestamp order can invert).
+        if (state.replaySafe && state.order && !state.order.ticket)
+          state.order.ticket = registerCommit(instant);
+        return instant;
+      }),
     claimCommand: (commandId, txId, timestamp) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
