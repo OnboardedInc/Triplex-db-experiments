@@ -1,0 +1,3 @@
+# Instrumentation equivalence test audit
+
+`fingerprint.test.ts` grants only a focused unit-test MATCH: it seeds a new UUID-named memory scope, invokes the unmodified independent O-DOMAIN Python population generator in this attempt at N=50, runs the instrumented reader at the fresh returned basis, and compares every fingerprint field through `requireFingerprint`. Accepted W0/domain pins are checked by the reader. Actual expected/observed bytes, source identities from the oracle and metrics remain in the UUID-named durable evidence directory. This is no VM/engine or performance verdict. The added metric-shape assertions are ancillary; the content comparison is the correctness check.
