@@ -77,6 +77,7 @@ export class FeedConsumer {
   private readonly source: string;
   private store: InstanceType<typeof SqliteConsumerStore>;
   private readonly now: () => number;
+  private readonly publicationWaitMs: number;
   private readonly publicationOf?: (key: FeedPosition) => FeedPublication | undefined;
   private readonly measurement?: Measurement;
   private readonly commitOf: (position: number) => CommitInfo | undefined;
@@ -124,6 +125,7 @@ export class FeedConsumer {
     epoch: string;
     startAfter: number;
     now: () => number;
+    publicationWaitMs?: number;
     publicationOf?: (key: FeedPosition) => FeedPublication | undefined;
     measurement?: Measurement;
     commitOf: (p: number) => CommitInfo | undefined;
@@ -136,6 +138,7 @@ export class FeedConsumer {
     this.now = opts.now;
     this.commitOf = opts.commitOf;
     this.publicationOf = opts.publicationOf;
+    this.publicationWaitMs = opts.publicationWaitMs ?? 0;
     this.measurement = opts.measurement;
     this.open = opts.open;
     this.log = opts.log;
@@ -305,7 +308,14 @@ export class FeedConsumer {
       const publications = new Map<number, FeedPublication>();
       for (const [position] of affected) {
         const key = this.publicationKey(position);
-        const record = readProducerPublication(this.measurement.records, key);
+        // [DX-H3] Why: the journal can arrive before the writer HTTP response observer.
+        // Rejected: fabricating a timestamp at poll/ACK or accepting a missing witness.
+        const deadline = performance.now() + this.publicationWaitMs;
+        let record = readProducerPublication(this.measurement.records, key);
+        while (!record && performance.now() < deadline) {
+          await new Promise(r => setTimeout(r, 1));
+          record = readProducerPublication(this.measurement.records, key);
+        }
         const observation = this.publicationOf ? this.publicationOf(key) : record;
         publicationLagMs(observation, captureFeedInstant(this.measurement.clock, key), record);
         publications.set(position, record!);
