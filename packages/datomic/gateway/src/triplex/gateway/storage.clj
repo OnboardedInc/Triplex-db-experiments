@@ -101,11 +101,25 @@
                                instant-row (first (filter #(= ":_tx/instant" (:attribute %)) rs))
                                commands (filter #(= ":_tx/command-id" (:attribute %)) rs)
                                claims-valid (every? (fn [r] (some #(and (= entity (get % "txId")) (= (:value_string r) (get % "commandId"))) claims)) commands)]
-                           (if (and position-row (= "datetime" (:value_type instant-row)) claims-valid (nil? existing))
+                           (if (and position-row (= "datetime" (:value_type instant-row))
+                                    (= 1 (count (filter #(= ":_tx/position" (:attribute %)) rs)))
+                                    (= 1 (count (filter #(= ":_tx/instant" (:attribute %)) rs)))
+                                    claims-valid (nil? existing))
                              [[:db/add "datomic.tx" :triplex.tx/journals (str "e:" entity)]
                               [:db/add (str "e:" entity) :triplex.journal/position (marker (:recorded_position position-row))]]
                              [[:db/add scope :triplex.scope/feed-irregular true]])))
                        (group-by :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh)))
+               ;; [DX-B4-T1] Why: malformed SPI journals can share a position; their portable tie order is not the tx-link order.
+               ;; Rejected: accepting duplicate journal positions and guessing their order.
+               (let [ps (map :recorded_position (filter #(and (= "_Transaction" (:entity_type %)) (= ":_tx/position" (:attribute %))) fresh))]
+                 (when (not= (count ps) (count (distinct ps))) [[:db/add scope :triplex.scope/feed-irregular true]]))
+               ;; [DX-B4-T2] Why: the portable command query also sees untyped SPI rows.
+               ;; Rejected: proving claim completeness only for rows tagged _Transaction.
+               (when (some (fn [r]
+                             (and (= ":_tx/command-id" (:attribute r))
+                                  (not (some #(and (= (:entity_id r) (get % "txId"))
+                                                   (= (:value_string r) (get % "commandId"))) claims)))) fresh)
+                 [[:db/add scope :triplex.scope/feed-irregular true]])
                ;; Retiring or extending a published journal invalidates the append-only proof.
                (when (some #(= "_Transaction" (:entity_type %)) old)
                  [[:db/add scope :triplex.scope/feed-irregular true]])
@@ -143,7 +157,8 @@
      [[:triplex/commit {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
-                       :ops ops :times times :irregular irregular :position-irregular irregular}]])))
+                       :ops ops :times times :irregular irregular :position-irregular irregular
+                       :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}]])))
 (defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))

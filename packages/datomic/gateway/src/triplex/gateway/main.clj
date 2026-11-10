@@ -29,7 +29,7 @@
   (try
     @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
-        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version 2 :triplex.scope/feed-version 1 :triplex.scope/schema-hash schema/schema-hash}])
+        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version 2 :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}])
     (catch Exception e
       (let [current (sync-db uri)]
         (assert-scope current scope)

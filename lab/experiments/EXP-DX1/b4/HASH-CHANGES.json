@@ -1,0 +1,68 @@
+[
+  {
+    "path": "lab/bench/driver.ts",
+    "oldSha256": "6fdb2eda4c7d8385845e8fc77aa0cbac40f213543da5f0810c094061b652020c",
+    "newSha256": "d3c2b17d8917bcbc00519e71be7e2b8c04a8d289ea8c8d7682ffb468b0bad4ac",
+    "referencedInAcceptance": false
+  },
+  {
+    "path": "lab/bench/lib/composition.ts",
+    "oldSha256": "3f3fafe5ad909a2bf45381e012ceebb324af50dfa2c235750a6c3c8edef9ee04",
+    "newSha256": "963fc6a034c503110789175ddef13e88fa2ae8fca80c43dcd713040527ffe64a",
+    "referencedInAcceptance": false
+  },
+  {
+    "path": "packages/core/src/storage/StorageAdapter.ts",
+    "oldSha256": "21443a243b0da376593b9451dc385a6e6f1b9ac57ab32aa56311e86c3aa15753",
+    "newSha256": "c5564ca0cabef4b8c6650ab6a27823077e4d30833478c8c56af40cda5be88f13",
+    "referencedInAcceptance": false
+  },
+  {
+    "path": "packages/core/src/store/Triples.ts",
+    "oldSha256": "da3515b5013feae546c08cc6865a4b517292a0f5fcb0f679340d5aba2b20060d",
+    "newSha256": "73817e9997267163d63f9970fe7b9d2cdebaa6f4a574f970c47f5ca990750801",
+    "referencedInAcceptance": true
+  },
+  {
+    "path": "packages/core/src/store/TriplesLive.ts",
+    "oldSha256": "582d26531c7cdf3a35920b716336a14b1cfa23436af6e7402920ebbfa66f6304",
+    "newSha256": "2e6d796512bcdf56b8efbcda0e05871be7b9b4997feab1311233a8fae30925ee",
+    "referencedInAcceptance": false
+  },
+  {
+    "path": "packages/datomic/gateway/src/triplex/gateway/commit.clj",
+    "oldSha256": "3973572bf4cb96ffbfe0f86fb06437ec98a43c12f27615af06adc5cd8f3c3a4a",
+    "newSha256": "947392ab3a9b2990462e010e8a052f8f25ce9558cae5c01b55de6ab5e19540a9",
+    "referencedInAcceptance": false
+  },
+  {
+    "path": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+    "oldSha256": "3f41f414fe7cc45f2d2fb6e9fca24a395668fa5b694daa8afa9b1b2645ac3311",
+    "newSha256": "3144547043567914b65eec3e99bd7d2e26a678e0c0977ef55a2d0a0f616c76fe",
+    "referencedInAcceptance": false
+  },
+  {
+    "path": "packages/datomic/gateway/src/triplex/gateway/schema.clj",
+    "oldSha256": "919be8628290cc1ac24ff209b9df953904cab866e430e1093b5b682d4259ee55",
+    "newSha256": "cf268895eb6c09b6e080c310fe1689939992ff609a4a0e5379e173fb012cb8a2",
+    "referencedInAcceptance": false
+  },
+  {
+    "path": "packages/datomic/gateway/src/triplex/gateway/storage.clj",
+    "oldSha256": "7fe29ba265e473b375bfaa9f4a3d043d3a7bae9dab4aa8e1da2615ec750dc985",
+    "newSha256": "e7dd563a144146c90535d2ad25549590ef7c58aa83b2ad3b68e767aa9160dd0a",
+    "referencedInAcceptance": false
+  },
+  {
+    "path": "packages/datomic/src/DatomicStorageAdapter.ts",
+    "oldSha256": "f4de24a5bac75f667fb495b2caa263d7c042dbb608d7c8f66ccca0c93a80548c",
+    "newSha256": "f37364cbefdb3290c9f0f3f3eec01e9cc79442b0e571d01aebf8157bb9bdf833",
+    "referencedInAcceptance": false
+  },
+  {
+    "path": "packages/datomic/test/value-domain.test.ts",
+    "oldSha256": "a83f6361807037c9363bf70e64329ea87d187d6ab6c76760caad552d8d234ab8",
+    "newSha256": "9a62b35d305230e3c61a842fec36c63439a398bc8e8cc6d317851864a9b15951",
+    "referencedInAcceptance": false
+  }
+]

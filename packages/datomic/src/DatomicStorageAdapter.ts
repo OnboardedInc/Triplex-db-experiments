@@ -6,7 +6,7 @@ import { decodeEntity } from "./reach.js";
 import { reachResponse } from "./reach.js";
 import { readFailure } from "./readErrors.js";
 import { randomUUID } from "node:crypto";
-import { Effect, Exit, Semaphore } from "effect";
+import { Effect, Exit, Option, Semaphore } from "effect";
 import { type ResolvedTemporalBasis } from "@triplex-build/triplex";
 import {
   type StorageAdapterService,
@@ -583,7 +583,11 @@ export const makeDatomicStorageAdapter = (
           );
           if (result.declined) return undefined;
           return result.transactions.map(([txId, position, rows]) => {
-            const triples = decodeEntity(txId, position, rows).rows;
+            // [DX-B4-T1] Why: portable feed enumeration includes only typed journal rows, even after SPI writes.
+            // Rejected: including unrelated rows merely because they share a journal entity ID.
+            const triples = decodeEntity(txId, position, rows).rows.filter(
+              (t) => Option.isSome(t.entityType) && t.entityType.value === "_Transaction",
+            );
             if (triples.some((t) => t.entityId !== txId))
               throw new TypeError("Journal binding mismatch");
             return { txId, triples };

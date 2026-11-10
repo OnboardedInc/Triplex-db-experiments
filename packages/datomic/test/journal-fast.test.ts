@@ -216,6 +216,74 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("indexed journals", 
       c.close();
     }
   });
+  it("filters untyped rows sharing a journal entity exactly like the portable feed", async () => {
+    const c = client(),
+      s = await setup(c);
+    try {
+      const receipt = await s.fast.runPromise(s.t.transact([op(1)]));
+      await Effect.runPromise(
+        s.a.withTransaction(
+          Effect.gen(function* () {
+            const p = yield* s.a.nextCommitPosition();
+            yield* s.a.insert(
+              {
+                entityId: receipt.txId,
+                attribute: ":_tx/actor",
+                value: { type: "string", value: "not-journal-typed" },
+              },
+              "spi",
+              1000,
+              "untyped-actor",
+              p,
+            );
+          }),
+        ),
+      );
+      expect(await Effect.runPromise(s.a.getTransactionsAfter!(0, 100))).toBeDefined();
+      expect(await s.fast.runPromise(s.t.transactions())).toEqual(
+        await s.fallback.runPromise(s.oracle.transactions()),
+      );
+    } finally {
+      await s.close();
+      c.close();
+    }
+  });
+  it("declines unindexed command metadata written through the SPI", async () => {
+    const c = client(),
+      s = await setup(c);
+    try {
+      const receipt = await s.fast.runPromise(s.t.transact([op(1)]));
+      await Effect.runPromise(
+        s.a.withTransaction(
+          Effect.gen(function* () {
+            const p = yield* s.a.nextCommitPosition();
+            yield* s.a.insert(
+              {
+                entityId: receipt.txId,
+                attribute: ":_tx/command-id",
+                value: { type: "string", value: "spi-command" },
+              },
+              "spi",
+              1000,
+              "untyped-command",
+              p,
+            );
+          }),
+        ),
+      );
+      expect(
+        await Effect.runPromise(s.a.getTransactionIdByCommand!("spi-command")),
+      ).toBeUndefined();
+      const actual = await s.fast.runPromise(s.t.transactionByCommand("spi-command"));
+      expect(actual).not.toBeNull();
+      expect(actual).toEqual(
+        await s.fallback.runPromise(s.oracle.transactionByCommand("spi-command")),
+      );
+    } finally {
+      await s.close();
+      c.close();
+    }
+  });
   it("long polls wake promptly on publication and time out empty", async () => {
     const c = client(),
       s = await setup(c);
