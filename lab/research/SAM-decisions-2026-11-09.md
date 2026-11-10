@@ -134,3 +134,13 @@ Orchestrator reading:
 Orchestrator reading: storage footprint becomes a measured quantity now (spike DX-S4, script `s4/footprint.sh`). Whether it is a
 ranked sixth priority, and its bar, is Sam's to confirm; the orchestrator proposes a definition and a provisional bar and treats
 it as a guard metric until he does. `lab/NORTH-STAR.md` is not edited without his word.
+
+## 2026-11-10 about 17:35 UTC: shrink the VM's memory (verbatim)
+
+> Yeah I guess we can shrink the VM. As long as it's not going to hurt your testing and it actually improves the testing, then that's fine. I think it's okay as long as it's not going to mess with us too much.
+
+Orchestrator reading and choice: **20 GiB to 16 GiB, not 14.** The engine's containers peak at roughly 11.5 to 13.5 GiB of
+resident memory (transactor heap 3 GiB, two gateways with 2 GiB heaps, Postgres, the load generator at 2 to 4 GiB). At 14 GiB
+the guest would have almost no page cache left at peak, which would hurt Postgres and so the testing; 16 GiB keeps 2.5 to 4 GiB
+of cache. The VM process held all 20 GiB on the host, so this returns 4 GiB to macOS. CPUs stay at 8, disk at 100 GiB. Done with
+the measurement lock held so no agent's containers were running.
