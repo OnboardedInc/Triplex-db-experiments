@@ -126,3 +126,11 @@ Orchestrator reading:
    `/Users/sam/projects/triplex-db`; the VM stays at 8 CPUs.
 4. The Mac has only 38 GiB free in total, so data the lab generates (seed volumes inside the VM's disk image) must also stay
    small. That is not part of the download budget but it is the same disk.
+
+## 2026-11-10 about 15:30 UTC: storage size per subject (verbatim)
+
+> "- Disk is a hard limit. A 1,000-subject seed is 654 MB, so 100k would be about 65 GB, and your Mac has 38 GiB free." As a question is 100k subjects being 65 GB not scalable? How does that work? Compared to other triple stores or how we're storing it, is there some way we could work on that? That seems way too big. Can we brainstorm ways to think about that or can you do some of your own research to figure out ways to attack that problem? I think that might need to become another priority: disk size per subject or something, with some way to measure that.
+
+Orchestrator reading: storage footprint becomes a measured quantity now (spike DX-S4, script `s4/footprint.sh`). Whether it is a
+ranked sixth priority, and its bar, is Sam's to confirm; the orchestrator proposes a definition and a provisional bar and treats
+it as a guard metric until he does. `lab/NORTH-STAR.md` is not edited without his word.
