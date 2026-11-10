@@ -32,6 +32,7 @@ import { Worker } from "node:worker_threads";
 import { openComposition, type CompositionHandle, type Receipt } from "./lib/composition.ts";
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
+import { ProbeThread } from "./lib/probe-thread.ts";
 import { SideThread } from "./lib/side-thread.ts";
 import { commitBreakdown } from "./lib/commit-breakdown.ts";
 import { completedMaintenanceInWindow, requestIndex } from "./lib/maintenance.ts";
@@ -145,7 +146,7 @@ const log = (line: string) => {
   process.stderr.write(text + "\n");
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
-const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
+const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 
 const report: Record<string, any> = latencyReceipt({
   format: "tx2-ns-report/2",
@@ -419,6 +420,7 @@ async function run() {
     return at;
   };
   const publicationTimes = new Map<number, any>();
+  let probeThread: ProbeThread | null = null;
   const execute = async (job: Job) => {
     const ev = job.ev;
     const out: any = { attempts: 0, tags: [] as string[], path: "direct" };
@@ -431,8 +433,10 @@ async function run() {
     while (!receipt && out.attempts < 6) {
       out.attempts++;
       out.transactCalledAt ??= now();
-      const res = await writer.transact(cmd.operations, meta);
+      const probeResult = ev.stream === "probe10" && probeThread ? await probeThread.transact(cmd.operations, meta) : null;
+      const res = probeResult ? probeResult.result : await writer.transact(cmd.operations, meta);
       out.transactReturnedAt = now();
+      if (probeResult) Object.assign(out, probeResult.timing);
       if (res.ok) { receipt = res.value; break; }
       out.tags.push(res.tag);
       out.lastError = String(res.error?.message ?? "").slice(0, 300);
@@ -570,6 +574,10 @@ async function run() {
     publicationTimes.set(position, { publicationStartedAt, publicationDurableAt: now(), ...(diagnostics === undefined ? {} : { diagnostics }) });
   });
   report.publicationObserver = publicationWriter ? "DatomicClient.transact result, before Triples receipt and driver ACK; durable bound host-clock sidecar" : "not integrated";
+  if (publicationWriter && config.probe10PerS > 0 && config.composition !== "memory") {
+    probeThread = new ProbeThread({dir:rawDir,epoch:`${scopeName}#0`,lane,composition:config.composition,scope:scopeName});
+    await probeThread.ready;
+  }
   const feedTarget = setInterval(() => { if (feed) feed.lifeMaxTarget = acked.length ? acked[acked.length - 1]!.position : 0; }, 100);
   const feedDone = feed ? feed.run() : Promise.resolve();
   // [DX-H1] Why: retain a failing feed as a caught driver failure during wind-down. Rejected: an unhandled rejection that leaves status RUNNING.
@@ -770,6 +778,7 @@ async function run() {
   await aux.close().catch(() => {});
   await growthComp.close().catch(() => {});
   await probeComp?.close().catch(() => {});
+  await probeThread?.close();
   if (feed instanceof SideThread) { report.sideThread = { elu: feed.elus }; await feed.close(); }
   observeDatomicPublication(undefined);
   publicationReader?.close();
@@ -1301,7 +1310,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const saturated = Object.values(stats).filter((s: any) => s.client.saturated).map((s: any) => s.phase);
   const total = records.length, ok = verdicts.filter((v) => v.ok).length, errs = verdicts.filter((v) => v.kind === "error").length;
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput" };
-  report.client = { saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
+  report.client = { series: {main:mainElu,readers:workerElu},
+    burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
+    saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
   report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
   report.compositionIdentity = { ...report.composition, watermarkSamples: watermarkSamples.length, note: "image digest, config hash and slot per assignment are bound by the gate (lab/bin/gate.mjs NS)" };
