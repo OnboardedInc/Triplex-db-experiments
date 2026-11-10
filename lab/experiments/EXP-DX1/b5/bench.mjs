@@ -635,6 +635,12 @@ async function main() {
       try {
         let next = 0, facts = 0, commands = 0;
         const start = performance.now();
+        const shared = Array.from({length: accounts}, (_, account) => sharedFacts(account)).flat();
+        for (let off = 0; off < shared.length; off += 200) {
+          const batch = shared.slice(off, off + 200);
+          await sh.runtime.runPromise(sh.triples.transact(batch.map(f => ({op: "assert", entityId: f.e, attribute: f.a, value: f.v, validFrom: SEED_VALID_FROM})), {commandId: `shared-${off}`}));
+          commands++; facts += batch.length;
+        }
         await Promise.all(Array.from({length: writers}, async () => {
           while (next < 2000) {
             const subject = next++, batch = ownFacts(subject, accounts);
@@ -646,6 +652,29 @@ async function main() {
         report.steps.seedWriters.push({writers, subjects: 2000, commands, facts, elapsedMs, commandsPerSecond: commands * 1000 / elapsedMs, factsPerSecond: facts * 1000 / elapsedMs}); save();
       } finally {await sh.client.delete(seedScope); await sh.close();}
     }
+    report.steps.w0Page = await measured("w0-page", async () => {
+      const {seedW0} = await import("../../../bench/lib/w0-seed.ts");
+      const {publicSweep, portableSweep} = await import("../../../bench/lib/w0-public.ts");
+      const {V_W0} = await import("../../../bench/lib/w0-world.ts");
+      const {subjectList} = await import("../../../bench/lib/sweep.ts");
+      const pageScope = DatabaseScope.test(`DX-B5-w0-page-${randomUUID()}`), wh = await handle("http://127.0.0.1:8505", pageScope);
+      let rh;
+      try {
+        const handleOf = h => ({storage: h.adapter, triples: h.triples, scope: pageScope, backend: {name: "datomic"}, run: effect => h.runtime.runPromise(effect)});
+        const portable = portableSweep(handleOf(wh));
+        const seeded = await seedW0({currentPosition: () => wh.runtime.runPromise(wh.adapter.currentCommitPosition()),
+          transact: async (ops, meta) => ({ok: true, value: await wh.runtime.runPromise(wh.triples.transact(ops, meta))}),
+          storeCounts: () => portable.counts()}, 64, `${dir}/w0-page-seed.ndjson`);
+        rh = await handle("http://127.0.0.1:8506", pageScope);
+        const selected = await publicSweep("datomic", handleOf(rh));
+        const subjects = subjectList(64), basis = {position: seeded.basis.tx, validAt: V_W0};
+        const expected = await portable.page(subjects, basis);
+        let requests = 0; rh.client.onRequest = () => requests++;
+        const start = performance.now(), page = await selected.page(subjects, basis), elapsedMs = performance.now() - start;
+        assert.deepEqual(page.rows, expected.rows); assert.deepEqual(page.reportedBasis, basis); assert.equal(requests, 1);
+        return {elapsedMs, httpRequests: requests, rows: page.rows.length, subjects: subjects.length, basis, seed: seeded};
+      } finally {await rh?.close(); await wh.client.delete(pageScope); await wh.close();}
+    }); save();
     report.diagnostics = { write: w.client.reachDiagnostics, read: r.client.reachDiagnostics };
     save();
     console.log(JSON.stringify({ dir, steps: report.steps }, null, 2));

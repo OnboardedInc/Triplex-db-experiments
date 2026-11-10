@@ -25,7 +25,7 @@ PY
   trap cleanup EXIT
   bash lab/experiments/EXP-DX1/b5/up.sh "$prefix" --gateway-src "$stage" > "$stage/start.log" 2>&1
   set +e
-  DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL=http://127.0.0.1:8505 DX_B5_SCENARIOS=1 node_modules/.bin/vitest run --config lab/experiments/EXP-DX1/b3/vitest.config.ts packages/datomic/test/layout-differential.test.ts > "$stage/test.log" 2>&1
+  DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL=http://127.0.0.1:8505 DX_B5_SCENARIOS=1 DX_B5_SCENARIO_START=1 node_modules/.bin/vitest run --config lab/experiments/EXP-DX1/b3/vitest.config.ts packages/datomic/test/layout-differential.test.ts > "$stage/test.log" 2>&1
   status=$?
   set -e
   printf '%s\n' "$status" > "$stage/exit-code"

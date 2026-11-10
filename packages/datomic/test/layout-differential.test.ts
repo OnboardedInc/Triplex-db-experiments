@@ -33,7 +33,8 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
       comparisons++;
     };
     try {
-      for (let scenario = 0; scenario < count; scenario++) {
+      const firstScenario = Number(process.env.DX_B5_SCENARIO_START ?? 0);
+      for (let scenario = firstScenario; scenario < firstScenario + count; scenario++) {
         const stores = await Promise.all(
           (["legacy", "lean"] as const).map(async (layout) => {
             const scope = DatabaseScope.test(`b5-${layout}-${randomUUID()}`);
@@ -62,6 +63,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
               scenario % 10 === 0 && commit === 4 ? 50 : 100 + Math.floor(commit / 2) * 100;
             const inputs = Array.from({ length: 4 }, (_, j) => ({
               entityId: `e${(commit + j) % 5}`,
+              entityType: "_Test",
               attribute: `a${j}`,
               value:
                 j < 3
@@ -82,7 +84,9 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
                       yield* s.adapter.retract(
                         rowIds[commit - 1]!,
                         timestamp,
-                        `_tx/${String(commit).padStart(26, "0")}`,
+                        scenario % 5 === 0 && commit === 5
+                          ? ""
+                          : `_tx/${String(commit).padStart(26, "0")}`,
                         p,
                       );
                     for (const [j, input] of inputs.entries())
@@ -93,6 +97,27 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
                         `r${commit}-${j}`,
                         p,
                       );
+                    if (commit === 2 && scenario % 7 === 0) {
+                      yield* s.adapter.insert(
+                        {
+                          entityId: "e0",
+                          entityType: "_Test",
+                          attribute: "born",
+                          value: { type: "string", value: "retired in same physical transaction" },
+                          validFrom: 0,
+                        },
+                        "_tx/00000000000000000000000077",
+                        timestamp,
+                        "born",
+                        p,
+                      );
+                      yield* s.adapter.retract(
+                        "born",
+                        timestamp + 1,
+                        "_tx/00000000000000000000000078",
+                        p,
+                      );
+                    }
                     if (commit === 3)
                       yield* s.adapter.withTransaction(
                         Effect.gen(function* () {
@@ -141,7 +166,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("layout differential", 
                 (s: typeof lean) => s.adapter.getByEntities([root, "e0"], basis),
                 (s: typeof lean) => s.adapter.query({ entityId: root }, basis),
                 (s: typeof lean) => s.adapter.query({ attribute: "a1" }, basis),
-                (s: typeof lean) => s.adapter.query({ entityType: "Missing" }, basis),
+                (s: typeof lean) => s.adapter.query({ entityType: "_Test" }, basis),
                 (s: typeof lean) => s.adapter.dependencyState(["a0", "a1"], basis),
               ];
               for (const request of requests)

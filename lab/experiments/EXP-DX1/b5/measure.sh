@@ -6,7 +6,15 @@ layout=${1:?lean or legacy}
 [[ $layout == lean || $layout == legacy ]] || exit 2
 prefix="tx2-dxb5-measure-$layout-$(date +%s)"
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
-while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
+guard=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B5/functional-active
+while true; do
+  if [[ -e "$guard" ]]; then sleep 5; continue; fi
+  if mkdir "$lock" 2>/dev/null; then
+    if [[ ! -e "$guard" ]]; then break; fi
+    rmdir "$lock"
+  fi
+  sleep 5
+done
 started=$(date +%s)
 printf '{"id":"DX-B5","prefix":"%s","layout":"%s"}\n' "$prefix" "$layout" > "$lock/owner.json"
 cleanup() {
