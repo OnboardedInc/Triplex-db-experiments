@@ -64,3 +64,55 @@ it("publishes only new, changed or retired work, in frames of at most 64", async
   expect(result.commits).toBe(1);
   expect(submitted).toEqual([["s0", "s1", "s2"]]);
 });
+
+it("fills publication frames across sparse input pages", async () => {
+  const records = Array.from(
+    { length: 130 },
+    (_, i): W0.EvaluationRecord => ({
+      subject: "s" + i,
+      release: "R2",
+      basis: { tx: 20n, validTime: "2026-11-04T12:00:00Z" },
+      workItems: [
+        {
+          id: "s" + i + ":item",
+          key: "k",
+          kind: "create",
+          payload: "{}",
+          rule: "OT",
+          version: "v",
+        },
+      ],
+    }),
+  );
+  const frames: string[][] = [];
+  const comp = {
+    currentPosition: async () => 21,
+    sweepPage: async (ids: string[]) => ({
+      rows: ids
+        .filter((id) => Number(id.slice("p5:outbox:s".length)) % 2 === 1)
+        .map((entityId) => {
+          const subject = entityId.slice("p5:outbox:".length);
+          return {
+            entityId,
+            attribute: "p5/state",
+            value: {
+              value: canonical({
+                items: [{ id: subject + ":item", payload: "{}", retired: false, seq: 1n, subject }],
+                pending: [],
+                subjects: [],
+              }),
+            },
+          };
+        }),
+    }),
+    publishOutbox: async (rs: W0.EvaluationRecord[]) => {
+      frames.push(rs.map((r) => r.subject));
+      return { deliveries: [], retry: false };
+    },
+  } as unknown as CompositionHandle;
+  const r = await publishChanged(comp, records);
+  expect(frames.map((f) => f.length)).toEqual([64, 1]);
+  expect(frames.flat()).toEqual(records.filter((_, i) => i % 2 === 0).map((r) => r.subject));
+  expect(r.changed).toBe(65);
+  expect(r.commits).toBe(2);
+});

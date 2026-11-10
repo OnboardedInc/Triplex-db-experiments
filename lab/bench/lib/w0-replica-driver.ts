@@ -35,7 +35,7 @@ export async function runReplicaDriver(argv: string[]) {
   };
   const N = Number(opt("rung", "1000")),
     scope = opt("scope"),
-    workers = Number(opt("workers", "4"));
+    workers = Number(opt("workers", "3"));
   if (!scope || !Number.isSafeInteger(N) || N < 1)
     throw new Error("Existing seeded scope and positive N required");
   const subjects = subjectList(N),
@@ -57,8 +57,10 @@ export async function runReplicaDriver(argv: string[]) {
     }
   const replica = new Replica(base, V_W0),
     oracle = new DomainOracle();
-  const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope };
+  const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
+  const recordedPage = (roots: readonly string[], basis: { position: number; validAt: number }) =>
+    recorder ? recorder.around(() => comp.sweepPage(roots, basis)) : comp.sweepPage(roots, basis);
   const equalWorlds = async (cut: number, fingerprint = false) => {
     const hashes = [createHash("sha256"), createHash("sha256")];
     hashes.forEach((h) => h.update("["));
@@ -67,7 +69,7 @@ export async function runReplicaDriver(argv: string[]) {
     let worlds = 0;
     for (let i = 0; i < subjects.length; i += 64) {
       const ids = subjects.slice(i, i + 64),
-        page = await comp.sweepPage(ids, { position: cut, validAt: V_W0 });
+        page = await recordedPage(ids, { position: cut, validAt: V_W0 });
       for (const subject of ids) {
         if (
           worldCanonical(worldOf(subject, snap.world(subject))) !==
@@ -191,7 +193,7 @@ export async function runReplicaDriver(argv: string[]) {
             },
           ];
         } else if (i % 4 === 2) {
-          const answer = subject + "/dxr1:" + i;
+          const answer = subject + "/ans:dxr1-" + i;
           ops = [
             [subject, "answers", answer],
             [answer, "field", "trace"],
@@ -217,8 +219,8 @@ export async function runReplicaDriver(argv: string[]) {
             .world(subject)
             .filter(
               (r) =>
-                r.entityId.endsWith("/dxr1:" + i) ||
-                (r.value.type === "ref" && r.value.value.endsWith("/dxr1:" + i)),
+                r.entityId.endsWith("/ans:dxr1-" + i) ||
+                (r.value.type === "ref" && r.value.value.endsWith("/ans:dxr1-" + i)),
             )
             .map((r) => r.id);
         if ((i + 1) % 250 === 0)
@@ -242,6 +244,23 @@ export async function runReplicaDriver(argv: string[]) {
       };
       console.log(JSON.stringify({ kind: "follow-equality", ...report.follow }));
     }
+    if (argv.includes("--publish")) {
+      const active = await commit(
+        [
+          {
+            op: "assert",
+            entityId: "p5:tenant",
+            attribute: "p5/activation",
+            value: { type: "string", value: "R1" },
+            validFrom: V_W0,
+          },
+        ],
+        "activate:R1",
+      );
+      cut = active.position;
+      await replica.snapshotAt(cut);
+      report.activations = { R1: cut };
+    }
     const r1Snapshot = await replica.snapshotAt(cut),
       r1Position = cut;
     if (argv.includes("--publish")) {
@@ -260,6 +279,25 @@ export async function runReplicaDriver(argv: string[]) {
       };
       cut = await comp.currentPosition();
       await replica.snapshotAt(cut);
+      const old = replica
+        .world("p5:tenant")
+        .filter((r) => r.entityId === "p5:tenant" && r.attribute === "p5/activation");
+      const active = await commit(
+        [
+          ...old.map((r) => ({ op: "retract", id: r.id })),
+          {
+            op: "assert",
+            entityId: "p5:tenant",
+            attribute: "p5/activation",
+            value: { type: "string", value: "R2" },
+            validFrom: V_W0,
+          },
+        ],
+        "activate:R2",
+      );
+      cut = active.position;
+      await replica.snapshotAt(cut);
+      report.activations.R2 = cut;
     }
     const snap = await replica.snapshotAt(cut);
     const live = argv.includes("--live");
@@ -291,9 +329,9 @@ export async function runReplicaDriver(argv: string[]) {
       scope,
       N,
       dir: trafficDir,
-      seed: "DX-R1-fixed",
-      offsetS: 0,
-      warmupMs: 2000,
+      seed: opt("traffic-seed", "DX-H2-frozen-v1"),
+      offsetS: Number(opt("traffic-offset-s", "0")),
+      warmupMs: Number(opt("live-warmup-ms", "15000")),
     };
     const result = await evaluateAll({
       replica,
@@ -350,7 +388,7 @@ export async function runReplicaDriver(argv: string[]) {
         }
         if (!live) return;
         traffic = await startW0Live({ ...liveOptions, id: "baseline" });
-        await new Promise((r) => setTimeout(r, Number(opt("baseline-ms", "10000"))));
+        await new Promise((r) => setTimeout(r, Number(opt("baseline-ms", "30000"))));
         report.baseline = await traffic.stop();
         traffic = undefined;
         replica.start();
@@ -422,12 +460,12 @@ export async function runReplicaDriver(argv: string[]) {
     };
     for (let offset = 0; offset < result.records.length; offset += 64) {
       const records = result.records.slice(offset, offset + 64);
-      const gateway = await comp.sweepPage(
+      const gateway = await recordedPage(
         records.map((r) => r.subject),
         { position: cut, validAt: V_W0 },
       );
       const states = argv.includes("--publish")
-        ? await comp.sweepPage(
+        ? await recordedPage(
             records.map((r) => "p5:outbox:" + r.subject),
             { position: finalPosition, validAt: V_W0 },
           )
@@ -446,6 +484,10 @@ export async function runReplicaDriver(argv: string[]) {
         });
         if (W0.outputJson(r.candidates[0].output) !== expected)
           throw new Error("Python output mismatch " + r.subject);
+        const expectedOutput = JSON.parse(expected);
+        const normalizedRecord = { ...r.candidates[0].record,
+          workItems: r.candidates[0].record.workItems.map((w) => ({ ...w, payload: JSON.parse(w.payload) })) };
+        if (canonical(normalizedRecord) !== canonical(recordOf(expectedOutput))) throw new Error("Independent Python record mismatch " + r.subject);
         const slow = W0.sweepSubject(world, W0.R2, {
           tx: cut,
           validTime: W0.POPULATION_VALID_TIME,
@@ -487,8 +529,7 @@ export async function runReplicaDriver(argv: string[]) {
     report.publishedStatesCompared = statesCompared;
     report.oracleCompared = checked;
     if (argv.includes("--candidates")) {
-      const position = await comp.currentPosition();
-      await replica.snapshotAt(position);
+      const position = cut;
       const variant = (id: string, key: string, n: number) =>
         W0.compileRelease({
           ...W0.R2.doc,
@@ -501,12 +542,19 @@ export async function runReplicaDriver(argv: string[]) {
         subjects,
         position,
         workers,
+        view: snap,
         releases: [
           W0.R2,
           variant("OT", "thresholdMinutes", 2700),
           variant("PAYCHG", "thresholdCents", 700),
         ],
       });
+      for (let i = 0; i < multi.records.length; i++) {
+        if (
+          canonical(multi.records[i].candidates[0]) !== canonical(result.records[i].candidates[0])
+        )
+          throw new Error("Candidate pass changed its shared R2 input/output cut");
+      }
       report.candidates = {
         wallMs: multi.evaluationWallMs,
         ratio: multi.evaluationWallMs / result.evaluationWallMs,
@@ -515,8 +563,6 @@ export async function runReplicaDriver(argv: string[]) {
         cpuSeconds: multi.cpuSeconds,
       };
     }
-    if (fs.existsSync("/sys/fs/cgroup/memory.peak"))
-      report.cgroupPeakBytes = Number(fs.readFileSync("/sys/fs/cgroup/memory.peak", "utf8"));
     if (argv.includes("--journal-counts")) {
       let after = 0,
         assertions = 0,
@@ -543,6 +589,8 @@ export async function runReplicaDriver(argv: string[]) {
         throw new Error("Independent journal count mismatch");
       report.journalCounts = counts;
     }
+    if (fs.existsSync("/sys/fs/cgroup/memory.peak"))
+      report.cgroupPeakBytes = Number(fs.readFileSync("/sys/fs/cgroup/memory.peak", "utf8"));
     report.rss = process.memoryUsage().rss;
     report.peakRss = process.resourceUsage().maxRSS * 1024;
     console.log(JSON.stringify({ kind: "result", ...report }));

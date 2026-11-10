@@ -13,6 +13,7 @@ export interface ReplicaEvaluationOptions {
   subjects: readonly string[];
   releases: W0.CompiledRelease | readonly W0.CompiledRelease[];
   position: number;
+  view?: ReplicaSnapshot;
   workers?: number;
   beforeTimedWindow?: () => Promise<void>;
   // Publishing several candidates would race distinct release choices; previews may evaluate all of them.
@@ -34,7 +35,9 @@ export async function evaluateAll(o: ReplicaEvaluationOptions) {
   )
     throw new Error("Invalid replica evaluation request");
   const captureStarted = performance.now();
-  const snapshot = await o.replica.snapshotAt(o.position);
+  const snapshot = o.view ?? (await o.replica.snapshotAt(o.position));
+  if (snapshot.position !== o.position || snapshot.validAt !== o.replica.validAt)
+    throw new Error("Frozen view basis mismatch");
   const captureMs = performance.now() - captureStarted;
   return evaluateSnapshot(snapshot, o, releases, workers, captureMs);
 }
@@ -162,6 +165,13 @@ export async function publishChanged(
   let changed = 0,
     commits = 0;
   const responses: any[] = [];
+  const pending: W0.EvaluationRecord[] = [];
+  const flush = async (count: number) => {
+    const frame = pending.splice(0, count);
+    responses.push(await comp.publishOutbox(frame));
+    changed += frame.length;
+    commits++;
+  };
   for (let i = 0; i < records.length; i += 64) {
     const page = records.slice(i, i + 64);
     const position = await comp.currentPosition();
@@ -192,12 +202,11 @@ export async function publishChanged(
         result.deliveries.length > 0 || canonical(result.state.items) !== canonical(state.items)
       );
     });
-    if (differences.length) {
-      // Existing atomic outbox re-reads its own state and uses TripleLive CAS and idempotent command identity.
-      responses.push(await comp.publishOutbox(differences));
-      changed += differences.length;
-      commits++;
-    }
+    // [DX-R1] Why: pack changed subjects across input pages into the existing 64-subject atomic frame size.
+    // Rejected: publishing each sparse input page separately (needlessly multiplies native commits).
+    pending.push(...differences);
+    while (pending.length >= 64) await flush(64);
   }
+  if (pending.length) await flush(pending.length);
   return { changed, commits, wallMs: performance.now() - started, responses };
 }

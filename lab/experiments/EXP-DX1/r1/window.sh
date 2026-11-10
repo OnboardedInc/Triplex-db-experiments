@@ -34,7 +34,7 @@ held=true
 deadline=$(( $(date +%s) * 1000 + 1100000 ))
 printf '{"id":"DX-R1","pid":%s}\n' "$$" > "$lock/owner.json"
 [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB'; exit 1; }
-(sleep 1100; kill -TERM $$) & timer=$!
+(sleep 1100; docker rm -f "$prefix-driver" || true; kill -TERM $$) & timer=$!
 for name in "$prefix-pg-data" "$prefix-tools"; do
  if docker volume inspect "$name" >/dev/null 2>&1; then echo "refuse existing owned volume $name"; exit 2; fi
 done
@@ -73,7 +73,7 @@ for (const role of ["w","r"]) { let ok=false; for(let i=0;i<180;i++){try{let r=a
    kb=$(docker run --rm --pull never --name "$prefix-budget" -v "$prefix-pg-data:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}') || { kill -TERM $$; exit 1; }
    owned_kb=$(du -sk /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R1 | awk '{print $1}')
    free_kb=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
-   if [[ $kb -gt 7300000 || $owned_kb -gt 950000 || $free_kb -lt 5242880 ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; kill -TERM $$; exit 1; fi
+   if [[ $kb -gt 7300000 || $owned_kb -gt 950000 || $free_kb -lt 5242880 ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; docker rm -f "$prefix-driver" || true; kill -TERM $$; exit 1; fi
  done
 ) & watcher=$!
 docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 8g --memory-swap 8g \
