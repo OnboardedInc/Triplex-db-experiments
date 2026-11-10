@@ -14,3 +14,5 @@ The H5 equivalence verdict compares sorted complete observed row bytes against t
 `w0-live-worker.ts` adds only request context and nested causes to a failed read. `h5/summarize.mjs` copies existing gate statuses and raw timing sums; it grants no new verdict, and labels worker-overlapping demand separately from sweep wall time.
 
 Outbox build/commit CPU observations use the executing main thread's actual CPU counters; no correctness verdict depends on them. The observer includes its driver cgroup when available, counting independent Python oracle CPU as part of client resource demand.
+
+The mandatory fingerprint preview now records per-thread read/index/world-decode/kernel/hash CPU and gateway read-interval cgroup deltas. Its original world/output digest updates and all expected-byte comparisons remain intact; observations grant no additional verdict. The wrapper checks aggregate sealed-volume disk size before copying and reserves three minutes of the 45-minute lease for cleanup; outer cleanup also attempts driver copy-out before removal.

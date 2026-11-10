@@ -27,6 +27,11 @@ cleanup() {
  rc=$?; trap - EXIT TERM INT
  [[ -z $timer ]] || kill "$timer" 2>/dev/null || true
  for role in gw-w gw-r tx pg; do docker logs --timestamps "$prefix-$role" > "$out/$role.log" 2>&1 || true; done
+ # [DX-H5] Why: a deadline must retain driver bytes before removing its container.
+ # Rejected: relying only on the child wrapper's exit trap during outer cleanup.
+ if docker container inspect "$prefix-driver" >/dev/null 2>&1; then
+   mkdir -p "$out/driver"; docker cp "$prefix-driver:/driver/." "$out/driver/" >> "$out/cleanup.log" 2>&1 || true
+ fi
  for role in driver health cgroups extract tools-extract copy runtime-check; do docker rm -f "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
  for role in gw-r gw-w tx pg; do docker stop -t 30 "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
  bash lab/experiments/EXP-DX1/stack/down.sh "$prefix" --volumes >> "$out/cleanup.log" 2>&1
@@ -43,7 +48,7 @@ trap cleanup EXIT
 trap 'exit 124' TERM INT
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 held=true; printf '{"id":"DX-H5","prefix":"%s","kind":"%s","pid":%s}\n' "$prefix" "$kind" "$$" > "$lock/owner.json"
-(sleep 2700; kill -TERM $$) & timer=$!
+(sleep 2520; kill -TERM $$) & timer=$!
 python3 - <<'PY'
 import shutil
 assert shutil.disk_usage('.').free >= 5*1024**3, 'host disk under 5GiB'
@@ -81,6 +86,16 @@ if [[ $kind == seed ]]; then
  for role in gw-r gw-w tx pg; do docker stop -t 60 "$prefix-$role" >> "$out/seal.log"; done
  sealed=tx2-dxh5-seed-$n-pg-data
  if docker volume inspect "$sealed" >/dev/null 2>&1; then echo 'sealed seed exists; refuse overwrite'; exit 2; fi
+ # [DX-H5] Why: sealed seeds have a 30 GB aggregate retention budget independent of free host space.
+ # Rejected: assuming a small rung implies a small SQL volume.
+ existing_bytes=0
+ for v in $(docker volume ls --filter name=tx2-dxh5-seed- --format '{{.Name}}'); do
+  [[ $v =~ ^tx2-dxh5-seed-[0-9]+-pg-data$ ]] || exit 2
+  kb=$(docker run --rm --pull never --name "$prefix-copy" -v "$v:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}')
+  existing_bytes=$((existing_bytes + kb * 1024))
+ done
+ new_kb=$(docker run --rm --pull never --name "$prefix-copy" -v "$prefix-pg-data:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}')
+ [[ $((existing_bytes + new_kb * 1024)) -le 30000000000 ]] || { echo 'sealed seed budget exceeded'; exit 2; }
  docker volume create "$sealed" > "$out/sealed-volume.txt"
  docker run --rm --pull never --name "$prefix-copy" -v "$prefix-pg-data:/from:ro" -v "$sealed:/to" postgres:17-alpine sh -c 'cp -a /from/. /to/; du -sk /to' >> "$out/seal.log"
 fi

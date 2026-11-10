@@ -173,6 +173,7 @@ export async function runW0Driver(argv: string[]) {
     };
     const b0 = { position: report.seed.basis.tx, validAt: V_W0 };
     console.error("[P5] G0 preview sweep");
+    const previewMetrics: any[] = [];
     const gate = await fingerprintSweep(
       {
         endpoint: comp.backend.url,
@@ -186,13 +187,20 @@ export async function runW0Driver(argv: string[]) {
         scope,
         comp,
         close: async () => {},
-        observePage: (records, page) =>
-          fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records)),
+        observePage: (records, page, metrics) => {
+          fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records));
+          previewMetrics.push({ page, ...metrics });
+        },
       }),
     );
     const fingerprint = gate.observed,
       count = N;
-    report.preview = { ...gate, metrics: [], cpuScope: "fingerprint-controller-process" };
+    report.preview = {
+      ...gate,
+      metrics: previewMetrics,
+      cpuScope: "main-thread-no-live-preview",
+      note: "Preview reader uses the main/write gateway; fingerprint bytes and count gates are unchanged.",
+    };
     requireFingerprint(fingerprint, expected, N);
     report.seed.fingerprint = fingerprint;
     report.gates.G0 = { status: "PASS", subjects: count, fingerprint };
