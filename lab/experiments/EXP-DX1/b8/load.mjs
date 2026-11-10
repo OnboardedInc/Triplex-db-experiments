@@ -325,6 +325,7 @@ if (!isMainThread) {
         once,
         initialPosition: Number(basis.position.v),
         newest,
+        readCpu: cpu,
       });
     }
   } finally {

@@ -1,0 +1,78 @@
+{
+  "kind": "developer correctness gate union; not acceptance",
+  "attempts": [
+    "tx2-dxb8-int-base-1794317482",
+    "tx2-dxb8-int-native-1794318014",
+    "tx2-dxb8-int-diff-1794317623",
+    "tx2-dxb8-int-full-1794318044"
+  ],
+  "base": {
+    "legacy": 179,
+    "lean": 177,
+    "expectedLeanSkips": 2
+  },
+  "nativeAssertions": 53829,
+  "full": {
+    "legacy": {
+      "files": 4,
+      "tests": 9,
+      "logSha256": "c41f262e1a864475075035f9a7ec068d8cea6e686febaad42c1a16cabc10ca4c"
+    },
+    "lean": {
+      "files": 4,
+      "tests": 9,
+      "logSha256": "e25adff6e7659ca7da5426d05c2f27149a5e11020317586cc69ae9107bade101"
+    }
+  },
+  "differential": {
+    "scenarios": 300,
+    "comparisons": 95028,
+    "fastRowClosures": 5664,
+    "rngStates": [
+      428278297,
+      -711779450,
+      1425974214,
+      -1699957524
+    ],
+    "cache": {
+      "revisionMisses": 10492,
+      "entries": 0,
+      "evictions": 0,
+      "entityBudgetBytes": 234881024,
+      "hits": 15878,
+      "policy": "insertion-order; oldest-cut revision eviction",
+      "revisionViews": 0,
+      "verificationErrors": 0,
+      "budgetBytes": 268435456,
+      "revisionHits": 17102,
+      "bytes": 0,
+      "verify": true,
+      "entityBytes": 0,
+      "misses": 7962,
+      "revisionBudgetBytes": 33554432,
+      "verified": 32980,
+      "revisionEvictions": 0,
+      "revisionBytes": 0
+    }
+  },
+  "gatewaySha256": {
+    "journal.clj": "df8f33cb220fcc5e5815f8a2cfe6b1f6800ebb96458c0ba6e5e576d94a804b63",
+    "selftest.clj": "ea057f74074a87d8b9af7ee76adafafa9ccd7b7f53472f8530769e974143923a",
+    "stats.clj": "db2cbd9a493fc8fe8f3f537f4244a1e4abc93eadd199caa502279e4ed089c0dd",
+    "feed_test.clj": "1b9baceaed3af1d46059cd834f5e7daec9139e4114452172daab06cc27d3f988",
+    "storage.clj": "cc688384b341d1b56b0c7c8f0af9a3a075de7066f32a3e4c45717c65139ce1f0",
+    "schema.clj": "2116f76f2d85f3aeb6fa4ba15533d5dd560754ffc448117eff1a5644c38817af",
+    "query.clj": "b33de776b4b7bf94e07a54048a8d5d83907f52b3c345b67b48d44a16d102a7fc",
+    "feed_live.clj": "3116fb316e4f7af8a1a237b0b3eef82190fd97517418f731c58e107080a342e6",
+    "codec.clj": "98fc351ab48b2cf9d8ce839a1a43f889b7ad2d3d39a48f27eaec56060046eca5",
+    "feed.clj": "6bd50d33f95802f0de0db942dbf901d6b9820e38cefc2786f7aeb1cddeff133b",
+    "admission.clj": "b7b636da9307cd4c0a17acb5a30e7d2190b7ba4f2165db619141ff36041f21dc",
+    "lean.clj": "0211d10cb892d39846cdd9cd561ce7bacefb145cdf355eb2007962781c2400e7",
+    "main.clj": "bf884fcbd9e2b255de2a56a9eddcbbed03e2fdc425e9087aec22f9e2cbcd60b8",
+    "entity_cache.clj": "0ff987216ef65ee85c398dbe6708dc5ba8345bab783a6403d603d2c58220ee97",
+    "canonical.clj": "66873b85d284aeda3464678c4b23cf6e723601f2e74931ae10f0ea8f3ad65faf",
+    "scope.clj": "f38c21761787db3d9ac6267a645cbc7dccd47fd06987f02508dc4f86367b2a45",
+    "commit.clj": "de78f74d7fda190533af0a8423adc749e17bc68a5d4bf10760a64f94b2d3faa2",
+    "reach.clj": "32ef73bb6a1a0c923993768dfb75d30ff75f5c4fd10c1492d71124cc8b4e3006"
+  }
+}

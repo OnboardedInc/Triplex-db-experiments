@@ -11,7 +11,7 @@
   (let [handle (str (UUID/randomUUID)) now (System/currentTimeMillis)]
     (swap! snapshots #(assoc (into {} (filter (fn [[_ v]] (> (:expires v) now)) %)) handle
                             {:name name :db db :expires (+ now ttl-ms)}))
-    {:handle handle :position (codec/encode-value "long" (scope/head-position db (:scope (reach/config name db))))}))
+    {:handle handle :position (codec/encode-value "long" (scope/head-position db (scope/entity db)))}))
 (defn release! [name handle]
   (when (= name (:name (@snapshots handle))) (swap! snapshots dissoc handle))
   {:released true})
@@ -242,7 +242,7 @@
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
     (let [parsed (System/nanoTime)
-          data (tx-data db input (:scope (reach/config name db)))
+          data (tx-data db input (scope/entity db))
           start (System/nanoTime)
           timeline (atom {:requestParsed parsed :payloadPrepared start})
           report (deref (submit! conn data input timeline) 5000 ::timeout)
@@ -277,7 +277,7 @@
   ([db]
    (scope/head-position db (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([name db]
-   (scope/head-position db (:scope (reach/config name db)))))
+   (scope/head-position db (scope/entity db))))
 (defn unavailable! [message]
   (throw (ex-info message {:status 409 :code "BasisNotAvailable"})))
 ;; [EXP-DA01] Why: future cuts must wait for publication, never silently answer from the head (Q89c/d). Rejected: treating P >= head as latest.

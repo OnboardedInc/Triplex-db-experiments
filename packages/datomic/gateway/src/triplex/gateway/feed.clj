@@ -1,5 +1,5 @@
 (ns triplex.gateway.feed
-  (:require [datomic.api :as d] [triplex.gateway.admission :as admission] [triplex.gateway.codec :as codec])
+  (:require [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.admission :as admission] [triplex.gateway.codec :as codec])
   (:import [java.util.concurrent TimeUnit]))
 
 ;; [EXP-DF01] Why: R29/R41 E6 uses reports only as wakeups, always replaying the durable log.
@@ -52,24 +52,30 @@
 ;; [EXP-DF01] Why: Datomic owns ONE report queue per connection; broadcast wakeups to all polls.
 ;; Rejected: remove per request (disconnects other waiters) or retaining reports (unbounded data copies).
 (def wakeups (atom {}))
-(defn subscribe! [conn]
+;; [DX-B8-C] Why: notification-only subscribers need no DB read; initialize revision state only after its queue exists.
+;; Rejected: snapshotting before queue creation (can miss a report), or assuming every generic subscriber is a Datomic connection.
+(defn subscribe!
+  ([conn] (subscribe! conn nil))
+  ([conn make-recent]
   (locking wakeups
     (let [state (or (@wakeups conn)
                     (let [^java.util.concurrent.BlockingQueue queue (d/tx-report-queue conn) signal (atom (promise)) running (atom true)
+                          recent-state (when make-recent (make-recent))
                           ;; [DX-B7-S4] Why: one daemon owns this connection's report queue and broadcasts wakeups.
                           ;; Rejected: one queue consumer per waiter, or millisecond sleeps between predicate reads.
                           worker (doto (Thread.
                                     (fn []
                                       (try
                                         (while @running
-                                          (.take queue)
+                                          (let [report (.take queue)]
+                                            (when recent-state (recent/apply-report! recent-state report)))
                                           (let [old @signal] (reset! signal (promise)) (deliver old true)))
                                         (catch InterruptedException _))) "tx2-peer-notify")
                                    (.setDaemon true) (.start))]
-                      {:signal signal :running running :worker worker :users 0}))
+                      {:signal signal :running running :worker worker :recent recent-state :users 0}))
           next (update state :users inc)]
       (swap! wakeups assoc conn next)
-      next)))
+      next))))
 (defn unsubscribe! [conn]
   (locking wakeups
     (let [state (@wakeups conn)]
@@ -77,6 +83,7 @@
         (do (reset! (:running state) false)
             (.interrupt ^Thread (:worker state))
             (.join ^Thread (:worker state) 1000)
+            (recent/close! (:recent state))
             (d/remove-tx-report-queue conn)
             (swap! wakeups dissoc conn))))))
  ;; [DX-B7-S4] Why: arm before checking the current immutable db, so a commit cannot disappear between check and wait.

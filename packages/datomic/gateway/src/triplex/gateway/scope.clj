@@ -34,6 +34,7 @@
 
 ;; [DX-B8] Why: commit transactions are immutable, so a head seek never cancels scope-position retractions.
 ;; Rejected: reverse EAVT on a cardinality-one scope value (still merges its retired datoms).
+(defn entity [db] (:e (first (datomic.api/datoms db :aevt :triplex.scope/key))))
 (defn value [db e a] (:v (first (datomic.api/datoms db :eavt e a))))
 (defn head-v2? [db e] (and (datomic.api/entid db :triplex.scope/head-version)
        (= 2 (value db e :triplex.scope/head-version))))

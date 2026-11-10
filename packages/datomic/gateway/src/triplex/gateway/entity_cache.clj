@@ -39,7 +39,9 @@
 (def ^LongAdder revision-misses (LongAdder.))
 (def ^LongAdder revision-evictions (LongAdder.))
 (defn revision-budget [] (quot budget 8))
-(defn entity-budget [] (- budget (revision-budget)))
+;; [DX-B8-C] Why: reserve one sixteenth from parsed entities for report-fed revisions within the same total budget.
+;; Rejected: adding an unaccounted recent map on top of the existing 256 MiB cache.
+(defn entity-budget [] (- budget (revision-budget) (quot budget 16)))
 (defn remove-revision-view! [key]
   (when-let [view (.remove revision-views key)]
     (.addAndGet revision-bytes (- (.get ^AtomicLong (:bytes view)))) true))

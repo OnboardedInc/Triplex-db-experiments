@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [datomic.api :as d] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
+  (:require [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger]))
 (set! *warn-on-reflection* false)
 
@@ -16,12 +16,24 @@
 (def ^ConcurrentHashMap ids (ConcurrentHashMap.))
 (def ^ConcurrentHashMap configs (ConcurrentHashMap.))
 (declare sessions)
-(defn forget! [name] (cache/forget! name) (.remove ids name) (.remove configs name) (.remove ^ConcurrentHashMap sessions name))
+;; [DX-B8-C] Why: old requests retain their connection identity across deletion and recreation of a scope name.
+;; Rejected: one name-keyed ID/config map (a late old request could seed the replacement database's map).
+(defn generation-key [name epoch] (if epoch [name epoch] name))
+(defn forget! [name]
+  (cache/forget! name)
+  (doseq [^ConcurrentHashMap table [ids configs sessions] key (.keySet table)
+          :when (= name (if (vector? key) (first key) key))] (.remove table key))
+  nil)
 (defn decline! [reason] (throw (ex-info reason {:declined reason})))
-(defn config [name db]
-  (or (.get configs name)
+(defn id-map [key]
+  (or (.get ids key) (let [m (ConcurrentHashMap.)] (or (.putIfAbsent ids key m) m))))
+(defn config
+  ([name db] (config name db nil))
+  ([name db epoch]
+  (let [key (generation-key name epoch)]
+  (or (.get configs key)
       (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))
-            value {:cache-generation (Object.) :scope (.e scope)
+            value {:cache-generation (Object.) :scope (.e scope) :entity-ids (id-map key)
                    :row (d/entid db :triplex.entity/row)
                    :overflow (d/entid db :triplex.entity/row-overflow)
                    :rev (d/entid db :triplex.entity/rev)
@@ -30,15 +42,15 @@
                    :version (d/entid db :triplex.scope/rows-version)
                    :irregular (d/entid db :triplex.scope/irregular)
                    :position-regular (d/entid db :triplex.scope/position-regular)}]
-        (or (.putIfAbsent configs name value) value))))
-(defn entity-id [db name ^String id]
-  (let [^ConcurrentHashMap cache (or (.get ids name)
-                                    (let [m (ConcurrentHashMap.)] (or (.putIfAbsent ids name m) m)))]
+        (or (.putIfAbsent configs key value) value))))))
+(defn entity-id [db name ^String id & [context]]
+  (let [^ConcurrentHashMap cache (if (map? context) (:entity-ids context)
+                                   (id-map (generation-key name context)))]
     (or (.get cache id)
         (when-let [eid (d/entid db [:triplex.entity/id id])]
           (.putIfAbsent cache id eid) eid))))
-(defn select-db [name db basis]
-  (let [cfg (config name db) header (long-array 4)
+(defn select-db [name db basis & [epoch]]
+  (let [cfg (config name db epoch) header (long-array 4)
         p (get basis "recordedPosition") r (get basis "recordedAt")
         value (fn [a] (:v (first (d/datoms db :eavt (:scope cfg) a))))]
     ;; [DX-B8] Why: read only the stable eligibility attributes, never walk a scope's hot legacy values.
@@ -61,7 +73,7 @@
                      ^datomic.Datom datom (first (d/seek-datoms db :avet :triplex.tx/max-recorded-at (Math/nextUp (double r))))]
                  (when (and datom (= a (.a datom))) (dec (d/tx->t (.e datom))))))
           t (min (long (or pt (d/basis-t db))) (long (or rt (d/basis-t db))))]
-      [(if (= t (d/basis-t db)) db (d/as-of db t)) (or p head) t])))
+      [(if (= t (d/basis-t db)) db (d/as-of db t)) (or p head) t (zero? (aget header 2))])))
 (defn bits ^double [^String text ^long start]
   (Double/longBitsToDouble (Long/parseUnsignedLong text (int start) (int (+ start 16)) 16)))
  ;; [DX-B2-N2] Why: a session remembers only immutable entity revisions; concurrent references may retry full.
@@ -82,11 +94,12 @@
               (when (some? (.putIfAbsent entries eid rev))
                 (.decrementAndGet slots) (.put entries eid rev))
               (recur))))))))
-(defn session-map [name session]
+(defn session-map [name session & [epoch]]
   (when session
     (when-not (and (string? session) (<= 1 (.length ^String session) 64)) (decline! "session"))
-    (let [^LinkedHashMap lru (or (.get sessions name)
-                                (let [m (LinkedHashMap. 64 0.75 true)] (or (.putIfAbsent sessions name m) m)))]
+    (let [key (generation-key name epoch)
+          ^LinkedHashMap lru (or (.get sessions key)
+                                (let [m (LinkedHashMap. 64 0.75 true)] (or (.putIfAbsent sessions key m) m)))]
       (locking lru
         (or (.get lru session)
             (let [m (atom (session-generation))]
@@ -121,23 +134,31 @@
     (when (and (pos? (.size texts)) (zero? revision)) (decline! "missing-revision"))
     (.append out \])
     (let [json (.toString out) texts (vec texts) refs (vec refs)]
-      {:rev (if (empty? texts) 0 revision) :texts texts :refs refs :json json
-       :bytes (+ 512 (* 2 (.length ^String json))
+      {:rev (if (empty? texts) 0 revision) :texts texts :refs refs :json json :recent-safe (empty? retired)
+       :bytes (+ 560 (* 2 (.length ^String json))
                  (reduce + 0 (map #(+ 48 (* 2 (.length ^String %))) texts))
                  (reduce + 0 (map #(+ 96 (* 2 (.length ^String (first %)))) refs)))})))
-;; [DX-B7-S3] Why: tx-data revises every changed row entity; the transactor remaps that revision atomically.
-;; Rejected: skipping the revision seek (writers and as-of cuts must select their own immutable rows).
+;; [DX-B8-C] Why: a caught-up report witness proves the revision at this exact cut; other reads keep the cut memo.
+;; Rejected: reusing a newer entity revision at an older cut, or reading beyond the consumer watermark.
 (defn read-entity [name db cfg id valid ^longs counts]
-  (let [eid (entity-id db name id) valid (double valid)
-        rev (if eid (long (cache/revision (:revision-view cfg) eid
-                            (fn [] (let [^datomic.Datom revision (first (d/datoms db :eavt eid (:rev cfg)))]
-                                     (if revision (long (.v revision)) 0))))) 0)
+  (let [eid (entity-id db name id cfg) valid (double valid)
+        witness (volatile! nil)
+        read-datom (fn [] (first (d/datoms db :eavt eid (:rev cfg))))
+        recent-state (when (:recent-eligible cfg) (:recent-state cfg))
+        selected-t (:selected-t cfg)
+        cached (when (and eid recent-state) (recent/lookup recent-state eid selected-t read-datom))
+        rev (if eid (if cached (:rev cached)
+                      (long (cache/revision (:revision-view cfg) eid
+                        (fn [] (let [revision (read-datom)] (vreset! witness revision)
+                                 (if revision (long (:v revision)) 0)))))) 0)
         value (if eid
                 (if (pos? rev)
                   (cache/lookup [name (:connection-generation cfg) (:cache-generation cfg) eid rev] #(parse-entity db cfg eid rev (- 100000 (aget counts 0))))
                   (parse-entity db cfg eid rev (- 100000 (aget counts 0))))
                 {:rev 0 :texts [] :refs [] :json "[]"})
         refs (ArrayList.)]
+    (when (and eid recent-state @witness)
+      (recent/install! recent-state eid selected-t @witness (:recent-safe value)))
     (aset counts 0 (+ (aget counts 0) (count (:texts value))))
     (when (> (aget counts 0) 100000) (decline! "row-budget"))
     (doseq [[ref from to] (:refs value)]
@@ -150,11 +171,11 @@
       (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
       (append-string! out (.next it))))
   (.append out \]))
-(defn build-response [name current input & [epoch]]
+(defn build-response [name current input & [epoch recent-state]]
   (try
-    (let [[db position t] (select-db name current (get input "basis"))
-          base-cfg (config name current)
-          cfg (assoc base-cfg :connection-generation epoch
+    (let [[db position t recent-eligible] (select-db name current (get input "basis") epoch)
+          base-cfg (config name current epoch)
+          cfg (assoc base-cfg :connection-generation epoch :selected-t t :recent-state recent-state :recent-eligible recent-eligible
                 :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])) valid (double (get-in input ["basis" "validAt"]))
           need (get input "need")
           _ (when (and need (not (and (vector? need) (<= 1 (count need) 50000) (every? string? need) (= (count need) (count (distinct need)))))) (decline! "need"))
@@ -162,7 +183,7 @@
           row-page? (true? (get input "rowPage"))
           entity-limit (if row-page? 50000 5000)
           entities (LinkedHashMap.) closures (ArrayList.) counts (long-array 1)
-          session-state (session-map name (get input "session"))
+          session-state (session-map name (get input "session") epoch)
           generation (when session-state @session-state)
           ^ConcurrentHashMap remembered (:entries generation) out (StringBuilder. 65536)]
       (when-not (and (vector? roots) (<= 1 (count roots) (if need 50000 5000))) (decline! "roots"))
@@ -225,5 +246,6 @@
 
 (defn response
   ([name current input] (response name current input nil))
-  ([name current input epoch]
-   (admission/execute admission/reads #(build-response name current input epoch))))
+  ([name current input epoch] (response name current input epoch nil))
+  ([name current input epoch recent-state]
+   (admission/execute admission/reads #(build-response name current input epoch recent-state))))
