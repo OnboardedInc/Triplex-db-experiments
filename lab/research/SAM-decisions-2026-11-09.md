@@ -184,3 +184,22 @@ recommendation is in the chat reply of the same time and nothing is rented witho
 Orchestrator reading: DX-N1 stopped, its branch `exp/DX-N1-native` is not merged, its downloaded tools and run directories under
 `~/Claude/Projects/triplex-db-2/native/` are removed, no process of its is running. Work is either a large design jump for lane D
 or a measurement that decides the next jump. Small iterations only where the outcome is near certain.
+
+## 2026-11-10 about 22:25 UTC: activation design, concurrent ontology edits, publication size (verbatim)
+
+> But in our world I've seen that multiple people are making changes to the ontology and they have different previews going at once. It means that if it takes minutes, then when someone else makes a change in those same minutes, things that are
+
+(The message ended there. The orchestrator answered that stored previews go stale when the ontology changes and proposed a
+feed-maintained local copy of current facts in the runtime, so that any release is evaluated from nothing quickly.)
+
+> Yeah I don't think it's about publishing 100,000 results at once because we're not going to be publishing that much probably. The publishes won't be huge chunks. I think that's understandable. If you're adding a giant amount of things at once, that could be tough. Yeah this sounds great. You got exactly what I was going to say.
+
+Orchestrator reading:
+
+1. **P5 design direction, confirmed by Sam: the runtime keeps a compact local copy of every subject's current facts, kept
+   current by the change feed, and evaluates a release from that copy.** Several candidate releases can be evaluated at once.
+   Stored previews of outputs are not the mechanism.
+2. **Publication is not required to push 100,000 results in one go.** The activation bar is about re-evaluating up to 100,000
+   subjects without hurting live traffic; what gets published is what changed, in ordinary-sized commits, and a very large
+   publish being slower is acceptable. `lab/TARGETS.md` P5 item 5 ("wall time includes evaluation and publication") is read as:
+   evaluation of all subjects plus publication of the changed outputs.
