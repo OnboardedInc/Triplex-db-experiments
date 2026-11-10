@@ -32,6 +32,7 @@ import { Worker } from "node:worker_threads";
 import { openComposition, type CompositionHandle, type Receipt } from "./lib/composition.ts";
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
+import { commitBreakdown } from "./lib/commit-breakdown.ts";
 import { completedMaintenanceInWindow, requestIndex } from "./lib/maintenance.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
@@ -415,6 +416,7 @@ async function run() {
     feed?.ackArrived(receipt.position);
     return at;
   };
+  const publicationTimes = new Map<number, any>();
   const execute = async (job: Job) => {
     const ev = job.ev;
     const out: any = { attempts: 0, tags: [] as string[], path: "direct" };
@@ -426,7 +428,9 @@ async function run() {
     let receipt: Receipt | null = null;
     while (!receipt && out.attempts < 6) {
       out.attempts++;
+      out.transactCalledAt ??= now();
       const res = await writer.transact(cmd.operations, meta);
+      out.transactReturnedAt = now();
       if (res.ok) { receipt = res.value; break; }
       out.tags.push(res.tag);
       out.lastError = String(res.error?.message ?? "").slice(0, 300);
@@ -441,6 +445,8 @@ async function run() {
       return;
     }
     out.outcome = "committed";
+    Object.assign(out, publicationTimes.get(receipt.position));
+    publicationTimes.delete(receipt.position);
     if (ev.ackLoss) {
       const retry = await writer.transact(cmd.operations, meta);
       const resolved = await resolveByCommand(cmd.commandId);
@@ -457,6 +463,7 @@ async function run() {
       st.addressValidFrom = cmd.validRange.from;
     }
     const at = noteAck(receipt, ev.subject, { seq: ev.seq, stream: ev.stream, correction: ev.correction, correctionValidFrom: ev.correction ? cmd.validRange.from : null, stamp: cmd.newStamp });
+    out.ackPublishedAt = at;
     if (ev.stream === "background") {
       const result = { position: receipt.position, ackAt: at };
       ackedBySeq.set(ev.seq, result);
@@ -544,7 +551,11 @@ async function run() {
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
     open: () => openComposition(config.composition, lane, scopeName), log, crashes: crashPlan,
   });
-  if (publicationWriter) observeDatomicPublication((position, operationId) => publicationWriter.publish(feed!.publicationKey(position), operationId));
+  if (publicationWriter) observeDatomicPublication((position, operationId, diagnostics) => {
+    const publicationStartedAt = now();
+    publicationWriter.publish(feed!.publicationKey(position), operationId);
+    publicationTimes.set(position, { publicationStartedAt, publicationDurableAt: now(), ...(diagnostics === undefined ? {} : { diagnostics }) });
+  });
   report.publicationObserver = publicationWriter ? "DatomicClient.transact result, before Triples receipt and driver ACK; durable bound host-clock sidecar" : "not integrated";
   const feedTarget = setInterval(() => { if (feed) feed.lifeMaxTarget = acked.length ? acked[acked.length - 1]!.position : 0; }, 100);
   const feedDone = feed ? feed.run() : Promise.resolve();
@@ -750,7 +761,7 @@ async function run() {
   publicationReader?.close();
   publicationWriter?.close();
   log(`wind down: writer pending ${scheduler.pending}, probe pending ${probeScheduler?.pending ?? 0}, feed checkpoint ${feed?.checkpoint ?? "-"}/${lastAcked}, final position ${finalPosition}`);
-  fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify(latencyReceipt({ writer: "ns-write-event/1", qleverConnectionMode: report.qleverConnectionMode, stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome }))).join("\n") + "\n");
+  fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify(latencyReceipt({ ...w, writer: "ns-write-event/1", qleverConnectionMode: report.qleverConnectionMode, stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome }))).join("\n") + "\n");
 
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
@@ -1156,6 +1167,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     readYourOwnWrite: { pulls: ryowRows.length, correct: ryowOk, pull: ryowHist.summary(), failures: ryowRows.filter((x) => !x.v.ok).slice(0, 5).map((x) => ({ kind: x.v.kind, subject: x.r[R.subject], position: x.r[R.basisPosition] })) },
     duplicates: { resends: resends.length, considered: dupConsidered.length, returnedOriginal: dupOk },
     lostAck: { simulated: lostAck.length, returnedOriginal: lostOk, retryTags: countBy(lostAck.map((r) => r.retryTag)) },
+    breakdown: { units: "ms", note: "driverOwn includes offer queueing, post-transact ACK work and durable publication witness inside transact; medians are per-command sums, not sums of medians; all latency bars remain unchanged",
+      byPhase: Object.fromEntries(ctx.phases.map(p => [p.name, commitBreakdown(committed.filter(w => w.scheduledAt >= p.start && w.scheduledAt < p.end))])),
+      burst: commitBreakdown(committed.filter(w => w.burst)), all: commitBreakdown(committed) },
     probe10Diagnostic: { note: "diagnostic only (TARGETS 1.1 P2 item 2); overlay stream, not part of any bar", commit: probeHist.summary() },
     progress,
     bars: [

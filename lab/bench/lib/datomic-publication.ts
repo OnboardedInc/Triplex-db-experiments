@@ -1,6 +1,6 @@
 // [DX-H1] Why: Datomic publication is the TS client's transact-result boundary (TARGETS / Q98).
 // Rejected: stamping at the driver ACK or feed poll (would omit source-to-consumer time).
-let observer: ((position: number, operationId: string) => void) | undefined;
+let observer: ((position: number, operationId: string, diagnostics?: unknown) => void) | undefined;
 const installed = new WeakSet<object>();
 export function observeDatomicPublication(callback: typeof observer) {
   observer = callback;
@@ -28,7 +28,7 @@ export function installDatomicPublication(api: any) {
         !input.operationId
       )
         throw new Error("Datomic publication response/input binding mismatch");
-      observer(position, input.operationId);
+      observer(position, input.operationId, result.diagnostics ?? result.commitDiagnostics);
     }
     return result;
   };
