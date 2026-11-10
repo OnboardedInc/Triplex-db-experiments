@@ -100,7 +100,15 @@ export async function runW0Driver(argv: string[]) {
     report.sources[f] = sha256(fs.readFileSync(f));
   const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
   save();
-  process.env["TX2_P5_CLOCK_START"] = String(V_W0);
+  // [DX-H5] Why: replaying deterministic scope IDs on a sealed store reuses seed transaction/triple IDs.
+  // Rejected: reopening the seed's deterministic generator (collides); rewriting stored IDs or positions (breaks G0).
+  if (opt("seed-receipt")) {
+    delete process.env.TX2_P5_CLOCK_START;
+    report.runtimeMode = "live-clock-fresh-ids-for-restored-scope";
+  } else {
+    process.env["TX2_P5_CLOCK_START"] = String(V_W0);
+    report.runtimeMode = "fixed-W0-seed-clock-and-ids";
+  }
   if (lane === "datomic") process.env.TX2_W0_POINT_JOURNAL = "1";
   if (opt("seed-receipt")) process.env.TX2_W0_RESTORE_INDEXED_JOURNAL = "1";
   report.pins = await loadW0Pins();
