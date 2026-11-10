@@ -31,18 +31,20 @@ for window in sorted(ROOT.iterdir()):
     expected=image_ids['ghcr.io/xtdb/xtdb-aws:2.2.0'] if name.endswith(('write','read')) else image_ids['apache/kafka:4.1.1'] if name.endswith('kafka') else image_ids['cgr.dev/chainguard/minio:latest']
     assert c['Image']==expected,'image'
     final=load(window/(name+'-final.json'))[0];assert final['Id']==c['Id'] and not final['State']['OOMKilled'],'engine changed/OOM'
+    assert final['State']['StartedAt']==c['State']['StartedAt'],'engine restarted during timing hold'
+    for key in ['CpusetCpus','Memory','MemorySwap','PortBindings']:assert final['HostConfig'][key]==c['HostConfig'][key],'engine resource binding changed'
     assert x['after']['stats'][name]['cpuUsec']>=x['before']['stats'][name]['cpuUsec']
    keeper='\n'.join(f.read_text() for f in window.glob('keeper-*.txt'))
    assert ('running 8' in keeper and '"onePerCpu": true' in keeper) if x['keepAwake'] else 'running 0' in keeper
    if '-off-' in x['name']:assert not x['keepAwake'],'off label'
    if '-on-' in x['name'] or x['name'].startswith('read-') or x['name']=='wait-mechanism':assert x['keepAwake'],'on label'
    if x['name'].startswith('open-'):
-    assert x['n']==x['offered']==len(x['samples']) and not x['errors']
+    assert x['n']==x['offered']==len(x['samples']) and not x['errors'] and {s['i'] for s in x['samples']}==set(range(x['n']))
     check=load(window/'driver'/(x['name']+'-content.json'))
     assert not check['errors'] and int(check['claims'][0]['n'])==x['n']+201 and int(check['docs'][0]['n'])==3*(x['n']+200) and int(check['heads'][0]['n'])==x['n']+200
     if not window.name.startswith('control-'):assert int(check['bad'][0]['n'])==0,'stored payload mismatch'
     assert sum(r['clients'] for r in x['readerResults'])==x['readerCount'] and all(r['n']>0 for r in x['readerResults'])
-    if x['lagSamples']:assert len(x['lagSamples'])==x['n']
+    if x['lagSamples']:assert len(x['lagSamples'])==x['n'] and {s['id'] for s in x['lagSamples']}=={f"{x['scope']}-{i}" for i in range(x['n'])}
    elif x['name'].startswith('read-'):
     assert x['n']==len(x['samples']) and len({s['i'] for s in x['samples']})==x['n']
     if x.get('writerResult'):
