@@ -24,6 +24,11 @@ elif STAGE=='control-reads':
     keeper(True)
     for kind in ['a','b','c','d','e']:
         for readers in [1,4,16]:execute('read.mjs','read',PHASE,kind,readers,timeout=180)
+elif STAGE=='control-reads-rest':
+    # [XN-S2-LIVE] Why: retain the 95-document single-client timeout and collect the unattempted point/pinned controls. Rejected: retrying or inferring the timed-out bulk case as a measured result.
+    keeper(True)
+    for kind in ['c','d','e']:
+        for readers in [1,4,16]:execute('read.mjs','read',PHASE,kind,readers,timeout=180)
 elif STAGE=='topology':
     keeper(True)
     if docker('exec',driver,'test','-f','/driver/seed.json',check=False).returncode!=0:execute('read.mjs','seed',timeout=180)
