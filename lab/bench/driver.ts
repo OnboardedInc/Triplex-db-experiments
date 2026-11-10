@@ -32,6 +32,7 @@ import { Worker } from "node:worker_threads";
 import { openComposition, type CompositionHandle, type Receipt } from "./lib/composition.ts";
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
+import { completedMaintenanceInWindow, requestIndex } from "./lib/maintenance.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
 import { alignAssertIds } from "./lib/receipt.ts";
@@ -645,14 +646,7 @@ async function run() {
       const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
       await sleep(delay);
       const waitMs = Math.max(1, Math.min(600000, Math.floor(spec.seconds! * 1000 - delay - 100)));
-      try {
-        const event = await indexClient.request("POST", `/v2/db/${indexDb}/request-index`, {waitMs});
-        if (event.database !== indexDb || typeof event.job !== "string" || !/^[0-9a-f-]{36}$/.test(event.job) ||
-            !/^[0-9]+$/.test(event.requestedT) || typeof event.completed !== "boolean" ||
-            !Number.isSafeInteger(event.requestedAtMs) || (event.completed && (!Number.isSafeInteger(event.completedAtMs) || event.completedAtMs < event.requestedAtMs)))
-          throw Error("Invalid Datomic maintenance event binding");
-        datomicMaintenanceJobs.push({...event, phase:spec.name, t:event.completedAtMs});
-      } catch (error) { datomicMaintenanceJobs.push({phase:spec.name, completed:false, error:String(error)}); }
+      datomicMaintenanceJobs.push(await requestIndex(indexClient, indexDb, spec.name, now, waitMs));
     })() : null;
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
@@ -1071,7 +1065,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const mainEluMean = mean(mainElu.filter((e) => e.t >= w.from && e.t < w.to).map((e) => e.elu));
     const eng = engineSamples.filter((e) => e.t >= w.from && e.t < w.to);
     const maxWorkerElu = workerEluMean.length ? Math.max(...workerEluMean) : null;
-    const maint = (ctx.maintenance.events ?? []).filter((e: any) => e.t >= w.from && e.t < w.to && (lane !== "datomic" || (e.completed === true && e.requestedAtMs >= w.from && e.completedAtMs < w.to))).length;
+    const maint = (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, phase.name, w.from, w.to) : e.t >= w.from && e.t < w.to).length;
     const marks = watermarkSamples.filter((s) => s.t >= w.from && s.t < w.to).map((s) => s.marks["source"] ?? 0);
     return {
       phase: phase.name, readers: phase.readers, mode: phase.mode, windowS: Math.round(secs * 10) / 10, overlapsBurst: phase.overlapsBurst,
