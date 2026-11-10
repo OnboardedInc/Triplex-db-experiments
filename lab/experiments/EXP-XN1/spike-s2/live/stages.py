@@ -4,11 +4,13 @@ if STAGE=='control-commits':
         nested=dict(globals(),STAGE='control-'+arm,PHASE=PHASE+'-'+arm)
         exec((out/'sources'/'stages.py').read_text(),nested)
 elif STAGE=='control-off':
-    keeper(False)
+    keeper(True)
     if docker('exec',driver,'test','-f','/driver/seed.json',check=False).returncode!=0:
         execute('read.mjs','seed',timeout=120)
     if docker('exec',driver,'test','-f','/driver/history.json',check=False).returncode!=0:
         execute('write.mjs','history','one','fresh',timeout=240)
+    execute('history-check.mjs',PHASE,timeout=30)
+    keeper(False)
     for shape in ['one','two']:execute('write.mjs','correct',shape,PHASE,timeout=30)
     for rate,readers in [(15,0),(55,0),(55,16)]:execute('write.mjs','open','one',PHASE,rate,readers,timeout=100)
 elif STAGE=='control-on':

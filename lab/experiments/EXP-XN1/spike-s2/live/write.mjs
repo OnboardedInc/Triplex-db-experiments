@@ -51,7 +51,7 @@ try{
   const head=await cs[0].query('SELECT pos FROM xn_head WHERE _id=$1',[text(`${scope}-s0`)]);
   const claims=await cs[0].query('SELECT COUNT(*) AS n FROM xn_claim WHERE _id LIKE $1',[text(`${scope}-%`)]);
   const docs=await cs[0].query('SELECT COUNT(*) AS n FROM xn_ent WHERE _id LIKE $1',[text(`${scope}-%`)]);
-  const content=Number(head[0]?.pos)===20000&&Number(claims[0]?.n)===20001&&Number(docs[0]?.n)===Number(process.env.WINDOW_MS??60000);
+  const content=Number(head[0]?.pos)===20000&&Number(claims[0]?.n)===20001&&Number(docs[0]?.n)===60000;
   save('history',{scope,n:i,elapsedMs:Date.now()-start,head,claims,docs,content});if(!content)throw Error('history postflight counts mismatch');
  }else if(mode==='open'){
   const rate=Number(arg),readerCount=Number(readArg),positions=Array(200).fill(0);
