@@ -22,6 +22,10 @@ for (const prefix of fs
     file = path.join(dir, "receipt.json");
   if (!fs.existsSync(file)) continue;
   const r = JSON.parse(fs.readFileSync(file, "utf8"));
+  const outerFile = path.join(root, prefix, "exit.json");
+  const outerExit = fs.existsSync(outerFile)
+    ? JSON.parse(fs.readFileSync(outerFile, "utf8"))
+    : null;
   const log = path.join(dir, "activation-pages.ndjson");
   const pages = fs.existsSync(log)
     ? fs
@@ -79,6 +83,7 @@ for (const prefix of fs
     prefix,
     N: r.N,
     status: r.status,
+    outerExit,
     error: r.error ?? null,
     measuredSweepWallS: r.sweep?.wallMs / 1000 || null,
     subjectsPerS: r.sweep?.subjectsPerS ?? null,
@@ -105,7 +110,7 @@ for (const prefix of fs
   md.push(
     `## ${prefix}`,
     ``,
-    `N=${r.N}; receipt status ${r.status}; sweep wall ${fmt(result.measuredSweepWallS)} s; ${fmt(result.subjectsPerS)} subjects/s; ACK-metric prefix ${result.ackedMetricSubjects}/${r.N}.`,
+    `N=${r.N}; receipt status ${r.status}; outer exit ${outerExit?.exit ?? "not terminal"}; sweep wall ${fmt(result.measuredSweepWallS)} s; ${fmt(result.subjectsPerS)} subjects/s; ACK-metric prefix ${result.ackedMetricSubjects}/${r.N}. A RUNNING receipt with a nonzero outer exit is an interrupted attempt, not a live or successful trial.`,
     ``,
     "| Stage | Summed demand s | Demand s / sweep wall s | Worker thread CPU s | Input rows / CPU s | CPUs at 440k rows/s |",
     "| --- | ---: | ---: | ---: | ---: | ---: |",
