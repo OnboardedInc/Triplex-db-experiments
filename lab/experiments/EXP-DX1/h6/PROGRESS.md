@@ -10,3 +10,7 @@ North star: P5 activation, preserving exactness and P1/P2 live latency.
 - No 10k seed/sweep or final storage projection qualification yet. No acceptance claimed.
 
 Final disposition belongs in REPORT.md. All failures and original receipts remain durable.
+
+## Final disposition
+
+This file's earlier entries are snapshots. See [REPORT.md](REPORT.md) and [EVIDENCE.md](EVIDENCE.md) for the final results: latest1k223.31 subjects/s, seven complete gates PASS/overall PARTIAL;10k434,768 ACK positions ordered but no completed G0; no10k sweep; no retained H6 resources. The latest offline decode/world budgets miss. No acceptance claimed.

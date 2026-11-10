@@ -38,3 +38,13 @@ node lab/bin/heavy.mjs --label DX-H6-manifest -- node lab/experiments/EXP-DX1/h6
 ```
 
 No command above downloads images/dependencies or writes the acceptance contract. Exact label spelling/source heads and first-failure attempts are preserved in the durable launcher logs and per-attempt argument files; these examples do not retroactively qualify an attempt.
+
+Final executed candidate and evidence commands:
+
+```sh
+DXH6_SEED_VOLUME=tx2-dxh5-seed-1000-pg-data node lab/bin/heavy.mjs --poll-ms 100 --label DX-H6-sweep1000d -- bash lab/experiments/EXP-DX1/h6/attempt.sh sweep tx2-dxh6-sweep1000d --rung 1000 --scope dxh5-w0-1000-v1 --seed-receipt /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H5/tx2-dxh5-seed1000b/driver/receipt.json --seed-mapper 95781c05db68757c31e4ba218dfcb40a4fa7e957f25c9fdd0da1999ede33f79e --workers 4 --live --baseline-s 60 --live-warmup-s 15
+node lab/bin/heavy.mjs --poll-ms 100 --label DX-H6-evidence-batch -- bash -c 'node lab/experiments/EXP-DX1/h6/analyze.mjs > /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H6/analysis.log && node lab/experiments/EXP-DX1/h6/seed-journal.mjs > /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H6/seed-journal-result.log && node --experimental-strip-types lab/experiments/EXP-DX1/h6/offline.ts post-b8-current > /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H6/offline-post-b8-current.log'
+node lab/bin/heavy.mjs --poll-ms 100 --label DX-H6-final-evidence -- bash lab/experiments/EXP-DX1/h6/finalize.sh
+```
+
+`finalize.sh` runs only after `sweep1000d/exit.json`, inventories all own prefixes, writes the final derived analysis and manifest, then independently verifies every checksum. Output stays outside the evidence tree to avoid hashing its own changing log. No engine is kept alive while waiting for heavy/measurement admission.
