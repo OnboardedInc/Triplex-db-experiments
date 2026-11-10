@@ -26,7 +26,13 @@ def down(keep=False):
    for _ in range(150):
     if identity(r['pid']) is None:break
     time.sleep(.2)
-   else:raise RuntimeError('process did not stop: '+role)
+   else:
+    if identity(r['pid'])!=r['identity']:raise RuntimeError('identity changed during shutdown')
+    os.kill(r['pid'],signal.SIGKILL)
+    for _ in range(50):
+     if identity(r['pid']) is None:break
+     time.sleep(.1)
+    else:raise RuntimeError('process did not stop: '+role)
   rows.append(dict(role=role,pid=r['pid'],gone=identity(r['pid']) is None))
  (run/'cleanup.json').write_text(json.dumps(rows,indent=2))
  if not keep:
@@ -86,7 +92,7 @@ try:
  (run/'gateway-files.json').write_text(json.dumps(dict(original=original,native=adapted,nativeHash=gh),indent=2))
  (run/'tx-data').mkdir(); (run/'socket').mkdir()
  command([pg/'initdb','-D',run/'pg-data','-U','postgres','--auth=trust','--no-locale','--encoding=UTF8'])
- pgargs=[pg/'postgres','-D',run/'pg-data','-h','127.0.0.1','-p',str(base),'-k',run/'socket','-c','shared_buffers=512MB','-c','max_wal_size=8GB','-c','checkpoint_timeout=30min','-c','wal_buffers=64MB','-c','fsync=on','-c','synchronous_commit=on','-c','full_page_writes=on']
+ pgargs=[pg/'postgres','-D',run/'pg-data','-h','127.0.0.1','-p',str(base),'-k','','-c','shared_buffers=512MB','-c','max_wal_size=8GB','-c','checkpoint_timeout=30min','-c','wal_buffers=64MB','-c','fsync=on','-c','synchronous_commit=on','-c','full_page_writes=on']
  if variant!='default':pgargs+=['-c','wal_sync_method='+variant]
  launch('pg',pgargs)
  waitfor(lambda:subprocess.run([str(pg/'pg_isready'),'-h','127.0.0.1','-p',str(base)],capture_output=True).returncode==0)
@@ -126,7 +132,11 @@ finally:
  # Reap direct children before down's identity checks, avoiding zombies in standalone supervision.
  for c in reversed(children):
   if c.poll() is None:c.send_signal(signal.SIGINT if c==children[0] else signal.SIGTERM)
+ deadline=time.monotonic()+20
  for c in children:
-  try:c.wait(timeout=40)
-  except subprocess.TimeoutExpired:raise RuntimeError('cleanup refused: engine still alive')
+  try:c.wait(timeout=max(.1,deadline-time.monotonic()))
+  except subprocess.TimeoutExpired:
+   f=next((p for p in run.glob('*.pid.json') if json.loads(p.read_text())['pid']==c.pid),None)
+   if f is None or identity(c.pid)!=json.loads(f.read_text())['identity']:raise RuntimeError('cleanup identity mismatch')
+   c.kill();c.wait(timeout=5)
  down(os.environ.get('DX_NATIVE_KEEP')=='1')

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # [DX-N1] Why: one lock owns startup, driver, and cleanup; wall limit includes startup. Rejected: separate competing arm locks.
 source "$(dirname "$0")/common.sh"
-kind=${1:?pair|real|medium|tests|smoke}; prefix=${2:?prefix}; shift 2
+kind=${1:?pair|real|medium|tests|smoke|micro}; prefix=${2:?prefix}; shift 2
 valid_prefix "$prefix"
 if [[ $kind == pair ]]; then
-  bash "$0" real "$prefix-zero" --zero-readers "$@"
+  duration=${DX_MATCH_DURATION_S:-900}
+  bash "$0" real "$prefix-zero" --zero-readers --match-duration-s "$duration" "$@"
   baseline="$NATIVE/runs/$prefix-zero/driver/ns-writes.jsonl"
   [[ -s $baseline ]] || exit 1
-  exec bash "$0" real "$prefix-ladder" --baseline-writes "$baseline" "$@"
+  exec bash "$0" real "$prefix-ladder" --baseline-writes "$baseline" --match-duration-s "$duration" "$@"
 fi
-[[ $kind =~ ^(real|medium|tests|smoke)$ ]] || exit 2
+[[ $kind =~ ^(real|medium|tests|smoke|micro)$ ]] || exit 2
 cd "$REPO"; resources
 [[ ! -e $NATIVE/runs/$prefix ]] || { echo "use a fresh prefix; run already exists" >&2; exit 2; }
 mkdir -p "$EVIDENCE" "$NATIVE/runs"
@@ -34,7 +35,7 @@ trap 'exit 130' INT
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 held=true; printf '{"id":"DX-N1","pid":%s}\n' "$$" > "$lock/owner.json"
 # [DX-N1] Why: terminate within 20-minute lease even if a driver stalls. Rejected: relying on driver phase limits.
-node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),1170000)' "$$" & timer=$!
+node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),1140000)' "$$" & timer=$!
 resources
 sh lab/bin/host-quiet.sh > "$EVIDENCE/$prefix-host-before.txt" 2>&1 || true
 bash "$HERE/up.sh" "$prefix" > "$EVIDENCE/$prefix-up.log" 2>&1 & supervisor=$!
@@ -58,7 +59,11 @@ mkdir "$run/driver"
 git rev-parse HEAD > "$run/head.txt"
 python3 "$HERE/bind.py" "$run"
 if [[ $kind == tests ]]; then
-  /usr/sbin/taskpolicy -d default -t 0 -l 0 node "$HERE/command.mjs" "$REPO/node_modules/.bin/vitest" run --config lab/experiments/EXP-DX1/b5/vitest.config.ts packages/datomic/test/reach.test.ts packages/datomic/test/reach-repair.test.ts packages/datomic/test/journal-fast.test.ts packages/datomic/test/record-time-peer.test.ts packages/datomic/test/concurrent-commits.test.ts packages/datomic/test/adapter.test.ts packages/datomic/test/commit-observation.test.ts packages/datomic/test/layout-differential.test.ts > "$run/driver.log" 2>&1 &
+  /usr/sbin/taskpolicy -d default -t 0 -l 0 node "$HERE/command.mjs" "$REPO/node_modules/.bin/vitest" run --reporter=default --reporter=json --outputFile "$run/driver/tests.json" --config lab/experiments/EXP-DX1/b5/vitest.config.ts packages/datomic/test/reach.test.ts packages/datomic/test/reach-repair.test.ts packages/datomic/test/journal-fast.test.ts packages/datomic/test/record-time-peer.test.ts packages/datomic/test/concurrent-commits.test.ts packages/datomic/test/adapter.test.ts packages/datomic/test/commit-observation.test.ts packages/datomic/test/layout-differential.test.ts > "$run/driver.log" 2>&1 &
+elif [[ $kind == micro ]]; then
+  python3 "$HERE/prepare-matched.py"
+  export DX_N1_OUTPUT=$run/driver
+  /usr/sbin/taskpolicy -d default -t 0 -l 0 node "$HERE/command.mjs" bash "$HERE/matched-client.sh" > "$run/driver.log" 2>&1 &
 elif [[ $kind == smoke ]]; then
   /usr/sbin/taskpolicy -d default -t 0 -l 0 node "$HERE/command.mjs" node --experimental-strip-types "$HERE/smoke.mjs" > "$run/driver.log" 2>&1 &
 else

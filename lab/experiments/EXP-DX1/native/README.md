@@ -22,7 +22,7 @@ using its writes as the baseline, each in a separate bounded hold (like h3). `ma
 exit. It never detaches. Use it under a measurement lock. `down.sh PREFIX [--keep]` validates recorded PID birth/command
 identity, stops only those roots (Postgres shuts down its children), and deletes `pg-data` and `tx-data` unless `--keep`.
 Logs, PID records, effective configuration, source/build hashes and cleanup evidence remain. Run names cannot be reused.
-Every measured attempt is archived compressed under `evidence/DX-N1/`. A 19.5-minute timer reserves the final 30 seconds
+Every measured attempt is archived compressed under `evidence/DX-N1/`. A 19-minute timer reserves the final 60 seconds
 of the 20-minute lease for cleanup; a failed cleanup retains the lock for inspection.
 
 Endpoints bind only to IPv4 loopback at 28400 (Postgres), 28401 (transactor), 28403/28404 (gateways). The supervisor checks

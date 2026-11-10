@@ -17,6 +17,12 @@ stop_arm() {
  if [[ -n $arm_prefix ]]; then
   if [[ $arm_kind == vm ]]; then
    for role in pg tx gw-w gw-r; do docker logs "$arm_prefix-$role" > "$DX_STACK_EVIDENCE/$arm_prefix/$role.log" 2>&1 || true; done
+   if docker container inspect "$arm_prefix-driver" >/dev/null 2>&1; then
+    docker stop -t 5 "$arm_prefix-driver" >/dev/null || true
+    mkdir -p "$DX_STACK_EVIDENCE/$arm_prefix/driver"
+    docker cp "$arm_prefix-driver:/driver/." "$DX_STACK_EVIDENCE/$arm_prefix/driver/"
+    docker rm "$arm_prefix-driver" >/dev/null
+   fi
    bash lab/experiments/EXP-DX1/stack/down.sh "$arm_prefix" --volumes
    if docker volume inspect "$arm_prefix-driver" >/dev/null 2>&1; then docker volume rm "$arm_prefix-driver"; fi
    [[ -z $(docker ps -a --filter "name=^/$arm_prefix-" --format '{{.Names}}') ]] || return 1
@@ -39,7 +45,7 @@ trap 'exit 143' TERM
 trap 'exit 130' INT
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 held=true; printf '{"id":"DX-N1","pid":%s}\n' "$$" > "$lock/owner.json"
-node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),1170000)' "$$" & timer=$!
+node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),1140000)' "$$" & timer=$!
 sh lab/bin/host-quiet.sh > "$DX_STACK_EVIDENCE/$prefix/host-before.txt" 2>&1 || true
 export DX_TX_HEAP=3g DX_TX_MEMORY=4g DX_OBJECT_CACHE=1g DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g DX_PG_MEMORY=2g
 export DX_GW_WRITE_MEMORY=3g DX_GW_READ_MEMORY=3g
@@ -58,7 +64,7 @@ for repeat in 1 2; do
   if [[ $arm_kind == vm ]]; then
    unset TX2_NATIVE_PIDS DX_N1_OUTPUT TX2_NATIVE_RUN_DIR
    bash lab/experiments/EXP-DX1/stack/up.sh "$arm_prefix" --no-publish --cpus-pg 0 --cpus-tx 0,1 --cpus-gw-write 1 --cpus-gw-read 2,3 --gw-java-opts '-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g' --pg-settings '-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_buffers=64MB' > "$DX_STACK_EVIDENCE/$arm_prefix/up.log" 2>&1
-   bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$arm_prefix" --cpus 4,5,6,7 --memory 5g -- bash "$HERE/matched-client.sh" > "$DX_STACK_EVIDENCE/$arm_prefix/client.log" 2>&1 & client=$!
+   node "$HERE/command.mjs" bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$arm_prefix" --cpus 4,5,6,7 --memory 5g -- bash "$HERE/matched-client.sh" > "$DX_STACK_EVIDENCE/$arm_prefix/client.log" 2>&1 & client=$!
   else
    bash "$HERE/up.sh" "$arm_prefix" > "$DX_STACK_EVIDENCE/$arm_prefix/up.log" 2>&1 & supervisor=$!
    run=$NATIVE/runs/$arm_prefix
