@@ -364,13 +364,16 @@ local Postgres image. If not, lane X needs `ghcr.io/xtdb/xtdb-aws:2.2.0` and an 
 **keep-awake helper**: the first version's `start` matched itself and started nothing; fixed (commit a323c667). Whether the
 busy loops cost throughput under load is open: DX-B8 measures everything without and with.
 
+**XN-S2 final (13:35 UTC, merged):** `!Postgres` is an external-source remote, not a log; `log: !Postgres` is rejected. No two-node
+XTDB can be built from local images. **Lane X is parked** until Sam decides on two downloads: `ghcr.io/xtdb/xtdb-aws:2.2.0` (has the
+Kafka module) and an S3-compatible object store image. Report `lab/experiments/EXP-XN1/spike-s2/REPORT.md`.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-B8 (resumed 13:26 UTC) | Owns the whole package now: merge DX-B7, finish the head fix, all gates on both layouts, commit `DX-B8 fix:`; measure commits and pulls on a 50,000-commit scope, frozen and moving basis, without and with keep-awake; if still short, a revision map fed by the report queue so a current pull makes no Datomic call | `exp/DX-B8-head-lookup`, `.claude/worktrees/dx-b8` | `.../prompts/DX-B8-resume1.md` |
 | DX-H6 | P5 sweep stage budgets, pipeline, oracle outside the timed path, ordered seeding with commits in flight, 10,000-subject seed and sweep (four steps committed, measuring) | `exp/DX-H6-sweep-cost`, `.claude/worktrees/dx-h6` | `.../prompts/DX-H6.md` |
-| XN-S2 (resumed 12:58 UTC) | Two XTDB nodes on a Postgres-backed log, engine only, no downloads | `spike/XN-S2`, `.claude/worktrees/xn-s2` | `.../prompts/XN-S2-resume1.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
