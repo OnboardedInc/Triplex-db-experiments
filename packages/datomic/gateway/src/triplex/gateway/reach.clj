@@ -15,6 +15,12 @@
   (.append out \" ) out)
 (def ^ConcurrentHashMap ids (ConcurrentHashMap.))
 (def ^ConcurrentHashMap configs (ConcurrentHashMap.))
+;; [DX-B9-A] Why: all per-request fields have fixed slots, so adding report witnesses does not
+;; turn every hot keyword access into a linear PersistentArrayMap.indexOf search.
+;; Rejected: removing generation/cut fields to shrink the map (would weaken cache binding).
+(defrecord ReadConfig [cache-generation scope entity-ids row overflow rev id position version
+                       irregular position-regular connection-generation selected-t recent-state
+                       recent-eligible revision-view])
 (declare sessions)
 ;; [DX-B8-C] Why: old requests retain their connection identity across deletion and recreation of a scope name.
 ;; Rejected: one name-keyed ID/config map (a late old request could seed the replacement database's map).
@@ -33,7 +39,7 @@
   (let [key (generation-key name epoch)]
   (or (.get configs key)
       (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))
-            value {:cache-generation (Object.) :scope (.e scope) :entity-ids (id-map key)
+            value (map->ReadConfig {:cache-generation (Object.) :scope (.e scope) :entity-ids (id-map key)
                    :row (d/entid db :triplex.entity/row)
                    :overflow (d/entid db :triplex.entity/row-overflow)
                    :rev (d/entid db :triplex.entity/rev)
@@ -41,7 +47,7 @@
                    :position (d/entid db :triplex.scope/position)
                    :version (d/entid db :triplex.scope/rows-version)
                    :irregular (d/entid db :triplex.scope/irregular)
-                   :position-regular (d/entid db :triplex.scope/position-regular)}]
+                   :position-regular (d/entid db :triplex.scope/position-regular)})]
         (or (.putIfAbsent configs key value) value))))))
 (defn entity-id [db name ^String id & [context]]
   (let [^ConcurrentHashMap cache (if (map? context) (:entity-ids context)
@@ -140,7 +146,7 @@
                  (reduce + 0 (map #(+ 96 (* 2 (.length ^String (first %)))) refs)))})))
 ;; [DX-B8-C] Why: a caught-up report witness proves the revision at this exact cut; other reads keep the cut memo.
 ;; Rejected: reusing a newer entity revision at an older cut, or reading beyond the consumer watermark.
-(defn read-entity [name db cfg id valid ^longs counts]
+(defn read-entity-recent [name db cfg id valid ^longs counts]
   (let [eid (entity-id db name id cfg) valid (double valid)
         witness (volatile! nil)
         read-datom (fn [] (first (d/datoms db :eavt eid (:rev cfg))))
@@ -153,7 +159,7 @@
                                  (if revision (long (:v revision)) 0)))))) 0)
         value (if eid
                 (if (pos? rev)
-                  (cache/lookup [name (:connection-generation cfg) (:cache-generation cfg) eid rev] #(parse-entity db cfg eid rev (- 100000 (aget counts 0))))
+                  (cache/lookup (cache/parsed-key name (:cache-generation cfg) eid rev) #(parse-entity db cfg eid rev (- 100000 (aget counts 0))))
                   (parse-entity db cfg eid rev (- 100000 (aget counts 0))))
                 {:rev 0 :texts [] :refs [] :json "[]"})
         refs (ArrayList.)]
@@ -164,6 +170,27 @@
     (doseq [[ref from to] (:refs value)]
       (when (and (<= (double from) valid) (< valid (double to))) (.add refs ref)))
     [eid (:rev value) (:texts value) refs (:json value)]))
+;; [DX-B9-A] Why: disabled report witnesses must also avoid their per-entity volatile/closure/miss costs.
+;; Rejected: disabling only the consumer while retaining its extra hot-path work.
+(defn read-entity-legacy [name db cfg id valid ^longs counts]
+  (let [eid (entity-id db name id cfg) valid (double valid)
+        rev (if eid (long (cache/revision (:revision-view cfg) eid
+                           (fn [] (long (or (:v (first (d/datoms db :eavt eid (:rev cfg)))) 0))))) 0)
+        value (if eid
+                (if (pos? rev)
+                  (cache/lookup (cache/parsed-key name (:cache-generation cfg) eid rev)
+                    #(parse-entity db cfg eid rev (- 100000 (aget counts 0))))
+                  (parse-entity db cfg eid rev (- 100000 (aget counts 0))))
+                {:rev 0 :texts [] :refs [] :json "[]"})
+        refs (ArrayList.)]
+    (aset counts 0 (+ (aget counts 0) (count (:texts value))))
+    (when (> (aget counts 0) 100000) (decline! "row-budget"))
+    (doseq [[ref from to] (:refs value)]
+      (when (and (<= (double from) valid) (< valid (double to))) (.add refs ref)))
+    [eid (:rev value) (:texts value) refs (:json value)]))
+(defn read-entity [name db cfg id valid counts]
+  (if (:recent-state cfg) (read-entity-recent name db cfg id valid counts)
+    (read-entity-legacy name db cfg id valid counts)))
 (defn append-strings! [^StringBuilder out ^Iterable values]
   (.append out \[)
   (let [it (.iterator values) n (long-array 1)]

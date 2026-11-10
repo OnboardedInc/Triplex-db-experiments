@@ -6,6 +6,10 @@
            [java.util.function Predicate]))
 ;; [DX-B8-C] Why: a report-updated revision witness survives selected-cut changes; misses retain exact DB reads.
 ;; Rejected: using a revision observed at an older cut as the current revision after reconnect or eviction.
+ ;; [DX-B9-A] Why: paired repeats still lose at64 readers; notification-only writes and exact cut memos stay default.
+;; Rejected: enabling a report-fed optimization whose complete read/write path is not at least the old gateway's speed.
+(def enabled (or (= "1" (System/getenv "TX2_RECENT_REVISIONS"))
+                 (= "true" (System/getProperty "triplex.recentRevisions"))))
 (def ^Object allocation-lock (Object.))
 (def ^ConcurrentLinkedQueue order (ConcurrentLinkedQueue.))
 (def ^AtomicLong bytes (AtomicLong. 0))

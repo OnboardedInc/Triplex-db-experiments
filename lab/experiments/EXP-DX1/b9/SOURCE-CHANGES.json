@@ -1,0 +1,42 @@
+[
+  {
+    "path": "packages/datomic/gateway/src/triplex/gateway/cache_key_test.clj",
+    "oldSha256": null,
+    "newSha256": "18810ee5d1cfe28e77013f24d4c4d73830a4382db77164acad4843eb8db620c6"
+  },
+  {
+    "path": "packages/datomic/gateway/src/triplex/gateway/entity_cache.clj",
+    "oldSha256": "8809e8e7d700281dbfa585b123d8cd9839d2824f30390d881d25164006d414e9",
+    "newSha256": "b157fce589c4157241956e0529b1a32570ff729da960fb89c1f8f6c48b592237"
+  },
+  {
+    "path": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+    "oldSha256": "c3296edaf81c562db8e19e063638d33058c772e7db23710234015576ae150fdf",
+    "newSha256": "f5bd4a5c7ac873a18d11d6fa039749cea3102187a5ec5424aa0db0f95cf64728"
+  },
+  {
+    "path": "packages/datomic/gateway/src/triplex/gateway/reach.clj",
+    "oldSha256": "b6130d5959c7432a5c7ebf208d2d986fac49f75317f3bfe3fd78a02c18f7fc09",
+    "newSha256": "24aa6d5023b83aa66a0c1ebf7e4a2fca7dded32a8b36f40e0567a8bfa459c63b"
+  },
+  {
+    "path": "packages/datomic/gateway/src/triplex/gateway/recent.clj",
+    "oldSha256": "d43f47888ef83c277d9df30d3a30c75f751cce3c70beb02b793131fea8d6434b",
+    "newSha256": "1d84fcef0b03044989f08f77d7260ed91ecbd2d324b514718e581dc451814bfb"
+  },
+  {
+    "path": "packages/datomic/src/sweepRows.ts",
+    "oldSha256": "13d45a1c931e698e2f70b19ec1afbec33ffdb1d6fb49e1a42e48b8a688f9ec25",
+    "newSha256": "da55a32f5b662e038295cbd08b471a3e6b5ee3dac4e54733c6a0d209c58af5d7"
+  },
+  {
+    "path": "packages/datomic/test/sweepRows.test.ts",
+    "oldSha256": "f3af44dfba9a1c8ba9cfe9a3eff0cbcf6ae95ec026701559536221c6f9ea1e68",
+    "newSha256": "9a79dd43d52a2fde4b9d9693aa94f3e4355305405315221c3844536ea8a680d0"
+  },
+  {
+    "path": "packages/datomic/test/w0-page.test.ts",
+    "oldSha256": "653f393c9495e4a1c1f8e69ffc2efbe4bc1ab4b499e801d9730e4c0bc55e448a",
+    "newSha256": "85e4ebdba23635e9ca3e32129b22e0382ed7f3b7f77d3006334e14f7b3914fe5"
+  }
+]

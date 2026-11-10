@@ -221,13 +221,35 @@ export function decodeSweepRows(
     )
       throw new TypeError("Sweep closure binding mismatch");
   });
-  // [DX-H6] Why: the kernel consumes a canonical fact set, not SDK BFS order. Return each visible inline row once.
-  // Rejected: sorting each entity and then rebuilding/traversing the same graph before worldOf sorts its facts anyway.
+  // [DX-H6] Why: validate complete visible reference coverage before returning each inline row once.
+  // Rejected: accepting a missing referenced entity as an empty entity.
   // Full reference coverage still checks every visible ref, including empty referenced entities.
   for (const row of result)
     if (row.value.type === "ref" && !entities.has(row.value.value))
       throw new TypeError("Sweep reference coverage mismatch");
-  return result;
+  // [DX-B9-A] Why: the portable multi-root reader finishes the root frontier before shared children.
+  // Rejected: weakening the existing byte/order equality test to a sorted set comparison.
+  const bodies = new Map<string, SweepRow[]>();
+  for (const row of result) {
+    const body = bodies.get(row.entityId);
+    if (body) body.push(row);
+    else bodies.set(row.entityId, [row]);
+  }
+  const queue = [...roots],
+    seen = new Set(roots),
+    ordered: SweepRow[] = [];
+  for (let i = 0; i < queue.length; i++) {
+    for (const row of bodies.get(queue[i]!) ?? []) {
+      ordered.push(row);
+      if (row.value.type === "ref" && !seen.has(row.value.value)) {
+        seen.add(row.value.value);
+        queue.push(row.value.value);
+      }
+    }
+  }
+  if (ordered.length !== result.length)
+    throw new TypeError("Sweep response contains unreachable rows");
+  return ordered;
 }
 export async function sweepRows(
   client: DatomicClient,

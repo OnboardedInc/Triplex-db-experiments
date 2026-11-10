@@ -18,7 +18,7 @@
   (or (@connections uri)
       (locking connections
         (or (@connections uri)
-            (let [conn (d/connect uri) watch (feed/subscribe! conn #(recent/make-state (d/basis-t (d/db conn)))) view {:conn conn :generation (Object.) :recent (:recent watch)}]
+            (let [conn (d/connect uri) watch (feed/subscribe! conn (when recent/enabled #(recent/make-state (d/basis-t (d/db conn))))) view {:conn conn :generation (Object.) :recent (:recent watch)}]
               (swap! connections assoc uri view) view)))))
 (defn connection [uri] (:conn (connection-view uri)))
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
