@@ -20,6 +20,19 @@ import type { Rule as ConstraintRule, ViolationAt } from "../Constraint.js";
  * StorageAdapterService - Backend-agnostic storage primitives
  */
 export interface StorageAdapterService {
+  // [DX-B4-T1] Why: indexed journal pages avoid a whole-store poll. Rejected: requiring every backend to implement it.
+  readonly getTransactionsAfter?: (
+    after: number,
+    limit: number,
+    waitMs?: number,
+  ) => Effect.Effect<
+    ReadonlyArray<{ txId: string; triples: readonly import("../Triple.js").Triple[] }> | undefined,
+    ReadError
+  >;
+  // [DX-B4-T2] Why: unique command claims provide an exact point lookup. Rejected: scanning all facts for retries.
+  readonly getTransactionIdByCommand?: (
+    commandId: string,
+  ) => Effect.Effect<string | null | undefined, ReadError>;
   // [DX-B3-M2] Why: a transactor may allocate the final position after staging.
   // Rejected: returning the provisional position as a committed receipt.
   readonly committedPosition?: (txId: string) => number | undefined;

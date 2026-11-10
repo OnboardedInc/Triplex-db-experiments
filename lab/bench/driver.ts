@@ -519,7 +519,10 @@ async function run() {
   const feedTarget = setInterval(() => { if (feed) feed.lifeMaxTarget = acked.length ? acked[acked.length - 1]!.position : 0; }, 100);
   const feedDone = feed ? feed.run() : Promise.resolve();
   // [DX-H1] Why: retain a failing feed as a caught driver failure during wind-down. Rejected: an unhandled rejection that leaves status RUNNING.
-  void feedDone.catch(() => {});
+  // [DX-B4-T4] Why: a failed consumer must retain the complete diagnostic report and a failing exit.
+  // Rejected: throwing at wind-down before writer/read/oracle observations are saved.
+  let feedFailure: unknown;
+  void feedDone.catch((cause) => { feedFailure = cause; log(`feed failed: ${String(cause)}`); });
 
   // ---------------------------------------------------------------- probe10 (P2 diagnostic only)
   let probeTimer: ReturnType<typeof setInterval> | null = null;
@@ -685,14 +688,14 @@ async function run() {
   lateGrowth.length = 0;
   const lastAcked = Math.max(acked.length ? Math.max(...acked.map((a) => a.position)) : seed.lastPosition, await writer.currentPosition().catch(() => 0));
   const feedDeadline = now() + 120_000;
-  while (feed && feed.checkpoint < lastAcked && now() < feedDeadline) await sleep(100);
+  while (feed && !feedFailure && feed.checkpoint < lastAcked && now() < feedDeadline) await sleep(100);
   feedWind = feed ? { target: lastAcked, checkpointAtStop: feed.checkpoint, inFlightAtFeedTarget } : null;
   feed?.stop();
-  await feedDone;
+  await feedDone.catch(() => {});
   clearInterval(feedTarget);
-  let replay: any = null;
+  let replay: any = feedFailure ? { exact: false, status: "NOT-RUN", reason: "feed consumer failed" } : null;
   // [EXP-M01R] Why: paired rounds have no P3 consumer; NS keeps main's post-drain target and replay. Rejected: restoring the old early feed target (misses late commits).
-  if (feed) {
+  if (feed && !feedFailure) {
     const replayHandle = await openComposition(config.composition, lane, scopeName);
     const firstCrash = feed.crashReport().find((c) => c.checkpoint !== null);
     replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
@@ -728,7 +731,12 @@ async function run() {
     distribution: countBy(pullCalls.map(String)), unit: "public Triples service calls; see httpRequests for actual HTTP" };
   report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
   report.engineSamples = engineSamples;
-  report.status = "DONE";
+  if (feedFailure) {
+    report.feedFailure = String(feedFailure);
+    report.invalidReasons = [...(report.invalidReasons ?? []), `Feed consumer failed: ${String(feedFailure)}`];
+    process.exitCode = 1;
+  }
+  report.status = feedFailure ? "ERROR" : "DONE";
   report.endedAt = new Date().toISOString();
   fs.writeFileSync(path.join(rawDir, "ns-log.txt"), logLines.join("\n") + "\n");
   save();

@@ -669,16 +669,24 @@ const makeTriplesServices = Effect.gen(function* () {
 
     const transaction: TriplesService["transaction"] = (txId) => transactionAtBasis(txId);
 
+    // [DX-B4-T2] Why: undefined declines; null is an exact absence. Rejected: treating absence as a scan request.
     const transactionByCommand: TriplesService["transactionByCommand"] = (commandId) =>
-      adapter
-        .query({ attribute: TxAttributes.COMMAND_ID, value: { type: "string", value: commandId } })
-        .pipe(
-          Effect.flatMap((rows) =>
-            rows[0] === undefined
-              ? Effect.succeed(null)
-              : transaction(unsafe.transactionId(rows[0].entity_id)),
-          ),
+      Effect.gen(function* () {
+        const direct = yield* (
+          adapter.getTransactionIdByCommand?.(commandId) ?? Effect.succeed(undefined)
         );
+        if (direct !== undefined)
+          return direct === null ? null : yield* transaction(unsafe.transactionId(direct));
+        return yield* adapter
+          .query({ attribute: TxAttributes.COMMAND_ID, value: { type: "string", value: commandId } })
+          .pipe(
+            Effect.flatMap((rows) =>
+              rows[0] === undefined
+                ? Effect.succeed(null)
+                : transaction(unsafe.transactionId(rows[0].entity_id)),
+            ),
+          );
+      });
 
     const transactions: TriplesService["transactions"] = (request = {}) => {
       const after = request.after ?? 0;
@@ -693,18 +701,29 @@ const makeTriplesServices = Effect.gen(function* () {
           new ReadError({ message: "Transaction page limit must be between 1 and 1000" }),
         );
       }
-      return adapter.query({ entityType: "_Transaction" }).pipe(
-        Effect.map((rows) => {
-          const page = transactionRecordsFromTriples(rows.map(rowToTriple))
-            .filter((record) => record.position > after)
-            .slice(0, limit);
-          const last = page.at(-1);
-          return {
-            transactions: page,
-            ...(last ? { next: last.position } : {}),
-          };
-        }),
-      );
+      const waitMs = request.waitMs ?? 0;
+      if (!Number.isSafeInteger(waitMs) || waitMs < 0 || waitMs > 30_000)
+        return Effect.fail(
+          new ReadError({ message: "Transaction wait must be between 0 and 30000 ms" }),
+        );
+      // [DX-B4-T1] Why: reuse journal decoding and cursor bounds for either source. Rejected: trusting a fast page's cursor.
+      return Effect.gen(function* () {
+        const direct = yield* (
+          adapter.getTransactionsAfter?.(after, limit, waitMs) ?? Effect.succeed(undefined)
+        );
+        const records =
+          direct === undefined
+            ? transactionRecordsFromTriples(
+                (yield* adapter.query({ entityType: "_Transaction" })).map(rowToTriple),
+              )
+            : direct.flatMap(({ txId, triples }) => {
+                const record = transactionRecordFromTriples(unsafe.transactionId(txId), triples);
+                return record ? [record] : [];
+              });
+        const page = records.filter((record) => record.position > after).slice(0, limit);
+        const last = page.at(-1);
+        return { transactions: page, ...(last ? { next: last.position } : {}) };
+      });
     };
 
     const entityTransactions: TriplesService["transactionsForEntity"] = (entityId, request) =>

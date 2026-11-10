@@ -1,0 +1,8 @@
+{
+  "at": "2026-11-10T01:31:20.586908+00:00",
+  "manifestSha256": "10dd64be5d635bc268d26e329c857a6702fc19e7464e7bc63248121241ed6ed5",
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B4",
+  "checkedFiles": 3609,
+  "mismatches": [],
+  "meaning": "content integrity only; no native or performance verdict"
+}

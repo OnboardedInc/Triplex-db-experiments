@@ -200,7 +200,7 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     transactionByCommand: claims?.lookup ?? ((id) => outcome(T.transactionByCommand(id))),
     pull,
     sweepPull: pull,
-    feedPage: journal?.page ?? ((after, limit) => h.run(T.transactions({ after, limit }))),
+    feedPage: (after, limit) => h.run(T.transactions({ after, limit, ...(lane === "datomic" && variant === "reach" ? {waitMs: 200} : {}) })),
     currentPosition: () => h.run(T.currentPosition()),
     close: async () => { claims?.close(); await sweep.close(); await h.close(); },
   };

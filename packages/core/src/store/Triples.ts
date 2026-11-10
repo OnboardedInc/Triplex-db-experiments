@@ -119,6 +119,8 @@ export interface TransactionRecord {
 }
 
 export interface TransactionPageRequest {
+  /** Optional long poll, 0..30,000 milliseconds. Defaults to 0; unsupported adapters ignore it. */
+  readonly waitMs?: number;
   /** Return transactions strictly after this commit position. Defaults to 0. */
   readonly after?: number;
   /** Maximum number of transactions to return. Defaults to 100; maximum 1,000. */

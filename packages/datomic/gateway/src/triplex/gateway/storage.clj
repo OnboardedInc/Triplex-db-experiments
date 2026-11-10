@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* true)
@@ -93,6 +93,36 @@
                [{:db/id "datomic.tx" :triplex.tx/position (marker position)
                  :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
                  :triplex.tx/recorded-at (finite! (:recorded-at metadata))}]
+               ;; [DX-B4-T1] Why: one physical commit can contain several logical journals.
+               ;; Rejected: using only tx/id (drops nested transacts at interior cursors).
+               (mapcat (fn [[entity rs]]
+                         (let [existing (d/entid db [:triplex.entity/id entity])
+                               position-row (first (filter #(= ":_tx/position" (:attribute %)) rs))
+                               instant-row (first (filter #(= ":_tx/instant" (:attribute %)) rs))
+                               commands (filter #(= ":_tx/command-id" (:attribute %)) rs)
+                               claims-valid (every? (fn [r] (some #(and (= entity (get % "txId")) (= (:value_string r) (get % "commandId"))) claims)) commands)]
+                           (if (and position-row (= "datetime" (:value_type instant-row))
+                                    (= 1 (count (filter #(= ":_tx/position" (:attribute %)) rs)))
+                                    (= 1 (count (filter #(= ":_tx/instant" (:attribute %)) rs)))
+                                    claims-valid (nil? existing))
+                             [[:db/add "datomic.tx" :triplex.tx/journals (str "e:" entity)]
+                              [:db/add (str "e:" entity) :triplex.journal/position (marker (:recorded_position position-row))]]
+                             [[:db/add scope :triplex.scope/feed-irregular true]])))
+                       (group-by :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh)))
+               ;; [DX-B4-T1] Why: malformed SPI journals can share a position; their portable tie order is not the tx-link order.
+               ;; Rejected: accepting duplicate journal positions and guessing their order.
+               (let [ps (map :recorded_position (filter #(and (= "_Transaction" (:entity_type %)) (= ":_tx/position" (:attribute %))) fresh))]
+                 (when (not= (count ps) (count (distinct ps))) [[:db/add scope :triplex.scope/feed-irregular true]]))
+               ;; [DX-B4-T2] Why: the portable command query also sees untyped SPI rows.
+               ;; Rejected: proving claim completeness only for rows tagged _Transaction.
+               (when (some (fn [r]
+                             (and (= ":_tx/command-id" (:attribute r))
+                                  (not (some #(and (= (:entity_id r) (get % "txId"))
+                                                   (= (:value_string r) (get % "commandId"))) claims)))) fresh)
+                 [[:db/add scope :triplex.scope/feed-irregular true]])
+               ;; Retiring or extending a published journal invalidates the append-only proof.
+               (when (some #(= "_Transaction" (:entity_type %)) old)
+                 [[:db/add scope :triplex.scope/feed-irregular true]])
                (upserts fresh)
                (map (fn [row]
                       (cond-> (fact-map row metadata)
@@ -127,7 +157,8 @@
      [[:triplex/commit {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
-                       :ops ops :times times :irregular irregular :position-irregular irregular}]])))
+                       :ops ops :times times :irregular irregular :position-irregular irregular
+                       :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}]])))
 (defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
@@ -264,8 +295,12 @@
                   (get pattern "entityId") (subject-ids (get pattern "entityId"))
                   ;; [EXP-DA01] Why: refs have VAET and AEVT but no AVET without an explicit index; whole live scans must enumerate the actual attribute index. Rejected: a shape-dependent attribute-not-indexed failure hidden by subject-only fixtures.
                   :else (map :e (if (= route "live") (d/datoms db :aevt :f/live) (d/datoms db :avet :f/id))))
-        rows (map #(row db %) ids)]
-    {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
+        branch (cond id "id" (some? entities) "entities" (get pattern "entityId") "entity" :else "scan")
+        _ (stats/bump! [:branches branch :calls] 1)
+        visited (volatile! 0)
+        scan-key (pr-str (select-keys pattern ["attribute" "entityType"]))
+        rows (map #(do (when (= branch "scan") (vswap! visited inc) (stats/bump! [:branches branch :datoms] 1)) (row db %)) ids)
+        result {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                   (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source")
      :basis basis :subjectAttribute (str attribute)
      :rows (mapv #(wire-row (mask-retirement % basis))
@@ -274,7 +309,12 @@
                                      (or (nil? entities) (some #{(:entity_id r)} entities))
                                      (every? (fn [[k field]] (or (nil? (get pattern k)) (.startsWith ^String (str (get pattern k)) "?")
                                                                (= (get pattern k) (get r field))))
-                                             [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]]))) rows))}))
+                                             [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]]))) rows))}]
+    (when (= branch "scan")
+      (stats/bump! [:scanPatterns scan-key :calls] 1)
+      (stats/bump! [:scanPatterns scan-key :datoms] @visited)
+      (swap! stats/counts update-in [:scanPatterns scan-key :maxDatoms] (fnil max 0) @visited))
+    result))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).
