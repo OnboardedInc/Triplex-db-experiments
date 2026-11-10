@@ -3,6 +3,20 @@
 set -euo pipefail
 kind=${1:?functional|medium|real}; prefix=${2:?prefix}; shift 2
 [[ $prefix =~ ^tx2-dx[a-z0-9-]+$ ]] || exit 2
+# [DX-H4] Why: each arm needs a fresh physical stack and identical immutable arguments.
+# Rejected: the in-run baseline phase (a different frozen-trace segment).
+if [[ $kind == pair ]]; then
+  root=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H4}
+  duration=${DX_MATCH_DURATION_S:-900}
+  bash "$0" real "$prefix-zero" "$@" --zero-readers --match-duration-s "$duration"
+  baseline="$root/$prefix-zero/driver/ns-writes.jsonl"
+  [[ -s $baseline ]] || exit 1
+  mkdir -p "$root/$prefix-ladder/input"
+  cp "$baseline" "$root/$prefix-ladder/input/ns-writes.jsonl"
+  cp "$root/$prefix-zero/driver/ns-report.json" "$root/$prefix-ladder/input/ns-report.json"
+  bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl"
+  exit
+fi
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 agent=$(printf '%s' "$prefix" | cut -d- -f2 | tr '[:lower:]' '[:upper:]' | sed 's/^DX/DX-/')
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/$agent}

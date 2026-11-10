@@ -1311,6 +1311,13 @@ function p2Progress(background: any[], traceStart: number) {
 }
 function loadBaselineWrites(): any[] | null {
   if (!config.baselineWrites) return null;
+  const baselineReport = JSON.parse(fs.readFileSync(path.join(path.dirname(config.baselineWrites), "ns-report.json"), "utf8"));
+  if (baselineReport.config?.zeroReaders !== true || baselineReport.trace?.digest !== report.trace.digest ||
+      baselineReport.config?.rungSubjects !== config.rungSubjects || baselineReport.config?.composition !== config.composition ||
+      baselineReport.config?.lane !== lane || baselineReport.config?.seed !== config.seed)
+    throw Error("Matched baseline identity differs (zero readers, trace, subjects, composition, lane or seed)");
+  report.matchedBaseline = { traceDigest: baselineReport.trace.digest, offeredUntilTraceS: baselineReport.writer?.offeredUntilTraceS,
+    source: config.baselineWrites, sha256: createHash("sha256").update(fs.readFileSync(config.baselineWrites)).digest("hex") };
   return readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
 }
 function matchedBaseline(rows: any[], fromOffset: number, toOffset: number) {
