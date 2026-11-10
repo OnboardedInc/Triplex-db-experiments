@@ -1,5 +1,5 @@
 (ns triplex.gateway.journal
-  (:require [datomic.api :as d] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage]))
+  (:require [datomic.api :as d] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage]))
 (set! *warn-on-reflection* false)
 ;; [DX-B4-T1] Why: these reads use only immutable indexes; a scope without the write-side proof declines.
 ;; Rejected: reconstructing journals through entity/pull/query or guessing legacy completeness.
@@ -20,14 +20,13 @@
           _ (when-not (and (integer? limit) (<= 1 limit 1000) (integer? wait-ms) (<= 0 wait-ms 30000))
               (throw (ex-info "Invalid journal page bounds" {:status 400})))
           deadline (+ (System/nanoTime) (* wait-ms 1000000))
-          current (loop [db (storage/await-record-time name conn
+          initial (storage/await-record-time name conn
                     (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
-                      (get input "basisWaitMs") (fn [_] (d/db conn))) input)]
-               ;; [DX-B6-5] Why: this index is ordered by logical position, not by the physical commit's record-time cut.
-               ;; Rejected: declining exact position feeds after multi-instant nested commits or raw timestamp regressions.
-               (supported! db name false)
-               (if (and (pos? wait-ms) (<= (storage/head-position name db) after) (< (System/nanoTime) deadline))
-                 (do (Thread/sleep 1) (recur (d/db conn))) db))]
+                      (get input "basisWaitMs") (fn [_] (d/db conn)) conn) input)
+          _ (supported! initial name false)
+          current (if (and (pos? wait-ms) (<= (storage/head-position name initial) after))
+                    (feed/await-db conn (fn [db] (supported! db name false)
+                                         (> (storage/head-position name db) after)) deadline) initial)]
       (admission/execute admission/journals (fn []
         (let [;; [DX-B6-5] Why: an explicit basis selects a cut after freshness, rather than exposing later journals.
           ;; Rejected: waiting for R and then enumerating the current head unconditionally.

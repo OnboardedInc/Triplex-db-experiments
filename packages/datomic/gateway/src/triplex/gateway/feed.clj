@@ -55,10 +55,17 @@
 (defn subscribe! [conn]
   (locking wakeups
     (let [state (or (@wakeups conn)
-                    (let [queue (d/tx-report-queue conn) signal (atom (promise)) running (atom true)
-                          worker (future (while @running
-                                           (when (.poll queue 100 TimeUnit/MILLISECONDS)
-                                             (let [old @signal] (reset! signal (promise)) (deliver old true)))))]
+                    (let [^java.util.concurrent.BlockingQueue queue (d/tx-report-queue conn) signal (atom (promise)) running (atom true)
+                          ;; [DX-B7-S4] Why: one daemon owns this connection's report queue and broadcasts wakeups.
+                          ;; Rejected: one queue consumer per waiter, or millisecond sleeps between predicate reads.
+                          worker (doto (Thread.
+                                    (fn []
+                                      (try
+                                        (while @running
+                                          (.take queue)
+                                          (let [old @signal] (reset! signal (promise)) (deliver old true)))
+                                        (catch InterruptedException _))) "tx2-peer-notify")
+                                   (.setDaemon true) (.start))]
                       {:signal signal :running running :worker worker :users 0}))
           next (update state :users inc)]
       (swap! wakeups assoc conn next)
@@ -68,9 +75,20 @@
     (let [state (@wakeups conn)]
       (if (> (:users state) 1) (swap! wakeups update-in [conn :users] dec)
         (do (reset! (:running state) false)
-            (future-cancel (:worker state))
+            (.interrupt ^Thread (:worker state))
+            (.join ^Thread (:worker state) 1000)
             (d/remove-tx-report-queue conn)
             (swap! wakeups dissoc conn))))))
+ ;; [DX-B7-S4] Why: arm before checking the current immutable db, so a commit cannot disappear between check and wait.
+;; Rejected: sleeping first, or arming after an empty read (loses a sparse writer's only notification).
+(defn await-db [conn ready? deadline]
+  (let [watch (subscribe! conn)]
+    (try
+      (loop []
+        (let [signal @(:signal watch) db (d/db conn) remaining (- deadline (System/nanoTime))]
+          (if (or (ready? db) (<= remaining 0)) db
+            (do (deref signal (quot (+ remaining 999999) 1000000) false) (recur)))))
+      (finally (unsubscribe! conn)))))
 (defn- poll-log-with-clock [from limit wait-ms read-page arm-wait now-ns]
   ;; [EXP-DF01-R2] Why: F1 reports can be stale or precede a readable cut; only the log answers.
   ;; Rejected: one wake/read (returns empty early) or reusing a delivered promise (busy spins).

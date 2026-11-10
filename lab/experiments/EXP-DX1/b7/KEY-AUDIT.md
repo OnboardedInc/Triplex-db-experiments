@@ -21,3 +21,10 @@ and must preserve overflow/missing-revision declines. Staged `d/with` rows are r
 The runtime verify mode will reread all row and retirement datoms at the exact same immutable db on cache hits and compare row texts,
 reference intervals and inline JSON. Differential scenarios and a deliberate same-revision mutation test must execute that mode.
 This file records reasoning, not an execution verdict.
+
+Step 4 extension: `reach/build-response` uses the physical `t` returned by `select-db`, rather than `d/basis-t` on an as-of value.
+The revision memo key includes that exact cut, connection generation and configuration generation. A hit therefore refers to
+one immutable database value. The memo and parsed entities share the configured estimated byte budget (one eighth / seven eighths).
+Eviction detaches an entire old cut; an in-flight builder cannot repopulate a detached view. Verify mode rereads the revision on
+memo hits and then rereads the full entity on parsed-cache hits. The negative selftest deliberately supplies a changed revision
+at a fixed key and requires an error. This extends the proof without broadening the supported write boundary above.

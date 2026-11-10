@@ -129,8 +129,9 @@
 ;; Rejected: skipping the revision seek (writers and as-of cuts must select their own immutable rows).
 (defn read-entity [name db cfg id valid ^longs counts]
   (let [eid (entity-id db name id) valid (double valid)
-        ^datomic.Datom revision (when eid (first (d/datoms db :eavt eid (:rev cfg))))
-        rev (if revision (long (.v revision)) 0)
+        rev (if eid (long (cache/revision (:revision-view cfg) eid
+                            (fn [] (let [^datomic.Datom revision (first (d/datoms db :eavt eid (:rev cfg)))]
+                                     (if revision (long (.v revision)) 0))))) 0)
         value (if eid
                 (if (pos? rev)
                   (cache/lookup [name (:connection-generation cfg) (:cache-generation cfg) eid rev] #(parse-entity db cfg eid rev (- 100000 (aget counts 0))))
@@ -152,7 +153,9 @@
 (defn build-response [name current input & [epoch]]
   (try
     (let [[db position t] (select-db name current (get input "basis"))
-          cfg (assoc (config name current) :connection-generation epoch) valid (double (get-in input ["basis" "validAt"]))
+          base-cfg (config name current)
+          cfg (assoc base-cfg :connection-generation epoch
+                :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])) valid (double (get-in input ["basis" "validAt"]))
           need (get input "need")
           _ (when (and need (not (and (vector? need) (<= 1 (count need) 50000) (every? string? need) (= (count need) (count (distinct need)))))) (decline! "need"))
           roots (or need (get input "roots"))

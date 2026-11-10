@@ -27,3 +27,19 @@ Step 3, before commit:
 - `parsed-revision-cache-verification` mutates rows without a revision on both layouts as a negative fixture and requires detection. `parsed-cache-byte-budget` checks eviction, hits, mismatches and oversize bypass. `cache-connection-generations` models a late old-generation insertion and requires new answer bytes after recreation. These fresh isolated helper JVMs share the captured source/image, not server caches.
 - Both complete native layout suites pass. All 300 adjoining differential scenarios ran with verification enabled: positive hits, verified comparisons at least equal to hits, zero errors and bounded bytes. The union preserves RNG states and matches the executed package-source capture.
 - The seed transcript and ACK-matched frozen basis now bind the performance input. The default cache's hit rate did not satisfy the throughput targets; no promotion is inferred from passing correctness checks.
+
+Step 4, assertion-site audit (results are credited only after their attempt completes):
+
+- `entity-cache/revision` compares concurrent duplicate inserts and, in verify mode, rereads the revision datom at the exact selected immutable cut. The view key binds database name, captured connection generation, configuration generation and selected physical t. It increments the same mismatch counter before throwing on any difference.
+- `revision-memo-cuts-and-budget` checks differing physical cuts, eviction, detached-view insertion refusal, and a deliberate stale-revision negative fixture. It uses fresh isolated state and restores all cache state in `finally`.
+- `feed/await-db` treats reports only as notifications. It arms the signal before reading the peer db and tests the predicate again after each wake and at deadline. Journal answers continue to come from durable selected-db rows. No notification is itself a semantic verdict.
+- Final native and differential gates retain the unchanged exact content/decline/race assertions. A differential success requires all three successful fresh exits and contiguous original RNG ranges, plus positive cache hits, verified comparisons at least equal to parsed hits plus revision hits, zero verification errors and bounded accounting.
+- `mixed.mjs` requires one delivery per actual ACK tx ID, increasing feed positions, matching ACK positions and no missing deliveries before calculating lag. Each phase keeps actual offered/started/ACK/delivery timestamps, HTTP counts and worker utilisation. Phase results are diagnostics bound to the fresh seeded scope, captured source/build, exact frozen basis, owned containers/cgroups and independent Poisson schedule.
+- The corrected keep-awake preflight inspects actual guest scheduler policy and affinity: exactly eight SCHED_IDLE workers, one per CPU. It does not trust `already-running` or the count of sudo monitor processes. Cleanup separately requires zero matching workers and an empty owned container/network/volume inventory before releasing the lock.
+- `SOURCE-HASHES.json` records actual before/after package bytes; it does not update or adopt acceptance pins. Evidence checksums bind retained bytes and do not prove semantic acceptance.
+
+Budget close: final legacy/Clojure and performance attempts completed. Final lean admission and final verifier differential did
+not execute, so `verify-final.py` has not emitted a final union or verdict. Its future union requires source-byte equality across
+all final captures, fresh completed cleanup exits, exact test denominators/RNG continuity, positive revision/parsed verification,
+zero mismatches, byte bounds, actual wake-helper pre/post policy checks and zero load declines/faults/full retries. Missing files
+fail closed. Explicit queued-job cancellation is an operational receipt only, not test evidence.

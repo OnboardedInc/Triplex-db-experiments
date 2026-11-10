@@ -24,3 +24,11 @@ per hit, zero verification errors and byte accounting within budget.
 
 Mixed writes cycle through the same 400 subjects used by B6. Each arm prefetches its exact stamp/address preconditions before the
 60-second interval, and preserves request counts, main-loop utilisation and feed poll timelines. Frozen-basis matrices run first.
+
+Step 4 adds a revision memo for each exact selected physical cut; it shares the configured byte budget with parsed entities.
+Verification now requires a fresh comparison for revision hits as well as parsed-entity hits. `finish-gates.sh` runs the remaining
+final lean suite and full differential after the successful final performance cleanup. The final matrix uses four workers.
+
+The orchestrator's VM wake result is copied verbatim in `VM-WAKE-RESULT.md`. The local helper corrects upstream start's ancestor
+self-match and verifies actual SCHED_IDLE policies and individual CPU affinities. Every new lease stops those workers before release.
+Earlier measurements had no keep-awake helper; the unrelated QLever health-check removal is another test-bed change.

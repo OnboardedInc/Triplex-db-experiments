@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -228,7 +228,7 @@
       (locking state
         (loop []
           (when (and (< @state (dec sequence)) (< (System/nanoTime) deadline))
-            (.wait ^Object state 1) (recur)))
+            (.wait ^Object state (max 1 (quot (+ (- deadline (System/nanoTime)) 999999) 1000000))) (recur)))
         (when (< @state (dec sequence)) (stats/bump! [:commitOrder :timeouts] 1))
         (when (<= sequence @state) (stats/bump! [:commitOrder :late] 1))
         (let [_ (swap! timeline assoc :predecessorReady (System/nanoTime))
@@ -285,19 +285,25 @@
 (defn unavailable! [message]
   (throw (ex-info message {:status 409 :code "BasisNotAvailable"})))
 ;; [EXP-DA01] Why: future cuts must wait for publication, never silently answer from the head (Q89c/d). Rejected: treating P >= head as latest.
-(defn await-position [db p wait-ms refresh]
+(defn await-position [db p wait-ms refresh & [conn]]
   (if (nil? p) db
     (let [p (safe-position p) wait-ms (or wait-ms 500)
           _ (when-not (and (integer? wait-ms) (<= 1 wait-ms 2000)) (codec/invalid "Basis wait must be 1..2000 ms"))
-          deadline (+ (System/nanoTime) (* wait-ms 1000000))]
-      (loop [current db]
-        (if (<= p (head-position current)) current
-          (let [remaining (quot (- deadline (System/nanoTime)) 1000000)]
-            (when (<= remaining 0) (unavailable! "Requested position is beyond the available snapshot"))
-            (Thread/sleep 1)
-            (let [remaining (max 1 (quot (- deadline (System/nanoTime)) 1000000)) next (refresh remaining)]
-              (when (= next ::timeout) (unavailable! "Requested position did not become available before the deadline"))
-              (recur next))))))))
+          deadline (+ (System/nanoTime) (* wait-ms 1000000))
+          ready? #(<= p (head-position %))]
+      (if (ready? db) db
+        (let [next (refresh (max 1 (quot (- deadline (System/nanoTime)) 1000000)))]
+          (when (= next ::timeout) (unavailable! "Requested position did not become available before the deadline"))
+          (let [current (cond (ready? next) next
+                              conn (feed/await-db conn ready? deadline)
+                              ;; A held db cannot advance; wait only for its deadline, never replace its cut.
+                              :else (let [remaining (- deadline (System/nanoTime)) waiter (Object.)]
+                                      (when (pos? remaining)
+                                        (locking waiter (.wait waiter (quot (+ remaining 999999) 1000000))))
+                                      (refresh 1)))]
+            (when (or (= current ::timeout) (not (ready? current)))
+              (unavailable! "Requested position is beyond the available snapshot"))
+            current))))))
 ;; [EXP-DA01] Why: sparse logical positions map to the first containing physical transaction in logarithmic index work (Q89d). Rejected: rebuilding an O(commits) host map at each basis.
 (defn at-position [db p]
   (if (nil? p) db
@@ -457,11 +463,10 @@
                 (throw (ex-info "Invalid basisWaitMs" {:status 400})))
             deadline (+ (System/nanoTime) (* wait-ms 1000000))]
         (stats/bump! [:recordTimeWaits] 1)
-        (loop [db db]
-          (cond (<= r (maximum db)) db
-                (< (System/nanoTime) deadline) (do (Thread/sleep 1) (recur (d/db conn)))
-                :else (do (stats/bump! [:recordTimeSyncs] 1)
-                          (let [synced (deref (d/sync conn) 2000 ::timeout)]
-                            (when (= ::timeout synced)
-                              (throw (ex-info "Record-time sync timed out" {:status 503 :code "BasisNotAvailable"})))
-                            synced))))))))
+        (let [current (feed/await-db conn #(<= r (maximum %)) deadline)]
+          (if (<= r (maximum current)) current
+            (do (stats/bump! [:recordTimeSyncs] 1)
+                (let [synced (deref (d/sync conn) 2000 ::timeout)]
+                  (when (= ::timeout synced)
+                    (throw (ex-info "Record-time sync timed out" {:status 503 :code "BasisNotAvailable"})))
+                  synced))))))))

@@ -328,6 +328,29 @@
               (is (= [["root" 1 [expected]]] (get body "entities")))))))
       (finally (gateway/delete-scope! "datomic:mem://" scope)))))
 
+ ;; [DX-B7-S4] Why: revision aliases are cut-bound, byte-bounded and re-read in verification mode.
+;; Rejected: reusing head revisions at old cuts or repopulating a detached memo view.
+(deftest revision-memo-cuts-and-budget
+  (let [name "b7-revisions" epoch (Object.) cfg (Object.) reads (atom 0)]
+    (try
+      (with-redefs [entity-cache/budget 8192 entity-cache/verify-enabled false]
+        (let [a (entity-cache/revision-view [name epoch cfg 100])]
+          (is (= 1 (entity-cache/revision a 10 #(do (swap! reads inc) 1)) ))
+          (is (= 1 (entity-cache/revision a 10 #(do (swap! reads inc) 1)) ))
+          (is (= 1 @reads) "An immutable-cut hit performs no second index seek")
+          (let [b (entity-cache/revision-view [name epoch cfg 101])]
+            (is (= 2 (entity-cache/revision b 10 (constantly 2))))
+            (is (<= (:revisionBytes (entity-cache/stats)) 1024))
+            (is (<= (:bytes (entity-cache/stats)) 8192))
+            (is (= 9 (entity-cache/revision a 99 (constantly 9))))
+            (is (not (.containsKey ^java.util.concurrent.ConcurrentHashMap (:entries a) 99)))
+            (with-redefs [entity-cache/verify-enabled true]
+              (is (= 2 (entity-cache/revision b 10 #(do (swap! reads inc) 2))))
+              (is (= 2 @reads))
+              (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Different entity bytes"
+                    (entity-cache/revision b 10 (constantly 3))))))))
+      (finally (entity-cache/forget! name)))))
+
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]
     (println (json/write-str result))

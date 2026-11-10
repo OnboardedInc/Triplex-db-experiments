@@ -6,6 +6,7 @@ export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 root=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B7
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 mkdir -p "$root"
+keep_awake=false
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 lease_started=$(date +%s)
 printf '{"id":"DX-B7","pid":%d,"startedAtSeconds":%d}\n' $$ "$lease_started" > "$lock/owner.json"
@@ -33,6 +34,11 @@ cleanup() {
   if [[ -s "$root/$prefix-cleanup.txt" ]]; then
     echo "Owned resources remain; retain lock for explicit cleanup" >&2; exit 1
   fi
+  if [[ $keep_awake == true ]]; then
+    bash "$root/$prefix-keep-awake.sh" status > "$root/$prefix-keep-awake-final-status.txt" 2>&1 || true
+    bash "$root/$prefix-keep-awake.sh" stop > "$root/$prefix-keep-awake-stop.txt" 2>&1 || { echo 'Keep-awake cleanup failed; retain measurement lock' >&2; exit 1; }
+    grep -q 'remaining 0' "$root/$prefix-keep-awake-stop.txt" || { echo 'Keep-awake workers remain; retain measurement lock' >&2; exit 1; }
+  fi
   python3 - "$lock/owner.json" "$$" <<'PYOWNER'
 import json,sys
 owner=json.load(open(sys.argv[1]));assert owner['id']=='DX-B7' and owner['pid']==int(sys.argv[2])
@@ -51,7 +57,21 @@ trap cleanup EXIT
 finish() { result=$?; kill "$watchdog" 2>/dev/null || true; cleanup "$result"; }
 trap finish EXIT
 git -C /Users/sam/projects/triplex-db-2/.claude/worktrees/d-native show lane/d-native:lab/experiments/EXP-DX1/vm-wake/RESULT.md > "$root/$prefix-vm-wake.txt" 2>/dev/null || true
-if [[ -s "$root/$prefix-vm-wake.txt" ]]; then cat "$root/$prefix-vm-wake.txt"; echo 'Read wake instructions before proceeding' >&2; exit 2; fi
+if [[ -s "$root/$prefix-vm-wake.txt" ]]; then
+  cmp -s lab/experiments/EXP-DX1/b7/VM-WAKE-RESULT.md "$root/$prefix-vm-wake.txt" || { cat "$root/$prefix-vm-wake.txt"; echo 'Re-read changed VM wake instructions' >&2; exit 2; }
+  git -C /Users/sam/projects/triplex-db-2/.claude/worktrees/d-native show lane/d-native:lab/experiments/EXP-DX1/vm-wake/keep-awake.sh > "$root/$prefix-keep-awake-upstream.sh"
+  cmp -s lab/experiments/EXP-DX1/b7/keep-awake-upstream.sh "$root/$prefix-keep-awake-upstream.sh" || { echo 'Re-read changed keep-awake helper' >&2; exit 2; }
+  cp lab/experiments/EXP-DX1/b7/keep-awake-fixed.sh "$root/$prefix-keep-awake.sh"
+  keep_awake=true
+  bash "$root/$prefix-keep-awake.sh" start > "$root/$prefix-keep-awake-start.txt" 2>&1
+  bash "$root/$prefix-keep-awake.sh" status > "$root/$prefix-keep-awake-status.txt"
+  python3 - "$root/$prefix-keep-awake-status.txt" <<'PYAWAKE'
+import json,sys
+lines=open(sys.argv[1]).read().splitlines();assert lines[0]=='running 8'
+s=json.loads(lines[1]);assert s['onePerCpu'] and len(s['workers'])==8
+PYAWAKE
+fi
+printf '{"keepAwake":%s,"earlierRunsHadKeepAwake":false}\n' "$keep_awake" > "$root/$prefix-environment.json"
 export DX_STACK_EVIDENCE="$root"
 if [[ ${B7_PREBUILD:-} == 1 ]]; then node_modules/.bin/turbo run build --filter=@triplex-build/triplex-datomic...; fi
 python3 -c 'import shutil; assert shutil.disk_usage(".").free >= 5*1024**3, "Host disk free below 5 GiB"'

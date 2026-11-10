@@ -1,0 +1,56 @@
+{
+  "base": "2870c42b",
+  "note": "Contract unchanged; changed package source hashes for the contract owner.",
+  "files": [
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/admission.clj",
+      "oldSha256": null,
+      "newSha256": "b7b636da9307cd4c0a17acb5a30e7d2190b7ba4f2165db619141ff36041f21dc"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/entity_cache.clj",
+      "oldSha256": null,
+      "newSha256": "0ff987216ef65ee85c398dbe6708dc5ba8345bab783a6403d603d2c58220ee97"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed.clj",
+      "oldSha256": "4a1e15d8150d78ca7b9a763652027ccd4c6014520ce9391dc8d7464557ce2630",
+      "newSha256": "6bd50d33f95802f0de0db942dbf901d6b9820e38cefc2786f7aeb1cddeff133b"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed_live.clj",
+      "oldSha256": "817fb0cba56df3ed60219e23abff49c8c6b18eb80099a0a4699a53f01f616954",
+      "newSha256": "3116fb316e4f7af8a1a237b0b3eef82190fd97517418f731c58e107080a342e6"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed_test.clj",
+      "oldSha256": "35508854ae2c5bd849d0a60dd44d10b03f7daa477cd8042a586cb51a62096e18",
+      "newSha256": "1b9baceaed3af1d46059cd834f5e7daec9139e4114452172daab06cc27d3f988"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/journal.clj",
+      "oldSha256": "c236749f3d740c22f13fbe4bc68c02e14841f561c24486c2c80be720daeaa084",
+      "newSha256": "df8f33cb220fcc5e5815f8a2cfe6b1f6800ebb96458c0ba6e5e576d94a804b63"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+      "oldSha256": "6cbe793ef16a0a132ab1227fd7a0dec8b58e1f7f37ade3ed99f8b9610fe5251b",
+      "newSha256": "bfa5081c62d12e6e05185caaf0782f4ea99824da852759b73443924b71dd3185"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/reach.clj",
+      "oldSha256": "2f1fd8c50e28f14da60f985997729aaab909f3fe50d3f4229394526f223f8137",
+      "newSha256": "503294cb056b3a4c5fc5966e3bfdbf1a789db369688c4b200d054b883904b5cd"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/selftest.clj",
+      "oldSha256": "5060884fd018d0e2d5e585d9d89b0f9d3d160dccf426122a447973c6b4720c34",
+      "newSha256": "e3e8b524d8f7aadadf51c2435a30556b6ce689b1e0361389da22eae0652e1f66"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/storage.clj",
+      "oldSha256": "8b8230c25d94c6d595171f1089e78a88d2496cabf064daba181064fb966c43eb",
+      "newSha256": "98320ef0dbadf7cf2d8184838bfb3758f1edae939720c4b4530710ffcdd519fb"
+    }
+  ]
+}

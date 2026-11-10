@@ -66,8 +66,14 @@ if (!isMainThread) {
     );
   for (let i = 0; i < 2000; i++) await pull();
   parentPort.postMessage({ ready: true });
-  parentPort.on("message", async ({ readers, durationMs, mode: nextMode }) => {
+  parentPort.on("message", async ({ readers, durationMs, mode: nextMode, warmup }) => {
     mode = nextMode;
+    if (warmup) {
+      h.client.onRequest = undefined;
+      for (let i = 0; i < 2000; i++) await pull();
+      parentPort.postMessage({ warm: true });
+      return;
+    }
     const eluStart = performance.eventLoopUtilization();
     let calls = 0,
       bytes = 0;
@@ -214,6 +220,13 @@ if (!isMainThread) {
     for (const [mode, readers] of JSON.parse(
       process.env.B7_PHASES || '[["random",4],["random",256]]',
     )) {
+      // [DX-B7] Why: sequential measurements start after a full cycle, so earlier random arms cannot leave a warm client subset.
+      // Rejected: counting the initial mixed-cache transition as steady sequential miss throughput.
+      if (mode === "sequential") {
+        const warm = workers.map(once);
+        workers.forEach((worker) => worker.postMessage({ mode, warmup: true }));
+        await Promise.all(warm);
+      }
       const gatewayCacheBefore = (
         await (
           await fetch(process.env.DATOMIC_READ_URLS.split(",")[0] + "/v2/admin/scan-stats")

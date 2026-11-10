@@ -19,7 +19,7 @@
       (locking connections
         (or (@connections uri)
             (let [conn (d/connect uri) view {:conn conn :generation (Object.)}]
-              (swap! connections assoc uri view) view)))))
+              (feed/subscribe! conn) (swap! connections assoc uri view) view)))))
 (defn connection [uri] (:conn (connection-view uri)))
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
                      (when (= result ::timeout) (throw (ex-info "Sync deadline exceeded" {:status 503 :code "SyncTimeout"}))) result))
@@ -58,7 +58,7 @@
     ;; [EXP-DA00] Why: releasing the last mem peer may destroy it before delete. Rejected: release-first (selftest-3 returned false).
     (let [deleted (d/delete-database uri)]
       (reach/forget! name)
-      (when-let [view (@connections uri)] (let [conn (:conn view)] (d/release conn) (swap! connections dissoc uri)))
+      (when-let [view (@connections uri)] (let [conn (:conn view)] (feed/unsubscribe! conn) (d/release conn) (swap! connections dissoc uri)))
         {:db name :deleted deleted})))
 (defn basis [base name]
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
@@ -143,7 +143,7 @@
                  (get input "basisWaitMs")
                  (fn [remaining] (if-let [t (get input "basisT")]
                                    (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
-                                   (d/db conn)))) initial)
+                                   (d/db conn))) conn) initial)
             db (storage/await-record-time name conn db input)]
         (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
          :body (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view))}))
@@ -158,7 +158,7 @@
                    (get input "basisWaitMs")
                    (fn [remaining] (if-let [t (get input "basisT")]
                                      (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
-                                     (d/db conn)))))
+                                     (d/db conn))) conn))
             db (when conn (storage/await-record-time name conn db input))]
         (response 200
           (case action

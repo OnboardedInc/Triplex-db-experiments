@@ -1,16 +1,24 @@
-# DX-B7 working state
+# DX-B7 handoff
 
-North star: P1 concurrent pinned reads, P2 writer isolation, P3 notifications, P4 read cost.
+Steps 1–3 committed: `7dd9877f`, `73b9f41a`, `a3a49968`; each completed both native layouts and all 300 differential scenarios.
+Step 4 is an unpromoted prototype: notification waits plus an exact-cut revision memo within the configured byte budget.
 
-- Step 1 committed: `7dd9877f`. Native cases complete on both layouts; 300 differential cases passed as three adjoining RNG-preserving 100-case shards. Experiment targets still missed.
-- Step 2 is the current package source. VM matrix complete; both complete layouts and all 300 adjoining differential scenarios passed via `run-step-gates.sh step2 a`.
-- Steps 3 and 4 are prepared ONLY in ignored `candidate/`; they are not the running package. An isolated in-memory helper passed 53,704 assertions after cache generation protection. Later verification bit-comparison changes still need fresh tests.
-- Bulky captures/logs/JFR and candidate snapshots are under `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B7/`.
-- Do not adopt the early timed-out mixed batches as whole-attempt successes. Their complete legacy/lean file slices are identified separately in `step1-gate-union.json`.
-- Original profile A is empty. Profile B has unchanged gateway bytes, with partial harness startup byte binding documented in `PASS-AUDIT.md`.
+Final legacy: 21 tests passed. Final Clojure: 14 / 53,715 assertions; feed: 13 / 85. Final performance completed with verified
+keep-awake and four workers: O1–O5 missed; O6 met (quiet ACK-to-feed p99 16.8 ms at 1/s, 13.6 ms at Poisson 15/s).
 
-Next: finish step 2 gates and commit. For step 3 apply candidate `reach.clj`, `entity_cache.clj` and selftest, but construct `main.clj`
-from the current package with the connection-generation transformation; candidate main already contains step 4 notification calls.
-Then run the VM matrix and full gates with `B7_DIFF_VERIFY=true`. Apply notification files only for step 4. The full report is committed last.
+O7 is incomplete. Final lean admission waited 15 minutes; the full gate job queued 28 minutes. After the approximate three-hour
+budget, own queued jobs were explicitly cancelled before engine creation. No owned containers remain. See `BUDGET-CANCELLATION.json`.
+No final lean or memo-verifier differential success is claimed. Earlier step-3 differential verified parsed entities only.
 
-Step 3: full native suites and all 300 verifier-enabled differential scenarios passed. Parsed cache alone misses throughput; JFR still ranks revision-index iterators highest. Step 4 candidate adds exact-selected-cut revision memoization within the same total budget, alongside notification waits.
+Resume with a fresh attempt (no source changes first):
+
+```sh
+node lab/bin/heavy.mjs --label DX-B7-resume-c -- bash lab/experiments/EXP-DX1/b7/finish-gates.sh c
+python3 lab/experiments/EXP-DX1/b7/verify-final.py c
+```
+
+The current after-profile still ranks Datomic numeric comparisons and retraction filtering highest. Isolate scope freshness and
+cut-selection work, and wake-helper scheduling/cgroup effects, before another optimization claim. No step-5 parser/escaping work.
+
+Durable evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B7/`. Report and compact checksum index are in this directory.
+No acceptance promotion, contract edits, merge, push or deployment.
