@@ -140,6 +140,11 @@ if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) ||
   throw new Error(`Reader caches plus ${WRITER_CACHE_BUDGET_MIB} MiB writer cache budgets must total at most 4096 MiB`);
 if (!["gateway", "replica"].includes(config.readPath) || (config.readPath === "replica" && lane !== "datomic"))
   throw Error("--read-path replica requires lane datomic");
+// [DX-R3] Why: peak RSS must include worker shutdown and all post-run verification/collection work.
+// Rejected: reporting only the sample taken before final analysis and report serialization.
+if (config.readPath === "replica") process.once("exit", () => {
+  console.log(JSON.stringify({ kind: "replica-reader-process-peak", bytes: process.resourceUsage().maxRSS * 1024 }));
+});
 const pairPlan: RoundPlan | null = config.roundPlan ? JSON.parse(fs.readFileSync(path.resolve(config.roundPlan), "utf8")) : null;
 if (pairPlan) {
   if (pairPlan.format !== "tx2-round-plan/1") throw new Error(`--round-plan: format ${pairPlan.format}`);
