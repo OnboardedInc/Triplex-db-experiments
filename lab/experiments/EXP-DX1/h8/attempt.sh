@@ -125,10 +125,17 @@ export DX_TX_HEAP=3g DX_TX_MEMORY=4g DX_GW_WRITE_MEMORY=3g DX_GW_READ_MEMORY=3g 
 tx_profile='-XX:StartFlightRecording=filename=/tmp/h8.jfr,settings=profile,dumponexit=true'
 gw_profile=$tx_profile
 [[ $kind != seed ]] || { tx_profile=; gw_profile=; }
+# [DX-H8] Why: the measured seed retains ~2 GiB WAL; its read-only clone must fit beside the sealed seed under 12 GB.
+# Rejected: deleting sealed WAL or cloning first and discovering the cap during fingerprint capture.
+wal_max=2GB; [[ $kind == seed ]] || wal_max=256MB
 bash lab/experiments/EXP-DX1/h8/up.sh "$prefix" --no-publish --cpus-pg 0 --cpus-tx 0,1 --cpus-gw-write 1 --cpus-gw-read 2,3 \
  --tx-java-opts "-Xms1g -Xmx3g $tx_profile" \
  --gw-java-opts "$gw_profile -Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g" \
- --pg-settings '-c shared_buffers=512MB -c max_wal_size=2GB -c checkpoint_timeout=30min' > "$out/up.log" 2>&1
+ --pg-settings "-c shared_buffers=512MB -c max_wal_size=$wal_max -c checkpoint_timeout=30min" > "$out/up.log" 2>&1
+if [[ -n ${DXH8_SEED_VOLUME:-} ]]; then
+ docker exec "$prefix-pg" psql -U postgres -d datomic -c 'CHECKPOINT' > "$out/clone-checkpoint.txt"
+ docker exec "$prefix-pg" psql -U postgres -d datomic -Atc "SELECT json_build_object('max_wal_size',current_setting('max_wal_size'),'wal_bytes',(SELECT COALESCE(sum(size),0) FROM pg_ls_waldir()));" >> "$out/clone-checkpoint.txt"
+fi
 docker stats --no-stream --format '{{json .}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" > "$out/stats-owned.jsonl"
 export DX_DRIVER_ENV="TRIPLEX_DATOMIC_LAYOUT=lean TX2_W0_COUNT_CONCURRENCY=64 TX2_SWEEP_STRICT=1"
 if [[ $kind == record ]]; then
