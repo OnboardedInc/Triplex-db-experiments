@@ -1,7 +1,7 @@
 import { Worker } from "node:worker_threads";
 import { Replica, type ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
 import type { CompositionHandle } from "./composition.ts";
-import { W0, canonical } from "./w0-world.ts";
+import { W0, canonical, requirePosition } from "./w0-world.ts";
 
 export interface ReplicaEvaluation {
   subject: string;
@@ -12,7 +12,7 @@ export interface ReplicaEvaluationOptions {
   replica: Replica;
   subjects: readonly string[];
   releases: W0.CompiledRelease | readonly W0.CompiledRelease[];
-  position: number;
+  position?: number;
   view?: ReplicaSnapshot;
   workers?: number;
   beforeTimedWindow?: () => Promise<void>;
@@ -34,9 +34,19 @@ export async function evaluateAll(o: ReplicaEvaluationOptions) {
     (o.publish && releases.length !== 1)
   )
     throw new Error("Invalid replica evaluation request");
+  if (!o.view && o.position !== undefined && o.position > o.replica.position)
+    requirePosition(
+      { position: o.position, validAt: o.replica.validAt },
+      await o.replica.source.head(),
+    );
   const captureStarted = performance.now();
-  const snapshot = o.view ?? (await o.replica.snapshotAt(o.position));
-  if (snapshot.position !== o.position || snapshot.validAt !== o.replica.validAt)
+  const snapshot =
+    o.view ??
+    (o.position === undefined ? await o.replica.capture() : await o.replica.snapshotAt(o.position));
+  if (
+    (o.position !== undefined && snapshot.position !== o.position) ||
+    snapshot.validAt !== o.replica.validAt
+  )
     throw new Error("Frozen view basis mismatch");
   const captureMs = performance.now() - captureStarted;
   return evaluateSnapshot(snapshot, o, releases, workers, captureMs);
@@ -183,7 +193,16 @@ export async function publishChanged(
     for (const row of stored.rows)
       if (row.attribute === "p5/state") {
         if (states.has(row.entityId)) throw new Error("Ambiguous publication state");
-        const s = JSON.parse(row.value.value);
+        // [DX-R1] Why: the existing JSON publisher revives numbers only after parsing; reject tokens it would round.
+        // Rejected: silently comparing rounded sequence or basis integers before deciding whether to publish.
+        const s = JSON.parse(row.value.value, (_key, value, context?: { source: string }) => {
+          if (
+            typeof value === "number" &&
+            (!Number.isSafeInteger(value) || !/^-?(0|[1-9][0-9]*)$/.test(context?.source ?? ""))
+          )
+            throw new Error("Unsafe numeric token in stored outbox state");
+          return value;
+        });
         states.set(row.entityId, {
           items: s.items.map((x: any) => ({ ...x, seq: BigInt(x.seq) })),
           pending: s.pending.map((x: any) => ({ ...x, seq: BigInt(x.seq) })),

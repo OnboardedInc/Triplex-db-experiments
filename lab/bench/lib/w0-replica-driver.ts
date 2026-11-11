@@ -12,6 +12,8 @@ import {
   datomicReplicaSource,
 } from "../../../packages/datomic/dist/index.js";
 import { openComposition } from "./composition.ts";
+import { runtimeApi } from "./triplex.ts";
+import { openBulkCounts } from "../../experiments/EXP-DX1/h6/bulk-counts.ts";
 import {
   W0,
   V_W0,
@@ -46,7 +48,8 @@ export async function runReplicaDriver(argv: string[]) {
     64 * 1024 ** 2,
     { entityCacheBytes: 1, rowCacheBytes: 1 },
   );
-  const db = "s2-" + Buffer.from(scope).toString("base64url");
+  const db =
+    "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
   const base = datomicReplicaSource(client, db, () => comp.currentPosition()),
     recordDir = opt("record-dir");
   const recorder = recordDir ? recordReplicaHttp(recordDir) : undefined;
@@ -59,6 +62,12 @@ export async function runReplicaDriver(argv: string[]) {
     oracle = new DomainOracle();
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
+  let bulkCounts: Awaited<ReturnType<typeof openBulkCounts>> | undefined;
+  const followTo = async (p: number) => {
+    while (replica.position < p) await replica.followOnce(1000, p);
+    if (!replica.isValid || replica.position !== p)
+      throw new Error("Replica did not reach exact acknowledged cut");
+  };
   const recordedPage = (roots: readonly string[], basis: { position: number; validAt: number }) =>
     recorder ? recorder.around(() => comp.sweepPage(roots, basis)) : comp.sweepPage(roots, basis);
   const equalWorlds = async (cut: number, fingerprint = false) => {
@@ -111,7 +120,13 @@ export async function runReplicaDriver(argv: string[]) {
         ],
         { maxBuffer: 4 << 20 },
       );
-      const expected = JSON.parse(stdout).fingerprint;
+      const full = JSON.parse(stdout).fingerprint;
+      const expected = {
+        basisTx: full.basisTx,
+        facts: full.facts,
+        worlds: full.worlds,
+        R2: full.R2,
+      };
       if (canonical(actual) !== canonical(expected))
         throw new Error("Independent seed fingerprint mismatch");
       console.log(JSON.stringify({ kind: "seed-fingerprint", observed: actual, expected }));
@@ -125,6 +140,10 @@ export async function runReplicaDriver(argv: string[]) {
     return r.value;
   };
   try {
+    // [DX-R1] Why: reuse H6's qualified full-history transport; per-entity HTTP would consume the bounded hold.
+    // Rejected: replacing stored history counts with client ACK totals or changing their expected values.
+    bulkCounts = await openBulkCounts(comp);
+    comp.storeCounts = bulkCounts.count;
     if (argv.includes("--seed")) {
       if (!recordDir) throw new Error("Seed log directory required");
       fs.mkdirSync(recordDir, { recursive: true });
@@ -206,14 +225,35 @@ export async function runReplicaDriver(argv: string[]) {
             validFrom: V_W0,
           }));
         } else ops = added.map((id) => ({ op: "retract", id }));
+        const retiredIds = new Set(ops.filter((op) => op.op === "retract").map((op) => op.id));
+        const retiredRows = replica.world(subject).filter((row) => retiredIds.has(row.id));
         const r = await commit(ops, "follow:" + i),
           ack = performance.now();
         const cpu = process.threadCpuUsage();
-        await replica.followOnce();
+        await followTo(r.position);
         const d = process.threadCpuUsage(cpu);
         cpuSeconds += (d.user + d.system) / 1e6;
         if (replica.position !== r.position) throw new Error("Follow did not reach ACK");
         lags.push(performance.now() - ack);
+        // [DX-R1] Why: compare acknowledged content as well as the independent database pull; shared stale reads cannot hide a dropped update.
+        // Rejected: accepting watermark progress alone after a write.
+        for (const op of ops.filter((op) => op.op === "assert")) {
+          if (
+            !replica
+              .world(op.entityId)
+              .some(
+                (row) =>
+                  row.entityId === op.entityId &&
+                  row.attribute === op.attribute &&
+                  row.position === r.position &&
+                  canonical(row.value) === canonical(op.value),
+              )
+          )
+            throw new Error("Acknowledged assertion absent from replica");
+        }
+        for (const old of retiredRows)
+          if (replica.world(old.entityId).some((row) => row.id === old.id))
+            throw new Error("Retired row remained in replica");
         if (i % 4 === 2)
           added = replica
             .world(subject)
@@ -237,6 +277,8 @@ export async function runReplicaDriver(argv: string[]) {
       report.follow = {
         commands,
         cpuSeconds,
+        cpuScope:
+          "main thread: feed, need decode and packing; excludes asynchronous evidence compression",
         p99AckToAppliedMs: lags[Math.ceil(lags.length * 0.99) - 1],
         worlds: (await equalWorlds(cut)).worlds,
         workload:
@@ -258,7 +300,7 @@ export async function runReplicaDriver(argv: string[]) {
         "activate:R1",
       );
       cut = active.position;
-      await replica.snapshotAt(cut);
+      await followTo(cut);
       report.activations = { R1: cut };
     }
     const r1Snapshot = await replica.snapshotAt(cut),
@@ -270,6 +312,7 @@ export async function runReplicaDriver(argv: string[]) {
         releases: W0.R1,
         position: cut,
         workers,
+        view: r1Snapshot,
         publish: comp,
       });
       report.r1Publication = {
@@ -278,7 +321,7 @@ export async function runReplicaDriver(argv: string[]) {
         wallMs: r1.publication!.wallMs,
       };
       cut = await comp.currentPosition();
-      await replica.snapshotAt(cut);
+      await followTo(cut);
       const old = replica
         .world("p5:tenant")
         .filter((r) => r.entityId === "p5:tenant" && r.attribute === "p5/activation");
@@ -296,10 +339,12 @@ export async function runReplicaDriver(argv: string[]) {
         "activate:R2",
       );
       cut = active.position;
-      await replica.snapshotAt(cut);
+      await followTo(cut);
       report.activations.R2 = cut;
     }
+    const freezeStarted = performance.now();
     const snap = await replica.snapshotAt(cut);
+    report.freezeMs = performance.now() - freezeStarted;
     const live = argv.includes("--live");
     const trafficDir = opt("traffic-dir", recordDir + "/../traffic");
     if (live) fs.mkdirSync(trafficDir, { recursive: true });
@@ -339,6 +384,7 @@ export async function runReplicaDriver(argv: string[]) {
       releases: W0.R2,
       position: cut,
       workers,
+      view: snap,
       ...(argv.includes("--publish") ? { publish: comp } : {}),
       beforeTimedWindow: async () => {
         if (argv.includes("--post-capture")) {
@@ -363,7 +409,7 @@ export async function runReplicaDriver(argv: string[]) {
               ],
               "post-capture:" + subject,
             );
-            await replica.snapshotAt(r.position);
+            await followTo(r.position);
             const before = JSON.parse(
               await oracle.call("evaluate", {
                 world: worldOf(subject, snap.world(subject)),
@@ -384,7 +430,21 @@ export async function runReplicaDriver(argv: string[]) {
           }
           if (mutations.length !== Math.ceil(N / 100))
             throw new Error("Insufficient post-capture positive witnesses");
-          report.postCapture = { subjects: mutations, captured: cut, current: replica.position };
+          const negatives = subjects
+            .filter((subject) => !mutations.includes(subject))
+            .slice(0, mutations.length);
+          for (const subject of negatives)
+            if (
+              worldCanonical(worldOf(subject, snap.world(subject))) !==
+              worldCanonical(worldOf(subject, replica.world(subject)))
+            )
+              throw new Error("Post-capture negative input witness changed");
+          report.postCapture = {
+            subjects: mutations,
+            negativeSubjects: negatives,
+            captured: cut,
+            current: replica.position,
+          };
         }
         if (!live) return;
         traffic = await startW0Live({ ...liveOptions, id: "baseline" });
@@ -413,8 +473,8 @@ export async function runReplicaDriver(argv: string[]) {
     await replica.stop();
     report.evaluation = {
       wallMs: result.evaluationWallMs,
-      passWallMs: result.passWallMs,
-      passRate: result.passSubjectsPerSecond,
+      passWallMs: result.passWallMs + report.freezeMs,
+      passRate: N / ((result.passWallMs + report.freezeMs) / 1000),
       startupMs: result.startupMs,
       cpuSeconds: result.cpuSeconds,
       rate: result.subjectsPerSecond,
@@ -485,9 +545,15 @@ export async function runReplicaDriver(argv: string[]) {
         if (W0.outputJson(r.candidates[0].output) !== expected)
           throw new Error("Python output mismatch " + r.subject);
         const expectedOutput = JSON.parse(expected);
-        const normalizedRecord = { ...r.candidates[0].record,
-          workItems: r.candidates[0].record.workItems.map((w) => ({ ...w, payload: JSON.parse(w.payload) })) };
-        if (canonical(normalizedRecord) !== canonical(recordOf(expectedOutput))) throw new Error("Independent Python record mismatch " + r.subject);
+        const normalizedRecord = {
+          ...r.candidates[0].record,
+          workItems: r.candidates[0].record.workItems.map((w) => ({
+            ...w,
+            payload: JSON.parse(w.payload),
+          })),
+        };
+        if (canonical(normalizedRecord) !== canonical(recordOf(expectedOutput)))
+          throw new Error("Independent Python record mismatch " + r.subject);
         const slow = W0.sweepSubject(world, W0.R2, {
           tx: cut,
           validTime: W0.POPULATION_VALID_TIME,
@@ -558,8 +624,8 @@ export async function runReplicaDriver(argv: string[]) {
       report.candidates = {
         wallMs: multi.evaluationWallMs,
         ratio: multi.evaluationWallMs / result.evaluationWallMs,
-        passWallMs: multi.passWallMs,
-        passRatio: multi.passWallMs / result.passWallMs,
+        passWallMs: multi.passWallMs + report.freezeMs,
+        passRatio: (multi.passWallMs + report.freezeMs) / (result.passWallMs + report.freezeMs),
         cpuSeconds: multi.cpuSeconds,
       };
     }
@@ -591,6 +657,7 @@ export async function runReplicaDriver(argv: string[]) {
     }
     if (fs.existsSync("/sys/fs/cgroup/memory.peak"))
       report.cgroupPeakBytes = Number(fs.readFileSync("/sys/fs/cgroup/memory.peak", "utf8"));
+    report.fullHistoryCounts = bulkCounts.stats;
     report.rss = process.memoryUsage().rss;
     report.peakRss = process.resourceUsage().maxRSS * 1024;
     console.log(JSON.stringify({ kind: "result", ...report }));
@@ -600,6 +667,7 @@ export async function runReplicaDriver(argv: string[]) {
     await replica.stop();
     await recorder?.close();
     oracle.close();
+    bulkCounts?.close();
     client.close();
     await comp.close();
   }

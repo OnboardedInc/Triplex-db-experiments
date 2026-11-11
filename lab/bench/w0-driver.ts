@@ -23,7 +23,8 @@ import {
 } from "./lib/w0-gates.ts";
 const execute = promisify(execFile);
 export async function runW0Driver(argv: string[]) {
-  if (argv.includes("--replica")) return (await import("./lib/w0-replica-driver.ts")).runReplicaDriver(argv);
+  if (argv.includes("--replica"))
+    return (await import("./lib/w0-replica-driver.ts")).runReplicaDriver(argv);
   const opt = (k: string, d?: string) => {
     const i = argv.indexOf("--" + k);
     return i < 0 ? d : argv[i + 1];

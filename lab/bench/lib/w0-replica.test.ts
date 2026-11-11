@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
-import { publishChanged } from "./w0-replica.ts";
+import { Replica } from "../../../packages/datomic/dist/index.js";
+import { publishChanged, evaluateAll } from "./w0-replica.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { W0, canonical } from "./w0-world.ts";
 // [DX-R1] Why: independent fixture expectations distinguish stable payload, replacement, retirement and new work.
@@ -115,4 +116,59 @@ it("fills publication frames across sparse input pages", async () => {
   expect(frames.flat()).toEqual(records.filter((_, i) => i % 2 === 0).map((r) => r.subject));
   expect(r.changed).toBe(65);
   expect(r.commits).toBe(2);
+});
+
+it("declines stored integer tokens the existing publisher cannot safely decode", async () => {
+  for (const seq of ["9007199254740993", "1.0"]) {
+    let called = false;
+    const comp = {
+      currentPosition: async () => 2,
+      sweepPage: async () => ({
+        rows: [
+          {
+            entityId: "p5:outbox:s",
+            attribute: "p5/state",
+            value: {
+              value:
+                '{"items":[{"id":"i","payload":"{}","retired":false,"seq":' +
+                seq +
+                ',"subject":"s"}],"pending":[],"subjects":[]}',
+            },
+          },
+        ],
+      }),
+      publishOutbox: async () => {
+        called = true;
+        return { deliveries: [], retry: false };
+      },
+    } as unknown as CompositionHandle;
+    await expect(
+      publishChanged(comp, [
+        {
+          subject: "s",
+          release: "R2",
+          basis: { tx: 2n, validTime: "2026-11-04T12:00:00Z" },
+          workItems: [],
+        },
+      ]),
+    ).rejects.toThrow("Unsafe numeric token");
+    expect(called).toBe(false);
+  }
+});
+
+it("rejects an unavailable future evaluation cut even for an empty scope", async () => {
+  const replica = new Replica(
+    {
+      head: async () => 0,
+      page: async () => {
+        throw new Error("unexpected page");
+      },
+      feed: async () => ({ head: 0, transactions: [] }),
+    },
+    0,
+  );
+  await replica.bootstrap([], 0);
+  await expect(
+    evaluateAll({ replica, subjects: [], releases: W0.R2, position: 1 }),
+  ).rejects.toThrow("explicit available");
 });
