@@ -3,7 +3,17 @@ import type { SweepRow } from "../sweepRows.js";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
-const WIDTH = 48;
+export const REPLICA_ROW_WIDTH = 56;
+const WIDTH = REPLICA_ROW_WIDTH;
+export interface ReplicaRow extends SweepRow {
+  readonly publicMetadata?: {
+    recordedAt: number;
+    createdBy: string | null;
+    entityType: string | null;
+    schemaVersion: number | null;
+    txId: string | null;
+  };
+}
 // [DX-R1] Why: a tagged JSON tree preserves signed zero without colliding with user object keys.
 // Rejected: JSON.stringify alone (silently canonicalizes -0).
 const tag = (v: any): any =>
@@ -29,7 +39,7 @@ export interface PackedEntity {
   readonly offset?: number;
   readonly byteLength?: number;
 }
-export function packEntity(revision: number, rows: readonly SweepRow[]): PackedEntity {
+export function packEntity(revision: number, rows: readonly ReplicaRow[]): PackedEntity {
   const dictionary: string[] = [],
     ids = new Map<string, number>();
   const intern = (s: string) => {
@@ -54,6 +64,23 @@ export function packEntity(revision: number, rows: readonly SweepRow[]): PackedE
           : typeof v.value === "string"
             ? intern(v.value)
             : 0,
+      // [DX-R3] Why: fixed metadata slots avoid repeating field names and object tags in every entity dictionary.
+      // Rejected: tagged metadata objects (almost doubled the recorded copy's packed bytes).
+      intern(
+        JSON.stringify(
+          r.publicMetadata
+            ? [
+                tag(r.publicMetadata.recordedAt),
+                r.publicMetadata.createdBy,
+                r.publicMetadata.entityType,
+                r.publicMetadata.schemaVersion === null
+                  ? null
+                  : tag(r.publicMetadata.schemaVersion),
+                r.publicMetadata.txId,
+              ]
+            : null,
+        ),
+      ),
     ];
   });
   // [DX-R1] Why: UTF-8 JSON dictionary preserves lone UTF-16 surrogates as escapes and interns repeated attributes.
@@ -67,7 +94,8 @@ export function packEntity(revision: number, rows: readonly SweepRow[]): PackedE
   new Uint8Array(buffer, 8, bytes.length).set(bytes);
   rows.forEach((r, i) => {
     const o = start + i * WIDTH;
-    values[i]!.forEach((n, j) => view.setUint32(o + j * 4, n, true));
+    values[i]!.slice(0, 4).forEach((n, j) => view.setUint32(o + j * 4, n, true));
+    view.setUint32(o + 48, values[i]![4]!, true);
     view.setFloat64(o + 16, r.position, true);
     view.setFloat64(o + 24, r.validFrom, true);
     view.setFloat64(o + 32, r.validTo ?? Infinity, true);
@@ -79,14 +107,19 @@ export function packEntity(revision: number, rows: readonly SweepRow[]): PackedE
   });
   return { revision, buffer };
 }
-export function unpackEntity(entityId: string, packed: PackedEntity, validAt: number): SweepRow[] {
+export function unpackEntity(
+  entityId: string,
+  packed: PackedEntity,
+  validAt: number,
+  includeMetadata = false,
+): ReplicaRow[] {
   const view = new DataView(packed.buffer, packed.offset ?? 0, packed.byteLength),
     length = view.getUint32(0, true);
   const dictionary: string[] = JSON.parse(
     decoder.decode(new Uint8Array(packed.buffer, (packed.offset ?? 0) + 8, length)),
   );
   const start = Math.ceil((8 + length) / 8) * 8,
-    rows: SweepRow[] = [];
+    rows: ReplicaRow[] = [];
   for (let i = 0; i < view.getUint32(4, true); i++) {
     const o = start + i * WIDTH,
       from = view.getFloat64(o + 24, true),
@@ -109,7 +142,19 @@ export function unpackEntity(entityId: string, packed: PackedEntity, validAt: nu
                     ? numeric === 1
                     : text,
           } as TripleValue);
+    const metadata = JSON.parse(dictionary[view.getUint32(o + 48, true)]!);
+    const publicMetadata =
+      metadata === null
+        ? null
+        : {
+            recordedAt: untag(metadata[0]),
+            createdBy: metadata[1],
+            entityType: metadata[2],
+            schemaVersion: metadata[3] === null ? null : untag(metadata[3]),
+            txId: metadata[4],
+          };
     rows.push({
+      ...(!includeMetadata || publicMetadata === null ? {} : { publicMetadata }),
       id: dictionary[view.getUint32(o, true)]!,
       entityId,
       attribute: dictionary[view.getUint32(o + 4, true)]!,

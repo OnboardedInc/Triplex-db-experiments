@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { packEntity, type SweepRow } from "../../../../packages/datomic/dist/index.js";
-import { prepareEntity, ReplicaReader, ReplicaReadHost } from "../../../bench/lib/replica-reads.ts";
+import { packEntity as rawPackEntity, type SweepRow } from "../../../../packages/datomic/dist/index.js";
+import { prepareEntity, ReplicaReader, ReplicaReadHost, publicRow } from "../../../bench/lib/replica-reads.ts";
 import { worldBytes } from "./canonical-world.ts";
 import { observe } from "../../../bench/lib/observe.ts";
+
+const withMetadata = (row: SweepRow) => ({ ...row, publicMetadata: {
+  recordedAt: row.position * 100, createdBy: "test", entityType: null, schemaVersion: 1, txId: `tx-${row.position}`,
+} });
+const packEntity = (revision: number, rows: readonly SweepRow[]) => rawPackEntity(revision, rows.map(withMetadata));
 
 test("prepared contributions include every actual typed fact at valid-time boundaries and old cuts", async () => {
   const values: any[] = [
@@ -82,7 +87,7 @@ test("prepared contributions include every actual typed fact at valid-time bound
       assert.deepEqual(
         observe(fast),
         observe({
-          triples: expected.rows,
+          triples: expected.rows.map(publicRow),
           entities: expected.entities,
           depth: expected.depth,
           roundTrips: 0,
@@ -167,7 +172,7 @@ test("recovery does not anchor a record clock from pending or previously rejecte
     position: 1,
     changes: [["root", undefined, entity]],
   });
-  assert.equal(host.index.resolve({ recordedAt: 100, validAt: 0 }), 1);
+  assert.equal(host.index.resolve({ recordedAt: 100, validAt: 0 }), undefined);
   times.set(2, 200);
   host.replica.onUpdate!({ reset: true, valid: false, position: 1, changes: [] });
   assert.equal(times.size, 0);
@@ -204,11 +209,11 @@ test("many interval boundaries use compact shared summaries, with exact end-poin
     const fast = await reader.pullAt("root", { validAt }, async () => {
       throw Error("fallback");
     });
-    assert.equal(worldBytes(fast.triples), worldBytes(exact.rows));
+    assert.equal(worldBytes(fast.triples), worldBytes(exact.rows.map(publicRow)));
     assert.deepEqual(
       observe(fast),
       observe({
-        triples: exact.rows,
+        triples: exact.rows.map(publicRow),
         entities: 1,
         depth: 0,
         roundTrips: 0,
@@ -313,7 +318,7 @@ test("RYOW reply preserves actual typed world bytes and binds fallback W separat
   reader.apply({ position: 1, reset: true, valid: true, recordTime: 100, changes: [["root", undefined, prepareEntity("root", packEntity(1, rows))]] });
   const result = await reader.pullAt("root", { recordedPosition: 1, recordedAt: 100, validAt: 5 }, async () => { throw Error("unexpected fallback"); });
   const cloned = structuredClone(replicaReply(result));
-  assert.equal(worldBytes(cloned.triples), worldBytes(rows));
+  assert.equal(worldBytes(cloned.triples), worldBytes(rows.map(withMetadata).map(publicRow)));
   assert.deepEqual(observe(cloned), observe(result));
 });
 

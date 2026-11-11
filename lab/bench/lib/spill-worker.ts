@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { BatchSequence } from "./reader-lifecycle.ts";
 import { ReadRecords } from "./read-records.ts";
@@ -6,7 +7,10 @@ import { Histogram } from "./hist.ts";
 const records = new ReadRecords(cfg.directory);
 const starts = new Map<number, number>();
 const phases = new Map<number, { reads: number; errors: number; settled: number; read: Histogram; wait: Histogram; routes: Record<string, number> }>();
-function retain(rows: ReadRecord[], samples: any[] = []) {
+function retain(rows: ReadRecord[], samples: any[] = [], splits: any[] = []) {
+  // [DX-R3] Why: persist each actual split's step timestamps before acknowledging its observation batch.
+  // Rejected: inferring straddles from the target-selection policy or ACK counts alone.
+  if (splits.length) fs.appendFileSync(`${cfg.directory}-split-steps.jsonl`, splits.map(x => JSON.stringify(x) + "\n").join(""));
   const changed = new Set<number>();
   for (const row of rows) {
     records.push(row);
@@ -28,7 +32,7 @@ port!.on("message", m => {
   try {
     if (m.type === "connect") { const sequence = new BatchSequence(); m.port.on("message", (batch: any) => {
       sequence.accept(batch.id);
-      retain(batch.records, batch.samples);
+      retain(batch.records, batch.samples, batch.splitEvents);
       // [DX-R3] Why: reader shutdown must acknowledge the exact retained prefix before parent finalization crosses ports.
       // Rejected: relying on FIFO ordering between unrelated MessagePorts.
       m.port.postMessage({ id: batch.id });

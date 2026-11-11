@@ -86,6 +86,7 @@ export class RecentReads {
     }
     this.position = delta.position;
     if (delta.recordTime !== undefined) this.noteTime(delta.recordTime, delta.position);
+    else this.timeSafe = false;
     this.floor = Math.max(this.floor, this.position - this.positions);
     while (this.retiredStart < this.retired.length) {
       const item = this.retired[this.retiredStart]!;
@@ -105,7 +106,7 @@ export class RecentReads {
     for (const [time, p] of this.times) if (p < this.floor) this.times.delete(time);
     this.valid = delta.valid;
   }
-  noteTime(time: number, p: number): void {
+  private noteTime(time: number, p: number): void {
     // [DX-R3] Why: non-monotone record clocks cannot be mapped by a position prefix.
     // Rejected: nearest timestamp (would silently answer an irregular time cut).
     if (!Number.isFinite(time)) {
@@ -118,11 +119,19 @@ export class RecentReads {
     this.lastTime = Math.max(this.lastTime, time);
     this.times.set(time, p);
   }
+  isOpenClock(time: number): boolean {
+    return this.timeSafe && this.times.has(time) && time >= this.lastTime;
+  }
   resolve(basis: ReadBasis): number | undefined {
     if (!this.valid || !Number.isFinite(basis.validAt)) return undefined;
     let p = basis.recordedPosition;
     if (basis.recordedAt !== undefined) {
-      const mapped = this.timeSafe ? this.times.get(basis.recordedAt) : undefined;
+      // [DX-R3] Why: the last observed clock can still acquire another equal-clock journal.
+      // Rejected: detecting duplicates only after delivery (the preceding admission was already unsafe).
+      const mapped =
+        this.timeSafe && (p !== undefined || basis.recordedAt < this.lastTime)
+          ? this.times.get(basis.recordedAt)
+          : undefined;
       if (mapped === undefined || (p !== undefined && p !== mapped)) return undefined;
       p = mapped;
     }
@@ -188,7 +197,7 @@ export class RecentReads {
       for (const id of todo) {
         const entity = this.entityAt(id, p);
         if (!entity) return undefined;
-        for (const row of unpackEntity(id, entity, basis.validAt)) {
+        for (const row of unpackEntity(id, entity, basis.validAt, true)) {
           rows.push(row);
           if (row.value.type === "ref" && !seen.has(row.value.value)) {
             seen.add(row.value.value);

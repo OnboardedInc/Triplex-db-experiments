@@ -1,3 +1,4 @@
+import { canonicalWorld } from "./lib/canonical.ts";
 import { requireDrained } from "./lib/reader-lifecycle.ts";
 import { ReaderTurn } from "./lib/reader-turn.ts";
 import { Histogram } from "./lib/hist.ts";
@@ -39,6 +40,7 @@ type ReaderConfig = {
   replicaPort?: import("node:worker_threads").MessagePort;
   observationPort?: import("node:worker_threads").MessagePort;
   readPath?: "gateway" | "replica";
+  splitTarget?: "pending" | "mixed";
   replicaHistoryMiB?: number;
   replicaYield?: "loop" | "fair";
   rawSampleLimit?: number;
@@ -93,14 +95,15 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   let hot: number[] = [];
   let records: ReadRecord[] = [];
   let samples: any[] = [];
+  let splitEvents: any[] = [];
   let observationSerial = 0;
   const observationPending = new Map<number, () => void>();
   cfg.observationPort?.on("message", m => { observationPending.get(m.id)?.(); observationPending.delete(m.id); });
   function sendReads() {
-    if (!cfg.observationPort) { port.postMessage({ type: "reads", records, samples }); records = []; samples = []; return Promise.resolve(); }
+    if (!cfg.observationPort) { port.postMessage({ type: "reads", records, samples, splitEvents }); records = []; samples = []; splitEvents = []; return Promise.resolve(); }
     const id = ++observationSerial;
     const done = new Promise<void>(resolve => observationPending.set(id, resolve));
-    cfg.observationPort.postMessage({ id, records, samples }); records = []; samples = [];
+    cfg.observationPort.postMessage({ id, records, samples, splitEvents }); records = []; samples = []; splitEvents = [];
     return done;
   }
   async function observationCredit() {
@@ -159,39 +162,53 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     return [{ recordedAt: latest.instant, validAt: now - Math.floor(rng.next() * 90 * DAY) }, 2, latest.position, latest.txId];
   }
 
-  async function readOnce(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; hotPick?: boolean }) {
+  async function readOnce(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; assignedAt?: number; hotPick?: boolean }) {
     activeReads++; attemptedReads++;
     const start = nowAbs();
     const t0 = performance.now();
     let split = 0, forcedPosition = -1, straddleWaitMs = 0;
+    const evidence = opts.straddleSeq === undefined ? undefined : { phase: ph, worker: cfg.worker,
+      rule: cfg.splitTarget, basis: { ...basis }, route: null as string | null, subject, seq: opts.straddleSeq, assignedAt: opts.assignedAt,
+      firstStepEnd: null as number | null, acknowledgedAt: null as number | null,
+      position: null as number | null, secondStepStart: null as number | null, secondStepEnd: null as number | null };
     const between = opts.straddleSeq !== undefined
       ? async () => {
           split = 1;
           const step1End = nowAbs();
+          if (evidence) evidence.firstStepEnd = step1End;
           const reply = await ask({ type: "straddle", seq: opts.straddleSeq }, 10_000);
           straddleWaitMs = nowAbs() - step1End;
+          if (evidence) { evidence.acknowledgedAt = reply?.ackAt ?? null; evidence.position = reply?.position ?? null; evidence.secondStepStart = nowAbs(); }
           if (reply && reply.position >= 0 && reply.ackAt > step1End) { split = 2; forcedPosition = reply.position; }
         }
       : undefined;
     try {
       const gateway = () => opts.sweep ? comp.sweepPull(ids.placement(subject), basis) : comp.pull(ids.placement(subject), basis, replica ? undefined : between);
       const pr = replica
-        ? opts.keepRows ? { ...await gateway(), route: "fallback" }
-          : await replica.pullAt(ids.placement(subject), { ...basis, recordedPosition: position }, gateway, between)
+        ? await replica.pullAt(ids.placement(subject), basis, gateway, between, false, position)
         : await gateway();
       // The wait for the straddled command's ACK is the driver's scheduling, not the store's service time.
       const latency = performance.now() - t0 - straddleWaitMs;
+      if (evidence) { evidence.secondStepEnd = nowAbs(); evidence.route = pr.route; }
       const o = observe(pr);
+      let gatewayCanonical: string | undefined;
+      if (opts.keepRows && replica) {
+        const reference = await gateway();
+        gatewayCanonical = canonicalWorld(reference.triples);
+        if (canonicalWorld(pr.triples) !== canonicalWorld(reference.triples)) throw Error("oracle route full-row mismatch");
+        if (JSON.stringify(o) !== JSON.stringify(observe({ ...pr, observation: undefined })))
+          throw Error("prepared full-row observation mismatch");
+      }
       const stats = phases.get(ph) ?? { reads: 0, reasons: {}, straddleWait: new Histogram() };
       phases.set(ph, stats); stats.reads++;
       if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? (opts.keepRows ? "oracle-raw" : "gateway"); stats.reasons[reason] = (stats.reasons[reason] ?? 0) + 1; }
       if (split > 0) stats.straddleWait.recordMs(straddleWaitMs);
       records.push([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, pr.route, pr.language, pr.waitedMs]);
       if (opts.keepRows)
-        samples.push({ phase: ph, subject, basis, position, start, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo ?? null, t.id]) });
+        samples.push({ phase: ph, subject, basis, position, start, route: pr.route, fullCanonical: canonicalWorld(pr.triples), gatewayCanonical, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, (t.validTo?._tag === "Some" ? t.validTo.value : null), t.id]) });
     } catch (error: any) {
       records.push([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, "error", "", 0]);
-    } finally { activeReads--; completedReads++; }
+    } finally { if (evidence) splitEvents.push(evidence); activeReads--; completedReads++; }
   }
 
   async function loop(id: number) {
@@ -206,16 +223,16 @@ export async function startReader(port: any, cfg: ReaderConfig) {
         const oracle = cfg.sampleSubjects.length > 0 && rng.next() < cfg.oracleRate;
         let picked = oracle ? { subject: cfg.sampleSubjects[rng.int(cfg.sampleSubjects.length)]!, hotPick: false } : pickSubject(rng);
         const [basis, kind, position] = pickBasis(rng);
-        let straddleSeq: number | undefined;
+        let straddleSeq: number | undefined, assignedAt: number | undefined;
         if (!oracle && mode === "mixed" && rng.next() < cfg.splitShare) {
           const assignment = await ask({ type: "split-request" }, 2_000);
-          if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; }
+          if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; assignedAt = assignment.assignedAt; }
         }
         // [DX-R3] Why: the driver consumes at most its raw oracle budget; every other read still checks stamp + complete digest.
         // Rejected: retaining thousands of unused raw worlds when local reads become fast.
         const keepRows = oracle && rawSamples < (cfg.rawSampleLimit ?? Infinity);
         if (keepRows) rawSamples++;
-        await readOnce(picked.subject, basis, kind, position, phase, { keepRows, straddleSeq, hotPick: picked.hotPick });
+        await readOnce(picked.subject, basis, kind, position, phase, { keepRows, straddleSeq, assignedAt, hotPick: picked.hotPick });
         // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
         // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
         if (replica) {

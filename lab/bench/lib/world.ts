@@ -19,6 +19,7 @@
  * 10m subjects. Values come from hashes. Numbers follow SCOPE section 2 item 4: money is scaled
  * integers (`integer`), hours and weights are decimal strings; no binary64 business values.
  */
+import { typed } from "./canonical.ts";
 import { hash2 } from "./rng.ts";
 
 export const RUNGS: Record<string, number> = { "10k": 10_000, "100k": 100_000, "1m": 1_000_000, "10m": 10_000_000 };
@@ -172,14 +173,7 @@ export function sharedFacts(a: number): Fact[] {
 
 /** Canonical member text of one fact, used by digests on both the expected and observed side. */
 export function memberOf(e: string, a: string, v: any): string {
-  switch (v.type) {
-    case "blob":
-      return `${e}\u0001${a}\u0001blob:${v.value}|${v.mimeType}|${v.size}${v.filename === undefined ? "" : `|${v.filename}`}`;
-    case "json":
-      return `${e}\u0001${a}\u0001json:${JSON.stringify(v.value)}`;
-    default:
-      return `${e}\u0001${a}\u0001${v.type}:${String(v.value)}`;
-  }
+  return JSON.stringify(typed([e, a, v]));
 }
 
 // ---------------------------------------------------------------- sampling cells (P4 weighted mix)

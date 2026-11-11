@@ -13,6 +13,9 @@ import { worldOf, worldCanonical, reachableRows } from "../../../bench/lib/w0-wo
 // [DX-R1] Why: exercise the production journal decoder and exact need reads against recorded real command bytes.
 // Rejected: replacing real journals with synthetic entity lists, or treating recording replay as another live measurement.
 import { prepareEntity, ReplicaReader } from "../../../bench/lib/replica-reads.ts";
+import { decodeEntity, reachResponse } from "../../../../packages/datomic/dist/reach.js";
+import { worldBytes } from "./canonical-world.ts";
+import { publicRow } from "../../../bench/lib/replica-reads.ts";
 import { observe } from "../../../bench/lib/observe.ts";
 const index = new RecentReads();
 const directory = process.argv[2];
@@ -88,23 +91,21 @@ replica.onUpdate = (update) => {
 };
 await replica.bootstrap(subjects, basis.recordedPosition);
 const original = index.image();
+const sourceCuts = new Map<number, Map<string, ReturnType<typeof decodeEntity>>>();
 const compare = (position: number) => {
+  const sourceEntities = sourceCuts.get(position) ?? new Map<string, ReturnType<typeof decodeEntity>>();
+  sourceCuts.set(position, sourceEntities);
   let compared = 0;
   for (const { body, n } of requests) {
     if (!body.rowPage || body.need || body.basis?.recordedPosition !== position || compared >= 1000)
       continue;
-    const rows = decodeSweepRows(response(n), body.roots, body.basis);
-    assert(rows, "Recorded full page declined");
+    const wire = response(n);
+    const entities = new Map<string, ReturnType<typeof decodeEntity>>();
+    for (const [id, rev, rows] of wire.entities) { const decoded = decodeEntity(id, rev, rows); entities.set(id, decoded); sourceEntities.set(id, decoded); }
     for (const subject of body.roots) {
-      assert.equal(
-        worldCanonical(
-          worldOf(
-            subject,
-            index.pull(subject, { recordedPosition: position, validAt: basis.validAt })!.rows,
-          ),
-        ),
-        worldCanonical(worldOf(subject, reachableRows([subject], rows))),
-      );
+      const actual = index.pull(subject, { recordedPosition: position, validAt: basis.validAt })!.rows.map(publicRow);
+      const expected = reachResponse(subject, entities, body.basis).triples;
+      assert.equal(worldBytes(actual), worldBytes(expected));
       compared++;
     }
   }
@@ -129,17 +130,17 @@ for (let n = 0; n < 10000; n++) {
   };
   // Position tests omit record time: it is intentionally unrecorded at bootstrap.
   const positional = { recordedPosition: readBasis.recordedPosition, validAt: readBasis.validAt };
-  const actual = index.pull(subject, positional);
+  const expected = reachResponse(subject, sourceCuts.get(positional.recordedPosition)!, positional).triples;
   const value = await copy.pullAt(subject, positional as any, async () => {
     throw Error("unexpected fallback");
   });
-  assert(actual);
+  assert.equal(worldBytes(value.triples), worldBytes(expected));
   assert.deepEqual(
     observe(value),
     observe({
-      triples: actual.rows,
-      entities: actual.entities,
-      depth: actual.depth,
+      triples: expected,
+      entities: 0,
+      depth: 0,
       roundTrips: 0,
       route: "replica",
       language: "packed",

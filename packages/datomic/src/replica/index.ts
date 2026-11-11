@@ -14,6 +14,12 @@ export {
   type ReadDelta,
   type ReadImage,
 } from "./RecentReads.js";
-export { packEntity, unpackEntity, type PackedEntity } from "./packed.js";
+export {
+  packEntity,
+  unpackEntity,
+  type PackedEntity,
+  type ReplicaRow,
+  REPLICA_ROW_WIDTH,
+} from "./packed.js";
 export type { ReplicaUpdate } from "./Replica.js";
 export { timedReplicaSource } from "./TimedSource.js";

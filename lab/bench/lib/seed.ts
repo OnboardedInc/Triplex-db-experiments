@@ -47,6 +47,7 @@ export function alignIds(operations: readonly any[], receipt: Receipt): (string 
 
 export async function seedRung(opts: {
   comp: CompositionHandle;
+  onReceipt?: (operations: readonly any[], receipt: Receipt) => void;
   subjects: number;
   runTag: string;
   batchFacts: number;
@@ -82,6 +83,7 @@ export async function seedRung(opts: {
       latencies.push(performance.now() - t0);
       if (out.ok) {
         const receipt = out.value;
+        opts.onReceipt?.(operations, receipt);
         commands++;
         positions.push(receipt.position);
         lastInstant = Math.max(lastInstant, receipt.instant);

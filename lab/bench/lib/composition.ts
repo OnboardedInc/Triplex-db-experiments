@@ -12,6 +12,7 @@
  * entities at a basis, transactions({ after }), transactionByCommand). Register a new one in
  * COMPOSITIONS; reader workers resolve the same name, so all threads use the same paths.
  */
+import { canonicalWorld } from "./canonical.ts";
 import { countHttp } from "./http-counts.ts";
 import { Effect, core, openTriples, type Lane, type TriplesHandle } from "./triplex.ts";
 
@@ -26,7 +27,14 @@ export interface PulledTriple {
   readonly attribute: string;
   readonly value: any;
   readonly validFrom?: number;
-  readonly validTo?: number;
+  readonly validTo?: any;
+  readonly recordedAt?: number;
+  readonly createdBy?: any;
+  readonly entityType?: any;
+  readonly schemaVersion?: any;
+  readonly txId?: any;
+  readonly retractedAt?: any;
+  readonly retractTxId?: any;
 }
 export interface PullResult {
   readonly replicaFallbackReason?: string;
@@ -132,9 +140,7 @@ export async function reachPull(h: Pick<TriplesHandle, "triples" | "run">, root:
   const before: any[][] | undefined = between ? await h.run(T.entities([E(root)], basis)) : undefined;
   if (between) await between();
   const result: any = await h.run(T.reach(E(root), basis));
-  const stable = (value: any): any => Array.isArray(value) ? value.map(stable) :
-    value !== null && typeof value === "object" ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
-  const canonical = (rows: readonly any[]) => JSON.stringify(rows.map(t => JSON.stringify(stable(t))).sort());
+  const canonical = canonicalWorld;
   if (before && canonical(before[0] ?? []) !== canonical(result.triples.filter((t: any) => t.entityId === root)))
     throw new Error("reach split-root snapshot violation");
   return { triples: result.triples, entities: new Set([root, ...result.triples.map((t: any) => t.entityId)]).size,

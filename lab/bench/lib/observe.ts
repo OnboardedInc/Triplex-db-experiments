@@ -1,7 +1,8 @@
 /** What a read observed, in the same terms the expected-state model computes. */
+import { Option } from "effect";
 import type { PullResult } from "./composition.ts";
 import { Digest, hash2 } from "./rng.ts";
-import { memberOf } from "./world.ts";
+import { canonicalRow } from "./canonical.ts";
 
 export interface Observed {
   digest: string;
@@ -21,6 +22,7 @@ const members = new WeakMap<object, MemberPart>();
 const frozenData = (v: unknown): boolean => {
   if (v === null || typeof v !== "object") return typeof v !== "function";
   if (!Object.isFrozen(v)) return false;
+  if (Option.isOption(v)) return Option.isNone(v) || frozenData(v.value);
   const prototype = Object.getPrototypeOf(v);
   if (prototype !== Object.prototype && prototype !== Array.prototype && prototype !== null)
     return false;
@@ -39,7 +41,7 @@ export function observe(pr: PullResult): Observed {
   for (const t of pr.triples) {
     let part = members.get(t);
     if (!part) {
-      const m = memberOf(t.entityId, t.attribute, t.value);
+      const m = canonicalRow(t);
       const [a, b] = hash2(m);
       const isStamp = t.attribute === ":placement/stamp";
       part = {
@@ -49,12 +51,12 @@ export function observe(pr: PullResult): Observed {
         stamp: isStamp ? Number(t.value.value) : -1,
         stamps: isStamp ? 1 : 0,
       };
-      // [DX-H7] Why: only member fields contribute; metadata Options need not be plain data.
-      // Rejected: shallow freezing (nested JSON can still change).
+      // [DX-R3] Why: cache only complete immutable public rows, including Option payloads and nested values.
+      // Rejected: caching a projection while unexamined metadata can still change.
       if (Object.isFrozen(t)) {
         const descriptors = Object.getOwnPropertyDescriptors(t);
         if (
-          ["entityId", "attribute", "value"].every(
+          Object.keys(descriptors).every(
             (k) => descriptors[k] && "value" in descriptors[k] && frozenData(descriptors[k].value),
           )
         )

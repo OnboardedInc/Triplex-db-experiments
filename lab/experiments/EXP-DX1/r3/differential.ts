@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { DatomicClient, decodeSweepRows } from "../../../../packages/datomic/dist/index.js";
+import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import { decodeEntity, reachResponse } from "../../../../packages/datomic/dist/reach.js";
 import { openComposition, type Basis } from "../../../bench/lib/composition.ts";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { ReplicaReadHost, ReplicaReader } from "../../../bench/lib/replica-reads.ts";
@@ -101,6 +102,7 @@ try {
           recordedPosition: receipt.position,
           validAt: Date.now() - (kind === 2 ? (1 + (n % 90)) * 86400000 : 0),
         };
+        if (n % 11 === 0) delete (basis as any).recordedPosition;
         if (n % 503 === 0) {
           basis = { recordedPosition: host.index.floor, validAt: Date.now() } as Basis;
           floorReads++;
@@ -115,8 +117,10 @@ try {
             rowPage: true,
             full: true,
           });
-          const rows = decodeSweepRows(wire, [subject], basis as any);
-          assert(rows, `gateway declined ${JSON.stringify(wire)}`);
+          assert(!wire.declined, `gateway declined ${JSON.stringify(wire)}`);
+          const entities = new Map<string, ReturnType<typeof decodeEntity>>();
+          for (const [id, revision, rows] of wire.entities) entities.set(id, decodeEntity(id, revision, rows));
+          const rows = reachResponse(subject, entities, basis as any).triples;
           return {
             triples: rows,
             entities: 0,

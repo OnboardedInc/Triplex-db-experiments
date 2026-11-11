@@ -397,7 +397,7 @@ async function run() {
   const seed = bulkManifest
     ? await seedFromManifest(bulkManifest, writer, log)
     : await seedRung({
-        comp: writer, subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
+        comp: writer, onReceipt: (operations, receipt) => model.bindReceipt(operations, receipt, "bulk-seed"), subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
         recordSubjects: oracleRecordSet, recordAccounts: new Set([...oracleRecordSet].map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
       });
   report.seedPath = bulkManifest ? { kind: "bulk-index", manifest: config.seedManifest, nqSha256: bulkManifest.nq.sha256, quads: bulkManifest.nq.quads } : { kind: "transact" };
@@ -432,7 +432,7 @@ async function run() {
 
   // ---------------------------------------------------------------- reader workers
   const replicaHost = config.readPath === "replica" ? config.replicaThread === "worker"
-    ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName,
+    ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
       composition: config.composition, roots: Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
       historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer }, aux)
@@ -453,19 +453,29 @@ async function run() {
       return remote.pull(root, basis);
     };
   }
-  const workerCfg = (w: number) => ({ replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
   const sweepDone = new Map<number, (v: any) => void>();
+  const splitDirectory = spill?.directory ?? path.join(rawDir, `observations-${runTag}`);
+  let splitWrites = Promise.resolve(), splitWriteError: unknown, splitFileStarted = false;
+
   const onWorkerMessage = (w: number, worker: Worker) => (msg: any) => {
-    if (msg.type === "reads") { for (const r of msg.records) retainRead(r); for (const s of msg.samples) oracleSamples.push(s); }
+    if (msg.type === "reads") {
+      for (const r of msg.records) retainRead(r); for (const s of msg.samples) oracleSamples.push(s);
+      if (msg.splitEvents?.length) {
+        const text = msg.splitEvents.map((x: any) => JSON.stringify(x) + "\n").join(""), first = !splitFileStarted;
+        splitFileStarted = true;
+        splitWrites = splitWrites.then(() => fs.promises.writeFile(`${splitDirectory}-split-steps.jsonl`, text, { flag: first ? "wx" : "a" })).catch(error => { splitWriteError = error; });
+      }
+    }
     else if (msg.type === "elu") {
       workerElu.push({ worker: w, t: msg.t, elu: msg.elu });
       workerDiagnostics.push({ worker: w, t: msg.t, diagnostics: msg.diagnostics, memory: msg.memory, threadCpuMs: msg.threadCpuMs });
     }
     else if (msg.type === "sweep-done") sweepDone.get(msg.phase)?.(msg);
-    else if (msg.type === "split-request") worker.postMessage({ type: "split", token: msg.token, ...straddleCandidate() });
+    else if (msg.type === "split-request") worker.postMessage({ type: "split", token: msg.token, ...straddleCandidate(), assignedAt: now() });
     else if (msg.type === "straddle") {
       const done = ackedBySeq.get(msg.seq);
       if (done) worker.postMessage({ type: "acked", token: msg.token, ...done });
@@ -597,6 +607,7 @@ async function run() {
       for (const w of ackWaiters.get(ev.seq) ?? []) w(result);
       ackWaiters.delete(ev.seq);
     }
+    model.bindReceipt(cmd.operations, receipt, ev.kind);
     model.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream });
     if (ev.stream === "background") original.set(ev.seq, { operations: cmd.operations, meta, receipt });
     out.position = receipt.position;
@@ -889,8 +900,12 @@ async function run() {
   for (const w of workers) await w.terminate();
   clearInterval(basisTimer);
   if (preparedSweeper) { preparedSweeper.worker.postMessage({ type: "stop" }); await preparedSweeper.worker.terminate(); }
-  if (spill) { records = await spill.finish(); spillFinished = true; }
   await replicaHost?.close();
+  if (spill) { records = await spill.finish(); spillFinished = true; }
+  await splitWrites;
+  if (splitWriteError) throw splitWriteError;
+  report.splitEvidence = { rule: config.splitTarget,
+    ...await (await import("./lib/split-evidence.ts")).completeSplitEvidence(splitDirectory, replicaHost && "applied" in replicaHost ? replicaHost.applied : []) };
   if (replicaHost) report.replica = { copyBytes: replicaHost.replica.bytes, historyBytes: replicaHost.index.historyBytes,
     floor: replicaHost.index.floor, position: replicaHost.index.position, positionWindow: replicaHost.index.positions,
     historyBudgetBytes: replicaHost.index.maxBytes, feedPeer: config.replicaPeer, feedEndpoint: "endpoint" in replicaHost ? replicaHost.endpoint : (await import("./lib/replica-reads.ts")).replicaEndpoint(process.env, config.replicaPeer), applyThread: config.replicaThread,
@@ -903,6 +918,7 @@ async function run() {
     if (!receipt) { log(`history growth: ${late.cmd.commandId} never committed`); continue; }
     const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1, subjects: late.cmd.perSubject.map((x: any) => x.subject) });
     if (late.cmd.perSubject.some((x: any) => oracleRecordSet.has(x.subject))) recordedCommands.push({ commandId: late.cmd.commandId, operations: late.cmd.operations, preconditions: late.cmd.preconditions, actor: "p4-history", receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(late.cmd.operations, receipt) } });
+    model.bindReceipt(late.cmd.operations, receipt, "p4-history");
     for (const s of late.cmd.perSubject) model.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
   }
   lateGrowth.length = 0;
@@ -1028,6 +1044,7 @@ async function run() {
         commands++;
         assertions += cmd.operations.filter((o) => o.op === "assert").length;
         const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1, subjects: group });
+        model.bindReceipt(cmd.operations, receipt, "p4-history");
         for (const s of cmd.perSubject) {
           versionIds.set(s.subject, s.added.map((f) => receipt!.triples.find((t) => t.entityId === f.e && t.attribute === f.a)!.id));
           historyVersion.set(s.subject, v);
@@ -1213,7 +1230,10 @@ function windowOf(phase: any) {
 function judgeRead(r: ReadRecord) {
   if (r[R.error] !== null) return { ok: false, kind: "error" };
   const exp = expectations.expected(r[R.subject], r[R.recordedAt], r[R.validAt]);
-  if (r[R.stamp] === exp.stamp && r[R.digest] === exp.digest) return { ok: true, kind: "correct" };
+  // [DX-R3] Why: a business-only expectation has no assertion identity or temporal provenance to certify a full-row read.
+  // Rejected: accepting a digest before all seed/write receipts have populated the independent full-row model.
+  if (!exp.fullRows) return { ok: false, kind: "wrong-world" };
+  if (r[R.stamp] === exp.stamp && r[R.facts] === exp.facts && r[R.digest] === exp.digest) return { ok: true, kind: "correct" };
   const late = model.lateArrivals(r[R.subject], r[R.recordedAt], r[R.start]);
   if (exp.stamp >= 0 && r[R.stamp] < exp.stamp) return { ok: false, kind: late > 0 ? "stale-late-arrival" : "stale" };
   if (r[R.stamp] > exp.stamp) return { ok: false, kind: "future-or-latest-state" };
@@ -1610,6 +1630,8 @@ function cpuUse() {
 // ---------------------------------------------------------------- oracle (independent sample check at the driver-recorded basis)
 
 function runOracle(finalPosition: number, lastAcked: number) {
+  atomicWrite(path.join(rawDir, "ns-full-read-samples.jsonl"), oracleSamples.filter((s) => s.phase >= 0).slice(0, config.oracleMaxReads).map((sample: any) => JSON.stringify(sample)).join("\n") + "\n");
+
   if (!config.oracleRoot) return { status: "NOT-RUN", reason: "no --oracle-root (the gate extracts O-REPLAY from exp/O01-replay-oracle)" };
   const reads: OracleSampleRead[] = oracleSamples.filter((s) => s.phase >= 0).slice(0, config.oracleMaxReads).map((s) => ({ subject: s.subject, basis: s.basis, rows: s.rows }));
   if (!reads.length) return { status: "NOT-RUN", reason: "no sampled reads" };

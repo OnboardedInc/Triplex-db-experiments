@@ -10,6 +10,8 @@
  * V is later, so the seed contributes in full. Checking a read costs O(commands of that subject).
  * The O-REPLAY sample re-derives the same answers independently from command intent.
  */
+import { FullRowModel } from "./full-row-model.ts";
+import type { Receipt } from "./composition.ts";
 import { Digest } from "./rng.ts";
 import { accountOfSubject, accountsFor, memberOf, ownFacts, sharedFacts } from "./world.ts";
 import type { Fact } from "./world.ts";
@@ -32,6 +34,7 @@ export interface Commit {
   readonly stream: string;
 }
 export interface Expected {
+  fullRows: boolean;
   stamp: number;
   digest: string;
   facts: number;
@@ -48,6 +51,13 @@ export function partsOf(added: readonly Fact[], addedValidFrom: readonly number[
 }
 
 export class Model {
+  private full: FullRowModel | undefined;
+  receiptVersion = 0;
+  bindReceipt(operations: readonly any[], receipt: Receipt, actor?: string): void {
+    this.full ??= new FullRowModel();
+    this.full.add(operations, receipt, actor);
+    this.receiptVersion++;
+  }
   readonly accounts: number;
   readonly subjects: number;
   private shared = new Map<number, Digest>();
@@ -91,7 +101,7 @@ export class Model {
       if (c.stamp >= 0 && (!last || c.position > last.position)) last = c;
     }
     const stamp = !last ? 0 : last.stampValidFrom <= validAt ? last.stamp : -1;
-    return { stamp, digest: d.hex(), facts: d.n, commits };
+    return { fullRows: this.full !== undefined, stamp, digest: this.full ? this.full.expected(subject, recordedAt, validAt) : d.hex(), facts: d.n, commits };
   }
   /** Commits of the subject with instant <= R acknowledged after time t (arrived after the read started). */
   lateArrivals(subject: number, recordedAt: number, t: number): number {

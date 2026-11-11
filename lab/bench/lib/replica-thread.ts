@@ -1,6 +1,6 @@
 import { Worker, MessageChannel } from "node:worker_threads";
 import { Histogram } from "./hist.ts";
-import { replicaEndpoint } from "./replica-reads.ts";
+import { replicaEndpoint, restoreReplicaReply } from "./replica-reads.ts";
 import type { Basis, PullResult, CompositionHandle } from "./composition.ts";
 
 // [DX-R3] Why: all follower application and RYOW index work stays off the commit issuer, including metadata allocation.
@@ -42,7 +42,7 @@ export class ReplicaThread {
         const p = this.pending.get(m.id); this.pending.delete(m.id);
         if (m.error) p?.reject(Error(m.error));
         else if (m.fallback && p) void this.gateway(p.root, p.basis).then(value => p.resolve({ ...value, route: "fallback", waitedMs: m.waitedMs, replicaFallbackReason: m.reason }), p.reject);
-        else p?.resolve(m.value);
+        else p?.resolve(restoreReplicaReply(m.value));
       }
       if (m.type === "closed") { this.closed = true; this.closeReply?.(); }
       if (m.type === "error") failed(Error(m.message));

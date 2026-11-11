@@ -1,3 +1,4 @@
+import { Option } from "effect";
 import { pathToFileURL } from "node:url";
 import { REPO, runtimeApi } from "./triplex.ts";
 import { observe } from "./observe.ts";
@@ -10,30 +11,56 @@ import type {
 } from "../../../packages/datomic/dist/index.js";
 
 const api = await import(pathToFileURL(`${REPO}/packages/datomic/dist/index.js`).href);
+if (api.REPLICA_ROW_WIDTH !== 56) throw Error("Replica packed API/build layout mismatch");
 type Prepared = PackedEntity & {
   stats: SharedArrayBuffer;
   refs: readonly { id: string; from: number; to: number }[];
   additionalBytes: number;
+  publicComplete: boolean;
 };
+function freezePublic<T>(value: T): T {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    for (const child of Object.values(value)) freezePublic(child);
+    Object.freeze(value);
+  }
+  return value;
+}
 const STAT_WIDTH = 64;
+
+// [DX-R3] Why: public callers see the gateway Triple contract, including actual Effect Options.
+// Rejected: returning physical positions or numeric interval ends as a different public payload.
+export function publicRow(row: any): PullResult["triples"][number] {
+  const m = row.publicMetadata;
+  if (!m) throw new Error("Replica row lacks public metadata");
+  return freezePublic({ id: row.id, entityId: row.entityId, attribute: row.attribute, value: row.value,
+    recordedAt: m.recordedAt, validFrom: row.validFrom,
+    validTo: row.validTo === undefined ? Option.none() : Option.some(row.validTo),
+    createdBy: m.createdBy ? Option.some(m.createdBy) : Option.none(),
+    retractedAt: Option.none(), entityType: m.entityType ? Option.some(m.entityType) : Option.none(),
+    schemaVersion: m.schemaVersion ? Option.some(m.schemaVersion) : Option.none(),
+    txId: m.txId ? Option.some(m.txId) : Option.none(), retractTxId: Option.none() });
+}
+
 // [DX-R3] Why: reuse the exact value decoder once while retaining every row's own interval.
 // Rejected: a second tagged-value codec, or decoding the entire entity once for each valid-time boundary.
 function allRows(id: string, packed: PackedEntity) {
   const length = packed.byteLength ?? packed.buffer.byteLength - (packed.offset ?? 0);
   const original = new DataView(packed.buffer, packed.offset ?? 0, length);
   const start = Math.ceil((8 + original.getUint32(0, true)) / 8) * 8;
+  if (start + original.getUint32(4, true) * api.REPLICA_ROW_WIDTH > length)
+    throw Error("Truncated replica row buffer");
   const scratch = new SharedArrayBuffer(length);
   new Uint8Array(scratch).set(new Uint8Array(packed.buffer, packed.offset ?? 0, length));
   const view = new DataView(scratch);
   for (let i = 0; i < view.getUint32(4, true); i++) {
-    view.setFloat64(start + i * 48 + 24, -Number.MAX_VALUE, true);
-    view.setFloat64(start + i * 48 + 32, Number.MAX_VALUE, true);
+    view.setFloat64(start + i * api.REPLICA_ROW_WIDTH + 24, -Number.MAX_VALUE, true);
+    view.setFloat64(start + i * api.REPLICA_ROW_WIDTH + 32, Number.MAX_VALUE, true);
   }
   return api
-    .unpackEntity(id, { revision: packed.revision, buffer: scratch }, 0)
+    .unpackEntity(id, { revision: packed.revision, buffer: scratch }, 0, true)
     .map((row: any, i: number) => {
-      const from = original.getFloat64(start + i * 48 + 24, true),
-        to = original.getFloat64(start + i * 48 + 32, true);
+      const from = original.getFloat64(start + i * api.REPLICA_ROW_WIDTH + 24, true),
+        to = original.getFloat64(start + i * api.REPLICA_ROW_WIDTH + 32, true);
       return { ...row, validFrom: from, validTo: to === Infinity ? undefined : to };
     });
 }
@@ -48,14 +75,16 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
     list.push({ sign, part });
     events.set(at, list);
   };
+  let publicComplete = true;
   for (const row of allRows(id, packed)) {
+    publicComplete &&= row.publicMetadata !== undefined;
     const from = row.validFrom,
       to = row.validTo ?? Infinity;
     if (!Number.isFinite(from) || (to !== Infinity && !Number.isFinite(to)))
       throw Error("Invalid contribution interval");
     if (from >= to) continue;
     const o = observe({
-      triples: [row],
+      triples: [row.publicMetadata ? publicRow(row) : row],
       entities: 1,
       depth: 0,
       roundTrips: 0,
@@ -103,6 +132,7 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
   }
   return {
     ...packed,
+    publicComplete,
     stats,
     refs,
     additionalBytes:
@@ -149,13 +179,14 @@ export class ReplicaReader {
     fallback: () => Promise<PullResult>,
     between?: () => Promise<void>,
     rows = false,
+    receiptPosition?: number,
   ): Promise<PullResult> {
     if (between) {
       // [DX-R3] Why: the first complete read must happen before the real intervening ACK.
       // Rejected: waiting for the ACK before touching the index (would report a fictitious straddle).
-      const before = await this.pullAt(root, basis, fallback, undefined, rows);
+      const before = await this.pullAt(root, basis, fallback, undefined, rows, receiptPosition);
       await between();
-      const after = await this.pullAt(root, basis, fallback, undefined, rows);
+      const after = await this.pullAt(root, basis, fallback, undefined, rows, receiptPosition);
       if (JSON.stringify(observe(before)) !== JSON.stringify(observe(after)))
         throw Error("replica split snapshot violation");
       // [DX-R3] Why: preserve lazy world descriptors across split reads without decoding entity bodies.
@@ -171,18 +202,22 @@ export class ReplicaReader {
       );
     }
     let waitedMs = 0;
-    if (basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position) {
+    // [DX-R3] Why: a receipt position can guide catch-up without changing a time-only read into a position-capped read.
+    // Rejected: inserting the hint into the basis (hides a later equal-clock position from the requested time cut).
+    const waitPosition = basis.recordedPosition ?? receiptPosition;
+    if (waitPosition !== undefined && waitPosition > this.index.position) {
       this.diagnostics.ahead++;
       const start = performance.now();
-      await this.wait(basis.recordedPosition, 10);
+      await this.wait(waitPosition, 10);
       waitedMs = performance.now() - start;
-      if (this.index.position >= basis.recordedPosition) this.diagnostics.caughtUp++;
+      if (this.index.position >= waitPosition) this.diagnostics.caughtUp++;
       else this.diagnostics.waitExpired++;
     }
     if (!rows) {
       const total = { a: 0, b: 0, n: 0, bytes: 0, stamp: -1, stamps: 0 };
       const selected: (string | PackedEntity)[] = [];
       const selectedValidAt = basis.validAt;
+      let complete = true;
       let materialized: PullResult["triples"] | undefined;
       const found = this.index.visit(
         root,
@@ -190,7 +225,7 @@ export class ReplicaReader {
         (id: string, packed: PackedEntity, validAt: number) => {
           selected.push(id, packed);
           const prepared = packed as Prepared;
-          if (!prepared.stats) throw Error("Unprepared replica read buffer");
+          if (!prepared.stats || !prepared.publicComplete) { complete = false; return []; }
           let view = statViews.get(packed);
           if (!view) {
             view = new DataView(prepared.stats);
@@ -216,7 +251,7 @@ export class ReplicaReader {
           return refs;
         },
       );
-      if (found) {
+      if (found && complete) {
         this.diagnostics.local++;
         return {
           // [DX-R3] Why: a pull returns its actual immutable world, not only a checksum; decoding is demand-driven.
@@ -229,9 +264,10 @@ export class ReplicaReader {
                   selected[i] as string,
                   selected[i + 1] as PackedEntity,
                   selectedValidAt,
+                  true,
                 ))
-                  rows.push(row);
-              materialized = rows;
+                  rows.push(publicRow(row));
+              materialized = Object.freeze(rows);
             }
             return materialized;
           },
@@ -254,10 +290,10 @@ export class ReplicaReader {
       }
     } else {
       const found = this.index.pull(root, basis);
-      if (found) {
+      if (found && found.rows.every((row: any) => "publicMetadata" in row)) {
         this.diagnostics.local++;
         return {
-          triples: found.rows,
+          triples: Object.freeze(found.rows.map(publicRow)),
           entities: found.entities,
           depth: found.depth,
           roundTrips: 0,
@@ -271,7 +307,8 @@ export class ReplicaReader {
     if (!(basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position)) this.diagnostics.ineligible++;
     const replicaFallbackReason = !this.index.valid ? "copy-unavailable" :
       basis.recordedPosition !== undefined && basis.recordedPosition < this.index.floor ? "outside-window" :
-      basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position ? "watermark-timeout" : "unmapped-clock-or-closure";
+      basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position ? "watermark-timeout" :
+      basis.recordedPosition === undefined && basis.recordedAt !== undefined && this.index.isOpenClock(basis.recordedAt) ? "open-record-clock" : "unmapped-clock-or-closure";
     const result = await fallback();
     return { ...result, route: "fallback", waitedMs, replicaFallbackReason };
   }
@@ -282,6 +319,7 @@ export function replicaEndpoint(env: NodeJS.ProcessEnv, peer: "reader" | "writer
   return peer === "writer" ? env.DATOMIC_URL! : env.DATOMIC_READ_URLS?.split(",")[0] ?? env.DATOMIC_URL!;
 }
 export class ReplicaReadHost {
+  readonly applied: { position: number; at: number }[] = [];
   readonly index: InstanceType<typeof api.RecentReads>;
   readonly replica: InstanceType<typeof api.Replica>;
   private times: Map<number, number>;
@@ -308,6 +346,7 @@ export class ReplicaReadHost {
         ...(clock !== undefined ? { recordTime: clock } : {}),
       };
       this.index.apply(delta);
+      if (delta.valid) this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now() });
       times.delete(update.position);
       for (const listener of this.listeners) listener(delta);
     };
@@ -354,7 +393,20 @@ export class ReplicaReadHost {
 // [DX-R3] Why: the low-volume RYOW reply must carry its real world, even though hot readers use lazy immutable buffers.
 // Rejected: a checksum-only reply that invents an empty triples array across the worker boundary.
 export function replicaReply(result: PullResult): PullResult {
-  return { ...result, triples: result.triples };
+  return { ...result, triples: result.triples.map(row => mapOptions(row, value =>
+    value._tag === "Some" ? { _tag: "Some", value: value.value } : { _tag: "None" })) };
+}
+export function restoreReplicaReply(result: PullResult): PullResult {
+  return { ...result, triples: Object.freeze(result.triples.map(row => freezePublic(mapOptions(row, value =>
+    value._tag === "Some" ? Option.some(value.value) : Option.none())))) };
+}
+// [DX-R3] Why: structured clone drops Effect Option prototype tags; carry them explicitly on the wire.
+// Rejected: treating a cloned None as an arbitrary empty object or a cloned Some as its unwrapped value.
+function mapOptions(row: PullResult["triples"][number], convert: (value: any) => any) {
+  const copy: any = { ...row };
+  for (const key of ["validTo", "createdBy", "entityType", "schemaVersion", "txId", "retractedAt", "retractTxId"])
+    if (copy[key] && (copy[key]._tag === "Some" || copy[key]._tag === "None")) copy[key] = convert(copy[key]);
+  return copy;
 }
 
 // [DX-R3] Why: a read peer may still be catching up at bootstrap; retry the same exact two-cut proof before declining.

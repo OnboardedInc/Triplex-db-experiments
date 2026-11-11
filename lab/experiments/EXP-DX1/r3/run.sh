@@ -40,7 +40,13 @@ python3 - <<'PY'
 import shutil
 assert shutil.disk_usage('.').free >= 15*1024**3, 'requires 15 GiB free'
 PY
-while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
+# [DX-R3] Why: review fixes must not queue behind the long seed when asked to take only a free hold.
+# Rejected: checking availability separately then entering an unbounded admission wait.
+if [[ ${DX_R3_TRY_LOCK:-0} == 1 ]]; then
+  if ! mkdir "$lock" 2>/dev/null; then echo 'DX-R3 measurement lock busy; no resources created'; cat "$lock/owner.json" 2>/dev/null || true; exit 75; fi
+else
+  while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
+fi
 held=true
 printf '{"id":"DX-R3","pid":%s}\n' "$$" > "$lock/owner.json"
 python3 - <<'PY'

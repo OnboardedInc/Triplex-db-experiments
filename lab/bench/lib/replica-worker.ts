@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { ReplicaReadHost, ReplicaReader, replicaReply } from "./replica-reads.ts";
 // [DX-R3] Why: a new public runtime after seed can advance the native basis without a journal position and poison clock admission.
@@ -14,10 +15,14 @@ try {
   const indexStats = () => ({ floor: host.index.floor, position: host.index.position, historyBytes: host.index.historyBytes, positions: host.index.positions, maxBytes: host.index.maxBytes });
   const readers = new Set<import("node:worker_threads").MessagePort>();
   let bytes = host.replica.bytes;
+  // [DX-R3] Why: per-position application times must survive a late stop and stay off the commit issuer.
+  // Rejected: retaining the only application witness in the parent's RAM until final analysis.
+  const appliedLog = cfg.appliedLogPath ? fs.openSync(cfg.appliedLogPath, "wx") : undefined;
   host.subscribe(delta => {
     bytes = delta.reset ? host.replica.bytes : bytes + delta.changes.reduce((sum, [, previous, entity]) => sum + (entity.byteLength ?? entity.buffer.byteLength) - (previous ? previous.byteLength ?? previous.buffer.byteLength : 0), 0);
     const at = performance.timeOrigin + performance.now();
     local.notify();
+    if (delta.valid && appliedLog !== undefined) fs.writeSync(appliedLog, JSON.stringify({ position: delta.position, at }) + "\n");
     port!.postMessage({ type: "progress", index: indexStats(), valid: delta.valid, bytes, at });
     for (const reader of readers) reader.postMessage({ type: "replica-delta", delta, sentAt: at });
   });
@@ -32,7 +37,7 @@ try {
         port!.postMessage({ type: "reply", id: m.id, value: replicaReply(result) });
       } catch (error) {
         if (error === declined) port!.postMessage({ type: "reply", id: m.id, fallback: true, waitedMs: performance.now() - started,
-          reason: !host.index.valid ? "copy-unavailable" : m.basis.recordedPosition < host.index.floor ? "outside-window" : m.basis.recordedPosition > host.index.position ? "watermark-timeout" : "unmapped-clock-or-closure" });
+          reason: !host.index.valid ? "copy-unavailable" : m.basis.recordedPosition < host.index.floor ? "outside-window" : m.basis.recordedPosition > host.index.position ? "watermark-timeout" : m.basis.recordedPosition === undefined && host.index.isOpenClock(m.basis.recordedAt) ? "open-record-clock" : "unmapped-clock-or-closure" });
         else port!.postMessage({ type: "reply", id: m.id, error: String(error) });
       }
     }
@@ -43,6 +48,6 @@ try {
       readers.add(m.port);
       m.port.on("close", () => readers.delete(m.port));
     }
-    if (m.type === "close") { await host.close(); for (const reader of readers) reader.close(); port!.postMessage({ type: "closed" }); port!.close(); }
+    if (m.type === "close") { await host.close(); if (appliedLog !== undefined) fs.closeSync(appliedLog); for (const reader of readers) reader.close(); port!.postMessage({ type: "closed" }); port!.close(); }
   });
 } catch (error) { port!.postMessage({ type: "error", message: String(error) }); }
