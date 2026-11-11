@@ -650,7 +650,8 @@ export async function runReplicaDriver(argv: string[]) {
       if (
         counts.position !== after ||
         counts.assertions !== assertions ||
-        counts.retired !== retired
+        counts.retired !== retired ||
+        ("frames" in counts && counts.frames !== after)
       )
         throw new Error("Independent journal count mismatch");
       report.journalCounts = counts;
