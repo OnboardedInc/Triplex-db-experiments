@@ -21,6 +21,8 @@ cleanup() {
     docker network rm "$prefix-net" || true
     docker volume rm "$prefix-pg-data" "$prefix-driver" || true
     [[ -z $(docker ps -a --filter "name=$prefix" --format '{{.Names}}') ]] || { echo 'cleanup incomplete, retaining lock'; exit 1; }
+    [[ -z $(docker volume ls --filter "name=$prefix" --format '{{.Name}}') ]] || { echo 'owned volumes remain, retaining lock'; exit 1; }
+    [[ -z $(docker network ls --filter "name=$prefix" --format '{{.Name}}') ]] || { echo 'owned networks remain, retaining lock'; exit 1; }
     rm "$lock/owner.json"; rmdir "$lock"
   fi
   rm -rf "$operational"

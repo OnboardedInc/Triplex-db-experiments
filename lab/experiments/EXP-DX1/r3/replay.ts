@@ -4,7 +4,7 @@ import { gunzipSync } from "node:zlib";
 import {
   Replica,
   DatomicClient,
-  datomicReplicaSource,
+  timedReplicaSource,
   decodeSweepRows,
   RecentReads,
 } from "../../../../packages/datomic/dist/index.js";
@@ -57,17 +57,23 @@ const client = {
     return response(n!, body.after !== undefined ? "feed" : body.need ? "need" : "page");
   },
 } as unknown as DatomicClient;
-const replica = new Replica(
-  datomicReplicaSource(client, "recorded", async () => basis.recordedPosition),
-  basis.validAt,
-);
-replica.onUpdate = (update) =>
+const timed = timedReplicaSource(client, "recorded", async () => basis.recordedPosition);
+const replica = new Replica(timed.source, basis.validAt);
+let clocks = 0;
+replica.onUpdate = (update) => {
+  if (!update.reset) {
+    assert(Number.isFinite(timed.times.get(update.position)));
+    clocks++;
+  }
   index.apply({
     ...update,
+    ...(timed.times.has(update.position) ? { recordTime: timed.times.get(update.position)! } : {}),
     changes: update.changes.map(
       ([id, previous, packed]) => [id, previous, prepareEntity(id, packed)] as const,
     ),
   });
+  timed.times.delete(update.position);
+};
 await replica.bootstrap(subjects, basis.recordedPosition);
 const original = index.image();
 const compare = (position: number) => {
@@ -140,6 +146,7 @@ console.log(
   }),
 );
 console.log(
-  JSON.stringify({ kind: "recorded-follow", commands: 2000, packedBytes: replica.bytes, traffic }),
+  JSON.stringify({ kind: "recorded-follow", commands: 2000, clocks, packedBytes: replica.bytes, traffic }),
 );
+assert.equal(clocks, 2000);
 await replica.stop();

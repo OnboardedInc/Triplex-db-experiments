@@ -86,6 +86,7 @@ if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--o
 const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
+if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 const config = {
   lane,
   rung: devSubjects ? `dev:${rungSubjects}` : rung,
@@ -849,7 +850,7 @@ async function run() {
     report.invalidReasons = [...(report.invalidReasons ?? []), `Feed consumer failed: ${String(feedFailure)}`];
     process.exitCode = 1;
   }
-  const incompleteHistory = !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
+  const incompleteHistory = !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
   if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");
   if (finalizationErrors.length) {
     report.invalidReasons = [...(report.invalidReasons ?? []), ...finalizationErrors];

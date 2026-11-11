@@ -60,13 +60,14 @@ if [[ $mode == differential ]]; then
 else
   command=(node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 256 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --output runs/DX-R3-vm/ns-report.json)
 fi
+rc=0
 docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 8g --memory-swap 8g \
   -v "$repo:$repo:ro" -v "$prefix-driver:$repo/runs/DX-R3-vm" -w "$repo" \
   -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_ENGINE_CPUS=4 \
-  node:22.23.2-bookworm-slim "${command[@]}"
+  node:22.23.2-bookworm-slim "${command[@]}" || rc=$?
 # Read the report even though the driver process has exited; this is raw command output, not another evidence format.
 if [[ $mode == benchmark ]]; then
-  docker cp "$prefix-driver:$repo/runs/DX-R3-vm/ns-report.json" "$config/report.json"
-  cat "$config/report.json"
+  if docker cp "$prefix-driver:$repo/runs/DX-R3-vm/ns-report.json" "$config/report.json"; then cat "$config/report.json"; fi
 fi
 docker inspect --format '{{.Name}} {{.State.ExitCode}} {{.State.OOMKilled}} {{.HostConfig.CpusetCpus}} {{.HostConfig.Memory}}' "$prefix-driver"
+exit "$rc"
