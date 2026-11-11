@@ -79,13 +79,18 @@ PY
 : > "$out/stats-before.jsonl"
 # Local images only: combine the local Python runtime with Node's executable/shared libraries on an owned volume.
 docker image inspect python:3.13-slim node:22.23.2-bookworm-slim > "$out/tool-images.json"
+# [DX-H8] Why: two full seed copies narrowly fit before the tool volume; checkpoint the working clone before allocating tools.
+# Rejected: deleting source WAL or exceeding 12 GB briefly while creating the clone.
+provision_tools() {
 docker volume create "$prefix-tools" >/dev/null
 docker create --pull never --name "$prefix-tools-extract" -v "$prefix-tools:/tool" node:22.23.2-bookworm-slim sh -c 'cp /usr/local/bin/node /tool/node; cp /usr/lib/*-linux-gnu/libstdc++.so.6 /usr/lib/*-linux-gnu/libgcc_s.so.1 /tool/' >/dev/null
 docker start -a "$prefix-tools-extract"
 docker rm "$prefix-tools-extract" >/dev/null
-# [DX-H8] Why: prove the local ARM64/x86 runtime pairing before paying for JVM startup.
+# [DX-H8] Why: prove the local ARM64/x86 runtime pairing before starting the load generator.
 # Rejected: architecture-specific library paths and a first check inside the measured driver.
 docker run --rm --pull never --name "$prefix-runtime-check" --network none -v "$prefix-tools:/tool:ro" -v "$PWD:$PWD:ro" -w "$PWD" -e LD_LIBRARY_PATH=/tool python:3.13-slim /tool/node --experimental-strip-types --input-type=module -e 'import {execFileSync} from "node:child_process";console.log(process.version,process.arch);console.log(execFileSync("python3",["--version"],{encoding:"utf8"}));await import("./lab/bench/w0-driver.ts");console.log("W0 public imports ready")' > "$out/runtime-check.txt"
+}
+[[ $kind != seed ]] || provision_tools
 export DX_TX_HEAP=3g DX_TX_MEMORY=4g DX_GW_WRITE_MEMORY=3g DX_GW_READ_MEMORY=3g DX_PG_MEMORY=2g DX_OBJECT_CACHE=1g DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
 if [[ ${DXH8_PREFLIGHT:-false} == true ]]; then
  [[ $kind == seed && $prefix == tx2-dxh8-seed-10000 ]] || exit 2
@@ -124,8 +129,8 @@ if [[ ${DXH8_SEED_VOLUME:-} == tx2-dxh8-seed-10000-pg-data ]]; then
  python3 - "$DX_STACK_EVIDENCE/tx2-dxh8-seed-10000/stopped-volume-kib.txt" <<'PYCAP'
 import sys
 seed_bytes=int(open(sys.argv[1]).readline().split()[0])*1024
-assert 2*seed_bytes+150000000 <= 12000000000, 'full clone plus tools would exceed 12 GB'
-print({'seed_bytes':seed_bytes,'maximum_clone_and_tools_bytes':2*seed_bytes+150000000})
+assert 2*seed_bytes+50000000 <= 12000000000, 'temporary full clone plus startup reserve would exceed 12 GB'
+print({'seed_bytes':seed_bytes,'maximum_clone_peak_bytes':2*seed_bytes+50000000})
 PYCAP
 fi
 if [[ -n ${DXH8_SEED_VOLUME:-} ]]; then
@@ -149,6 +154,18 @@ bash lab/experiments/EXP-DX1/h8/up.sh "$prefix" --no-publish --cpus-pg 0 --cpus-
 if [[ -n ${DXH8_SEED_VOLUME:-} ]]; then
  docker exec "$prefix-pg" psql -U postgres -d datomic -c 'CHECKPOINT' > "$out/clone-checkpoint.txt"
  docker exec "$prefix-pg" psql -U postgres -d datomic -Atc "SELECT json_build_object('max_wal_size',current_setting('max_wal_size'),'wal_bytes',(SELECT COALESCE(sum(size),0) FROM pg_ls_waldir()));" >> "$out/clone-checkpoint.txt"
+fi
+if [[ $kind != seed ]]; then
+ if [[ ${DXH8_SEED_VOLUME:-} == tx2-dxh8-seed-10000-pg-data ]]; then
+  docker run --rm --pull never --name "$prefix-copy" --network none -v "$prefix-pg-data:/clone:ro" postgres:17-alpine du -sk /clone > "$out/checkpointed-clone-kib.txt"
+  python3 - "$DX_STACK_EVIDENCE/tx2-dxh8-seed-10000/stopped-volume-kib.txt" "$out/checkpointed-clone-kib.txt" <<'PYTOOLS'
+import sys
+sizes=[int(open(p).readline().split()[0])*1024 for p in sys.argv[1:]]
+assert sum(sizes)+150000000 <= 12000000000, 'checkpoint did not free enough room for tools'
+print({'volume_bytes_before_tools':sum(sizes),'with_tool_reserve':sum(sizes)+150000000})
+PYTOOLS
+ fi
+ provision_tools
 fi
 docker stats --no-stream --format '{{json .}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" > "$out/stats-owned.jsonl"
 export DX_DRIVER_ENV="TRIPLEX_DATOMIC_LAYOUT=lean TX2_W0_COUNT_CONCURRENCY=64 TX2_SWEEP_STRICT=1"
