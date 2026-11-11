@@ -168,7 +168,7 @@ export async function startW0Live(o: {
         (w) => w.scheduled >= measurementStart && w.scheduled < end,
       );
       return {
-        readers: 64,
+        readers: 256,
         warmupMs,
         generatorStartedAtMs: start,
         startedAtMs: measurementStart,
