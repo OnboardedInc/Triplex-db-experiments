@@ -188,3 +188,9 @@ captured synchronously when each HTTP request is created, so overlapping commits
 retain their own observations. Callbacks are off by default; the client retains
 no completed-commit history. `client.onRequest` remains the successful-request
 callback; commit observations also include parsed conflict responses.
+
+### Ordered commit pipelines
+
+Each `DatomicClient` has its own commit identity and sequence. The gateway buffers up to 64 early arrivals and submits each client's contiguous sequence without waiting for transaction acknowledgements. A missing predecessor expires after 30 seconds (`TX2_COMMIT_ORDER_GAP_MS`), rejecting the buffered suffix with `CommitOrderGap`; no timeout permits overtaking. Storage-adapter callers receive `DatomicCommitOrderError`, including `code` and `expectedSequence`, with the gateway error as its cause.
+
+Low-level clients must use an HTTP timeout longer than the gap deadline (at least 35 seconds for the default); `makeDatomicRuntime` already uses 35 seconds. Low-level `transact` callers can resend the failed sequence and suffix using the same client ID and operation IDs. The gateway's error JSON includes `expectedSequence` (also mirrored in the existing transport's numeric `maximum` field). For adapter-managed sequences, `resumeCommitOrder(client, expectedSequence)` resets issuance only after all pending calls have settled. Resolve ambiguous commits through their operation receipts before retrying; sequence reset does not replace lost-ACK resolution.

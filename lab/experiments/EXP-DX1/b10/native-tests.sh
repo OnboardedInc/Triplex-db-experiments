@@ -9,9 +9,9 @@ export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 out=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B10/native-artifacts/$prefix
 mkdir -p "$out"
 status=0
-suites=(triplex.gateway.cache-key-test dxb8.head-test triplex.gateway.selftest dxb8.feed-test-main)
+suites=(triplex.gateway.commit-order-test triplex.gateway.cache-key-test dxb8.head-test triplex.gateway.selftest dxb8.feed-test-main)
 if [[ ${B8_RECENT_TESTS:-0} == 1 ]]; then suites+=(triplex.gateway.recent-test dxb8.lifecycle-test dxb8.hot-test); fi
-if [[ ${B8_NATIVE_FOCUSED:-} == 1 ]]; then suites=(triplex.gateway.cache-key-test dxb8.head-test dxb8.feed-test-main); fi
+if [[ ${B8_NATIVE_FOCUSED:-} == 1 ]]; then suites=(triplex.gateway.commit-order-test triplex.gateway.cache-key-test dxb8.head-test dxb8.feed-test-main); fi
 for suite in "${suites[@]}"; do
  recent=0; if [[ $suite == dxb8.hot-test || $suite == dxb8.lifecycle-test || $suite == triplex.gateway.recent-test ]]; then recent=1; fi
  uri='datomic:mem://{db}'

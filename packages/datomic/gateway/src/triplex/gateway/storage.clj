@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -214,35 +214,30 @@
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
                        :lean lean :ops ops :times times :replay-safe (true? (get input "replaySafe")) :irregular irregular :position-irregular irregular
                        :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}]])))
-;; [DX-B5-L0] Why: HTTP connections can overtake ordered client sends; serialize submission only.
-;; Rejected: waiting for the transaction result under this monitor (queues acknowledgements).
-(def submissions (atom {}))
+;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
+;; Rejected: a twenty-millisecond wait followed by overtaking.
 (defn submit! [conn data input timeline]
-  (if-let [client (get input "clientId")]
-    (let [sequence (get input "sendSequence")
-          _ (when-not (and (string? client) (<= 1 (count client) 64) (integer? sequence) (pos? sequence))
-              (codec/invalid "Invalid send sequence"))
-          state (or (@submissions client)
-                    (get (swap! submissions #(if (contains? % client) % (assoc % client (atom 0)))) client))
-          deadline (+ (System/nanoTime) 20000000)]
-      (locking state
-        (loop []
-          (when (and (< @state (dec sequence)) (< (System/nanoTime) deadline))
-            (.wait ^Object state (max 1 (quot (+ (- deadline (System/nanoTime)) 999999) 1000000))) (recur)))
-        (when (< @state (dec sequence)) (stats/bump! [:commitOrder :timeouts] 1))
-        (when (<= sequence @state) (stats/bump! [:commitOrder :late] 1))
-        (let [_ (swap! timeline assoc :predecessorReady (System/nanoTime))
-              future (d/transact-async conn data)
-              _ (swap! timeline assoc :submitted (System/nanoTime))]
-          (swap! state max sequence) (.notifyAll ^Object state) future)))
-    (do (swap! timeline assoc :predecessorReady (System/nanoTime))
-        (let [future (d/transact-async conn data)] (swap! timeline assoc :submitted (System/nanoTime)) future))))
+  (let [submit (fn []
+                 (swap! timeline assoc :predecessorReady (System/nanoTime))
+                 (let [future (d/transact-async conn data)]
+                   (swap! timeline assoc :submitted (System/nanoTime)) future))]
+    (if-let [client (get input "clientId")]
+      (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
+      (submit))))
+;; [DX-B10] Why: a definitive preflight rejection resolves its sequence without a database write.
+;; Rejected: skipping that turn (strands all later valid commands behind a permanent gap).
+(defn reject-ordered! [conn input error]
+  (when-let [client (get input "clientId")]
+    (order/enqueue! client (get input "sendSequence") (get input "operationId")
+                    #(delay nil) order/gap-ms order/buffer-limit [conn input]))
+  (throw error))
 (defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
-    (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
+    (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
     (let [parsed (System/nanoTime)
-          data (tx-data db input (scope/entity db))
+          data (try (tx-data db input (scope/entity db))
+                    (catch Exception e (reject-ordered! conn input e)))
           start (System/nanoTime)
           timeline (atom {:requestParsed parsed :payloadPrepared start})
           report (deref (submit! conn data input timeline) 5000 ::timeout)
@@ -259,7 +254,7 @@
        :datoms (count (:tx-data report))})
     (catch Exception e
       (let [text (str e)]
-        (when (= "OutcomeUnknown" (:code (ex-data e))) (throw e))
+        (when (or (= "OutcomeUnknown" (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (.getMessage e)
                        {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))

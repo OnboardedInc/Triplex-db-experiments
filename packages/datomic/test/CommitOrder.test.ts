@@ -79,3 +79,35 @@ it("issues unique scope instants and catches up immediately", async () => {
   expect(issueInstant(scope, 100)).toBe(10001);
   expect(issueInstant(`${scope}-other`, 100)).toBe(100);
 });
+
+// [DX-B10] Why: a new client must start at one; resumption must wait for all old ACKs.
+// Rejected: resetting a live lane (reuses sequence numbers while earlier calls can still arrive).
+it("uses independent client sequences and resumes only a settled suffix", async () => {
+  const { commitClientIdFor, resumeCommitOrder } = await import("../src/CommitOrder.js");
+  const left = {},
+    right = {};
+  expect(commitClientIdFor(left)).not.toBe(commitClientIdFor(right));
+  expect(commitClientIdFor(left)).toBe(commitClientIdFor(left));
+  let release!: () => void;
+  const done = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const first = sendCommit(registerCommit(100, left), async (n, sent) => {
+    expect(n).toBe(1);
+    sent();
+    await done;
+  });
+  await sendCommit(registerCommit(101, right), async (n, sent) => {
+    expect(n).toBe(1);
+    sent();
+  });
+  expect(() => resumeCommitOrder(left, 1)).toThrow("Settle");
+  release();
+  await first;
+  resumeCommitOrder(left, 1);
+  await sendCommit(registerCommit(102, left), async (n, sent) => {
+    expect(n).toBe(1);
+    sent();
+  });
+  expect(() => resumeCommitOrder(left, 3)).toThrow(RangeError);
+});
