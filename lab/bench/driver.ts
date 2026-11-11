@@ -282,6 +282,8 @@ function visitPhase(phase: number, fn: (record: ReadRecord, index: number) => vo
   else records.forEach((r, k) => { if (r[R.phase] === phase) fn(r, k); });
 }
 let spillFinished = false;
+let mainReadCount = 0;
+let judgedReadCount = 0;
 const oracleSamples: any[] = [];
 const settledReadCounts = new Map<number, number>();
 if (spill) spill.onProgress = m => {
@@ -291,6 +293,7 @@ if (spill) spill.onProgress = m => {
 const phaseStarts = new Map<number, number>();
 const observedPhases = new Map<number, { reads: number; errors: number; read: Histogram; wait: Histogram; routes: Record<string, number> }>();
 function retainRead(r: ReadRecord) {
+  if (spill) mainReadCount++;
   if (spill && !spillFinished) { spill.push(r); return; }
   records.push(r);
   const phase = r[R.phase];
@@ -929,7 +932,7 @@ async function run() {
   // [DX-R3] Why: persist the final buffered observations before the CPU-heavy all-ACK checker starts.
   // Rejected: only checkpointing phase boundaries while the last worker batch remains memory-only.
   if (records instanceof ReadRecords) records.checkpoint();
-  report.phaseProgress = Object.fromEntries([...observedPhases].map(([id, s]) => [id, {
+  report.phaseProgress = spill ? spill.progress : Object.fromEntries([...observedPhases].map(([id, s]) => [id, {
     reads: s.reads, errors: s.errors, read: s.read.toJSON(), watermarkWait: s.wait.toJSON(), routes: s.routes,
     verification: "PENDING final all-ACK model comparison; all arrived worker batches persisted" }]));
   report.phases = phases;
@@ -952,6 +955,13 @@ async function run() {
   records.forEach(r => { if (r[R.error] === null) { pulls++; roundTripSum += r[R.roundTrips]; const key = String(r[R.roundTrips]); roundTripDistribution[key] = (roundTripDistribution[key] ?? 0) + 1; } });
   report.pullRoundTrips = { pulls, mean: pulls ? roundTripSum / pulls : null,
     distribution: roundTripDistribution, unit: "public Triples service calls; see httpRequests for actual HTTP" };
+  if (spill) {
+    const attempts = readerFinalDiagnostics.reduce((n, x) => n + (x.diagnostics.readAttempts?.attempted ?? 0), 0);
+    const completed = readerFinalDiagnostics.reduce((n, x) => n + (x.diagnostics.readAttempts?.completed ?? 0), 0);
+    report.observationAccounting = { attempts, completed, mainReadCount, retained: records.length, judged: judgedReadCount };
+    if (attempts !== completed || records.length !== completed + mainReadCount || records.length !== judgedReadCount)
+      finalizationErrors.push("Read-attempt, retained-observation and final-verdict counts differ");
+  }
   if (records instanceof ReadRecords) report.observationStorage = { format: "lossless Float64 tuples and interned strings", records: records.length, encodedBytes: records.encodedBytes, numericResidentBytes: records.residentBytes, spillDirectory: records.directory, strings: records.stringCount };
   report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
   report.engineSamples = engineSamples;
@@ -1204,6 +1214,7 @@ const VERDICTS = ["correct", "error", "stale-late-arrival", "stale", "future-or-
 function readVerdicts(): Uint8Array {
   const result = new Uint8Array(records.length);
   records.forEach((r, k) => { const verdict = judgeRead(r); result[k] = VERDICTS.findIndex(v => v.kind === verdict.kind); });
+  judgedReadCount = result.length;
   return result;
 }
 const bandOf = (f: number) => (f <= 10 ? "5-10" : f <= 25 ? "11-25" : "26-50");

@@ -43,7 +43,7 @@ test("direct producer ports drain every exact tuple and oracle sample before fin
       const port = spill.connect();
       const rows = expected.filter((_, i) => i % 2 === producer);
       const ack = new Promise<void>(resolve => port.once("message", () => resolve()));
-      port.postMessage({ id: producer, records: rows, samples: [{ producer, stamp: 123 }] });
+      port.postMessage({ id: 1, records: rows, samples: [{ producer, stamp: 123 }] });
       await ack; port.close();
     }));
     const restored = await spill.finish();

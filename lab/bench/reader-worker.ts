@@ -1,3 +1,4 @@
+import { requireDrained } from "./lib/reader-lifecycle.ts";
 import { ReaderTurn } from "./lib/reader-turn.ts";
 import { Histogram } from "./lib/hist.ts";
 import { readerDiagnostics } from "./lib/reader-diagnostics.ts";
@@ -81,7 +82,8 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     }
   });
   const phases = new Map<number, { reads: number; reasons: Record<string, number>; straddleWait: Histogram }>();
-  const finalDiagnostics = () => ({ gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
+  let activeReads = 0, attemptedReads = 0, completedReads = 0;
+  const finalDiagnostics = () => ({ readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
     phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, fallbackReasons: s.reasons, straddleWait: s.straddleWait.toJSON() }])) });
   let phase = -1;
   let mode = "mixed";
@@ -158,6 +160,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   }
 
   async function readOnce(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; hotPick?: boolean }) {
+    activeReads++; attemptedReads++;
     const start = nowAbs();
     const t0 = performance.now();
     let split = 0, forcedPosition = -1, straddleWaitMs = 0;
@@ -188,7 +191,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
         samples.push({ phase: ph, subject, basis, position, start, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo ?? null, t.id]) });
     } catch (error: any) {
       records.push([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, "error", "", 0]);
-    }
+    } finally { activeReads--; completedReads++; }
   }
 
   async function loop(id: number) {
@@ -282,6 +285,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
             // Rejected: a 10k-subject local microtask chain that stalls every worker message.
             await observationCredit();
             if (replica && cfg.replicaYield !== "loop") await turn.enter();
+            if (stopping) break;
             await readOnce(subject, msg.basis, 0, msg.position, msg.phase, { keepRows: false, sweep: true });
           }
         }),
@@ -292,7 +296,8 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       wanted = 0;
       for (const resolve of waiting.values()) resolve(null);
       const deadline = Date.now() + 30_000;
-      while (running > 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
+      while ((running > 0 || activeReads > 0) && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
+      requireDrained(running, activeReads);
       clearInterval(flush);
       loopDelay.disable();
       await sendReads();
