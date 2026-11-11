@@ -1,0 +1,629 @@
+• turbo 2.8.20
+
+   • Packages in scope: @triplex-build/triplex-datomic, @triplex-build/triplex-qualification, @triplex-build/w0
+   • Running build in 3 packages
+   • Remote caching disabled, using shared worktree cache
+
+@triplex-build/triplex:build: cache bypass, force executing 7215e3e71326b16a
+@triplex-build/w0:build: cache bypass, force executing ca5eba0bcb866742
+@triplex-build/triplex:build: 
+@triplex-build/triplex:build: > @triplex-build/triplex@0.2.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/packages/core
+@triplex-build/triplex:build: > tsdown
+@triplex-build/triplex:build: 
+@triplex-build/w0:build: 
+@triplex-build/w0:build: > @triplex-build/w0@0.0.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/packages/w0
+@triplex-build/w0:build: > tsc -p tsconfig.json
+@triplex-build/w0:build: 
+@triplex-build/triplex:build: ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+@triplex-build/triplex:build: ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/packages/core/tsdown.config.ts 
+@triplex-build/triplex:build: ℹ entry: src/Branded.ts, src/Constraint.ts, src/EntityPage.ts, src/Error.ts, src/Pagination.ts, src/Temporal.ts, src/Triple.ts, src/Value.ts, src/ValueDomain.ts, src/index.ts, src/internal.ts, src/params.ts, src/content/CanonicalJson.ts, src/content/ContentId.ts, src/content/Sha256.ts, src/content/index.ts, src/datalog/compiler.ts, src/datalog/index.ts, src/datalog/schema.ts, src/datalog/types.ts, src/datalog/validation.ts, src/datalog/wrapper.ts, src/config/Attribute.ts, src/config/BoolExpr.ts, src/config/Catalog.ts, src/config/ConfigNode.ts, src/config/ConfigRuntime.ts, src/config/ConfigStore.ts, src/config/Entity.ts, src/config/EntityType.ts, src/config/EntityValidation.ts, src/config/Evaluate.ts, src/config/GraphConstraint.ts, src/config/InMemoryConfigStore.ts, src/config/Reactor.ts, src/config/TypeExpr.ts, src/config/TypeSchema.ts, src/config/TypeSubsumption.ts, src/config/World.ts, src/config/index.ts, src/dialects/index.ts, src/dialects/postgresql.ts, src/dialects/sqlite.ts, src/dialects/types.ts, src/derivation/Derivation.ts, src/derivation/Materialization.ts, src/derivation/Overlay.ts, src/derivation/index.ts, src/entity/Descriptors.ts, src/entity/EntityCodec.ts, src/entity/Errors.ts, src/entity/Model.ts, src/entity/PhysicalNames.ts, src/entity/Plan.ts, src/entity/ProjectionSpec.ts, src/entity/Repository.ts, src/entity/index.ts, src/errors/index.ts, src/feed/index.ts, src/kv/index.ts, src/operational/ConsumerCheckpoint.ts, src/operational/index.ts, src/native/FrontierClosure.ts, src/native/NativeQuery.ts, src/storage/QueryExecutor.ts, src/storage/ReadSurface.ts, src/storage/StorageAdapter.ts, src/storage/types.ts, src/snapshots/EntitySnapshotsCapability.ts, src/snapshots/SnapshotService.ts, src/snapshots/SnapshotServiceLive.ts, src/snapshots/canonical.ts, src/snapshots/index.ts, src/subscriptions/SubscriptionManager.ts, src/subscriptions/SyncHub.ts, src/subscriptions/TopicTree.ts, src/subscriptions/extract-dependencies.ts, src/subscriptions/index.ts, src/subscriptions/invalidation.ts, src/subscriptions/query-hash.ts, src/subscriptions/types.ts, src/store/ChangeEmissionCapability.ts, src/store/ChangeEmitter.ts, src/store/DatabaseManager.ts, src/store/DatabaseRegistry.ts, src/store/RuntimeServices.ts, src/store/StoreCapability.ts, src/store/TripleStoreRuntime.ts, src/store/Triples.ts, src/store/TriplesLive.ts, src/store/entityTransactionHistory.ts, src/store/reach.ts, src/store/systemNamespace.ts, src/store/transactionMetadata.ts, src/store/validateValues.ts, src/store/writeEventUtils.ts, src/types/Pattern.ts, src/utils/id.ts, src/kv/datalog/executor.ts, src/kv/datalog/index.ts, src/kv/datalog/pattern.ts, src/kv/datalog/predicate.ts, src/kv/datalog/types.ts, src/kv/hexastore/KvTripleStore.ts, src/kv/hexastore/index.ts, src/kv/hexastore/indexes.ts, src/kv/hexastore/scan.ts, src/kv/hexastore/tuple.ts, src/kv/kv/InMemoryKvBackend.ts, src/kv/kv/KvBackend.ts, src/kv/kv/encoding.ts, src/kv/kv/index.ts, src/kv/layers/KvTriplesLive.ts, src/kv/layers/index.ts, src/kv/layers/valueAdmission.ts, src/runtime/Capabilities.ts, src/runtime/DatabaseScope.ts, src/runtime/Runtime.ts, src/runtime/index.ts
+@triplex-build/triplex:build: ℹ target: esnext
+@triplex-build/triplex:build: ℹ tsconfig: tsconfig.json
+@triplex-build/triplex:build: ℹ Build start
+@triplex-build/triplex:build: ℹ Cleaning 464 files
+ WARNING  IO error: Operation not permitted (os error 1)
+@triplex-build/triplex:build: ℹ dist/datalog/compiler.js                            61.60 kB │ gzip: 12.48 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/KvTriplesLive.js                     28.38 kB │ gzip:  6.91 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/KvTripleStore.js                  25.73 kB │ gzip:  6.26 kB
+@triplex-build/triplex:build: ℹ dist/config/EntityValidation.js                     24.92 kB │ gzip:  5.77 kB
+@triplex-build/triplex:build: ℹ dist/store/TriplesLive.js                           23.45 kB │ gzip:  5.79 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/executor.js                         21.33 kB │ gzip:  5.70 kB
+@triplex-build/triplex:build: ℹ dist/datalog/schema.js                              20.80 kB │ gzip:  5.71 kB
+@triplex-build/triplex:build: ℹ dist/entity/ProjectionSpec.js                       19.70 kB │ gzip:  6.54 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Materialization.js                  15.91 kB │ gzip:  3.94 kB
+@triplex-build/triplex:build: ℹ dist/config/Evaluate.js                             14.98 kB │ gzip:  5.06 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/SnapshotServiceLive.js               14.94 kB │ gzip:  3.01 kB
+@triplex-build/triplex:build: ℹ dist/native/FrontierClosure.js                      14.45 kB │ gzip:  4.61 kB
+@triplex-build/triplex:build: ℹ dist/datalog/validation.js                          13.80 kB │ gzip:  3.40 kB
+@triplex-build/triplex:build: ℹ dist/config/InMemoryConfigStore.js                  13.71 kB │ gzip:  4.89 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Derivation.js                       12.29 kB │ gzip:  3.59 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigStore.js                          12.28 kB │ gzip:  3.35 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/tuple.js                          12.18 kB │ gzip:  3.35 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/pattern.js                          11.71 kB │ gzip:  3.40 kB
+@triplex-build/triplex:build: ℹ dist/datalog/wrapper.js                             11.62 kB │ gzip:  3.35 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigNode.js                           11.37 kB │ gzip:  4.42 kB
+@triplex-build/triplex:build: ℹ dist/Constraint.js                                  10.65 kB │ gzip:  3.06 kB
+@triplex-build/triplex:build: ℹ dist/config/GraphConstraint.js                      10.29 kB │ gzip:  2.96 kB
+@triplex-build/triplex:build: ℹ dist/internal.js                                     9.71 kB │ gzip:  2.37 kB
+@triplex-build/triplex:build: ℹ dist/ValueDomain.js                                  9.64 kB │ gzip:  3.07 kB
+@triplex-build/triplex:build: ℹ dist/entity/Descriptors.js                           9.40 kB │ gzip:  3.16 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/InMemoryKvBackend.js                      8.97 kB │ gzip:  2.77 kB
+@triplex-build/triplex:build: ℹ dist/entity/PhysicalNames.js                         8.21 kB │ gzip:  3.38 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeSubsumption.js                       8.18 kB │ gzip:  3.02 kB
+@triplex-build/triplex:build: ℹ dist/Pagination.js                                   8.04 kB │ gzip:  2.50 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeExpr.js                              7.60 kB │ gzip:  2.79 kB
+@triplex-build/triplex:build: ℹ dist/entity/EntityCodec.js                           7.51 kB │ gzip:  2.53 kB
+@triplex-build/triplex:build: ℹ dist/operational/ConsumerCheckpoint.js               7.42 kB │ gzip:  2.14 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Overlay.js                           6.89 kB │ gzip:  2.40 kB
+@triplex-build/triplex:build: ℹ dist/config/World.js                                 6.56 kB │ gzip:  2.75 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/SyncHub.js                        6.46 kB │ gzip:  1.80 kB
+@triplex-build/triplex:build: ℹ dist/store/transactionMetadata.js                    6.09 kB │ gzip:  1.75 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/EntitySnapshotsCapability.js          6.03 kB │ gzip:  1.91 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigRuntime.js                         5.66 kB │ gzip:  2.12 kB
+@triplex-build/triplex:build: ℹ dist/feed/index.js                                   5.41 kB │ gzip:  1.86 kB
+@triplex-build/triplex:build: ℹ dist/Triple.js                                       5.26 kB │ gzip:  1.07 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeSchema.js                            5.20 kB │ gzip:  2.15 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/TopicTree.js                      5.13 kB │ gzip:  1.28 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/extract-dependencies.js           5.01 kB │ gzip:  1.62 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/indexes.js                         4.86 kB │ gzip:  1.43 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/valueAdmission.js                     4.66 kB │ gzip:  1.75 kB
+@triplex-build/triplex:build: ℹ dist/native/NativeQuery.js                           4.64 kB │ gzip:  1.67 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/SubscriptionManager.js            4.63 kB │ gzip:  1.27 kB
+@triplex-build/triplex:build: ℹ dist/config/Entity.js                                4.63 kB │ gzip:  2.09 kB
+@triplex-build/triplex:build: ℹ dist/content/CanonicalJson.js                        4.48 kB │ gzip:  1.90 kB
+@triplex-build/triplex:build: ℹ dist/index.js                                        4.48 kB │ gzip:  1.18 kB
+@triplex-build/triplex:build: ℹ dist/errors/index.js                                 4.36 kB │ gzip:  1.37 kB
+@triplex-build/triplex:build: ℹ dist/config/Reactor.js                               4.34 kB │ gzip:  1.60 kB
+@triplex-build/triplex:build: ℹ dist/content/Sha256.js                               4.15 kB │ gzip:  2.10 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/canonical.js                          4.06 kB │ gzip:  1.47 kB
+@triplex-build/triplex:build: ℹ dist/EntityPage.js                                   3.88 kB │ gzip:  1.25 kB
+@triplex-build/triplex:build: ℹ dist/config/EntityType.js                            3.68 kB │ gzip:  1.34 kB
+@triplex-build/triplex:build: ℹ dist/runtime/index.js                                3.52 kB │ gzip:  0.94 kB
+@triplex-build/triplex:build: ℹ dist/config/BoolExpr.js                              3.43 kB │ gzip:  1.45 kB
+@triplex-build/triplex:build: ℹ dist/store/writeEventUtils.js                        3.43 kB │ gzip:  1.19 kB
+@triplex-build/triplex:build: ℹ dist/content/ContentId.js                            3.42 kB │ gzip:  1.51 kB
+@triplex-build/triplex:build: ℹ dist/store/entityTransactionHistory.js               3.35 kB │ gzip:  1.26 kB
+@triplex-build/triplex:build: ℹ dist/config/Attribute.js                             3.14 kB │ gzip:  1.27 kB
+@triplex-build/triplex:build: ℹ dist/Value.js                                        3.03 kB │ gzip:  1.07 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/invalidation.js                   2.81 kB │ gzip:  1.02 kB
+@triplex-build/triplex:build: ℹ dist/entity/Errors.js                                2.78 kB │ gzip:  1.27 kB
+@triplex-build/triplex:build: ℹ dist/config/Catalog.js                               2.77 kB │ gzip:  1.34 kB
+@triplex-build/triplex:build: ℹ dist/storage/ReadSurface.js                          2.68 kB │ gzip:  0.97 kB
+@triplex-build/triplex:build: ℹ dist/store/StoreCapability.js                        2.57 kB │ gzip:  1.10 kB
+@triplex-build/triplex:build: ℹ dist/runtime/Runtime.js                              2.37 kB │ gzip:  0.84 kB
+@triplex-build/triplex:build: ℹ dist/store/RuntimeServices.js                        2.37 kB │ gzip:  0.86 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/scan.js                            2.28 kB │ gzip:  0.73 kB
+@triplex-build/triplex:build: ℹ dist/store/systemNamespace.js                        2.22 kB │ gzip:  0.79 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/encoding.js                               2.20 kB │ gzip:  0.94 kB
+@triplex-build/triplex:build: ℹ dist/entity/Repository.js                            2.16 kB │ gzip:  1.01 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/predicate.js                         2.01 kB │ gzip:  0.84 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/types.js                             1.99 kB │ gzip:  0.73 kB
+@triplex-build/triplex:build: ℹ dist/kv/index.js                                     1.98 kB │ gzip:  0.63 kB
+@triplex-build/triplex:build: ℹ dist/store/TripleStoreRuntime.js                     1.93 kB │ gzip:  0.59 kB
+@triplex-build/triplex:build: ℹ dist/Branded.js                                      1.92 kB │ gzip:  0.59 kB
+@triplex-build/triplex:build: ℹ dist/runtime/Capabilities.js                         1.82 kB │ gzip:  0.63 kB
+@triplex-build/triplex:build: ℹ dist/config/index.js                                 1.74 kB │ gzip:  0.41 kB
+@triplex-build/triplex:build: ℹ dist/runtime/DatabaseScope.js                        1.58 kB │ gzip:  0.68 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/query-hash.js                     1.28 kB │ gzip:  0.63 kB
+@triplex-build/triplex:build: ℹ dist/Temporal.js                                     1.22 kB │ gzip:  0.59 kB
+@triplex-build/triplex:build: ℹ dist/utils/id.js                                     1.17 kB │ gzip:  0.60 kB
+@triplex-build/triplex:build: ℹ dist/store/ChangeEmissionCapability.js               1.15 kB │ gzip:  0.61 kB
+@triplex-build/triplex:build: ℹ dist/datalog/index.js                                1.10 kB │ gzip:  0.30 kB
+@triplex-build/triplex:build: ℹ dist/entity/Plan.js                                  1.08 kB │ gzip:  0.53 kB
+@triplex-build/triplex:build: ℹ dist/store/Triples.js                                1.00 kB │ gzip:  0.57 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/index.js                           0.97 kB │ gzip:  0.35 kB
+@triplex-build/triplex:build: ℹ dist/store/ChangeEmitter.js                          0.84 kB │ gzip:  0.46 kB
+@triplex-build/triplex:build: ℹ dist/entity/index.js                                 0.83 kB │ gzip:  0.26 kB
+@triplex-build/triplex:build: ℹ dist/dialects/postgresql.js                          0.83 kB │ gzip:  0.51 kB
+@triplex-build/triplex:build: ℹ dist/store/reach.js                                  0.81 kB │ gzip:  0.46 kB
+@triplex-build/triplex:build: ℹ dist/dialects/sqlite.js                              0.77 kB │ gzip:  0.48 kB
+@triplex-build/triplex:build: ℹ dist/storage/QueryExecutor.js                        0.76 kB │ gzip:  0.42 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/SnapshotService.js                    0.75 kB │ gzip:  0.40 kB
+@triplex-build/triplex:build: ℹ dist/storage/StorageAdapter.js                       0.72 kB │ gzip:  0.41 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/index.js                              0.71 kB │ gzip:  0.26 kB
+@triplex-build/triplex:build: ℹ dist/store/validateValues.js                         0.69 kB │ gzip:  0.33 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/KvBackend.js                              0.67 kB │ gzip:  0.43 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/index.js                          0.62 kB │ gzip:  0.23 kB
+@triplex-build/triplex:build: ℹ dist/store/DatabaseRegistry.js                       0.61 kB │ gzip:  0.35 kB
+@triplex-build/triplex:build: ℹ dist/store/DatabaseManager.js                        0.58 kB │ gzip:  0.34 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/index.js                             0.53 kB │ gzip:  0.22 kB
+@triplex-build/triplex:build: ℹ dist/Error.js                                        0.51 kB │ gzip:  0.23 kB
+@triplex-build/triplex:build: ℹ dist/params.js                                       0.46 kB │ gzip:  0.28 kB
+@triplex-build/triplex:build: ℹ dist/derivation/index.js                             0.45 kB │ gzip:  0.19 kB
+@triplex-build/triplex:build: ℹ dist/types/Pattern.js                                0.43 kB │ gzip:  0.26 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/index.js                                  0.34 kB │ gzip:  0.16 kB
+@triplex-build/triplex:build: ℹ dist/content/index.js                                0.27 kB │ gzip:  0.12 kB
+@triplex-build/triplex:build: ℹ dist/dialects/types.js                               0.21 kB │ gzip:  0.17 kB
+@triplex-build/triplex:build: ℹ dist/dialects/index.js                               0.20 kB │ gzip:  0.11 kB
+@triplex-build/triplex:build: ℹ dist/datalog/types.js                                0.17 kB │ gzip:  0.15 kB
+@triplex-build/triplex:build: ℹ dist/operational/index.js                            0.13 kB │ gzip:  0.08 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/index.js                              0.10 kB │ gzip:  0.07 kB
+@triplex-build/triplex:build: ℹ dist/entity/Model.js                                 0.01 kB │ gzip:  0.03 kB
+@triplex-build/triplex:build: ℹ dist/storage/types.js                                0.01 kB │ gzip:  0.03 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/types.js                          0.01 kB │ gzip:  0.03 kB
+@triplex-build/triplex:build: ℹ dist/datalog/compiler.js.map                       124.97 kB │ gzip: 27.13 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/KvTriplesLive.js.map                 58.61 kB │ gzip: 13.78 kB
+@triplex-build/triplex:build: ℹ dist/config/EntityValidation.js.map                 51.66 kB │ gzip: 11.39 kB
+@triplex-build/triplex:build: ℹ dist/store/TriplesLive.js.map                       50.95 kB │ gzip: 12.25 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/KvTripleStore.js.map              50.86 kB │ gzip: 11.76 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/executor.js.map                     46.11 kB │ gzip: 11.29 kB
+@triplex-build/triplex:build: ℹ dist/entity/ProjectionSpec.js.map                   43.44 kB │ gzip: 12.28 kB
+@triplex-build/triplex:build: ℹ dist/datalog/schema.js.map                          37.31 kB │ gzip:  8.98 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Materialization.js.map              32.08 kB │ gzip:  7.41 kB
+@triplex-build/triplex:build: ℹ dist/native/FrontierClosure.js.map                  32.06 kB │ gzip:  9.88 kB
+@triplex-build/triplex:build: ℹ dist/config/Evaluate.js.map                         29.98 kB │ gzip:  8.87 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/SnapshotServiceLive.js.map           29.31 kB │ gzip:  5.77 kB
+@triplex-build/triplex:build: ℹ dist/config/InMemoryConfigStore.js.map              29.07 kB │ gzip:  8.84 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Derivation.js.map                   28.61 kB │ gzip:  7.63 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigStore.js.map                      27.69 kB │ gzip:  6.80 kB
+@triplex-build/triplex:build: ℹ dist/datalog/validation.js.map                      25.63 kB │ gzip:  6.27 kB
+@triplex-build/triplex:build: ℹ dist/datalog/wrapper.js.map                         25.07 kB │ gzip:  6.80 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/tuple.js.map                      25.04 kB │ gzip:  6.33 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/pattern.js.map                      22.39 kB │ gzip:  5.93 kB
+@triplex-build/triplex:build: ℹ dist/Constraint.js.map                              21.81 kB │ gzip:  5.64 kB
+@triplex-build/triplex:build: ℹ dist/ValueDomain.js.map                             20.95 kB │ gzip:  6.16 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigNode.js.map                       20.24 kB │ gzip:  6.58 kB
+@triplex-build/triplex:build: ℹ dist/config/GraphConstraint.js.map                  20.01 kB │ gzip:  5.32 kB
+@triplex-build/triplex:build: ℹ dist/entity/Descriptors.js.map                      18.69 kB │ gzip:  5.47 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/InMemoryKvBackend.js.map                 18.42 kB │ gzip:  5.39 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeSubsumption.js.map                  15.90 kB │ gzip:  5.22 kB
+@triplex-build/triplex:build: ℹ dist/Pagination.js.map                              15.77 kB │ gzip:  4.40 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeExpr.js.map                         14.43 kB │ gzip:  4.36 kB
+@triplex-build/triplex:build: ℹ dist/entity/EntityCodec.js.map                      14.30 kB │ gzip:  4.32 kB
+@triplex-build/triplex:build: ℹ dist/operational/ConsumerCheckpoint.js.map          14.01 kB │ gzip:  3.79 kB
+@triplex-build/triplex:build: ℹ dist/feed/index.js.map                              13.63 kB │ gzip:  4.19 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/SyncHub.js.map                   13.26 kB │ gzip:  3.61 kB
+@triplex-build/triplex:build: ℹ dist/store/Triples.js.map                           13.15 kB │ gzip:  3.73 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Overlay.js.map                      12.91 kB │ gzip:  4.12 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/EntitySnapshotsCapability.js.map     12.86 kB │ gzip:  3.64 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/SubscriptionManager.js.map       12.69 kB │ gzip:  3.25 kB
+@triplex-build/triplex:build: ℹ dist/store/transactionMetadata.js.map               11.71 kB │ gzip:  3.24 kB
+@triplex-build/triplex:build: ℹ dist/config/Reactor.js.map                          11.44 kB │ gzip:  4.01 kB
+@triplex-build/triplex:build: ℹ dist/entity/PhysicalNames.js.map                    11.30 kB │ gzip:  4.28 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigRuntime.js.map                    11.10 kB │ gzip:  3.66 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/canonical.js.map                     10.97 kB │ gzip:  2.98 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/indexes.js.map                    10.83 kB │ gzip:  2.75 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/valueAdmission.js.map                10.71 kB │ gzip:  3.63 kB
+@triplex-build/triplex:build: ℹ dist/config/World.js.map                            10.35 kB │ gzip:  3.88 kB
+@triplex-build/triplex:build: ℹ dist/native/NativeQuery.js.map                      10.31 kB │ gzip:  3.36 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeSchema.js.map                       10.06 kB │ gzip:  3.43 kB
+@triplex-build/triplex:build: ℹ dist/Triple.js.map                                   9.71 kB │ gzip:  1.87 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/extract-dependencies.js.map       9.42 kB │ gzip:  2.88 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/TopicTree.js.map                  9.36 kB │ gzip:  2.51 kB
+@triplex-build/triplex:build: ℹ dist/config/Entity.js.map                            9.32 kB │ gzip:  3.47 kB
+@triplex-build/triplex:build: ℹ dist/storage/StorageAdapter.js.map                   9.30 kB │ gzip:  3.03 kB
+@triplex-build/triplex:build: ℹ dist/config/Attribute.js.map                         8.97 kB │ gzip:  3.08 kB
+@triplex-build/triplex:build: ℹ dist/datalog/schema.d.ts.map                         8.95 kB │ gzip:  1.01 kB
+@triplex-build/triplex:build: ℹ dist/errors/index.js.map                             8.93 kB │ gzip:  2.40 kB
+@triplex-build/triplex:build: ℹ dist/config/EntityType.js.map                        8.65 kB │ gzip:  2.83 kB
+@triplex-build/triplex:build: ℹ dist/entity/Repository.js.map                        8.65 kB │ gzip:  2.91 kB
+@triplex-build/triplex:build: ℹ dist/storage/ReadSurface.js.map                      8.27 kB │ gzip:  2.86 kB
+@triplex-build/triplex:build: ℹ dist/entity/Plan.js.map                              7.97 kB │ gzip:  2.98 kB
+@triplex-build/triplex:build: ℹ dist/EntityPage.js.map                               7.89 kB │ gzip:  2.31 kB
+@triplex-build/triplex:build: ℹ dist/store/writeEventUtils.js.map                    7.64 kB │ gzip:  2.40 kB
+@triplex-build/triplex:build: ℹ dist/content/CanonicalJson.js.map                    7.57 kB │ gzip:  2.84 kB
+@triplex-build/triplex:build: ℹ dist/content/Sha256.js.map                           7.09 kB │ gzip:  2.83 kB
+@triplex-build/triplex:build: ℹ dist/store/entityTransactionHistory.js.map           6.96 kB │ gzip:  2.41 kB
+@triplex-build/triplex:build: ℹ dist/config/BoolExpr.js.map                          6.56 kB │ gzip:  2.23 kB
+@triplex-build/triplex:build: ℹ dist/runtime/Runtime.js.map                          6.45 kB │ gzip:  1.93 kB
+@triplex-build/triplex:build: ℹ dist/storage/QueryExecutor.js.map                    6.05 kB │ gzip:  1.87 kB
+@triplex-build/triplex:build: ℹ dist/store/StoreCapability.js.map                    5.84 kB │ gzip:  1.96 kB
+@triplex-build/triplex:build: ℹ dist/Value.js.map                                    5.64 kB │ gzip:  1.75 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/invalidation.js.map               5.44 kB │ gzip:  1.90 kB
+@triplex-build/triplex:build: ℹ dist/runtime/Capabilities.js.map                     5.15 kB │ gzip:  1.62 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/types.js.map                         5.15 kB │ gzip:  1.73 kB
+@triplex-build/triplex:build: ℹ dist/store/RuntimeServices.js.map                    4.79 kB │ gzip:  1.62 kB
+@triplex-build/triplex:build: ℹ dist/entity/Errors.js.map                            4.67 kB │ gzip:  1.81 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/scan.js.map                        4.51 kB │ gzip:  1.38 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/KvBackend.js.map                          4.49 kB │ gzip:  1.65 kB
+@triplex-build/triplex:build: ℹ dist/store/systemNamespace.js.map                    4.42 kB │ gzip:  1.49 kB
+@triplex-build/triplex:build: ℹ dist/content/ContentId.js.map                        4.41 kB │ gzip:  1.85 kB
+@triplex-build/triplex:build: ℹ dist/store/TriplesLive.d.ts.map                      4.36 kB │ gzip:  0.41 kB
+@triplex-build/triplex:build: ℹ dist/store/DatabaseRegistry.js.map                   4.11 kB │ gzip:  1.11 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/SnapshotService.js.map                4.08 kB │ gzip:  1.25 kB
+@triplex-build/triplex:build: ℹ dist/store/Triples.d.ts.map                          4.08 kB │ gzip:  1.16 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/encoding.js.map                           3.91 kB │ gzip:  1.45 kB
+@triplex-build/triplex:build: ℹ dist/config/Catalog.js.map                           3.88 kB │ gzip:  1.73 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/predicate.js.map                     3.84 kB │ gzip:  1.39 kB
+@triplex-build/triplex:build: ℹ dist/Branded.js.map                                  3.66 kB │ gzip:  1.00 kB
+@triplex-build/triplex:build: ℹ dist/store/TripleStoreRuntime.js.map                 3.48 kB │ gzip:  1.11 kB
+@triplex-build/triplex:build: ℹ dist/runtime/DatabaseScope.js.map                    3.22 kB │ gzip:  1.34 kB
+@triplex-build/triplex:build: ℹ dist/entity/Repository.d.ts.map                      2.96 kB │ gzip:  0.91 kB
+@triplex-build/triplex:build: ℹ dist/storage/StorageAdapter.d.ts.map                 2.89 kB │ gzip:  0.89 kB
+@triplex-build/triplex:build: ℹ dist/config/InMemoryConfigStore.d.ts.map             2.87 kB │ gzip:  0.80 kB
+@triplex-build/triplex:build: ℹ dist/errors/index.d.ts.map                           2.74 kB │ gzip:  0.67 kB
+@triplex-build/triplex:build: ℹ dist/datalog/compiler.d.ts.map                       2.71 kB │ gzip:  0.81 kB
+@triplex-build/triplex:build: ℹ dist/Temporal.js.map                                 2.67 kB │ gzip:  1.21 kB
+@triplex-build/triplex:build: ℹ dist/entity/Model.d.ts.map                           2.67 kB │ gzip:  0.75 kB
+@triplex-build/triplex:build: ℹ dist/store/ChangeEmitter.js.map                      2.60 kB │ gzip:  1.01 kB
+@triplex-build/triplex:build: ℹ dist/entity/ProjectionSpec.d.ts.map                  2.52 kB │ gzip:  0.77 kB
+@triplex-build/triplex:build: ℹ dist/store/DatabaseManager.js.map                    2.49 kB │ gzip:  0.85 kB
+@triplex-build/triplex:build: ℹ dist/config/EntityValidation.d.ts.map                2.44 kB │ gzip:  0.74 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Derivation.d.ts.map                  2.38 kB │ gzip:  0.71 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigNode.d.ts.map                      2.23 kB │ gzip:  0.61 kB
+@triplex-build/triplex:build: ℹ dist/utils/id.js.map                                 2.21 kB │ gzip:  1.05 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeExpr.d.ts.map                        2.21 kB │ gzip:  0.59 kB
+@triplex-build/triplex:build: ℹ dist/store/reach.js.map                              2.17 kB │ gzip:  1.04 kB
+@triplex-build/triplex:build: ℹ dist/Triple.d.ts.map                                 2.15 kB │ gzip:  0.49 kB
+@triplex-build/triplex:build: ℹ dist/config/Evaluate.d.ts.map                        2.04 kB │ gzip:  0.61 kB
+@triplex-build/triplex:build: ℹ dist/config/Attribute.d.ts.map                       1.99 kB │ gzip:  0.68 kB
+@triplex-build/triplex:build: ℹ dist/config/Entity.d.ts.map                          1.90 kB │ gzip:  0.64 kB
+@triplex-build/triplex:build: ℹ dist/feed/index.d.ts.map                             1.84 kB │ gzip:  0.57 kB
+@triplex-build/triplex:build: ℹ dist/store/ChangeEmissionCapability.js.map           1.83 kB │ gzip:  0.88 kB
+@triplex-build/triplex:build: ℹ dist/native/FrontierClosure.d.ts.map                 1.81 kB │ gzip:  0.67 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/KvTripleStore.d.ts.map             1.80 kB │ gzip:  0.62 kB
+@triplex-build/triplex:build: ℹ dist/store/validateValues.js.map                     1.78 kB │ gzip:  0.80 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/query-hash.js.map                 1.77 kB │ gzip:  0.80 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/indexes.d.ts.map                   1.70 kB │ gzip:  0.47 kB
+@triplex-build/triplex:build: ℹ dist/storage/ReadSurface.d.ts.map                    1.67 kB │ gzip:  0.58 kB
+@triplex-build/triplex:build: ℹ dist/entity/Plan.d.ts.map                            1.63 kB │ gzip:  0.61 kB
+@triplex-build/triplex:build: ℹ dist/Branded.d.ts.map                                1.62 kB │ gzip:  0.42 kB
+@triplex-build/triplex:build: ℹ dist/Constraint.d.ts.map                             1.58 kB │ gzip:  0.47 kB
+@triplex-build/triplex:build: ℹ dist/datalog/types.js.map                            1.55 kB │ gzip:  0.61 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigStore.d.ts.map                     1.54 kB │ gzip:  0.55 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/KvBackend.d.ts.map                        1.49 kB │ gzip:  0.50 kB
+@triplex-build/triplex:build: ℹ dist/storage/QueryExecutor.d.ts.map                  1.48 kB │ gzip:  0.49 kB
+@triplex-build/triplex:build: ℹ dist/dialects/sqlite.js.map                          1.47 kB │ gzip:  0.83 kB
+@triplex-build/triplex:build: ℹ dist/config/BoolExpr.d.ts.map                        1.45 kB │ gzip:  0.42 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/types.d.ts.map                    1.34 kB │ gzip:  0.52 kB
+@triplex-build/triplex:build: ℹ dist/config/GraphConstraint.d.ts.map                 1.32 kB │ gzip:  0.49 kB
+@triplex-build/triplex:build: ℹ dist/dialects/postgresql.js.map                      1.32 kB │ gzip:  0.74 kB
+@triplex-build/triplex:build: ℹ dist/types/Pattern.js.map                            1.31 kB │ gzip:  0.63 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/SnapshotService.d.ts.map              1.30 kB │ gzip:  0.43 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/tuple.d.ts.map                     1.29 kB │ gzip:  0.44 kB
+@triplex-build/triplex:build: ℹ dist/Value.d.ts.map                                  1.29 kB │ gzip:  0.40 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Materialization.d.ts.map             1.27 kB │ gzip:  0.45 kB
+@triplex-build/triplex:build: ℹ dist/native/NativeQuery.d.ts.map                     1.25 kB │ gzip:  0.44 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/canonical.d.ts.map                    1.25 kB │ gzip:  0.42 kB
+@triplex-build/triplex:build: ℹ dist/config/Reactor.d.ts.map                         1.23 kB │ gzip:  0.43 kB
+@triplex-build/triplex:build: ℹ dist/store/DatabaseRegistry.d.ts.map                 1.21 kB │ gzip:  0.44 kB
+@triplex-build/triplex:build: ℹ dist/config/World.d.ts.map                           1.20 kB │ gzip:  0.45 kB
+@triplex-build/triplex:build: ℹ dist/runtime/Runtime.d.ts.map                        1.18 kB │ gzip:  0.43 kB
+@triplex-build/triplex:build: ℹ dist/params.js.map                                   1.17 kB │ gzip:  0.58 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/SubscriptionManager.d.ts.map      1.14 kB │ gzip:  0.45 kB
+@triplex-build/triplex:build: ℹ dist/ValueDomain.d.ts.map                            1.11 kB │ gzip:  0.41 kB
+@triplex-build/triplex:build: ℹ dist/config/EntityType.d.ts.map                      1.09 kB │ gzip:  0.45 kB
+@triplex-build/triplex:build: ℹ dist/entity/Descriptors.d.ts.map                     1.04 kB │ gzip:  0.41 kB
+@triplex-build/triplex:build: ℹ dist/store/DatabaseManager.d.ts.map                  1.01 kB │ gzip:  0.36 kB
+@triplex-build/triplex:build: ℹ dist/runtime/Capabilities.d.ts.map                   1.00 kB │ gzip:  0.42 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigRuntime.d.ts.map                   0.99 kB │ gzip:  0.40 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/SyncHub.d.ts.map                  0.96 kB │ gzip:  0.41 kB
+@triplex-build/triplex:build: ℹ dist/operational/ConsumerCheckpoint.d.ts.map         0.91 kB │ gzip:  0.37 kB
+@triplex-build/triplex:build: ℹ dist/store/RuntimeServices.d.ts.map                  0.90 kB │ gzip:  0.36 kB
+@triplex-build/triplex:build: ℹ dist/entity/Errors.d.ts.map                          0.87 kB │ gzip:  0.32 kB
+@triplex-build/triplex:build: ℹ dist/store/systemNamespace.d.ts.map                  0.84 kB │ gzip:  0.36 kB
+@triplex-build/triplex:build: ℹ dist/Pagination.d.ts.map                             0.81 kB │ gzip:  0.36 kB
+@triplex-build/triplex:build: ℹ dist/Error.js.map                                    0.80 kB │ gzip:  0.38 kB
+@triplex-build/triplex:build: ℹ dist/dialects/types.js.map                           0.74 kB │ gzip:  0.41 kB
+@triplex-build/triplex:build: ℹ dist/store/transactionMetadata.d.ts.map              0.68 kB │ gzip:  0.32 kB
+@triplex-build/triplex:build: ℹ dist/store/TripleStoreRuntime.d.ts.map               0.67 kB │ gzip:  0.31 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeSubsumption.d.ts.map                 0.66 kB │ gzip:  0.29 kB
+@triplex-build/triplex:build: ℹ dist/store/entityTransactionHistory.d.ts.map         0.63 kB │ gzip:  0.29 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/executor.d.ts.map                    0.61 kB │ gzip:  0.28 kB
+@triplex-build/triplex:build: ℹ dist/entity/EntityCodec.d.ts.map                     0.60 kB │ gzip:  0.28 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Overlay.d.ts.map                     0.59 kB │ gzip:  0.29 kB
+@triplex-build/triplex:build: ℹ dist/EntityPage.d.ts.map                             0.59 kB │ gzip:  0.26 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/types.d.ts.map                       0.55 kB │ gzip:  0.27 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/pattern.d.ts.map                     0.54 kB │ gzip:  0.28 kB
+@triplex-build/triplex:build: ℹ dist/entity/PhysicalNames.d.ts.map                   0.52 kB │ gzip:  0.29 kB
+@triplex-build/triplex:build: ℹ dist/store/StoreCapability.d.ts.map                  0.52 kB │ gzip:  0.28 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/valueAdmission.d.ts.map               0.51 kB │ gzip:  0.27 kB
+@triplex-build/triplex:build: ℹ dist/datalog/wrapper.d.ts.map                        0.49 kB │ gzip:  0.28 kB
+@triplex-build/triplex:build: ℹ dist/store/ChangeEmitter.d.ts.map                    0.48 kB │ gzip:  0.28 kB
+@triplex-build/triplex:build: ℹ dist/config/Catalog.d.ts.map                         0.47 kB │ gzip:  0.26 kB
+@triplex-build/triplex:build: ℹ dist/types/Pattern.d.ts.map                          0.46 kB │ gzip:  0.25 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/TopicTree.d.ts.map                0.46 kB │ gzip:  0.26 kB
+@triplex-build/triplex:build: ℹ dist/content/ContentId.d.ts.map                      0.44 kB │ gzip:  0.25 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/encoding.d.ts.map                         0.41 kB │ gzip:  0.23 kB
+@triplex-build/triplex:build: ℹ dist/Temporal.d.ts.map                               0.39 kB │ gzip:  0.24 kB
+@triplex-build/triplex:build: ℹ dist/runtime/DatabaseScope.d.ts.map                  0.39 kB │ gzip:  0.24 kB
+@triplex-build/triplex:build: ℹ dist/content/CanonicalJson.d.ts.map                  0.38 kB │ gzip:  0.23 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/scan.d.ts.map                      0.38 kB │ gzip:  0.23 kB
+@triplex-build/triplex:build: ℹ dist/store/validateValues.d.ts.map                   0.36 kB │ gzip:  0.20 kB
+@triplex-build/triplex:build: ℹ dist/_virtual/_rolldown/runtime.js                   0.35 kB │ gzip:  0.25 kB
+@triplex-build/triplex:build: ℹ dist/datalog/validation.d.ts.map                     0.35 kB │ gzip:  0.20 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeSchema.d.ts.map                      0.32 kB │ gzip:  0.20 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/predicate.d.ts.map                   0.32 kB │ gzip:  0.20 kB
+@triplex-build/triplex:build: ℹ dist/dialects/types.d.ts.map                         0.32 kB │ gzip:  0.20 kB
+@triplex-build/triplex:build: ℹ dist/store/writeEventUtils.d.ts.map                  0.29 kB │ gzip:  0.20 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/KvTriplesLive.d.ts.map                0.28 kB │ gzip:  0.20 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/SnapshotServiceLive.d.ts.map          0.28 kB │ gzip:  0.17 kB
+@triplex-build/triplex:build: ℹ dist/storage/types.d.ts.map                          0.28 kB │ gzip:  0.18 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/invalidation.d.ts.map             0.28 kB │ gzip:  0.19 kB
+@triplex-build/triplex:build: ℹ dist/params.d.ts.map                                 0.24 kB │ gzip:  0.17 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/extract-dependencies.d.ts.map     0.24 kB │ gzip:  0.18 kB
+@triplex-build/triplex:build: ℹ dist/store/reach.d.ts.map                            0.23 kB │ gzip:  0.17 kB
+@triplex-build/triplex:build: ℹ dist/utils/id.d.ts.map                               0.23 kB │ gzip:  0.18 kB
+@triplex-build/triplex:build: ℹ dist/store/ChangeEmissionCapability.d.ts.map         0.22 kB │ gzip:  0.17 kB
+@triplex-build/triplex:build: ℹ dist/Error.d.ts.map                                  0.21 kB │ gzip:  0.15 kB
+@triplex-build/triplex:build: ℹ dist/datalog/types.d.ts.map                          0.20 kB │ gzip:  0.17 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/InMemoryKvBackend.d.ts.map                0.20 kB │ gzip:  0.16 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/EntitySnapshotsCapability.d.ts.map    0.19 kB │ gzip:  0.16 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/query-hash.d.ts.map               0.17 kB │ gzip:  0.15 kB
+@triplex-build/triplex:build: ℹ dist/content/Sha256.d.ts.map                         0.15 kB │ gzip:  0.13 kB
+@triplex-build/triplex:build: ℹ dist/dialects/postgresql.d.ts.map                    0.15 kB │ gzip:  0.13 kB
+@triplex-build/triplex:build: ℹ dist/dialects/sqlite.d.ts.map                        0.13 kB │ gzip:  0.13 kB
+@triplex-build/triplex:build: ℹ dist/datalog/schema.d.ts                           186.01 kB │ gzip:  8.68 kB
+@triplex-build/triplex:build: ℹ dist/store/TriplesLive.d.ts                        134.00 kB │ gzip:  4.98 kB
+@triplex-build/triplex:build: ℹ dist/Triple.d.ts                                    34.72 kB │ gzip:  2.21 kB
+@triplex-build/triplex:build: ℹ dist/internal.d.ts                                  13.47 kB │ gzip:  3.11 kB
+@triplex-build/triplex:build: ℹ dist/errors/index.d.ts                              12.69 kB │ gzip:  2.04 kB
+@triplex-build/triplex:build: ℹ dist/store/Triples.d.ts                             11.31 kB │ gzip:  3.25 kB
+@triplex-build/triplex:build: ℹ dist/entity/ProjectionSpec.d.ts                     10.48 kB │ gzip:  3.64 kB
+@triplex-build/triplex:build: ℹ dist/native/FrontierClosure.d.ts                    10.30 kB │ gzip:  4.13 kB
+@triplex-build/triplex:build: ℹ dist/datalog/compiler.d.ts                           9.46 kB │ gzip:  2.30 kB
+@triplex-build/triplex:build: ℹ dist/config/InMemoryConfigStore.d.ts                 9.32 kB │ gzip:  2.85 kB
+@triplex-build/triplex:build: ℹ dist/config/EntityValidation.d.ts                    8.30 kB │ gzip:  1.95 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigNode.d.ts                          7.95 kB │ gzip:  2.67 kB
+@triplex-build/triplex:build: ℹ dist/config/Evaluate.d.ts                            7.50 kB │ gzip:  2.84 kB
+@triplex-build/triplex:build: ℹ dist/entity/Plan.d.ts                                6.85 kB │ gzip:  2.46 kB
+@triplex-build/triplex:build: ℹ dist/index.d.ts                                      6.61 kB │ gzip:  1.62 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/KvTripleStore.d.ts                 6.30 kB │ gzip:  2.22 kB
+@triplex-build/triplex:build: ℹ dist/entity/Repository.d.ts                          6.17 kB │ gzip:  2.00 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Derivation.d.ts                      6.13 kB │ gzip:  1.75 kB
+@triplex-build/triplex:build: ℹ dist/storage/StorageAdapter.d.ts                     6.02 kB │ gzip:  1.69 kB
+@triplex-build/triplex:build: ℹ dist/runtime/index.d.ts                              5.60 kB │ gzip:  1.39 kB
+@triplex-build/triplex:build: ℹ dist/entity/Errors.d.ts                              5.59 kB │ gzip:  1.61 kB
+@triplex-build/triplex:build: ℹ dist/config/Attribute.d.ts                           5.18 kB │ gzip:  1.76 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeExpr.d.ts                            5.11 kB │ gzip:  1.71 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigStore.d.ts                         5.08 kB │ gzip:  1.49 kB
+@triplex-build/triplex:build: ℹ dist/storage/QueryExecutor.d.ts                      4.96 kB │ gzip:  1.61 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Materialization.d.ts                 4.90 kB │ gzip:  1.45 kB
+@triplex-build/triplex:build: ℹ dist/Constraint.d.ts                                 4.86 kB │ gzip:  1.38 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/types.d.ts                        4.66 kB │ gzip:  1.47 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/tuple.d.ts                         4.63 kB │ gzip:  1.40 kB
+@triplex-build/triplex:build: ℹ dist/entity/Model.d.ts                               4.49 kB │ gzip:  1.55 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/indexes.d.ts                       4.28 kB │ gzip:  1.25 kB
+@triplex-build/triplex:build: ℹ dist/config/World.d.ts                               4.24 kB │ gzip:  1.68 kB
+@triplex-build/triplex:build: ℹ dist/Value.d.ts                                      4.20 kB │ gzip:  0.98 kB
+@triplex-build/triplex:build: ℹ dist/operational/ConsumerCheckpoint.d.ts             4.14 kB │ gzip:  1.14 kB
+@triplex-build/triplex:build: ℹ dist/config/ConfigRuntime.d.ts                       4.11 kB │ gzip:  1.23 kB
+@triplex-build/triplex:build: ℹ dist/config/GraphConstraint.d.ts                     4.03 kB │ gzip:  1.15 kB
+@triplex-build/triplex:build: ℹ dist/config/Entity.d.ts                              4.02 kB │ gzip:  1.49 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/SubscriptionManager.d.ts          4.01 kB │ gzip:  1.24 kB
+@triplex-build/triplex:build: ℹ dist/entity/PhysicalNames.d.ts                       3.97 kB │ gzip:  1.64 kB
+@triplex-build/triplex:build: ℹ dist/feed/index.d.ts                                 3.92 kB │ gzip:  1.29 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/KvBackend.d.ts                            3.67 kB │ gzip:  1.34 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeSubsumption.d.ts                     3.31 kB │ gzip:  0.84 kB
+@triplex-build/triplex:build: ℹ dist/native/NativeQuery.d.ts                         3.23 kB │ gzip:  1.12 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/canonical.d.ts                        3.22 kB │ gzip:  1.05 kB
+@triplex-build/triplex:build: ℹ dist/config/BoolExpr.d.ts                            3.08 kB │ gzip:  1.06 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/SnapshotService.d.ts                  3.06 kB │ gzip:  0.99 kB
+@triplex-build/triplex:build: ℹ dist/config/Reactor.d.ts                             3.02 kB │ gzip:  1.10 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/pattern.d.ts                         3.02 kB │ gzip:  1.22 kB
+@triplex-build/triplex:build: ℹ dist/store/DatabaseRegistry.d.ts                     3.01 kB │ gzip:  0.86 kB
+@triplex-build/triplex:build: ℹ dist/entity/Descriptors.d.ts                         2.92 kB │ gzip:  1.06 kB
+@triplex-build/triplex:build: ℹ dist/derivation/Overlay.d.ts                         2.92 kB │ gzip:  1.06 kB
+@triplex-build/triplex:build: ℹ dist/Branded.d.ts                                    2.90 kB │ gzip:  0.50 kB
+@triplex-build/triplex:build: ℹ dist/ValueDomain.d.ts                                2.72 kB │ gzip:  0.92 kB
+@triplex-build/triplex:build: ℹ dist/content/ContentId.d.ts                          2.62 kB │ gzip:  0.95 kB
+@triplex-build/triplex:build: ℹ dist/store/StoreCapability.d.ts                      2.52 kB │ gzip:  1.05 kB
+@triplex-build/triplex:build: ℹ dist/storage/ReadSurface.d.ts                        2.48 kB │ gzip:  0.78 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/types.d.ts                           2.41 kB │ gzip:  0.89 kB
+@triplex-build/triplex:build: ℹ dist/config/EntityType.d.ts                          2.37 kB │ gzip:  0.95 kB
+@triplex-build/triplex:build: ℹ dist/kv/index.d.ts                                   2.34 kB │ gzip:  0.73 kB
+@triplex-build/triplex:build: ℹ dist/store/systemNamespace.d.ts                      2.24 kB │ gzip:  0.74 kB
+@triplex-build/triplex:build: ℹ dist/runtime/Capabilities.d.ts                       2.24 kB │ gzip:  0.74 kB
+@triplex-build/triplex:build: ℹ dist/Pagination.d.ts                                 2.17 kB │ gzip:  0.83 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/executor.d.ts                        2.10 kB │ gzip:  0.80 kB
+@triplex-build/triplex:build: ℹ dist/runtime/Runtime.d.ts                            2.08 kB │ gzip:  0.69 kB
+@triplex-build/triplex:build: ℹ dist/store/DatabaseManager.d.ts                      2.08 kB │ gzip:  0.64 kB
+@triplex-build/triplex:build: ℹ dist/store/RuntimeServices.d.ts                      1.88 kB │ gzip:  0.53 kB
+@triplex-build/triplex:build: ℹ dist/store/TripleStoreRuntime.d.ts                   1.82 kB │ gzip:  0.57 kB
+@triplex-build/triplex:build: ℹ dist/config/index.d.ts                               1.81 kB │ gzip:  0.41 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/SyncHub.d.ts                      1.75 kB │ gzip:  0.65 kB
+@triplex-build/triplex:build: ℹ dist/store/transactionMetadata.d.ts                  1.71 kB │ gzip:  0.55 kB
+@triplex-build/triplex:build: ℹ dist/datalog/wrapper.d.ts                            1.70 kB │ gzip:  0.76 kB
+@triplex-build/triplex:build: ℹ dist/Temporal.d.ts                                   1.66 kB │ gzip:  0.77 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/KvTriplesLive.d.ts                    1.61 kB │ gzip:  0.74 kB
+@triplex-build/triplex:build: ℹ dist/store/ChangeEmitter.d.ts                        1.60 kB │ gzip:  0.71 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/invalidation.d.ts                 1.58 kB │ gzip:  0.67 kB
+@triplex-build/triplex:build: ℹ dist/utils/id.d.ts                                   1.57 kB │ gzip:  0.73 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/index.d.ts                        1.53 kB │ gzip:  0.44 kB
+@triplex-build/triplex:build: ℹ dist/content/Sha256.d.ts                             1.47 kB │ gzip:  0.82 kB
+@triplex-build/triplex:build: ℹ dist/entity/EntityCodec.d.ts                         1.43 kB │ gzip:  0.51 kB
+@triplex-build/triplex:build: ℹ dist/content/CanonicalJson.d.ts                      1.42 kB │ gzip:  0.63 kB
+@triplex-build/triplex:build: ℹ dist/datalog/index.d.ts                              1.36 kB │ gzip:  0.37 kB
+@triplex-build/triplex:build: ℹ dist/datalog/types.d.ts                              1.33 kB │ gzip:  0.59 kB
+@triplex-build/triplex:build: ℹ dist/config/Catalog.d.ts                             1.31 kB │ gzip:  0.62 kB
+@triplex-build/triplex:build: ℹ dist/store/entityTransactionHistory.d.ts             1.27 kB │ gzip:  0.47 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/encoding.d.ts                             1.26 kB │ gzip:  0.59 kB
+@triplex-build/triplex:build: ℹ dist/config/TypeSchema.d.ts                          1.25 kB │ gzip:  0.66 kB
+@triplex-build/triplex:build: ℹ dist/store/writeEventUtils.d.ts                      1.24 kB │ gzip:  0.63 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/extract-dependencies.d.ts         1.21 kB │ gzip:  0.55 kB
+@triplex-build/triplex:build: ℹ dist/EntityPage.d.ts                                 1.15 kB │ gzip:  0.40 kB
+@triplex-build/triplex:build: ℹ dist/entity/index.d.ts                               1.15 kB │ gzip:  0.37 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/predicate.d.ts                       1.15 kB │ gzip:  0.54 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/index.d.ts                         1.14 kB │ gzip:  0.41 kB
+@triplex-build/triplex:build: ℹ dist/datalog/validation.d.ts                         1.09 kB │ gzip:  0.43 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/valueAdmission.d.ts                   1.05 kB │ gzip:  0.44 kB
+@triplex-build/triplex:build: ℹ dist/kv/hexastore/scan.d.ts                          1.05 kB │ gzip:  0.49 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/TopicTree.d.ts                    1.00 kB │ gzip:  0.47 kB
+@triplex-build/triplex:build: ℹ dist/runtime/DatabaseScope.d.ts                      0.99 kB │ gzip:  0.48 kB
+@triplex-build/triplex:build: ℹ dist/Error.d.ts                                      0.97 kB │ gzip:  0.33 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/index.d.ts                            0.96 kB │ gzip:  0.30 kB
+@triplex-build/triplex:build: ℹ dist/subscriptions/query-hash.d.ts                   0.96 kB │ gzip:  0.49 kB
+@triplex-build/triplex:build: ℹ dist/types/Pattern.d.ts                              0.82 kB │ gzip:  0.37 kB
+@triplex-build/triplex:build: ℹ dist/store/ChangeEmissionCapability.d.ts             0.75 kB │ gzip:  0.37 kB
+@triplex-build/triplex:build: ℹ dist/storage/types.d.ts                              0.73 kB │ gzip:  0.35 kB
+@triplex-build/triplex:build: ℹ dist/dialects/types.d.ts                             0.71 kB │ gzip:  0.36 kB
+@triplex-build/triplex:build: ℹ dist/derivation/index.d.ts                           0.69 kB │ gzip:  0.23 kB
+@triplex-build/triplex:build: ℹ dist/kv/datalog/index.d.ts                           0.65 kB │ gzip:  0.25 kB
+@triplex-build/triplex:build: ℹ dist/store/validateValues.d.ts                       0.65 kB │ gzip:  0.30 kB
+@triplex-build/triplex:build: ℹ dist/store/reach.d.ts                                0.62 kB │ gzip:  0.35 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/SnapshotServiceLive.d.ts              0.59 kB │ gzip:  0.25 kB
+@triplex-build/triplex:build: ℹ dist/snapshots/EntitySnapshotsCapability.d.ts        0.51 kB │ gzip:  0.26 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/InMemoryKvBackend.d.ts                    0.49 kB │ gzip:  0.26 kB
+@triplex-build/triplex:build: ℹ dist/kv/kv/index.d.ts                                0.47 kB │ gzip:  0.21 kB
+@triplex-build/triplex:build: ℹ dist/dialects/postgresql.d.ts                        0.44 kB │ gzip:  0.30 kB
+@triplex-build/triplex:build: ℹ dist/params.d.ts                                     0.43 kB │ gzip:  0.24 kB
+@triplex-build/triplex:build: ℹ dist/dialects/sqlite.d.ts                            0.33 kB │ gzip:  0.23 kB
+@triplex-build/triplex:build: ℹ dist/content/index.d.ts                              0.28 kB │ gzip:  0.12 kB
+@triplex-build/triplex:build: ℹ dist/dialects/index.d.ts                             0.23 kB │ gzip:  0.12 kB
+@triplex-build/triplex:build: ℹ dist/operational/index.d.ts                          0.13 kB │ gzip:  0.09 kB
+@triplex-build/triplex:build: ℹ dist/kv/layers/index.d.ts                            0.10 kB │ gzip:  0.07 kB
+@triplex-build/triplex:build: ℹ 440 files, total: 2.95 MB
+@triplex-build/triplex:build: [33m[PLUGIN_TIMINGS] Warning:[0m Your build spent significant time in plugins. Here is a breakdown:
+@triplex-build/triplex:build:   - tsdown:deps (62%)
+@triplex-build/triplex:build:   - rolldown-plugin-dts:resolver (18%)
+@triplex-build/triplex:build: See https://rolldown.rs/options/checks#plugintimings for more details.
+@triplex-build/triplex:build: 
+@triplex-build/triplex:build: ✔ Build complete in 4618ms
+ WARNING  IO error: Operation not permitted (os error 1)
+@triplex-build/triplex-testkit:build: cache bypass, force executing 5642721f78b81c95
+@triplex-build/triplex-testkit:build: 
+@triplex-build/triplex-testkit:build: > @triplex-build/triplex-testkit@0.2.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/packages/testkit
+@triplex-build/triplex-testkit:build: > tsdown
+@triplex-build/triplex-testkit:build: 
+@triplex-build/triplex-testkit:build: ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+@triplex-build/triplex-testkit:build: ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/packages/testkit/tsdown.config.ts 
+@triplex-build/triplex-testkit:build: ℹ entry: src/index.ts, src/offline-route-fixtures.ts, src/route-coverage.ts, src/route-equivalence.ts, src/route-history-grammar.ts, src/route.ts, src/routeEquivalence.ts, src/routeHistory.ts, src/valueLimits.ts, src/feed/index.ts
+@triplex-build/triplex-testkit:build: ℹ target: esnext
+@triplex-build/triplex-testkit:build: ℹ tsconfig: tsconfig.json
+@triplex-build/triplex-testkit:build: ℹ Build start
+@triplex-build/triplex-testkit:build: ℹ Cleaning 39 files
+@triplex-build/triplex-testkit:build: ℹ dist/index.js                          87.21 kB │ gzip: 15.88 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-equivalence.js              20.75 kB │ gzip:  6.02 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-coverage.js                  8.55 kB │ gzip:  2.62 kB
+@triplex-build/triplex-testkit:build: ℹ dist/feed/index.js                      7.34 kB │ gzip:  2.38 kB
+@triplex-build/triplex-testkit:build: ℹ dist/valueLimits.js                     7.23 kB │ gzip:  2.13 kB
+@triplex-build/triplex-testkit:build: ℹ dist/offline-route-fixtures.js          5.50 kB │ gzip:  2.09 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-history-grammar.js           5.17 kB │ gzip:  1.67 kB
+@triplex-build/triplex-testkit:build: ℹ dist/routeEquivalence.js                2.44 kB │ gzip:  0.99 kB
+@triplex-build/triplex-testkit:build: ℹ dist/routeHistory.js                    2.16 kB │ gzip:  0.94 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route.js                           1.02 kB │ gzip:  0.32 kB
+@triplex-build/triplex-testkit:build: ℹ dist/index.js.map                     157.66 kB │ gzip: 27.62 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-equivalence.js.map          46.18 kB │ gzip: 12.30 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-coverage.js.map             16.56 kB │ gzip:  4.73 kB
+@triplex-build/triplex-testkit:build: ℹ dist/feed/index.js.map                 15.53 kB │ gzip:  4.71 kB
+@triplex-build/triplex-testkit:build: ℹ dist/valueLimits.js.map                13.65 kB │ gzip:  3.90 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-history-grammar.js.map      10.30 kB │ gzip:  3.20 kB
+@triplex-build/triplex-testkit:build: ℹ dist/offline-route-fixtures.js.map     10.04 kB │ gzip:  3.50 kB
+@triplex-build/triplex-testkit:build: ℹ dist/routeEquivalence.js.map            5.29 kB │ gzip:  1.95 kB
+@triplex-build/triplex-testkit:build: ℹ dist/routeHistory.js.map                5.05 kB │ gzip:  1.91 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-equivalence.d.ts.map         3.88 kB │ gzip:  1.05 kB
+@triplex-build/triplex-testkit:build: ℹ dist/feed/index.d.ts.map                1.07 kB │ gzip:  0.42 kB
+@triplex-build/triplex-testkit:build: ℹ dist/index.d.ts.map                     0.84 kB │ gzip:  0.35 kB
+@triplex-build/triplex-testkit:build: ℹ dist/routeEquivalence.d.ts.map          0.59 kB │ gzip:  0.28 kB
+@triplex-build/triplex-testkit:build: ℹ dist/routeHistory.d.ts.map              0.52 kB │ gzip:  0.25 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-coverage.d.ts.map            0.32 kB │ gzip:  0.18 kB
+@triplex-build/triplex-testkit:build: ℹ dist/offline-route-fixtures.d.ts.map    0.21 kB │ gzip:  0.17 kB
+@triplex-build/triplex-testkit:build: ℹ dist/valueLimits.d.ts.map               0.17 kB │ gzip:  0.14 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-history-grammar.d.ts.map     0.16 kB │ gzip:  0.14 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-equivalence.d.ts             8.09 kB │ gzip:  2.19 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-coverage.d.ts                3.65 kB │ gzip:  0.83 kB
+@triplex-build/triplex-testkit:build: ℹ dist/index.d.ts                         2.74 kB │ gzip:  1.00 kB
+@triplex-build/triplex-testkit:build: ℹ dist/feed/index.d.ts                    2.67 kB │ gzip:  0.98 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route.d.ts                         1.71 kB │ gzip:  0.42 kB
+@triplex-build/triplex-testkit:build: ℹ dist/offline-route-fixtures.d.ts        1.21 kB │ gzip:  0.64 kB
+@triplex-build/triplex-testkit:build: ℹ dist/routeHistory.d.ts                  1.13 kB │ gzip:  0.43 kB
+@triplex-build/triplex-testkit:build: ℹ dist/routeEquivalence.d.ts              0.98 kB │ gzip:  0.39 kB
+@triplex-build/triplex-testkit:build: ℹ dist/valueLimits.d.ts                   0.54 kB │ gzip:  0.27 kB
+@triplex-build/triplex-testkit:build: ℹ dist/route-history-grammar.d.ts         0.29 kB │ gzip:  0.20 kB
+@triplex-build/triplex-testkit:build: ℹ 38 files, total: 458.42 kB
+@triplex-build/triplex-testkit:build: ✔ Build complete in 1922ms
+ WARNING @triplex-build/triplex-datomic:build: cache bypass, force executing a5dff666d1b87e15
+ IO error: Operation not permitted (os error 1)
+@triplex-build/triplex-qualification:build: cache bypass, force executing e31c86dfce592105
+@triplex-build/triplex-datomic:build: 
+@triplex-build/triplex-datomic:build: > @triplex-build/triplex-datomic@0.1.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/packages/datomic
+@triplex-build/triplex-datomic:build: > tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist
+@triplex-build/triplex-datomic:build: 
+@triplex-build/triplex-qualification:build: 
+@triplex-build/triplex-qualification:build: > @triplex-build/triplex-qualification@0.1.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/packages/qualification
+@triplex-build/triplex-qualification:build: > tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist
+@triplex-build/triplex-qualification:build: 
+@triplex-build/triplex-datomic:build: ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+@triplex-build/triplex-datomic:build: ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/packages/datomic/tsdown.config.ts 
+@triplex-build/triplex-datomic:build: ℹ entry: src/ByteCache.ts, src/CommitOrder.ts, src/DatomicClient.ts, src/DatomicQueryExecutor.ts, src/DatomicStorageAdapter.ts, src/RowCache.ts, src/TransactionContext.ts, src/codec.ts, src/compiler.ts, src/index.ts, src/kernel.ts, src/protocol.ts, src/reach.ts, src/readErrors.ts, src/rowText.ts, src/rows.ts, src/scopeName.ts, src/sweepRows.ts, src/replica/RecentReads.ts, src/replica/Replica.ts, src/replica/TimedSource.ts, src/replica/decodeRows.ts, src/replica/index.ts, src/replica/inlineSource.ts, src/replica/packed.ts, src/replica/sharedIndex.ts, src/replica/source.ts
+@triplex-build/triplex-datomic:build: ℹ target: esnext
+@triplex-build/triplex-datomic:build: ℹ tsconfig: tsconfig.json
+@triplex-build/triplex-datomic:build: ℹ Build start
+@triplex-build/triplex-datomic:build: ℹ dist/DatomicStorageAdapter.js      28.04 kB │ gzip:  7.12 kB
+@triplex-build/triplex-datomic:build: ℹ dist/DatomicClient.js              20.05 kB │ gzip:  5.84 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/Replica.js            12.10 kB │ gzip:  3.46 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/RecentReads.js         7.49 kB │ gzip:  2.31 kB
+@triplex-build/triplex-datomic:build: ℹ dist/sweepRows.js                   7.19 kB │ gzip:  2.17 kB
+@triplex-build/triplex-datomic:build: ℹ dist/DatomicQueryExecutor.js        7.18 kB │ gzip:  2.38 kB
+@triplex-build/triplex-datomic:build: ℹ dist/kernel.js                      7.15 kB │ gzip:  2.48 kB
+@triplex-build/triplex-datomic:build: ℹ dist/rows.js                        5.88 kB │ gzip:  1.80 kB
+@triplex-build/triplex-datomic:build: ℹ dist/rowText.js                     5.18 kB │ gzip:  1.64 kB
+@triplex-build/triplex-datomic:build: ℹ dist/compiler.js                    4.64 kB │ gzip:  1.64 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/sharedIndex.js         4.53 kB │ gzip:  1.49 kB
+@triplex-build/triplex-datomic:build: ℹ dist/RowCache.js                    3.81 kB │ gzip:  1.26 kB
+@triplex-build/triplex-datomic:build: ℹ dist/reach.js                       3.19 kB │ gzip:  1.20 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/packed.js              3.11 kB │ gzip:  1.21 kB
+@triplex-build/triplex-datomic:build: ℹ dist/codec.js                       2.97 kB │ gzip:  1.05 kB
+@triplex-build/triplex-datomic:build: ℹ dist/CommitOrder.js                 2.80 kB │ gzip:  1.07 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/inlineSource.js        2.56 kB │ gzip:  1.06 kB
+@triplex-build/triplex-datomic:build: ℹ dist/index.js                       2.46 kB │ gzip:  0.81 kB
+@triplex-build/triplex-datomic:build: ℹ dist/ByteCache.js                   2.24 kB │ gzip:  0.78 kB
+@triplex-build/triplex-datomic:build: ℹ dist/protocol.js                    1.90 kB │ gzip:  0.81 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/source.js              1.86 kB │ gzip:  0.81 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/TimedSource.js         1.80 kB │ gzip:  0.75 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/decodeRows.js          1.31 kB │ gzip:  0.62 kB
+@triplex-build/triplex-datomic:build: ℹ dist/readErrors.js                  0.97 kB │ gzip:  0.41 kB
+@triplex-build/triplex-datomic:build: ℹ dist/TransactionContext.js          0.44 kB │ gzip:  0.27 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/index.js               0.43 kB │ gzip:  0.18 kB
+@triplex-build/triplex-datomic:build: ℹ dist/scopeName.js                   0.24 kB │ gzip:  0.19 kB
+@triplex-build/triplex-datomic:build: ℹ dist/DatomicStorageAdapter.js.map  60.95 kB │ gzip: 15.35 kB
+@triplex-build/triplex-datomic:build: ℹ dist/DatomicClient.js.map          45.30 kB │ gzip: 12.59 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/Replica.js.map        26.37 kB │ gzip:  7.42 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/RecentReads.js.map    16.63 kB │ gzip:  4.89 kB
+@triplex-build/triplex-datomic:build: ℹ dist/sweepRows.js.map              15.75 kB │ gzip:  4.63 kB
+@triplex-build/triplex-datomic:build: ℹ dist/kernel.js.map                 15.36 kB │ gzip:  4.75 kB
+@triplex-build/triplex-datomic:build: ℹ dist/DatomicQueryExecutor.js.map   14.53 kB │ gzip:  4.37 kB
+@triplex-build/triplex-datomic:build: ℹ dist/rows.js.map                   11.09 kB │ gzip:  3.39 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/sharedIndex.js.map    10.38 kB │ gzip:  3.30 kB
+@triplex-build/triplex-datomic:build: ℹ dist/compiler.js.map                9.80 kB │ gzip:  3.16 kB
+@triplex-build/triplex-datomic:build: ℹ dist/rowText.js.map                 9.79 kB │ gzip:  3.10 kB
+@triplex-build/triplex-datomic:build: ℹ dist/RowCache.js.map                8.45 kB │ gzip:  2.73 kB
+@triplex-build/triplex-datomic:build: ℹ dist/reach.js.map                   7.32 kB │ gzip:  2.67 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/packed.js.map          7.32 kB │ gzip:  2.46 kB
+@triplex-build/triplex-datomic:build: ℹ dist/codec.js.map                   6.14 kB │ gzip:  2.07 kB
+@triplex-build/triplex-datomic:build: ℹ dist/CommitOrder.js.map             6.07 kB │ gzip:  2.33 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/inlineSource.js.map    5.76 kB │ gzip:  2.16 kB
+@triplex-build/triplex-datomic:build: ℹ dist/ByteCache.js.map               4.61 kB │ gzip:  1.56 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/TimedSource.js.map     4.37 kB │ gzip:  1.74 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/source.js.map          4.11 kB │ gzip:  1.60 kB
+@triplex-build/triplex-datomic:build: ℹ dist/protocol.js.map                4.03 kB │ gzip:  1.59 kB
+@triplex-build/triplex-datomic:build: ℹ dist/index.js.map                   3.27 kB │ gzip:  1.22 kB
+@triplex-build/triplex-datomic:build: ℹ dist/replica/decodeRows.js.map      2.51 kB │ gzip:  1.14 kB
+@triplex-build/triplex-datomic:build: ℹ dist/TransactionContext.js.map      1.97 kB │ gzip:  0.88 kB
+@triplex-build/triplex-datomic:build: ℹ dist/readErrors.js.map              1.85 kB │ gzip:  0.84 kB
+@triplex-build/triplex-datomic:build: ℹ dist/codec-spec.js                  0.82 kB │ gzip:  0.37 kB
+@triplex-build/triplex-datomic:build: ℹ dist/scopeName.js.map               0.55 kB │ gzip:  0.39 kB
+@triplex-build/triplex-datomic:build: ℹ dist/codec-spec.js.map              0.12 kB │ gzip:  0.11 kB
+@triplex-build/triplex-datomic:build: ℹ 55 files, total: 446.73 kB
+@triplex-build/triplex-datomic:build: ✔ Build complete in 70ms
+@triplex-build/triplex-qualification:build: ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+@triplex-build/triplex-qualification:build: ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/packages/qualification/tsdown.config.ts 
+@triplex-build/triplex-qualification:build: ℹ entry: src/index.ts
+@triplex-build/triplex-qualification:build: ℹ target: esnext
+@triplex-build/triplex-qualification:build: ℹ tsconfig: tsconfig.json
+@triplex-build/triplex-qualification:build: ℹ Build start
+@triplex-build/triplex-qualification:build: ℹ dist/index.js                           9.23 kB │ gzip:  2.77 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/xtdb-workloads.js.map      83.53 kB │ gzip: 19.54 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/xtdb-workloads.js          44.12 kB │ gzip: 10.93 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/qlever-workloads.js.map    42.40 kB │ gzip: 11.08 kB
+@triplex-build/triplex-qualification:build: ℹ dist/engine-write-counter.js.map       37.24 kB │ gzip: 12.10 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/qlever-recursion.js.map    24.01 kB │ gzip:  6.63 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/qlever-workloads.js        19.98 kB │ gzip:  5.73 kB
+@triplex-build/triplex-qualification:build: ℹ dist/index.js.map                      19.02 kB │ gzip:  5.53 kB
+@triplex-build/triplex-qualification:build: ℹ dist/engine-write-counter.js           16.90 kB │ gzip:  5.92 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/qlever-recursion.js        10.67 kB │ gzip:  3.39 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/xtdb-exact-sum.js.map       7.69 kB │ gzip:  3.32 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/xtdb-exact-sum.js           4.92 kB │ gzip:  2.34 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/xtdb-native-errors.js.map   3.85 kB │ gzip:  1.72 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/xtdb-native-errors.js       2.36 kB │ gzip:  1.15 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/support-paths.js.map        1.26 kB │ gzip:  0.72 kB
+@triplex-build/triplex-qualification:build: ℹ dist/native/support-paths.js            0.62 kB │ gzip:  0.36 kB
+@triplex-build/triplex-qualification:build: ℹ 16 files, total: 327.82 kB
+@triplex-build/triplex-qualification:build: ✔ Build complete in 47ms
+ WARNING  IO error: Operation not permitted (os error 1)
+ WARNING  IO error: Operation not permitted (os error 1)
+
+ Tasks:    5 successful, 5 total
+Cached:    0 cached, 5 total
+  Time:    12.847s 
+

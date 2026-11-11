@@ -1,0 +1,16 @@
+• turbo 2.8.20
+
+   • Packages in scope: @triplex-build/w0
+   • Running build in 1 packages
+   • Remote caching disabled, using shared worktree cache
+
+@triplex-build/w0:build: cache hit, replaying logs ca5eba0bcb866742
+@triplex-build/w0:build: 
+@triplex-build/w0:build: > @triplex-build/w0@0.0.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/p5b/packages/w0
+@triplex-build/w0:build: > tsc -p tsconfig.json
+@triplex-build/w0:build: 
+
+ Tasks:    1 successful, 1 total
+Cached:    1 cached, 1 total
+  Time:    62ms >>> FULL TURBO
+

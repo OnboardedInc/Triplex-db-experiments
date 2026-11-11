@@ -1,0 +1,619 @@
+• turbo 2.8.20
+
+   • Packages in scope: @triplex-build/triplex-datomic, @triplex-build/triplex-qualification
+   • Running build in 2 packages
+   • Remote caching disabled, using shared worktree cache
+
+@triplex-build/triplex:build: cache hit, replaying logs 7215e3e71326b16a
+@triplex-build/triplex:build: 
+@triplex-build/triplex:build: > @triplex-build/triplex@0.2.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/d-native/packages/core
+@triplex-build/triplex:build: > tsdown
+@triplex-build/triplex:build: 
+@triplex-build/triplex:build: [34mℹ[39m [34mtsdown v0.21.7[39m powered by [38;2;255;126;23mrolldown v1.0.0-rc.12[39m
+@triplex-build/triplex:build: [34mℹ[39m config file: [4m/Users/sam/projects/triplex-db-2/.claude/worktrees/d-native/packages/core/tsdown.config.ts[24m 
+@triplex-build/triplex:build: [34mℹ[39m entry: [34msrc/Branded.ts, src/Constraint.ts, src/EntityPage.ts, src/Error.ts, src/Pagination.ts, src/Temporal.ts, src/Triple.ts, src/Value.ts, src/ValueDomain.ts, src/index.ts, src/internal.ts, src/params.ts, src/content/CanonicalJson.ts, src/content/ContentId.ts, src/content/Sha256.ts, src/content/index.ts, src/config/Attribute.ts, src/config/BoolExpr.ts, src/config/Catalog.ts, src/config/ConfigNode.ts, src/config/ConfigRuntime.ts, src/config/ConfigStore.ts, src/config/Entity.ts, src/config/EntityType.ts, src/config/EntityValidation.ts, src/config/Evaluate.ts, src/config/GraphConstraint.ts, src/config/InMemoryConfigStore.ts, src/config/Reactor.ts, src/config/TypeExpr.ts, src/config/TypeSchema.ts, src/config/TypeSubsumption.ts, src/config/World.ts, src/config/index.ts, src/datalog/compiler.ts, src/datalog/index.ts, src/datalog/schema.ts, src/datalog/types.ts, src/datalog/validation.ts, src/datalog/wrapper.ts, src/derivation/Derivation.ts, src/derivation/Materialization.ts, src/derivation/Overlay.ts, src/derivation/index.ts, src/dialects/index.ts, src/dialects/postgresql.ts, src/dialects/sqlite.ts, src/dialects/types.ts, src/errors/index.ts, src/feed/index.ts, src/entity/Descriptors.ts, src/entity/EntityCodec.ts, src/entity/Errors.ts, src/entity/Model.ts, src/entity/PhysicalNames.ts, src/entity/Plan.ts, src/entity/ProjectionSpec.ts, src/entity/Repository.ts, src/entity/index.ts, src/kv/index.ts, src/native/FrontierClosure.ts, src/native/NativeQuery.ts, src/operational/ConsumerCheckpoint.ts, src/operational/index.ts, src/runtime/Capabilities.ts, src/runtime/DatabaseScope.ts, src/runtime/Runtime.ts, src/runtime/index.ts, src/snapshots/EntitySnapshotsCapability.ts, src/snapshots/SnapshotService.ts, src/snapshots/SnapshotServiceLive.ts, src/snapshots/canonical.ts, src/snapshots/index.ts, src/store/ChangeEmissionCapability.ts, src/store/ChangeEmitter.ts, src/store/DatabaseManager.ts, src/store/DatabaseRegistry.ts, src/store/RuntimeServices.ts, src/store/StoreCapability.ts, src/store/TripleStoreRuntime.ts, src/store/Triples.ts, src/store/TriplesLive.ts, src/store/entityTransactionHistory.ts, src/store/reach.ts, src/store/systemNamespace.ts, src/store/transactionMetadata.ts, src/store/validateValues.ts, src/store/writeEventUtils.ts, src/storage/QueryExecutor.ts, src/storage/ReadSurface.ts, src/storage/StorageAdapter.ts, src/storage/types.ts, src/subscriptions/SubscriptionManager.ts, src/subscriptions/SyncHub.ts, src/subscriptions/TopicTree.ts, src/subscriptions/extract-dependencies.ts, src/subscriptions/index.ts, src/subscriptions/invalidation.ts, src/subscriptions/query-hash.ts, src/subscriptions/types.ts, src/types/Pattern.ts, src/utils/id.ts, src/kv/hexastore/KvTripleStore.ts, src/kv/hexastore/index.ts, src/kv/hexastore/indexes.ts, src/kv/hexastore/scan.ts, src/kv/hexastore/tuple.ts, src/kv/datalog/executor.ts, src/kv/datalog/index.ts, src/kv/datalog/pattern.ts, src/kv/datalog/predicate.ts, src/kv/datalog/types.ts, src/kv/kv/InMemoryKvBackend.ts, src/kv/kv/KvBackend.ts, src/kv/kv/encoding.ts, src/kv/kv/index.ts, src/kv/layers/KvTriplesLive.ts, src/kv/layers/index.ts, src/kv/layers/valueAdmission.ts[39m
+@triplex-build/triplex:build: [34mℹ[39m target: [34mesnext[39m
+@triplex-build/triplex:build: [34mℹ[39m tsconfig: [34mtsconfig.json[39m
+@triplex-build/triplex:build: [34mℹ[39m Build start
+@triplex-build/triplex:build: [34mℹ[39m Cleaning 464 files
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdatalog/compiler.js[22m                           [2m 61.60 kB[22m [2m│ gzip: 12.48 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/layers/KvTriplesLive.js[22m                    [2m 28.38 kB[22m [2m│ gzip:  6.91 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/hexastore/KvTripleStore.js[22m                 [2m 25.73 kB[22m [2m│ gzip:  6.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/EntityValidation.js[22m                    [2m 24.92 kB[22m [2m│ gzip:  5.77 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/TriplesLive.js[22m                          [2m 23.45 kB[22m [2m│ gzip:  5.79 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/datalog/executor.js[22m                        [2m 21.33 kB[22m [2m│ gzip:  5.70 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdatalog/schema.js[22m                             [2m 20.80 kB[22m [2m│ gzip:  5.71 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mentity/ProjectionSpec.js[22m                      [2m 19.70 kB[22m [2m│ gzip:  6.54 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mderivation/Materialization.js[22m                 [2m 15.91 kB[22m [2m│ gzip:  3.94 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/Evaluate.js[22m                            [2m 14.98 kB[22m [2m│ gzip:  5.06 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msnapshots/SnapshotServiceLive.js[22m              [2m 14.94 kB[22m [2m│ gzip:  3.01 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mnative/FrontierClosure.js[22m                     [2m 14.45 kB[22m [2m│ gzip:  4.61 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdatalog/validation.js[22m                         [2m 13.80 kB[22m [2m│ gzip:  3.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/InMemoryConfigStore.js[22m                 [2m 13.71 kB[22m [2m│ gzip:  4.89 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mderivation/Derivation.js[22m                      [2m 12.29 kB[22m [2m│ gzip:  3.59 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/ConfigStore.js[22m                         [2m 12.28 kB[22m [2m│ gzip:  3.35 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/hexastore/tuple.js[22m                         [2m 12.18 kB[22m [2m│ gzip:  3.35 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/datalog/pattern.js[22m                         [2m 11.71 kB[22m [2m│ gzip:  3.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdatalog/wrapper.js[22m                            [2m 11.62 kB[22m [2m│ gzip:  3.35 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/ConfigNode.js[22m                          [2m 11.37 kB[22m [2m│ gzip:  4.42 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mConstraint.js[22m                                 [2m 10.65 kB[22m [2m│ gzip:  3.06 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/GraphConstraint.js[22m                     [2m 10.29 kB[22m [2m│ gzip:  2.96 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1minternal.js[22m                                   [2m  9.71 kB[22m [2m│ gzip:  2.37 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mValueDomain.js[22m                                [2m  9.64 kB[22m [2m│ gzip:  3.07 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mentity/Descriptors.js[22m                         [2m  9.40 kB[22m [2m│ gzip:  3.16 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/kv/InMemoryKvBackend.js[22m                    [2m  8.97 kB[22m [2m│ gzip:  2.77 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mentity/PhysicalNames.js[22m                       [2m  8.21 kB[22m [2m│ gzip:  3.38 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/TypeSubsumption.js[22m                     [2m  8.18 kB[22m [2m│ gzip:  3.02 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mPagination.js[22m                                 [2m  8.04 kB[22m [2m│ gzip:  2.50 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/TypeExpr.js[22m                            [2m  7.60 kB[22m [2m│ gzip:  2.79 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mentity/EntityCodec.js[22m                         [2m  7.51 kB[22m [2m│ gzip:  2.53 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1moperational/ConsumerCheckpoint.js[22m             [2m  7.42 kB[22m [2m│ gzip:  2.14 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mderivation/Overlay.js[22m                         [2m  6.89 kB[22m [2m│ gzip:  2.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/World.js[22m                               [2m  6.56 kB[22m [2m│ gzip:  2.75 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msubscriptions/SyncHub.js[22m                      [2m  6.46 kB[22m [2m│ gzip:  1.80 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/transactionMetadata.js[22m                  [2m  6.09 kB[22m [2m│ gzip:  1.75 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msnapshots/EntitySnapshotsCapability.js[22m        [2m  6.03 kB[22m [2m│ gzip:  1.91 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/ConfigRuntime.js[22m                       [2m  5.66 kB[22m [2m│ gzip:  2.12 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mfeed/index.js[22m                                 [2m  5.41 kB[22m [2m│ gzip:  1.86 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mTriple.js[22m                                     [2m  5.26 kB[22m [2m│ gzip:  1.07 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/TypeSchema.js[22m                          [2m  5.20 kB[22m [2m│ gzip:  2.15 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msubscriptions/TopicTree.js[22m                    [2m  5.13 kB[22m [2m│ gzip:  1.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msubscriptions/extract-dependencies.js[22m         [2m  5.01 kB[22m [2m│ gzip:  1.62 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/hexastore/indexes.js[22m                       [2m  4.86 kB[22m [2m│ gzip:  1.43 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/layers/valueAdmission.js[22m                   [2m  4.66 kB[22m [2m│ gzip:  1.75 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mnative/NativeQuery.js[22m                         [2m  4.64 kB[22m [2m│ gzip:  1.67 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msubscriptions/SubscriptionManager.js[22m          [2m  4.63 kB[22m [2m│ gzip:  1.27 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/Entity.js[22m                              [2m  4.63 kB[22m [2m│ gzip:  2.09 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mcontent/CanonicalJson.js[22m                      [2m  4.48 kB[22m [2m│ gzip:  1.90 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mindex.js[22m                                      [2m  4.48 kB[22m [2m│ gzip:  1.18 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1merrors/index.js[22m                               [2m  4.36 kB[22m [2m│ gzip:  1.37 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/Reactor.js[22m                             [2m  4.34 kB[22m [2m│ gzip:  1.60 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mcontent/Sha256.js[22m                             [2m  4.15 kB[22m [2m│ gzip:  2.10 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msnapshots/canonical.js[22m                        [2m  4.06 kB[22m [2m│ gzip:  1.47 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mEntityPage.js[22m                                 [2m  3.88 kB[22m [2m│ gzip:  1.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/EntityType.js[22m                          [2m  3.68 kB[22m [2m│ gzip:  1.34 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mruntime/index.js[22m                              [2m  3.52 kB[22m [2m│ gzip:  0.94 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/BoolExpr.js[22m                            [2m  3.43 kB[22m [2m│ gzip:  1.45 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/writeEventUtils.js[22m                      [2m  3.43 kB[22m [2m│ gzip:  1.19 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mcontent/ContentId.js[22m                          [2m  3.42 kB[22m [2m│ gzip:  1.51 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/entityTransactionHistory.js[22m             [2m  3.35 kB[22m [2m│ gzip:  1.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/Attribute.js[22m                           [2m  3.14 kB[22m [2m│ gzip:  1.27 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mValue.js[22m                                      [2m  3.03 kB[22m [2m│ gzip:  1.07 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msubscriptions/invalidation.js[22m                 [2m  2.81 kB[22m [2m│ gzip:  1.02 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mentity/Errors.js[22m                              [2m  2.78 kB[22m [2m│ gzip:  1.27 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/Catalog.js[22m                             [2m  2.77 kB[22m [2m│ gzip:  1.34 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstorage/ReadSurface.js[22m                        [2m  2.68 kB[22m [2m│ gzip:  0.97 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/StoreCapability.js[22m                      [2m  2.57 kB[22m [2m│ gzip:  1.10 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mruntime/Runtime.js[22m                            [2m  2.37 kB[22m [2m│ gzip:  0.84 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/RuntimeServices.js[22m                      [2m  2.37 kB[22m [2m│ gzip:  0.86 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/hexastore/scan.js[22m                          [2m  2.28 kB[22m [2m│ gzip:  0.73 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/systemNamespace.js[22m                      [2m  2.22 kB[22m [2m│ gzip:  0.79 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/kv/encoding.js[22m                             [2m  2.20 kB[22m [2m│ gzip:  0.94 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mentity/Repository.js[22m                          [2m  2.16 kB[22m [2m│ gzip:  1.01 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/datalog/predicate.js[22m                       [2m  2.01 kB[22m [2m│ gzip:  0.84 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/datalog/types.js[22m                           [2m  1.99 kB[22m [2m│ gzip:  0.73 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/index.js[22m                                   [2m  1.98 kB[22m [2m│ gzip:  0.63 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/TripleStoreRuntime.js[22m                   [2m  1.93 kB[22m [2m│ gzip:  0.59 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mBranded.js[22m                                    [2m  1.92 kB[22m [2m│ gzip:  0.59 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mruntime/Capabilities.js[22m                       [2m  1.82 kB[22m [2m│ gzip:  0.63 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mconfig/index.js[22m                               [2m  1.74 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mruntime/DatabaseScope.js[22m                      [2m  1.58 kB[22m [2m│ gzip:  0.68 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msubscriptions/query-hash.js[22m                   [2m  1.28 kB[22m [2m│ gzip:  0.63 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mTemporal.js[22m                                   [2m  1.22 kB[22m [2m│ gzip:  0.59 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mutils/id.js[22m                                   [2m  1.17 kB[22m [2m│ gzip:  0.60 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/ChangeEmissionCapability.js[22m             [2m  1.15 kB[22m [2m│ gzip:  0.61 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdatalog/index.js[22m                              [2m  1.10 kB[22m [2m│ gzip:  0.30 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mentity/Plan.js[22m                                [2m  1.08 kB[22m [2m│ gzip:  0.53 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/Triples.js[22m                              [2m  1.00 kB[22m [2m│ gzip:  0.57 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/hexastore/index.js[22m                         [2m  0.97 kB[22m [2m│ gzip:  0.35 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/ChangeEmitter.js[22m                        [2m  0.84 kB[22m [2m│ gzip:  0.46 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mentity/index.js[22m                               [2m  0.83 kB[22m [2m│ gzip:  0.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdialects/postgresql.js[22m                        [2m  0.83 kB[22m [2m│ gzip:  0.51 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/reach.js[22m                                [2m  0.81 kB[22m [2m│ gzip:  0.46 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdialects/sqlite.js[22m                            [2m  0.77 kB[22m [2m│ gzip:  0.48 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstorage/QueryExecutor.js[22m                      [2m  0.76 kB[22m [2m│ gzip:  0.42 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msnapshots/SnapshotService.js[22m                  [2m  0.75 kB[22m [2m│ gzip:  0.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstorage/StorageAdapter.js[22m                     [2m  0.72 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msnapshots/index.js[22m                            [2m  0.71 kB[22m [2m│ gzip:  0.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/validateValues.js[22m                       [2m  0.69 kB[22m [2m│ gzip:  0.33 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/kv/KvBackend.js[22m                            [2m  0.67 kB[22m [2m│ gzip:  0.43 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msubscriptions/index.js[22m                        [2m  0.62 kB[22m [2m│ gzip:  0.23 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/DatabaseRegistry.js[22m                     [2m  0.61 kB[22m [2m│ gzip:  0.35 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstore/DatabaseManager.js[22m                      [2m  0.58 kB[22m [2m│ gzip:  0.34 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/datalog/index.js[22m                           [2m  0.53 kB[22m [2m│ gzip:  0.22 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mError.js[22m                                      [2m  0.51 kB[22m [2m│ gzip:  0.23 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mparams.js[22m                                     [2m  0.46 kB[22m [2m│ gzip:  0.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mderivation/index.js[22m                           [2m  0.45 kB[22m [2m│ gzip:  0.19 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mtypes/Pattern.js[22m                              [2m  0.43 kB[22m [2m│ gzip:  0.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/kv/index.js[22m                                [2m  0.34 kB[22m [2m│ gzip:  0.16 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mcontent/index.js[22m                              [2m  0.27 kB[22m [2m│ gzip:  0.12 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdialects/types.js[22m                             [2m  0.21 kB[22m [2m│ gzip:  0.17 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdialects/index.js[22m                             [2m  0.20 kB[22m [2m│ gzip:  0.11 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mdatalog/types.js[22m                              [2m  0.17 kB[22m [2m│ gzip:  0.15 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1moperational/index.js[22m                          [2m  0.13 kB[22m [2m│ gzip:  0.08 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mkv/layers/index.js[22m                            [2m  0.10 kB[22m [2m│ gzip:  0.07 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mentity/Model.js[22m                               [2m  0.01 kB[22m [2m│ gzip:  0.03 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1mstorage/types.js[22m                              [2m  0.01 kB[22m [2m│ gzip:  0.03 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[1msubscriptions/types.js[22m                        [2m  0.01 kB[22m [2m│ gzip:  0.03 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/compiler.js.map                       [2m124.97 kB[22m [2m│ gzip: 27.13 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/layers/KvTriplesLive.js.map                [2m 58.61 kB[22m [2m│ gzip: 13.78 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/EntityValidation.js.map                [2m 51.66 kB[22m [2m│ gzip: 11.39 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/TriplesLive.js.map                      [2m 50.95 kB[22m [2m│ gzip: 12.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/hexastore/KvTripleStore.js.map             [2m 50.86 kB[22m [2m│ gzip: 11.76 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/datalog/executor.js.map                    [2m 46.11 kB[22m [2m│ gzip: 11.29 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/ProjectionSpec.js.map                  [2m 43.44 kB[22m [2m│ gzip: 12.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/schema.js.map                         [2m 37.31 kB[22m [2m│ gzip:  8.98 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mderivation/Materialization.js.map             [2m 32.08 kB[22m [2m│ gzip:  7.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mnative/FrontierClosure.js.map                 [2m 32.06 kB[22m [2m│ gzip:  9.88 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Evaluate.js.map                        [2m 29.98 kB[22m [2m│ gzip:  8.87 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msnapshots/SnapshotServiceLive.js.map          [2m 29.31 kB[22m [2m│ gzip:  5.77 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/InMemoryConfigStore.js.map             [2m 29.07 kB[22m [2m│ gzip:  8.84 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mderivation/Derivation.js.map                  [2m 28.61 kB[22m [2m│ gzip:  7.63 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/ConfigStore.js.map                     [2m 27.69 kB[22m [2m│ gzip:  6.80 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/validation.js.map                     [2m 25.63 kB[22m [2m│ gzip:  6.27 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/wrapper.js.map                        [2m 25.07 kB[22m [2m│ gzip:  6.80 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/hexastore/tuple.js.map                     [2m 25.04 kB[22m [2m│ gzip:  6.33 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/datalog/pattern.js.map                     [2m 22.39 kB[22m [2m│ gzip:  5.93 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mConstraint.js.map                             [2m 21.81 kB[22m [2m│ gzip:  5.64 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mValueDomain.js.map                            [2m 20.95 kB[22m [2m│ gzip:  6.16 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/ConfigNode.js.map                      [2m 20.24 kB[22m [2m│ gzip:  6.58 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/GraphConstraint.js.map                 [2m 20.01 kB[22m [2m│ gzip:  5.32 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/Descriptors.js.map                     [2m 18.69 kB[22m [2m│ gzip:  5.47 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/kv/InMemoryKvBackend.js.map                [2m 18.42 kB[22m [2m│ gzip:  5.39 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/TypeSubsumption.js.map                 [2m 15.90 kB[22m [2m│ gzip:  5.22 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mPagination.js.map                             [2m 15.77 kB[22m [2m│ gzip:  4.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/TypeExpr.js.map                        [2m 14.43 kB[22m [2m│ gzip:  4.36 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/EntityCodec.js.map                     [2m 14.30 kB[22m [2m│ gzip:  4.32 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22moperational/ConsumerCheckpoint.js.map         [2m 14.01 kB[22m [2m│ gzip:  3.79 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mfeed/index.js.map                             [2m 13.63 kB[22m [2m│ gzip:  4.19 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/SyncHub.js.map                  [2m 13.26 kB[22m [2m│ gzip:  3.61 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/Triples.js.map                          [2m 13.15 kB[22m [2m│ gzip:  3.73 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mderivation/Overlay.js.map                     [2m 12.91 kB[22m [2m│ gzip:  4.12 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msnapshots/EntitySnapshotsCapability.js.map    [2m 12.86 kB[22m [2m│ gzip:  3.64 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/SubscriptionManager.js.map      [2m 12.69 kB[22m [2m│ gzip:  3.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/transactionMetadata.js.map              [2m 11.71 kB[22m [2m│ gzip:  3.24 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Reactor.js.map                         [2m 11.44 kB[22m [2m│ gzip:  4.01 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/PhysicalNames.js.map                   [2m 11.30 kB[22m [2m│ gzip:  4.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/ConfigRuntime.js.map                   [2m 11.10 kB[22m [2m│ gzip:  3.66 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msnapshots/canonical.js.map                    [2m 10.97 kB[22m [2m│ gzip:  2.98 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/hexastore/indexes.js.map                   [2m 10.83 kB[22m [2m│ gzip:  2.75 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/layers/valueAdmission.js.map               [2m 10.71 kB[22m [2m│ gzip:  3.63 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/World.js.map                           [2m 10.35 kB[22m [2m│ gzip:  3.88 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mnative/NativeQuery.js.map                     [2m 10.31 kB[22m [2m│ gzip:  3.36 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/TypeSchema.js.map                      [2m 10.06 kB[22m [2m│ gzip:  3.43 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mTriple.js.map                                 [2m  9.71 kB[22m [2m│ gzip:  1.87 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/extract-dependencies.js.map     [2m  9.42 kB[22m [2m│ gzip:  2.88 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/TopicTree.js.map                [2m  9.36 kB[22m [2m│ gzip:  2.51 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Entity.js.map                          [2m  9.32 kB[22m [2m│ gzip:  3.47 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstorage/StorageAdapter.js.map                 [2m  9.30 kB[22m [2m│ gzip:  3.03 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Attribute.js.map                       [2m  8.97 kB[22m [2m│ gzip:  3.08 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/schema.d.ts.map                       [2m  8.95 kB[22m [2m│ gzip:  1.01 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22merrors/index.js.map                           [2m  8.93 kB[22m [2m│ gzip:  2.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/EntityType.js.map                      [2m  8.65 kB[22m [2m│ gzip:  2.83 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/Repository.js.map                      [2m  8.65 kB[22m [2m│ gzip:  2.91 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstorage/ReadSurface.js.map                    [2m  8.27 kB[22m [2m│ gzip:  2.86 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/Plan.js.map                            [2m  7.97 kB[22m [2m│ gzip:  2.98 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mEntityPage.js.map                             [2m  7.89 kB[22m [2m│ gzip:  2.31 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/writeEventUtils.js.map                  [2m  7.64 kB[22m [2m│ gzip:  2.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mcontent/CanonicalJson.js.map                  [2m  7.57 kB[22m [2m│ gzip:  2.84 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mcontent/Sha256.js.map                         [2m  7.09 kB[22m [2m│ gzip:  2.83 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/entityTransactionHistory.js.map         [2m  6.96 kB[22m [2m│ gzip:  2.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/BoolExpr.js.map                        [2m  6.56 kB[22m [2m│ gzip:  2.23 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mruntime/Runtime.js.map                        [2m  6.45 kB[22m [2m│ gzip:  1.93 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstorage/QueryExecutor.js.map                  [2m  6.05 kB[22m [2m│ gzip:  1.87 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/StoreCapability.js.map                  [2m  5.84 kB[22m [2m│ gzip:  1.96 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mValue.js.map                                  [2m  5.64 kB[22m [2m│ gzip:  1.75 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/invalidation.js.map             [2m  5.44 kB[22m [2m│ gzip:  1.90 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mruntime/Capabilities.js.map                   [2m  5.15 kB[22m [2m│ gzip:  1.62 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/datalog/types.js.map                       [2m  5.15 kB[22m [2m│ gzip:  1.73 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/RuntimeServices.js.map                  [2m  4.79 kB[22m [2m│ gzip:  1.62 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/Errors.js.map                          [2m  4.67 kB[22m [2m│ gzip:  1.81 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/hexastore/scan.js.map                      [2m  4.51 kB[22m [2m│ gzip:  1.38 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/kv/KvBackend.js.map                        [2m  4.49 kB[22m [2m│ gzip:  1.65 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/systemNamespace.js.map                  [2m  4.42 kB[22m [2m│ gzip:  1.49 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mcontent/ContentId.js.map                      [2m  4.41 kB[22m [2m│ gzip:  1.85 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/TriplesLive.d.ts.map                    [2m  4.36 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/DatabaseRegistry.js.map                 [2m  4.11 kB[22m [2m│ gzip:  1.11 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msnapshots/SnapshotService.js.map              [2m  4.08 kB[22m [2m│ gzip:  1.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/Triples.d.ts.map                        [2m  4.08 kB[22m [2m│ gzip:  1.16 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/kv/encoding.js.map                         [2m  3.91 kB[22m [2m│ gzip:  1.45 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Catalog.js.map                         [2m  3.88 kB[22m [2m│ gzip:  1.73 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/datalog/predicate.js.map                   [2m  3.84 kB[22m [2m│ gzip:  1.39 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mBranded.js.map                                [2m  3.66 kB[22m [2m│ gzip:  1.00 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/TripleStoreRuntime.js.map               [2m  3.48 kB[22m [2m│ gzip:  1.11 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mruntime/DatabaseScope.js.map                  [2m  3.22 kB[22m [2m│ gzip:  1.34 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/Repository.d.ts.map                    [2m  2.96 kB[22m [2m│ gzip:  0.91 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstorage/StorageAdapter.d.ts.map               [2m  2.89 kB[22m [2m│ gzip:  0.89 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/InMemoryConfigStore.d.ts.map           [2m  2.87 kB[22m [2m│ gzip:  0.80 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22merrors/index.d.ts.map                         [2m  2.74 kB[22m [2m│ gzip:  0.67 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/compiler.d.ts.map                     [2m  2.71 kB[22m [2m│ gzip:  0.81 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mTemporal.js.map                               [2m  2.67 kB[22m [2m│ gzip:  1.21 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/Model.d.ts.map                         [2m  2.67 kB[22m [2m│ gzip:  0.75 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/ChangeEmitter.js.map                    [2m  2.60 kB[22m [2m│ gzip:  1.01 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/ProjectionSpec.d.ts.map                [2m  2.52 kB[22m [2m│ gzip:  0.77 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/DatabaseManager.js.map                  [2m  2.49 kB[22m [2m│ gzip:  0.85 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/EntityValidation.d.ts.map              [2m  2.44 kB[22m [2m│ gzip:  0.74 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mderivation/Derivation.d.ts.map                [2m  2.38 kB[22m [2m│ gzip:  0.71 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/ConfigNode.d.ts.map                    [2m  2.23 kB[22m [2m│ gzip:  0.61 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mutils/id.js.map                               [2m  2.21 kB[22m [2m│ gzip:  1.05 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/TypeExpr.d.ts.map                      [2m  2.21 kB[22m [2m│ gzip:  0.59 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/reach.js.map                            [2m  2.17 kB[22m [2m│ gzip:  1.04 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mTriple.d.ts.map                               [2m  2.15 kB[22m [2m│ gzip:  0.49 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Evaluate.d.ts.map                      [2m  2.04 kB[22m [2m│ gzip:  0.61 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Attribute.d.ts.map                     [2m  1.99 kB[22m [2m│ gzip:  0.68 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Entity.d.ts.map                        [2m  1.90 kB[22m [2m│ gzip:  0.64 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mfeed/index.d.ts.map                           [2m  1.84 kB[22m [2m│ gzip:  0.57 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/ChangeEmissionCapability.js.map         [2m  1.83 kB[22m [2m│ gzip:  0.88 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mnative/FrontierClosure.d.ts.map               [2m  1.81 kB[22m [2m│ gzip:  0.67 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/hexastore/KvTripleStore.d.ts.map           [2m  1.80 kB[22m [2m│ gzip:  0.62 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/validateValues.js.map                   [2m  1.78 kB[22m [2m│ gzip:  0.80 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/query-hash.js.map               [2m  1.77 kB[22m [2m│ gzip:  0.80 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/hexastore/indexes.d.ts.map                 [2m  1.70 kB[22m [2m│ gzip:  0.47 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstorage/ReadSurface.d.ts.map                  [2m  1.67 kB[22m [2m│ gzip:  0.58 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/Plan.d.ts.map                          [2m  1.63 kB[22m [2m│ gzip:  0.61 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mBranded.d.ts.map                              [2m  1.62 kB[22m [2m│ gzip:  0.42 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mConstraint.d.ts.map                           [2m  1.58 kB[22m [2m│ gzip:  0.47 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/types.js.map                          [2m  1.55 kB[22m [2m│ gzip:  0.61 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/ConfigStore.d.ts.map                   [2m  1.54 kB[22m [2m│ gzip:  0.55 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/kv/KvBackend.d.ts.map                      [2m  1.49 kB[22m [2m│ gzip:  0.50 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstorage/QueryExecutor.d.ts.map                [2m  1.48 kB[22m [2m│ gzip:  0.49 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdialects/sqlite.js.map                        [2m  1.47 kB[22m [2m│ gzip:  0.83 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/BoolExpr.d.ts.map                      [2m  1.45 kB[22m [2m│ gzip:  0.42 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/types.d.ts.map                  [2m  1.34 kB[22m [2m│ gzip:  0.52 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/GraphConstraint.d.ts.map               [2m  1.32 kB[22m [2m│ gzip:  0.49 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdialects/postgresql.js.map                    [2m  1.32 kB[22m [2m│ gzip:  0.74 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mtypes/Pattern.js.map                          [2m  1.31 kB[22m [2m│ gzip:  0.63 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msnapshots/SnapshotService.d.ts.map            [2m  1.30 kB[22m [2m│ gzip:  0.43 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/hexastore/tuple.d.ts.map                   [2m  1.29 kB[22m [2m│ gzip:  0.44 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mValue.d.ts.map                                [2m  1.29 kB[22m [2m│ gzip:  0.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mderivation/Materialization.d.ts.map           [2m  1.27 kB[22m [2m│ gzip:  0.45 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mnative/NativeQuery.d.ts.map                   [2m  1.25 kB[22m [2m│ gzip:  0.44 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msnapshots/canonical.d.ts.map                  [2m  1.25 kB[22m [2m│ gzip:  0.42 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Reactor.d.ts.map                       [2m  1.23 kB[22m [2m│ gzip:  0.43 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/DatabaseRegistry.d.ts.map               [2m  1.21 kB[22m [2m│ gzip:  0.44 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/World.d.ts.map                         [2m  1.20 kB[22m [2m│ gzip:  0.45 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mruntime/Runtime.d.ts.map                      [2m  1.18 kB[22m [2m│ gzip:  0.43 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mparams.js.map                                 [2m  1.17 kB[22m [2m│ gzip:  0.58 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/SubscriptionManager.d.ts.map    [2m  1.14 kB[22m [2m│ gzip:  0.45 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mValueDomain.d.ts.map                          [2m  1.11 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/EntityType.d.ts.map                    [2m  1.09 kB[22m [2m│ gzip:  0.45 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/Descriptors.d.ts.map                   [2m  1.04 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/DatabaseManager.d.ts.map                [2m  1.01 kB[22m [2m│ gzip:  0.36 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mruntime/Capabilities.d.ts.map                 [2m  1.00 kB[22m [2m│ gzip:  0.42 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/ConfigRuntime.d.ts.map                 [2m  0.99 kB[22m [2m│ gzip:  0.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/SyncHub.d.ts.map                [2m  0.96 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22moperational/ConsumerCheckpoint.d.ts.map       [2m  0.91 kB[22m [2m│ gzip:  0.37 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/RuntimeServices.d.ts.map                [2m  0.90 kB[22m [2m│ gzip:  0.36 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/Errors.d.ts.map                        [2m  0.87 kB[22m [2m│ gzip:  0.32 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/systemNamespace.d.ts.map                [2m  0.84 kB[22m [2m│ gzip:  0.36 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mPagination.d.ts.map                           [2m  0.81 kB[22m [2m│ gzip:  0.36 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mError.js.map                                  [2m  0.80 kB[22m [2m│ gzip:  0.38 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdialects/types.js.map                         [2m  0.74 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/transactionMetadata.d.ts.map            [2m  0.68 kB[22m [2m│ gzip:  0.32 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/TripleStoreRuntime.d.ts.map             [2m  0.67 kB[22m [2m│ gzip:  0.31 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/TypeSubsumption.d.ts.map               [2m  0.66 kB[22m [2m│ gzip:  0.29 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/entityTransactionHistory.d.ts.map       [2m  0.63 kB[22m [2m│ gzip:  0.29 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/datalog/executor.d.ts.map                  [2m  0.61 kB[22m [2m│ gzip:  0.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/EntityCodec.d.ts.map                   [2m  0.60 kB[22m [2m│ gzip:  0.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mderivation/Overlay.d.ts.map                   [2m  0.59 kB[22m [2m│ gzip:  0.29 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mEntityPage.d.ts.map                           [2m  0.59 kB[22m [2m│ gzip:  0.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/datalog/types.d.ts.map                     [2m  0.55 kB[22m [2m│ gzip:  0.27 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/datalog/pattern.d.ts.map                   [2m  0.54 kB[22m [2m│ gzip:  0.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mentity/PhysicalNames.d.ts.map                 [2m  0.52 kB[22m [2m│ gzip:  0.29 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/StoreCapability.d.ts.map                [2m  0.52 kB[22m [2m│ gzip:  0.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/layers/valueAdmission.d.ts.map             [2m  0.51 kB[22m [2m│ gzip:  0.27 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/wrapper.d.ts.map                      [2m  0.49 kB[22m [2m│ gzip:  0.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/ChangeEmitter.d.ts.map                  [2m  0.48 kB[22m [2m│ gzip:  0.28 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/Catalog.d.ts.map                       [2m  0.47 kB[22m [2m│ gzip:  0.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mtypes/Pattern.d.ts.map                        [2m  0.46 kB[22m [2m│ gzip:  0.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/TopicTree.d.ts.map              [2m  0.46 kB[22m [2m│ gzip:  0.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mcontent/ContentId.d.ts.map                    [2m  0.44 kB[22m [2m│ gzip:  0.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/kv/encoding.d.ts.map                       [2m  0.41 kB[22m [2m│ gzip:  0.23 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mTemporal.d.ts.map                             [2m  0.39 kB[22m [2m│ gzip:  0.24 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mruntime/DatabaseScope.d.ts.map                [2m  0.39 kB[22m [2m│ gzip:  0.24 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mcontent/CanonicalJson.d.ts.map                [2m  0.38 kB[22m [2m│ gzip:  0.23 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/hexastore/scan.d.ts.map                    [2m  0.38 kB[22m [2m│ gzip:  0.23 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/validateValues.d.ts.map                 [2m  0.36 kB[22m [2m│ gzip:  0.20 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m_virtual/_rolldown/runtime.js                 [2m  0.35 kB[22m [2m│ gzip:  0.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/validation.d.ts.map                   [2m  0.35 kB[22m [2m│ gzip:  0.20 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mconfig/TypeSchema.d.ts.map                    [2m  0.32 kB[22m [2m│ gzip:  0.20 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/datalog/predicate.d.ts.map                 [2m  0.32 kB[22m [2m│ gzip:  0.20 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdialects/types.d.ts.map                       [2m  0.32 kB[22m [2m│ gzip:  0.20 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/writeEventUtils.d.ts.map                [2m  0.29 kB[22m [2m│ gzip:  0.20 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/layers/KvTriplesLive.d.ts.map              [2m  0.28 kB[22m [2m│ gzip:  0.20 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msnapshots/SnapshotServiceLive.d.ts.map        [2m  0.28 kB[22m [2m│ gzip:  0.17 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstorage/types.d.ts.map                        [2m  0.28 kB[22m [2m│ gzip:  0.18 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/invalidation.d.ts.map           [2m  0.28 kB[22m [2m│ gzip:  0.19 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mparams.d.ts.map                               [2m  0.24 kB[22m [2m│ gzip:  0.17 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/extract-dependencies.d.ts.map   [2m  0.24 kB[22m [2m│ gzip:  0.18 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/reach.d.ts.map                          [2m  0.23 kB[22m [2m│ gzip:  0.17 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mutils/id.d.ts.map                             [2m  0.23 kB[22m [2m│ gzip:  0.18 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mstore/ChangeEmissionCapability.d.ts.map       [2m  0.22 kB[22m [2m│ gzip:  0.17 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mError.d.ts.map                                [2m  0.21 kB[22m [2m│ gzip:  0.15 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdatalog/types.d.ts.map                        [2m  0.20 kB[22m [2m│ gzip:  0.17 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mkv/kv/InMemoryKvBackend.d.ts.map              [2m  0.20 kB[22m [2m│ gzip:  0.16 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msnapshots/EntitySnapshotsCapability.d.ts.map  [2m  0.19 kB[22m [2m│ gzip:  0.16 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22msubscriptions/query-hash.d.ts.map             [2m  0.17 kB[22m [2m│ gzip:  0.15 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mcontent/Sha256.d.ts.map                       [2m  0.15 kB[22m [2m│ gzip:  0.13 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdialects/postgresql.d.ts.map                  [2m  0.15 kB[22m [2m│ gzip:  0.13 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22mdialects/sqlite.d.ts.map                      [2m  0.13 kB[22m [2m│ gzip:  0.13 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdatalog/schema.d.ts[22m[39m                           [2m186.01 kB[22m [2m│ gzip:  8.68 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/TriplesLive.d.ts[22m[39m                        [2m134.00 kB[22m [2m│ gzip:  4.97 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mTriple.d.ts[22m[39m                                   [2m 34.72 kB[22m [2m│ gzip:  2.21 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1minternal.d.ts[22m[39m                                 [2m 13.47 kB[22m [2m│ gzip:  3.11 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1merrors/index.d.ts[22m[39m                             [2m 12.69 kB[22m [2m│ gzip:  2.04 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/Triples.d.ts[22m[39m                            [2m 11.31 kB[22m [2m│ gzip:  3.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mentity/ProjectionSpec.d.ts[22m[39m                    [2m 10.48 kB[22m [2m│ gzip:  3.64 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mnative/FrontierClosure.d.ts[22m[39m                   [2m 10.30 kB[22m [2m│ gzip:  4.13 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdatalog/compiler.d.ts[22m[39m                         [2m  9.46 kB[22m [2m│ gzip:  2.30 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/InMemoryConfigStore.d.ts[22m[39m               [2m  9.32 kB[22m [2m│ gzip:  2.85 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/EntityValidation.d.ts[22m[39m                  [2m  8.30 kB[22m [2m│ gzip:  1.95 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/ConfigNode.d.ts[22m[39m                        [2m  7.95 kB[22m [2m│ gzip:  2.67 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/Evaluate.d.ts[22m[39m                          [2m  7.50 kB[22m [2m│ gzip:  2.84 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mentity/Plan.d.ts[22m[39m                              [2m  6.85 kB[22m [2m│ gzip:  2.46 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mindex.d.ts[22m[39m                                    [2m  6.61 kB[22m [2m│ gzip:  1.62 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/KvTripleStore.d.ts[22m[39m               [2m  6.30 kB[22m [2m│ gzip:  2.22 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mentity/Repository.d.ts[22m[39m                        [2m  6.17 kB[22m [2m│ gzip:  2.00 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mderivation/Derivation.d.ts[22m[39m                    [2m  6.13 kB[22m [2m│ gzip:  1.75 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstorage/StorageAdapter.d.ts[22m[39m                   [2m  6.02 kB[22m [2m│ gzip:  1.69 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mruntime/index.d.ts[22m[39m                            [2m  5.60 kB[22m [2m│ gzip:  1.39 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mentity/Errors.d.ts[22m[39m                            [2m  5.59 kB[22m [2m│ gzip:  1.61 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/Attribute.d.ts[22m[39m                         [2m  5.18 kB[22m [2m│ gzip:  1.76 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/TypeExpr.d.ts[22m[39m                          [2m  5.11 kB[22m [2m│ gzip:  1.71 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/ConfigStore.d.ts[22m[39m                       [2m  5.08 kB[22m [2m│ gzip:  1.49 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstorage/QueryExecutor.d.ts[22m[39m                    [2m  4.96 kB[22m [2m│ gzip:  1.61 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mderivation/Materialization.d.ts[22m[39m               [2m  4.90 kB[22m [2m│ gzip:  1.45 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mConstraint.d.ts[22m[39m                               [2m  4.86 kB[22m [2m│ gzip:  1.38 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msubscriptions/types.d.ts[22m[39m                      [2m  4.66 kB[22m [2m│ gzip:  1.47 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/tuple.d.ts[22m[39m                       [2m  4.63 kB[22m [2m│ gzip:  1.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mentity/Model.d.ts[22m[39m                             [2m  4.49 kB[22m [2m│ gzip:  1.55 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/indexes.d.ts[22m[39m                     [2m  4.28 kB[22m [2m│ gzip:  1.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/World.d.ts[22m[39m                             [2m  4.24 kB[22m [2m│ gzip:  1.68 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mValue.d.ts[22m[39m                                    [2m  4.20 kB[22m [2m│ gzip:  0.98 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1moperational/ConsumerCheckpoint.d.ts[22m[39m           [2m  4.14 kB[22m [2m│ gzip:  1.14 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/ConfigRuntime.d.ts[22m[39m                     [2m  4.11 kB[22m [2m│ gzip:  1.23 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/GraphConstraint.d.ts[22m[39m                   [2m  4.03 kB[22m [2m│ gzip:  1.15 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/Entity.d.ts[22m[39m                            [2m  4.02 kB[22m [2m│ gzip:  1.49 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msubscriptions/SubscriptionManager.d.ts[22m[39m        [2m  4.01 kB[22m [2m│ gzip:  1.24 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mentity/PhysicalNames.d.ts[22m[39m                     [2m  3.97 kB[22m [2m│ gzip:  1.64 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mfeed/index.d.ts[22m[39m                               [2m  3.92 kB[22m [2m│ gzip:  1.29 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/kv/KvBackend.d.ts[22m[39m                          [2m  3.67 kB[22m [2m│ gzip:  1.34 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/TypeSubsumption.d.ts[22m[39m                   [2m  3.31 kB[22m [2m│ gzip:  0.84 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mnative/NativeQuery.d.ts[22m[39m                       [2m  3.23 kB[22m [2m│ gzip:  1.12 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msnapshots/canonical.d.ts[22m[39m                      [2m  3.22 kB[22m [2m│ gzip:  1.05 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/BoolExpr.d.ts[22m[39m                          [2m  3.08 kB[22m [2m│ gzip:  1.06 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msnapshots/SnapshotService.d.ts[22m[39m                [2m  3.06 kB[22m [2m│ gzip:  0.99 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/Reactor.d.ts[22m[39m                           [2m  3.02 kB[22m [2m│ gzip:  1.10 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/pattern.d.ts[22m[39m                       [2m  3.02 kB[22m [2m│ gzip:  1.22 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/DatabaseRegistry.d.ts[22m[39m                   [2m  3.01 kB[22m [2m│ gzip:  0.86 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mentity/Descriptors.d.ts[22m[39m                       [2m  2.92 kB[22m [2m│ gzip:  1.06 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mderivation/Overlay.d.ts[22m[39m                       [2m  2.92 kB[22m [2m│ gzip:  1.06 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mBranded.d.ts[22m[39m                                  [2m  2.90 kB[22m [2m│ gzip:  0.50 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mValueDomain.d.ts[22m[39m                              [2m  2.72 kB[22m [2m│ gzip:  0.92 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mcontent/ContentId.d.ts[22m[39m                        [2m  2.62 kB[22m [2m│ gzip:  0.95 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/StoreCapability.d.ts[22m[39m                    [2m  2.52 kB[22m [2m│ gzip:  1.05 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstorage/ReadSurface.d.ts[22m[39m                      [2m  2.48 kB[22m [2m│ gzip:  0.78 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/types.d.ts[22m[39m                         [2m  2.41 kB[22m [2m│ gzip:  0.89 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/EntityType.d.ts[22m[39m                        [2m  2.37 kB[22m [2m│ gzip:  0.95 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/index.d.ts[22m[39m                                 [2m  2.34 kB[22m [2m│ gzip:  0.73 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/systemNamespace.d.ts[22m[39m                    [2m  2.24 kB[22m [2m│ gzip:  0.74 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mruntime/Capabilities.d.ts[22m[39m                     [2m  2.24 kB[22m [2m│ gzip:  0.73 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mPagination.d.ts[22m[39m                               [2m  2.17 kB[22m [2m│ gzip:  0.83 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/executor.d.ts[22m[39m                      [2m  2.10 kB[22m [2m│ gzip:  0.80 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mruntime/Runtime.d.ts[22m[39m                          [2m  2.08 kB[22m [2m│ gzip:  0.69 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/DatabaseManager.d.ts[22m[39m                    [2m  2.08 kB[22m [2m│ gzip:  0.64 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/RuntimeServices.d.ts[22m[39m                    [2m  1.88 kB[22m [2m│ gzip:  0.53 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/TripleStoreRuntime.d.ts[22m[39m                 [2m  1.82 kB[22m [2m│ gzip:  0.57 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/index.d.ts[22m[39m                             [2m  1.81 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msubscriptions/SyncHub.d.ts[22m[39m                    [2m  1.75 kB[22m [2m│ gzip:  0.65 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/transactionMetadata.d.ts[22m[39m                [2m  1.71 kB[22m [2m│ gzip:  0.55 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdatalog/wrapper.d.ts[22m[39m                          [2m  1.70 kB[22m [2m│ gzip:  0.76 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mTemporal.d.ts[22m[39m                                 [2m  1.66 kB[22m [2m│ gzip:  0.77 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/layers/KvTriplesLive.d.ts[22m[39m                  [2m  1.61 kB[22m [2m│ gzip:  0.74 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/ChangeEmitter.d.ts[22m[39m                      [2m  1.60 kB[22m [2m│ gzip:  0.71 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msubscriptions/invalidation.d.ts[22m[39m               [2m  1.58 kB[22m [2m│ gzip:  0.67 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mutils/id.d.ts[22m[39m                                 [2m  1.57 kB[22m [2m│ gzip:  0.73 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msubscriptions/index.d.ts[22m[39m                      [2m  1.53 kB[22m [2m│ gzip:  0.44 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mcontent/Sha256.d.ts[22m[39m                           [2m  1.47 kB[22m [2m│ gzip:  0.82 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mentity/EntityCodec.d.ts[22m[39m                       [2m  1.43 kB[22m [2m│ gzip:  0.51 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mcontent/CanonicalJson.d.ts[22m[39m                    [2m  1.42 kB[22m [2m│ gzip:  0.63 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdatalog/index.d.ts[22m[39m                            [2m  1.36 kB[22m [2m│ gzip:  0.37 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdatalog/types.d.ts[22m[39m                            [2m  1.33 kB[22m [2m│ gzip:  0.59 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/Catalog.d.ts[22m[39m                           [2m  1.31 kB[22m [2m│ gzip:  0.62 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/entityTransactionHistory.d.ts[22m[39m           [2m  1.27 kB[22m [2m│ gzip:  0.47 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/kv/encoding.d.ts[22m[39m                           [2m  1.26 kB[22m [2m│ gzip:  0.59 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mconfig/TypeSchema.d.ts[22m[39m                        [2m  1.25 kB[22m [2m│ gzip:  0.66 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/writeEventUtils.d.ts[22m[39m                    [2m  1.24 kB[22m [2m│ gzip:  0.63 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msubscriptions/extract-dependencies.d.ts[22m[39m       [2m  1.21 kB[22m [2m│ gzip:  0.55 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mEntityPage.d.ts[22m[39m                               [2m  1.15 kB[22m [2m│ gzip:  0.40 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mentity/index.d.ts[22m[39m                             [2m  1.15 kB[22m [2m│ gzip:  0.37 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/predicate.d.ts[22m[39m                     [2m  1.15 kB[22m [2m│ gzip:  0.54 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/index.d.ts[22m[39m                       [2m  1.14 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdatalog/validation.d.ts[22m[39m                       [2m  1.09 kB[22m [2m│ gzip:  0.43 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/layers/valueAdmission.d.ts[22m[39m                 [2m  1.05 kB[22m [2m│ gzip:  0.44 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/scan.d.ts[22m[39m                        [2m  1.05 kB[22m [2m│ gzip:  0.49 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msubscriptions/TopicTree.d.ts[22m[39m                  [2m  1.00 kB[22m [2m│ gzip:  0.47 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mruntime/DatabaseScope.d.ts[22m[39m                    [2m  0.99 kB[22m [2m│ gzip:  0.48 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mError.d.ts[22m[39m                                    [2m  0.97 kB[22m [2m│ gzip:  0.33 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msnapshots/index.d.ts[22m[39m                          [2m  0.96 kB[22m [2m│ gzip:  0.30 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msubscriptions/query-hash.d.ts[22m[39m                 [2m  0.96 kB[22m [2m│ gzip:  0.49 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mtypes/Pattern.d.ts[22m[39m                            [2m  0.82 kB[22m [2m│ gzip:  0.37 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/ChangeEmissionCapability.d.ts[22m[39m           [2m  0.75 kB[22m [2m│ gzip:  0.37 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstorage/types.d.ts[22m[39m                            [2m  0.73 kB[22m [2m│ gzip:  0.35 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdialects/types.d.ts[22m[39m                           [2m  0.71 kB[22m [2m│ gzip:  0.36 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mderivation/index.d.ts[22m[39m                         [2m  0.69 kB[22m [2m│ gzip:  0.23 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/index.d.ts[22m[39m                         [2m  0.65 kB[22m [2m│ gzip:  0.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/validateValues.d.ts[22m[39m                     [2m  0.65 kB[22m [2m│ gzip:  0.30 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mstore/reach.d.ts[22m[39m                              [2m  0.62 kB[22m [2m│ gzip:  0.35 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msnapshots/SnapshotServiceLive.d.ts[22m[39m            [2m  0.59 kB[22m [2m│ gzip:  0.25 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1msnapshots/EntitySnapshotsCapability.d.ts[22m[39m      [2m  0.51 kB[22m [2m│ gzip:  0.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/kv/InMemoryKvBackend.d.ts[22m[39m                  [2m  0.49 kB[22m [2m│ gzip:  0.26 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/kv/index.d.ts[22m[39m                              [2m  0.47 kB[22m [2m│ gzip:  0.21 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdialects/postgresql.d.ts[22m[39m                      [2m  0.44 kB[22m [2m│ gzip:  0.30 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mparams.d.ts[22m[39m                                   [2m  0.43 kB[22m [2m│ gzip:  0.24 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdialects/sqlite.d.ts[22m[39m                          [2m  0.33 kB[22m [2m│ gzip:  0.23 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mcontent/index.d.ts[22m[39m                            [2m  0.28 kB[22m [2m│ gzip:  0.12 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mdialects/index.d.ts[22m[39m                           [2m  0.23 kB[22m [2m│ gzip:  0.12 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1moperational/index.d.ts[22m[39m                        [2m  0.13 kB[22m [2m│ gzip:  0.09 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m [2mdist/[22m[32m[1mkv/layers/index.d.ts[22m[39m                          [2m  0.10 kB[22m [2m│ gzip:  0.07 kB[22m
+@triplex-build/triplex:build: [34mℹ[39m 440 files, total: 2.95 MB
+@triplex-build/triplex:build: [33m[PLUGIN_TIMINGS] Warning:[0m Your build spent significant time in plugins. Here is a breakdown:
+@triplex-build/triplex:build:   - tsdown:deps (56%)
+@triplex-build/triplex:build:   - rolldown-plugin-dts:generate (25%)
+@triplex-build/triplex:build: See https://rolldown.rs/options/checks#plugintimings for more details.
+@triplex-build/triplex:build: 
+@triplex-build/triplex:build: [32m✔[39m Build complete in [32m3830ms[39m
+@triplex-build/triplex-testkit:build: cache hit, replaying logs 5642721f78b81c95
+@triplex-build/triplex-testkit:build: 
+@triplex-build/triplex-testkit:build: > @triplex-build/triplex-testkit@0.2.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/d-native/packages/testkit
+@triplex-build/triplex-testkit:build: > tsdown
+@triplex-build/triplex-testkit:build: 
+@triplex-build/triplex-testkit:build: [34mℹ[39m [34mtsdown v0.21.7[39m powered by [38;2;255;126;23mrolldown v1.0.0-rc.12[39m
+@triplex-build/triplex-testkit:build: [34mℹ[39m config file: [4m/Users/sam/projects/triplex-db-2/.claude/worktrees/d-native/packages/testkit/tsdown.config.ts[24m 
+@triplex-build/triplex-testkit:build: [34mℹ[39m entry: [34msrc/index.ts, src/offline-route-fixtures.ts, src/route-coverage.ts, src/route-equivalence.ts, src/route-history-grammar.ts, src/route.ts, src/routeEquivalence.ts, src/routeHistory.ts, src/valueLimits.ts, src/feed/index.ts[39m
+@triplex-build/triplex-testkit:build: [34mℹ[39m target: [34mesnext[39m
+@triplex-build/triplex-testkit:build: [34mℹ[39m tsconfig: [34mtsconfig.json[39m
+@triplex-build/triplex-testkit:build: [34mℹ[39m Build start
+@triplex-build/triplex-testkit:build: [34mℹ[39m Cleaning 39 files
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1mindex.js[22m                         [2m 87.21 kB[22m [2m│ gzip: 15.88 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1mroute-equivalence.js[22m             [2m 20.75 kB[22m [2m│ gzip:  6.02 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1mroute-coverage.js[22m                [2m  8.55 kB[22m [2m│ gzip:  2.62 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1mfeed/index.js[22m                    [2m  7.34 kB[22m [2m│ gzip:  2.38 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1mvalueLimits.js[22m                   [2m  7.23 kB[22m [2m│ gzip:  2.13 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1moffline-route-fixtures.js[22m        [2m  5.50 kB[22m [2m│ gzip:  2.09 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1mroute-history-grammar.js[22m         [2m  5.17 kB[22m [2m│ gzip:  1.67 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1mrouteEquivalence.js[22m              [2m  2.44 kB[22m [2m│ gzip:  0.99 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1mrouteHistory.js[22m                  [2m  2.16 kB[22m [2m│ gzip:  0.94 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[1mroute.js[22m                         [2m  1.02 kB[22m [2m│ gzip:  0.32 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mindex.js.map                     [2m157.66 kB[22m [2m│ gzip: 27.62 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mroute-equivalence.js.map         [2m 46.18 kB[22m [2m│ gzip: 12.30 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mroute-coverage.js.map            [2m 16.56 kB[22m [2m│ gzip:  4.73 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mfeed/index.js.map                [2m 15.53 kB[22m [2m│ gzip:  4.71 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mvalueLimits.js.map               [2m 13.65 kB[22m [2m│ gzip:  3.90 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mroute-history-grammar.js.map     [2m 10.30 kB[22m [2m│ gzip:  3.20 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22moffline-route-fixtures.js.map    [2m 10.04 kB[22m [2m│ gzip:  3.50 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mrouteEquivalence.js.map          [2m  5.29 kB[22m [2m│ gzip:  1.95 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mrouteHistory.js.map              [2m  5.05 kB[22m [2m│ gzip:  1.91 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mroute-equivalence.d.ts.map       [2m  3.88 kB[22m [2m│ gzip:  1.05 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mfeed/index.d.ts.map              [2m  1.07 kB[22m [2m│ gzip:  0.42 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mindex.d.ts.map                   [2m  0.84 kB[22m [2m│ gzip:  0.35 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mrouteEquivalence.d.ts.map        [2m  0.59 kB[22m [2m│ gzip:  0.28 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mrouteHistory.d.ts.map            [2m  0.52 kB[22m [2m│ gzip:  0.25 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mroute-coverage.d.ts.map          [2m  0.32 kB[22m [2m│ gzip:  0.18 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22moffline-route-fixtures.d.ts.map  [2m  0.21 kB[22m [2m│ gzip:  0.17 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mvalueLimits.d.ts.map             [2m  0.17 kB[22m [2m│ gzip:  0.14 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22mroute-history-grammar.d.ts.map   [2m  0.16 kB[22m [2m│ gzip:  0.14 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1mroute-equivalence.d.ts[22m[39m           [2m  8.09 kB[22m [2m│ gzip:  2.19 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1mroute-coverage.d.ts[22m[39m              [2m  3.65 kB[22m [2m│ gzip:  0.83 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1mindex.d.ts[22m[39m                       [2m  2.74 kB[22m [2m│ gzip:  1.00 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1mfeed/index.d.ts[22m[39m                  [2m  2.67 kB[22m [2m│ gzip:  0.98 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1mroute.d.ts[22m[39m                       [2m  1.71 kB[22m [2m│ gzip:  0.42 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1moffline-route-fixtures.d.ts[22m[39m      [2m  1.21 kB[22m [2m│ gzip:  0.64 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1mrouteHistory.d.ts[22m[39m                [2m  1.13 kB[22m [2m│ gzip:  0.43 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1mrouteEquivalence.d.ts[22m[39m            [2m  0.98 kB[22m [2m│ gzip:  0.39 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1mvalueLimits.d.ts[22m[39m                 [2m  0.54 kB[22m [2m│ gzip:  0.27 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m [2mdist/[22m[32m[1mroute-history-grammar.d.ts[22m[39m       [2m  0.29 kB[22m [2m│ gzip:  0.20 kB[22m
+@triplex-build/triplex-testkit:build: [34mℹ[39m 38 files, total: 458.42 kB
+@triplex-build/triplex-testkit:build: [32m✔[39m Build complete in [32m1429ms[39m
+@triplex-build/triplex-qualification:build: cache hit, replaying logs e31c86dfce592105
+@triplex-build/triplex-qualification:build: 
+@triplex-build/triplex-qualification:build: > @triplex-build/triplex-qualification@0.1.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/d-native/packages/qualification
+@triplex-build/triplex-qualification:build: > tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist
+@triplex-build/triplex-qualification:build: 
+@triplex-build/triplex-qualification:build: [34mℹ[39m [34mtsdown v0.21.7[39m powered by [38;2;255;126;23mrolldown v1.0.0-rc.12[39m
+@triplex-build/triplex-qualification:build: [34mℹ[39m config file: [4m/Users/sam/projects/triplex-db-2/.claude/worktrees/d-native/packages/qualification/tsdown.config.ts[24m 
+@triplex-build/triplex-qualification:build: [34mℹ[39m entry: [34msrc/index.ts[39m
+@triplex-build/triplex-qualification:build: [34mℹ[39m target: [34mesnext[39m
+@triplex-build/triplex-qualification:build: [34mℹ[39m tsconfig: [34mtsconfig.json[39m
+@triplex-build/triplex-qualification:build: [34mℹ[39m Build start
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22m[1mindex.js[22m                          [2m 9.23 kB[22m [2m│ gzip:  2.77 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/xtdb-workloads.js.map      [2m83.53 kB[22m [2m│ gzip: 19.54 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/xtdb-workloads.js          [2m44.12 kB[22m [2m│ gzip: 10.93 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/qlever-workloads.js.map    [2m42.40 kB[22m [2m│ gzip: 11.08 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mengine-write-counter.js.map       [2m37.24 kB[22m [2m│ gzip: 12.10 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/qlever-recursion.js.map    [2m24.01 kB[22m [2m│ gzip:  6.63 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/qlever-workloads.js        [2m19.98 kB[22m [2m│ gzip:  5.73 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mindex.js.map                      [2m19.02 kB[22m [2m│ gzip:  5.53 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mengine-write-counter.js           [2m16.90 kB[22m [2m│ gzip:  5.92 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/qlever-recursion.js        [2m10.67 kB[22m [2m│ gzip:  3.39 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/xtdb-exact-sum.js.map      [2m 7.69 kB[22m [2m│ gzip:  3.32 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/xtdb-exact-sum.js          [2m 4.92 kB[22m [2m│ gzip:  2.34 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/xtdb-native-errors.js.map  [2m 3.85 kB[22m [2m│ gzip:  1.72 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/xtdb-native-errors.js      [2m 2.36 kB[22m [2m│ gzip:  1.15 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/support-paths.js.map       [2m 1.26 kB[22m [2m│ gzip:  0.72 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m [2mdist/[22mnative/support-paths.js           [2m 0.62 kB[22m [2m│ gzip:  0.36 kB[22m
+@triplex-build/triplex-qualification:build: [34mℹ[39m 16 files, total: 327.82 kB
+@triplex-build/triplex-qualification:build: [32m✔[39m Build complete in [32m63ms[39m
+@triplex-build/triplex-datomic:build: cache hit, replaying logs a5dff666d1b87e15
+@triplex-build/triplex-datomic:build: 
+@triplex-build/triplex-datomic:build: > @triplex-build/triplex-datomic@0.1.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/verdict/packages/datomic
+@triplex-build/triplex-datomic:build: > tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist
+@triplex-build/triplex-datomic:build: 
+@triplex-build/triplex-datomic:build: [34mℹ[39m [34mtsdown v0.21.7[39m powered by [38;2;255;126;23mrolldown v1.0.0-rc.12[39m
+@triplex-build/triplex-datomic:build: [34mℹ[39m config file: [4m/Users/sam/projects/triplex-db-2/.claude/worktrees/verdict/packages/datomic/tsdown.config.ts[24m 
+@triplex-build/triplex-datomic:build: [34mℹ[39m entry: [34msrc/ByteCache.ts, src/CommitOrder.ts, src/DatomicClient.ts, src/DatomicQueryExecutor.ts, src/DatomicStorageAdapter.ts, src/RowCache.ts, src/TransactionContext.ts, src/codec.ts, src/compiler.ts, src/index.ts, src/kernel.ts, src/protocol.ts, src/reach.ts, src/readErrors.ts, src/rowText.ts, src/rows.ts, src/scopeName.ts, src/sweepRows.ts, src/replica/RecentReads.ts, src/replica/Replica.ts, src/replica/TimedSource.ts, src/replica/decodeRows.ts, src/replica/index.ts, src/replica/inlineSource.ts, src/replica/packed.ts, src/replica/sharedIndex.ts, src/replica/source.ts[39m
+@triplex-build/triplex-datomic:build: [34mℹ[39m target: [34mesnext[39m
+@triplex-build/triplex-datomic:build: [34mℹ[39m tsconfig: [34mtsconfig.json[39m
+@triplex-build/triplex-datomic:build: [34mℹ[39m Build start
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mDatomicStorageAdapter.js[22m      [2m28.04 kB[22m [2m│ gzip:  7.12 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mDatomicClient.js[22m              [2m20.05 kB[22m [2m│ gzip:  5.84 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreplica/Replica.js[22m            [2m12.10 kB[22m [2m│ gzip:  3.46 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreplica/RecentReads.js[22m        [2m 7.49 kB[22m [2m│ gzip:  2.31 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1msweepRows.js[22m                  [2m 7.19 kB[22m [2m│ gzip:  2.17 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mDatomicQueryExecutor.js[22m       [2m 7.18 kB[22m [2m│ gzip:  2.38 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mkernel.js[22m                     [2m 7.15 kB[22m [2m│ gzip:  2.48 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mrows.js[22m                       [2m 5.88 kB[22m [2m│ gzip:  1.80 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mrowText.js[22m                    [2m 5.18 kB[22m [2m│ gzip:  1.64 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mcompiler.js[22m                   [2m 4.64 kB[22m [2m│ gzip:  1.64 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreplica/sharedIndex.js[22m        [2m 4.53 kB[22m [2m│ gzip:  1.49 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mRowCache.js[22m                   [2m 3.81 kB[22m [2m│ gzip:  1.26 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreach.js[22m                      [2m 3.19 kB[22m [2m│ gzip:  1.20 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreplica/packed.js[22m             [2m 3.11 kB[22m [2m│ gzip:  1.21 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mcodec.js[22m                      [2m 2.97 kB[22m [2m│ gzip:  1.05 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mCommitOrder.js[22m                [2m 2.80 kB[22m [2m│ gzip:  1.07 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreplica/inlineSource.js[22m       [2m 2.56 kB[22m [2m│ gzip:  1.06 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mindex.js[22m                      [2m 2.46 kB[22m [2m│ gzip:  0.81 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mByteCache.js[22m                  [2m 2.24 kB[22m [2m│ gzip:  0.78 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mprotocol.js[22m                   [2m 1.90 kB[22m [2m│ gzip:  0.81 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreplica/source.js[22m             [2m 1.86 kB[22m [2m│ gzip:  0.81 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreplica/TimedSource.js[22m        [2m 1.80 kB[22m [2m│ gzip:  0.75 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreplica/decodeRows.js[22m         [2m 1.31 kB[22m [2m│ gzip:  0.62 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreadErrors.js[22m                 [2m 0.97 kB[22m [2m│ gzip:  0.41 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mTransactionContext.js[22m         [2m 0.44 kB[22m [2m│ gzip:  0.27 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mreplica/index.js[22m              [2m 0.43 kB[22m [2m│ gzip:  0.18 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22m[1mscopeName.js[22m                  [2m 0.24 kB[22m [2m│ gzip:  0.19 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mDatomicStorageAdapter.js.map  [2m60.95 kB[22m [2m│ gzip: 15.35 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mDatomicClient.js.map          [2m45.30 kB[22m [2m│ gzip: 12.59 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreplica/Replica.js.map        [2m26.37 kB[22m [2m│ gzip:  7.42 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreplica/RecentReads.js.map    [2m16.63 kB[22m [2m│ gzip:  4.89 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22msweepRows.js.map              [2m15.75 kB[22m [2m│ gzip:  4.63 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mkernel.js.map                 [2m15.36 kB[22m [2m│ gzip:  4.75 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mDatomicQueryExecutor.js.map   [2m14.53 kB[22m [2m│ gzip:  4.37 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mrows.js.map                   [2m11.09 kB[22m [2m│ gzip:  3.39 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreplica/sharedIndex.js.map    [2m10.38 kB[22m [2m│ gzip:  3.30 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mcompiler.js.map               [2m 9.80 kB[22m [2m│ gzip:  3.16 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mrowText.js.map                [2m 9.79 kB[22m [2m│ gzip:  3.10 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mRowCache.js.map               [2m 8.45 kB[22m [2m│ gzip:  2.73 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreach.js.map                  [2m 7.32 kB[22m [2m│ gzip:  2.67 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreplica/packed.js.map         [2m 7.32 kB[22m [2m│ gzip:  2.46 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mcodec.js.map                  [2m 6.14 kB[22m [2m│ gzip:  2.07 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mCommitOrder.js.map            [2m 6.07 kB[22m [2m│ gzip:  2.33 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreplica/inlineSource.js.map   [2m 5.76 kB[22m [2m│ gzip:  2.16 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mByteCache.js.map              [2m 4.61 kB[22m [2m│ gzip:  1.56 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreplica/TimedSource.js.map    [2m 4.37 kB[22m [2m│ gzip:  1.74 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreplica/source.js.map         [2m 4.11 kB[22m [2m│ gzip:  1.60 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mprotocol.js.map               [2m 4.03 kB[22m [2m│ gzip:  1.59 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mindex.js.map                  [2m 3.27 kB[22m [2m│ gzip:  1.22 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreplica/decodeRows.js.map     [2m 2.51 kB[22m [2m│ gzip:  1.14 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mTransactionContext.js.map     [2m 1.97 kB[22m [2m│ gzip:  0.88 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mreadErrors.js.map             [2m 1.85 kB[22m [2m│ gzip:  0.84 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mcodec-spec.js                 [2m 0.82 kB[22m [2m│ gzip:  0.37 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mscopeName.js.map              [2m 0.55 kB[22m [2m│ gzip:  0.39 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m [2mdist/[22mcodec-spec.js.map             [2m 0.12 kB[22m [2m│ gzip:  0.11 kB[22m
+@triplex-build/triplex-datomic:build: [34mℹ[39m 55 files, total: 446.73 kB
+@triplex-build/triplex-datomic:build: [32m✔[39m Build complete in [32m61ms[39m
+
+ Tasks:    4 successful, 4 total
+Cached:    4 cached, 4 total
+  Time:    188ms >>> FULL TURBO
+

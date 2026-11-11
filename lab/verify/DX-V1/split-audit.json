@@ -1,0 +1,56 @@
+{
+  "input": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H4/tx2-dxh4-q7-ladder/input/ns-writes.jsonl",
+  "sha256": "cda21241ff83c3df6c0addd32136367fc0fcf433047cda90d378f639139db90d",
+  "commands": 7408,
+  "method": "100 ms grid; on-time offer assumed at scheduledAt; pending retained until finishedAt; first query takes 1 ms; native commit is no later than publicationDurableAt; no historical read starts or actual selections are available",
+  "policies": {
+    "pending": {
+      "opportunities": 8998,
+      "noTarget": 5811,
+      "offered": 864,
+      "future": 2323,
+      "ackAlreadyBeforeStep1": 52,
+      "ackAfterStep1": 3135,
+      "durableAlreadyBeforeStep1": 71,
+      "durableWitnessAfterStep1": 3116,
+      "ackAfterStep1ButAlreadyDurable": 19,
+      "missingDurableWitness": 0,
+      "selectedCommands": 2004,
+      "meanWaitToAckMs": 90.42893853141179
+    },
+    "mixed": {
+      "opportunities": 8998,
+      "noTarget": 5811,
+      "offered": 217,
+      "future": 2970,
+      "ackAlreadyBeforeStep1": 9,
+      "ackAfterStep1": 3178,
+      "durableAlreadyBeforeStep1": 13,
+      "durableWitnessAfterStep1": 3174,
+      "ackAfterStep1ButAlreadyDurable": 4,
+      "missingDurableWitness": 0,
+      "selectedCommands": 1968,
+      "meanWaitToAckMs": 138.45778381903042
+    }
+  },
+  "explicitCounterexample": {
+    "timeline": {
+      "offer": 0,
+      "nativeCommit": 1,
+      "feedApplied": 2,
+      "splitAssignment": 3,
+      "firstReadEnd": 4,
+      "ackPublished": 5,
+      "secondRead": 6
+    },
+    "pendingTarget": {
+      "subject": 0,
+      "seq": 1
+    },
+    "mixedTargetWithSameDraw": {
+      "subject": 1,
+      "seq": 2
+    },
+    "implication": "pending reports split=2 at reader-worker.ts:173, although both complete local reads follow the native commit and feed application; mixed can choose the future command instead"
+  }
+}

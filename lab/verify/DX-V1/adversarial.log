@@ -1,0 +1,66 @@
+TAP version 13
+# {"temporalFold":{"checked":9416,"fallbacks":2256,"held":10,"floor":285}}
+# Subtest: F1: actual gateway Triple and local result disagree on normal row metadata
+ok 1 - F1: actual gateway Triple and local result disagree on normal row metadata
+  ---
+  duration_ms: 7.101875
+  type: 'test'
+  ...
+# Subtest: F2: unchanged judgeRead accepts incorrect assertion identity and temporal metadata
+ok 2 - F2: unchanged judgeRead accepts incorrect assertion identity and temporal metadata
+  ---
+  duration_ms: 6.991916
+  type: 'test'
+  ...
+# Subtest: F2: canonical member serialization collapses signed zero, nested JSON zero and field boundaries
+ok 3 - F2: canonical member serialization collapses signed zero, nested JSON zero and field boundaries
+  ---
+  duration_ms: 0.444166
+  type: 'test'
+  ...
+# Subtest: atomic half-applied journal stays unavailable at new position, old cut remains whole
+ok 4 - atomic half-applied journal stays unavailable at new position, old cut remains whole
+  ---
+  duration_ms: 3.83075
+  type: 'test'
+  ...
+# Subtest: independent temporal fold: 300 cuts, shared refs/cycles/leaving closures, corrections, retractions, byte eviction and held results
+ok 5 - independent temporal fold: 300 cuts, shared refs/cycles/leaving closures, corrections, retractions, byte eviction and held results
+  ---
+  duration_ms: 154.592292
+  type: 'test'
+  ...
+# {"recordedMetadataCounterexample":{"root":"pl:s00000000","position":42775,"gatewayRecordedAt":1793793600000,"localRecordedAt":null,"facts":16}}
+# Subtest: duplicate, missing and out-of-order reader deltas invalidate; separately lagging reader falls back
+ok 6 - duplicate, missing and out-of-order reader deltas invalidate; separately lagging reader falls back
+  ---
+  duration_ms: 12.558417
+  type: 'test'
+  ...
+# Subtest: unknown/duplicate/regressing clocks decline after observation; a captured result survives rebuild
+ok 7 - unknown/duplicate/regressing clocks decline after observation; a captured result survives rebuild
+  ---
+  duration_ms: 0.313375
+  type: 'test'
+  ...
+# Subtest: late ACK expected-state append invalidates cache; spill checks all 9000 tuples and detects truncation
+ok 8 - late ACK expected-state append invalidates cache; spill checks all 9000 tuples and detects truncation
+  ---
+  duration_ms: 74.895875
+  type: 'test'
+  ...
+# Subtest: recorded real gateway page exhibits F1 on original bytes
+ok 9 - recorded real gateway page exhibits F1 on original bytes
+  ---
+  duration_ms: 66.440708
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 932.505042
