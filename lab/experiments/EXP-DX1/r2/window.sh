@@ -13,7 +13,7 @@ if [[ $s5 == true ]]; then
 fi
 repo=$PWD
 out=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2/$prefix
-if [[ $s5 == true ]]; then out=$(mktemp -d /private/tmp/dxs5-eval.XXXXXX); else mkdir -p "$out"; fi
+if [[ $s5 == true ]]; then out=$(mktemp -d "$repo/lab/experiments/EXP-DX1/s5/.runtime.XXXXXX"); else mkdir -p "$out"; fi
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 held=false; resources=false; completed=false; timer=; watcher=; diskguard=
 cleanup() {

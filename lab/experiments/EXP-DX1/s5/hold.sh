@@ -7,7 +7,7 @@ n=${1:?1000|10000|100000}; chunk=${2:?chunk subjects}; deliberate=${3:-false}
 [[ $n == 1000 || $n == 10000 || $n == 100000 ]] || exit 2
 [[ $chunk =~ ^[1-9][0-9]*$ ]] && (( chunk % 50 == 0 && chunk <= n && n % chunk == 0 )) || exit 2
 prefix=tx2-dxs5-seed-$n; scope=dxs5-w0-$n-v1
-repo=$PWD; out=$(mktemp -d /private/tmp/dxs5.XXXXXX)
+repo=$PWD; out=$(mktemp -d "$repo/lab/experiments/EXP-DX1/s5/.runtime.XXXXXX")
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 held=false; timer=; watcher=; keep=false; owned=false
 cleanup() {
@@ -21,7 +21,11 @@ cleanup() {
   docker network rm "$prefix-net" 2>/dev/null || true
   docker volume rm "$prefix-tools" 2>/dev/null || true
   if [[ $keep != true ]]; then docker volume rm "$prefix-pg-data" 2>/dev/null || true; fi
-  if [[ -n $(docker ps -aq --filter "name=^/$prefix-") ]]; then echo 'containers remain: retaining lock'; exit 1; fi
+  remaining=$(docker ps -aq --filter "name=^/$prefix-") || { echo 'cannot verify containers: retaining lock'; exit 1; }
+  [[ -z $remaining ]] || { echo 'containers remain: retaining lock'; exit 1; }
+  remaining_volumes=$(docker volume ls --filter "name=^$prefix-" --format '{{.Name}}') || { echo 'cannot verify volumes: retaining lock'; exit 1; }
+  expected=; [[ $keep != true ]] || expected="$prefix-pg-data"
+  [[ $remaining_volumes == "$expected" ]] || { echo "unexpected retained volumes $remaining_volumes: retaining lock"; exit 1; }
  fi
  if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
  rm -rf "$out"
@@ -40,6 +44,8 @@ printf '{"id":"DX-S5","pid":%s,"kind":"seed-%s"}\n' "$$" "$n" > "$lock/owner.jso
 (( $(free_mac) >= 15728640 )) || exit 2
 git diff --quiet && git diff --cached --quiet || { echo 'dirty source refused'; exit 2; }
 git rev-parse HEAD
+hold_started=$(date +%s)
+echo "hold startedAt=$(date -u +%FT%TZ)"
 seconds=1440; [[ $n != 100000 ]] || seconds=17900
 # [DX-S5] Why: Bash defers traps while waiting on a foreground Docker client; end the client before signalling its supervisor.
 # Rejected: TERM alone (a long seed could keep the measurement lock beyond its deadline).
@@ -133,4 +139,4 @@ if [[ $n == 100000 ]]; then
  (( size*1024 <= 20000000000 )) || { echo 'seed exceeds 20GB'; exit 1; }
  keep=true
 fi
-echo "sealed candidate=$keep volume=$prefix-pg-data"
+echo "sealed candidate=$keep volume=$prefix-pg-data wallSeconds=$(( $(date +%s)-hold_started ))"

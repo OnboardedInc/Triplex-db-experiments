@@ -158,7 +158,7 @@ export async function seedW0(
     commandsHash.update(line);
     if (position % 1000 === 0)
       console.error(
-        `[DX-H6 seed] ${position} commands, ${(position / ((performance.now() - seedStarted) / 1000)).toFixed(1)} commands/s, window ${concurrency}`,
+        `[DX-H6 seed] ${position} commands, ${((position - from) / ((performance.now() - seedStarted) / 1000)).toFixed(1)} commands/s, window ${concurrency}`,
       );
     await checkpoint?.();
   };
