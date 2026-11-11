@@ -24,7 +24,7 @@ cleanup() {
    docker ps -a --filter "name=$prefix" --format '{{.Names}}'
    docker volume ls --filter "name=$prefix" --format '{{.Name}}'
    fi
-   rm "$lock/owner.json"; rmdir "$lock"
+   rm -f "$lock/owner.json"; rmdir "$lock"
  fi
  find "$out" -type f -name "*.ndjson" -exec gzip {} \;
  echo "window exit=$rc"; exit "$rc"
@@ -33,10 +33,10 @@ trap cleanup EXIT
 trap 'exit 124' TERM INT
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 held=true
+printf '{"id":"DX-R2","pid":%s}\n' "$$" > "$lock/owner.json"
 git diff --quiet && git diff --cached --quiet || { echo "refuse dirty source"; exit 2; }
 git rev-parse HEAD
 deadline=$(( $(date +%s) * 1000 + 1100000 ))
-printf '{"id":"DX-R2","pid":%s}\n' "$$" > "$lock/owner.json"
 [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB'; exit 1; }
 [[ -z $(docker ps -q --filter "volume=$seed") ]] || { echo 'refuse an active seed'; exit 2; }
 (sleep 1100; docker rm -f "$prefix-driver" || true; kill -TERM $$) & timer=$!
