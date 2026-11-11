@@ -42,8 +42,8 @@ export const makeDatomicStorageAdapter: typeof original = (...args) => {
     depth = 0;
   const sync = async () => {
     const p = await Effect.runPromise(adapter.currentCommitPosition());
+    assert(initialized, "Replica must bootstrap before corpus writes");
     for (const replica of replicas) {
-      if (!initialized) await replica.bootstrap(roots, 0);
       while (replica.position < p) {
         try {
           await replica.followOnce(0, p);
@@ -83,13 +83,25 @@ export const makeDatomicStorageAdapter: typeof original = (...args) => {
         corpusStats.worlds++;
       }
     }
-    initialized = true;
     corpusStats.transactionCompletions++;
     if (corpusStats.transactionCompletions % 100 === 0)
       console.log(JSON.stringify({ kind: "corpus-progress", ...corpusStats }));
   };
   return {
     ...adapter,
+    // [DX-R1] Why: position zero is the current empty cut during initialize, not a past cut after the first physical frame.
+    // Rejected: bootstrapping retroactively after the first commit, which the gateway declines as interior-position.
+    initialize: () =>
+      adapter.initialize().pipe(
+        Effect.tap(() =>
+          Effect.tryPromise(async () => {
+            const p = await Effect.runPromise(adapter.currentCommitPosition());
+            assert.equal(p, 0, "Corpus scope must start empty");
+            for (const replica of replicas) await replica.bootstrap(roots, p);
+            initialized = true;
+          }),
+        ),
+      ),
     withTransaction: ((effect: any) =>
       Effect.suspend(() => {
         depth++;
