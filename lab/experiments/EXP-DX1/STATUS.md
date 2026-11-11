@@ -637,11 +637,25 @@ from now on, and long holds only for things every design needs.
 Leads from this: (a) a pause target or ZGC for the transactor; (b) let the commit function assign the record time when the
 client's is not above the maximum, the way it already assigns positions, instead of rejecting and replaying.
 
+## 2026-11-11 01:15 UTC: 10,000-subject W0 seed sealed; DX-H8 stopped; lock users cut to three
+
+**Sealed seed: volume `tx2-dxh8-seed-10000-pg-data`** (5.8 GB), scope `dxh8-w0-10000-v1`, G0 PASS, 434,768 commands, 4,488,231 facts,
+world fingerprint `sha256:7b4c292331396ab379423ed7faa1a095c324dcdb72afb411d0f48f93efa5624d`, serial seed 184.7 commands/s (39 minutes)
+plus 4 minutes of counts; receipt `~/Claude/Projects/triplex-db-2/evidence/DX-H8/tx2-dxh8-seed-10000/driver/receipt.json`. Clone it,
+never modify it.
+
+DX-H8 stopped by the orchestrator after the seed (its 10,000-subject stored-preview run is comparison only); its containers,
+clone volume and stale lock were removed by hand; report as left is 4f7a8618 on `exp/DX-H8-preview-activation` (not merged).
+DX-B10 resumed for its ordering proofs and the seed-rate measurement (one resume attempt failed with "model is at capacity";
+the retry is running). Lock users now: DX-R1, DX-H7, DX-B10.
+
+Disk: 27 GiB free on the Mac at 01:12 UTC (evidence 48 GB, swap 18.7 GB, VM disk image 39 GB).
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-H8 | P5 jump: preview memo, feed-driven re-evaluation, coalesced publication; publication profile; seal a 10,000-subject W0 seed; 10,000-subject activation | `exp/DX-H8-preview-activation`, `.claude/worktrees/dx-h8` | `.../prompts/DX-H8.md` |
+| DX-B10 (resumed 01:11 UTC) | Run the strict-order proofs and the full suite; W0 seed rate at windows 1 and 32 with the fingerprint | `exp/DX-B10-order`, `.claude/worktrees/dx-b10` | `.../prompts/DX-B10-resume1.md` |
 | DX-R1 | Local copy of current facts in the runtime (bootstrap, follow the feed, freeze), release evaluation from it for one and several candidates, publish only changed outputs; equality gates against the gateway and the full sweep | `exp/DX-R1-replica`, `.claude/worktrees/dx-r1` | `.../prompts/DX-R1.md` |
 | DX-H7 (resumed 00:06 UTC) | Gate its client and driver changes; writer predecessor-stamp map (one HTTP call per commit at 10,000 subjects) | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7-resume1.md` |
 
