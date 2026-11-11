@@ -1,57 +1,62 @@
-# DX-V1 — FIX-FIRST
+# DX-V1 round two — FIX-FIRST
 
-North star: P1 exact pinned concurrent reads; correctness floor from lab/SCOPE.md, NORTH-STAR.md and TARGETS.md.
-Reviewed head: `abbac16bb3e969f41eef5a968566d63fc6b41813`; tools/evidence commit: `dc172454`; branch `review/DX-V1`.
-No product source, benchmark source or acceptance contract changed. No containers, engine slots, measurement lock, merge or push.
+North star: P1 exact pinned reads; correctness floor in lab/SCOPE.md, NORTH-STAR.md and TARGETS.md.
+Reviewed `7ec1c313981eacc1906fc817df6dfd866f52a6d7`, fast-forwarded as requested; reviewer tools/evidence commit `c8f682d4` on `review/DX-V1`.
+All reviewer edits are under lab/verify/DX-V1/. No product/benchmark/acceptance edits after that merge; no containers, engine slots or measurement lock.
+The original three regression cases now pass for the intended reasons. Three additional bounded counterexamples prevent accepting the unrestricted exact-read/check claim; none demonstrates a wrong result in the existing frozen public benchmark trace.
 
-## Findings
+## Original findings, now claim-only tests
 
-**F1 — HIGH: different payload served on the benchmark's local route.** `packages/datomic/src/replica/decodeRows.ts:31`, `lab/bench/lib/replica-reads.ts:224`; compare `packages/datomic/src/reach.ts:53` and `lab/bench/lib/composition.ts:142`.
-Sequence: decode one identical gateway row with recordedAt=100, createdBy=client and validTo=20; install its packed version; read position 1 / validAt 10 locally, then through the gateway Triple decoder.
-Local omits recordedAt/createdBy/entityType/schemaVersion/txId and returns numeric validTo; gateway retains metadata and an Effect Option validTo. The benchmark actually uses these two different contracts for local and fallback reads.
-Repro: `adversarial.test.ts` tests named F1 and “recorded real gateway page”; original recording request/response 0 at position 42,775 independently exhibits the missing recordedAt=1793793600000. `fresh-claim-regressions.log` has the failing full-row equality.
-Likelihood: deterministic on ordinary benchmark local reads; any real caller expecting public Triple metadata sees it. This is a byte/API-equivalence defect, not evidence of corrupted business E/A/V values; Replica's standalone SweepRow API is explicitly a projection.
-Fix: preserve the same public result contract in the packed path, or explicitly define a narrower projection and normalize both routes before claiming equivalence. The current public Triples service itself is not wired to this benchmark-local reader.
+| Finding | Current result and reason | Output |
+| --- | --- | --- |
+| F1 payload mismatch | FIXED in tested paths: both local modes deeply equal gateway Triples with real Options; prepared/materialized/worker-restored forms agree; active projection-only rows fall back. Source metadata is retained, not inferred from the current journal. | round2/final-claims.log, test 1 |
+| F2 old unchecked fields | FIXED for the original mutations: exact source judge rejects 44 field/missing/undefined/Option mutations, an error record, and canonical forms distinguish signed zero. Expected rows are receipt/intent-bound. Broader check failures remain below. | same, test 2 |
+| F3 delayed equal-clock case | FIXED: newest time100 falls back before p2/time100 arrives; observing that duplicate keeps times ineligible. On a regular branch, applied time101 admits the prior time100 cut. Future clock regression remains below. | same, test 3 |
 
-**F2 — HIGH: the checker accepts wrong identity/temporal bytes.** `lab/bench/driver.ts:1213`, `lab/bench/lib/observe.ts:42`, `lab/bench/lib/world.ts:174`, `lab/bench/reader-worker.ts:179`.
-Sequence: build subject 0's complete seeded expected world; change every assertion ID, row position and valid-time bounds while preserving visible E/A/V. Execute the exact judgeRead source with the real Model/ExpectationCache: verdict remains `{ok:true,kind:"correct"}`.
-Repro: F2 tests and the second expected failure in `fresh-claim-regressions.log`. Separate concrete pairs show number -0/+0 and nested JSON -0/+0 have identical observations despite different canonical bytes; no hash collision search is involved.
-The raw O-REPLAY sample explicitly calls the gateway when keepRows=true, so its PASS cannot independently detect this local payload defect. Prepared observations also bypass row decoding (`observe.ts:34`); digest equality is not full-byte equality.
-Likelihood: F1 already passes this checker in normal reads; ID/interval corruption would always be missed when visible E/A/V is unchanged. Signed-zero cases are outside the fixed trace's generated values, but occur in supported real inputs. No observed benchmark E/A/V corruption is claimed.
-Fix: check a typed, lossless canonical representation covering all fields the claimed API returns, preserve signed zero, and run raw oracle samples through the local route as well as the gateway. Recheck actual materialized local rows against prepared summaries.
+`DX_V1_ASSERT_CLAIM=1 node --experimental-strip-types --test lab/verify/DX-V1/adversarial.test.ts` now exits 0: 3 pass / 0 fail. No old-defect assertion runs first.
+Original tests/runner/report are preserved as `adversarial.historical.ts`, `run.historical.sh`, `REPORT-round1.md`; they are historical, not current gates.
 
-**F3 — HIGH: a time-only basis can serve the earlier of two equal-clock positions before the second feed delta arrives.** `packages/datomic/src/replica/RecentReads.ts:117` and `:125`; gateway trace `gateway/src/triplex/gateway/commit.clj:91-96` and `reach.clj:77-81` (under packages/datomic).
-Sequence: bootstrap p1/time100 with value “before” and validAt0; commit p2/time100 with value “after” through a non-replay-safe SPI write; delay its journal delivery; read recordedAt100 locally. Local returns “before”; gateway time selection has no max-recorded-at >100 and therefore selects the current p2 cut, returning “after”.
-Repro: test F3 and the third expected failure in `fresh-claim-regressions.log`. After applying p2, duplicate-clock detection correctly falls back; the unsafe interval is before that observation. Position-only p1 remains exact.
-Gateway admissibility is a source trace, not a live transaction: the <=prior guard requires replay-safe; the irregular flag tests <prior, so equality is not marked irregular. Replica capability does not require all future writers to be replay-safe. A complete regular SPI journal can therefore preserve eligibility.
-Likelihood: not generated by the benchmark's public Triples writes (which use replay-safe strict clocks); relevant when supported SPI/import writers share an admitted scope. Native reproduction of that full SPI transaction was not run under the no-container rule.
-Fix: enforce a durable strictly increasing clock rule for every write to admitted scopes, or refuse local time admission without a source proof that the mapped time cut is closed against later equal/regressing writes. Detection after following is insufficient.
+## Remaining findings
 
-## Split workload comparison
+**R2-B — HIGH, wrong answer served after a late SPI clock regression.** `packages/datomic/src/replica/RecentReads.ts:132`; gateway `packages/datomic/gateway/src/triplex/gateway/commit.clj:91` and `:96`, `storage.clj:351` and `:436`.
+Sequence: bootstrap p1/time100 containing r-1; apply p2/time101 (time100 becomes closed); a non-replay-safe SPI commit p3/time100 adds r-3; delay p3's journal; read time100/validAt10. Local returns only r-1 while the gateway's record-time history filter includes r-1 and r-3. Applying p3 subsequently disables the local time mapping, too late for that read.
+Repro: `round2/attacks.test.ts:73`, R2-B; exact missing-ID output and failing equality in `round2/final-counterexamples.log`. Local reproduction is executable; SPI admissibility/gateway fallback is a source trace, not a live native transaction.
+Why admitted: the gateway rejects <=prior only for replay-safe writes, otherwise accepts a regression and marks the scope irregular. The local reader has no current scope-generation/clock fence before serving the old closed cut. Source-side irregularity is not known until following catches up.
+Likelihood: absent from the fixed public trace's replay-safe writes; relevant to scopes shared with permitted SPI/import writers. This does not show failure for an all-writer monotone scope. The exact native SPI transaction remains unexecuted.
+Fix: enforce a durable monotone-clock rule for every writer to a locally time-readable scope, or fence local admission against retroactive writes/scope invalidation. One later greater observed clock does not prove that future SPI clocks cannot regress.
 
-`split-target.ts:5-9` prefers offered commands or the nearest upcoming command; mixed draws uniformly over both sets. The ACK criterion at `reader-worker.ts:173` is unchanged and checks neither native publication nor replica application between reads.
-Concrete schedule: offer0, commit1, feed-applied2, assignment3, first-read-end4, ACK5, second-read6. Pending counts split=2 although both reads follow the same applied version; mixed can select a genuinely future command. This is coverage weakness, not a demonstrated wrong read.
-`split-audit.json` counterfactually replays the same 7,408 original q7 background writes on 8,998 opportunities: 100 ms grid, first query 1 ms, offers assumed on time; 5,811 opportunities have no target in either policy.
+**R2-A — HIGH, wrong expired read judged correct outside the trace's no-validTo restriction.** `lab/bench/lib/expectation-cache.ts:15-20`, `lab/bench/lib/model.ts:104`, `lab/bench/driver.ts:1236`.
+Sequence: bind a full seed receipt whose fourth scalar assertion ends at validTo20; judge its 120-row world at VT10 to warm the cache; at VT20 return the same now-wrong 120 rows. The unchanged judge says correct. Direct FullRowModel output has 119 rows at VT20; the cache reuses VT10's 120-row digest because its key has no validTo/seed boundaries. With a fresh cache, even the correct 119-row answer fails because Model.facts still uses the old non-expiring business count.
+Repro: `round2/attacks.test.ts:17`, R2-A; logs show uncached digest suffix :119 versus cached :120 and `{ok:true,kind:"correct"}` for the expired row. Exactly this rejection assertion fails in `round2/final-counterexamples.log`.
+Likelihood: not generated by the current fixed writer trace (no finite validTo); deterministic for the accepted receipt fixture and relevant before reusing this full-row checker for real interval expiry/correction scenarios. No production replica expiry error was found.
+Fix: derive expected counts and all record/valid-time cache boundaries from the complete full-row model, including seed/shared rows, retractions and validTo; alternatively refuse unsupported interval fixtures explicitly instead of certifying them.
 
-| Selected-target category | pending | mixed |
-| --- | ---: | ---: |
-| Offered / future | 864 / 2,323 | 217 / 2,970 |
-| ACK after first read | 3,135 | 3,178 |
-| Durable witness after first read | 3,116 | 3,174 |
-| Later ACK but already durably published | 19 | 4 |
-| Mean wait to ACK, ms | 90.43 | 138.46 |
+**R2-C — MEDIUM, different returned value types share a canonical form and pass the judge.** `lab/bench/lib/canonical.ts:9-14`, `lab/bench/lib/full-row-model.ts:74`, `lab/bench/driver.ts:1236`.
+Sequence: bind a correct row with `{type:"json",value:{}}`; change only its observed value to `{type:"json",value:new Date(0)}`. Deep equality and JSON serialization differ, but both canonical encodings are an empty object; the real judge accepts the wrong row. The model and observer share this non-injective canonicalizer, so their agreement does not rescue the check.
+Repro: `round2/attacks.test.ts:47`, R2-C, third distinct counterexample in `round2/final-counterexamples.log`; this is structural type collapse, not a probabilistic hash collision.
+Likelihood: not present in the frozen trace; Date is an invalid Datomic JSON value and normal decoding does not produce it. This is a checker false-positive under a wrong-return-type fault, not evidence that Datomic currently returns Dates for JSON objects.
+Fix: validate the returned value domain/plain-object prototypes and array shape before canonicalizing; reject unsupported objects rather than coercing every object to enumerable keys.
 
-These are replay counts, not actual historical reader straddles. Publication witness after a read also does not prove native commit after it. The retained evidence lacks actual assignment/first-step/application timestamps, so original genuine straddles cannot be counted; retain those timestamps and compare identical-policy pairs before attribution.
+## What did not break, and remaining live evidence
 
-## Verification, limits and outcome audit
+Fresh forced builds: five tasks successful, zero cache hits (`round2/build.log`). Three claim tests + eleven further characterizations + 34 builder-focused tests pass; optional new-claim mode exits 1 with exactly R2-A/R2-B/R2-C failed. `run.sh` requires those precise outcomes, not a generic nonzero exit.
+Recorded replay freshly completes 2,000 journals/clocks, 3,000 complete public-world comparisons at bootstrap/end/retained cuts, and 10,000 prepared/materialized/source comparisons with zero differences (`round2/replay.log`). These remain offline executions over original historical bytes.
+Did not break: full metadata across changed intervals and retraction/old-basis reads; held lazy rows; projection decline in both public modes; first post-bootstrap closed cut, exact floor, newest clock rejection, structured-cloned images and conservative rebuild admission; two versions with one revision retaining distinct bytes/stats/metadata; standard missing/undefined/Option/nested-value distinctions.
+FullRowModel provenance trace uses operations plus write receipts (including generated IDs/receipt clock), not sampled read results; source metadata is not populated from a read under test. Shared canonicalization is the concrete common failure in R2-C. No same-revision prepared-cache collision was found.
+Real-worker probes execute closed/open clock routing and injected bad gateway/prepared observations. Mismatches become retained error records; attempted=completed=retained and active=0 at the stopped ACK. Existing sequence/drain/spill tests pass; timeout/error rows are not judged correct. The initial incomplete-composition fixture failure is retained as a harness failure.
+Closed-clock raw samples actually query local plus gateway. An open-clock sample instead uses fallback plus gateway and consumes the raw-sample budget; the code imposes no minimum number of locally answered raw samples. This is a live coverage limitation, not a newly observed wrong read. Require and report local raw-sample counts before qualifying the local path.
+Still live-unverified: native SPI regression, current 200k differential, pending/mixed ladders, writer concurrency, read/fallback/open-clock shares and waits, per-reader delta straddles, 10k RSS and all performance bars. Source-follower application timestamps alone do not show when a particular reader applied its delta. No root/package-consumer check, publish, push or promotion.
 
-Fresh local builds: five successful tasks, zero cache hits (`build-fresh.log`); 13 characterization tests pass and exactly three named claim assertions fail as expected. The wrapper requires those precise failures, not merely a nonzero exit.
-Thirty existing focused tests pass (`fresh-existing-tests.log`). Recorded replay: 2,000 journals/clocks, 3,000 canonical W0 world comparisons across current/retained cuts, 10,000 prepared observations, zero differences (`fresh-recorded-replay.log`). These are fresh offline executions of historical recording bytes.
-Independent synthetic fold: 300 cuts / 9,416 checks, including 2,256 fallbacks, floor advancing to 285 and ten held lazy worlds. Shared targets, cycles, leaving closures, corrections/retractions and byte eviction did not corrupt projected worlds.
-Also did not break: reads during a staged half journal; feed and reader-delta gaps/duplicates/reordering; delayed reader fallback; observed unknown/regressing/duplicate clocks; same-assertion interval corrections at both endpoints; rebuild with held results; slab append/rollover immutability; late-ACK expectation invalidation; 9,000 spilled tuple readbacks and truncation rejection.
-No new live differential, benchmark pair, native SPI transaction, container restart, root check or package-consumer check was run. Current R3 REPORT labels its newer full pair 0% local and its final correction unit/typechecked only; historical q7/oracle numbers do not qualify that correction.
-Outcome audit: every observation-to-outcome site is listed in `AUDIT.md`: adversarial.test.ts (content assertions, fresh fixtures, source/input binding), run.sh (precisely named fresh failures and successful checks), split-audit.ts (bound counterfactual counts, no acceptance), capture.mjs (actual-byte hashes, no PASS), and this report (FIX-FIRST with native limitations). No engine-slot identity is claimed.
-`binding.json`/`SHA256SUMS` bind 333 source files, 169 rebuilt JS files, tools/logs and the 8,888-input external index. Bulky index: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-V1/recorded-inputs.json`; originals remain in DX-R1/DX-H4. Initial harness/build failures remain retained, distinct from semantic counterexamples.
-Pinned-path audit: no pinned product/bench/acceptance path changed, so no old/new source hashes require re-pinning. Report is committed last; all repository additions are beneath lab/verify/DX-V1/.
-Reproduce after building dependencies: `node lab/bin/heavy.mjs --label DX-V1-repeat -- bash lab/verify/DX-V1/run.sh`; direct claim assertion command: `DX_V1_ASSERT_CLAIM=1 node --experimental-strip-types --test lab/verify/DX-V1/adversarial.test.ts` (expected exit 1, exactly F1/F2/F3).
-Open decisions: settle full Triple versus explicit projection equivalence; close the all-writer clock guarantee and run its native SPI case; retain actual split-step/application evidence. No fix or promotion was performed.
+## Builder numbers checked against original logs
+
+`round2/check-numbers.mjs` hashes and parses p4-footprint-b.log.gz / p4-offline-rate-c.log.gz; `round2/builder-numbers.json` retains values and arithmetic. Fresh footprint replay reproduces them exactly (`round2/footprint.log`).
+1,000 subjects / 145,138 entities / 442,196 facts: packed 46,211,688 -> 67,690,600 bytes, or 46,211.688 -> 67,690.600 per subject: **+46.4794%**. Prepared sidecars add 75,289,972 bytes; payload plus accounted sidecars = 142,980,572 bytes, not process RSS.
+Historical 200,000 reads per arm: 24,290.843542 ms / 8,233.555152 per second before; 27,001.587416 ms / 7,406.971928 per second after: **10.0392% lower rate**. CPU .12115871 -> .13385167 ms/read: **+10.4763%**. Arithmetic and log claims match.
+This was old-first/new-second, one quiescent host-thread arm each, with different payload/check strength and no writer/engine or repeated variance estimate. I did not rerun a rate measurement without the forbidden measurement lock; the logs establish that observation, not an attributable live 10% regression.
+
+## Outcome audit, binding and handoff
+
+Every observation-to-outcome site is enumerated in `round2/AUDIT.md`: claim tests; attack tests; actual-worker probes; fixtures/extracted judge; run.sh; number parser; hash capture; this report. Each states its content checks, fresh attempt construction and exact source/build/input binding; historical inputs, injected faults and native source traces are labelled. No engine-slot identity is borrowed.
+`round2/binding.json` / `round2/SHA256SUMS`: reviewed 7ec1c313, 341 source files, 169 rebuilt JS files, dependency manifests, reviewer tools/logs, and a hash-bound 8,891-input index. Bulky index: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-V1/round2/recorded-inputs.json`; original recordings/builder logs remain external.
+No reviewer-authored product/bench/acceptance changes or moved pins; the required merge brought the builder's existing source. First-round bindings and all failed attempts remain. Report committed last. Reproduce: `node lab/bin/heavy.mjs --label DX-V1-r2-repeat -- bash lab/verify/DX-V1/run.sh`.
+Open: enforce/qualify the all-writer clock fence; fix or explicitly scope temporal model/cache admission; reject invalid canonical value types; then obtain locally answered raw samples and a fresh live run. No code under review was fixed.
