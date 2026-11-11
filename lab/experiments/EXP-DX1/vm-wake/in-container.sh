@@ -13,7 +13,12 @@ while :; do
     cpus=$(docker inspect "$c" --format '{{.HostConfig.CpusetCpus}}'); n=0
     for part in ${cpus//,/ }; do if [[ $part == *-* ]]; then n=$((n + ${part#*-} - ${part%-*} + 1)); else n=$((n+1)); fi; done
     [[ $n -eq 0 ]] && n=1
-    ok=0; for i in $(seq 1 $n); do docker exec -d "$c" chrt -i 0 sh -c 'while :; do :; done' 2>/dev/null && ok=$((ok+1)); done
+    # SCHED_IDLE where the image has it; otherwise the lowest nice level (Postgres's Alpine image has no chrt -i).
+    how=idle; docker exec "$c" chrt -i 0 true >/dev/null 2>&1 || how=nice
+    ok=0; for i in $(seq 1 $n); do
+      if [[ $how == idle ]]; then docker exec -d "$c" chrt -i 0 sh -c 'while :; do :; done' 2>/dev/null && ok=$((ok+1))
+      else docker exec -d "$c" nice -n 19 sh -c 'while :; do :; done' 2>/dev/null && ok=$((ok+1)); fi
+    done; echo "  $c uses $how"
     echo "$(date -u +%T) $c cpuset=$cpus loops=$ok/$n"; seen="$seen$c "
   done
   sleep 2
