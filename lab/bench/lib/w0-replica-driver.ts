@@ -23,7 +23,7 @@ import {
 } from "./w0-world.ts";
 import { subjectList } from "./sweep.ts";
 import { evaluateAll } from "./w0-replica.ts";
-import { DomainOracle } from "./w0-gates.ts";
+import { DomainOracle, DomainOraclePool } from "./w0-gates.ts";
 import { startW0Live, matchW0Live } from "./w0-replica-live.ts";
 // [DX-R1] Why: this explicit entry point leaves the existing full-sweep gates and H8's path unchanged.
 // Rejected: relabelling old controller PASS rows as replica acceptance.
@@ -36,7 +36,10 @@ export async function runReplicaDriver(argv: string[]) {
     scope = opt("scope"),
     workers = Number(opt("workers", "3")),
     oracleConcurrency = Number(opt("oracle-concurrency", "1")),
+    oracleProcesses = Number(opt("oracle-processes", "1")),
     verificationPages = Number(opt("verification-pages", "1"));
+  if (!Number.isSafeInteger(oracleProcesses) || oracleProcesses < 1 || oracleProcesses > 4)
+    throw Error("invalid oracle process count");
   if (!Number.isSafeInteger(oracleConcurrency) || oracleConcurrency < 1 || oracleConcurrency > 32)
     throw Error("invalid oracle concurrency");
   if (!Number.isSafeInteger(verificationPages) || verificationPages < 1 || verificationPages > 8)
@@ -88,10 +91,11 @@ export async function runReplicaDriver(argv: string[]) {
   };
   const replica = new Replica(base, V_W0),
     batchOracle = argv.includes("--batch-oracle"),
-    oracle = new DomainOracle(
+    oracle = new DomainOraclePool(
       batchOracle
         ? new URL("../../experiments/EXP-DX1/s5/oracle.py", import.meta.url).pathname
         : undefined,
+      oracleProcesses,
     );
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
   // [DX-S5] Why: report actual all-subject oracle time separately from activation and storage readback.
@@ -232,6 +236,11 @@ export async function runReplicaDriver(argv: string[]) {
     const initialHeap = process.memoryUsage().heapUsed;
     const start = performance.now();
     let cut = await comp.currentPosition();
+    // [DX-S5] Why: a declared first-use run must begin at the sealed position, before any activation writes.
+    // Rejected: silently evaluating an already consumed first-use seed at a later head.
+    if (opt("seed-position") && cut !== Number(opt("seed-position")))
+      throw Error("initial head differs from sealed position");
+    report.initialSeedPosition = cut;
     await replica.bootstrap(subjects, cut);
     (globalThis as any).gc?.();
     const bootstrapImage = (await replica.snapshotAt(cut)).sharedImage();
@@ -761,6 +770,7 @@ export async function runReplicaDriver(argv: string[]) {
     report.publishedStatesCompared = statesCompared;
     report.oracleCompared = checked;
     report.oracleConcurrency = oracleConcurrency;
+    report.oracleProcesses = oracleProcesses;
     report.oracleTransport = batchOracle ? "batched unchanged O-DOMAIN" : "original";
     report.postAckExactnessWallMs = performance.now() - exactnessStarted;
     report.postAckOracleWallMs = oracleWallMs - oracleBeforeExactness;

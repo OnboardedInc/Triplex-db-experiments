@@ -30,6 +30,12 @@ cleanup() {
  [[ -z $diskguard ]] || kill "$diskguard" 2>/dev/null || true
  if [[ $held == true ]]; then
    if [[ $resources == true ]]; then
+   if [[ $s5 == true && $rc != 0 ]]; then
+    # [DX-S5] Why: retain complete failed JVM logs before removing first-use evaluation containers.
+    # Rejected: losing the cause while preserving only a driver socket error.
+    docker stop -t 15 "$prefix-gw-r" "$prefix-gw-w" "$prefix-tx" || true
+    python3 "$repo/lab/experiments/EXP-DX1/s5/failure-logs.py" "$prefix" || true
+   fi
    if [[ $first_use == true ]] && docker container inspect "$prefix-pg" >/dev/null 2>&1; then
     for role in gw-r gw-w tx; do docker stop -t 15 "$prefix-$role" || true; done
     docker stop -t 20 "$prefix-pg" || true
@@ -150,14 +156,24 @@ start_jvm() {
   docker run -d --pull never -v "$repo/lab/experiments/EXP-DX1/s5/logback.xml:/opt/datomic/bin/logback.xml:ro" "$@"
  else docker run -d --pull never "$@"; fi
 }
-start_jvm --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory 4g --memory-swap 4g -e 'JAVA_OPTS=-Xms256m -Xmx3g' -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
+peer_cache=1g; peer_entity_cache=268435456; peer_sessions=1000000; peer_java_extra=; tx_java_extra=
+if [[ $s5 == true ]]; then
+ peer_cache=256m; peer_entity_cache=67108864; peer_sessions=65536
+ peer_java_extra='-XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
+ tx_java_extra='-Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
+fi
+start_jvm --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory 4g --memory-swap 4g -e "JAVA_OPTS=-Xms256m -Xmx3g $tx_java_extra" -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
  cpu=1; [[ $role == w ]] || cpu=2,3
  host_port=18542; [[ $role == w ]] || host_port=18543
- start_jvm --restart on-failure:10 --name "$prefix-gw-$role" -p "127.0.0.1:$host_port:8080" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e 'DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g -Dtriplex.codec.spec=/opt/replica-codec-spec.json' -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main
+ start_jvm --restart on-failure:10 --name "$prefix-gw-$role" -p "127.0.0.1:$host_port:8080" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e "DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=$peer_cache -Dtriplex.codec.spec=/opt/replica-codec-spec.json $peer_java_extra" -e "TX2_ENTITY_CACHE_BYTES=$peer_entity_cache" -e "TX2_REACH_SESSION_ENTRIES=$peer_sessions" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main
  done
 docker run --rm --pull never --name "$prefix-copy" --network "$prefix-net" node:22.23.2-bookworm-slim node -e '
 for (const role of ["w","r"]) { let ok=false; for(let i=0;i<180;i++){try{let r=await fetch("http://"+process.argv[1]+"-gw-"+role+":8080/health"); if(r.ok){console.log(await r.text());ok=true;break;}}catch{} await new Promise(r=>setTimeout(r,1000));}if(!ok)process.exit(1);}' "$prefix"
+if [[ $s5 == true ]]; then
+ db=$(node --input-type=module -e 'import {DatabaseScope} from "./packages/core/dist/runtime/index.js";console.log("s2-"+Buffer.from(String(DatabaseScope.test(process.argv[1]))).toString("base64url"))' "$scope")
+ bash lab/experiments/EXP-DX1/s5/wait-ready.sh "$prefix" "$db" 0
+fi
 if [[ ${1:-} == --gateway-tests ]]; then
  for ns in triplex.gateway.feed-test triplex.gateway.selftest; do
   docker exec -e DF01_RECORDED_PAGE=/tmp/dxr2-feed-recording.json -e 'DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -Dtriplex.codec.spec=/opt/replica-codec-spec.json' "$prefix-gw-r" /opt/datomic/bin/run -m "$ns"

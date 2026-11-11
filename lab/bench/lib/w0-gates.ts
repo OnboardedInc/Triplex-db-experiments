@@ -63,6 +63,24 @@ export class DomainOracle {
     this.child.stdin.end();
   }
 }
+// [DX-S5] Why: after activation the driver has idle cores, but one Python pipe serialized the full 100k oracle.
+// Rejected: sampling or changing O-DOMAIN; each isolated child receives the original complete request bytes.
+export class DomainOraclePool {
+  readonly children: DomainOracle[];
+  private next = 0;
+  constructor(entrypoint: string | undefined, count = 1) {
+    if (!Number.isSafeInteger(count) || count < 1 || count > 4)
+      throw Error("invalid oracle process count");
+    this.children = Array.from({ length: count }, () => new DomainOracle(entrypoint));
+  }
+  call(op: string, input: unknown): Promise<string> {
+    const child = this.children[this.next++ % this.children.length]!;
+    return child.call(op, input);
+  }
+  close() {
+    for (const child of this.children) child.close();
+  }
+}
 export function wireRecord(r: any) {
   return {
     ...r,
