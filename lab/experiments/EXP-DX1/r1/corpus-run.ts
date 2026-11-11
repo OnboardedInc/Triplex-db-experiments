@@ -39,6 +39,11 @@ for (const test of process.argv.includes("--corpus-dry-run") ? [] : selected) {
         timer = setTimeout(() => reject(new Error("Corpus timeout")), test.timeout);
       }),
     ]);
+  } catch (error) {
+    console.log(
+      JSON.stringify({ kind: "replica-corpus-incomplete", ...corpusStats, error: String(error) }),
+    );
+    throw error;
   } finally {
     clearTimeout(timer!);
   }
