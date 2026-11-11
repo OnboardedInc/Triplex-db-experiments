@@ -834,3 +834,16 @@ Actions: (1) `h4/run.sh` takes `DX_DRIVER_MEMORY`; **q5** queued behind the 24 G
 from the frozen checkout at `1eea10e2` (scripts only differ from `ea8931d5`). (2) Owed harness fix, for DX-R3's resume or a small
 brief once DX-R3 exits (it owns `driver.ts`): write each phase's summary to disk when the phase ends, bound sample memory,
 record driver memory per phase. With local reads at 15,000/s the sample volume triples again.
+
+## 2026-11-11 04:50 UTC: w2 (one CPU per engine container, with and without in-container idle loops)
+
+Zero-reader writer trace, 10,000 subjects, 200 s, Postgres on CPU 0, transactor 1, write gateway 2, read gateway 3.
+
+| Arm | Steady commit p50 / p90 / p99 ms | Burst commit p50 / p90 / p99 / max ms | Burst over 100 ms |
+| --- | --- | --- | --- |
+| No loops | 24.8 / 41.2 / 106.9 (n 1,382) | 7.1 / 13.3 / 42.0 / 336.0 (n 3,262) | 17 |
+| Idle loop in each container | 17.3 / 31.5 / 90.9 (n 1,395) | 10.4 / 18.5 / 42.4 / 313.1 (n 3,262) | 9 |
+
+Reading: loops inside the containers take 30% off the sparse-commit median and add 46% to the burst median, so they are not a
+fix. The arms ran 50 minutes apart (the lock went to others in between) and the host was quieter for the second, so the steady
+gain is an upper bound. In-container loops are closed as an option; `nohlt` (whole-guest idle polling) is the remaining test.
