@@ -8,7 +8,7 @@ import {
 import { Replica, datomicReplicaSource } from "../../../../packages/datomic/dist/index.js";
 import { makeDatomicStorageAdapter as original } from "../../../../packages/datomic/dist/DatomicStorageAdapter.js";
 
-export const corpusStats = { physicalCommits: 0, worlds: 0, rebuilds: 0 };
+export const corpusStats = { transactionCompletions: 0, worlds: 0, rebuilds: 0 };
 const roots = [...Array.from({ length: 8 }, (_, i) => "e" + i), "root", "public"];
 const times = [0, 100, 200, 299, 300];
 // [DX-R1] Why: keep the original corpus and portable adapter as the expected side, comparing complete current row projections.
@@ -84,8 +84,8 @@ export const makeDatomicStorageAdapter: typeof original = (...args) => {
       }
     }
     initialized = true;
-    corpusStats.physicalCommits++;
-    if (corpusStats.physicalCommits % 100 === 0)
+    corpusStats.transactionCompletions++;
+    if (corpusStats.transactionCompletions % 100 === 0)
       console.log(JSON.stringify({ kind: "corpus-progress", ...corpusStats }));
   };
   return {
