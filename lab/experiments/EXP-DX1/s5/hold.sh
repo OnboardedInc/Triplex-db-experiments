@@ -54,6 +54,7 @@ docker volume create "$prefix-tools"
   mac=$(free_mac)
   vm=$(docker run --rm --pull never --name "$prefix-budget" -v "$prefix-pg-data:/data:ro" postgres:17-alpine sh -c 'df -Pk /data | tail -1; du -sk /data') || { kill -TERM $$; exit 1; }
   echo "disk $(date -u +%FT%TZ) macFreeKiB=$mac vm=$vm"
+  docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} memory={{.MemUsage}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" "$prefix-driver" 2>/dev/null || true
   vmfree=$(echo "$vm" | awk 'NR==1 {print $4}')
   (( mac >= 15728640 && vmfree >= 5242880 )) || { kill -TERM $$; exit 1; }
   sleep 10
@@ -102,5 +103,9 @@ docker exec "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d datomic -c CHECK
 docker stop -t 30 "$prefix-pg"
 [[ $(docker inspect --format '{{.State.ExitCode}}' "$prefix-pg") == 0 ]] || exit 1
 docker run --rm --pull never --name "$prefix-copy" -v "$prefix-pg-data:/data:ro" postgres:17-alpine sh -c 'du -sk /data; du -sk /data/pg_wal; pg_controldata /data | head -20'
-[[ $n != 100000 ]] || keep=true
+if [[ $n == 100000 ]]; then
+ size=$(docker run --rm --pull never --name "$prefix-copy" -v "$prefix-pg-data:/data:ro" postgres:17-alpine du -sk /data | awk '{print $1}')
+ (( size*1024 <= 20000000000 )) || { echo 'seed exceeds 20GB'; exit 1; }
+ keep=true
+fi
 echo "sealed candidate=$keep volume=$prefix-pg-data"

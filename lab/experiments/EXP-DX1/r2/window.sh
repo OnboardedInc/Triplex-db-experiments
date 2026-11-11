@@ -4,21 +4,27 @@
 set -euo pipefail
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 prefix=${1:?tx2-dxr2-*}; seed=${2:?sealed-volume}; scope=${3:?scope}; n=${4:?subjects}; shift 4
-[[ $prefix =~ ^tx2-dxr2-[a-z0-9-]+$ ]] || exit 2
-[[ $seed == tx2-dxh5-seed-1000-pg-data || $seed == tx2-dxh8-seed-10000-pg-data ]] || exit 2
+s5=false
+[[ $prefix =~ ^tx2-dxs5-[a-z0-9-]+$ ]] && s5=true
+[[ $prefix =~ ^tx2-dxr2-[a-z0-9-]+$ || $s5 == true ]] || exit 2
+[[ $seed == tx2-dxh5-seed-1000-pg-data || $seed == tx2-dxh8-seed-10000-pg-data || ( $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 ) ]] || exit 2
+if [[ $s5 == true ]]; then
+ [[ -f /Users/sam/Claude/Projects/triplex-db-2/locks/long-hold-ok ]] || { echo 'long hold not authorized'; exit 2; }
+fi
 repo=$PWD
 out=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2/$prefix
-mkdir -p "$out"
+if [[ $s5 == true ]]; then out=$(mktemp -d /private/tmp/dxs5-eval.XXXXXX); else mkdir -p "$out"; fi
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
-held=false; resources=false; completed=false; timer=; watcher=
+held=false; resources=false; completed=false; timer=; watcher=; diskguard=
 cleanup() {
  rc=$?; trap - EXIT TERM INT
  [[ $completed == true || $rc != 0 ]] || rc=1
  [[ -z $timer ]] || kill "$timer" 2>/dev/null || true
  [[ -z $watcher ]] || kill "$watcher" 2>/dev/null || true
+ [[ -z $diskguard ]] || kill "$diskguard" 2>/dev/null || true
  if [[ $held == true ]]; then
    if [[ $resources == true ]]; then
-   for role in gate driver gw-r gw-w tx pg copy extract budget; do docker rm -f "$prefix-$role" || true; done
+   for role in gate driver gw-r gw-w tx pg copy extract budget guard; do docker rm -f "$prefix-$role" || true; done
    docker network rm "$prefix-net" || true
    docker volume rm "$prefix-pg-data" "$prefix-tools" || true
    docker ps -a --filter "name=$prefix" --format '{{.Names}}'
@@ -27,19 +33,23 @@ cleanup() {
    rm -f "$lock/owner.json"; rmdir "$lock"
  fi
  find "$out" -type f -name "*.ndjson" -exec gzip {} \;
+ [[ $s5 != true ]] || rm -rf "$out"
  echo "window exit=$rc"; exit "$rc"
 }
 trap cleanup EXIT
 trap 'exit 124' TERM INT
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 held=true
-printf '{"id":"DX-R2","pid":%s}\n' "$$" > "$lock/owner.json"
+id=DX-R2; [[ $s5 != true ]] || id=DX-S5
+printf '{"id":"%s","pid":%s,"kind":"evaluation"}\n' "$id" "$$" > "$lock/owner.json"
 git diff --quiet && git diff --cached --quiet || { echo "refuse dirty source"; exit 2; }
 git rev-parse HEAD
-deadline=$(( $(date +%s) * 1000 + 1100000 ))
+hold_s=1100; driver_memory=8g; clone_kib=6000000
+[[ $s5 != true ]] || { hold_s=3500; driver_memory=11g; clone_kib=19531250; }
+deadline=$(( $(date +%s) * 1000 + hold_s * 1000 ))
 [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB'; exit 1; }
 [[ -z $(docker ps -q --filter "volume=$seed") ]] || { echo 'refuse an active seed'; exit 2; }
-(sleep 1100; docker rm -f "$prefix-driver" || true; kill -TERM $$) & timer=$!
+(sleep "$hold_s"; docker rm -f "$prefix-driver" || true; kill -TERM $$) & timer=$!
 for name in "$prefix-pg-data" "$prefix-tools"; do
  if docker volume inspect "$name" >/dev/null 2>&1; then echo "refuse existing owned volume $name"; exit 2; fi
 done
@@ -48,8 +58,28 @@ for role in pg tx gw-w gw-r driver; do
 done
 if docker network inspect "$prefix-net" >/dev/null 2>&1; then echo 'refuse existing network'; exit 2; fi
 resources=true
+if [[ $s5 == true ]]; then
+ (
+  while sleep 5; do
+   mac=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
+   vm=$(docker run --rm --pull never --name "$prefix-guard" postgres:17-alpine sh -c 'df -Pk / | tail -1' | awk '{print $4}') || { kill -TERM $$; exit 1; }
+   echo "evaluation-disk macFreeKiB=$mac vmFreeKiB=$vm"
+   (( mac >= 15728640 && vm >= 5242880 )) || { docker rm -f "$prefix-driver" "$prefix-copy" || true; kill -TERM $$; exit 1; }
+  done
+ ) & diskguard=$!
+fi
 for name in "$prefix-pg-data" "$prefix-tools"; do docker volume create "$name"; done
-docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" -v "$prefix-pg-data:/to" postgres:17-alpine sh -c 'test $(du -sk /from | cut -f1) -lt 6000000 && cp -a /from/. /to/ && du -sk /to'
+# [DX-S5] Why: reserve full clone space plus the Mac/VM floors before allocating any seed bytes.
+# Rejected: allowing a 100k copy to discover the disk limit only after it finishes.
+clone_start=$(date +%s)
+if [[ $s5 == true ]]; then
+ source_kib=$(docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}')
+ mac_kib=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
+ vm_kib=$(docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" postgres:17-alpine sh -c 'df -Pk /from | tail -1' | awk '{print $4}')
+ (( mac_kib-source_kib >= 15728640 && vm_kib-source_kib >= 5242880 )) || { echo 'clone does not fit disk reserve'; exit 1; }
+fi
+docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" -v "$prefix-pg-data:/to" postgres:17-alpine sh -c 'test $(du -sk /from | cut -f1) -lt "$1" && cp -a /from/. /to/ && du -sk /to' sh "$clone_kib"
+echo "clone elapsedSeconds=$(( $(date +%s)-clone_start ))"
 docker create --pull never --name "$prefix-extract" -v "$prefix-tools:/tool" node:22.23.2-bookworm-slim sh -c 'cp /usr/local/bin/node /tool/node; cp /usr/lib/*-linux-gnu/libstdc++.so.6 /usr/lib/*-linux-gnu/libgcc_s.so.1 /tool/'
 docker start -a "$prefix-extract"; docker rm "$prefix-extract"
 mkdir "$out/config"
@@ -87,10 +117,12 @@ fi
    kb=$(docker run --rm --pull never --name "$prefix-budget" -v "$prefix-pg-data:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}') || { kill -TERM $$; exit 1; }
    owned_kb=$(du -sk /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2 | awk '{print $1}')
    free_kb=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
-   if [[ $kb -gt 7300000 || $owned_kb -gt 490000 || $free_kb -lt 5242880 ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; docker rm -f "$prefix-driver" || true; kill -TERM $$; exit 1; fi
+   volume_cap=7300000; floor=5242880
+   [[ $s5 != true ]] || { volume_cap=22000000; floor=15728640; }
+   if [[ $kb -gt $volume_cap || $owned_kb -gt 490000 || $free_kb -lt $floor ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; docker rm -f "$prefix-driver" || true; kill -TERM $$; exit 1; fi
  done
 ) & watcher=$!
-docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 8g --memory-swap 8g \
+docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory "$driver_memory" --memory-swap "$driver_memory" \
  -v "$repo:$repo:ro" -v "$out:$out" -v "$prefix-tools:/tool:ro" -w "$repo" -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin \
  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e "DX_R1_DEADLINE=$deadline" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
  python:3.13-slim /tool/node --expose-gc --experimental-strip-types lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" "$@"
