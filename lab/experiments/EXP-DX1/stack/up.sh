@@ -9,6 +9,8 @@ tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true
 # Rejected: replacing defaults globally (would change other agents' measurements).
 # [orchestrator merge] Flags (DX-S3) win; DX_* environment variables (DX-H3) are the fallback; then the old defaults.
 pg_mem=${DX_PG_MEMORY:-512m} tx_mem=${DX_TX_MEMORY:-3g} gw_mem=1500m tx_java="-Xms256m -Xmx${DX_TX_HEAP:-2g}" gw_java=''
+# [DX-M2] Why: opt-in JVM arms preserve concurrent experiments' defaults. Rejected: changing the control globally.
+tx_java=${DX_TX_JAVA_OPTS:-$tx_java}
 index_threshold=${DX_INDEX_THRESHOLD:-128m} index_max=${DX_INDEX_MAX:-512m} object_cache=${DX_OBJECT_CACHE:-128m} pg_settings=''
 while (($#)); do
   case "$1" in
@@ -103,9 +105,10 @@ for role in w r; do
   if [[ $role == w ]]; then mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; heap=${DX_GW_WRITE_HEAP:-}; else mem=${DX_GW_READ_MEMORY:-$gw_mem}; heap=${DX_GW_READ_HEAP:-}; fi
   # bin/run reads DATOMIC_JAVA_OPTS, not JAVA_OPTS (DX-S3). An explicit --gw-java-opts wins; else DX_GW_*_HEAP; else the launcher default (1g).
   role_java=$gw_java; [[ -n $role_java || -z $heap ]] || role_java="-Xms256m -Xmx$heap"
+  if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
     ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" -e "DATOMIC_JAVA_OPTS=$role_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
-    -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
+    -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -v "$src:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false
   for ((i=0;i<180;i++)); do
