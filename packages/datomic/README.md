@@ -184,8 +184,13 @@ request strict mode; existing sealed seeds retain their original policy.
 
 In a strict scope, every write through the gateway's commit function, including
 unsafe SPI and claim-only/empty commits, must use one finite record clock per
-physical commit, strictly greater than the scope's durable maximum. A runtime
-copy answers record-time-only pinned reads locally only in strict scopes, and
+physical commit, strictly greater than the scope's durable maximum. Public
+replay-safe writes obtain this clock from the adapter; callers need not supply one.
+Logical journals in the same physical commit share that instant. On a source
+clock conflict, the adapter replays above the reported maximum with a new ordered
+submission turn.
+
+A runtime copy answers record-time-only pinned reads locally only in strict scopes, and
 only after a later applied clock closes the requested cut, with the required
 history and reference closure retained. Other time-pinned reads use the gateway.
 Position-pinned and current reads do not require strict mode for local eligibility.
