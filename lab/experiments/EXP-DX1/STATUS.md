@@ -918,3 +918,21 @@ Merge conflict in `Replica.ts` resolved by keeping DX-R2's inline replacement pa
 typechecks, 25 vitest and 13 node tests pass (`ORCH-merge/merge3-*.log`). Orchestrator run queued:
 `r3/run.sh benchmark m1` (log `evidence/DX-R3/orch-benchmark-m1.log`). Owed after it: the differential on the merged code,
 and the full pair with `--read-path replica`.
+
+## 2026-11-11 06:40 UTC: DX-R2 measured fresh at 10,000 subjects (orchestrator run, VM plain, no `nohlt`)
+
+`r2/window.sh tx2-dxr2-10000-b` on a clone of the sealed seed, 3 workers, exit 0. Log `evidence/DX-R2/orch-10000-b.log`.
+Exactness: 10,000 bootstrap worlds equal, 10,000 post-acknowledgement states equal, 10,000 published states compared, 10,000
+subjects through the oracle; zero mismatches.
+
+| Measurement | DX-R1 | DX-R2 | Target |
+| --- | --- | --- | --- |
+| Bootstrap, 10,000 subjects | 71.8 s | 30.4 s (157 page reads) | 30 s |
+| Evaluate all 10,000 for one release, pass wall | 9.27 s | 4.13 s (startup 0.49 s; 2,420 subjects/s) | |
+| Follow lag, acknowledgement to applied, under 256 readers | p99 1,453 ms | p50 4.5 ms, p99 82.8 ms (162 commits) | p99 at most 250 ms |
+| Publish changed outputs | 997 subjects in 3.5 s | 997 in 4.05 s; first activation 5,435 in 6.77 s (85 commits) | |
+| Container peak | 5.14 GiB | 2.32 GB (data 556 MB, index 95 MB) | |
+| Live traffic during evaluation against before: read p99 / commit service p99 | 1.00 / 1.03 | 1.14 / 1.44 (382 commits each side) | at most 1.5 |
+
+Projection to 100,000 subjects, not measured: evaluation about 41 s plus publication of what changed (at 250 to 800 subjects/s),
+bootstrap about 5 minutes, data 5.66 GB. The commit ratio 1.44 is near its bar and rests on 382 commits; watch it at scale.
