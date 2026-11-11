@@ -1,10 +1,12 @@
 import { Worker } from "node:worker_threads";
 // [DX-H4] Why: keep a read-only final snapshot for the existing P3 predicates.
 // Rejected: replacing feed correctness with worker exit status.
-export function sideThreadEnvironment(env: NodeJS.ProcessEnv) {
+export function sideThreadEnvironment(env: NodeJS.ProcessEnv, peer: "reader" | "writer" = "writer") {
   // [DX-H4] Why: moving the former main-thread auxiliary work must retain its write-peer route.
   // Rejected: default worker read-peer selection (observed 26 stale RYOW reads in s5-zero).
-  return { ...env, DATOMIC_READ_URLS: env.DATOMIC_URL };
+  // [DX-R3] Why: local RYOW is served by the runtime copy, so the P3-only reader can follow the read peer too.
+  // Rejected: changing gateway RYOW's default (the earlier stale-read regression still applies there).
+  return peer === "reader" ? { ...env } : { ...env, DATOMIC_READ_URLS: env.DATOMIC_URL };
 }
 export class SideThread {
   readonly name = "dependency-index";
@@ -27,7 +29,7 @@ export class SideThread {
     this.checkpoint = cfg.startAfter;
     this.worker = new Worker(new URL("../side-worker.ts", import.meta.url), {
       workerData: cfg,
-      env: sideThreadEnvironment(process.env),
+      env: sideThreadEnvironment(process.env, cfg.feedPeer ?? "writer"),
     });
     let readyResolve: any, readyReject: any, doneResolve: any, doneReject: any;
     this.ready = new Promise((r, j) => {

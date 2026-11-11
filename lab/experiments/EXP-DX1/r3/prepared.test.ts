@@ -259,3 +259,13 @@ test("replica peer selection keeps reader and writer controls distinct", async (
   assert.equal(replicaEndpoint(env, "writer"), "http://writer:8080");
   assert.equal(replicaEndpoint({ DATOMIC_URL: env.DATOMIC_URL }, "reader"), env.DATOMIC_URL);
 });
+
+// [DX-R3] Why: the P3 follower must actually move off W while gateway RYOW preserves its exact writer route.
+// Rejected: changing the shared default and reintroducing stale gateway RYOW reads.
+test("local-mode P3 follower can use R without changing the gateway-mode writer route", async () => {
+  const { sideThreadEnvironment } = await import("../../../bench/lib/side-thread.ts");
+  const env = { DATOMIC_URL: "http://writer:8080", DATOMIC_READ_URLS: "http://reader:8080" };
+  assert.equal(sideThreadEnvironment(env, "reader").DATOMIC_READ_URLS, env.DATOMIC_READ_URLS);
+  assert.equal(sideThreadEnvironment(env).DATOMIC_READ_URLS, env.DATOMIC_URL);
+  assert.equal(env.DATOMIC_READ_URLS, "http://reader:8080");
+});

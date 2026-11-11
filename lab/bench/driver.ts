@@ -661,6 +661,7 @@ async function run() {
   if (!pairPlan && lane === "datomic" && config.composition !== "memory") {
     feed = new SideThread({dir:rawDir,epoch:`${scopeName}#0`,startAfter:seed.lastPosition,
       lane,composition:config.composition,scope:scopeName,publication:!!publicationWriter,
+      feedPeer: replicaHost ? config.replicaPeer : "writer",
       crashes:crashPlan,publicationWaitMs:5000,pollTimeoutMs:120_000},log);
     feed.dir=rawDir;
     await feed.ready;
