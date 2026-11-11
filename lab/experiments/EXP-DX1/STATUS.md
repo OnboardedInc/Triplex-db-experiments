@@ -813,3 +813,24 @@ All four files are in `~/Claude/Projects/triplex-db-2/research/2026-11-11/`. Wha
 **DX-M2 launched 04:05 UTC** (`exp/DX-M2-commit-tail`, brief `~/Claude/Projects/triplex-db-2/agents/prompts/DX-M2.md`):
 transactor and write-gateway JVM arms, record time assigned in the transaction, transaction hints. Targets: burst commit p50
 at most 8 ms and p99 at most 30 ms, no transactor pause over 25 ms, zero clock replays, at least 700 commands/s at window 32.
+
+## 2026-11-11 04:25 UTC: q4 result (zero-reader arm only); ladder lost to the driver container's memory limit
+
+**Zero-reader arm, q3 against q4 (same code, `ea8931d5`; q4 on the quieter host: swap 16.6 GB at start, 4.0 GB at the end).**
+
+| Run | Steady (2/s) commit p50 / p90 / p99 ms | Burst (55/s) commit p50 / p90 / p99 / max ms | Burst commits over 100 ms |
+| --- | --- | --- | --- |
+| q3 | 22.6 / 39.0 / 119.4 (n 1,757) | 8.6 / 17.0 / 47.6 / 141.2 (n 6,546) | 7 |
+| q4 | 18.5 / 41.5 / 124.2 (n 1,758) | 8.7 / 17.7 / 49.0 / 132.2 (n 6,546) | 6 |
+
+Reading: a quieter host did not move commit latency. The burst tail and the sparse-commit cost belong to the stack (transactor
+pauses without Datomic's GC flags, clock replays, the VM's wake penalty), which is what DX-M2 and the `nohlt` test attack.
+
+**Ladder arm lost a third time.** VM kernel log, 04:14:41 UTC: `Memory cgroup out of memory: Killed process (node) anon-rss
+8117208kB` in the driver container (limit 8 GiB, JavaScript heap limit 6 GiB) at the start of `presweep`, after every ladder
+level had finished. The driver keeps all samples in memory and analyses at the end, so a late death loses the whole ladder; the
+report has no memory readings. q1 (699,920 reads) fitted; since DX-H7 the same ladder does about twice the reads.
+Actions: (1) `h4/run.sh` takes `DX_DRIVER_MEMORY`; **q5** queued behind the 24 GiB restart with a 12 GiB container and 8 GiB heap,
+from the frozen checkout at `1eea10e2` (scripts only differ from `ea8931d5`). (2) Owed harness fix, for DX-R3's resume or a small
+brief once DX-R3 exits (it owns `driver.ts`): write each phase's summary to disk when the phase ends, bound sample memory,
+record driver memory per phase. With local reads at 15,000/s the sample volume triples again.
