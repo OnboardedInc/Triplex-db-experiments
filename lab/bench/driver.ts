@@ -325,7 +325,7 @@ function straddleCandidate(): { subject: number; seq: number } {
   const keys = [...pendingBySubject.keys()];
   const soon = upcomingJobs(STRADDLE_HORIZON_MS).filter((j) => j.ev.stream === "background" && !j.ev.resend);
   return splitTarget(
-    keys.map(subject => ({ subject, seq: pendingBySubject.get(subject)!.at(-1)! })),
+    keys.map(subject => ({ subject, seq: pendingBySubject.get(subject)!.at(-1)! })).filter(candidate => config.splitTarget === "mixed" || !ackedBySeq.has(candidate.seq)),
     soon.map(job => ({ subject: job.key, seq: job.ev.seq })),
     n => straddleRng.int(n), config.splitTarget);
 }
@@ -417,7 +417,7 @@ async function run() {
   // ---------------------------------------------------------------- reader workers
   const replicaHost = config.readPath === "replica" ? await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
     scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux, { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed, config.replicaHistoryMiB * 1024 ** 2) : undefined;
-  const replicaLocal = replicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader() : undefined;
+  const replicaLocal = replicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2) : undefined;
   if (replicaHost && replicaLocal) {
     replicaLocal.install(replicaHost.index.image());
     replicaHost.subscribe(delta => replicaLocal.apply(delta));
@@ -885,6 +885,14 @@ async function run() {
   log(`wind down: writer pending ${scheduler.pending}, probe pending ${probeScheduler?.pending ?? 0}, feed checkpoint ${feed?.checkpoint ?? "-"}/${lastAcked}, final position ${finalPosition}`);
   fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify(latencyReceipt({ ...w, writer: "ns-write-event/1", qleverConnectionMode: report.qleverConnectionMode, stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome }))).join("\n") + "\n");
 
+  // [DX-R3] Why: persist the final buffered observations before the CPU-heavy all-ACK checker starts.
+  // Rejected: only checkpointing phase boundaries while the last worker batch remains memory-only.
+  if (records instanceof ReadRecords) records.checkpoint();
+  report.phaseProgress = Object.fromEntries([...observedPhases].map(([id, s]) => [id, {
+    reads: s.reads, errors: s.errors, read: s.read.toJSON(), watermarkWait: s.wait.toJSON(), routes: s.routes,
+    verification: "PENDING final all-ACK model comparison; all arrived worker batches persisted" }]));
+  report.phases = phases;
+  save();
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
   report.finalPosition = finalPosition === null ? null : coordinate(finalPosition);

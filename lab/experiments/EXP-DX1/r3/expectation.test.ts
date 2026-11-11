@@ -30,6 +30,7 @@ test("split selection prefers a real offered command without inventing writes or
   assert.deepEqual(splitTarget(pending, soon, n => (range = n) - 1, "pending"), pending[1]);
   assert.equal(range, 2);
   assert.deepEqual(splitTarget(pending, soon, n => n - 1, "mixed"), soon[0]);
-  assert.deepEqual(splitTarget([], soon, () => 0, "pending"), soon[0]);
+  assert.deepEqual(splitTarget([], [...soon, { subject: 10, seq: 4 }], () => 1, "pending"), soon[0]);
+  assert.deepEqual(splitTarget([], [...soon, { subject: 10, seq: 4 }], () => 1, "mixed"), { subject: 10, seq: 4 });
   assert.deepEqual(splitTarget([], [], () => { throw Error("no draw"); }, "pending"), { subject: -1, seq: -1 });
 });
