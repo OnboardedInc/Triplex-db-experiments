@@ -82,6 +82,17 @@ export async function runReplicaDriver(argv: string[]) {
   const replica = new Replica(base, V_W0),
     oracle = new DomainOracle();
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
+  // [DX-S5] Why: report actual all-subject oracle time separately from activation and storage readback.
+  // Rejected: projecting the 10k verifier cost or silently replacing full verification with sampling.
+  let oracleWallMs = 0;
+  const timedOracle = async (...args: Parameters<DomainOracle["call"]>) => {
+    const started = performance.now();
+    try {
+      return await oracle.call(...args);
+    } finally {
+      oracleWallMs += performance.now() - started;
+    }
+  };
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
   let bulkCounts: Awaited<ReturnType<typeof openBulkCounts>> | undefined;
   const followTo = async (p: number) => {
@@ -438,14 +449,14 @@ export async function runReplicaDriver(argv: string[]) {
             );
             await followTo(r.position);
             const before = JSON.parse(
-              await oracle.call("evaluate", {
+              await timedOracle("evaluate", {
                 world: worldOf(subject, snap.world(subject)),
                 release: "R2",
                 basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
               }),
             );
             const after = JSON.parse(
-              await oracle.call("evaluate", {
+              await timedOracle("evaluate", {
                 world: worldOf(subject, replica.world(subject)),
                 release: "R2",
                 basis: { tx: r.position, validTime: W0.POPULATION_VALID_TIME },
@@ -533,6 +544,8 @@ export async function runReplicaDriver(argv: string[]) {
       };
     // [DX-R1] Why: every independent oracle comparison is after the last publication ACK, over the frozen input cut.
     // Rejected: sampling subjects or using evaluator output as the oracle's input.
+    const exactnessStarted = performance.now();
+    const oracleBeforeExactness = oracleWallMs;
     let checked = 0,
       statesCompared = 0,
       expectedR1Changed = 0,
@@ -557,7 +570,7 @@ export async function runReplicaDriver(argv: string[]) {
     });
     const applyExpected = async (previous: any, output: any) => {
       const next = JSON.parse(
-        await oracle.call("publish", { state: previous, evaluations: [recordOf(output)] }),
+        await timedOracle("publish", { state: previous, evaluations: [recordOf(output)] }),
       );
       if (next.error) throw new Error("Oracle publication error " + next.error);
       const changed =
@@ -583,7 +596,7 @@ export async function runReplicaDriver(argv: string[]) {
           worldCanonical(world) !== worldCanonical(worldOf(r.subject, snap.world(r.subject)))
         )
           throw new Error("Frozen world/gateway mismatch " + r.subject);
-        const expected = await oracle.call("evaluate", {
+        const expected = await timedOracle("evaluate", {
           world,
           release: "R2",
           basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
@@ -608,7 +621,7 @@ export async function runReplicaDriver(argv: string[]) {
           throw new Error("Full sweep record mismatch");
         if (states) {
           const r1 = JSON.parse(
-            await oracle.call("evaluate", {
+            await timedOracle("evaluate", {
               world: worldOf(r.subject, r1Snapshot.world(r.subject)),
               release: "R1",
               basis: { tx: r1Position, validTime: W0.POPULATION_VALID_TIME },
@@ -640,11 +653,15 @@ export async function runReplicaDriver(argv: string[]) {
       throw new Error("Changed subject coverage mismatch");
     report.publishedStatesCompared = statesCompared;
     report.oracleCompared = checked;
+    report.postAckExactnessWallMs = performance.now() - exactnessStarted;
+    report.postAckOracleWallMs = oracleWallMs - oracleBeforeExactness;
     console.log(
       JSON.stringify({
         kind: "post-ack-equality",
         subjects: checked,
         states: statesCompared,
+        exactnessWallMs: report.postAckExactnessWallMs,
+        oracleWallMs: report.postAckOracleWallMs,
         evaluation: report.evaluation,
         publication: report.publication,
         liveFollow: report.liveFollow,

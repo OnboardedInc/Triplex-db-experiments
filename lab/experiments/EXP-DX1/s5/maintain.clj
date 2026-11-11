@@ -30,10 +30,10 @@
   {:rows @n :sha256 (.formatHex (java.util.HexFormat/of) (.digest md))}))
 (defn proof [conn]
  (let [db (d/db conn)] {:basis (d/basis-t db) :current (rows-proof db) :history (rows-proof (d/history db))}))
-(defn -main [uri]
+(defn -main [uri mode]
  (let [conn (d/connect uri) _ @(d/sync conn) before (proof conn)]
   (emit {:event "native-before" :proof before})
-  (maintain conn)
+  (when (not= mode "proof") (maintain conn))
   (let [after (proof conn)]
    (emit {:event "native-after" :proof after})
    (when (not= before after) (throw (ex-info "maintenance changed stored rows" {}))))

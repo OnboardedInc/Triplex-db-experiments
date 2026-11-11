@@ -69,9 +69,12 @@ run_driver() {
 }
 maintain() {
  db=$(node --input-type=module -e 'import {DatabaseScope} from "./packages/core/dist/runtime/index.js";console.log("s2-"+Buffer.from(String(DatabaseScope.test(process.argv[1]))).toString("base64url"))' "$scope")
+ native_proof() {
  docker run --rm --pull never --name "$prefix-peer" --network "$prefix-net" --memory 3g --memory-swap 3g \
  -e DATOMIC_JAVA_OPTS='-Xms128m -Xmx2g' -e DATOMIC_EXT_CLASSPATH=/s5 -v "$repo/lab/experiments/EXP-DX1/s5:/s5:ro" \
- --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m maintain "datomic:sql://$db?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
+ --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m maintain "datomic:sql://$db?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" "${1:-maintain}"
+ }
+ native_proof | tee "$out/native-before.jsonl"
  last=; stable=0
  for ((i=0;i<60;i++)); do
   now=$(docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT count(*),sum(octet_length(val)) FROM datomic_kvs;')
@@ -85,6 +88,14 @@ maintain() {
  vmfree=$(docker exec "$prefix-pg" sh -c 'df -Pk /var/lib/postgresql/data | tail -1' | awk '{print $4}')
  (( vmfree*1024 > table+5368709120 && $(free_mac)*1024 > table+16106127360 )) || { echo 'vacuum rewrite reserve unavailable'; exit 1; }
  docker exec "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d datomic -c 'VACUUM FULL;' -c 'CHECKPOINT;' -c "SELECT pg_total_relation_size('datomic_kvs'),pg_database_size(current_database());"
+ native_proof proof | tee "$out/native-after.jsonl"
+ python3 - "$out/native-before.jsonl" "$out/native-after.jsonl" <<'PYPROOF'
+import json,sys
+def read(p):
+ return [json.loads(s)['proof'] for s in open(p) if s.startswith('{') and json.loads(s).get('event')=='native-after'][-1]
+a,b=map(read,sys.argv[1:]);assert a==b, 'vacuum changed current/history rows'
+print(json.dumps({'event':'post-vacuum-native-equality','proof':b}))
+PYPROOF
 }
 for ((end=chunk;end<=n;end+=chunk)); do
  run_driver "$end"
