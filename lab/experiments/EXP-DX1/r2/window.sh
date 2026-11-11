@@ -67,6 +67,7 @@ trap cleanup EXIT
 trap 'exit 124' TERM INT
 if [[ $s5 == true ]]; then
  [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB before admission'; exit 1; }
+ [[ $(docker volume ls --filter "name=^$seed$" --format '{{.Name}}') == "$seed" ]] || { echo 'missing sealed seed refused before admission'; exit 2; }
 fi
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 held=true
