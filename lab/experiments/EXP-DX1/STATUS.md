@@ -1169,3 +1169,10 @@ seed and its clock admission declined every local read. Reads were still all cor
 commits; the 4.7 s stall was the main thread cloning the retained image for the sweep. The orchestrator is running the short
 ladder on the corrected head (`r3/run.sh benchmark m2`) to see whether local reads work again. `lane/d-native` and the frozen
 checkout stay at the q7 code.
+
+**15:36 UTC.** Short ladder on DX-R3's corrected head (`abbac16b`, `r3/run.sh benchmark m2`, busy host, `nohlt` still on): local
+reads work again. Zero violations and zero errors in 3,100,344 reads; local share 1 / 1 / 1 / 0.9997 / 0.9923 at 1 / 4 / 16 / 64 /
+256 readers; follower on its own worker, fed by the read gateway. Rates (11,879 to 30,658 reads/s) are not comparable with the
+night's because Sam's calls are running. Not merged yet: the full pair on this head waits for a quiet window.
+`long-hold-ok` removed 15:36 UTC until `nohlt` is off, so the 5-hour seed cannot start with the VM still polling on eight
+cores; the switch-off waiter retries the lock every 0.3 s and restores the file afterwards.

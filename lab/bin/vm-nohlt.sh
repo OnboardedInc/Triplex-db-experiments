@@ -10,7 +10,7 @@ out=/Users/sam/Claude/Projects/triplex-db-2/evidence/ORCH-vm-wake; mkdir -p "$ou
 log="$out/nohlt-$mode-${cpus}cpu-$(date -u +%Y%m%dT%H%M%SZ).log"
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
-while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
+while ! mkdir "$lock" 2>/dev/null; do sleep "${TX2_LOCK_RETRY_S:-5}"; done
 printf '{"id":"ORCH-vm-nohlt","pid":%d}\n' $$ > "$lock/owner.json"
 trap 'rm -rf "$lock"' EXIT
 (
