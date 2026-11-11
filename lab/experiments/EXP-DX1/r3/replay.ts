@@ -57,6 +57,18 @@ const client = {
     return response(n!, body.after !== undefined ? "feed" : body.need ? "need" : "page");
   },
 } as unknown as DatomicClient;
+const firstFeed = requests.find(({ body }) => body.after === basis.recordedPosition)!;
+assert(firstFeed);
+const badPage = response(firstFeed.n);
+badPage.transactions[0][1]++;
+const invalid = timedReplicaSource(
+  { request: async () => badPage } as unknown as DatomicClient,
+  "recorded",
+  async () => basis.recordedPosition,
+);
+await assert.rejects(invalid.source.feed(basis.recordedPosition, 1000, 0));
+assert.equal(invalid.times.size, 0);
+console.log(JSON.stringify({ kind: "rejected-clock-page", mappingsPublished: invalid.times.size }));
 const timed = timedReplicaSource(client, "recorded", async () => basis.recordedPosition);
 const replica = new Replica(timed.source, basis.validAt);
 let clocks = 0;
@@ -146,7 +158,13 @@ console.log(
   }),
 );
 console.log(
-  JSON.stringify({ kind: "recorded-follow", commands: 2000, clocks, packedBytes: replica.bytes, traffic }),
+  JSON.stringify({
+    kind: "recorded-follow",
+    commands: 2000,
+    clocks,
+    packedBytes: replica.bytes,
+    traffic,
+  }),
 );
 assert.equal(clocks, 2000);
 await replica.stop();

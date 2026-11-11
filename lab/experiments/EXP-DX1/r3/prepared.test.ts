@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { packEntity, type SweepRow } from "../../../../packages/datomic/dist/index.js";
-import { prepareEntity, ReplicaReader } from "../../../bench/lib/replica-reads.ts";
+import { prepareEntity, ReplicaReader, ReplicaReadHost } from "../../../bench/lib/replica-reads.ts";
 import { worldBytes } from "./canonical-world.ts";
 import { observe } from "../../../bench/lib/observe.ts";
 
@@ -155,4 +155,30 @@ test("receipt wait is bounded and reports a fallback; intervening ACK retains th
   );
   assert.equal(straddled.route, "replica");
   assert.equal(reader.index.position, 2);
+});
+
+test("recovery does not anchor a record clock from pending or previously rejected journals", async () => {
+  const times = new Map([[1, 100]]);
+  const host = new (ReplicaReadHost as any)({}, times) as ReplicaReadHost;
+  const entity = packEntity(1, []);
+  host.replica.onUpdate!({
+    reset: true,
+    valid: true,
+    position: 1,
+    changes: [["root", undefined, entity]],
+  });
+  assert.equal(host.index.resolve({ recordedAt: 100, validAt: 0 }), 1);
+  times.set(2, 200);
+  host.replica.onUpdate!({ reset: true, valid: false, position: 1, changes: [] });
+  assert.equal(times.size, 0);
+  times.set(3, 300);
+  host.replica.onUpdate!({
+    reset: true,
+    valid: true,
+    position: 3,
+    changes: [["root", undefined, entity]],
+  });
+  assert.equal(host.index.resolve({ recordedAt: 300, validAt: 0 }), undefined);
+  assert.equal(host.index.resolve({ recordedPosition: 3, validAt: 0 }), 3);
+  await host.close();
 });

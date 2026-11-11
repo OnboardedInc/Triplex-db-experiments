@@ -172,7 +172,13 @@ export class ReplicaReadHost {
   private constructor(source: any, times: Map<number, number>) {
     this.times = times;
     this.replica = new api.Replica(source, Date.now());
+    let initialized = false;
     this.replica.onUpdate = (update: any) => {
+      // [DX-R3] Why: only open()'s initial cut has a gateway time/position proof; recovery images have none.
+      // Rejected: treating a pending journal clock as a verified bootstrap clock after invalidation.
+      const clock = update.reset && initialized ? NaN : times.get(update.position);
+      if (update.reset) initialized = true;
+      if (update.reset && !update.valid) times.clear();
       const delta: ReadDelta = {
         ...update,
         changes: update.changes.map(([id, previous, entity]: any) => [
@@ -180,7 +186,7 @@ export class ReplicaReadHost {
           previous,
           prepareEntity(id, entity),
         ]),
-        ...(times.has(update.position) ? { recordTime: times.get(update.position)! } : {}),
+        ...(clock !== undefined ? { recordTime: clock } : {}),
       };
       this.index.apply(delta);
       times.delete(update.position);
