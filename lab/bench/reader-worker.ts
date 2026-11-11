@@ -34,6 +34,7 @@ import { observe, type ReadRecord } from "./lib/observe.ts";
 
 type ReaderConfig = {
   readPath?: "gateway" | "replica";
+  rawSampleLimit?: number;
   replicaImage?: import("../../packages/datomic/dist/index.js").ReadImage;
   entityCacheBytes?: number;
   subjectShards?: number;
@@ -67,6 +68,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   let hot: number[] = [];
   let records: ReadRecord[] = [];
   let samples: any[] = [];
+  let rawSamples = 0;
   let stopping = false;
   let tokenSeq = 0;
   const waiting = new Map<number, (msg: any) => void>();
@@ -156,7 +158,11 @@ export async function startReader(port: any, cfg: ReaderConfig) {
           const assignment = await ask({ type: "split-request" }, 2_000);
           if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; }
         }
-        await readOnce(picked.subject, basis, kind, position, phase, { keepRows: oracle, straddleSeq, hotPick: picked.hotPick });
+        // [DX-R3] Why: the driver consumes at most its raw oracle budget; every other read still checks stamp + complete digest.
+        // Rejected: retaining thousands of unused raw worlds when local reads become fast.
+        const keepRows = oracle && rawSamples < (cfg.rawSampleLimit ?? Infinity);
+        if (keepRows) rawSamples++;
+        await readOnce(picked.subject, basis, kind, position, phase, { keepRows, straddleSeq, hotPick: picked.hotPick });
         // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
         // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
         if (replica && ++localReads % 8 === 0) await new Promise<void>(resolve => setImmediate(resolve));

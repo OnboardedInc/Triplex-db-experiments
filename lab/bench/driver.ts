@@ -45,6 +45,7 @@ import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublication
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
 import { R, observe, type ReadRecord } from "./lib/observe.ts";
+import { ReadRecords, type ObservationRecords } from "./lib/read-records.ts";
 import { buildCase, checkWithOracle, type OracleSampleRead } from "./lib/oracle.ts";
 import { PROFILES, nsPlan, type Profile } from "./lib/phases.ts";
 import { Rng, seedOf } from "./lib/rng.ts";
@@ -248,7 +249,7 @@ const cpuMarks: { t: number; cpu: NodeJS.CpuUsage }[] = [];
 
 const model = new Model(rungSubjects);
 const accounts = accountsFor(rungSubjects);
-const records: ReadRecord[] = [];
+const records: ObservationRecords = config.readPath === "replica" ? new ReadRecords() : [];
 const oracleSamples: any[] = [];
 const workerDiagnostics: { worker: number; t: number; diagnostics: unknown; memory: unknown; threadCpuMs: number | null }[] = [];
 const workerElu: { worker: number; t: number; elu: number }[] = [];
@@ -386,7 +387,7 @@ async function run() {
     const gatewayPull = aux.pull.bind(aux);
     aux.pull = (root, basis, between) => replicaLocal.pullAt(root, basis, () => gatewayPull(root, basis), between);
   }
-  const workerCfg = (w: number) => ({ readPath: config.readPath, replicaImage: replicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const sweepDone = new Map<number, (v: any) => void>();
@@ -850,9 +851,12 @@ async function run() {
   report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : finalPosition === null ? { status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) } : runOracle(finalPosition, lastAcked);
   // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
   // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
-  const pullCalls = records.filter(r => r[R.error] === null).map(r => r[R.roundTrips]);
-  report.pullRoundTrips = { pulls: pullCalls.length, mean: mean(pullCalls),
-    distribution: countBy(pullCalls.map(String)), unit: "public Triples service calls; see httpRequests for actual HTTP" };
+  let pulls = 0, roundTripSum = 0;
+  const roundTripDistribution: Record<string, number> = {};
+  records.forEach(r => { if (r[R.error] === null) { pulls++; roundTripSum += r[R.roundTrips]; const key = String(r[R.roundTrips]); roundTripDistribution[key] = (roundTripDistribution[key] ?? 0) + 1; } });
+  report.pullRoundTrips = { pulls, mean: pulls ? roundTripSum / pulls : null,
+    distribution: roundTripDistribution, unit: "public Triples service calls; see httpRequests for actual HTTP" };
+  if (records instanceof ReadRecords) report.observationStorage = { format: "lossless Float64 tuples and interned strings", records: records.length, encodedBytes: records.encodedBytes, strings: records.stringCount };
   report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
   report.engineSamples = engineSamples;
   if (feedFailure) {
@@ -1231,7 +1235,8 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const b256 = bands(in256);
   const byOutcome = countBy(writes.filter((w) => !w.resend).map((w) => `${w.stream}:${w.outcome ?? "unaccounted"}`));
   const unaccounted = writes.filter((w) => (w.outcome ?? "unaccounted") === "unaccounted").length + ctx.pendingAtEnd;
-  const ryowRows = records.map((r, k) => ({ r, v: verdicts[k]! })).filter((x) => x.r[R.phase] === PHASE_RYOW);
+  const ryowRows: { r: ReadRecord; v: ReturnType<typeof judgeRead> }[] = [];
+  records.forEach((r, k) => { if (r[R.phase] === PHASE_RYOW) ryowRows.push({ r, v: verdicts[k]! }); });
   const ryowHist = new Histogram();
   const ryowWait = new Histogram();
   for (const x of ryowRows) { ryowHist.recordMs(x.r[R.latency]); ryowWait.recordMs(x.r[R.waitedMs]); }
@@ -1338,7 +1343,8 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   let p5: any = { status: "not-run" };
   if (sweepPhase) {
     const s = sweepPhase.sweep;
-    const rows = records.map((r, k) => ({ r, v: verdicts[k]! })).filter((x) => x.r[R.phase] === sweepPhase.idx + SWEEP_PHASE_OFFSET);
+    const rows: { r: ReadRecord; v: ReturnType<typeof judgeRead> }[] = [];
+    records.forEach((r, k) => { if (r[R.phase] === sweepPhase.idx + SWEEP_PHASE_OFFSET) rows.push({ r, v: verdicts[k]! }); });
     const h = new Histogram();
     for (const x of rows) h.recordMs(x.r[R.latency]);
     const pulled = new Set(rows.map((x) => x.r[R.subject]));
