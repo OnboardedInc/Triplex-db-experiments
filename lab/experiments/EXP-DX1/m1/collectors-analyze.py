@@ -14,6 +14,7 @@ def analyze(root):
  assert len(ws)==3350, f'expected frozen burst 3350, observed {len(ws)}'
  ms=sorted(w['transactReturnedAt']-w['transactCalledAt'] for w in ws)
  result=dict(run=root.name,burst=[utc(start),utc(end)],commits=len(ws),call=dict(p50=statistics.median(ms),p99=ms[math.ceil(.99*len(ms))-1],max=max(ms),over100=sum(x>100 for x in ms)))
+ counters=lines(root/'driver/counters.jsonl')
  for role in ['gw-w','tx']:
   pauses=[]; safes=[]; alltimes=[]
   files=sorted(root.glob('gc-'+role+'.log*'))
@@ -33,7 +34,9 @@ def analyze(root):
     if m:
      duration=int(m[1])/1e6
      if at>=start and at-duration<end:safes.append(duration)
-  assert min(alltimes)<start and max(alltimes)>=end, f'incomplete {role} log coverage'
+  # [DX-M1] Why: GC logging has no heartbeat; a quiet tail is valid when the live copy succeeded after counters cover the window. Rejected: requiring a post-burst GC event as proof of capture completeness.
+  assert min(alltimes)<start and counters[-1]['epochMs']>=end+10000 and read(root/('gc-'+role+'-copy.txt'))=='', f'incomplete {role} capture'
+  assert any(t in read(root/'hold.txt') for t in ['released','run-cleaned']), 'run cleanup has not completed'
   assert pauses and safes, f'no recognized pauses/safepoints in {role}; inspect collector format'
   result[role]=dict(pauses=stats(pauses),safepoints=stats(safes))
  diag=lines(root/'driver/commit-phases.jsonl'); requests=lines(root/'driver/http-errors.jsonl')
@@ -59,8 +62,11 @@ def analyze(root):
  # [DX-M1] Why: Effect's shared scheduler can inherit another fiber's AsyncLocalStorage context. Rejected: treating that optional context as transaction identity; bind successful positions, operation IDs and return times instead.
  result['retry409']=dict(commits=len(retried),responses=conflicts,duplicates=duplicates,unbound=len(unbound),reasons=[dict(code=k[0],message=k[1],count=v) for k,v in reasons.items()])
  assert not unbound, f'unbound new commits: {unbound[:10]}'
- result['all409DuringBurstIncludingProbesReplays']=dict(collections.Counter(r.get('code') for r in requests if r.get('status')==409 and start<=r['at']<end))
- counters=lines(root/'driver/counters.jsonl');times=[c['epochMs'] for c in counters]; name=root.name+'-gw-w'
+ result['allLogged409DuringBurstIncludingReplays']=dict(collections.Counter(r.get('code') for r in requests if r.get('status')==409 and start<=r['at']<end))
+ replayRanges=[(w['transactCalledAt'],w['transactReturnedAt']) for w in ws if w['resend']]+[(w['transactReturnedAt'],w['ackPublishedAt']) for w in ws if w['ackLoss']]
+ cas=[r for r in requests if r.get('code')=='CasConflict' and start<=r['at']<end]
+ result['replayChecks']=dict(explicitResends=duplicates,lostAckReplays=sum(w['ackLoss'] for w in ws),newCommitOuterRetries=sum(w['attempts']>1 for w in ws if not w['resend']),casWithinReplayIntervals=sum(any(a-1<=r['at']<=b+1 for a,b in replayRanges) for r in cas),casTotal=len(cas))
+ times=[c['epochMs'] for c in counters]; name=root.name+'-gw-w'
  def value(t):
   i=bisect.bisect_right(times,t);assert 0<i<len(times)
   lo,hi=counters[i-1],counters[i]

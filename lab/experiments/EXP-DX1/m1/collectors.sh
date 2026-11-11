@@ -51,6 +51,8 @@ trap cleanup EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
 while :; do
+ # [DX-M1] Why: refuse a late lease when the enclosing experiment cannot finish its full trace before the budget. Rejected: starting an inevitably truncated benchmark.
+ if [[ -n ${M1_ADMISSION_DEADLINE_EPOCH:-} ]] && (( $(date +%s)>=M1_ADMISSION_DEADLINE_EPOCH )); then echo 'admission deadline reached'; exit 124; fi
  free=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}'); ((free>=15*1024*1024)) || { echo 'below 15 GiB free'; exit 1; }
  bytes=$(du -sk "$DX_STACK_EVIDENCE" | awk '{print $1}'); ((bytes<300*1024)) || { echo 'evidence budget exhausted'; exit 1; }
  sh lab/bin/host-quiet.sh >> "$out/host-before.jsonl" || true
