@@ -4,6 +4,7 @@
     "../../../bench/lib/w0-replica*.ts",
     "run.ts",
     "corpus-*.ts",
-    "replay-inline.ts"
+    "replay-inline.ts",
+    "offline-scale.ts"
   ]
 }
