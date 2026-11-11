@@ -38,6 +38,7 @@ export function decodeReplicaRows(
       ...(row.valid_to === null ? {} : { validTo: row.valid_to }),
     };
   });
+  if (rows.length && revision === 0) throw new TypeError("Missing nonempty revision");
   if (!rows.length && revision !== 0) throw new TypeError("Invalid empty revision");
   return rows;
 }

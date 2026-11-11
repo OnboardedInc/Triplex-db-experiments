@@ -140,7 +140,7 @@ describe("inline replica journal", () => {
     expect(frozen.world("root")[1]!.value.value).toBe("before");
     expect(reads).toBe(0);
   });
-  for (const corruption of ["cut", "coverage", "reference", "revision"])
+  for (const corruption of ["cut", "coverage", "reference", "revision", "zeroRevision"])
     it("invalidates " + corruption, async () => {
       const f = fixture(),
         r = new Replica(f.source, 0);
@@ -158,6 +158,7 @@ describe("inline replica journal", () => {
             ["shared", 2, [wire(row("shared", "ref", { type: "ref", value: "missing" }, 2))]],
           ];
         if (corruption === "revision") replacement.entities = [["shared", -1, []]];
+        if (corruption === "zeroRevision") (replacement.entities[0] as any[])[1] = 0;
         return { ...page, transactions: page.transactions.map((tx) => ({ ...tx, replacement })) };
       };
       await expect(r.followOnce()).rejects.toThrow();
