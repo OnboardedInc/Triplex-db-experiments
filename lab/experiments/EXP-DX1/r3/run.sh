@@ -4,7 +4,7 @@
 set -euo pipefail
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 mode=${1:?differential|benchmark|both|compare}; attempt=${2:?fresh attempt name}
-[[ $mode == differential || $mode == benchmark || $mode == both || $mode == compare ]] || exit 2
+[[ $mode == differential || $mode == benchmark || $mode == both || $mode == compare || $mode == probe || $mode == gates ]] || exit 2
 [[ $attempt =~ ^[a-z0-9-]+$ ]] || exit 2
 prefix=tx2-dxr3-$attempt
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
@@ -64,5 +64,8 @@ done
 if docker network inspect "$prefix-net" >/dev/null 2>&1; then echo "refuse existing network"; exit 2; fi
 owned=true
 export DX_R3_OPERATIONAL=$operational DX_R3_PREFIX=$prefix DX_R3_MODE=$mode
-node lab/experiments/EXP-DX1/b6/bounded-command.mjs 1140 bash lab/experiments/EXP-DX1/r3/work.sh & job=$!
+# [DX-R3-P7] Why: the task grants a forty-minute hold for both proofs, twenty otherwise.
+# Rejected: cutting the full differential/ladder off at the old nineteen-minute deadline.
+deadline=1140; [[ $mode != both ]] || deadline=2340
+node lab/experiments/EXP-DX1/b6/bounded-command.mjs "$deadline" bash lab/experiments/EXP-DX1/r3/work.sh & job=$!
 wait "$job"

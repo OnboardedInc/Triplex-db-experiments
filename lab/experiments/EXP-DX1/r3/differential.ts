@@ -12,6 +12,30 @@ import { buildTraceCommand } from "../../../bench/lib/commands.ts";
 import { observe } from "../../../bench/lib/observe.ts";
 import { worldBytes } from "./canonical-world.ts";
 
+// [DX-R3-P7] Why: retain the first source refusal before retry errors obscure its cause.
+// Rejected: printing only the final seed exception, which can be a later ordering suffix error.
+const request = DatomicClient.prototype.request;
+DatomicClient.prototype.request = async function (method, path, body, timeout, sent) {
+  try {
+    return (await request.call(this, method, path, body, timeout, sent)) as any;
+  } catch (error: any) {
+    if (path.endsWith("/transact"))
+      console.log(
+        JSON.stringify({
+          kind: "source-rejection",
+          path,
+          code: error.code,
+          status: error.status,
+          message: error.message,
+          maximum: error.maximum,
+          sequence: (body as any)?.sendSequence,
+          operationId: (body as any)?.operationId,
+          claims: (body as any)?.claims,
+        }),
+      );
+    throw error;
+  }
+};
 const subjects = 2000,
   count = Number(process.env.DX_R3_READS ?? 200000);
 await proveStrictSource(process.env.DATOMIC_URL!);

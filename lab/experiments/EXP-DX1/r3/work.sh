@@ -9,7 +9,17 @@ git rev-parse HEAD
 # Rejected: assuming the guest can see a macOS temporary path.
 config="$repo/lab/experiments/EXP-DX1/r3/.runtime-$prefix"
 mkdir "$config"
-trap 'rm -rf "$config"' EXIT
+# [DX-R3-P7] Why: a restarted peer loses in-memory order lanes; preserve its first refusal/lifecycle evidence.
+# Rejected: deleting gateway logs before diagnosing a final client suffix error.
+finish_work() {
+  local rc=$?
+  for role in gw-w gw-r tx; do
+    docker inspect --format '{{.Name}} restart={{.RestartCount}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} error={{.State.Error}}' "$prefix-$role" || true
+    if [[ $rc != 0 ]]; then docker logs --tail 100 "$prefix-$role" 2>&1 || true; fi
+  done
+  rm -rf "$config"
+}
+trap finish_work EXIT
 mkdir -p runs/DX-R3-vm
 for role in pg tx gw-w gw-r driver extract health; do
   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then echo "refuse existing $prefix-$role"; exit 2; fi
@@ -86,6 +96,14 @@ if [[ $mode == compare ]]; then
     docker rm "$prefix-driver"
     [[ $arm_rc == 0 ]] || exit "$arm_rc"
   done
+  exit
+fi
+if [[ $mode == probe ]]; then
+  run_driver node --experimental-strip-types lab/experiments/EXP-DX1/r3/p7-native.ts
+  exit
+fi
+if [[ $mode == gates ]]; then
+  run_driver env DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL="http://$prefix-gw-w:8080" DX_B5_SCENARIOS=300 node_modules/.bin/vitest run --config lab/experiments/EXP-DX1/b5/vitest.config.ts packages/datomic/test/layout-differential.test.ts packages/datomic/test/strict-order.test.ts
   exit
 fi
 if [[ $mode == both ]]; then

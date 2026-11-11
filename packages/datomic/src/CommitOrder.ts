@@ -113,3 +113,17 @@ export function issueInstant(scope: string, now: number) {
   observeInstant(scope, instant);
   return instant;
 }
+
+// [DX-R3-P7] Why: strict scopes order physical commits, including nested public journals.
+// Rejected: issuing a fresh instant per logical command (one physical commit then has mixed clocks).
+export function physicalInstant(
+  scope: string,
+  now: number,
+  order: { instant?: number },
+  strict: boolean,
+) {
+  if (strict && order.instant !== undefined) return order.instant;
+  const instant = issueInstant(scope, now);
+  if (strict) order.instant = instant;
+  return instant;
+}

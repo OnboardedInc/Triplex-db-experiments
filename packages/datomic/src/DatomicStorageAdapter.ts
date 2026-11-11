@@ -3,7 +3,7 @@ import {
   endCommit,
   sendCommit,
   commitClientIdFor,
-  issueInstant,
+  physicalInstant,
   observeInstant,
 } from "./CommitOrder.js";
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
@@ -74,6 +74,7 @@ export const makeDatomicStorageAdapter = (
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 45_000;
   let lastSeenPosition = 0;
+  let strictRecordClocks = false;
   const prefix = `${db}\0`;
   const cache = {
     get: (id: string) => client.rowCache.get(prefix + id),
@@ -853,7 +854,7 @@ export const makeDatomicStorageAdapter = (
     transactionInstant: (now) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
-        const instant = issueInstant(scopeKey, now);
+        const instant = physicalInstant(scopeKey, now, state.order ?? {}, strictRecordClocks);
         // [DX-B6-5] Why: register before this fiber yields; nested journals share the first ticket.
         // Rejected: first-insert registration (timestamp order can invert).
         if (state.replaySafe && state.order && !state.order.ticket)
@@ -965,7 +966,10 @@ export const makeDatomicStorageAdapter = (
     initialize: () =>
       Effect.tryPromise({
         try: async () => {
-          await client.create(scopeKey, options.layout);
+          // [DX-R3-P7] Why: clock sharing follows the stored immutable policy, including reopened scopes.
+          // Rejected: trusting the creation request or making callers choose timestamps.
+          strictRecordClocks =
+            (await client.create(scopeKey, options.layout)).strictRecordClocks === true;
         },
         catch: (cause) =>
           new MigrationError({

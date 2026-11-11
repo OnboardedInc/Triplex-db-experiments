@@ -11,7 +11,9 @@ export interface DatomicClaim {
 }
 export interface TransactionState {
   readonly diagnostic?: import("./DatomicClient.js").DatomicCommitAttempt | undefined;
-  readonly order?: { ticket?: import("./CommitOrder.js").OrderedCommit } | undefined;
+  readonly order?:
+    | { ticket?: import("./CommitOrder.js").OrderedCommit; instant?: number }
+    | undefined;
   readonly replaySafe?: boolean | undefined;
   readonly client: DatomicClient;
   readonly scopeKey: string;

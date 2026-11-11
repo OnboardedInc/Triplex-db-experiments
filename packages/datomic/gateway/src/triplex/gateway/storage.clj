@@ -235,8 +235,13 @@
   (let [hints (transaction-hints conn data timeline)
         submit (fn []
                  (swap! timeline assoc :predecessorReady (System/nanoTime))
-                 (let [future (if hints (d/transact-async conn data :hints hints)
-                                  (d/transact-async conn data))]
+                 (let [future (try (if hints (d/transact-async conn data :hints hints)
+                                             (d/transact-async conn data))
+                                   ;; [DX-R3-P7] Why: a definitive synchronous clock refusal resolves this turn,
+                                   ;; just like a failed transaction future; the retry owns the next sequence.
+                                   ;; Rejected: leaving next unchanged while the adapter has consumed the send.
+                                   (catch Exception e
+                                     (if (re-find #"TRIPLEX_CLOCK" (str e)) (delay (throw e)) (throw e))))]
                    (swap! timeline assoc :submitted (System/nanoTime)) future))]
     (if-let [client (get input "clientId")]
       (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
