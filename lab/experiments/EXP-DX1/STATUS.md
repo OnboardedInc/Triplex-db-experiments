@@ -1110,3 +1110,39 @@ fixes, zero violations and zero errors:
 
 **q7** started 10:35 UTC from the frozen checkout at `55eb490b` (all merges): `DX_READ_PATH=replica`, 12 GiB driver,
 `--replica-history-mib 192`, under `nohlt`. `long-hold-ok` is removed until q7 ends, then restored by the same command.
+
+## 2026-11-11 11:15 UTC: q7, the full pair with local reads (frozen checkout `55eb490b`, under `nohlt`)
+
+Oracle PASS; 9,295,313 ladder reads, zero violations, zero errors; 7,408 of 7,408 commands published; driver peak 4.47 GB with
+18,367,740 observations spilled to disk (3.09 GB). Split-read rule `pending` (DX-R3's). Tables
+`~/Claude/Projects/triplex-db-2/evidence/DX-H4/tx2-dxh4-q7-TABLES.md`.
+
+| Priority | Bar | q6 gateway reads | q7 local reads | Required | q7 verdict |
+| --- | --- | --- | --- | --- | --- |
+| P1 | Read p99 at 256 readers | 340 ms | 5.2 ms | at most 100 | met |
+| P1 | Correct reads/s at 64 / 256 / 1,024 | 4,655 / 4,186 / 3,656 | 43,433 / 41,782 / 49,520 | | |
+| P1 | 256 against 64 | 0.90 | 0.962 | at least 1.0 | miss |
+| P1 | 1,024 against 256 | 0.87 | 1.185 | at least 0.9 | met |
+| P1 | Recovery after 1,024 | never | 35 s | at most 60 s | met |
+| P1 | Commit p99 at 256 against matched zero-reader window | 1.21 | 1.263 | at most 1.25 | miss |
+| P2 | Commit p50 at 256 readers, 5-10 / 11-25 facts | 12.9 / 13.3 ms | 12.1 / 11.6 ms | at most 10 | miss |
+| P2 | Commit p99 at 256 readers, 5-10 / 11-25 facts | 20.0 / 54.0 ms | 30.7 / 35.3 ms | at most 50 | met |
+| P2 | All commits p99, 5-10 / 11-25 / 26-50 facts | 43.8 / 46.3 / 44.3 ms | 103.9 / 97.3 / 85.0 ms | at most 50 | miss (new) |
+| P2 | Burst commit p50, 5-10 facts | 9.7 ms | 13.8 ms | at most 10 | miss (new) |
+| P2 | Steady-state queue | within bound | 3 (bound 2.19) | | miss (new) |
+| P3 | Feed lag p99 at 256 readers; gaps, order, resume, crash points | 32.6 ms; exact | 21.1 ms; exact | 250 | met |
+| P4 | Pull p50 / p99 | 0.62 / 4.26 ms | 0.024 / 0.155 ms | 5 / 25 | met |
+| P4 | History flatness | | 1.03 | at most 1.1 | met |
+| P5 rows in this driver | Commit p99 during sweep against presweep | | 174 | at most 1.5 | miss (the local sweep blocks the driver's main thread 4.7 s) |
+
+Reading: local reads settle the read side of P1 and P4 at this rung. They made commits worse. Per-phase segments: in burst
+phases the request to the write gateway is p50 12.2 to 12.9 ms and p99 51 to 77 ms (q6: p99 near 42 ms), and the driver's own
+time before the request is p99 21 to 55 ms (q6: negligible). Two suspects: the write gateway (one CPU, shared with the
+transactor) now also serves the follower's feed with complete changed rows per journal; and the driver's main thread carries
+the writer, the follower, observation spilling and the sweep.
+
+**DX-R3 resumed 11:13 UTC, part 3** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-R3-resume2.md`): take the feed off the
+write gateway (read gateway, or one CPU per engine container), free the writer's thread, 256 readers at least as fast as 64,
+rerun the full pair under both split-read rules. Targets: every P1 and P2 bar in the table at once.
+
+`long-hold-ok` restored 11:12 UTC. DX-S5 is on its 10,000-subject proof (509 to 515 commands/s, window 32).
