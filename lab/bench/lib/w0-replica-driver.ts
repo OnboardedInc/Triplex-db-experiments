@@ -500,7 +500,12 @@ export async function runReplicaDriver(argv: string[]) {
       };
     }
     await replica.stop();
+    (globalThis as any).gc?.();
     report.evaluation = {
+      inputBytes: result.replicaBytes,
+      sharedIndexBytes: snap.sharedImage().shared!.index.byteLength,
+      overlayEntities: snap.sharedImage().entities.length,
+      heapDelta: process.memoryUsage().heapUsed - initialHeap,
       wallMs: result.evaluationWallMs,
       passWallMs: result.passWallMs + report.freezeMs,
       passRate: N / ((result.passWallMs + report.freezeMs) / 1000),
