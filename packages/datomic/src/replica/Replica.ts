@@ -61,7 +61,16 @@ export class ReplicaSnapshot {
     return walk(this.entities, this.validAt, subjectId);
   }
 }
+export interface ReplicaUpdate {
+  readonly position: number;
+  readonly reset: boolean;
+  readonly valid: boolean;
+  readonly changes: readonly (readonly [string, PackedEntity | undefined, PackedEntity])[];
+}
 export class Replica {
+  // [DX-R3] Why: publish complete atomic cuts and old immutable buffers to optional read indexes.
+  // Rejected: exposing the mutable entity Map (workers could observe half a journal).
+  onUpdate: ((update: ReplicaUpdate) => void) | undefined;
   private entities = new Map<string, PackedEntity>();
   private watermark = 0;
   private valid = false;
@@ -112,6 +121,7 @@ export class Replica {
   }
   private invalidate(e: unknown): never {
     this.valid = false;
+    this.onUpdate?.({ position: this.watermark, reset: true, valid: false, changes: [] });
     for (const w of this.waiters) w.reject(e);
     this.waiters.clear();
     this.rejectCaptures(e);
@@ -235,6 +245,12 @@ export class Replica {
         this.entities = next;
         this.roots = unique;
         this.valid = true;
+        this.onUpdate?.({
+          position: cut,
+          reset: true,
+          valid: true,
+          changes: [...next].map(([id, e]) => [id, undefined, e] as const),
+        });
         this.advance(cut);
       } catch (e) {
         this.invalidate(e);
@@ -271,7 +287,9 @@ export class Replica {
         // Rejected: guessing a new revision or applying a partial retraction; refresh only changed closures at the exact cut.
         const changes = new Map<string, PackedEntity>();
         await this.load(tx.entities, tx.position, changes, true);
+        const replaced = [...changes].map(([id, e]) => [id, this.entities.get(id), e] as const);
         for (const [id, e] of changes) this.entities.set(id, e);
+        this.onUpdate?.({ position: tx.position, reset: false, valid: true, changes: replaced });
         this.advance(tx.position);
       }
     } catch (e) {
