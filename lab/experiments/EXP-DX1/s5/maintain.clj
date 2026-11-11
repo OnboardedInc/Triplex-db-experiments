@@ -29,12 +29,31 @@
     (swap! n inc)))
   {:rows @n :sha256 (.formatHex (java.util.HexFormat/of) (.digest md))}))
 (defn proof [conn]
- (let [db (d/db conn) current (rows-proof db) history (rows-proof (d/history db))]
+ ;; [DX-S5] Why: current/history scans are independent immutable views; hash both completely using idle maintenance CPUs.
+ ;; Rejected: skipping either history or current rows, or changing their datom/digest order.
+ (let [db (d/db conn) a (future (rows-proof db)) b (future (rows-proof (d/history db)))
+       current @a history @b]
   (when (or (zero? (:rows current)) (< (:rows history) (:rows current)))
    (throw (ex-info "missing native scope rows" {})))
   {:basis (d/basis-t db) :current current :history history}))
 (defn -main [uri mode]
- (let [conn (d/connect uri) _ @(d/sync conn) started (System/nanoTime)]
+ (if (= mode "parallel-test")
+  ;; [DX-S5] Why: compare serial and parallel bytes on the same fresh native snapshot, including a retraction.
+  ;; Rejected: count-only parity or using this memory test as SQL/scale acceptance.
+  (let [u (str "datomic:mem://dxs5-proof-" (java.util.UUID/randomUUID))
+        _ (assert (d/create-database u)) conn (d/connect u)]
+   @(d/transact conn [{:db/ident :triplex.entity/row :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
+   @(d/transact conn (mapv (fn [i] {:db/id (d/tempid :db.part/user) :triplex.entity/row (str i)}) (range 1000)))
+   (let [e (d/q '[:find ?e . :where [?e :triplex.entity/row "500"]] (d/db conn))]
+    @(d/transact conn [[:db/retract e :triplex.entity/row "500"] [:db/add e :triplex.entity/row "changed"]]))
+   (let [db (d/db conn) serial {:basis (d/basis-t db) :current (rows-proof db) :history (rows-proof (d/history db))}
+         parallel (proof conn)]
+    (assert (= 1000 (get-in serial [:current :rows])))
+    (assert (= 1002 (get-in serial [:history :rows])))
+    (assert (= serial parallel))
+    (emit {:event "parallel-proof-unit-parity" :serial serial :parallel parallel :memory-only true}))
+   (d/release conn))
+  (let [conn (d/connect uri) _ @(d/sync conn) started (System/nanoTime)]
   ;; [DX-S5] Why: compare one fresh pre-maintenance image with one fresh post-vacuum image, not duplicate hashes in the same peer.
   ;; Rejected: eight full datom scans per chunk (the redundant checks add no preservation evidence).
   (if (= mode "proof")
@@ -42,5 +61,6 @@
    (do
     (emit {:event "native-before" :proof (proof conn) :elapsedMs (/ (- (System/nanoTime) started) 1000000.0)})
     (maintain conn)))
-  (d/release conn))
- (d/shutdown true))
+  (d/release conn)))
+ (d/shutdown true)
+ (shutdown-agents))

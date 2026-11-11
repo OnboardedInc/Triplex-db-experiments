@@ -39,7 +39,9 @@ printf 'durability fsync/synchronous_commit/full_page_writes:\n%s\n' "$durabilit
 [[ $durability == $'on\non\non' ]] || { echo 'durability settings refused'; exit 1; }
 docker run -d --pull never -v "$repo/lab/experiments/EXP-DX1/s5/logback.xml:/opt/datomic/bin/logback.xml:ro" --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1,2,3 --memory 4g --memory-swap 4g -e 'JAVA_OPTS=-Xms256m -Xmx3g' -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
- cpu=1; [[ $role == w ]] || cpu=2,3
+ # [DX-S5] Why: seeding has one JS main thread, leaving two private writer cores without changing evaluation placement.
+ # Rejected: serializing writer preparation on core 1 while spare VM CPUs remain idle.
+ cpu=4,5; [[ $role == w ]] || cpu=2,3
  host_port=18542; [[ $role == w ]] || host_port=18543
  docker run -d --pull never -v "$repo/lab/experiments/EXP-DX1/s5/logback.xml:/opt/datomic/bin/logback.xml:ro" --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e 'DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g -Dtriplex.codec.spec=/opt/replica-codec-spec.json' -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main
  done
