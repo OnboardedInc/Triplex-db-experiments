@@ -295,3 +295,24 @@ test("apply-delay summary exposes missing ACKed positions and clamps apply-befor
   assert.equal(result.p50Ms, 0); assert(result.p99Ms! >= 25 && result.p99Ms! < 25.2);
   assert.deepEqual(result.unappliedAcknowledgedPositions, [3]);
 });
+
+// [DX-R3] Why: peer routing and the exact RYOW world must survive a worker structured-clone boundary.
+// Rejected: asserting only cached observation fields, or letting the RYOW fallback inherit R's replication delay.
+test("RYOW reply preserves actual typed world bytes and binds fallback W separately from follower R", async () => {
+  const { replicaThreadEnvironment } = await import("../../../bench/lib/replica-thread.ts");
+  const { replicaEndpoint, replicaReply } = await import("../../../bench/lib/replica-reads.ts");
+  const env = { DATOMIC_URL: "http://writer:8080", DATOMIC_READ_URLS: "http://reader:8080" };
+  assert.equal(replicaEndpoint(env, "reader"), "http://reader:8080");
+  assert.equal(replicaThreadEnvironment(env).DATOMIC_READ_URLS, "http://writer:8080");
+  const rows: SweepRow[] = [
+    { entityId: "root", id: "signed", attribute: "signed", value: { type: "number", value: -0 }, position: 1, validFrom: 0 },
+    { entityId: "root", id: "exact", attribute: "exact", value: { type: "integer", value: "9007199254740993" }, position: 1, validFrom: 0 },
+    { entityId: "root", id: "unicode", attribute: "unicode", value: { type: "string", value: "é/\ud800" }, position: 1, validFrom: 0 },
+  ];
+  const reader = new ReplicaReader();
+  reader.apply({ position: 1, reset: true, valid: true, recordTime: 100, changes: [["root", undefined, prepareEntity("root", packEntity(1, rows))]] });
+  const result = await reader.pullAt("root", { recordedPosition: 1, recordedAt: 100, validAt: 5 }, async () => { throw Error("unexpected fallback"); });
+  const cloned = structuredClone(replicaReply(result));
+  assert.equal(worldBytes(cloned.triples), worldBytes(rows));
+  assert.deepEqual(observe(cloned), observe(result));
+});

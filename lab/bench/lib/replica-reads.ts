@@ -320,9 +320,10 @@ export class ReplicaReadHost {
     feed: "legacy" | "inline" = "inline",
     historyBytes = 64 * 1024 ** 2,
     peer: "reader" | "writer" = "reader",
+    endpoint = replicaEndpoint(process.env, peer),
   ) {
     const client = new api.DatomicClient(
-      replicaEndpoint(process.env, peer),
+      endpoint,
     );
     const db = await client.create(
       runtimeApi.DatabaseScope.test(scope),
@@ -363,4 +364,10 @@ export class ReplicaReadHost {
     this.listeners.clear();
     this.times.clear();
   }
+}
+
+// [DX-R3] Why: the low-volume RYOW reply must carry its real world, even though hot readers use lazy immutable buffers.
+// Rejected: a checksum-only reply that invents an empty triples array across the worker boundary.
+export function replicaReply(result: PullResult): PullResult {
+  return { ...result, triples: result.triples };
 }

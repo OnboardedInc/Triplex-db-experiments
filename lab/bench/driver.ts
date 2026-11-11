@@ -440,13 +440,20 @@ async function run() {
       scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
       config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer) : undefined;
-  const replicaLocal = replicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2, replicaHost.index) : undefined;
-  if (replicaHost && replicaLocal) {
-    replicaHost.subscribe(() => replicaLocal.notify());
+  const mainReplicaHost = replicaHost && !("connect" in replicaHost) ? replicaHost : undefined;
+  const replicaLocal = mainReplicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2, mainReplicaHost.index) : undefined;
+  if (mainReplicaHost && replicaLocal) {
+    mainReplicaHost.subscribe(() => replicaLocal.notify());
     const gatewayPull = aux.pull.bind(aux);
     aux.pull = (root, basis, between) => replicaLocal.pullAt(root, basis, () => gatewayPull(root, basis), between);
+  } else if (replicaHost && "pull" in replicaHost) {
+    const remote = replicaHost;
+    aux.pull = (root, basis, between) => {
+      if (between) throw Error("RYOW worker does not accept a split callback");
+      return remote.pull(root, basis);
+    };
   }
-  const workerCfg = (w: number) => ({ replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost && !("connect" in replicaHost) ? replicaHost.index.image() : undefined, subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
@@ -468,7 +475,7 @@ async function run() {
   const startWorker = async (w: number, cfg: any) => {
     const pendingDeltas: any[] = [];
     const directReplica = replicaHost && "connect" in replicaHost ? replicaHost : undefined;
-    const unsubscribe = directReplica ? undefined : replicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
+    const unsubscribe = mainReplicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
     const observationPort = spill?.connect();
     const replicaPort = directReplica?.connect();
     const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: { ...cfg, observationPort, replicaPort }, transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : [])], env: process.env });
@@ -482,7 +489,7 @@ async function run() {
     });
     unsubscribe?.();
     for (const delta of pendingDeltas) worker.postMessage({ type: "replica-delta", delta, sentAt: now() });
-    if (!directReplica) replicaHost?.subscribe(delta => worker.postMessage({ type: "replica-delta", delta, sentAt: now() }));
+    mainReplicaHost?.subscribe(delta => worker.postMessage({ type: "replica-delta", delta, sentAt: now() }));
     worker.on("message", onWorkerMessage(w, worker));
     return { worker, stopped: stoppedP };
   };
@@ -882,7 +889,7 @@ async function run() {
   await replicaHost?.close();
   if (replicaHost) report.replica = { copyBytes: replicaHost.replica.bytes, historyBytes: replicaHost.index.historyBytes,
     floor: replicaHost.index.floor, position: replicaHost.index.position, positionWindow: replicaHost.index.positions,
-    historyBudgetBytes: replicaHost.index.maxBytes, feedPeer: config.replicaPeer, applyThread: config.replicaThread,
+    historyBudgetBytes: replicaHost.index.maxBytes, feedPeer: config.replicaPeer, feedEndpoint: "endpoint" in replicaHost ? replicaHost.endpoint : (await import("./lib/replica-reads.ts")).replicaEndpoint(process.env, config.replicaPeer), applyThread: config.replicaThread,
     acknowledgementToApplied: "applied" in replicaHost ? (await import("./lib/replica-thread.ts")).appliedDelay(replicaHost.applied, ackOf) : null,
     peakProcessBytesBeforeAnalysis: process.resourceUsage().maxRSS * 1024 };
   // Growth commands that outlived their phase: wait for them, then fold any that committed into the model.
