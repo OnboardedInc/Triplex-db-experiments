@@ -651,13 +651,23 @@ the retry is running). Lock users now: DX-R1, DX-H7, DX-B10.
 
 Disk: 27 GiB free on the Mac at 01:12 UTC (evidence 48 GB, swap 18.7 GB, VM disk image 39 GB).
 
+## DX-H7 merged (2026-11-11 02:08 UTC, merge 0939c037)
+
+Reader changes gated on the lean layout: `reach` (200 scenarios, 5,120 concurrent cold pulls), `reach-repair`, `cache-budget`, and all
+300 differential scenarios (95,028 comparisons). Writer predecessor cache (0f00f4af): a bounded map of exact predecessor tuples
+(256 MiB budget; a unit test holds 400,000 predecessors for 100,000 subjects in about 155 MiB) survives row-cache eviction, so a
+commit to a known subject stages without `/begin`; a miss falls back to `/begin`, a stale entry gets the gateway's typed conflict
+and the existing retry. Lean `concurrent-commits`, `commit-observation`, `adapter`, `cache-budget` pass. **Not verified:** one
+real-gateway test recheck, and the before/after measurement at 10,000 subjects (calls per commit, dense and sparse medians).
+The queued paired benchmark `tx2-dxh4-q2` measures both the reader ceiling and requests per commit on this merge.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-B10 (resumed 01:11 UTC) | Run the strict-order proofs and the full suite; W0 seed rate at windows 1 and 32 with the fingerprint | `exp/DX-B10-order`, `.claude/worktrees/dx-b10` | `.../prompts/DX-B10-resume1.md` |
 | DX-R1 | Local copy of current facts in the runtime (bootstrap, follow the feed, freeze), release evaluation from it for one and several candidates, publish only changed outputs; equality gates against the gateway and the full sweep | `exp/DX-R1-replica`, `.claude/worktrees/dx-r1` | `.../prompts/DX-R1.md` |
-| DX-H7 (resumed 00:06 UTC) | Gate its client and driver changes; writer predecessor-stamp map (one HTTP call per commit at 10,000 subjects) | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7-resume1.md` |
+| ORCH | Paired 10,000-subject benchmark `tx2-dxh4-q2` on merge 0939c037 (`quiet/run-10k-pair.sh`, waits for quiet up to 20 minutes, then the lock) | `lane/d-native` | |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
