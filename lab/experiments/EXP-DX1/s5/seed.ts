@@ -5,7 +5,6 @@ import { openComposition } from "../../../bench/lib/composition.ts";
 import { seedCommands, seedW0 } from "../../../bench/lib/w0-seed.ts";
 import { readW0Fingerprint } from "../../../bench/lib/w0-fingerprint.ts";
 import { W0, V_W0, many, canonical, triplexValue } from "../../../bench/lib/w0-world.ts";
-import { openBulkCounts } from "../h6/bulk-counts.ts";
 
 // [DX-S5] Why: the checkpoint is operational state, never a verdict; the database journal repairs a killed suffix.
 // Rejected: resuming from a process-local ACK count or trusting an earlier fingerprint as fresh evidence.
@@ -19,8 +18,9 @@ process.env.TX2_P5_CLOCK_START = String(V_W0);
 process.env.TX2_W0_POINT_JOURNAL = "1";
 process.env.TX2_W0_RESTORE_INDEXED_JOURNAL = "1";
 const comp = await openComposition("reach", "datomic", scope);
-const bulk = await openBulkCounts(comp);
-comp.storeCounts = bulk.count;
+// [DX-S5] Why: native maintenance counts all current/history rows once per chunk; replaying millions of journals just to enumerate entities is quadratic across chunks.
+// Rejected: reporting generated assertions as observed stored row counts. This field names only the observed head.
+comp.storeCounts = async () => ({ position: await comp.currentPosition() });
 const stateFile = "/state/checkpoint.json.gz";
 const latest = new Map<string, string>();
 try {
@@ -46,6 +46,20 @@ try {
       assert(!next.done);
       const c = next.value!;
       assert.equal(tx.commandId, `p5:seed:${c.position}`);
+      const expectedRetractions = c.rows
+        .flatMap(([e, a]) => {
+          const id = latest.get(e + "\0" + a);
+          return !many.has(a) && c.validFrom <= V_W0 && id ? [id] : [];
+        })
+        .sort();
+      assert.deepEqual(
+        tx.changes
+          .filter((x: any) => x.op === "retract")
+          .map((x: any) => x.tripleId)
+          .sort(),
+        expectedRetractions,
+      );
+      assert(tx.changes.every((x: any) => x.op === "assert" || x.op === "retract"));
       const actual = tx.changes.filter((x: any) => x.op === "assert");
       assert.equal(actual.length, c.rows.length);
       for (let i = 0; i < actual.length; i++) {
@@ -58,6 +72,12 @@ try {
         );
         assert(x, "recovery assertion differs");
         assert.equal(x.validFrom, c.validFrom);
+        assert.equal(
+          x.validTo,
+          a === "payRateCents" && c.validFrom <= V_W0 && W0.plan(R, Number(e.slice(4))).raise
+            ? Date.parse("2026-11-16T00:00:00Z")
+            : undefined,
+        );
         if (!many.has(a)) latest.set(e + "\0" + a, x.tripleId);
       }
       after = tx.position;
@@ -119,6 +139,5 @@ try {
     }),
   );
 } finally {
-  bulk.close();
   await comp.close();
 }
