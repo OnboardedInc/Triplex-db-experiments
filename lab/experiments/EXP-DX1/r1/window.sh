@@ -34,6 +34,7 @@ held=true
 deadline=$(( $(date +%s) * 1000 + 1100000 ))
 printf '{"id":"DX-R1","pid":%s}\n' "$$" > "$lock/owner.json"
 [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB'; exit 1; }
+[[ -z $(docker ps -q --filter "volume=$seed") ]] || { echo 'refuse an active seed'; exit 2; }
 (sleep 1100; docker rm -f "$prefix-driver" || true; kill -TERM $$) & timer=$!
 for name in "$prefix-pg-data" "$prefix-tools"; do
  if docker volume inspect "$name" >/dev/null 2>&1; then echo "refuse existing owned volume $name"; exit 2; fi
