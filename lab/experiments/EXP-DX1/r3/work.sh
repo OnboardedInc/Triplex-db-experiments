@@ -103,7 +103,9 @@ if [[ $mode == probe ]]; then
   exit
 fi
 if [[ $mode == gates ]]; then
-  run_driver env DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL="http://$prefix-gw-w:8080" DX_B5_SCENARIOS=300 node_modules/.bin/vitest run --config lab/experiments/EXP-DX1/b5/vitest.config.ts packages/datomic/test/layout-differential.test.ts packages/datomic/test/strict-order.test.ts
+  run_driver env DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL="http://$prefix-gw-w:8080" DX_B5_SCENARIOS=300 node_modules/.bin/vitest run --testTimeout 900000 --config lab/experiments/EXP-DX1/b5/vitest.config.ts packages/datomic/test/layout-differential.test.ts packages/datomic/test/strict-order.test.ts
+  docker rm "$prefix-driver"
+  run_driver env DATOMIC_INTEGRATION=1 DATOMIC_TEST_LAYOUT=lean node_modules/.bin/vitest run --config lab/experiments/EXP-DX1/b5/vitest.config.ts packages/datomic/test/strict-order.test.ts
   exit
 fi
 if [[ $mode == both ]]; then
