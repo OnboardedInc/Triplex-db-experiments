@@ -103,6 +103,7 @@ export async function seedW0(
     through: number;
     latest: Map<string, string>;
     discardLog?: boolean;
+    boundedState?: boolean;
   },
 ) {
   // [DX-H5] Why: W0's immutable fingerprint includes reference commit positions.
@@ -153,17 +154,36 @@ export async function seedW0(
     assertions += c.rows.length;
     retractions += operations.length - c.rows.length;
     position = c.position;
-    const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
-    if (!range?.discardLog) fs.writeSync(fd, line);
-    commandsHash.update(line);
+    // [DX-S5] Why: the discarded receipt stream is neither evidence nor an acceptance input; canonicalizing it saturated the seed driver.
+    // Rejected: hashing unretained bytes while the real stored-world and native-history checks wait.
+    if (!range?.discardLog) {
+      const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
+      fs.writeSync(fd, line);
+      commandsHash.update(line);
+    }
     if (position % 1000 === 0)
       console.error(
         `[DX-H6 seed] ${position} commands, ${((position - from) / ((performance.now() - seedStarted) / 1000)).toFixed(1)} commands/s, window ${concurrency}`,
       );
     await checkpoint?.();
   };
+  let activeRoot: string | undefined;
+  const completedRoots = new Set<string>();
   try {
     for (const c of seedCommands(N)) {
+      if (range?.boundedState) {
+        // [DX-S5] Why: W0 finishes each root before the next; past scalar IDs can never be needed by later seed commands.
+        // Rejected: retaining tens of millions of answer scalar IDs until the last subject (unbounded checkpoint/heap).
+        const root = c.rows[0]![0];
+        if (root !== activeRoot) {
+          if (completedRoots.has(root)) throw Error("seed root was revisited");
+          if (activeRoot !== undefined) completedRoots.add(activeRoot);
+          if (c.position > from) latest.clear();
+          activeRoot = root;
+        }
+        if (c.position > from && c.rows.some(([e]) => e !== root && !e.startsWith(root + "/")))
+          throw Error("seed command is not root-local");
+      }
       if (c.position <= from) continue;
       if (c.position > through) break;
       while (
@@ -254,7 +274,8 @@ export async function seedW0(
     assertions,
     retractions,
     commands: position,
-    logSha256: commandsHash.digest("hex"),
+    logSha256: range?.discardLog ? "not-recorded" : commandsHash.digest("hex"),
+    receiptLogRetained: !range?.discardLog,
     counts,
     releaseHashes: [W0.R1.hash, W0.R2.hash, W0.R3.hash],
     wallMs: performance.now() - seedStarted,

@@ -26,6 +26,7 @@ test("range resumes scalar IDs and matches every full-seed world", async () => {
     through: cut,
     latest,
     discardLog: true,
+    boundedState: true,
   });
   const restored = new Map<string, string>(JSON.parse(JSON.stringify([...latest])));
   await seedW0(split, N, "/dev/null", undefined, 32, 0, {
@@ -33,7 +34,9 @@ test("range resumes scalar IDs and matches every full-seed world", async () => {
     through: total,
     latest: restored,
     discardLog: true,
+    boundedState: true,
   });
+  assert(restored.size < 8192, "scalar state must be root-bounded");
   const basis = { position: total, validAt: V_W0 };
   for (let i = 0; i < N; i++) {
     const subject = W0.placementId(i);
@@ -48,6 +51,7 @@ test("range resumes scalar IDs and matches every full-seed world", async () => {
       through: total,
       latest,
       discardLog: true,
+      boundedState: true,
     }),
     /head mismatch/,
   );

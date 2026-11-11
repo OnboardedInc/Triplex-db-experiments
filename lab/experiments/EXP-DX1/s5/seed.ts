@@ -40,8 +40,12 @@ try {
     assert(head > from, "kill test did not leave a committed suffix");
   // Recover every already committed command since the last checkpoint and verify actual stored assertion content.
   const commands = seedCommands(N);
-  let next = commands.next();
-  while (!next.done && next.value.position <= from) next = commands.next();
+  let next = commands.next(),
+    previousRoot: string | undefined;
+  while (!next.done && next.value.position <= from) {
+    previousRoot = next.value.rows[0]![0];
+    next = commands.next();
+  }
   for (let after = from; after < head; ) {
     const page = await comp.feedPage(after, Math.min(100, head - after));
     assert(page.transactions.length > 0, "missing recovery journals");
@@ -49,6 +53,9 @@ try {
       assert.equal(tx.position, after + 1);
       assert(!next.done);
       const c = next.value!;
+      const root = c.rows[0]![0];
+      if (root !== previousRoot) latest.clear();
+      previousRoot = root;
       assert.equal(tx.commandId, `p5:seed:${c.position}`);
       const expectedRetractions = c.rows
         .flatMap(([e, a]) => {
@@ -104,6 +111,7 @@ try {
       through,
       latest,
       discardLog: true,
+      boundedState: true,
     });
     console.log(JSON.stringify({ event: "chunk-seeded", endSubjects, ...result }));
     const data = gzipSync(JSON.stringify({ scope, N, position: through, latest: [...latest] }));
