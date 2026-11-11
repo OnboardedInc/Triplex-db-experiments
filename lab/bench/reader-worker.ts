@@ -1,3 +1,4 @@
+import { readerDiagnostics } from "./lib/reader-diagnostics.ts";
 import { httpCounts } from "./lib/http-counts.ts";
 /**
  * Reader worker thread: closed-loop subject pulls at a named basis, plus the P5 sweep.
@@ -25,12 +26,15 @@ import { httpCounts } from "./lib/http-counts.ts";
  */
 import { isMainThread, parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
+import { readFileSync } from "node:fs";
 import { openComposition, type Basis, type CompositionHandle } from "./lib/composition.ts";
 import { Rng, seedOf } from "./lib/rng.ts";
 import { BUCKETS, HOP_SHARE, ids, subjectInCell, type Bucket, type Hop } from "./lib/world.ts";
 import { observe, type ReadRecord } from "./lib/observe.ts";
 
 type ReaderConfig = {
+  entityCacheBytes?: number;
+  subjectShards?: number;
   lane: "xtdb" | "qlever" | "datomic";
   scope: string;
   composition: string;
@@ -80,7 +84,12 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       return { subject: i ?? rng.int(cfg.subjects), hotPick: false };
     }
     if (hot.length && rng.next() < 0.6) return { subject: hot[rng.int(hot.length)]!, hotPick: true };
-    return { subject: rng.int(cfg.subjects), hotPick: false };
+    // [DX-H7] Why: give uniform reads a stable per-worker hot set instead of decoding it in every isolate.
+    // Rejected: sharding hot picks (would change their distribution across recently written subjects).
+    const shards = cfg.subjectShards ?? 1;
+    const offset = cfg.worker < shards ? cfg.worker : 0;
+    const count = Math.ceil((cfg.subjects - offset) / shards);
+    return { subject: count > 0 ? offset + shards * rng.int(count) : rng.int(cfg.subjects), hotPick: false };
   }
 
   /** Returns [basis, kind (0 latest, 1 last hour, 2 past valid time), receipt position, txId]. */
@@ -155,10 +164,18 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     }
   }
 
+  // [DX-H7] Why: Linux per-thread CPU excludes the writer and sibling reader isolates.
+  // Rejected: process.cpuUsage in each worker (counts every worker repeatedly).
+  const threadCpuMs = () => {
+    if (process.platform !== "linux") return null;
+    const stat = readFileSync("/proc/thread-self/stat", "utf8");
+    const fields = stat.slice(stat.lastIndexOf(")") + 2).split(" ");
+    return (Number(fields[11]) + Number(fields[12])) * 10;
+  };
   let elu = performance.eventLoopUtilization();
   const flush = setInterval(() => {
     const next = performance.eventLoopUtilization();
-    port.postMessage({ type: "elu", t: nowAbs(), elu: performance.eventLoopUtilization(next, elu).utilization, running });
+    port.postMessage({ type: "elu", t: nowAbs(), elu: performance.eventLoopUtilization(next, elu).utilization, activeMs: performance.eventLoopUtilization(next, elu).active, threadCpuMs: threadCpuMs(), httpCounts: httpCounts(), diagnostics: readerDiagnostics(), memory: process.memoryUsage(), running });
     elu = next;
     if (records.length || samples.length) {
       port.postMessage({ type: "reads", records, samples });
@@ -201,8 +218,9 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       port.postMessage({ type: "reads", records, samples });
       records = [];
       samples = [];
+      const diagnostics = readerDiagnostics();
       await comp.close().catch(() => {});
-      port.postMessage({ type: "stopped", httpCounts: httpCounts() });
+      port.postMessage({ type: "stopped", httpCounts: httpCounts(), diagnostics });
     }
   });
 

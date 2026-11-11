@@ -10,7 +10,7 @@ import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency
  *   node lab/bench/driver.ts --lane xtdb|qlever|datomic --rung 10k|100k|1m|10m --output runs/NS/<id>/ns-report.json
  *     [--profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline-writes FILE]
  *     [--composition public] [--seed ns-v2] [--reader-threads 4] [--seed-budget-s 3600] [--seed-batch-facts 400]
- *     [--writer-max-inflight 32] [--sweep-concurrency 16] [--oracle-root DIR]
+ *     [--reader-entity-cache-mib 640] [--no-reader-affinity] [--writer-max-inflight 32] [--sweep-concurrency 16] [--oracle-root DIR]
  *     development only: [--subjects N] [--max-readers N] [--burst-multiplier X] [--level-s S]
  *   paired rounds (EXP-M01, PAIR-0; normally started by lab/bench/duet.ts, two drivers at once):
  *     --arm A|B --round-plan FILE (--barrier-dir DIR | --start-at-abs-ms T)
@@ -32,6 +32,7 @@ import { Worker } from "node:worker_threads";
 import { openComposition, type CompositionHandle, type Receipt } from "./lib/composition.ts";
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
+import { WRITER_CACHE_BUDGET_MIB, WRITER_PREDECESSOR_CACHE_MIB } from "./lib/predecessors.ts";
 import { ProbeThread } from "./lib/probe-thread.ts";
 import { SideThread } from "./lib/side-thread.ts";
 import { commitBreakdown } from "./lib/commit-breakdown.ts";
@@ -97,6 +98,9 @@ const config = {
   composition: opt("composition", "public")!,
   seed: opt("seed", "ns-v2")!,
   readerThreads: Number(opt("reader-threads", "4")),
+  readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", lane === "datomic" ? "640" : "128")),
+  writerPredecessorCacheMiB: lane === "datomic" ? WRITER_PREDECESSOR_CACHE_MIB : 0,
+  readerSubjectAffinity: lane === "datomic" && !flag("no-reader-affinity"),
   seedBudgetS: Number(opt("seed-budget-s", "3600")),
   seedBatchFacts: Number(opt("seed-batch-facts", "400")),
   writerMaxInFlight: Number(opt("writer-max-inflight", "32")),
@@ -124,6 +128,12 @@ const config = {
   barrierDir: opt("barrier-dir") ?? null,
   startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
+// [DX-H7] Why: bound aggregate reader and writer cache estimates below half the 8 GiB client grant.
+// Rejected: an unbounded per-thread cache (moves saturation to memory pressure).
+if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) || config.readerEntityCacheMiB < 1 ||
+    !Number.isSafeInteger(config.readerThreads) || config.readerThreads < 1 ||
+    config.readerThreads * (config.readerEntityCacheMiB + 64) + WRITER_CACHE_BUDGET_MIB > 4096))
+  throw new Error(`Reader caches plus ${WRITER_CACHE_BUDGET_MIB} MiB writer cache budgets must total at most 4096 MiB`);
 const pairPlan: RoundPlan | null = config.roundPlan ? JSON.parse(fs.readFileSync(path.resolve(config.roundPlan), "utf8")) : null;
 if (pairPlan) {
   if (pairPlan.format !== "tx2-round-plan/1") throw new Error(`--round-plan: format ${pairPlan.format}`);
@@ -235,6 +245,7 @@ const model = new Model(rungSubjects);
 const accounts = accountsFor(rungSubjects);
 const records: ReadRecord[] = [];
 const oracleSamples: any[] = [];
+const workerDiagnostics: { worker: number; t: number; diagnostics: unknown; memory: unknown; threadCpuMs: number | null }[] = [];
 const workerElu: { worker: number; t: number; elu: number }[] = [];
 const acked: { instant: number; position: number; txId: string; at: number }[] = [];
 const ackOf = new Map<number, { at: number; instant: number; subject: number; subjects?: number[]; seq: number; stream: string; correction: boolean; correctionValidFrom: number | null; stamp: number }>();
@@ -351,13 +362,16 @@ async function run() {
   log(`trace: ${events.length} events over ${traceDurationS}s, digest ${report.trace.digest}, active-set share ${report.trace.generated.activeShare.toFixed(3)}`);
 
   // ---------------------------------------------------------------- reader workers
-  const workerCfg = (w: number) => ({ lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const sweepDone = new Map<number, (v: any) => void>();
   const onWorkerMessage = (w: number, worker: Worker) => (msg: any) => {
     if (msg.type === "reads") { for (const r of msg.records) records.push(r); for (const s of msg.samples) oracleSamples.push(s); }
-    else if (msg.type === "elu") workerElu.push({ worker: w, t: msg.t, elu: msg.elu });
+    else if (msg.type === "elu") {
+      workerElu.push({ worker: w, t: msg.t, elu: msg.elu });
+      workerDiagnostics.push({ worker: w, t: msg.t, diagnostics: msg.diagnostics, memory: msg.memory, threadCpuMs: msg.threadCpuMs });
+    }
     else if (msg.type === "sweep-done") sweepDone.get(msg.phase)?.(msg);
     else if (msg.type === "split-request") worker.postMessage({ type: "split", token: msg.token, ...straddleCandidate() });
     else if (msg.type === "straddle") {
@@ -1311,6 +1325,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const saturated = Object.values(stats).filter((s: any) => s.client.saturated).map((s: any) => s.phase);
   const total = records.length, ok = verdicts.filter((v) => v.ok).length, errs = verdicts.filter((v) => v.kind === "error").length;
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput" };
+  report.readerDiagnostics = workerDiagnostics;
   report.client = { series: {main:mainElu,readers:workerElu},
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
     saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };

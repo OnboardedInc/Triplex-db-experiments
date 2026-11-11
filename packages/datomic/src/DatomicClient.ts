@@ -1,5 +1,5 @@
 import { ByteCache } from "./ByteCache.js";
-import { RowCache, estimateRowBytes } from "./RowCache.js";
+import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { randomUUID } from "node:crypto";
 import { decodeEntity, type CachedEntity, type ReachWire } from "./reach.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
@@ -128,8 +128,15 @@ export class DatomicClient {
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
   readonly rowCache: RowCache;
+  readonly predecessorCache: PredecessorCache;
   forceFullReach = false;
   readonly reachDiagnostics = {
+    inlineEntities: 0,
+    referenceEntities: 0,
+    referenceHits: 0,
+    referenceMisses: 0,
+    decodedRows: 0,
+    decodedTextBytes: 0,
     refMisses: 0,
     waits: 0,
     waitHits: 0,
@@ -140,6 +147,31 @@ export class DatomicClient {
     faults: 0,
     declines: {} as Record<string, number>,
   };
+  // [DX-H7] Why: parsed reference IDs repeatedly rebuilt and hashed long database-prefixed keys.
+  // Rejected: changing cache identity to an entity ID alone (cross-database collisions).
+  private reachKeyDb: string | undefined;
+  private readonly reachKeys = new Map<string, string>();
+  private reachKeyBytes = 0;
+  private reachKey(db: string, prefix: string, id: string): string {
+    if (this.reachKeyDb !== db) {
+      this.reachKeys.clear();
+      this.reachKeyBytes = 0;
+      this.reachKeyDb = db;
+    }
+    const found = this.reachKeys.get(id);
+    if (found !== undefined) return found;
+    const key = prefix + id;
+    const bytes = 128 + 2 * (id.length + key.length);
+    if (bytes <= 32 * 1024 ** 2) {
+      if (this.reachKeyBytes + bytes > 32 * 1024 ** 2) {
+        this.reachKeys.clear();
+        this.reachKeyBytes = 0;
+      }
+      this.reachKeys.set(id, key);
+      this.reachKeyBytes += bytes;
+    }
+    return key;
+  }
   private readonly endpoint: URL;
   constructor(
     endpoint: string,
@@ -148,11 +180,17 @@ export class DatomicClient {
     readonly cacheOptions: {
       readonly entityCacheBytes?: number;
       readonly rowCacheBytes?: number;
+      readonly predecessorCacheBytes?: number;
+      readonly predecessorAttributes?: readonly string[];
     } = {},
   ) {
     this.reachCache = new ByteCache(
       cacheOptions.entityCacheBytes ?? 128 * 1024 ** 2,
       (entity) => 256 + entity.storedRows.reduce((n, row) => n + 3 * estimateRowBytes(row), 0),
+    );
+    this.predecessorCache = new PredecessorCache(
+      cacheOptions.predecessorCacheBytes,
+      cacheOptions.predecessorAttributes,
     );
     this.rowCache = new RowCache(
       Number.MAX_SAFE_INTEGER,
@@ -172,8 +210,12 @@ export class DatomicClient {
   }
   readonly rowObservers = new Set<(db: string, row: TripleRow) => void>();
   close(): void {
+    this.reachKeys.clear();
+    this.reachKeyBytes = 0;
+    this.reachKeyDb = undefined;
     this.reachCache.clear();
     this.rowCache.clear();
+    this.predecessorCache.clear();
     this.layouts.clear();
     this.rowObservers.clear();
     this.agent.destroy();
@@ -376,8 +418,9 @@ export class DatomicClient {
           throw new TypeError("Reach response basis/shape mismatch");
         const prefix = `${db}\0`;
         const cache = {
-          get: (id: string) => this.reachCache.get(prefix + id),
-          set: (id: string, entity: CachedEntity) => this.reachCache.set(prefix + id, entity),
+          get: (id: string) => this.reachCache.get(this.reachKey(db, prefix, id)),
+          set: (id: string, entity: CachedEntity) =>
+            this.reachCache.set(this.reachKey(db, prefix, id), entity),
         };
         if (response.reset) {
           this.reachCache.deleteWhere((key) => key.startsWith(prefix));
@@ -399,11 +442,24 @@ export class DatomicClient {
           let decoded: CachedEntity | undefined;
           if (entity.length === 3) {
             if (!Array.isArray(entity[2])) throw new TypeError("Invalid inline entity");
+            this.reachDiagnostics.inlineEntities++;
+            this.countReachDecode(entity[2]);
             decoded = decodeEntity(id, rev, entity[2], (row) => {
               for (const observe of this.rowObservers) observe(db, row);
             });
             cache.set(id, decoded);
-          } else decoded = cache.get(id);
+          } else {
+            this.reachDiagnostics.referenceEntities++;
+            decoded = cache.get(id);
+            if (decoded?.rev === rev) {
+              this.reachDiagnostics.referenceHits++;
+              // [DX-H7] Why: references are reads too; refresh only the small predecessor cache.
+              // Rejected: replaying row observers (would churn the row LRU on every reader cache hit).
+              if (this.predecessorCache.enabled)
+                for (const row of decoded.storedRows)
+                  this.predecessorCache.retain(prefix + row.id, row);
+            } else this.reachDiagnostics.referenceMisses++;
+          }
           if (!decoded || decoded.rev !== rev) missed = true;
           else entities.set(id, decoded);
         }
@@ -456,6 +512,7 @@ export class DatomicClient {
                   !Array.isArray(entry[2])
                 )
                   throw new TypeError("Repair entity/revision mismatch");
+                this.countReachDecode(entry[2]);
                 const decoded = decodeEntity(entry[0], entry[1], entry[2], (row) => {
                   for (const observe of this.rowObservers) observe(db, row);
                 });
@@ -488,6 +545,18 @@ export class DatomicClient {
       }
     }
     return undefined;
+  }
+  // [DX-H7] Why: distinguish decode churn from verification CPU without serializing rows again.
+  // Rejected: JSON.stringify telemetry (adds the CPU cost being measured).
+  private countReachDecode(rows: unknown[]) {
+    this.reachDiagnostics.decodedRows += rows.length;
+    for (const row of rows) {
+      if (typeof row === "string") this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(row);
+      else if (Array.isArray(row))
+        for (const value of row)
+          if (typeof value === "string")
+            this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(value);
+    }
   }
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");

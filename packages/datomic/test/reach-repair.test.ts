@@ -81,3 +81,34 @@ it("rejects repair bytes from another revision and retries full", async () => {
   expect(client.reachDiagnostics.fullRetries).toBe(1);
   client.close();
 });
+// [DX-H7] Why: key reuse must preserve database prefixes while calls interleave and caches reset.
+// Rejected: interning IDs without their active database context.
+it("keeps interned reach keys separate across databases and resets", async () => {
+  const client = new DatomicClient("http://localhost:1");
+  const request = vi.spyOn(client, "request").mockImplementation(
+    async (_method, path) =>
+      ({
+        ...wire([
+          ["root", 0, []],
+          ["shared", 0, []],
+        ]),
+        reset: path.includes("/db/b/"),
+      }) as any,
+  );
+  await Promise.all([
+    client.reachEntities("a", ["root"], basis),
+    client.reachEntities("b", ["root"], basis),
+  ]);
+  expect(client.reachCache.has("a\0root")).toBe(true);
+  expect(client.reachCache.has("b\0root")).toBe(true);
+  request.mockResolvedValue(
+    wire([
+      ["root", 0],
+      ["shared", 0],
+    ]),
+  );
+  expect((await client.reachEntities("a", ["root"], basis))?.entities.size).toBe(2);
+  expect((await client.reachEntities("b", ["root"], basis))?.entities.size).toBe(2);
+  expect(client.reachDiagnostics.needRequests).toBe(0);
+  client.close();
+});
