@@ -871,7 +871,7 @@ Tables `~/Claude/Projects/triplex-db-2/evidence/DX-H4/tx2-dxh4-q5-TABLES.md`.
 | P1 | Correct reads/s, 256 against 64 | 4,940 / 5,543 = 0.89 | at least 1.0 | miss |
 | P1 | Commit p99 at 256 readers against the matched zero-reader window | 81.95 / 43.32 = 1.89 | at most 1.25 | miss, on 46 commits |
 | P1 | Correct reads/s, 1,024 against 256 | 0.88 | at least 0.9 | miss |
-| P1 | Recovery time after the 1,024 level | null | at most 60 s | not produced by the driver (harness gap) |
+| P1 | Recovery time after the 1,024 level | never within 60 s | at most 60 s | miss; same cause as read p99 at 256 (recovery windows read p99 295 to 348 ms, commit p99 36 to 39 ms against 47 matched) |
 | P2 | Commit p50 at 256 readers, 5-10 / 11-25 facts | 14.7 / 12.7 ms | at most 10 | miss |
 | P2 | Commit p99 at 256 readers, 5-10 / 11-25 facts | 23.7 / 82.0 ms | at most 50 | met / miss (16 commits in the band) |
 | P2 | All commits: burst p50 / p99, 5-10 facts | 9.3 / 55.6 ms | 10 / 50 | met / miss |
@@ -892,4 +892,4 @@ What is left for lane D at this rung, and what is already aimed at it:
    DX-R3 moves those reads to the local copy.
 2. **Commits (p50 with readers, p99 everywhere):** DX-M2 (transactor GC flags, record time assigned in the transaction, hints)
    and the `nohlt` test (wake penalty; note commit p50 27 ms with 1 reader against 11 to 14 ms with 4 to 256).
-3. **Harness gaps:** recovery time is null; the P5 rows need the local-copy evaluation wired in; sample memory.
+3. **Harness gaps:** the P5 rows need the local-copy evaluation wired in; sample memory. Recovery follows from item 1.
