@@ -139,7 +139,7 @@ if [[ $activation_check == true ]]; then
  -v "$repo:$repo:ro" -v "$out:$out" -v "$prefix-tools:/tool:ro" -w "$repo" -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin \
  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
  python:3.13-slim /tool/node --expose-gc --experimental-strip-types lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" \
- --seed-fingerprint --publish --post-capture --candidates --oracle-candidates --oracle-concurrency 8 --live --traffic-offset-s 120 --baseline-ms 12000 --live-warmup-ms 10000
+ --seed-fingerprint --publish --post-capture --candidates --oracle-candidates --oracle-concurrency 8 --batch-oracle --live --traffic-offset-s 120 --baseline-ms 12000 --live-warmup-ms 10000
 fi
 for role in gw-r gw-w tx; do docker stop -t 30 "$prefix-$role"; done
 docker exec "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d datomic -c CHECKPOINT

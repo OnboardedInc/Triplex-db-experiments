@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
 import { canonical, sha256 } from "./w0-world.ts";
 export function equalBytes(gate: string, observed: string, expected: string) {
@@ -27,12 +27,11 @@ export function requireFingerprint(observed: any, oracle: any, N: number) {
       throw new Error("G0 fingerprint mismatch: " + k);
 }
 export class DomainOracle {
-  child = spawn("python3", ["-I", new URL("./w0-oracle.py", import.meta.url).pathname], {
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+  child: ChildProcessWithoutNullStreams;
   queue: { resolve: (s: string) => void; reject: (e: any) => void }[] = [];
   error: Error | undefined;
-  constructor() {
+  constructor(entrypoint = new URL("./w0-oracle.py", import.meta.url).pathname) {
+    this.child = spawn("python3", ["-I", entrypoint], { stdio: ["pipe", "pipe", "pipe"] });
     let stderr = "";
     this.child.stderr.on("data", (d) => (stderr += d));
     createInterface({ input: this.child.stdout }).on("line", (line) => {

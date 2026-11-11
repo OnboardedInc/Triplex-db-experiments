@@ -84,7 +84,12 @@ export async function runReplicaDriver(argv: string[]) {
     return result;
   };
   const replica = new Replica(base, V_W0),
-    oracle = new DomainOracle();
+    batchOracle = argv.includes("--batch-oracle"),
+    oracle = new DomainOracle(
+      batchOracle
+        ? new URL("../../experiments/EXP-DX1/s5/oracle.py", import.meta.url).pathname
+        : undefined,
+    );
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
   // [DX-S5] Why: report actual all-subject oracle time separately from activation and storage readback.
   // Rejected: projecting the 10k verifier cost or silently replacing full verification with sampling.
@@ -618,11 +623,25 @@ export async function runReplicaDriver(argv: string[]) {
           worldCanonical(world) !== worldCanonical(worldOf(r.subject, snap.world(r.subject)))
         )
           throw new Error("Frozen world/gateway mismatch " + r.subject);
-        const expected = await timedOracle("evaluate", {
-          world,
-          release: "R2",
-          basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
-        });
+        let paired: any;
+        if (batchOracle && states) {
+          const r1World = worldOf(r.subject, r1Snapshot.world(r.subject));
+          paired = JSON.parse(
+            await timedOracle("activation-check", {
+              world,
+              ...(worldCanonical(r1World) === worldCanonical(world) ? {} : { r1World }),
+              basisR1: { tx: r1Position, validTime: W0.POPULATION_VALID_TIME },
+              basisR2: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
+            }),
+          );
+        }
+        const expected = paired
+          ? paired.R2
+          : await timedOracle("evaluate", {
+              world,
+              release: "R2",
+              basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
+            });
         if (W0.outputJson(r.candidates[0].output) !== expected)
           throw new Error("Python output mismatch " + r.subject);
         const expectedOutput = JSON.parse(expected);
@@ -642,17 +661,25 @@ export async function runReplicaDriver(argv: string[]) {
         if ("error" in slow || canonical(slow.record) !== canonical(r.candidates[0].record))
           throw new Error("Full sweep record mismatch");
         if (states) {
-          const r1 = JSON.parse(
-            await timedOracle("evaluate", {
-              world: worldOf(r.subject, r1Snapshot.world(r.subject)),
-              release: "R1",
-              basis: { tx: r1Position, validTime: W0.POPULATION_VALID_TIME },
-            }),
-          );
-          const first = await applyExpected({ items: [], pending: [], subjects: [] }, r1);
-          const second = await applyExpected(first.state, JSON.parse(expected));
-          expectedR1Changed += Number(first.changed);
-          expectedR2Changed += Number(second.changed);
+          let expectedState: any;
+          if (paired) {
+            expectedR1Changed += Number(paired.r1Changed);
+            expectedR2Changed += Number(paired.r2Changed);
+            expectedState = paired.state;
+          } else {
+            const r1 = JSON.parse(
+              await timedOracle("evaluate", {
+                world: worldOf(r.subject, r1Snapshot.world(r.subject)),
+                release: "R1",
+                basis: { tx: r1Position, validTime: W0.POPULATION_VALID_TIME },
+              }),
+            );
+            const first = await applyExpected({ items: [], pending: [], subjects: [] }, r1);
+            const second = await applyExpected(first.state, JSON.parse(expected));
+            expectedR1Changed += Number(first.changed);
+            expectedR2Changed += Number(second.changed);
+            expectedState = second.state;
+          }
           const rows = states.rows.filter(
             (row) => row.entityId === "p5:outbox:" + r.subject && row.attribute === "p5/state",
           );
@@ -660,7 +687,7 @@ export async function runReplicaDriver(argv: string[]) {
           const actual = rows.length
             ? wireState(JSON.parse(rows[0].value.value))
             : { items: [], pending: [], subjects: [] };
-          if (canonical(actual) !== canonical(second.state))
+          if (canonical(actual) !== canonical(expectedState))
             throw new Error("Independent published state mismatch " + r.subject);
           statesCompared++;
         }
@@ -676,6 +703,7 @@ export async function runReplicaDriver(argv: string[]) {
     report.publishedStatesCompared = statesCompared;
     report.oracleCompared = checked;
     report.oracleConcurrency = oracleConcurrency;
+    report.oracleTransport = batchOracle ? "batched unchanged O-DOMAIN" : "original";
     report.postAckExactnessWallMs = performance.now() - exactnessStarted;
     report.postAckOracleWallMs = oracleWallMs - oracleBeforeExactness;
     console.log(
@@ -743,12 +771,27 @@ export async function runReplicaDriver(argv: string[]) {
           const world = worldOf(r.subject, snap.world(r.subject));
           if (worldSha256(world) !== r.worldSha256 || r.candidates.length !== 3)
             throw new Error("Candidate world/coverage mismatch");
+          const batchExpected = batchOracle
+            ? JSON.parse(
+                await timedOracle("evaluate-many", {
+                  world,
+                  requests: ["R2", "R1", "R3"].map((release) => ({
+                    release,
+                    basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
+                  })),
+                }),
+              )
+            : undefined;
+          if (batchExpected && batchExpected.length !== 3)
+            throw Error("Incomplete oracle candidate batch");
           for (let j = 0; j < 3; j++) {
-            const expected = await timedOracle("evaluate", {
-              world,
-              release: ["R2", "R1", "R3"][j],
-              basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
-            });
+            const expected = batchExpected
+              ? batchExpected[j]
+              : await timedOracle("evaluate", {
+                  world,
+                  release: ["R2", "R1", "R3"][j],
+                  basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
+                });
             const candidate = r.candidates[j];
             if (W0.outputJson(candidate.output) !== expected)
               throw new Error("Candidate Python output mismatch " + r.subject);
