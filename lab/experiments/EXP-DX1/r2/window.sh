@@ -76,11 +76,11 @@ docker run --rm --pull never --name "$prefix-copy" --network "$prefix-net" node:
 for (const role of ["w","r"]) { let ok=false; for(let i=0;i<180;i++){try{let r=await fetch("http://"+process.argv[1]+"-gw-"+role+":8080/health"); if(r.ok){console.log(await r.text());ok=true;break;}}catch{} await new Promise(r=>setTimeout(r,1000));}if(!ok)process.exit(1);}' "$prefix"
 if [[ ${1:-} == --gateway-tests ]]; then
  for ns in triplex.gateway.feed-test triplex.gateway.selftest; do
-  docker exec -e 'DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -Dtriplex.codec.spec=/opt/replica-codec-spec.json' "$prefix-gw-r" /opt/datomic/bin/run -m "$ns"
+  docker exec -e DF01_RECORDED_PAGE=/tmp/dxr2-feed-recording.json -e 'DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -Dtriplex.codec.spec=/opt/replica-codec-spec.json' "$prefix-gw-r" /opt/datomic/bin/run -m "$ns"
  done
  DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL=http://127.0.0.1:18542 pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec vitest run packages/datomic/test/journal-fast.test.ts
- completed=true
- exit 0
+ shift
+ if [[ $# == 0 ]]; then completed=true; exit 0; fi
 fi
 (
  while sleep 15; do
