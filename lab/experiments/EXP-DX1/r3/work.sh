@@ -63,6 +63,21 @@ docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset
   -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_ENGINE_CPUS=4 \
   node:22.23.2-bookworm-slim "$@"
 }
+if [[ $mode == compare ]]; then
+  # [DX-R3] Why: alternate a legacy control and the new path inside one measured hold on distinct fresh scopes.
+  # Rejected: comparing a quiet new run against an old run from another noisy VM window.
+  for arm in a b; do
+    yield=loop; feed=legacy
+    [[ $arm == a ]] || { yield=fair; feed=inline; }
+    echo "DX-R3 comparison arm=$arm yield=$yield feed=$feed"
+    run_driver node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 1024 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --replica-yield "$yield" --replica-feed "$feed" --output "runs/DX-R3-vm/report-$arm.json"
+    docker cp "$prefix-driver:$repo/runs/DX-R3-vm/report-$arm.json" "$config/report-$arm.json"
+    cat "$config/report-$arm.json"
+    docker inspect --format '{{.Name}} {{.State.ExitCode}} {{.State.OOMKilled}} {{.HostConfig.CpusetCpus}} {{.HostConfig.Memory}}' "$prefix-driver"
+    docker rm "$prefix-driver"
+  done
+  exit
+fi
 if [[ $mode == both ]]; then
   run_driver node --experimental-strip-types lab/experiments/EXP-DX1/r3/differential.ts
   docker inspect --format '{{.Name}} {{.State.ExitCode}} {{.State.OOMKilled}}' "$prefix-driver"

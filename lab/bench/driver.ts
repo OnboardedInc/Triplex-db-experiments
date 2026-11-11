@@ -100,6 +100,8 @@ const config = {
   composition: opt("composition", "public")!,
   seed: opt("seed", "ns-v2")!,
   readPath: opt("read-path", "gateway") as "gateway" | "replica",
+  replicaYield: opt("replica-yield", "fair") as "loop" | "fair",
+  replicaFeed: opt("replica-feed", "inline") as "legacy" | "inline",
   readerLadderOnly: flag("reader-ladder-only"),
   readerThreads: Number(opt("reader-threads", "4")),
   readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", lane === "datomic" ? "640" : "128")),
@@ -138,6 +140,8 @@ if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) ||
     !Number.isSafeInteger(config.readerThreads) || config.readerThreads < 1 ||
     config.readerThreads * (config.readerEntityCacheMiB + 64) + WRITER_CACHE_BUDGET_MIB > 4096))
   throw new Error(`Reader caches plus ${WRITER_CACHE_BUDGET_MIB} MiB writer cache budgets must total at most 4096 MiB`);
+if (!["loop", "fair"].includes(config.replicaYield) || !["legacy", "inline"].includes(config.replicaFeed))
+  throw Error("invalid replica-yield or replica-feed control");
 if (!["gateway", "replica"].includes(config.readPath) || (config.readPath === "replica" && lane !== "datomic"))
   throw Error("--read-path replica requires lane datomic");
 // [DX-R3] Why: peak RSS must include worker shutdown and all post-run verification/collection work.
@@ -182,7 +186,7 @@ const report: Record<string, any> = latencyReceipt({
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
 });
-const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
+const save = () => atomicWrite(output, JSON.stringify(report, null, 2) + "\n");
 
 // ---------------------------------------------------------------- engine sampling (async; never blocks the writer)
 
@@ -254,8 +258,27 @@ const cpuMarks: { t: number; cpu: NodeJS.CpuUsage }[] = [];
 
 const model = new Model(rungSubjects);
 const accounts = accountsFor(rungSubjects);
-const records: ObservationRecords = config.readPath === "replica" ? new ReadRecords() : [];
+const records: ObservationRecords = config.readPath === "replica" ? new ReadRecords(path.join(rawDir, `observations-${runTag}`)) : [];
+function visitPhase(phase: number, fn: (record: ReadRecord, index: number) => void) {
+  if (records instanceof ReadRecords) records.forPhase(phase, fn);
+  else records.forEach((r, k) => { if (r[R.phase] === phase) fn(r, k); });
+}
 const oracleSamples: any[] = [];
+const settledReadCounts = new Map<number, number>();
+const phaseStarts = new Map<number, number>();
+const observedPhases = new Map<number, { reads: number; errors: number; read: Histogram; wait: Histogram; routes: Record<string, number> }>();
+function retainRead(r: ReadRecord) {
+  records.push(r);
+  const phase = r[R.phase];
+  const summary = observedPhases.get(phase) ?? { reads: 0, errors: 0, read: new Histogram(), wait: new Histogram(), routes: {} };
+  observedPhases.set(phase, summary);
+  summary.reads++;
+  if (r[R.error] === null && r[R.start] >= (phaseStarts.get(phase) ?? Infinity) + config.settleS * 1000) settledReadCounts.set(phase, (settledReadCounts.get(phase) ?? 0) + 1);
+  if (r[R.error] !== null) summary.errors++;
+  else summary.read.recordMs(r[R.latency]);
+  summary.wait.recordMs(r[R.waitedMs]);
+  summary.routes[r[R.route]] = (summary.routes[r[R.route]] ?? 0) + 1;
+}
 const workerDiagnostics: { worker: number; t: number; diagnostics: unknown; memory: unknown; threadCpuMs: number | null }[] = [];
 const workerElu: { worker: number; t: number; elu: number }[] = [];
 const acked: { instant: number; position: number; txId: string; at: number }[] = [];
@@ -384,7 +407,7 @@ async function run() {
 
   // ---------------------------------------------------------------- reader workers
   const replicaHost = config.readPath === "replica" ? await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
-    scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux, { position: seed.lastPosition, instant: seed.lastInstant }) : undefined;
+    scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux, { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed) : undefined;
   const replicaLocal = replicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader() : undefined;
   if (replicaHost && replicaLocal) {
     replicaLocal.install(replicaHost.index.image());
@@ -392,12 +415,12 @@ async function run() {
     const gatewayPull = aux.pull.bind(aux);
     aux.pull = (root, basis, between) => replicaLocal.pullAt(root, basis, () => gatewayPull(root, basis), between);
   }
-  const workerCfg = (w: number) => ({ readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const sweepDone = new Map<number, (v: any) => void>();
   const onWorkerMessage = (w: number, worker: Worker) => (msg: any) => {
-    if (msg.type === "reads") { for (const r of msg.records) records.push(r); for (const s of msg.samples) oracleSamples.push(s); }
+    if (msg.type === "reads") { for (const r of msg.records) retainRead(r); for (const s of msg.samples) oracleSamples.push(s); }
     else if (msg.type === "elu") {
       workerElu.push({ worker: w, t: msg.t, elu: msg.elu });
       workerDiagnostics.push({ worker: w, t: msg.t, diagnostics: msg.diagnostics, memory: msg.memory, threadCpuMs: msg.threadCpuMs });
@@ -420,8 +443,8 @@ async function run() {
       worker.on("error", reject);
     });
     unsubscribe?.();
-    for (const delta of pendingDeltas) worker.postMessage({ type: "replica-delta", delta });
-    replicaHost?.subscribe(delta => worker.postMessage({ type: "replica-delta", delta }));
+    for (const delta of pendingDeltas) worker.postMessage({ type: "replica-delta", delta, sentAt: now() });
+    replicaHost?.subscribe(delta => worker.postMessage({ type: "replica-delta", delta, sentAt: now() }));
     worker.on("message", onWorkerMessage(w, worker));
     return { worker, stopped: stoppedP };
   };
@@ -531,7 +554,7 @@ async function run() {
     if (oracleRecordSet.has(ev.subject))
       recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
     if (ev.stream === "background") {
-      const p = !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; records.push(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost);
+      const p = !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; retainRead(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost);
       ryowPending.add(p);
       void p.finally(() => ryowPending.delete(p));
     }
@@ -658,10 +681,10 @@ async function run() {
           try {
             const pr = await probeComp!.pull(ids.placement(job.ev.subject), basis);
             const o = observe(pr);
-            records.push([PHASE_PROBE, job.ev.subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, latest.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
+            retainRead([PHASE_PROBE, job.ev.subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, latest.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
             job.ok = true;
           } catch (error: any) {
-            records.push([PHASE_PROBE, job.ev.subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, latest.position, 0, -1, 0, "error", "", 0]);
+            retainRead([PHASE_PROBE, job.ev.subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, latest.position, 0, -1, 0, "error", "", 0]);
             job.ok = false;
           }
         },
@@ -728,6 +751,7 @@ async function run() {
     const start = now();
     const entry: any = { historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
+    phaseStarts.set(idx, start);
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
     const indexJob = indexClient && /^L[0-9]+$/.test(spec.name) && spec.seconds ? (async () => {
       const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
@@ -742,7 +766,7 @@ async function run() {
       await sleep(spec.seconds * 1000);
       if (!config.zeroReaders && /^p4h(1|3|10)$/.test(spec.name)) {
         const deadline = now() + 120_000;
-        while (records.filter(r => r[R.phase] === idx && r[R.start] >= start + config.settleS * 1000 && r[R.error] === null).length < 10_000 && now() < deadline) await sleep(250);
+        while ((settledReadCounts.get(idx) ?? 0) < 10_000 && now() < deadline) await sleep(250);
       }
     }
     entry.end = now();
@@ -751,6 +775,15 @@ async function run() {
     await indexJob;
     entry.traceEndS = (entry.end - traceStart) / 1000;
     entry.overlapsBurst = overlapsBurst(entry.traceStartS, entry.traceEndS, params);
+    // [DX-R3] Why: finished phase observations and memory survive a late kill; only final all-ACK analysis can certify correctness.
+    // Rejected: a final-report-only memory sample or an online PASS before earlier record-time commits settle.
+    entry.memory = { ...process.memoryUsage(), peakProcessBytes: process.resourceUsage().maxRSS * 1024,
+      retainedReads: records.length, numericResidentBytes: records instanceof ReadRecords ? records.residentBytes : null };
+    console.log(JSON.stringify({ kind: "phase-memory", phase: entry.name, ...entry.memory }));
+    if (records instanceof ReadRecords) records.checkpoint();
+    report.phaseProgress = Object.fromEntries([...observedPhases].map(([id, s]) => [id, {
+      reads: s.reads, errors: s.errors, read: s.read.toJSON(), watermarkWait: s.wait.toJSON(), routes: s.routes,
+      verification: "PENDING final all-ACK model comparison; observed arrivals include settle and may omit in-flight reads" }]));
     report.phases = phases;
     save();
   }
@@ -861,7 +894,7 @@ async function run() {
   records.forEach(r => { if (r[R.error] === null) { pulls++; roundTripSum += r[R.roundTrips]; const key = String(r[R.roundTrips]); roundTripDistribution[key] = (roundTripDistribution[key] ?? 0) + 1; } });
   report.pullRoundTrips = { pulls, mean: pulls ? roundTripSum / pulls : null,
     distribution: roundTripDistribution, unit: "public Triples service calls; see httpRequests for actual HTTP" };
-  if (records instanceof ReadRecords) report.observationStorage = { format: "lossless Float64 tuples and interned strings", records: records.length, encodedBytes: records.encodedBytes, strings: records.stringCount };
+  if (records instanceof ReadRecords) report.observationStorage = { format: "lossless Float64 tuples and interned strings", records: records.length, encodedBytes: records.encodedBytes, numericResidentBytes: records.residentBytes, spillDirectory: records.directory, strings: records.stringCount };
   report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
   report.engineSamples = engineSamples;
   if (feedFailure) {
@@ -879,6 +912,9 @@ async function run() {
   report.endedAt = new Date().toISOString();
   fs.writeFileSync(path.join(rawDir, "ns-log.txt"), logLines.join("\n") + "\n");
   save();
+  // [DX-R3] Why: all reads have now been checked and the oracle/bars/report saved; only then release the owned raw spill.
+  // Rejected: deleting it in a failure trap, which would erase unfinished run evidence.
+  if (records instanceof ReadRecords && report.status === "DONE" && report.correctness?.errors === 0 && report.correctness?.violations === 0) records.dispose();
   log(`report: ${path.relative(REPO, output)}`);
   setTimeout(() => process.exit(process.exitCode ?? 0), 500).unref();
 
@@ -1004,12 +1040,12 @@ function probeSchedule(perS: number, durationS: number, n: number): { seq: numbe
  * (probe, read-your-own-write, readers) against the expected-state model at the driver-recorded basis.
  */
 function pairedAnalysis(ctx: { rounds: RoundRecord[]; probeScheduler: OpenLoopScheduler<any>; probeEvents: number }) {
-  const verdicts = records.map((r) => judgeRead(r));
+  const verdicts = readVerdicts();
   const violationKinds: Record<string, number> = {};
   const violationSample: any[] = [];
   const byKind: Record<string, { reads: number; correct: number; violations: number; errors: number }> = {};
   records.forEach((r, k) => {
-    const v = verdicts[k]!;
+    const v = VERDICTS[verdicts[k]!]!;
     const kind = r[R.phase] === PHASE_PROBE ? "probe" : r[R.phase] === PHASE_RYOW ? "readYourOwnWrite" : "readers";
     const b = (byKind[kind] ??= { reads: 0, correct: 0, violations: 0, errors: 0 });
     b.reads++;
@@ -1018,7 +1054,7 @@ function pairedAnalysis(ctx: { rounds: RoundRecord[]; probeScheduler: OpenLoopSc
     violationKinds[v.kind] = (violationKinds[v.kind] ?? 0) + 1;
     if (violationSample.length < 10) violationSample.push({ kind: v.kind, phase: r[R.phase], subject: r[R.subject], basis: { recordedAt: r[R.recordedAt], validAt: r[R.validAt], position: r[R.basisPosition] }, observed: { stamp: r[R.stamp], digest: r[R.digest] }, expected: model.expected(r[R.subject], r[R.recordedAt], r[R.validAt]) });
   });
-  const total = records.length, ok = verdicts.filter((v) => v.ok).length, errs = verdicts.filter((v) => v.kind === "error").length;
+  const total = records.length, ok = verdicts.reduce((n, code) => n + Number(code === 0), 0), errs = verdicts.reduce((n, code) => n + Number(code === 1), 0);
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, byKind, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested; errors are censored in the latency histograms and never goodput" };
   const histograms: Record<string, any> = {};
   const rounds = ctx.rounds.map((row) => {
@@ -1026,7 +1062,7 @@ function pairedAnalysis(ctx: { rounds: RoundRecord[]; probeScheduler: OpenLoopSc
     for (const [name, h] of Object.entries(hist)) histograms[`${row.id}.${config.arm}.${name}`] = h;
     if (pairPlan!.readers > 0) {
       const reads = new Histogram();
-      records.forEach((r, k) => { if (r[R.phase] === 0 && r[R.start] >= row.fromMs && r[R.start] < row.toMs && verdicts[k]!.ok) reads.recordMs(r[R.latency]); });
+      records.forEach((r, k) => { if (r[R.phase] === 0 && r[R.start] >= row.fromMs && r[R.start] < row.toMs && VERDICTS[verdicts[k]!]!.ok) reads.recordMs(r[R.latency]); });
       histograms[`${row.id}.${config.arm}.reads`] = reads.toJSON();
     }
     return rest;
@@ -1066,9 +1102,9 @@ async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt, 
   try {
     const pr = await comp.pull(ids.placement(subject), basis);
     const o = observe(pr);
-    records.push([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, receipt.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
+    retainRead([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, receipt.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
   } catch (error: any) {
-    records.push([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, receipt.position, 0, -1, 0, "error", "", 0]);
+    retainRead([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, receipt.position, 0, -1, 0, "error", "", 0]);
   }
 }
 /** Maintenance evidence (TARGETS 1.1 P1 item 3): engine log lines naming compaction, merge or rebuild. */
@@ -1103,6 +1139,14 @@ function judgeRead(r: ReadRecord) {
   if (r[R.stamp] > exp.stamp) return { ok: false, kind: "future-or-latest-state" };
   return { ok: false, kind: "wrong-world" };
 }
+// [DX-R3] Why: one byte per verdict preserves every judgment without a heap object per observation.
+// Rejected: retaining millions of identical {ok:true,kind:"correct"} objects during full-ladder analysis.
+const VERDICTS = ["correct", "error", "stale-late-arrival", "stale", "future-or-latest-state", "wrong-world"].map(kind => ({ ok: kind === "correct", kind }));
+function readVerdicts(): Uint8Array {
+  const result = new Uint8Array(records.length);
+  records.forEach((r, k) => { const verdict = judgeRead(r); result[k] = VERDICTS.findIndex(v => v.kind === verdict.kind); });
+  return result;
+}
 const bandOf = (f: number) => (f <= 10 ? "5-10" : f <= 25 ? "11-25" : "26-50");
 const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null);
 const ratio = (a: number | null | undefined, b: number | null | undefined) => (a == null || b == null || b === 0 ? null : a / b);
@@ -1110,11 +1154,11 @@ const bar = (id: string, value: any, limit: string, pass: boolean | null, note?:
 const countBy = (values: string[]) => { const o: Record<string, number> = {}; for (const v of values) o[v] = (o[v] ?? 0) + 1; return o; };
 
 function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintenance: any; historyList: number[]; pendingAtEnd: number }) {
-  const verdicts = records.map((r) => judgeRead(r));
+  const verdicts = readVerdicts();
   const violationKinds: Record<string, number> = {};
   const violationSample: any[] = [];
   records.forEach((r, k) => {
-    const v = verdicts[k]!;
+    const v = VERDICTS[verdicts[k]!]!;
     if (v.ok || v.kind === "error") return;
     violationKinds[v.kind] = (violationKinds[v.kind] ?? 0) + 1;
     if (violationSample.length < 10) violationSample.push({ kind: v.kind, phase: r[R.phase], subject: r[R.subject], basis: { recordedAt: r[R.recordedAt], validAt: r[R.validAt], position: r[R.basisPosition], kind: r[R.basisKind] }, split: r[R.split], observed: { stamp: r[R.stamp], digest: r[R.digest] }, expected: model.expected(r[R.subject], r[R.recordedAt], r[R.validAt]) });
@@ -1139,11 +1183,11 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     let waited = 0;
     const watermarkWait = new Histogram();
     const buckets: Record<string, Histogram> = {};
-    const bytesBy: Record<string, number[]> = {};
-    records.forEach((r, k) => {
+    const bytesBy: Record<string, { sum: number; count: number }> = {};
+    visitPhase(phase.idx, (r, k) => {
       if (r[R.phase] !== phase.idx || r[R.start] < w.from || r[R.start] + r[R.latency] > w.to) return;
       reads++;
-      const v = verdicts[k]!;
+      const v = VERDICTS[verdicts[k]!]!;
       if (v.ok) { correct++; read.recordMs(r[R.latency]); } else if (v.kind === "error") errors++; else violations++;
       const lw = lastAckBefore(r[R.subject], r[R.start]);
       if (lw !== null && r[R.start] - lw <= 60_000) hotReads++;
@@ -1158,7 +1202,8 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
         const b = facts <= 200 ? "small" : facts <= 800 ? "medium" : "large";
         for (const key of [`bucket:${b}`, `hops:${hopOf(r[R.subject])}`]) {
           (buckets[key] ??= new Histogram()).recordMs(r[R.latency]);
-          (bytesBy[key] ??= []).push(r[R.bytes]);
+          const bytes = bytesBy[key] ??= { sum: 0, count: 0 };
+          bytes.sum += r[R.bytes]; bytes.count++;
         }
       }
     });
@@ -1182,7 +1227,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       hotShare: reads ? hotReads / reads : null, basisMix: { latest: byBasis[0], lastHour: byBasis[1], pastValidTime: byBasis[2] },
       split: { reads: splitReads, straddledATraceCommand: splitForced, straddledCorrect: splitCorrect },
       routing: { routes, languages, fallbackShare: reads ? (routes["fallback"] ?? 0) / reads : null, localShare: reads ? (routes["replica"] ?? 0) / reads : null, waitedReads: waited, watermarkWait: watermarkWait.summary(), watermarkWaitMs: 10 },
-      buckets: Object.fromEntries(Object.entries(buckets).map(([k, h]) => [k, { ...h.summary(), meanBytes: mean(bytesBy[k]!) }])),
+      buckets: Object.fromEntries(Object.entries(buckets).map(([k, h]) => [k, { ...h.summary(), meanBytes: bytesBy[k]!.sum / bytesBy[k]!.count }])),
       writer: { commits: commits.length, commit: commit.summary(), maxLatencyMs: commits.length ? Math.max(...commits.map((c) => c.latencyMs)) : null, matchedZeroReader: matched },
       feedLag: lag.summary(),
       maintenanceEvents: maint,
@@ -1241,7 +1286,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const byOutcome = countBy(writes.filter((w) => !w.resend).map((w) => `${w.stream}:${w.outcome ?? "unaccounted"}`));
   const unaccounted = writes.filter((w) => (w.outcome ?? "unaccounted") === "unaccounted").length + ctx.pendingAtEnd;
   const ryowRows: { r: ReadRecord; v: ReturnType<typeof judgeRead> }[] = [];
-  records.forEach((r, k) => { if (r[R.phase] === PHASE_RYOW) ryowRows.push({ r, v: verdicts[k]! }); });
+  visitPhase(PHASE_RYOW, (r, k) => { if (r[R.phase] === PHASE_RYOW) ryowRows.push({ r, v: VERDICTS[verdicts[k]!]! }); });
   const ryowHist = new Histogram();
   const ryowWait = new Histogram();
   for (const x of ryowRows) { ryowHist.recordMs(x.r[R.latency]); ryowWait.recordMs(x.r[R.waitedMs]); }
@@ -1321,7 +1366,12 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const best = ladder.slice().sort((a, b) => b.goodputPerS - a.goodputPerS)[0];
   const cpu = cpuUse();
   const largest = mix?.buckets["bucket:large"];
-  const phaseBytes = (s: any) => { const idx = ctx.phases.find((p) => p.name === s?.phase)?.idx; return mean(records.filter((r, k) => r[R.phase] === idx && verdicts[k]!.ok).map((r) => r[R.bytes])); };
+  const phaseBytes = (s: any) => {
+    const idx = ctx.phases.find((p) => p.name === s?.phase)?.idx;
+    let sum = 0, count = 0;
+    visitPhase(idx, (r, k) => { if (r[R.phase] === idx && verdicts[k] === 0) { sum += r[R.bytes]; count++; } });
+    return count ? sum / count : null;
+  };
   const quotaRate = best && engineCpus ? best.goodputPerS / engineCpus : null;
   const historyInvalid = [h1, h3, h10].flatMap((h, i) => {
     const phase = ctx.phases.find(p => p.name === ["p4h1", "p4h3", "p4h10"][i]);
@@ -1349,7 +1399,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   if (sweepPhase) {
     const s = sweepPhase.sweep;
     const rows: { r: ReadRecord; v: ReturnType<typeof judgeRead> }[] = [];
-    records.forEach((r, k) => { if (r[R.phase] === sweepPhase.idx + SWEEP_PHASE_OFFSET) rows.push({ r, v: verdicts[k]! }); });
+    visitPhase(sweepPhase.idx + SWEEP_PHASE_OFFSET, (r, k) => { if (r[R.phase] === sweepPhase.idx + SWEEP_PHASE_OFFSET) rows.push({ r, v: VERDICTS[verdicts[k]!]! }); });
     const h = new Histogram();
     for (const x of rows) h.recordMs(x.r[R.latency]);
     const pulled = new Set(rows.map((x) => x.r[R.subject]));
@@ -1375,7 +1425,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   }
 
   const saturated = Object.values(stats).filter((s: any) => s.client.saturated).map((s: any) => s.phase);
-  const total = records.length, ok = verdicts.filter((v) => v.ok).length, errs = verdicts.filter((v) => v.kind === "error").length;
+  const total = records.length, ok = verdicts.reduce((n, code) => n + Number(code === 0), 0), errs = verdicts.reduce((n, code) => n + Number(code === 1), 0);
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput" };
   report.readerDiagnostics = workerDiagnostics;
   report.client = { series: {main:mainElu,readers:workerElu},

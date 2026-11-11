@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import {spawn} from 'node:child_process';
 // [DX-H3] Why: raw scan intervals and client CPU must survive driver failure. Rejected: final-report-only telemetry.
 const out='runs/DX-H3-vm';
-const child=spawn('node',['--experimental-strip-types','lab/bench/driver.ts',...process.argv.slice(2)],{stdio:'inherit'});
+// [DX-R3] Why: direct observe invocations and the H4 wrapper must agree on which current index serves reads.
+// Rejected: ignoring DX_READ_PATH in the child process while the surrounding run claims replica.
+const args=process.argv.slice(2);
+if(!args.includes('--read-path')) args.push('--read-path',process.env.DX_READ_PATH??'gateway');
+const child=spawn('node',['--experimental-strip-types','lab/bench/driver.ts',...args],{stdio:'inherit'});
 let active=true;
 async function sample() {
   const row={at:new Date().toISOString(),peers:{}};

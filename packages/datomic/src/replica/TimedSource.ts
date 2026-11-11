@@ -2,6 +2,7 @@ import type { DatomicClient } from "../DatomicClient.js";
 import { decodeEntity } from "../reach.js";
 import { decodeRowText } from "../rowText.js";
 import { datomicReplicaSource } from "./source.js";
+import { Replica } from "./Replica.js";
 import type { ReplicaSource } from "./Replica.js";
 
 // [DX-R3] Why: reuse the validated journal transport and extract record clocks from those same bytes.
@@ -10,12 +11,18 @@ export function timedReplicaSource(
   client: DatomicClient,
   db: string,
   head: () => Promise<number>,
+  validAt?: number,
 ): {
   source: ReplicaSource;
   times: Map<number, number>;
 } {
   const times = new Map<number, number>();
-  const base = datomicReplicaSource(client, db, head);
+  // [DX-R3] Why: inline journals contain the same original clock rows plus exact replacements.
+  // Rejected: repairing every journal with a second reach request; omitted validAt keeps recorded legacy replay compatible.
+  const make = (transport: DatomicClient) => validAt === undefined
+    ? datomicReplicaSource(transport, db, head)
+    : Replica.source(transport, db, head, validAt);
+  const base = make(client);
   const source: ReplicaSource = {
     ...base,
     async feed(after, limit, waitMs) {
@@ -51,7 +58,7 @@ export function timedReplicaSource(
       } as DatomicClient;
       // [DX-R3] Why: rejected pages must not leave clocks that a later rebuild could mistake for evidence.
       // Rejected: publishing clocks in the transport interceptor before journal binding validation.
-      const page = await datomicReplicaSource(transport, db, head).feed(after, limit, waitMs);
+      const page = await make(transport).feed(after, limit, waitMs);
       for (const [position, time] of staged) times.set(position, time);
       return page;
     },

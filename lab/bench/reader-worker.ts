@@ -1,3 +1,5 @@
+import { ReaderTurn } from "./lib/reader-turn.ts";
+import { Histogram } from "./lib/hist.ts";
 import { readerDiagnostics } from "./lib/reader-diagnostics.ts";
 import { httpCounts } from "./lib/http-counts.ts";
 /**
@@ -25,7 +27,7 @@ import { httpCounts } from "./lib/http-counts.ts";
  *               {type:'split-request', token} | {type:'straddle', token, seq} | {type:'sweep-done', phase, wallMs} | {type:'error', message}
  */
 import { isMainThread, parentPort, workerData } from "node:worker_threads";
-import { performance } from "node:perf_hooks";
+import { performance, monitorEventLoopDelay } from "node:perf_hooks";
 import { readFileSync } from "node:fs";
 import { openComposition, type Basis, type CompositionHandle } from "./lib/composition.ts";
 import { Rng, seedOf } from "./lib/rng.ts";
@@ -34,6 +36,7 @@ import { observe, type ReadRecord } from "./lib/observe.ts";
 
 type ReaderConfig = {
   readPath?: "gateway" | "replica";
+  replicaYield?: "loop" | "fair";
   rawSampleLimit?: number;
   replicaImage?: import("../../packages/datomic/dist/index.js").ReadImage;
   entityCacheBytes?: number;
@@ -60,6 +63,11 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   let comp: CompositionHandle;
   const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader() : undefined;
   if (replica && cfg.replicaImage) replica.install(cfg.replicaImage);
+  const turn = new ReaderTurn();
+  const loopDelay = monitorEventLoopDelay({ resolution: 1 });
+  loopDelay.enable();
+  const deltaLag = new Histogram();
+  let deltas = 0;
   let phase = -1;
   let mode = "mixed";
   let wanted = 0;
@@ -150,6 +158,8 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     running++;
     try {
       while (!stopping && id < wanted && acked.length > 0) {
+        if (replica && cfg.replicaYield !== "loop") await turn.enter();
+        if (stopping || id >= wanted) break;
         const oracle = cfg.sampleSubjects.length > 0 && rng.next() < cfg.oracleRate;
         let picked = oracle ? { subject: cfg.sampleSubjects[rng.int(cfg.sampleSubjects.length)]!, hotPick: false } : pickSubject(rng);
         const [basis, kind, position] = pickBasis(rng);
@@ -165,7 +175,11 @@ export async function startReader(port: any, cfg: ReaderConfig) {
         await readOnce(picked.subject, basis, kind, position, phase, { keepRows, straddleSeq, hotPick: picked.hotPick });
         // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
         // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
-        if (replica && ++localReads % 8 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+        if (replica) {
+          if (cfg.replicaYield === "loop") {
+            if (++localReads % 8 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+          }
+        }
       }
     } finally {
       running--;
@@ -193,8 +207,9 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   let elu = performance.eventLoopUtilization();
   const flush = setInterval(() => {
     const next = performance.eventLoopUtilization();
-    port.postMessage({ type: "elu", t: nowAbs(), elu: performance.eventLoopUtilization(next, elu).utilization, activeMs: performance.eventLoopUtilization(next, elu).active, threadCpuMs: threadCpuMs(), httpCounts: httpCounts(), diagnostics: readerDiagnostics(), memory: process.memoryUsage(), running });
+    port.postMessage({ type: "elu", t: nowAbs(), elu: performance.eventLoopUtilization(next, elu).utilization, activeMs: performance.eventLoopUtilization(next, elu).active, threadCpuMs: threadCpuMs(), httpCounts: httpCounts(), diagnostics: { gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics, loopDelay: { p99Ms: loopDelay.percentile(99) / 1e6, maxMs: loopDelay.max / 1e6 }, deltas, deltaLag: deltaLag.summary() }, memory: process.memoryUsage(), running });
     elu = next;
+    loopDelay.reset();
     if (records.length || samples.length) {
       port.postMessage({ type: "reads", records, samples });
       records = [];
@@ -204,6 +219,8 @@ export async function startReader(port: any, cfg: ReaderConfig) {
 
   port.on("message", async (msg: any) => {
     if (msg.type === "replica-delta") {
+      deltas++;
+      if (msg.sentAt !== undefined) deltaLag.recordMs(nowAbs() - msg.sentAt);
       replica?.apply(msg.delta);
     } else if (msg.type === "level") {
       phase = msg.phase;
@@ -235,6 +252,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       const deadline = Date.now() + 30_000;
       while (running > 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
       clearInterval(flush);
+      loopDelay.disable();
       port.postMessage({ type: "reads", records, samples });
       records = [];
       samples = [];
