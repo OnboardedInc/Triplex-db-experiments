@@ -1,4 +1,5 @@
 import { Worker, MessageChannel } from "node:worker_threads";
+import { Histogram } from "./hist.ts";
 import { ReplicaReader } from "./replica-reads.ts";
 import type { ReadDelta, ReadImage } from "../../../packages/datomic/dist/index.js";
 
@@ -21,7 +22,7 @@ export class ReplicaThread {
       if (m.type === "delta") {
         this.index.apply(m.delta);
         this.replica.bytes = m.bytes;
-        this.applied.push({ position: m.delta.position, at: m.at });
+        if (m.delta.valid) this.applied.push({ position: m.delta.position, at: m.at });
         for (const listener of this.listeners) listener(m.delta);
       }
       if (m.type === "closed") { this.closed = true; this.closeReply?.(); }
@@ -48,4 +49,15 @@ export class ReplicaThread {
     } finally { await this.worker.terminate(); }
     if (this.fail) throw this.fail;
   }
+}
+
+// [DX-R3] Why: follow-delay percentiles must expose ACKed positions absent from the observed applied prefix.
+// Rejected: silently treating a missing or invalidated application as a zero-delay success.
+export function appliedDelay(applied: readonly { position: number; at: number }[], acked: ReadonlyMap<number, { at: number }>) {
+  const h = new Histogram(), seen = new Set<number>();
+  for (const x of applied) {
+    const ack = acked.get(x.position);
+    if (ack && !seen.has(x.position)) { seen.add(x.position); h.recordMs(Math.max(0, x.at - ack.at)); }
+  }
+  return { ...h.summary(), acknowledgedPositions: acked.size, unappliedAcknowledgedPositions: [...acked.keys()].filter(p => !seen.has(p)) };
 }

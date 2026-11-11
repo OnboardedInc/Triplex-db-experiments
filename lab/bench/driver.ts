@@ -436,10 +436,9 @@ async function run() {
       scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
       config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer) : undefined;
-  const replicaLocal = replicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2) : undefined;
+  const replicaLocal = replicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2, replicaHost.index) : undefined;
   if (replicaHost && replicaLocal) {
-    replicaLocal.install(replicaHost.index.image());
-    replicaHost.subscribe(delta => replicaLocal.apply(delta));
+    replicaHost.subscribe(() => replicaLocal.notify());
     const gatewayPull = aux.pull.bind(aux);
     aux.pull = (root, basis, between) => replicaLocal.pullAt(root, basis, () => gatewayPull(root, basis), between);
   }
@@ -872,12 +871,12 @@ async function run() {
   clearInterval(basisTimer);
   if (preparedSweeper) { preparedSweeper.worker.postMessage({ type: "stop" }); await preparedSweeper.worker.terminate(); }
   if (spill) { records = await spill.finish(); spillFinished = true; }
+  await replicaHost?.close();
   if (replicaHost) report.replica = { copyBytes: replicaHost.replica.bytes, historyBytes: replicaHost.index.historyBytes,
     floor: replicaHost.index.floor, position: replicaHost.index.position, positionWindow: replicaHost.index.positions,
     historyBudgetBytes: replicaHost.index.maxBytes, feedPeer: config.replicaPeer, applyThread: config.replicaThread,
-    acknowledgementToApplied: "applied" in replicaHost ? (() => { const h = new Histogram(); for (const x of replicaHost.applied) { const ack = ackOf.get(x.position); if (ack) h.recordMs(Math.max(0, x.at - ack.at)); } return h.summary(); })() : null,
+    acknowledgementToApplied: "applied" in replicaHost ? (await import("./lib/replica-thread.ts")).appliedDelay(replicaHost.applied, ackOf) : null,
     peakProcessBytesBeforeAnalysis: process.resourceUsage().maxRSS * 1024 };
-  await replicaHost?.close();
   // Growth commands that outlived their phase: wait for them, then fold any that committed into the model.
   for (const late of lateGrowth) {
     await Promise.race([late.pending, sleep(60_000)]);

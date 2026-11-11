@@ -269,3 +269,29 @@ test("local-mode P3 follower can use R without changing the gateway-mode writer 
   assert.equal(sideThreadEnvironment(env).DATOMIC_READ_URLS, env.DATOMIC_URL);
   assert.equal(env.DATOMIC_READ_URLS, "http://reader:8080");
 });
+
+// [DX-R3] Why: sharing the host index must still wake RYOW waiters only after the host applies the exact target cut.
+// Rejected: advancing a second index or resolving a wait from an ACK before the feed applies it.
+test("RYOW shares an externally applied index and wakes only at its target", async () => {
+  const { ReplicaReader } = await import("../../../bench/lib/replica-reads.ts");
+  const first = new ReplicaReader();
+  first.index.apply({ position: 10, reset: true, valid: true, recordTime: 100, changes: [] });
+  const ryow = new ReplicaReader(64 * 1024 ** 2, first.index);
+  assert.equal(ryow.index, first.index);
+  let completed = false;
+  const pending = ryow.wait(12, 500).then(() => { completed = true; });
+  first.index.apply({ position: 11, reset: false, valid: true, recordTime: 101, changes: [] });
+  ryow.notify(); await Promise.resolve(); assert.equal(completed, false);
+  first.index.apply({ position: 12, reset: false, valid: true, recordTime: 102, changes: [] });
+  ryow.notify(); await pending; assert.equal(completed, true);
+});
+
+// [DX-R3] Why: an ACK-to-apply histogram must retain its censoring denominator and count each valid position once.
+// Rejected: reporting incomplete applications as zeros or counting a recovery replay twice.
+test("apply-delay summary exposes missing ACKed positions and clamps apply-before-ACK to zero", async () => {
+  const { appliedDelay } = await import("../../../bench/lib/replica-thread.ts");
+  const result = appliedDelay([{ position: 1, at: 90 }, { position: 1, at: 110 }, { position: 2, at: 225 }, { position: 9, at: 900 }], new Map([[1, { at: 100 }], [2, { at: 200 }], [3, { at: 300 }]]));
+  assert.equal(result.count, 2); assert.equal(result.acknowledgedPositions, 3);
+  assert.equal(result.p50Ms, 0); assert(result.p99Ms! >= 25 && result.p99Ms! < 25.2);
+  assert.deepEqual(result.unappliedAcknowledgedPositions, [3]);
+});

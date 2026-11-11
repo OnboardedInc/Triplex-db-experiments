@@ -112,7 +112,9 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
 const statViews = new WeakMap<object, DataView>();
 export class ReplicaReader {
   readonly index: InstanceType<typeof api.RecentReads>;
-  constructor(historyBytes = 64 * 1024 ** 2) { this.index = new api.RecentReads(20_000, historyBytes); }
+  // [DX-R3] Why: the host proxy already validates/applies each cut; RYOW can share that same immutable-version index.
+  // Rejected: a second main-thread copy of every current/history entry and duplicate per-commit validation/allocation.
+  constructor(historyBytes = 64 * 1024 ** 2, index?: InstanceType<typeof api.RecentReads>) { this.index = index ?? new api.RecentReads(20_000, historyBytes); }
   readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0 };
   private waiters = new Set<{ p: number; done(): void }>();
   install(image: ReadImage) {
@@ -120,6 +122,9 @@ export class ReplicaReader {
   }
   apply(delta: ReadDelta) {
     this.index.apply(delta);
+    this.notify();
+  }
+  notify() {
     for (const waiter of this.waiters)
       if (this.index.position >= waiter.p || !this.index.valid) waiter.done();
   }
