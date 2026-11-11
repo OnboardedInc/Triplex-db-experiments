@@ -762,7 +762,7 @@ exclusive CPUs a loop cannot take time from a neighbouring container, which is w
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
 
-## 2026-11-11 04:10 UTC: quiet host overnight, VM memory, research round
+## 2026-11-11 04:00 UTC: quiet host overnight, VM memory, research round
 
 **Host.** Sam (2026-11-10 night): the other project on this Mac is winding down, so memory and CPU are free overnight. Measured
 with `lab/bin/host-quiet.sh`: swap used 16,568 MB at 03:37 UTC, 7,055 MB at 03:57 UTC; 60% of memory free; call apps 7% CPU.
