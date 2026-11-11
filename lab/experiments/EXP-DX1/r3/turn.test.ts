@@ -11,6 +11,7 @@ test("one worker-wide budget admits bounded batches under 1024 closed loops", as
   }));
   clearInterval(tick);
   assert(turn.diagnostics.yields >= 191);
+  assert.equal(turn.diagnostics.admissions, 3072);
   assert.equal(turn.diagnostics.maxTurnReads, 16);
   assert(messages > 0, "I/O remains serviceable during local promise traffic");
 });

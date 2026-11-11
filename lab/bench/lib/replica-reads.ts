@@ -111,7 +111,8 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
 }
 const statViews = new WeakMap<object, DataView>();
 export class ReplicaReader {
-  readonly index = new api.RecentReads();
+  readonly index: InstanceType<typeof api.RecentReads>;
+  constructor(historyBytes = 64 * 1024 ** 2) { this.index = new api.RecentReads(20_000, historyBytes); }
   readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0 };
   private waiters = new Set<{ p: number; done(): void }>();
   install(image: ReadImage) {
@@ -159,6 +160,7 @@ export class ReplicaReader {
         {
           route: before.route === "replica" && after.route === "replica" ? "replica" : "fallback",
           roundTrips: before.roundTrips + after.roundTrips,
+          replicaFallbackReason: before.replicaFallbackReason ?? after.replicaFallbackReason,
           waitedMs: before.waitedMs + after.waitedMs,
         },
       );
@@ -262,17 +264,21 @@ export class ReplicaReader {
     }
     this.diagnostics.fallback++;
     if (!(basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position)) this.diagnostics.ineligible++;
+    const replicaFallbackReason = !this.index.valid ? "copy-unavailable" :
+      basis.recordedPosition !== undefined && basis.recordedPosition < this.index.floor ? "outside-window" :
+      basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position ? "watermark-timeout" : "unmapped-clock-or-closure";
     const result = await fallback();
-    return { ...result, route: "fallback", waitedMs };
+    return { ...result, route: "fallback", waitedMs, replicaFallbackReason };
   }
 }
 export class ReplicaReadHost {
-  readonly index = new api.RecentReads();
+  readonly index: InstanceType<typeof api.RecentReads>;
   readonly replica: InstanceType<typeof api.Replica>;
   private times: Map<number, number>;
   private closeClient: (() => void) | undefined;
   private listeners = new Set<(delta: ReadDelta) => void>();
-  private constructor(source: any, times: Map<number, number>) {
+  private constructor(source: any, times: Map<number, number>, historyBytes: number) {
+    this.index = new api.RecentReads(20_000, historyBytes);
     this.times = times;
     this.replica = new api.Replica(source, Date.now());
     let initialized = false;
@@ -302,6 +308,7 @@ export class ReplicaReadHost {
     comp: CompositionHandle,
     initial: { position: number; instant: number },
     feed: "legacy" | "inline" = "inline",
+    historyBytes = 64 * 1024 ** 2,
   ) {
     const client = new api.DatomicClient(
       process.env.DATOMIC_READ_URLS?.split(",")[0] ?? process.env.DATOMIC_URL!,
@@ -329,7 +336,7 @@ export class ReplicaReadHost {
         ? initial.instant
         : NaN,
     );
-    const host = new ReplicaReadHost(source, times);
+    const host = new ReplicaReadHost(source, times, historyBytes);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
     host.replica.start();

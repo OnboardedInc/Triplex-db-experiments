@@ -66,11 +66,15 @@ docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset
 if [[ $mode == compare ]]; then
   # [DX-R3] Why: alternate a legacy control and the new path inside one measured hold on distinct fresh scopes.
   # Rejected: comparing a quiet new run against an old run from another noisy VM window.
-  for arm in a b; do
-    yield=loop; feed=legacy
-    [[ $arm == a ]] || { yield=fair; feed=inline; }
-    echo "DX-R3 comparison arm=$arm yield=$yield feed=$feed"
-    run_driver node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 1024 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --replica-yield "$yield" --replica-feed "$feed" --output "runs/DX-R3-vm/report-$arm.json"
+  for arm in ${DX_R3_ARMS:-a b}; do
+    case $arm in
+      a) yield=loop; feed=legacy; split=mixed; history=64; cache=640;;
+      b) yield=fair; feed=inline; split=mixed; history=64; cache=640;;
+      c) yield=fair; feed=inline; split=pending; history=192; cache=16;;
+      *) exit 2;;
+    esac
+    echo "DX-R3 comparison arm=$arm yield=$yield feed=$feed split=$split historyMiB=$history cacheMiB=$cache"
+    run_driver node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 1024 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --replica-yield "$yield" --replica-feed "$feed" --split-target "$split" --replica-history-mib "$history" --reader-entity-cache-mib "$cache" --output "runs/DX-R3-vm/report-$arm.json"
     docker cp "$prefix-driver:$repo/runs/DX-R3-vm/report-$arm.json" "$config/report-$arm.json"
     cat "$config/report-$arm.json"
     docker inspect --format '{{.Name}} {{.State.ExitCode}} {{.State.OOMKilled}} {{.HostConfig.CpusetCpus}} {{.HostConfig.Memory}}' "$prefix-driver"
@@ -87,7 +91,7 @@ fi
 if [[ $mode == differential ]]; then
   command=(node --experimental-strip-types lab/experiments/EXP-DX1/r3/differential.ts)
 else
-  command=(node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 256 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --output runs/DX-R3-vm/ns-report.json)
+  command=(node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --replica-history-mib 192 --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 256 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --output runs/DX-R3-vm/ns-report.json)
 fi
 rc=0
 run_driver "${command[@]}" || rc=$?

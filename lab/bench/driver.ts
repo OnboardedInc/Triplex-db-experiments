@@ -45,6 +45,8 @@ import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublication
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
 import { R, observe, type ReadRecord } from "./lib/observe.ts";
+import { ExpectationCache } from "./lib/expectation-cache.ts";
+import { splitTarget } from "./lib/split-target.ts";
 import { ReadRecords, type ObservationRecords } from "./lib/read-records.ts";
 import { buildCase, checkWithOracle, type OracleSampleRead } from "./lib/oracle.ts";
 import { PROFILES, nsPlan, type Profile } from "./lib/phases.ts";
@@ -101,10 +103,14 @@ const config = {
   seed: opt("seed", "ns-v2")!,
   readPath: opt("read-path", "gateway") as "gateway" | "replica",
   replicaYield: opt("replica-yield", "fair") as "loop" | "fair",
+  splitTarget: opt("split-target", opt("read-path", "gateway") === "replica" ? "pending" : "mixed") as "pending" | "mixed",
+  // [DX-R3] Why: the default stays 64 MiB; a measured benchmark can retain its 2,000-receipt basis cohort explicitly.
+  // Rejected: enlarging an unreported window or letting per-reader gateway caches consume 3 x 640 MiB beside the replica.
+  replicaHistoryMiB: Number(opt("replica-history-mib", "64")),
   replicaFeed: opt("replica-feed", "inline") as "legacy" | "inline",
   readerLadderOnly: flag("reader-ladder-only"),
   readerThreads: Number(opt("reader-threads", "4")),
-  readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", lane === "datomic" ? "640" : "128")),
+  readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", opt("read-path", "gateway") === "replica" ? "16" : lane === "datomic" ? "640" : "128")),
   writerPredecessorCacheMiB: lane === "datomic" ? WRITER_PREDECESSOR_CACHE_MIB : 0,
   readerSubjectAffinity: lane === "datomic" && !flag("no-reader-affinity"),
   seedBudgetS: Number(opt("seed-budget-s", "3600")),
@@ -140,6 +146,8 @@ if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) ||
     !Number.isSafeInteger(config.readerThreads) || config.readerThreads < 1 ||
     config.readerThreads * (config.readerEntityCacheMiB + 64) + WRITER_CACHE_BUDGET_MIB > 4096))
   throw new Error(`Reader caches plus ${WRITER_CACHE_BUDGET_MIB} MiB writer cache budgets must total at most 4096 MiB`);
+if (!["pending", "mixed"].includes(config.splitTarget) || !Number.isSafeInteger(config.replicaHistoryMiB) || config.replicaHistoryMiB < 1 || config.replicaHistoryMiB > 1024)
+  throw Error("invalid split-target or replica-history-mib");
 if (!["loop", "fair"].includes(config.replicaYield) || !["legacy", "inline"].includes(config.replicaFeed))
   throw Error("invalid replica-yield or replica-feed control");
 if (!["gateway", "replica"].includes(config.readPath) || (config.readPath === "replica" && lane !== "datomic"))
@@ -258,6 +266,9 @@ const cpuMarks: { t: number; cpu: NodeJS.CpuUsage }[] = [];
 
 const model = new Model(rungSubjects);
 const accounts = accountsFor(rungSubjects);
+const expectations = new ExpectationCache(model);
+const ryowFallbackReasons: Record<string, number> = {};
+const readerFinalDiagnostics: any[] = [];
 const records: ObservationRecords = config.readPath === "replica" ? new ReadRecords(path.join(rawDir, `observations-${runTag}`)) : [];
 function visitPhase(phase: number, fn: (record: ReadRecord, index: number) => void) {
   if (records instanceof ReadRecords) records.forPhase(phase, fn);
@@ -313,12 +324,10 @@ const STRADDLE_HORIZON_MS = 250;
 function straddleCandidate(): { subject: number; seq: number } {
   const keys = [...pendingBySubject.keys()];
   const soon = upcomingJobs(STRADDLE_HORIZON_MS).filter((j) => j.ev.stream === "background" && !j.ev.resend);
-  const total = keys.length + soon.length;
-  if (!total) return { subject: -1, seq: -1 };
-  const k = straddleRng.int(total);
-  if (k < keys.length) { const list = pendingBySubject.get(keys[k]!)!; return { subject: keys[k]!, seq: list[list.length - 1]! }; }
-  const job = soon[k - keys.length]!;
-  return { subject: job.key, seq: job.ev.seq };
+  return splitTarget(
+    keys.map(subject => ({ subject, seq: pendingBySubject.get(subject)!.at(-1)! })),
+    soon.map(job => ({ subject: job.key, seq: job.ev.seq })),
+    n => straddleRng.int(n), config.splitTarget);
 }
 const overlayCount: Record<string, number> = {};
 let feed: FeedConsumer | SideThread | null = null;
@@ -407,7 +416,7 @@ async function run() {
 
   // ---------------------------------------------------------------- reader workers
   const replicaHost = config.readPath === "replica" ? await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
-    scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux, { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed) : undefined;
+    scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux, { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed, config.replicaHistoryMiB * 1024 ** 2) : undefined;
   const replicaLocal = replicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader() : undefined;
   if (replicaHost && replicaLocal) {
     replicaLocal.install(replicaHost.index.image());
@@ -415,7 +424,7 @@ async function run() {
     const gatewayPull = aux.pull.bind(aux);
     aux.pull = (root, basis, between) => replicaLocal.pullAt(root, basis, () => gatewayPull(root, basis), between);
   }
-  const workerCfg = (w: number) => ({ replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const sweepDone = new Map<number, (v: any) => void>();
@@ -437,7 +446,7 @@ async function run() {
     const pendingDeltas: any[] = [];
     const unsubscribe = replicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
     const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
-    const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (workerHttpCounts.push({ worker: w, counts: m.httpCounts }), resolve())));
+    const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (workerHttpCounts.push({ worker: w, counts: m.httpCounts }), readerFinalDiagnostics.push({ worker: w, diagnostics: m.diagnostics }), resolve())));
     await new Promise<void>((resolve, reject) => {
       worker.on("message", (m: any) => { if (m.type === "ready") resolve(); else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
       worker.on("error", reject);
@@ -1102,6 +1111,7 @@ async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt, 
   try {
     const pr = await comp.pull(ids.placement(subject), basis);
     const o = observe(pr);
+    if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? "gateway"; ryowFallbackReasons[reason] = (ryowFallbackReasons[reason] ?? 0) + 1; }
     retainRead([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, receipt.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
   } catch (error: any) {
     retainRead([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, receipt.position, 0, -1, 0, "error", "", 0]);
@@ -1132,7 +1142,7 @@ function windowOf(phase: any) {
 }
 function judgeRead(r: ReadRecord) {
   if (r[R.error] !== null) return { ok: false, kind: "error" };
-  const exp = model.expected(r[R.subject], r[R.recordedAt], r[R.validAt]);
+  const exp = expectations.expected(r[R.subject], r[R.recordedAt], r[R.validAt]);
   if (r[R.stamp] === exp.stamp && r[R.digest] === exp.digest) return { ok: true, kind: "correct" };
   const late = model.lateArrivals(r[R.subject], r[R.recordedAt], r[R.start]);
   if (exp.stamp >= 0 && r[R.stamp] < exp.stamp) return { ok: false, kind: late > 0 ? "stale-late-arrival" : "stale" };
@@ -1300,7 +1310,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const p2 = {
     bandsAtL256: b256, bandsAll: bands(committed), bandsSteady: bands(committed.filter((w) => !w.burst)), bandsBurst: bands(committed.filter((w) => w.burst)),
     accounting: { byStreamAndOutcome: byOutcome, resendsByResult: countBy(resends.map((r) => r.result)), unaccounted, pendingAtEnd: ctx.pendingAtEnd, errorTags: countBy(writes.flatMap((w) => w.tags ?? [])) },
-    readYourOwnWrite: { pulls: ryowRows.length, correct: ryowOk, pull: ryowHist.summary(), watermarkWait: ryowWait.summary(), routes: countBy(ryowRows.map(x => x.r[R.route])), failures: ryowRows.filter((x) => !x.v.ok).slice(0, 5).map((x) => ({ kind: x.v.kind, subject: x.r[R.subject], position: x.r[R.basisPosition] })) },
+    readYourOwnWrite: { pulls: ryowRows.length, correct: ryowOk, pull: ryowHist.summary(), watermarkWait: ryowWait.summary(), fallbackReasons: ryowFallbackReasons, routes: countBy(ryowRows.map(x => x.r[R.route])), failures: ryowRows.filter((x) => !x.v.ok).slice(0, 5).map((x) => ({ kind: x.v.kind, subject: x.r[R.subject], position: x.r[R.basisPosition] })) },
     duplicates: { resends: resends.length, considered: dupConsidered.length, returnedOriginal: dupOk },
     lostAck: { simulated: lostAck.length, returnedOriginal: lostOk, retryTags: countBy(lostAck.map((r) => r.retryTag)) },
     breakdown: { units: "ms", note: "driverOwn includes offer queueing, all post-transact completion work (including after ACK), and durable publication witness inside transact; medians are per-command sums, not sums of medians; all latency bars remain unchanged",
@@ -1429,6 +1439,8 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const total = records.length, ok = verdicts.reduce((n, code) => n + Number(code === 0), 0), errs = verdicts.reduce((n, code) => n + Number(code === 1), 0);
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput" };
   report.readerDiagnostics = workerDiagnostics;
+  report.readerFinalDiagnostics = readerFinalDiagnostics;
+  report.expectedStateCache = expectations.diagnostics;
   report.client = { series: {main:mainElu,readers:workerElu},
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
     peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
