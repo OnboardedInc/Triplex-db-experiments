@@ -94,9 +94,24 @@ const OPTION_FIELDS = new Set([
   "retractedAt",
   "retractTxId",
 ]);
+// [DX-R3-P7] Why: an immutable row's complete typed text recurs in source comparisons and observations.
+// Rejected: ID/revision caches (could certify changed fields) or caching merely frozen containers.
+const immutable = new WeakSet<object>();
+const rowText = new WeakMap<object, string>();
+export function frozenData(value: unknown): boolean {
+  if (value === null || typeof value !== "object") return typeof value !== "function";
+  if (immutable.has(value)) return true;
+  if (!Object.isFrozen(value)) return false;
+  const descriptors = supportedDescriptors(value);
+  if (!Object.values(descriptors).every((d) => frozenData(d.value))) return false;
+  immutable.add(value);
+  return true;
+}
 export const canonicalRow = (row: any): string => {
+  const cached = rowText.get(row);
+  if (cached !== undefined) return cached;
   plain(row);
-  return JSON.stringify([
+  const text = JSON.stringify([
     "row",
     Object.keys(row)
       .sort()
@@ -119,6 +134,8 @@ export const canonicalRow = (row: any): string => {
         return [key, value];
       }),
   ]);
+  if (frozenData(row)) rowText.set(row, text);
+  return text;
 };
 export const canonicalWorld = (rows: readonly any[]): string =>
   JSON.stringify(rows.map(canonicalRow).sort());

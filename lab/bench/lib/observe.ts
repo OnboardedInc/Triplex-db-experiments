@@ -1,7 +1,7 @@
 /** What a read observed, in the same terms the expected-state model computes. */
 import type { PullResult } from "./composition.ts";
 import { Digest, hash2 } from "./rng.ts";
-import { canonicalRow, supportedDescriptors } from "./canonical.ts";
+import { canonicalRow, frozenData } from "./canonical.ts";
 
 export interface Observed {
   digest: string;
@@ -18,12 +18,7 @@ export interface Observed {
 // Rejected: ID/revision-only result caching (could hide mutations or valid-time filtering).
 type MemberPart = { a: number; b: number; bytes: number; stamp: number; stamps: number };
 const members = new WeakMap<object, MemberPart>();
-const frozenData = (v: unknown): boolean => {
-  if (v === null || typeof v !== "object") return typeof v !== "function";
-  if (!Object.isFrozen(v)) return false;
-  const descriptors = supportedDescriptors(v);
-  return Object.values(descriptors).every((d) => frozenData(d.value));
-};
+
 export function observe(pr: PullResult): Observed {
   // [DX-R3] Why: follower hashes every fact in each immutable version; readers add those exact contributions.
   // Rejected: sampling facts or replacing the independent expected-state comparison.
@@ -47,15 +42,7 @@ export function observe(pr: PullResult): Observed {
       };
       // [DX-R3] Why: cache only complete immutable public rows, including Option payloads and nested values.
       // Rejected: caching a projection while unexamined metadata can still change.
-      if (Object.isFrozen(t)) {
-        const descriptors = supportedDescriptors(t);
-        if (
-          Object.keys(descriptors).every(
-            (k) => descriptors[k] && "value" in descriptors[k] && frozenData(descriptors[k].value),
-          )
-        )
-          members.set(t, part);
-      }
+      if (frozenData(t)) members.set(t, part);
     }
     d.a = (d.a + part.a) >>> 0;
     d.b = (d.b + part.b) >>> 0;

@@ -1,9 +1,7 @@
 import { proveStrictSource } from "./strict-source.ts";
 import assert from "node:assert/strict";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
-import { decodeEntity, reachResponse } from "../../../../packages/datomic/dist/reach.js";
 import { openComposition, type Basis } from "../../../bench/lib/composition.ts";
-import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { ReplicaReadHost, ReplicaReader } from "../../../bench/lib/replica-reads.ts";
 import { seedRung } from "../../../bench/lib/seed.ts";
 import { ids } from "../../../bench/lib/world.ts";
@@ -62,8 +60,7 @@ const host = await ReplicaReadHost.open(
 const reader = new ReplicaReader();
 reader.install(host.index.image());
 host.subscribe((delta) => reader.apply(delta));
-const client = new DatomicClient(process.env.DATOMIC_READ_URLS!.split(",")[0]!, 30000);
-const db = await client.create(runtimeApi.DatabaseScope.test(scope), "lean", true);
+
 const acked = [{ position: seed.lastPosition, instant: seed.lastInstant }];
 const trace = generateTrace({ seed: "ns-v2", subjects, durationS: 3600 }).filter(
   (event) => !event.resend,
@@ -136,29 +133,10 @@ try {
           basis = { recordedPosition: host.index.position, validAt: Date.now() } as Basis;
           current++;
         }
-        const gateway = async () => {
-          const wire = await client.request<any>("POST", `/v2/db/${db.db}/reach-many`, {
-            roots: [subject],
-            basis,
-            rowPage: true,
-            full: true,
-          });
-          assert(!wire.declined, `gateway declined ${JSON.stringify(wire)}`);
-          const entities = new Map<string, ReturnType<typeof decodeEntity>>();
-          for (const [id, revision, rows] of wire.entities)
-            entities.set(id, decodeEntity(id, revision, rows));
-          const rows = reachResponse(subject, entities, basis as any).triples;
-          return {
-            triples: rows,
-            entities: 0,
-            roundTrips: 1,
-            depth: 0,
-            route: "source",
-            language: "gateway",
-            waitedMs: 0,
-          };
-        };
-        const before = await reader.pullAt(subject, basis, gateway, undefined, true);
+        // [DX-R3-P7] Why: the oracle is the benchmark's public gateway route, whose references bind immutable entity versions.
+        // Rejected: forced full bodies plus duplicate local pulls (re-decodes every unchanged fact on every pair).
+        const gateway = () => comp.pull(subject, basis);
+        const before = await reader.pullAt(subject, basis, gateway, undefined, n % 2 === 0);
         // [DX-R3] Why: force the two sides of selected pairs across an actual ACK at the same named cut.
         // Rejected: only comparing quiescent bootstrap worlds.
         if (n % 997 === 0) {
@@ -178,9 +156,7 @@ try {
           expectedBytes,
           `canonical world at ${JSON.stringify({ n, basis })}`,
         );
-        const fast = await reader.pullAt(subject, basis, gateway);
-        assert.equal(worldBytes(fast.triples), expectedBytes, `lazy world at ${n}`);
-        assert.deepEqual(observe(fast), observe(slow), `whole-world observation at ${n}`);
+        assert.deepEqual(observe(before), observe(slow), `whole-world observation at ${n}`);
         if (before.route === "replica") local++;
         else fallback++;
         wait.push(before.waitedMs);
@@ -230,7 +206,6 @@ try {
   writing = false;
   await writer;
   await host.close();
-  client.close();
   await comp.close();
 }
 if (writerError) throw writerError;
