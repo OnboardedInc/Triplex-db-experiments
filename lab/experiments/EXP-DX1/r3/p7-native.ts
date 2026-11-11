@@ -141,14 +141,26 @@ try {
         receipts: any[] = [],
         gateway: number[] = [];
       collect = gateway;
+      const rate = Number(process.env.DX_R3_COST_RATE ?? 0);
+      assert(Number.isFinite(rate) && rate >= 0);
+      const offeredStart = performance.now();
+      let maximumIssueLagMs = 0;
       let next = 0,
         active = 0,
         peak = 0;
       await Promise.all(
         Array.from({ length: 32 }, async () => {
           while (next < 256) {
-            const n = next++,
-              start = performance.now();
+            const n = next++;
+            if (rate > 0) {
+              const scheduled = offeredStart + (n * 1000) / rate;
+              while (performance.now() < scheduled)
+                await new Promise((resolve) =>
+                  setTimeout(resolve, Math.max(1, scheduled - performance.now())),
+                );
+              maximumIssueLagMs = Math.max(maximumIssueLagMs, performance.now() - scheduled);
+            }
+            const start = performance.now();
             active++;
             peak = Math.max(peak, active);
             try {
@@ -173,7 +185,8 @@ try {
       collect = undefined;
       assert.equal(gateway.length, 256);
       assert(gateway.every(Number.isFinite));
-      assert.equal(peak, 32);
+      if (rate === 0) assert.equal(peak, 32);
+      else assert(peak >= 1 && peak <= 32);
       assert.equal(receipts.length, 256);
       assert.equal(new Set(receipts.map((r) => r.position)).size, 256);
       const sorted = receipts.sort((a, b) => a.position - b.position);
@@ -206,6 +219,8 @@ try {
           strict,
           inFlight: peak,
           factsPerCommand: 8,
+          offeredPerS: rate || "closed-loop",
+          maximumIssueLagMs,
           commitMs: summary(latencies),
           gatewayTransactMs: summary(gateway),
           verified: 256,
