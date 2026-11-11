@@ -1200,3 +1200,38 @@ check. Brief `~/Claude/Projects/triplex-db-2/agents/prompts/DX-V1.md`; report to
 
 Queue after the seed: 100,000-subject activation (P5 verdict); full pairs on DX-R3's corrected head under both split-read
 rules; write-gateway arms (second CPU, small cache, low-pause collector); where a sparse commit's extra 5 ms goes.
+
+## 2026-11-11 16:20 UTC: DX-V1 review of the local-read path: FIX-FIRST, three findings; DX-R3 resumed to fix them
+
+Reviewer DX-V1 (`review/DX-V1` at `4b9f6382`, report `lab/verify/DX-V1/REPORT.md` on that branch; no containers). 43 focused
+tests pass; three claim assertions fail as written (`DX_V1_ASSERT_CLAIM=1 node --experimental-strip-types --test
+lab/verify/DX-V1/adversarial.test.ts`).
+
+1. **F1, the local route returns a narrower payload than the gateway.** A locally answered read omits `recordedAt`,
+   `createdBy`, `entityType`, `schemaVersion` and `txId` and returns a numeric `validTo`; the gateway route returns the public
+   Triple with that metadata and an Option `validTo`. Deterministic on every local read in the benchmark. Entity, attribute
+   and value are not affected. So "the same bytes the gateway would return" is false as stated.
+2. **F2, the benchmark's check cannot see it.** `judgeRead` compares a digest of visible entity/attribute/value: with every
+   assertion id, row position and valid-time bound changed the verdict stays "correct"; `-0` and `+0` are indistinguishable;
+   the raw oracle sample goes through the gateway even when the read path is local. **Every "zero violations" count so far,
+   gateway and local, means: stamp and entity/attribute/value at the requested basis were right. It does not cover row
+   identity, positions or valid-time bounds.**
+3. **F3, a record-time basis can be answered from the earlier of two positions sharing one clock value before the second
+   journal arrives.** Not reachable with the benchmark's writers (strictly increasing clocks); reachable with other supported
+   writers. Traced in source, not reproduced natively.
+4. **Split-read rule:** by the reviewer's replay of q7's 7,408 writes, acknowledgement lands after the first read for 3,135
+   selected targets under `pending` and 3,178 under `mixed` (durable witness after the first read: 3,116 and 3,174); `pending`
+   picks fewer future commands (2,323 against 2,970) and waits 90 ms on average against 138 ms. A small loss of coverage, not
+   a demonstrated wrong read; the retained evidence lacks the timestamps to count real straddles.
+
+What did not break: half-applied journals, feed and delta gaps, duplicates and reordering, shared targets, cycles, closures
+shrinking, corrections and retractions, byte eviction, rebuild with held results, slab immutability, late-acknowledgement
+invalidation, spill read-back. Recorded replay: 3,000 world comparisons and 10,000 observations, zero differences.
+
+**Consequence for the scorecard:** P1's "zero wrong reads" stands for values at the requested basis and is not yet shown for
+the full returned row. No verdict on local reads until F1 to F3 are fixed and the check covers every returned field.
+
+**DX-R3 resumed 16:19 UTC, part 4** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-R3-resume3.md`): local route returns the
+complete public Triple; the check covers a typed lossless canonical form of every returned field for both routes, with
+oracle samples through the route under test; a time-only basis is admitted locally only when its cut is closed; split-read
+timestamps retained. Done when the reviewer's command exits 0. Code and unit tests now, measurements after the seed.
