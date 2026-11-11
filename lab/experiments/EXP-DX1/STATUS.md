@@ -988,3 +988,36 @@ Reading: a thread now wakes on time and runs at full speed after a wait. The pri
 needs a 6-CPU placement for the stack. Switch `nohlt` off before Sam's working day unless he says to keep it.
 
 **q6** started 06:30 UTC: the same pair as q5 (frozen checkout `1eea10e2`, gateway reads, 12 GiB driver), `nohlt` the only change.
+
+## 2026-11-11 07:15 UTC: q6, the q5 pair with `nohlt` on (same code `1eea10e2`, gateway reads)
+
+Oracle PASS, zero violations. Host load 8 to 11 during the run (the VM's eight polling vCPUs plus agents); swap 4.4 GB.
+
+| Measurement | q5 (plain) | q6 (`nohlt`) | Bar |
+| --- | --- | --- | --- |
+| Zero-reader arm, steady 2/s commit p50 / p99 | 23.6 / 76.8 ms | 13.6 / 78.8 ms | |
+| Zero-reader arm, burst 55/s commit p50 / p99 / max | 7.2 / 31.3 / 59.6 ms | 8.9 / 37.6 / 80.7 ms | |
+| Ladder, all commits p99 by band (5-10 / 11-25 / 26-50 facts) | 55.6 / 62.2 / 49.4 ms | 43.8 / 46.3 / 44.3 ms | 50 |
+| Ladder, burst commit p50 (5-10 facts) | 9.3 ms | 9.7 ms | 10 |
+| Commit p50 at 256 readers (5-10 / 11-25 facts) | 14.7 / 12.7 ms | 12.9 / 13.3 ms | 10 |
+| Commit p99 at 256 readers (5-10 / 11-25 facts) | 23.7 / 82.0 ms | 20.0 / 54.0 ms | 50 |
+| Commit p99 at 256 readers against matched zero-reader window | 1.89 | 1.21 | 1.25 |
+| Commit p50 with 1 reader | 27.0 ms | 15.4 ms | |
+| Correct reads/s at 64 / 256 / 1,024 readers | 5,543 / 4,940 / 4,358 | 4,655 / 4,186 / 3,656 | |
+| Read p99 at 256 readers | 255 ms | 340 ms | 100 |
+| Pulls/s per engine core | 1,386 | 1,164 | 1,100 |
+| Feed lag p99 at 256 readers | 33.6 ms | 32.6 ms | 250 |
+
+Reading:
+1. `nohlt` takes 10 ms off a sparse commit (23.6 to 13.6 ms) and brings every all-commit p99 band and the writer ratio at 256
+   readers inside their bars. A sparse commit still costs 13.6 ms against 7 to 9 ms dense, so about 5 ms of the sparse cost is
+   not the vCPU wake (lead for DX-M2's T5).
+2. It costs 15 to 20% of dense throughput (reads/s, pulls per engine core, burst commit median): eight always-busy vCPUs
+   compete with each other and with the host for six performance cores.
+3. q5's zero-reader burst (7.2 / 31.3 ms, none over 100 ms) is better than q3 and q4 (8.6 to 8.7 / 47.6 to 49.0 ms, 6 to 7 over
+   100 ms) with the same code; the differences are the VM's memory (24 against 16 GiB) and the host's free memory. Not isolated.
+4. Commit p50 at 256 readers stays at 13 ms either way: with 256 gateway readers the engine CPUs are shared. Local reads
+   (DX-R3) take that load off the engine; the pair with local reads will show it.
+
+`~/Claude/Projects/triplex-db-2/locks/long-hold-ok` created 07:15 UTC: DX-S5 may start its long seed hold once its 1,000 and
+10,000 proofs pass. DX-M2 and DX-R3 measure before that or after it.
