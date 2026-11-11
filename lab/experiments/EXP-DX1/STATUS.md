@@ -761,3 +761,23 @@ exclusive CPUs a loop cannot take time from a neighbouring container, which is w
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
+
+## 2026-11-11 04:10 UTC: quiet host overnight, VM memory, research round
+
+**Host.** Sam (2026-11-10 night): the other project on this Mac is winding down, so memory and CPU are free overnight. Measured
+with `lab/bin/host-quiet.sh`: swap used 16,568 MB at 03:37 UTC, 7,055 MB at 03:57 UTC; 60% of memory free; call apps 7% CPU.
+q4 (frozen checkout `ea8931d5`) started its zero-reader arm at 03:46 UTC, so the first arm overlaps the wind-down and the
+ladder arm runs on the quieter host. q4 against q3 is the test of what a quiet host changes.
+
+**VM memory.** `lab/bin/vm-resize.sh 24` is queued (background) behind q4's `host-after` file: it takes the measurement lock,
+refuses if any container is running, restarts triplex2 at 8 CPU / 24 GiB / 100 GiB, restores the docker context, remounts with
+`discard`. Reason: the 100,000-subject steps need about 21 to 27 GiB in the VM (driver heap 6, local copy 6 to 12, transactor 3,
+two peers 4, Postgres 2). Log `~/Claude/Projects/triplex-db-2/evidence/ORCH-vm-resize/`.
+
+**Research round (four Sonnet agents, high effort; Sam asked for it).** Files in
+`~/Claude/Projects/triplex-db-2/research/2026-11-11/`: R1 local replicas, R2 incremental evaluation (landed), R3 Datomic and
+XTDB tuning, R4 test bed and commit path. R2's main finding for P5: memoize each rule per subject keyed by (rule content hash,
+hashes of the values it read), share that store across candidate releases, and drop the per-pass setup (5.2 s of the 9.3 s at
+10,000 subjects) by reading lazily from the local copy. A release that changes 3 of 12 rules then reruns about a quarter of the
+rule work, and activation invalidates nothing. It needs per-rule pure functions, recorded reads, no ambient clock (threshold
+primitives so each output carries the instant it could next change), and canonical outputs.
