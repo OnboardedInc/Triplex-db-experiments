@@ -67,7 +67,7 @@ pathlib.Path(sys.argv[1]+'/source-build-hashes.json').write_text(json.dumps(rows
 PY2
 fi
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
-held=false; watchdog=; child=
+held=false; watchdog=; operational=; child=
 cleanup() {
   rc=$?; trap - EXIT TERM INT
   if [[ -n $watchdog ]]; then kill "$watchdog" 2>/dev/null || true; wait "$watchdog" 2>/dev/null || true; fi
@@ -97,6 +97,7 @@ cleanup() {
       if [[ -f $out/driver/$file ]]; then echo "DX-R3 raw-output $prefix/driver/$file"; cat "$out/driver/$file"; echo; fi
     done
   fi
+  if [[ -n $operational ]]; then rm -rf "$operational"; fi
   if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
   exit "$rc"
 }
@@ -152,6 +153,15 @@ else
 fi
 extra=(); [[ -z ${DX_GW_JAVA_OPTS:-} ]] || extra+=(--gw-java-opts "$DX_GW_JAVA_OPTS")
 [[ -z ${DX_PG_SETTINGS:-} ]] || extra+=(--pg-settings "$DX_PG_SETTINGS")
-run_stage bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
+# [DX-R3] Why: stack configuration is temporary machinery; durable evidence contains command output only.
+# Rejected: retaining copied gateway sources and setup hash manifests as experimental evidence.
+stack_evidence=$DX_STACK_EVIDENCE
+if [[ $prefix == tx2-dxr3-* ]]; then
+  operational="$PWD/lab/experiments/EXP-DX1/r3/.runtime-$prefix"
+  mkdir "$operational"
+  stack_evidence=$operational
+  extra+=(--gateway-src "$PWD/packages/datomic/gateway" --codec-spec "$PWD/packages/datomic/src/codec-spec.json")
+fi
+run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
  --lane datomic --composition reach --read-path "${DX_READ_PATH:-gateway}" --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1
