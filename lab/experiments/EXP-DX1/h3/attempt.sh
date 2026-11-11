@@ -23,6 +23,7 @@ export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex
 out=$DX_STACK_EVIDENCE/$prefix; mkdir -p "$out"
 printf '%s\n' "$kind" "$prefix" "$@" > "$out/arguments.txt"
 git rev-parse HEAD > "$out/head.txt"
+[[ $prefix != tx2-dxr3-* ]] || cat "$out/head.txt"
 if [[ $prefix != tx2-dxr3-* ]]; then
 python3 - "$out" <<'PY2'
 import subprocess,pathlib,sys,hashlib,json
@@ -53,6 +54,16 @@ cleanup() {
   docker network ls --filter "name=$prefix" --format '{{.Name}}' > "$out/remaining-networks.txt"
   docker volume ls --filter "name=$prefix" --format '{{.Name}}' > "$out/remaining-volumes.txt"
   if [[ -s $out/remaining-containers.txt || -s $out/remaining-networks.txt || -s $out/remaining-volumes.txt ]]; then echo 'cleanup incomplete; retain lock' >&2; exit 1; fi
+  # [DX-R3] Why: one compressed command stream retains the actual reports, writes and logs even on a late failure.
+  # Rejected: source captures/hash manifests or relying on files that disappear with the driver volume.
+  if [[ $prefix == tx2-dxr3-* ]]; then
+    for file in up.log driver.log gw-w.log gw-r.log tx.log pg.log remaining-containers.txt remaining-networks.txt remaining-volumes.txt; do
+      if [[ -f $out/$file ]]; then echo "DX-R3 raw-output $prefix/$file"; cat "$out/$file"; fi
+    done
+    for file in ns-report.json ns-writes.jsonl scan-stats.jsonl oracle-case.json oracle-expected.json; do
+      if [[ -f $out/driver/$file ]]; then echo "DX-R3 raw-output $prefix/driver/$file"; cat "$out/driver/$file"; echo; fi
+    done
+  fi
   if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
   exit "$rc"
 }
@@ -69,7 +80,7 @@ units={'B':1,'KiB':1024,'MiB':1024**2,'GiB':1024**3}
 used=0
 for r in rows:
  m=re.search(r'([\d.]+)([KMG]?i?B)',r['MemUsage'].split('/')[0].strip()); used+=float(m[1])*units[m[2]]
-assert 20*1024**3-used>=8*1024**3, 'less than 8 GiB VM memory free'
+if sys.argv[2]=='admitted': assert 20*1024**3-used>=8*1024**3, 'less than 8 GiB VM memory free at admission'
 assert shutil.disk_usage('.').free>=15*1024**3, 'less than 15 GiB host disk free'
 PY2
 }
