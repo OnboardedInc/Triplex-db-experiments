@@ -182,3 +182,39 @@ test("recovery does not anchor a record clock from pending or previously rejecte
   assert.equal(host.index.resolve({ recordedPosition: 3, validAt: 0 }), 3);
   await host.close();
 });
+
+test("many interval boundaries use compact shared summaries, with exact end-point observations", async () => {
+  const rows: SweepRow[] = Array.from({ length: 512 }, (_, i) => ({
+    id: `r${i}`,
+    entityId: "root",
+    attribute: i % 5 ? "value" : ":placement/stamp",
+    value: { type: "number", value: i },
+    position: 1,
+    validFrom: i,
+    ...(i % 3 ? { validTo: i + 200 } : {}),
+  }));
+  const packed = packEntity(1, rows),
+    prepared = prepareEntity("root", packed);
+  assert(prepared.stats instanceof SharedArrayBuffer);
+  assert(prepared.stats.byteLength <= (rows.length * 2 + 1) * 64);
+  const reader = new ReplicaReader();
+  reader.apply({ reset: true, valid: true, position: 1, changes: [["root", undefined, prepared]] });
+  for (const validAt of [-1, 0, 1, 199, 200, 511, 512, 710, 711, Number.MAX_VALUE]) {
+    const exact = reader.index.pull("root", { validAt })!;
+    const fast = await reader.pullAt("root", { validAt }, async () => {
+      throw Error("fallback");
+    });
+    assert.deepEqual(
+      observe(fast),
+      observe({
+        triples: exact.rows,
+        entities: 1,
+        depth: 0,
+        roundTrips: 0,
+        route: "replica",
+        language: "packed",
+        waitedMs: 0,
+      }),
+    );
+  }
+});

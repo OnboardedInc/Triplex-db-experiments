@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
 import { REPO, runtimeApi } from "./triplex.ts";
-import { observe, type Observed } from "./observe.ts";
+import { observe } from "./observe.ts";
 import type { CompositionHandle, PullResult } from "./composition.ts";
 import type {
   PackedEntity,
@@ -10,43 +10,106 @@ import type {
 } from "../../../packages/datomic/dist/index.js";
 
 const api = await import(pathToFileURL(`${REPO}/packages/datomic/dist/index.js`).href);
-type Segment = { from: number; to: number; refs: readonly string[]; observed: Observed };
-type Prepared = PackedEntity & { segments: readonly Segment[] };
-// [DX-R3] Why: hash every actual fact once per immutable entity version/valid-time segment in the follower.
-// Rejected: each reader decoding JSON and hashing the same entity bodies on every pull.
-export function prepareEntity(id: string, packed: PackedEntity): Prepared {
-  const view = new DataView(packed.buffer, packed.offset ?? 0, packed.byteLength);
-  const start = Math.ceil((8 + view.getUint32(0, true)) / 8) * 8;
-  const boundaries = new Set<number>([-Infinity, Infinity]);
+type Prepared = PackedEntity & {
+  stats: SharedArrayBuffer;
+  refs: readonly { id: string; from: number; to: number }[];
+  additionalBytes: number;
+};
+const STAT_WIDTH = 64;
+// [DX-R3] Why: reuse the exact value decoder once while retaining every row's own interval.
+// Rejected: a second tagged-value codec, or decoding the entire entity once for each valid-time boundary.
+function allRows(id: string, packed: PackedEntity) {
+  const length = packed.byteLength ?? packed.buffer.byteLength - (packed.offset ?? 0);
+  const original = new DataView(packed.buffer, packed.offset ?? 0, length);
+  const start = Math.ceil((8 + original.getUint32(0, true)) / 8) * 8;
+  const scratch = new SharedArrayBuffer(length);
+  new Uint8Array(scratch).set(new Uint8Array(packed.buffer, packed.offset ?? 0, length));
+  const view = new DataView(scratch);
   for (let i = 0; i < view.getUint32(4, true); i++) {
-    boundaries.add(view.getFloat64(start + i * 48 + 24, true));
-    boundaries.add(view.getFloat64(start + i * 48 + 32, true));
+    view.setFloat64(start + i * 48 + 24, -Number.MAX_VALUE, true);
+    view.setFloat64(start + i * 48 + 32, Number.MAX_VALUE, true);
   }
-  const sorted = [...boundaries].sort((a, b) => a - b),
-    segments: Segment[] = [];
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const from = sorted[i]!,
-      to = sorted[i + 1]!;
-    const triples = api.unpackEntity(id, packed, from);
-    segments.push({
-      from,
-      to,
-      refs: triples
-        .filter((row: any) => row.value.type === "ref")
-        .map((row: any) => row.value.value),
-      observed: observe({
-        triples,
-        entities: 1,
-        depth: 0,
-        roundTrips: 0,
-        route: "replica",
-        language: "packed",
-        waitedMs: 0,
-      }),
+  return api
+    .unpackEntity(id, { revision: packed.revision, buffer: scratch }, 0)
+    .map((row: any, i: number) => {
+      const from = original.getFloat64(start + i * 48 + 24, true),
+        to = original.getFloat64(start + i * 48 + 32, true);
+      return { ...row, validFrom: from, validTo: to === Infinity ? undefined : to };
     });
-  }
-  return { ...packed, segments };
 }
+// [DX-R3] Why: shared numeric prefix contributions hash each fact once; references keep one interval each.
+// Rejected: JS object summaries plus repeated reference strings for every boundary/version (D exhausted the 2 GiB heap).
+export function prepareEntity(id: string, packed: PackedEntity): Prepared {
+  type Part = { a: number; b: number; bytes: number; stamp: number; stamps: number };
+  const events = new Map<number, { sign: number; part: Part }[]>();
+  const refs: { id: string; from: number; to: number }[] = [];
+  const event = (at: number, sign: number, part: Part) => {
+    const list = events.get(at) ?? [];
+    list.push({ sign, part });
+    events.set(at, list);
+  };
+  for (const row of allRows(id, packed)) {
+    const from = row.validFrom,
+      to = row.validTo ?? Infinity;
+    if (!Number.isFinite(from) || (to !== Infinity && !Number.isFinite(to)))
+      throw Error("Invalid contribution interval");
+    if (from >= to) continue;
+    const o = observe({
+      triples: [row],
+      entities: 1,
+      depth: 0,
+      roundTrips: 0,
+      route: "replica",
+      language: "packed",
+      waitedMs: 0,
+    });
+    const part = {
+      a: parseInt(o.digest.slice(0, 8), 16),
+      b: parseInt(o.digest.slice(8, 16), 16),
+      bytes: o.bytes,
+      stamp: o.stamp,
+      stamps: o.stamps,
+    };
+    event(from, 1, part);
+    event(to, -1, part);
+    if (row.value.type === "ref") refs.push({ id: row.value.value, from, to });
+  }
+  const bounds = [...new Set([-Infinity, Infinity, ...events.keys()])].sort((a, b) => a - b);
+  const stats = new SharedArrayBuffer((bounds.length - 1) * STAT_WIDTH),
+    view = new DataView(stats);
+  let a = 0,
+    b = 0,
+    facts = 0,
+    bytes = 0,
+    stamps = 0;
+  const activeStamps = new Map<number, number>();
+  for (let i = 0; i < bounds.length - 1; i++) {
+    for (const { sign, part } of events.get(bounds[i]!) ?? []) {
+      a = (a + sign * part.a) >>> 0;
+      b = (b + sign * part.b) >>> 0;
+      facts += sign;
+      bytes += sign * part.bytes;
+      stamps += sign * part.stamps;
+      if (part.stamps) {
+        const count = (activeStamps.get(part.stamp) ?? 0) + sign;
+        if (count) activeStamps.set(part.stamp, count);
+        else activeStamps.delete(part.stamp);
+      }
+    }
+    const stamp = Math.max(-1, ...activeStamps.keys());
+    [bounds[i]!, bounds[i + 1]!, a, b, facts, bytes, stamp, stamps].forEach((n, j) =>
+      view.setFloat64(i * STAT_WIDTH + j * 8, n, true),
+    );
+  }
+  return {
+    ...packed,
+    stats,
+    refs,
+    additionalBytes:
+      256 + stats.byteLength + refs.reduce((n, ref) => n + 96 + ref.id.length * 2, 0),
+  };
+}
+const statViews = new WeakMap<object, DataView>();
 export class ReplicaReader {
   readonly index = new api.RecentReads();
   private waiters = new Set<{ p: number; done(): void }>();
@@ -107,24 +170,31 @@ export class ReplicaReader {
         root,
         basis,
         (_id: string, packed: PackedEntity, validAt: number) => {
-          const segments = (packed as Prepared).segments;
-          if (!segments) throw Error("Unprepared replica read buffer");
+          const prepared = packed as Prepared;
+          if (!prepared.stats) throw Error("Unprepared replica read buffer");
+          let view = statViews.get(packed);
+          if (!view) {
+            view = new DataView(prepared.stats);
+            statViews.set(packed, view);
+          }
           let lo = 0,
-            hi = segments.length;
+            hi = view.byteLength / STAT_WIDTH;
           while (lo < hi) {
             const mid = (lo + hi) >>> 1;
-            if (segments[mid]!.to <= validAt) lo = mid + 1;
+            if (view.getFloat64(mid * STAT_WIDTH + 8, true) <= validAt) lo = mid + 1;
             else hi = mid;
           }
-          const segment = segments[lo]!;
-          const o = segment.observed;
-          total.a = (total.a + parseInt(o.digest.slice(0, 8), 16)) >>> 0;
-          total.b = (total.b + parseInt(o.digest.slice(8, 16), 16)) >>> 0;
-          total.n += o.facts;
-          total.bytes += o.bytes;
-          total.stamps += o.stamps;
-          total.stamp = Math.max(total.stamp, o.stamp);
-          return segment.refs;
+          const offset = lo * STAT_WIDTH;
+          total.a = (total.a + view.getFloat64(offset + 16, true)) >>> 0;
+          total.b = (total.b + view.getFloat64(offset + 24, true)) >>> 0;
+          total.n += view.getFloat64(offset + 32, true);
+          total.bytes += view.getFloat64(offset + 40, true);
+          total.stamp = Math.max(total.stamp, view.getFloat64(offset + 48, true));
+          total.stamps += view.getFloat64(offset + 56, true);
+          const refs: string[] = [];
+          for (const ref of prepared.refs)
+            if (ref.from <= validAt && validAt < ref.to) refs.push(ref.id);
+          return refs;
         },
       );
       if (found)

@@ -102,11 +102,7 @@ try {
           validAt: Date.now() - (kind === 2 ? (1 + (n % 90)) * 86400000 : 0),
         };
         if (n % 503 === 0) {
-          basis = {
-            recordedPosition: host.index.floor,
-            validAt: Date.now(),
-            recordedAt: seed.lastInstant,
-          };
+          basis = { recordedPosition: host.index.floor, validAt: Date.now() } as Basis;
           floorReads++;
         } else if (n % 7 === 0) {
           basis = { recordedPosition: host.index.position, validAt: Date.now() } as Basis;
@@ -162,6 +158,8 @@ try {
               local,
               fallback,
               wallS: (performance.now() - started) / 1000,
+              historyBytes: host.index.historyBytes,
+              memory: process.memoryUsage(),
             }),
           );
       }

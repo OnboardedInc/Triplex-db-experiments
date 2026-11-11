@@ -191,3 +191,21 @@ test("worker delta clones retain shared bytes and exact historical cuts", async 
   assert(image.entities[0]![2].buffer instanceof SharedArrayBuffer);
   assert.deepEqual(unpackEntity("root", image.entities[0]![2], 0), [row("a")]);
 });
+
+test("sidecar bytes count toward eviction and survive shared-image installation", () => {
+  const a = { ...packed("a"), additionalBytes: 4096 },
+    b = packed("b", 2);
+  const bounded = new RecentReads(20000, 4000);
+  boot(bounded, a);
+  bounded.apply({ reset: false, valid: true, position: 2, changes: [["root", a, b]] });
+  assert.equal(bounded.floor, 2);
+  assert.equal(bounded.historyBytes, 0);
+  const roomy = new RecentReads();
+  boot(roomy, a);
+  roomy.apply({ reset: false, valid: true, position: 2, changes: [["root", a, b]] });
+  assert.equal(roomy.historyBytes, a.buffer.byteLength + 4096);
+  const copy = new RecentReads();
+  copy.install(structuredClone(roomy.image()));
+  assert.equal(copy.historyBytes, roomy.historyBytes);
+  assert.equal(value(copy, 1), "a");
+});

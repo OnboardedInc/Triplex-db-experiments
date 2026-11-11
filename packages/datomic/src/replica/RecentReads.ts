@@ -80,7 +80,7 @@ export class RecentReads {
         versions.push(version);
         this.history.set(id, versions);
         this.retired.push({ id, version });
-        this.retainedBytes += old.entity.byteLength ?? old.entity.buffer.byteLength;
+        this.retainedBytes += footprint(old.entity);
       }
       this.current.set(id, { from: delta.position, entity });
     }
@@ -91,7 +91,7 @@ export class RecentReads {
       const item = this.retired[this.retiredStart]!;
       if (item.version.until > this.floor && this.retainedBytes <= this.maxBytes) break;
       this.floor = Math.max(this.floor, item.version.until);
-      this.retainedBytes -= item.version.entity.byteLength ?? item.version.entity.buffer.byteLength;
+      this.retainedBytes -= footprint(item.version.entity);
       const versions = this.history.get(item.id)!;
       versions.shift();
       if (!versions.length) this.history.delete(item.id);
@@ -221,10 +221,7 @@ export class RecentReads {
       .flatMap(([id, versions]) => versions.map((version) => ({ id, version })))
       .sort((a, b) => a.version.until - b.version.until);
     this.retiredStart = 0;
-    this.retainedBytes = this.retired.reduce(
-      (n, x) => n + (x.version.entity.byteLength ?? x.version.entity.buffer.byteLength),
-      0,
-    );
+    this.retainedBytes = this.retired.reduce((n, x) => n + footprint(x.version.entity), 0);
     this.times = new Map(image.times);
     this.lastTime = Math.max(-Infinity, ...this.times.keys());
     this.timeSafe = image.timeSafe;
@@ -274,4 +271,13 @@ function sameBytes(a: PackedEntity, b: PackedEntity): boolean {
   const x = new Uint8Array(a.buffer, a.offset ?? 0, a.byteLength ?? a.buffer.byteLength);
   const y = new Uint8Array(b.buffer, b.offset ?? 0, b.byteLength ?? b.buffer.byteLength);
   return x.length === y.length && x.every((v, i) => v === y[i]);
+}
+
+// [DX-R3] Why: reader sidecars consume retained memory too, not only the original entity payload.
+// Rejected: a payload-only history budget while contribution/reference metadata remains unaccounted.
+function footprint(entity: PackedEntity): number {
+  const extra = (entity as PackedEntity & { additionalBytes?: number }).additionalBytes ?? 0;
+  if (!Number.isSafeInteger(extra) || extra < 0)
+    throw new TypeError("Invalid replica sidecar budget");
+  return (entity.byteLength ?? entity.buffer.byteLength) + extra;
 }
