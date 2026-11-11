@@ -76,10 +76,19 @@ git diff --quiet && git diff --cached --quiet || { echo "refuse dirty source"; e
 git rev-parse HEAD
 hold_s=1100; driver_memory=8g; clone_kib=6000000
 [[ $s5 != true ]] || { hold_s=3500; driver_memory=11g; clone_kib=19531250; }
+# [DX-S5] Why: a delayed seed must not silently consume time beyond the overall task budget.
+# Rejected: dropping exactness coverage to fit; a capped verifier remains explicitly incomplete.
+if [[ $s5 == true && -n ${S5_END_EPOCH:-} ]]; then
+ [[ $S5_END_EPOCH =~ ^[0-9]+$ ]] || exit 2
+ available=$(( S5_END_EPOCH - $(date +%s) - 90 ))
+ (( available >= 300 )) || { echo 'insufficient remaining evaluation budget'; exit 2; }
+ (( available >= hold_s )) || hold_s=$available
+ echo "overall-budget endEpoch=$S5_END_EPOCH holdSeconds=$hold_s cleanupReserveSeconds=90"
+fi
 deadline=$(( $(date +%s) * 1000 + hold_s * 1000 ))
 [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB'; exit 1; }
 [[ -z $(docker ps -q --filter "volume=$seed") ]] || { echo 'refuse an active seed'; exit 2; }
-(sleep "$hold_s"; docker rm -f "$prefix-driver" || true; kill -TERM $$) & timer=$!
+(sleep "$hold_s"; docker rm -f "$prefix-driver" || true; [[ $s5 != true ]] || docker rm -f "$prefix-copy" || true; kill -TERM $$) & timer=$!
 for name in "$prefix-pg-data" "$prefix-tools"; do
  if docker volume inspect "$name" >/dev/null 2>&1; then echo "refuse existing owned volume $name"; exit 2; fi
 done
