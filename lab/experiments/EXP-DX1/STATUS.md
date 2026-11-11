@@ -936,3 +936,10 @@ subjects through the oracle; zero mismatches.
 
 Projection to 100,000 subjects, not measured: evaluation about 41 s plus publication of what changed (at 250 to 800 subjects/s),
 bootstrap about 5 minutes, data 5.66 GB. The commit ratio 1.44 is near its bar and rests on 382 commits; watch it at scale.
+
+**DX-S5 launched 06:23 UTC** (`exp/DX-S5-seed-100k`, brief `~/Claude/Projects/triplex-db-2/agents/prompts/DX-S5.md`): a resumable,
+maintained seeding procedure proven by fingerprint at 1,000 and 10,000; the sealed 100,000-subject seed (target at most 20 GB;
+unmaintained it would be near 60 GB against 46 GiB free); release activation at 100,000 with full exactness. Its long holds
+(seed up to 5 h, evaluation up to 60 min) start only when `~/Claude/Projects/triplex-db-2/locks/long-hold-ok` exists; the
+orchestrator creates that file when tonight's short measurements are done (DX-R3 ladder, `nohlt`, DX-M2's arms, the pair with
+local reads).
