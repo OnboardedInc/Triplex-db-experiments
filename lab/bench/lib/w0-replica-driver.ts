@@ -27,7 +27,7 @@ import {
 import { subjectList } from "./sweep.ts";
 import { evaluateAll } from "./w0-replica.ts";
 import { DomainOracle } from "./w0-gates.ts";
-import { startW0Live, matchW0Live } from "./w0-live.ts";
+import { startW0Live, matchW0Live } from "./w0-replica-live.ts";
 // [DX-R1] Why: this explicit entry point leaves the existing full-sweep gates and H8's path unchanged.
 // Rejected: relabelling old controller PASS rows as replica acceptance.
 export async function runReplicaDriver(argv: string[]) {
@@ -58,6 +58,24 @@ export async function runReplicaDriver(argv: string[]) {
       const original = base[method] as Function;
       (base as any)[method] = (...args: any[]) => recorder.around(() => original(...args));
     }
+  let recordedInline = false,
+    pageReads = 0,
+    feedReads = 0;
+  const originalPage = base.page,
+    originalFeed = base.feed;
+  base.page = (...args) => {
+    pageReads++;
+    return originalPage(...args);
+  };
+  base.feed = async (...args) => {
+    feedReads++;
+    const result = await originalFeed(...args);
+    if (!recordedInline && result.transactions.length) {
+      recordedInline = true;
+      console.log(JSON.stringify({ kind: "inline-feed-sample", request: args, response: result }));
+    }
+    return result;
+  };
   const replica = new Replica(base, V_W0),
     oracle = new DomainOracle();
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
@@ -166,7 +184,11 @@ export async function runReplicaDriver(argv: string[]) {
     let cut = await comp.currentPosition();
     await replica.bootstrap(subjects, cut);
     (globalThis as any).gc?.();
+    const bootstrapImage = (await replica.snapshotAt(cut)).sharedImage();
     report.bootstrap = {
+      indexBytes: bootstrapImage.shared!.index.byteLength,
+      slabBytes: bootstrapImage.shared!.buffers.reduce((n, buffer) => n + buffer.byteLength, 0),
+      pageReads,
       indexHeapDelta: process.memoryUsage().heapUsed - initialHeap,
       wallMs: performance.now() - start,
       bytes: replica.bytes,
@@ -277,6 +299,7 @@ export async function runReplicaDriver(argv: string[]) {
       report.follow = {
         commands,
         cpuSeconds,
+        extraPageReads: pageReads - report.bootstrap.pageReads,
         cpuScope:
           "main thread: feed, need decode and packing; excludes asynchronous evidence compression",
         p99AckToAppliedMs: lags[Math.ceil(lags.length * 0.99) - 1],
@@ -690,6 +713,7 @@ export async function runReplicaDriver(argv: string[]) {
     if (fs.existsSync("/sys/fs/cgroup/memory.peak"))
       report.cgroupPeakBytes = Number(fs.readFileSync("/sys/fs/cgroup/memory.peak", "utf8"));
     report.fullHistoryCounts = bulkCounts.stats;
+    report.transport = { pageReads, feedReads };
     report.rss = process.memoryUsage().rss;
     report.peakRss = process.resourceUsage().maxRSS * 1024;
     console.log(JSON.stringify({ kind: "result", ...report }));

@@ -120,3 +120,28 @@ export class SharedIndex implements EntityTable {
     for (let i = 0; i < this.view.getUint32(4, true); i++) yield [this.id(i), this.entity(i)];
   }
 }
+
+// [DX-R2] Why: the runtime also retains the compact index; removing worker copies alone leaves 3 GB of Map/SAB metadata at 100k.
+// Rejected: keeping the bootstrap Map alive after freezing it into the shared index.
+export class OverlayTable implements EntityTable {
+  constructor(
+    readonly base: EntityTable,
+    readonly delta = new Map<string, PackedEntity>(),
+  ) {}
+  get(id: string) {
+    return this.delta.get(id) ?? this.base.get(id);
+  }
+  has(id: string) {
+    return this.get(id) !== undefined;
+  }
+  set(id: string, entity: PackedEntity) {
+    this.delta.set(id, entity);
+  }
+  *values() {
+    for (const [, entity] of this) yield entity;
+  }
+  *[Symbol.iterator](): IterableIterator<readonly [string, PackedEntity]> {
+    for (const entry of this.base) if (!this.delta.has(entry[0])) yield entry;
+    yield* this.delta;
+  }
+}

@@ -3,6 +3,7 @@ import { type ReachWire } from "../reach.js";
 import type { DatomicClient } from "../DatomicClient.js";
 import {
   SharedIndex,
+  OverlayTable,
   Slabs,
   shareIndex,
   type SharedIndexImage,
@@ -50,7 +51,10 @@ export class ReplicaSnapshot {
   readonly position: number;
   readonly validAt: number;
   constructor(image: ReplicaImage) {
-    this.entities = image.shared ? new SharedIndex(image.shared) : new Map(image.entities);
+    this.entities = image.shared
+      ? new OverlayTable(new SharedIndex(image.shared), new Map(image.entities))
+      : new Map(image.entities);
+    this.shared = image.shared ? image : undefined;
     this.position = image.position;
     this.validAt = image.validAt;
   }
@@ -76,6 +80,7 @@ export class ReplicaSnapshot {
   }
 }
 export class Replica {
+  static readonly UnsupportedScope = ReplicaUnsupportedScope;
   static source(
     client: DatomicClient,
     db: string,
@@ -84,7 +89,8 @@ export class Replica {
   ): ReplicaSource {
     return inlineSource(client, db, head, validAt);
   }
-  private entities = new Map<string, PackedEntity>();
+  private entities = new OverlayTable(new Map<string, PackedEntity>());
+  private baseImage: SharedIndexImage | undefined;
   private slabs = new Slabs();
   private watermark = 0;
   private valid = false;
@@ -103,7 +109,8 @@ export class Replica {
     return new ReplicaSnapshot({
       position: this.watermark,
       validAt: this.validAt,
-      entities: [...this.entities],
+      entities: this.baseImage ? [...this.entities.delta] : [...this.entities],
+      ...(this.baseImage ? { shared: this.baseImage } : {}),
     });
   }
   private rejectCaptures(error: unknown) {
@@ -268,7 +275,8 @@ export class Replica {
         this.slabs = new Slabs();
         const next = new Map<string, PackedEntity>();
         await this.load(unique, cut, next);
-        this.entities = next;
+        this.baseImage = shareIndex(next);
+        this.entities = new OverlayTable(new SharedIndex(this.baseImage));
         this.roots = unique;
         this.valid = true;
         this.advance(cut);

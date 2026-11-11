@@ -1,3 +1,4 @@
+import { gunzipSync } from "node:zlib";
 import type { DatomicClient } from "../DatomicClient.js";
 import { decodeEntity, type ReachWire } from "../reach.js";
 import { decodeRowText } from "../rowText.js";
@@ -21,14 +22,27 @@ export function inlineSource(
       );
       return result.supported === true ? undefined : (result.declined ?? "missing-capability");
     },
-    page: (roots, basis, need) =>
-      client.request<ReachWire>("POST", `/v2/db/${db}/reach-many`, {
-        roots,
-        basis,
-        rowPage: true,
-        full: true,
-        ...(need ? { need: roots } : {}),
-      }),
+    async page(roots, basis, need) {
+      const response = await client.request<ReachWire | { gzipRows: string }>(
+        "POST",
+        `/v2/db/${db}/reach-many`,
+        {
+          roots,
+          basis,
+          rowPage: true,
+          full: true,
+          gzipRows: true,
+          ...(need ? { need: roots } : {}),
+        },
+      );
+      return "gzipRows" in response
+        ? (JSON.parse(
+            gunzipSync(Buffer.from(response.gzipRows, "base64"), {
+              maxOutputLength: 64 * 1024 ** 2,
+            }).toString("utf8"),
+          ) as ReachWire)
+        : response;
+    },
     async feed(after, limit, waitMs) {
       const page = await client.request<{
         declined?: string;

@@ -15,9 +15,11 @@ export function decodeReplicaRows(
   cut: number,
 ): SweepRow[] {
   const seen = new Set<string>();
-  const rows = wire.map((values) => {
-    const row =
-      typeof values === "string" ? decodeRowText(values) : decodeRowTextColumns(values, "2");
+  const decoded = wire.map((values) =>
+    typeof values === "string" ? decodeRowText(values) : decodeRowTextColumns(values, "2"),
+  );
+  decoded.sort((a, b) => a.recorded_at - b.recorded_at || a.id.localeCompare(b.id));
+  const rows = decoded.map((row) => {
     if (
       row.entity_id !== id ||
       seen.has(row.id) ||

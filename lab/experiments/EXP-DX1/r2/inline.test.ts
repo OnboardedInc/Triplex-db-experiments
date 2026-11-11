@@ -178,9 +178,11 @@ describe("inline replica journal", () => {
 });
 
 it("shares immutable slabs and one binary index, preserving unicode IDs and old slices", async () => {
-  const f = fixture(), r = new Replica(f.source, 0);
+  const f = fixture(),
+    r = new Replica(f.source, 0);
   await r.bootstrap(["root"]);
-  const snap = await r.capture(), image = snap.sharedImage();
+  const snap = await r.capture(),
+    image = snap.sharedImage();
   expect(image.entities.length).toBe(0);
   expect(image.shared!.buffers.length).toBe(1);
   expect(image.shared!.buffers[0]).toBe(snap.image().entities[0]![1].buffer);
@@ -190,4 +192,21 @@ it("shares immutable slabs and one binary index, preserving unicode IDs and old 
   await r.followOnce();
   expect(shared.world("root")).toEqual(snap.world("root"));
   expect(r.world("root")[1]!.id).toBe("later");
+});
+
+it("binary indexes distinguish Unicode, lone surrogates, collisions and absent IDs", async () => {
+  const { shareIndex, SharedIndex, Slabs } =
+    await import("../../../../packages/datomic/src/replica/sharedIndex.js");
+  const { packEntity } = await import("../../../../packages/datomic/src/replica/packed.js");
+  const slabs = new Slabs();
+  const ids = ["😀", "\ud800", "", ...Array.from({ length: 1000 }, (_, i) => "collision:" + i)];
+  const entries = new Map(
+    ids.map((id, i) => [
+      id,
+      slabs.put(packEntity(i + 1, [row(id, "r" + i, { type: "number", value: i })])),
+    ]),
+  );
+  const index = new SharedIndex(shareIndex(entries));
+  for (const [id, entity] of entries) expect(index.get(id)).toEqual(entity);
+  expect(index.get("missing")).toBeUndefined();
 });

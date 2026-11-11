@@ -257,8 +257,14 @@
       "{\"supported\":true}")
     (catch clojure.lang.ExceptionInfo e
       (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))
+;; [DX-R2] Why: the cached row projection compresses repeated IDs/attributes without changing a numeric token.
+;; Rejected: a lossy W0-specific column projection or a new dependency/download.
+(defn compressed-rows [^String text]
+  (let [out (java.io.ByteArrayOutputStream.)]
+    (with-open [gzip (java.util.zip.GZIPOutputStream. out)] (.write gzip (.getBytes text "UTF-8")))
+    (str "{\"gzipRows\":\"" (.encodeToString (java.util.Base64/getEncoder) (.toByteArray out)) "\"}")))
 (defn response
   ([name current input] (response name current input nil))
   ([name current input epoch] (response name current input epoch nil))
   ([name current input epoch recent-state]
-   (admission/execute admission/reads #(if (true? (get input "replicaCapability")) (replica-capability name current input) (build-response name current input epoch recent-state)))))
+   (admission/execute admission/reads #(if (true? (get input "replicaCapability")) (replica-capability name current input) (let [body (build-response name current input epoch recent-state)] (if (and (true? (get input "gzipRows")) (true? (get input "rowPage"))) (compressed-rows body) body))))))
