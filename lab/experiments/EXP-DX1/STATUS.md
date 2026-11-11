@@ -619,13 +619,30 @@ comparison only and the lock is needed.
 **The measurement lock is the bottleneck: DX-H7 waited 112 minutes, DX-B10 over 100.** At most three agents that need the lock
 from now on, and long holds only for things every design needs.
 
+## DX-M1 collector arms (merged 2026-11-11 00:40 UTC; `m1/REPORT.md` section "Collector arms"): burst commits at 10,000 subjects, zero readers
+
+| Write gateway | Gateway pauses: count / longest ms | Transactor longest pause ms | Commit p50 / p99 / max ms | Over 100 ms | Clock-conflict retries |
+| --- | --- | --- | --- | --- | --- |
+| G1 as today (run 1, run 2) | 54 / 35.0; 57 / 37.1 | 63.1; 43.7 | 9.44 / 66.2 / 206; 9.40 / 59.2 / 111 | 17; 1 | 11; 3 |
+| Generational ZGC (run 1, run 2) | 28 / 0.05; 31 / 0.03 | 94.2; 55.2 | 9.66 / 70.0 / 196; 10.82 / 76.4 / 208 | 15; 17 | 8; 8 |
+| Small-footprint G1 | 147 / 104.3 | 59.5 | 9.72 / 267.6 / 1,305 | 64 | 13 |
+
+1. **Burst commit p50 is 9.4 ms with G1 (bar 10).** p99 is 59 to 66 ms (bar 50).
+2. ZGC removes the gateway's pauses but slows the median 2 to 15% and does not improve p99, because **the transactor's own G1
+   pauses (44 to 94 ms) and clock-conflict retries now set the tail**. The small-footprint arm is rejected.
+3. The retries are `ClockConflict`: a commit's client-issued record time was not above the scope's maximum (two clients in
+   the driver), so the commit function rejects it and the client replays. 3 to 13 per burst.
+4. Not measured (lock): transactor with ZGC or a pause target; write gateway on its own CPU.
+
+Leads from this: (a) a pause target or ZGC for the transactor; (b) let the commit function assign the record time when the
+client's is not above the maximum, the way it already assigns positions, instead of rejecting and replaying.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-H8 | P5 jump: preview memo, feed-driven re-evaluation, coalesced publication; publication profile; seal a 10,000-subject W0 seed; 10,000-subject activation | `exp/DX-H8-preview-activation`, `.claude/worktrees/dx-h8` | `.../prompts/DX-H8.md` |
 | DX-R1 | Local copy of current facts in the runtime (bootstrap, follow the feed, freeze), release evaluation from it for one and several candidates, publish only changed outputs; equality gates against the gateway and the full sweep | `exp/DX-R1-replica`, `.claude/worktrees/dx-r1` | `.../prompts/DX-R1.md` |
-| DX-M1 (resumed 23:11 UTC) | Collector arms for the write path, alternating: longest pause under 20 ms through the burst | `exp/DX-M1-stall`, `.claude/worktrees/dx-m1` | `.../prompts/DX-M1-resume1.md` |
 | DX-H7 (resumed 00:06 UTC) | Gate its client and driver changes; writer predecessor-stamp map (one HTTP call per commit at 10,000 subjects) | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7-resume1.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
