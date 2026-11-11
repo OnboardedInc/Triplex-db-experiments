@@ -1368,6 +1368,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const largest = mix?.buckets["bucket:large"];
   const phaseBytes = (s: any) => {
     const idx = ctx.phases.find((p) => p.name === s?.phase)?.idx;
+    if (idx === undefined) return null;
     let sum = 0, count = 0;
     visitPhase(idx, (r, k) => { if (r[R.phase] === idx && verdicts[k] === 0) { sum += r[R.bytes]; count++; } });
     return count ? sum / count : null;

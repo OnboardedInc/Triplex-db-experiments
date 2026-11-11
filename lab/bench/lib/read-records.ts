@@ -64,8 +64,16 @@ export class ReadRecords implements ObservationRecords {
   }
   private flushChunk() {
     if (!this.directory || !this.active) return;
-    fs.writeFileSync(path.join(this.directory, `${this.activeChunk}.f64`), new Uint8Array(this.active.buffer));
-    fs.writeFileSync(path.join(this.directory, `${this.activeChunk}.json`), JSON.stringify(this.strings));
+    // [DX-R3] Why: a kill during the next checkpoint must leave the preceding committed prefix readable.
+    // Rejected: truncating the active chunk in place before state.json advances.
+    for (const [name, bytes] of [
+      [`${this.activeChunk}.f64`, new Uint8Array(this.active.buffer)],
+      [`${this.activeChunk}.json`, JSON.stringify(this.strings)],
+    ] as const) {
+      const file = path.join(this.directory, name);
+      fs.writeFileSync(file + ".tmp", bytes);
+      fs.renameSync(file + ".tmp", file);
+    }
   }
   checkpoint() {
     if (!this.directory) return;

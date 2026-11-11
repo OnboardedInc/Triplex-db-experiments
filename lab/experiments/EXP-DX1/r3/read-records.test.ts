@@ -83,3 +83,31 @@ test("bounded spill survives checkpoint/reopen and reads phase subsets losslessl
     assert(!fs.existsSync(dir));
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
+
+test("abrupt stop between chunk replacement and metadata publication preserves the preceding phase", async () => {
+  const fs = await import("node:fs");
+  const os = await import("node:os");
+  const path = await import("node:path");
+  const { spawnSync } = await import("node:child_process");
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "dxr3-interrupt-"));
+  const dir = path.join(root, "rows");
+  const row = (n: number): ReadRecord => [0, n, 1, -0, n, n/7, 0, 1, `unique-${n}`, 2, 1, 0, null, 0, 1, 0, -1, 0, "replica", "packed", 0];
+  try {
+    const child = spawnSync(process.execPath, ["--experimental-strip-types", "--input-type=module", "-e", `
+      import fs from 'node:fs';
+      import { ReadRecords } from ${JSON.stringify(new URL("../../../bench/lib/read-records.ts", import.meta.url).href)};
+      const row = ${row.toString().replace(': number', '').replace(': ReadRecord', '')};
+      const store = new ReadRecords(${JSON.stringify(dir)});
+      for(let n=0;n<5000;n++) store.push(row(n));
+      store.checkpoint();
+      for(let n=5000;n<7000;n++) store.push(row(n));
+      const rename = fs.renameSync;
+      fs.renameSync = (from,to) => { rename(from,to); if(to.endsWith('/1.f64')) process.kill(process.pid,'SIGKILL'); };
+      store.checkpoint();
+    `], { encoding: "utf8" });
+    assert.equal(child.signal, "SIGKILL", child.stderr);
+    const restored = new ReadRecords(dir, true);
+    assert.equal(restored.length, 5000);
+    assert.deepEqual([...restored], Array.from({ length: 5000 }, (_, n) => row(n)));
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
