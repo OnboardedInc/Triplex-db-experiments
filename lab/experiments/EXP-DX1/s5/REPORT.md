@@ -1,3 +1,4 @@
+Second-part diagnosis in progress on retained seed id 1b8525ba-a1ae-4a81-9299-82e1e9a9f932; prior report below is historical.
 DX-S5 — INCOMPLETE: no sealed 100k seed and no 100k activation. Builder diagnostic; no acceptance promotion.
 Failed seed began df3838d8; log phase f768b4e8; proof/placement ab5329b9. Recovery correction 450c1442; missing-seed guard 199ac5a9.
 T1 PASS on corrected procedure: 1k in two 500-subject chunks with injected AMQ219007/reconnect; 10k in two 5000-subject chunks with a deliberately killed driver/controller and a new resumed hold.
@@ -54,3 +55,6 @@ Evidence: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S5/ — raw comman
 Final T1: proof1000-h.log.gz, proof10000-c.log.gz, proof10000-c-interrupt.log.gz, proof10000-d-resume.log.gz. Failed long run: seed100000-a.log.gz. Retained engine logs: seed-{tx,gww,gwr}-info-a.tar.gz.
 First failures retained: import/store/mount setup, canceled queued holds, 10k-a timeout before final maintenance, log PID sandbox check, head-helper mount, occupied unit helper name.
 Final inventories: zero DX-S5 containers, volumes and networks; no runtime directories remain. Original H5/H8 volumes were never mounted writable or modified. Evidence totals <1 GB compressed.
+
+Second-part audit: readiness.clj compares a fresh d/connect+d/sync database head with the explicit expected head and emits URI/basis; diagnose.sh binds the held slot and exact retained volume-pair identity. This is connectivity evidence, not seed qualification.
+Readiness audit: wait-ready.mjs requires a fresh HTTP 200 with encoded long head >= this attempt checkpoint, target database path and owned network; seed.ts still checks exact head and every world before qualification. No readiness output seals a seed.

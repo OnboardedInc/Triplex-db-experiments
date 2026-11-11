@@ -39,14 +39,20 @@ fi
 durability=$(docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SHOW fsync; SHOW synchronous_commit; SHOW full_page_writes;')
 printf 'durability fsync/synchronous_commit/full_page_writes:\n%s\n' "$durability"
 [[ $durability == $'on\non\non' ]] || { echo 'durability settings refused'; exit 1; }
-docker run -d --pull never -v "${S5_LOGBACK:-$repo/lab/experiments/EXP-DX1/s5/logback.xml}:/opt/datomic/bin/logback.xml:ro" --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1,2,3 --memory 4g --memory-swap 4g -e "JAVA_OPTS=-Xms256m -Xmx3g ${S5_TX_JAVA_EXTRA:-}" -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
+docker run -d --pull never -v "${S5_LOGBACK:-$repo/lab/experiments/EXP-DX1/s5/logback.xml}:/opt/datomic/bin/logback.xml:ro" --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1,2,3 --memory 4g --memory-swap 4g -e "JAVA_OPTS=-Xms256m -Xmx3g ${S5_TX_JAVA_EXTRA:--Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M}" -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
  # [DX-S5] Why: seeding has one JS main thread, leaving two private writer cores without changing evaluation placement.
  # Rejected: serializing writer preparation on core 1 while spare VM CPUs remain idle.
  cpu=4,5; [[ $role == w ]] || cpu=2,3
  host_port=18542; [[ $role == w ]] || host_port=18543
- docker run -d --pull never -v "${S5_LOGBACK:-$repo/lab/experiments/EXP-DX1/s5/logback.xml}:/opt/datomic/bin/logback.xml:ro" --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e "DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g -Dtriplex.codec.spec=/opt/replica-codec-spec.json ${S5_PEER_JAVA_EXTRA:-}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main
+ docker run -d --pull never -v "${S5_LOGBACK:-$repo/lab/experiments/EXP-DX1/s5/logback.xml}:/opt/datomic/bin/logback.xml:ro" --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e "DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=256m -Dtriplex.codec.spec=/opt/replica-codec-spec.json ${S5_PEER_JAVA_EXTRA:--XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M}" -e TX2_ENTITY_CACHE_BYTES=67108864 -e TX2_REACH_SESSION_ENTRIES=65536 -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main
  done
 if [[ ${S5_DIAGNOSTIC:-0} == 1 ]]; then return 0; fi
-docker run --rm --pull never --name "$prefix-copy" --network "$prefix-net" node:22.23.2-bookworm-slim node -e '
-for (const role of ["w","r"]) { let ok=false; for(let i=0;i<180;i++){try{let r=await fetch("http://"+process.argv[1]+"-gw-"+role+":8080/health"); if(r.ok){console.log(await r.text());ok=true;break;}}catch{} await new Promise(r=>setTimeout(r,1000));}if(!ok)process.exit(1);}' "$prefix"
+# [DX-S5] Why: a 2 GiB peer heap OOMed at 80k with a 1 GiB object cache; keep bounded cache headroom.
+# Rejected: giving two peers extra GiB that would displace the 11 GiB evaluation driver from the 24 GiB VM.
+db=; minimum=0
+if [[ $fresh != true ]]; then
+ db=$(node --input-type=module -e 'import {DatabaseScope} from "./packages/core/dist/runtime/index.js";console.log("s2-"+Buffer.from(String(DatabaseScope.test(process.argv[1]))).toString("base64url"))' "$scope")
+ minimum=$(docker run --rm --pull never --name "$prefix-copy" -v "$prefix-tools:/state:ro" node:22.23.2-bookworm-slim node -e 'const fs=require("node:fs"),z=require("node:zlib");console.log(JSON.parse(z.gunzipSync(fs.readFileSync("/state/checkpoint.json.gz"))).position)')
+fi
+bash lab/experiments/EXP-DX1/s5/wait-ready.sh "$prefix" "$db" "$minimum"

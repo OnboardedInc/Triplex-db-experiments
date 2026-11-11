@@ -176,7 +176,20 @@ try {
         endSubjects,
         { position: through, validAt: V_W0 },
         AbortSignal.timeout(1200000),
-        undefined,
+        (records, page) => {
+          // [DX-S5] Why: expose fresh readback progress while a large prefix is checked; this is never a verdict.
+          // Rejected: treating a quiet, heap-stalled gateway as a long successful verification.
+          if (page % 128 === 0 || page === Math.ceil(endSubjects / 64) - 1)
+            console.log(
+              JSON.stringify({
+                event: "fingerprint-progress",
+                endSubjects,
+                page,
+                records: records.length,
+                position: through,
+              }),
+            );
+        },
         4,
       );
       const counts = await comp.storeCounts();

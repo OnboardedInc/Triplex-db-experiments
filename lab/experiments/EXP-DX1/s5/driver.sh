@@ -17,8 +17,9 @@ if [[ $mode == seed ]]; then
  if [[ $(docker inspect --format '{{.State.Running}}' "$prefix-gw-r") == true ]]; then docker stop -t 3 "$prefix-gw-r"; fi
 else
  docker start "$prefix-gw-r"
- docker run --rm --pull never --name "$prefix-copy" --network "$prefix-net" node:22.23.2-bookworm-slim node -e '
- let ok=false; for(let i=0;i<180;i++){try{const r=await fetch("http://"+process.argv[1]+":8080/health");if(r.ok){console.log(await r.text());ok=true;break;}}catch{}await new Promise(r=>setTimeout(r,1000));}if(!ok)process.exit(1);' "$prefix-gw-r"
+ db=$(node --input-type=module -e 'import {DatabaseScope} from "./packages/core/dist/runtime/index.js";console.log("s2-"+Buffer.from(String(DatabaseScope.test(process.argv[1]))).toString("base64url"))' "$scope")
+ minimum=$(docker run --rm --pull never --name "$prefix-copy" -v "$prefix-tools:/state:ro" node:22.23.2-bookworm-slim node -e 'const fs=require("node:fs"),z=require("node:zlib");console.log(JSON.parse(z.gunzipSync(fs.readFileSync("/state/checkpoint.json.gz"))).position)')
+ bash lab/experiments/EXP-DX1/s5/wait-ready.sh "$prefix" "$db" "$minimum" r
 fi
 # [DX-S5] Why: seed preparation uses one main CPU; leave separate cores for the writer peer.
 # Rejected: a saturated one-core writer beside three mostly idle driver cores.

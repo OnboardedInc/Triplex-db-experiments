@@ -166,7 +166,8 @@ maintain() {
  docker exec "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d datomic -c 'VACUUM FULL;' -c 'CHECKPOINT;' -c "SELECT sum(pg_total_relation_size(relid)) AS table_bytes,max(pg_total_relation_size(relid)) AS max_leaf_bytes,count(*) AS leaves,pg_database_size(current_database()) AS database_bytes FROM pg_partition_tree('datomic_kvs') WHERE isleaf;"
  reconnect() {
   docker start "$prefix-tx" "$prefix-gw-w"
-  docker run --rm --pull never --name "$prefix-copy" --network "$prefix-net" node:22.23.2-bookworm-slim node -e 'let ok=false;for(let i=0;i<180;i++){try{const r=await fetch("http://"+process.argv[1]+":8080/health");if(r.ok){console.log(await r.text());ok=true;break;}}catch{}await new Promise(r=>setTimeout(r,1000));}if(!ok)process.exit(1);' "$prefix-gw-w"
+  minimum=$(docker run --rm --pull never --name "$prefix-copy" -v "$prefix-tools:/state:ro" node:22.23.2-bookworm-slim node -e 'const fs=require("node:fs"),z=require("node:zlib");console.log(JSON.parse(z.gunzipSync(fs.readFileSync("/state/checkpoint.json.gz"))).position)')
+  bash lab/experiments/EXP-DX1/s5/wait-ready.sh "$prefix" "$db" "$minimum" w
  }
  reconnect
  # [DX-S5] Why: exercise the observed connection failure once in a bounded proof, without modifying any facts.

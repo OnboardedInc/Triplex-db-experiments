@@ -16,5 +16,7 @@
       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %-10contextName %logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
+  <logger name="datomic.lifecycle" level="INFO"/>
+  <logger name="datomic.log" level="INFO"/>
   <root level="WARN"><appender-ref ref="MAIN"/></root>
 </configuration>
