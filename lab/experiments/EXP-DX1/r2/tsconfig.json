@@ -1,0 +1,10 @@
+{
+  "extends": "../../../bench/tsconfig.json",
+  "include": [
+    "../../../bench/lib/w0-replica*.ts",
+    "run.ts",
+    "corpus-*.ts",
+    "replay-inline.ts",
+    "offline-scale.ts"
+  ]
+}

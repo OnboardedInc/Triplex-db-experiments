@@ -6,11 +6,7 @@ import { createGzip } from "node:zlib";
 import { pipeline } from "node:stream/promises";
 import { seedW0 } from "./w0-seed.ts";
 import { recordReplicaHttp } from "./w0-replica-record.ts";
-import {
-  DatomicClient,
-  Replica,
-  datomicReplicaSource,
-} from "../../../packages/datomic/dist/index.js";
+import { DatomicClient, Replica } from "../../../packages/datomic/dist/index.js";
 import { openComposition } from "./composition.ts";
 import { runtimeApi } from "./triplex.ts";
 import { openBulkCounts } from "../../experiments/EXP-DX1/h6/bulk-counts.ts";
@@ -27,7 +23,7 @@ import {
 import { subjectList } from "./sweep.ts";
 import { evaluateAll } from "./w0-replica.ts";
 import { DomainOracle } from "./w0-gates.ts";
-import { startW0Live, matchW0Live } from "./w0-live.ts";
+import { startW0Live, matchW0Live } from "./w0-replica-live.ts";
 // [DX-R1] Why: this explicit entry point leaves the existing full-sweep gates and H8's path unchanged.
 // Rejected: relabelling old controller PASS rows as replica acceptance.
 export async function runReplicaDriver(argv: string[]) {
@@ -50,14 +46,39 @@ export async function runReplicaDriver(argv: string[]) {
   );
   const db =
     "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
-  const base = datomicReplicaSource(client, db, () => comp.currentPosition()),
+  // [DX-R2] Why: feed publication is already visible on the writer peer; 256 read pulls must not queue its wakeup.
+  // Rejected: sharing the saturated read-peer HTTP queue for both feed and bootstrap.
+  const feedClient = new DatomicClient(comp.backend.url, 35000, 64 * 1024 ** 2, {
+    entityCacheBytes: 1,
+    rowCacheBytes: 1,
+  });
+  const base = Replica.source(client, db, () => comp.currentPosition(), V_W0),
     recordDir = opt("record-dir");
+  base.feed = Replica.source(feedClient, db, () => comp.currentPosition(), V_W0).feed;
   const recorder = recordDir ? recordReplicaHttp(recordDir) : undefined;
   if (recorder)
     for (const method of ["page", "feed"] as const) {
       const original = base[method] as Function;
       (base as any)[method] = (...args: any[]) => recorder.around(() => original(...args));
     }
+  let recordedInline = false,
+    pageReads = 0,
+    feedReads = 0;
+  const originalPage = base.page,
+    originalFeed = base.feed;
+  base.page = (...args) => {
+    pageReads++;
+    return originalPage(...args);
+  };
+  base.feed = async (...args) => {
+    feedReads++;
+    const result = await originalFeed(...args);
+    if (!recordedInline && result.transactions.length) {
+      recordedInline = true;
+      console.log(JSON.stringify({ kind: "inline-feed-sample", request: args, response: result }));
+    }
+    return result;
+  };
   const replica = new Replica(base, V_W0),
     oracle = new DomainOracle();
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
@@ -166,7 +187,12 @@ export async function runReplicaDriver(argv: string[]) {
     let cut = await comp.currentPosition();
     await replica.bootstrap(subjects, cut);
     (globalThis as any).gc?.();
+    const bootstrapImage = (await replica.snapshotAt(cut)).sharedImage();
     report.bootstrap = {
+      initialHeap,
+      indexBytes: bootstrapImage.shared!.index.byteLength,
+      slabBytes: bootstrapImage.shared!.buffers.reduce((n, buffer) => n + buffer.byteLength, 0),
+      pageReads,
       indexHeapDelta: process.memoryUsage().heapUsed - initialHeap,
       wallMs: performance.now() - start,
       bytes: replica.bytes,
@@ -277,6 +303,7 @@ export async function runReplicaDriver(argv: string[]) {
       report.follow = {
         commands,
         cpuSeconds,
+        extraPageReads: pageReads - report.bootstrap.pageReads,
         cpuScope:
           "main thread: feed, need decode and packing; excludes asynchronous evidence compression",
         p99AckToAppliedMs: lags[Math.ceil(lags.length * 0.99) - 1],
@@ -469,11 +496,28 @@ export async function runReplicaDriver(argv: string[]) {
         .sort((a, b) => a - b);
       report.liveFollow = {
         commits: lags.length,
+        p50AckToAppliedMs: lags.length ? lags[Math.ceil(lags.length * 0.5) - 1] : null,
         p99AckToAppliedMs: lags.length ? lags[Math.ceil(lags.length * 0.99) - 1] : null,
       };
     }
     await replica.stop();
+    const currentImage = (await replica.snapshotAt(replica.position)).sharedImage();
+    const retainedImages = [r1Snapshot.sharedImage(), snap.sharedImage(), currentImage];
+    const retainedBuffers = new Set(
+      retainedImages.flatMap((image) => [
+        ...image.shared!.buffers,
+        ...image.entities.map(([, entity]) => entity.buffer),
+      ]),
+    );
+    const retainedIndexes = new Set(retainedImages.map((image) => image.shared!.index));
+    (globalThis as any).gc?.();
     report.evaluation = {
+      retainedDataBytes: [...retainedBuffers].reduce((n, buffer) => n + buffer.byteLength, 0),
+      retainedIndexBytes: [...retainedIndexes].reduce((n, buffer) => n + buffer.byteLength, 0),
+      inputBytes: result.replicaBytes,
+      sharedIndexBytes: snap.sharedImage().shared!.index.byteLength,
+      overlayEntities: snap.sharedImage().entities.length,
+      heapDelta: process.memoryUsage().heapUsed - initialHeap,
       wallMs: result.evaluationWallMs,
       passWallMs: result.passWallMs + report.freezeMs,
       passRate: N / ((result.passWallMs + report.freezeMs) / 1000),
@@ -689,6 +733,13 @@ export async function runReplicaDriver(argv: string[]) {
     if (fs.existsSync("/sys/fs/cgroup/memory.peak"))
       report.cgroupPeakBytes = Number(fs.readFileSync("/sys/fs/cgroup/memory.peak", "utf8"));
     report.fullHistoryCounts = bulkCounts.stats;
+    report.transport = {
+      pageReads,
+      feedReads,
+      feedPeer: "writer",
+      bootstrapPeer: "reader",
+      liveReaders: 256,
+    };
     report.rss = process.memoryUsage().rss;
     report.peakRss = process.resourceUsage().maxRSS * 1024;
     console.log(JSON.stringify({ kind: "result", ...report }));
@@ -699,6 +750,7 @@ export async function runReplicaDriver(argv: string[]) {
     await recorder?.close();
     oracle.close();
     bulkCounts?.close();
+    feedClient.close();
     client.close();
     await comp.close();
   }

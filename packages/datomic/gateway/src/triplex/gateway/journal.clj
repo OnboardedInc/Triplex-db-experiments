@@ -1,5 +1,5 @@
 (ns triplex.gateway.journal
-  (:require [datomic.api :as d] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage]))
+  (:require [clojure.data.json :as json] [datomic.api :as d] [triplex.gateway.lean :as lean] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage]))
 (set! *warn-on-reflection* false)
 ;; [DX-B4-T1] Why: these reads use only immutable indexes; a scope without the write-side proof declines.
 ;; Rejected: reconstructing journals through entity/pull/query or guessing legacy completeness.
@@ -14,6 +14,13 @@
   (if-let [reason (:declined (ex-data e))]
     (let [out (StringBuilder.)] (stats/bump! [:journalDeclines reason] 1) (.append out "{\"declined\":") (reach/append-string! out reason) (.append out "}") (str out))
     (throw e)))
+;; [DX-R2] Why: replacement rows must come from the journal cut, including retired entities and new reference closures.
+;; Rejected: current-head rows (two journals in a page may change the same entity).
+(defn replica-supported! [db name]
+  (supported! db name false)
+  (let [scope (:scope (reach/config name db))]
+    (when-not (= 3 (value db scope :triplex.scope/rows-version)) (reach/decline! "replica-layout"))
+    (when-not (true? (value db scope :triplex.scope/position-regular)) (reach/decline! "replica-positions"))))
 (defn page [conn name input]
   (try
     (let [after (storage/safe-position (get input "after")) limit (get input "limit") wait-ms (get input "waitMs" 0)
@@ -24,9 +31,13 @@
                     (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
                       (get input "basisWaitMs") (fn [_] (d/db conn)) conn) input)
           _ (supported! initial name false)
+          _ (when (true? (get input "replicaRows")) (replica-supported! initial name))
           current (if (and (pos? wait-ms) (<= (storage/head-position name initial) after))
                     (feed/await-db conn (fn [db] (supported! db name false)
-                                         (> (storage/head-position name db) after)) deadline) initial)]
+                                         (> (storage/head-position name db) after)) deadline) initial)
+          ;; [DX-R2] Why: a scope can become unsupported while a long poll waits, even without a new public journal.
+          ;; Rejected: trusting only the eligibility proof from before the wait.
+          _ (when (true? (get input "replicaRows")) (replica-supported! current name))]
       (admission/execute admission/journals (fn []
         (let [;; [DX-B6-5] Why: an explicit basis selects a cut after freshness, rather than exposing later journals.
           ;; Rejected: waiting for R and then enumerating the current head unconditionally.
@@ -48,7 +59,21 @@
         ;; Current rows are exact: supported scopes have never retired or extended a published journal.
         (doseq [[j row] (map-indexed vector (d/datoms db :eavt e :triplex.entity/row))]
           (when (pos? j) (.append out ",")) (reach/append-string! out (:v row)))
-        (.append out "]]"))
+        (.append out "]")
+        (when (true? (get input "replicaRows"))
+          (let [rows (map #(lean/decode (:v %)) (d/datoms db :eavt e :triplex.entity/row))
+                changed (vec (map :value_string (filter #(and (= "_Transaction" (:entity_type %)) (= ":_tx/changed-entity" (:attribute %))) rows)))
+                changes (for [row rows :when (and (= "_Transaction" (:entity_type row)) (= ":_tx/change" (:attribute row)))] (json/read-str (:value_json row)))
+                new-refs (set (for [c changes :when (and (= "assert" (get c "op")) (= "ref" (get-in c ["value" "type"])))] (get-in c ["value" "value"])))
+                _ (when-not (every? string? new-refs) (reach/decline! "invalid-reference"))
+                roots (vec (distinct (concat changed new-refs)))
+                payload (if (empty? changed)
+                          (str "{\"position\":" p ",\"t\":\"" (d/basis-t db) "\",\"reset\":false,\"entities\":[],\"closures\":[]}")
+                          (let [body (reach/build-response name db {"roots" roots "basis" {"recordedPosition" p "validAt" (get input "validAt")}
+                            "shallowRoots" (vec (remove new-refs changed)) "closureRoots" changed "replicaPage" true "rowPage" true "full" true})]
+                            (str "{\"incremental\":true," (subs body 1))))]
+            (.append out ",") (.append out payload)))
+        (.append out "]"))
       (.append out "]}") (str out)))))
     (catch Exception e (declined e))))
 ;; [DX-B4-T3] Why: command identity and current receipt bodies do not depend on record-time monotonicity.

@@ -204,6 +204,10 @@
           base-cfg (config name current epoch)
           cfg (assoc base-cfg :connection-generation epoch :selected-t t :recent-state recent-state :recent-eligible recent-eligible
                 :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])) valid (double (get-in input ["basis" "validAt"]))
+          ;; [DX-R2] Why: inline journals replace changed rows; only newly introduced reference roots need graph expansion.
+          ;; Rejected: repeating every unchanged form/answer entity after a scalar replacement.
+          shallow-roots (set (get input "shallowRoots"))
+          closure-roots (when (contains? input "closureRoots") (set (get input "closureRoots")))
           need (get input "need")
           _ (when (and need (not (and (vector? need) (<= 1 (count need) 50000) (every? string? need) (= (count need) (count (distinct need)))))) (decline! "need"))
           roots (or need (get input "roots"))
@@ -216,7 +220,7 @@
       (when-not (and (vector? roots) (<= 1 (count roots) (if need 50000 5000))) (decline! "roots"))
       ;; [DX-B5-L5] Why: 64 real W0 subjects exceed 10k answer entities; legacy triple requests retain their bound.
       ;; Rejected: silently falling back to many requests for a normal W0 page, or unbounded batch graphs.
-      (when (and row-page? (not need) (> (count roots) 64)) (decline! "row-page-roots"))
+      (when (and row-page? (not (true? (get input "replicaPage"))) (not need) (> (count roots) 64)) (decline! "row-page-roots"))
       (doseq [root roots]
         (when-not (string? root) (decline! "root"))
         (let [queue (ArrayDeque.) seen (HashSet.) order (ArrayList.)]
@@ -227,11 +231,11 @@
                             (let [value (read-entity name db cfg id valid counts)]
                               (.put entities id value)
                               (when (> (.size entities) entity-limit) (decline! "entity-budget")) value))
-                  ^ArrayList refs (if need (ArrayList.) (nth entry 3)) it (.iterator refs)]
+                  ^ArrayList refs (if (or need (and (= id root) (shallow-roots root))) (ArrayList.) (nth entry 3)) it (.iterator refs)]
               (.add order id)
               (while (.hasNext it)
                 (let [ref (.next it)] (when (.add seen ref) (.add queue ref))))))
-          (.add closures [root order])))
+          (when (or (nil? closure-roots) (closure-roots root)) (.add closures [root order]))))
       (let [new-count (long-array 1) reset (and remembered
             (do (let [it (.iterator (.values entities))]
                   (while (.hasNext it)
@@ -271,8 +275,27 @@
     (catch clojure.lang.ExceptionInfo e
       (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))
 
+;; [DX-R2] Why: bootstrap discovers unsupported scopes before allocating a partial local copy.
+;; Rejected: discovering legacy/imported layouts only after following starts.
+(defn replica-capability [name db input]
+  (try
+    (let [cfg (config name db) scope (:scope cfg) v (fn [a] (:v (first (d/datoms db :eavt scope a))))]
+      (when-not (= 3 (v :triplex.scope/rows-version)) (decline! "replica-layout"))
+      (when-not (true? (v :triplex.scope/position-regular)) (decline! "replica-positions"))
+      (when (v :triplex.scope/feed-irregular) (decline! "irregular"))
+      (when-not (= 2 (v :triplex.scope/feed-version)) (decline! "feed-version"))
+      (select-db name db (get input "basis"))
+      "{\"supported\":true}")
+    (catch clojure.lang.ExceptionInfo e
+      (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))
+;; [DX-R2] Why: the cached row projection compresses repeated IDs/attributes without changing a numeric token.
+;; Rejected: a lossy W0-specific column projection or a new dependency/download.
+(defn compressed-rows [^String text]
+  (let [out (java.io.ByteArrayOutputStream.)]
+    (with-open [gzip (java.util.zip.GZIPOutputStream. out)] (.write gzip (.getBytes text "UTF-8")))
+    (str "{\"gzipRows\":\"" (.encodeToString (java.util.Base64/getEncoder) (.toByteArray out)) "\"}")))
 (defn response
   ([name current input] (response name current input nil))
   ([name current input epoch] (response name current input epoch nil))
   ([name current input epoch recent-state]
-   (admission/execute admission/reads #(build-response name current input epoch recent-state))))
+   (admission/execute admission/reads #(if (true? (get input "replicaCapability")) (replica-capability name current input) (let [body (build-response name current input epoch recent-state)] (if (and (true? (get input "gzipRows")) (true? (get input "rowPage"))) (compressed-rows body) body))))))
