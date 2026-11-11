@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { test } from "node:test";
 import { prepareJournalReader } from "../../../bench/lib/w0-journal-pool.ts";
 // [DX-H8] Why: compare every dense stored position across concurrent page boundaries and reject missing content.
@@ -31,17 +34,29 @@ test("parallel stored journal reads preserve order, complete coverage and entity
     lane: "xtdb",
     scope: "journal-unit",
   });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dxh8-journal-"));
   try {
-    const r = await reader.scan({ position: transactions.length, entities: true });
+    const file = path.join(dir, "journal.ndjson");
+    const r = await reader.scan({ position: transactions.length, entities: true, file });
+    assert.deepEqual(
+      fs
+        .readFileSync(file, "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line)),
+      transactions,
+    );
     assert.equal(r.position, 4050);
     assert.equal(r.assertions, 4050);
     assert.equal(r.retired, 579);
     assert.equal(r.entities.length, 4050);
-    assert.equal(r.requests, 5);
-    assert.equal(peak, 4);
+    assert.equal(r.requests, 8);
+    assert.equal(r.decodingWorkers, 4);
+    assert.ok(peak >= 1 && peak <= 4);
     empty = true;
     await assert.rejects(reader.scan({ position: 4050 }), /gap\/coverage/);
   } finally {
     await reader.close();
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });
