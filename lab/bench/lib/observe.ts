@@ -29,6 +29,9 @@ const frozenData = (v: unknown): boolean => {
   );
 };
 export function observe(pr: PullResult): Observed {
+  // [DX-R3] Why: follower hashes every fact in each immutable version; readers add those exact contributions.
+  // Rejected: sampling facts or replacing the independent expected-state comparison.
+  if (pr.observation) return pr.observation;
   const d = new Digest();
   let stamp = -1,
     stamps = 0,

@@ -9,7 +9,7 @@ import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency
  *
  *   node lab/bench/driver.ts --lane xtdb|qlever|datomic --rung 10k|100k|1m|10m --output runs/NS/<id>/ns-report.json
  *     [--profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline-writes FILE]
- *     [--composition public] [--seed ns-v2] [--reader-threads 4] [--seed-budget-s 3600] [--seed-batch-facts 400]
+ *     [--read-path gateway|replica] [--reader-ladder-only] [--composition public] [--seed ns-v2] [--reader-threads 4] [--seed-budget-s 3600] [--seed-batch-facts 400]
  *     [--reader-entity-cache-mib 640] [--no-reader-affinity] [--writer-max-inflight 32] [--sweep-concurrency 16] [--oracle-root DIR]
  *     development only: [--subjects N] [--max-readers N] [--burst-multiplier X] [--level-s S]
  *   paired rounds (EXP-M01, PAIR-0; normally started by lab/bench/duet.ts, two drivers at once):
@@ -45,6 +45,7 @@ import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublication
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
 import { R, observe, type ReadRecord } from "./lib/observe.ts";
+import { ReadRecords, type ObservationRecords } from "./lib/read-records.ts";
 import { buildCase, checkWithOracle, type OracleSampleRead } from "./lib/oracle.ts";
 import { PROFILES, nsPlan, type Profile } from "./lib/phases.ts";
 import { Rng, seedOf } from "./lib/rng.ts";
@@ -86,6 +87,7 @@ if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--o
 const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
+if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 const config = {
   lane,
   rung: devSubjects ? `dev:${rungSubjects}` : rung,
@@ -97,6 +99,8 @@ const config = {
   devOverrides: devFlags,
   composition: opt("composition", "public")!,
   seed: opt("seed", "ns-v2")!,
+  readPath: opt("read-path", "gateway") as "gateway" | "replica",
+  readerLadderOnly: flag("reader-ladder-only"),
   readerThreads: Number(opt("reader-threads", "4")),
   readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", lane === "datomic" ? "640" : "128")),
   writerPredecessorCacheMiB: lane === "datomic" ? WRITER_PREDECESSOR_CACHE_MIB : 0,
@@ -134,6 +138,13 @@ if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) ||
     !Number.isSafeInteger(config.readerThreads) || config.readerThreads < 1 ||
     config.readerThreads * (config.readerEntityCacheMiB + 64) + WRITER_CACHE_BUDGET_MIB > 4096))
   throw new Error(`Reader caches plus ${WRITER_CACHE_BUDGET_MIB} MiB writer cache budgets must total at most 4096 MiB`);
+if (!["gateway", "replica"].includes(config.readPath) || (config.readPath === "replica" && lane !== "datomic"))
+  throw Error("--read-path replica requires lane datomic");
+// [DX-R3] Why: peak RSS must include worker shutdown and all post-run verification/collection work.
+// Rejected: reporting only the sample taken before final analysis and report serialization.
+if (config.readPath === "replica") process.once("exit", () => {
+  console.log(JSON.stringify({ kind: "replica-reader-process-peak", bytes: process.resourceUsage().maxRSS * 1024 }));
+});
 const pairPlan: RoundPlan | null = config.roundPlan ? JSON.parse(fs.readFileSync(path.resolve(config.roundPlan), "utf8")) : null;
 if (pairPlan) {
   if (pairPlan.format !== "tx2-round-plan/1") throw new Error(`--round-plan: format ${pairPlan.format}`);
@@ -243,7 +254,7 @@ const cpuMarks: { t: number; cpu: NodeJS.CpuUsage }[] = [];
 
 const model = new Model(rungSubjects);
 const accounts = accountsFor(rungSubjects);
-const records: ReadRecord[] = [];
+const records: ObservationRecords = config.readPath === "replica" ? new ReadRecords() : [];
 const oracleSamples: any[] = [];
 const workerDiagnostics: { worker: number; t: number; diagnostics: unknown; memory: unknown; threadCpuMs: number | null }[] = [];
 const workerElu: { worker: number; t: number; elu: number }[] = [];
@@ -312,6 +323,16 @@ async function run() {
   // trace commands cannot starve it; a command that outlives the phase is resolved at wind-down.
   const growthComp = await openComposition(config.composition, lane, scopeName);
   report.composition = { name: writer.name, assignments: writer.assignments, backend: writer.backend, scopeKey: `composition:${writer.name}/source:${lane}/scope:${scopeName}` };
+  if (config.readPath === "replica") {
+    // [DX-R3] Why: routing through a runtime index changes the composition, even though writes retain their original opening.
+    // Rejected: describing locally served reads as the source engine's own index.
+    report.composition.readPath = "replica";
+    report.composition.scopeKey += "/read:replica";
+    report.composition.assignments = { ...writer.assignments,
+      current: { lane, role: "process-local packed replica maintained by the ordered journal" },
+      history: { lane, role: "local recent-version window with exact gateway fallback" },
+      replicationEdges: [...writer.assignments.replicationEdges, { from: "source", to: "current", consumerSourceSha256: null, generation: "DX-R3/recent" }] };
+  }
   coordinate = writer.coordinate;
   // [EXP-M01] In paired rounds the coordinator's VM agent reads every container's cgroup counters (lib/noise.ts);
   // the per-second docker stats and watermark polls would only add apparatus load to the engine and the daemon.
@@ -362,7 +383,16 @@ async function run() {
   log(`trace: ${events.length} events over ${traceDurationS}s, digest ${report.trace.digest}, active-set share ${report.trace.generated.activeShare.toFixed(3)}`);
 
   // ---------------------------------------------------------------- reader workers
-  const workerCfg = (w: number) => ({ subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const replicaHost = config.readPath === "replica" ? await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
+    scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux, { position: seed.lastPosition, instant: seed.lastInstant }) : undefined;
+  const replicaLocal = replicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader() : undefined;
+  if (replicaHost && replicaLocal) {
+    replicaLocal.install(replicaHost.index.image());
+    replicaHost.subscribe(delta => replicaLocal.apply(delta));
+    const gatewayPull = aux.pull.bind(aux);
+    aux.pull = (root, basis, between) => replicaLocal.pullAt(root, basis, () => gatewayPull(root, basis), between);
+  }
+  const workerCfg = (w: number) => ({ readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const sweepDone = new Map<number, (v: any) => void>();
@@ -381,12 +411,17 @@ async function run() {
     }
   };
   const startWorker = async (w: number, cfg: any) => {
+    const pendingDeltas: any[] = [];
+    const unsubscribe = replicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
     const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
     const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (workerHttpCounts.push({ worker: w, counts: m.httpCounts }), resolve())));
     await new Promise<void>((resolve, reject) => {
       worker.on("message", (m: any) => { if (m.type === "ready") resolve(); else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
       worker.on("error", reject);
     });
+    unsubscribe?.();
+    for (const delta of pendingDeltas) worker.postMessage({ type: "replica-delta", delta });
+    replicaHost?.subscribe(delta => worker.postMessage({ type: "replica-delta", delta }));
     worker.on("message", onWorkerMessage(w, worker));
     return { worker, stopped: stoppedP };
   };
@@ -496,7 +531,7 @@ async function run() {
     if (oracleRecordSet.has(ev.subject))
       recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
     if (ev.stream === "background") {
-      const p = feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; records.push(row); }) : ryow(aux, ev.subject, receipt);
+      const p = !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; records.push(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost);
       ryowPending.add(p);
       void p.finally(() => ryowPending.delete(p));
     }
@@ -646,7 +681,7 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
-  const plan = nsPlan(profile, config.zeroReaders).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
+  const plan = nsPlan(profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   const phases: any[] = [];
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
   // Rejected: issuing maintenance after readers stop.
@@ -689,6 +724,7 @@ async function run() {
     const historyIndex = indexClient && /^p4h(1|3|10)$/.test(spec.name)
       ? await requestIndex(indexClient, indexDb, spec.name, now, 60_000) : null;
     if (historyIndex) datomicMaintenanceJobs.push(historyIndex);
+    const phaseCpuStart = process.cpuUsage();
     const start = now();
     const entry: any = { historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
@@ -710,6 +746,8 @@ async function run() {
       }
     }
     entry.end = now();
+    const phaseCpu = process.cpuUsage(phaseCpuStart);
+    entry.clientCpuMs = (phaseCpu.user + phaseCpu.system) / 1000;
     await indexJob;
     entry.traceEndS = (entry.end - traceStart) / 1000;
     entry.overlapsBurst = overlapsBurst(entry.traceStartS, entry.traceEndS, params);
@@ -758,6 +796,10 @@ async function run() {
   await Promise.race([Promise.all(stopped), sleep(40_000)]);
   for (const w of workers) await w.terminate();
   clearInterval(basisTimer);
+  if (replicaHost) report.replica = { copyBytes: replicaHost.replica.bytes, historyBytes: replicaHost.index.historyBytes,
+    floor: replicaHost.index.floor, position: replicaHost.index.position, positionWindow: replicaHost.index.positions,
+    historyBudgetBytes: replicaHost.index.maxBytes, peakProcessBytesBeforeAnalysis: process.resourceUsage().maxRSS * 1024 };
+  await replicaHost?.close();
   // Growth commands that outlived their phase: wait for them, then fold any that committed into the model.
   for (const late of lateGrowth) {
     await Promise.race([late.pending, sleep(60_000)]);
@@ -814,9 +856,12 @@ async function run() {
   report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : finalPosition === null ? { status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) } : runOracle(finalPosition, lastAcked);
   // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
   // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
-  const pullCalls = records.filter(r => r[R.error] === null).map(r => r[R.roundTrips]);
-  report.pullRoundTrips = { pulls: pullCalls.length, mean: mean(pullCalls),
-    distribution: countBy(pullCalls.map(String)), unit: "public Triples service calls; see httpRequests for actual HTTP" };
+  let pulls = 0, roundTripSum = 0;
+  const roundTripDistribution: Record<string, number> = {};
+  records.forEach(r => { if (r[R.error] === null) { pulls++; roundTripSum += r[R.roundTrips]; const key = String(r[R.roundTrips]); roundTripDistribution[key] = (roundTripDistribution[key] ?? 0) + 1; } });
+  report.pullRoundTrips = { pulls, mean: pulls ? roundTripSum / pulls : null,
+    distribution: roundTripDistribution, unit: "public Triples service calls; see httpRequests for actual HTTP" };
+  if (records instanceof ReadRecords) report.observationStorage = { format: "lossless Float64 tuples and interned strings", records: records.length, encodedBytes: records.encodedBytes, strings: records.stringCount };
   report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
   report.engineSamples = engineSamples;
   if (feedFailure) {
@@ -824,7 +869,7 @@ async function run() {
     report.invalidReasons = [...(report.invalidReasons ?? []), `Feed consumer failed: ${String(feedFailure)}`];
     process.exitCode = 1;
   }
-  const incompleteHistory = !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
+  const incompleteHistory = !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
   if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");
   if (finalizationErrors.length) {
     report.invalidReasons = [...(report.invalidReasons ?? []), ...finalizationErrors];
@@ -1014,8 +1059,8 @@ function overlapsBurst(fromS: number, toS: number, p: TraceParams) {
   for (let t = p.firstBurstAtS; t < toS; t += p.burstPeriodS) if (t + p.burstDurationS > fromS) return true;
   return false;
 }
-async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt) {
-  const basis = { recordedAt: receipt.instant, validAt: Math.floor(now()) };
+async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt, replica = false) {
+  const basis = { ...(replica ? { recordedPosition: receipt.position } : {}), recordedAt: receipt.instant, validAt: Math.floor(now()) };
   const start = now();
   const t = performance.now();
   try {
@@ -1092,6 +1137,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const routes: Record<string, number> = {};
     const languages: Record<string, number> = {};
     let waited = 0;
+    const watermarkWait = new Histogram();
     const buckets: Record<string, Histogram> = {};
     const bytesBy: Record<string, number[]> = {};
     records.forEach((r, k) => {
@@ -1105,6 +1151,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       routes[r[R.route]] = (routes[r[R.route]] ?? 0) + 1;
       languages[r[R.language]] = (languages[r[R.language]] ?? 0) + 1;
       if (r[R.waitedMs] > 0) waited++;
+      watermarkWait.recordMs(r[R.waitedMs]);
       if (r[R.split] > 0) { splitReads++; if (r[R.split] === 2) { splitForced++; if (v.ok) splitCorrect++; } }
       if (v.ok) {
         const facts = worldFactsOf(r[R.subject], accounts);
@@ -1134,13 +1181,15 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       reads, correct, violations, errors, goodputPerS: correct / secs, read: read.summary(),
       hotShare: reads ? hotReads / reads : null, basisMix: { latest: byBasis[0], lastHour: byBasis[1], pastValidTime: byBasis[2] },
       split: { reads: splitReads, straddledATraceCommand: splitForced, straddledCorrect: splitCorrect },
-      routing: { routes, languages, fallbackShare: reads ? (routes["fallback"] ?? 0) / reads : null, waitedReads: waited, watermarkWaitMs: 10 },
+      routing: { routes, languages, fallbackShare: reads ? (routes["fallback"] ?? 0) / reads : null, localShare: reads ? (routes["replica"] ?? 0) / reads : null, waitedReads: waited, watermarkWait: watermarkWait.summary(), watermarkWaitMs: 10 },
       buckets: Object.fromEntries(Object.entries(buckets).map(([k, h]) => [k, { ...h.summary(), meanBytes: mean(bytesBy[k]!) }])),
       writer: { commits: commits.length, commit: commit.summary(), maxLatencyMs: commits.length ? Math.max(...commits.map((c) => c.latencyMs)) : null, matchedZeroReader: matched },
       feedLag: lag.summary(),
       maintenanceEvents: maint,
       watermarks: marks.length ? { source: { min: coordinate(Math.min(...marks)), max: coordinate(Math.max(...marks)) } } : null,
-      client: { workerEluMean, maxWorkerElu, mainElu: mainEluMean, saturated: (maxWorkerElu ?? 0) > 0.9 || (mainEluMean ?? 0) > 0.9 },
+      client: { workerEluMean, maxWorkerElu, mainElu: mainEluMean,
+        processCpuMsPerLocalReadUpperBound: (routes["replica"] ?? 0) > 0 ? phase.clientCpuMs / routes["replica"] : null,
+        saturated: (maxWorkerElu ?? 0) > 0.9 || (mainEluMean ?? 0) > 0.9 },
       engine: { containers: Object.fromEntries(containers.map(name => [name, { cpuPercentMean: mean(eng.map(e => e.containers[name]?.cpuPercent).filter((n): n is number => n !== undefined)) }])), cpuPercentMean: mean(eng.map((e) => e.cpuPercent)), samples: eng.length, peakMemBytes: eng.length ? Math.max(...eng.map((e) => e.memBytes)) : null },
       _read: read,
       _commit: commit,
@@ -1178,7 +1227,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("NS-P1-RECOVERY-MS", recovery?.recoveredAfterMs ?? null, "<= 60000", recovery ? recovery.recoveredAfterMs !== null && recovery.recoveredAfterMs <= 60_000 : null, recovery?.note ?? undefined),
       bar("1.1 P1.1 hot-set share of reads (min over ladder levels)", ladder.length ? Math.min(...ladder.map((s) => s.hotShare ?? 0)) : null, ">= 0.5", ladder.length ? ladder.every((s) => (s.hotShare ?? 0) >= 0.5) : null),
       bar("1.1 P1.2 split reads straddling a frozen-trace command, all correct", ladder.reduce((s, x) => s + x.split.straddledATraceCommand, 0), "> 0 and all correct", ladder.length ? ladder.some((s) => s.split.straddledATraceCommand > 0) && ladder.every((s) => s.split.straddledATraceCommand === s.split.straddledCorrect) : null, "step 1 before the trace command's ACK, step 2 after; the driver adds no writes (RULINGS Q31b)"),
-      bar("4.1.5 fallback share per window (reported)", ladder.map((s) => s.routing.fallbackShare), "reported", null, "one-engine composition: every read is served by the source of truth's own surface"),
+      bar("4.1.5 fallback share per window (reported)", ladder.map((s) => s.routing.fallbackShare), "reported", null, "Replica-eligible reads are local; unresolved cuts use the gateway"),
       bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every window >= 1", ladder.length ? ladder.every((s) => s.maintenanceEvents >= 1) : null, lane === "datomic" ? "completed request-index job with request/completion timestamps inside the measured window" : "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
     ],
   };
@@ -1191,9 +1240,11 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const b256 = bands(in256);
   const byOutcome = countBy(writes.filter((w) => !w.resend).map((w) => `${w.stream}:${w.outcome ?? "unaccounted"}`));
   const unaccounted = writes.filter((w) => (w.outcome ?? "unaccounted") === "unaccounted").length + ctx.pendingAtEnd;
-  const ryowRows = records.map((r, k) => ({ r, v: verdicts[k]! })).filter((x) => x.r[R.phase] === PHASE_RYOW);
+  const ryowRows: { r: ReadRecord; v: ReturnType<typeof judgeRead> }[] = [];
+  records.forEach((r, k) => { if (r[R.phase] === PHASE_RYOW) ryowRows.push({ r, v: verdicts[k]! }); });
   const ryowHist = new Histogram();
-  for (const x of ryowRows) ryowHist.recordMs(x.r[R.latency]);
+  const ryowWait = new Histogram();
+  for (const x of ryowRows) { ryowHist.recordMs(x.r[R.latency]); ryowWait.recordMs(x.r[R.waitedMs]); }
   const ryowOk = ryowRows.filter((x) => x.v.ok).length;
   const dupConsidered = resends.filter((r) => r.result !== "original-not-committed");
   const dupOk = dupConsidered.filter((r) => r.result === "already-committed-original" || r.result === "resolved-by-command").length;
@@ -1204,7 +1255,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const p2 = {
     bandsAtL256: b256, bandsAll: bands(committed), bandsSteady: bands(committed.filter((w) => !w.burst)), bandsBurst: bands(committed.filter((w) => w.burst)),
     accounting: { byStreamAndOutcome: byOutcome, resendsByResult: countBy(resends.map((r) => r.result)), unaccounted, pendingAtEnd: ctx.pendingAtEnd, errorTags: countBy(writes.flatMap((w) => w.tags ?? [])) },
-    readYourOwnWrite: { pulls: ryowRows.length, correct: ryowOk, pull: ryowHist.summary(), failures: ryowRows.filter((x) => !x.v.ok).slice(0, 5).map((x) => ({ kind: x.v.kind, subject: x.r[R.subject], position: x.r[R.basisPosition] })) },
+    readYourOwnWrite: { pulls: ryowRows.length, correct: ryowOk, pull: ryowHist.summary(), watermarkWait: ryowWait.summary(), routes: countBy(ryowRows.map(x => x.r[R.route])), failures: ryowRows.filter((x) => !x.v.ok).slice(0, 5).map((x) => ({ kind: x.v.kind, subject: x.r[R.subject], position: x.r[R.basisPosition] })) },
     duplicates: { resends: resends.length, considered: dupConsidered.length, returnedOriginal: dupOk },
     lostAck: { simulated: lostAck.length, returnedOriginal: lostOk, retryTags: countBy(lostAck.map((r) => r.retryTag)) },
     breakdown: { units: "ms", note: "driverOwn includes offer queueing, all post-transact completion work (including after ACK), and durable publication witness inside transact; medians are per-command sums, not sums of medians; all latency bars remain unchanged",
@@ -1297,7 +1348,8 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   let p5: any = { status: "not-run" };
   if (sweepPhase) {
     const s = sweepPhase.sweep;
-    const rows = records.map((r, k) => ({ r, v: verdicts[k]! })).filter((x) => x.r[R.phase] === sweepPhase.idx + SWEEP_PHASE_OFFSET);
+    const rows: { r: ReadRecord; v: ReturnType<typeof judgeRead> }[] = [];
+    records.forEach((r, k) => { if (r[R.phase] === sweepPhase.idx + SWEEP_PHASE_OFFSET) rows.push({ r, v: verdicts[k]! }); });
     const h = new Histogram();
     for (const x of rows) h.recordMs(x.r[R.latency]);
     const pulled = new Set(rows.map((x) => x.r[R.subject]));
@@ -1328,7 +1380,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   report.readerDiagnostics = workerDiagnostics;
   report.client = { series: {main:mainElu,readers:workerElu},
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
-    saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
+    peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
   report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
   report.compositionIdentity = { ...report.composition, watermarkSamples: watermarkSamples.length, note: "image digest, config hash and slot per assignment are bound by the gate (lab/bin/gate.mjs NS)" };

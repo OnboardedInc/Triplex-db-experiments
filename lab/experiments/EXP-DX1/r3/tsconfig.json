@@ -1,0 +1,4 @@
+{
+  "extends": "../../../bench/tsconfig.json",
+  "include": ["../../../bench/lib/replica-reads.ts", "../../../bench/reader-worker.ts", "*.ts"]
+}
