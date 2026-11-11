@@ -142,8 +142,8 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     }
   }
 
-  let localReads = 0;
   async function loop(id: number) {
+    let localReads = 0;
     const rng = new Rng(seedOf(`reader:${cfg.seed}:${cfg.worker}:${id}`));
     running++;
     try {
@@ -159,7 +159,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
         await readOnce(picked.subject, basis, kind, position, phase, { keepRows: oracle, straddleSeq, hotPick: picked.hotPick });
         // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
         // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
-        if (replica && ++localReads % 32 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+        if (replica && ++localReads % 8 === 0) await new Promise<void>(resolve => setImmediate(resolve));
       }
     } finally {
       running--;

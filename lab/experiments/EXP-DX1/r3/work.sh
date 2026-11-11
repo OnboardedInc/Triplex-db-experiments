@@ -4,6 +4,7 @@
 set -euo pipefail
 prefix=${DX_R3_PREFIX:?}; config=${DX_R3_OPERATIONAL:?}; mode=${DX_R3_MODE:?}; repo=$PWD
 [[ $prefix == tx2-dxr3-* ]] || exit 2
+git rev-parse HEAD
 # [DX-R3] Why: the VM shares the project tree; arbitrary host /tmp binds are not guaranteed shared.
 # Rejected: assuming the guest can see a macOS temporary path.
 config="$repo/lab/experiments/EXP-DX1/r3/.runtime-$prefix"
@@ -57,7 +58,7 @@ for (const role of ["w","r"]) { let ok=false; for(let i=0;i<180;i++){try{const r
 if [[ $mode == differential ]]; then
   command=(node --experimental-strip-types lab/experiments/EXP-DX1/r3/differential.ts)
 else
-  command=(node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 256 --burst-multiplier 1 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --output runs/DX-R3-vm/ns-report.json)
+  command=(node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 256 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --output runs/DX-R3-vm/ns-report.json)
 fi
 docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 8g --memory-swap 8g \
   -v "$repo:$repo:ro" -v "$prefix-driver:$repo/runs/DX-R3-vm" -w "$repo" \
