@@ -41,7 +41,13 @@ printf '{"id":"DX-S5","pid":%s,"kind":"seed-%s"}\n' "$$" "$n" > "$lock/owner.jso
 git diff --quiet && git diff --cached --quiet || { echo 'dirty source refused'; exit 2; }
 git rev-parse HEAD
 seconds=1440; [[ $n != 100000 ]] || seconds=17900
-(sleep "$seconds"; kill -TERM $$) & timer=$!
+# [DX-S5] Why: Bash defers traps while waiting on a foreground Docker client; end the client before signalling its supervisor.
+# Rejected: TERM alone (a long seed could keep the measurement lock beyond its deadline).
+abort_hold() {
+ docker rm -f "$prefix-driver" "$prefix-peer" "$prefix-copy" "$prefix-gw-r" "$prefix-gw-w" "$prefix-tx" "$prefix-pg" 2>/dev/null || true
+ kill -TERM $$
+}
+(sleep "$seconds"; abort_hold) & timer=$!
 [[ -z $(docker ps -aq --filter "name=^/$prefix-") ]] || exit 2
 fresh=true
 if docker volume inspect "$prefix-pg-data" >/dev/null 2>&1; then echo 'existing seed refused'; exit 2; fi
@@ -52,11 +58,11 @@ docker volume create "$prefix-tools"
 (
  while true; do
   mac=$(free_mac)
-  vm=$(docker run --rm --pull never --name "$prefix-budget" -v "$prefix-pg-data:/data:ro" postgres:17-alpine sh -c 'df -Pk /data | tail -1; du -sk /data') || { kill -TERM $$; exit 1; }
+  vm=$(docker run --rm --pull never --name "$prefix-budget" -v "$prefix-pg-data:/data:ro" postgres:17-alpine sh -c 'df -Pk /data | tail -1; du -sk /data') || { abort_hold; exit 1; }
   echo "disk $(date -u +%FT%TZ) macFreeKiB=$mac vm=$vm"
   docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} memory={{.MemUsage}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" "$prefix-driver" 2>/dev/null || true
   vmfree=$(echo "$vm" | awk 'NR==1 {print $4}')
-  (( mac >= 15728640 && vmfree >= 5242880 )) || { kill -TERM $$; exit 1; }
+  (( mac >= 15728640 && vmfree >= 5242880 )) || { abort_hold; exit 1; }
   sleep 10
  done
 ) & watcher=$!
