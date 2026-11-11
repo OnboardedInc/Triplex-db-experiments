@@ -8,13 +8,18 @@ kind=${1:?functional|medium|real}; prefix=${2:?prefix}; shift 2
 if [[ $kind == pair ]]; then
   root=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H4}
   duration=${DX_MATCH_DURATION_S:-900}
-  bash "$0" real "$prefix-zero" "$@" --zero-readers --match-duration-s "$duration"
+  # [DX-R3] Why: a parent cancelled while waiting for a child arm must stop that same owned child before returning.
+  # Rejected: leaving a queued real-arm shell orphaned after the pair's heavy wrapper receives TERM.
+  pair_child=
+  trap 'if [[ -n $pair_child ]]; then kill -TERM "$pair_child" 2>/dev/null || true; wait "$pair_child" || true; fi; exit 143' TERM INT
+  pair_arm() { "$@" & pair_child=$!; wait "$pair_child"; pair_child=; }
+  pair_arm bash "$0" real "$prefix-zero" "$@" --zero-readers --match-duration-s "$duration"
   baseline="$root/$prefix-zero/driver/ns-writes.jsonl"
   [[ -s $baseline ]] || exit 1
   mkdir -p "$root/$prefix-ladder/input"
   cp "$baseline" "$root/$prefix-ladder/input/ns-writes.jsonl"
   cp "$root/$prefix-zero/driver/ns-report.json" "$root/$prefix-ladder/input/ns-report.json"
-  bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl" --match-duration-s "$duration"
+  pair_arm bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl" --match-duration-s "$duration"
   exit
 fi
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
