@@ -40,7 +40,7 @@ cleanup() {
  done
  for role in tx gw-w; do
    if [[ -s $out/$role.jfr ]]; then
-     docker run --rm --pull never --name "$prefix-profile" --network none -v "$out:/recording:ro" --entrypoint /opt/java/openjdk/bin/jfr tx2-datomic:1.0.7745-da00 print --json --events jdk.ExecutionSample,jdk.NativeMethodSample /recording/$role.jfr 2> "$out/$role-jfr-error.txt" | gzip -1 -n > "$out/$role-samples.json.gz" || true
+     docker run --rm --pull never --name "$prefix-profile" --network none -v "$out:/recording:ro" --entrypoint /opt/java/openjdk/bin/jfr tx2-datomic:1.0.7745-da00 print --json --stack-depth 256 --events jdk.ExecutionSample,jdk.NativeMethodSample /recording/$role.jfr 2> "$out/$role-jfr-error.txt" | gzip -1 -n > "$out/$role-samples.json.gz" || true
    fi
  done
  if [[ $keep_seed == true ]]; then

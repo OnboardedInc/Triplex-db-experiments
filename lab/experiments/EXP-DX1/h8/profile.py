@@ -31,7 +31,7 @@ r = json.loads((root / 'driver/receipt.json').read_text())
 metrics = r.get('sweep', {}).get('metrics', [])
 intervals = [(m['timing'].get('publicationStartedAtEpochMs', m['timing']['publicationAckAtEpochMs'] - m['timing']['publishCommitMs']), m['timing']['publicationAckAtEpochMs']) for m in metrics if 'publishCommitMs' in m['timing']]
 for role in ['tx', 'gw-w']:
-    f = root / (role + '-samples.json')
+    f = root / (role + ('-samples-full.json' if '--full' in sys.argv[2:] else '-samples.json'))
     if not f.exists(): f = f.with_suffix(f.suffix + '.gz')
     if not f.exists():
         print(role, 'NO RECORDING'); continue
