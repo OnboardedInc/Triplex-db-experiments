@@ -1,14 +1,18 @@
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import { decodeEntity, type ReachWire } from "../reach.js";
+import type { DatomicClient } from "../DatomicClient.js";
+import { inlineSource } from "./inlineSource.js";
 import type { SweepRow } from "../sweepRows.js";
 import { packEntity, unpackEntity, type PackedEntity } from "./packed.js";
 
 export interface ReplicaJournal {
   readonly position: number;
   readonly entities: readonly string[];
+  readonly replacement?: ReachWire;
 }
 export interface ReplicaSource {
   head(): Promise<number>;
+  capability?(basis: ResolvedTemporalBasis): Promise<string | undefined>;
   page(roots: readonly string[], basis: ResolvedTemporalBasis, need?: boolean): Promise<ReachWire>;
   feed(
     after: number,
@@ -17,6 +21,12 @@ export interface ReplicaSource {
   ): Promise<{ head: number; transactions: readonly ReplicaJournal[] }>;
 }
 export class ReplicaInvalid extends Error {}
+export class ReplicaUnsupportedScope extends ReplicaInvalid {
+  override readonly name = "ReplicaUnsupportedScope";
+  constructor(readonly reason: string) {
+    super("Unsupported replica scope: " + reason);
+  }
+}
 const position = (p: number) => {
   if (!Number.isSafeInteger(p) || p < 0) throw new ReplicaInvalid("Invalid position");
 };
@@ -62,6 +72,14 @@ export class ReplicaSnapshot {
   }
 }
 export class Replica {
+  static source(
+    client: DatomicClient,
+    db: string,
+    head: () => Promise<number>,
+    validAt: number,
+  ): ReplicaSource {
+    return inlineSource(client, db, head, validAt);
+  }
   private entities = new Map<string, PackedEntity>();
   private watermark = 0;
   private valid = false;
@@ -144,78 +162,87 @@ export class Replica {
         { recordedPosition: p, validAt: this.validAt },
         need,
       );
-      if (
-        response.declined !== undefined ||
-        response.position !== p ||
-        !/^\d+$/.test(response.t) ||
-        typeof response.reset !== "boolean" ||
-        !Array.isArray(response.entities) ||
-        !Array.isArray(response.closures) ||
-        response.closures.length !== batch.length
-      )
-        throw new ReplicaInvalid("Page declined or basis/shape mismatch");
-      const received = new Set<string>();
-      for (const entry of response.entities) {
-        if (
-          !Array.isArray(entry) ||
-          entry.length !== 3 ||
-          typeof entry[0] !== "string" ||
-          !Number.isSafeInteger(entry[1]) ||
-          entry[1] < 0 ||
-          !Array.isArray(entry[2]) ||
-          received.has(entry[0])
-        )
-          throw new ReplicaInvalid("Incomplete or duplicate entity");
-        const [id, rev, wire] = entry as [string, number, unknown[]];
-        const decoded = decodeEntity(id, rev, wire);
-        const byId = new Map(decoded.storedRows.map((r) => [r.id, r]));
-        const rows = decoded.rows.map((r): SweepRow => {
-          const stored = byId.get(r.id)!;
-          if (
-            !Number.isSafeInteger(stored.recorded_position) ||
-            stored.recorded_position < 0 ||
-            stored.recorded_position > p
-          )
-            throw new ReplicaInvalid("Row beyond cut");
-          return {
-            id: r.id,
-            entityId: id,
-            attribute: r.attribute,
-            value: r.value,
-            position: stored.recorded_position,
-            validFrom: stored.valid_from,
-            ...(stored.valid_to === null ? {} : { validTo: stored.valid_to }),
-          };
-        });
-        const packed = packEntity(rev, rows),
-          previous = into.get(id);
-        // [DX-R1] Why: overlapping bootstrap pages must agree at their pinned cut.
-        // Rejected: last-page-wins (would conceal incoherent responses).
-        if (previous && previous.revision === rev && !equalBytes(previous.buffer, packed.buffer))
-          throw new ReplicaInvalid("Revision contents changed");
-        into.set(id, packed);
-        received.add(id);
-      }
-      response.closures.forEach(([root, ids], n) => {
-        if (
-          root !== batch[n] ||
-          !Array.isArray(ids) ||
-          !ids.includes(root) ||
-          new Set(ids).size !== ids.length ||
-          ids.some((id) => !received.has(id))
-        )
-          throw new ReplicaInvalid("Closure coverage mismatch");
-      });
-      const missing = new Set<string>();
-      for (const id of received)
-        for (const r of unpackEntity(id, into.get(id)!, this.validAt))
-          if (r.value.type === "ref" && !received.has(r.value.value)) {
-            if (!need) throw new ReplicaInvalid("Reference coverage mismatch");
-            if (!into.has(r.value.value) && !this.entities.has(r.value.value))
-              missing.add(r.value.value);
-          }
-      if (missing.size) await this.load([...missing], p, into, true);
+      await this.acceptPage(response, batch, p, into, need);
     }
+  }
+  private async acceptPage(
+    response: ReachWire,
+    batch: readonly string[],
+    p: number,
+    into: Map<string, PackedEntity>,
+    need: boolean,
+  ) {
+    if (
+      response.declined !== undefined ||
+      response.position !== p ||
+      !/^\d+$/.test(response.t) ||
+      typeof response.reset !== "boolean" ||
+      !Array.isArray(response.entities) ||
+      !Array.isArray(response.closures) ||
+      response.closures.length !== batch.length
+    )
+      throw new ReplicaInvalid("Page declined or basis/shape mismatch");
+    const received = new Set<string>();
+    for (const entry of response.entities) {
+      if (
+        !Array.isArray(entry) ||
+        entry.length !== 3 ||
+        typeof entry[0] !== "string" ||
+        !Number.isSafeInteger(entry[1]) ||
+        entry[1] < 0 ||
+        !Array.isArray(entry[2]) ||
+        received.has(entry[0])
+      )
+        throw new ReplicaInvalid("Incomplete or duplicate entity");
+      const [id, rev, wire] = entry as [string, number, unknown[]];
+      const decoded = decodeEntity(id, rev, wire);
+      const byId = new Map(decoded.storedRows.map((r) => [r.id, r]));
+      const rows = decoded.rows.map((r): SweepRow => {
+        const stored = byId.get(r.id)!;
+        if (
+          !Number.isSafeInteger(stored.recorded_position) ||
+          stored.recorded_position < 0 ||
+          stored.recorded_position > p
+        )
+          throw new ReplicaInvalid("Row beyond cut");
+        return {
+          id: r.id,
+          entityId: id,
+          attribute: r.attribute,
+          value: r.value,
+          position: stored.recorded_position,
+          validFrom: stored.valid_from,
+          ...(stored.valid_to === null ? {} : { validTo: stored.valid_to }),
+        };
+      });
+      const packed = packEntity(rev, rows),
+        previous = into.get(id);
+      // [DX-R1] Why: overlapping bootstrap pages must agree at their pinned cut.
+      // Rejected: last-page-wins (would conceal incoherent responses).
+      if (previous && previous.revision === rev && !equalBytes(previous.buffer, packed.buffer))
+        throw new ReplicaInvalid("Revision contents changed");
+      into.set(id, packed);
+      received.add(id);
+    }
+    response.closures.forEach(([root, ids], n) => {
+      if (
+        root !== batch[n] ||
+        !Array.isArray(ids) ||
+        !ids.includes(root) ||
+        new Set(ids).size !== ids.length ||
+        ids.some((id) => !received.has(id))
+      )
+        throw new ReplicaInvalid("Closure coverage mismatch");
+    });
+    const missing = new Set<string>();
+    for (const id of received)
+      for (const r of unpackEntity(id, into.get(id)!, this.validAt))
+        if (r.value.type === "ref" && !received.has(r.value.value)) {
+          if (!need) throw new ReplicaInvalid("Reference coverage mismatch");
+          if (!into.has(r.value.value) && !this.entities.has(r.value.value))
+            missing.add(r.value.value);
+        }
+    if (missing.size) await this.load([...missing], p, into, true);
   }
   bootstrap(roots: readonly string[], p?: number): Promise<void> {
     return this.exclusive(async () => {
@@ -224,6 +251,11 @@ export class Replica {
         this.valid = false;
         const cut = p ?? (await this.source.head());
         position(cut);
+        const unsupported = await this.source.capability?.({
+          recordedPosition: cut,
+          validAt: this.validAt,
+        });
+        if (unsupported !== undefined) throw new ReplicaUnsupportedScope(unsupported);
         if (p === undefined && cut < this.watermark)
           throw new ReplicaInvalid("Rebuild head regressed");
         const unique = [...new Set(roots)];
@@ -270,7 +302,9 @@ export class Replica {
         // [DX-R1] Why: the journal has logical changes, but not the physical revision/complete current row set.
         // Rejected: guessing a new revision or applying a partial retraction; refresh only changed closures at the exact cut.
         const changes = new Map<string, PackedEntity>();
-        await this.load(tx.entities, tx.position, changes, true);
+        if (tx.replacement !== undefined)
+          await this.acceptPage(tx.replacement, tx.entities, tx.position, changes, false);
+        else await this.load(tx.entities, tx.position, changes, true);
         for (const [id, e] of changes) this.entities.set(id, e);
         this.advance(tx.position);
       }

@@ -50,7 +50,7 @@ export async function runReplicaDriver(argv: string[]) {
   );
   const db =
     "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
-  const base = datomicReplicaSource(client, db, () => comp.currentPosition()),
+  const base = Replica.source(client, db, () => comp.currentPosition(), V_W0),
     recordDir = opt("record-dir");
   const recorder = recordDir ? recordReplicaHttp(recordDir) : undefined;
   if (recorder)
@@ -469,6 +469,7 @@ export async function runReplicaDriver(argv: string[]) {
         .sort((a, b) => a - b);
       report.liveFollow = {
         commits: lags.length,
+        p50AckToAppliedMs: lags.length ? lags[Math.ceil(lags.length * 0.5) - 1] : null,
         p99AckToAppliedMs: lags.length ? lags[Math.ceil(lags.length * 0.99) - 1] : null,
       };
     }

@@ -189,7 +189,7 @@
       (when-not (and (vector? roots) (<= 1 (count roots) (if need 50000 5000))) (decline! "roots"))
       ;; [DX-B5-L5] Why: 64 real W0 subjects exceed 10k answer entities; legacy triple requests retain their bound.
       ;; Rejected: silently falling back to many requests for a normal W0 page, or unbounded batch graphs.
-      (when (and row-page? (not need) (> (count roots) 64)) (decline! "row-page-roots"))
+      (when (and row-page? (not (true? (get input "replicaPage"))) (not need) (> (count roots) 64)) (decline! "row-page-roots"))
       (doseq [root roots]
         (when-not (string? root) (decline! "root"))
         (let [queue (ArrayDeque.) seen (HashSet.) order (ArrayList.)]
@@ -244,8 +244,21 @@
     (catch clojure.lang.ExceptionInfo e
       (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))
 
+;; [DX-R2] Why: bootstrap discovers unsupported scopes before allocating a partial local copy.
+;; Rejected: discovering legacy/imported layouts only after following starts.
+(defn replica-capability [name db input]
+  (try
+    (let [cfg (config name db) scope (:scope cfg) v (fn [a] (:v (first (d/datoms db :eavt scope a))))]
+      (when-not (= 3 (v :triplex.scope/rows-version)) (decline! "replica-layout"))
+      (when-not (true? (v :triplex.scope/position-regular)) (decline! "replica-positions"))
+      (when (v :triplex.scope/feed-irregular) (decline! "irregular"))
+      (when-not (= 2 (v :triplex.scope/feed-version)) (decline! "feed-version"))
+      (select-db name db (get input "basis"))
+      "{\"supported\":true}")
+    (catch clojure.lang.ExceptionInfo e
+      (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))
 (defn response
   ([name current input] (response name current input nil))
   ([name current input epoch] (response name current input epoch nil))
   ([name current input epoch recent-state]
-   (admission/execute admission/reads #(build-response name current input epoch recent-state))))
+   (admission/execute admission/reads #(if (true? (get input "replicaCapability")) (replica-capability name current input) (build-response name current input epoch recent-state)))))
