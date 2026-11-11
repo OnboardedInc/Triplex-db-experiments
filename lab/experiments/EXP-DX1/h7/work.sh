@@ -8,9 +8,11 @@ repo=$PWD
 export DX_TX_HEAP=3g DX_TX_MEMORY=4g DX_GW_WRITE_MEMORY=3g DX_GW_READ_MEMORY=3g DX_PG_MEMORY=2g
 export DX_OBJECT_CACHE=1g DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
 bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --port-write 18497 --port-read 18498 --cpus-tx 0,1 --cpus-pg 0 --cpus-gw-write 1 --cpus-gw-read 2,3 --gw-java-opts '-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g' --pg-settings '-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_buffers=64MB'
-run_gates() {
-  DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL=http://127.0.0.1:18497 TRIPLEX_DATOMIC_LAYOUT=lean ./node_modules/.bin/vitest run packages/datomic/test/reach.test.ts packages/datomic/test/reach-repair.test.ts packages/datomic/test/cache-budget.test.ts packages/datomic/test/layout-differential.test.ts
-}
+run_gates() { (
+  cd "${DX_H7_GATES_SOURCE_ROOT:-$repo}"
+  echo "DX-H7 reader gate source: $PWD"
+  DX_B5_SCENARIOS=300 DX_B5_SCENARIO_START=0 DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL=http://127.0.0.1:18497 TRIPLEX_DATOMIC_LAYOUT=lean ./node_modules/.bin/vitest run --silent=false --reporter=verbose packages/datomic/test/reach.test.ts packages/datomic/test/reach-repair.test.ts packages/datomic/test/cache-budget.test.ts packages/datomic/test/layout-differential.test.ts
+); }
 # [DX-H7] Why: correctness suites need a complete fresh lease after the measured arms.
 # Rejected: extending the measurement hold beyond its 20-minute limit.
 if [[ ${DX_H7_GATES_ONLY:-0} == 1 ]]; then run_gates; exit; fi

@@ -1,7 +1,7 @@
 # DX-H7 — diagnostic improvement; target NOT met
 
 - North star: P1/P4; scope and bars: lab/SCOPE.md, lab/NORTH-STAR.md, lab/TARGETS.md. 10k subjects, 3 reader threads, 30 s per level, lean layout; engine CPUs 0–3, driver 4–7 / 8 GiB.
-- Measured implementation: `bab74570`; later commits only adjust mutable-input guarding and harness/lease cleanup. No second post-change measurement.
+- Measured reader implementation: `bab74570`; original followups through `8bf28097` only adjust mutable-input guarding and harness/lease cleanup. No second reader measurement.
 - Raw command output: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H7/raw.log` (all attempts retained).
 - Lock wait ≈112 min defeated the first-40-minute profile budget. First `before` doubled readers through auto-start + explicit start; invalid, retained. Tables use `before-corrected`.
 - Before worker-0 profile: sampled milliseconds (31.5 s including stop/drain); D=packages/datomic/src counterpart, B=lab/bench, Effect=dependency. No Triplex-core function ranks in these tables.
@@ -58,3 +58,11 @@ Counters below use the same central telemetry intervals; hits/misses count initi
 - Commands: `node lab/bin/heavy.mjs --label DX-H7-measure -- bash lab/experiments/EXP-DX1/h7/run.sh`; `node lab/experiments/EXP-DX1/h7/summarize.mjs <raw.log>`; `node --experimental-strip-types --test lab/experiments/EXP-DX1/h7/observe.test.ts`.
 - Gates: `DX_H7_PREFIX=tx2-dxh7-gates1 DX_H7_GATES_ONLY=1 node lab/bin/heavy.mjs --label DX-H7-gates -- bash lab/experiments/EXP-DX1/h7/run.sh`; work.sh runs reach, reach-repair, cache-budget and layout-differential with DATOMIC_INTEGRATION=1 / TRIPLEX_DATOMIC_LAYOUT=lean (300 differential scenarios).
 - Cleanup: q1 containers/network/volumes removed, no seed retained. Gates-only attempt created no containers; final Docker checks found no DX-H7 containers, networks or volumes. No full NS/L1024 run, independent review or promotion claimed.
+
+## Gates
+- Continuation evidence is raw output under `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H7/`: `gates2.log`, `recovery3.log`, `stamps-unit.log`, `stamps-build.log`.
+- Reader gates use isolated reader source `8bf28097` with shared installed dependencies, so preparing the writer cannot change the source under test.
+- Lean gates2: 9/10 tests passed: reach (200 scenarios, 6,600 comparisons / 30,500 answer comparisons, 5,120 concurrent cold pulls), reach-repair, cache-budget and typed layout parity. No semantic mismatch was reported.
+- The serial 300-case differential timed out at 900 s; its failure is retained. Recovery passed all 300 cases: 95,028 comparisons and 5,664 matching native/row closures. All required reader checks now pass across gates2 + recovery3.
+- Recovery used the existing RNG-preserving starts 0/100/200, 100 cases each, in parallel; raw boundary states chain exactly and draws end at 36,300. No reader change was reverted on the timing-only failure.
+- Commands: `DX_H7_PREFIX=tx2-dxh7-gates2 DX_H7_GATES_ONLY=1 node lab/bin/heavy.mjs --label DX-H7-gates -- bash lab/experiments/EXP-DX1/h7/run.sh` (with `DX_H7_GATES_SOURCE_ROOT=/private/tmp/dxh7-reader-gates`); recovery adds `DX_H7_WORK=lab/experiments/EXP-DX1/h7/retry-work.sh`, prefix `tx2-dxh7-gates3` and label `DX-H7-recovery`.

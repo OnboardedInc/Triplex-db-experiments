@@ -19,7 +19,7 @@ cleanup() {
   docker volume rm "$prefix-driver" >/dev/null 2>&1 || true
   remaining=$(docker ps -a --filter "name=$prefix" --format '{{.Names}}')
   [[ -z $remaining ]] || { echo "owned containers remain; retain lock: $remaining"; exit 1; }
-  rm -f lab/experiments/EXP-DX1/h7/.after-ready lab/experiments/EXP-DX1/h7/.optimized-ready
+  rm -f lab/experiments/EXP-DX1/h7/.after-ready lab/experiments/EXP-DX1/h7/.optimized-ready lab/experiments/EXP-DX1/h7/.reader-gated-ready
   rm -f "$lock/owner.json"; rmdir "$lock"
   exit "$rc"
 }
@@ -30,5 +30,8 @@ python3 - <<'PY'
 import shutil
 assert shutil.disk_usage('.').free >= 15*1024**3, 'requires 15 GiB free'
 PY
-node lab/experiments/EXP-DX1/b6/bounded-command.mjs 1140 bash lab/experiments/EXP-DX1/h7/work.sh & job=$!
+# [DX-H7] Why: keep one cleanup/deadline implementation for every diagnostic body.
+# Rejected: duplicating lease ownership and TERM handling in retry and writer wrappers.
+work=${DX_H7_WORK:-lab/experiments/EXP-DX1/h7/work.sh}
+node lab/experiments/EXP-DX1/b6/bounded-command.mjs 1140 bash "$work" & job=$!
 wait "$job"
