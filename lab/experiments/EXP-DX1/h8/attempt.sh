@@ -32,14 +32,14 @@ cleanup() {
  if docker container inspect "$prefix-driver" >/dev/null 2>&1; then
    mkdir -p "$out/driver"; docker cp "$prefix-driver:/driver/." "$out/driver/" >> "$out/cleanup.log" 2>&1 || true
  fi
- for role in driver health cgroups extract tools-extract copy runtime-check budget; do docker rm -f "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
+ for role in driver health cgroups extract tools-extract copy runtime-check budget jfr profile; do docker rm -f "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
  for role in gw-r gw-w tx; do docker update --restart=no "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; docker exec "$prefix-$role" sh -c 'for f in /proc/[0-9]*/comm; do read n < "$f" || continue; if [ "$n" = java ]; then p=${f#/proc/}; p=${p%/comm}; kill -TERM "$p"; fi; done' >> "$out/cleanup.log" 2>&1 || true; done
  for role in gw-r gw-w tx pg; do docker stop -t 30 "$prefix-$role" >> "$out/cleanup.log" 2>&1 || true; done
  for role in tx gw-w; do
    docker cp "$prefix-$role:/tmp/h8.jfr" "$out/$role.jfr" >> "$out/cleanup.log" 2>&1 || true
  done
  for role in tx gw-w; do
-   if [[ -s $out/$role.jfr ]]; then
+   if [[ -s $out/$role.jfr && ${DXH8_EXPORT_PROFILE:-true} == true ]]; then
      docker run --rm --pull never --name "$prefix-profile" --network none -v "$out:/recording:ro" --entrypoint /opt/java/openjdk/bin/jfr tx2-datomic:1.0.7745-da00 print --json --stack-depth 256 --events jdk.ExecutionSample,jdk.NativeMethodSample /recording/$role.jfr 2> "$out/$role-jfr-error.txt" | gzip -1 -n > "$out/$role-samples.json.gz" || true
    fi
  done
