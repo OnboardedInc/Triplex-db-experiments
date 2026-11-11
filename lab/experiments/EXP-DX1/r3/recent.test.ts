@@ -7,7 +7,6 @@ import {
   unpackEntity,
   packEntity,
   type SweepRow,
-  type PackedEntity,
 } from "../../../../packages/datomic/dist/index.js";
 // Test construction uses the built packer, not a second serialization implementation.
 

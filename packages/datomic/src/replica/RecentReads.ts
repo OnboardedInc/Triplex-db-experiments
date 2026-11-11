@@ -56,7 +56,7 @@ export class RecentReads {
       this.retainedBytes = 0;
       this.times.clear();
       this.lastTime = -Infinity;
-      this.timeSafe = true;
+      this.timeSafe = delta.recordTime !== undefined && Number.isFinite(delta.recordTime);
       this.floor = delta.position;
     } else if (!this.valid || delta.position !== this.position + 1) {
       this.valid = false;

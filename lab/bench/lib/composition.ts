@@ -16,6 +16,7 @@ import { countHttp } from "./http-counts.ts";
 import { Effect, core, openTriples, type Lane, type TriplesHandle } from "./triplex.ts";
 
 export interface Basis {
+  readonly recordedPosition?: number;
   readonly recordedAt: number;
   readonly validAt: number;
 }
@@ -28,6 +29,7 @@ export interface PulledTriple {
   readonly validTo?: number;
 }
 export interface PullResult {
+  readonly observation?: import("./observe.ts").Observed;
   readonly triples: readonly PulledTriple[];
   readonly entities: number;
   readonly roundTrips: number;

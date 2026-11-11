@@ -33,6 +33,8 @@ import { BUCKETS, HOP_SHARE, ids, subjectInCell, type Bucket, type Hop } from ".
 import { observe, type ReadRecord } from "./lib/observe.ts";
 
 type ReaderConfig = {
+  readPath?: "gateway" | "replica";
+  replicaImage?: import("../../packages/datomic/dist/index.js").ReadImage;
   entityCacheBytes?: number;
   subjectShards?: number;
   lane: "xtdb" | "qlever" | "datomic";
@@ -55,6 +57,8 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   const DAY = 86_400_000;
 
   let comp: CompositionHandle;
+  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader() : undefined;
+  if (replica && cfg.replicaImage) replica.install(cfg.replicaImage);
   let phase = -1;
   let mode = "mixed";
   let wanted = 0;
@@ -122,7 +126,11 @@ export async function startReader(port: any, cfg: ReaderConfig) {
         }
       : undefined;
     try {
-      const pr = await (opts.sweep ? comp.sweepPull(ids.placement(subject), basis) : comp.pull(ids.placement(subject), basis, between));
+      const gateway = () => opts.sweep ? comp.sweepPull(ids.placement(subject), basis) : comp.pull(ids.placement(subject), basis, replica ? undefined : between);
+      const pr = replica
+        ? opts.keepRows ? { ...await gateway(), route: "fallback" }
+          : await replica.pullAt(ids.placement(subject), { ...basis, recordedPosition: position }, gateway, between)
+        : await gateway();
       // The wait for the straddled command's ACK is the driver's scheduling, not the store's service time.
       const latency = performance.now() - t0 - straddleWaitMs;
       const o = observe(pr);
@@ -134,6 +142,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     }
   }
 
+  let localReads = 0;
   async function loop(id: number) {
     const rng = new Rng(seedOf(`reader:${cfg.seed}:${cfg.worker}:${id}`));
     running++;
@@ -148,6 +157,9 @@ export async function startReader(port: any, cfg: ReaderConfig) {
           if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; }
         }
         await readOnce(picked.subject, basis, kind, position, phase, { keepRows: oracle, straddleSeq, hotPick: picked.hotPick });
+        // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
+        // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
+        if (replica && ++localReads % 32 === 0) await new Promise<void>(resolve => setImmediate(resolve));
       }
     } finally {
       running--;
@@ -185,7 +197,9 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   }, 500);
 
   port.on("message", async (msg: any) => {
-    if (msg.type === "level") {
+    if (msg.type === "replica-delta") {
+      replica?.apply(msg.delta);
+    } else if (msg.type === "level") {
       phase = msg.phase;
       mode = msg.mode ?? "mixed";
       setLevel(msg.readers);
