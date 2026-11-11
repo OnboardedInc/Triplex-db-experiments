@@ -49,6 +49,16 @@ cleanup() {
    fi
    rm -f "$lock/owner.json"; rmdir "$lock"
  fi
+ # [DX-S5] Why: retain every actual latency/write event in this command's one raw output file, including failed windows.
+ # Rejected: deleting the traffic streams and leaving only computed p99 summaries as evidence.
+ if [[ $s5 == true ]]; then
+  for raw in "$out"/traffic/*-traffic.ndjson; do
+   [[ -f $raw ]] || continue
+   printf '\n{"kind":"traffic-raw-begin","file":"%s"}\n' "${raw##*/}"
+   cat "$raw" || rc=1
+   printf '\n{"kind":"traffic-raw-end","file":"%s"}\n' "${raw##*/}"
+  done
+ fi
  find "$out" -type f -name "*.ndjson" -exec gzip {} \;
  [[ $s5 != true ]] || rm -rf "$out"
  echo "window exit=$rc"; exit "$rc"
