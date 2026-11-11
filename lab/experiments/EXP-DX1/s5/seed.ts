@@ -4,7 +4,7 @@ import { gzipSync, gunzipSync } from "node:zlib";
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { seedCommands, seedW0 } from "../../../bench/lib/w0-seed.ts";
 import { readW0Fingerprint } from "../../../bench/lib/w0-fingerprint.ts";
-import { W0, V_W0, many, canonical, triplexValue } from "../../../bench/lib/w0-world.ts";
+import { W0, V_W0, many, canonical, triplexValue, sha256 } from "../../../bench/lib/w0-world.ts";
 
 // [DX-S5] Why: the checkpoint is operational state, never a verdict; the database journal repairs a killed suffix.
 // Rejected: resuming from a process-local ACK count or trusting an earlier fingerprint as fresh evidence.
@@ -25,12 +25,28 @@ const comp = await openComposition("reach", "datomic", scope);
 comp.storeCounts = async () => ({ position: await comp.currentPosition() });
 const stateFile = "/state/checkpoint.json.gz";
 const latest = new Map<string, string>();
+const mapper = sha256(fs.readFileSync(new URL("../../../bench/lib/w0-seed.ts", import.meta.url)));
+const releaseHashes = [W0.R1.hash, W0.R2.hash, W0.R3.hash];
 try {
-  let from = 0;
+  let from = 0,
+    verifiedSubjects = 0;
   if (fs.existsSync(stateFile)) {
     const saved = JSON.parse(gunzipSync(fs.readFileSync(stateFile)).toString());
+    assert.equal(saved.format, "dxs5-seed/2");
     assert.equal(saved.scope, scope);
     assert.equal(saved.N, N);
+    assert.equal(saved.mapper, mapper);
+    assert.deepEqual(saved.releaseHashes, releaseHashes);
+    assert(Number.isSafeInteger(saved.position) && saved.position >= 0);
+    assert(
+      Number.isSafeInteger(saved.endSubjects) && saved.endSubjects >= 0 && saved.endSubjects <= N,
+    );
+    assert(
+      Number.isSafeInteger(saved.verifiedSubjects) &&
+        saved.verifiedSubjects >= 0 &&
+        saved.verifiedSubjects <= saved.endSubjects,
+    );
+    verifiedSubjects = saved.verifiedSubjects;
     from = saved.position;
     for (const [k, v] of saved.latest) latest.set(k, v);
   }
@@ -105,6 +121,31 @@ try {
     through += p.commands;
   }
   assert(head <= through, "range already passed");
+  // [DX-S5] Why: distinguish durable commits from a fully maintained/read-back chunk across controller restarts.
+  // Rejected: treating a pre-maintenance checkpoint as a successful chunk or accepting different mapper/release inputs.
+  const checkpoint = (verified: number) => {
+    const data = gzipSync(
+      JSON.stringify({
+        format: "dxs5-seed/2",
+        scope,
+        N,
+        position: through,
+        endSubjects,
+        verifiedSubjects: verified,
+        mapper,
+        releaseHashes,
+        latest: [...latest],
+      }),
+    );
+    const fd = fs.openSync(stateFile + ".tmp", "w");
+    fs.writeSync(fd, data);
+    fs.fsyncSync(fd);
+    fs.closeSync(fd);
+    fs.renameSync(stateFile + ".tmp", stateFile);
+    const dir = fs.openSync("/state", "r");
+    fs.fsyncSync(dir);
+    fs.closeSync(dir);
+  };
   if (mode === "seed") {
     const result = await seedW0(comp, N, "/dev/null", undefined, 32, 0, {
       from: head,
@@ -114,12 +155,7 @@ try {
       boundedState: true,
     });
     console.log(JSON.stringify({ event: "chunk-seeded", endSubjects, ...result }));
-    const data = gzipSync(JSON.stringify({ scope, N, position: through, latest: [...latest] }));
-    const fd = fs.openSync(stateFile + ".tmp", "w");
-    fs.writeSync(fd, data);
-    fs.fsyncSync(fd);
-    fs.closeSync(fd);
-    fs.renameSync(stateFile + ".tmp", stateFile);
+    checkpoint(verifiedSubjects);
   } else assert.equal(head, through);
   if (mode !== "seed") {
     const writerURL = process.env.DATOMIC_URL;
@@ -166,6 +202,7 @@ try {
           expected,
         }),
       );
+      checkpoint(endSubjects);
     } finally {
       if (reader !== comp) await reader.close();
     }

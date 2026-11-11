@@ -9,27 +9,37 @@ n=${1:?1000|10000|100000}; chunk=${2:?chunk subjects}; deliberate=${3:-false}; a
 prefix=tx2-dxs5-seed-$n; scope=dxs5-w0-$n-v1
 repo=$PWD; out=$(mktemp -d "$repo/lab/experiments/EXP-DX1/s5/.runtime.XXXXXX")
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
-held=false; timer=; watcher=; keep=false; owned=false
+held=false; timer=; watcher=; keep=false; owned=false; ready=false; partial=false
 cleanup() {
  rc=$?; trap - EXIT TERM INT
  [[ -z $timer ]] || kill "$timer" 2>/dev/null || true
  [[ -z $watcher ]] || kill "$watcher" 2>/dev/null || true
  if [[ $held == true && $owned == true ]]; then
-  for role in driver peer copy budget extract gw-r gw-w tx; do docker rm -f "$prefix-$role" 2>/dev/null || true; done
+  for role in driver peer copy budget extract; do docker rm -f "$prefix-$role" 2>/dev/null || true; done
+  if (( rc != 0 )); then
+   docker stop -t 3 "$prefix-gw-r" "$prefix-gw-w" || true
+   docker stop -t 30 "$prefix-tx" "$prefix-pg" || true
+   python3 "$repo/lab/experiments/EXP-DX1/s5/failure-logs.py" "$prefix" || true
+   if [[ $ready == true && ${S5_DISCARD_ON_FAILURE:-0} != 1 ]]; then partial=true; fi
+  fi
+  for role in gw-r gw-w tx; do docker rm -f "$prefix-$role" 2>/dev/null || true; done
   docker stop -t 30 "$prefix-pg" || true
   docker rm "$prefix-pg" 2>/dev/null || true
   docker network rm "$prefix-net" 2>/dev/null || true
-  docker volume rm "$prefix-tools" 2>/dev/null || true
-  if [[ $keep != true ]]; then docker volume rm "$prefix-pg-data" 2>/dev/null || true; fi
+  if [[ $partial != true ]]; then
+   docker volume rm "$prefix-tools" 2>/dev/null || true
+   if [[ $keep != true ]]; then docker volume rm "$prefix-pg-data" 2>/dev/null || true; fi
+  fi
   remaining=$(docker ps -aq --filter "name=^/$prefix-") || { echo 'cannot verify containers: retaining lock'; exit 1; }
   [[ -z $remaining ]] || { echo 'containers remain: retaining lock'; exit 1; }
-  remaining_volumes=$(docker volume ls --filter "name=^$prefix-" --format '{{.Name}}') || { echo 'cannot verify volumes: retaining lock'; exit 1; }
+  remaining_volumes=$(docker volume ls --filter "name=^$prefix-" --format '{{.Name}}' | sort) || { echo 'cannot verify volumes: retaining lock'; exit 1; }
   expected=; [[ $keep != true ]] || expected="$prefix-pg-data"
+  [[ $partial != true ]] || expected="$prefix-pg-data"$'\n'"$prefix-tools"
   [[ $remaining_volumes == "$expected" ]] || { echo "unexpected retained volumes $remaining_volumes: retaining lock"; exit 1; }
  fi
  if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
  rm -rf "$out"
- echo "hold exit=$rc retained=$keep"; exit "$rc"
+ echo "hold exit=$rc retained=$keep partial=$partial"; exit "$rc"
 }
 trap cleanup EXIT
 trap 'exit 124' TERM INT
@@ -53,29 +63,67 @@ seconds=1440; [[ $n != 100000 ]] || seconds=17900
 # [DX-S5] Why: Bash defers traps while waiting on a foreground Docker client; end the client before signalling its supervisor.
 # Rejected: TERM alone (a long seed could keep the measurement lock beyond its deadline).
 abort_hold() {
- docker rm -f "$prefix-driver" "$prefix-peer" "$prefix-copy" "$prefix-gw-r" "$prefix-gw-w" "$prefix-tx" "$prefix-pg" 2>/dev/null || true
+ docker rm -f "$prefix-driver" "$prefix-peer" "$prefix-copy" "$prefix-extract" 2>/dev/null || true
+ # [DX-S5] Why: interrupt a blocked vacuum/client while retaining stopped JVM diagnostics and durable partial data.
+ # Rejected: force-removing every JVM before its failure log can be read.
+ docker stop -t 3 "$prefix-gw-r" "$prefix-gw-w" 2>/dev/null || true
+ docker stop -t 10 "$prefix-tx" "$prefix-pg" 2>/dev/null || true
  kill -TERM $$
 }
 (sleep "$seconds"; abort_hold) & timer=$!
 [[ -z $(docker ps -aq --filter "name=^/$prefix-") ]] || exit 2
 fresh=true
-if docker volume inspect "$prefix-pg-data" >/dev/null 2>&1; then echo 'existing seed refused'; exit 2; fi
-owned=true
-docker volume create "$prefix-pg-data"
-docker volume create "$prefix-tools"
+if [[ ${S5_RESUME:-0} == 1 ]]; then
+ # [DX-S5] Why: a whole-controller interruption must resume the same owned data/checkpoint pair.
+ # Rejected: adopting a same-named foreign volume or restarting from an ACK count without the durable journals.
+ seed_id=
+ for suffix in pg-data tools; do
+  labels=$(docker volume inspect --format '{{index .Labels "triplex.lab.owner"}} {{index .Labels "triplex.dxs5.subjects"}} {{index .Labels "triplex.dxs5.chunk"}} {{index .Labels "triplex.dxs5.seed-id"}}' "$prefix-$suffix")
+  read -r owner subjects saved_chunk identity <<< "$labels"
+  [[ $owner == DX-S5 && $subjects == "$n" && $saved_chunk == "$chunk" && -n $identity && $identity != '<no value>' ]] || { echo 'resume ownership/input mismatch'; exit 2; }
+  [[ -z $seed_id || $seed_id == "$identity" ]] || { echo 'resume volume pair mismatch'; exit 2; }
+  seed_id=$identity
+ done
+ fresh=false; owned=true; ready=true
+ echo "resuming owned unsealed seed id=$seed_id"
+else
+ for suffix in pg-data tools; do
+  if docker volume inspect "$prefix-$suffix" >/dev/null 2>&1; then echo 'existing seed refused; use S5_RESUME=1 for its owned checkpoint pair'; exit 2; fi
+ done
+ owned=true; seed_id=$(node -e 'console.log(require("node:crypto").randomUUID())')
+ for suffix in pg-data tools; do
+  docker volume create --label triplex.lab.owner=DX-S5 --label "triplex.dxs5.subjects=$n" --label "triplex.dxs5.chunk=$chunk" --label "triplex.dxs5.seed-id=$seed_id" "$prefix-$suffix"
+ done
+fi
 # Monitor during startup, writes and maintenance; reserve live-table rewrite space separately before vacuum.
 (
  while true; do
   mac=$(free_mac)
   vm=$(docker run --rm --pull never --name "$prefix-budget" -v "$prefix-pg-data:/data:ro" postgres:17-alpine sh -c 'df -Pk /data | tail -1; du -sk /data') || { abort_hold; exit 1; }
   echo "disk $(date -u +%FT%TZ) macFreeKiB=$mac vm=$vm"
-  docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} memory={{.MemUsage}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" "$prefix-driver" 2>/dev/null || true
+  # [DX-S5] Why: an absent driver previously suppressed resident diagnostics during maintenance.
+  # Rejected: making all engine observations depend on a short-lived client container existing.
+  docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} memory={{.MemUsage}}' "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" 2>/dev/null || true
+  docker inspect --format 'engine-state {{.Name}} running={{.State.Running}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} restarts={{.RestartCount}}' "$prefix-tx" 2>/dev/null || true
+  for role in driver peer; do
+   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} memory={{.MemUsage}}' "$prefix-$role" 2>/dev/null || true; fi
+  done
   vmfree=$(echo "$vm" | awk 'NR==1 {print $4}')
   (( mac >= 15728640 && vmfree >= 5242880 )) || { abort_hold; exit 1; }
   sleep 10
  done
 ) & watcher=$!
 source lab/experiments/EXP-DX1/s5/setup.sh
+ready=true
+start=$chunk
+if [[ $fresh != true ]]; then
+ saved=$(docker run --rm --pull never --name "$prefix-copy" -v "$prefix-tools:/state:ro" node:22.23.2-bookworm-slim node -e 'const fs=require("node:fs"),z=require("node:zlib");if(!fs.existsSync("/state/checkpoint.json.gz")){console.log("0 0");}else{const s=JSON.parse(z.gunzipSync(fs.readFileSync("/state/checkpoint.json.gz")));if(s.format!=="dxs5-seed/2"||s.N!==Number(process.argv[1])||s.scope!==process.argv[2]||!Number.isSafeInteger(s.endSubjects)||!Number.isSafeInteger(s.verifiedSubjects)||s.verifiedSubjects<0||s.endSubjects<s.verifiedSubjects||s.endSubjects>Number(process.argv[1]))throw Error("invalid checkpoint header");console.log(s.endSubjects,s.verifiedSubjects);}' "$n" "$scope")
+ read -r committed verified <<< "$saved"
+ (( committed % chunk == 0 && verified % chunk == 0 )) || { echo 'checkpoint chunk mismatch'; exit 2; }
+ if (( committed > verified || committed == n )); then start=$committed; else start=$((committed+chunk)); fi
+ (( start > 0 && start <= n )) || exit 2
+ echo "resume startSubjects=$start committedSubjects=$committed verifiedSubjects=$verified"
+fi
 run_driver() { S5_REQUIRE_RECOVERED=${require_recovered:-0} bash lab/experiments/EXP-DX1/s5/driver.sh "$n" "$@"; }
 # [DX-S5] Why: a killed seed process may have a durable uncheckpointed suffix; recover it without ending the owned hold.
 # Rejected: deleting a several-hour partial seed on the first driver process interruption.
@@ -109,8 +157,32 @@ maintain() {
  echo "vacuum rewrite reserve bytes=$table (largest leaf; leaves reclaimed sequentially)"
  vmfree=$(docker exec "$prefix-pg" sh -c 'df -Pk /var/lib/postgresql/data | tail -1' | awk '{print $4}')
  (( vmfree*1024 > table+5368709120 && $(free_mac)*1024 > table+16106127360 )) || { echo 'vacuum rewrite reserve unavailable'; exit 1; }
+ # [DX-S5] Why: the 70k post-vacuum peer lost its broker connection; keep JVMs out of the long SQL-exclusive reclaim.
+ # Rejected: allowing maintenance to strand a live transactor, then deleting hours of otherwise resumable data.
+ docker stop -t 3 "$prefix-gw-r" "$prefix-gw-w"
+ docker stop -t 30 "$prefix-tx"
+ docker inspect --format 'maintenance-stopped {{.Name}} running={{.State.Running}} exit={{.State.ExitCode}}' "$prefix-gw-r" "$prefix-gw-w" "$prefix-tx"
+ for role in gw-r gw-w tx; do [[ $(docker inspect --format '{{.State.Running}}' "$prefix-$role") == false ]] || return 1; done
  docker exec "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d datomic -c 'VACUUM FULL;' -c 'CHECKPOINT;' -c "SELECT sum(pg_total_relation_size(relid)) AS table_bytes,max(pg_total_relation_size(relid)) AS max_leaf_bytes,count(*) AS leaves,pg_database_size(current_database()) AS database_bytes FROM pg_partition_tree('datomic_kvs') WHERE isleaf;"
- native_proof proof | tee "$out/native-after.jsonl"
+ reconnect() {
+  docker start "$prefix-tx" "$prefix-gw-w"
+  docker run --rm --pull never --name "$prefix-copy" --network "$prefix-net" node:22.23.2-bookworm-slim node -e 'let ok=false;for(let i=0;i<180;i++){try{const r=await fetch("http://"+process.argv[1]+":8080/health");if(r.ok){console.log(await r.text());ok=true;break;}}catch{}await new Promise(r=>setTimeout(r,1000));}if(!ok)process.exit(1);' "$prefix-gw-w"
+ }
+ reconnect
+ # [DX-S5] Why: exercise the observed connection failure once in a bounded proof, without modifying any facts.
+ # Rejected: claiming the reconnect path works from shell shape alone.
+ if [[ ${S5_TEST_BROKER_DOWN:-0} == 1 && ${disconnect_tested:-false} != true ]]; then
+  disconnect_tested=true
+  echo 'INJECTED native-after broker down once; expected fresh-peer connection failure and explicit retry'
+  docker stop -t 3 "$prefix-tx"
+ fi
+ for attempt in 1 2 3; do
+  echo "native-after attempt=$attempt"
+  if native_proof proof 2>&1 | tee "$out/native-after.jsonl"; then break; else native_rc=$?; fi
+  if (( attempt == 3 )) || ! rg -q 'AMQ219007|ActiveMQNotConnectedException' "$out/native-after.jsonl"; then return "$native_rc"; fi
+  echo 'fresh native peer connection failed; restart owned writer/transactor and retry, with first failure retained above'
+  docker stop -t 3 "$prefix-gw-w"; docker stop -t 30 "$prefix-tx"; reconnect
+ done
  python3 - "$out/native-before.jsonl" "$out/native-after.jsonl" <<'PYPROOF'
 import json,sys
 def read(p,event):
@@ -119,7 +191,7 @@ a=read(sys.argv[1],'native-before');b=read(sys.argv[2],'native-after');assert a=
 print(json.dumps({'event':'post-vacuum-native-equality','proof':b}))
 PYPROOF
 }
-for ((end=chunk;end<=n;end+=chunk)); do
+for ((end=start;end<=n;end+=chunk)); do
  seed_recover "$end"
  require_recovered=0
  maintain
@@ -139,7 +211,7 @@ if [[ $activation_check == true ]]; then
  -v "$repo:$repo:ro" -v "$out:$out" -v "$prefix-tools:/tool:ro" -w "$repo" -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin \
  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
  python:3.13-slim /tool/node --expose-gc --experimental-strip-types lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" \
- --seed-fingerprint --publish --post-capture --candidates --oracle-candidates --oracle-concurrency 8 --batch-oracle --live --traffic-offset-s 120 --baseline-ms 12000 --live-warmup-ms 10000
+ --seed-fingerprint --publish --post-capture --candidates --oracle-candidates --oracle-concurrency 8 --batch-oracle --verification-pages 4 --live --traffic-offset-s 120 --baseline-ms 12000 --live-warmup-ms 10000
 fi
 for role in gw-r gw-w tx; do docker stop -t 30 "$prefix-$role"; done
 docker exec "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d datomic -c CHECKPOINT
