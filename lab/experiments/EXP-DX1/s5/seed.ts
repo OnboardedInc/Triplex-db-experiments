@@ -121,35 +121,55 @@ try {
     fs.closeSync(fd);
     fs.renameSync(stateFile + ".tmp", stateFile);
   } else assert.equal(head, through);
-  const fingerprint = await readW0Fingerprint(
-    comp,
-    endSubjects,
-    { position: through, validAt: V_W0 },
-    AbortSignal.timeout(600000),
-  );
-  const counts = await comp.storeCounts();
-  assert.equal(await comp.currentPosition(), through);
-  const expected =
-    N === endSubjects
-      ? (
-          {
-            1000: "sha256:ca15387e66e25ed5e19a4adc602e941f7f06dd8b0f1c6ca7d1a5d2f02f8171ad",
-            10000: "sha256:7b4c292331396ab379423ed7faa1a095c324dcdb72afb411d0f48f93efa5624d",
-          } as Record<number, string>
-        )[N]
-      : undefined;
-  if (expected) assert.equal(fingerprint.worlds, expected);
-  console.log(
-    JSON.stringify({
-      event: "chunk-readback",
-      scope,
-      N,
-      endSubjects,
-      counts,
-      fingerprint,
-      expected,
-    }),
-  );
+  if (mode !== "seed") {
+    const writerURL = process.env.DATOMIC_URL;
+    const readURL = process.env.DATOMIC_READ_URLS?.split(",")[0] ?? writerURL;
+    let reader = comp;
+    try {
+      if (readURL !== writerURL) {
+        process.env.DATOMIC_URL = readURL;
+        try {
+          reader = await openComposition("reach", "datomic", scope);
+        } finally {
+          process.env.DATOMIC_URL = writerURL;
+        }
+      }
+      assert.equal(await reader.currentPosition(), through);
+      const fingerprint = await readW0Fingerprint(
+        reader,
+        endSubjects,
+        { position: through, validAt: V_W0 },
+        AbortSignal.timeout(1200000),
+        undefined,
+        4,
+      );
+      const counts = await comp.storeCounts();
+      assert.equal(await comp.currentPosition(), through);
+      const expected =
+        N === endSubjects
+          ? (
+              {
+                1000: "sha256:ca15387e66e25ed5e19a4adc602e941f7f06dd8b0f1c6ca7d1a5d2f02f8171ad",
+                10000: "sha256:7b4c292331396ab379423ed7faa1a095c324dcdb72afb411d0f48f93efa5624d",
+              } as Record<number, string>
+            )[N]
+          : undefined;
+      if (expected) assert.equal(fingerprint.worlds, expected);
+      console.log(
+        JSON.stringify({
+          event: "chunk-readback",
+          scope,
+          N,
+          endSubjects,
+          counts,
+          fingerprint,
+          expected,
+        }),
+      );
+    } finally {
+      if (reader !== comp) await reader.close();
+    }
+  }
 } finally {
   await comp.close();
 }

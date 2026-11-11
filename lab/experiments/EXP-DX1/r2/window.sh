@@ -11,6 +11,12 @@ s5=false
 if [[ $s5 == true ]]; then
  [[ -f /Users/sam/Claude/Projects/triplex-db-2/locks/long-hold-ok ]] || { echo 'long hold not authorized'; exit 2; }
 fi
+allow_first_use=false; first_use=false
+if [[ ${1:-} == --first-use-if-needed ]]; then
+ [[ $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 ]] || exit 2
+ allow_first_use=true; shift
+fi
+working_volume=$prefix-pg-data
 repo=$PWD
 out=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2/$prefix
 if [[ $s5 == true ]]; then out=$(mktemp -d "$repo/lab/experiments/EXP-DX1/s5/.runtime.XXXXXX"); else mkdir -p "$out"; fi
@@ -24,6 +30,12 @@ cleanup() {
  [[ -z $diskguard ]] || kill "$diskguard" 2>/dev/null || true
  if [[ $held == true ]]; then
    if [[ $resources == true ]]; then
+   if [[ $first_use == true ]] && docker container inspect "$prefix-pg" >/dev/null 2>&1; then
+    for role in gw-r gw-w tx; do docker stop -t 15 "$prefix-$role" || true; done
+    docker stop -t 20 "$prefix-pg" || true
+    docker inspect --format 'first-use PG exit={{.State.ExitCode}}' "$prefix-pg"
+    [[ $(docker inspect --format '{{.State.ExitCode}}' "$prefix-pg") == 0 ]] || rc=1
+   fi
    for role in gate driver gw-r gw-w tx pg copy extract budget guard; do docker rm -f "$prefix-$role" || true; done
    docker network rm "$prefix-net" || true
    docker volume rm "$prefix-pg-data" "$prefix-tools" || true
@@ -82,10 +94,16 @@ if [[ $s5 == true ]]; then
  mac_kib=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
  vm_kib=$(docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" postgres:17-alpine sh -c 'df -Pk /from | tail -1' | awk '{print $4}')
  echo "clone-plan sourceKiB=$source_kib macFreeKiB=$mac_kib vmFreeKiB=$vm_kib"
- (( mac_kib-source_kib >= 15728640 && vm_kib-source_kib >= 5242880 )) || { echo 'clone does not fit disk reserve'; exit 1; }
+ if ! (( mac_kib-source_kib >= 15728640 && vm_kib-source_kib >= 5242880 )); then
+  [[ $allow_first_use == true ]] || { echo 'clone does not fit disk reserve'; exit 1; }
+  first_use=true; working_volume=$seed
+  echo 'DECLARED FIRST USE: clone does not fit the disk reserve; this evaluation modifies the new seed volume.'
+ fi
 fi
+if [[ $first_use != true ]]; then
 docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" -v "$prefix-pg-data:/to" postgres:17-alpine sh -c 'test $(du -sk /from | cut -f1) -lt "$1" && cp -a /from/. /to/ && du -sk /to' sh "$clone_kib"
 echo "clone elapsedSeconds=$(( $(date +%s)-clone_start ))"
+else echo 'clone skipped: first use'; fi
 docker create --pull never --name "$prefix-extract" -v "$prefix-tools:/tool" node:22.23.2-bookworm-slim sh -c 'cp /usr/local/bin/node /tool/node; cp /usr/lib/*-linux-gnu/libstdc++.so.6 /usr/lib/*-linux-gnu/libgcc_s.so.1 /tool/'
 docker start -a "$prefix-extract"; docker rm "$prefix-extract"
 mkdir "$out/config"
@@ -100,7 +118,7 @@ lines=[l for l in (root/'template.properties').read_text().splitlines() if l.par
 (root/'sql.properties').write_text('\n'.join(lines)+'\n'+'\n'.join(k+'='+v for k,v in s.items())+'\n')
 PY
 docker network create "$prefix-net"
-docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus 0 --memory 2g --memory-swap 2g -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" postgres:17-alpine postgres -c shared_buffers=512MB -c max_wal_size=1GB -c checkpoint_timeout=5min
+docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus 0 --memory 2g --memory-swap 2g -e POSTGRES_PASSWORD=datomic -v "$working_volume:/var/lib/postgresql/data" postgres:17-alpine postgres -c shared_buffers=512MB -c max_wal_size=1GB -c checkpoint_timeout=5min
 for ((i=0;i<90;i++)); do docker exec "$prefix-pg" pg_isready -h 127.0.0.1 -U postgres && break; sleep 1; done
 docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory 4g --memory-swap 4g -e 'JAVA_OPTS=-Xms256m -Xmx3g' -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
@@ -120,7 +138,7 @@ if [[ ${1:-} == --gateway-tests ]]; then
 fi
 (
  while sleep 15; do
-   kb=$(docker run --rm --pull never --name "$prefix-budget" -v "$prefix-pg-data:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}') || { kill -TERM $$; exit 1; }
+   kb=$(docker run --rm --pull never --name "$prefix-budget" -v "$working_volume:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}') || { kill -TERM $$; exit 1; }
    owned_kb=$(du -sk /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2 | awk '{print $1}')
    free_kb=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
    volume_cap=7300000; floor=5242880
@@ -133,6 +151,6 @@ docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset
  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e "DX_R1_DEADLINE=$deadline" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
  python:3.13-slim /tool/node --expose-gc --experimental-strip-types lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" "$@"
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT pg_database_size(current_database());'
-docker run --rm --pull never --name "$prefix-copy" -v "$prefix-pg-data:/from:ro" postgres:17-alpine du -sk /from
+docker run --rm --pull never --name "$prefix-copy" -v "$working_volume:/from:ro" postgres:17-alpine du -sk /from
 
 completed=true

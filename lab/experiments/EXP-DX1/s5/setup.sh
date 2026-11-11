@@ -37,7 +37,7 @@ fi
 durability=$(docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SHOW fsync; SHOW synchronous_commit; SHOW full_page_writes;')
 printf 'durability fsync/synchronous_commit/full_page_writes:\n%s\n' "$durability"
 [[ $durability == $'on\non\non' ]] || { echo 'durability settings refused'; exit 1; }
-docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory 4g --memory-swap 4g -e 'JAVA_OPTS=-Xms256m -Xmx3g' -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
+docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1,2,3 --memory 4g --memory-swap 4g -e 'JAVA_OPTS=-Xms256m -Xmx3g' -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
  cpu=1; [[ $role == w ]] || cpu=2,3
  host_port=18542; [[ $role == w ]] || host_port=18543

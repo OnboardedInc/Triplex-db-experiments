@@ -1,3 +1,4 @@
+import { orderedMap } from "./w0-parallel.ts";
 import fs from "node:fs";
 import { measureW0Http } from "./w0-http.ts";
 import { createHash } from "node:crypto";
@@ -33,6 +34,7 @@ export async function readW0Fingerprint(
   basis: PositionBasis,
   signal: AbortSignal,
   observePage?: (records: readonly any[], page: number, metrics?: any) => void,
+  pageConcurrency = 1,
 ): Promise<W0Fingerprint> {
   W0.rung(N);
   await loadW0Pins();
@@ -42,39 +44,61 @@ export async function readW0Fingerprint(
   outputs.update("[");
   let count = 0,
     facts = 0;
-  for (let offset = 0; offset < N; offset += 64) {
+  if (!Number.isSafeInteger(pageConcurrency) || pageConcurrency < 1 || pageConcurrency > 8)
+    throw Error("invalid fingerprint concurrency");
+  // [DX-H5] Why: the mandatory preview is a no-live calibration on the identical observed rows.
+  // Rejected: estimating gateway/client CPU from latency while 64 other readers are running.
+  const cpu = () => process.threadCpuUsage();
+  const elapsedCpu = (before: ReturnType<typeof cpu>) => {
+    const now = cpu();
+    return (now.user - before.user + now.system - before.system) / 1000;
+  };
+  const gateways = () =>
+    Object.fromEntries(
+      (process.env.TX2_ENGINE_CGROUPS ?? "")
+        .split(",")
+        .filter(Boolean)
+        .map((entry) => {
+          const [name, p] = entry.split("=");
+          return [
+            name,
+            Number(fs.readFileSync(p + "/cpu.stat", "utf8").match(/^usage_usec (\d+)$/m)?.[1]),
+          ];
+        }),
+    );
+  const offsets = Array.from({ length: Math.ceil(N / 64) }, (_, i) => i * 64);
+  const pages = orderedMap(offsets, pageConcurrency, async (offset) => {
     signal.throwIfAborted();
     const subjects = Array.from({ length: Math.min(64, N - offset) }, (_, k) =>
       W0.placementId(offset + k),
     );
-    // [DX-H5] Why: the mandatory preview is a no-live calibration on the identical observed rows.
-    // Rejected: estimating gateway/client CPU from latency while 64 other readers are running.
-    const cpu = () => process.threadCpuUsage();
-    const elapsedCpu = (before: ReturnType<typeof cpu>) => {
-      const now = cpu();
-      return (now.user - before.user + now.system - before.system) / 1000;
-    };
-    const gateways = () =>
-      Object.fromEntries(
-        (process.env.TX2_ENGINE_CGROUPS ?? "")
-          .split(",")
-          .filter(Boolean)
-          .map((entry) => {
-            const [name, p] = entry.split("=");
-            return [
-              name,
-              Number(fs.readFileSync(p + "/cpu.stat", "utf8").match(/^usage_usec (\d+)$/m)?.[1]),
-            ];
-          }),
-      );
+    // [DX-S5] Why: prefetch at one immutable cut and fold pages in subject order; defaults remain serial.
+    // Rejected: folding completion order (would change the canonical world-array fingerprint).
     const gatewayBefore = gateways(),
       readCpuStart = cpu(),
       readStarted = performance.now();
     const measured = await measureW0Http(() => comp.sweepPage(subjects, basis));
+    return {
+      offset,
+      subjects,
+      measured,
+      gatewayBefore,
+      gatewayAfter: gateways(),
+      readWallMs: performance.now() - readStarted,
+      readCpuMs: elapsedCpu(readCpuStart),
+    };
+  });
+  for await (const {
+    offset,
+    subjects,
+    measured,
+    gatewayBefore,
+    gatewayAfter,
+    readWallMs,
+    readCpuMs,
+  } of pages) {
+    signal.throwIfAborted();
     const page = measured.value;
-    const readWallMs = performance.now() - readStarted,
-      readCpuMs = elapsedCpu(readCpuStart),
-      gatewayAfter = gateways();
     let decodeWallMs = 0,
       decodeCpuMs = 0,
       evaluateWallMs = 0,
@@ -138,7 +162,8 @@ export async function readW0Fingerprint(
         Object.entries(gatewayAfter).map(([name, value]) => [name, value - gatewayBefore[name]]),
       ),
       gateway: comp.backend.url,
-      cpuScope: "main-thread-no-live-preview",
+      cpuScope:
+        pageConcurrency === 1 ? "main-thread-no-live-preview" : "overlapping-prefetch CPU spans",
     });
   }
   signal.throwIfAborted();

@@ -1,3 +1,4 @@
+import { forEachBounded } from "./w0-parallel.ts";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
@@ -33,7 +34,10 @@ export async function runReplicaDriver(argv: string[]) {
   };
   const N = Number(opt("rung", "1000")),
     scope = opt("scope"),
-    workers = Number(opt("workers", "3"));
+    workers = Number(opt("workers", "3")),
+    oracleConcurrency = Number(opt("oracle-concurrency", "1"));
+  if (!Number.isSafeInteger(oracleConcurrency) || oracleConcurrency < 1 || oracleConcurrency > 32)
+    throw Error("invalid oracle concurrency");
   if (!scope || !Number.isSafeInteger(N) || N < 1)
     throw new Error("Existing seeded scope and positive N required");
   const subjects = subjectList(N),
@@ -84,13 +88,15 @@ export async function runReplicaDriver(argv: string[]) {
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
   // [DX-S5] Why: report actual all-subject oracle time separately from activation and storage readback.
   // Rejected: projecting the 10k verifier cost or silently replacing full verification with sampling.
-  let oracleWallMs = 0;
+  let oracleWallMs = 0,
+    oracleActive = 0,
+    oracleStarted = 0;
   const timedOracle = async (...args: Parameters<DomainOracle["call"]>) => {
-    const started = performance.now();
+    if (oracleActive++ === 0) oracleStarted = performance.now();
     try {
       return await oracle.call(...args);
     } finally {
-      oracleWallMs += performance.now() - started;
+      if (--oracleActive === 0) oracleWallMs += performance.now() - oracleStarted;
     }
   };
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
@@ -358,6 +364,19 @@ export async function runReplicaDriver(argv: string[]) {
         commits: r1.publication!.commits,
         wallMs: r1.publication!.wallMs,
       };
+      report.r1Evaluation = {
+        wallMs: r1.evaluationWallMs,
+        passWallMs: r1.passWallMs,
+        combinedWallMs: r1.passWallMs + r1.publication!.wallMs,
+        live: false,
+      };
+      console.log(
+        JSON.stringify({
+          kind: "r1-publication",
+          evaluation: report.r1Evaluation,
+          publication: report.r1Publication,
+        }),
+      );
       cut = await comp.currentPosition();
       await followTo(cut);
       const old = replica
@@ -592,7 +611,7 @@ export async function runReplicaDriver(argv: string[]) {
             { position: finalPosition, validAt: V_W0 },
           )
         : undefined;
-      for (const r of records) {
+      await forEachBounded(records, oracleConcurrency, async (r) => {
         const world = worldOf(r.subject, reachableRows([r.subject], gateway.rows));
         if (
           worldSha256(world) !== r.worldSha256 ||
@@ -646,7 +665,7 @@ export async function runReplicaDriver(argv: string[]) {
           statesCompared++;
         }
         checked++;
-      }
+      });
     }
     if (
       statesCompared &&
@@ -656,6 +675,7 @@ export async function runReplicaDriver(argv: string[]) {
       throw new Error("Changed subject coverage mismatch");
     report.publishedStatesCompared = statesCompared;
     report.oracleCompared = checked;
+    report.oracleConcurrency = oracleConcurrency;
     report.postAckExactnessWallMs = performance.now() - exactnessStarted;
     report.postAckOracleWallMs = oracleWallMs - oracleBeforeExactness;
     console.log(
@@ -719,7 +739,7 @@ export async function runReplicaDriver(argv: string[]) {
       const candidateOracleStarted = performance.now();
       let candidateOracleCompared = 0;
       if (canonicalCandidates) {
-        for (const r of multi.records) {
+        await forEachBounded(multi.records, oracleConcurrency, async (r) => {
           const world = worldOf(r.subject, snap.world(r.subject));
           if (worldSha256(world) !== r.worldSha256 || r.candidates.length !== 3)
             throw new Error("Candidate world/coverage mismatch");
@@ -743,7 +763,7 @@ export async function runReplicaDriver(argv: string[]) {
               throw new Error("Candidate Python record mismatch " + r.subject);
             candidateOracleCompared++;
           }
-        }
+        });
         if (candidateOracleCompared !== N * 3)
           throw new Error("Candidate oracle coverage mismatch");
       }
