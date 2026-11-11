@@ -106,10 +106,23 @@ export function sendCommit<A>(
 // Rejected: per-client clocks (cross-client ties survive).
 const issued = new Map<string, number>();
 export function observeInstant(scope: string, maximum: number) {
+  if (!Number.isFinite(maximum)) throw new RangeError("Expected a finite record clock maximum");
   issued.set(scope, Math.max(issued.get(scope) ?? -Infinity, maximum));
 }
 export function issueInstant(scope: string, now: number) {
-  const instant = Math.max(now, (issued.get(scope) ?? -Infinity) + 1);
+  if (!Number.isFinite(now)) throw new RangeError("Expected a finite record clock");
+  const maximum = issued.get(scope) ?? -Infinity;
+  let instant = Math.max(now, maximum + 1);
+  // [DX-R3-P7] Why: supported imported clocks can exceed the integer-millisecond precision range.
+  // Rejected: maximum + 1 alone (can round back to maximum and make every replay fail).
+  if (instant <= maximum) {
+    const bits = new DataView(new ArrayBuffer(8));
+    bits.setFloat64(0, maximum);
+    bits.setBigUint64(0, bits.getBigUint64(0) + (maximum >= 0 ? 1n : -1n));
+    instant = bits.getFloat64(0);
+  }
+  if (!Number.isFinite(instant))
+    throw new RangeError("Finite record clock exhausted; use a fresh scope");
   observeInstant(scope, instant);
   return instant;
 }

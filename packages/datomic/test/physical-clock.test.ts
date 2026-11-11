@@ -125,3 +125,54 @@ it("replays a rejected adapter transaction above the returned maximum with a fre
     client.close();
   }
 });
+
+// [DX-R3-P7] Why: clock conflict recovery must advance even when adding one loses precision.
+// Rejected: exercising only Date.now-sized maxima (misses supported large finite imported times).
+it("advances large finite maxima exactly or fails before allocating an impossible clock", async () => {
+  const { issueInstant } = await import("../src/CommitOrder.js");
+  for (const maximum of [2 ** 53, 1e20, -1e20]) {
+    const scope = randomUUID();
+    observeInstant(scope, maximum);
+    const first = issueInstant(scope, maximum);
+    expect(Number.isFinite(first)).toBe(true);
+    expect(first).toBeGreaterThan(maximum);
+    expect(issueInstant(scope, maximum)).toBeGreaterThan(first);
+  }
+  const exhausted = randomUUID();
+  observeInstant(exhausted, Number.MAX_VALUE);
+  expect(() => issueInstant(exhausted, 100)).toThrow("exhausted");
+  expect(() => observeInstant(randomUUID(), Infinity)).toThrow("finite");
+  expect(() => issueInstant(randomUUID(), NaN)).toThrow("finite");
+});
+
+it("returns a typed clock-exhaustion error without consuming an ordered send", async () => {
+  const client = new DatomicClient("http://127.0.0.1:1"),
+    scope = randomUUID();
+  client.create = async () => ({
+    db: "scope",
+    created: false,
+    schemaHash: "",
+    strictRecordClocks: true,
+  });
+  client.begin = async () => ({ handle: "held", position: 0 });
+  client.release = async () => ({});
+  client.transact = async () => {
+    throw new Error("exhausted clock must never submit");
+  };
+  const adapter = makeDatomicStorageAdapter(client, scope);
+  try {
+    await Effect.runPromise(adapter.initialize());
+    observeInstant(scope, Number.MAX_VALUE);
+    await expect(
+      Effect.runPromise(
+        adapter.withTransaction(adapter.transactionInstant!(100), { replaySafe: true }),
+      ),
+    ).rejects.toThrow("Cannot allocate a finite record clock");
+    await sendCommit(registerCommit(100, client), async (sequence, sent) => {
+      sent();
+      expect(sequence).toBe(1);
+    });
+  } finally {
+    client.close();
+  }
+});

@@ -854,7 +854,15 @@ export const makeDatomicStorageAdapter = (
     transactionInstant: (now) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
-        const instant = physicalInstant(scopeKey, now, state.order ?? {}, strictRecordClocks);
+        const instant = yield* Effect.try({
+          try: () => physicalInstant(scopeKey, now, state.order ?? {}, strictRecordClocks),
+          catch: (cause) =>
+            new WriteError({
+              message:
+                "Cannot allocate a finite record clock; use a fresh scope if the clock is exhausted",
+              cause,
+            }),
+        });
         // [DX-B6-5] Why: register before this fiber yields; nested journals share the first ticket.
         // Rejected: first-insert registration (timestamp order can invert).
         if (state.replaySafe && state.order && !state.order.ticket)
