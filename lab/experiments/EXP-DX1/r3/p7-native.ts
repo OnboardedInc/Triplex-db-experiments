@@ -48,7 +48,9 @@ try {
     assert.equal(stored.strictRecordClocks, strict);
     const comp = await openComposition("reach", "datomic", scope);
     try {
-      if (arm === 0) {
+      // [DX-R3-P7] Why: matched arms need the same seeded database size, not a large strict arm against empty controls.
+      // Rejected: seeding only the first arm (confounds clock policy with index size and warmup).
+      {
         const seed = await seedRung({
           comp,
           subjects: 2000,
@@ -63,7 +65,8 @@ try {
         assert(seed.complete && seed.failures.length === 0);
         console.log(
           JSON.stringify({
-            kind: "strict-public-seed",
+            kind: "public-seed",
+            strict,
             subjects: seed.seededSubjects,
             commands: seed.commands,
             failures: seed.failures,
