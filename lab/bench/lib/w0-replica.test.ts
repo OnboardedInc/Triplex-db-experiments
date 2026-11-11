@@ -1,0 +1,174 @@
+import { expect, it } from "vitest";
+import { Replica } from "../../../packages/datomic/dist/index.js";
+import { publishChanged, evaluateAll } from "./w0-replica.ts";
+import type { CompositionHandle } from "./composition.ts";
+import { W0, canonical } from "./w0-world.ts";
+// [DX-R1] Why: independent fixture expectations distinguish stable payload, replacement, retirement and new work.
+// Rejected: generating the expected difference set by calling the implementation's filter again.
+it("publishes only new, changed or retired work, in frames of at most 64", async () => {
+  const subjects = Array.from({ length: 130 }, (_, i) => "s" + i);
+  const records = subjects.map(
+    (subject): W0.EvaluationRecord => ({
+      subject,
+      release: "R2",
+      basis: { tx: 20n, validTime: "2026-11-04T12:00:00Z" },
+      workItems: [
+        {
+          id: subject + ":item",
+          key: "k",
+          kind: "create",
+          payload: '{"value":2}',
+          rule: "OT",
+          version: "v2",
+        },
+      ],
+    }),
+  );
+  records[1] = { ...records[1], workItems: [] };
+  const submitted: string[][] = [];
+  const comp = {
+    currentPosition: async () => 21,
+    sweepPage: async (ids: string[]) => ({
+      rows: ids
+        .filter((id) => !id.endsWith(":s2"))
+        .map((entityId) => {
+          const subject = entityId.slice("p5:outbox:".length);
+          return {
+            entityId,
+            attribute: "p5/state",
+            value: {
+              type: "string",
+              value: canonical({
+                items: [
+                  {
+                    id: subject + ":item",
+                    payload: subject === "s0" || subject === "s1" ? '{"value":1}' : '{"value":2}',
+                    retired: false,
+                    seq: 1n,
+                    subject,
+                  },
+                ],
+                pending: [],
+                subjects: [{ subject, basis: { tx: 1n, validTime: "2026-11-04T12:00:00Z" } }],
+              }),
+            },
+          };
+        }),
+    }),
+    publishOutbox: async (rs: W0.EvaluationRecord[]) => {
+      submitted.push(rs.map((r) => r.subject));
+      return { deliveries: [], retry: false };
+    },
+  } as unknown as CompositionHandle;
+  const result = await publishChanged(comp, records);
+  expect(result.changed).toBe(3);
+  expect(result.commits).toBe(1);
+  expect(submitted).toEqual([["s0", "s1", "s2"]]);
+});
+
+it("fills publication frames across sparse input pages", async () => {
+  const records = Array.from(
+    { length: 130 },
+    (_, i): W0.EvaluationRecord => ({
+      subject: "s" + i,
+      release: "R2",
+      basis: { tx: 20n, validTime: "2026-11-04T12:00:00Z" },
+      workItems: [
+        {
+          id: "s" + i + ":item",
+          key: "k",
+          kind: "create",
+          payload: "{}",
+          rule: "OT",
+          version: "v",
+        },
+      ],
+    }),
+  );
+  const frames: string[][] = [];
+  const comp = {
+    currentPosition: async () => 21,
+    sweepPage: async (ids: string[]) => ({
+      rows: ids
+        .filter((id) => Number(id.slice("p5:outbox:s".length)) % 2 === 1)
+        .map((entityId) => {
+          const subject = entityId.slice("p5:outbox:".length);
+          return {
+            entityId,
+            attribute: "p5/state",
+            value: {
+              value: canonical({
+                items: [{ id: subject + ":item", payload: "{}", retired: false, seq: 1n, subject }],
+                pending: [],
+                subjects: [],
+              }),
+            },
+          };
+        }),
+    }),
+    publishOutbox: async (rs: W0.EvaluationRecord[]) => {
+      frames.push(rs.map((r) => r.subject));
+      return { deliveries: [], retry: false };
+    },
+  } as unknown as CompositionHandle;
+  const r = await publishChanged(comp, records);
+  expect(frames.map((f) => f.length)).toEqual([64, 1]);
+  expect(frames.flat()).toEqual(records.filter((_, i) => i % 2 === 0).map((r) => r.subject));
+  expect(r.changed).toBe(65);
+  expect(r.commits).toBe(2);
+});
+
+it("declines stored integer tokens the existing publisher cannot safely decode", async () => {
+  for (const seq of ["9007199254740993", "1.0"]) {
+    let called = false;
+    const comp = {
+      currentPosition: async () => 2,
+      sweepPage: async () => ({
+        rows: [
+          {
+            entityId: "p5:outbox:s",
+            attribute: "p5/state",
+            value: {
+              value:
+                '{"items":[{"id":"i","payload":"{}","retired":false,"seq":' +
+                seq +
+                ',"subject":"s"}],"pending":[],"subjects":[]}',
+            },
+          },
+        ],
+      }),
+      publishOutbox: async () => {
+        called = true;
+        return { deliveries: [], retry: false };
+      },
+    } as unknown as CompositionHandle;
+    await expect(
+      publishChanged(comp, [
+        {
+          subject: "s",
+          release: "R2",
+          basis: { tx: 2n, validTime: "2026-11-04T12:00:00Z" },
+          workItems: [],
+        },
+      ]),
+    ).rejects.toThrow("Unsafe numeric token");
+    expect(called).toBe(false);
+  }
+});
+
+it("rejects an unavailable future evaluation cut even for an empty scope", async () => {
+  const replica = new Replica(
+    {
+      head: async () => 0,
+      page: async () => {
+        throw new Error("unexpected page");
+      },
+      feed: async () => ({ head: 0, transactions: [] }),
+    },
+    0,
+  );
+  await replica.bootstrap([], 0);
+  await expect(
+    evaluateAll({ replica, subjects: [], releases: W0.R2, position: 1 }),
+  ).rejects.toThrow("explicit available");
+});
