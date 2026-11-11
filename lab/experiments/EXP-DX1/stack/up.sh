@@ -4,12 +4,14 @@ set -euo pipefail
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
-tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true
+tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec=
 # [DX-S3] Why: tune placement, heap and durable storage without changing existing callers.
 # Rejected: replacing defaults globally (would change other agents' measurements).
 # [orchestrator merge] Flags (DX-S3) win; DX_* environment variables (DX-H3) are the fallback; then the old defaults.
 pg_mem=${DX_PG_MEMORY:-512m} tx_mem=${DX_TX_MEMORY:-3g} gw_mem=1500m tx_java="-Xms256m -Xmx${DX_TX_HEAP:-2g}" gw_java=''
-index_threshold=${DX_INDEX_THRESHOLD:-128m} index_max=${DX_INDEX_MAX:-512m} object_cache=${DX_OBJECT_CACHE:-128m} pg_settings=''
+# [DX-M2] Why: opt-in JVM arms preserve concurrent experiments' defaults. Rejected: changing the control globally.
+tx_java=${DX_TX_JAVA_OPTS:-$tx_java}
+index_threshold=${DX_INDEX_THRESHOLD:-128m} index_max=${DX_INDEX_MAX:-512m} object_cache=${DX_TX_OBJECT_CACHE:-${DX_OBJECT_CACHE:-128m}} pg_settings=''
 while (($#)); do
   case "$1" in
     --no-publish) publish=false; shift; continue;;
@@ -19,7 +21,7 @@ while (($#)); do
     --tx-java-opts) tx_java=$2;; --gw-java-opts) gw_java=$2;;
     --memory-index-threshold) index_threshold=$2;; --memory-index-max) index_max=$2;;
     --object-cache-max) object_cache=$2;; --pg-settings) pg_settings=$2;;
-    --gateway-src) src=$2;; --port-write) port_w=$2;; --port-read) port_r=$2;;
+    --codec-spec) spec=$2;; --gateway-src) src=$2;; --port-write) port_w=$2;; --port-read) port_r=$2;;
     *) echo "unknown option $1" >&2; exit 2;;
   esac
   shift 2
@@ -47,11 +49,22 @@ if [[ -z "$src" ]]; then
   cp "$repo/packages/datomic/src/codec-spec.json" "$src/codec-spec.json"
 fi
 src=$(cd "$src" && pwd)
-[[ -d "$src/src" && -f "$src/codec-spec.json" ]] || { echo "gateway source needs src/ and codec-spec.json" >&2; exit 2; }
-gateway_hash=$(python3 - "$src" "$attempt/gateway-files.json" <<'PY'
+# [DX-M2] Why: a live source mount can use the tracked codec spec without a source copy.
+# Rejected: adding an untracked codec file to a shared gateway source tree.
+spec_mount=(); spec_java=''
+if [[ -n $spec ]]; then
+  spec=$(cd "$(dirname "$spec")" && pwd)/$(basename "$spec")
+  spec_mount=(-v "$spec:/opt/spec/codec-spec.json:ro")
+  spec_java=' -Dtriplex.codec.spec=/opt/spec/codec-spec.json'
+fi
+spec=${spec:-$src/codec-spec.json}
+[[ -d "$src/src" && -f "$spec" ]] || { echo "gateway source needs src/ and codec-spec.json" >&2; exit 2; }
+gateway_hash=$(python3 - "$src" "$attempt/gateway-files.json" "$spec" "$spec_java" <<'PY'
 import pathlib,hashlib,json,sys
 root=pathlib.Path(sys.argv[1])
 files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.rglob('*')) if p.is_file()}
+# [DX-M2] Why: the loaded external codec participates in source identity. Rejected: hashing only unused local codec bytes.
+if sys.argv[4]: files['@loaded-codec-spec.json']=hashlib.sha256(pathlib.Path(sys.argv[3]).read_bytes()).hexdigest()
 data=json.dumps(files,sort_keys=True,separators=(',',':')).encode()
 pathlib.Path(sys.argv[2]).write_bytes(data)
 print(hashlib.sha256(data).hexdigest())
@@ -103,10 +116,11 @@ for role in w r; do
   if [[ $role == w ]]; then mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; heap=${DX_GW_WRITE_HEAP:-}; else mem=${DX_GW_READ_MEMORY:-$gw_mem}; heap=${DX_GW_READ_HEAP:-}; fi
   # bin/run reads DATOMIC_JAVA_OPTS, not JAVA_OPTS (DX-S3). An explicit --gw-java-opts wins; else DX_GW_*_HEAP; else the launcher default (1g).
   role_java=$gw_java; [[ -n $role_java || -z $heap ]] || role_java="-Xms256m -Xmx$heap"
+  if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
-    ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" -e "DATOMIC_JAVA_OPTS=$role_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
-    -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
-    -v "$src:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
+    ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
+    -v "$src:/opt/gateway:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false
   for ((i=0;i<180;i++)); do
     if [[ $publish == false ]]; then

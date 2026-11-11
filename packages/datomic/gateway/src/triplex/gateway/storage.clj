@@ -216,10 +216,23 @@
                        :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
 ;; Rejected: a twenty-millisecond wait followed by overtaking.
+;; [DX-M2] Why: hints prefetch the opaque commit function's reads before its serial turn.
+;; Source: https://docs.datomic.com/reference/hints.html. Rejected: submitting d/with's
+;; expanded data (would move invariant checks off the authoritative transaction).
+(def commit-hints? (= "true" (System/getenv "TX2_COMMIT_HINTS")))
+(defn transaction-hints [conn data timeline]
+  (when commit-hints?
+    (try
+      (:hints (d/with (d/db conn) data :return-hints true))
+      ;; A stale speculative basis can reject an otherwise valid ordered commit.
+      ;; Hints are optional; only the transactor may make the definitive decision.
+      (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))))
 (defn submit! [conn data input timeline]
-  (let [submit (fn []
+  (let [hints (transaction-hints conn data timeline)
+        submit (fn []
                  (swap! timeline assoc :predecessorReady (System/nanoTime))
-                 (let [future (d/transact-async conn data)]
+                 (let [future (if hints (d/transact-async conn data :hints hints)
+                                  (d/transact-async conn data))]
                    (swap! timeline assoc :submitted (System/nanoTime)) future))]
     (if-let [client (get input "clientId")]
       (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
