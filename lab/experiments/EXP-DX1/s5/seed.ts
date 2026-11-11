@@ -14,7 +14,9 @@ const N = Number(ns),
 const R = W0.rung(N);
 assert(scope?.startsWith("dxs5-"));
 assert(endSubjects > 0 && endSubjects <= N && endSubjects % 50 === 0);
-process.env.TX2_P5_CLOCK_START = String(V_W0);
+// [DX-S5] Why: deterministic Runtime IDs restart at one in each driver process and would collide after a chunk restart.
+// Rejected: resetting a scope-seeded ID generator. World fingerprints omit physical IDs and recorded wall times; logical positions stay exact.
+delete process.env.TX2_P5_CLOCK_START;
 process.env.TX2_W0_POINT_JOURNAL = "1";
 process.env.TX2_W0_RESTORE_INDEXED_JOURNAL = "1";
 const comp = await openComposition("reach", "datomic", scope);
