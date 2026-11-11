@@ -53,15 +53,18 @@ src=$(cd "$src" && pwd)
 # Rejected: adding an untracked codec file to a shared gateway source tree.
 spec_mount=(); spec_java=''
 if [[ -n $spec ]]; then
+  spec=$(cd "$(dirname "$spec")" && pwd)/$(basename "$spec")
   spec_mount=(-v "$spec:/opt/spec/codec-spec.json:ro")
   spec_java=' -Dtriplex.codec.spec=/opt/spec/codec-spec.json'
 fi
 spec=${spec:-$src/codec-spec.json}
 [[ -d "$src/src" && -f "$spec" ]] || { echo "gateway source needs src/ and codec-spec.json" >&2; exit 2; }
-gateway_hash=$(python3 - "$src" "$attempt/gateway-files.json" <<'PY'
+gateway_hash=$(python3 - "$src" "$attempt/gateway-files.json" "$spec" "$spec_java" <<'PY'
 import pathlib,hashlib,json,sys
 root=pathlib.Path(sys.argv[1])
 files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.rglob('*')) if p.is_file()}
+# [DX-M2] Why: the loaded external codec participates in source identity. Rejected: hashing only unused local codec bytes.
+if sys.argv[4]: files['@loaded-codec-spec.json']=hashlib.sha256(pathlib.Path(sys.argv[3]).read_bytes()).hexdigest()
 data=json.dumps(files,sort_keys=True,separators=(',',':')).encode()
 pathlib.Path(sys.argv[2]).write_bytes(data)
 print(hashlib.sha256(data).hexdigest())
