@@ -40,7 +40,7 @@ sed 's/<root level="WARN">/<root level="INFO">/' lab/experiments/EXP-DX1/s5/logb
 sed -i.bak '/<root level=/i\
   <logger name="datomic.kv-cluster" level="WARN"/>\
   <logger name="datomic.kv-cluster-storage" level="WARN"/>' "$out/logback.xml"
-S5_TX_JAVA_EXTRA='-Xlog:gc*:file=log/gc.log:time,uptime,level,tags:filecount=2,filesize=16M' S5_PEER_JAVA_EXTRA='-Xlog:gc*:file=log/gc.log:time,uptime,level,tags:filecount=2,filesize=16M' S5_DIAGNOSTIC=1 S5_LOGBACK="$out/logback.xml" source lab/experiments/EXP-DX1/s5/setup.sh
+S5_TX_JAVA_EXTRA='-Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M' S5_PEER_JAVA_EXTRA='-Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M' S5_DIAGNOSTIC=1 S5_LOGBACK="$out/logback.xml" source lab/experiments/EXP-DX1/s5/setup.sh
 echo "diagnostic started $(date -u +%FT%TZ) controller=$$"
 # Keep the supervised engines alive for read-only observations from this task.
 for ((i=0;i<240;i++)); do

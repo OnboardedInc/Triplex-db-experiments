@@ -53,7 +53,7 @@ for role in ('gw-r', 'gw-w', 'tx', 'pg'):
     p = subprocess.Popen(['docker', 'cp', name + ':/tmp/.', '-'], env=env, stdout=subprocess.PIPE)
     with tarfile.open(fileobj=p.stdout, mode='r|') as archive:
         for member in archive:
-            if member.isfile() and re.fullmatch(r'(?:\./)?clojure-[^/]+\.edn', member.name):
+            if member.isfile() and re.fullmatch(r'(?:\./)?(?:clojure-[^/]+\.edn|gc\.log(?:\.[0-9]+)?)', member.name):
                 print(json.dumps({'event': 'failure-clojure-report', 'container': name, 'file': member.name}), flush=True)
                 sys.stdout.buffer.write(archive.extractfile(member).read())
                 sys.stdout.buffer.flush()
