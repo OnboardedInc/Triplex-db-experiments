@@ -578,6 +578,26 @@ Follow-ups: DX-M1 resumed for collector arms on the write gateway and transactor
 G1, write gateway on its own CPU), alternating. A predecessor-stamp cache for the writer (one HTTP call per commit at any scope
 size) goes to whoever next owns `RowCache.ts` (DX-H7 is in it now).
 
+## DX-H7 first result (2026-11-11 00:05 UTC, branch `exp/DX-H7-driver-10k` head 8bf28097, **not merged: its gates did not finish**)
+
+Report `h7/REPORT.md` on that branch. 10,000 subjects, 3 reader threads, steady writes only (no bursts), one run each:
+
+| Arm | Readers | Verified pulls/s | Read p99 ms | Reader CPU ms per pull | Requests per pull |
+| --- | --- | --- | --- | --- | --- |
+| before | 64 / 256 | 3,709 / 3,848 | 53.6 / 188.7 | 0.77 / 0.76 | 1.35 / 1.32 |
+| after | 64 / 256 | 4,899 / 4,834 | 40.1 / 138.6 | 0.56 / 0.57 | 1.004 / 1.006 |
+
+Changes: interned reach keys, subject-to-thread affinity for the uniform part, 640 MiB entity cache per reader (294 to 297 MiB
+used, zero evictions), reuse of hashes for immutable fact objects. Zero violations in 444,197 reads. Targets 0.4 ms and 6,000
+pulls/s not met; reader threads still 0.92 to 0.98 busy; remaining cost is re-decoding entity bodies when current and historical
+revisions alternate, traversal, Effect runtime and GC. Reader process peak 3.82 GiB. It waited 112 minutes for the lock.
+4,834 pulls/s would clear P4's quota bar (4,400); read p99 at 256 readers (138.6 ms) is still bounded by the load generator.
+Resumed: finish gates (commit `DX-H7 gated:`), then a writer predecessor-stamp map so commits make one HTTP call at any size.
+
+Orchestrator's note for the next jump: once DX-R1's local copy passes its equality gates, the same copy with a short window of
+recent revisions can serve current and recently pinned reads with no request at all; that takes the read path's cost out of
+both the gateway and the client's decode. Not started.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
@@ -586,7 +606,7 @@ size) goes to whoever next owns `RowCache.ts` (DX-H7 is in it now).
 | DX-R1 | Local copy of current facts in the runtime (bootstrap, follow the feed, freeze), release evaluation from it for one and several candidates, publish only changed outputs; equality gates against the gateway and the full sweep | `exp/DX-R1-replica`, `.claude/worktrees/dx-r1` | `.../prompts/DX-R1.md` |
 | DX-M1 (resumed 23:11 UTC) | Collector arms for the write path, alternating: longest pause under 20 ms through the burst | `exp/DX-M1-stall`, `.claude/worktrees/dx-m1` | `.../prompts/DX-M1-resume1.md` |
 | DX-B10 | Gate and commit DX-B9's gateway fix; strict per-client commit order with tests; W0 seed at window 32 with the fingerprint | `exp/DX-B10-order` (from `exp/DX-B9-walls`), `.claude/worktrees/dx-b10` | `.../prompts/DX-B10.md` |
-| DX-H7 | Load-generator CPU per pull at 10,000 subjects: profile, cache budgets, shared decode, cheaper exact verification; target 6,000 verified pulls/s | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7.md` |
+| DX-H7 (resumed 00:06 UTC) | Gate its client and driver changes; writer predecessor-stamp map (one HTTP call per commit at 10,000 subjects) | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7-resume1.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
