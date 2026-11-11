@@ -19,18 +19,24 @@ for (const window of [1, 32]) {
   const bulk = await openBulkCounts(comp);
   comp.storeCounts = bulk.count;
   try {
+    console.log(JSON.stringify({ window, phase: "seed-start" }));
+    const cpuBefore = process.cpuUsage();
     const seed = await seedW0(comp, 1000, `/driver/w${window}.ndjson`, undefined, window);
+    const loadCpuMicros = process.cpuUsage(cpuBefore);
     const observed = await readW0Fingerprint(
       comp,
       1000,
       { position: seed.basis.tx, validAt: V_W0 },
       AbortSignal.timeout(120000),
     );
-    console.log(JSON.stringify({ window, seed, observed }));
+    console.log(JSON.stringify({ window, seed, loadCpuMicros, observed }));
     assert.equal(
       observed.worlds,
       "sha256:ca15387e66e25ed5e19a4adc602e941f7f06dd8b0f1c6ca7d1a5d2f02f8171ad",
     );
+  } catch (error) {
+    console.error(JSON.stringify({ window, error: String(error), stack: (error as Error).stack }));
+    process.exitCode = 1;
   } finally {
     bulk.close();
     await comp.close();

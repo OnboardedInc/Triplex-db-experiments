@@ -8,6 +8,12 @@ if [[ ${B10_RESTART_NORMAL:-0} == 1 ]]; then
  bash lab/experiments/EXP-DX1/b10/gateways.sh "$prefix" 0
 fi
 docker volume create "$prefix-driver" >/dev/null
+# [DX-B10] Why: sample owned CPU use during the single seed comparison for a quick bottleneck check.
+# Rejected: repeating the timed run just to diagnose a small window speedup.
+(while sleep 15; do
+ docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} memory={{.MemUsage}}' "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" "$prefix-driver" || true
+done) & sampler=$!
+trap 'kill "$sampler" 2>/dev/null || true; wait "$sampler" || true' EXIT
 docker run --rm --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 5g --memory-swap 5g \
  -v "$PWD:$PWD:ro" -w "$PWD" -v "$prefix-driver:/driver" \
  -e DATOMIC_URL="http://$prefix-gw-w:8080" -e DATOMIC_READ_URLS="http://$prefix-gw-r:8080" \

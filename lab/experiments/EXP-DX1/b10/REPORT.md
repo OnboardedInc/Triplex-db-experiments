@@ -45,3 +45,25 @@ Gates: node lab/bin/heavy.mjs --label DX-B10-STEP -- bash lab/experiments/EXP-DX
 Executed MODEs: native, diff, original combined all, long; pending order grant was cancelled. Current runner also offers base and clock slices.
 Next: reserve a window for order/native/HTTP, base/clock and the W0 seed comparison, then rerun the fresh differential and independent review.
 Raw clients need an HTTP timeout longer than the gap deadline; makeDatomicRuntime already uses 35 seconds.
+
+## Continuation — 2026-11-11 UTC
+Correctness proof commit: 34fc25a8; no implementation fix or test weakening was needed.
+commit_order_test.clj: 8 tests / 98 assertions passed, including 10,000 reordered arrivals at window 64.
+Full native gateway run: 45 tests / 53,975 assertions passed.
+strict-order.test.ts: 4 tests per layout passed (8 total); both 10,000-commit runs checked every ACK position.
+Fresh lean base: 24 files, 183 passed; 2 existing legacy-only read-pins cases skipped by their authored conditions.
+Fresh lean long: reach 3 and concurrent-commits 4 passed; 3,200 pipelined commands and 500 conflict races.
+Fresh lean clock/peer: 2 passed; 2,000 distributed commands, 5,000 peer commits and 10,000 peer read answers.
+Fresh differential: 300 scenarios across both layouts, 95,028 comparisons, 5,664 row closures; all passed.
+Commands: heavy.mjs --label DX-B10-proof-* -- bash b10/window.sh PREFIX bash b10/gates.sh PREFIX MODE.
+MODEs: order, diff; B10_LAYOUTS=lean for base, clock and long. Paths are lab/experiments/EXP-DX1/b10/.
+Raw proof logs: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B10/proven-{order,lean,long,diff}.log.
+Seed measurement: NOT RUN. The queued grant waited 02:15–02:41 UTC and never acquired the measurement lock.
+DX-H4 held q2-zero and then q2-ladder; its lock and containers were left untouched. The owned queued wrapper was stopped (exit 128).
+Windows 1 and 32: commands/s unavailable; acknowledged-reference positions and the 1,000-subject fingerprint were NOT checked.
+The 1,000 commands/s target, speedup and bottleneck diagnosis remain unassessed; no timing estimate is presented as a measurement.
+Queued command: heavy.mjs --label DX-B10-seed-windows -- env B10_VM=1 B10_CACHE_VERIFY=false bash b10/window.sh tx2-dxb10-seed1000 bash b10/seed-vm.sh tx2-dxb10-seed1000.
+Raw queue/lock output: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B10/seed-windows.log; total evidence about 15 MiB.
+The prepared runner samples owned CPU and reports each window independently; it was not executed in this continuation.
+All owned proof stacks/volumes/networks were removed; the seed job created none. Forbidden source files were unchanged.
+Next: admit that seed comparison in an exclusive hold; correctness proofs now need no rerun unless implementation changes.
