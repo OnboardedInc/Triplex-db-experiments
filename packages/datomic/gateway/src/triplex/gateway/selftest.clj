@@ -388,6 +388,8 @@
               (let [error (try (write! 3 clock) nil (catch clojure.lang.ExceptionInfo e e))]
                 (is (some? error))
                 (is (= "ClockConflict" (:code (ex-data error))))
+                (is (.contains (str (.getMessage error)) "strictRecordClocks"))
+                (is (.contains (str (.getMessage error)) "fresh non-strict scope"))
                 (is (= 2 (storage/head-position name (gateway/sync-db uri))))))
             (is (thrown? clojure.lang.ExceptionInfo
                   (storage/commit! name conn (gateway/sync-db uri)

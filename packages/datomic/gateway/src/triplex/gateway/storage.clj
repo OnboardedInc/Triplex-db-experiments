@@ -248,6 +248,11 @@
     (order/enqueue! client (get input "sendSequence") (get input "operationId")
                     #(delay nil) order/gap-ms order/buffer-limit [conn input]))
   (throw error))
+ ;; [DX-R3-P6] Why: a clock fence needs an actionable policy/import explanation at the adapter boundary.
+;; Rejected: exposing only the transactor's numeric TRIPLEX_CLOCK marker (does not explain immutable strict scopes).
+(defn clock-conflict-message [message]
+  (str message " Record-clock policy: replay-safe writes, and every gateway commit in strictRecordClocks scopes, must advance the scope maximum."
+       " Use a greater commit time. To preserve old history times, use a fresh non-strict scope, or load a strict scope in increasing commit times, one clock per commit."))
 (defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
@@ -272,7 +277,7 @@
     (catch Exception e
       (let [text (str e)]
         (when (or (= "OutcomeUnknown" (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
-        (throw (ex-info (.getMessage e)
+        (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
                         :code (cond (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"

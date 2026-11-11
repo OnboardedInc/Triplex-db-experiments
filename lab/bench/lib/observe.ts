@@ -1,8 +1,7 @@
 /** What a read observed, in the same terms the expected-state model computes. */
-import { Option } from "effect";
 import type { PullResult } from "./composition.ts";
 import { Digest, hash2 } from "./rng.ts";
-import { canonicalRow } from "./canonical.ts";
+import { canonicalRow, supportedDescriptors } from "./canonical.ts";
 
 export interface Observed {
   digest: string;
@@ -22,13 +21,8 @@ const members = new WeakMap<object, MemberPart>();
 const frozenData = (v: unknown): boolean => {
   if (v === null || typeof v !== "object") return typeof v !== "function";
   if (!Object.isFrozen(v)) return false;
-  if (Option.isOption(v)) return Option.isNone(v) || frozenData(v.value);
-  const prototype = Object.getPrototypeOf(v);
-  if (prototype !== Object.prototype && prototype !== Array.prototype && prototype !== null)
-    return false;
-  return Object.values(Object.getOwnPropertyDescriptors(v)).every(
-    (d) => "value" in d && frozenData(d.value),
-  );
+  const descriptors = supportedDescriptors(v);
+  return Object.values(descriptors).every((d) => frozenData(d.value));
 };
 export function observe(pr: PullResult): Observed {
   // [DX-R3] Why: follower hashes every fact in each immutable version; readers add those exact contributions.
@@ -54,7 +48,7 @@ export function observe(pr: PullResult): Observed {
       // [DX-R3] Why: cache only complete immutable public rows, including Option payloads and nested values.
       // Rejected: caching a projection while unexamined metadata can still change.
       if (Object.isFrozen(t)) {
-        const descriptors = Object.getOwnPropertyDescriptors(t);
+        const descriptors = supportedDescriptors(t);
         if (
           Object.keys(descriptors).every(
             (k) => descriptors[k] && "value" in descriptors[k] && frozenData(descriptors[k].value),

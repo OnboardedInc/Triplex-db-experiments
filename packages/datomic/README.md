@@ -160,11 +160,45 @@ sequence peer submissions. A regressing public clock produces a conflict and a
 fresh callback replay instead of making the scope irregular. Clock conflicts
 have a retry budget of `max(32, maxRetries)`; ordinary serialization conflicts
 retain `maxRetries`. Unsafe SPI callbacks retain the legacy irregular-history
-behavior. Registration ends at socket send completion, so acknowledgements still
+behavior only in non-strict scopes. Registration ends at socket send completion, so acknowledgements still
 overlap, including through older instrumentation wrappers.
 
 This layout remains experimental. See `lab/experiments/EXP-DX1/b5/REPORT.md` for
 actual gate denominators, diagnostic measurements and unresolved limitations.
+
+### Strict record clocks and history imports
+
+`strictRecordClocks` is an immutable scope policy set only at creation. Existing
+scopes and the default are non-strict (`false`); reopening a scope cannot enable
+or disable the policy. Low-level provisioning can opt in with the third argument before opening a runtime:
+
+```ts
+const client = new DatomicClient(url);
+const database = await client.create(scope, "lean", true);
+```
+
+`scope` is the canonical `DatabaseScope` text. The returned
+`database.strictRecordClocks` and the gateway's replica capability report the
+stored policy, rather than echoing the requested flag. New benchmark/seed scopes
+request strict mode; existing sealed seeds retain their original policy.
+
+In a strict scope, every write through the gateway's commit function, including
+unsafe SPI and claim-only/empty commits, must use one finite record clock per
+physical commit, strictly greater than the scope's durable maximum. A runtime
+copy answers record-time-only pinned reads locally only in strict scopes, and
+only after a later applied clock closes the requested cut, with the required
+history and reference closure retained. Other time-pinned reads use the gateway.
+Position-pinned and current reads do not require strict mode for local eligibility.
+
+`ClockConflict` names this record-clock policy and reports the maximum. Use a
+greater commit time. A writer preserving old record times must use a fresh
+non-strict scope, or load a strict scope in increasing commit times, one clock per
+commit. A strict scope that already passed an imported record time cannot be
+downgraded; do not rewrite meaningful history clocks merely to pass the fence.
+
+The policy is enforced for writes through the gateway's commit function. Raw
+administrative Datomic transactions can bypass or alter it and are outside this
+guarantee; the policy is not a fence against database administrators.
 
 ### Client cache budgets
 

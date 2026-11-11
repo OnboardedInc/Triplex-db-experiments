@@ -41,7 +41,7 @@ export async function proveStrictSource(endpoint: string) {
         assert.equal(cap.supported, true); assert.equal(cap.strictRecordClocks, strict);
         if (strict) {
           for (const clock of [100, 101]) await assert.rejects(write(3, [clock]),
-            (e: any) => e.code === "ClockConflict" && e.maximum === 101);
+            (e: any) => e.code === "ClockConflict" && e.maximum === 101 && e.message.includes("strictRecordClocks") && e.message.includes("fresh non-strict scope"));
           await assert.rejects(write(3, [102, 103]), (e: any) => e.code === "TransactionRejected");
           assert.equal((await client.basis(db.db)).position.v, "2");
           await client.transact(db.db, { sourceK: 2, position: 3, operationId: "claim-only", attemptId: "probe",
