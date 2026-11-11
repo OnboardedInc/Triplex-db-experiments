@@ -259,6 +259,10 @@ export async function runReplicaDriver(argv: string[]) {
       position: cut,
     };
     console.log(JSON.stringify({ kind: "bootstrap", ...report.bootstrap }));
+    // [DX-S5] Why: first use may append activation/outbox records, but its application input stays at the sealed cut.
+    // Rejected: quietly moving the requested sealed input basis to the later activation transaction.
+    const pinnedInput =
+      seedPosition !== undefined ? await replica.snapshotAt(seedPosition) : undefined;
     report.bootstrapWorlds = (await equalWorlds(cut, argv.includes("--seed-fingerprint"))).worlds;
     console.log(
       JSON.stringify({
@@ -389,14 +393,14 @@ export async function runReplicaDriver(argv: string[]) {
       await followTo(cut);
       report.activations = { R1: cut };
     }
-    const r1Snapshot = await replica.snapshotAt(cut),
-      r1Position = cut;
+    const r1Snapshot = pinnedInput ?? (await replica.snapshotAt(cut)),
+      r1Position = r1Snapshot.position;
     if (argv.includes("--publish")) {
       const r1 = await evaluateAll({
         replica,
         subjects,
         releases: W0.R1,
-        position: cut,
+        position: r1Position,
         workers,
         view: r1Snapshot,
         publish: comp,
@@ -442,7 +446,9 @@ export async function runReplicaDriver(argv: string[]) {
       report.activations.R2 = cut;
     }
     const freezeStarted = performance.now();
-    const snap = await replica.snapshotAt(cut);
+    const snap = pinnedInput ?? (await replica.snapshotAt(cut));
+    cut = snap.position;
+    report.frozenInputPosition = cut;
     report.freezeMs = performance.now() - freezeStarted;
     const live = argv.includes("--live");
     const trafficDir = opt("traffic-dir", recordDir + "/../traffic");
