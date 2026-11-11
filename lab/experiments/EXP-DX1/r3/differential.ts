@@ -145,6 +145,7 @@ try {
           `canonical world at ${JSON.stringify({ n, basis })}`,
         );
         const fast = await reader.pullAt(subject, basis, gateway);
+        assert.equal(worldBytes(fast.triples), worldBytes(slow.triples), `lazy world at ${n}`);
         assert.deepEqual(observe(fast), observe(slow), `whole-world observation at ${n}`);
         if (before.route === "replica") local++;
         else fallback++;

@@ -151,12 +151,16 @@ export class ReplicaReader {
       const after = await this.pullAt(root, basis, fallback, undefined, rows);
       if (JSON.stringify(observe(before)) !== JSON.stringify(observe(after)))
         throw Error("replica split snapshot violation");
-      return {
-        ...after,
-        route: before.route === "replica" && after.route === "replica" ? "replica" : "fallback",
-        roundTrips: before.roundTrips + after.roundTrips,
-        waitedMs: before.waitedMs + after.waitedMs,
-      };
+      // [DX-R3] Why: preserve lazy world descriptors across split reads without decoding entity bodies.
+      // Rejected: object spread (invokes the triples getter and materializes the world).
+      return Object.assign(
+        Object.create(Object.getPrototypeOf(after), Object.getOwnPropertyDescriptors(after)),
+        {
+          route: before.route === "replica" && after.route === "replica" ? "replica" : "fallback",
+          roundTrips: before.roundTrips + after.roundTrips,
+          waitedMs: before.waitedMs + after.waitedMs,
+        },
+      );
     }
     let waitedMs = 0;
     if (basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position) {
@@ -166,10 +170,14 @@ export class ReplicaReader {
     }
     if (!rows) {
       const total = { a: 0, b: 0, n: 0, bytes: 0, stamp: -1, stamps: 0 };
+      const selected: (string | PackedEntity)[] = [];
+      const selectedValidAt = basis.validAt;
+      let materialized: PullResult["triples"] | undefined;
       const found = this.index.visit(
         root,
         basis,
-        (_id: string, packed: PackedEntity, validAt: number) => {
+        (id: string, packed: PackedEntity, validAt: number) => {
+          selected.push(id, packed);
           const prepared = packed as Prepared;
           if (!prepared.stats) throw Error("Unprepared replica read buffer");
           let view = statViews.get(packed);
@@ -199,7 +207,22 @@ export class ReplicaReader {
       );
       if (found)
         return {
-          triples: [],
+          // [DX-R3] Why: a pull returns its actual immutable world, not only a checksum; decoding is demand-driven.
+          // Rejected: an empty triples array paired with a cached nonempty observation.
+          get triples() {
+            if (!materialized) {
+              const rows: PullResult["triples"][number][] = [];
+              for (let i = 0; i < selected.length; i += 2)
+                for (const row of api.unpackEntity(
+                  selected[i] as string,
+                  selected[i + 1] as PackedEntity,
+                  selectedValidAt,
+                ))
+                  rows.push(row);
+              materialized = rows;
+            }
+            return materialized;
+          },
           ...found,
           roundTrips: 0,
           route: "replica",

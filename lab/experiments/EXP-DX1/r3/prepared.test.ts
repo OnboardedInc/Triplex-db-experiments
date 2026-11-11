@@ -204,6 +204,7 @@ test("many interval boundaries use compact shared summaries, with exact end-poin
     const fast = await reader.pullAt("root", { validAt }, async () => {
       throw Error("fallback");
     });
+    assert.equal(worldBytes(fast.triples), worldBytes(exact.rows));
     assert.deepEqual(
       observe(fast),
       observe({
@@ -217,4 +218,34 @@ test("many interval boundaries use compact shared summaries, with exact end-poin
       }),
     );
   }
+});
+
+test("lazy worlds retain the exact selected version after the window advances", async () => {
+  const reader = new ReplicaReader();
+  const original = prepareEntity(
+    "root",
+    packEntity(1, [
+      {
+        id: "old",
+        entityId: "root",
+        attribute: "value",
+        value: { type: "string", value: "old" },
+        position: 1,
+        validFrom: 0,
+      },
+    ]),
+  );
+  reader.apply({ reset: true, valid: true, position: 1, changes: [["root", undefined, original]] });
+  const basis = { validAt: 0 };
+  const result = await reader.pullAt("root", basis, async () => { throw Error("fallback"); });
+  basis.validAt = -1;
+  assert(Object.getOwnPropertyDescriptor(result, "triples")?.get);
+  reader.apply({
+    reset: false,
+    valid: true,
+    position: 2,
+    changes: [["root", original, prepareEntity("root", packEntity(2, []))]],
+  });
+  assert.equal(result.triples[0]?.value.value, "old");
+  assert.equal(result.triples.length, 1);
 });
