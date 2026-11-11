@@ -967,3 +967,24 @@ the 64 level became seven times faster while 256 loses time to 19,681 watermark 
 readers (targets 40,000 reads/s, p99 25 ms, local share 0.99; 1,024 readers at least 0.9 of 256); follow the feed with DX-R2's
 inline journals; pass the read path through the pair scripts and bound sample memory so the full ladder fits 12 GiB with
 finished phases on disk; rerun the 200,000-pair differential on merged code.
+
+## 2026-11-11 06:30 UTC: `nohlt` is on in the triplex2 guest; the wake penalty is gone on the probe
+
+`lab/bin/vm-nohlt.sh on 8` under the lock, 06:27 UTC. Guest command line now `… ro nohlt console=tty1 console=ttyAMA0`; 8 CPU,
+24 GiB, 157 volumes intact, `discard` remounted, docker context `default` before and after. Log
+`~/Claude/Projects/triplex-db-2/evidence/ORCH-vm-wake/nohlt-on-8cpu-20261111T055953Z.log`. Probe (`vm-wake/run.sh`, 2.1 ms unit of
+pure CPU work pinned to CPU 5):
+
+| Arm | Before (plain) work p50 / p99 ms | Before sleep overshoot p50 / p99 ms | With `nohlt` work p50 / p99 ms | With `nohlt` sleep overshoot p50 / p99 ms |
+| --- | --- | --- | --- | --- |
+| Back-to-back | 2.14 / 2.51 | | 2.27 / 5.50 | |
+| After a 50 ms sleep | 5.76 / 11.02 | 9.98 / 10.34 | 2.37 / 5.83 | 0.07 / 0.13 |
+| After a 1 s sleep | 7.77 / 10.91 | 6.23 / 10.35 | 2.39 / 5.96 | 0.08 / 0.12 |
+
+Reading: a thread now wakes on time and runs at full speed after a wait. The price is in the back-to-back tail (p99 2.5 to
+5.5 ms; eight always-busy vCPU threads on six performance cores) and on the host: the VM process uses 798% CPU continuously
+(Mac on AC power, no thermal warning recorded). Every measurement from 06:27 UTC on is taken under `nohlt` until
+`lab/bin/vm-nohlt.sh off` is run; say so next to each number. To do: a 6-vCPU `nohlt` arm (all vCPUs on performance cores)
+needs a 6-CPU placement for the stack. Switch `nohlt` off before Sam's working day unless he says to keep it.
+
+**q6** started 06:30 UTC: the same pair as q5 (frozen checkout `1eea10e2`, gateway reads, 12 GiB driver), `nohlt` the only change.
