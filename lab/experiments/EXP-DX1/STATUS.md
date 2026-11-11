@@ -1375,3 +1375,16 @@ retained data (complete transactor and gateway logs, what the transactor is doin
 
 **DX-R3 live proof queued** on the lock from the DX-R3 worktree (`f930813c`): `r3/run.sh both p6-both`, log
 `evidence/DX-R3/orch-p6-both.log`.
+
+## 2026-11-11 21:32 UTC: first live run on a strict scope failed while seeding; DX-R3 part 7
+
+`r3/run.sh both p6-both` on `f930813c` (`evidence/DX-R3/orch-p6-both.log`). The native strict-clock probe passed (non-strict
+scope accepts a clock regression; strict scope rejects it and rejects mixed clocks; capability reports the stored property).
+The differential then could not seed its fresh strict scope: `seed command …:seed:s1105-1156 failed 8 times: WriteError:
+Resend the client suffix from expectedSequence`. So through the public adapter the benchmark's own batched seeding cannot
+commit in a strict scope; no differential and no ladder ran. This is the kind of defect the offline rounds could not see.
+
+**DX-R3 resumed 21:31 UTC, part 7** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-R3-resume6.md`): find the first rejection,
+make the adapter choose one clock per physical commit above the scope's maximum (batched commands and commits in flight),
+keep the ordered-submission state consistent after a clock rejection, then run the proof and measure the strict rule's cost
+on a commit. The lock is shared with DX-S5's diagnosis.
