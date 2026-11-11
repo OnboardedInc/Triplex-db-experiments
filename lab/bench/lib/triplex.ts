@@ -7,6 +7,7 @@
  * Rejected: adding lab/bench to the pnpm workspace (lockfile change); importing packages' src (unbuilt bytes).
  */
 import path from "node:path";
+import { NS_PREDECESSOR_ATTRIBUTES, WRITER_PREDECESSOR_CACHE_MIB } from "./predecessors.ts";
 import { installReaderDiagnostics } from "./reader-diagnostics.ts";
 import { installDatomicPublication } from "./datomic-publication.ts";
 import fs from "node:fs";
@@ -58,7 +59,7 @@ export async function openTriples(
     installDatomicPublication(api);
     if (!isMainThread) installReaderDiagnostics(api);
     if (typeof api.makeDatomicRuntime !== "function") throw Error("Datomic public runtime unavailable");
-    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, ...(!isMainThread && workerData?.entityCacheBytes ? { entityCacheBytes: workerData.entityCacheBytes } : {}), ...(process.env.TRIPLEX_DATOMIC_LAYOUT ? { layout: process.env.TRIPLEX_DATOMIC_LAYOUT } : {}), ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
+    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, predecessorCacheBytes: WRITER_PREDECESSOR_CACHE_MIB * 1024 ** 2, predecessorAttributes: isMainThread ? NS_PREDECESSOR_ATTRIBUTES : [], ...(!isMainThread && workerData?.entityCacheBytes ? { entityCacheBytes: workerData.entityCacheBytes } : {}), ...(process.env.TRIPLEX_DATOMIC_LAYOUT ? { layout: process.env.TRIPLEX_DATOMIC_LAYOUT } : {}), ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
   })() : await qualification.loadQualificationBackend(lane);
   if (lane === "qlever" && process.env["QLEVER_COMMIT_PATH"] === "broker") {
     const api = await import(dist("qlever", "index.js"));

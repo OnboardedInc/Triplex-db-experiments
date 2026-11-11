@@ -19,6 +19,13 @@ import { makeDatomicQueryExecutor } from "../src/DatomicQueryExecutor.js";
 import { buildTraceCommand } from "../../../lab/bench/lib/commands.js";
 import { ids } from "../../../lab/bench/lib/world.js";
 
+// [DX-H7] Why: scope creation and query capability expectations must select the same physical layout.
+// Rejected: independent layout flags that create lean scopes but run legacy-only query assertions.
+const testLayout =
+  (process.env.TRIPLEX_DATOMIC_LAYOUT ?? process.env.DATOMIC_TEST_LAYOUT) === "lean"
+    ? "lean"
+    : "legacy";
+
 // [DX-B3-M2] Why: compare fresh public receipts, stored positions and every named historical reach cut.
 // Rejected: exit-zero alone or a test which serializes unrelated subjects through admission.
 describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
@@ -31,6 +38,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
       for (let i = 0; i < count; i++) {
         const client = new DatomicClient(url, 30000);
         const adapter = makeDatomicStorageAdapter(client, scope, {
+          layout: testLayout,
           maxRetries: 2,
           optimisticCommits: false,
         });
@@ -57,7 +65,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         );
         handles.push({ client, adapter, runtime, pin, triples: await runtime.runPromise(Triples) });
       }
-      const db = (await handles[0]!.client.create(scope)).db;
+      const db = (await handles[0]!.client.create(scope, testLayout)).db;
       return {
         handles,
         db,
@@ -246,7 +254,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         );
 
         expect(h.client.reachDiagnostics.declines).toEqual({});
-        if (process.env.DATOMIC_TEST_LAYOUT === "lean") {
+        if (testLayout === "lean") {
           await expect(
             h.client.request("POST", `/v1/db/${s.db}/q`, {
               edn: "[:find ?e :where [?e :triplex.tx/position _]]",

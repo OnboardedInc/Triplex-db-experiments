@@ -32,6 +32,7 @@ import { Worker } from "node:worker_threads";
 import { openComposition, type CompositionHandle, type Receipt } from "./lib/composition.ts";
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
+import { WRITER_CACHE_BUDGET_MIB, WRITER_PREDECESSOR_CACHE_MIB } from "./lib/predecessors.ts";
 import { ProbeThread } from "./lib/probe-thread.ts";
 import { SideThread } from "./lib/side-thread.ts";
 import { commitBreakdown } from "./lib/commit-breakdown.ts";
@@ -98,6 +99,7 @@ const config = {
   seed: opt("seed", "ns-v2")!,
   readerThreads: Number(opt("reader-threads", "4")),
   readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", lane === "datomic" ? "640" : "128")),
+  writerPredecessorCacheMiB: lane === "datomic" ? WRITER_PREDECESSOR_CACHE_MIB : 0,
   readerSubjectAffinity: lane === "datomic" && !flag("no-reader-affinity"),
   seedBudgetS: Number(opt("seed-budget-s", "3600")),
   seedBatchFacts: Number(opt("seed-batch-facts", "400")),
@@ -126,12 +128,12 @@ const config = {
   barrierDir: opt("barrier-dir") ?? null,
   startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
-// [DX-H7] Why: bound aggregate entity, row and key cache estimates below half the 8 GiB client grant.
+// [DX-H7] Why: bound aggregate reader and writer cache estimates below half the 8 GiB client grant.
 // Rejected: an unbounded per-thread cache (moves saturation to memory pressure).
 if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) || config.readerEntityCacheMiB < 1 ||
     !Number.isSafeInteger(config.readerThreads) || config.readerThreads < 1 ||
-    config.readerThreads * (config.readerEntityCacheMiB + 64) > 4096))
-  throw new Error("Reader entity + row + key cache budgets must total at most 4096 MiB");
+    config.readerThreads * (config.readerEntityCacheMiB + 64) + WRITER_CACHE_BUDGET_MIB > 4096))
+  throw new Error(`Reader caches plus ${WRITER_CACHE_BUDGET_MIB} MiB writer cache budgets must total at most 4096 MiB`);
 const pairPlan: RoundPlan | null = config.roundPlan ? JSON.parse(fs.readFileSync(path.resolve(config.roundPlan), "utf8")) : null;
 if (pairPlan) {
   if (pairPlan.format !== "tx2-round-plan/1") throw new Error(`--round-plan: format ${pairPlan.format}`);

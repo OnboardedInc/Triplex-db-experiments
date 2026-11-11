@@ -72,6 +72,7 @@ export const makeDatomicStorageAdapter = (
     // [DX-B6-1] Why: immutable journal bodies evicted subject preconditions during seed, adding a snapshot HTTP call to lone commits.
     // Rejected: raising the 32 MiB budget (unbounded client memory caused the original driver failure).
     if (row.entity_type === "_Transaction") return;
+    if (client.predecessorCache.enabled) client.predecessorCache.remember(prefix + row.id, row);
     cache.set(row.id, {
       ...row,
       retracted_at: null,
@@ -83,7 +84,7 @@ export const makeDatomicStorageAdapter = (
     if (name === db) remember(row);
   };
   client.rowObservers.add(observe);
-  const cached = (id: string) => cache.get(id);
+  const cached = (id: string) => cache.get(id) ?? client.predecessorCache.row(prefix + id);
   const finalPositions = new Map<string, number>();
   const admission = Semaphore.makeUnsafe(1);
   const current = Effect.map(CurrentTransactions, (transactions) => transactions.get(key));
@@ -229,6 +230,7 @@ export const makeDatomicStorageAdapter = (
         };
       }
       state.rows.set(id, next);
+      if (next.retracted_at !== null) client.predecessorCache.delete(prefix + id);
       if (state.newIds.has(id)) {
         if (row.tx_id) finalPositions.set(row.tx_id, next.recorded_position);
         remember(next);
@@ -487,12 +489,17 @@ export const makeDatomicStorageAdapter = (
               : undefined;
           if (observation) diagnostic!.attempts.push(observation);
           const hint = transactionOptions?.hint;
-          const optimistic =
+          // [DX-H7] Why: capture predecessors before yielding; concurrent reads can evict either cache.
+          // Rejected: separate has/get checks (an eligible row can disappear before staging).
+          const predecessors =
             options.optimisticCommits !== false &&
             !forceSnapshot &&
             transactionOptions?.replaySafe === true &&
-            hint !== undefined &&
-            (hint.tripleIds ?? []).every((id) => cache.has(id));
+            hint !== undefined
+              ? (hint.tripleIds ?? []).map((id) => [id, cached(id)] as const)
+              : undefined;
+          const optimistic =
+            predecessors !== undefined && predecessors.every(([, row]) => row !== undefined);
           if (observation) {
             observation.optimistic = optimistic;
             observation.begin = !optimistic;
@@ -511,7 +518,7 @@ export const makeDatomicStorageAdapter = (
                     prefetch: {
                       ...(hint?.commandId === undefined ? {} : { commandId: hint.commandId }),
                       claim: null,
-                      rows: new Map((hint?.tripleIds ?? []).map((id) => [id, cached(id)!])),
+                      rows: new Map(predecessors!.map(([id, row]) => [id, row!])),
                     },
                   })
                 : transactionOptions?.hint === undefined
@@ -544,7 +551,10 @@ export const makeDatomicStorageAdapter = (
             scopeWide: false,
           };
           for (const row of state.prefetch?.rows.values() ?? [])
-            if (row) state.entities.add(row.entity_id);
+            if (row) {
+              state.entities.add(row.entity_id);
+              if (!optimistic) remember(row);
+            }
           const context = new Map(transactions);
           context.set(key, state);
           return yield* Effect.gen(function* () {
@@ -577,7 +587,10 @@ export const makeDatomicStorageAdapter = (
                       ),
                       Effect.suspend(() => {
                         client.commitDiagnostics.replays++;
-                        for (const id of hint?.tripleIds ?? []) cache.delete(id);
+                        for (const id of hint?.tripleIds ?? []) {
+                          cache.delete(id);
+                          client.predecessorCache.delete(prefix + id);
+                        }
                         return attempt(retry + 1, true);
                       }),
                     )
@@ -951,6 +964,7 @@ export const makeDatomicStorageAdapter = (
       Effect.sync(() => {
         client.rowObservers.delete(observe);
         cache.clear();
+        client.predecessorCache.clearScope(db);
         finalPositions.clear();
       }),
   };

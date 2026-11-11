@@ -11,6 +11,13 @@ import { makeDatomicQueryExecutor } from "../src/DatomicQueryExecutor.js";
 import { DatomicClient } from "../src/DatomicClient.js";
 import { makeDatomicStorageAdapter } from "../src/DatomicStorageAdapter.js";
 
+// [DX-H7] Why: scope creation and query capability expectations must select the same physical layout.
+// Rejected: independent layout flags that create lean scopes but run legacy-only query assertions.
+const testLayout =
+  (process.env.TRIPLEX_DATOMIC_LAYOUT ?? process.env.DATOMIC_TEST_LAYOUT) === "lean"
+    ? "lean"
+    : "legacy";
+
 // [EXP-DA01] Why: exercise real gateway atomic boundaries with isolated databases. Rejected: mocked semantic acceptance.
 describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
   "Datomic storage transaction boundary",
@@ -26,10 +33,13 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
     ) {
       const client = new DatomicClient(url, 5000);
       const scope = DatabaseScope.test(`da01-${randomUUID()}`);
-      const adapter = makeDatomicStorageAdapter(client, scope, { resolutionTimeoutMs: timeout });
+      const adapter = makeDatomicStorageAdapter(client, scope, {
+        resolutionTimeoutMs: timeout,
+        layout: testLayout,
+      });
       const create = client.create.bind(client);
-      client.create = async (scope) => {
-        const created = await create(scope);
+      client.create = async (scope, layout) => {
+        const created = await create(scope, layout);
         console.log(JSON.stringify({ kind: "datomic-test-db-created", scope, ...created }));
         return created;
       };
@@ -63,11 +73,11 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
       ];
       try {
         for (const scope of scopes) {
-          const created = await client.create(scope);
+          const created = await client.create(scope, testLayout);
           console.log(JSON.stringify({ kind: "datomic-test-db-created", scope, ...created }));
           try {
             expect(Buffer.from(created.db.slice(3), "base64url").toString("utf8")).toBe(scope);
-            expect((await client.create(scope)).created).toBe(false);
+            expect((await client.create(scope, testLayout)).created).toBe(false);
             expect((await client.basis(created.db)).position.v).toBe("0");
             const snapshot = await client.begin(created.db);
             try {
@@ -91,7 +101,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
           '["triplex-scope-v1","test","test","x",-0]',
           '["triplex-scope-v2","test","test","x",0]',
         ])
-          await expect(client.create(scope)).rejects.toThrow();
+          await expect(client.create(scope, testLayout)).rejects.toThrow();
       } finally {
         client.close();
       }
@@ -270,7 +280,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
     it("queries the speculative delta through native Datalog", async () =>
       withStore(async (a, client, scope) => {
         const q = makeDatomicQueryExecutor(client, scope);
-        if (process.env.DATOMIC_TEST_LAYOUT === "lean") {
+        if (testLayout === "lean") {
           await expect(
             Effect.runPromise(
               q.execute({ find: ["?v"], where: [["subject", ":value", "?v"]] }, false, {

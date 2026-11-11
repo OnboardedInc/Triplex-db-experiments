@@ -1,5 +1,5 @@
 import { ByteCache } from "./ByteCache.js";
-import { RowCache, estimateRowBytes } from "./RowCache.js";
+import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { randomUUID } from "node:crypto";
 import { decodeEntity, type CachedEntity, type ReachWire } from "./reach.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
@@ -128,6 +128,7 @@ export class DatomicClient {
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
   readonly rowCache: RowCache;
+  readonly predecessorCache: PredecessorCache;
   forceFullReach = false;
   readonly reachDiagnostics = {
     inlineEntities: 0,
@@ -179,11 +180,17 @@ export class DatomicClient {
     readonly cacheOptions: {
       readonly entityCacheBytes?: number;
       readonly rowCacheBytes?: number;
+      readonly predecessorCacheBytes?: number;
+      readonly predecessorAttributes?: readonly string[];
     } = {},
   ) {
     this.reachCache = new ByteCache(
       cacheOptions.entityCacheBytes ?? 128 * 1024 ** 2,
       (entity) => 256 + entity.storedRows.reduce((n, row) => n + 3 * estimateRowBytes(row), 0),
+    );
+    this.predecessorCache = new PredecessorCache(
+      cacheOptions.predecessorCacheBytes,
+      cacheOptions.predecessorAttributes,
     );
     this.rowCache = new RowCache(
       Number.MAX_SAFE_INTEGER,
@@ -208,6 +215,7 @@ export class DatomicClient {
     this.reachKeyDb = undefined;
     this.reachCache.clear();
     this.rowCache.clear();
+    this.predecessorCache.clear();
     this.layouts.clear();
     this.rowObservers.clear();
     this.agent.destroy();
@@ -443,8 +451,14 @@ export class DatomicClient {
           } else {
             this.reachDiagnostics.referenceEntities++;
             decoded = cache.get(id);
-            if (decoded?.rev === rev) this.reachDiagnostics.referenceHits++;
-            else this.reachDiagnostics.referenceMisses++;
+            if (decoded?.rev === rev) {
+              this.reachDiagnostics.referenceHits++;
+              // [DX-H7] Why: references are reads too; refresh only the small predecessor cache.
+              // Rejected: replaying row observers (would churn the row LRU on every reader cache hit).
+              if (this.predecessorCache.enabled)
+                for (const row of decoded.storedRows)
+                  this.predecessorCache.retain(prefix + row.id, row);
+            } else this.reachDiagnostics.referenceMisses++;
           }
           if (!decoded || decoded.rev !== rev) missed = true;
           else entities.set(id, decoded);
