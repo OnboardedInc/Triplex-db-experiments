@@ -1,0 +1,20 @@
+<configuration>
+  <!-- [DX-S5] Why: per-block INFO logging consumed gigabytes outside PostgreSQL and threatened the disk floor.
+       Rejected: changing durability or discarding unbounded active logs without a declared retention policy. -->
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+  <appender name="MAIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${DATOMIC_LOG_DIR:-log}/active.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${DATOMIC_LOG_DIR:-log}/%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>16MB</maxFileSize>
+      <maxHistory>2</maxHistory>
+      <totalSizeCap>64MB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %-10contextName %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <root level="WARN"><appender-ref ref="MAIN"/></root>
+</configuration>
