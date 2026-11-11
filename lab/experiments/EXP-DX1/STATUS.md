@@ -1046,3 +1046,33 @@ DX-M2 (`ec1e69d8`): 215 tests passed and 2 skipped, 300 differential scenarios, 
    position but no committed instant. Assigning the time on the server needs a core contract change (a committed-instant
    reconciliation like the one that exists for position). Clock replays were 3 to 13 per 3,350-call burst in DX-M1, so this is
    a p99.9 matter; left as a design decision for Sam.
+
+## 2026-11-11 09:36 UTC: transactor JVM arms measured (`m2/jvm-arms.sh j1`); no arm fixes the tail, keep the launch as is
+
+Zero-reader writer trace, 10,000 subjects, 200 s, 3,262 burst commits per run, under `nohlt`, write-gateway pause goal 50.
+Evidence `~/Claude/Projects/triplex-db-2/evidence/DX-H4/tx2-dxh4-j1-*`. Runs took 13 to 14 minutes each because other parties took
+the lock in between; host load 8 to 9 throughout.
+
+| Arm (run order) | Burst commit p50 / p99 / max ms | Burst commits over 50 ms | Steady commit p50 / p99 ms | Transactor pauses: count / over 25 ms / max ms | Write-gateway pauses: count / over 25 ms / max ms |
+| --- | --- | --- | --- | --- | --- |
+| A as is (1) | 9.3 / 42.3 / 68.7 | 11 | 14.5 / 95.5 | 367 / 29 / 51.0 | 210 / 42 / 62.9 |
+| A as is (8) | 9.1 / 40.9 / 64.0 | 10 | 14.5 / 80.9 | 315 / 41 / 67.6 | 201 / 34 / 54.1 |
+| B Datomic defaults (2) | 9.0 / 37.5 / 79.7 | 4 | 14.5 / 72.2 | 98 / 33 / 134.7 | 204 / 44 / 61.4 |
+| B Datomic defaults (7) | 9.3 / 42.0 / 96.2 | 16 | 13.8 / 83.7 | 103 / 39 / 138.6 | 201 / 43 / 63.5 |
+| C goal 20, pretouch, cache 256m (3) | 10.1 / 43.0 / 93.0 | 17 | 15.0 / 119.2 | 190 / 16 / 102.3 | 206 / 39 / 48.3 |
+| C goal 20, pretouch, cache 256m (6) | 9.0 / 40.6 / 60.5 | 9 | 15.6 / 130.9 | 273 / 14 / 81.5 | 212 / 33 / 53.4 |
+| D C plus young generation at most 20% (4) | 10.2 / 53.2 / 85.8 | 41 | 15.5 / 110.8 | 200 / 4 / 75.8 | 204 / 46 / 52.6 |
+| D C plus young generation at most 20% (5) | 10.2 / 48.5 / 75.6 | 28 | 15.9 / 117.2 | 207 / 4 / 32.4 | 207 / 40 / 57.5 |
+
+Reading:
+1. **Burst p99 is 37 to 43 ms in arms A, B and C and 48 to 53 ms in D; no arm separates from A beyond the run-to-run spread.**
+   Datomic's default flags (B) make transactor pauses rarer and much longer (135 to 139 ms maximum). D nearly removes pauses over
+   25 ms and has the worst commit p99. So the transactor's GC flags were a real defect in the setup but not the cause of the
+   tail, and the launch stays as it is (arm A).
+2. **The write gateway pauses as much as the transactor in every arm: about 205 pauses per run, 33 to 46 of them over 25 ms,
+   maximum 48 to 64 ms.** It runs G1 on one CPU with a 1 GB object cache. Leads, not started: a second CPU for the write
+   gateway (DX-M2 measured 13 to 15% more commands/s with it), a small object cache on it, generational ZGC once it has the
+   second CPU (DX-M1 saw its pauses vanish on one CPU at 2 to 15% cost to the median).
+3. Under `nohlt` the burst p99 bar (50 ms) is met in six of eight runs here and in every band of q6, with about 15% margin.
+
+`long-hold-ok` restored 09:36 UTC. DX-S5 holds the lock for its 10,000-subject proof; DX-R3 is waiting to compare.
