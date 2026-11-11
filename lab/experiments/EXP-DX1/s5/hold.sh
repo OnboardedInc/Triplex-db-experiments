@@ -105,10 +105,11 @@ maintain() {
   last=$now; sleep 5
  done
  (( stable >= 6 )) || { echo 'GC did not quiesce'; exit 1; }
- table=$(docker exec "$prefix-pg" psql -U postgres -d datomic -Atc "SELECT pg_total_relation_size('datomic_kvs')")
+ table=$(docker exec "$prefix-pg" psql -U postgres -d datomic -Atc "SELECT max(pg_total_relation_size(relid)) FROM pg_partition_tree('datomic_kvs') WHERE isleaf")
+ echo "vacuum rewrite reserve bytes=$table (largest leaf; leaves reclaimed sequentially)"
  vmfree=$(docker exec "$prefix-pg" sh -c 'df -Pk /var/lib/postgresql/data | tail -1' | awk '{print $4}')
  (( vmfree*1024 > table+5368709120 && $(free_mac)*1024 > table+16106127360 )) || { echo 'vacuum rewrite reserve unavailable'; exit 1; }
- docker exec "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d datomic -c 'VACUUM FULL;' -c 'CHECKPOINT;' -c "SELECT pg_total_relation_size('datomic_kvs'),pg_database_size(current_database());"
+ docker exec "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d datomic -c 'VACUUM FULL;' -c 'CHECKPOINT;' -c "SELECT sum(pg_total_relation_size(relid)) AS table_bytes,max(pg_total_relation_size(relid)) AS max_leaf_bytes,count(*) AS leaves,pg_database_size(current_database()) AS database_bytes FROM pg_partition_tree('datomic_kvs') WHERE isleaf;"
  native_proof proof | tee "$out/native-after.jsonl"
  python3 - "$out/native-before.jsonl" "$out/native-after.jsonl" <<'PYPROOF'
 import json,sys

@@ -21,7 +21,14 @@ docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres <<'SQL'
 CREATE DATABASE datomic TEMPLATE template0 ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C';
 CREATE ROLE datomic LOGIN PASSWORD 'datomic';
 \connect datomic
-CREATE TABLE datomic_kvs(id text NOT NULL PRIMARY KEY,rev integer,map text,val bytea);
+-- [DX-S5] Why: hash-partition the unchanged logical KVS so VACUUM FULL rewrites at most one sixteenth at a time.
+-- Rejected: rewriting the entire 100k live table beside its old allocation (Mac reserve can make it inadmissible).
+CREATE TABLE datomic_kvs(id text NOT NULL PRIMARY KEY,rev integer,map text,val bytea) PARTITION BY HASH(id);
+DO $$ BEGIN
+ FOR i IN 0..15 LOOP
+  EXECUTE format('CREATE TABLE datomic_kvs_p%s PARTITION OF datomic_kvs FOR VALUES WITH (MODULUS 16, REMAINDER %s)',i,i);
+ END LOOP;
+END $$;
 GRANT ALL ON TABLE datomic_kvs TO datomic;
 SQL
 fi
