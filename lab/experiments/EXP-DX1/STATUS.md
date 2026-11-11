@@ -894,7 +894,7 @@ What is left for lane D at this rung, and what is already aimed at it:
    and the `nohlt` test (wake penalty; note commit p50 27 ms with 1 reader against 11 to 14 ms with 4 to 256).
 3. **Harness gaps:** the P5 rows need the local-copy evaluation wired in; sample memory. Recovery follows from item 1.
 
-## 2026-11-11 06:30 UTC: DX-R2 and DX-R3 merged; their 10,000-subject measurements run by the orchestrator
+## 2026-11-11 06:15 UTC: DX-R2 and DX-R3 merged; their 10,000-subject measurements run by the orchestrator
 
 Both agents finished their code and proofs but neither got the lock for its 10,000-subject run (the pair, the restart and three
 agents queued on it).
@@ -919,7 +919,7 @@ typechecks, 25 vitest and 13 node tests pass (`ORCH-merge/merge3-*.log`). Orches
 `r3/run.sh benchmark m1` (log `evidence/DX-R3/orch-benchmark-m1.log`). Owed after it: the differential on the merged code,
 and the full pair with `--read-path replica`.
 
-## 2026-11-11 06:40 UTC: DX-R2 measured fresh at 10,000 subjects (orchestrator run, VM plain, no `nohlt`)
+## 2026-11-11 06:20 UTC: DX-R2 measured fresh at 10,000 subjects (orchestrator run, VM plain, no `nohlt`)
 
 `r2/window.sh tx2-dxr2-10000-b` on a clone of the sealed seed, 3 workers, exit 0. Log `evidence/DX-R2/orch-10000-b.log`.
 Exactness: 10,000 bootstrap worlds equal, 10,000 post-acknowledgement states equal, 10,000 published states compared, 10,000
