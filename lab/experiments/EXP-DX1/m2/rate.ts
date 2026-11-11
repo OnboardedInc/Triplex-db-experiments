@@ -26,7 +26,13 @@ for (const window of [32]) {
     console.log(JSON.stringify({ arm, window, phase: "seed-start" }));
     const transactorCpuBefore = readFileSync("/tx-cpu/cpu.stat", "utf8");
     const cpuBefore = process.cpuUsage();
-    const seed = await seedW0(comp, 1000, `/driver/${arm}-${randomUUID()}.ndjson`, undefined, window);
+    const seed = await seedW0(
+      comp,
+      1000,
+      `/driver/${arm}-${randomUUID()}.ndjson`,
+      undefined,
+      window,
+    );
     const loadCpuMicros = process.cpuUsage(cpuBefore);
     const transactorCpuAfter = readFileSync("/tx-cpu/cpu.stat", "utf8");
     const usage = (text: string) => {
@@ -46,9 +52,23 @@ for (const window of [32]) {
       observed.worlds,
       "sha256:ca15387e66e25ed5e19a4adc602e941f7f06dd8b0f1c6ca7d1a5d2f02f8171ad",
     );
-    console.log(JSON.stringify({ arm, window, seed, loadCpuMicros, transactorCpuBefore, transactorCpuAfter, transactorCpuMicros, transactorCpuMicrosPerCommit: transactorCpuMicros / seed.commands, observed }));
+    console.log(
+      JSON.stringify({
+        arm,
+        window,
+        seed,
+        loadCpuMicros,
+        transactorCpuBefore,
+        transactorCpuAfter,
+        transactorCpuMicros,
+        transactorCpuMicrosPerCommit: transactorCpuMicros / seed.commands,
+        observed,
+      }),
+    );
   } catch (error) {
-    console.error(JSON.stringify({ arm, window, error: String(error), stack: (error as Error).stack }));
+    console.error(
+      JSON.stringify({ arm, window, error: String(error), stack: (error as Error).stack }),
+    );
     process.exitCode = 1;
   } finally {
     bulk.close();

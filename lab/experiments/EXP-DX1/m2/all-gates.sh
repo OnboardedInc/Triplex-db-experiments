@@ -3,7 +3,7 @@
 # Rejected: spending another lease just to repeat stack startup between correctness slices.
 set -euo pipefail
 if [[ ${M2_OWNED_CHILD:-0} != 1 ]]; then
- exec node lab/experiments/EXP-DX1/m2/run-owned.mjs bash "$0" "$@"
+ exec node --experimental-strip-types lab/experiments/EXP-DX1/m2/run-owned.ts bash "$0" "$@"
 fi
 gate_started=$(date +%s)
 prefix=${1:?owned prefix}

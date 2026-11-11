@@ -3,7 +3,7 @@
 # Rejected: comparing arm samples collected across different holds.
 set -euo pipefail
 if [[ ${M2_OWNED_CHILD:-0} != 1 ]]; then
- exec node lab/experiments/EXP-DX1/m2/run-owned.mjs bash "$0" "$@"
+ exec node --experimental-strip-types lab/experiments/EXP-DX1/m2/run-owned.ts bash "$0" "$@"
 fi
 prefix=${1:?owned prefix}
 [[ $prefix =~ ^tx2-dxm2-[a-z0-9-]+$ ]] || exit 2
