@@ -596,6 +596,17 @@ export async function runReplicaDriver(argv: string[]) {
       throw new Error("Changed subject coverage mismatch");
     report.publishedStatesCompared = statesCompared;
     report.oracleCompared = checked;
+    console.log(
+      JSON.stringify({
+        kind: "post-ack-equality",
+        subjects: checked,
+        states: statesCompared,
+        evaluation: report.evaluation,
+        publication: report.publication,
+        liveFollow: report.liveFollow,
+        matched: report.matched,
+      }),
+    );
     if (argv.includes("--candidates")) {
       const position = cut;
       const variant = (id: string, key: string, n: number) =>
@@ -643,16 +654,20 @@ export async function runReplicaDriver(argv: string[]) {
         cpuSeconds: multi.cpuSeconds,
         live: candidateLive,
       };
+      console.log(JSON.stringify({ kind: "candidates", ...report.candidates }));
     }
     if (argv.includes("--journal-counts")) {
+      // [DX-R1] Why: the candidate live arm has its own real commits after publication-state verification.
+      // Rejected: folding those new journals against the earlier publication cut.
+      const countPosition = await comp.currentPosition();
       let after = 0,
         assertions = 0,
         retired = 0;
-      while (after < finalPosition) {
-        const page = await comp.feedPage(after, 100);
+      while (after < countPosition) {
+        const page = await comp.feedPage(after, Math.min(100, countPosition - after));
         if (!page.transactions.length) throw new Error("Journal fold gap");
         for (const tx of page.transactions) {
-          if (tx.position !== after + 1 || tx.position > finalPosition)
+          if (tx.position !== after + 1 || tx.position > countPosition)
             throw new Error("Journal position mismatch");
           after = tx.position;
           for (const c of tx.changes) {
