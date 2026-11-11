@@ -1352,3 +1352,26 @@ Seed at 19:10 UTC: 2,785,000 commands (about 64,000 subjects), 431 commands/s, a
 
 Order after the seed: (1) 100,000-subject activation on a clone (P5 verdict); (2) DX-R3 live proof; (3) merge, then full
 pairs under both split-read rules; (4) write-gateway arms and the sparse-commit question.
+
+## 2026-11-11 21:25 UTC: seed stopped at 80,000 on a repeating connection failure; DX-S5 resumed to diagnose
+
+Five orchestrator attempts (`evidence/DX-S5/orch-seed100000-b{1..5}.log`), unsealed volumes retained
+(`tx2-dxs5-seed-100000-pg-data` 13.72 GB, `-tools`; seed id `1b8525ba…`): 80,000 subjects committed (position 3,471,684), 70,000
+verified with fingerprint.
+
+| Attempt | UTC | What happened |
+| --- | --- | --- |
+| 1 | 16:00 to 18:08 | 0 to 50,000; stopped in maintenance, `GC did not quiesce` (5-minute wait; fixed to 30 in `8ab86b2c`) |
+| 2 | 18:08 to 20:25 | 50,000, 60,000, 70,000 maintained and read back; 80,000 seeded; then `AMQ219007: Cannot connect to server(s)` |
+| 3, 4, 5 | 20:25 to 21:18 | each resumes at 80,000, the driver reads the head once, the next read gets `socket hang up`; both gateways' logs show repeated `AMQ219007` start-up failures; the transactor says `System started` |
+
+`AMQ219007` is the error that ended last night's run at 70,000. The injected-failure proof at 1,000 subjects did not cover
+it: at this size a peer cannot connect to a transactor that reports it has started, at the same point every time. Cause not
+known. Seeding rate today 327 to 566 commands/s; Mac free space 27 GiB.
+
+**DX-S5 resumed 21:20 UTC** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-S5-resume1.md`): diagnose read-only on the
+retained data (complete transactor and gateway logs, what the transactor is doing when the peer fails), fix, resume to
+100,000, seal, then activation at 100,000 (on the seed's first use if a clone does not fit, pinned to the sealed position).
+
+**DX-R3 live proof queued** on the lock from the DX-R3 worktree (`f930813c`): `r3/run.sh both p6-both`, log
+`evidence/DX-R3/orch-p6-both.log`.
