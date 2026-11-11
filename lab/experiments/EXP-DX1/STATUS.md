@@ -1076,3 +1076,37 @@ Reading:
 3. Under `nohlt` the burst p99 bar (50 ms) is met in six of eight runs here and in every band of q6, with about 15% margin.
 
 `long-hold-ok` restored 09:36 UTC. DX-S5 holds the lock for its 10,000-subject proof; DX-R3 is waiting to compare.
+
+## 2026-11-11 10:35 UTC: DX-R3 part 2 merged (`2a55e36f`); q7, the full pair with local reads, started
+
+DX-R3 part 2 (`5cb5ec95`), measured under `nohlt`, 10,000 subjects, 3 reader threads, 30 s levels, 8,337,364 reads after the
+fixes, zero violations and zero errors:
+
+| Readers | Correct reads/s before / after (same hold) | Read p99 ms before / after | Local share after |
+| --- | --- | --- | --- |
+| 1 | 21,338 / 21,447 | 0.138 / 0.137 | 1 |
+| 4 | 54,321 / 54,523 | 0.157 / 0.156 | 1 |
+| 16 | 54,867 / 54,385 | 0.341 / 0.341 | 1 |
+| 64 | 32,557 / 42,086 | 1.167 / 1.191 | 0.99995 |
+| 256 | 17,051 / 36,108 | 1.823 / 4.895 | 0.9986 |
+| 1,024 | 20,359 / 31,862 | 36.095 / 5.919 | 0.9974 |
+
+1. Both arms follow the feed with DX-R2's inline journals and take worker turns in FIFO order; that alone moved read p99 at 256
+   readers from 95.7 ms to 1.8 ms and the local share from 0.940 to 0.9996 (the agent's earlier control).
+2. **The "after" arm also changes which command a split read straddles** (`--split-target pending`, the default when the read
+   path is the local copy; `mixed`, the original rule, stays the default for gateway reads). A split read does its first step
+   before a trace command is acknowledged and its second after. The original rule picks uniformly among commands due in the
+   next 250 ms, so a reader can sit idle up to 250 ms waiting for a future command: the agent measured 231 of 256 closed-loop
+   readers parked that way. The new rule picks a command already offered, else the next one due. Checks are unchanged and no
+   writes are added, but **this is a change to the workload's definition, not to the store; it needs Sam's eyes before a
+   verdict rests on it.** q7 runs with the new rule; q8 will run the original rule.
+3. Ratios after: 256 against 64 = 0.858 (bar 1.0), 1,024 against 256 = 0.882 (bar 0.9). The limit is reader CPU in the load
+   generator (2.6 to 2.8 cores busy across three threads; the driver flags the client as saturated).
+4. Differential on the merged code with the inline source: 200,000 pairs, zero differences (199,834 local, 166 gateway).
+5. Read-your-own-write wait p50 / p99 2.6 / 35.1 ms; 158 of 3,415 fell back to the gateway on the 10 ms wait; all correct.
+6. Memory: exact observations spill to disk; process peak 3.62 GiB in the 30 s ladder. Phase checkpoints survive a late stop.
+7. P4 "pulls/s per engine core" with local reads: the driver divides verified pulls by the engine's four cores although no
+   pull reaches the engine (13,631 by that arithmetic). Report local pulls per client core and CPU per pull beside it.
+
+**q7** started 10:35 UTC from the frozen checkout at `55eb490b` (all merges): `DX_READ_PATH=replica`, 12 GiB driver,
+`--replica-history-mib 192`, under `nohlt`. `long-hold-ok` is removed until q7 ends, then restored by the same command.
