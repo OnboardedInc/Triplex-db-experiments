@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { packEntity, type SweepRow } from "../../../../packages/datomic/dist/index.js";
 import { prepareEntity, ReplicaReader } from "../../../bench/lib/replica-reads.ts";
+import { worldBytes } from "./canonical-world.ts";
 import { observe } from "../../../bench/lib/observe.ts";
 
 test("prepared contributions include every actual typed fact at valid-time boundaries and old cuts", async () => {
@@ -42,6 +43,11 @@ test("prepared contributions include every actual typed fact at valid-time bound
       validFrom: 0,
     },
   ];
+  assert.notEqual(
+    worldBytes([{ ...rows[3]!, value: { type: "number", value: -0 } }]),
+    worldBytes([{ ...rows[3]!, value: { type: "number", value: 0 } }]),
+  );
+  assert.equal(worldBytes(rows), worldBytes([...rows].reverse()));
   const rootEntity = prepareEntity("root", packEntity(1, rows)),
     childEntity = prepareEntity("child", packEntity(1, child));
   const reader = new ReplicaReader();

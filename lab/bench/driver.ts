@@ -317,6 +317,16 @@ async function run() {
   // trace commands cannot starve it; a command that outlives the phase is resolved at wind-down.
   const growthComp = await openComposition(config.composition, lane, scopeName);
   report.composition = { name: writer.name, assignments: writer.assignments, backend: writer.backend, scopeKey: `composition:${writer.name}/source:${lane}/scope:${scopeName}` };
+  if (config.readPath === "replica") {
+    // [DX-R3] Why: routing through a runtime index changes the composition, even though writes retain their original opening.
+    // Rejected: describing locally served reads as the source engine's own index.
+    report.composition.readPath = "replica";
+    report.composition.scopeKey += "/read:replica";
+    report.composition.assignments = { ...writer.assignments,
+      current: { lane, role: "process-local packed replica maintained by the ordered journal" },
+      history: { lane, role: "local recent-version window with exact gateway fallback" },
+      replicationEdges: [...writer.assignments.replicationEdges, { from: "source", to: "current", consumerSourceSha256: null, generation: "DX-R3/recent" }] };
+  }
   coordinate = writer.coordinate;
   // [EXP-M01] In paired rounds the coordinator's VM agent reads every container's cgroup counters (lib/noise.ts);
   // the per-second docker stats and watermark polls would only add apparatus load to the engine and the daemon.

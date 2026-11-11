@@ -8,7 +8,7 @@ import { ids } from "../../../bench/lib/world.ts";
 import { generateTrace } from "../../../bench/lib/trace.ts";
 import { buildTraceCommand } from "../../../bench/lib/commands.ts";
 import { observe } from "../../../bench/lib/observe.ts";
-import { worldOf, worldCanonical } from "../../../bench/lib/w0-world.ts";
+import { worldBytes } from "./canonical-world.ts";
 
 const subjects = 2000,
   count = Number(process.env.DX_R3_READS ?? 200000);
@@ -144,8 +144,8 @@ try {
         }
         const slow = await gateway();
         assert.equal(
-          worldCanonical(worldOf(subject, before.triples as any)),
-          worldCanonical(worldOf(subject, slow.triples)),
+          worldBytes(before.triples),
+          worldBytes(slow.triples),
           `canonical world at ${JSON.stringify({ n, basis })}`,
         );
         const fast = await reader.pullAt(subject, basis, gateway);
@@ -173,6 +173,8 @@ try {
   console.log(
     JSON.stringify({
       kind: "fresh-differential",
+      scope,
+      database: db.db,
       subjects,
       compared,
       differences: 0,
