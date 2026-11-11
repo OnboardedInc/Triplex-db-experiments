@@ -176,3 +176,18 @@ describe("inline replica journal", () => {
     expect(r.isValid).toBe(false);
   });
 });
+
+it("shares immutable slabs and one binary index, preserving unicode IDs and old slices", async () => {
+  const f = fixture(), r = new Replica(f.source, 0);
+  await r.bootstrap(["root"]);
+  const snap = await r.capture(), image = snap.sharedImage();
+  expect(image.entities.length).toBe(0);
+  expect(image.shared!.buffers.length).toBe(1);
+  expect(image.shared!.buffers[0]).toBe(snap.image().entities[0]![1].buffer);
+  const shared = new ReplicaSnapshot(image);
+  expect(shared.world("root")).toEqual(snap.world("root"));
+  f.commit([["shared", [row("shared", "later", { type: "string", value: "later" }, 2)]]]);
+  await r.followOnce();
+  expect(shared.world("root")).toEqual(snap.world("root"));
+  expect(r.world("root")[1]!.id).toBe("later");
+});
