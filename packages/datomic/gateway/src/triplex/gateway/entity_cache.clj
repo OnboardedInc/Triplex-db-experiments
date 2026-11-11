@@ -11,6 +11,22 @@
     (when (neg? n) (throw (IllegalArgumentException. "Negative entity cache budget"))) n))
 (def verify-enabled (or (= "1" (System/getenv "TX2_ENTITY_CACHE_VERIFY"))
                         (= "true" (System/getProperty "triplex.entityCacheVerify"))))
+;; [DX-B9-A] Why: the config token uniquely binds scope and captured connection generation;
+;; primitive eid/revision equality avoids vector hashing and boxed/composite equality on every entity.
+;; Rejected: an eid-only map (historical revisions and recreated scopes must remain distinct).
+(deftype ParsedKey [name generation ^long eid ^long revision ^int hash]
+  Object
+  (hashCode [_] hash)
+  (equals [_ other]
+    (and (instance? ParsedKey other)
+         (identical? generation (.-generation ^ParsedKey other))
+         (= eid (.-eid ^ParsedKey other))
+         (= revision (.-revision ^ParsedKey other)))))
+(defn parsed-key [name generation ^long eid ^long revision]
+  (ParsedKey. name generation eid revision
+    (unchecked-int (bit-xor (System/identityHashCode generation)
+                            (Long/hashCode eid) (Integer/rotateLeft (Long/hashCode revision) 16)))))
+(defn key-name [key] (if (instance? ParsedKey key) (.-name ^ParsedKey key) (first key)))
 (def ^ConcurrentHashMap entries (ConcurrentHashMap.))
 (def ^ConcurrentLinkedQueue order (ConcurrentLinkedQueue.))
 (def ^AtomicLong bytes (AtomicLong. 0))
@@ -98,12 +114,12 @@
       value)))
 (defn forget! [name]
   (locking entries
-    (doseq [key (.keySet entries) :when (= name (first key))]
+    (doseq [key (.keySet entries) :when (= name (key-name key))]
       (when-let [removed (.remove entries key)] (.addAndGet bytes (- (long (:bytes removed))))))
-    (.removeIf order (reify Predicate (test [_ key] (= name (first key))))))
+    (.removeIf order (reify Predicate (test [_ key] (= name (key-name key))))))
   (locking revision-views
-    (doseq [key (.keySet revision-views) :when (= name (first key))] (remove-revision-view! key))
-    (.removeIf revision-order (reify Predicate (test [_ key] (= name (first key)))))))
+    (doseq [key (.keySet revision-views) :when (= name (key-name key))] (remove-revision-view! key))
+    (.removeIf revision-order (reify Predicate (test [_ key] (= name (key-name key)))))))
 (defn stats []
   {:hits (.sum hits) :misses (.sum misses) :evictions (.sum evictions)
    :bytes (+ (.get bytes) (.get revision-bytes)) :entityBytes (.get bytes) :revisionBytes (.get revision-bytes)

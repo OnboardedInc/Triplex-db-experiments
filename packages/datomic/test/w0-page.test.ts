@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { Effect } from "effect";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DatabaseScope } from "@triplex-build/triplex/runtime";
 import { DatomicClient } from "../src/DatomicClient.js";
+import { DatomicClient as BuiltDatomicClient } from "../dist/index.js";
 import { makeDatomicStorageAdapter } from "../src/DatomicStorageAdapter.js";
 import { publicSweep, portableSweep } from "../../../lab/bench/lib/w0-public.js";
 // [DX-B5-L5] Why: row order, shared refs and recorded positions must survive the page optimization.
@@ -10,10 +11,9 @@ import { publicSweep, portableSweep } from "../../../lab/bench/lib/w0-public.js"
 describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("W0 row page", () => {
   for (const layout of ["legacy", "lean"] as const)
     it(`equals the portable BFS in one HTTP request (${layout})`, async () => {
-      const c = new DatomicClient(
-        process.env.DATOMIC_GATEWAY_URL ?? "http://127.0.0.1:8505",
-        30000,
-      );
+      const url = process.env.DATOMIC_GATEWAY_URL ?? "http://127.0.0.1:8505";
+      const c = new DatomicClient(url, 30000);
+      let selected: Awaited<ReturnType<typeof publicSweep>> | undefined;
       const scope = DatabaseScope.test(`b5-page-${randomUUID()}`),
         a = makeDatomicStorageAdapter(c, scope, { layout });
       try {
@@ -73,11 +73,11 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("W0 row page", () => {
         const handle = {
           storage: a,
           scope,
-          backend: { name: "datomic" },
+          backend: { name: "datomic", url },
           run: Effect.runPromise,
         } as any;
-        const selected = await publicSweep("datomic", handle),
-          portable = portableSweep(handle);
+        selected = await publicSweep("datomic", handle);
+        const portable = portableSweep(handle);
         for (const position of [1, 2]) {
           const subjects = Array.from({ length: 64 }, (_, i) => `s${i}`),
             basis = { position, validAt: 30 };
@@ -86,8 +86,22 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("W0 row page", () => {
           c.onRequest = () => {
             calls++;
           };
-          const got = await selected.page(subjects, basis);
-          c.onRequest = undefined;
+          // [DX-B9-A] Why: H6 uses its own built SDK client; count both it and the portable fallback.
+          // Rejected: observing only the seed client (would report zero actual optimized HTTP requests).
+          const request = BuiltDatomicClient.prototype.request;
+          const observed = vi
+            .spyOn(BuiltDatomicClient.prototype, "request")
+            .mockImplementation(function (...args) {
+              calls++;
+              return request.apply(this, args);
+            });
+          let got;
+          try {
+            got = await selected.page(subjects, basis);
+          } finally {
+            observed.mockRestore();
+            c.onRequest = undefined;
+          }
           expect(got.rows).toEqual(expected.rows);
           expect(got.reportedBasis).toEqual(basis);
           expect(got.roundTrips).toBe(1);
@@ -95,6 +109,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("W0 row page", () => {
           expect(got.rows).toHaveLength(65);
         }
       } finally {
+        await selected?.close();
         await c.delete(scope);
         c.close();
       }

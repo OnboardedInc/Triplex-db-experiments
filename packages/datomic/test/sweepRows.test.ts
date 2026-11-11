@@ -82,22 +82,82 @@ describe("uncached sweep rows", () => {
 
 // [DX-H6] Why: check the specialized fixed-column validator against the original codec on every column.
 // Rejected: assuming unused metadata columns can be left unchecked.
-it('matches original codec acceptance and values for mutations of every column',async()=>{
- const {decodeRowTextColumns}=await import('../src/rowText.js');
- const {decodeValueColumns,storedValueDomain,ValueDomains}=await import('@triplex-build/triplex/runtime');
- const candidates=[null,0,1,-0,'-0','bad','0000000000000001',true,{},[],1.5,Number.MAX_SAFE_INTEGER+1];
- for(let column=0;column<17;column++)for(const candidate of candidates){
-  const w=wire(),columns=w.entities[0][2][0];columns[column]=candidate;
-  let expected:any,valid=true;
-  try{
-   const r=decodeRowTextColumns(columns,'2');
-   if(r.entity_id!=='s'||r.recorded_position<1||r.recorded_position>1||!Number.isFinite(r.recorded_at))throw Error('binding');
-   const value=decodeValueColumns(r,storedValueDomain(ValueDomains.datomic,r.attribute));
-   if(value.type==='ref' && value.value!=='s' && value.value!=='v')throw Error('missing ref');
-   expected=r.valid_from<=5&&(r.valid_to===null||r.valid_to>5)?[{id:r.id,entityId:r.entity_id,attribute:r.attribute,value,position:r.recorded_position,validFrom:r.valid_from,...(r.valid_to===null?{}:{validTo:r.valid_to})}]:[];
-  }catch{valid=false;}
-  w.entities.push(['v',0,[]]);w.closures[0][1].push('v');
-  if(valid)expect(decodeSweepRows(w,['s'],basis),`column ${column}: ${String(candidate)}`).toEqual(expected);
-  else expect(()=>decodeSweepRows(w,['s'],basis),`column ${column}: ${String(candidate)}`).toThrow();
- }
+it("matches original codec acceptance and values for mutations of every column", async () => {
+  const { decodeRowTextColumns } = await import("../src/rowText.js");
+  const { decodeValueColumns, storedValueDomain, ValueDomains } =
+    await import("@triplex-build/triplex/runtime");
+  const candidates = [
+    null,
+    0,
+    1,
+    -0,
+    "-0",
+    "bad",
+    "0000000000000001",
+    true,
+    {},
+    [],
+    1.5,
+    Number.MAX_SAFE_INTEGER + 1,
+  ];
+  for (let column = 0; column < 17; column++)
+    for (const candidate of candidates) {
+      const w = wire(),
+        columns = w.entities[0][2][0];
+      columns[column] = candidate;
+      let expected: any,
+        valid = true;
+      try {
+        const r = decodeRowTextColumns(columns, "2");
+        if (
+          r.entity_id !== "s" ||
+          r.recorded_position < 1 ||
+          r.recorded_position > 1 ||
+          !Number.isFinite(r.recorded_at)
+        )
+          throw Error("binding");
+        const value = decodeValueColumns(r, storedValueDomain(ValueDomains.datomic, r.attribute));
+        if (value.type === "ref" && value.value !== "s" && value.value !== "v")
+          throw Error("missing ref");
+        expected =
+          r.valid_from <= 5 && (r.valid_to === null || r.valid_to > 5)
+            ? [
+                {
+                  id: r.id,
+                  entityId: r.entity_id,
+                  attribute: r.attribute,
+                  value,
+                  position: r.recorded_position,
+                  validFrom: r.valid_from,
+                  ...(r.valid_to === null ? {} : { validTo: r.valid_to }),
+                },
+              ]
+            : [];
+      } catch {
+        valid = false;
+      }
+      w.entities.push(["v", 0, []]);
+      w.closures[0][1].push("v");
+      if (valid)
+        expect(decodeSweepRows(w, ["s"], basis), `column ${column}: ${String(candidate)}`).toEqual(
+          expected,
+        );
+      else
+        expect(
+          () => decodeSweepRows(w, ["s"], basis),
+          `column ${column}: ${String(candidate)}`,
+        ).toThrow();
+    }
+});
+
+// [DX-B9-A] Why: reordering must not silently discard nonempty entities outside the visible root graph.
+// Rejected: trusting a closure list without following the returned visible reference values.
+it("rejects a nonempty unreachable entity instead of dropping its rows", () => {
+  const w = wire();
+  const extra = [...w.entities[0][2][0]];
+  extra[1] = "foreign-row";
+  extra[2] = "extra";
+  w.entities.push(["extra", 1, [extra]]);
+  w.closures[0][1].push("extra");
+  expect(() => decodeSweepRows(w, ["s"], basis)).toThrow("unreachable");
 });

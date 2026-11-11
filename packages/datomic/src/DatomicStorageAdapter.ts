@@ -2,7 +2,7 @@ import {
   registerCommit,
   endCommit,
   sendCommit,
-  commitClientId,
+  commitClientIdFor,
   issueInstant,
   observeInstant,
 } from "./CommitOrder.js";
@@ -43,6 +43,20 @@ export class DatomicSerializationConflict extends WriteError {
   readonly reason = "serialization-conflict" as const;
 }
 
+// [DX-B10] Why: callers distinguish an unsubmitted suffix from an ambiguous durable commit.
+// Rejected: retrying a gap as a serialization conflict (would allocate still later sequence numbers).
+export class DatomicCommitOrderError extends WriteError {
+  readonly reason = "commit-order" as const;
+  get code(): string {
+    return (this.cause as DatomicHttpError).code;
+  }
+  // [DX-B10] Why: the existing transport preserves maximum; the concurrent read-cache owner owns its decoder.
+  // Rejected: editing DatomicClient.ts or dropping the gateway's recovery coordinate.
+  get expectedSequence(): number | undefined {
+    return (this.cause as DatomicHttpError).maximum;
+  }
+}
+
 export const makeDatomicStorageAdapter = (
   client: DatomicClient,
   scopeKey: string,
@@ -58,7 +72,7 @@ export const makeDatomicStorageAdapter = (
   const key = Symbol(scopeKey);
   const db = databaseName(scopeKey);
   const maxRetries = options.maxRetries ?? 12;
-  const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
+  const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 45_000;
   let lastSeenPosition = 0;
   const prefix = `${db}\0`;
   const cache = {
@@ -266,7 +280,7 @@ export const makeDatomicStorageAdapter = (
         let submitError: unknown;
         try {
           state.submitted = true;
-          const ticket = state.order?.ticket ?? registerCommit(-Infinity);
+          const ticket = state.order?.ticket ?? registerCommit(-Infinity, client);
           if (state.order) state.order.ticket = ticket;
           if (state.diagnostic) {
             state.diagnostic.ready = performance.now();
@@ -284,7 +298,7 @@ export const makeDatomicStorageAdapter = (
               return client.observeRequests(state.diagnostic, () =>
                 client.transact(db, {
                   onSent: sent,
-                  clientId: commitClientId,
+                  clientId: commitClientIdFor(client),
                   sendSequence,
                   // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
                   // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
@@ -352,6 +366,8 @@ export const makeDatomicStorageAdapter = (
                 cause: error,
               });
             }
+            if (error.code.startsWith("CommitOrder"))
+              throw new DatomicCommitOrderError({ message: error.message, cause: error });
             throw new WriteError({ message: "Datomic transaction was rejected", cause: error });
           }
           submitError = error;
@@ -644,7 +660,7 @@ export const makeDatomicStorageAdapter = (
       return yield* Effect.try({
         try: () => {
           if (state.replaySafe && state.order && !state.order.ticket)
-            state.order.ticket = registerCommit(timestamp);
+            state.order.ticket = registerCommit(timestamp, client);
           const row: TripleRow = {
             id,
             entity_id: input.entityId,
@@ -841,14 +857,14 @@ export const makeDatomicStorageAdapter = (
         // [DX-B6-5] Why: register before this fiber yields; nested journals share the first ticket.
         // Rejected: first-insert registration (timestamp order can invert).
         if (state.replaySafe && state.order && !state.order.ticket)
-          state.order.ticket = registerCommit(instant);
+          state.order.ticket = registerCommit(instant, client);
         return instant;
       }),
     claimCommand: (commandId, txId, timestamp) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
         if (state.replaySafe && state.order && !state.order.ticket)
-          state.order.ticket = registerCommit(timestamp);
+          state.order.ticket = registerCommit(timestamp, client);
         const pending = state.claims.get(commandId);
         if (pending !== undefined) return pending.txId;
         if (state.optimistic && state.prefetch?.commandId !== commandId) {
@@ -879,7 +895,7 @@ export const makeDatomicStorageAdapter = (
       Effect.gen(function* () {
         const state = yield* requireTransaction;
         if (state.replaySafe && state.order && !state.order.ticket)
-          state.order.ticket = registerCommit(timestamp);
+          state.order.ticket = registerCommit(timestamp, client);
         const row = (yield* queryRows({}, undefined, false, id).pipe(
           Effect.mapError(
             (cause) => new WriteError({ message: "Cannot read retraction target", cause }),

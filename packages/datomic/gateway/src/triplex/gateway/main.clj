@@ -18,7 +18,7 @@
   (or (@connections uri)
       (locking connections
         (or (@connections uri)
-            (let [conn (d/connect uri) watch (feed/subscribe! conn #(recent/make-state (d/basis-t (d/db conn)))) view {:conn conn :generation (Object.) :recent (:recent watch)}]
+            (let [conn (d/connect uri) watch (feed/subscribe! conn (when recent/enabled #(recent/make-state (d/basis-t (d/db conn))))) view {:conn conn :generation (Object.) :recent (:recent watch)}]
               (swap! connections assoc uri view) view)))))
 (defn connection [uri] (:conn (connection-view uri)))
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
@@ -183,7 +183,8 @@
                       {:txId (when claim (storage/value cut claim :triplex.claim/tx-id))}))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
-                                {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (:maximum (ex-data e)) :route (:route (ex-data e))}))))
+                                (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
+                                  (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e))))))))
 (defn -main [& _]
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.

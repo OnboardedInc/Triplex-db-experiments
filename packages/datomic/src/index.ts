@@ -57,6 +57,7 @@ export * from "./DatomicClient.js";
 export {
   makeDatomicStorageAdapter,
   DatomicSerializationConflict,
+  DatomicCommitOrderError,
 } from "./DatomicStorageAdapter.js";
 export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
 
@@ -64,3 +65,5 @@ export { DatomicBasisNotAvailable, DatomicLayoutUnsupported } from "./readErrors
 
 export { sweepRows, decodeSweepRows, type SweepRow } from "./sweepRows.js";
 export * from "./replica/index.js";
+
+export { resumeCommitOrder } from "./CommitOrder.js";

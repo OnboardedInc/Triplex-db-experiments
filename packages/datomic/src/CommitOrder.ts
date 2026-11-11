@@ -3,13 +3,45 @@
 import { randomUUID } from "node:crypto";
 export interface OrderedCommit {
   timestamp: number;
+  lane: object;
   ready: boolean;
   sending?: boolean;
   send?: (sequence: number) => void;
 }
 const pending: OrderedCommit[] = [];
 export const commitClientId = randomUUID();
-let sequence = 0;
+interface Lane {
+  id: string;
+  sequence: number;
+  inFlight: number;
+}
+const defaultLane = {};
+const lanes = new WeakMap<object, Lane>();
+function laneFor(key: object): Lane {
+  let lane = lanes.get(key);
+  if (!lane) {
+    lane = { id: key === defaultLane ? commitClientId : randomUUID(), sequence: 0, inFlight: 0 };
+    lanes.set(key, lane);
+  }
+  return lane;
+}
+// [DX-B10] Why: each client owns a sequence; distinct gateway clients cannot fill one another's gaps.
+// Rejected: one process-global counter (cross-peer writes create permanent gaps).
+export function commitClientIdFor(key: object) {
+  return laneFor(key).id;
+}
+export function resumeCommitOrder(key: object, expectedSequence: number) {
+  const lane = laneFor(key);
+  if (lane.inFlight || pending.some((item) => item.lane === key))
+    throw new Error("Settle the client suffix before resuming its sequence");
+  if (
+    !Number.isSafeInteger(expectedSequence) ||
+    expectedSequence < 1 ||
+    expectedSequence > lane.sequence + 1
+  )
+    throw new RangeError("Invalid expected commit sequence");
+  lane.sequence = expectedSequence - 1;
+}
 export const orderDiagnostics = { sent: 0, regressions: 0, maximum: -Infinity };
 function drain() {
   if (pending.some((item) => item.sending)) return;
@@ -22,11 +54,11 @@ function drain() {
       if (item.timestamp < orderDiagnostics.maximum) orderDiagnostics.regressions++;
       orderDiagnostics.maximum = Math.max(orderDiagnostics.maximum, item.timestamp);
     }
-    item.send?.(++sequence);
+    item.send?.(++laneFor(item.lane).sequence);
   }
 }
-export function registerCommit(timestamp: number): OrderedCommit {
-  const item = { timestamp, ready: false };
+export function registerCommit(timestamp: number, lane = defaultLane): OrderedCommit {
+  const item = { timestamp, ready: false, lane };
   pending.push(item);
   return item;
 }
@@ -45,7 +77,21 @@ export function sendCommit<A>(
       try {
         // [DX-B5-L0] Why: req.end may still be queued behind a TCP connect; finish is the actual send boundary.
         // Rejected: draining on request construction (different sockets can overtake by more than 20 ms).
-        resolve(send(number, () => endCommit(item)).finally(() => endCommit(item)));
+        const lane = laneFor(item.lane);
+        lane.inFlight++;
+        let request: Promise<A>;
+        try {
+          request = send(number, () => endCommit(item));
+        } catch (error) {
+          lane.inFlight--;
+          throw error;
+        }
+        resolve(
+          request.finally(() => {
+            lane.inFlight--;
+            endCommit(item);
+          }),
+        );
       } catch (error) {
         endCommit(item);
         reject(error);
