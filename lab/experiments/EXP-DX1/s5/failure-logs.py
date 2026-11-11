@@ -39,6 +39,8 @@ for role in ('gw-r', 'gw-w', 'tx', 'pg'):
                     emitted += len(block)
                     sys.stdout.buffer.write(block)
                 sys.stdout.buffer.flush()
+                if not member.name.endswith(".gz") and emitted != member.size:
+                    raise RuntimeError(f"incomplete JVM log {name}/{member.name}: {emitted} != {member.size}")
                 print('\n' + json.dumps({'event': 'failure-log-end', 'container': name, 'file': member.name, 'emittedBytes': emitted}), flush=True)
         p.stdout.read()
         if p.wait():
