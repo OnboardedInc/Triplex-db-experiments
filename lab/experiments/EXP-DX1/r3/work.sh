@@ -55,16 +55,27 @@ for role in w r; do
  done
 docker run --rm --pull never --name "$prefix-health" --network "$prefix-net" node:22.23.2-bookworm-slim node -e '
 for (const role of ["w","r"]) { let ok=false; for(let i=0;i<180;i++){try{const r=await fetch("http://"+process.argv[1]+"-gw-"+role+":8080/health"); if(r.ok){console.log(await r.text());ok=true;break;}}catch{} await new Promise(r=>setTimeout(r,1000));}if(!ok)process.exit(1);}' "$prefix"
+# [DX-R3] Why: proof and measurement fit one bounded lease; clients and database scopes remain distinct.
+# Rejected: a second admission wait that can exhaust the four-hour task budget.
+run_driver() {
+docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 8g --memory-swap 8g \
+  -v "$repo:$repo:ro" -v "$prefix-driver:$repo/runs/DX-R3-vm" -w "$repo" \
+  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_ENGINE_CPUS=4 \
+  node:22.23.2-bookworm-slim "$@"
+}
+if [[ $mode == both ]]; then
+  run_driver node --experimental-strip-types lab/experiments/EXP-DX1/r3/differential.ts
+  docker inspect --format '{{.Name}} {{.State.ExitCode}} {{.State.OOMKilled}}' "$prefix-driver"
+  docker rm "$prefix-driver"
+  mode=benchmark
+fi
 if [[ $mode == differential ]]; then
   command=(node --experimental-strip-types lab/experiments/EXP-DX1/r3/differential.ts)
 else
   command=(node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 256 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --output runs/DX-R3-vm/ns-report.json)
 fi
 rc=0
-docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 8g --memory-swap 8g \
-  -v "$repo:$repo:ro" -v "$prefix-driver:$repo/runs/DX-R3-vm" -w "$repo" \
-  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_ENGINE_CPUS=4 \
-  node:22.23.2-bookworm-slim "${command[@]}" || rc=$?
+run_driver "${command[@]}" || rc=$?
 # Read the report even though the driver process has exited; this is raw command output, not another evidence format.
 if [[ $mode == benchmark ]]; then
   if docker cp "$prefix-driver:$repo/runs/DX-R3-vm/ns-report.json" "$config/report.json"; then cat "$config/report.json"; fi
