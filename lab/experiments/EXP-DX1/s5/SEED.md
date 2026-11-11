@@ -16,4 +16,7 @@ No 100,000-subject fingerprint, fact count, sealed bytes, clone time or release-
 
 The corrected procedure retains an owned unsealed data/checkpoint pair on failure and supports `S5_RESUME=1` with the same N/chunk arguments.
 It stops JVMs around VACUUM FULL, reconnects before fresh verification, and captures resident failure diagnostics.
-These corrections require fresh bounded proofs; they do not turn the failed 70,000-subject attempt into a PASS or recover its deleted data.
+Fresh corrected proofs passed at 1,000 subjects (including injected AMQ219007/reconnect) and 10,000 subjects (including whole-controller interruption, retained volumes and 896 replayed committed suffix commands).
+Both final world fingerprints match the provided sealed-seed references; every native current/history row matched before and after maintenance.
+These bounded proofs do not qualify 100,000 subjects, turn the failed 70,000-subject attempt into a PASS, or recover its deleted data.
+Final inventory contains no DX-S5 containers, volumes or networks; no sealed 100,000-subject volume was retained.
