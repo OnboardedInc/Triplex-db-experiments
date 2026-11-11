@@ -55,6 +55,9 @@ cleanup() {
 }
 trap cleanup EXIT
 trap 'exit 124' TERM INT
+if [[ $s5 == true ]]; then
+ [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB before admission'; exit 1; }
+fi
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 held=true
 id=DX-R2; [[ $s5 != true ]] || id=DX-S5
@@ -139,11 +142,13 @@ fi
 (
  while sleep 15; do
    kb=$(docker run --rm --pull never --name "$prefix-budget" -v "$working_volume:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}') || { kill -TERM $$; exit 1; }
-   owned_kb=$(du -sk /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2 | awk '{print $1}')
+   evidence_root=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2; evidence_cap=490000
+   [[ $s5 != true ]] || { evidence_root=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S5; evidence_cap=976562; }
+   owned_kb=$(du -sk "$evidence_root" | awk '{print $1}')
    free_kb=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
    volume_cap=7300000; floor=5242880
    [[ $s5 != true ]] || { volume_cap=22000000; floor=15728640; }
-   if [[ $kb -gt $volume_cap || $owned_kb -gt 490000 || $free_kb -lt $floor ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; docker rm -f "$prefix-driver" || true; kill -TERM $$; exit 1; fi
+   if [[ $kb -gt $volume_cap || $owned_kb -gt $evidence_cap || $free_kb -lt $floor ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; docker rm -f "$prefix-driver" || true; kill -TERM $$; exit 1; fi
  done
 ) & watcher=$!
 docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory "$driver_memory" --memory-swap "$driver_memory" \

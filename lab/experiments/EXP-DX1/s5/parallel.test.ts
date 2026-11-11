@@ -6,6 +6,39 @@ import { memoryComposition } from "../../../bench/lib/memory.ts";
 import { seedW0 } from "../../../bench/lib/w0-seed.ts";
 import { readW0Fingerprint } from "../../../bench/lib/w0-fingerprint.ts";
 import { W0, V_W0, worldOf } from "../../../bench/lib/w0-world.ts";
+import { runReplicaDriver } from "../../../bench/lib/w0-replica-driver.ts";
+
+// [DX-S5] Why: a slow oracle consumer must not prefetch the entire 100k world, and failed reads must stay failures.
+// Rejected: testing only completion order without the retained-page bound or early iterator cleanup.
+test("readback prefetch stays bounded and propagates failure", async () => {
+  let started = 0;
+  const pages = orderedMap(
+    Array.from({ length: 100 }, (_, i) => i),
+    4,
+    async (i) => {
+      started++;
+      await new Promise((r) => setTimeout(r, 2));
+      return i;
+    },
+  );
+  assert.deepEqual(await pages.next(), { value: 0, done: false });
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(started, 4);
+  await pages.return(undefined);
+  assert.equal(started, 4);
+  await assert.rejects(async () => {
+    for await (const _ of orderedMap([0, 1, 2], 3, async (i) => {
+      if (i === 1) throw Error("native page failure");
+      return i;
+    })) {
+      /* consume every ordered result */
+    }
+  }, /native page failure/);
+  await assert.rejects(
+    runReplicaDriver(["--rung", "1", "--scope", "s5", "--verification-pages", "9"]),
+    /invalid verification/,
+  );
+});
 
 // [DX-S5] Why: deliberately complete page reads out of order and compare serial/parallel oracle bytes on distinct worlds/releases.
 // Rejected: checking only task counts (which would miss swapped responses or completion-order fingerprints).

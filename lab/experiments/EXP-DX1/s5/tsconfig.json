@@ -1,1 +1,4 @@
-{"extends":"../../../bench/tsconfig.json","include":["seed.ts","range.test.ts"]}
+{
+  "extends": "../../../bench/tsconfig.json",
+  "include": ["seed.ts", "range.test.ts", "parallel.test.ts"]
+}

@@ -1,4 +1,4 @@
-import { forEachBounded } from "./w0-parallel.ts";
+import { forEachBounded, orderedMap } from "./w0-parallel.ts";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
@@ -35,9 +35,12 @@ export async function runReplicaDriver(argv: string[]) {
   const N = Number(opt("rung", "1000")),
     scope = opt("scope"),
     workers = Number(opt("workers", "3")),
-    oracleConcurrency = Number(opt("oracle-concurrency", "1"));
+    oracleConcurrency = Number(opt("oracle-concurrency", "1")),
+    verificationPages = Number(opt("verification-pages", "1"));
   if (!Number.isSafeInteger(oracleConcurrency) || oracleConcurrency < 1 || oracleConcurrency > 32)
     throw Error("invalid oracle concurrency");
+  if (!Number.isSafeInteger(verificationPages) || verificationPages < 1 || verificationPages > 8)
+    throw Error("invalid verification page concurrency");
   if (!scope || !Number.isSafeInteger(N) || N < 1)
     throw new Error("Existing seeded scope and positive N required");
   const subjects = subjectList(N),
@@ -106,22 +109,29 @@ export async function runReplicaDriver(argv: string[]) {
   };
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
   let bulkCounts: Awaited<ReturnType<typeof openBulkCounts>> | undefined;
+  let verificationComp = comp;
   const followTo = async (p: number) => {
     while (replica.position < p) await replica.followOnce(1000, p);
     if (!replica.isValid || replica.position !== p)
       throw new Error("Replica did not reach exact acknowledged cut");
   };
   const recordedPage = (roots: readonly string[], basis: { position: number; validAt: number }) =>
-    recorder ? recorder.around(() => comp.sweepPage(roots, basis)) : comp.sweepPage(roots, basis);
+    recorder
+      ? recorder.around(() => verificationComp.sweepPage(roots, basis))
+      : verificationComp.sweepPage(roots, basis);
   const equalWorlds = async (cut: number, fingerprint = false) => {
     const hashes = [createHash("sha256"), createHash("sha256")];
     hashes.forEach((h) => h.update("["));
     let facts = 0;
     const snap = await replica.snapshotAt(cut);
     let worlds = 0;
-    for (let i = 0; i < subjects.length; i += 64) {
-      const ids = subjects.slice(i, i + 64),
-        page = await recordedPage(ids, { position: cut, validAt: V_W0 });
+    // [DX-S5] Why: pipeline immutable native pages, but fold every world in its original subject order.
+    // Rejected: concurrent digest updates (response completion order would change the fingerprint).
+    const offsets = Array.from({ length: Math.ceil(subjects.length / 64) }, (_, i) => i * 64);
+    for await (const { ids, page } of orderedMap(offsets, verificationPages, async (i) => {
+      const ids = subjects.slice(i, i + 64);
+      return { ids, page: await recordedPage(ids, { position: cut, validAt: V_W0 }) };
+    })) {
       for (const subject of ids) {
         if (
           worldCanonical(worldOf(subject, snap.world(subject))) !==
@@ -183,6 +193,21 @@ export async function runReplicaDriver(argv: string[]) {
     return r.value;
   };
   try {
+    // [DX-S5] Why: untimed exact readback can use the two-core reader peer and bounded page overlap.
+    // Rejected: serial verification on the one-core writer peer; defaults and all content/cut checks stay intact.
+    if (verificationPages > 1) {
+      const writerURL = process.env.DATOMIC_URL;
+      const readURL = process.env.DATOMIC_READ_URLS?.split(",")[0];
+      if (!readURL) throw Error("parallel verification requires a read peer");
+      process.env.DATOMIC_URL = readURL;
+      try {
+        verificationComp = await openComposition("reach", "datomic", scope);
+      } finally {
+        if (writerURL === undefined) delete process.env.DATOMIC_URL;
+        else process.env.DATOMIC_URL = writerURL;
+      }
+    }
+    report.verificationPages = verificationPages;
     // [DX-R1] Why: reuse H6's qualified full-history transport; per-entity HTTP would consume the bounded hold.
     // Rejected: replacing stored history counts with client ACK totals or changing their expected values.
     bulkCounts = await openBulkCounts(comp);
@@ -569,6 +594,27 @@ export async function runReplicaDriver(argv: string[]) {
         commits: result.publication.commits,
         wallMs: result.publication.wallMs,
       };
+    // [DX-S5] Why: retain measured activation/memory observations even if the later full oracle exceeds its hold.
+    // Rejected: calling incomplete exactness a PASS or losing all timing observations on a verifier timeout.
+    console.log(
+      JSON.stringify({
+        kind: "activation-measurement",
+        exactness: "pending",
+        N,
+        scope,
+        releaseHash: W0.R2.hash,
+        subjects: result.records.length,
+        cut,
+        evaluation: report.evaluation,
+        publication: report.publication,
+        combinedWallMs: report.evaluation.passWallMs + (report.publication?.wallMs ?? 0),
+        matched: report.matched,
+        liveFollow: report.liveFollow,
+        cgroupPeakBytes: fs.existsSync("/sys/fs/cgroup/memory.peak")
+          ? Number(fs.readFileSync("/sys/fs/cgroup/memory.peak", "utf8"))
+          : null,
+      }),
+    );
     // [DX-R1] Why: every independent oracle comparison is after the last publication ACK, over the frozen input cut.
     // Rejected: sampling subjects or using evaluator output as the oracle's input.
     const exactnessStarted = performance.now();
@@ -604,18 +650,28 @@ export async function runReplicaDriver(argv: string[]) {
         next.deliveries.length > 0 || canonical(next.state.items) !== canonical(previous.items);
       return { changed, state: changed ? next.state : previous };
     };
-    for (let offset = 0; offset < result.records.length; offset += 64) {
-      const records = result.records.slice(offset, offset + 64);
-      const gateway = await recordedPage(
-        records.map((r) => r.subject),
-        { position: cut, validAt: V_W0 },
-      );
-      const states = argv.includes("--publish")
-        ? await recordedPage(
-            records.map((r) => "p5:outbox:" + r.subject),
-            { position: finalPosition, validAt: V_W0 },
-          )
-        : undefined;
+    const recordOffsets = Array.from(
+      { length: Math.ceil(result.records.length / 64) },
+      (_, i) => i * 64,
+    );
+    for await (const { records, gateway, states } of orderedMap(
+      recordOffsets,
+      verificationPages,
+      async (offset) => {
+        const records = result.records.slice(offset, offset + 64);
+        const gateway = await recordedPage(
+          records.map((r) => r.subject),
+          { position: cut, validAt: V_W0 },
+        );
+        const states = argv.includes("--publish")
+          ? await recordedPage(
+              records.map((r) => "p5:outbox:" + r.subject),
+              { position: finalPosition, validAt: V_W0 },
+            )
+          : undefined;
+        return { records, gateway, states };
+      },
+    )) {
       await forEachBounded(records, oracleConcurrency, async (r) => {
         const world = worldOf(r.subject, reachableRows([r.subject], gateway.rows));
         if (
@@ -875,6 +931,7 @@ export async function runReplicaDriver(argv: string[]) {
     bulkCounts?.close();
     feedClient.close();
     client.close();
+    if (verificationComp !== comp) await verificationComp.close();
     await comp.close();
   }
 }
