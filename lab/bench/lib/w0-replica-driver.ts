@@ -611,12 +611,24 @@ export async function runReplicaDriver(argv: string[]) {
         position,
         workers,
         view: snap,
+        // [DX-R1] Why: compare one and three candidates under the same 64-reader/writer profile.
+        // Rejected: timing the three-candidate pass after stopping all live traffic.
+        beforeTimedWindow: async () => {
+          if (!live) return;
+          collectLiveLag = false;
+          replica.start();
+          traffic = await startW0Live({ ...liveOptions, id: "candidates" });
+        },
         releases: [
           W0.R2,
           variant("OT", "thresholdMinutes", 2700),
           variant("PAYCHG", "thresholdCents", 700),
         ],
       });
+      const candidateTraffic = traffic as Awaited<ReturnType<typeof startW0Live>> | undefined;
+      const candidateLive = candidateTraffic ? await candidateTraffic.stop() : undefined;
+      traffic = undefined;
+      await replica.stop();
       for (let i = 0; i < multi.records.length; i++) {
         if (
           canonical(multi.records[i].candidates[0]) !== canonical(result.records[i].candidates[0])
@@ -629,6 +641,7 @@ export async function runReplicaDriver(argv: string[]) {
         passWallMs: multi.passWallMs + report.freezeMs,
         passRatio: (multi.passWallMs + report.freezeMs) / (result.passWallMs + report.freezeMs),
         cpuSeconds: multi.cpuSeconds,
+        live: candidateLive,
       };
     }
     if (argv.includes("--journal-counts")) {
