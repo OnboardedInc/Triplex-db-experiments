@@ -98,6 +98,12 @@ export async function seedW0(
   checkpoint?: () => Promise<void>,
   concurrency = 1,
   serialPrefix = 0,
+  range?: {
+    from: number;
+    through: number;
+    latest: Map<string, string>;
+    discardLog?: boolean;
+  },
 ) {
   // [DX-H5] Why: W0's immutable fingerprint includes reference commit positions.
   // Rejected: silently accepting reordered concurrent seed commands as the reference world.
@@ -105,14 +111,20 @@ export async function seedW0(
     throw Error("invalid seed concurrency");
   if (!Number.isSafeInteger(serialPrefix) || serialPrefix < 0)
     throw Error("invalid serial seed prefix");
-  if ((await comp.currentPosition()) !== 0) throw new Error("W0 seed requires fresh scope");
+  // [DX-S5] Why: ranges resume only at the observed dense head, with scalar identities restored from durable journals.
+  // Rejected: replaying committed writes (duplicates can conceal an incorrect recovery position).
+  const from = range?.from ?? 0;
+  const through = range?.through ?? W0.populationBasis(W0.rung(N)).tx;
+  if (!Number.isSafeInteger(from) || !Number.isSafeInteger(through) || from < 0 || through < from)
+    throw Error("invalid seed range");
+  if ((await comp.currentPosition()) !== from) throw new Error("W0 seed head mismatch");
   const seedStarted = performance.now();
   const Rseed = W0.rung(N);
-  const fd = fs.openSync(logFile, "wx"),
-    latest = new Map<string, string>();
+  const fd = fs.openSync(logFile, range?.discardLog ? "w" : "wx"),
+    latest = range?.latest ?? new Map<string, string>();
   let assertions = 0,
     retractions = 0,
-    position = 0;
+    position = from;
   const commandsHash = (await import("node:crypto")).createHash("sha256");
   // [DX-H6] Why: submit the one reference stream in order, retaining bounded ACKs and scalar dependencies.
   // Rejected: per-subject concurrent producers (their arrival positions differ from the reference).
@@ -142,7 +154,7 @@ export async function seedW0(
     retractions += operations.length - c.rows.length;
     position = c.position;
     const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
-    fs.writeSync(fd, line);
+    if (!range?.discardLog) fs.writeSync(fd, line);
     commandsHash.update(line);
     if (position % 1000 === 0)
       console.error(
@@ -152,6 +164,8 @@ export async function seedW0(
   };
   try {
     for (const c of seedCommands(N)) {
+      if (c.position <= from) continue;
+      if (c.position > through) break;
       while (
         pending.length >= (c.position <= serialPrefix ? 1 : concurrency) ||
         c.rows.some(([e, a]) => !many.has(a) && pendingKeys.has(e + "\0" + a))
@@ -211,7 +225,7 @@ export async function seedW0(
   }
   const R = W0.rung(N),
     basis = W0.populationBasis(R);
-  if (position !== basis.tx) throw new Error("population basis mismatch");
+  if (position !== through) throw new Error("population range mismatch");
   const commandWallMs = performance.now() - seedStarted;
   const countsStarted = performance.now();
   const counts = await comp.storeCounts();
