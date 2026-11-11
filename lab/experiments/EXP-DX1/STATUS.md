@@ -1255,3 +1255,34 @@ timestamps retained. Done when the reviewer's command exits 0. Code and unit tes
 
 Seed at 17:13 UTC: 1,312,000 commands (about 30,000 subjects), 452 to 566 commands/s between maintenance stops, first attempt.
 The 100,000-subject memory projection for the local copy rises with F1's fix from 5.66 GB to about 8.3 GB of data.
+
+## 2026-11-11 17:32 UTC: DX-V1 round two: F1 to F3 confirmed fixed; three new findings outside the frozen trace; DX-R3 part 5
+
+Reviewer head `720f6774` (`review/DX-V1`, `lab/verify/DX-V1/REPORT.md`). Its claim command now exits 0 (3 pass). 48 checks pass.
+Builder's footprint and rate numbers verified from the original logs.
+
+1. **R2-B, wrong answer served, needs a writer the benchmark does not have.** After the copy applied p2/time101 the cut at
+   time100 counts as closed; the gateway accepts a later non-replay-safe SPI commit p3/time100 (it rejects clocks at or below
+   the previous one only for replay-safe writes); until p3's journal arrives a local read at time100 misses p3's rows.
+   Reproduced locally; the SPI transaction itself is a source trace, not run natively.
+2. **R2-A, wrong read judged correct, needs data the trace does not have.** The expectation cache's key has no `validTo`
+   boundary, so a row that expired between two valid times is judged with the earlier digest. The frozen trace has no finite
+   `validTo`.
+3. **R2-C, wrong read judged correct under a wrong-type fault.** The canonical form coerces non-plain objects (`new Date(0)`
+   and `{}` share a form). Normal decoding does not produce such values.
+4. Coverage limit: an oracle raw sample with an open clock uses the fallback route and still consumes the sample budget, so
+   nothing guarantees locally answered raw samples.
+
+Did not break: metadata across changed intervals, retractions and old bases; held lazy rows; projection decline; first cut
+after bootstrap; exact floor; newest-clock rejection; rebuild admission; two versions with one revision; missing, undefined,
+Option and nested-value distinctions; errors and timeouts never counted correct.
+
+**Orchestrator's decision on R2-B:** make the guarantee durable at the source. A scope gets an immutable "strict record
+clocks" property at creation; in such a scope the commit function rejects every write whose record time is not above the
+scope's maximum, replay-safe or not; the capability answer reports it; the local copy answers a time-only basis only in
+strict scopes and only on a closed cut. Elsewhere time-only bases go to the gateway; position-pinned and current reads stay
+local everywhere. Existing scopes keep today's behaviour. A product consequence for Sam: a strict scope cannot take
+history imports that carry old record times.
+
+**DX-R3 resumed 17:30 UTC, part 5** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-R3-resume4.md`): R2-A, R2-B, R2-C and a
+minimum of locally answered raw samples per ladder level. Seed at 17:30 UTC: 1,734,000 commands (about 40,000 subjects).
