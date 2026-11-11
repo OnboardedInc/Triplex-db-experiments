@@ -1,22 +1,30 @@
-No sealed 100,000-subject seed exists from DX-S5.
+Unsealed seed in progress — second part, 2026-11-11.
 
-The requested volume was `tx2-dxs5-seed-100000-pg-data`, scope `dxs5-w0-100000-v1`.
-Attempt `seed100000-a.log.gz` ran from 2026-11-11 11:32:41 UTC until approximately 14:18:39 UTC and failed after seven committed chunks.
-It reached 70,000 subjects and logical position 3,041,238 through real window-32 commits; summed command time was 5,299.869 s (573.833 commands/s).
-The fresh post-vacuum peer failed with `ActiveMQNotConnectedException / AMQ219007`; the original cleanup removed the unsealed data and checkpoint volumes.
-The original transactor failure's root cause is unproven: its resident JVM diagnostics were not captured before that cleanup.
+Volume: `tx2-dxs5-seed-100000-pg-data`; checkpoint: `tx2-dxs5-seed-100000-tools`.
+Scope: `dxs5-w0-100000-v1`; seed id: `1b8525ba-a1ae-4a81-9299-82e1e9a9f932`.
+The same retained pair from orchestrator attempts b1–b5 is being resumed; no new seed was substituted.
 
-The last fully read-back prefix was 60,000 subjects, at position 2,608,828, with 26,787,308 reachable fact occurrences.
-Its world fingerprint was `sha256:7bb39ce4e93a802b9ddf2e1ea8d677cd4fc71ac91f4ff3637a5f972f33fa6b56`.
-This covers the first 60,000 worlds of the 100,000-subject rung (L=2000, K=100), not a separately generated 60,000-subject rung.
-The 70,000-subject pre-maintenance scan counted 87,507,432 current and 87,534,992 historical native rows; post-maintenance preservation at that prefix was not verified.
-The last SQL table-size observation was 10,778,935,296 B, largest leaf 677,642,240 B; this is not a sealed-volume measurement.
-Peak sampled PostgreSQL volume allocation was 16,195,883,008 B. Minimum sampled Mac free space was 25.859741 GiB; minimum VM free space was 42,817,120 KiB.
-No 100,000-subject fingerprint, fact count, sealed bytes, clone time or release-activation result was obtained.
+Last fully verified prefix: 80,000 subjects at logical position 3,471,684.
+World fingerprint: `sha256:e51fd84cb777179efdc131e1d68fd5645b3a156cf8c9be94e36b01ff858cec98`.
+R2 fingerprint: `sha256:6fa5bccab01f0e293bd16f017f9dc806d3c3c61421b0e0ab608dc8dc4f7e43bd`.
+Reachable fact occurrences: 35,643,500; shared reachable facts repeat per subject.
+This is the first 80,000 subjects of the 100,000-subject rung, not a separately generated 80,000-subject population.
+Fresh complete native pre/post maintenance equality at basis 22,058,829:
+current 99,889,072 rows, digest `393c9cc53fb9d0e57905e81bf5e68f6b314746e58b1d5a885913ce9143430df7`;
+history 99,920,448 rows, digest `26d8870ce36e40f8e5791c4de6c1f0c8f2da3f1a1622ff8c7c9feca12c152cf0`.
+Evidence: `~/Claude/Projects/triplex-db-2/evidence/DX-S5/seed100000-c1.log` (active; compressed when closed).
+The hold has advanced to the next 10,000-subject chunk; current head can exceed the verified cut above.
 
-The corrected procedure retains an owned unsealed data/checkpoint pair on failure and supports `S5_RESUME=1` with the same N/chunk arguments.
-It stops JVMs around VACUUM FULL, reconnects before fresh verification, and captures resident failure diagnostics.
-Fresh corrected proofs passed at 1,000 subjects (including injected AMQ219007/reconnect) and 10,000 subjects (including whole-controller interruption, retained volumes and 896 replayed committed suffix commands).
-Both final world fingerprints match the provided sealed-seed references; every native current/history row matched before and after maintenance.
-These bounded proofs do not qualify 100,000 subjects, turn the failed 70,000-subject attempt into a PASS, or recover its deleted data.
-Final inventory contains no DX-S5 containers, volumes or networks; no sealed 100,000-subject volume was retained.
+Diagnosis: b4 logged `OutOfMemoryError: Java heap space` in `/reach-many` at `datomic.index.Index.seek` through `entity_cache/revision` (raw lines 961–995).
+The AMQ startup failures were separately reproducible before the broker's first heartbeat/listen; a fresh peer read the retained head in 1.553 s.
+The retained database was already indexed: the transactor reported zero catch-up bytes, index-t=tail-t=22058829, catch-up 16 ms.
+Both original-profile gateways also returned HTTP 200 at head 3471684; PostgreSQL max_connections=100, with no exhausted connection pool observed.
+Evidence: `orch-seed100000-b4.log.gz`, `live-jvm80000-a.log.gz`, `probe80000-c.log.gz`, `http-head80000-a.log.gz`, `observe80000-c.log.gz`.
+The allegedly empty b5 transactor section contains all 13,162 bytes plus its separator in the raw file.
+
+Correction: wait for a successful target-database head read, not generic health; keep the 2 GiB peer heap/3 GiB container limits.
+Datomic object cache is 256 MiB, parsed cache 64 MiB, and session entries 65,536; defaults outside the S5 profile are unchanged.
+Complete 80,000-subject readback now succeeds, with reader container memory sampled near 2.25 GiB.
+Complete console/rotated/Clojure/GC logs are captured on failures, and uncompressed extraction counts must equal the archived size.
+Resume: `S5_RESUME=1 node lab/bin/heavy.mjs --label DX-S5-seed100000-c1 -- bash lab/experiments/EXP-DX1/s5/hold.sh 100000 10000 false`.
+No 100,000-subject seal, clone or activation result exists yet. The original deleted first attempt remains a historical failure.
