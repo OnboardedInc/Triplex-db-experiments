@@ -11,7 +11,31 @@ export function installDatomicPublication(api: any) {
   installed.add(prototype);
   const original = prototype.transact;
   prototype.transact = async function (db: string, input: any) {
-    const result = await original.call(this, db, input);
+    let result;
+    try {
+      result = await original.call(this, db, input);
+    } catch (error: any) {
+      // [DX-R3-P7] Why: the first source refusal or local encoding error can be hidden by later suffix failures.
+      // Rejected: logging only the final seed exception (cannot distinguish clock rejection from a missing send).
+      if (process.env.DX_R3_SOURCE_DIAGNOSTICS === "1")
+        console.log(
+          JSON.stringify({
+            kind: "adapter-source-rejection",
+            db,
+            operationId: input.operationId,
+            sequence: input.sendSequence,
+            sourceK: input.sourceK,
+            position: input.position,
+            claims: input.claims,
+            code: error?.code,
+            status: error?.status,
+            maximum: error?.maximum,
+            message: error?.message ?? String(error),
+            name: error?.name,
+          }),
+        );
+      throw error;
+    }
     if (observer) {
       const position = Number(result?.position?.v);
       if (

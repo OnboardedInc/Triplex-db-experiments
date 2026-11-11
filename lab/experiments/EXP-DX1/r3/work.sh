@@ -70,7 +70,7 @@ for (const role of ["w","r"]) { let ok=false; for(let i=0;i<180;i++){try{const r
 run_driver() {
 docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 8g --memory-swap 8g \
   -v "$repo:$repo:ro" -v "$prefix-driver:$repo/runs/DX-R3-vm" -w "$repo" \
-  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_ENGINE_CPUS=4 -e "DX_R3_COST_RATE=${DX_R3_COST_RATE:-0}" \
+  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_ENGINE_CPUS=4 -e DX_R3_SOURCE_DIAGNOSTICS=1 -e "DX_R3_COST_RATE=${DX_R3_COST_RATE:-0}" \
   node:22.23.2-bookworm-slim "$@"
 }
 if [[ $mode == compare ]]; then
