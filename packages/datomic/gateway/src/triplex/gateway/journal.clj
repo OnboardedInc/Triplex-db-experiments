@@ -34,7 +34,10 @@
           _ (when (true? (get input "replicaRows")) (replica-supported! initial name))
           current (if (and (pos? wait-ms) (<= (storage/head-position name initial) after))
                     (feed/await-db conn (fn [db] (supported! db name false)
-                                         (> (storage/head-position name db) after)) deadline) initial)]
+                                         (> (storage/head-position name db) after)) deadline) initial)
+          ;; [DX-R2] Why: a scope can become unsupported while a long poll waits, even without a new public journal.
+          ;; Rejected: trusting only the eligibility proof from before the wait.
+          _ (when (true? (get input "replicaRows")) (replica-supported! current name))]
       (admission/execute admission/journals (fn []
         (let [;; [DX-B6-5] Why: an explicit basis selects a cut after freshness, rather than exposing later journals.
           ;; Rejected: waiting for R and then enumerating the current head unconditionally.

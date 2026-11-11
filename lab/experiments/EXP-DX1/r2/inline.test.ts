@@ -314,3 +314,22 @@ it("bounds inline feed responses after a publication backlog", async () => {
   expect(input.replicaRows).toBe(true);
   expect(input.limit).toBe(16);
 });
+
+it("invalidates on a scope decline even when the logical head has not advanced", async () => {
+  const f = fixture();
+  const client = {
+    async request(_method: string, _path: string, input: any) {
+      if (input.replicaCapability) return { supported: true };
+      if (input.replicaRows) return { declined: "replica-positions" };
+      return f.source.page(input.roots, input.basis);
+    },
+  };
+  const r = new Replica(
+    Replica.source(client as any, "test", async () => 1, 0),
+    0,
+  );
+  await r.bootstrap(["root"]);
+  await expect(r.followOnce()).rejects.toThrow("replica-positions");
+  expect(r.isValid).toBe(false);
+  expect(() => r.world("root")).toThrow("rebuild");
+});
