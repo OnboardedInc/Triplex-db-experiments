@@ -680,6 +680,16 @@ export async function runReplicaDriver(argv: string[]) {
             r.id === id ? ({ ...r, params: { [key]: n } } as any) : r,
           ),
         });
+      // [DX-S5] Why: the three canonical releases all have an independent Python oracle; keep the prior custom candidates as the default.
+      // Rejected: reporting three-candidate exactness after checking only the shared R2 candidate.
+      const canonicalCandidates = argv.includes("--oracle-candidates");
+      const candidateReleases = canonicalCandidates
+        ? [W0.R2, W0.R1, W0.R3]
+        : [
+            W0.R2,
+            variant("OT", "thresholdMinutes", 2700),
+            variant("PAYCHG", "thresholdCents", 700),
+          ];
       const multi = await evaluateAll({
         replica,
         subjects,
@@ -694,11 +704,7 @@ export async function runReplicaDriver(argv: string[]) {
           replica.start();
           traffic = await startW0Live({ ...liveOptions, id: "candidates" });
         },
-        releases: [
-          W0.R2,
-          variant("OT", "thresholdMinutes", 2700),
-          variant("PAYCHG", "thresholdCents", 700),
-        ],
+        releases: candidateReleases,
       });
       const candidateTraffic = traffic as Awaited<ReturnType<typeof startW0Live>> | undefined;
       const candidateLive = candidateTraffic ? await candidateTraffic.stop() : undefined;
@@ -710,7 +716,41 @@ export async function runReplicaDriver(argv: string[]) {
         )
           throw new Error("Candidate pass changed its shared R2 input/output cut");
       }
+      const candidateOracleStarted = performance.now();
+      let candidateOracleCompared = 0;
+      if (canonicalCandidates) {
+        for (const r of multi.records) {
+          const world = worldOf(r.subject, snap.world(r.subject));
+          if (worldSha256(world) !== r.worldSha256 || r.candidates.length !== 3)
+            throw new Error("Candidate world/coverage mismatch");
+          for (let j = 0; j < 3; j++) {
+            const expected = await timedOracle("evaluate", {
+              world,
+              release: ["R2", "R1", "R3"][j],
+              basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
+            });
+            const candidate = r.candidates[j];
+            if (W0.outputJson(candidate.output) !== expected)
+              throw new Error("Candidate Python output mismatch " + r.subject);
+            const record = {
+              ...candidate.record,
+              workItems: candidate.record.workItems.map((w) => ({
+                ...w,
+                payload: JSON.parse(w.payload),
+              })),
+            };
+            if (canonical(record) !== canonical(recordOf(JSON.parse(expected))))
+              throw new Error("Candidate Python record mismatch " + r.subject);
+            candidateOracleCompared++;
+          }
+        }
+        if (candidateOracleCompared !== N * 3)
+          throw new Error("Candidate oracle coverage mismatch");
+      }
       report.candidates = {
+        oracleCompared: candidateOracleCompared,
+        oracleWallMs: canonicalCandidates ? performance.now() - candidateOracleStarted : null,
+        releaseHashes: candidateReleases.map((r) => r.hash),
         wallMs: multi.evaluationWallMs,
         ratio: multi.evaluationWallMs / result.evaluationWallMs,
         passWallMs: multi.passWallMs + report.freezeMs,

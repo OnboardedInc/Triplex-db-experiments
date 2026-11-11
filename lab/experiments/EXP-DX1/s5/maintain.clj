@@ -29,7 +29,10 @@
     (swap! n inc)))
   {:rows @n :sha256 (.formatHex (java.util.HexFormat/of) (.digest md))}))
 (defn proof [conn]
- (let [db (d/db conn)] {:basis (d/basis-t db) :current (rows-proof db) :history (rows-proof (d/history db))}))
+ (let [db (d/db conn) current (rows-proof db) history (rows-proof (d/history db))]
+  (when (or (zero? (:rows current)) (< (:rows history) (:rows current)))
+   (throw (ex-info "missing native scope rows" {})))
+  {:basis (d/basis-t db) :current current :history history}))
 (defn -main [uri mode]
  (let [conn (d/connect uri) _ @(d/sync conn) started (System/nanoTime)]
   ;; [DX-S5] Why: compare one fresh pre-maintenance image with one fresh post-vacuum image, not duplicate hashes in the same peer.

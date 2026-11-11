@@ -135,14 +135,14 @@ export async function seedW0(
     const { c, operations, commandId, ack } = pending.shift()!;
     const result = await ack;
     if (!result.ok || result.value.position !== c.position) {
-      fs.writeFileSync(
-        logFile + ".failure.json",
+      const failure =
         JSON.stringify(
           { expectedPosition: c.position, commandId, operations, result },
           (_key, value) => (typeof value === "bigint" ? value.toString() : value),
           2,
-        ) + "\n",
-      );
+        ) + "\n";
+      if (range?.discardLog) console.error(failure);
+      else fs.writeFileSync(logFile + ".failure.json", failure);
       if (!result.ok) throw new Error(`seed ${c.position}: ${result.tag}`);
       throw new Error(`reference position mismatch ${c.position} != ${result.value.position}`);
     }
@@ -204,9 +204,8 @@ export async function seedW0(
     while (pending.length) await drain();
   } finally {
     const unresolved = await Promise.allSettled(pending.map((p) => p.ack));
-    if (pending.length)
-      fs.writeFileSync(
-        logFile + ".unconsumed.ndjson",
+    if (pending.length) {
+      const unresolvedText =
         pending
           .map((p, i) =>
             JSON.stringify(
@@ -219,8 +218,10 @@ export async function seedW0(
               (_key, value) => (typeof value === "bigint" ? value.toString() : value),
             ),
           )
-          .join("\n") + "\n",
-      );
+          .join("\n") + "\n";
+      if (range?.discardLog) console.error(unresolvedText);
+      else fs.writeFileSync(logFile + ".unconsumed.ndjson", unresolvedText);
+    }
     fs.closeSync(fd);
   }
   const R = W0.rung(N),

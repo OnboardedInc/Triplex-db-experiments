@@ -30,6 +30,11 @@ cleanup() {
    docker ps -a --filter "name=$prefix" --format '{{.Names}}'
    docker volume ls --filter "name=$prefix" --format '{{.Name}}'
    fi
+   if [[ $s5 == true ]]; then
+    remaining=$(docker ps -aq --filter "name=^/$prefix-") || { echo 'cannot verify containers: lock retained'; exit 1; }
+    volumes=$(docker volume ls --filter "name=^$prefix-" --format '{{.Name}}') || { echo 'cannot verify volumes: lock retained'; exit 1; }
+    [[ -z $remaining && -z $volumes ]] || { echo 'owned resources remain: lock retained'; exit 1; }
+   fi
    rm -f "$lock/owner.json"; rmdir "$lock"
  fi
  find "$out" -type f -name "*.ndjson" -exec gzip {} \;
@@ -76,6 +81,7 @@ if [[ $s5 == true ]]; then
  source_kib=$(docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}')
  mac_kib=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
  vm_kib=$(docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" postgres:17-alpine sh -c 'df -Pk /from | tail -1' | awk '{print $4}')
+ echo "clone-plan sourceKiB=$source_kib macFreeKiB=$mac_kib vmFreeKiB=$vm_kib"
  (( mac_kib-source_kib >= 15728640 && vm_kib-source_kib >= 5242880 )) || { echo 'clone does not fit disk reserve'; exit 1; }
 fi
 docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" -v "$prefix-pg-data:/to" postgres:17-alpine sh -c 'test $(du -sk /from | cut -f1) -lt "$1" && cp -a /from/. /to/ && du -sk /to' sh "$clone_kib"

@@ -3,7 +3,7 @@
 # Rejected: leaving a peer resident or retaining a failed proof's volume.
 set -euo pipefail
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
-n=${1:?1000|10000|100000}; chunk=${2:?chunk subjects}; deliberate=${3:-false}
+n=${1:?1000|10000|100000}; chunk=${2:?chunk subjects}; deliberate=${3:-false}; activation_check=${4:-false}
 [[ $n == 1000 || $n == 10000 || $n == 100000 ]] || exit 2
 [[ $chunk =~ ^[1-9][0-9]*$ ]] && (( chunk % 50 == 0 && chunk <= n && n % chunk == 0 )) || exit 2
 prefix=tx2-dxs5-seed-$n; scope=dxs5-w0-$n-v1
@@ -38,6 +38,9 @@ free_mac() { df -k /System/Volumes/Data | awk 'NR==2 {print $4}'; }
 if [[ $n == 100000 ]]; then
  [[ -f /Users/sam/Claude/Projects/triplex-db-2/locks/long-hold-ok ]] || { echo 'long hold not authorized'; exit 2; }
 fi
+# [DX-S5] Why: discover missing built public imports before consuming an engine hold.
+# Rejected: discovering a missing qualification package after all engine JVMs have started.
+node --experimental-strip-types --input-type=module -e 'await import("./lab/bench/lib/composition.ts"); await import("./lab/bench/lib/w0-replica-driver.ts"); console.log("driver imports ready")'
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 held=true
 printf '{"id":"DX-S5","pid":%s,"kind":"seed-%s"}\n' "$$" "$n" > "$lock/owner.json"
@@ -129,6 +132,14 @@ for ((end=chunk;end<=n;end+=chunk)); do
   require_recovered=1
  fi
 done
+if [[ $activation_check == true ]]; then
+ [[ $n == 1000 ]] || { echo 'activation preflight is the 1k disposable seed only'; exit 2; }
+ docker run --rm --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 11g --memory-swap 11g \
+ -v "$repo:$repo:ro" -v "$out:$out" -v "$prefix-tools:/tool:ro" -w "$repo" -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin \
+ -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
+ python:3.13-slim /tool/node --expose-gc --experimental-strip-types lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" \
+ --seed-fingerprint --publish --post-capture --candidates --oracle-candidates --live --traffic-offset-s 120 --baseline-ms 12000 --live-warmup-ms 10000
+fi
 for role in gw-r gw-w tx; do docker stop -t 30 "$prefix-$role"; done
 docker exec "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d datomic -c CHECKPOINT
 docker stop -t 30 "$prefix-pg"
