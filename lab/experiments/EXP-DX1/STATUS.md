@@ -1146,3 +1146,26 @@ write gateway (read gateway, or one CPU per engine container), free the writer's
 rerun the full pair under both split-read rules. Targets: every P1 and P2 bar in the table at once.
 
 `long-hold-ok` restored 11:12 UTC. DX-S5 is on its 10,000-subject proof (509 to 515 commands/s, window 32).
+
+## 2026-11-11 15:20 UTC: morning state. 100,000 seed failed at 70,000; DX-R3 part 3 regressed; `nohlt` being switched off
+
+**Host:** Sam's working day has started (call apps 98% CPU, load 14.7, swap 8.4 GB, `host-quiet` false). `lab/bin/vm-nohlt.sh off`
+is queued on the lock (DX-S5 holds it for a 10,000-subject proof); until it runs the VM uses eight host cores. No latency
+verdicts are valid on this host state; daytime is for the seed and for functional checks.
+
+**DX-S5 (still running, budget ends about 16:23 UTC).** Proofs passed: 1,000 subjects in two chunks and 10,000 in two chunks
+with maintenance and a deliberate kill reproduce both sealed fingerprints. The long seed ran 9,958 s, reached 70,000 subjects
+(3,041,238 positions, 573.8 commands/s, peak Postgres allocation 16.2 GB, Mac free space never under 25.9 GiB) and failed:
+after the 70,000 chunk's `VACUUM FULL` the restarted peer could not connect to the transactor (`AMQ219007`), and the script's
+cleanup deleted the partial seed. No sealed 100,000 seed, no 100,000 evaluation. The agent has since changed the procedure to
+keep an interrupted seed for resume and is re-proving it. JVM INFO logs had grown to 3.8 GB by 40,000 subjects (now bounded).
+
+**DX-R3 part 3 (`abbac16b`, not merged).** It moved the follower, read-your-own-write and observation spilling off the
+commit thread and bound the follower to the read gateway. Its full pair then answered every read through the gateway (201
+correct reads/s at 256 readers, read p99 2.9 s, 760 commands unaccounted): the new worker opened a second runtime after the
+seed and its clock admission declined every local read. Reads were still all correct and the oracle passed. A correction
+(`bca7bf81`) is unit-tested only. Finding worth keeping: in q7 the follower already read from the read gateway (the
+`feedPeer: writer` label belongs to the W0 harness), so the write gateway serving the feed was not the cause of q7's slower
+commits; the 4.7 s stall was the main thread cloning the retained image for the sweep. The orchestrator is running the short
+ladder on the corrected head (`r3/run.sh benchmark m2`) to see whether local reads work again. `lane/d-native` and the frozen
+checkout stay at the q7 code.
