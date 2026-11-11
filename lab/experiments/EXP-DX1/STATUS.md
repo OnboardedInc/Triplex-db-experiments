@@ -710,13 +710,31 @@ between the two arms. No per-level table exists. What survives in `ns-report.jso
 against 682,512 in `q1` (about 2.1 times), 1.02 to 1.03 requests per pull (was 1.24 to 1.37), 9,563 transact requests for 8,846
 commits (1.08 per commit, was 1.19). **Rule from now on: verdict pairs run from a frozen checkout that nothing else touches.**
 
+## Merged code checked, and seeding with commits in flight measured (2026-11-11 03:00 UTC, head 9ac1fafc)
+
+1. Lean package suite on the merge of DX-H7, DX-R1 and DX-B10: 28 files, 206 tests passed, 2 skipped
+   (`~/Claude/Projects/triplex-db-2/evidence/ORCH-merge/merge-base.log`).
+2. W0 seed of 1,000 subjects in the VM (`b10/seed-vm.sh`, evidence `ORCH-merge/seed-windows.log`):
+
+| In flight | Commands/s | World fingerprint |
+| --- | --- | --- |
+| 1 | 264.5 | `sha256:ca15387e…` (the reference) |
+| 32 | 533.7 | `sha256:ca15387e…` (the reference) |
+
+Strict ordering holds with 32 in flight. The speedup is 2.0 times, not more, because the transactor is at one full core and
+the load generator's main thread is also saturated (about 2.4 ms of its CPU per command). A 100,000-subject seed (4.34 million
+commands) is about 2.3 hours at this rate, if it holds with size. Group commit in the gateway (several commands of different
+subjects in one Datomic transaction) would be the next lever; not started.
+
+3. The next 10,000-subject pair (`tx2-dxh4-q3`) runs from a frozen checkout, `.claude/worktrees/verdict`, detached at this head.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-R2 | Local copy at scale: journals with complete rows, no per-pass image, compact bootstrap, supported-scope check and corpus gate | `exp/DX-R2-replica-scale`, `.claude/worktrees/dx-r2` | `.../prompts/DX-R2.md` |
 | DX-R3 | Local copy as the read path: recent-version window, `pullAt`, shared across reader threads, benchmark option `--read-path replica` | `exp/DX-R3-replica-reads`, `.claude/worktrees/dx-r3` | `.../prompts/DX-R3.md` |
-| ORCH | Rebuild of merge f63be9e9; lean package suite on the merged code; W0 seed rate at windows 1 and 32 (`b10/seed-vm.sh`); then a frozen checkout for the next 10,000-subject pair | `lane/d-native` | |
+| ORCH | Paired 10,000-subject benchmark `tx2-dxh4-q3` from the frozen checkout `.claude/worktrees/verdict` | detached at 9ac1fafc | |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
