@@ -62,8 +62,12 @@ cleanup() {
 }
 trap cleanup EXIT
 trap 'exit 124' TERM INT
-while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
+# [DX-H8] Why: a scale trial admitted too late cannot finish verification inside the four-hour task budget.
+# Rejected: consuming a late lease and calling an unverified publication a completed scale result.
+admissible() { [[ -z ${DXH8_LATEST_START_EPOCH:-} ]] || (( $(date +%s) < DXH8_LATEST_START_EPOCH )); }
+while ! mkdir "$lock" 2>/dev/null; do admissible || { echo 'latest admission time passed'; exit 124; }; sleep 5; done
 held=true; printf '{"id":"DX-H8","prefix":"%s","kind":"%s","pid":%s}\n' "$prefix" "$kind" "$$" > "$lock/owner.json"
+admissible || { echo 'latest admission time passed'; exit 124; }
 lease_ms=${DXH8_LEASE_MS:-900000}
 [[ $lease_ms == 900000 || $lease_ms == 4200000 ]] || exit 2
 DXH8_LEASE_MS=$lease_ms node lab/experiments/EXP-DX1/h8/deadline.mjs "$prefix" > "$out/deadline.log" 2>&1 & guard=$!
