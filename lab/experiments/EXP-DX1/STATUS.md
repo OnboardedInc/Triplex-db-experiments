@@ -857,3 +857,39 @@ The docker context was `default` before and after: the other project stopped Sam
 
 q5 (frozen checkout `1eea10e2`, driver container 12 GiB, heap 8 GiB) started 05:09 UTC. `lab/bin/vm-nohlt.sh on 8` waits for q5's
 `host-after` file. Agents holding the lock after that restart measure under `nohlt`; compare their absolute numbers with care.
+
+## 2026-11-11 06:00 UTC: q5, the first complete 10,000-subject pair on a quiet host
+
+Frozen checkout `1eea10e2`, VM 8 CPU / 24 GiB, driver container 12 GiB. Host before and after: swap 3.96 / 3.92 GB, load 2.0 /
+1.7, call apps 5% / 3%. Oracle PASS; 1,089,211 ladder reads, zero violations, zero errors; 7,408 of 7,408 commands published.
+Tables `~/Claude/Projects/triplex-db-2/evidence/DX-H4/tx2-dxh4-q5-TABLES.md`.
+
+| Priority | Bar | q5 | Required | Verdict |
+| --- | --- | --- | --- | --- |
+| P1 | Wrong reads | 0 | 0 | met |
+| P1 | Read p99 at 256 readers | 255.0 ms | at most 100 | miss; reader threads 94% busy, read gateway 152% of 2 CPUs |
+| P1 | Correct reads/s, 256 against 64 | 4,940 / 5,543 = 0.89 | at least 1.0 | miss |
+| P1 | Commit p99 at 256 readers against the matched zero-reader window | 81.95 / 43.32 = 1.89 | at most 1.25 | miss, on 46 commits |
+| P1 | Correct reads/s, 1,024 against 256 | 0.88 | at least 0.9 | miss |
+| P1 | Recovery time after the 1,024 level | null | at most 60 s | not produced by the driver (harness gap) |
+| P2 | Commit p50 at 256 readers, 5-10 / 11-25 facts | 14.7 / 12.7 ms | at most 10 | miss |
+| P2 | Commit p99 at 256 readers, 5-10 / 11-25 facts | 23.7 / 82.0 ms | at most 50 | met / miss (16 commits in the band) |
+| P2 | All commits: burst p50 / p99, 5-10 facts | 9.3 / 55.6 ms | 10 / 50 | met / miss |
+| P2 | Accounting, duplicates, lost acknowledgements, read your own write | all exact | exact | met |
+| P3 | Gaps, order, duplicates, resume, three crash points | 0 / 0 / 0 / exact / 3 | | met |
+| P3 | Feed lag p99 at 256 readers | 33.6 ms | at most 250 | met |
+| P4 | Weighted-mix pull p50 / p99 | 0.49 / 3.44 ms | 5 / 25 | met |
+| P4 | Pulls/s per engine core | 1,386 | at least 1,100 | met (first time) |
+| P4 | History flatness p99, depth 10 against depth 1 | 0.99 | at most 1.1 | met |
+| P5 | In this driver | fetch-only, 118 s extrapolated | 100 s with evaluation | seam; P5 is measured by the local-copy harness (DX-R1/R2) |
+
+Ladder (readers: read p50 / p99 ms, correct reads/s, commit p50 / p99 ms): 1: 0.30 / 1.08, 1,843, 27.0 / 57.3. 4: 0.52 / 3.5,
+1,604, 11.3 / 47.4. 16: 1.45 / 23.7, 2,392, 11.5 / 45.1. 64: 7.2 / 41.5, 5,543, 12.3 / 36.2. 256: 36.6 / 255.0, 4,940, 14.5 /
+82.0. 1,024: 157.7 / 1,003.5, 4,358, 17.0 / 27.8.
+
+What is left for lane D at this rung, and what is already aimed at it:
+1. **Reads at 256 readers (p99, goodput ratio):** the limit is the load generator's reader threads and the gateway round trip.
+   DX-R3 moves those reads to the local copy.
+2. **Commits (p50 with readers, p99 everywhere):** DX-M2 (transactor GC flags, record time assigned in the transaction, hints)
+   and the `nohlt` test (wake penalty; note commit p50 27 ms with 1 reader against 11 to 14 ms with 4 to 256).
+3. **Harness gaps:** recovery time is null; the P5 rows need the local-copy evaluation wired in; sample memory.
