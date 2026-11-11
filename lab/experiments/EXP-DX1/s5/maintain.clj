@@ -31,11 +31,13 @@
 (defn proof [conn]
  (let [db (d/db conn)] {:basis (d/basis-t db) :current (rows-proof db) :history (rows-proof (d/history db))}))
 (defn -main [uri mode]
- (let [conn (d/connect uri) _ @(d/sync conn) before (proof conn)]
-  (emit {:event "native-before" :proof before})
-  (when (not= mode "proof") (maintain conn))
-  (let [after (proof conn)]
-   (emit {:event "native-after" :proof after})
-   (when (not= before after) (throw (ex-info "maintenance changed stored rows" {}))))
+ (let [conn (d/connect uri) _ @(d/sync conn) started (System/nanoTime)]
+  ;; [DX-S5] Why: compare one fresh pre-maintenance image with one fresh post-vacuum image, not duplicate hashes in the same peer.
+  ;; Rejected: eight full datom scans per chunk (the redundant checks add no preservation evidence).
+  (if (= mode "proof")
+   (emit {:event "native-after" :proof (proof conn) :elapsedMs (/ (- (System/nanoTime) started) 1000000.0)})
+   (do
+    (emit {:event "native-before" :proof (proof conn) :elapsedMs (/ (- (System/nanoTime) started) 1000000.0)})
+    (maintain conn)))
   (d/release conn))
  (d/shutdown true))

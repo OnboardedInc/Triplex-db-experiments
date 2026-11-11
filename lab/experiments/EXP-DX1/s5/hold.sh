@@ -109,9 +109,9 @@ maintain() {
  native_proof proof | tee "$out/native-after.jsonl"
  python3 - "$out/native-before.jsonl" "$out/native-after.jsonl" <<'PYPROOF'
 import json,sys
-def read(p):
- return [json.loads(s)['proof'] for s in open(p) if s.startswith('{') and json.loads(s).get('event')=='native-after'][-1]
-a,b=map(read,sys.argv[1:]);assert a==b, 'vacuum changed current/history rows'
+def read(p,event):
+ return [json.loads(s)['proof'] for s in open(p) if s.startswith('{') and json.loads(s).get('event')==event][-1]
+a=read(sys.argv[1],'native-before');b=read(sys.argv[2],'native-after');assert a==b, 'maintenance changed current/history rows'
 print(json.dumps({'event':'post-vacuum-native-equality','proof':b}))
 PYPROOF
 }

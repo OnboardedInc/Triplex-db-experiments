@@ -239,7 +239,9 @@ export async function seedW0(
     requestedInFlight: concurrency,
     peakInFlight,
     commandWallMs,
-    ...(range ? { fromPosition: from, throughPosition: through, seededCommands: position - from } : {}),
+    ...(range
+      ? { fromPosition: from, throughPosition: through, seededCommands: position - from }
+      : {}),
     commandCommandsPerS: (position - from) / (commandWallMs / 1000),
     countsWallMs,
     spec: "W0-1.1.2",

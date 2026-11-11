@@ -529,6 +529,9 @@ export async function runReplicaDriver(argv: string[]) {
       sharedIndexBytes: snap.sharedImage().shared!.index.byteLength,
       overlayEntities: snap.sharedImage().entities.length,
       heapDelta: process.memoryUsage().heapUsed - initialHeap,
+      heapUsedBytes: process.memoryUsage().heapUsed,
+      memoryGeometryScope:
+        "retained data/index and main heap after GC; cgroup peak covers all driver processes",
       wallMs: result.evaluationWallMs,
       passWallMs: result.passWallMs + report.freezeMs,
       passRate: N / ((result.passWallMs + report.freezeMs) / 1000),
