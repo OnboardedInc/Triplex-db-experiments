@@ -67,12 +67,18 @@ docker volume create "$prefix-tools"
  done
 ) & watcher=$!
 source lab/experiments/EXP-DX1/s5/setup.sh
-run_driver() {
- docker run --rm --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 11g --memory-swap 11g \
- -v "$repo:$repo:ro" -v "$prefix-tools:/state" -w "$repo" \
- -e "S5_REQUIRE_RECOVERED=${require_recovered:-0}" -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 \
- node:22.23.2-bookworm-slim node --experimental-strip-types lab/experiments/EXP-DX1/s5/seed.ts "$scope" "$n" "$1" "${2:-seed}"
+run_driver() { S5_REQUIRE_RECOVERED=${require_recovered:-0} bash lab/experiments/EXP-DX1/s5/driver.sh "$n" "$@"; }
+# [DX-S5] Why: a killed seed process may have a durable uncheckpointed suffix; recover it without ending the owned hold.
+# Rejected: deleting a several-hour partial seed on the first driver process interruption.
+seed_recover() {
+ for attempt in 1 2 3; do
+  if run_driver "$1"; then return 0; else rc=$?; fi
+  [[ $rc == 137 || $rc == 143 ]] || return "$rc"
+  echo "seed driver exit=$rc; resume attempt=$((attempt+1)) from checkpoint and stored suffix"
+ done
+ return "$rc"
 }
+
 maintain() {
  db=$(node --input-type=module -e 'import {DatabaseScope} from "./packages/core/dist/runtime/index.js";console.log("s2-"+Buffer.from(String(DatabaseScope.test(process.argv[1]))).toString("base64url"))' "$scope")
  native_proof() {
@@ -104,7 +110,7 @@ print(json.dumps({'event':'post-vacuum-native-equality','proof':b}))
 PYPROOF
 }
 for ((end=chunk;end<=n;end+=chunk)); do
- run_driver "$end"
+ seed_recover "$end"
  require_recovered=0
  maintain
  run_driver "$end" verify
