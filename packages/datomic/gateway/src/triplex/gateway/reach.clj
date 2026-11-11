@@ -177,6 +177,10 @@
           base-cfg (config name current epoch)
           cfg (assoc base-cfg :connection-generation epoch :selected-t t :recent-state recent-state :recent-eligible recent-eligible
                 :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])) valid (double (get-in input ["basis" "validAt"]))
+          ;; [DX-R2] Why: inline journals replace changed rows; only newly introduced reference roots need graph expansion.
+          ;; Rejected: repeating every unchanged form/answer entity after a scalar replacement.
+          shallow-roots (set (get input "shallowRoots"))
+          closure-roots (when (contains? input "closureRoots") (set (get input "closureRoots")))
           need (get input "need")
           _ (when (and need (not (and (vector? need) (<= 1 (count need) 50000) (every? string? need) (= (count need) (count (distinct need)))))) (decline! "need"))
           roots (or need (get input "roots"))
@@ -200,11 +204,11 @@
                             (let [value (read-entity name db cfg id valid counts)]
                               (.put entities id value)
                               (when (> (.size entities) entity-limit) (decline! "entity-budget")) value))
-                  ^ArrayList refs (if need (ArrayList.) (nth entry 3)) it (.iterator refs)]
+                  ^ArrayList refs (if (or need (and (= id root) (shallow-roots root))) (ArrayList.) (nth entry 3)) it (.iterator refs)]
               (.add order id)
               (while (.hasNext it)
                 (let [ref (.next it)] (when (.add seen ref) (.add queue ref))))))
-          (.add closures [root order])))
+          (when (or (nil? closure-roots) (closure-roots root)) (.add closures [root order]))))
       (let [new-count (long-array 1) reset (and remembered
             (do (let [it (.iterator (.values entities))]
                   (while (.hasNext it)

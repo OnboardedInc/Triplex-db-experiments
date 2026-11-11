@@ -152,6 +152,7 @@ describe("inline replica journal", () => {
         const replacement = await f.source.page(["shared"], { recordedPosition: 2, validAt: 0 });
         if (corruption === "cut") replacement.position = 1;
         if (corruption === "coverage") replacement.entities = [];
+        if (corruption === "reference") (replacement as any).incremental = true;
         if (corruption === "reference")
           replacement.entities = [
             ["shared", 2, [wire(row("shared", "ref", { type: "ref", value: "missing" }, 2))]],
@@ -230,4 +231,66 @@ it("bootstraps the compressed projection through the opt-in source", async () =>
   await r.bootstrap(["root"]);
   expect(r.world("root")[1]!.value.value).toBe("before");
   expect(requests[1].gzipRows).toBe(true);
+});
+
+it("uses prior known references without reading or borrowing a later journal's rows", async () => {
+  const f = fixture(),
+    r = new Replica(f.source, 0);
+  await r.bootstrap(["root"]);
+  f.commit([["root", [row("root", "r2", { type: "ref", value: "shared" }, 2)]]]);
+  f.commit([["shared", [row("shared", "s3", { type: "string", value: "third" }, 3)]]]);
+  const feed = f.source.feed,
+    page = f.source.page;
+  f.source.feed = async (...args) => {
+    const result = await feed(...args);
+    return {
+      ...result,
+      transactions: await Promise.all(
+        result.transactions.map(async (tx) => ({
+          ...tx,
+          replacement: {
+            ...(await page(tx.entities, { recordedPosition: tx.position, validAt: 0 }, true)),
+            incremental: true,
+          },
+        })),
+      ),
+    };
+  };
+  f.source.page = async () => {
+    throw new Error("Unexpected read");
+  };
+  const second = await r.snapshotAt(2);
+  expect(second.world("root")[1]!.value.value).toBe("before");
+  await r.followOnce();
+  expect(r.world("root")[1]!.value.value).toBe("third");
+  expect(second.world("root")[1]!.value.value).toBe("before");
+});
+
+it("invalidates an incremental journal with an unknown reference instead of guessing or reading", async () => {
+  const f = fixture(),
+    r = new Replica(f.source, 0);
+  await r.bootstrap(["root"]);
+  f.commit([["root", [row("root", "r2", { type: "ref", value: "unknown" }, 2)]]]);
+  const feed = f.source.feed,
+    page = f.source.page;
+  f.source.feed = async (...args) => {
+    const result = await feed(...args);
+    return {
+      ...result,
+      transactions: [
+        {
+          ...result.transactions[0]!,
+          replacement: {
+            ...(await page(["root"], { recordedPosition: 2, validAt: 0 }, true)),
+            incremental: true,
+          },
+        },
+      ],
+    };
+  };
+  f.source.page = async () => {
+    throw new Error("Unexpected read");
+  };
+  await expect(r.followOnce()).rejects.toThrow("Reference coverage");
+  expect(r.isValid).toBe(false);
 });

@@ -1,5 +1,5 @@
 (ns triplex.gateway.journal
-  (:require [datomic.api :as d] [triplex.gateway.lean :as lean] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage]))
+  (:require [clojure.data.json :as json] [datomic.api :as d] [triplex.gateway.lean :as lean] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage]))
 (set! *warn-on-reflection* false)
 ;; [DX-B4-T1] Why: these reads use only immutable indexes; a scope without the write-side proof declines.
 ;; Rejected: reconstructing journals through entity/pull/query or guessing legacy completeness.
@@ -60,9 +60,15 @@
         (when (true? (get input "replicaRows"))
           (let [rows (map #(lean/decode (:v %)) (d/datoms db :eavt e :triplex.entity/row))
                 changed (vec (map :value_string (filter #(and (= "_Transaction" (:entity_type %)) (= ":_tx/changed-entity" (:attribute %))) rows)))
+                changes (for [row rows :when (and (= "_Transaction" (:entity_type row)) (= ":_tx/change" (:attribute row)))] (json/read-str (:value_json row)))
+                new-refs (set (for [c changes :when (and (= "assert" (get c "op")) (= "ref" (get-in c ["value" "type"])))] (get-in c ["value" "value"])))
+                _ (when-not (every? string? new-refs) (reach/decline! "invalid-reference"))
+                roots (vec (distinct (concat changed new-refs)))
                 payload (if (empty? changed)
                           (str "{\"position\":" p ",\"t\":\"" (d/basis-t db) "\",\"reset\":false,\"entities\":[],\"closures\":[]}")
-                          (reach/build-response name db {"roots" changed "basis" {"recordedPosition" p "validAt" (get input "validAt")} "replicaPage" true "rowPage" true "full" true}))]
+                          (let [body (reach/build-response name db {"roots" roots "basis" {"recordedPosition" p "validAt" (get input "validAt")}
+                            "shallowRoots" (vec (remove new-refs changed)) "closureRoots" changed "replicaPage" true "rowPage" true "full" true})]
+                            (str "{\"incremental\":true," (subs body 1))))]
             (.append out ",") (.append out payload)))
         (.append out "]"))
       (.append out "]}") (str out)))))

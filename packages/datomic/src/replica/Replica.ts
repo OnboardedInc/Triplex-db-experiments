@@ -17,7 +17,7 @@ import { packEntity, unpackEntity, type PackedEntity } from "./packed.js";
 export interface ReplicaJournal {
   readonly position: number;
   readonly entities: readonly string[];
-  readonly replacement?: ReachWire;
+  readonly replacement?: ReachWire & { readonly incremental?: boolean };
 }
 export interface ReplicaSource {
   head(): Promise<number>;
@@ -193,6 +193,7 @@ export class Replica {
     p: number,
     into: Map<string, PackedEntity>,
     need: boolean,
+    allowKnown = false,
   ) {
     if (
       response.declined !== undefined ||
@@ -248,6 +249,9 @@ export class Replica {
     for (const id of received)
       for (const r of unpackEntity(id, into.get(id)!, this.validAt))
         if (r.value.type === "ref" && !received.has(r.value.value)) {
+          // [DX-R2] Why: unchanged reference targets retain their exact prior rows; changed targets must be in this journal.
+          // Rejected: a network refresh per journal or treating an unknown target as empty.
+          if (allowKnown && this.entities.has(r.value.value)) continue;
           if (!need) throw new ReplicaInvalid("Reference coverage mismatch");
           if (!into.has(r.value.value) && !this.entities.has(r.value.value))
             missing.add(r.value.value);
@@ -311,11 +315,18 @@ export class Replica {
       if (!page.transactions.length) await new Promise((resolve) => setTimeout(resolve, 1));
       for (const tx of page.transactions) {
         if (through !== undefined && tx.position > through) break;
-        // [DX-R1] Why: the journal has logical changes, but not the physical revision/complete current row set.
-        // Rejected: guessing a new revision or applying a partial retraction; refresh only changed closures at the exact cut.
+        // [DX-R2] Why: inline replacements bind complete changed rows and new references to this exact journal cut.
+        // Rejected: current-head reads; legacy sources retain the old exact-position need path.
         const changes = new Map<string, PackedEntity>();
         if (tx.replacement !== undefined)
-          await this.acceptPage(tx.replacement, tx.entities, tx.position, changes, false);
+          await this.acceptPage(
+            tx.replacement,
+            tx.entities,
+            tx.position,
+            changes,
+            false,
+            tx.replacement.incremental === true,
+          );
         else await this.load(tx.entities, tx.position, changes, true);
         for (const [id, e] of changes) this.entities.set(id, e);
         this.advance(tx.position);
