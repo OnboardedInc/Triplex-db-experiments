@@ -271,6 +271,11 @@ export class ReplicaReader {
     return { ...result, route: "fallback", waitedMs, replicaFallbackReason };
   }
 }
+// [DX-R3] Why: report and control feed placement explicitly; the local host historically used the read URL already.
+// Rejected: inferring its route from the unrelated W0 driver's feedPeer label.
+export function replicaEndpoint(env: NodeJS.ProcessEnv, peer: "reader" | "writer") {
+  return peer === "writer" ? env.DATOMIC_URL! : env.DATOMIC_READ_URLS?.split(",")[0] ?? env.DATOMIC_URL!;
+}
 export class ReplicaReadHost {
   readonly index: InstanceType<typeof api.RecentReads>;
   readonly replica: InstanceType<typeof api.Replica>;
@@ -309,9 +314,10 @@ export class ReplicaReadHost {
     initial: { position: number; instant: number },
     feed: "legacy" | "inline" = "inline",
     historyBytes = 64 * 1024 ** 2,
+    peer: "reader" | "writer" = "reader",
   ) {
     const client = new api.DatomicClient(
-      process.env.DATOMIC_READ_URLS?.split(",")[0] ?? process.env.DATOMIC_URL!,
+      replicaEndpoint(process.env, peer),
     );
     const db = await client.create(
       runtimeApi.DatabaseScope.test(scope),

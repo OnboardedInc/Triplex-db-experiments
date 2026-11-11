@@ -47,6 +47,8 @@ import { Model, partsOf } from "./lib/model.ts";
 import { R, observe, type ReadRecord } from "./lib/observe.ts";
 import { ExpectationCache } from "./lib/expectation-cache.ts";
 import { splitTarget } from "./lib/split-target.ts";
+import { SpillThread } from "./lib/spill-thread.ts";
+import { monitorEventLoopDelay } from "node:perf_hooks";
 import { ReadRecords, type ObservationRecords } from "./lib/read-records.ts";
 import { buildCase, checkWithOracle, type OracleSampleRead } from "./lib/oracle.ts";
 import { PROFILES, nsPlan, type Profile } from "./lib/phases.ts";
@@ -107,6 +109,8 @@ const config = {
   // [DX-R3] Why: the default stays 64 MiB; a measured benchmark can retain its 2,000-receipt basis cohort explicitly.
   // Rejected: enlarging an unreported window or letting per-reader gateway caches consume 3 x 640 MiB beside the replica.
   replicaHistoryMiB: Number(opt("replica-history-mib", "64")),
+  replicaPeer: opt("replica-peer", "reader") as "reader" | "writer",
+  replicaThread: opt("replica-thread", "worker") as "main" | "worker",
   replicaFeed: opt("replica-feed", "inline") as "legacy" | "inline",
   readerLadderOnly: flag("reader-ladder-only"),
   readerThreads: Number(opt("reader-threads", "4")),
@@ -148,6 +152,7 @@ if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) ||
   throw new Error(`Reader caches plus ${WRITER_CACHE_BUDGET_MIB} MiB writer cache budgets must total at most 4096 MiB`);
 if (!["pending", "mixed"].includes(config.splitTarget) || !Number.isSafeInteger(config.replicaHistoryMiB) || config.replicaHistoryMiB < 1 || config.replicaHistoryMiB > 1024)
   throw Error("invalid split-target or replica-history-mib");
+if (!["reader", "writer"].includes(config.replicaPeer) || !["main", "worker"].includes(config.replicaThread)) throw Error("invalid replica peer/thread");
 if (!["loop", "fair"].includes(config.replicaYield) || !["legacy", "inline"].includes(config.replicaFeed))
   throw Error("invalid replica-yield or replica-feed control");
 if (!["gateway", "replica"].includes(config.readPath) || (config.readPath === "replica" && lane !== "datomic"))
@@ -269,17 +274,19 @@ const accounts = accountsFor(rungSubjects);
 const expectations = new ExpectationCache(model);
 const ryowFallbackReasons: Record<string, number> = {};
 const readerFinalDiagnostics: any[] = [];
-const records: ObservationRecords = config.readPath === "replica" ? new ReadRecords(path.join(rawDir, `observations-${runTag}`)) : [];
+const spill = config.readPath === "replica" ? new SpillThread(path.join(rawDir, `observations-${runTag}`)) : undefined;
+let records: ObservationRecords = [];
 function visitPhase(phase: number, fn: (record: ReadRecord, index: number) => void) {
   if (records instanceof ReadRecords) records.forPhase(phase, fn);
   else records.forEach((r, k) => { if (r[R.phase] === phase) fn(r, k); });
 }
+let spillFinished = false;
 const oracleSamples: any[] = [];
 const settledReadCounts = new Map<number, number>();
 const phaseStarts = new Map<number, number>();
 const observedPhases = new Map<number, { reads: number; errors: number; read: Histogram; wait: Histogram; routes: Record<string, number> }>();
 function retainRead(r: ReadRecord) {
-  records.push(r);
+  if (spill && !spillFinished) spill.push(r); else records.push(r);
   const phase = r[R.phase];
   const summary = observedPhases.get(phase) ?? { reads: 0, errors: 0, read: new Histogram(), wait: new Histogram(), routes: {} };
   observedPhases.set(phase, summary);
@@ -415,8 +422,15 @@ async function run() {
   log(`trace: ${events.length} events over ${traceDurationS}s, digest ${report.trace.digest}, active-set share ${report.trace.generated.activeShare.toFixed(3)}`);
 
   // ---------------------------------------------------------------- reader workers
-  const replicaHost = config.readPath === "replica" ? await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
-    scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux, { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed, config.replicaHistoryMiB * 1024 ** 2) : undefined;
+  const replicaHost = config.readPath === "replica" ? config.replicaThread === "worker"
+    ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName,
+      composition: config.composition, roots: Array.from({ length: N }, (_, i) => ids.placement(i)),
+      initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
+      historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer })
+    : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
+      scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
+      { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
+      config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer) : undefined;
   const replicaLocal = replicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2) : undefined;
   if (replicaHost && replicaLocal) {
     replicaLocal.install(replicaHost.index.image());
@@ -462,6 +476,10 @@ async function run() {
     for (const s of started) { workers.push(s.worker); stopped.push(s.stopped); }
     log(`readers: ${workers.length} worker threads ready`);
   }
+  // [DX-R3] Why: cloning/installing the full window is bootstrap work, not a multi-second sweep-time writer stall.
+  // Rejected: starting worker 99 from runSweep while the frozen writer is already issuing commands.
+  const preparedSweeper = replicaHost && !config.zeroReaders && !config.readerLadderOnly
+    ? await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 }) : undefined;
   const broadcast = () => {
     const t = now();
     const hot: number[] = [];
@@ -757,6 +775,8 @@ async function run() {
       ? await requestIndex(indexClient, indexDb, spec.name, now, 60_000) : null;
     if (historyIndex) datomicMaintenanceJobs.push(historyIndex);
     const phaseCpuStart = process.cpuUsage();
+    const writerEluStart = performance.eventLoopUtilization();
+    const writerDelay = monitorEventLoopDelay({ resolution: 1 }); writerDelay.enable();
     const start = now();
     const entry: any = { historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
@@ -779,6 +799,8 @@ async function run() {
       }
     }
     entry.end = now();
+    writerDelay.disable();
+    entry.writerThread = { elu: performance.eventLoopUtilization(writerEluStart).utilization, longestBlockedMs: writerDelay.max / 1e6, p99BlockedMs: writerDelay.percentile(99) / 1e6 };
     const phaseCpu = process.cpuUsage(phaseCpuStart);
     entry.clientCpuMs = (phaseCpu.user + phaseCpu.system) / 1000;
     await indexJob;
@@ -787,9 +809,9 @@ async function run() {
     // [DX-R3] Why: finished phase observations and memory survive a late kill; only final all-ACK analysis can certify correctness.
     // Rejected: a final-report-only memory sample or an online PASS before earlier record-time commits settle.
     entry.memory = { ...process.memoryUsage(), peakProcessBytes: process.resourceUsage().maxRSS * 1024,
-      retainedReads: records.length, numericResidentBytes: records instanceof ReadRecords ? records.residentBytes : null };
+      retainedReads: spill?.length ?? records.length, numericResidentBytes: records instanceof ReadRecords ? records.residentBytes : null };
     console.log(JSON.stringify({ kind: "phase-memory", phase: entry.name, ...entry.memory }));
-    if (records instanceof ReadRecords) records.checkpoint();
+    if (spill) await spill.checkpoint(); else if (records instanceof ReadRecords) records.checkpoint();
     report.phaseProgress = Object.fromEntries([...observedPhases].map(([id, s]) => [id, {
       reads: s.reads, errors: s.errors, read: s.read.toJSON(), watermarkWait: s.wait.toJSON(), routes: s.routes,
       verification: "PENDING final all-ACK model comparison; observed arrivals include settle and may omit in-flight reads" }]));
@@ -838,9 +860,13 @@ async function run() {
   await Promise.race([Promise.all(stopped), sleep(40_000)]);
   for (const w of workers) await w.terminate();
   clearInterval(basisTimer);
+  if (preparedSweeper) { preparedSweeper.worker.postMessage({ type: "stop" }); await preparedSweeper.worker.terminate(); }
+  if (spill) { records = await spill.finish(); spillFinished = true; }
   if (replicaHost) report.replica = { copyBytes: replicaHost.replica.bytes, historyBytes: replicaHost.index.historyBytes,
     floor: replicaHost.index.floor, position: replicaHost.index.position, positionWindow: replicaHost.index.positions,
-    historyBudgetBytes: replicaHost.index.maxBytes, peakProcessBytesBeforeAnalysis: process.resourceUsage().maxRSS * 1024 };
+    historyBudgetBytes: replicaHost.index.maxBytes, feedPeer: config.replicaPeer, applyThread: config.replicaThread,
+    acknowledgementToApplied: "applied" in replicaHost ? (() => { const h = new Histogram(); for (const x of replicaHost.applied) { const ack = ackOf.get(x.position); if (ack) h.recordMs(Math.max(0, x.at - ack.at)); } return h.summary(); })() : null,
+    peakProcessBytesBeforeAnalysis: process.resourceUsage().maxRSS * 1024 };
   await replicaHost?.close();
   // Growth commands that outlived their phase: wait for them, then fold any that committed into the model.
   for (const late of lateGrowth) {
@@ -991,7 +1017,7 @@ async function run() {
     // Offered after the capture and not awaited: the sweep starts at once; positions are filled in as ACKs arrive.
     const mutationsDone = Promise.all(mutated.map((s) => overlay("p5-mutation", s, 6))).then((positions) => { out.mutationPositions = positions; });
     void mutationsDone;
-    const { worker: sweeper, stopped: sweeperStopped } = await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 });
+    const { worker: sweeper, stopped: sweeperStopped } = preparedSweeper ?? await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 });
     const done = new Promise<any>((resolve) => sweepDone.set(idx + SWEEP_PHASE_OFFSET, resolve));
     out.startedAt = now();
     sweeper.postMessage({ type: "sweep", phase: idx + SWEEP_PHASE_OFFSET, subjects: list, basis, position: last.position, concurrency: config.sweepConcurrency });

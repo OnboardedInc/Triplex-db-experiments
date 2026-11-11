@@ -44,9 +44,9 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres; [[ $file != postgres-table.sql ]] || db=datomic
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$config/$file"
 done
-docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory 4g --memory-swap 4g -e 'JAVA_OPTS=-Xms256m -Xmx3g' -v "$config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
+docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "${DX_CPUS_TX:-0,1}" --memory 4g --memory-swap 4g -e 'JAVA_OPTS=-Xms256m -Xmx3g' -v "$config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
-  cpu=1; [[ $role == w ]] || cpu=2,3
+  cpu=${DX_CPUS_GW_WRITE:-1}; [[ $role == w ]] || cpu=${DX_CPUS_GW_READ:-2,3}
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g \
     -e 'DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g -Dtriplex.codec.spec=/opt/replica-codec-spec.json' \
     -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" \
@@ -67,14 +67,18 @@ if [[ $mode == compare ]]; then
   # [DX-R3] Why: alternate a legacy control and the new path inside one measured hold on distinct fresh scopes.
   # Rejected: comparing a quiet new run against an old run from another noisy VM window.
   for arm in ${DX_R3_ARMS:-a b}; do
+    thread=worker; peer=reader
     case $arm in
       a) yield=loop; feed=legacy; split=mixed; history=64; cache=640;;
       b) yield=fair; feed=inline; split=mixed; history=64; cache=640;;
       c) yield=fair; feed=inline; split=pending; history=192; cache=16;;
+      d) yield=fair; feed=inline; split=pending; history=192; cache=16; thread=main;;
+      e) yield=fair; feed=inline; split=pending; history=192; cache=16;;
+      f) yield=fair; feed=inline; split=pending; history=192; cache=16; peer=writer;;
       *) exit 2;;
     esac
-    echo "DX-R3 comparison arm=$arm yield=$yield feed=$feed split=$split historyMiB=$history cacheMiB=$cache"
-    run_driver node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 1024 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --replica-yield "$yield" --replica-feed "$feed" --split-target "$split" --replica-history-mib "$history" --reader-entity-cache-mib "$cache" --output "runs/DX-R3-vm/report-$arm.json"
+    echo "DX-R3 comparison arm=$arm yield=$yield feed=$feed split=$split historyMiB=$history cacheMiB=$cache thread=$thread peer=$peer"
+    run_driver node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 1024 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --replica-thread "$thread" --replica-peer "$peer" --replica-yield "$yield" --replica-feed "$feed" --split-target "$split" --replica-history-mib "$history" --reader-entity-cache-mib "$cache" --output "runs/DX-R3-vm/report-$arm.json"
     docker cp "$prefix-driver:$repo/runs/DX-R3-vm/report-$arm.json" "$config/report-$arm.json"
     cat "$config/report-$arm.json"
     docker inspect --format '{{.Name}} {{.State.ExitCode}} {{.State.OOMKilled}} {{.HostConfig.CpusetCpus}} {{.HostConfig.Memory}}' "$prefix-driver"

@@ -249,3 +249,13 @@ test("lazy worlds retain the exact selected version after the window advances", 
   assert.equal(result.triples[0]?.value.value, "old");
   assert.equal(result.triples.length, 1);
 });
+
+// [DX-R3] Why: a peer-placement experiment must change the actual transport endpoint, not only its report label.
+// Rejected: assuming a worker's default composition endpoint controls the explicit replica client.
+test("replica peer selection keeps reader and writer controls distinct", async () => {
+  const { replicaEndpoint } = await import("../../../bench/lib/replica-reads.ts");
+  const env = { DATOMIC_URL: "http://writer:8080", DATOMIC_READ_URLS: "http://reader:8080,http://reader2:8080" };
+  assert.equal(replicaEndpoint(env, "reader"), "http://reader:8080");
+  assert.equal(replicaEndpoint(env, "writer"), "http://writer:8080");
+  assert.equal(replicaEndpoint({ DATOMIC_URL: env.DATOMIC_URL }, "reader"), env.DATOMIC_URL);
+});

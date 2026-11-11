@@ -38,6 +38,7 @@ export class ReadRecords implements ObservationRecords {
         throw Error("Invalid observation spill state");
       this.count = state.count;
       this.flushedStrings = state.flushedStrings;
+      this.phases = new Map((state.phases ?? []).map(([phase, chunks]: [number, number[]]) => [phase, new Set(chunks)]));
       if (this.count) {
         this.activeChunk = Math.floor((this.count - 1) / CHUNK);
         const loaded = this.load(this.activeChunk);
@@ -79,7 +80,7 @@ export class ReadRecords implements ObservationRecords {
     if (!this.directory) return;
     this.flushChunk();
     const state = path.join(this.directory, "state.json");
-    fs.writeFileSync(state + ".tmp", JSON.stringify({ width: WIDTH, count: this.count, flushedStrings: this.flushedStrings }));
+    fs.writeFileSync(state + ".tmp", JSON.stringify({ width: WIDTH, count: this.count, flushedStrings: this.flushedStrings, phases: [...this.phases].map(([phase, chunks]) => [phase, [...chunks]]) }));
     fs.renameSync(state + ".tmp", state);
   }
   dispose() {

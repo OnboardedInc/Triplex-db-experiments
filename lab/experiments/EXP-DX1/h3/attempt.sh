@@ -13,6 +13,27 @@ if [[ $kind == pair ]]; then
   pair_child=
   trap 'if [[ -n $pair_child ]]; then kill -TERM "$pair_child" 2>/dev/null || true; wait "$pair_child" || true; fi; exit 143' TERM INT
   pair_arm() { "$@" & pair_child=$!; wait "$pair_child"; pair_child=; }
+  # [DX-R3] Why: the authorized full pair shares one 45-minute lease across alternating matched arms.
+  # Rejected: releasing the lock between arms, or silently extending a single-arm diagnostic lease.
+  if [[ $prefix == tx2-dxr3-* ]]; then
+    pair_lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
+    python3 -c 'import shutil; assert shutil.disk_usage(".").free >= 15*1024**3'
+    while ! mkdir "$pair_lock" 2>/dev/null; do sleep 5; done
+    printf '{"id":"DX-R3","pid":%s,"kind":"full-pair"}\n' "$$" > "$pair_lock/owner.json"
+    export DX_R3_PAIR_LEASE_PID=$$
+    pair_cleanup() {
+      pair_rc=$?; trap - EXIT TERM INT
+      if [[ -n $pair_child ]]; then kill -TERM "$pair_child" 2>/dev/null || true; wait "$pair_child" || true; fi
+      kill "$pair_watchdog" 2>/dev/null || true; wait "$pair_watchdog" 2>/dev/null || true
+      # Cleanup of each child must precede lease release; a surviving prefix retains the lock.
+      [[ -z $(docker ps -a --filter "name=$prefix" --format '{{.Names}}') ]] || exit 1
+      rm "$pair_lock/owner.json"; rmdir "$pair_lock"
+      exit "$pair_rc"
+    }
+    trap pair_cleanup EXIT
+    trap 'exit 143' TERM INT
+    node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),2580000)' "$$" & pair_watchdog=$!
+  fi
   pair_arm bash "$0" real "$prefix-zero" "$@" --zero-readers --match-duration-s "$duration"
   baseline="$root/$prefix-zero/driver/ns-writes.jsonl"
   [[ -s $baseline ]] || exit 1
@@ -91,14 +112,21 @@ PY2
 }
 check_resources before
 if [[ $kind =~ ^(functional|medium|real)$ ]]; then
+  if [[ $prefix == tx2-dxr3-* && -n ${DX_R3_PAIR_LEASE_PID:-} ]]; then
+    python3 - "$lock/owner.json" "$DX_R3_PAIR_LEASE_PID" <<'LEASE'
+import json,sys
+owner=json.load(open(sys.argv[1])); assert owner['id']=='DX-R3' and owner['kind']=='full-pair' and owner['pid']==int(sys.argv[2])
+LEASE
+  else
   while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
   held=true; printf '{"id":"%s","pid":%s,"prefix":"%s","kind":"%s"}\n' "$agent" "$$" "$prefix" "$kind" > "$lock/owner.json"
+  fi
 fi
 trap cleanup EXIT
 trap 'exit 143' TERM INT
 # [DX-R3] Why: bound the complete owned hold, including setup, and copy completed phases before cleanup.
 # Rejected: timing only the final benchmark command while setup can already consume the lease.
-if [[ $prefix == tx2-dxr3-* ]]; then
+if [[ $prefix == tx2-dxr3-* && -z ${DX_R3_PAIR_LEASE_PID:-} ]]; then
   node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),1140000)' "$$" & watchdog=$!
 fi
 run_stage() { "$@" & child=$!; wait "$child"; child=; }
