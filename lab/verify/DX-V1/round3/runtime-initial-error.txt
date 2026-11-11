@@ -1,0 +1,10 @@
+Historical environment failure, copied from the actual initial tool output.
+Command used the pre-existing CX-DF01 extracted JRE, whose lib/modules was absent:
+
+Error occurred during initialization of VM
+Failed setting boot class path.
+
+No Clojure source executed in that attempt. Its original commit.log was overwritten
+by the later successful attempt; this text preserves the observed tool output and
+does not claim to be an independently retained original stderr file. Successful
+attempts use a newly extracted copy of the retained tarball, under DX-V1/round3/runtime.

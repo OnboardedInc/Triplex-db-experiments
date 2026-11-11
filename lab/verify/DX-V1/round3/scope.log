@@ -1,0 +1,16 @@
+{:check [:create false], :actual false}
+{:check [:reopen false], :actual false}
+{:check [:second-bootstrap false], :actual {[bootstrap :triplex.scope/bootstrap] "singleton", [scope :triplex.scope/feed-version] 2, [scope :triplex.scope/position] 0, [scope :triplex.scope/schema-hash] "fixture-schema", [scope :triplex.scope/key] "one", [scope :triplex.scope/position-regular] true, [scope :triplex.scope/strict-record-clocks] false, [scope :triplex.scope/head-version] 2, [scope :triplex.scope/rows-version] 3}}
+{:check [:unique-conflict-caught false], :actual 1}
+{:check [:capability false], :actual "{\"supported\":true,\"strictRecordClocks\":false}"}
+{:check [:create true], :actual true}
+{:check [:reopen true], :actual true}
+{:check [:second-bootstrap true], :actual {[bootstrap :triplex.scope/bootstrap] "singleton", [scope :triplex.scope/feed-version] 2, [scope :triplex.scope/position] 0, [scope :triplex.scope/schema-hash] "fixture-schema", [scope :triplex.scope/key] "one", [scope :triplex.scope/position-regular] true, [scope :triplex.scope/strict-record-clocks] true, [scope :triplex.scope/head-version] 2, [scope :triplex.scope/rows-version] 3}}
+{:check [:unique-conflict-caught true], :actual 1}
+{:check [:capability true], :actual "{\"supported\":true,\"strictRecordClocks\":true}"}
+{:check :missing-policy-not-upgraded, :actual false}
+{:check :missing-policy-capability, :actual "{\"supported\":true,\"strictRecordClocks\":false}"}
+{:check :reject-nonboolean, :actual "strictRecordClocks must be boolean"}
+{:check :capability-uses-given-snapshot, :actual "{\"supported\":true,\"strictRecordClocks\":false}"}
+{:check :capability-does-not-cache-other-scope, :actual "{\"supported\":true,\"strictRecordClocks\":true}"}
+{:checks 15, :native-engine false, :unique-constraint "simulated; schema is separately inspected"}

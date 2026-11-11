@@ -1,0 +1,77 @@
+TAP version 13
+# Subtest: metadata and interval revisions retain the selected source version, including a retracted row's old tx/clock
+ok 1 - metadata and interval revisions retain the selected source version, including a retracted row's old tx/clock
+  ---
+  duration_ms: 28.027041
+  type: 'test'
+  ...
+# Subtest: closed-clock eligibility at bootstrap, first following cut, floor, image install and rebuild
+ok 2 - closed-clock eligibility at bootstrap, first following cut, floor, image install and rebuild
+  ---
+  duration_ms: 1.744291
+  type: 'test'
+  ...
+# Subtest: canonical field matrix distinguishes missing, undefined, null, Options and all supported value representations
+ok 3 - canonical field matrix distinguishes missing, undefined, null, Options and all supported value representations
+  ---
+  duration_ms: 1.496416
+  type: 'test'
+  ...
+# Subtest: two entity versions sharing a revision never share prepared bytes, metadata or digest cache entries
+ok 4 - two entity versions sharing a revision never share prepared bytes, metadata or digest cache entries
+  ---
+  duration_ms: 5.347083
+  type: 'test'
+  ...
+# {"readerProbe":"closed","calls":1,"records":19,"samples":1,"sampleRoutes":["replica"],"errors":0,"accounting":{"attempted":19,"completed":19,"active":0}}
+# Subtest: real worker: closed
+ok 5 - real worker: closed
+  ---
+  duration_ms: 71.965042
+  type: 'test'
+  ...
+# Subtest: real worker: open
+not ok 6 - real worker: open
+  ---
+  duration_ms: 61.595875
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round3/reader-probes.test.ts:162:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    probe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round3/reader-probes.test.ts:136:14)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# {"readerProbe":"wrong-gateway","calls":14,"records":14,"samples":0,"sampleRoutes":[],"errors":14,"accounting":{"attempted":14,"completed":14,"active":0}}
+# Subtest: real worker: wrong-gateway
+ok 7 - real worker: wrong-gateway
+  ---
+  duration_ms: 59.040375
+  type: 'test'
+  ...
+# {"readerProbe":"wrong-prepared","calls":11,"records":11,"samples":0,"sampleRoutes":[],"errors":11,"accounting":{"attempted":11,"completed":11,"active":0}}
+# Subtest: real worker: wrong-prepared
+ok 8 - real worker: wrong-prepared
+  ---
+  duration_ms: 74.202334
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 7
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1059.335083

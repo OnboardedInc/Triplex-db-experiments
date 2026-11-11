@@ -1,0 +1,2 @@
+{"reviewedHead":"59fb16aef7e74a1c6d2b18dd297803f88765f638","source":349,"built":169,"external":9152,"local":33}
+Reproduced FIX-FIRST: repaired claims pass; exactly three current value-contract assertions fail.

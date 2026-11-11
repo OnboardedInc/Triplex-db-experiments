@@ -1,0 +1,30 @@
+{:check :strict-above, :actual 101.0}
+{:check [:strict-not-above 100], :actual "TRIPLEX_CLOCK 100"}
+{:check [:strict-not-above 99], :actual "TRIPLEX_CLOCK 100"}
+{:check [:strict-not-above -0.0], :actual "TRIPLEX_CLOCK 100"}
+{:check [:strict-not-above 0.0], :actual "TRIPLEX_CLOCK 100"}
+{:check [:strict-nonfinite ##NaN], :actual "Invalid strict record clock"}
+{:check [:strict-nonfinite ##Inf], :actual "Invalid strict record clock"}
+{:check [:strict-nonfinite ##-Inf], :actual "Invalid strict record clock"}
+{:check [:strict-nonfinite nil], :actual "Invalid strict record clock"}
+{:check [:strict-nonfinite "101"], :actual "Invalid strict record clock"}
+{:check :strict-one-physical-clock, :actual "Strict scopes require one record clock per commit"}
+{:check :several-journals-one-clock, :actual 101.0}
+{:check :empty-rows-with-clock, :actual 101.0}
+{:check :retraction-clock, :actual 101.0}
+{:check :serial-second-equal-rejected, :actual "TRIPLEX_CLOCK 101.0"}
+{:check :precision-rounds-equal-rejected, :actual "TRIPLEX_CLOCK 9.007199254740992E15"}
+{:check :first-negative-zero, :actual -0.0}
+{:check :zero-after-negative-zero, :actual "TRIPLEX_CLOCK -0.0"}
+{:check [:nonstrict-spi-regression false], :actual 100}
+{:check [:nonstrict-spi-regression nil], :actual 100}
+{:check :nonstrict-replay-safe-still-rejects, :actual "TRIPLEX_CLOCK 100"}
+{:check :native-clockless-payload-not-rejected, :actual 100}
+{:check :native-payload-can-clear-policy, :actual true}
+{:check :legacy-head-strict-rejects-equal, :actual "TRIPLEX_CLOCK 100"}
+{:check :maximum-after-retraction-still-rejects-old, :actual "TRIPLEX_CLOCK 101.0"}
+{:policy true, :reads [[:eavt scope :triplex.scope/head-version] [:eavt 10 :triplex.tx/position] [:eavt 10 :triplex.tx/position] [:entid :triplex.entity/row] [:eavt 10 :triplex.tx/max-recorded-at] [:entid :triplex.scope/strict-record-clocks] [:eavt scope :triplex.scope/strict-record-clocks]], :extra-policy-eavt 1}
+{:policy false, :reads [[:eavt scope :triplex.scope/head-version] [:eavt 10 :triplex.tx/position] [:eavt 10 :triplex.tx/position] [:entid :triplex.entity/row] [:eavt 10 :triplex.tx/max-recorded-at] [:entid :triplex.scope/strict-record-clocks] [:eavt scope :triplex.scope/strict-record-clocks]], :extra-policy-eavt 1}
+{:policy nil, :reads [[:eavt scope :triplex.scope/head-version] [:eavt 10 :triplex.tx/position] [:eavt 10 :triplex.tx/position] [:entid :triplex.entity/row] [:eavt 10 :triplex.tx/max-recorded-at] [:entid :triplex.scope/strict-record-clocks] [:eavt scope :triplex.scope/strict-record-clocks]], :extra-policy-eavt 1}
+{:nonstrict-old-new-comparisons 40, :behavior "identical output/error", :additional-reads "one d/entid attribute lookup plus one EAVT scope flag lookup, also for non-strict scopes"}
+{:checks 25, :native-engine false, :source "commit.clj quoted code"}

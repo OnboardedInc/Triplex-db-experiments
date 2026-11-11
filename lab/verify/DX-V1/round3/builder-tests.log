@@ -1,0 +1,276 @@
+TAP version 13
+# Subtest: expected-world memoization equals the original at all boundaries, including late out-of-order ACKs
+ok 1 - expected-world memoization equals the original at all boundaries, including late out-of-order ACKs
+  ---
+  duration_ms: 268.81975
+  type: 'test'
+  ...
+# Subtest: split selection prefers a real offered command without inventing writes or losing legacy control
+ok 2 - split selection prefers a real offered command without inventing writes or losing legacy control
+  ---
+  duration_ms: 0.229625
+  type: 'test'
+  ...
+# Subtest: F1 corrected: public full Triple equality, actual Options, prepared and materialized observations
+ok 3 - F1 corrected: public full Triple equality, actual Options, prepared and materialized observations
+  ---
+  duration_ms: 6.287583
+  type: 'test'
+  ...
+# Subtest: F2 corrected: real judge rejects every changed field, signed zero, nested JSON and field-boundary ambiguity
+ok 4 - F2 corrected: real judge rejects every changed field, signed zero, nested JSON and field-boundary ambiguity
+  ---
+  duration_ms: 59.049666
+  type: 'test'
+  ...
+# Subtest: F3 corrected: time-only newest clock falls back before delayed equal-clock journal; later clock closes a regular cut
+ok 5 - F3 corrected: time-only newest clock falls back before delayed equal-clock journal; later clock closes a regular cut
+  ---
+  duration_ms: 5.843125
+  type: 'test'
+  ...
+# Subtest: projection-only fixtures decline the public route while the standalone SweepRow API remains usable
+ok 6 - projection-only fixtures decline the public route while the standalone SweepRow API remains usable
+  ---
+  duration_ms: 0.578833
+  type: 'test'
+  ...
+# Subtest: inline source admits original journal clocks and rejects a bad page without publishing them
+ok 7 - inline source admits original journal clocks and rejects a bad page without publishing them
+  ---
+  duration_ms: 598.792417
+  type: 'test'
+  ...
+# Subtest: reader completion requires drained ACK even on exit zero; post-ready errors stay failures
+ok 8 - reader completion requires drained ACK even on exit zero; post-ready errors stay failures
+  ---
+  duration_ms: 2.250208
+  type: 'test'
+  ...
+# Subtest: stop acknowledgement refuses active live loops or sweep reads
+ok 9 - stop acknowledgement refuses active live loops or sweep reads
+  ---
+  duration_ms: 0.281708
+  type: 'test'
+  ...
+# Subtest: producer sequence rejects duplicate, missing and reordered batches
+ok 10 - producer sequence rejects duplicate, missing and reordered batches
+  ---
+  duration_ms: 0.091959
+  type: 'test'
+  ...
+# Subtest: prepared contributions include every actual typed fact at valid-time boundaries and old cuts
+ok 11 - prepared contributions include every actual typed fact at valid-time boundaries and old cuts
+  ---
+  duration_ms: 41.2305
+  type: 'test'
+  ...
+# Subtest: receipt wait is bounded and reports a fallback; intervening ACK retains the requested basis
+ok 12 - receipt wait is bounded and reports a fallback; intervening ACK retains the requested basis
+  ---
+  duration_ms: 12.865
+  type: 'test'
+  ...
+# Subtest: recovery does not anchor a record clock from pending or previously rejected journals
+ok 13 - recovery does not anchor a record clock from pending or previously rejected journals
+  ---
+  duration_ms: 1.069416
+  type: 'test'
+  ...
+# Subtest: many interval boundaries use compact shared summaries, with exact end-point observations
+ok 14 - many interval boundaries use compact shared summaries, with exact end-point observations
+  ---
+  duration_ms: 80.917291
+  type: 'test'
+  ...
+# Subtest: lazy worlds retain the exact selected version after the window advances
+ok 15 - lazy worlds retain the exact selected version after the window advances
+  ---
+  duration_ms: 0.8645
+  type: 'test'
+  ...
+# Subtest: replica peer selection keeps reader and writer controls distinct
+ok 16 - replica peer selection keeps reader and writer controls distinct
+  ---
+  duration_ms: 0.413584
+  type: 'test'
+  ...
+# Subtest: local-mode P3 follower can use R without changing the gateway-mode writer route
+ok 17 - local-mode P3 follower can use R without changing the gateway-mode writer route
+  ---
+  duration_ms: 1.181458
+  type: 'test'
+  ...
+# Subtest: RYOW shares an externally applied index and wakes only at its target
+ok 18 - RYOW shares an externally applied index and wakes only at its target
+  ---
+  duration_ms: 0.203667
+  type: 'test'
+  ...
+# Subtest: apply-delay summary exposes missing ACKed positions and clamps apply-before-ACK to zero
+ok 19 - apply-delay summary exposes missing ACKed positions and clamps apply-before-ACK to zero
+  ---
+  duration_ms: 5.13825
+  type: 'test'
+  ...
+# Subtest: RYOW reply preserves actual typed world bytes and binds fallback W separately from follower R
+ok 20 - RYOW reply preserves actual typed world bytes and binds fallback W separately from follower R
+  ---
+  duration_ms: 1.415583
+  type: 'test'
+  ...
+# Subtest: bootstrap clock retries peer lag but never admits unequal or absent native cuts
+ok 21 - bootstrap clock retries peer lag but never admits unequal or absent native cuts
+  ---
+  duration_ms: 6.097333
+  type: 'test'
+  ...
+# Subtest: lossless observations preserve every field, order, sign, null and string across chunks
+ok 22 - lossless observations preserve every field, order, sign, null and string across chunks
+  ---
+  duration_ms: 188.352916
+  type: 'test'
+  ...
+# Subtest: bounded spill survives checkpoint/reopen and reads phase subsets losslessly
+ok 23 - bounded spill survives checkpoint/reopen and reads phase subsets losslessly
+  ---
+  duration_ms: 127.71375
+  type: 'test'
+  ...
+# Subtest: abrupt stop between chunk replacement and metadata publication preserves the preceding phase
+ok 24 - abrupt stop between chunk replacement and metadata publication preserves the preceding phase
+  ---
+  duration_ms: 410.990375
+  type: 'test'
+  ...
+# Subtest: raw oracle samples materialize the local route and independently query the gateway at the unchanged time basis
+ok 25 - raw oracle samples materialize the local route and independently query the gateway at the unchanged time basis
+  ---
+  duration_ms: 84.342167
+  type: 'test'
+  ...
+# Subtest: each phase obtains a local raw sample after the global budget was exhausted; open clocks consume none
+ok 26 - each phase obtains a local raw sample after the global budget was exhausted; open clocks consume none
+  ---
+  duration_ms: 58.679833
+  type: 'test'
+  ...
+# Subtest: exact floor, current, missing, time mapping and byte eviction
+ok 27 - exact floor, current, missing, time mapping and byte eviction
+  ---
+  duration_ms: 9.659708
+  type: 'test'
+  ...
+# Subtest: valid-time row and reference intervals are half open, including cycles and missing closures
+ok 28 - valid-time row and reference intervals are half open, including cycles and missing closures
+  ---
+  duration_ms: 1.858708
+  type: 'test'
+  ...
+# Subtest: new entities decline before their known existence; gaps/rebuilds invalidate old cuts
+ok 29 - new entities decline before their known existence; gaps/rebuilds invalidate old cuts
+  ---
+  duration_ms: 1.084667
+  type: 'test'
+  ...
+# Subtest: regressing and duplicate clocks decline record-time reads
+ok 30 - regressing and duplicate clocks decline record-time reads
+  ---
+  duration_ms: 0.123542
+  type: 'test'
+  ...
+# Subtest: ahead receipt waits, then exact fallback; mapped times cannot override explicit position
+ok 31 - ahead receipt waits, then exact fallback; mapped times cannot override explicit position
+  ---
+  duration_ms: 1.040917
+  type: 'test'
+  ...
+# Subtest: worker delta clones retain shared bytes and exact historical cuts
+ok 32 - worker delta clones retain shared bytes and exact historical cuts
+  ---
+  duration_ms: 7.559875
+  type: 'test'
+  ...
+# Subtest: sidecar bytes count toward eviction and survive shared-image installation
+ok 33 - sidecar bytes count toward eviction and survive shared-image installation
+  ---
+  duration_ms: 0.711333
+  type: 'test'
+  ...
+# (node:82706) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R2-A: cached and uncached judges reject expired rows and accept the exact smaller world
+ok 34 - R2-A: cached and uncached judges reject expired rows and accept the exact smaller world
+  ---
+  duration_ms: 22.389
+  type: 'test'
+  ...
+# Subtest: R2-A: full reachable seed/shared, reference, validTo and retraction boundaries give exact counts and stamps
+ok 35 - R2-A: full reachable seed/shared, reference, validTo and retraction boundaries give exact counts and stamps
+  ---
+  duration_ms: 2.52725
+  type: 'test'
+  ...
+# Subtest: R2-C: unsupported prototypes/properties are rejected rather than certified as JSON
+ok 36 - R2-C: unsupported prototypes/properties are rejected rather than certified as JSON
+  ---
+  duration_ms: 15.928625
+  type: 'test'
+  ...
+# Subtest: R2-B: non-strict scopes never admit a time-only cut, including before a regressing journal arrives
+ok 37 - R2-B: non-strict scopes never admit a time-only cut, including before a regressing journal arrives
+  ---
+  duration_ms: 10.288959
+  type: 'test'
+  ...
+# Subtest: strict scope policy and closed-cut proof survive shared index images; old images default non-strict
+ok 38 - strict scope policy and closed-cut proof survive shared index images; old images default non-strict
+  ---
+  duration_ms: 0.120459
+  type: 'test'
+  ...
+# Subtest: raw local coverage requires matching full payloads from every reader ladder level
+ok 39 - raw local coverage requires matching full payloads from every reader ladder level
+  ---
+  duration_ms: 0.195
+  type: 'test'
+  ...
+# Subtest: scope creation explicitly requests strict clocks while default and reopened scopes keep their policy
+ok 40 - scope creation explicitly requests strict clocks while default and reopened scopes keep their policy
+  ---
+  duration_ms: 0.370459
+  type: 'test'
+  ...
+# Subtest: invalid returned values survive the actual driver's compact verdict pipeline
+ok 41 - invalid returned values survive the actual driver's compact verdict pipeline
+  ---
+  duration_ms: 3.345417
+  type: 'test'
+  ...
+# Subtest: worker spill retains exact rows, partial batches, checkpoint prefix and resumed phase index
+ok 42 - worker spill retains exact rows, partial batches, checkpoint prefix and resumed phase index
+  ---
+  duration_ms: 369.951958
+  type: 'test'
+  ...
+# Subtest: direct producer ports drain every exact tuple and oracle sample before finalization
+ok 43 - direct producer ports drain every exact tuple and oracle sample before finalization
+  ---
+  duration_ms: 345.139375
+  type: 'test'
+  ...
+# Subtest: one worker-wide budget admits bounded batches under 1024 closed loops
+ok 44 - one worker-wide budget admits bounded batches under 1024 closed loops
+  ---
+  duration_ms: 42.472708
+  type: 'test'
+  ...
+1..44
+# tests 44
+# suites 0
+# pass 44
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1536.344917

@@ -1,0 +1,6 @@
+{"kind":"rejected-clock-page","mappingsPublished":0}
+{"kind":"recorded-world-equality","position":42775,"subjects":1000}
+{"kind":"recorded-world-equality","position":44775,"subjects":1000}
+{"kind":"recorded-world-equality","position":42775,"subjects":1000}
+{"kind":"optimized-observation-equality","optimized":10000,"differences":0,"floor":42775,"historyBytes":7384014}
+{"kind":"recorded-follow","commands":2000,"clocks":2000,"packedBytes":67698904,"traffic":{"page":{"requests":16,"bytes":97654944},"need":{"requests":2000,"bytes":5782007},"feed":{"requests":2000,"bytes":6592868}}}
