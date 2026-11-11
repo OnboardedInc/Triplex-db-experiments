@@ -16,7 +16,8 @@ export interface ReplicaEvaluationOptions {
   view?: ReplicaSnapshot;
   workers?: number;
   beforeTimedWindow?: () => Promise<void>;
-  // Publishing several candidates would race distinct release choices; previews may evaluate all of them.
+  // [DX-R1] Why: several candidates may share a preview, but publication selects one active release.
+  // Rejected: racing distinct release choices through the same published outbox state.
   publish?: CompositionHandle;
 }
 export async function evaluateAll(o: ReplicaEvaluationOptions) {
