@@ -210,3 +210,24 @@ it("binary indexes distinguish Unicode, lone surrogates, collisions and absent I
   for (const [id, entity] of entries) expect(index.get(id)).toEqual(entity);
   expect(index.get("missing")).toBeUndefined();
 });
+
+it("bootstraps the compressed projection through the opt-in source", async () => {
+  const { gzipSync } = await import("node:zlib");
+  const f = fixture(),
+    requests: any[] = [];
+  const client = {
+    async request(_method: string, _path: string, input: any) {
+      requests.push(input);
+      if (input.replicaCapability) return { supported: true };
+      const page = await f.source.page(input.roots, input.basis);
+      return { gzipRows: gzipSync(JSON.stringify(page)).toString("base64") };
+    },
+  };
+  const r = new Replica(
+    Replica.source(client as any, "test", async () => 1, 0),
+    0,
+  );
+  await r.bootstrap(["root"]);
+  expect(r.world("root")[1]!.value.value).toBe("before");
+  expect(requests[1].gzipRows).toBe(true);
+});

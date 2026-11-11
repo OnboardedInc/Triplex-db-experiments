@@ -37,24 +37,28 @@ export class Slabs {
 // [DX-R2] Why: a shared open-addressed index avoids cloning hundreds of thousands of tuples into every worker.
 // Rejected: per-worker Maps (multiply retained index objects and UTF-16 strings).
 export function shareIndex(table: EntityTable): SharedIndexImage {
-  const entries = [...table];
+  let count = 0,
+    textBytes = 0;
+  for (const [id] of table) {
+    count++;
+    textBytes += encoder.encode(JSON.stringify(id)).byteLength;
+  }
   let slots = 1;
-  while (slots < entries.length * 2) slots *= 2;
-  const strings = entries.map(([id]) => encoder.encode(JSON.stringify(id)));
+  while (slots < count * 2) slots *= 2;
   const start = 8 + slots * 4,
-    textStart = start + entries.length * 32;
-  const index = new SharedArrayBuffer(
-    textStart + strings.reduce((n, bytes) => n + bytes.length, 0),
-  );
+    textStart = start + count * 32;
+  const index = new SharedArrayBuffer(textStart + textBytes);
   const view = new DataView(index),
     bytes = new Uint8Array(index),
     buckets = new Uint32Array(index, 8, slots);
   view.setUint32(0, slots, true);
-  view.setUint32(4, entries.length, true);
+  view.setUint32(4, count, true);
   const buffers: SharedArrayBuffer[] = [],
     handles = new Map<SharedArrayBuffer, number>();
   let text = textStart;
-  entries.forEach(([id, e], i) => {
+  let i = 0;
+  for (const [id, e] of table) {
+    const textBytes = encoder.encode(JSON.stringify(id));
     let handle = handles.get(e.buffer);
     if (handle === undefined) {
       handle = buffers.length;
@@ -62,16 +66,17 @@ export function shareIndex(table: EntityTable): SharedIndexImage {
       buffers.push(e.buffer);
     }
     const offset = start + i * 32;
-    [text, strings[i]!.length, handle, e.offset ?? 0, e.byteLength ?? e.buffer.byteLength].forEach(
+    [text, textBytes.length, handle, e.offset ?? 0, e.byteLength ?? e.buffer.byteLength].forEach(
       (v, j) => view.setUint32(offset + j * 4, v, true),
     );
     view.setFloat64(offset + 24, e.revision, true);
-    bytes.set(strings[i]!, text);
-    text += strings[i]!.length;
+    bytes.set(textBytes, text);
+    text += textBytes.length;
     let slot = hash(id) & (slots - 1);
     while (buckets[slot]) slot = (slot + 1) & (slots - 1);
     buckets[slot] = i + 1;
-  });
+    i++;
+  }
   return { index, buffers };
 }
 export class SharedIndex implements EntityTable {

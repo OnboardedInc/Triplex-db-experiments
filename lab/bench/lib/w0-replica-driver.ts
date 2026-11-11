@@ -6,11 +6,7 @@ import { createGzip } from "node:zlib";
 import { pipeline } from "node:stream/promises";
 import { seedW0 } from "./w0-seed.ts";
 import { recordReplicaHttp } from "./w0-replica-record.ts";
-import {
-  DatomicClient,
-  Replica,
-  datomicReplicaSource,
-} from "../../../packages/datomic/dist/index.js";
+import { DatomicClient, Replica } from "../../../packages/datomic/dist/index.js";
 import { openComposition } from "./composition.ts";
 import { runtimeApi } from "./triplex.ts";
 import { openBulkCounts } from "../../experiments/EXP-DX1/h6/bulk-counts.ts";
@@ -50,8 +46,15 @@ export async function runReplicaDriver(argv: string[]) {
   );
   const db =
     "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
+  // [DX-R2] Why: feed publication is already visible on the writer peer; 256 read pulls must not queue its wakeup.
+  // Rejected: sharing the saturated read-peer HTTP queue for both feed and bootstrap.
+  const feedClient = new DatomicClient(comp.backend.url, 35000, 64 * 1024 ** 2, {
+    entityCacheBytes: 1,
+    rowCacheBytes: 1,
+  });
   const base = Replica.source(client, db, () => comp.currentPosition(), V_W0),
     recordDir = opt("record-dir");
+  base.feed = Replica.source(feedClient, db, () => comp.currentPosition(), V_W0).feed;
   const recorder = recordDir ? recordReplicaHttp(recordDir) : undefined;
   if (recorder)
     for (const method of ["page", "feed"] as const) {
@@ -713,7 +716,13 @@ export async function runReplicaDriver(argv: string[]) {
     if (fs.existsSync("/sys/fs/cgroup/memory.peak"))
       report.cgroupPeakBytes = Number(fs.readFileSync("/sys/fs/cgroup/memory.peak", "utf8"));
     report.fullHistoryCounts = bulkCounts.stats;
-    report.transport = { pageReads, feedReads };
+    report.transport = {
+      pageReads,
+      feedReads,
+      feedPeer: "writer",
+      bootstrapPeer: "reader",
+      liveReaders: 256,
+    };
     report.rss = process.memoryUsage().rss;
     report.peakRss = process.resourceUsage().maxRSS * 1024;
     console.log(JSON.stringify({ kind: "result", ...report }));
@@ -724,6 +733,7 @@ export async function runReplicaDriver(argv: string[]) {
     await recorder?.close();
     oracle.close();
     bulkCounts?.close();
+    feedClient.close();
     client.close();
     await comp.close();
   }

@@ -32,6 +32,8 @@ trap cleanup EXIT
 trap 'exit 124' TERM INT
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 held=true
+git diff --quiet && git diff --cached --quiet || { echo "refuse dirty source"; exit 2; }
+git rev-parse HEAD
 deadline=$(( $(date +%s) * 1000 + 1100000 ))
 printf '{"id":"DX-R2","pid":%s}\n' "$$" > "$lock/owner.json"
 [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB'; exit 1; }
