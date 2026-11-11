@@ -5,7 +5,7 @@ set -euo pipefail
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 n=${1:?1000|10000|100000}; chunk=${2:?chunk subjects}; deliberate=${3:-false}
 [[ $n == 1000 || $n == 10000 || $n == 100000 ]] || exit 2
-[[ $chunk =~ ^[1-9][0-9]*$ ]] && (( chunk % 50 == 0 && chunk <= n )) || exit 2
+[[ $chunk =~ ^[1-9][0-9]*$ ]] && (( chunk % 50 == 0 && chunk <= n && n % chunk == 0 )) || exit 2
 prefix=tx2-dxs5-seed-$n; scope=dxs5-w0-$n-v1
 repo=$PWD; out=$(mktemp -d /private/tmp/dxs5.XXXXXX)
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
@@ -64,7 +64,7 @@ source lab/experiments/EXP-DX1/s5/setup.sh
 run_driver() {
  docker run --rm --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory 11g --memory-swap 11g \
  -v "$repo:$repo:ro" -v "$prefix-tools:/state" -w "$repo" \
- -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 \
+ -e "S5_REQUIRE_RECOVERED=${require_recovered:-0}" -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 \
  node:22.23.2-bookworm-slim node --experimental-strip-types lab/experiments/EXP-DX1/s5/seed.ts "$scope" "$n" "$1" "${2:-seed}"
 }
 maintain() {
@@ -99,6 +99,7 @@ PYPROOF
 }
 for ((end=chunk;end<=n;end+=chunk)); do
  run_driver "$end"
+ require_recovered=0
  maintain
  run_driver "$end" verify
  if [[ $deliberate == true && $end == "$chunk" && $end -lt $n ]]; then
@@ -107,6 +108,7 @@ for ((end=chunk;end<=n;end+=chunk)); do
   docker kill "$prefix-driver"
   wait "$child" && { echo 'kill proof unexpectedly completed'; exit 1; }
   echo 'deliberate driver kill completed; next chunk resumes stored suffix'
+  require_recovered=1
  fi
 done
 for role in gw-r gw-w tx; do docker stop -t 30 "$prefix-$role"; done

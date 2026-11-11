@@ -34,6 +34,8 @@ try {
   }
   const head = await comp.currentPosition();
   assert(head >= from, "database behind checkpoint");
+  if (process.env.S5_REQUIRE_RECOVERED === "1")
+    assert(head > from, "kill test did not leave a committed suffix");
   // Recover every already committed command since the last checkpoint and verify actual stored assertion content.
   const commands = seedCommands(N);
   let next = commands.next();
