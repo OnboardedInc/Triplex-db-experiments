@@ -21,7 +21,7 @@ for role in ('gw-r', 'gw-w', 'tx', 'pg'):
     state = json.loads(result.stdout)[0]
     print(json.dumps({'event': 'failure-container', 'name': name, 'id': state['Id'],
                       'state': state['State'], 'restarts': state['RestartCount']}), flush=True)
-    subprocess.run(['docker', 'logs', '--tail', '200', name], env=env, check=False)
+    subprocess.run(['docker', 'logs', name], env=env, check=False)
     if role == 'pg' or state['State']['Running']:
         continue
     p = subprocess.Popen(['docker', 'cp', name + ':/opt/datomic/log/.', '-'], env=env, stdout=subprocess.PIPE)
@@ -34,10 +34,12 @@ for role in ('gw-r', 'gw-w', 'tx', 'pg'):
                                   'file': member.name, 'bytes': member.size}), flush=True)
                 data = archive.extractfile(member)
                 stream = gzip.GzipFile(fileobj=data) if member.name.endswith('.gz') else data
+                emitted = 0
                 while block := stream.read(65536):
+                    emitted += len(block)
                     sys.stdout.buffer.write(block)
                 sys.stdout.buffer.flush()
-                print('\n' + json.dumps({'event': 'failure-log-end', 'container': name, 'file': member.name}), flush=True)
+                print('\n' + json.dumps({'event': 'failure-log-end', 'container': name, 'file': member.name, 'emittedBytes': emitted}), flush=True)
         p.stdout.read()
         if p.wait():
             print(json.dumps({'event': 'failure-log-copy-error', 'container': name}), flush=True)
@@ -45,3 +47,15 @@ for role in ('gw-r', 'gw-w', 'tx', 'pg'):
         if p.poll() is None:
             p.terminate()
             p.wait()
+
+    # [DX-S5] Why: Clojure writes the full peer-connect exception to /tmp, outside active.log.
+    # Rejected: retaining only the console's exception summary.
+    p = subprocess.Popen(['docker', 'cp', name + ':/tmp/.', '-'], env=env, stdout=subprocess.PIPE)
+    with tarfile.open(fileobj=p.stdout, mode='r|') as archive:
+        for member in archive:
+            if member.isfile() and re.fullmatch(r'(?:\./)?clojure-[^/]+\.edn', member.name):
+                print(json.dumps({'event': 'failure-clojure-report', 'container': name, 'file': member.name}), flush=True)
+                sys.stdout.buffer.write(archive.extractfile(member).read())
+                sys.stdout.buffer.flush()
+    p.stdout.read()
+    p.wait()
