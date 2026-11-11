@@ -10,9 +10,10 @@ repo=$PWD
 out=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2/$prefix
 mkdir -p "$out"
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
-held=false; resources=false; timer=; watcher=
+held=false; resources=false; completed=false; timer=; watcher=
 cleanup() {
  rc=$?; trap - EXIT TERM INT
+ [[ $completed == true || $rc != 0 ]] || rc=1
  [[ -z $timer ]] || kill "$timer" 2>/dev/null || true
  [[ -z $watcher ]] || kill "$watcher" 2>/dev/null || true
  if [[ $held == true ]]; then
@@ -68,8 +69,8 @@ for ((i=0;i<90;i++)); do docker exec "$prefix-pg" pg_isready -h 127.0.0.1 -U pos
 docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory 4g --memory-swap 4g -e 'JAVA_OPTS=-Xms256m -Xmx3g' -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
  cpu=1; [[ $role == w ]] || cpu=2,3
- ports=(); [[ $role != w ]] || ports=(-p 127.0.0.1:18542:8080)
- docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" "${ports[@]}" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e 'DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g -Dtriplex.codec.spec=/opt/replica-codec-spec.json' -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main
+ host_port=18542; [[ $role == w ]] || host_port=18543
+ docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" -p "127.0.0.1:$host_port:8080" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e 'DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g -Dtriplex.codec.spec=/opt/replica-codec-spec.json' -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main
  done
 docker run --rm --pull never --name "$prefix-copy" --network "$prefix-net" node:22.23.2-bookworm-slim node -e '
 for (const role of ["w","r"]) { let ok=false; for(let i=0;i<180;i++){try{let r=await fetch("http://"+process.argv[1]+"-gw-"+role+":8080/health"); if(r.ok){console.log(await r.text());ok=true;break;}}catch{} await new Promise(r=>setTimeout(r,1000));}if(!ok)process.exit(1);}' "$prefix"
@@ -78,6 +79,7 @@ if [[ ${1:-} == --gateway-tests ]]; then
   docker exec -e 'DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -Dtriplex.codec.spec=/opt/replica-codec-spec.json' "$prefix-gw-r" /opt/datomic/bin/run -m "$ns"
  done
  DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL=http://127.0.0.1:18542 pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec vitest run packages/datomic/test/journal-fast.test.ts
+ completed=true
  exit 0
 fi
 (
@@ -94,3 +96,5 @@ docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset
  python:3.13-slim /tool/node --expose-gc --experimental-strip-types lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" "$@"
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT pg_database_size(current_database());'
 docker run --rm --pull never --name "$prefix-copy" -v "$prefix-pg-data:/from:ro" postgres:17-alpine du -sk /from
+
+completed=true
