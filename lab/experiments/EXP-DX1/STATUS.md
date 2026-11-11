@@ -661,12 +661,44 @@ and the existing retry. Lean `concurrent-commits`, `commit-observation`, `adapte
 real-gateway test recheck, and the before/after measurement at 10,000 subjects (calls per commit, dense and sparse medians).
 The queued paired benchmark `tx2-dxh4-q2` measures both the reader ceiling and requests per commit on this merge.
 
+## DX-R1 result: the local copy works and is exact (merged 2026-11-11 02:18 UTC, merge 401ecf98; report `lab/experiments/EXP-DX1/r1/REPORT.md`)
+
+| Measurement | 1,000 subjects | 10,000 subjects |
+| --- | --- | --- |
+| Worlds, outputs, records, published states against gateway, full sweep and oracle | all equal (also after 2,000 followed live commands) | all equal |
+| Bootstrap | 6.6 s | 71.8 s |
+| Packed bytes per subject (plus heap) | 46.2 KB (+35.7 KB) | 46.7 KB (+30.6 KB) |
+| Evaluation pass: freeze + setup + compute (compute alone) | 1.17 s (0.44 s) | **9.27 s (4.09 s)**: 1,079 subjects/s whole pass, 2,444 compute |
+| Live traffic during the pass: read p99 ratio / scheduled-writer p99 ratio | 0.73 / no samples | 1.00 / 1.03 (10 samples) |
+| Three candidate releases in one pass | 1.16 times one | 1.17 times one |
+| Publishing changed outputs | 149 subjects, 0.49 s | 997 subjects, 3.53 s (283 changed subjects/s) |
+| Load-generator peak | 1.85 GB | 5.14 GiB |
+
+Misses: follow lag under live load at 10,000 subjects p99 1,453 ms (each journal needs an exact-position `need` read; 17.6 ms
+serial); the 300-scenario corpus gate ran 0 of 300 (first scenario is legacy layout with an explicit-position import, which the
+gateway declines as `irregular`); 1,000-subject pass is 852 subjects/s because setup dominates.
+Linear arithmetic for 100,000 subjects on the same four CPUs: evaluation pass 92.7 s (compute 40.9 s), bootstrap 718 s, memory
+about 7.7 GB plus a 4.7 GB per-pass image. **At the 10,000-subject rung the P5 bar is met in this run (diagnostic, not a receipt).**
+
+Next jumps, launched:
+1. **DX-R2**: journals carry complete changed rows and revisions so following needs no extra read (lag p99 at most 250 ms under
+   256 readers and the burst); workers read the store's own buffers (no per-pass image; 100,000 subjects in at most 6 GB);
+   compact bootstrap pages; supported-scope check and the corpus gate.
+2. **DX-R3**: the same copy as the read path. A short window of replaced versions lets it answer current and recently pinned
+   reads with no request; older reads go to the gateway; the benchmark's readers get `--read-path replica` with the unchanged
+   correctness check. Targets: at least 15,000 verified pulls/s and read p99 at most 100 ms at 256 readers, 10,000 subjects.
+
+Note on `tx2-dxh4-q2`: the worktree was merged and rebuilt while its zero-reader arm was running, so its two arms may have
+loaded different builds of the Datomic client (the merge added replica files and one export; the benchmark's read and write
+paths did not change).
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-B10 (resumed 01:11 UTC) | Run the strict-order proofs and the full suite; W0 seed rate at windows 1 and 32 with the fingerprint | `exp/DX-B10-order`, `.claude/worktrees/dx-b10` | `.../prompts/DX-B10-resume1.md` |
-| DX-R1 | Local copy of current facts in the runtime (bootstrap, follow the feed, freeze), release evaluation from it for one and several candidates, publish only changed outputs; equality gates against the gateway and the full sweep | `exp/DX-R1-replica`, `.claude/worktrees/dx-r1` | `.../prompts/DX-R1.md` |
+| DX-R2 | Local copy at scale: journals with complete rows, no per-pass image, compact bootstrap, supported-scope check and corpus gate | `exp/DX-R2-replica-scale`, `.claude/worktrees/dx-r2` | `.../prompts/DX-R2.md` |
+| DX-R3 | Local copy as the read path: recent-version window, `pullAt`, shared across reader threads, benchmark option `--read-path replica` | `exp/DX-R3-replica-reads`, `.claude/worktrees/dx-r3` | `.../prompts/DX-R3.md` |
 | ORCH | Paired 10,000-subject benchmark `tx2-dxh4-q2` on merge 0939c037 (`quiet/run-10k-pair.sh`, waits for quiet up to 20 minutes, then the lock) | `lane/d-native` | |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
