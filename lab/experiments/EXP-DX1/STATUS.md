@@ -728,13 +728,36 @@ subjects in one Datomic transaction) would be the next lever; not started.
 
 3. The next 10,000-subject pair (`tx2-dxh4-q3`) runs from a frozen checkout, `.claude/worktrees/verdict`, detached at this head.
 
+## Third 10,000-subject pair `tx2-dxh4-q3` (2026-11-11 03:01 to 03:36 UTC, frozen checkout at fe0705f4, quiet host): ladder lost to a heap limit
+
+Every phase ran (ladder to 1,024 readers, P4 phases, sweep); the driver then died in the final analysis with "JavaScript heap
+out of memory" (twice the reads of earlier runs in the default V8 heap). `h4/run.sh` now sets a 6 GiB heap. No read-side table.
+
+What survives (commit records are written as they happen):
+
+| Arm and window | Commits | Call to return p50 / p99 ms |
+| --- | --- | --- |
+| Zero readers, burst (55/s) | 6,546 | **8.6 / 47.6** (7 over 100 ms, max 141) |
+| Zero readers, steady (about 2/s) | 1,757 | 22.6 / 119.4 |
+| Ladder, L4 and L16 windows (the burst falls here) | 1,653 and 1,736 | 12.1 / 64.1 and 14.1 / 66.1 |
+| Ladder, L64 / L256 / L1024 windows (steady rate only) | 95 / 95 / 92 | 20.2 / 136.6, **24.7 / 187.8**, 23.9 / 119.3 |
+
+Requests per commit 1.07 (9,488 for 8,836). Two readings: (1) with no readers, burst commits meet both P2 numbers (10 and 50 ms)
+on a quiet host; (2) **in the real profile the 256-reader window contains only steady-rate commits**, so the P2 bar "at 256
+readers" is judged on about 95 sparse commits, whose p50 is 22 to 25 ms at every reader count including one. That is the wake
+penalty per hop, not reader interference.
+
+Queued: `tx2-dxh4-q4` (same pair, 6 GiB heap, frozen checkout at ea8931d5) and `quiet/wake-ab2.sh w2` (each engine container on
+its own CPU, Postgres 0, transactor 1, write gateway 2, read gateway 3, with and without in-container idle loops: with
+exclusive CPUs a loop cannot take time from a neighbouring container, which is why the first in-container test failed).
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-R2 | Local copy at scale: journals with complete rows, no per-pass image, compact bootstrap, supported-scope check and corpus gate | `exp/DX-R2-replica-scale`, `.claude/worktrees/dx-r2` | `.../prompts/DX-R2.md` |
 | DX-R3 | Local copy as the read path: recent-version window, `pullAt`, shared across reader threads, benchmark option `--read-path replica` | `exp/DX-R3-replica-reads`, `.claude/worktrees/dx-r3` | `.../prompts/DX-R3.md` |
-| ORCH | Paired 10,000-subject benchmark `tx2-dxh4-q3` from the frozen checkout `.claude/worktrees/verdict` | detached at 9ac1fafc | |
+| ORCH | Pair `tx2-dxh4-q4` from the frozen checkout (6 GiB driver heap); writer-trace A/B `w2` with exclusive CPUs | `.claude/worktrees/verdict` at ea8931d5; `lane/d-native` | |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
