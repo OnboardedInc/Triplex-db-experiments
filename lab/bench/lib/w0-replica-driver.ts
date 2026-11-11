@@ -608,6 +608,8 @@ export async function runReplicaDriver(argv: string[]) {
         evaluation: report.evaluation,
         publication: report.publication,
         combinedWallMs: report.evaluation.passWallMs + (report.publication?.wallMs ?? 0),
+        baseline: report.baseline,
+        live: report.live,
         matched: report.matched,
         liveFollow: report.liveFollow,
         cgroupPeakBytes: fs.existsSync("/sys/fs/cgroup/memory.peak")
