@@ -1,10 +1,14 @@
 import type { PackedEntity } from "./packed.js";
 
+const entityBytes = (entity: PackedEntity) => entity.byteLength ?? entity.buffer.byteLength;
+
 export interface EntityTable extends Iterable<readonly [string, PackedEntity]> {
+  readonly bytes?: number | undefined;
   get(id: string): PackedEntity | undefined;
   values(): Iterable<PackedEntity>;
 }
 export interface SharedIndexImage {
+  readonly packedBytes?: number;
   readonly index: SharedArrayBuffer;
   readonly buffers: readonly SharedArrayBuffer[];
 }
@@ -38,8 +42,10 @@ export class Slabs {
 // Rejected: per-worker Maps (multiply retained index objects and UTF-16 strings).
 export function shareIndex(table: EntityTable): SharedIndexImage {
   let count = 0,
-    textBytes = 0;
-  for (const [id] of table) {
+    textBytes = 0,
+    packedBytes = 0;
+  for (const [id, entity] of table) {
+    packedBytes += entityBytes(entity);
     count++;
     textBytes += encoder.encode(JSON.stringify(id)).byteLength;
   }
@@ -77,7 +83,7 @@ export function shareIndex(table: EntityTable): SharedIndexImage {
     buckets[slot] = i + 1;
     i++;
   }
-  return { index, buffers };
+  return { index, buffers, packedBytes };
 }
 export class SharedIndex implements EntityTable {
   private readonly view: DataView;
@@ -109,6 +115,9 @@ export class SharedIndex implements EntityTable {
       revision: this.view.getFloat64(offset + 24, true),
     };
   }
+  get bytes() {
+    return this.image.packedBytes;
+  }
   get(id: string) {
     let slot = hash(id) & (this.buckets.length - 1);
     while (this.buckets[slot]) {
@@ -129,10 +138,20 @@ export class SharedIndex implements EntityTable {
 // [DX-R2] Why: the runtime also retains the compact index; removing worker copies alone leaves 3 GB of Map/SAB metadata at 100k.
 // Rejected: keeping the bootstrap Map alive after freezing it into the shared index.
 export class OverlayTable implements EntityTable {
+  private total: number;
+  get bytes() {
+    return this.total;
+  }
   constructor(
     readonly base: EntityTable,
     readonly delta = new Map<string, PackedEntity>(),
-  ) {}
+  ) {
+    // [DX-R2] Why: memory counters must not decode every entity ID after an evaluation pass.
+    // Rejected: a hidden full-index scan outside the reported setup/compute timers.
+    this.total = base.bytes ?? [...base.values()].reduce((n, entity) => n + entityBytes(entity), 0);
+    for (const [id, entity] of delta)
+      this.total += entityBytes(entity) - (base.get(id) ? entityBytes(base.get(id)!) : 0);
+  }
   get(id: string) {
     return this.delta.get(id) ?? this.base.get(id);
   }
@@ -140,6 +159,8 @@ export class OverlayTable implements EntityTable {
     return this.get(id) !== undefined;
   }
   set(id: string, entity: PackedEntity) {
+    const previous = this.get(id);
+    this.total += entityBytes(entity) - (previous ? entityBytes(previous) : 0);
     this.delta.set(id, entity);
   }
   *values() {

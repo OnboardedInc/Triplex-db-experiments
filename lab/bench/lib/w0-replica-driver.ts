@@ -189,6 +189,7 @@ export async function runReplicaDriver(argv: string[]) {
     (globalThis as any).gc?.();
     const bootstrapImage = (await replica.snapshotAt(cut)).sharedImage();
     report.bootstrap = {
+      initialHeap,
       indexBytes: bootstrapImage.shared!.index.byteLength,
       slabBytes: bootstrapImage.shared!.buffers.reduce((n, buffer) => n + buffer.byteLength, 0),
       pageReads,
@@ -500,8 +501,19 @@ export async function runReplicaDriver(argv: string[]) {
       };
     }
     await replica.stop();
+    const currentImage = (await replica.snapshotAt(replica.position)).sharedImage();
+    const retainedImages = [r1Snapshot.sharedImage(), snap.sharedImage(), currentImage];
+    const retainedBuffers = new Set(
+      retainedImages.flatMap((image) => [
+        ...image.shared!.buffers,
+        ...image.entities.map(([, entity]) => entity.buffer),
+      ]),
+    );
+    const retainedIndexes = new Set(retainedImages.map((image) => image.shared!.index));
     (globalThis as any).gc?.();
     report.evaluation = {
+      retainedDataBytes: [...retainedBuffers].reduce((n, buffer) => n + buffer.byteLength, 0),
+      retainedIndexBytes: [...retainedIndexes].reduce((n, buffer) => n + buffer.byteLength, 0),
       inputBytes: result.replicaBytes,
       sharedIndexBytes: snap.sharedImage().shared!.index.byteLength,
       overlayEntities: snap.sharedImage().entities.length,

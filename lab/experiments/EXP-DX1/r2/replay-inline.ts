@@ -23,7 +23,7 @@ const requests = fs
   .sort((a, b) => a.n - b.n);
 const key = (body: any) =>
   body.after !== undefined
-    ? JSON.stringify(["feed", body.after, body.limit])
+    ? JSON.stringify(["feed", body.after])
     : JSON.stringify(["page", body.roots, body.basis, !!body.need]);
 const recorded = new Map<string, number>();
 for (const { n, body } of requests) if (!recorded.has(key(body))) recorded.set(key(body), n);
@@ -68,6 +68,7 @@ const inlineClient = {
     if (body.replicaCapability) return { supported: true };
     if (body.after !== undefined) {
       const raw = response(recorded.get(key(body))!, "feed");
+      assert(raw.transactions.length <= body.limit, "Recorded serial page must fit the new bound");
       const decoded = await oldSource.feed(body.after, body.limit, body.waitMs);
       return {
         ...raw,
@@ -123,6 +124,8 @@ const end = basis.recordedPosition + 2000;
 while (replica.position < end) await replica.followOnce(0, end);
 assert.equal(replica.position, end);
 compare(end);
+assert.equal(inlineJournals, 2000);
+assert.equal(extraPageReads, 0);
 console.log(
   JSON.stringify({
     kind: "reconstructed-inline-follow",
@@ -133,6 +136,4 @@ console.log(
     traffic,
   }),
 );
-assert.equal(inlineJournals, 2000);
-assert.equal(extraPageReads, 0);
 await replica.stop();

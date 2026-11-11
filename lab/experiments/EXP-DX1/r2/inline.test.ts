@@ -193,6 +193,12 @@ it("shares immutable slabs and one binary index, preserving unicode IDs and old 
   await r.followOnce();
   expect(shared.world("root")).toEqual(snap.world("root"));
   expect(r.world("root")[1]!.id).toBe("later");
+  expect(shared.bytes).toBe(snap.bytes);
+  expect(r.bytes).toBe(
+    (await r.snapshotAt(2))
+      .image()
+      .entities.reduce((n, [, entity]) => n + (entity.byteLength ?? entity.buffer.byteLength), 0),
+  );
 });
 
 it("binary indexes distinguish Unicode, lone surrogates, collisions and absent IDs", async () => {
@@ -293,4 +299,18 @@ it("invalidates an incremental journal with an unknown reference instead of gues
   };
   await expect(r.followOnce()).rejects.toThrow("Reference coverage");
   expect(r.isValid).toBe(false);
+});
+
+it("bounds inline feed responses after a publication backlog", async () => {
+  let input: any;
+  const client = {
+    async request(_method: string, _path: string, body: any) {
+      input = body;
+      return { head: 1, transactions: [] };
+    },
+  };
+  const source = Replica.source(client as any, "test", async () => 1, 0);
+  await source.feed(1, 1000, 0);
+  expect(input.replicaRows).toBe(true);
+  expect(input.limit).toBe(16);
 });

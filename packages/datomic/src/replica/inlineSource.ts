@@ -51,7 +51,9 @@ export function inlineSource(
       }>(
         "POST",
         `/v2/db/${db}/transactions`,
-        { after, limit, waitMs, replicaRows: true, validAt },
+        // [DX-R2] Why: activation can leave hundreds of 64-subject publication journals queued; bound response/packing bursts.
+        // Rejected: returning 1,000 complete replacement payloads in one response (can exceed the 64 MiB client cap).
+        { after, limit: Math.min(limit, 16), waitMs, replicaRows: true, validAt },
         Math.max(30000, waitMs + 5000),
       );
       if (page.declined !== undefined || !Array.isArray(page.transactions))

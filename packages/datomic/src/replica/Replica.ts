@@ -71,6 +71,7 @@ export class ReplicaSnapshot {
   }
 
   get bytes(): number {
+    if (this.entities.bytes !== undefined) return this.entities.bytes;
     let n = 0;
     for (const e of this.entities.values()) n += e.byteLength ?? e.buffer.byteLength;
     return n;
@@ -131,6 +132,7 @@ export class Replica {
     return this.valid;
   }
   get bytes(): number {
+    if (this.entities.bytes !== undefined) return this.entities.bytes;
     let n = 0;
     for (const e of this.entities.values()) n += e.byteLength ?? e.buffer.byteLength;
     return n;
