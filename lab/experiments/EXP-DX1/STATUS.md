@@ -781,3 +781,35 @@ hashes of the values it read), share that store across candidate releases, and d
 10,000 subjects) by reading lazily from the local copy. A release that changes 3 of 12 rules then reruns about a quarter of the
 rule work, and activation invalidates nothing. It needs per-rule pure functions, recorded reads, no ambient clock (threshold
 primitives so each output carries the instant it could next change), and canonical outputs.
+
+## 2026-11-11 04:10 UTC: research round complete (R1 to R4); DX-M2 launched; nohlt test prepared
+
+All four files are in `~/Claude/Projects/triplex-db-2/research/2026-11-11/`. What changes the plan:
+
+1. **Found by checking R3's warning against the live process: the transactor has never had Datomic's GC flags.**
+   `bin/transactor` applies `-XX:+UseG1GC -XX:MaxGCPauseMillis=50` only when `JAVA_OPTS` is empty; `stack/up.sh` sets it, so the
+   process is `java -server … -Xmx1g -Xms1g -Xms256m -Xmx3g …` (from `docker top tx2-dxh4-q4-ladder-tx`): JVM default pause goal
+   200 ms and a heap that grows from 256 MB. Its pauses (44 to 94 ms) set the burst p99. DX-M1's collector arms changed only the
+   write gateway. Every lane D commit number so far carries this.
+2. **R4: record time as `max(submitted, previous + step)` inside the transaction** removes the `ClockConflict` replay. **R3:
+   transaction hints** (`d/with :return-hints true`, pass `:hints`) move the commit function's reads out of the serialized
+   pipeline; the transactor already batches queued transactions into one storage write, so pipelining is the group commit; do
+   not merge logical commits into one Datomic transaction (functions see only the database before the transaction).
+3. **R4: guest kernel parameter `nohlt`** (arm64 selects `GENERIC_IDLE_POLL_SETUP`; our guest kernel 6.8 has it and boots through
+   GRUB) makes an idle vCPU busy-wait instead of blocking on the host, the suspected cause of the 8 to 10 ms wake penalty. Cost:
+   every vCPU uses a host core at 100% while the VM is up. `lab/bin/vm-nohlt.sh on|off [cpus]` switches it under the lock and
+   runs `vm-wake/run.sh` before and after. To run after q4, the 24 GiB restart and w2. Also from R4: a SCHED_IDLE loop in its own
+   normal-weight cgroup competes at that group's full weight (explains "steals about half"); `cpu.idle=1` on that cgroup is the fix
+   if loops are kept. **Durability caveat for the scorecard:** Lima's vz driver attaches disks with fsync mode "fsync", which
+   Apple documents as best-effort, so a durable acknowledgement on this test bed is not power-loss durable and the 3 ms commit
+   cost will not transfer to real hardware unchanged.
+4. **R1 (local copy):** restart from a saved checkpoint plus the feed tail instead of a full bootstrap; mark one subject stale
+   and refetch it instead of rebuilding everything; one incremental hash per subject bucket compared with a gateway-side hash
+   at the same position as the continuous check; cold subjects compressed. Candidates for the brief after DX-R2 merges.
+5. **R2 (evaluation):** per-rule memo keyed by rule hash and read values, shared across candidates (previous entry).
+6. **XTDB (R3 section E):** commits go through a Kafka source log; vendor publishes 27.8k single-put transactions/s pipelined
+   and no latency floor; the agent's inference is that it will not beat 3 ms p50 commits. Lane X stays parked behind lane D.
+
+**DX-M2 launched 04:05 UTC** (`exp/DX-M2-commit-tail`, brief `~/Claude/Projects/triplex-db-2/agents/prompts/DX-M2.md`):
+transactor and write-gateway JVM arms, record time assigned in the transaction, transaction hints. Targets: burst commit p50
+at most 8 ms and p99 at most 30 ms, no transactor pause over 25 ms, zero clock replays, at least 700 commands/s at window 32.
