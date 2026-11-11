@@ -1235,3 +1235,23 @@ the full returned row. No verdict on local reads until F1 to F3 are fixed and th
 complete public Triple; the check covers a typed lossless canonical form of every returned field for both routes, with
 oracle samples through the route under test; a time-only basis is admitted locally only when its cut is closed; split-read
 timestamps retained. Done when the reviewer's command exits 0. Code and unit tests now, measurements after the seed.
+
+## 2026-11-11 17:15 UTC: DX-R3 part 4 fixed F1 to F3 offline (`7ec1c313`, not merged); reviewer sent back; seed at 30%
+
+1. **F1:** packed rows carry `recordedAt`, `createdBy`, `entityType`, `schemaVersion`, `txId`; the local route returns the full
+   public Triple with real Effect Options; a buffer without source metadata declines. No gateway change was needed.
+2. **F2:** the judge compares a typed canonical form of every public field against a full-row model built from the seed and
+   every write receipt; oracle samples go through the route under test and the gateway; signed zero preserved.
+3. **F3:** a time-only basis is local only after a later journal with a strictly greater clock has been applied.
+4. Split reads keep both rules and now retain assignment, first-step end, acknowledgement, application and second-step times.
+5. Cost, from recorded 1,000-subject inputs (no engine): packed bytes per subject 46,212 to 67,691 (+46%); verified reads/s on
+   one thread 8,234 to 7,407 (-10%); client CPU per pull 0.121 to 0.134 ms.
+6. Recorded replay under the stronger check: 3,000 complete world pairs, 10,000 observations, 2,000 journals; zero differences.
+7. The reviewer's command still exits 1: its tests assert the old defect before the claim, and three fixtures are
+   projection-only buffers that now decline. The builder left them as they are. **DX-V1 resumed 17:14 UTC** to rewrite its
+   claim tests, rule on each fix, and attack the new check and the fixed read path.
+8. Not run (lock held by the seed): the 200,000-pair differential with full rows and the ladders. Command for the
+   orchestrator after the seed: `node lab/bin/heavy.mjs --label DX-R3-p4-both -- bash lab/experiments/EXP-DX1/r3/run.sh both p4-both`.
+
+Seed at 17:13 UTC: 1,312,000 commands (about 30,000 subjects), 452 to 566 commands/s between maintenance stops, first attempt.
+The 100,000-subject memory projection for the local copy rises with F1's fix from 5.66 GB to about 8.3 GB of data.
