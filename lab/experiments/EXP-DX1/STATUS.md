@@ -847,3 +847,13 @@ Zero-reader writer trace, 10,000 subjects, 200 s, Postgres on CPU 0, transactor 
 Reading: loops inside the containers take 30% off the sparse-commit median and add 46% to the burst median, so they are not a
 fix. The arms ran 50 minutes apart (the lock went to others in between) and the host was quieter for the second, so the steady
 gain is an upper bound. In-container loops are closed as an option; `nohlt` (whole-guest idle polling) is the remaining test.
+
+## 2026-11-11 05:10 UTC: VM at 24 GiB; q5 running; nohlt queued behind q5
+
+VM restarted 05:08 UTC under the lock: 8 CPU, 24 GiB (docker sees 25,146,339,328 bytes), 157 volumes and 16 images intact, data
+disk remounted with `discard`. Log `~/Claude/Projects/triplex-db-2/evidence/ORCH-vm-resize/resize-20261111T035920Z-24g.log`.
+The docker context was `default` before and after: the other project stopped Sam's default colima profile during its wind-down
+(`colima list` shows it Stopped), which is what moved the context off `colima`; nothing here touched that profile.
+
+q5 (frozen checkout `1eea10e2`, driver container 12 GiB, heap 8 GiB) started 05:09 UTC. `lab/bin/vm-nohlt.sh on 8` waits for q5's
+`host-after` file. Agents holding the lock after that restart measure under `nohlt`; compare their absolute numbers with care.
