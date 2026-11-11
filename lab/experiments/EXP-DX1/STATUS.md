@@ -598,6 +598,27 @@ Orchestrator's note for the next jump: once DX-R1's local copy passes its equali
 recent revisions can serve current and recently pinned reads with no request at all; that takes the read path's cost out of
 both the gateway and the client's decode. Not started.
 
+## DX-B10 result (2026-11-11 00:30 UTC, branch `exp/DX-B10-order` head 489409b7, **not merged: ordering proofs not run**)
+
+Step 1 committed and gated (37 native tests, 300 differential scenarios with 95,028 comparisons): DX-B9's gateway key fix and
+sweep decoder repair. Step 2 committed: strict per-client commit order (client UUID plus sequence; gateway buffers up to 64
+early arrivals per client and hands them to the transactor strictly in sequence, no timeout overtakes; a 30 s gap fails the
+buffered suffix with a typed `CommitOrderGap`). Passed after step 2: build, 10 units, `reach` and `concurrent-commits` on both
+layouts (6,400 pipelined commands, 1,000 conflicting races). **Not run** (over 100 minutes waiting for the lock): the 10,000-arrival
+ordering tests (`commit_order_test.clj`, `strict-order.test.ts`), the full suite, the W0 seed at window 1 and 32, the fingerprint.
+
+## DX-H8 interim (branch `exp/DX-H8-preview-activation`): publication cost per subject measured
+
+Stored-preview activation at 1,000 subjects: 280 subjects/s (147 affected and re-evaluated, 853 reused, largest fan-out 138 from
+one work location); the no-preview fallback 162 subjects/s in the same session. Publication is the bound: 333 ms per 64-subject
+commit, best 1.07 ms per subject at 256 subjects per commit; the gateway rejects request bodies over 4 MiB (1,024 subjects).
+With Sam's ruling that only changed outputs are published in ordinary commits, this cost applies to the changed subjects only.
+Now sealing a 10,000-subject W0 seed (70-minute hold); the orchestrator stops it after that, since its remaining targets are
+comparison only and the lock is needed.
+
+**The measurement lock is the bottleneck: DX-H7 waited 112 minutes, DX-B10 over 100.** At most three agents that need the lock
+from now on, and long holds only for things every design needs.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
@@ -605,7 +626,6 @@ both the gateway and the client's decode. Not started.
 | DX-H8 | P5 jump: preview memo, feed-driven re-evaluation, coalesced publication; publication profile; seal a 10,000-subject W0 seed; 10,000-subject activation | `exp/DX-H8-preview-activation`, `.claude/worktrees/dx-h8` | `.../prompts/DX-H8.md` |
 | DX-R1 | Local copy of current facts in the runtime (bootstrap, follow the feed, freeze), release evaluation from it for one and several candidates, publish only changed outputs; equality gates against the gateway and the full sweep | `exp/DX-R1-replica`, `.claude/worktrees/dx-r1` | `.../prompts/DX-R1.md` |
 | DX-M1 (resumed 23:11 UTC) | Collector arms for the write path, alternating: longest pause under 20 ms through the burst | `exp/DX-M1-stall`, `.claude/worktrees/dx-m1` | `.../prompts/DX-M1-resume1.md` |
-| DX-B10 | Gate and commit DX-B9's gateway fix; strict per-client commit order with tests; W0 seed at window 32 with the fingerprint | `exp/DX-B10-order` (from `exp/DX-B9-walls`), `.claude/worktrees/dx-b10` | `.../prompts/DX-B10.md` |
 | DX-H7 (resumed 00:06 UTC) | Gate its client and driver changes; writer predecessor-stamp map (one HTTP call per commit at 10,000 subjects) | `exp/DX-H7-driver-10k`, `.claude/worktrees/dx-h7` | `.../prompts/DX-H7-resume1.md` |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
