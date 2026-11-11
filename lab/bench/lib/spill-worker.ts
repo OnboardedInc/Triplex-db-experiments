@@ -1,7 +1,7 @@
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
-import { ReadRecords } from "./lib/read-records.ts";
-import { R, type ReadRecord } from "./lib/observe.ts";
-import { Histogram } from "./lib/hist.ts";
+import { ReadRecords } from "./read-records.ts";
+import { R, type ReadRecord } from "./observe.ts";
+import { Histogram } from "./hist.ts";
 const records = new ReadRecords(cfg.directory);
 const starts = new Map<number, number>();
 const phases = new Map<number, { reads: number; errors: number; settled: number; read: Histogram; wait: Histogram; routes: Record<string, number> }>();

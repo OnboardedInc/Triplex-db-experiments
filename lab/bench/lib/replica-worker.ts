@@ -1,6 +1,6 @@
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
-import { openComposition } from "./lib/composition.ts";
-import { ReplicaReadHost } from "./lib/replica-reads.ts";
+import { openComposition } from "./composition.ts";
+import { ReplicaReadHost } from "./replica-reads.ts";
 const comp = await openComposition(cfg.composition, "datomic", cfg.scope);
 try {
   const host = await ReplicaReadHost.open(cfg.scope, cfg.roots, comp, cfg.initial, cfg.feed, cfg.historyBytes, cfg.peer);

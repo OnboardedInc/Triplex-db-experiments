@@ -18,7 +18,7 @@ export class SpillThread {
   readonly directory: string;
   constructor(directory: string) {
     this.directory = directory;
-    this.worker = new Worker(new URL("../spill-worker.ts", import.meta.url), { workerData: { directory } });
+    this.worker = new Worker(new URL("./spill-worker.ts", import.meta.url), { workerData: { directory } });
     this.worker.on("message", m => {
       if (m.type === "progress") {
         this.delivered = m.count;

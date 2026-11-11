@@ -15,7 +15,7 @@ export class ReplicaThread {
   private closeReply: (() => void) | undefined;
   private constructor(cfg: any, ready: (image: ReadImage) => void, reject: (error: Error) => void) {
     this.index = new ReplicaReader(cfg.historyBytes).index;
-    this.worker = new Worker(new URL("../replica-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
+    this.worker = new Worker(new URL("./replica-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
     this.worker.on("message", m => {
       if (m.type === "ready") { this.index.install(m.image); this.replica.bytes = m.bytes; ready(m.image); }
       if (m.type === "delta") {
