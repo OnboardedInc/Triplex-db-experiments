@@ -849,8 +849,12 @@ async function run() {
       phases.push(entry);
       setReaders(entry.idx, 0, "mixed");
       log(`phase tail: matching both arms to the fixed trace length (${config.matchDurationS}s)`);
+      const tailElu = performance.eventLoopUtilization();
+      const tailDelay = monitorEventLoopDelay({ resolution: 1 }); tailDelay.enable();
       await sleep(until - now());
       entry.end = now();
+      tailDelay.disable();
+      entry.writerThread = { elu: performance.eventLoopUtilization(tailElu).utilization, longestBlockedMs: tailDelay.max / 1e6, p99BlockedMs: tailDelay.percentile(99) / 1e6 };
       entry.traceEndS = (entry.end - traceStart) / 1000;
     }
   }
