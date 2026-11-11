@@ -111,7 +111,9 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
 }
 const statViews = new WeakMap<object, DataView>();
 export class ReplicaReader {
-  readonly index = new api.RecentReads();
+  readonly index: InstanceType<typeof api.RecentReads>;
+  constructor(historyBytes = 64 * 1024 ** 2) { this.index = new api.RecentReads(20_000, historyBytes); }
+  readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0 };
   private waiters = new Set<{ p: number; done(): void }>();
   install(image: ReadImage) {
     this.index.install(image);
@@ -158,15 +160,19 @@ export class ReplicaReader {
         {
           route: before.route === "replica" && after.route === "replica" ? "replica" : "fallback",
           roundTrips: before.roundTrips + after.roundTrips,
+          replicaFallbackReason: before.replicaFallbackReason ?? after.replicaFallbackReason,
           waitedMs: before.waitedMs + after.waitedMs,
         },
       );
     }
     let waitedMs = 0;
     if (basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position) {
+      this.diagnostics.ahead++;
       const start = performance.now();
       await this.wait(basis.recordedPosition, 10);
       waitedMs = performance.now() - start;
+      if (this.index.position >= basis.recordedPosition) this.diagnostics.caughtUp++;
+      else this.diagnostics.waitExpired++;
     }
     if (!rows) {
       const total = { a: 0, b: 0, n: 0, bytes: 0, stamp: -1, stamps: 0 };
@@ -205,7 +211,8 @@ export class ReplicaReader {
           return refs;
         },
       );
-      if (found)
+      if (found) {
+        this.diagnostics.local++;
         return {
           // [DX-R3] Why: a pull returns its actual immutable world, not only a checksum; decoding is demand-driven.
           // Rejected: an empty triples array paired with a cached nonempty observation.
@@ -239,9 +246,11 @@ export class ReplicaReader {
             bytes: total.bytes,
           },
         };
+      }
     } else {
       const found = this.index.pull(root, basis);
-      if (found)
+      if (found) {
+        this.diagnostics.local++;
         return {
           triples: found.rows,
           entities: found.entities,
@@ -251,18 +260,25 @@ export class ReplicaReader {
           language: "packed",
           waitedMs,
         };
+      }
     }
+    this.diagnostics.fallback++;
+    if (!(basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position)) this.diagnostics.ineligible++;
+    const replicaFallbackReason = !this.index.valid ? "copy-unavailable" :
+      basis.recordedPosition !== undefined && basis.recordedPosition < this.index.floor ? "outside-window" :
+      basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position ? "watermark-timeout" : "unmapped-clock-or-closure";
     const result = await fallback();
-    return { ...result, route: "fallback", waitedMs };
+    return { ...result, route: "fallback", waitedMs, replicaFallbackReason };
   }
 }
 export class ReplicaReadHost {
-  readonly index = new api.RecentReads();
+  readonly index: InstanceType<typeof api.RecentReads>;
   readonly replica: InstanceType<typeof api.Replica>;
   private times: Map<number, number>;
   private closeClient: (() => void) | undefined;
   private listeners = new Set<(delta: ReadDelta) => void>();
-  private constructor(source: any, times: Map<number, number>) {
+  private constructor(source: any, times: Map<number, number>, historyBytes: number) {
+    this.index = new api.RecentReads(20_000, historyBytes);
     this.times = times;
     this.replica = new api.Replica(source, Date.now());
     let initialized = false;
@@ -291,6 +307,8 @@ export class ReplicaReadHost {
     roots: readonly string[],
     comp: CompositionHandle,
     initial: { position: number; instant: number },
+    feed: "legacy" | "inline" = "inline",
+    historyBytes = 64 * 1024 ** 2,
   ) {
     const client = new api.DatomicClient(
       process.env.DATOMIC_READ_URLS?.split(",")[0] ?? process.env.DATOMIC_URL!,
@@ -299,7 +317,7 @@ export class ReplicaReadHost {
       runtimeApi.DatabaseScope.test(scope),
       process.env.TRIPLEX_DATOMIC_LAYOUT ?? "lean",
     );
-    const { source, times } = api.timedReplicaSource(client, db.db, () => comp.currentPosition());
+    const { source, times } = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), feed === "inline" ? Date.now() : undefined);
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
     const positionPage = await source.page(
@@ -318,7 +336,7 @@ export class ReplicaReadHost {
         ? initial.instant
         : NaN,
     );
-    const host = new ReplicaReadHost(source, times);
+    const host = new ReplicaReadHost(source, times, historyBytes);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
     host.replica.start();

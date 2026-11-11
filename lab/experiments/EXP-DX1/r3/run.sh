@@ -3,8 +3,8 @@
 # Rejected: keeping a warm seed stack outside the shared measurement lock.
 set -euo pipefail
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
-mode=${1:?differential|benchmark|both}; attempt=${2:?fresh attempt name}
-[[ $mode == differential || $mode == benchmark || $mode == both ]] || exit 2
+mode=${1:?differential|benchmark|both|compare}; attempt=${2:?fresh attempt name}
+[[ $mode == differential || $mode == benchmark || $mode == both || $mode == compare ]] || exit 2
 [[ $attempt =~ ^[a-z0-9-]+$ ]] || exit 2
 prefix=tx2-dxr3-$attempt
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure

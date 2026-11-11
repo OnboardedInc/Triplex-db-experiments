@@ -8,13 +8,18 @@ kind=${1:?functional|medium|real}; prefix=${2:?prefix}; shift 2
 if [[ $kind == pair ]]; then
   root=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H4}
   duration=${DX_MATCH_DURATION_S:-900}
-  bash "$0" real "$prefix-zero" "$@" --zero-readers --match-duration-s "$duration"
+  # [DX-R3] Why: a parent cancelled while waiting for a child arm must stop that same owned child before returning.
+  # Rejected: leaving a queued real-arm shell orphaned after the pair's heavy wrapper receives TERM.
+  pair_child=
+  trap 'if [[ -n $pair_child ]]; then kill -TERM "$pair_child" 2>/dev/null || true; wait "$pair_child" || true; fi; exit 143' TERM INT
+  pair_arm() { "$@" & pair_child=$!; wait "$pair_child"; pair_child=; }
+  pair_arm bash "$0" real "$prefix-zero" "$@" --zero-readers --match-duration-s "$duration"
   baseline="$root/$prefix-zero/driver/ns-writes.jsonl"
   [[ -s $baseline ]] || exit 1
   mkdir -p "$root/$prefix-ladder/input"
   cp "$baseline" "$root/$prefix-ladder/input/ns-writes.jsonl"
   cp "$root/$prefix-zero/driver/ns-report.json" "$root/$prefix-ladder/input/ns-report.json"
-  bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl" --match-duration-s "$duration"
+  pair_arm bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl" --match-duration-s "$duration"
   exit
 fi
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
@@ -23,6 +28,8 @@ export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex
 out=$DX_STACK_EVIDENCE/$prefix; mkdir -p "$out"
 printf '%s\n' "$kind" "$prefix" "$@" > "$out/arguments.txt"
 git rev-parse HEAD > "$out/head.txt"
+[[ $prefix != tx2-dxr3-* ]] || cat "$out/head.txt"
+if [[ $prefix != tx2-dxr3-* ]]; then
 python3 - "$out" <<'PY2'
 import subprocess,pathlib,sys,hashlib,json
 files=subprocess.check_output(['git','ls-files','lab/bench','lab/experiments/EXP-DX1/stack','lab/experiments/EXP-DX1/h3','lab/experiments/EXP-DX1/h4','packages/datomic','packages/core','pnpm-lock.yaml'],text=True).splitlines()
@@ -30,10 +37,21 @@ files += [str(p) for d in ['datomic','core','host','qualification','w0','xtdb','
 rows={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in sorted(set(files)) if pathlib.Path(p).is_file()}
 pathlib.Path(sys.argv[1]+'/source-build-hashes.json').write_text(json.dumps(rows,indent=2)+'\n')
 PY2
+fi
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
-held=false
+held=false; watchdog=; child=
 cleanup() {
-  rc=$?; trap - EXIT
+  rc=$?; trap - EXIT TERM INT
+  if [[ -n $watchdog ]]; then kill "$watchdog" 2>/dev/null || true; wait "$watchdog" 2>/dev/null || true; fi
+  if [[ $prefix == tx2-dxr3-* ]] && docker container inspect "$prefix-driver" >/dev/null 2>&1; then
+    docker stop --time 10 "$prefix-driver" || true
+  fi
+  if [[ -n $child ]]; then kill -TERM "$child" 2>/dev/null || true; wait "$child" 2>/dev/null || true; fi
+  if [[ $prefix == tx2-dxr3-* ]] && docker container inspect "$prefix-driver" >/dev/null 2>&1; then
+    mkdir -p "$out/driver"
+    docker cp "$prefix-driver:/driver/." "$out/driver/" || { echo 'driver evidence copy failed; retain lock' >&2; exit 1; }
+    docker rm -f "$prefix-driver"
+  fi
   for role in gw-w gw-r tx pg; do docker logs --timestamps "$prefix-$role" > "$out/$role.log" 2>&1 || true; done
   bash lab/experiments/EXP-DX1/stack/down.sh "$prefix" --volumes
   docker volume rm "$prefix-driver" > "$out/volume-cleanup.txt" 2>&1 || true
@@ -41,6 +59,16 @@ cleanup() {
   docker network ls --filter "name=$prefix" --format '{{.Name}}' > "$out/remaining-networks.txt"
   docker volume ls --filter "name=$prefix" --format '{{.Name}}' > "$out/remaining-volumes.txt"
   if [[ -s $out/remaining-containers.txt || -s $out/remaining-networks.txt || -s $out/remaining-volumes.txt ]]; then echo 'cleanup incomplete; retain lock' >&2; exit 1; fi
+  # [DX-R3] Why: one compressed command stream retains the actual reports, writes and logs even on a late failure.
+  # Rejected: source captures/hash manifests or relying on files that disappear with the driver volume.
+  if [[ $prefix == tx2-dxr3-* ]]; then
+    for file in up.log driver.log gw-w.log gw-r.log tx.log pg.log remaining-containers.txt remaining-networks.txt remaining-volumes.txt; do
+      if [[ -f $out/$file ]]; then echo "DX-R3 raw-output $prefix/$file"; cat "$out/$file"; fi
+    done
+    for file in ns-report.json ns-writes.jsonl scan-stats.jsonl oracle-case.json oracle-expected.json; do
+      if [[ -f $out/driver/$file ]]; then echo "DX-R3 raw-output $prefix/driver/$file"; cat "$out/driver/$file"; echo; fi
+    done
+  fi
   if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
   exit "$rc"
 }
@@ -57,16 +85,23 @@ units={'B':1,'KiB':1024,'MiB':1024**2,'GiB':1024**3}
 used=0
 for r in rows:
  m=re.search(r'([\d.]+)([KMG]?i?B)',r['MemUsage'].split('/')[0].strip()); used+=float(m[1])*units[m[2]]
-assert 20*1024**3-used>=8*1024**3, 'less than 8 GiB VM memory free'
-assert shutil.disk_usage('.').free>=5*1024**3, 'less than 5 GiB host disk free'
+if sys.argv[2]=='admitted': assert 20*1024**3-used>=8*1024**3, 'less than 8 GiB VM memory free at admission'
+assert shutil.disk_usage('.').free>=15*1024**3, 'less than 15 GiB host disk free'
 PY2
 }
 check_resources before
 if [[ $kind =~ ^(functional|medium|real)$ ]]; then
   while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
-  held=true; printf '{"id":"DX-H4","prefix":"%s","kind":"%s"}\n' "$prefix" "$kind" > "$lock/owner.json"
+  held=true; printf '{"id":"%s","pid":%s,"prefix":"%s","kind":"%s"}\n' "$agent" "$$" "$prefix" "$kind" > "$lock/owner.json"
 fi
 trap cleanup EXIT
+trap 'exit 143' TERM INT
+# [DX-R3] Why: bound the complete owned hold, including setup, and copy completed phases before cleanup.
+# Rejected: timing only the final benchmark command while setup can already consume the lease.
+if [[ $prefix == tx2-dxr3-* ]]; then
+  node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),1140000)' "$$" & watchdog=$!
+fi
+run_stage() { "$@" & child=$!; wait "$child"; child=; }
 check_resources admitted
 if [[ $kind == functional ]]; then
   export DX_TX_HEAP=1g DX_TX_MEMORY=1500m DX_GW_WRITE_HEAP=768m DX_GW_READ_HEAP=768m TX2_ENGINE_CPUS=1
@@ -82,6 +117,6 @@ else
 fi
 extra=(); [[ -z ${DX_GW_JAVA_OPTS:-} ]] || extra+=(--gw-java-opts "$DX_GW_JAVA_OPTS")
 [[ -z ${DX_PG_SETTINGS:-} ]] || extra+=(--pg-settings "$DX_PG_SETTINGS")
-bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
-bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
- --lane datomic --composition reach --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1
+run_stage bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
+run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
+ --lane datomic --composition reach --read-path "${DX_READ_PATH:-gateway}" --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1

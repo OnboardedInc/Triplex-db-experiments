@@ -139,13 +139,16 @@ try {
           straddles++;
         }
         const slow = await gateway();
+        // [DX-R3] Why: the gateway result is immutable for this pair; serialize its complete bytes once.
+        // Rejected: serializing the same expected world twice (adds CPU without an independent observation).
+        const expectedBytes = worldBytes(slow.triples);
         assert.equal(
           worldBytes(before.triples),
-          worldBytes(slow.triples),
+          expectedBytes,
           `canonical world at ${JSON.stringify({ n, basis })}`,
         );
         const fast = await reader.pullAt(subject, basis, gateway);
-        assert.equal(worldBytes(fast.triples), worldBytes(slow.triples), `lazy world at ${n}`);
+        assert.equal(worldBytes(fast.triples), expectedBytes, `lazy world at ${n}`);
         assert.deepEqual(observe(fast), observe(slow), `whole-world observation at ${n}`);
         if (before.route === "replica") local++;
         else fallback++;

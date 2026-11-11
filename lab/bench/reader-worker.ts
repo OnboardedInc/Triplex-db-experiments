@@ -1,3 +1,5 @@
+import { ReaderTurn } from "./lib/reader-turn.ts";
+import { Histogram } from "./lib/hist.ts";
 import { readerDiagnostics } from "./lib/reader-diagnostics.ts";
 import { httpCounts } from "./lib/http-counts.ts";
 /**
@@ -25,7 +27,7 @@ import { httpCounts } from "./lib/http-counts.ts";
  *               {type:'split-request', token} | {type:'straddle', token, seq} | {type:'sweep-done', phase, wallMs} | {type:'error', message}
  */
 import { isMainThread, parentPort, workerData } from "node:worker_threads";
-import { performance } from "node:perf_hooks";
+import { performance, monitorEventLoopDelay } from "node:perf_hooks";
 import { readFileSync } from "node:fs";
 import { openComposition, type Basis, type CompositionHandle } from "./lib/composition.ts";
 import { Rng, seedOf } from "./lib/rng.ts";
@@ -34,6 +36,8 @@ import { observe, type ReadRecord } from "./lib/observe.ts";
 
 type ReaderConfig = {
   readPath?: "gateway" | "replica";
+  replicaHistoryMiB?: number;
+  replicaYield?: "loop" | "fair";
   rawSampleLimit?: number;
   replicaImage?: import("../../packages/datomic/dist/index.js").ReadImage;
   entityCacheBytes?: number;
@@ -58,8 +62,16 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   const DAY = 86_400_000;
 
   let comp: CompositionHandle;
-  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader() : undefined;
+  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2) : undefined;
   if (replica && cfg.replicaImage) replica.install(cfg.replicaImage);
+  const turn = new ReaderTurn();
+  const loopDelay = monitorEventLoopDelay({ resolution: 1 });
+  loopDelay.enable();
+  const deltaLag = new Histogram();
+  let deltas = 0;
+  const phases = new Map<number, { reads: number; reasons: Record<string, number>; straddleWait: Histogram }>();
+  const finalDiagnostics = () => ({ gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
+    phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, fallbackReasons: s.reasons, straddleWait: s.straddleWait.toJSON() }])) });
   let phase = -1;
   let mode = "mixed";
   let wanted = 0;
@@ -74,9 +86,14 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   const waiting = new Map<number, (msg: any) => void>();
   const ask = (msg: any, timeoutMs: number) => {
     const token = ++tokenSeq;
-    const p = new Promise<any>((resolve) => waiting.set(token, resolve));
-    port.postMessage({ ...msg, token });
-    return Promise.race([p, new Promise<any>((r) => setTimeout(() => r(null), timeoutMs))]).finally(() => waiting.delete(token));
+    // [DX-R3] Why: completed split requests must not retain 2/10-second timeout promises during fast local reads.
+    // Rejected: racing a live timeout that still fires after its reply has already arrived.
+    return new Promise<any>(resolve => {
+      const done = (reply: any) => { clearTimeout(timer); waiting.delete(token); resolve(reply); };
+      const timer = setTimeout(() => done(null), timeoutMs);
+      waiting.set(token, done);
+      port.postMessage({ ...msg, token });
+    });
   };
 
   function pickSubject(rng: Rng): { subject: number; hotPick: boolean } {
@@ -136,6 +153,10 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       // The wait for the straddled command's ACK is the driver's scheduling, not the store's service time.
       const latency = performance.now() - t0 - straddleWaitMs;
       const o = observe(pr);
+      const stats = phases.get(ph) ?? { reads: 0, reasons: {}, straddleWait: new Histogram() };
+      phases.set(ph, stats); stats.reads++;
+      if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? (opts.keepRows ? "oracle-raw" : "gateway"); stats.reasons[reason] = (stats.reasons[reason] ?? 0) + 1; }
+      if (split > 0) stats.straddleWait.recordMs(straddleWaitMs);
       records.push([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, pr.route, pr.language, pr.waitedMs]);
       if (opts.keepRows)
         samples.push({ phase: ph, subject, basis, position, start, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo ?? null, t.id]) });
@@ -150,6 +171,8 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     running++;
     try {
       while (!stopping && id < wanted && acked.length > 0) {
+        if (replica && cfg.replicaYield !== "loop") await turn.enter();
+        if (stopping || id >= wanted) break;
         const oracle = cfg.sampleSubjects.length > 0 && rng.next() < cfg.oracleRate;
         let picked = oracle ? { subject: cfg.sampleSubjects[rng.int(cfg.sampleSubjects.length)]!, hotPick: false } : pickSubject(rng);
         const [basis, kind, position] = pickBasis(rng);
@@ -165,7 +188,11 @@ export async function startReader(port: any, cfg: ReaderConfig) {
         await readOnce(picked.subject, basis, kind, position, phase, { keepRows, straddleSeq, hotPick: picked.hotPick });
         // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
         // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
-        if (replica && ++localReads % 8 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+        if (replica) {
+          if (cfg.replicaYield === "loop") {
+            if (++localReads % 8 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+          }
+        }
       }
     } finally {
       running--;
@@ -193,8 +220,9 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   let elu = performance.eventLoopUtilization();
   const flush = setInterval(() => {
     const next = performance.eventLoopUtilization();
-    port.postMessage({ type: "elu", t: nowAbs(), elu: performance.eventLoopUtilization(next, elu).utilization, activeMs: performance.eventLoopUtilization(next, elu).active, threadCpuMs: threadCpuMs(), httpCounts: httpCounts(), diagnostics: readerDiagnostics(), memory: process.memoryUsage(), running });
+    port.postMessage({ type: "elu", t: nowAbs(), elu: performance.eventLoopUtilization(next, elu).utilization, activeMs: performance.eventLoopUtilization(next, elu).active, threadCpuMs: threadCpuMs(), httpCounts: httpCounts(), diagnostics: { gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics, loopDelay: { p99Ms: loopDelay.percentile(99) / 1e6, maxMs: loopDelay.max / 1e6 }, deltas, deltaLag: deltaLag.summary() }, memory: process.memoryUsage(), running });
     elu = next;
+    loopDelay.reset();
     if (records.length || samples.length) {
       port.postMessage({ type: "reads", records, samples });
       records = [];
@@ -204,6 +232,8 @@ export async function startReader(port: any, cfg: ReaderConfig) {
 
   port.on("message", async (msg: any) => {
     if (msg.type === "replica-delta") {
+      deltas++;
+      if (msg.sentAt !== undefined) deltaLag.recordMs(nowAbs() - msg.sentAt);
       replica?.apply(msg.delta);
     } else if (msg.type === "level") {
       phase = msg.phase;
@@ -223,6 +253,9 @@ export async function startReader(port: any, cfg: ReaderConfig) {
         Array.from({ length: msg.concurrency }, async () => {
           while (!stopping && next < list.length) {
             const subject = list[next++]!;
+            // [DX-R3] Why: sweep reads must yield to the same feed/traffic budget as live readers.
+            // Rejected: a 10k-subject local microtask chain that stalls every worker message.
+            if (replica && cfg.replicaYield !== "loop") await turn.enter();
             await readOnce(subject, msg.basis, 0, msg.position, msg.phase, { keepRows: false, sweep: true });
           }
         }),
@@ -235,10 +268,11 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       const deadline = Date.now() + 30_000;
       while (running > 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
       clearInterval(flush);
+      loopDelay.disable();
       port.postMessage({ type: "reads", records, samples });
       records = [];
       samples = [];
-      const diagnostics = readerDiagnostics();
+      const diagnostics = finalDiagnostics();
       await comp.close().catch(() => {});
       port.postMessage({ type: "stopped", httpCounts: httpCounts(), diagnostics });
     }
