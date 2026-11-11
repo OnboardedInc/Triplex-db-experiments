@@ -1286,3 +1286,27 @@ history imports that carry old record times.
 
 **DX-R3 resumed 17:30 UTC, part 5** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-R3-resume4.md`): R2-A, R2-B, R2-C and a
 minimum of locally answered raw samples per ladder level. Seed at 17:30 UTC: 1,734,000 commands (about 40,000 subjects).
+
+## 2026-11-11 18:25 UTC: seed attempt 1 stopped at 50,000 and resumed; DX-R3 part 5 done offline; DX-V1 round three
+
+**Seed.** Attempt 1 (16:00 to 18:08 UTC) seeded and committed 50,000 subjects (2,176,327 positions; 40,000 verified) and
+stopped in the 50,000 chunk's maintenance with `GC did not quiesce`: `s5/hold.sh` waited 60 x 5 s for the storage table's row
+count to stop falling, and `gc-storage` was still deleting (633,168 rows, 7.7 GB of values). The unsealed volumes were kept.
+Attempt 2 resumed at 18:08:35 UTC from the checkpoint (`recovered 0`), the count settled (609,875 rows) and the 50,000 chunk's
+read-back fingerprint is recorded. Fix for later attempts, committed in the DX-S5 worktree as `8ab86b2c`: wait up to 360 x 5 s.
+The running attempt keeps the script it started with (the edit replaced the file, it did not rewrite it in place).
+Disk at 18:22 UTC: Mac 26.3 GiB free (floor 15), VM data disk 46 GB free, Postgres directory 8.8 GB after maintenance.
+
+**DX-R3 part 5 (`59fb16ae`, not merged), offline.** R2-A: expected digest, count and stamp from one receipt-bound full-row
+walk, cache cuts at every record start, retraction, `validFrom` and `validTo`. R2-C: canonicalization validates prototypes and
+own data properties; anything else is an invalid-value violation. R2-B: immutable `strictRecordClocks` per scope written with
+the bootstrap transaction; in a strict scope the commit function rejects any write whose record clock is not above the
+durable maximum and requires one finite clock per physical commit; capability reports it; time-only local admission only for
+strict scopes on a closed cut. Existing sealed seeds are not strict and cannot be upgraded, so **on them every time-only read
+goes to the gateway**; new benchmark and seed scopes are created strict. Each ladder level needs at least one locally answered
+raw oracle sample or the run's status is ERROR. 45 node, 11 benchmark and 25 package tests pass; recorded replay zero
+differences. No engine run (lock held). **The 100,000-subject seed now being built is not strict** (its procedure predates
+this), which matters only for time-only reads on it, not for release activation.
+
+**DX-V1 resumed 18:23 UTC, round three:** rule on R2-A to R2-C and attack the commit-function change, the capability path and
+the cache cuts again.
