@@ -66,6 +66,10 @@ owned=true
 export DX_R3_OPERATIONAL=$operational DX_R3_PREFIX=$prefix DX_R3_MODE=$mode
 # [DX-R3-P7] Why: the task grants a forty-minute hold for both proofs, twenty otherwise.
 # Rejected: cutting the full differential/ladder off at the old nineteen-minute deadline.
-deadline=1140; [[ $mode != both ]] || deadline=2340
+maximum=1140; [[ $mode != both ]] || maximum=2340
+# [DX-R3-P7] Why: a late free window may have less task budget than the maximum lease.
+# Rejected: reducing reads or phases to fit (would weaken the proof); an early deadline leaves a failed partial run.
+deadline=${DX_R3_HOLD_SECONDS:-$maximum}
+[[ $deadline =~ ^[1-9][0-9]{0,3}$ ]] && (( deadline <= maximum )) || exit 2
 node lab/experiments/EXP-DX1/b6/bounded-command.mjs "$deadline" bash lab/experiments/EXP-DX1/r3/work.sh & job=$!
 wait "$job"
