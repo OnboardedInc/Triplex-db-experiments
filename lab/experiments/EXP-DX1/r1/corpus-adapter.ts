@@ -4,6 +4,7 @@ import {
   decodeValueColumns,
   storedValueDomain,
   ValueDomains,
+  MigrationError,
 } from "../../../../packages/core/dist/runtime/index.js";
 import { Replica, datomicReplicaSource } from "../../../../packages/datomic/dist/index.js";
 import { makeDatomicStorageAdapter as original } from "../../../../packages/datomic/dist/DatomicStorageAdapter.js";
@@ -94,11 +95,20 @@ export const makeDatomicStorageAdapter: typeof original = (...args) => {
     initialize: () =>
       adapter.initialize().pipe(
         Effect.tap(() =>
-          Effect.tryPromise(async () => {
-            const p = await Effect.runPromise(adapter.currentCommitPosition());
-            assert.equal(p, 0, "Corpus scope must start empty");
-            for (const replica of replicas) await replica.bootstrap(roots, p);
-            initialized = true;
+          Effect.tryPromise({
+            try: async () => {
+              const p = await Effect.runPromise(adapter.currentCommitPosition());
+              assert.equal(p, 0, "Corpus scope must start empty");
+              for (const replica of replicas) await replica.bootstrap(roots, p);
+              initialized = true;
+            },
+            catch: (cause) =>
+              new MigrationError({
+                version: 1,
+                name: "replica-corpus-bootstrap",
+                message: "Cannot bootstrap corpus replica",
+                cause,
+              }),
           }),
         ),
       ),
