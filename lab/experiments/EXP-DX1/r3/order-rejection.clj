@@ -17,9 +17,10 @@
     (fn []
       (let [out (submit! :connection [] input (atom {}))]
         (assert (= 2 (:next @(order/lane-for client))))
-        (assert (identical? error (try @out nil (catch Exception e e)))))
+        (assert (identical? error (try @out nil (catch Exception e e))))
+        (assert (identical? error (try (deref out 5000 ::timeout) nil (catch Exception e e)))))
       (assert (= {:accepted true} @(submit! :connection [] (assoc input "sendSequence" 2 "operationId" "retry") (atom {}))))
       (assert (= 3 (:next @(order/lane-for client))))
       (assert (= 2 @calls)))))
-(println "source submit!: synchronous ClockConflict consumed turn 1, original error preserved, retry turn 2 accepted; no engine used")
+(println "source submit!: synchronous ClockConflict consumed turn 1, original error preserved by both plain and timed deref, retry turn 2 accepted; no engine used")
 (shutdown-agents)

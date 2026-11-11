@@ -241,7 +241,13 @@
                                    ;; just like a failed transaction future; the retry owns the next sequence.
                                    ;; Rejected: leaving next unchanged while the adapter has consumed the send.
                                    (catch Exception e
-                                     (if (re-find #"TRIPLEX_CLOCK" (str e)) (delay (throw e)) (throw e))))]
+                                     (if (re-find #"TRIPLEX_CLOCK" (str e))
+                                       ;; [DX-R3-P7] Why: commit! dereferences with a deadline.
+                                       ;; Rejected: Delay (plain deref only; masks the clock error on timed deref).
+                                       (reify
+                                         clojure.lang.IDeref (deref [_] (throw e))
+                                         clojure.lang.IBlockingDeref (deref [_ _ _] (throw e)))
+                                       (throw e))))]
                    (swap! timeline assoc :submitted (System/nanoTime)) future))]
     (if-let [client (get input "clientId")]
       (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
