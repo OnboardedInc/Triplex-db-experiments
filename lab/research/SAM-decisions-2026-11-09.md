@@ -203,3 +203,19 @@ Orchestrator reading:
    subjects without hurting live traffic; what gets published is what changed, in ordinary-sized commits, and a very large
    publish being slower is acceptable. `lab/TARGETS.md` P5 item 5 ("wall time includes evaluation and publication") is read as:
    evaluation of all subjects plus publication of the changed outputs.
+
+## 2026-11-11 about 15:40 UTC: keep `nohlt` on; build the 100,000-subject seed as fast as possible; the Mac is free
+
+Sam, verbatim (dictated; "no HLT" is `nohlt`, "the other way penalty" is the wake penalty, "Build the C" is read as "build
+the seed"):
+
+> Yeah I'm good with the no HLT thing being on. That works for me. Removing the other way penalty works for me.
+>
+> What's the durable commit on this test bed? Is it not power-loss durable? It will not carry over. I don't get what you're actually saying there. I don't think we should switch off the no HLT. You can keep that on to keep testing. That's fine.
+>
+> Build the C as fast as you can so we can start to do it. That would be great. I'm not using this computer at all so you just need to get it all done.
+
+Orchestrator's reading:
+1. `nohlt` stays on as the standing test condition. The queued switch-off was cancelled before it ran.
+2. Sam is not using this Mac, so the VM's eight busy cores and long holds are acceptable, day or night.
+3. The 100,000-subject seed is the top job; run it as soon as the corrected procedure is proven.
