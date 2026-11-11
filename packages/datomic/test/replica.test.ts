@@ -212,4 +212,45 @@ describe("packed replica", () => {
     expect(original.world("root")[1]!.value.value).toBe("before");
     expect(r.position).toBe(2001);
   });
+  it("captures a requested cut while an already in-flight follower batch advances beyond it", async () => {
+    const f = fixture(),
+      r = new Replica(f.source, 0);
+    await r.bootstrap(["root"]);
+    f.commit([["shared", [row("shared", "v2", { type: "string", value: "v2" }, 2)]]]);
+    f.commit([["shared", [row("shared", "v3", { type: "string", value: "v3" }, 3)]]]);
+    const original = f.source.feed;
+    let release!: () => void, entered!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const started = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    f.source.feed = async (...args) => {
+      entered();
+      await gate;
+      return original(...args);
+    };
+    const running = r.followOnce();
+    await started;
+    const frozen = r.snapshotAt(2);
+    release();
+    const view = await frozen;
+    await running;
+    expect(r.position).toBe(3);
+    expect(view.position).toBe(2);
+    expect(view.world("root")[1]!.id).toBe("v2");
+    expect(r.world("root")[1]!.id).toBe("v3");
+    expect((await r.capture()).position).toBe(3);
+  });
+  it("cancels a future capture when stopped instead of leaving its polling task alive", async () => {
+    const f = fixture(),
+      r = new Replica(f.source, 0);
+    await r.bootstrap(["root"]);
+    const waiting = r.snapshotAt(10),
+      rejected = expect(waiting).rejects.toThrow("stopped");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await r.stop();
+    await rejected;
+  });
 });

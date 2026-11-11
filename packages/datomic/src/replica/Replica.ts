@@ -70,7 +70,24 @@ export class Replica {
   private stopped = true;
   private roots: readonly string[] = [];
   private configured = false;
+  private captureEpoch = 0;
   private waiters = new Set<{ p: number; resolve(): void; reject(e: unknown): void }>();
+  private captures = new Map<
+    number,
+    Set<{ resolve(view: ReplicaSnapshot): void; reject(e: unknown): void }>
+  >();
+  private view(): ReplicaSnapshot {
+    return new ReplicaSnapshot({
+      position: this.watermark,
+      validAt: this.validAt,
+      entities: [...this.entities],
+    });
+  }
+  private rejectCaptures(error: unknown) {
+    for (const requests of this.captures.values())
+      for (const request of requests) request.reject(error);
+    this.captures.clear();
+  }
   constructor(
     readonly source: ReplicaSource,
     readonly validAt: number,
@@ -97,10 +114,17 @@ export class Replica {
     this.valid = false;
     for (const w of this.waiters) w.reject(e);
     this.waiters.clear();
+    this.rejectCaptures(e);
     throw e;
   }
   private advance(p: number) {
     this.watermark = p;
+    const requests = this.captures.get(p);
+    if (requests) {
+      const view = this.view();
+      for (const request of requests) request.resolve(view);
+      this.captures.delete(p);
+    }
     for (const w of this.waiters)
       if (w.p <= p) {
         w.resolve();
@@ -196,6 +220,7 @@ export class Replica {
   bootstrap(roots: readonly string[], p?: number): Promise<void> {
     return this.exclusive(async () => {
       try {
+        this.rejectCaptures(new ReplicaInvalid("Replica rebuilt before requested snapshot"));
         this.valid = false;
         const cut = p ?? (await this.source.head());
         position(cut);
@@ -261,17 +286,31 @@ export class Replica {
   }
   async snapshotAt(p: number): Promise<ReplicaSnapshot> {
     position(p);
-    // [DX-R1] Why: exact capture is serialized with application; later commits replace immutable buffers.
-    // Rejected: awaiting a watermark then capturing (the follower could already have passed the requested cut).
+    if (!this.valid || p < this.watermark)
+      return Promise.reject(new ReplicaInvalid("Exact current snapshot unavailable"));
+    if (p === this.watermark) return Promise.resolve(this.view());
+    // [DX-R1] Why: register synchronously before an in-flight batch can pass P; advance captures P before its next journal.
+    // Rejected: queuing the capture behind a follower batch (it could finish beyond the requested position).
+    const epoch = this.captureEpoch;
+    const result = new Promise<ReplicaSnapshot>((resolve, reject) => {
+      const requests = this.captures.get(p) ?? new Set();
+      requests.add({ resolve, reject });
+      this.captures.set(p, requests);
+    });
+    void this.exclusive(async () => {
+      while (this.valid && this.watermark < p && epoch === this.captureEpoch)
+        await this.applyFeed(1000, p);
+    }).catch((error) => this.rejectCaptures(error));
+    return result;
+  }
+  capture(): Promise<ReplicaSnapshot> {
     return this.exclusive(async () => {
-      while (this.valid && this.watermark < p) await this.applyFeed(1000, p);
-      if (!this.valid || this.watermark !== p)
-        throw new ReplicaInvalid("Exact current snapshot unavailable");
-      return new ReplicaSnapshot({
-        position: p,
-        validAt: this.validAt,
-        entities: [...this.entities],
-      });
+      if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
+      const p = await this.source.head();
+      position(p);
+      if (p < this.watermark) throw new ReplicaInvalid("Capture head regressed");
+      while (this.watermark < p) await this.applyFeed(1000, p);
+      return this.view();
     });
   }
   world(subjectId: string): SweepRow[] {
@@ -297,9 +336,13 @@ export class Replica {
   }
   async stop(): Promise<void> {
     this.stopped = true;
+    this.captureEpoch++;
+    this.rejectCaptures(new ReplicaInvalid("Replica stopped"));
     await this.following;
+    await this.serial;
     for (const w of this.waiters) w.reject(new ReplicaInvalid("Replica stopped"));
     this.waiters.clear();
+    this.rejectCaptures(new ReplicaInvalid("Replica stopped"));
   }
 }
 function equalBytes(a: SharedArrayBuffer, b: SharedArrayBuffer) {
