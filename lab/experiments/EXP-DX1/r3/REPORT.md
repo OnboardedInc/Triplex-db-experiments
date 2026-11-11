@@ -1,64 +1,54 @@
-# DX-R3 part 5 — offline regressions fixed; native proof pending
-Merged review/DX-V1 at 720f6774 first; reviewer files remain unchanged. Code commits: aed7b489, 75ddfd79.
-R2-A: expected digest, fact count and stamp now come from the same receipt-bound full-row visibility walk.
-Cache cuts include every reachable seed/shared/historical row's record start/retraction and validFrom/validTo, including reference intervals.
-Receipt-version changes invalidate those boundaries; the old business-only model remains ineligible for driver correctness verdicts.
-Test: expired assertion rejected by cached judge; exact smaller world accepted; exhaustive seed/shared/reference/retraction boundary comparisons pass.
-R2-C: canonicalization validates prototypes and own data properties before enumeration; Date/Map/Set/classes, sparse/custom arrays, symbols and accessors reject.
-Plain objects (Object.prototype or null) and ordinary arrays remain supported; typed numbers retain signed zero.
-Unsupported returned values produce CanonicalValueError, classified as invalid-value violations, including the driver's compact verdict array.
-Tests exercise prototype attacks, correct public rows, and the actual compact verdict pipeline; nothing is sampled in correctness judging.
-R2-B: scope creation writes immutable strictRecordClocks with the unique bootstrap transaction; defaults and existing missing properties mean false.
-Reopening/late initialization cannot enable or disable it. Creation replies and supported replica capabilities report the actual stored property.
-The serial commit function checks strict SPI and replay-safe writes against the durable prefix maximum, including claim-only/empty commit clocks.
-Strict mode requires one finite numeric record clock per physical commit, above that maximum; clocks normalize to doubles before storing the maximum.
-Uniformity prevents journals inside one physical commit, delivered across feed pages, from closing then regressing a cut.
-Follower clock admission also requires journal instant values to match the stored record timestamps; a mismatched header maps to NaN and declines.
-Existing non-strict SPI/import behavior stays unchanged. Strict imports must use uniformly clocked, increasing commits; unordered historical imports need non-strict scopes.
-Only a source capability with strictRecordClocks=true admits time-only local cuts, still requiring a greater applied clock and exact mapping/window/closure.
-Position/current admission does not require strict clocks. Policy survives shared images; missing old image fields default false.
-New benchmark/seed openings explicitly request strict scopes; existing sealed seeds cannot be upgraded by reopening.
-Thus old sealed seeds have 0% local time-only admission by construction; the current time-only ladder mix uses the gateway on them.
-No fresh strict-scope time-only local share or RYOW wait was measured; report.timeOnlyRouting and replicaRecordClockPolicies now expose actual counts/policy.
-Tests: delayed regressing SPI fixture falls back with complete matching rows; non-strict position/current reads remain local; strict closed cuts/image copies work.
-Native tests added: strict-record-clock-policy in gateway selftest (both head layouts), plus strict-source.ts before the differential.
-The SPI probe checks fresh scope creation, immutable policy/capability, complete row readback, regression/equal-clock rejection, mixed-clock rejection and claim-only maximum.
-Raw oracle: every active ladder level requires at least one actual local full-payload sample compared against the gateway; none makes run status ERROR.
-Open-clock fallbacks do not spend local quota; each worker renews quota per phase after the global extra-sample budget is exhausted.
-All retained local phase samples reach the raw file and oracle; gateway default keeps its prior cap. Oracle model lookup binds exact phase/start/subject/basis.
-Worker test: two phases each retain one matching local sample with global budget 1, after open-clock fallbacks; coverage test rejects missing/mismatched levels.
-Fresh per-level sample counts are unavailable because no native hold was acquired; the offline worker fixture counts are 1 / 1.
+# DX-R3 part 6 — value claims pass; live proof pending
+North star: P1 exact returned payloads and the correctness floor; P2 policy-read cost remains to be measured against lab/TARGETS.md.
+Merged review/DX-V1 at c51a6b32 first; reviewer files are unchanged. Code commit: f86936a2.
+## R3-C2: Option validation and cache admission
+Only the actual supported Effect Some/None prototypes admit Option encoding; unknown prototypes decline as invalid values.
+Every own descriptor is inspected before any Option value is read. Accessors, symbols, hidden extras and invalid tag/value shapes reject.
+Canonical encoding reads validated descriptor values; enumerable extras, including an own tag, contribute to the bytes instead of disappearing.
+The member cache now uses the same supportedDescriptors validation for the row and every nested object/Option/array.
+Only recursively frozen own data enters its WeakMap; mutable Option payloads are re-observed, never certified from an old digest.
+The injected frozen accessor is rejected on its first observation with zero getter calls, so it cannot seed a stale cached verdict.
+## R3-C1/C3: array shape
+Arrays require Array.prototype, exactly the own data indices 0..length-1, each enumerable, plus their non-enumerable length.
+The validator checks actual ownership of each index; matching key counts or numeric-looking names alone do not establish density.
+Hidden indices, sparse arrays, 4294967295/01/-0/1e0 keys, accessors and extras reject before reading values.
+Reviewer command: 3 pass / 0 fail. Own tests cover both Option variants, all descriptor faults, mutable cache payloads, extras and valid dense arrays.
+## R3-N: source policy lookup
+Kept the trusted serial policy read; no client flag bypass was added and commit.clj is unchanged in this part.
+It resolves the attribute ID with d/entid, then reads first(d/datoms db :eavt scope attribute): one indexed (entity,attribute) prefix lookup.
+It is additional work on non-strict scopes too; the existing maximum lookup is unchanged, with no added maximum scan.
+The actual quoted function executed offline with explicit Datomic doubles: 25 clock/boundary checks and 40 non-strict old/new comparisons passed.
+Its read vectors confirm one added attribute-ID resolution plus one policy EAVT lookup; outputs/errors match in all 40 comparisons.
+No engine ran for this probe. Native cost cannot be inferred from double timing; leave the latency measurement to the orchestrator's next commit run.
+## Adapter guidance and ClockConflict
+packages/datomic/README.md now explains creation-only immutable strictRecordClocks, default/existing false, low-level opt-in and actual capability policy.
+It explains local time-only eligibility, closed cuts/fallback, position/current eligibility, sealed-seed behavior and one increasing clock per strict commit.
+History import remedies: a fresh non-strict scope, or a strict scope loaded in increasing commit times, one clock per commit; existing strict scopes cannot downgrade.
+It explicitly bounds enforcement to gateway commit-function writes: raw administrative Datomic transactions can bypass/alter the policy and are outside the guarantee.
+Gateway ClockConflict retains its code/maximum and now names the record-clock policy, greater-clock remedy and history-import alternatives.
+Four actual source-formatter cases pass offline; native SPI and gateway selftests now also assert the policy/remedy message when run.
 ## Gates and evidence
-Evidence: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R3/p5-*.log.gz (raw command output, one compressed file per run).
-45 node tests and 11 benchmark tests pass; 25 package vitest tests pass, 3 live tests skipped; three typechecks pass; explicit worker-entry typecheck passed.
-Lint: zero errors, five pre-existing unused-variable warnings. Package build and git diff --check pass.
-Recorded replay: 3,000 complete typed public worlds and 10,000 prepared/materialized/source observations, zero differences; 2,000 original journals applied.
-Final row layout is unchanged from part 4; no fresh throughput, 10k memory, 200,000-pair result or ladder locality/wait claim is made.
-Primary logs: p5-clock-gates, p5-vitest, p5-bench-unit-host, p5-final-clock-replay, p5-domain-verdict, p5-review-final, p5-review-original-final.
-Native admissions: p5-native{,-clock}-admission.log.gz, both exit 75; DX-S5 still holds the lock. No lease, container, volume or engine slot was created.
-## Reviewer command incompatibility
-New-claim command exits 1 (3 pass / 4 fail), for corrected behavior at unconditional old-defect assertions, not its optional claim assertions.
-round2/attacks.test.ts:27 requires stale cached digest; :29 requires expired rows accepted; :32 requires the correct smaller world rejected.
-:59 requires Date and {} canonical equality; :61 requires acceptance. :92 requires replica routing and :93 requires unequal worlds after an unseen regression.
-Its closed-clock fixture :178 also assumes default-strict RecentReads without a source guarantee; the new contract requires explicit strict proof.
-Original command: 2 pass / 1 fail; F3's fixture similarly assumes strict policy and the old fallback reason. F1/F2 continue passing.
-The review run.sh itself requires three failing claims and writes reviewer files, so it was not invoked. No reviewer assertion was edited or bypassed.
+65 Node regressions pass (48 builder, 17 reviewer), including the exact three value claims; three typechecks pass.
+25 package vitest tests pass, 3 live tests skipped; 11 benchmark tests pass. Lint and git diff --check pass.
+Recorded replay: 2,000 journals/clocks, 3,000 complete typed public worlds, 10,000 source/prepared/materialized observations; zero differences.
+No fresh rate, RSS, follower-delay or engine timing is claimed. No correctness bar or workload rule changed.
+Evidence: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R3/p6-*.log.gz; compressed raw command output, one file per run.
+Primary logs: p6-claim-command, p6-final-validated, p6-vitest, p6-bench-unit, p6-clojure, p6-final-replay, p6-lint.
+The first Java attempt failed before Clojure execution because the old extracted JRE lacked lib/modules (p6-clock-probes).
+Successful probes used a fresh temporary extraction of the already retained CX-DF01 JRE archive, then removed that owned temporary runtime; no download.
+Live admission: p6-native-admission.log.gz exited 75, DX-S5 still holds the lock; no lease/container/volume/slot created. Native strict SPI/differential/ladder remain unverified.
 ## Commands
-node --experimental-strip-types --test lab/experiments/EXP-DX1/r3/*.test.ts
-node --experimental-strip-types --test lab/bench/test/bench.test.ts (host boot-session sysctl access required)
-DX_V1_R2_ASSERT_CLAIM=1 node --experimental-strip-types --test lab/verify/DX-V1/round2/attacks.test.ts
-DX_V1_ASSERT_CLAIM=1 node --experimental-strip-types --test lab/verify/DX-V1/adversarial.test.ts
+node --experimental-strip-types --test lab/verify/DX-V1/round3/value-claims.test.ts
+node --experimental-strip-types --test lab/experiments/EXP-DX1/r3/*.test.ts lab/verify/DX-V1/round3/{claims,value-claims,temporal,capability,read-regressions,reader-probes}.test.ts
 pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec tsc --noEmit -p packages/datomic/tsconfig.json
-pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec tsc --noEmit -p lab/experiments/EXP-DX1/r3/driver-tsconfig.json
-pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec tsc --noEmit -p lab/experiments/EXP-DX1/r3/tsconfig.json
-Vitest: node lab/bin/heavy.mjs --label DX-R3-p5-vitest -- pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec vitest run packages/datomic/test/{replica,replica-packed,replica-source,rowText,reach,sweepRows,compact}.test.ts
-Replay: node lab/bin/heavy.mjs --label DX-R3-p5-final-clock-replay -- node --experimental-strip-types lab/experiments/EXP-DX1/r3/replay.ts /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R1/tx2-dxr1-1000-d/pages
-Native, free-only: DX_R3_TRY_LOCK=1 node lab/bin/heavy.mjs --label DX-R3-p5-prove -- bash lab/experiments/EXP-DX1/r3/run.sh both p5-prove
+Same tsc invocation with lab/experiments/EXP-DX1/r3/driver-tsconfig.json and lab/experiments/EXP-DX1/r3/tsconfig.json.
+Clojure: retained JRE 21.0.13+9 / Clojure 1.12.5, clojure.main round3/commit-probe.clj and r3/clock-message.clj, -Xmx128m (source AST/doubles, not Datomic).
+node lab/bin/heavy.mjs --label DX-R3-p6-final-replay -- node --experimental-strip-types lab/experiments/EXP-DX1/r3/replay.ts /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R1/tx2-dxr1-1000-d/pages
+DX_R3_TRY_LOCK=1 node lab/bin/heavy.mjs --label DX-R3-p6-both -- bash lab/experiments/EXP-DX1/r3/run.sh both p6-both
 ## Outcome audit (content / freshness / binding)
-canonical/observe/prepareEntity: complete typed fields validated; immutable version contributions created in this process; exact entity/version/valid cut.
-FullRowModel.summary, Model.expected, ExpectationCache, judgeRead/readVerdicts: full expected content/count/stamp; fresh receipt model and cache invalidation; source command identities and exact basis.
-readOnce/rawLocalCoverage/driver finalization/runOracle: full local/gateway payloads plus independent model verdict; fresh worker arrays/quotas; exact run phase, attempt start, subject, basis and actual route.
-TimedSource/RecentReads.resolve/image: header values match stored record clocks; strict closed cut/window/closure checks; fresh image/feed clocks bound to source capability and exact position. Unknown proof declines.
-create/capability/commit: actual stored immutable policy and serial maximum, no request echo; initial transaction/current serial db; exact scope/commit input. Native execution still unverified.
-strict-source, differential/replay and test assertions: explicit outcomes/counts/complete typed content; fresh execution (recordings labelled offline); own scope/source and requested inputs/cuts. Native tests are not reported PASS.
-No acceptance edits or changed pinned paths found. No root check, native performance PASS, promotion, push or merge to main.
+dataDescriptors/plain/optionData/typed/canonicalRow: validate every own descriptor and supported prototype; fresh descriptor snapshots before reads; exact object fields and complete typed values.
+supportedDescriptors/frozenData/observe/cache: identical shape checks plus recursive frozen data; fresh process WeakMap; exact immutable row instance, never identity-only or getter-backed reuse.
+Unchanged judgeRead/readVerdicts and expected model consume those complete contributions; invalid values remain violations. Every read remains checked at its requested basis.
+Node/reviewer/Clojure/replay assertions check content and explicit counts in this attempt, bind exact source functions/rows/bases, and label doubles and historical inputs; no engine slot is claimed.
+strict-source/native selftest assert ClockConflict code, maximum and message against their own scope; full-row readback/source binding remain mandatory. Those native assertions are not reported PASS.
+No acceptance edits or changed pinned paths found; no root check, native performance PASS, promotion, push or merge to main.
