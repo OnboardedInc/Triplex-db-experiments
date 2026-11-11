@@ -1,26 +1,16 @@
 #!/usr/bin/env bash
-# [DX-V1] Why: retain successful characterization checks AND the three expected failed claim assertions.
-# Rejected: treating any nonzero test exit, an old log, or a generic failed import as reproduction.
+# [DX-V1-R2] Why: run the repaired claim gates and require the exact new counterexamples.
+# Rejected: counting obsolete first-round characterization failures as current evidence.
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
-out=lab/verify/DX-V1
-node --experimental-strip-types --test "$out/adversarial.test.ts" > "$out/fresh-characterization.log" 2>&1
+out=lab/verify/DX-V1/round2
+DX_V1_ASSERT_CLAIM=1 node --experimental-strip-types --test lab/verify/DX-V1/adversarial.test.ts > "$out/final-claims.log" 2>&1
+node --experimental-strip-types --test "$out/attacks.test.ts" "$out/reader-probes.test.ts" > "$out/final-checks.log" 2>&1
 rc=0
-DX_V1_ASSERT_CLAIM=1 node --experimental-strip-types --test "$out/adversarial.test.ts" > "$out/fresh-claim-regressions.log" 2>&1 || rc=$?
+DX_V1_R2_ASSERT_CLAIM=1 node --experimental-strip-types --test "$out/attacks.test.ts" > "$out/final-counterexamples.log" 2>&1 || rc=$?
 [[ $rc == 1 ]]
-[[ $(rg -c '^not ok' "$out/fresh-claim-regressions.log") == 3 ]]
-for finding in F1 F2 F3; do
-  rg -q "^not ok [0-9]+ - $finding:" "$out/fresh-claim-regressions.log"
+[[ $(rg -c '^not ok' "$out/final-counterexamples.log") == 3 ]]
+for finding in R2-A R2-B R2-C; do
+  rg -q "^not ok [0-9]+ - $finding:" "$out/final-counterexamples.log"
 done
-node --experimental-strip-types --test \
-  lab/experiments/EXP-DX1/r3/recent.test.ts \
-  lab/experiments/EXP-DX1/r3/prepared.test.ts \
-  lab/experiments/EXP-DX1/r3/expectation.test.ts \
-  lab/experiments/EXP-DX1/r3/read-records.test.ts \
-  lab/experiments/EXP-DX1/r3/spill-thread.test.ts \
-  lab/experiments/EXP-DX1/r3/inline-clock.test.ts \
-  lab/experiments/EXP-DX1/r3/lifecycle.test.ts \
-  lab/experiments/EXP-DX1/r3/turn.test.ts > "$out/fresh-existing-tests.log" 2>&1
-node --experimental-strip-types lab/experiments/EXP-DX1/r3/replay.ts \
-  /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R1/tx2-dxr1-1000-d/pages > "$out/fresh-recorded-replay.log" 2>&1
-node --experimental-strip-types "$out/split-audit.ts" > "$out/split-audit.json"
+node "$out/check-numbers.mjs" > "$out/builder-numbers.json"

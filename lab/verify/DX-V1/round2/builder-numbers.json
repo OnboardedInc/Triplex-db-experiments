@@ -1,0 +1,73 @@
+{
+  "inputs": [
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R3/p4-footprint-b.log.gz",
+      "sha256": "96299ccb56d1222cb7d7d0ccd2bf2cb73d96c4b171738edab9cb29bd1196cddf",
+      "bytes": 414
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R3/p4-offline-rate-c.log.gz",
+      "sha256": "fae18136ab3611a77892d6b52713e3458a7ddd52f87eb6e7a57283f138fe0c2c",
+      "bytes": 556
+    }
+  ],
+  "footprint": {
+    "kind": "matched-recorded-bootstrap-footprint",
+    "position": 42775,
+    "subjects": 1000,
+    "entities": 145138,
+    "facts": 442196,
+    "beforePackedBytes": 46211688,
+    "afterPackedBytes": 67690600,
+    "beforePackedBytesPerSubject": 46211.688,
+    "afterPackedBytesPerSubject": 67690.6,
+    "preparedSidecarBytes": 75289972,
+    "packedIncreaseRatio": 1.464793928323934,
+    "note": "1000-subject recorded W0 bootstrap; packed payload and accounted sidecars, not 10000-subject NS process RSS"
+  },
+  "packedIncreasePercent": 46.479392832393394,
+  "packedPlusAccountedSidecars": 142980572,
+  "rates": [
+    {
+      "kind": "offline-recorded-reader-rate",
+      "arm": "abbac16b-projection-check",
+      "reads": 200000,
+      "differences": 0,
+      "wallMs": 24290.843542000002,
+      "readsPerS": 8233.555152343337,
+      "clientCpuMsPerPull": 0.12115870999999999,
+      "subjects": 1000,
+      "position": 42775,
+      "memory": {
+        "rss": 1622523904,
+        "heapTotal": 1503887360,
+        "heapUsed": 1336812568,
+        "external": 10082469,
+        "arrayBuffers": 151214873
+      },
+      "note": "single host thread, quiescent historical W0 cut, no engine, no writer, not the 10k ladder"
+    },
+    {
+      "kind": "offline-recorded-reader-rate",
+      "arm": "corrected-full-row-check",
+      "reads": 200000,
+      "differences": 0,
+      "wallMs": 27001.587416000002,
+      "readsPerS": 7406.971927935187,
+      "clientCpuMsPerPull": 0.13385167,
+      "subjects": 1000,
+      "position": 42775,
+      "memory": {
+        "rss": 1589772288,
+        "heapTotal": 1367097344,
+        "heapUsed": 1027988248,
+        "external": 10082509,
+        "arrayBuffers": 151214873
+      },
+      "note": "single host thread, quiescent historical W0 cut, no engine, no writer, not the 10k ladder"
+    }
+  ],
+  "rateCostPercent": 10.039201889270133,
+  "clientCpuIncreasePercent": 10.476308306683046,
+  "interpretation": "Numbers match the raw historical offline logs. One arm per implementation, old first, no paired repetitions/variance/writer/engine; not a live rate result."
+}

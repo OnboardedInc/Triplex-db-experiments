@@ -1,0 +1,48 @@
+TAP version 13
+# {"counterexample":"R2-A","before":{"fullRows":true,"stamp":0,"digest":"3ae267c4fce8a801:120","facts":120,"commits":0},"after":{"fullRows":true,"stamp":0,"digest":"745f18c96542a4ed:119","facts":120,"commits":0},"cached":{"fullRows":true,"stamp":0,"digest":"3ae267c4fce8a801:120","facts":120,"commits":0},"verdict":{"ok":true,"kind":"correct"}}
+# {"counterexample":"R2-B","localIds":["r-1"],"expectedIds":["r-1","r-3"],"route":"replica"}
+# Subtest: R2-A: cached expectation accepts an expired assertion across a finite validTo boundary
+ok 1 - R2-A: cached expectation accepts an expired assertion across a finite validTo boundary
+  ---
+  duration_ms: 17.071917
+  type: 'test'
+  ...
+# Subtest: R2-B: a later retroactive SPI clock can invalidate a locally closed time before delivery
+ok 2 - R2-B: a later retroactive SPI clock can invalidate a locally closed time before delivery
+  ---
+  duration_ms: 15.270542
+  type: 'test'
+  ...
+# Subtest: metadata and interval revisions retain the selected source version, including a retracted row's old tx/clock
+ok 3 - metadata and interval revisions retain the selected source version, including a retracted row's old tx/clock
+  ---
+  duration_ms: 6.689916
+  type: 'test'
+  ...
+# Subtest: closed-clock eligibility at bootstrap, first following cut, floor, image install and rebuild
+ok 4 - closed-clock eligibility at bootstrap, first following cut, floor, image install and rebuild
+  ---
+  duration_ms: 0.3435
+  type: 'test'
+  ...
+# Subtest: canonical field matrix distinguishes missing, undefined, null, Options and all supported value representations
+ok 5 - canonical field matrix distinguishes missing, undefined, null, Options and all supported value representations
+  ---
+  duration_ms: 1.320041
+  type: 'test'
+  ...
+# Subtest: two entity versions sharing a revision never share prepared bytes, metadata or digest cache entries
+ok 6 - two entity versions sharing a revision never share prepared bytes, metadata or digest cache entries
+  ---
+  duration_ms: 1.08725
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 631.229583

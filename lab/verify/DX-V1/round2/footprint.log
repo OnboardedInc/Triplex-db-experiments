@@ -1,0 +1,3 @@
+{"kind":"matched-recorded-bootstrap-footprint","position":42775,"subjects":1000,"entities":145138,"facts":442196,"beforePackedBytes":46211688,"afterPackedBytes":67690600,"beforePackedBytesPerSubject":46211.688,"afterPackedBytesPerSubject":67690.6,"preparedSidecarBytes":75289972,"packedIncreaseRatio":1.464793928323934,"note":"1000-subject recorded W0 bootstrap; packed payload and accounted sidecars, not 10000-subject NS process RSS"}
+(node:46207) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

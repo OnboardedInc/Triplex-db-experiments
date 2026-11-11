@@ -1,0 +1,107 @@
+TAP version 13
+# Subtest: real worker: closed
+not ok 1 - real worker: closed
+  ---
+  duration_ms: 6.495667
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:68:3'
+  failureType: 'uncaughtException'
+  error: |-
+    TypeError: Cannot read properties of undefined (reading 'bind')
+        at openComposition (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/lib/composition.ts:235:36)
+        at async startReader (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/reader-worker.ts:331:12)
+        at async probe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:43:5)
+        at async Test.run (node:internal/test_runner/test:1054:7)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    openComposition (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/lib/composition.ts:235:36)
+    async startReader (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/reader-worker.ts:331:12)
+    async probe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:43:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+    MessagePort.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:34:35)
+    [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)
+  ...
+# Subtest: real worker: open
+not ok 2 - real worker: open
+  ---
+  duration_ms: 3.930917
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:68:3'
+  failureType: 'uncaughtException'
+  error: |-
+    TypeError: Cannot read properties of undefined (reading 'bind')
+        at openComposition (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/lib/composition.ts:235:36)
+        at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+        at async startReader (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/reader-worker.ts:331:12)
+        at async probe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:43:5)
+        at async Test.run (node:internal/test_runner/test:1054:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    openComposition (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/lib/composition.ts:235:36)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async startReader (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/reader-worker.ts:331:12)
+    async probe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:43:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+    MessagePort.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:34:35)
+    [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)
+  ...
+# Subtest: real worker: wrong-gateway
+not ok 3 - real worker: wrong-gateway
+  ---
+  duration_ms: 2.335792
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:68:3'
+  failureType: 'uncaughtException'
+  error: |-
+    TypeError: Cannot read properties of undefined (reading 'bind')
+        at openComposition (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/lib/composition.ts:235:36)
+        at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+        at async startReader (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/reader-worker.ts:331:12)
+        at async probe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:43:5)
+        at async Test.run (node:internal/test_runner/test:1054:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    openComposition (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/lib/composition.ts:235:36)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async startReader (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/reader-worker.ts:331:12)
+    async probe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:43:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+    MessagePort.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:34:35)
+    [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)
+  ...
+# Subtest: real worker: wrong-prepared
+not ok 4 - real worker: wrong-prepared
+  ---
+  duration_ms: 2.143
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:68:3'
+  failureType: 'uncaughtException'
+  error: |-
+    TypeError: Cannot read properties of undefined (reading 'bind')
+        at openComposition (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/lib/composition.ts:235:36)
+        at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+        at async startReader (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/reader-worker.ts:331:12)
+        at async probe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:43:5)
+        at async Test.run (node:internal/test_runner/test:1054:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    openComposition (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/lib/composition.ts:235:36)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async startReader (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/bench/reader-worker.ts:331:12)
+    async probe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:43:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+    MessagePort.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/dx-v1/lab/verify/DX-V1/round2/reader-probes.test.ts:34:35)
+    [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)
+  ...

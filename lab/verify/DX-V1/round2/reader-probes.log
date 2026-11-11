@@ -1,0 +1,38 @@
+TAP version 13
+# {"readerProbe":"closed","calls":1,"records":12,"samples":1,"sampleRoutes":["replica"],"errors":0,"accounting":{"attempted":12,"completed":12,"active":0}}
+# Subtest: real worker: closed
+ok 1 - real worker: closed
+  ---
+  duration_ms: 62.882166
+  type: 'test'
+  ...
+# {"readerProbe":"open","calls":10,"records":9,"samples":1,"sampleRoutes":["fallback"],"errors":0,"accounting":{"attempted":9,"completed":9,"active":0}}
+# Subtest: real worker: open
+ok 2 - real worker: open
+  ---
+  duration_ms: 56.075833
+  type: 'test'
+  ...
+# {"readerProbe":"wrong-gateway","calls":1,"records":76,"samples":0,"sampleRoutes":[],"errors":1,"accounting":{"attempted":76,"completed":76,"active":0}}
+# Subtest: real worker: wrong-gateway
+ok 3 - real worker: wrong-gateway
+  ---
+  duration_ms: 57.914625
+  type: 'test'
+  ...
+# {"readerProbe":"wrong-prepared","calls":1,"records":75,"samples":0,"sampleRoutes":[],"errors":1,"accounting":{"attempted":75,"completed":75,"active":0}}
+# Subtest: real worker: wrong-prepared
+ok 4 - real worker: wrong-prepared
+  ---
+  duration_ms: 53.794625
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 838.732875

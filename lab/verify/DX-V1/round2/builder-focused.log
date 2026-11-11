@@ -1,0 +1,214 @@
+TAP version 13
+# Subtest: expected-world memoization equals the original at all boundaries, including late out-of-order ACKs
+ok 1 - expected-world memoization equals the original at all boundaries, including late out-of-order ACKs
+  ---
+  duration_ms: 368.498084
+  type: 'test'
+  ...
+# Subtest: split selection prefers a real offered command without inventing writes or losing legacy control
+ok 2 - split selection prefers a real offered command without inventing writes or losing legacy control
+  ---
+  duration_ms: 0.1505
+  type: 'test'
+  ...
+# Subtest: F1 corrected: public full Triple equality, actual Options, prepared and materialized observations
+ok 3 - F1 corrected: public full Triple equality, actual Options, prepared and materialized observations
+  ---
+  duration_ms: 4.067917
+  type: 'test'
+  ...
+# Subtest: F2 corrected: real judge rejects every changed field, signed zero, nested JSON and field-boundary ambiguity
+ok 4 - F2 corrected: real judge rejects every changed field, signed zero, nested JSON and field-boundary ambiguity
+  ---
+  duration_ms: 47.535083
+  type: 'test'
+  ...
+# Subtest: F3 corrected: time-only newest clock falls back before delayed equal-clock journal; later clock closes a regular cut
+ok 5 - F3 corrected: time-only newest clock falls back before delayed equal-clock journal; later clock closes a regular cut
+  ---
+  duration_ms: 1.91
+  type: 'test'
+  ...
+# Subtest: projection-only fixtures decline the public route while the standalone SweepRow API remains usable
+ok 6 - projection-only fixtures decline the public route while the standalone SweepRow API remains usable
+  ---
+  duration_ms: 0.161541
+  type: 'test'
+  ...
+# Subtest: reader completion requires drained ACK even on exit zero; post-ready errors stay failures
+ok 7 - reader completion requires drained ACK even on exit zero; post-ready errors stay failures
+  ---
+  duration_ms: 1.336083
+  type: 'test'
+  ...
+# Subtest: stop acknowledgement refuses active live loops or sweep reads
+ok 8 - stop acknowledgement refuses active live loops or sweep reads
+  ---
+  duration_ms: 0.219417
+  type: 'test'
+  ...
+# Subtest: producer sequence rejects duplicate, missing and reordered batches
+ok 9 - producer sequence rejects duplicate, missing and reordered batches
+  ---
+  duration_ms: 0.081667
+  type: 'test'
+  ...
+# Subtest: prepared contributions include every actual typed fact at valid-time boundaries and old cuts
+ok 10 - prepared contributions include every actual typed fact at valid-time boundaries and old cuts
+  ---
+  duration_ms: 43.613958
+  type: 'test'
+  ...
+# Subtest: receipt wait is bounded and reports a fallback; intervening ACK retains the requested basis
+ok 11 - receipt wait is bounded and reports a fallback; intervening ACK retains the requested basis
+  ---
+  duration_ms: 17.428291
+  type: 'test'
+  ...
+# Subtest: recovery does not anchor a record clock from pending or previously rejected journals
+ok 12 - recovery does not anchor a record clock from pending or previously rejected journals
+  ---
+  duration_ms: 0.87725
+  type: 'test'
+  ...
+# Subtest: many interval boundaries use compact shared summaries, with exact end-point observations
+ok 13 - many interval boundaries use compact shared summaries, with exact end-point observations
+  ---
+  duration_ms: 73.185167
+  type: 'test'
+  ...
+# Subtest: lazy worlds retain the exact selected version after the window advances
+ok 14 - lazy worlds retain the exact selected version after the window advances
+  ---
+  duration_ms: 0.37825
+  type: 'test'
+  ...
+# Subtest: replica peer selection keeps reader and writer controls distinct
+ok 15 - replica peer selection keeps reader and writer controls distinct
+  ---
+  duration_ms: 0.139625
+  type: 'test'
+  ...
+# Subtest: local-mode P3 follower can use R without changing the gateway-mode writer route
+ok 16 - local-mode P3 follower can use R without changing the gateway-mode writer route
+  ---
+  duration_ms: 1.020666
+  type: 'test'
+  ...
+# Subtest: RYOW shares an externally applied index and wakes only at its target
+ok 17 - RYOW shares an externally applied index and wakes only at its target
+  ---
+  duration_ms: 0.165958
+  type: 'test'
+  ...
+# Subtest: apply-delay summary exposes missing ACKed positions and clamps apply-before-ACK to zero
+ok 18 - apply-delay summary exposes missing ACKed positions and clamps apply-before-ACK to zero
+  ---
+  duration_ms: 7.617
+  type: 'test'
+  ...
+# Subtest: RYOW reply preserves actual typed world bytes and binds fallback W separately from follower R
+ok 19 - RYOW reply preserves actual typed world bytes and binds fallback W separately from follower R
+  ---
+  duration_ms: 1.422958
+  type: 'test'
+  ...
+# Subtest: bootstrap clock retries peer lag but never admits unequal or absent native cuts
+ok 20 - bootstrap clock retries peer lag but never admits unequal or absent native cuts
+  ---
+  duration_ms: 48.661625
+  type: 'test'
+  ...
+# Subtest: lossless observations preserve every field, order, sign, null and string across chunks
+ok 21 - lossless observations preserve every field, order, sign, null and string across chunks
+  ---
+  duration_ms: 206.043042
+  type: 'test'
+  ...
+# Subtest: bounded spill survives checkpoint/reopen and reads phase subsets losslessly
+ok 22 - bounded spill survives checkpoint/reopen and reads phase subsets losslessly
+  ---
+  duration_ms: 173.828833
+  type: 'test'
+  ...
+# Subtest: abrupt stop between chunk replacement and metadata publication preserves the preceding phase
+ok 23 - abrupt stop between chunk replacement and metadata publication preserves the preceding phase
+  ---
+  duration_ms: 384.908916
+  type: 'test'
+  ...
+# Subtest: raw oracle samples materialize the local route and independently query the gateway at the unchanged time basis
+ok 24 - raw oracle samples materialize the local route and independently query the gateway at the unchanged time basis
+  ---
+  duration_ms: 116.480875
+  type: 'test'
+  ...
+# Subtest: exact floor, current, missing, time mapping and byte eviction
+ok 25 - exact floor, current, missing, time mapping and byte eviction
+  ---
+  duration_ms: 1.84075
+  type: 'test'
+  ...
+# Subtest: valid-time row and reference intervals are half open, including cycles and missing closures
+ok 26 - valid-time row and reference intervals are half open, including cycles and missing closures
+  ---
+  duration_ms: 0.267792
+  type: 'test'
+  ...
+# Subtest: new entities decline before their known existence; gaps/rebuilds invalidate old cuts
+ok 27 - new entities decline before their known existence; gaps/rebuilds invalidate old cuts
+  ---
+  duration_ms: 0.345708
+  type: 'test'
+  ...
+# Subtest: regressing and duplicate clocks decline record-time reads
+ok 28 - regressing and duplicate clocks decline record-time reads
+  ---
+  duration_ms: 0.089834
+  type: 'test'
+  ...
+# Subtest: ahead receipt waits, then exact fallback; mapped times cannot override explicit position
+ok 29 - ahead receipt waits, then exact fallback; mapped times cannot override explicit position
+  ---
+  duration_ms: 0.451292
+  type: 'test'
+  ...
+# Subtest: worker delta clones retain shared bytes and exact historical cuts
+ok 30 - worker delta clones retain shared bytes and exact historical cuts
+  ---
+  duration_ms: 25.105417
+  type: 'test'
+  ...
+# Subtest: sidecar bytes count toward eviction and survive shared-image installation
+ok 31 - sidecar bytes count toward eviction and survive shared-image installation
+  ---
+  duration_ms: 1.563
+  type: 'test'
+  ...
+# Subtest: worker spill retains exact rows, partial batches, checkpoint prefix and resumed phase index
+ok 32 - worker spill retains exact rows, partial batches, checkpoint prefix and resumed phase index
+  ---
+  duration_ms: 384.679541
+  type: 'test'
+  ...
+# Subtest: direct producer ports drain every exact tuple and oracle sample before finalization
+ok 33 - direct producer ports drain every exact tuple and oracle sample before finalization
+  ---
+  duration_ms: 265.599166
+  type: 'test'
+  ...
+# Subtest: split steps persist before batch ACK and join exact applications, retaining missing witnesses
+ok 34 - split steps persist before batch ACK and join exact applications, retaining missing witnesses
+  ---
+  duration_ms: 343.1965
+  type: 'test'
+  ...
+1..34
+# tests 34
+# suites 0
+# pass 34
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1412.573209
