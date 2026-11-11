@@ -118,6 +118,16 @@ PYVALID
  docker volume rm "$prefix-driver" >/dev/null
  unset DXH8_RESTORE
 fi
+if [[ ${DXH8_SEED_VOLUME:-} == tx2-dxh8-seed-10000-pg-data ]]; then
+ # [DX-H8] Why: the temporary full clone precedes its WAL checkpoint and must also respect the hard 12 GB cap.
+ # Rejected: relying on a later disk watcher after an over-budget copy has already happened.
+ python3 - "$DX_STACK_EVIDENCE/tx2-dxh8-seed-10000/stopped-volume-kib.txt" <<'PYCAP'
+import sys
+seed_bytes=int(open(sys.argv[1]).readline().split()[0])*1024
+assert 2*seed_bytes+150000000 <= 12000000000, 'full clone plus tools would exceed 12 GB'
+print({'seed_bytes':seed_bytes,'maximum_clone_and_tools_bytes':2*seed_bytes+150000000})
+PYCAP
+fi
 if [[ -n ${DXH8_SEED_VOLUME:-} ]]; then
  [[ $DXH8_SEED_VOLUME == tx2-dxh5-seed-1000-pg-data || $DXH8_SEED_VOLUME == tx2-dxh8-seed-10000-pg-data ]] || exit 2
  docker volume inspect "$DXH8_SEED_VOLUME" > "$out/seed-volume.json"
