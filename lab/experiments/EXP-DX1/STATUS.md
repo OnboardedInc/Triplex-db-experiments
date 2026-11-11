@@ -1176,3 +1176,27 @@ reads work again. Zero violations and zero errors in 3,100,344 reads; local shar
 night's because Sam's calls are running. Not merged yet: the full pair on this head waits for a quiet window.
 `long-hold-ok` removed 15:36 UTC until `nohlt` is off, so the 5-hour seed cannot start with the VM still polling on eight
 cores; the switch-off waiter retries the lock every 0.3 s and restores the file afterwards.
+
+## 2026-11-11 16:05 UTC: 100,000-subject seed restarted by the orchestrator; reviewer on the local-read path
+
+**Sam, about 15:40 UTC (verbatim in `lab/research/SAM-decisions-2026-11-09.md`):** keep `nohlt` on; build the seed as fast as
+possible; he is not using this Mac. The switch-off was cancelled before it ran; `nohlt` is the standing test condition.
+
+**DX-S5 exited 15:59 UTC (`d636fa1b`, not merged yet; its worktree must stay clean while the seed runs from it).** Corrected
+procedure proven: 1,000 subjects in two chunks with an injected `AMQ219007` and reconnect; 10,000 in two chunks with the driver
+and controller killed and a new hold resuming (896 stored commands recovered, 12,566,422 current and 12,570,330 history rows
+equal); both sealed fingerprints reproduced. No 100,000 seed from the agent.
+
+**Seed run (orchestrator, background `bfc9qcba9`), started 16:00 UTC from the DX-S5 worktree:**
+`S5_RESUME=<0|1> node lab/bin/heavy.mjs --label ORCH-S5-seed100000-b<n> -- bash lab/experiments/EXP-DX1/s5/hold.sh 100000 10000 false`,
+up to five attempts; a hold that ends early (limit 17,900 s) keeps its unsealed volumes and the next attempt resumes them.
+Logs `~/Claude/Projects/triplex-db-2/evidence/DX-S5/orch-seed100000-b<n>.log`. The lock is held for the whole seed, so no
+other measurement runs until it ends. Rate just before the start was 374 commands/s (Slack and a Chrome session use about two
+host cores; last night's rate was 574), so expect 4 to 6 hours.
+
+**DX-V1 launched 16:01 UTC** (reviewer, Codex high effort, worktree at DX-R3's head `abbac16b`, no containers): try to make the
+local copy serve a wrong read, make the benchmark accept one, and judge whether the changed split-read rule weakens the
+check. Brief `~/Claude/Projects/triplex-db-2/agents/prompts/DX-V1.md`; report to `lab/verify/DX-V1/REPORT.md`.
+
+Queue after the seed: 100,000-subject activation (P5 verdict); full pairs on DX-R3's corrected head under both split-read
+rules; write-gateway arms (second CPU, small cache, low-pause collector); where a sparse commit's extra 5 ms goes.
