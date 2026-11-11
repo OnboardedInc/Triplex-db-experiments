@@ -702,13 +702,21 @@ One conflict in `packages/datomic/src/index.ts` (two added exports) resolved by 
 arm is running; rebuild after it). **Not measured:** W0 seed rate at windows 1 and 32 with the fingerprint; the orchestrator runs
 `b10/seed-vm.sh` after q2.
 
+## Second 10,000-subject pair `tx2-dxh4-q2` (2026-11-11 02:07 to 02:48 UTC): no verdict table, orchestrator's error
+
+The host was quiet for once (other processes 76 to 116% CPU, no call). Both arms ran to the end, but the ladder's analysis
+refused the matched baseline ("uses different harness source") because the orchestrator merged DX-R1 and DX-B10 into the worktree
+between the two arms. No per-level table exists. What survives in `ns-report.json`: 1,445,690 pulls completed in the ladder
+against 682,512 in `q1` (about 2.1 times), 1.02 to 1.03 requests per pull (was 1.24 to 1.37), 9,563 transact requests for 8,846
+commits (1.08 per commit, was 1.19). **Rule from now on: verdict pairs run from a frozen checkout that nothing else touches.**
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
 | DX-R2 | Local copy at scale: journals with complete rows, no per-pass image, compact bootstrap, supported-scope check and corpus gate | `exp/DX-R2-replica-scale`, `.claude/worktrees/dx-r2` | `.../prompts/DX-R2.md` |
 | DX-R3 | Local copy as the read path: recent-version window, `pullAt`, shared across reader threads, benchmark option `--read-path replica` | `exp/DX-R3-replica-reads`, `.claude/worktrees/dx-r3` | `.../prompts/DX-R3.md` |
-| ORCH | Paired 10,000-subject benchmark `tx2-dxh4-q2` on merge 0939c037 (`quiet/run-10k-pair.sh`, waits for quiet up to 20 minutes, then the lock) | `lane/d-native` | |
+| ORCH | Rebuild of merge f63be9e9; lean package suite on the merged code; W0 seed rate at windows 1 and 32 (`b10/seed-vm.sh`); then a frozen checkout for the next 10,000-subject pair | `lane/d-native` | |
 
 After these: merge DX-B8 (it carries DX-B7) and DX-H6; paired north-star run at 2,000 and 10,000 subjects without and with
 keep-awake; 100,000-subject seed and sweep; one independent review, receipts.
