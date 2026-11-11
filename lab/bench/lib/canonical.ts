@@ -1,3 +1,4 @@
+import { Option } from "effect";
 // [DX-R3] Why: tagged structure preserves field boundaries, absent fields, Options and signed zero.
 // Rejected: JSON.stringify of business E/A/V (drops identity, metadata and -0).
 export function typed(value: any): any {
@@ -31,11 +32,10 @@ export const canonicalRow = (row: any): string =>
       .sort()
       .map((key) => {
         const v = row[key];
+        // [DX-R3] Why: a plain tagged wire object is not the public Effect Option type.
+        // Rejected: normalizing lookalikes (would hide a wrong result type).
         const value =
-          OPTION_FIELDS.has(key) &&
-          v &&
-          typeof v === "object" &&
-          (v._tag === "Some" || v._tag === "None")
+          OPTION_FIELDS.has(key) && Option.isOption(v)
             ? [
                 "option",
                 v._tag,
@@ -43,7 +43,7 @@ export const canonicalRow = (row: any): string =>
                 Object.keys(v)
                   .filter((k) => k !== "_tag" && (k !== "value" || v._tag === "None"))
                   .sort()
-                  .map((k) => [k, typed(v[k])]),
+                  .map((k) => [k, typed((v as any)[k])]),
               ]
             : typed(v);
         return [key, value];

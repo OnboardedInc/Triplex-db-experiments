@@ -6,7 +6,12 @@ import { packEntity, RecentReads } from "../../../../packages/datomic/dist/index
 import { decodeReplicaRows } from "../../../../packages/datomic/dist/replica/decodeRows.js";
 import { decodeEntity, reachResponse } from "../../../../packages/datomic/dist/reach.js";
 import { encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
-import { prepareEntity, ReplicaReader, replicaReply, restoreReplicaReply } from "../../../bench/lib/replica-reads.ts";
+import {
+  prepareEntity,
+  ReplicaReader,
+  replicaReply,
+  restoreReplicaReply,
+} from "../../../bench/lib/replica-reads.ts";
 import { observe, R } from "../../../bench/lib/observe.ts";
 import { canonicalWorld } from "../../../bench/lib/canonical.ts";
 import { ownFacts, sharedFacts, accountsFor, accountOfSubject } from "../../../bench/lib/world.ts";
@@ -175,6 +180,13 @@ test("F2 corrected: real judge rejects every changed field, signed zero, nested 
     changed[0] = { ...changed[0]!, [field]: value };
     assert.equal(judge(record(changed)).ok, false, field);
   }
+  const wrongOption = [...triples];
+  wrongOption[0] = { ...wrongOption[0]!, createdBy: { _tag: "Some", value: "writer" } as any };
+  assert.equal(
+    judge(record(wrongOption)).ok,
+    false,
+    "plain Option lookalike is not a public Effect Option",
+  );
   for (const [left, right] of [
     [-0, 0],
     [{ nested: [-0] }, { nested: [0] }],
@@ -222,10 +234,23 @@ test("F3 corrected: time-only newest clock falls back before delayed equal-clock
   });
   assert.equal(reader.index.resolve({ recordedAt: 100, validAt: 10 }), undefined);
   const closedReader = new ReplicaReader();
-  closedReader.apply({ reset: true, valid: true, position: 1, recordTime: 100, changes: [["root", undefined, first]] });
-  closedReader.apply({ reset: false, valid: true, position: 2, recordTime: 101,
-    changes: [["root", first, packed(wire("later", 2, 101), 2)]] });
-  const closed = await closedReader.pullAt("root", { recordedAt: 100, validAt: 10 }, async () => { throw Error("unexpected closed-clock fallback"); });
+  closedReader.apply({
+    reset: true,
+    valid: true,
+    position: 1,
+    recordTime: 100,
+    changes: [["root", undefined, first]],
+  });
+  closedReader.apply({
+    reset: false,
+    valid: true,
+    position: 2,
+    recordTime: 101,
+    changes: [["root", first, packed(wire("later", 2, 101), 2)]],
+  });
+  const closed = await closedReader.pullAt("root", { recordedAt: 100, validAt: 10 }, async () => {
+    throw Error("unexpected closed-clock fallback");
+  });
   assert.equal(closed.route, "replica");
   assert.deepEqual(closed.triples, decodeEntity("root", 1, [wire()]).rows);
   const regular = new RecentReads();
@@ -242,9 +267,29 @@ test("F3 corrected: time-only newest clock falls back before delayed equal-clock
 });
 
 test("projection-only fixtures decline the public route while the standalone SweepRow API remains usable", async () => {
-  const p = packEntity(1, [{ id: "projection", entityId: "root", attribute: "value", value: { type: "string", value: "x" }, position: 1, validFrom: 0 }]);
-  const reader = new ReplicaReader(); reader.apply({ reset: true, valid: true, position: 1, changes: [["root", undefined, prepareEntity("root", p)]] });
-  assert.equal(reader.index.pull("root", { recordedPosition: 1, validAt: 1 })!.rows[0]!.id, "projection");
-  const answer = await reader.pullAt("root", { recordedPosition: 1, validAt: 1 }, async () => result([]));
+  const p = packEntity(1, [
+    {
+      id: "projection",
+      entityId: "root",
+      attribute: "value",
+      value: { type: "string", value: "x" },
+      position: 1,
+      validFrom: 0,
+    },
+  ]);
+  const reader = new ReplicaReader();
+  reader.apply({
+    reset: true,
+    valid: true,
+    position: 1,
+    changes: [["root", undefined, prepareEntity("root", p)]],
+  });
+  assert.equal(
+    reader.index.pull("root", { recordedPosition: 1, validAt: 1 })!.rows[0]!.id,
+    "projection",
+  );
+  const answer = await reader.pullAt("root", { recordedPosition: 1, validAt: 1 }, async () =>
+    result([]),
+  );
   assert.equal(answer.route, "fallback");
 });

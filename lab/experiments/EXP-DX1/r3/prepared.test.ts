@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { packEntity as rawPackEntity, type SweepRow } from "../../../../packages/datomic/dist/index.js";
-import { prepareEntity, ReplicaReader, ReplicaReadHost, publicRow } from "../../../bench/lib/replica-reads.ts";
+import { prepareEntity, ReplicaReader, ReplicaReadHost, publicRow, restoreReplicaReply } from "../../../bench/lib/replica-reads.ts";
 import { worldBytes } from "./canonical-world.ts";
 import { observe } from "../../../bench/lib/observe.ts";
 
@@ -317,7 +317,7 @@ test("RYOW reply preserves actual typed world bytes and binds fallback W separat
   const reader = new ReplicaReader();
   reader.apply({ position: 1, reset: true, valid: true, recordTime: 100, changes: [["root", undefined, prepareEntity("root", packEntity(1, rows))]] });
   const result = await reader.pullAt("root", { recordedPosition: 1, recordedAt: 100, validAt: 5 }, async () => { throw Error("unexpected fallback"); });
-  const cloned = structuredClone(replicaReply(result));
+  const cloned = restoreReplicaReply(structuredClone(replicaReply(result)));
   assert.equal(worldBytes(cloned.triples), worldBytes(rows.map(withMetadata).map(publicRow)));
   assert.deepEqual(observe(cloned), observe(result));
 });
