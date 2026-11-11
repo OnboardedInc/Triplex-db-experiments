@@ -39,13 +39,21 @@ fi
 durability=$(docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SHOW fsync; SHOW synchronous_commit; SHOW full_page_writes;')
 printf 'durability fsync/synchronous_commit/full_page_writes:\n%s\n' "$durability"
 [[ $durability == $'on\non\non' ]] || { echo 'durability settings refused'; exit 1; }
+# [DX-S5] Why: validate bounded ID memo eviction against native memory databases before it serves the retained SQL seed.
+# Rejected: consuming the first-use activation without a cross-epoch/historical/concurrent eviction proof.
+docker run --rm --pull never --name "$prefix-peer" --memory 1g --memory-swap 1g \
+ -e DATOMIC_JAVA_OPTS='-Xms128m -Xmx768m -Dtriplex.codec.spec=/opt/replica-codec-spec.json' \
+ -e TX2_S5_ID_CACHE_ENTRIES=128 -e DATOMIC_EXT_CLASSPATH=/s5:/opt/gateway/src \
+ -v "$repo/lab/experiments/EXP-DX1/s5:/s5:ro" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" \
+ -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" \
+ --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m id-memo-test
 docker run -d --pull never -v "${S5_LOGBACK:-$repo/lab/experiments/EXP-DX1/s5/logback.xml}:/opt/datomic/bin/logback.xml:ro" --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1,2,3 --memory 4g --memory-swap 4g -e "JAVA_OPTS=-Xms256m -Xmx3g ${S5_TX_JAVA_EXTRA:--Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M}" -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
  # [DX-S5] Why: seeding has one JS main thread, leaving two private writer cores without changing evaluation placement.
  # Rejected: serializing writer preparation on core 1 while spare VM CPUs remain idle.
  cpu=4,5; [[ $role == w ]] || cpu=2,3
  host_port=18542; [[ $role == w ]] || host_port=18543
- docker run -d --pull never -v "${S5_LOGBACK:-$repo/lab/experiments/EXP-DX1/s5/logback.xml}:/opt/datomic/bin/logback.xml:ro" --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e "DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=256m -Dtriplex.codec.spec=/opt/replica-codec-spec.json ${S5_PEER_JAVA_EXTRA:--XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M}" -e TX2_ENTITY_CACHE_BYTES=67108864 -e TX2_REACH_SESSION_ENTRIES=65536 -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main
+ docker run -d --pull never -v "${S5_LOGBACK:-$repo/lab/experiments/EXP-DX1/s5/logback.xml}:/opt/datomic/bin/logback.xml:ro" --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e "DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=256m -Dtriplex.codec.spec=/opt/replica-codec-spec.json ${S5_PEER_JAVA_EXTRA:--XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M}" -e TX2_ENTITY_CACHE_BYTES=67108864 -e TX2_REACH_SESSION_ENTRIES=65536 -e TX2_S5_ID_CACHE_ENTRIES=131072 -e DATOMIC_EXT_CLASSPATH=/s5:/opt/gateway/src -v "$repo/lab/experiments/EXP-DX1/s5:/s5:ro" -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m bounded-gateway
  done
 if [[ ${S5_DIAGNOSTIC:-0} == 1 ]]; then return 0; fi
 # [DX-S5] Why: a 2 GiB peer heap OOMed at 80k with a 1 GiB object cache; keep bounded cache headroom.

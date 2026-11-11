@@ -153,12 +153,13 @@ for ((i=0;i<90;i++)); do docker exec "$prefix-pg" pg_isready -h 127.0.0.1 -U pos
 # Rejected: spending the reserved Mac disk on disposable container log files.
 start_jvm() {
  if [[ $s5 == true ]]; then
-  docker run -d --pull never -v "$repo/lab/experiments/EXP-DX1/s5/logback.xml:/opt/datomic/bin/logback.xml:ro" "$@"
+  docker run -d --pull never -v "$repo/lab/experiments/EXP-DX1/s5/logback.xml:/opt/datomic/bin/logback.xml:ro" -v "$repo/lab/experiments/EXP-DX1/s5:/s5:ro" "$@"
  else docker run -d --pull never "$@"; fi
 }
-peer_cache=1g; peer_entity_cache=268435456; peer_sessions=1000000; peer_java_extra=; tx_java_extra=
+peer_cache=1g; peer_entity_cache=268435456; peer_sessions=1000000; peer_java_extra=; tx_java_extra=; gateway_main=triplex.gateway.main; gateway_classpath=/opt/gateway/src
 if [[ $s5 == true ]]; then
  peer_cache=256m; peer_entity_cache=67108864; peer_sessions=65536
+ gateway_main=bounded-gateway; gateway_classpath=/s5:/opt/gateway/src
  peer_java_extra='-XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
  tx_java_extra='-Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
 fi
@@ -166,7 +167,7 @@ start_jvm --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory
 for role in w r; do
  cpu=1; [[ $role == w ]] || cpu=2,3
  host_port=18542; [[ $role == w ]] || host_port=18543
- start_jvm --restart on-failure:10 --name "$prefix-gw-$role" -p "127.0.0.1:$host_port:8080" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e "DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=$peer_cache -Dtriplex.codec.spec=/opt/replica-codec-spec.json $peer_java_extra" -e "TX2_ENTITY_CACHE_BYTES=$peer_entity_cache" -e "TX2_REACH_SESSION_ENTRIES=$peer_sessions" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main
+ start_jvm --restart on-failure:10 --name "$prefix-gw-$role" -p "127.0.0.1:$host_port:8080" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e "DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=$peer_cache -Dtriplex.codec.spec=/opt/replica-codec-spec.json $peer_java_extra" -e "TX2_ENTITY_CACHE_BYTES=$peer_entity_cache" -e "TX2_REACH_SESSION_ENTRIES=$peer_sessions" -e "DATOMIC_EXT_CLASSPATH=$gateway_classpath" -e TX2_S5_ID_CACHE_ENTRIES=131072 -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m "$gateway_main"
  done
 docker run --rm --pull never --name "$prefix-copy" --network "$prefix-net" node:22.23.2-bookworm-slim node -e '
 for (const role of ["w","r"]) { let ok=false; for(let i=0;i<180;i++){try{let r=await fetch("http://"+process.argv[1]+"-gw-"+role+":8080/health"); if(r.ok){console.log(await r.text());ok=true;break;}}catch{} await new Promise(r=>setTimeout(r,1000));}if(!ok)process.exit(1);}' "$prefix"
