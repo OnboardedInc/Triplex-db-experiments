@@ -44,6 +44,9 @@ export async function runReplicaDriver(argv: string[]) {
     throw Error("invalid oracle concurrency");
   if (!Number.isSafeInteger(verificationPages) || verificationPages < 1 || verificationPages > 8)
     throw Error("invalid verification page concurrency");
+  const seedPosition = argv.includes("--seed-position") ? Number(opt("seed-position")) : undefined;
+  if (seedPosition !== undefined && (!Number.isSafeInteger(seedPosition) || seedPosition < 1))
+    throw Error("invalid sealed seed position");
   if (!scope || !Number.isSafeInteger(N) || N < 1)
     throw new Error("Existing seeded scope and positive N required");
   const subjects = subjectList(N),
@@ -238,7 +241,7 @@ export async function runReplicaDriver(argv: string[]) {
     let cut = await comp.currentPosition();
     // [DX-S5] Why: a declared first-use run must begin at the sealed position, before any activation writes.
     // Rejected: silently evaluating an already consumed first-use seed at a later head.
-    if (opt("seed-position") && cut !== Number(opt("seed-position")))
+    if (seedPosition !== undefined && cut !== seedPosition)
       throw Error("initial head differs from sealed position");
     report.initialSeedPosition = cut;
     await replica.bootstrap(subjects, cut);
