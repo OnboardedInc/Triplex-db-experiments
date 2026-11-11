@@ -1021,3 +1021,28 @@ Reading:
 
 `~/Claude/Projects/triplex-db-2/locks/long-hold-ok` created 07:15 UTC: DX-S5 may start its long seed hold once its 1,000 and
 10,000 proofs pass. DX-M2 and DX-R3 measure before that or after it.
+
+## 2026-11-11 07:35 UTC: DX-M2 exited partial; merged (`01d356d8`); the JVM arms are being run by the orchestrator
+
+DX-M2 (`ec1e69d8`): 215 tests passed and 2 skipped, 300 differential scenarios, native and ordering gates. Defaults unchanged.
+
+1. **JVM arms built, not measured by the agent** (`m2/arms.sh`): A as is (`-Xms256m -Xmx3g`); B Datomic's defaults
+   (`-Xms3g -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=50`); C pause goal 20, `AlwaysPreTouch`, object cache 256m; D is C plus
+   `G1MaxNewSizePercent=20`. The agent held that `h4/run.sh` could not serve as the measurement and stopped. The orchestrator
+   runs them: `m2/jvm-arms.sh j1` (order A B C D D C B A, zero-reader writer trace, 10,000 subjects, 200 s, GC and safepoint
+   logs to the containers' stdout), under `nohlt`. `long-hold-ok` was removed for the duration so DX-S5's long hold cannot land
+   between arms.
+2. **Transaction hints: slower in all four pairs, keep off.** 1,000 subjects, 42,775 commands per arm, 32 in flight, JVM arm B:
+
+| Write gateway CPUs | Hints off | Hints on | Hints off | Hints on |
+| --- | --- | --- | --- | --- |
+| 1 | 612.0 commands/s | 520.3 | 634.6 | 526.3 |
+| 2 | 704.2 | 651.8 | 713.3 | 687.7 |
+
+   All eight fingerprints equal. A second CPU for the write gateway gives 13 to 15% more commands/s (the 534/s measured
+   earlier was arm A with one gateway CPU on the plain VM; not the same hold).
+3. **Record time assigned in the transaction: not built.** The public receipt's instant is chosen in
+   `packages/core/src/store/TriplesLive.ts` before the adapter commits, and the storage adapter interface reports a committed
+   position but no committed instant. Assigning the time on the server needs a core contract change (a committed-instant
+   reconciliation like the one that exists for position). Clock replays were 3 to 13 per 3,350-call burst in DX-M1, so this is
+   a p99.9 matter; left as a design decision for Sam.
