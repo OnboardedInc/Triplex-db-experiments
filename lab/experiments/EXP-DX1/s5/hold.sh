@@ -145,7 +145,7 @@ maintain() {
  }
  native_proof | tee "$out/native-before.jsonl"
  last=; stable=0
- for ((i=0;i<60;i++)); do
+ for ((i=0;i<360;i++)); do
   now=$(docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT count(*),sum(octet_length(val)) FROM datomic_kvs;')
   echo "gc $now"
   if [[ $now == "$last" ]]; then stable=$((stable+1)); else stable=0; fi
