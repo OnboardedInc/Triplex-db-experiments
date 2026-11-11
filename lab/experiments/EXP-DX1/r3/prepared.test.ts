@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { packEntity as rawPackEntity, type SweepRow } from "../../../../packages/datomic/dist/index.js";
+import { RecentReads, packEntity as rawPackEntity, type SweepRow } from "../../../../packages/datomic/dist/index.js";
 import { prepareEntity, ReplicaReader, ReplicaReadHost, publicRow, restoreReplicaReply } from "../../../bench/lib/replica-reads.ts";
 import { worldBytes } from "./canonical-world.ts";
 import { observe } from "../../../bench/lib/observe.ts";
@@ -55,7 +55,7 @@ test("prepared contributions include every actual typed fact at valid-time bound
   assert.equal(worldBytes(rows), worldBytes([...rows].reverse()));
   const rootEntity = prepareEntity("root", packEntity(1, rows)),
     childEntity = prepareEntity("child", packEntity(1, child));
-  const reader = new ReplicaReader();
+  const reader = new ReplicaReader(64 * 1024 ** 2, new RecentReads(20_000, 64 * 1024 ** 2, true));
   reader.apply({
     reset: true,
     valid: true,

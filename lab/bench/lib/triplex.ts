@@ -59,6 +59,11 @@ export async function openTriples(
     installDatomicPublication(api);
     if (!isMainThread) installReaderDiagnostics(api);
     if (typeof api.makeDatomicRuntime !== "function") throw Error("Datomic public runtime unavailable");
+    // [DX-R3] Why: new benchmark/seed scopes need source-enforced clock ordering; reopen reports the existing policy.
+    // Rejected: changing the runtime default or upgrading sealed scopes (breaks historical import writers).
+    const creator = new api.DatomicClient(url);
+    try { await creator.create(runtimeApi.DatabaseScope.test(scopeName), process.env.TRIPLEX_DATOMIC_LAYOUT ?? "legacy", true); }
+    finally { creator.close(); }
     return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, predecessorCacheBytes: WRITER_PREDECESSOR_CACHE_MIB * 1024 ** 2, predecessorAttributes: isMainThread ? NS_PREDECESSOR_ATTRIBUTES : [], ...(!isMainThread && workerData?.entityCacheBytes ? { entityCacheBytes: workerData.entityCacheBytes } : {}), ...(process.env.TRIPLEX_DATOMIC_LAYOUT ? { layout: process.env.TRIPLEX_DATOMIC_LAYOUT } : {}), ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
   })() : await qualification.loadQualificationBackend(lane);
   if (lane === "qlever" && process.env["QLEVER_COMMIT_PATH"] === "broker") {

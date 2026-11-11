@@ -308,6 +308,7 @@ export class ReplicaReader {
     const replicaFallbackReason = !this.index.valid ? "copy-unavailable" :
       basis.recordedPosition !== undefined && basis.recordedPosition < this.index.floor ? "outside-window" :
       basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position ? "watermark-timeout" :
+      basis.recordedPosition === undefined && basis.recordedAt !== undefined && !this.index.strictRecordClocks ? "non-strict-record-clock" :
       basis.recordedPosition === undefined && basis.recordedAt !== undefined && this.index.isOpenClock(basis.recordedAt) ? "open-record-clock" : "unmapped-clock-or-closure";
     const result = await fallback();
     return { ...result, route: "fallback", waitedMs, replicaFallbackReason };
@@ -325,8 +326,8 @@ export class ReplicaReadHost {
   private times: Map<number, number>;
   private closeClient: (() => void) | undefined;
   private listeners = new Set<(delta: ReadDelta) => void>();
-  private constructor(source: any, times: Map<number, number>, historyBytes: number) {
-    this.index = new api.RecentReads(20_000, historyBytes);
+  private constructor(source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean) {
+    this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks);
     this.times = times;
     this.replica = new api.Replica(source, Date.now());
     let initialized = false;
@@ -372,7 +373,12 @@ export class ReplicaReadHost {
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
     times.set(initial.position, await bootstrapClock(source, roots[0]!, initial));
-    const host = new ReplicaReadHost(source, times, historyBytes);
+    // [DX-R3] Why: admission follows the actual source capability, never the requested creation policy.
+    // Rejected: treating old sealed seeds as strict when reopening them cannot change their contract.
+    const capability = await client.request("POST", `/v2/db/${db.db}/reach-many`, {
+      replicaCapability: true, basis: { recordedPosition: initial.position, validAt: Date.now() },
+    });
+    const host = new ReplicaReadHost(source, times, historyBytes, capability.supported === true && capability.strictRecordClocks === true);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
     host.replica.start();

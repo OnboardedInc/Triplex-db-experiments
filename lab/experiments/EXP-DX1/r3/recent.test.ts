@@ -31,7 +31,7 @@ const boot = (index: RecentReads, e = packed("a")) =>
   });
 
 test("exact floor, current, missing, time mapping and byte eviction", () => {
-  const index = new RecentReads(2, 100000),
+  const index = new RecentReads(2, 100000, true),
     a = packed("a"),
     b = packed("b", 2),
     c = packed("c", 3),

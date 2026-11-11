@@ -44,6 +44,7 @@ type ReaderConfig = {
   replicaHistoryMiB?: number;
   replicaYield?: "loop" | "fair";
   rawSampleLimit?: number;
+  rawLocalMinimum?: number;
   replicaImage?: import("../../packages/datomic/dist/index.js").ReadImage;
   entityCacheBytes?: number;
   subjectShards?: number;
@@ -83,10 +84,10 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       replica!.apply(msg.delta);
     }
   });
-  const phases = new Map<number, { reads: number; reasons: Record<string, number>; straddleWait: Histogram }>();
+  const phases = new Map<number, { reads: number; reasons: Record<string, number>; straddleWait: Histogram; rawLocalSamples: number; rawFallbackSamples: number; timeOnlyReads: number; timeOnlyLocal: number }>();
   let activeReads = 0, attemptedReads = 0, completedReads = 0;
-  const finalDiagnostics = () => ({ readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
-    phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, fallbackReasons: s.reasons, straddleWait: s.straddleWait.toJSON() }])) });
+  const finalDiagnostics = () => ({ strictRecordClocks: replica?.index.strictRecordClocks, readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
+    phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, rawLocalSamples: s.rawLocalSamples, rawFallbackSamples: s.rawFallbackSamples, timeOnlyReads: s.timeOnlyReads, timeOnlyLocal: s.timeOnlyLocal, fallbackReasons: s.reasons, straddleWait: s.straddleWait.toJSON() }])) });
   let phase = -1;
   let mode = "mixed";
   let wanted = 0;
@@ -112,6 +113,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     while (observationPending.size >= 2) await new Promise<void>(resolve => setTimeout(resolve, 1));
   }
   let rawSamples = 0;
+  const rawPending = new Set<number>();
   let stopping = false;
   let tokenSeq = 0;
   const waiting = new Map<number, (msg: any) => void>();
@@ -166,6 +168,10 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     activeReads++; attemptedReads++;
     const start = nowAbs();
     const t0 = performance.now();
+    const stats = phases.get(ph) ?? { reads: 0, reasons: {}, straddleWait: new Histogram(), rawLocalSamples: 0, rawFallbackSamples: 0, timeOnlyReads: 0, timeOnlyLocal: 0 };
+    phases.set(ph, stats);
+    const timeOnly = basis.recordedAt !== undefined && basis.recordedPosition === undefined;
+    if (timeOnly) stats.timeOnlyReads++;
     let split = 0, forcedPosition = -1, straddleWaitMs = 0;
     const evidence = opts.straddleSeq === undefined ? undefined : { phase: ph, worker: cfg.worker,
       rule: cfg.splitTarget, basis: { ...basis }, route: null as string | null, subject, seq: opts.straddleSeq, assignedAt: opts.assignedAt,
@@ -187,6 +193,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       const pr = replica
         ? await replica.pullAt(ids.placement(subject), basis, gateway, between, false, position)
         : await gateway();
+      if (timeOnly && pr.route === "replica") stats.timeOnlyLocal++;
       // The wait for the straddled command's ACK is the driver's scheduling, not the store's service time.
       const latency = performance.now() - t0 - straddleWaitMs;
       if (evidence) { evidence.secondStepEnd = nowAbs(); evidence.route = pr.route; }
@@ -199,12 +206,12 @@ export async function startReader(port: any, cfg: ReaderConfig) {
         if (JSON.stringify(o) !== JSON.stringify(observe({ ...pr, observation: undefined })))
           throw Error("prepared full-row observation mismatch");
       }
-      const stats = phases.get(ph) ?? { reads: 0, reasons: {}, straddleWait: new Histogram() };
-      phases.set(ph, stats); stats.reads++;
+      stats.reads++;
+      if (opts.keepRows) { if (pr.route === "replica") { stats.rawLocalSamples++; rawSamples++; } else stats.rawFallbackSamples++; }
       if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? (opts.keepRows ? "oracle-raw" : "gateway"); stats.reasons[reason] = (stats.reasons[reason] ?? 0) + 1; }
       if (split > 0) stats.straddleWait.recordMs(straddleWaitMs);
       records.push([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, pr.route, pr.language, pr.waitedMs]);
-      if (opts.keepRows)
+      if (opts.keepRows && (pr.route === "replica" || !replica || stats.rawFallbackSamples === 1))
         samples.push({ phase: ph, subject, basis, position, start, route: pr.route, fullCanonical: canonicalWorld(pr.triples), gatewayCanonical, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, (t.validTo?._tag === "Some" ? t.validTo.value : null), t.id]) });
     } catch (error: any) {
       records.push([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, "error", "", 0]);
@@ -228,11 +235,18 @@ export async function startReader(port: any, cfg: ReaderConfig) {
           const assignment = await ask({ type: "split-request" }, 2_000);
           if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; assignedAt = assignment.assignedAt; }
         }
-        // [DX-R3] Why: the driver consumes at most its raw oracle budget; every other read still checks stamp + complete digest.
-        // Rejected: retaining thousands of unused raw worlds when local reads become fast.
-        const keepRows = oracle && rawSamples < (cfg.rawSampleLimit ?? Infinity);
-        if (keepRows) rawSamples++;
-        await readOnce(picked.subject, basis, kind, position, phase, { keepRows, straddleSeq, assignedAt, hotPick: picked.hotPick });
+        // [DX-R3] Why: each phase owes local raw comparisons even after the global extra-sample budget is spent.
+        // Rejected: charging open-clock fallbacks against the local quota (never exercises the copy).
+        const readPhase = phase;
+        let keepRows = false;
+        if (oracle) {
+          const owesLocal = replica !== undefined && (phases.get(readPhase)?.rawLocalSamples ?? 0) < (cfg.rawLocalMinimum ?? 1);
+          keepRows = (owesLocal || rawSamples < (cfg.rawSampleLimit ?? Infinity)) &&
+            (!replica || (!rawPending.has(readPhase) && replica.index.resolve(basis) !== undefined));
+        }
+        if (keepRows) { rawPending.add(readPhase); if (!replica) rawSamples++; }
+        try { await readOnce(picked.subject, basis, kind, position, readPhase, { keepRows, straddleSeq, assignedAt, hotPick: picked.hotPick }); }
+        finally { if (keepRows) rawPending.delete(readPhase); }
         // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
         // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
         if (replica) {

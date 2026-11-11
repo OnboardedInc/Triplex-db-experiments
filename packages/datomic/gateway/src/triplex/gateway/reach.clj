@@ -285,7 +285,8 @@
       (when (v :triplex.scope/feed-irregular) (decline! "irregular"))
       (when-not (= 2 (v :triplex.scope/feed-version)) (decline! "feed-version"))
       (select-db name db (get input "basis"))
-      "{\"supported\":true}")
+      (str "{\"supported\":true,\"strictRecordClocks\":"
+           (true? (v :triplex.scope/strict-record-clocks)) "}"))
     (catch clojure.lang.ExceptionInfo e
       (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))
 ;; [DX-R2] Why: the cached row projection compresses repeated IDs/attributes without changing a numeric token.

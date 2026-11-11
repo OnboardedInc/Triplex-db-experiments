@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { rawLocalCoverage } from "./lib/raw-local-coverage.ts";
 import { httpCounts } from "./lib/http-counts.ts";
 import { readLatencyRun } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
@@ -969,6 +970,18 @@ async function run() {
   report.finalPosition = finalPosition === null ? null : coordinate(finalPosition);
   if (feed && feed.uncheckedIntents) finalizationErrors.push(`${feed.uncheckedIntents} feed intent checks still lack ACK metadata`);
   if (ryowPending.size) finalizationErrors.push(`${ryowPending.size} read-your-own-write pulls did not finish`);
+  if (config.readPath === "replica") {
+    report.rawLocalSamples = rawLocalCoverage(phases, oracleSamples);
+    report.replicaRecordClockPolicies = readerFinalDiagnostics.map(x => ({ worker: x.worker, strictRecordClocks: x.diagnostics.strictRecordClocks }));
+    report.timeOnlyRouting = phases.filter(p => p.readers > 0).map(p => {
+      const counts = readerFinalDiagnostics.map(x => x.diagnostics.phases?.[p.idx]);
+      const reads = counts.reduce((n, x) => n + (x?.timeOnlyReads ?? 0), 0);
+      const local = counts.reduce((n, x) => n + (x?.timeOnlyLocal ?? 0), 0);
+      return { phase: p.name, reads, local, localShare: reads ? local / reads : null };
+    });
+    for (const level of report.rawLocalSamples) if (!level.ok)
+      finalizationErrors.push(`${level.phase}: locally answered raw oracle samples ${level.compared}/${level.minimum}`);
+  }
   report.finalizationErrors = finalizationErrors;
   report.positionCoordinates = "TARGETS 4.1 item 3: (stream, epoch, offset, ordinal); Triplex gives one dense position per scope and one engine transaction per transact, so offset = position and ordinal = 0";
   report.maintenance = maintenance;
@@ -1228,6 +1241,9 @@ function windowOf(phase: any) {
   return { from: phase.start + config.settleS * 1000, to: phase.end };
 }
 function judgeRead(r: ReadRecord) {
+  // [DX-R3] Why: unsupported returned values are wrong reads, not transport failures.
+  // Rejected: hiding domain violations in the error counter instead of the correctness verdict.
+  if (r[R.error] === "CanonicalValueError") return { ok: false, kind: "invalid-value" };
   if (r[R.error] !== null) return { ok: false, kind: "error" };
   const exp = expectations.expected(r[R.subject], r[R.recordedAt], r[R.validAt]);
   // [DX-R3] Why: a business-only expectation has no assertion identity or temporal provenance to certify a full-row read.
@@ -1241,7 +1257,7 @@ function judgeRead(r: ReadRecord) {
 }
 // [DX-R3] Why: one byte per verdict preserves every judgment without a heap object per observation.
 // Rejected: retaining millions of identical {ok:true,kind:"correct"} objects during full-ladder analysis.
-const VERDICTS = ["correct", "error", "stale-late-arrival", "stale", "future-or-latest-state", "wrong-world"].map(kind => ({ ok: kind === "correct", kind }));
+const VERDICTS = ["correct", "error", "stale-late-arrival", "stale", "future-or-latest-state", "wrong-world", "invalid-value"].map(kind => ({ ok: kind === "correct", kind }));
 function readVerdicts(): Uint8Array {
   const result = new Uint8Array(records.length);
   records.forEach((r, k) => { const verdict = judgeRead(r); result[k] = VERDICTS.findIndex(v => v.kind === verdict.kind); });
@@ -1630,15 +1646,19 @@ function cpuUse() {
 // ---------------------------------------------------------------- oracle (independent sample check at the driver-recorded basis)
 
 function runOracle(finalPosition: number, lastAcked: number) {
-  atomicWrite(path.join(rawDir, "ns-full-read-samples.jsonl"), oracleSamples.filter((s) => s.phase >= 0).slice(0, config.oracleMaxReads).map((sample: any) => JSON.stringify(sample)).join("\n") + "\n");
+  const candidates = oracleSamples.filter((s) => s.phase >= 0);
+  const selectedSamples = config.readPath === "replica" ? candidates : candidates.slice(0, config.oracleMaxReads);
+  atomicWrite(path.join(rawDir, "ns-full-read-samples.jsonl"), selectedSamples.map((sample: any) => JSON.stringify(sample)).join("\n") + "\n");
 
   if (!config.oracleRoot) return { status: "NOT-RUN", reason: "no --oracle-root (the gate extracts O-REPLAY from exp/O01-replay-oracle)" };
-  const reads: OracleSampleRead[] = oracleSamples.filter((s) => s.phase >= 0).slice(0, config.oracleMaxReads).map((s) => ({ subject: s.subject, basis: s.basis, rows: s.rows }));
+  const reads: OracleSampleRead[] = selectedSamples.map((s) => ({ subject: s.subject, basis: s.basis, rows: s.rows }));
   if (!reads.length) return { status: "NOT-RUN", reason: "no sampled reads" };
   const caseDoc = buildCase({ caseId: `NS/${runTag}`, commands: recordedCommands, lastPosition: Math.max(finalPosition, lastAcked), reads });
   const result = checkWithOracle({ oracleRoot: config.oracleRoot, dir: rawDir, caseDoc, reads });
-  const modelAgrees = reads.filter((r) => {
-    const rec = records.find((x) => x[R.subject] === r.subject && x[R.recordedAt] === r.basis.recordedAt && x[R.validAt] === r.basis.validAt);
+  // [DX-R3] Why: bind each oracle verdict to its exact retained attempt, not another read at the same basis.
+  // Rejected: subject/time-only lookup (can attach an earlier read's verdict to this sample).
+  const modelAgrees = selectedSamples.filter((r) => {
+    const rec = records.find((x) => x[R.phase] === r.phase && x[R.start] === r.start && x[R.subject] === r.subject && x[R.recordedAt] === r.basis.recordedAt && x[R.validAt] === r.basis.validAt);
     return rec ? judgeRead(rec).ok : false;
   }).length;
   return { ...result, modelCorrectOnSameReads: modelAgrees, recordedCommands: recordedCommands.length };

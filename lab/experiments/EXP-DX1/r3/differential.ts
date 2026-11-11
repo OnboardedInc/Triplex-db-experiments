@@ -1,3 +1,4 @@
+import { proveStrictSource } from "./strict-source.ts";
 import assert from "node:assert/strict";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { decodeEntity, reachResponse } from "../../../../packages/datomic/dist/reach.js";
@@ -13,6 +14,7 @@ import { worldBytes } from "./canonical-world.ts";
 
 const subjects = 2000,
   count = Number(process.env.DX_R3_READS ?? 200000);
+await proveStrictSource(process.env.DATOMIC_URL!);
 const scope = `dxr3-diff-${Date.now()}`;
 const comp = await openComposition("reach", "datomic", scope);
 const seed = await seedRung({
@@ -37,7 +39,7 @@ const reader = new ReplicaReader();
 reader.install(host.index.image());
 host.subscribe((delta) => reader.apply(delta));
 const client = new DatomicClient(process.env.DATOMIC_READ_URLS!.split(",")[0]!, 30000);
-const db = await client.create(runtimeApi.DatabaseScope.test(scope), "lean");
+const db = await client.create(runtimeApi.DatabaseScope.test(scope), "lean", true);
 const acked = [{ position: seed.lastPosition, instant: seed.lastInstant }];
 const trace = generateTrace({ seed: "ns-v2", subjects, durationS: 3600 }).filter(
   (event) => !event.resend,
@@ -119,7 +121,8 @@ try {
           });
           assert(!wire.declined, `gateway declined ${JSON.stringify(wire)}`);
           const entities = new Map<string, ReturnType<typeof decodeEntity>>();
-          for (const [id, revision, rows] of wire.entities) entities.set(id, decodeEntity(id, revision, rows));
+          for (const [id, revision, rows] of wire.entities)
+            entities.set(id, decodeEntity(id, revision, rows));
           const rows = reachResponse(subject, entities, basis as any).triples;
           return {
             triples: rows,

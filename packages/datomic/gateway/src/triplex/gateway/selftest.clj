@@ -353,6 +353,58 @@
                     (entity-cache/revision b 10 (constantly 3))))))))
       (finally (entity-cache/forget! name)))))
 
+ ;; [DX-R3] Why: exercise non-replay-safe SPI commits at the native serial point, in both head layouts.
+;; Rejected: mocking peer clock validation (cannot reject a late optimistic writer).
+(deftest strict-record-clock-policy
+  (doseq [head-v2 [false true] strict [false true]]
+    (let [scope-text (str "[\"triplex-scope-v1\",\"test\",\"dxr3\",\"strict-" head-v2 "-" strict "\",0]")
+          base "datomic:mem://"
+          created (gateway/create-scope! base scope-text "lean" head-v2 strict)
+          name (:db created) uri (gateway/db-uri name) conn (gateway/connection uri)
+          write! (fn [p clock]
+                   (storage/commit! name conn (gateway/sync-db uri)
+                     (row-input {"sourceK" (dec p) "position" p "operationId" (str "strict-" p)
+                                 "rows" [(storage/wire-row {:id (str "strict-row-" p) :entity_id "root" :attribute ":v"
+                                           :value_type "string" :value_string (str p) :recorded_at clock
+                                           :recorded_position p :valid_from 0.0 :schema_version 1 :tx_id (str "tx-" p)})]
+                                 "newIds" [(str "strict-row-" p)]
+                                 "claims" [{"commandId" (str "command-" p) "txId" (str "tx-" p) "timestamp" (long clock)}]
+                                 "replaySafe" false})))]
+      (try
+        (is (= strict (:strictRecordClocks created)))
+        (is (= strict (:strictRecordClocks (gateway/create-scope! base scope-text "lean" head-v2 (not strict))))
+            "Reopening cannot enable or disable the immutable policy")
+        (gateway/initialize-scope! uri scope-text "lean" head-v2 (not strict))
+        (is (= strict (:strictRecordClocks (gateway/create-scope! base scope-text "lean" head-v2 strict)))
+            "A stale bootstrap transaction cannot alter the policy")
+        (write! 1 100.0)
+        (write! 2 101.0)
+        (let [cap (json/read-str (reach/replica-capability name (gateway/sync-db uri) {"basis" {"validAt" 0.0}}))]
+          (is (true? (get cap "supported")))
+          (is (= strict (get cap "strictRecordClocks"))))
+        (if strict
+          (do
+            (doseq [clock [100.0 101.0]]
+              (let [error (try (write! 3 clock) nil (catch clojure.lang.ExceptionInfo e e))]
+                (is (some? error))
+                (is (= "ClockConflict" (:code (ex-data error))))
+                (is (= 2 (storage/head-position name (gateway/sync-db uri))))))
+            (is (thrown? clojure.lang.ExceptionInfo
+                  (storage/commit! name conn (gateway/sync-db uri)
+                    (row-input {"sourceK" 2 "position" 3 "operationId" "mixed-clocks" "newIds" ["mixed-a" "mixed-b"] "claims" []
+                                "rows" (mapv (fn [[id clock]] (storage/wire-row
+                                         {:id id :entity_id "root" :attribute ":v" :value_type "string" :value_string id
+                                          :recorded_at clock :recorded_position 3 :valid_from 0.0 :schema_version 1 :tx_id "mixed"}))
+                                         [["mixed-a" 102.0] ["mixed-b" 103.0]])}))))
+            (is (= 2 (storage/head-position name (gateway/sync-db uri))))
+            (storage/commit! name conn (gateway/sync-db uri)
+              (row-input {"sourceK" 2 "position" 3 "operationId" "claim-only" "rows" [] "newIds" []
+                          "claims" [{"commandId" "claim-only" "txId" "claim-tx" "timestamp" 102.0}]}))
+            (is (= 102.0 (scope/max-recorded-at (gateway/sync-db uri) (scope/entity (gateway/sync-db uri)))))
+            (is (thrown? clojure.lang.ExceptionInfo (write! 4 102.0))))
+          (do (write! 3 100.0) (is (= 3 (storage/head-position name (gateway/sync-db uri))))))
+        (finally (gateway/delete-scope! base scope-text))))))
+
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]
     (println (json/write-str result))

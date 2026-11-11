@@ -212,7 +212,11 @@
      [[:triplex/commit {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
-                       :lean lean :ops ops :times times :replay-safe (true? (get input "replaySafe")) :irregular irregular :position-irregular irregular
+                       :lean lean :ops ops :times times
+                       ;; [DX-R3] Why: strict scopes also order empty/claim-only commits and every imported claim clock.
+                       ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
+                       :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))
+                       :replay-safe (true? (get input "replaySafe")) :irregular irregular :position-irregular irregular
                        :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
 ;; Rejected: a twenty-millisecond wait followed by overtaking.

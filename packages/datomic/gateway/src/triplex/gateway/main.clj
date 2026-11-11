@@ -33,12 +33,13 @@
   ;; Rejected: silently marking an existing scope v2 during schema installation.
   ([uri scope] (initialize-scope! uri scope "legacy" false))
   ([uri scope layout] (initialize-scope! uri scope layout true))
-  ([uri scope layout head-v2]
+  ([uri scope layout head-v2] (initialize-scope! uri scope layout head-v2 false))
+  ([uri scope layout head-v2 strict-clocks]
   ;; [EXP-DA01] Why: a stale first opener must never reset a writer's position. Rejected: check-then-upsert of the scope header (concurrent initialization race).
   (try
     @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
-        (cond-> {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version (if (= layout "lean") 3 2) :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}
+        (cond-> {:triplex.scope/key scope :triplex.scope/strict-record-clocks (boolean strict-clocks) :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version (if (= layout "lean") 3 2) :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}
           head-v2 (assoc :triplex.scope/head-version 2))])
     (catch Exception e
       (let [current (sync-db uri)]
@@ -47,19 +48,24 @@
 (defn create-scope!
   ([base scope] (create-scope! base scope "legacy" false))
   ([base scope layout] (create-scope! base scope layout true))
-  ([base scope layout head-v2]
+  ([base scope layout head-v2] (create-scope! base scope layout head-v2 false))
+  ([base scope layout head-v2 strict-clocks]
+  ;; [DX-R3] Why: clock policy is written only by the unique bootstrap winner, never on reopen.
+  ;; Rejected: upgrading existing scopes (older/importing writers may regress their clocks).
+  (when-not (instance? Boolean strict-clocks) (codec/invalid "strictRecordClocks must be boolean"))
   (when-not (#{"legacy" "lean"} layout) (codec/invalid "Unknown layout"))
   (let [name (scope-name scope) uri (db-uri name) created (d/create-database uri) conn (connection uri)]
     (assert-scope (sync-db uri) scope)
     (when-not (stored-scope (sync-db uri))
       @(d/transact conn schema/schema)
       (assert-scope (sync-db uri) scope)
-      (initialize-scope! uri scope layout head-v2))
+      (initialize-scope! uri scope layout head-v2 strict-clocks))
     (when-not (= schema/schema-hash (:triplex.scope/schema-hash (d/entity (sync-db uri) [:triplex.scope/key scope])))
       @(d/transact conn schema/schema)
       @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))
     (commit/install! conn scope)
-    (cond-> {:db name :created created :schemaHash schema/schema-hash}
+    (cond-> {:db name :created created :schemaHash schema/schema-hash
+             :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity (sync-db uri) [:triplex.scope/key scope])))}
       (lean/enabled? (d/db conn)) (assoc :layout "lean")))))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (db-uri name)]
@@ -120,7 +126,7 @@
       (do (d/db (connection (db-uri "tx2-health")))
           (response 200 {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}))
       (and (= :post request-method) (= "/v1/db/create" uri))
-      (response 200 (let [input (request-json body)] (create-scope! uri-template (get input "scope") (get input "layout" "legacy"))))
+      (response 200 (let [input (request-json body)] (create-scope! uri-template (get input "scope") (get input "layout" "legacy") true (get input "strictRecordClocks" false))))
       (and (= :post request-method) (= "/v1/db/delete" uri))
       (response 200 (delete-scope! uri-template (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))

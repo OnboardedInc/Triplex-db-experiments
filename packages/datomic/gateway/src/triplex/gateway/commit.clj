@@ -29,7 +29,7 @@
                    datom (first (d/index-range (d/history db) :triplex.entity/row prefix nil))]
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times replay-safe irregular position-irregular journal-entities]} payload
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities]} payload
            head-v2 (= 2 (value scope :triplex.scope/head-version))
            latest (when head-v2 (newest-commit))
            h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
@@ -87,8 +87,19 @@
                            :else [(replace-value op)])) ops)
                prior (if head-v2 (when latest (value latest :triplex.tx/max-recorded-at))
                          (value scope :triplex.scope/max-recorded-at))
-               maximum (if (seq times) (reduce max (or prior (first times)) times) (when head-v2 prior))
-               _ (when (and replay-safe prior (some #(<= % prior) times))
+               ;; [DX-R3] Why: serial validation covers SPI and replay-safe commits against the durable scope maximum.
+               ;; Rejected: a peer policy or replay-safe-only guard (a late SPI clock invalidates a closed cut).
+               strict-clocks (and (d/entid db :triplex.scope/strict-record-clocks)
+                                  (true? (value scope :triplex.scope/strict-record-clocks)))
+               _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) record-clocks))
+                   (throw (ex-info "Invalid strict record clock" {})))
+               checked-times (if strict-clocks (map double (concat times record-clocks)) times)
+               ;; [DX-R3] Why: one physical commit can span feed pages; its journals cannot close then regress a cut.
+               ;; Rejected: checking only the previous physical maximum (misses mixed clocks inside this commit).
+               _ (when (and strict-clocks (seq checked-times) (some #(not (== (double (first checked-times)) (double %))) checked-times))
+                   (throw (ex-info "Strict scopes require one record clock per commit" {})))
+               maximum (if (seq checked-times) (reduce max (or prior (first checked-times)) checked-times) (when head-v2 prior))
+               _ (when (and (or replay-safe strict-clocks) prior (some #(<= % prior) checked-times))
                    (throw (ex-info (str "TRIPLEX_CLOCK " prior) {:maximum prior})))
                irregular (or irregular
                              (and (seq times)

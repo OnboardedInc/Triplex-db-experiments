@@ -1,15 +1,8 @@
-/**
- * Expected-state model: what a subject pull must return at a basis (R = record time of a receipt the
- * driver observed, V = valid time).
- *
- * World(i, R, V) = seed world of i + every committed command touching i whose receipt instant is <= R,
- * applied as multiset digest parts. Each part carries the validFrom of the assertion it adds or removes,
- * and counts at V only when validFrom <= V (no fact the driver writes has a validTo). A record-time
- * retraction removes a fact at every V, so its removal part carries the removed assertion's own validFrom:
- * a fact that was never visible at V is never subtracted. Seed facts are valid from 2023 and every reader
- * V is later, so the seed contributes in full. Checking a read costs O(commands of that subject).
- * The O-REPLAY sample re-derives the same answers independently from command intent.
+/** Receipt-bound full-row expectations: record visibility, valid-time intervals and reachable reference closures.
+ * The business digest below remains only for legacy unbound fixtures; the driver refuses to certify those reads.
  */
+// [DX-R3] Why: seed/shared expiry and retractions affect counts, stamps and every cache boundary.
+// Rejected: non-expiring business counts beside a complete-row digest (can accept an expired assertion).
 import { FullRowModel } from "./full-row-model.ts";
 import type { Receipt } from "./composition.ts";
 import { Digest } from "./rng.ts";
@@ -42,7 +35,12 @@ export interface Expected {
 }
 
 /** Digest parts grouped by validFrom: + for added facts, - for removed facts. */
-export function partsOf(added: readonly Fact[], addedValidFrom: readonly number[], removed: readonly Fact[], removedValidFrom: readonly number[]): Part[] {
+export function partsOf(
+  added: readonly Fact[],
+  addedValidFrom: readonly number[],
+  removed: readonly Fact[],
+  removedValidFrom: readonly number[],
+): Part[] {
   const groups = new Map<number, Digest>();
   const g = (vf: number) => groups.get(vf) ?? groups.set(vf, new Digest()).get(vf)!;
   added.forEach((f, k) => g(addedValidFrom[k]!).add(memberOf(f.e, f.a, f.v)));
@@ -91,9 +89,26 @@ export class Model {
     list.push(commit);
     this.commits.set(subject, list);
   }
+  expectationBoundaries(subject: number) {
+    if (this.full) return this.full.boundaries(subject);
+    const list = this.commits.get(subject) ?? [];
+    return {
+      record: [...new Set(list.map((c) => c.instant))].sort((a, b) => a - b),
+      valid: [
+        ...new Set(list.flatMap((c) => [c.stampValidFrom, ...c.parts.map((p) => p.validFrom)])),
+      ].sort((a, b) => a - b),
+    };
+  }
   expected(subject: number, recordedAt: number, validAt: number): Expected {
+    if (this.full)
+      return {
+        fullRows: true,
+        ...this.full.summary(subject, recordedAt, validAt),
+        commits: (this.commits.get(subject) ?? []).filter((c) => c.instant <= recordedAt).length,
+      };
     const d = new Digest().plus(this.seedDigest(subject));
-    let last: Commit | null = null, commits = 0;
+    let last: Commit | null = null,
+      commits = 0;
     for (const c of this.commits.get(subject) ?? []) {
       if (c.instant > recordedAt) continue;
       commits++;
@@ -101,11 +116,12 @@ export class Model {
       if (c.stamp >= 0 && (!last || c.position > last.position)) last = c;
     }
     const stamp = !last ? 0 : last.stampValidFrom <= validAt ? last.stamp : -1;
-    return { fullRows: this.full !== undefined, stamp, digest: this.full ? this.full.expected(subject, recordedAt, validAt) : d.hex(), facts: d.n, commits };
+    return { fullRows: this.full !== undefined, stamp, digest: d.hex(), facts: d.n, commits };
   }
   /** Commits of the subject with instant <= R acknowledged after time t (arrived after the read started). */
   lateArrivals(subject: number, recordedAt: number, t: number): number {
-    return (this.commits.get(subject) ?? []).filter((c) => c.instant <= recordedAt && c.ackAtMs > t).length;
+    return (this.commits.get(subject) ?? []).filter((c) => c.instant <= recordedAt && c.ackAtMs > t)
+      .length;
   }
   /** Did any commit to the subject get acknowledged inside [from, to]? (split-read evidence) */
   committedBetween(subject: number, from: number, to: number): boolean {

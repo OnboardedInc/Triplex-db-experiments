@@ -223,7 +223,7 @@ test("F3 corrected: time-only newest clock falls back before delayed equal-clock
     1,
   );
   assert.equal(actual.route, "fallback");
-  assert.equal(actual.replicaFallbackReason, "open-record-clock");
+  assert.equal(actual.replicaFallbackReason, "non-strict-record-clock");
   assert.equal(canonicalWorld(actual.triples), canonicalWorld((await gateway()).triples));
   reader.apply({
     reset: false,
@@ -233,7 +233,10 @@ test("F3 corrected: time-only newest clock falls back before delayed equal-clock
     changes: [["root", first, second]],
   });
   assert.equal(reader.index.resolve({ recordedAt: 100, validAt: 10 }), undefined);
-  const closedReader = new ReplicaReader();
+  const closedReader = new ReplicaReader(
+    64 * 1024 ** 2,
+    new RecentReads(20_000, 64 * 1024 ** 2, true),
+  );
   closedReader.apply({
     reset: true,
     valid: true,
@@ -253,7 +256,7 @@ test("F3 corrected: time-only newest clock falls back before delayed equal-clock
   });
   assert.equal(closed.route, "replica");
   assert.deepEqual(closed.triples, decodeEntity("root", 1, [wire()]).rows);
-  const regular = new RecentReads();
+  const regular = new RecentReads(20_000, 64 * 1024 ** 2, true);
   regular.apply({ reset: true, valid: true, position: 1, recordTime: 100, changes: [] });
   assert.equal(regular.resolve({ recordedAt: 100, validAt: 10 }), undefined);
   regular.apply({ reset: false, valid: true, position: 2, recordTime: 101, changes: [] });

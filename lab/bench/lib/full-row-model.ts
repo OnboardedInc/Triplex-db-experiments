@@ -80,10 +80,34 @@ export class FullRowModel {
       } else throw Error(`Unsupported expected operation ${op.op}`);
     }
   }
+  // [DX-R3] Why: every possible reachable version contributes both temporal boundaries, including seed/shared rows.
+  // Rejected: command summaries (omit validTo, seed expiry and retraction record times).
+  boundaries(subject: number): { record: number[]; valid: number[] } {
+    const record = new Set<number>(),
+      valid = new Set<number>();
+    const seen = new Set([ids.placement(subject)]),
+      todo = [...seen];
+    for (let i = 0; i < todo.length; i++)
+      for (const v of this.entities.get(todo[i]!) ?? []) {
+        record.add(v.from);
+        if (Number.isFinite(v.until)) record.add(v.until);
+        valid.add(v.row.validFrom);
+        if (Option.isSome(v.row.validTo)) valid.add(v.row.validTo.value as number);
+        if (v.row.value.type === "ref" && !seen.has(v.row.value.value)) {
+          seen.add(v.row.value.value);
+          todo.push(v.row.value.value);
+        }
+      }
+    return { record: [...record].sort((a, b) => a - b), valid: [...valid].sort((a, b) => a - b) };
+  }
   expected(subject: number, recordedAt: number, validAt: number): string {
+    return this.summary(subject, recordedAt, validAt).digest;
+  }
+  summary(subject: number, recordedAt: number, validAt: number) {
     const seen = new Set([ids.placement(subject)]),
       todo = [...seen],
       d = new Digest();
+    let stamp = -1;
     for (let i = 0; i < todo.length; i++)
       for (const v of this.entities.get(todo[i]!) ?? []) {
         const t = v.row;
@@ -97,11 +121,12 @@ export class FullRowModel {
         d.a = (d.a + v.a) >>> 0;
         d.b = (d.b + v.b) >>> 0;
         d.n++;
+        if (t.attribute === ":placement/stamp") stamp = Math.max(stamp, Number(t.value.value));
         if (t.value.type === "ref" && !seen.has(t.value.value)) {
           seen.add(t.value.value);
           todo.push(t.value.value);
         }
       }
-    return d.hex();
+    return { digest: d.hex(), facts: d.n, stamp };
   }
 }

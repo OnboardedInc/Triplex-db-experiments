@@ -20,6 +20,7 @@ export interface ReadImage {
   readonly history: readonly (readonly [string, readonly Version[]])[];
   readonly times: readonly (readonly [number, number])[];
   readonly timeSafe: boolean;
+  readonly strictRecordClocks?: boolean;
 }
 // [DX-R3] Why: evict whole cuts, so every entity resolves at every admitted position.
 // Rejected: independent per-entity LRUs (a global watermark would falsely certify missing history).
@@ -31,6 +32,7 @@ export class RecentReads {
   private times = new Map<number, number>();
   private lastTime = -Infinity;
   private timeSafe = true;
+  private strictClocks: boolean;
   private retainedBytes = 0;
   floor = 0;
   position = 0;
@@ -38,7 +40,9 @@ export class RecentReads {
   constructor(
     readonly positions = 20_000,
     readonly maxBytes = 64 * 1024 ** 2,
+    strictRecordClocks = false,
   ) {
+    this.strictClocks = strictRecordClocks === true;
     if (
       !Number.isSafeInteger(positions) ||
       positions < 0 ||
@@ -47,6 +51,7 @@ export class RecentReads {
     )
       throw new TypeError("Invalid recent-read budget");
   }
+  get strictRecordClocks(): boolean { return this.strictClocks; }
   apply(delta: ReadDelta): void {
     if (delta.reset) {
       this.current.clear();
@@ -126,6 +131,9 @@ export class RecentReads {
     if (!this.valid || !Number.isFinite(basis.validAt)) return undefined;
     let p = basis.recordedPosition;
     if (basis.recordedAt !== undefined) {
+      // [DX-R3] Why: a later clock closes a cut only under a source-enforced immutable strict policy.
+      // Rejected: assuming ordinary SPI writers cannot regress after the observed watermark.
+      if (p === undefined && !this.strictRecordClocks) return undefined;
       // [DX-R3] Why: the last observed clock can still acquire another equal-clock journal.
       // Rejected: detecting duplicates only after delivery (the preceding admission was already unsafe).
       const mapped =
@@ -221,6 +229,7 @@ export class RecentReads {
       history: [...this.history],
       times: [...this.times],
       timeSafe: this.timeSafe,
+      strictRecordClocks: this.strictRecordClocks,
     };
   }
   install(image: ReadImage): void {
@@ -234,6 +243,7 @@ export class RecentReads {
     this.times = new Map(image.times);
     this.lastTime = Math.max(-Infinity, ...this.times.keys());
     this.timeSafe = image.timeSafe;
+    this.strictClocks = image.strictRecordClocks === true;
     this.floor = image.floor;
     this.position = image.position;
     this.valid = image.valid;
