@@ -692,11 +692,20 @@ Note on `tx2-dxh4-q2`: the worktree was merged and rebuilt while its zero-reader
 loaded different builds of the Datomic client (the merge added replica files and one export; the benchmark's read and write
 paths did not change).
 
+## DX-B10 proven and merged (2026-11-11 02:45 UTC, merge f63be9e9): strict per-client commit order
+
+Proofs (commit 34fc25a8, no implementation change needed): `commit_order_test.clj` 8 tests including 10,000 reordered arrivals
+with 64 in flight; `strict-order.test.ts` on both layouts, 10,000 real reordered commits each, every ACK position checked; full
+native gateway run 45 tests / 53,975 assertions; lean base 183 passed; lean long (3,200 pipelined commands, 500 conflict races);
+clock and peer (2,000 distributed commands, 5,000 peer commits, 10,000 peer read answers); all 300 differential scenarios.
+One conflict in `packages/datomic/src/index.ts` (two added exports) resolved by keeping both. **Not rebuilt yet** (the q2 ladder
+arm is running; rebuild after it). **Not measured:** W0 seed rate at windows 1 and 32 with the fingerprint; the orchestrator runs
+`b10/seed-vm.sh` after q2.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-B10 (resumed 01:11 UTC) | Run the strict-order proofs and the full suite; W0 seed rate at windows 1 and 32 with the fingerprint | `exp/DX-B10-order`, `.claude/worktrees/dx-b10` | `.../prompts/DX-B10-resume1.md` |
 | DX-R2 | Local copy at scale: journals with complete rows, no per-pass image, compact bootstrap, supported-scope check and corpus gate | `exp/DX-R2-replica-scale`, `.claude/worktrees/dx-r2` | `.../prompts/DX-R2.md` |
 | DX-R3 | Local copy as the read path: recent-version window, `pullAt`, shared across reader threads, benchmark option `--read-path replica` | `exp/DX-R3-replica-reads`, `.claude/worktrees/dx-r3` | `.../prompts/DX-R3.md` |
 | ORCH | Paired 10,000-subject benchmark `tx2-dxh4-q2` on merge 0939c037 (`quiet/run-10k-pair.sh`, waits for quiet up to 20 minutes, then the lock) | `lane/d-native` | |
