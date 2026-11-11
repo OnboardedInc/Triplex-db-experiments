@@ -6,6 +6,7 @@ n=${1:?subjects}; end=${2:?end subjects}; mode=${3:-seed}
 [[ $n == 1000 || $n == 10000 || $n == 100000 ]] || exit 2
 [[ $mode == seed || $mode == verify ]] || exit 2
 prefix=tx2-dxs5-seed-$n; scope=dxs5-w0-$n-v1; repo=$PWD
+echo "driver-source=$(git rev-parse HEAD) mode=$mode endSubjects=$end"
 python3 - "$n" <<'PYLOCK'
 import json,os,sys
 r=json.load(open('/Users/sam/Claude/Projects/triplex-db-2/locks/measure/owner.json'))

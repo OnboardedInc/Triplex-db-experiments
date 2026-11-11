@@ -200,6 +200,9 @@ try {
               {
                 1000: "sha256:ca15387e66e25ed5e19a4adc602e941f7f06dd8b0f1c6ca7d1a5d2f02f8171ad",
                 10000: "sha256:7b4c292331396ab379423ed7faa1a095c324dcdb72afb411d0f48f93efa5624d",
+                // [DX-S5] Why: the unchanged Python population oracle independently computed the 100k world array.
+                // Rejected: sealing against the candidate's own earlier observed fingerprint; raw run: population100000-a.log.gz.
+                100000: "sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760",
               } as Record<number, string>
             )[N]
           : undefined;
