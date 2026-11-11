@@ -435,7 +435,7 @@ async function run() {
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName,
       composition: config.composition, roots: Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
-      historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer })
+      historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer }, aux)
     : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
       scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,

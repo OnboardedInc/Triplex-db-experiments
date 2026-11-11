@@ -315,7 +315,7 @@ export class ReplicaReadHost {
   static async open(
     scope: string,
     roots: readonly string[],
-    comp: CompositionHandle,
+    comp: Pick<CompositionHandle, "currentPosition">,
     initial: { position: number; instant: number },
     feed: "legacy" | "inline" = "inline",
     historyBytes = 64 * 1024 ** 2,
@@ -332,22 +332,7 @@ export class ReplicaReadHost {
     const { source, times } = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), feed === "inline" ? Date.now() : undefined);
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
-    const positionPage = await source.page(
-      [roots[0]!],
-      { recordedPosition: initial.position, validAt: Date.now() },
-      true,
-    );
-    const timePage = await source.page(
-      [roots[0]!],
-      { recordedAt: initial.instant, validAt: Date.now() },
-      true,
-    );
-    times.set(
-      initial.position,
-      !positionPage.declined && !timePage.declined && positionPage.t === timePage.t
-        ? initial.instant
-        : NaN,
-    );
+    times.set(initial.position, await bootstrapClock(source, roots[0]!, initial));
     const host = new ReplicaReadHost(source, times, historyBytes);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
@@ -370,4 +355,18 @@ export class ReplicaReadHost {
 // Rejected: a checksum-only reply that invents an empty triples array across the worker boundary.
 export function replicaReply(result: PullResult): PullResult {
   return { ...result, triples: result.triples };
+}
+
+// [DX-R3] Why: a read peer may still be catching up at bootstrap; retry the same exact two-cut proof before declining.
+// Rejected: nearest-time admission or accepting different native cuts (would weaken the original clock rule).
+export async function bootstrapClock(source: { page(...args: any[]): Promise<any> }, root: string, initial: { position: number; instant: number }, budgetMs = 2000) {
+  const deadline = performance.now() + budgetMs;
+  for (;;) {
+    const validAt = Date.now();
+    const p = await source.page([root], { recordedPosition: initial.position, validAt }, true);
+    const r = await source.page([root], { recordedAt: initial.instant, validAt }, true);
+    if (!p.declined && !r.declined && typeof p.t === "string" && p.t.length > 0 && p.t === r.t) return initial.instant;
+    if (performance.now() >= deadline) return NaN;
+    await new Promise(resolve => setTimeout(resolve, 5));
+  }
 }

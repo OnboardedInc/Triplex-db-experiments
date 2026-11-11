@@ -316,3 +316,15 @@ test("RYOW reply preserves actual typed world bytes and binds fallback W separat
   assert.equal(worldBytes(cloned.triples), worldBytes(rows));
   assert.deepEqual(observe(cloned), observe(result));
 });
+
+// [DX-R3] Why: transient peer lag must not permanently disable exact clock admission; mismatched cuts must still decline.
+// Rejected: admitting the supplied receipt clock without equal observed native cuts.
+test("bootstrap clock retries peer lag but never admits unequal or absent native cuts", async () => {
+  const { bootstrapClock } = await import("../../../bench/lib/replica-reads.ts");
+  let calls = 0;
+  const source = { async page(_roots: string[], basis: any) { calls++; assert.equal(basis.recordedPosition ?? basis.recordedAt, calls % 2 ? 2 : 20); return calls <= 2 ? { declined: true } : { t: "123" }; } };
+  assert.equal(await bootstrapClock(source, "root", { position: 2, instant: 20 }), 20); assert.equal(calls, 4);
+  let n = 0;
+  assert(Number.isNaN(await bootstrapClock({ async page() { return { t: String(++n) }; } }, "root", { position: 2, instant: 20 }, 0)));
+  assert(Number.isNaN(await bootstrapClock({ async page() { return {}; } }, "root", { position: 2, instant: 20 }, 0)));
+});
