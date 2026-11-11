@@ -32,4 +32,9 @@ done
 # [DX-M2] Why: spend this lease on matched rate arms, not an unchanged nine-minute suite rerun.
 # Rejected: repeating already-passing source-bound checks before every timing sample.
 git rev-parse HEAD
+# [DX-M2] Why: changing peer CPU concurrency gets a fresh real reordered-arrival check.
+# Rejected: assuming a single-core ordering sample covers this physical profile.
+if [[ ${M2_ORDER_BEFORE_RATE:-0} == 1 ]]; then
+ bash lab/experiments/EXP-DX1/m2/gates.sh order
+fi
 bash lab/experiments/EXP-DX1/m2/rate.sh "$prefix"

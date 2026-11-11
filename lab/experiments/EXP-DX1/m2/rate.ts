@@ -21,7 +21,13 @@ assert.match(arm ?? "", /^[AB][12]$/);
 for (const window of [32]) {
   const comp = await openComposition("reach", "datomic", `dxm2-${arm}-w${window}-${randomUUID()}`);
   const bulk = await openBulkCounts(comp);
-  comp.storeCounts = bulk.count;
+  // [DX-M2] Why: count validation follows the last ACK and must not inflate command CPU.
+  // Rejected: sampling after seedW0 returns (its return includes a full count scan).
+  let transactorCpuAfterCommands: string | undefined;
+  comp.storeCounts = () => {
+    transactorCpuAfterCommands = readFileSync("/tx-cpu/cpu.stat", "utf8");
+    return bulk.count();
+  };
   try {
     console.log(JSON.stringify({ arm, window, phase: "seed-start" }));
     const transactorCpuBefore = readFileSync("/tx-cpu/cpu.stat", "utf8");
@@ -34,7 +40,12 @@ for (const window of [32]) {
       window,
     );
     const loadCpuMicros = process.cpuUsage(cpuBefore);
-    const transactorCpuAfter = readFileSync("/tx-cpu/cpu.stat", "utf8");
+    const transactorCpuAfterCounts = readFileSync("/tx-cpu/cpu.stat", "utf8");
+    assert.ok(
+      transactorCpuAfterCommands,
+      "command boundary must be observed before count validation",
+    );
+    const transactorCpuAfter = transactorCpuAfterCommands;
     const usage = (text: string) => {
       const match = /^usage_usec (\d+)$/m.exec(text);
       assert.ok(match, "transactor cgroup CPU counter required");
@@ -60,6 +71,9 @@ for (const window of [32]) {
         loadCpuMicros,
         transactorCpuBefore,
         transactorCpuAfter,
+        transactorCpuAfterCounts,
+        cpuScope: "commands only; count validation and fingerprint reads excluded",
+        transactorCpuMicrosWithCounts: usage(transactorCpuAfterCounts) - usage(transactorCpuBefore),
         transactorCpuMicros,
         transactorCpuMicrosPerCommit: transactorCpuMicros / seed.commands,
         observed,

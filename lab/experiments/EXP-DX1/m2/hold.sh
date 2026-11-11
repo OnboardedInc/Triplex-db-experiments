@@ -54,7 +54,7 @@ if [[ $mode == native ]]; then
   -e 'DATOMIC_URI_TEMPLATE=datomic:mem://{db}' --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m hints-test & child=$!
 else
  bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --gateway-src "$PWD/packages/datomic/gateway" --codec-spec "$PWD/packages/datomic/src/codec-spec.json" \
-  --port-write 8546 --port-read 8547 --cpus-pg 0 --cpus-tx 0,1 --cpus-gw-write 2 --cpus-gw-read 3 \
+  --port-write 8546 --port-read 8547 --cpus-pg 0 --cpus-tx 0,1 --cpus-gw-write "${M2_GW_WRITE_CPUS:-2}" --cpus-gw-read 3 \
   --gw-java-opts '-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=50 -Ddatomic.objectCacheMax=1g' \
   --pg-memory 2g --tx-memory 4g --gw-memory 3g
  export DATOMIC_INTEGRATION=1 DATOMIC_GATEWAY_URL=http://127.0.0.1:8546 DATOMIC_URL=http://127.0.0.1:8546 DATOMIC_READ_URLS=http://127.0.0.1:8547 DATOMIC_TEST_LAYOUT=lean
