@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # [DX-H3] Why: cleanup precedes measurement-lock release. Rejected: abandoned engines outside a lease.
 set -euo pipefail
+export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 kind=${1:?functional|medium|real}; prefix=${2:?prefix}; shift 2
 [[ $prefix =~ ^tx2-dx[a-z0-9-]+$ ]] || exit 2
 # [DX-H4] Why: each arm needs a fresh physical stack and identical immutable arguments.
@@ -25,8 +26,14 @@ if [[ $kind == pair ]]; then
       pair_rc=$?; trap - EXIT TERM INT
       if [[ -n $pair_child ]]; then kill -TERM "$pair_child" 2>/dev/null || true; wait "$pair_child" || true; fi
       kill "$pair_watchdog" 2>/dev/null || true; wait "$pair_watchdog" 2>/dev/null || true
-      # Cleanup of each child must precede lease release; a surviving prefix retains the lock.
-      [[ -z $(docker ps -a --filter "name=$prefix" --format '{{.Names}}') ]] || exit 1
+      # [DX-R3] Why: a child's incomplete cleanup must retain ownership even if only a volume or network survives.
+      # Rejected: checking containers alone before releasing the shared pair lease.
+      pair_remaining=$(docker ps -a --filter "name=$prefix" --format '{{.Names}}') || exit 1
+      [[ -z $pair_remaining ]] || exit 1
+      pair_remaining=$(docker volume ls --filter "name=$prefix" --format '{{.Name}}') || exit 1
+      [[ -z $pair_remaining ]] || exit 1
+      pair_remaining=$(docker network ls --filter "name=$prefix" --format '{{.Name}}') || exit 1
+      [[ -z $pair_remaining ]] || exit 1
       rm "$pair_lock/owner.json"; rmdir "$pair_lock"
       exit "$pair_rc"
     }

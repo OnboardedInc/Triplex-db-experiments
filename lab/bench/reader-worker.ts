@@ -35,6 +35,8 @@ import { BUCKETS, HOP_SHARE, ids, subjectInCell, type Bucket, type Hop } from ".
 import { observe, type ReadRecord } from "./lib/observe.ts";
 
 type ReaderConfig = {
+  replicaPort?: import("node:worker_threads").MessagePort;
+  observationPort?: import("node:worker_threads").MessagePort;
   readPath?: "gateway" | "replica";
   replicaHistoryMiB?: number;
   replicaYield?: "loop" | "fair";
@@ -69,6 +71,15 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   loopDelay.enable();
   const deltaLag = new Histogram();
   let deltas = 0;
+  let replicaReadyResolve: (() => void) | undefined;
+  const replicaReady = cfg.replicaPort ? new Promise<void>(resolve => { replicaReadyResolve = resolve; }) : Promise.resolve();
+  cfg.replicaPort?.on("message", msg => {
+    if (msg.type === "replica-image") { replica!.install(msg.image); replicaReadyResolve!(); }
+    if (msg.type === "replica-delta") {
+      deltas++; if (msg.sentAt !== undefined) deltaLag.recordMs(nowAbs() - msg.sentAt);
+      replica!.apply(msg.delta);
+    }
+  });
   const phases = new Map<number, { reads: number; reasons: Record<string, number>; straddleWait: Histogram }>();
   const finalDiagnostics = () => ({ gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
     phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, fallbackReasons: s.reasons, straddleWait: s.straddleWait.toJSON() }])) });
@@ -80,6 +91,21 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   let hot: number[] = [];
   let records: ReadRecord[] = [];
   let samples: any[] = [];
+  let observationSerial = 0;
+  const observationPending = new Map<number, () => void>();
+  cfg.observationPort?.on("message", m => { observationPending.get(m.id)?.(); observationPending.delete(m.id); });
+  function sendReads() {
+    if (!cfg.observationPort) { port.postMessage({ type: "reads", records, samples }); records = []; samples = []; return Promise.resolve(); }
+    const id = ++observationSerial;
+    const done = new Promise<void>(resolve => observationPending.set(id, resolve));
+    cfg.observationPort.postMessage({ id, records, samples }); records = []; samples = [];
+    return done;
+  }
+  async function observationCredit() {
+    // [DX-R3] Why: an unhealthy spill cannot grow an unbounded queue of exact tuples in the process.
+    // Rejected: dropping reads or blocking the writer thread with synchronous disk backpressure.
+    while (observationPending.size >= 2) await new Promise<void>(resolve => setTimeout(resolve, 1));
+  }
   let rawSamples = 0;
   let stopping = false;
   let tokenSeq = 0;
@@ -171,6 +197,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     running++;
     try {
       while (!stopping && id < wanted && acked.length > 0) {
+        await observationCredit();
         if (replica && cfg.replicaYield !== "loop") await turn.enter();
         if (stopping || id >= wanted) break;
         const oracle = cfg.sampleSubjects.length > 0 && rng.next() < cfg.oracleRate;
@@ -224,9 +251,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     elu = next;
     loopDelay.reset();
     if (records.length || samples.length) {
-      port.postMessage({ type: "reads", records, samples });
-      records = [];
-      samples = [];
+      void sendReads();
     }
   }, 500);
 
@@ -255,6 +280,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
             const subject = list[next++]!;
             // [DX-R3] Why: sweep reads must yield to the same feed/traffic budget as live readers.
             // Rejected: a 10k-subject local microtask chain that stalls every worker message.
+            await observationCredit();
             if (replica && cfg.replicaYield !== "loop") await turn.enter();
             await readOnce(subject, msg.basis, 0, msg.position, msg.phase, { keepRows: false, sweep: true });
           }
@@ -269,9 +295,10 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       while (running > 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
       clearInterval(flush);
       loopDelay.disable();
-      port.postMessage({ type: "reads", records, samples });
-      records = [];
-      samples = [];
+      await sendReads();
+      while (observationPending.size) await new Promise(resolve => setTimeout(resolve, 1));
+      cfg.observationPort?.close();
+      cfg.replicaPort?.close();
       const diagnostics = finalDiagnostics();
       await comp.close().catch(() => {});
       port.postMessage({ type: "stopped", httpCounts: httpCounts(), diagnostics });
@@ -280,6 +307,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
 
   try {
     comp = await openComposition(cfg.composition, cfg.lane, cfg.scope);
+    await replicaReady;
     port.postMessage({ type: "ready" });
   } catch (error: any) {
     port.postMessage({ type: "error", message: String(error?.stack ?? error) });

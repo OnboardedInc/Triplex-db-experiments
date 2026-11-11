@@ -184,7 +184,7 @@ const log = (line: string) => {
   process.stderr.write(text + "\n");
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
-const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
+const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", "lab/bench/replica-worker.ts", "lab/bench/spill-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 
 const report: Record<string, any> = latencyReceipt({
   format: "tx2-ns-report/2",
@@ -283,10 +283,15 @@ function visitPhase(phase: number, fn: (record: ReadRecord, index: number) => vo
 let spillFinished = false;
 const oracleSamples: any[] = [];
 const settledReadCounts = new Map<number, number>();
+if (spill) spill.onProgress = m => {
+  for (const [phase, summary] of Object.entries(m.phases) as [string, any][]) settledReadCounts.set(Number(phase), summary.settled);
+  for (const sample of m.samples ?? []) oracleSamples.push(sample);
+};
 const phaseStarts = new Map<number, number>();
 const observedPhases = new Map<number, { reads: number; errors: number; read: Histogram; wait: Histogram; routes: Record<string, number> }>();
 function retainRead(r: ReadRecord) {
-  if (spill && !spillFinished) spill.push(r); else records.push(r);
+  if (spill && !spillFinished) { spill.push(r); return; }
+  records.push(r);
   const phase = r[R.phase];
   const summary = observedPhases.get(phase) ?? { reads: 0, errors: 0, read: new Histogram(), wait: new Histogram(), routes: {} };
   observedPhases.set(phase, summary);
@@ -438,7 +443,7 @@ async function run() {
     const gatewayPull = aux.pull.bind(aux);
     aux.pull = (root, basis, between) => replicaLocal.pullAt(root, basis, () => gatewayPull(root, basis), between);
   }
-  const workerCfg = (w: number) => ({ replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost && !("connect" in replicaHost) ? replicaHost.index.image() : undefined, subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const sweepDone = new Map<number, (v: any) => void>();
@@ -458,8 +463,11 @@ async function run() {
   };
   const startWorker = async (w: number, cfg: any) => {
     const pendingDeltas: any[] = [];
-    const unsubscribe = replicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
-    const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
+    const directReplica = replicaHost && "connect" in replicaHost ? replicaHost : undefined;
+    const unsubscribe = directReplica ? undefined : replicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
+    const observationPort = spill?.connect();
+    const replicaPort = directReplica?.connect();
+    const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: { ...cfg, observationPort, replicaPort }, transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : [])], env: process.env });
     const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (workerHttpCounts.push({ worker: w, counts: m.httpCounts }), readerFinalDiagnostics.push({ worker: w, diagnostics: m.diagnostics }), resolve())));
     await new Promise<void>((resolve, reject) => {
       worker.on("message", (m: any) => { if (m.type === "ready") resolve(); else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
@@ -467,7 +475,7 @@ async function run() {
     });
     unsubscribe?.();
     for (const delta of pendingDeltas) worker.postMessage({ type: "replica-delta", delta, sentAt: now() });
-    replicaHost?.subscribe(delta => worker.postMessage({ type: "replica-delta", delta, sentAt: now() }));
+    if (!directReplica) replicaHost?.subscribe(delta => worker.postMessage({ type: "replica-delta", delta, sentAt: now() }));
     worker.on("message", onWorkerMessage(w, worker));
     return { worker, stopped: stoppedP };
   };
@@ -781,6 +789,7 @@ async function run() {
     const entry: any = { historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
     phaseStarts.set(idx, start);
+    await spill?.beginPhase(idx, start, config.settleS * 1000);
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
     const indexJob = indexClient && /^L[0-9]+$/.test(spec.name) && spec.seconds ? (async () => {
       const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
@@ -812,7 +821,7 @@ async function run() {
       retainedReads: spill?.length ?? records.length, numericResidentBytes: records instanceof ReadRecords ? records.residentBytes : null };
     console.log(JSON.stringify({ kind: "phase-memory", phase: entry.name, ...entry.memory }));
     if (spill) await spill.checkpoint(); else if (records instanceof ReadRecords) records.checkpoint();
-    report.phaseProgress = Object.fromEntries([...observedPhases].map(([id, s]) => [id, {
+    report.phaseProgress = spill ? spill.progress : Object.fromEntries([...observedPhases].map(([id, s]) => [id, {
       reads: s.reads, errors: s.errors, read: s.read.toJSON(), watermarkWait: s.wait.toJSON(), routes: s.routes,
       verification: "PENDING final all-ACK model comparison; observed arrivals include settle and may omit in-flight reads" }]));
     report.phases = phases;
