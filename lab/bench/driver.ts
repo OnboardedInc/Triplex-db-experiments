@@ -47,6 +47,7 @@ import { Model, partsOf } from "./lib/model.ts";
 import { R, observe, type ReadRecord } from "./lib/observe.ts";
 import { ExpectationCache } from "./lib/expectation-cache.ts";
 import { splitTarget } from "./lib/split-target.ts";
+import { ReaderLifecycle } from "./lib/reader-lifecycle.ts";
 import { SpillThread } from "./lib/spill-thread.ts";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { ReadRecords, type ObservationRecords } from "./lib/read-records.ts";
@@ -445,6 +446,7 @@ async function run() {
   const workerCfg = (w: number) => ({ replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: replicaHost && !("connect" in replicaHost) ? replicaHost.index.image() : undefined, subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
+  const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
   const sweepDone = new Map<number, (v: any) => void>();
   const onWorkerMessage = (w: number, worker: Worker) => (msg: any) => {
     if (msg.type === "reads") { for (const r of msg.records) retainRead(r); for (const s of msg.samples) oracleSamples.push(s); }
@@ -467,7 +469,10 @@ async function run() {
     const observationPort = spill?.connect();
     const replicaPort = directReplica?.connect();
     const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: { ...cfg, observationPort, replicaPort }, transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : [])], env: process.env });
-    const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (workerHttpCounts.push({ worker: w, counts: m.httpCounts }), readerFinalDiagnostics.push({ worker: w, diagnostics: m.diagnostics }), resolve())));
+    const life = new ReaderLifecycle(); readerLives.push({ worker: w, life });
+    worker.on("error", (error: unknown) => life.error(error));
+    worker.on("exit", (code: number) => life.exit(code));
+    const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (life.acknowledgeStop(), workerHttpCounts.push({ worker: w, counts: m.httpCounts }), readerFinalDiagnostics.push({ worker: w, diagnostics: m.diagnostics }), resolve())));
     await new Promise<void>((resolve, reject) => {
       worker.on("message", (m: any) => { if (m.type === "ready") resolve(); else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
       worker.on("error", reject);
@@ -902,7 +907,8 @@ async function run() {
     replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
     await replayHandle.close().catch(() => {});
   }
-  const finalizationErrors: string[] = [];
+  report.readerLifecycle = readerLives.map(({ worker, life }) => ({ worker, stopped: life.stopped, failures: life.failures }));
+  const finalizationErrors: string[] = readerLives.flatMap(({ worker, life }) => [...life.failures, ...(life.stopped ? [] : ["missing drained stopped acknowledgement"])].map(error => `reader ${worker}: ${error}`));
   const finalPosition = await observeFinalHead(() => writer.currentPosition(), finalizationErrors);
   samplersOn = false;
   clearInterval(eluTimer);

@@ -78,11 +78,13 @@ if [[ $mode == compare ]]; then
       *) exit 2;;
     esac
     echo "DX-R3 comparison arm=$arm yield=$yield feed=$feed split=$split historyMiB=$history cacheMiB=$cache thread=$thread peer=$peer"
-    run_driver node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 1024 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --replica-thread "$thread" --replica-peer "$peer" --replica-yield "$yield" --replica-feed "$feed" --split-target "$split" --replica-history-mib "$history" --reader-entity-cache-mib "$cache" --output "runs/DX-R3-vm/report-$arm.json"
+    arm_rc=0
+    run_driver node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 1024 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --replica-thread "$thread" --replica-peer "$peer" --replica-yield "$yield" --replica-feed "$feed" --split-target "$split" --replica-history-mib "$history" --reader-entity-cache-mib "$cache" --output "runs/DX-R3-vm/report-$arm.json" || arm_rc=$?
     docker cp "$prefix-driver:$repo/runs/DX-R3-vm/report-$arm.json" "$config/report-$arm.json"
     cat "$config/report-$arm.json"
     docker inspect --format '{{.Name}} {{.State.ExitCode}} {{.State.OOMKilled}} {{.HostConfig.CpusetCpus}} {{.HostConfig.Memory}}' "$prefix-driver"
     docker rm "$prefix-driver"
+    [[ $arm_rc == 0 ]] || exit "$arm_rc"
   done
   exit
 fi
