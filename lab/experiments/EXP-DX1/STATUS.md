@@ -943,3 +943,27 @@ unmaintained it would be near 60 GB against 46 GiB free); release activation at 
 (seed up to 5 h, evaluation up to 60 min) start only when `~/Claude/Projects/triplex-db-2/locks/long-hold-ok` exists; the
 orchestrator creates that file when tonight's short measurements are done (DX-R3 ladder, `nohlt`, DX-M2's arms, the pair with
 local reads).
+
+## 2026-11-11 06:28 UTC: reader ladder with local reads on the merged code (`r3/run.sh benchmark m1`)
+
+10,000 subjects, 3 reader threads on CPUs 4 to 7, 28 s windows, writer trace running, VM plain. Zero violations and zero errors
+in 5,323,863 reads; every read checked against the expected-state model. The external oracle was not run in this ladder-only
+mode. Log `~/Claude/Projects/triplex-db-2/evidence/DX-R3/orch-benchmark-m1.log`.
+
+| Readers | Correct reads/s (gateway path, q5) | Read p50 / p99 ms (gateway path, q5) | Local share | Watermark wait p99 ms |
+| --- | --- | --- | --- | --- |
+| 1 | 22,522 (1,843) | 0.019 / 0.076 (0.30 / 1.08) | 1.000 | 0 |
+| 4 | 55,629 (1,604) | 0.020 / 0.087 (0.52 / 3.5) | 1.000 | 0 |
+| 16 | 59,267 (2,392) | 0.019 / 0.095 (1.45 / 23.7) | 1.000 | 0 |
+| 64, overlaps a burst | 38,769 (5,543) | 0.019 / 0.122 (7.2 / 41.5) | 0.9991 | 0 |
+| 256, overlaps a burst | 13,949 (4,940) | 0.038 / 91.6 (36.6 / 255.0) | 0.955 | 36.1 |
+
+Against DX-R3's targets: read p99 at 256 readers 91.6 ms (target 100, met); 13,949 reads/s at 256 (target 15,000, 7% short).
+Against Sam's bars: read p99 at 256 is now inside 100 ms; the rate at 256 is 0.36 of the rate at 64 (bar: not below), because
+the 64 level became seven times faster while 256 loses time to 19,681 watermark waits and 17,543 gateway fallbacks during the
+55/s burst. Peak process memory before analysis 5.05 GB in this short ladder.
+
+**DX-R3 resumed 06:27 UTC** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-R3-resume1.md`): find and fix what limits 256
+readers (targets 40,000 reads/s, p99 25 ms, local share 0.99; 1,024 readers at least 0.9 of 256); follow the feed with DX-R2's
+inline journals; pass the read path through the pair scripts and bound sample memory so the full ladder fits 12 GiB with
+finished phases on disk; rerun the 200,000-pair differential on merged code.
