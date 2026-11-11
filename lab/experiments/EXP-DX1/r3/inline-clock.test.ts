@@ -1,3 +1,4 @@
+import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
@@ -29,6 +30,15 @@ test("inline source admits original journal clocks and rejects a bad page withou
   assert.equal(result.transactions.length, page.transactions.length);
   assert.equal(timed.times.size, page.transactions.length);
   assert([...timed.times.values()].every(Number.isFinite));
+  const badClock = structuredClone(page);
+  badClock.transactions[0][2] = badClock.transactions[0][2].map((text: string) => {
+    const row = decodeRowText(text);
+    return row.attribute === ":_tx/instant" ? encodeRowText({ ...row, recorded_at: row.recorded_at + 1 }) : text;
+  });
+  const badClockClient = { async request() { return badClock; } } as unknown as DatomicClient;
+  const untrustedClock = timedReplicaSource(badClockClient, "recorded", async () => badClock.head, 123);
+  await untrustedClock.source.feed(request.body.after, 1000, 0);
+  assert(Number.isNaN(untrustedClock.times.get(badClock.transactions[0][1])), "stored record clock must match the admitted instant");
   page.transactions[0][1]++;
   const rejected = timedReplicaSource(client, "recorded", async () => page.head, 123);
   await assert.rejects(rejected.source.feed(request.body.after, 1000, 0), /position mismatch/);

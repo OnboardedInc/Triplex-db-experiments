@@ -42,7 +42,9 @@ export function timedReplicaSource(
                   ? instant[0]!.value.value
                   : NaN;
               const changes = rows.filter((row) => row.attribute === ":_tx/change");
-              const regular = changes.every((row) => {
+              // [DX-R3] Why: strict source ordering applies to stored record clocks, not an unchecked instant value.
+              // Rejected: an empty change list vacuously certifying a forged journal clock.
+              const regular = Number.isFinite(time) && rows.every(row => row.recordedAt === time) && changes.every((row) => {
                 if (row.value.type !== "json") return false;
                 const change = row.value.value as Record<string, unknown>;
                 return (
