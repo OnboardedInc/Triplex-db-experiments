@@ -1334,3 +1334,21 @@ commits, follower lag, raw samples at every level, time-read local share on stri
 
 **DX-R3 resumed 18:52 UTC, part 6:** R3-C2, R3-C1/C3, R3-N stated or measured, README and error text. After this the review
 loop stops and the live runs decide: differential and ladder on a strict scope, then the pairs.
+
+## 2026-11-11 19:12 UTC: DX-R3 part 6 done (`f930813c`); review loop closed pending live runs; disk reclaimed
+
+DX-R3 part 6: Option descriptors and dense arrays are validated before canonicalizing and before cache admission; the
+reviewer's round-three value claims pass 3 of 3; README and `ClockConflict` text describe `strictRecordClocks`. All offline
+suites and three typechecks pass; recorded replay zero differences. No engine run (lock held by the seed). The review loop
+stops here: three rounds, nine findings, all fixed offline; what remains is live proof on a strict scope
+(`node lab/bin/heavy.mjs --label DX-R3-p6-both -- bash lab/experiments/EXP-DX1/r3/run.sh both p6-both` from the DX-R3 worktree).
+Branches not merged yet: `exp/DX-R3-replica-reads` (contains `review/DX-V1`), `exp/DX-S5-seed-100k`.
+
+Disk: `lab/bin/compress-evidence.sh` over evidence files above 50 MB freed 4.1 GiB (22.6 to 26.7 GiB free). A second pass marks
+the ended native lane's stores (`P4N-R1`, `P4N-R2`, `P5N-R1`, `P5N-R2`, `P5B-R3` arms) as settled and compresses them, to make
+room for a clone of the 100,000-subject seed (about 14 GB plus the 15 GiB floor) so the sealed seed stays unmodified.
+
+Seed at 19:10 UTC: 2,785,000 commands (about 64,000 subjects), 431 commands/s, attempt 2, Mac 26.1 GiB free.
+
+Order after the seed: (1) 100,000-subject activation on a clone (P5 verdict); (2) DX-R3 live proof; (3) merge, then full
+pairs under both split-read rules; (4) write-gateway arms and the sparse-commit question.
