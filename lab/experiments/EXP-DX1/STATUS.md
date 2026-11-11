@@ -893,3 +893,28 @@ What is left for lane D at this rung, and what is already aimed at it:
 2. **Commits (p50 with readers, p99 everywhere):** DX-M2 (transactor GC flags, record time assigned in the transaction, hints)
    and the `nohlt` test (wake penalty; note commit p50 27 ms with 1 reader against 11 to 14 ms with 4 to 256).
 3. **Harness gaps:** the P5 rows need the local-copy evaluation wired in; sample memory. Recovery follows from item 1.
+
+## 2026-11-11 06:30 UTC: DX-R2 and DX-R3 merged; their 10,000-subject measurements run by the orchestrator
+
+Both agents finished their code and proofs but neither got the lock for its 10,000-subject run (the pair, the restart and three
+agents queued on it).
+
+**DX-R2 (`87c43441`, merged `e2ba64e8`).** Journals carry complete changed rows and revisions (opt-in `Replica.source`, 16
+journals per page); immutable slab slices with a shared binary index and no per-pass image; compressed bootstrap pages, four in
+flight; supported-scope check. Fresh 1,000 subjects: 2,000 commands followed with zero extra page reads, all 1,000 worlds equal,
+acknowledgement-to-applied p99 10.1 ms (no reader load), bootstrap 3.57 s, full pass 0.73 s (setup 0.48, compute 0.26), driver
+peak 813 MB. Corpus gate: 300 of 300 scenarios, 125,200 eligible worlds equal (was 0 of 300). Recorded 10,000-subject inputs:
+worlds, outputs, records equal; slabs 468 MB, index 95 MB. 100,000-subject projection: data 5.66 GB; whole-process peak scaled
+10x 15.4 GB. Not measured: loaded lag, 10,000 bootstrap, setup/compute, peak. Orchestrator run queued:
+`r2/window.sh tx2-dxr2-10000-b … --live --publish` (log `evidence/DX-R2/orch-10000-b.log`).
+
+**Merged-code suite after DX-R2:** 28 files, 206 passed and 2 skipped, then 208 passed (`ORCH-merge/merge2-base.log`).
+
+**DX-R3 (`b357dbe1`, merged `92445010`).** `RecentReads` (per-entity version intervals, default 20,000 positions and 64 MiB),
+`pullAt`, one follower with reader threads sharing buffers, `--read-path replica`, observations kept in packed storage, process
+peak emitted at exit. Differential at 2,000 subjects with a concurrent writer (3,039 commits): 200,000 read pairs, zero
+differences (155,159 local, 44,841 gateway). Benchmark not measured: it stopped before seeding on a missing build output.
+Merge conflict in `Replica.ts` resolved by keeping DX-R2's inline replacement path and DX-R3's update hook; build, three
+typechecks, 25 vitest and 13 node tests pass (`ORCH-merge/merge3-*.log`). Orchestrator run queued:
+`r3/run.sh benchmark m1` (log `evidence/DX-R3/orch-benchmark-m1.log`). Owed after it: the differential on the merged code,
+and the full pair with `--read-path replica`.
