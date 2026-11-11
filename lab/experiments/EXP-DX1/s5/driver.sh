@@ -17,6 +17,10 @@ PYLOCK
 if [[ $mode == seed ]]; then
  if [[ $(docker inspect --format '{{.State.Running}}' "$prefix-gw-r") == true ]]; then docker stop -t 3 "$prefix-gw-r"; fi
 else
+ # [DX-S5] Why: prefix verification saturated two reader cores while the writer was idle; use its spare cores for readback.
+ # Rejected: changing the later evaluation's frozen live-traffic placement or increasing peer memory.
+ docker update --cpuset-cpus 2,3,4,5 "$prefix-gw-r"
+ docker inspect --format 'verification CPUs={{.HostConfig.CpusetCpus}} memory={{.HostConfig.Memory}}' "$prefix-gw-r"
  docker start "$prefix-gw-r"
  db=$(node --input-type=module -e 'import {DatabaseScope} from "./packages/core/dist/runtime/index.js";console.log("s2-"+Buffer.from(String(DatabaseScope.test(process.argv[1]))).toString("base64url"))' "$scope")
  minimum=$(docker run --rm --pull never --name "$prefix-copy" -v "$prefix-tools:/state:ro" node:22.23.2-bookworm-slim node -e 'const fs=require("node:fs"),z=require("node:zlib");console.log(JSON.parse(z.gunzipSync(fs.readFileSync("/state/checkpoint.json.gz"))).position)')
