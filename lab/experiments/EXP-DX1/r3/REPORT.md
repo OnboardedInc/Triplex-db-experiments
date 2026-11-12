@@ -1,52 +1,64 @@
-# DX-R3 part 7 — NO equivalence PASS; position-oracle defect fixed, native rerun required
-North star: P1 exact pinned reads and P2 public commits; lab/SCOPE.md, NORTH-STAR.md and TARGETS.md remain the contract.
-Implementation head: cf099a46. This report is committed last.
-## Historical seed failure
-The original log ends in `WriteError: Resend the client suffix from expectedSequence`; it retained neither the first rejection nor its exact ordering code.
-That historical cause remains unproven. Three fresh strict 2,000-subject seeds here succeeded; the last completed in 26.7 s, without seed failures.
-A deterministic batch defect was fixed: logical journals inside one strict physical commit previously received different clocks.
-The adapter now caches the first physical instant on shared outer transaction state, using the stored immutable scope policy, and issues a fresh clock on replay.
-A returned conflict maximum advances issuance immediately, including large finite clocks where adding one rounds back; exhaustion returns WriteError before consuming a send.
-A synchronous TRIPLEX_CLOCK submission refusal now supplies both ordinary and timed dereference, preserving the error while consuming its ordered turn.
-That synchronous edge is proven with the actual source function and explicit Datomic doubles, not claimed as the historical seed cause.
-README documents automatic public clock selection; the strict source rule and administrative-write boundary are unchanged.
-## Native observations and failed proof
-p7-probe passed: 2,000 subjects / 59 seed commands / zero failures / 29.13 s; eight-journal physical batches shared one instant twice.
-Four strict/non-strict/non-strict/strict arms each verified 256 durable commands with 32 in flight; all 64 deliberately induced ClockConflict responses recovered without a suffix gap.
-Those stress timings include injected strict retries and unequal initial database sizes: they are not a fair policy-cost comparison.
-p7-both-3 reached 10,000 complete pairs with zero differences in 307.42 s (32.5 pairs/s); I terminated it through the holder cleanup because its projection exceeded the 40-minute lease.
-The checker now memoizes complete canonical member text only after descriptor/prototype validation and recursive immutability proof, performed in the canonical traversal.
-The world container embeds the already encoded typed members directly; decoded equivalence to the former escaped container is tested, including controls, quotes and signed zero.
-The differential performs one complete local/gateway byte comparison per pair, alternating eager/lazy local materialization, plus whole-world observation equality; no facts or pairs are sampled.
-p7-final reached 10,000 equal comparisons in 112.20 s, then FAILED at n=16096, subject 96, floor position 59. No ladder ran.
-Definite oracle defect: comp.pull called public T.reach; core resolveTemporalBasis retains time but discards internal recordedPosition. Position-only floor/current requests became latest.
-The failed expected-side read therefore was not bound to position 59; this is not a valid same-basis equivalence result and does not exonerate the copy.
-Composition now forwards Datomic positions directly to getReachTriples; declined optimized reads traverse getByEntities with the identical basis on every level, including split-root verification.
-A missing exact adapter path fails closed. No packages/core or DatomicClient read path was changed. Native rerun of this correction is outstanding.
-## Gates and limits
-56 Node tests pass, including all three unchanged reviewer value claims, typed-container equivalence, exact direct/generic position routing and publication binding.
-31 package vitest tests pass; four native tests skipped. Three typechecks pass (package, driver, r3); affected checks were rerun after the position correction.
-Actual Clojure source submit/order checks pass: timed/plain error identity and next-turn retry; eight DX-B10 order tests / 98 assertions, including 10,000 reordered arrivals.
-Final recorded replay passes: 2,000 journals/clocks, 3,000 complete typed worlds, 10,000 optimized observations; zero differences. Packed copy at 1,000 subjects: 67,698,904 bytes.
-The 200,000-pair final proof, ladder/routing/raw-local quotas/time-only local share, 300 native B10 scenarios and native HTTP order gates remain unverified.
-Fair strict/non-strict cost and absolute indexed-policy-read cost remain unmeasured; both comparison arms execute the policy lookup, so that contrast alone cannot isolate its absolute cost.
-The prepared cost fixture seeds identical 2,000-subject worlds in every arm and excludes conflict warmup; DX_R3_COST_RATE=55 offers eight-fact commands at 55/s.
-DX-S5 held the lock across most of the budget and reclaimed it after releases; all owned containers/networks/volumes were removed before releasing each lease.
-## Commands and raw evidence
-Evidence: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R3/p7-*.log.gz; one compressed raw output per run, no manifests/source captures.
-Primary logs: p7-probe, p7-both-3 (terminated), p7-final (failed), p7-final-node, p7-position-checked, p7-replay-final, p7-regressions-final, p7-clock-build, p7-timed-deref, p7-source-order.
-Retained unsuccessful intermediate probes/typechecks and the superseded slow replay; their output is not reported PASS.
-DX_R3_TRY_LOCK=1 node lab/bin/heavy.mjs --label DX-R3-p7-next -- bash lab/experiments/EXP-DX1/r3/run.sh both <fresh-prefix>
-Native B10: same command with gates <fresh-prefix>; cost: DX_R3_COST_RATE=55 with probe <fresh-prefix>. Default caps: 39 minutes for both, 19 otherwise.
-DX_R3_HOLD_SECONDS may shorten those deadlines; it never reduces read counts or phases and an incomplete run fails.
-Node: node --experimental-strip-types --test lab/experiments/EXP-DX1/r3/*.test.ts lab/verify/DX-V1/round3/value-claims.test.ts lab/bench/test/datomic-publication.test.ts
-Types/build: pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec tsc --noEmit -p <package|r3/driver-tsconfig|r3/tsconfig>; same pnpm --filter @triplex-build/triplex-datomic build.
-Replay: node lab/bin/heavy.mjs --label DX-R3-replay -- node --experimental-strip-types lab/experiments/EXP-DX1/r3/replay.ts /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R1/tx2-dxr1-1000-d/pages
-## Outcome audit: content / freshness / binding
-physical-clock tests check exact issued times, finite/exhaustion behavior, actual retry payloads and all 32 sequence turns; fresh UUID scopes/lanes bind the shipped functions.
-order-rejection evaluates shipped submit! with real order lanes and explicit doubles, checks original error identity through timed/plain deref and exact next cursors; no engine claim.
-canonicalRow/immutable/member caches validate all descriptors, prototypes and nested frozen data before admission; fresh-process WeakMaps bind exact immutable objects, never IDs or revisions alone.
-World-container tests compare every decoded typed member with the prior encoding; every differential pair still includes all returned fields and facts.
-reachPull positional tests prohibit latest calls, check the exact requested cut on direct and every generic level, verify public metadata and truthful round-trip counts; fresh mock inputs, no native claim.
-Native fixture verdicts require fresh scopes/stored policy, seed completion, unique receipt positions, strict clock order and exact durable command values. Expected injected refusals are labelled.
-The live failure invalidates any full equivalence PASS; the corrected oracle requires fresh source/slot/basis binding. No acceptance edits, changed pinned paths found, bar/core edits, root/pack check, promotion, push or main merge.
+# DX-R3 part 8 — 5,100,186 correct reads; speed targets NOT MET
+The interrupted full pair exposed 318 oracle-wire mismatches: O-REPLAY adds private binary64 `bits` witnesses, which the typed public comparator incorrectly treated as public fields. Checked decoding fixes them: the same 53 local samples / 2,849 entity queries now have zero mismatches, oracle and receipt PASS. This is a saved-sample proof, not an all-read pair PASS.
+Latest runtime head 1398836c (all three readers report strict clocks): short ladder DONE, 5,100,186/5,100,186 correct, zero violations/errors; all 3,415 offered writes eventually published, zero terminal typed rejections/conflicts (internal CAS retries remain in raw output). Full pair fd81b715 remains interrupted; no overall P1/P2 promotion.
+## Admission and implementation
+Strict scopes enforce finite normalized double clocks, one clock per physical commit, above the durable prior maximum, including SPI, empty and claim-only commits. Administrative Datomic transactions remain outside that gateway guarantee.
+Several logical journals share a physical clock. The feed now binds each journal to its indexed physical final position; newest-clock time admission waits until that entire position group is applied, including groups split across pages.
+A strictly greater applied clock proves an intervening time cut; an equal newest clock proves it only at the physical end. Positions apply in order; window-floor and byte-budget checks still precede cache admission.
+Bootstrap fetches the exact source journal clock/end and verifies the native cut; a caller's seed instant is no clock proof. An unclocked rebuild admits no invented clock; the next validated strict journal restores later time admission.
+Non-strict scopes always send time-only reads to the gateway. Unknown/above-head clocks, missing end proof and evicted cuts also fall back; receipt hints wait up to 10 ms without changing the requested basis.
+Full public rows and Options remain unchanged. Bounded content-keyed decoded rows and canonical member contributions avoid repeated decoding/hashing; keys include every encoded field and IEEE bits. Cut summaries use exact root/position/valid-interval keys and weak version manifests.
+Strong handle promotions last only one event-loop turn or index notification; public answers pin their own immutable versions and materialize independently. Fair batches increased 64→256 reads with the same 1 ms fast-path time budget.
+Follower application and internal full-contribution RYOW capture run off the writer thread; full public pulls still return complete rows. Feed pages are bounded to four journals. Native predecessor comparison checks every bounded byte without copies (malformed slices reject).
+Every read still receives the independent full-row model verdict after the measured phases. Complete analysis now checkpoints before waiting for the independent oracle; the oracle runs concurrently on a joined worker only after measured activity ends; raw samples match retained attempts in one traversal rather than repeatedly scanning the spill.
+## Measurements (10k subjects, 3 reader workers)
+Before: orchestrator's 794b034b short ladder. After: 1398836c fresh strict-scope short ladder, standard TX 0,1 / W 1 / R 2,3 placement, 30 s levels; complete typed expected-state checking. Different noisy runs, not an alternating same-hold control.
+|Readers|Before correct/s; p99 ms; local|After correct/s; p50 / p99 ms; local / time-only local|
+|---:|---|---|
+|1|676; 12.4; .664|15,489; .016 / .287; 1 / 1|
+|4|1,827; 21.6; .733|37,671; .020 / .325; 1 / 1|
+|16|1,868; 56.3; .687|36,963; .056 / .587; .999985 / .999985|
+|64|3,103; 154.6; .868|26,640; .291 / 2.175; .999554 / .999607|
+|256|3,261; 266.2; .975|8,910; 1.303 / 23.935; .992288 / .992127|
+|1,024|not supplied|17,622; 5.695 / 47.359; .995673 / .994653|
+Targets: 64-reader rate <40k; 256/64=.3345 (FAIL), 1024/256=1.9777 (met); p99 at256 <=25 ms and all local/time-only shares >=.99 (met). Current client is saturated: 2,199,206 world-cache misses / 1,916,958 evictions across reader workers; 256 costs .452 ms client CPU/local read. Closed-clock fallback is no longer the primary limit.
+Follow delay baseline reader-peer p50/p90/p99: 0/137/532 ms. Latest: 6.783/70.143/199.679 ms (FAIL <100); p99 ACK→available 139.263, available→received 29.951, received→applied 96.255 ms (percentiles do not add). Available includes feed scheduling/admission, not pure replication.
+Earlier same-hold reader/writer-peer trials gave follow p99 413.695/618.495 ms with internal RYOW; moving to W was worse there. Main-thread full-world RYOW cloning had cost 5.078 ms CPU/read; internal complete observations cost .123 ms in that recorded control. Neither peer meets the final <100 ms target yet. Latest RYOW wait p50/p99 0/78.335 ms, 258/3,415 fallbacks, all RYOW reads correct; pull p50/p99 26.367/428.031 ms.
+A native 1 MiB predecessor control alternated old/new/new/old: 128 comparisons cost 1,294.953/3.074/3.742/1,315.558 ms CPU. This isolates byte validation, not native feed latency; live effect of the final optimization is unmeasured.
+Bounded recorded rate control (1k roots, yield every 256, 200k checked reads per arm): 794b 7,817/s / .12764 ms CPU; corrected 17,506/s / .05805 ms CPU; zero differences. No engine/writer; not the 10k target.
+Latest serving/capture process CPU upper bounds at 64/256/1024: .10823/.45176/.21913 ms/local read (includes writer/follower/spill); post-run main-thread verdict CPU .003401 ms/read, complete JS analysis .006819 ms/read. Read latency stops before judging. Final oracle-worker saved-case check: PASS, 1,435 main callbacks during 359.862 s, 1.983 GB host peak (not the native driver peak).
+## Full-pair P1 / P2 (write-only recovery; no read PASS)
+Before below is historical q7 (different earlier code); after is fd81. All P1 verified-read/goodput/recovery/hot-set/split-correctness/maintenance verdicts remain unqualified. Captured read errors were zero; that does not prove zero violations.
+|Commit measure ms, 5–10 / 11–25 / 26–50 facts|q7 before|fd81 after|
+|---|---|---|
+|All-commit p99|103.9 / 97.3 / 85.0|3538.943 / 3899.391 / 3309.567|
+|L256 p50|12.1 / 11.6 / not supplied|16.895 / 21.887 / 24.063|
+|L256 p99|not supplied|43.372 / 77.145 / 24.063|
+|Burst p50|13.8 / not supplied / not supplied|25.599 / 28.799 / 33.279|
+Matched L256/L1024 writer p99 ratios: 2.7966/2.5365 (limits 1.25/2); L256 maximum 77.145 ms (limit 2000). Read-rate ratios, recovery and zero-violation bars need final judgments. Queue/accounting/typed-rejection/RYOW/duplicate/lost-ACK verdicts were not saved for the ladder.
+The sweep finished before its 2 s settle boundary: zero eligible writer commits, so sweep/presweep commit-p99 ratio is null, not zero; the bar is uncomputable. No bar or arithmetic changed.
+Latest short-run all-band commit p99 1851.391/1892.351/1679.359 ms; steady queue 1 <=2.19, accounting/RYOW correct, but no matched zero arm for this head. Even the completed fd81 zero arm failed latency/queue targets: all-band p99 1392.639/1335.295/1466.367 ms; L256 p50 16.767/16.319 ms; steady queue 4 > 2.19. Its 7,408 RYOW reads were correct with zero errors/violations.
+Latest copy/history: 69,743,528 / 156,418,906 bytes; driver peak 4,422,656,000 bytes (>4 GiB, FAIL). Full-pair fd81 peak before analysis 5,876,944,896 bytes. Phase RSS GB: warmup 2.805, baseline 1.673, L1 2.083, L4 3.059, L16 4.321, L64 4.616, L256 4.533, L1024 4.808, recovery 4.839, p4mix 4.945, p4h1 4.366, grow3 3.848, p4h3 3.894, grow10 4.477, p4h10 4.358, presweep 5.640, sweep 5.472.
+P4's unchanged arithmetic divides end-to-end verified pulls/s by four reserved engine cores even when pulls never reach the engine. It is not engine pull throughput; report local driver throughput/CPU separately from engine writer/feed cost.
+## Why the earlier differentials passed
+The earlier e5d31c30 and 2e06d5de 200k tests called `/reach-many` directly with rowPage/full and forwarded positions; they bypassed the later `T.reach` position-forwarding defect. Receipt bases carried both record time and position; floor/current bases carried positions only; there were no time-only cuts.
+Their 200k mix was 171,087 receipt+position, 398 floor-position and 28,515 current-watermark-position reads; local/gateway counts were 170,224/29,776 and 155,159/44,841. Their canonical projection omitted public metadata/Options, so those passes never proved F1's full public payload equivalence. The orchestrator's later 794b full-typed 200k proof did.
+## Gates and commands
+75 Node tests, 14 current reviewer tests, 17 package vitest tests (one native test skipped), package build and three typechecks pass. Historical adversarial F3 still fails: it requires non-strict time-only local admission after a greater clock, contrary to the subsequent R2-B ruling; its assertion was not edited.
+Latest local raw comparisons per L1/L4/L16/L64/L256/L1024: 1/3/3/3/3/3, all complete-byte equal to gateway. Pending split timings: 68,227 complete; 63,234 ACKs / 30,957 applications between steps; mixed not rerun. Recorded replay on current native-equality code: 2,000 journals/clocks, 3,000 complete typed worlds and 10,000 optimized observations, zero differences. No new live 200k proof or completed latest-head pair is claimed.
+`node --experimental-strip-types --test lab/experiments/EXP-DX1/r3/*.test.ts lab/verify/DX-V1/round3/value-claims.test.ts lab/bench/test/datomic-publication.test.ts`; vitest: replica, replica-packed, replica-source, physical-clock, clock-order.
+Typechecks: `pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec tsc --noEmit -p packages/datomic/tsconfig.json`; two direct tsc runs use `--types node --target ES2022 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions --skipLibCheck`, reader-worker.ts and driver.ts respectively.
+Replay/rate: `node lab/bin/heavy.mjs --label DX-R3-p8-native-equality-replay -- node --experimental-strip-types lab/experiments/EXP-DX1/r3/replay.ts /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R1/tx2-dxr1-1000-c/pages`; full-row-rate.ts uses the same directory.
+Latest ladder: `DX_R3_TRY_LOCK=1 DX_R3_HOLD_SECONDS=720 node lab/bin/heavy.mjs --label DX-R3-p8-final-ladder-c -- bash lab/experiments/EXP-DX1/r3/run.sh benchmark p8-final-ladder-c` after a bounded free-lock wait. A/B failed admission without resources. Full 200k differential was not rerun (previous 2,253 s exceeds an ordinary short lease).
+Next pair: `DX_R3_TRY_LOCK=1 DX_READ_PATH=replica DX_DRIVER_MEMORY=12g DX_DRIVER_HEAP_MB=8192 DX_STACK_EVIDENCE=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R3 node lab/bin/heavy.mjs --label DX-R3-p8-final-pair -- bash lab/experiments/EXP-DX1/h4/run.sh pair tx2-dxr3-p8-final-pair --rung 10k --seed-batch-facts 2000 --replica-history-mib 192` (default TX 0,1 / W 1 / R 2,3; measured fd81 used separate PG0/TX1/W2/R3).
+## Content / freshness / binding audit
+RecentReads admission checks this validated strict clock/end prefix and retained floor; images preserve end metadata. TimedSource publishes staged evidence only after actual page validation; physical ends come from immutable indexed source transactions.
+Bootstrap clears stale mappings and checks the freshly fetched journal's actual clock against its source/native cut, never a caller instant. Predecessor native equality checks all bounded bytes and rejects malformed offsets/lengths; position/revision/order guards remain.
+Decoded-row keys include all encoded inputs and signed-zero bits; canonical parts require complete descriptor validation/freeze. Cut-cache hits re-resolve root/source cut/valid boundaries and promote every immutable version; missing handles walk again, with release on update/turn. No ID-only certificate.
+Every observation still reaches the complete expected-state judge. Oracle samples compare actual local/gateway full canonical bytes; sample matching binds the first exact phase/start/subject/record-time/valid-time attempt in one pass.
+The joined oracle worker receives the exact post-drain case/reads; worker errors are ORACLE-ERROR, mandatory oracle failure invalidates finalization, and no final PASS precedes all-read judgments. Verdict CPU uses main-thread counters when available; process analysis CPU labels concurrent oracle contribution.
+Oracle admission verifies private bits, exact case hash/identity, complete query IDs/kinds/row arrays, fresh output, independent oracle+receipt PASS, exit zero and zero value mismatches. Tests inject wrong values, verdicts, receipts, stale/missing output and extra numeric fields.
+Recovery only checks saved sample inputs / write distributions, explicitly retains interrupted status and null empty windows, and never certifies all reads. Cleanup regression executes the shipped failing redirected trap and proves finite output plus original exit status.
+No acceptance files/core/bar arithmetic edited; no literal acceptance pin references found among changed paths. Latest full pair, follow <100 ms, 64>=40k, 256>=64 and <4 GiB remain unmet/open; 1024>=.9*256 is met only in the short ladder.
+Evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R3/`, raw command `.log.gz` files and `p8-final-ladder-c.log.gz`, `p8-worker-saved-oracle.log.gz` and `p8-pair-a.tar.xz` (230,182,324 bytes); first failed oracle output retained in `p8-oracle-wire-failure-complete.log.gz`.
+A cleanup trap recursively copied driver.log into its redirected self, consuming 19,015,501,885 bytes. All bytes were compressed/verified before releasing blocks; all archived source files were byte-verified before deletion. Trap output now restores caller FDs; own containers/volumes/networks are gone. Evidence totals 332,996,247 bytes (<500 MB).
