@@ -219,3 +219,16 @@ Orchestrator's reading:
 1. `nohlt` stays on as the standing test condition. The queued switch-off was cancelled before it ran.
 2. Sam is not using this Mac, so the VM's eight busy cores and long holds are acceptable, day or night.
 3. The 100,000-subject seed is the top job; run it as soon as the corrected procedure is proven.
+
+## 2026-11-12 about 14:50 UTC: pause the work gracefully; remove XTDB experiment data and downloadable Docker images
+
+Sam, verbatim:
+
+> I actually want you to pause. Don't stop anything that's already kind of working but I want you to pause work gracefully. I need to use my Claude usage and my Codex usage for something else this week. And yeah get rid of the XTDB experiment data and the downloadable Docker images as well. That looks good to me.
+
+Orchestrator's reading:
+1. No new agents (Claude or Codex) and no new orchestration from now on. What is already running may finish.
+2. Remove what was proposed just before: the two finished XTDB experiment data volumes (`tx2-xtdb-s1-data`, `tx2-xtdb-s2-data`)
+   and the downloadable images the Datomic lane does not use (Kafka, MinIO, SeaweedFS, the tracing image). Not the XTDB
+   images, not `tx2-xtdb-dev-data`, not any seed, nothing of QLever.
+3. Leave the state written down so the work can resume from files.
