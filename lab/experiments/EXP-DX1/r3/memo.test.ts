@@ -102,3 +102,16 @@ test("turn promotions end before an index update and before the next turn", asyn
     assert.equal(cache.get("root", 1, 2, 0), undefined);
   } finally { prototype.deref = deref; cache.clear(); }
 });
+
+// [DX-R3-P9] Why: a larger measured byte budget must retain useful cuts beyond the old count cap, while eviction remains bounded.
+// Rejected: an entry-count control whose capacity is unrelated to measured manifest size.
+test("world cache capacity follows its complete byte charge beyond 2048 entries", () => {
+  const cache = new CutCache(8 * 1024 ** 2), packed = {buffer:new SharedArrayBuffer(1024),revision:1};
+  const value = {triples:[],observation:{digest:"exact",stamp:-1,stamps:0,facts:0,bytes:0},entities:0,depth:0,roundTrips:0,route:"replica",language:"packed",waitedMs:0};
+  for(let p=0;p<3000;p++) cache.put("root",p,0,10,value,["root",packed],()=>[]);
+  assert.equal(cache.diagnostics.entries,3000);assert(cache.diagnostics.bytes<=cache.maxBytes);
+  assert.equal(cache.get("root",0,1,0)?.observation?.digest,"exact");
+  for(let p=3000;p<10000;p++) cache.put("root",p,0,10,value,["root",packed],()=>[]);
+  assert(cache.diagnostics.evictions>0);assert(cache.diagnostics.bytes<=cache.maxBytes);
+  cache.clear();assert.equal(cache.diagnostics.bytes,0);
+});

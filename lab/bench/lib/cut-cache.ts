@@ -65,7 +65,9 @@ export class CutCache {
       waitedMs: 0, replicaFallbackReason: value.replicaFallbackReason };
     this.diagnostics.bytes += bytes;
     this.entries.set(key, { from, to, value: metadata, selected: weak, bytes, read });
-    while (this.entries.size > 2048 || this.diagnostics.bytes > this.maxBytes) {
+    // [DX-R3-P9] Why: measured manifests retain ~3.4 KiB each; the independent 2,048-entry cap defeats larger byte-budget controls.
+    // Rejected: an unbounded cache (every entry still charges at least 1,024 bytes and its complete weak manifest).
+    while (this.diagnostics.bytes > this.maxBytes) {
       this.remove(this.entries.keys().next().value!); this.diagnostics.evictions++;
     }
     this.diagnostics.entries = this.entries.size;

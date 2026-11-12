@@ -87,6 +87,7 @@ if [[ $mode == compare ]]; then
       f) yield=fair; feed=inline; split=pending; history=192; cache=16; peer=writer;;
       g) yield=fair; feed=inline; split=pending; history=192; cache=16;;
       h) yield=fair; feed=inline; split=pending; history=192; cache=16; world=0;;
+      i) yield=fair; feed=inline; split=pending; history=192; cache=16; world=128;;
       *) exit 2;;
     esac
     echo "DX-R3 comparison arm=$arm yield=$yield feed=$feed split=$split historyMiB=$history cacheMiB=$cache thread=$thread peer=$peer worldCacheMiB=$world"

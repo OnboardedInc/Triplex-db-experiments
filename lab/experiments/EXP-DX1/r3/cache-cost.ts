@@ -32,7 +32,8 @@ const expected = rootList.map(root => observe({ triples: reachResponse(root, ent
   entities: 0, depth: 0, roundTrips: 1, route: "recorded", language: "recorded", waitedMs: 0 }));
 const seedPosition = basis.recordedPosition;
 const fallback = async (): Promise<never> => { throw Error("unexpected recorded fallback"); };
-for (const mib of [32, 0, 8, 16, 64, 0, 32]) {
+for (const mib of (process.env.DX_R3_CACHE_MIBS ?? "32,0,8,16,64,0,32").split(",").map(Number)) {
+  assert(Number.isSafeInteger(mib) && mib >= 0 && mib <= 512);
   const reader = new ReplicaReader();
   reader.apply({ reset: true, valid: true, position: seedPosition, changes: [...packed].map(([id, value]) => [id, undefined, value]) });
   const cache = new CutCache(mib * 1024 ** 2);
