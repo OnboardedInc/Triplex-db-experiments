@@ -26,7 +26,10 @@ const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LEDGER = join(REPO, 'lab', 'agents', 'ledger.jsonl');
 const DURABLE = '/Users/sam/Claude/Projects/triplex-db-2/agents';
 const MODEL = 'gpt-6.1-sol';
-const EFFORT = { builder: 'medium', reviewer: 'high' }; // the only allowed pairs; nothing above high
+// [PROTOCOL 2026-11-12] Why: Sam on resuming, 2026-11-12: "only use codex sol agents on max effort to build things? you should
+// not use claude for things I want to save your usage". Both roles now run at max; no Claude agent is launched for this work.
+// Rejected: keeping medium for builders (the 2026-11-09 setting, superseded by this instruction).
+const EFFORT = { builder: 'max', reviewer: 'max' }; // the only allowed pairs since 2026-11-12
 // Shared state every agent must be able to write: the pnpm store, the durable project folder, git objects and worktree metadata
 // (commits from a worktree write into the main .git), and the main checkout's lock and engine ledgers (lab/bin/lib.mjs LOCKS,
 // ENGINE_DIR), so heavy.mjs and engine.mjs reservations work from inside the sandbox.
