@@ -283,3 +283,17 @@ Orchestrator's reading:
 3. The tracing built first on resume must report, for every commit and read, how much of the time was spent in TypeScript
    (the Node process: Triplex code, event-loop waits, garbage collection) against the gateways, the transactor, Postgres
    and the network, so the TypeScript share is a number in every run.
+
+## 2026-11-12 about 18:05 UTC: resume; build only with Codex sol agents at max effort; save Claude usage
+
+Sam, verbatim:
+
+> Can you resume, but only use codex sol agents on max effort to build things? you should not use claude for things I want to save your usage
+
+Orchestrator's reading:
+1. The pause is over. The order of work is the one recorded above: tracing and measurement first, kept in the code and
+   reporting the TypeScript share; then P2 at 10,000 subjects; then P4 history flatness.
+2. Every agent is Codex `gpt-6.1-sol` at reasoning effort `max` (`lab/bin/agent.mjs` now passes `max` for builders and
+   reviewers). No Claude agent of any model is launched.
+3. The orchestrator (Claude) keeps its own usage low: it writes briefs, launches agents, waits for them to exit without
+   polling, reads their short reports and records results. It does not read large files or run analyses an agent can run.
