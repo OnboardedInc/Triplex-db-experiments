@@ -78,3 +78,16 @@ test("two actual inline feed pages keep a multi-journal physical clock open unti
   assert.equal(restored.resolve({ recordedAt: 100, validAt: 0 }), 2);
   await host.close();
 });
+
+test("bootstrap clock comes from fresh journal bytes, never an arbitrary equal-cut caller instant", async () => {
+  const { bootstrapSourceClock } = await import("../../../bench/lib/replica-reads.ts");
+  const times = new Map([[1, 150]]), ends = new Map([[1, 1]]);
+  const source = {
+    async feed(after: number, limit: number) { assert.equal(after, 0); assert.equal(limit, 1); times.set(1, 100); ends.set(1, 1); },
+    async page(_roots: string[], basis: any) { if (basis.recordedAt !== undefined) assert.equal(basis.recordedAt, 100); return { t: "12" }; },
+  };
+  assert.equal(await bootstrapSourceClock(source, times, ends, "root", 1), 100);
+  const omitted = { ...source, async feed() {} };
+  assert(Number.isNaN(await bootstrapSourceClock(omitted, times, ends, "root", 1)));
+  assert.equal(ends.has(1), false);
+});

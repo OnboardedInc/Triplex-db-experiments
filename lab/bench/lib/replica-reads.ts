@@ -404,8 +404,7 @@ export class ReplicaReadHost {
     const source = boundedReplicaFeed(timed.source);
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
-    await source.feed(Math.max(0, initial.position - 1), 1, 0);
-    times.set(initial.position, await bootstrapClock(source, roots[0]!, initial));
+    times.set(initial.position, await bootstrapSourceClock(source, times, clockEnds, roots[0]!, initial.position));
     // [DX-R3] Why: admission follows the actual source capability, never the requested creation policy.
     // Rejected: treating old sealed seeds as strict when reopening them cannot change their contract.
     const capability = await client.request("POST", `/v2/db/${db.db}/reach-many`, {
@@ -466,4 +465,14 @@ export async function bootstrapClock(source: { page(...args: any[]): Promise<any
 // Rejected: waiting to pack sixteen growing hot worlds before requesting the next page.
 export function boundedReplicaFeed<T extends { feed(after: number, limit: number, waitMs: number): Promise<any> }>(source: T): T {
   return { ...source, feed: (after: number, limit: number, waitMs: number) => source.feed(after, Math.min(limit, 4), waitMs) };
+}
+
+// [DX-R3-P8] Why: equal native cuts do not prove an arbitrary caller clock equals the journal clock.
+// Rejected: admitting a future caller instant at the head (a later strict commit could still be below that instant).
+export async function bootstrapSourceClock(source: { feed(after: number, limit: number, waitMs: number): Promise<any>; page(...args: any[]): Promise<any> }, times: Map<number, number>, ends: Map<number, number>, root: string, position: number) {
+  times.delete(position); ends.delete(position);
+  await source.feed(Math.max(0, position - 1), 1, 0);
+  const instant = times.get(position);
+  return instant !== undefined && Number.isFinite(instant)
+    ? bootstrapClock(source, root, { position, instant }) : NaN;
 }
