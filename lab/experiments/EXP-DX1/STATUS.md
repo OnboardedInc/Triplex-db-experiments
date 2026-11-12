@@ -1541,3 +1541,37 @@ mechanism; then fix only what the table shows; then the 256-reader cache; then o
 
 **DX-S5 part 3 (running):** publication pipelined, live reads from the local copy in the window harness, gateway id memo
 bounded in the gateway source (`bb55eafb`); it holds the lock for an evaluation at 100,000.
+
+## 2026-11-12 08:20 UTC: DX-S5 part 3: publication 2.4 times faster; P5 inside the bar without traffic; live arm on a saturated client
+
+DX-S5 part 3 (`023a91b0`, not merged), 100,000 subjects, pinned to the sealed position 4,338,757 (volume now 17.92 GB with
+appended commits).
+
+| Measurement at 100,000 | Part 2 | Part 3 | Bar |
+| --- | --- | --- | --- |
+| Publish 53,681 changed subjects, no traffic | 74.6 s (64 per frame, one at a time; 720/s) | 31.0 s (256 per frame, 8 in flight; 1,734/s) | |
+| Evaluation plus publication, no traffic | 107.7 s | about 63 s (32 + 31) | at most 100 s: met without traffic |
+| Evaluation plus publication, live traffic | 170.1 s (gateway readers) | 134.5 s (readers on the local copy; 49.4 + 84.2, of which 24.1 s yielding) | miss |
+| Read p99 during against before | 1.05 | 1.98 (927 to 1,830 ms) | 1.5: miss |
+| Commit p99 during against before | 2.09 | 1.59 scheduled (152 s to 242 s), 2.35 service (132 to 311 ms) | 1.5: miss |
+| Exactness, all 100,000 | equal | equal (worlds, outputs, records, stored states, Python oracle; 701 s) | |
+| Candidates (300,000) | equal | not completed (exit 137 after main exactness; OOM flag not captured) | |
+| Bootstrap | 475.8 s | 446.1 s | |
+
+1. **Gateway id memo bounded in the gateway source** (`bb55eafb`): 131,072 entries and a 32 MiB estimate per scope and
+   connection generation, native fallback; the 100,000-subject world read-back completed in a 2 GB heap without the wrapper;
+   16,384 native row comparisons and the gateway selftest pass.
+2. A 256-subject publication frame is about 1.6 MB of HTTP and 1,806 datoms; larger engine caches showed no benefit.
+3. **The live arm's baseline is saturated before activation starts:** commits wait about two and a half minutes and local
+   reads have p99 near one second. The driver's CPU profile is 59% snapshot construction and 22 to 34% GC: 256 closed-loop
+   readers with no think time, the writer, the follower and evaluation share one process's CPUs. The ratios are measured on
+   a client that is out of CPU, so they are not a store result yet.
+
+**DX-S5 resumed 08:19 UTC, part 4** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-S5-resume3.md`): a stated thread and
+CPU layout for the runtime (commit thread alone, follower worker, reader workers, evaluation workers as a setting; engine on
+CPUs 0 to 2 and runtime on 3 to 7 now that reads do not reach the engine), a healthy baseline shown first, activation paced
+by two settings, the candidate stage inside 11 GiB.
+
+**Decision owed to Sam:** the CPU split between engine and runtime. With reads answered in the runtime the read gateway is
+nearly idle, and the runtime now carries readers, follower, evaluation and writer. The test bed has used 4 + 4; part 4 tries
+3 + 5.
