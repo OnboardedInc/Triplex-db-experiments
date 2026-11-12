@@ -118,7 +118,9 @@ const config = {
   replicaWorldCacheMiB: Number(opt("replica-world-cache-mib", "32")),
   replicaHistoryMiB: Number(opt("replica-history-mib", "64")),
   replicaPeer: opt("replica-peer", "reader") as "reader" | "writer",
-  replicaFallbackThread: opt("replica-fallback-thread", "worker") as "main" | "worker",
+  // [DX-R3-P9] Why: retain the established fallback until the bounded worker passes native stress; the unbounded worker had 112 errors.
+  // Rejected: promoting from zero-reader captures alone.
+  replicaFallbackThread: opt("replica-fallback-thread", "main") as "main" | "worker",
   replicaThread: opt("replica-thread", "worker") as "main" | "worker",
   replicaFeed: opt("replica-feed", "inline") as "legacy" | "inline",
   readerLadderOnly: flag("reader-ladder-only"),
