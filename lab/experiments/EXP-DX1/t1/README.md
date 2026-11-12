@@ -27,7 +27,7 @@ not per-request CPU. The report states each of these limits and preserves unknow
 Set `TRIPLEX_TRACE_DEBUG=1` only for debugging: Node 8508, transactor 8505, gateways 8506/8507, inside the VM network, with no
 host port mapping. This is off by default. Debug runs are not latency evidence.
 
-The JVM image already contains JFR. The recorder uses `jdk.jfr.consumer` to export events at graceful shutdown, so no JDK image
+The JVM image already contains JFR. The recorder uses `jdk.jfr.consumer` to export events while the JVMs are alive before shutdown, so no JDK image
 or dependency is downloaded. Thread park threshold is 5 ms; socket/file threshold is 1 ms; GC and safepoint events have zero
 threshold. Datomic metrics use its supported callback at its native cadence (no undocumented interval override). Transactor
 transaction logs retain io-stats; individual storage statements and internal transactor work are not automatically causal spans.

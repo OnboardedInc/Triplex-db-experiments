@@ -32,7 +32,9 @@
 (defn flush! [] (when (realized? writer) (when-let [^BufferedWriter w @writer] (locking w (.flush w)))))
 (when enabled
   (jfr/install! (:process identity-fields) identity-fields)
-  (let [t (Thread. ^Runnable (fn [] (while true (Thread/sleep 1000) (flush!))) "triplex-trace-flush")]
+  (let [t (Thread. ^Runnable (fn [] (while true (Thread/sleep 1000) (flush!)
+        (when-let [dir (System/getenv "TRIPLEX_TRACE_DIR")]
+          (when (.exists (File. (str dir "/.finish"))) (jfr/finish! (:process identity-fields) identity-fields))))) "triplex-trace-flush")]
     (.setDaemon t true) (.start t))
   (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable flush!)))
 (defn parse-parent [value]

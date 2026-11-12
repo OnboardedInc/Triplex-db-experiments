@@ -69,7 +69,11 @@ function sample() {
       ["memory", "vm_stat", []],
     ]) {
       try {
-        const out = execFileSync(cmd, args, { encoding: "utf8", timeout: 800 });
+        const out = execFileSync(cmd, args, {
+          encoding: "utf8",
+          timeout: 800,
+          stdio: ["ignore", "pipe", "pipe"],
+        });
         row[key] =
           key === "cpu"
             ? out

@@ -96,7 +96,17 @@ cleanup() {
     if [[ -n $sampler ]]; then kill -TERM "$sampler" 2>/dev/null || true; wait "$sampler" 2>/dev/null || true; fi
   done
   if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
-    for role in gw-w gw-r tx; do docker stop --time 60 "$prefix-$role" >> "$out/trace-shutdown.log" 2>&1 || true; done
+    touch "$out/trace/raw/.finish"
+    for ((jfr_wait=0;jfr_wait<90;jfr_wait++)); do
+      [[ ! -f $out/trace/raw/gw-w.jfr-complete.jsonl || ! -f $out/trace/raw/gw-r.jfr-complete.jsonl || ! -f $out/trace/raw/tx.jfr-complete.jsonl ]] || break
+      sleep 1
+    done
+    for role in gw-w gw-r tx; do
+      docker update --restart=no "$prefix-$role" >> "$out/trace-shutdown.log" 2>&1 || true
+      # The launcher is PID 1; signal only java PIDs *inside this owned container*.
+      docker exec "$prefix-$role" bash -c 'for f in /proc/[0-9]*/comm; do IFS= read -r comm < "$f" || continue; if [[ $comm == java ]]; then pid=${f#/proc/}; pid=${pid%/comm}; kill -TERM "$pid"; fi; done' >> "$out/trace-shutdown.log" 2>&1 || true
+      docker stop --timeout 15 "$prefix-$role" >> "$out/trace-shutdown.log" 2>&1 || true
+    done
   fi
   for role in gw-w gw-r tx pg; do docker logs --timestamps "$prefix-$role" > "$out/$role.log" 2>&1 || true; done
   bash lab/experiments/EXP-DX1/stack/down.sh "$prefix" --volumes
@@ -190,7 +200,7 @@ if [[ $prefix == tx2-dxr3-* ]]; then
 fi
 if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
   export TRIPLEX_TRACE_RUN=$prefix TRIPLEX_TRACE_SLOT=$prefix TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)
-  node -e 'const fs=require("fs");fs.writeFileSync(process.argv[1],JSON.stringify({tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,level:process.env.TRIPLEX_TRACE_LEVEL,startedAt:Date.now()})+"\n")' "$out/trace-run.json"
+  node -e 'const fs=require("fs");fs.writeFileSync(process.argv[1],JSON.stringify({tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,level:process.env.TRIPLEX_TRACE_LEVEL,requiredJfr:["gw-w","gw-r","tx"],requireSystem:true,startedAt:Date.now()})+"\n")' "$out/trace-run.json"
 fi
 run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
 # [DX-R3-P9] Why: q6 comparisons require the same live guest boot parameters, not a remembered VM setting.

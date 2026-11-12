@@ -1,5 +1,6 @@
 // @ts-nocheck -- JSON wire records are validated on ingestion; checkjs still checks all bindings.
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { createGunzip } from "node:zlib";
 import { createInterface } from "node:readline";
@@ -153,7 +154,7 @@ function phaseOf(r, phases) {
   const name = phase?.name ?? "outside-phases";
   const priority = /sweep|activation|impact/.test(name)
     ? "P5"
-    : /history|current|weighted|depth/.test(name)
+    : /p4|history|current|weighted|depth/.test(name)
       ? "P4"
       : r.kind === "commit"
         ? "P2"
@@ -197,7 +198,9 @@ export async function buildReport(runDir, { copyTo } = {}) {
   const requests = [],
     events = [],
     resources = [],
-    histograms = [];
+    histograms = [],
+    completions = [],
+    jfrCounts = new Map();
   const errors = [];
   for (const file of input) {
     let footer = false;
@@ -225,8 +228,13 @@ export async function buildReport(runDir, { copyTo } = {}) {
             throw Error("invalid request record");
           requests.push(r);
         } else if (r.type === "event") {
-          if (validSpan(r)) events.push(r);
-        } else if (r.type === "resource" || r.type === "metrics") resources.push(r);
+          if (validSpan(r)) {
+            events.push(r);
+            if (r.name.startsWith("jdk."))
+              jfrCounts.set(r.process, (jfrCounts.get(r.process) ?? 0) + 1);
+          }
+        } else if (r.type === "jfr-complete") completions.push(r);
+        else if (r.type === "resource" || r.type === "metrics") resources.push(r);
         else if (r.type === "histograms") {
           footer = true;
           histograms.push(r);
@@ -265,8 +273,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     ...phaseOf(r, bench.phases ?? []),
   }));
   const commits = evaluated.filter((r) => r.root.kind === "commit");
-  const measured = commits.filter((r) => r.name !== "outside-phases");
-  const denom = measured.length ? measured : commits;
+  const denom = commits;
   const explained = denom.filter((r) => r.explained >= 0.95 && !r.root.truncated).length;
   // Content/freshness/binding: compare the observed per-command trace against this run's actual writer rows.
   const writesFile = path.join(rootDir, "driver/ns-writes.jsonl");
@@ -284,6 +291,65 @@ export async function buildReport(runDir, { copyTo } = {}) {
   if (!manifest) errors.push("Run binding manifest absent");
   if (!histograms.length) errors.push("No final Node histograms: recorder drain not proven");
   if (!denom.length) errors.push("No commit traces");
+  for (const role of manifest?.requiredJfr ?? []) {
+    const c = completions.find((r) => r.role === role);
+    const file = path.join(rootDir, "trace/raw", role + ".jfr.gz");
+    if (
+      !c ||
+      !fs.existsSync(file) ||
+      !(c.events > 0) ||
+      c.events !== jfrCounts.get(role) ||
+      c.recordingStart < manifest.startedAt - 1000 ||
+      c.at < Date.parse(bench.endedAt ?? "") - 1000
+    ) {
+      errors.push(`Missing/stale/inconsistent JFR export for ${role}`);
+      continue;
+    }
+    try {
+      const hash = createHash("sha256");
+      let header,
+        bytes = 0;
+      const stream = fs.createReadStream(file).pipe(createGunzip());
+      for await (const chunk of stream) {
+        if (!header) header = chunk.subarray(0, 4).toString("hex");
+        bytes += chunk.length;
+        hash.update(chunk);
+      }
+      if (header !== "464c5200" || bytes < 68 || hash.digest("hex") !== c.fileSha256)
+        errors.push(`JFR bytes mismatch for ${role}`);
+    } catch (error) {
+      errors.push(`JFR verification failed for ${role}: ${error.message}`);
+    }
+  }
+  if (manifest?.requireSystem) {
+    if (!resources.some((r) => r.process === "system-darwin" && r.swap !== null && r.cpu !== null))
+      errors.push("Mac CPU/swap collector missing");
+    if (
+      !resources.some(
+        (r) => r.process === "system-linux" && Object.keys(r.cgroups ?? {}).length >= 4,
+      )
+    )
+      errors.push("VM/cgroup collector missing");
+    if (!resources.some((r) => r.process === "postgres" && r.activity))
+      errors.push("Postgres wait/WAL/IO collector missing");
+  }
+
+  for (const r of evaluated)
+    r.overlappingWork = events
+      .filter(
+        (e) =>
+          e.process === r.root.process &&
+          e.thread === r.root.thread &&
+          e.layer === "typescript" &&
+          e.start < r.root.end &&
+          e.end > r.root.start,
+      )
+      .map((e) => ({
+        name: e.name,
+        overlapMs: Math.min(e.end, r.root.end) - Math.max(e.start, r.root.start),
+      }))
+      .sort((a, b) => b.overlapMs - a.overlapMs)
+      .slice(0, 5);
   const groups = new Map();
   for (const r of evaluated) {
     const key = `${r.priority} / ${r.name} / ${r.root.kind}`;
@@ -321,6 +387,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     errors,
     complete: errors.length === 0,
     histograms,
+    collectors: { jfr: completions, resources: resources.length },
     groups: Object.fromEntries(
       [...groups].map(([k, rows]) => [
         k,
@@ -361,12 +428,12 @@ export async function buildReport(runDir, { copyTo } = {}) {
       "",
       table(rows, "quantile"),
       "",
-      "| slowest trace | wall ms | TypeScript ms | TypeScript share | unexplained ms | largest step |",
-      "| --- | ---: | ---: | ---: | ---: | --- |",
+      `| slowest trace | wall ms | ${LAYERS.join(" | ")} | TypeScript ms | TypeScript share | unexplained ms | largest step | overlapping same-thread work |`,
+      `| --- | ---: | ${LAYERS.map(() => "---:").join(" | ")} | ---: | ---: | ---: | --- | --- |`,
     );
     for (const r of [...rows].sort((a, b) => b.wallMs - a.wallMs).slice(0, 20))
       lines.push(
-        `| ${r.traceId} | ${n(r.wallMs)} | ${n(r.typescriptMs)} | ${n(r.typescriptShare)} | ${n(r.unexplainedMs)} | ${r.steps[0]?.[0] ?? "unknown"} |`,
+        `| ${r.traceId} | ${n(r.wallMs)} | ${LAYERS.map((k) => n(r.layers[k])).join(" | ")} | ${n(r.typescriptMs)} | ${n(r.typescriptShare)} | ${n(r.unexplainedMs)} | ${r.steps[0]?.[0] ?? "unknown"} | ${r.overlappingWork.map((e) => e.name + " " + n(e.overlapMs) + "ms").join("; ") || "none observed"} |`,
       );
     lines.push("");
   }

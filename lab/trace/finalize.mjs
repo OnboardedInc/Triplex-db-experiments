@@ -21,6 +21,36 @@ for (const role of ["gw-w", "gw-r", "tx", "pg"]) {
   if (fs.existsSync(file))
     fs.copyFileSync(file, path.join(raw, `${role}.log`), fs.constants.COPYFILE_EXCL);
 }
+const manifestPath = path.join(run, "trace-run.json");
+if (fs.existsSync(manifestPath) && fs.existsSync(path.join(raw, "postgres-samples.log"))) {
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  const lines = fs.readFileSync(path.join(raw, "postgres-samples.log"), "utf8").split("\n");
+  const samples = [];
+  for (const line of lines)
+    if (line.trim().startsWith("{")) {
+      const row = JSON.parse(line);
+      if (
+        row.type !== "postgres-sample" ||
+        !Number.isFinite(row.at) ||
+        row.at < manifest.startedAt - 1000
+      )
+        throw Error("Stale/invalid Postgres sample");
+      samples.push({
+        ...row,
+        type: "resource",
+        process: "postgres",
+        thread: 0,
+        run: manifest.tag,
+        source: manifest.source,
+        slot: manifest.slot,
+      });
+    }
+  fs.writeFileSync(
+    path.join(raw, "postgres.jsonl"),
+    samples.map((r) => JSON.stringify(r)).join("\n") + "\n",
+    { flag: "wx" },
+  );
+}
 for (const file of filesUnder(raw))
   if (!file.endsWith(".gz")) {
     await pipeline(

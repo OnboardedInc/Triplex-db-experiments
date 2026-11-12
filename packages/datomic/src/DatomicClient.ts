@@ -9,7 +9,15 @@ import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
 import { encodeRowText } from "./rowText.js";
 import http from "node:http";
 import { stringifyExact, validateTagged, type TaggedValue } from "./codec.js";
-import { beginSpan, currentTrace, endSpan, traceInterval, traceparent, traceSync, tracedRequest } from "./tracing.js";
+import {
+  beginSpan,
+  currentTrace,
+  endSpan,
+  traceInterval,
+  traceparent,
+  traceSync,
+  tracedRequest,
+} from "./tracing.js";
 
 export class DatomicHttpError extends Error {
   readonly _tag = "DatomicHttpError";
@@ -231,12 +239,22 @@ export class DatomicClient {
   ): Promise<T> {
     // [DX-T1] Why: a caller's commit/read owns all HTTP children, including retries and failures.
     // Rejected: a new unrelated trace for each round trip (loses queue and post-response cost).
-    const route = path.replace(/\/s2?-[^/]+/g, "/{db}").replace(/\/operation\/[^/]+/, "/operation/{id}");
-    return tracedRequest(path.endsWith("/transact") ? "commit" : "read", `http ${method} ${route}`, {}, () =>
-      this.requestTraced<T>(method, path, body, timeoutMs, onSent));
+    const route = path
+      .replace(/\/s2?-[^/]+/g, "/{db}")
+      .replace(/\/operation\/[^/]+/, "/operation/{id}");
+    return tracedRequest(
+      path.endsWith("/transact") ? "commit" : "read",
+      `http ${method} ${route}`,
+      {},
+      () => this.requestTraced<T>(method, path, body, timeoutMs, onSent),
+    );
   }
   private async requestTraced<T>(
-    method: "GET" | "POST", path: string, body: unknown, timeoutMs: number, onSent?: () => void,
+    method: "GET" | "POST",
+    path: string,
+    body: unknown,
+    timeoutMs: number,
+    onSent?: () => void,
   ): Promise<T> {
     const started = performance.now();
     const observation = this.activeObservation;
@@ -264,7 +282,9 @@ export class DatomicClient {
         body = { ...body, basisT: this.lastCommit.t };
     }
     const serializeStart = performance.now();
-    const bytes = traceSync("client.encode", () => body === undefined ? undefined : Buffer.from(stringifyExact(body)));
+    const bytes = traceSync("client.encode", () =>
+      body === undefined ? undefined : Buffer.from(stringifyExact(body)),
+    );
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     return new Promise<T>((resolve, reject) => {
       const trace = currentTrace();
@@ -277,10 +297,25 @@ export class DatomicClient {
         if (completed) return;
         completed = true;
         const origin = performance.timeOrigin;
-        traceInterval(trace, "socket.queue-and-write", origin + started, origin + written, "network", exchange?.id);
-        traceInterval(trace, "socket.wait-first-byte", origin + written, origin + headers, "gateway-wait", exchange?.id);
+        traceInterval(
+          trace,
+          "socket.queue-and-write",
+          origin + socketStarted,
+          origin + written,
+          "network",
+          exchange?.id,
+        );
+        traceInterval(
+          trace,
+          "socket.wait-first-byte",
+          origin + written,
+          origin + headers,
+          "gateway-wait",
+          exchange?.id,
+        );
         endSpan(exchange);
       };
+      const socketStarted = performance.now();
       const req = http.request(
         new URL(path, this.endpoint),
         {
@@ -305,18 +340,29 @@ export class DatomicClient {
             else chunks.push(chunk);
           });
           res.on("error", (error) => {
-            complete(); reject(new DatomicTransportError(error.message, { cause: error }));
+            complete();
+            reject(new DatomicTransportError(error.message, { cause: error }));
           });
           res.on("end", () => {
             const bodyEnd = performance.now();
-            traceInterval(trace, "socket.body-read", performance.timeOrigin + headers, performance.timeOrigin + bodyEnd, "network", exchange?.id);
+            traceInterval(
+              trace,
+              "socket.body-read",
+              performance.timeOrigin + headers,
+              performance.timeOrigin + bodyEnd,
+              "network",
+              exchange?.id,
+            );
             complete();
             try {
-              const data = traceSync("client.parse", () => JSON.parse(Buffer.concat(chunks).toString("utf8"))) as Record<
-                string,
-                unknown
-              >;
-              if (exchange) exchange.attributes = { responseTraceparent: String(res.headers["traceparent"] ?? "missing"), status: res.statusCode ?? 0 };
+              const data = traceSync("client.parse", () =>
+                JSON.parse(Buffer.concat(chunks).toString("utf8")),
+              ) as Record<string, unknown>;
+              if (exchange)
+                exchange.attributes = {
+                  responseTraceparent: String(res.headers["traceparent"] ?? "missing"),
+                  status: res.statusCode ?? 0,
+                };
               const status = res.statusCode ?? 0;
               const sample: DatomicRequestSample | undefined =
                 observation || this.onRequest
@@ -371,7 +417,8 @@ export class DatomicClient {
       );
       req.on("close", () => clearTimeout(timer));
       req.on("error", (error) => {
-        complete(); reject(new DatomicTransportError(error.message, { cause: error }));
+        complete();
+        reject(new DatomicTransportError(error.message, { cause: error }));
       });
       req.once("finish", () => {
         written = performance.now();

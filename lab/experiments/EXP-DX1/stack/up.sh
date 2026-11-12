@@ -95,7 +95,7 @@ trace_env=(-e "TRIPLEX_TRACE_LEVEL=$trace_level" -e "TRIPLEX_TRACE_RUN=$prefix" 
 trace_mount=(-v "$attempt/trace/raw:/trace")
 trace_tx_java= trace_gw_java=
 if [[ $trace_level != off ]]; then
-  trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,filename=/trace/tx.jfr,dumponexit=true,maxsize=0 -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+  trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,filename=/trace/tx.jfr,dumponexit=false,maxsize=0 -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
   trace_gw_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
   pg_settings="$pg_settings -c track_io_timing=on -c track_wal_io_timing=on -c log_min_duration_statement=0 -c log_parameter_max_length=0 -c log_parameter_max_length_on_error=0 -c log_checkpoints=on -c log_autovacuum_min_duration=0 -c log_timezone=UTC"
 fi
@@ -137,7 +137,7 @@ for role in w r; do
   role_java=$gw_java; [[ -n $role_java || -z $heap ]] || role_java="-Xms256m -Xmx$heap"
   if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   role_trace_java=$trace_gw_java
-  if [[ $trace_level != off ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,filename=/trace/gw-$role.jfr,dumponexit=true,maxsize=0"; fi
+  if [[ $trace_level != off ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,filename=/trace/gw-$role.jfr,dumponexit=false,maxsize=0"; fi
   if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
     debug_port=8506; [[ $role == w ]] || debug_port=8507
     role_trace_java="$role_trace_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debug_port"
