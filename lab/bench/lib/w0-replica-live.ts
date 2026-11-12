@@ -233,7 +233,9 @@ export async function startW0Live(o: {
   const writer = (async () => {
     for (const event of events) {
       while (!stopped && !failed && now() < start + event.atMs) await pause();
-      if (stopped || failed) break;
+      // [DX-S5] Why: stop freezes an offer-time boundary, not permission to drop already-due frozen events.
+      // Rejected: breaking immediately on stop after event-loop delay (silently lowers the offered writer load).
+      if (failed || (stopped && start + event.atMs >= end)) break;
       offered.push(event);
       offerLiveWrite();
       serial = serial

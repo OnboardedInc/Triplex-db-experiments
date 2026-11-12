@@ -1,3 +1,10 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
+import { memoryComposition } from "../../../bench/lib/memory.ts";
+import { generateTrace } from "../../../bench/lib/trace.ts";
+import { startW0Live } from "../../../bench/lib/w0-replica-live.ts";
 import { RecentReads, packEntity, pullAt } from "../../../../packages/datomic/dist/index.js";
 import { localReadTurns } from "../../../bench/lib/w0-replica-live.ts";
 import { it, expect } from "vitest";
@@ -220,4 +227,62 @@ it("serves exact current-position rows through the built public pullAt API witho
     "fallback",
   );
   expect(fallbacks).toBe(1);
+});
+
+it("drains every frozen offer due before stop even when the event loop was delayed", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dxs5-offers-"));
+  const comp = memoryComposition("datomic", "dxs5-unit-" + randomUUID());
+  const replica = {
+    position: 0,
+    validAt: 1,
+    snapshotAt: async () => ({
+      position: 0,
+      validAt: 1,
+      world: () => [
+        {
+          id: "fixture",
+          entityId: W0.placementId(0),
+          attribute: "fixture",
+          value: { type: "string", value: "unchanged" },
+          position: 0,
+          validFrom: 0,
+        },
+      ],
+    }),
+  };
+  try {
+    const live = await startW0Live({
+      comp,
+      composition: "memory",
+      lane: "datomic",
+      scope: "unit",
+      N: 1,
+      dir,
+      id: "drain",
+      seed: "dxs5-stop-offers",
+      offsetS: 120,
+      replica: replica as any,
+    });
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
+    const result = await live.stop();
+    const expected = generateTrace({
+      seed: "dxs5-stop-offers",
+      subjects: 1,
+      durationS: 1020,
+    }).filter(
+      (e) => e.atMs >= 120000 && e.atMs - 120000 < result.endedAtMs - result.generatorStartedAtMs,
+    );
+    expect(expected.length).toBeGreaterThan(0);
+    expect(result.offered).toBe(expected.length);
+    expect(result.acknowledged).toBe(expected.length);
+    const raw = fs
+      .readFileSync(result.raw, "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    expect(raw.filter((r) => r.kind === "write").length).toBe(expected.length);
+  } finally {
+    await comp.close();
+    fs.rmSync(dir, { recursive: true });
+  }
 });
