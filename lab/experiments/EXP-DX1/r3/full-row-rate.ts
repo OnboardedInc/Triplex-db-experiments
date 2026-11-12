@@ -59,9 +59,10 @@ for (const [reader, check, arm] of [[before, oldObserve, 0], [after, observe, 1]
     const k = i % rootList.length, result = await reader.pullAt(rootList[k], basis, async () => { throw Error("fallback"); });
     const actual = check(result), expected = expectations[k]![arm];
     if (actual.digest !== expected.digest || actual.stamp !== expected.stamp || actual.facts !== expected.facts || actual.stamps !== expected.stamps || actual.bytes !== expected.bytes) throw Error(`Wrong offline read ${arm}/${i}`);
+    if ((i + 1) % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
   }
   const elapsed = performance.now()-start, used = process.cpuUsage(cpu);
   console.log(JSON.stringify({ kind: "offline-recorded-reader-rate", arm: arm === 0 ? "794b034b-full-row-check" : "p8-full-row-memo", reads: count, differences: 0,
     wallMs: elapsed, readsPerS: count*1000/elapsed, clientCpuMsPerPull: (used.user+used.system)/1000/count,
-    subjects: roots.size, position: basis.recordedPosition, memory: process.memoryUsage(), note: "single host thread, quiescent historical W0 cut, no engine, no writer, not the 10k ladder" }));
+    subjects: roots.size, position: basis.recordedPosition, memory: process.memoryUsage(), note: "single host thread, yield every 256 reads, quiescent historical W0 cut, no engine, no writer, not the 10k ladder" }));
 }

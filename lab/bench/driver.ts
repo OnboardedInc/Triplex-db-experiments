@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readObservation, type ReadObservation } from "./lib/read-observation.ts";
 import type { Basis } from "./lib/composition.ts";
+import { sampleMatches } from "./lib/sample-matches.ts";
 import { rawLocalCoverage } from "./lib/raw-local-coverage.ts";
 import { httpCounts } from "./lib/http-counts.ts";
 import { readLatencyRun } from "../receipts/parse.ts";
@@ -989,6 +990,11 @@ async function run() {
   report.maintenance = maintenance;
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
   else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
+  // [DX-R3-P8] Why: a slow or killed independent oracle must not erase already completed all-read judgments and bars.
+  // Rejected: first saving analysis only after the independent process returns.
+  report.status = "ANALYSED";
+  report.oracle = { status: "NOT-RUN", reason: "independent oracle pending" };
+  save();
   report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : finalPosition === null ? { status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) } : runOracle(finalPosition, lastAcked);
   // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
   // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
@@ -1670,10 +1676,7 @@ function runOracle(finalPosition: number, lastAcked: number) {
   const result = checkWithOracle({ oracleRoot: config.oracleRoot, dir: rawDir, caseDoc, reads });
   // [DX-R3] Why: bind each oracle verdict to its exact retained attempt, not another read at the same basis.
   // Rejected: subject/time-only lookup (can attach an earlier read's verdict to this sample).
-  const modelAgrees = selectedSamples.filter((r) => {
-    const rec = records.find((x) => x[R.phase] === r.phase && x[R.start] === r.start && x[R.subject] === r.subject && x[R.recordedAt] === r.basis.recordedAt && x[R.validAt] === r.basis.validAt);
-    return rec ? judgeRead(rec).ok : false;
-  }).length;
+  const modelAgrees = sampleMatches(records, selectedSamples).filter(rec => rec && judgeRead(rec).ok).length;
   return { ...result, modelCorrectOnSameReads: modelAgrees, recordedCommands: recordedCommands.length };
 }
 
