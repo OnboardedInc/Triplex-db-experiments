@@ -198,6 +198,13 @@ if [[ $s5 == true ]]; then
  db=$(node --input-type=module -e 'import {DatabaseScope} from "./packages/core/dist/runtime/index.js";console.log("s2-"+Buffer.from(String(DatabaseScope.test(process.argv[1]))).toString("base64url"))' "$scope")
  bash lab/experiments/EXP-DX1/s5/wait-ready.sh "$prefix" "$db" 0
 fi
+if [[ ${1:-} == --id-lookup-probe ]]; then
+ [[ $s5 == true && $n == 100000 ]] || exit 2
+ # [DX-S5] Why: use a small read-only peer inside the idle writer's existing cgroup before the driver starts.
+ # Rejected: adding another engine reservation or sampling this diagnostic as an exactness verdict.
+ docker exec -e DATOMIC_JAVA_OPTS='-Xms128m -Xmx512m -Ddatomic.objectCacheMax=64m' -e DATOMIC_EXT_CLASSPATH=/s5:/opt/gateway/src "$prefix-gw-w" /opt/datomic/bin/run -m id-lookup-probe "datomic:sql://$db?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" 4338757 "dxs5-probe-$prefix"
+ shift
+fi
 if [[ ${1:-} == --gateway-tests ]]; then
  for ns in triplex.gateway.feed-test triplex.gateway.selftest; do
   docker exec -e DF01_RECORDED_PAGE=/tmp/dxr2-feed-recording.json -e 'DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -Dtriplex.codec.spec=/opt/replica-codec-spec.json' "$prefix-gw-r" /opt/datomic/bin/run -m "$ns"
