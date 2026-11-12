@@ -248,3 +248,25 @@ Orchestrator's reading:
    flatness miss if it is real. P1 and P3 passed in q8 and are to be kept, not reworked.
 3. Everything committed; pushed where a remote exists. This repository has no git remote configured, so a push needs Sam
    to name one; a bundle of every branch is written to `~/Claude/Projects/triplex-db-2/backups/` meanwhile.
+
+## 2026-11-12 about 17:40 UTC: on resume, tracing and measurement come first and stay in the code
+
+Context: Sam asked whether TypeScript is the bottleneck and whether to rewrite in Rust. The orchestrator answered that the
+evidence does not point at TypeScript and that the stalls are not located yet. Sam then wrote, verbatim:
+
+> Okay I would like you to, very first thing, add all of the analytics, all of the tracing and stuff. That's the first thing you do: add tons of tracing, tons of logging, tons of measurement and observability stuff everywhere, and keep that in the code. Don't get rid of it so that when you make a run it's super easy to see a picture of the trace of what took everything so long. That's super important for us.
+>
+> If there isn't a lot of space for those, you should store them somewhere else. You can store them in my drive after you've used a few, if you need to. I don't want to have to keep trying to locate stuff.
+>
+> Really set up the tracing and the debugger essentially first so that we can trace all this stuff, using whatever best practice would be for this. Don't do that yet but that should be the first thing you do and then you can continue along with what you would say.
+
+Orchestrator's reading:
+1. Still paused. Nothing is built now ("Don't do that yet").
+2. On resume the first piece of work is tracing, logging and measurement across every layer of a commit and a read (the
+   TypeScript client and replica, both gateways, the transactor, Postgres, the VM and the host). It comes before the P2
+   work and the P2 work then uses it.
+3. The instrumentation is permanent. It is not removed after a diagnosis. Every run produces a picture of where the time
+   went without extra steps.
+4. Trace files live in one known place. When disk space runs short, older raw traces move to Sam's drive rather than being
+   deleted. Open question for Sam at resume: whether "my drive" means Google Drive or a disk attached to this Mac.
+5. After the tracing is in place, continue with the order already agreed (P2 at 10,000 subjects, then P4 history flatness).
