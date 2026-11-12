@@ -1604,3 +1604,31 @@ DX-R3 part 9 (`b648ac2b`, not merged). Zero-reader writer trace, 10,000 subjects
 **Orchestrator check running (10:38 UTC):** `quiet/old-new-arms.sh`, the same zero-reader trace alternately on the frozen
 checkout at `0e1c0144` and on DX-R3's head (old, new, new, old). Old code slow now means host drift; old code fast means a
 code regression to bisect by commit.
+
+## 2026-11-12 12:35 UTC: old against new: the old code is slow now too, so the 2x commit median is the host, not the code
+
+`quiet/old-new-arms.sh`, zero-reader writer trace, 10,000 subjects, 200 s, 3,262 burst commits per run, `nohlt`, gateway reads.
+
+| Run (UTC) | Code | Burst p50 / p90 / p99 ms | Steady p50 / p99 ms | Host: other CPU %, swap GB, load |
+| --- | --- | --- | --- | --- |
+| 1 (10:35) | old `0e1c0144` | 19.9 / 57.5 / 244.6 | 23.2 / 241.2 | 235, 14.6, 12.9 |
+| 2 (11:01) | new `b648ac2b` | 19.9 / 57.3 / 169.0 | 23.0 / 196.9 | 266, 12.2, 12.2 |
+| 3 (11:16) | new `b648ac2b` | 19.0 / 52.1 / 134.4 | 22.9 / 171.3 | 260, 12.3, 11.9 |
+| 4 (11:30) | old `0e1c0144` | 12.0 / 28.9 / 85.5 | 15.8 / 93.3 | 264, 12.1, 12.0 |
+
+The same old code measured burst 9.1 to 9.3 / 41 to 42 ms on 2026-11-11 07:40 to 09:16 UTC with other host CPU at 9 to 48%.
+Tonight other processes used 2.3 to 2.7 host cores during every run (agents' builds, tests and replays outside the lock; the
+VM under `nohlt` needs all eight of its cores), with 12 to 15 GB of swap. At 12:32 UTC, with one agent in an evaluation hold
+and nothing else building, other CPU is 52%.
+
+Conclusions:
+1. **No evidence of a code regression in the shared write path**: new and old overlap (19.0 to 19.9 against 12.0 to 19.9).
+2. **Under `nohlt` any host CPU use outside the VM shows up directly in commit latency.** The measurement lock serializes
+   containers, not agents' host-side builds and tests. DX-R3's four arms and DX-S5's runs last night disturbed each other
+   this way; their absolute numbers are not verdicts.
+3. **Rule from now on: a verdict run happens only with no agent working at all** (not merely holding the lock), other host CPU
+   under about 60%, recorded before and after. Agents run one at a time when either is measuring.
+
+Next, once DX-S5 part 4 exits (budget ends about 13:20 UTC) and nothing else is running: old against new again on the quiet
+host, then the full pair on DX-R3's head (strict scope, default placement), then the 100,000 verdict run if part 4 leaves one
+to run.
