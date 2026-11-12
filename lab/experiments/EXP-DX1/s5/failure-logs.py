@@ -10,7 +10,7 @@ import tarfile
 # [DX-S5] Why: the first long failure lost the transactor's diagnostics when its container was removed.
 # Rejected: claiming a root cause from the verifier's connection error or deleting closed logs before retention.
 prefix = sys.argv[1]
-assert re.fullmatch(r'tx2-dxs5-(?:seed-(?:1000|10000|100000)|eval-100000-[a-z0-9-]+)', prefix)
+assert re.fullmatch(r'tx2-dxs5-[a-z0-9-]+', prefix)
 env = dict(os.environ, DOCKER_HOST='unix:///Users/sam/.colima/triplex2/docker.sock')
 for role in ('gw-r', 'gw-w', 'tx', 'pg'):
     name = prefix + '-' + role

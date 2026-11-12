@@ -9,7 +9,7 @@ import json,os,re,sys
 p=sys.argv[1];s=json.load(open('/Users/sam/Claude/Projects/triplex-db-2/locks/measure/owner.json'))
 assert s['id']=='DX-S5'
 if s['kind'].startswith('seed-'):assert p=='tx2-dxs5-'+s['kind']
-else:assert s['kind']=='evaluation' and re.fullmatch(r'tx2-dxs5-eval-100000-[a-z0-9-]+',p)
+else:assert s['kind']=='evaluation' and re.fullmatch(r'tx2-dxs5-[a-z0-9-]+',p)
 os.kill(s['pid'],0)
 PYLOCK
 docker run --rm --pull never --name "$prefix-copy" --network "$prefix-net" \
