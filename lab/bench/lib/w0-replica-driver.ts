@@ -1,6 +1,7 @@
 import { forEachBounded, orderedMap } from "./w0-parallel.ts";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
+import { getHeapStatistics } from "node:v8";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { createGzip } from "node:zlib";
@@ -47,6 +48,27 @@ export async function runReplicaDriver(argv: string[]) {
   const seedPosition = argv.includes("--seed-position") ? Number(opt("seed-position")) : undefined;
   if (seedPosition !== undefined && (!Number.isSafeInteger(seedPosition) || seedPosition < 1))
     throw Error("invalid sealed seed position");
+  const candidateVerification = argv.includes("--verify-candidates-at-seed");
+  // [DX-S5] Why: a second oracle hold reads the immutable seed cut after the first-use activation appended records.
+  // Rejected: accepting a consumed seed for another timed publication, or replaying the live writer trace.
+  if (
+    candidateVerification &&
+    (seedPosition === undefined ||
+      !argv.includes("--candidates") ||
+      !argv.includes("--oracle-candidates") ||
+      !argv.includes("--seed-fingerprint") ||
+      [
+        "--publish",
+        "--post-capture",
+        "--live",
+        "--seed",
+        "--follow-commands",
+        "--corpus",
+        "--corpus-after",
+        "--journal-fast-gate",
+      ].some((flag) => argv.includes(flag)))
+  )
+    throw Error("invalid read-only candidate verification");
   if (!scope || !Number.isSafeInteger(N) || N < 1)
     throw new Error("Existing seeded scope and positive N required");
   const subjects = subjectList(N),
@@ -101,6 +123,7 @@ export async function runReplicaDriver(argv: string[]) {
       oracleProcesses,
     );
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
+  report.nodeHeapLimitBytes = getHeapStatistics().heap_size_limit;
   // [DX-S5] Why: report actual all-subject oracle time separately from activation and storage readback.
   // Rejected: projecting the 10k verifier cost or silently replacing full verification with sampling.
   let oracleWallMs = 0,
@@ -241,9 +264,14 @@ export async function runReplicaDriver(argv: string[]) {
     let cut = await comp.currentPosition();
     // [DX-S5] Why: a declared first-use run must begin at the sealed position, before any activation writes.
     // Rejected: silently evaluating an already consumed first-use seed at a later head.
-    if (seedPosition !== undefined && cut !== seedPosition)
+    if (
+      seedPosition !== undefined &&
+      (candidateVerification ? cut < seedPosition : cut !== seedPosition)
+    )
       throw Error("initial head differs from sealed position");
     report.initialSeedPosition = cut;
+    report.candidateVerificationOnly = candidateVerification;
+    if (candidateVerification) cut = seedPosition!;
     await replica.bootstrap(subjects, cut);
     (globalThis as any).gc?.();
     const bootstrapImage = (await replica.snapshotAt(cut)).sharedImage();
@@ -616,7 +644,7 @@ export async function runReplicaDriver(argv: string[]) {
     // Rejected: calling incomplete exactness a PASS or losing all timing observations on a verifier timeout.
     console.log(
       JSON.stringify({
-        kind: "activation-measurement",
+        kind: candidateVerification ? "verification-evaluation" : "activation-measurement",
         exactness: "pending",
         N,
         scope,
@@ -671,7 +699,7 @@ export async function runReplicaDriver(argv: string[]) {
       return { changed, state: changed ? next.state : previous };
     };
     const recordOffsets = Array.from(
-      { length: Math.ceil(result.records.length / 64) },
+      { length: candidateVerification ? 0 : Math.ceil(result.records.length / 64) },
       (_, i) => i * 64,
     );
     for await (const { records, gateway, states } of orderedMap(
@@ -785,7 +813,7 @@ export async function runReplicaDriver(argv: string[]) {
     report.postAckOracleWallMs = oracleWallMs - oracleBeforeExactness;
     console.log(
       JSON.stringify({
-        kind: "post-ack-equality",
+        kind: candidateVerification ? "main-exactness-not-rerun" : "post-ack-equality",
         subjects: checked,
         states: statesCompared,
         exactnessWallMs: report.postAckExactnessWallMs,
@@ -797,6 +825,11 @@ export async function runReplicaDriver(argv: string[]) {
       }),
     );
     if (argv.includes("--candidates")) {
+      // [DX-S5] Why: all single-release records have already been verified (or will be checked as candidate zero).
+      // Rejected: retaining duplicate object graphs until the three-candidate deserializer exhausts Node's heap.
+      const sharedCandidateBytes = result.records.map((r) => canonical(r.candidates[0]));
+      result.records.length = 0;
+      (globalThis as any).gc?.();
       const position = cut;
       const variant = (id: string, key: string, n: number) =>
         W0.compileRelease({
@@ -831,14 +864,27 @@ export async function runReplicaDriver(argv: string[]) {
         },
         releases: candidateReleases,
       });
+      console.log(
+        JSON.stringify({
+          kind: "candidate-measurement",
+          exactness: "pending",
+          N,
+          cut,
+          subjects: multi.records.length,
+          releaseHashes: candidateReleases.map((r) => r.hash),
+          wallMs: multi.evaluationWallMs,
+          passWallMs: multi.passWallMs + report.freezeMs,
+          live: Boolean(traffic),
+        }),
+      );
       const candidateTraffic = traffic as Awaited<ReturnType<typeof startW0Live>> | undefined;
       const candidateLive = candidateTraffic ? await candidateTraffic.stop() : undefined;
       traffic = undefined;
       await replica.stop();
+      if (multi.records.length !== N || sharedCandidateBytes.length !== N)
+        throw new Error("Candidate subject coverage mismatch");
       for (let i = 0; i < multi.records.length; i++) {
-        if (
-          canonical(multi.records[i].candidates[0]) !== canonical(result.records[i].candidates[0])
-        )
+        if (canonical(multi.records[i].candidates[0]) !== sharedCandidateBytes[i])
           throw new Error("Candidate pass changed its shared R2 input/output cut");
       }
       const candidateOracleStarted = performance.now();
@@ -887,7 +933,10 @@ export async function runReplicaDriver(argv: string[]) {
         if (candidateOracleCompared !== N * 3)
           throw new Error("Candidate oracle coverage mismatch");
       }
+      (globalThis as any).gc?.();
       report.candidates = {
+        heapUsedBytes: process.memoryUsage().heapUsed,
+        retainedSubjects: multi.records.length,
         oracleCompared: candidateOracleCompared,
         oracleWallMs: canonicalCandidates ? performance.now() - candidateOracleStarted : null,
         releaseHashes: candidateReleases.map((r) => r.hash),
@@ -942,7 +991,12 @@ export async function runReplicaDriver(argv: string[]) {
     };
     report.rss = process.memoryUsage().rss;
     report.peakRss = process.resourceUsage().maxRSS * 1024;
-    console.log(JSON.stringify({ kind: "result", ...report }));
+    console.log(
+      JSON.stringify({
+        kind: candidateVerification ? "candidate-verification-result" : "result",
+        ...report,
+      }),
+    );
     return report;
   } finally {
     if (traffic) await traffic.stop();

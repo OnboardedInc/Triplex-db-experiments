@@ -39,3 +39,16 @@ Evidence: `~/Claude/Projects/triplex-db-2/evidence/DX-S5/`, raw command output c
 Seal evidence: `seed100000-c2.log`, `population100000-a.log.gz`, `seal-summary-b.log`; diagnosis: b2/b4, `readback100k-jvm-a.log.gz`; strict bound: `idmemo-unit-b.log`; pinned-input proof: `pinned-proof1000-a.log`.
 Seal audit: seed.ts compares fresh complete ordered worlds/facts/head/R2 against independent population bytes and bound inputs; maintain.clj checks both complete row streams at the same basis; hold.sh requires this attempt's full verification, clean PG stop and <=20 GB.
 The summary command independently checked all four fingerprint fields, unique completed c2 seal, clean PG stop, allocation and sampled disk floor; connectivity/unit outputs alone never qualify the seed.
+
+First use was declared in `activation100000-a.log` on 2026-11-12: source 16,435,760 KiB, Mac free 21,468,804 KiB, so a clone plus the floor did not fit; clone time is unavailable (skipped).
+The retained volume now contains appended activation, outbox and traffic records. Its sealed logical input at position 4,338,757 remains readable; it is no longer a pristine physical seed copy.
+All 100,000 bootstrap worlds and the independent four-field fingerprint matched before the first activation append.
+R1 preparation: 32.077 s evaluation, 74.639 s publication, 53,681 changed subjects/839 commits, 107.710 s including setup, without live traffic.
+Live R2: 54.939 s evaluation, 114.304 s publication, 9,798 changed subjects/154 commits, 170.125 s including setup (100 s bar missed).
+Read p99 before/during: 3755.279/3936.765 ms, ratio 1.048; scheduled commit p99 119480.656/249368.891 ms, ratio 2.087 (1.5 bar missed).
+Matched 100 s prefix ratios: read 1.041, scheduled commit 2.087, commit service 2.394; baseline did not cover the full 169.427 s sweep window. Sequential diagnostic, no A/A calibration.
+Follow lag p99: 271.768 ms over 1,216 observed commits. Main driver peak reported 9,780,568,064 B; data/index/main post-GC heap 5,179,965,440/911,191,011/1,848,022,656 B.
+Main exactness completed all 100,000 worlds, outputs, records, published states and per-subject Python checks, zero mismatches; 1,358.709 s total, oracle-active wall 1,324.560 s.
+Published states were read at position 4,347,443, independently observed in `activation100000-head-b.log`; all evaluation inputs stayed at sealed P.
+The following three-candidate pass failed at Node's default ~2 GiB heap: `FATAL ERROR: Reached heap limit` at log line 686, worker result deserialization stack. Window exit 133, not a timer or JVM failure.
+The corrected S5 driver keeps the 11 GiB cgroup cap, permits a 4 GiB V8 heap, compacts already checked reference records to exact canonical bytes, and provides a read-only candidate-only follow-up. Candidate exactness remains pending until that run completes.

@@ -11,7 +11,17 @@ s5=false
 if [[ $s5 == true ]]; then
  [[ -f /Users/sam/Claude/Projects/triplex-db-2/locks/long-hold-ok ]] || { echo 'long hold not authorized'; exit 2; }
 fi
-allow_first_use=false; first_use=false
+allow_first_use=false; first_use=false; verify_in_place=false
+if [[ ${1:-} == --verify-in-place ]]; then
+ [[ $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 ]] || exit 2
+ verify_in_place=true; shift
+ [[ " $* " == *' --verify-candidates-at-seed '* ]] || { echo 'read-only verifier required'; exit 2; }
+ # [DX-S5] Why: these alternate entry points bypass the driver's read-only argument guard.
+ # Rejected: permitting a corpus or journal mutation under a verification-only declaration.
+ for arg in "$@"; do
+  case "$arg" in --corpus|--corpus-after|--journal-fast-gate) echo 'mutating alternate entry point refused'; exit 2;; esac
+ done
+fi
 if [[ ${1:-} == --first-use-if-needed ]]; then
  [[ $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 ]] || exit 2
  allow_first_use=true; shift
@@ -123,7 +133,10 @@ if [[ $s5 == true ]]; then
  mac_kib=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
  vm_kib=$(docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" postgres:17-alpine sh -c 'df -Pk /from | tail -1' | awk '{print $4}')
  echo "clone-plan sourceKiB=$source_kib macFreeKiB=$mac_kib vmFreeKiB=$vm_kib"
- if ! (( mac_kib-source_kib >= 15728640 && vm_kib-source_kib >= 5242880 )); then
+ if [[ $verify_in_place == true ]]; then
+  first_use=true; working_volume=$seed
+  echo 'READ-ONLY CANDIDATE VERIFICATION: previously used seed; immutable input cut, no logical writes.'
+ elif ! (( mac_kib-source_kib >= 15728640 && vm_kib-source_kib >= 5242880 )); then
   [[ $allow_first_use == true ]] || { echo 'clone does not fit disk reserve'; exit 1; }
   first_use=true; working_volume=$seed
   echo 'DECLARED FIRST USE: clone does not fit the disk reserve; this evaluation modifies the new seed volume.'
@@ -132,6 +145,7 @@ fi
 if [[ $first_use != true ]]; then
 docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" -v "$prefix-pg-data:/to" postgres:17-alpine sh -c 'test $(du -sk /from | cut -f1) -lt "$1" && cp -a /from/. /to/ && du -sk /to' sh "$clone_kib"
 echo "clone elapsedSeconds=$(( $(date +%s)-clone_start ))"
+elif [[ $verify_in_place == true ]]; then echo 'clone skipped: read-only verification';
 else echo 'clone skipped: first use'; fi
 docker create --pull never --name "$prefix-extract" -v "$prefix-tools:/tool" node:22.23.2-bookworm-slim sh -c 'cp /usr/local/bin/node /tool/node; cp /usr/lib/*-linux-gnu/libstdc++.so.6 /usr/lib/*-linux-gnu/libgcc_s.so.1 /tool/'
 docker start -a "$prefix-extract"; docker rm "$prefix-extract"
@@ -195,10 +209,14 @@ fi
    if [[ $kb -gt $volume_cap || $owned_kb -gt $evidence_cap || $free_kb -lt $floor ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; docker rm -f "$prefix-driver" || true; kill -TERM $$; exit 1; fi
  done
 ) & watcher=$!
+# [DX-S5] Why: the default ~2 GiB V8 heap failed deserializing three candidates after main exactness completed.
+# Rejected: raising the 11 GiB container cap; shared packed input stays outside this explicit 4 GiB heap allowance.
+node_flags=(--expose-gc --experimental-strip-types)
+[[ $s5 != true ]] || node_flags+=(--max-old-space-size=4096)
 docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory "$driver_memory" --memory-swap "$driver_memory" \
  -v "$repo:$repo:ro" -v "$out:$out" -v "$prefix-tools:/tool:ro" -w "$repo" -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin \
  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e "DX_R1_DEADLINE=$deadline" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
- python:3.13-slim /tool/node --expose-gc --experimental-strip-types lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" "$@"
+ python:3.13-slim /tool/node "${node_flags[@]}" lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" "$@"
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT pg_database_size(current_database());'
 docker run --rm --pull never --name "$prefix-copy" -v "$working_volume:/from:ro" postgres:17-alpine du -sk /from
 
