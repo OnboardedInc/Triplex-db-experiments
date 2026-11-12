@@ -1,6 +1,6 @@
 import { it, expect } from "vitest";
 import { publishChanged } from "../../../bench/lib/w0-replica.ts";
-import { outboxEntity } from "../../../bench/lib/w0-outbox.ts";
+import { outboxEntity, offerLiveWrite, finishLiveWrite } from "../../../bench/lib/w0-outbox.ts";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 // [DX-S5] Why: exercise actual atomic outbox construction, bounded overlap and stored bytes, including a late failed ACK.
@@ -59,4 +59,38 @@ it("overlaps disjoint frames, preserves invocation order and publishes exact sta
   await expect(
     publishChanged(failed, records, { frameSize: 128, inflight: 4, readStates: () => [] }),
   ).rejects.toThrow("injected");
+});
+
+it("gives pending trace writes priority before publication submission", async () => {
+  let submitted = false;
+  const comp = {
+    transactionByCommand: async () => ({ ok: true, value: null }),
+    transact: async () => {
+      submitted = true;
+      return { ok: true, value: {} };
+    },
+  } as unknown as CompositionHandle;
+  offerLiveWrite();
+  const task = publishChanged(
+    comp,
+    [
+      {
+        subject: "priority",
+        release: "R1",
+        basis: { tx: 1n, validTime: W0.POPULATION_VALID_TIME },
+        workItems: [
+          { id: "item", key: "k", kind: "create", payload: "{}", rule: "r", version: "v" },
+        ],
+      },
+    ],
+    { inflight: 1, frameSize: 64, yieldToWriter: true, readStates: () => [] },
+  );
+  try {
+    await new Promise((r) => setTimeout(r, 10));
+    expect(submitted).toBe(false);
+  } finally {
+    finishLiveWrite();
+  }
+  await task;
+  expect(submitted).toBe(true);
 });

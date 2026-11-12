@@ -35,11 +35,11 @@
   (assert (<= @high r/id-memo-limit))
   (assert (= (.sum r/id-memo-inserts) (+ (* r/id-memo-limit (.sum r/id-memo-evictions)) (.size ma) (.size mz)))
           "concurrent insertion bypassed the cache bound/accounting")
-  (let [tiny (r/bounded-id-map 128 1024)]
+  (let [native-stats (r/id-memo-stats) tiny (r/bounded-id-map 128 1024)]
    (doseq [i (range 1024)] (.putIfAbsent tiny (str "long-key-" i) i))
    (assert (<= (reduce + (map r/id-entry-bytes (.keySet tiny))) 1024))
    (.putIfAbsent tiny (apply str (repeat 1024 "x")) 1)
-   (assert (nil? (.get tiny (apply str (repeat 1024 "x"))))))
-  (println (json/write-str (assoc (r/id-memo-stats) :event "id-memo-native-unit" :comparisons (* 8 2048) :epochs 2 :cuts 3 :mismatches 0 :memoryOnly true :observedHigh @high :accountingExact true)))
+   (assert (nil? (.get tiny (apply str (repeat 1024 "x")))))
+  (println (json/write-str (assoc native-stats :byteBoundTest true :event "id-memo-native-unit" :comparisons (* 8 2048) :epochs 2 :cuts 3 :mismatches 0 :memoryOnly true :observedHigh @high :accountingExact true))))
   (d/release a) (d/release z))
  (d/shutdown true) (shutdown-agents))
