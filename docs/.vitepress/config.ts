@@ -137,8 +137,8 @@ export default defineConfig({
     docFooter: { prev: "Previous", next: "Continue" },
     externalLinkIcon: true,
     footer: {
-      message: "Released under the MIT License.",
-      copyright: "© 2026 Ben Jacobson",
+      message: "Triplex is released under the MIT License.",
+      copyright: "Triplex © 2026 Ben Jacobson. Experiments and changes © 2026 Onboarded.",
     },
   },
 });

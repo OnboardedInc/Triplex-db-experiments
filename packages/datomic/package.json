@@ -2,6 +2,8 @@
   "name": "@triplex-build/triplex-datomic",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Onboarded",
   "description": "Experimental Datomic gateway client for the Triplex lab",
   "files": [
     "dist",

@@ -2,6 +2,8 @@
   "name": "@triplex-build/triplex-duckdb",
   "version": "0.0.0",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Onboarded",
   "files": ["dist", "LICENSE", "README.md"],
   "type": "module",
   "main": "./dist/index.js",

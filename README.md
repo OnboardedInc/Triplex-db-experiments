@@ -5,14 +5,18 @@
   </picture>
 </p>
 
-# Triplex
+# Triplex database experiments
 
-This independent checkout develops **Triplex on XTDB and Triplex on QLever** in
-parallel. Both retain Triplex's Datalog and transactional mutation APIs. See the
-[development and qualification plan](qualification/PLAN.md),
-[XTDB backend](packages/xtdb/README.md), and [QLever backend](packages/qlever/README.md).
-The [acceptance ledger](qualification/ledger.json) records incomplete contracts
-and capacity gates. The inherited upstream documentation continues below.
+This repository is Onboarded's database research. It tunes a Triplex fact store on several database
+engines (Datomic on Postgres storage, native XTDB and QLever) against five ranked priorities. The
+research lives in `lab/`. Start with [the scope](lab/SCOPE.md), [the priorities](lab/NORTH-STAR.md)
+and [the targets](lab/TARGETS.md).
+
+The code under `packages/` started as a copy of [Triplex](https://github.com/bjacobso/triplex) by
+Ben Jacobson, released under the MIT License. Onboarded changed that copy in place and added
+`packages/datomic`, `packages/xtdb`, `packages/qlever`, `packages/duckdb`, `packages/qualification`
+and `packages/w0`. [NOTICE.md](NOTICE.md) says which parts are Triplex's and which are Onboarded's.
+The inherited upstream Triplex README continues below.
 
 > [!WARNING]
 > Triplex is pre-1.0. The published `@triplex-build` packages require `effect@4.0.3`;
@@ -625,4 +629,6 @@ Part of the [WorldVM](https://worldvm.com) family of experiments.
 
 ## License
 
-MIT © 2026 Ben Jacobson.
+Triplex is MIT © 2026 Ben Jacobson. Its licence text is in
+[licenses/TRIPLEX-MIT.txt](licenses/TRIPLEX-MIT.txt). Onboarded's work in this repository is © 2026
+Onboarded and has no licence yet. [NOTICE.md](NOTICE.md) lists which parts are which.

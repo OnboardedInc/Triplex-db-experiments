@@ -2,6 +2,8 @@
   "name": "@triplex-build/triplex-qualification",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Onboarded",
   "type": "module",
   "exports": {
     ".": {
