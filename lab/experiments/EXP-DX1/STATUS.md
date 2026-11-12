@@ -1456,3 +1456,18 @@ copy as the design has it, pacing so trace commits stay within 1.5, the gateway'
 then the verdict run at 100,000.
 
 **DX-R3 proof running** since 02:15 UTC from `794b034b`: `r3/run.sh both p8-both` (`evidence/DX-R3/orch-p8-both.log`).
+
+## 2026-11-12 02:55 UTC: differential on the final local-read code passes; ladder rerun alone
+
+`r3/run.sh both p8-both` from `794b034b` (`evidence/DX-R3/orch-p8-both.log`), under `nohlt`, fresh strict-clock scope:
+
+1. Native strict-clock probe: non-strict scope accepts a regression; strict scope rejects equal and lower clocks
+   (`ClockConflict`, with the policy and remedy in the message) and several clocks in one commit (`TransactionRejected`).
+2. **Differential: 200,000 pairs, complete typed public rows, zero differences**, with 4,930 concurrent writes; 174,823
+   answered locally and 25,177 through the gateway; 398 floor reads, 201 commit straddles, 28,515 current-position reads;
+   basis mix 160,000 current-receipt, 30,000 receipt-pinned, 10,000 varied valid time. 2,253 s.
+3. The differential used all 39 minutes of the hold, so the ladder did not run (exit 124). Rerunning the ladder alone:
+   `r3/run.sh benchmark p8-ladder` (`evidence/DX-R3/orch-p8-ladder.log`).
+
+This is the first equivalence result on the code that carries all nine review fixes and the position-forwarding fix on the
+expected side. Still owed from the agent's list: why the two earlier 200,000-pair runs passed before that fix.
