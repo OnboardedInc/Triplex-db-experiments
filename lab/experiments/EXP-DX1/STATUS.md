@@ -1632,3 +1632,29 @@ Conclusions:
 Next, once DX-S5 part 4 exits (budget ends about 13:20 UTC) and nothing else is running: old against new again on the quiet
 host, then the full pair on DX-R3's head (strict scope, default placement), then the 100,000 verdict run if part 4 leaves one
 to run.
+
+## 2026-11-12 13:30 UTC: DX-S5 part 4 (`ee11403c`, not merged); all agents have exited; quiet verdict sequence started
+
+DX-S5 part 4, 100,000 subjects, layout engine CPUs 0 to 2 and runtime CPUs 3 to 7 (commit thread alone, follower worker, two
+reader workers for 256 closed-loop readers, evaluation workers as a setting). Run while DX-R3 was also working on the host,
+so absolute latencies carry host load.
+
+1. **Candidates complete:** three releases in one pass 35.0 s; all 300,000 outputs and records equal to the Python oracle;
+   worlds and both sealed fingerprints equal again; driver peak 10.05 GiB, no OOM (flags captured). Single release 24.3 s.
+2. **Activation without traffic:** 46.7 s (two evaluators, including setup) + 36.2 s (53,681 changed, 256 per frame, 8 in
+   flight) = 82.9 s. Inside 100 s. Published states not fully re-verified in this run.
+3. **No live activation result.** The frozen trace at its offset starts inside a 50x burst, and at this size the commit path
+   did not keep up: SDK commit service p50 77 to 200 ms and p99 2.0 to 2.3 s, scheduled-to-acknowledged p99 83 to 109 s; the
+   transactor logged broker back-pressure (`AMQ222183`, 293,802 bytes against 262,144). Paced at 10 commands/s the baseline
+   is healthy (service p50 23.6 / p99 186 ms, scheduled p99 815 ms, local reads 5,585/s with p50 41 / p99 120 ms); at 5/s
+   service p50 19.4 / p99 131 ms. Largest sustainable rate not established.
+4. One run used 11.8 GiB and was OOM-killed (memory fix followed); a follower failure during drain is fixed to surface its
+   original error. Bootstrap 768 s in the last full run.
+
+**What this adds to the picture:** at 100,000 subjects in this harness a single commit costs 19 to 24 ms at low rate, against
+9 ms in the 10,000-subject north-star trace. Different commands (W0 business commands) and a loaded host, so not yet a
+finding about scale; **commit latency at 100,000 subjects with the north-star trace has never been measured** and is owed.
+
+**Quiet verdict sequence started 13:27 UTC, no agent running** (background `bwdgjfg8p`): wait for a quiet host; old
+(`0e1c0144`) against new (`b648ac2b`) zero-reader arms, order old, new, new, old (`tx2-dxh4-oq*`); then **q8**, the full pair on
+DX-R3's head with local reads on a strict scope, default placement.
