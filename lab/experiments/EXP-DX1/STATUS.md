@@ -1658,3 +1658,13 @@ finding about scale; **commit latency at 100,000 subjects with the north-star tr
 **Quiet verdict sequence started 13:27 UTC, no agent running** (background `bwdgjfg8p`): wait for a quiet host; old
 (`0e1c0144`) against new (`b648ac2b`) zero-reader arms, order old, new, new, old (`tx2-dxh4-oq*`); then **q8**, the full pair on
 DX-R3's head with local reads on a strict scope, default placement.
+
+## 2026-11-12 15:05 UTC: paused at Sam's request. q8: every P1 bar met on the exact code; P2 far out in the full pair
+
+Sam paused the work about 14:50 UTC (usage needed elsewhere this week). No agents. State, branches, open decisions and
+resume steps: `lab/HANDOFF-2026-11-12.md`, which also carries the q8 table. In short: q8 (DX-R3 head `b648ac2b`, exact local
+reads, strict scope, quiet host, oracle PASS) meets all P1 bars (read p99 at 256 readers 9.15 ms; 32,220 / 33,170 / 35,101
+reads/s at 64 / 256 / 1,024), P3 and P4 pull latency; misses P2 (all-commit p99 4.5 to 4.6 s, burst p50 36 to 42 ms, queue 5)
+and P4 history flatness (1.57). Old against new on the quiet host: no regression in the zero-reader commit path.
+`quiet/pause-tail.sh` is running unattended: approved removals, one 100,000-subject pair with gateway reads
+(`tx2-dxh4-k100-*`), then the VM is stopped.
