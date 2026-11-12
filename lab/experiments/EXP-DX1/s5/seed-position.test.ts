@@ -89,3 +89,18 @@ test("repeat activation and publication settings reject missing binding before e
     /invalid publication gap/,
   );
 });
+
+test("publication trials require complete immutable independent references and bounded settings", async () => {
+  const good = { id: "dxs5-extra-test", mode: "replica", size: 64, inflight: 2 };
+  for (const trials of [
+    [good],
+    [null],
+    [{ ...good, inflight: 33 }],
+    [{ ...good, size: 257 }],
+    [good, good],
+  ])
+    await assert.rejects(
+      runReplicaDriver(["--publication-trials", JSON.stringify(trials)]),
+      /invalid publication trials/,
+    );
+});

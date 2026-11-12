@@ -49,6 +49,50 @@ export async function runReplicaDriver(argv: string[]) {
   const seedPosition = argv.includes("--seed-position") ? Number(opt("seed-position")) : undefined;
   if (seedPosition !== undefined && (!Number.isSafeInteger(seedPosition) || seedPosition < 1))
     throw Error("invalid sealed seed position");
+  const publicationTrials: {
+    id: string;
+    mode: string;
+    size: number;
+    inflight: number;
+    gapMs?: number;
+    yieldToWriter?: boolean;
+    r1Size?: number;
+    r1Inflight?: number;
+  }[] = JSON.parse(opt("publication-trials", "[]"));
+  if (
+    !Array.isArray(publicationTrials) ||
+    publicationTrials.length > 3 ||
+    publicationTrials.some((t) => t === null || typeof t !== "object") ||
+    new Set(publicationTrials.map((t) => t.id)).size !== publicationTrials.length ||
+    publicationTrials.some(
+      (t) =>
+        !/^[a-z0-9-]{8,64}$/.test(t.id) ||
+        !["replica", "gateway"].includes(t.mode) ||
+        !Number.isInteger(t.size) ||
+        t.size < 1 ||
+        t.size > 256 ||
+        !Number.isInteger(t.inflight) ||
+        t.inflight < 1 ||
+        t.inflight > 32 ||
+        (t.gapMs !== undefined && (!Number.isFinite(t.gapMs) || t.gapMs < 0 || t.gapMs > 1000)) ||
+        (t.yieldToWriter !== undefined && typeof t.yieldToWriter !== "boolean") ||
+        (t.r1Size !== undefined &&
+          (!Number.isInteger(t.r1Size) || t.r1Size < 1 || t.r1Size > 256)) ||
+        (t.r1Inflight !== undefined &&
+          (!Number.isInteger(t.r1Inflight) || t.r1Inflight < 1 || t.r1Inflight > 32)),
+    ) ||
+    (publicationTrials.length &&
+      (!seedPosition ||
+        !argv.includes("--seed-fingerprint") ||
+        !argv.includes("--publish") ||
+        !argv.includes("--live") ||
+        !argv.includes("--batch-oracle") ||
+        !argv.includes("--candidates") ||
+        !argv.includes("--oracle-candidates") ||
+        !opt("publication-id") ||
+        publicationTrials.some((t) => t.id === opt("publication-id"))))
+  )
+    throw Error("invalid publication trials binding/settings");
   const candidateVerification = argv.includes("--verify-candidates-at-seed");
   const repeatActivation = argv.includes("--activation-at-seed");
   const publicationId = opt("publication-id");
@@ -760,6 +804,7 @@ export async function runReplicaDriver(argv: string[]) {
       statesCompared = 0,
       expectedR1Changed = 0,
       expectedR2Changed = 0;
+    const expectedTrialStates = new Map<string, string>();
     const finalPosition = await comp.currentPosition();
     report.publishedStatePosition = finalPosition;
     const wireState = (state: any) => ({
@@ -887,8 +932,10 @@ export async function runReplicaDriver(argv: string[]) {
           const actual = rows.length
             ? wireState(JSON.parse(rows[0].value.value))
             : { items: [], pending: [], subjects: [] };
-          if (canonical(actual) !== canonical(expectedState))
+          const expectedBytes = canonical(expectedState);
+          if (canonical(actual) !== expectedBytes)
             throw new Error("Independent published state mismatch " + r.subject);
+          if (publicationTrials.length) expectedTrialStates.set(r.subject, expectedBytes);
           statesCompared++;
         }
         checked++;
@@ -920,10 +967,16 @@ export async function runReplicaDriver(argv: string[]) {
         matched: report.matched,
       }),
     );
+    const sharedCandidateBytes = argv.includes("--candidates")
+      ? result.records.map((r) => canonical(r.candidates[0]))
+      : [];
+    const sharedWorldHashes = publicationTrials.length
+      ? result.records.map((r) => r.worldSha256)
+      : [];
+    let trialR1Reference: string[] = [];
     if (argv.includes("--candidates")) {
       // [DX-S5] Why: all single-release records have already been verified (or will be checked as candidate zero).
       // Rejected: retaining duplicate object graphs until the three-candidate deserializer exhausts Node's heap.
-      const sharedCandidateBytes = result.records.map((r) => canonical(r.candidates[0]));
       result.records.length = 0;
       (globalThis as any).gc?.();
       const position = cut;
@@ -1044,7 +1097,201 @@ export async function runReplicaDriver(argv: string[]) {
         live: candidateLive,
       };
       console.log(JSON.stringify({ kind: "candidates", ...report.candidates }));
+      if (publicationTrials.length) {
+        if (
+          candidateOracleCompared !== 3 * N ||
+          expectedTrialStates.size !== N ||
+          cut !== seedPosition ||
+          r1Position !== seedPosition
+        )
+          throw Error("publication trials lack complete independent references");
+        trialR1Reference = multi.records.map((r) => canonical(r.candidates[1]));
+        multi.records.length = 0;
+      }
     }
+    // [DX-S5] Why: reuse complete independently checked canonical expectations only for identical immutable P/release inputs.
+    // Rejected: rerunning the expensive bootstrap/oracle for each scheduler setting, sampling states, or using unverified evaluator bytes.
+    report.publicationTrials = [];
+    (globalThis as any).gc?.();
+    for (const trial of publicationTrials) {
+      process.env.TX2_W0_OUTBOX_NAMESPACE = trial.id;
+      try {
+        await followTo(await comp.currentPosition());
+        const initial = await comp.currentPosition();
+        let absent = 0;
+        const offsets = Array.from({ length: Math.ceil(N / 64) }, (_, i) => i * 64);
+        for await (const page of orderedMap(offsets, verificationPages, (i) =>
+          recordedPage(subjects.slice(i, i + 64).map(outboxEntity), {
+            position: initial,
+            validAt: V_W0,
+          }),
+        )) {
+          if (page.position !== initial || page.rows.length)
+            throw Error("trial namespace not fresh at exact head");
+          absent += Math.min(64, N - absent);
+        }
+        if (absent !== N) throw Error("incomplete trial absence proof");
+        const activateTrial = async (release: string) => {
+          const ack = await commit(
+            [
+              {
+                op: "assert",
+                entityId: "p5:tenant:" + trial.id,
+                attribute: "p5/activation",
+                value: { type: "string", value: release },
+                validFrom: V_W0,
+              },
+            ],
+            "trial:" + trial.id + ":activate:" + release,
+          );
+          await followTo(ack.position);
+        };
+        await activateTrial("R1");
+        const r1View = await replica.snapshotAt(replica.position);
+        const r1Trial = await evaluateAll({
+          replica,
+          subjects,
+          releases: W0.R1,
+          workers,
+          view: r1Snapshot,
+          position: r1Position,
+          publish: comp,
+          publication: {
+            frameSize: trial.r1Size ?? 256,
+            inflight: trial.r1Inflight ?? 8,
+            readStates: (ids) => ids.flatMap((id) => r1View.world(id)),
+          },
+        });
+        if (
+          r1Trial.records.length !== N ||
+          r1Trial.publication!.changed !== expectedR1Changed ||
+          r1Trial.publication!.responses.some((r) => r.retry)
+        )
+          throw Error("R1 trial publication coverage/replay mismatch");
+        for (let i = 0; i < N; i++)
+          if (
+            r1Trial.records[i].subject !== subjects[i] ||
+            r1Trial.records[i].worldSha256 !== sharedWorldHashes[i] ||
+            canonical(r1Trial.records[i].candidates[0]) !== trialR1Reference[i]
+          )
+            throw Error("R1 trial differs from independently checked bytes");
+        const profile = (p: NonNullable<typeof r1Trial.publication>) => ({
+          ...p,
+          responses: p.responses.map((r) => r.timing),
+        });
+        const r1Metric = {
+          evaluationMs: r1Trial.evaluationWallMs,
+          passMs: r1Trial.passWallMs,
+          publication: profile(r1Trial.publication!),
+        };
+        r1Trial.records.length = 0;
+        r1Trial.publication!.responses.length = 0;
+        await followTo(await comp.currentPosition());
+        await activateTrial("R2");
+        const stateView = await replica.snapshotAt(replica.position);
+        const options = {
+          ...liveOptions,
+          commandNamespace: trial.id,
+          replica: trial.mode === "replica" ? replica : undefined,
+        };
+        let baseline: any;
+        const r2Trial = await evaluateAll({
+          replica,
+          subjects,
+          releases: W0.R2,
+          workers,
+          view: snap,
+          position: cut,
+          publish: comp,
+          publication: {
+            frameSize: trial.size,
+            inflight: trial.inflight,
+            gapMs: trial.gapMs,
+            yieldToWriter: trial.yieldToWriter,
+            readStates: (ids) => ids.flatMap((id) => stateView.world(id)),
+          },
+          beforeTimedWindow: async () => {
+            replica.start();
+            traffic = await startW0Live({ ...options, id: trial.id + "-baseline" });
+            await new Promise((r) => setTimeout(r, Number(opt("baseline-ms", "30000"))));
+            baseline = await traffic.stop();
+            traffic = undefined;
+            traffic = await startW0Live({ ...options, id: trial.id + "-sweep" });
+          },
+        });
+        const during = await traffic!.stop();
+        traffic = undefined;
+        await replica.stop();
+        const stateCut = await comp.currentPosition();
+        if (
+          r2Trial.records.length !== N ||
+          r2Trial.publication!.changed !== expectedR2Changed ||
+          r2Trial.publication!.responses.some((r) => r.retry)
+        )
+          throw Error("R2 trial publication coverage/replay mismatch");
+        for (let i = 0; i < N; i++)
+          if (
+            r2Trial.records[i].subject !== subjects[i] ||
+            r2Trial.records[i].worldSha256 !== sharedWorldHashes[i] ||
+            canonical(r2Trial.records[i].candidates[0]) !== sharedCandidateBytes[i]
+          )
+            throw Error("R2 trial differs from independently checked bytes");
+        const metric = {
+          id: trial.id,
+          mode: trial.mode,
+          sourcePosition: cut,
+          initialHead: initial,
+          statePosition: stateCut,
+          r1: r1Metric,
+          evaluationMs: r2Trial.evaluationWallMs,
+          passMs: r2Trial.passWallMs,
+          publication: profile(r2Trial.publication!),
+          combinedWallMs: r2Trial.passWallMs + r2Trial.publication!.wallMs,
+          baseline,
+          live: during,
+          matched: matchW0Live(baseline, during),
+          outputsCompared: N,
+          recordsCompared: N,
+          statesCompared: 0,
+          exactness: "pending",
+          cgroupPeakBytes: fs.existsSync("/sys/fs/cgroup/memory.peak")
+            ? Number(fs.readFileSync("/sys/fs/cgroup/memory.peak", "utf8"))
+            : null,
+        };
+        console.log(JSON.stringify({ kind: "publication-trial-measurement", ...metric }));
+        r2Trial.records.length = 0;
+        r2Trial.publication!.responses.length = 0;
+        for await (const page of orderedMap(offsets, verificationPages, (i) =>
+          recordedPage(subjects.slice(i, i + 64).map(outboxEntity), {
+            position: stateCut,
+            validAt: V_W0,
+          }),
+        )) {
+          if (page.position !== stateCut) throw Error("trial stored state cut mismatch");
+          const i = metric.statesCompared;
+          for (const subject of subjects.slice(i, i + 64)) {
+            const rows = page.rows.filter(
+              (row) => row.entityId === outboxEntity(subject) && row.attribute === "p5/state",
+            );
+            if (rows.length > 1) throw Error("ambiguous trial state");
+            const actual = rows.length
+              ? wireState(JSON.parse(rows[0].value.value))
+              : { items: [], pending: [], subjects: [] };
+            if (canonical(actual) !== expectedTrialStates.get(subject))
+              throw Error("trial state differs from independent oracle " + subject);
+            metric.statesCompared++;
+          }
+        }
+        if (metric.statesCompared !== N) throw Error("incomplete trial state coverage");
+        metric.exactness = "all-independent-reference-bytes-equal";
+        report.publicationTrials.push(metric);
+        console.log(JSON.stringify({ kind: "publication-trial-result", ...metric }));
+      } finally {
+        process.env.TX2_W0_OUTBOX_NAMESPACE = publicationId;
+      }
+      (globalThis as any).gc?.();
+    }
+    expectedTrialStates.clear();
     if (argv.includes("--journal-counts")) {
       // [DX-R1] Why: the candidate live arm has its own real commits after publication-state verification.
       // Rejected: folding those new journals against the earlier publication cut.
