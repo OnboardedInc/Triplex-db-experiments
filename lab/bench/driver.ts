@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { readObservation, type ReadObservation } from "./lib/read-observation.ts";
+import type { Basis } from "./lib/composition.ts";
 import { rawLocalCoverage } from "./lib/raw-local-coverage.ts";
 import { httpCounts } from "./lib/http-counts.ts";
 import { readLatencyRun } from "../receipts/parse.ts";
@@ -615,7 +617,7 @@ async function run() {
     if (oracleRecordSet.has(ev.subject))
       recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
     if (ev.stream === "background") {
-      const p = !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; retainRead(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost);
+      const p = !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; retainRead(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost, replicaHost && "observe" in replicaHost ? replicaHost.observe.bind(replicaHost) : undefined);
       ryowPending.add(p);
       void p.finally(() => ryowPending.delete(p));
     }
@@ -1204,15 +1206,17 @@ function overlapsBurst(fromS: number, toS: number, p: TraceParams) {
   for (let t = p.firstBurstAtS; t < toS; t += p.burstPeriodS) if (t + p.burstDurationS > fromS) return true;
   return false;
 }
-async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt, replica = false) {
+async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt, replica = false, capture?: (root: string, basis: Basis) => Promise<ReadObservation>) {
   const basis = { ...(replica ? { recordedPosition: receipt.position } : {}), recordedAt: receipt.instant, validAt: Math.floor(now()) };
   const start = now();
   const t = performance.now();
   try {
-    const pr = await comp.pull(ids.placement(subject), basis);
-    const o = observe(pr);
+    const result = capture ? await capture(ids.placement(subject), basis) : await comp.pull(ids.placement(subject), basis);
+    const latency = performance.now() - t;
+    const pr = "observed" in result ? result : readObservation(result);
+    const o = pr.observed;
     if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? "gateway"; ryowFallbackReasons[reason] = (ryowFallbackReasons[reason] ?? 0) + 1; }
-    retainRead([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, receipt.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
+    retainRead([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, receipt.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
   } catch (error: any) {
     retainRead([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, receipt.position, 0, -1, 0, "error", "", 0]);
   }

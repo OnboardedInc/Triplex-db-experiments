@@ -1,4 +1,5 @@
 import { Worker, MessageChannel } from "node:worker_threads";
+import { readObservation, type ReadObservation } from "./read-observation.ts";
 import { Histogram } from "./hist.ts";
 import { replicaEndpoint, restoreReplicaReply } from "./replica-reads.ts";
 import type { Basis, PullResult, CompositionHandle } from "./composition.ts";
@@ -17,7 +18,7 @@ export class ReplicaThread {
   private fail: Error | undefined;
   private closeReply: (() => void) | undefined;
   private serial = 0;
-  private pending = new Map<number, { root: string; basis: Basis; resolve(value: PullResult): void; reject(error: Error): void }>();
+  private pending = new Map<number, { root: string; basis: Basis; observation?: boolean; resolve(value: any): void; reject(error: Error): void }>();
   private constructor(cfg: any, comp: CompositionHandle, ready: () => void, reject: (error: Error) => void) {
     this.head = comp.currentPosition.bind(comp);
     this.gateway = comp.pull.bind(comp);
@@ -41,8 +42,8 @@ export class ReplicaThread {
       if (m.type === "reply") {
         const p = this.pending.get(m.id); this.pending.delete(m.id);
         if (m.error) p?.reject(Error(m.error));
-        else if (m.fallback && p) void this.gateway(p.root, p.basis).then(value => p.resolve({ ...value, route: "fallback", waitedMs: m.waitedMs, replicaFallbackReason: m.reason }), p.reject);
-        else p?.resolve(restoreReplicaReply(m.value));
+        else if (m.fallback && p) void this.gateway(p.root, p.basis).then(value => p.resolve(p.observation ? readObservation({ ...value, route: "fallback", waitedMs: m.waitedMs, replicaFallbackReason: m.reason }) : { ...value, route: "fallback", waitedMs: m.waitedMs, replicaFallbackReason: m.reason }), p.reject);
+        else p?.resolve(p.observation ? m.value : restoreReplicaReply(m.value));
       }
       if (m.type === "closed") { this.closed = true; this.closeReply?.(); }
       if (m.type === "error") failed(Error(m.message));
@@ -65,6 +66,14 @@ export class ReplicaThread {
     if (this.fail) return Promise.reject(this.fail);
     const id = ++this.serial;
     return new Promise((resolve, reject) => { this.pending.set(id, { root, basis, resolve, reject }); this.worker.postMessage({ type: "pull", id, root, basis }); });
+  }
+  observe(root: string, basis: Basis): Promise<ReadObservation> {
+    if (this.fail) return Promise.reject(this.fail);
+    const id = ++this.serial;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { root, basis, observation: true, resolve, reject });
+      this.worker.postMessage({ type: "observe", id, root, basis });
+    });
   }
   async close() {
     try {

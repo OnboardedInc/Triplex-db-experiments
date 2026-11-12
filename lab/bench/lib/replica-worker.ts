@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { readObservation } from "./read-observation.ts";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { ReplicaReadHost, ReplicaReader, replicaReply } from "./replica-reads.ts";
 // [DX-R3] Why: a new public runtime after seed can advance the native basis without a journal position and poison clock admission.
@@ -28,13 +29,13 @@ try {
   });
   port!.postMessage({ type: "ready", index: indexStats(), bytes: host.replica.bytes });
   port!.on("message", async m => {
-    if (m.type === "pull") {
+    if (m.type === "pull" || m.type === "observe") {
       const declined = Error("exact gateway fallback required"), started = performance.now();
       try {
         const result = await local.pullAt(m.root, m.basis, async () => { throw declined; });
         // [DX-R3] Why: return the real immutable world across the worker boundary for low-volume RYOW calls.
         // Rejected: fabricating an empty triples array beside a nonempty cached digest.
-        port!.postMessage({ type: "reply", id: m.id, value: replicaReply(result) });
+        port!.postMessage({ type: "reply", id: m.id, value: m.type === "observe" ? readObservation(result) : replicaReply(result) });
       } catch (error) {
         if (error === declined) port!.postMessage({ type: "reply", id: m.id, fallback: true, waitedMs: performance.now() - started,
           reason: !host.index.valid ? "copy-unavailable" : m.basis.recordedPosition < host.index.floor ? "outside-window" : m.basis.recordedPosition > host.index.position ? "watermark-timeout" : m.basis.recordedPosition === undefined && host.index.isOpenClock(m.basis.recordedAt) ? "open-record-clock" : "unmapped-clock-or-closure" });

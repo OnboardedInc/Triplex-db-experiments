@@ -19,7 +19,11 @@ if [[ $kind == pair ]]; then
   if [[ $prefix == tx2-dxr3-* ]]; then
     pair_lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
     python3 -c 'import shutil; assert shutil.disk_usage(".").free >= 15*1024**3'
-    while ! mkdir "$pair_lock" 2>/dev/null; do sleep 5; done
+    if [[ ${DX_R3_TRY_LOCK:-0} == 1 ]]; then
+      if ! mkdir "$pair_lock" 2>/dev/null; then echo 'DX-R3 pair lock busy; no resources created'; exit 75; fi
+    else
+      while ! mkdir "$pair_lock" 2>/dev/null; do sleep 5; done
+    fi
     printf '{"id":"DX-R3","pid":%s,"kind":"full-pair"}\n' "$$" > "$pair_lock/owner.json"
     export DX_R3_PAIR_LEASE_PID=$$
     pair_cleanup() {

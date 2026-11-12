@@ -63,7 +63,8 @@ test("exact floor, current, missing, time mapping and byte eviction", () => {
   assert.equal(value(index, 1), undefined);
   assert.equal(value(index, 2), "b");
   assert.equal(index.resolve({ recordedAt: 200, validAt: 0 }), 2);
-  assert.equal(index.resolve({ recordedAt: 201, validAt: 0 }), undefined);
+  // [DX-R3-P8] Why: the later strict clock proves the exact intervening prefix; rejected nearest-clock extrapolation above the head.
+  assert.equal(index.resolve({ recordedAt: 201, validAt: 0 }), 2);
   assert.equal(index.resolve({ recordedPosition: 3, recordedAt: 200, validAt: 0 }), undefined);
   const tiny = new RecentReads(100, 0);
   boot(tiny, a);
