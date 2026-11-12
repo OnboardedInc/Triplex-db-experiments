@@ -1279,6 +1279,7 @@ const bar = (id: string, value: any, limit: string, pass: boolean | null, note?:
 const countBy = (values: string[]) => { const o: Record<string, number> = {}; for (const v of values) o[v] = (o[v] ?? 0) + 1; return o; };
 
 function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintenance: any; historyList: number[]; pendingAtEnd: number }) {
+  const analysisCpuStart = process.cpuUsage(), analysisWallStart = performance.now();
   const verdicts = readVerdicts();
   const violationKinds: Record<string, number> = {};
   const violationSample: any[] = [];
@@ -1560,11 +1561,14 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
     peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
-  report.verificationCost = judgingCost;
   report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
   report.compositionIdentity = { ...report.composition, watermarkSamples: watermarkSamples.length, note: "image digest, config hash and slot per assignment are bound by the gate (lab/bin/gate.mjs NS)" };
   report.secondary = { bulkLane: "not measured (seed uses the bulk lane without live reads)", retroactiveCorrections: p3.bars[7], explainAtOldBasis: "past-valid-time reads are 5% of the P1 mix; bit-for-bit audit repeats are not measured" };
   report.histograms = Object.fromEntries(Object.entries(stats).flatMap(([name, s]: any) => [[`${name}.read`, s._read.toJSON()], [`${name}.commit`, s._commit.toJSON()]]));
+  const analysisCpu = process.cpuUsage(analysisCpuStart), fullAnalysisCpuMs = (analysisCpu.user + analysisCpu.system) / 1000;
+  report.verificationCost = { verdicts: judgingCost, fullAnalysisCpuMs, fullAnalysisWallMs: performance.now() - analysisWallStart,
+    fullAnalysisCpuMsPerRead: fullAnalysisCpuMs / records.length,
+    scope: "process CPU after measured phases; includes every verdict and all JS statistics; phase client CPU includes serving/capture, follower, writer and spill" };
 }
 /** TARGETS 1.1 P2 item 4 (RULINGS Q31a): progress and bounded outstanding work. */
 function p2Progress(background: any[], traceStart: number) {

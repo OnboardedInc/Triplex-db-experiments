@@ -190,10 +190,15 @@ Logical journals in the same physical commit share that instant. On a source
 clock conflict, the adapter replays above the reported maximum with a new ordered
 submission turn.
 
-A runtime copy answers record-time-only pinned reads locally only in strict scopes, and
-only after a later applied clock closes the requested cut, with the required
-history and reference closure retained. Other time-pinned reads use the gateway.
-Position-pinned and current reads do not require strict mode for local eligibility.
+A runtime copy answers record-time-only pinned reads locally only in strict scopes.
+Once an applied physical commit has a clock at or above the requested time, the
+copy can resolve that exact prefix, provided its history and reference closure
+are retained. The newest applied clock is eligible immediately after every journal
+of that physical commit has arrived, even when its journals span feed pages.
+A bootstrap clock comes from the journal itself; an unclocked rebuild can admit
+the next validated strict journal without inventing the rebuild's clock.
+Other time-pinned reads use the gateway. Position-pinned and current-watermark
+reads do not require strict mode for local eligibility.
 
 `ClockConflict` names this record-clock policy and reports the maximum. Use a
 greater commit time. A writer preserving old record times must use a fresh

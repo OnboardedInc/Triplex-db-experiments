@@ -67,3 +67,18 @@ test("cached lazy worlds materialize separately and bound weak manifests", () =>
   assert(cache.diagnostics.bytes <= 4096); assert(cache.diagnostics.evictions > 0);
   cache.clear(); assert.equal(cache.diagnostics.bytes, 0);
 });
+
+test("an unavailable weak version triggers a fresh exact walk instead of a cached certificate", async () => {
+  const reader = new ReplicaReader(), packed = prepareEntity("root", packEntity(1, [original]));
+  reader.apply({ reset: true, valid: true, position: 1, changes: [["root", undefined, packed]] });
+  const basis = { recordedPosition: 1, validAt: 3 };
+  const fallback = async (): Promise<never> => { throw Error("unexpected gateway fallback"); };
+  const expected = canonicalWorld((await reader.pullAt("root", basis, fallback)).triples);
+  const prototype = WeakRef.prototype as any, deref = prototype.deref;
+  try {
+    prototype.deref = () => undefined;
+    const result = await reader.pullAt("root", basis, fallback);
+    assert.equal(canonicalWorld(result.triples), expected);
+    assert.equal(reader.diagnostics.worldCache.weakMisses, 1);
+  } finally { prototype.deref = deref; }
+});
