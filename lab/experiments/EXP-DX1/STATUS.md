@@ -1388,3 +1388,36 @@ commit in a strict scope; no differential and no ladder ran. This is the kind of
 make the adapter choose one clock per physical commit above the scope's maximum (batched commands and commits in flight),
 keep the ordered-submission state consistent after a clock rejection, then run the proof and measure the strict rule's cost
 on a commit. The lock is shared with DX-S5's diagnosis.
+
+## 2026-11-12 00:40 UTC: the 100,000-subject seed is sealed; activation at 100,000 is running; DX-R3 part 7
+
+**Sealed 2026-11-12 00:07:30 UTC** (`lab/experiments/EXP-DX1/s5/SEED.md` on `exp/DX-S5-seed-100k`, `db2a7a68`): volume
+`tx2-dxs5-seed-100000-pg-data`, scope `dxs5-w0-100000-v1`, seed id `1b8525ba…`, logical position 4,338,757, 100,000 subjects,
+44,537,987 reachable fact occurrences, worlds `sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760`.
+Fingerprints, position and fact count match the independent Python population oracle (164 s). Native rows equal before and
+after the final maintenance (124,817,263 current, 124,856,479 history). Table 15.75 GB; stopped volume 16.83 GB including
+1.04 GB of WAL (target 20 GB). Command time 10,059 s at 431 commands/s; calendar time 8 h 7 min from the first attempt
+including failed starts. Peak Postgres allocation 22.2 GB; lowest Mac free space 15.87 GiB (floor 15). Not a strict-clock scope.
+
+**Real cause of the stops at 70,000 and 80,000 (corrects the start-up race reported at 22:10 UTC):** the gateway ran out of
+heap. `orch-seed100000-b4.log` lines 961 to 995 record `OutOfMemoryError` in `/reach-many`, in `Index.seek` through
+`entity_cache/revision`: **the gateway's read path keeps an unbounded memo of positive entity ids, millions of entries at this
+size, in a 2 GB heap.** The dead gateway gave the driver `socket hang up`; the `AMQ219007` lines were start-up noise from before
+the transactor's broker heartbeat. The 80,000 chunk was already indexed and a fresh peer read its head in 1.55 s. The seed
+finished with reduced caches and an S5-only launch wrapper that caps the memo at 131,072 entries; **no gateway source was
+changed, so the product defect is still there and needs a bounded memo in the gateway itself.** Readiness now waits for a real
+head read of the target database, and complete JVM, Clojure and GC logs are kept on failure.
+
+**Activation at 100,000** started about 00:23 UTC in DX-S5's hold (`evidence/DX-S5/activation100000-a.log`), on the seed's
+first use, pinned to the sealed position. Mac free space 22.3 GiB.
+
+**DX-R3 part 7 (`794b034b`, not merged).** Strict scopes now seed and take pipelined writes natively: three fresh strict
+2,000-subject seeds succeeded; four arms of 256 commands with 32 in flight recovered from all 64 induced `ClockConflict`
+responses without an order gap. Fixes: journals inside one physical commit share one clock; a returned conflict maximum
+advances the adapter's clock at once; a synchronous clock refusal consumes its ordered turn. The original
+`Resend the client suffix` failure was not reproduced, so its cause is not proven. The differential reached 10,000 equal
+pairs, then failed at pair 16,096 (subject 96, floor position 59): the agent traced it to the expected side, where the
+benchmark's gateway read went through the public `reach`, which keeps record time and drops the internal position, so a
+position-only request was answered at latest. Fixed in `composition.ts` (positions forwarded directly); **not rerun, so there
+is no equivalence result on the final code yet.** Open question for the rerun: the two earlier 200,000-pair differentials
+passed with zero differences; say why they did not hit this.
