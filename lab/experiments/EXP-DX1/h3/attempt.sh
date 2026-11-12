@@ -17,9 +17,10 @@ if [[ $kind == pair ]]; then
   pair_child=
   trap 'if [[ -n $pair_child ]]; then kill -TERM "$pair_child" 2>/dev/null || true; wait "$pair_child" || true; fi; exit 143' TERM INT
   pair_arm() { "$@" & pair_child=$!; wait "$pair_child"; pair_child=; }
-  # [DX-R3] Why: the authorized full pair shares one 45-minute lease across alternating matched arms.
+  # [DX-T1] Why: the authorized full pair shares one lease across matched arms, including cleanup.
   # Rejected: releasing the lock between arms, or silently extending a single-arm diagnostic lease.
-  if [[ $prefix == tx2-dxr3-* ]]; then
+  if [[ $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ]]; then
+    pair_id=DX-R3; [[ $prefix != tx2-dxt1-* ]] || pair_id=DX-T1
     pair_lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
     python3 -c 'import shutil; assert shutil.disk_usage(".").free >= 15*1024**3'
     if [[ ${DX_R3_TRY_LOCK:-0} == 1 ]]; then
@@ -27,8 +28,8 @@ if [[ $kind == pair ]]; then
     else
       while ! mkdir "$pair_lock" 2>/dev/null; do sleep 5; done
     fi
-    printf '{"id":"DX-R3","pid":%s,"kind":"full-pair"}\n' "$$" > "$pair_lock/owner.json"
-    export DX_R3_PAIR_LEASE_PID=$$
+    printf '{"id":"%s","pid":%s,"kind":"full-pair"}\n' "$pair_id" "$$" > "$pair_lock/owner.json"
+    export DX_R3_PAIR_LEASE_PID=$$ DX_PAIR_LEASE_ID=$pair_id
     pair_cleanup() {
       pair_rc=$?; trap - EXIT TERM INT
       if [[ -n $pair_child ]]; then kill -TERM "$pair_child" 2>/dev/null || true; wait "$pair_child" || true; fi
@@ -152,10 +153,10 @@ PY2
 }
 check_resources before
 if [[ $kind =~ ^(functional|medium|real)$ ]]; then
-  if [[ $prefix == tx2-dxr3-* && -n ${DX_R3_PAIR_LEASE_PID:-} ]]; then
-    python3 - "$lock/owner.json" "$DX_R3_PAIR_LEASE_PID" <<'LEASE'
+  if [[ ( $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ) && -n ${DX_R3_PAIR_LEASE_PID:-} ]]; then
+    python3 - "$lock/owner.json" "$DX_R3_PAIR_LEASE_PID" "${DX_PAIR_LEASE_ID:-DX-R3}" <<'LEASE'
 import json,sys
-owner=json.load(open(sys.argv[1])); assert owner['id']=='DX-R3' and owner['kind'] in ('full-pair','writer-arms') and owner['pid']==int(sys.argv[2])
+owner=json.load(open(sys.argv[1])); assert owner['id']==sys.argv[3] and owner['kind'] in ('full-pair','writer-arms') and owner['pid']==int(sys.argv[2])
 LEASE
   else
   while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
@@ -206,7 +207,10 @@ fi
 run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
 # [DX-R3-P9] Why: q6 comparisons require the same live guest boot parameters, not a remembered VM setting.
 # Rejected: assuming nohlt survives an orchestrator restart.
-if [[ $prefix == tx2-dxr3-* ]]; then echo 'DX-R3 live guest kernel'; docker exec "$prefix-tx" cat /proc/cmdline; fi
+if [[ $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ]]; then
+  docker exec "$prefix-tx" cat /proc/cmdline > "$out/guest-kernel.txt"
+  if [[ $prefix == tx2-dxt1-* ]]; then python3 -c 'import sys; assert "nohlt" in open(sys.argv[1]).read().split(), "guest nohlt condition absent"' "$out/guest-kernel.txt"; fi
+fi
 if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
   node lab/trace/system-sampler.mjs "$out/trace/raw" & trace_host=$!
   docker exec -i "$prefix-pg" psql -X -Atq -U postgres -d datomic < lab/trace/postgres.sql > "$out/trace/raw/postgres-samples.log" 2> "$out/trace/raw/postgres-sample-errors.txt" & trace_pg=$!

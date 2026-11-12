@@ -69,6 +69,21 @@ for (const file of filesUnder(raw)) {
 fs.writeFileSync(path.join(run, "trace/SHA256SUMS"), hashes.join("\n") + "\n");
 const copy = process.argv[3];
 const result = await buildReport(run, { copyTo: copy });
+const reportFiles = ["TRACE-REPORT.md", "trace.html", "trace.chrome.json", "trace-summary.json"];
+const reportHashes =
+  reportFiles
+    .map(
+      (name) =>
+        `${createHash("sha256")
+          .update(fs.readFileSync(path.join(run, name)))
+          .digest("hex")}  ${name}`,
+    )
+    .join("\n") + "\n";
+const indexText = `# ${result.tag}\n\nSource: ${result.source}. Trace collection complete: ${result.complete}.\n\n${result.finding}\n\nCanonical files: ~/Claude/Projects/triplex-db-2/evidence/DX-T1/${result.tag}/.\nCompressed raw traces: ${result.rawBytes} bytes, under trace/raw; hashes in trace/SHA256SUMS.\nLarge viewers remain in the durable store and the local worktree copy; only this index, report and SHA256SUMS are committed.\n`;
+for (const destination of [run, ...(copy ? [copy] : [])]) {
+  fs.writeFileSync(path.join(destination, "SHA256SUMS"), reportHashes);
+  fs.writeFileSync(path.join(destination, "INDEX.md"), indexText);
+}
 registerRun(run);
 console.log(
   JSON.stringify({

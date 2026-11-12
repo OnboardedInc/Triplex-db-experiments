@@ -74,6 +74,44 @@ function validSpan(s) {
 }
 // [DX-T1] Why: integrate the union of intervals, choosing the innermost named work, never summing nested wall times.
 // Rejected: adding independent p99s or treating an unrelated storage/JFR event as a causal child.
+function contextEvents(row, events) {
+  return events
+    .filter((e) => e.start < row.root.end && e.end > row.root.start)
+    .filter(
+      (e) =>
+        e.layer !== "jvm-event" ||
+        row.spans.some((s) => s.process === e.process && s.thread === e.thread),
+    );
+}
+function pressureEvents(resources) {
+  const events = [],
+    previous = new Map();
+  for (const sample of [...resources].sort((a, b) => a.at - b.at))
+    for (const [container, stats] of Object.entries(sample.cgroups ?? {})) {
+      const counters = Object.fromEntries(
+        (stats["cpu.stat"] ?? "")
+          .trim()
+          .split("\n")
+          .map((s) => s.split(" "))
+          .filter((s) => s.length === 2)
+          .map(([k, v]) => [k, Number(v)]),
+      );
+      const old = previous.get(container);
+      if (old && counters.throttled_usec > old.throttled)
+        events.push({
+          type: "event",
+          name: `${container} CPU throttled ${(counters.throttled_usec - old.throttled) / 1000}ms in sample`,
+          layer: "throttling",
+          process: container,
+          thread: 0,
+          start: old.at,
+          end: sample.at,
+          estimated: true,
+        });
+      previous.set(container, { at: sample.at, throttled: counters.throttled_usec });
+    }
+  return events;
+}
 export function attribute(root, gateways = [], events = []) {
   const all = root.spans.map((s) => ({ ...s, process: root.process, thread: root.thread }));
   for (const g of gateways) {
@@ -87,6 +125,22 @@ export function attribute(root, gateways = [], events = []) {
       thread: g.thread,
     });
     all.push(...g.spans.map((s) => ({ ...s, process: g.process, thread: s.thread ?? g.thread })));
+    const awaitSpan = g.spans.find((s) => s.name.startsWith("peer.transact-await"));
+    const submitted = g.attributes?.submittedAt;
+    if (
+      awaitSpan &&
+      Number.isFinite(submitted) &&
+      submitted >= awaitSpan.start &&
+      submitted <= awaitSpan.end
+    )
+      all.push({
+        name: "gateway.commit-order-wait",
+        layer: "gateway-queue",
+        start: awaitSpan.start,
+        end: submitted,
+        process: g.process,
+        thread: g.thread,
+      });
   }
   // GC pauses have process/isolate identity; timer drift is an overlay estimate and never causal attribution.
   for (const e of events)
@@ -129,6 +183,8 @@ export function attribute(root, gateways = [], events = []) {
       : "uncovered";
     steps[step] = (steps[step] ?? 0) + b - a;
   }
+  if (!spans.some((s) => s.layer === "transactor")) layers.transactor = null;
+  if (!spans.some((s) => s.layer === "postgres")) layers.postgres = null;
   const wall = duration(root),
     ts =
       layers.typescript + layers["event-loop"] + layers["typescript-gc"] + layers["driver-queue"];
@@ -247,6 +303,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
       errors.push(`${path.basename(file)}: ${error.message}`);
     }
   }
+  events.push(...pressureEvents(resources));
   const gateways = new Map();
   for (const r of requests)
     if (r.name.startsWith("gateway ")) {
@@ -372,6 +429,9 @@ export async function buildReport(runDir, { copyTo } = {}) {
     schema: "triplex.trace-report.v1",
     tag,
     source: manifest?.source ?? null,
+    reporterSha256: createHash("sha256")
+      .update(fs.readFileSync(new URL(import.meta.url)))
+      .digest("hex"),
     finding,
     requests: roots.length,
     commits: commits.length,
@@ -415,7 +475,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     "",
     `Commit coverage: ${explained}/${denom.length} (${n(denom.length ? (100 * explained) / denom.length : NaN)}%) have at least 95% of wall time covered by named layer spans. Target: 99%. Writer trace completeness: ${writes - missingCommits}/${writes}. Raw trace bytes: ${rawBytes}.`,
     "",
-    "Units: ms; TypeScript share is a fraction. Quantiles are per column (their values do not add). TypeScript own code is instrumented Node wall time excluding observed waits/GC, not on-CPU time. Driver queue is separate; timer drift is a bounded estimate shown only as an overlay. Peer-wait includes network, transactor queue and storage; these internal shares remain unknown unless independently correlated. No unrelated Postgres or JFR event is assigned to a transaction.",
+    "Units: ms; n/a means not causally measured (including closed transactor/storage shares), not zero work. TypeScript share is a fraction. Quantiles are per column (their values do not add). TypeScript own code is instrumented Node wall time excluding observed waits/GC, not on-CPU time. Driver queue is separate; timer drift is a bounded estimate shown only as an overlay. Peer-wait includes network, transactor queue and storage; these internal shares remain unknown unless independently correlated. No unrelated Postgres or JFR event is assigned to a transaction.",
     "",
     "Network is residual socket wait around matched gateway spans, including callback scheduling uncertainty. Gateway receive begins at Jetty dispatch: earlier Jetty/socket queue is invisible. VM clocks share CLOCK_REALTIME; gateway millisecond anchoring has approximately 1 ms uncertainty. Response-first-byte includes network and callback scheduling; no finer causal claim is made.",
     "",
@@ -451,6 +511,15 @@ export async function buildReport(runDir, { copyTo } = {}) {
     JSON.stringify(summary, null, 2) + "\n",
   );
   const chrome = [];
+  const processIds = new Map();
+  const pidFor = (name) => {
+    if (!processIds.has(name)) {
+      const id = processIds.size + 1;
+      processIds.set(name, id);
+      chrome.push({ name: "process_name", ph: "M", pid: id, tid: 0, args: { name } });
+    }
+    return processIds.get(name);
+  };
   const start = Math.min(...selected.map((r) => r.root.start));
   for (const r of selected) {
     const spanRows = [
@@ -471,22 +540,26 @@ export async function buildReport(runDir, { copyTo } = {}) {
         ph: "X",
         ts: (s.start - start) * 1000,
         dur: duration(s) * 1000,
-        pid: s.process ?? r.root.process,
+        pid: pidFor(s.process ?? r.root.process),
         tid: s.thread ?? r.root.thread,
         args: { traceId: r.traceId, phase: r.name, priority: r.priority },
       });
-    for (const e of events)
-      if (e.start < r.root.end && e.end > r.root.start)
-        chrome.push({
-          name: e.name,
-          cat: e.layer,
-          ph: "X",
-          ts: (e.start - start) * 1000,
-          dur: duration(e) * 1000,
-          pid: e.process,
-          tid: e.thread ?? 0,
-          args: { overlapsTrace: r.traceId, estimated: !!e.estimated },
-        });
+    for (const e of contextEvents(r, events))
+      chrome.push({
+        name: e.name,
+        cat: e.layer,
+        ph: "X",
+        ts: (e.start - start) * 1000,
+        dur: duration(e) * 1000,
+        pid: pidFor(e.process),
+        tid: e.thread ?? 0,
+        args: {
+          overlapsTrace: r.traceId,
+          estimated: !!e.estimated,
+          originalStartMs: e.start,
+          originalEndMs: e.end,
+        },
+      });
   }
   fs.writeFileSync(
     path.join(rootDir, "trace.chrome.json"),
@@ -496,9 +569,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
       metadata: { tag, source: summary.source },
     }) + "\n",
   );
-  const relevantEvents = events.filter((e) =>
-    selected.some((r) => e.start < r.root.end && e.end > r.root.start),
-  );
+  const relevantEvents = events.filter((e) => selected.some((r) => contextEvents(r, [e]).length));
   const relevantResources = resources
     .filter((e) => selected.some((r) => e.at >= r.root.start - 1000 && e.at <= r.root.end + 1000))
     .map((e) => (e.vm ? { ...e, vm: undefined } : e));
@@ -517,12 +588,12 @@ export async function buildReport(runDir, { copyTo } = {}) {
 }
 function html(finding, data, tag) {
   return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Triplex trace ${esc(tag)}</title>
-<style>body{margin:24px;background:#111822;color:#dde9f5;font:14px system-ui}h1{font-size:24px}p{max-width:1200px;line-height:1.5}select,input,button{background:#23364c;color:white;padding:8px;border:1px solid #567;border-radius:5px}.card{background:#1a2635;margin:18px 0;padding:16px;overflow:auto;border-radius:8px}.lane{position:relative;height:26px;min-width:920px;border-bottom:1px solid #314057}.label{display:inline-block;width:240px;overflow:hidden;font-size:11px;white-space:nowrap}.bar{position:absolute;top:3px;height:19px;border-radius:3px;min-width:1px;background:#69c8a0;cursor:crosshair}.typescript{background:#69c8a0}.gateway{background:#9bb4ff}.peer-wait,.peer-call{background:#dfb878}.driver-queue{background:#e88b82}.typescript-gc,.gateway-gc{background:#f38ace}.network{background:#86d7ed}.event-loop{background:#f9de66}.muted{color:#91a5bd}pre{white-space:pre-wrap}#tip{position:fixed;bottom:0;background:#07101c;padding:12px;left:0;right:0;max-height:180px;overflow:auto}summary{cursor:pointer}svg{background:#122030}</style>
+<style>body{margin:24px;background:#111822;color:#dde9f5;font:14px system-ui}h1{font-size:24px}p{max-width:1200px;line-height:1.5}select,input,button{background:#23364c;color:white;padding:8px;border:1px solid #567;border-radius:5px}.card{background:#1a2635;margin:18px 0;padding:16px;overflow:auto;border-radius:8px}.lane{position:relative;height:26px;min-width:920px;border-bottom:1px solid #314057}.label{display:inline-block;width:240px;overflow:hidden;font-size:11px;white-space:nowrap}.bar{position:absolute;top:3px;height:19px;border-radius:3px;min-width:1px;background:#69c8a0;cursor:crosshair}.typescript{background:#69c8a0}.gateway{background:#9bb4ff}.peer-wait,.peer-call{background:#dfb878}.driver-queue{background:#e88b82}.typescript-gc,.gateway-gc{background:#f38ace}.network{background:#86d7ed}.event-loop{background:#f9de66}.jvm-event{background:#8392a5}.jvm-safepoint{background:#dc9ee2}.throttling{background:#e8a161}.context-label{color:#c4a3e5}.muted{color:#91a5bd}pre{white-space:pre-wrap}#tip{position:fixed;bottom:0;background:#07101c;padding:12px;left:0;right:0;max-height:180px;overflow:auto}summary{cursor:pointer}svg{background:#122030}</style>
 <h1>Triplex request timeline · ${esc(tag)}</h1><p>${esc(finding)}</p><p class="muted">Offline evidence. Each row has its own wall-time scale. Hover for span, thread, timestamp and trace ID. Orange is peer wait (network + transactor + storage); it is not a claim about internal transactor CPU. Pink GC and yellow estimated timer drift are overlapping observations.</p>
 <label>Phase <select id="phase"><option value="">All</option></select></label> <label>Kind <select id="kind"><option value="">All</option><option>commit</option><option>read</option></select></label> <label><input type="checkbox" id="events" checked>Overlapping pauses and work</label><div id="view"></div><pre id="tip">Hover over a span to inspect it.</pre><script type="application/json" id="data">${data}</script><script>
 const data=JSON.parse(document.getElementById('data').textContent),phase=document.getElementById('phase'),kind=document.getElementById('kind'),show=document.getElementById('events'),view=document.getElementById('view'),tip=document.getElementById('tip');
 for(const name of [...new Set(data.selected.map(r=>r.priority+' / '+r.name))]) {const o=document.createElement('option');o.textContent=o.value=name;phase.append(o);}
-function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms';c.append(desc);const spans=[...r.spans];if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start));for(const s of spans.sort((a,b)=>a.start-b.start)){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,resources:data.resources.filter(x=>x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
+function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms';c.append(desc);const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,resources:data.resources.filter(x=>x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
 phase.onchange=kind.onchange=show.onchange=render;render();</script>`;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

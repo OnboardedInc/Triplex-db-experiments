@@ -78,6 +78,51 @@ describe("permanent request tracing", () => {
     expect(rows(dir).some((r) => r.type === "histograms")).toBe(true);
     expect(rows(dir).filter((r) => r.type === "request" && r.kind === "commit")).toHaveLength(1);
   });
+  it("preserves each trace across concurrent yielding Effect fibers", async () => {
+    const { api } = await recorder();
+    const { Effect } = await import("effect");
+    const { DatomicClient } = await import("../src/DatomicClient.js");
+    const expected = new Map<number, string>(),
+      mismatches: string[] = [];
+    const server = http.createServer((req, res) => {
+      let text = "";
+      req.on("data", (c) => (text += c));
+      req.on("end", () => {
+        const { n } = JSON.parse(text),
+          actual = api.parseTraceparent(req.headers.traceparent)?.traceId;
+        if (actual !== expected.get(n)) mismatches.push(String(n));
+        res.end("{}");
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const client = new DatomicClient(
+      `http://127.0.0.1:${(server.address() as import("node:net").AddressInfo).port}`,
+    );
+    try {
+      await Promise.all(
+        Array.from({ length: 32 }, async (_, n) => {
+          const trace = api.beginTrace("commit", "effect-fiber")!;
+          expected.set(n, trace.traceId);
+          await api.withTrace(trace, () =>
+            Effect.runPromise(
+              Effect.gen(function* () {
+                yield* Effect.sleep(`${n % 4} millis`);
+                yield* Effect.tryPromise(() => client.request("POST", "/effect", { n }));
+                yield* Effect.sleep("1 millis");
+                yield* Effect.tryPromise(() => client.request("POST", "/effect", { n }));
+              }),
+            ),
+          );
+          api.finishTrace(trace);
+        }),
+      );
+      expect(mismatches).toEqual([]);
+    } finally {
+      client.close();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      await api.flushTracing();
+    }
+  });
   it("keeps every commit and slow read plus a fixed sample and rejects malformed parent ids", async () => {
     const { api } = await recorder();
     expect(api.keepTrace("commit", "f".repeat(32), 0)).toBe(true);
@@ -207,14 +252,60 @@ describe("permanent request tracing", () => {
     expect(
       JSON.parse(readFileSync(path.join(dir, "trace.chrome.json"), "utf8")).traceEvents.length,
     ).toBeGreaterThan(2);
-    writeFileSync(path.join(dir,"trace-run.json"),JSON.stringify({tag:"fixture",source:"source",slot:"slot",level:"full",requiredJfr:["gw-w"]}));
-    const absentJfr=await buildReport(dir);
+    writeFileSync(
+      path.join(dir, "trace-run.json"),
+      JSON.stringify({
+        tag: "fixture",
+        source: "source",
+        slot: "slot",
+        level: "full",
+        requiredJfr: ["gw-w"],
+      }),
+    );
+    const absentJfr = await buildReport(dir);
     expect(absentJfr.complete).toBe(false);
-    expect(absentJfr.errors.some(e=>e.includes("JFR export for gw-w"))).toBe(true);
+    expect(absentJfr.errors.some((e) => e.includes("JFR export for gw-w"))).toBe(true);
     writeFileSync(
       path.join(dir, "trace-run.json"),
       JSON.stringify({ tag: "wrong-attempt", source: "source", slot: "slot", level: "full" }),
     );
     expect((await buildReport(dir)).complete).toBe(false);
+  });
+  it("renders the retained real smoke trace fixture with exact source/run/HTTP-parent binding", async () => {
+    const { buildReport } = await import("../../../lab/trace/report.mjs");
+    const fixture = JSON.parse(
+      readFileSync(new URL("./fixtures/tracing-smoke.json", import.meta.url), "utf8"),
+    );
+    const dir = mkdtempSync(path.join(tmpdir(), "triplex-recorded-trace-"));
+    directories.push(dir);
+    mkdirSync(path.join(dir, "trace/raw"), { recursive: true });
+    mkdirSync(path.join(dir, "driver"));
+    const root = fixture.requests[0];
+    writeFileSync(path.join(dir, "trace-run.json"), JSON.stringify(fixture.manifest));
+    writeFileSync(
+      path.join(dir, "driver/ns-report.json"),
+      JSON.stringify({
+        seed: { seededSubjects: 1000 },
+        phases: [{ idx: 0, name: "recorded", start: root.start - 1, end: root.end + 1 }],
+      }),
+    );
+    writeFileSync(
+      path.join(dir, "driver/ns-writes.jsonl"),
+      JSON.stringify({ traceId: root.traceId }) + "\n",
+    );
+    writeFileSync(
+      path.join(dir, "trace/raw/fixture.jsonl"),
+      [
+        ...fixture.requests,
+        { type: "histograms", run: root.run, source: root.source, slot: root.slot, histograms: {} },
+      ]
+        .map((r) => JSON.stringify(r))
+        .join("\n") + "\n",
+    );
+    const report = await buildReport(dir);
+    expect(report.complete).toBe(true);
+    expect(report.coverage.atLeast95Percent).toBe(1);
+    expect(report.commits).toBe(1);
+    expect(readFileSync(path.join(dir, "TRACE-REPORT.md"), "utf8")).toContain(root.traceId);
   });
 });

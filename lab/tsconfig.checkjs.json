@@ -273,6 +273,7 @@
     "../lab/scenarios/lib/triplex.mjs",
     "../lab/scenarios/run.mjs",
     "../lab/scenarios/v2/cases.mjs",
+    "../lab/trace/cost.mjs",
     "../lab/trace/finalize.mjs",
     "../lab/trace/report.mjs",
     "../lab/trace/system-sampler.mjs",

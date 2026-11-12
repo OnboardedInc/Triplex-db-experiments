@@ -36,6 +36,12 @@ function sample() {
           return [s.slice(0, i), s.slice(i + 1)];
         }),
     );
+    const ownGroup = read("/proc/self/cgroup")
+      ?.trim()
+      .split("\n")
+      .find((s) => s.startsWith("0::"))
+      ?.slice(3);
+    if (ownGroup) groups.driver = path.join("/sys/fs/cgroup", ownGroup);
     row.cgroups = Object.fromEntries(
       Object.entries(groups).map(([name, dir]) => [
         name,

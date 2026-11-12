@@ -1,0 +1,285 @@
+{
+  "provenance": "One unmodified commit and its gateway children from tx2-dxt1-smoke-e; historical unit fixture only",
+  "manifest": {
+    "tag": "tx2-dxt1-smoke-e",
+    "slot": "tx2-dxt1-smoke-e",
+    "source": "6b20dbdad0e0b137dc58ec37703b16e11f187a9c",
+    "level": "full",
+    "startedAt": 1794520958316.27
+  },
+  "requests": [
+    {
+      "run": "tx2-dxt1-smoke-e",
+      "source": "6b20dbdad0e0b137dc58ec37703b16e11f187a9c",
+      "slot": "tx2-dxt1-smoke-e",
+      "process": "node-13",
+      "thread": 0,
+      "schema": "triplex.trace.v1",
+      "type": "request",
+      "traceId": "d639a3119dd7a9610000000000000489",
+      "kind": "commit",
+      "name": "driver.commit",
+      "start": 1794520959316.27,
+      "end": 1794520959361.1287,
+      "root": "000000000000048a",
+      "spans": [
+        {
+          "id": "000000000000048b",
+          "parent": "000000000000048a",
+          "name": "driver.queue (scheduler/subject/admission)",
+          "layer": "driver-queue",
+          "start": 1794520959316.27,
+          "end": 1794520959317.098
+        },
+        {
+          "id": "000000000000048d",
+          "parent": "000000000000048c",
+          "name": "driver.plan-and-encode-command",
+          "layer": "typescript",
+          "start": 1794520959317.6143,
+          "end": 1794520959318.2727
+        },
+        {
+          "id": "000000000000048f",
+          "parent": "000000000000048e",
+          "name": "client.validation-and-staging",
+          "layer": "typescript",
+          "start": 1794520959319.6545,
+          "end": 1794520959321.4783
+        },
+        {
+          "id": "0000000000000491",
+          "parent": "000000000000048e",
+          "name": "client.transact-encode",
+          "layer": "typescript",
+          "start": 1794520959321.533,
+          "end": 1794520959323.1838
+        },
+        {
+          "id": "0000000000000493",
+          "parent": "0000000000000492",
+          "name": "client.encode",
+          "layer": "typescript",
+          "start": 1794520959323.211,
+          "end": 1794520959323.392
+        },
+        {
+          "id": "0000000000000495",
+          "parent": "0000000000000494",
+          "name": "socket.body-read",
+          "layer": "network",
+          "start": 1794520959356.486,
+          "end": 1794520959356.578
+        },
+        {
+          "id": "0000000000000496",
+          "parent": "0000000000000494",
+          "name": "socket.queue-and-write",
+          "layer": "network",
+          "start": 1794520959323.396,
+          "end": 1794520959323.7256
+        },
+        {
+          "id": "0000000000000497",
+          "parent": "0000000000000494",
+          "name": "socket.wait-first-byte",
+          "layer": "gateway-wait",
+          "start": 1794520959323.7256,
+          "end": 1794520959356.486
+        },
+        {
+          "id": "0000000000000494",
+          "parent": "0000000000000492",
+          "name": "client.http",
+          "layer": "gateway-wait",
+          "start": 1794520959323.3953,
+          "end": 1794520959356.5898,
+          "attributes": {
+            "responseTraceparent": "00-d639a3119dd7a9610000000000000489-00000000000005b8-01",
+            "status": 200
+          }
+        },
+        {
+          "id": "0000000000000498",
+          "parent": "0000000000000492",
+          "name": "client.parse",
+          "layer": "typescript",
+          "start": 1794520959356.5913,
+          "end": 1794520959356.624
+        },
+        {
+          "id": "0000000000000492",
+          "parent": "000000000000048e",
+          "name": "http POST /v1/db/{db}/transact",
+          "layer": "typescript",
+          "start": 1794520959323.1995,
+          "end": 1794520959356.6978
+        },
+        {
+          "id": "0000000000000499",
+          "parent": "000000000000048e",
+          "name": "driver.publication",
+          "layer": "typescript",
+          "start": 1794520959356.9253,
+          "end": 1794520959358.7727
+        },
+        {
+          "id": "0000000000000490",
+          "parent": "000000000000048e",
+          "name": "client.persist-and-resolve",
+          "layer": "typescript",
+          "start": 1794520959321.5007,
+          "end": 1794520959359.1658
+        },
+        {
+          "id": "000000000000048e",
+          "parent": "000000000000048c",
+          "name": "triplex.transact",
+          "layer": "typescript",
+          "start": 1794520959318.3154,
+          "end": 1794520959359.2236
+        },
+        {
+          "id": "000000000000049a",
+          "parent": "000000000000048c",
+          "name": "driver.expected-state.bind-receipt",
+          "layer": "typescript",
+          "start": 1794520959359.4673,
+          "end": 1794520959360.4753
+        },
+        {
+          "id": "000000000000049b",
+          "parent": "000000000000048c",
+          "name": "driver.expected-state.add-commit",
+          "layer": "typescript",
+          "start": 1794520959360.478,
+          "end": 1794520959360.7485
+        },
+        {
+          "id": "000000000000048c",
+          "parent": "000000000000048a",
+          "name": "driver.execute",
+          "layer": "typescript",
+          "start": 1794520959317.2073,
+          "end": 1794520959361.0132
+        }
+      ],
+      "attributes": {
+        "stream": "background",
+        "seq": 0,
+        "burst": false,
+        "expired": false,
+        "outcome": "committed"
+      },
+      "truncated": 0
+    },
+    {
+      "schema": "triplex.trace.v1",
+      "slot": "tx2-dxt1-smoke-e",
+      "run": "tx2-dxt1-smoke-e",
+      "spans": [
+        {
+          "parent": "00000000000005b9",
+          "name": "gateway.request-parse",
+          "start": 1794520959324.7085,
+          "layer": "gateway",
+          "thread": 51,
+          "id": "00000000000005ba",
+          "end": 1794520959325.3286
+        },
+        {
+          "parent": "00000000000005bb",
+          "name": "d/db",
+          "start": 1794520959325.4075,
+          "layer": "peer-call",
+          "thread": 51,
+          "id": "00000000000005bc",
+          "end": 1794520959325.447
+        },
+        {
+          "parent": "00000000000005bb",
+          "name": "commit.prepare-and-validate",
+          "start": 1794520959325.5718,
+          "layer": "gateway",
+          "thread": 51,
+          "id": "00000000000005bd",
+          "end": 1794520959337.7131
+        },
+        {
+          "parent": "00000000000005be",
+          "name": "d/transact-async",
+          "start": 1794520959337.8413,
+          "layer": "peer-call",
+          "thread": 51,
+          "id": "00000000000005bf",
+          "end": 1794520959339.826
+        },
+        {
+          "parent": "00000000000005bb",
+          "name": "peer.transact-await (includes order/network/storage)",
+          "start": 1794520959337.7407,
+          "layer": "peer-wait",
+          "thread": 51,
+          "id": "00000000000005be",
+          "end": 1794520959355.7097
+        },
+        {
+          "parent": "00000000000005b9",
+          "name": "storage/commit!",
+          "start": 1794520959325.364,
+          "layer": "gateway",
+          "thread": 51,
+          "id": "00000000000005bb",
+          "end": 1794520959355.8723
+        },
+        {
+          "parent": "00000000000005b8",
+          "name": "gateway.route",
+          "start": 1794520959324.446,
+          "layer": "gateway",
+          "thread": 51,
+          "id": "00000000000005b9",
+          "end": 1794520959355.936
+        },
+        {
+          "parent": "00000000000005b8",
+          "name": "gateway.response-encode",
+          "start": 1794520959355.9395,
+          "layer": "gateway",
+          "thread": 51,
+          "id": "00000000000005c0",
+          "end": 1794520959355.9753
+        },
+        {
+          "parent": "00000000000005b8",
+          "name": "gateway.response-write",
+          "start": 1794520959356.0168,
+          "layer": "gateway",
+          "thread": 51,
+          "id": "00000000000005c1",
+          "end": 1794520959356.1633
+        }
+      ],
+      "parent": "0000000000000494",
+      "name": "gateway /v1/db/{db}/transact",
+      "process": "gw-w",
+      "start": 1794520959324.3945,
+      "traceId": "d639a3119dd7a9610000000000000489",
+      "type": "request",
+      "source": "6b20dbdad0e0b137dc58ec37703b16e11f187a9c",
+      "counters": {
+        "[:routes \"post /v1/db/{db}/transact\"]": 1
+      },
+      "root": "00000000000005b8",
+      "thread": 51,
+      "kind": "commit",
+      "truncated": 0,
+      "end": 1794520959356.1675,
+      "attributes": {
+        "submittedAt": 1794520959337.8318,
+        "datomicT": "15368",
+        "status": 200
+      }
+    }
+  ]
+}
