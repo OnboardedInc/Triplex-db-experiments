@@ -66,7 +66,7 @@ test("two actual inline feed pages keep a multi-journal physical clock open unti
   } };
   const timed = timedReplicaSource(client as any, "test", async () => 2, 0);
   const source = boundedReplicaFeed(timed.source);
-  const host = new (ReplicaReadHost as any)(source, timed.times, 1024, true, timed.clockEnds, timed.timings) as InstanceType<typeof ReplicaReadHost>;
+  const host = new (ReplicaReadHost as any)(source, timed.times, 1024, true, timed.clockEnds, timed.timings) as import("../../../bench/lib/replica-reads.ts").ReplicaReadHost;
   await source.feed(0, 1, 0);
   host.replica.onUpdate!({ reset: true, valid: true, position: 1, changes: [] });
   assert.equal(host.index.resolve({ recordedAt: 100, validAt: 0 }), undefined);
