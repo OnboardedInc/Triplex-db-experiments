@@ -1503,3 +1503,41 @@ gateway.
 against the code and apply it; follow delay p99 under 100 ms; judging off the read's path; targets 40,000 reads/s at 64,
 256 at least the 64 rate, p99 at most 25 ms, local share at least 0.99 including time-only reads; then one full pair on a
 strict scope.
+
+## 2026-11-12 06:50 UTC: DX-R3 part 8: reads exact and local again; commits take seconds; part 9 is a bisection
+
+DX-R3 part 8 (`ce3520b5`, not merged), strict scope, full-row check, `nohlt`.
+
+1. **Admission argument confirmed and applied with one refinement:** several logical journals share one physical commit's
+   clock, so a cut at the newest clock is admitted only when that whole position group has been applied (also across feed
+   pages); a strictly greater applied clock proves any earlier cut. Bootstrap takes its clock from the source journal.
+2. Short ladder, 5,100,186 reads, zero violations, zero errors, local raw samples compared at every level:
+
+| Readers | Correct reads/s | Read p50 / p99 ms | Local share / time-only local share |
+| --- | --- | --- | --- |
+| 1 | 15,489 | 0.016 / 0.287 | 1 / 1 |
+| 4 | 37,671 | 0.020 / 0.325 | 1 / 1 |
+| 16 | 36,963 | 0.056 / 0.587 | 0.99999 / 0.99999 |
+| 64 | 26,640 | 0.291 / 2.175 | 0.9996 / 0.9996 |
+| 256 | 8,910 | 1.303 / 23.935 | 0.9923 / 0.9921 |
+| 1,024 | 17,622 | 5.695 / 47.359 | 0.9957 / 0.9947 |
+
+   Against the bars: read p99 at 256 met (23.9 ms against 100); 256 against 64 = 0.33 (bar 1.0, miss); 1,024 against 256
+   = 1.98 (met). The client is the limit at 256: 2,199,206 world-cache misses and 1,916,958 evictions, 0.45 ms of client CPU
+   per read. Driver peak 4.42 GB.
+3. Follow delay p50 / p90 / p99: 6.8 / 70 / 200 ms (was 0 / 137 / 532).
+4. **Commits regressed far outside the bars, also with zero readers:** zero-reader arm all-commit p99 1,393 / 1,335 /
+   1,466 ms by band (q6: 43.8 / 46.3 / 44.3), steady queue 4 (bound 2.19); with readers all-commit p99 3.3 to 3.9 s, burst
+   p50 25.6 to 33.3 ms, commit p50 at 256 readers 16.9 to 24.1 ms. Cause not isolated by the agent.
+5. Answer on the two early 200,000-pair differentials: they called `/reach-many` directly with positions (171,087 receipt
+   plus position, 398 floor, 28,515 current), never a time-only basis and never through public `reach`, and compared a
+   projection without public metadata. They did not prove full-payload equivalence; the orchestrator's `p8-both` run did.
+6. A cleanup trap copied `driver.log` into itself and used 19.0 GB before the agent caught and removed it. Mac free space
+   18.8 GiB at 06:46 UTC.
+
+**DX-R3 resumed 06:47 UTC, part 9** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-R3-resume8.md`): four alternating
+zero-reader arms (read path gateway or replica, scope strict or not) to isolate the commit regression before any new
+mechanism; then fix only what the table shows; then the 256-reader cache; then one full pair.
+
+**DX-S5 part 3 (running):** publication pipelined, live reads from the local copy in the window harness, gateway id memo
+bounded in the gateway source (`bb55eafb`); it holds the lock for an evaluation at 100,000.
