@@ -145,12 +145,21 @@ export class OverlayTable implements EntityTable {
   constructor(
     readonly base: EntityTable,
     readonly delta = new Map<string, PackedEntity>(),
+    knownBytes?: number,
   ) {
     // [DX-R2] Why: memory counters must not decode every entity ID after an evaluation pass.
     // Rejected: a hidden full-index scan outside the reported setup/compute timers.
-    this.total = base.bytes ?? [...base.values()].reduce((n, entity) => n + entityBytes(entity), 0);
-    for (const [id, entity] of delta)
-      this.total += entityBytes(entity) - (base.get(id) ? entityBytes(base.get(id)!) : 0);
+    // [DX-S5] Why: an internal immutable snapshot already has the exact maintained counter at its captured cut.
+    // Rejected: resolving every overlay ID twice per read snapshot (the 100k CPU profile was dominated by this scan).
+    this.total =
+      knownBytes ??
+      base.bytes ??
+      [...base.values()].reduce((n, entity) => n + entityBytes(entity), 0);
+    if (knownBytes === undefined)
+      for (const [id, entity] of delta) {
+        const previous = base.get(id);
+        this.total += entityBytes(entity) - (previous ? entityBytes(previous) : 0);
+      }
   }
   get(id: string) {
     return this.delta.get(id) ?? this.base.get(id);

@@ -45,6 +45,9 @@ export interface ReplicaImage {
   readonly entities: readonly (readonly [string, PackedEntity])[];
   readonly shared?: SharedIndexImage;
 }
+// [DX-S5] Why: bind the maintained byte count to the exact locally captured immutable image, without retaining images.
+// Rejected: trusting byte hints in external/worker images; those still calculate their count from actual packed entities.
+const snapshotBytes = new WeakMap<ReplicaImage, number>();
 export class ReplicaSnapshot {
   private readonly entities: EntityTable;
   private shared: ReplicaImage | undefined;
@@ -52,7 +55,11 @@ export class ReplicaSnapshot {
   readonly validAt: number;
   constructor(image: ReplicaImage) {
     this.entities = image.shared
-      ? new OverlayTable(new SharedIndex(image.shared), new Map(image.entities))
+      ? new OverlayTable(
+          new SharedIndex(image.shared),
+          new Map(image.entities),
+          snapshotBytes.get(image),
+        )
       : new Map(image.entities);
     this.shared = image.shared ? image : undefined;
     this.position = image.position;
@@ -116,12 +123,14 @@ export class Replica {
     Set<{ resolve(view: ReplicaSnapshot): void; reject(e: unknown): void }>
   >();
   private view(): ReplicaSnapshot {
-    return new ReplicaSnapshot({
+    const image: ReplicaImage = {
       position: this.watermark,
       validAt: this.validAt,
       entities: this.baseImage ? [...this.entities.delta] : [...this.entities],
       ...(this.baseImage ? { shared: this.baseImage } : {}),
-    });
+    };
+    snapshotBytes.set(image, this.entities.bytes);
+    return new ReplicaSnapshot(image);
   }
   private rejectCaptures(error: unknown) {
     for (const requests of this.captures.values())

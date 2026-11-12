@@ -15,6 +15,11 @@ allow_first_use=false; first_use=false; verify_in_place=false; reuse_seed=false
 if [[ ${1:-} == --reuse-seed ]]; then
  [[ $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 && " $* " == *' --activation-at-seed '* ]] || exit 2
  reuse_seed=true; shift
+ # [DX-S5] Why: a retained sealed cut permits isolated activation appends, never a bypass into corpus seeding.
+ # Rejected: relying only on the replica driver's guard when alternate entry points dispatch before it.
+ for arg in "$@"; do
+  case "$arg" in --corpus|--corpus-after|--journal-fast-gate|--seed) echo 'mutating alternate entry point refused'; exit 2;; esac
+ done
 fi
 if [[ ${1:-} == --verify-in-place ]]; then
  [[ $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 ]] || exit 2

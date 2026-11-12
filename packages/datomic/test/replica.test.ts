@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import { SharedIndex } from "../src/replica/sharedIndex.js";
 import { Replica, ReplicaSnapshot, type ReplicaSource } from "../src/replica/Replica.js";
 import type { SweepRow } from "../src/sweepRows.js";
 import { encodeRowText } from "../src/rowText.js";
@@ -92,6 +93,41 @@ function fixture() {
   };
 }
 describe("packed replica", () => {
+  it("captures exact byte counts and isolated rows without rescanning the shared base", async () => {
+    const f = fixture(),
+      replica = new Replica(f.source, 0);
+    await replica.bootstrap(["root"]);
+    const original = await replica.snapshotAt(1);
+    f.commit([
+      ["shared", [row("shared", "long", { type: "string", value: "replacement".repeat(30) }, 2)]],
+      ["new", [row("new", "extra", { type: "boolean", value: true }, 2)]],
+    ]);
+    await replica.followOnce();
+    const lookup = vi.spyOn(SharedIndex.prototype, "get");
+    let frozen: ReplicaSnapshot;
+    try {
+      frozen = await replica.snapshotAt(2);
+      for (let i = 0; i < 20; i++) expect((await replica.snapshotAt(2)).bytes).toBe(frozen.bytes);
+      expect(lookup).not.toHaveBeenCalled();
+    } finally {
+      lookup.mockRestore();
+    }
+    const actualBytes = frozen!
+      .image()
+      .entities.reduce((n, [, e]) => n + (e.byteLength ?? e.buffer.byteLength), 0);
+    expect(frozen!.bytes).toBe(actualBytes);
+    expect(new ReplicaSnapshot(frozen!.sharedImage()).bytes).toBe(actualBytes);
+    f.commit([["shared", []]]);
+    await replica.followOnce();
+    const retracted = await replica.snapshotAt(3);
+    expect(retracted.bytes).toBe(
+      retracted.image().entities.reduce((n, [, e]) => n + (e.byteLength ?? e.buffer.byteLength), 0),
+    );
+    expect(new ReplicaSnapshot(retracted.sharedImage()).bytes).toBe(retracted.bytes);
+    expect(retracted.world("root").map((r) => r.id)).toEqual(["r"]);
+    expect(frozen!.world("root")[1]!.id).toBe("long");
+    expect(original.world("root")[1]!.value.value).toBe("before");
+  });
   it("bootstraps, follows shared changes/retractions/new refs, and isolates snapshots", async () => {
     const f = fixture(),
       replica = new Replica(f.source, 0);
