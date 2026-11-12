@@ -55,7 +55,8 @@ import { ReaderLifecycle } from "./lib/reader-lifecycle.ts";
 import { SpillThread } from "./lib/spill-thread.ts";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { ReadRecords, type ObservationRecords } from "./lib/read-records.ts";
-import { buildCase, checkWithOracle, type OracleSampleRead } from "./lib/oracle.ts";
+import { checkWithOracleWorker } from "./lib/oracle-thread.ts";
+import { buildCase, type OracleSampleRead } from "./lib/oracle.ts";
 import { PROFILES, nsPlan, type Profile } from "./lib/phases.ts";
 import { Rng, seedOf } from "./lib/rng.ts";
 import { OpenLoopScheduler, type JobResult } from "./lib/scheduler.ts";
@@ -988,6 +989,10 @@ async function run() {
   report.finalizationErrors = finalizationErrors;
   report.positionCoordinates = "TARGETS 4.1 item 3: (stream, epoch, offset, ordinal); Triplex gives one dense position per scope and one engine transaction per transact, so offset = position and ordinal = 0";
   report.maintenance = maintenance;
+  // [DX-R3-P8] Why: both checks consume immutable post-drain inputs; overlap them after the last measured phase.
+  // Rejected: serial analysis plus oracle extending a 45-minute lease, or moving either check onto live read/write paths.
+  const independentOracle = (config.zeroReaders ? Promise.resolve({ status: "NOT-RUN", reason: "zero-reader baseline run" }) : pairPlan && pairPlan.readers === 0 ? Promise.resolve({ status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" }) : finalPosition === null ? Promise.resolve({ status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) }) : runOracle(finalPosition, lastAcked))
+    .catch(error => ({ status: "ORACLE-ERROR", stderr: String(error) }));
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
   else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
   // [DX-R3-P8] Why: a slow or killed independent oracle must not erase already completed all-read judgments and bars.
@@ -995,7 +1000,9 @@ async function run() {
   report.status = "ANALYSED";
   report.oracle = { status: "NOT-RUN", reason: "independent oracle pending" };
   save();
-  report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : finalPosition === null ? { status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) } : runOracle(finalPosition, lastAcked);
+  report.oracle = await independentOracle;
+  if (config.oracleRoot && !config.zeroReaders && !(pairPlan && pairPlan.readers === 0) && report.oracle.status !== "PASS")
+    finalizationErrors.push(`Independent oracle ${report.oracle.status}`);
   // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
   // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
   let pulls = 0, roundTripSum = 0;
@@ -1268,14 +1275,16 @@ function judgeRead(r: ReadRecord) {
 // [DX-R3] Why: one byte per verdict preserves every judgment without a heap object per observation.
 // Rejected: retaining millions of identical {ok:true,kind:"correct"} objects during full-ladder analysis.
 const VERDICTS = ["correct", "error", "stale-late-arrival", "stale", "future-or-latest-state", "wrong-world", "invalid-value"].map(kind => ({ ok: kind === "correct", kind }));
-let judgingCost: { cpuMs: number; wallMs: number; reads: number; cpuMsPerRead: number } | undefined;
+let judgingCost: { cpuMs: number; wallMs: number; reads: number; cpuMsPerRead: number; cpuScope: string } | undefined;
 function readVerdicts(): Uint8Array {
-  const cpuStart = process.cpuUsage(), wallStart = performance.now();
+  const threadScope = typeof (process as any).threadCpuUsage === "function";
+  const cpuUsage: typeof process.cpuUsage = threadScope ? (process as any).threadCpuUsage : process.cpuUsage;
+  const cpuStart = cpuUsage(), wallStart = performance.now();
   const result = new Uint8Array(records.length);
   records.forEach((r, k) => { const verdict = judgeRead(r); result[k] = VERDICTS.findIndex(v => v.kind === verdict.kind); });
   judgedReadCount = result.length;
-  const cpu = process.cpuUsage(cpuStart);
-  judgingCost = { cpuMs: (cpu.user + cpu.system) / 1000, wallMs: performance.now() - wallStart, reads: result.length, cpuMsPerRead: (cpu.user + cpu.system) / 1000 / result.length };
+  const cpu = cpuUsage(cpuStart);
+  judgingCost = { cpuMs: (cpu.user + cpu.system) / 1000, wallMs: performance.now() - wallStart, reads: result.length, cpuMsPerRead: (cpu.user + cpu.system) / 1000 / result.length, cpuScope: threadScope ? "main thread" : "process upper bound, may include concurrent oracle worker" };
   return result;
 }
 const bandOf = (f: number) => (f <= 10 ? "5-10" : f <= 25 ? "11-25" : "26-50");
@@ -1574,7 +1583,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const analysisCpu = process.cpuUsage(analysisCpuStart), fullAnalysisCpuMs = (analysisCpu.user + analysisCpu.system) / 1000;
   report.verificationCost = { verdicts: judgingCost, fullAnalysisCpuMs, fullAnalysisWallMs: performance.now() - analysisWallStart,
     fullAnalysisCpuMsPerRead: fullAnalysisCpuMs / records.length,
-    scope: "process CPU after measured phases; includes every verdict and all JS statistics; phase client CPU includes serving/capture, follower, writer and spill" };
+    scope: "process CPU after measured phases; includes every verdict and all JS statistics; post-run process CPU may include the concurrent independent oracle worker (not the external oracle process); phase client CPU includes serving/capture, follower, writer and spill" };
 }
 /** TARGETS 1.1 P2 item 4 (RULINGS Q31a): progress and bounded outstanding work. */
 function p2Progress(background: any[], traceStart: number) {
@@ -1664,7 +1673,7 @@ function cpuUse() {
 
 // ---------------------------------------------------------------- oracle (independent sample check at the driver-recorded basis)
 
-function runOracle(finalPosition: number, lastAcked: number) {
+async function runOracle(finalPosition: number, lastAcked: number) {
   const candidates = oracleSamples.filter((s) => s.phase >= 0);
   const selectedSamples = config.readPath === "replica" ? candidates : candidates.slice(0, config.oracleMaxReads);
   atomicWrite(path.join(rawDir, "ns-full-read-samples.jsonl"), selectedSamples.map((sample: any) => JSON.stringify(sample)).join("\n") + "\n");
@@ -1673,7 +1682,7 @@ function runOracle(finalPosition: number, lastAcked: number) {
   const reads: OracleSampleRead[] = selectedSamples.map((s) => ({ subject: s.subject, basis: s.basis, rows: s.rows }));
   if (!reads.length) return { status: "NOT-RUN", reason: "no sampled reads" };
   const caseDoc = buildCase({ caseId: `NS/${runTag}`, commands: recordedCommands, lastPosition: Math.max(finalPosition, lastAcked), reads });
-  const result = checkWithOracle({ oracleRoot: config.oracleRoot, dir: rawDir, caseDoc, reads });
+  const result = await checkWithOracleWorker({ oracleRoot: config.oracleRoot, dir: rawDir, caseDoc, reads });
   // [DX-R3] Why: bind each oracle verdict to its exact retained attempt, not another read at the same basis.
   // Rejected: subject/time-only lookup (can attach an earlier read's verdict to this sample).
   const modelAgrees = sampleMatches(records, selectedSamples).filter(rec => rec && judgeRead(rec).ok).length;

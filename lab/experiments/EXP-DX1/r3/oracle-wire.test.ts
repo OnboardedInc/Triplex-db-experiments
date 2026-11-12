@@ -114,3 +114,71 @@ json.dump(out,open(sys.argv[3],'w'))
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+import { checkWithOracleWorker } from "../../../bench/lib/oracle-thread.ts";
+test("independent oracle worker leaves main available and joins on success and error", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "dxr3-oracle-worker-"));
+  const cli = path.join(root, "lab/oracles/replay/cli.py");
+  fs.mkdirSync(path.dirname(cli), { recursive: true });
+  fs.writeFileSync(
+    cli,
+    `import json,sys,hashlib,time
+raw=open(sys.argv[1],'rb').read();case=json.loads(raw);time.sleep(.15)
+out={'format':'triplex-db-2/o-replay-expected/1','caseId':case['caseId'],'caseSha256':hashlib.sha256(raw).hexdigest(),'verdict':'PASS','receiptConsistency':{'status':'PASS'},'queries':[{'id':'r0|e','kind':'entityTriples','result':{'raw':[{'entityId':'e','attribute':'a','value':{'type':'datetime','value':0,'bits':'0x0000000000000000'}}]}}]}
+if case.get('wrong'):out['queries'][0]['result']['raw'][0]['attribute']='wrong'
+json.dump(out,open(sys.argv[3],'w'))
+`,
+  );
+  const previous = process.env.TX2_ORACLE_BRIDGE;
+  delete process.env.TX2_ORACLE_BRIDGE;
+  try {
+    const dir = path.join(root, "output");
+    fs.mkdirSync(dir);
+    const input = {
+      oracleRoot: root,
+      dir,
+      caseDoc: { caseId: "worker-fixture", queries: [{ id: "r0|e", kind: "entityTriples" }] },
+      reads: [
+        {
+          subject: 0,
+          basis: { recordedAt: 1, validAt: 1 },
+          rows: [
+            ["e", "a", { type: "datetime", value: 0 }, 0, null, "assertion"] as [
+              string,
+              string,
+              any,
+              number | null,
+              number | null,
+              string,
+            ],
+          ],
+        },
+      ],
+    };
+    let ticked = false;
+    const timer = setTimeout(() => {
+      ticked = true;
+    }, 10);
+    const pending = checkWithOracleWorker(input);
+    const result = await pending;
+    clearTimeout(timer);
+    assert(ticked, "oracle blocked the main event loop");
+    assert.equal(result.status, "PASS");
+    assert.equal(result.reads, 1);
+    assert.equal(result.entityQueries, 1);
+    assert.equal(result.mismatchCount, 0);
+    const wrong = await checkWithOracleWorker({
+      ...input,
+      caseDoc: { ...input.caseDoc, wrong: true },
+    });
+    assert.equal(wrong.status, "FAIL");
+    assert.equal(wrong.mismatchCount, 1);
+    fs.unlinkSync(cli);
+    const failed = await checkWithOracleWorker(input);
+    assert.equal(failed.status, "ORACLE-ERROR");
+  } finally {
+    if (previous === undefined) delete process.env.TX2_ORACLE_BRIDGE;
+    else process.env.TX2_ORACLE_BRIDGE = previous;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
