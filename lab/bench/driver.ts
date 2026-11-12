@@ -44,7 +44,7 @@ import { completedMaintenanceInWindow, requestIndex } from "./lib/maintenance.ts
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
 import { alignAssertIds } from "./lib/receipt.ts";
-import { observeDatomicPublication } from "./lib/datomic-publication.ts";
+import { datomicWriterDiagnostics, observeDatomicPublication } from "./lib/datomic-publication.ts";
 import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
@@ -109,6 +109,7 @@ const config = {
   devOverrides: devFlags,
   composition: opt("composition", "public")!,
   seed: opt("seed", "ns-v2")!,
+  strictRecordClocks: process.env.DX_STRICT_RECORD_CLOCKS !== "0",
   readPath: opt("read-path", "gateway") as "gateway" | "replica",
   replicaYield: opt("replica-yield", "fair") as "loop" | "fair",
   splitTarget: opt("split-target", opt("read-path", "gateway") === "replica" ? "pending" : "mixed") as "pending" | "mixed",
@@ -537,6 +538,7 @@ async function run() {
   // scheduled instant in both arms (R22 section 1: only simultaneous pairing shares this host's noise).
   const traceStart = pairPlan ? await pairBarrier(N, report.trace.digest) : now() + 1000;
   report.traceStartAbsMs = traceStart;
+  report.writerSourceDiagnostics = { start: datomicWriterDiagnostics() };
   const jobs: Job[] = events.map((ev) => ({ key: ev.subject, scheduledAt: traceStart + ev.atMs, ev }));
   const probeEvents = pairPlan ? probeSchedule(pairPlan.probe.perS, pairPlan.durationS, N) : [];
   const book = pairPlan ? new RoundBook(pairPlan.rounds, traceStart, events.filter((e) => e.stream === "background" && !e.resend), probeEvents) : null;
@@ -817,7 +819,7 @@ async function run() {
     const writerEluStart = performance.eventLoopUtilization();
     const writerDelay = monitorEventLoopDelay({ resolution: 1 }); writerDelay.enable();
     const start = now();
-    const entry: any = { historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
+    const entry: any = { writerDiagnosticsStart: datomicWriterDiagnostics(), historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
     phaseStarts.set(idx, start);
     await spill?.beginPhase(idx, start, config.settleS * 1000);
@@ -840,6 +842,7 @@ async function run() {
     }
     entry.end = now();
     writerDelay.disable();
+    entry.writerDiagnosticsEnd = datomicWriterDiagnostics();
     entry.writerThread = { elu: performance.eventLoopUtilization(writerEluStart).utilization, longestBlockedMs: writerDelay.max / 1e6, p99BlockedMs: writerDelay.percentile(99) / 1e6 };
     const phaseCpu = process.cpuUsage(phaseCpuStart);
     entry.clientCpuMs = (phaseCpu.user + phaseCpu.system) / 1000;
@@ -861,7 +864,7 @@ async function run() {
   if (config.matchDurationS) {
     const until = traceStart + config.matchDurationS * 1000;
     if (now() < until) {
-      const entry: any = { idx: phases.length, name: "tail", readers: 0, measured: false, start: now(), traceStartS: (now() - traceStart) / 1000 };
+      const entry: any = { idx: phases.length, name: "tail", writerDiagnosticsStart: datomicWriterDiagnostics(), readers: 0, measured: false, start: now(), traceStartS: (now() - traceStart) / 1000 };
       phases.push(entry);
       setReaders(entry.idx, 0, "mixed");
       log(`phase tail: matching both arms to the fixed trace length (${config.matchDurationS}s)`);
@@ -870,6 +873,7 @@ async function run() {
       await sleep(until - now());
       entry.end = now();
       tailDelay.disable();
+      entry.writerDiagnosticsEnd = datomicWriterDiagnostics();
       entry.writerThread = { elu: performance.eventLoopUtilization(tailElu).utilization, longestBlockedMs: tailDelay.max / 1e6, p99BlockedMs: tailDelay.percentile(99) / 1e6 };
       entry.traceEndS = (entry.end - traceStart) / 1000;
     }
@@ -899,6 +903,7 @@ async function run() {
   const inFlightDeadline = now() + 300_000;
   while (scheduler.inFlightCount > 0 && now() < inFlightDeadline) await sleep(250);
   const inFlightAtFeedTarget = scheduler.inFlightCount;
+  report.writerSourceDiagnostics.end = datomicWriterDiagnostics();
   await Promise.race([Promise.all([...ryowPending]), sleep(30_000)]);
   for (const w of workers) w.postMessage({ type: "stop" });
   await Promise.race([Promise.all(stopped), sleep(40_000)]);

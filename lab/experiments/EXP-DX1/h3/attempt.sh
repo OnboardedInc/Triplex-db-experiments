@@ -131,7 +131,7 @@ if [[ $kind =~ ^(functional|medium|real)$ ]]; then
   if [[ $prefix == tx2-dxr3-* && -n ${DX_R3_PAIR_LEASE_PID:-} ]]; then
     python3 - "$lock/owner.json" "$DX_R3_PAIR_LEASE_PID" <<'LEASE'
 import json,sys
-owner=json.load(open(sys.argv[1])); assert owner['id']=='DX-R3' and owner['kind']=='full-pair' and owner['pid']==int(sys.argv[2])
+owner=json.load(open(sys.argv[1])); assert owner['id']=='DX-R3' and owner['kind'] in ('full-pair','writer-arms') and owner['pid']==int(sys.argv[2])
 LEASE
   else
   while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
