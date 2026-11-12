@@ -1,6 +1,7 @@
 import { Worker } from "node:worker_threads";
 import { Replica, type ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
 import type { CompositionHandle } from "./composition.ts";
+import { publishRecords, outboxEntity, type PublicationOptions } from "./w0-outbox.ts";
 import { W0, canonical, requirePosition } from "./w0-world.ts";
 
 export interface ReplicaEvaluation {
@@ -19,6 +20,9 @@ export interface ReplicaEvaluationOptions {
   // [DX-R1] Why: several candidates may share a preview, but publication selects one active release.
   // Rejected: racing distinct release choices through the same published outbox state.
   publish?: CompositionHandle;
+  publication?: PublicationOptions & {
+    readStates?: (ids: readonly string[]) => readonly import("./w0-world.ts").WorldRow[];
+  };
 }
 export async function evaluateAll(o: ReplicaEvaluationOptions) {
   const releases = (
@@ -148,6 +152,7 @@ async function evaluateSnapshot(
       publication = await publishChanged(
         o.publish,
         records.map((r) => r.candidates[0]!.record),
+        o.publication,
       );
     return {
       records,
@@ -171,62 +176,124 @@ async function evaluateSnapshot(
 export async function publishChanged(
   comp: CompositionHandle,
   records: readonly W0.EvaluationRecord[],
+  options: ReplicaEvaluationOptions["publication"] = {},
 ) {
   const started = performance.now();
   let changed = 0,
     commits = 0;
   const responses: any[] = [];
   const pending: W0.EvaluationRecord[] = [];
+  const pendingRows = new Map<string, import("./w0-world.ts").WorldRow[]>();
+  const active = new Set<Promise<void>>();
+  const frameSize = options.frameSize ?? 64,
+    inflight = options.inflight ?? 1;
+  if (
+    !Number.isInteger(frameSize) ||
+    frameSize < 1 ||
+    frameSize > 256 ||
+    !Number.isInteger(inflight) ||
+    inflight < 1 ||
+    inflight > 32
+  )
+    throw Error("invalid publication settings");
+  let stateReadMs = 0,
+    failure: unknown;
+
   const flush = async (count: number) => {
+    if (failure) throw failure;
     const frame = pending.splice(0, count);
-    responses.push(await comp.publishOutbox(frame));
+    const rows = frame.flatMap((r) => pendingRows.get(outboxEntity(r.subject)) ?? []);
+    frame.forEach((r) => pendingRows.delete(outboxEntity(r.subject)));
+    const index = responses.length;
+    responses.push(null);
+    const task = (async () => {
+      responses[index] =
+        options.readStates || options.frameSize || options.inflight
+          ? await publishRecords(comp, frame, { ...options, stateRows: rows })
+          : await comp.publishOutbox(frame);
+    })();
+    active.add(task);
+    void task
+      .catch((e) => {
+        failure ??= e;
+      })
+      .finally(() => active.delete(task));
+    if (active.size >= inflight) await Promise.race(active);
+    if (options.gapMs) await new Promise((r) => setTimeout(r, options.gapMs));
     changed += frame.length;
     commits++;
   };
-  for (let i = 0; i < records.length; i += 64) {
-    const page = records.slice(i, i + 64);
-    const position = await comp.currentPosition();
-    const stored = await comp.sweepPage(
-      page.map((r) => "p5:outbox:" + r.subject),
-      { position, validAt: Date.parse("2026-11-04T12:00:00Z") },
-    );
-    const states = new Map<string, W0.OutboxState>();
-    for (const row of stored.rows)
-      if (row.attribute === "p5/state") {
-        if (states.has(row.entityId)) throw new Error("Ambiguous publication state");
-        // [DX-R1] Why: the existing JSON publisher revives numbers only after parsing; reject tokens it would round.
-        // Rejected: silently comparing rounded sequence or basis integers before deciding whether to publish.
-        const s = JSON.parse(row.value.value, (_key, value, context?: { source: string }) => {
-          if (
-            typeof value === "number" &&
-            (!Number.isSafeInteger(value) || !/^-?(0|[1-9][0-9]*)$/.test(context?.source ?? ""))
-          )
-            throw new Error("Unsafe numeric token in stored outbox state");
-          return value;
-        });
-        states.set(row.entityId, {
-          items: s.items.map((x: any) => ({ ...x, seq: BigInt(x.seq) })),
-          pending: s.pending.map((x: any) => ({ ...x, seq: BigInt(x.seq) })),
-          subjects: s.subjects.map((x: any) => ({
-            ...x,
-            basis: { ...x.basis, tx: BigInt(x.basis.tx) },
-          })),
-        });
+  try {
+    for (let i = 0; i < records.length; i += 64) {
+      const page = records.slice(i, i + 64);
+      const stateStarted = performance.now();
+      const stored = options.readStates
+        ? { rows: options.readStates(page.map((r) => outboxEntity(r.subject))) }
+        : await comp.sweepPage(
+            page.map((r) => outboxEntity(r.subject)),
+            { position: await comp.currentPosition(), validAt: Date.parse("2026-11-04T12:00:00Z") },
+          );
+      stateReadMs += performance.now() - stateStarted;
+      for (const row of stored.rows) {
+        const rows = pendingRows.get(row.entityId) ?? [];
+        rows.push(row);
+        pendingRows.set(row.entityId, rows);
       }
-    const differences = page.filter((r) => {
-      const state = states.get("p5:outbox:" + r.subject) ?? W0.EMPTY_OUTBOX;
-      const result = W0.publish(state, [r]);
-      // [DX-R1] Why: retirement changes persisted item state without emitting a delivery in W0.
-      // Rejected: filtering by delivery count alone (silently retains removed work items).
-      return (
-        result.deliveries.length > 0 || canonical(result.state.items) !== canonical(state.items)
-      );
-    });
-    // [DX-R1] Why: pack changed subjects across input pages into the existing 64-subject atomic frame size.
-    // Rejected: publishing each sparse input page separately (needlessly multiplies native commits).
-    pending.push(...differences);
-    while (pending.length >= 64) await flush(64);
+      const states = new Map<string, W0.OutboxState>();
+      for (const row of stored.rows)
+        if (row.attribute === "p5/state") {
+          if (states.has(row.entityId)) throw new Error("Ambiguous publication state");
+          // [DX-R1] Why: the existing JSON publisher revives numbers only after parsing; reject tokens it would round.
+          // Rejected: silently comparing rounded sequence or basis integers before deciding whether to publish.
+          const s = JSON.parse(row.value.value, (_key, value, context?: { source: string }) => {
+            if (
+              typeof value === "number" &&
+              (!Number.isSafeInteger(value) || !/^-?(0|[1-9][0-9]*)$/.test(context?.source ?? ""))
+            )
+              throw new Error("Unsafe numeric token in stored outbox state");
+            return value;
+          });
+          states.set(row.entityId, {
+            items: s.items.map((x: any) => ({ ...x, seq: BigInt(x.seq) })),
+            pending: s.pending.map((x: any) => ({ ...x, seq: BigInt(x.seq) })),
+            subjects: s.subjects.map((x: any) => ({
+              ...x,
+              basis: { ...x.basis, tx: BigInt(x.basis.tx) },
+            })),
+          });
+        }
+      const differences = page.filter((r) => {
+        const state = states.get(outboxEntity(r.subject)) ?? W0.EMPTY_OUTBOX;
+        const result = W0.publish(state, [r]);
+        // [DX-R1] Why: retirement changes persisted item state without emitting a delivery in W0.
+        // Rejected: filtering by delivery count alone (silently retains removed work items).
+        return (
+          result.deliveries.length > 0 || canonical(result.state.items) !== canonical(state.items)
+        );
+      });
+      // [DX-R1] Why: pack changed subjects across input pages into the existing 64-subject atomic frame size.
+      // Rejected: publishing each sparse input page separately (needlessly multiplies native commits).
+      const changedEntities = new Set(differences.map((r) => outboxEntity(r.subject)));
+      for (const record of page)
+        if (!changedEntities.has(outboxEntity(record.subject)))
+          pendingRows.delete(outboxEntity(record.subject));
+      pending.push(...differences);
+      while (pending.length >= frameSize) await flush(frameSize);
+    }
+    if (pending.length) await flush(pending.length);
+  } finally {
+    await Promise.allSettled(active);
   }
-  if (pending.length) await flush(pending.length);
-  return { changed, commits, wallMs: performance.now() - started, responses };
+  await Promise.all(active);
+  if (failure) throw failure;
+  return {
+    changed,
+    commits,
+    wallMs: performance.now() - started,
+    stateReadMs,
+    frameSize,
+    inflight,
+    gapMs: options.gapMs ?? 0,
+    responses,
+  };
 }

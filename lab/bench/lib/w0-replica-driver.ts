@@ -23,6 +23,7 @@ import {
   worldSha256,
 } from "./w0-world.ts";
 import { subjectList } from "./sweep.ts";
+import { outboxEntity } from "./w0-outbox.ts";
 import { evaluateAll } from "./w0-replica.ts";
 import { DomainOracle, DomainOraclePool } from "./w0-gates.ts";
 import { startW0Live, matchW0Live } from "./w0-replica-live.ts";
@@ -49,6 +50,48 @@ export async function runReplicaDriver(argv: string[]) {
   if (seedPosition !== undefined && (!Number.isSafeInteger(seedPosition) || seedPosition < 1))
     throw Error("invalid sealed seed position");
   const candidateVerification = argv.includes("--verify-candidates-at-seed");
+  const repeatActivation = argv.includes("--activation-at-seed");
+  const publicationId = opt("publication-id");
+  if (
+    repeatActivation &&
+    (!seedPosition ||
+      !argv.includes("--seed-fingerprint") ||
+      !argv.includes("--publish") ||
+      argv.includes("--seed") ||
+      candidateVerification ||
+      !/^[a-z0-9-]{8,64}$/.test(publicationId))
+  )
+    throw Error(
+      "repeat activation requires sealed cut, full fingerprint, publication and a fresh namespace",
+    );
+  if (publicationId) {
+    if (!/^[a-z0-9-]{8,64}$/.test(publicationId)) throw Error("invalid publication namespace");
+    process.env.TX2_W0_OUTBOX_NAMESPACE = publicationId;
+  }
+  if (!["gateway", "replica"].includes(opt("reader-mode", "gateway")))
+    throw Error("invalid reader mode");
+  const publication = argv.includes("--publication-inflight")
+    ? {
+        inflight: Number(opt("publication-inflight")),
+        frameSize: Number(opt("publication-size", "64")),
+        gapMs: Number(opt("publication-gap-ms", "0")),
+        yieldToWriter: argv.includes("--publication-yield-writer"),
+      }
+    : undefined;
+  if (
+    publication &&
+    (!Number.isFinite(publication.gapMs) ||
+      publication.gapMs < 0 ||
+      publication.gapMs > 1000 ||
+      !Number.isInteger(publication.frameSize) ||
+      publication.frameSize < 1 ||
+      publication.frameSize > 256 ||
+      !Number.isInteger(publication.inflight) ||
+      publication.inflight < 1 ||
+      publication.inflight > 32)
+  )
+    throw Error("invalid publication gap");
+
   // [DX-S5] Why: a second oracle hold reads the immutable seed cut after the first-use activation appended records.
   // Rejected: accepting a consumed seed for another timed publication, or replaying the live writer trace.
   if (
@@ -162,14 +205,20 @@ export async function runReplicaDriver(argv: string[]) {
       const ids = subjects.slice(i, i + 64);
       return { ids, page: await recordedPage(ids, { position: cut, validAt: V_W0 }) };
     })) {
+      const rowIndex = new Map<string, (typeof page.rows)[number][]>();
+      for (const row of page.rows) {
+        const list = rowIndex.get(row.entityId) ?? [];
+        list.push(row);
+        rowIndex.set(row.entityId, list);
+      }
       for (const subject of ids) {
         if (
           worldCanonical(worldOf(subject, snap.world(subject))) !==
-          worldCanonical(worldOf(subject, reachableRows([subject], page.rows)))
+          worldCanonical(worldOf(subject, reachableRows([subject], page.rows, rowIndex)))
         )
           throw new Error("World equality mismatch " + subject);
         if (fingerprint) {
-          const world = worldOf(subject, reachableRows([subject], page.rows));
+          const world = worldOf(subject, reachableRows([subject], page.rows, rowIndex));
           const output = W0.sweepSubject(world, W0.R2, {
             tx: cut,
             validTime: W0.POPULATION_VALID_TIME,
@@ -218,7 +267,9 @@ export async function runReplicaDriver(argv: string[]) {
     return { snap, worlds };
   };
   const commit = async (operations: any[], id: string) => {
-    const r = await comp.transact(operations, { commandId: "dxr1:" + id });
+    const r = await comp.transact(operations, {
+      commandId: "dxr1:" + (publicationId ? publicationId + ":" : "") + id,
+    });
     if (!r.ok) throw new Error(r.tag);
     return r.value;
   };
@@ -266,13 +317,22 @@ export async function runReplicaDriver(argv: string[]) {
     // Rejected: silently evaluating an already consumed first-use seed at a later head.
     if (
       seedPosition !== undefined &&
-      (candidateVerification ? cut < seedPosition : cut !== seedPosition)
+      (candidateVerification || repeatActivation ? cut < seedPosition : cut !== seedPosition)
     )
       throw Error("initial head differs from sealed position");
     report.initialSeedPosition = cut;
+    report.publicationId = publicationId;
+    report.readerMode = opt("reader-mode", "gateway");
     report.candidateVerificationOnly = candidateVerification;
-    if (candidateVerification) cut = seedPosition!;
-    await replica.bootstrap(subjects, cut);
+    if (candidateVerification || repeatActivation) cut = seedPosition!;
+    // [DX-S5] Why: include this attempt's outboxes in the ordered-feed copy; absence at P is read from storage, not presumed from a UUID.
+    // Rejected: treating an arbitrary namespace as empty without reading its exact initial cut.
+    await replica.bootstrap(
+      publicationId ? [...subjects, ...subjects.map(outboxEntity)] : subjects,
+      cut,
+    );
+    if (publicationId && subjects.some((s) => replica.world(outboxEntity(s)).length))
+      throw Error("publication namespace already exists at seed cut");
     (globalThis as any).gc?.();
     const bootstrapImage = (await replica.snapshotAt(cut)).sharedImage();
     report.bootstrap = {
@@ -409,7 +469,7 @@ export async function runReplicaDriver(argv: string[]) {
         [
           {
             op: "assert",
-            entityId: "p5:tenant",
+            entityId: "p5:tenant" + (publicationId ? ":" + publicationId : ""),
             attribute: "p5/activation",
             value: { type: "string", value: "R1" },
             validFrom: V_W0,
@@ -424,6 +484,9 @@ export async function runReplicaDriver(argv: string[]) {
     const r1Snapshot = pinnedInput ?? (await replica.snapshotAt(cut)),
       r1Position = r1Snapshot.position;
     if (argv.includes("--publish")) {
+      if (publicationId && subjects.some((s) => replica.world(outboxEntity(s)).length))
+        throw Error("publication namespace already used at current head");
+      const publicationView = await replica.snapshotAt(replica.position);
       const r1 = await evaluateAll({
         replica,
         subjects,
@@ -432,11 +495,22 @@ export async function runReplicaDriver(argv: string[]) {
         workers,
         view: r1Snapshot,
         publish: comp,
+        ...(publication
+          ? {
+              publication: {
+                ...publication,
+                frameSize: Number(opt("r1-publication-size", String(publication.frameSize))),
+                inflight: Number(opt("r1-publication-inflight", String(publication.inflight))),
+                readStates: (ids) => ids.flatMap((id) => publicationView.world(id)),
+              },
+            }
+          : {}),
       });
       report.r1Publication = {
         changed: r1.publication!.changed,
         commits: r1.publication!.commits,
         wallMs: r1.publication!.wallMs,
+        profile: { ...r1.publication, responses: r1.publication!.responses.map((r) => r.timing) },
       };
       report.r1Evaluation = {
         wallMs: r1.evaluationWallMs,
@@ -461,7 +535,7 @@ export async function runReplicaDriver(argv: string[]) {
           ...old.map((r) => ({ op: "retract", id: r.id })),
           {
             op: "assert",
-            entityId: "p5:tenant",
+            entityId: "p5:tenant" + (publicationId ? ":" + publicationId : ""),
             attribute: "p5/activation",
             value: { type: "string", value: "R2" },
             validFrom: V_W0,
@@ -510,7 +584,10 @@ export async function runReplicaDriver(argv: string[]) {
       seed: opt("traffic-seed", "DX-H2-frozen-v1"),
       offsetS: Number(opt("traffic-offset-s", "0")),
       warmupMs: Number(opt("live-warmup-ms", "15000")),
+      ...(opt("reader-mode", "gateway") === "replica" ? { replica } : {}),
+      commandNamespace: publicationId,
     };
+    const publicationView = await replica.snapshotAt(replica.position);
     const result = await evaluateAll({
       replica,
       subjects,
@@ -519,6 +596,14 @@ export async function runReplicaDriver(argv: string[]) {
       workers,
       view: snap,
       ...(argv.includes("--publish") ? { publish: comp } : {}),
+      ...(publication
+        ? {
+            publication: {
+              ...publication,
+              readStates: (ids) => ids.flatMap((id) => publicationView.world(id)),
+            },
+          }
+        : {}),
       beforeTimedWindow: async () => {
         if (argv.includes("--post-capture")) {
           const mutations: string[] = [];
@@ -639,6 +724,10 @@ export async function runReplicaDriver(argv: string[]) {
         changed: result.publication.changed,
         commits: result.publication.commits,
         wallMs: result.publication.wallMs,
+        profile: {
+          ...result.publication,
+          responses: result.publication.responses.map((r) => r.timing),
+        },
       };
     // [DX-S5] Why: retain measured activation/memory observations even if the later full oracle exceeds its hold.
     // Rejected: calling incomplete exactness a PASS or losing all timing observations on a verifier timeout.
@@ -713,15 +802,21 @@ export async function runReplicaDriver(argv: string[]) {
         );
         const states = argv.includes("--publish")
           ? await recordedPage(
-              records.map((r) => "p5:outbox:" + r.subject),
+              records.map((r) => outboxEntity(r.subject)),
               { position: finalPosition, validAt: V_W0 },
             )
           : undefined;
         return { records, gateway, states };
       },
     )) {
+      const rowIndex = new Map<string, (typeof gateway.rows)[number][]>();
+      for (const row of gateway.rows) {
+        const list = rowIndex.get(row.entityId) ?? [];
+        list.push(row);
+        rowIndex.set(row.entityId, list);
+      }
       await forEachBounded(records, oracleConcurrency, async (r) => {
-        const world = worldOf(r.subject, reachableRows([r.subject], gateway.rows));
+        const world = worldOf(r.subject, reachableRows([r.subject], gateway.rows, rowIndex));
         if (
           worldSha256(world) !== r.worldSha256 ||
           worldCanonical(world) !== worldCanonical(worldOf(r.subject, snap.world(r.subject)))
@@ -785,7 +880,7 @@ export async function runReplicaDriver(argv: string[]) {
             expectedState = second.state;
           }
           const rows = states.rows.filter(
-            (row) => row.entityId === "p5:outbox:" + r.subject && row.attribute === "p5/state",
+            (row) => row.entityId === outboxEntity(r.subject) && row.attribute === "p5/state",
           );
           if (rows.length > 1) throw new Error("Ambiguous published state");
           const actual = rows.length

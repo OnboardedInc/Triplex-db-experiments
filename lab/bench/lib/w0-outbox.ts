@@ -2,12 +2,32 @@ import { measureHttp } from "./http-counts.ts";
 import { measureW0Http } from "./w0-http.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { W0, canonical, sha256 } from "./w0-world.ts";
+export const outboxEntity = (subject: string) =>
+  "p5:outbox:" +
+  (process.env.TX2_W0_OUTBOX_NAMESPACE ? process.env.TX2_W0_OUTBOX_NAMESPACE + ":" : "") +
+  subject;
+export interface PublicationOptions {
+  frameSize?: number;
+  inflight?: number;
+  stateRows?: readonly import("./w0-world.ts").WorldRow[];
+  gapMs?: number;
+  yieldToWriter?: boolean;
+}
+// [DX-S5] Why: publication yields before submission while frozen-trace offers await ACK, preserving the trace's own serial order.
+// Rejected: merely reducing average publication rate while already queued frames continue ahead of live commits.
+let liveWriterBacklog = 0;
+export const offerLiveWrite = () => {
+  liveWriterBacklog++;
+};
+export const finishLiveWrite = () => {
+  if (--liveWriterBacklog < 0) throw Error("negative writer backlog");
+};
 const submissionTails = new WeakMap<CompositionHandle, Promise<void>>();
 const publicationLimit = Number(process.env.TX2_W0_PUBLISH_INFLIGHT ?? "2");
-if (!Number.isSafeInteger(publicationLimit) || publicationLimit < 1 || publicationLimit > 8)
+if (!Number.isSafeInteger(publicationLimit) || publicationLimit < 1 || publicationLimit > 32)
   throw Error("invalid publication capacity");
 const capacities = new WeakMap<CompositionHandle, { active: number; waiting: (() => void)[] }>();
-async function publicationSlot(comp: CompositionHandle) {
+async function publicationSlot(comp: CompositionHandle, limit: number) {
   let state = capacities.get(comp);
   if (!state) {
     state = { active: 0, waiting: [] };
@@ -15,7 +35,7 @@ async function publicationSlot(comp: CompositionHandle) {
   }
   const pool = state;
   await new Promise<void>((resolve) => {
-    if (pool.active < publicationLimit) {
+    if (pool.active < limit) {
       pool.active++;
       resolve();
     } else pool.waiting.push(resolve);
@@ -29,9 +49,19 @@ async function publicationSlot(comp: CompositionHandle) {
 export async function publishRecords(
   comp: CompositionHandle,
   records: readonly W0.EvaluationRecord[],
+  options: PublicationOptions = {},
 ) {
-  if (records.length > 64 || new Set(records.map((r) => r.subject)).size !== records.length)
-    throw new Error("outbox frame must contain <=64 distinct subjects");
+  if (
+    !Number.isInteger(options.frameSize ?? 64) ||
+    (options.frameSize ?? 64) < 1 ||
+    (options.frameSize ?? 64) > 256 ||
+    !Number.isInteger(options.inflight ?? publicationLimit) ||
+    (options.inflight ?? publicationLimit) < 1 ||
+    (options.inflight ?? publicationLimit) > 32 ||
+    records.length > (options.frameSize ?? 64) ||
+    new Set(records.map((r) => r.subject)).size !== records.length
+  )
+    throw new Error("outbox frame must contain bounded distinct subjects");
   // [DX-H6] Why: prepare disjoint pages concurrently, then submit in invocation order without waiting for prior ACKs.
   // Rejected: serial state reads/build/ACK across all pages.
   const previousSubmission = submissionTails.get(comp) ?? Promise.resolve();
@@ -47,13 +77,15 @@ export async function publishRecords(
   try {
     // [DX-H6] Why: large SDK frames registered together delayed live writer p99 23.33x with eight workers.
     // Rejected: letting every ready evaluation immediately stage another native publication.
-    release = await publicationSlot(comp);
+    release = await publicationSlot(comp, options.inflight ?? publicationLimit);
     const publishCapacityWaitMs = performance.now() - capacityQueuedAt;
     const buildStart = performance.now();
     const cpuNow = () => process.threadCpuUsage();
     const buildCpu = cpuNow();
-    const commandId = "p5:outbox:" + sha256(canonical(records));
+    const commandId = outboxEntity(sha256(canonical(records)));
+    const lookupStart = performance.now();
     const existing = await comp.transactionByCommand(commandId);
+    const commandLookupMs = performance.now() - lookupStart;
     if (!existing.ok) throw new Error(existing.tag);
     const recover = (triples: readonly any[]) =>
       triples
@@ -76,19 +108,24 @@ export async function publishRecords(
       deliveries: any[] = [];
     // [DX-H6] Why: all persisted subject states share one page snapshot, with the same TripleLive CAS at commit.
     // Rejected: one sequential reach request per subject (64 round trips before each publication).
-    const statePosition = await comp.currentPosition();
-    const statePage = await comp.sweepPage(
-      records.map((r) => "p5:outbox:" + r.subject),
-      { position: statePosition, validAt: V_PUBLIC },
-    );
+    const stateStarted = performance.now();
+    const stateRows =
+      options.stateRows ??
+      (
+        await comp.sweepPage(
+          records.map((r) => outboxEntity(r.subject)),
+          { position: await comp.currentPosition(), validAt: V_PUBLIC },
+        )
+      ).rows;
+    const stateReadMs = performance.now() - stateStarted;
     const states = new Map<string, any[]>();
-    for (const row of statePage.rows) {
+    for (const row of stateRows) {
       const list = states.get(row.entityId) ?? [];
       list.push(row);
       states.set(row.entityId, list);
     }
     for (const record of records) {
-      const entityId = "p5:outbox:" + record.subject;
+      const entityId = outboxEntity(record.subject);
       const old = { triples: states.get(entityId) ?? [] };
       const previous = old.triples.find((t) => t.attribute === "p5/state");
       const state = previous ? reviveState(JSON.parse(previous.value.value)) : W0.EMPTY_OUTBOX;
@@ -117,6 +154,8 @@ export async function publishRecords(
     const buildOutboxMs = performance.now() - buildStart;
     const buildEndCpu = cpuNow();
     await previousSubmission;
+    while (options.yieldToWriter && liveWriterBacklog > 0)
+      await new Promise((r) => setTimeout(r, 1));
     const committing = measureHttp(() =>
       measureW0Http(() =>
         comp.transact(operations, { commandId, actor: "p5-publisher", preconditions }),
@@ -132,6 +171,11 @@ export async function publishRecords(
       retry: false,
       timing: {
         buildOutboxMs,
+        commandLookupMs,
+        stateReadMs,
+        operations: operations.length,
+        preconditions: preconditions.length,
+        payloadBytes: Buffer.byteLength(JSON.stringify(operations)),
         publishCapacityWaitMs,
         publicationLimit,
         buildOutboxMainThreadIntervalCpuMs:
@@ -140,7 +184,11 @@ export async function publishRecords(
           (commitEndCpu.user - buildEndCpu.user + commitEndCpu.system - buildEndCpu.system) / 1000,
         publishCommitMs: commit.wallMs,
         publishRequests: commit.requests,
+        requests: commit.value.samples,
         publishDatoms: commit.value.datomSamples ? commit.value.datoms : null,
+        publishSerializeMicros: commit.value.wireSerializeMicros,
+        publishGatewayParseMicros: commit.value.wireParseMicros,
+        publishResponseBytes: commit.value.responseBytes,
         publishGatewayMicros: commit.value.gatewayHeaders ? commit.value.gatewayMicros : null,
       },
     };

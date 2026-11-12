@@ -11,7 +11,11 @@ s5=false
 if [[ $s5 == true ]]; then
  [[ -f /Users/sam/Claude/Projects/triplex-db-2/locks/long-hold-ok ]] || { echo 'long hold not authorized'; exit 2; }
 fi
-allow_first_use=false; first_use=false; verify_in_place=false
+allow_first_use=false; first_use=false; verify_in_place=false; reuse_seed=false
+if [[ ${1:-} == --reuse-seed ]]; then
+ [[ $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 && " $* " == *' --activation-at-seed '* ]] || exit 2
+ reuse_seed=true; shift
+fi
 if [[ ${1:-} == --verify-in-place ]]; then
  [[ $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 ]] || exit 2
  verify_in_place=true; shift
@@ -133,7 +137,10 @@ if [[ $s5 == true ]]; then
  mac_kib=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
  vm_kib=$(docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" postgres:17-alpine sh -c 'df -Pk /from | tail -1' | awk '{print $4}')
  echo "clone-plan sourceKiB=$source_kib macFreeKiB=$mac_kib vmFreeKiB=$vm_kib"
- if [[ $verify_in_place == true ]]; then
+ if [[ $reuse_seed == true ]]; then
+  first_use=true; working_volume=$seed
+  echo 'DECLARED REUSE: previously consumed seed; immutable evaluation cut, fresh publication namespace; appends retained.'
+ elif [[ $verify_in_place == true ]]; then
   first_use=true; working_volume=$seed
   echo 'READ-ONLY CANDIDATE VERIFICATION: previously used seed; immutable input cut, no logical writes.'
  elif ! (( mac_kib-source_kib >= 15728640 && vm_kib-source_kib >= 5242880 )); then
@@ -156,12 +163,12 @@ docker rm "$prefix-extract"
 python3 - "$out/config" "$prefix" <<'PY'
 import sys,pathlib
 root=pathlib.Path(sys.argv[1]); prefix=sys.argv[2]
-s={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx','sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic','sql-user':'datomic','sql-password':'datomic','memory-index-threshold':'256m','memory-index-max':'1g','object-cache-max':'1g'}
+s={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx','sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic','sql-user':'datomic','sql-password':'datomic','memory-index-threshold':'256m','memory-index-max':'1g','object-cache-max':__import__('os').environ.get('S5_TX_CACHE','1g')}
 lines=[l for l in (root/'template.properties').read_text().splitlines() if l.partition('=')[0].strip() not in s]
 (root/'sql.properties').write_text('\n'.join(lines)+'\n'+'\n'.join(k+'='+v for k,v in s.items())+'\n')
 PY
 docker network create "$prefix-net"
-docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus 0 --memory 2g --memory-swap 2g -e POSTGRES_PASSWORD=datomic -v "$working_volume:/var/lib/postgresql/data" postgres:17-alpine postgres -c shared_buffers=512MB -c max_wal_size=1GB -c checkpoint_timeout=5min
+docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus 0 --memory 2g --memory-swap 2g -e POSTGRES_PASSWORD=datomic -v "$working_volume:/var/lib/postgresql/data" postgres:17-alpine postgres -c shared_buffers="${S5_PG_BUFFERS:-512MB}" -c max_wal_size=1GB -c checkpoint_timeout=5min
 for ((i=0;i<90;i++)); do docker exec "$prefix-pg" pg_isready -h 127.0.0.1 -U postgres && break; sleep 1; done
 # [DX-S5] Why: retain bounded WARN/error logs instead of gigabytes of per-block INFO; old R2 defaults stay unchanged.
 # Rejected: spending the reserved Mac disk on disposable container log files.
@@ -172,14 +179,16 @@ start_jvm() {
 }
 peer_cache=1g; peer_entity_cache=268435456; peer_sessions=1000000; peer_java_extra=; tx_java_extra=; gateway_main=triplex.gateway.main; gateway_classpath=/opt/gateway/src
 if [[ $s5 == true ]]; then
- peer_cache=256m; peer_entity_cache=67108864; peer_sessions=65536
- gateway_main=bounded-gateway; gateway_classpath=/s5:/opt/gateway/src
+ peer_cache=${S5_PEER_CACHE:-256m}; peer_entity_cache=67108864; peer_sessions=65536
+ gateway_main=triplex.gateway.main; gateway_classpath=/opt/gateway/src
  peer_java_extra='-XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
  tx_java_extra='-Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
 fi
+echo "engine-config CPUs=0-3 memoryGiB=12 txHeapGiB=3 txObjectCache=${S5_TX_CACHE:-1g} pgSharedBuffers=${S5_PG_BUFFERS:-512MB} peerHeapGiB=2 peerObjectCache=$peer_cache writerCPUs=${S5_WRITER_CPUS:-1} gatewayMain=$gateway_main"
 start_jvm --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory 4g --memory-swap 4g -e "JAVA_OPTS=-Xms256m -Xmx3g $tx_java_extra" -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
  cpu=1; [[ $role == w ]] || cpu=2,3
+ [[ $s5 != true || $role != w ]] || cpu=${S5_WRITER_CPUS:-1}
  host_port=18542; [[ $role == w ]] || host_port=18543
  start_jvm --restart on-failure:10 --name "$prefix-gw-$role" -p "127.0.0.1:$host_port:8080" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e "DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=$peer_cache -Dtriplex.codec.spec=/opt/replica-codec-spec.json $peer_java_extra" -e "TX2_ENTITY_CACHE_BYTES=$peer_entity_cache" -e "TX2_REACH_SESSION_ENTRIES=$peer_sessions" -e "DATOMIC_EXT_CLASSPATH=$gateway_classpath" -e TX2_S5_ID_CACHE_ENTRIES=131072 -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m "$gateway_main"
  done

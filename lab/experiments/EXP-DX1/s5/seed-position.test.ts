@@ -57,3 +57,35 @@ test("candidate verification rejects absent binding and every mutating option be
       /invalid read-only candidate verification/,
     );
 });
+
+// [DX-S5] Why: repeated activation is a distinct explicit mode with an immutable input cut and isolated outputs/claims.
+// Rejected: accepting a consumed head under first-use semantics or a malformed frame/reader setting.
+test("repeat activation and publication settings reject missing binding before engine access", async () => {
+  const base = ["--rung", "100000", "--scope", "dxs5-w0-100000-v1", "--activation-at-seed"];
+  const required = [
+    "--seed-position",
+    "4338757",
+    "--seed-fingerprint",
+    "--publish",
+    "--publication-id",
+    "dxs5-test-fresh",
+  ];
+  for (const omitted of [
+    "--seed-position",
+    "--seed-fingerprint",
+    "--publish",
+    "--publication-id",
+  ]) {
+    const args = required.filter((value, i) => value !== omitted && !(required[i - 1] === omitted));
+    await assert.rejects(runReplicaDriver([...base, ...args]), /repeat activation requires/);
+  }
+  await assert.rejects(
+    runReplicaDriver([...base, ...required, "--seed"]),
+    /repeat activation requires/,
+  );
+  await assert.rejects(runReplicaDriver(["--reader-mode", "typo"]), /invalid reader mode/);
+  await assert.rejects(
+    runReplicaDriver(["--publication-inflight", "33"]),
+    /invalid publication gap/,
+  );
+});

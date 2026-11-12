@@ -1,10 +1,14 @@
 // [DX-R2] Why: the requested live arm has 256 readers (8 workers with 32 readers each). Rejected: reusing the 64-reader R1 arm as target evidence.
 import fs from "node:fs";
+import { offerLiveWrite, finishLiveWrite } from "./w0-outbox.ts";
 import path from "node:path";
 import { sha256 } from "./w0-world.ts";
 import { Worker } from "node:worker_threads";
 import { generateTrace } from "./trace.ts";
 import { applyW0Trace, percentile } from "./w0-traffic.ts";
+import type { Replica, ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
+import { Rng, seedOf } from "./rng.ts";
+import { W0 } from "./w0-world.ts";
 import type { CompositionHandle } from "./composition.ts";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 5));
 const now = () => performance.timeOrigin + performance.now();
@@ -19,6 +23,8 @@ export async function startW0Live(o: {
   seed: string;
   offsetS: number;
   warmupMs?: number;
+  replica?: Replica;
+  commandNamespace?: string;
 }) {
   const warmupMs = o.warmupMs ?? 0;
   if (!Number.isSafeInteger(warmupMs) || warmupMs < 0 || warmupMs > 60000)
@@ -34,44 +40,89 @@ export async function startW0Live(o: {
     serial = Promise.resolve();
   const workers: Worker[] = [];
   const done: Promise<void>[] = [];
+  let localReaders: Promise<void>[] = [];
+  let snapshot: ReplicaSnapshot | undefined;
+  let pendingSnapshot: Promise<ReplicaSnapshot> | undefined,
+    pendingPosition = -1;
+  const observeRead = (m: { started: number; ms: number; [key: string]: unknown }) => {
+    reads.push(m);
+    fs.writeSync(log, JSON.stringify({ kind: "read", ...m }) + "\n");
+  };
   try {
-    await Promise.all(
-      Array.from({ length: 8 }, async (_, worker) => {
-        const w = new Worker(new URL("./w0-replica-live-worker.ts", import.meta.url), {
-          workerData: { ...o, comp: undefined, worker },
-        });
-        workers.push(w);
-        done.push(
-          new Promise<void>((resolve) =>
-            w.on("exit", (code) => {
-              if (code !== 0) failed ??= Error("live reader worker exited " + code);
-              resolve();
-            }),
-          ),
-        );
-        await new Promise<void>((resolve, reject) => {
-          w.on("error", (e) => {
-            failed = e;
-            reject(e);
-          });
-          w.on("message", (m) => {
-            if (m.type === "ready") resolve();
-            if (m.type === "failure") {
-              fs.writeSync(
-                log,
-                JSON.stringify({ kind: "failure", worker, at: now(), error: m.error }) + "\n",
-              );
-              failed = Error(m.error);
-              reject(failed);
+    if (o.replica) {
+      // [DX-S5] Why: 256 current-state reads use the followed copy's own immutable snapshot API, with one cached view per applied cut.
+      // Rejected: gateway traffic masquerading as runtime reads, or copying the multi-gigabyte base image for each request.
+      snapshot = await o.replica.snapshotAt(o.replica.position);
+      localReaders = Array.from({ length: 256 }, (_, reader) =>
+        (async () => {
+          const rng = new Rng(seedOf(o.seed + ":local:" + reader));
+          while (!stopped && !failed) {
+            const started = now();
+            await new Promise<void>((resolve) => setImmediate(resolve));
+            if (stopped) break;
+            if (snapshot!.position !== o.replica!.position) {
+              const p = o.replica!.position;
+              if (p !== pendingPosition) {
+                pendingPosition = p;
+                pendingSnapshot = o.replica!.snapshotAt(p);
+              }
+              snapshot = await pendingSnapshot!;
             }
-            if (m.type === "read") {
-              reads.push(m);
-              fs.writeSync(log, JSON.stringify({ kind: "read", ...m }) + "\n");
-            }
+            const view = snapshot!,
+              subject = W0.placementId(rng.int(o.N));
+            const rows = view.world(subject);
+            if (!rows.length || rows.some((row) => row.position > view.position))
+              throw Error("invalid local read cut/content");
+            observeRead({
+              started,
+              ms: now() - started,
+              position: view.position,
+              subject,
+              rows: rows.length,
+            });
+          }
+        })().catch((e) => {
+          failed ??= e;
+        }),
+      );
+    } else
+      await Promise.all(
+        Array.from({ length: 8 }, async (_, worker) => {
+          const w = new Worker(new URL("./w0-replica-live-worker.ts", import.meta.url), {
+            workerData: { ...o, comp: undefined, replica: undefined, worker },
           });
-        });
-      }),
-    );
+          workers.push(w);
+          done.push(
+            new Promise<void>((resolve) =>
+              w.on("exit", (code) => {
+                if (code !== 0) failed ??= Error("live reader worker exited " + code);
+                resolve();
+              }),
+            ),
+          );
+          await new Promise<void>((resolve, reject) => {
+            w.on("error", (e) => {
+              failed = e;
+              reject(e);
+            });
+            w.on("message", (m) => {
+              if (m.type === "ready") resolve();
+              if (m.type === "failure") {
+                fs.writeSync(
+                  log,
+                  JSON.stringify({ kind: "failure", worker, at: now(), error: m.error }) + "\n",
+                );
+                failed = Error(m.error);
+                reject(failed);
+              }
+              if (m.type === "read") {
+                reads.push(m);
+                fs.writeSync(log, JSON.stringify({ kind: "read", ...m }) + "\n");
+              }
+            });
+          });
+        }),
+      );
   } catch (e) {
     await Promise.all(workers.map((w) => w.terminate()));
     fs.closeSync(log);
@@ -86,12 +137,16 @@ export async function startW0Live(o: {
   let activeScheduled = 0;
   const namespaced: CompositionHandle = {
     ...o.comp,
-    transactionByCommand: (id) => o.comp.transactionByCommand(o.id + ":" + id),
+    transactionByCommand: (id) =>
+      o.comp.transactionByCommand(
+        (o.commandNamespace ? o.commandNamespace + ":" : "") + o.id + ":" + id,
+      ),
     transact: async (operations, meta: any) => {
       const begun = now();
       const result = await o.comp.transact(operations, {
         ...meta,
-        commandId: o.id + ":" + meta.commandId,
+        commandId:
+          (o.commandNamespace ? o.commandNamespace + ":" : "") + o.id + ":" + meta.commandId,
       });
       const row = {
         kind: "commit",
@@ -112,6 +167,7 @@ export async function startW0Live(o: {
       while (!stopped && !failed && now() < start + event.atMs) await pause();
       if (stopped || failed) break;
       offered.push(event);
+      offerLiveWrite();
       serial = serial
         .then(async () => {
           activeScheduled = start + event.atMs;
@@ -132,7 +188,8 @@ export async function startW0Live(o: {
         })
         .catch((e) => {
           failed ??= e;
-        });
+        })
+        .finally(finishLiveWrite);
     }
     await serial;
   })();
@@ -148,7 +205,7 @@ export async function startW0Live(o: {
       stopped = true;
       workers.forEach((w) => w.postMessage("stop"));
       await writer;
-      await Promise.all(done);
+      await Promise.all([...done, ...localReaders]);
       fs.closeSync(log);
       if (failed) throw failed;
       const summary = (samples: { started: number; ms: number }[]) => {
@@ -169,6 +226,7 @@ export async function startW0Live(o: {
       );
       return {
         readers: 256,
+        readerMode: o.replica ? "replica-current-snapshot-fixed-valid-time" : "gateway",
         warmupMs,
         generatorStartedAtMs: start,
         startedAtMs: measurementStart,

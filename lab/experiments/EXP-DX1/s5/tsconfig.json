@@ -2,6 +2,7 @@
   "extends": "../../../bench/tsconfig.json",
   "include": [
     "seed.ts",
+    "publication.test.ts",
     "range.test.ts",
     "parallel.test.ts",
     "oracle-pool.test.ts",

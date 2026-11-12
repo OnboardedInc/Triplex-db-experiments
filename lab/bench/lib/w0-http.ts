@@ -5,6 +5,7 @@ import { DatomicClient } from "../../../packages/datomic/dist/index.js";
 // [DX-H5] Why: use the existing public request observer to attribute bytes/service/datoms per page.
 // Rejected: parsing each response a second time or subtracting global live-traffic counters.
 const context = new AsyncLocalStorage<{
+  samples: Record<string, unknown>[];
   requests: number;
   responseBytes: number;
   gatewayMicros: number;
@@ -25,6 +26,17 @@ DatomicClient.prototype.request = function (...args: any[]) {
       const active = context.getStore();
       if (!active) return;
       active.requests++;
+      active.samples.push({
+        path: sample.path,
+        wallMs: sample.finished - sample.started,
+        requestBytes: sample.requestBytes,
+        responseBytes: sample.responseBytes,
+        serializeMicros: sample.serializeMicros,
+        gatewayParseMicros: sample.parseMicros,
+        gatewayMicros: sample.gatewayMicros,
+        transactMicros: sample.transactMicros,
+        timeline: sample.gatewayTimeline,
+      });
       active.responseBytes += sample.responseBytes;
       if (Number.isFinite(sample.gatewayMicros)) {
         active.gatewayMicros += sample.gatewayMicros;
@@ -44,6 +56,7 @@ DatomicClient.prototype.request = function (...args: any[]) {
 };
 export async function measureW0Http<T>(run: () => Promise<T>) {
   const active = {
+    samples: [] as Record<string, unknown>[],
     requests: 0,
     responseBytes: 0,
     gatewayMicros: 0,
