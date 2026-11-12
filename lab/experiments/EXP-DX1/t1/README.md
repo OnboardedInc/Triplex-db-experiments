@@ -6,6 +6,7 @@ North star: P2 first (small commits under 256 readers), then P1/P3/P4/P5; the sc
 `bash lab/experiments/EXP-DX1/t1/run.sh real tx2-dxt1-smoke --subjects 1000 --level-s 2 --max-readers 16`
 smokes the complete path before any 10,000-subject measurement.
 `bash lab/experiments/EXP-DX1/t1/run.sh pair tx2-dxt1-pair --rung 10k` runs the exact-local-read pair.
+The entrypoint verifies an owned copy of frozen O-REPLAY `03d86f33`; `DX_ORACLE_ROOT` is executable source, while oracle inputs/outputs stay in each run.
 The run's cleanup calls `node lab/trace/finalize.mjs RUN_DIR COPY_DIR` automatically after collecting and stopping the JVMs.
 Reports live at `~/Claude/Projects/triplex-db-2/evidence/DX-T1/TAG/{TRACE-REPORT.md,trace.html,trace.chrome.json,trace-summary.json}`.
 Raw compressed records and JFR live at `TAG/trace/raw/`, with SHA256SUMS one level above.

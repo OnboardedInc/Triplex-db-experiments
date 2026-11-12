@@ -53,3 +53,8 @@ Worker RPC context now binds source/run/slot and the exact sending span across p
 A real Worker test checks continuation and foreign-attempt rejection; a missing receiver makes the report incomplete.
 Explicit RPC wait is partitioned by child spans; other event-loop readiness remains unmeasured, never inferred from GC overlap.
 Off controls generate an explicit disabled view and index row, without a collection completeness claim.
+
+- `tx2-dxt1-smoke-f`: full collection validated (88/88 coverage, 1,780,569 exact reads), but the independent oracle
+  was ORACLE-ERROR because its executable root was misconfigured as an empty output directory. This is not semantic PASS.
+  The T1 entrypoint now materializes the exact frozen O-REPLAY commit into its owned evidence tree and verifies every byte
+  before admission; its 26 existing historical source files matched that commit exactly.
