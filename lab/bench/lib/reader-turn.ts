@@ -9,7 +9,7 @@ export class ReaderTurn {
   readonly diagnostics = { yields: 0, maxTurnMs: 0, maxTurnReads: 0, admissions: 0 };
   readonly maxReads: number;
   readonly maxMs: number;
-  constructor(maxReads = 64, maxMs = 1) {
+  constructor(maxReads = 256, maxMs = 1) {
     this.maxReads = maxReads;
     this.maxMs = maxMs;
   }

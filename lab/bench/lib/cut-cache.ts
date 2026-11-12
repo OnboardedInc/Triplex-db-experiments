@@ -3,12 +3,22 @@ import type { PullResult } from "./composition.ts";
 type Selected = readonly (string | PackedEntity)[];
 type Reader = (selected: Selected, validAt: number) => PullResult["triples"];
 type Metadata = Omit<PullResult, "triples">;
-type Entry = { from: number; to: number; value: Metadata; selected: readonly (string | WeakRef<PackedEntity>)[]; bytes: number; read: Reader };
+type Entry = { from: number; to: number; value: Metadata; selected: readonly (string | WeakRef<PackedEntity>)[]; bytes: number; read: Reader; promoted?: Selected };
 const handles = new WeakMap<PackedEntity, WeakRef<PackedEntity>>();
 // [DX-R3-P8] Why: exact-cut summaries can reuse immutable versions without retaining old backing slabs.
 // Rejected: root-revision keys (miss changed children), time rounding, and strong manifests (thrash or pin whole slabs).
 export class CutCache {
   private entries = new Map<string, Entry>();
+  private promoted = new Set<Entry>();
+  private release: ReturnType<typeof setImmediate> | undefined;
+  // [DX-R3-P8] Why: WeakRef promotion is invariant within one synchronous turn, but must not pin evicted slabs across updates.
+  // Rejected: dereferencing every member on every hit, or retaining strong version manifests across turns/commits.
+  releasePromotions() {
+    if (this.release) clearImmediate(this.release);
+    this.release = undefined;
+    for (const entry of this.promoted) entry.promoted = undefined;
+    this.promoted.clear();
+  }
   readonly diagnostics = { hits: 0, misses: 0, weakMisses: 0, evictions: 0, bytes: 0, entries: 0 };
   readonly maxBytes: number;
   constructor(maxBytes = 32 * 1024 ** 2) { this.maxBytes = maxBytes; }
@@ -16,11 +26,17 @@ export class CutCache {
   get(root: string, position: number, validAt: number, waitedMs: number): PullResult | undefined {
     const key = this.key(root, position), entry = this.entries.get(key);
     if (!entry || validAt < entry.from || validAt >= entry.to) { this.diagnostics.misses++; return; }
-    const selected: (string | PackedEntity)[] = [];
+    let selected = entry.promoted;
+    if (!selected) {
+    const promoted: (string | PackedEntity)[] = [];
     for (let i = 0; i < entry.selected.length; i += 2) {
       const version = (entry.selected[i + 1] as WeakRef<PackedEntity>).deref();
       if (!version) { this.remove(key); this.diagnostics.weakMisses++; this.diagnostics.misses++; return; }
-      selected.push(entry.selected[i] as string, version);
+      promoted.push(entry.selected[i] as string, version);
+    }
+    selected = entry.promoted = Object.freeze(promoted);
+    this.promoted.add(entry);
+    this.release ??= setImmediate(() => this.releasePromotions());
     }
     this.entries.delete(key); this.entries.set(key, entry); this.diagnostics.hits++;
     return reply(entry.value, entry.read, selected, validAt, waitedMs);
@@ -49,10 +65,12 @@ export class CutCache {
     this.diagnostics.entries = this.entries.size;
   }
   private remove(key: string) {
-    this.diagnostics.bytes -= this.entries.get(key)!.bytes;
+    const entry = this.entries.get(key)!;
+    this.promoted.delete(entry); entry.promoted = undefined;
+    this.diagnostics.bytes -= entry.bytes;
     this.entries.delete(key); this.diagnostics.entries = this.entries.size;
   }
-  clear() { this.entries.clear(); this.diagnostics.bytes = 0; this.diagnostics.entries = 0; }
+  clear() { this.releasePromotions(); this.entries.clear(); this.diagnostics.bytes = 0; this.diagnostics.entries = 0; }
 }
 // [DX-R3-P8] Why: each answer pins promoted versions and materializes its own complete public rows on demand.
 // Rejected: a shared memoizing getter (pins decoded worlds), or a lazy walk over an index that may later evict the cut.

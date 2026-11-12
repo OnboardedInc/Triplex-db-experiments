@@ -82,3 +82,23 @@ test("an unavailable weak version triggers a fresh exact walk instead of a cache
     assert.equal(reader.diagnostics.worldCache.weakMisses, 1);
   } finally { prototype.deref = deref; }
 });
+
+test("turn promotions end before an index update and before the next turn", async () => {
+  const cache = new CutCache(), packed = { buffer: new SharedArrayBuffer(1024), revision: 1 };
+  const value = { triples: [], observation: { digest: "x", stamp: -1, stamps: 0, facts: 0, bytes: 0 }, entities: 0, depth: 0, roundTrips: 0, route: "replica", language: "packed", waitedMs: 0 };
+  cache.put("root", 1, 0, 10, value, ["root", packed], () => []);
+  assert(cache.get("root", 1, 2, 0));
+  const prototype = WeakRef.prototype as any, deref = prototype.deref;
+  try {
+    prototype.deref = () => undefined;
+    assert(cache.get("root", 1, 2, 0));
+    cache.releasePromotions();
+    assert.equal(cache.get("root", 1, 2, 0), undefined);
+    prototype.deref = deref;
+    cache.put("root", 1, 0, 10, value, ["root", packed], () => []);
+    assert(cache.get("root", 1, 2, 0));
+    await new Promise<void>(resolve => setImmediate(resolve));
+    prototype.deref = () => undefined;
+    assert.equal(cache.get("root", 1, 2, 0), undefined);
+  } finally { prototype.deref = deref; cache.clear(); }
+});

@@ -180,6 +180,7 @@ export class ReplicaReader {
     this.notify();
   }
   notify() {
+    this.worlds.releasePromotions();
     for (const waiter of this.waiters)
       if (this.index.position >= waiter.p || !this.index.valid) waiter.done();
   }

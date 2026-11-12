@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # [DX-H3] Why: cleanup precedes measurement-lock release. Rejected: abandoned engines outside a lease.
 set -euo pipefail
+# [DX-R3-P8] Why: EXIT may run inside a redirected failing stage; restore the caller stream before reading stage logs.
+# Rejected: inheriting that redirection (cat driver.log recursively appends to itself until disk exhaustion).
+exec 8>&1 9>&2
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 kind=${1:?functional|medium|real}; prefix=${2:?prefix}; shift 2
 [[ $prefix =~ ^tx2-dx[a-z0-9-]+$ ]] || exit 2
@@ -74,6 +77,7 @@ lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 held=false; watchdog=; operational=; child=
 cleanup() {
   rc=$?; trap - EXIT TERM INT
+  exec 1>&8 2>&9
   if [[ -n $watchdog ]]; then kill "$watchdog" 2>/dev/null || true; wait "$watchdog" 2>/dev/null || true; fi
   if [[ $prefix == tx2-dxr3-* ]] && docker container inspect "$prefix-driver" >/dev/null 2>&1; then
     docker stop --time 10 "$prefix-driver" || true
