@@ -238,8 +238,20 @@ export async function runReplicaDriver(argv: string[]) {
     const target = await comp.currentPosition();
     let reached = after;
     try {
-      const first = await base.feed(after, 16, 0);
-      const roots = [...new Set(first.transactions.flatMap((tx) => tx.entities))];
+      // [DX-S5] Why: a shallow journal may omit unchanged references from any later changed root.
+      // Rejected: bootstrapping only the first page's roots (G's diagnostic produced an artificial coverage failure).
+      const changed = new Set<string>();
+      let collected = after;
+      while (collected < target) {
+        const page = await base.feed(collected, 16, 0);
+        const transactions = page.transactions.filter((tx) => tx.position <= target);
+        if (!transactions.length) throw Error("probe tail omitted journals");
+        for (const tx of transactions) {
+          for (const id of tx.entities) changed.add(id);
+          collected = tx.position;
+        }
+      }
+      const roots = [...changed];
       const probe = new Replica(base, V_W0);
       await probe.bootstrap(roots, after);
       while (probe.position < target) {
@@ -262,9 +274,9 @@ export async function runReplicaDriver(argv: string[]) {
       );
     }
     if (argv.includes("--probe-follow-only")) {
-      console.log(
-        JSON.stringify({ kind: "follow-probe-final-head", position: await comp.currentPosition() }),
-      );
+      const finalHead = await comp.currentPosition();
+      if (finalHead !== target) throw Error("read-only tail probe head changed");
+      console.log(JSON.stringify({ kind: "follow-probe-final-head", position: finalHead }));
       await comp.close();
       return;
     }
