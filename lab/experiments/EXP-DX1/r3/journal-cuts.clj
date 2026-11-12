@@ -10,7 +10,7 @@
 (stub 'd 'datoms (fn [_ _ e a] (when (= [e a] [:physical :triplex.tx/journals]) [{:v :j1} {:v :j2}])))
 (stub 'storage 'safe-position identity)
 (stub 'storage 'await-position (fn [db & _] db))
-(stub 'storage 'await-record-time (fn [_ db _] db))
+(stub 'storage 'await-record-time (fn [_ _ db _] db))
 (stub 'storage 'head-position (fn [& _] 2))
 (stub 'reach 'select-db (fn [_ db _] [db]))
 (stub 'reach 'decline! (fn [why] (throw (ex-info why {}))))

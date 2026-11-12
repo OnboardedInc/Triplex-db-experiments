@@ -11,6 +11,8 @@ test("strict newest clock closes exactly at its physical end across pages and sh
   r.apply({ reset: false, valid: true, position: 11, recordTime: 101, clockEnd: 12, changes: [] });
   assert.equal(r.resolve({ recordedAt: 101, validAt: 0 }), undefined);
   assert.equal(r.resolve({ recordedAt: 100, validAt: 0 }), 10);
+  assert.equal(r.resolve({ recordedAt: 100.5, validAt: 0 }), 10);
+  assert.equal(r.resolve({ recordedAt: 99, validAt: 0 }), undefined);
   const reader = new RecentReads(); reader.install(r.image());
   assert.equal(reader.resolve({ recordedAt: 101, validAt: 0 }), undefined);
   reader.apply({ reset: false, valid: true, position: 12, recordTime: 101, clockEnd: 12, changes: [] });

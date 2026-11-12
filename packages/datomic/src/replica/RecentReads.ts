@@ -149,10 +149,19 @@ export class RecentReads {
       if (p === undefined && !this.strictRecordClocks) return undefined;
       // [DX-R3-P8] Why: strict clocks close at the final journal of the physical commit.
       // Rejected: waiting for another commit (unnecessary latency), or admitting a partial grouped commit.
-      const mapped =
+      let mapped =
         this.timeSafe && (p !== undefined || basis.recordedAt < this.lastTime || this.closed(basis.recordedAt))
           ? this.times.get(basis.recordedAt)
           : undefined;
+      // [DX-R3-P8] Why: a strict applied clock above t proves the exact prefix for intervening double values too.
+      // Rejected: rounding t to a clock or extrapolating beyond the newest applied journal.
+      if (mapped === undefined && this.strictRecordClocks && this.timeSafe && basis.recordedAt < this.lastTime) {
+        let chosen = -Infinity;
+        for (const [time, at] of this.times) if (time <= basis.recordedAt && time > chosen) {
+          chosen = time;
+          mapped = at;
+        }
+      }
       if (mapped === undefined || (p !== undefined && p !== mapped)) return undefined;
       p = mapped;
     }
