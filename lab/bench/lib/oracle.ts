@@ -13,6 +13,8 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { requireOracleBinding } from "./oracle-output.ts";
+import { oraclePublicValue } from "./oracle-public-value.ts";
 import { memberOf } from "./world.ts";
 import type { RecordedCommand } from "./seed.ts";
 
@@ -79,7 +81,9 @@ export function buildCase(opts: { caseId: string; commands: readonly RecordedCom
 export function checkWithOracle(opts: { oracleRoot: string; dir: string; caseDoc: any; reads: readonly OracleSampleRead[] }) {
   const caseFile = path.join(opts.dir, "oracle-case.json");
   const outFile = path.join(opts.dir, "oracle-expected.json");
-  fs.writeFileSync(caseFile, JSON.stringify(opts.caseDoc));
+  const caseText = JSON.stringify(opts.caseDoc);
+  fs.writeFileSync(caseFile, caseText);
+  fs.rmSync(outFile, { force: true });
   const cli = path.join(opts.oracleRoot, "lab/oracles/replay/cli.py");
   const started = Date.now();
   let exitCode = 0;
@@ -93,12 +97,13 @@ export function checkWithOracle(opts: { oracleRoot: string; dir: string; caseDoc
     if (!fs.existsSync(outFile)) return { status: "ORACLE-ERROR", exitCode, stderr: String(error.stderr ?? error.message).slice(0, 2000), reads: 0, mismatches: [] as any[] };
   }
   const out = JSON.parse(fs.readFileSync(outFile, "utf8"));
+  requireOracleBinding(out, caseText, opts.caseDoc);
   const expectedByRead = new Map<number, Map<string, Set<string>>>();
   for (const q of out.queries ?? []) {
     const [k, e] = String(q.id).split("|");
     const map = expectedByRead.get(Number(k.slice(1))) ?? new Map<string, Set<string>>();
     const rows = q.result?.raw ?? [];
-    map.set(e!, new Set(rows.map((row: any) => memberOf(row.entityId, row.attribute, row.value))));
+    map.set(e!, new Set(rows.map((row: any) => memberOf(row.entityId, row.attribute, oraclePublicValue(row.value)))));
     expectedByRead.set(Number(k.slice(1)), map);
   }
   const mismatches: any[] = [];
@@ -119,7 +124,7 @@ export function checkWithOracle(opts: { oracleRoot: string; dir: string; caseDoc
     }
   });
   return {
-    status: mismatches.length === 0 && exitCode === 0 ? "PASS" : "FAIL",
+    status: mismatches.length === 0 && exitCode === 0 && out.verdict === "PASS" && out.receiptConsistency?.status === "PASS" ? "PASS" : "FAIL",
     oracleVerdict: out.verdict,
     divergedAtCommand: out.divergedAtCommand ?? null,
     receiptConsistency: out.receiptConsistency?.status ?? null,
