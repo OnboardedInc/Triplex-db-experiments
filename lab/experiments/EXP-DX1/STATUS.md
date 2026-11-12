@@ -1668,3 +1668,17 @@ reads/s at 64 / 256 / 1,024), P3 and P4 pull latency; misses P2 (all-commit p99 
 and P4 history flatness (1.57). Old against new on the quiet host: no regression in the zero-reader commit path.
 `quiet/pause-tail.sh` is running unattended: approved removals, one 100,000-subject pair with gateway reads
 (`tx2-dxh4-k100-*`), then the VM is stopped.
+
+## 2026-11-12 17:10 UTC: k100 read: commits far out at 100,000 subjects; ladder analysis refused its baseline; VM stopped
+
+Still paused; no agent ran. The unattended tail finished at 17:01 UTC and stopped the triplex2 VM. Reading and per-phase
+tables: `h4/K100-READ-2026-11-12.md`. In short: the zero-reader arm finished with 116 of 7,547 background commands expired
+at 30 s, quiet-window commit p50 18 to 45 ms (bar 10; 9 to 12 ms at 10,000 subjects), steady p99 about 5 s and burst p50
+about 1.1 s. The ladder arm ran all 17 phases and then ended ERROR, because the analysis requires a matched baseline in which
+every command committed; so there is no P1, P3 or P4 figure at 100,000 subjects. The 10,000-subject burst trace offers more
+than the commit path takes at this size. Lead, not proven: gateway caches sized for 10,000 subjects (read gateway entity
+cache 5.40 million evictions, revision cache 31.7 million misses against 23.5 million hits).
+
+Repository: history was rewritten to replace a throwaway local MinIO key, and `NOTICE.md` now separates Triplex (Ben
+Jacobson, MIT) from Onboarded's work; branch hashes changed (DX-R3 `be202d43`, DX-S5 `8569fd5a`, DX-V1 `09e93474`). Detail in
+`lab/HANDOFF-2026-11-12.md`.
