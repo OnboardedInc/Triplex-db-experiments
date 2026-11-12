@@ -15,6 +15,17 @@ import { W0 } from "./w0-world.ts";
 import type { CompositionHandle } from "./composition.ts";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 5));
 const now = () => performance.timeOrigin + performance.now();
+// [DX-S5] Why: measure a declared engine capacity cap without dropping/reordering frozen commands or changing their valid times.
+// Rejected: reducing the frozen burst silently or measuring service latency while hiding its offer queue.
+export function capacitySchedule<T extends { atMs: number }>(events: readonly T[], maxRate = 0) {
+  if (!Number.isFinite(maxRate) || maxRate < 0) throw Error("invalid capacity rate");
+  let previous = -Infinity;
+  return events.map((event) => {
+    const atMs = maxRate ? Math.max(event.atMs, previous + 1000 / maxRate) : event.atMs;
+    previous = atMs;
+    return { event, atMs };
+  });
+}
 // [DX-S5] Why: keep 256 requests outstanding without running all their synchronous graph decodes before the next I/O turn.
 // Rejected: 256 independent setImmediate callbacks in one phase (artificially starves trace RPCs and feed responses).
 export function localReadTurns(batch = 1) {
@@ -55,6 +66,7 @@ export async function startW0Live(o: {
   readersDisabled?: boolean;
   writerInFlight?: number;
   writeActivity?: (pending: boolean) => void;
+  maxWriteRate?: number;
 }) {
   const warmupMs = o.warmupMs ?? 0;
   if (!Number.isSafeInteger(warmupMs) || warmupMs < 0 || warmupMs > 60000)
@@ -218,6 +230,7 @@ export async function startW0Live(o: {
     },
   };
   const offered: any[] = [];
+  const schedule = capacitySchedule(events, o.maxWriteRate);
   const measurementStart = start + warmupMs;
   const writerInFlight = o.writerInFlight ?? 1;
   if (!Number.isInteger(writerInFlight) || writerInFlight < 1 || writerInFlight > 32)
@@ -225,13 +238,13 @@ export async function startW0Live(o: {
   // [DX-S5] Why: the north-star scheduler preserves each subject's order while overlapping independent trace commands.
   // Rejected: global ACK serialization (thread isolation alone still queued 30 seconds at 1k with only 12% writer ELU).
   const scheduler = new OpenLoopScheduler(
-    events.map((event) => ({ key: event.subject, scheduledAt: start + event.atMs, event })),
+    schedule.map(({ event, atMs }) => ({ key: event.subject, scheduledAt: start + atMs, event })),
     {
       maxInFlight: writerInFlight,
       deadlineMs: Number.MAX_SAFE_INTEGER,
       now,
-      onOffer: ({ event }) => {
-        offered.push(event);
+      onOffer: ({ event, scheduledAt }) => {
+        offered.push({ ...event, offeredAtMs: scheduledAt - start });
         offerLiveWrite();
         o.writeActivity?.(true);
       },
@@ -295,13 +308,14 @@ export async function startW0Live(o: {
         };
       };
       const observedOffers = offered.filter(
-        (e) => start + e.atMs >= measurementStart && start + e.atMs < end,
+        (e) => start + e.offeredAtMs >= measurementStart && start + e.offeredAtMs < end,
       );
       const observedWrites = writes.filter(
         (w) => w.scheduled >= measurementStart && w.scheduled < end,
       );
       return {
         writerInFlight,
+        maxWriteRate: o.maxWriteRate ?? 0,
         writerMaxInFlightSeen: scheduler.maxInFlightSeen,
         pendingAtStop,
         readers: 256,
@@ -324,8 +338,9 @@ export async function startW0Live(o: {
         lostAckOffers: observedOffers.filter((e) => e.ackLoss).length,
         corrections: observedOffers.filter((e) => e.correction).length,
         offeredTraceSha256: sha256(JSON.stringify(observedOffers)),
-        generatorTraceSha256: sha256(JSON.stringify(events)),
+        generatorTraceSha256: sha256(JSON.stringify(schedule)),
         seed: o.seed,
+        commandNamespace: o.commandNamespace,
         offsetS: o.offsetS,
         failures: 0,
         raw: path.join(o.dir, o.id + "-traffic.ndjson"),

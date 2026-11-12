@@ -21,7 +21,7 @@ class ClosedDriverLog(unittest.TestCase):
                 payload = {"kind": "driver-body", "attempt": str(uuid.uuid4()), "payload": "α" * 600000}
                 data = (json.dumps(payload, ensure_ascii=False) + "\n").encode()
                 pathlib.Path(root, "driver.log").write_bytes(data)
-                script = ('set -euo pipefail\ns5=true; held=false; resources=false; '
+                script = ('set -euo pipefail\nexec 3>&1\ns5=true; held=false; resources=false; '
                           f'completed={"true" if rc == 0 else "false"}; out=$1; timer=; watcher=; diskguard=; sampler=\n'
                           + cleanup + '\ntrap cleanup EXIT\n'
                           + '(while sleep .001; do echo "evaluation-disk macFreeKiB=20000000 vmFreeKiB=40000000"; done) &\n'
@@ -32,6 +32,24 @@ class ClosedDriverLog(unittest.TestCase):
                 self.assertEqual(records, [{"kind": "driver-raw-begin", "bytes": len(data)}, payload,
                                            {"kind": "driver-raw-end"}])
                 self.assertFalse(pathlib.Path(root).exists())
+
+    def test_term_inside_redirected_driver_cannot_copy_log_into_itself(self):
+        source = pathlib.Path("lab/experiments/EXP-DX1/r2/window.sh").read_text()
+        cleanup = source[source.index("cleanup() {"):source.index("\ntrap cleanup EXIT")]
+        with tempfile.TemporaryDirectory(prefix="dxs5-term-logging-") as root:
+            script = ('set -euo pipefail\nexec 3>&1\ns5=true; held=false; resources=false; '
+                      'completed=false; out=$1; timer=; watcher=; diskguard=; sampler=\n'
+                      + cleanup + '\ntrap cleanup EXIT\ntrap "exit 124" TERM\n'
+                      + 'run_driver() { echo \'{"kind":"driver-body","payload":"TERM"}\'; kill -TERM $$; }\n'
+                      + 'run_driver > "$out/driver.log" 2>&1\n')
+            result = subprocess.run(["bash", "-c", script, "term-test", root],
+                                    capture_output=True, timeout=5)
+            self.assertEqual(result.returncode, 124, result.stderr.decode())
+            self.assertLess(len(result.stdout), 1000)
+            records = [json.loads(line) for line in result.stdout.decode().splitlines() if line.startswith("{")]
+            self.assertEqual([r["kind"] for r in records],
+                             ["driver-raw-begin", "driver-body", "driver-raw-end"])
+            self.assertFalse(pathlib.Path(root).exists())
 
     def test_supervisor_captures_final_peak_after_child_kill(self):
         with tempfile.TemporaryDirectory(prefix="dxs5-supervisor-") as root:

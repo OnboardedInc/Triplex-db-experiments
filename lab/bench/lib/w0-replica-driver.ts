@@ -217,6 +217,118 @@ export async function runReplicaDriver(argv: string[]) {
     }
     return result;
   };
+  // [DX-S5] Why: replay a retained failing tail through the real decoder on a small exact-cut bootstrap, without writes.
+  // Rejected: claiming the generic mirror-reset error identifies its underlying transport or row validation cause.
+  if (opt("probe-follow-after")) {
+    const after = Number(opt("probe-follow-after"));
+    if (!Number.isSafeInteger(after) || after < 0) throw Error("invalid probe cut");
+    const target = await comp.currentPosition();
+    let reached = after;
+    try {
+      const first = await base.feed(after, 16, 0);
+      const roots = [...new Set(first.transactions.flatMap((tx) => tx.entities))];
+      const probe = new Replica(base, V_W0);
+      await probe.bootstrap(roots, after);
+      while (probe.position < target) {
+        await probe.followOnce(0, target);
+        reached = probe.position;
+      }
+      console.log(
+        JSON.stringify({ kind: "follow-probe", after, target, reached, roots: roots.length }),
+      );
+    } catch (error) {
+      console.log(
+        JSON.stringify({
+          kind: "follow-probe-error",
+          after,
+          target,
+          reached,
+          error: String(error).slice(0, 8192),
+          stack: error instanceof Error ? error.stack?.slice(0, 8192) : undefined,
+        }),
+      );
+    }
+    if (argv.includes("--probe-follow-only")) {
+      console.log(
+        JSON.stringify({ kind: "follow-probe-final-head", position: await comp.currentPosition() }),
+      );
+      await comp.close();
+      return;
+    }
+  }
+  // [DX-S5] Why: isolate engine capacity from activation and avoid replaying every earlier publication into this baseline.
+  // Rejected: calling an already queued burst a healthy denominator or qualifying a capped rate as the frozen offered load.
+  const capacityBaselines: any[] = [];
+  if (opt("capacity-baseline-rates")) {
+    const rates = opt("capacity-baseline-rates").split(",").map(Number);
+    if (!rates.length || rates.some((n) => !Number.isFinite(n) || n <= 0))
+      throw Error("invalid capacity rates");
+    if (!opt("capacity-id")) throw Error("capacity namespace required");
+    fs.mkdirSync(opt("traffic-dir"), { recursive: true });
+    await (async () => {
+      const copy = new Replica(base, V_W0),
+        begun = performance.now();
+      const position = await comp.currentPosition();
+      await copy.bootstrap(subjects, position);
+      console.log(
+        JSON.stringify({
+          kind: "capacity-bootstrap",
+          position,
+          subjects: N,
+          wallMs: performance.now() - begun,
+          bytes: copy.bytes,
+        }),
+      );
+      for (const maxWriteRate of rates) {
+        copy.compact();
+        const follower = await startRuntimeFollower(copy, scope, db, comp.backend.url);
+        try {
+          const traffic = await startThreadedW0Live(
+            {
+              comp,
+              composition: "reach",
+              lane: "datomic",
+              scope,
+              N,
+              dir: opt("traffic-dir"),
+              id: "capacity-" + maxWriteRate,
+              seed: "DX-H2-frozen-v1",
+              offsetS: 120,
+              warmupMs: 10000,
+              replica: copy,
+              commandNamespace: opt("capacity-id"),
+              maxWriteRate,
+            },
+            follower,
+            2,
+          );
+          await new Promise((r) => setTimeout(r, 100000));
+          const measured = await traffic.stop();
+          let healthy = true,
+            refusal: string | undefined;
+          try {
+            assertBaselineHeadroom(measured);
+          } catch (error) {
+            healthy = false;
+            refusal = String(error);
+          }
+          const result = {
+            kind: "capacity-baseline",
+            maxWriteRate,
+            healthy,
+            refusal,
+            ...measured,
+            queueToServiceP99: measured.commit.p99 / measured.commitService.p99,
+          };
+          capacityBaselines.push(result);
+          console.log(JSON.stringify(result));
+        } finally {
+          await follower.stop();
+        }
+      }
+    })();
+    (globalThis as any).gc?.();
+  }
   const replica = new Replica(base, V_W0),
     batchOracle = argv.includes("--batch-oracle"),
     oracle = new DomainOraclePool(
@@ -226,6 +338,7 @@ export async function runReplicaDriver(argv: string[]) {
       oracleProcesses,
     );
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
+  report.capacityBaselines = capacityBaselines;
   report.nodeHeapLimitBytes = getHeapStatistics().heap_size_limit;
   // [DX-S5] Why: report actual all-subject oracle time separately from activation and storage readback.
   // Rejected: projecting the 10k verifier cost or silently replacing full verification with sampling.

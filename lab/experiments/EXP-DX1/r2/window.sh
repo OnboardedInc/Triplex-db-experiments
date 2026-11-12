@@ -43,10 +43,13 @@ working_volume=$prefix-pg-data
 repo=$PWD
 out=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2/$prefix
 if [[ $s5 == true ]]; then out=$(mktemp -d "$repo/lab/experiments/EXP-DX1/s5/.runtime.XXXXXX"); else mkdir -p "$out"; fi
+# [DX-S5] Why: TERM inside redirected run_driver otherwise makes cleanup cat driver.log into itself until disk exhaustion.
+# Rejected: relying on function redirections unwinding before EXIT traps (the 100k C abort disproved it).
+exec 3>&1
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
 held=false; resources=false; completed=false; timer=; watcher=; diskguard=; sampler=
 cleanup() {
- rc=$?; trap - EXIT TERM INT
+ rc=$?; exec 1>&3 2>&3; trap - EXIT TERM INT
  if [[ $s5 == true && $held == true && $resources == true ]]; then docker stop -t 10 "$prefix-driver" >/dev/null 2>&1 || true; fi
  [[ $completed == true || $rc != 0 ]] || rc=1
  [[ -z $timer ]] || kill "$timer" 2>/dev/null || true

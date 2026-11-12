@@ -67,6 +67,9 @@ export async function startRuntimeFollower(
   const owner = managed({ role: "follower", image, scope, db, url });
   owner.worker.on("message", (message) => {
     if (message.type === "delta") {
+      // [DX-S5] Why: invalidation is followed by the owner's original failure; terminating here discarded that cause in 100k C.
+      // Rejected: trying to apply a reset as a normal delta and killing the worker before its error message arrives.
+      if (!message.update.valid) return;
       try {
         replica.applyUpdate(message.update);
       } catch (error) {
@@ -91,9 +94,21 @@ export async function startRuntimeFollower(
       return result.metrics;
     },
     metrics() {
-      return new Promise<any>((resolve) => {
+      owner.check();
+      return new Promise<any>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          owner.worker.off("message", listener);
+          try {
+            owner.check();
+          } catch (error) {
+            reject(error);
+            return;
+          }
+          reject(Error("follower metrics timed out"));
+        }, 10000);
         const listener = (message: any) => {
           if (message.type === "metrics") {
+            clearTimeout(timer);
             owner.worker.off("message", listener);
             resolve(message.metrics);
           }

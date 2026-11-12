@@ -2,9 +2,23 @@ import { expect, it } from "vitest";
 import { Worker, MessageChannel } from "node:worker_threads";
 import { Replica, packEntity } from "../../../../packages/datomic/dist/index.js";
 import { runtimeWorkerEnvironment } from "../../../bench/lib/w0-runtime.ts";
-import { assertBaselineHeadroom } from "../../../bench/lib/w0-replica-live.ts";
+import { assertBaselineHeadroom, capacitySchedule } from "../../../bench/lib/w0-replica-live.ts";
 import { evaluateAll } from "../../../bench/lib/w0-replica.ts";
 import { W0, V_W0, triplexValue, canonical, w0Basis } from "../../../bench/lib/w0-world.ts";
+
+it("capacity caps preserve every frozen event and valid time while exposing the new offer schedule", () => {
+  const events = [
+    { atMs: 10, subject: 1 },
+    { atMs: 11, subject: 1 },
+    { atMs: 900, subject: 2 },
+  ];
+  const paced = capacitySchedule(events, 5);
+  expect(paced.map((j) => j.atMs)).toEqual([10, 210, 900]);
+  paced.forEach((job, i) => expect(job.event).toBe(events[i]));
+  expect(events.map((e) => e.atMs)).toEqual([10, 11, 900]);
+  expect(capacitySchedule(events).map((j) => j.atMs)).toEqual([10, 11, 900]);
+  for (const rate of [NaN, Infinity, -1]) expect(() => capacitySchedule(events, rate)).toThrow();
+});
 
 it("reader worker follows ordered packed cuts and walks only the requested subject", async () => {
   const subject = W0.placementId(0);
