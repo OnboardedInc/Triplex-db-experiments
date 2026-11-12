@@ -12,6 +12,7 @@ child=; guard=; held=false; prefix=
 disk() { python3 -c 'import shutil; n=shutil.disk_usage(".").free; print("freeBytes",n,flush=True); assert n>=15*1024**3, "15 GiB floor"'; }
 finish() {
   rc=$?; trap - EXIT TERM INT
+  [[ ${BASH_SUBSHELL:-0} == 0 ]] || exit "$rc"
   if [[ -n $child ]]; then kill -TERM "$child" 2>/dev/null || true; wait "$child" || true; fi
   if [[ -n $guard ]]; then kill "$guard" 2>/dev/null || true; wait "$guard" 2>/dev/null || true; fi
   if [[ $held == true ]]; then
@@ -59,7 +60,7 @@ for arm in "$@"; do
   case $arm in G) read=replica; strict=1; extra=(--replica-fallback-thread worker);; E) read=gateway; strict=0; extra=(--expected-row-hash after);; F) read=replica; strict=1; extra=(--expected-row-hash after --replica-fallback-thread worker);; A) read=gateway; strict=0;; B) read=gateway; strict=1;; C) read=replica; strict=0;; D) read=replica; strict=1;; *) exit 2;; esac
   export DX_READ_PATH=$read DX_STRICT_RECORD_CLOCKS=$strict DX_R3_SOURCE_DIAGNOSTICS=1
   echo "ARM $arm $prefix strict=$strict read=$read $(date -u)"
-  bash lab/experiments/EXP-DX1/h4/run.sh real "$prefix" --rung 10k --zero-readers --match-duration-s 200 --reader-ladder-only --level-s 30 --max-readers 1024 --seed-batch-facts "${DX_R3_SEED_BATCH_FACTS:-400}" --replica-history-mib 192 "${extra[@]}" > "$DX_STACK_EVIDENCE/$prefix.log" 2>&1 & child=$!
+  bash lab/experiments/EXP-DX1/h4/run.sh real "$prefix" --rung 10k --zero-readers --match-duration-s 200 --reader-ladder-only --level-s 30 --max-readers 1024 --seed-batch-facts "${DX_R3_SEED_BATCH_FACTS:-400}" --replica-history-mib 192 ${extra[@]+"${extra[@]}"} > "$DX_STACK_EVIDENCE/$prefix.log" 2>&1 & child=$!
   arm_rc=0; wait "$child" || arm_rc=$?; child=
   python3 lab/experiments/EXP-DX1/r3/writer-arm-summary.py "$DX_STACK_EVIDENCE/$prefix" "$arm" || true
   gzip "$DX_STACK_EVIDENCE/$prefix.log"

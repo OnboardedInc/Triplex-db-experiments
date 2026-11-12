@@ -168,7 +168,12 @@ if [[ $prefix == tx2-dxr3-* ]]; then
   operational="$PWD/lab/experiments/EXP-DX1/r3/.runtime-$prefix"
   mkdir "$operational"
   stack_evidence=$operational
-  extra+=(--gateway-src "$PWD/packages/datomic/gateway" --codec-spec "$PWD/packages/datomic/src/codec-spec.json")
+  gateway_source=${DX_R3_GATEWAY_SRC:-$PWD/packages/datomic/gateway}
+  if [[ -n ${DX_R3_GATEWAY_SRC:-} ]]; then
+    [[ $gateway_source == "$PWD/lab/experiments/EXP-DX1/r3/.old-commit-"*/gateway ]] || exit 2
+    echo "DX-R3 temporary non-strict commit source: $gateway_source"
+  fi
+  extra+=(--gateway-src "$gateway_source" --codec-spec "$PWD/packages/datomic/src/codec-spec.json")
 fi
 run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
