@@ -47,3 +47,34 @@ test("a lying duplicate end cannot reopen an already closed strict clock", () =>
   r.apply({ reset: false, valid: true, position: 2, recordTime: 100, clockEnd: 2, changes: [] });
   assert.equal(r.resolve({ recordedAt: 100, validAt: 0 }), undefined);
 });
+
+test("two actual inline feed pages keep a multi-journal physical clock open until its final journal", async () => {
+  const { timedReplicaSource } = await import("../../../../packages/datomic/dist/index.js");
+  const { encodeRowText } = await import("../../../../packages/datomic/dist/rowText.js");
+  const { ReplicaReadHost, boundedReplicaFeed } = await import("../../../bench/lib/replica-reads.ts");
+  const calls: number[] = [];
+  const client = { async request(_method: string, _route: string, body: any) {
+    calls.push(body.limit);
+    const p = body.after + 1, id = `_tx/0000000000000000000000000${p}`;
+    const fields = { entity_id: id, value_string: null, value_boolean: null, value_json: null,
+      recorded_position: p, recorded_at: 100, valid_from: 0, valid_to: null, created_by: null,
+      entity_type: "_Transaction", schema_version: 1, tx_id: id, retracted_at: null,
+      retracted_position: null, retract_tx_id: null };
+    const rows = [encodeRowText({ ...fields, id: `position-${p}`, attribute: ":_tx/position", value_type: "number", value_number: p, value_datetime: null }),
+      encodeRowText({ ...fields, id: `instant-${p}`, attribute: ":_tx/instant", value_type: "datetime", value_number: null, value_datetime: 100 })];
+    return { head: 2, clockEnds: [[p, 2]], transactions: [[id, p, rows, { position: p, t: "12", reset: false, entities: [], closures: [] }]] };
+  } };
+  const timed = timedReplicaSource(client as any, "test", async () => 2, 0);
+  const source = boundedReplicaFeed(timed.source);
+  const host = new (ReplicaReadHost as any)(source, timed.times, 1024, true, timed.clockEnds, timed.timings) as InstanceType<typeof ReplicaReadHost>;
+  await source.feed(0, 1, 0);
+  host.replica.onUpdate!({ reset: true, valid: true, position: 1, changes: [] });
+  assert.equal(host.index.resolve({ recordedAt: 100, validAt: 0 }), undefined);
+  await source.feed(1, 1000, 0);
+  host.replica.onUpdate!({ reset: false, valid: true, position: 2, changes: [] });
+  assert.equal(host.index.resolve({ recordedAt: 100, validAt: 0 }), 2);
+  assert.deepEqual(calls, [1, 4]);
+  const restored = new RecentReads(); restored.install(host.index.image());
+  assert.equal(restored.resolve({ recordedAt: 100, validAt: 0 }), 2);
+  await host.close();
+});

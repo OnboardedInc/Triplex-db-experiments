@@ -51,18 +51,19 @@ test("world cache binds child versions, every valid boundary, floor and reset", 
   await assert.rejects(pull(1, 3), /fallback/);
   assert.equal(reader.diagnostics.worldCache.entries, 0);
 });
-test("cached lazy worlds materialize separately and retain bounded backing slabs", () => {
+test("cached lazy worlds materialize separately and bound weak manifests", () => {
   const cache = new CutCache(4096), buffer = new SharedArrayBuffer(1024);
+  const selected = ["root", { buffer, revision: 1 }];
   let calls = 0;
   const read = () => { calls++; return []; };
   const value = { get triples() { return read(); }, observation: { digest: "x", stamp: -1, stamps: 0, facts: 0, bytes: 0 }, entities: 0, depth: 0, roundTrips: 0, route: "replica", language: "packed", waitedMs: 0 };
-  cache.put("root", 1, 0, 10, value, [[buffer, 1024]], read);
+  cache.put("root", 1, 0, 10, value, selected, read);
   const a = cache.get("root", 1, 2, 0)!, b = cache.get("root", 1, 3, 7)!;
   assert.equal(calls, 0); void a.triples; void a.triples; assert.equal(calls, 1);
   void b.triples; assert.equal(calls, 2); assert.equal(b.waitedMs, 7);
   assert.equal(cache.get("root", 1, 10, 0), undefined);
   assert.equal(cache.get("root", 2, 3, 0), undefined);
-  for (let p = 2; p < 10; p++) cache.put("root", p, 0, 10, value, [[new SharedArrayBuffer(1024), 1024]], read);
+  for (let p = 2; p < 10; p++) cache.put("root", p, 0, 10, value, ["root", { buffer: new SharedArrayBuffer(1024), revision: p }], read);
   assert(cache.diagnostics.bytes <= 4096); assert(cache.diagnostics.evictions > 0);
   cache.clear(); assert.equal(cache.diagnostics.bytes, 0);
 });

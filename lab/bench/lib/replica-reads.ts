@@ -309,14 +309,7 @@ export class ReplicaReader {
             bytes: total.bytes,
           },
         };
-        const held = new Map<object, number>();
-        for (let i = 1; i < selected.length; i += 2) {
-          const packed = selected[i] as Prepared;
-          held.set(packed, 256 + (packed.additionalBytes ?? 0));
-          held.set(packed.buffer, packed.buffer.byteLength);
-          held.set(packed.stats, packed.stats.byteLength);
-        }
-        if (cut !== undefined) this.worlds.put(root, cut, intervalFrom, intervalTo, answer, [...held], materializeWorld.bind(undefined, selected, selectedValidAt));
+        if (cut !== undefined) this.worlds.put(root, cut, intervalFrom, intervalTo, answer, selected, materializeWorld);
         return answer;
       }
     } else {
@@ -406,7 +399,9 @@ export class ReplicaReadHost {
       runtimeApi.DatabaseScope.test(scope),
       process.env.TRIPLEX_DATOMIC_LAYOUT ?? "lean",
     );
-    const { source, times, clockEnds, timings } = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), feed === "inline" ? Date.now() : undefined);
+    const timed = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), feed === "inline" ? Date.now() : undefined);
+    const { times, clockEnds, timings } = timed;
+    const source = boundedReplicaFeed(timed.source);
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
     await source.feed(Math.max(0, initial.position - 1), 1, 0);
@@ -465,4 +460,10 @@ export async function bootstrapClock(source: { page(...args: any[]): Promise<any
     if (performance.now() >= deadline) return NaN;
     await new Promise(resolve => setTimeout(resolve, 5));
   }
+}
+
+// [DX-R3-P8] Why: four journals bound CPU/packing bursts between long polls without changing ordered content.
+// Rejected: waiting to pack sixteen growing hot worlds before requesting the next page.
+export function boundedReplicaFeed<T extends { feed(after: number, limit: number, waitMs: number): Promise<any> }>(source: T): T {
+  return { ...source, feed: (after: number, limit: number, waitMs: number) => source.feed(after, Math.min(limit, 4), waitMs) };
 }
