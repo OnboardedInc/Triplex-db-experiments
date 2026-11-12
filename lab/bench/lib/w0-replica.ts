@@ -152,6 +152,7 @@ async function evaluateSnapshot(
               worker.postMessage({ type: "page", id, subjects: pages[id] });
             };
             worker.on("message", (m) => {
+              if (m.type === "metrics") return;
               if (m.type !== "result") {
                 fail(new Error(m.error ?? "Unexpected worker message"));
                 return;
@@ -177,15 +178,28 @@ async function evaluateSnapshot(
               cpuSeconds += m.cpuSeconds;
               dispatch();
             });
+            worker.postMessage({ type: "begin" });
             dispatch();
           });
-        return { run };
+        const metrics = () =>
+          new Promise<any>((resolve) => {
+            const listener = (message: any) => {
+              if (message.type === "metrics") {
+                worker.off("message", listener);
+                resolve(message);
+              }
+            };
+            worker.on("message", listener);
+            worker.postMessage({ type: "metrics" });
+          });
+        return { run, metrics };
       }),
     );
     const startupMs = performance.now() - started;
     await o.beforeTimedWindow?.();
     const start = performance.now();
     await Promise.all(pool.map((p) => p.run()));
+    const workerMetrics = await Promise.all(pool.map((thread) => thread.metrics()));
     const evaluationWallMs = performance.now() - start;
     const records = [...results].sort(([a], [b]) => a - b).flatMap(([, records]) => records);
     if (
@@ -202,6 +216,7 @@ async function evaluateSnapshot(
       );
     return {
       records,
+      workerMetrics,
       captureMs,
       startupMs,
       evaluationWallMs,

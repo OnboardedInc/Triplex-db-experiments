@@ -1,5 +1,7 @@
 // [DX-R2] Why: the requested live arm has 256 readers (8 workers with 32 readers each). Rejected: reusing the 64-reader R1 arm as target evidence.
 import fs from "node:fs";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { OpenLoopScheduler } from "./scheduler.ts";
 import { offerLiveWrite, finishLiveWrite } from "./w0-outbox.ts";
 import path from "node:path";
 import { sha256 } from "./w0-world.ts";
@@ -50,6 +52,7 @@ export async function startW0Live(o: {
   currentReads?: RecentReads;
   commandNamespace?: string;
   readersDisabled?: boolean;
+  writerInFlight?: number;
   writeActivity?: (pending: boolean) => void;
 }) {
   const warmupMs = o.warmupMs ?? 0;
@@ -75,8 +78,7 @@ export async function startW0Live(o: {
   let failed: unknown,
     stopped = false,
     start = 0,
-    end = Infinity,
-    serial = Promise.resolve();
+    end = Infinity;
   const workers: Worker[] = [];
   const done: Promise<void>[] = [];
   let localReaders: Promise<void>[] = [];
@@ -188,7 +190,7 @@ export async function startW0Live(o: {
   const events = generateTrace({ seed: o.seed, subjects: o.N, durationS: o.offsetS + 900 })
     .filter((e) => e.atMs >= o.offsetS * 1000)
     .map((e) => ({ ...e, atMs: e.atMs - o.offsetS * 1000 }));
-  let activeScheduled = 0;
+  const scheduledContext = new AsyncLocalStorage<number>();
   const namespaced: CompositionHandle = {
     ...o.comp,
     transactionByCommand: (id) =>
@@ -205,7 +207,7 @@ export async function startW0Live(o: {
       const row = {
         kind: "commit",
         started: begun,
-        scheduled: activeScheduled,
+        scheduled: scheduledContext.getStore() ?? 0,
         ms: now() - begun,
         ok: result.ok,
       };
@@ -216,43 +218,49 @@ export async function startW0Live(o: {
   };
   const offered: any[] = [];
   const measurementStart = start + warmupMs;
-  const writer = (async () => {
-    for (const event of events) {
-      while (!stopped && !failed && now() < start + event.atMs) await pause();
-      // [DX-S5] Why: stop freezes an offer-time boundary, not permission to drop already-due frozen events.
-      // Rejected: breaking immediately on stop after event-loop delay (silently lowers the offered writer load).
-      if (failed || (stopped && start + event.atMs >= end)) break;
-      offered.push(event);
-      offerLiveWrite();
-      o.writeActivity?.(true);
-      serial = serial
-        .then(async () => {
-          activeScheduled = start + event.atMs;
-          const result = await applyW0Trace(namespaced, {
-            ...event,
-            atMs: event.atMs + o.offsetS * 1000,
-          });
+  const writerInFlight = o.writerInFlight ?? 1;
+  if (!Number.isInteger(writerInFlight) || writerInFlight < 1 || writerInFlight > 32)
+    throw Error("invalid writer window");
+  // [DX-S5] Why: the north-star scheduler preserves each subject's order while overlapping independent trace commands.
+  // Rejected: global ACK serialization (thread isolation alone still queued 30 seconds at 1k with only 12% writer ELU).
+  const scheduler = new OpenLoopScheduler(
+    events.map((event) => ({ key: event.subject, scheduledAt: start + event.atMs, event })),
+    {
+      maxInFlight: writerInFlight,
+      deadlineMs: Number.MAX_SAFE_INTEGER,
+      now,
+      onOffer: ({ event }) => {
+        offered.push(event);
+        offerLiveWrite();
+        o.writeActivity?.(true);
+      },
+      exec: async ({ event, scheduledAt }) => {
+        try {
+          const result = await scheduledContext.run(scheduledAt, () =>
+            applyW0Trace(namespaced, { ...event, atMs: event.atMs + o.offsetS * 1000 }),
+          );
           const row = {
             kind: "write",
             event,
             ack: now(),
-            scheduled: start + event.atMs,
+            scheduled: scheduledAt,
             duplicate: result.duplicate,
             position: result.receipt.position,
           };
           writes.push(row);
           appendRaw(JSON.stringify(row) + "\n");
-        })
-        .catch((e) => {
-          failed ??= e;
-        })
-        .finally(() => {
-          finishLiveWrite();
-          o.writeActivity?.(false);
-        });
-    }
-    await serial;
-  })();
+        } catch (error) {
+          failed ??= error;
+        }
+      },
+      onDone: (result) => {
+        if (result.expired) failed ??= Error("trace offer expired");
+        finishLiveWrite();
+        o.writeActivity?.(false);
+      },
+    },
+  );
+  scheduler.start();
   // [DX-H6] Why: compare warm gateway/reader windows with the same fixed generator offset in both arms.
   // Rejected: cold first-prefix p99 as the denominator (sweep1000b baseline was 1.116 s).
   while (now() < measurementStart && !failed) await pause();
@@ -262,9 +270,15 @@ export async function startW0Live(o: {
     },
     stop: async () => {
       end = now();
+      // [DX-S5] Why: flush every event due before the stop boundary even after a delayed timer, without admitting future offers.
+      // Rejected: silently dropping the final due prefix or censoring its slow acknowledgements.
+      scheduler.setUntil(end);
+      scheduler.start();
+      scheduler.stop();
+      const pendingAtStop = scheduler.pending;
       stopped = true;
       workers.forEach((w) => w.postMessage("stop"));
-      await writer;
+      while (scheduler.pending) await pause();
       await Promise.all([...done, ...localReaders]);
       flushRaw();
       fs.closeSync(log);
@@ -286,6 +300,9 @@ export async function startW0Live(o: {
         (w) => w.scheduled >= measurementStart && w.scheduled < end,
       );
       return {
+        writerInFlight,
+        writerMaxInFlightSeen: scheduler.maxInFlightSeen,
+        pendingAtStop,
         readers: 256,
         readerMode: o.currentReads
           ? "replica-current-position-pullAt-fixed-valid-time"

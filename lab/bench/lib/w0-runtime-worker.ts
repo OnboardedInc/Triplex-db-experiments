@@ -31,6 +31,7 @@ try {
       ...workerData.options,
       comp,
       readersDisabled: true,
+      writerInFlight: 32,
       writeActivity: (pending) => port.postMessage({ type: "write-activity", pending }),
     });
     const atReady = performance.eventLoopUtilization();

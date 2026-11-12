@@ -1,3 +1,4 @@
+import { inspect } from "node:util";
 import { measureHttp } from "./http-counts.ts";
 import { measureW0Http } from "./w0-http.ts";
 import type { CompositionHandle } from "./composition.ts";
@@ -176,7 +177,8 @@ export async function publishRecords(
     const commit = await committing;
     const commitEndCpu = cpuNow();
     const r = commit.value.value;
-    if (!r.ok) throw new Error("outbox publication failed: " + r.tag);
+    if (!r.ok)
+      throw new Error("outbox publication failed: " + r.tag + " " + inspect(r, { depth: 8 }));
     return {
       deliveries,
       retry: false,

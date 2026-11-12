@@ -806,7 +806,19 @@ export async function runReplicaDriver(argv: string[]) {
         traffic = await startTraffic({ ...liveOptions, id: "baseline" });
         await new Promise((r) => setTimeout(r, Number(opt("baseline-ms", "30000"))));
         report.baseline = await traffic.stop();
-        console.log(JSON.stringify({ kind: "healthy-baseline", ...report.baseline }));
+        console.log(
+          JSON.stringify({
+            kind: "live-baseline",
+            ...report.baseline,
+            queueToServiceP99: report.baseline.commit.p99 / report.baseline.commitService.p99,
+          }),
+        );
+        if (
+          argv.includes("--require-healthy-baseline") &&
+          (report.baseline.commit.p99 / report.baseline.commitService.p99 > 5 ||
+            report.baseline.pendingAtStop > 32)
+        )
+          throw Error("baseline queue is not bounded: activation refused");
         traffic = undefined;
         collectLiveLag = true;
         traffic = await startTraffic({ ...liveOptions, id: "sweep" });
@@ -853,6 +865,7 @@ export async function runReplicaDriver(argv: string[]) {
       passRate: N / ((result.passWallMs + report.freezeMs) / 1000),
       startupMs: result.startupMs,
       cpuSeconds: result.cpuSeconds,
+      workerMetrics: result.workerMetrics,
       rate: result.subjectsPerSecond,
     };
     if (result.publication)
@@ -1191,6 +1204,7 @@ export async function runReplicaDriver(argv: string[]) {
         passWallMs: multi.passWallMs + report.freezeMs,
         passRatio: (multi.passWallMs + report.freezeMs) / (result.passWallMs + report.freezeMs),
         cpuSeconds: multi.cpuSeconds,
+        workerMetrics: multi.workerMetrics,
         live: candidateLive,
       };
       console.log(JSON.stringify({ kind: "candidates", ...report.candidates }));

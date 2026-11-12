@@ -18,6 +18,6 @@ exec node lab/bin/heavy.mjs --label "DX-S5-activation-$attempt" -- bash lab/expe
  --reuse-seed --activation-at-seed --seed-position 4338757 --seed-fingerprint --publish \
  --publication-id "dxs5-full-$attempt" --publication-size "${S5_PUBLISH_SIZE:-128}" --publication-inflight "${S5_PUBLISH_INFLIGHT:-2}" \
  --publication-yield-writer --publication-yield-ms "${S5_PUBLISH_YIELD_MS:-0}" --r1-publication-size "${S5_R1_SIZE:-256}" --r1-publication-inflight "${S5_R1_INFLIGHT:-8}" \
- --runtime-workers --reader-workers 2 --workers "${S5_EVAL_WORKERS:-2}" --reader-mode replica --live --traffic-offset-s 120 --baseline-ms 100000 --live-warmup-ms 10000 \
+ --require-healthy-baseline --runtime-workers --reader-workers 2 --workers "${S5_EVAL_WORKERS:-2}" --reader-mode replica --live --traffic-offset-s 120 --baseline-ms 100000 --live-warmup-ms 10000 \
  --oracle-concurrency 8 --oracle-processes 3 --batch-oracle --verification-pages 4 \
  "$@"

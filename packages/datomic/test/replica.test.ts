@@ -119,6 +119,15 @@ describe("packed replica", () => {
       changes: update!.changes.map(([id, , next]) => [id, next, next] as const),
     };
     expect(() => wrong.applyUpdate(bad)).toThrow("predecessor");
+    const sameRevision = Replica.fromImage(f.source, image);
+    const { packEntity } = await import("../src/replica/packed.js");
+    const wrongBytes = packEntity(1, [row("shared", "s", { type: "string", value: "wrong" })]);
+    expect(() =>
+      sameRevision.applyUpdate({
+        ...update!,
+        changes: update!.changes.map(([id, , next]) => [id, wrongBytes, next] as const),
+      }),
+    ).toThrow("predecessor");
     expect(wrong.position).toBe(1);
     expect(wrong.isValid).toBe(false);
     const reset = Replica.fromImage(f.source, image);
