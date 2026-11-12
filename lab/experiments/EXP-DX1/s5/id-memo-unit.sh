@@ -25,7 +25,13 @@ printf '{"id":"DX-S5","pid":%s,"kind":"memo-unit"}\n' "$$" > "$lock/owner.json"
 git rev-parse HEAD
 docker run --rm --pull never --name "$prefix-peer" --memory 1g --memory-swap 1g \
  -e DATOMIC_JAVA_OPTS='-Xms128m -Xmx768m -Dtriplex.codec.spec=/opt/replica-codec-spec.json' \
- -e TX2_S5_ID_CACHE_ENTRIES=128 -e DATOMIC_EXT_CLASSPATH=/s5:/opt/gateway/src \
+ -e TX2_ID_CACHE_ENTRIES=128 -e DATOMIC_EXT_CLASSPATH=/s5:/opt/gateway/src \
  -v "$repo/lab/experiments/EXP-DX1/s5:/s5:ro" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" \
  -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" \
  --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m id-memo-test
+docker run --rm --pull never --name "$prefix-peer" --memory 1g --memory-swap 1g \
+ -e DATOMIC_JAVA_OPTS='-Xms128m -Xmx768m -Dtriplex.codec.spec=/opt/replica-codec-spec.json' \
+ -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+ -v "$repo/packages/datomic/gateway:/opt/gateway:ro" \
+ -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" \
+ --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.selftest

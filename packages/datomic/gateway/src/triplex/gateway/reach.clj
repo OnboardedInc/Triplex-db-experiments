@@ -1,6 +1,6 @@
 (ns triplex.gateway.reach
   (:require [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
-  (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger]))
+  (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger LongAdder]))
 (set! *warn-on-reflection* false)
 
 ;; [DX-B2-N1] Why: immutable datoms and cached numeric identifiers keep the reach path at index cost.
@@ -31,8 +31,36 @@
           :when (= name (if (vector? key) (first key) key))] (.remove table key))
   nil)
 (defn decline! [reason] (throw (ex-info reason {:declined reason})))
+(def id-memo-limit (Long/parseLong (or (System/getenv "TX2_ID_CACHE_ENTRIES") "131072")))
+(def id-memo-byte-limit (Long/parseLong (or (System/getenv "TX2_ID_CACHE_BYTES") "33554432")))
+(when-not (and (<= 1 id-memo-limit 1048576) (<= 1024 id-memo-byte-limit 268435456))
+  (throw (IllegalArgumentException. "Invalid ID memo bound")))
+(def ^LongAdder id-memo-inserts (LongAdder.))
+(def ^LongAdder id-memo-evictions (LongAdder.))
+(defn id-entry-bytes [^String key] (+ 160 (* 2 (.length key))))
+(defn bounded-id-map [bound byte-bound]
+  (let [bytes (volatile! 0)]
+    (proxy [ConcurrentHashMap] []
+      (putIfAbsent [key value]
+        ;; [DX-S5] Why: bound positive-ID acceleration by entries and conservative retained bytes under one insertion monitor.
+        ;; Rejected: unbounded IDs (100k readback exhausted a 2 GiB heap); misses still use d/entid at the requested db.
+        (locking this
+          (if-let [old (.get ^ConcurrentHashMap this key)] old
+            (let [size (id-entry-bytes key)]
+              (when (or (>= (.size ^ConcurrentHashMap this) bound) (> (+ @bytes size) byte-bound))
+                (.clear ^ConcurrentHashMap this) (vreset! bytes 0) (.increment id-memo-evictions))
+              (when (<= size byte-bound)
+                (vswap! bytes + size) (.increment id-memo-inserts)
+                (.put ^ConcurrentHashMap this key value)))))))))
+(defn id-memo-stats []
+  {:limit id-memo-limit :byteLimit id-memo-byte-limit :maps (.size ids)
+   :entries (reduce + 0 (map #(.size ^ConcurrentHashMap %) (.values ids)))
+   :maximumMapEntries (reduce max 0 (map #(.size ^ConcurrentHashMap %) (.values ids)))
+   :estimatedBytes (reduce + 0 (for [^ConcurrentHashMap m (.values ids) key (.keySet m)] (id-entry-bytes key)))
+   :byteAccounting "160 bytes/node, value, table share and string header plus two bytes per key character; conservative estimate, not measured heap"
+   :inserts (.sum id-memo-inserts) :evictions (.sum id-memo-evictions)})
 (defn id-map [key]
-  (or (.get ids key) (let [m (ConcurrentHashMap.)] (or (.putIfAbsent ids key m) m))))
+  (or (.get ids key) (let [m (bounded-id-map id-memo-limit id-memo-byte-limit)] (or (.putIfAbsent ids key m) m))))
 (defn config
   ([name db] (config name db nil))
   ([name db epoch]
