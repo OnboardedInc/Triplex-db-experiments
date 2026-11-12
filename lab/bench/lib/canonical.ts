@@ -4,21 +4,27 @@ import { Option } from "effect";
 export class CanonicalValueError extends Error {
   readonly _tag = "CanonicalValueError";
 }
+type Admission = { frozen: boolean };
 export function typed(value: any): any {
+  return encodeTyped(value);
+}
+function encodeTyped(value: any, admission?: Admission): any {
   if (typeof value === "number") return ["number", Object.is(value, -0) ? "-0" : String(value)];
   if (value === undefined) return ["undefined"];
   if (value === null) return ["null"];
   if (Array.isArray(value)) {
     plain(value, true);
-    return ["array", value.map(typed)];
+    if (admission) admission.frozen &&= Object.isFrozen(value);
+    return ["array", value.map((v) => encodeTyped(v, admission))];
   }
   if (typeof value === "object") {
     plain(value);
+    if (admission) admission.frozen &&= Object.isFrozen(value);
     return [
       "object",
       Object.keys(value)
         .sort()
-        .map((k) => [k, typed(value[k])]),
+        .map((k) => [k, encodeTyped(value[k], admission)]),
     ];
   }
   if (typeof value === "string" || typeof value === "boolean") return [typeof value, value];
@@ -111,6 +117,9 @@ export const canonicalRow = (row: any): string => {
   const cached = rowText.get(row);
   if (cached !== undefined) return cached;
   plain(row);
+  // [DX-R3-P7] Why: the canonical traversal already validates every descriptor and nested value.
+  // Rejected: walking the entire tree again solely to prove cache immutability.
+  const admission = { frozen: Object.isFrozen(row) };
   const text = JSON.stringify([
     "row",
     Object.keys(row)
@@ -120,22 +129,30 @@ export const canonicalRow = (row: any): string => {
         // [DX-R3] Why: a plain tagged wire object is not the public Effect Option type.
         // Rejected: normalizing lookalikes (would hide a wrong result type).
         const option = OPTION_FIELDS.has(key) ? optionData(v) : undefined;
+        if (option) admission.frozen &&= Object.isFrozen(v);
         const value = option
           ? [
               "option",
               option.tag,
-              ...(option.tag === "Some" ? [typed(option.descriptors.value!.value)] : []),
+              ...(option.tag === "Some"
+                ? [encodeTyped(option.descriptors.value!.value, admission)]
+                : []),
               Object.keys(option.descriptors)
                 .filter((k) => k !== "value" || option.tag === "None")
                 .sort()
-                .map((k) => [k, typed(option.descriptors[k]!.value)]),
+                .map((k) => [k, encodeTyped(option.descriptors[k]!.value, admission)]),
             ]
-          : typed(v);
+          : encodeTyped(v, admission);
         return [key, value];
       }),
   ]);
-  if (frozenData(row)) rowText.set(row, text);
+  if (admission.frozen) {
+    immutable.add(row);
+    rowText.set(row, text);
+  }
   return text;
 };
+// [DX-R3-P7] Why: each member is already complete canonical JSON; preserve its typed tree directly.
+// Rejected: JSON-encoding member strings again (quotes/escapes every field a second time).
 export const canonicalWorld = (rows: readonly any[]): string =>
-  JSON.stringify(rows.map(canonicalRow).sort());
+  "[" + rows.map(canonicalRow).sort().join(",") + "]";

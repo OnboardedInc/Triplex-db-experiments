@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { openComposition, type Basis } from "../../../bench/lib/composition.ts";
 import { ReplicaReadHost, ReplicaReader } from "../../../bench/lib/replica-reads.ts";
+import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { seedRung } from "../../../bench/lib/seed.ts";
 import { ids } from "../../../bench/lib/world.ts";
 import { generateTrace } from "../../../bench/lib/trace.ts";
@@ -61,6 +62,8 @@ const reader = new ReplicaReader();
 reader.install(host.index.image());
 host.subscribe((delta) => reader.apply(delta));
 
+const client = new DatomicClient(process.env.DATOMIC_READ_URLS!.split(",")[0]!, 30000);
+const db = await client.create(runtimeApi.DatabaseScope.test(scope), "lean", true);
 const acked = [{ position: seed.lastPosition, instant: seed.lastInstant }];
 const trace = generateTrace({ seed: "ns-v2", subjects, durationS: 3600 }).filter(
   (event) => !event.resend,
@@ -206,6 +209,7 @@ try {
   writing = false;
   await writer;
   await host.close();
+  client.close();
   await comp.close();
 }
 if (writerError) throw writerError;
