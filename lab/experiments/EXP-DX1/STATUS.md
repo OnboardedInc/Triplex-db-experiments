@@ -1421,3 +1421,38 @@ benchmark's gateway read went through the public `reach`, which keeps record tim
 position-only request was answered at latest. Fixed in `composition.ts` (positions forwarded directly); **not rerun, so there
 is no equivalence result on the final code yet.** Open question for the rerun: the two earlier 200,000-pair differentials
 passed with zero differences; say why they did not hit this.
+
+## 2026-11-12 02:20 UTC: P5 measured at 100,000 subjects for the first time (DX-S5 part 2, `33f54e5b`)
+
+Exactness, no sampling: all 100,000 worlds, outputs, records and published states equal; the Python oracle on all 100,000
+(1,359 s); all 300,000 candidate outputs and records equal (second, read-only hold). Run on the seed's first use (a clone
+needed 16.83 GB with 20.5 GiB free), pinned to the sealed position 4,338,757; head now 4,347,648.
+
+| Measurement at 100,000 | Without live traffic | With live traffic (256 gateway readers, writer trace) | Bar |
+| --- | --- | --- | --- |
+| Bootstrap of the local copy | 475.8 s (1,563 pages; data 4.63 GB, index 0.91 GB) | | reported |
+| Evaluate all subjects, one release | 31.9 to 32.1 s | 54.9 s | |
+| Three candidates in one pass | 46.6 s | not completed live (driver heap, fixed after) | |
+| Publish changed outputs | 74.6 s, 53,681 subjects, 839 commits | 114.3 s, 9,798 subjects, 154 commits | |
+| Evaluation plus publication | 107.7 s | **170.1 s** | at most 100 s: **miss** |
+| Read p99 during against before | | 1.05 | at most 1.5: met |
+| Commit p99 during against before | | **2.09** (service time 2.38) | at most 1.5: **miss** |
+| Follow lag p99 | | 271.8 ms over 1,216 commits | 250 |
+| Driver container peak | 9.11 GiB (follow-up stage 9.26 GiB) | | cap 11 GiB |
+
+Reading:
+1. Evaluation at full scale is 32 s idle and 55 s under load: inside the bar alone. Publication is the miss: one commit of
+   64 subjects' outputs at a time, 89 ms each idle and 742 ms under load.
+2. The live load in this harness is 256 closed-loop readers through the read gateway; before the sweep starts read p99 is
+   3.76 s and commits wait in a queue for about two minutes. The baseline is an overloaded engine, which is not the design
+   (reads come from the local copy). The ratios above are measured against that baseline.
+3. The host had 14.6 to 17.0 GB of swap in use during and after the run (VM 24 GiB on a 36 GB Mac with other applications).
+   The orchestrator restarted the VM afterwards (02:14 UTC, same size, `nohlt` kept): swap 12.6 GB and falling, Mac free
+   space 16.4 to 20.9 GiB.
+
+**DX-S5 resumed 02:16 UTC, part 3** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-S5-resume2.md`): publication rate
+(commits in flight, commit size, cache sizes; target 53,681 subjects in 30 s idle), live traffic with readers on the local
+copy as the design has it, pacing so trace commits stay within 1.5, the gateway's id memo bounded in the gateway source,
+then the verdict run at 100,000.
+
+**DX-R3 proof running** since 02:15 UTC from `794b034b`: `r3/run.sh both p8-both` (`evidence/DX-R3/orch-p8-both.log`).
