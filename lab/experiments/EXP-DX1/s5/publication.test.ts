@@ -235,7 +235,7 @@ it("drains every frozen offer due before stop even when the event loop was delay
   const replica = {
     position: 0,
     validAt: 1,
-    snapshotAt: async () => ({
+    snapshotSubject: () => ({
       position: 0,
       validAt: 1,
       world: () => [

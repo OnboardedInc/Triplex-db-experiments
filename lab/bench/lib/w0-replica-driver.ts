@@ -268,7 +268,8 @@ export async function runReplicaDriver(argv: string[]) {
     const snap = await replica.snapshotAt(cut);
     if (currentReads && currentReads.position !== cut)
       throw Error("current-read index is not at the world-verification cut");
-    let worlds = 0;
+    let worlds = 0,
+      subjectSnapshots = 0;
     // [DX-S5] Why: pipeline immutable native pages, but fold every world in its original subject order.
     // Rejected: concurrent digest updates (response completion order would change the fingerprint).
     const offsets = Array.from({ length: Math.ceil(subjects.length / 64) }, (_, i) => i * 64);
@@ -283,6 +284,19 @@ export async function runReplicaDriver(argv: string[]) {
         rowIndex.set(row.entityId, list);
       }
       for (const subject of ids) {
+        if (opt("reader-mode", "gateway") === "replica") {
+          const scoped = replica.snapshotSubject(subject);
+          if (
+            scoped.position !== cut ||
+            scoped.validAt !== V_W0 ||
+            worldCanonical(worldOf(subject, scoped.world(subject))) !==
+              worldCanonical(worldOf(subject, snap.world(subject)))
+          )
+            throw Error(
+              "Current subject snapshot differs at the exact verification cut " + subject,
+            );
+          subjectSnapshots++;
+        }
         if (currentReads) {
           const local = currentReads.pull(subject, { recordedPosition: cut, validAt: V_W0 });
           if (
@@ -344,7 +358,7 @@ export async function runReplicaDriver(argv: string[]) {
       console.log(JSON.stringify({ kind: "seed-fingerprint", observed: actual, expected }));
       report.seedFingerprint = actual;
     }
-    return { snap, worlds };
+    return { snap, worlds, subjectSnapshots };
   };
   const commit = async (operations: any[], id: string) => {
     const r = await comp.transact(operations, {
@@ -441,12 +455,15 @@ export async function runReplicaDriver(argv: string[]) {
     // Rejected: quietly moving the requested sealed input basis to the later activation transaction.
     const pinnedInput =
       seedPosition !== undefined ? await replica.snapshotAt(seedPosition) : undefined;
-    report.bootstrapWorlds = (await equalWorlds(cut, argv.includes("--seed-fingerprint"))).worlds;
+    const bootstrapEquality = await equalWorlds(cut, argv.includes("--seed-fingerprint"));
+    report.bootstrapWorlds = bootstrapEquality.worlds;
+    report.subjectSnapshotWorlds = bootstrapEquality.subjectSnapshots;
     console.log(
       JSON.stringify({
         kind: "bootstrap-world-equality",
         worlds: report.bootstrapWorlds,
         currentReadWorlds: currentReads ? report.bootstrapWorlds : 0,
+        subjectSnapshotWorlds: report.subjectSnapshotWorlds,
         mismatches: 0,
       }),
     );

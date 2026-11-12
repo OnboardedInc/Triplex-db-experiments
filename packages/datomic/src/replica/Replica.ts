@@ -45,9 +45,6 @@ export interface ReplicaImage {
   readonly entities: readonly (readonly [string, PackedEntity])[];
   readonly shared?: SharedIndexImage;
 }
-// [DX-S5] Why: bind the maintained byte count to the exact locally captured immutable image, without retaining images.
-// Rejected: trusting byte hints in external/worker images; those still calculate their count from actual packed entities.
-const snapshotBytes = new WeakMap<ReplicaImage, number>();
 export class ReplicaSnapshot {
   private readonly entities: EntityTable;
   private shared: ReplicaImage | undefined;
@@ -55,11 +52,7 @@ export class ReplicaSnapshot {
   readonly validAt: number;
   constructor(image: ReplicaImage) {
     this.entities = image.shared
-      ? new OverlayTable(
-          new SharedIndex(image.shared),
-          new Map(image.entities),
-          snapshotBytes.get(image),
-        )
+      ? new OverlayTable(new SharedIndex(image.shared), new Map(image.entities))
       : new Map(image.entities);
     this.shared = image.shared ? image : undefined;
     this.position = image.position;
@@ -123,14 +116,12 @@ export class Replica {
     Set<{ resolve(view: ReplicaSnapshot): void; reject(e: unknown): void }>
   >();
   private view(): ReplicaSnapshot {
-    const image: ReplicaImage = {
+    return new ReplicaSnapshot({
       position: this.watermark,
       validAt: this.validAt,
       entities: this.baseImage ? [...this.entities.delta] : [...this.entities],
       ...(this.baseImage ? { shared: this.baseImage } : {}),
-    };
-    snapshotBytes.set(image, this.entities.bytes);
-    return new ReplicaSnapshot(image);
+    });
   }
   private rejectCaptures(error: unknown) {
     for (const requests of this.captures.values())
@@ -403,6 +394,18 @@ export class Replica {
     if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
     return walk(this.entities, this.validAt, subjectId);
   }
+  snapshotSubject(subjectId: string): ReplicaSnapshot {
+    if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
+    // [DX-S5] Why: capture one complete reachable world synchronously at the current cut, sharing only immutable packed buffers.
+    // Rejected: cloning the entire accumulated overlay for every live read (100k profiles spent most CPU copying/counting and collecting it).
+    const entities = new Map<string, PackedEntity>();
+    walk(this.entities, this.validAt, subjectId, entities);
+    return new ReplicaSnapshot({
+      position: this.watermark,
+      validAt: this.validAt,
+      entities: [...entities],
+    });
+  }
   start(): void {
     if (!this.configured) throw new ReplicaInvalid("Bootstrap roots required before following");
     if (this.following) return;
@@ -437,12 +440,18 @@ function equalBytes(a: PackedEntity, b: PackedEntity) {
   return x.length === y.length && x.every((v, i) => v === y[i]);
 }
 
-function walk(entities: EntityTable, validAt: number, subjectId: string): SweepRow[] {
+function walk(
+  entities: EntityTable,
+  validAt: number,
+  subjectId: string,
+  captured?: Map<string, PackedEntity>,
+): SweepRow[] {
   const seen = new Set([subjectId]),
     rows: SweepRow[] = [];
   for (const id of seen) {
     const entity = entities.get(id);
     if (!entity) throw new ReplicaInvalid("Missing referenced entity: " + id);
+    captured?.set(id, entity);
     for (const row of unpackEntity(id, entity, validAt)) {
       rows.push(row);
       if (row.value.type === "ref") seen.add(row.value.value);

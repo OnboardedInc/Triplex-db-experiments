@@ -6,12 +6,7 @@ import { sha256 } from "./w0-world.ts";
 import { Worker } from "node:worker_threads";
 import { generateTrace } from "./trace.ts";
 import { applyW0Trace, percentile } from "./w0-traffic.ts";
-import {
-  pullAt,
-  type RecentReads,
-  type Replica,
-  type ReplicaSnapshot,
-} from "../../../packages/datomic/dist/index.js";
+import { pullAt, type RecentReads, type Replica } from "../../../packages/datomic/dist/index.js";
 import { Rng, seedOf } from "./rng.ts";
 import { W0 } from "./w0-world.ts";
 import type { CompositionHandle } from "./composition.ts";
@@ -83,18 +78,14 @@ export async function startW0Live(o: {
   const workers: Worker[] = [];
   const done: Promise<void>[] = [];
   let localReaders: Promise<void>[] = [];
-  let snapshot: ReplicaSnapshot | undefined;
-  let pendingSnapshot: Promise<ReplicaSnapshot> | undefined,
-    pendingPosition = -1;
   const observeRead = (m: { started: number; ms: number; [key: string]: unknown }) => {
     reads.push(m);
     appendRaw(JSON.stringify({ kind: "read", ...m }) + "\n");
   };
   try {
     if (o.replica) {
-      // [DX-S5] Why: 256 current-state reads use the followed copy's own immutable snapshot API, with one cached view per applied cut.
-      // Rejected: gateway traffic masquerading as runtime reads, or copying the multi-gigabyte base image for each request.
-      if (!o.currentReads) snapshot = await o.replica.snapshotAt(o.replica.position);
+      // [DX-S5] Why: scoped immutable snapshots preserve each current cut without copying unrelated outbox overlays.
+      // Rejected: full-map snapshots per applied cut (profiles G/F exceeded 100 s while native engines were mostly idle).
       const readTurn = localReadTurns();
       localReaders = Array.from({ length: 256 }, (_, reader) =>
         (async () => {
@@ -121,16 +112,9 @@ export async function startW0Live(o: {
               if (answer.route !== "replica") throw Error("current read escaped replica");
               rows = answer.value.rows;
             } else {
-              if (snapshot!.position !== o.replica!.position) {
-                const p = o.replica!.position;
-                if (p !== pendingPosition) {
-                  pendingPosition = p;
-                  pendingSnapshot = o.replica!.snapshotAt(p);
-                }
-                snapshot = await pendingSnapshot!;
-              }
-              position = snapshot!.position;
-              rows = snapshot!.world(subject);
+              const snapshot = o.replica!.snapshotSubject(subject);
+              position = snapshot.position;
+              rows = snapshot.world(subject);
             }
             if (!rows.length || rows.some((row) => row.position > position))
               throw Error("invalid local read cut/content");
@@ -300,7 +284,7 @@ export async function startW0Live(o: {
         readerMode: o.currentReads
           ? "replica-current-position-pullAt-fixed-valid-time"
           : o.replica
-            ? "replica-current-snapshot-fixed-valid-time"
+            ? "replica-current-subject-snapshot-fixed-valid-time"
             : "gateway",
         warmupMs,
         generatorStartedAtMs: start,
