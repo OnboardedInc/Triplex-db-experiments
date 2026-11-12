@@ -1,54 +1,52 @@
-# DX-R3 part 6 — value claims pass; live proof pending
-North star: P1 exact returned payloads and the correctness floor; P2 policy-read cost remains to be measured against lab/TARGETS.md.
-Merged review/DX-V1 at c51a6b32 first; reviewer files are unchanged. Code commit: f86936a2.
-## R3-C2: Option validation and cache admission
-Only the actual supported Effect Some/None prototypes admit Option encoding; unknown prototypes decline as invalid values.
-Every own descriptor is inspected before any Option value is read. Accessors, symbols, hidden extras and invalid tag/value shapes reject.
-Canonical encoding reads validated descriptor values; enumerable extras, including an own tag, contribute to the bytes instead of disappearing.
-The member cache now uses the same supportedDescriptors validation for the row and every nested object/Option/array.
-Only recursively frozen own data enters its WeakMap; mutable Option payloads are re-observed, never certified from an old digest.
-The injected frozen accessor is rejected on its first observation with zero getter calls, so it cannot seed a stale cached verdict.
-## R3-C1/C3: array shape
-Arrays require Array.prototype, exactly the own data indices 0..length-1, each enumerable, plus their non-enumerable length.
-The validator checks actual ownership of each index; matching key counts or numeric-looking names alone do not establish density.
-Hidden indices, sparse arrays, 4294967295/01/-0/1e0 keys, accessors and extras reject before reading values.
-Reviewer command: 3 pass / 0 fail. Own tests cover both Option variants, all descriptor faults, mutable cache payloads, extras and valid dense arrays.
-## R3-N: source policy lookup
-Kept the trusted serial policy read; no client flag bypass was added and commit.clj is unchanged in this part.
-It resolves the attribute ID with d/entid, then reads first(d/datoms db :eavt scope attribute): one indexed (entity,attribute) prefix lookup.
-It is additional work on non-strict scopes too; the existing maximum lookup is unchanged, with no added maximum scan.
-The actual quoted function executed offline with explicit Datomic doubles: 25 clock/boundary checks and 40 non-strict old/new comparisons passed.
-Its read vectors confirm one added attribute-ID resolution plus one policy EAVT lookup; outputs/errors match in all 40 comparisons.
-No engine ran for this probe. Native cost cannot be inferred from double timing; leave the latency measurement to the orchestrator's next commit run.
-## Adapter guidance and ClockConflict
-packages/datomic/README.md now explains creation-only immutable strictRecordClocks, default/existing false, low-level opt-in and actual capability policy.
-It explains local time-only eligibility, closed cuts/fallback, position/current eligibility, sealed-seed behavior and one increasing clock per strict commit.
-History import remedies: a fresh non-strict scope, or a strict scope loaded in increasing commit times, one clock per commit; existing strict scopes cannot downgrade.
-It explicitly bounds enforcement to gateway commit-function writes: raw administrative Datomic transactions can bypass/alter the policy and are outside the guarantee.
-Gateway ClockConflict retains its code/maximum and now names the record-clock policy, greater-clock remedy and history-import alternatives.
-Four actual source-formatter cases pass offline; native SPI and gateway selftests now also assert the policy/remedy message when run.
-## Gates and evidence
-65 Node regressions pass (48 builder, 17 reviewer), including the exact three value claims; three typechecks pass.
-25 package vitest tests pass, 3 live tests skipped; 11 benchmark tests pass. Lint and git diff --check pass.
-Recorded replay: 2,000 journals/clocks, 3,000 complete typed public worlds, 10,000 source/prepared/materialized observations; zero differences.
-No fresh rate, RSS, follower-delay or engine timing is claimed. No correctness bar or workload rule changed.
-Evidence: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R3/p6-*.log.gz; compressed raw command output, one file per run.
-Primary logs: p6-claim-command, p6-final-validated, p6-vitest, p6-bench-unit, p6-clojure, p6-final-replay, p6-lint.
-The first Java attempt failed before Clojure execution because the old extracted JRE lacked lib/modules (p6-clock-probes).
-Successful probes used a fresh temporary extraction of the already retained CX-DF01 JRE archive, then removed that owned temporary runtime; no download.
-Live admission: p6-native-admission.log.gz exited 75, DX-S5 still holds the lock; no lease/container/volume/slot created. Native strict SPI/differential/ladder remain unverified.
-## Commands
-node --experimental-strip-types --test lab/verify/DX-V1/round3/value-claims.test.ts
-node --experimental-strip-types --test lab/experiments/EXP-DX1/r3/*.test.ts lab/verify/DX-V1/round3/{claims,value-claims,temporal,capability,read-regressions,reader-probes}.test.ts
-pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec tsc --noEmit -p packages/datomic/tsconfig.json
-Same tsc invocation with lab/experiments/EXP-DX1/r3/driver-tsconfig.json and lab/experiments/EXP-DX1/r3/tsconfig.json.
-Clojure: retained JRE 21.0.13+9 / Clojure 1.12.5, clojure.main round3/commit-probe.clj and r3/clock-message.clj, -Xmx128m (source AST/doubles, not Datomic).
-node lab/bin/heavy.mjs --label DX-R3-p6-final-replay -- node --experimental-strip-types lab/experiments/EXP-DX1/r3/replay.ts /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R1/tx2-dxr1-1000-d/pages
-DX_R3_TRY_LOCK=1 node lab/bin/heavy.mjs --label DX-R3-p6-both -- bash lab/experiments/EXP-DX1/r3/run.sh both p6-both
-## Outcome audit (content / freshness / binding)
-dataDescriptors/plain/optionData/typed/canonicalRow: validate every own descriptor and supported prototype; fresh descriptor snapshots before reads; exact object fields and complete typed values.
-supportedDescriptors/frozenData/observe/cache: identical shape checks plus recursive frozen data; fresh process WeakMap; exact immutable row instance, never identity-only or getter-backed reuse.
-Unchanged judgeRead/readVerdicts and expected model consume those complete contributions; invalid values remain violations. Every read remains checked at its requested basis.
-Node/reviewer/Clojure/replay assertions check content and explicit counts in this attempt, bind exact source functions/rows/bases, and label doubles and historical inputs; no engine slot is claimed.
-strict-source/native selftest assert ClockConflict code, maximum and message against their own scope; full-row readback/source binding remain mandatory. Those native assertions are not reported PASS.
-No acceptance edits or changed pinned paths found; no root check, native performance PASS, promotion, push or merge to main.
+# DX-R3 part 7 — NO equivalence PASS; position-oracle defect fixed, native rerun required
+North star: P1 exact pinned reads and P2 public commits; lab/SCOPE.md, NORTH-STAR.md and TARGETS.md remain the contract.
+Implementation head: cf099a46. This report is committed last.
+## Historical seed failure
+The original log ends in `WriteError: Resend the client suffix from expectedSequence`; it retained neither the first rejection nor its exact ordering code.
+That historical cause remains unproven. Three fresh strict 2,000-subject seeds here succeeded; the last completed in 26.7 s, without seed failures.
+A deterministic batch defect was fixed: logical journals inside one strict physical commit previously received different clocks.
+The adapter now caches the first physical instant on shared outer transaction state, using the stored immutable scope policy, and issues a fresh clock on replay.
+A returned conflict maximum advances issuance immediately, including large finite clocks where adding one rounds back; exhaustion returns WriteError before consuming a send.
+A synchronous TRIPLEX_CLOCK submission refusal now supplies both ordinary and timed dereference, preserving the error while consuming its ordered turn.
+That synchronous edge is proven with the actual source function and explicit Datomic doubles, not claimed as the historical seed cause.
+README documents automatic public clock selection; the strict source rule and administrative-write boundary are unchanged.
+## Native observations and failed proof
+p7-probe passed: 2,000 subjects / 59 seed commands / zero failures / 29.13 s; eight-journal physical batches shared one instant twice.
+Four strict/non-strict/non-strict/strict arms each verified 256 durable commands with 32 in flight; all 64 deliberately induced ClockConflict responses recovered without a suffix gap.
+Those stress timings include injected strict retries and unequal initial database sizes: they are not a fair policy-cost comparison.
+p7-both-3 reached 10,000 complete pairs with zero differences in 307.42 s (32.5 pairs/s); I terminated it through the holder cleanup because its projection exceeded the 40-minute lease.
+The checker now memoizes complete canonical member text only after descriptor/prototype validation and recursive immutability proof, performed in the canonical traversal.
+The world container embeds the already encoded typed members directly; decoded equivalence to the former escaped container is tested, including controls, quotes and signed zero.
+The differential performs one complete local/gateway byte comparison per pair, alternating eager/lazy local materialization, plus whole-world observation equality; no facts or pairs are sampled.
+p7-final reached 10,000 equal comparisons in 112.20 s, then FAILED at n=16096, subject 96, floor position 59. No ladder ran.
+Definite oracle defect: comp.pull called public T.reach; core resolveTemporalBasis retains time but discards internal recordedPosition. Position-only floor/current requests became latest.
+The failed expected-side read therefore was not bound to position 59; this is not a valid same-basis equivalence result and does not exonerate the copy.
+Composition now forwards Datomic positions directly to getReachTriples; declined optimized reads traverse getByEntities with the identical basis on every level, including split-root verification.
+A missing exact adapter path fails closed. No packages/core or DatomicClient read path was changed. Native rerun of this correction is outstanding.
+## Gates and limits
+56 Node tests pass, including all three unchanged reviewer value claims, typed-container equivalence, exact direct/generic position routing and publication binding.
+31 package vitest tests pass; four native tests skipped. Three typechecks pass (package, driver, r3); affected checks were rerun after the position correction.
+Actual Clojure source submit/order checks pass: timed/plain error identity and next-turn retry; eight DX-B10 order tests / 98 assertions, including 10,000 reordered arrivals.
+Final recorded replay passes: 2,000 journals/clocks, 3,000 complete typed worlds, 10,000 optimized observations; zero differences. Packed copy at 1,000 subjects: 67,698,904 bytes.
+The 200,000-pair final proof, ladder/routing/raw-local quotas/time-only local share, 300 native B10 scenarios and native HTTP order gates remain unverified.
+Fair strict/non-strict cost and absolute indexed-policy-read cost remain unmeasured; both comparison arms execute the policy lookup, so that contrast alone cannot isolate its absolute cost.
+The prepared cost fixture seeds identical 2,000-subject worlds in every arm and excludes conflict warmup; DX_R3_COST_RATE=55 offers eight-fact commands at 55/s.
+DX-S5 held the lock across most of the budget and reclaimed it after releases; all owned containers/networks/volumes were removed before releasing each lease.
+## Commands and raw evidence
+Evidence: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R3/p7-*.log.gz; one compressed raw output per run, no manifests/source captures.
+Primary logs: p7-probe, p7-both-3 (terminated), p7-final (failed), p7-final-node, p7-position-checked, p7-replay-final, p7-regressions-final, p7-clock-build, p7-timed-deref, p7-source-order.
+Retained unsuccessful intermediate probes/typechecks and the superseded slow replay; their output is not reported PASS.
+DX_R3_TRY_LOCK=1 node lab/bin/heavy.mjs --label DX-R3-p7-next -- bash lab/experiments/EXP-DX1/r3/run.sh both <fresh-prefix>
+Native B10: same command with gates <fresh-prefix>; cost: DX_R3_COST_RATE=55 with probe <fresh-prefix>. Default caps: 39 minutes for both, 19 otherwise.
+DX_R3_HOLD_SECONDS may shorten those deadlines; it never reduces read counts or phases and an incomplete run fails.
+Node: node --experimental-strip-types --test lab/experiments/EXP-DX1/r3/*.test.ts lab/verify/DX-V1/round3/value-claims.test.ts lab/bench/test/datomic-publication.test.ts
+Types/build: pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store exec tsc --noEmit -p <package|r3/driver-tsconfig|r3/tsconfig>; same pnpm --filter @triplex-build/triplex-datomic build.
+Replay: node lab/bin/heavy.mjs --label DX-R3-replay -- node --experimental-strip-types lab/experiments/EXP-DX1/r3/replay.ts /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R1/tx2-dxr1-1000-d/pages
+## Outcome audit: content / freshness / binding
+physical-clock tests check exact issued times, finite/exhaustion behavior, actual retry payloads and all 32 sequence turns; fresh UUID scopes/lanes bind the shipped functions.
+order-rejection evaluates shipped submit! with real order lanes and explicit doubles, checks original error identity through timed/plain deref and exact next cursors; no engine claim.
+canonicalRow/immutable/member caches validate all descriptors, prototypes and nested frozen data before admission; fresh-process WeakMaps bind exact immutable objects, never IDs or revisions alone.
+World-container tests compare every decoded typed member with the prior encoding; every differential pair still includes all returned fields and facts.
+reachPull positional tests prohibit latest calls, check the exact requested cut on direct and every generic level, verify public metadata and truthful round-trip counts; fresh mock inputs, no native claim.
+Native fixture verdicts require fresh scopes/stored policy, seed completion, unique receipt positions, strict clock order and exact durable command values. Expected injected refusals are labelled.
+The live failure invalidates any full equivalence PASS; the corrected oracle requires fresh source/slot/basis binding. No acceptance edits, changed pinned paths found, bar/core edits, root/pack check, promotion, push or main merge.
