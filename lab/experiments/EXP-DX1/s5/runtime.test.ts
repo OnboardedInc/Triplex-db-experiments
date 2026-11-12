@@ -4,7 +4,30 @@ import { Replica, packEntity } from "../../../../packages/datomic/dist/index.js"
 import { runtimeWorkerEnvironment } from "../../../bench/lib/w0-runtime.ts";
 import { assertBaselineHeadroom, capacitySchedule } from "../../../bench/lib/w0-replica-live.ts";
 import { evaluateAll } from "../../../bench/lib/w0-replica.ts";
+import { runReplicaDriver } from "../../../bench/lib/w0-replica-driver.ts";
 import { W0, V_W0, triplexValue, canonical, w0Basis } from "../../../bench/lib/w0-world.ts";
+
+it("read-only verification rejects a capacity writer before opening any engine", async () => {
+  await expect(
+    runReplicaDriver([
+      "--scope",
+      "must-not-connect",
+      "--rung",
+      "1",
+      "--verify-candidates-at-seed",
+      "--seed-position",
+      "1",
+      "--seed-fingerprint",
+      "--candidates",
+      "--oracle-candidates",
+      "--capacity-baseline-rates",
+      "5",
+    ]),
+  ).rejects.toThrow("capacity traffic requires an explicitly writable activation hold");
+  await expect(
+    runReplicaDriver(["--probe-follow-only", "--probe-follow-after", "1"]),
+  ).rejects.toThrow("tail-only probe requires read-only verification declaration");
+});
 
 it("capacity caps preserve every frozen event and valid time while exposing the new offer schedule", () => {
   const events = [

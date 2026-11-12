@@ -108,6 +108,15 @@ export async function runReplicaDriver(argv: string[]) {
   const candidateVerification = argv.includes("--verify-candidates-at-seed");
   const repeatActivation = argv.includes("--activation-at-seed");
   const publicationId = opt("publication-id");
+  if (opt("capacity-baseline-rates") && (!repeatActivation || candidateVerification))
+    throw Error("capacity traffic requires an explicitly writable activation hold");
+  if (argv.includes("--capacity-only") && !opt("capacity-baseline-rates"))
+    throw Error("capacity-only requires explicit rates");
+  if (
+    argv.includes("--probe-follow-only") &&
+    (!candidateVerification || !opt("probe-follow-after"))
+  )
+    throw Error("tail-only probe requires read-only verification declaration and an exact cut");
   if (
     repeatActivation &&
     (!seedPosition ||
@@ -328,6 +337,19 @@ export async function runReplicaDriver(argv: string[]) {
       }
     })();
     (globalThis as any).gc?.();
+    if (argv.includes("--capacity-only")) {
+      console.log(
+        JSON.stringify({
+          kind: "capacity-only-result",
+          classification: "DIAGNOSTIC",
+          acceptance: false,
+          capacityBaselines,
+          head: await comp.currentPosition(),
+        }),
+      );
+      await comp.close();
+      return;
+    }
   }
   const replica = new Replica(base, V_W0),
     batchOracle = argv.includes("--batch-oracle"),
