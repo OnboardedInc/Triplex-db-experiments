@@ -174,6 +174,8 @@ export async function publishRecords(
       deliveries,
       retry: false,
       timing: {
+        receiptTxId: r.value.txId,
+        receiptPosition: r.value.position,
         buildOutboxMs,
         commandLookupMs,
         stateReadMs,
@@ -221,3 +223,41 @@ function reviveState(s: any): W0.OutboxState {
 // Rejected: canonicalizing the entire publication response (failed the first VM attempt after real ACKs).
 export const encodePublicationEvidence = (actual: { deliveries: readonly any[]; retry: boolean }) =>
   canonical({ deliveries: actual.deliveries, retry: actual.retry });
+
+// [DX-S5] Why: Effect's shared scheduler can execute concurrent request callbacks in another ALS context.
+// Rejected: attributing those callbacks to their enclosing frame; native diagnostics bind each actual operation/transaction explicitly.
+export function bindPublicationProfiles(responses: any[]) {
+  const commits = responses.flatMap((r) => r.timing?.adapterCommits ?? []);
+  const frames = responses.flatMap((r) => r.timing?.nativeFrames ?? []);
+  for (const response of responses) {
+    const t = response.timing;
+    if (!t) continue;
+    const bound = commits.filter((c) =>
+      c.transactionIds?.some((id: string) => id === t.receiptTxId || id === "_tx/" + t.receiptTxId),
+    );
+    t.diagnosticReceiptBound = bound.length === 1;
+    if (bound.length !== 1) {
+      t.requests = [];
+      t.nativeFrames = [];
+      t.adapterCommits = [];
+      continue;
+    }
+    t.adapterCommits = bound;
+    t.requests = bound.flatMap((c) => c.attempts.flatMap((a: any) => a.requests ?? []));
+    t.nativeFrames = frames.filter((f) => f.operationId === bound[0].operationId);
+    t.publishRequests = bound[0].httpCalls;
+    t.publishDatoms = t.requests.reduce((n: number, q: any) => n + (q.datoms ?? 0), 0);
+    t.publishSerializeMicros = t.requests.reduce(
+      (n: number, q: any) => n + (Number.isFinite(q.serializeMicros) ? q.serializeMicros : 0),
+      0,
+    );
+    t.publishGatewayParseMicros = t.requests.reduce(
+      (n: number, q: any) => n + (Number.isFinite(q.gatewayParseMicros) ? q.gatewayParseMicros : 0),
+      0,
+    );
+    t.publishGatewayMicros = t.requests.reduce(
+      (n: number, q: any) => n + (Number.isFinite(q.gatewayMicros) ? q.gatewayMicros : 0),
+      0,
+    );
+  }
+}

@@ -1,7 +1,12 @@
 import { Worker } from "node:worker_threads";
 import { Replica, type ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
 import type { CompositionHandle } from "./composition.ts";
-import { publishRecords, outboxEntity, type PublicationOptions } from "./w0-outbox.ts";
+import {
+  publishRecords,
+  bindPublicationProfiles,
+  outboxEntity,
+  type PublicationOptions,
+} from "./w0-outbox.ts";
 import { W0, canonical, requirePosition } from "./w0-world.ts";
 
 export interface ReplicaEvaluation {
@@ -286,6 +291,7 @@ export async function publishChanged(
   }
   await Promise.all(active);
   if (failure) throw failure;
+  bindPublicationProfiles(responses);
   return {
     changed,
     commits,

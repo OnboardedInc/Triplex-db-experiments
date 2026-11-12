@@ -1,7 +1,12 @@
 import { localReadTurns } from "../../../bench/lib/w0-replica-live.ts";
 import { it, expect } from "vitest";
 import { publishChanged } from "../../../bench/lib/w0-replica.ts";
-import { outboxEntity, offerLiveWrite, finishLiveWrite } from "../../../bench/lib/w0-outbox.ts";
+import {
+  outboxEntity,
+  bindPublicationProfiles,
+  offerLiveWrite,
+  finishLiveWrite,
+} from "../../../bench/lib/w0-outbox.ts";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 // [DX-S5] Why: exercise actual atomic outbox construction, bounded overlap and stored bytes, including a late failed ACK.
@@ -110,4 +115,36 @@ it("keeps 256 reads outstanding while allowing I/O turns between bounded decode 
   expect(completed).toBe(8);
   await Promise.all(reads);
   expect(completed).toBe(256);
+});
+
+it("binds concurrent profiling by the actual receipt rather than a shared callback context", () => {
+  const a = {
+    operationId: "op-a",
+    transactionIds: ["_tx/a"],
+    httpCalls: 1,
+    attempts: [{ requests: [{ path: "a", datoms: 7 }] }],
+  };
+  const b = {
+    operationId: "op-b",
+    transactionIds: ["_tx/b"],
+    httpCalls: 2,
+    attempts: [{ requests: [{ path: "b", datoms: 9 }] }],
+  };
+  const responses: any[] = [
+    {
+      timing: {
+        receiptTxId: "a",
+        adapterCommits: [b, a],
+        nativeFrames: [{ operationId: "op-b" }, { operationId: "op-a" }],
+      },
+    },
+    { timing: { receiptTxId: "_tx/b", adapterCommits: [], nativeFrames: [] } },
+    { timing: { receiptTxId: "missing", adapterCommits: [], nativeFrames: [] } },
+  ];
+  bindPublicationProfiles(responses);
+  expect(responses[0].timing.requests.map((r: any) => r.path)).toEqual(["a"]);
+  expect(responses[1].timing.requests.map((r: any) => r.path)).toEqual(["b"]);
+  expect(responses[0].timing.nativeFrames).toEqual([{ operationId: "op-a" }]);
+  expect(responses[1].timing.publishDatoms).toBe(9);
+  expect(responses[2].timing.diagnosticReceiptBound).toBe(false);
 });

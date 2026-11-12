@@ -27,23 +27,35 @@ DatomicClient.prototype.request = function (...args: any[]) {
     // Rejected: calling all client wall time native transact time, or changing the commit function for instrumentation.
     this.onCommit = (sample) => {
       priorCommit?.(sample);
-      context
-        .getStore()
-        ?.commits.push({
-          operationId: sample.operationId,
-          wallMs: sample.returned - sample.started,
-          httpCalls: sample.httpCalls,
-          replays: sample.replays,
-          attempts: sample.attempts.map((a) => ({
-            optimistic: a.optimistic,
-            begin: a.begin,
-            httpCalls: a.httpCalls,
-            beforeAdapterMs: a.firstAdapterCall - sample.started,
-            preparationMs: a.ready === undefined ? null : a.ready - a.firstAdapterCall,
-            orderWaitMs:
-              a.ready === undefined || a.released === undefined ? null : a.released - a.ready,
+      context.getStore()?.commits.push({
+        operationId: sample.operationId,
+        transactionIds: sample.transactionIds,
+        wallMs: sample.returned - sample.started,
+        httpCalls: sample.httpCalls,
+        replays: sample.replays,
+        attempts: sample.attempts.map((a) => ({
+          optimistic: a.optimistic,
+          begin: a.begin,
+          httpCalls: a.httpCalls,
+          beforeAdapterMs: a.firstAdapterCall - sample.started,
+          preparationMs: a.ready === undefined ? null : a.ready - a.firstAdapterCall,
+          orderWaitMs:
+            a.ready === undefined || a.released === undefined ? null : a.released - a.ready,
+          requests: a.requests.map((q) => ({
+            operationId: q.operationId,
+            path: q.path,
+            wallMs: q.finished - q.started,
+            requestBytes: q.requestBytes,
+            responseBytes: q.responseBytes,
+            serializeMicros: q.serializeMicros,
+            gatewayParseMicros: q.parseMicros,
+            gatewayMicros: q.gatewayMicros,
+            transactMicros: q.transactMicros,
+            datoms: q.datoms,
+            timeline: q.gatewayTimeline,
           })),
-        });
+        })),
+      });
     };
     const prior = this.onRequest;
     this.onRequest = (sample) => {

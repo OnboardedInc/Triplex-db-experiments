@@ -572,8 +572,12 @@ export async function runReplicaDriver(argv: string[]) {
       cut = await comp.currentPosition();
       await followTo(cut);
       const old = replica
-        .world("p5:tenant")
-        .filter((r) => r.entityId === "p5:tenant" && r.attribute === "p5/activation");
+        .world("p5:tenant" + (publicationId ? ":" + publicationId : ""))
+        .filter(
+          (r) =>
+            r.entityId === "p5:tenant" + (publicationId ? ":" + publicationId : "") &&
+            r.attribute === "p5/activation",
+        );
       const active = await commit(
         [
           ...old.map((r) => ({ op: "retract", id: r.id })),
