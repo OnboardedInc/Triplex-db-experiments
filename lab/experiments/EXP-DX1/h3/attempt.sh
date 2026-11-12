@@ -98,6 +98,7 @@ cleanup() {
   if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
     touch "$out/trace/raw/.finish"
     for ((jfr_wait=0;jfr_wait<90;jfr_wait++)); do
+      [[ -s $out/driver/ns-report.json ]] || break
       [[ ! -f $out/trace/raw/gw-w.jfr-complete.jsonl || ! -f $out/trace/raw/gw-r.jfr-complete.jsonl || ! -f $out/trace/raw/tx.jfr-complete.jsonl ]] || break
       sleep 1
     done

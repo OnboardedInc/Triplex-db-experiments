@@ -31,3 +31,7 @@ The acceptance files are unchanged. Old/new SHA256 values below are for review; 
 - `tx2-dxt1-smoke-c`: oracle PASS, 2,073,483/2,073,483 exact reads, but launcher shutdown lost JFR; Mac swap was denied.
   Its historical `complete:true` covered only Node trace checks in that source revision. It is not evidence of all-layer
   collection. The next source explicitly requires fresh, SHA256-bound JFR exports and the system collectors.
+
+- `tx2-dxt1-smoke-d`: JFR startup option conflict (`filename` with `dumponexit=false`), before the benchmark.
+  The controller died before cleanup. Recovery retained the startup log, removed only this prefix's resources, verified
+  `recovery-remaining.txt` was empty and then removed its dead-owner lock. No latency or semantic result is claimed.

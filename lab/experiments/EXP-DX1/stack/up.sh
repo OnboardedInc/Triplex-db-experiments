@@ -4,6 +4,20 @@ set -euo pipefail
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
+# [DX-T1] Why: read owned startup logs through the same scoped runner, before a health deadline expires.
+# Rejected: reaching an unrelated Docker context or losing the first JVM startup error behind retries.
+if [[ ${1:-} == --inventory ]]; then
+  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
+  docker ps -a --filter "name=^/${prefix}-" --format '{{.Names}}'
+  docker volume ls --filter "name=^${prefix}-" --format '{{.Name}}'
+  docker network ls --filter "name=^${prefix}-" --format '{{.Name}}'
+  exit
+fi
+if [[ ${1:-} == --logs ]]; then
+  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
+  for role in pg tx gw-w gw-r; do docker logs --tail 35 "$prefix-$role" 2>&1 || true; done
+  exit
+fi
 tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec=
 # [DX-S3] Why: tune placement, heap and durable storage without changing existing callers.
 # Rejected: replacing defaults globally (would change other agents' measurements).
@@ -95,7 +109,7 @@ trace_env=(-e "TRIPLEX_TRACE_LEVEL=$trace_level" -e "TRIPLEX_TRACE_RUN=$prefix" 
 trace_mount=(-v "$attempt/trace/raw:/trace")
 trace_tx_java= trace_gw_java=
 if [[ $trace_level != off ]]; then
-  trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,filename=/trace/tx.jfr,dumponexit=false,maxsize=0 -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+  trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0 -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
   trace_gw_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
   pg_settings="$pg_settings -c track_io_timing=on -c track_wal_io_timing=on -c log_min_duration_statement=0 -c log_parameter_max_length=0 -c log_parameter_max_length_on_error=0 -c log_checkpoints=on -c log_autovacuum_min_duration=0 -c log_timezone=UTC"
 fi
@@ -103,8 +117,9 @@ if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
   trace_tx_java="$trace_tx_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8505"
 fi
 if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
+  mkdir -p "$attempt/trace/preflight"
   docker run --rm --pull never --name "$prefix-trace-check" --network none --memory 768m --memory-swap 768m \
-    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx512m" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" \
+    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" \
     --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
 docker network create "$prefix-net" >/dev/null
@@ -137,7 +152,7 @@ for role in w r; do
   role_java=$gw_java; [[ -n $role_java || -z $heap ]] || role_java="-Xms256m -Xmx$heap"
   if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   role_trace_java=$trace_gw_java
-  if [[ $trace_level != off ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,filename=/trace/gw-$role.jfr,dumponexit=false,maxsize=0"; fi
+  if [[ $trace_level != off ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"; fi
   if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
     debug_port=8506; [[ $role == w ]] || debug_port=8507
     role_trace_java="$role_trace_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debug_port"

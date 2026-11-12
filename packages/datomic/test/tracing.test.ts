@@ -207,6 +207,10 @@ describe("permanent request tracing", () => {
     expect(
       JSON.parse(readFileSync(path.join(dir, "trace.chrome.json"), "utf8")).traceEvents.length,
     ).toBeGreaterThan(2);
+    writeFileSync(path.join(dir,"trace-run.json"),JSON.stringify({tag:"fixture",source:"source",slot:"slot",level:"full",requiredJfr:["gw-w"]}));
+    const absentJfr=await buildReport(dir);
+    expect(absentJfr.complete).toBe(false);
+    expect(absentJfr.errors.some(e=>e.includes("JFR export for gw-w"))).toBe(true);
     writeFileSync(
       path.join(dir, "trace-run.json"),
       JSON.stringify({ tag: "wrong-attempt", source: "source", slot: "slot", level: "full" }),
