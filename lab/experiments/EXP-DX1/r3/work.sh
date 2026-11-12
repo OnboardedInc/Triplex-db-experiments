@@ -77,7 +77,7 @@ if [[ $mode == compare ]]; then
   # [DX-R3] Why: alternate a legacy control and the new path inside one measured hold on distinct fresh scopes.
   # Rejected: comparing a quiet new run against an old run from another noisy VM window.
   for arm in ${DX_R3_ARMS:-a b}; do
-    thread=worker; peer=reader
+    thread=worker; peer=reader; world=32
     case $arm in
       a) yield=loop; feed=legacy; split=mixed; history=64; cache=640;;
       b) yield=fair; feed=inline; split=mixed; history=64; cache=640;;
@@ -85,13 +85,16 @@ if [[ $mode == compare ]]; then
       d) yield=fair; feed=inline; split=pending; history=192; cache=16; thread=main;;
       e) yield=fair; feed=inline; split=pending; history=192; cache=16;;
       f) yield=fair; feed=inline; split=pending; history=192; cache=16; peer=writer;;
+      g) yield=fair; feed=inline; split=pending; history=192; cache=16;;
+      h) yield=fair; feed=inline; split=pending; history=192; cache=16; world=0;;
       *) exit 2;;
     esac
-    echo "DX-R3 comparison arm=$arm yield=$yield feed=$feed split=$split historyMiB=$history cacheMiB=$cache thread=$thread peer=$peer"
+    echo "DX-R3 comparison arm=$arm yield=$yield feed=$feed split=$split historyMiB=$history cacheMiB=$cache thread=$thread peer=$peer worldCacheMiB=$world"
     arm_rc=0
-    run_driver node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 1024 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --replica-thread "$thread" --replica-peer "$peer" --replica-yield "$yield" --replica-feed "$feed" --split-target "$split" --replica-history-mib "$history" --reader-entity-cache-mib "$cache" --output "runs/DX-R3-vm/report-$arm.json" || arm_rc=$?
+    run_driver node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 1024 --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --replica-world-cache-mib "$world" --replica-fallback-thread worker --replica-thread "$thread" --replica-peer "$peer" --replica-yield "$yield" --replica-feed "$feed" --split-target "$split" --replica-history-mib "$history" --reader-entity-cache-mib "$cache" --output "runs/DX-R3-vm/report-$arm.json" || arm_rc=$?
     docker cp "$prefix-driver:$repo/runs/DX-R3-vm/report-$arm.json" "$config/report-$arm.json"
     cat "$config/report-$arm.json"
+    if docker cp "$prefix-driver:$repo/runs/DX-R3-vm/ns-full-read-samples.jsonl" "$config/full-samples-$arm.jsonl"; then cat "$config/full-samples-$arm.jsonl"; fi
     docker inspect --format '{{.Name}} {{.State.ExitCode}} {{.State.OOMKilled}} {{.HostConfig.CpusetCpus}} {{.HostConfig.Memory}}' "$prefix-driver"
     docker rm "$prefix-driver"
     [[ $arm_rc == 0 ]] || exit "$arm_rc"

@@ -118,8 +118,7 @@ const config = {
   replicaWorldCacheMiB: Number(opt("replica-world-cache-mib", "32")),
   replicaHistoryMiB: Number(opt("replica-history-mib", "64")),
   replicaPeer: opt("replica-peer", "reader") as "reader" | "writer",
-  expectedRowHash: opt("expected-row-hash", "eager") as "eager" | "after",
-  replicaFallbackThread: opt("replica-fallback-thread", "main") as "main" | "worker",
+  replicaFallbackThread: opt("replica-fallback-thread", "worker") as "main" | "worker",
   replicaThread: opt("replica-thread", "worker") as "main" | "worker",
   replicaFeed: opt("replica-feed", "inline") as "legacy" | "inline",
   readerLadderOnly: flag("reader-ladder-only"),
@@ -154,7 +153,7 @@ const config = {
   barrierDir: opt("barrier-dir") ?? null,
   startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
-if (!["eager", "after"].includes(config.expectedRowHash) || !["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
+if (!["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
 // [DX-H7] Why: bound aggregate reader and writer cache estimates below half the 8 GiB client grant.
 // Rejected: an unbounded per-thread cache (moves saturation to memory pressure).
 if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) || config.readerEntityCacheMiB < 1 ||
@@ -280,7 +279,7 @@ const cpuMarks: { t: number; cpu: NodeJS.CpuUsage }[] = [];
 
 // ---------------------------------------------------------------- shared state
 
-const model = new Model(rungSubjects, config.expectedRowHash === "after");
+const model = new Model(rungSubjects);
 const accounts = accountsFor(rungSubjects);
 const expectations = new ExpectationCache(model);
 const ryowFallbackReasons: Record<string, number> = {};
