@@ -1004,6 +1004,10 @@ async function run() {
     .catch(error => ({ status: "ORACLE-ERROR", stderr: String(error) }));
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
   else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
+  // [DX-R3-P9] Why: the cache control exposed receipt errors outside ladder windows; DONE must reject every read error too.
+  // Rejected: treating zero wrong worlds as a successful zero-error proof.
+  if (report.correctness?.violations || report.correctness?.errors)
+    finalizationErrors.push(`All-read correctness: ${report.correctness.violations} violations, ${report.correctness.errors} errors`);
   // [DX-R3-P8] Why: a slow or killed independent oracle must not erase already completed all-read judgments and bars.
   // Rejected: first saving analysis only after the independent process returns.
   report.status = "ANALYSED";
