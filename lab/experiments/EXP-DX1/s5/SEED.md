@@ -1,36 +1,41 @@
-Unsealed 100,000-subject seed — second part, 2026-11-11.
+Sealed 100,000-subject seed — 2026-11-12 00:07:30 UTC.
 
-Volume: `tx2-dxs5-seed-100000-pg-data`; checkpoint: `tx2-dxs5-seed-100000-tools`.
-Scope: `dxs5-w0-100000-v1`; seed id: `1b8525ba-a1ae-4a81-9299-82e1e9a9f932`.
-All 100,000 subjects are committed at position 4,338,757. The same pair from orchestrator attempts b1–b5 remains retained.
-Last fully verified prefix: 90,000 subjects at position 3,907,910, with 40,132,691 reachable fact occurrences.
-Observed prefix world fingerprint: `sha256:8bcb75b80e2109d52fc9494d4df0b4c933fe84e301aeb3a91f3c74ccd5f325c6`.
-Observed prefix R2 fingerprint: `sha256:759600884712c02659f3e85ed738591464d83b5aa93e8ccb72dec56e758d88cd`.
-These are the first 90,000 subjects of the 100,000-subject rung, not a separately generated population.
-World fingerprints cover ordered subject worlds at the named cut; shared reachable facts repeat per subject, physical IDs/scope names/recorded clocks are excluded.
+Volume: `tx2-dxs5-seed-100000-pg-data`; scope: `dxs5-w0-100000-v1`.
+Seed id: `1b8525ba-a1ae-4a81-9299-82e1e9a9f932`; logical position: **4,338,757**.
+Subjects: **100,000**; reachable fact occurrences: **44,537,987**.
+Worlds: `sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760`.
+R2: `sha256:551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562`.
+Both fingerprints, position and fact count match the unchanged independent Python population oracle (164.10 s).
+Fingerprints cover canonical ordered subject worlds at this cut, with all reachable valid-time facts and logical assertion positions.
+Shared facts repeat per subject; physical Datomic IDs, scope names and recorded wall clocks are excluded.
 
-Fresh 100,000-subject native pre/post maintenance equality in attempt c1, basis 27,564,749:
-all `:triplex.entity/row` datoms: current 124,817,263, digest `1350b8f7420fd7fa3ef35439a80d085b12a36bc1bce058920743541f560a7bf5`;
-history 124,856,479, digest `74180824252e5437d991d70e71aab9a6ef02ff02425c0f97d592c89f6bf3ea3c`.
-Other native metadata attributes are not included in this row digest.
-Maintained table bytes: 15,750,660,096; database bytes: 15,757,386,255. A clean stopped-volume seal is still pending.
+Final native basis: 27,564,753. Complete pre/post maintenance `:triplex.entity/row` datoms:
+current 124,817,263, SHA256 `1350b8f7420fd7fa3ef35439a80d085b12a36bc1bce058920743541f560a7bf5`;
+history 124,856,479, SHA256 `74180824252e5437d991d70e71aab9a6ef02ff02425c0f97d592c89f6bf3ea3c`.
+Other native metadata attributes are outside these row digests.
+Table bytes: **15,754,092,544**; database bytes: **15,760,835,087**.
+Clean stopped-volume allocation: **16,830,218,240 B** (including **1,040,199,680 B** WAL), below 20 GB.
+Peak sampled PostgreSQL allocation across retained-seed attempts: **22,220,980,224 B**.
+Minimum sampled Mac free: **15.874 GiB**, never observed below the 15 GiB floor.
+Retained-seed elapsed calendar time b1 start to clean seal: **29,192 s (8 h 6 m 32 s)**, including failed starts/gaps.
+Positive-chunk command time: **10,058.816 s**, **431.339 commands/s** for 4,338,757 commands.
+Final c2 hold: **1,188 s**, repeating final maintenance and completing full readback; tools volume removed after seal.
 
-Expected 100,000-subject fingerprint from unchanged Python population oracle, 164.10 s, `population100000-a.log.gz`:
-worlds `sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760`;
-R2 `sha256:551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562`;
-position 4,338,757; reachable fact occurrences 44,537,987. These expected values are not an observed SQL/world PASS.
+Diagnosis: b4 lines 961–995 record `OutOfMemoryError` in `/reach-many`, `Index.seek` through `entity_cache/revision`.
+The 80k chunk was already indexed; fresh direct peer connect/read took 1.553 s, catch-up was zero bytes/16 ms, index-t=tail-t=22058829.
+AMQ219007 startup errors precede the new broker heartbeat/listener. PostgreSQL connection limit was 100, without exhaustion.
+Reduced object/parsed/session caches let 80k and 90k finish; 100k c1 still stalled, full compaction 2037M→1980M in a 2048M heap.
+The read path's unbounded positive-ID memo retained millions of entries. The S5-only launch wrapper caps it at 131,072 with unchanged scope/epoch keys and native fallback.
+No gateway source or commit function changed. The strict concurrent unit compares 16,384 rows across two epochs/three cuts, with zero mismatches and exact capacity accounting.
+Readiness now waits for a real target-database head read; complete console, rotated JVM, Clojure and GC logs are retained on failure, with emitted byte counts checked.
+The allegedly empty b5 transactor section actually contained all 13,162 bytes; the earlier display was truncated.
 
-The transactor is not replaying a long tail: fresh connect/read took 1.553 s, and its log reported zero catch-up bytes, index-t=tail-t=22058829, 16 ms.
-Startup AMQ errors precede the new broker heartbeat/listen. Both original-profile gateways could read the retained head over HTTP.
-The actual readback failure is peer heap exhaustion: b4 logged `OutOfMemoryError` in `/reach-many` at `Index.seek` through `entity_cache/revision` (lines 961–995).
-Lowering the object/parsed/session cache budgets let 80,000 and 90,000 read back fully, but c1 stalled near the end of 100,000 and hit `Gateway deadline exceeded`.
-`readback100k-jvm-a.log` shows full compaction 2037M→1980M in the 2048M heap; the thread dump is in the native reach/index seek path.
-The read path also has an unbounded positive-ID memo (`reach.clj` id-map/entity-id). S5 now bounds it at 131,072 entries, retaining the same scope/epoch keys and native `d/entid` fallback.
-No original gateway source or commit function changed: `bounded_gateway.clj` is an S5-only launch wrapper.
-Fresh native eviction unit: 16,384 row comparisons, two epochs/three cuts, zero mismatches; `idmemo-unit-a.log`.
-The correction retains complete console/rotated/Clojure/GC logs on failure and checks emitted byte counts. The allegedly empty b5 transactor section actually contains all 13,162 bytes plus its separator.
-
-Attempt c2 is repeating maintenance and full readback on the same retained pair with the bounded memo.
-Resume command: `S5_RESUME=1 node lab/bin/heavy.mjs --label DX-S5-seed100000-c2 -- bash lab/experiments/EXP-DX1/s5/hold.sh 100000 10000 false`.
-Evidence root: `~/Claude/Projects/triplex-db-2/evidence/DX-S5/`; closed raw command logs are gzip compressed.
-No 100,000-subject seal, clone or activation result exists yet. The original deleted first attempt remains a historical failure.
+Resume used: `S5_RESUME=1 node lab/bin/heavy.mjs --label DX-S5-seed100000-c2 -- bash lab/experiments/EXP-DX1/s5/hold.sh 100000 10000 false`.
+Do not resume this sealed volume: its checkpoint/tools volume has been removed. Use the evaluation window below to clone or explicitly declare first use.
+`node lab/bin/heavy.mjs --label DX-S5-activation100000-a -- bash lab/experiments/EXP-DX1/r2/window.sh tx2-dxs5-eval-100000-a tx2-dxs5-seed-100000-pg-data dxs5-w0-100000-v1 100000 --first-use-if-needed --seed-position 4338757 --seed-fingerprint --publish --post-capture --candidates --oracle-candidates --oracle-concurrency 8 --oracle-processes 3 --batch-oracle --verification-pages 4 --live --traffic-offset-s 120 --baseline-ms 100000 --live-warmup-ms 10000`
+The window measures required clone bytes against available space plus the floor. If insufficient, it declares first use before appending; all input comparisons remain pinned to position 4,338,757.
+The fresh H5 clone proof at position 42,775 compared all 1,000 published states and 4,000 main/candidate oracle outputs successfully.
+Evidence: `~/Claude/Projects/triplex-db-2/evidence/DX-S5/`, raw command output compressed when closed.
+Seal evidence: `seed100000-c2.log`, `population100000-a.log.gz`, `seal-summary-b.log`; diagnosis: b2/b4, `readback100k-jvm-a.log.gz`; strict bound: `idmemo-unit-b.log`; pinned-input proof: `pinned-proof1000-a.log`.
+Seal audit: seed.ts compares fresh complete ordered worlds/facts/head/R2 against independent population bytes and bound inputs; maintain.clj checks both complete row streams at the same basis; hold.sh requires this attempt's full verification, clean PG stop and <=20 GB.
+The summary command independently checked all four fingerprint fields, unique completed c2 seal, clean PG stop, allocation and sampled disk floor; connectivity/unit outputs alone never qualify the seed.
