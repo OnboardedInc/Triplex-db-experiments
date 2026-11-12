@@ -328,7 +328,7 @@ export async function runReplicaDriver(argv: string[]) {
     // [DX-S5] Why: include this attempt's outboxes in the ordered-feed copy; absence at P is read from storage, not presumed from a UUID.
     // Rejected: treating an arbitrary namespace as empty without reading its exact initial cut.
     await replica.bootstrap(
-      publicationId ? [...subjects, ...subjects.map(outboxEntity)] : subjects,
+      publicationId || publication ? [...subjects, ...subjects.map(outboxEntity)] : subjects,
       cut,
     );
     if (publicationId && subjects.some((s) => replica.world(outboxEntity(s)).length))
