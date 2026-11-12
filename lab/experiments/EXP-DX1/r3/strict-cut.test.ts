@@ -28,6 +28,9 @@ test("bootstrap and rebuilt cuts need fresh end proof; eviction and non-strict p
   r.apply({ reset: true, valid: false, position: 10, changes: [] });
   r.apply({ reset: true, valid: true, position: 20, changes: [] });
   assert.equal(r.resolve({ recordedAt: 100, validAt: 0 }), undefined);
+  r.apply({ reset: false, valid: true, position: 21, recordTime: 201, clockEnd: 21, changes: [] });
+  assert.equal(r.resolve({ recordedAt: 201, validAt: 0 }), 21);
+  assert.equal(r.resolve({ recordedAt: 200, validAt: 0 }), undefined);
   r.apply({ reset: true, valid: true, position: 20, recordTime: 200, clockEnd: 20, changes: [] });
   assert.equal(r.resolve({ recordedAt: 200, validAt: 0 }), 20);
   r.apply({ reset: false, valid: true, position: 21, recordTime: 201, clockEnd: 21, changes: [] });

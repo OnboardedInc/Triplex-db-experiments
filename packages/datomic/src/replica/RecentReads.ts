@@ -65,7 +65,10 @@ export class RecentReads {
       this.times.clear();
       this.clockEnds.clear();
       this.lastTime = -Infinity;
-      this.timeSafe = delta.recordTime !== undefined && Number.isFinite(delta.recordTime);
+      // [DX-R3-P8] Why: an unclocked strict rebuild still proves the prefix for the next validated journal.
+      // Rejected: inventing the rebuild clock, or permanently disabling all later strict cuts.
+      this.timeSafe = (this.strictClocks && delta.recordTime === undefined) ||
+        (delta.recordTime !== undefined && Number.isFinite(delta.recordTime));
       this.floor = delta.position;
     } else if (!this.valid || delta.position !== this.position + 1) {
       this.valid = false;
@@ -95,7 +98,7 @@ export class RecentReads {
     }
     this.position = delta.position;
     if (delta.recordTime !== undefined) this.noteTime(delta.recordTime, delta.position, delta.clockEnd);
-    else this.timeSafe = false;
+    else if (!delta.reset || !this.strictClocks) this.timeSafe = false;
     this.floor = Math.max(this.floor, this.position - this.positions);
     while (this.retiredStart < this.retired.length) {
       const item = this.retired[this.retiredStart]!;

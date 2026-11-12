@@ -348,7 +348,7 @@ export class ReplicaReadHost {
           previous,
           prepareEntity(id, entity),
         ]),
-        ...(clock !== undefined ? { recordTime: clock, clockEnd: clockEnds.get(update.position) } : {}),
+        ...(clock !== undefined && (!update.reset || Number.isFinite(clock)) ? { recordTime: clock, clockEnd: clockEnds.get(update.position) } : {}),
       };
       this.index.apply(delta);
       if (delta.valid) this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now(), ...timings.get(delta.position) });
