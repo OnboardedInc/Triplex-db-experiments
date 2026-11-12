@@ -12,9 +12,10 @@
  * entities at a basis, transactions({ after }), transactionByCommand). Register a new one in
  * COMPOSITIONS; reader workers resolve the same name, so all threads use the same paths.
  */
+import { Option } from "effect";
 import { canonicalWorld } from "./canonical.ts";
 import { countHttp } from "./http-counts.ts";
-import { Effect, core, openTriples, type Lane, type TriplesHandle } from "./triplex.ts";
+import { Effect, core, runtimeApi, openTriples, type Lane, type TriplesHandle } from "./triplex.ts";
 
 export interface Basis {
   readonly recordedPosition?: number;
@@ -132,19 +133,51 @@ function failureOf(exit: any): StoreFailure {
 }
 
 /** [DX-H1] One public closure call at the requested cut; split reads verify the root across the intervening ACK. */
-export async function reachPull(h: Pick<TriplesHandle, "triples" | "run">, root: string, basis: Basis, between: (() => Promise<void>) | undefined, language: string): Promise<PullResult> {
+export async function reachPull(h: Pick<TriplesHandle, "triples" | "run"> & Partial<Pick<TriplesHandle, "storage" | "backend">>, root: string, basis: Basis, between: (() => Promise<void>) | undefined, language: string): Promise<PullResult> {
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   // [DX-H1] Why: one public reach at the same cut, including split-root verification.
   // Rejected: latest-root comparison (would confuse valid commits with snapshot violations).
-  const before: any[][] | undefined = between ? await h.run(T.entities([E(root)], basis)) : undefined;
+  // [DX-R3-P7] Why: the public TemporalBasis resolver drops internal recordedPosition, even when supplied.
+  // Rejected: calling T.reach for a position cut (a floor-only request silently becomes latest).
+  const positional = h.backend?.name === "datomic" && basis.recordedPosition !== undefined;
+  const decode = (r: any) => ({ id:r.id, entityId:r.entity_id, attribute:r.attribute,
+    value:runtimeApi.decodeValueColumns(r, runtimeApi.storedValueDomain(h.storage.valueDomain,r.attribute)),
+    recordedAt:r.recorded_at, validFrom:r.valid_from, validTo:(r.valid_to === null ? Option.none() : Option.some(r.valid_to)),
+    createdBy:r.created_by?Option.some(r.created_by):Option.none(), retractedAt:(r.retracted_at === null ? Option.none() : Option.some(r.retracted_at)),
+    entityType:r.entity_type?Option.some(r.entity_type):Option.none(), schemaVersion:r.schema_version?Option.some(r.schema_version):Option.none(),
+    txId:r.tx_id?Option.some(r.tx_id):Option.none(), retractTxId:r.retract_tx_id?Option.some(r.retract_tx_id):Option.none() });
+  const entitiesAt = async (ids: string[]) => {
+    if (!h.storage?.getByEntities) throw new Error("Exact Datomic position read unavailable");
+    const found: any = await h.run(h.storage.getByEntities(ids,basis));
+    return ids.map(id => (found.get(id) ?? []).map(decode));
+  };
+  const exactReach = async (): Promise<any> => {
+    if (!positional) return h.run(T.reach(E(root),basis));
+    const direct: any = h.storage?.getReachTriples ? await h.run(h.storage.getReachTriples(root,basis)) : undefined;
+    if (direct) return {...direct, gatewayTrips:1};
+    // [DX-R3-P7] Why: a declined optimized reach still needs the same position on every generic level.
+    // Rejected: the public fallback (resolves a fresh head after losing the requested position).
+    const seen = new Set([root]), triples: any[] = [];
+    let frontier=[root], trips=0;
+    while(frontier.length) {
+      const bodies=await entitiesAt(frontier), next: string[]=[]; trips++;
+      for(const body of bodies) for(const row of body) {
+        triples.push(row);
+        if(row.value.type === "ref" && !seen.has(row.value.value)) {seen.add(row.value.value);next.push(row.value.value);}
+      }
+      frontier=next;
+    }
+    return {triples,hops:trips,gatewayTrips:trips};
+  };
+  const before: any[][] | undefined = between ? (positional ? await entitiesAt([root]) : await h.run(T.entities([E(root)],basis))) : undefined;
   if (between) await between();
-  const result: any = await h.run(T.reach(E(root), basis));
+  const result: any = await exactReach();
   const canonical = canonicalWorld;
   if (before && canonical(before[0] ?? []) !== canonical(result.triples.filter((t: any) => t.entityId === root)))
     throw new Error("reach split-root snapshot violation");
   return { triples: result.triples, entities: new Set([root, ...result.triples.map((t: any) => t.entityId)]).size,
-    roundTrips: between ? 2 : 1, depth: result.hops - 1, route: "source", language, waitedMs: 0 };
+    roundTrips: (result.gatewayTrips ?? 1) + (between ? 1 : 0), depth: result.hops - 1, route: "source", language, waitedMs: 0 };
 }
 
 async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "broker-h1" | "reach" = "public"): Promise<CompositionHandle> {
