@@ -20,7 +20,9 @@
       (when (>= (.size ^ConcurrentHashMap this) bound)
        (.clear ^ConcurrentHashMap this) (.increment evictions))
       (.increment inserts)
-      (proxy-super putIfAbsent key value)))))))
+      ;; [DX-S5] Why: the monitor already established absence; the plain parent put keeps interception active.
+      ;; Rejected: proxy-super putIfAbsent (concurrent insertions bypassed its accounting in the first native run).
+      (.put ^ConcurrentHashMap this key value)))))))
 (defn id-map [key]
  (or (.get reach/ids key)
      (let [m (memo limit)] (or (.putIfAbsent reach/ids key m) m))))

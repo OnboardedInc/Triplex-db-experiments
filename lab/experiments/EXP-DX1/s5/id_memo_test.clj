@@ -19,7 +19,7 @@
                         [:db/add (d/entid old [:triplex.entity/id "e5"]) :triplex.entity/row "new-left5"]
                         {:db/id (d/tempid :db.part/user) :triplex.entity/id "late" :triplex.entity/row "late-value"}])
        current (d/db a) right (d/db z) ea (Object.) ez (Object.)
-       ma (r/id-map ["same-name" ea]) mz (r/id-map ["same-name" ez])]
+       ma (r/id-map ["same-name" ea]) mz (r/id-map ["same-name" ez]) high (atom 0)]
   (assert (not (identical? ma mz)))
   (assert (not= (d/entid old [:triplex.entity/id "e0"]) (d/entid right [:triplex.entity/id "e0"])))
   (let [jobs (doall (for [worker (range 8)]
@@ -28,10 +28,14 @@
                       id (if (zero? (mod i 101)) "late" (str "e" (mod (+ i (* worker 127)) 1024)))
                       expected (rows db (d/entid db [:triplex.entity/id id]))
                       actual (rows db (r/entity-id db "same-name" id {:entity-ids cache}))]
-                 (assert (= expected actual) (str "native rows differ " id)))))))]
+                 (assert (= expected actual) (str "native rows differ " id))
+                 (swap! high max (.size ma) (.size mz)))))))]
    (doseq [job jobs] @job))
   (assert (<= (.size ma) b/limit)) (assert (<= (.size mz) b/limit))
   (assert (pos? (.sum b/evictions)))
-  (println (json/write-str (assoc (b/stats) :event "id-memo-native-unit" :comparisons (* 8 2048) :epochs 2 :cuts 3 :mismatches 0 :memoryOnly true)))
+  (assert (<= @high b/limit))
+  (assert (= (.sum b/inserts) (+ (* b/limit (.sum b/evictions)) (.size ma) (.size mz)))
+          "concurrent insertion bypassed the cache bound/accounting")
+  (println (json/write-str (assoc (b/stats) :event "id-memo-native-unit" :comparisons (* 8 2048) :epochs 2 :cuts 3 :mismatches 0 :memoryOnly true :observedHigh @high :accountingExact true)))
   (d/release a) (d/release z))
  (d/shutdown true) (shutdown-agents))
