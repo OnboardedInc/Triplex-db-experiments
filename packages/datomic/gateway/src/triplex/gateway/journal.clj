@@ -48,10 +48,10 @@
                                (sort-by second
                                  (for [link links
                                        :let [e (:v link) p (value db e :triplex.journal/position)]
-                                       :when (> p after)] [e p]))))
+                                       :when (> p after)] [e p (:v tx)]))))
                            (d/index-range db :triplex.tx/position (inc after) nil))
           out (StringBuilder.)]
-      (.append out "{\"head\":") (.append out (str (storage/head-position name db))) (.append out ",\"transactions\":[")
+      (.append out "{\"availableAt\":") (.append out (System/currentTimeMillis)) (.append out ",\"head\":") (.append out (str (storage/head-position name db))) (.append out ",\"transactions\":[")
       (doseq [[i [e p]] (map-indexed vector (take limit journals))]
         (when (value db e :triplex.entity/row-overflow) (reach/decline! "row-overflow"))
         (when (pos? i) (.append out ","))
@@ -74,6 +74,12 @@
                             (str "{\"incremental\":true," (subs body 1))))]
             (.append out ",") (.append out payload)))
         (.append out "]"))
+      ;; [DX-R3-P8] Why: a clock cut closes at the physical commit's final position, even across feed pages.
+      ;; Rejected: treating the last journal in a response as a transaction boundary.
+      (.append out "],\"clockEnds\":[")
+      (doseq [[i [_ p end]] (map-indexed vector (take limit journals))]
+        (when (pos? i) (.append out ","))
+        (.append out (str "[" p "," end "]")))
       (.append out "]}") (str out)))))
     (catch Exception e (declined e))))
 ;; [DX-B4-T3] Why: command identity and current receipt bodies do not depend on record-time monotonicity.

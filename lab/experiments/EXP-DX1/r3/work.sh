@@ -117,7 +117,7 @@ fi
 if [[ $mode == differential ]]; then
   command=(node --experimental-strip-types lab/experiments/EXP-DX1/r3/differential.ts)
 else
-  command=(node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --replica-history-mib 192 --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers 256 --split-target "${DX_R3_SPLIT_TARGET:-pending}" --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --output runs/DX-R3-vm/ns-report.json)
+  command=(node --experimental-strip-types lab/bench/driver.ts --lane datomic --rung 10k --composition reach --read-path replica --replica-history-mib 192 --reader-ladder-only --reader-threads 3 --profile smoke --level-s 30 --max-readers "${DX_R3_MAX_READERS:-1024}" --replica-peer "${DX_R3_PEER:-reader}" --split-target "${DX_R3_SPLIT_TARGET:-pending}" --probe10-per-s 0 --rate-scale 1 --seed-batch-facts 2000 --output runs/DX-R3-vm/ns-report.json)
 fi
 rc=0
 run_driver "${command[@]}" || rc=$?

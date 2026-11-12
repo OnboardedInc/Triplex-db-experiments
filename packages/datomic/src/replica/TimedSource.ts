@@ -15,8 +15,12 @@ export function timedReplicaSource(
 ): {
   source: ReplicaSource;
   times: Map<number, number>;
+  clockEnds: Map<number, number>;
+  timings: Map<number, { availableAt?: number; receivedAt: number }>;
 } {
   const times = new Map<number, number>();
+  const clockEnds = new Map<number, number>();
+  const timings = new Map<number, { availableAt?: number; receivedAt: number }>();
   // [DX-R3] Why: inline journals contain the same original clock rows plus exact replacements.
   // Rejected: repairing every journal with a second reach request; omitted validAt keeps recorded legacy replay compatible.
   const make = (transport: DatomicClient) => validAt === undefined
@@ -27,11 +31,17 @@ export function timedReplicaSource(
     ...base,
     async feed(after, limit, waitMs) {
       const staged = new Map<number, number>();
+      const ends = new Map<number, number>();
+      const observed = new Map<number, { availableAt?: number; receivedAt: number }>();
       const transport = {
         async request(method: any, route: string, body: any, timeout?: number) {
           const response = await client.request<any>(method, route, body, timeout);
           if (route.endsWith("/transactions") && Array.isArray(response.transactions)) {
+            const receivedAt = performance.timeOrigin + performance.now();
             for (const [id, position, wire] of response.transactions) {
+              observed.set(position, { availableAt: response.availableAt, receivedAt });
+              const end = response.clockEnds?.find((entry: number[]) => entry[0] === position)?.[1];
+              if (Number.isSafeInteger(end) && end >= position && end <= response.head) ends.set(position, end);
               const typed = wire.filter(
                 (text: string) => decodeRowText(text).entity_type === "_Transaction",
               );
@@ -62,8 +72,10 @@ export function timedReplicaSource(
       // Rejected: publishing clocks in the transport interceptor before journal binding validation.
       const page = await make(transport).feed(after, limit, waitMs);
       for (const [position, time] of staged) times.set(position, time);
+      for (const [position, end] of ends) clockEnds.set(position, end);
+      for (const [position, timing] of observed) timings.set(position, timing);
       return page;
     },
   };
-  return { source, times };
+  return { source, times, clockEnds, timings };
 }

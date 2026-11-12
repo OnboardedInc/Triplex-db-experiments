@@ -320,15 +320,19 @@ export function replicaEndpoint(env: NodeJS.ProcessEnv, peer: "reader" | "writer
   return peer === "writer" ? env.DATOMIC_URL! : env.DATOMIC_READ_URLS?.split(",")[0] ?? env.DATOMIC_URL!;
 }
 export class ReplicaReadHost {
-  readonly applied: { position: number; at: number }[] = [];
+  readonly applied: { position: number; at: number; availableAt?: number; receivedAt?: number }[] = [];
   readonly index: InstanceType<typeof api.RecentReads>;
   readonly replica: InstanceType<typeof api.Replica>;
   private times: Map<number, number>;
+  private clockEnds: Map<number, number>;
+  readonly timings: Map<number, { availableAt?: number; receivedAt: number }>;
   private closeClient: (() => void) | undefined;
   private listeners = new Set<(delta: ReadDelta) => void>();
-  private constructor(source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean) {
+  private constructor(source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean, clockEnds = new Map<number, number>(), timings = new Map<number, { availableAt?: number; receivedAt: number }>()) {
     this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks);
     this.times = times;
+    this.clockEnds = clockEnds;
+    this.timings = timings;
     this.replica = new api.Replica(source, Date.now());
     let initialized = false;
     this.replica.onUpdate = (update: any) => {
@@ -344,11 +348,13 @@ export class ReplicaReadHost {
           previous,
           prepareEntity(id, entity),
         ]),
-        ...(clock !== undefined ? { recordTime: clock } : {}),
+        ...(clock !== undefined ? { recordTime: clock, clockEnd: clockEnds.get(update.position) } : {}),
       };
       this.index.apply(delta);
-      if (delta.valid) this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now() });
+      if (delta.valid) this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now(), ...timings.get(delta.position) });
+      timings.delete(delta.position);
       times.delete(update.position);
+      clockEnds.delete(update.position);
       for (const listener of this.listeners) listener(delta);
     };
   }
@@ -369,16 +375,17 @@ export class ReplicaReadHost {
       runtimeApi.DatabaseScope.test(scope),
       process.env.TRIPLEX_DATOMIC_LAYOUT ?? "lean",
     );
-    const { source, times } = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), feed === "inline" ? Date.now() : undefined);
+    const { source, times, clockEnds, timings } = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), feed === "inline" ? Date.now() : undefined);
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
+    await source.feed(Math.max(0, initial.position - 1), 1, 0);
     times.set(initial.position, await bootstrapClock(source, roots[0]!, initial));
     // [DX-R3] Why: admission follows the actual source capability, never the requested creation policy.
     // Rejected: treating old sealed seeds as strict when reopening them cannot change their contract.
     const capability = await client.request("POST", `/v2/db/${db.db}/reach-many`, {
       replicaCapability: true, basis: { recordedPosition: initial.position, validAt: Date.now() },
     });
-    const host = new ReplicaReadHost(source, times, historyBytes, capability.supported === true && capability.strictRecordClocks === true);
+    const host = new ReplicaReadHost(source, times, historyBytes, capability.supported === true && capability.strictRecordClocks === true, clockEnds, timings);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
     host.replica.start();

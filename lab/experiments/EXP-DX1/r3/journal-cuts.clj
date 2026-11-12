@@ -1,0 +1,40 @@
+(ns dxr3.journal-cuts (:require [clojure.java.io :as io]))
+;; [DX-R3-P8] Why: execute the shipped page encoder against an explicit two-journal physical commit.
+;; Rejected: trusting a synthetic transport's claimed end position without testing its source encoding.
+(doseq [n '[d storage reach feed admission stats]]
+  (create-ns (symbol (str "dxr3.fake-" n)))
+  (alias n (symbol (str "dxr3.fake-" n))))
+(defn stub [n sym f] (intern (the-ns (symbol (str "dxr3.fake-" n))) sym f))
+(stub 'd 'db (fn [_] :db))
+(stub 'd 'index-range (fn [& _] [{:e :physical :v 2}]))
+(stub 'd 'datoms (fn [_ _ e a] (when (= [e a] [:physical :triplex.tx/journals]) [{:v :j1} {:v :j2}])))
+(stub 'storage 'safe-position identity)
+(stub 'storage 'await-position (fn [db & _] db))
+(stub 'storage 'await-record-time (fn [_ db _] db))
+(stub 'storage 'head-position (fn [& _] 2))
+(stub 'reach 'select-db (fn [_ db _] [db]))
+(stub 'reach 'decline! (fn [why] (throw (ex-info why {}))))
+(stub 'reach 'append-string! (fn [out s] (.append ^StringBuilder out (pr-str s))))
+(stub 'reach 'build-response (fn [& _] (throw (Exception. "Unexpected payload branch"))))
+(stub 'admission 'execute (fn [_ f] (f)))
+(stub 'admission 'journals :journals)
+(stub 'feed 'await-db (fn [& _] (throw (Exception. "Unexpected wait"))))
+(stub 'd 'basis-t (fn [_] 10))
+(stub 'stats 'bump! (fn [& _]))
+(create-ns 'dxr3.fake-lean) (alias 'lean 'dxr3.fake-lean)
+(stub 'lean 'decode identity)
+(create-ns 'dxr3.fake-json) (alias 'json 'dxr3.fake-json)
+(stub 'json 'read-str identity)
+(defn supported! [& _])
+(defn replica-supported! [& _])
+(defn declined [e] (throw e))
+(defn value [_ e a] (get {[:j1 :triplex.journal/position] 1 [:j2 :triplex.journal/position] 2
+                         [:j1 :triplex.entity/id] "journal1" [:j2 :triplex.entity/id] "journal2"} [e a]))
+(def forms (with-open [r (java.io.PushbackReader. (io/reader "packages/datomic/gateway/src/triplex/gateway/journal.clj"))]
+             (binding [*read-eval* false] (doall (take-while #(not= ::eof %) (repeatedly #(read r false ::eof)))))))
+(eval (first (filter #(and (seq? %) (= 'defn (first %)) (= 'page (second %))) forms)))
+(doseq [[after expected] [[0 "\"clockEnds\":[[1,2]]"] [1 "\"clockEnds\":[[2,2]]"]]]
+  (let [out (page :conn "scope" {"after" after "limit" 1 "waitMs" 0})]
+    (assert (.contains ^String out expected) out)
+    (println out)))
+(println "actual journal encoder: two pages, one immutable physical end; no native engine claim")

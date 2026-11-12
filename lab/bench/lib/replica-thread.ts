@@ -8,7 +8,7 @@ import type { Basis, PullResult, CompositionHandle } from "./composition.ts";
 export class ReplicaThread {
   readonly index = { floor: 0, position: 0, historyBytes: 0, positions: 20_000, maxBytes: 0 };
   readonly replica = { bytes: 0 };
-  readonly applied: { position: number; at: number }[] = [];
+  readonly applied: { position: number; at: number; availableAt?: number; receivedAt?: number }[] = [];
   readonly endpoint: string;
   private worker: Worker;
   private head: () => Promise<number>;
@@ -36,7 +36,7 @@ export class ReplicaThread {
     this.worker.on("message", m => {
       if (m.type === "ready" || m.type === "progress") { Object.assign(this.index, m.index); this.replica.bytes = m.bytes; }
       if (m.type === "ready") ready();
-      if (m.type === "progress" && m.valid) this.applied.push({ position: m.index.position, at: m.at });
+      if (m.type === "progress" && m.valid) this.applied.push(m.timing ?? { position: m.index.position, at: m.at });
       if (m.type === "head") void this.head().then(value => this.worker.postMessage({ type: "head-reply", id: m.id, value }), error => this.worker.postMessage({ type: "head-reply", id: m.id, error: String(error) }));
       if (m.type === "reply") {
         const p = this.pending.get(m.id); this.pending.delete(m.id);
@@ -76,13 +76,16 @@ export class ReplicaThread {
 
 // [DX-R3] Why: follow-delay percentiles must expose ACKed positions absent from the observed applied prefix.
 // Rejected: silently treating a missing or invalidated application as a zero-delay success.
-export function appliedDelay(applied: readonly { position: number; at: number }[], acked: ReadonlyMap<number, { at: number }>) {
-  const h = new Histogram(), seen = new Set<number>();
+export function appliedDelay(applied: readonly { position: number; at: number; availableAt?: number; receivedAt?: number }[], acked: ReadonlyMap<number, { at: number }>) {
+  const h = new Histogram(), availability = new Histogram(), transport = new Histogram(), apply = new Histogram(), seen = new Set<number>();
   for (const x of applied) {
     const ack = acked.get(x.position);
-    if (ack && !seen.has(x.position)) { seen.add(x.position); h.recordMs(Math.max(0, x.at - ack.at)); }
+    if (ack && !seen.has(x.position)) { seen.add(x.position); h.recordMs(Math.max(0, x.at - ack.at));
+      if (x.availableAt !== undefined) availability.recordMs(Math.max(0, x.availableAt - ack.at));
+      if (x.availableAt !== undefined && x.receivedAt !== undefined) transport.recordMs(Math.max(0, x.receivedAt - x.availableAt));
+      if (x.receivedAt !== undefined) apply.recordMs(Math.max(0, x.at - x.receivedAt)); }
   }
-  return { ...h.summary(), acknowledgedPositions: acked.size, unappliedAcknowledgedPositions: [...acked.keys()].filter(p => !seen.has(p)) };
+  return { ...h.summary(), stages: { acknowledgedToAvailable: availability.summary(), availableToReceived: transport.summary(), receivedToApplied: apply.summary() }, acknowledgedPositions: acked.size, unappliedAcknowledgedPositions: [...acked.keys()].filter(p => !seen.has(p)) };
 }
 
 export function replicaThreadEnvironment(env: NodeJS.ProcessEnv) {

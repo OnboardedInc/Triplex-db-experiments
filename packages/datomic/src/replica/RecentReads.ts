@@ -11,6 +11,7 @@ export interface ReadBasis {
 type Version = { from: number; until: number; entity: PackedEntity };
 export interface ReadDelta extends ReplicaUpdate {
   readonly recordTime?: number;
+  readonly clockEnd?: number;
 }
 export interface ReadImage {
   readonly floor: number;
@@ -20,6 +21,7 @@ export interface ReadImage {
   readonly history: readonly (readonly [string, readonly Version[]])[];
   readonly times: readonly (readonly [number, number])[];
   readonly timeSafe: boolean;
+  readonly clockEnds?: readonly (readonly [number, number])[];
   readonly strictRecordClocks?: boolean;
 }
 // [DX-R3] Why: evict whole cuts, so every entity resolves at every admitted position.
@@ -31,6 +33,7 @@ export class RecentReads {
   private retiredStart = 0;
   private times = new Map<number, number>();
   private lastTime = -Infinity;
+  private clockEnds = new Map<number, number>();
   private timeSafe = true;
   private strictClocks: boolean;
   private retainedBytes = 0;
@@ -60,6 +63,7 @@ export class RecentReads {
       this.retiredStart = 0;
       this.retainedBytes = 0;
       this.times.clear();
+      this.clockEnds.clear();
       this.lastTime = -Infinity;
       this.timeSafe = delta.recordTime !== undefined && Number.isFinite(delta.recordTime);
       this.floor = delta.position;
@@ -90,7 +94,7 @@ export class RecentReads {
       this.current.set(id, { from: delta.position, entity });
     }
     this.position = delta.position;
-    if (delta.recordTime !== undefined) this.noteTime(delta.recordTime, delta.position);
+    if (delta.recordTime !== undefined) this.noteTime(delta.recordTime, delta.position, delta.clockEnd);
     else this.timeSafe = false;
     this.floor = Math.max(this.floor, this.position - this.positions);
     while (this.retiredStart < this.retired.length) {
@@ -108,10 +112,10 @@ export class RecentReads {
       this.retired = this.retired.slice(this.retiredStart);
       this.retiredStart = 0;
     }
-    for (const [time, p] of this.times) if (p < this.floor) this.times.delete(time);
+    for (const [time, p] of this.times) if (p < this.floor) { this.times.delete(time); this.clockEnds.delete(time); }
     this.valid = delta.valid;
   }
-  private noteTime(time: number, p: number): void {
+  private noteTime(time: number, p: number, end?: number): void {
     // [DX-R3] Why: non-monotone record clocks cannot be mapped by a position prefix.
     // Rejected: nearest timestamp (would silently answer an irregular time cut).
     if (!Number.isFinite(time)) {
@@ -120,12 +124,21 @@ export class RecentReads {
     }
     if (!Number.isSafeInteger(p) || p < this.floor) return;
     const previous = this.times.get(time);
-    if (time < this.lastTime || (previous !== undefined && previous !== p)) this.timeSafe = false;
+    if (time < this.lastTime || (previous !== undefined && previous !== p &&
+      (end === undefined || this.clockEnds.get(time) !== end || previous >= end))) this.timeSafe = false;
+    if (end !== undefined) {
+      if (!Number.isSafeInteger(end) || end < p) this.timeSafe = false;
+      else this.clockEnds.set(time, end);
+    }
     this.lastTime = Math.max(this.lastTime, time);
     this.times.set(time, p);
   }
   isOpenClock(time: number): boolean {
-    return this.timeSafe && this.times.has(time) && time >= this.lastTime;
+    return this.timeSafe && time >= this.lastTime && !this.closed(time);
+  }
+  private closed(time: number): boolean {
+    const end = this.clockEnds.get(time);
+    return end !== undefined && end <= this.position && this.times.get(time) === end;
   }
   resolve(basis: ReadBasis): number | undefined {
     if (!this.valid || !Number.isFinite(basis.validAt)) return undefined;
@@ -134,10 +147,10 @@ export class RecentReads {
       // [DX-R3] Why: a later clock closes a cut only under a source-enforced immutable strict policy.
       // Rejected: assuming ordinary SPI writers cannot regress after the observed watermark.
       if (p === undefined && !this.strictRecordClocks) return undefined;
-      // [DX-R3] Why: the last observed clock can still acquire another equal-clock journal.
-      // Rejected: detecting duplicates only after delivery (the preceding admission was already unsafe).
+      // [DX-R3-P8] Why: strict clocks close at the final journal of the physical commit.
+      // Rejected: waiting for another commit (unnecessary latency), or admitting a partial grouped commit.
       const mapped =
-        this.timeSafe && (p !== undefined || basis.recordedAt < this.lastTime)
+        this.timeSafe && (p !== undefined || basis.recordedAt < this.lastTime || this.closed(basis.recordedAt))
           ? this.times.get(basis.recordedAt)
           : undefined;
       if (mapped === undefined || (p !== undefined && p !== mapped)) return undefined;
@@ -229,6 +242,7 @@ export class RecentReads {
       history: [...this.history],
       times: [...this.times],
       timeSafe: this.timeSafe,
+      clockEnds: [...this.clockEnds],
       strictRecordClocks: this.strictRecordClocks,
     };
   }
@@ -243,6 +257,7 @@ export class RecentReads {
     this.times = new Map(image.times);
     this.lastTime = Math.max(-Infinity, ...this.times.keys());
     this.timeSafe = image.timeSafe;
+    this.clockEnds = new Map(image.clockEnds);
     this.strictClocks = image.strictRecordClocks === true;
     this.floor = image.floor;
     this.position = image.position;

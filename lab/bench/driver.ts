@@ -1258,10 +1258,14 @@ function judgeRead(r: ReadRecord) {
 // [DX-R3] Why: one byte per verdict preserves every judgment without a heap object per observation.
 // Rejected: retaining millions of identical {ok:true,kind:"correct"} objects during full-ladder analysis.
 const VERDICTS = ["correct", "error", "stale-late-arrival", "stale", "future-or-latest-state", "wrong-world", "invalid-value"].map(kind => ({ ok: kind === "correct", kind }));
+let judgingCost: { cpuMs: number; wallMs: number; reads: number; cpuMsPerRead: number } | undefined;
 function readVerdicts(): Uint8Array {
+  const cpuStart = process.cpuUsage(), wallStart = performance.now();
   const result = new Uint8Array(records.length);
   records.forEach((r, k) => { const verdict = judgeRead(r); result[k] = VERDICTS.findIndex(v => v.kind === verdict.kind); });
   judgedReadCount = result.length;
+  const cpu = process.cpuUsage(cpuStart);
+  judgingCost = { cpuMs: (cpu.user + cpu.system) / 1000, wallMs: performance.now() - wallStart, reads: result.length, cpuMsPerRead: (cpu.user + cpu.system) / 1000 / result.length };
   return result;
 }
 const bandOf = (f: number) => (f <= 10 ? "5-10" : f <= 25 ? "11-25" : "26-50");
@@ -1552,6 +1556,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
     peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
+  report.verificationCost = judgingCost;
   report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
   report.compositionIdentity = { ...report.composition, watermarkSamples: watermarkSamples.length, note: "image digest, config hash and slot per assignment are bound by the gate (lab/bin/gate.mjs NS)" };
   report.secondary = { bulkLane: "not measured (seed uses the bulk lane without live reads)", retroactiveCorrections: p3.bars[7], explainAtOldBasis: "past-valid-time reads are 5% of the P1 mix; bit-for-bit audit repeats are not measured" };

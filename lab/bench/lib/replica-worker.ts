@@ -23,7 +23,7 @@ try {
     const at = performance.timeOrigin + performance.now();
     local.notify();
     if (delta.valid && appliedLog !== undefined) fs.writeSync(appliedLog, JSON.stringify({ position: delta.position, at }) + "\n");
-    port!.postMessage({ type: "progress", index: indexStats(), valid: delta.valid, bytes, at });
+    port!.postMessage({ type: "progress", index: indexStats(), valid: delta.valid, bytes, at, timing: host.applied.at(-1) });
     for (const reader of readers) reader.postMessage({ type: "replica-delta", delta, sentAt: at });
   });
   port!.postMessage({ type: "ready", index: indexStats(), bytes: host.replica.bytes });
