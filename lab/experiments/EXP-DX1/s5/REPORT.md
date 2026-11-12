@@ -1,66 +1,62 @@
-Second-part diagnosis in progress on retained seed id 1b8525ba-a1ae-4a81-9299-82e1e9a9f932; prior report below is historical.
-DX-S5 — INCOMPLETE: no sealed 100k seed and no 100k activation. Builder diagnostic; no acceptance promotion.
-Failed seed began df3838d8; log phase f768b4e8; proof/placement ab5329b9. Recovery correction 450c1442; missing-seed guard 199ac5a9.
-T1 PASS on corrected procedure: 1k in two 500-subject chunks with injected AMQ219007/reconnect; 10k in two 5000-subject chunks with a deliberately killed driver/controller and a new resumed hold.
-The corrected resume recovered 896 stored suffix commands (215346→216242), ended at 434768, and matched 12566422 current/12570330 history rows; holds were ~923 s interrupted / 1008 s resumed, each <25 min. Corrected 1k hold: 642 s.
-1k worlds = sha256:ca15387e66e25ed5e19a4adc602e941f7f06dd8b0f1c6ca7d1a5d2f02f8171ad (444368 fact occurrences).
-10k worlds = sha256:7b4c292331396ab379423ed7faa1a095c324dcdb72afb411d0f48f93efa5624d (4488231 fact occurrences).
-Fingerprint scope: canonical ordered subject worlds, each with all reachable valid-time facts and logical assertion positions; shared facts repeat per subject.
-It excludes physical Datomic IDs, database scope names and recorded wall clocks; native current/history digests separately include physical row identity/content.
-T2 FAIL: 70k commits/P=3041238; ~9958 s hold wall, 5299.869 s command time (573.833/s). Peak sampled PG allocation 16.196 GB; minimum sampled Mac free 25.860 GiB. No 100k seal.
-T3 NOT RUN at 100k: local-copy bootstrap.
-T4 NOT RUN at 100k: one-release evaluation plus changed-output publication; three candidates in one pass.
-T5 NOT RUN at 100k: matched frozen-trace read/commit p99 ratios under 256 readers.
-T6 NOT RUN at 100k: driver peak and retained data/index/main-heap geometry (11 GiB cap).
-T7 NOT RUN at 100k: every world, output, record, published state and per-subject Python oracle; no sampling.
-Corrected 1k diagnostic: bootstrap 3.273 s; R2 pass+publication 6.090 s; all 1000 main and 3000 candidate oracle checks equal; driver peak 2170171392 B.
-Its retained data/index/main heap were 195035136/9849130/63632784 B; read/commit p99 ratios 2.065/0.797 (read miss). Seeding CPU layout; no 100k projection.
+DX-S5 — 100k sealed, live activation measured, exactness complete; time and commit-p99 bars MISSED. Builder diagnostic, no acceptance promotion.
+Measured sources: seal abb0e467; first-use activation db2a7a68; read-only candidate follow-up 4658aabe. Full seed identity/hashes and commands: SEED.md.
+Cause: b4 lines 961–995 show Java heap OOM in reach-many / Index.seek / entity_cache.revision; c1's 100k readback retained 1980M after full GC in a 2048M heap.
+AMQ startup/stale-broker errors were a symptom: retained 80k was already indexed; direct peer connect/head=3471684 took 1.553 s, gateway catch-up zero bytes/19 ms, index-t=tail-t=22058829 (diagnose80000-b, lines 71–85). Broker NIO acceptor started at 21:33:10.175 (live-jvm80000-a:23); heartbeat/location and SQL limit 100 were observed, without connection exhaustion.
+Observed peerConnectionTTLMsec=10000 and heartbeatIntervalMsec=5000 (live-jvm80000-a); no TTL increase was needed. Subsequent reconnect logs show 1 s backoff with an unbounded retry maximum.
+Fix: successful target-DB head readiness; peer caches 256 MiB object/64 MiB parsed/65536 sessions; S5-only ID memo capped at 131072 per scope/epoch with native fallback. No gateway/commit/core/replica source change.
+Complete JVM console/rotated/Clojure/GC logs now carry byte checks. b5's allegedly empty transactor section actually had all 13162 bytes; display truncation caused the confusion.
+A later Node ~2 GiB heap OOM occurred AFTER main exactness, while deserializing candidates (activation log 686, exit 133, not timer). S5 now permits 4 GiB old space within the unchanged 11 GiB cgroup and compacts reference objects to exact canonical bytes.
 
-Seeding procedure, twelve lines:
-1. Use the local images, private Docker socket and offline frozen pnpm store; build the existing public imports first.
-2. Run `node lab/bin/heavy.mjs --label DX-S5-seed100000-a -- bash lab/experiments/EXP-DX1/s5/hold.sh 100000 10000 false`.
-3. Acquire the measurement lock; require long-hold-ok, at least 15 GiB Mac/5 GiB VM free, and enforce the bounded hold/watchdogs.
-4. Create the owned PostgreSQL volume with the unchanged logical KVS hash-partitioned sixteen ways; require fsync/synchronous_commit/full_page_writes=on.
-5. Submit real commits with window 32, strict client send sequence, scalar dependencies and exact expected ACK positions.
-6. Save the complete-chunk checkpoint; recover every committed suffix journal with exact command/assertion/retraction/validity checks.
-7. Park only the owned read peer during writes; seed writer uses cores 4–5 and JS uses 6–7; bounded WARN logs rotate at 16 MB/64 MB retained.
-8. Request/sync index, collect unreachable storage and wait for stable observed KVS row/value counts; reserve the largest leaf plus disk floors; stop owned JVMs.
-9. VACUUM FULL/CHECKPOINT; restart writer/transactor and reconnect; compare every current/history row before/after at the same basis, with two complete hash streams.
-10. Restart/health-check the reader; fingerprint every prefix subject at its exact cut; seal only after clean PG stop and volume <=20,000,000,000 B.
-11. Driver interruption resumes automatically; whole-hold resume: `S5_RESUME=1 node lab/bin/heavy.mjs --label DX-S5-resume -- bash lab/experiments/EXP-DX1/s5/hold.sh 100000 10000 false`.
-12. Clone/evaluate: `bash lab/experiments/EXP-DX1/r2/window.sh tx2-dxs5-eval-100000-a tx2-dxs5-seed-100000-pg-data dxs5-w0-100000-v1 100000 --first-use-if-needed --seed-fingerprint --publish --post-capture --candidates --oracle-candidates --oracle-concurrency 8 --batch-oracle --verification-pages 4 --live --traffic-offset-s 120 --baseline-ms 100000 --live-warmup-ms 10000`.
-A corrected failed hold retains its owned unsealed data/checkpoint pair for resume, with containers removed; S5_DISCARD_ON_FAILURE=1 opts out. Finish-time cleanup removes unsealed fixtures. First-use fallback applies only to the new 100k seed.
+| Target | Observed | Result |
+| --- | --- | --- |
+| T1 | 1k: two 500-subject chunks, injected reconnect; 10k: two 5000 chunks, maintenance, deliberate kill/new-hold resume; exact reference fingerprints | Equal, prior proofs |
+| T2 | Sealed 16,830,218,240 B; table 15,754,092,544 B; peak sampled PG 22,220,980,224 B; minimum sampled Mac free 15.874 GiB | Within seal/floor bars |
+| T3 | Main bootstrap 475.817 s, 4,630,799,992 input B, 911,191,011 index B, 1563 pages | Reported |
+| T4 | Live R2: evaluation 54.939 s; setup-inclusive pass 55.822 s + publication 114.304 s = 170.125 s; 9798 changed / 154 commits | MISS 100 s |
+| T5 | Full-window read p99 3755.279→3936.765 ms (1.048×); scheduled commit 119480.656→249368.891 ms (2.087×); service 133.922→318.956 ms (2.382×) | Commit MISS 1.5× |
+| T6 | Main stage peak 9.109 GiB; complete candidate follow-up peak 9.257 GiB, both under enforced 11 GiB cap | Measured stages within cap |
+| T7 | All 100000 worlds/outputs/records/published states/main Python checks equal; all 300000 candidate outputs/records equal in second hold | Zero mismatches, no sampling |
+1k worlds sha256:ca15387e66e25ed5e19a4adc602e941f7f06dd8b0f1c6ca7d1a5d2f02f8171ad; 444368 fact occurrences. 10k worlds sha256:7b4c292331396ab379423ed7faa1a095c324dcdb72afb411d0f48f93efa5624d; 4488231 occurrences.
+10k resume recovered 896 stored suffix commands (215346→216242), ended P=434768; complete current/history rows 12566422/12570330 equal. Interrupted/resumed holds ~923/1008 s; corrected 1k 642 s.
+Fingerprints cover ordered canonical subject worlds at the cut, reachable valid-time facts/logical assertion positions; shared facts repeat. Physical IDs, scope names and recorded clocks are excluded; native row digests separately include physical identity/content.
+100k scope dxs5-w0-100000-v1, seed id 1b8525ba-a1ae-4a81-9299-82e1e9a9f932, P=4338757, 44537987 fact occurrences; independent Python population hash equality. Native row counts current/history 124817263/124856479 at basis 27564753.
+Retained build b1–b5/c1/c2: 29192 s elapsed including failures/gaps; positive-command time 10058.816 s, 431.339 commands/s. Final c2 hold 1188 s. Earlier deleted 70k trial: separate 9958 s, original cause unproven.
+Peak disk refers to sampled PG allocation; total owned disk peak was not separately captured. Mac free-space guards cover the whole filesystem.
+Clone required another 16.83 GB with only 20.47 GiB Mac free: skipped, no clone time. First use was declared; volume now contains appends, not a pristine physical seed. Historical P was reverified; final logical head 4347648, stopped allocation 16764157952 B.
+R1 preparation without live traffic: 32.077 s evaluation, 74.639 s publication, 53681 changed/839 commits; setup-inclusive 107.710 s. Read-only R2 reference 31.865 s; three-candidate pass 46.620 s / 47.446 s including setup, without live traffic.
+T5 matched 100 s prefix ratios: read 1.041×, scheduled commit 2.087×, service 2.394×; baseline did not cover full 169.427 s sweep. Follow lag p99 271.768 ms over 1216 commits. Sequential diagnostic, no clone/A-A calibration; host swap after activation was 14.56 GiB used.
+T6 main retained data/index/main post-GC heap: 5179965440/911191011/1848022656 B. Follow-up data/index/candidate main heap: 4633657344/911191011/3142315000 B; cgroup peak 9939202048 B. Buffer/index lengths and heap snapshots are not an additive peak breakdown; the crashed first container's final whole peak was not captured.
+T7 main exactness 1358.709 s, oracle-active wall 1324.560 s; inputs P, published states at 4347443, all changed-subject counts independently equal. Candidate oracle stage 357.209 s; repeated native-world/population equality at P, head unchanged 4347648→4347648, zero logical writes/live readers. Live three-candidate completion remains unmeasured after the first OOM.
 
-Seeding limits: commits, engine indexing stalls and repeated full-prefix checks; busy writer/transactor CPUs were observed, without a frame-level CPU profile.
-At 40k, owned JVM INFO logs had grown to ~3.8 GB outside PG; stopped JVM logs were retained compressed and byte-compared before reclamation.
-The controller paused for that logging-only restart; GW exits were 137, TX 143; the restarted head remained exactly 1739437. PG durability was unchanged.
-Later source window added parallel complete native hashes and read-peer parking; the native memory unit checks identical serial/parallel bytes (1000 current/1002 historical).
-The real SQL 50k pre/post maintenance digests matched all 62596454 current/62616210 historical rows; fresh post-scan took 42.953 s.
-At 70k the post-vacuum peer could not connect to the transactor (AMQ219007). Old cleanup deleted the partial seed; its missing JVM diagnostics leave the original cause unproven.
-Next: rerun the long seed with corrected stop/reconnect/retention and retained failure diagnostics; reproduce the original failure at scale if it recurs. Evaluation bottlenecks remain unmeasured; a fresh 100k build/evaluation cannot fit the remaining ten-hour budget.
+Procedure, twelve lines:
+1. Use local images/offline dependencies and the private Docker socket; run every engine job through heavy.mjs.
+2. Acquire measurement lock/owner.json, long-hold-ok and bounded timer; refuse below Mac 15 GiB/VM 5 GiB and watch both throughout.
+3. Create or validate the owned data/checkpoint volume pair, seed id, N/chunk/mapper/releases; retain the pair on failure.
+4. Submit real commits in 10000-subject chunks, window 32, strict per-client order and exact expected ACK positions; no durability relaxation.
+5. Recover every committed suffix journal with exact command/assertion/retraction/validity checks; fsync/rename the checkpoint.
+6. Park only the owned read peer while writing; bounded logs rotate, peer memo/caches are bounded; use idle writer CPUs for full readback.
+7. Request/sync index, run gc-storage, wait for six stable row/value polls (up to 360), not merely job submission success.
+8. Hash every current/history entity-row datom at one native basis before maintenance; preserve both complete streams' counts/digests.
+9. Stop owned JVMs; reserve largest live leaf plus disk floors, VACUUM FULL all sixteen physical partitions and CHECKPOINT.
+10. Restart, wait for a successful target-head read, repeat full native digests at the same basis, then fingerprint every prefix world at the exact logical head.
+11. Resume: `S5_RESUME=1 node lab/bin/heavy.mjs --label DX-S5-resume -- bash lab/experiments/EXP-DX1/s5/hold.sh 100000 10000 false`; after final verification, clean PG stop and <=20 GB seal, remove tools.
+12. Clone current retained volume for historical verification when space permits: use the follow-up command below with fresh names and OMIT --verify-in-place (insufficient reserve refuses); it verifies P, not a pristine physical copy.
 
-PASS audit — content, freshness and binding:
-`w0-seed.ts` checks actual ACK positions; `seed.ts` binds checkpoint format/scope/N/mapper/releases, validates every fresh suffix byte, and only marks verified subjects after full readback at the unchanged head.
-`maintain.clj` compares complete current/history content at one native basis through fresh pre/post peers; its serial/parallel memory parity is only a unit gate.
-`verify-log-archive.py` compares every retained/original byte, requires this hold's archive and stopped unchanged container ID, and reads back zeroed files/new configuration bytes.
-`w0-replica-driver.ts` retains every frozen-world/output/record/state/count comparison against native reads and unchanged O-DOMAIN; candidate oracle checks all 3N; timing-only output says pending.
-`hold.sh` binds resume ownership/input labels/pair identity; unsealed retention is not PASS. Sealing requires fresh full verification, clean PG stop, bytes and cleanup checks; `window.sh` refuses missing seeds and requires full driver success. Interruption binds the native PID/start/command and exact owned driver.
-Range/parallel tests compare actual fresh fixture worlds/oracle bytes, preserve order/bounds, and reject failures; no historical receipt becomes a fresh PASS.
-No lab/acceptance file or pinned owned path changed; no package, gateway, core, merge, push, publish or deployment change.
+Seeding is limited by the real commit path plus indexing/GC/reclamation and repeated full-prefix reads; command time was only 10059 s of the 29192 s retained-build elapsed. No frame-level CPU profile was taken.
+Activation publication dominates (114.304 s versus 54.939 s evaluation): publisher fetches current head/outbox state in 1563 native pages and emits 154 frames while live writers run. Next: use ordered-feed current outbox state with exact freshness checks, then measure writer contention; retain the same frozen trace.
+Verifier cost also includes rebuilding reached-row lookup maps per subject/page and main-thread serialization; reuse a page index next. Four-GiB old space fixed candidate OOM, but its non-live speed cannot be attributed to heap alone.
+Activation command: `node lab/bin/heavy.mjs --label DX-S5-activation100000-a -- bash lab/experiments/EXP-DX1/r2/window.sh tx2-dxs5-eval-100000-a tx2-dxs5-seed-100000-pg-data dxs5-w0-100000-v1 100000 --first-use-if-needed --seed-position 4338757 --seed-fingerprint --publish --post-capture --candidates --oracle-candidates --oracle-concurrency 8 --oracle-processes 3 --batch-oracle --verification-pages 4 --live --traffic-offset-s 120 --baseline-ms 100000 --live-warmup-ms 10000`.
+Follow-up: `node lab/bin/heavy.mjs --label DX-S5-candidates100000-a -- bash lab/experiments/EXP-DX1/r2/window.sh tx2-dxs5-eval-100000-candidates-a tx2-dxs5-seed-100000-pg-data dxs5-w0-100000-v1 100000 --verify-in-place --verify-candidates-at-seed --seed-position 4338757 --seed-fingerprint --candidates --oracle-candidates --oracle-concurrency 8 --oracle-processes 3 --batch-oracle --verification-pages 4`.
 
-Checks: targeted S5/R2 TypeScript; four focused Node tests; native parallel parity; focused formatting and lint (zero warnings/errors); shell syntax.
-Root check/pack not run (bench-only changes). Every expensive run uses `node lab/bin/heavy.mjs --label DX-S5-* -- <command>`.
-Final proofs: `S5_TEST_BROKER_DOWN=1 ... hold.sh 1000 500 false true`; `... hold.sh 10000 5000 false`; `python3 .../s5/interrupt-for-proof.py <proof10000-c.log>`; `S5_RESUME=1 ... hold.sh 10000 5000 false`, all engine holds through heavy.mjs.
-Evidence: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S5/ — raw command output only, compressed when closed; no hash manifests/source captures.
-Final T1: proof1000-h.log.gz, proof10000-c.log.gz, proof10000-c-interrupt.log.gz, proof10000-d-resume.log.gz. Failed long run: seed100000-a.log.gz. Retained engine logs: seed-{tx,gww,gwr}-info-a.tar.gz.
-First failures retained: import/store/mount setup, canceled queued holds, 10k-a timeout before final maintenance, log PID sandbox check, head-helper mount, occupied unit helper name.
-Final inventories: zero DX-S5 containers, volumes and networks; no runtime directories remain. Original H5/H8 volumes were never mounted writable or modified. Evidence totals <1 GB compressed.
-
-Second-part audit: readiness.clj compares a fresh d/connect+d/sync database head with the explicit expected head and emits URI/basis; diagnose.sh binds the held slot and exact retained volume-pair identity. This is connectivity evidence, not seed qualification.
-Readiness audit: wait-ready.mjs requires a fresh HTTP 200 with encoded long head >= this attempt checkpoint, target database path and owned network; seed.ts still checks exact head and every world before qualification. No readiness output seals a seed.
-Oracle pool audit: each call uses an isolated unchanged DomainOracle child and its FIFO response queue; 24 distinct frozen requests matched original serial bytes. All full-scale comparisons still check every subject/candidate and their frozen cuts; seed-position rejects a consumed first-use head.
-The final 100k seed.ts world-hash gate compares the fresh ordered readback against the unchanged Python population oracle (population100000-a, 164.1 s), rather than a candidate observation; checkpoints still bind the unchanged seed mapper/releases.
-Explicit --seed-position also retains the fresh immutable bootstrap snapshot for R1/R2/candidate inputs and all native/oracle input comparisons; activation/outbox positions remain separately reported. Defaults are unchanged.
-bounded-gateway/id_memo_test: eviction changes only the positive ID accelerator; native lookups at the exact db remain the fallback, scope/epoch keys are preserved, and the fresh memory test compares every row across concurrent evictions and three cuts/two epochs before emitting its unit result.
-Second-hold audit: --verify-candidates-at-seed rejects missing cut/fingerprint/three-candidate oracle and all mutation/traffic entry points before engine access; it reads a fresh observed head >= P and bootstraps exactly P, retaining all N native-world/fingerprint checks and all 3N Python output/record checks.
-It emits main-exactness-not-rerun with zero main/state comparisons, never a replacement main/publication PASS. Candidate reference compaction preserves every canonical byte and checks both N-sized arrays; pending measurements remain pending until complete oracle coverage. window.sh's in-place verifier is only available for the owned 100k seed and rejects bypassing corpus/journal entry points.
+Content/freshness/binding audit of every verdict-producing place:
+`w0-seed.ts` checks actual ACK positions; `seed.ts` binds fresh checkpoint/suffix bytes to scope/N/mapper/releases and exact head, marks verified only after complete readback, and requires independent full-population fingerprint equality at 100k.
+`maintain.clj` compares complete fresh current/history row bytes/counts at the same native basis before/after index/GC/VACUUM; GC stability alone is not semantic PASS. `verify-log-archive.py` checks every original/retained byte, stopped unchanged owned container identity, and read-back reclamation/configuration.
+`hold.sh` binds owned volume-pair labels/seed id/inputs/source; seal requires this attempt's complete fingerprint/native proof, clean PG stop and measured <=20 GB. Summary commands check unique bound raw events, not mere exit status; retained partial volumes are never PASS.
+`readiness.clj` uses fresh connect/sync/head; `wait-ready.mjs` requires fresh HTTP 200, typed target head >= checkpoint, owned target/network, with exact seed-head/world checks following. These emit connectivity evidence, not seed qualification; failure-logs.py checks complete emitted byte counts.
+`w0-replica-driver.ts` checks every ordered N world/output/record and stored state at explicit cuts, independent O-DOMAIN and changed counts. Pending timings never assert exactness. Candidate-only mode requires P/full fingerprint/3 candidates, rejects mutation/traffic/bypass flags, checks all 3N bytes/records, and final head equals this attempt's initial head; main/state comparisons are explicitly NOT rerun.
+Reference compaction retains every canonical candidate byte and checks both arrays' N coverage before comparison. `bounded_gateway.clj` retains scope/epoch keys/native fallback; id_memo_test compares 16384 native rows across fresh UUID databases, shifted IDs, three cuts/two epochs/concurrent eviction, observed max 128 and exact insert/eviction accounting before its unit verdict.
+Range/parallel/oracle-pool/readiness/seed-pin tests use fresh fixtures, exact ordered/golden bytes, count/bound checks and negative failures; 24 distinct pooled oracle requests matched original serial bytes. No historical receipt is treated as fresh execution.
+Checks: nine focused Node tests, targeted S5/R2 TypeScript, native bound unit, formatting/lint (zero warnings/errors), all S5/R2 shell syntax and four Python ASTs. Root check/pack not run (bench-only changes). No pinned owned path found; lab/acceptance unchanged; no gateway/core/replica package edits, merge or push.
+Evidence: /Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S5/ — 424501670 B compressed raw command output, first failures retained; no hash manifests/source captures.
+T1: proof1000-h.log.gz, proof10000-c.log.gz, proof10000-c-interrupt.log.gz, proof10000-d-resume.log.gz. T2/cause: orch-seed100000-b*.log.gz, seed100000-c*.log.gz, probe80000-c.log.gz, readback100k-jvm-a.log.gz, population100000-a.log.gz, idmemo-unit-b.log.gz; earlier deleted trial seed100000-a.log.gz. Activation/candidates: activation100000-a.log.gz, candidates100000-a.log.gz; final checks/inventory: final-types-c.log.gz, final-units-c.log.gz, final-static-c.log.gz, final-inventory-b.log.gz.
+Final inventory: no owned containers/networks/runtime directories; only tx2-dxs5-seed-100000-pg-data retained, own hold released. H5/H8 originals never mounted writable. Open: T4/T5 misses, no completed live three-candidate result or pristine clone; separate reviewer still required.
