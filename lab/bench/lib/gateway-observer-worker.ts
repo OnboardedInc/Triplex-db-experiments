@@ -26,7 +26,12 @@ try {
         const observed=readObservation({...result,route:"fallback",waitedMs:m.waitedMs,replicaFallbackReason:m.reason});
         checks.recordMs(performance.now()-start); captures++;
         port!.postMessage({id:m.id,value:observed});
-      } catch(error) { const message=String(error); errors[message]=(errors[message]??0)+1; port!.postMessage({id:m.id,error:message}); }
+      } catch(error) {
+        // [DX-R3-P9] Why: retain first source failure reasons without an unbounded per-position diagnostic map.
+        // Rejected: discarding the reason again, or retaining every unique error string in a long failed run.
+        const message=String(error), key=message in errors || Object.keys(errors).length<32 ? message : "other errors";
+        errors[key]=(errors[key]??0)+1; port!.postMessage({id:m.id,error:message});
+      }
     });
   });
   port!.postMessage({type:"ready"});
