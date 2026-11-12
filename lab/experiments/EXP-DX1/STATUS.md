@@ -1575,3 +1575,32 @@ by two settings, the candidate stage inside 11 GiB.
 **Decision owed to Sam:** the CPU split between engine and runtime. With reads answered in the runtime the read gateway is
 nearly idle, and the runtime now carries readers, follower, evaluation and writer. The test bed has used 4 + 4; part 4 tries
 3 + 5.
+
+## 2026-11-12 10:40 UTC: DX-R3 part 9 bisection: strict clocks are not the cause; the commit median is 2x slower in every arm
+
+DX-R3 part 9 (`b648ac2b`, not merged). Zero-reader writer trace, 10,000 subjects, first 200 s, default placement, `nohlt`,
+3,420 correct read-your-own-write checks per arm, zero violations. Arms ran in two holds (A and B, then C and D).
+
+| Arm (read path / scope) | Steady p50 / p99 ms | Burst p50 / p99 / max ms | Clock / CAS refusals | Commit thread busy / longest block ms | Follow p99 ms |
+| --- | --- | --- | --- | --- | --- |
+| A gateway / non-strict | 24.6 / 139.0 | 18.4 / 99.8 / 218 | 10 / 116 | 0.114 / 75 | |
+| B gateway / strict | 28.7 / 170.1 | 20.7 / 103.1 / 198 | 7 / 116 | 0.120 / 80 | |
+| C replica / non-strict | 28.1 / 135.1 | 18.2 / 156.1 / 431 | 12 / 116 | 0.133 / 253 | 72.7 |
+| D replica / strict | 29.4 / 123.7 | 18.5 / 167.5 / 408 | 10 / 116 | 0.132 / 177 | 52.0 |
+
+1. **Strict clocks do not explain the regression** (A against B, C against D). Clock refusals are 7 to 12 per run.
+2. **The seconds-long tail in part 8 came from the transactor's collector:** that run placed the transactor on one CPU, where
+   the JVM selects Serial GC (42 pauses, longest 531 ms). With G1 at a 25 ms goal on the same placement: burst p99 282 to
+   92 ms, steady p99 559 to 155 ms. `h4/run.sh` now selects G1 when the transactor has one CPU.
+3. The replica path adds tail (burst p99 156 to 167 against 100): read-your-own-write captures that miss the copy ran full
+   gateway decoding on the commit thread (82 misses, 253 ms block). A worker for them exists, opt-in, not yet stress-proven.
+4. **Arm A itself is twice as slow as the same configuration earlier:** burst p50 18.4 ms against 9.1 to 9.3 in the JVM-arm
+   runs (`0e1c0144`) and 8.9 in q6 (`1eea10e2`); q7's zero arm (`55eb490b`, replica path) was 12.4 / 66.7. The agent tried
+   and rejected three explanations (expected-row hashing, the older commit function, atomic clock allocation). Either the
+   shared write path regressed during DX-R3's parts, or the host has drifted (swap 12 to 17 GB for a day, load 12).
+5. 256 readers: a larger or absent world cache does not help (26,613 / 7,095 / 15,127 reads/s at 64 / 256 / 1,024 with
+   32 MiB; 22,519 / 8,217 / 10,545 without); the no-cache run had 131 read-your-own-write errors. Unresolved.
+
+**Orchestrator check running (10:38 UTC):** `quiet/old-new-arms.sh`, the same zero-reader trace alternately on the frozen
+checkout at `0e1c0144` and on DX-R3's head (old, new, new, old). Old code slow now means host drift; old code fast means a
+code regression to bisect by commit.
