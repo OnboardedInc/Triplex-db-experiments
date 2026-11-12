@@ -371,10 +371,19 @@ export async function runReplicaDriver(argv: string[]) {
     if (candidateVerification || repeatActivation) cut = seedPosition!;
     // [DX-S5] Why: include this attempt's outboxes in the ordered-feed copy; absence at P is read from storage, not presumed from a UUID.
     // Rejected: treating an arbitrary namespace as empty without reading its exact initial cut.
+    const trialOutboxRoots = publicationTrials.flatMap((t) =>
+      subjects.map((subject) => "p5:outbox:" + t.id + ":" + subject),
+    );
     await replica.bootstrap(
-      publicationId || publication ? [...subjects, ...subjects.map(outboxEntity)] : subjects,
+      publicationId || publication
+        ? [...subjects, ...subjects.map(outboxEntity), ...trialOutboxRoots]
+        : subjects,
       cut,
     );
+    // [DX-S5] Why: configured empty roots remain explicit empty entities in snapshots, including later trial namespaces.
+    // Rejected: treating Replica.world's missing-root exception as evidence of absence.
+    if (trialOutboxRoots.some((id) => replica.world(id).length))
+      throw Error("trial namespace already exists at seed cut");
     if (publicationId && subjects.some((s) => replica.world(outboxEntity(s)).length))
       throw Error("publication namespace already exists at seed cut");
     (globalThis as any).gc?.();

@@ -246,6 +246,10 @@ export function bindPublicationProfiles(responses: any[]) {
     t.requests = bound.flatMap((c) => c.attempts.flatMap((a: any) => a.requests ?? []));
     t.nativeFrames = frames.filter((f) => f.operationId === bound[0].operationId);
     t.publishRequests = bound[0].httpCalls;
+    t.publishResponseBytes = t.requests.reduce(
+      (n: number, q: any) => n + (q.responseBytes ?? 0),
+      0,
+    );
     t.publishDatoms = t.requests.reduce((n: number, q: any) => n + (q.datoms ?? 0), 0);
     t.publishSerializeMicros = t.requests.reduce(
       (n: number, q: any) => n + (Number.isFinite(q.serializeMicros) ? q.serializeMicros : 0),
