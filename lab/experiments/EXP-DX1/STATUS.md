@@ -1471,3 +1471,35 @@ then the verdict run at 100,000.
 
 This is the first equivalence result on the code that carries all nine review fixes and the position-forwarding fix on the
 expected side. Still owed from the agent's list: why the two earlier 200,000-pair runs passed before that fix.
+
+## 2026-11-12 03:02 UTC: ladder on the final local-read code: exact, and 10 to 30 times slower than part 2
+
+`r3/run.sh benchmark p8-ladder` from `794b034b` (`evidence/DX-R3/orch-p8-ladder.log`), strict-clock scope, `nohlt`, 28 s windows.
+Zero violations, zero errors, status DONE, a locally answered raw sample compared with the gateway at every level.
+
+| Readers | Correct reads/s (part 2, `5cb5ec95`) | Read p50 / p99 ms (part 2 p99) | Local share (part 2) |
+| --- | --- | --- | --- |
+| 1 | 676 (21,447) | 0.068 / 12.4 (0.14) | 0.664 (1) |
+| 4 | 1,827 (54,523) | 0.069 / 21.6 (0.16) | 0.733 (1) |
+| 16 | 1,868 (54,385) | 0.163 / 56.3 (0.34) | 0.687 (1) |
+| 64 | 3,103 (42,086) | 0.285 / 154.6 (1.19) | 0.868 (0.99995) |
+| 256 | 3,261 (36,108) | 0.299 / 266.2 (4.90) | 0.975 (0.9986) |
+
+Acknowledgement-to-applied (follower on a worker, fed by the read gateway): p50 0, p90 137 ms, p99 532 ms.
+
+Reading: the median local read is unchanged (0.07 to 0.3 ms). The rate and the tail are set by the 3 to 34% of reads sent
+to the gateway, nearly all time-only reads on a cut the F3/R2-B rule does not yet call closed (it waits for a later journal
+with a strictly greater clock). **At these numbers local reads on the exact code are slower than the gateway path at 64 and
+256 readers (q6: 4,655 and 4,186 reads/s), so P1's read bars are not met on the exact code.** The part-2 numbers in q7 were
+taken with the narrower payload and the weaker check and are not a verdict.
+
+**Orchestrator's argument for the fix:** in a strict scope the commit function rejects any clock not strictly above the
+scope's maximum, so clocks increase strictly with position and the copy applies in position order; once a journal with a
+clock at or above `t` is applied, the cut at `t` is final. A read at the newest applied clock is answerable at once; only `t`
+beyond it must wait. The stricter rule is needed only in non-strict scopes, which already send time-only reads to the
+gateway.
+
+**DX-R3 resumed 03:01 UTC, part 8** (`~/Claude/Projects/triplex-db-2/agents/prompts/DX-R3-resume7.md`): verify that argument
+against the code and apply it; follow delay p99 under 100 ms; judging off the read's path; targets 40,000 reads/s at 64,
+256 at least the 64 rate, p99 at most 25 ms, local share at least 0.99 including time-only reads; then one full pair on a
+strict scope.
