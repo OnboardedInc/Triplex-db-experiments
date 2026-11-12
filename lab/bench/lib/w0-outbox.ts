@@ -12,6 +12,7 @@ export interface PublicationOptions {
   stateRows?: readonly import("./w0-world.ts").WorldRow[];
   gapMs?: number;
   yieldToWriter?: boolean;
+  maxWriterYieldMs?: number;
 }
 // [DX-S5] Why: publication yields before submission while frozen-trace offers await ACK, preserving the trace's own serial order.
 // Rejected: merely reducing average publication rate while already queued frames continue ahead of live commits.
@@ -157,7 +158,13 @@ export async function publishRecords(
     await previousSubmission;
     const submissionOrderWaitMs = performance.now() - orderingStarted;
     const yieldStarted = performance.now();
-    while (options.yieldToWriter && liveWriterBacklog > 0)
+    // [DX-S5] Why: a saturated trace kept the old strict-idle gate waiting 198 s at only 1k subjects.
+    // Rejected: starving publication until the entire burst queue empties; the in-flight bound still limits native interference.
+    while (
+      options.yieldToWriter &&
+      liveWriterBacklog > 0 &&
+      performance.now() - yieldStarted < (options.maxWriterYieldMs ?? 50)
+    )
       await new Promise((r) => setTimeout(r, 1));
     const writerYieldMs = performance.now() - yieldStarted;
     const committing = measureHttp(() =>

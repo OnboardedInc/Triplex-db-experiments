@@ -6,7 +6,12 @@ import { sha256 } from "./w0-world.ts";
 import { Worker } from "node:worker_threads";
 import { generateTrace } from "./trace.ts";
 import { applyW0Trace, percentile } from "./w0-traffic.ts";
-import type { Replica, ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
+import {
+  pullAt,
+  type RecentReads,
+  type Replica,
+  type ReplicaSnapshot,
+} from "../../../packages/datomic/dist/index.js";
 import { Rng, seedOf } from "./rng.ts";
 import { W0 } from "./w0-world.ts";
 import type { CompositionHandle } from "./composition.ts";
@@ -14,7 +19,7 @@ const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 5));
 const now = () => performance.timeOrigin + performance.now();
 // [DX-S5] Why: keep 256 requests outstanding without running all their synchronous graph decodes before the next I/O turn.
 // Rejected: 256 independent setImmediate callbacks in one phase (artificially starves trace RPCs and feed responses).
-export function localReadTurns(batch = 8) {
+export function localReadTurns(batch = 1) {
   if (!Number.isInteger(batch) || batch < 1 || batch > 32) throw Error("invalid local read batch");
   const waiting: (() => void)[] = [];
   let scheduled = false;
@@ -47,6 +52,7 @@ export async function startW0Live(o: {
   offsetS: number;
   warmupMs?: number;
   replica?: Replica;
+  currentReads?: RecentReads;
   commandNamespace?: string;
 }) {
   const warmupMs = o.warmupMs ?? 0;
@@ -56,6 +62,19 @@ export async function startW0Live(o: {
     commits: any[] = [],
     writes: any[] = [];
   const log = fs.openSync(path.join(o.dir, o.id + "-traffic.ndjson"), "wx");
+  let rawBuffer = "";
+  const flushRaw = () => {
+    if (rawBuffer) {
+      fs.writeSync(log, rawBuffer);
+      rawBuffer = "";
+    }
+  };
+  // [DX-S5] Why: batch raw NDJSON transport rather than performing one synchronous VM/host write per local read.
+  // Rejected: sampling telemetry or allowing instrumentation I/O to dominate the runtime's event loop.
+  const appendRaw = (line: string) => {
+    rawBuffer += line;
+    if (rawBuffer.length >= 65536) flushRaw();
+  };
   let failed: unknown,
     stopped = false,
     start = 0,
@@ -69,13 +88,13 @@ export async function startW0Live(o: {
     pendingPosition = -1;
   const observeRead = (m: { started: number; ms: number; [key: string]: unknown }) => {
     reads.push(m);
-    fs.writeSync(log, JSON.stringify({ kind: "read", ...m }) + "\n");
+    appendRaw(JSON.stringify({ kind: "read", ...m }) + "\n");
   };
   try {
     if (o.replica) {
       // [DX-S5] Why: 256 current-state reads use the followed copy's own immutable snapshot API, with one cached view per applied cut.
       // Rejected: gateway traffic masquerading as runtime reads, or copying the multi-gigabyte base image for each request.
-      snapshot = await o.replica.snapshotAt(o.replica.position);
+      if (!o.currentReads) snapshot = await o.replica.snapshotAt(o.replica.position);
       const readTurn = localReadTurns();
       localReaders = Array.from({ length: 256 }, (_, reader) =>
         (async () => {
@@ -85,24 +104,41 @@ export async function startW0Live(o: {
             await readTurn();
             // [DX-S5] Why: drain reads already offered before stop so their full latency remains in the window.
             // Rejected: censoring the final 256 pending reads when the activation ends.
-            if (snapshot!.position !== o.replica!.position) {
-              const p = o.replica!.position;
-              if (p !== pendingPosition) {
-                pendingPosition = p;
-                pendingSnapshot = o.replica!.snapshotAt(p);
+            const subject = W0.placementId(rng.int(o.N));
+            let rows: readonly import("./w0-world.ts").WorldRow[], position: number;
+            if (o.currentReads) {
+              position = o.replica!.position;
+              if (o.currentReads.position !== position)
+                throw Error("current read index watermark mismatch");
+              const answer = await pullAt(
+                o.currentReads,
+                subject,
+                { recordedPosition: position, validAt: o.replica!.validAt },
+                async () => {
+                  throw Error("unexpected current-read fallback");
+                },
+              );
+              if (answer.route !== "replica") throw Error("current read escaped replica");
+              rows = answer.value.rows;
+            } else {
+              if (snapshot!.position !== o.replica!.position) {
+                const p = o.replica!.position;
+                if (p !== pendingPosition) {
+                  pendingPosition = p;
+                  pendingSnapshot = o.replica!.snapshotAt(p);
+                }
+                snapshot = await pendingSnapshot!;
               }
-              snapshot = await pendingSnapshot!;
+              position = snapshot!.position;
+              rows = snapshot!.world(subject);
             }
-            const view = snapshot!,
-              subject = W0.placementId(rng.int(o.N));
-            const rows = view.world(subject);
-            if (!rows.length || rows.some((row) => row.position > view.position))
+            if (!rows.length || rows.some((row) => row.position > position))
               throw Error("invalid local read cut/content");
             observeRead({
               started,
               ms: now() - started,
-              position: view.position,
-              validAt: view.validAt,
+              position,
+              validAt: o.replica!.validAt,
               subject,
               rows: rows.length,
             });
@@ -115,7 +151,13 @@ export async function startW0Live(o: {
       await Promise.all(
         Array.from({ length: 8 }, async (_, worker) => {
           const w = new Worker(new URL("./w0-replica-live-worker.ts", import.meta.url), {
-            workerData: { ...o, comp: undefined, replica: undefined, worker },
+            workerData: {
+              ...o,
+              comp: undefined,
+              replica: undefined,
+              currentReads: undefined,
+              worker,
+            },
           });
           workers.push(w);
           done.push(
@@ -134,8 +176,7 @@ export async function startW0Live(o: {
             w.on("message", (m) => {
               if (m.type === "ready") resolve();
               if (m.type === "failure") {
-                fs.writeSync(
-                  log,
+                appendRaw(
                   JSON.stringify({ kind: "failure", worker, at: now(), error: m.error }) + "\n",
                 );
                 failed = Error(m.error);
@@ -143,7 +184,7 @@ export async function startW0Live(o: {
               }
               if (m.type === "read") {
                 reads.push(m);
-                fs.writeSync(log, JSON.stringify({ kind: "read", ...m }) + "\n");
+                appendRaw(JSON.stringify({ kind: "read", ...m }) + "\n");
               }
             });
           });
@@ -151,6 +192,7 @@ export async function startW0Live(o: {
       );
   } catch (e) {
     await Promise.all(workers.map((w) => w.terminate()));
+    flushRaw();
     fs.closeSync(log);
     throw e;
   }
@@ -182,7 +224,7 @@ export async function startW0Live(o: {
         ok: result.ok,
       };
       commits.push(row);
-      fs.writeSync(log, JSON.stringify(row) + "\n");
+      appendRaw(JSON.stringify(row) + "\n");
       return result;
     },
   };
@@ -210,7 +252,7 @@ export async function startW0Live(o: {
             position: result.receipt.position,
           };
           writes.push(row);
-          fs.writeSync(log, JSON.stringify(row) + "\n");
+          appendRaw(JSON.stringify(row) + "\n");
         })
         .catch((e) => {
           failed ??= e;
@@ -232,6 +274,7 @@ export async function startW0Live(o: {
       workers.forEach((w) => w.postMessage("stop"));
       await writer;
       await Promise.all([...done, ...localReaders]);
+      flushRaw();
       fs.closeSync(log);
       if (failed) throw failed;
       const summary = (samples: { started: number; ms: number }[]) => {
@@ -252,7 +295,11 @@ export async function startW0Live(o: {
       );
       return {
         readers: 256,
-        readerMode: o.replica ? "replica-current-snapshot-fixed-valid-time" : "gateway",
+        readerMode: o.currentReads
+          ? "replica-current-position-pullAt-fixed-valid-time"
+          : o.replica
+            ? "replica-current-snapshot-fixed-valid-time"
+            : "gateway",
         warmupMs,
         generatorStartedAtMs: start,
         startedAtMs: measurementStart,

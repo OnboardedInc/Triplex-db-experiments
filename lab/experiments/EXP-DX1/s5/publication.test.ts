@@ -1,3 +1,4 @@
+import { RecentReads, packEntity, pullAt } from "../../../../packages/datomic/dist/index.js";
 import { localReadTurns } from "../../../bench/lib/w0-replica-live.ts";
 import { it, expect } from "vitest";
 import { publishChanged } from "../../../bench/lib/w0-replica.ts";
@@ -102,7 +103,7 @@ it("gives pending trace writes priority before publication submission", async ()
 });
 
 it("keeps 256 reads outstanding while allowing I/O turns between bounded decode batches", async () => {
-  const turn = localReadTurns(),
+  const turn = localReadTurns(8),
     reads: Promise<void>[] = [];
   let completed = 0;
   for (let i = 0; i < 256; i++)
@@ -147,4 +148,76 @@ it("binds concurrent profiling by the actual receipt rather than a shared callba
   expect(responses[0].timing.nativeFrames).toEqual([{ operationId: "op-a" }]);
   expect(responses[1].timing.publishDatoms).toBe(9);
   expect(responses[2].timing.diagnosticReceiptBound).toBe(false);
+});
+
+it("bounds writer yielding so a permanently nonempty trace queue cannot starve publication", async () => {
+  const comp = {
+    transactionByCommand: async () => ({ ok: true, value: null }),
+    transact: async () => ({ ok: true, value: {} }),
+  } as unknown as CompositionHandle;
+  offerLiveWrite();
+  try {
+    const result = await publishChanged(
+      comp,
+      [
+        {
+          subject: "bounded-yield",
+          release: "R1",
+          basis: { tx: 1n, validTime: W0.POPULATION_VALID_TIME },
+          workItems: [
+            { id: "item", key: "k", kind: "create", payload: "{}", rule: "r", version: "v" },
+          ],
+        },
+      ],
+      {
+        inflight: 1,
+        frameSize: 64,
+        yieldToWriter: true,
+        maxWriterYieldMs: 1,
+        readStates: () => [],
+      },
+    );
+    expect(result.changed).toBe(1);
+    expect(result.commits).toBe(1);
+  } finally {
+    finishLiveWrite();
+  }
+});
+
+it("serves exact current-position rows through the built public pullAt API without history or fallback", async () => {
+  const index = new RecentReads(0, 0);
+  const before = [
+    {
+      id: "row-a",
+      entityId: "root",
+      attribute: "value",
+      value: { type: "string" as const, value: "before" },
+      position: 1,
+      validFrom: 0,
+    },
+  ];
+  const after = [
+    { ...before[0], id: "row-b", value: { type: "string" as const, value: "after" }, position: 2 },
+  ];
+  const old = packEntity(1, before),
+    next = packEntity(2, after);
+  index.apply({ position: 1, reset: true, valid: true, changes: [["root", undefined, old]] });
+  let fallbacks = 0;
+  const fallback = async () => {
+    fallbacks++;
+    return "unavailable";
+  };
+  const first = await pullAt(index, "root", { recordedPosition: 1, validAt: 1 }, fallback);
+  expect(first.route).toBe("replica");
+  if (first.route === "replica") expect(first.value.rows).toEqual(before);
+  index.apply({ position: 2, reset: false, valid: true, changes: [["root", old, next]] });
+  const second = await pullAt(index, "root", { recordedPosition: 2, validAt: 1 }, fallback);
+  expect(second.route).toBe("replica");
+  if (second.route === "replica") expect(second.value.rows).toEqual(after);
+  expect(fallbacks).toBe(0);
+  expect(index.historyBytes).toBe(0);
+  expect((await pullAt(index, "root", { recordedPosition: 1, validAt: 1 }, fallback)).route).toBe(
+    "fallback",
+  );
+  expect(fallbacks).toBe(1);
 });

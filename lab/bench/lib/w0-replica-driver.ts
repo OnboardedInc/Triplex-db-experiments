@@ -8,7 +8,7 @@ import { createGzip } from "node:zlib";
 import { pipeline } from "node:stream/promises";
 import { seedW0 } from "./w0-seed.ts";
 import { recordReplicaHttp } from "./w0-replica-record.ts";
-import { DatomicClient, Replica } from "../../../packages/datomic/dist/index.js";
+import { DatomicClient, Replica, RecentReads } from "../../../packages/datomic/dist/index.js";
 import { openComposition } from "./composition.ts";
 import { runtimeApi } from "./triplex.ts";
 import { openBulkCounts } from "../../experiments/EXP-DX1/h6/bulk-counts.ts";
@@ -56,6 +56,7 @@ export async function runReplicaDriver(argv: string[]) {
     inflight: number;
     gapMs?: number;
     yieldToWriter?: boolean;
+    maxWriterYieldMs?: number;
     r1Size?: number;
     r1Inflight?: number;
   }[] = JSON.parse(opt("publication-trials", "[]"));
@@ -76,6 +77,10 @@ export async function runReplicaDriver(argv: string[]) {
         t.inflight > 32 ||
         (t.gapMs !== undefined && (!Number.isFinite(t.gapMs) || t.gapMs < 0 || t.gapMs > 1000)) ||
         (t.yieldToWriter !== undefined && typeof t.yieldToWriter !== "boolean") ||
+        (t.maxWriterYieldMs !== undefined &&
+          (!Number.isFinite(t.maxWriterYieldMs) ||
+            t.maxWriterYieldMs < 0 ||
+            t.maxWriterYieldMs > 1000)) ||
         (t.r1Size !== undefined &&
           (!Number.isInteger(t.r1Size) || t.r1Size < 1 || t.r1Size > 256)) ||
         (t.r1Inflight !== undefined &&
@@ -120,11 +125,15 @@ export async function runReplicaDriver(argv: string[]) {
         frameSize: Number(opt("publication-size", "64")),
         gapMs: Number(opt("publication-gap-ms", "0")),
         yieldToWriter: argv.includes("--publication-yield-writer"),
+        maxWriterYieldMs: Number(opt("publication-yield-ms", "50")),
       }
     : undefined;
   if (
     publication &&
-    (!Number.isFinite(publication.gapMs) ||
+    (!Number.isFinite(publication.maxWriterYieldMs) ||
+      publication.maxWriterYieldMs < 0 ||
+      publication.maxWriterYieldMs > 1000 ||
+      !Number.isFinite(publication.gapMs) ||
       publication.gapMs < 0 ||
       publication.gapMs > 1000 ||
       !Number.isInteger(publication.frameSize) ||
@@ -224,6 +233,16 @@ export async function runReplicaDriver(argv: string[]) {
       if (--oracleActive === 0) oracleWallMs += performance.now() - oracleStarted;
     }
   };
+  const currentReads = argv.includes("--replica-current-index") ? new RecentReads(0, 0) : undefined;
+  let currentReadEntities = 0;
+  if (currentReads)
+    replica.onUpdate = (update) => {
+      currentReads.apply(update);
+      currentReadEntities = update.reset
+        ? update.changes.length
+        : currentReadEntities +
+          update.changes.filter(([, previous]) => previous === undefined).length;
+    };
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
   let bulkCounts: Awaited<ReturnType<typeof openBulkCounts>> | undefined;
   let verificationComp = comp;
@@ -241,6 +260,8 @@ export async function runReplicaDriver(argv: string[]) {
     hashes.forEach((h) => h.update("["));
     let facts = 0;
     const snap = await replica.snapshotAt(cut);
+    if (currentReads && currentReads.position !== cut)
+      throw Error("current-read index is not at the world-verification cut");
     let worlds = 0;
     // [DX-S5] Why: pipeline immutable native pages, but fold every world in its original subject order.
     // Rejected: concurrent digest updates (response completion order would change the fingerprint).
@@ -256,6 +277,15 @@ export async function runReplicaDriver(argv: string[]) {
         rowIndex.set(row.entityId, list);
       }
       for (const subject of ids) {
+        if (currentReads) {
+          const local = currentReads.pull(subject, { recordedPosition: cut, validAt: V_W0 });
+          if (
+            !local ||
+            worldCanonical(worldOf(subject, local.rows)) !==
+              worldCanonical(worldOf(subject, snap.world(subject)))
+          )
+            throw Error("Current-position pullAt index differs from replica snapshot " + subject);
+        }
         if (
           worldCanonical(worldOf(subject, snap.world(subject))) !==
           worldCanonical(worldOf(subject, reachableRows([subject], page.rows, rowIndex)))
@@ -367,6 +397,7 @@ export async function runReplicaDriver(argv: string[]) {
     report.initialSeedPosition = cut;
     report.publicationId = publicationId;
     report.readerMode = opt("reader-mode", "gateway");
+    report.currentPositionReadIndex = !!currentReads;
     report.candidateVerificationOnly = candidateVerification;
     if (candidateVerification || repeatActivation) cut = seedPosition!;
     // [DX-S5] Why: include this attempt's outboxes in the ordered-feed copy; absence at P is read from storage, not presumed from a UUID.
@@ -409,6 +440,7 @@ export async function runReplicaDriver(argv: string[]) {
       JSON.stringify({
         kind: "bootstrap-world-equality",
         worlds: report.bootstrapWorlds,
+        currentReadWorlds: currentReads ? report.bootstrapWorlds : 0,
         mismatches: 0,
       }),
     );
@@ -643,6 +675,7 @@ export async function runReplicaDriver(argv: string[]) {
       warmupMs: Number(opt("live-warmup-ms", "15000")),
       ...(opt("reader-mode", "gateway") === "replica" ? { replica } : {}),
       commandNamespace: publicationId,
+      currentReads: opt("reader-mode", "gateway") === "replica" ? currentReads : undefined,
     };
     const publicationView = await replica.snapshotAt(replica.position);
     const result = await evaluateAll({
@@ -1206,6 +1239,7 @@ export async function runReplicaDriver(argv: string[]) {
           ...liveOptions,
           commandNamespace: trial.id,
           replica: trial.mode === "replica" ? replica : undefined,
+          currentReads: trial.mode === "replica" ? currentReads : undefined,
         };
         let baseline: any;
         const r2Trial = await evaluateAll({
@@ -1221,6 +1255,7 @@ export async function runReplicaDriver(argv: string[]) {
             inflight: trial.inflight,
             gapMs: trial.gapMs,
             yieldToWriter: trial.yieldToWriter,
+            maxWriterYieldMs: trial.maxWriterYieldMs,
             readStates: (ids) => ids.flatMap((id) => stateView.world(id)),
           },
           beforeTimedWindow: async () => {
@@ -1352,6 +1387,14 @@ export async function runReplicaDriver(argv: string[]) {
       if (report.finalPosition !== report.initialSeedPosition)
         throw Error("Read-only candidate verification changed the logical head");
     }
+    report.currentReadIndex = currentReads
+      ? {
+          entries: currentReadEntities,
+          historyBytes: currentReads.historyBytes,
+          scope:
+            "current position at fixed valid time; lookup Map in main heap, packed buffers shared with replica",
+        }
+      : null;
     report.rss = process.memoryUsage().rss;
     report.peakRss = process.resourceUsage().maxRSS * 1024;
     console.log(

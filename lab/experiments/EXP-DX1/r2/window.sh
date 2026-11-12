@@ -184,7 +184,7 @@ if [[ $s5 == true ]]; then
  peer_java_extra='-XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
  tx_java_extra='-Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
 fi
-echo "engine-config CPUs=0-3 memoryGiB=12 txHeapGiB=3 txObjectCache=${S5_TX_CACHE:-1g} pgSharedBuffers=${S5_PG_BUFFERS:-512MB} peerHeapGiB=2 peerObjectCache=$peer_cache writerCPUs=${S5_WRITER_CPUS:-1} gatewayMain=$gateway_main"
+echo "engine-config CPUs=0-3 memoryGiB=12 txHeapGiB=3 txObjectCache=${S5_TX_CACHE:-1g} pgSharedBuffers=${S5_PG_BUFFERS:-512MB} peerHeapGiB=2 peerObjectCache=$peer_cache writerCPUs=${S5_WRITER_CPUS:-1} gatewayMain=$gateway_main pointJournal=${S5_POINT_JOURNAL:-0}"
 start_jvm --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory 4g --memory-swap 4g -e "JAVA_OPTS=-Xms256m -Xmx3g $tx_java_extra" -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
  cpu=1; [[ $role == w ]] || cpu=2,3
@@ -224,7 +224,7 @@ node_flags=(--expose-gc --experimental-strip-types)
 [[ $s5 != true ]] || node_flags+=(--max-old-space-size=4096)
 docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory "$driver_memory" --memory-swap "$driver_memory" \
  -v "$repo:$repo:ro" -v "$out:$out" -v "$prefix-tools:/tool:ro" -w "$repo" -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin \
- -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e "DX_R1_DEADLINE=$deadline" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
+ -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e "DX_R1_DEADLINE=$deadline" -e "TX2_W0_POINT_JOURNAL=${S5_POINT_JOURNAL:-0}" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
  python:3.13-slim /tool/node "${node_flags[@]}" lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" "$@"
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT pg_database_size(current_database());'
 docker run --rm --pull never --name "$prefix-copy" -v "$working_volume:/from:ro" postgres:17-alpine du -sk /from

@@ -198,7 +198,13 @@ export async function publishChanged(
     frameSize > 256 ||
     !Number.isInteger(inflight) ||
     inflight < 1 ||
-    inflight > 32
+    inflight > 32 ||
+    !Number.isFinite(options.gapMs ?? 0) ||
+    (options.gapMs ?? 0) < 0 ||
+    (options.gapMs ?? 0) > 1000 ||
+    !Number.isFinite(options.maxWriterYieldMs ?? 50) ||
+    (options.maxWriterYieldMs ?? 50) < 0 ||
+    (options.maxWriterYieldMs ?? 50) > 1000
   )
     throw Error("invalid publication settings");
   let stateReadMs = 0,
@@ -300,6 +306,8 @@ export async function publishChanged(
     frameSize,
     inflight,
     gapMs: options.gapMs ?? 0,
+    yieldToWriter: !!options.yieldToWriter,
+    maxWriterYieldMs: options.yieldToWriter ? (options.maxWriterYieldMs ?? 50) : 0,
     responses,
   };
 }
