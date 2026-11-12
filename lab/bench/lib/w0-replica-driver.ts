@@ -49,6 +49,12 @@ export async function runReplicaDriver(argv: string[]) {
   const seedPosition = argv.includes("--seed-position") ? Number(opt("seed-position")) : undefined;
   if (seedPosition !== undefined && (!Number.isSafeInteger(seedPosition) || seedPosition < 1))
     throw Error("invalid sealed seed position");
+  // [DX-S5] Why: the 1k current-read Map retained 152405 entries; its full-scale mirror reverses R2's ~3 GB index compaction.
+  // Rejected: risking the 11 GiB driver budget; 100k uses the shared-base ReplicaSnapshot path instead.
+  if (argv.includes("--replica-current-index") && N > 10000)
+    throw Error(
+      "current-read Map is limited to 10000 subjects; use shared snapshots at full scale",
+    );
   const publicationTrials: {
     id: string;
     mode: string;

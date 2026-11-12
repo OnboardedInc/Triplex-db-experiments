@@ -104,3 +104,10 @@ test("publication trials require complete immutable independent references and b
       /invalid publication trials/,
     );
 });
+
+test("full-scale runs refuse the duplicate current-read Map before engine access", async () => {
+  await assert.rejects(
+    runReplicaDriver(["--rung", "100000", "--replica-current-index"]),
+    /current-read Map is limited/,
+  );
+});
