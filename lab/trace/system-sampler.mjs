@@ -70,7 +70,7 @@ function sample() {
     );
   } else if (process.platform === "darwin") {
     for (const [key, cmd, args] of [
-      ["cpu", "ps", ["-A", "-o", "pcpu="]],
+      ["cpu", "ps", ["-A", "-o", "pcpu=,comm="]],
       ["swap", "sysctl", ["vm.swapusage"]],
       ["memory", "vm_stat", []],
     ]) {
@@ -80,13 +80,20 @@ function sample() {
           timeout: 800,
           stdio: ["ignore", "pipe", "pipe"],
         });
-        row[key] =
-          key === "cpu"
-            ? out
-                .trim()
-                .split(/\s+/)
-                .reduce((s, n) => s + Number(n), 0)
-            : out;
+        if (key === "cpu") {
+          const processes = out
+            .trim()
+            .split("\n")
+            .map((line) => /^\s*([\d.]+)\s+(.*)$/.exec(line))
+            .filter(Boolean);
+          row.cpu = processes.reduce((sum, p) => sum + Number(p[1]), 0);
+          row.otherCpu = processes
+            .filter((p) => !/Virtualization|limactl|ssh /.test(p[2]))
+            .reduce((sum, p) => sum + Number(p[1]), 0);
+          row.callCpu = processes
+            .filter((p) => /UVCAssistant|coreaudiod|zoom|Granola|FathomMeeting/.test(p[2]))
+            .reduce((sum, p) => sum + Number(p[1]), 0);
+        } else row[key] = out;
       } catch {
         row[key] = null;
       }

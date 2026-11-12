@@ -11,9 +11,26 @@ for (const [i, level] of ["off", "full", "full", "off"].entries()) {
   if (
     report.status !== "DONE" ||
     report.seed?.seededSubjects !== 10000 ||
-    !report.config?.zeroReaders
+    !report.config?.zeroReaders ||
+    report.config?.matchDurationS !== 200 ||
+    report.config?.readPath !== "replica" ||
+    report.config?.strictRecordClocks !== true ||
+    typeof report.trace?.digest !== "string" ||
+    !/^[0-9a-f]{40}$/.test(source)
   )
     throw Error("Unfinished/wrong cost arm");
+  // [DX-T1] Why: the measured level must be this arm's actual producer setting, and traced arms must drain successfully.
+  // Rejected: labelling an old/partial arm as full from its directory name alone.
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, "trace-run.json"), "utf8"));
+  const tracing = JSON.parse(fs.readFileSync(path.join(dir, "trace-summary.json"), "utf8"));
+  if (
+    manifest.tag !== path.basename(dir) ||
+    manifest.source !== source ||
+    manifest.level !== level ||
+    tracing.source !== source ||
+    (level === "full" ? !tracing.complete : !tracing.disabled)
+  )
+    throw Error("Cost trace level/source/collection mismatch");
   const writes = [];
   for await (const w of records(path.join(dir, "driver/ns-writes.jsonl")))
     if (w.stream === "background" && !w.resend) {

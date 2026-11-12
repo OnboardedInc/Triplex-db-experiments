@@ -10,7 +10,7 @@
 (def enabled (not= level "off"))
 (def ^:dynamic *request* nil)
 (def ^:dynamic *parent* nil)
-(def ids (AtomicLong. 0))
+(def ids (AtomicLong. (.getMostSignificantBits (UUID/randomUUID))))
 (def origin-ms (System/currentTimeMillis))
 (def origin-ns (System/nanoTime))
 (defn clock [] (+ (double origin-ms) (/ (- (System/nanoTime) origin-ns) 1000000.0)))

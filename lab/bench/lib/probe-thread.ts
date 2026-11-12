@@ -1,3 +1,4 @@
+import { captureTraceContext, traceAsync } from "./tracing.ts";
 import { Worker } from "node:worker_threads";
 // [DX-H4] Why: probe HTTP/encoding/receipt work must not queue background writer offers.
 // Rejected: disabling the 10-fact overlay or giving it an independent per-subject order.
@@ -39,11 +40,11 @@ export class ProbeThread {
     const id = ++this.serial;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      this.worker.postMessage({ type, id, ...args });
+      this.worker.postMessage({ type, id, ...args, trace: captureTraceContext() });
     });
   }
   transact(operations: any, meta: any) {
-    return this.rpc("transact", { operations, meta });
+    return traceAsync("rpc.probe.transact", () => this.rpc("transact", { operations, meta }), "event-loop");
   }
   async close() {
     await this.rpc("close", {});

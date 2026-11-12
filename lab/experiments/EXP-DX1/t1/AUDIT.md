@@ -6,10 +6,11 @@ North star: P2 latency under 256 readers. No acceptance contract, seed or semant
 
 | Site | Content check | Freshness check | Binding check | Meaning |
 | --- | --- | --- | --- | --- |
-| `lab/trace/report.mjs` `complete` | validates interval shapes and declared JFR bytes/export counts/SHA256; requires Mac/VM/Postgres collectors, writer trace IDs and every Node drain footer; reports missing data | unique run directory; timestamps compared with run start and final benchmark time | every record must match run/source/slot; server children match the exact HTTP parent span | trace collection completeness only; never oracle PASS |
-| `lab/trace/report.mjs` coverage numerator | exclusive interval union, unknown retained; truncation excludes coverage numerator | only this attempt's matched roots | same trace ID and parent span; writer denominator checked separately | reported fraction, not a promoted verdict |
+| `lab/trace/report.mjs` `complete` | validates interval shapes and declared JFR bytes/export counts/SHA256; requires Mac/VM/Postgres collectors, writer trace IDs and every Node drain footer; reports missing data | unique run directory; timestamps compared with run start and final benchmark time | every record must match run/source/slot; worker/server descendants match each exact sending span; missing RPC receivers are errors | trace collection completeness only; never oracle PASS |
+| `lab/trace/report.mjs` coverage numerator | exclusive interval union, unknown retained; truncation in any causal child excludes coverage numerator | only this attempt's matched roots | same trace ID and parent span; writer denominator checked separately | reported fraction, not a promoted verdict |
 | `lab/bin/trace-store.mjs` `archive` | SHA256 reread of every copied destination file before source removal | exclusive destination; existing destination refused | catalog names the raw tree and run tag; reports remain | byte-verified local movement only |
 | `lab/trace/finalize.mjs` output/exit | runs the report checks; gzip/parser/collection errors are retained | fresh raw filenames and footer required | run/source/slot manifest; hashes every raw file | nonzero on incomplete tracing; does not certify semantics |
+| `lab/trace/cost.mjs` matched-cost output | DONE, complete seed, every background command committed; full arms require trace collection; actual level checked | new arm directories; source and producer-level manifests | identical code hash, frozen-trace digest, command counts, strict/local/200-second configuration | observed quantile changes only; no causal overhead PASS |
 | Existing bench oracle/bar verdicts | unchanged comparators and expected-state inputs; wrappers preserve return/errors | existing gates retain their original attempt rules | existing source/receipt binding untouched | no new semantic PASS implementation |
 
 `TRACE-REPORT.md` is generated from observations, including unknowns. Independent review still decides promotion.
@@ -35,3 +36,20 @@ The acceptance files are unchanged. Old/new SHA256 values below are for review; 
 - `tx2-dxt1-smoke-d`: JFR startup option conflict (`filename` with `dumponexit=false`), before the benchmark.
   The controller died before cleanup. Recovery retained the startup log, removed only this prefix's resources, verified
   `recovery-remaining.txt` was empty and then removed its dead-owner lock. No latency or semantic result is claimed.
+
+## First 10k pair and measurement corrections
+
+- `tx2-dxt1-q8-a`: both 10,000-subject arms reached DONE; ladder oracle PASS and 2,799,041 exact reads, zero differences.
+  The inherited 43-minute watchdog interrupted the automatic ladder renderer after all containers/volumes were removed.
+  Raw traces are intact. A render-only recovery validates those original bytes, preserves prior derived revisions and
+  keeps the original producer hash `c4c5b598`; this is not a new run or an independent promotion.
+- The report now indexes timestamped events and sorts span candidates once per request. GC overlapping a peer wait stays
+  an ambient overlay; it is not charged to TypeScript/gateway own work. Exact top-20 read retention is tested even below
+  50 ms. New direct-client scopes include encoding/decoding; long synchronous scopes identify contention on other traces.
+- A fresh 1k smoke and full pair on the final producer are required after these recorder changes. The T1 normal package
+  run currently has 186 passed, 51 skipped; the focused tracing suite has eight tests. Nothing is a promotion.
+
+Worker RPC context now binds source/run/slot and the exact sending span across probe, replica and side/observer workers.
+A real Worker test checks continuation and foreign-attempt rejection; a missing receiver makes the report incomplete.
+Explicit RPC wait is partitioned by child spans; other event-loop readiness remains unmeasured, never inferred from GC overlap.
+Off controls generate an explicit disabled view and index row, without a collection completeness claim.

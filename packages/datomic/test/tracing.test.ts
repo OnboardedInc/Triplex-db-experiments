@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import http from "node:http";
+import { Worker } from "node:worker_threads";
 import { mkdtempSync, rmSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -78,6 +79,55 @@ describe("permanent request tracing", () => {
     expect(rows(dir).some((r) => r.type === "histograms")).toBe(true);
     expect(rows(dir).filter((r) => r.type === "request" && r.kind === "commit")).toHaveLength(1);
   });
+  it("continues the exact sending span across a real worker and rejects foreign attempt context", async () => {
+    const { api, dir } = await recorder();
+    const worker = new Worker(
+      `
+      const {parentPort}=require("node:worker_threads");
+      import(${JSON.stringify(new URL("../src/tracing.ts", import.meta.url).href)}).then(api=>{
+        parentPort.once("message",async wire=>{
+          await api.continueTrace(wire,"worker.test",async()=>api.traceSync("worker.own",()=>42));
+          await api.flushTracing(); parentPort.postMessage("drained"); parentPort.close();
+        });
+      });`,
+      { eval: true, execArgv: [] },
+    );
+    const trace = api.beginTrace("commit", "driver.commit")!;
+    try {
+      await api.withTrace(trace, () =>
+        api.traceAsync(
+          "rpc.test",
+          () =>
+            new Promise<void>((resolve, reject) => {
+              worker.once("error", reject);
+              worker.once("message", () => resolve());
+              worker.postMessage(api.captureTraceContext());
+            }),
+          "event-loop",
+        ),
+      );
+    } finally {
+      await worker.terminate();
+    }
+    api.finishTrace(trace);
+    const foreign = api.captureTraceContext();
+    expect(foreign).toBeUndefined();
+    await api.continueTrace(
+      { traceId: trace.traceId, parent: trace.root, run: "other", source: "source", slot: "slot" },
+      "foreign",
+      async () => {},
+    );
+    await api.flushTracing();
+    const recorded = rows(dir),
+      receiver = recorded.find((r) => r.name === "worker.test");
+    expect(receiver.traceId).toBe(trace.traceId);
+    expect(receiver.parent).toBe(trace.spans.find((s) => s.name === "rpc.test")!.id);
+    expect(receiver.root).not.toBe(trace.root);
+    expect(receiver.thread).not.toBe(trace.thread);
+    expect(receiver.spans[0].parent).toBe(receiver.root);
+    expect(recorded.find((r) => r.name === "foreign").attributes.invalidParent).toBe(true);
+    expect(recorded.find((r) => r.name === "foreign").traceId).not.toBe(trace.traceId);
+  });
   it("preserves each trace across concurrent yielding Effect fibers", async () => {
     const { api } = await recorder();
     const { Effect } = await import("effect");
@@ -136,6 +186,29 @@ describe("permanent request tracing", () => {
     expect(api.parseTraceparent(`00-${"1".repeat(32)}-${"0".repeat(16)}-01`)).toBeUndefined();
     expect(api.parseTraceparent("junk")).toBeUndefined();
     await api.flushTracing();
+  });
+  it("retains the actual top 20 of every phase even below the slow threshold", async () => {
+    const { api, dir } = await recorder();
+    const phases = new Map<number, any[]>();
+    for (const phase of [7, 8]) {
+      const traces = [];
+      for (let i = 0; i < 40; i++) {
+        const trace = api.beginTrace("read", "top-read", { phase }, api.traceNow() - i)!;
+        api.finishTrace(trace);
+        traces.push(trace);
+      }
+      phases.set(phase, traces);
+    }
+    await api.flushTracing();
+    const retained = rows(dir).filter((r) => r.type === "request" && r.name === "top-read");
+    expect(new Set(retained.map((r) => r.traceId)).size).toBe(retained.length);
+    for (const [phase, traces] of phases)
+      for (const expected of traces
+        .sort((a, b) => b.end - b.start - (a.end - a.start))
+        .slice(0, 20))
+        expect(
+          retained.some((r) => r.traceId === expected.traceId && r.attributes.phase === phase),
+        ).toBe(true);
   });
   it("records failure spans and isolates parent contexts across asynchronous tasks", async () => {
     const { api } = await recorder();
@@ -208,6 +281,79 @@ describe("permanent request tracing", () => {
     expect(a.layers["peer-wait"]).toBe(4);
     expect(a.layers.network).toBe(2);
     expect(a.unexplainedMs).toBe(0);
+    // [DX-T1] Why: a pause while waiting on another process is overlap, not extra own-process latency.
+    // Rejected: charging every overlapping GC to the request's TypeScript share.
+    const remoteGc = attribute(
+      root,
+      [gateway],
+      [{ name: "gc", layer: "typescript-gc", process: "node", thread: 0, start: 1008, end: 1010 }],
+    );
+    expect(remoteGc.layers["typescript-gc"]).toBe(0);
+    expect(remoteGc.typescriptMs).toBe(10);
+    const localGc = attribute(
+      root,
+      [gateway],
+      [{ name: "gc", layer: "typescript-gc", process: "node", thread: 0, start: 1001, end: 1003 }],
+    );
+    expect(localGc.layers["typescript-gc"]).toBe(2);
+    expect(localGc.typescriptMs).toBe(10);
+    const peerGc = attribute(
+      root,
+      [gateway],
+      [{ name: "gc", layer: "gateway-gc", process: "gw-w", thread: 1, start: 1008, end: 1010 }],
+    );
+    expect(peerGc.layers["gateway-gc"]).toBe(0);
+    expect(peerGc.layers["peer-wait"]).toBe(4);
+    // [DX-T1] Why: child worker/socket/server intervals replace the parent's RPC wait, rather than being hidden by it.
+    // Rejected: ranking an event-loop wait above deeper remote work or accepting an unobserved worker receiver.
+    const { traceChildren } = await import("../../../lab/trace/report.mjs");
+    const workerRoot = {
+      ...root,
+      root: "worker-root",
+      parent: "rpc",
+      name: "worker.probe",
+      kind: "internal",
+      thread: 1,
+      start: 1002,
+      end: 1018,
+      spans: [
+        {
+          id: "worker-own",
+          parent: "worker-root",
+          name: "worker.own",
+          layer: "typescript",
+          start: 1002,
+          end: 1018,
+        },
+        {
+          id: "worker-http",
+          parent: "worker-own",
+          name: "client.http",
+          layer: "gateway-wait",
+          start: 1005,
+          end: 1015,
+        },
+      ],
+    };
+    const sender = {
+      ...root,
+      spans: [
+        root.spans[0],
+        { id: "rpc", parent: "2", name: "rpc.test", layer: "event-loop", start: 1001, end: 1019 },
+      ],
+    };
+    const remoteGateway = { ...gateway, parent: "worker-http" };
+    const children = traceChildren(sender, [remoteGateway, workerRoot]);
+    expect(children).toHaveLength(2);
+    expect(
+      traceChildren(sender, [{ ...workerRoot, source: "foreign" }, remoteGateway]),
+    ).toHaveLength(0);
+    const remote = attribute(sender, [remoteGateway], [], [workerRoot]);
+    expect(remote.layers["event-loop"]).toBe(2);
+    expect(remote.layers.typescript).toBe(8);
+    expect(remote.layers.gateway).toBe(4);
+    expect(remote.layers["peer-wait"]).toBe(4);
+    expect(remote.layers.network).toBe(2);
     const dir = mkdtempSync(path.join(tmpdir(), "triplex-report-test-"));
     directories.push(dir);
     mkdirSync(path.join(dir, "trace/raw"), { recursive: true });
@@ -248,6 +394,14 @@ describe("permanent request tracing", () => {
     expect(report.complete).toBe(true);
     expect(report.coverage.denominator).toBe(1);
     expect(report.coverage.atLeast95Percent).toBe(1);
+    const rawFixture = path.join(dir, "trace/raw/fixture.jsonl"),
+      originalBytes = readFileSync(rawFixture, "utf8");
+    writeFileSync(rawFixture, originalBytes.replace(JSON.stringify(root), JSON.stringify(sender)));
+    const absentWorker = await buildReport(dir);
+    expect(absentWorker.complete).toBe(false);
+    expect(absentWorker.errors).toContain("1 worker RPC spans have no bound receiver trace");
+    writeFileSync(rawFixture, originalBytes);
+    await buildReport(dir);
     expect(readFileSync(path.join(dir, "trace.html"), "utf8")).toContain(root.traceId);
     expect(
       JSON.parse(readFileSync(path.join(dir, "trace.chrome.json"), "utf8")).traceEvents.length,

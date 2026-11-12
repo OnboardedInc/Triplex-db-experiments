@@ -74,14 +74,46 @@ function validSpan(s) {
 }
 // [DX-T1] Why: integrate the union of intervals, choosing the innermost named work, never summing nested wall times.
 // Rejected: adding independent p99s or treating an unrelated storage/JFR event as a causal child.
-function contextEvents(row, events) {
-  return events
-    .filter((e) => e.start < row.root.end && e.end > row.root.start)
-    .filter(
-      (e) =>
-        e.layer !== "jvm-event" ||
-        row.spans.some((s) => s.process === e.process && s.thread === e.thread),
-    );
+function intervalIndex(rows) {
+  const sorted = [...rows].sort((a, b) => a.start - b.start),
+    ends = [];
+  let max = -Infinity;
+  for (const e of sorted) {
+    max = Math.max(max, e.end);
+    ends.push(max);
+  }
+  return {
+    overlap(start, end) {
+      let lo = 0,
+        hi = sorted.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        if (sorted[mid].start < end) lo = mid + 1;
+        else hi = mid;
+      }
+      const out = [];
+      for (let i = lo - 1; i >= 0 && ends[i] > start; i--)
+        if (sorted[i].end > start) out.push(sorted[i]);
+      return out;
+    },
+  };
+}
+function groupedIndex(rows, key) {
+  const map = new Map();
+  for (const r of rows) {
+    const k = key(r),
+      list = map.get(k) ?? [];
+    list.push(r);
+    map.set(k, list);
+  }
+  return new Map([...map].map(([k, v]) => [k, intervalIndex(v)]));
+}
+function contextEvents(row, indexes) {
+  const events = indexes.general.overlap(row.root.start, row.root.end),
+    keys = new Set(row.spans.map((s) => `${s.process}:${s.thread}`));
+  for (const key of keys)
+    events.push(...(indexes.threads.get(key)?.overlap(row.root.start, row.root.end) ?? []));
+  return events.filter((e) => !e.traceId || e.traceId !== row.traceId);
 }
 function pressureEvents(resources) {
   const events = [],
@@ -112,17 +144,61 @@ function pressureEvents(resources) {
     }
   return events;
 }
-export function attribute(root, gateways = [], events = []) {
+// [DX-T1] Why: wire propagation must bind both the trace and the exact sending span, including multi-hop fallback.
+// Rejected: joining requests by trace ID alone or treating a missing worker as TypeScript own work.
+export function traceChildren(root, candidates) {
+  const found = [],
+    pending = candidates.filter(
+      (r) =>
+        r !== root &&
+        r.traceId === root.traceId &&
+        r.run === root.run &&
+        r.source === root.source &&
+        r.slot === root.slot,
+    );
+  const ids = new Set([root.root, ...root.spans.map((s) => s.id)]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let i = pending.length - 1; i >= 0; i--) {
+      const r = pending[i];
+      if (!r.parent || !ids.has(r.parent)) continue;
+      found.push(r);
+      pending.splice(i, 1);
+      ids.add(r.root);
+      for (const s of r.spans) ids.add(s.id);
+      changed = true;
+    }
+  }
+  return found;
+}
+export function attribute(root, gateways = [], events = [], remotes = []) {
   const all = root.spans.map((s) => ({ ...s, process: root.process, thread: root.thread }));
+  for (const r of remotes) {
+    all.push({
+      id: r.root,
+      parent: r.parent,
+      name: r.name,
+      layer: "typescript",
+      start: r.start,
+      end: r.end,
+      process: r.process,
+      thread: r.thread,
+      attributes: r.attributes,
+    });
+    all.push(...r.spans.map((s) => ({ ...s, process: r.process, thread: r.thread })));
+  }
   for (const g of gateways) {
     all.push({
       id: g.root,
+      parent: g.parent,
       name: g.name,
       layer: "gateway",
       start: g.start,
       end: g.end,
       process: g.process,
       thread: g.thread,
+      attributes: { ...g.attributes, counters: JSON.stringify(g.counters ?? {}) },
     });
     all.push(...g.spans.map((s) => ({ ...s, process: g.process, thread: s.thread ?? g.thread })));
     const awaitSpan = g.spans.find((s) => s.name.startsWith("peer.transact-await"));
@@ -134,6 +210,8 @@ export function attribute(root, gateways = [], events = []) {
       submitted <= awaitSpan.end
     )
       all.push({
+        id: `${awaitSpan.id}-order`,
+        parent: awaitSpan.id,
         name: "gateway.commit-order-wait",
         layer: "gateway-queue",
         start: awaitSpan.start,
@@ -142,47 +220,91 @@ export function attribute(root, gateways = [], events = []) {
         thread: g.thread,
       });
   }
-  // GC pauses have process/isolate identity; timer drift is an overlay estimate and never causal attribution.
-  for (const e of events)
-    if (
+  const byId = new Map(all.filter((s) => s.id).map((s) => [s.id, s]));
+  const depths = new Map([[root.root, 0]]);
+  function depth(s, seen = new Set()) {
+    if (depths.has(s.id)) return depths.get(s.id);
+    if (seen.has(s.id)) return 0;
+    seen.add(s.id);
+    const parent = byId.get(s.parent),
+      value = parent ? 1 + depth(parent, seen) : 1;
+    depths.set(s.id, value);
+    return value;
+  }
+  // Clip receiver finalization to its sending wait for exclusive latency; raw observations remain in the trace store.
+  const spans = all
+    .filter(validSpan)
+    .map((s) => {
+      let start = Math.max(root.start, s.start),
+        end = Math.min(root.end, s.end),
+        parent = byId.get(s.parent);
+      const seen = new Set([s.id]);
+      while (parent && !seen.has(parent.id)) {
+        seen.add(parent.id);
+        start = Math.max(start, parent.start);
+        end = Math.min(end, parent.end);
+        parent = byId.get(parent.parent);
+      }
+      return { ...s, start, end };
+    })
+    .filter((s) => s.end > s.start);
+  const pauses = events.filter(
+    (e) =>
       !e.estimated &&
       ["typescript-gc", "gateway-gc"].includes(e.layer) &&
-      ((e.process === root.process && e.thread === root.thread) ||
-        gateways.some((g) => g.process === e.process))
-    )
-      all.push(e);
-  const spans = all.filter(validSpan).filter((s) => s.start < root.end && s.end > root.start);
+      e.start < root.end &&
+      e.end > root.start,
+  );
   const points = [
     ...new Set([
       root.start,
       root.end,
-      ...spans.flatMap((s) => [Math.max(root.start, s.start), Math.min(root.end, s.end)]),
+      ...[...spans, ...pauses].flatMap((s) => [
+        Math.max(root.start, s.start),
+        Math.min(root.end, s.end),
+      ]),
     ]),
   ].sort((a, b) => a - b);
-  const layers = Object.fromEntries(LAYERS.map((k) => [k, 0]));
-  const steps = {};
+  // [DX-T1] Why: sort once per request; never sort all candidates at every boundary or charge an ambient pause to a remote wait.
+  // Rejected: GC overlap as causal latency, and scanning every run event for every request.
+  const ordered = [...spans].sort(
+    (x, y) =>
+      depth(y) - depth(x) ||
+      (rank[y.layer] ?? 0) - (rank[x.layer] ?? 0) ||
+      duration(x) - duration(y),
+  );
+  const layers = Object.fromEntries(LAYERS.map((k) => [k, 0])),
+    steps = {};
   for (let i = 1; i < points.length; i++) {
     const a = points[i - 1],
       b = points[i];
-    const candidates = spans
-      .filter((s) => s.start <= a && s.end >= b)
-      .sort((x, y) => (rank[y.layer] ?? 0) - (rank[x.layer] ?? 0) || duration(x) - duration(y));
-    const s = candidates[0];
-    // Until the server's spans are received, socket wait is unobserved gateway/network time, not measured network.
+    let selected = ordered.find((s) => s.start <= a && s.end >= b);
+    const pause = pauses.find(
+      (e) =>
+        e.start <= a &&
+        e.end >= b &&
+        e.process === (selected?.process ?? root.process) &&
+        ((e.layer === "typescript-gc" &&
+          selected?.layer === "typescript" &&
+          e.thread === (selected.thread ?? root.thread)) ||
+          (e.layer === "gateway-gc" && ["gateway", "peer-call"].includes(selected?.layer))),
+    );
+    if (pause) selected = pause;
     const layer =
-      s?.layer === "gateway-wait"
-        ? gateways.length
+      selected?.layer === "gateway-wait"
+        ? gateways.some((g) => g.parent === selected.id || g.parent === selected.parent)
           ? "network"
           : "unknown"
-        : LAYERS.includes(s?.layer)
-          ? s.layer
+        : LAYERS.includes(selected?.layer)
+          ? selected.layer
           : "unknown";
     layers[layer] += b - a;
-    const step = s
-      ? `${s.process ?? root.process}/thread-${s.thread ?? root.thread}/${s.name}`
+    const step = selected
+      ? `${selected.process ?? root.process}/thread-${selected.thread ?? root.thread}/${selected.name}`
       : "uncovered";
     steps[step] = (steps[step] ?? 0) + b - a;
   }
+  if (!spans.some((s) => s.layer === "event-loop")) layers["event-loop"] = null;
   if (!spans.some((s) => s.layer === "transactor")) layers.transactor = null;
   if (!spans.some((s) => s.layer === "postgres")) layers.postgres = null;
   const wall = duration(root),
@@ -208,13 +330,16 @@ function phaseOf(r, phases) {
       ? phases.find((p) => p.idx === specified || p.idx + 1000 === specified)
       : phases.find((p) => r.start >= p.start && r.start < p.end);
   const name = phase?.name ?? "outside-phases";
-  const priority = /sweep|activation|impact/.test(name)
-    ? "P5"
-    : /p4|history|current|weighted|depth/.test(name)
-      ? "P4"
-      : r.kind === "commit"
-        ? "P2"
-        : "P1";
+  const priority =
+    r.name === "replica.follow" || /^http .*\/(transactions|journal)$/.test(r.name)
+      ? "P3"
+      : /sweep|activation|impact/.test(name)
+        ? "P5"
+        : /p4|history|current|weighted|depth/.test(name)
+          ? "P4"
+          : r.kind === "commit"
+            ? "P2"
+            : "P1";
   return { name, priority, readers: phase?.readers ?? null };
 }
 function table(rows, label) {
@@ -248,6 +373,39 @@ export async function buildReport(runDir, { copyTo } = {}) {
   const manifest = fs.existsSync(manifestFile)
     ? JSON.parse(fs.readFileSync(manifestFile, "utf8"))
     : null;
+  if (manifest?.level === "off") {
+    const finding =
+      "Tracing was intentionally off for this control arm; latency is in ns-report.json and layer attribution is unavailable.";
+    const summary = {
+      schema: "triplex.trace-report.v1",
+      tag,
+      source: manifest.source,
+      disabled: true,
+      complete: false,
+      errors: [],
+      finding,
+      commits: null,
+      coverage: null,
+      rawBytes: filesUnder(path.join(rootDir, "trace/raw")).reduce(
+        (n, f) => n + fs.statSync(f).size,
+        0,
+      ),
+    };
+    const outputs = {
+      "TRACE-REPORT.md": `# Trace report\n\n${finding}\n\nRun ${tag}; source ${manifest.source}; subjects ${bench.seed?.seededSubjects ?? "unknown"}. No collection completeness or semantic verdict is asserted.\n`,
+      "trace.html": `<!doctype html><meta charset="utf-8"><title>Tracing off</title><h1>Tracing off</h1><p>${esc(finding)}</p>`,
+      "trace.chrome.json": JSON.stringify({ traceEvents: [] }),
+      "trace-summary.json": JSON.stringify(summary, null, 2) + "\n",
+    };
+    for (const [name, bytes] of Object.entries(outputs))
+      fs.writeFileSync(path.join(rootDir, name), bytes);
+    if (copyTo) {
+      fs.mkdirSync(copyTo, { recursive: true });
+      for (const name of Object.keys(outputs))
+        fs.copyFileSync(path.join(rootDir, name), path.join(copyTo, name));
+    }
+    return summary;
+  }
   const input = filesUnder(path.join(rootDir, "trace/raw")).filter((f) =>
     /\.jsonl(\.gz)?$/.test(f),
   );
@@ -255,6 +413,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     events = [],
     resources = [],
     histograms = [],
+    metadata = [],
     completions = [],
     jfrCounts = new Map();
   const errors = [];
@@ -291,18 +450,35 @@ export async function buildReport(runDir, { copyTo } = {}) {
           }
         } else if (r.type === "jfr-complete") completions.push(r);
         else if (r.type === "resource" || r.type === "metrics") resources.push(r);
+        else if (r.type === "metadata") metadata.push(r);
         else if (r.type === "histograms") {
           footer = true;
           histograms.push(r);
           if (r.failure) errors.push("Recorder reported failure");
         }
       }
-      if (/^node-/.test(path.basename(file)) && !footer)
+      if (path.basename(file).startsWith("node-") && !footer)
         errors.push(`Missing drain footer in ${path.basename(file)}`);
     } catch (error) {
       errors.push(`${path.basename(file)}: ${error.message}`);
     }
   }
+  const replicaPublications = new Map();
+  // [DX-T1] Why: asynchronous replica work links by the validated logical position within this one benchmark scope.
+  // Rejected: assigning a feed poll's unrelated trace ID to the original writer, or adding post-ACK work to commit latency.
+  for (const request of requests)
+    if (request.name === "replica.follow")
+      for (const span of request.spans)
+        if (span.name === "replica.publish" && Number.isSafeInteger(span.attributes?.position)) {
+          const event = {
+            ...span,
+            process: request.process,
+            thread: request.thread,
+            traceId: request.traceId,
+            type: "event",
+          };
+          replicaPublications.set(span.attributes.position, event);
+        }
   events.push(...pressureEvents(resources));
   const gateways = new Map();
   for (const r of requests)
@@ -318,29 +494,95 @@ export async function buildReport(runDir, { copyTo } = {}) {
       r.name === "reader.pull" ||
       r.name === "driver.ryow",
   );
+  const ownedIds = new Set(roots.map((r) => r.traceId));
+  roots.push(
+    ...requests.filter(
+      (r) =>
+        !ownedIds.has(r.traceId) &&
+        (r.name === "replica.follow" || /^http .*\/(transactions|journal)$/.test(r.name)),
+    ),
+  );
   if (!roots.length) roots = requests.filter((r) => r.name.startsWith("http "));
-  // Only exact trace and parent-span matches qualify gateway children; same trace alone is insufficient for retries.
-  const linked = (r) =>
-    (gateways.get(r.traceId) ?? []).filter((g) =>
-      r.spans.some((s) => s.id === g.parent && s.name === "client.http"),
-    );
-  const evaluated = roots.map((r) => ({
-    root: r,
-    ...attribute(r, linked(r), events),
-    ...phaseOf(r, bench.phases ?? []),
-  }));
+  const byTrace = new Map();
+  for (const request of requests) {
+    const list = byTrace.get(request.traceId) ?? [];
+    list.push(request);
+    byTrace.set(request.traceId, list);
+  }
+  const linked = (r) => traceChildren(r, byTrace.get(r.traceId) ?? []);
+  const pauseIndex = intervalIndex(
+    events.filter((e) => ["typescript-gc", "gateway-gc"].includes(e.layer)),
+  );
+  const workIndex = groupedIndex(
+    events.filter((e) => e.layer === "typescript"),
+    (e) => `${e.process}:${e.thread}`,
+  );
+  const contextIndexes = {
+    general: intervalIndex(events.filter((e) => e.layer !== "jvm-event")),
+    threads: groupedIndex(
+      events.filter((e) => e.layer === "jvm-event"),
+      (e) => `${e.process}:${e.thread}`,
+    ),
+  };
+  let missingReceivers = 0;
+  const evaluated = roots.map((r) => {
+    const children = linked(r),
+      nodes = [r, ...children];
+    for (const node of nodes)
+      for (const span of node.spans)
+        if (span.name.startsWith("rpc.") && !children.some((child) => child.parent === span.id))
+          missingReceivers++;
+    return {
+      root: r,
+      allTruncated: nodes.reduce((n, node) => n + (node.truncated ?? 0), 0),
+      ...attribute(
+        r,
+        children.filter((c) => c.name.startsWith("gateway ")),
+        pauseIndex.overlap(r.start, r.end),
+        children.filter((c) => !c.name.startsWith("gateway ")),
+      ),
+      ...phaseOf(r, bench.phases ?? []),
+    };
+  });
+  if (missingReceivers)
+    errors.push(`${missingReceivers} worker RPC spans have no bound receiver trace`);
   const commits = evaluated.filter((r) => r.root.kind === "commit");
   const denom = commits;
-  const explained = denom.filter((r) => r.explained >= 0.95 && !r.root.truncated).length;
+  const explained = denom.filter((r) => r.explained >= 0.95 && !r.allTruncated).length;
   // Content/freshness/binding: compare the observed per-command trace against this run's actual writer rows.
   const writesFile = path.join(rootDir, "driver/ns-writes.jsonl");
   let writes = 0,
     missingCommits = 0;
-  const ids = new Set(commits.map((r) => r.traceId));
+  const byId = new Map(commits.map((r) => [r.traceId, r]));
+  const ids = new Set(byId.keys());
   if (fs.existsSync(writesFile))
     for await (const w of records(writesFile)) {
       writes++;
       if (!w.traceId || !ids.has(w.traceId)) missingCommits++;
+      else {
+        const trace = byId.get(w.traceId);
+        if (Number.isFinite(w.scheduledAt) && Math.abs(trace.root.start - w.scheduledAt) > 1)
+          errors.push("Writer/trace offer timestamp mismatch");
+        trace.writer = {
+          facts: w.facts,
+          stream: w.stream,
+          seq: w.seq,
+          burst: w.burst,
+          position: w.position,
+        };
+        if (
+          Number.isFinite(trace.root.attributes.position) &&
+          Number.isFinite(w.position) &&
+          trace.root.attributes.position !== w.position
+        )
+          errors.push("Writer/trace position mismatch");
+        const publication = replicaPublications.get(w.position);
+        if (publication)
+          trace.replicaPublication = {
+            ...publication,
+            msAfterRootEnd: publication.end - trace.root.end,
+          };
+      }
     }
   else errors.push("Writer file absent: cannot establish complete commit denominator");
   if (missingCommits)
@@ -392,15 +634,10 @@ export async function buildReport(runDir, { copyTo } = {}) {
   }
 
   for (const r of evaluated)
-    r.overlappingWork = events
-      .filter(
-        (e) =>
-          e.process === r.root.process &&
-          e.thread === r.root.thread &&
-          e.layer === "typescript" &&
-          e.start < r.root.end &&
-          e.end > r.root.start,
-      )
+    r.overlappingWork = (
+      workIndex.get(`${r.root.process}:${r.root.thread}`)?.overlap(r.root.start, r.root.end) ?? []
+    )
+      .filter((e) => !e.traceId || e.traceId !== r.traceId)
       .map((e) => ({
         name: e.name,
         overlapMs: Math.min(e.end, r.root.end) - Math.max(e.start, r.root.start),
@@ -413,14 +650,49 @@ export async function buildReport(runDir, { copyTo } = {}) {
     const group = groups.get(key) ?? [];
     group.push(r);
     groups.set(key, group);
+    if (
+      r.root.kind === "commit" &&
+      r.writer?.stream === "background" &&
+      r.writer.facts >= 5 &&
+      r.writer.facts <= 10
+    ) {
+      const bandKey = `${r.priority} / ${r.name} / commit / 5-10 facts`,
+        band = groups.get(bandKey) ?? [];
+      band.push(r);
+      groups.set(bandKey, band);
+    }
   }
   const selected = [];
+  const selectedIds = new Set();
   for (const group of groups.values())
-    selected.push(...[...group].sort((a, b) => b.wallMs - a.wallMs).slice(0, 20));
+    for (const r of [...group].sort((a, b) => b.wallMs - a.wallMs).slice(0, 20))
+      if (!selectedIds.has(r.traceId)) {
+        selectedIds.add(r.traceId);
+        selected.push(r);
+      }
   const slow = [...commits].sort((a, b) => b.wallMs - a.wallMs).slice(0, 5);
   const finding = slow.length
     ? `The slowest observed commits spent their largest exclusive interval in ${slow.map((r) => `\`${r.steps[0]?.[0] ?? "unknown"}\` (${n(r.steps[0]?.[1])} ms, trace \`${r.traceId}\`)`).join("; ")}. These are observed spans, not proof of the closed-source transactor's internal cause.`
     : "No commit traces were observed; the cause of slow commits is not established.";
+  const hostByPhase = Object.fromEntries(
+    (bench.phases ?? []).map((p) => {
+      const samples = resources.filter(
+        (r) => r.process === "system-darwin" && r.at >= p.start && r.at <= p.end,
+      );
+      const cpu = samples.map((r) => r.otherCpu).filter(Number.isFinite);
+      return [
+        p.name,
+        {
+          samples: samples.length,
+          otherCpuP50: percentile(cpu, 0.5),
+          otherCpuP99: percentile(cpu, 0.99),
+          otherCpuMax: cpu.length ? Math.max(...cpu) : null,
+          busySamples: cpu.filter((v) => v > 150).length,
+          rule: "diagnostic host-quiet heuristic; not a performance acceptance gate",
+        },
+      ];
+    }),
+  );
   const rawBytes = filesUnder(path.join(rootDir, "trace/raw")).reduce(
     (sum, f) => sum + fs.statSync(f).size,
     0,
@@ -437,6 +709,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     commits: commits.length,
     writerRows: writes,
     missingCommits,
+    missingReceivers,
     coverage: {
       denominator: denom.length,
       atLeast95Percent: explained,
@@ -447,7 +720,13 @@ export async function buildReport(runDir, { copyTo } = {}) {
     errors,
     complete: errors.length === 0,
     histograms,
+    readRetention: {
+      slowMs: 50,
+      sample: 1024,
+      exactTop20: metadata.length > 0 && metadata.every((r) => r.topReadsPerPhase === 20),
+    },
     collectors: { jfr: completions, resources: resources.length },
+    hostByPhase,
     groups: Object.fromEntries(
       [...groups].map(([k, rows]) => [
         k,
@@ -464,7 +743,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
         },
       ]),
     ),
-    slowest: slow.map(({ root, spans, ...rest }) => rest),
+    slowest: slow.map(({ root: _root, spans: _spans, ...rest }) => rest),
   };
   const lines = [
     "# Trace report",
@@ -475,7 +754,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     "",
     `Commit coverage: ${explained}/${denom.length} (${n(denom.length ? (100 * explained) / denom.length : NaN)}%) have at least 95% of wall time covered by named layer spans. Target: 99%. Writer trace completeness: ${writes - missingCommits}/${writes}. Raw trace bytes: ${rawBytes}.`,
     "",
-    "Units: ms; n/a means not causally measured (including closed transactor/storage shares), not zero work. TypeScript share is a fraction. Quantiles are per column (their values do not add). TypeScript own code is instrumented Node wall time excluding observed waits/GC, not on-CPU time. Driver queue is separate; timer drift is a bounded estimate shown only as an overlay. Peer-wait includes network, transactor queue and storage; these internal shares remain unknown unless independently correlated. No unrelated Postgres or JFR event is assigned to a transaction.",
+    "Units: ms; n/a means not causally measured (including closed transactor/storage shares), not zero work. TypeScript share is a fraction. Quantiles are per column (their values do not add). TypeScript own code is instrumented Node scope wall time excluding observed remote waits/GC, not on-CPU time; it can include unmeasured scheduling waits. Event-loop wait records explicit worker RPC handoff/reply waits after subtracting linked worker/socket/server work. Other per-request event-loop delay is not causally measured (n/a when no RPC); timestamped timer drift is an estimated overlay. Driver offer queue is separate. Peer-wait includes network, transactor queue and storage; these internal shares remain unknown unless independently correlated. No unrelated Postgres or JFR event is assigned to a transaction.",
     "",
     "Network is residual socket wait around matched gateway spans, including callback scheduling uncertainty. Gateway receive begins at Jetty dispatch: earlier Jetty/socket queue is invisible. VM clocks share CLOCK_REALTIME; gateway millisecond anchoring has approximately 1 ms uncertainty. Response-first-byte includes network and callback scheduling; no finer causal claim is made.",
     "",
@@ -500,7 +779,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
   lines.push(
     "## Visibility limits",
     "",
-    "Logical read histograms include every finished read; retained fast reads are a fixed 1/1024 FNV sample, and reads at least 50 ms are retained. Slowest read selection is among the retained sample plus every observed slow read. Worker resource series distinguish isolate heap and process RSS. Linux per-thread CPU is sampled from /proc (10 ms ticks); per-request CPU attribution is not available. GC overlaps and independent thread work are pictured, not inferred from percentiles.",
+    "Logical read histograms include every finished read; fast reads use a fixed 1/1024 FNV sample, every read at least 50 ms is retained, and new recorder revisions also retain the actual top 20 per phase/thread. Historical runs without top-20 retention show the slowest retained reads. Logical read root wall includes named oracle and intentional straddle waits; target-bar service latency remains in ns-report.json. Worker resource series distinguish isolate heap and process RSS. Linux per-thread CPU is sampled from /proc (10 ms ticks); per-request CPU attribution is not available. GC during remote waits is an ambient overlay and is not charged to TypeScript or gateway own work. GC overlaps and independent thread work are pictured, not inferred from percentiles.",
     "",
     "JFR GC/safepoint/thread-park/socket events, transactor callback metrics, PostgreSQL duration/checkpoint/autovacuum logs, pg_stat_activity/wal/io samples, cgroup throttling/pressure/memory/io and Mac CPU/swap are retained when available. Closed-source transactor internals and individual Postgres statements cannot be causally split without a transaction identifier; the table deliberately leaves these shares unknown. Samples are not request-specific proof. See trace-run.json and collection-errors.txt for unavailable collectors.",
     "",
@@ -544,7 +823,40 @@ export async function buildReport(runDir, { copyTo } = {}) {
         tid: s.thread ?? r.root.thread,
         args: { traceId: r.traceId, phase: r.name, priority: r.priority },
       });
-    for (const e of contextEvents(r, events))
+    if (r.replicaPublication) {
+      const p = r.replicaPublication,
+        flowId = "position-" + r.traceId;
+      chrome.push({
+        name: "replica publication (position link)",
+        cat: "replica",
+        ph: "X",
+        ts: (p.start - start) * 1000,
+        dur: duration(p) * 1000,
+        pid: pidFor(p.process),
+        tid: p.thread,
+        args: { traceId: r.traceId, feedTraceId: p.traceId, position: r.writer.position },
+      });
+      chrome.push({
+        name: "commit to replica position link",
+        cat: "replica",
+        ph: "s",
+        ts: (r.root.start - start) * 1000,
+        pid: pidFor(r.root.process),
+        tid: r.root.thread,
+        id: flowId,
+      });
+      chrome.push({
+        name: "commit to replica position link",
+        cat: "replica",
+        ph: "f",
+        ts: (p.start - start) * 1000,
+        pid: pidFor(p.process),
+        tid: p.thread,
+        id: flowId,
+        bp: "e",
+      });
+    }
+    for (const e of contextEvents(r, contextIndexes))
       chrome.push({
         name: e.name,
         cat: e.layer,
@@ -569,7 +881,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
       metadata: { tag, source: summary.source },
     }) + "\n",
   );
-  const relevantEvents = events.filter((e) => selected.some((r) => contextEvents(r, [e]).length));
+  const relevantEvents = [...new Set(selected.flatMap((r) => contextEvents(r, contextIndexes)))];
   const relevantResources = resources
     .filter((e) => selected.some((r) => e.at >= r.root.start - 1000 && e.at <= r.root.end + 1000))
     .map((e) => (e.vm ? { ...e, vm: undefined } : e));
@@ -593,8 +905,8 @@ function html(finding, data, tag) {
 <label>Phase <select id="phase"><option value="">All</option></select></label> <label>Kind <select id="kind"><option value="">All</option><option>commit</option><option>read</option></select></label> <label><input type="checkbox" id="events" checked>Overlapping pauses and work</label><div id="view"></div><pre id="tip">Hover over a span to inspect it.</pre><script type="application/json" id="data">${data}</script><script>
 const data=JSON.parse(document.getElementById('data').textContent),phase=document.getElementById('phase'),kind=document.getElementById('kind'),show=document.getElementById('events'),view=document.getElementById('view'),tip=document.getElementById('tip');
 for(const name of [...new Set(data.selected.map(r=>r.priority+' / '+r.name))]) {const o=document.createElement('option');o.textContent=o.value=name;phase.append(o);}
-function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms';c.append(desc);const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,resources:data.resources.filter(x=>x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
-phase.onchange=kind.onchange=show.onchange=render;render();</script>`;
+function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms'+(r.replicaPublication?' · replica publication '+r.replicaPublication.msAfterRootEnd.toFixed(3)+' ms relative to end':'');c.append(desc);const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,replicaPublication:r.replicaPublication,resources:data.resources.filter(x=>x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
+phase.onchange=kind.onchange=show.onchange=render;kind.value="commit";const preferred=[...phase.options].find(o=>o.value==="P2 / L256");if(preferred)phase.value=preferred.value;render();</script>`;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const dir = process.argv[2];

@@ -1,3 +1,4 @@
+import { captureTraceContext, traceAsync } from "./tracing.ts";
 import { Worker } from "node:worker_threads";
 import type { Basis } from "./composition.ts";
 import type { ReadObservation } from "./read-observation.ts";
@@ -27,10 +28,10 @@ export class GatewayObserver {
   private rpc(type: string, args: any): Promise<any> {
     if (this.fail) return Promise.reject(this.fail);
     const id=++this.serial;
-    return new Promise((resolve,reject) => { this.pending.set(id,{resolve,reject}); this.worker.postMessage({type,id,...args}); });
+    return new Promise((resolve,reject) => { this.pending.set(id,{resolve,reject}); this.worker.postMessage({type,id,...args,trace:captureTraceContext()}); });
   }
   observe(root: string, basis: Basis, waitedMs: number, reason: string): Promise<ReadObservation> {
-    return this.rpc("observe", {root,basis,waitedMs,reason});
+    return traceAsync("rpc.gateway-observer.observe", () => this.rpc("observe", {root,basis,waitedMs,reason}), "event-loop");
   }
   async close() {
     this.closing=true;

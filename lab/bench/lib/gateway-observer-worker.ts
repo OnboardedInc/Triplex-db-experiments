@@ -1,3 +1,4 @@
+import { continueTrace, flushTracing } from "./tracing.ts";
 import { performance } from "node:perf_hooks";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { CaptureQueue } from "./capture-queue.ts";
@@ -14,12 +15,12 @@ try {
   const elu=performance.eventLoopUtilization();
   port!.on("message", m => {
     if (m.type === "close") {
-      void queue.drain().then(() => {
-        gateway.close(); port!.postMessage({id:m.id,value:{captures,check:checks.summary(),elu:performance.eventLoopUtilization(elu).utilization,http:httpCounts(),queue:queue.stats,errors}}); port!.close();
+      void queue.drain().then(async () => {
+        gateway.close(); await flushTracing(); port!.postMessage({id:m.id,value:{captures,check:checks.summary(),elu:performance.eventLoopUtilization(elu).utilization,http:httpCounts(),queue:queue.stats,errors}}); port!.close();
       });
       return;
     }
-    void queue.run(async () => {
+    void queue.run(() => continueTrace(m.trace,"worker.gateway-observer.observe", async () => {
       try {
         const result = await countHttp("receipt-fallback", () => gateway.pull(m.root,m.basis));
         const start=performance.now();
@@ -32,7 +33,7 @@ try {
         const message=String(error), key=message in errors || Object.keys(errors).length<32 ? message : "other errors";
         errors[key]=(errors[key]??0)+1; port!.postMessage({id:m.id,error:message});
       }
-    });
+    }));
   });
   port!.postMessage({type:"ready"});
 } catch(error) { port!.postMessage({type:"error",error:String(error)}); port!.close(); }

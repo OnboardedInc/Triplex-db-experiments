@@ -1,4 +1,4 @@
-import { flushTracing } from "./lib/tracing.ts";
+import { flushTracing, continueTrace } from "./lib/tracing.ts";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
@@ -26,7 +26,7 @@ observeDatomicPublication((position, operationId, diagnostics) => {
   });
 });
 const comp = await openComposition(cfg.composition, cfg.lane, cfg.scope);
-port!.on("message", async (m) => {
+const handleMessage = async (m: any) => {
   try {
     if (m.type === "close") {
       await comp.close();
@@ -58,5 +58,6 @@ port!.on("message", async (m) => {
   } catch (error) {
     port!.postMessage({ id: m.id, error: String(error) });
   }
-});
+};
+port!.on("message", m => { void (m.type==="close" ? handleMessage(m) : continueTrace(m.trace,"worker.probe.transact",()=>handleMessage(m))); });
 port!.postMessage({ ready: true });

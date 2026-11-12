@@ -1,4 +1,4 @@
-import { flushTracing } from "./tracing.ts";
+import { flushTracing, continueTrace } from "./tracing.ts";
 import fs from "node:fs";
 import { readObservation } from "./read-observation.ts";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
@@ -29,7 +29,7 @@ try {
     for (const reader of readers) reader.postMessage({ type: "replica-delta", delta, sentAt: at });
   });
   port!.postMessage({ type: "ready", index: indexStats(), bytes: host.replica.bytes });
-  port!.on("message", async m => {
+  const handleMessage = async (m: any) => {
     if (m.type === "pull" || m.type === "observe") {
       const declined = Error("exact gateway fallback required"), started = performance.now();
       try {
@@ -51,5 +51,6 @@ try {
       m.port.on("close", () => readers.delete(m.port));
     }
     if (m.type === "close") { await host.close(); if (appliedLog !== undefined) fs.closeSync(appliedLog); for (const reader of readers) reader.close(); await flushTracing(); port!.postMessage({ type: "closed" }); port!.close(); }
-  });
+  };
+  port!.on("message",m=>{void (["pull","observe"].includes(m.type)?continueTrace(m.trace,"worker.replica."+m.type,()=>handleMessage(m)):handleMessage(m));});
 } catch (error) { port!.postMessage({ type: "error", message: String(error) }); }

@@ -439,6 +439,16 @@ export class DatomicClient {
     basis: ResolvedTemporalBasis,
     rowPage = false,
   ) {
+    return tracedRequest("read", "client.reach", {}, () =>
+      this.reachEntitiesTraced(db, roots, basis, rowPage),
+    );
+  }
+  private async reachEntitiesTraced(
+    db: string,
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
+    rowPage: boolean,
+  ) {
     const older = [...this.reachInflight];
     let ingested!: () => void;
     const ready = new Promise<void>((resolve) => {
@@ -725,6 +735,12 @@ export class DatomicClient {
     return this.request("POST", `/v1/db/${db}/release`, { handle }, 250);
   }
   async rows(db: string, input: Record<string, unknown>): Promise<readonly TripleRow[]> {
+    return tracedRequest("read", "client.rows", {}, () => this.rowsTraced(db, input));
+  }
+  private async rowsTraced(
+    db: string,
+    input: Record<string, unknown>,
+  ): Promise<readonly TripleRow[]> {
     const response = await this.request<{ rows: WireRow[] }>("POST", `/v1/db/${db}/read`, input);
     const rows = traceSync("client.rows-decode", () => response.rows.map(decodeRow));
     if (!input["staged"])
@@ -752,6 +768,17 @@ export class DatomicClient {
       handle?: string;
       release?: boolean;
     },
+    onSent?: () => void,
+  ): Promise<unknown> {
+    // [DX-T1] Why: direct client users retain encoding and post-response validation in the same commit trace.
+    // Rejected: starting the only trace after serialization at the HTTP boundary.
+    return tracedRequest("commit", "client.transact", {}, () =>
+      this.transactTraced(db, input, onSent),
+    );
+  }
+  private async transactTraced(
+    db: string,
+    input: Parameters<DatomicClient["transact"]>[1],
     onSent?: () => void,
   ): Promise<unknown> {
     const encodeSpan = beginSpan("client.transact-encode");

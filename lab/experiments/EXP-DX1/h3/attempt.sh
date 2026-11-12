@@ -47,7 +47,8 @@ if [[ $kind == pair ]]; then
     }
     trap pair_cleanup EXIT
     trap 'exit 143' TERM INT
-    node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),2580000)' "$$" & pair_watchdog=$!
+    pair_limit_ms=2580000; [[ $pair_id != DX-T1 ]] || pair_limit_ms=3600000
+    node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$pair_limit_ms" & pair_watchdog=$!
   fi
   pair_arm bash "$0" real "$prefix-zero" "$@" --zero-readers --match-duration-s "$duration"
   baseline="$root/$prefix-zero/driver/ns-writes.jsonl"
@@ -129,7 +130,7 @@ cleanup() {
   fi
   if [[ -n $operational ]]; then rm -rf "$operational"; fi
   if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
-  if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
+  if [[ -f $out/trace-run.json ]]; then
     node lab/trace/finalize.mjs "$out" "lab/experiments/EXP-DX1/t1/runs/$prefix" > "$out/trace-finalize.log" 2>&1 || { cat "$out/trace-finalize.log" >&2; [[ $rc != 0 ]] || rc=1; }
   fi
   exit "$rc"
@@ -200,10 +201,8 @@ if [[ $prefix == tx2-dxr3-* ]]; then
   fi
   extra+=(--gateway-src "$gateway_source" --codec-spec "$PWD/packages/datomic/src/codec-spec.json")
 fi
-if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
-  export TRIPLEX_TRACE_RUN=$prefix TRIPLEX_TRACE_SLOT=$prefix TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)
-  node -e 'const fs=require("fs");fs.writeFileSync(process.argv[1],JSON.stringify({tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,level:process.env.TRIPLEX_TRACE_LEVEL,requiredJfr:["gw-w","gw-r","tx"],requireSystem:true,startedAt:Date.now()})+"\n")' "$out/trace-run.json"
-fi
+export TRIPLEX_TRACE_RUN=$prefix TRIPLEX_TRACE_SLOT=$prefix TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)
+node -e 'const fs=require("fs");fs.writeFileSync(process.argv[1],JSON.stringify({tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,level:process.env.TRIPLEX_TRACE_LEVEL,requiredJfr:process.env.TRIPLEX_TRACE_LEVEL==="off"?[]:["gw-w","gw-r","tx"],requireSystem:process.env.TRIPLEX_TRACE_LEVEL!=="off",startedAt:Date.now()})+"\n")' "$out/trace-run.json"
 run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
 # [DX-R3-P9] Why: q6 comparisons require the same live guest boot parameters, not a remembered VM setting.
 # Rejected: assuming nohlt survives an orchestrator restart.

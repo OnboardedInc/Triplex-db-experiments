@@ -20,5 +20,5 @@ export DX_TX_HEAP=3g DX_TX_MEMORY=4g DX_GW_WRITE_MEMORY=3g DX_GW_READ_MEMORY=3g 
 export DX_OBJECT_CACHE=1g DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
 export DX_GW_JAVA_OPTS='-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g'
 export DX_PG_SETTINGS='-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_buffers=64MB'
-export DX_ORACLE_ROOT=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H3/oracle
+export DX_ORACLE_ROOT=${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}
 exec bash lab/experiments/EXP-DX1/h3/attempt.sh "$@"

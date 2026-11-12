@@ -1,4 +1,4 @@
-import { traceSync, traceAsync } from "./tracing.ts";
+import { traceSync, traceWork, traceAsync } from "./tracing.ts";
 import { CutCache } from "./cut-cache.ts";
 import { Option } from "effect";
 import { pathToFileURL } from "node:url";
@@ -182,7 +182,7 @@ export class ReplicaReader {
   }
   apply(delta: ReadDelta) {
     if (delta.reset) this.worlds.clear();
-    traceSync("replica.apply-delta", () => this.index.apply(delta));
+    traceWork("replica.apply-delta", () => this.index.apply(delta), { position:delta.position, valid:delta.valid }, true);
     this.notify();
   }
   notify() {

@@ -17,3 +17,6 @@ bash lab/experiments/EXP-DX1/h4/run.sh pair "$prefix" --rung 10k "${@:3}" > "$E/
 sh lab/bin/host-quiet.sh > "$E/$prefix-host-after.jsonl"
 python3 lab/experiments/EXP-DX1/h4/summarize.py "$E/$prefix-ladder" > "$E/$prefix-TABLES.md" 2> "$E/$prefix-summarize.err"
 echo "pair rc=$rc quietAtStart=$quiet"; cat "$E/$prefix-host-before.jsonl" "$E/$prefix-host-after.jsonl"; head -3 "$E/$prefix-TABLES.md"
+
+# [DX-T1] Why: the caller must observe a failed/aborted pair, even when table rendering succeeds. Rejected: exit zero after printing rc=143.
+exit "$rc"

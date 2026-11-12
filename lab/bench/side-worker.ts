@@ -1,4 +1,4 @@
-import { flushTracing } from "./lib/tracing.ts";
+import { flushTracing, continueTrace } from "./lib/tracing.ts";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
@@ -43,7 +43,7 @@ function snapshot() {
     duplicates: feed.visibleDuplicateEffects(),
   };
 }
-port!.on("message", async (m) => {
+const handleMessage = async (m: any) => {
   try {
     if (m.type === "ack") {
       commits.set(m.position, m.info);
@@ -123,7 +123,8 @@ port!.on("message", async (m) => {
   } catch (e) {
     port!.postMessage({ type: "reply", id: m.id, error: String(e) });
   }
-});
+};
+port!.on("message", m=>{void (m.trace&&m.type!=="trace-close" ? continueTrace(m.trace,"worker.side."+m.type,()=>handleMessage(m)) : handleMessage(m));});
 port!.postMessage({ type: "ready" });
 try {
   await feed.run();

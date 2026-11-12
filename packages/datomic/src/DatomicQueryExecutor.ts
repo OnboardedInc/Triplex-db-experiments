@@ -1,3 +1,4 @@
+import { traceSync } from "./tracing.js";
 import { readFailure } from "./readErrors.js";
 import { databaseName } from "./scopeName.js";
 import { Effect } from "effect";
@@ -73,7 +74,7 @@ export function makeDatomicQueryExecutor(
             const evaluate = async (q: DatalogQuery): Promise<QueryContext[]> => {
               if (Date.now() - started > 30000)
                 throw new RangeError("Datomic query deadline exceeded");
-              const compiled = compileDatomic(q, cut);
+              const compiled = traceSync("client.query-planning", () => compileDatomic(q, cut));
               const wire = await client.request<{ rows: TaggedValue[][] }>(
                 "POST",
                 `/v1/db/${db}/q`,
@@ -185,7 +186,7 @@ export function makeDatomicQueryExecutor(
     steps: [
       {
         label: "native fact-entity join with support witnesses",
-        query: compileDatomic(query, { validAt: 0 }).edn,
+        query: traceSync("client.query-explain", () => compileDatomic(query, { validAt: 0 })).edn,
       },
     ],
   });

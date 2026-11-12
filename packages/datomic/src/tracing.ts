@@ -31,6 +31,7 @@ export interface RequestTrace {
   start: number;
   end: number;
   root: string;
+  parent?: string | undefined;
   spans: TraceSpan[];
   attributes: TraceAttributes;
   truncated: number;
@@ -52,12 +53,21 @@ const identity = {
 };
 let serial = 0;
 const prefix = randomBytes(8).toString("hex");
-const spanId = () => (++serial).toString(16).padStart(16, "0");
+// [DX-T1] Why: continued traces cross isolates; a process-local counter alone collides across workers.
+// Rejected: crypto allocation for every span; a random 64-bit starting point plus increment is cheap.
+let spanCounter = BigInt("0x" + randomBytes(8).toString("hex"));
+const spanId = () => {
+  spanCounter = (spanCounter + 1n) & 0xffffffffffffffffn;
+  if (spanCounter === 0n) spanCounter = 1n;
+  return spanCounter.toString(16).padStart(16, "0");
+};
 export const traceNow = () => performance.timeOrigin + performance.now();
 let failure: string | undefined;
 let sink: ReturnType<typeof createGzip> | undefined;
 let output: ReturnType<typeof createWriteStream> | undefined;
 let stopped = false;
+const topReads = new Map<string, RequestTrace[]>();
+const emitted = new WeakSet<RequestTrace>();
 const histograms = new Map<string, { count: number; max: number; buckets: number[] }>();
 
 // [DX-T1] Why: batch compressed output per isolate; no payloads, SQL, entity IDs or error messages.
@@ -123,6 +133,48 @@ export function beginTrace(
     truncated: 0,
   };
 }
+export interface WireTraceContext {
+  traceId: string;
+  parent: string;
+  run: string;
+  source: string;
+  slot: string;
+}
+export function captureTraceContext(): WireTraceContext | undefined {
+  const active = context.getStore();
+  return active
+    ? {
+        traceId: active.trace.traceId,
+        parent: active.span,
+        run: active.trace.run,
+        source: active.trace.source,
+        slot: active.trace.slot,
+      }
+    : undefined;
+}
+export async function continueTrace<A>(
+  wire: WireTraceContext | undefined,
+  name: string,
+  run: () => Promise<A>,
+): Promise<A> {
+  if (traceLevel === "off") return run();
+  const parsed = wire ? parseTraceparent(`00-${wire.traceId}-${wire.parent}-01`) : undefined;
+  const trace = beginTrace("internal", name)!;
+  if (
+    parsed &&
+    wire?.run === identity.run &&
+    wire.source === identity.source &&
+    wire.slot === identity.slot
+  ) {
+    trace.traceId = parsed.traceId;
+    trace.parent = parsed.parent;
+  } else if (wire) trace.attributes["invalidParent"] = true;
+  try {
+    return await withTrace(trace, run);
+  } finally {
+    finishTrace(trace);
+  }
+}
 export function currentTrace(): RequestTrace | undefined {
   return context.getStore()?.trace;
 }
@@ -161,7 +213,12 @@ export function endSpan(span: TraceSpan | undefined, attributes?: TraceAttribute
   if (!span || !trace) return;
   span.end = traceNow();
   if (attributes) span.attributes = { ...span.attributes, ...attributes };
-  if (traceLevel === "summary" && span.layer === "typescript" && span.end - span.start < 0.5)
+  if (
+    traceLevel === "summary" &&
+    span.layer === "typescript" &&
+    span.end - span.start < 0.5 &&
+    !trace.spans.some((child) => child.parent === span.id)
+  )
     return;
   addSpan(trace, span);
 }
@@ -169,23 +226,47 @@ export function inSpan<A>(span: TraceSpan | undefined, run: () => A): A {
   const active = context.getStore();
   return span && active ? context.run({ trace: active.trace, span: span.id }, run) : run();
 }
-export function traceSync<A>(name: string, run: () => A, layer = "typescript"): A {
-  const span = beginSpan(name, layer);
+export function traceSync<A>(
+  name: string,
+  run: () => A,
+  layer = "typescript",
+  attributes?: TraceAttributes,
+): A {
+  const span = beginSpan(name, layer, attributes);
   try {
     return inSpan(span, run);
   } finally {
     endSpan(span);
+    // [DX-T1] Why: long synchronous work must be visible to other requests queued on this same isolate.
+    // Rejected: showing a queue stall without the other request's blocking stack scope.
+    if (span && span.end - span.start >= 1)
+      emit({
+        type: "event",
+        name: span.name,
+        layer: span.layer,
+        start: span.start,
+        end: span.end,
+        traceId: currentTrace()?.traceId,
+        attributes: span.attributes,
+        synchronous: true,
+      });
   }
 }
-export function traceWork<A>(name: string, run: () => A): A {
+export function traceWork<A>(
+  name: string,
+  run: () => A,
+  attributes?: TraceAttributes,
+  retainEvery = false,
+): A {
   if (traceLevel === "off") return run();
-  if (currentTrace()) return traceSync(name, run);
+  if (currentTrace()) return traceSync(name, run, "typescript", attributes);
   const start = traceNow();
   try {
     return run();
   } finally {
     const end = traceNow();
-    if (end - start >= 0.5) emit({ type: "event", name, layer: "typescript", start, end });
+    if (retainEvery || end - start >= 0.5)
+      emit({ type: "event", name, layer: "typescript", start, end, attributes });
   }
 }
 export async function traceAsync<A>(
@@ -235,7 +316,11 @@ export function finishTrace(
   Object.assign(trace.attributes, attributes);
   const duration = trace.end - trace.start;
   const key = `${trace.kind}:${trace.attributes["phase"] ?? "unphased"}`;
-  const h = histograms.get(key) ?? { count: 0, max: 0, buckets: new Array<number>(256).fill(0) };
+  const h = histograms.get(key) ?? {
+    count: 0,
+    max: 0,
+    buckets: Array.from({ length: 256 }, () => 0),
+  };
   h.count++;
   h.max = Math.max(h.max, duration);
   const bucket = Math.max(
@@ -244,7 +329,21 @@ export function finishTrace(
   );
   h.buckets[bucket] = (h.buckets[bucket] ?? 0) + 1;
   histograms.set(key, h);
-  if (keepTrace(trace.kind, trace.traceId, duration)) emit(trace);
+  // [DX-T1] Why: retain the actual top 20 per phase/thread even when every read is below the slow threshold.
+  // Rejected: presenting the slowest fixed-sample reads as the actual slowest reads.
+  if (trace.kind === "read") {
+    const top = topReads.get(key) ?? [];
+    if (top.length < 20 || duration > top[0]!.end - top[0]!.start) {
+      top.push(trace);
+      top.sort((a, b) => a.end - a.start - (b.end - b.start));
+      if (top.length > 20) top.shift();
+      topReads.set(key, top);
+    }
+  }
+  if (keepTrace(trace.kind, trace.traceId, duration)) {
+    emit(trace);
+    emitted.add(trace);
+  }
 }
 export async function tracedRequest<A>(
   kind: RequestTrace["kind"],
@@ -329,6 +428,7 @@ export function startTraceTelemetry(): void {
     level: traceLevel,
     slowReadMs: TRACE_SLOW_READ_MS,
     readSample: TRACE_READ_SAMPLE,
+    topReadsPerPhase: 20,
     clock: "unix-ms anchored to monotonic performance clock",
   });
 }
@@ -337,6 +437,13 @@ export async function flushTracing(): Promise<void> {
   if (telemetryTimer) clearInterval(telemetryTimer);
   gc?.disconnect();
   delay?.disable();
+  for (const top of topReads.values())
+    for (const trace of top)
+      if (!emitted.has(trace)) {
+        trace.attributes["retention"] = "phase-top20";
+        emit(trace);
+        emitted.add(trace);
+      }
   emit({
     type: "histograms",
     at: traceNow(),

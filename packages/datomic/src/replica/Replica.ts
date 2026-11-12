@@ -231,7 +231,9 @@ export class Replica {
       )
         throw new ReplicaInvalid("Incomplete or duplicate entity");
       const [id, rev, wire] = entry as [string, number, unknown[]];
-      const rows = traceSync("replica.validate-and-decode", () => decodeReplicaRows(id, rev, wire, p));
+      const rows = traceSync("replica.validate-and-decode", () =>
+        decodeReplicaRows(id, rev, wire, p),
+      );
       const packed = traceSync("replica.pack", () => packEntity(rev, rows)),
         previous = into.get(id);
       // [DX-R2] Why: pages at one cut must agree; reuse immutable buffers for overlapping closures.
@@ -312,12 +314,16 @@ export class Replica {
     return this.exclusive(() => this.applyFeed(waitMs, through));
   }
   private async applyFeed(waitMs: number, through?: number): Promise<void> {
-    return tracedRequest("internal", "replica.follow", {}, () => this.applyFeedTraced(waitMs, through));
+    return tracedRequest("internal", "replica.follow", {}, () =>
+      this.applyFeedTraced(waitMs, through),
+    );
   }
   private async applyFeedTraced(waitMs: number, through?: number): Promise<void> {
     try {
       if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
-      const page = await traceAsync("replica.fetch-feed", () => this.source.feed(this.watermark, 1000, waitMs));
+      const page = await traceAsync("replica.fetch-feed", () =>
+        this.source.feed(this.watermark, 1000, waitMs),
+      );
       position(page.head);
       if (page.head < this.watermark || !Array.isArray(page.transactions))
         throw new ReplicaInvalid("Feed regressed");
@@ -352,7 +358,18 @@ export class Replica {
         else await this.load(tx.entities, tx.position, changes, true);
         const replaced = [...changes].map(([id, e]) => [id, this.entities.get(id), e] as const);
         for (const [id, e] of changes) this.entities.set(id, e);
-        traceSync("replica.publish", () => this.onUpdate?.({ position: tx.position, reset: false, valid: true, changes: replaced }));
+        traceSync(
+          "replica.publish",
+          () =>
+            this.onUpdate?.({
+              position: tx.position,
+              reset: false,
+              valid: true,
+              changes: replaced,
+            }),
+          "typescript",
+          { position: tx.position },
+        );
         this.advance(tx.position);
       }
     } catch (e) {

@@ -1,3 +1,4 @@
+import { captureTraceContext, traceAsync } from "./tracing.ts";
 import { Worker } from "node:worker_threads";
 // [DX-H4] Why: keep a read-only final snapshot for the existing P3 predicates.
 // Rejected: replacing feed correctness with worker exit status.
@@ -73,7 +74,7 @@ export class SideThread {
     const id = ++this.serial;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      this.worker.postMessage({ type, id, ...args });
+      this.worker.postMessage({ type, id, ...args, trace: captureTraceContext() });
     });
   }
   ack(position: number, info: any) {
@@ -104,12 +105,12 @@ export class SideThread {
     return this.rpc("replay", { from });
   }
   ryow(subject: number, receipt: any, basis: any, start: number) {
-    return this.rpc("ryow", {
+    return traceAsync("rpc.side.ryow", () => this.rpc("ryow", {
       subject,
       receipt: { instant: receipt.instant, position: receipt.position },
       basis,
       start,
-    });
+    }), "event-loop");
   }
   async close() {
     await this.rpc("trace-close", {});

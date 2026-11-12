@@ -636,7 +636,7 @@ async function run() {
       recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
     if (ev.stream === "background") {
       const ryowTrace = beginTrace("read", "driver.ryow", { phase: -2, commitTraceId: jobTraces.get(job)?.traceId ?? "off" });
-      const p = withTrace(ryowTrace, () => traceAsync("driver.ryow-capture", () => !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; retainRead(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost, replicaHost && "observe" in replicaHost ? replicaHost.observe.bind(replicaHost) : undefined))).finally(() => finishTrace(ryowTrace));
+      const p = withTrace(ryowTrace, () => traceAsync("driver.ryow-capture", () => !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then((row: any)=>{ row[R.phase]=PHASE_RYOW; retainRead(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost, replicaHost && "observe" in replicaHost ? replicaHost.observe.bind(replicaHost) : undefined))).finally(() => finishTrace(ryowTrace));
       ryowPending.add(p);
       void p.finally(() => ryowPending.delete(p));
     }
@@ -667,7 +667,7 @@ async function run() {
       const ev = r.job.ev;
       const trace = jobTraces.get(r.job) ?? beginTrace("commit", "driver.expired", { stream: ev.stream, seq: ev.seq }, r.job.scheduledAt);
       if (r.expired) traceInterval(trace, "driver.expired-in-queue", r.job.scheduledAt, r.finishedAt, "driver-queue");
-      finishTrace(trace, { expired: r.expired, outcome: outcomes.get(okey(ev))?.outcome ?? "unknown" });
+      finishTrace(trace, { expired: r.expired, outcome: outcomes.get(okey(ev))?.outcome ?? "unknown", position:outcomes.get(okey(ev))?.position??null });
       if (ev.stream === "background" && !ev.resend) {
         const list = pendingBySubject.get(ev.subject);
         if (list) { const k = list.indexOf(ev.seq); if (k >= 0) list.splice(k, 1); if (!list.length) pendingBySubject.delete(ev.subject); }
