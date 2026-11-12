@@ -27,7 +27,7 @@ import { outboxEntity } from "./w0-outbox.ts";
 import { evaluateAll, compactCandidateReferences } from "./w0-replica.ts";
 import { DomainOracle, DomainOraclePool } from "./w0-gates.ts";
 import { startRuntimeFollower, startThreadedW0Live } from "./w0-runtime.ts";
-import { startW0Live, matchW0Live } from "./w0-replica-live.ts";
+import { startW0Live, matchW0Live, assertBaselineHeadroom } from "./w0-replica-live.ts";
 // [DX-R1] Why: this explicit entry point leaves the existing full-sweep gates and H8's path unchanged.
 // Rejected: relabelling old controller PASS rows as replica acceptance.
 export async function runReplicaDriver(argv: string[]) {
@@ -655,6 +655,10 @@ export async function runReplicaDriver(argv: string[]) {
           publication: report.r1Publication,
         }),
       );
+      // [DX-S5] Why: R1 objects are no longer needed after its ACKs; the later independent oracle reconstructs every R1 expectation.
+      // Rejected: carrying 100k initial-release graphs through the live mirror handoff near the 11 GiB cap.
+      r1.records.length = 0;
+      (globalThis as any).gc?.();
       cut = await comp.currentPosition();
       await followTo(cut);
       const old = replica
@@ -814,12 +818,7 @@ export async function runReplicaDriver(argv: string[]) {
             queueToServiceP99: report.baseline.commit.p99 / report.baseline.commitService.p99,
           }),
         );
-        if (
-          argv.includes("--require-healthy-baseline") &&
-          (report.baseline.commit.p99 / report.baseline.commitService.p99 > 5 ||
-            report.baseline.pendingAtStop > 32)
-        )
-          throw Error("baseline queue is not bounded: activation refused");
+        if (argv.includes("--require-healthy-baseline")) assertBaselineHeadroom(report.baseline);
         traffic = undefined;
         collectLiveLag = true;
         traffic = await startTraffic({ ...liveOptions, id: "sweep" });

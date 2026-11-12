@@ -5,7 +5,7 @@ set -euo pipefail
 attempt=${1:?fresh attempt id}; shift
 [[ $attempt =~ ^[a-z0-9-]+$ ]] || exit 2
 [[ ${S5_MATRIX:-0} == 0 || ${S5_MATRIX:-0} == 1 ]] || exit 2
-export S5_POINT_JOURNAL=1 S5_WRITER_CPUS=1,2 S5_READ_CPUS=2 S5_RUNTIME_CPUS=3,4,5,6,7
+export S5_CHECKPOINT_ON_START=1 S5_POINT_JOURNAL=1 S5_WRITER_CPUS=1,2 S5_READ_CPUS=2 S5_RUNTIME_CPUS=3,4,5,6,7
 export S5_TX_CACHE=${S5_TX_CACHE:-1280m} S5_PG_BUFFERS=${S5_PG_BUFFERS:-768MB} S5_PEER_CACHE=${S5_PEER_CACHE:-384m}
 trials='[{"id":"dxs5-gateway32-'$attempt'","mode":"gateway","size":32,"inflight":1,"yieldToWriter":true,"maxWriterYieldMs":50,"r1Size":128,"r1Inflight":16},{"id":"dxs5-local16-'$attempt'","mode":"replica","size":16,"inflight":1,"yieldToWriter":true,"maxWriterYieldMs":100,"r1Size":64,"r1Inflight":8}]'
 # [DX-S5] Why: H completed the single-release oracle then exited 137 entering candidates; isolate completed main holds by default.

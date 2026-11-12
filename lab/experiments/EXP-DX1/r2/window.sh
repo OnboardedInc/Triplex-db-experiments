@@ -219,7 +219,18 @@ start_jvm() {
   docker run -d --pull never -v "$repo/lab/experiments/EXP-DX1/s5/logback.xml:/opt/datomic/bin/logback.xml:ro" -v "$repo/lab/experiments/EXP-DX1/s5:/s5:ro" "$@"
  else docker run -d --pull never "$@"; fi
 }
-peer_cache=1g; peer_entity_cache=268435456; peer_sessions=1000000; peer_java_extra=; tx_java_extra=; gateway_main=triplex.gateway.main; gateway_classpath=/opt/gateway/src
+peer_cache=1g; peer_entity_cache=268435456; peer_sessions=1000000; peer_java_extra=
+if [[ $s5 == true && ${S5_CHECKPOINT_ON_START:-0} == 1 ]]; then
+ # [DX-S5] Why: observe and recycle completed WAL before another retained-volume hold without relaxing durability or rewriting application rows.
+ # Rejected: deleting WAL files or starting a new publication with an unmeasured disk margin.
+ docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT pg_database_size(current_database()), (SELECT sum(size) FROM pg_ls_waldir());'
+ docker exec "$prefix-pg" psql -U postgres -d datomic -c CHECKPOINT
+ docker exec "$prefix-pg" psql -U postgres -d datomic -c CHECKPOINT
+ docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT pg_database_size(current_database()), (SELECT sum(size) FROM pg_ls_waldir());'
+ docker exec "$prefix-pg" sh -c 'du -sk /var/lib/postgresql/data/base /var/lib/postgresql/data/pg_wal'
+ df -k /System/Volumes/Data
+fi
+tx_java_extra=; gateway_main=triplex.gateway.main; gateway_classpath=/opt/gateway/src
 if [[ $s5 == true ]]; then
  peer_cache=${S5_PEER_CACHE:-256m}; peer_entity_cache=67108864; peer_sessions=65536
  gateway_main=triplex.gateway.main; gateway_classpath=/opt/gateway/src

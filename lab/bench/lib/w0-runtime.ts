@@ -8,8 +8,20 @@ import { offerLiveWrite, finishLiveWrite } from "./w0-outbox.ts";
 import { percentile } from "./w0-traffic.ts";
 import type { startW0Live } from "./w0-replica-live.ts";
 const workerUrl = new URL("./w0-runtime-worker.ts", import.meta.url);
+// [DX-S5] Why: openTriples routes every worker to READ_URLS by default, including a writer worker unless its environment is explicit.
+// Rejected: inheriting the reader endpoint (100k A routed all trace commits to the one-CPU read peer and queued before activation).
+export function runtimeWorkerEnvironment(role: string, url?: string) {
+  if (role !== "writer" && role !== "follower") return { ...process.env };
+  if (!url || !["http:", "https:"].includes(new URL(url).protocol))
+    throw Error("missing runtime writer endpoint");
+  return { ...process.env, DATOMIC_URL: url, DATOMIC_READ_URLS: url };
+}
 function managed(data: any, transferList: import("node:worker_threads").TransferListItem[] = []) {
-  const worker = new Worker(workerUrl, { workerData: data, transferList });
+  const worker = new Worker(workerUrl, {
+    workerData: data,
+    transferList,
+    env: runtimeWorkerEnvironment(data.role, data.url),
+  });
   let failure: Error | undefined;
   let readyResolve!: () => void, readyReject!: (error: Error) => void;
   let stopResolve!: (value: any) => void, stopReject!: (error: Error) => void;
@@ -135,7 +147,11 @@ export async function startThreadedW0Live(
     }
     await Promise.all(readers.map((reader) => reader.ready));
     const { comp: _comp, replica: _replica, currentReads: _reads, ...plain } = options;
-    const writer = managed({ role: "writer", options: { ...plain, id: options.id + "-writer" } });
+    const writer = managed({
+      role: "writer",
+      url: options.comp.backend.url,
+      options: { ...plain, id: options.id + "-writer" },
+    });
     writer.worker.on("message", (message) => {
       if (message.type === "write-activity") {
         if (message.pending) {

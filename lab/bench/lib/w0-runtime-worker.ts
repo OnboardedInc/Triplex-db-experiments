@@ -27,6 +27,8 @@ try {
       workerData.options.lane,
       workerData.options.scope,
     );
+    if (comp.backend.url !== workerData.url)
+      throw Error("writer routed outside its bound write gateway: " + comp.backend.url);
     const traffic = await startW0Live({
       ...workerData.options,
       comp,
@@ -57,6 +59,8 @@ try {
       rowCacheBytes: 1,
     });
     const comp = await openComposition("reach", "datomic", workerData.scope);
+    if (comp.backend.url !== workerData.url)
+      throw Error("follower head routed outside its bound write gateway");
     const source = Replica.source(
       client,
       workerData.db,
@@ -64,6 +68,7 @@ try {
       workerData.image.validAt,
     );
     const replica = Replica.fromImage(source, workerData.image);
+    workerData.image = undefined;
     const subscribers: import("node:worker_threads").MessagePort[] = [];
     replica.onUpdate = (update) => {
       port.postMessage({ type: "delta", update });

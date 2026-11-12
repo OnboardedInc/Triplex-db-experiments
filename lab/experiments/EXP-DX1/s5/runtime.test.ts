@@ -1,6 +1,8 @@
 import { expect, it } from "vitest";
 import { Worker, MessageChannel } from "node:worker_threads";
 import { Replica, packEntity } from "../../../../packages/datomic/dist/index.js";
+import { runtimeWorkerEnvironment } from "../../../bench/lib/w0-runtime.ts";
+import { assertBaselineHeadroom } from "../../../bench/lib/w0-replica-live.ts";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 
 it("reader worker follows ordered packed cuts and walks only the requested subject", async () => {
@@ -73,3 +75,37 @@ it("reader worker follows ordered packed cuts and walks only the requested subje
     channel.port1.close();
   }
 }, 15000);
+
+it("binds writer/follower composition routing to the declared write endpoint without changing reader routing", () => {
+  const writer = "http://bound-write:8080";
+  for (const role of ["writer", "follower"]) {
+    const env = runtimeWorkerEnvironment(role, writer);
+    expect(env.DATOMIC_URL).toBe(writer);
+    expect(env.DATOMIC_READ_URLS).toBe(writer);
+    expect(() => runtimeWorkerEnvironment(role)).toThrow();
+  }
+  expect(runtimeWorkerEnvironment("reader").DATOMIC_READ_URLS).toBe(process.env.DATOMIC_READ_URLS);
+});
+it("requires complete finite baseline samples before activation admission", () => {
+  const good = {
+    readers: 256,
+    read: { count: 1000 },
+    commitService: { count: 10, p99: 20 },
+    commit: { p99: 60 },
+    offered: 10,
+    acknowledged: 10,
+    failures: 0,
+    windowMs: 10000,
+    pendingAtStop: 2,
+  };
+  expect(() => assertBaselineHeadroom(good)).not.toThrow();
+  for (const bad of [
+    { read: { count: 0 } },
+    { commitService: { count: 0, p99: null } },
+    { commit: { p99: NaN } },
+    { acknowledged: 9 },
+    { pendingAtStop: 33 },
+    { windowMs: 0 },
+  ])
+    expect(() => assertBaselineHeadroom({ ...good, ...bad })).toThrow();
+});

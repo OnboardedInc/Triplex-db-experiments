@@ -418,3 +418,25 @@ export function* rawLiveRecords(file: string): Generator<any> {
     fs.closeSync(fd);
   }
 }
+
+// [DX-S5] Why: admission needs actual finite latency samples and complete ACK coverage, not NaN comparisons on an empty window.
+// Rejected: allowing null/null > 5 to evaluate false and silently admit a missing baseline.
+export function assertBaselineHeadroom(summary: any) {
+  const ratio = summary?.commit?.p99 / summary?.commitService?.p99;
+  if (
+    summary?.readers !== 256 ||
+    !(summary?.read?.count >= 256) ||
+    !(summary?.commitService?.count > 0) ||
+    !(summary?.commitService?.p99 > 0) ||
+    !(summary?.offered > 0) ||
+    summary.offered !== summary.acknowledged ||
+    summary.failures !== 0 ||
+    !(summary.windowMs >= 1000) ||
+    !Number.isFinite(ratio) ||
+    ratio > 5 ||
+    !Number.isSafeInteger(summary.pendingAtStop) ||
+    summary.pendingAtStop < 0 ||
+    summary.pendingAtStop > 32
+  )
+    throw Error("baseline queue is not bounded or samples are incomplete: activation refused");
+}

@@ -6,6 +6,9 @@
     "range.test.ts",
     "parallel.test.ts",
     "oracle-pool.test.ts",
-    "seed-position.test.ts"
+    "seed-position.test.ts",
+    "runtime.test.ts",
+    "../../../bench/lib/w0-replica-driver.ts",
+    "../../../bench/lib/w0-runtime-worker.ts"
   ]
 }
