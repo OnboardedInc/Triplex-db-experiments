@@ -13,10 +13,10 @@ first, last = report['writerSourceDiagnostics']['start'], report['writerSourceDi
 def delta(field):
     return {k: v-first.get(field, {}).get(k, 0) for k, v in last.get(field, {}).items()}
 print(json.dumps({'arm': arm, 'head': (root/'head.txt').read_text().strip(), 'runTag': report['runTag'],
-  'scope': report['scope'], 'status': report['status'], 'strict': report['config']['strictRecordClocks'], 'readPath': report['config']['readPath'],
+  'scope': report['scope'], 'status': report['status'], 'strict': report['config']['strictRecordClocks'], 'readPath': report['config']['readPath'], 'expectedRowHash': report['config'].get('expectedRowHash','eager'), 'fallbackThread': report['config'].get('replicaFallbackThread','main'),
   'steady': dist([r['transactReturnedAt']-r['transactCalledAt'] for r in commits if not r.get('burst')]),
   'burst': dist([r['transactReturnedAt']-r['transactCalledAt'] for r in commits if r.get('burst')]),
-  'statuses': delta('statuses'), 'sourceErrors': delta('errors'), 'adapter': delta('counters'),
+  'statuses': delta('statuses'), 'sourceErrors': delta('errors'), 'adapter': {k:v for k,v in delta('counters').items() if k not in ('beginDecodeMicros','transactEncodeMicros')},
   'requests': last['requests']-first['requests'], 'requestsPerCommit': (last['requests']-first['requests'])/len(commits) if commits else None,
   'writerThread': [{'phase': p['name'], **p['writerThread']} for p in phases if 'writerThread' in p],
   'followP99Ms': report.get('replica', {}).get('acknowledgementToApplied', {}).get('p99Ms'),

@@ -55,10 +55,11 @@ i=0
 for arm in "$@"; do
   i=$((i+1)); prefix=tx2-dxr3-$tag-$(echo "$arm" | tr A-Z a-z)$i
   [[ ! -e $DX_STACK_EVIDENCE/$prefix && ! -e $DX_STACK_EVIDENCE/$prefix.log.gz ]] || exit 2
-  case $arm in A) read=gateway; strict=0;; B) read=gateway; strict=1;; C) read=replica; strict=0;; D) read=replica; strict=1;; *) exit 2;; esac
+  extra=()
+  case $arm in G) read=replica; strict=1; extra=(--replica-fallback-thread worker);; E) read=gateway; strict=0; extra=(--expected-row-hash after);; F) read=replica; strict=1; extra=(--expected-row-hash after --replica-fallback-thread worker);; A) read=gateway; strict=0;; B) read=gateway; strict=1;; C) read=replica; strict=0;; D) read=replica; strict=1;; *) exit 2;; esac
   export DX_READ_PATH=$read DX_STRICT_RECORD_CLOCKS=$strict DX_R3_SOURCE_DIAGNOSTICS=1
   echo "ARM $arm $prefix strict=$strict read=$read $(date -u)"
-  bash lab/experiments/EXP-DX1/h4/run.sh real "$prefix" --rung 10k --zero-readers --match-duration-s 200 --reader-ladder-only --level-s 30 --max-readers 1024 --seed-batch-facts 2000 --replica-history-mib 192 > "$DX_STACK_EVIDENCE/$prefix.log" 2>&1 & child=$!
+  bash lab/experiments/EXP-DX1/h4/run.sh real "$prefix" --rung 10k --zero-readers --match-duration-s 200 --reader-ladder-only --level-s 30 --max-readers 1024 --seed-batch-facts "${DX_R3_SEED_BATCH_FACTS:-400}" --replica-history-mib 192 "${extra[@]}" > "$DX_STACK_EVIDENCE/$prefix.log" 2>&1 & child=$!
   arm_rc=0; wait "$child" || arm_rc=$?; child=
   python3 lab/experiments/EXP-DX1/r3/writer-arm-summary.py "$DX_STACK_EVIDENCE/$prefix" "$arm" || true
   gzip "$DX_STACK_EVIDENCE/$prefix.log"

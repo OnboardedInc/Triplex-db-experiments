@@ -3,10 +3,12 @@ import { canonicalRow, typed } from "./canonical.ts";
 import { Digest } from "./rng.ts";
 import { ids, memberOf } from "./world.ts";
 import type { Receipt } from "./composition.ts";
-type Version = { row: any; from: number; until: number; a: number; b: number };
+type Version = { row: any; from: number; until: number; a: number; b: number; hashed: boolean };
 // [DX-R3] Why: expected full rows come from command intent plus acknowledged assertion identities/metadata.
 // Rejected: using observed reads or the replica bootstrap as expected-state evidence.
 export class FullRowModel {
+  private readonly deferredHash: boolean;
+  constructor(deferredHash = false) { this.deferredHash = deferredHash; }
   private seen = new Set<number>();
   private entities = new Map<string, Version[]>();
   private assertions = new Map<string, Version>();
@@ -60,7 +62,9 @@ export class FullRowModel {
           id: source.id,
           entityId: op.entityId,
           attribute: op.attribute,
-          value: op.value,
+          // [DX-R3-P9] Why: post-trace hashing must retain the exact owned intent even if an input value is reused later.
+          // Rejected: delaying a hash over a caller's mutable JSON object; keyOf has already validated the whole value domain.
+          value: this.deferredHash ? structuredClone(op.value) : op.value,
           recordedAt: receipt.instant,
           validFrom: op.validFrom ?? receipt.instant,
           validTo: op.validTo === undefined ? Option.none() : Option.some(op.validTo),
@@ -71,8 +75,8 @@ export class FullRowModel {
           retractedAt: Option.none(),
           retractTxId: Option.none(),
         };
-        const d = new Digest().add(canonicalRow(row));
-        const v = { row, from: receipt.instant, until: Infinity, a: d.a, b: d.b };
+        const d = this.deferredHash ? undefined : new Digest().add(canonicalRow(row));
+        const v = { row, from: receipt.instant, until: Infinity, a: d?.a ?? 0, b: d?.b ?? 0, hashed: d !== undefined };
         const body = this.entities.get(row.entityId) ?? [];
         body.push(v);
         this.entities.set(row.entityId, body);
@@ -118,6 +122,12 @@ export class FullRowModel {
           (Option.isSome(t.validTo) && t.validTo.value <= validAt)
         )
           continue;
+        // [DX-R3-P9] Why: every visible fact still contributes its complete canonical public row, after measured writes stop.
+        // Rejected: dropping metadata from the check or charging expectation hashing to commit acknowledgement latency.
+        if (!v.hashed) {
+          const part = new Digest().add(canonicalRow(t));
+          v.a = part.a; v.b = part.b; v.hashed = true;
+        }
         d.a = (d.a + v.a) >>> 0;
         d.b = (d.b + v.b) >>> 0;
         d.n++;

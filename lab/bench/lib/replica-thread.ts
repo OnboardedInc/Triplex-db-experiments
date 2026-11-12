@@ -1,3 +1,4 @@
+import { GatewayObserver } from "./gateway-observer.ts";
 import { Worker, MessageChannel } from "node:worker_threads";
 import { readObservation, type ReadObservation } from "./read-observation.ts";
 import { Histogram } from "./hist.ts";
@@ -14,6 +15,8 @@ export class ReplicaThread {
   private worker: Worker;
   private head: () => Promise<number>;
   private gateway: CompositionHandle["pull"];
+  private gatewayObserver?: GatewayObserver;
+  gatewayObserverStats: any;
   private closed = false;
   private fail: Error | undefined;
   private closeReply: (() => void) | undefined;
@@ -42,6 +45,8 @@ export class ReplicaThread {
       if (m.type === "reply") {
         const p = this.pending.get(m.id); this.pending.delete(m.id);
         if (m.error) p?.reject(Error(m.error));
+        else if (m.fallback && p?.observation && this.gatewayObserver && p.basis.recordedPosition !== undefined)
+          void this.gatewayObserver.observe(p.root,p.basis,m.waitedMs,m.reason).then(p.resolve,p.reject);
         else if (m.fallback && p) void this.gateway(p.root, p.basis).then(value => p.resolve(p.observation ? readObservation({ ...value, route: "fallback", waitedMs: m.waitedMs, replicaFallbackReason: m.reason }) : { ...value, route: "fallback", waitedMs: m.waitedMs, replicaFallbackReason: m.reason }), p.reject);
         else p?.resolve(p.observation ? m.value : restoreReplicaReply(m.value));
       }
@@ -55,7 +60,13 @@ export class ReplicaThread {
     let resolve!: () => void, reject!: (error: Error) => void;
     const ready = new Promise<void>((r, j) => { resolve = r; reject = j; });
     const thread = new ReplicaThread(cfg, comp, resolve, reject);
-    try { await ready; return thread; } catch (e) { await thread.worker.terminate(); throw e; }
+    try {
+      if (cfg.fallbackThread === "worker") {
+        thread.gatewayObserver = new GatewayObserver(cfg.scope, replicaEndpoint(process.env,"reader"));
+        await Promise.all([ready,thread.gatewayObserver.ready]);
+      } else await ready;
+      return thread;
+    } catch (e) { await thread.worker.terminate(); await thread.gatewayObserver?.close().catch(()=>{}); throw e; }
   }
   connect() {
     const { port1, port2 } = new MessageChannel();
@@ -78,7 +89,10 @@ export class ReplicaThread {
   async close() {
     try {
       if (!this.fail) await new Promise<void>(resolve => { this.closeReply = resolve; this.worker.postMessage({ type: "close" }); });
-    } finally { await this.worker.terminate(); }
+    } finally {
+      await this.worker.terminate();
+      if (this.gatewayObserver) this.gatewayObserverStats = await this.gatewayObserver.close();
+    }
     if (this.fail) throw this.fail;
   }
 }

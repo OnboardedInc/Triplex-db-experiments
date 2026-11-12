@@ -12,7 +12,7 @@ try {
   const host = await ReplicaReadHost.open(cfg.scope, cfg.roots, comp, cfg.initial, cfg.feed, cfg.historyBytes, cfg.peer, cfg.sourceEndpoint);
   // [DX-R3] Why: subscribe and publish the initial cut in one turn; no journal can fall between image and deltas.
   // Rejected: requesting a snapshot and subscribing in separate parent messages.
-  const local = new ReplicaReader(cfg.historyBytes, host.index);
+  const local = new ReplicaReader(cfg.historyBytes, host.index, cfg.worldCacheBytes ?? 32 * 1024 ** 2);
   const indexStats = () => ({ floor: host.index.floor, position: host.index.position, historyBytes: host.index.historyBytes, positions: host.index.positions, maxBytes: host.index.maxBytes });
   const readers = new Set<import("node:worker_threads").MessagePort>();
   let bytes = host.replica.bytes;

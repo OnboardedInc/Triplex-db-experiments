@@ -115,8 +115,11 @@ const config = {
   splitTarget: opt("split-target", opt("read-path", "gateway") === "replica" ? "pending" : "mixed") as "pending" | "mixed",
   // [DX-R3] Why: the default stays 64 MiB; a measured benchmark can retain its 2,000-receipt basis cohort explicitly.
   // Rejected: enlarging an unreported window or letting per-reader gateway caches consume 3 x 640 MiB beside the replica.
+  replicaWorldCacheMiB: Number(opt("replica-world-cache-mib", "32")),
   replicaHistoryMiB: Number(opt("replica-history-mib", "64")),
   replicaPeer: opt("replica-peer", "reader") as "reader" | "writer",
+  expectedRowHash: opt("expected-row-hash", "eager") as "eager" | "after",
+  replicaFallbackThread: opt("replica-fallback-thread", "main") as "main" | "worker",
   replicaThread: opt("replica-thread", "worker") as "main" | "worker",
   replicaFeed: opt("replica-feed", "inline") as "legacy" | "inline",
   readerLadderOnly: flag("reader-ladder-only"),
@@ -151,6 +154,7 @@ const config = {
   barrierDir: opt("barrier-dir") ?? null,
   startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
+if (!["eager", "after"].includes(config.expectedRowHash) || !["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
 // [DX-H7] Why: bound aggregate reader and writer cache estimates below half the 8 GiB client grant.
 // Rejected: an unbounded per-thread cache (moves saturation to memory pressure).
 if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) || config.readerEntityCacheMiB < 1 ||
@@ -276,7 +280,7 @@ const cpuMarks: { t: number; cpu: NodeJS.CpuUsage }[] = [];
 
 // ---------------------------------------------------------------- shared state
 
-const model = new Model(rungSubjects);
+const model = new Model(rungSubjects, config.expectedRowHash === "after");
 const accounts = accountsFor(rungSubjects);
 const expectations = new ExpectationCache(model);
 const ryowFallbackReasons: Record<string, number> = {};
@@ -441,13 +445,13 @@ async function run() {
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
       composition: config.composition, roots: Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
-      historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer }, aux)
+      worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer }, aux)
     : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
       scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
       config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer) : undefined;
   const mainReplicaHost = replicaHost && !("connect" in replicaHost) ? replicaHost : undefined;
-  const replicaLocal = mainReplicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2, mainReplicaHost.index) : undefined;
+  const replicaLocal = mainReplicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2, mainReplicaHost.index, config.replicaWorldCacheMiB * 1024 ** 2) : undefined;
   if (mainReplicaHost && replicaLocal) {
     mainReplicaHost.subscribe(() => replicaLocal.notify());
     const gatewayPull = aux.pull.bind(aux);
@@ -459,7 +463,7 @@ async function run() {
       return remote.pull(root, basis);
     };
   }
-  const workerCfg = (w: number) => ({ splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
@@ -919,6 +923,7 @@ async function run() {
   if (replicaHost) report.replica = { copyBytes: replicaHost.replica.bytes, historyBytes: replicaHost.index.historyBytes,
     floor: replicaHost.index.floor, position: replicaHost.index.position, positionWindow: replicaHost.index.positions,
     historyBudgetBytes: replicaHost.index.maxBytes, feedPeer: config.replicaPeer, feedEndpoint: "endpoint" in replicaHost ? replicaHost.endpoint : (await import("./lib/replica-reads.ts")).replicaEndpoint(process.env, config.replicaPeer), applyThread: config.replicaThread,
+    receiptGateway: "gatewayObserverStats" in replicaHost ? replicaHost.gatewayObserverStats : null,
     acknowledgementToApplied: "applied" in replicaHost ? (await import("./lib/replica-thread.ts")).appliedDelay(replicaHost.applied, ackOf) : null,
     peakProcessBytesBeforeAnalysis: process.resourceUsage().maxRSS * 1024 };
   // Growth commands that outlived their phase: wait for them, then fold any that committed into the model.

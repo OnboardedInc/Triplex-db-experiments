@@ -21,7 +21,10 @@ export class CutCache {
   }
   readonly diagnostics = { hits: 0, misses: 0, weakMisses: 0, evictions: 0, bytes: 0, entries: 0 };
   readonly maxBytes: number;
-  constructor(maxBytes = 32 * 1024 ** 2) { this.maxBytes = maxBytes; }
+  constructor(maxBytes = 32 * 1024 ** 2) {
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 0) throw RangeError("Invalid world cache budget");
+    this.maxBytes = maxBytes;
+  }
   private key(root: string, position: number) { return `${root.length}:${root}@${position}`; }
   get(root: string, position: number, validAt: number, waitedMs: number): PullResult | undefined {
     const key = this.key(root, position), entry = this.entries.get(key);

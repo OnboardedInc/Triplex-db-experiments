@@ -37,6 +37,7 @@ import { BUCKETS, HOP_SHARE, ids, subjectInCell, type Bucket, type Hop } from ".
 import { observe, type ReadRecord } from "./lib/observe.ts";
 
 type ReaderConfig = {
+  replicaWorldCacheBytes?: number;
   replicaPort?: import("node:worker_threads").MessagePort;
   observationPort?: import("node:worker_threads").MessagePort;
   readPath?: "gateway" | "replica";
@@ -68,7 +69,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   const DAY = 86_400_000;
 
   let comp: CompositionHandle;
-  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2) : undefined;
+  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, undefined, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2) : undefined;
   if (replica && cfg.replicaImage) replica.install(cfg.replicaImage);
   const turn = new ReaderTurn();
   const loopDelay = monitorEventLoopDelay({ resolution: 1 });

@@ -167,7 +167,12 @@ export class ReplicaReader {
   private worlds = new CutCache();
   // [DX-R3] Why: the host proxy already validates/applies each cut; RYOW can share that same immutable-version index.
   // Rejected: a second main-thread copy of every current/history entry and duplicate per-commit validation/allocation.
-  constructor(historyBytes = 64 * 1024 ** 2, index?: InstanceType<typeof api.RecentReads>) { this.index = index ?? new api.RecentReads(20_000, historyBytes); }
+  constructor(historyBytes = 64 * 1024 ** 2, index?: InstanceType<typeof api.RecentReads>, worldCacheBytes = 32 * 1024 ** 2) {
+    this.index = index ?? new api.RecentReads(20_000, historyBytes);
+    // [DX-R3-P9] Why: measure the existing cache against a direct packed walk without changing any answer or basis rule.
+    // Rejected: assuming that more weak manifests help a mostly-miss workload.
+    this.worlds = new CutCache(worldCacheBytes); this.diagnostics.worldCache = this.worlds.diagnostics;
+  }
   readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0, worldCache: this.worlds.diagnostics };
   private waiters = new Set<{ p: number; done(): void }>();
   install(image: ReadImage) {
