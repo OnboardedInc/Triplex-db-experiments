@@ -23,10 +23,10 @@
   (assert (not= (d/entid old [:triplex.entity/id "e0"]) (d/entid right [:triplex.entity/id "e0"])))
   (let [jobs (doall (for [worker (range 8)]
                (future (doseq [i (range 2048)]
-                (let [[db cache] (nth [[old ma] [current ma] [right mz]] (mod (+ i worker) 3))
+                (let [[db cache identity-db] (nth [[old ma current] [current ma current] [right mz right]] (mod (+ i worker) 3))
                       id (if (zero? (mod i 101)) "late" (str "e" (mod (+ i (* worker 127)) 1024)))
                       expected (rows db (d/entid db [:triplex.entity/id id]))
-                      actual (rows db (r/entity-id db "same-name" id {:entity-ids cache}))]
+                      actual (rows db (r/entity-id db "same-name" id {:entity-ids cache :identity-db identity-db}))]
                  (assert (= expected actual) (str "native rows differ " id))
                  (swap! high max (.size ma) (.size mz)))))))]
    (doseq [job jobs] @job))

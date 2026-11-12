@@ -20,7 +20,7 @@
 ;; Rejected: removing generation/cut fields to shrink the map (would weaken cache binding).
 (defrecord ReadConfig [cache-generation scope entity-ids row overflow rev id position version
                        irregular position-regular connection-generation selected-t recent-state
-                       recent-eligible revision-view])
+                       recent-eligible revision-view identity-db])
 (declare sessions)
 ;; [DX-B8-C] Why: old requests retain their connection identity across deletion and recreation of a scope name.
 ;; Rejected: one name-keyed ID/config map (a late old request could seed the replacement database's map).
@@ -43,7 +43,7 @@
     (proxy [ConcurrentHashMap] []
       (putIfAbsent [key value]
         ;; [DX-S5] Why: bound positive-ID acceleration by entries and conservative retained bytes under one insertion monitor.
-        ;; Rejected: unbounded IDs (100k readback exhausted a 2 GiB heap); misses still use d/entid at the requested db.
+        ;; Rejected: unbounded IDs (100k readback exhausted a 2 GiB heap); misses still use native d/entid; row reads retain their requested db.
         (locking this
           (if-let [old (.get ^ConcurrentHashMap this key)] old
             (let [size (id-entry-bytes key)]
@@ -77,11 +77,14 @@
                    :irregular (d/entid db :triplex.scope/irregular)
                    :position-regular (d/entid db :triplex.scope/position-regular)})]
         (or (.putIfAbsent configs key value) value))))))
+;; [DX-S5] Why: public entity identities are append-only within a connection generation; resolve the physical ID at its current db.
+;; Historical d/entid misses traversed MergeIter/windowed for the large post-seal tail (full-scale thread-b).
+;; Rejected: changing the row basis or caching absence; every revision/row still comes from the exact selected historical db.
 (defn entity-id [db name ^String id & [context]]
   (let [^ConcurrentHashMap cache (if (map? context) (:entity-ids context)
                                    (id-map (generation-key name context)))]
     (or (.get cache id)
-        (when-let [eid (d/entid db [:triplex.entity/id id])]
+        (when-let [eid (d/entid (or (when (map? context) (:identity-db context)) db) [:triplex.entity/id id])]
           (.putIfAbsent cache id eid) eid))))
 (defn select-db [name db basis & [epoch]]
   (let [cfg (config name db epoch) header (long-array 4)
@@ -230,7 +233,7 @@
   (try
     (let [[db position t recent-eligible] (select-db name current (get input "basis") epoch)
           base-cfg (config name current epoch)
-          cfg (assoc base-cfg :connection-generation epoch :selected-t t :recent-state recent-state :recent-eligible recent-eligible
+          cfg (assoc base-cfg :identity-db current :connection-generation epoch :selected-t t :recent-state recent-state :recent-eligible recent-eligible
                 :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])) valid (double (get-in input ["basis" "validAt"]))
           ;; [DX-R2] Why: inline journals replace changed rows; only newly introduced reference roots need graph expansion.
           ;; Rejected: repeating every unchanged form/answer entity after a scalar replacement.
