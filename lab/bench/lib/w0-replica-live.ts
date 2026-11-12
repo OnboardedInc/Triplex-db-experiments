@@ -4,6 +4,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { OpenLoopScheduler } from "./scheduler.ts";
 import { offerLiveWrite, finishLiveWrite } from "./w0-outbox.ts";
 import path from "node:path";
+import { StringDecoder } from "node:string_decoder";
 import { sha256 } from "./w0-world.ts";
 import { Worker } from "node:worker_threads";
 import { generateTrace } from "./trace.ts";
@@ -348,25 +349,31 @@ export function matchW0Live(baseline: any, sweep: any) {
   )
     throw Error("live traffic generator binding mismatch");
   const ms = Math.min(baseline.windowMs, sweep.windowMs);
-  const summary = (arm: any, kind: "read" | "commit" | "commitService") => {
-    const samples = fs
-      .readFileSync(arm.raw, "utf8")
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => JSON.parse(line))
-      .filter(
-        (r) =>
-          r.kind === (kind === "commit" ? "write" : kind === "commitService" ? "commit" : "read") &&
-          (kind !== "read" ? r.scheduled : r.started) >= arm.startedAtMs &&
-          (kind !== "read" ? r.scheduled : r.started) < arm.startedAtMs + ms,
-      )
-      .map((r) => (kind === "commit" ? r.ack - r.scheduled : r.ms));
-    return {
-      count: samples.length,
-      p50: samples.length ? percentile(samples, 0.5) : null,
-      p99: samples.length ? percentile(samples, 0.99) : null,
-    };
+  // [DX-S5] Why: matching hundreds of thousands of raw local reads must not retain six whole parsed logs beside the 100k world.
+  // Rejected: readFileSync/split/map per metric (avoidable post-window heap and cgroup peak).
+  const summarize = (arm: any) => {
+    const samples: Record<string, number[]> = { read: [], commit: [], commitService: [] };
+    for (const row of rawLiveRecords(arm.raw)) {
+      const kind =
+        row.kind === "write" ? "commit" : row.kind === "commit" ? "commitService" : row.kind;
+      if (!(kind in samples)) continue;
+      const at = kind === "read" ? row.started : row.scheduled;
+      if (at >= arm.startedAtMs && at < arm.startedAtMs + ms)
+        samples[kind].push(kind === "commit" ? row.ack - row.scheduled : row.ms);
+    }
+    return Object.fromEntries(
+      Object.entries(samples).map(([kind, values]) => [
+        kind,
+        {
+          count: values.length,
+          p50: values.length ? percentile(values, 0.5) : null,
+          p99: values.length ? percentile(values, 0.99) : null,
+        },
+      ]),
+    );
   };
+  const before = summarize(baseline),
+    during = summarize(sweep);
   const result: any = {
     matchedWindowMs: ms,
     fullSweepCovered: baseline.windowMs >= sweep.windowMs,
@@ -374,8 +381,8 @@ export function matchW0Live(baseline: any, sweep: any) {
     reason: "Sequential windows on an evolving store; no clone/A-A calibration",
   };
   for (const kind of ["read", "commit", "commitService"] as const) {
-    const b = summary(baseline, kind),
-      s = summary(sweep, kind);
+    const b = before[kind],
+      s = during[kind];
     result[kind] = {
       baseline: b,
       sweep: s,
@@ -383,4 +390,31 @@ export function matchW0Live(baseline: any, sweep: any) {
     };
   }
   return result;
+}
+
+// [DX-S5] Why: preserve complete UTF-8 records while reading a bounded chunk, including the final record without a newline.
+// Rejected: decoding arbitrary byte chunks independently or ignoring malformed/truncated JSON.
+export function* rawLiveRecords(file: string): Generator<any> {
+  const fd = fs.openSync(file, "r"),
+    chunk = Buffer.alloc(65536),
+    decoder = new StringDecoder("utf8");
+  let pending = "",
+    length: number;
+  try {
+    while ((length = fs.readSync(fd, chunk, 0, chunk.length, null))) {
+      pending += decoder.write(chunk.subarray(0, length));
+      let from = 0,
+        end: number;
+      while ((end = pending.indexOf("\n", from)) >= 0) {
+        const line = pending.slice(from, end);
+        if (line) yield JSON.parse(line);
+        from = end + 1;
+      }
+      pending = pending.slice(from);
+    }
+    pending += decoder.end();
+    if (pending) yield JSON.parse(pending);
+  } finally {
+    fs.closeSync(fd);
+  }
 }

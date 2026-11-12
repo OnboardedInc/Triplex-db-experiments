@@ -4,7 +4,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { memoryComposition } from "../../../bench/lib/memory.ts";
 import { generateTrace } from "../../../bench/lib/trace.ts";
-import { startW0Live } from "../../../bench/lib/w0-replica-live.ts";
+import { rawLiveRecords, startW0Live } from "../../../bench/lib/w0-replica-live.ts";
 import { RecentReads, packEntity, pullAt } from "../../../../packages/datomic/dist/index.js";
 import { localReadTurns } from "../../../bench/lib/w0-replica-live.ts";
 import { it, expect } from "vitest";
@@ -335,4 +335,21 @@ it("keeps lossless candidate bytes and decodes independent bounded graphs", () =
   expect(record.candidates).not.toBe(record.candidates);
   expect(Object.is((record.candidates[0].output as any).negativeZero, -0)).toBe(true);
   expect(canonical(record.candidates)).toBe(canonical(candidates));
+});
+
+it("streams every complete UTF-8 telemetry byte and rejects a truncated final record", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "dxs5-raw-records-"));
+  const file = path.join(root, "fresh.ndjson");
+  const expected = [
+    { id: randomUUID(), text: "α".repeat(70000) },
+    { kind: "write", scheduled: 1, ack: 2 },
+  ];
+  try {
+    fs.writeFileSync(file, expected.map((record) => JSON.stringify(record)).join("\n"));
+    expect([...rawLiveRecords(file)]).toEqual(expected);
+    fs.appendFileSync(file, "\n{broken");
+    expect(() => [...rawLiveRecords(file)]).toThrow();
+  } finally {
+    fs.rmSync(root, { recursive: true });
+  }
 });
