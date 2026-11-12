@@ -59,7 +59,8 @@ export async function startW0Live(o: {
           while (!stopped && !failed) {
             const started = now();
             await new Promise<void>((resolve) => setImmediate(resolve));
-            if (stopped) break;
+            // [DX-S5] Why: drain reads already offered before stop so their full latency remains in the window.
+            // Rejected: censoring the final 256 pending reads when the activation ends.
             if (snapshot!.position !== o.replica!.position) {
               const p = o.replica!.position;
               if (p !== pendingPosition) {
