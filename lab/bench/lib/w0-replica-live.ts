@@ -12,6 +12,29 @@ import { W0 } from "./w0-world.ts";
 import type { CompositionHandle } from "./composition.ts";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 5));
 const now = () => performance.timeOrigin + performance.now();
+// [DX-S5] Why: keep 256 requests outstanding without running all their synchronous graph decodes before the next I/O turn.
+// Rejected: 256 independent setImmediate callbacks in one phase (artificially starves trace RPCs and feed responses).
+export function localReadTurns(batch = 8) {
+  if (!Number.isInteger(batch) || batch < 1 || batch > 32) throw Error("invalid local read batch");
+  const waiting: (() => void)[] = [];
+  let scheduled = false;
+  const dispatch = () => {
+    scheduled = false;
+    for (const resolve of waiting.splice(0, batch)) resolve();
+    if (waiting.length) {
+      scheduled = true;
+      setImmediate(dispatch);
+    }
+  };
+  return () =>
+    new Promise<void>((resolve) => {
+      waiting.push(resolve);
+      if (!scheduled) {
+        scheduled = true;
+        setImmediate(dispatch);
+      }
+    });
+}
 export async function startW0Live(o: {
   comp: CompositionHandle;
   composition: string;
@@ -53,12 +76,13 @@ export async function startW0Live(o: {
       // [DX-S5] Why: 256 current-state reads use the followed copy's own immutable snapshot API, with one cached view per applied cut.
       // Rejected: gateway traffic masquerading as runtime reads, or copying the multi-gigabyte base image for each request.
       snapshot = await o.replica.snapshotAt(o.replica.position);
+      const readTurn = localReadTurns();
       localReaders = Array.from({ length: 256 }, (_, reader) =>
         (async () => {
           const rng = new Rng(seedOf(o.seed + ":local:" + reader));
           while (!stopped && !failed) {
             const started = now();
-            await new Promise<void>((resolve) => setImmediate(resolve));
+            await readTurn();
             // [DX-S5] Why: drain reads already offered before stop so their full latency remains in the window.
             // Rejected: censoring the final 256 pending reads when the activation ends.
             if (snapshot!.position !== o.replica!.position) {

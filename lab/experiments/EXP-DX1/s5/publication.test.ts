@@ -1,3 +1,4 @@
+import { localReadTurns } from "../../../bench/lib/w0-replica-live.ts";
 import { it, expect } from "vitest";
 import { publishChanged } from "../../../bench/lib/w0-replica.ts";
 import { outboxEntity, offerLiveWrite, finishLiveWrite } from "../../../bench/lib/w0-outbox.ts";
@@ -93,4 +94,20 @@ it("gives pending trace writes priority before publication submission", async ()
   }
   await task;
   expect(submitted).toBe(true);
+});
+
+it("keeps 256 reads outstanding while allowing I/O turns between bounded decode batches", async () => {
+  const turn = localReadTurns(),
+    reads: Promise<void>[] = [];
+  let completed = 0;
+  for (let i = 0; i < 256; i++)
+    reads.push(
+      turn().then(() => {
+        completed++;
+      }),
+    );
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  expect(completed).toBe(8);
+  await Promise.all(reads);
+  expect(completed).toBe(256);
 });
