@@ -25,9 +25,9 @@ The 80k chunk was already indexed (b2), not awaiting a 430k-transaction replay. 
 Observed peer TTL **10,000 ms**, heartbeat **5,000 ms**, unchanged; later reconnects show 1 s backoff/unbounded retry maximum.
 Restart AMQ failures precede the new broker heartbeat/listener; the diagnostic captures storage location/heartbeat and port 4334 (NIO acceptor started 21:33:10.175, live-jvm80000-a line 23). PostgreSQL max_connections=100 was not exhausted.
 Reduced object/parsed/session cache budgets let 80k and 90k finish, but c1 stalled near the end of 100k: full compaction **2037M→1980M in a 2048M heap**.
-The read path's positive-ID memo was unbounded. The S5-only wrapper caps each unchanged scope/epoch map at **131,072**, retaining native `d/entid` fallback.
+At sealing, the read path's positive-ID memo was unbounded and an S5 wrapper capped each scope/epoch map at **131,072**. The third part moves the bound into gateway source, default on: **131,072 entries / 32 MiB conservative entry estimate** per scope/generation, with native fallback; heap bytes are not directly measured.
 Peer object cache **256 MiB**, parsed entity cache **64 MiB**, reach sessions **65,536**; peer heap/container stay **2/3 GiB**.
-No gateway source, commit function, replica package or core changed. Strict native unit: **16,384** row comparisons, two epochs/three cuts, zero mismatches and exact concurrent capacity accounting.
+The seal used the wrapper without gateway/commit/replica/core edits. The third part changes gateway memo source and adds the small Replica subject-snapshot fix documented first in REPORT.md; commit semantics/core remain unchanged. Strict native unit: **16,384** row comparisons, two epochs/three cuts, zero mismatches and exact concurrent capacity accounting.
 Readiness now waits for a successful target-database head read; the seed driver also checks the exact checkpoint head and full worlds. Complete console/rotated/Clojure/GC logs are captured on failure with byte counts checked.
 The allegedly empty b5 transactor section actually contained all **13,162 bytes** plus separator; the earlier display was truncated.
 
@@ -58,6 +58,33 @@ Do not resume the sealed volume: its checkpoint/tools volume is gone. The origin
 Read-only follow-up command:
 `node lab/bin/heavy.mjs --label DX-S5-candidates100000-a -- bash lab/experiments/EXP-DX1/r2/window.sh tx2-dxs5-eval-100000-candidates-a tx2-dxs5-seed-100000-pg-data dxs5-w0-100000-v1 100000 --verify-in-place --verify-candidates-at-seed --seed-position 4338757 --seed-fingerprint --candidates --oracle-candidates --oracle-concurrency 8 --oracle-processes 3 --batch-oracle --verification-pages 4`
 To clone the retained volume for verification when disk permits, use that command with a fresh prefix/label and **omit `--verify-in-place`**; it copies the appended volume, then verifies historical P, and refuses insufficient reserve.
-Seal source **abb0e467**; evidence root `~/Claude/Projects/triplex-db-2/evidence/DX-S5/` (**424,501,670 B**, compressed raw output only).
+At the prior reporting point, seal source **abb0e467**; evidence root `~/Claude/Projects/triplex-db-2/evidence/DX-S5/` (**424,501,670 B**, compressed raw output only).
 Primary evidence: `seed100000-c2.log.gz`, `population100000-a.log.gz`, `orch-seed100000-b4.log.gz`, `readback100k-jvm-a.log.gz`, `idmemo-unit-b.log.gz`, `activation100000-a.log.gz`, `candidates100000-a.log.gz`, `final-inventory-b.log.gz`.
 T4/T5 remain missed; complete three-candidate live performance and a pristine physical clone were not obtained. See REPORT.md for the content/freshness/binding audit and next changes.
+
+Third-part activation, 2026-11-12, measured source **e4759d64**:
+- Reused this appended volume explicitly; H began at head **4,357,536** and evaluated immutable **P=4,338,757**.
+- All **100,000** native/full/subject-scoped worlds and the two sealed fingerprints above matched again, zero mismatches.
+- Bootstrap **446.136 s**, **4,635,599,992 B** packed input, **932,391,011 B** shared index, **6,250 pages** including empty trial roots.
+- No-traffic R1: **32.495 s** evaluation, **35.926 s** publication, **53,681 changed / 210 commits**, size 256/window 32. F/G window-8 timing observations were **30.959/31.148 s**, but those attempts were aborted before complete state exactness.
+- Live local subject snapshots at fixed configured valid time: evaluation pass **50.388 s** + publication **84.153 s** = **134.541 s**, **9,798 changed / 307 commits**, size 32/window 1/yield limit 50 ms. The wall bar still misses.
+- Full-window read p99 **926.814→1830.415 ms (1.975×)**; scheduled commit **152389.243→242498.461 ms (1.591×)**; service **132.333→310.526 ms (2.347×)**. Both ratio bars miss; baseline burst writes already queue for minutes.
+- Every **100,000 output, record and stored state** matched the unchanged per-subject Python oracle; post-ACK exactness **701.413 s**, oracle-active wall **682.989 s**. No sampling.
+- The exact native state cut was captured and checked on every page, but its number was scheduled for the final report that did not complete. Future equality summaries now emit it directly.
+- The command later exited **137** entering the candidate stage, with no complete new three-candidate or matrix result. Final Docker OOM state/whole-run peak were not retained, so the cause is unconfirmed.
+- Main-stage peak **11,648,790,528 B (10.849 GiB)** under the **11 GiB** cap; current packed data/index/main post-GC heap **6,149,071,920/932,391,011/1,946,522,416 B**. These are not an additive peak breakdown.
+- Shell disk polls interleaved one large equality JSON record. The complete record is recoverable by removing only recognizable poll records; original raw bytes remain. New windows merge closed driver logs after poll writers stop and preserve the driver OOM state.
+- Latest mitigation incrementally releases verified record graphs while retaining exact reference bytes/order; unit/type checks passed, **100k candidate completion is not reverified**.
+- Latest source uses **triplex.gateway.main, Xmx2g, without the S5 wrapper**; all 100k native reads completed. Physical IDs resolve at the request's current DB, while all rows/revisions retain the selected historical DB.
+
+Fresh final read-only hold, source **0da93a79**, no application driver or logical writes:
+- Both peers observed current head **4,364,832**, native basis **27,888,318**; three beyond the highest preserved H ACK **4,364,829**.
+- Database **17,443,673,779 B**; clean-stopped volume allocation **17,923,854,336 B** (**17,503,764 KiB**); PostgreSQL exit **0**.
+- This remains the only retained DX-S5 volume. No DX-S5 containers/networks/runtime directories remain. No pristine clone exists; cloning still does not fit the 15 GiB reserve.
+- H minimum sampled Mac free **19,220,116 KiB (18.330 GiB)**, VM free **41,119,948 KiB**. Original seal time/size/peak above remain historical seeding measurements, unchanged.
+
+Current main-only command, using a fresh attempt name: `bash lab/experiments/EXP-DX1/s5/activation.sh next-main-1`.
+The runner now defaults to R1 window 8 and omits candidates/matrix; `S5_MATRIX=1` explicitly enables those uncompleted stages. This is not a new successful full-scale measurement.
+Head-only command: `node lab/bin/heavy.mjs --label DX-S5-head -- bash lab/experiments/EXP-DX1/r2/window.sh tx2-dxs5-head-new tx2-dxs5-seed-100000-pg-data dxs5-w0-100000-v1 100000 --head-only`.
+Read-only clone verification remains the earlier candidate-verification command with fresh names and without `--verify-in-place`; reserve checks must pass. Never resume seeding this consumed volume.
+Evidence: `publication100000-f/g/h.log.gz`, `full-f/g-cpu-a.log.gz`, `full-h-parse-a.log.gz`, `head-final-a.log.gz`, and focused check logs under the evidence root above. REPORT.md distinguishes fresh phase checks from historical and uncompleted work.
