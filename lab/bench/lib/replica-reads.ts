@@ -1,3 +1,4 @@
+import { CutCache } from "./cut-cache.ts";
 import { Option } from "effect";
 import { pathToFileURL } from "node:url";
 import { REPO, runtimeApi } from "./triplex.ts";
@@ -43,26 +44,33 @@ export function publicRow(row: any): PullResult["triples"][number] {
 
 // [DX-R3] Why: reuse the exact value decoder once while retaining every row's own interval.
 // Rejected: a second tagged-value codec, or decoding the entire entity once for each valid-time boundary.
-function allRows(id: string, packed: PackedEntity) {
-  const length = packed.byteLength ?? packed.buffer.byteLength - (packed.offset ?? 0);
-  const original = new DataView(packed.buffer, packed.offset ?? 0, length);
-  const start = Math.ceil((8 + original.getUint32(0, true)) / 8) * 8;
-  if (start + original.getUint32(4, true) * api.REPLICA_ROW_WIDTH > length)
-    throw Error("Truncated replica row buffer");
-  const scratch = new SharedArrayBuffer(length);
-  new Uint8Array(scratch).set(new Uint8Array(packed.buffer, packed.offset ?? 0, length));
-  const view = new DataView(scratch);
-  for (let i = 0; i < view.getUint32(4, true); i++) {
-    view.setFloat64(start + i * api.REPLICA_ROW_WIDTH + 24, -Number.MAX_VALUE, true);
-    view.setFloat64(start + i * api.REPLICA_ROW_WIDTH + 32, Number.MAX_VALUE, true);
+// [DX-R3-P8] Why: growing event lists repeat old rows; bound content-addressed decoding rather than rehashing them.
+// Rejected: ID-only memoization (cannot certify all public metadata), or an unbounded row cache.
+class RowMemo extends Map<string, any> {
+  bytes = 0;
+  hits = 0;
+  override get(key: string) {
+    const value = super.get(key);
+    if (value) { this.hits++; super.delete(key); super.set(key, value); }
+    return value;
   }
-  return api
-    .unpackEntity(id, { revision: packed.revision, buffer: scratch }, 0, true)
-    .map((row: any, i: number) => {
-      const from = original.getFloat64(start + i * api.REPLICA_ROW_WIDTH + 24, true),
-        to = original.getFloat64(start + i * api.REPLICA_ROW_WIDTH + 32, true);
-      return { ...row, validFrom: from, validTo: to === Infinity ? undefined : to };
-    });
+  override set(key: string, value: any) {
+    if (super.has(key)) { super.delete(key); this.bytes -= this.cost(key); }
+    const cost = this.cost(key);
+    if (cost > 32 * 1024 ** 2) return this;
+    while (this.size && this.bytes + cost > 32 * 1024 ** 2) {
+      const oldest = this.keys().next().value!;
+      super.delete(oldest); this.bytes -= this.cost(oldest);
+    }
+    this.bytes += cost;
+    return super.set(key, value);
+  }
+  private cost(key: string) { return key.length * 6 + 2048; }
+}
+const rowMemo = new RowMemo();
+const rowParts = new WeakMap<object, { a: number; b: number; bytes: number; stamp: number; stamps: number }>();
+function allRows(id: string, packed: PackedEntity) {
+  return api.unpackEntity(id, packed, 0, true, true, rowMemo);
 }
 // [DX-R3] Why: shared numeric prefix contributions hash each fact once; references keep one interval each.
 // Rejected: JS object summaries plus repeated reference strings for every boundary/version (D exhausted the 2 GiB heap).
@@ -83,6 +91,8 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
     if (!Number.isFinite(from) || (to !== Infinity && !Number.isFinite(to)))
       throw Error("Invalid contribution interval");
     if (from >= to) continue;
+    let part = rowParts.get(row);
+    if (!part) {
     const o = observe({
       triples: [row.publicMetadata ? publicRow(row) : row],
       entities: 1,
@@ -92,13 +102,16 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
       language: "packed",
       waitedMs: 0,
     });
-    const part = {
+    part = {
       a: parseInt(o.digest.slice(0, 8), 16),
       b: parseInt(o.digest.slice(8, 16), 16),
       bytes: o.bytes,
       stamp: o.stamp,
       stamps: o.stamps,
     };
+    freezePublic(row);
+    rowParts.set(row, part);
+    }
     event(from, 1, part);
     event(to, -1, part);
     if (row.value.type === "ref") refs.push({ id: row.value.value, from, to });
@@ -139,18 +152,30 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
       256 + stats.byteLength + refs.reduce((n, ref) => n + 96 + ref.id.length * 2, 0),
   };
 }
+// [DX-R3-P8] Why: cached worlds retain packed versions, never materialized public rows from another read.
+// Rejected: sharing a memoizing triples getter (would pin arbitrarily large decoded worlds outside the byte budget).
+function materializeWorld(selected: readonly (string | PackedEntity)[], validAt: number): PullResult["triples"] {
+  const rows: PullResult["triples"][number][] = [];
+  for (let i = 0; i < selected.length; i += 2)
+    for (const row of api.unpackEntity(selected[i] as string, selected[i + 1] as PackedEntity, validAt, true))
+      rows.push(publicRow(row));
+  return Object.freeze(rows);
+}
 const statViews = new WeakMap<object, DataView>();
 export class ReplicaReader {
   readonly index: InstanceType<typeof api.RecentReads>;
+  private worlds = new CutCache();
   // [DX-R3] Why: the host proxy already validates/applies each cut; RYOW can share that same immutable-version index.
   // Rejected: a second main-thread copy of every current/history entry and duplicate per-commit validation/allocation.
   constructor(historyBytes = 64 * 1024 ** 2, index?: InstanceType<typeof api.RecentReads>) { this.index = index ?? new api.RecentReads(20_000, historyBytes); }
-  readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0 };
+  readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0, worldCache: this.worlds.diagnostics };
   private waiters = new Set<{ p: number; done(): void }>();
   install(image: ReadImage) {
+    this.worlds.clear();
     this.index.install(image);
   }
   apply(delta: ReadDelta) {
+    if (delta.reset) this.worlds.clear();
     this.index.apply(delta);
     this.notify();
   }
@@ -214,6 +239,10 @@ export class ReplicaReader {
       else this.diagnostics.waitExpired++;
     }
     if (!rows) {
+      const cut = this.index.resolve(basis);
+      const cached = cut === undefined ? undefined : this.worlds.get(root, cut, basis.validAt, waitedMs);
+      if (cached) { this.diagnostics.local++; return cached; }
+      let intervalFrom = -Infinity, intervalTo = Infinity;
       const total = { a: 0, b: 0, n: 0, bytes: 0, stamp: -1, stamps: 0 };
       const selected: (string | PackedEntity)[] = [];
       const selectedValidAt = basis.validAt;
@@ -239,6 +268,8 @@ export class ReplicaReader {
             else hi = mid;
           }
           const offset = lo * STAT_WIDTH;
+          intervalFrom = Math.max(intervalFrom, view.getFloat64(offset, true));
+          intervalTo = Math.min(intervalTo, view.getFloat64(offset + 8, true));
           total.a = (total.a + view.getFloat64(offset + 16, true)) >>> 0;
           total.b = (total.b + view.getFloat64(offset + 24, true)) >>> 0;
           total.n += view.getFloat64(offset + 32, true);
@@ -253,21 +284,12 @@ export class ReplicaReader {
       );
       if (found && complete) {
         this.diagnostics.local++;
-        return {
+        const answer: PullResult = {
           // [DX-R3] Why: a pull returns its actual immutable world, not only a checksum; decoding is demand-driven.
           // Rejected: an empty triples array paired with a cached nonempty observation.
           get triples() {
             if (!materialized) {
-              const rows: PullResult["triples"][number][] = [];
-              for (let i = 0; i < selected.length; i += 2)
-                for (const row of api.unpackEntity(
-                  selected[i] as string,
-                  selected[i + 1] as PackedEntity,
-                  selectedValidAt,
-                  true,
-                ))
-                  rows.push(publicRow(row));
-              materialized = Object.freeze(rows);
+              materialized = materializeWorld(selected, selectedValidAt);
             }
             return materialized;
           },
@@ -287,6 +309,15 @@ export class ReplicaReader {
             bytes: total.bytes,
           },
         };
+        const held = new Map<object, number>();
+        for (let i = 1; i < selected.length; i += 2) {
+          const packed = selected[i] as Prepared;
+          held.set(packed, 256 + (packed.additionalBytes ?? 0));
+          held.set(packed.buffer, packed.buffer.byteLength);
+          held.set(packed.stats, packed.stats.byteLength);
+        }
+        if (cut !== undefined) this.worlds.put(root, cut, intervalFrom, intervalTo, answer, [...held], materializeWorld.bind(undefined, selected, selectedValidAt));
+        return answer;
       }
     } else {
       const found = this.index.pull(root, basis);

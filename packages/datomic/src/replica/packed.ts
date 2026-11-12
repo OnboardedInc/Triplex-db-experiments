@@ -112,6 +112,8 @@ export function unpackEntity(
   packed: PackedEntity,
   validAt: number,
   includeMetadata = false,
+  includeInvisible = false,
+  memo?: Map<string, ReplicaRow>,
 ): ReplicaRow[] {
   const view = new DataView(packed.buffer, packed.offset ?? 0, packed.byteLength),
     length = view.getUint32(0, true);
@@ -124,10 +126,19 @@ export function unpackEntity(
     const o = start + i * WIDTH,
       from = view.getFloat64(o + 24, true),
       to = view.getFloat64(o + 32, true);
-    if (from > validAt || to <= validAt) continue;
+    if (!includeInvisible && (from > validAt || to <= validAt)) continue;
     const type = dictionary[view.getUint32(o + 8, true)]!;
     const text = dictionary[view.getUint32(o + 12, true)]!;
     const numeric = view.getFloat64(o + 40, true);
+    // [DX-R3-P8] Why: reuse only when every encoded input to the decoded row is byte-identical.
+    // Rejected: assertion IDs/revisions or ordinary numeric JSON keys (miss metadata edits and signed zero).
+    const key = memo ? JSON.stringify([includeMetadata, entityId,
+      dictionary[view.getUint32(o, true)], dictionary[view.getUint32(o + 4, true)], type,
+      type === "number" || type === "datetime" || type === "boolean" ? null : text,
+      ...[16, 24, 32, 40].map(offset => view.getBigUint64(o + offset, true).toString(16)),
+      dictionary[view.getUint32(o + 48, true)]]) : undefined;
+    const remembered = key === undefined ? undefined : memo!.get(key);
+    if (remembered) { rows.push(remembered); continue; }
     const value =
       type === "blob"
         ? (untag(JSON.parse(text)) as TripleValue)
@@ -153,7 +164,7 @@ export function unpackEntity(
             schemaVersion: metadata[3] === null ? null : untag(metadata[3]),
             txId: metadata[4],
           };
-    rows.push({
+    const row: ReplicaRow = {
       ...(!includeMetadata || publicMetadata === null ? {} : { publicMetadata }),
       id: dictionary[view.getUint32(o, true)]!,
       entityId,
@@ -162,7 +173,9 @@ export function unpackEntity(
       position: view.getFloat64(o + 16, true),
       validFrom: from,
       ...(to === Infinity ? {} : { validTo: to }),
-    });
+    };
+    rows.push(row);
+    if (key !== undefined) memo!.set(key, row);
   }
   return rows;
 }
