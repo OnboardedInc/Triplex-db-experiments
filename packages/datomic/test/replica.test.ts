@@ -93,6 +93,47 @@ function fixture() {
   };
 }
 describe("packed replica", () => {
+  it("compacts only the overlay into shared layers without changing bytes, enumeration or held cuts", async () => {
+    const f = fixture(),
+      owner = new Replica(f.source, 0);
+    await owner.bootstrap(["root"]);
+    const first = await owner.snapshotAt(1),
+      base = first.sharedImage().shared!;
+    f.commit([
+      ["shared", [row("shared", "after", { type: "string", value: "second" }, 2)]],
+      ...Array.from({ length: 2000 }, (_, i): [string, SweepRow[]] => [
+        "unrelated" + i,
+        [row("unrelated" + i, "u" + i, { type: "boolean", value: true }, 2)],
+      ]),
+    ]);
+    await owner.followOnce();
+    const before = await owner.snapshotAt(2),
+      bytes = owner.bytes;
+    const world = before.world("root");
+    owner.compact();
+    const compact = await owner.snapshotAt(2),
+      image = compact.sharedImage();
+    expect(image.entities).toHaveLength(0);
+    expect(image.shared!.parent!.index).toBe(base.index);
+    expect(compact.world("root")).toEqual(world);
+    expect(owner.bytes).toBe(bytes);
+    expect(compact.image().entities).toHaveLength(2002);
+    expect(new Set(compact.image().entities.map(([id]) => id)).size).toBe(2002);
+    const restored = Replica.fromImage(f.source, structuredClone(image));
+    expect(restored.world("root")).toEqual(world);
+    expect(restored.bytes).toBe(bytes);
+    f.commit([["shared", []]]);
+    await owner.followOnce();
+    owner.compact();
+    const empty = await owner.snapshotAt(3);
+    expect(empty.sharedImage().shared!.parent!.index).toBe(image.shared!.index);
+    expect(empty.world("root")).toHaveLength(1);
+    expect(empty.image().entities).toHaveLength(2002);
+    expect(empty.bytes).toBe(owner.bytes);
+    expect(first.world("root").find((r) => r.entityId === "shared")!.value.value).toBe("before");
+    expect(before.world("root")).toEqual(world);
+    expect(compact.world("root")).toEqual(world);
+  });
   it("hands a compact image to a current mirror and rejects gaps and changed predecessor bytes atomically", async () => {
     const f = fixture(),
       owner = new Replica(f.source, 0);

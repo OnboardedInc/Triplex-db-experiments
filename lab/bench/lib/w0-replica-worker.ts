@@ -50,7 +50,7 @@ parentPort!.on("message", (m) => {
       // [DX-S5] Why: keep all three exact candidate payloads in lossless binary form instead of retaining 300000 object graphs in the coordinator.
       // Rejected: JSON coercion (BigInt/negative-zero loss) or dropping outputs to make the 11 GiB cap fit.
       records:
-        releases.length > 1
+        workerData.compactRecords || releases.length > 1
           ? records.map(({ candidates, ...record }) => ({
               ...record,
               encodedCandidates: serialize(candidates),

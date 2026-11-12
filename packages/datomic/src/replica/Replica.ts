@@ -178,6 +178,19 @@ export class Replica {
       this.invalidate(error);
     }
   }
+  // [DX-S5] Why: hand off one immutable shared overlay instead of cloning its million-entry Map into three isolates (100k B confirmed cgroup OOM).
+  // Rejected: a full-base copy or a larger driver cap; unchanged and overridden packed bytes remain shared and historical snapshots stay immutable.
+  compact(): void {
+    if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
+    if (!this.entities.delta.size) return;
+    const next = shareIndex(this.entities.delta);
+    this.baseImage = {
+      ...next,
+      ...(this.baseImage ? { parent: this.baseImage } : {}),
+      packedBytes: this.entities.bytes,
+    };
+    this.entities = new OverlayTable(new SharedIndex(this.baseImage));
+  }
   get position(): number {
     return this.watermark;
   }

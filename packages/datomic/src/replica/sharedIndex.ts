@@ -8,6 +8,7 @@ export interface EntityTable extends Iterable<readonly [string, PackedEntity]> {
   values(): Iterable<PackedEntity>;
 }
 export interface SharedIndexImage {
+  readonly parent?: SharedIndexImage;
   readonly packedBytes?: number;
   readonly index: SharedArrayBuffer;
   readonly buffers: readonly SharedArrayBuffer[];
@@ -89,7 +90,9 @@ export class SharedIndex implements EntityTable {
   private readonly view: DataView;
   private readonly buckets: Uint32Array;
   private readonly start: number;
+  private readonly parent: SharedIndex | undefined;
   constructor(private readonly image: SharedIndexImage) {
+    this.parent = image.parent ? new SharedIndex(image.parent) : undefined;
     this.view = new DataView(image.index);
     this.buckets = new Uint32Array(image.index, 8, this.view.getUint32(0, true));
     this.start = 8 + this.buckets.length * 4;
@@ -118,7 +121,7 @@ export class SharedIndex implements EntityTable {
   get bytes() {
     return this.image.packedBytes;
   }
-  get(id: string) {
+  private own(id: string) {
     let slot = hash(id) & (this.buckets.length - 1);
     while (this.buckets[slot]) {
       const i = this.buckets[slot]! - 1;
@@ -127,10 +130,19 @@ export class SharedIndex implements EntityTable {
     }
     return undefined;
   }
+  get(id: string): PackedEntity | undefined {
+    return this.own(id) ?? this.parent?.get(id);
+  }
   *values() {
-    for (let i = 0; i < this.view.getUint32(4, true); i++) yield this.entity(i);
+    if (!this.parent) {
+      for (let i = 0; i < this.view.getUint32(4, true); i++) yield this.entity(i);
+    } else for (const [, entity] of this) yield entity;
   }
   *[Symbol.iterator](): IterableIterator<readonly [string, PackedEntity]> {
+    // [DX-S5] Why: a compact immutable overlay shares its predecessor index but replaces each entity exactly once.
+    // Rejected: copying the whole 919 MB base index, or returning both the old and new rows for an overridden entity.
+    if (this.parent)
+      for (const entry of this.parent) if (this.own(entry[0]) === undefined) yield entry;
     for (let i = 0; i < this.view.getUint32(4, true); i++) yield [this.id(i), this.entity(i)];
   }
 }

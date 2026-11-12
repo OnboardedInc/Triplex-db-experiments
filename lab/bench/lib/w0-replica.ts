@@ -57,6 +57,7 @@ export interface ReplicaEvaluationOptions {
   position?: number;
   view?: ReplicaSnapshot;
   workers?: number;
+  compactRecords?: boolean;
   beforeTimedWindow?: () => Promise<void>;
   // [DX-R1] Why: several candidates may share a preview, but publication selects one active release.
   // Rejected: racing distinct release choices through the same published outbox state.
@@ -118,7 +119,7 @@ async function evaluateSnapshot(
     const pool = await Promise.all(
       Array.from({ length: count }, async () => {
         const worker = new Worker(new URL("./w0-replica-worker.ts", import.meta.url), {
-          workerData: { image, releases },
+          workerData: { image, releases, compactRecords: o.compactRecords },
         });
         threads.push(worker);
         let dispatch!: () => void, failure: unknown;
@@ -211,7 +212,10 @@ async function evaluateSnapshot(
     if (o.publish)
       publication = await publishChanged(
         o.publish,
-        records.map((r) => r.candidates[0]!.record),
+        {
+          length: records.length,
+          slice: (from, to) => records.slice(from, to).map((r) => r.candidates[0]!.record),
+        },
         o.publication,
       );
     return {
@@ -236,7 +240,7 @@ async function evaluateSnapshot(
 // Rejected: comparing full records (basis/release changes would force no-op publications for every subject).
 export async function publishChanged(
   comp: CompositionHandle,
-  records: readonly W0.EvaluationRecord[],
+  records: Pick<readonly W0.EvaluationRecord[], "length" | "slice">,
   options: ReplicaEvaluationOptions["publication"] = {},
 ) {
   const started = performance.now();

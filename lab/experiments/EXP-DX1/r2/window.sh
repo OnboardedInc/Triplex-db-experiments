@@ -163,7 +163,7 @@ if [[ $s5 == true ]]; then
    mac=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
    vm=$(docker run --rm --pull never --name "$prefix-guard" postgres:17-alpine sh -c 'df -Pk / | tail -1' | awk '{print $4}') || { kill -TERM $$; exit 1; }
    echo "evaluation-disk macFreeKiB=$mac vmFreeKiB=$vm"
-   (( mac >= 15728640 && vm >= 5242880 )) || { docker rm -f "$prefix-driver" "$prefix-copy" || true; kill -TERM $$; exit 1; }
+   (( mac >= 15728640 && vm >= 5242880 )) || { kill -TERM $$; exit 1; }
   done
  ) & diskguard=$!
 fi

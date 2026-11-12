@@ -76,11 +76,21 @@ it("overlaps disjoint frames, preserves invocation order and publishes exact sta
       return { ok: true, value: { position: frames.length, triples: ops } };
     },
   } as unknown as CompositionHandle;
-  const result = await publishChanged(comp, records, {
-    frameSize: 128,
-    inflight: 4,
-    readStates: () => [],
-  });
+  const result = await publishChanged(
+    comp,
+    {
+      length: records.length,
+      slice: (from = 0, to = records.length) => {
+        expect(to - from).toBeLessThanOrEqual(64);
+        return records.slice(from, to);
+      },
+    },
+    {
+      frameSize: 128,
+      inflight: 4,
+      readStates: () => [],
+    },
+  );
   expect(result.changed).toBe(603);
   expect(result.commits).toBe(5);
   expect(peak).toBe(4);

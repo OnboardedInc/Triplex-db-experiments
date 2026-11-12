@@ -257,6 +257,7 @@ export async function runReplicaDriver(argv: string[]) {
   let runtimeFollower: Awaited<ReturnType<typeof startRuntimeFollower>> | undefined;
   const threaded = argv.includes("--runtime-workers");
   const startFollowing = async () => {
+    if (threaded) replica.compact();
     if (threaded)
       runtimeFollower ??= await startRuntimeFollower(replica, scope, db, comp.backend.url);
     else replica.start();
@@ -616,6 +617,7 @@ export async function runReplicaDriver(argv: string[]) {
     if (argv.includes("--publish")) {
       if (publicationId && subjects.some((s) => replica.world(outboxEntity(s)).length))
         throw Error("publication namespace already used at current head");
+      if (threaded) replica.compact();
       const publicationView = await replica.snapshotAt(replica.position);
       const r1 = await evaluateAll({
         replica,
@@ -623,6 +625,7 @@ export async function runReplicaDriver(argv: string[]) {
         releases: W0.R1,
         position: r1Position,
         workers,
+        compactRecords: threaded,
         view: r1Snapshot,
         publish: comp,
         ...(publication
@@ -726,6 +729,7 @@ export async function runReplicaDriver(argv: string[]) {
       commandNamespace: publicationId,
       currentReads: opt("reader-mode", "gateway") === "replica" ? currentReads : undefined,
     };
+    if (threaded) replica.compact();
     const publicationView = await replica.snapshotAt(replica.position);
     const result = await evaluateAll({
       replica,
@@ -733,6 +737,7 @@ export async function runReplicaDriver(argv: string[]) {
       releases: W0.R2,
       position: cut,
       workers,
+      compactRecords: threaded,
       view: snap,
       ...(argv.includes("--publish") ? { publish: comp } : {}),
       ...(publication
@@ -842,15 +847,19 @@ export async function runReplicaDriver(argv: string[]) {
     await stopFollowing();
     const currentImage = (await replica.snapshotAt(replica.position)).sharedImage();
     const retainedImages = [r1Snapshot.sharedImage(), snap.sharedImage(), currentImage];
-    const retainedBuffers = new Set(
-      retainedImages.flatMap((image) => [
-        ...image.shared!.buffers,
-        ...image.entities.map(([, entity]) => entity.buffer),
-      ]),
-    );
-    const retainedIndexes = new Set(retainedImages.map((image) => image.shared!.index));
+    const retainedBuffers = new Set<SharedArrayBuffer>(),
+      retainedIndexes = new Set<SharedArrayBuffer>();
+    for (const image of retainedImages) {
+      image.entities.forEach(([, entity]) => retainedBuffers.add(entity.buffer));
+      for (let layer = image.shared; layer; layer = layer.parent) {
+        retainedIndexes.add(layer.index);
+        layer.buffers.forEach((buffer) => retainedBuffers.add(buffer));
+      }
+    }
     (globalThis as any).gc?.();
     report.evaluation = {
+      retainedDataScope:
+        "upper bound by SAB wrapper identity; cross-worker handles can alias the same slab",
       retainedDataBytes: [...retainedBuffers].reduce((n, buffer) => n + buffer.byteLength, 0),
       retainedIndexBytes: [...retainedIndexes].reduce((n, buffer) => n + buffer.byteLength, 0),
       inputBytes: result.replicaBytes,
@@ -1112,6 +1121,7 @@ export async function runReplicaDriver(argv: string[]) {
         subjects,
         position,
         workers,
+        compactRecords: threaded,
         view: snap,
         // [DX-R1] Why: compare one and three candidates under the same live reader/writer profile.
         // Rejected: timing the three-candidate pass after stopping all live traffic.
