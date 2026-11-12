@@ -77,6 +77,7 @@ export async function startW0Live(o: {
               started,
               ms: now() - started,
               position: view.position,
+              validAt: view.validAt,
               subject,
               rows: rows.length,
             });

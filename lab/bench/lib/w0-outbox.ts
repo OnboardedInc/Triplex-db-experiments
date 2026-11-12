@@ -153,9 +153,13 @@ export async function publishRecords(
     // [EXP-P5] Why: state, per-item sequence and deliveries commit in the same frame with command-id deduplication. Rejected: updating an in-memory outbox before ACK (loses work on resume).
     const buildOutboxMs = performance.now() - buildStart;
     const buildEndCpu = cpuNow();
+    const orderingStarted = performance.now();
     await previousSubmission;
+    const submissionOrderWaitMs = performance.now() - orderingStarted;
+    const yieldStarted = performance.now();
     while (options.yieldToWriter && liveWriterBacklog > 0)
       await new Promise((r) => setTimeout(r, 1));
+    const writerYieldMs = performance.now() - yieldStarted;
     const committing = measureHttp(() =>
       measureW0Http(() =>
         comp.transact(operations, { commandId, actor: "p5-publisher", preconditions }),
@@ -173,11 +177,13 @@ export async function publishRecords(
         buildOutboxMs,
         commandLookupMs,
         stateReadMs,
+        submissionOrderWaitMs,
+        writerYieldMs,
         operations: operations.length,
         preconditions: preconditions.length,
         payloadBytes: Buffer.byteLength(JSON.stringify(operations)),
         publishCapacityWaitMs,
-        publicationLimit,
+        publicationLimit: options.inflight ?? publicationLimit,
         buildOutboxMainThreadIntervalCpuMs:
           (buildEndCpu.user - buildCpu.user + buildEndCpu.system - buildCpu.system) / 1000,
         publishCommitMainThreadIntervalCpuMs:
@@ -185,6 +191,8 @@ export async function publishRecords(
         publishCommitMs: commit.wallMs,
         publishRequests: commit.requests,
         requests: commit.value.samples,
+        adapterCommits: commit.value.commits,
+        nativeFrames: commit.value.nativeFrames,
         publishDatoms: commit.value.datomSamples ? commit.value.datoms : null,
         publishSerializeMicros: commit.value.wireSerializeMicros,
         publishGatewayParseMicros: commit.value.wireParseMicros,

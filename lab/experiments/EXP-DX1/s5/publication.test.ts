@@ -53,7 +53,7 @@ it("overlaps disjoint frames, preserves invocation order and publishes exact sta
     ...comp,
     transact: async () => {
       await new Promise((r) => setTimeout(r, 1));
-      return { ok: false, tag: "injected" };
+      return { ok: false, tag: "injected", error: new Error("injected") };
     },
   } as CompositionHandle;
   await expect(
