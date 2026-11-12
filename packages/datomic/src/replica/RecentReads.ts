@@ -1,3 +1,4 @@
+import { equalPackedBytes } from "./equalPackedBytes.js";
 import type { PackedEntity } from "./packed.js";
 import { unpackEntity } from "./packed.js";
 import type { ReplicaUpdate } from "./Replica.js";
@@ -83,7 +84,7 @@ export class RecentReads {
         old.entity !== previous &&
         (old.entity.revision !== previous?.revision ||
           !previous ||
-          !sameBytes(old.entity, previous))
+          !equalPackedBytes(old.entity, previous))
       )
         throw new Error("Recent read predecessor mismatch");
       if (old) {
@@ -311,12 +312,6 @@ export async function pullAt<T>(
   return local
     ? { route: "replica", waitedMs, value: local }
     : { route: "fallback", waitedMs, value: await fallback() };
-}
-
-function sameBytes(a: PackedEntity, b: PackedEntity): boolean {
-  const x = new Uint8Array(a.buffer, a.offset ?? 0, a.byteLength ?? a.buffer.byteLength);
-  const y = new Uint8Array(b.buffer, b.offset ?? 0, b.byteLength ?? b.buffer.byteLength);
-  return x.length === y.length && x.every((v, i) => v === y[i]);
 }
 
 // [DX-R3] Why: reader sidecars consume retained memory too, not only the original entity payload.
