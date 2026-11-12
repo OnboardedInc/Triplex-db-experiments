@@ -57,9 +57,12 @@ for arm in "$@"; do
   i=$((i+1)); prefix=tx2-dxr3-$tag-$(echo "$arm" | tr A-Z a-z)$i
   [[ ! -e $DX_STACK_EVIDENCE/$prefix && ! -e $DX_STACK_EVIDENCE/$prefix.log.gz ]] || exit 2
   extra=(--replica-fallback-thread main)
-  case $arm in G) read=replica; strict=1; extra=(--replica-fallback-thread worker);; A) read=gateway; strict=0;; B) read=gateway; strict=1;; C) read=replica; strict=0;; D) read=replica; strict=1;; *) exit 2;; esac
+  case $arm in
+    J) read=replica; strict=1; export DX_CPUS_PG=0 DX_CPUS_TX=1 DX_CPUS_GW_WRITE=2 DX_CPUS_GW_READ=3; export DX_TX_JAVA_OPTS='-Xms256m -Xmx3g -Xlog:gc,safepoint:stdout:time,uptime';;
+    K) read=replica; strict=1; export DX_CPUS_PG=0 DX_CPUS_TX=1 DX_CPUS_GW_WRITE=2 DX_CPUS_GW_READ=3; export DX_TX_JAVA_OPTS='-Xms256m -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Xlog:gc,safepoint:stdout:time,uptime';;
+    G) read=replica; strict=1; extra=(--replica-fallback-thread worker);; A) read=gateway; strict=0;; B) read=gateway; strict=1;; C) read=replica; strict=0;; D) read=replica; strict=1;; *) exit 2;; esac
   export DX_READ_PATH=$read DX_STRICT_RECORD_CLOCKS=$strict DX_R3_SOURCE_DIAGNOSTICS=1
-  echo "ARM $arm $prefix strict=$strict read=$read $(date -u)"
+  echo "ARM $arm $prefix strict=$strict read=$read TX_JAVA_OPTS=${DX_TX_JAVA_OPTS:-default} $(date -u)"
   bash lab/experiments/EXP-DX1/h4/run.sh real "$prefix" --rung 10k --zero-readers --match-duration-s 200 --reader-ladder-only --level-s 30 --max-readers 1024 --seed-batch-facts "${DX_R3_SEED_BATCH_FACTS:-400}" --replica-history-mib 192 ${extra[@]+"${extra[@]}"} > "$DX_STACK_EVIDENCE/$prefix.log" 2>&1 & child=$!
   arm_rc=0; wait "$child" || arm_rc=$?; child=
   python3 lab/experiments/EXP-DX1/r3/writer-arm-summary.py "$DX_STACK_EVIDENCE/$prefix" "$arm" || true
