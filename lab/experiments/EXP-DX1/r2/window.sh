@@ -103,7 +103,7 @@ cleanup() {
  # [DX-S5] Why: retain every actual latency/write event in this command's one raw output file, including failed windows.
  # Rejected: deleting the traffic streams and leaving only computed p99 summaries as evidence.
  if [[ $s5 == true ]]; then
-  for raw in "$out"/traffic/*-traffic.ndjson; do
+  for raw in "$out"/traffic/*.ndjson; do
    [[ -f $raw ]] || continue
    printf '\n{"kind":"traffic-raw-begin","file":"%s"}\n' "${raw##*/}"
    cat "$raw" || rc=1

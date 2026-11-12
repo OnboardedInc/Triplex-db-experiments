@@ -149,72 +149,74 @@ export async function startThreadedW0Live(
     });
     await writer.ready;
     const followerBefore = await follower.metrics();
+    let stopping: Promise<any> | undefined;
     return {
       check() {
         follower.check();
         writer.check();
         readers.forEach((reader) => reader.check());
       },
-      async stop() {
-        writer.worker.postMessage({ type: "stop" });
-        readers.forEach((reader) => reader.worker.postMessage({ type: "stop" }));
-        try {
-          const [write, read] = await Promise.all([
-            writer.stopped,
-            Promise.all(readers.map((reader) => reader.stopped)),
-          ]);
-          fs.closeSync(fd);
-          const summary = write.summary;
-          const ms = samples
-            .filter(
-              (sample) =>
-                sample.started >= summary.startedAtMs && sample.started < summary.endedAtMs,
-            )
-            .map((sample) => sample.ms);
-          // [DX-S5] Why: keep every raw read and write sample in the same matching input, without sending full worlds between threads.
-          // Rejected: computing ratios from unbound worker aggregates or dropping slow reads at stop.
-          const raw = path.join(options.dir, options.id + "-traffic.ndjson");
-          fs.copyFileSync(summary.raw, raw);
-          const out = fs.openSync(raw, "a");
-          const input = fs.openSync(readFile, "r");
+      stop: () =>
+        (stopping ??= (async () => {
+          writer.worker.postMessage({ type: "stop" });
+          readers.forEach((reader) => reader.worker.postMessage({ type: "stop" }));
           try {
-            const chunk = Buffer.alloc(65536);
-            let n: number;
-            while ((n = fs.readSync(input, chunk, 0, chunk.length, null)))
-              fs.writeSync(out, chunk.subarray(0, n));
+            const [write, read] = await Promise.all([
+              writer.stopped,
+              Promise.all(readers.map((reader) => reader.stopped)),
+            ]);
+            fs.closeSync(fd);
+            const summary = write.summary;
+            const ms = samples
+              .filter(
+                (sample) =>
+                  sample.started >= summary.startedAtMs && sample.started < summary.endedAtMs,
+              )
+              .map((sample) => sample.ms);
+            // [DX-S5] Why: keep every raw read and write sample in the same matching input, without sending full worlds between threads.
+            // Rejected: computing ratios from unbound worker aggregates or dropping slow reads at stop.
+            const raw = path.join(options.dir, options.id + "-traffic.ndjson");
+            fs.copyFileSync(summary.raw, raw);
+            const out = fs.openSync(raw, "a");
+            const input = fs.openSync(readFile, "r");
+            try {
+              const chunk = Buffer.alloc(65536);
+              let n: number;
+              while ((n = fs.readSync(input, chunk, 0, chunk.length, null)))
+                fs.writeSync(out, chunk.subarray(0, n));
+            } finally {
+              fs.closeSync(input);
+              fs.closeSync(out);
+            }
+            fs.unlinkSync(summary.raw);
+            fs.unlinkSync(readFile);
+            const followerAfter = await follower.metrics();
+            return {
+              ...summary,
+              readers: 256,
+              readerMode: "worker-current-immutable-packed-world-fixed-valid-time",
+              raw,
+              read: {
+                count: ms.length,
+                p50: ms.length ? percentile(ms, 0.5) : null,
+                p99: ms.length ? percentile(ms, 0.99) : null,
+              },
+              readsPerSecond: ms.length / (summary.windowMs / 1000),
+              threads: {
+                writer: write.metrics,
+                readers: read.map((result) => result.metrics),
+                followerBefore,
+                followerAfter,
+              },
+            };
           } finally {
-            fs.closeSync(input);
-            fs.closeSync(out);
+            while (pending > 0) {
+              pending--;
+              finishLiveWrite();
+            }
+            await Promise.all([writer, ...readers].map((thread) => thread.worker.terminate()));
           }
-          fs.unlinkSync(summary.raw);
-          fs.unlinkSync(readFile);
-          const followerAfter = await follower.metrics();
-          return {
-            ...summary,
-            readers: 256,
-            readerMode: "worker-current-immutable-packed-world-fixed-valid-time",
-            raw,
-            read: {
-              count: ms.length,
-              p50: ms.length ? percentile(ms, 0.5) : null,
-              p99: ms.length ? percentile(ms, 0.99) : null,
-            },
-            readsPerSecond: ms.length / (summary.windowMs / 1000),
-            threads: {
-              writer: write.metrics,
-              readers: read.map((result) => result.metrics),
-              followerBefore,
-              followerAfter,
-            },
-          };
-        } finally {
-          while (pending > 0) {
-            pending--;
-            finishLiveWrite();
-          }
-          await Promise.all([writer, ...readers].map((thread) => thread.worker.terminate()));
-        }
-      },
+        })()),
     };
   } catch (error) {
     fs.closeSync(fd);

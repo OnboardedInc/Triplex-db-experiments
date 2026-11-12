@@ -806,6 +806,7 @@ export async function runReplicaDriver(argv: string[]) {
         traffic = await startTraffic({ ...liveOptions, id: "baseline" });
         await new Promise((r) => setTimeout(r, Number(opt("baseline-ms", "30000"))));
         report.baseline = await traffic.stop();
+        traffic = undefined;
         console.log(
           JSON.stringify({
             kind: "live-baseline",
