@@ -27,6 +27,9 @@ export class CutCache {
   }
   private key(root: string, position: number) { return `${root.length}:${root}@${position}`; }
   get(root: string, position: number, validAt: number, waitedMs: number): PullResult | undefined {
+    // [DX-R3-P9] Why: a disabled cache must not allocate position keys on every packed walk.
+    // Rejected: probing an empty Map (adds allocation to the no-cache control without changing its answer).
+    if (!this.maxBytes) { this.diagnostics.misses++; return; }
     const key = this.key(root, position), entry = this.entries.get(key);
     if (!entry || validAt < entry.from || validAt >= entry.to) { this.diagnostics.misses++; return; }
     let selected = entry.promoted;

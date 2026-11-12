@@ -176,5 +176,8 @@ if [[ $prefix == tx2-dxr3-* ]]; then
   extra+=(--gateway-src "$gateway_source" --codec-spec "$PWD/packages/datomic/src/codec-spec.json")
 fi
 run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
+# [DX-R3-P9] Why: q6 comparisons require the same live guest boot parameters, not a remembered VM setting.
+# Rejected: assuming nohlt survives an orchestrator restart.
+if [[ $prefix == tx2-dxr3-* ]]; then echo 'DX-R3 live guest kernel'; docker exec "$prefix-tx" cat /proc/cmdline; fi
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
  --lane datomic --composition reach --read-path "${DX_READ_PATH:-gateway}" --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1

@@ -296,3 +296,23 @@ test("projection-only fixtures decline the public route while the standalone Swe
   );
   assert.equal(answer.route, "fallback");
 });
+
+// [DX-R3-P9] Why: disabling retention must keep full payload equality and floor admission on every read.
+// Rejected: a rate-only cache control (could hide an evicted-cut or metadata regression).
+test("zero and retained world caches preserve full rows and decline a newly evicted cut", async () => {
+  for (const budget of [0,32*1024**2]) {
+    const a=wire("before",1,100),b=wire("after",2,101),old=packed(a,1),next=packed(b,2);
+    const expected=(text: string,p: number) => reachResponse("root",new Map([["root",decodeEntity("root",p,[text])]]),{recordedPosition:p,validAt:10}).triples;
+    const before=canonicalWorld(expected(a,1)),after=canonicalWorld(expected(b,2));
+    const reader=new ReplicaReader(0,undefined,budget);
+    reader.apply({reset:true,valid:true,position:1,recordTime:100,changes:[["root",undefined,old]]});
+    let fallbacks=0;
+    const source=async()=>{fallbacks++;return result(expected(a,1));};
+    assert.equal(canonicalWorld((await reader.pullAt("root",{recordedPosition:1,validAt:10},source)).triples),before);
+    reader.apply({reset:false,valid:true,position:2,recordTime:101,changes:[["root",old,next]]});
+    assert.equal(canonicalWorld((await reader.pullAt("root",{recordedPosition:2,validAt:10},source)).triples),after);
+    const evicted=await reader.pullAt("root",{recordedPosition:1,validAt:10},source);
+    assert.equal(evicted.route,"fallback");assert.equal(canonicalWorld(evicted.triples),before);assert.equal(fallbacks,1);
+    if(!budget) assert.equal(reader.diagnostics.worldCache.bytes,0);
+  }
+});

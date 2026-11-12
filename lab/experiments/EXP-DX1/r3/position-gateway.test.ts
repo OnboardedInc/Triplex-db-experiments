@@ -21,10 +21,11 @@ test("read-only receipt fallback preserves complete rows and exact position with
   const reader=await openPositionGateway("receipt-test","http://127.0.0.1:1",client);
   try {
     const basis={recordedPosition:7,recordedAt:10,validAt:11};
+    const wanted={...basis}, expected=canonicalWorld([row]);
     const result=await reader.pull("root",basis);
-    assert.equal(canonicalWorld(result.triples),canonicalWorld([row]));
+    assert.equal(canonicalWorld(result.triples),expected);
     assert.equal(Object.is(result.triples[0]!.value.value,-0),true);
-    assert.deepEqual(calls.map(c=>[c.roots,c.basis]),[[["root"],basis]]);
+    assert.deepEqual(calls.map(c=>[c.roots,c.basis]),[[["root"],wanted]]);
     assert.equal(result.roundTrips,1);
     await assert.rejects(reader.pull("root",{recordedAt:10,validAt:11}),/exact position/);
     assert.equal(calls.length,1);
