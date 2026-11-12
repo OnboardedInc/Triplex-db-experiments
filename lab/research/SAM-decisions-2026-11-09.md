@@ -232,3 +232,19 @@ Orchestrator's reading:
    and the downloadable images the Datomic lane does not use (Kafka, MinIO, SeaweedFS, the tracing image). Not the XTDB
    images, not `tx2-xtdb-dev-data`, not any seed, nothing of QLever.
 3. Leave the state written down so the work can resume from files.
+
+## 2026-11-12 about 15:10 UTC: on resume keep iterating at 10,000 subjects; focus on P2 (and P4); 100,000 only as a reading
+
+Sam, verbatim:
+
+> In the future let's keep iterating on 10,000 and get that to pass. I think that you're correct that we should do 10,000 first actually but we should just get a read on current stuff on the 100,000 subject 1. If that doesn't require a lot of usage to run the 100,000 subject result, then you should try that just to measure the reading. I think that'd be fine.
+>
+> When we pick back up we can keep iterating. I really only care about getting the all-commit P99 down or I guess the P2 stuff down. Sounds good to me, as well as, I guess, P4 unless it's not important. Do all that and then confirm back to me what you're going to do and what you understand about the current state. And make sure everything is committed and pushed, etc., for where we are now so we don't lose any data.
+
+Orchestrator's reading:
+1. The 10,000-subject rung stays the gate; iterate there until every bar passes. 100,000 subjects is measured once now as a
+   reading (the unattended `k100` pair), not as a gate.
+2. On resume the work is P2 (all-commit p99 first, then burst p50, commit p50 at 256 readers, the queue) and the P4 history
+   flatness miss if it is real. P1 and P3 passed in q8 and are to be kept, not reworked.
+3. Everything committed; pushed where a remote exists. This repository has no git remote configured, so a push needs Sam
+   to name one; a bundle of every branch is written to `~/Claude/Projects/triplex-db-2/backups/` meanwhile.
