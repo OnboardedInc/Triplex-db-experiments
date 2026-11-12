@@ -7,6 +7,7 @@ import { Replica, DatomicClient } from "../../../packages/datomic/dist/index.js"
 import { openComposition } from "./composition.ts";
 import { startW0Live, localReadTurns } from "./w0-replica-live.ts";
 import { W0 } from "./w0-world.ts";
+import { adaptiveReplicaFeed } from "./w0-parallel.ts";
 import { Rng, seedOf } from "./rng.ts";
 const port = parentPort!;
 const origin = () => performance.timeOrigin + performance.now();
@@ -66,6 +67,11 @@ try {
       workerData.db,
       () => comp.currentPosition(),
       workerData.image.validAt,
+    );
+    source.feed = adaptiveReplicaFeed(source.feed, (event) =>
+      console.log(
+        JSON.stringify({ kind: "replica-feed-page-retry", scope: workerData.scope, ...event }),
+      ),
     );
     const replica = Replica.fromImage(source, workerData.image);
     workerData.image = undefined;

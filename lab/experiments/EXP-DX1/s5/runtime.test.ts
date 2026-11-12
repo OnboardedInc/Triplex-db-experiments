@@ -5,6 +5,7 @@ import { runtimeWorkerEnvironment } from "../../../bench/lib/w0-runtime.ts";
 import { assertBaselineHeadroom, capacitySchedule } from "../../../bench/lib/w0-replica-live.ts";
 import { evaluateAll } from "../../../bench/lib/w0-replica.ts";
 import { runReplicaDriver } from "../../../bench/lib/w0-replica-driver.ts";
+import { adaptiveReplicaFeed } from "../../../bench/lib/w0-parallel.ts";
 import { W0, V_W0, triplexValue, canonical, w0Basis } from "../../../bench/lib/w0-world.ts";
 
 it("read-only verification rejects a capacity writer before opening any engine", async () => {
@@ -214,3 +215,58 @@ it("retains single-release worker results losslessly in compact form", async () 
     );
   }
 }, 15000);
+
+// [DX-S5] Why: an oversized response is a read transport failure, so retries must preserve its cursor and every returned byte.
+// Rejected: truncating returned journals, retrying unrelated failures, or looping forever on a single oversized journal.
+it("oversized feed pages halve at the same cut and retain the learned safe bound", async () => {
+  const calls: number[][] = [],
+    events: unknown[] = [];
+  const page = {
+    head: 99,
+    transactions: [{ position: 42, entities: ["fixture"] }],
+    bytes: new Uint8Array([0, 1, 255]),
+  };
+  const feed = adaptiveReplicaFeed(
+    async (after, limit, wait) => {
+      calls.push([after, limit, wait]);
+      if (limit > 4)
+        throw Object.assign(new Error("Gateway response exceeds 67108864 bytes"), {
+          _tag: "DatomicTransportError",
+        });
+      return page;
+    },
+    (event) => events.push(event),
+  );
+  expect(await feed(41, 1000, 17)).toBe(page);
+  expect(await feed(41, 1000, 17)).toBe(page);
+  expect(calls).toEqual([
+    [41, 16, 17],
+    [41, 8, 17],
+    [41, 4, 17],
+    [41, 4, 17],
+  ]);
+  expect(events).toHaveLength(2);
+  expect(page.bytes).toEqual(new Uint8Array([0, 1, 255]));
+});
+it("unrelated feed errors propagate without another request", async () => {
+  const error = new Error("Gateway response exceeds 67108864 bytes");
+  let calls = 0;
+  const feed = adaptiveReplicaFeed(async () => {
+    calls++;
+    throw error;
+  });
+  await expect(feed(41, 16, 0)).rejects.toBe(error);
+  expect(calls).toBe(1);
+});
+it("one oversized journal fails closed after a bounded number of retries", async () => {
+  const error = Object.assign(new Error("Gateway response exceeds 67108864 bytes"), {
+    _tag: "DatomicTransportError",
+  });
+  const limits: number[] = [];
+  const feed = adaptiveReplicaFeed(async (_after, limit) => {
+    limits.push(limit);
+    throw error;
+  });
+  await expect(feed(41, 16, 0)).rejects.toBe(error);
+  expect(limits).toEqual([16, 8, 4, 2, 1]);
+});

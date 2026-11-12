@@ -1,4 +1,4 @@
-import { forEachBounded, orderedMap } from "./w0-parallel.ts";
+import { forEachBounded, orderedMap, adaptiveReplicaFeed } from "./w0-parallel.ts";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { getHeapStatistics } from "node:v8";
@@ -40,7 +40,9 @@ export async function runReplicaDriver(argv: string[]) {
     workers = Number(opt("workers", "3")),
     oracleConcurrency = Number(opt("oracle-concurrency", "1")),
     oracleProcesses = Number(opt("oracle-processes", "1")),
-    verificationPages = Number(opt("verification-pages", "1"));
+    verificationPages = Number(opt("verification-pages", "1")),
+    maxWriteRate = Number(opt("traffic-write-max-rate", "0"));
+  if (!Number.isFinite(maxWriteRate) || maxWriteRate < 0) throw Error("invalid offered write rate");
   if (!Number.isSafeInteger(oracleProcesses) || oracleProcesses < 1 || oracleProcesses > 4)
     throw Error("invalid oracle process count");
   if (!Number.isSafeInteger(oracleConcurrency) || oracleConcurrency < 1 || oracleConcurrency > 32)
@@ -212,7 +214,9 @@ export async function runReplicaDriver(argv: string[]) {
     pageReads = 0,
     feedReads = 0;
   const originalPage = base.page,
-    originalFeed = base.feed;
+    originalFeed = adaptiveReplicaFeed(base.feed, (event) =>
+      console.log(JSON.stringify({ kind: "replica-feed-page-retry", scope, ...event })),
+    );
   base.page = (...args) => {
     pageReads++;
     return originalPage(...args);
@@ -860,6 +864,7 @@ export async function runReplicaDriver(argv: string[]) {
       seed: opt("traffic-seed", "DX-H2-frozen-v1"),
       offsetS: Number(opt("traffic-offset-s", "0")),
       warmupMs: Number(opt("live-warmup-ms", "15000")),
+      maxWriteRate,
       ...(opt("reader-mode", "gateway") === "replica" ? { replica } : {}),
       commandNamespace: publicationId,
       currentReads: opt("reader-mode", "gateway") === "replica" ? currentReads : undefined,

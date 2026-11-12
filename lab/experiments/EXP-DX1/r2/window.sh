@@ -72,6 +72,7 @@ cleanup() {
     # [DX-S5] Why: preserve identity, OOM and last live cgroup high-water marks before removing any owned container.
     # Rejected: querying a vanished cgroup after exit 137 or losing the flags in cleanup.
     [[ ! -f $out/container-peaks.log ]] || cat "$out/container-peaks.log"
+    printf '\n'
     for role in driver gw-r gw-w tx pg; do
      docker inspect --format '{"event":"container-final","name":"{{.Name}}","id":"{{.Id}}","state":{{json .State}}}' "$prefix-$role" || true
     done

@@ -52,3 +52,34 @@ export async function* orderedMap<A, B>(
     await Promise.allSettled(pending.values());
   }
 }
+
+// [DX-S5] Why: retained 100k roots make 16 complete journal replacements exceed the unchanged 64 MiB transport cap.
+// Rejected: raising that cap or skipping journals; halve only an oversized read at the same exact cursor, failing closed at one.
+export function adaptiveReplicaFeed<T>(
+  request: (after: number, limit: number, waitMs: number) => Promise<T>,
+  onShrink?: (event: { after: number; from: number; to: number; error: string }) => void,
+) {
+  let learned = 16;
+  return async (after: number, limit: number, waitMs: number): Promise<T> => {
+    if (!Number.isSafeInteger(limit) || limit < 1) throw Error("invalid feed page limit");
+    let size = Math.min(limit, learned);
+    for (;;) {
+      try {
+        return await request(after, size, waitMs);
+      } catch (error) {
+        if (
+          size === 1 ||
+          !(error instanceof Error) ||
+          !("_tag" in error) ||
+          error._tag !== "DatomicTransportError" ||
+          !/^Gateway response exceeds \d+ bytes$/.test(error.message)
+        )
+          throw error;
+        const previous = size;
+        learned = Math.min(learned, Math.max(1, Math.floor(size / 2)));
+        size = learned;
+        onShrink?.({ after, from: previous, to: size, error: error.message });
+      }
+    }
+  };
+}
