@@ -270,3 +270,16 @@ Orchestrator's reading:
 4. Trace files live in one known place. When disk space runs short, older raw traces move to Sam's drive rather than being
    deleted. Open question for Sam at resume: whether "my drive" means Google Drive or a disk attached to this Mac.
 5. After the tracing is in place, continue with the order already agreed (P2 at 10,000 subjects, then P4 history flatness).
+
+## 2026-11-12 about 17:45 UTC: stay in TypeScript; the tracing must measure the TypeScript share
+
+Sam, verbatim:
+
+> And I agree. Let's not do anything inside of Rust. Let's just stay in TypeScript. We don't have to specifically look for a TypeScript problem but I want to be able to measure that so you should include that in your visibility in the future. Include that in the tooling that you're going to add.
+
+Orchestrator's reading:
+1. No Rust rewrite. The Triplex layer stays in TypeScript.
+2. No separate hunt for a TypeScript problem.
+3. The tracing built first on resume must report, for every commit and read, how much of the time was spent in TypeScript
+   (the Node process: Triplex code, event-loop waits, garbage collection) against the gateways, the transactor, Postgres
+   and the network, so the TypeScript share is a number in every run.
