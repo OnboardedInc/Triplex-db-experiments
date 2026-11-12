@@ -761,6 +761,7 @@ export async function runReplicaDriver(argv: string[]) {
       expectedR1Changed = 0,
       expectedR2Changed = 0;
     const finalPosition = await comp.currentPosition();
+    report.publishedStatePosition = finalPosition;
     const wireState = (state: any) => ({
       ...state,
       items: state.items.map((i: any) => ({
@@ -1084,10 +1085,10 @@ export async function runReplicaDriver(argv: string[]) {
       bootstrapPeer: "reader",
       liveReaders: live ? 256 : 0,
     };
+    report.finalPosition = await comp.currentPosition();
     if (candidateVerification) {
       // [DX-S5] Why: verify the read-only declaration against this hold's actual logical head at both ends.
       // Rejected: treating the absence of publication flags alone as evidence that nothing appended commands.
-      report.finalPosition = await comp.currentPosition();
       if (report.finalPosition !== report.initialSeedPosition)
         throw Error("Read-only candidate verification changed the logical head");
     }
