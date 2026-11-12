@@ -1,4 +1,4 @@
-(ns id-memo-test (:require [triplex.gateway.reach :as r]
+(ns id-memo-test (:require [triplex.gateway.reach :as r] [id-lookup-probe]
                           [datomic.api :as d] [clojure.data.json :as json]))
 ;; [DX-S5] Why: compare actual native rows after repeated/concurrent cache eviction, including old cuts and two epochs.
 ;; Rejected: count-only cache tests or substituting this memory test for the full SQL/world fingerprint gate.
