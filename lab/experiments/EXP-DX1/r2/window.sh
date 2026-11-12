@@ -44,15 +44,17 @@ repo=$PWD
 out=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2/$prefix
 if [[ $s5 == true ]]; then out=$(mktemp -d "$repo/lab/experiments/EXP-DX1/s5/.runtime.XXXXXX"); else mkdir -p "$out"; fi
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
-held=false; resources=false; completed=false; timer=; watcher=; diskguard=
+held=false; resources=false; completed=false; timer=; watcher=; diskguard=; sampler=
 cleanup() {
  rc=$?; trap - EXIT TERM INT
+ if [[ $s5 == true && $held == true && $resources == true ]]; then docker stop -t 10 "$prefix-driver" >/dev/null 2>&1 || true; fi
  [[ $completed == true || $rc != 0 ]] || rc=1
  [[ -z $timer ]] || kill "$timer" 2>/dev/null || true
  [[ -z $watcher ]] || kill "$watcher" 2>/dev/null || true
  [[ -z $diskguard ]] || kill "$diskguard" 2>/dev/null || true
+ [[ -z $sampler ]] || kill "$sampler" 2>/dev/null || true
  if [[ $s5 == true ]]; then
-  for child in "$timer" "$watcher" "$diskguard"; do [[ -z $child ]] || wait "$child" 2>/dev/null || true; done
+  for child in "$timer" "$watcher" "$diskguard" "$sampler"; do [[ -z $child ]] || wait "$child" 2>/dev/null || true; done
   # [DX-S5] Why: concatenate closed driver output only after poll writers stop; H's poll split a large exactness JSON record.
   # Rejected: streaming megabyte JSON and shell polls into one append descriptor (individual Docker writes interleave).
   if [[ -f $out/driver.log ]]; then
@@ -63,6 +65,16 @@ cleanup() {
  fi
  if [[ $held == true ]]; then
    if [[ $resources == true ]]; then
+   if [[ $s5 == true ]]; then
+    # [DX-S5] Why: preserve identity, OOM and last live cgroup high-water marks before removing any owned container.
+    # Rejected: querying a vanished cgroup after exit 137 or losing the flags in cleanup.
+    [[ ! -f $out/container-peaks.log ]] || cat "$out/container-peaks.log"
+    for role in driver gw-r gw-w tx pg; do
+     docker inspect --format '{"event":"container-final","name":"{{.Name}}","id":"{{.Id}}","state":{{json .State}}}' "$prefix-$role" || true
+    done
+    [[ ! -f $out/driver-memory.ndjson ]] || cat "$out/driver-memory.ndjson"
+    df -k /System/Volumes/Data
+   fi
    if [[ $s5 == true && $rc != 0 ]]; then
     # [DX-S5] Why: retain complete failed JVM logs before removing first-use evaluation containers.
     # Rejected: losing the cause while preserving only a driver socket error.
@@ -136,7 +148,7 @@ fi
 deadline=$(( $(date +%s) * 1000 + hold_s * 1000 ))
 [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB'; exit 1; }
 [[ -z $(docker ps -q --filter "volume=$seed") ]] || { echo 'refuse an active seed'; exit 2; }
-(sleep "$hold_s"; docker rm -f "$prefix-driver" || true; [[ $s5 != true ]] || docker rm -f "$prefix-copy" || true; kill -TERM $$) & timer=$!
+(sleep "$hold_s"; kill -TERM $$) & timer=$!
 for name in "$prefix-pg-data" "$prefix-tools"; do
  if docker volume inspect "$name" >/dev/null 2>&1; then echo "refuse existing owned volume $name"; exit 2; fi
 done
@@ -214,10 +226,10 @@ if [[ $s5 == true ]]; then
  peer_java_extra='-XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
  tx_java_extra='-Xlog:gc*:file=/tmp/gc.log:time,uptime,level,tags:filecount=2,filesize=16M'
 fi
-echo "engine-config CPUs=0-3 memoryGiB=12 txHeapGiB=3 txObjectCache=${S5_TX_CACHE:-1g} pgSharedBuffers=${S5_PG_BUFFERS:-512MB} peerHeapGiB=2 peerObjectCache=$peer_cache writerCPUs=${S5_WRITER_CPUS:-1} gatewayMain=$gateway_main pointJournal=${S5_POINT_JOURNAL:-0}"
+echo "engine-config readCPUs=${S5_READ_CPUS:-2,3} runtimeCPUs=${S5_RUNTIME_CPUS:-4,5,6,7} memoryGiB=12 txHeapGiB=3 txObjectCache=${S5_TX_CACHE:-1g} pgSharedBuffers=${S5_PG_BUFFERS:-512MB} peerHeapGiB=2 peerObjectCache=$peer_cache writerCPUs=${S5_WRITER_CPUS:-1} gatewayMain=$gateway_main pointJournal=${S5_POINT_JOURNAL:-0}"
 start_jvm --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus 0,1 --memory 4g --memory-swap 4g -e "JAVA_OPTS=-Xms256m -Xmx3g $tx_java_extra" -v "$out/config:/config:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /config/sql.properties
 for role in w r; do
- cpu=1; [[ $role == w ]] || cpu=2,3
+ cpu=1; [[ $role == w ]] || cpu=${S5_READ_CPUS:-2,3}
  [[ $s5 != true || $role != w ]] || cpu=${S5_WRITER_CPUS:-1}
  host_port=18542; [[ $role == w ]] || host_port=18543
  start_jvm --restart on-failure:10 --name "$prefix-gw-$role" -p "127.0.0.1:$host_port:8080" --network "$prefix-net" --cpuset-cpus "$cpu" --memory 3g --memory-swap 3g -e "DATOMIC_JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=$peer_cache -Dtriplex.codec.spec=/opt/replica-codec-spec.json $peer_java_extra" -e "TX2_ENTITY_CACHE_BYTES=$peer_entity_cache" -e "TX2_REACH_SESSION_ENTRIES=$peer_sessions" -e "DATOMIC_EXT_CLASSPATH=$gateway_classpath" -e TX2_S5_ID_CACHE_ENTRIES=131072 -e "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic" -v "$repo/packages/datomic/gateway:/opt/gateway:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/replica-codec-spec.json:ro" --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m "$gateway_main"
@@ -262,22 +274,36 @@ fi
    free_kb=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
    volume_cap=7300000; floor=5242880
    [[ $s5 != true ]] || { volume_cap=22000000; floor=15728640; }
-   if [[ $kb -gt $volume_cap || $owned_kb -gt $evidence_cap || $free_kb -lt $floor ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; docker rm -f "$prefix-driver" || true; kill -TERM $$; exit 1; fi
+   if [[ $kb -gt $volume_cap || $owned_kb -gt $evidence_cap || $free_kb -lt $floor ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; kill -TERM $$; exit 1; fi
  done
 ) & watcher=$!
 # [DX-S5] Why: the default ~2 GiB V8 heap failed deserializing three candidates after main exactness completed.
 # Rejected: raising the 11 GiB container cap; shared packed input stays outside this explicit 4 GiB heap allowance.
 node_flags=(--expose-gc --experimental-strip-types)
 [[ $s5 != true ]] || node_flags+=(--max-old-space-size=4096)
+driver_entry=(/tool/node)
+[[ $s5 != true ]] || driver_entry=(python3 "$repo/lab/experiments/EXP-DX1/s5/supervise.py" /tool/node)
 run_driver() {
-docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory "$driver_memory" --memory-swap "$driver_memory" \
+docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus "${S5_RUNTIME_CPUS:-4,5,6,7}" --memory "$driver_memory" --memory-swap "$driver_memory" \
  -v "$repo:$repo:ro" -v "$out:$out" -v "$prefix-tools:/tool:ro" -w "$repo" -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin \
- -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e "DX_R1_DEADLINE=$deadline" -e "TX2_W0_POINT_JOURNAL=${S5_POINT_JOURNAL:-0}" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
- python:3.13-slim /tool/node "${node_flags[@]}" lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" "$@"
+ -e "S5_DRIVER_MEMORY_LOG=$out/driver-memory.ndjson" -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e "DX_R1_DEADLINE=$deadline" -e "TX2_W0_POINT_JOURNAL=${S5_POINT_JOURNAL:-0}" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
+ python:3.13-slim "${driver_entry[@]}" "${node_flags[@]}" lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" "$@"
 }
 if [[ $s5 == true ]]; then
  # [DX-S5] Why: retain the kernel OOM flag and exact container identity before cleanup removes an exited driver.
  # Rejected: diagnosing exit 137 from a pre-exit peak while discarding State.OOMKilled.
+ (
+  while sleep 5; do
+   docker stats --no-stream --format '{{json .}}' "$prefix-driver" "$prefix-gw-w" "$prefix-tx" "$prefix-pg" 2>/dev/null || true
+   for role in driver gw-r gw-w tx pg; do
+    docker exec "$prefix-$role" sh -c 'printf "peak="; cat /sys/fs/cgroup/memory.peak; printf "events="; tr "\n" "," < /sys/fs/cgroup/memory.events' 2>/dev/null | sed "s/^/container-sample epoch=$(date +%s) role=$role /" || true
+   done
+   # [DX-S5] Why: a single runaway raw file must stop the hold even when the aggregate disk reserve still fits.
+   # Rejected: checking only compressed evidence after cleanup.
+   oversized=$(find "$out" -type f -size +1000000000c -print -quit)
+   if [[ -n $oversized ]]; then echo "file-limit exceeded: $oversized"; kill -TERM $$; exit 1; fi
+  done
+ ) > "$out/container-peaks.log" 2>&1 & sampler=$!
  driver_rc=0
  run_driver "$@" > "$out/driver.log" 2>&1 || driver_rc=$?
  docker inspect --format '{"event":"driver-exit","id":"{{.Id}}","state":{{json .State}},"memoryBytes":{{.HostConfig.Memory}}}' "$prefix-driver" || true

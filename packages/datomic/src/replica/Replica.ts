@@ -134,6 +134,50 @@ export class Replica {
   ) {
     if (!Number.isFinite(validAt)) throw new TypeError("Explicit valid time required");
   }
+  // [DX-S5] Why: hand an already verified immutable image to a follower/read isolate without re-reading or duplicating its packed base.
+  // Rejected: private-field access in the harness or a second 4.6 GB bootstrap for every reader worker.
+  static fromImage(source: ReplicaSource, image: ReplicaImage): Replica {
+    position(image.position);
+    const replica = new Replica(source, image.validAt);
+    if (new Set(image.entities.map(([id]) => id)).size !== image.entities.length)
+      throw new ReplicaInvalid("Duplicate image entity");
+    replica.baseImage = image.shared;
+    replica.entities = new OverlayTable(
+      image.shared ? new SharedIndex(image.shared) : new Map<string, PackedEntity>(),
+      new Map(image.entities),
+    );
+    replica.watermark = image.position;
+    replica.valid = true;
+    return replica;
+  }
+  // [DX-S5] Why: reader isolates accept one complete ordered cut, checking its predecessor bytes before any mutation.
+  // Rejected: applying unchecked partial deltas or using a latest-head snapshot to repair a gap silently.
+  applyUpdate(update: ReplicaUpdate): void {
+    try {
+      if (!this.valid || !update.valid || update.reset || update.position !== this.watermark + 1)
+        throw new ReplicaInvalid("Mirror gap, reset or invalidation");
+      const ids = new Set<string>();
+      for (const [id, previous, next] of update.changes) {
+        const current = this.entities.get(id);
+        if (
+          ids.has(id) ||
+          !Number.isSafeInteger(next.revision) ||
+          next.revision < 0 ||
+          (current === undefined) !== (previous === undefined) ||
+          (current &&
+            previous &&
+            (current.revision !== previous.revision || !equalBytes(current, previous)))
+        )
+          throw new ReplicaInvalid("Mirror predecessor mismatch");
+        ids.add(id);
+      }
+      for (const [id, , next] of update.changes) this.entities.set(id, next);
+      this.onUpdate?.(update);
+      this.advance(update.position);
+    } catch (error) {
+      this.invalidate(error);
+    }
+  }
   get position(): number {
     return this.watermark;
   }

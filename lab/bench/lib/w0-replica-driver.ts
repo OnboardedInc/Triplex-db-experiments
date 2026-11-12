@@ -26,6 +26,7 @@ import { subjectList } from "./sweep.ts";
 import { outboxEntity } from "./w0-outbox.ts";
 import { evaluateAll, compactCandidateReferences } from "./w0-replica.ts";
 import { DomainOracle, DomainOraclePool } from "./w0-gates.ts";
+import { startRuntimeFollower, startThreadedW0Live } from "./w0-runtime.ts";
 import { startW0Live, matchW0Live } from "./w0-replica-live.ts";
 // [DX-R1] Why: this explicit entry point leaves the existing full-sweep gates and H8's path unchanged.
 // Rejected: relabelling old controller PASS rows as replica acceptance.
@@ -249,7 +250,28 @@ export async function runReplicaDriver(argv: string[]) {
         : currentReadEntities +
           update.changes.filter(([, previous]) => previous === undefined).length;
     };
-  let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
+  let traffic:
+    | Awaited<ReturnType<typeof startW0Live>>
+    | Awaited<ReturnType<typeof startThreadedW0Live>>
+    | undefined;
+  let runtimeFollower: Awaited<ReturnType<typeof startRuntimeFollower>> | undefined;
+  const threaded = argv.includes("--runtime-workers");
+  const startFollowing = async () => {
+    if (threaded)
+      runtimeFollower ??= await startRuntimeFollower(replica, scope, db, comp.backend.url);
+    else replica.start();
+  };
+  const stopFollowing = async () => {
+    if (runtimeFollower) {
+      report.followerThread = await runtimeFollower.stop();
+      runtimeFollower = undefined;
+    }
+    await replica.stop();
+  };
+  const startTraffic = async (options: Parameters<typeof startW0Live>[0]) =>
+    threaded && options.replica
+      ? startThreadedW0Live(options, runtimeFollower!, Number(opt("reader-workers", "2")))
+      : startW0Live(options);
   let bulkCounts: Awaited<ReturnType<typeof openBulkCounts>> | undefined;
   let verificationComp = comp;
   const followTo = async (p: number) => {
@@ -780,13 +802,14 @@ export async function runReplicaDriver(argv: string[]) {
         if (!live) return;
         // [DX-R1] Why: the runtime follows writes in both no-sweep and sweep arms, so only evaluation/publication differs.
         // Rejected: pausing follow during baseline (creates an artificial backlog and omits normal replica cost).
-        replica.start();
-        traffic = await startW0Live({ ...liveOptions, id: "baseline" });
+        await startFollowing();
+        traffic = await startTraffic({ ...liveOptions, id: "baseline" });
         await new Promise((r) => setTimeout(r, Number(opt("baseline-ms", "30000"))));
         report.baseline = await traffic.stop();
+        console.log(JSON.stringify({ kind: "healthy-baseline", ...report.baseline }));
         traffic = undefined;
         collectLiveLag = true;
-        traffic = await startW0Live({ ...liveOptions, id: "sweep" });
+        traffic = await startTraffic({ ...liveOptions, id: "sweep" });
       },
     });
     if (traffic) {
@@ -804,7 +827,7 @@ export async function runReplicaDriver(argv: string[]) {
         p99AckToAppliedMs: lags.length ? lags[Math.ceil(lags.length * 0.99) - 1] : null,
       };
     }
-    await replica.stop();
+    await stopFollowing();
     const currentImage = (await replica.snapshotAt(replica.position)).sharedImage();
     const retainedImages = [r1Snapshot.sharedImage(), snap.sharedImage(), currentImage];
     const retainedBuffers = new Set(
@@ -1082,8 +1105,8 @@ export async function runReplicaDriver(argv: string[]) {
         beforeTimedWindow: async () => {
           if (!live) return;
           collectLiveLag = false;
-          replica.start();
-          traffic = await startW0Live({ ...liveOptions, id: "candidates" });
+          await startFollowing();
+          traffic = await startTraffic({ ...liveOptions, id: "candidates" });
         },
         releases: candidateReleases,
       });
@@ -1103,7 +1126,7 @@ export async function runReplicaDriver(argv: string[]) {
       const candidateTraffic = traffic as Awaited<ReturnType<typeof startW0Live>> | undefined;
       const candidateLive = candidateTraffic ? await candidateTraffic.stop() : undefined;
       traffic = undefined;
-      await replica.stop();
+      await stopFollowing();
       if (multi.records.length !== N || sharedCandidateBytes.length !== N)
         throw new Error("Candidate subject coverage mismatch");
       for (let i = 0; i < multi.records.length; i++) {
@@ -1287,17 +1310,17 @@ export async function runReplicaDriver(argv: string[]) {
             readStates: (ids) => ids.flatMap((id) => stateView.world(id)),
           },
           beforeTimedWindow: async () => {
-            replica.start();
-            traffic = await startW0Live({ ...options, id: trial.id + "-baseline" });
+            await startFollowing();
+            traffic = await startTraffic({ ...options, id: trial.id + "-baseline" });
             await new Promise((r) => setTimeout(r, Number(opt("baseline-ms", "30000"))));
             baseline = await traffic.stop();
             traffic = undefined;
-            traffic = await startW0Live({ ...options, id: trial.id + "-sweep" });
+            traffic = await startTraffic({ ...options, id: trial.id + "-sweep" });
           },
         });
         const during = await traffic!.stop();
         traffic = undefined;
-        await replica.stop();
+        await stopFollowing();
         const stateCut = await comp.currentPosition();
         if (
           r2Trial.records.length !== N ||
@@ -1434,7 +1457,7 @@ export async function runReplicaDriver(argv: string[]) {
     return report;
   } finally {
     if (traffic) await traffic.stop();
-    await replica.stop();
+    await stopFollowing();
     await recorder?.close();
     oracle.close();
     bulkCounts?.close();

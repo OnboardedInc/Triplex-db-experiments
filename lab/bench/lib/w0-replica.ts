@@ -1,3 +1,4 @@
+import { deserialize } from "node:v8";
 import { Worker } from "node:worker_threads";
 import { Replica, type ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
 import type { CompositionHandle } from "./composition.ts";
@@ -13,6 +14,22 @@ export interface ReplicaEvaluation {
   subject: string;
   worldSha256: string;
   candidates: (W0.SubjectResult & { release: string })[];
+}
+// [DX-S5] Why: retain every candidate byte but decode just the subject being checked by the bounded oracle pool.
+// Rejected: a second full object representation alongside the shared base, live overlay and reader isolates.
+export function decodeCandidateRecord(record: {
+  subject: string;
+  worldSha256: string;
+  encodedCandidates: Uint8Array;
+}): ReplicaEvaluation {
+  const encoded = record.encodedCandidates;
+  return {
+    subject: record.subject,
+    worldSha256: record.worldSha256,
+    get candidates() {
+      return deserialize(encoded);
+    },
+  };
 }
 export function compactCandidateReferences(
   records: ReplicaEvaluation[],
@@ -150,7 +167,12 @@ async function evaluateSnapshot(
                 fail(new Error("Replica page coverage mismatch"));
                 return;
               }
-              results.set(m.id, m.records);
+              results.set(
+                m.id,
+                m.records.map((record: any) =>
+                  record.encodedCandidates ? decodeCandidateRecord(record) : record,
+                ),
+              );
               completed++;
               cpuSeconds += m.cpuSeconds;
               dispatch();

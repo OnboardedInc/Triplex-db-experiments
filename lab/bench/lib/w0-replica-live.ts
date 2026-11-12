@@ -49,6 +49,8 @@ export async function startW0Live(o: {
   replica?: Replica;
   currentReads?: RecentReads;
   commandNamespace?: string;
+  readersDisabled?: boolean;
+  writeActivity?: (pending: boolean) => void;
 }) {
   const warmupMs = o.warmupMs ?? 0;
   if (!Number.isSafeInteger(warmupMs) || warmupMs < 0 || warmupMs > 60000)
@@ -131,7 +133,7 @@ export async function startW0Live(o: {
           failed ??= e;
         }),
       );
-    } else
+    } else if (!o.readersDisabled)
       await Promise.all(
         Array.from({ length: 8 }, async (_, worker) => {
           const w = new Worker(new URL("./w0-replica-live-worker.ts", import.meta.url), {
@@ -222,6 +224,7 @@ export async function startW0Live(o: {
       if (failed || (stopped && start + event.atMs >= end)) break;
       offered.push(event);
       offerLiveWrite();
+      o.writeActivity?.(true);
       serial = serial
         .then(async () => {
           activeScheduled = start + event.atMs;
@@ -243,7 +246,10 @@ export async function startW0Live(o: {
         .catch((e) => {
           failed ??= e;
         })
-        .finally(finishLiveWrite);
+        .finally(() => {
+          finishLiveWrite();
+          o.writeActivity?.(false);
+        });
     }
     await serial;
   })();

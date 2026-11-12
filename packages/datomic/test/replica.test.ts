@@ -93,6 +93,41 @@ function fixture() {
   };
 }
 describe("packed replica", () => {
+  it("hands a compact image to a current mirror and rejects gaps and changed predecessor bytes atomically", async () => {
+    const f = fixture(),
+      owner = new Replica(f.source, 0);
+    await owner.bootstrap(["root"]);
+    const image = (await owner.snapshotAt(1)).sharedImage();
+    const mirror = Replica.fromImage(f.source, structuredClone(image));
+    const held = await mirror.snapshotAt(1);
+    let update: import("../src/replica/Replica.js").ReplicaUpdate | undefined;
+    owner.onUpdate = (value) => {
+      update = value;
+    };
+    f.commit([["shared", [row("shared", "s2", { type: "string", value: "after" }, 2)]]]);
+    await owner.followOnce();
+    mirror.applyUpdate(structuredClone(update!));
+    expect(mirror.position).toBe(2);
+    expect(mirror.world("root")).toEqual(owner.world("root"));
+    expect(held.world("root").find((r) => r.entityId === "shared")!.value.value).toBe("before");
+    expect(mirror.bytes).toBe(owner.bytes);
+    expect(() => mirror.applyUpdate(update!)).toThrow("gap");
+    expect(mirror.isValid).toBe(false);
+    const wrong = Replica.fromImage(f.source, image);
+    const bad = {
+      ...update!,
+      changes: update!.changes.map(([id, , next]) => [id, next, next] as const),
+    };
+    expect(() => wrong.applyUpdate(bad)).toThrow("predecessor");
+    expect(wrong.position).toBe(1);
+    expect(wrong.isValid).toBe(false);
+    const reset = Replica.fromImage(f.source, image);
+    expect(() => reset.applyUpdate({ ...update!, reset: true })).toThrow("reset");
+    const duplicate = Replica.fromImage(f.source, image);
+    expect(() =>
+      duplicate.applyUpdate({ ...update!, changes: [...update!.changes, ...update!.changes] }),
+    ).toThrow("predecessor");
+  });
   it("captures a subject closure at one cut without scanning unrelated overlay entries", async () => {
     const f = fixture(),
       replica = new Replica(f.source, 0);

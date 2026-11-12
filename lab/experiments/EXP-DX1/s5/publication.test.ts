@@ -8,7 +8,12 @@ import { startW0Live } from "../../../bench/lib/w0-replica-live.ts";
 import { RecentReads, packEntity, pullAt } from "../../../../packages/datomic/dist/index.js";
 import { localReadTurns } from "../../../bench/lib/w0-replica-live.ts";
 import { it, expect } from "vitest";
-import { publishChanged, compactCandidateReferences } from "../../../bench/lib/w0-replica.ts";
+import { serialize } from "node:v8";
+import {
+  publishChanged,
+  compactCandidateReferences,
+  decodeCandidateRecord,
+} from "../../../bench/lib/w0-replica.ts";
 import {
   outboxEntity,
   bindPublicationProfiles,
@@ -307,4 +312,27 @@ it("drains every frozen offer due before stop even when the event loop was delay
     await comp.close();
     fs.rmSync(dir, { recursive: true });
   }
+});
+
+// [DX-S5] Why: compact candidate transport must preserve exact scalar types and release ordering while releasing decoded graphs.
+// Rejected: JSON candidate transport or checking only output counts.
+it("keeps lossless candidate bytes and decodes independent bounded graphs", () => {
+  const candidates = [
+    {
+      release: "R2",
+      record: { basis: { tx: 9007199254740993n } },
+      output: { negativeZero: -0, missing: null },
+    },
+    { release: "R1", output: "second" },
+    { release: "R3", output: "third" },
+  ];
+  const record = decodeCandidateRecord({
+    subject: "subject",
+    worldSha256: "hash",
+    encodedCandidates: serialize(candidates),
+  });
+  expect(record.candidates).toEqual(candidates);
+  expect(record.candidates).not.toBe(record.candidates);
+  expect(Object.is((record.candidates[0].output as any).negativeZero, -0)).toBe(true);
+  expect(canonical(record.candidates)).toBe(canonical(candidates));
 });

@@ -1,3 +1,4 @@
+import { serialize } from "node:v8";
 import { parentPort, workerData } from "node:worker_threads";
 import { ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
 import { W0, worldOf, worldSha256, w0Basis } from "./w0-world.ts";
@@ -27,7 +28,15 @@ parentPort!.on("message", (m) => {
     parentPort!.postMessage({
       type: "result",
       id: m.id,
-      records,
+      // [DX-S5] Why: keep all three exact candidate payloads in lossless binary form instead of retaining 300000 object graphs in the coordinator.
+      // Rejected: JSON coercion (BigInt/negative-zero loss) or dropping outputs to make the 11 GiB cap fit.
+      records:
+        releases.length > 1
+          ? records.map(({ candidates, ...record }) => ({
+              ...record,
+              encodedCandidates: serialize(candidates),
+            }))
+          : records,
       cpuSeconds: (cpu.user + cpu.system) / 1e6,
       wallMs: performance.now() - started,
     });
