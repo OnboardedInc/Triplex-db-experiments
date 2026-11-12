@@ -38,7 +38,8 @@ function save(all) {
 export function registerRun(dir) {
   dir = path.resolve(dir);
   const s = JSON.parse(fs.readFileSync(path.join(dir, "trace-summary.json"), "utf8"));
-  const b = JSON.parse(fs.readFileSync(path.join(dir, "driver/ns-report.json"), "utf8"));
+  const reportPath = path.join(dir, "driver/ns-report.json");
+  const b = fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, "utf8")) : {};
   const row = {
     date: new Date().toISOString(),
     tag: path.basename(dir),

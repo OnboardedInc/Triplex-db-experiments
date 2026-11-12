@@ -1,5 +1,5 @@
 (ns triplex.gateway.trace-test
-  (:require [clojure.test :refer :all] [triplex.gateway.trace :as trace] [ring.core.protocols :as protocols]))
+  (:require [clojure.test :refer :all] [triplex.gateway.trace :as trace] [ring.core.protocols :as protocols] [triplex.gateway.main]))
 ;; [DX-T1] Why: exercise actual Ring response write, parent nesting and counter isolation.
 ;; Rejected: only testing a regular expression or manufacturing a gateway result in TypeScript.
 (deftest propagated-parent-and-written-response

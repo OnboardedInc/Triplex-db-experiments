@@ -2,7 +2,7 @@
   (:require [clojure.data.json :as json] [clojure.string :as str])
   (:import [jdk.jfr FlightRecorder Recording]
            [jdk.jfr.consumer RecordingFile RecordedEvent]
-           [java.nio.file Paths]
+           [java.nio.file Paths Files]
            [java.io BufferedWriter FileWriter]))
 ;; [DX-T1] Why: the pinned image is a JRE, so export with the built-in consumer API, not a downloaded jcmd/JDK.
 ;; Rejected: a recording that needs an external manual conversion before the timeline can show pauses.
@@ -24,10 +24,11 @@
     (Thread. ^Runnable
       (fn []
         (when-let [dir (System/getenv "TRIPLEX_TRACE_DIR")]
-          (let [file (str dir "/" process ".jfr")]
+          (let [file (str dir "/" process "-export.jfr")]
             (try
               (doseq [^Recording r (.getRecordings (FlightRecorder/getFlightRecorder))]
-                (when (= "triplex" (.getName r)) (.stop r) (.dump r (Paths/get file (make-array String 0)))))
+                (when (= "triplex" (.getName r)) (when (= "RUNNING" (str (.getState r))) (.stop r)) (.dump r (Paths/get file (make-array String 0)))))
               (export! file process identity)
-              (catch Throwable _ (spit (str dir "/" process "-jfr-error.txt") "JFR dump/export failed; coverage incomplete\n"))))))
+              (Files/deleteIfExists (Paths/get file (make-array String 0)))
+              (catch Throwable error (spit (str dir "/" process "-jfr-error.txt") (str "JFR dump/export failed; coverage incomplete: " (.getName (class error)) " " (.getMessage error) "\n")))))))
       "triplex-jfr-export")))

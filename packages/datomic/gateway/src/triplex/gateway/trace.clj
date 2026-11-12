@@ -60,7 +60,7 @@
            (if old# (MDC/put "trace_id" old#) (MDC/remove "trace_id"))
            (let [end# (clock) record# {:id id# :parent parent# :name ~name :layer ~layer :start start# :end end# :thread (.getId (Thread/currentThread))}]
              (when (or (not= level "summary") (not= ~layer "gateway") (>= (- end# start#) 0.5))
-               (swap! *request* (fn [r#] (if (< (count (:spans r#)) 8192) (update r# :spans conj record#) (update r# :truncated inc))))))))))
+               (swap! *request* (fn [r#] (if (< (count (:spans r#)) 8192) (update r# :spans conj record#) (update r# :truncated inc)))))))))))
 (defn finish! [request]
   (let [r (assoc @request :end (clock)) duration (- (:end r) (:start r))]
     (when (or (= level "full") (= (:kind r) "commit") (>= duration 50) (sampled? (:traceId r))) (emit! r))))

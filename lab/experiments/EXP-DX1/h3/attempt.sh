@@ -196,9 +196,6 @@ run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/s
 # [DX-R3-P9] Why: q6 comparisons require the same live guest boot parameters, not a remembered VM setting.
 # Rejected: assuming nohlt survives an orchestrator restart.
 if [[ $prefix == tx2-dxr3-* ]]; then echo 'DX-R3 live guest kernel'; docker exec "$prefix-tx" cat /proc/cmdline; fi
-if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
-  docker exec -e TRIPLEX_TRACE_LEVEL=off -e DATOMIC_JAVA_OPTS=-Xmx512m "$prefix-gw-w" /opt/datomic/bin/run -m triplex.gateway.trace-test > "$out/gateway-trace-tests.log" 2>&1
-fi
 if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
   node lab/trace/system-sampler.mjs "$out/trace/raw" & trace_host=$!
   docker exec -i "$prefix-pg" psql -X -Atq -U postgres -d datomic < lab/trace/postgres.sql > "$out/trace/raw/postgres-samples.log" 2> "$out/trace/raw/postgres-sample-errors.txt" & trace_pg=$!

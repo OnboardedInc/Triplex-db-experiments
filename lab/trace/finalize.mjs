@@ -39,7 +39,7 @@ for (const file of filesUnder(raw)) {
 fs.writeFileSync(path.join(run, "trace/SHA256SUMS"), hashes.join("\n") + "\n");
 const copy = process.argv[3];
 const result = await buildReport(run, { copyTo: copy });
-if (fs.existsSync(path.join(run, "driver/ns-report.json"))) registerRun(run);
+registerRun(run);
 console.log(
   JSON.stringify({
     tag: result.tag,
