@@ -854,7 +854,7 @@ export async function runReplicaDriver(argv: string[]) {
         position,
         workers,
         view: snap,
-        // [DX-R1] Why: compare one and three candidates under the same 64-reader/writer profile.
+        // [DX-R1] Why: compare one and three candidates under the same live reader/writer profile.
         // Rejected: timing the three-candidate pass after stopping all live traffic.
         beforeTimedWindow: async () => {
           if (!live) return;
@@ -987,8 +987,15 @@ export async function runReplicaDriver(argv: string[]) {
       feedReads,
       feedPeer: "writer",
       bootstrapPeer: "reader",
-      liveReaders: 256,
+      liveReaders: live ? 256 : 0,
     };
+    if (candidateVerification) {
+      // [DX-S5] Why: verify the read-only declaration against this hold's actual logical head at both ends.
+      // Rejected: treating the absence of publication flags alone as evidence that nothing appended commands.
+      report.finalPosition = await comp.currentPosition();
+      if (report.finalPosition !== report.initialSeedPosition)
+        throw Error("Read-only candidate verification changed the logical head");
+    }
     report.rss = process.memoryUsage().rss;
     report.peakRss = process.resourceUsage().maxRSS * 1024;
     console.log(

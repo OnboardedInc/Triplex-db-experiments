@@ -52,3 +52,5 @@ Main exactness completed all 100,000 worlds, outputs, records, published states 
 Published states were read at position 4,347,443, independently observed in `activation100000-head-b.log`; all evaluation inputs stayed at sealed P.
 The following three-candidate pass failed at Node's default ~2 GiB heap: `FATAL ERROR: Reached heap limit` at log line 686, worker result deserialization stack. Window exit 133, not a timer or JVM failure.
 The corrected S5 driver keeps the 11 GiB cgroup cap, permits a 4 GiB V8 heap, compacts already checked reference records to exact canonical bytes, and provides a read-only candidate-only follow-up. Candidate exactness remains pending until that run completes.
+Candidate-only H5 clone proof passed at 42,775: all 1,000 native worlds/four-field fingerprint and 3,000 candidate outputs/records matched, 715,038,720 B driver peak, no live traffic or publication; `candidate-proof1000-a.log`.
+The follow-up also checks that its final observed logical head equals its initial observed head; it reports zero live readers when traffic is disabled.
