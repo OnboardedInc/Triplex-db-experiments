@@ -117,6 +117,8 @@ describe("packed replica", () => {
     await replica.followOnce();
     const full = await replica.snapshotAt(2),
       lookup = vi.spyOn(SharedIndex.prototype, "get");
+    expect(full.image().entities).toHaveLength(2003);
+    expect(full.world("unrelated0")[0]!.value).toEqual({ type: "boolean", value: true });
     let frozen: ReplicaSnapshot;
     try {
       frozen = replica.snapshotSubject("root");

@@ -11,7 +11,11 @@ s5=false
 if [[ $s5 == true ]]; then
  [[ -f /Users/sam/Claude/Projects/triplex-db-2/locks/long-hold-ok ]] || { echo 'long hold not authorized'; exit 2; }
 fi
-allow_first_use=false; first_use=false; verify_in_place=false; reuse_seed=false
+allow_first_use=false; first_use=false; verify_in_place=false; reuse_seed=false; head_only=false
+if [[ ${1:-} == --head-only ]]; then
+ [[ $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 && $scope == dxs5-w0-100000-v1 && $# == 1 ]] || exit 2
+ head_only=true; verify_in_place=true; shift
+fi
 if [[ ${1:-} == --reuse-seed ]]; then
  [[ $s5 == true && $seed == tx2-dxs5-seed-100000-pg-data && $n == 100000 && " $* " == *' --activation-at-seed '* ]] || exit 2
  reuse_seed=true; shift
@@ -47,6 +51,16 @@ cleanup() {
  [[ -z $timer ]] || kill "$timer" 2>/dev/null || true
  [[ -z $watcher ]] || kill "$watcher" 2>/dev/null || true
  [[ -z $diskguard ]] || kill "$diskguard" 2>/dev/null || true
+ if [[ $s5 == true ]]; then
+  for child in "$timer" "$watcher" "$diskguard"; do [[ -z $child ]] || wait "$child" 2>/dev/null || true; done
+  # [DX-S5] Why: concatenate closed driver output only after poll writers stop; H's poll split a large exactness JSON record.
+  # Rejected: streaming megabyte JSON and shell polls into one append descriptor (individual Docker writes interleave).
+  if [[ -f $out/driver.log ]]; then
+   printf '{"kind":"driver-raw-begin","bytes":%s}\n' "$(wc -c < "$out/driver.log" | tr -d ' ')"
+   cat "$out/driver.log" || rc=1
+   printf '\n{"kind":"driver-raw-end"}\n'
+  fi
+ fi
  if [[ $held == true ]]; then
    if [[ $resources == true ]]; then
    if [[ $s5 == true && $rc != 0 ]]; then
@@ -94,7 +108,15 @@ if [[ $s5 == true ]]; then
  [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB before admission'; exit 1; }
  [[ $(docker volume ls --filter "name=^$seed$" --format '{{.Name}}') == "$seed" ]] || { echo 'missing sealed seed refused before admission'; exit 2; }
 fi
-while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
+if [[ $s5 == true && -n ${S5_END_EPOCH:-} ]]; then [[ $S5_END_EPOCH =~ ^[0-9]+$ ]] || exit 2; fi
+while ! mkdir "$lock" 2>/dev/null; do
+ # [DX-S5] Why: a queued hold must stop at its latest feasible admission, not outlive the overall task budget.
+ # Rejected: checking the deadline only after another owner's long hold finally releases the lock.
+ if [[ $s5 == true && -n ${S5_END_EPOCH:-} ]] && (( $(date +%s) + 390 >= S5_END_EPOCH )); then
+  echo 'insufficient remaining budget while waiting for measurement lock'; exit 2
+ fi
+ sleep 5
+done
 held=true
 id=DX-R2; [[ $s5 != true ]] || id=DX-S5
 printf '{"id":"%s","pid":%s,"kind":"evaluation"}\n' "$id" "$$" > "$lock/owner.json"
@@ -145,6 +167,9 @@ if [[ $s5 == true ]]; then
  if [[ $reuse_seed == true ]]; then
   first_use=true; working_volume=$seed
   echo 'DECLARED REUSE: previously consumed seed; immutable evaluation cut, fresh publication namespace; appends retained.'
+ elif [[ $head_only == true ]]; then
+  first_use=true; working_volume=$seed
+  echo 'READ-ONLY HEAD OBSERVATION: previously used seed; no application driver or logical writes.'
  elif [[ $verify_in_place == true ]]; then
   first_use=true; working_volume=$seed
   echo 'READ-ONLY CANDIDATE VERIFICATION: previously used seed; immutable input cut, no logical writes.'
@@ -203,6 +228,16 @@ if [[ $s5 == true ]]; then
  db=$(node --input-type=module -e 'import {DatabaseScope} from "./packages/core/dist/runtime/index.js";console.log("s2-"+Buffer.from(String(DatabaseScope.test(process.argv[1]))).toString("base64url"))' "$scope")
  bash lab/experiments/EXP-DX1/s5/wait-ready.sh "$prefix" "$db" 0
 fi
+if [[ $head_only == true ]]; then
+ # [DX-S5] Why: observe the consumed volume's exact current head/bytes after a failed driver without bootstrapping or publishing again.
+ # Rejected: treating the largest ACK as a fresh native head read, or bypassing the shared lock for a quick container.
+ echo "head-only databaseBytes=$(docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT pg_database_size(current_database());')"
+ docker stop -t 15 "$prefix-gw-r" "$prefix-gw-w" "$prefix-tx"
+ docker stop -t 20 "$prefix-pg"
+ [[ $(docker inspect --format '{{.State.ExitCode}}' "$prefix-pg") == 0 ]] || exit 1
+ docker run --rm --pull never --name "$prefix-copy" -v "$seed:/from:ro" postgres:17-alpine du -sk /from
+ completed=true; exit 0
+fi
 if [[ ${1:-} == --id-lookup-probe ]]; then
  [[ $s5 == true && $n == 100000 ]] || exit 2
  # [DX-S5] Why: use a small read-only peer inside the idle writer's existing cgroup before the driver starts.
@@ -234,10 +269,20 @@ fi
 # Rejected: raising the 11 GiB container cap; shared packed input stays outside this explicit 4 GiB heap allowance.
 node_flags=(--expose-gc --experimental-strip-types)
 [[ $s5 != true ]] || node_flags+=(--max-old-space-size=4096)
+run_driver() {
 docker run --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 4,5,6,7 --memory "$driver_memory" --memory-swap "$driver_memory" \
  -v "$repo:$repo:ro" -v "$out:$out" -v "$prefix-tools:/tool:ro" -w "$repo" -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin \
  -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e "DX_R1_DEADLINE=$deadline" -e "TX2_W0_POINT_JOURNAL=${S5_POINT_JOURNAL:-0}" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 \
  python:3.13-slim /tool/node "${node_flags[@]}" lab/experiments/EXP-DX1/r2/run.ts --replica --rung "$n" --scope "$scope" --traffic-dir "$out/traffic" "$@"
+}
+if [[ $s5 == true ]]; then
+ # [DX-S5] Why: retain the kernel OOM flag and exact container identity before cleanup removes an exited driver.
+ # Rejected: diagnosing exit 137 from a pre-exit peak while discarding State.OOMKilled.
+ driver_rc=0
+ run_driver "$@" > "$out/driver.log" 2>&1 || driver_rc=$?
+ docker inspect --format '{"event":"driver-exit","id":"{{.Id}}","state":{{json .State}},"memoryBytes":{{.HostConfig.Memory}}}' "$prefix-driver" || true
+ (( driver_rc == 0 )) || exit "$driver_rc"
+else run_driver "$@"; fi
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc 'SELECT pg_database_size(current_database());'
 docker run --rm --pull never --name "$prefix-copy" -v "$working_volume:/from:ro" postgres:17-alpine du -sk /from
 
