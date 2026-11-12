@@ -5,8 +5,9 @@
 # usage: run-10k-pair.sh <prefix like tx2-dxh4-q1> [max minutes to wait for quiet, default 360]
 set -uo pipefail
 prefix=${1:?prefix}; waitmin=${2:-360}
+export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-full}
 cd "$(git rev-parse --show-toplevel)"
-E=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H4; mkdir -p "$E"
+E=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-H4}; mkdir -p "$E"
 free=$(df -k /System/Volumes/Data | awk 'NR==2{print int($4/1048576)}'); [ "$free" -ge 15 ] || { echo "refusing: only ${free} GiB free"; exit 3; }
 sh lab/bin/host-quiet.sh --wait "$waitmin" > "$E/$prefix-host-wait.jsonl"; quiet=$?
 sh lab/bin/host-quiet.sh > "$E/$prefix-host-before.jsonl"

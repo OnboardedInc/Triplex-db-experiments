@@ -1,0 +1,10 @@
+<configuration>
+  <!-- [DX-T1] Why: keep transaction io-stats and trace-correlated peer logs without stdout payload logging. Rejected: root DEBUG (unbounded parameter detail). -->
+  <appender name="TRACE" class="ch.qos.logback.core.FileAppender">
+    <file>/trace/${TRIPLEX_TRACE_PROCESS:-jvm}-datomic.log</file>
+    <append>false</append>
+    <encoder><pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS,UTC} %thread %level %logger trace=%X{trace_id:-untraced} - %msg%n</pattern></encoder>
+  </appender>
+  <logger name="datomic.transaction" level="DEBUG"/>
+  <root level="INFO"><appender-ref ref="TRACE"/></root>
+</configuration>

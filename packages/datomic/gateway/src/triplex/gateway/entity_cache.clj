@@ -1,4 +1,5 @@
 (ns triplex.gateway.entity-cache
+  (:require [triplex.gateway.trace :as trace])
   (:refer-clojure :exclude [bytes])
   (:import [java.util.concurrent ConcurrentHashMap ConcurrentLinkedQueue]
            [java.util.concurrent.atomic AtomicLong LongAdder]
@@ -65,7 +66,7 @@
   (while (> (+ (.get revision-bytes) size) (revision-budget))
     (let [old (.poll revision-order)]
       (when-not old (throw (IllegalStateException. "Revision memo accounting lost its view")))
-      (when (remove-revision-view! old) (.increment revision-evictions)))))
+      (when (remove-revision-view! old) (do (trace/counter! "entity-cache.revision-evictions" 1) (.increment revision-evictions))))))
 (defn revision-view [key]
   (when (>= (revision-budget) 768)
     (or (.get revision-views key)
@@ -77,9 +78,9 @@
                     (.addAndGet revision-bytes 768) view)))))))
 (defn revision [view eid read-revision]
   (if-let [cached (when view (.get ^ConcurrentHashMap (:entries view) eid))]
-    (do (.increment revision-hits)
+    (do (do (trace/counter! "entity-cache.revision-hits" 1) (.increment revision-hits))
         (when verify-enabled (check! (:key view) {:revision cached} {:revision (read-revision)})) cached)
-    (let [_ (.increment revision-misses) rev (read-revision)]
+    (let [_ (do (trace/counter! "entity-cache.revision-misses" 1) (.increment revision-misses)) rev (read-revision)]
       (when view
         (locking revision-views
           (when (identical? view (.get revision-views (:key view)))
@@ -95,9 +96,9 @@
 
 (defn lookup [key build]
   (if-let [value (.get entries key)]
-    (do (.increment hits)
+    (do (do (trace/counter! "entity-cache.hits" 1) (.increment hits))
         (when verify-enabled (check! key value (build))) value)
-    (let [_ (.increment misses) value (build) size (long (:bytes value))]
+    (let [_ (do (trace/counter! "entity-cache.misses" 1) (.increment misses)) value (build) size (long (:bytes value))]
       (when (<= size (entity-budget))
         ;; [DX-B7-S3] Why: only insert/evict needs exclusion; every hit is a CHM lookup plus local counters.
         ;; Rejected: approximate unbounded byte counters or a recency queue entry on every hit.
@@ -109,7 +110,7 @@
                 (let [old (.poll order)]
                   (when-not old (throw (IllegalStateException. "Entity cache accounting lost eviction key")))
                   (when-let [removed (.remove entries old)]
-                    (.addAndGet bytes (- (long (:bytes removed)))) (.increment evictions))))
+                    (.addAndGet bytes (- (long (:bytes removed)))) (do (trace/counter! "entity-cache.evictions" 1) (.increment evictions)))))
               (.put entries key value) (.add order key) (.addAndGet bytes size)))))
       value)))
 (defn forget! [name]

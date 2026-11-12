@@ -1,3 +1,4 @@
+import { traceWork, flushTracing } from "./tracing.ts";
 import fs from "node:fs";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { BatchSequence } from "./reader-lifecycle.ts";
@@ -28,17 +29,18 @@ function retain(rows: ReadRecord[], samples: any[] = [], splits: any[] = []) {
       verification: "PENDING final all-ACK model comparison; observed arrivals include settle and may omit in-flight reads" }];
   })) });
 }
-port!.on("message", m => {
+port!.on("message", async m => {
   try {
     if (m.type === "connect") { const sequence = new BatchSequence(); m.port.on("message", (batch: any) => {
       sequence.accept(batch.id);
-      retain(batch.records, batch.samples, batch.splitEvents);
+      traceWork("spill.retain-batch", () => retain(batch.records, batch.samples, batch.splitEvents));
       // [DX-R3] Why: reader shutdown must acknowledge the exact retained prefix before parent finalization crosses ports.
       // Rejected: relying on FIFO ordering between unrelated MessagePorts.
       m.port.postMessage({ id: batch.id });
     }); }
     if (m.type === "phase") { starts.set(m.phase, m.start + m.settleMs); port!.postMessage({ type: "reply", id: m.id }); }
     if (m.type === "rows") retain(m.rows);
+    if (m.type === "trace-close") { await flushTracing(); port!.postMessage({ type: "reply", id: m.id }); }
     if (m.type === "checkpoint") { records.checkpoint(); port!.postMessage({ type: "reply", id: m.id }); }
   } catch (error) { if (m.id) port!.postMessage({ type: "reply", id: m.id, error: String(error) }); else throw error; }
 });

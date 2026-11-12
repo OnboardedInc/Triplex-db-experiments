@@ -62,7 +62,7 @@ export class SpillThread {
     await this.rpc("checkpoint");
   }
   async finish() {
-    try { await this.checkpoint(); } finally { this.closing = true; await this.worker.terminate(); }
+    try { await this.checkpoint(); await this.rpc("trace-close"); } finally { this.closing = true; await this.worker.terminate(); }
     return new ReadRecords(this.directory, true);
   }
 }

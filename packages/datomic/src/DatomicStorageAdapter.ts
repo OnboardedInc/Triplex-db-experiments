@@ -1,3 +1,4 @@
+import { beginSpan, endSpan } from "./tracing.js";
 import {
   registerCommit,
   endCommit,
@@ -69,6 +70,13 @@ export const makeDatomicStorageAdapter = (
     readonly indexedJournalReads?: boolean;
   } = {},
 ): StorageAdapterService => {
+  // [DX-T1] Why: Effect scopes include staging/validation and always close on typed failure or interruption.
+  // Rejected: only timing successful HTTP transacts (loses replay, admission and preflight work).
+  const traced = <A, E, R>(name: string, effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>
+    Effect.suspend(() => {
+      const span = beginSpan(name);
+      return effect.pipe(Effect.ensuring(Effect.sync(() => endSpan(span))));
+    });
   const key = Symbol(scopeKey);
   const db = databaseName(scopeKey);
   const maxRetries = options.maxRetries ?? 12;
@@ -575,7 +583,7 @@ export const makeDatomicStorageAdapter = (
           const context = new Map(transactions);
           context.set(key, state);
           return yield* Effect.gen(function* () {
-            const result = yield* Effect.provideService(effect, CurrentTransactions, context);
+            const result = yield* traced("client.validation-and-staging", Effect.provideService(effect, CurrentTransactions, context));
             if (state.restart.needed)
               return yield* Effect.fail(
                 new WriteError({ message: "Unsupported optimistic read requires a snapshot" }),
@@ -587,7 +595,7 @@ export const makeDatomicStorageAdapter = (
             )
               return result;
             const exit = yield* Effect.exit(
-              Effect.uninterruptible(persist(state, operationId, randomUUID())),
+              traced("client.persist-and-resolve", Effect.uninterruptible(persist(state, operationId, randomUUID()))),
             );
             if (Exit.isSuccess(exit)) return result;
             return yield* Effect.failCause(exit.cause).pipe(

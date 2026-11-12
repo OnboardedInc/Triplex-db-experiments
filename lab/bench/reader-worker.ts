@@ -1,3 +1,4 @@
+import { beginTrace, withTrace, finishTrace, traceSync, traceAsync, flushTracing } from "./lib/tracing.ts";
 import { canonicalWorld } from "./lib/canonical.ts";
 import { requireDrained } from "./lib/reader-lifecycle.ts";
 import { ReaderTurn } from "./lib/reader-turn.ts";
@@ -166,6 +167,11 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   }
 
   async function readOnce(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; assignedAt?: number; hotPick?: boolean }) {
+    const trace = beginTrace("read", "reader.pull", { phase: ph, worker: cfg.worker, oracle: opts.keepRows, position });
+    try { return await withTrace(trace, () => traceAsync("reader.execute", () => readOnceTraced(subject, basis, kind, position, ph, opts))); }
+    finally { finishTrace(trace); }
+  }
+  async function readOnceTraced(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; assignedAt?: number; hotPick?: boolean }) {
     activeReads++; attemptedReads++;
     const start = nowAbs();
     const t0 = performance.now();
@@ -183,7 +189,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
           split = 1;
           const step1End = nowAbs();
           if (evidence) evidence.firstStepEnd = step1End;
-          const reply = await ask({ type: "straddle", seq: opts.straddleSeq }, 10_000);
+          const reply = await traceAsync("reader.straddle-await-ack", () => ask({ type: "straddle", seq: opts.straddleSeq }, 10_000), "driver-queue");
           straddleWaitMs = nowAbs() - step1End;
           if (evidence) { evidence.acknowledgedAt = reply?.ackAt ?? null; evidence.position = reply?.position ?? null; evidence.secondStepStart = nowAbs(); }
           if (reply && reply.position >= 0 && reply.ackAt > step1End) { split = 2; forcedPosition = reply.position; }
@@ -198,10 +204,10 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       // The wait for the straddled command's ACK is the driver's scheduling, not the store's service time.
       const latency = performance.now() - t0 - straddleWaitMs;
       if (evidence) { evidence.secondStepEnd = nowAbs(); evidence.route = pr.route; }
-      const o = observe(pr);
+      const o = traceSync("reader.observe", () => observe(pr));
       let gatewayCanonical: string | undefined;
       if (opts.keepRows && replica) {
-        const reference = await gateway();
+        const reference = await traceAsync("reader.oracle-gateway", gateway);
         gatewayCanonical = canonicalWorld(reference.triples);
         if (canonicalWorld(pr.triples) !== canonicalWorld(reference.triples)) throw Error("oracle route full-row mismatch");
         if (JSON.stringify(o) !== JSON.stringify(observe({ ...pr, observation: undefined })))
@@ -338,6 +344,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       cfg.replicaPort?.close();
       const diagnostics = finalDiagnostics();
       await comp.close().catch(() => {});
+      await flushTracing();
       port.postMessage({ type: "stopped", httpCounts: httpCounts(), diagnostics });
     }
   });

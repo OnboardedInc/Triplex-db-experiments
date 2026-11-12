@@ -1,5 +1,5 @@
 (ns triplex.gateway.feed
-  (:require [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.admission :as admission] [triplex.gateway.codec :as codec])
+  (:require [triplex.gateway.trace :as trace] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.admission :as admission] [triplex.gateway.codec :as codec])
   (:import [java.util.concurrent TimeUnit]))
 
 ;; [EXP-DF01] Why: R29/R41 E6 uses reports only as wakeups, always replaying the durable log.
@@ -37,7 +37,7 @@
                                (map (fn [c] (let [f (d/entity cut [:f/id (:assertionId c)])]
                                               (if (= "assert" (:op c)) (:f/tx-id f) (:f/retract-tx-id f)))) changes))
                        (remove nil?) distinct sort vec)
-            commands (sort (d/q '[:find [?id ...] :in $ ?tx :where [?c :triplex.claim/tx ?tx] [?c :triplex.claim/command-id ?id]] cut (d/t->tx t)))
+            commands (sort (trace/span "d/q" "peer-call" (d/q '[:find [?id ...] :in $ ?tx :where [?c :triplex.claim/tx ?tx] [?c :triplex.claim/command-id ?id]] cut (d/t->tx t))))
             stamp (required (:triplex.tx/recorded-at tx))]
         ;; [EXP-DF01] Why: DA01 fractional legacy record times cannot satisfy FD01's natural stamp.
         ;; Rejected: rounding the annotation or borrowing :db/txInstant (changes the decided record time).
@@ -92,7 +92,7 @@
   (let [watch (subscribe! conn)]
     (try
       (loop []
-        (let [signal @(:signal watch) db (d/db conn) remaining (- deadline (System/nanoTime))]
+        (let [signal @(:signal watch) db (trace/span "d/db" "peer-call" (d/db conn)) remaining (- deadline (System/nanoTime))]
           (if (or (ready? db) (<= remaining 0)) db
             (do (deref signal (quot (+ remaining 999999) 1000000) false) (recur)))))
       (finally (unsubscribe! conn)))))
@@ -121,7 +121,7 @@
       (try
         (let [read-page (fn [start n]
                           (admission/execute admission/journals (fn []
-                          (let [db (d/db conn) end (inc (d/basis-t db))]
+                          (let [db (trace/span "d/db" "peer-call" (d/db conn)) end (inc (d/basis-t db))]
                             (if (>= start end) []
                               (mapv #(project db %) (take n (d/tx-range (d/log conn) start end))))))))
               rows (poll-log from limit wait-ms read-page

@@ -1,3 +1,4 @@
+import { flushTracing } from "./tracing.ts";
 import fs from "node:fs";
 import { readObservation } from "./read-observation.ts";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
@@ -49,6 +50,6 @@ try {
       readers.add(m.port);
       m.port.on("close", () => readers.delete(m.port));
     }
-    if (m.type === "close") { await host.close(); if (appliedLog !== undefined) fs.closeSync(appliedLog); for (const reader of readers) reader.close(); port!.postMessage({ type: "closed" }); port!.close(); }
+    if (m.type === "close") { await host.close(); if (appliedLog !== undefined) fs.closeSync(appliedLog); for (const reader of readers) reader.close(); await flushTracing(); port!.postMessage({ type: "closed" }); port!.close(); }
   });
 } catch (error) { port!.postMessage({ type: "error", message: String(error) }); }

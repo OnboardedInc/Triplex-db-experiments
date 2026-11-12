@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, type Trace } from "./lib/tracing.ts";
 import { readObservation, type ReadObservation } from "./lib/read-observation.ts";
 import type { Basis } from "./lib/composition.ts";
 import { sampleMatches } from "./lib/sample-matches.ts";
@@ -364,6 +365,7 @@ let coordinate: (position: number) => any = (position) => ({ stream: "unknown", 
 
 function main() {
   return run().catch((error) => {
+    void flushTracing();
     report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
     report.status = "ERROR";
     report.error = String(error?.stack ?? error);
@@ -472,7 +474,7 @@ async function run() {
   const splitDirectory = spill?.directory ?? path.join(rawDir, `observations-${runTag}`);
   let splitWrites = Promise.resolve(), splitWriteError: unknown, splitFileStarted = false;
 
-  const onWorkerMessage = (w: number, worker: Worker) => (msg: any) => {
+  const onWorkerMessage = (w: number, worker: Worker) => (msg: any) => traceWork("driver.worker-message", () => {
     if (msg.type === "reads") {
       for (const r of msg.records) retainRead(r); for (const s of msg.samples) oracleSamples.push(s);
       if (msg.splitEvents?.length) {
@@ -492,7 +494,7 @@ async function run() {
       if (done) worker.postMessage({ type: "acked", token: msg.token, ...done });
       else (ackWaiters.get(msg.seq) ?? ackWaiters.set(msg.seq, []).get(msg.seq)!).push((r) => worker.postMessage({ type: "acked", token: msg.token, ...r }));
     }
-  };
+  });
   const startWorker = async (w: number, cfg: any) => {
     const pendingDeltas: any[] = [];
     const directReplica = replicaHost && "connect" in replicaHost ? replicaHost : undefined;
@@ -564,20 +566,27 @@ async function run() {
   };
   const publicationTimes = new Map<number, any>();
   let probeThread: ProbeThread | null = null;
-  const execute = async (job: Job) => {
+  const jobTraces = new WeakMap<Job, Trace>();
+  const execute = (job: Job) => {
+    const trace = beginTrace("commit", "driver.commit", { stream: job.ev.stream, seq: job.ev.seq, burst: job.ev.burst }, job.scheduledAt);
+    jobTraces.set(job, trace);
+    traceInterval(trace, "driver.queue (scheduler/subject/admission)", job.scheduledAt, traceNow(), "driver-queue");
+    return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job)));
+  };
+  const executeTraced = async (job: Job) => {
     const ev = job.ev;
-    const out: any = { attempts: 0, tags: [] as string[], path: "direct" };
+    const out: any = { traceId: jobTraces.get(job)?.traceId, attempts: 0, tags: [] as string[], path: "direct" };
     outcomes.set(okey(ev), out);
     if (ev.resend) return resend(job, out);
     const st = state.get(ev.subject)!;
-    const cmd = buildTraceCommand({ runTag, event: ev, state: st, scheduledAbsMs: job.scheduledAt });
+    const cmd = traceSync("driver.plan-and-encode-command", () => buildTraceCommand({ runTag, event: ev, state: st, scheduledAbsMs: job.scheduledAt }));
     const meta = { commandId: cmd.commandId, actor: ev.kind, preconditions: cmd.preconditions };
     let receipt: Receipt | null = null;
     while (!receipt && out.attempts < 6) {
       out.attempts++;
       out.transactCalledAt ??= now();
       const probeResult = ev.stream === "probe10" && probeThread ? await probeThread.transact(cmd.operations, meta) : null;
-      const res = probeResult ? probeResult.result : await writer.transact(cmd.operations, meta);
+      const res = probeResult ? probeResult.result : await traceAsync("triplex.transact", () => writer.transact(cmd.operations, meta));
       out.transactReturnedAt = now();
       if (probeResult) Object.assign(out, probeResult.timing);
       if (res.ok) { receipt = res.value; break; }
@@ -597,7 +606,7 @@ async function run() {
     Object.assign(out, publicationTimes.get(receipt.position));
     publicationTimes.delete(receipt.position);
     if (ev.ackLoss) {
-      const retry = await writer.transact(cmd.operations, meta);
+      const retry = await traceAsync("triplex.transact", () => writer.transact(cmd.operations, meta));
       const resolved = await resolveByCommand(cmd.commandId);
       lostAck.push({ seq: ev.seq, retryTag: retry.ok ? "COMMITTED-AGAIN" : retry.tag, retryNamesOriginal: !retry.ok && retry.error?.transactionId === receipt.txId, resolvedOriginal: resolved?.txId === receipt.txId && resolved?.position === receipt.position });
       out.path = "lost-ack-resolved";
@@ -619,14 +628,15 @@ async function run() {
       for (const w of ackWaiters.get(ev.seq) ?? []) w(result);
       ackWaiters.delete(ev.seq);
     }
-    model.bindReceipt(cmd.operations, receipt, ev.kind);
-    model.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream });
+    traceSync("driver.expected-state.bind-receipt", () => model.bindReceipt(cmd.operations, receipt!, ev.kind));
+    traceSync("driver.expected-state.add-commit", () => model.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream }));
     if (ev.stream === "background") original.set(ev.seq, { operations: cmd.operations, meta, receipt });
     out.position = receipt.position;
     if (oracleRecordSet.has(ev.subject))
       recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
     if (ev.stream === "background") {
-      const p = !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; retainRead(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost, replicaHost && "observe" in replicaHost ? replicaHost.observe.bind(replicaHost) : undefined);
+      const ryowTrace = beginTrace("read", "driver.ryow", { phase: -2, commitTraceId: jobTraces.get(job)?.traceId ?? "off" });
+      const p = withTrace(ryowTrace, () => traceAsync("driver.ryow-capture", () => !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then(row=>{ row[R.phase]=PHASE_RYOW; retainRead(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost, replicaHost && "observe" in replicaHost ? replicaHost.observe.bind(replicaHost) : undefined))).finally(() => finishTrace(ryowTrace));
       ryowPending.add(p);
       void p.finally(() => ryowPending.delete(p));
     }
@@ -655,6 +665,9 @@ async function run() {
     },
     onDone: (r: JobResult<Job>) => {
       const ev = r.job.ev;
+      const trace = jobTraces.get(r.job) ?? beginTrace("commit", "driver.expired", { stream: ev.stream, seq: ev.seq }, r.job.scheduledAt);
+      if (r.expired) traceInterval(trace, "driver.expired-in-queue", r.job.scheduledAt, r.finishedAt, "driver-queue");
+      finishTrace(trace, { expired: r.expired, outcome: outcomes.get(okey(ev))?.outcome ?? "unknown" });
       if (ev.stream === "background" && !ev.resend) {
         const list = pendingBySubject.get(ev.subject);
         if (list) { const k = list.indexOf(ev.seq); if (k >= 0) list.splice(k, 1); if (!list.length) pendingBySubject.delete(ev.subject); }
@@ -664,6 +677,7 @@ async function run() {
         ackWaiters.delete(ev.seq);
       }
       const out = outcomes.get(okey(ev)) ?? {};
+      out.traceId = trace?.traceId;
       if (r.expired) { out.outcome = "unaccounted"; out.reason = "not sent: writer deadline passed"; r.job.onDone?.(-1); }
       writes.push({ stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
         offsetMs: r.job.scheduledAt - traceStart, scheduledAt: r.job.scheduledAt, startedAt: r.startedAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, waitMs: r.waitMs, expired: r.expired, ...out });
@@ -715,7 +729,7 @@ async function run() {
   }
   if (publicationWriter) observeDatomicPublication((position, operationId, diagnostics) => {
     const publicationStartedAt = now();
-    publicationWriter.publish(feed!.publicationKey(position), operationId);
+    traceSync("driver.publication", () => publicationWriter.publish(feed!.publicationKey(position), operationId));
     publicationTimes.set(position, { publicationStartedAt, publicationDurableAt: now(), ...(diagnostics === undefined ? {} : { diagnostics }) });
   });
   report.publicationObserver = publicationWriter ? "DatomicClient.transact result, before Triples receipt and driver ACK; durable bound host-clock sidecar" : "not integrated";
@@ -1054,6 +1068,7 @@ async function run() {
   // Rejected: deleting it in a failure trap, which would erase unfinished run evidence.
   if (records instanceof ReadRecords && report.status === "DONE" && report.correctness?.errors === 0 && report.correctness?.violations === 0) records.dispose();
   log(`report: ${path.relative(REPO, output)}`);
+  await flushTracing();
   setTimeout(() => process.exit(process.exitCode ?? 0), 500).unref();
 
   // ---------------------------------------------------------------- phase bodies

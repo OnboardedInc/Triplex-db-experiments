@@ -1,3 +1,4 @@
+import { traceSync, traceAsync } from "./tracing.ts";
 import { CutCache } from "./cut-cache.ts";
 import { Option } from "effect";
 import { pathToFileURL } from "node:url";
@@ -181,7 +182,7 @@ export class ReplicaReader {
   }
   apply(delta: ReadDelta) {
     if (delta.reset) this.worlds.clear();
-    this.index.apply(delta);
+    traceSync("replica.apply-delta", () => this.index.apply(delta));
     this.notify();
   }
   notify() {
@@ -204,7 +205,10 @@ export class ReplicaReader {
       this.waiters.add(waiter);
     });
   }
-  async pullAt(
+  async pullAt(root: string, basis: ReadBasis, fallback: () => Promise<PullResult>, between?: () => Promise<void>, rows = false, receiptPosition?: number): Promise<PullResult> {
+    return traceAsync("replica.pull-at", () => this.pullAtTraced(root, basis, fallback, between, rows, receiptPosition));
+  }
+  private async pullAtTraced(
     root: string,
     basis: ReadBasis,
     fallback: () => Promise<PullResult>,
@@ -380,7 +384,7 @@ export class ReplicaReadHost {
         ]),
         ...(clock !== undefined && (!update.reset || Number.isFinite(clock)) ? { recordTime: clock, clockEnd: clockEnds.get(update.position) } : {}),
       };
-      this.index.apply(delta);
+      traceSync("replica.apply-delta", () => this.index.apply(delta));
       if (delta.valid) this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now(), ...timings.get(delta.position) });
       timings.delete(delta.position);
       times.delete(update.position);

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration version="2.0" label="Triplex request pauses" description="DX-T1 permanent low-volume JVM pause and I/O evidence" provider="Triplex">
+  <event name="jdk.GarbageCollection"><setting name="enabled">true</setting><setting name="threshold">0 ms</setting></event>
+  <event name="jdk.GCPhasePause"><setting name="enabled">true</setting><setting name="threshold">0 ms</setting></event>
+  <event name="jdk.SafepointBegin"><setting name="enabled">true</setting><setting name="threshold">0 ms</setting></event>
+  <event name="jdk.SafepointEnd"><setting name="enabled">true</setting></event>
+  <event name="jdk.SafepointStateSynchronization"><setting name="enabled">true</setting><setting name="threshold">0 ms</setting></event>
+  <event name="jdk.ExecuteVMOperation"><setting name="enabled">true</setting><setting name="threshold">1 ms</setting></event>
+  <event name="jdk.ThreadPark"><setting name="enabled">true</setting><setting name="threshold">5 ms</setting><setting name="stackTrace">true</setting></event>
+  <event name="jdk.SocketRead"><setting name="enabled">true</setting><setting name="threshold">1 ms</setting><setting name="stackTrace">false</setting></event>
+  <event name="jdk.SocketWrite"><setting name="enabled">true</setting><setting name="threshold">1 ms</setting><setting name="stackTrace">false</setting></event>
+  <event name="jdk.FileRead"><setting name="enabled">true</setting><setting name="threshold">1 ms</setting></event>
+  <event name="jdk.FileWrite"><setting name="enabled">true</setting><setting name="threshold">1 ms</setting></event>
+</configuration>

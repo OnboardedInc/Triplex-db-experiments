@@ -1,3 +1,4 @@
+import { flushTracing } from "./lib/tracing.ts";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
@@ -49,6 +50,7 @@ port!.on("message", async (m) => {
       feed.ackArrived(m.position);
     }
     if (m.type === "target") feed.lifeMaxTarget = m.target;
+    if (m.type === "trace-close") { await flushTracing(); port!.postMessage({ type: "reply", id: m.id }); }
     if (m.type === "stop") feed.stop();
     if (m.type === "replay") {
       const handle = await open();

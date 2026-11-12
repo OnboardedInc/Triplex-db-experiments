@@ -6,8 +6,11 @@ const out='runs/DX-H3-vm';
 // Rejected: ignoring DX_READ_PATH in the child process while the surrounding run claims replica.
 const args=process.argv.slice(2);
 if(!args.includes('--read-path')) args.push('--read-path',process.env.DX_READ_PATH??'gateway');
-const child=spawn('node',['--experimental-strip-types','lab/bench/driver.ts',...args],{stdio:'inherit'});
+const debug=process.env.TRIPLEX_TRACE_DEBUG==='1'?['--inspect=0.0.0.0:8508']:[];
+const child=spawn('node',[...debug,'--experimental-strip-types','lab/bench/driver.ts',...args],{stdio:'inherit'});
 let active=true;
+const system = process.env.TRIPLEX_TRACE_LEVEL && process.env.TRIPLEX_TRACE_LEVEL !== 'off'
+  ? spawn('node',['lab/trace/system-sampler.mjs','/driver/trace/raw'],{stdio:'inherit'}) : null;
 async function sample() {
   const row={at:new Date().toISOString(),peers:{}};
   for(const [role,url] of [['w',process.env.DATOMIC_URL],['r',process.env.DATOMIC_READ_URLS]]) {
@@ -18,4 +21,4 @@ async function sample() {
 }
 const poll=(async()=>{while(active){await sample();await new Promise(r=>setTimeout(r,5000));}})();
 for(const sig of ['SIGTERM','SIGINT']) process.on(sig,()=>child.kill(sig));
-child.on('exit',async(code,signal)=>{active=false;await poll;await sample();process.exitCode=code??1;});
+child.on('exit',async(code,signal)=>{active=false;system?.kill('SIGTERM');await poll;await sample();process.exitCode=code??1;});

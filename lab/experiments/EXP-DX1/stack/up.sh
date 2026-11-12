@@ -36,7 +36,7 @@ export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 evidence=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H1}
 attempt="$evidence/$prefix"
-mkdir -p "$attempt/sql" "$attempt/config"
+mkdir -p "$attempt/sql" "$attempt/config" "$attempt/trace/raw"
 [[ ! -e "$attempt/stack.json" ]] || { echo "use a fresh prefix; evidence already exists" >&2; exit 2; }
 for role in pg tx gw-w gw-r extract; do
   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then echo "container already exists: $prefix-$role" >&2; exit 2; fi
@@ -88,6 +88,20 @@ settings={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx',
 lines=[line for line in (root/'template.properties').read_text().splitlines() if line.partition('=')[0].strip() not in settings]
 (root/'sql.properties').write_text('\n'.join(lines)+'\n'+'\n'.join(k+'='+v for k,v in settings.items())+'\n')
 PY
+# [DX-T1] Why: JFR and structured gateway records survive process shutdown on an owned run mount.
+# Rejected: pulling a JDK image or exposing debugging ports on the Mac.
+trace_level=${TRIPLEX_TRACE_LEVEL:-off}
+trace_env=(-e "TRIPLEX_TRACE_LEVEL=$trace_level" -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git -C "$repo" rev-parse HEAD)" -e TRIPLEX_TRACE_DIR=/trace)
+trace_mount=(-v "$attempt/trace/raw:/trace")
+trace_tx_java= trace_gw_java=
+if [[ $trace_level != off ]]; then
+  trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,filename=/trace/tx.jfr,dumponexit=true,maxsize=0 -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+  trace_gw_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+  pg_settings="$pg_settings -c track_io_timing=on -c track_wal_io_timing=on -c log_min_duration_statement=0 -c log_parameter_max_length=0 -c log_parameter_max_length_on_error=0 -c log_checkpoints=on -c log_autovacuum_min_duration=0 -c log_timezone=UTC"
+fi
+if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
+  trace_tx_java="$trace_tx_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8505"
+fi
 docker network create "$prefix-net" >/dev/null
 docker volume create "$prefix-pg-data" >/dev/null
 docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
@@ -107,7 +121,7 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$attempt/sql/$file" > "$attempt/sql/$file.log"
 done
 docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
-  -e "JAVA_OPTS=$tx_java" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
+  -e "JAVA_OPTS=$tx_java$trace_tx_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # A ready transactor is checked by gateway health, which creates and syncs a real SQL database.
 for role in w r; do
@@ -117,8 +131,14 @@ for role in w r; do
   # bin/run reads DATOMIC_JAVA_OPTS, not JAVA_OPTS (DX-S3). An explicit --gw-java-opts wins; else DX_GW_*_HEAP; else the launcher default (1g).
   role_java=$gw_java; [[ -n $role_java || -z $heap ]] || role_java="-Xms256m -Xmx$heap"
   if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
+  role_trace_java=$trace_gw_java
+  if [[ $trace_level != off ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,filename=/trace/gw-$role.jfr,dumponexit=true,maxsize=0"; fi
+  if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
+    debug_port=8506; [[ $role == w ]] || debug_port=8507
+    role_trace_java="$role_trace_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debug_port"
+  fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
-    ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -v "$src:/opt/gateway:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false

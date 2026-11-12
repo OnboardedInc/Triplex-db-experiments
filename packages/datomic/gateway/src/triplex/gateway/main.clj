@@ -1,5 +1,5 @@
 (ns triplex.gateway.main
-  (:require [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
+  (:require [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
@@ -18,10 +18,10 @@
   (or (@connections uri)
       (locking connections
         (or (@connections uri)
-            (let [conn (d/connect uri) watch (feed/subscribe! conn (when recent/enabled #(recent/make-state (d/basis-t (d/db conn))))) view {:conn conn :generation (Object.) :recent (:recent watch)}]
+            (let [conn (d/connect uri) watch (feed/subscribe! conn (when recent/enabled #(recent/make-state (d/basis-t (trace/span "d/db" "peer-call" (d/db conn)))))) view {:conn conn :generation (Object.) :recent (:recent watch)}]
               (swap! connections assoc uri view) view)))))
 (defn connection [uri] (:conn (connection-view uri)))
-(defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
+(defn sync-db [uri] (let [result (trace/span "d/sync" "peer-wait" (deref (d/sync (connection uri)) 2000 ::timeout))]
                      (when (= result ::timeout) (throw (ex-info "Sync deadline exceeded" {:status 503 :code "SyncTimeout"}))) result))
 (def scope-name scope/name-for)
 (defn stored-scope [db] (when (d/entid db :triplex.scope/key) (:v (first (d/datoms db :aevt :triplex.scope/key)))))
@@ -37,10 +37,10 @@
   ([uri scope layout head-v2 strict-clocks]
   ;; [EXP-DA01] Why: a stale first opener must never reset a writer's position. Rejected: check-then-upsert of the scope header (concurrent initialization race).
   (try
-    @(d/transact (connection uri)
+    (trace/span "d/transact" "peer-wait" @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
         (cond-> {:triplex.scope/key scope :triplex.scope/strict-record-clocks (boolean strict-clocks) :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version (if (= layout "lean") 3 2) :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}
-          head-v2 (assoc :triplex.scope/head-version 2))])
+          head-v2 (assoc :triplex.scope/head-version 2))]))
     (catch Exception e
       (let [current (sync-db uri)]
         (assert-scope current scope)
@@ -57,16 +57,16 @@
   (let [name (scope-name scope) uri (db-uri name) created (d/create-database uri) conn (connection uri)]
     (assert-scope (sync-db uri) scope)
     (when-not (stored-scope (sync-db uri))
-      @(d/transact conn schema/schema)
+      (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
       (assert-scope (sync-db uri) scope)
       (initialize-scope! uri scope layout head-v2 strict-clocks))
     (when-not (= schema/schema-hash (:triplex.scope/schema-hash (d/entity (sync-db uri) [:triplex.scope/key scope])))
-      @(d/transact conn schema/schema)
-      @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))
+      (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
+      (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))
     (commit/install! conn scope)
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity (sync-db uri) [:triplex.scope/key scope])))}
-      (lean/enabled? (d/db conn)) (assoc :layout "lean")))))
+      (lean/enabled? (trace/span "d/db" "peer-call" (d/db conn))) (assoc :layout "lean")))))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (db-uri name)]
     (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))
@@ -77,7 +77,7 @@
         {:db name :deleted deleted})))
 (defn basis [base name]
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
-  (let [db (d/db (connection (db-uri name))) scope (stored-scope db)]
+  (let [db (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) scope (stored-scope db)]
     (when-not scope (throw (ex-info "Scope not initialized" {:status 409 :code "ScopeUninitialized"})))
     (let [entity (d/entid db [:triplex.scope/key scope])]
       {:t (codec/encode-value "long" (d/basis-t db))
@@ -96,7 +96,7 @@
 (defn request-index! [name conn input]
   (let [wait-ms (get input "waitMs")]
     (when-not (and (integer? wait-ms) (<= 1 wait-ms 600000)) (codec/invalid "waitMs must be 1..600000"))
-    (let [t (d/basis-t (d/db conn)) requested (System/currentTimeMillis) job (str (java.util.UUID/randomUUID))]
+    (let [t (d/basis-t (trace/span "d/db" "peer-call" (d/db conn))) requested (System/currentTimeMillis) job (str (java.util.UUID/randomUUID))]
       (d/request-index conn)
       (let [result (deref (d/sync-index conn t) wait-ms ::timeout) completed (not= result ::timeout)]
         {:job job :database name :requestedT (str t) :requestedAtMs requested :completed completed
@@ -105,9 +105,9 @@
   (when-not body (codec/invalid "Missing JSON body"))
   (let [bytes (.readNBytes ^java.io.InputStream body 4194305)]
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
-    (let [start (System/nanoTime) input (json/read-str (String. bytes "UTF-8"))]
+    (let [start (System/nanoTime) input (trace/span "gateway.request-parse" "gateway" (json/read-str (String. bytes "UTF-8")))]
       (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) input)))
-(defn handler [{:keys [request-method uri body query-string]}]
+(defn route-handler [{:keys [request-method uri body query-string]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
     (cond
@@ -118,12 +118,12 @@
             conn (connection (db-uri name))]
         (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
                      :body (if (.endsWith ^String uri "transactions")
-                             (journal/page conn name input)
+                             (trace/span "journal/page" "gateway" (journal/page conn name input))
                              (if (.endsWith ^String uri "journal")
-                               (journal/entity (d/db conn) name input)
-                               (journal/command (d/db conn) name input)))}))
+                               (trace/span "journal/entity" "gateway" (journal/entity (trace/span "d/db" "peer-call" (d/db conn)) name input))
+                               (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input))))}))
       (and (= :get request-method) (= "/health" uri))
-      (do (d/db (connection (db-uri "tx2-health")))
+      (do (trace/span "d/db" "peer-call" (d/db (connection (db-uri "tx2-health"))))
           (response 200 {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}))
       (and (= :post request-method) (= "/v1/db/create" uri))
       (response 200 (let [input (request-json body)] (create-scope! uri-template (get input "scope") (get input "layout" "legacy") true (get input "strictRecordClocks" false))))
@@ -137,52 +137,52 @@
                                              (let [^String encoded (or v "")] [k (java.net.URLDecoder/decode encoded "UTF-8")])))
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
         (let [conn (connection (db-uri name))]
-          (when (lean/enabled? (d/db conn)) (lean/unsupported! "log"))
+          (when (lean/enabled? (trace/span "d/db" "peer-call" (d/db conn))) (lean/unsupported! "log"))
           (response 200 (assoc (feed/log-page conn params) :database name))))
       (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime) db-uri (db-uri name)]
-        (try (timed start (response 200 (storage/commit! name (connection db-uri) (d/db (connection db-uri)) input)))
+        (try (timed start (response 200 (trace/span "storage/commit!" "gateway" (storage/commit! name (connection db-uri) (trace/span "d/db" "peer-call" (d/db (connection db-uri))) input))))
              (finally (when (get input "release") (storage/release! name (get input "handle"))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/request-index" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)]
         (response 200 (request-index! name (connection (db-uri name)) input)))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)]
-        (timed start (response 200 (storage/begin-command! name (d/db (connection (db-uri name))) input))))
+        (timed start (response 200 (trace/span "storage/begin-command!" "gateway" (storage/begin-command! name (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) input)))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(reach|reach-many)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
             view (connection-view (db-uri name)) conn (:conn view)
-            initial (d/db conn) p (get-in input ["basis" "recordedPosition"])
+            initial (trace/span "d/db" "peer-call" (d/db conn)) p (get-in input ["basis" "recordedPosition"])
             waited (and (some? p) (> p (storage/head-position name initial)))
-            db (if waited (storage/await-position initial p
+            db (if waited (trace/span "storage/await-position" "gateway" (storage/await-position initial p
                  (get input "basisWaitMs")
                  (fn [remaining] (if-let [t (get input "basisT")]
-                                   (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
-                                   (d/db conn))) conn) initial)
-            db (storage/await-record-time name conn db input)]
+                                   (trace/span "d/sync" "peer-wait" (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout))
+                                   (trace/span "d/db" "peer-call" (d/db conn)))) conn)) initial)
+            db (trace/span "storage/await-record-time" "gateway" (storage/await-record-time name conn db input))]
         (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
-         :body (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view) (:recent view))}))
+         :body (trace/span "reach/response" "gateway" (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view) (:recent view)))}))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name)
             input (when (= request-method :post) (request-json body))
             conn (when (and (not= action "release") (or (= action "transact") (not (get input "handle")))) (connection db-uri))
             ;; [EXP-DA01] Why: held queries need no transactor sync and must never substitute a new db between requests (Q89d). Rejected: unconditional per-request sync.
             db (when conn
-                 (storage/await-position (d/db conn)
+                 (trace/span "storage/await-position" "gateway" (storage/await-position (trace/span "d/db" "peer-call" (d/db conn))
                    (if (= action "claim") (get input "position") (get-in input ["basis" "recordedPosition"]))
                    (get input "basisWaitMs")
                    (fn [remaining] (if-let [t (get input "basisT")]
-                                     (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
-                                     (d/db conn))) conn))
-            db (when conn (storage/await-record-time name conn db input))]
+                                     (trace/span "d/sync" "peer-wait" (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout))
+                                     (trace/span "d/db" "peer-call" (d/db conn)))) conn)))
+            db (when conn (trace/span "storage/await-record-time" "gateway" (storage/await-record-time name conn db input)))]
         (response 200
           (case action
             "snapshot" (storage/begin! name db)
             "release" (storage/release! name (get input "handle"))
-            "transact" (try (storage/commit! name conn db input)
+            "transact" (try (trace/span "storage/commit!" "gateway" (storage/commit! name conn db input))
                          (finally (when (get input "release") (storage/release! name (get input "handle")))))
-            "read" (storage/read-rows name db input)
-            "q" (do (when (lean/enabled? (or db (storage/held-db name (get input "handle")))) (lean/unsupported! "q")) (query/run name db input))
+            "read" (trace/span "storage/read-rows" "gateway" (storage/read-rows name db input))
+            "q" (do (when (lean/enabled? (or db (storage/held-db name (get input "handle")))) (lean/unsupported! "q")) (trace/span "query/run" "gateway" (query/run name db input)))
             "operation" (storage/operation db id)
             "claim" (let [cut (storage/at-position db (get input "position"))
                           claim (d/entid cut [:triplex.claim/command-id (get input "commandId")])]
@@ -191,6 +191,7 @@
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e))))))))
+(defn handler [request] (trace/handler route-handler request))
 (defn -main [& _]
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.

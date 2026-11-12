@@ -60,7 +60,9 @@ fi
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 agent=$(printf '%s' "$prefix" | cut -d- -f2 | tr '[:lower:]' '[:upper:]' | sed 's/^DX/DX-/')
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/$agent}
-out=$DX_STACK_EVIDENCE/$prefix; mkdir -p "$out"
+out=$DX_STACK_EVIDENCE/$prefix
+[[ ! -e $out/arguments.txt ]] || { echo "refusing reused run tag: $prefix" >&2; exit 2; }
+mkdir -p "$out"
 printf '%s\n' "$kind" "$prefix" "$@" > "$out/arguments.txt"
 git rev-parse HEAD > "$out/head.txt"
 [[ $prefix != tx2-dxr3-* ]] || cat "$out/head.txt"
@@ -74,7 +76,7 @@ pathlib.Path(sys.argv[1]+'/source-build-hashes.json').write_text(json.dumps(rows
 PY2
 fi
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
-held=false; watchdog=; operational=; child=
+held=false; watchdog=; operational=; child=; trace_host=; trace_pg=
 cleanup() {
   rc=$?; trap - EXIT TERM INT
   exec 1>&8 2>&9
@@ -87,6 +89,14 @@ cleanup() {
     mkdir -p "$out/driver"
     docker cp "$prefix-driver:/driver/." "$out/driver/" || { echo 'driver evidence copy failed; retain lock' >&2; exit 1; }
     docker rm -f "$prefix-driver"
+  fi
+  # [DX-T1] Why: orderly JVM shutdown dumps and converts JFR before any owned container is removed.
+  # Rejected: rm -f (loses the only recording of the slow run).
+  for sampler in "$trace_host" "$trace_pg"; do
+    if [[ -n $sampler ]]; then kill -TERM "$sampler" 2>/dev/null || true; wait "$sampler" 2>/dev/null || true; fi
+  done
+  if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
+    for role in gw-w gw-r tx; do docker stop --time 60 "$prefix-$role" >> "$out/trace-shutdown.log" 2>&1 || true; done
   fi
   for role in gw-w gw-r tx pg; do docker logs --timestamps "$prefix-$role" > "$out/$role.log" 2>&1 || true; done
   bash lab/experiments/EXP-DX1/stack/down.sh "$prefix" --volumes
@@ -107,6 +117,9 @@ cleanup() {
   fi
   if [[ -n $operational ]]; then rm -rf "$operational"; fi
   if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
+  if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
+    node lab/trace/finalize.mjs "$out" "lab/experiments/EXP-DX1/t1/runs/$prefix" > "$out/trace-finalize.log" 2>&1 || { cat "$out/trace-finalize.log" >&2; [[ $rc != 0 ]] || rc=1; }
+  fi
   exit "$rc"
 }
 # [DX-H3] Why: a queued attempt's memory observation can become stale before it owns the lock.
@@ -175,9 +188,20 @@ if [[ $prefix == tx2-dxr3-* ]]; then
   fi
   extra+=(--gateway-src "$gateway_source" --codec-spec "$PWD/packages/datomic/src/codec-spec.json")
 fi
+if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
+  export TRIPLEX_TRACE_RUN=$prefix TRIPLEX_TRACE_SLOT=$prefix TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)
+  node -e 'const fs=require("fs");fs.writeFileSync(process.argv[1],JSON.stringify({tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,level:process.env.TRIPLEX_TRACE_LEVEL,startedAt:Date.now()})+"\n")' "$out/trace-run.json"
+fi
 run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
 # [DX-R3-P9] Why: q6 comparisons require the same live guest boot parameters, not a remembered VM setting.
 # Rejected: assuming nohlt survives an orchestrator restart.
 if [[ $prefix == tx2-dxr3-* ]]; then echo 'DX-R3 live guest kernel'; docker exec "$prefix-tx" cat /proc/cmdline; fi
+if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
+  docker exec -e TRIPLEX_TRACE_LEVEL=off -e DATOMIC_JAVA_OPTS=-Xmx512m "$prefix-gw-w" /opt/datomic/bin/run -m triplex.gateway.trace-test > "$out/gateway-trace-tests.log" 2>&1
+fi
+if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
+  node lab/trace/system-sampler.mjs "$out/trace/raw" & trace_host=$!
+  docker exec -i "$prefix-pg" psql -X -Atq -U postgres -d datomic < lab/trace/postgres.sql > "$out/trace/raw/postgres-samples.log" 2> "$out/trace/raw/postgres-sample-errors.txt" & trace_pg=$!
+fi
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
  --lane datomic --composition reach --read-path "${DX_READ_PATH:-gateway}" --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1

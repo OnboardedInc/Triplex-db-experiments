@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.trace :as trace] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -227,16 +227,17 @@
 (defn transaction-hints [conn data timeline]
   (when commit-hints?
     (try
-      (:hints (d/with (d/db conn) data :return-hints true))
+      (:hints (trace/span "d/with" "peer-call" (d/with (trace/span "d/db" "peer-call" (d/db conn)) data :return-hints true)))
       ;; A stale speculative basis can reject an otherwise valid ordered commit.
       ;; Hints are optional; only the transactor may make the definitive decision.
       (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))))
 (defn submit! [conn data input timeline]
   (let [hints (transaction-hints conn data timeline)
-        submit (fn []
+        submit (bound-fn []
                  (swap! timeline assoc :predecessorReady (System/nanoTime))
-                 (let [future (try (if hints (d/transact-async conn data :hints hints)
-                                             (d/transact-async conn data))
+                 (trace/attribute! :submittedAt (trace/clock))
+                 (let [future (try (if hints (trace/span "d/transact-async" "peer-call" (d/transact-async conn data :hints hints))
+                                             (trace/span "d/transact-async" "peer-call" (d/transact-async conn data)))
                                    ;; [DX-R3-P7] Why: a definitive synchronous clock refusal resolves this turn,
                                    ;; just like a failed transaction future; the retry owns the next sequence.
                                    ;; Rejected: leaving next unchanged while the adapter has consumed the send.
@@ -269,14 +270,15 @@
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
     (let [parsed (System/nanoTime)
-          data (try (tx-data db input (scope/entity db))
+          data (try (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db)))
                     (catch Exception e (reject-ordered! conn input e)))
           start (System/nanoTime)
           timeline (atom {:requestParsed parsed :payloadPrepared start})
-          report (deref (submit! conn data input timeline) 5000 ::timeout)
+          report (trace/span "peer.transact-await (includes order/network/storage)" "peer-wait" (deref (submit! conn data input timeline) 5000 ::timeout))
           completed (System/nanoTime)
           transact-micros (quot (- completed start) 1000)]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
+      (trace/attribute! :datomicT (str (d/basis-t (:db-after report))))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
        :transactMicros transact-micros
        :timeline (into {} (map (fn [[k v]] [k (/ (- v parsed) 1000.0)])
@@ -342,7 +344,7 @@
 (defn read-db [name current input]
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
-               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(d/with held (tx-data held staged)))) held))
+               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held staged))))) held))
              current)
         p (get-in input ["basis" "recordedPosition"])]
     ;; [EXP-DA01] Why: a held value cannot advance even if another writer commits; refuse future requests against that exact pin. Rejected: replacing a held db with a newer one mid-query.
@@ -436,7 +438,7 @@
 (defn read-rows [name current input]
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
-               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(d/with held (tx-data held staged)))) held)) current)]
+               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held staged))))) held)) current)]
     (if-not (lean/enabled? db) (legacy-read-rows name current input)
       (let [basis (get input "basis") history (get input "history") route (get input "route" "history")
             pattern (get input "pattern") entities (when-let [ids (get input "entityIds")] (set ids))
@@ -490,7 +492,7 @@
         (let [current (feed/await-db conn #(<= r (maximum %)) deadline)]
           (if (<= r (maximum current)) current
             (do (stats/bump! [:recordTimeSyncs] 1)
-                (let [synced (deref (d/sync conn) 2000 ::timeout)]
+                (let [synced (trace/span "d/sync" "peer-wait" (deref (d/sync conn) 2000 ::timeout))]
                   (when (= ::timeout synced)
                     (throw (ex-info "Record-time sync timed out" {:status 503 :code "BasisNotAvailable"})))
                   synced))))))))

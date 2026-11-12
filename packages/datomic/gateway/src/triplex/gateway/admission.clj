@@ -1,4 +1,5 @@
 (ns triplex.gateway.admission
+  (:require [triplex.gateway.trace :as trace])
   (:import [java.util.concurrent Semaphore]))
 ;; [DX-B7-S1] Why: CPU work queues FIFO on the assigned cores; waits retain Jetty threads but no permit.
 ;; Rejected: lowering Jetty's thread ceiling (long polls would exhaust it and starve feed delivery).
@@ -11,5 +12,5 @@
 ;; Rejected: one shared semaphore (256 readers can delay notification delivery).
 (def journals (Semaphore. 1 true))
 (defn execute [^Semaphore permits f]
-  (.acquire permits)
-  (try (f) (finally (.release permits))))
+  (trace/span "gateway.admission-wait" "gateway-queue" (.acquire permits))
+  (try (trace/span "gateway.admitted-work" "gateway" (f)) (finally (.release permits))))

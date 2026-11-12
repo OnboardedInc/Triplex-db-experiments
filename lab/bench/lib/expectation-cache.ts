@@ -1,3 +1,4 @@
+import { traceWork } from "./tracing.ts";
 import type { Model, Expected, Commit } from "./model.ts";
 // [DX-R3] Why: global receipt clocks and current valid times vary even when a subject's expected world does not.
 // Rejected: recomputing every subject part for every read, or caching observed results instead of comparing every read.
@@ -19,6 +20,9 @@ export class ExpectationCache {
     this.model = model;
   }
   expected(subject: number, recordedAt: number, validAt: number) {
+    return traceWork("driver.expected-state.lookup", () => this.expectedTraced(subject, recordedAt, validAt));
+  }
+  private expectedTraced(subject: number, recordedAt: number, validAt: number) {
     if (!Number.isFinite(recordedAt) || !Number.isFinite(validAt))
       return this.model.expected(subject, recordedAt, validAt);
     const list = this.model.commits.get(subject) ?? EMPTY;

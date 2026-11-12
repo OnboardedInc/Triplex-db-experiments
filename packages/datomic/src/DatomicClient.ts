@@ -9,6 +9,7 @@ import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
 import { encodeRowText } from "./rowText.js";
 import http from "node:http";
 import { stringifyExact, validateTagged, type TaggedValue } from "./codec.js";
+import { beginSpan, currentTrace, endSpan, traceInterval, traceparent, traceSync, tracedRequest } from "./tracing.js";
 
 export class DatomicHttpError extends Error {
   readonly _tag = "DatomicHttpError";
@@ -228,6 +229,15 @@ export class DatomicClient {
     timeoutMs = this.timeoutMs,
     onSent?: () => void,
   ): Promise<T> {
+    // [DX-T1] Why: a caller's commit/read owns all HTTP children, including retries and failures.
+    // Rejected: a new unrelated trace for each round trip (loses queue and post-response cost).
+    const route = path.replace(/\/s2?-[^/]+/g, "/{db}").replace(/\/operation\/[^/]+/, "/operation/{id}");
+    return tracedRequest(path.endsWith("/transact") ? "commit" : "read", `http ${method} ${route}`, {}, () =>
+      this.requestTraced<T>(method, path, body, timeoutMs, onSent));
+  }
+  private async requestTraced<T>(
+    method: "GET" | "POST", path: string, body: unknown, timeoutMs: number, onSent?: () => void,
+  ): Promise<T> {
     const started = performance.now();
     const observation = this.activeObservation;
     const operationId =
@@ -254,11 +264,23 @@ export class DatomicClient {
         body = { ...body, basisT: this.lastCommit.t };
     }
     const serializeStart = performance.now();
-    const bytes = body === undefined ? undefined : Buffer.from(stringifyExact(body));
+    const bytes = traceSync("client.encode", () => body === undefined ? undefined : Buffer.from(stringifyExact(body)));
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     return new Promise<T>((resolve, reject) => {
+      const trace = currentTrace();
+      const exchange = beginSpan("client.http", "gateway-wait");
+      const parent = traceparent(exchange);
       let written = NaN,
         headers = NaN;
+      let completed = false;
+      const complete = () => {
+        if (completed) return;
+        completed = true;
+        const origin = performance.timeOrigin;
+        traceInterval(trace, "socket.queue-and-write", origin + started, origin + written, "network", exchange?.id);
+        traceInterval(trace, "socket.wait-first-byte", origin + written, origin + headers, "gateway-wait", exchange?.id);
+        endSpan(exchange);
+      };
       const req = http.request(
         new URL(path, this.endpoint),
         {
@@ -266,6 +288,7 @@ export class DatomicClient {
           agent: this.agent,
           headers: {
             Accept: "application/json",
+            traceparent: parent,
             ...(bytes
               ? { "Content-Type": "application/json", "Content-Length": bytes.length }
               : {}),
@@ -281,15 +304,19 @@ export class DatomicClient {
               res.destroy(new Error(`Gateway response exceeds ${this.maxResponseBytes} bytes`));
             else chunks.push(chunk);
           });
-          res.on("error", (error) =>
-            reject(new DatomicTransportError(error.message, { cause: error })),
-          );
+          res.on("error", (error) => {
+            complete(); reject(new DatomicTransportError(error.message, { cause: error }));
+          });
           res.on("end", () => {
+            const bodyEnd = performance.now();
+            traceInterval(trace, "socket.body-read", performance.timeOrigin + headers, performance.timeOrigin + bodyEnd, "network", exchange?.id);
+            complete();
             try {
-              const data = JSON.parse(Buffer.concat(chunks).toString("utf8")) as Record<
+              const data = traceSync("client.parse", () => JSON.parse(Buffer.concat(chunks).toString("utf8"))) as Record<
                 string,
                 unknown
               >;
+              if (exchange) exchange.attributes = { responseTraceparent: String(res.headers["traceparent"] ?? "missing"), status: res.statusCode ?? 0 };
               const status = res.statusCode ?? 0;
               const sample: DatomicRequestSample | undefined =
                 observation || this.onRequest
@@ -343,9 +370,9 @@ export class DatomicClient {
         timeoutMs,
       );
       req.on("close", () => clearTimeout(timer));
-      req.on("error", (error) =>
-        reject(new DatomicTransportError(error.message, { cause: error })),
-      );
+      req.on("error", (error) => {
+        complete(); reject(new DatomicTransportError(error.message, { cause: error }));
+      });
       req.once("finish", () => {
         written = performance.now();
       });
@@ -607,6 +634,7 @@ export class DatomicClient {
       ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
       ids: hint.tripleIds ?? [],
     });
+    const decodeSpan = beginSpan("client.begin-validate-and-decode");
     const decodeStart = performance.now();
     const p = validateTagged(response.position);
     const position = Number(p.v);
@@ -634,6 +662,7 @@ export class DatomicClient {
       if (!rows.has(row.id)) throw new TypeError("Unexpected prefetched row");
       rows.set(row.id, row);
     }
+    endSpan(decodeSpan);
     this.commitDiagnostics.beginDecodeMicros = (performance.now() - decodeStart) * 1000;
     return {
       handle: response.handle,
@@ -650,7 +679,7 @@ export class DatomicClient {
   }
   async rows(db: string, input: Record<string, unknown>): Promise<readonly TripleRow[]> {
     const response = await this.request<{ rows: WireRow[] }>("POST", `/v1/db/${db}/read`, input);
-    const rows = response.rows.map(decodeRow);
+    const rows = traceSync("client.rows-decode", () => response.rows.map(decodeRow));
     if (!input["staged"])
       for (const row of rows) for (const observe of this.rowObservers) observe(db, row);
     return rows;
@@ -678,6 +707,7 @@ export class DatomicClient {
     },
     onSent?: () => void,
   ): Promise<unknown> {
+    const encodeSpan = beginSpan("client.transact-encode");
     const encodeStart = performance.now();
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
@@ -718,6 +748,7 @@ export class DatomicClient {
           ]),
       ),
     };
+    endSpan(encodeSpan);
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
     const sendKey = `${db}/${input.operationId}`;
     if (onSent) this.sentCallbacks.set(sendKey, onSent);

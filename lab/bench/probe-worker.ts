@@ -1,3 +1,4 @@
+import { flushTracing } from "./lib/tracing.ts";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
@@ -30,6 +31,7 @@ port!.on("message", async (m) => {
     if (m.type === "close") {
       await comp.close();
       writer.close();
+      await flushTracing();
       port!.postMessage({ id: m.id });
       port!.close();
       return;

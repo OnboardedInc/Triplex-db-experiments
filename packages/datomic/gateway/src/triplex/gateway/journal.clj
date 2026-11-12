@@ -1,5 +1,5 @@
 (ns triplex.gateway.journal
-  (:require [clojure.data.json :as json] [datomic.api :as d] [triplex.gateway.lean :as lean] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage]))
+  (:require [triplex.gateway.trace :as trace] [clojure.data.json :as json] [datomic.api :as d] [triplex.gateway.lean :as lean] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage]))
 (set! *warn-on-reflection* false)
 ;; [DX-B4-T1] Why: these reads use only immutable indexes; a scope without the write-side proof declines.
 ;; Rejected: reconstructing journals through entity/pull/query or guessing legacy completeness.
@@ -27,9 +27,9 @@
           _ (when-not (and (integer? limit) (<= 1 limit 1000) (integer? wait-ms) (<= 0 wait-ms 30000))
               (throw (ex-info "Invalid journal page bounds" {:status 400})))
           deadline (+ (System/nanoTime) (* wait-ms 1000000))
-          initial (storage/await-record-time name conn
-                    (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
-                      (get input "basisWaitMs") (fn [_] (d/db conn)) conn) input)
+          initial (trace/span "storage/await-record-time" "gateway" (storage/await-record-time name conn
+                    (trace/span "storage/await-position" "gateway" (storage/await-position (trace/span "d/db" "peer-call" (d/db conn)) (get-in input ["basis" "recordedPosition"])
+                      (get input "basisWaitMs") (fn [_] (trace/span "d/db" "peer-call" (d/db conn))) conn)) input))
           _ (supported! initial name false)
           _ (when (true? (get input "replicaRows")) (replica-supported! initial name))
           current (if (and (pos? wait-ms) (<= (storage/head-position name initial) after))

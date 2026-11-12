@@ -111,7 +111,8 @@ export class SideThread {
       start,
     });
   }
-  close() {
+  async close() {
+    await this.rpc("trace-close", {});
     return this.worker.terminate();
   }
 }

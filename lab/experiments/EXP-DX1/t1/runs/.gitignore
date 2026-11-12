@@ -1,0 +1,7 @@
+# Raw evidence stays in the durable store. Large generated viewers remain available locally and by checksum.
+*
+!.gitignore
+!*/
+!*/TRACE-REPORT.md
+!*/INDEX.md
+!*/SHA256SUMS
