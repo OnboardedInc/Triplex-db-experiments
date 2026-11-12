@@ -119,6 +119,12 @@ cleanup() {
 }
 trap cleanup EXIT
 trap 'exit 124' TERM INT
+# [DX-S5] Why: bash defers its TERM trap while waiting for foreground docker run; stop the child to enter log-preserving cleanup.
+# Rejected: signaling only bash (C required a manual driver stop before its deferred trap could execute).
+abort_hold() {
+ kill -TERM $$
+ if [[ $s5 == true ]]; then docker stop -t 10 "$prefix-driver" >/dev/null 2>&1 || true; fi
+}
 if [[ $s5 == true ]]; then
  [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB before admission'; exit 1; }
  [[ $(docker volume ls --filter "name=^$seed$" --format '{{.Name}}') == "$seed" ]] || { echo 'missing sealed seed refused before admission'; exit 2; }
@@ -151,7 +157,7 @@ fi
 deadline=$(( $(date +%s) * 1000 + hold_s * 1000 ))
 [[ $(df -k /System/Volumes/Data | awk 'NR==2 {print $4}') -ge 15728640 ]] || { echo 'disk below 15 GiB'; exit 1; }
 [[ -z $(docker ps -q --filter "volume=$seed") ]] || { echo 'refuse an active seed'; exit 2; }
-(sleep "$hold_s"; kill -TERM $$) & timer=$!
+(sleep "$hold_s"; abort_hold) & timer=$!
 for name in "$prefix-pg-data" "$prefix-tools"; do
  if docker volume inspect "$name" >/dev/null 2>&1; then echo "refuse existing owned volume $name"; exit 2; fi
 done
@@ -164,9 +170,9 @@ if [[ $s5 == true ]]; then
  (
   while sleep 5; do
    mac=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
-   vm=$(docker run --rm --pull never --name "$prefix-guard" postgres:17-alpine sh -c 'df -Pk / | tail -1' | awk '{print $4}') || { kill -TERM $$; exit 1; }
+   vm=$(docker run --rm --pull never --name "$prefix-guard" postgres:17-alpine sh -c 'df -Pk / | tail -1' | awk '{print $4}') || { abort_hold; exit 1; }
    echo "evaluation-disk macFreeKiB=$mac vmFreeKiB=$vm"
-   (( mac >= 15728640 && vm >= 5242880 )) || { kill -TERM $$; exit 1; }
+   (( mac >= 15728640 && vm >= 5242880 )) || { abort_hold; exit 1; }
   done
  ) & diskguard=$!
 fi
@@ -281,14 +287,14 @@ if [[ ${1:-} == --gateway-tests ]]; then
 fi
 (
  while sleep 15; do
-   kb=$(docker run --rm --pull never --name "$prefix-budget" -v "$working_volume:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}') || { kill -TERM $$; exit 1; }
+   kb=$(docker run --rm --pull never --name "$prefix-budget" -v "$working_volume:/from:ro" postgres:17-alpine du -sk /from | awk '{print $1}') || { abort_hold; exit 1; }
    evidence_root=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-R2; evidence_cap=490000
    [[ $s5 != true ]] || { evidence_root=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-S5; evidence_cap=976562; }
    owned_kb=$(du -sk "$evidence_root" | awk '{print $1}')
    free_kb=$(df -k /System/Volumes/Data | awk 'NR==2 {print $4}')
    volume_cap=7300000; floor=5242880
    [[ $s5 != true ]] || { volume_cap=22000000; floor=15728640; }
-   if [[ $kb -gt $volume_cap || $owned_kb -gt $evidence_cap || $free_kb -lt $floor ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; kill -TERM $$; exit 1; fi
+   if [[ $kb -gt $volume_cap || $owned_kb -gt $evidence_cap || $free_kb -lt $floor ]]; then echo "resource stop: volumeKiB=$kb evidenceKiB=$owned_kb freeKiB=$free_kb"; abort_hold; exit 1; fi
  done
 ) & watcher=$!
 # [DX-S5] Why: the default ~2 GiB V8 heap failed deserializing three candidates after main exactness completed.
@@ -315,7 +321,7 @@ if [[ $s5 == true ]]; then
    # [DX-S5] Why: a single runaway raw file must stop the hold even when the aggregate disk reserve still fits.
    # Rejected: checking only compressed evidence after cleanup.
    oversized=$(find "$out" -type f -size +1000000000c -print -quit)
-   if [[ -n $oversized ]]; then echo "file-limit exceeded: $oversized"; kill -TERM $$; exit 1; fi
+   if [[ -n $oversized ]]; then echo "file-limit exceeded: $oversized"; abort_hold; exit 1; fi
   done
  ) > "$out/container-peaks.log" 2>&1 & sampler=$!
  driver_rc=0

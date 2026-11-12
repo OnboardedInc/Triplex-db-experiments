@@ -67,6 +67,26 @@ class ClosedDriverLog(unittest.TestCase):
             self.assertEqual(records[-1]["values"]["memory.events"], "oom 1\noom_kill 1")
             self.assertEqual(result.stdout, b"")
 
+    def test_abort_stops_foreground_child_before_deferred_term_cleanup(self):
+        source = pathlib.Path("lab/experiments/EXP-DX1/r2/window.sh").read_text()
+        cleanup = source[source.index("cleanup() {"):source.index("\ntrap cleanup EXIT")]
+        begin = source.index("abort_hold() {")
+        abort = source[begin:source.index("\n}", begin) + 2]
+        with tempfile.TemporaryDirectory(prefix="dxs5-abort-logging-") as root:
+            script = ('set -euo pipefail\nexec 3>&1\ns5=true; held=false; resources=false; '
+                      'completed=false; prefix=tx2-dxs5-unit; out=$1; timer=; watcher=; diskguard=; sampler=\n'
+                      + cleanup + '\n' + abort + '\ntrap cleanup EXIT\ntrap "exit 124" TERM\n'
+                      + 'docker() { echo mock-driver-stop >&3; kill -TERM "$(cat "$out/child")"; }\n'
+                      + '(sleep .1; abort_hold) & timer=$!\n'
+                      + 'run_driver() { bash -c \'echo $$ > "$1/child"; echo "{\\"kind\\":\\"driver-body\\"}"; exec sleep 60\' child "$out"; }\n'
+                      + 'run_driver > "$out/driver.log" 2>&1\n')
+            result = subprocess.run(["bash", "-c", script, "abort-test", root],
+                                    capture_output=True, timeout=5)
+            self.assertEqual(result.returncode, 124, result.stderr.decode())
+            self.assertIn(b"mock-driver-stop", result.stdout)
+            self.assertLess(len(result.stdout), 2000)
+            self.assertFalse(pathlib.Path(root).exists())
+
 
 if __name__ == "__main__":
     unittest.main()
