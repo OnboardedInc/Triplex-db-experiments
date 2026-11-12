@@ -24,7 +24,7 @@ import {
 } from "./w0-world.ts";
 import { subjectList } from "./sweep.ts";
 import { outboxEntity } from "./w0-outbox.ts";
-import { evaluateAll } from "./w0-replica.ts";
+import { evaluateAll, compactCandidateReferences } from "./w0-replica.ts";
 import { DomainOracle, DomainOraclePool } from "./w0-gates.ts";
 import { startW0Live, matchW0Live } from "./w0-replica-live.ts";
 // [DX-R1] Why: this explicit entry point leaves the existing full-sweep gates and H8's path unchanged.
@@ -1026,22 +1026,27 @@ export async function runReplicaDriver(argv: string[]) {
     console.log(
       JSON.stringify({
         kind: candidateVerification ? "main-exactness-not-rerun" : "post-ack-equality",
+        sourcePosition: cut,
+        publishedStatePosition: report.publishedStatePosition,
         subjects: checked,
         states: statesCompared,
         exactnessWallMs: report.postAckExactnessWallMs,
         oracleWallMs: report.postAckOracleWallMs,
         evaluation: report.evaluation,
-        publication: report.publication,
+        publication: report.publication && {
+          changed: report.publication.changed,
+          commits: report.publication.commits,
+          wallMs: report.publication.wallMs,
+        },
         liveFollow: report.liveFollow,
         matched: report.matched,
       }),
     );
-    const sharedCandidateBytes = argv.includes("--candidates")
-      ? result.records.map((r) => canonical(r.candidates[0]))
-      : [];
-    const sharedWorldHashes = publicationTrials.length
-      ? result.records.map((r) => r.worldSha256)
-      : [];
+    const references = argv.includes("--candidates")
+      ? compactCandidateReferences(result.records, Boolean(publicationTrials.length))
+      : { candidates: [], worlds: [] };
+    const sharedCandidateBytes = references.candidates,
+      sharedWorldHashes = references.worlds;
     let trialR1Reference: string[] = [];
     if (argv.includes("--candidates")) {
       // [DX-S5] Why: all single-release records have already been verified (or will be checked as candidate zero).

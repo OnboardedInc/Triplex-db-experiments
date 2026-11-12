@@ -8,7 +8,7 @@ import { startW0Live } from "../../../bench/lib/w0-replica-live.ts";
 import { RecentReads, packEntity, pullAt } from "../../../../packages/datomic/dist/index.js";
 import { localReadTurns } from "../../../bench/lib/w0-replica-live.ts";
 import { it, expect } from "vitest";
-import { publishChanged } from "../../../bench/lib/w0-replica.ts";
+import { publishChanged, compactCandidateReferences } from "../../../bench/lib/w0-replica.ts";
 import {
   outboxEntity,
   bindPublicationProfiles,
@@ -17,6 +17,28 @@ import {
 } from "../../../bench/lib/w0-outbox.ts";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
+it("compacts every reference byte in order while releasing the original graphs in chunks", () => {
+  const records = Array.from({ length: 3073 }, (_, i) => ({
+    subject: "s" + i,
+    worldSha256: "w" + i,
+    candidates: [
+      {
+        release: "r",
+        output: { n: i, signed: -0 },
+        record: { subject: "s" + i, basis: { tx: BigInt(i) } },
+      },
+    ],
+  })) as any;
+  const expected = records.map((r: any) => canonical(r.candidates[0])),
+    worlds = records.map((r: any) => r.worldSha256),
+    remaining: number[] = [];
+  const actual = compactCandidateReferences(records, true, () => remaining.push(records.length));
+  expect(actual).toEqual({ candidates: expected, worlds });
+  expect(records).toEqual([]);
+  expect(remaining.at(-1)).toBe(0);
+  expect(remaining.length).toBeGreaterThan(1);
+  expect(remaining.every((n, i) => n < 3073 && (!i || n < remaining[i - 1]))).toBe(true);
+});
 // [DX-S5] Why: exercise actual atomic outbox construction, bounded overlap and stored bytes, including a late failed ACK.
 // Rejected: a scheduler-only mock that never applies the publication operations or checks changed coverage.
 it("overlaps disjoint frames, preserves invocation order and publishes exact states", async () => {

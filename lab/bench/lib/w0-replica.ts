@@ -14,6 +14,25 @@ export interface ReplicaEvaluation {
   worldSha256: string;
   candidates: (W0.SubjectResult & { release: string })[];
 }
+export function compactCandidateReferences(
+  records: ReplicaEvaluation[],
+  includeWorlds: boolean,
+  collect: () => void = () => (globalThis as any).gc?.(),
+) {
+  const candidates = new Array<string>(records.length),
+    worlds = includeWorlds ? new Array<string>(records.length) : [];
+  // [DX-S5] Why: release verified object graphs while producing their exact reference bytes; H exited 137 at this transition near its cap.
+  // Rejected: map the entire second representation before clearing the first (an avoidable transient peak, not a confirmed OOM diagnosis).
+  while (records.length) {
+    const index = records.length - 1,
+      record = records.pop()!;
+    if (!record.candidates[0]) throw Error("Missing candidate reference");
+    candidates[index] = canonical(record.candidates[0]);
+    if (includeWorlds) worlds[index] = record.worldSha256;
+    if (records.length % 1024 === 0) collect();
+  }
+  return { candidates, worlds };
+}
 export interface ReplicaEvaluationOptions {
   replica: Replica;
   subjects: readonly string[];
