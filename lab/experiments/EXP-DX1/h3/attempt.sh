@@ -102,8 +102,9 @@ cleanup() {
     jfr_roles=(); [[ ${TRIPLEX_TRACE_TX_JFR:-0} != 1 ]] || jfr_roles+=(tx)
     [[ ${TRIPLEX_TRACE_GW_JFR:-0} != 1 ]] || jfr_roles+=(gw-w gw-r)
     for ((jfr_wait=0;jfr_wait<90;jfr_wait++)); do
-      [[ -s $out/driver/ns-report.json ]] || break
-      jfr_pending=false; for jfr_role in ${jfr_roles[@]+"${jfr_roles[@]}"}; do [[ -f $out/trace/raw/$jfr_role.jfr-complete.jsonl ]] || jfr_pending=true; done
+      # [DX-T1-4] Why: even a driver argument failure leaves live JVM recordings to drain.
+      # Rejected: killing exporters immediately when the benchmark report is absent (truncated forensic traces).
+      jfr_pending=false; for jfr_role in ${jfr_roles[@]+"${jfr_roles[@]}"}; do [[ -f $out/trace/raw/$jfr_role.jfr-complete.jsonl || -f $out/trace/raw/$jfr_role-jfr-error.txt ]] || jfr_pending=true; done
       [[ $jfr_pending == true ]] || break
       sleep 1
     done
