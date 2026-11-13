@@ -33,7 +33,7 @@
         (.set event 0 (:traceId context)) (.set event 1 (:parent context)) (.set event 2 id)
         (.begin event) event))))
 (def native-factory (delay (EventFactory/create [(AnnotationElement. Name "triplex.NativeTransaction")]
-                            [(ValueDescriptor. String "message")])))
+                            [(ValueDescriptor. String "message") (ValueDescriptor. String "writerThread")])))
 ;; Source: https://docs.datomic.com/reference/io-stats.html (native process/apply scopes).
 ;; [DX-T1-4] Why: capture the native t/process/apply/io counters without a FileAppender write on the serial path.
 ;; Rejected: DEBUG logging every native message or inventing storage time from a peer future.
@@ -46,14 +46,14 @@
                      (try (let [message (.getFormattedMessage event)]
                             (when (and (.startsWith ^String message "{") (.contains ^String message ":event :tx/process"))
                               (let [record (.newEvent ^EventFactory @native-factory)]
-                                (.begin record) (.set record 0 message) (.commit record))))
+                                (.begin record) (.set record 0 message) (.set record 1 (.getThreadName event)) (.commit record))))
                           (catch Throwable _ nil))))]
     (.setContext appender context) (.setName appender "triplex-native-jfr") (.start appender)
     (.detachAndStopAllAppenders logger) (.setAdditive logger false)
     (.setLevel logger ch.qos.logback.classic.Level/INFO) (.addAppender logger appender)))
-(defn native-stats [^RecordedEvent event detail]
+(defn native-stats [^RecordedEvent event]
   (let [data (edn/read-string (.getString event "message"))
-        name (second (re-matches #"writer-(.+)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" (or (:threadName detail) "")))
+        name (second (re-matches #"writer-(.+)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" (or (.getString event "writerThread") "")))
         database-hash (when name (let [hash (.digest (java.security.MessageDigest/getInstance "SHA-256") (.getBytes ^String name "UTF-8"))]
                                   (format "%064x" (java.math.BigInteger. 1 hash))))]
     {:nativeType "triplex.NativeTransaction" :databaseHash database-hash :datomicT (str (:t data))
@@ -103,7 +103,7 @@
               (let [detail (details event) transaction (= name "triplex.TransactionFunction") native (= name "triplex.NativeTransaction")
                     layer (cond transaction "transactor" (= name "jdk.GCPhasePause") (if (= process "tx") "transactor-gc" "gateway-gc")
                                 (str/includes? name "Safepoint") "jvm-safepoint" :else "jvm-event")]
-                (.write w (str (json/write-str (merge identity detail (when native (native-stats event detail)) (when transaction {:nativeType name :traceId (.getString event "traceId") :parent (.getString event "parentSpanId") :id (.getString event "spanId")}) {:type "event" :name (cond transaction "transactor.triplex-function" native "datomic.tx/process" :else name) :layer layer :process process
+                (.write w (str (json/write-str (merge identity detail (when native (native-stats event)) (when transaction {:nativeType name :traceId (.getString event "traceId") :parent (.getString event "parentSpanId") :id (.getString event "spanId")}) {:type "event" :name (cond transaction "transactor.triplex-function" native "datomic.tx/process" :else name) :layer layer :process process
                              :clock (assoc (:clock identity) :uncertaintyMs (+ uncertainty 0.001))
                              :start (+ offset (monotonic-at points (millis (.getStartTime event))))
                              :end (+ offset (monotonic-at points (millis (.getEndTime event))))})) "\n"))
