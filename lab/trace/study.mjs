@@ -123,7 +123,8 @@ for (const arm of arms) {
       threads: threadRows,
     };
   }
-  const swaps = [];
+  const swaps = [],
+    macCpu = [];
   let vm = 0;
   for (const f of filesUnder(path.join(dir, "trace/raw")).filter((f) =>
     /system-.*jsonl.gz$/.test(f),
@@ -132,12 +133,13 @@ for (const arm of arms) {
       if (r.run !== tag || r.source !== source || r.slot !== tag || r.at < m.startedAt - 1000)
         throw Error("Stale/foreign resource sample");
       if (r.process === "system-darwin") {
+        if (Number.isFinite(r.otherCpu)) macCpu.push(r.otherCpu);
         const v = /used\s*=\s*([\d.]+)M/.exec(r.swap ?? "");
         if (v) swaps.push(Number(v[1]) / 1024);
       }
       if (r.process === "system-linux" && Object.keys(r.cgroups ?? {}).length >= 4) vm++;
     }
-  if (!swaps.length || !vm) throw Error("Missing host/VM observations");
+  if (!swaps.length || !macCpu.length || !vm) throw Error("Missing host/VM observations");
   const writes = [];
   for await (const w of records(path.join(dir, "driver/ns-writes.jsonl")))
     if (w.stream === "background" && !w.resend) writes.push(w);
@@ -169,6 +171,7 @@ for (const arm of arms) {
       0.99,
     ),
     swapGiB: { min: Math.min(...swaps), median: percentile(swaps, 0.5), max: Math.max(...swaps) },
+    macCpu: { median: percentile(macCpu, 0.5), p99: percentile(macCpu, 0.99) },
     oracle: b.oracle,
     gates,
     coverage: t.coverage,
@@ -189,13 +192,13 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}. ${partial ? "PARTIAL SESSION: closing off control refused for disk; opening control only. " : ""}One quiet hold, 200-second off references and the unchanged full 900-second zero/ladder pair. Control and pair workloads differ in duration; off figures show host/session context, not a matched reader-load improvement claim.`,
+  `Source ${source}. ${partial ? "PARTIAL SESSION: closing off control refused for disk; opening control only. " : ""}One measurement hold, 200-second off references and the unchanged full 900-second zero/ladder pair. Control and pair workloads differ in duration; off figures show host/session context, not a matched reader-load improvement claim.`,
   "",
-  "| arm / tracing | primary p50 ms | primary p99 ms | off control p50 / p99 ms | swap GiB median (min-max) |",
-  "| --- | ---: | ---: | --- | --- |",
+  "| arm / tracing | primary p50 ms | primary p99 ms | off control p50 / p99 ms | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
+  "| --- | ---: | ---: | --- | --- | --- |",
   ...rows.map(
     (r) =>
-      `| ${r.arm} / ${r.level} | ${r.p50Ms.toFixed(3)} | ${r.p99Ms.toFixed(3)} | ${off50.toFixed(3)} / ${off99.toFixed(3)} | ${r.swapGiB.median.toFixed(3)} (${r.swapGiB.min.toFixed(3)}-${r.swapGiB.max.toFixed(3)}) |`,
+      `| ${r.arm} / ${r.level} | ${r.p50Ms.toFixed(3)} | ${r.p99Ms.toFixed(3)} | ${off50.toFixed(3)} / ${off99.toFixed(3)} | ${r.swapGiB.median.toFixed(3)} (${r.swapGiB.min.toFixed(3)}-${r.swapGiB.max.toFixed(3)}) | ${r.macCpu.median.toFixed(1)} / ${r.macCpu.p99.toFixed(1)} |`,
   ),
   "",
   `Controls: ${controls.map((r) => r.tag).join(", ")}. The following values/flags are copied from the existing benchmark gates, not independently certified.`,

@@ -5,7 +5,7 @@ import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
 import { bookendComparison } from "./anatomy.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
-if (!["ablation", "cost", "anatomy", "cpu-floor", "fallback-floor"].includes(kind))
+if (!["ablation", "cost", "anatomy", "cpu-floor", "fallback-floor", "history-256"].includes(kind))
   throw Error("Expected ablation or cost");
 const session = path.join(base, prefix + "-session"),
   source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
@@ -14,11 +14,13 @@ const arms =
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
     : kind === "anatomy"
       ? ["off", "anatomy", "anatomy", "off"]
-      : kind === "fallback-floor"
-        ? ["baseline", "fallback-worker", "fallback-worker", "baseline"]
-        : kind === "cpu-floor"
-          ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
-          : ["off", "summary", "summary", "off"];
+      : kind === "history-256"
+        ? ["baseline", "history-192", "history-192", "baseline"]
+        : kind === "fallback-floor"
+          ? ["baseline", "fallback-worker", "fallback-worker", "baseline"]
+          : kind === "cpu-floor"
+            ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
+            : ["off", "summary", "summary", "off"];
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const rows = [];
 let buildHashes;
@@ -36,9 +38,13 @@ for (const [i, arm] of arms.entries()) {
   buildHashes = actualHashes;
   const effective = configuration({
     TRIPLEX_TRACE_LEVEL:
-      arm === "off" ? "off" : arm === "summary" || kind === "fallback-floor" ? "summary" : "full",
+      arm === "off"
+        ? "off"
+        : arm === "summary" || ["fallback-floor", "history-256"].includes(kind)
+          ? "summary"
+          : "full",
     TRIPLEX_TRACE_SESSION: prefix,
-    ...(!["full", "summary"].includes(arm) && kind !== "fallback-floor"
+    ...(!["full", "summary"].includes(arm) && !["fallback-floor", "history-256"].includes(kind)
       ? {
           TRIPLEX_TRACE_COMPONENTS:
             arm === "off"
@@ -52,7 +58,7 @@ for (const [i, arm] of arms.entries()) {
   if (
     bench.status !== "DONE" ||
     bench.seed?.seededSubjects !== 10000 ||
-    !bench.config?.zeroReaders ||
+    bench.config?.zeroReaders !== (kind !== "history-256") ||
     bench.config.matchDurationS !== 200 ||
     bench.config.readPath !== "replica" ||
     !bench.config.strictRecordClocks ||
@@ -73,6 +79,13 @@ for (const [i, arm] of arms.entries()) {
     bench.config.replicaFallbackThread !== (arm === "fallback-worker" ? "worker" : "main")
   )
     throw Error("Fallback placement readback mismatch");
+  if (
+    kind === "history-256" &&
+    (bench.config.replicaHistoryMiB !== (arm === "history-192" ? 192 : 64) ||
+      bench.config.replicaFallbackThread !== "worker" ||
+      bench.config.maxReaders !== 256)
+  )
+    throw Error("Replica history readback mismatch");
   const containers = read(path.join(dir, "containers.json")),
     driver = read(path.join(dir, "driver-container.json"))[0];
   if (kind === "cpu-floor") {
@@ -184,6 +197,8 @@ for (const [i, arm] of arms.entries()) {
         !Number.isFinite(w.scheduledAt) ||
         w.scheduledAt < manifest.startedAt - 1000 ||
         !(w.finishedAt >= w.startedAt && w.startedAt >= w.scheduledAt) ||
+        !Number.isFinite(bench.endedAt) ||
+        w.finishedAt > bench.endedAt ||
         Math.abs(w.latencyMs - (w.finishedAt - w.scheduledAt)) > 0.01
       )
         throw Error("Writer content/freshness mismatch");
@@ -227,6 +242,10 @@ for (const [i, arm] of arms.entries()) {
     nativeMetrics,
     hostSamples: host,
     vmSamples: vm,
+    replicaHistoryMiB: bench.config.replicaHistoryMiB,
+    ladder256: bench.priorities?.P1?.ladder?.find((r) => r.readers === 256) ?? null,
+    bandsAtL256: bench.priorities?.P2?.bandsAtL256 ?? null,
+    scheduler256: summary.schedulerByPhase?.L256 ?? null,
   });
 }
 if (
@@ -235,7 +254,9 @@ if (
 )
   throw Error("Workload/denominator changed inside session");
 const controls = rows.filter(
-    (r) => r.arm === (["cpu-floor", "fallback-floor"].includes(kind) ? "baseline" : "off"),
+    (r) =>
+      r.arm ===
+      (["cpu-floor", "fallback-floor", "history-256"].includes(kind) ? "baseline" : "off"),
   ),
   off50 = controls.reduce((s, r) => s + r.p50Ms, 0) / controls.length,
   off99 = controls.reduce((s, r) => s + r.p99Ms, 0) / controls.length;
@@ -249,7 +270,7 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, frozen 200-second zero-reader segment. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
+  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${kind === "history-256" ? "frozen 200-second reader-ladder diagnostic (20-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
   "",
   "| arm / level | p50 ms | p99 ms | control p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
   "| --- | ---: | ---: | --- | --- | --- | --- |",
@@ -263,7 +284,7 @@ const text = [
 ];
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 const result = {
-  comparison: ["cpu-floor", "fallback-floor"].includes(kind)
+  comparison: ["cpu-floor", "fallback-floor", "history-256"].includes(kind)
     ? {
         p50Ms: bookendComparison(
           controls.map((r) => r.p50Ms),
