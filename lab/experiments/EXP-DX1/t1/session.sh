@@ -61,7 +61,7 @@ for arm in "${arms[@]}"; do
     placement=(DX_CPUS_TX=0,1 DX_CPUS_PG=0 DX_CPUS_GW_WRITE=1 DX_CPUS_GW_READ=2,3 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU= DX_WORKER_CPUS=)
     if [[ $arm == engine-isolated ]]; then placement=(DX_CPUS_TX=0,1 DX_CPUS_PG=2 DX_CPUS_GW_WRITE=3 DX_CPUS_GW_READ=2,3 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU= DX_WORKER_CPUS=);fi
   fi
-  workload=();reader_args=(--zero-readers --max-readers 0)
+  workload=();duration=200;level_s=20;reader_args=(--zero-readers --max-readers 0)
   if [[ $kind == fallback-floor ]]; then
     # [DX-T1-4] Why: sampled writer stacks identify full-world fallback decoding/checking on this thread.
     # Rejected: change CPU placement or expected-state representation in the same comparison.
@@ -71,14 +71,14 @@ for arm in "${arms[@]}"; do
   if [[ $kind == history-256 ]]; then
     # [DX-T1-4] Why: q8 retained 192 MiB; a 64-MiB window sends old exact cuts to the gateway.
     # Rejected: changing the read basis or hiding fallbacks; compare the same cohort with more retained history.
-    level=summary;components=default;reader_args=(--max-readers 256)
+    level=summary;components=default;duration=300;level_s=45;reader_args=(--max-readers 256)
     workload=(--replica-history-mib 64 --replica-fallback-thread worker)
     [[ $arm != history-192 ]] || workload=(--replica-history-mib 192 --replica-fallback-thread worker)
   fi
   if [[ $arm == full || $arm == summary ]]; then level=$arm;components=default;fi
   export TRIPLEX_TRACE_LEVEL=$level
   if [[ $components == default ]]; then unset TRIPLEX_TRACE_COMPONENTS;else export TRIPLEX_TRACE_COMPONENTS=$components;fi
-  env DX_FSYNC_PROBE=$([[ $kind == anatomy && $i == 1 ]] && echo 1 || echo 0) ${placement[@]+"${placement[@]}"} bash lab/experiments/EXP-DX1/t1/run.sh real "$tag" --rung 10k --reader-ladder-only "${reader_args[@]}" --level-s 20 --match-duration-s 200 ${workload[@]+"${workload[@]}"} "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
+  env DX_FSYNC_PROBE=$([[ $kind == anatomy && $i == 1 ]] && echo 1 || echo 0) ${placement[@]+"${placement[@]}"} bash lab/experiments/EXP-DX1/t1/run.sh real "$tag" --rung 10k --reader-ladder-only "${reader_args[@]}" --level-s "$level_s" --match-duration-s "$duration" ${workload[@]+"${workload[@]}"} "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
   stage_rc=0;wait "$child" || stage_rc=$?;child=
   printf '%s\n' "$stage_rc" > "$session_dir/$i-exit.txt"
   if [[ $stage_rc != 0 ]];then

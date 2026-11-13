@@ -59,7 +59,7 @@ for (const [i, arm] of arms.entries()) {
     bench.status !== "DONE" ||
     bench.seed?.seededSubjects !== 10000 ||
     bench.config?.zeroReaders !== (kind !== "history-256") ||
-    bench.config.matchDurationS !== 200 ||
+    bench.config.matchDurationS !== (kind === "history-256" ? 300 : 200) ||
     bench.config.readPath !== "replica" ||
     !bench.config.strictRecordClocks ||
     typeof bench.trace?.digest !== "string"
@@ -86,6 +86,24 @@ for (const [i, arm] of arms.entries()) {
       bench.config.maxReaders !== 256)
   )
     throw Error("Replica history readback mismatch");
+  if (kind === "history-256") {
+    // [DX-T1-4] Why: a retained-history trial needs reads after the first burst, not a pre-burst cache hit test.
+    // Rejected: 20-second ladder levels (readers stop at 115 seconds, before the frozen burst starts).
+    const phase = bench.phases.find((p) => p.name === "L256");
+    if (
+      bench.config.levelS !== 45 ||
+      !bench.config.readerLadderOnly ||
+      !phase ||
+      phase.start - bench.traceStartAbsMs < 180000 ||
+      phase.end - phase.start < 44900 ||
+      bench.replica.historyBudgetBytes !== bench.config.replicaHistoryMiB * 1024 ** 2 ||
+      bench.correctness?.errors !== 0 ||
+      bench.correctness?.violations !== 0 ||
+      bench.oracle?.status !== "PASS" ||
+      bench.oracle?.mismatchCount !== 0
+    )
+      throw Error("History pressure, exactness, or real capacity observation absent");
+  }
   const containers = read(path.join(dir, "containers.json")),
     driver = read(path.join(dir, "driver-container.json"))[0];
   if (kind === "cpu-floor") {
@@ -206,7 +224,7 @@ for (const [i, arm] of arms.entries()) {
       writes.push(w);
     }
   if (
-    writes.length !== 3420 ||
+    writes.length !== (kind === "history-256" ? 3530 : 3420) ||
     bench.trace.digest !== "aa8a7636ff027ab3" ||
     bench.writer.pendingAtEnd !== 0 ||
     bench.writer.expired !== 0
@@ -270,7 +288,7 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${kind === "history-256" ? "frozen 200-second reader-ladder diagnostic (20-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
+  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${kind === "history-256" ? "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
   "",
   "| arm / level | p50 ms | p99 ms | control p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
   "| --- | ---: | ---: | --- | --- | --- | --- |",
