@@ -297,3 +297,24 @@ Orchestrator's reading:
    reviewers). No Claude agent of any model is launched.
 3. The orchestrator (Claude) keeps its own usage low: it writes briefs, launches agents, waits for them to exit without
    polling, reads their short reports and records results. It does not read large files or run analyses an agent can run.
+
+## 2026-11-13 about 16:20 UTC: keep a file of the hardest problems; on Sunday run one Fable 5.2 agent at extra-high effort to write a deep menu of radical ideas
+
+Sam, verbatim:
+
+> Can you keep track of some of the hardest problems that you would want to take a look at? Even though you're having Codex look at them, if you could just keep tracking some of the hardest things that are required, like creative technical solutions potentially and stuff. Keep those in a file somewhere.
+>
+> I think the usage for this account resets on Sunday sometime. I want you to schedule a trigger then to run when I get back to full usage. I want you to run a Fable 5.2 agent on extra high, looking for radical ways to leapfrog ahead to the results that we need to pass our bars. Just generate a bunch of candidate ideas.
+>
+> It doesn't have to build them but it should just create a bunch of things that we could do by carefully reading the code, carefully thinking through it, looking at all of our research, and thinking about it. Really have it come up with a bunch of possibilities that then you can pick from as a menu afterward and have Codex on Max go explore after. Does that make sense?
+>
+> And actually since you're just having Fable create the menu (and I think it'd be a deep menu with details, evidence, research, and whatever), you can actually run that Fable agent on extra high and tell it to be thorough.
+
+Orchestrator's reading:
+1. `lab/HARD-PROBLEMS.md` is the file. The orchestrator updates it whenever an agent report changes the picture.
+2. One Fable 5.2 agent at extra-high effort, read-only, thorough, writes a deep menu of candidate ideas with evidence. This
+   is the one exception to "no Claude agents"; building stays with Codex `gpt-6.1-sol` at `max`.
+3. Scheduled for Sunday 2026-11-15 at 23:07 local time, late in the day because the exact reset hour is not known. Brief:
+   `~/Claude/Projects/triplex-db-2/agents/prompts/LEAPFROG-fable.md`. Output:
+   `~/Claude/Projects/triplex-db-2/research/2026-11-15-leapfrog/MENU.md` and `SUMMARY.md`.
+4. Afterwards the orchestrator picks from the menu and hands the picks to Codex at max effort.
