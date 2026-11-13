@@ -104,6 +104,27 @@ export function correlateStatements(windows, statements, uncertaintyMs = 2) {
   }
   return rows;
 }
+// [DX-T1-4] Why: two reversed-order pairs retain host drift instead of promoting any lower median.
+// Rejected: comparing with a historical control or treating a difference inside bookend drift as a benefit.
+export function bookendComparison(controls, candidates) {
+  if (
+    controls.length !== 2 ||
+    candidates.length !== 2 ||
+    [...controls, ...candidates].some((x) => !Number.isFinite(x) || x < 0)
+  )
+    throw Error("Expected two finite bookends and two candidates");
+  const baseline = controls.reduce((a, b) => a + b, 0) / 2,
+    candidate = candidates.reduce((a, b) => a + b, 0) / 2,
+    drift = Math.abs(controls[1] - controls[0]);
+  return {
+    baseline,
+    candidate,
+    benefit: baseline - candidate,
+    drift,
+    lowerBeyondBookendDrift:
+      baseline - candidate > drift && candidates.every((x) => x < Math.min(...controls)),
+  };
+}
 export function tailCauses(commits) {
   const groups = new Map();
   for (const r of commits.filter(
@@ -252,6 +273,20 @@ export async function writeAnatomy(
           stats(clean.map((w) => w.statements.filter((s) => s.kind === k).length)),
         ]),
       ),
+      storageWritesPerWindow: stats(
+        clean.map(
+          (w) => w.statements.filter((s) => ["insert", "update", "delete"].includes(s.kind)).length,
+        ),
+      ),
+      aggregateWrites:
+        first && last
+          ? statements.filter(
+              (s) =>
+                s.end >= first.at &&
+                s.end <= last.at &&
+                ["insert", "update", "delete"].includes(s.kind),
+            ).length
+          : null,
       walDelta,
       walScope: first && last ? { start: first.at, end: last.at } : null,
     },
@@ -259,6 +294,21 @@ export async function writeAnatomy(
     examples: exchanges.sort((a, b) => b.commitMs - a.commitMs).slice(0, 20),
     sqlExamples: clean.slice(0, 10),
   };
+  const ownNames = [
+    ...new Set(roots.flatMap((r) => r.steps.map(([k]) => k.replace(/^.*?\/thread-\d+\//, "")))),
+  ];
+  result.namedSteps = Object.fromEntries(
+    ownNames.map((k) => [
+      k,
+      stats(
+        roots.map((r) =>
+          r.steps
+            .filter(([name]) => name.replace(/^.*?\/thread-\d+\//, "") === k)
+            .reduce((a, [, v]) => a + v, 0),
+        ),
+      ),
+    ]),
+  );
   const text = [
     "# Commit anatomy",
     "",
@@ -274,7 +324,9 @@ export async function writeAnatomy(
     "",
     `Postgres: ${clean.length} isolated windows, ${result.sql.ambiguousWindows} ambiguous. Statement count p50/p99 ${n(result.sql.statementsPerWindow.p50)}/${n(result.sql.statementsPerWindow.p99)}; server statement ms p50/p99 ${n(result.sql.statementMsPerWindow.p50)}/${n(result.sql.statementMsPerWindow.p99)}. WAL sample delta: ${JSON.stringify(walDelta)}. WAL counters are aggregate over the stated sample window, including background storage work; they are never presented as exact per-Datomic-transaction counts.`,
     "",
-    "Peer wait still includes peer/transactor networking, transactor computation/queue and storage round trips. SQL windows are correlations without a shared transaction ID. SQL duration includes server sync time; WAL time must not be added to it. Autocommit statements can each flush WAL. A statement's WAL sync count and transactor own before/after storage remain unsplit without backend-specific observations.",
+    "Postgres protocol scope: https://www.postgresql.org/docs/17/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY ; cumulative WAL lag: https://www.postgresql.org/docs/17/monitoring-stats.html#MONITORING-STATS-VIEWS .",
+    "",
+    "Peer wait still includes peer/transactor networking, transactor computation/queue and storage round trips. SQL windows are correlations without a shared transaction ID. Extended-protocol execute duration excludes the later implicit commit at Sync; it is not complete storage wall time. WAL sync counters have a different aggregate scope and are not added as a per-request measurement. Autocommit statements can each flush WAL. A statement's WAL sync count and transactor own before/after storage remain unsplit without backend-specific observations.",
     "",
     "| Phase / largest observed cause | commits >50ms | total wall ms | total cause ms | worst trace ID |",
     "| --- | ---: | ---: | ---: | --- |",

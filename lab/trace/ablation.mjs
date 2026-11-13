@@ -3,8 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
+import { bookendComparison } from "./anatomy.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
-if (!["ablation", "cost", "anatomy"].includes(kind)) throw Error("Expected ablation or cost");
+if (!["ablation", "cost", "anatomy", "cpu-floor"].includes(kind))
+  throw Error("Expected ablation or cost");
 const session = path.join(base, prefix + "-session"),
   source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
 const arms =
@@ -12,7 +14,9 @@ const arms =
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
     : kind === "anatomy"
       ? ["off", "anatomy", "anatomy", "off"]
-      : ["off", "summary", "summary", "off"];
+      : kind === "cpu-floor"
+        ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
+        : ["off", "summary", "summary", "off"];
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const rows = [];
 let buildHashes;
@@ -34,7 +38,11 @@ for (const [i, arm] of arms.entries()) {
     ...(!["full", "summary"].includes(arm)
       ? {
           TRIPLEX_TRACE_COMPONENTS:
-            arm === "off" ? "" : arm === "anatomy" ? "node,gateway,tx-jfr,gw-jfr,postgres" : arm,
+            arm === "off"
+              ? ""
+              : arm === "anatomy" || kind === "cpu-floor"
+                ? "node,gateway,tx-jfr,gw-jfr,postgres"
+                : arm,
         }
       : {}),
   });
@@ -59,6 +67,18 @@ for (const [i, arm] of arms.entries()) {
     throw Error("Run/source/component/session binding mismatch " + tag);
   const containers = read(path.join(dir, "containers.json")),
     driver = read(path.join(dir, "driver-container.json"))[0];
+  if (kind === "cpu-floor") {
+    const expected = {
+      pg: arm === "engine-isolated" ? "2" : "0",
+      tx: "0,1",
+      "gw-w": arm === "engine-isolated" ? "3" : "1",
+      "gw-r": "2,3",
+    };
+    for (const [role, cpus] of Object.entries(expected))
+      if (containers.find((c) => c.Name === "/" + tag + "-" + role)?.HostConfig.CpusetCpus !== cpus)
+        throw Error("CPU placement readback mismatch");
+    if (driver.HostConfig.CpusetCpus !== "4,5,6,7") throw Error("Driver CPU control changed");
+  }
   const envOf = (c) =>
     Object.fromEntries(
       c.Config.Env.map((s) => {
@@ -146,13 +166,29 @@ for (const [i, arm] of arms.entries()) {
       if (r.process === "system-linux" && Object.keys(r.cgroups ?? {}).length >= 4) vm++;
     }
   if (!host || !vm) throw Error("Common host/VM observations absent");
-  const writes = [];
+  const writes = [],
+    sequences = new Set();
   for await (const w of records(path.join(dir, "driver/ns-writes.jsonl")))
     if (w.stream === "background" && !w.resend) {
       if (w.outcome !== "committed" || w.expired) throw Error("Incomplete command trace");
+      if (
+        sequences.has(w.seq) ||
+        !Number.isFinite(w.scheduledAt) ||
+        w.scheduledAt < manifest.startedAt - 1000 ||
+        !(w.finishedAt >= w.startedAt && w.startedAt >= w.scheduledAt) ||
+        Math.abs(w.latencyMs - (w.finishedAt - w.scheduledAt)) > 0.01
+      )
+        throw Error("Writer content/freshness mismatch");
+      sequences.add(w.seq);
       writes.push(w);
     }
-  if (!writes.length) throw Error("No measured commands");
+  if (
+    writes.length !== 3420 ||
+    bench.trace.digest !== "aa8a7636ff027ab3" ||
+    bench.writer.pendingAtEnd !== 0 ||
+    bench.writer.expired !== 0
+  )
+    throw Error("Incomplete or changed frozen 200-second trace");
   rows.push({
     tag,
     arm,
@@ -190,7 +226,7 @@ if (
   new Set(rows.map((r) => r.commands)).size !== 1
 )
   throw Error("Workload/denominator changed inside session");
-const controls = rows.filter((r) => r.arm === "off"),
+const controls = rows.filter((r) => r.arm === (kind === "cpu-floor" ? "baseline" : "off")),
   off50 = controls.reduce((s, r) => s + r.p50Ms, 0) / controls.length,
   off99 = controls.reduce((s, r) => s + r.p99Ms, 0) / controls.length;
 for (const r of rows) {
@@ -203,9 +239,9 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, frozen 200-second zero-reader segment. Control is mean bookend off-arm quantiles; no pooled-percentile claim.`,
+  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, frozen 200-second zero-reader segment. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
   "",
-  "| arm / level | p50 ms | p99 ms | off p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
+  "| arm / level | p50 ms | p99 ms | control p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
   "| --- | ---: | ---: | --- | --- | --- | --- |",
   ...rows.map(
     (r) =>
@@ -215,7 +251,21 @@ const text = [
   `Controls: ${controls.map((r) => r.tag).join(", ")}. Each arm: ${rows[0].commands} completed primary commands. Observed differences are diagnostic; recorder effects can interact and host noise is retained.`,
   "",
 ];
+const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 const result = {
+  comparison:
+    kind === "cpu-floor"
+      ? {
+          p50Ms: bookendComparison(
+            controls.map((r) => r.p50Ms),
+            candidates.map((r) => r.p50Ms),
+          ),
+          p99Ms: bookendComparison(
+            controls.map((r) => r.p99Ms),
+            candidates.map((r) => r.p99Ms),
+          ),
+        }
+      : null,
   bookendDriftP50Ms: Math.abs(controls[0].p50Ms - controls.at(-1).p50Ms),
   source,
   session: prefix,

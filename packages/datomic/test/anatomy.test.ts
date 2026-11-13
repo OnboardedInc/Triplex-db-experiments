@@ -4,9 +4,16 @@ import {
   parsePostgres,
   correlateStatements,
   tailCauses,
+  bookendComparison,
 } from "../../../lab/trace/anatomy.mjs";
 
 describe("commit anatomy observations", () => {
+  it("does not promote an apparent saving within the bookend drift", () => {
+    expect(bookendComparison([13, 13.4], [13.1, 13.2]).lowerBeyondBookendDrift).toBe(false);
+    expect(bookendComparison([13, 13.2], [11, 11.2]).lowerBeyondBookendDrift).toBe(true);
+    expect(() => bookendComparison([13], [11, 11])).toThrow();
+    expect(() => bookendComparison([13, 13], [11, NaN])).toThrow();
+  });
   const owner = {
     traceId: "1".repeat(32),
     run: "run",

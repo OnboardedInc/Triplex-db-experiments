@@ -2,7 +2,7 @@
 # [DX-T1-2] Why: one lease, one source and bookend controls bind recorder ablations to one host session.
 # Rejected: compare a recorder with a historical quiet off arm or allow unrelated work between arms.
 set -euo pipefail
-kind=${1:?ablation|cost|anatomy}; prefix=${2:?tx2-dxt1-prefix}; shift 2
+kind=${1:?ablation|cost|anatomy|cpu-floor}; prefix=${2:?tx2-dxt1-prefix}; shift 2
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
@@ -42,6 +42,7 @@ if [[ $kind == ablation ]]; then
   arms=(off tx-jfr gw-jfr postgres gateway node native-logs full off)
 elif [[ $kind == cost ]]; then arms=(off summary summary off)
 elif [[ $kind == anatomy ]]; then arms=(off anatomy anatomy off)
+elif [[ $kind == cpu-floor ]]; then arms=(baseline engine-isolated engine-isolated baseline)
 else exit 2;fi
 i=0
 for arm in "${arms[@]}"; do
@@ -50,11 +51,18 @@ for arm in "${arms[@]}"; do
   sh lab/bin/host-quiet.sh > "$session_dir/$i-host-before.jsonl" || true
   level=full;components=$arm
   if [[ $arm == off ]]; then level=off;components=;fi
-  if [[ $arm == anatomy ]]; then components=node,gateway,tx-jfr,gw-jfr,postgres;fi
+  if [[ $arm == anatomy || $kind == cpu-floor ]]; then components=node,gateway,tx-jfr,gw-jfr,postgres;fi
+  placement=()
+  if [[ $kind == cpu-floor ]]; then
+    # [DX-T1-4] Why: isolate the largest peer wait from PG/HTTP CPU competition, without changing TX capacity or Node placement.
+    # Rejected: simultaneously changing the writer core, collector or workload (cannot attribute a floor change).
+    placement=(DX_CPUS_TX=0,1 DX_CPUS_PG=0 DX_CPUS_GW_WRITE=1 DX_CPUS_GW_READ=2,3 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU= DX_WORKER_CPUS=)
+    if [[ $arm == engine-isolated ]]; then placement=(DX_CPUS_TX=0,1 DX_CPUS_PG=2 DX_CPUS_GW_WRITE=3 DX_CPUS_GW_READ=2,3 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU= DX_WORKER_CPUS=);fi
+  fi
   if [[ $arm == full || $arm == summary ]]; then level=$arm;components=default;fi
   export TRIPLEX_TRACE_LEVEL=$level
   if [[ $components == default ]]; then unset TRIPLEX_TRACE_COMPONENTS;else export TRIPLEX_TRACE_COMPONENTS=$components;fi
-  DX_FSYNC_PROBE=$([[ $kind == anatomy && $i == 1 ]] && echo 1 || echo 0) bash lab/experiments/EXP-DX1/t1/run.sh real "$tag" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
+  env DX_FSYNC_PROBE=$([[ $kind == anatomy && $i == 1 ]] && echo 1 || echo 0) ${placement[@]+"${placement[@]}"} bash lab/experiments/EXP-DX1/t1/run.sh real "$tag" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
   wait "$child";child=
   sh lab/bin/host-quiet.sh > "$session_dir/$i-host-after.jsonl" || true
 done
