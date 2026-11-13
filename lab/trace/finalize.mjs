@@ -1,5 +1,5 @@
 import { packOracle } from "./pack-oracle.mjs";
-// @ts-nocheck -- command-line run manifests are validated by the report reader.
+// Command-line run manifests are validated by the report reader.
 import fs from "node:fs";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
@@ -122,14 +122,17 @@ console.log(
     errors: result.errors,
   }),
 );
-if (!result.complete && !result.disabled) process.exitCode = 1;
+if (!result.complete && !("disabled" in result && result.disabled)) process.exitCode = 1;
 
 if (!renderOnly && result.tag.startsWith("tx2-dxt1-")) {
   const archive = await packOracle(run);
   if (archive.files && copy) {
+    // [DX-T1-2] Why: a completed archive copy must name its fresh verified journal. Rejected: treating a missing receipt as success.
+    const journal = archive.journal;
+    if (!journal) throw Error("Completed oracle archive has no journal");
     fs.copyFileSync(
-      path.join(run, archive.journal),
-      path.join(copy, archive.journal),
+      path.join(run, journal),
+      path.join(copy, journal),
       fs.constants.COPYFILE_FICLONE,
     );
     for (const destination of [run, copy])

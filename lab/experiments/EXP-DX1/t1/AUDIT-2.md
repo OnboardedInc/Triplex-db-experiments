@@ -92,7 +92,31 @@ its incomplete evidence is retained, no result promoted, and cleanup/restoration
 `p2-smoke-i` passed oracle and 84/84 coverage. Gateway ID tests passed 5 tests / 21 assertions in every cost-d preflight.
 `p2-cost-d` missed cost: +1.199 ms / 7.14% mean p50 versus 16.793 ms off; default swap 15.780/15.623 GiB.
 No cross-session speedup is claimed for the ID conversion. An isolated Node output change now batches at most 64 KiB
-before each gzip write or 20 ms before flush; timestamps, sampling and spans are unchanged. `flushTracing` drains
+as a gzip-write threshold or 20 ms before flush (one record may exceed 64 KiB); timestamps, sampling and spans are unchanged. `flushTracing` drains
 the final partial batch before ending gzip. Timer write errors become incomplete evidence rather than escaping into
 product calls. Its normal regression verifies all 1,000 exact IDs, ordered records, parent links and the fresh final
 histogram count/failure footer across several full batches and a partial tail. No semantic verdict comparator changed.
+
+Final cost-e source 4ad48894: mean p50 +0.486 ms / 2.97%; the absolute 0.3 ms target is missed. No per-change
+latency benefit is claimed across sessions. CPU isolation and compact model remain opt-in; neither qualified P2.
+Latest 1k smoke-j: oracle PASS, 50 reads / 3,058 entities, zero mismatches; 82/82 trace coverage. Normal package
+suite: 195 passed / 51 service tests skipped; typecheck, build and focused queue/model/component tests passed.
+All 9 changed JavaScript files are registered; 451 registered roots have zero type or unsuppressed binding diagnostics.
+The mandatory root checker remains nonzero because 124 unchanged inherited files are absent from its registry.
+An attempted canonical refresh exposed their historical type errors; that unrelated expansion was reverted.
+The changed observer is now registered with tuple/map/signal JSDoc types; emitted JavaScript operations are unchanged.
+`trace/finalize.mjs` now narrows disabled results explicitly and refuses a completed archive copy without its journal.
+The existing archive byte/source checks remain the content/freshness/binding gate; the new guard cannot manufacture
+a missing journal. The normal archive tests and binding checker validate the output contract and branch names.
+Final evidence check reread 986 recorded hashes across 55 part-2 attempts. Its diagnostic result binds the exact
+recorded manifests/raw bytes and attempt source, not a new semantic PASS. The offline viewer check selected actual
+L256 and tail phases, verified the example trace ID, 38 commit cards / 2,046 bars, and zero JS/network errors.
+Final pin scan: no changed path is referenced by acceptance pins; no acceptance file was edited.
+Queue analysis validates complete report/source/tag/slot and same-boot clock bindings before linking predecessor IDs.
+It reports observations only; it does not certify an unknown internal transactor/storage/GC cause. The original q8-c
+queue cannot be retroactively split. Current snapshots are discrete boundary/20 ms observations, never continuous proof.
+Some offline archive, pin and small receipt-hash checks were invoked directly instead of through heavy.mjs,
+contrary to the wrapper rule; no measurement hold was active. All benchmark/engine runs, archive writes, bulk
+evidence readbacks and test/build jobs used the heavy wrapper. This is a procedural deviation, not a qualified gate.
+No raw trace tree was removed, no seed volume was mounted or mutated, and every owned resource was cleaned before
+lease release. Recovery paths and byte hashes are indexed in CHECKS-2.md.

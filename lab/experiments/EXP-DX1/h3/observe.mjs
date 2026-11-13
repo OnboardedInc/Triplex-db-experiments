@@ -12,13 +12,14 @@ let active=true;
 const system = process.env.TRIPLEX_TRACE_SYSTEM === '1' || (process.env.TRIPLEX_TRACE_LEVEL && process.env.TRIPLEX_TRACE_LEVEL !== 'off')
   ? spawn('node',['lab/trace/system-sampler.mjs','/driver/trace/raw'],{stdio:'inherit'}) : null;
 async function sample() {
-  const row={at:new Date().toISOString(),peers:{}};
-  for(const [role,url] of [['w',process.env.DATOMIC_URL],['r',process.env.DATOMIC_READ_URLS]]) {
+  const row={at:new Date().toISOString(),peers:/** @type {Record<string, unknown>} */ ({})};
+  // [DX-T1-2] Why: tuple roles stay strings even when a diagnostic URL is absent. Rejected: skipping missing URLs (changes recorded errors).
+  for(const [role,url] of /** @type {Array<[string, string | undefined]>} */ ([['w',process.env.DATOMIC_URL],['r',process.env.DATOMIC_READ_URLS]])) {
     try {const r=await fetch(url+'/v2/admin/scan-stats',{signal:AbortSignal.timeout(5000)});row.peers[role]={status:r.status,body:await r.text()};}
     catch(e){row.peers[role]={error:String(e)};}
   }
   fs.appendFileSync(out+'/scan-stats.jsonl',JSON.stringify(row)+'\n');
 }
 const poll=(async()=>{while(active){await sample();await new Promise(r=>setTimeout(r,5000));}})();
-for(const sig of ['SIGTERM','SIGINT']) process.on(sig,()=>child.kill(sig));
+for(const sig of /** @type {NodeJS.Signals[]} */ (['SIGTERM','SIGINT'])) process.on(sig,()=>child.kill(sig));
 child.on('exit',async(code,signal)=>{active=false;system?.kill('SIGTERM');await poll;await sample();process.exitCode=code??1;});
