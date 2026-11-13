@@ -1,0 +1,458 @@
+{
+  "schema": "triplex.host-gate.v1",
+  "source": "3f59403d87c87549399afea0b842c639a2dec389",
+  "assessedAt": "2026-11-13T14:17:02.348Z",
+  "capacityFits": true,
+  "decision": "stop",
+  "thresholdP50Ms": 12,
+  "note": "Capacity covers a bounded 20-second L256 probe, not long-pair memory. Oracle status is copied from the bound run report; this gate does not promote P1/P2/P3 or independently rerun the oracle. Off arms have no per-layer trace.",
+  "runs": [
+    {
+      "tag": "tx2-dxt1-p3-v0-memory-a",
+      "level": "off",
+      "source": "3f59403d87c87549399afea0b842c639a2dec389",
+      "digest": "aa8a7636ff027ab3",
+      "commands": 124,
+      "p50Ms": 18.132080078125,
+      "p99Ms": 57.975341796875,
+      "transactP50Ms": 16.33984375,
+      "outsideTransactP50Ms": 1.287353515625,
+      "swapGiB": {
+        "min": 11.01720703125,
+        "median": 11.06408203125,
+        "max": 11.07189453125
+      },
+      "hostOtherCpuPercent": {
+        "median": 51.099999999999994,
+        "max": 391.5000000000001
+      },
+      "hostSamples": 375,
+      "hostSamplesAboveAdmission": 106,
+      "guestBootId": "322a229b-8c95-4e7f-bf6a-6d046fd624df",
+      "guestMemoryGiB": 15.583454132080078,
+      "guestMinAvailableGiB": 8.22149658203125,
+      "guestMaxSwapUsedGiB": 0,
+      "oomKills": 0,
+      "inputFiles": [
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/trace-run.json",
+          "bytes": 571,
+          "sha256": "65109676d82c321037da9a0fb3f738b6e33a3cccab8d55e89208d91a1358f90e"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/driver/ns-report.json",
+          "bytes": 2552306,
+          "sha256": "97023e42f840d1647924768395652897a183efa62eb0172651ce4ccc9976243f"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/trace-summary.json",
+          "bytes": 387,
+          "sha256": "1b4a8ab026f2a83d63c77cfdb664e06f55f4bfff8ece49fd3c8d7f13acbb4dc1"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/stack.json",
+          "bytes": 1578,
+          "sha256": "9cfa060752e9004780cdedad0d890016aa4f495bdc4bb66113b30a9bd07ce15d"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/containers.json",
+          "bytes": 37048,
+          "sha256": "87e85494c8a92749eb8a9c921164fabdb3d8b92cada38963ae05ffc67fb6af99"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/driver-container.json",
+          "bytes": 12451,
+          "sha256": "20c935b8d94af47d3bbcb715f71d242661c271db9ede69fb6702064ea07b64a5"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/head.txt",
+          "bytes": 41,
+          "sha256": "631d2a9757186abc9ce504c36a70366f9ef4eda747af99b46be96f995630c209"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/source-build-hashes.json",
+          "bytes": 167517,
+          "sha256": "39192e0fca9fda3d432625e5b41136abd54a2f8420570c0e5f91b7742a0ca45a"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/postgres-trace-settings.txt",
+          "bytes": 11,
+          "sha256": "63aea779e02c85fe2813a59be17409b5167de00ea0098870bd2edcf74ebbc67e"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/guest-kernel.txt",
+          "bytes": 127,
+          "sha256": "374993dcb854cc6657b2e87106ee436d4d0995769d9b7c1c7a7e8f8ea1adaf2f"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/remaining-containers.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/remaining-networks.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/remaining-volumes.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/trace/raw/system-linux.jsonl.gz",
+          "bytes": 294132,
+          "sha256": "8c96e0c4dc50998c85ccc82b63fc40a5e4d69407e9c56e1df251a3166ffc5454"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/trace/raw/system-darwin.jsonl.gz",
+          "bytes": 48440,
+          "sha256": "bdec8f437625f9be74ce1ab1bc46da35802ce8bf6c4ce50ff056f72a91727ee3"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-memory-a/driver/ns-writes.jsonl",
+          "bytes": 183601,
+          "sha256": "bb53b6d28c801ed707843e5cfecd0f4775a565ed25f5738b3e314fb1eb230f40"
+        }
+      ],
+      "guestCpuBusyPercent": 17.05161212055858,
+      "l256Reads": 1041301,
+      "l256MinAvailableGiB": 8.22149658203125,
+      "oracleReported": {
+        "reads": 37,
+        "entityQueries": 1927,
+        "mismatches": 0
+      }
+    },
+    {
+      "tag": "tx2-dxt1-p3-v0-off-a",
+      "level": "off",
+      "source": "3f59403d87c87549399afea0b842c639a2dec389",
+      "digest": "aa8a7636ff027ab3",
+      "commands": 3420,
+      "p50Ms": 13.17626953125,
+      "p99Ms": 87.83203125,
+      "transactP50Ms": 11.47216796875,
+      "outsideTransactP50Ms": 1.226806640625,
+      "swapGiB": {
+        "min": 10.90783203125,
+        "median": 10.93908203125,
+        "max": 11.00939453125
+      },
+      "hostOtherCpuPercent": {
+        "median": 50.500000000000014,
+        "max": 203
+      },
+      "hostSamples": 319,
+      "hostSamplesAboveAdmission": 7,
+      "guestBootId": "322a229b-8c95-4e7f-bf6a-6d046fd624df",
+      "guestMemoryGiB": 15.583454132080078,
+      "guestMinAvailableGiB": 8.89590835571289,
+      "guestMaxSwapUsedGiB": 0,
+      "oomKills": 0,
+      "inputFiles": [
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/trace-run.json",
+          "bytes": 562,
+          "sha256": "9ea8b76c5c764a8105e90eb00c44528820c0fa0007e8d36d73cfbe9231088040"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/driver/ns-report.json",
+          "bytes": 494661,
+          "sha256": "2629dda66fa48cf425b0221b82e67974584b2c969f2d26ee2ff10ea8dcf894ce"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/trace-summary.json",
+          "bytes": 384,
+          "sha256": "b5acfccf99f5d2dff0143c4a479d1273152146e7676277161c11ff751a6106a5"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/stack.json",
+          "bytes": 1557,
+          "sha256": "f046fbd6d891aeb9f7596468de786139141339bab581075e2b5ae25605c4f5d0"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/containers.json",
+          "bytes": 36927,
+          "sha256": "25a82d17487dfefa3dec9b13895dc5bb20a45f9e221bb03e3c0fc8aee378f242"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/driver-container.json",
+          "bytes": 12556,
+          "sha256": "e5fcfd9d478dcff1d7cb525bcb72cffdf933ee783abfdb840084aab30f025096"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/head.txt",
+          "bytes": 41,
+          "sha256": "631d2a9757186abc9ce504c36a70366f9ef4eda747af99b46be96f995630c209"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/source-build-hashes.json",
+          "bytes": 167517,
+          "sha256": "39192e0fca9fda3d432625e5b41136abd54a2f8420570c0e5f91b7742a0ca45a"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/postgres-trace-settings.txt",
+          "bytes": 11,
+          "sha256": "63aea779e02c85fe2813a59be17409b5167de00ea0098870bd2edcf74ebbc67e"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/guest-kernel.txt",
+          "bytes": 127,
+          "sha256": "374993dcb854cc6657b2e87106ee436d4d0995769d9b7c1c7a7e8f8ea1adaf2f"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/remaining-containers.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/remaining-networks.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/remaining-volumes.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/trace/raw/system-linux.jsonl.gz",
+          "bytes": 277047,
+          "sha256": "6e0e021815212d10f1c1702cb31f34f8d90198fb575e88e864e772bdea511252"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/trace/raw/system-darwin.jsonl.gz",
+          "bytes": 40360,
+          "sha256": "827102c32480e8b6fdcfb0548cf12d6730758893326cec1b83e7d598a03a861e"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-a/driver/ns-writes.jsonl",
+          "bytes": 2804726,
+          "sha256": "20fea6f70e899c001bc3bfbcd970064dfdd6c7f2487aec8a5e33eb9eed00b676"
+        }
+      ],
+      "guestCpuBusyPercent": 11.63049837033735
+    },
+    {
+      "tag": "tx2-dxt1-p3-v0-off-b",
+      "level": "off",
+      "source": "3f59403d87c87549399afea0b842c639a2dec389",
+      "digest": "aa8a7636ff027ab3",
+      "commands": 3420,
+      "p50Ms": 13.071044921875,
+      "p99Ms": 55.200439453125,
+      "transactP50Ms": 11.4384765625,
+      "outsideTransactP50Ms": 1.2138671875,
+      "swapGiB": {
+        "min": 9.320615234375,
+        "median": 9.336240234375,
+        "max": 9.336240234375
+      },
+      "hostOtherCpuPercent": {
+        "median": 40.900000000000006,
+        "max": 318.2000000000001
+      },
+      "hostSamples": 322,
+      "hostSamplesAboveAdmission": 9,
+      "guestBootId": "322a229b-8c95-4e7f-bf6a-6d046fd624df",
+      "guestMemoryGiB": 15.583454132080078,
+      "guestMinAvailableGiB": 8.863658905029297,
+      "guestMaxSwapUsedGiB": 0,
+      "oomKills": 0,
+      "inputFiles": [
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/trace-run.json",
+          "bytes": 562,
+          "sha256": "0e9e8d37f8c2aaf76723a259b53acb1c7559fff62e115a18212f49e40c5a6fa6"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/driver/ns-report.json",
+          "bytes": 492480,
+          "sha256": "6b523785f8e041c0ebd224ea6abd708e19141ed7f56756d4be81b104f5dc6ec4"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/trace-summary.json",
+          "bytes": 384,
+          "sha256": "6f3398cc5ec10b35f99cdd81f366097022e6d85aa405233160f80671f524e7f9"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/stack.json",
+          "bytes": 1557,
+          "sha256": "866e19b21f45870770d88057b50717f8c4e872a4d44088396ec308fb57c3b97e"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/containers.json",
+          "bytes": 36929,
+          "sha256": "1a2adc5cd3c6a6916b70aab7752b511050b0c468edf214bd7e57e53634156299"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/driver-container.json",
+          "bytes": 12556,
+          "sha256": "6ea6abd41898644580c5b6a9d7d0780a3714142ea61771541be549d6eaefcc1b"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/head.txt",
+          "bytes": 41,
+          "sha256": "631d2a9757186abc9ce504c36a70366f9ef4eda747af99b46be96f995630c209"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/source-build-hashes.json",
+          "bytes": 167517,
+          "sha256": "39192e0fca9fda3d432625e5b41136abd54a2f8420570c0e5f91b7742a0ca45a"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/postgres-trace-settings.txt",
+          "bytes": 11,
+          "sha256": "63aea779e02c85fe2813a59be17409b5167de00ea0098870bd2edcf74ebbc67e"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/guest-kernel.txt",
+          "bytes": 127,
+          "sha256": "374993dcb854cc6657b2e87106ee436d4d0995769d9b7c1c7a7e8f8ea1adaf2f"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/remaining-containers.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/remaining-networks.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/remaining-volumes.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/trace/raw/system-linux.jsonl.gz",
+          "bytes": 276333,
+          "sha256": "76351c5d18fd9462d684c69eb1ecd81ff6eddda921d0b5cc5d48c3f5d64433e6"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/trace/raw/system-darwin.jsonl.gz",
+          "bytes": 42308,
+          "sha256": "42c31962fabe9ec3637982f665b35de7a95e2769802bb6915d5e183543eeacd2"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-b/driver/ns-writes.jsonl",
+          "bytes": 2805699,
+          "sha256": "8490567c02dc1a3cad05df93b6cfeb9de9e4abf3f1d96e14e0388af190078f04"
+        }
+      ],
+      "guestCpuBusyPercent": 11.636008529804487
+    },
+    {
+      "tag": "tx2-dxt1-p3-v0-off-c",
+      "level": "off",
+      "source": "3f59403d87c87549399afea0b842c639a2dec389",
+      "digest": "aa8a7636ff027ab3",
+      "commands": 3420,
+      "p50Ms": 12.973388671875,
+      "p99Ms": 124.902587890625,
+      "transactP50Ms": 11.398193359375,
+      "outsideTransactP50Ms": 1.2060546875,
+      "swapGiB": {
+        "min": 8.72357421875,
+        "median": 8.72357421875,
+        "max": 8.72357421875
+      },
+      "hostOtherCpuPercent": {
+        "median": 43.6,
+        "max": 223.8
+      },
+      "hostSamples": 322,
+      "hostSamplesAboveAdmission": 10,
+      "guestBootId": "322a229b-8c95-4e7f-bf6a-6d046fd624df",
+      "guestMemoryGiB": 15.583454132080078,
+      "guestMinAvailableGiB": 8.681903839111328,
+      "guestMaxSwapUsedGiB": 0,
+      "oomKills": 0,
+      "inputFiles": [
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/trace-run.json",
+          "bytes": 562,
+          "sha256": "a41670b569738c3e27c7b1196ee9112a3944d4c9ff9e7e5003dcc8b32a45d793"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/driver/ns-report.json",
+          "bytes": 493416,
+          "sha256": "7454e89282e1754a69f46328efa342ae2182911695f458b00be0625998fadb73"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/trace-summary.json",
+          "bytes": 384,
+          "sha256": "c0811c7cc133a9484093dac0af7e9a6c68d1aff0a06f474a69b523670814c3c4"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/stack.json",
+          "bytes": 1557,
+          "sha256": "07a1fd253c17c3a6415042f561f5e7fb825019224902f092db77129ff6af659c"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/containers.json",
+          "bytes": 36928,
+          "sha256": "8282f25eb0fa88e0648dab6c62eade5358dc2774c3f0fefa8421a01234f19175"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/driver-container.json",
+          "bytes": 12556,
+          "sha256": "f0b4f83ab789e5570ccfad31d6b23d4d655f5e0cf876ef08dd798c2b8f546ce8"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/head.txt",
+          "bytes": 41,
+          "sha256": "631d2a9757186abc9ce504c36a70366f9ef4eda747af99b46be96f995630c209"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/source-build-hashes.json",
+          "bytes": 167517,
+          "sha256": "39192e0fca9fda3d432625e5b41136abd54a2f8420570c0e5f91b7742a0ca45a"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/postgres-trace-settings.txt",
+          "bytes": 11,
+          "sha256": "63aea779e02c85fe2813a59be17409b5167de00ea0098870bd2edcf74ebbc67e"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/guest-kernel.txt",
+          "bytes": 127,
+          "sha256": "374993dcb854cc6657b2e87106ee436d4d0995769d9b7c1c7a7e8f8ea1adaf2f"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/remaining-containers.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/remaining-networks.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/remaining-volumes.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/trace/raw/system-linux.jsonl.gz",
+          "bytes": 277773,
+          "sha256": "c9649c68b139f5767bd9a59fae7495cfa397101fc03287db387f65fbc03064fa"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/trace/raw/system-darwin.jsonl.gz",
+          "bytes": 40376,
+          "sha256": "677d4b347d13ae66b58ad852fad7035890bb5079a525b5653f32bf82def560ee"
+        },
+        {
+          "path": "tx2-dxt1-p3-v0-off-c/driver/ns-writes.jsonl",
+          "bytes": 2805925,
+          "sha256": "88d56655f5e4be736244feb570b84b2f1e00d920bcf51e5eeae93a9f6f1a3e81"
+        }
+      ],
+      "guestCpuBusyPercent": 11.531502088448175
+    }
+  ]
+}
