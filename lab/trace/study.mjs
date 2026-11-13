@@ -6,11 +6,22 @@ const [base, prefix] = process.argv.slice(2),
   session = path.join(base, prefix + "-session");
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
+const placements = process.argv.includes("--placements");
+const arms = placements
+  ? [
+      "off-before",
+      "baseline-zero",
+      "baseline-ladder",
+      "candidate-zero",
+      "candidate-ladder",
+      "off-after",
+    ]
+  : ["off-before", "zero", "ladder", "off-after"];
 const rows = [];
 let hashes;
 // [DX-T1-2] Why: report the existing gate values only after rereading exact source-bound attempt data and common host samples.
 // Rejected: claim PASS from controller exit or compare latency with historical off controls.
-for (const arm of ["off-before", "zero", "ladder", "off-after"]) {
+for (const arm of arms) {
   const tag = prefix + "-" + arm,
     dir = path.join(base, tag),
     b = read(path.join(dir, "driver/ns-report.json")),
@@ -36,7 +47,53 @@ for (const arm of ["off-before", "zero", "ladder", "off-after"]) {
     throw Error("Wrong/incomplete trace level");
   if (!off && (b.config.matchDurationS !== 900 || b.config.readerLadderOnly))
     throw Error("Full pair was shortened/changed");
-  if (b.config.zeroReaders !== (arm !== "ladder")) throw Error("Wrong reader arm");
+  if (b.config.zeroReaders !== !arm.endsWith("ladder")) throw Error("Wrong reader arm");
+  let placement;
+  if (placements && !off) {
+    const candidate = arm.startsWith("candidate"),
+      driver = read(path.join(dir, "driver-container.json"))[0],
+      containers = read(path.join(dir, "containers.json"));
+    const g = containers.find((c) => c.Name === "/" + tag + "-gw-r");
+    const expectedDriver = candidate ? "3,4,5,6,7" : "4,5,6,7",
+      expectedGateway = candidate ? "2" : "2,3";
+    if (
+      driver.HostConfig.CpusetCpus !== expectedDriver ||
+      g?.HostConfig.CpusetCpus !== expectedGateway
+    )
+      throw Error("Effective CPU placement mismatch");
+    const threadRows = fs
+      .readFileSync(path.join(dir, "driver.log"), "utf8")
+      .split("\n")
+      .filter((l) => l.startsWith('{"type":"node-thread-placement"'))
+      .map((l) => JSON.parse(l));
+    const expand = (v) =>
+      v
+        .split(",")
+        .flatMap((x) => {
+          const [a, b] = x.split("-").map(Number);
+          return b === undefined ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i);
+        })
+        .sort((a, b) => a - b)
+        .join(",");
+    if (candidate) {
+      if (
+        !threadRows.some((r) => r.thread === 0) ||
+        threadRows.filter((r) => r.thread !== 0).length < 4
+      )
+        throw Error("Missing actual main/worker affinity readback");
+      for (const r of threadRows) {
+        if (
+          r.main !== "3" ||
+          r.workers !== "4,5,6,7" ||
+          expand(r.allowed) !== (r.thread === 0 ? "3" : "4,5,6,7")
+        )
+          throw Error("Wrong thread affinity");
+        for (const b of r.background ?? [])
+          if (expand(b.allowed) !== "4,5,6,7") throw Error("Runtime thread shares writer core");
+      }
+    } else if (threadRows.length) throw Error("Baseline unexpectedly uses thread affinity");
+    placement = { driver: expectedDriver, readGateway: expectedGateway, threads: threadRows };
+  }
   const swaps = [];
   let vm = 0;
   for (const f of filesUnder(path.join(dir, "trace/raw")).filter((f) =>
@@ -65,11 +122,12 @@ for (const arm of ["off-before", "zero", "ladder", "off-after"]) {
     }
     for (const x of Object.values(v)) walk(x);
   }
-  if (arm === "ladder") walk(b.priorities);
+  if (arm.endsWith("ladder")) walk(b.priorities);
   rows.push({
     tag,
     arm,
     level: m.level,
+    placement,
     source,
     digest: b.trace.digest,
     commands: writes.length,
@@ -116,10 +174,29 @@ const text = [
   "| gate | observed value | bar | existing flag |",
   "| --- | --- | --- | --- |",
   ...rows
-    .find((r) => r.arm === "ladder")
-    .gates.map((g) => `| ${g.id} | ${JSON.stringify(g.value)} | ${g.bar} | ${g.pass} |`),
+    .filter((r) => r.arm.endsWith("ladder"))
+    .flatMap((r) =>
+      r.gates.map(
+        (g) => `| ${r.arm}: ${g.id} | ${JSON.stringify(g.value)} | ${g.bar} | ${g.pass} |`,
+      ),
+    ),
   "",
 ];
+text.push(
+  "## Writer CPU versus run-queue wait",
+  "",
+  "| arm | readers | observed ms | on CPU ms | waiting for CPU ms | tracing | swap GiB median | off p50 ms |",
+  "| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: |",
+);
+for (const r of rows.filter((r) => r.arm.endsWith("ladder")))
+  for (const phase of ["baseline", "L64", "L256", "L1024"]) {
+    const p = r.scheduler?.[phase];
+    if (p)
+      text.push(
+        `| ${r.arm} | ${p.readers} | ${p.spanMs?.toFixed(3)} | ${p.runtimeMs?.toFixed(3)} | ${p.runqueueMs?.toFixed(3) ?? "n/a"} | ${r.level} | ${r.swapGiB.median.toFixed(3)} | ${off50.toFixed(3)} |`,
+      );
+  }
+text.push("");
 fs.writeFileSync(
   path.join(session, "MEASUREMENTS.json"),
   JSON.stringify({ source, session: prefix, rows }, null, 2) + "\n",

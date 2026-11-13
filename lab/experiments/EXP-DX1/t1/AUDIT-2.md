@@ -48,3 +48,11 @@ Raw bytes remain unchanged. JFR now carries bracketed clock markers; SHA256-boun
 markers, preserves native raw JFR, and maps event timestamps through the observed marker pairs. No duration is inferred
 from a client's HTTP window. The JFR factory uses the official Java 17 EventFactory API:
 https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/EventFactory.html
+
+The corrected full 1k smoke `p2-smoke-d` passed the oracle and 94/94 coverage; clock binding and all local span parents
+validated. JFR preflight passed 3 tests / 16 assertions including real marker export. Normal package suite: 191 passed.
+A CPU-placement option now pins only the writer to guest CPU 3 and Node workers/runtime threads to CPUs 4-7; the read
+gateway moves to CPU 2, leaving the same eight guest CPUs. It is opt-in pending measurement, and does not change load.
+The placement study validates actual container masks and per-thread kernel readbacks, source/build hashes, full pair
+durations and fresh controls before reporting existing gate values. Each candidate worker must prove its own affinity;
+a missing readback is incomplete evidence, never a placement PASS. CPU-set parser and deferred-send tests are normal tests.

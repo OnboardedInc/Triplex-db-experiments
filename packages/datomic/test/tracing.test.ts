@@ -607,3 +607,13 @@ describe("shared Linux clock alignment", () => {
     ).toThrow(/clock binding/);
   });
 });
+
+describe("explicit CPU placement", () => {
+  it("validates CPU sets before applying an optional Linux-only placement", async () => {
+    const { parseTraceCpuSet } = await import("../src/tracing.js");
+    expect(parseTraceCpuSet("3")).toEqual([3]);
+    expect(parseTraceCpuSet("4,5,6,7")).toEqual([4, 5, 6, 7]);
+    for (const invalid of ["", "-1", "3,3", "1 2", "1,", "65536", "1;echo"])
+      expect(() => parseTraceCpuSet(invalid)).toThrow();
+  });
+});

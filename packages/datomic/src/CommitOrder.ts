@@ -1,9 +1,10 @@
 // [DX-B5-L0] Why: register the clock before staging can yield; order sends across all clients in this process.
 // Rejected: serializing acknowledgements (unrelated subjects must remain in flight).
 import { randomUUID } from "node:crypto";
-import { beginSpan, endSpan, bindTraceCallback } from "./tracing.js";
+import { beginSpan, endSpan, bindTraceCallback, currentTrace } from "./tracing.js";
 export interface OrderedCommit {
   timestamp: number;
+  traceId?: string | undefined;
   lane: object;
   ready: boolean;
   sending?: boolean;
@@ -59,7 +60,7 @@ function drain() {
   }
 }
 export function registerCommit(timestamp: number, lane = defaultLane): OrderedCommit {
-  const item = { timestamp, ready: false, lane };
+  const item = { timestamp, ready: false, lane, traceId: currentTrace()?.traceId };
   pending.push(item);
   return item;
 }
@@ -74,7 +75,15 @@ export function sendCommit<A>(
   send: (sequence: number, sent: () => void) => Promise<A>,
 ): Promise<A> {
   return new Promise((resolve, reject) => {
-    const wait = beginSpan("client.commit-send-queue", "event-loop");
+    const head = pending.reduce<OrderedCommit | undefined>(
+      (a, b) => (!a || b.timestamp < a.timestamp ? b : a),
+      undefined,
+    );
+    const wait = beginSpan("client.commit-send-queue", "event-loop", {
+      behindTraceId: head !== item ? (head?.traceId ?? null) : null,
+      headReady: head?.ready ?? false,
+      pending: pending.length,
+    });
     // [DX-T1-2] Why: preserve this ticket's exact trace parent when a predecessor releases it.
     // Rejected: borrowing the predecessor's context, which falsely charges its HTTP work to that commit.
     item.send = bindTraceCallback((number) => {

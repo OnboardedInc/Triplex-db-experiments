@@ -1,6 +1,16 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomBytes } from "node:crypto";
-import { mkdirSync, createWriteStream, readFileSync, openSync, readSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import {
+  mkdirSync,
+  createWriteStream,
+  readFileSync,
+  openSync,
+  readSync,
+  readdirSync,
+  readlinkSync,
+  existsSync,
+} from "node:fs";
 import { join } from "node:path";
 import { performance, PerformanceObserver, monitorEventLoopDelay } from "node:perf_hooks";
 import { threadId } from "node:worker_threads";
@@ -96,6 +106,69 @@ if (!["off", "summary", "full"].includes(configured))
 export const traceLevel = configured as TraceLevel;
 export const TRACE_SLOW_READ_MS = 50;
 export const TRACE_READ_SAMPLE = 1024;
+export function parseTraceCpuSet(value: string): number[] {
+  if (!/^\d+(,\d+)*$/.test(value)) throw new TypeError("Expected a comma-separated CPU list");
+  const cpus = value.split(",").map(Number);
+  if (
+    new Set(cpus).size !== cpus.length ||
+    cpus.some((c) => !Number.isSafeInteger(c) || c < 0 || c > 65535)
+  )
+    throw new TypeError("Invalid/duplicate CPU");
+  return cpus;
+}
+// [DX-T1-2] Why: a measured writer can reserve a core while reader, replica and runtime threads share the others.
+// Rejected: change read concurrency, hide queue delay, or let new workers inherit the writer's exclusive affinity.
+function configureThreadPlacement(): void {
+  const main = process.env["TRIPLEX_NODE_MAIN_CPUS"],
+    workers = process.env["TRIPLEX_NODE_WORKER_CPUS"];
+  if (!main && !workers) return;
+  if (process.platform !== "linux" || !main || !workers)
+    throw new Error("Thread placement requires Linux and both CPU lists");
+  const mainSet = parseTraceCpuSet(main),
+    workerSet = parseTraceCpuSet(workers);
+  if (mainSet.some((c) => workerSet.includes(c)))
+    throw new Error("Writer and worker CPU sets must be disjoint");
+  const tid = Number(readlinkSync("/proc/thread-self").split("/").at(-1));
+  if (!Number.isSafeInteger(tid) || tid < 1) throw new Error("Missing Linux thread identity");
+  const pin = (target: number, cpus: string) => {
+    try {
+      execFileSync("/usr/bin/taskset", ["-pc", cpus, String(target)], { stdio: "pipe" });
+    } catch (error) {
+      if (existsSync(`/proc/self/task/${target}`)) throw error;
+    }
+  };
+  if (threadId === 0)
+    for (const child of readdirSync("/proc/self/task"))
+      if (Number(child) !== tid) pin(Number(child), workers);
+  pin(tid, threadId === 0 ? main : workers);
+  const allowed = (readFileSync(`/proc/self/task/${tid}/status`, "utf8").match(
+    /^Cpus_allowed_list:\s*(.+)$/m,
+  ) ?? [])[1]?.trim();
+  const background =
+    threadId === 0
+      ? readdirSync("/proc/self/task")
+          .filter((t) => Number(t) !== tid)
+          .map((t) => ({
+            tid: Number(t),
+            allowed: (readFileSync(`/proc/self/task/${t}/status`, "utf8").match(
+              /^Cpus_allowed_list:\s*(.+)$/m,
+            ) ?? [])[1]?.trim(),
+          }))
+      : undefined;
+  process.stdout.write(
+    JSON.stringify({
+      type: "node-thread-placement",
+      pid: process.pid,
+      thread: threadId,
+      tid,
+      main,
+      workers,
+      allowed,
+      background,
+    }) + "\n",
+  );
+}
+configureThreadPlacement();
 function readTraceClock(): TraceClock | undefined {
   if (process.platform !== "linux") return;
   try {
