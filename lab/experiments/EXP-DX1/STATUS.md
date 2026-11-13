@@ -1682,3 +1682,22 @@ cache 5.40 million evictions, revision cache 31.7 million misses against 23.5 mi
 Repository: history was rewritten to replace a throwaway local MinIO key, and `NOTICE.md` now separates Triplex (Ben
 Jacobson, MIT) from Onboarded's work; branch hashes changed (DX-R3 `be202d43`, DX-S5 `8569fd5a`, DX-V1 `09e93474`). Detail in
 `lab/HANDOFF-2026-11-12.md`.
+
+## 2026-11-13 02:45 UTC: resumed; DX-T1 built permanent tracing; stalls are queue waits before the request; part 2 launched
+
+Sam resumed on 2026-11-12 about 18:05 UTC: tracing first and kept in the code, the TypeScript share measured, stay in
+TypeScript, every agent Codex `gpt-6.1-sol` at `max` (all verbatim in `lab/research/SAM-decisions-2026-11-09.md`).
+
+DX-T1 part 1 (`exp/DX-T1-tracing`, `3da5a2e2`, pushed, not merged; report `t1/REPORT.md` on that branch):
+1. Every run now writes `TRACE-REPORT.md`, `trace.html` and a trace-viewer file by itself; index at
+   `~/Claude/Projects/triplex-db-2/evidence/TRACE-INDEX.md`. Named spans cover at least 95% of wall time for 8,540 of 8,542
+   commits in a full 10,000-subject pair; oracle PASS.
+2. The slowest commits in that pair waited 1.0 to 1.5 s before the request, in the driver's writer queue (scheduler,
+   per-subject order and admission, not yet split). The 4.5 s stalls of q8 did not recur.
+3. Commit at 256 readers, full tracing: p50 24.2 ms, of which at the median TypeScript scopes 7.2 ms, waiting on the
+   transactor 10.9 ms, network 1.5 ms, gateway 1.4 ms; TypeScript share 35%.
+4. Full tracing costs 4.46 ms (30%) at commit p50, 4.04 ms of it inside transact. Too much for verdict runs.
+5. Host: 13 GB of swap in use; `off` control arms read 13.9 and 15.4 ms at p50 against 9 to 12 ms on a quiet host.
+
+DX-T1 part 2 is running (same agent session): a default tracing level under 3% cost, the queue wait split and explained,
+writer code time against waiting for a CPU, then the P2 fix at 10,000 subjects.
