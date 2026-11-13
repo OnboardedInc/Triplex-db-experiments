@@ -1,5 +1,6 @@
 // @ts-nocheck -- JSON wire records are validated on ingestion; checkjs still checks all bindings.
 import fs from "node:fs";
+import { loadCpuProfile } from "./cpu-profile.mjs";
 import { bindNativeTransaction } from "./native-transactions.mjs";
 import { writeAnatomy } from "./anatomy.mjs";
 import { createHash } from "node:crypto";
@@ -522,6 +523,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     histograms = [],
     metadata = [],
     completions = [],
+    profileClocks = [],
     jfrCounts = new Map();
   const errors = [];
   for (const file of input) {
@@ -535,7 +537,8 @@ export async function buildReport(runDir, { copyTo } = {}) {
           errors.push(`Binding mismatch in ${path.basename(file)}`);
           continue;
         }
-        if (r.type === "request") {
+        if (r.type === "cpu-profile-clock") profileClocks.push(r);
+        else if (r.type === "request") {
           if (manifest && r.start < manifest.startedAt - 1000)
             errors.push(`Stale request in ${path.basename(file)}`);
           if (
@@ -867,6 +870,34 @@ export async function buildReport(runDir, { copyTo } = {}) {
       errors.push("Postgres wait/WAL/IO collector missing");
   }
 
+  let cpuProfile = null;
+  try {
+    cpuProfile = await loadCpuProfile(
+      rootDir,
+      manifest,
+      profileClocks,
+      clockReference,
+      requests.find((r) => r.name === "driver.commit" && r.thread === 0)?.process,
+      Date.parse(bench.endedAt ?? ""),
+    );
+  } catch (error) {
+    errors.push(String(error));
+  }
+  if (cpuProfile)
+    for (const r of evaluated.filter(
+      (r) => r.root.process === cpuProfile.process && r.root.thread === cpuProfile.thread,
+    )) {
+      r.cpuProfile = cpuProfile.window(r.root.start, r.root.end);
+      const late = r.root.spans
+        .filter((s) => s.name === "driver.queue.scheduler-late")
+        .sort((a, b) => b.end - b.start - (a.end - a.start))[0];
+      if (late)
+        r.schedulerLateProfile = {
+          start: late.start,
+          end: late.end,
+          ...cpuProfile.window(late.start, late.end),
+        };
+    }
   for (const r of evaluated)
     r.overlappingWork = (
       workIndex.get(`${r.root.process}:${r.root.thread}`)?.overlap(r.root.start, r.root.end) ?? []
@@ -992,7 +1023,11 @@ export async function buildReport(runDir, { copyTo } = {}) {
       invalidSpanParents,
     },
     reporterSha256: createHash("sha256")
-      .update(fs.readFileSync(new URL(import.meta.url)))
+      .update(
+        ["report.mjs", "anatomy.mjs", "native-transactions.mjs", "cpu-profile.mjs"]
+          .map((name) => name + "\0" + fs.readFileSync(new URL(name, import.meta.url), "utf8"))
+          .join("\0"),
+      )
       .digest("hex"),
     finding,
     schedulerByPhase,
@@ -1019,6 +1054,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     collectors: {
       jfr: completions,
       resources: resources.length,
+      writerCpuProfile: cpuProfile ? { samples: cpuProfile.samples, clockBound: true } : null,
       transactorFunctionEvents: nativeFunctions.length,
       nativeTransactionStats: nativeTransactions.length,
     },
@@ -1091,6 +1127,34 @@ export async function buildReport(runDir, { copyTo } = {}) {
       "",
     );
   }
+  if (cpuProfile) {
+    lines.push(
+      "## Writer stacks during late scheduler offers",
+      "",
+      "Sample points are verified against two guest boot-clock brackets. Counts are samples, not continuous CPU time. Gaps over 3 ms are unknown execution state; they are not charged to the sampled function.",
+      "",
+      "| trace | phase | late ms | samples | top sampled functions | long gaps |",
+      "| --- | --- | ---: | ---: | --- | ---: |",
+    );
+    for (const r of [...commits]
+      .filter(
+        (r) =>
+          r.schedulerLateProfile && r.schedulerLateProfile.end - r.schedulerLateProfile.start >= 20,
+      )
+      .sort(
+        (a, b) =>
+          b.schedulerLateProfile.end -
+          b.schedulerLateProfile.start -
+          (a.schedulerLateProfile.end - a.schedulerLateProfile.start),
+      )
+      .slice(0, 20)) {
+      const p = r.schedulerLateProfile;
+      lines.push(
+        `| ${r.traceId} | ${r.name} | ${n(p.end - p.start)} | ${p.samples} | ${p.top.map(([f, c]) => f + " (" + c + ")").join("; ")} | ${p.longGaps} |`,
+      );
+    }
+    lines.push("");
+  }
   for (const [key, rows] of groups) {
     lines.push(
       `## ${key} (${rows.length} retained requests)`,
@@ -1131,6 +1195,17 @@ export async function buildReport(runDir, { copyTo } = {}) {
   };
   const start = Math.min(...selected.map((r) => r.root.start));
   for (const r of selected) {
+    for (const p of r.cpuProfile?.points ?? [])
+      chrome.push({
+        name: "CPU sample " + p.stack[0],
+        cat: "cpu-sample",
+        ph: "i",
+        s: "t",
+        ts: (p.at - start) * 1000,
+        pid: pidFor(r.root.process),
+        tid: r.root.thread,
+        args: { traceId: r.traceId, stack: p.stack, sampled: true },
+      });
     const spanRows = [
       {
         name: r.root.name,
@@ -1244,7 +1319,7 @@ function html(finding, data, tag) {
 <label>Phase <select id="phase"><option value="">All</option></select></label> <label>Kind <select id="kind"><option value="">All</option><option>commit</option><option>read</option></select></label> <label><input type="checkbox" id="events" checked>Overlapping pauses and work</label><div id="view"></div><pre id="tip">Hover over a span to inspect it.</pre><script type="application/json" id="data">${data}</script><script>
 const data=JSON.parse(document.getElementById('data').textContent),phase=document.getElementById('phase'),kind=document.getElementById('kind'),show=document.getElementById('events'),view=document.getElementById('view'),tip=document.getElementById('tip');
 for(const name of [...new Set(data.selected.map(r=>r.priority+' / '+r.name))]) {const o=document.createElement('option');o.textContent=o.value=name;phase.append(o);}
-function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms'+(r.replicaPublication?' · replica publication '+r.replicaPublication.msAfterRootEnd.toFixed(3)+' ms relative to end':'');c.append(desc);const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,nativeTransactions:r.nativeTransactions,replicaPublication:r.replicaPublication,resources:data.resources.filter(x=>x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
+function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms'+(r.replicaPublication?' · replica publication '+r.replicaPublication.msAfterRootEnd.toFixed(3)+' ms relative to end':'');c.append(desc);if(r.cpuProfile?.points?.length){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.textContent='Writer CPU sample points';line.append(label);for(const p of r.cpuProfile.points){const dot=document.createElement('span');dot.className='bar';dot.style.background='#e6b45d';dot.style.width='2px';dot.style.left=(240+680*(p.at-r.root.start)/Math.max(.001,r.wallMs))+'px';dot.onmouseenter=()=>tip.textContent=JSON.stringify(p,null,2);line.append(dot);}c.append(line);}const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,cpuProfile:r.cpuProfile,schedulerLateProfile:r.schedulerLateProfile,nativeTransactions:r.nativeTransactions,replicaPublication:r.replicaPublication,resources:data.resources.filter(x=>x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
 phase.onchange=kind.onchange=show.onchange=render;kind.value="commit";const preferred=[...phase.options].find(o=>o.value==="P2 / L256");if(preferred)phase.value=preferred.value;render();</script>`;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

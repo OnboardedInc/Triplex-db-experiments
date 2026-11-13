@@ -1,3 +1,4 @@
+import { cpuProfileClock } from "./lib/cpu-profile.ts";
 #!/usr/bin/env node
 import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, currentTraceStep, traceResource, type Trace } from "./lib/tracing.ts";
 import { readObservation, type ReadObservation } from "./lib/read-observation.ts";
@@ -378,6 +379,7 @@ function main() {
 }
 
 async function run() {
+  cpuProfileClock("start");
   save();
   const writer = await openComposition(config.composition, lane, scopeName);
   const aux = await openComposition(config.composition, lane, scopeName);
@@ -1027,6 +1029,7 @@ async function run() {
     verification: "PENDING final all-ACK model comparison; all arrived worker batches persisted" }]));
   report.phases = phases;
   save();
+  cpuProfileClock("end");
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
   report.finalPosition = finalPosition === null ? null : coordinate(finalPosition);

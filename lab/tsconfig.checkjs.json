@@ -15,6 +15,7 @@
   "files": [
     "../lab/trace/anatomy.mjs",
     "../lab/trace/native-transactions.mjs",
+    "../lab/trace/cpu-profile.mjs",
     "../lab/experiments/EXP-DX1/h3/observe.mjs",
     "../examples/config-explorer/smoke.mjs",
     "../experiments/qlever-native-count-inventory-v1/runner.mjs",

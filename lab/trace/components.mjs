@@ -34,6 +34,7 @@ export function configuration(env = process.env) {
     gatewayEnabled: has("gateway"),
     requiredJfr: [...(has("tx-jfr") ? ["tx"] : []), ...(has("gw-jfr") ? ["gw-w", "gw-r"] : [])],
     requireSystem: system,
+    requireNodeCpuProfile: has("node") && env.DX_NODE_PROFILE === "1",
     requirePostgres: has("postgres"),
     requireTransactorFunction: has("tx-jfr") && has("gateway"),
     requireTransactorStats: has("tx-jfr") && has("gateway") && env.DX_TX_NATIVE_JFR === "1",
