@@ -352,3 +352,27 @@ Orchestrator's reading:
    repository and logged in `lab/DOWNLOADS.md`. The orchestrator read it first. It is written for native binaries,
    Android, JavaScript and .NET targets; it has no direct route for JVM jars of compiled Clojure, so the agent uses its
    evidence method and its archive tools where they apply and a JVM decompiler for the classes.
+
+## 2026-11-13 about 18:10 UTC: Sam answers the five open design decisions
+
+The orchestrator had listed five decisions with a recommendation each (record-time backdating, who assigns record time,
+the split-read rule, the CPU split, acknowledging before the engine applies). Sam, verbatim:
+
+> Open design decisions:
+> 1. Can we have it be so that we maintain both paths and at query time and can tell which path we need to go? I don't think we can do strict, I think it needs to be bitemporal.
+> 2. Yes let server assign it.
+> 3. Explain this more, so I understand the tradeoffs, show examples.
+> 4. Yes to your recommendation
+> 5. Not yet, this seems risky, agree with your recs
+
+Orchestrator's reading:
+1. **Record time.** Not strict everywhere. The store stays bitemporal, both read paths (local copy and engine) are kept,
+   and each query is routed to the path that can answer it exactly. Open point put back to Sam the same day: strict record
+   clocks do not remove valid-time backdating, so whether backdated *record* time is needed in live scopes is still to be
+   confirmed; until then the existing rule stands (a per-scope `strictRecordClocks` flag; time-pinned reads are answered
+   locally only in strict scopes and by the engine elsewhere).
+2. **Record time is assigned by the server.** Decided. Needs the `packages/core` contract change; queued for a builder.
+3. **Split-read rule.** Not decided; Sam asked for a fuller explanation with examples.
+4. **CPU split.** Decided: judge on the whole 8-CPU machine (P4 becomes at least 4,400 pulls per second in total, which is
+   1,100 times the four engine cores the bar assumed) and let the split between engine and runtime be tuned freely.
+5. **Acknowledging before the engine has applied a commit.** Not now; Sam agrees it is risky. Revisit only with numbers.

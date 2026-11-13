@@ -108,10 +108,14 @@ Constraints every answer must respect: exactness and durability are the floor; t
 
 Sam, 2026-11-13: "I don't care about XTDB. Don't go back to that." Not a problem to solve; the goal is Datomic.
 
-## H9. Open design decisions that change what is possible (Sam's to make)
+## H9. Design decisions (Sam answered on 2026-11-13; verbatim in `lab/research/SAM-decisions-2026-11-09.md`)
 
-1. Backdated record times against strict clocks.
-2. Server-assigned record time (needs a `packages/core` contract change).
-3. The split-read rule (`pending` against `mixed`).
-4. How engine and runtime CPUs are split in the bars.
-5. Whether an acknowledgement may come from a durable intake log before the engine has applied it (H1 b).
+1. **Record time: not strict everywhere.** Keep the store bitemporal, keep both read paths, route each query to the path
+   that can answer it exactly. Open: whether live scopes need backdated record time or only backdated valid time. The hard
+   part: a rule that lets the local copy answer a time-pinned read in a scope that permits backdating, and knows when it
+   cannot.
+2. **Server assigns record time.** Decided; needs the `packages/core` contract change.
+3. **Split-read rule (`pending` or `mixed`).** Open; explained to Sam with examples, awaiting his choice.
+4. **CPU split.** Decided: judge on the whole 8-CPU machine (P4 at least 4,400 pulls per second in total); split tuned
+   freely.
+5. **Acknowledging from a durable intake log before the engine applies.** Not now (risky); revisit only with numbers.
