@@ -1,5 +1,6 @@
 (ns triplex.gateway.trace
-  (:require [clojure.data.json :as json] [clojure.string :as str] [ring.core.protocols :as protocols] [triplex.gateway.jfr :as jfr])
+  (:require [clojure.data.json :as json] [clojure.string :as str] [ring.core.protocols :as protocols] [triplex.gateway.jfr :as jfr]
+            [triplex.gateway.native-settings])
   (:import [java.io BufferedWriter FileWriter File]
            [java.nio.file Files Paths]
            [java.util UUID] [org.slf4j MDC]

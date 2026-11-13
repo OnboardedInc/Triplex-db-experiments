@@ -2,7 +2,7 @@
 # [DX-T1-2] Why: one lease, one source and bookend controls bind recorder ablations to one host session.
 # Rejected: compare a recorder with a historical quiet off arm or allow unrelated work between arms.
 set -euo pipefail
-kind=${1:?ablation|cost|anatomy|cpu-floor|fallback-floor|history-256|seed-floor|writer-256}; prefix=${2:?tx2-dxt1-prefix}; shift 2
+kind=${1:?ablation|cost|anatomy|cpu-floor|fallback-floor|history-256|seed-floor|writer-256|quiet-floor|quiet-256|channel-floor|channel-256|isolated-floor|isolated-256|index-floor|index-256}; prefix=${2:?tx2-dxt1-prefix}; shift 2
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
@@ -47,7 +47,20 @@ elif [[ $kind == fallback-floor ]]; then arms=(baseline fallback-worker fallback
 elif [[ $kind == history-256 ]]; then arms=(baseline history-192 history-192 baseline)
 elif [[ $kind == seed-floor ]]; then arms=(baseline seed-2000 seed-2000 baseline)
 elif [[ $kind == writer-256 ]]; then arms=(baseline writer-core writer-core baseline)
+elif [[ $kind =~ ^(quiet|channel|isolated|index)-(floor|256)$ ]]; then arms=(baseline candidate candidate baseline)
 else exit 2;fi
+# [DX-T1-4] Why: setting requests are explicit, identical controls bookend one changed native setting.
+# Rejected: claiming a tag proves the running JVM configuration or comparing hosts across sessions.
+export DX_NATIVE_SETTINGS_READBACK=${DX_NATIVE_SETTINGS_READBACK:-0}
+if [[ $kind =~ ^(quiet|channel|isolated|index)-(floor|256)$ ]]; then
+  export DX_NATIVE_SETTINGS_READBACK=1
+  python3 - "$session_dir/native-request.json" "$kind" <<'PY_NATIVE'
+import os,json,sys
+keys=['DX_QUIET_LOGS','DX_ENCRYPT_CHANNEL','DX_INDEX_THRESHOLD','DX_INDEX_MAX']
+defaults=['0','true','256m','1g']
+json.dump({'kind':sys.argv[2],'baseline':{k:os.environ.get(k,d) for k,d in zip(keys,defaults)}},open(sys.argv[1],'w'),indent=2)
+PY_NATIVE
+fi
 i=0;session_rc=0
 for arm in "${arms[@]}"; do
   i=$((i+1));tag=$prefix-$i-$arm
@@ -90,6 +103,20 @@ for arm in "${arms[@]}"; do
     workload=(--replica-history-mib 192 --replica-fallback-thread worker)
     placement=(DX_CPUS_DRIVER=4,5,6,7 DX_CPUS_GW_READ=2,3 DX_MAIN_CPU= DX_WORKER_CPUS=)
     [[ $arm != writer-core ]] || placement=(DX_CPUS_DRIVER=3,4,5,6,7 DX_CPUS_GW_READ=2 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7)
+  fi
+  if [[ $kind =~ ^(quiet|channel|isolated|index)-(floor|256)$ ]]; then
+    level=summary;components=default
+    if [[ $kind == *-256 ]]; then duration=300;level_s=45;reader_args=(--max-readers 256);fi
+    placement=(DX_QUIET_LOGS=${DX_QUIET_LOGS:-0} DX_ENCRYPT_CHANNEL=${DX_ENCRYPT_CHANNEL:-true} DX_INDEX_THRESHOLD=${DX_INDEX_THRESHOLD:-256m} DX_INDEX_MAX=${DX_INDEX_MAX:-1g}
+      DX_CPUS_TX=0,1 DX_CPUS_PG=0 DX_CPUS_GW_WRITE=1 DX_CPUS_GW_READ=2,3 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU= DX_WORKER_CPUS=)
+    if [[ $arm == candidate ]];then
+      case "$kind" in
+        quiet-*) placement+=(DX_QUIET_LOGS=1);;
+        channel-*) placement+=(DX_ENCRYPT_CHANNEL=false);;
+        isolated-*) placement+=(DX_CPUS_TX=0,1 DX_CPUS_PG=2 DX_CPUS_GW_WRITE=3 DX_CPUS_GW_READ=4 DX_CPUS_DRIVER=5,6,7 DX_MAIN_CPU=5 DX_WORKER_CPUS=6,7);;
+        index-*) placement+=(DX_INDEX_THRESHOLD=512m);;
+      esac
+    fi
   fi
   if [[ $arm == full || $arm == summary ]]; then level=$arm;components=default;fi
   export TRIPLEX_TRACE_LEVEL=$level

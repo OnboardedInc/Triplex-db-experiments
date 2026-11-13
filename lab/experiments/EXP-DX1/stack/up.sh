@@ -26,6 +26,8 @@ pg_mem=${DX_PG_MEMORY:-512m} tx_mem=${DX_TX_MEMORY:-3g} gw_mem=1500m tx_java="-X
 # [DX-M2] Why: opt-in JVM arms preserve concurrent experiments' defaults. Rejected: changing the control globally.
 tx_java=${DX_TX_JAVA_OPTS:-$tx_java}
 index_threshold=${DX_INDEX_THRESHOLD:-128m} index_max=${DX_INDEX_MAX:-512m} object_cache=${DX_TX_OBJECT_CACHE:-${DX_OBJECT_CACHE:-128m}} pg_settings=''
+quiet_loggers=${DX_QUIET_LOGS:-0} encrypt_channel=${DX_ENCRYPT_CHANNEL:-true} native_readback=${DX_NATIVE_SETTINGS_READBACK:-0}
+[[ $quiet_loggers =~ ^[01]$ && $encrypt_channel =~ ^(true|false)$ && $native_readback =~ ^[01]$ ]] || exit 2
 while (($#)); do
   case "$1" in
     --no-publish) publish=false; shift; continue;;
@@ -91,21 +93,26 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   docker cp "$prefix-extract:/opt/datomic/bin/sql/$file" "$attempt/sql/$file"
 done
 docker cp "$prefix-extract:/opt/datomic/config/samples/sql-transactor-template.properties" "$attempt/config/template.properties"
+docker cp "$prefix-extract:/opt/datomic/bin/logback.xml" "$attempt/config/vendor-logback.xml"
 docker rm "$prefix-extract" >/dev/null
 trap - EXIT
-python3 - "$attempt/config" "$prefix" "$index_threshold" "$index_max" "$object_cache" <<'PY'
+python3 - "$attempt/config" "$prefix" "$index_threshold" "$index_max" "$object_cache" "$encrypt_channel" <<'PY'
 import pathlib,sys
 root=pathlib.Path(sys.argv[1]); prefix=sys.argv[2]
 settings={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx',
 'sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic','sql-user':'datomic','sql-password':'datomic',
-'memory-index-threshold':sys.argv[3],'memory-index-max':sys.argv[4],'object-cache-max':sys.argv[5]}
+'memory-index-threshold':sys.argv[3],'memory-index-max':sys.argv[4],'object-cache-max':sys.argv[5],'encrypt-channel':sys.argv[6]}
 lines=[line for line in (root/'template.properties').read_text().splitlines() if line.partition('=')[0].strip() not in settings]
 (root/'sql.properties').write_text('\n'.join(lines)+'\n'+'\n'.join(k+'='+v for k,v in settings.items())+'\n')
 PY
+# [DX-T1-4] Why: remove only the five synchronous per-commit INFO categories, preserving vendor appenders and unrelated logs.
+# Rejected: replacing the whole logging setup or equating the extra native trace logger with default INFO.
+node "$repo/lab/trace/native-settings.mjs" "$attempt/config/vendor-logback.xml" "$attempt/config/quiet-logback.xml"
 # [DX-T1] Why: JFR and structured gateway records survive process shutdown on an owned run mount.
 # Rejected: pulling a JDK image or exposing debugging ports on the Mac.
 trace_level=${TRIPLEX_TRACE_LEVEL:-off}
 trace_env=(-e "TRIPLEX_TRACE_LEVEL=$trace_level" -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git -C "$repo" rev-parse HEAD)" -e TRIPLEX_TRACE_DIR=/trace)
+trace_env+=(-e "TRIPLEX_NATIVE_SETTINGS_READBACK=$native_readback")
 trace_mount=(-v "$attempt/trace/raw:/trace")
 # [DX-T1-2] Why: isolate collectors with an inspected effective configuration. Rejected: inferring enabled collectors from a tag.
 eval "$(node "$repo/lab/trace/components.mjs" --shell)"
@@ -116,6 +123,14 @@ trace_tx_java= trace_gw_java=
 if [[ $TRIPLEX_TRACE_NATIVE_LOGS == 1 ]]; then
   trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml"
   trace_gw_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+fi
+if [[ $quiet_loggers == 1 ]]; then
+  [[ $TRIPLEX_TRACE_NATIVE_LOGS == 0 && $trace_native_jfr == 0 ]] || { echo 'Quiet logging conflicts with native INFO/DEBUG capture' >&2; exit 2; }
+  trace_tx_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
+  trace_gw_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
+fi
+if [[ $native_readback == 1 && $TRIPLEX_TRACE_TX_JFR == 0 && $TRIPLEX_TRACE_NATIVE_LOGS == 0 ]]; then
+  trace_tx_java+=' -Ddatomic.metricsCallback=triplex.gateway.native-settings/metrics'
 fi
 if [[ $TRIPLEX_TRACE_TX_JFR == 1 ]]; then
   trace_tx_java+=" -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"
@@ -173,7 +188,7 @@ for role in w r; do
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
     ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_GW_JFR" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
-    -v "$src:/opt/gateway:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
+    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false
   for ((i=0;i<180;i++)); do
     if [[ $publish == false ]]; then
@@ -183,6 +198,23 @@ for role in w r; do
   done
   if [[ $ok != true ]]; then docker logs "$prefix-gw-$role" > "$attempt/gateway-$role.log" 2>&1; echo "gateway $role failed; see $attempt" >&2; exit 1; fi
 done
+if [[ $native_readback == 1 ]]; then
+  for role in tx gw-w gw-r; do
+    ready=false
+    for ((i=0;i<45;i++)); do
+      if [[ -s $attempt/trace/raw/$role-native-settings.json ]]; then ready=true;break;fi
+      sleep 1
+    done
+    [[ $ready == true ]] || { echo "Missing running-JVM native settings: $role" >&2;exit 1; }
+    cp "$attempt/trace/raw/$role-native-settings.json" "$attempt/config/$role-native-settings.json"
+  done
+  docker exec "$prefix-tx" bash -c 'for f in /opt/datomic/log/*.log; do [[ ! -f $f ]] || cat "$f"; done' > "$attempt/config/tx-startup.log"
+  python3 - "$attempt/config/tx-startup.log" "$encrypt_channel" <<'PY_CHANNEL'
+import re,sys
+seen=re.findall(r':encrypt-channel\s+(true|false)',open(sys.argv[1]).read())
+assert seen and set(seen)=={sys.argv[2]}, 'Transactor startup did not confirm the requested channel mode'
+PY_CHANNEL
+fi
 node "$repo/lab/trace/components.mjs" > "$attempt/trace-components.json"
 docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_min_duration_statement; SHOW track_io_timing; SHOW track_wal_io_timing;" > "$attempt/postgres-trace-settings.txt"
 docker inspect "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" > "$attempt/containers.json"

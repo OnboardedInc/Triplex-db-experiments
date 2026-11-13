@@ -17,7 +17,7 @@ if [[ $DX_CPUS_TX =~ ^[0-9]+$ && -z ${DX_TX_JAVA_OPTS:-} ]]; then
 fi
 export DX_CPUS_DRIVER=${DX_CPUS_DRIVER:-4,5,6,7} DX_READER_THREADS=${DX_READER_THREADS:-3} DX_DRIVER_MEMORY=${DX_DRIVER_MEMORY:-8g}
 export DX_TX_HEAP=3g DX_TX_MEMORY=4g DX_GW_WRITE_MEMORY=3g DX_GW_READ_MEMORY=3g DX_PG_MEMORY=2g
-export DX_OBJECT_CACHE=1g DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
+export DX_OBJECT_CACHE=${DX_OBJECT_CACHE:-1g} DX_INDEX_THRESHOLD=${DX_INDEX_THRESHOLD:-256m} DX_INDEX_MAX=${DX_INDEX_MAX:-1g}
 export DX_GW_JAVA_OPTS='-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g'
 # [DX-T1-4] Why: a same-session storage arm must reach Postgres and its recorded readback.
 # Rejected: overwriting an explicit durable candidate with an unconditional wrapper value.

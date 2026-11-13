@@ -4,7 +4,12 @@ import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
 import { bookendComparison, observedRunEnd } from "./anatomy.mjs";
+import { validateNativeSettings } from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
+const nativeKind = /^(quiet|channel|isolated|index)-(floor|256)$/.exec(kind);
+const readerDiagnostic = ["history-256", "writer-256"].includes(kind) || nativeKind?.[2] === "256";
+const summaryKind =
+  ["fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind) || !!nativeKind;
 if (
   ![
     "ablation",
@@ -15,13 +20,15 @@ if (
     "history-256",
     "seed-floor",
     "writer-256",
-  ].includes(kind)
+  ].includes(kind) &&
+  !nativeKind
 )
   throw Error("Expected ablation or cost");
 const session = path.join(base, prefix + "-session"),
   source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
-const arms =
-  kind === "ablation"
+const arms = nativeKind
+  ? ["baseline", "candidate", "candidate", "baseline"]
+  : kind === "ablation"
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
     : kind === "anatomy"
       ? ["off", "anatomy", "anatomy", "off"]
@@ -70,15 +77,9 @@ for (const [i, arm] of arms.entries()) {
   buildHashes = actualHashes;
   const effective = configuration({
     TRIPLEX_TRACE_LEVEL:
-      arm === "off"
-        ? "off"
-        : arm === "summary" ||
-            ["fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind)
-          ? "summary"
-          : "full",
+      arm === "off" ? "off" : arm === "summary" || summaryKind ? "summary" : "full",
     TRIPLEX_TRACE_SESSION: prefix,
-    ...(!["full", "summary"].includes(arm) &&
-    !["fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind)
+    ...(!["full", "summary"].includes(arm) && !summaryKind
       ? {
           TRIPLEX_TRACE_COMPONENTS:
             arm === "off"
@@ -92,8 +93,8 @@ for (const [i, arm] of arms.entries()) {
   if (
     bench.status !== "DONE" ||
     bench.seed?.seededSubjects !== 10000 ||
-    bench.config?.zeroReaders !== !["history-256", "writer-256"].includes(kind) ||
-    bench.config.matchDurationS !== (["history-256", "writer-256"].includes(kind) ? 300 : 200) ||
+    bench.config?.zeroReaders !== !readerDiagnostic ||
+    bench.config.matchDurationS !== (readerDiagnostic ? 300 : 200) ||
     bench.config.readPath !== "replica" ||
     !bench.config.strictRecordClocks ||
     typeof bench.trace?.digest !== "string"
@@ -120,7 +121,7 @@ for (const [i, arm] of arms.entries()) {
       bench.config.maxReaders !== 256)
   )
     throw Error("Replica history readback mismatch");
-  if (["history-256", "writer-256"].includes(kind)) {
+  if (readerDiagnostic) {
     // [DX-T1-4] Why: a retained-history trial needs reads after the first burst, not a pre-burst cache hit test.
     // Rejected: 20-second ladder levels (readers stop at 115 seconds, before the frozen burst starts).
     const phase = bench.phases.find((p) => p.name === "L256");
@@ -202,6 +203,50 @@ for (const [i, arm] of arms.entries()) {
           if (expand(b.allowed) !== "4,5,6,7") throw Error("Runtime thread shares writer core");
       }
     } else if (masks.length) throw Error("Baseline unexpectedly pinned");
+  }
+  if (nativeKind) {
+    const request = read(path.join(session, "native-request.json"));
+    const expected = { ...request.baseline };
+    if (arm === "candidate") {
+      if (nativeKind[1] === "quiet") expected.DX_QUIET_LOGS = "1";
+      if (nativeKind[1] === "channel") expected.DX_ENCRYPT_CHANNEL = "false";
+      if (nativeKind[1] === "index") expected.DX_INDEX_THRESHOLD = "512m";
+    }
+    const props = fs.readFileSync(path.join(dir, "config/sql.properties"), "utf8");
+    validateNativeSettings({
+      manifest,
+      rows: ["tx", "gw-w", "gw-r"].map((role) =>
+        read(path.join(dir, `config/${role}-native-settings.json`)),
+      ),
+      expected,
+      properties: props,
+    });
+    const channelStart = fs.readFileSync(path.join(dir, "config/tx-startup.log"), "utf8");
+    const channels = [...channelStart.matchAll(/:encrypt-channel\s+(true|false)/g)].map(
+      (m) => m[1],
+    );
+    if (!channels.length || channels.some((v) => v !== expected.DX_ENCRYPT_CHANNEL))
+      throw Error("Unconfirmed published channel mode");
+    const isolated = nativeKind[1] === "isolated" && arm === "candidate";
+    const masks = {
+      tx: "0,1",
+      pg: isolated ? "2" : "0",
+      "gw-w": isolated ? "3" : "1",
+      "gw-r": isolated ? "4" : "2,3",
+    };
+    for (const [role, cpus] of Object.entries(masks))
+      if (containers.find((c) => c.Name === `/${tag}-${role}`)?.HostConfig.CpusetCpus !== cpus)
+        throw Error("Native CPU placement mismatch");
+    if (driver.HostConfig.CpusetCpus !== (isolated ? "5,6,7" : "4,5,6,7"))
+      throw Error("Native driver CPU placement mismatch");
+    for (const role of ["tx", "gw-w", "gw-r"]) {
+      const c = containers.find((c) => c.Name === `/${tag}-${role}`);
+      const opts = c.Config.Env.find((v) =>
+        v.startsWith(role === "tx" ? "JAVA_OPTS=" : "DATOMIC_JAVA_OPTS="),
+      );
+      if (opts.includes("/dxh1/quiet-logback.xml") !== (expected.DX_QUIET_LOGS === "1"))
+        throw Error("Native JVM logback argument mismatch");
+    }
   }
   const envOf = (c) =>
     Object.fromEntries(
@@ -309,7 +354,7 @@ for (const [i, arm] of arms.entries()) {
       writes.push(w);
     }
   if (
-    writes.length !== (["history-256", "writer-256"].includes(kind) ? 3530 : 3420) ||
+    writes.length !== (readerDiagnostic ? 3530 : 3420) ||
     bench.trace.digest !== "aa8a7636ff027ab3" ||
     bench.writer.pendingAtEnd !== 0 ||
     bench.writer.expired !== 0
@@ -350,6 +395,7 @@ for (const [i, arm] of arms.entries()) {
     ladder256: bench.priorities?.P1?.ladder?.find((r) => r.readers === 256) ?? null,
     bandsAtL256: bench.priorities?.P2?.bandsAtL256 ?? null,
     scheduler256: summary.schedulerByPhase?.L256 ?? null,
+    nativeSettings: nativeKind ? read(path.join(dir, "config/tx-native-settings.json")) : null,
   });
 }
 if (
@@ -360,7 +406,8 @@ if (
 const controls = rows.filter(
     (r) =>
       r.arm ===
-      (["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind)
+      (["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind) ||
+      !!nativeKind
         ? "baseline"
         : "off"),
   ),
@@ -376,7 +423,7 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${["history-256", "writer-256"].includes(kind) ? "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
+  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${readerDiagnostic ? "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
   "",
   "| arm / level | p50 ms | p99 ms | control p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
   "| --- | ---: | ---: | --- | --- | --- | --- |",
@@ -390,20 +437,20 @@ const text = [
 ];
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 const result = {
-  comparison: ["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(
-    kind,
-  )
-    ? {
-        p50Ms: bookendComparison(
-          controls.map((r) => r.p50Ms),
-          candidates.map((r) => r.p50Ms),
-        ),
-        p99Ms: bookendComparison(
-          controls.map((r) => r.p99Ms),
-          candidates.map((r) => r.p99Ms),
-        ),
-      }
-    : null,
+  comparison:
+    ["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind) ||
+    !!nativeKind
+      ? {
+          p50Ms: bookendComparison(
+            controls.map((r) => r.p50Ms),
+            candidates.map((r) => r.p50Ms),
+          ),
+          p99Ms: bookendComparison(
+            controls.map((r) => r.p99Ms),
+            candidates.map((r) => r.p99Ms),
+          ),
+        }
+      : null,
   bookendDriftP50Ms: Math.abs(controls[0].p50Ms - controls.at(-1).p50Ms),
   source,
   session: prefix,
