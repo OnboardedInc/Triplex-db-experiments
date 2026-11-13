@@ -271,6 +271,8 @@
     "../lab/scenarios/run.mjs",
     "../lab/scenarios/v2/cases.mjs",
     "../lab/trace/ablation.mjs",
+    "../lab/trace/host-gate.mjs",
+    "../lab/trace/host-gate.test.mjs",
     "../lab/trace/study.mjs",
     "../lab/trace/pack-oracle.mjs",
     "../lab/trace/components.mjs",
