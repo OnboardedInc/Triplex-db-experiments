@@ -32,7 +32,7 @@ export DX_READ_PATH=replica DX_STRICT_RECORD_CLOCKS=1
 args=("$@")
 for setting in replica-history-mib replica-fallback-thread seed-batch-facts; do
   present=false
-  for argument in "${args[@]}"; do [[ $argument != --$setting && $argument != --$setting=* ]] || present=true; done
+  for argument in ${args[@]+"${args[@]}"}; do [[ $argument != --$setting && $argument != --$setting=* ]] || present=true; done
   if [[ $present == false ]]; then
     case "$setting" in
       replica-history-mib) args+=(--replica-history-mib 192);;
