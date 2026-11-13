@@ -14,8 +14,9 @@ Constraints every answer must respect: exactness and durability are the floor; t
 1. **What is hard.** P2 asks for commit p50 at most 10 ms. With zero readers and tracing off, a commit is 13.0 ms and the
    client's transact call (client, gateway, transactor, Postgres sync, and back) is 11.4 ms of it (DX-T1 part 3,
    `t1/REPORT-3.md` on `exp/DX-T1-tracing`). The best total ever measured on this Mac was 9.1 ms (2026-11-10, quiet host).
-2. **Evidence.** TypeScript outside the call is about 1.2 ms. The inside of the call is not split yet (DX-T1 part 4 is doing
-   that, including a raw fsync test of the VM disk).
+2. **Evidence.** TypeScript outside the call is about 1.2 ms. Inside the call (DX-RE1, H6): send leg 1.9 ms, transactor
+   4.1 ms, acknowledgement leg 2.0 ms at p50 in a traced run, with about 3.1 Postgres commits per transaction. DX-T1 part 4
+   is measuring the same anatomy untraced, with a raw fsync test of the VM disk.
 3. **Tried.** Transactor GC settings (no gain), hints (slower), strict clocks (cost nothing).
 4. **Directions not tried.**
    a. Fewer storage syncs per commit: several subjects' commits in one Datomic transaction when they arrive together, with
@@ -68,21 +69,32 @@ Constraints every answer must respect: exactness and durability are the floor; t
 3. **Directions not tried.** Cache budgets sized to the population; a commit path whose cost does not grow with the number
    of subjects (find what grows: index depth, cache misses, segment fetches); activation that yields to commits.
 
-## H6. The transactor is closed source: reverse engineer it (Sam, 2026-11-13)
+## H6. The transactor is closed source: reverse engineered on 2026-11-13 (Sam's direction)
 
-1. **What is hard.** The largest part of a commit is a wait on a process whose source we do not have.
-2. **Evidence.** Its native logs and metrics callback cost 3.1 ms per commit when on; Flight Recorder costs nothing
-   measurable but shows only JVM events.
-3. **Sam's direction:** "can we reverse engineer it to understand what's happening? ... If we can reverse engineer how it
-   works from the code, then we should be able to better reason about how to work with it, like how to better write stuff
-   that will work well on the transactor."
-4. **Plan (agent DX-RE1, queued behind DX-T1 part 4).** Confirm the distribution's licence permits it. Decompile the
-   transactor and peer jars and read the path of one transaction: how the peer submits it, the transactor's queue and
-   pipeline, what is written to storage and in how many statements and syncs, when the acknowledgement is sent, what
-   batches with what, how indexing and garbage interact with the commit path, and which settings change any of that. Match
-   the static reading against sampled stacks of the running transactor during commits. Output: our own notes, with class
-   and method names, and a list of ways to write so the transactor does less work per commit. Decompiled code stays out of
+1. **Done.** Agent DX-RE1 (Opus, extra-high effort, with the `reverse-engineer-anything` method) read the transactor from
+   its jar. The distribution's licence is Apache 2.0. Notes: `lab/experiments/EXP-DX1/re1/TRANSACTOR-NOTES.md`,
+   `WRITE-BETTER.md` and `REPORT.md` on branch `exp/DX-RE1-transactor` (`72785052`, pushed). Decompiled code is kept out of
    the repository.
+2. **How one transaction flows.** The peer only queues and sends (one message over TLS). The transactor applies one
+   transaction at a time on a `processor` thread: our transaction function, tempids, then index inserts with a lookup per
+   datom on an existing entity. It then serialises, and a `writer` thread writes whatever is already queued, with no wait
+   to gather more (its only group commit; 98% of writes carry one transaction). The durable write is two autocommitted
+   statements in a row, an insert and an update. The acknowledgement goes out only after the write. A commit crosses about
+   ten threads.
+3. **Storage cost.** At least 2 Postgres commits per transaction, observed about 3.1: each of our transactions adds about
+   12 KB of log, the log tail has a fixed 54,000-byte limit, so about every fourth transaction triggers a tail reset and
+   about three log-segment inserts ahead of the next commit.
+4. **Where the 9 ms went in a traced run (p50):** send leg 1.9 ms, inside the transactor 4.1 ms (apply 1.15, of which our
+   commit function 0.49; the two-statement write 1.07), acknowledgement leg 2.0 ms. 13% of commits wait about 5.5 ms on
+   Postgres reads during apply, 26% in the 2 s after an index adoption.
+5. **Ways to write better, ranked in `WRITE-BETTER.md`:** (1) take the five synchronous INFO log lines per commit off the
+   commit path (never removed in any "off" run); (2) CPUs for the transactor and Postgres that no other container uses;
+   (3) make `:triplex/commit` read less at the serial point; (4) TLS off between peer and transactor inside the VM;
+   (5) fewer bytes per transaction, so fewer tail resets; (6) fewer index adoptions; (7) combine queued commits into one
+   Datomic transaction (high risk: atomicity across commits); (8) measure with `:io-context`.
+6. **Still unknown.** The CPU split inside the send and acknowledgement legs; how long an index adoption blocks the
+   processor; what default logging costs untraced; which attributes make up the 12 KB; Postgres flush time per commit. Live
+   sampling of the running transactor was not done.
 
 ## H7. The test bench moves results more than the code does
 
