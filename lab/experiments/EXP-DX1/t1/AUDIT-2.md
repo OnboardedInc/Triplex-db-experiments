@@ -15,3 +15,8 @@ No acceptance file or pin was edited. Package build/typecheck and normal tests: 
 The independent queue-partition and component-configuration tests pass. Bench typecheck still has pre-existing
 errors in audit-traffic, hs01-seed and round2; no new diagnostic names a changed file.
 No new dependency or image. Raw evidence remains outside Git. Full measurements and final status follow in REPORT-2.md.
+
+The full 1k `p2-smoke-a` passed the oracle (53 reads / 3,278 entity queries), all 89 commits met scope coverage,
+and gateway preflight passed 3 tests / 14 assertions. Scheduler probe found the guest counter disabled;
+`scheduler-control.sh` now saves, enables and rereads it under the DX-T1 lease and restores it before release.
+The saved state is exclusive-created and restoration failure retains the lease. All ablation arms share this setting.

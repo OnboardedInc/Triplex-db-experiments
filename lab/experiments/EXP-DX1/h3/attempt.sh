@@ -131,6 +131,7 @@ cleanup() {
       if [[ -f $out/driver/$file ]]; then echo "DX-R3 raw-output $prefix/driver/$file"; cat "$out/driver/$file"; echo; fi
     done
   fi
+  if [[ -f $out/scheduler-state.json ]]; then bash lab/trace/scheduler-control.sh restore "$prefix" "$out" || { echo "Scheduler restore failed; retaining lease" >&2; exit 1; }; fi
   if [[ -n $operational ]]; then rm -rf "$operational"; fi
   if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
   if [[ -f $out/trace-run.json ]]; then
@@ -176,6 +177,8 @@ if [[ $prefix == tx2-dxr3-* && -z ${DX_R3_PAIR_LEASE_PID:-} ]]; then
 fi
 run_stage() { "$@" & child=$!; wait "$child"; child=; }
 check_resources admitted
+eval "$(node lab/trace/components.mjs --shell)"
+if [[ $prefix == tx2-dxt1-* && ${TRIPLEX_TRACE_SYSTEM:-0} == 1 ]]; then bash lab/trace/scheduler-control.sh enable "$prefix" "$out"; fi
 if [[ $kind == functional ]]; then
   export DX_TX_HEAP=1g DX_TX_MEMORY=1500m DX_GW_WRITE_HEAP=768m DX_GW_READ_HEAP=768m TX2_ENGINE_CPUS=1
   cpus=(--cpus-tx 6 --cpus-pg 6 --cpus-gw-write 6 --cpus-gw-read 6)
@@ -205,7 +208,6 @@ if [[ $prefix == tx2-dxr3-* ]]; then
   extra+=(--gateway-src "$gateway_source" --codec-spec "$PWD/packages/datomic/src/codec-spec.json")
 fi
 export TRIPLEX_TRACE_RUN=$prefix TRIPLEX_TRACE_SLOT=$prefix TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)
-eval "$(node lab/trace/components.mjs --shell)"
 node --input-type=module - "$out/trace-run.json" <<'TRACE_MANIFEST'
 import fs from "node:fs";import {configuration} from "./lab/trace/components.mjs";
 fs.writeFileSync(process.argv[2],JSON.stringify({...configuration(),tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,startedAt:Date.now()})+"\n");
