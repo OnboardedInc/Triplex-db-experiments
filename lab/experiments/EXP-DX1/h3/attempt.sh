@@ -71,7 +71,7 @@ git rev-parse HEAD > "$out/head.txt"
 if [[ $prefix != tx2-dxr3-* ]]; then
 python3 - "$out" <<'PY2'
 import subprocess,pathlib,sys,hashlib,json
-files=subprocess.check_output(['git','ls-files','lab/bench','lab/experiments/EXP-DX1/stack','lab/experiments/EXP-DX1/h3','lab/experiments/EXP-DX1/h4','packages/datomic','packages/core','pnpm-lock.yaml'],text=True).splitlines()
+files=subprocess.check_output(['git','ls-files','lab/bench','lab/experiments/EXP-DX1/stack','lab/experiments/EXP-DX1/h3','lab/experiments/EXP-DX1/h4','packages/datomic','packages/core','lab/trace','lab/experiments/EXP-DX1/t1/*.sh','pnpm-lock.yaml'],text=True).splitlines()
 files += [str(p) for d in ['datomic','core','host','qualification','w0','xtdb','qlever','sql'] for p in pathlib.Path('packages/'+d+'/dist').rglob('*') if p.is_file()]
 rows={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in sorted(set(files)) if pathlib.Path(p).is_file()}
 pathlib.Path(sys.argv[1]+'/source-build-hashes.json').write_text(json.dumps(rows,indent=2)+'\n')
@@ -99,9 +99,12 @@ cleanup() {
   done
   if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
     touch "$out/trace/raw/.finish"
+    jfr_roles=(); [[ ${TRIPLEX_TRACE_TX_JFR:-0} != 1 ]] || jfr_roles+=(tx)
+    [[ ${TRIPLEX_TRACE_GW_JFR:-0} != 1 ]] || jfr_roles+=(gw-w gw-r)
     for ((jfr_wait=0;jfr_wait<90;jfr_wait++)); do
       [[ -s $out/driver/ns-report.json ]] || break
-      [[ ! -f $out/trace/raw/gw-w.jfr-complete.jsonl || ! -f $out/trace/raw/gw-r.jfr-complete.jsonl || ! -f $out/trace/raw/tx.jfr-complete.jsonl ]] || break
+      jfr_pending=false; for jfr_role in ${jfr_roles[@]+"${jfr_roles[@]}"}; do [[ -f $out/trace/raw/$jfr_role.jfr-complete.jsonl ]] || jfr_pending=true; done
+      [[ $jfr_pending == true ]] || break
       sleep 1
     done
     for role in gw-w gw-r tx; do
@@ -202,7 +205,11 @@ if [[ $prefix == tx2-dxr3-* ]]; then
   extra+=(--gateway-src "$gateway_source" --codec-spec "$PWD/packages/datomic/src/codec-spec.json")
 fi
 export TRIPLEX_TRACE_RUN=$prefix TRIPLEX_TRACE_SLOT=$prefix TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)
-node -e 'const fs=require("fs");fs.writeFileSync(process.argv[1],JSON.stringify({tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,level:process.env.TRIPLEX_TRACE_LEVEL,requiredJfr:process.env.TRIPLEX_TRACE_LEVEL==="off"?[]:["gw-w","gw-r","tx"],requireSystem:process.env.TRIPLEX_TRACE_LEVEL!=="off",startedAt:Date.now()})+"\n")' "$out/trace-run.json"
+eval "$(node lab/trace/components.mjs --shell)"
+node --input-type=module - "$out/trace-run.json" <<'TRACE_MANIFEST'
+import fs from "node:fs";import {configuration} from "./lab/trace/components.mjs";
+fs.writeFileSync(process.argv[2],JSON.stringify({...configuration(),tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,startedAt:Date.now()})+"\n");
+TRACE_MANIFEST
 run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
 # [DX-R3-P9] Why: q6 comparisons require the same live guest boot parameters, not a remembered VM setting.
 # Rejected: assuming nohlt survives an orchestrator restart.
@@ -210,8 +217,10 @@ if [[ $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ]]; then
   docker exec "$prefix-tx" cat /proc/cmdline > "$out/guest-kernel.txt"
   if [[ $prefix == tx2-dxt1-* ]]; then python3 -c 'import sys; assert "nohlt" in open(sys.argv[1]).read().split(), "guest nohlt condition absent"' "$out/guest-kernel.txt"; fi
 fi
-if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
+if [[ $TRIPLEX_TRACE_SYSTEM == 1 ]]; then
   node lab/trace/system-sampler.mjs "$out/trace/raw" & trace_host=$!
+fi
+if [[ $TRIPLEX_TRACE_POSTGRES == 1 ]]; then
   docker exec -i "$prefix-pg" psql -X -Atq -U postgres -d datomic < lab/trace/postgres.sql > "$out/trace/raw/postgres-samples.log" 2> "$out/trace/raw/postgres-sample-errors.txt" & trace_pg=$!
 fi
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \

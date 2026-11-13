@@ -9,7 +9,7 @@ if(!args.includes('--read-path')) args.push('--read-path',process.env.DX_READ_PA
 const debug=process.env.TRIPLEX_TRACE_DEBUG==='1'?['--inspect=0.0.0.0:8508']:[];
 const child=spawn('node',[...debug,'--experimental-strip-types','lab/bench/driver.ts',...args],{stdio:'inherit'});
 let active=true;
-const system = process.env.TRIPLEX_TRACE_LEVEL && process.env.TRIPLEX_TRACE_LEVEL !== 'off'
+const system = process.env.TRIPLEX_TRACE_SYSTEM === '1' || (process.env.TRIPLEX_TRACE_LEVEL && process.env.TRIPLEX_TRACE_LEVEL !== 'off')
   ? spawn('node',['lab/trace/system-sampler.mjs','/driver/trace/raw'],{stdio:'inherit'}) : null;
 async function sample() {
   const row={at:new Date().toISOString(),peers:{}};

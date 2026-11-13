@@ -8,13 +8,9 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "allowImportingTsExtensions": true,
-    "lib": [
-      "ESNext"
-    ]
+    "lib": ["ESNext"]
   },
   "files": [
     "../examples/config-explorer/smoke.mjs",
@@ -273,6 +269,9 @@
     "../lab/scenarios/lib/triplex.mjs",
     "../lab/scenarios/run.mjs",
     "../lab/scenarios/v2/cases.mjs",
+    "../lab/trace/ablation.mjs",
+    "../lab/trace/components.mjs",
+    "../lab/trace/components.test.mjs",
     "../lab/trace/cost.mjs",
     "../lab/trace/finalize.mjs",
     "../lab/trace/report.mjs",

@@ -14,6 +14,13 @@ export interface Job {
   readonly key: number;
   readonly scheduledAt: number;
 }
+export interface QueueInterval<J> {
+  cause: "scheduler-late" | "subject" | "slot" | "scheduler-dispatch";
+  start: number;
+  end: number;
+  inFlight: number;
+  behind?: J;
+}
 export interface JobResult<J> {
   readonly job: J;
   readonly startedAt: number;
@@ -23,6 +30,7 @@ export interface JobResult<J> {
   /** startedAt - scheduledAt */
   readonly waitMs: number;
   readonly expired: boolean;
+  readonly queue?: QueueInterval<J>[];
 }
 
 export interface SchedulerOptions<J> {
@@ -35,6 +43,8 @@ export interface SchedulerOptions<J> {
   onOffer?: (job: J) => void;
   /** Stop offering jobs scheduled at or after this time. */
   until?: number;
+  /** [DX-T1-2] Why: observe queue transitions without changing dispatch or deadlines. Rejected: infer waiting from total latency. */
+  observeQueue?: boolean;
 }
 
 export class OpenLoopScheduler<J extends Job> {
@@ -42,6 +52,9 @@ export class OpenLoopScheduler<J extends Job> {
   private busy = new Set<number>();
   private ready: number[] = [];
   private inFlight = 0;
+  private active = new Map<number, J>();
+  private queueInfo = new Map<J, { offeredAt: number; readyAt?: number; behind?: J }>();
+  private flightChanges: { at: number; count: number }[] = [];
   private timer: ReturnType<typeof setTimeout> | null = null;
   private next = 0;
   private stopped = false;
@@ -79,7 +92,12 @@ export class OpenLoopScheduler<J extends Job> {
   upcoming(horizonMs: number, max = 64): J[] {
     const limit = this.opts.now() + horizonMs;
     const out: J[] = [];
-    for (let k = this.next; k < this.jobs.length && out.length < max && this.jobs[k]!.scheduledAt <= limit; k++) out.push(this.jobs[k]!);
+    for (
+      let k = this.next;
+      k < this.jobs.length && out.length < max && this.jobs[k]!.scheduledAt <= limit;
+      k++
+    )
+      out.push(this.jobs[k]!);
     return out;
   }
   /** Offer an overlay job now (its scheduledAt is its own offer time); it joins its subject's serial queue. */
@@ -91,6 +109,63 @@ export class OpenLoopScheduler<J extends Job> {
     (this.opts as { until?: number }).until = t;
   }
 
+  snapshot() {
+    const now = this.opts.now();
+    return {
+      at: now,
+      inFlight: this.inFlight,
+      capacity: this.opts.maxInFlight,
+      active: [...this.active.values()],
+      waiting: [...this.queues.values()].flat().filter((j) => now - j.scheduledAt >= 20),
+    };
+  }
+  private queueOf(job: J, startedAt: number): QueueInterval<J>[] | undefined {
+    if (!this.opts.observeQueue) return;
+    const info = this.queueInfo.get(job);
+    this.queueInfo.delete(job);
+    if (!info) return;
+    const readyAt = info.readyAt ?? startedAt,
+      result: QueueInterval<J>[] = [];
+    const add = (
+      cause: QueueInterval<J>["cause"],
+      start: number,
+      end: number,
+      inFlight: number,
+      behind?: J,
+    ) => {
+      if (end > start) result.push({ cause, start, end, inFlight, ...(behind ? { behind } : {}) });
+    };
+    const countAt = (at: number) => {
+      let low = 0,
+        high = this.flightChanges.length;
+      while (low < high) {
+        const mid = (low + high) >>> 1;
+        if (this.flightChanges[mid]!.at <= at) low = mid + 1;
+        else high = mid;
+      }
+      return this.flightChanges[low - 1]?.count ?? 0;
+    };
+    add("scheduler-late", job.scheduledAt, info.offeredAt, countAt(info.offeredAt));
+    add("subject", info.offeredAt, readyAt, countAt(info.offeredAt), info.behind);
+    let lo = 0,
+      hi = this.flightChanges.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (this.flightChanges[mid]!.at <= readyAt) lo = mid + 1;
+      else hi = mid;
+    }
+    let at = readyAt,
+      count = this.flightChanges[lo - 1]?.count ?? 0;
+    for (let i = lo; i < this.flightChanges.length; i++) {
+      const change = this.flightChanges[i]!;
+      if (change.at >= startedAt) break;
+      add(count >= this.opts.maxInFlight ? "slot" : "scheduler-dispatch", at, change.at, count);
+      at = change.at;
+      count = change.count;
+    }
+    add(count >= this.opts.maxInFlight ? "slot" : "scheduler-dispatch", at, startedAt, count);
+    return result;
+  }
   private tick = () => {
     this.timer = null;
     if (this.stopped) return;
@@ -108,8 +183,13 @@ export class OpenLoopScheduler<J extends Job> {
 
   private offer(job: J) {
     this.offered++;
+    const offeredAt = this.opts.now();
     this.opts.onOffer?.(job);
     const q = this.queues.get(job.key);
+    if (this.opts.observeQueue) {
+      const behind = q?.at(-1) ?? this.active.get(job.key);
+      this.queueInfo.set(job, { offeredAt, ...(behind ? { behind } : { readyAt: offeredAt }) });
+    }
     if (q) q.push(job);
     else this.queues.set(job.key, [job]);
     if (!this.busy.has(job.key)) {
@@ -135,13 +215,24 @@ export class OpenLoopScheduler<J extends Job> {
       return;
     }
     const startedAt = this.opts.now();
+    const queue = this.queueOf(job, startedAt);
     if (startedAt - job.scheduledAt > this.opts.deadlineMs) {
       this.expired++;
-      this.opts.onDone({ job, startedAt, finishedAt: startedAt, latencyMs: startedAt - job.scheduledAt, waitMs: startedAt - job.scheduledAt, expired: true });
+      this.opts.onDone({
+        job,
+        startedAt,
+        finishedAt: startedAt,
+        latencyMs: startedAt - job.scheduledAt,
+        waitMs: startedAt - job.scheduledAt,
+        expired: true,
+        queue,
+      });
       this.runNext(key);
       return;
     }
     this.inFlight++;
+    this.active.set(key, job);
+    if (this.opts.observeQueue) this.flightChanges.push({ at: startedAt, count: this.inFlight });
     this.maxInFlightSeen = Math.max(this.maxInFlightSeen, this.inFlight);
     this.opts
       .exec(job)
@@ -149,8 +240,23 @@ export class OpenLoopScheduler<J extends Job> {
       .then(() => {
         const finishedAt = this.opts.now();
         this.inFlight--;
+        this.active.delete(key);
+        if (this.opts.observeQueue) {
+          this.flightChanges.push({ at: finishedAt, count: this.inFlight });
+          const next = q?.[0],
+            info = next && this.queueInfo.get(next);
+          if (info) info.readyAt = finishedAt;
+        }
         this.completed++;
-        this.opts.onDone({ job, startedAt, finishedAt, latencyMs: finishedAt - job.scheduledAt, waitMs: startedAt - job.scheduledAt, expired: false });
+        this.opts.onDone({
+          job,
+          startedAt,
+          finishedAt,
+          latencyMs: finishedAt - job.scheduledAt,
+          waitMs: startedAt - job.scheduledAt,
+          expired: false,
+          queue,
+        });
         if (q && q.length) this.ready.push(key);
         else {
           this.queues.delete(key);

@@ -29,6 +29,11 @@ cgroups=$(docker run --rm --pull never --name "$prefix-cgroups" --cgroupns host 
 const fs=require("fs"); const rows=process.argv[1].trim().split("\n");
 function find(root,id,depth=0) { if(depth>5)return; for(const d of fs.readdirSync(root,{withFileTypes:true})) {if(!d.isDirectory())continue; const p=root+"/"+d.name;if(d.name.includes(id)&&fs.existsSync(p+"/cpu.stat"))return p;const r=find(p,id,depth+1);if(r)return r;}}
 console.log(rows.map(row=>{const [name,id]=row.split("=");const p=find("/sys/fs/cgroup",id);if(!p)throw Error("cgroup missing "+name);return name.replace(/^\//,"")+"="+p}).join(","));' "$ids")
+# [DX-T1-2] Why: prove scheduler counters and affinity tools on this guest, never infer support from host APIs.
+# Rejected: reporting a disabled run-queue counter as measured zero wait.
+docker run --rm --pull never --name "$prefix-scheduler-probe" --network none node:22.23.2-bookworm-slim node -e '
+const fs=require("fs");const read=p=>{try{return fs.readFileSync(p,"utf8")}catch{return null}};
+console.log(JSON.stringify({at:Date.now(),enabled:read("/proc/sys/kernel/sched_schedstats"),sample:read("/proc/thread-self/schedstat"),taskset:fs.existsSync("/usr/bin/taskset"),kernel:read("/proc/version")}));' > "$evidence/scheduler-capability.json"
 cleanup() {
   rc=$?
   trap - EXIT
@@ -46,6 +51,7 @@ docker create --pull never --name "$prefix-driver" --network "$prefix-net" --cpu
   --cgroupns host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v "$repo:$repo" \
   -v /Users/sam/Claude/Projects/triplex-db-2/evidence:/Users/sam/Claude/Projects/triplex-db-2/evidence \
   -v "$prefix-driver:/driver" -v "$prefix-driver:$repo/runs/DX-H3-vm" -w "$repo" \
+  -e "TRIPLEX_TRACE_NODE=${TRIPLEX_TRACE_NODE:-1}" -e "TRIPLEX_TRACE_SESSION=${TRIPLEX_TRACE_SESSION:-}" -e "TRIPLEX_TRACE_SYSTEM=${TRIPLEX_TRACE_SYSTEM:-0}" \
   -e "TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-off}" -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git -C "$repo" rev-parse HEAD)" -e TRIPLEX_TRACE_DIR=/driver/trace/raw -e TRIPLEX_TRACE_PROCESS=node -e "TRIPLEX_TRACE_DEBUG=${TRIPLEX_TRACE_DEBUG:-0}" \
   -e "TX2_ORACLE_BRIDGE=$evidence/oracle-bridge" \
   -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" \

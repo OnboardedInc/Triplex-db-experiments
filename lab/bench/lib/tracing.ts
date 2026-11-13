@@ -15,5 +15,7 @@ export const {
   captureTraceContext,
   continueTrace,
   flushTracing,
+  currentTraceStep,
+  traceResource,
 } = api;
 export type Trace = ReturnType<typeof api.beginTrace>;

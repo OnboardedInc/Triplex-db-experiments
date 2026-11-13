@@ -1,10 +1,48 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomBytes } from "node:crypto";
-import { mkdirSync, createWriteStream, readFileSync } from "node:fs";
+import { mkdirSync, createWriteStream, readFileSync, openSync, readSync } from "node:fs";
 import { join } from "node:path";
 import { performance, PerformanceObserver, monitorEventLoopDelay } from "node:perf_hooks";
 import { threadId } from "node:worker_threads";
 import { createGzip } from "node:zlib";
+
+export interface SchedulerSnapshot {
+  at: number;
+  runtimeNs: number;
+  runqueueNs: number;
+  switches: number;
+  waitEnabled: boolean;
+}
+export function parseSchedulerStats(
+  value: string,
+): Omit<SchedulerSnapshot, "at" | "waitEnabled"> | undefined {
+  const fields = value.trim().split(/\s+/).map(Number);
+  if (fields.length !== 3 || !fields.every((v) => Number.isSafeInteger(v) && v >= 0)) return;
+  return { runtimeNs: fields[0]!, runqueueNs: fields[1]!, switches: fields[2]! };
+}
+let fd: number | undefined;
+let unavailable = process.platform !== "linux";
+let waitEnabled = false;
+const buffer = Buffer.alloc(128);
+// [DX-T1-2] Why: a persistent per-isolate descriptor measures this Linux thread at boundaries without reopening procfs.
+// Rejected: process.cpuUsage (all threads), clock ticks (too coarse), or calling a zero disabled wait counter zero contention.
+export function readSchedulerSnapshot(): SchedulerSnapshot | undefined {
+  if (unavailable) return;
+  try {
+    if (fd === undefined) {
+      fd = openSync("/proc/thread-self/schedstat", "r");
+      waitEnabled = readFileSync("/proc/sys/kernel/sched_schedstats", "utf8").trim() === "1";
+    }
+    const n = readSync(fd, buffer, 0, buffer.length, 0);
+    const counters = parseSchedulerStats(buffer.toString("utf8", 0, n));
+    return counters
+      ? { ...counters, waitEnabled, at: performance.timeOrigin + performance.now() }
+      : undefined;
+  } catch {
+    unavailable = true;
+    return;
+  }
+}
 
 export type TraceLevel = "off" | "summary" | "full";
 export type TraceAttributes = Record<string, string | number | boolean | null>;
@@ -16,6 +54,9 @@ export interface TraceSpan {
   start: number;
   end: number;
   attributes?: TraceAttributes;
+  synchronous?: boolean;
+  schedulerStart?: SchedulerSnapshot | undefined;
+  schedulerEnd?: SchedulerSnapshot | undefined;
 }
 export interface RequestTrace {
   schema: "triplex.trace.v1";
@@ -35,10 +76,14 @@ export interface RequestTrace {
   spans: TraceSpan[];
   attributes: TraceAttributes;
   truncated: number;
+  schedulerStart?: SchedulerSnapshot | undefined;
+  schedulerEnd?: SchedulerSnapshot | undefined;
 }
 type Context = { trace: RequestTrace; span: string };
 const context = new AsyncLocalStorage<Context>();
-const configured = process.env["TRIPLEX_TRACE_LEVEL"] ?? "off";
+const liveSpans = new WeakMap<RequestTrace, Map<string, string>>();
+const configured =
+  process.env["TRIPLEX_TRACE_NODE"] === "0" ? "off" : (process.env["TRIPLEX_TRACE_LEVEL"] ?? "off");
 if (!["off", "summary", "full"].includes(configured))
   throw new TypeError("TRIPLEX_TRACE_LEVEL must be off, summary or full");
 export const traceLevel = configured as TraceLevel;
@@ -131,6 +176,7 @@ export function beginTrace(
     spans: [],
     attributes,
     truncated: 0,
+    ...(kind === "commit" && threadId === 0 ? { schedulerStart: readSchedulerSnapshot() } : {}),
   };
 }
 export interface WireTraceContext {
@@ -191,8 +237,14 @@ export function beginSpan(
 ): TraceSpan | undefined {
   const active = context.getStore();
   if (!active || traceLevel === "off") return;
+  const id = spanId();
+  if (active.trace.kind === "commit" || active.trace.attributes["logicalKind"] === "commit") {
+    const spans = liveSpans.get(active.trace) ?? new Map<string, string>();
+    spans.set(id, name);
+    liveSpans.set(active.trace, spans);
+  }
   return {
-    id: spanId(),
+    id,
     parent: active.span,
     name,
     layer,
@@ -215,6 +267,7 @@ export function endSpan(span: TraceSpan | undefined, attributes?: TraceAttribute
   const trace = currentTrace();
   if (!span || !trace) return;
   span.end = traceNow();
+  liveSpans.get(trace)?.delete(span.id);
   if (attributes) span.attributes = { ...span.attributes, ...attributes };
   if (
     traceLevel === "summary" &&
@@ -237,9 +290,16 @@ export function traceSync<A>(
   attributes?: TraceAttributes,
 ): A {
   const span = beginSpan(name, layer, attributes);
+  if (span) {
+    span.synchronous = true;
+    const trace = currentTrace();
+    if (trace?.kind === "commit" || trace?.attributes["logicalKind"] === "commit")
+      span.schedulerStart = readSchedulerSnapshot();
+  }
   try {
     return inSpan(span, run);
   } finally {
+    if (span?.schedulerStart) span.schedulerEnd = readSchedulerSnapshot();
     endSpan(span);
     // [DX-T1] Why: long synchronous work must be visible to other requests queued on this same isolate.
     // Rejected: showing a queue stall without the other request's blocking stack scope.
@@ -305,6 +365,18 @@ export function traceInterval(
       ...(attributes ? { attributes } : {}),
     });
 }
+// [DX-T1-2] Why: record the actual in-flight steps during long waits, rather than reconstruct a stage from its eventual result.
+// Rejected: treating a later completed span as the stage observed while its dependent job was waiting.
+export function currentTraceStep(trace: RequestTrace | undefined): string {
+  if (!trace) return "untraced";
+  return (
+    [...(liveSpans.get(trace)?.values() ?? [])].at(-1) ??
+    (trace.end > trace.start ? "completed" : trace.name)
+  );
+}
+export function traceResource(name: string, fields: Record<string, unknown>): void {
+  emit({ type: "resource", name, at: traceNow(), ...fields });
+}
 export function traceparent(span?: TraceSpan): string {
   const active = context.getStore();
   // [DX-T1] Why: even level off preserves W3C wire propagation for another service's tracing.
@@ -316,6 +388,7 @@ export function finishTrace(
   attributes: TraceAttributes = {},
 ): void {
   if (!trace) return;
+  if (trace.schedulerStart) trace.schedulerEnd = readSchedulerSnapshot();
   trace.end = traceNow();
   Object.assign(trace.attributes, attributes);
   const duration = trace.end - trace.start;

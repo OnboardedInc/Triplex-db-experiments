@@ -7,7 +7,9 @@
 ;; Rejected: logging payloads or inferring transactor execution from a peer future's wall time.
 (def level (or (System/getenv "TRIPLEX_TRACE_LEVEL") "off"))
 (when-not (#{"off" "summary" "full"} level) (throw (IllegalArgumentException. "Invalid TRIPLEX_TRACE_LEVEL")))
-(def enabled (not= level "off"))
+(def enabled (and (not= level "off") (not= "0" (System/getenv "TRIPLEX_TRACE_GATEWAY"))))
+(def jfr-enabled (if-let [v (System/getenv "TRIPLEX_TRACE_JFR")] (= v "1") enabled))
+(def native-enabled (= "1" (System/getenv "TRIPLEX_TRACE_NATIVE_LOGS")))
 (def ^:dynamic *request* nil)
 (def ^:dynamic *parent* nil)
 (def ids (AtomicLong. (.getMostSignificantBits (UUID/randomUUID))))
@@ -30,11 +32,11 @@
          (locking w (.write w (str (json/write-str (merge identity-fields row)) "\n"))))
        (catch Exception _ (binding [*out* *err*] (println "Triplex trace output failed; evidence incomplete")))))
 (defn flush! [] (when (realized? writer) (when-let [^BufferedWriter w @writer] (locking w (.flush w)))))
-(when enabled
-  (jfr/install! (:process identity-fields) identity-fields)
+(when (or enabled jfr-enabled native-enabled)
+  (when jfr-enabled (jfr/install! (:process identity-fields) identity-fields))
   (let [t (Thread. ^Runnable (fn [] (while true (Thread/sleep 1000) (flush!)
         (when-let [dir (System/getenv "TRIPLEX_TRACE_DIR")]
-          (when (.exists (File. (str dir "/.finish"))) (jfr/finish! (:process identity-fields) identity-fields))))) "triplex-trace-flush")]
+          (when (and jfr-enabled (.exists (File. (str dir "/.finish")))) (jfr/finish! (:process identity-fields) identity-fields))))) "triplex-trace-flush")]
     (.setDaemon t true) (.start t))
   (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable flush!)))
 (defn parse-parent [value]
@@ -92,4 +94,4 @@
           (catch Throwable error (attribute! :failed true) (finish! state) (throw error)))))))
 ;; Official callback accepts unknown numeric/map metrics; no credentials or database names are recorded.
 (defn metrics [metrics]
-  (emit! {:type "metrics" :at (clock) :metrics metrics}))
+  (when native-enabled (emit! {:type "metrics" :at (clock) :metrics metrics})))

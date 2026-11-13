@@ -172,6 +172,34 @@ export function traceChildren(root, candidates) {
   }
   return found;
 }
+// [DX-T1-2] Why: synchronous scopes cannot overlap another JS request on the same isolate; nested counters are unioned.
+// Rejected: assigning an async request's whole-thread CPU delta exclusively to that request.
+export function synchronousCpu(root) {
+  const scopes = root.spans.filter((s) => s.synchronous && s.schedulerStart && s.schedulerEnd);
+  const samples = scopes
+    .flatMap((s) => [s.schedulerStart, s.schedulerEnd])
+    .sort((a, b) => a.at - b.at);
+  let runtime = 0,
+    wait = 0,
+    wall = 0,
+    waitEnabled = true;
+  for (let i = 1; i < samples.length; i++) {
+    const a = samples[i - 1],
+      b = samples[i];
+    if (b.at <= a.at) continue;
+    if (!scopes.some((s) => s.schedulerStart.at <= a.at && s.schedulerEnd.at >= b.at)) continue;
+    if (b.runtimeNs < a.runtimeNs || b.runqueueNs < a.runqueueNs) continue;
+    runtime += (b.runtimeNs - a.runtimeNs) / 1e6;
+    wait += (b.runqueueNs - a.runqueueNs) / 1e6;
+    wall += b.at - a.at;
+    waitEnabled &&= a.waitEnabled && b.waitEnabled;
+  }
+  return {
+    cpuRuntimeMs: wall ? runtime : null,
+    cpuRunqueueMs: wall && waitEnabled ? wait : null,
+    cpuScopeWallMs: wall || null,
+  };
+}
 export function attribute(root, gateways = [], events = [], remotes = []) {
   const all = root.spans.map((s) => ({ ...s, process: root.process, thread: root.thread }));
   for (const r of remotes) {
@@ -312,6 +340,7 @@ export function attribute(root, gateways = [], events = [], remotes = []) {
       layers.typescript + layers["event-loop"] + layers["typescript-gc"] + layers["driver-queue"];
   return {
     traceId: root.traceId,
+    ...synchronousCpu(root),
     wallMs: wall,
     layers,
     typescriptMs: ts,
@@ -343,7 +372,16 @@ function phaseOf(r, phases) {
   return { name, priority, readers: phase?.readers ?? null };
 }
 function table(rows, label) {
-  const columns = ["wallMs", ...LAYERS, "typescriptMs", "typescriptShare", "unexplainedMs"];
+  const columns = [
+    "wallMs",
+    "cpuRuntimeMs",
+    "cpuRunqueueMs",
+    "cpuScopeWallMs",
+    ...LAYERS,
+    "typescriptMs",
+    "typescriptShare",
+    "unexplainedMs",
+  ];
   const get = (r, k) => r.layers[k] ?? r[k];
   const lines = [
     `| ${label} | ${columns.join(" | ")} |`,
@@ -406,6 +444,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     }
     return summary;
   }
+  const nodeEnabled = manifest?.nodeEnabled ?? manifest?.level !== "off";
   const input = filesUnder(path.join(rootDir, "trace/raw")).filter((f) =>
     /\.jsonl(\.gz)?$/.test(f),
   );
@@ -558,17 +597,39 @@ export async function buildReport(runDir, { copyTo } = {}) {
   if (fs.existsSync(writesFile))
     for await (const w of records(writesFile)) {
       writes++;
+      if (!nodeEnabled) continue;
       if (!w.traceId || !ids.has(w.traceId)) missingCommits++;
       else {
         const trace = byId.get(w.traceId);
         if (Number.isFinite(w.scheduledAt) && Math.abs(trace.root.start - w.scheduledAt) > 1)
           errors.push("Writer/trace offer timestamp mismatch");
+        if (manifest?.queueExpected) {
+          const queue = w.queue;
+          if (!Array.isArray(queue)) errors.push("Writer queue partition absent");
+          else {
+            const valid = queue.every(
+              (q) =>
+                Number.isFinite(q.start) &&
+                Number.isFinite(q.end) &&
+                q.end >= q.start &&
+                ["scheduler-late", "scheduler-dispatch", "subject", "slot"].includes(q.cause) &&
+                q.inFlight >= 0 &&
+                q.capacity > 0 &&
+                (q.cause !== "slot" || q.inFlight >= q.capacity) &&
+                (q.cause !== "subject" || ids.has(q.behindTraceId)),
+            );
+            const total = queue.reduce((n, q) => n + q.end - q.start, 0);
+            if (!valid || Math.abs(total - w.waitMs) > 0.5)
+              errors.push("Writer queue partition content/binding mismatch");
+          }
+        }
         trace.writer = {
           facts: w.facts,
           stream: w.stream,
           seq: w.seq,
           burst: w.burst,
           position: w.position,
+          queue: w.queue ?? null,
         };
         if (
           Number.isFinite(trace.root.attributes.position) &&
@@ -588,8 +649,9 @@ export async function buildReport(runDir, { copyTo } = {}) {
   if (missingCommits)
     errors.push(`${missingCommits}/${writes} writer observations lack a matching trace`);
   if (!manifest) errors.push("Run binding manifest absent");
-  if (!histograms.length) errors.push("No final Node histograms: recorder drain not proven");
-  if (!denom.length) errors.push("No commit traces");
+  if (nodeEnabled && !histograms.length)
+    errors.push("No final Node histograms: recorder drain not proven");
+  if (nodeEnabled && !denom.length) errors.push("No commit traces");
   for (const role of manifest?.requiredJfr ?? []) {
     const c = completions.find((r) => r.role === role);
     const file = path.join(rootDir, "trace/raw", role + ".jfr.gz");
@@ -629,7 +691,10 @@ export async function buildReport(runDir, { copyTo } = {}) {
       )
     )
       errors.push("VM/cgroup collector missing");
-    if (!resources.some((r) => r.process === "postgres" && r.activity))
+    if (
+      (manifest.requirePostgres ?? true) &&
+      !resources.some((r) => r.process === "postgres" && r.activity)
+    )
       errors.push("Postgres wait/WAL/IO collector missing");
   }
 
@@ -671,6 +736,51 @@ export async function buildReport(runDir, { copyTo } = {}) {
         selected.push(r);
       }
   const slow = [...commits].sort((a, b) => b.wallMs - a.wallMs).slice(0, 5);
+  for (const r of slow) {
+    r.queueDetails = r.root.spans
+      .filter((s) => s.name.startsWith("driver.queue."))
+      .map((s) => ({ cause: s.name, ms: s.end - s.start, ...s.attributes }))
+      .sort((a, b) => b.ms - a.ms);
+    const executing = r.root.spans.find((s) => s.name === "driver.execute")?.start ?? r.root.end;
+    r.queueContexts = resources
+      .filter(
+        (x) =>
+          x.name === "writer.queue-context" &&
+          x.process === r.root.process &&
+          x.at >= r.root.start &&
+          x.at <= executing,
+      )
+      .map((x) => ({ at: x.at, inFlight: x.inFlight, capacity: x.capacity, active: x.active }))
+      .slice(0, 40);
+  }
+  const schedulerByPhase = Object.fromEntries(
+    (bench.phases ?? []).map((p) => {
+      const samples = commits
+          .flatMap((r) => [
+            r.root.schedulerStart,
+            r.root.schedulerEnd,
+            ...r.root.spans.flatMap((s) => [s.schedulerStart, s.schedulerEnd]),
+          ])
+          .filter((x) => x && x.at >= p.start && x.at <= p.end)
+          .sort((a, b) => a.at - b.at),
+        first = samples[0],
+        last = samples.at(-1);
+      return [
+        p.name,
+        {
+          readers: p.readers,
+          samples: samples.length,
+          spanMs: first && last ? last.at - first.at : null,
+          runtimeMs: first && last ? (last.runtimeNs - first.runtimeNs) / 1e6 : null,
+          runqueueMs:
+            first && last && first.waitEnabled && last.waitEnabled
+              ? (last.runqueueNs - first.runqueueNs) / 1e6
+              : null,
+          waitEnabled: !!first?.waitEnabled,
+        },
+      ];
+    }),
+  );
   const finding = slow.length
     ? `The slowest observed commits spent their largest exclusive interval in ${slow.map((r) => `\`${r.steps[0]?.[0] ?? "unknown"}\` (${n(r.steps[0]?.[1])} ms, trace \`${r.traceId}\`)`).join("; ")}. These are observed spans, not proof of the closed-source transactor's internal cause.`
     : "No commit traces were observed; the cause of slow commits is not established.";
@@ -701,10 +811,14 @@ export async function buildReport(runDir, { copyTo } = {}) {
     schema: "triplex.trace-report.v1",
     tag,
     source: manifest?.source ?? null,
+    components: manifest?.components ?? null,
+    session: manifest?.session ?? null,
+    nodeEnabled,
     reporterSha256: createHash("sha256")
       .update(fs.readFileSync(new URL(import.meta.url)))
       .digest("hex"),
     finding,
+    schedulerByPhase,
     requests: roots.length,
     commits: commits.length,
     writerRows: writes,
@@ -752,7 +866,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     "",
     `Run \`${tag}\`; source \`${summary.source}\`; subjects ${bench.seed?.seededSubjects ?? "unknown"}; tracing ${manifest?.level ?? "unknown"}.`,
     "",
-    `Commit coverage: ${explained}/${denom.length} (${n(denom.length ? (100 * explained) / denom.length : NaN)}%) have at least 95% of wall time covered by named layer spans. Target: 99%. Writer trace completeness: ${writes - missingCommits}/${writes}. Raw trace bytes: ${rawBytes}.`,
+    `Commit coverage: ${explained}/${denom.length} (${n(denom.length ? (100 * explained) / denom.length : NaN)}%) have at least 95% of wall time covered by named layer spans. Target: 99%. Writer trace completeness: ${nodeEnabled ? `${writes - missingCommits}/${writes}` : "n/a (Node recorder ablated)"}. Raw trace bytes: ${rawBytes}.`,
     "",
     "Units: ms; n/a means not causally measured (including closed transactor/storage shares), not zero work. TypeScript share is a fraction. Quantiles are per column (their values do not add). TypeScript own code is instrumented Node scope wall time excluding observed remote waits/GC, not on-CPU time; it can include unmeasured scheduling waits. Event-loop wait records explicit worker RPC handoff/reply waits after subtracting linked worker/socket/server work. Other per-request event-loop delay is not causally measured (n/a when no RPC); timestamped timer drift is an estimated overlay. Driver offer queue is separate. Peer-wait includes network, transactor queue and storage; these internal shares remain unknown unless independently correlated. No unrelated Postgres or JFR event is assigned to a transaction.",
     "",
@@ -761,6 +875,36 @@ export async function buildReport(runDir, { copyTo } = {}) {
     `Evidence checks: ${errors.length ? errors.join("; ") : "source/run/slot binding, final histograms, writer trace IDs and interval content checked"}. Oracle: ${bench.oracle?.status ?? bench.independentOracle?.status ?? "see ns-report.json; not certified by tracing"}.`,
     "",
   ];
+  lines.push(
+    "## Writer thread scheduler accounting",
+    "",
+    "Actual Linux per-thread counters at request and synchronous span boundaries. Runtime includes Node/runtime/GC work; synchronous-scope columns cover observed synchronous work only. Async scopes can contain another request and are not assigned exclusive CPU. Disabled scheduler wait accounting is n/a.",
+    "",
+    "| phase | readers | observed interval ms | on-CPU runtime ms | waiting for CPU ms | samples |",
+    "| --- | ---: | ---: | ---: | ---: | ---: |",
+  );
+  for (const [name, cpu] of Object.entries(schedulerByPhase))
+    lines.push(
+      `| ${name} | ${cpu.readers} | ${n(cpu.spanMs)} | ${n(cpu.runtimeMs)} | ${n(cpu.runqueueMs)} | ${cpu.samples} |`,
+    );
+  lines.push(
+    "",
+    "## Queue wait dependencies",
+    "",
+    "| trace | cause | ms | behind trace | in-flight at boundary / capacity |",
+    "| --- | --- | ---: | --- | --- |",
+  );
+  for (const r of slow) {
+    for (const q of r.queueDetails)
+      lines.push(
+        `| ${r.traceId} | ${q.cause} | ${n(q.ms)} | ${q.behindTraceId ?? "none"} | ${q.inFlight} / ${q.capacity} |`,
+      );
+    lines.push(
+      "",
+      `Observed active steps while trace ${r.traceId} waited: ${JSON.stringify(r.queueContexts)}`,
+      "",
+    );
+  }
   for (const [key, rows] of groups) {
     lines.push(
       `## ${key} (${rows.length} retained requests)`,

@@ -499,3 +499,46 @@ describe("permanent request tracing", () => {
     expect(readFileSync(path.join(dir, "TRACE-REPORT.md"), "utf8")).toContain(root.traceId);
   });
 });
+
+describe("Linux per-thread scheduler counters", () => {
+  it("parses nanosecond counters and rejects malformed or imprecise values", async () => {
+    const { parseSchedulerStats } = await import("../src/tracing.js");
+    expect(parseSchedulerStats("1500000 250000 8\n")).toEqual({
+      runtimeNs: 1500000,
+      runqueueNs: 250000,
+      switches: 8,
+    });
+    for (const invalid of ["", "1 2", "1 -2 3", "1.5 2 3", "9007199254740992 2 3"])
+      expect(parseSchedulerStats(invalid)).toBeUndefined();
+  });
+});
+
+describe("exclusive synchronous CPU counters", () => {
+  it("unions nested synchronous boundaries and leaves disabled wait accounting unknown", async () => {
+    const { synchronousCpu } = await import("../../../lab/trace/report.mjs");
+    const point = (at: number, runtimeNs: number) => ({
+      at,
+      runtimeNs,
+      runqueueNs: runtimeNs,
+      switches: 1,
+      waitEnabled: true,
+    });
+    const spans = [
+      { synchronous: true, schedulerStart: point(0, 0), schedulerEnd: point(3, 1500000) },
+      { synchronous: true, schedulerStart: point(1, 500000), schedulerEnd: point(2, 1000000) },
+    ];
+    expect(synchronousCpu({ spans })).toEqual({
+      cpuRuntimeMs: 1.5,
+      cpuRunqueueMs: 1.5,
+      cpuScopeWallMs: 3,
+    });
+    for (const s of spans) {
+      s.schedulerStart.waitEnabled = false;
+      s.schedulerEnd.waitEnabled = false;
+    }
+    expect(synchronousCpu({ spans }).cpuRunqueueMs).toBeNull();
+    expect(
+      synchronousCpu({ spans: spans.map((s) => ({ ...s, synchronous: false })) }).cpuRuntimeMs,
+    ).toBeNull();
+  });
+});

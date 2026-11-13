@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, type Trace } from "./lib/tracing.ts";
+import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, currentTraceStep, traceResource, type Trace } from "./lib/tracing.ts";
 import { readObservation, type ReadObservation } from "./lib/read-observation.ts";
 import type { Basis } from "./lib/composition.ts";
 import { sampleMatches } from "./lib/sample-matches.ts";
@@ -568,9 +568,7 @@ async function run() {
   let probeThread: ProbeThread | null = null;
   const jobTraces = new WeakMap<Job, Trace>();
   const execute = (job: Job) => {
-    const trace = beginTrace("commit", "driver.commit", { stream: job.ev.stream, seq: job.ev.seq, burst: job.ev.burst }, job.scheduledAt);
-    jobTraces.set(job, trace);
-    traceInterval(trace, "driver.queue (scheduler/subject/admission)", job.scheduledAt, traceNow(), "driver-queue");
+    const trace = jobTraces.get(job);
     return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job)));
   };
   const executeTraced = async (job: Job) => {
@@ -658,15 +656,30 @@ async function run() {
     resends.push({ seq: job.ev.seq, result: how, tag: res.ok ? null : res.tag });
   };
   const scheduler = new OpenLoopScheduler<Job>(jobs, {
+    observeQueue: process.env.TRIPLEX_TRACE_LEVEL !== "off" && process.env.TRIPLEX_TRACE_NODE !== "0",
     maxInFlight: config.writerMaxInFlight, deadlineMs: config.writerDeadlineMs, now, exec: execute,
     onOffer: (job: Job) => {
+      jobTraces.set(job, beginTrace("commit", "driver.commit", { stream: job.ev.stream, seq: job.ev.seq, burst: job.ev.burst }, job.scheduledAt));
       if (job.ev.stream !== "background" || job.ev.resend) return;
       (pendingBySubject.get(job.key) ?? pendingBySubject.set(job.key, []).get(job.key)!).push(job.ev.seq);
     },
     onDone: (r: JobResult<Job>) => {
       const ev = r.job.ev;
       const trace = jobTraces.get(r.job) ?? beginTrace("commit", "driver.expired", { stream: ev.stream, seq: ev.seq }, r.job.scheduledAt);
-      if (r.expired) traceInterval(trace, "driver.expired-in-queue", r.job.scheduledAt, r.finishedAt, "driver-queue");
+      const queue = r.queue?.map((q) => ({
+        cause: q.cause,
+        start: q.start,
+        end: q.end,
+        inFlight: q.inFlight,
+        capacity: config.writerMaxInFlight,
+        behindTraceId: q.behind ? (jobTraces.get(q.behind)?.traceId ?? null) : null,
+      }));
+      for (const q of queue ?? [])
+        traceInterval(trace, `driver.queue.${q.cause}`, q.start, q.end, "driver-queue", undefined, {
+          inFlight: q.inFlight,
+          capacity: q.capacity,
+          behindTraceId: q.behindTraceId,
+        });
       finishTrace(trace, { expired: r.expired, outcome: outcomes.get(okey(ev))?.outcome ?? "unknown", position:outcomes.get(okey(ev))?.position??null });
       if (ev.stream === "background" && !ev.resend) {
         const list = pendingBySubject.get(ev.subject);
@@ -678,6 +691,7 @@ async function run() {
       }
       const out = outcomes.get(okey(ev)) ?? {};
       out.traceId = trace?.traceId;
+      out.queue = queue;
       if (r.expired) { out.outcome = "unaccounted"; out.reason = "not sent: writer deadline passed"; r.job.onDone?.(-1); }
       writes.push({ stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
         offsetMs: r.job.scheduledAt - traceStart, scheduledAt: r.job.scheduledAt, startedAt: r.startedAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, waitMs: r.waitMs, expired: r.expired, ...out });
@@ -693,6 +707,23 @@ async function run() {
       const ev: TraceEvent = { seq, atMs: now() - traceStart, kind: "runtime", subject, facts, correction: false, ackLoss: false, resend: false, burst: false, active: false, stream };
       scheduler.inject({ key: subject, scheduledAt: now(), ev, onDone: resolve });
     });
+  const queueContextTimer =
+    process.env.TRIPLEX_TRACE_LEVEL !== "off" && process.env.TRIPLEX_TRACE_NODE !== "0"
+      ? setInterval(() => {
+          const snapshot = scheduler.snapshot();
+          if (!snapshot.waiting.length) return;
+          traceResource("writer.queue-context", {
+            inFlight: snapshot.inFlight,
+            capacity: snapshot.capacity,
+            active: snapshot.active.map((j) => ({
+              traceId: jobTraces.get(j)?.traceId ?? null,
+              step: currentTraceStep(jobTraces.get(j)),
+            })),
+            waiting: snapshot.waiting.slice(0, 128).map((j) => jobTraces.get(j)?.traceId ?? null),
+            waitingCount: snapshot.waiting.length,
+          });
+        }, 20)
+      : null;
   const queueTimer = setInterval(() => {
     let background = 0;
     for (const list of pendingBySubject.values()) background += list.length;
@@ -903,6 +934,7 @@ async function run() {
   const endAt = now();
   if (probeTimer) clearInterval(probeTimer);
   clearInterval(queueTimer);
+  if (queueContextTimer) clearInterval(queueContextTimer);
   scheduler.setUntil(endAt);
   scheduler.stop();
   probeScheduler?.setUntil(endAt);

@@ -107,10 +107,21 @@ PY
 trace_level=${TRIPLEX_TRACE_LEVEL:-off}
 trace_env=(-e "TRIPLEX_TRACE_LEVEL=$trace_level" -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git -C "$repo" rev-parse HEAD)" -e TRIPLEX_TRACE_DIR=/trace)
 trace_mount=(-v "$attempt/trace/raw:/trace")
+# [DX-T1-2] Why: isolate collectors with an inspected effective configuration. Rejected: inferring enabled collectors from a tag.
+eval "$(node "$repo/lab/trace/components.mjs" --shell)"
+trace_env+=(-e "TRIPLEX_TRACE_GATEWAY=$TRIPLEX_TRACE_GATEWAY" -e "TRIPLEX_TRACE_NATIVE_LOGS=$TRIPLEX_TRACE_NATIVE_LOGS")
 trace_tx_java= trace_gw_java=
-if [[ $trace_level != off ]]; then
-  trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0 -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+if [[ $TRIPLEX_TRACE_NATIVE_LOGS == 1 ]]; then
+  trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml"
   trace_gw_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+fi
+if [[ $TRIPLEX_TRACE_TX_JFR == 1 ]]; then
+  trace_tx_java+=" -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"
+fi
+if [[ $TRIPLEX_TRACE_TX_JFR == 1 || $TRIPLEX_TRACE_NATIVE_LOGS == 1 ]]; then
+  trace_tx_java+=" -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+fi
+if [[ $TRIPLEX_TRACE_POSTGRES == 1 ]]; then
   pg_settings="$pg_settings -c track_io_timing=on -c track_wal_io_timing=on -c log_min_duration_statement=0 -c log_parameter_max_length=0 -c log_parameter_max_length_on_error=0 -c log_checkpoints=on -c log_autovacuum_min_duration=0 -c log_timezone=UTC"
 fi
 if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
@@ -141,7 +152,7 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$attempt/sql/$file" > "$attempt/sql/$file.log"
 done
 docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
-  -e "JAVA_OPTS=$tx_java$trace_tx_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
+  -e "JAVA_OPTS=$tx_java$trace_tx_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # A ready transactor is checked by gateway health, which creates and syncs a real SQL database.
 for role in w r; do
@@ -152,13 +163,13 @@ for role in w r; do
   role_java=$gw_java; [[ -n $role_java || -z $heap ]] || role_java="-Xms256m -Xmx$heap"
   if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   role_trace_java=$trace_gw_java
-  if [[ $trace_level != off ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"; fi
+  if [[ $TRIPLEX_TRACE_GW_JFR == 1 ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"; fi
   if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
     debug_port=8506; [[ $role == w ]] || debug_port=8507
     role_trace_java="$role_trace_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debug_port"
   fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
-    ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_GW_JFR" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -v "$src:/opt/gateway:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false
@@ -170,6 +181,8 @@ for role in w r; do
   done
   if [[ $ok != true ]]; then docker logs "$prefix-gw-$role" > "$attempt/gateway-$role.log" 2>&1; echo "gateway $role failed; see $attempt" >&2; exit 1; fi
 done
+node "$repo/lab/trace/components.mjs" > "$attempt/trace-components.json"
+docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_min_duration_statement; SHOW track_io_timing; SHOW track_wal_io_timing;" > "$attempt/postgres-trace-settings.txt"
 docker inspect "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" > "$attempt/containers.json"
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc "SHOW fsync; SHOW synchronous_commit; SHOW full_page_writes; SHOW wal_sync_method;" > "$attempt/durability.txt"
 python3 - "$attempt" "$prefix" "$gateway_hash" "$port_w" "$port_r" "$publish" <<'PY'
