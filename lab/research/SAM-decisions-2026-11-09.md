@@ -338,3 +338,17 @@ Orchestrator's reading:
    licence that ships with the distribution and confirm it permits this; keep decompiled code out of the public repository
    and commit only our own notes.
 3. The rest of the hard-problems list stands.
+
+## 2026-11-13 about 17:00 UTC: the reverse engineering is done by an Opus agent at extra-high effort, using the "reverse-engineer anything" skill
+
+Sam, verbatim:
+
+> have an opus agent on xhigh do the reverse engineering, have it use the "reverse-engineer anything" skill that is on the internet, pull that and use it
+
+Orchestrator's reading:
+1. DX-RE1 (the transactor study) runs as one Claude Opus agent at extra-high effort, not as a Codex agent. This is an
+   exception for this job; building stays with Codex `gpt-6.1-sol` at `max`.
+2. The skill is `reverse-engineer-anything` from `github.com/morluto/rea` (MIT), cloned at `cdc4541e` outside the
+   repository and logged in `lab/DOWNLOADS.md`. The orchestrator read it first. It is written for native binaries,
+   Android, JavaScript and .NET targets; it has no direct route for JVM jars of compiled Clojure, so the agent uses its
+   evidence method and its archive tools where they apply and a JVM decompiler for the classes.

@@ -12,3 +12,4 @@ Docker reports after the pull (uncompressed, so an upper bound on what was fetch
 | 2026-11-10 13:52 | `chrislusf/seaweedfs:3.97` (`sha256:bb05d66d2963…`) | fallback S3-compatible object store | 0.06 GiB | 0.49 GiB |
 | 2026-11-10 21:0x | Temurin JDK 21.0.13 for macOS arm64 (tarball, checksum verified) | DX-N1 native mode (ended by Sam; files removed 21:45 UTC) | 0.19 GiB | 0.68 GiB |
 | 2026-11-10 21:0x | Postgres.app 2.9.6 with Postgres 17 (dmg, checksum verified) | DX-N1 native mode (ended by Sam; files removed 21:45 UTC) | 0.11 GiB | 0.79 GiB |
+| 2026-11-13 17:0x | `github.com/morluto/rea` at `cdc4541e` (shallow git clone, anonymous; MIT), kept outside the repository under the project tools folder | "reverse-engineer anything" skill for the transactor study DX-RE1 (Sam asked for it by name) | 0.14 GiB | 0.93 GiB |
