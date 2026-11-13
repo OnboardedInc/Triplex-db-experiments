@@ -1054,7 +1054,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     collectors: {
       jfr: completions,
       resources: resources.length,
-      writerCpuProfile: cpuProfile ? { samples: cpuProfile.samples, clockBound: true } : null,
+      writerCpuProfile: cpuProfile ? { samples: cpuProfile.samples, backsteps: cpuProfile.backsteps, clockBound: true } : null,
       transactorFunctionEvents: nativeFunctions.length,
       nativeTransactionStats: nativeTransactions.length,
     },

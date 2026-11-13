@@ -39,6 +39,14 @@ describe("sampled writer stacks", () => {
     expect(r.longGaps).toBe(1);
     expect(r.maxGapMs).toBe(7);
   });
+  it("preserves signed sample backsteps without shifting later timestamps", () => {
+    const signed = { ...profile, samples: [2, 3, 3, 2, 2], timeDeltas: [2000, 8000, -2, 91002, 1000] };
+    const index = indexCpuProfile(signed, markers, ref);
+    expect(index.backsteps).toBe(1);
+    const r = index.window(ref.offsetMs + 1009, ref.offsetMs + 1011);
+    expect(r.samples).toBe(2);
+    expect(r.points.map((p) => p.at)).toEqual([ref.offsetMs + 1009.998, ref.offsetMs + 1010]);
+  });
   it("rejects another boot, missing calibration and invalid sample identity", () => {
     expect(() => indexCpuProfile(profile, markers, { ...ref, bootId: "another" })).toThrow(
       "foreign",
@@ -50,7 +58,7 @@ describe("sampled writer stacks", () => {
       "node",
     );
     expect(() =>
-      indexCpuProfile({ ...profile, timeDeltas: [-1, 1, 1, 1, 1] }, markers, ref),
+      indexCpuProfile({ ...profile, timeDeltas: [Number.NaN, 1, 1, 1, 1] }, markers, ref),
     ).toThrow("delta");
   });
 });

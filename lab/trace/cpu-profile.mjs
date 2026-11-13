@@ -51,7 +51,7 @@ export function indexCpuProfile(profile, markers, reference) {
   let at = profile.startTime;
   const points = profile.samples.map((id, i) => {
     const delta = profile.timeDeltas[i];
-    if (!Number.isFinite(delta) || delta < 0) throw Error("Invalid CPU profile delta");
+    if (!Number.isFinite(delta)) throw Error("Invalid CPU profile delta");
     at += delta;
     return {
       monoMs: at / 1000,
@@ -60,7 +60,12 @@ export function indexCpuProfile(profile, markers, reference) {
       gapMs: delta / 1000,
     };
   });
-  if (at > profile.endTime + 10000) throw Error("CPU samples exceed profile boundary");
+  if (points.some((p) => p.monoMs < profile.startTime / 1000 || p.monoMs > (profile.endTime + 10000) / 1000))
+    throw Error("CPU samples exceed profile boundary");
+  // [DX-T1-4] Why: observed V8 output contains a signed 2-us backstep; keep its timestamp and expose it.
+  // Rejected: clamping deltas (shifts later samples), or rejecting an otherwise clock-bound recording.
+  const backsteps = points.filter((p) => p.gapMs < 0).length;
+  points.sort((a, b) => a.at - b.at);
   for (const m of markers)
     if (
       !points.some(
@@ -73,6 +78,7 @@ export function indexCpuProfile(profile, markers, reference) {
       throw Error("V8 samples do not match both boot-clock markers");
   return {
     samples: points.length,
+    backsteps,
     process: markers[0].process,
     thread: markers[0].thread,
     window(start, end) {
