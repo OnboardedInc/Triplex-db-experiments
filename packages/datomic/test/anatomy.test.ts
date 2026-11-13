@@ -5,6 +5,7 @@ import {
   correlateStatements,
   tailCauses,
   bookendComparison,
+  aggregateExchanges,
 } from "../../../lab/trace/anatomy.mjs";
 
 describe("commit anatomy observations", () => {
@@ -51,6 +52,85 @@ describe("commit anatomy observations", () => {
     expect(overlap.boundaryOverlapMs).toBe(0.5);
     expect(() => exchangeAnatomy(owner, { ...gateway, source: "another" })).toThrow("Foreign");
     expect(exchangeAnatomy(owner, { ...gateway, parent: "unrelated" })).toBeNull();
+  });
+  it("counts retries once per commit and exposes concurrent HTTP overlap", () => {
+    const e = { traceId: "t", start: 1, end: 4, steps: { peer: 2, client: 1 } };
+    const root = { traceId: "t", name: "baseline", wallMs: 12 };
+    expect(aggregateExchanges(root, [e, { ...e, start: 5, end: 8 }])).toMatchObject({
+      attempts: 2,
+      httpWallMs: 6,
+      outsideHttpMs: 6,
+      steps: { peer: 4, client: 2 },
+    });
+    expect(aggregateExchanges(root, [e, { ...e, start: 2, end: 5 }])).toMatchObject({
+      attempts: 2,
+      httpWallMs: 4,
+      outsideHttpMs: 8,
+      overlapMs: 2,
+      steps: null,
+    });
+  });
+  it("charges a native function only to its exact peer parent", async () => {
+    const { attribute } = await import("../../../lab/trace/report.mjs");
+    const binding = { traceId: "t", run: "r", source: "h", slot: "s" };
+    const root = {
+      ...binding,
+      root: "root",
+      kind: "commit",
+      start: 0,
+      end: 10,
+      process: "node",
+      thread: 0,
+      spans: [
+        {
+          id: "http",
+          parent: "root",
+          name: "client.http",
+          layer: "gateway-wait",
+          start: 1,
+          end: 9,
+        },
+      ],
+    };
+    const gateway = {
+      ...binding,
+      root: "gw",
+      parent: "http",
+      name: "gateway /transact",
+      process: "gw-w",
+      thread: 1,
+      start: 1.5,
+      end: 8.5,
+      spans: [
+        {
+          id: "peer",
+          parent: "gw",
+          name: "peer.transact-await",
+          layer: "peer-wait",
+          start: 2,
+          end: 8,
+        },
+      ],
+    };
+    const event = {
+      ...binding,
+      id: "tx",
+      parent: "peer",
+      process: "tx",
+      thread: 2,
+      nativeType: "triplex.TransactionFunction",
+      name: "transactor.triplex-function",
+      layer: "transactor",
+      start: 3,
+      end: 5,
+    };
+    expect(attribute(root, [gateway], [event]).layers.transactor).toBe(2);
+    expect(
+      attribute(root, [gateway], [{ ...event, parent: "other" }]).layers.transactor,
+    ).toBeNull();
+    expect(
+      attribute(root, [gateway], [{ ...event, source: "foreign" }]).layers.transactor,
+    ).toBeNull();
   });
   it("counts executions rather than JDBC parse/bind messages and omits payloads", () => {
     const prefix =

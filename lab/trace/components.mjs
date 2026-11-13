@@ -33,6 +33,7 @@ export function configuration(env = process.env) {
     requiredJfr: [...(has("tx-jfr") ? ["tx"] : []), ...(has("gw-jfr") ? ["gw-w", "gw-r"] : [])],
     requireSystem: system,
     requirePostgres: has("postgres"),
+    requireTransactorFunction: has("tx-jfr") && has("gateway"),
     session: env.TRIPLEX_TRACE_SESSION ?? null,
     queueExpected: has("node"),
     requireClockBinding: has("node") && has("gateway"),

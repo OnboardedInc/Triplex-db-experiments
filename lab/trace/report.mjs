@@ -30,6 +30,7 @@ const rank = {
   gateway: 4,
   "peer-call": 5,
   "peer-wait": 6,
+  transactor: 6,
   "gateway-queue": 7,
   "driver-queue": 8,
   "event-loop": 9,
@@ -295,6 +296,21 @@ export function attribute(root, gateways = [], events = [], remotes = []) {
         thread: g.thread,
       });
   }
+  // [DX-T1-4] Why: only the exact submitted peer span owns this native transaction-function event.
+  // Rejected: assigning a coincident JVM event to whichever commit has the nearest timestamp.
+  const parents = new Set(all.map((s) => s.id));
+  all.push(
+    ...events.filter(
+      (e) =>
+        e.nativeType === "triplex.TransactionFunction" &&
+        e.process === "tx" &&
+        e.traceId === root.traceId &&
+        e.run === root.run &&
+        e.source === root.source &&
+        e.slot === root.slot &&
+        parents.has(e.parent),
+    ),
+  );
   const byId = new Map(all.filter((s) => s.id).map((s) => [s.id, s]));
   const depths = new Map([[root.root, 0]]);
   function depth(s, seen = new Set()) {
@@ -535,7 +551,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
         } else if (r.type === "event") {
           if (validSpan(r)) {
             events.push(r);
-            if (r.name.startsWith("jdk."))
+            if (r.name.startsWith("jdk.") || r.nativeType === "triplex.TransactionFunction")
               jfrCounts.set(r.process, (jfrCounts.get(r.process) ?? 0) + 1);
           }
         } else if (r.type === "jfr-complete") completions.push(r);
@@ -638,8 +654,27 @@ export async function buildReport(runDir, { copyTo } = {}) {
     byTrace.set(request.traceId, list);
   }
   const linked = (r) => traceChildren(r, byTrace.get(r.traceId) ?? []);
+  const nativeFunctions = events.filter((e) => e.nativeType === "triplex.TransactionFunction");
+  for (const e of nativeFunctions) {
+    const candidates = byTrace.get(e.traceId) ?? [];
+    const parent = candidates
+      .flatMap((r) => r.spans)
+      .find((s) => s.id === e.parent && s.layer === "peer-wait");
+    if (
+      e.process !== "tx" ||
+      !/^[0-9a-f]{16}$/.test(e.id ?? "") ||
+      !parent ||
+      e.start < parent.start - 0.1 ||
+      e.end > parent.end + 0.1
+    )
+      errors.push("Unbound or out-of-window native transaction function event");
+  }
   const pauseIndex = intervalIndex(
-    events.filter((e) => ["typescript-gc", "gateway-gc"].includes(e.layer)),
+    events.filter(
+      (e) =>
+        ["typescript-gc", "gateway-gc"].includes(e.layer) ||
+        e.nativeType === "triplex.TransactionFunction",
+    ),
   );
   const workIndex = groupedIndex(
     events.filter((e) => e.layer === "typescript"),
@@ -715,6 +750,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
         trace.writer = {
           facts: w.facts,
           resend: !!w.resend,
+          outcome: w.outcome,
           stream: w.stream,
           seq: w.seq,
           burst: w.burst,
@@ -738,6 +774,19 @@ export async function buildReport(runDir, { copyTo } = {}) {
   else errors.push("Writer file absent: cannot establish complete commit denominator");
   if (missingCommits)
     errors.push(`${missingCommits}/${writes} writer observations lack a matching trace`);
+  if (manifest?.requireTransactorFunction) {
+    const unobserved = commits.filter(
+      (r) =>
+        r.writer?.stream === "background" &&
+        !r.writer.resend &&
+        r.writer.outcome === "committed" &&
+        !r.spans.some((s) => s.nativeType === "triplex.TransactionFunction"),
+    );
+    if (unobserved.length)
+      errors.push(
+        `${unobserved.length} committed commands lack a bound native transaction-function interval`,
+      );
+  }
   if (!manifest) errors.push("Run binding manifest absent");
   if (nodeEnabled && !histograms.length)
     errors.push("No final Node histograms: recorder drain not proven");
@@ -937,7 +986,11 @@ export async function buildReport(runDir, { copyTo } = {}) {
       sample: 1024,
       exactTop20: metadata.length > 0 && metadata.every((r) => r.topReadsPerPhase === 20),
     },
-    collectors: { jfr: completions, resources: resources.length },
+    collectors: {
+      jfr: completions,
+      resources: resources.length,
+      transactorFunctionEvents: nativeFunctions.length,
+    },
     hostByPhase,
     groups: Object.fromEntries(
       [...groups].map(([k, rows]) => [
@@ -1027,7 +1080,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     "",
     "Logical read histograms include every finished read; fast reads use a fixed 1/1024 FNV sample, every read at least 50 ms is retained, and new recorder revisions also retain the actual top 20 per phase/thread. Historical runs without top-20 retention show the slowest retained reads. Logical read root wall includes named oracle and intentional straddle waits; target-bar service latency remains in ns-report.json. Worker resource series distinguish isolate heap and process RSS. Linux writer scheduler counters give nanosecond runtime/run-queue deltas for observed synchronous scopes and the sampled phase interval. Other thread telemetry uses /proc CPU ticks. Async request scopes do not have exclusive CPU attribution. GC during remote waits is an ambient overlay and is not charged to TypeScript or gateway own work. GC overlaps and independent thread work are pictured, not inferred from percentiles.",
     "",
-    "JFR GC/safepoint/thread-park/socket events, transactor callback metrics, PostgreSQL duration/checkpoint/autovacuum logs, pg_stat_activity/wal/io samples, cgroup throttling/pressure/memory/io and Mac CPU/swap are retained when available. Closed-source transactor internals and individual Postgres statements cannot be causally split without a transaction identifier; the table deliberately leaves these shares unknown. Samples are not request-specific proof. See trace-run.json and collection-errors.txt for unavailable collectors.",
+    "JFR GC/safepoint/thread-park/socket events, transactor callback metrics, PostgreSQL duration/checkpoint/autovacuum logs, pg_stat_activity/wal/io samples, cgroup throttling/pressure/memory/io and Mac CPU/swap are retained when available. Native JFR transaction-function spans, when present, bind the authored Triplex function to its exact peer-await span; the transactor column is this function wall time, not exclusive CPU. Remaining closed-source Datomic internals and individual Postgres statements cannot be causally split without a transaction identifier; the table deliberately leaves these shares unknown. Samples are not request-specific proof. See trace-run.json and collection-errors.txt for unavailable collectors.",
     "",
   );
   fs.writeFileSync(path.join(rootDir, "TRACE-REPORT.md"), lines.join("\n"));

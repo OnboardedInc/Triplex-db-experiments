@@ -26,7 +26,7 @@ export function exchangeAnatomy(owner, gateway) {
   const peers = gateway.spans
     .filter((s) => s.name === "d/transact" || s.name.startsWith("peer.transact-await"))
     .sort((a, b) => a.start - b.start);
-  if (!write || !body || peers.length !== 1) return null;
+  if (!write || !body || peers.length > 1) return null;
   const encode = owner.spans
     .filter((s) => s.name === "client.encode" && s.end <= http.start && s.parent === http.parent)
     .sort((a, b) => b.end - a.end)[0];
@@ -34,7 +34,7 @@ export function exchangeAnatomy(owner, gateway) {
     .filter((s) => s.name === "client.parse" && s.start >= body.end && s.parent === http.parent)
     .sort((a, b) => a.start - b.start)[0];
   if (!encode || !parse) return null;
-  const peer = peers[0];
+  const peer = peers[0] ?? { start: gateway.end, end: gateway.end };
   const steps = {
     "client encode and send": write.end - encode.start,
     "outbound network and Jetty dispatch": gateway.start - write.end,
@@ -52,6 +52,9 @@ export function exchangeAnatomy(owner, gateway) {
   return {
     traceId: owner.traceId,
     httpId: http.id,
+    peerCalls: peers.length,
+    start: encode.start,
+    end: parse.end,
     peerStart: peer.start,
     peerEnd: peer.end,
     wallMs: wall,
@@ -59,6 +62,45 @@ export function exchangeAnatomy(owner, gateway) {
     boundaryOverlapMs: -Object.values(steps)
       .filter((x) => x < 0)
       .reduce((a, b) => a + b, 0),
+  };
+}
+// [DX-T1-4] Why: retries belong to one commit's latency; parallel HTTP intervals cannot simply be added.
+// Rejected: treating each attempt as another commit or hiding an overlapping exchange in TypeScript time.
+export function aggregateExchanges(root, exchanges) {
+  const own = exchanges.filter((e) => e.traceId === root.traceId).sort((a, b) => a.start - b.start);
+  let union = 0,
+    end = -Infinity,
+    overlap = 0;
+  for (const e of own) {
+    if (e.start < end) overlap += Math.min(end, e.end) - e.start;
+    union += Math.max(0, e.end - Math.max(end, e.start));
+    end = Math.max(end, e.end);
+  }
+  const steps =
+    overlap > 0.001
+      ? null
+      : Object.fromEntries(
+          [...new Set(own.flatMap((e) => Object.keys(e.steps)))].map((k) => [
+            k,
+            own.reduce((a, e) => a + (e.steps[k] ?? 0), 0),
+          ]),
+        );
+  const outside = root.wallMs - union;
+  if (
+    steps &&
+    own.length &&
+    Math.abs(Object.values(steps).reduce((a, b) => a + b, 0) + outside - root.wallMs) > 0.01
+  )
+    throw Error("Per-commit anatomy does not close");
+  return {
+    traceId: root.traceId,
+    phase: root.name,
+    commitMs: root.wallMs,
+    attempts: own.length,
+    httpWallMs: union,
+    outsideHttpMs: outside,
+    overlapMs: overlap,
+    steps,
   };
 }
 export function parsePostgres(line) {
@@ -170,11 +212,7 @@ export async function writeAnatomy(
   const exchanges = [];
   for (const root of roots) {
     const linked = childrenOf(root.root);
-    for (const gateway of linked.filter(
-      (r) =>
-        r.name.startsWith("gateway ") &&
-        r.spans.some((s) => s.name === "d/transact" || s.name.startsWith("peer.transact-await")),
-    )) {
+    for (const gateway of linked.filter((r) => r.name.startsWith("gateway "))) {
       const owner = [root.root, ...linked].find((r) =>
         r.spans.some((s) => s.id === gateway.parent && s.name === "client.http"),
       );
@@ -193,16 +231,18 @@ export async function writeAnatomy(
   const system = resources.filter(
     (r) => r.process === "system-linux" && r.clock?.domain === "linux-monotonic",
   );
-  const windows = exchanges.flatMap((e) => {
-    const midpoint = (e.peerStart + e.peerEnd) / 2;
-    const near = system.reduce(
-      (old, r) => (!old || Math.abs(r.at - midpoint) < Math.abs(old.at - midpoint) ? r : old),
-      null,
-    );
-    if (!near || !e.clock || near.clock.bootId !== e.clock.bootId) return [];
-    const shift = (near.rawClockOffsetMs ?? near.clock.offsetMs) - e.clock.offsetMs;
-    return [{ traceId: e.traceId, start: e.peerStart + shift, end: e.peerEnd + shift }];
-  });
+  const windows = exchanges
+    .filter((e) => e.peerCalls)
+    .flatMap((e) => {
+      const midpoint = (e.peerStart + e.peerEnd) / 2;
+      const near = system.reduce(
+        (old, r) => (!old || Math.abs(r.at - midpoint) < Math.abs(old.at - midpoint) ? r : old),
+        null,
+      );
+      if (!near || !e.clock || near.clock.bootId !== e.clock.bootId) return [];
+      const shift = (near.rawClockOffsetMs ?? near.clock.offsetMs) - e.clock.offsetMs;
+      return [{ traceId: e.traceId, start: e.peerStart + shift, end: e.peerEnd + shift }];
+    });
   const statements = [];
   const log = path.join(runDir, "trace/raw/pg.log.gz");
   if (manifest.requirePostgres && fs.existsSync(log)) {
@@ -224,6 +264,18 @@ export async function writeAnatomy(
   const stepNames = [...new Set(exchanges.flatMap((e) => Object.keys(e.steps)))];
   const steps = Object.fromEntries(
     stepNames.map((k) => [k, stats(exchanges.map((e) => e.steps[k]))]),
+  );
+  const perCommit = roots.map((r) => aggregateExchanges(r, exchanges));
+  const medianWall = quantile(
+    roots.map((r) => r.wallMs),
+    0.5,
+  );
+  const functionRoots = roots.filter((r) =>
+    r.spans.some((s) => s.nativeType === "triplex.TransactionFunction"),
+  );
+  const sequential = perCommit.filter((r) => r.attempts && r.steps);
+  const commitSteps = Object.fromEntries(
+    stepNames.map((k) => [k, stats(sequential.map((e) => e.steps[k] ?? 0))]),
   );
   const wal = resources
     .filter((r) => r.process === "postgres" && r.wal)
@@ -256,8 +308,15 @@ export async function writeAnatomy(
     commits: roots.length,
     exchanges: exchanges.length,
     steps,
+    commitSteps,
+    transactorFunction: stats(functionRoots.map((r) => r.layers.transactor)),
+    remainingPeerWait: stats(roots.map((r) => r.layers["peer-wait"])),
+    unobservedFunctionCommits: roots.length - functionRoots.length,
+    partitionedCommits: sequential.length,
+    overlappingCommits: perCommit.filter((r) => r.overlapMs > 0.001).length,
+    missingExchangeCommits: perCommit.filter((r) => !r.attempts).length,
     commitWall: stats(roots.map((r) => r.wallMs)),
-    clientOutsideHttp: stats(exchanges.map((e) => e.commitMs - e.wallMs)),
+    clientOutsideHttp: stats(perCommit.map((e) => e.outsideHttpMs)),
     typescript: stats(roots.map((r) => r.typescriptMs)),
     typescriptShare: stats(roots.map((r) => r.typescriptMs / r.wallMs)),
     boundaryOverlaps: exchanges.filter((e) => e.boundaryOverlapMs > 0).length,
@@ -291,7 +350,11 @@ export async function writeAnatomy(
       walScope: first && last ? { start: first.at, end: last.at } : null,
     },
     tail: tailCauses(commits),
-    examples: exchanges.sort((a, b) => b.commitMs - a.commitMs).slice(0, 20),
+    examples: perCommit.sort((a, b) => b.commitMs - a.commitMs).slice(0, 20),
+    medianExample:
+      [...perCommit].sort(
+        (a, b) => Math.abs(a.commitMs - medianWall) - Math.abs(b.commitMs - medianWall),
+      )[0] ?? null,
     sqlExamples: clean.slice(0, 10),
   };
   const ownNames = [
@@ -312,15 +375,17 @@ export async function writeAnatomy(
   const text = [
     "# Commit anatomy",
     "",
-    `Run ${result.tag}; source ${result.source}; tracing ${result.level}. ${exchanges.length} linked transact exchanges / ${roots.length} primary commits. Collection complete: ${complete}.`,
+    `Run ${result.tag}; source ${result.source}; tracing ${result.level}. ${exchanges.length} linked HTTP exchanges / ${roots.length} primary commits; ${sequential.length} sequential per-commit partitions, ${result.overlappingCommits} with overlapping HTTP and ${result.missingExchangeCommits} without a complete HTTP exchange. Collection complete: ${complete}.`,
     "",
-    "Cross-boundary network values are signed residuals including Jetty dispatch and Node callbacks. Negative values expose concurrent write/header milestones and are retained. Quantiles do not add. Parse ends inside the resolve callback; later continuation work is outside this HTTP partition.",
+    "Cross-boundary network values are signed residuals including Jetty dispatch and Node callbacks. Negative values expose concurrent write/header milestones and are retained. Quantiles do not add. Parse ends inside the resolve callback; later continuation work is outside this HTTP partition. The table sums sequential attempts per primary commit. Concurrent exchanges remain explicitly unpartitioned; raw per-exchange quantiles are retained in JSON.",
     "",
     `Whole commit p50/p99 ${n(result.commitWall.p50)}/${n(result.commitWall.p99)} ms; outside the HTTP partition ${n(result.clientOutsideHttp.p50)}/${n(result.clientOutsideHttp.p99)} ms. TypeScript scope wall p50/p99 ${n(result.typescript.p50)}/${n(result.typescript.p99)} ms, share ${n(result.typescriptShare.p50)}/${n(result.typescriptShare.p99)}.`,
     "",
     "| Step | n | p50 ms | p99 ms |",
     "| --- | ---: | ---: | ---: |",
-    ...Object.entries(steps).map(([k, s]) => `| ${k} | ${s.n} | ${n(s.p50)} | ${n(s.p99)} |`),
+    ...Object.entries(commitSteps).map(([k, s]) => `| ${k} | ${s.n} | ${n(s.p50)} | ${n(s.p99)} |`),
+    "",
+    `Authored transactor function: ${result.transactorFunction.n}/${roots.length} commits observed, p50/p99 ${n(result.transactorFunction.p50)}/${n(result.transactorFunction.p99)} ms. Remaining peer wait excluding that function p50/p99 ${n(result.remainingPeerWait.p50)}/${n(result.remainingPeerWait.p99)} ms. Function wall includes any internal wait/GC; it is not an exclusive CPU claim.`,
     "",
     `Postgres: ${clean.length} isolated windows, ${result.sql.ambiguousWindows} ambiguous. Statement count p50/p99 ${n(result.sql.statementsPerWindow.p50)}/${n(result.sql.statementsPerWindow.p99)}; server statement ms p50/p99 ${n(result.sql.statementMsPerWindow.p50)}/${n(result.sql.statementMsPerWindow.p99)}. WAL sample delta: ${JSON.stringify(walDelta)}. WAL counters are aggregate over the stated sample window, including background storage work; they are never presented as exact per-Datomic-transaction counts.`,
     "",

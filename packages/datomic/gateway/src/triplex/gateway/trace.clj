@@ -61,6 +61,11 @@
   (zero? (mod (reduce (fn [h c] (bit-and 0xffffffff (* (bit-xor h (int c)) 16777619))) 2166136261 trace) 1024)))
 (defn counter! [name n]
   (when *request* (swap! *request* update-in [:counters name] (fnil + 0) n)))
+ ;; [DX-T1-4] Why: the function receives the exact peer-await parent at submission, not a guessed request/time join.
+;; Rejected: storing trace metadata as application datoms or inheriting a predecessor's ordered-submit context.
+(def tx-jfr-enabled (= "1" (System/getenv "TRIPLEX_TRACE_TX_JFR")))
+(defn transaction-context []
+  (when (and tx-jfr-enabled *request*) (assoc (select-keys @*request* [:traceId :run :source :slot]) :parent *parent*)))
 (defn attribute! [name value] (when *request* (swap! *request* assoc-in [:attributes name] value)))
 (defn interval! [name layer start end parent]
   (when *request*

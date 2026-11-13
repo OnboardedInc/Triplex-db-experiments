@@ -3,7 +3,7 @@
 
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
-(def code
+(def operation-code
   '(letfn [(value [e a] (:v (first (d/datoms db :eavt e a))))
            ;; [DX-B8] Why: immutable transaction values avoid the per-commit scope retraction merge.
            ;; Rejected: a peer-cached head (allocation must remain atomic on the transactor).
@@ -118,6 +118,18 @@
                           [[:db/add scope :triplex.scope/feed-irregular true]])
                         (when irregular [[:db/add scope :triplex.scope/irregular true]])
                         (when position-irregular [[:db/add scope :triplex.scope/position-regular false]]))))))))
+ ;; [DX-T1-4] Why: the authored transaction function is observable even though Datomic's surrounding pipeline is closed.
+;; Rejected: native DEBUG logs on the serial path, or requiring a tracing namespace on ordinary transactors.
+(defn instrument-code [operation]
+  (list 'let '[triplex-trace-event
+               (try (when (and (:triplex-trace payload) (find-ns 'triplex.gateway.jfr))
+                      (when-let [start (ns-resolve 'triplex.gateway.jfr 'start-transaction!)]
+                        (start (:triplex-trace payload))))
+                    (catch Throwable _ nil))]
+        (list 'try operation
+              '(finally (when triplex-trace-event
+                          (try (.commit triplex-trace-event) (catch Throwable _ nil)))))))
+(def code (instrument-code operation-code))
 (def source-hash (schema/sha256 (pr-str code)))
 (defn install! [conn scope]
   (let [db (d/db conn) e (d/entid db [:triplex.scope/key scope])]

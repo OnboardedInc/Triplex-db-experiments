@@ -236,7 +236,9 @@
         submit (bound-fn []
                  (swap! timeline assoc :predecessorReady (System/nanoTime))
                  (trace/attribute! :submittedAt (trace/clock))
-                 (let [future (try (if hints (trace/span "d/transact-async" "peer-call" (d/transact-async conn data :hints hints))
+                 (let [context (trace/transaction-context)
+                       data (if context (assoc-in data [0 1 :triplex-trace] context) data)
+                       future (try (if hints (trace/span "d/transact-async" "peer-call" (d/transact-async conn data :hints hints))
                                              (trace/span "d/transact-async" "peer-call" (d/transact-async conn data)))
                                    ;; [DX-R3-P7] Why: a definitive synchronous clock refusal resolves this turn,
                                    ;; just like a failed transaction future; the retry owns the next sequence.

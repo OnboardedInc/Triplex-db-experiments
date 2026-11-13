@@ -12,6 +12,26 @@
 ;; Rejected: pretend the trace namespace startup wall anchor is also the JFR recording's anchor.
 (def clock-factory (delay (EventFactory/create [(AnnotationElement. Name "triplex.ClockSync")]
                             [(ValueDescriptor. Long/TYPE "beforeNanos") (ValueDescriptor. Long/TYPE "afterNanos")])))
+(def installed (atom nil))
+(def transaction-ids (java.util.concurrent.atomic.AtomicLong. (System/nanoTime)))
+(def transaction-factory (delay
+  (EventFactory/create [(AnnotationElement. Name "triplex.TransactionFunction")]
+    [(ValueDescriptor. String "traceId") (ValueDescriptor. String "parentSpanId") (ValueDescriptor. String "spanId")])))
+;; [DX-T1-4] Why: native JFR records one causally bound interval without JSON or logging on the transaction thread.
+;; Rejected: treating all concurrent transactor activity as work for the current gateway request.
+(defn start-transaction! [context]
+  (when (and (= "tx" (:process @installed)) (realized? transaction-factory)
+             (= (select-keys context [:run :source :slot]) (select-keys @installed [:run :source :slot]))
+             (re-matches #"[0-9a-f]{32}" (or (:traceId context) ""))
+             (not= (:traceId context) "00000000000000000000000000000000")
+             (re-matches #"[0-9a-f]{16}" (or (:parent context) ""))
+             (not= (:parent context) "0000000000000000"))
+    (let [event (.newEvent ^EventFactory @transaction-factory)
+          n (loop [] (let [n (.incrementAndGet transaction-ids)] (if (zero? n) (recur) n))) text (Long/toUnsignedString n 16)
+          id (str (subs "0000000000000000" (count text)) text)]
+      (when (.isEnabled event)
+        (.set event 0 (:traceId context)) (.set event 1 (:parent context)) (.set event 2 id)
+        (.begin event) event))))
 (defn clock-sample! []
   (when (realized? clock-factory)
     (let [event (.newEvent ^EventFactory @clock-factory) before (System/nanoTime)]
@@ -54,10 +74,10 @@
         (if-not (.hasMoreEvents r) {:events count :clockSamples (clojure.core/count points) :clockMaxUncertaintyMs uncertainty}
           (let [^RecordedEvent event (.readEvent r) name (.getName (.getEventType event))]
             (if (= name "triplex.ClockSync") (recur count)
-              (let [detail (details event)
-                    layer (cond (= name "jdk.GCPhasePause") (if (= process "tx") "transactor-gc" "gateway-gc")
+              (let [detail (details event) transaction (= name "triplex.TransactionFunction")
+                    layer (cond transaction "transactor" (= name "jdk.GCPhasePause") (if (= process "tx") "transactor-gc" "gateway-gc")
                                 (str/includes? name "Safepoint") "jvm-safepoint" :else "jvm-event")]
-                (.write w (str (json/write-str (merge identity detail {:type "event" :name name :layer layer :process process
+                (.write w (str (json/write-str (merge identity detail (when transaction {:nativeType name :traceId (.getString event "traceId") :parent (.getString event "parentSpanId") :id (.getString event "spanId")}) {:type "event" :name (if transaction "transactor.triplex-function" name) :layer layer :process process
                              :clock (assoc (:clock identity) :uncertaintyMs (+ uncertainty 0.001))
                              :start (+ offset (monotonic-at points (millis (.getStartTime event))))
                              :end (+ offset (monotonic-at points (millis (.getEndTime event))))})) "\n"))
@@ -86,8 +106,11 @@
               (str "JFR dump/export failed; coverage incomplete: " (.getName (class error)) " " (.getMessage error) "\n"))))))))
 (defn install! [process identity]
   @clock-factory
+  @transaction-factory
+  (reset! installed (assoc identity :process process))
   (doseq [^Recording r (.getRecordings (FlightRecorder/getFlightRecorder))]
     (.enable r "triplex.ClockSync")
+    (.enable r "triplex.TransactionFunction")
     ;; [DX-T1-4] Why: targeted profiles identify transactor code without native DEBUG logging.
     ;; Rejected: adding sampling overhead to summary or silently changing every full run.
     (when (= "1" (System/getenv "TRIPLEX_TRACE_JFR_PROFILE"))
