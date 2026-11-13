@@ -1701,3 +1701,26 @@ DX-T1 part 1 (`exp/DX-T1-tracing`, `3da5a2e2`, pushed, not merged; report `t1/RE
 
 DX-T1 part 2 is running (same agent session): a default tracing level under 3% cost, the queue wait split and explained,
 writer code time against waiting for a CPU, then the P2 fix at 10,000 subjects.
+
+## 2026-11-13 12:40 UTC: DX-T1 part 2 read: long waits are same-subject chains behind one late commit; host swap is the main noise; VM cut to 16 GiB; part 3 launched
+
+DX-T1 part 2 (`exp/DX-T1-tracing`, `3f59403d`, pushed; report `t1/REPORT-2.md` on that branch). P2 does not pass.
+1. **Queue waits explained.** The slowest commits waited 1.7 to 2.0 s for an earlier commit of the same subject; in-flight
+   slots were free (1 to 26 of 32 in use). The chains lead back to one commit whose scheduler was 267 ms late; that first
+   delay is not explained yet. Per-subject order and the 32-slot window are benchmark policy; ordering by clock ticket in
+   the client and Node core contention would also exist in a deployment.
+2. **Writer thread at 256 readers** (45 s phase): 2.7 s on CPU, 5.7 s waiting for a CPU. A dedicated writer core cut the
+   wait from 6,223 ms to 162 ms; commit p50 23.4 to 19.3 ms, p99 noisy. Kept opt-in.
+3. **One commit at 256 readers**, 22.0 ms: wait on the transactor 11.7 ms, TypeScript scopes 5.8 ms, network and callback
+   2.1 ms, driver queue 1.4 ms, gateway 1.0 ms. TypeScript share 32.7%.
+4. **Tracing cost.** The transactor's native logs and metrics callback cost about 3.1 ms at p50; the Node recorder 1.1 ms;
+   Flight Recorder, Postgres logging and gateway spans cost nothing measurable. Default level `summary` (Node and gateway
+   spans, system sampling) costs 0.49 ms, 2.97%, at p50: under 3%, over the 0.3 ms aim.
+5. **Full pair at the default level:** all-commit p99 988 ms, burst p50 23.2 ms, 5 to 10 fact band at 256 readers p50 22.4
+   and p99 49.4 ms; P3 met; oracle PASS; P1 not retained in that pair (read p99 272 ms).
+6. **Host.** Every control read about 16 ms at commit p50 with zero readers and tracing off (9 to 12 ms on a quiet host),
+   with 12 to 17 GB of Mac swap in use. The Mac has 36 GiB; the VM held 24 GiB. The orchestrator restarted the VM with
+   **16 GiB** (8 CPUs, `nohlt` on); Mac disk free went from 16 to 29 GiB as swap shrank.
+
+Part 3 is running (same agent session): host gate (control p50 at most 12 ms), causes of commits over 50 ms, the wait on
+the transactor at 256 readers, CPU placement, then a verdict pair.
