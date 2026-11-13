@@ -31,6 +31,14 @@ describe("commit anatomy observations", () => {
     const r = exchangeAnatomy(owner, gateway)!;
     expect(Object.values(r.steps).reduce((a: number, b: unknown) => a + Number(b), 0)).toBe(16);
     expect(r.steps["peer transact wait"]).toBe(8);
+    expect(
+      exchangeAnatomy(owner, {
+        ...gateway,
+        spans: [
+          { ...gateway.spans[0], name: "peer.transact-await (includes order/network/storage)" },
+        ],
+      })?.steps["peer transact wait"],
+    ).toBe(8);
     const overlap = exchangeAnatomy(owner, { ...gateway, end: 15.5 })!;
     expect(overlap.steps["return network, body and callback"]).toBe(-0.5);
     expect(overlap.boundaryOverlapMs).toBe(0.5);

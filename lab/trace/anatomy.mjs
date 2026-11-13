@@ -24,7 +24,7 @@ export function exchangeAnatomy(owner, gateway) {
   const write = children.find((s) => s.name === "socket.queue-and-write");
   const body = children.find((s) => s.name === "socket.body-read");
   const peers = gateway.spans
-    .filter((s) => s.name === "d/transact")
+    .filter((s) => s.name === "d/transact" || s.name.startsWith("peer.transact-await"))
     .sort((a, b) => a.start - b.start);
   if (!write || !body || peers.length !== 1) return null;
   const encode = owner.spans
@@ -150,7 +150,9 @@ export async function writeAnatomy(
   for (const root of roots) {
     const linked = childrenOf(root.root);
     for (const gateway of linked.filter(
-      (r) => r.name.startsWith("gateway ") && r.spans.some((s) => s.name === "d/transact"),
+      (r) =>
+        r.name.startsWith("gateway ") &&
+        r.spans.some((s) => s.name === "d/transact" || s.name.startsWith("peer.transact-await")),
     )) {
       const owner = [root.root, ...linked].find((r) =>
         r.spans.some((s) => s.id === gateway.parent && s.name === "client.http"),
@@ -233,6 +235,10 @@ export async function writeAnatomy(
     commits: roots.length,
     exchanges: exchanges.length,
     steps,
+    commitWall: stats(roots.map((r) => r.wallMs)),
+    clientOutsideHttp: stats(exchanges.map((e) => e.commitMs - e.wallMs)),
+    typescript: stats(roots.map((r) => r.typescriptMs)),
+    typescriptShare: stats(roots.map((r) => r.typescriptMs / r.wallMs)),
     boundaryOverlaps: exchanges.filter((e) => e.boundaryOverlapMs > 0).length,
     sql: {
       correlation: "time window, not a causal ID; 2ms boundary uncertainty",
@@ -259,6 +265,8 @@ export async function writeAnatomy(
     `Run ${result.tag}; source ${result.source}; tracing ${result.level}. ${exchanges.length} linked transact exchanges / ${roots.length} primary commits. Collection complete: ${complete}.`,
     "",
     "Cross-boundary network values are signed residuals including Jetty dispatch and Node callbacks. Negative values expose concurrent write/header milestones and are retained. Quantiles do not add. Parse ends inside the resolve callback; later continuation work is outside this HTTP partition.",
+    "",
+    `Whole commit p50/p99 ${n(result.commitWall.p50)}/${n(result.commitWall.p99)} ms; outside the HTTP partition ${n(result.clientOutsideHttp.p50)}/${n(result.clientOutsideHttp.p99)} ms. TypeScript scope wall p50/p99 ${n(result.typescript.p50)}/${n(result.typescript.p99)} ms, share ${n(result.typescriptShare.p50)}/${n(result.typescriptShare.p99)}.`,
     "",
     "| Step | n | p50 ms | p99 ms |",
     "| --- | ---: | ---: | ---: |",

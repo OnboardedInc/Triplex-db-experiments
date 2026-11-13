@@ -80,6 +80,8 @@ if (!renderOnly) {
     fs.mkdirSync(revision, { recursive: true });
     for (const name of [
       "TRACE-REPORT.md",
+      "COMMIT-ANATOMY.md",
+      "commit-anatomy.json",
       "trace.html",
       "trace.chrome.json",
       "trace-summary.json",
