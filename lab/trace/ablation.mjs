@@ -5,7 +5,7 @@ import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
 import { bookendComparison } from "./anatomy.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
-if (!["ablation", "cost", "anatomy", "cpu-floor"].includes(kind))
+if (!["ablation", "cost", "anatomy", "cpu-floor", "fallback-floor"].includes(kind))
   throw Error("Expected ablation or cost");
 const session = path.join(base, prefix + "-session"),
   source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
@@ -14,9 +14,11 @@ const arms =
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
     : kind === "anatomy"
       ? ["off", "anatomy", "anatomy", "off"]
-      : kind === "cpu-floor"
-        ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
-        : ["off", "summary", "summary", "off"];
+      : kind === "fallback-floor"
+        ? ["baseline", "fallback-worker", "fallback-worker", "baseline"]
+        : kind === "cpu-floor"
+          ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
+          : ["off", "summary", "summary", "off"];
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const rows = [];
 let buildHashes;
@@ -33,9 +35,10 @@ for (const [i, arm] of arms.entries()) {
     throw Error("Source/build bytes changed inside session");
   buildHashes = actualHashes;
   const effective = configuration({
-    TRIPLEX_TRACE_LEVEL: arm === "off" ? "off" : arm === "summary" ? "summary" : "full",
+    TRIPLEX_TRACE_LEVEL:
+      arm === "off" ? "off" : arm === "summary" || kind === "fallback-floor" ? "summary" : "full",
     TRIPLEX_TRACE_SESSION: prefix,
-    ...(!["full", "summary"].includes(arm)
+    ...(!["full", "summary"].includes(arm) && kind !== "fallback-floor"
       ? {
           TRIPLEX_TRACE_COMPONENTS:
             arm === "off"
@@ -65,6 +68,11 @@ for (const [i, arm] of arms.entries()) {
     summary.source !== source
   )
     throw Error("Run/source/component/session binding mismatch " + tag);
+  if (
+    kind === "fallback-floor" &&
+    bench.config.replicaFallbackThread !== (arm === "fallback-worker" ? "worker" : "main")
+  )
+    throw Error("Fallback placement readback mismatch");
   const containers = read(path.join(dir, "containers.json")),
     driver = read(path.join(dir, "driver-container.json"))[0];
   if (kind === "cpu-floor") {
@@ -226,7 +234,9 @@ if (
   new Set(rows.map((r) => r.commands)).size !== 1
 )
   throw Error("Workload/denominator changed inside session");
-const controls = rows.filter((r) => r.arm === (kind === "cpu-floor" ? "baseline" : "off")),
+const controls = rows.filter(
+    (r) => r.arm === (["cpu-floor", "fallback-floor"].includes(kind) ? "baseline" : "off"),
+  ),
   off50 = controls.reduce((s, r) => s + r.p50Ms, 0) / controls.length,
   off99 = controls.reduce((s, r) => s + r.p99Ms, 0) / controls.length;
 for (const r of rows) {
@@ -253,19 +263,18 @@ const text = [
 ];
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 const result = {
-  comparison:
-    kind === "cpu-floor"
-      ? {
-          p50Ms: bookendComparison(
-            controls.map((r) => r.p50Ms),
-            candidates.map((r) => r.p50Ms),
-          ),
-          p99Ms: bookendComparison(
-            controls.map((r) => r.p99Ms),
-            candidates.map((r) => r.p99Ms),
-          ),
-        }
-      : null,
+  comparison: ["cpu-floor", "fallback-floor"].includes(kind)
+    ? {
+        p50Ms: bookendComparison(
+          controls.map((r) => r.p50Ms),
+          candidates.map((r) => r.p50Ms),
+        ),
+        p99Ms: bookendComparison(
+          controls.map((r) => r.p99Ms),
+          candidates.map((r) => r.p99Ms),
+        ),
+      }
+    : null,
   bookendDriftP50Ms: Math.abs(controls[0].p50Ms - controls.at(-1).p50Ms),
   source,
   session: prefix,

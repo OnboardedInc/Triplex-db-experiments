@@ -2,7 +2,7 @@
 # [DX-T1-2] Why: one lease, one source and bookend controls bind recorder ablations to one host session.
 # Rejected: compare a recorder with a historical quiet off arm or allow unrelated work between arms.
 set -euo pipefail
-kind=${1:?ablation|cost|anatomy|cpu-floor}; prefix=${2:?tx2-dxt1-prefix}; shift 2
+kind=${1:?ablation|cost|anatomy|cpu-floor|fallback-floor}; prefix=${2:?tx2-dxt1-prefix}; shift 2
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
@@ -43,8 +43,9 @@ if [[ $kind == ablation ]]; then
 elif [[ $kind == cost ]]; then arms=(off summary summary off)
 elif [[ $kind == anatomy ]]; then arms=(off anatomy anatomy off)
 elif [[ $kind == cpu-floor ]]; then arms=(baseline engine-isolated engine-isolated baseline)
+elif [[ $kind == fallback-floor ]]; then arms=(baseline fallback-worker fallback-worker baseline)
 else exit 2;fi
-i=0
+i=0;session_rc=0
 for arm in "${arms[@]}"; do
   i=$((i+1));tag=$prefix-$i-$arm
   [[ $(git rev-parse HEAD) == $(cat "$session_dir/head.txt") ]] || exit 2
@@ -59,11 +60,25 @@ for arm in "${arms[@]}"; do
     placement=(DX_CPUS_TX=0,1 DX_CPUS_PG=0 DX_CPUS_GW_WRITE=1 DX_CPUS_GW_READ=2,3 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU= DX_WORKER_CPUS=)
     if [[ $arm == engine-isolated ]]; then placement=(DX_CPUS_TX=0,1 DX_CPUS_PG=2 DX_CPUS_GW_WRITE=3 DX_CPUS_GW_READ=2,3 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU= DX_WORKER_CPUS=);fi
   fi
+  workload=()
+  if [[ $kind == fallback-floor ]]; then
+    # [DX-T1-4] Why: sampled writer stacks identify full-world fallback decoding/checking on this thread.
+    # Rejected: change CPU placement or expected-state representation in the same comparison.
+    level=summary;components=default;workload=(--replica-fallback-thread main)
+    [[ $arm != fallback-worker ]] || workload=(--replica-fallback-thread worker)
+  fi
   if [[ $arm == full || $arm == summary ]]; then level=$arm;components=default;fi
   export TRIPLEX_TRACE_LEVEL=$level
   if [[ $components == default ]]; then unset TRIPLEX_TRACE_COMPONENTS;else export TRIPLEX_TRACE_COMPONENTS=$components;fi
-  env DX_FSYNC_PROBE=$([[ $kind == anatomy && $i == 1 ]] && echo 1 || echo 0) ${placement[@]+"${placement[@]}"} bash lab/experiments/EXP-DX1/t1/run.sh real "$tag" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
-  wait "$child";child=
+  env DX_FSYNC_PROBE=$([[ $kind == anatomy && $i == 1 ]] && echo 1 || echo 0) ${placement[@]+"${placement[@]}"} bash lab/experiments/EXP-DX1/t1/run.sh real "$tag" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 ${workload[@]+"${workload[@]}"} "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
+  stage_rc=0;wait "$child" || stage_rc=$?;child=
+  printf '%s\n' "$stage_rc" > "$session_dir/$i-exit.txt"
+  if [[ $stage_rc != 0 ]];then
+    [[ $session_rc != 0 ]] || session_rc=$stage_rc
+    bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --inventory > "$session_dir/$i-remaining-after-failure.txt"
+    [[ ! -s $session_dir/$i-remaining-after-failure.txt ]] || exit "$stage_rc"
+  fi
   sh lab/bin/host-quiet.sh > "$session_dir/$i-host-after.jsonl" || true
 done
+[[ $session_rc == 0 ]] || exit "$session_rc"
 node lab/trace/ablation.mjs "$DX_STACK_EVIDENCE" "$prefix" "$kind" > "$session_dir/analysis.log"

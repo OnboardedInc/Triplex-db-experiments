@@ -16,7 +16,7 @@ if [[ $kind == pair ]]; then
   # Rejected: leaving a queued real-arm shell orphaned after the pair's heavy wrapper receives TERM.
   pair_child=
   trap 'if [[ -n $pair_child ]]; then kill -TERM "$pair_child" 2>/dev/null || true; wait "$pair_child" || true; fi; exit 143' TERM INT
-  pair_arm() { "$@" & pair_child=$!; wait "$pair_child"; pair_child=; }
+  pair_arm() { local arm_rc=0; "$@" & pair_child=$!; wait "$pair_child" || arm_rc=$?; pair_child=; return "$arm_rc"; }
   # [DX-T1] Why: the authorized full pair shares one lease across matched arms, including cleanup.
   # Rejected: releasing the lock between arms, or silently extending a single-arm diagnostic lease.
   if [[ ( $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ) && -z ${DX_R3_PAIR_LEASE_PID:-} ]]; then
@@ -50,14 +50,24 @@ if [[ $kind == pair ]]; then
     pair_limit_ms=2580000; [[ $pair_id != DX-T1 ]] || pair_limit_ms=3600000
     node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$pair_limit_ms" & pair_watchdog=$!
   fi
-  pair_arm bash "$0" real "$prefix-zero" "$@" --zero-readers --match-duration-s "$duration"
+  pair_rc=0
+  # [DX-T1-4] Why: a failed diagnostic arm must retain the concurrent arm and closing control.
+  # Rejected: fail-fast that loses the matched observations; the original nonzero verdict is preserved.
+  pair_arm bash "$0" real "$prefix-zero" "$@" --zero-readers --match-duration-s "$duration" || pair_rc=$?
+  if [[ $pair_rc != 0 ]]; then
+    [[ $prefix == tx2-dxt1-* ]] || exit "$pair_rc"
+    bash lab/experiments/EXP-DX1/stack/up.sh "$prefix-zero" --inventory > "$root/$prefix-zero/remaining-after-failure.txt"
+    [[ ! -s $root/$prefix-zero/remaining-after-failure.txt ]] || exit "$pair_rc"
+  fi
   baseline="$root/$prefix-zero/driver/ns-writes.jsonl"
   [[ -s $baseline ]] || exit 1
   mkdir -p "$root/$prefix-ladder/input"
   cp "$baseline" "$root/$prefix-ladder/input/ns-writes.jsonl"
   cp "$root/$prefix-zero/driver/ns-report.json" "$root/$prefix-ladder/input/ns-report.json"
-  pair_arm bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl" --match-duration-s "$duration"
-  exit
+  ladder_rc=0
+  pair_arm bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl" --match-duration-s "$duration" || ladder_rc=$?
+  [[ $pair_rc != 0 ]] || pair_rc=$ladder_rc
+  exit "$pair_rc"
 fi
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 agent=$(printf '%s' "$prefix" | cut -d- -f2 | tr '[:lower:]' '[:upper:]' | sed 's/^DX/DX-/')

@@ -40,7 +40,11 @@ describe("sampled writer stacks", () => {
     expect(r.maxGapMs).toBe(7);
   });
   it("preserves signed sample backsteps without shifting later timestamps", () => {
-    const signed = { ...profile, samples: [2, 3, 3, 2, 2], timeDeltas: [2000, 8000, -2, 91002, 1000] };
+    const signed = {
+      ...profile,
+      samples: [2, 3, 3, 2, 2],
+      timeDeltas: [2000, 8000, -2, 91002, 1000],
+    };
     const index = indexCpuProfile(signed, markers, ref);
     expect(index.backsteps).toBe(1);
     const r = index.window(ref.offsetMs + 1009, ref.offsetMs + 1011);

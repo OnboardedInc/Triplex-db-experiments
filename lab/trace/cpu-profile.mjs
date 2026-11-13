@@ -60,7 +60,11 @@ export function indexCpuProfile(profile, markers, reference) {
       gapMs: delta / 1000,
     };
   });
-  if (points.some((p) => p.monoMs < profile.startTime / 1000 || p.monoMs > (profile.endTime + 10000) / 1000))
+  if (
+    points.some(
+      (p) => p.monoMs < profile.startTime / 1000 || p.monoMs > (profile.endTime + 10000) / 1000,
+    )
+  )
     throw Error("CPU samples exceed profile boundary");
   // [DX-T1-4] Why: observed V8 output contains a signed 2-us backstep; keep its timestamp and expose it.
   // Rejected: clamping deltas (shifts later samples), or rejecting an otherwise clock-bound recording.

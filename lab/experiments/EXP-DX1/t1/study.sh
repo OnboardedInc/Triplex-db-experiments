@@ -39,17 +39,26 @@ trap 'exit 143' TERM INT
 node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),5400000)' "$$" & watchdog=$!
 run_stage() {
  [[ $(git rev-parse HEAD) == $(cat "$session_dir/head.txt") ]] || exit 2
- "$@" & child=$!;wait "$child";child=
+ local stage_rc=0; "$@" & child=$!;wait "$child" || stage_rc=$?;child=;return "$stage_rc"
 }
 unset TRIPLEX_TRACE_COMPONENTS
+session_rc=0
 for arm in off-before pair off-after;do
+ stage_rc=0
  sh lab/bin/host-quiet.sh > "$session_dir/$arm-host-before.jsonl" || true
  if [[ $arm == pair ]];then
-  run_stage env TRIPLEX_TRACE_LEVEL=summary bash lab/experiments/EXP-DX1/t1/run.sh pair "$prefix" --rung 10k "$@" > "$session_dir/$arm-controller.log" 2>&1
+  run_stage env TRIPLEX_TRACE_LEVEL=summary bash lab/experiments/EXP-DX1/t1/run.sh pair "$prefix" --rung 10k "$@" > "$session_dir/$arm-controller.log" 2>&1 || stage_rc=$?
  else
-  run_stage env TRIPLEX_TRACE_LEVEL=off bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-$arm" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$arm-controller.log" 2>&1
+  run_stage env TRIPLEX_TRACE_LEVEL=off bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-$arm" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$arm-controller.log" 2>&1 || stage_rc=$?
+ fi
+ printf '%s\n' "$stage_rc" > "$session_dir/$arm-exit.txt"
+ if [[ $stage_rc != 0 ]];then
+  [[ $session_rc != 0 ]] || session_rc=$stage_rc
+  bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --inventory > "$session_dir/$arm-remaining-after-failure.txt"
+  [[ ! -s $session_dir/$arm-remaining-after-failure.txt ]] || exit "$stage_rc"
  fi
  sh lab/bin/host-quiet.sh > "$session_dir/$arm-host-after.jsonl" || true
 done
+[[ $session_rc == 0 ]] || exit "$session_rc"
 python3 lab/experiments/EXP-DX1/h4/summarize.py "$DX_STACK_EVIDENCE/$prefix-ladder" > "$session_dir/TABLES.md"
 node lab/trace/study.mjs "$DX_STACK_EVIDENCE" "$prefix" > "$session_dir/analysis.log"
