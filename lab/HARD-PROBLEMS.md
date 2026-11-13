@@ -6,7 +6,7 @@ has been tried, and directions not yet tried. Numbers are at 10,000 subjects on 
 `lab/TARGETS.md`; Sam's five priorities are in `lab/NORTH-STAR.md`.
 
 Constraints every answer must respect: exactness and durability are the floor; the Triplex layer stays in TypeScript (Sam,
-2026-11-12); lanes are Datomic on Postgres storage and native XTDB (QLever paused); the only machine is Sam's Mac (36 GiB,
+2026-11-12); the lane is Datomic on Postgres storage (Sam closed the XTDB lane on 2026-11-13; QLever is paused); the only machine is Sam's Mac (36 GiB,
 12 cores) with the colima VM `triplex2`.
 
 ## H1. The commit median sits on the engine call, and the call alone is over the 10 ms bar
@@ -68,13 +68,21 @@ Constraints every answer must respect: exactness and durability are the floor; t
 3. **Directions not tried.** Cache budgets sized to the population; a commit path whose cost does not grow with the number
    of subjects (find what grows: index depth, cache misses, segment fetches); activation that yields to commits.
 
-## H6. The transactor is closed source
+## H6. The transactor is closed source: reverse engineer it (Sam, 2026-11-13)
 
-1. **What is hard.** The largest part of a commit is a wait on a process we cannot instrument from inside.
+1. **What is hard.** The largest part of a commit is a wait on a process whose source we do not have.
 2. **Evidence.** Its native logs and metrics callback cost 3.1 ms per commit when on; Flight Recorder costs nothing
    measurable but shows only JVM events.
-3. **Directions not tried.** Flight Recorder socket and file events on the transactor matched to Postgres statement times;
-   the peer's io-stats; the XTDB lane as the open-source comparison for the same commit.
+3. **Sam's direction:** "can we reverse engineer it to understand what's happening? ... If we can reverse engineer how it
+   works from the code, then we should be able to better reason about how to work with it, like how to better write stuff
+   that will work well on the transactor."
+4. **Plan (agent DX-RE1, queued behind DX-T1 part 4).** Confirm the distribution's licence permits it. Decompile the
+   transactor and peer jars and read the path of one transaction: how the peer submits it, the transactor's queue and
+   pipeline, what is written to storage and in how many statements and syncs, when the acknowledgement is sent, what
+   batches with what, how indexing and garbage interact with the commit path, and which settings change any of that. Match
+   the static reading against sampled stacks of the running transactor during commits. Output: our own notes, with class
+   and method names, and a list of ways to write so the transactor does less work per commit. Decompiled code stays out of
+   the repository.
 
 ## H7. The test bench moves results more than the code does
 
@@ -84,11 +92,9 @@ Constraints every answer must respect: exactness and durability are the floor; t
    verdict, not one long pair); a fixed quiet window agreed with Sam; a second machine is out of scope unless Sam changes
    that.
 
-## H8. XTDB has no current reading
+## H8. (closed) XTDB
 
-1. **What is hard.** The goal is all priorities met on Datomic or on XTDB. All evidence since 2026-11-10 is Datomic; the
-   XTDB experiment data was removed in the pause. Whether XTDB's commit path has a lower floor on this Mac is unknown.
-2. **Directions not tried.** The same traced commit anatomy on native XTDB as a one-day comparison.
+Sam, 2026-11-13: "I don't care about XTDB. Don't go back to that." Not a problem to solve; the goal is Datomic.
 
 ## H9. Open design decisions that change what is possible (Sam's to make)
 

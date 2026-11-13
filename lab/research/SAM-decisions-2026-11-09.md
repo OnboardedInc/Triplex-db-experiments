@@ -318,3 +318,23 @@ Orchestrator's reading:
    `~/Claude/Projects/triplex-db-2/agents/prompts/LEAPFROG-fable.md`. Output:
    `~/Claude/Projects/triplex-db-2/research/2026-11-15-leapfrog/MENU.md` and `SUMMARY.md`.
 4. Afterwards the orchestrator picks from the menu and hands the picks to Codex at max effort.
+
+## 2026-11-13 about 16:45 UTC: no XTDB; reverse engineer the transactor
+
+Sam, verbatim, after reading the list in `lab/HARD-PROBLEMS.md`:
+
+> I don't care about XTDB. Don't go back to that. That's not one. Don't do that one.
+>
+> For H6 can we reverse engineer it to understand what's happening? That'd be the best way to do it. If we can reverse engineer how it works from the code, then we should be able to better reason about how to work with it, like how to better write stuff that will work well on the transactor.
+>
+> Otherwise this looks good.
+
+He also asked for the open design decisions to be explained with examples (answered in chat the same day).
+
+Orchestrator's reading:
+1. The XTDB lane is closed. The goal is every priority met on Datomic. No XTDB work, comparison or reading.
+2. Reverse engineer the Datomic transactor and peer library from the shipped binaries, to learn how a transaction is
+   processed and written to storage, and from that how Triplex should write to it. First step of that work: read the
+   licence that ships with the distribution and confirm it permits this; keep decompiled code out of the public repository
+   and commit only our own notes.
+3. The rest of the hard-problems list stands.
