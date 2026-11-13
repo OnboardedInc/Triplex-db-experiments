@@ -5,6 +5,7 @@ import {
   correlateStatements,
   tailCauses,
   bookendComparison,
+  observedRunEnd,
   aggregateExchanges,
 } from "../../../lab/trace/anatomy.mjs";
 
@@ -14,6 +15,13 @@ describe("commit anatomy observations", () => {
     expect(bookendComparison([13, 13.2], [11, 11.2]).lowerBeyondBookendDrift).toBe(true);
     expect(() => bookendComparison([13], [11, 11])).toThrow();
     expect(() => bookendComparison([13, 13], [11, NaN])).toThrow();
+  });
+  it("checks the actual ISO run-end instant without removing the freshness upper bound", () => {
+    const end = Date.UTC(2026, 10, 13, 20, 33, 14, 624);
+    expect(observedRunEnd("2026-11-13T20:33:14.624Z")).toBe(end);
+    expect(observedRunEnd(end)).toBe(end);
+    expect(() => observedRunEnd("invalid")).toThrow("Invalid observed");
+    expect(() => observedRunEnd(Number.NaN)).toThrow("Invalid observed");
   });
   const owner = {
     traceId: "1".repeat(32),

@@ -149,6 +149,13 @@ export function correlateStatements(windows, statements, uncertaintyMs = 2) {
 }
 // [DX-T1-4] Why: two reversed-order pairs retain host drift instead of promoting any lower median.
 // Rejected: comparing with a historical control or treating a difference inside bookend drift as a benefit.
+// [DX-T1-4] Why: driver reports use ISO timestamps; freshness checks must compare the recorded instant.
+// Rejected: coercing the ISO string numerically (rejects every valid attempt), or dropping the upper bound.
+export function observedRunEnd(value) {
+  const at = typeof value === "string" ? Date.parse(value) : value;
+  if (!Number.isFinite(at)) throw Error("Invalid observed run end");
+  return at;
+}
 export function bookendComparison(controls, candidates) {
   if (
     controls.length !== 2 ||

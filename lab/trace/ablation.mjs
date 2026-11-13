@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
-import { bookendComparison } from "./anatomy.mjs";
+import { bookendComparison, observedRunEnd } from "./anatomy.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
 if (!["ablation", "cost", "anatomy", "cpu-floor", "fallback-floor", "history-256"].includes(kind))
   throw Error("Expected ablation or cost");
@@ -32,6 +32,7 @@ for (const [i, arm] of arms.entries()) {
     bench = read(path.join(dir, "driver/ns-report.json")),
     manifest = read(path.join(dir, "trace-run.json")),
     summary = read(path.join(dir, "trace-summary.json"));
+  const endedAt = observedRunEnd(bench.endedAt);
   const actualHashes = fs.readFileSync(path.join(dir, "source-build-hashes.json"), "utf8");
   if (buildHashes !== undefined && actualHashes !== buildHashes)
     throw Error("Source/build bytes changed inside session");
@@ -215,8 +216,8 @@ for (const [i, arm] of arms.entries()) {
         !Number.isFinite(w.scheduledAt) ||
         w.scheduledAt < manifest.startedAt - 1000 ||
         !(w.finishedAt >= w.startedAt && w.startedAt >= w.scheduledAt) ||
-        !Number.isFinite(bench.endedAt) ||
-        w.finishedAt > bench.endedAt ||
+        !Number.isFinite(endedAt) ||
+        w.finishedAt > endedAt ||
         Math.abs(w.latencyMs - (w.finishedAt - w.scheduledAt)) > 0.01
       )
         throw Error("Writer content/freshness mismatch");
