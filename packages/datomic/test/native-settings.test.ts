@@ -3,9 +3,20 @@ import {
   quietLogback,
   validateNativeSettings,
   QUIET_LOGGERS,
+  nativeBookendComparison,
 } from "../../../lab/trace/native-settings.mjs";
 
 describe("native setting comparison evidence", () => {
+  it("keeps the actual candidate count and requires a benefit beyond both fresh bookends", () => {
+    expect(nativeBookendComparison([14, 15], [13.8]).lowerBeyondBookendDrift).toBe(false);
+    expect(nativeBookendComparison([14, 14.2], [13])).toMatchObject({
+      candidateRuns: 1,
+      lowerBeyondBookendDrift: true,
+    });
+    expect(() => nativeBookendComparison([14], [13])).toThrow();
+    expect(() => nativeBookendComparison([14, 14], [])).toThrow();
+    expect(() => nativeBookendComparison([14, 14], [NaN])).toThrow();
+  });
   const manifest = { tag: "attempt", slot: "slot", source: "source", startedAt: 1000 };
   const expected = {
     DX_QUIET_LOGS: "1",

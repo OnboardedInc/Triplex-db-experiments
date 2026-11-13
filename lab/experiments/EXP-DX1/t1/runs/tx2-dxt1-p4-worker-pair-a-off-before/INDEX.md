@@ -7,3 +7,5 @@ Tracing was intentionally off for this control arm; latency is in ns-report.json
 Canonical files: ~/Claude/Projects/triplex-db-2/evidence/DX-T1/tx2-dxt1-p4-worker-pair-a-off-before/.
 Compressed raw traces: 406738 bytes, under trace/raw; hashes in trace/SHA256SUMS.
 Large viewers remain in the durable store and the local worktree copy; only this index, report and SHA256SUMS are committed.
+
+Viewer storage: trace.html embeds its original bytes as checked gzip and opens offline; large Chrome JSON is losslessly archived as trace.chrome.json.gz. The canonical VIEWER-ARCHIVE.json retains original hashes; trace/raw is unchanged.

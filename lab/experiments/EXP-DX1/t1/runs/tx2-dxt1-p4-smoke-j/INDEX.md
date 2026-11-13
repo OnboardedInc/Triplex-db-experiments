@@ -8,3 +8,5 @@ Canonical files: ~/Claude/Projects/triplex-db-2/evidence/DX-T1/tx2-dxt1-p4-smoke
 Compressed raw traces: 732204 bytes, under trace/raw; hashes in trace/SHA256SUMS.
 Large viewers remain in the durable store and the local worktree copy; only this index, report and SHA256SUMS are committed.
 Auxiliary oracle inputs are losslessly compressed; ORACLE-ARCHIVE.jsonl records original/decoded SHA256 and archive paths. Use gzip -dk to restore an original path.
+
+Viewer storage: trace.html embeds its original bytes as checked gzip and opens offline; large Chrome JSON is losslessly archived as trace.chrome.json.gz. The canonical VIEWER-ARCHIVE.json retains original hashes; trace/raw is unchanged.

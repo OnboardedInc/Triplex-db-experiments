@@ -4,7 +4,7 @@ import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
 import { bookendComparison, observedRunEnd } from "./anatomy.mjs";
-import { validateNativeSettings } from "./native-settings.mjs";
+import { validateNativeSettings, nativeBookendComparison } from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
 const nativeKind = /^(quiet|channel|isolated|index)-(floor|256)$/.exec(kind);
 const readerDiagnostic = ["history-256", "writer-256"].includes(kind) || nativeKind?.[2] === "256";
@@ -26,8 +26,17 @@ if (
   throw Error("Expected ablation or cost");
 const session = path.join(base, prefix + "-session"),
   source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
+const nativeRequest = nativeKind
+  ? JSON.parse(fs.readFileSync(path.join(session, "native-request.json"), "utf8"))
+  : null;
+const nativeRepeats = nativeRequest?.candidateRepeats ?? 2;
+if (nativeKind && (nativeRequest.kind !== kind || ![1, 2].includes(nativeRepeats)))
+  throw Error("Invalid native comparison plan");
+const compare = nativeKind ? nativeBookendComparison : bookendComparison;
 const arms = nativeKind
-  ? ["baseline", "candidate", "candidate", "baseline"]
+  ? nativeRepeats === 1
+    ? ["baseline", "candidate", "baseline"]
+    : ["baseline", "candidate", "candidate", "baseline"]
   : kind === "ablation"
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
     : kind === "anatomy"
@@ -229,15 +238,15 @@ for (const [i, arm] of arms.entries()) {
       throw Error("Unconfirmed published channel mode");
     const isolated = nativeKind[1] === "isolated" && arm === "candidate";
     const masks = {
-      tx: "0,1",
-      pg: isolated ? "2" : "0",
-      "gw-w": isolated ? "3" : "1",
+      tx: isolated ? "0" : "0,1",
+      pg: isolated ? "1" : "0",
+      "gw-w": isolated ? "2" : "1",
       "gw-r": isolated ? "4" : "2,3",
     };
     for (const [role, cpus] of Object.entries(masks))
       if (containers.find((c) => c.Name === `/${tag}-${role}`)?.HostConfig.CpusetCpus !== cpus)
         throw Error("Native CPU placement mismatch");
-    if (driver.HostConfig.CpusetCpus !== (isolated ? "5,6,7" : "4,5,6,7"))
+    if (driver.HostConfig.CpusetCpus !== (isolated ? "3,4,5,6,7" : "4,5,6,7"))
       throw Error("Native driver CPU placement mismatch");
     const placements = fs
       .readFileSync(path.join(dir, "driver.log"), "utf8")
@@ -252,12 +261,12 @@ for (const [i, arm] of arms.entries()) {
         throw Error("Native writer/worker affinity evidence absent");
       for (const r of placements) {
         if (
-          r.main !== "5" ||
-          r.workers !== "6,7" ||
-          r.allowed.replace("6-7", "6,7") !== (r.thread === 0 ? "5" : "6,7")
+          r.main !== "3" ||
+          r.workers !== "4,5,6,7" ||
+          r.allowed.replace("4-7", "4,5,6,7") !== (r.thread === 0 ? "3" : "4,5,6,7")
         )
           throw Error("Native writer/worker affinity mismatch");
-        if ((r.background ?? []).some((b) => b.allowed.replace("6-7", "6,7") !== "6,7"))
+        if ((r.background ?? []).some((b) => b.allowed.replace("4-7", "4,5,6,7") !== "4,5,6,7"))
           throw Error("Native runtime background thread shares writer core");
       }
     } else if (placements.length) throw Error("Native baseline unexpectedly pinned");
@@ -332,7 +341,8 @@ for (const [i, arm] of arms.entries()) {
   if (effective.gatewayEnabled && (!gatewayRequests["gw-w"] || !gatewayRequests["gw-r"]))
     throw Error("Requested gateway spans absent");
   const swaps = [],
-    macCpu = [];
+    macCpu = [],
+    hostRows = [];
   let host = 0,
     vm = 0;
   for (const file of filesUnder(path.join(dir, "trace/raw")).filter((f) =>
@@ -347,6 +357,7 @@ for (const [i, arm] of arms.entries()) {
       )
         throw Error("Stale/foreign host sample");
       if (r.process === "system-darwin") {
+        hostRows.push(r);
         if (Number.isFinite(r.otherCpu)) macCpu.push(r.otherCpu);
         const used = /used\s*=\s*([\d.]+)M/.exec(r.swap ?? "");
         if (used) {
@@ -382,6 +393,29 @@ for (const [i, arm] of arms.entries()) {
     bench.writer.expired !== 0
   )
     throw Error("Incomplete or changed frozen 200-second trace");
+  // [DX-T1-4] Why: host context belongs to the measured requests; post-run oracle CPU is not latency interference.
+  // Rejected: reporting a whole-arm CPU median dominated by independent validation after the timed work.
+  const hostContext = (start, end) => {
+    const observed = hostRows.filter((r) => r.at >= start && r.at <= end);
+    const cpu = observed.map((r) => r.otherCpu).filter(Number.isFinite);
+    const swap = observed
+      .map((r) => /used\s*=\s*([\d.]+)M/.exec(r.swap ?? ""))
+      .filter(Boolean)
+      .map((m) => Number(m[1]) / 1024);
+    if (!cpu.length || !swap.length) throw Error("Timed host context missing");
+    return {
+      start,
+      end,
+      samples: observed.length,
+      swapGiB: { min: Math.min(...swap), median: percentile(swap, 0.5), max: Math.max(...swap) },
+      macCpu: { median: percentile(cpu, 0.5), p99: percentile(cpu, 0.99), max: Math.max(...cpu) },
+    };
+  };
+  const timedHost = hostContext(
+    Math.min(...writes.map((w) => w.scheduledAt)),
+    Math.max(...writes.map((w) => w.finishedAt)),
+  );
+  const phase256 = bench.phases.find((p) => p.name === "L256");
   rows.push({
     tag,
     arm,
@@ -402,11 +436,13 @@ for (const [i, arm] of arms.entries()) {
       writes.map((w) => w.transactReturnedAt - w.transactCalledAt),
       0.5,
     ),
-    swapGiB: { min: Math.min(...swaps), median: percentile(swaps, 0.5), max: Math.max(...swaps) },
-    macCpu: {
-      median: percentile(macCpu, 0.5),
-      p99: percentile(macCpu, 0.99),
-      max: macCpu.length ? Math.max(...macCpu) : null,
+    swapGiB: timedHost.swapGiB,
+    macCpu: timedHost.macCpu,
+    timedHost,
+    hostAtL256: readerDiagnostic ? hostContext(phase256.start, phase256.end) : null,
+    wholeArmContext: {
+      swapGiB: { min: Math.min(...swaps), median: percentile(swaps, 0.5), max: Math.max(...swaps) },
+      macCpu: { median: percentile(macCpu, 0.5), p99: percentile(macCpu, 0.99) },
     },
     gatewayRequests,
     nativeMetrics,
@@ -445,7 +481,7 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${readerDiagnostic ? "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
+  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${readerDiagnostic ? "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim. Host context spans first scheduled to last finished primary commit; post-run oracle CPU is excluded.`,
   "",
   "| arm / level | p50 ms | p99 ms | control p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
   "| --- | ---: | ---: | --- | --- | --- | --- |",
@@ -460,26 +496,26 @@ const text = [
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 if (readerDiagnostic)
   text.push(
-    "| arm | L256 small commit p50 / p99 ms | L256 read p99 ms | correct pulls/s |",
-    "| --- | --- | ---: | ---: |",
+    "| arm | L256 small commit p50 / p99 ms | L256 read p99 ms | correct pulls/s | phase swap GiB / Mac CPU % |",
+    "| --- | --- | ---: | ---: | --- |",
     ...rows.map(
       (r) =>
-        `| ${r.arm} | ${r.bandsAtL256["5-10"].p50Ms.toFixed(3)} / ${r.bandsAtL256["5-10"].p99Ms.toFixed(3)} | ${r.ladder256.read.p99Ms.toFixed(3)} | ${r.ladder256.goodputPerS.toFixed(1)} |`,
+        `| ${r.arm} | ${r.bandsAtL256["5-10"].p50Ms.toFixed(3)} / ${r.bandsAtL256["5-10"].p99Ms.toFixed(3)} | ${r.ladder256.read.p99Ms.toFixed(3)} | ${r.ladder256.goodputPerS.toFixed(1)} | ${r.hostAtL256.swapGiB.median.toFixed(3)} / ${r.hostAtL256.macCpu.median.toFixed(1)} |`,
     ),
     "",
   );
 const result = {
   comparisonAtL256: readerDiagnostic
     ? {
-        smallP50Ms: bookendComparison(
+        smallP50Ms: compare(
           controls.map((r) => r.bandsAtL256["5-10"].p50Ms),
           candidates.map((r) => r.bandsAtL256["5-10"].p50Ms),
         ),
-        smallP99Ms: bookendComparison(
+        smallP99Ms: compare(
           controls.map((r) => r.bandsAtL256["5-10"].p99Ms),
           candidates.map((r) => r.bandsAtL256["5-10"].p99Ms),
         ),
-        readP99Ms: bookendComparison(
+        readP99Ms: compare(
           controls.map((r) => r.ladder256.read.p99Ms),
           candidates.map((r) => r.ladder256.read.p99Ms),
         ),
@@ -489,11 +525,11 @@ const result = {
     ["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind) ||
     !!nativeKind
       ? {
-          p50Ms: bookendComparison(
+          p50Ms: compare(
             controls.map((r) => r.p50Ms),
             candidates.map((r) => r.p50Ms),
           ),
-          p99Ms: bookendComparison(
+          p99Ms: compare(
             controls.map((r) => r.p99Ms),
             candidates.map((r) => r.p99Ms),
           ),
@@ -503,6 +539,7 @@ const result = {
   source,
   session: prefix,
   kind,
+  candidateRuns: candidates.length,
   controls: controls.map((r) => r.tag),
   rows,
 };

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { loadCpuProfile } from "./cpu-profile.mjs";
 import { bindNativeTransaction } from "./native-transactions.mjs";
 import { writeAnatomy } from "./anatomy.mjs";
+import { packHtml } from "./viewer.mjs";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { createGunzip } from "node:zlib";
@@ -985,7 +986,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     }),
   );
   const finding = slow.length
-    ? `The slowest observed commits spent their largest exclusive interval in ${slow.map((r) => `\`${r.steps[0]?.[0] ?? "unknown"}\` (${n(r.steps[0]?.[1])} ms, trace \`${r.traceId}\`)`).join("; ")}. These are observed spans, not proof of the closed-source transactor's internal cause.`
+    ? `The slowest observed commits spent their largest exclusive interval in ${slow.map((r) => `\`${r.steps[0]?.[0] ?? "unknown"}\` (${n(r.steps[0]?.[1])} ms, trace \`${r.traceId}\`)`).join("; ")}. These are observed spans, not proof of the transactor's internal cause.`
     : "No commit traces were observed; the cause of slow commits is not established.";
   const hostByPhase = Object.fromEntries(
     (bench.phases ?? []).map((p) => {
@@ -1024,7 +1025,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     },
     reporterSha256: createHash("sha256")
       .update(
-        ["report.mjs", "anatomy.mjs", "native-transactions.mjs", "cpu-profile.mjs"]
+        ["report.mjs", "anatomy.mjs", "native-transactions.mjs", "cpu-profile.mjs", "viewer.mjs"]
           .map((name) => name + "\0" + fs.readFileSync(new URL(name, import.meta.url), "utf8"))
           .join("\0"),
       )
@@ -1175,7 +1176,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     "",
     "Logical read histograms include every finished read; fast reads use a fixed 1/1024 FNV sample, every read at least 50 ms is retained, and new recorder revisions also retain the actual top 20 per phase/thread. Historical runs without top-20 retention show the slowest retained reads. Logical read root wall includes named oracle and intentional straddle waits; target-bar service latency remains in ns-report.json. Worker resource series distinguish isolate heap and process RSS. Linux writer scheduler counters give nanosecond runtime/run-queue deltas for observed synchronous scopes and the sampled phase interval. Other thread telemetry uses /proc CPU ticks. Async request scopes do not have exclusive CPU attribution. GC during remote waits is an ambient overlay and is not charged to TypeScript or gateway own work. GC overlaps and independent thread work are pictured, not inferred from percentiles.",
     "",
-    "JFR GC/safepoint/thread-park/socket events, transactor callback metrics, PostgreSQL duration/checkpoint/autovacuum logs, pg_stat_activity/wal/io samples, cgroup throttling/pressure/memory/io and Mac CPU/swap are retained when available. Native JFR transaction-function spans, when present, bind the authored Triplex function to its exact peer-await span; the transactor column is this function wall time, not exclusive CPU. Remaining closed-source Datomic internals and individual Postgres statements cannot be causally split without a transaction identifier; the table deliberately leaves these shares unknown. Samples are not request-specific proof. See trace-run.json and collection-errors.txt for unavailable collectors.",
+    "JFR GC/safepoint/thread-park/socket events, transactor callback metrics, PostgreSQL duration/checkpoint/autovacuum logs, pg_stat_activity/wal/io samples, cgroup throttling/pressure/memory/io and Mac CPU/swap are retained when available. Native JFR transaction-function spans, when present, bind the authored Triplex function to its exact peer-await span; the transactor column is this function wall time, not exclusive CPU. Remaining uninstrumented Datomic internals and individual Postgres statements cannot be causally split without a transaction identifier; the table deliberately leaves these shares unknown. Samples are not request-specific proof. See trace-run.json and collection-errors.txt for unavailable collectors.",
     "",
   );
   fs.writeFileSync(path.join(rootDir, "TRACE-REPORT.md"), lines.join("\n"));
@@ -1295,7 +1296,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     events: relevantEvents,
     resources: relevantResources,
   }).replaceAll("<", "\\u003c");
-  fs.writeFileSync(path.join(rootDir, "trace.html"), html(finding, data, tag));
+  fs.writeFileSync(path.join(rootDir, "trace.html"), packHtml(html(finding, data, tag)));
   if (copyTo) {
     fs.mkdirSync(copyTo, { recursive: true });
     for (const f of ["TRACE-REPORT.md", "trace.html", "trace.chrome.json", "trace-summary.json"])

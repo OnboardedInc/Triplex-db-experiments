@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync, readFileSync, readdirSync, mkdirSync, writeFileSyn
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
+import { unpackHtml } from "../../../lab/trace/viewer.mjs";
 const directories: string[] = [];
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -493,7 +494,7 @@ describe("permanent request tracing", () => {
     expect(absentWorker.errors).toContain("1 worker RPC spans have no bound receiver trace");
     writeFileSync(rawFixture, originalBytes);
     await buildReport(dir);
-    expect(readFileSync(path.join(dir, "trace.html"), "utf8")).toContain(root.traceId);
+    expect(unpackHtml(readFileSync(path.join(dir, "trace.html"), "utf8"))).toContain(root.traceId);
     expect(
       JSON.parse(readFileSync(path.join(dir, "trace.chrome.json"), "utf8")).traceEvents.length,
     ).toBeGreaterThan(2);

@@ -47,7 +47,10 @@ elif [[ $kind == fallback-floor ]]; then arms=(baseline fallback-worker fallback
 elif [[ $kind == history-256 ]]; then arms=(baseline history-192 history-192 baseline)
 elif [[ $kind == seed-floor ]]; then arms=(baseline seed-2000 seed-2000 baseline)
 elif [[ $kind == writer-256 ]]; then arms=(baseline writer-core writer-core baseline)
-elif [[ $kind =~ ^(quiet|channel|isolated|index)-(floor|256)$ ]]; then arms=(baseline candidate candidate baseline)
+elif [[ $kind =~ ^(quiet|channel|isolated|index)-(floor|256)$ ]]; then
+  [[ ${DX_NATIVE_REPEATS:-2} =~ ^[12]$ ]] || exit 2
+  arms=(baseline candidate candidate baseline)
+  [[ ${DX_NATIVE_REPEATS:-2} != 1 ]] || arms=(baseline candidate baseline)
 else exit 2;fi
 # [DX-T1-4] Why: setting requests are explicit, identical controls bookend one changed native setting.
 # Rejected: claiming a tag proves the running JVM configuration or comparing hosts across sessions.
@@ -58,7 +61,7 @@ if [[ $kind =~ ^(quiet|channel|isolated|index)-(floor|256)$ ]]; then
 import os,json,sys
 keys=['DX_QUIET_LOGS','DX_ENCRYPT_CHANNEL','DX_INDEX_THRESHOLD','DX_INDEX_MAX']
 defaults=['0','true','256m','1g']
-json.dump({'kind':sys.argv[2],'baseline':{k:os.environ.get(k,d) for k,d in zip(keys,defaults)}},open(sys.argv[1],'w'),indent=2)
+json.dump({'kind':sys.argv[2],'candidateRepeats':int(os.environ.get('DX_NATIVE_REPEATS','2')),'baseline':{k:os.environ.get(k,d) for k,d in zip(keys,defaults)}},open(sys.argv[1],'w'),indent=2)
 PY_NATIVE
 fi
 i=0;session_rc=0
@@ -109,11 +112,14 @@ for arm in "${arms[@]}"; do
     if [[ $kind == *-256 ]]; then duration=300;level_s=45;reader_args=(--max-readers 256);fi
     placement=(DX_QUIET_LOGS=${DX_QUIET_LOGS:-0} DX_ENCRYPT_CHANNEL=${DX_ENCRYPT_CHANNEL:-true} DX_INDEX_THRESHOLD=${DX_INDEX_THRESHOLD:-256m} DX_INDEX_MAX=${DX_INDEX_MAX:-1g}
       DX_CPUS_TX=0,1 DX_CPUS_PG=0 DX_CPUS_GW_WRITE=1 DX_CPUS_GW_READ=2,3 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU= DX_WORKER_CPUS=)
+    # [DX-T1-4] Why: one core each for TX/PG/write peer/writer leaves four reader cores on the eight-CPU machine.
+    # Rejected: giving readers only two cores or allowing single-core JVM ergonomics to switch the collector to Serial.
+    [[ $kind != isolated-* ]] || placement+=("DX_TX_JAVA_OPTS=-Xms256m -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=200")
     if [[ $arm == candidate ]];then
       case "$kind" in
         quiet-*) placement+=(DX_QUIET_LOGS=1);;
         channel-*) placement+=(DX_ENCRYPT_CHANNEL=false);;
-        isolated-*) placement+=(DX_CPUS_TX=0,1 DX_CPUS_PG=2 DX_CPUS_GW_WRITE=3 DX_CPUS_GW_READ=4 DX_CPUS_DRIVER=5,6,7 DX_MAIN_CPU=5 DX_WORKER_CPUS=6,7);;
+        isolated-*) placement+=(DX_CPUS_TX=0 DX_CPUS_PG=1 DX_CPUS_GW_WRITE=2 DX_CPUS_GW_READ=4 DX_CPUS_DRIVER=3,4,5,6,7 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7);;
         index-*) placement+=(DX_INDEX_THRESHOLD=512m);;
       esac
     fi

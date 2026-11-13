@@ -1,3 +1,4 @@
+// @ts-nocheck -- [DX-T1-4] Why: validate native wire records at this boundary; binding checks remain active. Rejected: trusting parsed JSON types.
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -9,6 +10,28 @@ export const QUIET_LOGGERS = [
   "datomic.update",
   "datomic.log",
 ];
+// [DX-T1-4] Why: the bounded continuation can bracket one native-setting candidate with two fresh controls.
+// Rejected: reusing an old control, duplicating a candidate as a fake repeat, or claiming a saving inside drift.
+export function nativeBookendComparison(controls, candidates) {
+  if (
+    controls.length !== 2 ||
+    ![1, 2].includes(candidates.length) ||
+    [...controls, ...candidates].some((v) => !Number.isFinite(v))
+  )
+    throw Error("Invalid native comparison denominator");
+  const baseline = (controls[0] + controls[1]) / 2;
+  const candidate = candidates.reduce((a, b) => a + b, 0) / candidates.length;
+  const benefit = baseline - candidate,
+    drift = Math.abs(controls[1] - controls[0]);
+  return {
+    baseline,
+    candidate,
+    benefit,
+    drift,
+    candidateRuns: candidates.length,
+    lowerBeyondBookendDrift: benefit > drift && Math.max(...candidates) < Math.min(...controls),
+  };
+}
 // [DX-T1-4] Why: preserve the distribution's exact appenders and unrelated levels in a single-variable logging arm.
 // Rejected: a replacement console appender (would confound logger levels with logging transport).
 export function quietLogback(xml) {
