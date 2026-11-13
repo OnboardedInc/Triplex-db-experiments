@@ -515,48 +515,52 @@ export class DatomicClient {
           set: (id: string, entity: CachedEntity) =>
             this.reachCache.set(this.reachKey(db, prefix, id), entity),
         };
-        if (response.reset) {
-          this.reachCache.deleteWhere((key) => key.startsWith(prefix));
-          this.reachDiagnostics.resets++;
-        }
         const entities = new Map<string, CachedEntity>();
         let missed = false;
-        for (const entity of response.entities) {
-          if (
-            !Array.isArray(entity) ||
-            (entity.length !== 2 && entity.length !== 3) ||
-            typeof entity[0] !== "string" ||
-            !Number.isSafeInteger(entity[1]) ||
-            entity[1] < 0 ||
-            entities.has(entity[0])
-          )
-            throw new TypeError("Invalid reach entity");
-          const [id, rev] = entity as [string, number];
-          let decoded: CachedEntity | undefined;
-          if (entity.length === 3) {
-            if (!Array.isArray(entity[2])) throw new TypeError("Invalid inline entity");
-            this.reachDiagnostics.inlineEntities++;
-            this.countReachDecode(entity[2]);
-            decoded = decodeEntity(id, rev, entity[2], (row) => {
-              for (const observe of this.rowObservers) observe(db, row);
-            });
-            cache.set(id, decoded);
-          } else {
-            this.reachDiagnostics.referenceEntities++;
-            decoded = cache.get(id);
-            if (decoded?.rev === rev) {
-              this.reachDiagnostics.referenceHits++;
-              // [DX-H7] Why: references are reads too; refresh only the small predecessor cache.
-              // Rejected: replaying row observers (would churn the row LRU on every reader cache hit).
-              if (this.predecessorCache.enabled)
-                for (const row of decoded.storedRows)
-                  this.predecessorCache.retain(prefix + row.id, row);
-            } else this.reachDiagnostics.referenceMisses++;
+        // [DX-T1-4] Why: old late-offer intervals overlap reach scopes but leave decode/cache work unnamed.
+        // Rejected: treating an asynchronous reach scope as exclusive JavaScript CPU time.
+        traceSync("client.reach-decode-and-cache", () => {
+          if (response.reset) {
+            this.reachCache.deleteWhere((key) => key.startsWith(prefix));
+            this.reachDiagnostics.resets++;
           }
-          if (!decoded || decoded.rev !== rev) missed = true;
-          else entities.set(id, decoded);
-        }
-        ingested();
+          for (const entity of response.entities) {
+            if (
+              !Array.isArray(entity) ||
+              (entity.length !== 2 && entity.length !== 3) ||
+              typeof entity[0] !== "string" ||
+              !Number.isSafeInteger(entity[1]) ||
+              entity[1] < 0 ||
+              entities.has(entity[0])
+            )
+              throw new TypeError("Invalid reach entity");
+            const [id, rev] = entity as [string, number];
+            let decoded: CachedEntity | undefined;
+            if (entity.length === 3) {
+              if (!Array.isArray(entity[2])) throw new TypeError("Invalid inline entity");
+              this.reachDiagnostics.inlineEntities++;
+              this.countReachDecode(entity[2]);
+              decoded = decodeEntity(id, rev, entity[2], (row) => {
+                for (const observe of this.rowObservers) observe(db, row);
+              });
+              cache.set(id, decoded);
+            } else {
+              this.reachDiagnostics.referenceEntities++;
+              decoded = cache.get(id);
+              if (decoded?.rev === rev) {
+                this.reachDiagnostics.referenceHits++;
+                // [DX-H7] Why: references are reads too; refresh only the small predecessor cache.
+                // Rejected: replaying row observers (would churn the row LRU on every reader cache hit).
+                if (this.predecessorCache.enabled)
+                  for (const row of decoded.storedRows)
+                    this.predecessorCache.retain(prefix + row.id, row);
+              } else this.reachDiagnostics.referenceMisses++;
+            }
+            if (!decoded || decoded.rev !== rev) missed = true;
+            else entities.set(id, decoded);
+          }
+          ingested();
+        });
         if (missed) {
           this.reachDiagnostics.refMisses++;
           const references = response.entities.filter(

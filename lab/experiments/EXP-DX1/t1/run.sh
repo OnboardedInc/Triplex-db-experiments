@@ -27,4 +27,14 @@ fi
 [[ -f $DX_ORACLE_ROOT/lab/oracles/replay/cli.py ]] || { echo 'Missing frozen oracle executable source' >&2; exit 2; }
 export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-summary}
 export DX_READ_PATH=replica DX_STRICT_RECORD_CLOCKS=1
-exec node lab/bin/heavy.mjs --label DX-T1-$prefix -- bash lab/experiments/EXP-DX1/h4/run.sh "$kind" "$prefix" "$@"
+# [DX-T1-4] Why: q8's 192-MiB window retains the benchmark's historical basis cohort; fallback decoding stays off the writer.
+# Rejected: silently inheriting the 64-MiB driver default, which caused measured historical-read gateway fallbacks.
+args=("$@")
+for setting in replica-history-mib replica-fallback-thread; do
+  present=false
+  for argument in "${args[@]}"; do [[ $argument != --$setting && $argument != --$setting=* ]] || present=true; done
+  if [[ $present == false ]]; then
+    if [[ $setting == replica-history-mib ]]; then args+=(--replica-history-mib 192); else args+=(--replica-fallback-thread worker); fi
+  fi
+done
+exec node lab/bin/heavy.mjs --label DX-T1-$prefix -- bash lab/experiments/EXP-DX1/h4/run.sh "$kind" "$prefix" "${args[@]}"
