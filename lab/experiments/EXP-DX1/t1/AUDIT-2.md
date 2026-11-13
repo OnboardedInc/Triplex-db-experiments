@@ -25,3 +25,7 @@ The 10k ablation session `p2-abl-a` completed all nine arms with 3,420 primary c
 Source/build bytes, actual collector flags, host swap samples and bookend controls passed the observation checks.
 Native logs/callback added 3.115 ms p50 (19.48%) against bookend mean 15.994 ms; full added 3.197 ms.
 Summary now excludes that stream while retaining Node/gateway spans, JFR and PG context. Its cost is not yet proved.
+
+`p2-cost-a` (off/summary/summary/off) measured +0.751 ms / 4.73% mean p50 overhead; the cost target was missed.
+The next cheaper summary keeps Node/gateway spans and system sampling; JFR, PG tracing and native logs stay in full.
+Gateway GC becomes n/a when JFR is excluded; scope coverage still describes wall intervals, not proven CPU execution.

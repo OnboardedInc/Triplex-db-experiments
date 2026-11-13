@@ -727,6 +727,9 @@ export async function buildReport(runDir, { copyTo } = {}) {
       groups.set(bandKey, band);
     }
   }
+  if (manifest?.requiredJfr && !manifest.requiredJfr.includes("gw-w")) {
+    for (const rows of groups.values()) for (const r of rows) r.layers["gateway-gc"] = null;
+  }
   const selected = [];
   const selectedIds = new Set();
   for (const group of groups.values())
@@ -866,7 +869,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     "",
     `Run \`${tag}\`; source \`${summary.source}\`; subjects ${bench.seed?.seededSubjects ?? "unknown"}; tracing ${manifest?.level ?? "unknown"}.`,
     "",
-    `Recorders: ${(manifest?.components ?? ["legacy configuration"]).join(", ")}. Native DEBUG transaction logging and its metrics callback are excluded from the summary default; full retains them.`,
+    `Recorders: ${(manifest?.components ?? ["legacy configuration"]).join(", ")}. The summary default keeps Node/gateway spans and system sampling. Full adds JVM JFR, native Datomic logs/metrics and Postgres statement/wait tracing. Without JFR, gateway own scope can include unmeasured JVM GC/safepoints; that GC share is n/a.`,
     "",
     `Commit coverage: ${explained}/${denom.length} (${n(denom.length ? (100 * explained) / denom.length : NaN)}%) have at least 95% of wall time covered by named layer spans. Target: 99%. Writer trace completeness: ${nodeEnabled ? `${writes - missingCommits}/${writes}` : "n/a (Node recorder ablated)"}. Raw trace bytes: ${rawBytes}.`,
     "",
