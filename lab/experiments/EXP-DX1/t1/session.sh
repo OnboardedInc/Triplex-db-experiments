@@ -22,6 +22,12 @@ cleanup() {
   if [[ -n $watchdog ]]; then kill "$watchdog" 2>/dev/null || true;wait "$watchdog" 2>/dev/null || true;fi
   bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --inventory > "$session_dir/remaining.txt" || exit 1
   [[ ! -s $session_dir/remaining.txt ]] || { echo 'Owned resources remain; retaining lease' >&2;exit 1; }
+ python3 - "$DX_STACK_EVIDENCE" "$prefix" <<'PY_RESTORE'
+import pathlib,json,sys
+for state in pathlib.Path(sys.argv[1]).glob(sys.argv[2]+"*/scheduler-state.json"):
+ old=json.loads(state.read_text());rows=[json.loads(l) for l in state.with_name("scheduler-control.jsonl").read_text().splitlines() if l.strip()]
+ assert rows and rows[-1]["mode"]=="restore" and rows[-1]["after"]==old["before"], "Unrestored guest scheduler: "+str(state)
+PY_RESTORE
   rm "$lock/owner.json";rmdir "$lock"
   exit "$rc"
 }

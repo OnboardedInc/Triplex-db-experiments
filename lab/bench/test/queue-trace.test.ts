@@ -53,3 +53,17 @@ test("queue intervals partition lateness, subject dependency, occupied slots and
   );
   assert.equal(finished.find((r) => r.job === a).queue[0].cause, "scheduler-late");
 });
+
+test("an expired predecessor releases subject ordering before its completion callback", async () => {
+  let now = 0, complete: (()=>void) | undefined;
+  const done: any[] = [];
+  const a = { key: 1, scheduledAt: 0, name: "a" }, b = { key: 1, scheduledAt: 0, name: "b" }, c = { key: 1, scheduledAt: 0, name: "c" };
+  const s = new OpenLoopScheduler<any>([], { maxInFlight: 1, deadlineMs: 5, now: ()=>now, observeQueue: true,
+    exec: ()=>new Promise<void>(r=>{complete=r}), onDone: r=>{done.push(r);now+=2} });
+  s.inject(a);s.inject(b);s.inject(c);now=10;complete!();await new Promise(r=>setImmediate(r));
+  const last = done.find(r=>r.job===c);
+  assert.equal(last.expired,true);
+  assert.equal(last.queue.find((q:any)=>q.cause==="subject").behind,b);
+  assert.equal(last.queue.find((q:any)=>q.cause==="subject").end,12);
+  assert.equal(last.queue.find((q:any)=>q.cause==="scheduler-dispatch").end,14);
+});

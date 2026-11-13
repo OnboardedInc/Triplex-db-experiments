@@ -29,3 +29,11 @@ Summary now excludes that stream while retaining Node/gateway spans, JFR and PG 
 `p2-cost-a` (off/summary/summary/off) measured +0.751 ms / 4.73% mean p50 overhead; the cost target was missed.
 The next cheaper summary keeps Node/gateway spans and system sampling; JFR, PG tracing and native logs stay in full.
 Gateway GC becomes n/a when JFR is excluded; scope coverage still describes wall intervals, not proven CPU execution.
+
+`p2-cost-b`: mean p50 +0.296 ms / 1.81%, just inside both aims, with 1.406 ms off-control drift.
+This is a borderline observation, not a robust overhead guarantee; all per-arm values and swap remain in COST-2-b.md.
+The full-pair study wrapper keeps 900-second phases and bookends them with off references under one lease.
+`trace/study.mjs` validates DONE/10k/strict/local/full duration, source/build bytes, session/tag/slot, trace completeness
+and fresh Mac/VM samples, then copies existing gate values and flags without certifying semantic acceptance.
+Scheduler restoration state now binds the exact source, prefix and live lease PID; the parent independently requires
+the restored readback before releasing its lease. Changing reader/seed/bar/oracle logic remains outside this change.

@@ -19,7 +19,7 @@ if [[ $kind == pair ]]; then
   pair_arm() { "$@" & pair_child=$!; wait "$pair_child"; pair_child=; }
   # [DX-T1] Why: the authorized full pair shares one lease across matched arms, including cleanup.
   # Rejected: releasing the lock between arms, or silently extending a single-arm diagnostic lease.
-  if [[ $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ]]; then
+  if [[ ( $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ) && -z ${DX_R3_PAIR_LEASE_PID:-} ]]; then
     pair_id=DX-R3; [[ $prefix != tx2-dxt1-* ]] || pair_id=DX-T1
     pair_lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
     python3 -c 'import shutil; assert shutil.disk_usage(".").free >= 15*1024**3'

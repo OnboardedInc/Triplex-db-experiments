@@ -218,6 +218,8 @@ export class OpenLoopScheduler<J extends Job> {
     const queue = this.queueOf(job, startedAt);
     if (startedAt - job.scheduledAt > this.opts.deadlineMs) {
       this.expired++;
+      const nextInfo = q?.[0] && this.queueInfo.get(q[0]);
+      if (nextInfo) nextInfo.readyAt = startedAt;
       this.opts.onDone({
         job,
         startedAt,
