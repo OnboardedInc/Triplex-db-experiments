@@ -486,7 +486,11 @@ export async function buildReport(runDir, { copyTo } = {}) {
     if (copyTo) {
       fs.mkdirSync(copyTo, { recursive: true });
       for (const name of Object.keys(outputs))
-        fs.copyFileSync(path.join(rootDir, name), path.join(copyTo, name));
+        fs.copyFileSync(
+          path.join(rootDir, name),
+          path.join(copyTo, name),
+          fs.constants.COPYFILE_FICLONE,
+        );
     }
     return summary;
   }
@@ -1134,7 +1138,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
   if (copyTo) {
     fs.mkdirSync(copyTo, { recursive: true });
     for (const f of ["TRACE-REPORT.md", "trace.html", "trace.chrome.json", "trace-summary.json"])
-      fs.copyFileSync(path.join(rootDir, f), path.join(copyTo, f));
+      fs.copyFileSync(path.join(rootDir, f), path.join(copyTo, f), fs.constants.COPYFILE_FICLONE);
   }
   return summary;
 }

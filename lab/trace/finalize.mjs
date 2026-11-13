@@ -1,3 +1,4 @@
+import { packOracle } from "./pack-oracle.mjs";
 // @ts-nocheck -- command-line run manifests are validated by the report reader.
 import fs from "node:fs";
 import path from "node:path";
@@ -122,3 +123,19 @@ console.log(
   }),
 );
 if (!result.complete && !result.disabled) process.exitCode = 1;
+
+if (!renderOnly && result.tag.startsWith("tx2-dxt1-")) {
+  const archive = await packOracle(run);
+  if (archive.files && copy) {
+    fs.copyFileSync(
+      path.join(run, archive.journal),
+      path.join(copy, archive.journal),
+      fs.constants.COPYFILE_FICLONE,
+    );
+    for (const destination of [run, copy])
+      fs.appendFileSync(
+        path.join(destination, "INDEX.md"),
+        "Auxiliary oracle inputs are losslessly compressed; ORACLE-ARCHIVE.jsonl records original/decoded SHA256 and archive paths. Use gzip -dk to restore an original path.\n",
+      );
+  }
+}

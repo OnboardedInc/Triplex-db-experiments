@@ -4,7 +4,7 @@
 set -euo pipefail
 mode=${1:?enable|restore}; prefix=${2:?owned-prefix}; out=${3:?evidence-dir}
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ && ( $mode == enable || $mode == restore ) ]] || exit 2
-export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
+export DOCKER_HOST="unix://$HOME/.colima/triplex2/docker.sock"
 lease="$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json"
 lease_pid=$(python3 - "$lease" <<'PY'
 import json,sys,os

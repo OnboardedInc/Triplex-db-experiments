@@ -271,6 +271,7 @@
     "../lab/scenarios/v2/cases.mjs",
     "../lab/trace/ablation.mjs",
     "../lab/trace/study.mjs",
+    "../lab/trace/pack-oracle.mjs",
     "../lab/trace/components.mjs",
     "../lab/trace/components.test.mjs",
     "../lab/trace/cost.mjs",

@@ -3,10 +3,26 @@ import { canonicalRow, typed } from "./canonical.ts";
 import { Digest } from "./rng.ts";
 import { ids, memberOf } from "./world.ts";
 import type { Receipt } from "./composition.ts";
-type Version = { row: any; from: number; until: number; a: number; b: number };
+type Version = {
+  row?: any;
+  from: number;
+  until: number;
+  a: number;
+  b: number;
+  validFrom?: number;
+  validTo?: number | undefined;
+  reference?: string | undefined;
+  stamp?: number | undefined;
+};
 // [DX-R3] Why: expected full rows come from command intent plus acknowledged assertion identities/metadata.
 // Rejected: using observed reads or the replica bootstrap as expected-state evidence.
 export class FullRowModel {
+  // [DX-T1-2] Why: the cached digest already covers every canonical row field; visibility traversal needs only these scalars.
+  // Rejected: retain metadata/Option wrappers after hashing (writer GC), or change the expected digest or temporal rules.
+  private readonly compact: boolean;
+  constructor(compact = process.env.DX_MODEL_COMPACT === "1") {
+    this.compact = compact;
+  }
   private seen = new Set<number>();
   private entities = new Map<string, Version[]>();
   private assertions = new Map<string, Version>();
@@ -72,7 +88,18 @@ export class FullRowModel {
           retractTxId: Option.none(),
         };
         const d = new Digest().add(canonicalRow(row));
-        const v = { row, from: receipt.instant, until: Infinity, a: d.a, b: d.b };
+        const v: Version = this.compact
+          ? {
+              from: receipt.instant,
+              until: Infinity,
+              a: d.a,
+              b: d.b,
+              validFrom: row.validFrom,
+              validTo: Option.isSome(row.validTo) ? row.validTo.value : undefined,
+              reference: row.value.type === "ref" ? row.value.value : undefined,
+              stamp: row.attribute === ":placement/stamp" ? Number(row.value.value) : undefined,
+            }
+          : { row, from: receipt.instant, until: Infinity, a: d.a, b: d.b };
         const body = this.entities.get(row.entityId) ?? [];
         body.push(v);
         this.entities.set(row.entityId, body);
@@ -91,11 +118,22 @@ export class FullRowModel {
       for (const v of this.entities.get(todo[i]!) ?? []) {
         record.add(v.from);
         if (Number.isFinite(v.until)) record.add(v.until);
-        valid.add(v.row.validFrom);
-        if (Option.isSome(v.row.validTo)) valid.add(v.row.validTo.value as number);
-        if (v.row.value.type === "ref" && !seen.has(v.row.value.value)) {
-          seen.add(v.row.value.value);
-          todo.push(v.row.value.value);
+        const validFrom = v.row ? v.row.validFrom : v.validFrom!;
+        const validTo = v.row
+          ? Option.isSome(v.row.validTo)
+            ? v.row.validTo.value
+            : undefined
+          : v.validTo;
+        const reference = v.row
+          ? v.row.value.type === "ref"
+            ? v.row.value.value
+            : undefined
+          : v.reference;
+        valid.add(validFrom);
+        if (validTo !== undefined) valid.add(validTo);
+        if (reference !== undefined && !seen.has(reference)) {
+          seen.add(reference);
+          todo.push(reference);
         }
       }
     return { record: [...record].sort((a, b) => a - b), valid: [...valid].sort((a, b) => a - b) };
@@ -111,20 +149,28 @@ export class FullRowModel {
     for (let i = 0; i < todo.length; i++)
       for (const v of this.entities.get(todo[i]!) ?? []) {
         const t = v.row;
+        const validFrom = t ? t.validFrom : v.validFrom!;
+        const validTo = t ? (Option.isSome(t.validTo) ? t.validTo.value : undefined) : v.validTo;
+        const reference = t ? (t.value.type === "ref" ? t.value.value : undefined) : v.reference;
+        const versionStamp = t
+          ? t.attribute === ":placement/stamp"
+            ? Number(t.value.value)
+            : undefined
+          : v.stamp;
         if (
           v.from > recordedAt ||
           v.until <= recordedAt ||
-          t.validFrom > validAt ||
-          (Option.isSome(t.validTo) && t.validTo.value <= validAt)
+          validFrom > validAt ||
+          (validTo !== undefined && validTo <= validAt)
         )
           continue;
         d.a = (d.a + v.a) >>> 0;
         d.b = (d.b + v.b) >>> 0;
         d.n++;
-        if (t.attribute === ":placement/stamp") stamp = Math.max(stamp, Number(t.value.value));
-        if (t.value.type === "ref" && !seen.has(t.value.value)) {
-          seen.add(t.value.value);
-          todo.push(t.value.value);
+        if (versionStamp !== undefined) stamp = Math.max(stamp, versionStamp);
+        if (reference !== undefined && !seen.has(reference)) {
+          seen.add(reference);
+          todo.push(reference);
         }
       }
     return { digest: d.hex(), facts: d.n, stamp };

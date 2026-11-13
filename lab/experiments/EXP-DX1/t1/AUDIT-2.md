@@ -60,3 +60,19 @@ a missing readback is incomplete evidence, never a placement PASS. CPU-set parse
 `p2-smoke-e` completed its benchmark but failed trace completeness: 231 retained peer `d/db` spans had pruned short
 gateway ancestors in summary mode. The failure is retained. Summary now preserves every ancestor of a retained child;
 a gateway regression test checks the exact parent set. CPU-affinity records remain diagnostic until the rerun passes.
+
+`p2-cpu-a` completed both full pairs; the closing off control was refused below 15 GiB, with no resources left.
+The partial renderer requires that exact refusal text, matching source and empty cleanup inventory, labels the session
+incomplete and uses the one actual off control. It never fabricates a bookend or a performance PASS.
+Lossless oracle packing and APFS viewer-copy clones recovered space; raw trace trees were not removed or rewritten.
+Clone receipts compare both originals and the fresh clone SHA256 before atomic replacement; independent COW inodes
+preserve both report paths. Compression receipts compare original/decoded bytes and source/run identity.
+`trace/pack-oracle.mjs` now automates completed-run packing: DONE plus exact tag/source/slot; exclusive archive/journal;
+decoded SHA256/length equality; archive, directory and journal fsync before unlink. Its `complete` means byte-preserving
+archive completion only. Normal package tests cover successful readback, foreign-source rejection and existing-destination
+refusal without deleting the original. Future report copies use COW where supported and keep identical bytes/paths.
+The compact expected model is opt-in. It caches the same full canonical-row digest and keeps visibility/reference/stamp
+scalars instead of retaining the row and Option wrappers. Both modes match an independently enumerated canonical-row
+reference at 48 record/valid-time cuts, including cycles, expiry, retraction and metadata. No oracle or bar was changed.
+Package suite: 194 passed, 51 skipped; compact-model reference test passed; native Node strip-types import passed.
+Bench typecheck still has only the previously reported unrelated files, with no changed-file diagnostic.

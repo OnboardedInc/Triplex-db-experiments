@@ -617,3 +617,44 @@ describe("explicit CPU placement", () => {
       expect(() => parseTraceCpuSet(invalid)).toThrow();
   });
 });
+
+describe("lossless completed-oracle archives", () => {
+  async function attempt() {
+    const dir = mkdtempSync(path.join(tmpdir(), "tx2-dxt1-pack-test-"));
+    directories.push(dir);
+    mkdirSync(path.join(dir, "driver"));
+    const source = "1".repeat(40),
+      tag = path.basename(dir);
+    writeFileSync(path.join(dir, "head.txt"), source);
+    writeFileSync(path.join(dir, "trace-run.json"), JSON.stringify({ source, tag, slot: tag }));
+    writeFileSync(path.join(dir, "driver/ns-report.json"), JSON.stringify({ status: "DONE" }));
+    writeFileSync(path.join(dir, "driver/oracle-expected.json"), "exact payload".repeat(100));
+    return dir;
+  }
+  it("rereads decoded bytes and retains source-bound SHA256 before removing the original", async () => {
+    const { packOracle } = await import("../../../lab/trace/pack-oracle.mjs");
+    const dir = await attempt();
+    const file = path.join(dir, "driver/oracle-expected.json"),
+      before = readFileSync(file);
+    expect((await packOracle(dir, { minBytes: 1 })).files).toBe(1);
+    expect(gunzipSync(readFileSync(file + ".gz"))).toEqual(before);
+    const manifest = readFileSync(path.join(dir, "ORACLE-ARCHIVE.jsonl"), "utf8")
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
+    expect(manifest[1].originalSha256).toBe(manifest[1].decodedSha256);
+    expect(manifest.at(-1).type).toBe("complete");
+    expect(readdirSync(path.join(dir, "driver"))).not.toContain("oracle-expected.json");
+  });
+  it("refuses a foreign source and an existing destination while retaining the original", async () => {
+    const { packOracle } = await import("../../../lab/trace/pack-oracle.mjs");
+    const dir = await attempt(),
+      file = path.join(dir, "driver/oracle-expected.json");
+    writeFileSync(path.join(dir, "head.txt"), "2".repeat(40));
+    await expect(packOracle(dir, { minBytes: 1 })).rejects.toThrow(/binding/);
+    writeFileSync(path.join(dir, "head.txt"), "1".repeat(40));
+    writeFileSync(file + ".gz", "corrupt existing file");
+    await expect(packOracle(dir, { minBytes: 1 })).rejects.toThrow();
+    expect(readFileSync(file, "utf8")).toBe("exact payload".repeat(100));
+  });
+});

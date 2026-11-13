@@ -7,7 +7,9 @@ const [base, prefix] = process.argv.slice(2),
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
 const placements = process.argv.includes("--placements");
-const arms = placements
+const modelExperiment = process.argv.includes("--experiment=model");
+const partial = process.argv.includes("--partial");
+const plannedArms = placements
   ? [
       "off-before",
       "baseline-zero",
@@ -17,6 +19,17 @@ const arms = placements
       "off-after",
     ]
   : ["off-before", "zero", "ladder", "off-after"];
+const arms = partial ? plannedArms.filter((a) => a !== "off-after") : plannedArms;
+if (partial) {
+  const refused = fs.readFileSync(path.join(session, "off-after-controller.log"), "utf8");
+  const expected = fs.readFileSync(path.join(base, prefix + "-off-after/head.txt"), "utf8").trim();
+  if (
+    !refused.includes("less than 15 GiB host disk free") ||
+    expected !== source ||
+    fs.readFileSync(path.join(session, "remaining.txt"), "utf8").trim()
+  )
+    throw Error("Missing validated disk-refusal/cleanup evidence");
+}
 const rows = [];
 let hashes;
 // [DX-T1-2] Why: report the existing gate values only after rereading exact source-bound attempt data and common host samples.
@@ -51,11 +64,12 @@ for (const arm of arms) {
   let placement;
   if (placements && !off) {
     const candidate = arm.startsWith("candidate"),
+      cpuCandidate = candidate && !modelExperiment,
       driver = read(path.join(dir, "driver-container.json"))[0],
       containers = read(path.join(dir, "containers.json"));
     const g = containers.find((c) => c.Name === "/" + tag + "-gw-r");
-    const expectedDriver = candidate ? "3,4,5,6,7" : "4,5,6,7",
-      expectedGateway = candidate ? "2" : "2,3";
+    const expectedDriver = cpuCandidate ? "3,4,5,6,7" : "4,5,6,7",
+      expectedGateway = cpuCandidate ? "2" : "2,3";
     if (
       driver.HostConfig.CpusetCpus !== expectedDriver ||
       g?.HostConfig.CpusetCpus !== expectedGateway
@@ -75,7 +89,7 @@ for (const arm of arms) {
         })
         .sort((a, b) => a - b)
         .join(",");
-    if (candidate) {
+    if (cpuCandidate) {
       if (
         !threadRows.some((r) => r.thread === 0) ||
         threadRows.filter((r) => r.thread !== 0).length < 4
@@ -92,7 +106,22 @@ for (const arm of arms) {
           if (expand(b.allowed) !== "4,5,6,7") throw Error("Runtime thread shares writer core");
       }
     } else if (threadRows.length) throw Error("Baseline unexpectedly uses thread affinity");
-    placement = { driver: expectedDriver, readGateway: expectedGateway, threads: threadRows };
+    if (modelExperiment) {
+      const env = Object.fromEntries(
+        driver.Config.Env.map((e) => {
+          const at = e.indexOf("=");
+          return [e.slice(0, at), e.slice(at + 1)];
+        }),
+      );
+      if (env.DX_MODEL_COMPACT !== (candidate ? "1" : "0") || b.config.compactModel !== candidate)
+        throw Error("Wrong expected-model mode");
+    }
+    placement = {
+      compactModel: modelExperiment && candidate,
+      driver: expectedDriver,
+      readGateway: expectedGateway,
+      threads: threadRows,
+    };
   }
   const swaps = [];
   let vm = 0;
@@ -150,8 +179,8 @@ for (const arm of arms) {
 }
 if (new Set(rows.map((r) => r.digest)).size !== 1) throw Error("Workload digest changed");
 const controls = rows.filter((r) => r.arm.startsWith("off")),
-  off50 = controls.reduce((s, r) => s + r.p50Ms, 0) / 2,
-  off99 = controls.reduce((s, r) => s + r.p99Ms, 0) / 2;
+  off50 = controls.reduce((s, r) => s + r.p50Ms, 0) / controls.length,
+  off99 = controls.reduce((s, r) => s + r.p99Ms, 0) / controls.length;
 for (const r of rows) {
   r.controlTags = controls.map((c) => c.tag);
   r.controlP50Ms = off50;
@@ -160,7 +189,7 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}. One quiet hold, bookend 200-second off references and the unchanged full 900-second zero/ladder pair. Control and pair workloads differ in duration; off figures show host/session context, not a matched reader-load improvement claim.`,
+  `Source ${source}. ${partial ? "PARTIAL SESSION: closing off control refused for disk; opening control only. " : ""}One quiet hold, 200-second off references and the unchanged full 900-second zero/ladder pair. Control and pair workloads differ in duration; off figures show host/session context, not a matched reader-load improvement claim.`,
   "",
   "| arm / tracing | primary p50 ms | primary p99 ms | off control p50 / p99 ms | swap GiB median (min-max) |",
   "| --- | ---: | ---: | --- | --- |",
@@ -198,7 +227,20 @@ for (const r of rows.filter((r) => r.arm.endsWith("ladder")))
   }
 text.push("");
 fs.writeFileSync(
-  path.join(session, "MEASUREMENTS.json"),
-  JSON.stringify({ source, session: prefix, rows }, null, 2) + "\n",
+  path.join(session, partial ? "MEASUREMENTS-PARTIAL.json" : "MEASUREMENTS.json"),
+  JSON.stringify(
+    {
+      source,
+      session: prefix,
+      sessionComplete: !partial,
+      missingControl: partial ? "off-after" : null,
+      rows,
+    },
+    null,
+    2,
+  ) + "\n",
 );
-fs.writeFileSync(path.join(session, "MEASUREMENTS.md"), text.join("\n"));
+fs.writeFileSync(
+  path.join(session, partial ? "MEASUREMENTS-PARTIAL.md" : "MEASUREMENTS.md"),
+  text.join("\n"),
+);

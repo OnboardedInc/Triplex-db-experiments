@@ -139,6 +139,7 @@ const config = {
   burstMultiplier: Number(opt("burst-multiplier", String(TRACE_DEFAULTS.burstMultiplier))),
   rateScale: Number(opt("rate-scale", "1")),
   levelS: opt("level-s") ? Number(opt("level-s")) : null,
+  compactModel: process.env.DX_MODEL_COMPACT === "1",
   oracleSampleSubjects: Number(opt("oracle-subjects", "12")),
   oracleRate: Number(opt("oracle-rate", "0.01")),
   oracleMaxReads: Number(opt("oracle-max-reads", "24")),

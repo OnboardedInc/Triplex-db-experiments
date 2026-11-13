@@ -2,6 +2,8 @@
 # [DX-T1-2] Why: two full default-level pairs needs same-session off references and one uninterrupted quiet hold.
 # Rejected: compare its latency with an earlier session or shorten the full pair to fit a control.
 set -euo pipefail
+experiment=${DX_PLACEMENT_EXPERIMENT:-cpu}
+[[ $experiment == cpu || $experiment == model ]] || exit 2
 prefix=${1:?tx2-dxt1-prefix};shift
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
@@ -41,13 +43,15 @@ unset TRIPLEX_TRACE_COMPONENTS
 for arm in off-before baseline candidate off-after;do
  sh lab/bin/host-quiet.sh > "$session_dir/$arm-host-before.jsonl" || true
  if [[ $arm == baseline ]];then
-  run_stage env TRIPLEX_TRACE_LEVEL=summary DX_CPUS_DRIVER=4,5,6,7 DX_CPUS_GW_READ=2,3 DX_MAIN_CPU= DX_WORKER_CPUS= bash lab/experiments/EXP-DX1/t1/run.sh pair "$prefix-baseline" --rung 10k "$@" > "$session_dir/$arm-controller.log" 2>&1
+  run_stage env TRIPLEX_TRACE_LEVEL=summary DX_CPUS_DRIVER=4,5,6,7 DX_CPUS_GW_READ=2,3 DX_MAIN_CPU= DX_WORKER_CPUS= DX_MODEL_COMPACT=0 bash lab/experiments/EXP-DX1/t1/run.sh pair "$prefix-baseline" --rung 10k "$@" > "$session_dir/$arm-controller.log" 2>&1
+ elif [[ $arm == candidate && $experiment == model ]];then
+  run_stage env TRIPLEX_TRACE_LEVEL=summary DX_CPUS_DRIVER=4,5,6,7 DX_CPUS_GW_READ=2,3 DX_MAIN_CPU= DX_WORKER_CPUS= DX_MODEL_COMPACT=1 bash lab/experiments/EXP-DX1/t1/run.sh pair "$prefix-candidate" --rung 10k "$@" > "$session_dir/$arm-controller.log" 2>&1
  elif [[ $arm == candidate ]];then
   run_stage env TRIPLEX_TRACE_LEVEL=summary DX_CPUS_DRIVER=3,4,5,6,7 DX_CPUS_GW_READ=2 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7 bash lab/experiments/EXP-DX1/t1/run.sh pair "$prefix-candidate" --rung 10k "$@" > "$session_dir/$arm-controller.log" 2>&1
  else
-  run_stage env TRIPLEX_TRACE_LEVEL=off DX_CPUS_DRIVER=4,5,6,7 DX_CPUS_GW_READ=2,3 DX_MAIN_CPU= DX_WORKER_CPUS= bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-$arm" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$arm-controller.log" 2>&1
+  run_stage env TRIPLEX_TRACE_LEVEL=off DX_CPUS_DRIVER=4,5,6,7 DX_CPUS_GW_READ=2,3 DX_MAIN_CPU= DX_WORKER_CPUS= DX_MODEL_COMPACT=0 bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-$arm" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$arm-controller.log" 2>&1
  fi
  sh lab/bin/host-quiet.sh > "$session_dir/$arm-host-after.jsonl" || true
 done
 for placement in baseline candidate;do python3 lab/experiments/EXP-DX1/h4/summarize.py "$DX_STACK_EVIDENCE/$prefix-$placement-ladder" > "$session_dir/$placement-TABLES.md";done
-node lab/trace/study.mjs "$DX_STACK_EVIDENCE" "$prefix" --placements > "$session_dir/analysis.log"
+node lab/trace/study.mjs "$DX_STACK_EVIDENCE" "$prefix" --placements "--experiment=$experiment" > "$session_dir/analysis.log"
