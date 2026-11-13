@@ -32,6 +32,24 @@ function rows(dir: string) {
 }
 
 describe("permanent request tracing", () => {
+  it("drains every commit across full output batches and the final partial batch", async () => {
+    const { api, dir } = await recorder("summary");
+    const ids: string[] = [];
+    for (let i = 0; i < 1000; i++) {
+      const trace = api.beginTrace("commit", "batched.commit", { phase: "batch" })!;
+      ids.push(trace.traceId);
+      api.withTrace(trace, () => api.traceSync("batched.step", () => i));
+      api.finishTrace(trace);
+    }
+    await api.flushTracing();
+    const recorded = rows(dir);
+    const commits = recorded.filter((r) => r.type === "request" && r.kind === "commit");
+    expect(commits.map((r) => r.traceId)).toEqual(ids);
+    expect(commits.every((r) => r.spans.length === 1 && r.spans[0].parent === r.root)).toBe(true);
+    expect(recorded.at(-1).type).toBe("histograms");
+    expect(recorded.at(-1).histograms["commit:batch"].count).toBe(1000);
+    expect(recorded.at(-1).failure).toBeNull();
+  });
   it("propagates W3C ids through concurrent client requests and records the response identity", async () => {
     const { api, dir } = await recorder();
     const { DatomicClient } = await import("../src/DatomicClient.js");

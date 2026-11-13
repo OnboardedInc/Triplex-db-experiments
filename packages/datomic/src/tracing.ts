@@ -209,9 +209,29 @@ let failure: string | undefined;
 let sink: ReturnType<typeof createGzip> | undefined;
 let output: ReturnType<typeof createWriteStream> | undefined;
 let stopped = false;
+let pendingOutput: string[] = [];
+let pendingBytes = 0;
+let outputTimer: ReturnType<typeof setTimeout> | undefined;
 const topReads = new Map<string, RequestTrace[]>();
 const emitted = new WeakSet<RequestTrace>();
 const histograms = new Map<string, { count: number; max: number; buckets: number[] }>();
+
+// [DX-T1-2] Why: one zlib job per small record adds cross-thread bookkeeping on the request path; a bounded batch amortizes it.
+// Rejected: sampling commits, moving timestamps, or leaving the final partial batch to an unreferenced timer.
+function flushOutput(): void {
+  if (outputTimer) clearTimeout(outputTimer);
+  outputTimer = undefined;
+  if (!pendingOutput.length || !sink) return;
+  const chunk = pendingOutput.join("");
+  pendingOutput = [];
+  pendingBytes = 0;
+  try {
+    sink.write(chunk);
+  } catch (error) {
+    failure = String(error);
+    process.stderr.write("Triplex trace output failed; trace evidence is incomplete\n");
+  }
+}
 
 // [DX-T1] Why: batch compressed output per isolate; no payloads, SQL, entity IDs or error messages.
 // Rejected: an SDK/exporter and synchronous writes on the commit thread.
@@ -234,7 +254,14 @@ function emit(row: object): void {
       sink.on("error", failed);
       sink.pipe(output);
     }
-    sink.write(JSON.stringify({ ...identity, ...row }) + "\n");
+    const line = JSON.stringify({ ...identity, ...row }) + "\n";
+    pendingOutput.push(line);
+    pendingBytes += Buffer.byteLength(line);
+    if (pendingBytes >= 65536) flushOutput();
+    else if (!outputTimer) {
+      outputTimer = setTimeout(flushOutput, 20);
+      outputTimer.unref();
+    }
   } catch (error) {
     failure = String(error);
   }
@@ -633,6 +660,7 @@ export async function flushTracing(): Promise<void> {
     histograms: Object.fromEntries(histograms),
     failure: failure ?? null,
   });
+  flushOutput();
   stopped = true;
   if (!sink || !output || failure) return;
   const destination = output;

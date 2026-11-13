@@ -86,3 +86,13 @@ with unsigned hexadecimal padding, retaining every span. Wire-ID tests cover ove
 Completed auxiliary captures were losslessly packed under checks/aux-compression-20261113.jsonl: original SHA/bytes,
 decoded equality, source/tag, fsynced archive and journal precede unlink. Raw trace trees and viewer paths are unchanged.
 111 auxiliary files recovered 866,455,138 bytes; gzip -dk restores the exact original paths for replay.
+
+`p2-smoke-h` used the wrong functional heap/cache combination and was cancelled after transactor startup refusal;
+its incomplete evidence is retained, no result promoted, and cleanup/restoration completed. The corrected real 1k
+`p2-smoke-i` passed oracle and 84/84 coverage. Gateway ID tests passed 5 tests / 21 assertions in every cost-d preflight.
+`p2-cost-d` missed cost: +1.199 ms / 7.14% mean p50 versus 16.793 ms off; default swap 15.780/15.623 GiB.
+No cross-session speedup is claimed for the ID conversion. An isolated Node output change now batches at most 64 KiB
+before each gzip write or 20 ms before flush; timestamps, sampling and spans are unchanged. `flushTracing` drains
+the final partial batch before ending gzip. Timer write errors become incomplete evidence rather than escaping into
+product calls. Its normal regression verifies all 1,000 exact IDs, ordered records, parent links and the fresh final
+histogram count/failure footer across several full batches and a partial tail. No semantic verdict comparator changed.
