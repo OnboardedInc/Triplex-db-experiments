@@ -67,7 +67,7 @@ Off controls generate an explicit disabled view and index row, without a collect
   Ladder oracle PASS (53 reads / 2,671 entities), 3,534,578 exact reads, zero differences/errors.
   Writer trace matches 8,542/8,542; 8,540/8,542 meet 95% named-scope coverage (99.9766%); zero missing RPC receivers.
   Zero-reader arm: 8,532/8,533 coverage (99.9883%); oracle deliberately NOT-RUN there. All collectors validated.
-- Combined compressed raw traces: 160,511,433 bytes (153.075 MiB). Every owned container/network/volume inventory is empty.
+- Combined compressed raw traces: 160,511,433 bytes (153.076 MiB). Every owned container/network/volume inventory is empty.
   The viewer was opened offline: filters, hover and overlays worked; no network requests or JavaScript errors.
 - `cost-a`: off/full/full/off, four fresh 10k arms, 3,420 primary commands each, same source and frozen trace.
   Mean arm p50 14.860 -> 18.351 ms (+3.491 ms, 23.495%); p99 85.162 -> 103.610 (+18.448, 21.663%).
@@ -76,4 +76,13 @@ Off controls generate an explicit disabled view and index row, without a collect
 - Host quiet checks passed before/after q8-b and cost-a, but timestamped OS activity exceeded the heuristic in some phases.
   The reader client saturated in q8-b. These are diagnostic observations, not clean latency acceptance or promotion.
 - After those measurements, summary was tightened to keep every commit step, including /begin and worker contexts.
-  Default full behavior is preserved; the new summary revision has unit tests; its own fresh smoke is next. No 10k summary cost is claimed.
+  Default full behavior is preserved; the new summary revision has unit tests and `smoke-h`: oracle PASS, 1,963,797 exact reads, 84/84 covered. No 10k summary cost is claimed.
+
+## Final receipt validation
+
+`checks/verify-final.mjs` rereads all eight fresh run raw/report manifests, verifies every SHA256 and raw-byte sum,
+compares source/tag with each attempt's producer head and run manifest, checks declared full/off collection state,
+and requires empty container/volume/network inventories plus absence of the measurement lock. Its output is
+`checks/verify-final.json` in the durable DX-T1 evidence. This certifies retained byte/inventory observations only.
+Freshness is this post-run reread; binding is the exact attempt tag/source, not the later documentation commit.
+The independent semantic oracle is unchanged; this builder did not independently promote a lane or acceptance contract.
