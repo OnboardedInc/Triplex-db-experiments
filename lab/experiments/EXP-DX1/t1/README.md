@@ -16,8 +16,7 @@ The single index is `~/Claude/Projects/triplex-db-2/evidence/TRACE-INDEX.md`. No
 `TRIPLEX_TRACE_LEVEL=off|summary|full` controls all processes; benchmark default is `full`, product default is `off`.
 
 Full records every commit and every physical HTTP gateway request. Logical reads retain every request at least 50 ms and a
-fixed 1/1024 FNV-1a sample of the remainder, plus the actual 20 slowest per phase/thread, with logarithmic histograms of all finished reads. Summary skips TypeScript and
-gateway own-work spans shorter than 0.5 ms and samples fast gateway reads. Both levels keep every commit. A request over
+fixed 1/1024 FNV-1a sample of the remainder, plus the actual 20 slowest per phase/thread, with logarithmic histograms of all finished reads. Summary omits short read-only own-work spans and samples fast gateway reads. Both levels keep every commit in full, including commit-owned begin routes and worker contexts. Summary reduces read log volume; its zero-reader overhead is not yet measured. A request over
 8,192 spans reports truncation explicitly and cannot satisfy the coverage numerator. Recording errors remain diagnostic gaps.
 Node GC pauses are timestamped; one-second CPU/heap/event-loop and separate cgroup/Mac samples locate contention. Timer drift
 is an estimated bound, never proof of GC or CPU attribution. The layer table uses exclusive interval unions, not added p99s.

@@ -93,7 +93,7 @@ const out = {
 fs.writeFileSync(path.join(base, `${prefix}-COST.json`), JSON.stringify(out, null, 2) + "\n");
 fs.writeFileSync(
   path.join(base, `${prefix}-COST.md`),
-  "# Tracing cost\n\nSame source, 10,000 subjects, zero readers; frozen first 200 seconds including the 120-second burst. Order: off, full, full, off. Whole offer-to-finish latency remains the primary measure; transact-only is diagnostic.\n\n| arm | n | p50 ms | p99 ms | transact p50 ms | transact p99 ms |\n| --- | ---: | ---: | ---: | ---: | ---: |\n" +
+  "# Tracing cost\n\nSame source, 10,000 subjects, zero readers; frozen first 200 seconds including the burst starting at 120 seconds. Order: off, full, full, off. Whole offer-to-finish latency remains the primary measure; transact-only is diagnostic.\n\n| arm | n | p50 ms | p99 ms | transact p50 ms | transact p99 ms |\n| --- | ---: | ---: | ---: | ---: | ---: |\n" +
     rows
       .map(
         (r) =>

@@ -17,6 +17,15 @@
           (is (some #(= "gateway.response-write" (:name %)) (:spans r)))
           (is (every? #(<= (:start %) (:end %)) (:spans r))))))))
 
+(deftest summary-keeps-a-complete-commit-begin-route
+  (let [rows (atom [])]
+    (with-redefs [trace/enabled true trace/level "summary" trace/emit! #(swap! rows conj %)]
+      (let [response (trace/handler (fn [_] (trace/span "commit.tiny" "gateway" nil) {:status 200 :headers {} :body "{}"}) {:uri "/begin" :headers {"x-triplex-trace-kind" "commit"}})]
+        (protocols/write-body-to-stream (:body response) response (java.io.ByteArrayOutputStream.))
+        (is (= 1 (count @rows)))
+        (is (= "commit" (:kind (first @rows))))
+        (is (some #(= "commit.tiny" (:name %)) (:spans (first @rows))))))))
+
 (deftest exports-real-jfr-before-shutdown
   (when (= "1" (System/getenv "TRIPLEX_TRACE_TEST_JFR"))
     (System/gc) (Thread/sleep 50)

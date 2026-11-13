@@ -139,6 +139,7 @@ export interface WireTraceContext {
   run: string;
   source: string;
   slot: string;
+  kind?: RequestTrace["kind"];
 }
 export function captureTraceContext(): WireTraceContext | undefined {
   const active = context.getStore();
@@ -149,6 +150,7 @@ export function captureTraceContext(): WireTraceContext | undefined {
         run: active.trace.run,
         source: active.trace.source,
         slot: active.trace.slot,
+        kind: active.trace.attributes["logicalKind"] === "commit" ? "commit" : active.trace.kind,
       }
     : undefined;
 }
@@ -168,6 +170,7 @@ export async function continueTrace<A>(
   ) {
     trace.traceId = parsed.traceId;
     trace.parent = parsed.parent;
+    if (wire.kind === "commit") trace.attributes["logicalKind"] = "commit";
   } else if (wire) trace.attributes["invalidParent"] = true;
   try {
     return await withTrace(trace, run);
@@ -215,6 +218,7 @@ export function endSpan(span: TraceSpan | undefined, attributes?: TraceAttribute
   if (attributes) span.attributes = { ...span.attributes, ...attributes };
   if (
     traceLevel === "summary" &&
+    trace.kind === "read" &&
     span.layer === "typescript" &&
     span.end - span.start < 0.5 &&
     !trace.spans.some((child) => child.parent === span.id)

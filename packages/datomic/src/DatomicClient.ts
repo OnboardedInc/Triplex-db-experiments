@@ -17,6 +17,7 @@ import {
   traceparent,
   traceSync,
   tracedRequest,
+  traceLevel,
 } from "./tracing.js";
 
 export class DatomicHttpError extends Error {
@@ -324,6 +325,12 @@ export class DatomicClient {
           headers: {
             Accept: "application/json",
             traceparent: parent,
+            // [DX-T1] Why: summary must retain every step of commits, including their begin/read routes and worker hops.
+            // Rejected: sampling a fast /begin because its route looks read-only while it belongs to a commit.
+            ...(traceLevel === "summary" &&
+            (trace?.kind === "commit" || trace?.attributes["logicalKind"] === "commit")
+              ? { "x-triplex-trace-kind": "commit" }
+              : {}),
             ...(bytes
               ? { "Content-Type": "application/json", "Content-Length": bytes.length }
               : {}),

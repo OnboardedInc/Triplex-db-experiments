@@ -10,10 +10,10 @@ afterEach(() => {
   vi.unstubAllEnvs();
   for (const dir of directories.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
-async function recorder() {
+async function recorder(level = "full") {
   const dir = mkdtempSync(path.join(tmpdir(), "triplex-trace-test-"));
   directories.push(dir);
-  vi.stubEnv("TRIPLEX_TRACE_LEVEL", "full");
+  vi.stubEnv("TRIPLEX_TRACE_LEVEL", level);
   vi.stubEnv("TRIPLEX_TRACE_DIR", dir);
   vi.stubEnv("TRIPLEX_TRACE_RUN", "fixture");
   vi.stubEnv("TRIPLEX_TRACE_SOURCE", "source");
@@ -127,6 +127,42 @@ describe("permanent request tracing", () => {
     expect(receiver.spans[0].parent).toBe(receiver.root);
     expect(recorded.find((r) => r.name === "foreign").attributes.invalidParent).toBe(true);
     expect(recorded.find((r) => r.name === "foreign").traceId).not.toBe(trace.traceId);
+  });
+  it("keeps all commit steps and flags commit-owned begin routes in summary, including continued contexts", async () => {
+    const { api, dir } = await recorder("summary");
+    const { DatomicClient } = await import("../src/DatomicClient.js");
+    const seen: unknown[] = [];
+    const server = http.createServer((req, res) => {
+      seen.push(req.headers["x-triplex-trace-kind"]);
+      res.end("{}");
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const client = new DatomicClient(
+        `http://127.0.0.1:${(server.address() as import("node:net").AddressInfo).port}`,
+      ),
+      trace = api.beginTrace("commit", "driver.commit")!;
+    try {
+      await api.withTrace(trace, async () => {
+        for (let i = 0; i < 5; i++) api.traceSync(`tiny.${i}`, () => i);
+        await client.request("POST", "/begin", {});
+        await api.continueTrace(api.captureTraceContext(), "worker.commit", async () => {
+          api.traceSync("worker.tiny", () => 0);
+          await client.request("POST", "/begin", {});
+        });
+      });
+      api.finishTrace(trace);
+    } finally {
+      client.close();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      await api.flushTracing();
+    }
+    expect(seen).toEqual(["commit", "commit"]);
+    expect(trace.spans.filter((s) => s.name.startsWith("tiny."))).toHaveLength(5);
+    expect(
+      rows(dir)
+        .find((r) => r.name === "worker.commit")
+        .spans.some((s: any) => s.name === "worker.tiny"),
+    ).toBe(true);
   });
   it("preserves each trace across concurrent yielding Effect fibers", async () => {
     const { api } = await recorder();
