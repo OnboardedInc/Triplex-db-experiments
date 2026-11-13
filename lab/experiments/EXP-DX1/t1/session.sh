@@ -2,14 +2,18 @@
 # [DX-T1-2] Why: one lease, one source and bookend controls bind recorder ablations to one host session.
 # Rejected: compare a recorder with a historical quiet off arm or allow unrelated work between arms.
 set -euo pipefail
-kind=${1:?ablation|cost}; prefix=${2:?tx2-dxt1-prefix}; shift 2
+kind=${1:?ablation|cost|anatomy}; prefix=${2:?tx2-dxt1-prefix}; shift 2
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
 session_dir=$DX_STACK_EVIDENCE/$prefix-session
 mkdir "$session_dir"
 git rev-parse HEAD > "$session_dir/head.txt"
-sh lab/bin/host-quiet.sh --wait "${DX_QUIET_WAIT_MIN:-10}" > "$session_dir/quiet-admission.jsonl" || exit 75
+# [DX-T1-4] Why: the authorized in-use-host study records admission and retains bookend drift.
+# Rejected: stopping diagnosis on host CPU activity; only the final absolute verdict needs quiet qualification.
+quiet_rc=0
+sh lab/bin/host-quiet.sh --wait "${DX_QUIET_WAIT_MIN:-0}" > "$session_dir/quiet-admission.jsonl" || quiet_rc=$?
+printf '%s\n' "$quiet_rc" > "$session_dir/quiet-admission-exit.txt"
 python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
 lock=$HOME/Claude/Projects/triplex-db-2/locks/measure
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
@@ -37,6 +41,7 @@ node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),5400000)
 if [[ $kind == ablation ]]; then
   arms=(off tx-jfr gw-jfr postgres gateway node native-logs full off)
 elif [[ $kind == cost ]]; then arms=(off summary summary off)
+elif [[ $kind == anatomy ]]; then arms=(off anatomy anatomy off)
 else exit 2;fi
 i=0
 for arm in "${arms[@]}"; do
@@ -45,10 +50,11 @@ for arm in "${arms[@]}"; do
   sh lab/bin/host-quiet.sh > "$session_dir/$i-host-before.jsonl" || true
   level=full;components=$arm
   if [[ $arm == off ]]; then level=off;components=;fi
+  if [[ $arm == anatomy ]]; then components=node,gateway,tx-jfr,gw-jfr,postgres;fi
   if [[ $arm == full || $arm == summary ]]; then level=$arm;components=default;fi
   export TRIPLEX_TRACE_LEVEL=$level
   if [[ $components == default ]]; then unset TRIPLEX_TRACE_COMPONENTS;else export TRIPLEX_TRACE_COMPONENTS=$components;fi
-  bash lab/experiments/EXP-DX1/t1/run.sh real "$tag" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
+  DX_FSYNC_PROBE=$([[ $kind == anatomy && $i == 1 ]] && echo 1 || echo 0) bash lab/experiments/EXP-DX1/t1/run.sh real "$tag" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
   wait "$child";child=
   sh lab/bin/host-quiet.sh > "$session_dir/$i-host-after.jsonl" || true
 done

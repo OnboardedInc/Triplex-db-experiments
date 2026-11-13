@@ -4,13 +4,15 @@ import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
-if (!["ablation", "cost"].includes(kind)) throw Error("Expected ablation or cost");
+if (!["ablation", "cost", "anatomy"].includes(kind)) throw Error("Expected ablation or cost");
 const session = path.join(base, prefix + "-session"),
   source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
 const arms =
   kind === "ablation"
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
-    : ["off", "summary", "summary", "off"];
+    : kind === "anatomy"
+      ? ["off", "anatomy", "anatomy", "off"]
+      : ["off", "summary", "summary", "off"];
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const rows = [];
 let buildHashes;
@@ -30,7 +32,10 @@ for (const [i, arm] of arms.entries()) {
     TRIPLEX_TRACE_LEVEL: arm === "off" ? "off" : arm === "summary" ? "summary" : "full",
     TRIPLEX_TRACE_SESSION: prefix,
     ...(!["full", "summary"].includes(arm)
-      ? { TRIPLEX_TRACE_COMPONENTS: arm === "off" ? "" : arm }
+      ? {
+          TRIPLEX_TRACE_COMPONENTS:
+            arm === "off" ? "" : arm === "anatomy" ? "node,gateway,tx-jfr,gw-jfr,postgres" : arm,
+        }
       : {}),
   });
   if (
@@ -115,7 +120,8 @@ for (const [i, arm] of arms.entries()) {
     }
   if (effective.gatewayEnabled && (!gatewayRequests["gw-w"] || !gatewayRequests["gw-r"]))
     throw Error("Requested gateway spans absent");
-  const swaps = [];
+  const swaps = [],
+    macCpu = [];
   let host = 0,
     vm = 0;
   for (const file of filesUnder(path.join(dir, "trace/raw")).filter((f) =>
@@ -130,6 +136,7 @@ for (const [i, arm] of arms.entries()) {
       )
         throw Error("Stale/foreign host sample");
       if (r.process === "system-darwin") {
+        if (Number.isFinite(r.otherCpu)) macCpu.push(r.otherCpu);
         const used = /used\s*=\s*([\d.]+)M/.exec(r.swap ?? "");
         if (used) {
           swaps.push(Number(used[1]) / 1024);
@@ -167,6 +174,11 @@ for (const [i, arm] of arms.entries()) {
       0.5,
     ),
     swapGiB: { min: Math.min(...swaps), median: percentile(swaps, 0.5), max: Math.max(...swaps) },
+    macCpu: {
+      median: percentile(macCpu, 0.5),
+      p99: percentile(macCpu, 0.99),
+      max: macCpu.length ? Math.max(...macCpu) : null,
+    },
     gatewayRequests,
     nativeMetrics,
     hostSamples: host,
@@ -193,17 +205,24 @@ const text = [
   "",
   `Source ${source}; one session, common host/VM sampling, 10,000 subjects, frozen 200-second zero-reader segment. Control is mean bookend off-arm quantiles; no pooled-percentile claim.`,
   "",
-  "| arm / level | p50 ms | p99 ms | off p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) |",
-  "| --- | ---: | ---: | --- | --- | --- |",
+  "| arm / level | p50 ms | p99 ms | off p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
+  "| --- | ---: | ---: | --- | --- | --- | --- |",
   ...rows.map(
     (r) =>
-      `| ${r.arm} / ${r.level} | ${r.p50Ms.toFixed(3)} | ${r.p99Ms.toFixed(3)} | ${off50.toFixed(3)} / ${off99.toFixed(3)} | ${r.deltaP50Ms.toFixed(3)} / ${r.deltaP50Percent.toFixed(2)}% | ${r.swapGiB.median.toFixed(3)} (${r.swapGiB.min.toFixed(3)}-${r.swapGiB.max.toFixed(3)}) |`,
+      `| ${r.arm} / ${r.level} | ${r.p50Ms.toFixed(3)} | ${r.p99Ms.toFixed(3)} | ${off50.toFixed(3)} / ${off99.toFixed(3)} | ${r.deltaP50Ms.toFixed(3)} / ${r.deltaP50Percent.toFixed(2)}% | ${r.swapGiB.median.toFixed(3)} (${r.swapGiB.min.toFixed(3)}-${r.swapGiB.max.toFixed(3)}) | ${r.macCpu.median?.toFixed(1)} / ${r.macCpu.p99?.toFixed(1)} |`,
   ),
   "",
   `Controls: ${controls.map((r) => r.tag).join(", ")}. Each arm: ${rows[0].commands} completed primary commands. Observed differences are diagnostic; recorder effects can interact and host noise is retained.`,
   "",
 ];
-const result = { source, session: prefix, kind, controls: controls.map((r) => r.tag), rows };
+const result = {
+  bookendDriftP50Ms: Math.abs(controls[0].p50Ms - controls.at(-1).p50Ms),
+  source,
+  session: prefix,
+  kind,
+  controls: controls.map((r) => r.tag),
+  rows,
+};
 fs.writeFileSync(path.join(session, "MEASUREMENTS.json"), JSON.stringify(result, null, 2) + "\n");
 fs.writeFileSync(path.join(session, "MEASUREMENTS.md"), text.join("\n"));
 console.log(JSON.stringify(result));

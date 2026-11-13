@@ -51,7 +51,7 @@ docker create --pull never --name "$prefix-driver" --network "$prefix-net" --cpu
   --cgroupns host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v "$repo:$repo" \
   -v /Users/sam/Claude/Projects/triplex-db-2/evidence:/Users/sam/Claude/Projects/triplex-db-2/evidence \
   -v "$prefix-driver:/driver" -v "$prefix-driver:$repo/runs/DX-H3-vm" -w "$repo" \
-  -e "TRIPLEX_TRACE_NODE=${TRIPLEX_TRACE_NODE:-1}" -e "TRIPLEX_TRACE_SESSION=${TRIPLEX_TRACE_SESSION:-}" -e "TRIPLEX_TRACE_SYSTEM=${TRIPLEX_TRACE_SYSTEM:-0}" \
+  -e "TRIPLEX_TRACE_CPU_PROFILE=${DX_NODE_PROFILE:-0}" -e "TRIPLEX_TRACE_NODE=${TRIPLEX_TRACE_NODE:-1}" -e "TRIPLEX_TRACE_SESSION=${TRIPLEX_TRACE_SESSION:-}" -e "TRIPLEX_TRACE_SYSTEM=${TRIPLEX_TRACE_SYSTEM:-0}" \
   -e "TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-off}" -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git -C "$repo" rev-parse HEAD)" -e TRIPLEX_TRACE_DIR=/driver/trace/raw -e TRIPLEX_TRACE_PROCESS=node -e "TRIPLEX_TRACE_DEBUG=${TRIPLEX_TRACE_DEBUG:-0}" \
   -e "TX2_ORACLE_BRIDGE=$evidence/oracle-bridge" \
   -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" \

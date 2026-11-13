@@ -1,5 +1,6 @@
 // @ts-nocheck -- JSON wire records are validated on ingestion; checkjs still checks all bindings.
 import fs from "node:fs";
+import { writeAnatomy } from "./anatomy.mjs";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { createGunzip } from "node:zlib";
@@ -713,6 +714,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
         }
         trace.writer = {
           facts: w.facts,
+          resend: !!w.resend,
           stream: w.stream,
           seq: w.seq,
           burst: w.burst,
@@ -1140,6 +1142,15 @@ export async function buildReport(runDir, { copyTo } = {}) {
     for (const f of ["TRACE-REPORT.md", "trace.html", "trace.chrome.json", "trace-summary.json"])
       fs.copyFileSync(path.join(rootDir, f), path.join(copyTo, f), fs.constants.COPYFILE_FICLONE);
   }
+  await writeAnatomy(rootDir, {
+    manifest,
+    requests,
+    commits,
+    resources,
+    childrenOf: (root) => traceChildren(root, requests),
+    copyTo,
+    complete: summary.complete,
+  });
   return summary;
 }
 function html(finding, data, tag) {

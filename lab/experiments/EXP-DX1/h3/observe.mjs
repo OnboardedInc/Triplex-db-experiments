@@ -7,7 +7,10 @@ const out='runs/DX-H3-vm';
 const args=process.argv.slice(2);
 if(!args.includes('--read-path')) args.push('--read-path',process.env.DX_READ_PATH??'gateway');
 const debug=process.env.TRIPLEX_TRACE_DEBUG==='1'?['--inspect=0.0.0.0:8508']:[];
-const child=spawn('node',[...debug,'--experimental-strip-types','lab/bench/driver.ts',...args],{stdio:'inherit'});
+// [DX-T1-4] Why: an opt-in sampled writer stack identifies work spanning a late scheduler timer.
+// Rejected: attributing every unobserved stall to GC or enabling profiler cost in summary.
+const profile=process.env.TRIPLEX_TRACE_CPU_PROFILE==='1'?['--cpu-prof','--cpu-prof-dir=/driver/trace/raw','--cpu-prof-interval=1000']:[];
+const child=spawn('node',[...debug,...profile,'--experimental-strip-types','lab/bench/driver.ts',...args],{stdio:'inherit'});
 let active=true;
 const system = process.env.TRIPLEX_TRACE_SYSTEM === '1' || (process.env.TRIPLEX_TRACE_LEVEL && process.env.TRIPLEX_TRACE_LEVEL !== 'off')
   ? spawn('node',['lab/trace/system-sampler.mjs','/driver/trace/raw'],{stdio:'inherit'}) : null;

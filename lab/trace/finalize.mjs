@@ -96,7 +96,15 @@ if (!renderOnly) {
 }
 const copy = process.argv[3];
 const result = await buildReport(run, { copyTo: copy });
-const reportFiles = ["TRACE-REPORT.md", "trace.html", "trace.chrome.json", "trace-summary.json"];
+const reportFiles = [
+  "TRACE-REPORT.md",
+  "trace.html",
+  "trace.chrome.json",
+  "trace-summary.json",
+  ...(fs.existsSync(path.join(run, "COMMIT-ANATOMY.md"))
+    ? ["COMMIT-ANATOMY.md", "commit-anatomy.json"]
+    : []),
+];
 const reportHashes =
   reportFiles
     .map(

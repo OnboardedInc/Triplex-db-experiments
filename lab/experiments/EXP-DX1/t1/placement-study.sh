@@ -11,7 +11,11 @@ export TRIPLEX_TRACE_SESSION=$prefix
 session_dir=$DX_STACK_EVIDENCE/$prefix-session
 mkdir "$session_dir"
 git rev-parse HEAD > "$session_dir/head.txt"
-sh lab/bin/host-quiet.sh --wait "${DX_QUIET_WAIT_MIN:-10}" > "$session_dir/quiet-admission.jsonl" || exit 75
+# [DX-T1-4] Why: the authorized in-use-host study records admission and retains bookend drift.
+# Rejected: stopping diagnosis on host CPU activity; only the final absolute verdict needs quiet qualification.
+quiet_rc=0
+sh lab/bin/host-quiet.sh --wait "${DX_QUIET_WAIT_MIN:-0}" > "$session_dir/quiet-admission.jsonl" || quiet_rc=$?
+printf '%s\n' "$quiet_rc" > "$session_dir/quiet-admission-exit.txt"
 python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
 lock=$HOME/Claude/Projects/triplex-db-2/locks/measure
 while ! mkdir "$lock" 2>/dev/null;do sleep 5;done

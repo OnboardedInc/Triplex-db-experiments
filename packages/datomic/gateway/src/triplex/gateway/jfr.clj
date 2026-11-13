@@ -33,6 +33,17 @@
       (let [i (loop [lo 0 hi n] (if (< lo hi) (let [mid (quot (+ lo hi) 2)] (if (<= (first (nth points mid)) t) (recur (inc mid) hi) (recur lo mid))) lo))
             [a am] (nth points (max 0 (min (- n 2) (dec i)))) [b bm] (nth points (max 1 (min (dec n) i)))]
         (if (= a b) (+ am (- t a)) (+ am (* (/ (- t a) (- b a)) (- bm am))))))))
+;; [DX-T1-4] Why: a park or socket event needs its thread, endpoint and stack to explain a wait.
+;; Rejected: exporting only its duration (cannot distinguish SQL I/O from an idle peer connection).
+(defn details [^RecordedEvent event]
+  (let [thread (if (.hasField event "sampledThread") (.getThread event "sampledThread") (.getThread event))
+        stack (.getStackTrace event)]
+    {:thread (when thread (.getJavaThreadId thread)) :threadName (when thread (.getJavaName thread))
+     :fields (into {} (keep (fn [k] (when (.hasField event k) [k (.getValue event k)]))
+                         ["host" "address" "port" "bytesRead" "bytesWritten" "timeout" "endOfStream"]))
+     :stack (when stack (mapv (fn [frame] (let [method (.getMethod frame)]
+                                 (str (.getName (.getType method)) "/" (.getName method) ":" (.getLineNumber frame))))
+                              (take 32 (.getFrames stack))))}))
 (defn export! [file process identity]
   (let [points (clock-points file) offset (get-in identity [:clock :offsetMs])
         uncertainty (reduce max 0 (map #(nth % 2) points))]
@@ -43,12 +54,11 @@
         (if-not (.hasMoreEvents r) {:events count :clockSamples (clojure.core/count points) :clockMaxUncertaintyMs uncertainty}
           (let [^RecordedEvent event (.readEvent r) name (.getName (.getEventType event))]
             (if (= name "triplex.ClockSync") (recur count)
-              (let [thread (.getThread event)
+              (let [detail (details event)
                     layer (cond (= name "jdk.GCPhasePause") (if (= process "tx") "transactor-gc" "gateway-gc")
                                 (str/includes? name "Safepoint") "jvm-safepoint" :else "jvm-event")]
-                (.write w (str (json/write-str (merge identity {:type "event" :name name :layer layer :process process
+                (.write w (str (json/write-str (merge identity detail {:type "event" :name name :layer layer :process process
                              :clock (assoc (:clock identity) :uncertaintyMs (+ uncertainty 0.001))
-                             :thread (when thread (.getJavaThreadId thread))
                              :start (+ offset (monotonic-at points (millis (.getStartTime event))))
                              :end (+ offset (monotonic-at points (millis (.getEndTime event))))})) "\n"))
                 (recur (inc count))))))))))
@@ -76,6 +86,12 @@
               (str "JFR dump/export failed; coverage incomplete: " (.getName (class error)) " " (.getMessage error) "\n"))))))))
 (defn install! [process identity]
   @clock-factory
-  (doseq [^Recording r (.getRecordings (FlightRecorder/getFlightRecorder))] (.enable r "triplex.ClockSync"))
+  (doseq [^Recording r (.getRecordings (FlightRecorder/getFlightRecorder))]
+    (.enable r "triplex.ClockSync")
+    ;; [DX-T1-4] Why: targeted profiles identify transactor code without native DEBUG logging.
+    ;; Rejected: adding sampling overhead to summary or silently changing every full run.
+    (when (= "1" (System/getenv "TRIPLEX_TRACE_JFR_PROFILE"))
+      (.withPeriod (.withStackTrace (.enable r "jdk.ExecutionSample")) (java.time.Duration/ofMillis 1))
+      (.withPeriod (.withStackTrace (.enable r "jdk.NativeMethodSample")) (java.time.Duration/ofMillis 10))))
   (clock-sample!)
   (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable #(finish! process identity) "triplex-jfr-fallback")))

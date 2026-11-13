@@ -225,5 +225,10 @@ fi
 if [[ $TRIPLEX_TRACE_POSTGRES == 1 ]]; then
   docker exec -i "$prefix-pg" psql -X -Atq -U postgres -d datomic < lab/trace/postgres.sql > "$out/trace/raw/postgres-samples.log" 2> "$out/trace/raw/postgres-sample-errors.txt" & trace_pg=$!
 fi
+# [DX-T1-4] Why: measure an owned volume's sync floor before timed work starts, under the same lease.
+# Rejected: probing a sealed seed, an active WAL file, or running a competing benchmark during phases.
+if [[ ${DX_FSYNC_PROBE:-0} == 1 ]]; then
+  run_stage bash lab/trace/storage-probe.sh "$prefix" "$out" > "$out/storage-probe-controller.log" 2>&1
+fi
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
  --lane datomic --composition reach --read-path "${DX_READ_PATH:-gateway}" --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1

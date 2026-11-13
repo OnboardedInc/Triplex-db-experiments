@@ -109,7 +109,7 @@ trace_env=(-e "TRIPLEX_TRACE_LEVEL=$trace_level" -e "TRIPLEX_TRACE_RUN=$prefix" 
 trace_mount=(-v "$attempt/trace/raw:/trace")
 # [DX-T1-2] Why: isolate collectors with an inspected effective configuration. Rejected: inferring enabled collectors from a tag.
 eval "$(node "$repo/lab/trace/components.mjs" --shell)"
-trace_env+=(-e "TRIPLEX_TRACE_GATEWAY=$TRIPLEX_TRACE_GATEWAY" -e "TRIPLEX_TRACE_NATIVE_LOGS=$TRIPLEX_TRACE_NATIVE_LOGS")
+trace_env+=(-e "TRIPLEX_TRACE_JFR_PROFILE=${DX_JFR_PROFILE:-0}" -e "TRIPLEX_TRACE_GATEWAY=$TRIPLEX_TRACE_GATEWAY" -e "TRIPLEX_TRACE_NATIVE_LOGS=$TRIPLEX_TRACE_NATIVE_LOGS")
 trace_tx_java= trace_gw_java=
 if [[ $TRIPLEX_TRACE_NATIVE_LOGS == 1 ]]; then
   trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml"
