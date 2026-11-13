@@ -324,6 +324,15 @@ export function assessHostGate(runs, source) {
         phase?.readers === 256 && phase.end - phase.start >= 19900,
         "256-reader capacity phase incomplete",
       );
+      // [DX-T1-3] Why: memory capacity needs actual successful reader work. Rejected: a phase label with idle or failed readers.
+      assert(
+        phase.stats?.readers === 256 &&
+          phase.stats.reads > 0 &&
+          phase.stats.correct === phase.stats.reads &&
+          phase.stats.errors === 0 &&
+          phase.stats.violations === 0,
+        "256-reader activity absent or incorrect",
+      );
       const samples = vm.filter((r) => r.at >= phase.start && r.at <= phase.end);
       assert(
         samples.length >= 18 &&
@@ -340,9 +349,12 @@ export function assessHostGate(runs, source) {
           b.oracle.reads > 0 &&
           b.oracle.entityQueries > 0 &&
           b.correctness?.violations === 0 &&
-          b.correctness.errors === 0,
+          b.correctness.errors === 0 &&
+          b.correctness.reads > 0 &&
+          b.correctness.correct === b.correctness.reads,
         "Capacity probe oracle/model report is not exact",
       );
+      item.l256Reads = phase.stats.reads;
       item.l256MinAvailableGiB = Math.min(...samples.map((r) => memory(r).MemAvailable)) / GiB;
       item.oracleReported = {
         reads: b.oracle.reads,

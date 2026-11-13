@@ -137,8 +137,18 @@ function fixture(tag, probe, start = 1_000_000, latency = 11) {
         matchDurationS: probe ? null : 200,
       },
       phases: [
-        { name: "warmup", start: start + 1000 },
-        { name: "L256", readers: probe ? 256 : 0, start: start + 2000, end: start + 22000 },
+        {
+          name: "warmup",
+          start: start + 1000,
+          stats: { readers: 16, reads: 1000, correct: 1000, errors: 0, violations: 0 },
+        },
+        {
+          name: "L256",
+          readers: probe ? 256 : 0,
+          start: start + 2000,
+          end: start + 22000,
+          stats: { readers: 256, reads: 1000, correct: 1000, errors: 0, violations: 0 },
+        },
       ],
       oracle: {
         status: "PASS",
@@ -148,7 +158,7 @@ function fixture(tag, probe, start = 1_000_000, latency = 11) {
         reads: 5,
         entityQueries: 10,
       },
-      correctness: { violations: 0, errors: 0 },
+      correctness: { reads: 1000, correct: 1000, violations: 0, errors: 0 },
       writer: { expired: 0, pendingAtEnd: 0 },
     },
     writes: Array.from({ length: probe ? 20 : 3420 }, (_, seq) => ({
@@ -303,6 +313,13 @@ test("host gate rejects foreign, stale, incomplete or semantically wrong evidenc
     assert.throws(() => assessHostGate(runs, source), expected);
   }
   const capacityFailures = /** @type {Array<(r: ReturnType<typeof fixture>) => void>} */ ([
+    (r) => {
+      r.bench.phases[1].stats.reads = 0;
+      r.bench.phases[1].stats.correct = 0;
+    },
+    (r) => {
+      r.bench.correctness.correct = 999;
+    },
     (r) => {
       r.containers[1].Created = new Date(0).toISOString();
     },
