@@ -1,6 +1,7 @@
 (ns triplex.gateway.trace
   (:require [clojure.data.json :as json] [clojure.string :as str] [ring.core.protocols :as protocols] [triplex.gateway.jfr :as jfr])
   (:import [java.io BufferedWriter FileWriter File]
+           [java.nio.file Files Paths]
            [java.util UUID] [org.slf4j MDC]
            [java.util.concurrent.atomic AtomicLong]))
 ;; [DX-T1] Why: request-local buffers preserve nesting without an SDK or cross-request mutable context.
@@ -17,7 +18,13 @@
 (def origin-ns (System/nanoTime))
 (defn clock [] (+ (double origin-ms) (/ (- (System/nanoTime) origin-ns) 1000000.0)))
 (defn id [] (format "%016x" (.incrementAndGet ids)))
-(def identity-fields {:run (or (System/getenv "TRIPLEX_TRACE_RUN") "unbound")
+;; [DX-T1-2] Why: Linux nanoTime and Node hrtime share this boot clock; wall-clock startup anchors can differ after VM clock steps.
+;; Rejected: clipping a gateway outside its client's wall interval and labelling the lost gateway duration network time.
+(def trace-clock (try {:domain "linux-monotonic"
+                       :bootId (str/trim (Files/readString (Paths/get "/proc/sys/kernel/random/boot_id" (make-array String 0))))
+                       :offsetMs (- (double origin-ms) (/ (double origin-ns) 1000000.0)) :uncertaintyMs 0.001}
+                      (catch Throwable _ nil)))
+(def identity-fields {:clock trace-clock :run (or (System/getenv "TRIPLEX_TRACE_RUN") "unbound")
                       :source (or (System/getenv "TRIPLEX_TRACE_SOURCE") "unbound")
                       :slot (or (System/getenv "TRIPLEX_TRACE_SLOT") "unbound")
                       :process (or (System/getenv "TRIPLEX_TRACE_PROCESS") "gateway")})
@@ -34,7 +41,7 @@
 (defn flush! [] (when (realized? writer) (when-let [^BufferedWriter w @writer] (locking w (.flush w)))))
 (when (or enabled jfr-enabled native-enabled)
   (when jfr-enabled (jfr/install! (:process identity-fields) identity-fields))
-  (let [t (Thread. ^Runnable (fn [] (while true (Thread/sleep 1000) (flush!)
+  (let [t (Thread. ^Runnable (fn [] (while true (Thread/sleep 1000) (when jfr-enabled (jfr/clock-sample!)) (flush!)
         (when-let [dir (System/getenv "TRIPLEX_TRACE_DIR")]
           (when (and jfr-enabled (.exists (File. (str dir "/.finish")))) (jfr/finish! (:process identity-fields) identity-fields))))) "triplex-trace-flush")]
     (.setDaemon t true) (.start t))

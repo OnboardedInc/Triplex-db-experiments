@@ -28,13 +28,16 @@
 
 (deftest exports-real-jfr-before-shutdown
   (when (= "1" (System/getenv "TRIPLEX_TRACE_TEST_JFR"))
-    (System/gc) (Thread/sleep 50)
-    (let [identity {:run "fixture" :slot "fixture" :source "fixture" :process "test"}
+    (let [identity {:run "fixture" :slot "fixture" :source "fixture" :process "test" :clock trace/trace-clock}
           file (str (System/getenv "TRIPLEX_TRACE_DIR") "/test.jfr")]
+      (jfr/install! "test" identity)
+      (System/gc) (Thread/sleep 50)
       (jfr/finish! "test" identity)
       (is (> (.length (java.io.File. file)) 68))
       (let [completion (json/read-str (slurp (str file "-complete.jsonl")))]
-        (is (pos? (get completion "events"))))
+        (is (pos? (get completion "events")))
+        (is (>= (get completion "clockSamples") 2))
+        (is (<= (get completion "clockMaxUncertaintyMs") 0.1)))
       (is (= (jfr/sha256 file) (get (json/read-str (slurp (str file "-complete.jsonl"))) "fileSha256")))
       (is (seq (slurp (str file ".jsonl")))))))
 (defn -main [& _] (let [r (run-tests 'triplex.gateway.trace-test)] (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1))))

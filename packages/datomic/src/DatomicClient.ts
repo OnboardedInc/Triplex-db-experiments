@@ -11,6 +11,7 @@ import http from "node:http";
 import { stringifyExact, validateTagged, type TaggedValue } from "./codec.js";
 import {
   beginSpan,
+  bindTraceCallback,
   currentTrace,
   endSpan,
   traceInterval,
@@ -294,7 +295,7 @@ export class DatomicClient {
       let written = NaN,
         headers = NaN;
       let completed = false;
-      const complete = () => {
+      const complete = bindTraceCallback(() => {
         if (completed) return;
         completed = true;
         const origin = performance.timeOrigin;
@@ -315,7 +316,7 @@ export class DatomicClient {
           exchange?.id,
         );
         endSpan(exchange);
-      };
+      });
       const socketStarted = performance.now();
       const req = http.request(
         new URL(path, this.endpoint),

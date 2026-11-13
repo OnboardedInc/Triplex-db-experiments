@@ -37,3 +37,14 @@ The full-pair study wrapper keeps 900-second phases and bookends them with off r
 and fresh Mac/VM samples, then copies existing gate values and flags without certifying semantic acceptance.
 Scheduler restoration state now binds the exact source, prefix and live lease PID; the parent independently requires
 the restored readback before releasing its lease. Changing reader/seed/bar/oracle logic remains outside this change.
+
+Full study `p2-pair-a` passed its oracle (53 reads / 2,310 entities) and all 3,458,638 model reads were exact.
+P2 and several P1 performance bars missed; P3 bars passed. Its CPU counters and queue partitions are valid observations.
+Its gateway/TypeScript shares are not reliable: startup wall-clock anchors differ by about 100 ms and deferred ticket
+sends could borrow a predecessor's trace. A real queued-HTTP test reproduces that context bug before the fix.
+The next revision binds deferred send/transport callbacks and aligns clocks only through matching Linux boot IDs
+and measured mono/epoch offsets. It checks every local span parent; missing/foreign clock bindings fail completeness.
+Raw bytes remain unchanged. JFR now carries bracketed clock markers; SHA256-bound export requires at least two precise
+markers, preserves native raw JFR, and maps event timestamps through the observed marker pairs. No duration is inferred
+from a client's HTTP window. The JFR factory uses the official Java 17 EventFactory API:
+https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/EventFactory.html

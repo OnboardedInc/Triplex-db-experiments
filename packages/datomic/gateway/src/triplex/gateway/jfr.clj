@@ -1,6 +1,6 @@
 (ns triplex.gateway.jfr
   (:require [clojure.data.json :as json] [clojure.string :as str] [clojure.java.io :as io])
-  (:import [jdk.jfr FlightRecorder Recording]
+  (:import [jdk.jfr FlightRecorder Recording EventFactory AnnotationElement ValueDescriptor Name]
            [jdk.jfr.consumer RecordingFile RecordedEvent]
            [java.nio.file Paths]
            [java.io BufferedWriter FileWriter]))
@@ -8,19 +8,50 @@
 ;; Rejected: racing JFR's own VM shutdown hook or downloading a JDK/jcmd image.
 (def finished (atom false))
 (defn millis [^java.time.Instant t] (+ (* 1000.0 (.getEpochSecond t)) (/ (.getNano t) 1000000.0)))
+;; [DX-T1-2] Why: JFR epoch timestamps have their own anchor; bracket a marker with the shared Linux monotonic clock.
+;; Rejected: pretend the trace namespace startup wall anchor is also the JFR recording's anchor.
+(def clock-factory (delay (EventFactory/create [(AnnotationElement. Name "triplex.ClockSync")]
+                            [(ValueDescriptor. Long/TYPE "beforeNanos") (ValueDescriptor. Long/TYPE "afterNanos")])))
+(defn clock-sample! []
+  (when (realized? clock-factory)
+    (let [event (.newEvent ^EventFactory @clock-factory) before (System/nanoTime)]
+      (.begin event)
+      (let [after (System/nanoTime)] (.set event 0 before) (.set event 1 after) (.commit event)))))
+(defn clock-points [file]
+  (with-open [r (RecordingFile. (Paths/get file (make-array String 0)))]
+    (loop [points []]
+      (if-not (.hasMoreEvents r) (vec (sort-by first points))
+        (let [^RecordedEvent event (.readEvent r)]
+          (if (= "triplex.ClockSync" (.getName (.getEventType event)))
+            (let [before (.getLong event "beforeNanos") after (.getLong event "afterNanos") uncertainty (/ (- after before) 2000000.0)]
+              (recur (if (<= 0 uncertainty 0.1) (conj points [(millis (.getStartTime event)) (/ (+ (double before) after) 2000000.0) uncertainty]) points)))
+            (recur points)))))))
+(defn monotonic-at [points t]
+  (let [n (count points)]
+    (when (zero? n) (throw (IllegalStateException. "No precise JFR boot-clock markers")))
+    (if (= n 1) (+ (second (first points)) (- t (ffirst points)))
+      (let [i (loop [lo 0 hi n] (if (< lo hi) (let [mid (quot (+ lo hi) 2)] (if (<= (first (nth points mid)) t) (recur (inc mid) hi) (recur lo mid))) lo))
+            [a am] (nth points (max 0 (min (- n 2) (dec i)))) [b bm] (nth points (max 1 (min (dec n) i)))]
+        (if (= a b) (+ am (- t a)) (+ am (* (/ (- t a) (- b a)) (- bm am))))))))
 (defn export! [file process identity]
-  (with-open [r (RecordingFile. (Paths/get file (make-array String 0)))
-              w (BufferedWriter. (FileWriter. (str file ".jsonl")))]
-    (loop [count 0]
-      (if-not (.hasMoreEvents r) count
-        (let [^RecordedEvent event (.readEvent r) name (.getName (.getEventType event))
-              thread (.getThread event)
-              layer (cond (= name "jdk.GCPhasePause") (if (= process "tx") "transactor-gc" "gateway-gc")
-                          (str/includes? name "Safepoint") "jvm-safepoint" :else "jvm-event")]
-          (.write w (str (json/write-str (merge identity {:type "event" :name name :layer layer :process process
-                       :thread (when thread (.getJavaThreadId thread))
-                       :start (millis (.getStartTime event)) :end (millis (.getEndTime event))})) "\n"))
-          (recur (inc count)))))))
+  (let [points (clock-points file) offset (get-in identity [:clock :offsetMs])
+        uncertainty (reduce max 0 (map #(nth % 2) points))]
+    (when-not (and (number? offset) (>= (count points) 2)) (throw (IllegalStateException. "JFR clock binding incomplete")))
+    (with-open [r (RecordingFile. (Paths/get file (make-array String 0)))
+                w (BufferedWriter. (FileWriter. (str file ".jsonl")))]
+      (loop [count 0]
+        (if-not (.hasMoreEvents r) {:events count :clockSamples (clojure.core/count points) :clockMaxUncertaintyMs uncertainty}
+          (let [^RecordedEvent event (.readEvent r) name (.getName (.getEventType event))]
+            (if (= name "triplex.ClockSync") (recur count)
+              (let [thread (.getThread event)
+                    layer (cond (= name "jdk.GCPhasePause") (if (= process "tx") "transactor-gc" "gateway-gc")
+                                (str/includes? name "Safepoint") "jvm-safepoint" :else "jvm-event")]
+                (.write w (str (json/write-str (merge identity {:type "event" :name name :layer layer :process process
+                             :clock (assoc (:clock identity) :uncertaintyMs (+ uncertainty 0.001))
+                             :thread (when thread (.getJavaThreadId thread))
+                             :start (+ offset (monotonic-at points (millis (.getStartTime event))))
+                             :end (+ offset (monotonic-at points (millis (.getEndTime event))))})) "\n"))
+                (recur (inc count))))))))))
 (defn sha256 [file]
   (let [digest (java.security.MessageDigest/getInstance "SHA-256") buffer (byte-array 65536)]
     (with-open [in (io/input-stream file)]
@@ -34,14 +65,17 @@
           (let [^Recording r (first (filter #(= "triplex" (.getName ^Recording %)) (.getRecordings (FlightRecorder/getFlightRecorder))))]
             (when-not r (throw (IllegalStateException. "No live triplex recording")))
             (let [started (millis (.getStartTime r))]
-              (when (= "RUNNING" (str (.getState r))) (.stop r))
+              (when (= "RUNNING" (str (.getState r))) (clock-sample!) (.stop r))
               (.dump r (Paths/get file (make-array String 0)))
-              (let [count (export! file process identity)]
+              (let [exported (export! file process identity)]
                 (spit (str file "-complete.jsonl")
-                  (str (json/write-str (merge identity {:type "jfr-complete" :role process :events count :fileSha256 (sha256 file) :recordingStart started
+                  (str (json/write-str (merge identity exported {:type "jfr-complete" :role process :fileSha256 (sha256 file) :recordingStart started
                                                        :at (millis (java.time.Instant/now))})) "\n")))))
           (catch Throwable error
             (spit (str dir "/" process "-jfr-error.txt")
               (str "JFR dump/export failed; coverage incomplete: " (.getName (class error)) " " (.getMessage error) "\n"))))))))
 (defn install! [process identity]
+  @clock-factory
+  (doseq [^Recording r (.getRecordings (FlightRecorder/getFlightRecorder))] (.enable r "triplex.ClockSync"))
+  (clock-sample!)
   (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable #(finish! process identity) "triplex-jfr-fallback")))

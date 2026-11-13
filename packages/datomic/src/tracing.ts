@@ -58,7 +58,14 @@ export interface TraceSpan {
   schedulerStart?: SchedulerSnapshot | undefined;
   schedulerEnd?: SchedulerSnapshot | undefined;
 }
+export interface TraceClock {
+  domain: "linux-monotonic";
+  bootId: string;
+  offsetMs: number;
+  uncertaintyMs: number;
+}
 export interface RequestTrace {
+  clock?: TraceClock | undefined;
   schema: "triplex.trace.v1";
   type: "request";
   run: string;
@@ -89,7 +96,25 @@ if (!["off", "summary", "full"].includes(configured))
 export const traceLevel = configured as TraceLevel;
 export const TRACE_SLOW_READ_MS = 50;
 export const TRACE_READ_SAMPLE = 1024;
+function readTraceClock(): TraceClock | undefined {
+  if (process.platform !== "linux") return;
+  try {
+    const bootId = readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim();
+    const before = Number(process.hrtime.bigint()) / 1e6;
+    const epoch = performance.timeOrigin + performance.now();
+    const after = Number(process.hrtime.bigint()) / 1e6;
+    return {
+      domain: "linux-monotonic",
+      bootId,
+      offsetMs: epoch - (before + after) / 2,
+      uncertaintyMs: (after - before) / 2,
+    };
+  } catch {
+    return;
+  }
+}
 const identity = {
+  clock: readTraceClock(),
   run: process.env["TRIPLEX_TRACE_RUN"] ?? "unbound",
   source: process.env["TRIPLEX_TRACE_SOURCE"] ?? "unbound",
   slot: process.env["TRIPLEX_TRACE_SLOT"] ?? "unbound",
@@ -229,6 +254,14 @@ export function currentTrace(): RequestTrace | undefined {
 }
 export function withTrace<A>(trace: RequestTrace | undefined, run: () => A): A {
   return trace ? context.run({ trace, span: trace.root }, run) : run();
+}
+// [DX-T1-2] Why: a queued callback can be invoked by another request's HTTP finish event.
+// Rejected: ordinary closure capture (AsyncLocalStorage follows the caller, not where the function was created).
+export function bindTraceCallback<A extends unknown[], R>(
+  callback: (...args: A) => R,
+): (...args: A) => R {
+  const active = context.getStore();
+  return active ? (...args: A) => context.run(active, () => callback(...args)) : callback;
 }
 export function beginSpan(
   name: string,

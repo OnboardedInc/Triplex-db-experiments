@@ -79,6 +79,43 @@ describe("permanent request tracing", () => {
     expect(rows(dir).some((r) => r.type === "histograms")).toBe(true);
     expect(rows(dir).filter((r) => r.type === "request" && r.kind === "commit")).toHaveLength(1);
   });
+  it("keeps a deferred ordered HTTP send in its own trace when another commit releases it", async () => {
+    const { api } = await recorder();
+    const { DatomicClient } = await import("../src/DatomicClient.js");
+    const { registerCommit, sendCommit, endCommit } = await import("../src/CommitOrder.js");
+    const seen: string[] = [];
+    const server = http.createServer((req, res) => {
+      seen.push(String(req.headers.traceparent));
+      res.end('{"ok":true}');
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+    const client = new DatomicClient(
+      `http://127.0.0.1:${(server.address() as import("node:net").AddressInfo).port}`,
+    );
+    const first = api.beginTrace("commit", "first")!,
+      second = api.beginTrace("commit", "second")!;
+    const blocker = api.withTrace(first, () => registerCommit(1)),
+      ticket = api.withTrace(second, () => registerCommit(2));
+    try {
+      const pending = api.withTrace(second, () =>
+        sendCommit(ticket, (_n, sent) => client.request("POST", "/test", {}, undefined, sent)),
+      );
+      expect(seen).toHaveLength(0);
+      api.withTrace(first, () => endCommit(blocker));
+      await pending;
+      expect(api.parseTraceparent(seen[0])!.traceId).toBe(second.traceId);
+      expect(second.spans.some((s) => s.name === "client.commit-send-queue")).toBe(true);
+      expect(first.spans.some((s) => s.name === "client.http")).toBe(false);
+    } finally {
+      endCommit(blocker);
+      endCommit(ticket);
+      client.close();
+      await new Promise<void>((r) => server.close(() => r()));
+      api.finishTrace(first);
+      api.finishTrace(second);
+      await api.flushTracing();
+    }
+  });
   it("continues the exact sending span across a real worker and rejects foreign attempt context", async () => {
     const { api, dir } = await recorder();
     const worker = new Worker(
@@ -540,5 +577,33 @@ describe("exclusive synchronous CPU counters", () => {
     expect(
       synchronousCpu({ spans: spans.map((s) => ({ ...s, synchronous: false })) }).cpuRuntimeMs,
     ).toBeNull();
+  });
+});
+
+describe("shared Linux clock alignment", () => {
+  it("aligns gateway and worker boundaries through the exact boot clock and rejects foreign boots", async () => {
+    const { alignClockRecord } = await import("../../../lab/trace/report.mjs");
+    const reference = {
+      domain: "linux-monotonic",
+      bootId: "boot-a",
+      offsetMs: 1000,
+      uncertaintyMs: 0.001,
+    };
+    const row = {
+      clock: { ...reference, offsetMs: 1100 },
+      start: 120,
+      end: 130,
+      attributes: { submittedAt: 125, position: 7 },
+      spans: [{ start: 121, end: 129, schedulerStart: { at: 121 }, schedulerEnd: { at: 129 } }],
+    };
+    const aligned = alignClockRecord(row, reference);
+    expect(aligned.start).toBe(20);
+    expect(aligned.end).toBe(30);
+    expect(aligned.attributes).toEqual({ submittedAt: 25, position: 7 });
+    expect(aligned.spans[0].schedulerStart.at).toBe(21);
+    expect(row.start).toBe(120);
+    expect(() =>
+      alignClockRecord({ ...row, clock: { ...row.clock, bootId: "other" } }, reference),
+    ).toThrow(/clock binding/);
   });
 });

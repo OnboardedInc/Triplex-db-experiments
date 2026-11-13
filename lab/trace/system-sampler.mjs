@@ -24,9 +24,20 @@ const read = (f) => {
     return null;
   }
 };
+const bootId =
+  process.platform === "linux" ? read("/proc/sys/kernel/random/boot_id")?.trim() : undefined;
 function sample() {
-  const row = { ...identity, type: "resource", at: Date.now() };
+  const before = Number(process.hrtime.bigint()) / 1e6;
+  const at = Date.now();
+  const after = Number(process.hrtime.bigint()) / 1e6;
+  const row = { ...identity, type: "resource", at };
   if (process.platform === "linux") {
+    row.clock = {
+      domain: "linux-monotonic",
+      bootId,
+      offsetMs: row.at - (before + after) / 2,
+      uncertaintyMs: 0.5 + (after - before) / 2,
+    };
     const groups = Object.fromEntries(
       (process.env.TX2_ENGINE_CGROUPS ?? "")
         .split(",")

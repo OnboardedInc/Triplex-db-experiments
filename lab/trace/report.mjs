@@ -63,6 +63,52 @@ export async function* records(file) {
   for await (const line of createInterface({ input, crlfDelay: Infinity }))
     if (line.trim()) yield JSON.parse(line);
 }
+// [DX-T1-2] Why: JVM nanoTime and Node hrtime use the same Linux boot clock even when startup wall anchors differ.
+// Rejected: infer network time from a gateway clipped away by clock skew, or silently guess an offset from a request duration.
+export function alignClockRecord(row, reference) {
+  if (!row.clock || row.clock.domain !== "linux-monotonic" || !reference) return row;
+  if (
+    row.clock.bootId !== reference.bootId ||
+    !Number.isFinite(row.clock.offsetMs) ||
+    !Number.isFinite(reference.offsetMs)
+  )
+    throw Error("Foreign/invalid monotonic clock binding");
+  const shift = reference.offsetMs - row.clock.offsetMs;
+  const point = (p) => (p ? { ...p, at: p.at + shift } : p);
+  return {
+    ...row,
+    clock: reference,
+    rawClockOffsetMs: row.clock.offsetMs,
+    clockAlignmentMs: shift,
+    ...(Number.isFinite(row.start) ? { start: row.start + shift, end: row.end + shift } : {}),
+    ...(Number.isFinite(row.at) ? { at: row.at + shift } : {}),
+    ...(row.schedulerStart
+      ? { schedulerStart: point(row.schedulerStart), schedulerEnd: point(row.schedulerEnd) }
+      : {}),
+    ...(row.attributes
+      ? {
+          attributes: {
+            ...row.attributes,
+            ...(Number.isFinite(row.attributes.submittedAt)
+              ? { submittedAt: row.attributes.submittedAt + shift }
+              : {}),
+          },
+        }
+      : {}),
+    ...(row.spans
+      ? {
+          spans: row.spans.map((s) => ({
+            ...s,
+            start: s.start + shift,
+            end: s.end + shift,
+            ...(s.schedulerStart
+              ? { schedulerStart: point(s.schedulerStart), schedulerEnd: point(s.schedulerEnd) }
+              : {}),
+          })),
+        }
+      : {}),
+  };
+}
 function validSpan(s) {
   return (
     typeof s.name === "string" &&
@@ -502,6 +548,44 @@ export async function buildReport(runDir, { copyTo } = {}) {
       errors.push(`${path.basename(file)}: ${error.message}`);
     }
   }
+  const clockReference = requests.find(
+    (r) => r.name === "driver.commit" && r.thread === 0 && r.clock?.domain === "linux-monotonic",
+  )?.clock;
+  const clockSources = [];
+  if (manifest?.requireClockBinding && !clockReference)
+    errors.push("Writer Linux boot-clock binding missing");
+  for (const rows of [requests, events, resources])
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (manifest?.requireClockBinding && r.type === "request" && !r.clock)
+        errors.push("Request clock binding missing: " + r.traceId);
+      try {
+        rows[i] = alignClockRecord(r, clockReference);
+        if (
+          r.clock &&
+          clockReference &&
+          !clockSources.some((x) => x.process === r.process && x.offsetMs === r.clock.offsetMs)
+        )
+          clockSources.push({
+            process: r.process,
+            offsetMs: r.clock.offsetMs,
+            shiftMs: rows[i].clockAlignmentMs,
+            uncertaintyMs: r.clock.uncertaintyMs,
+          });
+      } catch (error) {
+        errors.push(String(error));
+      }
+    }
+  let invalidSpanParents = 0;
+  if (manifest?.requireClockBinding)
+    for (const r of requests) {
+      const ids = new Set([r.root, ...r.spans.map((s) => s.id)]);
+      for (const span of r.spans) if (!ids.has(span.parent)) invalidSpanParents++;
+    }
+  if (invalidSpanParents)
+    errors.push(
+      `${invalidSpanParents} spans have a missing local parent (context or retention bug)`,
+    );
   const replicaPublications = new Map();
   // [DX-T1] Why: asynchronous replica work links by the validated logical position within this one benchmark scope.
   // Rejected: assigning a feed poll's unrelated trace ID to the original writer, or adding post-ACK work to commit latency.
@@ -817,6 +901,11 @@ export async function buildReport(runDir, { copyTo } = {}) {
     components: manifest?.components ?? null,
     session: manifest?.session ?? null,
     nodeEnabled,
+    clockAlignment: {
+      reference: clockReference ?? null,
+      sources: clockSources,
+      invalidSpanParents,
+    },
     reporterSha256: createHash("sha256")
       .update(fs.readFileSync(new URL(import.meta.url)))
       .digest("hex"),
@@ -875,7 +964,9 @@ export async function buildReport(runDir, { copyTo } = {}) {
     "",
     "Units: ms; n/a means not causally measured (including closed transactor/storage shares), not zero work. TypeScript share is a fraction. Quantiles are per column (their values do not add). TypeScript own code is instrumented Node scope wall time excluding observed remote waits/GC, not on-CPU time; it can include unmeasured scheduling waits. Event-loop wait records explicit worker RPC handoff/reply waits after subtracting linked worker/socket/server work. Other per-request event-loop delay is not causally measured (n/a when no RPC); timestamped timer drift is an estimated overlay. Driver offer queue is separate. Peer-wait includes network, transactor queue and storage; these internal shares remain unknown unless independently correlated. No unrelated Postgres or JFR event is assigned to a transaction.",
     "",
-    "Network is residual socket wait around matched gateway spans, including callback scheduling uncertainty. Gateway receive begins at Jetty dispatch: earlier Jetty/socket queue is invisible. VM clocks share CLOCK_REALTIME; gateway millisecond anchoring has approximately 1 ms uncertainty. Response-first-byte includes network and callback scheduling; no finer causal claim is made.",
+    `Linux clock alignment: ${clockReference ? `shared boot monotonic clock; ${clockSources.length} source calibrations, offsets preserved in raw traces and trace-summary.json` : "legacy wall anchors; cross-process timing may be skewed"}.`,
+    "",
+    "Network is residual socket wait around matched gateway spans, including callback scheduling uncertainty. Gateway receive begins at Jetty dispatch: earlier Jetty/socket queue is invisible. Node and gateway observations with the same Linux boot ID are aligned through their measured monotonic offsets. Other host/epoch-only overlays remain approximate. Response-first-byte includes network and callback scheduling; no finer causal claim is made.",
     "",
     `Evidence checks: ${errors.length ? errors.join("; ") : "source/run/slot binding, final histograms, writer trace IDs and interval content checked"}. Oracle: ${bench.oracle?.status ?? bench.independentOracle?.status ?? "see ns-report.json; not certified by tracing"}.`,
     "",

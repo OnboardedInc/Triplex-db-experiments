@@ -35,6 +35,7 @@ export function configuration(env = process.env) {
     requirePostgres: has("postgres"),
     session: env.TRIPLEX_TRACE_SESSION ?? null,
     queueExpected: has("node"),
+    requireClockBinding: has("node") && has("gateway"),
     flags: Object.fromEntries(
       [
         ["NODE", has("node")],

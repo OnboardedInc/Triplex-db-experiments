@@ -1,6 +1,7 @@
 // [DX-B5-L0] Why: register the clock before staging can yield; order sends across all clients in this process.
 // Rejected: serializing acknowledgements (unrelated subjects must remain in flight).
 import { randomUUID } from "node:crypto";
+import { beginSpan, endSpan, bindTraceCallback } from "./tracing.js";
 export interface OrderedCommit {
   timestamp: number;
   lane: object;
@@ -73,7 +74,11 @@ export function sendCommit<A>(
   send: (sequence: number, sent: () => void) => Promise<A>,
 ): Promise<A> {
   return new Promise((resolve, reject) => {
-    item.send = (number) => {
+    const wait = beginSpan("client.commit-send-queue", "event-loop");
+    // [DX-T1-2] Why: preserve this ticket's exact trace parent when a predecessor releases it.
+    // Rejected: borrowing the predecessor's context, which falsely charges its HTTP work to that commit.
+    item.send = bindTraceCallback((number) => {
+      endSpan(wait);
       try {
         // [DX-B5-L0] Why: req.end may still be queued behind a TCP connect; finish is the actual send boundary.
         // Rejected: draining on request construction (different sockets can overtake by more than 20 ms).
@@ -96,7 +101,7 @@ export function sendCommit<A>(
         endCommit(item);
         reject(error);
       }
-    };
+    });
     item.ready = true;
     drain();
   });
