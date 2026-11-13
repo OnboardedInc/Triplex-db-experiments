@@ -26,6 +26,18 @@
         (is (= "commit" (:kind (first @rows))))
         (is (some #(= "commit.tiny" (:name %)) (:spans (first @rows))))))))
 
+;; [DX-T1-2] Why: a retained peer step must keep each gateway ancestor even when the route is short.
+;; Rejected: pruning parents solely by duration (breaks nesting and causal attribution).
+(deftest summary-read-keeps-retained-child-parents
+  (let [rows (atom [])]
+    (with-redefs [trace/enabled true trace/level "summary" trace/emit! #(swap! rows conj %) trace/sampled? (constantly true)]
+      (let [response (trace/handler (fn [_] (trace/span "tiny-parent" "gateway" (trace/span "d/db" "peer-call" nil)) {:status 200 :headers {} :body "{}"}) {:uri "/transactions" :headers {}})]
+        (protocols/write-body-to-stream (:body response) response (java.io.ByteArrayOutputStream.))
+        (let [r (first @rows) ids (set (cons (:root r) (map :id (:spans r))))]
+          (is (= 1 (count @rows)))
+          (is (some #(= "tiny-parent" (:name %)) (:spans r)))
+          (is (every? #(contains? ids (:parent %)) (:spans r))))))))
+
 (deftest exports-real-jfr-before-shutdown
   (when (= "1" (System/getenv "TRIPLEX_TRACE_TEST_JFR"))
     (let [identity {:run "fixture" :slot "fixture" :source "fixture" :process "test" :clock trace/trace-clock}

@@ -56,3 +56,7 @@ gateway moves to CPU 2, leaving the same eight guest CPUs. It is opt-in pending 
 The placement study validates actual container masks and per-thread kernel readbacks, source/build hashes, full pair
 durations and fresh controls before reporting existing gate values. Each candidate worker must prove its own affinity;
 a missing readback is incomplete evidence, never a placement PASS. CPU-set parser and deferred-send tests are normal tests.
+
+`p2-smoke-e` completed its benchmark but failed trace completeness: 231 retained peer `d/db` spans had pruned short
+gateway ancestors in summary mode. The failure is retained. Summary now preserves every ancestor of a retained child;
+a gateway regression test checks the exact parent set. CPU-affinity records remain diagnostic until the rerun passes.
