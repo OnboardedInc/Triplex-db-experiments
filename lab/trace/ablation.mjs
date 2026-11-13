@@ -239,6 +239,28 @@ for (const [i, arm] of arms.entries()) {
         throw Error("Native CPU placement mismatch");
     if (driver.HostConfig.CpusetCpus !== (isolated ? "5,6,7" : "4,5,6,7"))
       throw Error("Native driver CPU placement mismatch");
+    const placements = fs
+      .readFileSync(path.join(dir, "driver.log"), "utf8")
+      .split("\n")
+      .filter((l) => l.startsWith('{"type":"node-thread-placement"'))
+      .map((l) => JSON.parse(l));
+    if (isolated) {
+      if (
+        !placements.some((r) => r.thread === 0) ||
+        placements.filter((r) => r.thread !== 0).length < 4
+      )
+        throw Error("Native writer/worker affinity evidence absent");
+      for (const r of placements) {
+        if (
+          r.main !== "5" ||
+          r.workers !== "6,7" ||
+          r.allowed.replace("6-7", "6,7") !== (r.thread === 0 ? "5" : "6,7")
+        )
+          throw Error("Native writer/worker affinity mismatch");
+        if ((r.background ?? []).some((b) => b.allowed.replace("6-7", "6,7") !== "6,7"))
+          throw Error("Native runtime background thread shares writer core");
+      }
+    } else if (placements.length) throw Error("Native baseline unexpectedly pinned");
     for (const role of ["tx", "gw-w", "gw-r"]) {
       const c = containers.find((c) => c.Name === `/${tag}-${role}`);
       const opts = c.Config.Env.find((v) =>
@@ -436,7 +458,33 @@ const text = [
   "",
 ];
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
+if (readerDiagnostic)
+  text.push(
+    "| arm | L256 small commit p50 / p99 ms | L256 read p99 ms | correct pulls/s |",
+    "| --- | --- | ---: | ---: |",
+    ...rows.map(
+      (r) =>
+        `| ${r.arm} | ${r.bandsAtL256["5-10"].p50Ms.toFixed(3)} / ${r.bandsAtL256["5-10"].p99Ms.toFixed(3)} | ${r.ladder256.read.p99Ms.toFixed(3)} | ${r.ladder256.goodputPerS.toFixed(1)} |`,
+    ),
+    "",
+  );
 const result = {
+  comparisonAtL256: readerDiagnostic
+    ? {
+        smallP50Ms: bookendComparison(
+          controls.map((r) => r.bandsAtL256["5-10"].p50Ms),
+          candidates.map((r) => r.bandsAtL256["5-10"].p50Ms),
+        ),
+        smallP99Ms: bookendComparison(
+          controls.map((r) => r.bandsAtL256["5-10"].p99Ms),
+          candidates.map((r) => r.bandsAtL256["5-10"].p99Ms),
+        ),
+        readP99Ms: bookendComparison(
+          controls.map((r) => r.ladder256.read.p99Ms),
+          candidates.map((r) => r.ladder256.read.p99Ms),
+        ),
+      }
+    : null,
   comparison:
     ["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind) ||
     !!nativeKind
