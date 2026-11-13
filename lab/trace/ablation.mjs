@@ -5,7 +5,18 @@ import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
 import { bookendComparison, observedRunEnd } from "./anatomy.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
-if (!["ablation", "cost", "anatomy", "cpu-floor", "fallback-floor", "history-256"].includes(kind))
+if (
+  ![
+    "ablation",
+    "cost",
+    "anatomy",
+    "cpu-floor",
+    "fallback-floor",
+    "history-256",
+    "seed-floor",
+    "writer-256",
+  ].includes(kind)
+)
   throw Error("Expected ablation or cost");
 const session = path.join(base, prefix + "-session"),
   source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
@@ -14,16 +25,20 @@ const arms =
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
     : kind === "anatomy"
       ? ["off", "anatomy", "anatomy", "off"]
-      : kind === "history-256"
-        ? ["baseline", "history-192", "history-192", "baseline"]
-        : kind === "fallback-floor"
-          ? ["baseline", "fallback-worker", "fallback-worker", "baseline"]
-          : kind === "cpu-floor"
-            ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
-            : ["off", "summary", "summary", "off"];
+      : kind === "seed-floor"
+        ? ["baseline", "seed-2000", "seed-2000", "baseline"]
+        : kind === "writer-256"
+          ? ["baseline", "writer-core", "writer-core", "baseline"]
+          : kind === "history-256"
+            ? ["baseline", "history-192", "history-192", "baseline"]
+            : kind === "fallback-floor"
+              ? ["baseline", "fallback-worker", "fallback-worker", "baseline"]
+              : kind === "cpu-floor"
+                ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
+                : ["off", "summary", "summary", "off"];
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const rows = [];
-let buildHashes;
+let buildHashes, commonInputs;
 // [DX-T1-2] Why: inspect the actual container environment/JVM options, PG readback and fresh raw resource bytes.
 // Rejected: treating a directory name or successful process exit as proof that its requested recorder was measured.
 for (const [i, arm] of arms.entries()) {
@@ -33,6 +48,22 @@ for (const [i, arm] of arms.entries()) {
     manifest = read(path.join(dir, "trace-run.json")),
     summary = read(path.join(dir, "trace-summary.json"));
   const endedAt = observedRunEnd(bench.endedAt);
+  // [DX-T1-4] Why: every comparison changes one declared input while the remaining workload stays byte-identical.
+  // Rejected: silently inheriting a different seed batch or read policy between placement arms.
+  const variable =
+    kind === "history-256"
+      ? "replicaHistoryMiB"
+      : kind === "fallback-floor"
+        ? "replicaFallbackThread"
+        : kind === "seed-floor"
+          ? "seedBatchFacts"
+          : null;
+  const inputs = JSON.stringify(
+    Object.fromEntries(Object.entries(bench.config).filter(([k]) => k !== variable)),
+  );
+  if (commonInputs !== undefined && commonInputs !== inputs)
+    throw Error("Uncontrolled workload input changed");
+  commonInputs = inputs;
   const actualHashes = fs.readFileSync(path.join(dir, "source-build-hashes.json"), "utf8");
   if (buildHashes !== undefined && actualHashes !== buildHashes)
     throw Error("Source/build bytes changed inside session");
@@ -41,11 +72,13 @@ for (const [i, arm] of arms.entries()) {
     TRIPLEX_TRACE_LEVEL:
       arm === "off"
         ? "off"
-        : arm === "summary" || ["fallback-floor", "history-256"].includes(kind)
+        : arm === "summary" ||
+            ["fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind)
           ? "summary"
           : "full",
     TRIPLEX_TRACE_SESSION: prefix,
-    ...(!["full", "summary"].includes(arm) && !["fallback-floor", "history-256"].includes(kind)
+    ...(!["full", "summary"].includes(arm) &&
+    !["fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind)
       ? {
           TRIPLEX_TRACE_COMPONENTS:
             arm === "off"
@@ -59,8 +92,8 @@ for (const [i, arm] of arms.entries()) {
   if (
     bench.status !== "DONE" ||
     bench.seed?.seededSubjects !== 10000 ||
-    bench.config?.zeroReaders !== (kind !== "history-256") ||
-    bench.config.matchDurationS !== (kind === "history-256" ? 300 : 200) ||
+    bench.config?.zeroReaders !== !["history-256", "writer-256"].includes(kind) ||
+    bench.config.matchDurationS !== (["history-256", "writer-256"].includes(kind) ? 300 : 200) ||
     bench.config.readPath !== "replica" ||
     !bench.config.strictRecordClocks ||
     typeof bench.trace?.digest !== "string"
@@ -87,7 +120,7 @@ for (const [i, arm] of arms.entries()) {
       bench.config.maxReaders !== 256)
   )
     throw Error("Replica history readback mismatch");
-  if (kind === "history-256") {
+  if (["history-256", "writer-256"].includes(kind)) {
     // [DX-T1-4] Why: a retained-history trial needs reads after the first burst, not a pre-burst cache hit test.
     // Rejected: 20-second ladder levels (readers stop at 115 seconds, before the frozen burst starts).
     const phase = bench.phases.find((p) => p.name === "L256");
@@ -105,6 +138,20 @@ for (const [i, arm] of arms.entries()) {
     )
       throw Error("History pressure, exactness, or real capacity observation absent");
   }
+  if (
+    kind === "seed-floor" &&
+    (bench.config.seedBatchFacts !== (arm === "seed-2000" ? 2000 : 400) ||
+      bench.config.replicaHistoryMiB !== 192 ||
+      bench.config.replicaFallbackThread !== "worker")
+  )
+    throw Error("Seed batching readback mismatch");
+  if (
+    kind === "writer-256" &&
+    (bench.config.replicaHistoryMiB !== 192 ||
+      bench.config.replicaFallbackThread !== "worker" ||
+      bench.config.maxReaders !== 256)
+  )
+    throw Error("Writer study input mismatch");
   const containers = read(path.join(dir, "containers.json")),
     driver = read(path.join(dir, "driver-container.json"))[0];
   if (kind === "cpu-floor") {
@@ -118,6 +165,43 @@ for (const [i, arm] of arms.entries()) {
       if (containers.find((c) => c.Name === "/" + tag + "-" + role)?.HostConfig.CpusetCpus !== cpus)
         throw Error("CPU placement readback mismatch");
     if (driver.HostConfig.CpusetCpus !== "4,5,6,7") throw Error("Driver CPU control changed");
+  }
+  if (kind === "writer-256") {
+    const candidate = arm === "writer-core";
+    if (
+      driver.HostConfig.CpusetCpus !== (candidate ? "3,4,5,6,7" : "4,5,6,7") ||
+      containers.find((c) => c.Name === "/" + tag + "-gw-r")?.HostConfig.CpusetCpus !==
+        (candidate ? "2" : "2,3")
+    )
+      throw Error("Writer/container CPU mask mismatch");
+    const masks = fs
+      .readFileSync(path.join(dir, "driver.log"), "utf8")
+      .split("\n")
+      .filter((l) => l.startsWith('{"type":"node-thread-placement"'))
+      .map((l) => JSON.parse(l));
+    const expand = (v) =>
+      v
+        .split(",")
+        .flatMap((r) => {
+          const [a, b] = r.split("-").map(Number);
+          return b === undefined ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i);
+        })
+        .sort((a, b) => a - b)
+        .join(",");
+    if (candidate) {
+      if (!masks.some((r) => r.thread === 0) || masks.filter((r) => r.thread !== 0).length < 4)
+        throw Error("Missing writer/worker masks");
+      for (const r of masks) {
+        if (
+          r.main !== "3" ||
+          r.workers !== "4,5,6,7" ||
+          expand(r.allowed) !== (r.thread === 0 ? "3" : "4,5,6,7")
+        )
+          throw Error("Wrong thread affinity");
+        for (const b of r.background ?? [])
+          if (expand(b.allowed) !== "4,5,6,7") throw Error("Runtime thread shares writer core");
+      }
+    } else if (masks.length) throw Error("Baseline unexpectedly pinned");
   }
   const envOf = (c) =>
     Object.fromEntries(
@@ -225,7 +309,7 @@ for (const [i, arm] of arms.entries()) {
       writes.push(w);
     }
   if (
-    writes.length !== (kind === "history-256" ? 3530 : 3420) ||
+    writes.length !== (["history-256", "writer-256"].includes(kind) ? 3530 : 3420) ||
     bench.trace.digest !== "aa8a7636ff027ab3" ||
     bench.writer.pendingAtEnd !== 0 ||
     bench.writer.expired !== 0
@@ -262,6 +346,7 @@ for (const [i, arm] of arms.entries()) {
     hostSamples: host,
     vmSamples: vm,
     replicaHistoryMiB: bench.config.replicaHistoryMiB,
+    seedBatchFacts: bench.config.seedBatchFacts,
     ladder256: bench.priorities?.P1?.ladder?.find((r) => r.readers === 256) ?? null,
     bandsAtL256: bench.priorities?.P2?.bandsAtL256 ?? null,
     scheduler256: summary.schedulerByPhase?.L256 ?? null,
@@ -275,7 +360,9 @@ if (
 const controls = rows.filter(
     (r) =>
       r.arm ===
-      (["cpu-floor", "fallback-floor", "history-256"].includes(kind) ? "baseline" : "off"),
+      (["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind)
+        ? "baseline"
+        : "off"),
   ),
   off50 = controls.reduce((s, r) => s + r.p50Ms, 0) / controls.length,
   off99 = controls.reduce((s, r) => s + r.p99Ms, 0) / controls.length;
@@ -289,7 +376,7 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${kind === "history-256" ? "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
+  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${["history-256", "writer-256"].includes(kind) ? "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim.`,
   "",
   "| arm / level | p50 ms | p99 ms | control p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
   "| --- | ---: | ---: | --- | --- | --- | --- |",
@@ -303,7 +390,9 @@ const text = [
 ];
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 const result = {
-  comparison: ["cpu-floor", "fallback-floor", "history-256"].includes(kind)
+  comparison: ["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(
+    kind,
+  )
     ? {
         p50Ms: bookendComparison(
           controls.map((r) => r.p50Ms),

@@ -2,7 +2,7 @@
 # [DX-T1-2] Why: one lease, one source and bookend controls bind recorder ablations to one host session.
 # Rejected: compare a recorder with a historical quiet off arm or allow unrelated work between arms.
 set -euo pipefail
-kind=${1:?ablation|cost|anatomy|cpu-floor|fallback-floor|history-256}; prefix=${2:?tx2-dxt1-prefix}; shift 2
+kind=${1:?ablation|cost|anatomy|cpu-floor|fallback-floor|history-256|seed-floor|writer-256}; prefix=${2:?tx2-dxt1-prefix}; shift 2
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
@@ -45,6 +45,8 @@ elif [[ $kind == anatomy ]]; then arms=(off anatomy anatomy off)
 elif [[ $kind == cpu-floor ]]; then arms=(baseline engine-isolated engine-isolated baseline)
 elif [[ $kind == fallback-floor ]]; then arms=(baseline fallback-worker fallback-worker baseline)
 elif [[ $kind == history-256 ]]; then arms=(baseline history-192 history-192 baseline)
+elif [[ $kind == seed-floor ]]; then arms=(baseline seed-2000 seed-2000 baseline)
+elif [[ $kind == writer-256 ]]; then arms=(baseline writer-core writer-core baseline)
 else exit 2;fi
 i=0;session_rc=0
 for arm in "${arms[@]}"; do
@@ -74,6 +76,20 @@ for arm in "${arms[@]}"; do
     level=summary;components=default;duration=300;level_s=45;reader_args=(--max-readers 256)
     workload=(--replica-history-mib 64 --replica-fallback-thread worker)
     [[ $arm != history-192 ]] || workload=(--replica-history-mib 192 --replica-fallback-thread worker)
+  fi
+  if [[ $kind == seed-floor ]]; then
+    # [DX-T1-4] Why: q8 used 2,000 seed facts per transaction; isolate its effect on the measured floor.
+    # Rejected: changing the frozen writer trace, read window, collector or engine settings in this comparison.
+    level=summary;components=default;workload=(--seed-batch-facts 400)
+    [[ $arm != seed-2000 ]] || workload=(--seed-batch-facts 2000)
+  fi
+  if [[ $kind == writer-256 ]]; then
+    # [DX-T1-4] Why: L256 trace counters show several seconds of writer run-queue wait; reserve one writer core.
+    # Rejected: reducing reader CPUs or changing transactor/Postgres settings in the same trial.
+    level=summary;components=default;duration=300;level_s=45;reader_args=(--max-readers 256)
+    workload=(--replica-history-mib 192 --replica-fallback-thread worker)
+    placement=(DX_CPUS_DRIVER=4,5,6,7 DX_CPUS_GW_READ=2,3 DX_MAIN_CPU= DX_WORKER_CPUS=)
+    [[ $arm != writer-core ]] || placement=(DX_CPUS_DRIVER=3,4,5,6,7 DX_CPUS_GW_READ=2 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7)
   fi
   if [[ $arm == full || $arm == summary ]]; then level=$arm;components=default;fi
   export TRIPLEX_TRACE_LEVEL=$level
