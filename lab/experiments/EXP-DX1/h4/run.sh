@@ -2,9 +2,9 @@
 # [DX-H4] Why: give client four CPUs without borrowing the engine's placement.
 # Rejected: more reader threads on two CPUs (client saturation invalidates P1).
 set -euo pipefail
-# [DX-T1] Why: one switch follows driver, workers and every JVM; full is the benchmark default.
+# [DX-T1] Why: one switch follows driver, workers and every JVM; summary is the benchmark default.
 # Rejected: requiring a second diagnostic run to discover where a tail came from.
-export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-full}
+export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-summary}
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H4}
 # [DX-R3] Why: pass the same explicit read path to both matched arms; the default remains gateway.
 # Rejected: setting a host variable that the isolated driver never receives.

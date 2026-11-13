@@ -12,7 +12,9 @@ export function configuration(env = process.env) {
     env.TRIPLEX_TRACE_COMPONENTS === undefined
       ? level === "off"
         ? []
-        : COMPONENTS
+        : level === "summary"
+          ? COMPONENTS.filter((c) => c !== "native-logs")
+          : COMPONENTS
       : env.TRIPLEX_TRACE_COMPONENTS.split(",").filter(Boolean);
   if (
     requested.some((c) => !COMPONENTS.includes(c)) ||

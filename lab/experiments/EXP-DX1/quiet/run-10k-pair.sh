@@ -5,7 +5,7 @@
 # usage: run-10k-pair.sh <prefix like tx2-dxh4-q1> [max minutes to wait for quiet, default 360]
 set -uo pipefail
 prefix=${1:?prefix}; waitmin=${2:-360}
-export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-full}
+export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-summary}
 cd "$(git rev-parse --show-toplevel)"
 E=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-H4}; mkdir -p "$E"
 free=$(df -k /System/Volumes/Data | awk 'NR==2{print int($4/1048576)}'); [ "$free" -ge 15 ] || { echo "refusing: only ${free} GiB free"; exit 3; }

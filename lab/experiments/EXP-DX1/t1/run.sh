@@ -25,6 +25,6 @@ for name in files:
 PY_ORACLE
 fi
 [[ -f $DX_ORACLE_ROOT/lab/oracles/replay/cli.py ]] || { echo 'Missing frozen oracle executable source' >&2; exit 2; }
-export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-full}
+export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-summary}
 export DX_READ_PATH=replica DX_STRICT_RECORD_CLOCKS=1
 exec node lab/bin/heavy.mjs --label DX-T1-$prefix -- bash lab/experiments/EXP-DX1/h4/run.sh "$kind" "$prefix" "$@"

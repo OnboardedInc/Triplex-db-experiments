@@ -20,3 +20,8 @@ The full 1k `p2-smoke-a` passed the oracle (53 reads / 3,278 entity queries), al
 and gateway preflight passed 3 tests / 14 assertions. Scheduler probe found the guest counter disabled;
 `scheduler-control.sh` now saves, enables and rereads it under the DX-T1 lease and restores it before release.
 The saved state is exclusive-created and restoration failure retains the lease. All ablation arms share this setting.
+
+The 10k ablation session `p2-abl-a` completed all nine arms with 3,420 primary commands each.
+Source/build bytes, actual collector flags, host swap samples and bookend controls passed the observation checks.
+Native logs/callback added 3.115 ms p50 (19.48%) against bookend mean 15.994 ms; full added 3.197 ms.
+Summary now excludes that stream while retaining Node/gateway spans, JFR and PG context. Its cost is not yet proved.

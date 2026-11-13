@@ -25,3 +25,9 @@ test("ablation enables exactly one recorder with common host sampling", () => {
     configuration({ TRIPLEX_TRACE_LEVEL: "off", TRIPLEX_TRACE_COMPONENTS: "node" }),
   );
 });
+
+test("default summary keeps the per-layer picture and excludes the costly native log stream", () => {
+  const c = configuration({ TRIPLEX_TRACE_LEVEL: "summary" });
+  assert.deepEqual(c.components, ["gateway", "gw-jfr", "node", "postgres", "tx-jfr"]);
+  assert.equal(c.flags.TRIPLEX_TRACE_NATIVE_LOGS, "0");
+});
