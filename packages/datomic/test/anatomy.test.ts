@@ -192,3 +192,38 @@ describe("commit anatomy observations", () => {
     ]);
   });
 });
+
+describe("native Datomic counter binding", () => {
+  it("requires exact database, t, source, slot, time and a single result", async () => {
+    const { bindNativeTransaction } = await import("../../../lab/trace/native-transactions.mjs");
+    const gateway = {
+      run: "r",
+      source: "h",
+      slot: "s",
+      traceId: "trace",
+      root: "gw",
+      start: 0,
+      end: 20,
+      attributes: { databaseHash: "a".repeat(64), datomicT: "1000" },
+      spans: [{ id: "peer", name: "peer.transact-await" }],
+    };
+    const event = {
+      ...gateway,
+      process: "tx",
+      nativeType: "triplex.NativeTransaction",
+      start: 18,
+      end: 18,
+      databaseHash: "a".repeat(64),
+      datomicT: "1000",
+      nativeStats: { msec: 10, "apply-msec": 6 },
+    };
+    expect(bindNativeTransaction(gateway, [event])?.parent).toBe("peer");
+    expect(bindNativeTransaction(gateway, [{ ...event, databaseHash: "b".repeat(64) }])).toBeNull();
+    expect(bindNativeTransaction(gateway, [{ ...event, source: "old" }])).toBeNull();
+    expect(() => bindNativeTransaction(gateway, [event, event])).toThrow("Duplicate");
+    expect(() => bindNativeTransaction(gateway, [{ ...event, start: 30 }])).toThrow("stale");
+    expect(() =>
+      bindNativeTransaction(gateway, [{ ...event, nativeStats: { msec: 1, "apply-msec": 6 } }]),
+    ).toThrow("Invalid");
+  });
+});

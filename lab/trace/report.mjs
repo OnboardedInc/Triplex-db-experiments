@@ -1,5 +1,6 @@
 // @ts-nocheck -- JSON wire records are validated on ingestion; checkjs still checks all bindings.
 import fs from "node:fs";
+import { bindNativeTransaction } from "./native-transactions.mjs";
 import { writeAnatomy } from "./anatomy.mjs";
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -551,7 +552,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
         } else if (r.type === "event") {
           if (validSpan(r)) {
             events.push(r);
-            if (r.name.startsWith("jdk.") || r.nativeType === "triplex.TransactionFunction")
+            if (r.name.startsWith("jdk.") || r.nativeType?.startsWith("triplex."))
               jfrCounts.set(r.process, (jfrCounts.get(r.process) ?? 0) + 1);
           }
         } else if (r.type === "jfr-complete") completions.push(r);
@@ -709,6 +710,24 @@ export async function buildReport(runDir, { copyTo } = {}) {
   });
   if (missingReceivers)
     errors.push(`${missingReceivers} worker RPC spans have no bound receiver trace`);
+  const nativeTransactions = events.filter((e) => e.nativeType === "triplex.NativeTransaction");
+  for (const row of evaluated) {
+    row.nativeTransactions = [];
+    for (const gateway of linked(row.root).filter((r) => r.name.startsWith("gateway "))) {
+      try {
+        const native = bindNativeTransaction(gateway, nativeTransactions);
+        if (
+          native &&
+          !row.nativeTransactions.some(
+            (n) => n.databaseHash === native.databaseHash && n.datomicT === native.datomicT,
+          )
+        )
+          row.nativeTransactions.push(native);
+      } catch (error) {
+        errors.push(String(error));
+      }
+    }
+  }
   const commits = evaluated.filter((r) => r.root.kind === "commit");
   const denom = commits;
   const explained = denom.filter((r) => r.explained >= 0.95 && !r.allTruncated).length;
@@ -774,6 +793,17 @@ export async function buildReport(runDir, { copyTo } = {}) {
   else errors.push("Writer file absent: cannot establish complete commit denominator");
   if (missingCommits)
     errors.push(`${missingCommits}/${writes} writer observations lack a matching trace`);
+  if (manifest?.requireTransactorStats) {
+    const missing = commits.filter(
+      (r) =>
+        r.writer?.stream === "background" &&
+        !r.writer.resend &&
+        r.writer.outcome === "committed" &&
+        !r.nativeTransactions.length,
+    );
+    if (missing.length)
+      errors.push(`${missing.length} committed commands lack exact database/t native stats`);
+  }
   if (manifest?.requireTransactorFunction) {
     const unobserved = commits.filter(
       (r) =>
@@ -990,6 +1020,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
       jfr: completions,
       resources: resources.length,
       transactorFunctionEvents: nativeFunctions.length,
+      nativeTransactionStats: nativeTransactions.length,
     },
     hostByPhase,
     groups: Object.fromEntries(
@@ -1213,7 +1244,7 @@ function html(finding, data, tag) {
 <label>Phase <select id="phase"><option value="">All</option></select></label> <label>Kind <select id="kind"><option value="">All</option><option>commit</option><option>read</option></select></label> <label><input type="checkbox" id="events" checked>Overlapping pauses and work</label><div id="view"></div><pre id="tip">Hover over a span to inspect it.</pre><script type="application/json" id="data">${data}</script><script>
 const data=JSON.parse(document.getElementById('data').textContent),phase=document.getElementById('phase'),kind=document.getElementById('kind'),show=document.getElementById('events'),view=document.getElementById('view'),tip=document.getElementById('tip');
 for(const name of [...new Set(data.selected.map(r=>r.priority+' / '+r.name))]) {const o=document.createElement('option');o.textContent=o.value=name;phase.append(o);}
-function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms'+(r.replicaPublication?' · replica publication '+r.replicaPublication.msAfterRootEnd.toFixed(3)+' ms relative to end':'');c.append(desc);const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,replicaPublication:r.replicaPublication,resources:data.resources.filter(x=>x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
+function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms'+(r.replicaPublication?' · replica publication '+r.replicaPublication.msAfterRootEnd.toFixed(3)+' ms relative to end':'');c.append(desc);const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,nativeTransactions:r.nativeTransactions,replicaPublication:r.replicaPublication,resources:data.resources.filter(x=>x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
 phase.onchange=kind.onchange=show.onchange=render;kind.value="commit";const preferred=[...phase.options].find(o=>o.value==="P2 / L256");if(preferred)phase.value=preferred.value;render();</script>`;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

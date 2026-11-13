@@ -299,7 +299,17 @@ export async function writeAnatomy(
           ].map((k) => [k, Number(last.wal[k]) - Number(first.wal[k])]),
         )
       : null;
+  const native = roots
+    .filter((r) => r.nativeTransactions?.length === 1)
+    .map((r) => r.nativeTransactions[0].nativeStats);
   const result = {
+    nativeTransactions: {
+      n: native.length,
+      transactorMs: stats(native.map((s) => s.msec)),
+      applyMs: stats(native.map((s) => s["apply-msec"])),
+      txWithMs: stats(native.map((s) => s["io-stats"]?.["api-ms"]).filter(Number.isFinite)),
+      queueAndStorageRemainderMs: stats(native.map((s) => s.msec - s["apply-msec"])),
+    },
     schema: "triplex.commit-anatomy.v1",
     tag: manifest.tag,
     source: manifest.source,
@@ -386,6 +396,8 @@ export async function writeAnatomy(
     ...Object.entries(commitSteps).map(([k, s]) => `| ${k} | ${s.n} | ${n(s.p50)} | ${n(s.p99)} |`),
     "",
     `Authored transactor function: ${result.transactorFunction.n}/${roots.length} commits observed, p50/p99 ${n(result.transactorFunction.p50)}/${n(result.transactorFunction.p99)} ms. Remaining peer wait excluding that function p50/p99 ${n(result.remainingPeerWait.p50)}/${n(result.remainingPeerWait.p99)} ms. Function wall includes any internal wait/GC; it is not an exclusive CPU claim.`,
+    "",
+    `Native database/t counters: ${native.length} primary commits; transactor p50/p99 ${n(result.nativeTransactions.transactorMs.p50)}/${n(result.nativeTransactions.transactorMs.p99)} ms; apply ${n(result.nativeTransactions.applyMs.p50)}/${n(result.nativeTransactions.applyMs.p99)} ms; queue/storage/other remainder ${n(result.nativeTransactions.queueAndStorageRemainderMs.p50)}/${n(result.nativeTransactions.queueAndStorageRemainderMs.p99)} ms. These are native counters, not reconstructed timeline boundaries.`,
     "",
     `Postgres: ${clean.length} isolated windows, ${result.sql.ambiguousWindows} ambiguous. Statement count p50/p99 ${n(result.sql.statementsPerWindow.p50)}/${n(result.sql.statementsPerWindow.p99)}; server statement ms p50/p99 ${n(result.sql.statementMsPerWindow.p50)}/${n(result.sql.statementMsPerWindow.p99)}. WAL sample delta: ${JSON.stringify(walDelta)}. WAL counters are aggregate over the stated sample window, including background storage work; they are never presented as exact per-Datomic-transaction counts.`,
     "",

@@ -70,6 +70,12 @@
           (is (some? event)) (Thread/sleep 2) (.commit event)
           (is (nil? (jfr/start-transaction! (assoc context :source "foreign"))))
           (is (nil? (jfr/start-transaction! (assoc context :parent "0000000000000000"))))))
+      (jfr/install-native!)
+      (doseq [r (.getRecordings (jdk.jfr.FlightRecorder/getFlightRecorder))] (.enable r "triplex.NativeTransaction"))
+      (let [thread (Thread/currentThread) old (.getName thread)]
+        (try (.setName thread "writer-fixture-00000000-0000-0000-0000-000000000001")
+             (.info (org.slf4j.LoggerFactory/getLogger "datomic.transaction") "{:event :tx/process :t 1000 :msec 10.0 :apply-msec 6.0 :io-stats {:api-ms 5.5}}")
+             (finally (.setName thread old))))
       (System/gc) (Thread/sleep 50)
       (jfr/finish! "test" identity)
       (is (> (.length (java.io.File. file)) 68))
@@ -83,5 +89,9 @@
             event (first (filter #(= "triplex.TransactionFunction" (get % "nativeType")) events))]
         (is (= "12345678901234567890123456789012" (get event "traceId")))
         (is (= "1234567890123456" (get event "parent")))
+        (let [native (first (filter #(= "triplex.NativeTransaction" (get % "nativeType")) events))]
+          (is (= "1000" (get native "datomicT")))
+          (is (= (triplex.gateway.schema/sha256 "fixture") (get native "databaseHash")))
+          (is (= 10.0 (get-in native ["nativeStats" "msec"]))))
         (is (<= (get event "start") (get event "end")))))))
 (defn -main [& _] (let [r (run-tests 'triplex.gateway.trace-test)] (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1))))

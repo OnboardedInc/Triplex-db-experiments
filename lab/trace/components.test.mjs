@@ -33,3 +33,22 @@ test("default summary keeps Node/gateway spans and excludes diagnostic collector
   assert.deepEqual(c.requiredJfr, []);
   assert.equal(c.requirePostgres, false);
 });
+
+test("native binary capture is explicit and cannot silently replace native file logging", () => {
+  assert.equal(
+    configuration({ TRIPLEX_TRACE_LEVEL: "summary", DX_TX_NATIVE_JFR: "1" }).requireTransactorStats,
+    false,
+  );
+  assert.equal(
+    configuration({
+      TRIPLEX_TRACE_LEVEL: "full",
+      TRIPLEX_TRACE_COMPONENTS: "node,gateway,tx-jfr",
+      DX_TX_NATIVE_JFR: "1",
+    }).requireTransactorStats,
+    true,
+  );
+  assert.throws(
+    () => configuration({ TRIPLEX_TRACE_LEVEL: "full", DX_TX_NATIVE_JFR: "1" }),
+    /file logging off/,
+  );
+});

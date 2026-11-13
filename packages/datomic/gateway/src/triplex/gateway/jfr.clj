@@ -1,5 +1,5 @@
 (ns triplex.gateway.jfr
-  (:require [clojure.data.json :as json] [clojure.string :as str] [clojure.java.io :as io])
+  (:require [clojure.data.json :as json] [clojure.string :as str] [clojure.java.io :as io] [clojure.edn :as edn])
   (:import [jdk.jfr FlightRecorder Recording EventFactory AnnotationElement ValueDescriptor Name]
            [jdk.jfr.consumer RecordingFile RecordedEvent]
            [java.nio.file Paths]
@@ -32,6 +32,32 @@
       (when (.isEnabled event)
         (.set event 0 (:traceId context)) (.set event 1 (:parent context)) (.set event 2 id)
         (.begin event) event))))
+(def native-factory (delay (EventFactory/create [(AnnotationElement. Name "triplex.NativeTransaction")]
+                            [(ValueDescriptor. String "message")])))
+;; Source: https://docs.datomic.com/reference/io-stats.html (native process/apply scopes).
+;; [DX-T1-4] Why: capture the native t/process/apply/io counters without a FileAppender write on the serial path.
+;; Rejected: DEBUG logging every native message or inventing storage time from a peer future.
+(defn install-native! []
+  @native-factory
+  (let [context (org.slf4j.LoggerFactory/getILoggerFactory)
+        logger (.getLogger context "datomic.transaction")
+        appender (proxy [ch.qos.logback.core.AppenderBase] []
+                   (append [event]
+                     (try (let [message (.getFormattedMessage event)]
+                            (when (and (.startsWith ^String message "{") (.contains ^String message ":event :tx/process"))
+                              (let [record (.newEvent ^EventFactory @native-factory)]
+                                (.begin record) (.set record 0 message) (.commit record))))
+                          (catch Throwable _ nil))))]
+    (.setContext appender context) (.setName appender "triplex-native-jfr") (.start appender)
+    (.detachAndStopAllAppenders logger) (.setAdditive logger false)
+    (.setLevel logger ch.qos.logback.classic.Level/INFO) (.addAppender logger appender)))
+(defn native-stats [^RecordedEvent event detail]
+  (let [data (edn/read-string (.getString event "message"))
+        name (second (re-matches #"writer-(.+)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" (or (:threadName detail) "")))
+        database-hash (when name (let [hash (.digest (java.security.MessageDigest/getInstance "SHA-256") (.getBytes ^String name "UTF-8"))]
+                                  (format "%064x" (java.math.BigInteger. 1 hash))))]
+    {:nativeType "triplex.NativeTransaction" :databaseHash database-hash :datomicT (str (:t data))
+     :nativeStats (select-keys data [:msec :apply-msec :io-stats :pf-stats :tx-stats :datom-count])}))
 (defn clock-sample! []
   (when (realized? clock-factory)
     (let [event (.newEvent ^EventFactory @clock-factory) before (System/nanoTime)]
@@ -74,10 +100,10 @@
         (if-not (.hasMoreEvents r) {:events count :clockSamples (clojure.core/count points) :clockMaxUncertaintyMs uncertainty}
           (let [^RecordedEvent event (.readEvent r) name (.getName (.getEventType event))]
             (if (= name "triplex.ClockSync") (recur count)
-              (let [detail (details event) transaction (= name "triplex.TransactionFunction")
+              (let [detail (details event) transaction (= name "triplex.TransactionFunction") native (= name "triplex.NativeTransaction")
                     layer (cond transaction "transactor" (= name "jdk.GCPhasePause") (if (= process "tx") "transactor-gc" "gateway-gc")
                                 (str/includes? name "Safepoint") "jvm-safepoint" :else "jvm-event")]
-                (.write w (str (json/write-str (merge identity detail (when transaction {:nativeType name :traceId (.getString event "traceId") :parent (.getString event "parentSpanId") :id (.getString event "spanId")}) {:type "event" :name (if transaction "transactor.triplex-function" name) :layer layer :process process
+                (.write w (str (json/write-str (merge identity detail (when native (native-stats event detail)) (when transaction {:nativeType name :traceId (.getString event "traceId") :parent (.getString event "parentSpanId") :id (.getString event "spanId")}) {:type "event" :name (cond transaction "transactor.triplex-function" native "datomic.tx/process" :else name) :layer layer :process process
                              :clock (assoc (:clock identity) :uncertaintyMs (+ uncertainty 0.001))
                              :start (+ offset (monotonic-at points (millis (.getStartTime event))))
                              :end (+ offset (monotonic-at points (millis (.getEndTime event))))})) "\n"))
@@ -116,5 +142,8 @@
     (when (= "1" (System/getenv "TRIPLEX_TRACE_JFR_PROFILE"))
       (.withPeriod (.withStackTrace (.enable r "jdk.ExecutionSample")) (java.time.Duration/ofMillis 1))
       (.withPeriod (.withStackTrace (.enable r "jdk.NativeMethodSample")) (java.time.Duration/ofMillis 10))))
+  (when (and (= process "tx") (= "1" (System/getenv "TRIPLEX_TRACE_TX_NATIVE_JFR")))
+    (install-native!)
+    (doseq [^Recording r (.getRecordings (FlightRecorder/getFlightRecorder))] (.enable r "triplex.NativeTransaction")))
   (clock-sample!)
   (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable #(finish! process identity) "triplex-jfr-fallback")))

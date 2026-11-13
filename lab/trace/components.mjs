@@ -24,6 +24,8 @@ export function configuration(env = process.env) {
   if (level === "off" && requested.length) throw Error("Off cannot enable a recorder");
   const components = [...requested].sort();
   const has = (name) => components.includes(name);
+  if (env.DX_TX_NATIVE_JFR === "1" && has("native-logs"))
+    throw Error("Binary native TX capture requires native file logging off");
   const system = !!env.TRIPLEX_TRACE_SESSION || level !== "off";
   return {
     level,
@@ -34,6 +36,7 @@ export function configuration(env = process.env) {
     requireSystem: system,
     requirePostgres: has("postgres"),
     requireTransactorFunction: has("tx-jfr") && has("gateway"),
+    requireTransactorStats: has("tx-jfr") && has("gateway") && env.DX_TX_NATIVE_JFR === "1",
     session: env.TRIPLEX_TRACE_SESSION ?? null,
     queueExpected: has("node"),
     requireClockBinding: has("node") && has("gateway"),
