@@ -1,6 +1,6 @@
 # DX-T1 checks
 
-Final implementation: `f6893eca95524bb4ecd715f442e8bcb23b8169c4`; full pair and four-arm cost producer: `0c1fa43b93562e3774b09e18c9e351decc0741da`.
+Implementation tested by the package suite: `f6893eca95524bb4ecd715f442e8bcb23b8169c4`; final full pair and four-arm cost producer: `d7aeb0699071e22fc8499fb97ea91eaf58ce195d` (same implementation, documentation commit).
 
 The normal Datomic package test command passed 187 tests, skipped 51 external-service integration tests. Nine tracing tests cover HTTP and real-worker propagation, nesting, foreign attempts, summary retention, deterministic read sampling, exact phase top-20, failures and recorded-fixture reports. The Datomic build/declaration and no-emit type check passed. Five new JavaScript roots passed the lab binding checker; touched recorder/report modules passed lint.
 
@@ -26,3 +26,17 @@ Receipts are under `~/Claude/Projects/triplex-db-2/evidence/DX-T1/checks/`. Orig
 | `verify-final.json` | 1957 | `6e61a1dd24b7359bea33e5b86093499b5735e75d11bc9467818198752505b73e` |
 | `pin-audit-final.json` | 57 | `30caddebb72baa45a27e3a22eeba55e440ec002027adb6bcbc82392e627c694f` |
 | `store-test.json` | 94 | `747442cf641f47266f9227165daeb4ee5f71dbfba89bd0e135b01d9aab8384e7` |
+
+Final `q8-c` and `cost-b` use that exact final producer, after the summary-retention change. Both pair arms reached DONE
+and automatic collection completeness; ladder oracle PASS (53 sampled reads / 2,561 entities), 3,400,353 exact model reads.
+The final viewer receipt `tx2-dxt1-q8-c-ladder/viewer-qa.json` binds HTML SHA256 and source, reports 38 selected commit
+cards (including extra small-commit selections), 20 read cards, filters/hover/overlays working, and zero network/JS errors.
+`verify-final-v2.json` rereads all fourteen fresh runs and their empty owned inventories; no measurement lock remains.
+The final pair is diagnostic: reader saturation and host activity prevent clean performance acceptance. Cost-b misses p50 aim.
+
+| final receipt (under DX-T1) | bytes | SHA256 |
+| --- | ---: | --- |
+| `checks/verify-final-v2.mjs` | 1992 | `e187a132818ee6b52453b9f1b06e2a0d20c3aec9b6b97ac4516bde034fedc3a3` |
+| `checks/verify-final-v2.json` | 3414 | `90e7d1cc4b34a13a23c8da905c9c09b352ad4a63f3c8e1409263fb90b67dd2de` |
+| `tx2-dxt1-q8-c-ladder/viewer-qa.json` | 327 | `7382fae085d6a72e56938a2475f8adcde23b32a5a14b0a406899e351dcd2ec0a` |
+| `tx2-dxt1-cost-b-COST.json` | 2202 | `507e0071002f9b1851bd2bcddbdcdc5a703b952e0988a27d5370509b38ed9935` |

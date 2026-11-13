@@ -86,3 +86,18 @@ and requires empty container/volume/network inventories plus absence of the meas
 `checks/verify-final.json` in the durable DX-T1 evidence. This certifies retained byte/inventory observations only.
 Freshness is this post-run reread; binding is the exact attempt tag/source, not the later documentation commit.
 The independent semantic oracle is unchanged; this builder did not independently promote a lane or acceptance contract.
+
+## Final same-source pair and cost
+
+The final implementation was frozen again for `q8-c` and `cost-b`, both producer `d7aeb0699071e22fc8499fb97ea91eaf58ce195d`.
+Both 10k arms finalized automatically; ladder oracle PASS (53 reads / 2,561 entities), 3,400,353 exact model reads, no errors.
+Ladder 8,540/8,542 scope coverage (99.9766%); zero arm 8,534/8,534. Every writer row has a trace; no missing RPC receivers.
+Compressed raw pair: 160,993,232 bytes (153.535 MiB). Final offline viewer QA binds the exact HTML SHA256 and producer.
+`cost-b`: 3,420 primary commands per arm, off/full/full/off. Mean arm p50 14.686 -> 19.147 ms (+4.460, 30.370%);
+p99 119.278 -> 114.261 (-5.017, -4.206%). p99 arm spread forbids an improvement claim. The p50 cost aim is missed.
+All fourteen fresh-run report/raw manifests now pass the versioned `checks/verify-final-v2.mjs` byte/source/tag/inventory
+checks (`verify-final-v2.json`); the prior validator and receipt remain unchanged. All owned resources and the lock are gone.
+No code changed after the final measured producer; only documentation and evidence indexes were added.
+The q8-c reader client saturated; host quiet was true before and false after, with one busy sample among 45 in L256.
+No production latency acceptance or independent promotion is claimed. Original 4.5s stalls were not reproduced.
+Current queue spans locate the delay before the request but do not partition scheduler, per-subject order and admission.

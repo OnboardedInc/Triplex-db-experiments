@@ -4,44 +4,47 @@ Same source, 10,000 subjects, zero readers; frozen first 200 seconds including t
 
 | arm | n | p50 ms | p99 ms | transact p50 ms | transact p99 ms |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| tx2-dxt1-cost-a-1-off | 3420 | 14.551025390625 | 77.633544921875 | 12.733154296875 | 54.36328125 |
-| tx2-dxt1-cost-a-2-full | 3420 | 17.8291015625 | 84.65478515625 | 15.735107421875 | 64.410888671875 |
-| tx2-dxt1-cost-a-3-full | 3420 | 18.873779296875 | 122.565673828125 | 16.654296875 | 98.31591796875 |
-| tx2-dxt1-cost-a-4-off | 3420 | 15.169189453125 | 92.68994140625 | 13.199462890625 | 62.490234375 |
+| tx2-dxt1-cost-b-1-off | 3420 | 13.931884765625 | 83.54296875 | 12.145263671875 | 58.14404296875 |
+| tx2-dxt1-cost-b-2-full | 3420 | 19.814453125 | 131.68212890625 | 17.32861328125 | 96.483642578125 |
+| tx2-dxt1-cost-b-3-full | 3420 | 18.47900390625 | 96.8408203125 | 16.322021484375 | 74.721435546875 |
+| tx2-dxt1-cost-b-4-off | 3420 | 15.44091796875 | 155.013916015625 | 13.43115234375 | 118.36865234375 |
 
 Delta uses the mean of each arm quantile (not a pooled percentile).
 
 ```json
 {
   "p50Ms": {
-    "off": 14.860107421875,
-    "full": 18.3514404296875,
-    "deltaMs": 3.4913330078125,
-    "percent": 23.494668703895382
+    "off": 14.6864013671875,
+    "full": 19.146728515625,
+    "deltaMs": 4.4603271484375,
+    "percent": 30.370456566731228
   },
   "p99Ms": {
-    "off": 85.1617431640625,
-    "full": 103.6102294921875,
-    "deltaMs": 18.448486328125,
-    "percent": 21.662880118111637
+    "off": 119.2784423828125,
+    "full": 114.261474609375,
+    "deltaMs": -5.0169677734375,
+    "percent": -4.206097659572072
   },
   "transactP50Ms": {
-    "off": 12.96630859375,
-    "full": 16.1947021484375,
-    "deltaMs": 3.2283935546875,
-    "percent": 24.898324232724534
+    "off": 12.7882080078125,
+    "full": 16.8253173828125,
+    "deltaMs": 4.037109375,
+    "percent": 31.568999914090167
   },
   "transactP99Ms": {
-    "off": 58.4267578125,
-    "full": 81.3634033203125,
-    "deltaMs": 22.9366455078125,
-    "percent": 39.25709104280533
+    "off": 88.25634765625,
+    "full": 85.6025390625,
+    "deltaMs": -2.65380859375,
+    "percent": -3.0069322651854247
   }
 }
 ```
 
-Producer: `0c1fa43b93562e3774b09e18c9e351decc0741da`; frozen trace `aa8a7636ff027ab3`.
+Producer: `d7aeb0699071e22fc8499fb97ea91eaf58ce195d`; frozen trace `aa8a7636ff027ab3`.
 
-Canonical measurements and input/source receipts are in `~/Claude/Projects/triplex-db-2/evidence/DX-T1/tx2-dxt1-cost-a-*`.
-The four arm report indexes in `runs/` carry their report/viewer checksums. This is an observed difference, not an isolated attribution
-to one recorder or an acceptance PASS. The later summary-retention fix has no four-arm cost measurement.
+Canonical measurements/input/source receipts: `~/Claude/Projects/triplex-db-2/evidence/DX-T1/tx2-dxt1-cost-b-*`.
+Each arm has its report/viewer checksum index under `runs/`. All 3,420 primary commands completed in every arm.
+The final p50 increase misses the cost aim. The p99 difference has substantial arm variation and does not prove an improvement.
+4.037 ms of the observed 4.460 ms p50 increase sits inside transact; no ablation isolates Node instrumentation,
+gateway serialization, JFR or PostgreSQL logging. Summary retains complete commits and reduces read-log volume;
+it passed the 1k smoke but has no 10k cost measurement. Earlier source results remain in [COST-a.md](COST-a.md).
