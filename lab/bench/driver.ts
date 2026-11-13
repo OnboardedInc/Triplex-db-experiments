@@ -1,5 +1,5 @@
-import { cpuProfileClock } from "./lib/cpu-profile.ts";
 #!/usr/bin/env node
+import { cpuProfileClock } from "./lib/cpu-profile.ts";
 import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, currentTraceStep, traceResource, type Trace } from "./lib/tracing.ts";
 import { readObservation, type ReadObservation } from "./lib/read-observation.ts";
 import type { Basis } from "./lib/composition.ts";
