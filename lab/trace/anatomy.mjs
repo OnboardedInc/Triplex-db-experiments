@@ -52,6 +52,7 @@ export function exchangeAnatomy(owner, gateway) {
   return {
     traceId: owner.traceId,
     httpId: http.id,
+    gatewayRoot: gateway.root,
     peerCalls: peers.length,
     start: encode.start,
     end: parse.end,
@@ -302,9 +303,32 @@ export async function writeAnatomy(
   const native = roots
     .filter((r) => r.nativeTransactions?.length === 1)
     .map((r) => r.nativeTransactions[0].nativeStats);
+  const txKeys = [...new Set(native.flatMap((s) => Object.keys(s["tx-stats"] ?? {})))];
+  const ioKeys = [...new Set(native.flatMap((s) => Object.keys(s["io-stats"]?.reads ?? {})))];
+  const nativeResidual = [];
+  for (const root of roots)
+    for (const metric of root.nativeTransactions ?? []) {
+      const e = exchanges.find(
+        (e) => e.traceId === root.traceId && e.gatewayRoot === metric.gatewayRoot,
+      );
+      if (e) nativeResidual.push(e.peerEnd - e.peerStart - metric.nativeStats.msec);
+    }
   const result = {
     nativeTransactions: {
       n: native.length,
+      applySteps: Object.fromEntries(
+        txKeys.map((k) => [
+          k,
+          stats(native.map((s) => s["tx-stats"]?.[k]).filter(Number.isFinite)),
+        ]),
+      ),
+      ioReads: Object.fromEntries(
+        ioKeys.map((k) => [
+          k,
+          stats(native.map((s) => s["io-stats"]?.reads?.[k]).filter(Number.isFinite)),
+        ]),
+      ),
+      peerMinusNativeMs: stats(nativeResidual),
       transactorMs: stats(native.map((s) => s.msec)),
       applyMs: stats(native.map((s) => s["apply-msec"])),
       txWithMs: stats(native.map((s) => s["io-stats"]?.["api-ms"]).filter(Number.isFinite)),
@@ -328,6 +352,9 @@ export async function writeAnatomy(
     commitWall: stats(roots.map((r) => r.wallMs)),
     clientOutsideHttp: stats(perCommit.map((e) => e.outsideHttpMs)),
     typescript: stats(roots.map((r) => r.typescriptMs)),
+    typescriptOwn: stats(roots.map((r) => r.layers.typescript)),
+    synchronousCpu: stats(roots.map((r) => r.cpuRuntimeMs).filter(Number.isFinite)),
+    synchronousRunqueue: stats(roots.map((r) => r.cpuRunqueueMs).filter(Number.isFinite)),
     typescriptShare: stats(roots.map((r) => r.typescriptMs / r.wallMs)),
     boundaryOverlaps: exchanges.filter((e) => e.boundaryOverlapMs > 0).length,
     sql: {
@@ -389,7 +416,9 @@ export async function writeAnatomy(
     "",
     "Cross-boundary network values are signed residuals including Jetty dispatch and Node callbacks. Negative values expose concurrent write/header milestones and are retained. Quantiles do not add. Parse ends inside the resolve callback; later continuation work is outside this HTTP partition. The table sums sequential attempts per primary commit. Concurrent exchanges remain explicitly unpartitioned; raw per-exchange quantiles are retained in JSON.",
     "",
-    `Whole commit p50/p99 ${n(result.commitWall.p50)}/${n(result.commitWall.p99)} ms; outside the HTTP partition ${n(result.clientOutsideHttp.p50)}/${n(result.clientOutsideHttp.p99)} ms. TypeScript scope wall p50/p99 ${n(result.typescript.p50)}/${n(result.typescript.p99)} ms, share ${n(result.typescriptShare.p50)}/${n(result.typescriptShare.p99)}.`,
+    `Whole commit p50/p99 ${n(result.commitWall.p50)}/${n(result.commitWall.p99)} ms; outside the HTTP partition ${n(result.clientOutsideHttp.p50)}/${n(result.clientOutsideHttp.p99)} ms. TypeScript total wall including offer queue p50/p99 ${n(result.typescript.p50)}/${n(result.typescript.p99)} ms, share ${n(result.typescriptShare.p50)}/${n(result.typescriptShare.p99)}.`,
+    "",
+    `TypeScript own scopes p50/p99 ${n(result.typescriptOwn.p50)}/${n(result.typescriptOwn.p99)} ms. Their observed synchronous CPU p50/p99 ${n(result.synchronousCpu.p50)}/${n(result.synchronousCpu.p99)} ms; run-queue wait ${n(result.synchronousRunqueue.p50)}/${n(result.synchronousRunqueue.p99)} ms. Synchronous counters exclude async scopes and can be quantized.`,
     "",
     "| Step | n | p50 ms | p99 ms |",
     "| --- | ---: | ---: | ---: |",
