@@ -38,6 +38,14 @@
           (is (some #(= "tiny-parent" (:name %)) (:spans r)))
           (is (every? #(contains? ids (:parent %)) (:spans r))))))))
 
+;; [DX-T1-2] Why: a faster formatter must preserve 64-bit wire identity across the sign boundary and skip the invalid all-zero ID.
+;; Rejected: timing assertions (host-dependent) or checking only an ordinary positive counter.
+(deftest fixed-width-nonzero-span-ids
+  (with-redefs [trace/ids (java.util.concurrent.atomic.AtomicLong. -2)]
+    (is (= ["ffffffffffffffff" "0000000000000001" "0000000000000002"] (repeatedly 3 trace/id))))
+  (with-redefs [trace/ids (java.util.concurrent.atomic.AtomicLong. (dec Long/MAX_VALUE))]
+    (is (= ["7fffffffffffffff" "8000000000000000"] (repeatedly 2 trace/id)))))
+
 (deftest exports-real-jfr-before-shutdown
   (when (= "1" (System/getenv "TRIPLEX_TRACE_TEST_JFR"))
     (let [identity {:run "fixture" :slot "fixture" :source "fixture" :process "test" :clock trace/trace-clock}

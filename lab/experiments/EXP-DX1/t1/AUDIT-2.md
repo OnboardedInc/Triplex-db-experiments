@@ -76,3 +76,13 @@ scalars instead of retaining the row and Option wrappers. Both modes match an in
 reference at 48 record/valid-time cuts, including cycles, expiry, retraction and metadata. No oracle or bar was changed.
 Package suite: 194 passed, 51 skipped; compact-model reference test passed; native Node strip-types import passed.
 Bench typecheck still has only the previously reported unrelated files, with no changed-file diagnostic.
+
+`p2-model-a` completed both full model pairs and both off bookends on f9f51d85. Both oracles and exact model reads passed;
+P2 and several P1 performance bars missed. Compact mode reduced retained heap but did not improve the principal latency
+results and remains opt-in, like CPU isolation. MODEL-A.md preserves all gate values, swap and controls.
+`p2-cost-c` on the corrected source measured +0.761 ms / 4.68% mean p50 overhead (off 16.238 ms; default swap
+16.050/15.964 GiB); it misses both cost aims. The next isolated change replaces gateway per-span Formatter allocation
+with unsigned hexadecimal padding, retaining every span. Wire-ID tests cover overflow/sign crossing and zero rejection.
+Completed auxiliary captures were losslessly packed under checks/aux-compression-20261113.jsonl: original SHA/bytes,
+decoded equality, source/tag, fsynced archive and journal precede unlink. Raw trace trees and viewer paths are unchanged.
+111 auxiliary files recovered 866,455,138 bytes; gzip -dk restores the exact original paths for replay.

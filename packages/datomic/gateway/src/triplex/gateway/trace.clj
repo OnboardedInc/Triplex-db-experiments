@@ -17,7 +17,12 @@
 (def origin-ms (System/currentTimeMillis))
 (def origin-ns (System/nanoTime))
 (defn clock [] (+ (double origin-ms) (/ (- (System/nanoTime) origin-ns) 1000000.0)))
-(defn id [] (format "%016x" (.incrementAndGet ids)))
+;; [DX-T1-2] Why: each span needs only unsigned hexadecimal, not Formatter's locale/parser allocations on the request thread.
+;; Rejected: sampling commit spans or shortening IDs (loses coverage or weakens cross-process identity).
+(defn id []
+  (let [n (loop [] (let [v (.incrementAndGet ids)] (if (zero? v) (recur) v)))
+        s (Long/toUnsignedString n 16)]
+    (str (subs "0000000000000000" (count s)) s)))
 ;; [DX-T1-2] Why: Linux nanoTime and Node hrtime share this boot clock; wall-clock startup anchors can differ after VM clock steps.
 ;; Rejected: clipping a gateway outside its client's wall interval and labelling the lost gateway duration network time.
 (def trace-clock (try {:domain "linux-monotonic"
