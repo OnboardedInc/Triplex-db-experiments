@@ -26,6 +26,12 @@ PY_ORACLE
 fi
 [[ -f $DX_ORACLE_ROOT/lab/oracles/replay/cli.py ]] || { echo 'Missing frozen oracle executable source' >&2; exit 2; }
 export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-summary}
+# [DX-T1-6] Why: full diagnostics retain quiet logging and native binary counters with the single level switch.
+# Rejected: requiring synchronous native file logging or a second collector variable for a normal full run.
+if [[ $TRIPLEX_TRACE_LEVEL == full && -z ${TRIPLEX_TRACE_COMPONENTS+x} ]]; then
+  export TRIPLEX_TRACE_COMPONENTS=node,gateway,tx-jfr,gw-jfr,postgres
+  export DX_TX_NATIVE_JFR=${DX_TX_NATIVE_JFR:-1}
+fi
 # [DX-T1-5] Why: retain the measured part-4 placement/history configuration for every new T1 arm.
 # Rejected: silently reverting to shared writer/engine cores between controlled comparisons.
 export DX_CPUS_TX=${DX_CPUS_TX:-0} DX_CPUS_PG=${DX_CPUS_PG:-1} DX_CPUS_GW_WRITE=${DX_CPUS_GW_WRITE:-2} DX_CPUS_GW_READ=${DX_CPUS_GW_READ:-4}

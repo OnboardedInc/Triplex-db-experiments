@@ -37,3 +37,19 @@ export function bindNativeTransaction(gateway, candidates) {
     parent: gateway.spans.find((s) => s.name.startsWith("peer.transact-await"))?.id,
   };
 }
+
+// [DX-T1-6] Why: retain both observed residuals around the native process counter, with their exact request binding.
+// Rejected: calling these pure network/CPU time or clamping clock/log-boundary overlap to zero.
+export function nativeWaitLegs(exchange, metric) {
+  if (!exchange || !metric || metric.nativeType !== "triplex.NativeTransaction" || metric.process !== "tx" ||
+      ["traceId", "run", "source", "slot", "gatewayRoot"].some(k => !exchange[k] || exchange[k] !== metric[k]) ||
+      ![exchange.peerStart, exchange.peerEnd, metric.start, metric.nativeStats?.msec].every(Number.isFinite) ||
+      exchange.peerEnd < exchange.peerStart || metric.nativeStats.msec < 0 ||
+      metric.start < exchange.peerStart - 1 || metric.start > exchange.peerEnd + 1)
+    throw Error("Unbound or stale native wait boundary");
+  return {
+    submitToNativeReadMs: metric.start - metric.nativeStats.msec - exchange.peerStart,
+    nativeProcessMs: metric.nativeStats.msec,
+    nativeToPeerMs: exchange.peerEnd - metric.start,
+  };
+}

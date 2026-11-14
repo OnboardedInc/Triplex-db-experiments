@@ -335,3 +335,14 @@ describe("native Datomic counter binding", () => {
     ).toThrow("Invalid");
   });
 });
+
+// [DX-T1-6] Why: direction labels require the exact native request and must preserve signed uncertainty. Rejected: nearest-time joins or clamped residuals.
+it("partitions native wait only across bound fresh boundaries", async () => {
+  const { nativeWaitLegs } = await import("../../../lab/trace/native-transactions.mjs");
+  const e = { traceId: "trace", run: "run", source: "head", slot: "slot", gatewayRoot: "gw", peerStart: 100, peerEnd: 140 };
+  const m = { ...e, nativeType: "triplex.NativeTransaction", process: "tx", start: 135, nativeStats: { msec: 20 } };
+  expect(nativeWaitLegs(e, m)).toEqual({ submitToNativeReadMs: 15, nativeProcessMs: 20, nativeToPeerMs: 5 });
+  expect(nativeWaitLegs(e, { ...m, nativeStats: { msec: 40 } }).submitToNativeReadMs).toBe(-5);
+  expect(() => nativeWaitLegs(e, { ...m, source: "old" })).toThrow();
+  expect(() => nativeWaitLegs(e, { ...m, start: 150 })).toThrow();
+});

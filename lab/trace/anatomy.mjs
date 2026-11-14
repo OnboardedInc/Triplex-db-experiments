@@ -4,6 +4,7 @@ import path from "node:path";
 import { createGunzip } from "node:zlib";
 import { createInterface } from "node:readline";
 import { createHash } from "node:crypto";
+import { nativeWaitLegs } from "./native-transactions.mjs";
 const quantile = (xs, p) =>
   xs.length ? [...xs].sort((a, b) => a - b)[Math.max(0, Math.ceil(xs.length * p) - 1)] : null;
 const stats = (xs) => ({ n: xs.length, p50: quantile(xs, 0.5), p99: quantile(xs, 0.99) });
@@ -77,6 +78,7 @@ export function exchangeAnatomy(owner, gateway) {
     throw Error("Anatomy partition does not close");
   return {
     traceId: owner.traceId,
+    run: owner.run, source: owner.source, slot: owner.slot,
     httpId: http.id,
     gatewayRoot: gateway.root,
     peerCalls: peers.length,
@@ -469,17 +471,26 @@ export async function writeAnatomy(
     .map((r) => r.nativeTransactions[0].nativeStats);
   const txKeys = [...new Set(native.flatMap((s) => Object.keys(s["tx-stats"] ?? {})))];
   const ioKeys = [...new Set(native.flatMap((s) => Object.keys(s["io-stats"]?.reads ?? {})))];
-  const nativeResidual = [];
+  const nativeResidual = [], sendResidual = [], ackResidual = [];
   for (const root of roots)
     for (const metric of root.nativeTransactions ?? []) {
       const e = exchanges.find(
         (e) => e.traceId === root.traceId && e.gatewayRoot === metric.gatewayRoot,
       );
-      if (e) nativeResidual.push(e.peerEnd - e.peerStart - metric.nativeStats.msec);
+      if (e) {
+        nativeResidual.push(e.peerEnd - e.peerStart - metric.nativeStats.msec);
+        const legs = nativeWaitLegs(e, metric);
+        sendResidual.push(legs.submitToNativeReadMs); ackResidual.push(legs.nativeToPeerMs);
+      }
     }
   const result = {
     nativeTransactions: {
       n: native.length,
+      submitToNativeReadMs: stats(sendResidual),
+      nativeToPeerMs: stats(ackResidual),
+      signedBoundaryOverlaps: sendResidual.filter(v => v < 0).length + ackResidual.filter(v => v < 0).length,
+      coldSqlCommits: native.filter(s => (s["io-stats"]?.reads?.sql ?? 0) > 0).length,
+      readCounterCommits: native.filter(s => s["io-stats"]?.reads).length,
       applySteps: Object.fromEntries(
         txKeys.map((k) => [
           k,
@@ -607,6 +618,9 @@ export async function writeAnatomy(
     `Authored transactor function: ${result.transactorFunction.n}/${roots.length} commits observed, p50/p99 ${n(result.transactorFunction.p50)}/${n(result.transactorFunction.p99)} ms. Remaining peer wait excluding that function p50/p99 ${n(result.remainingPeerWait.p50)}/${n(result.remainingPeerWait.p99)} ms. Function wall includes any internal wait/GC; it is not an exclusive CPU claim.`,
     "",
     `Native database/t counters: ${native.length} primary commits; transactor p50/p99 ${n(result.nativeTransactions.transactorMs.p50)}/${n(result.nativeTransactions.transactorMs.p99)} ms; apply ${n(result.nativeTransactions.applyMs.p50)}/${n(result.nativeTransactions.applyMs.p99)} ms; queue/storage/other remainder ${n(result.nativeTransactions.queueAndStorageRemainderMs.p50)}/${n(result.nativeTransactions.queueAndStorageRemainderMs.p99)} ms. These are native counters, not reconstructed timeline boundaries.`,
+    "",
+    `Native boundary residuals p50/p99: submit to inferred native read ${n(result.nativeTransactions.submitToNativeReadMs.p50)}/${n(result.nativeTransactions.submitToNativeReadMs.p99)} ms; native completion event to peer future ${n(result.nativeTransactions.nativeToPeerMs.p50)}/${n(result.nativeTransactions.nativeToPeerMs.p99)} ms. Signed overlaps: ${result.nativeTransactions.signedBoundaryOverlaps}. Cold SQL reads during apply: ${result.nativeTransactions.coldSqlCommits}/${result.nativeTransactions.readCounterCommits} commits with read counters.`,
+    "These residuals include encoding, messaging, queues, native event/log formatting and peer application; they are not exclusive network or CPU time. Native process start is inferred from its reported duration and completion event, so its logging boundary/rounding uncertainty remains. Individual messaging-thread run-queue waits and exact index-adoption boundaries are still not measured.",
     "",
     `Postgres: ${clean.length} isolated windows, ${result.sql.ambiguousWindows} ambiguous. Statement count p50/p99 ${n(result.sql.statementsPerWindow.p50)}/${n(result.sql.statementsPerWindow.p99)}; server statement ms p50/p99 ${n(result.sql.statementMsPerWindow.p50)}/${n(result.sql.statementMsPerWindow.p99)}. WAL sample delta: ${JSON.stringify(walDelta)}. WAL counters are aggregate over the stated sample window, including background storage work; they are never presented as exact per-Datomic-transaction counts.`,
     "",
