@@ -393,14 +393,14 @@
                 (is (= 2 (storage/head-position name (gateway/sync-db uri))))))
             (is (thrown? clojure.lang.ExceptionInfo
                   (storage/commit! name conn (gateway/sync-db uri)
-                    (row-input {"sourceK" 2 "position" 3 "operationId" "mixed-clocks" "newIds" ["mixed-a" "mixed-b"] "claims" []
+                    (row-input {"sourceK" 2 "position" 3 "operationId" "mixed-clocks" "assignRecordTime" false "newIds" ["mixed-a" "mixed-b"] "claims" []
                                 "rows" (mapv (fn [[id clock]] (storage/wire-row
                                          {:id id :entity_id "root" :attribute ":v" :value_type "string" :value_string id
                                           :recorded_at clock :recorded_position 3 :valid_from 0.0 :schema_version 1 :tx_id "mixed"}))
                                          [["mixed-a" 102.0] ["mixed-b" 103.0]])}))))
             (is (= 2 (storage/head-position name (gateway/sync-db uri))))
             (storage/commit! name conn (gateway/sync-db uri)
-              (row-input {"sourceK" 2 "position" 3 "operationId" "claim-only" "rows" [] "newIds" []
+              (row-input {"sourceK" 2 "position" 3 "operationId" "claim-only" "assignRecordTime" false "rows" [] "newIds" []
                           "claims" [{"commandId" "claim-only" "txId" "claim-tx" "timestamp" 102.0}]}))
             (is (= 102.0 (scope/max-recorded-at (gateway/sync-db uri) (scope/entity (gateway/sync-db uri)))))
             (is (thrown? clojure.lang.ExceptionInfo (write! 4 102.0))))
