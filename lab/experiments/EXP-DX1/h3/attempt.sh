@@ -243,3 +243,11 @@ if [[ ${DX_FSYNC_PROBE:-0} == 1 ]]; then
 fi
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
  --lane datomic --composition reach --read-path "${DX_READ_PATH:-gateway}" --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1
+
+# [DX-T1-5] Why: inspect actual immutable log datoms only after the completed timed workload, before owned storage is removed.
+# Rejected: measuring submitted JSON or adding a census to each commit's acknowledgement path.
+if [[ ${DX_TRANSACTION_CENSUS:-0} == 1 ]]; then
+  node lab/trace/transaction-shape.mjs prepare "$out"
+  run_stage docker exec -i -e 'DATOMIC_JAVA_OPTS=-Xms32m -Xmx384m -Dlogback.configurationFile=/dxh1/quiet-logback.xml' "$prefix-gw-w" /opt/datomic/bin/run -m triplex.gateway.transaction-shape < "$out/transaction-shape-input.json" > "$out/transaction-shape-stdout.jsonl" 2> "$out/transaction-shape-stderr.log"
+  node lab/trace/transaction-shape.mjs qualify "$out"
+fi

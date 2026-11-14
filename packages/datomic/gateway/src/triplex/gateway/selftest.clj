@@ -1,5 +1,5 @@
 (ns triplex.gateway.selftest
-  (:require [clojure.test :refer :all] [clojure.data.json :as json] [datomic.api :as d]
+  (:require [clojure.test :refer :all] [triplex.gateway.transaction-shape :as tx-shape] [clojure.data.json :as json] [datomic.api :as d]
             [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
 
  ;; [DX-B7] Why: old selftests predate mandatory row texts and the explicit layout/name parameters.
@@ -441,6 +441,26 @@
             (is (= "ClockExhausted" (:code (ex-data error))))
             (is (= 6 (storage/head-position name (gateway/sync-db uri))))))
         (finally (gateway/delete-scope! base scope-text))))))
+
+
+;; [DX-T1-5] Why: a byte census must inspect real immutable log datoms and refuse a foreign position/operation.
+;; Rejected: proving only a JSON aggregation helper on fabricated output.
+(deftest transaction-shape-binding
+  (let [scope-text "[\"triplex-scope-v1\",\"test\",\"dxt1\",\"census\",0]"
+        base "datomic:mem://" name (:db (gateway/create-scope! base scope-text "lean"))
+        uri (gateway/db-uri name) conn (gateway/connection uri)]
+    (try
+      (let [report @(d/transact conn [{:db/id "datomic.tx" :triplex.tx/operation-id "census-op" :triplex.tx/position 1}
+                                     {:triplex.entity/id "census-e" :triplex.entity/rev 1}])
+            db (:db-after report) actual (tx-shape/transaction db (d/log conn) {"operationId" "census-op" "position" 1})]
+        (is (= 1 (:position actual)))
+        (is (= "census-op" (:operationId actual)))
+        (is (= (:datoms actual) (reduce + (map :datoms (:attributes actual)))))
+        (is (= (:valueUtf8Bytes actual) (reduce + (map :valueUtf8Bytes (:attributes actual)))))
+        (is (pos? (:ednUtf8Bytes actual)))
+        (is (thrown? Exception (tx-shape/transaction db (d/log conn) {"operationId" "census-op" "position" 2})))
+        (is (thrown? Exception (tx-shape/transaction db (d/log conn) {"operationId" "foreign-op" "position" 1}))))
+      (finally (gateway/delete-scope! base scope-text)))))
 
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]
