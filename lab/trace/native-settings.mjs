@@ -35,7 +35,7 @@ export function nativeBookendComparison(controls, candidates) {
 }
 // [DX-T1-4] Why: an affinity receipt must describe this attempt's running threads, not a copied placement log.
 // Rejected: checking requested masks without source/slot/time and actual kernel readbacks.
-export function validateNativeAffinity(rows, manifest, endedAt) {
+export function validateNativeAffinity(rows, manifest, endedAt, masks = { main: "3", workers: "4,5,6,7" }) {
   if (
     !Number.isFinite(manifest.startedAt) ||
     !Number.isFinite(endedAt) ||
@@ -66,10 +66,10 @@ export function validateNativeAffinity(rows, manifest, endedAt) {
     )
       throw Error("Foreign/stale native affinity receipt");
     if (
-      r.main !== "3" ||
-      r.workers !== "4,5,6,7" ||
-      expand(r.allowed) !== (r.thread === 0 ? "3" : "4,5,6,7") ||
-      (r.background ?? []).some((b) => expand(b.allowed) !== "4,5,6,7")
+      r.main !== masks.main ||
+      r.workers !== masks.workers ||
+      expand(r.allowed) !== (r.thread === 0 ? masks.main : masks.workers) ||
+      (r.background ?? []).some((b) => expand(b.allowed) !== masks.workers)
     )
       throw Error("Native kernel affinity mismatch");
   }

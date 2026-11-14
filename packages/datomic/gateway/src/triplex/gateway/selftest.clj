@@ -462,6 +462,33 @@
         (is (thrown? Exception (tx-shape/transaction db (d/log conn) {"operationId" "foreign-op" "position" 1}))))
       (finally (gateway/delete-scope! base scope-text)))))
 
+;; [DX-T1-6] Why: both revision indexes must produce identical real Peer transactions and reject the same stale source.
+;; Rejected: testing an index-name string or changing the native row layout to make the lookup cheaper.
+(deftest revision-index-equivalence
+  (doseq [layout ["lean" "legacy"] head-v2 [true false]]
+    (let [base "datomic:mem://" scope-text (str "[\"triplex-scope-v1\",\"test\",\"test\",\"rev-index-" layout "-" head-v2 "\",0]")
+          name (:db (gateway/create-scope! base scope-text layout head-v2 false)) conn (gateway/connection (gateway/db-uri name))
+          input (fn [source p]
+                  (row-input {"sourceK" source "position" p "operationId" (str "rev-index-" p)
+                              "rows" [(storage/wire-row {:id (str "rev-row-" p) :entity_id "subject" :attribute ":v"
+                                        :value_type "number" :value_number (double p) :recorded_at (double p)
+                                        :recorded_position p :valid_from 0.0 :schema_version 1 :tx_id (str "rev-tx-" p)})]
+                              "newIds" [(str "rev-row-" p)] "claims" []}))]
+      (try
+        (storage/commit! name conn (gateway/sync-db (gateway/db-uri name)) (input 0 1))
+        (let [db (gateway/sync-db (gateway/db-uri name))
+              variants (fn [source flag]
+                         (let [data (storage/tx-data db (input source 2))]
+                           [(update-in (first data) [1] assoc :rev-aevt flag)]))
+              a (d/with db (variants 1 false)) b (d/with db (variants 1 true))
+              canonical (fn [report]
+                          (set (for [d (:tx-data report) :when (not= (:a d) (d/entid db :db/txInstant))]
+                                 [(:e d) (:a d) (:v d) (:added d)])))]
+          (is (= (canonical a) (canonical b)))
+          (is (thrown? Exception (d/with db (variants 0 false))))
+          (is (thrown? Exception (d/with db (variants 0 true)))))
+        (finally (gateway/delete-scope! base scope-text))))))
+
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]
     (println (json/write-str result))

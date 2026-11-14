@@ -30,6 +30,7 @@ export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-summary}
 # Rejected: silently reverting to shared writer/engine cores between controlled comparisons.
 export DX_CPUS_TX=${DX_CPUS_TX:-0} DX_CPUS_PG=${DX_CPUS_PG:-1} DX_CPUS_GW_WRITE=${DX_CPUS_GW_WRITE:-2} DX_CPUS_GW_READ=${DX_CPUS_GW_READ:-4}
 export DX_CPUS_DRIVER=${DX_CPUS_DRIVER:-3,4,5,6,7} DX_MAIN_CPU=${DX_MAIN_CPU-3} DX_WORKER_CPUS=${DX_WORKER_CPUS-4,5,6,7}
+export DX_TX_OBJECT_CACHE=${DX_TX_OBJECT_CACHE:-1280m}
 export DX_QUIET_LOGS=${DX_QUIET_LOGS:-1} DX_ENCRYPT_CHANNEL=${DX_ENCRYPT_CHANNEL:-true}
 export DX_TX_JAVA_OPTS=${DX_TX_JAVA_OPTS:-'-Xms256m -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=200'}
 

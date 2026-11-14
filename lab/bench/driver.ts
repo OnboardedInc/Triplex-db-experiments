@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { suffixDelta } from "./lib/basis-window.ts";
 import { DeferredPublications } from "./lib/deferred-publication.ts";
 import { cpuProfileClock } from "./lib/cpu-profile.ts";
 import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, currentTraceStep, traceResource, type Trace } from "./lib/tracing.ts";
@@ -108,6 +109,7 @@ const config = {
   rungSubjects,
   profile,
   zeroReaders: flag("zero-readers"),
+  readerBasisWire: opt("reader-basis-wire", "snapshot") as "snapshot" | "delta",
   matchDurationS: opt("match-duration-s") ? Number(opt("match-duration-s")) : null,
   baselineWrites: opt("baseline-writes") ?? null,
   devOverrides: devFlags,
@@ -160,6 +162,7 @@ const config = {
   barrierDir: opt("barrier-dir") ?? null,
   startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
+if (!["snapshot", "delta"].includes(config.readerBasisWire)) throw Error("Invalid reader basis wire mode");
 if (!["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
 // [DX-H7] Why: bound aggregate reader and writer cache estimates below half the 8 GiB client grant.
 // Rejected: an unbounded per-thread cache (moves saturation to memory pressure).
@@ -530,12 +533,26 @@ async function run() {
   // Rejected: starting worker 99 from runSweep while the frozen writer is already issuing commands.
   const preparedSweeper = replicaHost && !config.zeroReaders && !config.readerLadderOnly
     ? await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 }) : undefined;
+  let basisCursor: number | null = null;
+  const basisBroadcast = { messages: 0, ackItems: 0, ticks: 0, wall: new Histogram() };
   const broadcast = () => {
+    const attrs = { mode: config.readerBasisWire, workers: workers.length, added: 0, window: 0, wallMs: 0 };
+    return traceWork("driver.reader-basis.broadcast", () => {
     const t = now();
     const hot: number[] = [];
     for (const [subject, at] of lastWriteAt) if (t - at <= 60_000) hot.push(subject);
     const recent = acked.filter((a) => t - a.at <= 3_600_000).slice(-2000);
-    for (const w of workers) w.postMessage({ type: "basis", acked: recent.length ? recent : acked.slice(-1), hot });
+    const window = recent.length ? recent : acked.slice(-1);
+    // [DX-T1-6] Why: the sampled stall is structured-cloning unchanged receipt windows; transmit only their exact appended suffix.
+    // Rejected: reducing retention, skipping broadcasts or choosing a different read basis to hide client overhead.
+    const delta = config.readerBasisWire === "delta" ? suffixDelta(window, acked.length, basisCursor) : null;
+    for (const w of workers) w.postMessage(delta ? { type: "basis-delta", delta, hot } : { type: "basis", acked: window, hot });
+    basisCursor = acked.length;
+    basisBroadcast.ticks++; basisBroadcast.messages += workers.length;
+    basisBroadcast.ackItems += workers.length * (delta?.added.length ?? window.length);
+    attrs.added = delta?.added.length ?? window.length; attrs.window = window.length; attrs.wallMs = now() - t;
+    basisBroadcast.wall.recordMs(attrs.wallMs);
+    }, attrs, true);
   };
   broadcast();
   const basisTimer = setInterval(broadcast, 100);
@@ -1033,6 +1050,7 @@ async function run() {
     await replayHandle.close().catch(() => {});
   }
   report.readerLifecycle = readerLives.map(({ worker, life }) => ({ worker, stopped: life.stopped, failures: life.failures }));
+  report.readerBasisBroadcast = { mode: config.readerBasisWire, messages: basisBroadcast.messages, ackItems: basisBroadcast.ackItems, ticks: basisBroadcast.ticks, wall: basisBroadcast.wall.summary() };
   const finalizationErrors: string[] = readerLives.flatMap(({ worker, life }) => [...life.failures, ...(life.stopped ? [] : ["missing drained stopped acknowledgement"])].map(error => `reader ${worker}: ${error}`));
   const finalPosition = await observeFinalHead(() => writer.currentPosition(), finalizationErrors);
   samplersOn = false;

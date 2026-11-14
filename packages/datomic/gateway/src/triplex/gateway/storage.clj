@@ -216,6 +216,7 @@
      [[:triplex/commit {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
+                       :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
                        :lean lean :ops ops :times times :new-ids (vec new-ids) :assign-record-time (not= false (get input "assignRecordTime"))
                        ;; [DX-R3] Why: strict scopes also order empty/claim-only commits and every imported claim clock.
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).

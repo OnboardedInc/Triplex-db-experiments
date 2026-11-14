@@ -42,6 +42,9 @@ describe("native setting comparison evidence", () => {
       background: thread === 0 ? [{ allowed: "4-7" }] : undefined,
     }));
     expect(validateNativeAffinity(rows, manifest, 1200)).toBe(true);
+    const twoCore = rows.map(r => ({ ...r, main: "4", workers: "5,6,7", allowed: r.thread === 0 ? "4" : "5-7", background: r.thread === 0 ? [{ allowed: "5-7" }] : undefined }));
+    expect(() => validateNativeAffinity(twoCore, manifest, 1200)).toThrow();
+    expect(validateNativeAffinity(twoCore, manifest, 1200, { main: "4", workers: "5,6,7" })).toBe(true);
     expect(() =>
       validateNativeAffinity(
         rows.map((r) => ({ ...r, at: 999 })),

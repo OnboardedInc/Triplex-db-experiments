@@ -1,3 +1,4 @@
+import { BasisWindow } from "./lib/basis-window.ts";
 import { beginTrace, withTrace, finishTrace, traceSync, traceAsync, flushTracing } from "./lib/tracing.ts";
 import { canonicalWorld } from "./lib/canonical.ts";
 import { requireDrained } from "./lib/reader-lifecycle.ts";
@@ -95,6 +96,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   let wanted = 0;
   let running = 0;
   let acked: { instant: number; position: number; txId: string; at: number }[] = [];
+  const basisWindow = new BasisWindow<(typeof acked)[number]>();
   let hot: number[] = [];
   let records: ReadRecord[] = [];
   let samples: any[] = [];
@@ -305,8 +307,8 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       phase = msg.phase;
       mode = msg.mode ?? "mixed";
       setLevel(msg.readers);
-    } else if (msg.type === "basis") {
-      acked = msg.acked;
+    } else if (msg.type === "basis" || msg.type === "basis-delta") {
+      acked = msg.type === "basis-delta" ? basisWindow.apply(msg.delta) : msg.acked;
       hot = msg.hot;
       if (wanted > loops.size) setLevel(wanted);
     } else if (msg.type === "split" || msg.type === "acked") {

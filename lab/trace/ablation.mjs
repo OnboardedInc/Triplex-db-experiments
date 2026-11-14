@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
+import { validateBasisBroadcast } from "../bench/lib/basis-window.ts";
 import { bookendComparison, observedRunEnd, validateDeferredOrder } from "./anatomy.mjs";
 import {
   validateNativeSettings,
@@ -11,7 +12,7 @@ import {
   validateNativeBands,
 } from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
-const nativeKind = /^(quiet|channel|isolated|index|cache)-(floor|256)$/.exec(kind);
+const nativeKind = /^(quiet|channel|isolated|index|cache|revision|cores|basis)-(floor|256)$/.exec(kind);
 const readerDiagnostic =
   ["history-256", "writer-256", "record-clock-256"].includes(kind) || nativeKind?.[2] === "256";
 const summaryKind =
@@ -82,7 +83,7 @@ const arms = nativeKind
                     : ["off", "summary", "summary", "off"];
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const rows = [];
-let buildHashes, commonInputs;
+let buildHashes, commonInputs, commonRuntime;
 // [DX-T1-2] Why: inspect the actual container environment/JVM options, PG readback and fresh raw resource bytes.
 // Rejected: treating a directory name or successful process exit as proof that its requested recorder was measured.
 for (const [i, arm] of arms.entries()) {
@@ -95,7 +96,7 @@ for (const [i, arm] of arms.entries()) {
   // [DX-T1-4] Why: every comparison changes one declared input while the remaining workload stays byte-identical.
   // Rejected: silently inheriting a different seed batch or read policy between placement arms.
   const variable =
-    kind === "history-256"
+    kind.startsWith("basis-") ? "readerBasisWire" : kind === "history-256"
       ? "replicaHistoryMiB"
       : kind === "fallback-floor"
         ? "replicaFallbackThread"
@@ -114,9 +115,9 @@ for (const [i, arm] of arms.entries()) {
   buildHashes = actualHashes;
   const effective = configuration({
     TRIPLEX_TRACE_LEVEL:
-      kind.startsWith("cache-") ? "full" : arm === "off" ? "off" : arm === "summary" || summaryKind ? "summary" : "full",
+      /^(cache|revision|cores)-/.test(kind) ? "full" : arm === "off" ? "off" : arm === "summary" || summaryKind ? "summary" : "full",
     TRIPLEX_TRACE_SESSION: prefix,
-    ...(kind.startsWith("cache-") ? { TRIPLEX_TRACE_COMPONENTS: "node,gateway,tx-jfr", DX_TX_NATIVE_JFR: "1" } : {}),
+    ...(/^(cache|revision|cores)-/.test(kind) ? { TRIPLEX_TRACE_COMPONENTS: "node,gateway,tx-jfr", DX_TX_NATIVE_JFR: "1" } : {}),
     ...(!["full", "summary"].includes(arm) && !summaryKind
       ? {
           TRIPLEX_TRACE_COMPONENTS:
@@ -193,6 +194,18 @@ for (const [i, arm] of arms.entries()) {
     throw Error("Writer study input mismatch");
   const containers = read(path.join(dir, "containers.json")),
     driver = read(path.join(dir, "driver-container.json"))[0];
+  // [DX-T1-6] Why: current-stack trials vary one declared knob, including when CPU placement changes JVM ergonomics.
+  // Rejected: assuming equal tags/source prove equal image, heap, collector, Node options or durable storage policy.
+  if (nativeKind && ["cache", "revision", "cores", "basis"].includes(nativeKind[1])) {
+    const runtime = JSON.stringify([driver, ...["pg", "tx", "gw-w", "gw-r"].map(role => containers.find(c => c.Name === `/${tag}-${role}`))].map(c => ({
+      image: c.Image, memory: c.HostConfig.Memory, swap: c.HostConfig.MemorySwap,
+      java: c.Config.Env.filter(v => /^(JAVA_OPTS|DATOMIC_JAVA_OPTS|NODE_OPTIONS)=/.test(v)).sort(),
+    })));
+    if (commonRuntime !== undefined && commonRuntime !== runtime) throw Error("Uncontrolled runtime configuration changed");
+    commonRuntime = runtime;
+    const durability = fs.readFileSync(path.join(dir, "durability.txt"), "utf8").trim().split("\n");
+    if (durability.slice(0, 3).some(v => v !== "on") || durability.length !== 4) throw Error("Durability policy changed");
+  }
   if (kind === "cpu-floor") {
     const expected = {
       pg: arm === "engine-isolated" ? "2" : "0",
@@ -251,6 +264,14 @@ for (const [i, arm] of arms.entries()) {
       if (nativeKind[1] === "index") expected.DX_INDEX_THRESHOLD = "512m";
       if (nativeKind[1] === "cache") expected.DX_TX_OBJECT_CACHE = "1280m";
     }
+    if (nativeKind[1] === "revision") {
+      expected.DX_REV_AEVT = arm === "candidate" ? "1" : "0";
+      for (const role of ["gw-w", "gw-r"]) {
+        const c = containers.find(c => c.Name === `/${tag}-${role}`);
+        if (!c.Config.Env.includes("TX2_REV_AEVT=" + expected.DX_REV_AEVT)) throw Error("Revision index input mismatch");
+      }
+    }
+    if (nativeKind[1] === "basis" && bench.config.readerBasisWire !== (arm === "candidate" ? "delta" : "snapshot")) throw Error("Basis wire mode mismatch");
     const props = fs.readFileSync(path.join(dir, "config/sql.properties"), "utf8");
     validateNativeSettings({
       manifest,
@@ -266,24 +287,26 @@ for (const [i, arm] of arms.entries()) {
     );
     if (!channels.length || channels.some((v) => v !== expected.DX_ENCRYPT_CHANNEL))
       throw Error("Unconfirmed published channel mode");
-    const isolated = (nativeKind[1] === "isolated" && arm === "candidate") || nativeKind[1] === "cache";
+    const current = ["cache", "revision", "cores", "basis"].includes(nativeKind[1]);
+    const twoCore = nativeKind[1] === "cores" && arm === "candidate";
+    const isolated = (nativeKind[1] === "isolated" && arm === "candidate") || current;
     const masks = {
-      tx: isolated ? "0" : "0,1",
-      pg: isolated ? "1" : "0",
-      "gw-w": isolated ? "2" : "1",
-      "gw-r": isolated ? "4" : "2,3",
+      tx: twoCore ? "0,1" : isolated ? "0" : "0,1",
+      pg: twoCore ? "2" : isolated ? "1" : "0",
+      "gw-w": twoCore ? "3" : isolated ? "2" : "1",
+      "gw-r": twoCore ? "5" : isolated ? "4" : "2,3",
     };
     for (const [role, cpus] of Object.entries(masks))
       if (containers.find((c) => c.Name === `/${tag}-${role}`)?.HostConfig.CpusetCpus !== cpus)
         throw Error("Native CPU placement mismatch");
-    if (driver.HostConfig.CpusetCpus !== (isolated ? "3,4,5,6,7" : "4,5,6,7"))
+    if (driver.HostConfig.CpusetCpus !== (twoCore ? "4,5,6,7" : isolated ? "3,4,5,6,7" : "4,5,6,7"))
       throw Error("Native driver CPU placement mismatch");
     const placements = fs
       .readFileSync(path.join(dir, "driver.log"), "utf8")
       .split("\n")
       .filter((l) => l.startsWith('{"type":"node-thread-placement"'))
       .map((l) => JSON.parse(l));
-    if (isolated) validateNativeAffinity(placements, manifest, endedAt);
+    if (isolated) validateNativeAffinity(placements, manifest, endedAt, twoCore ? { main: "4", workers: "5,6,7" } : undefined);
     else if (placements.length) throw Error("Native baseline unexpectedly pinned");
     for (const role of ["tx", "gw-w", "gw-r"]) {
       const c = containers.find((c) => c.Name === `/${tag}-${role}`);
@@ -480,6 +503,13 @@ for (const [i, arm] of arms.entries()) {
     deferredOrder = validateDeferredOrder(writes, events, manifest, endedAt);
   }
   if (readerDiagnostic) validateNativeBands(bench, writes);
+  if (nativeKind?.[1] === "basis") {
+    const broadcasts = [];
+    for (const file of filesUnder(path.join(dir, "trace/raw")).filter(f => /\/node-.*-0\.jsonl.gz$/.test(f)))
+      for await (const event of records(file))
+        if (event.name === "driver.reader-basis.broadcast") broadcasts.push(event);
+    validateBasisBroadcast(bench.readerBasisBroadcast, broadcasts, manifest, endedAt);
+  }
   // [DX-T1-4] Why: host context belongs to the measured requests; post-run oracle CPU is not latency interference.
   // Rejected: reporting a whole-arm CPU median dominated by independent validation after the timed work.
   const hostContext = (start, end) => {
@@ -511,6 +541,7 @@ for (const [i, arm] of arms.entries()) {
     source,
     digest: bench.trace.digest,
     commands: writes.length,
+    basisBroadcast: bench.readerBasisBroadcast ?? null,
     writerCountersDelta: Object.fromEntries(
       [
         "optimisticAttempts",
@@ -616,6 +647,11 @@ if (kind.startsWith("record-clock-"))
     ),
     "",
   );
+if (kind.startsWith("basis-")) text.push(
+  "| arm | receipt items sent | broadcast p50 / p99 / max ms | host context / control |",
+  "| --- | ---: | --- | --- |",
+  ...rows.map(r => `| ${r.arm} | ${r.basisBroadcast.ackItems} | ${r.basisBroadcast.wall.p50Ms}/${r.basisBroadcast.wall.p99Ms}/${r.basisBroadcast.wall.maxMs} | swap ${r.swapGiB.median.toFixed(3)} GiB, Mac CPU ${r.macCpu.median.toFixed(1)}%; bookends above |`), "",
+);
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 if (readerDiagnostic)
   text.push(

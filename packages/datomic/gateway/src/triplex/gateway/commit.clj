@@ -4,7 +4,11 @@
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
 (def operation-code
-  '(letfn [(value [e a] (:v (first (d/datoms db :eavt e a))))
+  '(letfn [(value [e a]
+             ;; [DX-T1-6] Why: the rev check can warm the same AEVT segment native cardinality-one replacement reads.
+             ;; Rejected: changing stored identities or bypassing the serial revision conflict check.
+             (:v (first (if (and (:rev-aevt payload) (= a :triplex.entity/rev))
+                          (d/datoms db :aevt a e) (d/datoms db :eavt e a)))))
            ;; [DX-B8] Why: immutable transaction values avoid the per-commit scope retraction merge.
            ;; Rejected: a peer-cached head (allocation must remain atomic on the transactor).
            (newest-commit []
