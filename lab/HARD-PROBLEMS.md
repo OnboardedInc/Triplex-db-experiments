@@ -18,6 +18,11 @@ Constraints every answer must respect: exactness and durability are the floor; t
    4.1 ms, acknowledgement leg 2.0 ms at p50 in a traced run, with about 3.1 Postgres commits per transaction. DX-T1 part 4
    is measuring the same anatomy untraced, with a raw fsync test of the VM disk.
 3. **Tried.** Transactor GC settings (no gain), hints (slower), strict clocks (cost nothing).
+   **DX-T1 part 4 (2026-11-14):** at zero readers a commit is 14.5 ms on the busy host: peer transact wait 6.8 ms, other
+   named work outside the transact HTTP call 4.3 ms (begin, capture, publication, queue), gateway 1.0 ms, network 0.35 ms.
+   Raw fdatasync on the VM volume is 0.113 ms, so **disk sync is not the floor**; direction c below is closed. Dedicated
+   cores save 1.0 ms (kept). Quiet logging and TLS off gave nothing at zero readers. Best floor measured 14.4 ms.
+   The 4.3 ms outside the engine call is the largest untouched piece; part 5 splits it.
 4. **Directions not tried.**
    a. Fewer storage syncs per commit: several subjects' commits in one Datomic transaction when they arrive together, with
       per-command outcomes kept (group commit above the engine).

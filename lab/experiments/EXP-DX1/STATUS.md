@@ -1724,3 +1724,35 @@ DX-T1 part 2 (`exp/DX-T1-tracing`, `3f59403d`, pushed; report `t1/REPORT-2.md` o
 
 Part 3 is running (same agent session): host gate (control p50 at most 12 ms), causes of commits over 50 ms, the wait on
 the transactor at 256 readers, CPU placement, then a verdict pair.
+
+## 2026-11-14 03:20 UTC: DX-RE1 read the transactor; DX-T1 part 4: disk sync is not the floor, 4.3 ms of a commit is outside the engine call; part 5 launched
+
+Sam's decisions of 2026-11-13 (verbatim in `lab/research/SAM-decisions-2026-11-09.md`): XTDB lane closed; reverse engineer
+the transactor; stay bitemporal with both read paths; server assigns record time; P4 judged on the whole 8-CPU machine
+(at least 4,400 pulls/s); no acknowledgement before the engine applies. `lab/HARD-PROBLEMS.md` tracks the hard problems.
+
+**DX-RE1** (Opus agent, `exp/DX-RE1-transactor`, `72785052`, pushed): licence Apache 2.0; the transactor applies one
+transaction at a time, almost never groups writes, writes two autocommitted statements per transaction and about 3.1
+Postgres commits observed; a commit crosses about ten threads; notes and a ranked list in `re1/` on that branch.
+
+**DX-T1 part 4** (`exp/DX-T1-tracing`, `76939dd2`, pushed; report `t1/REPORT-4.md`). P2 does not pass. Busy host all run
+(swap 8 to 13 GiB, Mac CPU outside the VM 40 to 60% of a core at the median with spikes to 300%).
+1. **Anatomy at zero readers** (p50): whole commit 14.5 ms; peer transact wait 6.8 ms; gateway before and after the peer
+   1.0 ms; network both ways 0.35 ms; client encode, send, parse 0.3 ms; **other named work outside the transact HTTP call
+   4.3 ms** (begin, capture, publication, queue). TypeScript own wall 3.4 ms of which synchronous CPU 0.74 ms; TypeScript
+   share 32.6%.
+2. **Raw fdatasync on the VM volume: 0.113 ms.** Disk sync is not what holds the median up. Postgres execute time per
+   transaction 0.26 ms at the median.
+3. **Settings:** dedicated cores for transactor, Postgres, write gateway and writer save 1.0 ms at zero readers and 1.7 ms
+   at 256 readers, beyond drift (kept). Quiet logging: nothing at zero readers, 2.0 ms at 256 readers against 1.8 ms drift
+   (provisional). TLS off: no gain (TLS stays on).
+4. **Best floor measured:** 14.4 ms at zero readers with the kept placement, against 15.3 to 15.4 ms controls.
+5. **P1 restored:** the history window had been 64 MiB; at q8's 192 MiB read p99 at 256 readers went 245 to 8 ms; 33,252
+   correct pulls/s at 256 readers.
+6. **Tail:** commits over 50 ms 535 (baseline) against 218 (isolated cores) of 3,530; inside the bookend drift, no claim.
+   The 267 ms scheduler delay of part 2 included eight GC pauses (35 ms); the rest is not assigned.
+7. **Verdict pair incomplete** (budget ran out during its last phase). One session ended on a provider capacity error and
+   was resumed.
+
+Part 5 is running (same agent session): compress old evidence (disk at 17 GiB free), split and shrink the 4.3 ms, build
+server-assigned record time, measure bytes per transaction and transaction-function reads, then a verdict pair.
