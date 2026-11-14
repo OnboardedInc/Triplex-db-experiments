@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import { loadCpuProfile } from "./cpu-profile.mjs";
 import { bindNativeTransaction } from "./native-transactions.mjs";
-import { writeAnatomy } from "./anatomy.mjs";
+import { writeAnatomy, validateDeferredOrder } from "./anatomy.mjs";
 import { packHtml } from "./viewer.mjs";
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -737,6 +737,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
   const explained = denom.filter((r) => r.explained >= 0.95 && !r.allTruncated).length;
   // Content/freshness/binding: compare the observed per-command trace against this run's actual writer rows.
   const writesFile = path.join(rootDir, "driver/ns-writes.jsonl");
+  const deferredWriters = [];
   let writes = 0,
     missingCommits = 0;
   const byId = new Map(commits.map((r) => [r.traceId, r]));
@@ -745,6 +746,11 @@ export async function buildReport(runDir, { copyTo } = {}) {
     for await (const w of records(writesFile)) {
       writes++;
       if (!nodeEnabled) continue;
+      if (
+        w.outcome === "committed" &&
+        ((w.stream === "background" && !w.resend) || w.publicationDeferred)
+      )
+        deferredWriters.push(w);
       if (!w.traceId || !ids.has(w.traceId)) missingCommits++;
       else {
         const trace = byId.get(w.traceId);
@@ -1007,6 +1013,25 @@ export async function buildReport(runDir, { copyTo } = {}) {
       ];
     }),
   );
+  let deferredOrder = null;
+  if (bench.publicationMode === "deferred" && nodeEnabled) {
+    try {
+      if (
+        !bench.deferredPublication ||
+        bench.deferredPublication.captured !== bench.deferredPublication.persisted ||
+        bench.deferredPublication.pending !== 0
+      )
+        throw Error("Deferred witness drain unproven");
+      deferredOrder = validateDeferredOrder(
+        deferredWriters,
+        events.filter((e) => e.name === "driver.publication.persist-deferred"),
+        manifest,
+        Date.parse(bench.endedAt),
+      );
+    } catch (error) {
+      errors.push("Deferred witness order: " + error.message);
+    }
+  }
   const rawBytes = filesUnder(path.join(rootDir, "trace/raw")).reduce(
     (sum, f) => sum + fs.statSync(f).size,
     0,
@@ -1018,6 +1043,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     components: manifest?.components ?? null,
     session: manifest?.session ?? null,
     nodeEnabled,
+    deferredOrder,
     clockAlignment: {
       reference: clockReference ?? null,
       sources: clockSources,
