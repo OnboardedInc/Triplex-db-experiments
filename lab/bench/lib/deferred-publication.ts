@@ -28,10 +28,12 @@ export class DeferredPublications {
   private readonly storage = new Histogram();
   private persisted = 0;
   private failure: unknown;
-  constructor(
-    private readonly writer: Writer,
-    private readonly readBack: (key: Key) => unknown,
-  ) {}
+  private readonly writer: Writer;
+  private readonly readBack: (key: Key) => unknown;
+  constructor(writer: Writer, readBack: (key: Key) => unknown) {
+    this.writer = writer;
+    this.readBack = readBack;
+  }
   capture(key: Key, id: string, traceId: string | null, held: boolean) {
     const k = keyOf(key),
       prior = this.entries.get(k);
