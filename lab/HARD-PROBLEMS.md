@@ -104,10 +104,22 @@ Constraints every answer must respect: exactness and durability are the floor; t
 ## H7. The test bench moves results more than the code does
 
 1. **What is hard.** The same code read 9.1 ms on one night and 16 ms on another. A 24 GiB VM on a 36 GiB Mac put 12 to
-   17 GB into swap; the VM is now 16 GiB and the control reads 13 ms with the Mac in use.
-2. **Directions not tried.** A verdict protocol that is robust to the host (many short paired arms and a statistical
-   verdict, not one long pair); a fixed quiet window agreed with Sam; a second machine is out of scope unless Sam changes
-   that.
+   17 GB into swap; the VM is now 16 GiB.
+2. **What was making the Mac busy (looked at on 2026-11-14 12:40 UTC, Sam away from the machine).**
+   a. Our own VM: 415 to 445% CPU, by design, because guest `nohlt` keeps eight virtual CPUs spinning.
+   b. The Mac has **6 performance and 6 efficiency cores**. Eight always-busy virtual CPUs cannot all sit on performance
+      cores, and the load average was 11.7 to 14.8 on 12 cores, so virtual CPUs were being time-sliced or placed on
+      efficiency cores. Not yet tested: a 6-CPU VM, or pinning the measured containers to the virtual CPUs that behave.
+   c. Our own harness on the Mac side: the oracle replay (`oracle-bridge.mjs` and its Python) used about 0.4 of a core and
+      1.1 GB during a measured run.
+   d. Memory pressure, not idle swap: 55 to 140 MB free, the compressor moving 2,000 to 17,000 pages a second. Chrome (87
+      processes, 6.5 GiB), Paste (1.3 GiB) and Slack (1.2 GiB) were the largest users after the VM. Sam said to close what
+      was causing it; the orchestrator quit those three at 12:45 UTC: swap in use fell from 12.2 to 5.1 GB and free memory
+      rose to 62%.
+3. **Directions not tried.** A verdict protocol robust to the host (many short paired arms and a statistical verdict, not
+   one long pair); a 6-CPU VM matched to the performance cores; the oracle replay moved after the measured window or into
+   the VM; a host check before each arm that refuses to start under memory pressure; a second machine is out of scope
+   unless Sam changes that.
 
 ## H8. (closed) XTDB
 

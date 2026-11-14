@@ -1782,3 +1782,12 @@ the VM disk does not give space back to the Mac (image stays 62 GB). No external
 
 Part 6 is running (same agent session): the reference verdict pair first; then cold reads during apply, the transaction
 function's reads, the send and acknowledgement legs; the writer-thread stall; a closing pair.
+
+## 2026-11-14 12:50 UTC: host looked at while part 6 runs; Chrome, Slack and Paste quit at Sam's word; swap 12.2 to 5.1 GB
+
+Sam (away from the Mac): "What is causing the Mac to be busy? ... You can probably close down whatever it is that's causing
+it to be busy". Found: the VM at 415 to 445% CPU (guest `nohlt`, by design); 6 performance and 6 efficiency cores under 8
+spinning virtual CPUs, load average 11.7 to 14.8; our own oracle replay on the Mac side at 0.4 of a core; and real memory
+pressure (55 to 140 MB free, compressor at thousands of pages a second) with Chrome 6.5 GiB, Paste 1.3 GiB, Slack 1.2 GiB.
+Quit those three at 12:45 UTC. Swap in use 12.2 to 5.1 GB; free memory 62%. **Part 6 arms that span 12:45 UTC changed host
+state mid-arm**; arms after it are on a quieter host. Detail in `lab/HARD-PROBLEMS.md` H7.
