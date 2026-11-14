@@ -798,6 +798,21 @@ describe("lossless completed-oracle archives", () => {
     expect(manifest.at(-1).type).toBe("complete");
     expect(readdirSync(path.join(dir, "driver"))).not.toContain("oracle-expected.json");
   });
+  it("archives only this completed run's split observations with exact decoded bytes", async () => {
+    const { packOracle } = await import("../../../lab/trace/pack-oracle.mjs");
+    const dir = await attempt();
+    writeFileSync(
+      path.join(dir, "driver/ns-report.json"),
+      JSON.stringify({ status: "DONE", runTag: "nsexact" }),
+    );
+    const own = path.join(dir, "driver/observations-nsexact-split-complete.jsonl");
+    const other = path.join(dir, "driver/observations-other-split-complete.jsonl");
+    writeFileSync(own, "exact split timestamps\n");
+    writeFileSync(other, "unrelated\n");
+    expect((await packOracle(dir, { minBytes: 1 })).files).toBe(2);
+    expect(gunzipSync(readFileSync(own + ".gz")).toString()).toBe("exact split timestamps\n");
+    expect(readFileSync(other, "utf8")).toBe("unrelated\n");
+  });
   it("refuses a foreign source and an existing destination while retaining the original", async () => {
     const { packOracle } = await import("../../../lab/trace/pack-oracle.mjs");
     const dir = await attempt(),

@@ -28,8 +28,8 @@ export async function packOracle(directory, { minBytes = 5_000_000 } = {}) {
     tag = path.basename(dir),
     report = path.join(dir, "driver/ns-report.json");
   if (!/^tx2-dxt1-/.test(tag)) throw Error("Not an owned T1 attempt");
-  if (!fs.existsSync(report) || JSON.parse(fs.readFileSync(report, "utf8")).status !== "DONE")
-    return { files: 0, reason: "benchmark not complete" };
+  const benchmark = fs.existsSync(report) ? JSON.parse(fs.readFileSync(report, "utf8")) : null;
+  if (benchmark?.status !== "DONE") return { files: 0, reason: "benchmark not complete" };
   const source = fs.readFileSync(path.join(dir, "head.txt"), "utf8").trim(),
     manifest = JSON.parse(fs.readFileSync(path.join(dir, "trace-run.json"), "utf8"));
   if (
@@ -43,6 +43,14 @@ export async function packOracle(directory, { minBytes = 5_000_000 } = {}) {
     candidates = [
       "driver/oracle-case.json",
       "driver/oracle-expected.json",
+      // [DX-T1-7] Why: exact split observations are verified before finalization and otherwise accumulate ~80 MB per loaded arm.
+      // Rejected: sampling/dropping splits or selecting unrelated files with a broad directory glob.
+      ...(/^[a-zA-Z0-9-]+$/.test(benchmark.runTag ?? "")
+        ? [
+            `driver/observations-${benchmark.runTag}-split-steps.jsonl`,
+            `driver/observations-${benchmark.runTag}-split-complete.jsonl`,
+          ]
+        : []),
       ...(fs.existsSync(bridge)
         ? fs
             .readdirSync(bridge)

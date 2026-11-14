@@ -148,7 +148,7 @@ if (!renderOnly && result.tag.startsWith("tx2-dxt1-")) {
     for (const destination of [run, copy])
       fs.appendFileSync(
         path.join(destination, "INDEX.md"),
-        "Auxiliary oracle inputs are losslessly compressed; ORACLE-ARCHIVE.jsonl records original/decoded SHA256 and archive paths. Use gzip -dk to restore an original path.\n",
+        "Auxiliary oracle and split-observation inputs are losslessly compressed; ORACLE-ARCHIVE.jsonl records original/decoded SHA256 and archive paths. Use gzip -dk to restore an original path.\n",
       );
   }
 }
