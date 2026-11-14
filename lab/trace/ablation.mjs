@@ -13,7 +13,7 @@ import {
   validateNativeBands,
 } from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
-const nativeKind = /^(quiet|channel|isolated|index|cache|revision|cores|basis)-(floor|256)$/.exec(kind);
+const nativeKind = /^(quiet|channel|isolated|index|cache|revision|cores|basis|model)-(floor|256)$/.exec(kind);
 const readerDiagnostic =
   ["history-256", "writer-256", "record-clock-256"].includes(kind) || nativeKind?.[2] === "256";
 const summaryKind =
@@ -52,7 +52,7 @@ const nativeRequest = nativeKind
   : null;
 const nativeRepeats = nativeRequest?.candidateRepeats ?? 2;
 const stressDiagnostic = nativeRequest?.stressDiagnostic === true;
-if (stressDiagnostic && kind !== "basis-256") throw Error("Unsupported stress diagnostic");
+if (stressDiagnostic && !["basis-256", "model-256"].includes(kind)) throw Error("Unsupported stress diagnostic");
 if (nativeKind && (nativeRequest.kind !== kind || ![1, 2].includes(nativeRepeats)))
   throw Error("Invalid native comparison plan");
 const compare = nativeKind ? nativeBookendComparison : bookendComparison;
@@ -99,17 +99,17 @@ for (const [i, arm] of arms.entries()) {
   if (stressDiagnostic) {
     // [DX-T1-7] Why: ratio labels require this lease's byte-bound, completed zero-reader denominator.
     // Rejected: trusting a copied ratio or any zero run with a matching directory name.
-    const zd = path.join(base, prefix + "-zero");
+    const zd = path.join(base, prefix + (arm === "candidate" ? "-candidate-zero" : "-zero"));
     const zb = read(path.join(zd, "driver/ns-report.json")), zm = read(path.join(zd, "trace-run.json"));
     const crypto = await import("node:crypto");
     const baselinePath = path.join(zd, "driver/ns-writes.jsonl");
     const hash = crypto.createHash("sha256").update(fs.readFileSync(baselinePath)).digest("hex");
-    validateStressBaseline({ source, prefix, bench, manifest, baseline: zb, baselineManifest: zm, hash, baselinePath });
+    validateStressBaseline({ source, prefix, bench, manifest, baseline: zb, baselineManifest: zm, hash, baselinePath, candidate: arm === "candidate" });
   }
   // [DX-T1-4] Why: every comparison changes one declared input while the remaining workload stays byte-identical.
   // Rejected: silently inheriting a different seed batch or read policy between placement arms.
   const variable =
-    kind.startsWith("basis-") ? "readerBasisWire" : kind === "history-256"
+    kind.startsWith("basis-") ? "readerBasisWire" : kind.startsWith("model-") ? "expectedStateRetention" : kind === "history-256"
       ? "replicaHistoryMiB"
       : kind === "fallback-floor"
         ? "replicaFallbackThread"
@@ -117,7 +117,7 @@ for (const [i, arm] of arms.entries()) {
           ? "seedBatchFacts"
           : null;
   const inputs = JSON.stringify(
-    Object.fromEntries(Object.entries(bench.config).filter(([k]) => k !== variable)),
+    Object.fromEntries(Object.entries(bench.config).filter(([k]) => k !== variable && !(stressDiagnostic && k === "baselineWrites"))),
   );
   if (commonInputs !== undefined && commonInputs !== inputs)
     throw Error("Uncontrolled workload input changed");
@@ -209,7 +209,7 @@ for (const [i, arm] of arms.entries()) {
     driver = read(path.join(dir, "driver-container.json"))[0];
   // [DX-T1-6] Why: current-stack trials vary one declared knob, including when CPU placement changes JVM ergonomics.
   // Rejected: assuming equal tags/source prove equal image, heap, collector, Node options or durable storage policy.
-  if (nativeKind && ["cache", "revision", "cores", "basis"].includes(nativeKind[1])) {
+  if (nativeKind && ["cache", "revision", "cores", "basis", "model"].includes(nativeKind[1])) {
     const runtime = JSON.stringify([driver, ...["pg", "tx", "gw-w", "gw-r"].map(role => containers.find(c => c.Name === `/${tag}-${role}`))].map(c => ({
       image: c.Image, memory: c.HostConfig.Memory, swap: c.HostConfig.MemorySwap,
       java: c.Config.Env.filter(v => /^(JAVA_OPTS|DATOMIC_JAVA_OPTS|NODE_OPTIONS)=/.test(v)).sort(),
@@ -285,6 +285,13 @@ for (const [i, arm] of arms.entries()) {
       }
     }
     if (nativeKind[1] === "basis" && bench.config.readerBasisWire !== (arm === "candidate" ? "delta" : "snapshot")) throw Error("Basis wire mode mismatch");
+    if (nativeKind[1] === "model" && bench.config.expectedStateRetention !== (arm === "candidate" ? "journal" : "heap")) throw Error("Expected-model retention mismatch");
+    if (nativeKind[1] === "model" && arm === "candidate") {
+      const j = bench.expectedStateJournal;
+      if (!j || j.run !== tag || j.source !== source || j.slot !== tag || j.subjects !== 10000 || !/^[a-f0-9]{64}$/.test(j.sha256)) throw Error("Expected-model journal receipt mismatch");
+      const actual = (await import("node:crypto")).createHash("sha256").update(fs.readFileSync(path.join(dir, "driver", path.basename(j.file)))).digest("hex");
+      if (actual !== j.sha256) throw Error("Expected-model journal bytes changed");
+    }
     const props = fs.readFileSync(path.join(dir, "config/sql.properties"), "utf8");
     validateNativeSettings({
       manifest,
@@ -300,7 +307,7 @@ for (const [i, arm] of arms.entries()) {
     );
     if (!channels.length || channels.some((v) => v !== expected.DX_ENCRYPT_CHANNEL))
       throw Error("Unconfirmed published channel mode");
-    const current = ["cache", "revision", "cores", "basis"].includes(nativeKind[1]);
+    const current = ["cache", "revision", "cores", "basis", "model"].includes(nativeKind[1]);
     const twoCore = nativeKind[1] === "cores" ? arm === "candidate" : request.baseline.DX_CURRENT_TWO_CORES === "1";
     const isolated = (nativeKind[1] === "isolated" && arm === "candidate") || current;
     const masks = {

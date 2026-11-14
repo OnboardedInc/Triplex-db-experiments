@@ -15,6 +15,7 @@ import {
 import { join } from "node:path";
 import { performance, PerformanceObserver, monitorEventLoopDelay } from "node:perf_hooks";
 import { threadId } from "node:worker_threads";
+import { getHeapSpaceStatistics } from "node:v8";
 import { createGzip } from "node:zlib";
 
 export interface SchedulerSnapshot {
@@ -631,6 +632,8 @@ export function startTraceTelemetry(): void {
       emit({
         type: "event",
         name: "node.gc",
+        kind: (entry as unknown as { detail?: { kind?: number } }).detail?.kind ?? null,
+        flags: (entry as unknown as { detail?: { flags?: number } }).detail?.flags ?? null,
         layer: "typescript-gc",
         start: performance.timeOrigin + entry.startTime,
         end: performance.timeOrigin + entry.startTime + entry.duration,
@@ -660,6 +663,7 @@ export function startTraceTelemetry(): void {
       threadCpuMs: threadCpu(),
       processCpu: process.cpuUsage(),
       memory: process.memoryUsage(),
+      heapSpaces: getHeapSpaceStatistics(),
       heapUsedScope: "isolate",
       rssScope: "process",
       elu: performance.eventLoopUtilization(next, elu),

@@ -53,6 +53,7 @@ import { datomicWriterDiagnostics, observeDatomicPublication } from "./lib/datom
 import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, readProducerPublication, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
+import { ModelJournal } from "./lib/model-journal.ts";
 import { R, observe, type ReadRecord } from "./lib/observe.ts";
 import { ExpectationCache } from "./lib/expectation-cache.ts";
 import { splitTarget } from "./lib/split-target.ts";
@@ -145,6 +146,7 @@ const config = {
   rateScale: Number(opt("rate-scale", "1")),
   levelS: opt("level-s") ? Number(opt("level-s")) : null,
   compactModel: process.env.DX_MODEL_COMPACT === "1",
+  expectedStateRetention: opt("expected-state-retention", "heap") as "heap" | "journal",
   oracleSampleSubjects: Number(opt("oracle-subjects", "12")),
   oracleRate: Number(opt("oracle-rate", "0.01")),
   oracleMaxReads: Number(opt("oracle-max-reads", "24")),
@@ -162,6 +164,7 @@ const config = {
   barrierDir: opt("barrier-dir") ?? null,
   startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
+if (!["heap", "journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
 if (!["snapshot", "delta"].includes(config.readerBasisWire)) throw Error("Invalid reader basis wire mode");
 if (!["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
 // [DX-H7] Why: bound aggregate reader and writer cache estimates below half the 8 GiB client grant.
@@ -289,9 +292,13 @@ const cpuMarks: { t: number; cpu: NodeJS.CpuUsage }[] = [];
 
 // ---------------------------------------------------------------- shared state
 
-const model = new Model(rungSubjects);
+let model = new Model(rungSubjects);
+const modelJournal = config.expectedStateRetention === "journal" ? new ModelJournal(path.join(rawDir, `expected-model-${runTag}.bin`), {
+  run: process.env.TRIPLEX_TRACE_RUN ?? runTag, source: process.env.TRIPLEX_TRACE_SOURCE ?? "local", slot: process.env.TRIPLEX_TRACE_SLOT ?? runTag, subjects: rungSubjects,
+}) : undefined;
+const modelWriter = modelJournal ?? model;
 const accounts = accountsFor(rungSubjects);
-const expectations = new ExpectationCache(model);
+let expectations = new ExpectationCache(model);
 const ryowFallbackReasons: Record<string, number> = {};
 const readerFinalDiagnostics: any[] = [];
 const spill = config.readPath === "replica" ? new SpillThread(path.join(rawDir, `observations-${runTag}`)) : undefined;
@@ -418,7 +425,7 @@ async function run() {
   const seed = bulkManifest
     ? await seedFromManifest(bulkManifest, writer, log)
     : await seedRung({
-        comp: writer, onReceipt: (operations, receipt) => model.bindReceipt(operations, receipt, "bulk-seed"), subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
+        comp: writer, onReceipt: (operations, receipt) => modelWriter.bindReceipt(operations, receipt, "bulk-seed"), subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
         recordSubjects: oracleRecordSet, recordAccounts: new Set([...oracleRecordSet].map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
       });
   report.seedPath = bulkManifest ? { kind: "bulk-index", manifest: config.seedManifest, nqSha256: bulkManifest.nq.sha256, quads: bulkManifest.nq.quads } : { kind: "transact" };
@@ -659,8 +666,8 @@ async function run() {
       for (const w of ackWaiters.get(ev.seq) ?? []) w(result);
       ackWaiters.delete(ev.seq);
     }
-    traceSync("driver.expected-state.bind-receipt", () => model.bindReceipt(cmd.operations, receipt!, ev.kind));
-    traceSync("driver.expected-state.add-commit", () => model.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream }));
+    traceSync("driver.expected-state.bind-receipt", () => modelWriter.bindReceipt(cmd.operations, receipt!, ev.kind));
+    traceSync("driver.expected-state.add-commit", () => modelWriter.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream }));
     if (ev.stream === "background") original.set(ev.seq, { operations: cmd.operations, meta, receipt });
     out.position = receipt.position;
     if (oracleRecordSet.has(ev.subject))
@@ -1030,8 +1037,8 @@ async function run() {
     if (!receipt) { log(`history growth: ${late.cmd.commandId} never committed`); continue; }
     const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1, subjects: late.cmd.perSubject.map((x: any) => x.subject) });
     if (late.cmd.perSubject.some((x: any) => oracleRecordSet.has(x.subject))) recordedCommands.push({ commandId: late.cmd.commandId, operations: late.cmd.operations, preconditions: late.cmd.preconditions, actor: "p4-history", receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(late.cmd.operations, receipt) } });
-    model.bindReceipt(late.cmd.operations, receipt, "p4-history");
-    for (const s of late.cmd.perSubject) model.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
+    modelWriter.bindReceipt(late.cmd.operations, receipt, "p4-history");
+    for (const s of late.cmd.perSubject) modelWriter.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
   }
   lateGrowth.length = 0;
   const lastAcked = Math.max(acked.length ? Math.max(...acked.map((a) => a.position)) : seed.lastPosition, await writer.currentPosition().catch(() => 0));
@@ -1079,6 +1086,12 @@ async function run() {
   report.phases = phases;
   save();
   cpuProfileClock("end");
+  // [DX-T1-7] Why: every receipt/commit must hydrate and verify before any expected-world verdict is computed.
+  // Rejected: accepting a smaller heap by skipping the complete model or exposing an incompletely replayed model.
+  if (modelJournal) {
+    const restored = modelJournal.restore(); model = restored.model; expectations = new ExpectationCache(model);
+    report.expectedStateJournal = restored.receipt;
+  }
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
   report.finalPosition = finalPosition === null ? null : coordinate(finalPosition);
@@ -1187,11 +1200,11 @@ async function run() {
         commands++;
         assertions += cmd.operations.filter((o) => o.op === "assert").length;
         const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1, subjects: group });
-        model.bindReceipt(cmd.operations, receipt, "p4-history");
+        modelWriter.bindReceipt(cmd.operations, receipt, "p4-history");
         for (const s of cmd.perSubject) {
           versionIds.set(s.subject, s.added.map((f) => receipt!.triples.find((t) => t.entityId === f.e && t.attribute === f.a)!.id));
           historyVersion.set(s.subject, v);
-          model.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
+          modelWriter.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
         }
         if (group.some((i) => oracleRecordSet.has(i)))
           recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: "p4-history", receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });

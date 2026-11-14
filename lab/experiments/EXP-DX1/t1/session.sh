@@ -50,7 +50,7 @@ elif [[ $kind == fallback-floor ]]; then arms=(baseline fallback-worker fallback
 elif [[ $kind == history-256 ]]; then arms=(baseline history-192 history-192 baseline)
 elif [[ $kind == seed-floor ]]; then arms=(baseline seed-2000 seed-2000 baseline)
 elif [[ $kind == writer-256 ]]; then arms=(baseline writer-core writer-core baseline)
-elif [[ $kind =~ ^(quiet|channel|isolated|index|cache|revision|cores|basis)-(floor|256)$ ]]; then
+elif [[ $kind =~ ^(quiet|channel|isolated|index|cache|revision|cores|basis|model)-(floor|256)$ ]]; then
   [[ ${DX_NATIVE_REPEATS:-2} =~ ^[12]$ ]] || exit 2
   arms=(baseline candidate candidate baseline)
   [[ ${DX_NATIVE_REPEATS:-2} != 1 ]] || arms=(baseline candidate baseline)
@@ -58,12 +58,12 @@ else exit 2;fi
 # [DX-T1-4] Why: setting requests are explicit, identical controls bookend one changed native setting.
 # Rejected: claiming a tag proves the running JVM configuration or comparing hosts across sessions.
 export DX_NATIVE_SETTINGS_READBACK=${DX_NATIVE_SETTINGS_READBACK:-0}
-if [[ $kind =~ ^(quiet|channel|isolated|index|cache|revision|cores|basis)-(floor|256)$ ]]; then
+if [[ $kind =~ ^(quiet|channel|isolated|index|cache|revision|cores|basis|model)-(floor|256)$ ]]; then
   export DX_NATIVE_SETTINGS_READBACK=1
   python3 - "$session_dir/native-request.json" "$kind" <<'PY_NATIVE'
 import os,json,sys
 keys=['DX_QUIET_LOGS','DX_ENCRYPT_CHANNEL','DX_INDEX_THRESHOLD','DX_INDEX_MAX','DX_TX_OBJECT_CACHE','DX_REV_AEVT','DX_CURRENT_TWO_CORES']
-current=sys.argv[2].split('-')[0] in ['cache','revision','cores','basis']
+current=sys.argv[2].split('-')[0] in ['cache','revision','cores','basis','model']
 defaults=['1' if current else '0','true','256m','1g','1g' if sys.argv[2].startswith('cache-') else '1280m','0','0']
 json.dump({'kind':sys.argv[2],'candidateRepeats':int(os.environ.get('DX_NATIVE_REPEATS','2')),'baseline':{k:os.environ.get(k,d) for k,d in zip(keys,defaults)}},open(sys.argv[1],'w'),indent=2)
 PY_NATIVE
@@ -71,7 +71,7 @@ fi
 # [DX-T1-7] Why: stress diagnostics retain 45-second ladder phases and a fresh matched zero-reader tail denominator.
 # Rejected: judging the 1024-reader writer ratio from a truncated 256-only arm or a historical baseline.
 if [[ ${DX_STRESS_DIAGNOSTIC:-0} == 1 ]]; then
-  [[ $kind == basis-256 ]] || exit 2
+  [[ $kind == basis-256 || $kind == model-256 ]] || exit 2
   python3 - "$session_dir/native-request.json" <<'PY_STRESS'
 import json,sys
 p=sys.argv[1];d=json.load(open(p));d['stressDiagnostic']=True
@@ -86,6 +86,14 @@ i=0;session_rc=0
 for arm in "${arms[@]}"; do
   i=$((i+1));tag=$prefix-$i-$arm
   [[ $(git rev-parse HEAD) == $(cat "$session_dir/head.txt") ]] || exit 2
+  if [[ ${DX_STRESS_DIAGNOSTIC:-0} == 1 && $arm == candidate ]]; then
+    zero_mode=(--reader-basis-wire delta)
+    [[ $kind != model-256 ]] || zero_mode=(--expected-state-retention journal)
+    env TRIPLEX_TRACE_LEVEL=summary DX_TX_NATIVE_JFR=0 bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-candidate-zero" --rung 10k --reader-ladder-only --zero-readers --max-readers 0 --level-s 45 --match-duration-s 450 "${zero_mode[@]}" "$@" > "$session_dir/candidate-zero-controller.log" 2>&1 & child=$!
+    zero_rc=0;wait "$child" || zero_rc=$?;child=
+    printf '%s\n' "$zero_rc" > "$session_dir/candidate-zero-exit.txt"
+    [[ $zero_rc == 0 ]] || exit "$zero_rc"
+  fi
   sh lab/bin/host-quiet.sh > "$session_dir/$i-host-before.jsonl" || true
   level=full;components=$arm
   if [[ $arm == off ]]; then level=off;components=;fi
@@ -140,7 +148,7 @@ for arm in "${arms[@]}"; do
     placement=(DX_CPUS_DRIVER=4,5,6,7 DX_CPUS_GW_READ=2,3 DX_MAIN_CPU= DX_WORKER_CPUS=)
     [[ $arm != writer-core ]] || placement=(DX_CPUS_DRIVER=3,4,5,6,7 DX_CPUS_GW_READ=2 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7)
   fi
-  if [[ $kind =~ ^(quiet|channel|isolated|index|cache|revision|cores|basis)-(floor|256)$ ]]; then
+  if [[ $kind =~ ^(quiet|channel|isolated|index|cache|revision|cores|basis|model)-(floor|256)$ ]]; then
     level=summary;components=default
     if [[ $kind == *-256 ]]; then duration=300;level_s=45;reader_args=(--max-readers 256);fi
     placement=(DX_QUIET_LOGS=${DX_QUIET_LOGS:-0} DX_ENCRYPT_CHANNEL=${DX_ENCRYPT_CHANNEL:-true} DX_INDEX_THRESHOLD=${DX_INDEX_THRESHOLD:-256m} DX_INDEX_MAX=${DX_INDEX_MAX:-1g}
@@ -158,7 +166,7 @@ for arm in "${arms[@]}"; do
       esac
     fi
   fi
-  if [[ $kind =~ ^(cache|revision|cores|basis)- ]]; then
+  if [[ $kind =~ ^(cache|revision|cores|basis|model)- ]]; then
     # [DX-T1-6] Why: each current-stack arm changes one declared knob, with native counters for engine trials and the same pinned cohort for wire trials.
     # Rejected: restoring the old shared-core placement, changing heap/index thresholds too, or using native file logs.
     level=full;components=node,gateway,tx-jfr
@@ -176,9 +184,15 @@ for arm in "${arms[@]}"; do
       workload=(--reader-basis-wire $([[ $arm == candidate ]] && echo delta || echo snapshot))
     fi
   fi
+  if [[ $kind == model-* ]]; then
+    level=summary;components=default;placement+=(DX_TX_NATIVE_JFR=0)
+    workload=(--expected-state-retention $([[ $arm == candidate ]] && echo journal || echo heap))
+  fi
   if [[ ${DX_STRESS_DIAGNOSTIC:-0} == 1 ]]; then
     duration=450;reader_args=(--max-readers 1024)
-    workload+=(--baseline-writes "$DX_STACK_EVIDENCE/$prefix-zero/driver/ns-writes.jsonl")
+    zero_tag=$prefix-zero
+    [[ $arm != candidate ]] || zero_tag=$prefix-candidate-zero
+    workload+=(--baseline-writes "$DX_STACK_EVIDENCE/$zero_tag/driver/ns-writes.jsonl")
   fi
   if [[ $arm == full || $arm == summary ]]; then level=$arm;components=default;fi
   export TRIPLEX_TRACE_LEVEL=$level
