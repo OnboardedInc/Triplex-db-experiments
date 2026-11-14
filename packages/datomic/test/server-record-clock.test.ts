@@ -88,6 +88,7 @@ it("retimes only this physical commit's record metadata, not validity or old ass
     valid_from: 7,
     valid_to: 90,
     attribute: ":_tx/change",
+    entity_type: "_Transaction",
     value_json: JSON.stringify({ tripleId: "old", recordedAt: 50, retractedAt: 100, validFrom: 7 }),
   };
   expect(assignRecordTime(row, false, 101, new Set(["a"]))).toMatchObject({
@@ -106,4 +107,23 @@ it("retimes only this physical commit's record metadata, not validity or old ass
   expect(
     JSON.parse(assignRecordTime(row, true, 101, new Set(["old"])).value_json!).recordedAt,
   ).toBe(101);
+});
+
+// [DX-T1-5] Why: SPI data can use reserved-looking attributes without becoming an owned transaction journal.
+// Rejected: rewriting application datetime/JSON values merely because an attribute name matches a journal field.
+it("leaves untyped journal-looking application values untouched", () => {
+  const row: any = {
+    recorded_at: 1,
+    retracted_at: null,
+    entity_type: null,
+    attribute: ":_tx/change",
+    value_json: '{"recordedAt":1,"tripleId":"app"}',
+  };
+  expect(assignRecordTime(row, true, 2, new Set(["app"]))).toMatchObject({
+    recorded_at: 2,
+    value_json: row.value_json,
+  });
+  expect(
+    assignRecordTime({ ...row, attribute: ":_tx/instant", value_datetime: 7 }, true, 2, new Set()),
+  ).toMatchObject({ recorded_at: 2, value_datetime: 7 });
 });

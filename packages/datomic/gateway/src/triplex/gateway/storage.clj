@@ -162,8 +162,8 @@
                (map (fn [row]
                       (cond-> (reduce (fn [m k] (if (contains? m k) (update m k #(vector :triplex/record-time %)) m))
                                       (fact-map row metadata) [:f/recorded-at :f/retracted-at])
-                        (= ":_tx/instant" (:attribute row)) (assoc :f.v/double [:triplex/record-time (:value_datetime row)])
-                        (= ":_tx/change" (:attribute row)) (assoc :f.v/json [:triplex/change (:value_json row)])
+                        (and (= "_Transaction" (:entity_type row)) (= ":_tx/instant" (:attribute row))) (assoc :f.v/double [:triplex/record-time (:value_datetime row)])
+                        (and (= "_Transaction" (:entity_type row)) (= ":_tx/change" (:attribute row))) (assoc :f.v/json [:triplex/change (:value_json row)])
                         (seq (zero-signs row)) (assoc :f/negative-zero [:triplex/negative-zeros (zero-signs row)])
                         (not= (:recorded_position row) position) (assoc :f/position (marker (:recorded_position row)))
                         (= ":_tx/position" (:attribute row)) (assoc :f.v/double [:triplex/double-position (:recorded_position row)])

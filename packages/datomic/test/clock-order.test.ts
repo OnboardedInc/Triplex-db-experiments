@@ -1,6 +1,8 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { randomUUID } from "node:crypto";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { DatabaseScope } from "@triplex-build/triplex/runtime";
@@ -29,7 +31,32 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("distributed clock orde
               String(worker),
             ],
             { env: process.env, maxBuffer: 8 * 1024 ** 2 },
-          ).then((r) => JSON.parse(r.stdout)),
+          ).then((r) => {
+            // [DX-T1-5] Why: permanent tracing can share stdout; bind one complete worker result and preserve the raw stream.
+            // Rejected: parsing all stdout as one JSON object or silently accepting the last arbitrary log line.
+            if (process.env.DX_CLOCK_EVIDENCE_DIR) {
+              mkdirSync(process.env.DX_CLOCK_EVIDENCE_DIR, { recursive: true });
+              writeFileSync(
+                path.join(process.env.DX_CLOCK_EVIDENCE_DIR, `clock-${worker}.jsonl`),
+                r.stdout,
+                { flag: "wx" },
+              );
+              writeFileSync(
+                path.join(process.env.DX_CLOCK_EVIDENCE_DIR, `clock-${worker}.stderr`),
+                r.stderr,
+                { flag: "wx" },
+              );
+            }
+            const results = r.stdout
+              .split("\n")
+              .filter(Boolean)
+              .map((line) => JSON.parse(line))
+              .filter((row) => row.kind === "distributed-clock-worker");
+            expect(results).toHaveLength(1);
+            expect(results[0].worker).toBe(String(worker));
+            expect(results[0].scope).toBe(scope);
+            return results[0];
+          }),
         ),
       );
       const receipts = workers.flatMap((w) => w.receipts);

@@ -36,10 +36,10 @@
                (json/write-str change)))
            (assign-row [text offset clock new-ids]
              (let [start (- offset 2) values (json/read-str (subs text start))
-                   attr (nth values 3)
+                   attr (nth values 3) journal (= "_Transaction" (nth values 14))
                    values (cond-> (assoc values 10 clock)
-                            (= attr ":_tx/instant") (assoc 8 clock)
-                            (= attr ":_tx/change") (assoc 9 (assign-change (nth values 9) clock new-ids)))]
+                            (and journal (= attr ":_tx/instant")) (assoc 8 clock)
+                            (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids)))]
                (str (subs text 0 start) (json/write-str values))))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
      (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids]} payload

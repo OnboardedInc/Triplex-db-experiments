@@ -47,7 +47,15 @@ try {
       ids: receipt.triples.map((t) => t.id),
     });
   }
-  process.stdout.write(JSON.stringify({ worker, receipts, diagnostics: client.commitDiagnostics }));
+  process.stdout.write(
+    JSON.stringify({
+      kind: "distributed-clock-worker",
+      scope,
+      worker,
+      receipts,
+      diagnostics: client.commitDiagnostics,
+    }) + "\n",
+  );
 } finally {
   await runtime.dispose();
   client.close();

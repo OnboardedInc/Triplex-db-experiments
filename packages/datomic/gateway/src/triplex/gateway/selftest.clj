@@ -414,13 +414,13 @@
     (let [scope-text (str "[\"triplex-scope-v1\",\"test\",\"dxt1\",\"server-clock-" layout "-" head-v2 "-" strict "\",0]")
           base "datomic:mem://" created (gateway/create-scope! base scope-text layout head-v2 strict)
           name (:db created) uri (gateway/db-uri name) conn (gateway/connection uri)
-          write! (fn [p clock]
+          write! (fn [p clock & [extra]]
                    (storage/commit! name conn (gateway/sync-db uri)
                      (row-input {"sourceK" (dec p) "position" p "operationId" (str "server-" p) "replaySafe" false
                        "newIds" [(str "row-" p)] "claims" []
-                       "rows" [(storage/wire-row {:id (str "row-" p) :entity_id "root" :attribute ":v" :value_type "string"
+                       "rows" [(storage/wire-row (merge {:id (str "row-" p) :entity_id "root" :attribute ":v" :value_type "string"
                           :value_string "v" :recorded_at clock :recorded_position p :valid_from -500.0 :valid_to 5000.0
-                          :schema_version 1 :tx_id (str "tx-" p)})]})))]
+                          :schema_version 1 :tx_id (str "tx-" p)} extra))]})))]
       (try
         (is (= 100.0 (codec/decode-value (:recordedAt (write! 1 100.0)))))
         (is (= (if strict 101.0 7.0) (codec/decode-value (:recordedAt (write! 2 7.0)))))
@@ -429,6 +429,17 @@
           (is (= (if strict 101.0 7.0) (:recorded_at second)))
           (is (= -500.0 (:valid_from second))) (is (= 5000.0 (:valid_to second)))
           (is (= (if strict 101.0 7.0) (codec/decode-value (:recordedAt (storage/operation db "server-2"))))))
+        (write! 3 1.0 {:attribute ":_tx/instant" :value_type "datetime" :value_string nil :value_datetime 42.0})
+        (let [row (first (map storage/decode-row (:rows (storage/read-rows name (gateway/sync-db uri) {"id" "row-3" "history" true}))))]
+          (is (= (if strict 102.0 1.0) (:recorded_at row)))
+          (is (= 42.0 (:value_datetime row)) "Untyped journal-looking values remain application data"))
+        (when strict
+          (write! 4 1.0e20)
+          (is (> (codec/decode-value (:recordedAt (write! 5 1.0e20))) 1.0e20))
+          (write! 6 Double/MAX_VALUE)
+          (let [error (try (write! 7 0.0) nil (catch clojure.lang.ExceptionInfo e e))]
+            (is (= "ClockExhausted" (:code (ex-data error))))
+            (is (= 6 (storage/head-position name (gateway/sync-db uri))))))
         (finally (gateway/delete-scope! base scope-text))))))
 
 (defn -main [& _]

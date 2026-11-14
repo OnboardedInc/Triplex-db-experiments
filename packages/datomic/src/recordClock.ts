@@ -22,8 +22,9 @@ export function assignRecordTime(
   newIds: ReadonlySet<string>,
 ): TripleRow {
   if (!Number.isFinite(instant)) throw new TypeError("Invalid assigned record clock");
+  const journal = row.entity_type === "_Transaction";
   let value_json = row.value_json;
-  if (fresh && row.attribute === ":_tx/change" && value_json !== null) {
+  if (fresh && journal && row.attribute === ":_tx/change" && value_json !== null) {
     const change = JSON.parse(value_json);
     if (newIds.has(change.tripleId)) change.recordedAt = instant;
     if (Object.hasOwn(change, "retractedAt")) change.retractedAt = instant;
@@ -33,7 +34,7 @@ export function assignRecordTime(
     ...row,
     recorded_at: fresh ? instant : row.recorded_at,
     retracted_at: row.retracted_at === null ? null : instant,
-    ...(fresh && row.attribute === ":_tx/instant" ? { value_datetime: instant } : {}),
+    ...(fresh && journal && row.attribute === ":_tx/instant" ? { value_datetime: instant } : {}),
     value_json,
   };
 }

@@ -12,16 +12,16 @@ const debug=process.env.TRIPLEX_TRACE_DEBUG==='1'?['--inspect=0.0.0.0:8508']:[];
 const profile=process.env.TRIPLEX_TRACE_CPU_PROFILE==='1'?['--cpu-prof','--cpu-prof-dir=/driver/trace/raw','--cpu-prof-interval=1000']:[];
 // [DX-T1-5] Why: native package and differential gates share the owned smoke lease before its timed workload.
 // Rejected: a second ad hoc Docker lifecycle, or inferring exactness from mocked clock tests.
-if (process.env.DX_NATIVE_GATES === '1') {
+if (['1','clock'].includes(process.env.DX_NATIVE_GATES ?? '')) {
   const gates = [
     ['node_modules/.bin/vitest','run','--config','lab/experiments/EXP-DX1/b5/vitest.config.ts','--testTimeout','900000',
-      'packages/datomic/test/layout-differential.test.ts','packages/datomic/test/concurrent-commits.test.ts','packages/datomic/test/clock-order.test.ts'],
+      ...(process.env.DX_NATIVE_GATES === '1' ? ['packages/datomic/test/layout-differential.test.ts','packages/datomic/test/concurrent-commits.test.ts'] : []),'packages/datomic/test/clock-order.test.ts'],
     ['node','--experimental-strip-types','lab/experiments/EXP-DX1/r3/differential.ts'],
   ];
   for (const command of gates) {
     const rc = await new Promise(resolve => {
       const gate = spawn(command[0],command.slice(1),{stdio:'inherit',env:{...process.env,DATOMIC_INTEGRATION:'1',
-        DATOMIC_GATEWAY_URL:process.env.DATOMIC_URL,DX_B5_SCENARIOS:'300'}});
+        DATOMIC_GATEWAY_URL:process.env.DATOMIC_URL,DX_B5_SCENARIOS:'300',DX_CLOCK_EVIDENCE_DIR:'/driver/native-gates'}});
       gate.on('exit',code=>resolve(code??1));gate.on('error',()=>resolve(127));
       for(const sig of ['SIGTERM','SIGINT'])process.once(sig,()=>gate.kill(sig));
     });
