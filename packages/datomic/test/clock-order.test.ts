@@ -13,7 +13,9 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("distributed clock orde
   it("orders 4 processes x 500 public commands without irregular record-time cuts", async () => {
     const scope = DatabaseScope.test(`b5-clock-${randomUUID()}`),
       client = new DatomicClient(process.env.DATOMIC_GATEWAY_URL ?? "http://127.0.0.1:8505", 30000);
-    await client.create(scope);
+    // [DX-T1-5] Why: independently scheduled processes must learn the strictly increasing server-assigned clock.
+    // Rejected: testing only a non-strict scope's client ticket/replay path after removing it from strict scopes.
+    await client.create(scope, "lean", true);
     const adapter = makeDatomicStorageAdapter(client, scope);
     try {
       const workers = await Promise.all(
@@ -33,6 +35,12 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("distributed clock orde
       );
       const receipts = workers.flatMap((w) => w.receipts);
       expect(receipts).toHaveLength(2000);
+      for (const worker of workers) {
+        expect(worker.diagnostics.clockReplays).toBe(0);
+        expect(worker.diagnostics.ticketWaitMicros).toBe(0);
+        expect(worker.diagnostics.serverAssignedSubmissions).toBe(500);
+        expect(worker.diagnostics.clientOrderedSubmissions).toBe(0);
+      }
       receipts.sort((a, b) => a.position - b.position);
       expect(new Set(receipts.map((r) => r.instant)).size).toBe(receipts.length);
       for (let i = 1; i < receipts.length; i++)

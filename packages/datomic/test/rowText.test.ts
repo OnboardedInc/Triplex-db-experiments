@@ -193,3 +193,25 @@ it("rejects malformed modern wire positions and non-null journal placeholders", 
   values[6] = 1;
   expect(() => decodeRowTextColumns(values, "2")).toThrow();
 });
+
+// [DX-T1-5] Why: JVM-assigned clocks use equivalent JSON numbers; binding still checks the exact duplicated header.
+// Rejected: accepting a forged ID, validity or reference header to accommodate serializer differences.
+it("accepts JVM JSON numeric spelling while checking every header and column", () => {
+  const row = { ...base(), recorded_at: 1000, valid_from: 10, value_number: 3 };
+  const encoded = encodeRowText(row);
+  const body = encoded.indexOf('["0000000000000001"');
+  const numbers = encoded.slice(body).replace(",1000,10,", ",1.0E3,10.0,");
+  const text = encoded.slice(0, body) + numbers;
+  expect(text).not.toBe(encoded);
+  expect(decodeRowText(text)).toEqual(row);
+  expect(() => decodeRowText(text.replace("20002id", "20002xx"))).toThrow("header");
+  expect(() => decodeRowText(text.slice(0, body) + numbers.replace(",10.0,", ",11.0,"))).toThrow(
+    "header",
+  );
+  expect(() => decodeRowText(text.slice(0, body) + numbers.replace(",1.0E3,", ',"1000",'))).toThrow(
+    "number",
+  );
+  expect(() => decodeRowText(text.slice(0, body) + numbers.replace("]", ",null]"))).toThrow(
+    "columns",
+  );
+});

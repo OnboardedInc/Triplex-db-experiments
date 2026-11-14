@@ -133,10 +133,11 @@ export function decodeRowText(text: string): TripleRow {
   const length = Number.parseInt(text.slice(1, 5), 16);
   const start = 5 + length;
   const refLength = Number.parseInt(text.slice(start + 32, start + 36), 16);
-  const row = decodeRowTextArray(
-    JSON.parse(text.slice(start + 36 + refLength + (text[0] === "2" ? 1 : 0))),
-    text[0],
-  );
-  if (encodeRowText(row, text[0]) !== text) throw new TypeError("Noncanonical row text header");
+  const body = start + 36 + refLength + (text[0] === "2" ? 1 : 0);
+  const row = decodeRowTextArray(JSON.parse(text.slice(body)), text[0]);
+  // [DX-T1-5] Why: the server assigns record time using JVM JSON spelling; headers and typed values remain exact.
+  // Rejected: comparing entire JSON bytes to Node's number/escape spelling (valid server rows fail bootstrap).
+  if (encodeRowText(row, text[0]).slice(0, body) !== text.slice(0, body))
+    throw new TypeError("Noncanonical row text header");
   return row;
 }
