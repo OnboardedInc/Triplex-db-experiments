@@ -8,6 +8,7 @@ import {
   validateNativeSettings,
   nativeBookendComparison,
   validateNativeAffinity,
+  validateNativeBands,
 } from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
 const nativeKind = /^(quiet|channel|isolated|index)-(floor|256)$/.exec(kind);
@@ -388,6 +389,7 @@ for (const [i, arm] of arms.entries()) {
     bench.writer.expired !== 0
   )
     throw Error("Incomplete or changed frozen 200-second trace");
+  if (readerDiagnostic) validateNativeBands(bench, writes);
   // [DX-T1-4] Why: host context belongs to the measured requests; post-run oracle CPU is not latency interference.
   // Rejected: reporting a whole-arm CPU median dominated by independent validation after the timed work.
   const hostContext = (start, end) => {

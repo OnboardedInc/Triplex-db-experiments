@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { Histogram } from "../bench/lib/hist.ts";
 
 export const QUIET_LOGGERS = [
   "datomic.transaction",
@@ -16,7 +17,7 @@ export function nativeBookendComparison(controls, candidates) {
   if (
     controls.length !== 2 ||
     ![1, 2].includes(candidates.length) ||
-    [...controls, ...candidates].some((v) => !Number.isFinite(v))
+    [...controls, ...candidates].some((v) => !Number.isFinite(v) || v < 0)
   )
     throw Error("Invalid native comparison denominator");
   const baseline = (controls[0] + controls[1]) / 2;
@@ -35,6 +36,12 @@ export function nativeBookendComparison(controls, candidates) {
 // [DX-T1-4] Why: an affinity receipt must describe this attempt's running threads, not a copied placement log.
 // Rejected: checking requested masks without source/slot/time and actual kernel readbacks.
 export function validateNativeAffinity(rows, manifest, endedAt) {
+  if (
+    !Number.isFinite(manifest.startedAt) ||
+    !Number.isFinite(endedAt) ||
+    endedAt < manifest.startedAt
+  )
+    throw Error("Invalid affinity attempt clock");
   if (!rows.some((r) => r.thread === 0) || rows.filter((r) => r.thread !== 0).length < 4)
     throw Error("Native writer/worker affinity evidence absent");
   const expand = (s) =>
@@ -86,6 +93,7 @@ export function quietLogback(xml) {
 // [DX-T1-4] Why: a setting comparison needs content, startup freshness and the exact source/slot binding.
 // Rejected: accepting requested environment variables as evidence that a running JVM loaded them.
 export function validateNativeSettings({ manifest, rows, expected, properties }) {
+  if (!Number.isFinite(manifest.startedAt)) throw Error("Missing native attempt start");
   if (rows.length !== 3 || new Set(rows.map((r) => r.process)).size !== 3)
     throw Error("Missing/duplicate running JVM settings");
   const quiet = expected.DX_QUIET_LOGS === "1";
@@ -123,6 +131,43 @@ export function validateNativeSettings({ manifest, rows, expected, properties })
     "object-cache-max": "1g",
   }))
     if (props[name] !== value) throw Error("Native property mismatch " + name);
+  return true;
+}
+// [DX-T1-4] Why: L256 gains must match fresh primary writer bytes, not a cached summary table.
+// Rejected: accepting a reported percentile without its exact settled-window population and histogram rule.
+export function validateNativeBands(bench, writes) {
+  const phase = bench.phases.find((p) => p.name === "L256");
+  if (
+    !phase ||
+    !Number.isFinite(phase.start) ||
+    !Number.isFinite(phase.end) ||
+    !Number.isFinite(bench.config.settleS)
+  )
+    throw Error("Missing L256 clock window");
+  const selected = writes.filter(
+    (w) => w.scheduledAt >= phase.start + 1000 * bench.config.settleS && w.scheduledAt < phase.end,
+  );
+  for (const [lo, hi, name] of [
+    [5, 10, "5-10"],
+    [11, 25, "11-25"],
+    [26, 50, "26-50"],
+  ]) {
+    const histogram = new Histogram();
+    for (const w of selected) {
+      if (
+        !Number.isSafeInteger(w.facts) ||
+        w.facts < 5 ||
+        w.facts > 50 ||
+        !Number.isFinite(w.latencyMs) ||
+        w.latencyMs < 0
+      )
+        throw Error("Invalid L256 writer content");
+      if (w.facts >= lo && w.facts <= hi) histogram.recordMs(w.latencyMs);
+    }
+    for (const [key, value] of Object.entries(histogram.summary()))
+      if (bench.priorities?.P2?.bandsAtL256?.[name]?.[key] !== value)
+        throw Error("L256 summary differs from writer bytes");
+  }
   return true;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href)

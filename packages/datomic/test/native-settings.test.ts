@@ -5,9 +5,28 @@ import {
   QUIET_LOGGERS,
   nativeBookendComparison,
   validateNativeAffinity,
+  validateNativeBands,
 } from "../../../lab/trace/native-settings.mjs";
 
 describe("native setting comparison evidence", () => {
+  it("recomputes L256 histograms from the settled writer population", async () => {
+    const { Histogram } = await import("../../../lab/bench/lib/hist.ts");
+    const h = new Histogram();
+    h.recordMs(1.25);
+    const empty = new Histogram().summary();
+    const bench = {
+      config: { settleS: 2 },
+      phases: [{ name: "L256", start: 1000, end: 5000 }],
+      priorities: { P2: { bandsAtL256: { "5-10": h.summary(), "11-25": empty, "26-50": empty } } },
+    };
+    const writes = [
+      { scheduledAt: 3000, facts: 5, latencyMs: 1.25 },
+      { scheduledAt: 2000, facts: 5, latencyMs: 99 },
+    ];
+    expect(validateNativeBands(bench, writes)).toBe(true);
+    bench.priorities.P2.bandsAtL256["5-10"].p50Ms = 1.3;
+    expect(() => validateNativeBands(bench, writes)).toThrow("writer bytes");
+  });
   it("rejects a stale affinity record even when requested CPU masks match", () => {
     const manifest = { tag: "attempt", slot: "slot", source: "source", startedAt: 1000 };
     const rows = Array.from({ length: 5 }, (_, thread) => ({
