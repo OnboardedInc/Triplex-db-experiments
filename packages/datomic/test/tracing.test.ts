@@ -33,6 +33,45 @@ function rows(dir: string) {
 }
 
 describe("permanent request tracing", () => {
+  it("keeps command identity through concurrent managed Effect runs, yields, HTTP and foreign dispatcher flushes", async () => {
+    const { api, dir } = await recorder("summary");
+    const { Effect, ManagedRuntime, Layer, Scheduler } = await import("effect");
+    const { DatomicClient } = await import("../src/DatomicClient.js");
+    const seen = new Map<number, string>();
+    const server = http.createServer((req, res) => {
+      let text = "";
+      req.on("data", (chunk) => { text += chunk; });
+      req.on("end", () => {
+        const id = JSON.parse(text).id;
+        seen.set(id, String(req.headers.traceparent).split("-")[1]!);
+        setTimeout(() => res.end("{}"), id % 3);
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const client = new DatomicClient(`http://127.0.0.1:${(server.address() as import("node:net").AddressInfo).port}`);
+    const runtime = ManagedRuntime.make(Layer.empty);
+    const traces = Array.from({ length: 40 }, (_, id) => api.beginTrace("commit", "effect.command", { id })!);
+    try {
+      await Promise.all(traces.map((trace, id) => api.withTrace(trace, () => runtime.runPromise(Effect.gen(function*() {
+        for (let i = 0; i < 5; i++) yield* Effect.yieldNow;
+        yield* Effect.promise(() => client.request("POST", "/command", { id }));
+        yield* Effect.yieldNow;
+        expect(api.currentTrace()?.traceId).toBe(trace.traceId);
+      }), { scheduler: api.traceScheduler(new Scheduler.MixedScheduler()) })).finally(() => api.finishTrace(trace))));
+      traces.forEach((trace, id) => expect(seen.get(id)).toBe(trace.traceId));
+      let resumed: string | undefined;
+      const dispatcher = api.withTrace(traces[0], () => api.traceScheduler(new Scheduler.MixedScheduler()).makeDispatcher());
+      api.withTrace(traces[1], () => dispatcher.scheduleTask(() => { resumed = api.currentTrace()?.traceId; }, 0));
+      dispatcher.flush();
+      expect(resumed).toBe(traces[0]!.traceId);
+    } finally {
+      client.close();
+      await runtime.dispose();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      await api.flushTracing();
+    }
+    expect(rows(dir).filter((row) => row.name === "effect.command")).toHaveLength(40);
+  });
   it("retains deferred work as a linked overlay after its request is finished", async () => {
     const { api, dir } = await recorder("summary");
     const t = api.beginTrace("commit", "completed")!;

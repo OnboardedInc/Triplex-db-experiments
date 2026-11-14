@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { AsyncLocalStorage } from "node:async_hooks";
 import { DeferredPublications } from "./lib/deferred-publication.ts";
 import { cpuProfileClock } from "./lib/cpu-profile.ts";
 import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, currentTraceStep, traceResource, type Trace } from "./lib/tracing.ts";
@@ -574,14 +573,14 @@ async function run() {
   const publicationTimes = new Map<number, any>();
   let probeThread: ProbeThread | null = null;
   const jobTraces = new WeakMap<Job, Trace>();
-  // [DX-T1-5] Why: witness release follows the same measured job boundary even when tracing is off.
-  // Rejected: using trace presence as an ACK signal, or persisting on a timer before the job finishes.
-  const jobContext = new AsyncLocalStorage<Job>();
+  // [DX-T1-5] Why: native claim identity binds the witness to its measured job even with tracing off or interleaved fibers.
+  // Rejected: ambient async context as proof of transaction ownership (failed the concurrent ordering gate).
+  const jobsByCommandId = new Map<string, Job>();
   const completedJobs = new WeakSet<Job>();
   const capturedByJob = new WeakMap<Job, any[]>();
   const execute = (job: Job) => {
     const trace = jobTraces.get(job);
-    return jobContext.run(job, () => withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job))));
+    return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job)));
   };
   const executeTraced = async (job: Job) => {
     const ev = job.ev;
@@ -590,6 +589,9 @@ async function run() {
     if (ev.resend) return resend(job, out);
     const st = state.get(ev.subject)!;
     const cmd = traceSync("driver.plan-and-encode-command", () => buildTraceCommand({ runTag, event: ev, state: st, scheduledAbsMs: job.scheduledAt }));
+    if (jobsByCommandId.has(cmd.commandId)) throw Error("Duplicate active writer command identity");
+    jobsByCommandId.set(cmd.commandId, job);
+    out.commandId = cmd.commandId;
     const meta = { commandId: cmd.commandId, actor: ev.kind, preconditions: cmd.preconditions };
     let receipt: Receipt | null = null;
     while (!receipt && out.attempts < 6) {
@@ -680,6 +682,8 @@ async function run() {
     onDone: (r: JobResult<Job>) => {
       completedJobs.add(r.job);
       for (const key of capturedByJob.get(r.job) ?? []) deferredPublications?.release(key, r.finishedAt);
+      const commandId = outcomes.get(okey(r.job.ev))?.commandId;
+      if (commandId && jobsByCommandId.get(commandId) === r.job) jobsByCommandId.delete(commandId);
       const ev = r.job.ev;
       const trace = jobTraces.get(r.job) ?? beginTrace("commit", "driver.expired", { stream: ev.stream, seq: ev.seq }, r.job.scheduledAt);
       const queue = r.queue?.map((q) => ({
@@ -779,12 +783,14 @@ async function run() {
     open: () => openComposition(config.composition, lane, scopeName), log, crashes: crashPlan,
   });
   }
-  if (publicationWriter) observeDatomicPublication((position, operationId, diagnostics) => {
+  if (publicationWriter) observeDatomicPublication((position, operationId, diagnostics, commandIds = []) => {
     const publicationStartedAt = now();
-    const key = feed!.publicationKey(position), job = jobContext.getStore();
+    const owners = [...new Set(commandIds.flatMap((id) => jobsByCommandId.has(id) ? [jobsByCommandId.get(id)!] : []))];
+    if (owners.length > 1) throw Error("Native transaction crosses measured writer jobs");
+    const key = feed!.publicationKey(position), job = owners[0];
     if (deferredPublications) {
       const held = !!job && !completedJobs.has(job);
-      traceSync("driver.publication.capture", () => deferredPublications.capture(key, operationId, job ? jobTraces.get(job)?.traceId ?? null : null, held));
+      withTrace(job && jobTraces.get(job), () => traceSync("driver.publication.capture", () => deferredPublications.capture(key, operationId, job ? jobTraces.get(job)?.traceId ?? null : null, held)));
       if (held) (capturedByJob.get(job!) ?? capturedByJob.set(job!, []).get(job!)!).push(key);
     } else traceSync("driver.publication", () => publicationWriter.publish(key, operationId));
     publicationTimes.set(position, { publicationStartedAt, publicationOperationId: operationId, ...(deferredPublications ? { publicationDeferred: true, publicationCapturedAt: now() } : { publicationDurableAt: now() }), ...(diagnostics === undefined ? {} : { diagnostics }) });

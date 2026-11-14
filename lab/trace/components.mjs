@@ -40,6 +40,7 @@ export function configuration(env = process.env) {
     requireTransactorStats: has("tx-jfr") && has("gateway") && env.DX_TX_NATIVE_JFR === "1",
     session: env.TRIPLEX_TRACE_SESSION ?? null,
     queueExpected: has("node"),
+    nativeCommandBinding: has("node"),
     requireClockBinding: has("node") && has("gateway"),
     flags: Object.fromEntries(
       [

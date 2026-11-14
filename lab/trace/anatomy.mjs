@@ -8,6 +8,21 @@ const quantile = (xs, p) =>
   xs.length ? [...xs].sort((a, b) => a - b)[Math.max(0, Math.ceil(xs.length * p) - 1)] : null;
 const stats = (xs) => ({ n: xs.length, p50: quantile(xs, 0.5), p99: quantile(xs, 0.99) });
 const n = (x) => (Number.isFinite(x) ? x.toFixed(3) : "n/a");
+// [DX-T1-5] Why: request ownership is proven by the acknowledged native transaction, not by coincident timestamps.
+// Rejected: accepting a trace whose encoding/HTTP spans actually belong to a concurrently running command.
+export function validateCommandTrace(writer, requests) {
+  if (!Number.isSafeInteger(writer.position) || !writer.commandId || !writer.publicationOperationId)
+    throw Error("Missing writer native command identity");
+  const hash = (value) => createHash("sha256").update(value).digest("hex");
+  const matches = requests.flatMap((request) => request.spans).filter((span) =>
+    span.name === "client.transact-encode" &&
+    span.attributes?.appliedPosition === writer.position &&
+    span.attributes.operationHash === hash(writer.publicationOperationId) &&
+    span.attributes.commandHash === hash(JSON.stringify([writer.commandId])),
+  );
+  if (matches.length !== 1) throw Error("Writer/native ACK trace binding mismatch");
+  return true;
+}
 // [DX-T1-4] Why: directional residuals retain callback/dispatch time and observable boundary overlap.
 // Rejected: clamping a negative cross-process residual to zero and silently inflating another layer.
 export function exchangeAnatomy(owner, gateway) {

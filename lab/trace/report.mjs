@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import { loadCpuProfile } from "./cpu-profile.mjs";
 import { bindNativeTransaction } from "./native-transactions.mjs";
-import { writeAnatomy, validateDeferredOrder } from "./anatomy.mjs";
+import { writeAnatomy, validateDeferredOrder, validateCommandTrace } from "./anatomy.mjs";
 import { packHtml } from "./viewer.mjs";
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -754,6 +754,10 @@ export async function buildReport(runDir, { copyTo } = {}) {
       if (!w.traceId || !ids.has(w.traceId)) missingCommits++;
       else {
         const trace = byId.get(w.traceId);
+        if (manifest?.nativeCommandBinding && w.outcome === "committed" && w.stream === "background" && !w.resend) {
+          try { validateCommandTrace(w, [trace.root, ...linked(trace.root)]); }
+          catch (error) { errors.push(String(error)); }
+        }
         if (Number.isFinite(w.scheduledAt) && Math.abs(trace.root.start - w.scheduledAt) > 1)
           errors.push("Writer/trace offer timestamp mismatch");
         if (manifest?.queueExpected) {

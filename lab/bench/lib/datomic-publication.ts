@@ -1,6 +1,6 @@
 // [DX-H1] Why: Datomic publication is the TS client's transact-result boundary (TARGETS / Q98).
 // Rejected: stamping at the driver ACK or feed poll (would omit source-to-consumer time).
-let observer: ((position: number, operationId: string, diagnostics?: unknown) => void) | undefined;
+let observer: ((position: number, operationId: string, diagnostics?: unknown, commandIds?: readonly string[]) => void) | undefined;
 const installed = new WeakSet<object>();
 // [DX-R3-P9] Why: alternating arms need actual source refusals and adapter replay counters without extra requests.
 // Rejected: inferring clock conflicts from terminal writer outcomes (internal retries can hide them).
@@ -87,7 +87,11 @@ export function installDatomicPublication(api: any) {
         !input.operationId
       )
         throw new Error("Datomic publication response/input binding mismatch");
-      observer(position, input.operationId, result.diagnostics ?? result.commitDiagnostics);
+      // [DX-T1-5] Why: release a witness using the actual transaction claims, independent of a resumed Effect's ambient context.
+      // Rejected: guessing the owning command from AsyncLocalStorage (a shared continuation can run under another request).
+      const commandIds = input.claims.map((claim: any) => claim.commandId);
+      if (commandIds.some((id: unknown) => typeof id !== "string" || !id)) throw Error("Invalid publication command identity");
+      observer(position, input.operationId, result.diagnostics ?? result.commitDiagnostics, commandIds);
     }
     return result;
   };

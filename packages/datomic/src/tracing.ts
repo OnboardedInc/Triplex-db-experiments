@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { Scheduler } from "effect";
 import { randomBytes } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import {
@@ -371,6 +372,26 @@ export function bindTraceCallback<A extends unknown[], R>(
 ): (...args: A) => R {
   const active = context.getStore();
   return active ? (...args: A) => context.run(active, () => callback(...args)) : callback;
+}
+// [DX-T1-5] Why: pooled Effect dispatch can resume under a different request; bind each run's scheduler to its initiating trace.
+// Rejected: changing Effect's global scheduler, operation budget or task order to repair context propagation.
+export function traceScheduler(base: Scheduler.Scheduler): Scheduler.Scheduler {
+  const owner = context.getStore();
+  return {
+    executionMode: base.executionMode,
+    shouldYield: (fiber) => base.shouldYield(fiber),
+    makeDispatcher: () => {
+      const dispatcher = base.makeDispatcher();
+      return {
+        scheduleTask: (task, priority) => {
+          const active = context.getStore();
+          const selected = active?.trace === owner?.trace ? active : owner;
+          dispatcher.scheduleTask(() => selected ? context.run(selected, task) : context.exit(task), priority);
+        },
+        flush: () => dispatcher.flush(),
+      };
+    },
+  };
 }
 export function beginSpan(
   name: string,

@@ -1,6 +1,6 @@
 import { ByteCache } from "./ByteCache.js";
 import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { decodeEntity, type CachedEntity, type ReachWire } from "./reach.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -886,6 +886,13 @@ export class DatomicClient {
           throw new TypeError("Commit assigned record clock mismatch");
       }
       this.lastCommit = { db, position, t: String(t.v) };
+      // [DX-T1-5] Why: a native ACK's actual content must identify the command in its trace, even across interleaved fibers.
+      // Rejected: accepting matching timestamps/ambient trace IDs alone (can silently describe a different request).
+      if (encodeSpan) encodeSpan.attributes = {
+        appliedPosition: position,
+        operationHash: createHash("sha256").update(input.operationId).digest("hex"),
+        commandHash: createHash("sha256").update(JSON.stringify(input.claims.map((claim) => claim.commandId))).digest("hex"),
+      };
     }
     return response;
   }

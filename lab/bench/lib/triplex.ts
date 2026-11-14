@@ -13,7 +13,7 @@ import { installDatomicPublication } from "./datomic-publication.ts";
 import fs from "node:fs";
 import { isMainThread, workerData } from "node:worker_threads";
 import { pathToFileURL } from "node:url";
-import { Context, Effect, ManagedRuntime } from "effect";
+import { Context, Effect, ManagedRuntime, Scheduler } from "effect";
 
 export const REPO = path.resolve(import.meta.dirname, "../../..");
 const dist = (pkg: string, file: string) =>
@@ -89,14 +89,18 @@ export async function openTriples(
     ...(clock === undefined ? {} : { deterministic: { startTime: Number(clock), seed: scope } }),
   });
   const managed: any = (ManagedRuntime as any).make(layer);
-  const triples = await managed.runPromise(Effect.service(core.Triples));
+  const traceApi: any = lane === "datomic" ? await import(dist("datomic", "index.js")) : undefined;
+  // [DX-T1-5] Why: each public run carries its initiating trace through pooled Effect resumptions without changing scheduling policy.
+  // Rejected: one shared scheduler wrapper, which would bind all jobs to the first request's context.
+  const options = () => traceApi ? { scheduler: traceApi.traceScheduler(new Scheduler.MixedScheduler()) } : undefined;
+  const triples = await managed.runPromise(Effect.service(core.Triples), options());
   return {
     backend: { name: backend.name, url: backend.url, queryPath: backend.queryPath },
     scope,
     triples,
-    storage: await managed.runPromise(Effect.service(runtimeApi.StorageAdapter)),
-    run: (effect: any) => managed.runPromise(effect),
-    runExit: (effect: any) => managed.runPromiseExit(effect),
+    storage: await managed.runPromise(Effect.service(runtimeApi.StorageAdapter), options()),
+    run: (effect: any) => managed.runPromise(effect, options()),
+    runExit: (effect: any) => managed.runPromiseExit(effect, options()),
     close: () => managed.dispose(),
   };
 }
