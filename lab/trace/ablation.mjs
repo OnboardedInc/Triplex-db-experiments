@@ -476,9 +476,19 @@ for (const [i, arm] of arms.entries()) {
     digest: bench.trace.digest,
     commands: writes.length,
     writerCountersDelta: Object.fromEntries(
-      Object.entries(bench.writerSourceDiagnostics?.end?.counters ?? {}).map(([k, v]) => [
+      [
+        "optimisticAttempts",
+        "optimisticFallbacks",
+        "conflicts",
+        "replays",
+        "clockReplays",
+        "serverAssignedSubmissions",
+        "clientOrderedSubmissions",
+        "ticketWaitMicros",
+      ].map((k) => [
         k,
-        v - (bench.writerSourceDiagnostics?.start?.counters?.[k] ?? 0),
+        (bench.writerSourceDiagnostics?.end?.counters?.[k] ?? 0) -
+          (bench.writerSourceDiagnostics?.start?.counters?.[k] ?? 0),
       ]),
     ),
     p50Ms: percentile(
@@ -558,6 +568,16 @@ const text = [
   `Controls: ${controls.map((r) => r.tag).join(", ")}. Each arm: ${rows[0].commands} completed primary commands. Observed differences are diagnostic; recorder effects can interact and host noise is retained.`,
   "",
 ];
+if (kind.startsWith("record-clock-"))
+  text.push(
+    "| arm | server submissions | ordered submissions | clock replays | ticket wait total ms |",
+    "| --- | ---: | ---: | ---: | ---: |",
+    ...rows.map(
+      (r) =>
+        `| ${r.arm} | ${r.writerCountersDelta.serverAssignedSubmissions} | ${r.writerCountersDelta.clientOrderedSubmissions} | ${r.writerCountersDelta.clockReplays} | ${(r.writerCountersDelta.ticketWaitMicros / 1000).toFixed(3)} |`,
+    ),
+    "",
+  );
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 if (readerDiagnostic)
   text.push(
