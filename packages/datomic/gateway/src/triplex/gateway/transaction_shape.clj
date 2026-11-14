@@ -30,9 +30,9 @@
          :valueUtf8Bytes (reduce + (map :valueUtf8Bytes rows))
          :ednUtf8Bytes (reduce + (map :ednUtf8Bytes rows)) :attributes attributes}))))
 
-(defn -main [& _]
+(defn -main [& [request-file]]
   (try
-    (let [text (slurp *in*) input (json/read-str text)
+    (let [text (if request-file (slurp request-file) (slurp *in*)) input (json/read-str text)
           {scope-text "scope" commands "commands"} input
           started (System/currentTimeMillis)
           template (System/getenv "DATOMIC_URI_TEMPLATE")]

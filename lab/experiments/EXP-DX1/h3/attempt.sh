@@ -248,6 +248,9 @@ run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX
 # Rejected: measuring submitted JSON or adding a census to each commit's acknowledgement path.
 if [[ ${DX_TRANSACTION_CENSUS:-0} == 1 ]]; then
   node lab/trace/transaction-shape.mjs prepare "$out"
-  run_stage docker exec -i -e 'DATOMIC_JAVA_OPTS=-Xms32m -Xmx384m -Dlogback.configurationFile=/dxh1/quiet-logback.xml' "$prefix-gw-w" /opt/datomic/bin/run -m triplex.gateway.transaction-shape < "$out/transaction-shape-input.json" > "$out/transaction-shape-stdout.jsonl" 2> "$out/transaction-shape-stderr.log"
+  # [DX-T1-5] Why: background stages inherit closed stdin; the hashed request file survives that process boundary exactly.
+  # Rejected: redirecting stdin around run_stage (Bash replaces the asynchronous child's input with /dev/null).
+  run_stage docker cp "$out/transaction-shape-input.json" "$prefix-gw-w:/tmp/transaction-shape-input.json"
+  run_stage docker exec -e 'DATOMIC_JAVA_OPTS=-Xms32m -Xmx384m -Dlogback.configurationFile=/dxh1/quiet-logback.xml' "$prefix-gw-w" /opt/datomic/bin/run -m triplex.gateway.transaction-shape /tmp/transaction-shape-input.json > "$out/transaction-shape-stdout.jsonl" 2> "$out/transaction-shape-stderr.log"
   node lab/trace/transaction-shape.mjs qualify "$out"
 fi
