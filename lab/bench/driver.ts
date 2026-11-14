@@ -1,6 +1,6 @@
+#!/usr/bin/env node
 import { AsyncLocalStorage } from "node:async_hooks";
 import { DeferredPublications } from "./lib/deferred-publication.ts";
-#!/usr/bin/env node
 import { cpuProfileClock } from "./lib/cpu-profile.ts";
 import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, currentTraceStep, traceResource, type Trace } from "./lib/tracing.ts";
 import { readObservation, type ReadObservation } from "./lib/read-observation.ts";
