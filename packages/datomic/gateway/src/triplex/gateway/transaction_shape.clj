@@ -52,7 +52,7 @@
                     :slot (get input "slot") :scope scope-text :requestHash (schema/sha256 text)
                     :startedAt started :endedAt (System/currentTimeMillis)
                     :transactions transactions
-                    :units "Actual log datoms; string UTF-8 and nonstring EDN value bytes. EDN datom bytes are an uncompressed representation, not physical Fressian/storage bytes."}))))
+                    :units "Actual log datoms; string UTF-8 and nonstring EDN value bytes. EDN datom bytes are an uncompressed representation, not physical Fressian/storage bytes."})))
         (shutdown-agents)
         (System/exit 0)))
     (catch Throwable e (.printStackTrace e) (System/exit 1))))
