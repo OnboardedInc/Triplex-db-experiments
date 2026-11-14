@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
+import { validateStressBaseline } from "./stress-baseline.mjs";
 import { validateBasisBroadcast } from "../bench/lib/basis-window.ts";
 import { bookendComparison, observedRunEnd, validateDeferredOrder } from "./anatomy.mjs";
 import {
@@ -50,6 +51,8 @@ const nativeRequest = nativeKind
   ? JSON.parse(fs.readFileSync(path.join(session, "native-request.json"), "utf8"))
   : null;
 const nativeRepeats = nativeRequest?.candidateRepeats ?? 2;
+const stressDiagnostic = nativeRequest?.stressDiagnostic === true;
+if (stressDiagnostic && kind !== "basis-256") throw Error("Unsupported stress diagnostic");
 if (nativeKind && (nativeRequest.kind !== kind || ![1, 2].includes(nativeRepeats)))
   throw Error("Invalid native comparison plan");
 const compare = nativeKind ? nativeBookendComparison : bookendComparison;
@@ -93,6 +96,16 @@ for (const [i, arm] of arms.entries()) {
     manifest = read(path.join(dir, "trace-run.json")),
     summary = read(path.join(dir, "trace-summary.json"));
   const endedAt = observedRunEnd(bench.endedAt);
+  if (stressDiagnostic) {
+    // [DX-T1-7] Why: ratio labels require this lease's byte-bound, completed zero-reader denominator.
+    // Rejected: trusting a copied ratio or any zero run with a matching directory name.
+    const zd = path.join(base, prefix + "-zero");
+    const zb = read(path.join(zd, "driver/ns-report.json")), zm = read(path.join(zd, "trace-run.json"));
+    const crypto = await import("node:crypto");
+    const baselinePath = path.join(zd, "driver/ns-writes.jsonl");
+    const hash = crypto.createHash("sha256").update(fs.readFileSync(baselinePath)).digest("hex");
+    validateStressBaseline({ source, prefix, bench, manifest, baseline: zb, baselineManifest: zm, hash, baselinePath });
+  }
   // [DX-T1-4] Why: every comparison changes one declared input while the remaining workload stays byte-identical.
   // Rejected: silently inheriting a different seed batch or read policy between placement arms.
   const variable =
@@ -133,7 +146,7 @@ for (const [i, arm] of arms.entries()) {
     bench.status !== "DONE" ||
     bench.seed?.seededSubjects !== 10000 ||
     bench.config?.zeroReaders !== !readerDiagnostic ||
-    bench.config.matchDurationS !== (readerDiagnostic ? 300 : 200) ||
+    bench.config.matchDurationS !== (stressDiagnostic ? 450 : readerDiagnostic ? 300 : 200) ||
     bench.config.readPath !== "replica" ||
     !bench.config.strictRecordClocks ||
     typeof bench.trace?.digest !== "string"
@@ -485,7 +498,7 @@ for (const [i, arm] of arms.entries()) {
       writes.push(w);
     }
   if (
-    writes.length !== (readerDiagnostic ? 3530 : 3420) ||
+    writes.length !== (stressDiagnostic ? 3707 : readerDiagnostic ? 3530 : 3420) ||
     bench.trace.digest !== "aa8a7636ff027ab3" ||
     bench.writer.pendingAtEnd !== 0 ||
     bench.writer.expired !== 0
@@ -542,6 +555,8 @@ for (const [i, arm] of arms.entries()) {
     digest: bench.trace.digest,
     commands: writes.length,
     basisBroadcast: bench.readerBasisBroadcast ?? null,
+    over50: { count: writes.filter(w => w.latencyMs > 50).length, totalMs: writes.filter(w => w.latencyMs > 50).reduce((n,w) => n+w.latencyMs,0) },
+    writerTailRatios: stressDiagnostic ? bench.priorities.P1.bars.filter(b => /WRITER-P99-RATIO/.test(b.id)) : null,
     writerCountersDelta: Object.fromEntries(
       [
         "optimisticAttempts",

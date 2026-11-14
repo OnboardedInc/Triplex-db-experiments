@@ -68,6 +68,20 @@ defaults=['1' if current else '0','true','256m','1g','1g' if sys.argv[2].startsw
 json.dump({'kind':sys.argv[2],'candidateRepeats':int(os.environ.get('DX_NATIVE_REPEATS','2')),'baseline':{k:os.environ.get(k,d) for k,d in zip(keys,defaults)}},open(sys.argv[1],'w'),indent=2)
 PY_NATIVE
 fi
+# [DX-T1-7] Why: stress diagnostics retain 45-second ladder phases and a fresh matched zero-reader tail denominator.
+# Rejected: judging the 1024-reader writer ratio from a truncated 256-only arm or a historical baseline.
+if [[ ${DX_STRESS_DIAGNOSTIC:-0} == 1 ]]; then
+  [[ $kind == basis-256 ]] || exit 2
+  python3 - "$session_dir/native-request.json" <<'PY_STRESS'
+import json,sys
+p=sys.argv[1];d=json.load(open(p));d['stressDiagnostic']=True
+open(p,'w').write(json.dumps(d,indent=2)+'\n')
+PY_STRESS
+  env TRIPLEX_TRACE_LEVEL=summary DX_TX_NATIVE_JFR=0 bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-zero" --rung 10k --reader-ladder-only --zero-readers --max-readers 0 --level-s 45 --match-duration-s 450 "$@" > "$session_dir/zero-controller.log" 2>&1 & child=$!
+  zero_rc=0;wait "$child" || zero_rc=$?;child=
+  printf '%s\n' "$zero_rc" > "$session_dir/zero-exit.txt"
+  [[ $zero_rc == 0 ]] || exit "$zero_rc"
+fi
 i=0;session_rc=0
 for arm in "${arms[@]}"; do
   i=$((i+1));tag=$prefix-$i-$arm
@@ -161,6 +175,10 @@ for arm in "${arms[@]}"; do
       level=summary;components=default;placement+=(DX_TX_NATIVE_JFR=0)
       workload=(--reader-basis-wire $([[ $arm == candidate ]] && echo delta || echo snapshot))
     fi
+  fi
+  if [[ ${DX_STRESS_DIAGNOSTIC:-0} == 1 ]]; then
+    duration=450;reader_args=(--max-readers 1024)
+    workload+=(--baseline-writes "$DX_STACK_EVIDENCE/$prefix-zero/driver/ns-writes.jsonl")
   fi
   if [[ $arm == full || $arm == summary ]]; then level=$arm;components=default;fi
   export TRIPLEX_TRACE_LEVEL=$level
