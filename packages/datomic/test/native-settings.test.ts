@@ -4,9 +4,47 @@ import {
   validateNativeSettings,
   QUIET_LOGGERS,
   nativeBookendComparison,
+  validateNativeAffinity,
 } from "../../../lab/trace/native-settings.mjs";
 
 describe("native setting comparison evidence", () => {
+  it("rejects a stale affinity record even when requested CPU masks match", () => {
+    const manifest = { tag: "attempt", slot: "slot", source: "source", startedAt: 1000 };
+    const rows = Array.from({ length: 5 }, (_, thread) => ({
+      thread,
+      run: "attempt",
+      slot: "slot",
+      source: "source",
+      at: 1100,
+      pid: 14,
+      main: "3",
+      workers: "4,5,6,7",
+      allowed: thread === 0 ? "3" : "4-7",
+      background: thread === 0 ? [{ allowed: "4-7" }] : undefined,
+    }));
+    expect(validateNativeAffinity(rows, manifest, 1200)).toBe(true);
+    expect(() =>
+      validateNativeAffinity(
+        rows.map((r) => ({ ...r, at: 999 })),
+        manifest,
+        1200,
+      ),
+    ).toThrow();
+    expect(() =>
+      validateNativeAffinity(
+        rows.map((r) => ({ ...r, slot: "other" })),
+        manifest,
+        1200,
+      ),
+    ).toThrow();
+    expect(() =>
+      validateNativeAffinity(
+        rows.map((r) => ({ ...r, allowed: "3-7" })),
+        manifest,
+        1200,
+      ),
+    ).toThrow();
+  });
   it("keeps the actual candidate count and requires a benefit beyond both fresh bookends", () => {
     expect(nativeBookendComparison([14, 15], [13.8]).lowerBeyondBookendDrift).toBe(false);
     expect(nativeBookendComparison([14, 14.2], [13])).toMatchObject({

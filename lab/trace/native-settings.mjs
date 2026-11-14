@@ -32,6 +32,42 @@ export function nativeBookendComparison(controls, candidates) {
     lowerBeyondBookendDrift: benefit > drift && Math.max(...candidates) < Math.min(...controls),
   };
 }
+// [DX-T1-4] Why: an affinity receipt must describe this attempt's running threads, not a copied placement log.
+// Rejected: checking requested masks without source/slot/time and actual kernel readbacks.
+export function validateNativeAffinity(rows, manifest, endedAt) {
+  if (!rows.some((r) => r.thread === 0) || rows.filter((r) => r.thread !== 0).length < 4)
+    throw Error("Native writer/worker affinity evidence absent");
+  const expand = (s) =>
+    s
+      .split(",")
+      .flatMap((p) => {
+        const [a, b] = p.split("-").map(Number);
+        return b === undefined ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i);
+      })
+      .sort((a, b) => a - b)
+      .join(",");
+  for (const r of rows) {
+    if (
+      r.run !== manifest.tag ||
+      r.source !== manifest.source ||
+      r.slot !== manifest.slot ||
+      !Number.isFinite(r.at) ||
+      r.at < manifest.startedAt ||
+      r.at > endedAt ||
+      !Number.isSafeInteger(r.pid) ||
+      r.pid < 1
+    )
+      throw Error("Foreign/stale native affinity receipt");
+    if (
+      r.main !== "3" ||
+      r.workers !== "4,5,6,7" ||
+      expand(r.allowed) !== (r.thread === 0 ? "3" : "4,5,6,7") ||
+      (r.background ?? []).some((b) => expand(b.allowed) !== "4,5,6,7")
+    )
+      throw Error("Native kernel affinity mismatch");
+  }
+  return true;
+}
 // [DX-T1-4] Why: preserve the distribution's exact appenders and unrelated levels in a single-variable logging arm.
 // Rejected: a replacement console appender (would confound logger levels with logging transport).
 export function quietLogback(xml) {

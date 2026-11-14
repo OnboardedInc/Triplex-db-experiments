@@ -4,7 +4,11 @@ import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
 import { bookendComparison, observedRunEnd } from "./anatomy.mjs";
-import { validateNativeSettings, nativeBookendComparison } from "./native-settings.mjs";
+import {
+  validateNativeSettings,
+  nativeBookendComparison,
+  validateNativeAffinity,
+} from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
 const nativeKind = /^(quiet|channel|isolated|index)-(floor|256)$/.exec(kind);
 const readerDiagnostic = ["history-256", "writer-256"].includes(kind) || nativeKind?.[2] === "256";
@@ -253,28 +257,19 @@ for (const [i, arm] of arms.entries()) {
       .split("\n")
       .filter((l) => l.startsWith('{"type":"node-thread-placement"'))
       .map((l) => JSON.parse(l));
-    if (isolated) {
-      if (
-        !placements.some((r) => r.thread === 0) ||
-        placements.filter((r) => r.thread !== 0).length < 4
-      )
-        throw Error("Native writer/worker affinity evidence absent");
-      for (const r of placements) {
-        if (
-          r.main !== "3" ||
-          r.workers !== "4,5,6,7" ||
-          r.allowed.replace("4-7", "4,5,6,7") !== (r.thread === 0 ? "3" : "4,5,6,7")
-        )
-          throw Error("Native writer/worker affinity mismatch");
-        if ((r.background ?? []).some((b) => b.allowed.replace("4-7", "4,5,6,7") !== "4,5,6,7"))
-          throw Error("Native runtime background thread shares writer core");
-      }
-    } else if (placements.length) throw Error("Native baseline unexpectedly pinned");
+    if (isolated) validateNativeAffinity(placements, manifest, endedAt);
+    else if (placements.length) throw Error("Native baseline unexpectedly pinned");
     for (const role of ["tx", "gw-w", "gw-r"]) {
       const c = containers.find((c) => c.Name === `/${tag}-${role}`);
       const opts = c.Config.Env.find((v) =>
         v.startsWith(role === "tx" ? "JAVA_OPTS=" : "DATOMIC_JAVA_OPTS="),
       );
+      if (
+        nativeKind[1] === "isolated" &&
+        role === "tx" &&
+        (!opts.includes("-XX:+UseG1GC") || !opts.includes("-XX:MaxGCPauseMillis=200"))
+      )
+        throw Error("Placement changed collector policy");
       if (opts.includes("/dxh1/quiet-logback.xml") !== (expected.DX_QUIET_LOGS === "1"))
         throw Error("Native JVM logback argument mismatch");
     }

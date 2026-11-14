@@ -158,6 +158,10 @@ function configureThreadPlacement(): void {
   process.stdout.write(
     JSON.stringify({
       type: "node-thread-placement",
+      at: Date.now(),
+      run: process.env["TRIPLEX_TRACE_RUN"],
+      source: process.env["TRIPLEX_TRACE_SOURCE"],
+      slot: process.env["TRIPLEX_TRACE_SLOT"],
       pid: process.pid,
       thread: threadId,
       tid,
