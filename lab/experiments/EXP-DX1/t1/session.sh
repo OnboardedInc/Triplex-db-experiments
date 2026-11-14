@@ -62,9 +62,9 @@ if [[ $kind =~ ^(quiet|channel|isolated|index|cache|revision|cores|basis)-(floor
   export DX_NATIVE_SETTINGS_READBACK=1
   python3 - "$session_dir/native-request.json" "$kind" <<'PY_NATIVE'
 import os,json,sys
-keys=['DX_QUIET_LOGS','DX_ENCRYPT_CHANNEL','DX_INDEX_THRESHOLD','DX_INDEX_MAX','DX_TX_OBJECT_CACHE','DX_REV_AEVT']
+keys=['DX_QUIET_LOGS','DX_ENCRYPT_CHANNEL','DX_INDEX_THRESHOLD','DX_INDEX_MAX','DX_TX_OBJECT_CACHE','DX_REV_AEVT','DX_CURRENT_TWO_CORES']
 current=sys.argv[2].split('-')[0] in ['cache','revision','cores','basis']
-defaults=['1' if current else '0','true','256m','1g','1g' if sys.argv[2].startswith('cache-') else '1280m','0']
+defaults=['1' if current else '0','true','256m','1g','1g' if sys.argv[2].startswith('cache-') else '1280m','0','0']
 json.dump({'kind':sys.argv[2],'candidateRepeats':int(os.environ.get('DX_NATIVE_REPEATS','2')),'baseline':{k:os.environ.get(k,d) for k,d in zip(keys,defaults)}},open(sys.argv[1],'w'),indent=2)
 PY_NATIVE
 fi
@@ -154,7 +154,7 @@ for arm in "${arms[@]}"; do
       DX_TX_NATIVE_JFR=1)
     if [[ $kind == cache-* ]]; then placement+=(DX_TX_OBJECT_CACHE=$([[ $arm == candidate ]] && echo 1280m || echo 1g));fi
     if [[ $kind == revision-* ]]; then placement+=(DX_REV_AEVT=$([[ $arm == candidate ]] && echo 1 || echo 0));fi
-    if [[ $kind == cores-* && $arm == candidate ]]; then
+    if [[ ( $kind == cores-* && $arm == candidate ) || ( $kind != cores-* && ${DX_CURRENT_TWO_CORES:-0} == 1 ) ]]; then
       placement+=(DX_CPUS_TX=0,1 DX_CPUS_PG=2 DX_CPUS_GW_WRITE=3 DX_CPUS_GW_READ=5 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU=4 DX_WORKER_CPUS=5,6,7)
     fi
     if [[ $kind == basis-* ]]; then

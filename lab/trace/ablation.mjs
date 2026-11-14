@@ -288,7 +288,7 @@ for (const [i, arm] of arms.entries()) {
     if (!channels.length || channels.some((v) => v !== expected.DX_ENCRYPT_CHANNEL))
       throw Error("Unconfirmed published channel mode");
     const current = ["cache", "revision", "cores", "basis"].includes(nativeKind[1]);
-    const twoCore = nativeKind[1] === "cores" && arm === "candidate";
+    const twoCore = nativeKind[1] === "cores" ? arm === "candidate" : request.baseline.DX_CURRENT_TWO_CORES === "1";
     const isolated = (nativeKind[1] === "isolated" && arm === "candidate") || current;
     const masks = {
       tx: twoCore ? "0,1" : isolated ? "0" : "0,1",
