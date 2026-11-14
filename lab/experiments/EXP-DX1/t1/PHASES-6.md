@@ -117,3 +117,28 @@ Source 7629065bb0a0221b3ec27af2f5a6f030bd33487f; controls tx2-dxt1-p6-cores256-a
 Peer p50 mean-control 6.336, mean-candidate 6.488, benefit -0.151, bookend drift 0.495 ms. Same tracing/host contexts as the rows above.
 
 The two-core all-run benefit occurs outside the steady L256 median: steady peer p50 does not improve beyond its own drift. Cache improves the measured L256 small commit bar but its small-band peer median gain is within drift. Do not turn the mixed-load peer improvement into a claim about steady 256-reader engine service. Index-adoption times, dedicated messaging-thread run-queue waits, per-helper logical-read counts and exact peer/storage sublegs remain unsplit.
+
+## Full-pair phase context
+
+These complete fixed-window rows retain all primary commits; the zero arm has zero readers even when its clock-window name is L256. Subject/writer trace is unchanged. Reference uses summary; native diagnostic uses full with writer/JVM sampling. Separate off bookends and original source/whole-arm host drift are in REFERENCE-6.md and NATIVE-CONTEXT-6.md. Host columns below use samples inside the actual phase window. Native diagnostic bookends drift sharply, so its zero/loaded difference is not a causal reader-cost estimate.
+
+| run / window / actual readers | n | commit p50/p99 | peer p50/p99 | native p50/p99 | txfn p50/p99 | cold SQL / observed | on CPU p50/p99 | runqueue p50/p99 | swap GiB / Mac CPU % |
+| --- | ---: | --- | --- | --- | --- | ---: | --- | --- | --- |
+| reference-a-zero / baseline / 0 | 46 | 20.451/169.091 | 11.760/155.528 | n/a | n/a | 0/0 | 0.997/10.138 | 0.000/0.046 | 11.649/65.1 |
+| reference-a-zero / L64 / 0 | 50 | 14.911/133.756 | 6.826/75.484 | n/a | n/a | 0/0 | 0.997/4.998 | 0.000/0.031 | 11.649/56.9 |
+| reference-a-zero / L256 / 0 | 50 | 14.275/59.840 | 7.058/51.153 | n/a | n/a | 0/0 | 0.898/2.926 | 0.000/0.068 | 11.649/49.1 |
+| reference-a-zero / L1024 / 0 | 47 | 14.614/30.267 | 7.328/13.318 | n/a | n/a | 0/0 | 0.903/4.004 | 0.000/0.038 | 11.649/44.9 |
+| reference-a-ladder / baseline / 0 | 46 | 20.854/46.464 | 12.756/30.317 | n/a | n/a | 0/0 | 0.999/2.998 | 0.000/0.000 | 11.469/45.6 |
+| reference-a-ladder / L64 / 64 | 50 | 14.569/89.318 | 7.426/61.156 | n/a | n/a | 0/0 | 0.999/4.932 | 0.000/0.000 | 11.461/37.8 |
+| reference-a-ladder / L256 / 256 | 50 | 15.966/134.323 | 8.795/114.079 | n/a | n/a | 0/0 | 0.995/2.999 | 0.000/0.343 | 11.076/62.0 |
+| reference-a-ladder / L1024 / 1024 | 47 | 22.514/210.217 | 11.557/177.629 | n/a | n/a | 0/0 | 1.005/10.236 | 0.000/1.057 | 10.724/76.1 |
+| native-a-zero / baseline / 0 | 47 | 22.207/72.732 | 13.033/57.860 | 8.640/49.500 | 2.890/21.060 | 22/47 | 0.801/2.104 | 0.000/0.147 | 11.998/49.0 |
+| native-a-zero / L64 / 0 | 50 | 14.103/53.075 | 7.101/38.569 | 5.030/35.300 | 1.800/25.870 | 23/50 | 0.702/2.815 | 0.000/0.187 | 11.990/42.8 |
+| native-a-zero / L256 / 0 | 50 | 13.610/135.231 | 7.495/126.125 | 5.590/98.600 | 2.100/29.860 | 30/50 | 0.582/1.964 | 0.000/0.216 | 11.990/38.6 |
+| native-a-zero / L1024 / 0 | 48 | 15.760/55.459 | 7.911/38.332 | 5.990/35.100 | 2.750/21.020 | 22/48 | 0.847/2.996 | 0.000/0.201 | 11.990/39.7 |
+| native-a-ladder / baseline / 0 | 47 | 23.364/160.072 | 13.339/145.121 | 10.200/139.000 | 2.700/133.130 | 23/47 | 0.923/3.315 | 0.000/0.464 | 11.826/71.8 |
+| native-a-ladder / L64 / 64 | 50 | 17.211/136.836 | 9.160/125.567 | 6.730/34.100 | 1.990/13.420 | 26/50 | 0.593/3.707 | 0.000/0.783 | 11.826/59.1 |
+| native-a-ladder / L256 / 256 | 50 | 17.849/163.433 | 8.990/61.711 | 6.410/59.200 | 2.180/7.400 | 21/50 | 0.952/2.565 | 0.000/0.679 | 11.819/53.2 |
+| native-a-ladder / L1024 / 1024 | 47 | 22.823/125.223 | 11.098/109.453 | 7.660/106.000 | 3.490/100.680 | 25/47 | 1.059/4.984 | 0.134/1.426 | 11.819/50.5 |
+
+Native counters confirm cold reads but not a higher L256 cold-read rate under readers in this diagnostic. The peer residual still contains unsplit storage/queue/messaging work. No index-threshold/warming setting or transaction-layout change is retained.

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import http from "node:http";
+import { spawnSync } from "node:child_process";
 import { Worker } from "node:worker_threads";
 import { mkdtempSync, rmSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -597,6 +598,14 @@ describe("permanent request tracing", () => {
       JSON.parse(readFileSync(path.join(derived, "commit-anatomy.json"), "utf8")),
     ).toMatchObject({ source: "source", reporterSha256: derivedReport.reporterSha256 });
     await expect(buildReport(dir, { anatomyTo: dir })).rejects.toThrow("separate output");
+    const badCli = spawnSync(
+      process.execPath,
+      [new URL("../../../lab/trace/report.mjs", import.meta.url).pathname, dir, "--anatomy-to"],
+      { encoding: "utf8" },
+    );
+    expect(badCli.status).not.toBe(0);
+    expect(badCli.stderr).toContain("Missing anatomy output directory");
+    expect(readFileSync(path.join(dir, "TRACE-REPORT.md"))).toEqual(originalReport);
     const rawFixture = path.join(dir, "trace/raw/fixture.jsonl"),
       originalBytes = readFileSync(rawFixture, "utf8");
     writeFileSync(rawFixture, originalBytes.replace(JSON.stringify(root), JSON.stringify(sender)));

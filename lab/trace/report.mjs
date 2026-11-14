@@ -1400,6 +1400,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   if (!dir) throw Error("usage: report.mjs RUN_DIR [--copy-to DIR] [--anatomy-to DIR]");
   const i = process.argv.indexOf("--copy-to"),
     a = process.argv.indexOf("--anatomy-to");
+  // [DX-T1-6] Why: malformed analysis arguments must not fall through to rewriting the original reports.
+  // Rejected: treating a missing output argument as the normal mutable render mode.
+  if (a >= 0 && (!process.argv[a + 1] || process.argv[a + 1].startsWith("--")))
+    throw Error("Missing anatomy output directory");
   console.log(
     JSON.stringify(
       await buildReport(dir, {

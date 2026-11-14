@@ -12,6 +12,10 @@ bf9cccb3fcafbf871ed54c95ca47a72c418782cf8c94036fecd230833f72aa66  p6-phase-analy
 480bd9873d8e39c6a49c7ebe4eb702f72a5cc3f5f71d57a980195df91bb6cc8d  p6-phase-analysis/tx2-dxt1-p6-cores256-a-1-baseline/commit-anatomy.json
 1c1e2c7d8a73a179aaca78454940e91c6d0987d9c5037a1fe8873d1b2a1fe8d9  p6-phase-analysis/tx2-dxt1-p6-cores256-a-2-candidate/commit-anatomy.json
 300a529bc88fc54324dd0400cc76809f93fc3d9cd7ab0fec8fb2468dc148b93e  p6-phase-analysis/tx2-dxt1-p6-cores256-a-3-baseline/commit-anatomy.json
+1e15477a17e0623941ec470219410d233eff5701be3e14b574346b9189bdd089  p6-phase-analysis/tx2-dxt1-p6-native-a-ladder/commit-anatomy.json
+56653a7b0c1ae7628a4a7e6b7fe5658ac7354172bb42ba4184b31276d4c5ec19  p6-phase-analysis/tx2-dxt1-p6-native-a-zero/commit-anatomy.json
+3c56fb4bab56fc5e9ea18708eb6b8c450a089e4a1a7a9ed21888ca25fd7bf17a  p6-phase-analysis/tx2-dxt1-p6-reference-a-ladder/commit-anatomy.json
+f0b75541fa4ce8b8276194cca085c4ec236352f964d1d6f16afabb902c67b4d4  p6-phase-analysis/tx2-dxt1-p6-reference-a-zero/commit-anatomy.json
 0342288d06de9eab025ca3d4ff87fe3ce805f7b5badea78b647d3edff7262f77  p6-phase-analysis/tx2-dxt1-p6-rev0-a-1-baseline/commit-anatomy.json
 7ef3c0cd2a3f75d5353c409ba35c6138f9ec2685f6adbe892c60e23148247db5  p6-phase-analysis/tx2-dxt1-p6-rev0-a-2-candidate/commit-anatomy.json
 cbea7d99115916ce440c8bcf194cf3cb46443f91b0e695472a16194803e6369c  p6-phase-analysis/tx2-dxt1-p6-rev0-a-3-baseline/commit-anatomy.json
@@ -32,6 +36,10 @@ c40f7a261a1518cf8395b1e7fffea9154ed9db40b33a9f6740f91135a11aabc2  p6-phase-analy
 469d4c11343634475fa1355076bfa76cfea0e111ba2383913f116633b5b6448c  p6-phase-analysis/tx2-dxt1-p6-cores256-a-1-baseline/COMMIT-ANATOMY.md
 35f9ff0e5b19403659bbf1fdf6a71462cd2ce804ea7a8f71b2af0812c8cd9c85  p6-phase-analysis/tx2-dxt1-p6-cores256-a-2-candidate/COMMIT-ANATOMY.md
 74f1ebb1e0ad867cf654bce999c4b026a904ef771329c6c438fdf942929d5a21  p6-phase-analysis/tx2-dxt1-p6-cores256-a-3-baseline/COMMIT-ANATOMY.md
+8216cecfe193cc3b77935907ed192f80c432a027fe69ffcd7625452d01ade9cb  p6-phase-analysis/tx2-dxt1-p6-native-a-ladder/COMMIT-ANATOMY.md
+ccb7d277881fc220e12fabb96df64385081c90355fc55deec0b8ad8a0d6a465a  p6-phase-analysis/tx2-dxt1-p6-native-a-zero/COMMIT-ANATOMY.md
+2d69e821daaf26c9f620cf4bc25ee416cc0c985571b4a24e0d92e692dce31c0a  p6-phase-analysis/tx2-dxt1-p6-reference-a-ladder/COMMIT-ANATOMY.md
+f6e9e1de8a1d808be61649a3b82f3f535058f7cba53f7a863ec3fec0d59d9fa1  p6-phase-analysis/tx2-dxt1-p6-reference-a-zero/COMMIT-ANATOMY.md
 c26b1e942be5ec95a40b62ececd4cfb20ffb31b1cfd6511a06d7476c2bc2e8ce  p6-phase-analysis/tx2-dxt1-p6-rev0-a-1-baseline/COMMIT-ANATOMY.md
 0a9f236661a0c07f2949a2caa4d42e0959da95bbda65a1cff2a4c1c540b2351e  p6-phase-analysis/tx2-dxt1-p6-rev0-a-2-candidate/COMMIT-ANATOMY.md
 0bf932b76a21c5dd521fe2941fecfb4632bc602b66c9e7e35b5df416b62511d5  p6-phase-analysis/tx2-dxt1-p6-rev0-a-3-baseline/COMMIT-ANATOMY.md

@@ -16,7 +16,7 @@ Full recorder plus 1-ms writer/JVM sampling; no native file logs; source cc62564
 | cc795c670fc4390c0000000000004201 | 168.546 | 122/143 GC; 5 postMessage | 3 |
 | cc795c670fc4390c00000000000023a4 | 90.108 | 67/68 postMessage; one timer sample | 3 |
 
-The snapshot broadcast copies the same retained receipt cohort to every reader worker every 100 ms. The implemented delta protocol sends only the new exact suffix and keeps the same 2,000-item/hour expiry, order and pins. Native 200,000-world differential and combined oracle pass with delta. Its isolated loaded timing has not run: disk admission refused it before any container existed. It remains opt-in (`--reader-basis-wire delta`), so no fixed-tail or latency gain is claimed. GC/persistence bursts are still present; moving the witness behind the bar does not make its writer-thread contention disappear.
+The snapshot broadcast copies the same retained receipt cohort to every reader worker every 100 ms. The implemented delta protocol sends only the new exact suffix and keeps the same 2,000-item/hour expiry, order and pins. Golden unit comparisons retain the exact snapshot suffix; the combined 1,000-subject oracle passes with delta. The separate 200,000-world differential validates the product composition, not the benchmark worker wire. Its isolated loaded timing has not run: disk admission refused it before any container existed. It remains opt-in (`--reader-basis-wire delta`), so no fixed-tail or latency gain is claimed. GC/persistence bursts are still present; moving the witness behind the bar does not make its writer-thread contention disappear.
 
 ## Every commit over 50 ms, grouped by largest observed cause
 
