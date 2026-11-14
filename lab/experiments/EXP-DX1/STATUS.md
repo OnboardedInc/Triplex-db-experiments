@@ -1791,3 +1791,23 @@ spinning virtual CPUs, load average 11.7 to 14.8; our own oracle replay on the M
 pressure (55 to 140 MB free, compressor at thousands of pages a second) with Chrome 6.5 GiB, Paste 1.3 GiB, Slack 1.2 GiB.
 Quit those three at 12:45 UTC. Swap in use 12.2 to 5.1 GB; free memory 62%. **Part 6 arms that span 12:45 UTC changed host
 state mid-arm**; arms after it are on a quieter host. Detail in `lab/HARD-PROBLEMS.md` H7.
+
+## 2026-11-14 18:30 UTC: DX-T1 part 6: reference pair on the busy host; after the apps were closed, commit p50 11.4 ms and p99 under 50; part 7 launched
+
+DX-T1 part 6 (`exp/DX-T1-tracing`, `f29a11bb`, pushed; report `t1/REPORT-6.md`).
+1. **Reference pair (busy host: swap 10.7 to 12.1 GiB, Mac CPU outside the VM 45 to 65% of a core; `off` bookends 13.7 and
+   13.0 ms):** P2 misses (all-primary p99 204 ms; burst p50 14.0 and 16.9 ms; 256-reader small and medium p50 16.0 and
+   16.4 ms, p99 52.6 and 134 ms; queue and accounting met). P1: exact, read p99 8.4 ms at 256 readers, recovery 40 s met;
+   G256/G64 0.970 (bar 1), G1024/G256 0.870 (bar 0.9), writer-tail ratios 2.24 and 6.95 (bars 1.25 and 2) missed. P3 met
+   (lag p99 221 ms). P4 met on the whole machine: 14,720 correct pulls/s (bar 4,400), pull p50 0.034 and p99 0.293 ms,
+   history flatness 1.07 (bar 1.1). Oracle PASS. Split-read rule `pending`.
+2. **After Chrome, Slack and Paste were quit at 12:45 UTC (swap 4.7 to 4.9 GiB, Mac CPU about 11%), full tracing:**
+   zero-reader commit p50 11.4 to 11.5 ms, p99 43 to 47 ms. Two transactor cores: 10.65 ms and 37 ms (gain 0.71 ms against
+   0.21 drift), but about 6.5% less reader goodput, so not the default. 1,280 MiB transactor object cache: 256-reader small
+   band 11.42 / 72.4 to 10.85 / 36.9 ms p50 / p99 (kept); cold SQL reads during apply 436 to 342 of 3,530 commits.
+3. **Writer stalls are garbage collection:** 60 to 85% of profile samples inside stalls of 174 to 247 ms are GC; one 90 ms
+   stall is `postMessage`. An incremental receipt broadcast is built, opt-in, untimed.
+4. Closing pair not run: the Mac fell under the 20 GiB guard (19.5 free). `~/.codex` (Sam's other Codex work) holds 24 GB.
+
+Part 7 is running: the closing pair first while the host is quiet (floor back to 15 GiB), then the writer's garbage
+collection, a layout with two transactor cores that keeps P1, and a final pair.
