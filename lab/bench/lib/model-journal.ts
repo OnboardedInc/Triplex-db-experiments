@@ -8,7 +8,7 @@ import { createHash } from "node:crypto";
 import { Model, type Commit } from "./model.ts";
 import type { Receipt } from "./composition.ts";
 
-type Context = { run: string; source: string; slot: string; subjects: number };
+type Context = Readonly<{ run: string; source: string; slot: string; subjects: number }>;
 type Entry =
   | { seq: number; kind: "receipt"; operations: readonly any[]; receipt: Receipt; actor?: string }
   | { seq: number; kind: "commit"; subject: number; commit: Commit };
@@ -61,7 +61,7 @@ export class ModelJournal {
     )
       throw Error("Invalid model journal identity");
     this.file = file;
-    this.context = { ...context };
+    this.context = Object.freeze({ ...context });
     this.fd = fs.openSync(file, "wx");
     this.write({ schema: "triplex.expected-model/1", ...this.context });
   }
@@ -102,7 +102,25 @@ export class ModelJournal {
     if (!this.sealed) {
       fs.fsyncSync(this.fd);
       fs.closeSync(this.fd);
-      this.sealed = { frames: this.frames, bytes: this.bytes, sha256: this.digest.digest("hex") };
+      // [DX-T1-7] Why: even a capture-manifest receipt must describe read-back bytes and immutable ownership.
+      // Rejected: returning the hash of write buffers before checking the actual file content.
+      const expected = this.digest.digest("hex"),
+        observed = createHash("sha256");
+      if (fs.statSync(this.file).size !== this.bytes)
+        throw Error("Model journal seal length mismatch");
+      const input = fs.openSync(this.file, "r"),
+        block = Buffer.allocUnsafe(1024 * 1024);
+      try {
+        for (;;) {
+          const count = fs.readSync(input, block, 0, block.length, null);
+          if (!count) break;
+          observed.update(block.subarray(0, count));
+        }
+      } finally {
+        fs.closeSync(input);
+      }
+      if (observed.digest("hex") !== expected) throw Error("Model journal seal content mismatch");
+      this.sealed = { frames: this.frames, bytes: this.bytes, sha256: expected };
       fs.writeFileSync(
         this.file + ".json",
         JSON.stringify({ ...this.context, ...this.sealed }) + "\n",

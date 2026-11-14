@@ -27,7 +27,7 @@ export async function packOracle(directory, { minBytes = 5_000_000 } = {}) {
   const dir = path.resolve(directory),
     tag = path.basename(dir),
     report = path.join(dir, "driver/ns-report.json");
-  if (!/^tx2-dxt1-/.test(tag)) throw Error("Not an owned T1 attempt");
+  if (!tag.startsWith("tx2-dxt1-")) throw Error("Not an owned T1 attempt");
   const benchmark = fs.existsSync(report) ? JSON.parse(fs.readFileSync(report, "utf8")) : null;
   if (benchmark?.status !== "DONE") return { files: 0, reason: "benchmark not complete" };
   const source = fs.readFileSync(path.join(dir, "head.txt"), "utf8").trim(),

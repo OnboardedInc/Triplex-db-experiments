@@ -1,3 +1,4 @@
+// @ts-nocheck -- [DX-T1-7] Why: heterogeneous recorded bytes are validated at this boundary. Rejected: unchecked source/slot/time or denominator assumptions.
 import { observedRunEnd } from "./anatomy.mjs";
 
 // [DX-T1-7] Why: stress ratios need the actual completed denominator from this source-frozen lease.

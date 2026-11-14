@@ -1,4 +1,5 @@
 import { packOracle } from "./pack-oracle.mjs";
+import { buildWriterStats, writerStatsMarkdown } from "./writer-stats.mjs";
 // Command-line run manifests are validated by the report reader.
 import fs from "node:fs";
 import path from "node:path";
@@ -11,6 +12,8 @@ const run = path.resolve(process.argv[2]);
 const raw = path.join(run, "trace/raw");
 fs.mkdirSync(raw, { recursive: true });
 const renderOnly = process.argv.includes("--render-only");
+const skipRegister = process.argv.includes("--no-register");
+if (skipRegister && !renderOnly) throw Error("Only a derived fixture may skip run registration");
 if (!renderOnly) {
   // [DX-T1] Why: finalize after all owned processes have stopped and their files have been copied.
   // Rejected: reading a growing gzip stream or stamping an abandoned partial attempt as complete.
@@ -76,7 +79,17 @@ if (!renderOnly) {
   const old = path.join(run, "trace-summary.json");
   if (fs.existsSync(old)) {
     const prior = JSON.parse(fs.readFileSync(old, "utf8"));
-    const revision = path.join(run, "derived-original", prior.reporterSha256 ?? "legacy");
+    // [DX-T1-7] Why: helper changes can alter appended statistics while the base report renderer stays unchanged.
+    // Rejected: keying recovery only by the base renderer and losing an intermediate cited writer table.
+    const oldContent = createHash("sha256");
+    for (const name of ["TRACE-REPORT.md", "WRITER-STATS.json", "trace-summary.json"])
+      if (fs.existsSync(path.join(run, name)))
+        oldContent.update(name).update(fs.readFileSync(path.join(run, name)));
+    const revision = path.join(
+      run,
+      "derived-original",
+      (prior.reporterSha256 ?? "legacy") + "-" + oldContent.digest("hex"),
+    );
     fs.mkdirSync(revision, { recursive: true });
     for (const name of [
       "TRACE-REPORT.md",
@@ -85,6 +98,7 @@ if (!renderOnly) {
       "trace.html",
       "trace.chrome.json",
       "trace-summary.json",
+      "WRITER-STATS.json",
       "SHA256SUMS",
       "INDEX.md",
     ])
@@ -98,11 +112,30 @@ if (!renderOnly) {
 }
 const copy = process.argv[3];
 const result = await buildReport(run, { copyTo: copy });
+// [DX-T1-7] Why: every completed traced run must expose writer heap/GC/stall counts without another analysis command.
+// Rejected: a standalone diagnostic that leaves routine run reports unable to show the retained-heap cause.
+const benchmarkFile = path.join(run, "driver/ns-report.json");
+if (
+  result.complete &&
+  fs.existsSync(benchmarkFile) &&
+  JSON.parse(fs.readFileSync(benchmarkFile, "utf8")).status === "DONE"
+) {
+  const writer = await buildWriterStats(run);
+  for (const destination of [run, ...(copy ? [copy] : [])]) {
+    fs.writeFileSync(
+      path.join(destination, "WRITER-STATS.json"),
+      JSON.stringify(writer, null, 2) + "\n",
+      { flag: renderOnly ? "w" : "wx" },
+    );
+    fs.appendFileSync(path.join(destination, "TRACE-REPORT.md"), writerStatsMarkdown(writer));
+  }
+}
 const reportFiles = [
   "TRACE-REPORT.md",
   "trace.html",
   "trace.chrome.json",
   "trace-summary.json",
+  ...(fs.existsSync(path.join(run, "WRITER-STATS.json")) ? ["WRITER-STATS.json"] : []),
   ...(fs.existsSync(path.join(run, "COMMIT-ANATOMY.md"))
     ? ["COMMIT-ANATOMY.md", "commit-anatomy.json"]
     : []),
@@ -121,7 +154,7 @@ for (const destination of [run, ...(copy ? [copy] : [])]) {
   fs.writeFileSync(path.join(destination, "SHA256SUMS"), reportHashes);
   fs.writeFileSync(path.join(destination, "INDEX.md"), indexText);
 }
-registerRun(run);
+if (!skipRegister) registerRun(run);
 console.log(
   JSON.stringify({
     tag: result.tag,

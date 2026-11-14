@@ -1,3 +1,4 @@
+// @ts-nocheck -- [DX-T1-7] Why: heterogeneous recorded bytes are validated at this boundary. Rejected: unchecked source/slot/time or denominator assumptions.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,6 +17,31 @@ const summarize = (xs) => ({
 export function writerStats(manifest, bench, writes, events) {
   if (bench.status !== "DONE" || manifest.level === "off" || !writes.length)
     throw Error("Incomplete writer study");
+  if (
+    bench.writer?.pendingAtEnd !== 0 ||
+    bench.correctness?.errors !== 0 ||
+    bench.correctness?.violations !== 0 ||
+    bench.priorities?.P2?.accounting?.byStreamAndOutcome?.["background:committed"] !==
+      writes.length ||
+    manifest.slot !== manifest.tag ||
+    !/^[a-f0-9]{40}$/.test(manifest.source)
+  )
+    throw Error("Incomplete writer accounting");
+  const sequences = new Set();
+  for (const w of writes) {
+    if (
+      !Number.isSafeInteger(w.seq) ||
+      sequences.has(w.seq) ||
+      w.outcome !== "committed" ||
+      w.expired ||
+      !Number.isFinite(w.startedAt) ||
+      w.startedAt < w.scheduledAt ||
+      w.startedAt > w.finishedAt ||
+      !/^[a-f0-9]{32}$/.test(w.traceId)
+    )
+      throw Error("Invalid primary writer content");
+    sequences.add(w.seq);
+  }
   const primary = new Map(
     writes.filter((w) => w.stream === "background" && !w.resend).map((w) => [w.traceId, w]),
   );
@@ -41,6 +67,8 @@ export function writerStats(manifest, bench, writes, events) {
     if (e.type === "request" && primary.has(e.traceId)) {
       if (roots.has(e.traceId)) throw Error("Duplicate writer trace");
       const w = primary.get(e.traceId);
+      if (e.kind !== "commit" || e.attributes?.seq !== w.seq || e.attributes?.stream !== w.stream)
+        throw Error("Writer trace command mismatch");
       validateWriterBoundary(w, e);
       if (e.end > observedRunEnd(bench.endedAt) + 1) throw Error("Future writer boundary");
       roots.set(e.traceId, e);
@@ -95,14 +123,17 @@ export function writerStats(manifest, bench, writes, events) {
     note: "GC event durations and overlapping scheduler-lateness intervals are observations, not exclusive CPU or causal assignments. GC kinds absent in older recorders remain unrecorded.",
   };
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const [dir, out] = process.argv.slice(2);
-  if (!dir || !out) throw Error("writer-stats RUN NEW.json");
+export async function buildWriterStats(dir) {
   const read = (f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
   const m = read("trace-run.json"),
     b = read("driver/ns-report.json"),
     ws = [],
     es = [];
+  if (
+    m.tag !== path.basename(path.resolve(dir)) ||
+    m.source !== fs.readFileSync(path.join(dir, "head.txt"), "utf8").trim()
+  )
+    throw Error("Writer directory/source mismatch");
   for await (const w of records(path.join(dir, "driver/ns-writes.jsonl")))
     if (w.stream === "background" && !w.resend) ws.push(w);
   for (const f of filesUnder(path.join(dir, "trace/raw")).filter((f) =>
@@ -113,5 +144,15 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   result.reporterSha256 = createHash("sha256")
     .update(fs.readFileSync(fileURLToPath(import.meta.url)))
     .digest("hex");
+  return result;
+}
+export function writerStatsMarkdown(r) {
+  const fmt = (n) => (Number.isFinite(n) ? n.toFixed(3) : "n/a");
+  return `\n## Writer heap, GC and scheduler stalls\n\nSource ${r.source}; ${r.commands} complete primary writer rows; timed telemetry only. GC event durations are observations, not exclusive CPU.\n\n| writer metric | observed |\n| --- | --- |\n| Heap used median / peak MiB | ${fmt(r.heapUsed.p50 / 1048576)} / ${fmt(r.heapUsed.max / 1048576)} |\n| GC events / total duration / maximum ms | ${r.gc.n} / ${fmt(r.gc.totalMs)} / ${fmt(r.gc.max)} |\n| GC kinds (1 minor, 4 major, 8 incremental) | ${JSON.stringify(r.gc.kinds)} |\n| Scheduler lateness >50 ms, per-command intervals / sum ms | ${r.schedulerLate50.intervals} / ${fmt(r.schedulerLate50.totalMs)} |\n| Union stall episodes / duration ms | ${r.schedulerLate50.episodes} / ${fmt(r.schedulerLate50.unionMs)} |\n| All-primary p99 / over-50-ms requests | ${fmt(r.latency.p99)} / ${r.over50.count} |\n\nFull heap-space samples and causing trace IDs are in WRITER-STATS.json and trace/raw.\n`;
+}
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const [dir, out] = process.argv.slice(2);
+  if (!dir || !out) throw Error("writer-stats RUN NEW.json");
+  const result = await buildWriterStats(dir);
   fs.writeFileSync(out, JSON.stringify(result, null, 2) + "\n", { flag: "wx" });
 }

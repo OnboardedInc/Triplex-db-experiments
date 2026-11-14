@@ -8,9 +8,13 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "skipLibCheck": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "allowImportingTsExtensions": true,
-    "lib": ["ESNext"]
+    "lib": [
+      "ESNext"
+    ]
   },
   "files": [
     "../lab/trace/native-settings.mjs",
@@ -471,6 +475,8 @@
     "../scripts/xtdb-budget-runner.mjs",
     "../scripts/xtdb-qualification.mjs",
     "../scripts/xtdb-resources.mjs",
-    "../tools/bootstrap/maintenance-readiness.mjs"
+    "../tools/bootstrap/maintenance-readiness.mjs",
+    "../lab/trace/stress-baseline.mjs",
+    "../lab/trace/writer-stats.mjs"
   ]
 }

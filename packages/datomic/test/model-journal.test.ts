@@ -157,3 +157,19 @@ it("archives only a verified model and round-trips its exact input bytes", async
   expect(fs.existsSync(file + ".json")).toBe(true);
   await expect(journal.archive()).rejects.toThrow();
 });
+
+it("refuses altered capture bytes before issuing even a seal manifest", () => {
+  const { journal, file } = setup();
+  populate(journal);
+  const bytes = fs.readFileSync(file);
+  bytes[25] ^= 1;
+  fs.writeFileSync(file, bytes);
+  expect(() => journal.seal()).toThrow(/seal content/);
+});
+it("keeps journal ownership immutable after construction", () => {
+  const { journal } = setup();
+  expect(() => {
+    (journal.context as any).source = "other";
+  }).toThrow();
+  journal.seal();
+});
