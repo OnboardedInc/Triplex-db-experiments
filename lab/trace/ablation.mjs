@@ -289,8 +289,17 @@ for (const [i, arm] of arms.entries()) {
     if (nativeKind[1] === "model" && arm === "candidate") {
       const j = bench.expectedStateJournal;
       if (!j || j.run !== tag || j.source !== source || j.slot !== tag || j.subjects !== 10000 || !/^[a-f0-9]{64}$/.test(j.sha256)) throw Error("Expected-model journal receipt mismatch");
-      const actual = (await import("node:crypto")).createHash("sha256").update(fs.readFileSync(path.join(dir, "driver", path.basename(j.file)))).digest("hex");
-      if (actual !== j.sha256) throw Error("Expected-model journal bytes changed");
+      const rawPath = path.join(dir, "driver", path.basename(j.file));
+      let bytes;
+      if (j.archive) {
+        if (path.basename(j.archive.file) !== path.basename(j.file)+".gz") throw Error("Foreign model archive path");
+        const compressed = fs.readFileSync(rawPath+".gz");
+        const sha = (await import("node:crypto")).createHash("sha256").update(compressed).digest("hex");
+        if (sha !== j.archive.sha256 || compressed.length !== j.archive.bytes) throw Error("Model archive bytes changed");
+        bytes = (await import("node:zlib")).gunzipSync(compressed);
+      } else bytes = fs.readFileSync(rawPath);
+      const actual = (await import("node:crypto")).createHash("sha256").update(bytes).digest("hex");
+      if (actual !== j.sha256 || bytes.length !== j.bytes) throw Error("Expected-model journal bytes changed");
     }
     const props = fs.readFileSync(path.join(dir, "config/sql.properties"), "utf8");
     validateNativeSettings({

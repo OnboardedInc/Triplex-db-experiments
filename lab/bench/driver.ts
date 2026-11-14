@@ -1090,7 +1090,7 @@ async function run() {
   // Rejected: accepting a smaller heap by skipping the complete model or exposing an incompletely replayed model.
   if (modelJournal) {
     const restored = modelJournal.restore(); model = restored.model; expectations = new ExpectationCache(model);
-    report.expectedStateJournal = restored.receipt;
+    report.expectedStateJournal = await modelJournal.archive();
   }
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };

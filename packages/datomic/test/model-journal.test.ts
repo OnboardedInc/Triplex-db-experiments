@@ -143,3 +143,17 @@ it("replays full referenced worlds across record and valid cuts without coercing
     for (const v of [0, 10, 20, 399, 400, 410, 420, 500])
       expect(restored.expected(0, r, v)).toEqual(expected.expected(0, r, v));
 });
+
+it("archives only a verified model and round-trips its exact input bytes", async () => {
+  const { journal, file } = setup();
+  populate(journal);
+  await expect(journal.archive()).rejects.toThrow(/Verify/);
+  journal.restore();
+  const original = fs.readFileSync(file);
+  const archive = await journal.archive();
+  const { gunzipSync } = await import("node:zlib");
+  expect(gunzipSync(fs.readFileSync(archive.archive.file))).toEqual(original);
+  expect(fs.existsSync(file)).toBe(false);
+  expect(fs.existsSync(file + ".json")).toBe(true);
+  await expect(journal.archive()).rejects.toThrow();
+});

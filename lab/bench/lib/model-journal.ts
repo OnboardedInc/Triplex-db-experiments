@@ -1,4 +1,7 @@
 import fs from "node:fs";
+import path from "node:path";
+import { createGzip, createGunzip } from "node:zlib";
+import { pipeline } from "node:stream/promises";
 import { Option } from "effect";
 import { serialize, deserialize } from "node:v8";
 import { createHash } from "node:crypto";
@@ -42,6 +45,7 @@ const LIMIT = 128 * 1024 ** 2;
 export class ModelJournal {
   private fd: number;
   private frames = 0;
+  private restored = false;
   private bytes = 0;
   private digest = createHash("sha256");
   private sealed: { frames: number; bytes: number; sha256: string } | undefined;
@@ -107,6 +111,52 @@ export class ModelJournal {
     }
     return { ...this.context, ...this.sealed, file: this.file };
   }
+  async archive() {
+    // [DX-T1-7] Why: retained journal bytes must stay recoverable without accumulating another full object-log copy per arm.
+    // Rejected: deleting unchecked input or compressing on the measured acknowledgement path.
+    if (!this.restored) throw Error("Verify model journal before archive");
+    const seal = this.seal(),
+      file = this.file + ".gz";
+    await pipeline(
+      fs.createReadStream(this.file),
+      createGzip({ level: 9 }),
+      fs.createWriteStream(file, { flags: "wx" }),
+    );
+    const hash = createHash("sha256");
+    let bytes = 0;
+    for await (const chunk of fs.createReadStream(file).pipe(createGunzip())) {
+      hash.update(chunk);
+      bytes += chunk.length;
+    }
+    if (hash.digest("hex") !== seal.sha256 || bytes !== seal.bytes)
+      throw Error("Archived model journal content mismatch");
+    const compressed = createHash("sha256");
+    for await (const chunk of fs.createReadStream(file)) compressed.update(chunk);
+    const archive = { file, bytes: fs.statSync(file).size, sha256: compressed.digest("hex") };
+    const fd = fs.openSync(file, "r");
+    try {
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+    const metadata = this.file + ".archive.json";
+    fs.writeFileSync(metadata, JSON.stringify({ ...seal, archive }) + "\n", { flag: "wx" });
+    const meta = fs.openSync(metadata, "r");
+    try {
+      fs.fsyncSync(meta);
+    } finally {
+      fs.closeSync(meta);
+    }
+    const directory = fs.openSync(path.dirname(file), "r");
+    try {
+      fs.fsyncSync(directory);
+      fs.unlinkSync(this.file);
+      fs.fsyncSync(directory);
+    } finally {
+      fs.closeSync(directory);
+    }
+    return { ...seal, archive };
+  }
   restore() {
     const seal = this.seal();
     const fd = fs.openSync(this.file, "r");
@@ -150,6 +200,7 @@ export class ModelJournal {
       }
       if (frames !== seal.frames || digest.digest("hex") !== seal.sha256)
         throw Error("Model journal content mismatch");
+      this.restored = true;
       return { model, receipt: seal };
     } finally {
       fs.closeSync(fd);
