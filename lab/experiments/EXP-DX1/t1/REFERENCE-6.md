@@ -826,3 +826,5 @@ driverOwn includes offer queueing, all post-transact completion work (including 
 - tail: mean 0.073, max 0.485
 
 Whole-machine P4 observed goodput is 34,393.255 pulls/s (best level L64), against 4,400 total pulls/s. Weighted mix p50/p99 0.034/0.293 ms; largest bucket p99 0.429 ms. History p99 depth1/3/10 0.182/0.191/0.195 ms; depth10/depth1 1.0714. Engine bytes-read flatness remains unmeasured. Split-read default: pending. Loaded oracle PASS: 810 recorded commands, 53 reads, 2,626 entity queries, zero mismatches. This is diagnostic evidence, not acceptance promotion.
+
+Whole-machine weighted-mix goodput is 14,720.201 correct pulls/s (632,970 correct, zero errors/violations, recorded 43-second measured window), exceeding 4,400 total. This is the actual p4mix phase, without an engine-core quota multiplier; 34,393.255 above is the separate best ladder-level goodput. Trace level, swap, host CPU and off controls are the loaded reference context at the top.

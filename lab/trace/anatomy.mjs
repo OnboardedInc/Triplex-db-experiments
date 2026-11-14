@@ -12,11 +12,15 @@ const n = (x) => (Number.isFinite(x) ? x.toFixed(3) : "n/a");
 // [DX-T1-5] Why: the picture and the latency bar must use the same observed offer and completion instants.
 // Rejected: quietly attributing post-ACK report construction to the measured request.
 export function validateWriterBoundary(writer, root) {
-  if (![writer.scheduledAt, writer.finishedAt, writer.latencyMs, root.start, root.end].every(Number.isFinite) ||
-      writer.finishedAt < writer.scheduledAt ||
-      Math.abs(root.start - writer.scheduledAt) > 0.001 ||
-      Math.abs(root.end - writer.finishedAt) > 0.001 ||
-      Math.abs(root.end - root.start - writer.latencyMs) > 0.001)
+  if (
+    ![writer.scheduledAt, writer.finishedAt, writer.latencyMs, root.start, root.end].every(
+      Number.isFinite,
+    ) ||
+    writer.finishedAt < writer.scheduledAt ||
+    Math.abs(root.start - writer.scheduledAt) > 0.001 ||
+    Math.abs(root.end - writer.finishedAt) > 0.001 ||
+    Math.abs(root.end - root.start - writer.latencyMs) > 0.001
+  )
     throw Error("Writer/trace measured boundary mismatch");
   return true;
 }
@@ -26,12 +30,15 @@ export function validateCommandTrace(writer, requests) {
   if (!Number.isSafeInteger(writer.position) || !writer.commandId || !writer.publicationOperationId)
     throw Error("Missing writer native command identity");
   const hash = (value) => createHash("sha256").update(value).digest("hex");
-  const matches = requests.flatMap((request) => request.spans).filter((span) =>
-    span.name === "client.transact-encode" &&
-    span.attributes?.appliedPosition === writer.position &&
-    span.attributes.operationHash === hash(writer.publicationOperationId) &&
-    span.attributes.commandHash === hash(JSON.stringify([writer.commandId])),
-  );
+  const matches = requests
+    .flatMap((request) => request.spans)
+    .filter(
+      (span) =>
+        span.name === "client.transact-encode" &&
+        span.attributes?.appliedPosition === writer.position &&
+        span.attributes.operationHash === hash(writer.publicationOperationId) &&
+        span.attributes.commandHash === hash(JSON.stringify([writer.commandId])),
+    );
   if (matches.length !== 1) throw Error("Writer/native ACK trace binding mismatch");
   return true;
 }
@@ -78,7 +85,9 @@ export function exchangeAnatomy(owner, gateway) {
     throw Error("Anatomy partition does not close");
   return {
     traceId: owner.traceId,
-    run: owner.run, source: owner.source, slot: owner.slot,
+    run: owner.run,
+    source: owner.source,
+    slot: owner.slot,
     httpId: http.id,
     gatewayRoot: gateway.root,
     peerCalls: peers.length,
@@ -131,6 +140,71 @@ export function aggregateExchanges(root, exchanges) {
     overlapMs: overlap,
     steps,
   };
+}
+// [DX-T1-6] Why: the 256-reader peer/CPU floor must use all commits in that phase, not selected slow traces or a mixed-load median.
+// Rejected: reporting an all-run quantile as a steady-reader result or counting missing native observations as zero.
+export function summarizeCommitPhases(roots, exchanges) {
+  const groups = new Map(),
+    seen = new Set();
+  for (const root of roots) {
+    if (!root.traceId || seen.has(root.traceId) || !root.name || !Number.isFinite(root.wallMs))
+      throw Error("Invalid or duplicate phase commit");
+    seen.add(root.traceId);
+    const keys = [root.name];
+    if (root.writer?.facts >= 5 && root.writer.facts <= 10) keys.push(root.name + " / 5-10 facts");
+    for (const key of keys) {
+      const group = groups.get(key) ?? [];
+      group.push(root);
+      groups.set(key, group);
+    }
+  }
+  return Object.fromEntries(
+    [...groups].map(([key, group]) => {
+      const partitions = group.map((root) => aggregateExchanges(root, exchanges));
+      const sequential = partitions.filter((p) => p.attempts && p.steps);
+      const native = [],
+        send = [],
+        ack = [];
+      for (const root of group) {
+        if (root.nativeTransactions?.length !== 1) continue;
+        const metric = root.nativeTransactions[0];
+        const exchange = exchanges.find(
+          (e) => e.traceId === root.traceId && e.gatewayRoot === metric.gatewayRoot,
+        );
+        if (!exchange) continue;
+        const legs = nativeWaitLegs(exchange, metric);
+        native.push(metric.nativeStats);
+        send.push(legs.submitToNativeReadMs);
+        ack.push(legs.nativeToPeerMs);
+      }
+      const values = (getter) => stats(group.map(getter).filter(Number.isFinite));
+      return [
+        key,
+        {
+          commits: group.length,
+          partitioned: sequential.length,
+          missingExchanges: partitions.filter((p) => !p.attempts).length,
+          overlappingExchanges: partitions.filter((p) => p.overlapMs > 0.001).length,
+          wallMs: values((r) => r.wallMs),
+          typescriptOwnMs: values((r) => r.layers?.typescript),
+          cpuMs: values((r) => r.cpuRuntimeMs),
+          runqueueMs: values((r) => r.cpuRunqueueMs),
+          outsideHttpMs: stats(partitions.map((p) => p.outsideHttpMs)),
+          peerWaitMs: stats(sequential.map((p) => p.steps["peer transact wait"] ?? 0)),
+          nativeObserved: native.length,
+          nativeProcessMs: stats(native.map((s) => s.msec)),
+          nativeApplyMs: stats(native.map((s) => s["apply-msec"])),
+          nativeFunctionMs: stats(
+            native.map((s) => s["tx-stats"]?.["tx-fn-ms"]).filter(Number.isFinite),
+          ),
+          submitResidualMs: stats(send),
+          ackResidualMs: stats(ack),
+          coldSqlCommits: native.filter((s) => (s["io-stats"]?.reads?.sql ?? 0) > 0).length,
+          readCounterCommits: native.filter((s) => s["io-stats"]?.reads).length,
+        },
+      ];
+    }),
+  );
 }
 // [DX-T1-5] Why: partition the same outside-HTTP residual instead of adding overlapping named-scope percentiles.
 // Rejected: calling the whole 4.3 ms TypeScript CPU, or silently dropping uninstrumented continuation time.
@@ -367,7 +441,7 @@ export function validateDeferredOrder(writes, events, manifest, endedAt) {
 
 export async function writeAnatomy(
   runDir,
-  { manifest, commits, resources, childrenOf, copyTo, complete, bench },
+  { manifest, commits, resources, childrenOf, copyTo, outputDir, reporterSha256, complete, bench },
 ) {
   if (!manifest) return null;
   const roots = commits.filter((r) => r.writer?.stream === "background" && !r.writer.resend);
@@ -471,7 +545,9 @@ export async function writeAnatomy(
     .map((r) => r.nativeTransactions[0].nativeStats);
   const txKeys = [...new Set(native.flatMap((s) => Object.keys(s["tx-stats"] ?? {})))];
   const ioKeys = [...new Set(native.flatMap((s) => Object.keys(s["io-stats"]?.reads ?? {})))];
-  const nativeResidual = [], sendResidual = [], ackResidual = [];
+  const nativeResidual = [],
+    sendResidual = [],
+    ackResidual = [];
   for (const root of roots)
     for (const metric of root.nativeTransactions ?? []) {
       const e = exchanges.find(
@@ -480,7 +556,8 @@ export async function writeAnatomy(
       if (e) {
         nativeResidual.push(e.peerEnd - e.peerStart - metric.nativeStats.msec);
         const legs = nativeWaitLegs(e, metric);
-        sendResidual.push(legs.submitToNativeReadMs); ackResidual.push(legs.nativeToPeerMs);
+        sendResidual.push(legs.submitToNativeReadMs);
+        ackResidual.push(legs.nativeToPeerMs);
       }
     }
   const result = {
@@ -488,9 +565,10 @@ export async function writeAnatomy(
       n: native.length,
       submitToNativeReadMs: stats(sendResidual),
       nativeToPeerMs: stats(ackResidual),
-      signedBoundaryOverlaps: sendResidual.filter(v => v < 0).length + ackResidual.filter(v => v < 0).length,
-      coldSqlCommits: native.filter(s => (s["io-stats"]?.reads?.sql ?? 0) > 0).length,
-      readCounterCommits: native.filter(s => s["io-stats"]?.reads).length,
+      signedBoundaryOverlaps:
+        sendResidual.filter((v) => v < 0).length + ackResidual.filter((v) => v < 0).length,
+      coldSqlCommits: native.filter((s) => (s["io-stats"]?.reads?.sql ?? 0) > 0).length,
+      readCounterCommits: native.filter((s) => s["io-stats"]?.reads).length,
       applySteps: Object.fromEntries(
         txKeys.map((k) => [
           k,
@@ -512,12 +590,14 @@ export async function writeAnatomy(
     schema: "triplex.commit-anatomy.v1",
     tag: manifest.tag,
     source: manifest.source,
+    reporterSha256: reporterSha256 ?? null,
     level: manifest.level,
     collectionComplete: complete,
     commits: roots.length,
     exchanges: exchanges.length,
     steps,
     commitSteps,
+    phases: summarizeCommitPhases(roots, exchanges),
     transactorFunction: stats(functionRoots.map((r) => r.layers.transactor)),
     remainingPeerWait: stats(roots.map((r) => r.layers["peer-wait"])),
     unobservedFunctionCommits: roots.length - functionRoots.length,
@@ -622,6 +702,15 @@ export async function writeAnatomy(
     `Native boundary residuals p50/p99: submit to inferred native read ${n(result.nativeTransactions.submitToNativeReadMs.p50)}/${n(result.nativeTransactions.submitToNativeReadMs.p99)} ms; native completion event to peer future ${n(result.nativeTransactions.nativeToPeerMs.p50)}/${n(result.nativeTransactions.nativeToPeerMs.p99)} ms. Signed overlaps: ${result.nativeTransactions.signedBoundaryOverlaps}. Cold SQL reads during apply: ${result.nativeTransactions.coldSqlCommits}/${result.nativeTransactions.readCounterCommits} commits with read counters.`,
     "These residuals include encoding, messaging, queues, native event/log formatting and peer application; they are not exclusive network or CPU time. Native process start is inferred from its reported duration and completion event, so its logging boundary/rounding uncertainty remains. Individual messaging-thread run-queue waits and exact index-adoption boundaries are still not measured.",
     "",
+    "Per-phase rows include every primary commit, not only the slow selection. CPU/run-queue columns cover observed synchronous scopes; native columns retain their own observed denominators. Missing counters are n/a, not zero. Quantiles are p50/p99 ms and do not add.",
+    "",
+    "| Phase | commits / partitioned | wall | TypeScript own | on CPU | waiting for CPU | peer wait | native process | submit residual | ACK residual | cold SQL / observed |",
+    "| --- | ---: | --- | --- | --- | --- | --- | --- | --- | --- | ---: |",
+    ...Object.entries(result.phases).map(([phase, p]) => {
+      const q = (s) => `${n(s.p50)}/${n(s.p99)}`;
+      return `| ${phase} | ${p.commits}/${p.partitioned} | ${q(p.wallMs)} | ${q(p.typescriptOwnMs)} | ${q(p.cpuMs)} | ${q(p.runqueueMs)} | ${q(p.peerWaitMs)} | ${q(p.nativeProcessMs)} (${p.nativeObserved}) | ${q(p.submitResidualMs)} | ${q(p.ackResidualMs)} | ${p.coldSqlCommits}/${p.readCounterCommits} |`;
+    }),
+    "",
     `Postgres: ${clean.length} isolated windows, ${result.sql.ambiguousWindows} ambiguous. Statement count p50/p99 ${n(result.sql.statementsPerWindow.p50)}/${n(result.sql.statementsPerWindow.p99)}; server statement ms p50/p99 ${n(result.sql.statementMsPerWindow.p50)}/${n(result.sql.statementMsPerWindow.p99)}. WAL sample delta: ${JSON.stringify(walDelta)}. WAL counters are aggregate over the stated sample window, including background storage work; they are never presented as exact per-Datomic-transaction counts.`,
     "",
     "Postgres protocol scope: https://www.postgresql.org/docs/17/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY ; cumulative WAL lag: https://www.postgresql.org/docs/17/monitoring-stats.html#MONITORING-STATS-VIEWS .",
@@ -636,11 +725,11 @@ export async function writeAnatomy(
     ),
     "",
   ];
-  for (const dest of [runDir, ...(copyTo ? [copyTo] : [])]) {
+  for (const dest of [outputDir ?? runDir, ...(copyTo ? [copyTo] : [])]) {
     fs.mkdirSync(dest, { recursive: true });
     fs.writeFileSync(path.join(dest, "COMMIT-ANATOMY.md"), text.join("\n"));
   }
-  for (const dest of [runDir, ...(copyTo ? [copyTo] : [])])
+  for (const dest of [outputDir ?? runDir, ...(copyTo ? [copyTo] : [])])
     fs.writeFileSync(
       path.join(dest, "commit-anatomy.json"),
       JSON.stringify(result, null, 2) + "\n",

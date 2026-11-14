@@ -2,7 +2,12 @@
 import fs from "node:fs";
 import { loadCpuProfile } from "./cpu-profile.mjs";
 import { bindNativeTransaction } from "./native-transactions.mjs";
-import { writeAnatomy, validateDeferredOrder, validateCommandTrace, validateWriterBoundary } from "./anatomy.mjs";
+import {
+  writeAnatomy,
+  validateDeferredOrder,
+  validateCommandTrace,
+  validateWriterBoundary,
+} from "./anatomy.mjs";
 import { packHtml } from "./viewer.mjs";
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -468,7 +473,7 @@ function table(rows, label) {
     );
   return lines.join("\n");
 }
-export async function buildReport(runDir, { copyTo } = {}) {
+export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
   const rootDir = path.resolve(runDir),
     tag = path.basename(rootDir);
   const reportFile = path.join(rootDir, "driver/ns-report.json");
@@ -478,6 +483,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     ? JSON.parse(fs.readFileSync(manifestFile, "utf8"))
     : null;
   if (manifest?.level === "off") {
+    if (anatomyTo) throw Error("Tracing-off controls have no recorded anatomy");
     const finding =
       "Tracing was intentionally off for this control arm; latency is in ns-report.json and layer attribution is unavailable.";
     const summary = {
@@ -755,12 +761,23 @@ export async function buildReport(runDir, { copyTo } = {}) {
       else {
         const trace = byId.get(w.traceId);
         if (manifest?.writerBoundary) {
-          try { validateWriterBoundary(w, trace.root); }
-          catch (error) { errors.push(String(error)); }
+          try {
+            validateWriterBoundary(w, trace.root);
+          } catch (error) {
+            errors.push(String(error));
+          }
         }
-        if (manifest?.nativeCommandBinding && w.outcome === "committed" && w.stream === "background" && !w.resend) {
-          try { validateCommandTrace(w, [trace.root, ...linked(trace.root)]); }
-          catch (error) { errors.push(String(error)); }
+        if (
+          manifest?.nativeCommandBinding &&
+          w.outcome === "committed" &&
+          w.stream === "background" &&
+          !w.resend
+        ) {
+          try {
+            validateCommandTrace(w, [trace.root, ...linked(trace.root)]);
+          } catch (error) {
+            errors.push(String(error));
+          }
         }
         if (Number.isFinite(w.scheduledAt) && Math.abs(trace.root.start - w.scheduledAt) > 1)
           errors.push("Writer/trace offer timestamp mismatch");
@@ -1114,6 +1131,23 @@ export async function buildReport(runDir, { copyTo } = {}) {
     ),
     slowest: slow.map(({ root: _root, spans: _spans, ...rest }) => rest),
   };
+  // [DX-T1-6] Why: new phase summaries can be derived from immutable old bytes without rewriting a cited report or duplicating raw traces.
+  // Rejected: overwriting the original source-bound report during analysis or calling a new derivation a fresh benchmark.
+  if (anatomyTo) {
+    if (path.resolve(anatomyTo) === rootDir)
+      throw Error("Anatomy derivation needs a separate output directory");
+    await writeAnatomy(rootDir, {
+      bench,
+      manifest,
+      commits,
+      resources,
+      childrenOf: (root) => traceChildren(root, requests),
+      outputDir: path.resolve(anatomyTo),
+      reporterSha256: summary.reporterSha256,
+      complete: summary.complete,
+    });
+    return summary;
+  }
   const lines = [
     "# Trace report",
     "",
@@ -1346,6 +1380,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
     resources,
     childrenOf: (root) => traceChildren(root, requests),
     copyTo,
+    reporterSha256: summary.reporterSha256,
     complete: summary.complete,
   });
   return summary;
@@ -1362,9 +1397,15 @@ phase.onchange=kind.onchange=show.onchange=render;kind.value="commit";const pref
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const dir = process.argv[2];
-  if (!dir) throw Error("usage: report.mjs RUN_DIR [--copy-to DIR]");
-  const i = process.argv.indexOf("--copy-to");
+  if (!dir) throw Error("usage: report.mjs RUN_DIR [--copy-to DIR] [--anatomy-to DIR]");
+  const i = process.argv.indexOf("--copy-to"),
+    a = process.argv.indexOf("--anatomy-to");
   console.log(
-    JSON.stringify(await buildReport(dir, { copyTo: i >= 0 ? process.argv[i + 1] : undefined })),
+    JSON.stringify(
+      await buildReport(dir, {
+        copyTo: i >= 0 ? process.argv[i + 1] : undefined,
+        anatomyTo: a >= 0 ? process.argv[a + 1] : undefined,
+      }),
+    ),
   );
 }

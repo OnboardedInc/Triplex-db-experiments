@@ -587,6 +587,16 @@ describe("permanent request tracing", () => {
     expect(report.complete).toBe(true);
     expect(report.coverage.denominator).toBe(1);
     expect(report.coverage.atLeast95Percent).toBe(1);
+    const originalReport = readFileSync(path.join(dir, "TRACE-REPORT.md"));
+    const derived = path.join(dir, "derived-anatomy");
+    const derivedReport = await buildReport(dir, { anatomyTo: derived });
+    expect(derivedReport.complete).toBe(true);
+    expect(readFileSync(path.join(dir, "TRACE-REPORT.md"))).toEqual(originalReport);
+    expect(readdirSync(derived).sort()).toEqual(["COMMIT-ANATOMY.md", "commit-anatomy.json"]);
+    expect(
+      JSON.parse(readFileSync(path.join(derived, "commit-anatomy.json"), "utf8")),
+    ).toMatchObject({ source: "source", reporterSha256: derivedReport.reporterSha256 });
+    await expect(buildReport(dir, { anatomyTo: dir })).rejects.toThrow("separate output");
     const rawFixture = path.join(dir, "trace/raw/fixture.jsonl"),
       originalBytes = readFileSync(rawFixture, "utf8");
     writeFileSync(rawFixture, originalBytes.replace(JSON.stringify(root), JSON.stringify(sender)));

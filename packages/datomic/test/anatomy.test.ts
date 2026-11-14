@@ -12,9 +12,57 @@ import {
   validateDeferredOrder,
   validateCommandTrace,
   validateWriterBoundary,
+  summarizeCommitPhases,
 } from "../../../lab/trace/anatomy.mjs";
 
 describe("commit anatomy observations", () => {
+  it("keeps complete phase and small-commit denominators instead of mixing reader loads or missing counters", () => {
+    const roots = [
+      {
+        traceId: "zero",
+        name: "L0",
+        wallMs: 10,
+        writer: { facts: 5 },
+        layers: { typescript: 2 },
+        cpuRuntimeMs: 1,
+      },
+      {
+        traceId: "small",
+        name: "L256",
+        wallMs: 20,
+        writer: { facts: 10 },
+        layers: { typescript: 4 },
+        cpuRuntimeMs: 2,
+        cpuRunqueueMs: 3,
+      },
+      {
+        traceId: "medium",
+        name: "L256",
+        wallMs: 40,
+        writer: { facts: 20 },
+        layers: { typescript: 6 },
+      },
+    ];
+    const exchanges = [
+      { traceId: "zero", start: 1, end: 7, steps: { "peer transact wait": 6 } },
+      { traceId: "small", start: 2, end: 14, steps: { "peer transact wait": 12 } },
+    ];
+    const phases = summarizeCommitPhases(roots, exchanges);
+    expect(phases.L0.peerWaitMs).toEqual({ n: 1, p50: 6, p99: 6 });
+    expect(phases.L256).toMatchObject({
+      commits: 2,
+      partitioned: 1,
+      missingExchanges: 1,
+      wallMs: { n: 2, p50: 20, p99: 40 },
+      cpuMs: { n: 1, p50: 2, p99: 2 },
+      runqueueMs: { n: 1, p50: 3, p99: 3 },
+      nativeObserved: 0,
+      nativeProcessMs: { n: 0, p50: null, p99: null },
+    });
+    expect(phases["L256 / 5-10 facts"].commits).toBe(1);
+    expect(phases["L256 / 5-10 facts"].peerWaitMs.p50).toBe(12);
+    expect(() => summarizeCommitPhases([roots[0], roots[0]], exchanges)).toThrow("duplicate");
+  });
   it("rejects a trace closed by reporting work instead of the observed offer-to-completion boundary", () => {
     const writer = { scheduledAt: 10, finishedAt: 20, latencyMs: 10 };
     expect(validateWriterBoundary(writer, { start: 10, end: 20 })).toBe(true);
@@ -339,9 +387,27 @@ describe("native Datomic counter binding", () => {
 // [DX-T1-6] Why: direction labels require the exact native request and must preserve signed uncertainty. Rejected: nearest-time joins or clamped residuals.
 it("partitions native wait only across bound fresh boundaries", async () => {
   const { nativeWaitLegs } = await import("../../../lab/trace/native-transactions.mjs");
-  const e = { traceId: "trace", run: "run", source: "head", slot: "slot", gatewayRoot: "gw", peerStart: 100, peerEnd: 140 };
-  const m = { ...e, nativeType: "triplex.NativeTransaction", process: "tx", start: 135, nativeStats: { msec: 20 } };
-  expect(nativeWaitLegs(e, m)).toEqual({ submitToNativeReadMs: 15, nativeProcessMs: 20, nativeToPeerMs: 5 });
+  const e = {
+    traceId: "trace",
+    run: "run",
+    source: "head",
+    slot: "slot",
+    gatewayRoot: "gw",
+    peerStart: 100,
+    peerEnd: 140,
+  };
+  const m = {
+    ...e,
+    nativeType: "triplex.NativeTransaction",
+    process: "tx",
+    start: 135,
+    nativeStats: { msec: 20 },
+  };
+  expect(nativeWaitLegs(e, m)).toEqual({
+    submitToNativeReadMs: 15,
+    nativeProcessMs: 20,
+    nativeToPeerMs: 5,
+  });
   expect(nativeWaitLegs(e, { ...m, nativeStats: { msec: 40 } }).submitToNativeReadMs).toBe(-5);
   expect(() => nativeWaitLegs(e, { ...m, source: "old" })).toThrow();
   expect(() => nativeWaitLegs(e, { ...m, start: 150 })).toThrow();
