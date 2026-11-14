@@ -71,6 +71,10 @@ export function readProducerPublication(
 }
 const payload = (r: Omit<FeedPublication, "recordId">) =>
   JSON.stringify([r.source, r.stream, r.epoch, r.position, r.publicationId, r.domain, r.atNs]);
+declare const publicationCapture: unique symbol;
+export interface PublicationCapture {
+  readonly [publicationCapture]: true;
+}
 /** Producer-owned append-only position record. Invoke publish at source publication, never at ACK/poll. */
 export function openPublicationWriter(
   file: string,
@@ -88,28 +92,59 @@ export function openPublicationWriter(
   // Rejected: BEGIN/SELECT/INSERT/COMMIT for every new position (extra writer-thread work, same durable row).
   const insert = db.prepare("INSERT OR IGNORE INTO publications VALUES(?,?)");
   const select = db.prepare("SELECT body FROM publications WHERE key=?");
+  const captures = new WeakMap<PublicationCapture, FeedPublication>();
+  let closed = false;
+  // [DX-T1-5] Why: capture the source event now and permit its witness to be persisted later without inventing a time.
+  // Rejected: accepting a caller-supplied instant or returning a publication receipt before FULL-synchronous storage.
+  const capture = (key: FeedPosition, publicationId: string): PublicationCapture => {
+    if (closed) throw new Error("Publication writer is closed");
+    const bound = {
+      source: key.source,
+      stream: key.stream,
+      epoch: key.epoch,
+      position: key.position,
+    };
+    if (
+      bound.source !== source ||
+      bound.stream !== stream ||
+      typeof publicationId !== "string" ||
+      !publicationId
+    )
+      throw new Error("Producer publication binding mismatch");
+    feedPositionKey(bound);
+    const value = { ...captureFeedInstant(clock, bound), publicationId };
+    const record = Object.freeze({ ...value, recordId: hash(payload(value)) });
+    const token = Object.freeze({}) as PublicationCapture;
+    captures.set(token, record);
+    return token;
+  };
+  const persistCaptured = (token: PublicationCapture): FeedPublication => {
+    if (closed) throw new Error("Publication writer is closed");
+    const record = captures.get(token);
+    if (!record) throw new Error("Foreign or forged publication capture");
+    const positionKey = feedPositionKey(record);
+    if (Number(insert.run(positionKey, JSON.stringify(record)).changes) === 1) return record;
+    const prior = select.get(positionKey);
+    if (!prior) throw new Error("Producer insert did not persist a publication");
+    const existing = decode(String(prior["body"]), record);
+    if (existing.publicationId !== record.publicationId)
+      throw new Error("Position already has a different publication record");
+    return existing;
+  };
   return Object.freeze({
+    capture,
+    persistCaptured,
     publish: (key: FeedPosition, publicationId: string): FeedPublication => {
-      if (key.source !== source || key.stream !== stream || !publicationId)
-        throw new Error("Producer publication binding mismatch");
-      const positionKey = feedPositionKey(key);
       // [EXP-FD01-R3] Why: retry/poll must not replace an original position's publication time.
       // Rejected: overwriting the timestamp when a late map entry or lost ACK is observed.
       // [EXP-FD01-R3] Why: include sidecar lock/fsync delay after the source publication event.
       // Rejected: capturing after BEGIN, which understates lag when another writer holds the lock.
-      const observed = captureFeedInstant(clock, key);
-      const value = { ...observed, publicationId };
-      const record: FeedPublication = { ...value, recordId: hash(payload(value)) };
-      if (Number(insert.run(positionKey, JSON.stringify(record)).changes) === 1)
-        return Object.freeze(record);
-      const prior = select.get(positionKey);
-      if (!prior) throw new Error("Producer insert did not persist a publication");
-      const existing = decode(String(prior["body"]), key);
-      if (existing.publicationId !== publicationId)
-        throw new Error("Position already has a different publication record");
-      return existing;
+      return persistCaptured(capture(key, publicationId));
     },
-    close: () => db.close(),
+    close: () => {
+      db.close();
+      closed = true;
+    },
   });
 }
 function decode(body: string, key: FeedPosition): FeedPublication {

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
-import { bookendComparison, observedRunEnd } from "./anatomy.mjs";
+import { bookendComparison, observedRunEnd, validateDeferredOrder } from "./anatomy.mjs";
 import {
   validateNativeSettings,
   nativeBookendComparison,
@@ -19,6 +19,7 @@ const summaryKind =
     "record-clock-floor",
     "record-clock-256",
     "publication-floor",
+    "publication-defer",
     "fallback-floor",
     "history-256",
     "seed-floor",
@@ -31,6 +32,7 @@ if (
     "anatomy",
     "cpu-floor",
     "publication-floor",
+    "publication-defer",
     "record-clock-floor",
     "record-clock-256",
     "fallback-floor",
@@ -58,8 +60,13 @@ const arms = nativeKind
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
     : kind.startsWith("record-clock-")
       ? ["baseline", "server", "server", "baseline"]
-      : kind === "publication-floor"
-        ? ["baseline", "insert", "insert", "baseline"]
+      : kind === "publication-floor" || kind === "publication-defer"
+        ? [
+            "baseline",
+            kind === "publication-defer" ? "deferred" : "insert",
+            kind === "publication-defer" ? "deferred" : "insert",
+            "baseline",
+          ]
         : kind === "anatomy"
           ? ["off", "anatomy", "anatomy", "off"]
           : kind === "seed-floor"
@@ -325,8 +332,24 @@ for (const [i, arm] of arms.entries()) {
     )
       throw Error("Wrong clock path or nonzero server replay/ticket wait");
   }
-  if (kind === "publication-floor") {
-    const mode = arm === "insert" ? "insert" : "legacy";
+  if (["publication-floor", "publication-defer"].includes(kind)) {
+    const mode =
+      kind === "publication-defer"
+        ? arm === "deferred"
+          ? "deferred"
+          : "insert"
+        : arm === "insert"
+          ? "insert"
+          : "legacy";
+    if (
+      mode === "deferred" &&
+      (bench.deferredPublication?.captured !== 3420 ||
+        bench.deferredPublication?.persisted !== 3420 ||
+        bench.deferredPublication?.pending !== 0)
+    )
+      throw Error("Deferred witnesses incomplete or wrong commit binding");
+    if (bench.serverRecordTime !== false || envOf(driver).DX_SERVER_RECORD_TIME !== "0")
+      throw Error("Publication comparison changed clock assignment");
     if (bench.publicationMode !== mode || envOf(driver).DX_PUBLICATION_MODE !== mode)
       throw Error("Publication strategy runtime/readback mismatch");
     const masks = { tx: "0", pg: "1", "gw-w": "2", "gw-r": "4" };
@@ -443,6 +466,17 @@ for (const [i, arm] of arms.entries()) {
     bench.writer.expired !== 0
   )
     throw Error("Incomplete or changed frozen 200-second trace");
+  let deferredOrder = null;
+  if (arm === "deferred") {
+    const events = [];
+    for (const file of filesUnder(path.join(dir, "trace/raw")).filter((f) =>
+      /\/node-.*\.jsonl.gz$/.test(f),
+    ))
+      for await (const record of records(file))
+        if (record.type === "event" && record.name === "driver.publication.persist-deferred")
+          events.push(record);
+    deferredOrder = validateDeferredOrder(writes, events, manifest, endedAt);
+  }
   if (readerDiagnostic) validateNativeBands(bench, writes);
   // [DX-T1-4] Why: host context belongs to the measured requests; post-run oracle CPU is not latency interference.
   // Rejected: reporting a whole-arm CPU median dominated by independent validation after the timed work.
@@ -520,6 +554,7 @@ for (const [i, arm] of arms.entries()) {
     ladder256: bench.priorities?.P1?.ladder?.find((r) => r.readers === 256) ?? null,
     bandsAtL256: bench.priorities?.P2?.bandsAtL256 ?? null,
     scheduler256: summary.schedulerByPhase?.L256 ?? null,
+    deferredOrder,
     nativeSettings: nativeKind ? read(path.join(dir, "config/tx-native-settings.json")) : null,
   });
 }
@@ -533,6 +568,7 @@ const controls = rows.filter(
       r.arm ===
       ([
         "publication-floor",
+        "publication-defer",
         "record-clock-floor",
         "record-clock-256",
         "cpu-floor",
@@ -609,6 +645,7 @@ const result = {
   comparison:
     [
       "publication-floor",
+      "publication-defer",
       "record-clock-floor",
       "record-clock-256",
       "cpu-floor",

@@ -31,7 +31,7 @@ interface FeedPublication extends FeedInstant {
 export const { openHostFeedClock, openPublicationWriter, openPublicationReader } = hostRequire(
   "@triplex-build/triplex-host/feed",
 );
-const { captureFeedInstant, readProducerPublication } = hostRequire(
+export const { captureFeedInstant, readProducerPublication } = hostRequire(
   "@triplex-build/triplex-host/feed",
 );
 interface Measurement {

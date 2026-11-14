@@ -1055,7 +1055,9 @@ export async function buildReport(runDir, { copyTo } = {}) {
     collectors: {
       jfr: completions,
       resources: resources.length,
-      writerCpuProfile: cpuProfile ? { samples: cpuProfile.samples, backsteps: cpuProfile.backsteps, clockBound: true } : null,
+      writerCpuProfile: cpuProfile
+        ? { samples: cpuProfile.samples, backsteps: cpuProfile.backsteps, clockBound: true }
+        : null,
       transactorFunctionEvents: nativeFunctions.length,
       nativeTransactionStats: nativeTransactions.length,
     },
@@ -1303,6 +1305,7 @@ export async function buildReport(runDir, { copyTo } = {}) {
       fs.copyFileSync(path.join(rootDir, f), path.join(copyTo, f), fs.constants.COPYFILE_FICLONE);
   }
   await writeAnatomy(rootDir, {
+    bench,
     manifest,
     requests,
     commits,

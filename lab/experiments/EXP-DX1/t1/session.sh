@@ -2,7 +2,7 @@
 # [DX-T1-2] Why: one lease, one source and bookend controls bind recorder ablations to one host session.
 # Rejected: compare a recorder with a historical quiet off arm or allow unrelated work between arms.
 set -euo pipefail
-kind=${1:?record-clock-floor|record-clock-256|publication-floor|ablation|cost|anatomy|cpu-floor|fallback-floor|history-256|seed-floor|writer-256|quiet-floor|quiet-256|channel-floor|channel-256|isolated-floor|isolated-256|index-floor|index-256}; prefix=${2:?tx2-dxt1-prefix}; shift 2
+kind=${1:?record-clock-floor|record-clock-256|publication-floor|publication-defer|ablation|cost|anatomy|cpu-floor|fallback-floor|history-256|seed-floor|writer-256|quiet-floor|quiet-256|channel-floor|channel-256|isolated-floor|isolated-256|index-floor|index-256}; prefix=${2:?tx2-dxt1-prefix}; shift 2
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
@@ -42,6 +42,7 @@ if [[ $kind == ablation ]]; then
   arms=(off tx-jfr gw-jfr postgres gateway node native-logs full off)
 elif [[ $kind == record-clock-floor || $kind == record-clock-256 ]]; then arms=(baseline server server baseline)
 elif [[ $kind == publication-floor ]]; then arms=(baseline insert insert baseline)
+elif [[ $kind == publication-defer ]]; then arms=(baseline deferred deferred baseline)
 elif [[ $kind == cost ]]; then arms=(off summary summary off)
 elif [[ $kind == anatomy ]]; then arms=(off anatomy anatomy off)
 elif [[ $kind == cpu-floor ]]; then arms=(baseline engine-isolated engine-isolated baseline)
@@ -105,6 +106,10 @@ for arm in "${arms[@]}"; do
     level=summary;components=default;placement=(DX_SERVER_RECORD_TIME=0)
     [[ $arm != server ]] || placement=(DX_SERVER_RECORD_TIME=1)
     if [[ $kind == record-clock-256 ]]; then duration=300;level_s=45;reader_args=(--max-readers 256);fi
+  fi
+  if [[ $kind == publication-defer ]]; then
+    level=summary;components=default;placement=(DX_PUBLICATION_MODE=insert)
+    [[ $arm != deferred ]] || placement=(DX_PUBLICATION_MODE=deferred)
   fi
   if [[ $kind == publication-floor ]]; then
     # [DX-T1-5] Why: hold clocks, durability, exact reads and CPU placement fixed while measuring only witness SQL work.

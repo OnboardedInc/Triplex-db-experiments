@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+import { DeferredPublications } from "./lib/deferred-publication.ts";
 #!/usr/bin/env node
 import { cpuProfileClock } from "./lib/cpu-profile.ts";
 import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, currentTraceStep, traceResource, type Trace } from "./lib/tracing.ts";
@@ -48,7 +50,7 @@ import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "
 import { alignAssertIds } from "./lib/receipt.ts";
 import { openLegacyPublicationWriter } from "./lib/legacy-publication.ts";
 import { datomicWriterDiagnostics, observeDatomicPublication } from "./lib/datomic-publication.ts";
-import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, type CrashPoint } from "./lib/feed.ts";
+import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, readProducerPublication, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
 import { R, observe, type ReadRecord } from "./lib/observe.ts";
@@ -572,9 +574,14 @@ async function run() {
   const publicationTimes = new Map<number, any>();
   let probeThread: ProbeThread | null = null;
   const jobTraces = new WeakMap<Job, Trace>();
+  // [DX-T1-5] Why: witness release follows the same measured job boundary even when tracing is off.
+  // Rejected: using trace presence as an ACK signal, or persisting on a timer before the job finishes.
+  const jobContext = new AsyncLocalStorage<Job>();
+  const completedJobs = new WeakSet<Job>();
+  const capturedByJob = new WeakMap<Job, any[]>();
   const execute = (job: Job) => {
     const trace = jobTraces.get(job);
-    return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job)));
+    return jobContext.run(job, () => withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job))));
   };
   const executeTraced = async (job: Job) => {
     const ev = job.ev;
@@ -614,6 +621,7 @@ async function run() {
       lostAck.push({ seq: ev.seq, retryTag: retry.ok ? "COMMITTED-AGAIN" : retry.tag, retryNamesOriginal: !retry.ok && retry.error?.transactionId === receipt.txId, resolvedOriginal: resolved?.txId === receipt.txId && resolved?.position === receipt.position });
       out.path = "lost-ack-resolved";
     }
+    traceSync("driver.ack-and-subject-state", () => {
     const pl = ids.placement(ev.subject);
     st.stamp = cmd.newStamp;
     st.stampId = receipt.triples.find((t) => t.entityId === pl && t.attribute === ":placement/stamp")!.id;
@@ -623,7 +631,8 @@ async function run() {
       st.addressId = receipt.triples.find((t) => t.entityId === ids.worker(ev.subject) && t.attribute === ":worker/address")!.id;
       st.addressValidFrom = cmd.validRange.from;
     }
-    const at = noteAck(receipt, ev.subject, { seq: ev.seq, stream: ev.stream, correction: ev.correction, correctionValidFrom: ev.correction ? cmd.validRange.from : null, stamp: cmd.newStamp });
+    });
+    const at = traceSync("driver.ack-and-subject-state", () => noteAck(receipt!, ev.subject, { seq: ev.seq, stream: ev.stream, correction: ev.correction, correctionValidFrom: ev.correction ? cmd.validRange.from : null, stamp: cmd.newStamp }));
     out.ackPublishedAt = at;
     if (ev.stream === "background") {
       const result = { position: receipt.position, ackAt: at };
@@ -636,13 +645,13 @@ async function run() {
     if (ev.stream === "background") original.set(ev.seq, { operations: cmd.operations, meta, receipt });
     out.position = receipt.position;
     if (oracleRecordSet.has(ev.subject))
-      recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignAssertIds(cmd.operations, receipt) } });
-    if (ev.stream === "background") {
+      traceSync("driver.oracle-record", () => recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt!.txId, position: receipt!.position, instant: receipt!.instant, assertionIds: alignAssertIds(cmd.operations, receipt!) } }));
+    if (ev.stream === "background") traceSync("driver.ryow-dispatch", () => {
       const ryowTrace = beginTrace("read", "driver.ryow", { phase: -2, commitTraceId: jobTraces.get(job)?.traceId ?? "off" });
       const p = withTrace(ryowTrace, () => traceAsync("driver.ryow-capture", () => !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then((row: any)=>{ row[R.phase]=PHASE_RYOW; retainRead(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost, replicaHost && "observe" in replicaHost ? replicaHost.observe.bind(replicaHost) : undefined))).finally(() => finishTrace(ryowTrace));
       ryowPending.add(p);
       void p.finally(() => ryowPending.delete(p));
-    }
+    });
     job.onDone?.(receipt.position);
   };
   const resend = async (job: Job, out: any) => {
@@ -669,6 +678,8 @@ async function run() {
       (pendingBySubject.get(job.key) ?? pendingBySubject.set(job.key, []).get(job.key)!).push(job.ev.seq);
     },
     onDone: (r: JobResult<Job>) => {
+      completedJobs.add(r.job);
+      for (const key of capturedByJob.get(r.job) ?? []) deferredPublications?.release(key, r.finishedAt);
       const ev = r.job.ev;
       const trace = jobTraces.get(r.job) ?? beginTrace("commit", "driver.expired", { stream: ev.stream, seq: ev.seq }, r.job.scheduledAt);
       const queue = r.queue?.map((q) => ({
@@ -744,10 +755,11 @@ async function run() {
   const publicationClock = lane === "datomic" && !pairPlan ? openHostFeedClock() : null;
   const publicationSource = JSON.stringify({ route: "A0-control", dir: rawDir, epoch: `${scopeName}#0` });
   const publicationMode = process.env.DX_PUBLICATION_MODE ?? "insert";
-  if (!["insert","legacy"].includes(publicationMode)) throw Error("Invalid publication mode");
+  if (!["insert","legacy","deferred"].includes(publicationMode)) throw Error("Invalid publication mode");
   report.publicationMode = publicationMode;
   const publicationFactory = publicationMode === "legacy" ? openLegacyPublicationWriter : openPublicationWriter;
   const publicationWriter = publicationClock ? publicationFactory(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock) : null;
+  const deferredPublications = publicationMode === "deferred" && publicationWriter ? new DeferredPublications(publicationWriter, key => readProducerPublication(publicationReader, key)) : null;
   const publicationReader = publicationWriter ? openPublicationReader(path.join(rawDir, "publication.db")) : null;
   if (!pairPlan && lane === "datomic" && config.composition !== "memory") {
     feed = new SideThread({dir:rawDir,epoch:`${scopeName}#0`,startAfter:seed.lastPosition,
@@ -769,10 +781,15 @@ async function run() {
   }
   if (publicationWriter) observeDatomicPublication((position, operationId, diagnostics) => {
     const publicationStartedAt = now();
-    traceSync("driver.publication", () => publicationWriter.publish(feed!.publicationKey(position), operationId));
-    publicationTimes.set(position, { publicationStartedAt, publicationDurableAt: now(), ...(diagnostics === undefined ? {} : { diagnostics }) });
+    const key = feed!.publicationKey(position), job = jobContext.getStore();
+    if (deferredPublications) {
+      const held = !!job && !completedJobs.has(job);
+      traceSync("driver.publication.capture", () => deferredPublications.capture(key, operationId, job ? jobTraces.get(job)?.traceId ?? null : null, held));
+      if (held) (capturedByJob.get(job!) ?? capturedByJob.set(job!, []).get(job!)!).push(key);
+    } else traceSync("driver.publication", () => publicationWriter.publish(key, operationId));
+    publicationTimes.set(position, { publicationStartedAt, publicationOperationId: operationId, ...(deferredPublications ? { publicationDeferred: true, publicationCapturedAt: now() } : { publicationDurableAt: now() }), ...(diagnostics === undefined ? {} : { diagnostics }) });
   });
-  report.publicationObserver = publicationWriter ? "DatomicClient.transact result, before Triples receipt and driver ACK; durable bound host-clock sidecar" : "not integrated";
+  report.publicationObserver = publicationWriter ? deferredPublications ? "Native transact-result event captured before receipt; primary witness persisted after unchanged scheduler finishedAt; all witnesses drained before final validation" : "DatomicClient.transact result, before Triples receipt and driver ACK; durable bound host-clock sidecar" : "not integrated";
   if (publicationWriter && config.probe10PerS > 0 && config.composition !== "memory") {
     probeThread = new ProbeThread({dir:rawDir,epoch:`${scopeName}#0`,lane,composition:config.composition,scope:scopeName});
     await probeThread.ready;
@@ -964,6 +981,7 @@ async function run() {
   while (scheduler.inFlightCount > 0 && now() < inFlightDeadline) await sleep(250);
   const inFlightAtFeedTarget = scheduler.inFlightCount;
   report.writerSourceDiagnostics.end = datomicWriterDiagnostics();
+  if (deferredPublications) report.deferredPublication = await deferredPublications.flush();
   await Promise.race([Promise.all([...ryowPending]), sleep(30_000)]);
   for (const w of workers) w.postMessage({ type: "stop" });
   await Promise.race([Promise.all(stopped), sleep(40_000)]);
@@ -1022,6 +1040,7 @@ async function run() {
   await probeThread?.close();
   if (feed instanceof SideThread) { report.sideThread = { elu: feed.elus }; await feed.close(); }
   observeDatomicPublication(undefined);
+  if (deferredPublications) report.deferredPublication = await deferredPublications.flush();
   publicationReader?.close();
   publicationWriter?.close();
   log(`wind down: writer pending ${scheduler.pending}, probe pending ${probeScheduler?.pending ?? 0}, feed checkpoint ${feed?.checkpoint ?? "-"}/${lastAcked}, final position ${finalPosition}`);
@@ -1516,7 +1535,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     readYourOwnWrite: { pulls: ryowRows.length, correct: ryowOk, pull: ryowHist.summary(), watermarkWait: ryowWait.summary(), fallbackReasons: ryowFallbackReasons, routes: countBy(ryowRows.map(x => x.r[R.route])), failures: ryowRows.filter((x) => !x.v.ok).slice(0, 5).map((x) => ({ kind: x.v.kind, subject: x.r[R.subject], position: x.r[R.basisPosition] })) },
     duplicates: { resends: resends.length, considered: dupConsidered.length, returnedOriginal: dupOk },
     lostAck: { simulated: lostAck.length, returnedOriginal: lostOk, retryTags: countBy(lostAck.map((r) => r.retryTag)) },
-    breakdown: { units: "ms", note: "driverOwn includes offer queueing, all post-transact completion work (including after ACK), and durable publication witness inside transact; medians are per-command sums, not sums of medians; all latency bars remain unchanged",
+    breakdown: { units: "ms", note: "driverOwn includes offer queueing, all post-transact completion work (including after ACK), and any awaited durable publication witness inside transact (deferred witness durations are separate); medians are per-command sums, not sums of medians; all latency bars remain unchanged",
       byPhase: Object.fromEntries(ctx.phases.map(p => [p.name, commitBreakdown(committed.filter(w => w.scheduledAt >= p.start && w.scheduledAt < p.end))])),
       burst: commitBreakdown(committed.filter(w => w.burst)), all: commitBreakdown(committed) },
     probe10Diagnostic: { note: "diagnostic only (TARGETS 1.1 P2 item 2); overlay stream, not part of any bar", commit: probeHist.summary() },

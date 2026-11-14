@@ -8,6 +8,7 @@ import {
   observedRunEnd,
   aggregateExchanges,
   outsideAnatomy,
+  validateDeferredOrder,
 } from "../../../lab/trace/anatomy.mjs";
 
 describe("commit anatomy observations", () => {
@@ -23,6 +24,38 @@ describe("commit anatomy observations", () => {
     expect(observedRunEnd(end)).toBe(end);
     expect(() => observedRunEnd("invalid")).toThrow("Invalid observed");
     expect(() => observedRunEnd(Number.NaN)).toThrow("Invalid observed");
+  });
+  it("checks moved witness intervals against actual fresh writer bytes and completion boundaries", () => {
+    const traceId = "a".repeat(32),
+      manifest = { tag: "tag", slot: "tag", source: "head", startedAt: 0 };
+    const writer = {
+      traceId,
+      position: 7,
+      publicationOperationId: "op",
+      publicationStartedAt: 2,
+      publicationCapturedAt: 3,
+      publicationDeferred: true,
+      finishedAt: 5,
+    };
+    const event = {
+      run: "tag",
+      slot: "tag",
+      source: "head",
+      thread: 0,
+      start: 6,
+      end: 7,
+      attributes: { commitTraceId: traceId, position: "7", operationId: "op", finishedAt: 5 },
+    };
+    expect(validateDeferredOrder([writer], [event], manifest, 8).events).toBe(1);
+    for (const bad of [
+      { ...event, start: 4 },
+      { ...event, source: "prior" },
+      { ...event, end: 9 },
+      { ...event, attributes: { ...event.attributes, operationId: "foreign" } },
+    ])
+      expect(() => validateDeferredOrder([writer], [bad], manifest, 8)).toThrow("mismatch");
+    expect(() => validateDeferredOrder([writer], [], manifest, 8)).toThrow("Missing");
+    expect(() => validateDeferredOrder([writer], [event, event], manifest, 8)).toThrow("mismatch");
   });
   const owner = {
     traceId: "1".repeat(32),

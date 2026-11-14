@@ -158,6 +158,8 @@ export function outsideAnatomy(commit, exchanges) {
       names = chain.map((s) => s.name);
     if (names.some((n) => /(?:\/begin|\/snapshot)|^client.begin/.test(n)))
       return "begin snapshot / claim / prefetch";
+    if (names.some((n) => n === "driver.publication.capture"))
+      return "publication event capture (witness deferred)";
     if (names.some((n) => n === "driver.publication")) return "durable publication witness";
     if (names.some((n) => n.startsWith("driver.expected-state.")))
       return "expected-state bookkeeping";
@@ -175,7 +177,7 @@ export function outsideAnatomy(commit, exchanges) {
     if (names.some((n) => n === "driver.ack-and-subject-state"))
       return "benchmark ACK / subject state";
     if (selected.layer === "typescript-gc") return "Node GC";
-    return "other named continuation";
+    return "other named continuation: " + selected.name;
   };
   for (let i = 1; i < points.length; i++) {
     const a = points[i - 1],
@@ -296,9 +298,48 @@ export function tailCauses(commits) {
   }
   return [...groups.values()].sort((a, b) => b.totalWallMs - a.totalWallMs);
 }
+// [DX-T1-5] Why: prove every moved witness actually follows the same source-bound finishedAt used by the latency bar.
+// Rejected: trusting a requested mode, a queued count, or an event from a different request/attempt.
+export function validateDeferredOrder(writes, events, manifest, endedAt) {
+  const byId = new Map(writes.map((w) => [w.traceId, w])),
+    seen = new Set(),
+    delays = [];
+  if (byId.size !== writes.length || writes.some((w) => !/^[a-f0-9]{32}$/.test(w.traceId ?? "")))
+    throw Error("Invalid witness writer identities");
+  for (const event of events) {
+    const w = byId.get(event.attributes?.commitTraceId);
+    if (!w) continue;
+    if (
+      seen.has(w.traceId) ||
+      event.run !== manifest.tag ||
+      event.slot !== manifest.slot ||
+      event.source !== manifest.source ||
+      event.thread !== 0 ||
+      !Number.isFinite(event.start) ||
+      !Number.isFinite(event.end) ||
+      event.start < manifest.startedAt ||
+      event.end > endedAt ||
+      event.end < event.start ||
+      event.start < w.finishedAt ||
+      event.attributes.finishedAt !== w.finishedAt ||
+      event.attributes.position !== String(w.position) ||
+      event.attributes.operationId !== w.publicationOperationId ||
+      !w.publicationDeferred ||
+      !Number.isFinite(w.publicationCapturedAt) ||
+      w.publicationCapturedAt < w.publicationStartedAt ||
+      w.publicationCapturedAt > w.finishedAt
+    )
+      throw Error("Deferred witness content/freshness/binding/order mismatch");
+    seen.add(w.traceId);
+    delays.push(event.start - w.finishedAt);
+  }
+  if (seen.size !== writes.length) throw Error("Missing deferred witness intervals");
+  return { events: seen.size, afterFinishedAt: stats(delays) };
+}
+
 export async function writeAnatomy(
   runDir,
-  { manifest, commits, resources, childrenOf, copyTo, complete },
+  { manifest, commits, resources, childrenOf, copyTo, complete, bench },
 ) {
   if (!manifest) return null;
   const roots = commits.filter((r) => r.writer?.stream === "background" && !r.writer.resend);
@@ -449,6 +490,7 @@ export async function writeAnatomy(
     commitWall: stats(roots.map((r) => r.wallMs)),
     clientOutsideHttp: stats(perCommit.map((e) => e.outsideHttpMs)),
     outsideSteps,
+    deferredPublication: bench?.deferredPublication ?? null,
     typescript: stats(roots.map((r) => r.typescriptMs)),
     typescriptOwn: stats(roots.map((r) => r.layers.typescript)),
     synchronousCpu: stats(roots.map((r) => r.cpuRuntimeMs).filter(Number.isFinite)),
@@ -530,6 +572,12 @@ export async function writeAnatomy(
     "",
     "Outside steps retain queueing, apparatus and unknown continuation; marginal percentiles do not add. The measured offer-to-ACK/finished boundary is unchanged. Begin is a separate snapshot/claim/prefetch request only when the optimistic predecessor path declines. Publication is the benchmark durable producer witness; staging and settlement are product work; expected-state/oracle/RYOW validation is apparatus.",
     "",
+    ...(result.deferredPublication
+      ? [
+          `Deferred benchmark witness: ${result.deferredPublication.persisted}/${result.deferredPublication.captured} persisted, ${result.deferredPublication.pending} pending; SQLite/verification p50/p99 ${n(result.deferredPublication.storage.p50Ms)}/${n(result.deferredPublication.storage.p99Ms)} ms, source capture to durable p50/p99 ${n(result.deferredPublication.captureToDurable.p50Ms)}/${n(result.deferredPublication.captureToDurable.p99Ms)} ms. Primary persistence starts only after the unchanged scheduler finishedAt; every persistence interval remains a linked thread overlay. Native engine durability still precedes the ACK.`,
+          "",
+        ]
+      : []),
     `Authored transactor function: ${result.transactorFunction.n}/${roots.length} commits observed, p50/p99 ${n(result.transactorFunction.p50)}/${n(result.transactorFunction.p99)} ms. Remaining peer wait excluding that function p50/p99 ${n(result.remainingPeerWait.p50)}/${n(result.remainingPeerWait.p99)} ms. Function wall includes any internal wait/GC; it is not an exclusive CPU claim.`,
     "",
     `Native database/t counters: ${native.length} primary commits; transactor p50/p99 ${n(result.nativeTransactions.transactorMs.p50)}/${n(result.nativeTransactions.transactorMs.p99)} ms; apply ${n(result.nativeTransactions.applyMs.p50)}/${n(result.nativeTransactions.applyMs.p99)} ms; queue/storage/other remainder ${n(result.nativeTransactions.queueAndStorageRemainderMs.p50)}/${n(result.nativeTransactions.queueAndStorageRemainderMs.p99)} ms. These are native counters, not reconstructed timeline boundaries.`,

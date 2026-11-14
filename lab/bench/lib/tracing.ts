@@ -5,6 +5,7 @@ const api = await import(pathToFileURL(`${REPO}/packages/datomic/dist/index.js`)
 export const {
   beginTrace,
   withTrace,
+  withoutTrace,
   finishTrace,
   traceSync,
   traceWork,

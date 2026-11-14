@@ -359,6 +359,11 @@ export function currentTrace(): RequestTrace | undefined {
 export function withTrace<A>(trace: RequestTrace | undefined, run: () => A): A {
   return trace ? context.run({ trace, span: trace.root }, run) : run();
 }
+// [DX-T1-5] Why: deferred work outlives the ACK trace and must remain a visible thread overlay of its own.
+// Rejected: retaining a closed request context and appending a span after that request was recorded.
+export function withoutTrace<A>(run: () => A): A {
+  return context.exit(run);
+}
 // [DX-T1-2] Why: a queued callback can be invoked by another request's HTTP finish event.
 // Rejected: ordinary closure capture (AsyncLocalStorage follows the caller, not where the function was created).
 export function bindTraceCallback<A extends unknown[], R>(

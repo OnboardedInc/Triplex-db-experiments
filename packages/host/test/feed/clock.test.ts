@@ -92,3 +92,38 @@ it("keeps the first publication across competing handles and reopen", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// [DX-T1-5] Why: a delayed witness must retain the exact bound source event, with no receipt before persistence.
+// Rejected: reconstructing the timestamp later or allowing a structural token from another writer.
+it("persists only genuine bound captures and keeps their original event time", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "publication-capture-"));
+  const file = path.join(dir, "publication.db"),
+    clock = openHostFeedClock();
+  const key = { source: "source", stream: "stream", epoch: "0", position: "1" };
+  const a = openPublicationWriter(file, key.source, key.stream, clock);
+  const b = openPublicationWriter(file, key.source, key.stream, clock);
+  const reader = openPublicationReader(file);
+  try {
+    const mutable = { ...key };
+    const token = a.capture(mutable, "operation-1");
+    mutable.position = "foreign-after-capture";
+    const afterCapture = captureFeedInstant(clock, key);
+    expect(reader.get(key)).toBeUndefined();
+    expect(() => a.persistCaptured({} as any)).toThrow("forged");
+    expect(() => b.persistCaptured(token)).toThrow("Foreign");
+    await new Promise((resolve) => setTimeout(resolve, 15));
+    const persisted = a.persistCaptured(token);
+    expect(BigInt(persisted.atNs)).toBeLessThanOrEqual(BigInt(afterCapture.atNs));
+    expect(reader.get(key)).toEqual(persisted);
+    expect(a.persistCaptured(token)).toEqual(persisted);
+    expect(b.publish(key, "operation-1")).toEqual(persisted);
+    expect(
+      publicationLagMs(persisted, captureFeedInstant(clock, key), reader.get(key)),
+    ).toBeGreaterThan(0);
+  } finally {
+    reader.close();
+    a.close();
+    b.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

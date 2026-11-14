@@ -33,6 +33,32 @@ function rows(dir: string) {
 }
 
 describe("permanent request tracing", () => {
+  it("retains deferred work as a linked overlay after its request is finished", async () => {
+    const { api, dir } = await recorder("summary");
+    const t = api.beginTrace("commit", "completed")!;
+    let done!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      done = resolve;
+    });
+    api.withTrace(t, () =>
+      api.withoutTrace(() =>
+        setImmediate(() => {
+          expect(api.currentTrace()).toBeUndefined();
+          api.traceWork("deferred.witness", () => 1, { commitTraceId: t.traceId }, true);
+          done();
+        }),
+      ),
+    );
+    api.finishTrace(t);
+    await pending;
+    await api.flushTracing();
+    const recorded = rows(dir),
+      event = recorded.find((r) => r.type === "event" && r.name === "deferred.witness");
+    expect(event.attributes.commitTraceId).toBe(t.traceId);
+    expect(event.start).toBeGreaterThanOrEqual(t.end);
+    expect(recorded.find((r) => r.traceId === t.traceId && r.type === "request").spans).toEqual([]);
+  });
+
   it("drains every commit across full output batches and the final partial batch", async () => {
     const { api, dir } = await recorder("summary");
     const ids: string[] = [];
