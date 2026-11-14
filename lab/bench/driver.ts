@@ -550,6 +550,7 @@ async function run() {
   const traceStart = pairPlan ? await pairBarrier(N, report.trace.digest) : now() + 1000;
   report.traceStartAbsMs = traceStart;
   report.writerSourceDiagnostics = { start: datomicWriterDiagnostics() };
+  report.serverRecordTime = process.env.DX_SERVER_RECORD_TIME !== "0";
   const jobs: Job[] = events.map((ev) => ({ key: ev.subject, scheduledAt: traceStart + ev.atMs, ev }));
   const probeEvents = pairPlan ? probeSchedule(pairPlan.probe.perS, pairPlan.durationS, N) : [];
   const book = pairPlan ? new RoundBook(pairPlan.rounds, traceStart, events.filter((e) => e.stream === "background" && !e.resend), probeEvents) : null;

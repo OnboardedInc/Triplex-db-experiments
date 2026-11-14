@@ -502,17 +502,29 @@ const makeTriplesServices = Effect.gen(function* () {
         ),
     ).pipe(
       Effect.map((result) => {
-        const final = adapter.committedPosition?.(result.txId);
-        if (final !== undefined) return { ...result, position: final };
-        if (!adapter.committedPosition) return result;
-        // [DX-B3-M2] Why: nested receipts exist before the outer transaction assigns final positions.
-        // Rejected: retaining their provisional number after the outer commit shifts the span.
-        let position = result.position;
+        if (!adapter.committedPosition && !adapter.committedInstant) return result;
+        let position = adapter.committedPosition?.(result.txId) ?? result.position;
+        let instant = adapter.committedInstant?.(result.txId) ?? result.instant;
+        // [DX-T1-5] Why: nested receipts/assertions escape staging before the outer physical commit assigns its clock.
+        // Rejected: copying provisional record times permanently, or shifting explicit/default valid-time values.
+        const triples = adapter.committedInstant
+          ? result.triples.map((triple) => ({
+              ...triple,
+              get recordedAt() {
+                return adapter.committedInstant?.(result.txId) ?? triple.recordedAt;
+              },
+            }))
+          : result.triples;
         return {
           ...result,
+          triples,
           get position() {
             position = adapter.committedPosition?.(result.txId) ?? position;
             return position;
+          },
+          get instant() {
+            instant = adapter.committedInstant?.(result.txId) ?? instant;
+            return instant;
           },
         };
       }),

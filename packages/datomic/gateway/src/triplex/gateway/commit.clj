@@ -28,15 +28,46 @@
              (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
                    datom (first (d/index-range (d/history db) :triplex.entity/row prefix nil))]
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
+           (assign-change [text clock new-ids]
+             (let [change (json/read-str text)
+                   change (cond-> change
+                            (new-ids (get change "tripleId")) (assoc "recordedAt" clock)
+                            (contains? change "retractedAt") (assoc "retractedAt" clock))]
+               (json/write-str change)))
+           (assign-row [text offset clock new-ids]
+             (let [start (- offset 2) values (json/read-str (subs text start))
+                   attr (nth values 3)
+                   values (cond-> (assoc values 10 clock)
+                            (= attr ":_tx/instant") (assoc 8 clock)
+                            (= attr ":_tx/change") (assoc 9 (assign-change (nth values 9) clock new-ids)))]
+               (str (subs text 0 start) (json/write-str values))))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities]} payload
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids]} payload
            head-v2 (= 2 (value scope :triplex.scope/head-version))
            latest (when head-v2 (newest-commit))
            h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
                  (value scope :triplex.scope/position)) final (+ h span) final-digits (digits final) delta (- final provisional)
            lower (- provisional span)
            shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))
-           row-a (d/entid db :triplex.entity/row)]
+           row-a (d/entid db :triplex.entity/row)
+           prior (if head-v2 (when latest (value latest :triplex.tx/max-recorded-at))
+                     (value scope :triplex.scope/max-recorded-at))
+           strict-clocks (and (d/entid db :triplex.scope/strict-record-clocks)
+                              (true? (value scope :triplex.scope/strict-record-clocks)))
+           server-clock (and strict-clocks (not= false assign-record-time))
+           _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) (concat times record-clocks)))
+               (throw (ex-info "Invalid strict record clock" {})))
+           checked-times (if strict-clocks (map double (concat times record-clocks)) times)
+           ;; [DX-T1-5] Why: the serialized transaction owns the scope's next finite record clock; valid time stays submitted.
+           ;; Rejected: peer allocation and clock-conflict replay (two clients can race the same maximum).
+           clock (when server-clock
+                   (let [submitted (if (seq checked-times) (reduce max checked-times) (double (System/currentTimeMillis)))
+                         next (when prior (max (+ (double prior) 1.0) (Math/nextUp (double prior))))
+                         assigned (if next (max submitted next) submitted)]
+                     (when-not (Double/isFinite (double assigned))
+                       (throw (ex-info "TRIPLEX_CLOCK_EXHAUSTED" {})))
+                     (double assigned)))
+           new-id-set (set new-ids)]
        (when (or (not (pos? span)) (> final 9007199254740991))
          (throw (ex-info "Invalid commit span" {})))
        (when (and scope-wide (not= h source)) (conflict))
@@ -48,13 +79,25 @@
              (when (> (or (value e :triplex.entity/rev) 0) source) (conflict)))))
        (letfn [(replace-value [x]
                  (cond
+                   (and (instance? java.util.List x) (= :triplex/record-time (first x))) (if server-clock clock (second x))
+                   (and (instance? java.util.List x) (= :triplex/change (first x))) (if server-clock (assign-change (second x) clock new-id-set) (second x))
+                   (and (instance? java.util.List x) (= :triplex/negative-zeros (first x)))
+                   (if (and server-clock (not= Long/MIN_VALUE (Double/doubleToRawLongBits clock)))
+                     (disj (second x) :recorded_at :retracted_at) (second x))
                    (and (instance? java.util.List x) (= :triplex/position (first x))) (shifted (second x))
                    (and (instance? java.util.List x) (= :triplex/double-position (first x))) (double (shifted (second x)))
                    (and (instance? java.util.List x) (= :triplex/row (first x)))
-                   (let [[_ text p offset] x]
-                     (if (and (not= 0 delta) (< lower p (inc provisional)))
-                       (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
-                            (subs text (+ offset 16))) text))
+                   (let [[_ text p offset kind] x
+                         text (if (and (not= 0 delta) (< lower p (inc provisional)))
+                                (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
+                                     (subs text (+ offset 16))) text)]
+                     (if-not server-clock text
+                       (case kind
+                         :row (assign-row text offset clock new-id-set)
+                         :retirement (str (subs text 0 (+ offset 16))
+                                          (format "%016x" (Double/doubleToRawLongBits clock))
+                                          (subs text (+ offset 32)))
+                         text)))
                    (instance? java.util.Map x) (into {} (map (fn [[k v]] [k (replace-value v)]) x))
                    (instance? java.util.List x) (mapv replace-value x)
                    :else x))]
@@ -66,6 +109,9 @@
                                  id (subs raw 5 (+ 5 (Integer/parseInt raw 1 5 16)))]
                              (when (identity-row id) (throw (ex-info "TRIPLEX_IDENTITY f/id" {})))
                              [(replace-value [:db/add entity a text])])
+                           (= :triplex/retracted-zero (first op))
+                           (if (and server-clock (not= Long/MIN_VALUE (Double/doubleToRawLongBits clock)))
+                             [] [[:db/add (second op) :f/negative-zero :retracted_at]])
                            (= :triplex/retract (first op))
                            (let [[_ entity id] op e (d/entid db [:triplex.entity/id entity])
                                  suffix (str (format "%04x" (.length ^String id)) id)
@@ -85,24 +131,16 @@
                                (throw (ex-info "Missing live row datom" {})))
                              (if text [[:db/retract e :triplex.entity/row text]] []))
                            :else [(replace-value op)])) ops)
-               prior (if head-v2 (when latest (value latest :triplex.tx/max-recorded-at))
-                         (value scope :triplex.scope/max-recorded-at))
-               ;; [DX-R3] Why: serial validation covers SPI and replay-safe commits against the durable scope maximum.
-               ;; Rejected: a peer policy or replay-safe-only guard (a late SPI clock invalidates a closed cut).
-               strict-clocks (and (d/entid db :triplex.scope/strict-record-clocks)
-                                  (true? (value scope :triplex.scope/strict-record-clocks)))
-               _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) record-clocks))
-                   (throw (ex-info "Invalid strict record clock" {})))
-               checked-times (if strict-clocks (map double (concat times record-clocks)) times)
+
                ;; [DX-R3] Why: one physical commit can span feed pages; its journals cannot close then regress a cut.
                ;; Rejected: checking only the previous physical maximum (misses mixed clocks inside this commit).
-               _ (when (and strict-clocks (seq checked-times) (some #(not (== (double (first checked-times)) (double %))) checked-times))
+               _ (when (and strict-clocks (not server-clock) (seq checked-times) (some #(not (== (double (first checked-times)) (double %))) checked-times))
                    (throw (ex-info "Strict scopes require one record clock per commit" {})))
-               maximum (if (seq checked-times) (reduce max (or prior (first checked-times)) checked-times) (when head-v2 prior))
-               _ (when (and (or replay-safe strict-clocks) prior (some #(<= % prior) checked-times))
+               maximum (if server-clock clock (if (seq checked-times) (reduce max (or prior (first checked-times)) checked-times) (when head-v2 prior)))
+               _ (when (and (not server-clock) (or replay-safe strict-clocks) prior (some #(<= % prior) checked-times))
                    (throw (ex-info (str "TRIPLEX_CLOCK " prior) {:maximum prior})))
                irregular (or irregular
-                             (and (seq times)
+                             (and (not server-clock) (seq times)
                                   (or (some #(not= (first times) %) times)
                                       (and prior (some #(< % prior) times)))))]
            (vec (concat prepared
@@ -136,5 +174,5 @@
     (when-not (= source-hash (:v (first (d/datoms db :eavt e :triplex.scope/commit-fn-hash))))
       @(d/transact conn [{:db/ident :triplex/commit
                          :db/fn (d/function {:lang :clojure :params '[db payload]
-                                            :requires '[[datomic.api :as d]] :code code})}
+                                            :requires '[[datomic.api :as d] [clojure.data.json :as json]] :code code})}
                         [:db/add e :triplex.scope/commit-fn-hash source-hash]]))))

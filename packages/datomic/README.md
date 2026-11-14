@@ -155,13 +155,16 @@ fast reach while preserving each row's genuine recorded position. As with the
 triple getters, `undefined` means that the caller must use the portable path.
 Malformed graph coverage declines instead of becoming an Effect defect.
 
-Replay-safe public commits register their timestamps, order socket sends and
-sequence peer submissions. A regressing public clock produces a conflict and a
-fresh callback replay instead of making the scope irregular. Clock conflicts
-have a retry budget of `max(32, maxRetries)`; ordinary serialization conflicts
-retain `maxRetries`. Unsafe SPI callbacks retain the legacy irregular-history
-behavior only in non-strict scopes. Registration ends at socket send completion, so acknowledgements still
-overlap, including through older instrumentation wrappers.
+Strict scopes assign record time inside the durable transaction as the greater of
+submitted time and the previous record time plus one millisecond (or the next
+representable finite value when needed). The response and operation resolution
+return that assigned clock. The client publishes it in receipts and cached row
+metadata, including nested transactions; explicit and default valid-time values
+remain submitted. Strict server assignment does not use client timestamp tickets,
+ordered sends or clock-conflict replay. `serverRecordTime: false` retains the
+former client-ordered protocol for controlled comparisons and compatibility.
+Non-strict scopes retain their existing submitted/backdated record-time behavior.
+Idempotency, source preconditions and ordinary serialization retries remain in force.
 
 This layout remains experimental. See `lab/experiments/EXP-DX1/b5/REPORT.md` for
 actual gate denominators, diagnostic measurements and unresolved limitations.
@@ -182,13 +185,11 @@ const database = await client.create(scope, "lean", true);
 stored policy, rather than echoing the requested flag. New benchmark/seed scopes
 request strict mode; existing sealed seeds retain their original policy.
 
-In a strict scope, every write through the gateway's commit function, including
-unsafe SPI and claim-only/empty commits, must use one finite record clock per
-physical commit, strictly greater than the scope's durable maximum. Public
-replay-safe writes obtain this clock from the adapter; callers need not supply one.
-Logical journals in the same physical commit share that instant. On a source
-clock conflict, the adapter replays above the reported maximum with a new ordered
-submission turn.
+In a strict scope, every write through the gateway commit function, including
+unsafe SPI and claim-only/empty commits, receives one finite record clock at the
+serial point. The server chooses the greater of submitted clocks and the durable
+maximum plus one step. Logical journals in one physical commit share that clock.
+The response and original-operation resolution return it; valid time is unchanged.
 
 A runtime copy answers record-time-only pinned reads locally only in strict scopes.
 Once an applied physical commit has a clock at or above the requested time, the
@@ -200,41 +201,6 @@ the next validated strict journal without inventing the rebuild's clock.
 Other time-pinned reads use the gateway. Position-pinned and current-watermark
 reads do not require strict mode for local eligibility.
 
-`ClockConflict` names this record-clock policy and reports the maximum. Use a
-greater commit time. A writer preserving old record times must use a fresh
-non-strict scope, or load a strict scope in increasing commit times, one clock per
-commit. A strict scope that already passed an imported record time cannot be
-downgraded; do not rewrite meaningful history clocks merely to pass the fence.
-
-The policy is enforced for writes through the gateway's commit function. Raw
-administrative Datomic transactions can bypass or alter it and are outside this
-guarantee; the policy is not a fence against database administrators.
-
-### Client cache budgets
-
-`makeDatomicRuntime({ url, entityCacheBytes, rowCacheBytes })` bounds retained
-entity and row caches per client, shared across its scopes. Defaults are 128 MiB
-and 32 MiB. Accounting estimates UTF-16 row text, column slots and decoded entity
-objects; it is not a process RSS limit. Entries larger than their budget are not
-cached. Reads promote entries in the LRU; evictions retain the session and repair
-missing references with a basis-bound `need` request. `client.reachCache.bytes`,
-`client.rowCache.bytes`, their `peakBytes`/`evictions`, and
-`client.reachDiagnostics` expose the retained estimates and protocol paths.
-
-### Commit observations
-
-Set `client.onCommit` before executing writes to observe adapter start/return,
-transaction IDs, operation ID, HTTP call count, replay count and every attempt's
-optimistic/begin flags, staging/order timestamps and HTTP observations. Each
-request observation carries socket `finish`, response headers, parsed-response
-time, status, byte counts, reuse and the gateway phase timeline. Attribution is
-captured synchronously when each HTTP request is created, so overlapping commits
-retain their own observations. Callbacks are off by default; the client retains
-no completed-commit history. `client.onRequest` remains the successful-request
-callback; commit observations also include parsed conflict responses.
-
-### Ordered commit pipelines
-
-Each `DatomicClient` has its own commit identity and sequence. The gateway buffers up to 64 early arrivals and submits each client's contiguous sequence without waiting for transaction acknowledgements. A missing predecessor expires after 30 seconds (`TX2_COMMIT_ORDER_GAP_MS`), rejecting the buffered suffix with `CommitOrderGap`; no timeout permits overtaking. Storage-adapter callers receive `DatomicCommitOrderError`, including `code` and `expectedSequence`, with the gateway error as its cause.
-
-Low-level clients must use an HTTP timeout longer than the gap deadline (at least 35 seconds for the default); `makeDatomicRuntime` already uses 35 seconds. Low-level `transact` callers can resend the failed sequence and suffix using the same client ID and operation IDs. The gateway's error JSON includes `expectedSequence` (also mirrored in the existing transport's numeric `maximum` field). For adapter-managed sequences, `resumeCommitOrder(client, expectedSequence)` resets issuance only after all pending calls have settled. Resolve ambiguous commits through their operation receipts before retrying; sequence reset does not replace lost-ACK resolution.
+`ClockConflict` remains only for the explicit client-ordered compatibility path.
+A writer preserving backdated record times must use a non-strict scope. Assignment
+does not migrate the scope's layout or erase either temporal dimension.

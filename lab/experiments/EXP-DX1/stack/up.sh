@@ -144,6 +144,13 @@ fi
 if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
   trace_tx_java="$trace_tx_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8505"
 fi
+# [DX-T1-5] Why: exercise the real installed transaction function and both layouts before a smoke stack.
+# Rejected: mocking the server-clock serial point or silently skipping the gateway's normal selftests.
+if [[ ${DX_GATEWAY_SELFTEST:-0} == 1 ]]; then
+  docker run --rm --pull never --name "$prefix-selftest" --network none --memory 1500m --memory-swap 1500m \
+    -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx1g" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" \
+    --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.selftest > "$attempt/gateway-selftests.log" 2>&1
+fi
 if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
   mkdir -p "$attempt/trace/preflight"
   docker run --rm --pull never --name "$prefix-trace-check" --network none --memory 768m --memory-swap 768m \

@@ -42,7 +42,7 @@ export function installDatomicPublication(api: any) {
   };
   const original = prototype.transact;
   prototype.transact = async function (db: string, input: any) {
-    if (measuring && !records.has(this)) {
+    if (!records.has(this)) {
       const row = { requests: 0, statuses: {}, errors: {}, counters: this.commitDiagnostics ?? {} };
       records.set(this, row); measurements.add(row);
     }

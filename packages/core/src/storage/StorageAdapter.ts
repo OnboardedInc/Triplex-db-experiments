@@ -38,6 +38,10 @@ export interface StorageAdapterService {
   // [DX-B3-M2] Why: a transactor may allocate the final position after staging.
   // Rejected: returning the provisional position as a committed receipt.
   readonly committedPosition?: (txId: string) => number | undefined;
+  // [DX-T1-5] Why: a serialized backend can assign record time only after staging, alongside its durable position.
+  // Rejected: returning the submitted clock as the receipt, or changing valid-time fields when record time advances.
+  readonly committedInstant?: (txId: string) => number | undefined;
+
   // [EXP-QH1] Why: a columnar store can decode directly to Triples without a second row materialization.
   // Rejected: a new public pull API; undefined retains the normal read path, including transactions/history.
   readonly getEntityTriples?: (

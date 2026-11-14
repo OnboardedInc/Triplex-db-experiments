@@ -28,7 +28,7 @@ it("uses the stored policy and shares the outer instant through nested adapter c
   });
   client.begin = async () => ({ handle: "held", position: 0 });
   client.release = async () => ({});
-  const adapter = makeDatomicStorageAdapter(client, randomUUID());
+  const adapter = makeDatomicStorageAdapter(client, randomUUID(), { serverRecordTime: false });
   try {
     await Effect.runPromise(adapter.initialize());
     const times = await Effect.runPromise(
@@ -93,7 +93,7 @@ it("replays a rejected adapter transaction above the returned maximum with a fre
       datoms: 1,
     };
   };
-  const adapter = makeDatomicStorageAdapter(client, randomUUID());
+  const adapter = makeDatomicStorageAdapter(client, randomUUID(), { serverRecordTime: false });
   try {
     await Effect.runPromise(adapter.initialize());
     await Effect.runPromise(
@@ -159,7 +159,7 @@ it("returns a typed clock-exhaustion error without consuming an ordered send", a
   client.transact = async () => {
     throw new Error("exhausted clock must never submit");
   };
-  const adapter = makeDatomicStorageAdapter(client, scope);
+  const adapter = makeDatomicStorageAdapter(client, scope, { serverRecordTime: false });
   try {
     await Effect.runPromise(adapter.initialize());
     observeInstant(scope, Number.MAX_VALUE);

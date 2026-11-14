@@ -133,6 +133,9 @@ export class DatomicClient {
     conflicts: 0,
     replays: 0,
     clockReplays: 0,
+    serverAssignedSubmissions: 0,
+    clientOrderedSubmissions: 0,
+    ticketWaitMicros: 0,
   };
   private readonly layouts = new Map<string, "lean" | "legacy">();
   private readonly sentCallbacks = new Map<string, () => void>();
@@ -766,6 +769,7 @@ export class DatomicClient {
       clientId?: string;
       sendSequence?: number;
       replaySafe?: boolean;
+      assignRecordTime?: boolean;
       sourceK: number | null;
       span?: number;
       entities?: readonly string[];
@@ -838,7 +842,12 @@ export class DatomicClient {
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
     const sendKey = `${db}/${input.operationId}`;
     if (onSent) this.sentCallbacks.set(sendKey, onSent);
-    let response: { t?: TaggedValue; position?: TaggedValue; delta?: number };
+    let response: {
+      t?: TaggedValue;
+      position?: TaggedValue;
+      delta?: number;
+      recordedAt?: TaggedValue;
+    };
     try {
       response = await this.request("POST", `/v1/db/${db}/transact`, body, this.timeoutMs);
     } finally {
@@ -859,6 +868,23 @@ export class DatomicClient {
         position - input.position !== response.delta
       )
         throw new TypeError("Commit basis mismatch");
+      if (input.assignRecordTime === true) {
+        const assigned = response.recordedAt && validateTagged(response.recordedAt);
+        const submitted = [
+          ...input.rows.flatMap((row) => [
+            ...(input.newIds.includes(row.id) ? [row.recorded_at] : []),
+            ...(row.retracted_at === null ? [] : [row.retracted_at]),
+          ]),
+          ...input.claims.map((claim) => claim.timestamp),
+        ];
+        if (
+          !assigned ||
+          assigned.t !== "double" ||
+          !Number.isFinite(assigned.v) ||
+          submitted.some((v) => Number(assigned.v) < v)
+        )
+          throw new TypeError("Commit assigned record clock mismatch");
+      }
       this.lastCommit = { db, position, t: String(t.v) };
     }
     return response;
@@ -866,7 +892,13 @@ export class DatomicClient {
   operation(
     db: string,
     operationId: string,
-  ): Promise<{ status: "committed" | "absent"; position?: TaggedValue; t?: TaggedValue }> {
+  ): Promise<{
+    status: "committed" | "absent";
+    operationId?: string;
+    position?: TaggedValue;
+    t?: TaggedValue;
+    recordedAt?: TaggedValue;
+  }> {
     return this.request("GET", `/v1/db/${db}/operation/${encodeURIComponent(operationId)}`);
   }
   async claim(db: string, commandId: string, position: number): Promise<string | null> {

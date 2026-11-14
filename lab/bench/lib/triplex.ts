@@ -66,7 +66,7 @@ export async function openTriples(
     const creator = new api.DatomicClient(url);
     try { await creator.create(runtimeApi.DatabaseScope.test(scopeName), process.env.TRIPLEX_DATOMIC_LAYOUT ?? "legacy", process.env.DX_STRICT_RECORD_CLOCKS !== "0"); }
     finally { creator.close(); }
-    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, predecessorCacheBytes: WRITER_PREDECESSOR_CACHE_MIB * 1024 ** 2, predecessorAttributes: isMainThread ? NS_PREDECESSOR_ATTRIBUTES : [], ...(!isMainThread && workerData?.entityCacheBytes ? { entityCacheBytes: workerData.entityCacheBytes } : {}), ...(process.env.TRIPLEX_DATOMIC_LAYOUT ? { layout: process.env.TRIPLEX_DATOMIC_LAYOUT } : {}), ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
+    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, serverRecordTime: process.env.DX_SERVER_RECORD_TIME !== "0", predecessorCacheBytes: WRITER_PREDECESSOR_CACHE_MIB * 1024 ** 2, predecessorAttributes: isMainThread ? NS_PREDECESSOR_ATTRIBUTES : [], ...(!isMainThread && workerData?.entityCacheBytes ? { entityCacheBytes: workerData.entityCacheBytes } : {}), ...(process.env.TRIPLEX_DATOMIC_LAYOUT ? { layout: process.env.TRIPLEX_DATOMIC_LAYOUT } : {}), ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
   })() : await qualification.loadQualificationBackend(lane);
   if (lane === "qlever" && process.env["QLEVER_COMMIT_PATH"] === "broker") {
     const api = await import(dist("qlever", "index.js"));

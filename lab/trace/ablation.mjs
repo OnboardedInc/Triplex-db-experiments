@@ -12,11 +12,18 @@ import {
 } from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
 const nativeKind = /^(quiet|channel|isolated|index)-(floor|256)$/.exec(kind);
-const readerDiagnostic = ["history-256", "writer-256"].includes(kind) || nativeKind?.[2] === "256";
+const readerDiagnostic =
+  ["history-256", "writer-256", "record-clock-256"].includes(kind) || nativeKind?.[2] === "256";
 const summaryKind =
-  ["publication-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(
-    kind,
-  ) || !!nativeKind;
+  [
+    "record-clock-floor",
+    "record-clock-256",
+    "publication-floor",
+    "fallback-floor",
+    "history-256",
+    "seed-floor",
+    "writer-256",
+  ].includes(kind) || !!nativeKind;
 if (
   ![
     "ablation",
@@ -24,6 +31,8 @@ if (
     "anatomy",
     "cpu-floor",
     "publication-floor",
+    "record-clock-floor",
+    "record-clock-256",
     "fallback-floor",
     "history-256",
     "seed-floor",
@@ -47,21 +56,23 @@ const arms = nativeKind
     : ["baseline", "candidate", "candidate", "baseline"]
   : kind === "ablation"
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
-    : kind === "publication-floor"
-      ? ["baseline", "insert", "insert", "baseline"]
-      : kind === "anatomy"
-        ? ["off", "anatomy", "anatomy", "off"]
-        : kind === "seed-floor"
-          ? ["baseline", "seed-2000", "seed-2000", "baseline"]
-          : kind === "writer-256"
-            ? ["baseline", "writer-core", "writer-core", "baseline"]
-            : kind === "history-256"
-              ? ["baseline", "history-192", "history-192", "baseline"]
-              : kind === "fallback-floor"
-                ? ["baseline", "fallback-worker", "fallback-worker", "baseline"]
-                : kind === "cpu-floor"
-                  ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
-                  : ["off", "summary", "summary", "off"];
+    : kind.startsWith("record-clock-")
+      ? ["baseline", "server", "server", "baseline"]
+      : kind === "publication-floor"
+        ? ["baseline", "insert", "insert", "baseline"]
+        : kind === "anatomy"
+          ? ["off", "anatomy", "anatomy", "off"]
+          : kind === "seed-floor"
+            ? ["baseline", "seed-2000", "seed-2000", "baseline"]
+            : kind === "writer-256"
+              ? ["baseline", "writer-core", "writer-core", "baseline"]
+              : kind === "history-256"
+                ? ["baseline", "history-192", "history-192", "baseline"]
+                : kind === "fallback-floor"
+                  ? ["baseline", "fallback-worker", "fallback-worker", "baseline"]
+                  : kind === "cpu-floor"
+                    ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
+                    : ["off", "summary", "summary", "off"];
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const rows = [];
 let buildHashes, commonInputs;
@@ -287,6 +298,33 @@ for (const [i, arm] of arms.entries()) {
         return [s.slice(0, i), s.slice(i + 1)];
       }),
     );
+  if (kind.startsWith("record-clock-")) {
+    const enabled = arm === "server";
+    if (
+      bench.serverRecordTime !== enabled ||
+      envOf(driver).DX_SERVER_RECORD_TIME !== (enabled ? "1" : "0")
+    )
+      throw Error("Record-clock assignment mode mismatch");
+    const a = bench.writerSourceDiagnostics?.start?.counters,
+      b = bench.writerSourceDiagnostics?.end?.counters;
+    if (
+      !a ||
+      !b ||
+      !Number.isFinite(b.serverAssignedSubmissions) ||
+      !Number.isFinite(b.clientOrderedSubmissions)
+    )
+      throw Error("Missing actual clock-path counters");
+    const count = (k) => (b[k] ?? 0) - (a[k] ?? 0);
+    if (
+      enabled
+        ? count("serverAssignedSubmissions") <= 0 ||
+          count("clientOrderedSubmissions") !== 0 ||
+          count("clockReplays") !== 0 ||
+          count("ticketWaitMicros") !== 0
+        : count("clientOrderedSubmissions") <= 0 || count("serverAssignedSubmissions") !== 0
+    )
+      throw Error("Wrong clock path or nonzero server replay/ticket wait");
+  }
   if (kind === "publication-floor") {
     const mode = arm === "insert" ? "insert" : "legacy";
     if (bench.publicationMode !== mode || envOf(driver).DX_PUBLICATION_MODE !== mode)
@@ -437,6 +475,12 @@ for (const [i, arm] of arms.entries()) {
     source,
     digest: bench.trace.digest,
     commands: writes.length,
+    writerCountersDelta: Object.fromEntries(
+      Object.entries(bench.writerSourceDiagnostics?.end?.counters ?? {}).map(([k, v]) => [
+        k,
+        v - (bench.writerSourceDiagnostics?.start?.counters?.[k] ?? 0),
+      ]),
+    ),
     p50Ms: percentile(
       writes.map((w) => w.latencyMs),
       0.5,
@@ -477,8 +521,16 @@ if (
 const controls = rows.filter(
     (r) =>
       r.arm ===
-      (["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind) ||
-      !!nativeKind
+      ([
+        "publication-floor",
+        "record-clock-floor",
+        "record-clock-256",
+        "cpu-floor",
+        "fallback-floor",
+        "history-256",
+        "seed-floor",
+        "writer-256",
+      ].includes(kind) || !!nativeKind
         ? "baseline"
         : "off"),
   ),
@@ -535,8 +587,16 @@ const result = {
       }
     : null,
   comparison:
-    ["cpu-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind) ||
-    !!nativeKind
+    [
+      "publication-floor",
+      "record-clock-floor",
+      "record-clock-256",
+      "cpu-floor",
+      "fallback-floor",
+      "history-256",
+      "seed-floor",
+      "writer-256",
+    ].includes(kind) || !!nativeKind
       ? {
           p50Ms: compare(
             controls.map((r) => r.p50Ms),

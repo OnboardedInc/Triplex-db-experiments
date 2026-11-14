@@ -1,3 +1,4 @@
+import { assignRecordTime, assignedInstant } from "./recordClock.js";
 import { beginSpan, endSpan } from "./tracing.js";
 import {
   registerCommit,
@@ -67,6 +68,7 @@ export const makeDatomicStorageAdapter = (
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
     readonly optimisticCommits?: boolean;
+    readonly serverRecordTime?: boolean;
     readonly indexedJournalReads?: boolean;
   } = {},
 ): StorageAdapterService => {
@@ -109,6 +111,7 @@ export const makeDatomicStorageAdapter = (
   client.rowObservers.add(observe);
   const cached = (id: string) => cache.get(id) ?? client.predecessorCache.row(prefix + id);
   const finalPositions = new Map<string, number>();
+  const finalInstants = new Map<string, number>();
   const admission = Semaphore.makeUnsafe(1);
   const current = Effect.map(CurrentTransactions, (transactions) => transactions.get(key));
   const read = <A>(thunk: (signal: AbortSignal) => Promise<A>): Effect.Effect<A, ReadError> =>
@@ -230,13 +233,28 @@ export const makeDatomicStorageAdapter = (
 
   // [DX-B3-M3] Why: only an ACK bound to this operation or its resolved receipt can publish cached positions.
   // Rejected: caching provisional rows before the transactor has acknowledged them.
-  const settle = (state: TransactionState, position: number) => {
+  const settle = (state: TransactionState, position: number, instant?: number) => {
+    if (state.serverRecordTime && !Number.isFinite(instant))
+      throw new TypeError("Missing assigned record clock");
+    if (
+      state.serverRecordTime &&
+      ([...state.rows.values()].some(
+        (row) =>
+          (state.newIds.has(row.id) && row.recorded_at > instant!) ||
+          (row.retracted_at !== null && row.retracted_at > instant!),
+      ) ||
+        [...state.claims.values()].some((claim) => claim.timestamp > instant!))
+    )
+      throw new TypeError("Assigned record clock precedes submitted clock");
     const provisional = state.position,
       lower = state.sourceK,
       delta = position - provisional;
     const shift = (p: number) => (p > lower && p <= provisional ? p + delta : p);
     lastSeenPosition = Math.max(lastSeenPosition, position);
-    for (const claim of state.claims.values()) finalPositions.set(claim.txId, position);
+    for (const claim of state.claims.values()) {
+      finalPositions.set(claim.txId, position);
+      if (state.serverRecordTime) finalInstants.set(claim.txId, instant!);
+    }
     for (const [id, row] of state.rows) {
       let next = row;
       if (delta !== 0) {
@@ -252,10 +270,15 @@ export const makeDatomicStorageAdapter = (
             : {}),
         };
       }
+      if (state.serverRecordTime)
+        next = assignRecordTime(next, state.newIds.has(id), instant!, state.newIds);
       state.rows.set(id, next);
       if (next.retracted_at !== null) client.predecessorCache.delete(prefix + id);
       if (state.newIds.has(id)) {
-        if (row.tx_id) finalPositions.set(row.tx_id, next.recorded_position);
+        if (row.tx_id) {
+          finalPositions.set(row.tx_id, next.recorded_position);
+          if (state.serverRecordTime) finalInstants.set(row.tx_id, instant!);
+        }
         remember(next);
       }
     }
@@ -289,8 +312,10 @@ export const makeDatomicStorageAdapter = (
         let submitError: unknown;
         try {
           state.submitted = true;
-          const ticket = state.order?.ticket ?? registerCommit(-Infinity, client);
-          if (state.order) state.order.ticket = ticket;
+          const ticket = state.serverRecordTime
+            ? undefined
+            : (state.order?.ticket ?? registerCommit(-Infinity, client));
+          if (state.order && ticket) state.order.ticket = ticket;
           if (state.diagnostic) {
             state.diagnostic.ready = performance.now();
             state.diagnostic.transactionIds = [
@@ -301,35 +326,46 @@ export const makeDatomicStorageAdapter = (
               ),
             ];
           }
+          // [DX-T1-5] Why: server-assigned strict clocks eliminate timestamp tickets and client-wide send head-of-line waits.
+          // Rejected: queueing strict writes by a provisional client timestamp after the transactor owns record time.
+          const readyAt = performance.now();
+          const submit = (sendSequence?: number, sent?: () => void) => {
+            if (state.serverRecordTime) client.commitDiagnostics.serverAssignedSubmissions++;
+            else {
+              client.commitDiagnostics.clientOrderedSubmissions++;
+              client.commitDiagnostics.ticketWaitMicros += (performance.now() - readyAt) * 1000;
+            }
+            if (state.diagnostic) state.diagnostic.released = performance.now();
+            return client.observeRequests(state.diagnostic, () =>
+              client.transact(db, {
+                ...(sent ? { onSent: sent } : {}),
+                ...(sendSequence === undefined
+                  ? {}
+                  : { clientId: commitClientIdFor(client), sendSequence }),
+                assignRecordTime: state.serverRecordTime === true,
+                // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
+                // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
+                replaySafe:
+                  state.replaySafe === true &&
+                  [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
+                sourceK: state.optimistic ? null : state.sourceK,
+                position: state.position,
+                span: state.position - state.sourceK,
+                entities: [...state.entities],
+                live: [...state.live],
+                scopeWide: state.scopeWide,
+                operationId,
+                attemptId,
+                rows: [...state.rows.values()],
+                newIds: [...state.newIds],
+                claims: [...state.claims.values()],
+                ...(state.optimistic ? {} : { handle: state.handle }),
+                release: true,
+              }),
+            );
+          };
           const ack = await bounded(
-            sendCommit(ticket, (sendSequence, sent) => {
-              if (state.diagnostic) state.diagnostic.released = performance.now();
-              return client.observeRequests(state.diagnostic, () =>
-                client.transact(db, {
-                  onSent: sent,
-                  clientId: commitClientIdFor(client),
-                  sendSequence,
-                  // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
-                  // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
-                  replaySafe:
-                    state.replaySafe === true &&
-                    [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
-                  sourceK: state.optimistic ? null : state.sourceK,
-                  position: state.position,
-                  span: state.position - state.sourceK,
-                  entities: [...state.entities],
-                  live: [...state.live],
-                  scopeWide: state.scopeWide,
-                  operationId,
-                  attemptId,
-                  rows: [...state.rows.values()],
-                  newIds: [...state.newIds],
-                  claims: [...state.claims.values()],
-                  ...(state.optimistic ? {} : { handle: state.handle }),
-                  release: true,
-                }),
-              );
-            }),
+            state.serverRecordTime ? submit() : sendCommit(ticket!, submit),
           );
           // [EXP-DX1] Why: a bound transaction ACK is already a receipt; resolve only ambiguous ACKs.
           // Rejected: unconditional operation lookup (adds a third HTTP request).
@@ -355,7 +391,7 @@ export const makeDatomicStorageAdapter = (
             ) {
               const settled = beginSpan("client.settle-and-cache");
               try {
-                settle(state, Number(p.v));
+                settle(state, Number(p.v), assignedInstant(ack));
               } finally {
                 endSpan(settled);
               }
@@ -369,7 +405,13 @@ export const makeDatomicStorageAdapter = (
             error.status < 500 &&
             error.code !== "OperationDuplicate"
           ) {
-            if (["CasConflict", "CommandConflict", "ClockConflict"].includes(error.code)) {
+            if (
+              [
+                "CasConflict",
+                "CommandConflict",
+                ...(!state.serverRecordTime ? ["ClockConflict"] : []),
+              ].includes(error.code)
+            ) {
               client.commitDiagnostics.conflicts++;
               if (error.code === "ClockConflict") {
                 client.commitDiagnostics.clockReplays++;
@@ -392,10 +434,23 @@ export const makeDatomicStorageAdapter = (
               client.observeRequests(state.diagnostic, () => client.operation(db, operationId)),
             );
             if (receipt.status === "committed") {
-              const p = Number(validateTagged(receipt.position).v);
-              if (!Number.isSafeInteger(p) || p < state.position - state.sourceK)
-                throw new Error("Invalid operation receipt position");
-              settle(state, p);
+              const pTag = validateTagged(receipt.position),
+                tTag = validateTagged(receipt.t);
+              const p = Number(pTag.v),
+                instant = assignedInstant(receipt);
+              if (
+                pTag.t !== "long" ||
+                tTag.t !== "long" ||
+                BigInt(tTag.v) < 0n ||
+                !Number.isSafeInteger(p) ||
+                p < state.position - state.sourceK ||
+                (state.serverRecordTime &&
+                  (receipt.operationId !== operationId ||
+                    instant === undefined ||
+                    instant < (state.order?.instant ?? -Infinity)))
+              )
+                throw new Error("Invalid bound operation receipt");
+              settle(state, p, instant);
               return;
             }
           } catch (error) {
@@ -456,6 +511,7 @@ export const makeDatomicStorageAdapter = (
               order: parent.order,
               diagnostic: parent.diagnostic,
               replaySafe: parent.replaySafe,
+              serverRecordTime: parent.serverRecordTime,
               sourceK: parent.sourceK,
               handle: parent.handle,
               ...(parent.prefetch === undefined ? {} : { prefetch: parent.prefetch }),
@@ -570,6 +626,7 @@ export const makeDatomicStorageAdapter = (
             order: {},
             diagnostic: observation,
             replaySafe: transactionOptions?.replaySafe === true,
+            serverRecordTime: strictRecordClocks && options.serverRecordTime !== false,
             optimistic,
             restart: { needed: false },
             sourceK,
@@ -682,7 +739,7 @@ export const makeDatomicStorageAdapter = (
       const state = yield* requireTransaction;
       return yield* Effect.try({
         try: () => {
-          if (state.replaySafe && state.order && !state.order.ticket)
+          if (!state.serverRecordTime && state.replaySafe && state.order && !state.order.ticket)
             state.order.ticket = registerCommit(timestamp, client);
           const row: TripleRow = {
             id,
@@ -715,6 +772,7 @@ export const makeDatomicStorageAdapter = (
     });
 
   const adapter: StorageAdapterService = {
+    committedInstant: (txId) => finalInstants.get(txId),
     committedPosition: (txId) => {
       const p = finalPositions.get(txId);
       finalPositions.delete(txId);
@@ -877,7 +935,12 @@ export const makeDatomicStorageAdapter = (
       Effect.gen(function* () {
         const state = yield* requireTransaction;
         const instant = yield* Effect.try({
-          try: () => physicalInstant(scopeKey, now, state.order ?? {}, strictRecordClocks),
+          try: () => {
+            if (!state.serverRecordTime)
+              return physicalInstant(scopeKey, now, state.order ?? {}, strictRecordClocks);
+            if (!Number.isFinite(now)) throw new RangeError("Nonfinite submitted clock");
+            return (state.order!.instant ??= now);
+          },
           catch: (cause) =>
             new WriteError({
               message:
@@ -887,14 +950,14 @@ export const makeDatomicStorageAdapter = (
         });
         // [DX-B6-5] Why: register before this fiber yields; nested journals share the first ticket.
         // Rejected: first-insert registration (timestamp order can invert).
-        if (state.replaySafe && state.order && !state.order.ticket)
+        if (!state.serverRecordTime && state.replaySafe && state.order && !state.order.ticket)
           state.order.ticket = registerCommit(instant, client);
         return instant;
       }),
     claimCommand: (commandId, txId, timestamp) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
-        if (state.replaySafe && state.order && !state.order.ticket)
+        if (!state.serverRecordTime && state.replaySafe && state.order && !state.order.ticket)
           state.order.ticket = registerCommit(timestamp, client);
         const pending = state.claims.get(commandId);
         if (pending !== undefined) return pending.txId;
@@ -925,7 +988,7 @@ export const makeDatomicStorageAdapter = (
     retract: (id, timestamp, txId, position) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
-        if (state.replaySafe && state.order && !state.order.ticket)
+        if (!state.serverRecordTime && state.replaySafe && state.order && !state.order.ticket)
           state.order.ticket = registerCommit(timestamp, client);
         const row = (yield* queryRows({}, undefined, false, id).pipe(
           Effect.mapError(

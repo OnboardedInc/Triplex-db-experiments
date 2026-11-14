@@ -125,7 +125,7 @@
          ops (vec (remove nil? (concat
                [{:db/id "datomic.tx" :triplex.tx/position (marker position)
                  :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
-                 :triplex.tx/recorded-at (finite! (:recorded-at metadata))}]
+                 :triplex.tx/recorded-at [:triplex/record-time (finite! (:recorded-at metadata))]}]
                ;; [DX-B4-T1] Why: one physical commit can contain several logical journals.
                ;; Rejected: using only tx/id (drops nested transacts at interior cursors).
                (mapcat (fn [[entity rs]]
@@ -160,7 +160,11 @@
                  (map (fn [entity] {:db/id (str "e:" entity) :triplex.entity/id entity}) (distinct (map :entity_id fresh)))
                  (upserts fresh))
                (map (fn [row]
-                      (cond-> (fact-map row metadata)
+                      (cond-> (reduce (fn [m k] (if (contains? m k) (update m k #(vector :triplex/record-time %)) m))
+                                      (fact-map row metadata) [:f/recorded-at :f/retracted-at])
+                        (= ":_tx/instant" (:attribute row)) (assoc :f.v/double [:triplex/record-time (:value_datetime row)])
+                        (= ":_tx/change" (:attribute row)) (assoc :f.v/json [:triplex/change (:value_json row)])
+                        (seq (zero-signs row)) (assoc :f/negative-zero [:triplex/negative-zeros (zero-signs row)])
                         (not= (:recorded_position row) position) (assoc :f/position (marker (:recorded_position row)))
                         (= ":_tx/position" (:attribute row)) (assoc :f.v/double [:triplex/double-position (:recorded_position row)])
                         (:retracted_position row) (assoc :f/retracted-position (marker (:retracted_position row))))) (if lean [] fresh))
@@ -172,7 +176,7 @@
                              [(if (and (not lean) (> (.length ^String text) 8000))
                                 [:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]
                                 [(if lean :triplex/assert :db/add) (str "e:" (:entity_id row)) :triplex.entity/row [:triplex/row text (:recorded_position row)
-                                  (+ 44 (.length ^String (:id row)) (if (= "ref" (:value_type row)) (.length ^String (:value_string row)) 0))]])]))) fresh)
+                                  (+ 44 (.length ^String (:id row)) (if (= "ref" (:value_type row)) (.length ^String (:value_string row)) 0)) :row]])]))) fresh)
                ;; [DX-B5-L2] Why: Datomic cancels add/retract pairs in one physical tx; preserve born-retired rows with a marker.
                ;; Rejected: dropping their history, or assigning their retirement to a later synthetic transaction.
                (when lean
@@ -181,7 +185,7 @@
                     [:triplex/row (str (row-prefix (:id row)) (format "%016d" (:retracted_position row))
                                       (format "%016x" (Double/doubleToRawLongBits (double (:retracted_at row))))
                                       (or (:retract_tx_id row) ""))
-                     (:retracted_position row) (.length ^String (row-prefix (:id row)))]]))
+                     (:retracted_position row) (.length ^String (row-prefix (:id row))) :retirement]]))
                (mapcat (fn [row]
                          (when-not (:retracted_at row) (codec/invalid "Invalid retraction"))
                          (let [eid [:f/id (:id row)] subject [:triplex.entity/id (:entity_id row)]]
@@ -195,14 +199,14 @@
                                  [:triplex/row (str (row-prefix (:id row)) (format "%016d" (:retracted_position row))
                                                    (format "%016x" (Double/doubleToRawLongBits (double (:retracted_at row))))
                                                    (or (:retract_tx_id row) ""))
-                                  (:retracted_position row) (.length ^String (row-prefix (:id row)))]])]
+                                  (:retracted_position row) (.length ^String (row-prefix (:id row))) :retirement]])]
                            [[:triplex/retract (:entity_id row) (:id row)]
                             [:db/retract eid :f/live subject]
                             [:db/add eid :f/retracted-in "datomic.tx"]
-                            [:db/add eid :f/retracted-at (finite! (:retracted_at row))]
+                            [:db/add eid :f/retracted-at [:triplex/record-time (finite! (:retracted_at row))]]
                             [:db/add eid :f/retracted-position (marker (:retracted_position row))]
                             [:db/add eid :f/retract-tx-id (:retract_tx_id row)]
-                            (when (negative-zero? (:retracted_at row)) [:db/add eid :f/negative-zero :retracted_at])]))) old)
+                            (when (negative-zero? (:retracted_at row)) [:triplex/retracted-zero eid])]))) old)
                (map (fn [entity] [:db/add (str "e:" entity) :triplex.entity/rev (marker position)]) (distinct (map :entity_id rows)))
                ;; Existing-only subjects need their identity tempids too (retractions can contain no assertions).
                (map (fn [entity] {:db/id (str "e:" entity) :triplex.entity/id entity}) (distinct (map :entity_id old)))
@@ -212,7 +216,7 @@
      [[:triplex/commit {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
-                       :lean lean :ops ops :times times
+                       :lean lean :ops ops :times times :new-ids (vec new-ids) :assign-record-time (not= false (get input "assignRecordTime"))
                        ;; [DX-R3] Why: strict scopes also order empty/claim-only commits and every imported claim clock.
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))
@@ -283,6 +287,7 @@
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       (trace/attribute! :datomicT (str (d/basis-t (:db-after report))))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
+       :recordedAt (codec/encode-value "double" (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.tx/recorded-at))
        :transactMicros transact-micros
        :timeline (into {} (map (fn [[k v]] [k (/ (- v parsed) 1000.0)])
                               (assoc @timeline :completed completed :responsePrepared (System/nanoTime))))
@@ -296,7 +301,8 @@
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
-                        :code (cond (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
+                        :code (cond (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
+                                    (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
@@ -304,7 +310,8 @@
 (defn operation [db id]
   (if-let [entity (d/entid db [:triplex.tx/operation-id id])]
     (if-let [p (value db entity :triplex.tx/position)]
-      {:status "committed" :position (codec/encode-value "long" p) :t (codec/encode-value "long" (d/tx->t entity))}
+      {:status "committed" :operationId id :position (codec/encode-value "long" p) :t (codec/encode-value "long" (d/tx->t entity))
+       :recordedAt (codec/encode-value "double" (value db entity :triplex.tx/recorded-at))}
       {:status "absent"}) {:status "absent"}))
 (defn head-position
   ([db]

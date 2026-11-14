@@ -369,7 +369,7 @@
                                            :recorded_position p :valid_from 0.0 :schema_version 1 :tx_id (str "tx-" p)})]
                                  "newIds" [(str "strict-row-" p)]
                                  "claims" [{"commandId" (str "command-" p) "txId" (str "tx-" p) "timestamp" (long clock)}]
-                                 "replaySafe" false})))]
+                                 "replaySafe" false "assignRecordTime" false})))]
       (try
         (is (= strict (:strictRecordClocks created)))
         (is (= strict (:strictRecordClocks (gateway/create-scope! base scope-text "lean" head-v2 (not strict))))
@@ -405,6 +405,30 @@
             (is (= 102.0 (scope/max-recorded-at (gateway/sync-db uri) (scope/entity (gateway/sync-db uri)))))
             (is (thrown? clojure.lang.ExceptionInfo (write! 4 102.0))))
           (do (write! 3 100.0) (is (= 3 (storage/head-position name (gateway/sync-db uri))))))
+        (finally (gateway/delete-scope! base scope-text))))))
+
+;; [DX-T1-5] Why: default strict writes allocate at the actual serial point in both stored layouts/head versions.
+;; Rejected: proving assignment through a mock client, or treating valid time as the assigned record clock.
+(deftest server-assigned-record-clock
+  (doseq [layout ["lean" "legacy"] head-v2 [false true] strict [false true]]
+    (let [scope-text (str "[\"triplex-scope-v1\",\"test\",\"dxt1\",\"server-clock-" layout "-" head-v2 "-" strict "\",0]")
+          base "datomic:mem://" created (gateway/create-scope! base scope-text layout head-v2 strict)
+          name (:db created) uri (gateway/db-uri name) conn (gateway/connection uri)
+          write! (fn [p clock]
+                   (storage/commit! name conn (gateway/sync-db uri)
+                     (row-input {"sourceK" (dec p) "position" p "operationId" (str "server-" p) "replaySafe" false
+                       "newIds" [(str "row-" p)] "claims" []
+                       "rows" [(storage/wire-row {:id (str "row-" p) :entity_id "root" :attribute ":v" :value_type "string"
+                          :value_string "v" :recorded_at clock :recorded_position p :valid_from -500.0 :valid_to 5000.0
+                          :schema_version 1 :tx_id (str "tx-" p)})]})))]
+      (try
+        (is (= 100.0 (codec/decode-value (:recordedAt (write! 1 100.0)))))
+        (is (= (if strict 101.0 7.0) (codec/decode-value (:recordedAt (write! 2 7.0)))))
+        (let [db (gateway/sync-db uri) rows (map storage/decode-row (:rows (storage/read-rows name db {"history" true})))
+              second (first (filter #(= "row-2" (:id %)) rows))]
+          (is (= (if strict 101.0 7.0) (:recorded_at second)))
+          (is (= -500.0 (:valid_from second))) (is (= 5000.0 (:valid_to second)))
+          (is (= (if strict 101.0 7.0) (codec/decode-value (:recordedAt (storage/operation db "server-2"))))))
         (finally (gateway/delete-scope! base scope-text))))))
 
 (defn -main [& _]

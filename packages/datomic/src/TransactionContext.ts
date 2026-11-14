@@ -15,6 +15,7 @@ export interface TransactionState {
     | { ticket?: import("./CommitOrder.js").OrderedCommit; instant?: number }
     | undefined;
   readonly replaySafe?: boolean | undefined;
+  readonly serverRecordTime?: boolean | undefined;
   readonly client: DatomicClient;
   readonly scopeKey: string;
   readonly sourceK: number;
