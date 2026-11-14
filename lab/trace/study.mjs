@@ -6,6 +6,11 @@ const [base, prefix] = process.argv.slice(2),
   session = path.join(base, prefix + "-session");
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
+// [DX-T1-6] Why: the session declares summary versus diagnostic full before collecting observations.
+// Rejected: accepting whichever level an old or incomplete arm happens to contain.
+const levelFile = path.join(session, "trace-level.txt");
+const pairLevel = fs.existsSync(levelFile) ? fs.readFileSync(levelFile, "utf8").trim() : "summary";
+if (!["summary", "full"].includes(pairLevel)) throw Error("Invalid declared study trace level");
 const placements = process.argv.includes("--placements");
 const modelExperiment = process.argv.includes("--experiment=model");
 const partial = process.argv.includes("--partial");
@@ -56,7 +61,7 @@ for (const arm of arms) {
   )
     throw Error("Unfinished or foreign attempt " + tag);
   const off = arm.startsWith("off");
-  if (m.level !== (off ? "off" : "summary") || (off ? !t.disabled : !t.complete))
+  if (m.level !== (off ? "off" : pairLevel) || (off ? !t.disabled : !t.complete))
     throw Error("Wrong/incomplete trace level");
   if (!off && (b.config.matchDurationS !== 900 || b.config.readerLadderOnly))
     throw Error("Full pair was shortened/changed");

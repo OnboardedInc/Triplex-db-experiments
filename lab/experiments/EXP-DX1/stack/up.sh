@@ -125,7 +125,9 @@ if [[ $TRIPLEX_TRACE_NATIVE_LOGS == 1 ]]; then
   trace_gw_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
 fi
 if [[ $quiet_loggers == 1 ]]; then
-  [[ $TRIPLEX_TRACE_NATIVE_LOGS == 0 && $trace_native_jfr == 0 ]] || { echo 'Quiet logging conflicts with native INFO/DEBUG capture' >&2; exit 2; }
+  # [DX-T1-6] Why: the binary native appender detaches file appenders itself; quiet logging must remain on in a native profile.
+  # Rejected: restoring synchronous vendor file logging while measuring the transactor's counters.
+  [[ $TRIPLEX_TRACE_NATIVE_LOGS == 0 ]] || { echo 'Quiet logging conflicts with native file capture' >&2; exit 2; }
   trace_tx_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
   trace_gw_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
 fi

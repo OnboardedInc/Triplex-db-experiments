@@ -1,0 +1,12 @@
+# DX-T1 part 6 observation and receipt audit
+
+No acceptance contract is changed. All results remain diagnostic pending independent review.
+
+- Existing report.mjs/anatomy.mjs/finalize.mjs: actual writer offer/finishedAt, complete denominators, gateway/native ACK identity hashes, run/source/slot and clock brackets gate span coverage and report completeness. Missing, stale, duplicate, foreign or unbound observations refuse completeness; unknown time is retained. See AUDIT-5.md for inherited sites.
+- study.sh/study.mjs: immutable session HEAD and build hashes, fresh exact run tag/slot/session, actual 10,000-subject seed, unchanged 900-second full profile, matched input writer digest, exact local/strict read configuration and complete raw collectors precede copied gate flags. New trace-level.txt declares the intended summary or diagnostic full level before collection; old sessions retain the prior summary contract. Controls explicitly disable the CPU profiler. Busy-host bookend drift remains visible, not a speedup.
+- REFERENCE-6.md: reread all four original source-bound attempts at c9b9fc3f; every arm source/slot/session checked. Actual loaded oracle reports DONE/PASS, 810 commands, 53 reads, 2,626 entity queries and zero mismatches. The complete loaded trace and matched zero baseline are required; no zero-only run is an oracle PASS. Existing flag values are reproduced as observations, with misses and seams preserved. P4 total is actual goodput on the whole eight-CPU machine, not a quota multiplication used as new evidence.
+- Native JFR: enabling quiet logging with binary counters retains the quiet logback configuration. install-native! detaches the selected logger's appenders and adds only the binary event appender; native file capture is still rejected. Native database-hash/t and fresh gateway request bounds bind counters, not nearest-time guesses. This does not change storage, durability or acknowledgement timing.
+- CPU-profile reader: exact source/slot/process/thread, two boot-clock sample brackets, content-valid node ancestry/sample bounds gate a profile. Samples indicate observed stacks, not exclusive execution throughout unsampled gaps.
+- Cleanup: exact owned-prefix inventory must be empty and guest scheduler accounting restored before releasing the measurement lease. No shared resident, sealed seed or foreign stopped container is touched.
+
+Part-6 reference: the session exited zero, all owned resources were removed and the lease was released. No automatic acceptance promotion, upload or push.

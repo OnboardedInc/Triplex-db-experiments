@@ -9,12 +9,15 @@ export TRIPLEX_TRACE_SESSION=$prefix
 session_dir=$DX_STACK_EVIDENCE/$prefix-session
 mkdir "$session_dir"
 git rev-parse HEAD > "$session_dir/head.txt"
+study_level=${DX_STUDY_LEVEL:-summary}
+[[ $study_level == summary || $study_level == full ]] || exit 2
+printf '%s\n' "$study_level" > "$session_dir/trace-level.txt"
 # [DX-T1-4] Why: the authorized in-use-host study records admission and retains bookend drift.
 # Rejected: stopping diagnosis on host CPU activity; only the final absolute verdict needs quiet qualification.
 quiet_rc=0
 sh lab/bin/host-quiet.sh --wait "${DX_QUIET_WAIT_MIN:-0}" > "$session_dir/quiet-admission.jsonl" || quiet_rc=$?
 printf '%s\n' "$quiet_rc" > "$session_dir/quiet-admission-exit.txt"
-python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
+python3 -c 'import shutil;assert shutil.disk_usage(".").free>=20*1024**3'
 lock=$HOME/Claude/Projects/triplex-db-2/locks/measure
 while ! mkdir "$lock" 2>/dev/null;do sleep 5;done
 printf '{"id":"DX-T1","pid":%s,"kind":"full-pair"}\n' "$$" > "$lock/owner.json"
@@ -47,9 +50,13 @@ for arm in off-before pair off-after;do
  stage_rc=0
  sh lab/bin/host-quiet.sh > "$session_dir/$arm-host-before.jsonl" || true
  if [[ $arm == pair ]];then
-  run_stage env TRIPLEX_TRACE_LEVEL=summary bash lab/experiments/EXP-DX1/t1/run.sh pair "$prefix" --rung 10k "$@" > "$session_dir/$arm-controller.log" 2>&1 || stage_rc=$?
+  # [DX-T1-6] Why: a diagnostic pair keeps quiet native logging and profiles the writer without changing the default verdict level.
+  # Rejected: full's native file logger (measured overhead) or profiles in the off bookends.
+  collectors=()
+  [[ $study_level != full ]] || collectors=(TRIPLEX_TRACE_COMPONENTS=node,gateway,tx-jfr,gw-jfr,postgres)
+  run_stage env TRIPLEX_TRACE_LEVEL="$study_level" ${collectors[@]+"${collectors[@]}"} bash lab/experiments/EXP-DX1/t1/run.sh pair "$prefix" --rung 10k "$@" > "$session_dir/$arm-controller.log" 2>&1 || stage_rc=$?
  else
-  run_stage env TRIPLEX_TRACE_LEVEL=off bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-$arm" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$arm-controller.log" 2>&1 || stage_rc=$?
+  run_stage env TRIPLEX_TRACE_LEVEL=off DX_NODE_PROFILE=0 bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-$arm" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$arm-controller.log" 2>&1 || stage_rc=$?
  fi
  printf '%s\n' "$stage_rc" > "$session_dir/$arm-exit.txt"
  if [[ $stage_rc != 0 ]];then
