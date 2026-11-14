@@ -647,7 +647,7 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${readerDiagnostic ? "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)" : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim. Host context spans first scheduled to last finished primary commit; post-run oracle CPU is excluded.`,
+  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${readerDiagnostic ? (stressDiagnostic ? "frozen 450-second stress diagnostic (normal 45-second levels, not a full verdict)" : "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)") : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim. Host context spans first scheduled to last finished primary commit; post-run oracle CPU is excluded.`,
   "",
   "| arm / level | p50 ms | p99 ms | control p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
   "| --- | ---: | ---: | --- | --- | --- | --- |",
@@ -673,6 +673,11 @@ if (kind.startsWith("basis-")) text.push(
   "| arm | receipt items sent | broadcast p50 / p99 / max ms | host context / control |",
   "| --- | ---: | --- | --- |",
   ...rows.map(r => `| ${r.arm} | ${r.basisBroadcast.ackItems} | ${r.basisBroadcast.wall.p50Ms}/${r.basisBroadcast.wall.p99Ms}/${r.basisBroadcast.wall.maxMs} | swap ${r.swapGiB.median.toFixed(3)} GiB, Mac CPU ${r.macCpu.median.toFixed(1)}%; bookends above |`), "",
+);
+if (stressDiagnostic) text.push(
+  "| arm | writer p99 ratio L256 | writer p99 ratio L1024 | same-mode zero reference |",
+  "| --- | ---: | ---: | --- |",
+  ...rows.map(r=>`| ${r.arm} | ${r.writerTailRatios.find(v=>v.id.endsWith("256"))?.value ?? "n/a"} | ${r.writerTailRatios.find(v=>v.id.endsWith("1024"))?.value ?? "n/a"} | ${prefix}-${r.arm === "candidate" ? "candidate-zero" : "zero"} |`), "",
 );
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 if (readerDiagnostic)
@@ -733,6 +738,7 @@ const result = {
   controls: controls.map((r) => r.tag),
   rows,
 };
+result.reporterSha256 = (await import("node:crypto")).createHash("sha256").update(fs.readFileSync(new URL(import.meta.url))).digest("hex");
 fs.writeFileSync(path.join(session, "MEASUREMENTS.json"), JSON.stringify(result, null, 2) + "\n");
 fs.writeFileSync(path.join(session, "MEASUREMENTS.md"), text.join("\n"));
 console.log(JSON.stringify(result));

@@ -13,3 +13,15 @@ Controls are the two snapshot rows from this same lease; their read error preven
 Error trace `b334d35c018635f900000000002cd8fb`, worker 2, phase L1024, subject 6262, position 3990: reader wall 2446.697 ms, socket queue/write 2398.750 ms, no response span/status. The detailed transport error was not recorded. Neighbouring fallback requests waited on the socket and then completed. No wrong world is inferred or hidden. The reference pair remains independently complete.
 
 Next attempts use new tags, repeat controls, and a separate same-mode zero reference for the candidate. They retain the same frozen trace and phase durations. Compression of this incomplete comparison's raw numeric files is lossless, with original and compressed hashes plus restore commands in the private p7-retry-compression journal.
+
+## Fresh retry, qualified source/byte checks
+
+`tx2-dxt1-p7-basis-b`, source 4cf2b1a7, summary; 3,707 primary commands per 450-second arm, all loaded arms DONE/oracle PASS and zero read errors/violations. Both modes have their own same-lease zero reference. Original incorrectly labelled 300-second automatic captions are retained as MEASUREMENTS.initial.*; the corrected derivation records the actual reporter SHA256.
+
+| arm | primary p50 / p99 ms | >50-ms commits | GC count / total ms / max ms | heap used median / peak MiB | scheduler-late >50 count / sum ms | L256 / L1024 writer-tail ratios | swap GiB; Mac CPU % |
+| --- | --- | ---: | --- | --- | --- | --- | --- |
+| baseline | 12.569 / 44.483 | 23 | 822 / 2230.381 / 60.597 | 499.3 / 557.3 | 0 / 0.000 | 1.152 / 0.523 | 4.624; 11.2 |
+| candidate | 12.459 / 57.201 | 68 | 756 / 2186.364 / 73.029 | 497.9 / 546.4 | 1 / 52.235 | 2.323 / 0.760 | 4.608; 11.1 |
+| baseline | 12.500 / 53.584 | 54 | 822 / 2289.207 / 57.314 | 498.8 / 548.4 | 0 / 0.000 | 4.256 / 0.628 | 4.608; 11.1 |
+
+Controls are the two snapshot bookends above. Broadcast p99 is 5.151 / 1.303 / 5.151 ms and items 19,373,181 / 12,471 / 19,373,529. Primary median saving 0.075 ms narrowly exceeds 0.069-ms drift; no p99 or GC-stall improvement is established (p99 change +8.167 ms versus 9.101-ms drift). Keep delta for the direct broadcast saving; final full-pair bars still decide performance. GC kinds in all loaded arms: 7 major, 7 incremental; minor 808 / 742 / 808. Lateness intervals are per primary command, not exclusive CPU time. The journal is still opt-in pending its separate study.

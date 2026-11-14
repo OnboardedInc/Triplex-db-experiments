@@ -44,7 +44,7 @@ export DX_READ_PATH=replica DX_STRICT_RECORD_CLOCKS=1
 # [DX-T1-4] Why: q8's 192-MiB window retains the benchmark's historical basis cohort; fallback decoding stays off the writer.
 # Rejected: silently inheriting the 64-MiB driver default, which caused measured historical-read gateway fallbacks. Seed batches retain q8 setup after a measured tail benefit.
 args=("$@")
-for setting in replica-history-mib replica-fallback-thread seed-batch-facts; do
+for setting in replica-history-mib replica-fallback-thread seed-batch-facts reader-basis-wire; do
   present=false
   for argument in ${args[@]+"${args[@]}"}; do [[ $argument != --$setting && $argument != --$setting=* ]] || present=true; done
   if [[ $present == false ]]; then
@@ -52,6 +52,7 @@ for setting in replica-history-mib replica-fallback-thread seed-batch-facts; do
       replica-history-mib) args+=(--replica-history-mib 192);;
       replica-fallback-thread) args+=(--replica-fallback-thread worker);;
       seed-batch-facts) args+=(--seed-batch-facts 2000);;
+      reader-basis-wire) args+=(--reader-basis-wire delta);;
     esac
   fi
 done

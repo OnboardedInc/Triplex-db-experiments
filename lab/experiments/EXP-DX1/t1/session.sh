@@ -77,7 +77,9 @@ import json,sys
 p=sys.argv[1];d=json.load(open(p));d['stressDiagnostic']=True
 open(p,'w').write(json.dumps(d,indent=2)+'\n')
 PY_STRESS
-  env TRIPLEX_TRACE_LEVEL=summary DX_TX_NATIVE_JFR=0 bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-zero" --rung 10k --reader-ladder-only --zero-readers --max-readers 0 --level-s 45 --match-duration-s 450 "$@" > "$session_dir/zero-controller.log" 2>&1 & child=$!
+  zero_mode=()
+  [[ $kind != basis-256 ]] || zero_mode=(--reader-basis-wire snapshot)
+  env TRIPLEX_TRACE_LEVEL=summary DX_TX_NATIVE_JFR=0 bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-zero" --rung 10k --reader-ladder-only --zero-readers --max-readers 0 --level-s 45 --match-duration-s 450 ${zero_mode[@]+"${zero_mode[@]}"} "$@" > "$session_dir/zero-controller.log" 2>&1 & child=$!
   zero_rc=0;wait "$child" || zero_rc=$?;child=
   printf '%s\n' "$zero_rc" > "$session_dir/zero-exit.txt"
   [[ $zero_rc == 0 ]] || exit "$zero_rc"
