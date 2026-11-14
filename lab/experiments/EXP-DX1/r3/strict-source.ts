@@ -72,13 +72,13 @@ export async function proveStrictSource(endpoint: string) {
         assert.equal(cap.supported, true);
         assert.equal(cap.strictRecordClocks, strict);
         if (strict) {
-          const late = await write(3, [100]);
+          const late: any = await write(3, [100]);
           assert.equal(late.recordedAt?.v, 102);
           expected.push(row(3, 102, "-0"));
-          const mixed = await write(4, [7, 8]);
+          const mixed: any = await write(4, [7, 8]);
           assert.equal(mixed.recordedAt?.v, 103);
           expected.push(row(4, 103, "-0"), row(4, 103, "-1"));
-          const claim = await client.transact(db.db, {
+          const claim: any = await client.transact(db.db, {
             sourceK: 4,
             position: 5,
             operationId: "claim-only",
@@ -90,10 +90,14 @@ export async function proveStrictSource(endpoint: string) {
             claims: [{ commandId: "claim-only", txId: "claim", timestamp: 2 }],
           });
           assert.equal(claim.recordedAt?.v, 104);
-          const again = await write(3, [100]);
-          assert.equal(again.position.v, "3");
+          await assert.rejects(
+            write(3, [100]),
+            (error: any) => error.code === "OperationDuplicate",
+          );
+          const again = await client.operation(db.db, "probe-3-100");
+          assert.equal(again.operationId, "probe-3-100");
+          assert.equal(again.position?.v, "3");
           assert.equal(again.recordedAt?.v, 102);
-          assert.equal((await client.operation(db.db, `probe-3-100`)).recordedAt?.v, 102);
           await checkRows(5);
           assert.equal((await client.basis(db.db)).position.v, "5");
           const cut = await client.rows(db.db, {
