@@ -139,7 +139,7 @@ for arm in "${arms[@]}"; do
         channel-*) placement+=(DX_ENCRYPT_CHANNEL=false);;
         isolated-*) placement+=(DX_CPUS_TX=0 DX_CPUS_PG=1 DX_CPUS_GW_WRITE=2 DX_CPUS_GW_READ=4 DX_CPUS_DRIVER=3,4,5,6,7 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7);;
         index-*) placement+=(DX_INDEX_THRESHOLD=512m);;
-        cache-*) placement+=(DX_TX_OBJECT_CACHE=2g);;
+        cache-*) placement+=(DX_TX_OBJECT_CACHE=1280m);;
       esac
     fi
   fi
@@ -148,7 +148,7 @@ for arm in "${arms[@]}"; do
     # Rejected: restoring the old shared-core placement, changing heap/index thresholds too, or using native file logs.
     level=full;components=node,gateway,tx-jfr
     placement=(DX_QUIET_LOGS=1 DX_ENCRYPT_CHANNEL=true DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
-      DX_TX_OBJECT_CACHE=$([[ $arm == candidate ]] && echo 2g || echo 1g)
+      DX_TX_OBJECT_CACHE=$([[ $arm == candidate ]] && echo 1280m || echo 1g)
       DX_CPUS_TX=0 DX_CPUS_PG=1 DX_CPUS_GW_WRITE=2 DX_CPUS_GW_READ=4 DX_CPUS_DRIVER=3,4,5,6,7 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7
       DX_TX_NATIVE_JFR=1)
   fi

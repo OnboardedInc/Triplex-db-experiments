@@ -249,7 +249,7 @@ for (const [i, arm] of arms.entries()) {
       if (nativeKind[1] === "quiet") expected.DX_QUIET_LOGS = "1";
       if (nativeKind[1] === "channel") expected.DX_ENCRYPT_CHANNEL = "false";
       if (nativeKind[1] === "index") expected.DX_INDEX_THRESHOLD = "512m";
-      if (nativeKind[1] === "cache") expected.DX_TX_OBJECT_CACHE = "2g";
+      if (nativeKind[1] === "cache") expected.DX_TX_OBJECT_CACHE = "1280m";
     }
     const props = fs.readFileSync(path.join(dir, "config/sql.properties"), "utf8");
     validateNativeSettings({
