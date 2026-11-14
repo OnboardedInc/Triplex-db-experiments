@@ -1756,3 +1756,29 @@ Postgres commits observed; a commit crosses about ten threads; notes and a ranke
 
 Part 5 is running (same agent session): compress old evidence (disk at 17 GiB free), split and shrink the 4.3 ms, build
 server-assigned record time, measure bytes per transaction and transaction-function reads, then a verdict pair.
+
+## 2026-11-14 10:50 UTC: DX-T1 part 5: server-assigned record time built, witness deferred, commit 13.6 ms; disk blocked the verdict; 41 worktrees removed; part 6 launched
+
+DX-T1 part 5 (`exp/DX-T1-tracing`, `c9b9fc3f`, pushed; report `t1/REPORT-5.md`). P2 does not pass. Busy host (swap 9.7 to
+12.3 GiB, Mac CPU outside the VM about half a core at the median).
+1. **Commit at zero readers: 13.6 ms p50, 107 ms p99** (900 s arm, default tracing). Peer transact wait 6.4 ms p50, 59 ms
+   p99. Outside the transact HTTP call 3.6 ms: validation and staging 0.69, queue 0.77, encoding 0.40, expected-state
+   bookkeeping 0.37, receipt 0.13, the rest under 0.05 each. TypeScript own wall 2.66 ms, synchronous CPU 0.68 ms, share 28.9%.
+2. **`begin` is not a second round trip** on warm commits (cached predecessors).
+3. **Benchmark's durable witness moved behind the completion boundary: 1.5 ms saved** at p50 (drift 0.23 ms).
+4. **Server-assigned record time (Sam's decision) is built** for strict scopes: clock replays and ticket wait are zero
+   (controls: 5 to 10 replays, 106 to 581 ms total ticket wait per arm). It costs 0.42 ms at the zero-reader median (drift
+   0.29 ms); at 256 readers the medians are inside drift. Non-strict scopes still accept submitted record times; valid
+   time untouched. Core 861 tests, Datomic 230, host 34, gateway 17 tests pass; native differential 300 scenarios; live
+   replica differential 200,000 worlds, zero differences; four loaded oracles PASS.
+5. **Bytes per transaction:** 56 datoms and about 17 KB of value text per transaction, 98% of it native row texts. No
+   layout change made.
+6. **Verdict pair not run:** the Mac fell under 15 GiB free. Compression of old evidence gave 6.6 GiB (8.0 GB to 0.8 GB,
+   receipt `t1/COMPRESSION-5.md`).
+
+Orchestrator: removed 41 clean, fully pushed worktrees of finished experiments (branches kept; their small ignored files
+archived under `~/Claude/Projects/triplex-db-2/backups/worktree-ignored-2026-11-14/`); Mac free 14.9 to 30.1 GiB. Trimming
+the VM disk does not give space back to the Mac (image stays 62 GB). No external or cloud drive is mounted on this Mac.
+
+Part 6 is running (same agent session): the reference verdict pair first; then cold reads during apply, the transaction
+function's reads, the send and acknowledgement legs; the writer-thread stall; a closing pair.
