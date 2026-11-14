@@ -727,12 +727,15 @@ export async function writeAnatomy(
   ];
   for (const dest of [outputDir ?? runDir, ...(copyTo ? [copyTo] : [])]) {
     fs.mkdirSync(dest, { recursive: true });
-    fs.writeFileSync(path.join(dest, "COMMIT-ANATOMY.md"), text.join("\n"));
+    fs.writeFileSync(path.join(dest, "COMMIT-ANATOMY.md"), text.join("\n"), {
+      flag: outputDir ? "wx" : "w",
+    });
   }
   for (const dest of [outputDir ?? runDir, ...(copyTo ? [copyTo] : [])])
     fs.writeFileSync(
       path.join(dest, "commit-anatomy.json"),
       JSON.stringify(result, null, 2) + "\n",
+      { flag: outputDir ? "wx" : "w" },
     );
   return result;
 }

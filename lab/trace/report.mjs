@@ -1134,15 +1134,20 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
   // [DX-T1-6] Why: new phase summaries can be derived from immutable old bytes without rewriting a cited report or duplicating raw traces.
   // Rejected: overwriting the original source-bound report during analysis or calling a new derivation a fresh benchmark.
   if (anatomyTo) {
-    if (path.resolve(anatomyTo) === rootDir)
-      throw Error("Anatomy derivation needs a separate output directory");
+    const outputDir = path.resolve(anatomyTo);
+    if (outputDir === rootDir) throw Error("Anatomy derivation needs a separate output directory");
+    // [DX-T1-6] Why: a reused destination or symlink must not redirect a derivation into existing cited reports.
+    // Rejected: checking only the destination's spelling (aliases can name the same directory).
+    if (fs.existsSync(outputDir)) throw Error("Anatomy derivation requires a new output directory");
+    fs.mkdirSync(path.dirname(outputDir), { recursive: true });
+    fs.mkdirSync(outputDir, { mode: 0o700 });
     await writeAnatomy(rootDir, {
       bench,
       manifest,
       commits,
       resources,
       childrenOf: (root) => traceChildren(root, requests),
-      outputDir: path.resolve(anatomyTo),
+      outputDir,
       reporterSha256: summary.reporterSha256,
       complete: summary.complete,
     });

@@ -2,7 +2,15 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import http from "node:http";
 import { spawnSync } from "node:child_process";
 import { Worker } from "node:worker_threads";
-import { mkdtempSync, rmSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  rmSync,
+  readFileSync,
+  readdirSync,
+  mkdirSync,
+  writeFileSync,
+  symlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
@@ -598,6 +606,11 @@ describe("permanent request tracing", () => {
       JSON.parse(readFileSync(path.join(derived, "commit-anatomy.json"), "utf8")),
     ).toMatchObject({ source: "source", reporterSha256: derivedReport.reporterSha256 });
     await expect(buildReport(dir, { anatomyTo: dir })).rejects.toThrow("separate output");
+    await expect(buildReport(dir, { anatomyTo: derived })).rejects.toThrow("new output");
+    const alias = path.join(dir, "input-alias");
+    symlinkSync(dir, alias, "dir");
+    await expect(buildReport(dir, { anatomyTo: alias })).rejects.toThrow("new output");
+    expect(readFileSync(path.join(dir, "TRACE-REPORT.md"))).toEqual(originalReport);
     const badCli = spawnSync(
       process.execPath,
       [new URL("../../../lab/trace/report.mjs", import.meta.url).pathname, dir, "--anatomy-to"],
