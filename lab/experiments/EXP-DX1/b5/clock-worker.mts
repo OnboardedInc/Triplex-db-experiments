@@ -12,7 +12,7 @@ import {
   DatomicClient,
   makeDatomicStorageAdapter,
   makeDatomicQueryExecutor,
-} from "../../../../packages/datomic/src/index.js";
+} from "../../../../packages/datomic/dist/index.js";
 const [scope, worker] = process.argv.slice(2);
 const client = new DatomicClient(process.env.DATOMIC_GATEWAY_URL ?? "http://127.0.0.1:8505", 30000);
 const adapter = makeDatomicStorageAdapter(client, scope!, { maxRetries: 30 });

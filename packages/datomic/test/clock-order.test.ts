@@ -23,8 +23,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("distributed clock orde
           exec(
             process.execPath,
             [
-              "--import",
-              "tsx",
+              "--experimental-strip-types",
               "lab/experiments/EXP-DX1/b5/clock-worker.mts",
               scope,
               String(worker),
