@@ -14,7 +14,7 @@ git rev-parse HEAD > "$session_dir/head.txt"
 quiet_rc=0
 sh lab/bin/host-quiet.sh --wait "${DX_QUIET_WAIT_MIN:-0}" > "$session_dir/quiet-admission.jsonl" || quiet_rc=$?
 printf '%s\n' "$quiet_rc" > "$session_dir/quiet-admission-exit.txt"
-python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
+python3 -c 'import shutil;assert shutil.disk_usage(".").free>=20*1024**3'
 lock=$HOME/Claude/Projects/triplex-db-2/locks/measure
 while ! mkdir "$lock" 2>/dev/null; do sleep 5; done
 printf '{"id":"DX-T1","pid":%s,"kind":"writer-arms"}\n' "$$" > "$lock/owner.json"
@@ -50,7 +50,7 @@ elif [[ $kind == fallback-floor ]]; then arms=(baseline fallback-worker fallback
 elif [[ $kind == history-256 ]]; then arms=(baseline history-192 history-192 baseline)
 elif [[ $kind == seed-floor ]]; then arms=(baseline seed-2000 seed-2000 baseline)
 elif [[ $kind == writer-256 ]]; then arms=(baseline writer-core writer-core baseline)
-elif [[ $kind =~ ^(quiet|channel|isolated|index)-(floor|256)$ ]]; then
+elif [[ $kind =~ ^(quiet|channel|isolated|index|cache)-(floor|256)$ ]]; then
   [[ ${DX_NATIVE_REPEATS:-2} =~ ^[12]$ ]] || exit 2
   arms=(baseline candidate candidate baseline)
   [[ ${DX_NATIVE_REPEATS:-2} != 1 ]] || arms=(baseline candidate baseline)
@@ -58,12 +58,12 @@ else exit 2;fi
 # [DX-T1-4] Why: setting requests are explicit, identical controls bookend one changed native setting.
 # Rejected: claiming a tag proves the running JVM configuration or comparing hosts across sessions.
 export DX_NATIVE_SETTINGS_READBACK=${DX_NATIVE_SETTINGS_READBACK:-0}
-if [[ $kind =~ ^(quiet|channel|isolated|index)-(floor|256)$ ]]; then
+if [[ $kind =~ ^(quiet|channel|isolated|index|cache)-(floor|256)$ ]]; then
   export DX_NATIVE_SETTINGS_READBACK=1
   python3 - "$session_dir/native-request.json" "$kind" <<'PY_NATIVE'
 import os,json,sys
-keys=['DX_QUIET_LOGS','DX_ENCRYPT_CHANNEL','DX_INDEX_THRESHOLD','DX_INDEX_MAX']
-defaults=['0','true','256m','1g']
+keys=['DX_QUIET_LOGS','DX_ENCRYPT_CHANNEL','DX_INDEX_THRESHOLD','DX_INDEX_MAX','DX_TX_OBJECT_CACHE']
+defaults=['1' if sys.argv[2].startswith('cache-') else '0','true','256m','1g','1g']
 json.dump({'kind':sys.argv[2],'candidateRepeats':int(os.environ.get('DX_NATIVE_REPEATS','2')),'baseline':{k:os.environ.get(k,d) for k,d in zip(keys,defaults)}},open(sys.argv[1],'w'),indent=2)
 PY_NATIVE
 fi
@@ -125,7 +125,7 @@ for arm in "${arms[@]}"; do
     placement=(DX_CPUS_DRIVER=4,5,6,7 DX_CPUS_GW_READ=2,3 DX_MAIN_CPU= DX_WORKER_CPUS=)
     [[ $arm != writer-core ]] || placement=(DX_CPUS_DRIVER=3,4,5,6,7 DX_CPUS_GW_READ=2 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7)
   fi
-  if [[ $kind =~ ^(quiet|channel|isolated|index)-(floor|256)$ ]]; then
+  if [[ $kind =~ ^(quiet|channel|isolated|index|cache)-(floor|256)$ ]]; then
     level=summary;components=default
     if [[ $kind == *-256 ]]; then duration=300;level_s=45;reader_args=(--max-readers 256);fi
     placement=(DX_QUIET_LOGS=${DX_QUIET_LOGS:-0} DX_ENCRYPT_CHANNEL=${DX_ENCRYPT_CHANNEL:-true} DX_INDEX_THRESHOLD=${DX_INDEX_THRESHOLD:-256m} DX_INDEX_MAX=${DX_INDEX_MAX:-1g}
@@ -139,8 +139,18 @@ for arm in "${arms[@]}"; do
         channel-*) placement+=(DX_ENCRYPT_CHANNEL=false);;
         isolated-*) placement+=(DX_CPUS_TX=0 DX_CPUS_PG=1 DX_CPUS_GW_WRITE=2 DX_CPUS_GW_READ=4 DX_CPUS_DRIVER=3,4,5,6,7 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7);;
         index-*) placement+=(DX_INDEX_THRESHOLD=512m);;
+        cache-*) placement+=(DX_TX_OBJECT_CACHE=2g);;
       esac
     fi
+  fi
+  if [[ $kind == cache-* ]]; then
+    # [DX-T1-6] Why: only the transactor object-cache cap varies on the kept placement; native counters measure serial cold reads.
+    # Rejected: restoring the old shared-core placement, changing heap/index thresholds too, or using native file logs.
+    level=full;components=node,gateway,tx-jfr
+    placement=(DX_QUIET_LOGS=1 DX_ENCRYPT_CHANNEL=true DX_INDEX_THRESHOLD=256m DX_INDEX_MAX=1g
+      DX_TX_OBJECT_CACHE=$([[ $arm == candidate ]] && echo 2g || echo 1g)
+      DX_CPUS_TX=0 DX_CPUS_PG=1 DX_CPUS_GW_WRITE=2 DX_CPUS_GW_READ=4 DX_CPUS_DRIVER=3,4,5,6,7 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7
+      DX_TX_NATIVE_JFR=1)
   fi
   if [[ $arm == full || $arm == summary ]]; then level=$arm;components=default;fi
   export TRIPLEX_TRACE_LEVEL=$level

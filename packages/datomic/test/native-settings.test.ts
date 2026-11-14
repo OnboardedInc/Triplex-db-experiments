@@ -106,6 +106,11 @@ describe("native setting comparison evidence", () => {
   });
   it("requires observed levels and native property content", () => {
     expect(validateNativeSettings({ manifest, expected, properties, rows: rows() })).toBe(true);
+    // [DX-T1-6] Why: the object-cache arm must read back the declared cap on the exact running stack.
+    // Rejected: accepting the historical 1-GiB value for a purported 2-GiB candidate.
+    const larger = { ...expected, DX_TX_OBJECT_CACHE: "2g" };
+    expect(() => validateNativeSettings({ manifest, expected: larger, properties, rows: rows() })).toThrow("object-cache");
+    expect(validateNativeSettings({ manifest, expected: larger, properties: properties.replace("object-cache-max=1g", "object-cache-max=2g"), rows: rows() })).toBe(true);
     const wrong = rows();
     wrong[0]!.loggers["datomic.peer"] = "INFO";
     expect(() => validateNativeSettings({ manifest, expected, properties, rows: wrong })).toThrow();

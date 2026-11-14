@@ -11,7 +11,7 @@ import {
   validateNativeBands,
 } from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
-const nativeKind = /^(quiet|channel|isolated|index)-(floor|256)$/.exec(kind);
+const nativeKind = /^(quiet|channel|isolated|index|cache)-(floor|256)$/.exec(kind);
 const readerDiagnostic =
   ["history-256", "writer-256", "record-clock-256"].includes(kind) || nativeKind?.[2] === "256";
 const summaryKind =
@@ -114,8 +114,9 @@ for (const [i, arm] of arms.entries()) {
   buildHashes = actualHashes;
   const effective = configuration({
     TRIPLEX_TRACE_LEVEL:
-      arm === "off" ? "off" : arm === "summary" || summaryKind ? "summary" : "full",
+      kind.startsWith("cache-") ? "full" : arm === "off" ? "off" : arm === "summary" || summaryKind ? "summary" : "full",
     TRIPLEX_TRACE_SESSION: prefix,
+    ...(kind.startsWith("cache-") ? { TRIPLEX_TRACE_COMPONENTS: "node,gateway,tx-jfr", DX_TX_NATIVE_JFR: "1" } : {}),
     ...(!["full", "summary"].includes(arm) && !summaryKind
       ? {
           TRIPLEX_TRACE_COMPONENTS:
@@ -248,6 +249,7 @@ for (const [i, arm] of arms.entries()) {
       if (nativeKind[1] === "quiet") expected.DX_QUIET_LOGS = "1";
       if (nativeKind[1] === "channel") expected.DX_ENCRYPT_CHANNEL = "false";
       if (nativeKind[1] === "index") expected.DX_INDEX_THRESHOLD = "512m";
+      if (nativeKind[1] === "cache") expected.DX_TX_OBJECT_CACHE = "2g";
     }
     const props = fs.readFileSync(path.join(dir, "config/sql.properties"), "utf8");
     validateNativeSettings({
@@ -264,7 +266,7 @@ for (const [i, arm] of arms.entries()) {
     );
     if (!channels.length || channels.some((v) => v !== expected.DX_ENCRYPT_CHANNEL))
       throw Error("Unconfirmed published channel mode");
-    const isolated = nativeKind[1] === "isolated" && arm === "candidate";
+    const isolated = (nativeKind[1] === "isolated" && arm === "candidate") || nativeKind[1] === "cache";
     const masks = {
       tx: isolated ? "0" : "0,1",
       pg: isolated ? "1" : "0",

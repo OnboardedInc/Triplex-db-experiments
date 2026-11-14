@@ -128,7 +128,7 @@ export function validateNativeSettings({ manifest, rows, expected, properties })
     "encrypt-channel": expected.DX_ENCRYPT_CHANNEL,
     "memory-index-threshold": expected.DX_INDEX_THRESHOLD,
     "memory-index-max": expected.DX_INDEX_MAX,
-    "object-cache-max": "1g",
+    "object-cache-max": expected.DX_TX_OBJECT_CACHE ?? "1g",
   }))
     if (props[name] !== value) throw Error("Native property mismatch " + name);
   return true;
