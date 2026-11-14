@@ -386,7 +386,10 @@ export function traceScheduler(base: Scheduler.Scheduler): Scheduler.Scheduler {
         scheduleTask: (task, priority) => {
           const active = context.getStore();
           const selected = active?.trace === owner?.trace ? active : owner;
-          dispatcher.scheduleTask(() => selected ? context.run(selected, task) : context.exit(task), priority);
+          dispatcher.scheduleTask(
+            () => (selected ? context.run(selected, task) : context.exit(task)),
+            priority,
+          );
         },
         flush: () => dispatcher.flush(),
       };
@@ -549,10 +552,19 @@ export function traceparent(span?: TraceSpan): string {
 export function finishTrace(
   trace: RequestTrace | undefined,
   attributes: TraceAttributes = {},
+  endedAt?: number,
 ): void {
   if (!trace) return;
+  // [DX-T1-5] Why: a scheduler's measured ACK precedes report construction; the trace must use that same boundary.
+  // Rejected: including onDone recorder work in trace wall while the latency bar already stops at finishedAt.
+  const closedAt = traceNow();
+  if (
+    endedAt !== undefined &&
+    (!Number.isFinite(endedAt) || endedAt < trace.start || endedAt > closedAt)
+  )
+    throw new TypeError("Invalid measured trace completion");
   if (trace.schedulerStart) trace.schedulerEnd = readSchedulerSnapshot();
-  trace.end = traceNow();
+  trace.end = endedAt ?? closedAt;
   Object.assign(trace.attributes, attributes);
   const duration = trace.end - trace.start;
   const key = `${trace.kind}:${trace.attributes["phase"] ?? "unphased"}`;

@@ -11,18 +11,42 @@ import {
   outsideAnatomy,
   validateDeferredOrder,
   validateCommandTrace,
+  validateWriterBoundary,
 } from "../../../lab/trace/anatomy.mjs";
 
 describe("commit anatomy observations", () => {
+  it("rejects a trace closed by reporting work instead of the observed offer-to-completion boundary", () => {
+    const writer = { scheduledAt: 10, finishedAt: 20, latencyMs: 10 };
+    expect(validateWriterBoundary(writer, { start: 10, end: 20 })).toBe(true);
+    for (const root of [
+      { start: 10, end: 20.03 },
+      { start: 9, end: 20 },
+      { start: 10, end: NaN },
+    ])
+      expect(() => validateWriterBoundary(writer, root)).toThrow("boundary");
+  });
   it("binds the traced native acknowledgement to the actual writer command rather than another concurrent request", () => {
     const writer = { position: 10, commandId: "command", publicationOperationId: "operation" };
     const hash = (value: string) => createHash("sha256").update(value).digest("hex");
-    const request = { spans: [{ name: "client.transact-encode", attributes: {
-      appliedPosition: 10, operationHash: hash("operation"), commandHash: hash(JSON.stringify(["command"])),
-    } }] };
+    const request = {
+      spans: [
+        {
+          name: "client.transact-encode",
+          attributes: {
+            appliedPosition: 10,
+            operationHash: hash("operation"),
+            commandHash: hash(JSON.stringify(["command"])),
+          },
+        },
+      ],
+    };
     expect(validateCommandTrace(writer, [request])).toBe(true);
     for (const field of ["position", "commandId", "publicationOperationId"] as const)
-      expect(() => validateCommandTrace({ ...writer, [field]: field === "position" ? 11 : "foreign" }, [request])).toThrow("binding");
+      expect(() =>
+        validateCommandTrace({ ...writer, [field]: field === "position" ? 11 : "foreign" }, [
+          request,
+        ]),
+      ).toThrow("binding");
     expect(() => validateCommandTrace(writer, [])).toThrow("binding");
     expect(() => validateCommandTrace(writer, [request, request])).toThrow("binding");
   });

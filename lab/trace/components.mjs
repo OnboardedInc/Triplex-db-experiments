@@ -41,6 +41,7 @@ export function configuration(env = process.env) {
     session: env.TRIPLEX_TRACE_SESSION ?? null,
     queueExpected: has("node"),
     nativeCommandBinding: has("node"),
+    writerBoundary: has("node"),
     requireClockBinding: has("node") && has("gateway"),
     flags: Object.fromEntries(
       [

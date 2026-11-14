@@ -8,6 +8,17 @@ const quantile = (xs, p) =>
   xs.length ? [...xs].sort((a, b) => a - b)[Math.max(0, Math.ceil(xs.length * p) - 1)] : null;
 const stats = (xs) => ({ n: xs.length, p50: quantile(xs, 0.5), p99: quantile(xs, 0.99) });
 const n = (x) => (Number.isFinite(x) ? x.toFixed(3) : "n/a");
+// [DX-T1-5] Why: the picture and the latency bar must use the same observed offer and completion instants.
+// Rejected: quietly attributing post-ACK report construction to the measured request.
+export function validateWriterBoundary(writer, root) {
+  if (![writer.scheduledAt, writer.finishedAt, writer.latencyMs, root.start, root.end].every(Number.isFinite) ||
+      writer.finishedAt < writer.scheduledAt ||
+      Math.abs(root.start - writer.scheduledAt) > 0.001 ||
+      Math.abs(root.end - writer.finishedAt) > 0.001 ||
+      Math.abs(root.end - root.start - writer.latencyMs) > 0.001)
+    throw Error("Writer/trace measured boundary mismatch");
+  return true;
+}
 // [DX-T1-5] Why: request ownership is proven by the acknowledged native transaction, not by coincident timestamps.
 // Rejected: accepting a trace whose encoding/HTTP spans actually belong to a concurrently running command.
 export function validateCommandTrace(writer, requests) {

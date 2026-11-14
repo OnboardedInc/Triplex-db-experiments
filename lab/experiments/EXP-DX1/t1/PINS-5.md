@@ -1,7 +1,7 @@
 # Part 5 pin audit
 
-Contract files remain unchanged. Initial source: 76939dd2. Changed pinned references:
+Acceptance files remain unchanged. Compared initial 76939dd2 with the working source after the boundary-observation correction. Each changed path and its initial SHA256 was searched in lab/acceptance.
 
 | Path | Old SHA256 | New SHA256 |
 | --- | --- | --- |
-No changed pinned path or initial hash is referenced by lab/acceptance.
+No changed path or initial hash is referenced by lab/acceptance.

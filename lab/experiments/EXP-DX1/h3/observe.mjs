@@ -24,7 +24,7 @@ if (['1','clock'].includes(process.env.DX_NATIVE_GATES ?? '')) {
         DATOMIC_GATEWAY_URL:process.env.DATOMIC_URL,DX_B5_SCENARIOS:'300',DX_CLOCK_EVIDENCE_DIR:'/driver/native-gates',
         TRIPLEX_TRACE_LEVEL:'off',TRIPLEX_TRACE_NODE:'0',TRIPLEX_TRACE_SYSTEM:'0'}});
       gate.on('exit',code=>resolve(code??1));gate.on('error',()=>resolve(127));
-      for(const sig of ['SIGTERM','SIGINT'])process.once(sig,()=>gate.kill(sig));
+      for(const sig of /** @type {NodeJS.Signals[]} */ (['SIGTERM','SIGINT']))process.once(sig,()=>gate.kill(sig));
     });
     if (rc !== 0) process.exit(Number(rc));
   }

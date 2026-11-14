@@ -700,7 +700,7 @@ async function run() {
           capacity: q.capacity,
           behindTraceId: q.behindTraceId,
         });
-      finishTrace(trace, { expired: r.expired, outcome: outcomes.get(okey(ev))?.outcome ?? "unknown", position:outcomes.get(okey(ev))?.position??null });
+      finishTrace(trace, { expired: r.expired, outcome: outcomes.get(okey(ev))?.outcome ?? "unknown", position:outcomes.get(okey(ev))?.position??null }, r.finishedAt);
       if (ev.stream === "background" && !ev.resend) {
         const list = pendingBySubject.get(ev.subject);
         if (list) { const k = list.indexOf(ev.seq); if (k >= 0) list.splice(k, 1); if (!list.length) pendingBySubject.delete(ev.subject); }
