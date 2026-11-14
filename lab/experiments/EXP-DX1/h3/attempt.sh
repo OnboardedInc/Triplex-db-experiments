@@ -81,7 +81,7 @@ git rev-parse HEAD > "$out/head.txt"
 if [[ $prefix != tx2-dxr3-* ]]; then
 python3 - "$out" <<'PY2'
 import subprocess,pathlib,sys,hashlib,json
-files=subprocess.check_output(['git','ls-files','lab/bench','lab/experiments/EXP-DX1/stack','lab/experiments/EXP-DX1/h3','lab/experiments/EXP-DX1/h4','packages/datomic','packages/core','lab/trace','lab/experiments/EXP-DX1/t1/*.sh','pnpm-lock.yaml'],text=True).splitlines()
+files=subprocess.check_output(['git','ls-files','lab/bench','lab/experiments/EXP-DX1/stack','lab/experiments/EXP-DX1/h3','lab/experiments/EXP-DX1/h4','packages/datomic','packages/core','packages/host','lab/trace','lab/experiments/EXP-DX1/t1/*.sh','pnpm-lock.yaml'],text=True).splitlines()
 files += [str(p) for d in ['datomic','core','host','qualification','w0','xtdb','qlever','sql'] for p in pathlib.Path('packages/'+d+'/dist').rglob('*') if p.is_file()]
 rows={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in sorted(set(files)) if pathlib.Path(p).is_file()}
 pathlib.Path(sys.argv[1]+'/source-build-hashes.json').write_text(json.dumps(rows,indent=2)+'\n')

@@ -46,6 +46,7 @@ import { completedMaintenanceInWindow, requestIndex } from "./lib/maintenance.ts
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
 import { alignAssertIds } from "./lib/receipt.ts";
+import { openLegacyPublicationWriter } from "./lib/legacy-publication.ts";
 import { datomicWriterDiagnostics, observeDatomicPublication } from "./lib/datomic-publication.ts";
 import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
@@ -741,7 +742,11 @@ async function run() {
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
   const publicationClock = lane === "datomic" && !pairPlan ? openHostFeedClock() : null;
   const publicationSource = JSON.stringify({ route: "A0-control", dir: rawDir, epoch: `${scopeName}#0` });
-  const publicationWriter = publicationClock ? openPublicationWriter(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock) : null;
+  const publicationMode = process.env.DX_PUBLICATION_MODE ?? "insert";
+  if (!["insert","legacy"].includes(publicationMode)) throw Error("Invalid publication mode");
+  report.publicationMode = publicationMode;
+  const publicationFactory = publicationMode === "legacy" ? openLegacyPublicationWriter : openPublicationWriter;
+  const publicationWriter = publicationClock ? publicationFactory(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock) : null;
   const publicationReader = publicationWriter ? openPublicationReader(path.join(rawDir, "publication.db")) : null;
   if (!pairPlan && lane === "datomic" && config.composition !== "memory") {
     feed = new SideThread({dir:rawDir,epoch:`${scopeName}#0`,startAfter:seed.lastPosition,

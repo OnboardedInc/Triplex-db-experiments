@@ -14,13 +14,16 @@ const [base, prefix, kind] = process.argv.slice(2);
 const nativeKind = /^(quiet|channel|isolated|index)-(floor|256)$/.exec(kind);
 const readerDiagnostic = ["history-256", "writer-256"].includes(kind) || nativeKind?.[2] === "256";
 const summaryKind =
-  ["fallback-floor", "history-256", "seed-floor", "writer-256"].includes(kind) || !!nativeKind;
+  ["publication-floor", "fallback-floor", "history-256", "seed-floor", "writer-256"].includes(
+    kind,
+  ) || !!nativeKind;
 if (
   ![
     "ablation",
     "cost",
     "anatomy",
     "cpu-floor",
+    "publication-floor",
     "fallback-floor",
     "history-256",
     "seed-floor",
@@ -44,19 +47,21 @@ const arms = nativeKind
     : ["baseline", "candidate", "candidate", "baseline"]
   : kind === "ablation"
     ? ["off", "tx-jfr", "gw-jfr", "postgres", "gateway", "node", "native-logs", "full", "off"]
-    : kind === "anatomy"
-      ? ["off", "anatomy", "anatomy", "off"]
-      : kind === "seed-floor"
-        ? ["baseline", "seed-2000", "seed-2000", "baseline"]
-        : kind === "writer-256"
-          ? ["baseline", "writer-core", "writer-core", "baseline"]
-          : kind === "history-256"
-            ? ["baseline", "history-192", "history-192", "baseline"]
-            : kind === "fallback-floor"
-              ? ["baseline", "fallback-worker", "fallback-worker", "baseline"]
-              : kind === "cpu-floor"
-                ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
-                : ["off", "summary", "summary", "off"];
+    : kind === "publication-floor"
+      ? ["baseline", "insert", "insert", "baseline"]
+      : kind === "anatomy"
+        ? ["off", "anatomy", "anatomy", "off"]
+        : kind === "seed-floor"
+          ? ["baseline", "seed-2000", "seed-2000", "baseline"]
+          : kind === "writer-256"
+            ? ["baseline", "writer-core", "writer-core", "baseline"]
+            : kind === "history-256"
+              ? ["baseline", "history-192", "history-192", "baseline"]
+              : kind === "fallback-floor"
+                ? ["baseline", "fallback-worker", "fallback-worker", "baseline"]
+                : kind === "cpu-floor"
+                  ? ["baseline", "engine-isolated", "engine-isolated", "baseline"]
+                  : ["off", "summary", "summary", "off"];
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const rows = [];
 let buildHashes, commonInputs;
@@ -282,6 +287,17 @@ for (const [i, arm] of arms.entries()) {
         return [s.slice(0, i), s.slice(i + 1)];
       }),
     );
+  if (kind === "publication-floor") {
+    const mode = arm === "insert" ? "insert" : "legacy";
+    if (bench.publicationMode !== mode || envOf(driver).DX_PUBLICATION_MODE !== mode)
+      throw Error("Publication strategy runtime/readback mismatch");
+    const masks = { tx: "0", pg: "1", "gw-w": "2", "gw-r": "4" };
+    for (const [role, mask] of Object.entries(masks))
+      if (containers.find((c) => c.Name === `/${tag}-${role}`)?.HostConfig.CpusetCpus !== mask)
+        throw Error("Publication comparison placement changed");
+    if (driver.HostConfig.CpusetCpus !== "3,4,5,6,7")
+      throw Error("Publication driver placement changed");
+  }
   if (envOf(driver).TRIPLEX_TRACE_NODE !== effective.flags.TRIPLEX_TRACE_NODE)
     throw Error("Node effective flag mismatch");
   for (const role of ["tx", "gw-w", "gw-r"]) {

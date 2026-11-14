@@ -353,7 +353,12 @@ export const makeDatomicStorageAdapter = (
               t.t === "long" &&
               BigInt(t.v) >= 0n
             ) {
-              settle(state, Number(p.v));
+              const settled = beginSpan("client.settle-and-cache");
+              try {
+                settle(state, Number(p.v));
+              } finally {
+                endSpan(settled);
+              }
               return;
             }
           }
@@ -530,29 +535,32 @@ export const makeDatomicStorageAdapter = (
             observation.begin = !optimistic;
           }
           if (optimistic) client.commitDiagnostics.optimisticAttempts++;
-          const snapshot = yield* read<{
-            handle: string;
-            position: number;
-            prefetch?: NonNullable<TransactionState["prefetch"]>;
-          }>(() =>
-            client.observeRequests(observation, () =>
-              optimistic
-                ? Promise.resolve({
-                    handle: "",
-                    position: lastSeenPosition,
-                    prefetch: {
-                      ...(hint?.commandId === undefined ? {} : { commandId: hint.commandId }),
-                      claim: null,
-                      rows: new Map(predecessors!.map(([id, row]) => [id, row!])),
-                    },
-                  })
-                : transactionOptions?.hint === undefined
-                  ? client.begin(db)
-                  : client.beginCommand(db, transactionOptions.hint),
-            ),
-          ).pipe(
-            Effect.mapError(
-              (cause) => new WriteError({ message: "Cannot acquire Datomic source cut", cause }),
+          const snapshot = yield* traced(
+            "client.begin-snapshot-or-prefetch",
+            read<{
+              handle: string;
+              position: number;
+              prefetch?: NonNullable<TransactionState["prefetch"]>;
+            }>(() =>
+              client.observeRequests(observation, () =>
+                optimistic
+                  ? Promise.resolve({
+                      handle: "",
+                      position: lastSeenPosition,
+                      prefetch: {
+                        ...(hint?.commandId === undefined ? {} : { commandId: hint.commandId }),
+                        claim: null,
+                        rows: new Map(predecessors!.map(([id, row]) => [id, row!])),
+                      },
+                    })
+                  : transactionOptions?.hint === undefined
+                    ? client.begin(db)
+                    : client.beginCommand(db, transactionOptions.hint),
+              ),
+            ).pipe(
+              Effect.mapError(
+                (cause) => new WriteError({ message: "Cannot acquire Datomic source cut", cause }),
+              ),
             ),
           );
           const sourceK = snapshot.position;
@@ -583,7 +591,10 @@ export const makeDatomicStorageAdapter = (
           const context = new Map(transactions);
           context.set(key, state);
           return yield* Effect.gen(function* () {
-            const result = yield* traced("client.validation-and-staging", Effect.provideService(effect, CurrentTransactions, context));
+            const result = yield* traced(
+              "client.validation-and-staging",
+              Effect.provideService(effect, CurrentTransactions, context),
+            );
             if (state.restart.needed)
               return yield* Effect.fail(
                 new WriteError({ message: "Unsupported optimistic read requires a snapshot" }),
@@ -595,7 +606,10 @@ export const makeDatomicStorageAdapter = (
             )
               return result;
             const exit = yield* Effect.exit(
-              traced("client.persist-and-resolve", Effect.uninterruptible(persist(state, operationId, randomUUID()))),
+              traced(
+                "client.persist-and-resolve",
+                Effect.uninterruptible(persist(state, operationId, randomUUID())),
+              ),
             );
             if (Exit.isSuccess(exit)) return result;
             return yield* Effect.failCause(exit.cause).pipe(

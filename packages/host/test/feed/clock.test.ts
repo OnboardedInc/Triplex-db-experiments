@@ -65,3 +65,30 @@ it("binds producer publication bytes, retries, source coordinates and host/boot 
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// [DX-T1-5] Why: independent writers must preserve the first durable timestamp and reject conflicting IDs after reopening.
+// Rejected: testing only one cached writer handle (misses atomic insert conflicts and persisted bytes).
+it("keeps the first publication across competing handles and reopen", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "publication-insert-")),
+    file = path.join(dir, "publication.db");
+  const clock = openHostFeedClock(),
+    key = { source: "source", stream: "stream", epoch: "0", position: "17" };
+  const a = openPublicationWriter(file, key.source, key.stream, clock),
+    b = openPublicationWriter(file, key.source, key.stream, clock);
+  let first;
+  try {
+    first = a.publish(key, "source-17");
+    expect(b.publish(key, "source-17")).toEqual(first);
+    expect(() => b.publish(key, "different")).toThrow("different publication");
+  } finally {
+    a.close();
+    b.close();
+  }
+  const reader = openPublicationReader(file);
+  try {
+    expect(reader.get(key)).toEqual(first);
+  } finally {
+    reader.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

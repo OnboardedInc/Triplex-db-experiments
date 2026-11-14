@@ -84,6 +84,10 @@ export function openPublicationWriter(
   db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA fullfsync=ON; PRAGMA checkpoint_fullfsync=ON;
     PRAGMA wal_autocheckpoint=0; PRAGMA journal_size_limit=16777216; PRAGMA locking_mode=NORMAL; PRAGMA busy_timeout=5000;
     CREATE TABLE IF NOT EXISTS publications(key TEXT PRIMARY KEY, body TEXT NOT NULL);`);
+  // [DX-T1-5] Why: one autocommitted insert is already atomic and FULL-synchronous; prepare once.
+  // Rejected: BEGIN/SELECT/INSERT/COMMIT for every new position (extra writer-thread work, same durable row).
+  const insert = db.prepare("INSERT OR IGNORE INTO publications VALUES(?,?)");
+  const select = db.prepare("SELECT body FROM publications WHERE key=?");
   return Object.freeze({
     publish: (key: FeedPosition, publicationId: string): FeedPublication => {
       if (key.source !== source || key.stream !== stream || !publicationId)
@@ -94,25 +98,16 @@ export function openPublicationWriter(
       // [EXP-FD01-R3] Why: include sidecar lock/fsync delay after the source publication event.
       // Rejected: capturing after BEGIN, which understates lag when another writer holds the lock.
       const observed = captureFeedInstant(clock, key);
-      db.exec("BEGIN IMMEDIATE");
-      try {
-        const prior = db.prepare("SELECT body FROM publications WHERE key=?").get(positionKey);
-        if (prior) {
-          const record = decode(String(prior["body"]), key);
-          if (record.publicationId !== publicationId)
-            throw new Error("Position already has a different publication record");
-          db.exec("COMMIT");
-          return record;
-        }
-        const value = { ...observed, publicationId };
-        const record: FeedPublication = { ...value, recordId: hash(payload(value)) };
-        db.prepare("INSERT INTO publications VALUES(?,?)").run(positionKey, JSON.stringify(record));
-        db.exec("COMMIT");
+      const value = { ...observed, publicationId };
+      const record: FeedPublication = { ...value, recordId: hash(payload(value)) };
+      if (Number(insert.run(positionKey, JSON.stringify(record)).changes) === 1)
         return Object.freeze(record);
-      } catch (error) {
-        db.exec("ROLLBACK");
-        throw error;
-      }
+      const prior = select.get(positionKey);
+      if (!prior) throw new Error("Producer insert did not persist a publication");
+      const existing = decode(String(prior["body"]), key);
+      if (existing.publicationId !== publicationId)
+        throw new Error("Position already has a different publication record");
+      return existing;
     },
     close: () => db.close(),
   });

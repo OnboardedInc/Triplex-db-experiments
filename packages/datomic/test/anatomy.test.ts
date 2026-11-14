@@ -7,6 +7,7 @@ import {
   bookendComparison,
   observedRunEnd,
   aggregateExchanges,
+  outsideAnatomy,
 } from "../../../lab/trace/anatomy.mjs";
 
 describe("commit anatomy observations", () => {
@@ -77,6 +78,34 @@ describe("commit anatomy observations", () => {
       overlapMs: 2,
       steps: null,
     });
+  });
+  it("closes the outside-HTTP partition, including absent steps and uninstrumented gaps", () => {
+    const r = {
+      traceId: "t",
+      name: "phase",
+      wallMs: 12,
+      root: { start: 0, end: 12 },
+      spans: [
+        { id: "queue", name: "driver.queue.subject", start: 0, end: 2 },
+        { id: "staging", name: "client.validation-and-staging", start: 2, end: 5 },
+        { id: "publication", name: "driver.publication", start: 9, end: 10 },
+        { id: "model", name: "driver.expected-state.bind-receipt", start: 10, end: 11 },
+      ],
+    };
+    const e = { traceId: "t", start: 4, end: 9, steps: { http: 5 } };
+    expect(outsideAnatomy(r, [e])).toEqual({
+      traceId: "t",
+      outsideHttpMs: 7,
+      groups: {
+        queueing: 2,
+        "product validation / staging": 2,
+        "durable publication witness": 1,
+        "expected-state bookkeeping": 1,
+        "unmatched / continuation": 1,
+      },
+    });
+    expect(() => outsideAnatomy(r, [{ ...e, end: Infinity }])).toThrow("bounds");
+    expect(outsideAnatomy(r, [{ ...e, traceId: "foreign" }]).outsideHttpMs).toBe(12);
   });
   it("charges a native function only to its exact peer parent", async () => {
     const { attribute } = await import("../../../lab/trace/report.mjs");

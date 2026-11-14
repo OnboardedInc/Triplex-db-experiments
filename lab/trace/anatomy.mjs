@@ -104,6 +104,91 @@ export function aggregateExchanges(root, exchanges) {
     steps,
   };
 }
+// [DX-T1-5] Why: partition the same outside-HTTP residual instead of adding overlapping named-scope percentiles.
+// Rejected: calling the whole 4.3 ms TypeScript CPU, or silently dropping uninstrumented continuation time.
+export function outsideAnatomy(commit, exchanges) {
+  const root = commit.root;
+  if (!root || !Number.isFinite(root.start) || !Number.isFinite(root.end) || root.end < root.start)
+    throw Error("Invalid outside anatomy root");
+  const own = exchanges.filter((e) => e.traceId === commit.traceId);
+  if (
+    own.some(
+      (e) =>
+        !Number.isFinite(e.start) ||
+        !Number.isFinite(e.end) ||
+        e.end < e.start ||
+        e.start < root.start - 1 ||
+        e.end > root.end + 1,
+    )
+  )
+    throw Error("Invalid outside exchange bounds");
+  const spans = commit.spans.filter(
+    (s) => Number.isFinite(s.start) && Number.isFinite(s.end) && s.end >= s.start,
+  );
+  const ids = new Map(spans.map((s) => [s.id, s]));
+  const ancestors = (s) => {
+    const out = [],
+      seen = new Set();
+    while (s && !seen.has(s.id)) {
+      out.push(s);
+      seen.add(s.id);
+      s = ids.get(s.parent);
+    }
+    return out;
+  };
+  const depth = new Map(spans.map((s) => [s, ancestors(s).length]));
+  const ordered = [...spans].sort(
+    (a, b) => depth.get(b) - depth.get(a) || a.end - a.start - (b.end - b.start),
+  );
+  const points = [
+    ...new Set([
+      root.start,
+      root.end,
+      ...spans.flatMap((s) => [
+        Math.max(root.start, Math.min(root.end, s.start)),
+        Math.max(root.start, Math.min(root.end, s.end)),
+      ]),
+      ...own.flatMap((e) => [Math.max(root.start, e.start), Math.min(root.end, e.end)]),
+    ]),
+  ].sort((a, b) => a - b);
+  const groups = {};
+  const classify = (selected) => {
+    if (!selected) return "unmatched / continuation";
+    const chain = ancestors(selected),
+      names = chain.map((s) => s.name);
+    if (names.some((n) => /(?:\/begin|\/snapshot)|^client.begin/.test(n)))
+      return "begin snapshot / claim / prefetch";
+    if (names.some((n) => n === "driver.publication")) return "durable publication witness";
+    if (names.some((n) => n.startsWith("driver.expected-state.")))
+      return "expected-state bookkeeping";
+    if (names.some((n) => n === "driver.oracle-record")) return "oracle command bookkeeping";
+    if (names.some((n) => n === "driver.ryow-dispatch")) return "read-your-own-write dispatch";
+    if (names.some((n) => n.startsWith("driver.queue."))) return "queueing";
+    if (names.some((n) => /client.clock|client.commit-send-queue/.test(n)))
+      return "clock / ticket order";
+    if (names.some((n) => n === "client.settle-and-cache"))
+      return "receipt settlement / cache publication";
+    if (names.some((n) => n === "client.validation-and-staging"))
+      return "product validation / staging";
+    if (names.some((n) => n === "driver.plan-and-encode-command"))
+      return "benchmark command planning";
+    if (names.some((n) => n === "driver.ack-and-subject-state"))
+      return "benchmark ACK / subject state";
+    if (selected.layer === "typescript-gc") return "Node GC";
+    return "other named continuation";
+  };
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1],
+      b = points[i];
+    if (own.some((e) => e.start <= a && e.end >= b)) continue;
+    const name = classify(ordered.find((s) => s.start <= a && s.end >= b));
+    groups[name] = (groups[name] ?? 0) + b - a;
+  }
+  const expected = aggregateExchanges(commit, exchanges).outsideHttpMs;
+  if (Math.abs(Object.values(groups).reduce((a, b) => a + b, 0) - expected) > 0.01)
+    throw Error("Outside anatomy does not close");
+  return { traceId: commit.traceId, outsideHttpMs: expected, groups };
+}
 export function parsePostgres(line) {
   const m =
     / (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+) UTC \[(\d+)\].*?duration: ([\d.]+) ms\s+(?:execute [^:]+:|statement:)\s*(.*)/.exec(
@@ -274,6 +359,11 @@ export async function writeAnatomy(
     stepNames.map((k) => [k, stats(exchanges.map((e) => e.steps[k]))]),
   );
   const perCommit = roots.map((r) => aggregateExchanges(r, exchanges));
+  const outside = roots.map((r) => outsideAnatomy(r, exchanges));
+  const outsideNames = [...new Set(outside.flatMap((r) => Object.keys(r.groups)))];
+  const outsideSteps = Object.fromEntries(
+    outsideNames.map((k) => [k, stats(outside.map((r) => r.groups[k] ?? 0))]),
+  );
   const medianWall = quantile(
     roots.map((r) => r.wallMs),
     0.5,
@@ -358,6 +448,7 @@ export async function writeAnatomy(
     missingExchangeCommits: perCommit.filter((r) => !r.attempts).length,
     commitWall: stats(roots.map((r) => r.wallMs)),
     clientOutsideHttp: stats(perCommit.map((e) => e.outsideHttpMs)),
+    outsideSteps,
     typescript: stats(roots.map((r) => r.typescriptMs)),
     typescriptOwn: stats(roots.map((r) => r.layers.typescript)),
     synchronousCpu: stats(roots.map((r) => r.cpuRuntimeMs).filter(Number.isFinite)),
@@ -430,6 +521,14 @@ export async function writeAnatomy(
     "| Step | n | p50 ms | p99 ms |",
     "| --- | ---: | ---: | ---: |",
     ...Object.entries(commitSteps).map(([k, s]) => `| ${k} | ${s.n} | ${n(s.p50)} | ${n(s.p99)} |`),
+    "",
+    "| Outside transact HTTP (exclusive per commit) | n | p50 ms | p99 ms |",
+    "| --- | ---: | ---: | ---: |",
+    ...Object.entries(outsideSteps).map(
+      ([k, s]) => `| ${k} | ${s.n} | ${n(s.p50)} | ${n(s.p99)} |`,
+    ),
+    "",
+    "Outside steps retain queueing, apparatus and unknown continuation; marginal percentiles do not add. The measured offer-to-ACK/finished boundary is unchanged. Begin is a separate snapshot/claim/prefetch request only when the optimistic predecessor path declines. Publication is the benchmark durable producer witness; staging and settlement are product work; expected-state/oracle/RYOW validation is apparatus.",
     "",
     `Authored transactor function: ${result.transactorFunction.n}/${roots.length} commits observed, p50/p99 ${n(result.transactorFunction.p50)}/${n(result.transactorFunction.p99)} ms. Remaining peer wait excluding that function p50/p99 ${n(result.remainingPeerWait.p50)}/${n(result.remainingPeerWait.p99)} ms. Function wall includes any internal wait/GC; it is not an exclusive CPU claim.`,
     "",

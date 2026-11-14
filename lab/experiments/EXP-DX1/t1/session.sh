@@ -2,7 +2,7 @@
 # [DX-T1-2] Why: one lease, one source and bookend controls bind recorder ablations to one host session.
 # Rejected: compare a recorder with a historical quiet off arm or allow unrelated work between arms.
 set -euo pipefail
-kind=${1:?ablation|cost|anatomy|cpu-floor|fallback-floor|history-256|seed-floor|writer-256|quiet-floor|quiet-256|channel-floor|channel-256|isolated-floor|isolated-256|index-floor|index-256}; prefix=${2:?tx2-dxt1-prefix}; shift 2
+kind=${1:?publication-floor|ablation|cost|anatomy|cpu-floor|fallback-floor|history-256|seed-floor|writer-256|quiet-floor|quiet-256|channel-floor|channel-256|isolated-floor|isolated-256|index-floor|index-256}; prefix=${2:?tx2-dxt1-prefix}; shift 2
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
@@ -40,6 +40,7 @@ trap 'exit 143' TERM INT
 node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),5400000)' "$$" & watchdog=$!
 if [[ $kind == ablation ]]; then
   arms=(off tx-jfr gw-jfr postgres gateway node native-logs full off)
+elif [[ $kind == publication-floor ]]; then arms=(baseline insert insert baseline)
 elif [[ $kind == cost ]]; then arms=(off summary summary off)
 elif [[ $kind == anatomy ]]; then arms=(off anatomy anatomy off)
 elif [[ $kind == cpu-floor ]]; then arms=(baseline engine-isolated engine-isolated baseline)
@@ -98,6 +99,12 @@ for arm in "${arms[@]}"; do
     # Rejected: changing the frozen writer trace, read window, collector or engine settings in this comparison.
     level=summary;components=default;workload=(--seed-batch-facts 400)
     [[ $arm != seed-2000 ]] || workload=(--seed-batch-facts 2000)
+  fi
+  if [[ $kind == publication-floor ]]; then
+    # [DX-T1-5] Why: hold clocks, durability, exact reads and CPU placement fixed while measuring only witness SQL work.
+    # Rejected: comparing an old host session or omitting the witness from offer-to-ACK latency.
+    level=summary;components=default;placement=(DX_PUBLICATION_MODE=legacy)
+    [[ $arm != insert ]] || placement=(DX_PUBLICATION_MODE=insert)
   fi
   if [[ $kind == writer-256 ]]; then
     # [DX-T1-4] Why: L256 trace counters show several seconds of writer run-queue wait; reserve one writer core.
