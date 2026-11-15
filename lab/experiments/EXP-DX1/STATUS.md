@@ -1842,3 +1842,29 @@ finished, fully pushed worktrees after archiving their ignored files; Mac free 1
 
 Part 8 is running: journal bookends and writer GC settings, what the transactor does during the slow peer waits, a layout
 with two transactor cores, cost per fact and a slim-layout prototype on new seeds, then a final pair.
+
+## 2026-11-15 08:50 UTC: DX-T1 part 8: four candidates rejected, the tuning has reached a plateau; final pair A; part 9 (tail only) launched
+
+DX-T1 part 8 (`exp/DX-T1-tracing`, `8486b4e8`, pushed; report `t1/REPORT-8.md`, bars in `t1/VERDICT-8.md`). Quiet host
+(swap 4.1 GiB, Mac CPU about 10%; `off` bookends 10.6 / 47.7 and 10.7 / 45.1 ms).
+1. **Final pair A** (same settings as pair C plus nothing new): P2 all-primary p99 71.0 ms (C: 55.6; bar 50); 256-reader
+   medians 11.65 and 14.66 ms (bar 10); burst medians 9.66 (met) and 11.78 ms; queue and accounting met. P1: writer ratios
+   0.341 and 1.306 (met, with higher zero-reader denominators), G1024/G256 1.210, read p99 6.3 ms; G256/G64 0.9975 (bar 1)
+   and no qualifying recovery window within 60 s (missed). P3 met (lag p99 18 ms). P4 met (19,073 pulls/s; flatness 1.046).
+   Oracle PASS. Zero-reader arm: 10.5 ms p50, 49.4 ms p99.
+2. **Rejected with measurements:** journal for the expected model (heap 498 to 302 MiB, but p99 gain inside drift);
+   4 MiB nursery (adds 0.93 ms); 1,024 MiB old space (inside drift, ratio worse); transactor sharing Postgres's core (0.33 ms
+   against 0.24 drift, 1.5% fewer reads, scaling worse); slim row-text compression (exact, but adds 1.09 ms at the median and
+   saves 1.67% of value bytes).
+3. **Tail causes named:** peer wait in 113 of 144 commits over 50 ms; native traces park 143 to 253 ms at the durable log
+   tail write (`write_tail_descriptor`) with the transactor reading the Postgres socket and no GC. One 137 ms stall is the
+   benchmark's synchronous SQLite witness on the writer thread.
+4. One commit at 256 readers, medians: peer wait 6.0 ms, TypeScript own scopes 2.8 ms (synchronous CPU 0.33 ms).
+
+Orchestrator: removed the last seven finished worktrees after archiving untracked and ignored files (compressed, verified)
+under `~/Claude/Projects/triplex-db-2/backups/worktree-ignored-2026-11-14/`; remaining worktrees are `d-native`, `dx-t1`,
+`dx-re1`, `verdict`. Mac free 15.4 to 20.3 GiB.
+
+**Reading:** setting-level tuning is exhausted for the medians (about 0.6 to 1.6 ms over at zero readers and small commits,
+3.6 to 4.7 ms over for medium commits). The medians need a structural change; the idea menu (Fable agent, tonight 23:07
+local) is for that. Part 9 is narrow: the witness stall, the slow durable log writes seen from the Postgres side, one pair.
