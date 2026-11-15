@@ -518,7 +518,7 @@
       (let [db (gateway/sync-db (str base name)) datom (lean/by-id db "slim-row")]
         (is (= 4 (storage/value db (d/entid db [:triplex.scope/key scope-text]) :triplex.scope/rows-version)))
         (is (< (.length ^String (:v datom)) (count text)))
-        (is (= text (:value_string (lean/decode (:v datom)))))
+        (is (= text (:value_string (lean/decode (:v datom))))))
       (with-redefs [gateway/slim-rows? false] (gateway/create-scope! base scope-text "lean"))
       (is (= 4 (storage/value (gateway/sync-db (str base name)) (d/entid (gateway/sync-db (str base name)) [:triplex.scope/key scope-text]) :triplex.scope/rows-version)))
       (finally (gateway/delete-scope! base scope-text)))))
