@@ -40,3 +40,14 @@ Raw writes, actual settings, oracle archives, native/JFR traces, host samples an
 | swap GiB / Mac CPU median,p99 % | 4.210 / 9.9,92.2 | 4.148 / 10.5,88.0 | 4.140 / 10.9,96.2 |
 
 Reject 1024 MiB as the default: p99 saving 7.896 ms is inside 13.855-ms control drift; median delta +.016 ms is inside .138-ms drift. Maximum GC pause improves by 12.590 ms beyond 5.109-ms drift, but a >50-ms GC remains in every arm; live heap is unchanged. L1024 ratio improves beyond drift yet still misses 2; L256 ratio worsens. All three loaded arms DONE/oracle PASS, zero errors/violations; both zero references DONE/oracle NOT-RUN. Workers retain their actual 6144/16-MiB limits. This is the same frozen 450-second diagnostic, source 1a1b9388, split `pending`; no full P2 pass follows from the candidate's individual p99. Original data and exact context are in `DX-T1/tx2-dxt1-p8-oldheap-a-*`.
+
+Shared-core zero observations (full, same session, swap 4.234 GiB) are 11.924/48.925 ms on CPU 0 and 11.420/41.416 ms on 0,1; Mac CPU median/p99 10.3/84.5% and 10.1/85.3%. These fresh zero arms supply the actual loaded denominators, but have no closing zero control, so the .504-ms difference is not a qualified floor gain. Their loaded bookends are the shared-core table above. The loaded small-band median saving 1.248 ms is below 1.728-ms drift; the read p99 increases .160 ms from identical 6.175-ms controls. No second-core layout is kept.
+
+Additional shared-core P1 observations (full; source, swap, CPU and same-session controls are the shared-core table above):
+
+| observation | CPU 0 opening | CPU 0,1 candidate | CPU 0 closing |
+| --- | --- | --- | --- |
+| NS-P1-GOODPUT-256-VS-64 | 2.010707 (>= 1.0) | 2.036029 (>= 1.0) | 1.984505 (>= 1.0) |
+| NS-P1-GOODPUT-1024-VS-256 | 1.124827 (>= 0.9) | 1.117046 (>= 0.9) | 1.136350 (>= 0.9) |
+| L256 all-band commit p50 / p99 ms | 14.143 / 243.995 | 11.903 / 49.834 | 11.903 / 32.190 |
+| L256 medium-band commit p50 / p99 ms | 16.319 / 43.341 | 14.271 / 49.834 | 12.607 / 21.299 |
