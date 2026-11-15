@@ -36,3 +36,13 @@
                 (.get (.asCharBuffer (java.nio.ByteBuffer/wrap bytes)) chars)
                 (String. chars))))
           (finally (.end inflater)))))))
+
+;; [DX-T1-8] Why: journal and receipt routes return row texts directly, so expand before crossing the wire.
+;; Rejected: requiring each TypeScript reader/oracle to understand a private physical storage frame.
+(defn row-text [^String text]
+  (if (not= \2 (.charAt text 0)) text
+    (let [start (+ 5 (Integer/parseInt text 1 5 16)) ref-start (+ start 36)
+          size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
+          body-start (+ ref-start size 1)]
+      (if (.startsWith text "Z1" (int body-start))
+        (str (subs text 0 body-start) (body (subs text body-start))) text))))

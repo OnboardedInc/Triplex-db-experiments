@@ -14,7 +14,7 @@ const profile=process.env.TRIPLEX_TRACE_CPU_PROFILE==='1'?['--cpu-prof','--cpu-p
 // Rejected: a second ad hoc Docker lifecycle, or inferring exactness from mocked clock tests.
 if (['1','clock'].includes(process.env.DX_NATIVE_GATES ?? '')) {
   const gates = [
-    ['node_modules/.bin/vitest','run','--config','lab/experiments/EXP-DX1/b5/vitest.config.ts','--testTimeout','900000',
+    ['node_modules/.bin/vitest','run','--config','lab/experiments/EXP-DX1/b5/vitest.config.ts','--bail','1','--testTimeout','900000',
       ...(process.env.DX_NATIVE_GATES === '1' ? ['packages/datomic/test/layout-differential.test.ts','packages/datomic/test/concurrent-commits.test.ts'] : []),'packages/datomic/test/clock-order.test.ts'],
     ['node','--experimental-strip-types','lab/experiments/EXP-DX1/r3/differential.ts'],
   ];
