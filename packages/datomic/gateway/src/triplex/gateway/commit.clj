@@ -1,5 +1,5 @@
 (ns triplex.gateway.commit
-  (:require [datomic.api :as d] [triplex.gateway.schema :as schema]))
+  (:require [clojure.walk :as walk] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.schema :as schema]))
 
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
@@ -46,7 +46,7 @@
                             (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids)))]
                (str (subs text 0 start) (json/write-str values))))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids]} payload
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row]} payload
            head-v2 (= 2 (value scope :triplex.scope/head-version))
            latest (when head-v2 (newest-commit))
            h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
@@ -59,6 +59,8 @@
            strict-clocks (and (d/entid db :triplex.scope/strict-record-clocks)
                               (true? (value scope :triplex.scope/strict-record-clocks)))
            server-clock (and strict-clocks (not= false assign-record-time))
+           _ (when (not= (boolean slim-row) (= 4 (value scope :triplex.scope/rows-version)))
+               (throw (ex-info "TRIPLEX_SLIM_LAYOUT_MISMATCH" {})))
            _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) (concat times record-clocks)))
                (throw (ex-info "Invalid strict record clock" {})))
            checked-times (if strict-clocks (map double (concat times record-clocks)) times)
@@ -95,13 +97,14 @@
                          text (if (and (not= 0 delta) (< lower p (inc provisional)))
                                 (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
                                      (subs text (+ offset 16))) text)]
-                     (if-not server-clock text
-                       (case kind
-                         :row (assign-row text offset clock new-id-set)
-                         :retirement (str (subs text 0 (+ offset 16))
-                                          (format "%016x" (Double/doubleToRawLongBits clock))
-                                          (subs text (+ offset 32)))
-                         text)))
+                     (let [assigned (if-not server-clock text
+                                      (case kind
+                                        :row (assign-row text offset clock new-id-set)
+                                        :retirement (str (subs text 0 (+ offset 16))
+                                                         (format "%016x" (Double/doubleToRawLongBits clock))
+                                                         (subs text (+ offset 32)))
+                                        text))]
+                       (if (and slim-row (= kind :row)) (slim-row-code assigned offset) assigned)))
                    (instance? java.util.Map x) (into {} (map (fn [[k v]] [k (replace-value v)]) x))
                    (instance? java.util.List x) (mapv replace-value x)
                    :else x))]
@@ -171,7 +174,9 @@
         (list 'try operation
               '(finally (when triplex-trace-event
                           (try (.commit triplex-trace-event) (catch Throwable _ nil)))))))
-(def code (instrument-code operation-code))
+;; [DX-T1-8] Why: embed the exact codec in the installed function hash; the transactor needs no gateway namespace.
+;; Rejected: an unversioned remote helper or compressing before server clock assignment.
+(def code (instrument-code (walk/postwalk-replace {'slim-row-code slim/encoder-code} operation-code)))
 (def source-hash (schema/sha256 (pr-str code)))
 (defn install! [conn scope]
   (let [db (d/db conn) e (d/entid db [:triplex.scope/key scope])]

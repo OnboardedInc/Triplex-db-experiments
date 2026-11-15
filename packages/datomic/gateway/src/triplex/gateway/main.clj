@@ -7,6 +7,7 @@
 
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
 ;; [DX-H1] Why: SQL storage places the database before the JDBC query. Rejected: suffix concatenation (dev-only).
+(def slim-rows? (= "1" (System/getenv "TX2_SLIM_ROWS")))
 (def uri-template (or (System/getenv "DATOMIC_URI_TEMPLATE") "datomic:dev://127.0.0.1:4334/{db}"))
 (defn db-uri [name] (clojure.string/replace uri-template "{db}" name))
 (def connections (atom {}))
@@ -39,7 +40,7 @@
   (try
     (trace/span "d/transact" "peer-wait" @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
-        (cond-> {:triplex.scope/key scope :triplex.scope/strict-record-clocks (boolean strict-clocks) :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version (if (= layout "lean") 3 2) :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}
+        (cond-> {:triplex.scope/key scope :triplex.scope/strict-record-clocks (boolean strict-clocks) :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version (if (= layout "lean") (if slim-rows? 4 3) 2) :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}
           head-v2 (assoc :triplex.scope/head-version 2))]))
     (catch Exception e
       (let [current (sync-db uri)]

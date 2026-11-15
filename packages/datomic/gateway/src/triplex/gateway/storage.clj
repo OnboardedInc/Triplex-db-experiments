@@ -58,7 +58,7 @@
 ;; [DX-B5-L1] Why: the scope version is immutable; only lean scopes omit reified facts.
 ;; Rejected: migrating existing scopes in place (changes legacy read/storage contracts).
 (defn value [db e a] (:v (first (d/datoms db :eavt e a))))
-(defn lean? [db] (= 3 (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/rows-version)))
+(defn lean? [db] (contains? #{3 4} (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/rows-version)))
 (defn upserts [rows]
   (let [subjects (set (concat (map :entity_id rows) (keep #(when (= "ref" (:value_type %)) (:value_string %)) rows)))
         attributes (set (map :attribute rows))]
@@ -217,7 +217,7 @@
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
                        :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
-                       :lean lean :ops ops :times times :new-ids (vec new-ids) :assign-record-time (not= false (get input "assignRecordTime"))
+                       :lean lean :slim-row (= 4 (value db scope :triplex.scope/rows-version)) :ops ops :times times :new-ids (vec new-ids) :assign-record-time (not= false (get input "assignRecordTime"))
                        ;; [DX-R3] Why: strict scopes also order empty/claim-only commits and every imported claim clock.
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))

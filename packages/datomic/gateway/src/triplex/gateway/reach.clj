@@ -65,7 +65,7 @@
     (aset header 1 (long (or (value (:version cfg)) 0)))
     (when (value (:irregular cfg)) (aset header 2 1))
     (when (value (:position-regular cfg)) (aset header 3 1))
-    (when-not (#{2 3} (aget header 1)) (decline! "rows-version"))
+    (when-not (#{2 3 4} (aget header 1)) (decline! "rows-version"))
     ;; [DX-B3-M3] Why: parallel commits can reorder timestamps while positions remain an exact prefix.
     ;; Rejected: declining position-only/current pulls after a timestamp regression (needless history scans).
     ;; Older scopes without the explicit position proof retain the conservative fallback.
@@ -280,7 +280,7 @@
 (defn replica-capability [name db input]
   (try
     (let [cfg (config name db) scope (:scope cfg) v (fn [a] (:v (first (d/datoms db :eavt scope a))))]
-      (when-not (= 3 (v :triplex.scope/rows-version)) (decline! "replica-layout"))
+      (when-not (contains? #{3 4} (v :triplex.scope/rows-version)) (decline! "replica-layout"))
       (when-not (true? (v :triplex.scope/position-regular)) (decline! "replica-positions"))
       (when (v :triplex.scope/feed-irregular) (decline! "irregular"))
       (when-not (= 2 (v :triplex.scope/feed-version)) (decline! "feed-version"))

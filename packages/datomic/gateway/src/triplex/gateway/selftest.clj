@@ -1,6 +1,6 @@
 (ns triplex.gateway.selftest
   (:require [clojure.test :refer :all] [triplex.gateway.transaction-shape :as tx-shape] [clojure.data.json :as json] [datomic.api :as d]
-            [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
+            [triplex.gateway.slim :as slim] [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
 
  ;; [DX-B7] Why: old selftests predate mandatory row texts and the explicit layout/name parameters.
 ;; Rejected: bypassing the current commit API or removing the existing signed-zero/speculative assertions.
@@ -410,9 +410,9 @@
 ;; [DX-T1-5] Why: default strict writes allocate at the actual serial point in both stored layouts/head versions.
 ;; Rejected: proving assignment through a mock client, or treating valid time as the assigned record clock.
 (deftest server-assigned-record-clock
-  (doseq [layout ["lean" "legacy"] head-v2 [false true] strict [false true]]
-    (let [scope-text (str "[\"triplex-scope-v1\",\"test\",\"dxt1\",\"server-clock-" layout "-" head-v2 "-" strict "\",0]")
-          base "datomic:mem://" created (gateway/create-scope! base scope-text layout head-v2 strict)
+  (doseq [compressed [false true] layout ["lean" "legacy"] head-v2 [false true] strict [false true]]
+    (let [scope-text (str "[\"triplex-scope-v1\",\"test\",\"dxt1\",\"server-clock-" compressed "-" layout "-" head-v2 "-" strict "\",0]")
+          base "datomic:mem://" created (with-redefs [gateway/slim-rows? compressed] (gateway/create-scope! base scope-text layout head-v2 strict))
           name (:db created) uri (gateway/db-uri name) conn (gateway/connection uri)
           write! (fn [p clock & [extra]]
                    (storage/commit! name conn (gateway/sync-db uri)
@@ -488,6 +488,40 @@
           (is (thrown? Exception (d/with db (variants 0 false))))
           (is (thrown? Exception (d/with db (variants 0 true)))))
         (finally (gateway/delete-scope! base scope-text))))))
+
+;; [DX-T1-8] Why: physical compression must preserve every code unit and fail on corrupt storage before yielding a row.
+;; Rejected: checking a size ratio alone or replacing signed-zero, Unicode or pinned history assertions.
+(deftest slim-row-codec
+  (doseq [suffix [(apply str (repeat 200 "duplicate row metadata"))
+                  (str (apply str (repeat 200 "日本語🙂")) (char 0xd800) (char 0xdcff))
+                  "[null,\"-0\",123,true,false]" ""]]
+    (let [header "indexed-prefix" encoded (slim/encode (str header suffix) (+ 2 (count header)))]
+      (is (.startsWith ^String encoded header))
+      (is (= suffix (slim/body (subs encoded (count header)))))))
+  (let [frame (subs (slim/encode (str "prefix" (apply str (repeat 1000 "a"))) 8) 6)]
+    (is (.startsWith ^String frame "Z1"))
+    (is (thrown? Exception (slim/body (subs frame 0 (- (count frame) 4)))))
+    (is (thrown? Exception (slim/body (str frame "AAAA")))))
+  (doseq [frame ["Z1" "Z1ffffffffAAAA" "Z100000001AAAA" "Z100000001!!!!"]]
+    (is (thrown? Exception (slim/body frame)))))
+
+(deftest slim-layout-is-immutable-and-opt-in
+  (let [base "datomic:mem://" scope-text "[\"triplex-scope-v1\",\"test\",\"dxt1\",\"slim-layout\",0]"
+        created (with-redefs [gateway/slim-rows? true] (gateway/create-scope! base scope-text "lean"))
+        name (:db created) conn (gateway/connection (str base name))
+        text (apply str (repeat 200 "repeated exact value"))
+        row {:id "slim-row" :entity_id "root" :attribute ":v" :value_type "string" :value_string text
+             :recorded_at 1.0 :recorded_position 1 :valid_from -5.0 :schema_version 1 :tx_id "slim-tx"}]
+    (try
+      (storage/commit! name conn (gateway/sync-db (str base name))
+        (row-input {"sourceK" 0 "position" 1 "operationId" "slim-op" "newIds" ["slim-row"] "claims" [] "rows" [(storage/wire-row row)]}))
+      (let [db (gateway/sync-db (str base name)) datom (lean/by-id db "slim-row")]
+        (is (= 4 (storage/value db (d/entid db [:triplex.scope/key scope-text]) :triplex.scope/rows-version)))
+        (is (< (.length ^String (:v datom)) (count text)))
+        (is (= text (:value_string (lean/decode (:v datom)))))
+      (with-redefs [gateway/slim-rows? false] (gateway/create-scope! base scope-text "lean"))
+      (is (= 4 (storage/value (gateway/sync-db (str base name)) (d/entid (gateway/sync-db (str base name)) [:triplex.scope/key scope-text]) :triplex.scope/rows-version)))
+      (finally (gateway/delete-scope! base scope-text)))))
 
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]

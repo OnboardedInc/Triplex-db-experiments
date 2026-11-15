@@ -1,5 +1,5 @@
 (ns triplex.gateway.lean
-  (:require [datomic.api :as d] [clojure.data.json :as json] [triplex.gateway.reach :as reach]))
+  (:require [triplex.gateway.slim :as slim] [datomic.api :as d] [clojure.data.json :as json] [triplex.gateway.reach :as reach]))
 (set! *warn-on-reflection* false)
 ;; [DX-B5-L2] Why: only row text and native history contain lean facts; no reified fallback exists.
 ;; Rejected: empty answers from :f indexes, or decoding through d/entity/d/pull/d/q.
@@ -9,14 +9,14 @@
 (def numbers #{:value_number :value_boolean :value_datetime :recorded_at :valid_from :valid_to :schema_version})
 (defn value [db e a] (:v (first (d/datoms db :eavt e a))))
 (defn enabled? [db]
-  (= 3 (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/rows-version)))
+  (contains? #{3 4} (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/rows-version)))
 (defn unsupported! [route]
   (throw (ex-info (str "Lean layout does not support " route) {:status 409 :code "LayoutUnsupported" :route route})))
 (defn prefix [^String id] (str "2" (format "%04x" (.length id)) id))
 (defn decode [^String text]
   (let [start (+ 5 (Integer/parseInt text 1 5 16)) ref-start (+ start 36)
         size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
-        values (json/read-str (subs text (+ ref-start size 1)))
+        values (json/read-str (slim/body (subs text (+ ref-start size 1))))
         row (into {:retracted_at nil :retracted_position nil :retract_tx_id nil}
                   (map (fn [column v] [column (cond (= column :recorded_position) (Long/parseLong v)
                                                    (and (numbers column) (= v "-0")) -0.0
