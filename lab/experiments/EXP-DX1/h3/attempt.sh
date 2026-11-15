@@ -88,7 +88,7 @@ pathlib.Path(sys.argv[1]+'/source-build-hashes.json').write_text(json.dumps(rows
 PY2
 fi
 lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
-held=false; watchdog=; operational=; child=; trace_host=; trace_pg=
+held=false; watchdog=; operational=; child=; trace_host=; trace_pg=; trace_waits=
 cleanup() {
   rc=$?; trap - EXIT TERM INT
   exec 1>&8 2>&9
@@ -104,7 +104,7 @@ cleanup() {
   fi
   # [DX-T1] Why: orderly JVM shutdown dumps and converts JFR before any owned container is removed.
   # Rejected: rm -f (loses the only recording of the slow run).
-  for sampler in "$trace_host" "$trace_pg"; do
+  for sampler in "$trace_host" "$trace_pg" "$trace_waits"; do
     if [[ -n $sampler ]]; then kill -TERM "$sampler" 2>/dev/null || true; wait "$sampler" 2>/dev/null || true; fi
   done
   if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
@@ -236,6 +236,16 @@ fi
 if [[ $TRIPLEX_TRACE_POSTGRES == 1 ]]; then
   docker exec -i "$prefix-pg" psql -X -Atq -U postgres -d datomic < lab/trace/postgres.sql > "$out/trace/raw/postgres-samples.log" 2> "$out/trace/raw/postgres-sample-errors.txt" & trace_pg=$!
 fi
+# [DX-T1-9] Why: use the same diagnostic collectors in every storage arm and retain the actual durable configuration.
+# Rejected: changing sampling only for a candidate or sampling in the stalled writer isolate.
+if [[ ${DX_STORAGE_DIAGNOSTIC:-0} == 1 ]]; then
+  [[ $TRIPLEX_TRACE_POSTGRES == 1 ]] || exit 2
+  docker exec -i "$prefix-pg" psql -X -Atq -U postgres -d datomic < lab/trace/postgres-waits.sql > "$out/trace/raw/postgres-waits.log" 2> "$out/trace/raw/postgres-waits-errors.txt" & trace_waits=$!
+  docker exec "$prefix-pg" psql -X -Atq -U postgres -d datomic -c "SELECT json_build_object('settings',(SELECT json_agg(row_to_json(s)) FROM pg_settings s WHERE name IN ('fsync','synchronous_commit','full_page_writes','shared_buffers','wal_buffers','wal_sync_method','wal_init_zero','wal_recycle','min_wal_size','max_wal_size','checkpoint_timeout','checkpoint_completion_target','autovacuum','autovacuum_vacuum_scale_factor','autovacuum_vacuum_threshold','track_wal_io_timing','track_io_timing')),'relation',(SELECT json_agg(json_build_object('name',relname,'options',reloptions,'pages',relpages,'tuples',reltuples)) FROM pg_class WHERE relname='datomic_kvs'));" > "$out/storage-settings.json"
+  docker exec "$prefix-pg" cat /proc/self/mountinfo > "$out/storage-mountinfo.txt"
+  df -k . > "$out/host-disk-before.txt"
+  stat -f 'size=%z blocks=%b file=%N' "$HOME/.colima/triplex2/diffdisk" > "$out/host-vm-disk.txt" 2>&1 || true
+fi
 # [DX-T1-4] Why: measure an owned volume's sync floor before timed work starts, under the same lease.
 # Rejected: probing a sealed seed, an active WAL file, or running a competing benchmark during phases.
 if [[ ${DX_FSYNC_PROBE:-0} == 1 ]]; then
@@ -243,6 +253,13 @@ if [[ ${DX_FSYNC_PROBE:-0} == 1 ]]; then
 fi
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
  --lane datomic --composition reach --read-path "${DX_READ_PATH:-gateway}" --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1
+
+# [DX-T1-9] Why: retain the table's final HOT/dead-tuple/autovacuum state without scan work during the timed phase.
+# Rejected: guessing bloat from one dead-tuple estimate or running VACUUM/pgstattuple while timing commits.
+if [[ ${DX_STORAGE_DIAGNOSTIC:-0} == 1 ]]; then
+  docker exec "$prefix-pg" psql -X -Atq -U postgres -d datomic -c "SELECT json_build_object('at',extract(epoch from clock_timestamp())*1000,'table',(SELECT row_to_json(t) FROM pg_stat_user_tables t WHERE relname='datomic_kvs'),'sizes',(SELECT json_build_object('relation',pg_relation_size(oid),'total',pg_total_relation_size(oid),'pages',relpages,'tuples',reltuples,'options',reloptions) FROM pg_class WHERE relname='datomic_kvs'),'wal',(SELECT row_to_json(w) FROM pg_stat_wal w),'checkpoint',(SELECT row_to_json(c) FROM pg_stat_checkpointer c));" > "$out/storage-final.json"
+  df -k . > "$out/host-disk-after.txt"
+fi
 
 # [DX-T1-5] Why: inspect actual immutable log datoms only after the completed timed workload, before owned storage is removed.
 # Rejected: measuring submitted JSON or adding a census to each commit's acknowledgement path.

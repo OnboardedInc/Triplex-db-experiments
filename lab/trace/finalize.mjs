@@ -28,18 +28,18 @@ if (!renderOnly) {
       fs.copyFileSync(file, path.join(raw, `${role}.log`), fs.constants.COPYFILE_EXCL);
   }
   const manifestPath = path.join(run, "trace-run.json");
-  if (fs.existsSync(manifestPath) && fs.existsSync(path.join(raw, "postgres-samples.log"))) {
+  for (const [input, expected, output] of [
+    ["postgres-samples.log", "postgres-sample", "postgres.jsonl"],
+    ["postgres-waits.log", "postgres-wait", "postgres-waits.jsonl"],
+  ]) {
+    if (!fs.existsSync(manifestPath) || !fs.existsSync(path.join(raw, input))) continue;
     const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-    const lines = fs.readFileSync(path.join(raw, "postgres-samples.log"), "utf8").split("\n");
+    const lines = fs.readFileSync(path.join(raw, input), "utf8").split("\n");
     const samples = [];
     for (const line of lines)
       if (line.trim().startsWith("{")) {
         const row = JSON.parse(line);
-        if (
-          row.type !== "postgres-sample" ||
-          !Number.isFinite(row.at) ||
-          row.at < manifest.startedAt - 1000
-        )
+        if (row.type !== expected || !Number.isFinite(row.at) || row.at < manifest.startedAt - 1000)
           throw Error("Stale/invalid Postgres sample");
         samples.push({
           ...row,
@@ -52,7 +52,7 @@ if (!renderOnly) {
         });
       }
     fs.writeFileSync(
-      path.join(raw, "postgres.jsonl"),
+      path.join(raw, output),
       samples.map((r) => JSON.stringify(r)).join("\n") + "\n",
       { flag: "wx" },
     );
@@ -130,7 +130,8 @@ if (
     fs.appendFileSync(path.join(destination, "TRACE-REPORT.md"), writerStatsMarkdown(writer));
   }
 }
-const archive = !renderOnly && result.tag.startsWith("tx2-dxt1-") ? await packOracle(run) : { files: 0 };
+const archive =
+  !renderOnly && result.tag.startsWith("tx2-dxt1-") ? await packOracle(run) : { files: 0 };
 const reportFiles = [
   "TRACE-REPORT.md",
   "trace.html",
@@ -149,7 +150,9 @@ const reportHashes =
           .update(fs.readFileSync(path.join(run, name)))
           .digest("hex")}  ${name}`,
     )
-    .join("\n") + "\n" + await verifiedRawManifest(run);
+    .join("\n") +
+  "\n" +
+  (await verifiedRawManifest(run));
 const indexText = `# ${result.tag}\n\nSource: ${result.source}. Trace collection complete: ${result.complete}. Derived render recovery: ${renderOnly}.\n\n${result.finding}\n\nCanonical files: ~/Claude/Projects/triplex-db-2/evidence/DX-T1/${result.tag}/.\nCompressed raw traces: ${result.rawBytes} bytes, under trace/raw; hashes in trace/SHA256SUMS.\nLarge viewers remain in the durable store and the local worktree copy; only this index, report and SHA256SUMS are committed.\n`;
 for (const destination of [run, ...(copy ? [copy] : [])]) {
   fs.writeFileSync(path.join(destination, "SHA256SUMS"), reportHashes);

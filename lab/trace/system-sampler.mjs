@@ -1,6 +1,6 @@
 // @ts-nocheck -- Linux proc/cgroup and macOS counters have platform-specific wire shapes.
 import fs from "node:fs";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createGzip } from "node:zlib";
 import path from "node:path";
 const dir = process.argv[2];
@@ -115,12 +115,65 @@ function sample() {
 // [DX-T1] Why: a separate process keeps samples running while the commit isolate is stalled.
 // Rejected: sampling only in the writer's event loop (missing exactly the interval under investigation).
 const timer = setInterval(sample, 1000);
+// [DX-T1-9] Why: a 20-ms kernel disk sample can resolve a 143-ms WAL sync; one-second totals cannot locate it.
+// Rejected: a disk microbenchmark competing with transactions, or claiming Mac iostat exposes APFS/sparse-file queues.
+const storageDiagnostic = process.env.DX_STORAGE_DIAGNOSTIC === "1";
+const fast =
+  storageDiagnostic && process.platform === "linux"
+    ? setInterval(() => {
+        sink.write(
+          JSON.stringify({
+            ...identity,
+            type: "resource",
+            name: "storage-fast",
+            at: Date.now(),
+            clock: {
+              domain: "linux-monotonic",
+              bootId,
+              offsetMs: Date.now() - Number(process.hrtime.bigint()) / 1e6,
+              uncertaintyMs: 1,
+            },
+            diskstats: read("/proc/diskstats"),
+            pressure: read("/proc/pressure/io"),
+          }) + "\n",
+        );
+      }, 20)
+    : null;
+const disk =
+  storageDiagnostic && process.platform === "darwin"
+    ? spawn("/usr/sbin/iostat", ["-Id", "-w", "1"], { stdio: ["ignore", "pipe", "pipe"] })
+    : null;
+disk?.stdout.on("data", (bytes) =>
+  sink.write(
+    JSON.stringify({
+      ...identity,
+      type: "resource",
+      name: "host-disk",
+      at: Date.now(),
+      iostat: bytes.toString(),
+    }) + "\n",
+  ),
+);
+disk?.on("error", (error) =>
+  sink.write(
+    JSON.stringify({
+      ...identity,
+      type: "resource",
+      name: "host-disk-error",
+      at: Date.now(),
+      error: String(error),
+    }) + "\n",
+  ),
+);
 sample();
 for (const signal of ["SIGTERM", "SIGINT"])
   process.on(signal, () => {
     if (done) return;
     done = true;
     clearInterval(timer);
+    if (fast) clearInterval(fast);
+    disk?.stdout.removeAllListeners("data");
+    disk?.kill("SIGTERM");
     sample();
     sink.end();
   });
