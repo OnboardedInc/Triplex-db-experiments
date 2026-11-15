@@ -51,7 +51,7 @@ import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "
 import { alignAssertIds } from "./lib/receipt.ts";
 import { openLegacyPublicationWriter } from "./lib/legacy-publication.ts";
 import { datomicWriterDiagnostics, observeDatomicPublication } from "./lib/datomic-publication.ts";
-import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, readProducerPublication, type CrashPoint } from "./lib/feed.ts";
+import { FeedConsumer, openHostFeedClock, openPublicationWriter, openAsyncPublicationWriter, openPublicationReader, readProducerPublication, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
 import { ModelJournal } from "./lib/model-journal.ts";
@@ -786,11 +786,11 @@ async function run() {
   const publicationClock = lane === "datomic" && !pairPlan ? openHostFeedClock() : null;
   const publicationSource = JSON.stringify({ route: "A0-control", dir: rawDir, epoch: `${scopeName}#0` });
   const publicationMode = process.env.DX_PUBLICATION_MODE ?? "insert";
-  if (!["insert","legacy","deferred"].includes(publicationMode)) throw Error("Invalid publication mode");
+  if (!["insert","legacy","deferred","worker"].includes(publicationMode)) throw Error("Invalid publication mode");
   report.publicationMode = publicationMode;
   const publicationFactory = publicationMode === "legacy" ? openLegacyPublicationWriter : openPublicationWriter;
-  const publicationWriter = publicationClock ? publicationFactory(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock) : null;
-  const deferredPublications = publicationMode === "deferred" && publicationWriter ? new DeferredPublications(publicationWriter, key => readProducerPublication(publicationReader, key)) : null;
+  const publicationWriter = publicationClock ? publicationMode === "worker" ? await openAsyncPublicationWriter(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock, { workerCpus: process.env.TRIPLEX_NODE_WORKER_CPUS, onPersist: (sample: any) => traceResource("driver.publication.persist-worker", { layer: "typescript", start: sample.start, end: sample.end, workerThread: sample.thread, synchronous: true, attributes: { position: sample.position, operationId: sample.publicationId } }) }) : publicationFactory(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock) : null;
+  const deferredPublications = ["deferred","worker"].includes(publicationMode) && publicationWriter ? new DeferredPublications(publicationWriter, key => readProducerPublication(publicationReader, key)) : null;
   const publicationReader = publicationWriter ? openPublicationReader(path.join(rawDir, "publication.db")) : null;
   if (!pairPlan && lane === "datomic" && config.composition !== "memory") {
     feed = new SideThread({dir:rawDir,epoch:`${scopeName}#0`,startAfter:seed.lastPosition,
@@ -1076,7 +1076,7 @@ async function run() {
   observeDatomicPublication(undefined);
   if (deferredPublications) report.deferredPublication = await deferredPublications.flush();
   publicationReader?.close();
-  publicationWriter?.close();
+  await publicationWriter?.close();
   log(`wind down: writer pending ${scheduler.pending}, probe pending ${probeScheduler?.pending ?? 0}, feed checkpoint ${feed?.checkpoint ?? "-"}/${lastAcked}, final position ${finalPosition}`);
   fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify(latencyReceipt({ ...w, writer: "ns-write-event/1", qleverConnectionMode: report.qleverConnectionMode, stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome }))).join("\n") + "\n");
 

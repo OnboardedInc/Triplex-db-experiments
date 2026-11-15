@@ -70,3 +70,40 @@ it("rejects a persistence scheduled before the measured completion boundary", as
   queue.release(key, Date.now() + 1000000);
   await expect(queue.flush()).rejects.toThrow("before measured completion");
 });
+
+// [DX-T1-9] Why: final validity waits for worker persistence and independent readback, including asynchronous failure.
+// Rejected: counting a queued message as a durable witness or swallowing a worker's rejected write.
+it("drains asynchronous persistence and refuses an asynchronous storage failure", async () => {
+  let resolve!: (value: any) => void;
+  const record = { ...key, publicationId: "op", recordId: "a".repeat(64), atNs: "1" };
+  let stored: unknown;
+  const pending = new Promise<any>((r) => {
+    resolve = r;
+  });
+  const queue = new DeferredPublications(
+    { capture: () => ({}), persistCaptured: () => pending },
+    () => stored,
+  );
+  queue.capture(key, "op", null, false);
+  let complete = false;
+  const flush = queue.flush().then((value) => {
+    complete = true;
+    return value;
+  });
+  await tick();
+  expect(complete).toBe(false);
+  stored = record;
+  resolve(record);
+  expect(await flush).toMatchObject({ captured: 1, persisted: 1, pending: 0 });
+  const bad = new DeferredPublications(
+    {
+      capture: () => ({}),
+      persistCaptured: async () => {
+        throw Error("worker storage failed");
+      },
+    },
+    () => undefined,
+  );
+  bad.capture(key, "op", null, false);
+  await expect(bad.flush()).rejects.toThrow("worker storage failed");
+});

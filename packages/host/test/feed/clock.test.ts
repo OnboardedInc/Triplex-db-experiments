@@ -127,3 +127,71 @@ it("persists only genuine bound captures and keeps their original event time", a
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// [DX-T1-9] Why: a real SQLite lock must delay the worker's durable result while the producer isolate keeps running.
+// Rejected: an async-shaped mock that still performs fsync on the writer, or a timestamp captured after storage.
+it("persists original captures on another isolate and reads back the exact durable bytes", async () => {
+  const { openAsyncPublicationWriter } = await import("@triplex-build/triplex-host/feed");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "publication-worker-"));
+  const file = path.join(dir, "publication.db"),
+    clock = openHostFeedClock();
+  const key = { source: "source", stream: "stream", epoch: "0", position: "17" };
+  const samples: { thread: number; start: number; end: number }[] = [];
+  const writer = await openAsyncPublicationWriter(file, key.source, key.stream, clock, {
+    onPersist: (sample) => samples.push(sample),
+  });
+  const reader = openPublicationReader(file),
+    lock = new DatabaseSync(file);
+  try {
+    const token = writer.capture(key, "operation-17");
+    const afterCapture = captureFeedInstant(clock, key);
+    expect(reader.get(key)).toBeUndefined();
+    await expect(writer.persistCaptured({} as any)).rejects.toThrow("forged");
+    const foreign = openPublicationWriter(file, key.source, key.stream, clock);
+    await expect(writer.persistCaptured(foreign.capture(key, "operation-17"))).rejects.toThrow(
+      "Foreign",
+    );
+    foreign.close();
+    lock.exec("BEGIN IMMEDIATE");
+    let completed = false;
+    const pending = writer.persistCaptured(token).then((value) => {
+      completed = true;
+      return value;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    expect(completed).toBe(false);
+    expect(reader.get(key)).toBeUndefined();
+    lock.exec("ROLLBACK");
+    const record = await pending;
+    expect(BigInt(record.atNs)).toBeLessThanOrEqual(BigInt(afterCapture.atNs));
+    expect(reader.get(key)).toEqual(record);
+    expect(await writer.persistCaptured(token)).toEqual(record);
+    await expect(writer.persistCaptured(writer.capture(key, "conflicting"))).rejects.toThrow(
+      "binding",
+    );
+    expect(samples.every((sample) => sample.thread > 0 && sample.end >= sample.start)).toBe(true);
+    await writer.close();
+    const reopened = await openAsyncPublicationWriter(file, key.source, key.stream, clock);
+    try {
+      expect(await reopened.persistCaptured(reopened.capture(key, "operation-17"))).toEqual(record);
+    } finally {
+      await reopened.close();
+    }
+    await expect(writer.persistCaptured(token)).rejects.toThrow("closed");
+  } finally {
+    lock.close();
+    reader.close();
+    await writer.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it("rejects publication worker startup failure without producing a receipt", async () => {
+  const { openAsyncPublicationWriter } = await import("@triplex-build/triplex-host/feed");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "publication-worker-refused-"));
+  try {
+    await expect(openAsyncPublicationWriter(dir, "s", "s", openHostFeedClock())).rejects.toThrow();
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

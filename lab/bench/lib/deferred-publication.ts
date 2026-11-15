@@ -2,9 +2,10 @@ import { Histogram } from "./hist.ts";
 import { traceNow, traceWork, withoutTrace } from "./tracing.ts";
 
 type Key = { source: string; stream: string; epoch: string; position: string };
+type Record = Key & { publicationId: string; recordId: string; atNs: string };
 type Writer = {
   capture(key: Key, id: string): unknown;
-  persistCaptured(token: any): Key & { publicationId: string; recordId: string; atNs: string };
+  persistCaptured(token: any): Record | Promise<Record>;
 };
 const keyOf = (key: Key) => JSON.stringify([key.source, key.stream, key.epoch, key.position]);
 
@@ -57,15 +58,26 @@ export class DeferredPublications {
     // Rejected: dropping deferred SQLite work; retain every interval as a thread overlay with its causing trace ID.
     withoutTrace(() => {
       const p = new Promise<void>((resolve) =>
-        setImmediate(() => {
+        setImmediate(async () => {
           const start = traceNow();
           try {
             if (entry.finishedAt !== undefined && start < entry.finishedAt)
               throw Error("Witness started before measured completion");
-            traceWork(
+            const persisted = traceWork(
               "driver.publication.persist-deferred",
+              () => this.writer.persistCaptured(entry.token),
+              {
+                commitTraceId: entry.traceId,
+                position: entry.key.position,
+                operationId: entry.id,
+                finishedAt: entry.finishedAt ?? null,
+              },
+              true,
+            );
+            const record = await persisted;
+            traceWork(
+              "driver.publication.readback",
               () => {
-                const record = this.writer.persistCaptured(entry.token);
                 const actual = this.readBack(entry.key);
                 if (
                   keyOf(record) !== keyOf(entry.key) ||

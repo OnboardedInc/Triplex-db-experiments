@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { platform } from "node:os";
 import { readFileSync, statSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
+import { Worker } from "node:worker_threads";
 import {
   feedPositionKey,
   sameFeedClock,
@@ -75,29 +76,18 @@ declare const publicationCapture: unique symbol;
 export interface PublicationCapture {
   readonly [publicationCapture]: true;
 }
-/** Producer-owned append-only position record. Invoke publish at source publication, never at ACK/poll. */
-export function openPublicationWriter(
-  file: string,
+function publicationCaptures(
   source: string,
   stream: string,
   clock: HostFeedClock,
+  assertOpen: () => void,
 ) {
-  if (!clocks.has(clock) || !file || file === ":memory:")
-    throw new Error("Unbound publication writer");
-  const db = new DatabaseSync(file);
-  db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA fullfsync=ON; PRAGMA checkpoint_fullfsync=ON;
-    PRAGMA wal_autocheckpoint=0; PRAGMA journal_size_limit=16777216; PRAGMA locking_mode=NORMAL; PRAGMA busy_timeout=5000;
-    CREATE TABLE IF NOT EXISTS publications(key TEXT PRIMARY KEY, body TEXT NOT NULL);`);
-  // [DX-T1-5] Why: one autocommitted insert is already atomic and FULL-synchronous; prepare once.
-  // Rejected: BEGIN/SELECT/INSERT/COMMIT for every new position (extra writer-thread work, same durable row).
-  const insert = db.prepare("INSERT OR IGNORE INTO publications VALUES(?,?)");
-  const select = db.prepare("SELECT body FROM publications WHERE key=?");
   const captures = new WeakMap<PublicationCapture, FeedPublication>();
-  let closed = false;
+
   // [DX-T1-5] Why: capture the source event now and permit its witness to be persisted later without inventing a time.
   // Rejected: accepting a caller-supplied instant or returning a publication receipt before FULL-synchronous storage.
   const capture = (key: FeedPosition, publicationId: string): PublicationCapture => {
-    if (closed) throw new Error("Publication writer is closed");
+    assertOpen();
     const bound = {
       source: key.source,
       stream: key.stream,
@@ -118,10 +108,40 @@ export function openPublicationWriter(
     captures.set(token, record);
     return token;
   };
-  const persistCaptured = (token: PublicationCapture): FeedPublication => {
+  return {
+    capture,
+    record: (token: PublicationCapture) => {
+      assertOpen();
+      const record = captures.get(token);
+      if (!record) throw new Error("Foreign or forged publication capture");
+      return record;
+    },
+  };
+}
+/** Producer-owned append-only position record. Invoke publish at source publication, never at ACK/poll. */
+export function openPublicationWriter(
+  file: string,
+  source: string,
+  stream: string,
+  clock: HostFeedClock,
+) {
+  if (!clocks.has(clock) || !file || file === ":memory:")
+    throw new Error("Unbound publication writer");
+  const db = new DatabaseSync(file);
+  db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA fullfsync=ON; PRAGMA checkpoint_fullfsync=ON;
+    PRAGMA wal_autocheckpoint=0; PRAGMA journal_size_limit=16777216; PRAGMA locking_mode=NORMAL; PRAGMA busy_timeout=5000;
+    CREATE TABLE IF NOT EXISTS publications(key TEXT PRIMARY KEY, body TEXT NOT NULL);`);
+  // [DX-T1-5] Why: one autocommitted insert is already atomic and FULL-synchronous; prepare once.
+  // Rejected: BEGIN/SELECT/INSERT/COMMIT for every new position (extra writer-thread work, same durable row).
+  const insert = db.prepare("INSERT OR IGNORE INTO publications VALUES(?,?)");
+  const select = db.prepare("SELECT body FROM publications WHERE key=?");
+  let closed = false;
+  const captures = publicationCaptures(source, stream, clock, () => {
     if (closed) throw new Error("Publication writer is closed");
-    const record = captures.get(token);
-    if (!record) throw new Error("Foreign or forged publication capture");
+  });
+  const capture = captures.capture;
+  const persistCaptured = (token: PublicationCapture): FeedPublication => {
+    const record = captures.record(token);
     const positionKey = feedPositionKey(record);
     if (Number(insert.run(positionKey, JSON.stringify(record)).changes) === 1) return record;
     const prior = select.get(positionKey);
@@ -171,4 +191,192 @@ export function openPublicationReader(file: string): PublicationReader {
   });
   readers.add(reader);
   return reader;
+}
+
+export interface PublicationPersistenceSample {
+  readonly thread: number;
+  readonly start: number;
+  readonly end: number;
+  readonly position: string;
+  readonly publicationId: string;
+}
+// [DX-T1-9] Why: capture on the producer's clock, but keep FULL-synchronous SQLite and its readback off that isolate.
+// Rejected: capturing a later worker timestamp, acknowledging before readback, or transferring forgeable capture tokens.
+export async function openAsyncPublicationWriter(
+  file: string,
+  source: string,
+  stream: string,
+  clock: HostFeedClock,
+  options: { workerCpus?: string; onPersist?: (sample: PublicationPersistenceSample) => void } = {},
+) {
+  if (!clocks.has(clock) || !file || file === ":memory:")
+    throw new Error("Unbound publication writer");
+  const worker = new Worker(`(${publicationWorker.toString()})()`, {
+    eval: true,
+    workerData: { file, cpus: options.workerCpus },
+  });
+  let closed = false,
+    closing = false,
+    failed: Error | undefined,
+    sequence = 0;
+  const pending = new Map<
+    number,
+    { resolve: (value: string) => void; reject: (error: Error) => void }
+  >();
+  let readyResolve!: () => void, readyReject!: (error: Error) => void;
+  const ready = new Promise<void>((resolve, reject) => {
+    readyResolve = resolve;
+    readyReject = reject;
+  });
+  const fail = (error: Error) => {
+    failed ??= error;
+    readyReject(error);
+    for (const request of pending.values()) request.reject(error);
+    pending.clear();
+  };
+  worker.on("error", fail);
+  const exited = new Promise<void>((resolve) =>
+    worker.once("exit", (code) => {
+      closed = true;
+      if (!closing || code !== 0 || pending.size)
+        fail(new Error(`Publication worker exited (${code})`));
+      resolve();
+    }),
+  );
+  worker.on(
+    "message",
+    (message: {
+      ready?: boolean;
+      id: number;
+      body?: string;
+      error?: string;
+      sample?: PublicationPersistenceSample;
+    }) => {
+      if (message.ready) {
+        readyResolve();
+        return;
+      }
+      const request = pending.get(message.id);
+      if (!request) {
+        fail(new Error("Unbound publication worker reply"));
+        return;
+      }
+      pending.delete(message.id);
+      if (message.error) request.reject(new Error(message.error));
+      else if (typeof message.body !== "string")
+        request.reject(new Error("Missing durable publication readback"));
+      else {
+        try {
+          if (message.sample) options.onPersist?.(message.sample);
+          request.resolve(message.body);
+        } catch (error) {
+          request.reject(error instanceof Error ? error : new Error(String(error)));
+        }
+      }
+    },
+  );
+  try {
+    await ready;
+  } catch (error) {
+    await worker.terminate();
+    throw error;
+  }
+  const captures = publicationCaptures(source, stream, clock, () => {
+    if (failed) throw failed;
+    if (closed || closing) throw new Error("Publication writer is closed");
+  });
+  return Object.freeze({
+    capture: captures.capture,
+    persistCaptured: async (token: PublicationCapture): Promise<FeedPublication> => {
+      const captured = captures.record(token),
+        id = ++sequence;
+      const body = await new Promise<string>((resolve, reject) => {
+        pending.set(id, { resolve, reject });
+        try {
+          worker.postMessage({
+            id,
+            key: feedPositionKey(captured),
+            body: JSON.stringify(captured),
+          });
+        } catch (error) {
+          pending.delete(id);
+          reject(error);
+        }
+      });
+      const record = decode(body, captured);
+      if (
+        record.publicationId !== captured.publicationId ||
+        !sameFeedClock(record.domain, captured.domain) ||
+        BigInt(record.atNs) > BigInt(captured.atNs)
+      )
+        throw new Error("Durable publication capture binding mismatch");
+      return record;
+    },
+    close: async () => {
+      if (closed) {
+        if (failed) throw failed;
+        return;
+      }
+      // [DX-T1-9] Why: a close is queued after writes and their exact readbacks on the same ordered port.
+      // Rejected: terminate() during normal shutdown (could lose a pending witness and conceal failure).
+      closing = true;
+      worker.postMessage({ close: true });
+      await exited;
+      if (failed) throw failed;
+    },
+  });
+}
+// [DX-T1-9] Why: a self-contained worker function works in source tests and built ESM without a second runtime loader.
+// Rejected: a worker URL pointing at an unbuilt TypeScript sibling or a new SQLite dependency.
+function publicationWorker() {
+  const { parentPort, workerData, threadId } =
+    require("node:worker_threads") as typeof import("node:worker_threads");
+  const { DatabaseSync: Sqlite } = require("node:sqlite") as typeof import("node:sqlite");
+  const { performance: timer } = require("node:perf_hooks") as typeof import("node:perf_hooks");
+  if (!parentPort) throw new Error("Missing publication worker port");
+  if (workerData.cpus && process.platform === "linux") {
+    const { readFileSync: read } = require("node:fs") as typeof import("node:fs");
+    const { execFileSync: exec } =
+      require("node:child_process") as typeof import("node:child_process");
+    const tid = read("/proc/thread-self/stat", "utf8").split(" ")[0]!;
+    exec("taskset", ["-pc", workerData.cpus, tid], { stdio: "ignore" });
+  }
+  const db = new Sqlite(workerData.file);
+  db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA fullfsync=ON; PRAGMA checkpoint_fullfsync=ON;
+    PRAGMA wal_autocheckpoint=0; PRAGMA journal_size_limit=16777216; PRAGMA locking_mode=NORMAL; PRAGMA busy_timeout=5000;
+    CREATE TABLE IF NOT EXISTS publications(key TEXT PRIMARY KEY, body TEXT NOT NULL);`);
+  const insert = db.prepare("INSERT OR IGNORE INTO publications VALUES(?,?)"),
+    select = db.prepare("SELECT body FROM publications WHERE key=?");
+  parentPort.on(
+    "message",
+    (message: { close?: boolean; id: number; key: string; body: string }) => {
+      if (message.close) {
+        db.close();
+        parentPort.close();
+        return;
+      }
+      const start = timer.timeOrigin + timer.now();
+      try {
+        insert.run(message.key, message.body);
+        const row = select.get(message.key);
+        if (!row || typeof row["body"] !== "string")
+          throw new Error("Producer insert did not persist a publication");
+        const captured = JSON.parse(message.body) as { position: string; publicationId: string };
+        parentPort.postMessage({
+          id: message.id,
+          body: row["body"],
+          sample: {
+            thread: threadId,
+            start,
+            end: timer.timeOrigin + timer.now(),
+            position: captured.position,
+            publicationId: captured.publicationId,
+          },
+        });
+      } catch (error) {
+        parentPort.postMessage({ id: message.id, error: String(error) });
+      }
+    },
+  );
+  parentPort.postMessage({ ready: true });
 }

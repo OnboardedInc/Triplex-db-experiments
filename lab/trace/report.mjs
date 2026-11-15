@@ -566,8 +566,22 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
               jfrCounts.set(r.process, (jfrCounts.get(r.process) ?? 0) + 1);
           }
         } else if (r.type === "jfr-complete") completions.push(r);
-        else if (r.type === "resource" || r.type === "metrics") resources.push(r);
-        else if (r.type === "metadata") metadata.push(r);
+        else if (r.type === "resource" || r.type === "metrics") {
+          resources.push(r);
+          // [DX-T1-9] Why: a producer forwards its private witness worker's measured interval on the same process clock.
+          // Rejected: attributing off-thread SQLite to writer-thread code or using the parent's message round-trip as storage time.
+          if (r.name === "driver.publication.persist-worker") {
+            if (
+              !Number.isSafeInteger(r.workerThread) ||
+              r.workerThread <= 0 ||
+              !validSpan(r) ||
+              !r.attributes?.operationId ||
+              !r.attributes?.position
+            )
+              throw Error("Invalid publication worker interval");
+            events.push({ ...r, type: "event", thread: r.workerThread });
+          }
+        } else if (r.type === "metadata") metadata.push(r);
         else if (r.type === "histograms") {
           footer = true;
           histograms.push(r);
