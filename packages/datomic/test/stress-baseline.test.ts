@@ -62,7 +62,7 @@ const runtimeFixture = () => {
     Image: "sha256:image", HostConfig: { Memory: 1024, CpusetCpus: "0" },
     Config: { Env: ["TRIPLEX_TRACE_RUN=attempt", "NODE_OPTIONS=--max-old-space-size=6144"] },
   }));
-  return { manifest, containers: rows.slice(0, 4), driver: rows.slice(4), properties: "object-cache-max=1280m", sourceHashes: { source: "bytes" } };
+  return { manifest, traceStartAbsMs: 1500, containers: rows.slice(0, 4), driver: rows.slice(4), properties: "object-cache-max=1280m", sourceHashes: { source: "bytes" } };
 };
 describe("stress denominator runtime", () => {
   it("accepts observed matching runtime settings", () => {
@@ -78,6 +78,16 @@ describe("stress denominator runtime", () => {
   ])("rejects a changed denominator runtime %#", (mutate) => {
     const a = runtimeFixture(), b = structuredClone(a); mutate(b);
     expect(() => validateStressRuntime(stressRuntime(a), stressRuntime(b))).toThrow(/baseline/);
+  });
+  it.each([
+    (v: any) => (v.manifest.startedAt = NaN),
+    (v: any) => (v.traceStartAbsMs = NaN),
+    (v: any) => (v.containers[0].Created = "invalid"),
+    (v: any) => (v.containers[0].Created = new Date(2000).toISOString()),
+    (v: any) => (v.containers[0].State.StartedAt = new Date(2000).toISOString()),
+  ])("rejects missing or future runtime clocks %#", (mutate) => {
+    const a = runtimeFixture(); mutate(a);
+    expect(() => stressRuntime(a)).toThrow(/baseline/);
   });
   it("rejects stale container readbacks", () => {
     const a = runtimeFixture(); a.containers[0].Created = new Date(500).toISOString();

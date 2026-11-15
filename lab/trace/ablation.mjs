@@ -106,7 +106,7 @@ for (const [i, arm] of arms.entries()) {
     const baselinePath = path.join(zd, "driver/ns-writes.jsonl");
     const hash = crypto.createHash("sha256").update(fs.readFileSync(baselinePath)).digest("hex");
     validateStressBaseline({ source, prefix, bench, manifest, baseline: zb, baselineManifest: zm, hash, baselinePath, candidate: arm === "candidate" });
-    const runtime = (d, m, b) => stressRuntime({ manifest: m, containers: read(path.join(d, "containers.json")), driver: read(path.join(d, "driver-container.json")), properties: fs.readFileSync(path.join(d, "config/sql.properties"), "utf8"), sourceHashes: read(path.join(d, "source-build-hashes.json")), writerHeap: b.writerHeap });
+    const runtime = (d, m, b) => stressRuntime({ manifest: m, traceStartAbsMs: b.traceStartAbsMs, containers: read(path.join(d, "containers.json")), driver: read(path.join(d, "driver-container.json")), properties: fs.readFileSync(path.join(d, "config/sql.properties"), "utf8"), sourceHashes: read(path.join(d, "source-build-hashes.json")), writerHeap: b.writerHeap });
     validateStressRuntime(runtime(zd, zm, zb), runtime(dir, manifest, bench));
   }
   // [DX-T1-4] Why: every comparison changes one declared input while the remaining workload stays byte-identical.

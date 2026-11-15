@@ -1,6 +1,6 @@
 (ns triplex.gateway.transaction-shape
   (:require [datomic.api :as d] [clojure.data.json :as json] [clojure.string :as str]
-            [triplex.gateway.scope :as scope] [triplex.gateway.schema :as schema]))
+            [triplex.gateway.slim :as slim] [triplex.gateway.scope :as scope] [triplex.gateway.schema :as schema]))
 
 ;; [DX-T1-5] Why: inspect actual immutable log datoms after measurement, bound to an acknowledged operation and position.
 ;; Rejected: estimating log contents from the submitted transaction or running a census on the serial commit path.
@@ -15,19 +15,26 @@
       (let [datoms (:data (first records))
             rows (mapv (fn [datom]
                          (let [attribute (d/ident db (:a datom)) v (:v datom)
-                               value (if (string? v) v (pr-str v))]
+                               value (if (string? v) v (pr-str v))
+                               logical (if (= attribute :triplex.entity/row) (slim/row-text value) value)]
                            (when-not attribute (throw (ex-info "Census attribute identity missing" {})))
                            {:attribute (str attribute) :added (:added datom)
                             :valueUtf8Bytes (alength (.getBytes ^String value "UTF-8"))
+                            :logicalValueUtf8Bytes (alength (.getBytes ^String logical "UTF-8"))
+                            :compressedRows (if (= logical value) 0 1)
                             :ednUtf8Bytes (alength (.getBytes (pr-str [(:e datom) attribute v (:tx datom) (:added datom)]) "UTF-8"))})) datoms)
             attributes (mapv (fn [[attribute items]]
                                {:attribute attribute :datoms (count items)
                                 :added (count (filter :added items)) :retracted (count (remove :added items))
                                 :valueUtf8Bytes (reduce + (map :valueUtf8Bytes items))
+                                :logicalValueUtf8Bytes (reduce + (map :logicalValueUtf8Bytes items))
+                                :compressedRows (reduce + (map :compressedRows items))
                                 :ednUtf8Bytes (reduce + (map :ednUtf8Bytes items))})
                              (sort-by key (group-by :attribute rows)))]
         {:operationId operationId :position position :t t :datoms (count rows)
          :valueUtf8Bytes (reduce + (map :valueUtf8Bytes rows))
+         :logicalValueUtf8Bytes (reduce + (map :logicalValueUtf8Bytes rows))
+         :compressedRows (reduce + (map :compressedRows rows))
          :ednUtf8Bytes (reduce + (map :ednUtf8Bytes rows)) :attributes attributes}))))
 
 (defn -main [& [request-file]]
@@ -51,6 +58,7 @@
                    {:schema "triplex.transaction-shape.v1" :run (get input "run") :source (get input "source")
                     :slot (get input "slot") :scope scope-text :requestHash (schema/sha256 text)
                     :startedAt started :endedAt (System/currentTimeMillis)
+                    :rowsVersion (:v (first (d/datoms db :eavt (d/entid db [:triplex.scope/key scope-text]) :triplex.scope/rows-version)))
                     :transactions transactions
                     :units "Actual log datoms; string UTF-8 and nonstring EDN value bytes. EDN datom bytes are an uncompressed representation, not physical Fressian/storage bytes."})))
         (shutdown-agents)

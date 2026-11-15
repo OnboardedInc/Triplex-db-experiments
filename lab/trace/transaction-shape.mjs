@@ -33,6 +33,9 @@ export function qualifyShape(inputText, stdout, manifest, now = Date.now()) {
     result.transactions?.length !== input.commands.length
   )
     throw Error("Census content/freshness/binding mismatch");
+  const slim = input.expectedRowsVersion !== undefined;
+  if (slim && (![3, 4].includes(input.expectedRowsVersion) || result.rowsVersion !== input.expectedRowsVersion))
+    throw Error("Census physical layout mismatch");
   const seen = new Set();
   for (let i = 0; i < input.commands.length; i++) {
     const actual = result.transactions[i],
@@ -60,9 +63,14 @@ export function qualifyShape(inputText, stdout, manifest, now = Date.now()) {
         a.datoms !== a.added + a.retracted
       )
         throw Error("Invalid census attribute totals");
+      if (slim && (!["logicalValueUtf8Bytes", "compressedRows"].every(k => Number.isSafeInteger(a[k]) && a[k] >= 0) ||
+          a.compressedRows > a.datoms || a.logicalValueUtf8Bytes < a.valueUtf8Bytes ||
+          (a.attribute !== ":triplex.entity/row" && (a.compressedRows !== 0 || a.logicalValueUtf8Bytes !== a.valueUtf8Bytes)) ||
+          (result.rowsVersion === 3 && (a.compressedRows !== 0 || a.logicalValueUtf8Bytes !== a.valueUtf8Bytes))))
+        throw Error("Census slim byte totals invalid");
       attrs.add(a.attribute);
     }
-    for (const k of ["datoms", "valueUtf8Bytes", "ednUtf8Bytes"])
+    for (const k of ["datoms", "valueUtf8Bytes", "ednUtf8Bytes", ...(slim ? ["logicalValueUtf8Bytes", "compressedRows"] : [])])
       if (actual[k] !== actual.attributes.reduce((n, a) => n + a[k], 0))
         throw Error("Census totals do not close");
   }
@@ -101,6 +109,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
         slot: manifest.slot,
         scope: DatabaseScope.test(bench.scope),
         createdAt: Date.now(),
+        expectedRowsVersion: process.env.DX_SLIM_ROWS === "1" ? 4 : 3,
         commands,
       }) + "\n",
     );

@@ -3,7 +3,9 @@ import { observedRunEnd } from "./anatomy.mjs";
 
 // [DX-T1-8] Why: the denominator must use this arm's actual CPU, heap, JVM and storage settings.
 // Rejected: matching workload and source alone (a different runtime can manufacture a writer ratio).
-export function stressRuntime({ manifest, containers, driver, properties, sourceHashes, writerHeap }) {
+export function stressRuntime({ manifest, traceStartAbsMs, containers, driver, properties, sourceHashes, writerHeap }) {
+  if (!Number.isFinite(manifest.startedAt) || !Number.isFinite(traceStartAbsMs) || traceStartAbsMs <= manifest.startedAt)
+    throw Error("Stress baseline runtime clock missing");
   const all = [...containers, ...driver];
   const roles = ["pg", "tx", "gw-w", "gw-r", "driver"];
   if (all.length !== roles.length) throw Error("Stress baseline runtime containers missing");
@@ -14,8 +16,8 @@ export function stressRuntime({ manifest, containers, driver, properties, source
   };
   const runtime = roles.map((role) => {
     const c = all.find((c) => c.Name === "/" + manifest.tag + "-" + role);
-    if (!c || Date.parse(c.Created) < manifest.startedAt || !/^[a-f0-9]{64}$/.test(c.Id) ||
-        (role === "driver" ? c.State.Status !== "created" : !c.State.Running || Date.parse(c.State.StartedAt) < manifest.startedAt))
+    if (!c || !Number.isFinite(Date.parse(c.Created)) || Date.parse(c.Created) < manifest.startedAt || Date.parse(c.Created) > traceStartAbsMs || !/^[a-f0-9]{64}$/.test(c.Id) ||
+        (role === "driver" ? c.State.Status !== "created" : !c.State.Running || !Number.isFinite(Date.parse(c.State.StartedAt)) || Date.parse(c.State.StartedAt) < manifest.startedAt || Date.parse(c.State.StartedAt) > traceStartAbsMs))
       throw Error("Stress baseline foreign/stale runtime readback");
     const h = c.HostConfig;
     return { role, image: c.Image,
