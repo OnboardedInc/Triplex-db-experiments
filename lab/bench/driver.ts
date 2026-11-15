@@ -785,7 +785,7 @@ async function run() {
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
   const publicationClock = lane === "datomic" && !pairPlan ? openHostFeedClock() : null;
   const publicationSource = JSON.stringify({ route: "A0-control", dir: rawDir, epoch: `${scopeName}#0` });
-  const publicationMode = process.env.DX_PUBLICATION_MODE ?? "insert";
+  const publicationMode = process.env.DX_PUBLICATION_MODE ?? (lane === "datomic" ? "worker" : "insert");
   if (!["insert","legacy","deferred","worker"].includes(publicationMode)) throw Error("Invalid publication mode");
   report.publicationMode = publicationMode;
   const publicationFactory = publicationMode === "legacy" ? openLegacyPublicationWriter : openPublicationWriter;
