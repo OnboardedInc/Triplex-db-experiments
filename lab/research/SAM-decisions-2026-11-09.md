@@ -376,3 +376,21 @@ Orchestrator's reading:
 4. **CPU split.** Decided: judge on the whole 8-CPU machine (P4 becomes at least 4,400 pulls per second in total, which is
    1,100 times the four engine cores the bar assumed) and let the split between engine and runtime be tuned freely.
 5. **Acknowledging before the engine has applied a commit.** Not now; Sam agrees it is risky. Revisit only with numbers.
+
+## 2026-11-15 about 14:00 UTC: audit disk use across all Triplex work; archive to Google Drive; focus Datomic, then maybe XTDB
+
+Sam, verbatim:
+
+> Also across all of the Triplex, like the Triplex-DB and Triplex-DB-2, etc., I feel like we're taking up a ton, ton, ton, ton of space. Can you have a background agent go and look at all that stuff and figure out what we don't need anymore or what we could zip up and put in my Google Drive folders?
+>
+> I really only want to focus on Datomic right now and then maybe XTDB. The rest, I feel like, as long as we have the code, place the code as is in GitHub. Anything else that could be useful, we should just zip and store in Drive and get off the disk.
+>
+> Since you know the most about all of it, can you just have a background agent be prompted to go find that, audit it, and help with a plan to do that?
+
+Orchestrator's reading:
+1. One background agent (Codex `gpt-6.1-sol` at `max`, id ORCH-DISK1) audits every place the Triplex efforts use disk,
+   including `/Users/sam/projects/triplex-db`, read-only, and writes an inventory and a plan under
+   `~/Claude/Projects/triplex-db-2/disk-audit-2026-11-15/`. It changes nothing; the plan is carried out after Sam has seen it.
+2. Priorities for classifying: Datomic now, XTDB maybe later (this softens the 2026-11-13 "don't go back to that": XTDB
+   data is archived, not thrown away, and no XTDB work is started); other lanes keep only their code, on GitHub.
+3. "My drive" means Google Drive. No Drive folder is mounted on this Mac today; the plan says how to get archives there.
