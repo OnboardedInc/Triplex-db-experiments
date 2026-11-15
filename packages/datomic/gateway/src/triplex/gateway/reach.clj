@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
+  (:require [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger]))
 (set! *warn-on-reflection* false)
 
@@ -128,10 +128,15 @@
             (when-not (retired (subs text 0 start))
               (let [ref-start (+ start 36) ref-size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)]
                 (when-not (.isEmpty texts) (.append out \,))
-                (.add texts text)
+                ;; [DX-T1-8] Why: both JSON fragments and legacy text responses expose canonical logical rows.
+                ;; Rejected: emitting the compressed storage frame to replica/bootstrap or pinned read clients.
+                (let [body-start (+ ref-start ref-size 1)
+                      logical (if (.startsWith text "Z1" (int body-start))
+                                (str (subs text 0 body-start) (slim/body (subs text body-start))) text)]
+                (.add texts logical)
                 (when (> (.size texts) row-limit) (decline! "row-budget"))
-                (if (= \1 (.charAt text 0)) (append-string! out text)
-                  (.append out text (int (+ ref-start ref-size 1)) (.length text)))
+                (if (= \1 (.charAt text 0)) (append-string! out logical)
+                  (.append out ^String logical (int body-start) (.length ^String logical))))
               (when (pos? (Integer/parseInt text (int (+ start 32)) (int (+ start 36)) 16))
                 (let [ref-start (+ start 36) size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
                       from (bits text start) end (+ start 16)
