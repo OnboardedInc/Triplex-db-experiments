@@ -50,6 +50,8 @@ describe("writer-only heap constraints", () => {
       },
     },
     events: Array.from({ length: 5 }, (_, thread) => ({
+      type: "resource",
+      memory: { heapUsed: 100 },
       run: "r",
       source: "s",
       slot: "r",
@@ -60,6 +62,7 @@ describe("writer-only heap constraints", () => {
     oldMiB: 6144,
     youngMiB: 4,
     expectedThreads: [0, 1, 2, 3, 4],
+    window: { start: 1200, end: 1800 },
   });
   it("requires the actual measured limits of the writer and all worker roles", () => {
     const f = fixture();

@@ -359,12 +359,18 @@ for (const [i, arm] of arms.entries()) {
     const youngMiB = kind.startsWith("young-") && arm === "candidate" ? 4 : 16;
     for (const v of ["DX_WRITER_HEAP_TUNING=1", `DX_WRITER_OLD_MIB=${oldMiB}`, `DX_WRITER_YOUNG_MIB=${youngMiB}`])
       if (!driver.Config.Env.includes(v)) throw Error("Writer heap startup environment mismatch");
+    const primary = [];
+    for await (const w of records(path.join(dir,"driver/ns-writes.jsonl")))
+      if (w.stream === "background" && !w.resend) primary.push(w);
+    if (!primary.length) throw Error("Missing heap-study writer window");
+    const window = { start: Math.min(...primary.map(w => w.scheduledAt)), end: Math.max(...primary.map(w => w.finishedAt)) };
     const events = [];
     for (const f of filesUnder(path.join(dir,"trace/raw")).filter(f => /\/node-.*\.jsonl.gz$/.test(f)))
-      for await (const e of records(f)) if (e.type === "resource") events.push(e);
+      for await (const e of records(f)) if (e.type === "resource" && e.memory && e.at >= window.start && e.at <= window.end) events.push(e);
     const expectedThreads = fs.readFileSync(path.join(dir, "driver.log"), "utf8").split("\n")
-      .filter(line => line.startsWith('{"type":"node-thread-placement"')).map(line => JSON.parse(line).thread);
-    validateWriterHeap({ manifest, bench, events, oldMiB, youngMiB, expectedThreads });
+      .filter(line => line.startsWith('{"type":"node-thread-placement"')).map(line => JSON.parse(line))
+      .filter(r => r.at <= window.end).map(r => r.thread);
+    validateWriterHeap({ manifest, bench, events, oldMiB, youngMiB, expectedThreads, window });
   }
   const envOf = (c) =>
     Object.fromEntries(

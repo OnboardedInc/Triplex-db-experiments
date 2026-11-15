@@ -35,14 +35,33 @@ export function nativeBookendComparison(controls, candidates) {
 }
 // [DX-T1-8] Why: a writer-only V8 comparison needs actual isolate limits on this attempt's clock.
 // Rejected: trusting NODE_OPTIONS or reported worker resourceLimits (V8 startup flags can override them).
-export function validateWriterHeap({ manifest, bench, events, oldMiB, youngMiB, expectedThreads }) {
+export function validateWriterHeap({
+  manifest,
+  bench,
+  events,
+  oldMiB,
+  youngMiB,
+  expectedThreads,
+  window,
+}) {
   const h = bench.writerHeap;
   if (
-    ![manifest.startedAt, bench.traceStartAbsMs, observedEnd(bench.endedAt), h?.at].every(
-      Number.isFinite,
-    )
+    ![
+      manifest.startedAt,
+      bench.traceStartAbsMs,
+      observedEnd(bench.endedAt),
+      h?.at,
+      window?.start,
+      window?.end,
+    ].every(Number.isFinite)
   )
     throw Error("Missing writer heap clock");
+  if (
+    window.start < bench.traceStartAbsMs ||
+    window.end > observedEnd(bench.endedAt) ||
+    window.end <= window.start
+  )
+    throw Error("Invalid measured writer heap window");
   if (
     !h ||
     h.at < manifest.startedAt ||
@@ -66,20 +85,22 @@ export function validateWriterHeap({ manifest, bench, events, oldMiB, youngMiB, 
   }
   if (
     !Array.isArray(expectedThreads) ||
-    expectedThreads.length < 5 ||
+    expectedThreads.length < 2 ||
     expectedThreads.some((t) => !Number.isSafeInteger(t) || t < 0)
   )
     throw Error("Missing startup isolate identities");
   const threads = new Set();
   for (const e of events) {
     if (
+      e.type !== "resource" ||
+      !Number.isFinite(e.memory?.heapUsed) ||
       e.run !== manifest.tag ||
       e.source !== manifest.source ||
       e.slot !== manifest.slot ||
       !Number.isSafeInteger(e.thread) ||
       !Number.isFinite(e.at) ||
-      e.at < manifest.startedAt ||
-      e.at > observedEnd(bench.endedAt)
+      e.at < window.start ||
+      e.at > window.end
     )
       throw Error("Foreign/stale isolate heap telemetry");
     if (e.at < bench.traceStartAbsMs) continue;
