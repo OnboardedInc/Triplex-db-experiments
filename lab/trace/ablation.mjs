@@ -8,12 +8,13 @@ import { validateBasisBroadcast } from "../bench/lib/basis-window.ts";
 import { bookendComparison, observedRunEnd, validateDeferredOrder } from "./anatomy.mjs";
 import {
   validateNativeSettings,
+  validateWriterHeap,
   nativeBookendComparison,
   validateNativeAffinity,
   validateNativeBands,
 } from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
-const nativeKind = /^(quiet|channel|isolated|index|cache|revision|cores|basis|model)-(floor|256)$/.exec(kind);
+const nativeKind = /^(quiet|channel|isolated|index|cache|revision|cores|basis|model|shared|young|oldheap)-(floor|256)$/.exec(kind);
 const readerDiagnostic =
   ["history-256", "writer-256", "record-clock-256"].includes(kind) || nativeKind?.[2] === "256";
 const summaryKind =
@@ -52,7 +53,7 @@ const nativeRequest = nativeKind
   : null;
 const nativeRepeats = nativeRequest?.candidateRepeats ?? 2;
 const stressDiagnostic = nativeRequest?.stressDiagnostic === true;
-if (stressDiagnostic && !["basis-256", "model-256"].includes(kind)) throw Error("Unsupported stress diagnostic");
+if (stressDiagnostic && !["basis-256", "model-256", "shared-256", "young-256", "oldheap-256"].includes(kind)) throw Error("Unsupported stress diagnostic");
 if (nativeKind && (nativeRequest.kind !== kind || ![1, 2].includes(nativeRepeats)))
   throw Error("Invalid native comparison plan");
 const compare = nativeKind ? nativeBookendComparison : bookendComparison;
@@ -128,9 +129,9 @@ for (const [i, arm] of arms.entries()) {
   buildHashes = actualHashes;
   const effective = configuration({
     TRIPLEX_TRACE_LEVEL:
-      /^(cache|revision|cores)-/.test(kind) ? "full" : arm === "off" ? "off" : arm === "summary" || summaryKind ? "summary" : "full",
+      /^(cache|revision|cores|shared)-/.test(kind) ? "full" : arm === "off" ? "off" : arm === "summary" || summaryKind ? "summary" : "full",
     TRIPLEX_TRACE_SESSION: prefix,
-    ...(/^(cache|revision|cores)-/.test(kind) ? { TRIPLEX_TRACE_COMPONENTS: "node,gateway,tx-jfr", DX_TX_NATIVE_JFR: "1" } : {}),
+    ...(/^(cache|revision|cores|shared)-/.test(kind) ? { TRIPLEX_TRACE_COMPONENTS: kind.startsWith("shared-") ? "node,gateway,tx-jfr,gw-jfr,postgres" : "node,gateway,tx-jfr", DX_TX_NATIVE_JFR: "1" } : {}),
     ...(!["full", "summary"].includes(arm) && !summaryKind
       ? {
           TRIPLEX_TRACE_COMPONENTS:
@@ -209,7 +210,7 @@ for (const [i, arm] of arms.entries()) {
     driver = read(path.join(dir, "driver-container.json"))[0];
   // [DX-T1-6] Why: current-stack trials vary one declared knob, including when CPU placement changes JVM ergonomics.
   // Rejected: assuming equal tags/source prove equal image, heap, collector, Node options or durable storage policy.
-  if (nativeKind && ["cache", "revision", "cores", "basis", "model"].includes(nativeKind[1])) {
+  if (nativeKind && ["cache", "revision", "cores", "basis", "model", "shared", "young", "oldheap"].includes(nativeKind[1])) {
     const runtime = JSON.stringify([driver, ...["pg", "tx", "gw-w", "gw-r"].map(role => containers.find(c => c.Name === `/${tag}-${role}`))].map(c => ({
       image: c.Image, memory: c.HostConfig.Memory, swap: c.HostConfig.MemorySwap,
       java: c.Config.Env.filter(v => /^(JAVA_OPTS|DATOMIC_JAVA_OPTS|NODE_OPTIONS)=/.test(v)).sort(),
@@ -316,7 +317,7 @@ for (const [i, arm] of arms.entries()) {
     );
     if (!channels.length || channels.some((v) => v !== expected.DX_ENCRYPT_CHANNEL))
       throw Error("Unconfirmed published channel mode");
-    const current = ["cache", "revision", "cores", "basis", "model"].includes(nativeKind[1]);
+    const current = ["cache", "revision", "cores", "basis", "model", "shared", "young", "oldheap"].includes(nativeKind[1]);
     const twoCore = nativeKind[1] === "cores" ? arm === "candidate" : request.baseline.DX_CURRENT_TWO_CORES === "1";
     const isolated = (nativeKind[1] === "isolated" && arm === "candidate") || current;
     const masks = {
@@ -325,6 +326,7 @@ for (const [i, arm] of arms.entries()) {
       "gw-w": twoCore ? "3" : isolated ? "2" : "1",
       "gw-r": twoCore ? "5" : isolated ? "4" : "2,3",
     };
+    if (nativeKind[1] === "shared" && arm === "candidate") masks.tx = "0,1";
     for (const [role, cpus] of Object.entries(masks))
       if (containers.find((c) => c.Name === `/${tag}-${role}`)?.HostConfig.CpusetCpus !== cpus)
         throw Error("Native CPU placement mismatch");
@@ -351,6 +353,18 @@ for (const [i, arm] of arms.entries()) {
       if (opts.includes("/dxh1/quiet-logback.xml") !== (expected.DX_QUIET_LOGS === "1"))
         throw Error("Native JVM logback argument mismatch");
     }
+  }
+  if (/^(young|oldheap)-/.test(kind)) {
+    const oldMiB = kind.startsWith("oldheap-") && arm === "candidate" ? 1024 : 6144;
+    const youngMiB = kind.startsWith("young-") && arm === "candidate" ? 4 : 16;
+    for (const v of ["DX_WRITER_HEAP_TUNING=1", `DX_WRITER_OLD_MIB=${oldMiB}`, `DX_WRITER_YOUNG_MIB=${youngMiB}`])
+      if (!driver.Config.Env.includes(v)) throw Error("Writer heap startup environment mismatch");
+    const events = [];
+    for (const f of filesUnder(path.join(dir,"trace/raw")).filter(f => /\/node-.*\.jsonl.gz$/.test(f)))
+      for await (const e of records(f)) if (e.type === "resource") events.push(e);
+    const expectedThreads = fs.readFileSync(path.join(dir, "driver.log"), "utf8").split("\n")
+      .filter(line => line.startsWith('{"type":"node-thread-placement"')).map(line => JSON.parse(line).thread);
+    validateWriterHeap({ manifest, bench, events, oldMiB, youngMiB, expectedThreads });
   }
   const envOf = (c) =>
     Object.fromEntries(

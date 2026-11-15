@@ -29,7 +29,11 @@ if (['1','clock'].includes(process.env.DX_NATIVE_GATES ?? '')) {
     if (rc !== 0) process.exit(Number(rc));
   }
 }
-const child=spawn('node',[...debug,...profile,'--experimental-strip-types','lab/bench/driver.ts',...args],{stdio:'inherit'});
+// [DX-T1-8] Why: heap constraints apply only to the driver child; the observer and all reader workers retain their original limits.
+// Rejected: space-splitting NODE_OPTIONS transport or silently changing every isolate's GC policy.
+const heap = process.env.DX_WRITER_HEAP_TUNING === '1'
+  ? [`--max-old-space-size=${process.env.DX_WRITER_OLD_MIB ?? '6144'}`, `--max-semi-space-size=${process.env.DX_WRITER_YOUNG_MIB ?? '16'}`] : [];
+const child=spawn('node',[...debug,...profile,...heap,'--experimental-strip-types','lab/bench/driver.ts',...args],{stdio:'inherit'});
 let active=true;
 const system = process.env.TRIPLEX_TRACE_SYSTEM === '1' || (process.env.TRIPLEX_TRACE_LEVEL && process.env.TRIPLEX_TRACE_LEVEL !== 'off')
   ? spawn('node',['lab/trace/system-sampler.mjs','/driver/trace/raw'],{stdio:'inherit'}) : null;

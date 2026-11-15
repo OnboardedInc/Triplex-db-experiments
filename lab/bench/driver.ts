@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { configureWriterHeap } from "./lib/writer-heap.ts";
 import { suffixDelta } from "./lib/basis-window.ts";
 import { DeferredPublications } from "./lib/deferred-publication.ts";
 import { cpuProfileClock } from "./lib/cpu-profile.ts";
@@ -79,6 +80,7 @@ import { RoundBook, type ClientStats, type RoundRecord } from "./lib/rounds.ts";
 
 // ---------------------------------------------------------------- arguments
 
+const writerHeap = await configureWriterHeap();
 const argv = process.argv.slice(2);
 const opt = (name: string, fallback?: string) => {
   // [DX-H1] Why: explicit flags override wrapper defaults. Rejected: first occurrence (silently ignores development limits).
@@ -210,6 +212,7 @@ const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(
 const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 
 const report: Record<string, any> = latencyReceipt({
+  writerHeap,
   format: "tx2-ns-report/2",
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v2 sections 1.1, 2.1, 4.1",

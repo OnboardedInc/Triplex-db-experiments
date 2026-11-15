@@ -15,7 +15,7 @@ import {
 import { join } from "node:path";
 import { performance, PerformanceObserver, monitorEventLoopDelay } from "node:perf_hooks";
 import { threadId } from "node:worker_threads";
-import { getHeapSpaceStatistics } from "node:v8";
+import { getHeapSpaceStatistics, getHeapStatistics } from "node:v8";
 import { createGzip } from "node:zlib";
 
 export interface SchedulerSnapshot {
@@ -664,6 +664,7 @@ export function startTraceTelemetry(): void {
       processCpu: process.cpuUsage(),
       memory: process.memoryUsage(),
       heapSpaces: getHeapSpaceStatistics(),
+      heapLimit: getHeapStatistics().heap_size_limit,
       heapUsedScope: "isolate",
       rssScope: "process",
       elu: performance.eventLoopUtilization(next, elu),

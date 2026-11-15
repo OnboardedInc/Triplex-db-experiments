@@ -33,9 +33,73 @@ export function nativeBookendComparison(controls, candidates) {
     lowerBeyondBookendDrift: benefit > drift && Math.max(...candidates) < Math.min(...controls),
   };
 }
+// [DX-T1-8] Why: a writer-only V8 comparison needs actual isolate limits on this attempt's clock.
+// Rejected: trusting NODE_OPTIONS or reported worker resourceLimits (V8 startup flags can override them).
+export function validateWriterHeap({ manifest, bench, events, oldMiB, youngMiB, expectedThreads }) {
+  const h = bench.writerHeap;
+  if (
+    ![manifest.startedAt, bench.traceStartAbsMs, observedEnd(bench.endedAt), h?.at].every(
+      Number.isFinite,
+    )
+  )
+    throw Error("Missing writer heap clock");
+  if (
+    !h ||
+    h.at < manifest.startedAt ||
+    h.at >= bench.traceStartAbsMs ||
+    h.node !== bench.host.node ||
+    typeof h.v8 !== "string" ||
+    h.writer.oldMiB !== oldMiB ||
+    h.writer.youngMiB !== youngMiB ||
+    h.workers.oldMiB !== 6144 ||
+    h.workers.youngMiB !== 16
+  )
+    throw Error("Writer heap attempt/settings mismatch");
+  for (const role of ["writer", "workers"]) {
+    const v = h[role];
+    if (
+      !Number.isSafeInteger(v.heapLimit) ||
+      v.heapLimit < v.oldMiB * 1048576 ||
+      v.heapLimit > (v.oldMiB + 4 * v.youngMiB) * 1048576
+    )
+      throw Error("Invalid observed isolate heap limit");
+  }
+  if (
+    !Array.isArray(expectedThreads) ||
+    expectedThreads.length < 5 ||
+    expectedThreads.some((t) => !Number.isSafeInteger(t) || t < 0)
+  )
+    throw Error("Missing startup isolate identities");
+  const threads = new Set();
+  for (const e of events) {
+    if (
+      e.run !== manifest.tag ||
+      e.source !== manifest.source ||
+      e.slot !== manifest.slot ||
+      !Number.isSafeInteger(e.thread) ||
+      !Number.isFinite(e.at) ||
+      e.at < manifest.startedAt ||
+      e.at > observedEnd(bench.endedAt)
+    )
+      throw Error("Foreign/stale isolate heap telemetry");
+    if (e.at < bench.traceStartAbsMs) continue;
+    if (e.heapLimit !== (e.thread === 0 ? h.writer.heapLimit : h.workers.heapLimit))
+      throw Error("Actual writer/worker heap limit mismatch");
+    threads.add(e.thread);
+  }
+  if (!threads.has(0) || expectedThreads.some((t) => !threads.has(t)))
+    throw Error("Missing measured isolate limits");
+  return true;
+}
+const observedEnd = (value) => (typeof value === "number" ? value : Date.parse(value));
 // [DX-T1-4] Why: an affinity receipt must describe this attempt's running threads, not a copied placement log.
 // Rejected: checking requested masks without source/slot/time and actual kernel readbacks.
-export function validateNativeAffinity(rows, manifest, endedAt, masks = { main: "3", workers: "4,5,6,7" }) {
+export function validateNativeAffinity(
+  rows,
+  manifest,
+  endedAt,
+  masks = { main: "3", workers: "4,5,6,7" },
+) {
   if (
     !Number.isFinite(manifest.startedAt) ||
     !Number.isFinite(endedAt) ||
