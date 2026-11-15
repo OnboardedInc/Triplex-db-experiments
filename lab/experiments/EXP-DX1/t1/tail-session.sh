@@ -11,7 +11,7 @@ mkdir "$session_dir"
 git rev-parse HEAD > "$session_dir/head.txt"
 python3 - "$session_dir/request.json" "$kind" <<'PY'
 import os,json,sys
-json.dump({'kind':sys.argv[2],'candidate':os.environ.get('DX_TAIL_PG_SETTINGS'),'publication':os.environ.get('DX_PUBLICATION_MODE','deferred'),'witnessLevel':os.environ.get('DX_WITNESS_LEVEL','summary')},open(sys.argv[1],'w'),indent=2)
+json.dump({'kind':sys.argv[2],'candidate':os.environ.get('DX_TAIL_PG_SETTINGS'),'publication':os.environ.get('DX_PUBLICATION_MODE','worker' if sys.argv[2]=='storage' else 'deferred'),'witnessLevel':os.environ.get('DX_WITNESS_LEVEL','summary')},open(sys.argv[1],'w'),indent=2)
 PY
 python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
 lock=$HOME/Claude/Projects/triplex-db-2/locks/measure
@@ -52,7 +52,7 @@ for mode in baseline candidate baseline; do
   [[ $mode != candidate ]] || settings+=(DX_PUBLICATION_MODE=worker)
  else
   [[ -n ${DX_TAIL_PG_SETTINGS:-} ]] || exit 2
-  settings=(TRIPLEX_TRACE_LEVEL=full DX_STORAGE_DIAGNOSTIC=1 DX_TX_NATIVE_JFR=1)
+  settings=(TRIPLEX_TRACE_LEVEL=full DX_STORAGE_DIAGNOSTIC=1 DX_TX_NATIVE_JFR=1 "DX_PG_SETTINGS=-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_buffers=64MB -c wal_sync_method=fdatasync")
   workload=(--rung 10k --reader-ladder-only --max-readers 256 --level-s 45 --match-duration-s 300)
   [[ $mode != candidate ]] || settings+=("DX_PG_SETTINGS=$DX_TAIL_PG_SETTINGS")
  fi

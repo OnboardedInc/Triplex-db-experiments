@@ -254,6 +254,14 @@ fi
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
  --lane datomic --composition reach --read-path "${DX_READ_PATH:-gateway}" --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1
 
+# [DX-T1-9] Why: end-of-run heap/TOAST inspection preserves timed workload and exactness while exposing actual free space.
+# Rejected: VACUUM/rewrite as a diagnostic, or letting an unavailable optional census invent a successful observation.
+if [[ ${DX_PG_CENSUS:-0} == 1 ]]; then
+  census_rc=0
+  docker exec -i "$prefix-pg" psql -X -Atq -U postgres -d datomic < lab/trace/postgres-census.sql > "$out/storage-census.jsonl" 2> "$out/storage-census-errors.txt" || census_rc=$?
+  printf '%s\n' "$census_rc" > "$out/storage-census-exit.txt"
+fi
+
 # [DX-T1-9] Why: retain the table's final HOT/dead-tuple/autovacuum state without scan work during the timed phase.
 # Rejected: guessing bloat from one dead-tuple estimate or running VACUUM/pgstattuple while timing commits.
 if [[ ${DX_STORAGE_DIAGNOSTIC:-0} == 1 ]]; then

@@ -21,6 +21,8 @@ export DX_OBJECT_CACHE=${DX_OBJECT_CACHE:-1g} DX_INDEX_THRESHOLD=${DX_INDEX_THRE
 export DX_GW_JAVA_OPTS='-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g'
 # [DX-T1-4] Why: a same-session storage arm must reach Postgres and its recorded readback.
 # Rejected: overwriting an explicit durable candidate with an unconditional wrapper value.
-export DX_PG_SETTINGS=${DX_PG_SETTINGS:-'-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_buffers=64MB'}
+# [DX-T1-9] Why: matched durable O_DSYNC lowered peer p99 beyond drift; keep the override for fdatasync controls.
+# Rejected: disabling fsync/synchronous_commit (acknowledged commits could be lost).
+export DX_PG_SETTINGS=${DX_PG_SETTINGS:-'-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_buffers=64MB -c wal_sync_method=open_datasync'}
 export DX_ORACLE_ROOT=${DX_ORACLE_ROOT:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-H3/oracle}
 exec bash lab/experiments/EXP-DX1/h3/attempt.sh "$@"

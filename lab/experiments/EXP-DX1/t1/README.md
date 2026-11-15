@@ -13,7 +13,7 @@ Raw compressed records and JFR live at `TAG/trace/raw/`, with SHA256SUMS one lev
 Copies of reports go to `lab/experiments/EXP-DX1/t1/runs/TAG/` (large viewers are ignored by git; indexes carry checksums).
 `node lab/bin/trace-store.mjs list` shows bytes; `archive TAG --to DIR` copies, verifies and moves only the raw files.
 The single index is `~/Claude/Projects/triplex-db-2/evidence/TRACE-INDEX.md`. Nothing is uploaded.
-`TRIPLEX_TRACE_LEVEL=off|summary|full` controls all processes; benchmark default is `full`, product default is `off`.
+`TRIPLEX_TRACE_LEVEL=off|summary|full` controls all processes; benchmark default is `summary`, product default is `off`.
 
 Full records every commit and every physical HTTP gateway request. Logical reads retain every request at least 50 ms and a
 fixed 1/1024 FNV-1a sample of the remainder, plus the actual 20 slowest per phase/thread, with logarithmic histograms of all finished reads. Summary omits short read-only own-work spans and samples fast gateway reads. Both levels keep every commit in full, including commit-owned begin routes and worker contexts. Summary reduces read log volume; its zero-reader overhead is not yet measured. A request over

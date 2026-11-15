@@ -47,6 +47,7 @@ export DX_QUIET_LOGS=${DX_QUIET_LOGS:-1} DX_ENCRYPT_CHANNEL=${DX_ENCRYPT_CHANNEL
 export DX_TX_JAVA_OPTS=${DX_TX_JAVA_OPTS:-'-Xms256m -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=200'}
 
 export DX_READ_PATH=replica DX_STRICT_RECORD_CLOCKS=1
+export DX_PG_CENSUS=${DX_PG_CENSUS:-1}
 # [DX-T1-4] Why: q8's 192-MiB window retains the benchmark's historical basis cohort; fallback decoding stays off the writer.
 # Rejected: silently inheriting the 64-MiB driver default, which caused measured historical-read gateway fallbacks. Seed batches retain q8 setup after a measured tail benefit.
 args=("$@")

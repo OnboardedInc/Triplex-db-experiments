@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { execFileSync, spawn } from "node:child_process";
 import { createGzip } from "node:zlib";
 import path from "node:path";
+import { parseDarwinDiskStats } from "./disk-stats.mjs";
 const dir = process.argv[2];
 fs.mkdirSync(dir, { recursive: true });
 const sink = createGzip({ level: 1 });
@@ -108,6 +109,19 @@ function sample() {
       } catch {
         row[key] = null;
       }
+    }
+  }
+  if (process.platform === "darwin") {
+    const startedAt = Date.now();
+    try {
+      const data = execFileSync(
+        "/usr/sbin/ioreg",
+        ["-r", "-c", "IOBlockStorageDriver", "-w", "0"],
+        { encoding: "utf8", timeout: 800, stdio: ["ignore", "pipe", "pipe"] },
+      );
+      row.disk = { startedAt, endedAt: Date.now(), devices: parseDarwinDiskStats(data) };
+    } catch {
+      row.disk = { startedAt, endedAt: Date.now(), unavailable: true };
     }
   }
   sink.write(JSON.stringify(row) + "\n");
