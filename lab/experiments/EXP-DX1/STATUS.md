@@ -1868,3 +1868,24 @@ under `~/Claude/Projects/triplex-db-2/backups/worktree-ignored-2026-11-14/`; rem
 **Reading:** setting-level tuning is exhausted for the medians (about 0.6 to 1.6 ms over at zero readers and small commits,
 3.6 to 4.7 ms over for medium commits). The medians need a structural change; the idea menu (Fable agent, tonight 23:07
 local) is for that. Part 9 is narrow: the witness stall, the slow durable log writes seen from the Postgres side, one pair.
+
+## 2026-11-15 13:15 UTC: DX-T1 part 9: the tail is durable WAL sync delay under the virtual disk; pair F; Codex work paused until the idea menu
+
+DX-T1 part 9 (`exp/DX-T1-tracing`, `cfae020b`, pushed; report `t1/REPORT-9.md`, bars in `t1/VERDICT-9.md`). Quiet host (swap
+4.1 GiB, Mac CPU about 10%; `off` bookends 10.45 / 41.4 and 10.51 / 43.0 ms).
+1. **Pair F:** all-primary p99 67.2 ms (C 55.6, A 71.0; bar 50). Zero-reader arm 10.46 / 48.7 ms. 256-reader medians 12.22
+   and 13.06 ms (bar 10); small p99 at 256 readers 150.4 ms (bar 50; 46 commits in that window); medium burst 11.84 ms;
+   steady queue 3 (bar 2.19). P1: scaling 1.016 and 1.194 met, read p99 6.3 ms met; recovery missed again (all seven
+   windows); writer ratios 3.386 and 2.498 missed. P3 met (lag p99 77 ms). P4 met (18,172 pulls/s; flatness 1.022). Oracle
+   PASS with 19,766,713 model reads correct.
+2. **Cause of the slow log writes:** Postgres waiting on the durable WAL sync of the INSERT, with matching flush delays on
+   the guest's disk. Not checkpoints, locks or bloat (0.009% dead space, 99.8% HOT updates). Whether the delay is in
+   Virtualization and APFS or in the SSD is not split.
+3. **Kept:** witness persistence off the writer thread (0.49 ms at the median, no tail gain proved); `wal_sync_method =
+   open_datasync` provisionally (peer p99 44.2 to 38.7 ms, 8.4 ms against 5.9 ms drift; durability settings unchanged).
+4. In F, 100 of 131 commits over 50 ms are peer wait; one 149 ms writer stall overlaps 148 ms of GC.
+
+**Reading:** three quiet pairs (C, A, F) agree. P3 and P4 pass with margin; P1's reads pass and its writer ratios and
+recovery move between pass and miss; P2 misses by 0.5 to 4.7 ms at the medians and 6 to 21 ms at the all-commit p99. The
+tail's main cause is below Postgres, in how this Mac's virtual disk serves a flush. No Codex agent is running; the next
+work is chosen from the idea menu (Fable agent, tonight 23:07 local). Mac disk: 15.5 GiB free, at the floor.

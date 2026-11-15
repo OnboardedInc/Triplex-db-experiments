@@ -81,6 +81,14 @@ this reading: with Chrome, Slack and Paste open the same build read 204 ms and 1
    order them (pipelining per subject); merging a subject's queued commits into one transaction; a low-pause collector on
    the write gateway; finding the 267 ms delay with a `full` trace of the writer thread.
 
+   **DX-T1 parts 8 and 9 (2026-11-15):** in three quiet pairs the all-commit p99 was 55.6, 71.0 and 67.2 ms. 100 to 113 of
+   the 131 to 144 commits over 50 ms wait on the transactor's durable log write: Postgres is waiting on the WAL sync of the
+   INSERT, with matching flush delays on the guest disk (143 to 253 ms in traced examples). Not checkpoints, locks or bloat.
+   Unsplit: Virtualization and APFS against the SSD (the Mac's disk is 96% full and the VM disk is a sparse file).
+   `open_datasync` helps a little (kept provisionally). Rejected with measurements: journal, nursery and old-space sizes,
+   transactor sharing Postgres's core, per-row text compression. Untried: the VM disk's synchronisation mode, a separate
+   WAL device, fewer WAL syncs per transaction (H1 a), a verdict protocol that separates bench storage stalls from the store.
+
 ## H5. One hundred thousand subjects: commits slow down and bursts fall seconds behind
 
 1. **What is hard.** P5 is about 100,000 subjects. At that size (k100, gateway reads) quiet-window commit p50 was 18 to 45 ms
