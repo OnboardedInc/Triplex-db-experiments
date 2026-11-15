@@ -9,6 +9,23 @@ Constraints every answer must respect: exactness and durability are the floor; t
 2026-11-12); the lane is Datomic on Postgres storage (Sam closed the XTDB lane on 2026-11-13; QLever is paused); the only machine is Sam's Mac (36 GiB,
 12 cores) with the colima VM `triplex2`.
 
+## Where the bars stand (quiet Mac, closing pair of 2026-11-14, DX-T1 part 7)
+
+P3 and P4 pass. P1 passes except the writer p99 ratio at 1,024 readers (3.73 against 2). P2 misses: all-primary p99 55.6 ms
+(bar 50); 256-reader medians 11.4 ms (5 to 10 facts) and 13.6 ms (11 to 25 facts) against 10; medium burst median 12.1
+against 10. Oracle PASS. Table in `lab/experiments/EXP-DX1/STATUS.md` (2026-11-15 00:25 UTC). The Mac must be quiet for
+this reading: with Chrome, Slack and Paste open the same build read 204 ms and 16 ms.
+
+## H10. A commit writes about 17 KB of row text and 56 datoms, and commit time grows with it
+
+1. **What is hard.** The 11 to 25 fact band is 2.2 ms slower at the median than the 5 to 10 band. A census of real
+   transactions found 56 datoms and about 17 KB of value text per transaction, 98% of it native row texts. The transactor
+   pays per datom (an index lookup each), serialises the transaction twice, and resets the log tail about every fourth
+   transaction because of the size (about 3.1 Postgres commits per transaction).
+2. **Directions.** Store the row text compressed, once with references, or not at all if readers can rebuild it from the
+   datoms. Any of these is a new stored layout: seeds must be rebuilt and the 100,000-subject seed took hours. DX-T1 part 8
+   is prototyping on new 1,000 and 10,000-subject seeds.
+
 ## H1. The commit median sits on the engine call, and the call alone is over the 10 ms bar
 
 1. **What is hard.** P2 asks for commit p50 at most 10 ms. With zero readers and tracing off, a commit is 13.0 ms and the

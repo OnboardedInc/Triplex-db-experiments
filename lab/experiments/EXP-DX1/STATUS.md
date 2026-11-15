@@ -1811,3 +1811,34 @@ DX-T1 part 6 (`exp/DX-T1-tracing`, `f29a11bb`, pushed; report `t1/REPORT-6.md`).
 
 Part 7 is running: the closing pair first while the host is quiet (floor back to 15 GiB), then the writer's garbage
 collection, a layout with two transactor cores that keeps P1, and a final pair.
+
+## 2026-11-15 00:25 UTC: DX-T1 part 7: quiet closing pair: P3, P4 and all of P1 but one ratio pass; P2 misses by 5.6 ms at p99 and 1.4 to 3.6 ms at the loaded medians; part 8 launched
+
+DX-T1 part 7 (`exp/DX-T1-tracing`, `15ed6516`, pushed; report `t1/REPORT-7.md`, every bar in `t1/VERDICT-7.md`). Closing
+pair C on the quiet host (swap 4.7 GiB, Mac CPU outside the VM 12%; `off` bookends 11.0 / 45.6 and 10.7 / 41.4 ms p50 /
+p99), default tracing, split-read rule `pending`, oracle PASS:
+
+| Bar | Required | Busy reference (part 6) | Quiet closing pair C |
+| --- | --- | --- | --- |
+| P1 G256/G64; G1024/G256 | at least 1; 0.9 | 0.970; 0.870 | 1.017; 1.124 |
+| P1 writer p99 ratio at 256; at 1,024 | at most 1.25; 2 | 2.245; 6.945 | 1.129; **3.730** |
+| P1 read p99 at 256, ms; recovery | at most 100; 60 s | 8.4; 40 s | 6.8; 35 s |
+| P2 5 to 10 facts at 256, p50 / p99 ms | 10 / 50 | 16.0 / 52.6 | **11.39** / 24.5 |
+| P2 11 to 25 facts at 256, p50 / p99 ms | 10 / 50 | 16.4 / 134.3 | **13.57** / 22.8 |
+| P2 all-primary p99 ms | 50 | 203.9 | **55.65** |
+| P2 burst p50 small / medium ms | 10 / 10 | 14.0 / 16.9 | 9.79 / **12.10** |
+| P2 queue, drains, accounting | bounds | met | met |
+| P3 lag p99 ms; gaps, order, replay | 250; exact | 221; met | 46; met |
+| P4 correct pulls/s, whole machine | 4,400 | 14,720 | 16,521 |
+| P4 pull p50 / p99 ms; history flatness | 5 / 25; 1.1 | 0.034 / 0.293; 1.07 | 0.032 / 0.247; 1.02 |
+
+Kept: incremental receipt broadcast (broadcast p99 5.15 to 1.30 ms; no tail gain beyond drift). Journal for the expected
+model: writer heap 497 to 301 MiB, maximum GC pause 55 to 39 ms, no closing control, opt-in. Commits over 50 ms in C: 96 of
+7,408; largest cause peer wait (60), then same-subject predecessor (11), network (10), scheduler lateness (10). Final pair
+refused for disk (14.4 GiB).
+
+Orchestrator: compressed large files in the evidence of earlier experiments (lossless, `zstd --rm`) and removed eight more
+finished, fully pushed worktrees after archiving their ignored files; Mac free 14.3 to 25.2 GiB.
+
+Part 8 is running: journal bookends and writer GC settings, what the transactor does during the slow peer waits, a layout
+with two transactor cores, cost per fact and a slim-layout prototype on new seeds, then a final pair.
