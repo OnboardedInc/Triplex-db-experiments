@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { spawnSync } from "node:child_process";
 import { publicationLagMs } from "@triplex-build/triplex/feed";
 import {
   openHostFeedClock,
@@ -191,6 +192,30 @@ it("rejects publication worker startup failure without producing a receipt", asy
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "publication-worker-refused-"));
   try {
     await expect(openAsyncPublicationWriter(dir, "s", "s", openHostFeedClock())).rejects.toThrow();
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// [DX-T1-9] Why: ordinary Node must execute the built public export; source aliases conceal bundler-renamed worker loaders.
+// Rejected: another source-only fixture after the first VM smoke caught an unbound __require in the generated worker.
+it("executes the built publication worker through the public package export", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "publication-worker-built-"));
+  try {
+    const script = `import {openAsyncPublicationWriter,openHostFeedClock,openPublicationReader} from "@triplex-build/triplex-host/feed";
+      const key={source:"source",stream:"stream",epoch:"0",position:"1"};
+      const w=await openAsyncPublicationWriter(process.argv[1],key.source,key.stream,openHostFeedClock());
+      const r=await w.persistCaptured(w.capture(key,"operation"));
+      const reader=openPublicationReader(process.argv[1]);
+      if(JSON.stringify(reader.get(key))!==JSON.stringify(r))throw Error("durable bytes differ");
+      reader.close();await w.close();console.log(r.publicationId);`;
+    const result = spawnSync(
+      process.execPath,
+      ["--input-type=module", "-e", script, path.join(dir, "publication.db")],
+      { cwd: new URL("../../", import.meta.url), encoding: "utf8" },
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("operation");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

@@ -244,7 +244,7 @@ if [[ ${DX_STORAGE_DIAGNOSTIC:-0} == 1 ]]; then
   docker exec "$prefix-pg" psql -X -Atq -U postgres -d datomic -c "SELECT json_build_object('settings',(SELECT json_agg(row_to_json(s)) FROM pg_settings s WHERE name IN ('fsync','synchronous_commit','full_page_writes','shared_buffers','wal_buffers','wal_sync_method','wal_init_zero','wal_recycle','min_wal_size','max_wal_size','checkpoint_timeout','checkpoint_completion_target','autovacuum','autovacuum_vacuum_scale_factor','autovacuum_vacuum_threshold','track_wal_io_timing','track_io_timing')),'relation',(SELECT json_agg(json_build_object('name',relname,'options',reloptions,'pages',relpages,'tuples',reltuples)) FROM pg_class WHERE relname='datomic_kvs'));" > "$out/storage-settings.json"
   docker exec "$prefix-pg" cat /proc/self/mountinfo > "$out/storage-mountinfo.txt"
   df -k . > "$out/host-disk-before.txt"
-  stat -f 'size=%z blocks=%b file=%N' "$HOME/.colima/triplex2/diffdisk" > "$out/host-vm-disk.txt" 2>&1 || true
+  stat -f 'size=%z blocks=%b file=%N' "$HOME/.colima/_lima/colima-triplex2/disk" "$HOME/.colima/_lima/_disks/colima-triplex2/datadisk" > "$out/host-vm-disk.txt" 2>&1 || true
 fi
 # [DX-T1-4] Why: measure an owned volume's sync floor before timed work starts, under the same lease.
 # Rejected: probing a sealed seed, an active WAL file, or running a competing benchmark during phases.

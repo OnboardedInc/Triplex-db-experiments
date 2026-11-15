@@ -211,8 +211,11 @@ export async function openAsyncPublicationWriter(
 ) {
   if (!clocks.has(clock) || !file || file === ":memory:")
     throw new Error("Unbound publication writer");
-  const worker = new Worker(`(${publicationWorker.toString()})()`, {
+  const worker = new Worker(`(${publicationWorker.toString()})(require)`, {
     eval: true,
+    // [DX-T1-9] Why: this self-contained CommonJS worker must not inherit a caller's --input-type=module or CPU profiler.
+    // Rejected: relying on the caller's invocation mode (breaks the built public export in an ESM consumer).
+    execArgv: [],
     workerData: { file, cpus: options.workerCpus },
   });
   let closed = false,
@@ -328,16 +331,18 @@ export async function openAsyncPublicationWriter(
 }
 // [DX-T1-9] Why: a self-contained worker function works in source tests and built ESM without a second runtime loader.
 // Rejected: a worker URL pointing at an unbuilt TypeScript sibling or a new SQLite dependency.
-function publicationWorker() {
-  const { parentPort, workerData, threadId } =
-    require("node:worker_threads") as typeof import("node:worker_threads");
-  const { DatabaseSync: Sqlite } = require("node:sqlite") as typeof import("node:sqlite");
-  const { performance: timer } = require("node:perf_hooks") as typeof import("node:perf_hooks");
+function publicationWorker(load: NodeRequire) {
+  const { parentPort, workerData, threadId } = load(
+    "node:worker_threads",
+  ) as typeof import("node:worker_threads");
+  const { DatabaseSync: Sqlite } = load("node:sqlite") as typeof import("node:sqlite");
+  const { performance: timer } = load("node:perf_hooks") as typeof import("node:perf_hooks");
   if (!parentPort) throw new Error("Missing publication worker port");
   if (workerData.cpus && process.platform === "linux") {
-    const { readFileSync: read } = require("node:fs") as typeof import("node:fs");
-    const { execFileSync: exec } =
-      require("node:child_process") as typeof import("node:child_process");
+    const { readFileSync: read } = load("node:fs") as typeof import("node:fs");
+    const { execFileSync: exec } = load(
+      "node:child_process",
+    ) as typeof import("node:child_process");
     const tid = read("/proc/thread-self/stat", "utf8").split(" ")[0]!;
     exec("taskset", ["-pc", workerData.cpus, tid], { stdio: "ignore" });
   }

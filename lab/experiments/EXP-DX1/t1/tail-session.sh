@@ -11,7 +11,7 @@ mkdir "$session_dir"
 git rev-parse HEAD > "$session_dir/head.txt"
 python3 - "$session_dir/request.json" "$kind" <<'PY'
 import os,json,sys
-json.dump({'kind':sys.argv[2],'candidate':os.environ.get('DX_TAIL_PG_SETTINGS'),'publication':os.environ.get('DX_PUBLICATION_MODE','deferred')},open(sys.argv[1],'w'),indent=2)
+json.dump({'kind':sys.argv[2],'candidate':os.environ.get('DX_TAIL_PG_SETTINGS'),'publication':os.environ.get('DX_PUBLICATION_MODE','deferred'),'witnessLevel':os.environ.get('DX_WITNESS_LEVEL','summary')},open(sys.argv[1],'w'),indent=2)
 PY
 python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
 lock=$HOME/Claude/Projects/triplex-db-2/locks/measure
@@ -43,7 +43,12 @@ for mode in baseline candidate baseline; do
  sh lab/bin/host-quiet.sh > "$session_dir/$i-host-before.jsonl" || true
  settings=();workload=(--rung 10k --reader-ladder-only --max-readers 1024 --level-s 45 --match-duration-s 450)
  if [[ $kind == witness ]]; then
-  settings=(TRIPLEX_TRACE_LEVEL=summary DX_PUBLICATION_MODE=deferred)
+  witness_level=${DX_WITNESS_LEVEL:-summary}
+  [[ $witness_level == summary || $witness_level == full ]] || exit 2
+  settings=(TRIPLEX_TRACE_LEVEL=$witness_level DX_PUBLICATION_MODE=deferred)
+  # [DX-T1-9] Why: a full witness comparison can also observe storage, with identical collectors in all arms.
+  # Rejected: enabling server diagnostics only in the candidate and confusing collector cost with the witness change.
+  [[ $witness_level != full ]] || settings+=(DX_STORAGE_DIAGNOSTIC=1 DX_TX_NATIVE_JFR=1)
   [[ $mode != candidate ]] || settings+=(DX_PUBLICATION_MODE=worker)
  else
   [[ -n ${DX_TAIL_PG_SETTINGS:-} ]] || exit 2
