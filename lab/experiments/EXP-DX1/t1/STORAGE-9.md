@@ -31,3 +31,20 @@ Same-session sync-method ABA: source `80176ae4`, 10k full-level 300-second diagn
 Peer p99 improves 8.372 ms against 5.854-ms bookend drift. All-primary p99 improves 9.952 ms against 9.483-ms drift, a narrow margin; p50 change is inside .161-ms drift. Keep `open_datasync` provisionally for the verdict pair, not as proof that disk stalls are gone. All arms are DONE, oracle PASS with no mismatches/receipt violations, all 3530 witnesses durably read back, complete collectors, and exact model reads. The actual settings/source/build identities, fresh clocks and raw/decoded archive hashes are checked before comparison. Counter movement between WAL write and sync is not itself counted as a gain.
 
 Private recordings and verified derived scripts: `evidence/DX-T1/tx2-dxt1-p9-witness-a-*`, `p9-witness-analysis-b/`, `tx2-dxt1-p9-dsync-a-*`, `p9-dsync-analysis/`. Earlier failed derivations remain retained. Only this diagnostic's source-bound observations are attributed to its setting; C/A are historical references, not controls.
+
+
+Additional window accounting (same full-level host/bookends as the witness study; completed disk requests and lagged PG counters include other work):
+
+| trace suffix (full IDs above) | guest write await ms | flushes / average flush ms | average disk queue | PG WAL write / sync ms in enclosing ~2-s window | PG backend pid / xid |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 1eda | 1.491 | 8 / 43.000 | 2.752 | 1.907 / 421.181 | 91 / 16363 |
+| 2076 | 5.040 | 12 / 10.250 | 1.760 | 0.482 / 1.994 | 150 / 17239 |
+| 200b | 22.250 | 10 / 35.300 | 2.363 | 0.041 / 353.898 | 147 / 17123 |
+| 1ebe | 17.071 | 8 / 29.750 | 1.697 | 0.094 / 239.621 | 91 / 16408 |
+| 1f8e | 31.286 | 4 / 54.250 | 1.805 | 0.125 / 221.356 | 147 / 16930 |
+
+These are Linux diskstats-derived equivalents of interval await and queue depth, not per-request `iostat` identities. No backend lock blocker is sampled in these five INSERT waits. WAL sync dominates WAL write service in the broader windows, consistent with the direct WalSync observations. Neither an aggregate queue nor a counter delta identifies the physical SSD cache-flush time.
+
+Final F’s fresh post-timing `pgstattuple_approx` census finds heap 11,452,416 bytes (20.815% scanned), four dead tuples / .008662% dead space, 4.311% approximate free space; TOAST 198,033,408 bytes (14.371% scanned), zero dead tuples and 2.457% approximate free space. HOT updates are 10,937/10,954 (99.845%); five autovacuums ran. This does not indicate severe table bloat. Actual final settings keep autovacuum, fsync, synchronous_commit and full_page_writes on, checkpoint timeout 1800 s / completion target .9, max WAL 8192 MB, recycling/initial zeroing on, shared buffers 512 MiB and open_datasync. No extra checkpoint, WAL-size, table or buffer tuning was measured: those options are not declared exhausted. Summary/off I/O timing counters are disabled, so their zero timing fields are unmeasured. The census runs after the oracle/timing and is not a measurement of the heap during an individual slow commit.
+
+New Mac IOKit aggregate read/write operation/time counters are retained in F. They do not expose a bound physical cache-flush duration or separate the virtual-disk/APFS queue; no exact physical-versus-guest attribution is claimed. The next measurement needs that flush boundary, with clock uncertainty established. No host-volume or VM-disk relocation, physical power-loss experiment or risky durability shortcut was attempted.
