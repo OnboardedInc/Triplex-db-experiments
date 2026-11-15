@@ -1,6 +1,34 @@
 // @ts-nocheck -- [DX-T1-7] Why: heterogeneous recorded bytes are validated at this boundary. Rejected: unchecked source/slot/time or denominator assumptions.
 import { observedRunEnd } from "./anatomy.mjs";
 
+// [DX-T1-8] Why: the denominator must use this arm's actual CPU, heap, JVM and storage settings.
+// Rejected: matching workload and source alone (a different runtime can manufacture a writer ratio).
+export function stressRuntime({ manifest, containers, driver, properties, sourceHashes, writerHeap }) {
+  const all = [...containers, ...driver];
+  const roles = ["pg", "tx", "gw-w", "gw-r", "driver"];
+  if (all.length !== roles.length) throw Error("Stress baseline runtime containers missing");
+  const normalize = (s) => {
+    let result = String(s).split(manifest.tag).join("{run}");
+    for (const c of all) result = result.split(c.Id).join("{container:" + c.Name.slice(manifest.tag.length + 2) + "}");
+    return result;
+  };
+  const runtime = roles.map((role) => {
+    const c = all.find((c) => c.Name === "/" + manifest.tag + "-" + role);
+    if (!c || Date.parse(c.Created) < manifest.startedAt || !/^[a-f0-9]{64}$/.test(c.Id) ||
+        (role === "driver" ? c.State.Status !== "created" : !c.State.Running || Date.parse(c.State.StartedAt) < manifest.startedAt))
+      throw Error("Stress baseline foreign/stale runtime readback");
+    const h = c.HostConfig;
+    return { role, image: c.Image,
+      limits: Object.fromEntries(["Memory", "MemorySwap", "MemoryReservation", "CpuShares", "NanoCpus", "CpuPeriod", "CpuQuota", "CpusetCpus", "CpusetMems"].map((k) => [k, h[k]])),
+      env: c.Config.Env.map(normalize).sort() };
+  });
+  return { runtime, properties: normalize(properties), sourceHashes, writerHeap: writerHeap ? { writer: writerHeap.writer, workers: writerHeap.workers, node: writerHeap.node, v8: writerHeap.v8 } : null };
+}
+
+export function validateStressRuntime(baseline, loaded) {
+  if (JSON.stringify(baseline) !== JSON.stringify(loaded)) throw Error("Stress baseline runtime differs from loaded arm");
+}
+
 // [DX-T1-7] Why: stress ratios need the actual completed denominator from this source-frozen lease.
 // Rejected: a copied ratio, matching tag alone, or a baseline from another attempt with similar percentiles.
 export function validateStressBaseline({
@@ -32,6 +60,8 @@ export function validateStressBaseline({
     observedRunEnd(baseline.endedAt) >= manifest.startedAt ||
     baseline.config.readerBasisWire !== bench.config.readerBasisWire ||
     baseline.config.expectedStateRetention !== bench.config.expectedStateRetention ||
+    JSON.stringify(Object.entries(baseline.config).filter(([k]) => !["zeroReaders", "maxReaders", "baselineWrites"].includes(k))) !==
+      JSON.stringify(Object.entries(bench.config).filter(([k]) => !["zeroReaders", "maxReaders", "baselineWrites"].includes(k))) ||
     bench.config.maxReaders !== 1024 ||
     bench.config.baselineWrites !== baselinePath ||
     !/^[a-f0-9]{64}$/.test(hash) ||
