@@ -25,3 +25,5 @@ Next attempts use new tags, repeat controls, and a separate same-mode zero refer
 | baseline | 12.500 / 53.584 | 54 | 822 / 2289.207 / 57.314 | 498.8 / 548.4 | 0 / 0.000 | 4.256 / 0.628 | 4.608; 11.1 |
 
 Controls are the two snapshot bookends above. Broadcast p99 is 5.151 / 1.303 / 5.151 ms and items 19,373,181 / 12,471 / 19,373,529. Primary median saving 0.075 ms narrowly exceeds 0.069-ms drift; no p99 or GC-stall improvement is established (p99 change +8.167 ms versus 9.101-ms drift). Keep delta for the direct broadcast saving; final full-pair bars still decide performance. GC kinds in all loaded arms: 7 major, 7 incremental; minor 808 / 742 / 808. Lateness intervals are per primary command, not exclusive CPU time. The journal is still opt-in pending its separate study.
+
+Fresh recorded-byte derivation v3 additionally counts GC events over 50 ms: opening/delta/closing 2/2/1, summed observed duration 113.205/128.711/57.314 ms. All-primary >50-ms request wall totals are 1467.757/4667.151/3476.076 ms. These are not exclusive machine time and do not establish a delta tail improvement. Original v2 derivations remain retained.

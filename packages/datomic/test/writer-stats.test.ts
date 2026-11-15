@@ -66,6 +66,14 @@ it("keeps the complete primary denominator, timed GC and writer-isolate heap", (
   expect(s.schedulerLate50.unionMs).toBe(70);
   expect(s.gc.totalMs).toBe(10);
   expect(s.gc.kinds).toEqual({ "4": 1 });
+  // [DX-T1-7] Why: long-GC counts must exclude the exact threshold and post-measurement oracle work.
+  // Rejected: counting every isolate collection as a measured writer stall.
+  v.e.push(
+    { ...v.e[1], start: 110, end: 170 },
+    { ...v.e[1], start: 120, end: 170 },
+    { ...v.e[1], start: 201, end: 301 },
+  );
+  expect(writerStats(v.m, v.b, v.w, v.e).gc.over50).toEqual({ count: 1, totalMs: 60 });
   expect(s.heapUsed.p50).toBe(1024);
 });
 it.each(["foreign", "stale", "missing", "boundary", "denominator", "outcome", "sequence"])(

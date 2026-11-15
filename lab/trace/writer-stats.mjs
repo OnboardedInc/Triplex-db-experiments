@@ -100,7 +100,8 @@ export function writerStats(manifest, bench, writes, events) {
     if (last && v.start <= last.end) last.end = Math.max(last.end, v.end);
     else unions.push({ start: v.start, end: v.end });
   }
-  const over = writes.filter((w) => w.latencyMs > 50);
+  const over = writes.filter((w) => w.latencyMs > 50),
+    longGc = gc.filter((ms) => ms > 50);
   return {
     source: manifest.source,
     tag: manifest.tag,
@@ -117,7 +118,12 @@ export function writerStats(manifest, bench, writes, events) {
       unionMs: unions.reduce((n, v) => n + v.end - v.start, 0),
       worst: late.toSorted((a, b) => b.end - b.start - (a.end - a.start)).slice(0, 5),
     },
-    gc: { ...summarize(gc), totalMs: gc.reduce((n, v) => n + v, 0), kinds },
+    gc: {
+      ...summarize(gc),
+      totalMs: gc.reduce((n, v) => n + v, 0),
+      over50: { count: longGc.length, totalMs: longGc.reduce((n, v) => n + v, 0) },
+      kinds,
+    },
     heapUsed: summarize(heaps.map((e) => e.memory.heapUsed)),
     heapSpaces: heaps.at(-1).heapSpaces ?? null,
     note: "GC event durations and overlapping scheduler-lateness intervals are observations, not exclusive CPU or causal assignments. GC kinds absent in older recorders remain unrecorded.",
@@ -148,7 +154,7 @@ export async function buildWriterStats(dir) {
 }
 export function writerStatsMarkdown(r) {
   const fmt = (n) => (Number.isFinite(n) ? n.toFixed(3) : "n/a");
-  return `\n## Writer heap, GC and scheduler stalls\n\nSource ${r.source}; ${r.commands} complete primary writer rows; timed telemetry only. GC event durations are observations, not exclusive CPU.\n\n| writer metric | observed |\n| --- | --- |\n| Heap used median / peak MiB | ${fmt(r.heapUsed.p50 / 1048576)} / ${fmt(r.heapUsed.max / 1048576)} |\n| GC events / total duration / maximum ms | ${r.gc.n} / ${fmt(r.gc.totalMs)} / ${fmt(r.gc.max)} |\n| GC kinds (1 minor, 4 major, 8 incremental) | ${JSON.stringify(r.gc.kinds)} |\n| Scheduler lateness >50 ms, per-command intervals / sum ms | ${r.schedulerLate50.intervals} / ${fmt(r.schedulerLate50.totalMs)} |\n| Union stall episodes / duration ms | ${r.schedulerLate50.episodes} / ${fmt(r.schedulerLate50.unionMs)} |\n| All-primary p99 / over-50-ms requests | ${fmt(r.latency.p99)} / ${r.over50.count} |\n\nFull heap-space samples and causing trace IDs are in WRITER-STATS.json and trace/raw.\n`;
+  return `\n## Writer heap, GC and scheduler stalls\n\nSource ${r.source}; ${r.commands} complete primary writer rows; timed telemetry only. GC event durations are observations, not exclusive CPU.\n\n| writer metric | observed |\n| --- | --- |\n| Heap used median / peak MiB | ${fmt(r.heapUsed.p50 / 1048576)} / ${fmt(r.heapUsed.max / 1048576)} |\n| GC events / total duration / maximum ms | ${r.gc.n} / ${fmt(r.gc.totalMs)} / ${fmt(r.gc.max)} |\n| GC events >50 ms / total duration ms | ${r.gc.over50.count} / ${fmt(r.gc.over50.totalMs)} |\n| GC kinds (1 minor, 4 major, 8 incremental) | ${JSON.stringify(r.gc.kinds)} |\n| Scheduler lateness >50 ms, per-command intervals / sum ms | ${r.schedulerLate50.intervals} / ${fmt(r.schedulerLate50.totalMs)} |\n| Union stall episodes / duration ms | ${r.schedulerLate50.episodes} / ${fmt(r.schedulerLate50.unionMs)} |\n| All-primary p99 / over-50-ms requests / summed request wall ms | ${fmt(r.latency.p99)} / ${r.over50.count} / ${fmt(r.over50.totalMs)} |\n\nFull heap-space samples and scheduler-lateness trace IDs are in WRITER-STATS.json and trace/raw.\n`;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [dir, out] = process.argv.slice(2);

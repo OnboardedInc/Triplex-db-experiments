@@ -66,4 +66,4 @@ All latency rows below use their loaded arm/context above. Off controls are 200-
 
 The whole-machine P4 row uses the actual correctness-qualified weighted-phase goodput, with no quota multiplier or best-ladder substitution. Client single-reader P4 execution is CPU-saturated; this is the composed-path throughput. Physical engine bytes per query remain unmeasured. Exact all-read/oracle results are preserved independently of missed performance bars.
 
-Final status: the first model hold and its later closing control were refused at the unchanged 15-GiB floor. The retained delta broadcast has not yet had a later full-pair verdict; the journal stays opt-in because its timing bookend is missing. No missing arm is a PASS.
+Final status: the first model hold, its later closing control, and final full-pair attempt `tx2-dxt1-p7-final-a` were refused at the unchanged 15-GiB floor. The final attempt (source 7b864a32) stopped before lease/container acquisition; free space was 14.384 GiB at the subsequent ownership/lease check. The retained delta broadcast has no later full-pair verdict; the journal stays opt-in because its timing bookend is missing. No missing arm is a PASS.

@@ -27,3 +27,5 @@ Closing GC: 1811 events, 5082.407 ms total observed duration, maximum 71.153 ms.
 [Broadcast retry](BROADCAST-7.md) shows the exact wire cost reduction, with full GC/count/heap/ratio observations and no demonstrated tail improvement. [Journal trial](MODEL-7.md) shows a smaller heap and shorter GC events, but its closing control was disk-refused; no fixed-tail or controlled latency win is claimed. Oracle/source binding remains valid for the completed individual arms.
 
 Remaining retained writer graphs include oracle command inputs and duplicate-receipt history. Reads already spill to a worker. Journal mode relocates expectation-model inputs to framed bytes, replays the unchanged model after drain and verifies both archive and original hashes; it does not remove observations or shorten phases. V8 writer-only tuning and a shared-core two-transactor layout remain unmeasured.
+
+Recorded-byte v3 counts 4 measured writer GC events over 50 ms / 245.330 ms total in C. Those pauses can overlap scheduler/commit waits; their duration is not added to a wall-time budget or treated as proof of every stall.

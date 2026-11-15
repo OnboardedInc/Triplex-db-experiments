@@ -18,3 +18,5 @@ GC kinds (minor / major / incremental): heap loaded 745 / 7 / 7; journal loaded 
 Journal verification reproduces every original receipt-bound world only after drain, then archives the exact bytes. No engine layout or acknowledgement/durability setting changes. Both archive and decoded SHA256/length were independently reread; p7-model-bound-receipts.json is archive content evidence, not semantic promotion. The existing full-row checker and independent oracle remain mandatory.
 
 Raw data, refused third-control directory, original stderr and source/build manifests remain under the canonical private model-b paths; the incomplete-attempt compression journals retain restore commands and original hashes.
+
+Recorded-byte derivation v3: measured writer GC events over 50 ms, heap 1 / 55.168 ms versus journal 0 / 0 ms; both own-mode zero references have zero. This descriptive observation does not supply the refused closing control.
