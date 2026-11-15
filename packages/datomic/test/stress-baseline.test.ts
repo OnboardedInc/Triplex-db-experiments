@@ -59,7 +59,7 @@ const runtimeFixture = () => {
   const rows = ["pg", "tx", "gw-w", "gw-r", "driver"].map((role, i) => ({
     Name: "/attempt-" + role, Id: String(i + 1).repeat(64), Created: new Date(1100).toISOString(),
     State: { Running: role !== "driver", Status: role === "driver" ? "created" : "running", StartedAt: new Date(1200).toISOString() },
-    Image: "sha256:image", HostConfig: { Memory: 1024, CpusetCpus: "0" },
+    Image: "sha256:" + "a".repeat(64), HostConfig: { Memory: 1024, MemorySwap: 1024, MemoryReservation: 0, CpuShares: 0, NanoCpus: 0, CpuPeriod: 0, CpuQuota: 0, CpusetCpus: "0", CpusetMems: "" },
     Config: { Env: ["TRIPLEX_TRACE_RUN=attempt", "NODE_OPTIONS=--max-old-space-size=6144"] },
   }));
   return { manifest, traceStartAbsMs: 1500, containers: rows.slice(0, 4), driver: rows.slice(4), properties: "object-cache-max=1280m", sourceHashes: { source: "bytes" } };
@@ -75,6 +75,9 @@ describe("stress denominator runtime", () => {
     (v: any) => (v.containers[0].Image = "other"),
     (v: any) => (v.properties = "object-cache-max=1g"),
     (v: any) => (v.sourceHashes.source = "other"),
+    (v: any) => delete v.containers[0].HostConfig.Memory,
+    (v: any) => (v.containers[0].HostConfig.MemorySwap = -1),
+    (v: any) => (v.containers[0].HostConfig.CpusetCpus = ""),
   ])("rejects a changed denominator runtime %#", (mutate) => {
     const a = runtimeFixture(), b = structuredClone(a); mutate(b);
     expect(() => validateStressRuntime(stressRuntime(a), stressRuntime(b))).toThrow(/baseline/);

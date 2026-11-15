@@ -493,7 +493,7 @@
 ;; Rejected: checking a size ratio alone or replacing signed-zero, Unicode or pinned history assertions.
 (deftest slim-row-codec
   (doseq [suffix [(apply str (repeat 200 "duplicate row metadata"))
-                  (str (apply str (repeat 200 "日本語🙂")) (char 0xd800) (char 0xdcff))
+                  (str (apply str (repeat 200 "日本語🙂")) (char 0xd800) "separate" (char 0xdcff))
                   "[null,\"-0\",123,true,false]" ""]]
     (let [header "indexed-prefix" encoded (slim/encode (str header suffix) (+ 2 (count header)))]
       (is (.startsWith ^String encoded header))

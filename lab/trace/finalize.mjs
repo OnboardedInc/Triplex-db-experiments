@@ -1,4 +1,4 @@
-import { packOracle } from "./pack-oracle.mjs";
+import { packOracle, verifiedRawManifest } from "./pack-oracle.mjs";
 import { buildWriterStats, writerStatsMarkdown } from "./writer-stats.mjs";
 // Command-line run manifests are validated by the report reader.
 import fs from "node:fs";
@@ -130,6 +130,7 @@ if (
     fs.appendFileSync(path.join(destination, "TRACE-REPORT.md"), writerStatsMarkdown(writer));
   }
 }
+const archive = !renderOnly && result.tag.startsWith("tx2-dxt1-") ? await packOracle(run) : { files: 0 };
 const reportFiles = [
   "TRACE-REPORT.md",
   "trace.html",
@@ -148,7 +149,7 @@ const reportHashes =
           .update(fs.readFileSync(path.join(run, name)))
           .digest("hex")}  ${name}`,
     )
-    .join("\n") + "\n";
+    .join("\n") + "\n" + await verifiedRawManifest(run);
 const indexText = `# ${result.tag}\n\nSource: ${result.source}. Trace collection complete: ${result.complete}. Derived render recovery: ${renderOnly}.\n\n${result.finding}\n\nCanonical files: ~/Claude/Projects/triplex-db-2/evidence/DX-T1/${result.tag}/.\nCompressed raw traces: ${result.rawBytes} bytes, under trace/raw; hashes in trace/SHA256SUMS.\nLarge viewers remain in the durable store and the local worktree copy; only this index, report and SHA256SUMS are committed.\n`;
 for (const destination of [run, ...(copy ? [copy] : [])]) {
   fs.writeFileSync(path.join(destination, "SHA256SUMS"), reportHashes);
@@ -168,7 +169,6 @@ console.log(
 if (!result.complete && !("disabled" in result && result.disabled)) process.exitCode = 1;
 
 if (!renderOnly && result.tag.startsWith("tx2-dxt1-")) {
-  const archive = await packOracle(run);
   if (archive.files && copy) {
     // [DX-T1-2] Why: a completed archive copy must name its fresh verified journal. Rejected: treating a missing receipt as success.
     const journal = archive.journal;

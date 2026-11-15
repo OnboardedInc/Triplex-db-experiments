@@ -20,6 +20,12 @@ export function stressRuntime({ manifest, traceStartAbsMs, containers, driver, p
         (role === "driver" ? c.State.Status !== "created" : !c.State.Running || !Number.isFinite(Date.parse(c.State.StartedAt)) || Date.parse(c.State.StartedAt) < manifest.startedAt || Date.parse(c.State.StartedAt) > traceStartAbsMs))
       throw Error("Stress baseline foreign/stale runtime readback");
     const h = c.HostConfig;
+    if (!/^sha256:[a-f0-9]{64}$/.test(c.Image ?? "") ||
+        !["Memory", "MemorySwap", "MemoryReservation", "CpuShares", "NanoCpus", "CpuPeriod"].every(k => Number.isSafeInteger(h[k]) && h[k] >= 0) ||
+        h.Memory === 0 || h.MemorySwap < h.Memory || !Number.isSafeInteger(h.CpuQuota) || h.CpuQuota < -1 ||
+        typeof h.CpusetCpus !== "string" || !/^\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*$/.test(h.CpusetCpus) ||
+        typeof h.CpusetMems !== "string" || !Array.isArray(c.Config.Env) || c.Config.Env.some(e => typeof e !== "string" || !e.includes("=")))
+      throw Error("Stress baseline runtime content missing or invalid");
     return { role, image: c.Image,
       limits: Object.fromEntries(["Memory", "MemorySwap", "MemoryReservation", "CpuShares", "NanoCpus", "CpuPeriod", "CpuQuota", "CpusetCpus", "CpusetMems"].map((k) => [k, h[k]])),
       env: c.Config.Env.map(normalize).sort() };

@@ -825,3 +825,56 @@ describe("lossless completed-oracle archives", () => {
     expect(readFileSync(file, "utf8")).toBe("exact payload".repeat(100));
   });
 });
+
+describe("committed raw evidence checksums", () => {
+  it("seals observed bytes and refuses a substituted raw file", async () => {
+    const { verifiedRawManifest } = await import("../../../lab/trace/pack-oracle.mjs");
+    const { createHash } = await import("node:crypto");
+    const dir = mkdtempSync(path.join(tmpdir(), "tx2-dxt1-raw-sums-")); directories.push(dir);
+    mkdirSync(path.join(dir, "trace/raw"), { recursive: true });
+    writeFileSync(path.join(dir, "trace/raw/record.gz"), "recorded bytes");
+    const hash = createHash("sha256").update("recorded bytes").digest("hex");
+    writeFileSync(path.join(dir, "trace/SHA256SUMS"), hash + "  record.gz\n");
+    expect(await verifiedRawManifest(dir)).toContain(hash + "  trace/raw/record.gz\n");
+    writeFileSync(path.join(dir, "trace/raw/unlisted.gz"), "unlisted");
+    await expect(verifiedRawManifest(dir)).rejects.toThrow(/checksum/);
+    rmSync(path.join(dir, "trace/raw/unlisted.gz"));
+    writeFileSync(path.join(dir, "trace/raw/record.gz"), "substituted");
+    await expect(verifiedRawManifest(dir)).rejects.toThrow(/checksum/);
+  });
+  it("seals decoded oracle archive content and rejects a foreign archive journal", async () => {
+    const { packOracle, verifiedRawManifest } = await import("../../../lab/trace/pack-oracle.mjs");
+    const dir = mkdtempSync(path.join(tmpdir(), "tx2-dxt1-raw-oracle-")); directories.push(dir);
+    mkdirSync(path.join(dir, "trace/raw"), { recursive: true }); mkdirSync(path.join(dir, "driver"));
+    const source = "1".repeat(40), tag = path.basename(dir);
+    writeFileSync(path.join(dir, "head.txt"), source);
+    writeFileSync(path.join(dir, "trace-run.json"), JSON.stringify({ tag, slot: tag, source, startedAt: 0 }));
+    writeFileSync(path.join(dir, "trace/SHA256SUMS"), "");
+    writeFileSync(path.join(dir, "driver/ns-report.json"), JSON.stringify({ status: "DONE" }));
+    writeFileSync(path.join(dir, "driver/oracle-case.json"), "exact bytes");
+    await packOracle(dir, { minBytes: 1 });
+    expect(await verifiedRawManifest(dir)).toContain("  driver/oracle-case.json.gz\n");
+    const journal = path.join(dir, "ORACLE-ARCHIVE.jsonl");
+    const original = readFileSync(journal, "utf8");
+    writeFileSync(journal, original.replaceAll(source, "2".repeat(40)));
+    await expect(verifiedRawManifest(dir)).rejects.toThrow(/binding/);
+    const records = original.trim().split("\n").map(l => JSON.parse(l)); delete records[0].startedAt;
+    writeFileSync(journal, records.map(r => JSON.stringify(r)).join("\n") + "\n");
+    await expect(verifiedRawManifest(dir)).rejects.toThrow(/clock/);
+  });
+  it("refuses duplicate, escaping and symlink raw paths", async () => {
+    const { verifiedRawManifest } = await import("../../../lab/trace/pack-oracle.mjs");
+    const { createHash } = await import("node:crypto");
+    const dir = mkdtempSync(path.join(tmpdir(), "tx2-dxt1-raw-paths-")); directories.push(dir);
+    mkdirSync(path.join(dir, "trace/raw"), { recursive: true });
+    writeFileSync(path.join(dir, "trace/raw/record.gz"), "bytes");
+    const hash = createHash("sha256").update("bytes").digest("hex");
+    for (const names of [["record.gz", "record.gz"], ["../record.gz"], ["/record.gz"]]) {
+      writeFileSync(path.join(dir, "trace/SHA256SUMS"), names.map(n => hash + "  " + n).join("\n") + "\n");
+      await expect(verifiedRawManifest(dir)).rejects.toThrow(/checksum/);
+    }
+    symlinkSync("record.gz", path.join(dir, "trace/raw/link.gz"));
+    writeFileSync(path.join(dir, "trace/SHA256SUMS"), hash + "  link.gz\n");
+    await expect(verifiedRawManifest(dir)).rejects.toThrow(/checksum/);
+  });
+});

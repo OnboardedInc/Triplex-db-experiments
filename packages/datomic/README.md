@@ -204,3 +204,11 @@ reads do not require strict mode for local eligibility.
 `ClockConflict` remains only for the explicit client-ordered compatibility path.
 A writer preserving backdated record times must use a non-strict scope. Assignment
 does not migrate the scope's layout or erase either temporal dimension.
+
+The lab's `TX2_SLIM_ROWS=1` gateway switch creates new lean scopes with experimental
+physical rows version 4. It compresses only the row's JSON suffix after server
+clock assignment; indexed prefixes and public row values remain unchanged. Read,
+feed, receipt and replica routes expand it before returning data. Existing scopes
+keep their physical version when reopened, and ordinary lean creation remains
+version 3. The prototype requires fresh seeds and separate performance/exactness
+qualification; no migration or 100,000-subject qualification is provided.

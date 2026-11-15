@@ -26,6 +26,12 @@ PY_ORACLE
 fi
 [[ -f $DX_ORACLE_ROOT/lab/oracles/replay/cli.py ]] || { echo 'Missing frozen oracle executable source' >&2; exit 2; }
 export TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-summary}
+# [DX-T1-8] Why: CPU/swap are required context even for off controls; fail before starting a stack if sandbox access is absent.
+# Rejected: spending a long native preflight with silently null host counters and discovering it at finalization.
+if [[ $(uname -s) == Darwin ]]; then
+  /bin/ps -A -o pcpu=,comm= >/dev/null
+  /usr/sbin/sysctl vm.swapusage >/dev/null
+fi
 # [DX-T1-6] Why: full diagnostics retain quiet logging and native binary counters with the single level switch.
 # Rejected: requiring synchronous native file logging or a second collector variable for a normal full run.
 if [[ $TRIPLEX_TRACE_LEVEL == full && -z ${TRIPLEX_TRACE_COMPONENTS+x} ]]; then
