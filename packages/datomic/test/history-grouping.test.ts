@@ -33,7 +33,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("native history groupin
     for (const group of [4, 500]) {
       const scope = `dxt1-history-${attempt}-${group}`,
         comp = await openComposition("reach", "datomic", scope),
-        client = new DatomicClient(process.env.DATOMIC_URL!);
+        client = new DatomicClient(process.env.DATOMIC_URL!, 601000);
       let host: InstanceType<typeof ReplicaReadHost> | undefined;
       try {
         const seed = await seedRung({
@@ -160,7 +160,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("native history groupin
             () => performance.timeOrigin + performance.now(),
             60000,
           );
-          expect(indexJob.completed).toBe(true);
+          expect(indexJob.completed, JSON.stringify(indexJob)).toBe(true);
           await reader.wait(head.position, 30000);
           const basis = { recordedAt: head.instant, recordedPosition: head.position, validAt },
             semantic: string[] = [],

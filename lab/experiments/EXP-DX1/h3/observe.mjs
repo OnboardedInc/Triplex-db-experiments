@@ -12,10 +12,14 @@ const debug=process.env.TRIPLEX_TRACE_DEBUG==='1'?['--inspect=0.0.0.0:8508']:[];
 const profile=process.env.TRIPLEX_TRACE_CPU_PROFILE==='1'?['--cpu-prof','--cpu-prof-dir=/driver/trace/raw','--cpu-prof-interval=1000']:[];
 // [DX-T1-5] Why: native package and differential gates share the owned smoke lease before its timed workload.
 // Rejected: a second ad hoc Docker lifecycle, or inferring exactness from mocked clock tests.
-if (['1','clock'].includes(process.env.DX_NATIVE_GATES ?? '')) {
+if (['1','clock','history'].includes(process.env.DX_NATIVE_GATES ?? '')) {
+  // [DX-T1-12] Why: a retained first failure can rerun its corrected fixture plus the differential without repeating unrelated passed stress tests.
+  // Rejected: erase the first failure, relax index completion, or claim the skipped suites reran.
+  const packageTests = process.env.DX_NATIVE_GATES === 'history' ? ['packages/datomic/test/history-grouping.test.ts'] : [
+    ...(process.env.DX_NATIVE_GATES === '1' ? ['packages/datomic/test/layout-differential.test.ts','packages/datomic/test/concurrent-commits.test.ts','packages/datomic/test/history-grouping.test.ts'] : []),'packages/datomic/test/clock-order.test.ts'];
   const gates = [
     ['node_modules/.bin/vitest','run','--config','lab/experiments/EXP-DX1/b5/vitest.config.ts','--bail','1','--testTimeout','900000',
-      ...(process.env.DX_NATIVE_GATES === '1' ? ['packages/datomic/test/layout-differential.test.ts','packages/datomic/test/concurrent-commits.test.ts','packages/datomic/test/history-grouping.test.ts'] : []),'packages/datomic/test/clock-order.test.ts'],
+      ...packageTests],
     ['node','--experimental-strip-types','lab/experiments/EXP-DX1/r3/differential.ts'],
   ];
   for (const command of gates) {
