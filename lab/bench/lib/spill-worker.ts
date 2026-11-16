@@ -5,13 +5,18 @@ import { BatchSequence } from "./reader-lifecycle.ts";
 import { ReadRecords } from "./read-records.ts";
 import { R, type ReadRecord } from "./observe.ts";
 import { Histogram } from "./hist.ts";
-const records = new ReadRecords(cfg.directory);
+import { SpillBudget } from "./spill-budget.ts";
+const budget = cfg.maxBytes === undefined ? undefined : new SpillBudget(cfg.maxBytes);
+const records = new ReadRecords(cfg.directory, false, budget);
 const starts = new Map<number, number>();
 const phases = new Map<number, { reads: number; errors: number; settled: number; read: Histogram; wait: Histogram; routes: Record<string, number> }>();
 function retain(rows: ReadRecord[], samples: any[] = [], splits: any[] = []) {
   // [DX-R3] Why: persist each actual split's step timestamps before acknowledging its observation batch.
   // Rejected: inferring straddles from the target-selection policy or ACK counts alone.
-  if (splits.length) fs.appendFileSync(`${cfg.directory}-split-steps.jsonl`, splits.map(x => JSON.stringify(x) + "\n").join(""));
+  if (splits.length) {
+    const file = `${cfg.directory}-split-steps.jsonl`, bytes = splits.map(x => JSON.stringify(x) + "\n").join("");
+    if (budget) budget.append(file, bytes); else fs.appendFileSync(file, bytes);
+  }
   const changed = new Set<number>();
   for (const row of rows) {
     records.push(row);
@@ -23,7 +28,9 @@ function retain(rows: ReadRecord[], samples: any[] = [], splits: any[] = []) {
     summary.wait.recordMs(row[R.waitedMs]);
     summary.routes[row[R.route]] = (summary.routes[row[R.route]] ?? 0) + 1;
   }
-  port!.postMessage({ type: "progress", count: records.length, samples, phases: Object.fromEntries([...changed].map(phase => {
+  port!.postMessage({ type: "progress", count: records.length, samples,
+    diskBudget: budget && { bytes: budget.bytes, peakBytes: budget.peakBytes, maxBytes: budget.maxBytes, includes: "numeric tuples, strings, checkpoint, split steps and atomic-write scratch; excludes traces and replica apply log" },
+    phases: Object.fromEntries([...changed].map(phase => {
     const s = phases.get(phase)!;
     return [phase, { reads: s.reads, errors: s.errors, settled: s.settled, read: s.read.toJSON(), watermarkWait: s.wait.toJSON(), routes: s.routes,
       verification: "PENDING final all-ACK model comparison; observed arrivals include settle and may omit in-flight reads" }];

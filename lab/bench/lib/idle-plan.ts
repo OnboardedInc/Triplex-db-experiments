@@ -7,9 +7,9 @@ export interface IdleEvent extends TraceEvent {
   readonly idleGapMs: number;
   readonly idleWarmup: boolean;
 }
-export function idlePlan(gaps: readonly number[], count: number, subjects: number) {
+export function idlePlan(gaps: readonly number[], count: number, subjects: number, warmupCommits = 200) {
   if (
-    !gaps.length ||
+    !Number.isSafeInteger(warmupCommits) || warmupCommits<0 || warmupCommits>5000 || !gaps.length ||
     gaps.some((g) => !Number.isSafeInteger(g) || g < 10 || g > 1000) ||
     new Set(gaps).size !== gaps.length ||
     !Number.isSafeInteger(count) ||
@@ -24,7 +24,7 @@ export function idlePlan(gaps: readonly number[], count: number, subjects: numbe
   let offset = 0,
     seq = 0;
   for (const stage of [
-    { gap: 25, count: 200, warmup: true },
+    { gap: 25, count: warmupCommits, warmup: true },
     ...gaps.map((gap) => ({ gap, count, warmup: false })),
   ]) {
     const seconds = (stage.gap * stage.count + 1000) / 1000;

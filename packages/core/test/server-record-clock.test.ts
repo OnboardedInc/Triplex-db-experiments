@@ -46,7 +46,11 @@ it("settles top-level and escaped nested receipts without retiming validity", as
     valueDomain: ValueDomains.memory,
     initialize: () => Effect.void,
     transactionInstant: () => Effect.succeed(100),
-    committedInstant: (id: string) => times.get(id),
+    committedInstant: (id: string) => {
+      const t = times.get(id);
+      times.delete(id);
+      return t;
+    },
     committedPosition: (id: string) => positions.get(id),
     withTransaction: <A, E>(effect: Effect.Effect<A, E>) =>
       Effect.gen(function* () {
@@ -94,6 +98,9 @@ it("settles top-level and escaped nested receipts without retiming validity", as
     expect(result.instant).toBe(200);
     expect(result.position).toBe(101);
     expect(result.triples.map((t) => t.recordedAt)).toEqual([200, 200]);
+    expect(result.triples.map((t) => t.recordedAt)).toEqual([200, 200]);
+    expect(result.instant).toBe(200);
+    expect(times.has(result.txId)).toBe(false);
     expect(result.triples.map((t) => t.validFrom)).toEqual([7, 100]);
     let escaped: any;
     await runtime.runPromise(

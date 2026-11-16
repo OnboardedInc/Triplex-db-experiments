@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { R, type ReadRecord } from "./observe.ts";
+import type { SpillBudget } from "./spill-budget.ts";
 
 export interface ObservationRecords extends Iterable<ReadRecord> {
   readonly length: number;
@@ -25,10 +26,13 @@ export class ReadRecords implements ObservationRecords {
   private loaded: { chunk: number; data: Float64Array; strings: (string | null)[] } | undefined;
   private flushedStrings = 0;
   private phases = new Map<number, Set<number>>();
+  private readonly budget: SpillBudget | undefined;
   readonly directory: string | undefined;
   // [DX-R3] Why: full ladders retain tens of millions of exact observations until all late ACKs settle.
   // Rejected: sampling, online final judgments, or keeping the whole numeric log in client memory.
-  constructor(directory?: string, resume = false) {
+  constructor(directory?: string, resume = false, budget?: SpillBudget) {
+    if (resume && budget) throw Error("A resumed observation log is read-only for budget accounting");
+    this.budget = budget;
     this.directory = directory;
     if (!directory) return;
     if (!resume) fs.mkdirSync(directory);
@@ -72,6 +76,7 @@ export class ReadRecords implements ObservationRecords {
       [`${this.activeChunk}.json`, JSON.stringify(this.strings)],
     ] as const) {
       const file = path.join(this.directory, name);
+      if (this.budget) { this.budget.replace(file, bytes); continue; }
       fs.writeFileSync(file + ".tmp", bytes);
       fs.renameSync(file + ".tmp", file);
     }
@@ -80,7 +85,9 @@ export class ReadRecords implements ObservationRecords {
     if (!this.directory) return;
     this.flushChunk();
     const state = path.join(this.directory, "state.json");
-    fs.writeFileSync(state + ".tmp", JSON.stringify({ width: WIDTH, count: this.count, flushedStrings: this.flushedStrings, phases: [...this.phases].map(([phase, chunks]) => [phase, [...chunks]]) }));
+    const bytes = JSON.stringify({ width: WIDTH, count: this.count, flushedStrings: this.flushedStrings, phases: [...this.phases].map(([phase, chunks]) => [phase, [...chunks]]) });
+    if (this.budget) { this.budget.replace(state, bytes); return; }
+    fs.writeFileSync(state + ".tmp", bytes);
     fs.renameSync(state + ".tmp", state);
   }
   dispose() {

@@ -10,6 +10,21 @@ export const clockId = (clock: VerdictClock) => clock === "ack" ? VERDICT_CLOCK 
 export const clockMs = (row: any, clock: VerdictClock) => clock === "ack" ? verdictMs(row) : row.latencyMs;
 export const primaryRows = (rows: readonly any[]) => rows.filter(w => w.stream === "background" && !w.resend);
 export const committedRows = (rows: readonly any[]) => primaryRows(rows).filter(w => w.outcome === "committed" && !w.expired);
+export function refreshVerdictEligibility(report: any) {
+  if(!report.verdict) return;
+  const reasons:string[]=[];
+  if(report.verdictClock!==VERDICT_CLOCK || report.verdict.clock!==VERDICT_CLOCK || report.verdictPlanId!==V3_PLAN_ID) reasons.push("wrong verdict clock or plan identity");
+  if(report.status!=="DONE") reasons.push("run not finalized DONE");
+  if(report.config.profile!=="v3" || report.config.zeroReaders) reasons.push("not a full v3 reader arm");
+  if(report.config.devOverrides?.length) reasons.push("development override");
+  if(report.invalidReasons?.length || report.client?.invalid) reasons.push("invalid or saturated run");
+  if(report.oracle?.status!=="PASS" || report.oracle?.exitCode!==0 || report.oracle?.mismatchCount!==0 ||
+    !report.oracle.reads || report.oracle.modelCorrectOnSameReads!==report.oracle.reads ||
+    report.oracle.oracleVerdict!=="PASS" || report.oracle.receiptConsistency?.status!=="PASS") reasons.push("independent oracle not exact");
+  if(!report.correctness?.reads || report.correctness.errors!==0 || report.correctness.violations!==0 || report.correctness.correct!==report.correctness.reads) reasons.push("model observations incomplete or incorrect");
+  report.verdict.runQualification={eligible:reasons.length===0,reasons,note:"Observed run qualification only; source/slot/oracle gate remains independent"};
+  report.verdict.allMet=report.verdict.barsOnlyAllMet && reasons.length===0;
+}
 export function reportWindows(report: any) {
   if (report.verdictPlanId === V3_PLAN_ID || report.config.profile === "v3") return scheduledV3Windows();
   const interval = (name: string) => {
@@ -154,8 +169,11 @@ export function applyCommitVerdicts(report: any, writes: readonly any[], baselin
         const xs = good.filter(w => w.offsetMs >= p.start - report.traceStartAbsMs + report.config.settleS * 1000 && w.offsetMs < p.end - report.traceStartAbsMs);
         const d = distribution(values(xs), id), point = percentile(d, 0.99), pooled = find("P1", `NS-P1-WRITER-P99-RATIO-${p.pool.slice(1)}`);
         const pooledCommit = priorities.P1.ladder.find((x: any) => x.phase === p.pool)?.writer?.commit;
+        const pool = poolRows(good, windows[p.pool as "L256"|"L1024"],true);
+        const poolInterval=bootstrap90(distribution(values(pool),id),.99,`${p.pool}-pooled-p99`);
         return { phase: p.name, cycle: p.cycle, n: xs.length, p50Ms: percentile(d, 0.5), p99Ms: point,
           interval90: bootstrap90(d, 0.99, p.name), pooledP99Ms: pooledCommit?.p99Ms,
+          pooledInterval90:poolInterval,outsidePooledInterval:point!==null&&poolInterval!==null&&(point<poolInterval.low||point>poolInterval.high),
           pooledRatioInterval90: pooled?.interval90, diagnosticOnly: true };
       }) };
   }
@@ -166,6 +184,7 @@ export function applyCommitVerdicts(report: any, writes: readonly any[], baselin
   }
   report.verdict = { schema: "ns-verdict/3", minimumCommits: minimum, clock: id,
     prioritiesMet: Object.fromEntries(Object.entries(priorities).map(([k, p]: [string, any]) => [k, requiredBarsMet(p.bars ?? [])])),
-    allMet: requiredBarsMet(Object.values(priorities).flatMap((p: any) => p.bars ?? [])),
+    barsOnlyAllMet: requiredBarsMet(Object.values(priorities).flatMap((p: any) => p.bars ?? [])),
     note: "UNJUDGED/null counts as not met; DONE is not semantic acceptance; ratio interval qualification never replaces the point estimate" };
+  refreshVerdictEligibility(report);
 }

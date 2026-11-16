@@ -50,6 +50,7 @@ elif [[ $kind == fallback-floor ]]; then arms=(baseline fallback-worker fallback
 elif [[ $kind == history-256 ]]; then arms=(baseline history-192 history-192 baseline)
 elif [[ $kind == seed-floor ]]; then arms=(baseline seed-2000 seed-2000 baseline)
 elif [[ $kind == writer-256 ]]; then arms=(baseline writer-core writer-core baseline)
+elif [[ $kind =~ ^perfact-(pack|row|batch|body|all)-(floor|256)$ ]]; then arms=(baseline candidate candidate baseline)
 elif [[ $kind =~ ^(quiet|channel|isolated|index|cache|revision|cores|basis|model|shared|young|oldheap)-(floor|256)$ ]]; then
   [[ ${DX_NATIVE_REPEATS:-2} =~ ^[12]$ ]] || exit 2
   arms=(baseline candidate candidate baseline)
@@ -115,6 +116,15 @@ for arm in "${arms[@]}"; do
     if [[ $arm == engine-isolated ]]; then placement=(DX_CPUS_TX=0,1 DX_CPUS_PG=2 DX_CPUS_GW_WRITE=3 DX_CPUS_GW_READ=2,3 DX_CPUS_DRIVER=4,5,6,7 DX_MAIN_CPU= DX_WORKER_CPUS=);fi
   fi
   workload=();duration=200;level_s=20;reader_args=(--zero-readers --max-readers 0)
+  if [[ $kind =~ ^perfact-(pack|row|batch|body|all)-(floor|256)$ ]]; then
+    # [DX-T1-12] Why: one candidate at a time, same source, summary traces and baseline/candidate/candidate/baseline in one lease.
+    # Rejected: promote microbenchmark timings or compare a 256-reader arm with a historical zero-reader control.
+    component=${BASH_REMATCH[1]}; level=summary;components=default
+    [[ $component != all ]] || component=pack,row,batch,body
+    placement=(TRIPLEX_DATOMIC_FAST_PATHS=)
+    [[ $arm != candidate ]] || placement=(TRIPLEX_DATOMIC_FAST_PATHS=$component)
+    if [[ $kind == *-256 ]]; then duration=300;level_s=45;reader_args=(--max-readers 256);fi
+  fi
   if [[ $kind == fallback-floor ]]; then
     # [DX-T1-4] Why: sampled writer stacks identify full-world fallback decoding/checking on this thread.
     # Rejected: change CPU placement or expected-state representation in the same comparison.

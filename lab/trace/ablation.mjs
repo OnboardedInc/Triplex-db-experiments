@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { records, percentile, filesUnder } from "./report.mjs";
 import { configuration } from "./components.mjs";
+import { verdictMs,VERDICT_CLOCK } from "./instrument.mjs";
 import { validateStressBaseline, stressRuntime, validateStressRuntime } from "./stress-baseline.mjs";
 import { validateBasisBroadcast } from "../bench/lib/basis-window.ts";
 import { bookendComparison, observedRunEnd, validateDeferredOrder } from "./anatomy.mjs";
@@ -15,8 +16,9 @@ import {
 } from "./native-settings.mjs";
 const [base, prefix, kind] = process.argv.slice(2);
 const nativeKind = /^(quiet|channel|isolated|index|cache|revision|cores|basis|model|shared|young|oldheap)-(floor|256)$/.exec(kind);
+const perFactKind=/^perfact-(pack|row|batch|body|all)-(floor|256)$/.exec(kind);
 const readerDiagnostic =
-  ["history-256", "writer-256", "record-clock-256"].includes(kind) || nativeKind?.[2] === "256";
+  ["history-256", "writer-256", "record-clock-256"].includes(kind) || nativeKind?.[2] === "256" || perFactKind?.[2] === "256";
 const summaryKind =
   [
     "record-clock-floor",
@@ -27,7 +29,7 @@ const summaryKind =
     "history-256",
     "seed-floor",
     "writer-256",
-  ].includes(kind) || !!nativeKind;
+  ].includes(kind) || !!nativeKind || !!perFactKind;
 if (
   ![
     "ablation",
@@ -43,7 +45,7 @@ if (
     "seed-floor",
     "writer-256",
   ].includes(kind) &&
-  !nativeKind
+  !nativeKind && !perFactKind
 )
   throw Error("Expected ablation or cost");
 const session = path.join(base, prefix + "-session"),
@@ -57,7 +59,7 @@ if (stressDiagnostic && !["basis-256", "model-256", "shared-256", "young-256", "
 if (nativeKind && (nativeRequest.kind !== kind || ![1, 2].includes(nativeRepeats)))
   throw Error("Invalid native comparison plan");
 const compare = nativeKind ? nativeBookendComparison : bookendComparison;
-const arms = nativeKind
+const arms = perFactKind ? ["baseline","candidate","candidate","baseline"] : nativeKind
   ? nativeRepeats === 1
     ? ["baseline", "candidate", "baseline"]
     : ["baseline", "candidate", "candidate", "baseline"]
@@ -212,7 +214,7 @@ for (const [i, arm] of arms.entries()) {
     driver = read(path.join(dir, "driver-container.json"))[0];
   // [DX-T1-6] Why: current-stack trials vary one declared knob, including when CPU placement changes JVM ergonomics.
   // Rejected: assuming equal tags/source prove equal image, heap, collector, Node options or durable storage policy.
-  if (nativeKind && ["cache", "revision", "cores", "basis", "model", "shared", "young", "oldheap"].includes(nativeKind[1])) {
+  if (perFactKind || (nativeKind && ["cache", "revision", "cores", "basis", "model", "shared", "young", "oldheap"].includes(nativeKind[1]))) {
     const runtime = JSON.stringify([driver, ...["pg", "tx", "gw-w", "gw-r"].map(role => containers.find(c => c.Name === `/${tag}-${role}`))].map(c => ({
       image: c.Image, memory: c.HostConfig.Memory, swap: c.HostConfig.MemorySwap,
       java: c.Config.Env.filter(v => /^(JAVA_OPTS|DATOMIC_JAVA_OPTS|NODE_OPTIONS)=/.test(v)).sort(),
@@ -381,6 +383,10 @@ for (const [i, arm] of arms.entries()) {
         return [s.slice(0, i), s.slice(i + 1)];
       }),
     );
+  if(perFactKind) {
+    const component=perFactKind[1]==="all"?"pack,row,batch,body":perFactKind[1];
+    if(bench.verdictClock!==VERDICT_CLOCK || envOf(driver).TRIPLEX_DATOMIC_FAST_PATHS!==(arm==="candidate"?component:"")) throw Error("Per-fact candidate clock/input readback differs");
+  }
   if (kind.startsWith("record-clock-")) {
     const enabled = arm === "server";
     if (
@@ -561,10 +567,11 @@ for (const [i, arm] of arms.entries()) {
         if (event.name === "driver.reader-basis.broadcast") broadcasts.push(event);
     validateBasisBroadcast(bench.readerBasisBroadcast, broadcasts, manifest, endedAt);
   }
-  // [DX-T1-4] Why: host context belongs to the measured requests; post-run oracle CPU is not latency interference.
-  // Rejected: reporting a whole-arm CPU median dominated by independent validation after the timed work.
+  const latency=w=>bench.verdictClock===VERDICT_CLOCK?verdictMs(w):w.latencyMs;
+  // [DX-T1-12] Why: the host has no precise monotonic bridge to the guest; whole-arm samples remain context only.
+  // Rejected: label an epoch-filtered Mac sample as interference during an exact guest phase.
   const hostContext = (start, end) => {
-    const observed = hostRows.filter((r) => r.at >= start && r.at <= end);
+    const observed = hostRows;
     const cpu = observed.map((r) => r.otherCpu).filter(Number.isFinite);
     const swap = observed
       .map((r) => /used\s*=\s*([\d.]+)M/.exec(r.swap ?? ""))
@@ -574,6 +581,7 @@ for (const [i, arm] of arms.entries()) {
     return {
       start,
       end,
+      phaseAttributionQualified:false,scope:"whole-arm host context, including post-run verification; not exact phase interference",
       samples: observed.length,
       swapGiB: { min: Math.min(...swap), median: percentile(swap, 0.5), max: Math.max(...swap) },
       macCpu: { median: percentile(cpu, 0.5), p99: percentile(cpu, 0.99), max: Math.max(...cpu) },
@@ -593,7 +601,9 @@ for (const [i, arm] of arms.entries()) {
     digest: bench.trace.digest,
     commands: writes.length,
     basisBroadcast: bench.readerBasisBroadcast ?? null,
-    over50: { count: writes.filter(w => w.latencyMs > 50).length, totalMs: writes.filter(w => w.latencyMs > 50).reduce((n,w) => n+w.latencyMs,0) },
+    verdictClock:bench.verdictClock ?? "finish/2",
+    finishP50Ms:percentile(writes.map(w=>w.latencyMs),.5),finishP99Ms:percentile(writes.map(w=>w.latencyMs),.99),
+    over50: { count: writes.filter(w => latency(w) > 50).length, totalMs: writes.filter(w => latency(w) > 50).reduce((n,w) => n+latency(w),0) },
     writerTailRatios: stressDiagnostic ? bench.priorities.P1.bars.filter(b => /WRITER-P99-RATIO/.test(b.id)) : null,
     writerCountersDelta: Object.fromEntries(
       [
@@ -612,11 +622,11 @@ for (const [i, arm] of arms.entries()) {
       ]),
     ),
     p50Ms: percentile(
-      writes.map((w) => w.latencyMs),
+      writes.map(latency),
       0.5,
     ),
     p99Ms: percentile(
-      writes.map((w) => w.latencyMs),
+      writes.map(latency),
       0.99,
     ),
     transactP50Ms: percentile(

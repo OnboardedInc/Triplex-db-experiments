@@ -6,9 +6,11 @@ import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
-import { encodeRowText } from "./rowText.js";
+import { encodeRowText, encodeRowTextFast } from "./rowText.js";
+import { enabledFastPaths, fastPathEnabled } from "./fastPaths.js";
+import { largeRequestBody, encodeLargeRequest } from "./requestEncoding.js";
 import http from "node:http";
-import { stringifyExact, validateTagged, type TaggedValue } from "./codec.js";
+import { stringifyExact, stringifyNativeExact, validateTagged, type TaggedValue } from "./codec.js";
 import {
   beginSpan,
   bindTraceCallback,
@@ -17,8 +19,10 @@ import {
   traceInterval,
   traceparent,
   traceSync,
+  traceAsync,
   tracedRequest,
   traceLevel,
+  traceResource,
 } from "./tracing.js";
 
 export class DatomicHttpError extends Error {
@@ -167,6 +171,33 @@ export class DatomicClient {
   private reachKeyDb: string | undefined;
   private readonly reachKeys = new Map<string, string>();
   private reachKeyBytes = 0;
+  private cacheTimer: ReturnType<typeof setInterval> | undefined;
+  cacheDiagnostics() {
+    const stats = (c: {
+      bytes: number;
+      peakBytes: number;
+      size: number;
+      evictions: number;
+      byteLimit: number;
+    }) => ({
+      bytes: c.bytes,
+      peakBytes: c.peakBytes,
+      entries: c.size,
+      evictions: c.evictions,
+      budgetBytes: c.byteLimit,
+    });
+    return {
+      fastPaths: enabledFastPaths(),
+      reach: stats(this.reachCache),
+      rows: stats(this.rowCache),
+      predecessors: stats(this.predecessorCache),
+      reachKeys: {
+        bytes: this.reachKeyBytes,
+        entries: this.reachKeys.size,
+        budgetBytes: 4 * 1024 ** 2,
+      },
+    };
+  }
   private reachKey(db: string, prefix: string, id: string): string {
     if (this.reachKeyDb !== db) {
       this.reachKeys.clear();
@@ -177,8 +208,8 @@ export class DatomicClient {
     if (found !== undefined) return found;
     const key = prefix + id;
     const bytes = 128 + 2 * (id.length + key.length);
-    if (bytes <= 32 * 1024 ** 2) {
-      if (this.reachKeyBytes + bytes > 32 * 1024 ** 2) {
+    if (bytes <= 4 * 1024 ** 2) {
+      if (this.reachKeyBytes + bytes > 4 * 1024 ** 2) {
         this.reachKeys.clear();
         this.reachKeyBytes = 0;
       }
@@ -200,7 +231,7 @@ export class DatomicClient {
     } = {},
   ) {
     this.reachCache = new ByteCache(
-      cacheOptions.entityCacheBytes ?? 128 * 1024 ** 2,
+      cacheOptions.entityCacheBytes ?? 16 * 1024 ** 2,
       (entity) => 256 + entity.storedRows.reduce((n, row) => n + 3 * estimateRowBytes(row), 0),
     );
     this.predecessorCache = new PredecessorCache(
@@ -209,7 +240,7 @@ export class DatomicClient {
     );
     this.rowCache = new RowCache(
       Number.MAX_SAFE_INTEGER,
-      cacheOptions.rowCacheBytes ?? 32 * 1024 ** 2,
+      cacheOptions.rowCacheBytes ?? 8 * 1024 ** 2,
     );
     if (
       !Number.isSafeInteger(timeoutMs) ||
@@ -222,9 +253,18 @@ export class DatomicClient {
     if (this.endpoint.protocol !== "http:" || this.endpoint.username || this.endpoint.password)
       throw new TypeError("Expected HTTP gateway URL without credentials");
     this.agent = new http.Agent({ keepAlive: true, maxSockets: 512, maxTotalSockets: 512 });
+    // [DX-T1-12] Why: report real cache occupancy and budgets off the request path, including every writer/reader isolate.
+    // Rejected: assume a configured budget is resident, or add a cache walk to every commit.
+    if (traceLevel !== "off")
+      this.cacheTimer = setInterval(
+        () =>
+          traceResource("client.caches", { client: this.reachSession, ...this.cacheDiagnostics() }),
+        1000,
+      ).unref();
   }
   readonly rowObservers = new Set<(db: string, row: TripleRow) => void>();
   close(): void {
+    if (this.cacheTimer) clearInterval(this.cacheTimer);
     this.reachKeys.clear();
     this.reachKeyBytes = 0;
     this.reachKeyDb = undefined;
@@ -287,10 +327,18 @@ export class DatomicClient {
         body = { ...body, basisT: this.lastCommit.t };
     }
     const serializeStart = performance.now();
-    const bytes = traceSync("client.encode", () =>
-      body === undefined ? undefined : Buffer.from(stringifyExact(body)),
-    );
+    const bytes = largeRequestBody(body)
+      ? await traceAsync("client.encode", () => encodeLargeRequest(body))
+      : traceSync("client.encode", () =>
+          body === undefined
+            ? undefined
+            : Buffer.from((fastPathEnabled("body") ? stringifyNativeExact : stringifyExact)(body)),
+        );
+    const byteLength = typeof bytes === "string" ? Buffer.byteLength(bytes) : (bytes?.length ?? 0);
     const serializeMicros = (performance.now() - serializeStart) * 1000;
+    const remainingMs = timeoutMs - (performance.now() - started);
+    if (remainingMs <= 0)
+      throw new DatomicTransportError("Gateway deadline exceeded during encoding");
     return new Promise<T>((resolve, reject) => {
       const trace = currentTrace();
       const exchange = beginSpan("client.http", "gateway-wait");
@@ -335,9 +383,7 @@ export class DatomicClient {
             (trace?.kind === "commit" || trace?.attributes["logicalKind"] === "commit")
               ? { "x-triplex-trace-kind": "commit" }
               : {}),
-            ...(bytes
-              ? { "Content-Type": "application/json", "Content-Length": bytes.length }
-              : {}),
+            ...(bytes ? { "Content-Type": "application/json", "Content-Length": byteLength } : {}),
           },
         },
         (res) => {
@@ -388,7 +434,7 @@ export class DatomicClient {
                       reusedSocket: req.reusedSocket,
                       gatewayTimeline: data["timeline"],
                       responseBytes: size,
-                      requestBytes: bytes?.length ?? 0,
+                      requestBytes: byteLength,
                       serializeMicros,
                       parseMicros: Number(res.headers["x-tx2-request-parse-micros"] ?? NaN),
                       gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
@@ -424,7 +470,7 @@ export class DatomicClient {
       if (observation) observation.httpCalls++;
       const timer = setTimeout(
         () => req.destroy(new Error("Gateway deadline exceeded")),
-        timeoutMs,
+        remainingMs,
       );
       req.on("close", () => clearTimeout(timer));
       req.on("error", (error) => {
@@ -804,6 +850,9 @@ export class DatomicClient {
     const { onSent: inputSent, ...wireInput } = input;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
+    const rowFast = fastPathEnabled("row"),
+      newIds = rowFast ? new Set(input.newIds) : null;
+    const isNew = (id: string) => (newIds ? newIds.has(id) : input.newIds.includes(id));
     const retirementColumns = [
       "id",
       "entity_id",
@@ -826,15 +875,22 @@ export class DatomicClient {
       ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
       rowTexts: Object.fromEntries(
         input.rows
-          .filter((r) => input.newIds.includes(r.id))
+          .filter((r) => isNew(r.id))
           .map((r) => [
             r.id,
-            encodeRowText({
-              ...r,
-              retracted_at: null,
-              retracted_position: null,
-              retract_tx_id: null,
-            }),
+            (rowFast ? encodeRowTextFast : encodeRowText)(
+              rowFast &&
+                r.retracted_at === null &&
+                r.retracted_position === null &&
+                r.retract_tx_id === null
+                ? r
+                : {
+                    ...r,
+                    retracted_at: null,
+                    retracted_position: null,
+                    retract_tx_id: null,
+                  },
+            ),
           ]),
       ),
     };
@@ -872,7 +928,7 @@ export class DatomicClient {
         const assigned = response.recordedAt && validateTagged(response.recordedAt);
         const submitted = [
           ...input.rows.flatMap((row) => [
-            ...(input.newIds.includes(row.id) ? [row.recorded_at] : []),
+            ...(isNew(row.id) ? [row.recorded_at] : []),
             ...(row.retracted_at === null ? [] : [row.retracted_at]),
           ]),
           ...input.claims.map((claim) => claim.timestamp),

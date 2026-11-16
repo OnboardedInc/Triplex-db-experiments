@@ -504,14 +504,19 @@ const makeTriplesServices = Effect.gen(function* () {
       Effect.map((result) => {
         if (!adapter.committedPosition && !adapter.committedInstant) return result;
         let position = adapter.committedPosition?.(result.txId) ?? result.position;
-        let instant = adapter.committedInstant?.(result.txId) ?? result.instant;
+        // [DX-T1-12] Why: a backend may consume its assigned clock once; all escaped receipt/triple getters share that final value.
+        // Rejected: delete the adapter's entry while each triple independently re-reads it, or cache undefined before an outer commit.
+        let assigned: number | undefined;
+        const assignedInstant = () =>
+          assigned ?? (assigned = adapter.committedInstant?.(result.txId));
+        let instant = assignedInstant() ?? result.instant;
         // [DX-T1-5] Why: nested receipts/assertions escape staging before the outer physical commit assigns its clock.
         // Rejected: copying provisional record times permanently, or shifting explicit/default valid-time values.
         const triples = adapter.committedInstant
           ? result.triples.map((triple) => ({
               ...triple,
               get recordedAt() {
-                return adapter.committedInstant?.(result.txId) ?? triple.recordedAt;
+                return assignedInstant() ?? triple.recordedAt;
               },
             }))
           : result.triples;
@@ -523,7 +528,7 @@ const makeTriplesServices = Effect.gen(function* () {
             return position;
           },
           get instant() {
-            instant = adapter.committedInstant?.(result.txId) ?? instant;
+            instant = assignedInstant() ?? instant;
             return instant;
           },
         };

@@ -28,7 +28,7 @@ export class PredecessorCache {
   private nextScope = 0;
   namespaceBytes = 0;
   constructor(
-    readonly byteLimit = 256 * 1024 ** 2,
+    readonly byteLimit = 32 * 1024 ** 2,
     attributes?: readonly string[],
   ) {
     this.entries = new ByteCache<Buffer>(byteLimit, (value) => 64 + value.buffer.byteLength);

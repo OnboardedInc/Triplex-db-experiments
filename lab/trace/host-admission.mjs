@@ -60,7 +60,8 @@ export async function collectHostGate(count=60) {
   const context={diskFreeBytes:Number(fs.statfsSync(process.cwd()).bavail)*Number(fs.statfsSync(process.cwd()).bsize)};
   try {
     context.acPower=/AC Power/.test(native("/usr/bin/pmset",["-g","batt"]));
-    context.lowPowerOff=/lowpowermode\s+0/.test(native("/usr/bin/pmset",["-g","custom"]));
+    const power=native("/usr/bin/pmset",["-g","custom"]), ac=power.split(/AC Power:/)[1]?.split(/\n\S[^\n]*:/)[0];
+    context.lowPowerOff=typeof ac==="string" && /lowpowermode\s+0\b/.test(ac);
     const thermal=native("/usr/bin/pmset",["-g","therm"]);
     context.thermalNormal=thermal.split("\n").filter(l=>!/\bNo .*warning/i.test(l)).every(l=>!/(thermal|performance).*warning/i.test(l)) &&
       [...thermal.matchAll(/CPU_(?:Speed|Scheduler)_Limit\s*=\s*(\d+)/g)].every(m=>Number(m[1])===100);

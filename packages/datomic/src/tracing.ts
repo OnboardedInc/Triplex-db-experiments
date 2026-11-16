@@ -128,6 +128,10 @@ function configureThreadPlacement(): void {
     throw new Error("Thread placement requires Linux and both CPU lists");
   const mainSet = parseTraceCpuSet(main),
     workerSet = parseTraceCpuSet(workers);
+  const helpers = process.env["TRIPLEX_NODE_BACKGROUND_CPUS"] || workers;
+  const helperSet = parseTraceCpuSet(helpers);
+  if (helperSet.some((c) => !mainSet.includes(c) && !workerSet.includes(c)))
+    throw Error("Background CPUs must stay inside the reserved writer/worker allocation");
   if (mainSet.some((c) => workerSet.includes(c)))
     throw new Error("Writer and worker CPU sets must be disjoint");
   const tid = Number(readlinkSync("/proc/thread-self").split("/").at(-1));
@@ -141,7 +145,9 @@ function configureThreadPlacement(): void {
   };
   if (threadId === 0)
     for (const child of readdirSync("/proc/self/task"))
-      if (Number(child) !== tid) pin(Number(child), workers);
+      // [DX-T1-12] Why: an explicit diagnostic may let V8/libuv helpers use the writer core while reader isolates remain separate.
+      // Rejected: overlap reader threads with the writer, or promote this placement without a loaded comparison.
+      if (Number(child) !== tid) pin(Number(child), helpers);
   pin(tid, threadId === 0 ? main : workers);
   const allowed = (readFileSync(`/proc/self/task/${tid}/status`, "utf8").match(
     /^Cpus_allowed_list:\s*(.+)$/m,
@@ -169,6 +175,7 @@ function configureThreadPlacement(): void {
       tid,
       main,
       workers,
+      helperCpus: helpers,
       allowed,
       background,
     }) + "\n",

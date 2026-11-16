@@ -1,4 +1,5 @@
 import spec from "./codec-spec.json";
+import { isProxy } from "node:util/types";
 // [EXP-DA00] Why: preserve exact integer text and decimal scale across JSON. Rejected: Number for longs (rounds above 2^53).
 export type TextTag =
   | "long"
@@ -86,5 +87,45 @@ export function stringifyExact(value: unknown): string {
       .join(",")}}`;
   return invalid("Unsupported JSON value");
 }
+// [DX-T1-12] Why: native JSON is byte-identical on finite plain data without signed zero; keep the exact path for all other inputs.
+// Rejected: JSON.stringify without a scan (loses -0, invokes toJSON, drops unsupported fields), or scanning by invoking getters twice.
+export function isPlainJsonData(value: unknown, negativeZero = false): boolean {
+  const pending: unknown[] = [value],
+    seen = new Set<object>();
+  while (pending.length) {
+    const x = pending.pop();
+    if (x === null || typeof x === "string" || typeof x === "boolean") continue;
+    if (typeof x === "number") {
+      if (!Number.isFinite(x) || (!negativeZero && Object.is(x, -0))) return false;
+      continue;
+    }
+    if (typeof x !== "object" || isProxy(x) || seen.has(x) || "toJSON" in x) return false;
+    seen.add(x);
+    if (Array.isArray(x)) {
+      if (
+        Object.keys(x).some(
+          (k) => !/^\d+$/.test(k) || String(Number(k)) !== k || Number(k) >= x.length,
+        )
+      )
+        return false;
+      for (let i = 0; i < x.length; i++) {
+        const d = Object.getOwnPropertyDescriptor(x, String(i));
+        if (!d || !("value" in d)) return false;
+        pending.push(d.value);
+      }
+    } else {
+      if (Object.getPrototypeOf(x) !== Object.prototype && Object.getPrototypeOf(x) !== null)
+        return false;
+      for (const key of Object.keys(x)) {
+        const d = Object.getOwnPropertyDescriptor(x, key)!;
+        if (!("value" in d)) return false;
+        pending.push(d.value);
+      }
+    }
+  }
+  return true;
+}
+export const stringifyNativeExact = (value: unknown): string =>
+  isPlainJsonData(value) ? JSON.stringify(value) : stringifyExact(value);
 export const encodeTagged = (value: TaggedValue): string => stringifyExact(validateTagged(value));
 export const decodeTagged = (json: string): TaggedValue => validateTagged(JSON.parse(json));

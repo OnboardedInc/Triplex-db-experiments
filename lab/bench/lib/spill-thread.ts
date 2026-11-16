@@ -14,16 +14,18 @@ export class SpillThread {
   private delivered = 0;
   length = 0;
   progress: Record<string, any> = {};
+  diskBudget: Record<string, any> | undefined;
   onProgress: ((message: any) => void) | undefined;
   readonly directory: string;
-  constructor(directory: string) {
+  constructor(directory: string, maxBytes?: number) {
     this.directory = directory;
-    this.worker = new Worker(new URL("./spill-worker.ts", import.meta.url), { workerData: { directory } });
+    this.worker = new Worker(new URL("./spill-worker.ts", import.meta.url), { workerData: { directory, maxBytes } });
     this.worker.on("message", m => {
       if (m.type === "progress") {
         this.delivered = m.count;
         this.length = Math.max(this.length, m.count);
         Object.assign(this.progress, m.phases);
+        this.diskBudget = m.diskBudget;
         this.onProgress?.(m);
       }
       if (m.type === "reply") { const p = this.pending.get(m.id); this.pending.delete(m.id); if (m.error) p?.reject(Error(m.error)); else p?.resolve(); }

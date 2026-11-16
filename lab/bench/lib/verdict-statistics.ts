@@ -77,8 +77,10 @@ export function ratioBar(id: string, a: Distribution, b: Distribution, limit: nu
   const num = percentile(a, 0.99), den = percentile(b, 0.99), minimum = options.minimum ?? MIN_COMMITS;
   const value = num !== null && den !== null && den > 0 ? num / den : null;
   const invalid = options.invalid || (a.n < minimum || b.n < minimum ? `UNJUDGED (n<${minimum} on one or both sides)` : null);
+  // [DX-T1-12] Why: use the centre of an empirical rank so floating-point division/multiplication cannot select its neighbour.
+  // Rejected: pass rank/n back through ceil(p*n), which is one rank too high for some cohort sizes.
   const withoutMaximum = (d: Distribution): Distribution => ({ ...d, n: Math.max(0, d.n - 1),
-    quantile: p => d.n <= 1 ? null : d.quantile(Math.max(1, Math.ceil(p * (d.n - 1))) / d.n) });
+    quantile: p => d.n <= 1 ? null : d.quantile((Math.max(1, Math.ceil(p * (d.n - 1))) - 0.5) / d.n) });
   const leave = (x: Distribution, y: Distribution) => {
     const num = percentile(x, 0.99), den = percentile(y, 0.99), v = num !== null && den !== null && den > 0 ? num / den : null;
     return { value: v, pointPass: v !== null && v <= limit, judged: x.n >= minimum && y.n >= minimum && !options.invalid };

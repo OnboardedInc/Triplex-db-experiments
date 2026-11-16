@@ -14,7 +14,7 @@ import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency
 import { commitClocks, instrumentMetrics, verdictEnd, verdictMs, VERDICT_CLOCK } from "../trace/instrument.mjs";
 import { acknowledgeReceipt } from "./lib/acknowledgement.ts";
 import { pooledPhase } from "./lib/pooled-phases.ts";
-import { applyCommitVerdicts, matchBaseline } from "./lib/verdict.ts";
+import { applyCommitVerdicts, matchBaseline, refreshVerdictEligibility } from "./lib/verdict.ts";
 import { checkV3Trace, inIntervals, intervalMs, scheduledV3Windows, type Interval } from "./lib/verdict-plan.ts";
 import { V3_PLAN_ID, V3_OFFER_SECONDS } from "./lib/phases.ts";
 import { idlePlan, type IdleEvent } from "./lib/idle-plan.ts";
@@ -77,7 +77,7 @@ import { Rng, seedOf } from "./lib/rng.ts";
 import { OpenLoopScheduler, type JobResult } from "./lib/scheduler.ts";
 import { receiptOfRecord, seedRung, type RecordedCommand } from "./lib/seed.ts";
 import { TRACE_DEFAULTS, generateTrace, traceDigest, traceStats, type TraceEvent, type TraceParams } from "./lib/trace.ts";
-import { BUCKETS, HOP_SHARE, RUNGS, SEED_VALID_FROM, accountsFor, accountOfSubject, hopOf, ids, populationCounts, subjectInCell, worldFactsOf, type Bucket } from "./lib/world.ts";
+import { BUCKETS, HOP_SHARE, RUNGS, SEED_VALID_FROM, accountsFor, accountOfSubject, hopOf, ids, memberOf, populationCounts, subjectInCell, worldFactsOf, type Bucket } from "./lib/world.ts";
 import { REPO, runtimeApi } from "./lib/triplex.ts";
 import { pathToFileURL } from "node:url";
 const datomicMaintenanceJobs: any[] = [];
@@ -116,6 +116,7 @@ fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 if (opt("idle-gaps-ms")) devFlags.push("idle-diagnostic");
+if(Number(opt("writer-deadline-ms","30000"))!==30000) devFlags.push("writer-deadline-ms");
 const config = {
   lane,
   rung: devSubjects ? `dev:${rungSubjects}` : rung,
@@ -153,6 +154,7 @@ const config = {
   historyGrowthSubjects: Number(opt("history-growth-subjects", "4")),
   idleGapsMs: opt("idle-gaps-ms")?.split(",").map(Number) ?? null,
   idleCommits: Number(opt("idle-commits", "150")),
+  idleWarmupCommits: Number(opt("idle-warmup-commits","200")),
   idleKeep: opt("idle-keep", "none") as "none" | "http" | "refused",
   idleRefusalProofSha256: process.env.DX_IDLE_REFUSAL_PROOF_SHA256 ?? null,
   writerMaxInFlight: Number(opt("writer-max-inflight", "32")),
@@ -192,6 +194,7 @@ if (config.idleGapsMs && (lane !== "datomic" || !config.zeroReaders || !config.r
     !["none", "http", "refused"].includes(config.idleKeep))) throw Error("Idle diagnostics require isolated zero-reader, no overlay and no verdict baseline");
 if (config.idleKeep !== "none" || process.env.DX_IDLE_SENTINEL === "1" || process.env.DX_IDLE_REFUSAL_PROBE === "1")
   throw Error("Keep-warm requests and sentinels are forbidden (Sam 2026-11-16)");
+if(opt("idle-warmup-commits") && !config.idleGapsMs) throw Error("One-time warmup count is currently a fixed-gap diagnostic control, not an adopted v3 policy");
 if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
   throw Error("v3 requires its full fixed phase plan and unchanged offered rate");
 if (profile === "v3") config.matchDurationS = V3_OFFER_SECONDS;
@@ -336,7 +339,10 @@ const accounts = accountsFor(rungSubjects);
 let expectations = new ExpectationCache(model);
 const ryowFallbackReasons: Record<string, number> = {};
 const readerFinalDiagnostics: any[] = [];
-const spill = config.readPath === "replica" ? new SpillThread(path.join(rawDir, `observations-${runTag}`)) : undefined;
+const spillLimit = process.env.TRIPLEX_BENCH_SPILL_MAX_BYTES === undefined
+  ? (config.profile === "v3" ? 28 * 1024 ** 3 : undefined) : Number(process.env.TRIPLEX_BENCH_SPILL_MAX_BYTES);
+if (spillLimit !== undefined && (!Number.isSafeInteger(spillLimit) || spillLimit <= 0)) throw Error("Invalid observation spill byte limit");
+const spill = config.readPath === "replica" ? new SpillThread(path.join(rawDir, `observations-${runTag}`), spillLimit) : undefined;
 let records: ObservationRecords = [];
 function visitPhase(phase: number, fn: (record: ReadRecord, index: number) => void) {
   if (records instanceof ReadRecords) records.forPhase(phase, fn);
@@ -488,9 +494,10 @@ async function run() {
   // series under TARGETS 2.1 item 5; the plan hash and the parameters are bound in the report.
   const seriesParams: Partial<TraceParams> = pairPlan?.traceParams ?? {};
   const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
-  const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N) : null;
+  const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
   const traceDurationS = idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
   const events = idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
+  const resendSequences = new Set(events.filter(e=>e.resend).map(e=>e.seq));
   verdictEvents = events;
   if (profile === "v3") { report.verdictPlan = checkV3Trace(events); log(`v3 scheduled counts: ${JSON.stringify(report.verdictPlan.counts)}`); }
   report.trace = { params, durationS: traceDurationS, digest: traceDigest(events), generated: traceStats(events), generatorSha256: report.generator.traceSha256, seed: config.seed,
@@ -712,7 +719,9 @@ async function run() {
     }
     traceSync("driver.expected-state.bind-receipt", () => modelWriter.bindReceipt(cmd.operations, receipt!, ev.kind));
     traceSync("driver.expected-state.add-commit", () => modelWriter.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream }));
-    if (ev.stream === "background") original.set(ev.seq, { operations: cmd.operations, meta, receipt });
+    // [DX-T1-12] Why: only planned resends need original payload/receipt retention, and the frozen trace names them in advance.
+    // Rejected: retain full duplicate copies for every commit until shutdown.
+    if (ev.stream === "background" && resendSequences.has(ev.seq)) original.set(ev.seq, { operations: cmd.operations, meta, receipt });
     out.position = receipt.position;
     if (oracleRecordSet.has(ev.subject))
       traceSync("driver.oracle-record", () => recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt!.txId, position: receipt!.position, instant: receipt!.instant, assertionIds: alignAssertIds(cmd.operations, receipt!) } }));
@@ -1217,7 +1226,7 @@ async function run() {
     if (attempts !== completed || records.length !== completed + mainReadCount || records.length !== judgedReadCount)
       finalizationErrors.push("Read-attempt, retained-observation and final-verdict counts differ");
   }
-  if (records instanceof ReadRecords) report.observationStorage = { format: "lossless Float64 tuples and interned strings", records: records.length, encodedBytes: records.encodedBytes, numericResidentBytes: records.residentBytes, spillDirectory: records.directory, strings: records.stringCount };
+  if (records instanceof ReadRecords) report.observationStorage = { format: "lossless Float64 tuples and interned strings", records: records.length, encodedBytes: records.encodedBytes, numericResidentBytes: records.residentBytes, spillDirectory: records.directory, strings: records.stringCount, diskBudget: spill?.diskBudget };
   report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
   report.engineSamples = engineSamples;
   if (feedFailure) {
@@ -1232,6 +1241,7 @@ async function run() {
     process.exitCode = 1;
   }
   report.status = feedFailure || finalizationErrors.length ? "ERROR" : "DONE";
+  refreshVerdictEligibility(report);
   report.endedAt = new Date().toISOString();
   fs.writeFileSync(path.join(rawDir, "ns-log.txt"), logLines.join("\n") + "\n");
   save();
@@ -1272,10 +1282,18 @@ async function run() {
         }
         commands++;
         assertions += cmd.operations.filter((o) => o.op === "assert").length;
+        // [DX-T1-12] Why: one receipt index replaces quadratic growth lookups and checks the actual returned values before modelling them.
+        // Rejected: repeated triples.find or advancing a history depth from a successful status alone.
+        const receiptRows=new Map(receipt.triples.map(t=>[JSON.stringify([t.entityId,t.attribute]),t]));
+        if(receiptRows.size!==receipt.triples.length || receiptRows.size!==cmd.perSubject.reduce((n,s)=>n+s.added.length,0)) throw Error("History receipt assertion count differs");
+        for(const s of cmd.perSubject) for(const f of s.added) {
+          const row=receiptRows.get(JSON.stringify([f.e,f.a]));
+          if(!row || row.validFrom!==SEED_VALID_FROM || memberOf(row.entityId,row.attribute,row.value)!==memberOf(f.e,f.a,f.v)) throw Error("History receipt value differs");
+        }
         const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1, subjects: group });
         modelWriter.bindReceipt(cmd.operations, receipt, "p4-history");
         for (const s of cmd.perSubject) {
-          versionIds.set(s.subject, s.added.map((f) => receipt!.triples.find((t) => t.entityId === f.e && t.attribute === f.a)!.id));
+          versionIds.set(s.subject, s.added.map((f) => receiptRows.get(JSON.stringify([f.e,f.a]))!.id));
           historyVersion.set(s.subject, v);
           modelWriter.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
         }
@@ -1550,7 +1568,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
         }
       }
     });
-    const commits = background.filter((x) => x.scheduledAt >= w.from && x.scheduledAt < w.to && x.outcome === "committed");
+    const commits = background.filter((x) => x.scheduledAt >= w.from && x.scheduledAt < w.to && x.outcome === "committed" && !x.expired);
     const commit = new Histogram();
     for (const c of commits) commit.recordMs(verdictMs(c));
     const matched = baseline ? matchedBaseline(baseline, w.from - ctx.traceStart, w.to - ctx.traceStart) : null;
@@ -1598,6 +1616,8 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     }
     const first = ctx.phases.find(p => p.name === "L256-A");
     if (first?.end) stats["L256-legacy"] = levelStats({ ...first, end: first.start + 45000 });
+    const last=ctx.phases.find(p=>p.name==="L256-D");
+    if(last?.end) stats["L256-adjacent"] = levelStats({...last,start:last.end-45000});
   }
   const strip = (s: any) => s ? Object.fromEntries(Object.entries(s).filter(([k]) => !k.startsWith("_"))) : s;
   const L = (n: string) => stats[n];
@@ -1615,6 +1635,8 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const unmatched = (r: any) => (r?.basis?.startsWith("UNMATCHED") ? false : null);
   const p1 = {
     ladder: ladder.map(strip),
+    adjacentStressGoodput:profile==="v3"?{endOfLast256:strip(stats["L256-adjacent"]),firstStress:strip(stats["L1024-1"]),
+      ratio:ratio(stats["L1024-1"]?.goodputPerS,stats["L256-adjacent"]?.goodputPerS),diagnosticOnly:true}:null,
     recovery,
     writerWaitAttribution: { method: "matched-phase comparison against the zero-reader run of the same trace", baselineRun: config.baselineWrites, engineWaitEvidence: lane === "xtdb" ? "none exposed: XTDB has no read-path locks (TARGETS 1.1 P1 item 5)" : lane === "datomic" ? "not exposed: Datomic transactor/write-queue wait metrics unavailable" : "not exposed: no QLever broker queue in this composition" },
     bars: [
@@ -1636,7 +1658,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
 
   // ---------------- P2
   const bands = (rows: any[]) => Object.fromEntries(["5-10", "11-25", "26-50"].map((b) => { const h = new Histogram(); for (const w of rows) if (bandOf(w.facts) === b) h.recordMs(verdictMs(w)); return [b, h.summary()]; })) as Record<string, any>;
-  const committed = background.filter((w) => w.outcome === "committed");
+  const committed = background.filter((w) => w.outcome === "committed" && !w.expired);
   const l256 = ctx.phases.find((p) => p.name === "L256");
   const in256 = profile === "v3" ? committed.filter(w => inIntervals(w.offsetMs, scheduledV3Windows().L256)) : l256?.end ? committed.filter((w) => w.scheduledAt >= windowOf(l256).from && w.scheduledAt < windowOf(l256).to) : [];
   const b256 = bands(in256);
@@ -1653,7 +1675,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const lostOk = lostAck.filter((r) => r.resolvedOriginal && r.retryTag !== "COMMITTED-AGAIN").length;
   const progress = p2Progress(background, ctx.traceStart);
   const probeHist = new Histogram();
-  for (const w of writes) if (w.stream === "probe10" && w.outcome === "committed") probeHist.recordMs(verdictMs(w));
+  for (const w of writes) if (w.stream === "probe10" && w.outcome === "committed" && !w.expired) probeHist.recordMs(verdictMs(w));
   const p2 = {
     bandsAtL256: b256, bandsAll: bands(committed), bandsSteady: bands(committed.filter((w) => !w.burst)), bandsBurst: bands(committed.filter((w) => w.burst)),
     accounting: { byStreamAndOutcome: byOutcome, resendsByResult: countBy(resends.map((r) => r.result)), unaccounted, pendingAtEnd: ctx.pendingAtEnd, errorTags: countBy(writes.flatMap((w) => w.tags ?? [])) },
@@ -1672,6 +1694,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("NS-P2 11-25 band p99 ms (L256)", b256["11-25"].p99Ms, "<= 50", b256["11-25"].p99Ms != null ? b256["11-25"].p99Ms <= 50 : null),
       bar("NS-P2 26-50 band p99 ms (L256, provisional)", b256["26-50"].p99Ms, "<= 100", b256["26-50"].p99Ms != null ? b256["26-50"].p99Ms <= 100 : null),
       bar("NS-P2 every offered command accounted", unaccounted, "= 0", unaccounted === 0),
+      bar("NS-P2 no expired primary commands", background.filter(w=>w.expired).length, "= 0", background.every(w=>!w.expired)),
       bar("NS-P2 every oracle-valid trace command published", `${progress.validPublished}/${progress.validOffered}`, "all", progress.validOffered > 0 && progress.validPublished === progress.validOffered),
       bar("NS-P2 typed rejections only for deliberately invalid commands", progress.typedRejections, "= 0 (the trace holds no invalid commands yet)", progress.typedRejections === 0),
       bar("NS-P2 typed conflicts only where the oracle finds a CAS race", progress.typedConflicts, "= 0 (serial per subject: the trace has no CAS race)", progress.typedConflicts === 0),

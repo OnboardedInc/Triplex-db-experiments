@@ -70,6 +70,7 @@ it("uses server clocks without ticket order or clock replay, including outcome r
         ),
       );
       expect(a.committedInstant!("tx")).toBe(1001);
+      expect(a.committedInstant!("tx")).toBeUndefined();
       expect(submissions).toBe(1);
       expect(client.commitDiagnostics.clockReplays).toBe(0);
       expect(client.commitDiagnostics.ticketWaitMicros).toBe(0);

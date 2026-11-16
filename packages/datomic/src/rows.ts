@@ -13,7 +13,9 @@ import {
   type ValueDomain,
   type QueryPattern,
   type TripleRow,
+  type TripleInput,
 } from "@triplex-build/triplex/runtime";
+import { isPlainJsonData } from "./codec.js";
 
 export const assertionColumns = [
   "id",
@@ -76,7 +78,7 @@ export const canonicalJson = (value: unknown): string => {
 };
 
 // [CX-A01-0314-R3] Why: enforce the declared Datomic domain at its real row codec. Rejected: public preflight alone (direct SPI and codec callers bypass it).
-export const packValue = (value: TripleValue, domain: ValueDomain = ValueDomains.datomic) => {
+const pack = (value: TripleValue, domain: ValueDomain, once: boolean) => {
   assertValueInDomain(value, domain);
   const packed = {
     value_type: value.type,
@@ -107,7 +109,7 @@ export const packValue = (value: TripleValue, domain: ValueDomain = ValueDomains
       packed.value_boolean = value.value ? 1 : 0;
       break;
     case "json":
-      canonicalJson(value.value); // validate while retaining Triplex's public scalar spelling
+      if (!once || !isPlainJsonData(value.value, true)) canonicalJson(value.value);
       packed.value_json = canonicalJson(value.value);
       break;
     case "blob":
@@ -123,6 +125,57 @@ export const packValue = (value: TripleValue, domain: ValueDomain = ValueDomains
   }
   return packed;
 };
+export const packValue = (value: TripleValue, domain: ValueDomain = ValueDomains.datomic) =>
+  pack(value, domain, false);
+export const packValueOnce = (value: TripleValue, domain: ValueDomain = ValueDomains.datomic) =>
+  pack(value, domain, true);
+
+const packedRows = new WeakSet<object>();
+export const isPackedRow = (row: TripleRow) => packedRows.has(row);
+// [DX-T1-12] Why: only this constructor can attest immutable scalar rows built from a checked value; SPI/external rows keep full decoding.
+// Rejected: a caller-provided trusted flag or a WeakSet of mutable rows (either can bypass validation after mutation).
+export function createPackedRow(
+  input: TripleInput,
+  txId: string | null,
+  timestamp: number,
+  id: string,
+  position: number,
+  once = false,
+): TripleRow {
+  const row: TripleRow = {
+    id,
+    entity_id: input.entityId,
+    attribute: input.attribute,
+    ...(once ? packValueOnce : packValue)(
+      input.value,
+      storedValueDomain(ValueDomains.datomic, input.attribute),
+    ),
+    recorded_at: timestamp,
+    recorded_position: position,
+    valid_from: input.validFrom ?? timestamp,
+    valid_to: input.validTo ?? null,
+    created_by: input.createdBy ?? null,
+    retracted_at: null,
+    retracted_position: null,
+    retract_tx_id: null,
+    entity_type: input.entityType ?? null,
+    schema_version: 1,
+    tx_id: txId,
+  };
+  for (const key of ["id", "entity_id", "attribute"] as const)
+    if (typeof row[key] !== "string") throw TypeError(`Invalid row string ${key}`);
+  for (const key of ["created_by", "entity_type", "tx_id"] as const)
+    if (row[key] !== null && typeof row[key] !== "string")
+      throw TypeError(`Invalid row string ${key}`);
+  for (const key of ["recorded_at", "valid_from", "valid_to"] as const)
+    if (row[key] !== null && !Number.isFinite(row[key]))
+      throw TypeError(`Invalid row number ${key}`);
+  if (!Number.isSafeInteger(position) || position < 0)
+    throw RangeError("Invalid recorded position");
+  Object.freeze(row);
+  packedRows.add(row);
+  return row;
+}
 
 const nullableNumber = (input: unknown): number | null => {
   if (input === null || input === undefined) return null;

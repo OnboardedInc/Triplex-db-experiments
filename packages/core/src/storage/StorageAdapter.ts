@@ -40,6 +40,7 @@ export interface StorageAdapterService {
   readonly committedPosition?: (txId: string) => number | undefined;
   // [DX-T1-5] Why: a serialized backend can assign record time only after staging, alongside its durable position.
   // Rejected: returning the submitted clock as the receipt, or changing valid-time fields when record time advances.
+  // [DX-T1-12] Why: once a defined value is read the caller owns it; adapters may release that entry. Rejected: retaining every transaction forever.
   readonly committedInstant?: (txId: string) => number | undefined;
 
   // [EXP-QH1] Why: a columnar store can decode directly to Triples without a second row materialization.

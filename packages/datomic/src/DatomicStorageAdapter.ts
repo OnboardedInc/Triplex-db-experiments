@@ -31,7 +31,8 @@ import {
   TransactionOutcomeUnknown,
 } from "@triplex-build/triplex/runtime";
 import { DatomicClient, DatomicHttpError } from "./DatomicClient.js";
-import { matchesPattern, packValue, visibleAt } from "./rows.js";
+import { matchesPattern, packValue, packValueOnce, createPackedRow, visibleAt } from "./rows.js";
+import { fastPathEnabled } from "./fastPaths.js";
 import { stagedInput } from "./protocol.js";
 import { databaseName } from "./scopeName.js";
 import {
@@ -734,45 +735,63 @@ export const makeDatomicStorageAdapter = (
       );
     });
 
+  const stage = (
+    state: TransactionState,
+    input: TripleInput,
+    txId: string | null,
+    timestamp: number,
+    id: string,
+    position: number,
+  ) => {
+    if (!state.serverRecordTime && state.replaySafe && state.order && !state.order.ticket)
+      state.order.ticket = registerCommit(timestamp, client);
+    const row: TripleRow = fastPathEnabled("row")
+      ? createPackedRow(input, txId, timestamp, id, position, fastPathEnabled("pack"))
+      : {
+          id,
+          entity_id: input.entityId,
+          attribute: input.attribute,
+          ...(fastPathEnabled("pack") ? packValueOnce : packValue)(
+            input.value,
+            storedValueDomain(ValueDomains.datomic, input.attribute),
+          ),
+          recorded_at: timestamp,
+          recorded_position: position,
+          valid_from: input.validFrom ?? timestamp,
+          valid_to: input.validTo ?? null,
+          created_by: input.createdBy ?? null,
+          retracted_at: null,
+          retracted_position: null,
+          retract_tx_id: null,
+          entity_type: input.entityType ?? null,
+          schema_version: 1,
+          tx_id: txId,
+        };
+    if (state.rows.has(id)) throw new Error(`Duplicate assertion identity ${id}`);
+    state.entities.add(row.entity_id);
+    state.rows.set(id, row);
+    state.newIds.add(id);
+    return row;
+  };
+  const insertionError = (cause: unknown) =>
+    cause instanceof InvalidTripleError
+      ? cause
+      : new WriteError({ message: "Invalid Datomic assertion", cause });
   const insert: StorageAdapterService["insert"] = (input, txId, timestamp, id, position) =>
     Effect.gen(function* () {
       const state = yield* requireTransaction;
       return yield* Effect.try({
-        try: () => {
-          if (!state.serverRecordTime && state.replaySafe && state.order && !state.order.ticket)
-            state.order.ticket = registerCommit(timestamp, client);
-          const row: TripleRow = {
-            id,
-            entity_id: input.entityId,
-            attribute: input.attribute,
-            ...packValue(input.value, storedValueDomain(ValueDomains.datomic, input.attribute)),
-            recorded_at: timestamp,
-            recorded_position: position,
-            valid_from: input.validFrom ?? timestamp,
-            valid_to: input.validTo ?? null,
-            created_by: input.createdBy ?? null,
-            retracted_at: null,
-            retracted_position: null,
-            retract_tx_id: null,
-            entity_type: input.entityType ?? null,
-            schema_version: 1,
-            tx_id: txId,
-          };
-          if (state.rows.has(id)) throw new Error(`Duplicate assertion identity ${id}`);
-          state.entities.add(row.entity_id);
-          state.rows.set(id, row);
-          state.newIds.add(id);
-          return row;
-        },
-        catch: (cause) =>
-          cause instanceof InvalidTripleError
-            ? cause
-            : new WriteError({ message: "Invalid Datomic assertion", cause }),
+        try: () => stage(state, input, txId, timestamp, id, position),
+        catch: insertionError,
       });
     });
 
   const adapter: StorageAdapterService = {
-    committedInstant: (txId) => finalInstants.get(txId),
+    committedInstant: (txId) => {
+      const instant = finalInstants.get(txId);
+      finalInstants.delete(txId);
+      return instant;
+    },
     committedPosition: (txId) => {
       const p = finalPositions.get(txId);
       finalPositions.delete(txId);
@@ -982,9 +1001,18 @@ export const makeDatomicStorageAdapter = (
     batchInsert: (inputs, txId, timestamp, ids, position) =>
       inputs.length !== ids.length
         ? Effect.fail(new WriteError({ message: "Batch assertion identity count mismatch" }))
-        : Effect.forEach(inputs, (input: TripleInput, i) =>
-            insert(input, txId, timestamp, ids[i]!, position),
-          ),
+        : fastPathEnabled("batch")
+          ? Effect.gen(function* () {
+              const state = yield* requireTransaction;
+              return yield* Effect.try({
+                try: () =>
+                  inputs.map((input, i) => stage(state, input, txId, timestamp, ids[i]!, position)),
+                catch: insertionError,
+              });
+            })
+          : Effect.forEach(inputs, (input: TripleInput, i) =>
+              insert(input, txId, timestamp, ids[i]!, position),
+            ),
     retract: (id, timestamp, txId, position) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
@@ -1079,6 +1107,7 @@ export const makeDatomicStorageAdapter = (
         cache.clear();
         client.predecessorCache.clearScope(db);
         finalPositions.clear();
+        finalInstants.clear();
       }),
   };
   return adapter;
