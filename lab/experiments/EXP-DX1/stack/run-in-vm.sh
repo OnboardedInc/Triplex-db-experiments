@@ -22,20 +22,18 @@ if [[ $prefix == tx2-dxt1-* ]]; then
     --mount type=bind,src=/,dst=/guest,readonly node:22.23.2-bookworm-slim \
     sh -c 'df -k /guest /guest/var/lib/docker /guest/var/tmp; findmnt -T /guest -o SOURCE,FSTYPE,TARGET; findmnt -T /guest/var/lib/docker -o SOURCE,FSTYPE,TARGET' > "$evidence/guest-filesystems.txt"
 fi
-# [DX-T1-10] Why: the diagnostic moves every driver spill, witness and trace file off the database's virtual disk together.
-# Rejected: tmpfs only at /driver while the lexical output path still writes the old disk volume, or tmpfs in a verdict by default.
+# [DX-T1-10] Why: the diagnostic moves every driver spill, witness and trace file to a different durable ext4 disk together.
+# Rejected: tmpfs (the consumer correctly refuses its durability), or moving only one lexical output alias.
 storage=${DX_HARNESS_STORAGE:-volume}
 driver_mounts=(); command=("$@")
 if [[ $storage == volume ]]; then
   docker volume create "$prefix-driver" >/dev/null
   driver_mounts=(-v "$prefix-driver:/driver" -v "$prefix-driver:$repo/runs/DX-H3-vm")
-elif [[ $storage == tmpfs && $prefix == tx2-dxt1-* ]]; then
-  tmpfs_bytes=${DX_HARNESS_TMPFS_BYTES:-4294967296}
-  [[ $tmpfs_bytes =~ ^[0-9]+$ && $tmpfs_bytes -le 4294967296 && $tmpfs_bytes -ge 268435456 ]] || exit 2
-  driver_mounts=(--tmpfs "$repo/runs/DX-H3-vm:rw,nosuid,nodev,size=$tmpfs_bytes")
-  command=(/bin/sh -c 'ln -s "$PWD/runs/DX-H3-vm" /driver; exec "$@"' _ "$@")
+elif [[ $storage == root-disk && $prefix == tx2-dxt1-* ]]; then
+  node "$repo/lab/trace/harness-volume.mjs" create "$prefix" "$evidence"
+  driver_mounts=(-v "$prefix-driver:/driver" -v "$prefix-driver:$repo/runs/DX-H3-vm")
 else
-  echo 'Invalid harness storage: volume or owned tmpfs diagnostic only' >&2; exit 2
+  echo 'Invalid harness storage: volume or owned root-disk only' >&2; exit 2
 fi
 # Refuse host port forwarding in this mode, even for a pre-existing caller stack.
 for role in gw-w gw-r; do
@@ -60,6 +58,7 @@ cleanup() {
   # Copy even after command failure; retain container and volume if copy fails.
   docker cp "$prefix-driver:/driver/." "$evidence/driver/" || exit 1
   docker rm -f "$prefix-driver" >/dev/null
+  if [[ $storage == root-disk ]]; then node "$repo/lab/trace/harness-volume.mjs" export-clean "$prefix" "$evidence" || exit 1; fi
   exit "$rc"
 }
 trap cleanup EXIT

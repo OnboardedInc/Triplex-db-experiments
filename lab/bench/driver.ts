@@ -232,7 +232,7 @@ const report: Record<string, any> = latencyReceipt({
   generator: { traceSha256: sha256File("lab/bench/lib/trace.ts"), worldSha256: sha256File("lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
-  harnessStorage: { requested: process.env.DX_HARNESS_STORAGE ?? "volume", filesystemType: fs.statfsSync(rawDir).type, tmpfsLimitBytes: process.env.DX_HARNESS_STORAGE === "tmpfs" ? Number(process.env.DX_HARNESS_TMPFS_BYTES) : null, diagnosticOnly: process.env.DX_HARNESS_STORAGE === "tmpfs" },
+  harnessStorage: { requested: process.env.DX_HARNESS_STORAGE ?? "volume", filesystemType: fs.statfsSync(rawDir).type },
 });
 const save = () => atomicWrite(output, JSON.stringify(report, null, 2) + "\n");
 
