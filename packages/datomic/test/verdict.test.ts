@@ -10,6 +10,7 @@ import {
 } from "../../../lab/bench/lib/verdict-statistics.ts";
 import {
   checkV3Trace,
+  assertRequiredPlanCounts,
   checkedIntervals,
   poolRows,
   scheduledV3Windows,
@@ -254,6 +255,19 @@ it("strict passive host admission refuses missing counters, swapping, apps, disk
 
 describe("frozen v3 plan", () => {
   const events = generateTrace({ seed: "ns-v2", subjects: 10000, durationS: 7200 });
+  it("refuses native admission for the specified plan's sparse required recovery windows", () => {
+    const plan = checkV3Trace(events);
+    expect(() => assertRequiredPlanCounts({ ...plan, unjudged: [] })).toThrow("recovery");
+    expect(() =>
+      assertRequiredPlanCounts({
+        ...plan,
+        counts: {
+          ...plan.counts,
+          recovery: plan.counts.recovery.map((r) => ({ ...r, total: 500 })),
+        },
+      }),
+    ).not.toThrow();
+  });
   it("retains the prefix, rate, stress cycles and exact phase offsets", () => {
     const plan = nsPlan("v3"),
       check = checkV3Trace(events);

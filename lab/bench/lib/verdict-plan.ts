@@ -13,6 +13,18 @@ export function checkedIntervals(intervals: readonly Interval[]): Interval[] {
   }
   return result;
 }
+// [DX-T1-12] Why: native admission must fail before spending hours on a plan whose required recovery cohorts cannot reach Sam's minimum even without failures.
+// Rejected: silently raise the rate, extend the specified phases, or mistake the declared diagnostic 26-50 band for a required cohort.
+export function assertRequiredPlanCounts(plan: ReturnType<typeof checkV3Trace>) {
+  const c=plan.counts, enough=(n:number)=>Number.isSafeInteger(n)&&n>=500;
+  const missing=[
+    ...(!enough(c.L256.total)?["L256"]:[]),
+    ...["5-10","11-25"].filter(b=>!enough(c.L256.bands[b]!)).map(b=>`L256 ${b}`),
+    ...(!enough(c.L1024.total)?["L1024"]:[]),
+    ...c.recovery.filter(r=>!enough(r.total)).map(r=>`recovery offset ${r.fromS}`),
+  ];
+  if(missing.length)throw Error(`Specified v3 plan underfills required 500-commit cohorts: ${missing.join(", ")}`);
+}
 export const inIntervals = (at: number, intervals: readonly Interval[]) => intervals.some(w => at >= w.from && at < w.to);
 export const intervalMs = (intervals: readonly Interval[]) => checkedIntervals(intervals).reduce((n, w) => n + w.to - w.from, 0);
 export function poolRows<T extends { seq: number; offsetMs: number; burst?: boolean }>(rows: readonly T[], intervals: readonly Interval[], steady = true): T[] {

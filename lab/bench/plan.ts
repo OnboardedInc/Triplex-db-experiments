@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { generateTrace } from "./lib/trace.ts";
-import { checkV3Trace } from "./lib/verdict-plan.ts";
+import { checkV3Trace,assertRequiredPlanCounts } from "./lib/verdict-plan.ts";
 import { nsPlan } from "./lib/phases.ts";
 
 // [DX-T1-12] Why: verify the frozen offered cohorts before any database or measured container exists.
@@ -13,5 +13,7 @@ const result = {
     createHash("sha256").update(fs.readFileSync(new URL(`./lib/${n}`, import.meta.url))).digest("hex")])),
 };
 const text = JSON.stringify(result, null, 2) + "\n";
-if (process.argv[2]) fs.writeFileSync(process.argv[2], text, { flag: "wx" });
+const output=process.argv.slice(2).find(a=>a!=="--strict");
+if (output) fs.writeFileSync(output, text, { flag: "wx" });
 else process.stdout.write(text);
+if(process.argv.includes("--strict"))assertRequiredPlanCounts(result);

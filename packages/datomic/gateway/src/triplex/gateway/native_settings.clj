@@ -1,6 +1,6 @@
 (ns triplex.gateway.native-settings
   (:require [clojure.data.json :as json])
-  (:import [java.io File]
+  (:import [java.io File] [java.lang.management ManagementFactory] [com.sun.management HotSpotDiagnosticMXBean]
            [org.slf4j LoggerFactory]))
 ;; [DX-T1-4] Why: record the running JVM's effective logger levels once, including off controls.
 ;; Rejected: treating an XML filename or the absence of a message as proof that WARN was loaded.
@@ -13,6 +13,9 @@
                :run (System/getenv "TRIPLEX_TRACE_RUN") :source (System/getenv "TRIPLEX_TRACE_SOURCE")
                :slot (System/getenv "TRIPLEX_TRACE_SLOT") :process process
                :configuration (System/getProperty "logback.configurationFile")
+               ;; [DX-T1-12] Why: bind the effective compiler/heap policy without recording arbitrary JVM arguments or secrets. Rejected: an environment string as proof the VM accepted a flag.
+               :jvm {:compileThresholdScaling (try (.getValue (.getVMOption (ManagementFactory/getPlatformMXBean HotSpotDiagnosticMXBean) "CompileThresholdScaling")) (catch Throwable _ nil))
+                     :maxHeapBytes (.maxMemory (Runtime/getRuntime))}
                :loggers (into {} (map (fn [name] [name (str (.getEffectiveLevel (LoggerFactory/getLogger name)))]) logger-names))}]
       (.mkdirs (File. dir))
       (spit (File. dir (str process "-native-settings.json")) (str (json/write-str row) "\n")))))

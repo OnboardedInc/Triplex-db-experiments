@@ -13,7 +13,7 @@ for ((i=1;i<=$#;i++)); do
 done
 if [[ ${DX_NS_PROFILE:-smoke} == v3 ]]; then
   export DX_MATCH_DURATION_S=5520
-  node --import tsx lab/bench/plan.ts
+  node --import tsx lab/bench/plan.ts --strict
 fi
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export DX_ORACLE_ROOT=${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}
@@ -27,6 +27,9 @@ if [[ $kind == real || $kind == pair ]]; then
   node lab/experiments/EXP-DX1/t1/scale-settings.mjs --guest-bytes "$guest_bytes" --output "$DX_STACK_EVIDENCE/$prefix/population-settings.json" --driver-args "$@"
   scale_shell=$(node lab/experiments/EXP-DX1/t1/scale-settings.mjs --guest-bytes "$guest_bytes" --shell --driver-args "$@")
   eval "$scale_shell"
+  node lab/experiments/EXP-DX1/t1/jvm-policy.mjs "$DX_STACK_EVIDENCE/$prefix/compiler-policy.json"
+  compiler_shell=$(node lab/experiments/EXP-DX1/t1/jvm-policy.mjs --shell)
+  eval "$compiler_shell"
 fi
 # [DX-T1] Why: --oracle-root names frozen executable source, not an output directory; keep a verified owned copy.
 # Rejected: silently pointing it at an empty evidence folder or changing the independent oracle's implementation.
@@ -66,6 +69,7 @@ export DX_CPUS_TX=${DX_CPUS_TX:-0} DX_CPUS_PG=${DX_CPUS_PG:-1} DX_CPUS_GW_WRITE=
 export DX_CPUS_DRIVER=${DX_CPUS_DRIVER:-3,4,5,6,7} DX_MAIN_CPU=${DX_MAIN_CPU-3} DX_WORKER_CPUS=${DX_WORKER_CPUS-4,5,6,7}
 export DX_TX_OBJECT_CACHE=${DX_TX_OBJECT_CACHE:-1280m}
 export DX_QUIET_LOGS=${DX_QUIET_LOGS:-1} DX_ENCRYPT_CHANNEL=${DX_ENCRYPT_CHANNEL:-true}
+export DX_NATIVE_SETTINGS_READBACK=${DX_NATIVE_SETTINGS_READBACK:-1}
 export DX_TX_JAVA_OPTS=${DX_TX_JAVA_OPTS:-'-Xms256m -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=200'}
 
 export DX_READ_PATH=replica DX_STRICT_RECORD_CLOCKS=1

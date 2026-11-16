@@ -57,7 +57,7 @@ for mode in "${modes[@]}";do
  bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --guest-cpus eight >> "$out/cpu-transitions.jsonl"
  [[ $mode != six ]] || bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --guest-cpus six >> "$out/cpu-transitions.jsonl"
  sh lab/bin/host-quiet.sh > "$out/$i-host-before.jsonl" || true
- settings=(TRIPLEX_TRACE_LEVEL=summary TRIPLEX_TRACE_COMPONENTS=node,gateway DX_NATIVE_GATES=0 DX_STORAGE_DIAGNOSTIC=0 DX_TX_NATIVE_JFR=0 DX_PG_CENSUS=0)
+ settings=(TRIPLEX_TRACE_LEVEL=summary TRIPLEX_TRACE_COMPONENTS=node,gateway DX_NATIVE_GATES=0 DX_STORAGE_DIAGNOSTIC=0 DX_TX_NATIVE_JFR=0 DX_PG_CENSUS=0 DX_COMPILER_POLICY=default TRIPLEX_DATOMIC_FAST_PATHS=)
  # [DX-T1-12] Why: E6 keeps the identical CPU placement even with eight online; the loaded comparison separately prices the lost reader capacity.
  # Rejected: changing the number of online CPUs and moving a commit-path process in the same fixed-gap contrast.
  settings+=(DX_CPUS_TX=0 DX_CPUS_PG=1 DX_CPUS_GW_WRITE=2 DX_CPUS_GW_READ=4 DX_MAIN_CPU=3 DX_CPUS_DRIVER=3,4 DX_WORKER_CPUS=4)
@@ -77,7 +77,7 @@ for mode in "${modes[@]}";do
  fi
  if [[ $study == six-loaded ]];then
   kind=pair;args=(--rung 10k --max-readers 1024 --level-s 45 --probe10-per-s 0)
-  settings+=(DX_MATCH_DURATION_S=900 DX_CPUS_DRIVER=3,4,5,6,7 DX_WORKER_CPUS=4,5,6,7)
+  settings+=(DX_COMPILER_POLICY=early DX_MATCH_DURATION_S=900 DX_CPUS_DRIVER=3,4,5,6,7 DX_WORKER_CPUS=4,5,6,7)
   [[ $mode != six ]] || settings+=(DX_CPUS_DRIVER=3,4,5 DX_WORKER_CPUS=4,5)
  fi
  env "${settings[@]}" bash lab/experiments/EXP-DX1/t1/run.sh "$kind" "$tag" "${args[@]}" > "$out/$i-controller.log" 2>&1 & child=$!
