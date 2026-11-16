@@ -1889,3 +1889,38 @@ DX-T1 part 9 (`exp/DX-T1-tracing`, `cfae020b`, pushed; report `t1/REPORT-9.md`, 
 recovery move between pass and miss; P2 misses by 0.5 to 4.7 ms at the medians and 6 to 21 ms at the all-commit p99. The
 tail's main cause is below Postgres, in how this Mac's virtual disk serves a flush. No Codex agent is running; the next
 work is chosen from the idea menu (Fable agent, tonight 23:07 local). Mac disk: 15.5 GiB free, at the floor.
+
+## 2026-11-16 10:00 UTC: idea menu written; DX-T1 part 10 confirms its findings; pair H is the best yet (loaded all-commit p99 48.8 ms); part 11 launched
+
+**Idea menu** (one Fable agent at extra-high effort, run at Sam's word on 2026-11-15 evening):
+`lab/research/LEAPFROG-MENU-2026-11-15.md` and `LEAPFROG-SUMMARY-2026-11-15.md`. **Disk audit** (ORCH-DISK1, read-only):
+`~/Claude/Projects/triplex-db-2/disk-audit-2026-11-15/`; about 127 GB of Triplex files, up to 62 GB archivable or deletable
+outside the VMs; waiting for Sam's go-ahead. Google Drive for desktop is installed and mounted.
+
+**DX-T1 part 10** (`exp/DX-T1-tracing`, `7a1c2283`, pushed; report `t1/REPORT-10.md`, bars in `t1/VERDICT-10.md`):
+1. Every finding of the menu reproduced from the saved records.
+2. **Scheduler repair (kept):** timer lateness 0.60 to 0.002 ms at the median; commit median 0.69 ms lower.
+3. **History growth in four-subject commits (switch, not default):** commits over 50 ms in the growth step 14 and 17 to 0.
+4. **Disk separation: not confirmed** (23 slow commits against 12 and 17; inside drift). WAL preparation not adopted.
+5. **The cost of a quiet gap** is in durable storage and in peer and transactor wake-ups. At one commit per second:
+   a refused serial request 51 times a second saves 3.18 ms (8.58 against 11.6 to 11.9 ms); a disk sentinel 1.90 ms; a
+   gateway health call 1.25 ms. None adopted: keep-warm is Sam's decision.
+6. **Pair H** (quiet host, swap 4.0 GiB, `off` medians 9.87 and 9.83 ms; oracle PASS; split-read rule `pending`):
+
+| Bar | Required | H as measured today | H with the clock corrections |
+| --- | --- | --- | --- |
+| P2 all-primary p99, loaded; zero readers | 50 ms | 48.85; 51.13 | 45.58; 48.57 |
+| P2 5 to 10 facts at 256 readers, p50 / p99 | 10 / 50 ms | 10.88 / 103.0 | 10.05 / 102.3 |
+| P2 11 to 25 facts at 256 readers, p50 / p99 | 10 / 50 ms | 12.80 / 18.9 | 11.97 / 18.0 |
+| P2 burst p50 small / medium | 10 / 10 ms | 8.83 / 10.88 | 8.19 / 9.98 |
+| P2 queue, drains, accounting | bounds | met | met |
+| P1 G256/G64; G1024/G256 | 1; 0.9 | 0.9956; 1.138 | same |
+| P1 writer p99 ratio at 256; at 1,024 | 1.25; 2 | 4.16; 0.82 | 4.21; 0.78 |
+| P1 read p99; recovery | 100 ms; 60 s | met; 35 s | same |
+| P3 lag p99 | 250 ms | 22.5 | same |
+| P4 pulls/s whole machine; flatness | 4,400; 1.1 | 18,346; 1.021 | same |
+
+   The 103 ms small-band p99 and the 4.16 writer ratio at 256 readers come from one commit (98.98 ms of peer wait) in a
+   46-commit window. 68 primary commits over 50 ms: 46 peer wait, 13 same-subject wait, 5 network, 4 scheduler lateness.
+
+Part 11 is running: the probe for one Postgres commit per Datomic log write, and the pricing of fewer datoms per commit.
