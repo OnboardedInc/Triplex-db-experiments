@@ -1944,3 +1944,38 @@ What remains is in Sam's hands: where the verdict's clock stops (0.4 ms), bars o
 one-commit misses), a keep-warm mechanism (about 3 ms at the 256-reader medians), history growth in small commits (14 to 17
 slow commits per run). With those, the projection from pair H is a pass; it needs two confirming pairs on a quiet Mac. No
 agent is running.
+
+## 2026-11-16 16:20 UTC: Sam's decisions of the day; five read-only analyses written; cold-path investigation running; next build briefed
+
+Sam (verbatim in `lab/research/SAM-decisions-2026-11-09.md`): no keep-warm mechanism, find and fix the cause; a commit
+ends at the acknowledgement; bars over at least 500 commits; history growth in small commits; two short steps at 10,000
+subjects, then 100,000 without waiting for a perfect pass.
+
+Running: one Fable agent at maximum effort on the cause of the cold commit path
+(`~/Claude/Projects/triplex-db-2/research/2026-11-16-cold-path/`).
+
+Written by five Opus agents, read-only, in `~/Claude/Projects/triplex-db-2/research/2026-11-16-next/`:
+1. `PER-FACT-COST.md`: a commit is about 7.4 ms fixed plus 0.185 ms per fact. The 2.0 ms a medium commit costs over a
+   small one is 42% Datomic, 25% TypeScript product code, 10% benchmark bookkeeping, 9% gateway. Each fact is written
+   twice (its row, about 290 bytes, and an escaped copy in a change row, about 640 bytes) and the change JSON is encoded or
+   parsed about nine times before the acknowledgement. Exact fixes without a layout change: 0.3 to 0.65 ms (estimate).
+2. `WRITER-GC.md`: the writer's heap grows 340 to 715 MiB per run, mostly benchmark bookkeeping; every pause of 20 ms or
+   more is one of exactly 14 mark-compacts; three of four stalls fall in the history-growth step. Removing all writer
+   stalls and same-subject waits would move the all-commit p99 only 67.2 to 59.2, 71.0 to 62.5 and 48.8 to 42.4 ms: peer
+   wait keeps it above 50.
+3. `SCALE-100K-PLAN.md`: the north-star bench at 100,000 builds its own data (3.85 million facts, 19 to 24 minutes per
+   arm) and does not use the sealed seed, which only the activation harness needs. A pair needs about 24 GiB free on the
+   Mac, the activation reading about 38. Containers already peak at 13.7 GiB at 10,000 subjects; the reader arm at 100,000
+   needs a 24 GiB VM. Readiness items listed.
+4. `VERDICT-RULES-SPEC.md`: today's 256 and 1,024-reader windows hold 46 commits, so their "p99" is the slowest commit;
+   two identical runs exceed the 1.25 ratio 37% of the time at 46 commits. A `v3` profile on the same frozen trace gives
+   about 2,110 commits at 256 readers and 760 at 1,024; a pair takes about 3.3 hours.
+5. `BENCH-STEADINESS.md`: lima attaches the disk with host caching on and plain fsync, hard-coded; a guest flush is an
+   fsync of the whole image file and waits for other guest writers' pending data; the guest wall clock was stepped 100 to
+   232 ms 1,098 times since 2026-11-13; eight spinning virtual CPUs cannot all sit on six performance cores and pinning
+   inside the guest does not pin to Mac cores.
+
+Next build (Codex, `~/Claude/Projects/triplex-db-2/agents/prompts/DX-T1-resume12.md`) starts when the cold-path
+investigation has finished its timed runs: the verdict rules, the exact per-fact and client fixes, the 100,000-subject
+readiness items, the WAL-on-its-own-disk diagnostic, two confirming pairs. Mac disk 13 to 15 GiB free; the disk plan
+still waits for Sam's go-ahead.
