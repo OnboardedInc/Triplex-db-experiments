@@ -16,7 +16,7 @@ import {
 } from "../../../lab/bench/lib/verdict-plan.ts";
 import { nsPlan } from "../../../lab/bench/lib/phases.ts";
 import { generateTrace, traceDigest } from "../../../lab/bench/lib/trace.ts";
-import { matchBaseline } from "../../../lab/bench/lib/verdict.ts";
+import { applyCommitVerdicts, matchBaseline } from "../../../lab/bench/lib/verdict.ts";
 import { evaluateHostGate } from "../../../lab/trace/host-admission.mjs";
 import { buildHistoryGrowth } from "../../../lab/bench/lib/commands.ts";
 import { Digest } from "../../../lab/bench/lib/rng.ts";
@@ -173,6 +173,36 @@ describe("receipt-to-caller verdict", () => {
     expect(matchBaseline([], [{ from: 100, to: 200 }], expected, 200, "ack").invalid).toContain(
       "missing",
     );
+  });
+  it("never rescales expired or missing expiration metadata into a clean publication result", () => {
+    const report = () => ({
+      config: { profile: "smoke", settleS: 2 },
+      phases: [],
+      traceStartAbsMs: 0,
+      priorities: {
+        P1: { bars: [], ladder: [] },
+        P2: { bars: [] },
+        P3: { bars: [] },
+        P4: { bars: [] },
+        P5: { bars: [] },
+      },
+    });
+    for (const [expiration, expected] of [
+      [false, true],
+      [true, false],
+      [undefined, null],
+    ] as const) {
+      const r: any = report(),
+        writes = Array.from({ length: 500 }, (_, i) => ({
+          ...row(i, i * 1000),
+          facts: 7,
+          expired: i === 0 ? expiration : false,
+        }));
+      applyCommitVerdicts(r, writes, null, []);
+      expect(
+        r.priorities.P2.bars.find((b: any) => b.id === "NS-P2 no expired primary commands").pass,
+      ).toBe(expected);
+    }
   });
 });
 

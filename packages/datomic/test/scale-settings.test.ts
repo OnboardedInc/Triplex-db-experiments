@@ -38,7 +38,7 @@ it("a completed bar table cannot qualify an active, diagnostic, incorrect or ora
       reads: 1,
       modelCorrectOnSameReads: 1,
       oracleVerdict: "PASS",
-      receiptConsistency: { status: "PASS" },
+      receiptConsistency: "PASS",
     },
     correctness: { reads: 500, correct: 500, errors: 0, violations: 0 },
   };

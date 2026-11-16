@@ -165,7 +165,9 @@ for (const suffix of ["zero-before", "loaded", "zero-after"]) {
     start: Math.min(...writes.map((w) => w.scheduledAt)),
     end: Math.max(...writes.map((w) => w.finishedAt)),
   };
-  const h = host.filter((e) => e.at >= window.start && e.at <= window.end);
+  // [DX-T1-12] Why: retain whole-arm native context without assigning Mac/SQL epoch samples to guest-monotonic commit windows.
+  // Rejected: infer a per-transaction storage count or replay-only host load from clocks without a measured bridge.
+  const h = host;
   check(
     h.length >= 280 &&
       h.every((e) => Number.isFinite(e.otherCpu) && /used\s*=\s*[\d.]+[MG]/.test(e.swap)),
@@ -175,9 +177,7 @@ for (const suffix of ["zero-before", "loaded", "zero-after"]) {
     const [, n, unit] = /used\s*=\s*([\d.]+)([MG])/.exec(e.swap);
     return +n * (unit === "M" ? 1 / 1024 : 1);
   };
-  const replayHost = host.filter(
-    (e) => e.at >= replay.complete.startedAt && e.at <= replay.complete.endedAt,
-  );
+  const replayHost = host;
   check(
     replayHost.length >= 4 && replayHost.every((e) => Number.isFinite(e.otherCpu) && e.swap),
     "Replay host context absent",
@@ -185,15 +185,13 @@ for (const suffix of ["zero-before", "loaded", "zero-after"]) {
   const sqlLines = readRaw(dir, "pg.log").split("\n"),
     statements = sqlLines
       .map(parsePostgres)
-      .filter(Boolean)
-      .filter((s) => s.end >= window.start && s.end <= window.end),
+      .filter(Boolean),
     sqlCounts = {};
   for (const s of statements) sqlCounts[s.kind] = (sqlCounts[s.kind] ?? 0) + 1;
   const samples = readRaw(dir, "postgres-samples.log")
     .split("\n")
     .filter((l) => l.trim().startsWith("{"))
-    .map(JSON.parse)
-    .filter((s) => s.at >= window.start && s.at <= window.end);
+    .map(JSON.parse);
   check(samples.length >= 280, "Postgres counter window absent");
   const first = samples[0],
     last = samples.at(-1),
@@ -262,7 +260,7 @@ for (const suffix of ["zero-before", "loaded", "zero-after"]) {
     window,
     sourceBuildSha256: sha256(hashes),
     rawManifestSha256: sha256(seal),
-    host: { cpu: quantile(h.map((e) => e.otherCpu)), swapGiB: quantile(h.map(swap)) },
+    host: { cpu: quantile(h.map((e) => e.otherCpu)), swapGiB: quantile(h.map(swap)), scope:"whole arm; no phase attribution" },
     latency: quantile(rows.map((r) => r.wall)),
     slow: rows.filter((r) => r.wall > 50).length,
     replayHost: {
@@ -270,6 +268,7 @@ for (const suffix of ["zero-before", "loaded", "zero-after"]) {
       swapGiB: quantile(replayHost.map(swap)),
       start: replay.complete.startedAt,
       end: replay.complete.endedAt,
+      scope:"whole arm; not replay-only context",
     },
     correctness,
     oracle: b.oracle,
@@ -278,12 +277,11 @@ for (const suffix of ["zero-before", "loaded", "zero-after"]) {
     durable,
     storage: {
       sqlCounts,
-      writeCommitsPerTransaction: ((sqlCounts.insert ?? 0) + (sqlCounts.update ?? 0)) / rows.length,
+      writeCommitsPerTransaction:null,
       wal,
       sampleWindow: { start: first.at, end: last.at },
-      samplePrimary: rows.filter((r) => r.scheduledAt >= first.at && r.scheduledAt <= last.at)
-        .length,
-      note: "SQL write autocommits include background storage; WAL counters cover sampled window, not individual commits. open_datasync flushes in WAL writes.",
+      samplePrimary:null,
+      note: "Whole-collector SQL/WAL totals include seeding, background and validation. Per-commit division is unqualified without a clock bridge. open_datasync flushes in WAL writes.",
     },
     unboundNativeEvents: unboundNative.length,
     native: rows,

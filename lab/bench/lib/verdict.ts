@@ -20,7 +20,7 @@ export function refreshVerdictEligibility(report: any) {
   if(report.invalidReasons?.length || report.client?.invalid) reasons.push("invalid or saturated run");
   if(report.oracle?.status!=="PASS" || report.oracle?.exitCode!==0 || report.oracle?.mismatchCount!==0 ||
     !report.oracle.reads || report.oracle.modelCorrectOnSameReads!==report.oracle.reads ||
-    report.oracle.oracleVerdict!=="PASS" || report.oracle.receiptConsistency?.status!=="PASS") reasons.push("independent oracle not exact");
+    report.oracle.oracleVerdict!=="PASS" || report.oracle.receiptConsistency!=="PASS") reasons.push("independent oracle not exact");
   if(!report.correctness?.reads || report.correctness.errors!==0 || report.correctness.violations!==0 || report.correctness.correct!==report.correctness.reads) reasons.push("model observations incomplete or incorrect");
   report.verdict.runQualification={eligible:reasons.length===0,reasons,note:"Observed run qualification only; source/slot/oracle gate remains independent"};
   report.verdict.allMet=report.verdict.barsOnlyAllMet && reasons.length===0;
@@ -59,6 +59,13 @@ export function applyCommitVerdicts(report: any, writes: readonly any[], baselin
     if (i < 0) bars.push(next); else bars[i] = next;
   };
   const values = (rows: readonly any[]) => rows.map(w => clockMs(w, clock));
+  // [DX-T1-12] Why: old-data rescoring must retain expirations as a P2 failure even when latency excludes censored commands.
+  // Rejected: infer a clean run from the surviving committed latency cohort or treat missing expiration metadata as false.
+  if(!options.legacy) {
+    const primary=primaryRows(writes), known=primary.every(w=>typeof w.expired==="boolean"), expired=primary.filter(w=>w.expired===true).length;
+    replace("P2",{id:"NS-P2 no expired primary commands",value:known?expired:null,bar:"= 0",pass:known?expired===0:null,
+      n:primary.length,status:known?(expired?"MISS":"MET"):"UNJUDGED (expiration metadata missing)"});
+  }
   for (const [name, limit] of [["L256", 1.25], ["L1024", 2]] as const) {
     const selected = poolRows(good, windows[name], report.config.profile === "v3");
     const reference = baseline ? matchBaseline(baseline, windows[name], expected, (report.matchedBaseline?.offeredUntilTraceS ?? 0) * 1000, clock) : null;

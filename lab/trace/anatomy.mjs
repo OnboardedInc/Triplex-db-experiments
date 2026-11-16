@@ -311,8 +311,11 @@ export function parsePostgres(line) {
 }
 // [DX-T1-4] Why: a time-window correlation is weaker than an ID join, and concurrent windows must remain ambiguous.
 // Rejected: assigning all SQL in an overlapping peer wait to every transaction.
-export function correlateStatements(windows, statements, uncertaintyMs = 2) {
-  const rows = windows.map((w) => ({ ...w, statements: [], ambiguousStatements: 0 }));
+export function correlateStatements(windows, statements, uncertaintyMs = 2, clockAlignmentQualified = false) {
+  // [DX-T1-12] Why: SQL epoch stamps have no measured per-statement bridge to the writer's boot clock across guest time steps.
+  // Rejected: use the nearest one-second offset sample and call an unrelated statement part of one transaction.
+  const rows = windows.map((w) => ({ ...w, statements: [], ambiguousStatements: 0, clockAlignmentQualified }));
+  if (clockAlignmentQualified !== true) return rows;
   const sorted = [...rows].sort((a, b) => a.start - b.start),
     maxEnd = [];
   let end = -Infinity;
@@ -464,21 +467,9 @@ export async function writeAnatomy(
         });
     }
   }
-  const system = resources.filter(
-    (r) => r.process === "system-linux" && r.clock?.domain === "linux-monotonic",
-  );
   const windows = exchanges
     .filter((e) => e.peerCalls)
-    .flatMap((e) => {
-      const midpoint = (e.peerStart + e.peerEnd) / 2;
-      const near = system.reduce(
-        (old, r) => (!old || Math.abs(r.at - midpoint) < Math.abs(old.at - midpoint) ? r : old),
-        null,
-      );
-      if (!near || !e.clock || near.clock.bootId !== e.clock.bootId) return [];
-      const shift = (near.rawClockOffsetMs ?? near.clock.offsetMs) - e.clock.offsetMs;
-      return [{ traceId: e.traceId, start: e.peerStart + shift, end: e.peerEnd + shift }];
-    });
+    .map((e) => ({ traceId:e.traceId, start:e.peerStart, end:e.peerEnd }));
   const statements = [];
   const log = path.join(runDir, "trace/raw/pg.log.gz");
   if (manifest.requirePostgres && fs.existsSync(log)) {
@@ -492,7 +483,7 @@ export async function writeAnatomy(
       crlfDelay: Infinity,
     })) {
       const row = parsePostgres(line);
-      if (row && row.end >= manifest.startedAt - 1000) statements.push(row);
+      if (row) statements.push(row);
     }
   }
   const correlated = correlateStatements(windows, statements);
@@ -518,15 +509,8 @@ export async function writeAnatomy(
   const commitSteps = Object.fromEntries(
     stepNames.map((k) => [k, stats(sequential.map((e) => e.steps[k] ?? 0))]),
   );
-  const wal = resources
-    .filter((r) => r.process === "postgres" && r.wal)
-    .sort((a, b) => a.at - b.at);
-  const first = wal.find(
-    (r) => windows.length && r.at >= Math.min(...windows.map((w) => w.start)) - 2000,
-  );
-  const last = [...wal]
-    .reverse()
-    .find((r) => windows.length && r.at <= Math.max(...windows.map((w) => w.end)) + 2000);
+  const wal = resources.filter((r) => r.process === "postgres" && r.wal);
+  const first = wal[0], last = wal.at(-1);
   const walDelta =
     first && last && first !== last && first.wal.stats_reset === last.wal.stats_reset
       ? Object.fromEntries(
@@ -615,7 +599,8 @@ export async function writeAnatomy(
     typescriptShare: stats(roots.map((r) => r.typescriptMs / r.wallMs)),
     boundaryOverlaps: exchanges.filter((e) => e.boundaryOverlapMs > 0).length,
     sql: {
-      correlation: "time window, not a causal ID; 2ms boundary uncertainty",
+      correlation: "UNQUALIFIED: no measured per-statement clock bridge or causal ID; raw statements and whole-collector counters retained",
+      unqualifiedWindows:correlated.length,
       cleanWindows: clean.length,
       ambiguousWindows: correlated.filter((w) => w.ambiguousStatements).length,
       statementsPerWindow: stats(clean.map((w) => w.statements.length)),
@@ -631,17 +616,10 @@ export async function writeAnatomy(
           (w) => w.statements.filter((s) => ["insert", "update", "delete"].includes(s.kind)).length,
         ),
       ),
-      aggregateWrites:
-        first && last
-          ? statements.filter(
-              (s) =>
-                s.end >= first.at &&
-                s.end <= last.at &&
-                ["insert", "update", "delete"].includes(s.kind),
-            ).length
-          : null,
+      aggregateWrites:statements.filter(s=>["insert","update","delete"].includes(s.kind)).length,
+      aggregateWritesScope:"whole retained Postgres log, not a commit cohort",
       walDelta,
-      walScope: first && last ? { start: first.at, end: last.at } : null,
+      walScope: first && last ? { start: first.at, end: last.at, scope:"whole Postgres collector in recorded order; no writer-clock alignment" } : null,
     },
     tail: tailCauses(commits),
     examples: perCommit.sort((a, b) => b.commitMs - a.commitMs).slice(0, 20),
@@ -715,7 +693,7 @@ export async function writeAnatomy(
     "",
     "Postgres protocol scope: https://www.postgresql.org/docs/17/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY ; cumulative WAL lag: https://www.postgresql.org/docs/17/monitoring-stats.html#MONITORING-STATS-VIEWS .",
     "",
-    "Peer wait still includes peer/transactor networking, transactor computation/queue and storage round trips. SQL windows are correlations without a shared transaction ID. Extended-protocol execute duration excludes the later implicit commit at Sync; it is not complete storage wall time. WAL sync counters have a different aggregate scope and are not added as a per-request measurement. Autocommit statements can each flush WAL. A statement's WAL sync count and transactor own before/after storage remain unsplit without backend-specific observations.",
+    "Peer wait still includes peer/transactor networking, transactor computation/queue and storage round trips. SQL-to-commit correlation is disabled without a measured clock bridge or shared transaction ID. Raw statements and whole-collector WAL deltas remain; neither is divided by primary commits. Extended-protocol execute duration excludes the later implicit commit at Sync; it is not complete storage wall time. A statement's WAL sync count and transactor own before/after storage remain unsplit without backend-specific observations.",
     "",
     "| Phase / largest observed cause | commits >50ms | total wall ms | total cause ms | worst trace ID |",
     "| --- | ---: | ---: | ---: | --- |",

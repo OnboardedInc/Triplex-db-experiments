@@ -103,8 +103,10 @@ for (const [i, tag] of tags.entries()) {
   const writes = [];
   for await (const w of records(path.join(dir, "driver/ns-writes.jsonl"))) writes.push(w);
   const primary = writes.filter((w) => w.stream === "background" && !w.resend);
+  // [DX-T1-12] Why: the explicitly labelled one-time maturation diagnostic may have a different prefix; no warmup runs in judged phases.
+  // Rejected: assume 200 commits and reject a legitimate 5,000-commit diagnostic, or change the frozen v3 workload unmeasured.
   check(
-    primary.length === 200 + b.config.idleCommits * b.config.idleGapsMs.length &&
+    primary.length === (b.config.idleWarmupCommits ?? 200) + b.config.idleCommits * b.config.idleGapsMs.length &&
       new Set(primary.map((w) => w.commandId)).size === primary.length &&
       primary.every(
         (w) => w.facts === 10 && w.outcome === "committed" && !w.expired && !w.resend && !w.ackLoss,
@@ -140,9 +142,7 @@ for (const [i, tag] of tags.entries()) {
       if (
         raw.process === "system-darwin" &&
         typeof raw.swap === "string" &&
-        Number.isFinite(raw.otherCpu) &&
-        raw.at >= start &&
-        raw.at <= end
+        Number.isFinite(raw.otherCpu)
       )
         host.push(raw);
       if (raw.type === "disk-sentinel" && raw.at >= start && raw.at <= end) sentinel.push(raw);
@@ -302,7 +302,7 @@ for (const [i, tag] of tags.entries()) {
     digest: b.trace.digest,
     rows,
     groups,
-    host: { swapGiB: q(swaps), macCpu: q(host.map((h) => h.otherCpu)) },
+    host: { swapGiB: q(swaps), macCpu: q(host.map((h) => h.otherCpu)), scope:"whole arm, not a guest phase; no cross-clock bridge" },
     keep: b.idleKeep ?? null,
     sentinel: sentinel.length
       ? {

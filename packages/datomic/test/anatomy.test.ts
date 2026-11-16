@@ -311,6 +311,8 @@ describe("commit anatomy observations", () => {
           { start: 3, end: 7 },
         ],
         [s],
+        2,
+        true,
       ).map((r: any) => [r.statements.length, r.ambiguousStatements]),
     ).toEqual([
       [0, 1],
@@ -323,8 +325,14 @@ describe("commit anatomy observations", () => {
           { start: 20, end: 30 },
         ],
         [s],
+        2,
+        true,
       )[0].statements,
     ).toEqual([s]);
+    expect(correlateStatements([{ start: 0, end: 10 }], [s])[0]).toMatchObject({
+      statements: [],
+      clockAlignmentQualified: false,
+    });
   });
   it("keeps every primary tail and identifies predecessor waiting separately", () => {
     const commit = {
@@ -376,6 +384,9 @@ describe("native Datomic counter binding", () => {
     expect(bindNativeTransaction(gateway, [event])?.parent).toBe("peer");
     expect(bindNativeTransaction(gateway, [{ ...event, databaseHash: "b".repeat(64) }])).toBeNull();
     expect(bindNativeTransaction(gateway, [{ ...event, source: "old" }])).toBeNull();
+    expect(
+      bindNativeTransaction(gateway, [{ ...event, clockAlignmentQualified: false }]),
+    ).toBeNull();
     expect(() => bindNativeTransaction(gateway, [event, event])).toThrow("Duplicate");
     expect(() => bindNativeTransaction(gateway, [{ ...event, start: 30 }])).toThrow("stale");
     expect(() =>

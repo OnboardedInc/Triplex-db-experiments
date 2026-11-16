@@ -2,12 +2,15 @@
 // [DX-T1-4] Why: database plus t binds native totals to the peer result without guessing by nearest time.
 // Rejected: a t-only join (health and benchmark databases can both have t=1000).
 export function bindNativeTransaction(gateway, candidates) {
+  // [DX-T1-12] Why: exact database/t identity does not qualify a native event's location on an unbridged or stepped clock.
+  // Rejected: use a correct counter identity to justify incorrect send/ack leg durations.
   const hash = gateway.attributes?.databaseHash,
     t = gateway.attributes?.datomicT;
   if (!/^[0-9a-f]{64}$/.test(hash ?? "") || !/^\d+$/.test(t ?? "")) return null;
   const rows = candidates.filter(
     (e) =>
       e.nativeType === "triplex.NativeTransaction" &&
+      e.clockAlignmentQualified !== false && e.clock?.crossProcessQualified !== false &&
       e.process === "tx" &&
       e.run === gateway.run &&
       e.source === gateway.source &&
@@ -42,6 +45,7 @@ export function bindNativeTransaction(gateway, candidates) {
 // Rejected: calling these pure network/CPU time or clamping clock/log-boundary overlap to zero.
 export function nativeWaitLegs(exchange, metric) {
   if (!exchange || !metric || metric.nativeType !== "triplex.NativeTransaction" || metric.process !== "tx" ||
+      metric.clockAlignmentQualified === false || metric.clock?.crossProcessQualified === false ||
       ["traceId", "run", "source", "slot", "gatewayRoot"].some(k => !exchange[k] || exchange[k] !== metric[k]) ||
       ![exchange.peerStart, exchange.peerEnd, metric.start, metric.nativeStats?.msec].every(Number.isFinite) ||
       exchange.peerEnd < exchange.peerStart || metric.nativeStats.msec < 0 ||

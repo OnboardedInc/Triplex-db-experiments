@@ -79,7 +79,8 @@ export async function* records(file) {
 export function alignClockRecord(row, reference) {
   // [DX-T1-12] Why: Mac wall samples and stepped JFR epoch anchors have no measured bridge to the writer's boot clock.
   // Rejected: display a guessed 100-ms overlap as evidence that host I/O or a JVM pause caused one commit.
-  if (row.process === "system-darwin" || row.clock?.crossProcessQualified === false)
+  const jfr=row.type==="event" && (row.nativeType || /^jdk\./.test(row.name??""));
+  if (row.process === "system-darwin" || row.clock?.crossProcessQualified === false || (jfr && row.clock?.crossProcessQualified!==true))
     return {...row,clockAlignmentQualified:false};
   if (!row.clock || row.clock.domain !== "linux-monotonic" || !reference) return row;
   if (
@@ -1196,7 +1197,7 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
     "",
     "Units: ms; n/a means not causally measured (including closed transactor/storage shares), not zero work. TypeScript share is a fraction. Quantiles are per column (their values do not add). TypeScript own code is instrumented Node scope wall time excluding observed remote waits/GC, not on-CPU time; it can include unmeasured scheduling waits. Event-loop wait records explicit worker RPC handoff/reply waits after subtracting linked worker/socket/server work. Other per-request event-loop delay is not causally measured (n/a when no RPC); timestamped timer drift is an estimated overlay. Driver offer queue is separate. Peer-wait includes network, transactor queue and storage; these internal shares remain unknown unless independently correlated. No unrelated Postgres or JFR event is assigned to a transaction.",
     "",
-    `Linux clock alignment: ${clockReference ? `shared boot monotonic clock; ${clockSources.length} source calibrations, offsets preserved in raw traces and trace-summary.json` : "legacy wall anchors; cross-process timing may be skewed"}. ${unqualifiedEvents.length} JFR events with discontinuous anchors are retained raw but not overlaid; Mac wall samples are whole-run context, not per-commit overlap evidence.`,
+    `Linux clock alignment: ${clockReference ? `shared boot monotonic clock; ${clockSources.length} source calibrations, offsets preserved in raw traces and trace-summary.json` : "legacy wall anchors; cross-process timing may be skewed"}. ${unqualifiedEvents.length} JFR events without continuous-anchor proof are retained raw but not overlaid; Mac wall samples are whole-run context, not per-commit overlap evidence.`,
     "",
     "Network is residual socket wait around matched gateway spans, including callback scheduling uncertainty. Gateway receive begins at Jetty dispatch: earlier Jetty/socket queue is invisible. Node and gateway observations with the same Linux boot ID are aligned through their measured monotonic offsets. Other host/epoch-only overlays remain approximate. Response-first-byte includes network and callback scheduling; no finer causal claim is made.",
     "",
@@ -1396,7 +1397,7 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
   );
   const relevantEvents = [...new Set(selected.flatMap((r) => contextEvents(r, contextIndexes)))];
   const relevantResources = resources
-    .filter((e) => selected.some((r) => e.at >= r.root.start - 1000 && e.at <= r.root.end + 1000))
+    .filter((e) => e.clockAlignmentQualified!==false && selected.some((r) => e.at >= r.root.start - 1000 && e.at <= r.root.end + 1000))
     .map((e) => (e.vm ? { ...e, vm: undefined } : e));
   const data = JSON.stringify({
     selected: selected.map((r) => ({ ...r, root: { ...r.root, spans: undefined } })),

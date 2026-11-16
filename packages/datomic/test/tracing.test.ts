@@ -930,6 +930,32 @@ it("keeps unbridged Mac samples and stepped JFR anchors out of cross-process ove
   expect(
     alignClockRecord(
       {
+        type: "event",
+        process: "tx",
+        name: "jdk.GCPhasePause",
+        start: 2000,
+        end: 2010,
+        clock: reference,
+      },
+      reference,
+    ).clockAlignmentQualified,
+  ).toBe(false);
+  expect(
+    alignClockRecord(
+      {
+        type: "event",
+        process: "tx",
+        name: "jdk.GCPhasePause",
+        start: 2000,
+        end: 2010,
+        clock: { ...reference, crossProcessQualified: true },
+      },
+      reference,
+    ).start,
+  ).toBe(2000);
+  expect(
+    alignClockRecord(
+      {
         process: "tx",
         start: 2000,
         end: 2010,
