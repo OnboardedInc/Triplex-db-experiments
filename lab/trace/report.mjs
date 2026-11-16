@@ -9,6 +9,7 @@ import {
   validateWriterBoundary,
 } from "./anatomy.mjs";
 import { packHtml } from "./viewer.mjs";
+import { instrumentMarkdown, idleAndPhaseMetrics, idleMarkdown } from "./instrument.mjs";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { createGunzip } from "node:zlib";
@@ -484,6 +485,9 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
     : null;
   if (manifest?.level === "off") {
     if (anatomyTo) throw Error("Tracing-off controls have no recorded anatomy");
+    const offRows = [];
+    const offWrites = path.join(rootDir, "driver/ns-writes.jsonl");
+    if (fs.existsSync(offWrites)) for await (const row of records(offWrites)) offRows.push(row);
     const finding =
       "Tracing was intentionally off for this control arm; latency is in ns-report.json and layer attribution is unavailable.";
     const summary = {
@@ -496,13 +500,14 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       finding,
       commits: null,
       coverage: null,
+      instrumentIdle: idleAndPhaseMetrics(offRows, bench.phases ?? []),
       rawBytes: filesUnder(path.join(rootDir, "trace/raw")).reduce(
         (n, f) => n + fs.statSync(f).size,
         0,
       ),
     };
     const outputs = {
-      "TRACE-REPORT.md": `# Trace report\n\n${finding}\n\nRun ${tag}; source ${manifest.source}; subjects ${bench.seed?.seededSubjects ?? "unknown"}. No collection completeness or semantic verdict is asserted.\n`,
+      "TRACE-REPORT.md": `# Trace report\n\n${finding}\n\nRun ${tag}; source ${manifest.source}; subjects ${bench.seed?.seededSubjects ?? "unknown"}. No collection completeness or semantic verdict is asserted.\n${instrumentMarkdown(bench.instrument)}${idleMarkdown(summary.instrumentIdle)}`,
       "trace.html": `<!doctype html><meta charset="utf-8"><title>Tracing off</title><h1>Tracing off</h1><p>${esc(finding)}</p>`,
       "trace.chrome.json": JSON.stringify({ traceEvents: [] }),
       "trace-summary.json": JSON.stringify(summary, null, 2) + "\n",
@@ -758,12 +763,14 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
   // Content/freshness/binding: compare the observed per-command trace against this run's actual writer rows.
   const writesFile = path.join(rootDir, "driver/ns-writes.jsonl");
   const deferredWriters = [];
+  const allWriterRows = [];
   let writes = 0,
     missingCommits = 0;
   const byId = new Map(commits.map((r) => [r.traceId, r]));
   const ids = new Set(byId.keys());
   if (fs.existsSync(writesFile))
     for await (const w of records(writesFile)) {
+      allWriterRows.push(w);
       writes++;
       if (!nodeEnabled) continue;
       if (
@@ -1090,7 +1097,7 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
     },
     reporterSha256: createHash("sha256")
       .update(
-        ["report.mjs", "anatomy.mjs", "native-transactions.mjs", "cpu-profile.mjs", "viewer.mjs"]
+        ["report.mjs", "instrument.mjs", "anatomy.mjs", "native-transactions.mjs", "cpu-profile.mjs", "viewer.mjs"]
           .map((name) => name + "\0" + fs.readFileSync(new URL(name, import.meta.url), "utf8"))
           .join("\0"),
       )
@@ -1268,6 +1275,8 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
     "JFR GC/safepoint/thread-park/socket events, transactor callback metrics, PostgreSQL duration/checkpoint/autovacuum logs, pg_stat_activity/wal/io samples, cgroup throttling/pressure/memory/io and Mac CPU/swap are retained when available. Native JFR transaction-function spans, when present, bind the authored Triplex function to its exact peer-await span; the transactor column is this function wall time, not exclusive CPU. Remaining uninstrumented Datomic internals and individual Postgres statements cannot be causally split without a transaction identifier; the table deliberately leaves these shares unknown. Samples are not request-specific proof. See trace-run.json and collection-errors.txt for unavailable collectors.",
     "",
   );
+  summary.instrumentIdle = idleAndPhaseMetrics(allWriterRows, bench.phases ?? [], requests);
+  lines.push(instrumentMarkdown(bench.instrument), idleMarkdown(summary.instrumentIdle));
   fs.writeFileSync(path.join(rootDir, "TRACE-REPORT.md"), lines.join("\n"));
   fs.writeFileSync(
     path.join(rootDir, "trace-summary.json"),

@@ -17,7 +17,26 @@ evidence=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/$
 mkdir -p "$evidence/driver" "$evidence/oracle-bridge"
 bridge_pid=
 docker image inspect node:22.23.2-bookworm-slim >/dev/null
-docker volume create "$prefix-driver" >/dev/null
+if [[ $prefix == tx2-dxt1-* ]]; then
+  docker run --rm --pull never --name "$prefix-disk-map" --network none --memory 64m --memory-swap 64m \
+    --mount type=bind,src=/,dst=/guest,readonly node:22.23.2-bookworm-slim \
+    sh -c 'df -k /guest /guest/var/lib/docker /guest/var/tmp; findmnt -T /guest -o SOURCE,FSTYPE,TARGET; findmnt -T /guest/var/lib/docker -o SOURCE,FSTYPE,TARGET' > "$evidence/guest-filesystems.txt"
+fi
+# [DX-T1-10] Why: the diagnostic moves every driver spill, witness and trace file off the database's virtual disk together.
+# Rejected: tmpfs only at /driver while the lexical output path still writes the old disk volume, or tmpfs in a verdict by default.
+storage=${DX_HARNESS_STORAGE:-volume}
+driver_mounts=(); command=("$@")
+if [[ $storage == volume ]]; then
+  docker volume create "$prefix-driver" >/dev/null
+  driver_mounts=(-v "$prefix-driver:/driver" -v "$prefix-driver:$repo/runs/DX-H3-vm")
+elif [[ $storage == tmpfs && $prefix == tx2-dxt1-* ]]; then
+  tmpfs_bytes=${DX_HARNESS_TMPFS_BYTES:-4294967296}
+  [[ $tmpfs_bytes =~ ^[0-9]+$ && $tmpfs_bytes -le 4294967296 && $tmpfs_bytes -ge 268435456 ]] || exit 2
+  driver_mounts=(--tmpfs "$repo/runs/DX-H3-vm:rw,nosuid,nodev,size=$tmpfs_bytes")
+  command=(/bin/sh -c 'ln -s "$PWD/runs/DX-H3-vm" /driver; exec "$@"' _ "$@")
+else
+  echo 'Invalid harness storage: volume or owned tmpfs diagnostic only' >&2; exit 2
+fi
 # Refuse host port forwarding in this mode, even for a pre-existing caller stack.
 for role in gw-w gw-r; do
   [[ $(docker inspect --format '{{len .HostConfig.PortBindings}}' "$prefix-$role") == 0 ]] || { echo "VM mode requires up.sh --no-publish" >&2; exit 1; }
@@ -50,7 +69,7 @@ extra_env=(); for kv in ${DX_DRIVER_ENV:-}; do extra_env+=(-e "$kv"); done
 docker create --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus "$cpus" --memory "$memory" --memory-swap "$memory" \
   --cgroupns host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v "$repo:$repo" \
   -v /Users/sam/Claude/Projects/triplex-db-2/evidence:/Users/sam/Claude/Projects/triplex-db-2/evidence \
-  -v "$prefix-driver:/driver" -v "$prefix-driver:$repo/runs/DX-H3-vm" -w "$repo" \
+  "${driver_mounts[@]}" -w "$repo" \
   -e "TRIPLEX_TRACE_CPU_PROFILE=${DX_NODE_PROFILE:-0}" -e "TRIPLEX_TRACE_NODE=${TRIPLEX_TRACE_NODE:-1}" -e "TRIPLEX_TRACE_SESSION=${TRIPLEX_TRACE_SESSION:-}" -e "TRIPLEX_TRACE_SYSTEM=${TRIPLEX_TRACE_SYSTEM:-0}" \
   -e "TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-off}" -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git -C "$repo" rev-parse HEAD)" -e TRIPLEX_TRACE_DIR=/driver/trace/raw -e TRIPLEX_TRACE_PROCESS=node -e "TRIPLEX_TRACE_DEBUG=${TRIPLEX_TRACE_DEBUG:-0}" \
   -e "TX2_ORACLE_BRIDGE=$evidence/oracle-bridge" \
@@ -58,7 +77,7 @@ docker create --pull never --name "$prefix-driver" --network "$prefix-net" --cpu
   -e "TX2_ENGINE_CONTAINER=$prefix-pg,$prefix-tx,$prefix-gw-w,$prefix-gw-r" \
   -e "TX2_ENGINE_CGROUPS=$cgroups" -e "TX2_ENGINE_CPUS=${TX2_ENGINE_CPUS:-1}" \
   ${extra_env[@]+"${extra_env[@]}"} \
-  node:22.23.2-bookworm-slim "$@" >/dev/null
+  node:22.23.2-bookworm-slim "${command[@]}" >/dev/null
 docker inspect "$prefix-driver" > "$evidence/driver-container.json"
 printf '%s\n' "$cgroups" > "$evidence/cgroups.txt"
 node "$repo/lab/experiments/EXP-DX1/h3/oracle-bridge.mjs" server "$evidence/oracle-bridge" &

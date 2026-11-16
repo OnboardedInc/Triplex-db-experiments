@@ -23,6 +23,7 @@ export interface QueueInterval<J> {
 }
 export interface JobResult<J> {
   readonly job: J;
+  readonly offeredAt: number;
   readonly startedAt: number;
   readonly finishedAt: number;
   /** finishedAt - scheduledAt */
@@ -45,6 +46,13 @@ export interface SchedulerOptions<J> {
   until?: number;
   /** [DX-T1-2] Why: observe queue transitions without changing dispatch or deadlines. Rejected: infer waiting from total latency. */
   observeQueue?: boolean;
+  /** [DX-T1-10] Why: keep a literal old-timer control for matched trials. Rejected: adjust scheduled offers or latency bars. */
+  offerTiming?: "precise" | "legacy";
+  /** [DX-T1-10] Why: deterministic fractional clocks need cancellable wakes. Rejected: wall sleeps as timer-accuracy proof. */
+  wakes?: {
+    after: (delayMs: number, callback: () => void) => () => void;
+    soon: (callback: () => void) => () => void;
+  };
 }
 
 export class OpenLoopScheduler<J extends Job> {
@@ -55,7 +63,8 @@ export class OpenLoopScheduler<J extends Job> {
   private active = new Map<number, J>();
   private queueInfo = new Map<J, { offeredAt: number; readyAt?: number; behind?: J }>();
   private flightChanges: { at: number; count: number }[] = [];
-  private timer: ReturnType<typeof setTimeout> | null = null;
+  private cancelWake: (() => void) | null = null;
+  private offeredTimes = new WeakMap<J, number>();
   private next = 0;
   private stopped = false;
   offered = 0;
@@ -74,7 +83,8 @@ export class OpenLoopScheduler<J extends Job> {
   }
   stop(): void {
     this.stopped = true;
-    if (this.timer) clearTimeout(this.timer);
+    this.cancelWake?.();
+    this.cancelWake = null;
   }
   get pending(): number {
     let n = 0;
@@ -167,7 +177,7 @@ export class OpenLoopScheduler<J extends Job> {
     return result;
   }
   private tick = () => {
-    this.timer = null;
+    this.cancelWake = null;
     if (this.stopped) return;
     const now = this.opts.now();
     while (this.next < this.jobs.length && this.jobs[this.next]!.scheduledAt <= now) {
@@ -176,14 +186,35 @@ export class OpenLoopScheduler<J extends Job> {
       this.next++;
       this.offer(job);
     }
+    if (this.stopped) return;
     const upcoming = this.jobs[this.next];
-    if (upcoming && !(this.opts.until !== undefined && upcoming.scheduledAt >= this.opts.until))
-      this.timer = setTimeout(this.tick, Math.max(0, upcoming.scheduledAt - this.opts.now()));
+    if (upcoming && !(this.opts.until !== undefined && upcoming.scheduledAt >= this.opts.until)) {
+      const remaining = upcoming.scheduledAt - this.opts.now();
+      // [DX-T1-10] Why: wake before Node's millisecond timer floor, then yield to I/O while checking the exact clock.
+      // Rejected: round the offer earlier or spin synchronously (changes the workload or starves socket callbacks).
+      if (this.opts.offerTiming !== "legacy" && remaining <= 2) {
+        this.cancelWake =
+          this.opts.wakes?.soon(this.tick) ??
+          (() => {
+            const handle = setImmediate(this.tick);
+            return () => clearImmediate(handle);
+          })();
+      } else {
+        const delay = Math.max(0, remaining - (this.opts.offerTiming === "legacy" ? 0 : 2));
+        this.cancelWake =
+          this.opts.wakes?.after(delay, this.tick) ??
+          (() => {
+            const handle = setTimeout(this.tick, delay);
+            return () => clearTimeout(handle);
+          })();
+      }
+    }
   };
 
   private offer(job: J) {
     this.offered++;
     const offeredAt = this.opts.now();
+    this.offeredTimes.set(job, offeredAt);
     this.opts.onOffer?.(job);
     const q = this.queues.get(job.key);
     if (this.opts.observeQueue) {
@@ -215,6 +246,7 @@ export class OpenLoopScheduler<J extends Job> {
       return;
     }
     const startedAt = this.opts.now();
+    const offeredAt = this.offeredTimes.get(job)!;
     const queue = this.queueOf(job, startedAt);
     if (startedAt - job.scheduledAt > this.opts.deadlineMs) {
       this.expired++;
@@ -222,6 +254,7 @@ export class OpenLoopScheduler<J extends Job> {
       if (nextInfo) nextInfo.readyAt = startedAt;
       this.opts.onDone({
         job,
+        offeredAt,
         startedAt,
         finishedAt: startedAt,
         latencyMs: startedAt - job.scheduledAt,
@@ -252,6 +285,7 @@ export class OpenLoopScheduler<J extends Job> {
         this.completed++;
         this.opts.onDone({
           job,
+          offeredAt,
           startedAt,
           finishedAt,
           latencyMs: finishedAt - job.scheduledAt,

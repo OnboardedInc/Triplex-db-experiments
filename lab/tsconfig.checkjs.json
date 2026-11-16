@@ -17,6 +17,7 @@
     ]
   },
   "files": [
+    "../lab/trace/instrument.mjs",
     "../lab/trace/disk-stats.mjs",
     "../lab/trace/native-settings.mjs",
     "../lab/trace/viewer.mjs",

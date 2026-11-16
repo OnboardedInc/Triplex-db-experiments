@@ -1,0 +1,12 @@
+North star: preserve P1/P2 exactness and the unchanged verdict while diagnosing apparatus, storage and idle costs.
+
+| qualification site | content | freshness | binding |
+| --- | --- | --- | --- |
+| Menu reproduction | Original raw and decoded-oracle hashes verified before executing the three exact Appendix A scripts. Primary outcomes, offer/finish/ACK boundaries and denominator 7408 checked. | Original DONE/complete attempts retained as historical observations, never called fresh oracle or performance acceptance. | Menu Git blob/source and script hashes, original tag/slot/source, frozen trace digest and original writer bytes; exact output populations retained. |
+| `commitClocks` | Actual finite ordered offer/start/ACK/finish, measured latency/wait identities, consistent queue partition and duplicate serialized fields. | Captured in the current request; missing clocks reject rather than become zero. | The same job/row and its real scheduler offer; no caller-adjusted ACK, changed schedule or subtraction in an authoritative bar. |
+| `instrumentMetrics` | Reuses the benchmark histogram and exact phase/settle/band populations; corrected numerator and matched denominator use the same definition. | Post-drain rows from this attempt; incomplete outcomes remain counted as missing. | Actual source-hashed bench helper, same frozen inputs and baseline; scheduler/history settings must match. All corrected results remain diagnostic. |
+| Idle/phase report | Actual service intervals, complete earlier-active prefix, original scheduled phase and every primary >50-ms count. | Current completed rows and matching recorded gateway spans, not an old profile. | Same trace IDs and already validated run/source/slot/clock of the report reader. No time-window correlation is promoted to a causal storage ID. |
+
+The benchmark’s `latencyMs`, authoritative P1/P2 bars, observer clocks, phase lengths and frozen offer trace stay unchanged. ACK-only retains actual lateness. The menu’s corrected on-time-offer number is explicitly counterfactual: it subtracts all observed scheduler lateness, including GC/event-loop stalls, so it cannot qualify a PASS. History batches of four require an explicit switch; the default remains the original batch formula.
+
+No acceptance edit, new dependency/image or product contract change is authorized. Additional measurement, runtime and byte-seal qualifiers are added here before their observations are committed.

@@ -224,6 +224,9 @@ import fs from "node:fs";import {configuration} from "./lab/trace/components.mjs
 fs.writeFileSync(process.argv[2],JSON.stringify({...configuration(),tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,startedAt:Date.now()})+"\n");
 TRACE_MANIFEST
 run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
+# [DX-T1-10] Why: an alternative harness disk needs observed guest mount identities, not Docker-volume names.
+# Rejected: assume /tmp is another disk or inspect the Mac's default Docker daemon.
+docker exec "$prefix-pg" sh -c 'cat /proc/self/mountinfo; df -k / /tmp /var/lib/postgresql/data' > "$out/guest-storage-mounts.txt"
 # [DX-R3-P9] Why: q6 comparisons require the same live guest boot parameters, not a remembered VM setting.
 # Rejected: assuming nohlt survives an orchestrator restart.
 if [[ $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ]]; then

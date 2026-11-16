@@ -11,6 +11,7 @@ import { rawLocalCoverage } from "./lib/raw-local-coverage.ts";
 import { httpCounts } from "./lib/http-counts.ts";
 import { readLatencyRun } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
+import { commitClocks, instrumentMetrics } from "../trace/instrument.mjs";
 /**
  * NS north-star benchmark driver (EXP-N01, measurement semantics v2 = TARGETS 1.1, 2.1, 4.1).
  * Measures P1 to P5 on the frozen writer trace against one composition and writes one report JSON.
@@ -139,6 +140,8 @@ const config = {
   readerSubjectAffinity: lane === "datomic" && !flag("no-reader-affinity"),
   seedBudgetS: Number(opt("seed-budget-s", "3600")),
   seedBatchFacts: Number(opt("seed-batch-facts", "400")),
+  schedulerTiming: opt("scheduler-timing", "precise") as "precise" | "legacy",
+  historyGrowthSubjects: opt("history-growth-subjects") ? Number(opt("history-growth-subjects")) : null,
   writerMaxInFlight: Number(opt("writer-max-inflight", "32")),
   writerDeadlineMs: Number(opt("writer-deadline-ms", "30000")),
   sweepConcurrency: Number(opt("sweep-concurrency", "16")),
@@ -166,6 +169,11 @@ const config = {
   barrierDir: opt("barrier-dir") ?? null,
   startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
+// [DX-T1-10] Why: the scheduler repair is default, but changing frozen history batches remains explicit.
+// Rejected: silently making four-subject history growth the verdict workload or changing the authoritative finish clock.
+if (!["precise", "legacy"].includes(config.schedulerTiming) ||
+    (config.historyGrowthSubjects !== null && (!Number.isSafeInteger(config.historyGrowthSubjects) || config.historyGrowthSubjects < 1 || config.historyGrowthSubjects > 500)))
+  throw Error("Invalid scheduler timing or history growth subjects");
 if (!["heap", "journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
 if (!["snapshot", "delta"].includes(config.readerBasisWire)) throw Error("Invalid reader basis wire mode");
 if (!["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
@@ -209,7 +217,7 @@ const log = (line: string) => {
   process.stderr.write(text + "\n");
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
-const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
+const BENCH_FILES = ["lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 
 const report: Record<string, any> = latencyReceipt({
   writerHeap,
@@ -224,6 +232,7 @@ const report: Record<string, any> = latencyReceipt({
   generator: { traceSha256: sha256File("lab/bench/lib/trace.ts"), worldSha256: sha256File("lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
+  harnessStorage: { requested: process.env.DX_HARNESS_STORAGE ?? "volume", filesystemType: fs.statfsSync(rawDir).type, tmpfsLimitBytes: process.env.DX_HARNESS_STORAGE === "tmpfs" ? Number(process.env.DX_HARNESS_TMPFS_BYTES) : null, diagnosticOnly: process.env.DX_HARNESS_STORAGE === "tmpfs" },
 });
 const save = () => atomicWrite(output, JSON.stringify(report, null, 2) + "\n");
 
@@ -699,6 +708,7 @@ async function run() {
     resends.push({ seq: job.ev.seq, result: how, tag: res.ok ? null : res.tag });
   };
   const scheduler = new OpenLoopScheduler<Job>(jobs, {
+    offerTiming: config.schedulerTiming,
     observeQueue: process.env.TRIPLEX_TRACE_LEVEL !== "off" && process.env.TRIPLEX_TRACE_NODE !== "0",
     maxInFlight: config.writerMaxInFlight, deadlineMs: config.writerDeadlineMs, now, exec: execute,
     onOffer: (job: Job) => {
@@ -740,8 +750,10 @@ async function run() {
       out.traceId = trace?.traceId;
       out.queue = queue;
       if (r.expired) { out.outcome = "unaccounted"; out.reason = "not sent: writer deadline passed"; r.job.onDone?.(-1); }
-      writes.push({ stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
-        offsetMs: r.job.scheduledAt - traceStart, scheduledAt: r.job.scheduledAt, startedAt: r.startedAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, waitMs: r.waitMs, expired: r.expired, ...out });
+      const row = { stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
+        offsetMs: r.job.scheduledAt - traceStart, scheduledAt: r.job.scheduledAt, offeredAt: r.offeredAt, startedAt: r.startedAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, waitMs: r.waitMs, expired: r.expired, ...out };
+      if (!r.expired && Number.isFinite(row.ackPublishedAt)) Object.assign(row, commitClocks(row));
+      writes.push(row);
       if (book && ev.stream === "background" && !ev.resend)
         book.recordCommand({ seq: ev.seq, scheduledAt: r.job.scheduledAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, outcome: r.expired ? "expired" : out.outcome ?? "unaccounted" });
     },
@@ -1179,7 +1191,7 @@ async function run() {
     const started = now();
     const deadline = started + maxS * 1000;
     let commands = 0, assertions = 0, failures = 0;
-    const perCommand = Math.max(1, Math.floor(config.seedBatchFacts / 4));
+    const perCommand = config.historyGrowthSubjects ?? Math.max(1, Math.floor(config.seedBatchFacts / 4));
     if (!historyList.length) return { targetDepth: depth, reachedDepth: 1, subjects: 0, commands, assertions, failures, wallS: 0 };
     if (lateGrowth.length) return { targetDepth: depth, reachedDepth: Math.min(...historyList.map((i) => historyVersion.get(i) ?? 0)) + 1, subjects: historyList.length, commands, assertions, failures, wallS: 0, incomplete: true, skipped: `an earlier growth command (${lateGrowth[0]!.cmd.commandId}) is still pending; it is never re-sent` };
     for (let v = (historyVersion.get(historyList[0]!) ?? 0) + 1; v < depth && now() < deadline; v++) {
@@ -1708,6 +1720,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
   report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
+  report.instrument = instrumentMetrics(report, writes, baseline, Histogram);
   report.compositionIdentity = { ...report.composition, watermarkSamples: watermarkSamples.length, note: "image digest, config hash and slot per assignment are bound by the gate (lab/bin/gate.mjs NS)" };
   report.secondary = { bulkLane: "not measured (seed uses the bulk lane without live reads)", retroactiveCorrections: p3.bars[7], explainAtOldBasis: "past-valid-time reads are 5% of the P1 mix; bit-for-bit audit repeats are not measured" };
   report.histograms = Object.fromEntries(Object.entries(stats).flatMap(([name, s]: any) => [[`${name}.read`, s._read.toJSON()], [`${name}.commit`, s._commit.toJSON()]]));
@@ -1754,6 +1767,8 @@ function loadBaselineWrites(): any[] | null {
       baselineReport.config?.rungSubjects !== config.rungSubjects || baselineReport.config?.composition !== config.composition ||
       baselineReport.config?.lane !== lane || baselineReport.config?.seed !== config.seed)
     throw Error("Matched baseline identity differs (zero readers, trace, subjects, composition, lane or seed)");
+  if (baselineReport.config.schedulerTiming !== config.schedulerTiming || baselineReport.config.historyGrowthSubjects !== config.historyGrowthSubjects)
+    throw Error("Matched baseline scheduler/history workload differs");
   report.matchedBaseline = { traceDigest: baselineReport.trace.digest, offeredUntilTraceS: baselineReport.writer?.offeredUntilTraceS,
     source: config.baselineWrites, sha256: createHash("sha256").update(fs.readFileSync(config.baselineWrites)).digest("hex") };
   const rows = readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
