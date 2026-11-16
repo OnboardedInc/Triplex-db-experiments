@@ -107,7 +107,7 @@ const output = path.resolve(opt("output") ?? "");
 if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--output must be under runs/");
 const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
-const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
+const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s", "history-growth-subjects"].filter((f) => opt(f) !== undefined);
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 if (opt("idle-gaps-ms")) devFlags.push("idle-diagnostic");
 const config = {

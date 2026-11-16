@@ -9,3 +9,5 @@ Source 236dd70bf8077ee0a91acba63376db723e078306; summary tracing; scheduler tria
 | tx2-dxt1-p10-scheduler-a-3-baseline | 10.723/37.268 | 10.230/36.327 | 9.582/35.438 | 0.605/3.879 | 6.293 | 13.500/92.200 | 0/0/3 |
 
 Controls are the two baseline rows in this table. Report a gain only when it exceeds their drift. A zero-reader row is context for the loaded disk trial, not a matched semantic-oracle PASS. Raw byte seals are next to this report.
+
+Actual `waitMs` includes timer, subject and slot waits: p50/p99 0.650/11.330, 0.041/12.788, 0.653/10.124 ms. The precise arm meets the menu's p50-under-.05-ms scheduling target; its tail does not improve.

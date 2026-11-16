@@ -1,0 +1,3434 @@
+{
+  "origin": {
+    "tag": "tx2-dxt1-p9-final-a",
+    "source": "c8ef367bb0deb12bea3a8587bdbd2c21ccf10df5",
+    "reportSha256": "5f5129139fc2c5cf8978c9960ead4dcf6582a9017a5f9991f6a883b987f6db10",
+    "writesSha256": "9aa0a2aa1a1315e81ac2929bc894a3e689cc73babc0a1d9abed7c9cb0016f3a6",
+    "zeroWritesSha256": "7ec97b829edfa705d22f8548dd28b0f5c4ba077df79601a84508b10f032480cd",
+    "selection": "Original primary commits in settled L256, matched zero by offset; only report inputs retained."
+  },
+  "bench": {
+    "config": { "settleS": 2 },
+    "traceStartAbsMs": 1794744284547.9255,
+    "phases": [
+      {
+        "writerDiagnosticsStart": {
+          "requests": 0,
+          "statuses": {},
+          "errors": {},
+          "counters": {
+            "beginDecodeMicros": 52.041999995708466,
+            "transactEncodeMicros": 483.7089999928139,
+            "optimisticAttempts": 3787,
+            "optimisticFallbacks": 0,
+            "conflicts": 116,
+            "replays": 116,
+            "clockReplays": 0,
+            "serverAssignedSubmissions": 3792,
+            "clientOrderedSubmissions": 0,
+            "ticketWaitMicros": 0
+          }
+        },
+        "historyIndex": null,
+        "idx": 6,
+        "name": "L256",
+        "readers": 256,
+        "mode": "mixed",
+        "measured": true,
+        "start": 1794744524658.6665,
+        "traceStartS": 240.11074096679687,
+        "end": 1794744569659.6565,
+        "writerDiagnosticsEnd": {
+          "requests": 0,
+          "statuses": {},
+          "errors": {},
+          "counters": {
+            "beginDecodeMicros": 15.000000013969839,
+            "transactEncodeMicros": 541.4589999709278,
+            "optimisticAttempts": 3838,
+            "optimisticFallbacks": 0,
+            "conflicts": 118,
+            "replays": 118,
+            "clockReplays": 0,
+            "serverAssignedSubmissions": 3844,
+            "clientOrderedSubmissions": 0,
+            "ticketWaitMicros": 0
+          }
+        },
+        "writerThread": {
+          "elu": 0.053239733827451306,
+          "longestBlockedMs": 67.895295,
+          "p99BlockedMs": 1.860607
+        },
+        "clientCpuMs": 119731.915,
+        "traceEndS": 285.1117309570312,
+        "overlapsBurst": false,
+        "memory": {
+          "rss": 4716974080,
+          "heapTotal": 640675840,
+          "heapUsed": 513487056,
+          "external": 19121620,
+          "arrayBuffers": 413781,
+          "peakProcessBytes": 4766547968,
+          "retainedReads": 7391138,
+          "numericResidentBytes": null
+        },
+        "stats": {
+          "phase": "L256",
+          "readers": 256,
+          "mode": "mixed",
+          "windowS": 43,
+          "overlapsBurst": false,
+          "reads": 1878245,
+          "correct": 1878245,
+          "violations": 0,
+          "errors": 0,
+          "goodputPerS": 43679.11065365132,
+          "read": {
+            "count": 1878245,
+            "minMs": 0.002,
+            "maxMs": 28.233,
+            "meanMs": 1.587,
+            "p50Ms": 1.351,
+            "p90Ms": 3.183,
+            "p99Ms": 6.303,
+            "p999Ms": 10.111
+          },
+          "hotShare": 0.5971670362492646,
+          "basisMix": { "latest": 1502762, "lastHour": 281780, "pastValidTime": 93703 },
+          "split": { "reads": 10926, "straddledATraceCommand": 10917, "straddledCorrect": 10917 },
+          "routing": {
+            "routes": { "replica": 1878245 },
+            "languages": { "packed": 1878245 },
+            "fallbackShare": 0,
+            "localShare": 1,
+            "waitedReads": 0,
+            "watermarkWait": {
+              "count": 1878245,
+              "minMs": 0,
+              "maxMs": 0,
+              "meanMs": 0,
+              "p50Ms": 0,
+              "p90Ms": 0,
+              "p99Ms": 0,
+              "p999Ms": 0
+            },
+            "watermarkWaitMs": 10
+          },
+          "buckets": {
+            "bucket:medium": {
+              "count": 714842,
+              "minMs": 0.002,
+              "maxMs": 28.233,
+              "meanMs": 1.592,
+              "p50Ms": 1.359,
+              "p90Ms": 3.199,
+              "p99Ms": 6.335,
+              "p999Ms": 10.175,
+              "meanBytes": 527843.6677545528
+            },
+            "hops:4": {
+              "count": 663579,
+              "minMs": 0.002,
+              "maxMs": 28.181,
+              "meanMs": 1.586,
+              "p50Ms": 1.351,
+              "p90Ms": 3.183,
+              "p99Ms": 6.303,
+              "p999Ms": 10.111,
+              "meanBytes": 371372.5382629649
+            },
+            "bucket:small": {
+              "count": 860854,
+              "minMs": 0.002,
+              "maxMs": 27.4,
+              "meanMs": 1.573,
+              "p50Ms": 1.343,
+              "p90Ms": 3.167,
+              "p99Ms": 6.271,
+              "p999Ms": 9.983,
+              "meanBytes": 164375.46867296894
+            },
+            "hops:3": {
+              "count": 708009,
+              "minMs": 0.002,
+              "maxMs": 28.233,
+              "meanMs": 1.588,
+              "p50Ms": 1.351,
+              "p90Ms": 3.199,
+              "p99Ms": 6.303,
+              "p999Ms": 10.111,
+              "meanBytes": 457405.3713469744
+            },
+            "hops:6": {
+              "count": 506657,
+              "minMs": 0.002,
+              "maxMs": 27.857,
+              "meanMs": 1.588,
+              "p50Ms": 1.359,
+              "p90Ms": 3.183,
+              "p99Ms": 6.303,
+              "p999Ms": 10.111,
+              "meanBytes": 351986.6231691263
+            },
+            "bucket:large": {
+              "count": 302549,
+              "minMs": 0.002,
+              "maxMs": 28.043,
+              "meanMs": 1.614,
+              "p50Ms": 1.375,
+              "p90Ms": 3.231,
+              "p99Ms": 6.367,
+              "p999Ms": 10.367,
+              "meanBytes": 759515.0564404443
+            }
+          },
+          "writer": {
+            "commits": 46,
+            "commit": {
+              "count": 46,
+              "minMs": 7.659,
+              "maxMs": 150.402,
+              "meanMs": 16.727,
+              "p50Ms": 12.351,
+              "p90Ms": 19.967,
+              "p99Ms": 150.402,
+              "p999Ms": 150.402
+            },
+            "maxLatencyMs": 150.40185546875,
+            "matchedZeroReader": { "commits": 46, "p50Ms": 12.863, "p99Ms": 44.42529296875 }
+          },
+          "feedLag": {
+            "count": 89,
+            "minMs": 2.735,
+            "maxMs": 76.858,
+            "meanMs": 9.751,
+            "p50Ms": 8.703,
+            "p90Ms": 15.423,
+            "p99Ms": 76.858,
+            "p999Ms": 76.858
+          },
+          "maintenanceEvents": 1,
+          "watermarks": {
+            "source": {
+              "min": {
+                "stream": "triplex-journal:ns-datomic-10k-nsmwhsbklrc0bf",
+                "epoch": 0,
+                "offset": 3924,
+                "ordinal": 0
+              },
+              "max": {
+                "stream": "triplex-journal:ns-datomic-10k-nsmwhsbklrc0bf",
+                "epoch": 0,
+                "offset": 4010,
+                "ordinal": 0
+              }
+            }
+          },
+          "client": {
+            "workerEluMean": [
+              0.7969123390505235, 0.7976502781061324, 0.0048605072543669746, 0.7968360359504763
+            ],
+            "maxWorkerElu": 0.7976502781061324,
+            "mainElu": 0.05371041652499688,
+            "processCpuMsPerLocalReadUpperBound": 0.06374669704963942,
+            "saturated": false
+          },
+          "engine": {
+            "containers": {
+              "tx2-dxt1-p9-final-a-ladder-pg": { "cpuPercentMean": 0.5522001832536935 },
+              "tx2-dxt1-p9-final-a-ladder-tx": { "cpuPercentMean": 5.3240667969640985 },
+              "tx2-dxt1-p9-final-a-ladder-gw-w": { "cpuPercentMean": 1.8394209710170222 },
+              "tx2-dxt1-p9-final-a-ladder-gw-r": { "cpuPercentMean": 1.4585015979454878 }
+            },
+            "cpuPercentMean": 9.174189549180307,
+            "samples": 43,
+            "peakMemBytes": 5656563712
+          }
+        }
+      }
+    ],
+    "matchedBaseline": { "offeredUntilTraceS": 900.0001975097656 }
+  },
+  "writes": [
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3469",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744526820.2534,
+      "startedAt": 1794744526820.7559,
+      "ackPublishedAt": 1794744526857.8218,
+      "finishedAt": 1794744526858.314,
+      "latencyMs": 38.060546875,
+      "waitMs": 0.50244140625,
+      "offsetMs": 242272.32788085938,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744526820.2534,
+          "end": 1794744526820.684,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744526820.684,
+          "end": 1794744526820.7559,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3470",
+      "facts": 16,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744527169.2566,
+      "startedAt": 1794744527169.538,
+      "ackPublishedAt": 1794744527184.304,
+      "finishedAt": 1794744527185.0208,
+      "latencyMs": 15.76416015625,
+      "waitMs": 0.281494140625,
+      "offsetMs": 242621.3310546875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744527169.2566,
+          "end": 1794744527169.4949,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744527169.4949,
+          "end": 1794744527169.538,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3471",
+      "facts": 33,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744527567.0554,
+      "startedAt": 1794744527567.9268,
+      "ackPublishedAt": 1794744527588.3142,
+      "finishedAt": 1794744527589.2104,
+      "latencyMs": 22.155029296875,
+      "waitMs": 0.871337890625,
+      "offsetMs": 243019.1298828125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744527567.0554,
+          "end": 1794744527567.8562,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744527567.8562,
+          "end": 1794744527567.9268,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3472",
+      "facts": 12,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744528053.2126,
+      "startedAt": 1794744528053.9966,
+      "ackPublishedAt": 1794744528066.9,
+      "finishedAt": 1794744528067.964,
+      "latencyMs": 14.75146484375,
+      "waitMs": 0.783935546875,
+      "offsetMs": 243505.287109375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744528053.2126,
+          "end": 1794744528053.9536,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744528053.9536,
+          "end": 1794744528053.9966,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3473",
+      "facts": 12,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744529041.7734,
+      "startedAt": 1794744529042.5557,
+      "ackPublishedAt": 1794744529058.4924,
+      "finishedAt": 1794744529059.8037,
+      "latencyMs": 18.0302734375,
+      "waitMs": 0.7822265625,
+      "offsetMs": 244493.84790039062,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744529041.7734,
+          "end": 1794744529042.5193,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744529042.5193,
+          "end": 1794744529042.5557,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3474",
+      "facts": 12,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744529651.3076,
+      "startedAt": 1794744529652.0942,
+      "ackPublishedAt": 1794744529664.916,
+      "finishedAt": 1794744529665.8325,
+      "latencyMs": 14.52490234375,
+      "waitMs": 0.78662109375,
+      "offsetMs": 245103.38208007812,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744529651.3076,
+          "end": 1794744529652.046,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744529652.046,
+          "end": 1794744529652.0942,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3475",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744530226.3206,
+      "startedAt": 1794744530226.6064,
+      "ackPublishedAt": 1794744530376.049,
+      "finishedAt": 1794744530376.7224,
+      "latencyMs": 150.40185546875,
+      "waitMs": 0.285888671875,
+      "offsetMs": 245678.39501953125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744530226.3206,
+          "end": 1794744530226.5706,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744530226.5706,
+          "end": 1794744530226.6064,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3476",
+      "facts": 16,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744530943.9426,
+      "startedAt": 1794744530944.283,
+      "ackPublishedAt": 1794744530966.2283,
+      "finishedAt": 1794744530967.2104,
+      "latencyMs": 23.267822265625,
+      "waitMs": 0.34033203125,
+      "offsetMs": 246396.01708984375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744530943.9426,
+          "end": 1794744530944.2498,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744530944.2498,
+          "end": 1794744530944.283,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3477",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744532446.7146,
+      "startedAt": 1794744532446.814,
+      "ackPublishedAt": 1794744532462.0784,
+      "finishedAt": 1794744532463.2148,
+      "latencyMs": 16.500244140625,
+      "waitMs": 0.099365234375,
+      "offsetMs": 247898.7890625,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744532446.7146,
+          "end": 1794744532446.7874,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744532446.7874,
+          "end": 1794744532446.814,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3478",
+      "facts": 6,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744533188.5056,
+      "startedAt": 1794744533188.553,
+      "ackPublishedAt": 1794744533198.8403,
+      "finishedAt": 1794744533199.3152,
+      "latencyMs": 10.8095703125,
+      "waitMs": 0.04736328125,
+      "offsetMs": 248640.580078125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744533188.5056,
+          "end": 1794744533188.523,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744533188.523,
+          "end": 1794744533188.553,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3479",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744533305.7126,
+      "startedAt": 1794744533305.9922,
+      "ackPublishedAt": 1794744533316.0222,
+      "finishedAt": 1794744533316.5164,
+      "latencyMs": 10.8037109375,
+      "waitMs": 0.279541015625,
+      "offsetMs": 248757.787109375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744533305.7126,
+          "end": 1794744533305.9644,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744533305.9644,
+          "end": 1794744533305.9922,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3480",
+      "facts": 9,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744533655.7686,
+      "startedAt": 1794744533656.5034,
+      "ackPublishedAt": 1794744533668.1165,
+      "finishedAt": 1794744533668.7053,
+      "latencyMs": 12.936767578125,
+      "waitMs": 0.73486328125,
+      "offsetMs": 249107.84301757812,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744533655.7686,
+          "end": 1794744533656.431,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744533656.431,
+          "end": 1794744533656.5034,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3481",
+      "facts": 8,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744534504.6045,
+      "startedAt": 1794744534505.0527,
+      "ackPublishedAt": 1794744534518.5637,
+      "finishedAt": 1794744534519.1306,
+      "latencyMs": 14.526123046875,
+      "waitMs": 0.4482421875,
+      "offsetMs": 249956.67895507812,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744534504.6045,
+          "end": 1794744534505.0237,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744534505.0237,
+          "end": 1794744534505.0527,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3482",
+      "facts": 18,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744535622.0105,
+      "startedAt": 1794744535622.5303,
+      "ackPublishedAt": 1794744535637.7124,
+      "finishedAt": 1794744535638.4949,
+      "latencyMs": 16.484375,
+      "waitMs": 0.519775390625,
+      "offsetMs": 251074.0849609375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744535622.0105,
+          "end": 1794744535622.4922,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744535622.4922,
+          "end": 1794744535622.5303,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3483",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744536921.7466,
+      "startedAt": 1794744536922.8386,
+      "ackPublishedAt": 1794744536936.5747,
+      "finishedAt": 1794744536937.616,
+      "latencyMs": 15.869384765625,
+      "waitMs": 1.092041015625,
+      "offsetMs": 252373.82104492188,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744536921.7466,
+          "end": 1794744536922.7913,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744536922.7913,
+          "end": 1794744536922.8386,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3484",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744538027.7766,
+      "startedAt": 1794744538028.3916,
+      "ackPublishedAt": 1794744538039.8171,
+      "finishedAt": 1794744538040.3628,
+      "latencyMs": 12.586181640625,
+      "waitMs": 0.614990234375,
+      "offsetMs": 253479.85107421875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744538027.7766,
+          "end": 1794744538028.2952,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744538028.2952,
+          "end": 1794744538028.3916,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3485",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744538590.1196,
+      "startedAt": 1794744538590.3247,
+      "ackPublishedAt": 1794744538600.5444,
+      "finishedAt": 1794744538601.0317,
+      "latencyMs": 10.912109375,
+      "waitMs": 0.205078125,
+      "offsetMs": 254042.19409179688,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744538590.1196,
+          "end": 1794744538590.2332,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744538590.2332,
+          "end": 1794744538590.3247,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3486",
+      "facts": 9,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744539058.2605,
+      "startedAt": 1794744539058.38,
+      "ackPublishedAt": 1794744539068.387,
+      "finishedAt": 1794744539069.5513,
+      "latencyMs": 11.290771484375,
+      "waitMs": 0.119384765625,
+      "offsetMs": 254510.3349609375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744539058.2605,
+          "end": 1794744539058.3447,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744539058.3447,
+          "end": 1794744539058.38,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3487",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744539064.4915,
+      "startedAt": 1794744539065.4016,
+      "ackPublishedAt": 1794744539073.256,
+      "finishedAt": 1794744539073.5403,
+      "latencyMs": 9.048828125,
+      "waitMs": 0.91015625,
+      "offsetMs": 254516.56591796875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744539064.4915,
+          "end": 1794744539065.295,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744539065.295,
+          "end": 1794744539065.4016,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3488",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744540391.7195,
+      "startedAt": 1794744540392.7866,
+      "ackPublishedAt": 1794744540401.211,
+      "finishedAt": 1794744540401.7837,
+      "latencyMs": 10.064208984375,
+      "waitMs": 1.067138671875,
+      "offsetMs": 255843.7939453125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744540391.7195,
+          "end": 1794744540392.7512,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744540392.7512,
+          "end": 1794744540392.7866,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3489",
+      "facts": 9,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744540821.1116,
+      "startedAt": 1794744540822.1746,
+      "ackPublishedAt": 1794744540833.4153,
+      "finishedAt": 1794744540834.006,
+      "latencyMs": 12.89453125,
+      "waitMs": 1.06298828125,
+      "offsetMs": 256273.18603515625,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744540821.1116,
+          "end": 1794744540822.1138,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744540822.1138,
+          "end": 1794744540822.1746,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3490",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744540917.0776,
+      "startedAt": 1794744540917.2207,
+      "ackPublishedAt": 1794744540929.3093,
+      "finishedAt": 1794744540929.8845,
+      "latencyMs": 12.806884765625,
+      "waitMs": 0.14306640625,
+      "offsetMs": 256369.15209960938,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744540917.0776,
+          "end": 1794744540917.1711,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744540917.1711,
+          "end": 1794744540917.2207,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3491",
+      "facts": 8,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744541262.2185,
+      "startedAt": 1794744541262.823,
+      "ackPublishedAt": 1794744541275.5557,
+      "finishedAt": 1794744541276.1377,
+      "latencyMs": 13.919189453125,
+      "waitMs": 0.6044921875,
+      "offsetMs": 256714.29296875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744541262.2185,
+          "end": 1794744541262.7485,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744541262.7485,
+          "end": 1794744541262.823,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3492",
+      "facts": 21,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744542199.0396,
+      "startedAt": 1794744542199.4565,
+      "ackPublishedAt": 1794744542209.8953,
+      "finishedAt": 1794744542210.7505,
+      "latencyMs": 11.7109375,
+      "waitMs": 0.4169921875,
+      "offsetMs": 257651.11401367188,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744542199.0396,
+          "end": 1794744542199.4255,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744542199.4255,
+          "end": 1794744542199.4565,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3493",
+      "facts": 16,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744542453.6135,
+      "startedAt": 1794744542453.8584,
+      "ackPublishedAt": 1794744542462.4402,
+      "finishedAt": 1794744542463.2322,
+      "latencyMs": 9.61865234375,
+      "waitMs": 0.244873046875,
+      "offsetMs": 257905.68798828125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744542453.6135,
+          "end": 1794744542453.8083,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744542453.8083,
+          "end": 1794744542453.8584,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3494",
+      "facts": 20,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744544472.4727,
+      "startedAt": 1794744544472.6646,
+      "ackPublishedAt": 1794744544483.493,
+      "finishedAt": 1794744544484.2888,
+      "latencyMs": 11.816162109375,
+      "waitMs": 0.19189453125,
+      "offsetMs": 259924.54711914062,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744544472.4727,
+          "end": 1794744544472.6362,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744544472.6362,
+          "end": 1794744544472.6646,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3495",
+      "facts": 19,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744545624.9065,
+      "startedAt": 1794744545625.6716,
+      "ackPublishedAt": 1794744545637.1907,
+      "finishedAt": 1794744545637.9485,
+      "latencyMs": 13.0419921875,
+      "waitMs": 0.76513671875,
+      "offsetMs": 261076.98095703125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744545624.9065,
+          "end": 1794744545625.628,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744545625.628,
+          "end": 1794744545625.6716,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3496",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744548422.6865,
+      "startedAt": 1794744548422.8792,
+      "ackPublishedAt": 1794744548433.88,
+      "finishedAt": 1794744548434.4,
+      "latencyMs": 11.71337890625,
+      "waitMs": 0.192626953125,
+      "offsetMs": 263874.7609863281,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744548422.6865,
+          "end": 1794744548422.8547,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744548422.8547,
+          "end": 1794744548422.8792,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3497",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744548861.1694,
+      "startedAt": 1794744548861.9016,
+      "ackPublishedAt": 1794744548870.8804,
+      "finishedAt": 1794744548871.7627,
+      "latencyMs": 10.59326171875,
+      "waitMs": 0.732177734375,
+      "offsetMs": 264313.2438964844,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744548861.1694,
+          "end": 1794744548861.8694,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744548861.8694,
+          "end": 1794744548861.9016,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3498",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744551887.4417,
+      "startedAt": 1794744551887.6804,
+      "ackPublishedAt": 1794744551896.5454,
+      "finishedAt": 1794744551897.471,
+      "latencyMs": 10.029296875,
+      "waitMs": 0.23876953125,
+      "offsetMs": 267339.51611328125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744551887.4417,
+          "end": 1794744551887.65,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744551887.65,
+          "end": 1794744551887.6804,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3499",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744551937.2114,
+      "startedAt": 1794744551937.573,
+      "ackPublishedAt": 1794744551947.5498,
+      "finishedAt": 1794744551947.9517,
+      "latencyMs": 10.740234375,
+      "waitMs": 0.361572265625,
+      "offsetMs": 267389.2858886719,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744551937.2114,
+          "end": 1794744551937.5195,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744551937.5195,
+          "end": 1794744551937.573,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3500",
+      "facts": 23,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744554933.0854,
+      "startedAt": 1794744554933.2986,
+      "ackPublishedAt": 1794744554948.412,
+      "finishedAt": 1794744554949.3982,
+      "latencyMs": 16.312744140625,
+      "waitMs": 0.213134765625,
+      "offsetMs": 270385.1599121094,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744554933.0854,
+          "end": 1794744554933.2415,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744554933.2415,
+          "end": 1794744554933.2986,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3501",
+      "facts": 6,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744555747.7756,
+      "startedAt": 1794744555748.1199,
+      "ackPublishedAt": 1794744555754.942,
+      "finishedAt": 1794744555755.4343,
+      "latencyMs": 7.65869140625,
+      "waitMs": 0.34423828125,
+      "offsetMs": 271199.85009765625,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744555747.7756,
+          "end": 1794744555748.0874,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744555748.0874,
+          "end": 1794744555748.1199,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3502",
+      "facts": 8,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744557466.5566,
+      "startedAt": 1794744557467.3538,
+      "ackPublishedAt": 1794744557478.3557,
+      "finishedAt": 1794744557478.8987,
+      "latencyMs": 12.342041015625,
+      "waitMs": 0.797119140625,
+      "offsetMs": 272918.6311035156,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744557466.5566,
+          "end": 1794744557467.3162,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744557467.3162,
+          "end": 1794744557467.3538,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3503",
+      "facts": 14,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744557982.9075,
+      "startedAt": 1794744557982.9465,
+      "ackPublishedAt": 1794744557993.751,
+      "finishedAt": 1794744557994.418,
+      "latencyMs": 11.510498046875,
+      "waitMs": 0.0390625,
+      "offsetMs": 273434.98193359375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744557982.9075,
+          "end": 1794744557982.913,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744557982.913,
+          "end": 1794744557982.9465,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3504",
+      "facts": 22,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744558070.6055,
+      "startedAt": 1794744558071.3088,
+      "ackPublishedAt": 1794744558080.6284,
+      "finishedAt": 1794744558081.3628,
+      "latencyMs": 10.75732421875,
+      "waitMs": 0.703369140625,
+      "offsetMs": 273522.6799316406,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744558070.6055,
+          "end": 1794744558071.2751,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744558071.2751,
+          "end": 1794744558071.3088,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3505",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744558071.3445,
+      "startedAt": 1794744558074.9077,
+      "ackPublishedAt": 1794744558081.6655,
+      "finishedAt": 1794744558081.8384,
+      "latencyMs": 10.493896484375,
+      "waitMs": 3.563232421875,
+      "offsetMs": 273523.4189453125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744558071.3445,
+          "end": 1794744558074.8972,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744558074.8972,
+          "end": 1794744558074.9077,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3506",
+      "facts": 9,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744559983.3354,
+      "startedAt": 1794744559983.8936,
+      "ackPublishedAt": 1794744559994.6912,
+      "finishedAt": 1794744559995.2637,
+      "latencyMs": 11.92822265625,
+      "waitMs": 0.55810546875,
+      "offsetMs": 275435.4099121094,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744559983.3354,
+          "end": 1794744559983.8162,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744559983.8162,
+          "end": 1794744559983.8936,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3507",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744561826.9336,
+      "startedAt": 1794744561827.299,
+      "ackPublishedAt": 1794744561840.0579,
+      "finishedAt": 1794744561841.462,
+      "latencyMs": 14.5283203125,
+      "waitMs": 0.365478515625,
+      "offsetMs": 277279.0080566406,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744561826.9336,
+          "end": 1794744561827.2576,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744561827.2576,
+          "end": 1794744561827.299,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3508",
+      "facts": 11,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744562267.2195,
+      "startedAt": 1794744562268.2756,
+      "ackPublishedAt": 1794744562277.6516,
+      "finishedAt": 1794744562279.4497,
+      "latencyMs": 12.230224609375,
+      "waitMs": 1.05615234375,
+      "offsetMs": 277719.2939453125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744562267.2195,
+          "end": 1794744562268.2417,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744562268.2417,
+          "end": 1794744562268.2756,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3509",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744564240.3135,
+      "startedAt": 1794744564241.1453,
+      "ackPublishedAt": 1794744564256.469,
+      "finishedAt": 1794744564257.1003,
+      "latencyMs": 16.786865234375,
+      "waitMs": 0.831787109375,
+      "offsetMs": 279692.3879394531,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744564240.3135,
+          "end": 1794744564241.076,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744564241.076,
+          "end": 1794744564241.1453,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3510",
+      "facts": 8,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744564755.8936,
+      "startedAt": 1794744564756.6401,
+      "ackPublishedAt": 1794744564766.6162,
+      "finishedAt": 1794744564767.1958,
+      "latencyMs": 11.30224609375,
+      "waitMs": 0.74658203125,
+      "offsetMs": 280207.9680175781,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744564755.8936,
+          "end": 1794744564756.6165,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744564756.6165,
+          "end": 1794744564756.6401,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3511",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744566342.6135,
+      "startedAt": 1794744566343.4233,
+      "ackPublishedAt": 1794744566354.1838,
+      "finishedAt": 1794744566354.801,
+      "latencyMs": 12.1875,
+      "waitMs": 0.809814453125,
+      "offsetMs": 281794.68798828125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744566342.6135,
+          "end": 1794744566343.3503,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744566343.3503,
+          "end": 1794744566343.4233,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3512",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744567365.1074,
+      "startedAt": 1794744567365.255,
+      "ackPublishedAt": 1794744567377.0093,
+      "finishedAt": 1794744567377.6377,
+      "latencyMs": 12.5302734375,
+      "waitMs": 0.1474609375,
+      "offsetMs": 282817.1818847656,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744567365.1074,
+          "end": 1794744567365.2163,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744567365.2163,
+          "end": 1794744567365.255,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3513",
+      "facts": 13,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744567587.9614,
+      "startedAt": 1794744567588.1382,
+      "ackPublishedAt": 1794744567598.5251,
+      "finishedAt": 1794744567599.2695,
+      "latencyMs": 11.30810546875,
+      "waitMs": 0.1767578125,
+      "offsetMs": 283040.0358886719,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744567587.9614,
+          "end": 1794744567588.0486,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744567588.0486,
+          "end": 1794744567588.1382,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhsbklrc0bf:t3514",
+      "facts": 21,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794744567805.4285,
+      "startedAt": 1794744567806.1428,
+      "ackPublishedAt": 1794744567822.9387,
+      "finishedAt": 1794744567825.3105,
+      "latencyMs": 19.882080078125,
+      "waitMs": 0.71435546875,
+      "offsetMs": 283257.5029296875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794744567805.4285,
+          "end": 1794744567806.115,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794744567806.115,
+          "end": 1794744567806.1428,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    }
+  ],
+  "baseline": [
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3469",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743405913.098,
+      "startedAt": 1794743405913.8513,
+      "ackPublishedAt": 1794743405939.5388,
+      "finishedAt": 1794743405939.7527,
+      "latencyMs": 26.65478515625,
+      "waitMs": 0.75341796875,
+      "offsetMs": 242272.32788085938,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743405913.098,
+          "end": 1794743405913.8145,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743405913.8145,
+          "end": 1794743405913.8513,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3470",
+      "facts": 16,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743406262.101,
+      "startedAt": 1794743406262.4065,
+      "ackPublishedAt": 1794743406272.2344,
+      "finishedAt": 1794743406272.6528,
+      "latencyMs": 10.5517578125,
+      "waitMs": 0.305419921875,
+      "offsetMs": 242621.3310546875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743406262.101,
+          "end": 1794743406262.323,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743406262.323,
+          "end": 1794743406262.4065,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3471",
+      "facts": 33,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743406659.9,
+      "startedAt": 1794743406660.8503,
+      "ackPublishedAt": 1794743406675.3896,
+      "finishedAt": 1794743406676.096,
+      "latencyMs": 16.196044921875,
+      "waitMs": 0.950439453125,
+      "offsetMs": 243019.1298828125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743406659.9,
+          "end": 1794743406660.7964,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743406660.7964,
+          "end": 1794743406660.8503,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3472",
+      "facts": 12,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743407146.0571,
+      "startedAt": 1794743407146.2869,
+      "ackPublishedAt": 1794743407156.4453,
+      "finishedAt": 1794743407156.796,
+      "latencyMs": 10.73876953125,
+      "waitMs": 0.229736328125,
+      "offsetMs": 243505.287109375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743407146.0571,
+          "end": 1794743407146.1868,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743407146.1868,
+          "end": 1794743407146.2869,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3473",
+      "facts": 12,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743408134.618,
+      "startedAt": 1794743408134.9336,
+      "ackPublishedAt": 1794743408178.6892,
+      "finishedAt": 1794743408179.0432,
+      "latencyMs": 44.42529296875,
+      "waitMs": 0.315673828125,
+      "offsetMs": 244493.84790039062,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743408134.618,
+          "end": 1794743408134.8604,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743408134.8604,
+          "end": 1794743408134.9336,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3474",
+      "facts": 12,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743408744.152,
+      "startedAt": 1794743408744.3245,
+      "ackPublishedAt": 1794743408756.6484,
+      "finishedAt": 1794743408757.0615,
+      "latencyMs": 12.909423828125,
+      "waitMs": 0.17236328125,
+      "offsetMs": 245103.38208007812,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743408744.152,
+          "end": 1794743408744.2905,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743408744.2905,
+          "end": 1794743408744.3245,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3475",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743409319.165,
+      "startedAt": 1794743409319.9263,
+      "ackPublishedAt": 1794743409331.0337,
+      "finishedAt": 1794743409331.297,
+      "latencyMs": 12.132080078125,
+      "waitMs": 0.76123046875,
+      "offsetMs": 245678.39501953125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743409319.165,
+          "end": 1794743409319.7976,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743409319.7976,
+          "end": 1794743409319.9263,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3476",
+      "facts": 16,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743410036.787,
+      "startedAt": 1794743410037.857,
+      "ackPublishedAt": 1794743410064.5964,
+      "finishedAt": 1794743410065.4558,
+      "latencyMs": 28.668701171875,
+      "waitMs": 1.06982421875,
+      "offsetMs": 246396.01708984375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743410036.787,
+          "end": 1794743410037.8179,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743410037.8179,
+          "end": 1794743410037.857,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3477",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743411539.559,
+      "startedAt": 1794743411539.653,
+      "ackPublishedAt": 1794743411554.7256,
+      "finishedAt": 1794743411555.0476,
+      "latencyMs": 15.488525390625,
+      "waitMs": 0.093994140625,
+      "offsetMs": 247898.7890625,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743411539.559,
+          "end": 1794743411539.5925,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743411539.5925,
+          "end": 1794743411539.653,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3478",
+      "facts": 6,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743412281.35,
+      "startedAt": 1794743412282.2449,
+      "ackPublishedAt": 1794743412291.4993,
+      "finishedAt": 1794743412291.7695,
+      "latencyMs": 10.41943359375,
+      "waitMs": 0.894775390625,
+      "offsetMs": 248640.580078125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743412281.35,
+          "end": 1794743412282.2012,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743412282.2012,
+          "end": 1794743412282.2449,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3479",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743412398.5571,
+      "startedAt": 1794743412398.9944,
+      "ackPublishedAt": 1794743412417.8633,
+      "finishedAt": 1794743412418.0747,
+      "latencyMs": 19.517578125,
+      "waitMs": 0.437255859375,
+      "offsetMs": 248757.787109375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743412398.5571,
+          "end": 1794743412398.9321,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743412398.9321,
+          "end": 1794743412398.9944,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3480",
+      "facts": 9,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743412748.613,
+      "startedAt": 1794743412749.963,
+      "ackPublishedAt": 1794743412761.5247,
+      "finishedAt": 1794743412761.7969,
+      "latencyMs": 13.183837890625,
+      "waitMs": 1.349853515625,
+      "offsetMs": 249107.84301757812,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743412748.613,
+          "end": 1794743412749.9536,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743412749.9536,
+          "end": 1794743412749.963,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3481",
+      "facts": 8,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743413597.449,
+      "startedAt": 1794743413598.5222,
+      "ackPublishedAt": 1794743413613.277,
+      "finishedAt": 1794743413613.5625,
+      "latencyMs": 16.113525390625,
+      "waitMs": 1.0732421875,
+      "offsetMs": 249956.67895507812,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743413597.449,
+          "end": 1794743413598.4675,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743413598.4675,
+          "end": 1794743413598.5222,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3482",
+      "facts": 18,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743414714.855,
+      "startedAt": 1794743414715.08,
+      "ackPublishedAt": 1794743414725.6426,
+      "finishedAt": 1794743414726.3584,
+      "latencyMs": 11.50341796875,
+      "waitMs": 0.22509765625,
+      "offsetMs": 251074.0849609375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743414714.855,
+          "end": 1794743414715.0352,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743414715.0352,
+          "end": 1794743414715.08,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3483",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743416014.591,
+      "startedAt": 1794743416014.9292,
+      "ackPublishedAt": 1794743416023.95,
+      "finishedAt": 1794743416024.5203,
+      "latencyMs": 9.92919921875,
+      "waitMs": 0.338134765625,
+      "offsetMs": 252373.82104492188,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743416014.591,
+          "end": 1794743416014.8713,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743416014.8713,
+          "end": 1794743416014.9292,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3484",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743417120.621,
+      "startedAt": 1794743417121.2266,
+      "ackPublishedAt": 1794743417133.7083,
+      "finishedAt": 1794743417133.9395,
+      "latencyMs": 13.318359375,
+      "waitMs": 0.60546875,
+      "offsetMs": 253479.85107421875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743417120.621,
+          "end": 1794743417121.1616,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743417121.1616,
+          "end": 1794743417121.2266,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3485",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743417682.964,
+      "startedAt": 1794743417684.0234,
+      "ackPublishedAt": 1794743417692.3115,
+      "finishedAt": 1794743417692.5496,
+      "latencyMs": 9.58544921875,
+      "waitMs": 1.059326171875,
+      "offsetMs": 254042.19409179688,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743417682.964,
+          "end": 1794743417683.9624,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743417683.9624,
+          "end": 1794743417684.0234,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3486",
+      "facts": 9,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743418151.105,
+      "startedAt": 1794743418151.1877,
+      "ackPublishedAt": 1794743418161.2559,
+      "finishedAt": 1794743418161.5576,
+      "latencyMs": 10.45263671875,
+      "waitMs": 0.082763671875,
+      "offsetMs": 254510.3349609375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743418151.105,
+          "end": 1794743418151.1436,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743418151.1436,
+          "end": 1794743418151.1877,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3487",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743418157.336,
+      "startedAt": 1794743418157.3633,
+      "ackPublishedAt": 1794743418164.517,
+      "finishedAt": 1794743418164.7659,
+      "latencyMs": 7.429931640625,
+      "waitMs": 0.02734375,
+      "offsetMs": 254516.56591796875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743418157.336,
+          "end": 1794743418157.345,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743418157.345,
+          "end": 1794743418157.3633,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3488",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743419484.564,
+      "startedAt": 1794743419484.6306,
+      "ackPublishedAt": 1794743419496.2942,
+      "finishedAt": 1794743419496.5886,
+      "latencyMs": 12.024658203125,
+      "waitMs": 0.066650390625,
+      "offsetMs": 255843.7939453125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743419484.564,
+          "end": 1794743419484.576,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743419484.576,
+          "end": 1794743419484.6306,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3489",
+      "facts": 9,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743419913.956,
+      "startedAt": 1794743419914.433,
+      "ackPublishedAt": 1794743419929.1018,
+      "finishedAt": 1794743419929.416,
+      "latencyMs": 15.4599609375,
+      "waitMs": 0.47705078125,
+      "offsetMs": 256273.18603515625,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743419913.956,
+          "end": 1794743419914.35,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743419914.35,
+          "end": 1794743419914.433,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3490",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743420009.922,
+      "startedAt": 1794743420010.9207,
+      "ackPublishedAt": 1794743420020.2092,
+      "finishedAt": 1794743420020.5317,
+      "latencyMs": 10.609619140625,
+      "waitMs": 0.99853515625,
+      "offsetMs": 256369.15209960938,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743420009.922,
+          "end": 1794743420010.889,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743420010.889,
+          "end": 1794743420010.9207,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3491",
+      "facts": 8,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743420355.063,
+      "startedAt": 1794743420355.9224,
+      "ackPublishedAt": 1794743420365.028,
+      "finishedAt": 1794743420365.3137,
+      "latencyMs": 10.250732421875,
+      "waitMs": 0.859375,
+      "offsetMs": 256714.29296875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743420355.063,
+          "end": 1794743420355.8806,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743420355.8806,
+          "end": 1794743420355.9224,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3492",
+      "facts": 21,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743421291.884,
+      "startedAt": 1794743421292.9585,
+      "ackPublishedAt": 1794743421307.93,
+      "finishedAt": 1794743421308.444,
+      "latencyMs": 16.56005859375,
+      "waitMs": 1.074462890625,
+      "offsetMs": 257651.11401367188,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743421291.884,
+          "end": 1794743421292.9192,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743421292.9192,
+          "end": 1794743421292.9585,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3493",
+      "facts": 16,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743421546.458,
+      "startedAt": 1794743421547.1245,
+      "ackPublishedAt": 1794743421559.3235,
+      "finishedAt": 1794743421560.3877,
+      "latencyMs": 13.9296875,
+      "waitMs": 0.66650390625,
+      "offsetMs": 257905.68798828125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743421546.458,
+          "end": 1794743421547.092,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743421547.092,
+          "end": 1794743421547.1245,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3494",
+      "facts": 20,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743423565.3171,
+      "startedAt": 1794743423565.5737,
+      "ackPublishedAt": 1794743423575.8787,
+      "finishedAt": 1794743423576.421,
+      "latencyMs": 11.103759765625,
+      "waitMs": 0.256591796875,
+      "offsetMs": 259924.54711914062,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743423565.3171,
+          "end": 1794743423565.531,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743423565.531,
+          "end": 1794743423565.5737,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3495",
+      "facts": 19,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743424717.751,
+      "startedAt": 1794743424717.8936,
+      "ackPublishedAt": 1794743424727.9236,
+      "finishedAt": 1794743424728.419,
+      "latencyMs": 10.66796875,
+      "waitMs": 0.142578125,
+      "offsetMs": 261076.98095703125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743424717.751,
+          "end": 1794743424717.8193,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743424717.8193,
+          "end": 1794743424717.8936,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3496",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743427515.531,
+      "startedAt": 1794743427516.0593,
+      "ackPublishedAt": 1794743427525.7993,
+      "finishedAt": 1794743427526.2444,
+      "latencyMs": 10.71337890625,
+      "waitMs": 0.5283203125,
+      "offsetMs": 263874.7609863281,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743427515.531,
+          "end": 1794743427516.0222,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743427516.0222,
+          "end": 1794743427516.0593,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3497",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743427954.014,
+      "startedAt": 1794743427955.0315,
+      "ackPublishedAt": 1794743427966.2,
+      "finishedAt": 1794743427966.485,
+      "latencyMs": 12.47119140625,
+      "waitMs": 1.017578125,
+      "offsetMs": 264313.2438964844,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743427954.014,
+          "end": 1794743427954.9404,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743427954.9404,
+          "end": 1794743427955.0315,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3498",
+      "facts": 5,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743430980.2861,
+      "startedAt": 1794743430980.7778,
+      "ackPublishedAt": 1794743430989.8386,
+      "finishedAt": 1794743430990.0886,
+      "latencyMs": 9.802490234375,
+      "waitMs": 0.49169921875,
+      "offsetMs": 267339.51611328125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743430980.2861,
+          "end": 1794743430980.7373,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743430980.7373,
+          "end": 1794743430980.7778,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3499",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743431030.056,
+      "startedAt": 1794743431030.1025,
+      "ackPublishedAt": 1794743431036.1968,
+      "finishedAt": 1794743431036.4565,
+      "latencyMs": 6.400634765625,
+      "waitMs": 0.046630859375,
+      "offsetMs": 267389.2858886719,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743431030.056,
+          "end": 1794743431030.076,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743431030.076,
+          "end": 1794743431030.1025,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3500",
+      "facts": 23,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743434025.93,
+      "startedAt": 1794743434026.2776,
+      "ackPublishedAt": 1794743434037.449,
+      "finishedAt": 1794743434038.7961,
+      "latencyMs": 12.8662109375,
+      "waitMs": 0.34765625,
+      "offsetMs": 270385.1599121094,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743434025.93,
+          "end": 1794743434026.232,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743434026.232,
+          "end": 1794743434026.2776,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3501",
+      "facts": 6,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743434840.62,
+      "startedAt": 1794743434841.8733,
+      "ackPublishedAt": 1794743434853.433,
+      "finishedAt": 1794743434853.6685,
+      "latencyMs": 13.04833984375,
+      "waitMs": 1.253173828125,
+      "offsetMs": 271199.85009765625,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743434840.62,
+          "end": 1794743434841.8054,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743434841.8054,
+          "end": 1794743434841.8733,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3502",
+      "facts": 8,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743436559.4011,
+      "startedAt": 1794743436560.125,
+      "ackPublishedAt": 1794743436573.8708,
+      "finishedAt": 1794743436574.1946,
+      "latencyMs": 14.79345703125,
+      "waitMs": 0.723876953125,
+      "offsetMs": 272918.6311035156,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743436559.4011,
+          "end": 1794743436559.9995,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743436559.9995,
+          "end": 1794743436560.125,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3503",
+      "facts": 14,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743437075.752,
+      "startedAt": 1794743437075.8423,
+      "ackPublishedAt": 1794743437090.9531,
+      "finishedAt": 1794743437092.093,
+      "latencyMs": 16.341064453125,
+      "waitMs": 0.09033203125,
+      "offsetMs": 273434.98193359375,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743437075.752,
+          "end": 1794743437075.801,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743437075.801,
+          "end": 1794743437075.8423,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3505",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743437164.189,
+      "startedAt": 1794743437165.759,
+      "ackPublishedAt": 1794743437174.7593,
+      "finishedAt": 1794743437175.0894,
+      "latencyMs": 10.900390625,
+      "waitMs": 1.570068359375,
+      "offsetMs": 273523.4189453125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743437164.189,
+          "end": 1794743437165.7534,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743437165.7534,
+          "end": 1794743437165.759,
+          "inFlight": 1,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3504",
+      "facts": 22,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743437163.45,
+      "startedAt": 1794743437164.0757,
+      "ackPublishedAt": 1794743437175.5977,
+      "finishedAt": 1794743437176.2808,
+      "latencyMs": 12.830810546875,
+      "waitMs": 0.625732421875,
+      "offsetMs": 273522.6799316406,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743437163.45,
+          "end": 1794743437164.0542,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743437164.0542,
+          "end": 1794743437164.0757,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3506",
+      "facts": 9,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743439076.18,
+      "startedAt": 1794743439077.3801,
+      "ackPublishedAt": 1794743439091.9797,
+      "finishedAt": 1794743439092.3489,
+      "latencyMs": 16.1689453125,
+      "waitMs": 1.2001953125,
+      "offsetMs": 275435.4099121094,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743439076.18,
+          "end": 1794743439077.2153,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743439077.2153,
+          "end": 1794743439077.3801,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3507",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743440919.778,
+      "startedAt": 1794743440920.0781,
+      "ackPublishedAt": 1794743440931.3704,
+      "finishedAt": 1794743440931.6904,
+      "latencyMs": 11.912353515625,
+      "waitMs": 0.300048828125,
+      "offsetMs": 277279.0080566406,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743440919.778,
+          "end": 1794743440919.9836,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743440919.9836,
+          "end": 1794743440920.0781,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3508",
+      "facts": 11,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743441360.064,
+      "startedAt": 1794743441360.8362,
+      "ackPublishedAt": 1794743441377.626,
+      "finishedAt": 1794743441377.9678,
+      "latencyMs": 17.90380859375,
+      "waitMs": 0.772216796875,
+      "offsetMs": 277719.2939453125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743441360.064,
+          "end": 1794743441360.8132,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743441360.8132,
+          "end": 1794743441360.8362,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3509",
+      "facts": 7,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743443333.158,
+      "startedAt": 1794743443334.021,
+      "ackPublishedAt": 1794743443349.011,
+      "finishedAt": 1794743443349.5393,
+      "latencyMs": 16.38134765625,
+      "waitMs": 0.863037109375,
+      "offsetMs": 279692.3879394531,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743443333.158,
+          "end": 1794743443333.9773,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743443333.9773,
+          "end": 1794743443334.021,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3510",
+      "facts": 8,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743443848.738,
+      "startedAt": 1794743443849.4402,
+      "ackPublishedAt": 1794743443861.009,
+      "finishedAt": 1794743443861.53,
+      "latencyMs": 12.7919921875,
+      "waitMs": 0.7021484375,
+      "offsetMs": 280207.9680175781,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743443848.738,
+          "end": 1794743443849.4106,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743443849.4106,
+          "end": 1794743443849.4402,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3511",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743445435.458,
+      "startedAt": 1794743445436.161,
+      "ackPublishedAt": 1794743445448.1738,
+      "finishedAt": 1794743445448.5251,
+      "latencyMs": 13.067138671875,
+      "waitMs": 0.702880859375,
+      "offsetMs": 281794.68798828125,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743445435.458,
+          "end": 1794743445436.1238,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743445436.1238,
+          "end": 1794743445436.161,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3512",
+      "facts": 10,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743446457.952,
+      "startedAt": 1794743446458.8198,
+      "ackPublishedAt": 1794743446475.2983,
+      "finishedAt": 1794743446475.7012,
+      "latencyMs": 17.749267578125,
+      "waitMs": 0.867919921875,
+      "offsetMs": 282817.1818847656,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743446457.952,
+          "end": 1794743446458.71,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743446458.71,
+          "end": 1794743446458.8198,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3513",
+      "facts": 13,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743446680.806,
+      "startedAt": 1794743446681.8108,
+      "ackPublishedAt": 1794743446691.6653,
+      "finishedAt": 1794743446692.3748,
+      "latencyMs": 11.56884765625,
+      "waitMs": 1.0048828125,
+      "offsetMs": 283040.0358886719,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743446680.806,
+          "end": 1794743446681.784,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743446681.784,
+          "end": 1794743446681.8108,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    },
+    {
+      "stream": "background",
+      "resend": false,
+      "commandId": "nsmwhro3r72c50:t3514",
+      "facts": 21,
+      "burst": false,
+      "outcome": "committed",
+      "expired": false,
+      "scheduledAt": 1794743446898.273,
+      "startedAt": 1794743446899.1873,
+      "ackPublishedAt": 1794743446913.182,
+      "finishedAt": 1794743446913.6956,
+      "latencyMs": 15.422607421875,
+      "waitMs": 0.914306640625,
+      "offsetMs": 283257.5029296875,
+      "queue": [
+        {
+          "cause": "scheduler-late",
+          "start": 1794743446898.273,
+          "end": 1794743446899.148,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        },
+        {
+          "cause": "scheduler-dispatch",
+          "start": 1794743446899.148,
+          "end": 1794743446899.1873,
+          "inFlight": 0,
+          "capacity": 32,
+          "behindTraceId": null
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "bandsAtL256": {
+      "5-10": {
+        "count": 29,
+        "minMs": 7.659,
+        "maxMs": 150.402,
+        "meanMs": 17.802,
+        "p50Ms": 12.223,
+        "p90Ms": 16.895,
+        "p99Ms": 150.402,
+        "p999Ms": 150.402
+      },
+      "11-25": {
+        "count": 16,
+        "minMs": 9.619,
+        "maxMs": 23.268,
+        "meanMs": 14.438,
+        "p50Ms": 13.055,
+        "p90Ms": 19.967,
+        "p99Ms": 23.268,
+        "p999Ms": 23.268
+      },
+      "26-50": {
+        "count": 1,
+        "minMs": 22.155,
+        "maxMs": 22.155,
+        "meanMs": 22.155,
+        "p50Ms": 22.155,
+        "p90Ms": 22.155,
+        "p99Ms": 22.155,
+        "p999Ms": 22.155
+      }
+    },
+    "writer": {
+      "commits": 46,
+      "commit": {
+        "count": 46,
+        "minMs": 7.659,
+        "maxMs": 150.402,
+        "meanMs": 16.727,
+        "p50Ms": 12.351,
+        "p90Ms": 19.967,
+        "p99Ms": 150.402,
+        "p999Ms": 150.402
+      },
+      "maxLatencyMs": 150.40185546875,
+      "matchedZeroReader": { "commits": 46, "p50Ms": 12.863, "p99Ms": 44.42529296875 }
+    }
+  }
+}

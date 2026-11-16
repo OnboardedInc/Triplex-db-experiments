@@ -173,3 +173,25 @@ it("uses every earlier active request and attributes growth versus sparse by sch
   expect(m.phaseTypes.growth.over50).toBe(1);
   expect(m.phaseTypes.sparse.over50).toBe(1);
 });
+
+it("reproduces the recorded F L256 population and matched denominator at the original clock", async () => {
+  const { readFileSync } = await import("node:fs");
+  const fixture = JSON.parse(
+    readFileSync(new URL("./fixtures/instrument-F-L256.json", import.meta.url), "utf8"),
+  );
+  const before = JSON.stringify(fixture),
+    m = instrumentMetrics(fixture.bench, fixture.writes, fixture.baseline, Histogram);
+  expect(fixture.writes).toHaveLength(46);
+  expect(fixture.baseline).toHaveLength(46);
+  expect(m.missing).toBe(0);
+  expect(m.definitions.observed.bandsAtL256).toEqual(fixture.expected.bandsAtL256);
+  const phase = m.definitions.observed.phases.L256;
+  expect(phase.commit).toEqual(fixture.expected.writer.commit);
+  expect(phase.baselineCount).toBe(fixture.expected.writer.matchedZeroReader.commits);
+  expect(phase.baselineP99Ms).toBe(fixture.expected.writer.matchedZeroReader.p99Ms);
+  expect(JSON.stringify(fixture)).toBe(before);
+  fixture.writes[0].latencyMs -= 1;
+  expect(() =>
+    instrumentMetrics(fixture.bench, fixture.writes, fixture.baseline, Histogram),
+  ).toThrow();
+});

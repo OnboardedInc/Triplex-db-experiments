@@ -13,7 +13,7 @@ const session = path.join(base, prefix + "-session");
 const read = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
 const source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
 const { kind } = read(path.join(session, "request.json"));
-if (!["scheduler", "disk", "history", "wal"].includes(kind)) throw Error("Unsupported trial");
+if (!["scheduler", "disk", "history", "cores"].includes(kind)) throw Error("Unsupported trial");
 const modes =
   kind === "disk"
     ? ["zero", "baseline", "candidate", "baseline"]
@@ -31,7 +31,8 @@ const rows = [];
 let build;
 for (const [index, mode] of modes.entries()) {
   const i = index + 1,
-    tag = `${prefix}-${i}-${mode}`,
+    rootTag = `${prefix}-${i}-${mode}`,
+    tag = rootTag + (kind === "cores" ? "-ladder" : ""),
     dir = path.join(base, tag);
   check(
     fs.readFileSync(path.join(session, `${i}-exit.txt`), "utf8").trim() === "0",
@@ -80,7 +81,141 @@ for (const [index, mode] of modes.entries()) {
     "Primary accounting differs",
   );
   primary.forEach(commitClocks);
-  const instrument = instrumentMetrics(b, writes, [], Histogram);
+  const zeroRows = [];
+  let zeroMetrics = null;
+  if (kind === "cores") {
+    const ztag = rootTag + "-zero",
+      zd = path.join(base, ztag),
+      zb = read(path.join(zd, "driver/ns-report.json")),
+      zm = read(path.join(zd, "trace-run.json")),
+      zt = read(path.join(zd, "trace-summary.json"));
+    check(
+      zb.status === "DONE" &&
+        !zb.finalizationErrors.length &&
+        zb.seed.seededSubjects === 10000 &&
+        zb.config.zeroReaders &&
+        zb.config.matchDurationS === 450 &&
+        zb.config.readerLadderOnly &&
+        zb.config.schedulerTiming === "precise" &&
+        zb.config.historyGrowthSubjects === null &&
+        zb.config.readPath === "replica" &&
+        zb.config.strictRecordClocks &&
+        zb.publicationMode === "worker" &&
+        zb.trace.digest === b.trace.digest &&
+        zb.oracle.status === "NOT-RUN" &&
+        zm.tag === ztag &&
+        zm.slot === ztag &&
+        zm.source === source &&
+        zm.session === prefix &&
+        zt.tag === ztag &&
+        zt.source === source &&
+        zt.complete &&
+        zm.level === "summary" &&
+        fs.readFileSync(path.join(zd, "source-build-hashes.json"), "utf8") === hashes,
+      "Foreign/incomplete core zero arm",
+    );
+    fs.writeFileSync(path.join(session, ztag + ".SHA256SUMS"), await verifiedRawManifest(zd));
+    for await (const w of records(path.join(zd, "driver/ns-writes.jsonl")))
+      if (w.stream === "background" && !w.resend) zeroRows.push(w);
+    check(
+      zeroRows.length === primary.length &&
+        zeroRows.every((w) => w.outcome === "committed" && !w.expired) &&
+        b.matchedBaseline.sha256 ===
+          crypto
+            .createHash("sha256")
+            .update(fs.readFileSync(path.join(zd, "driver/ns-writes.jsonl")))
+            .digest("hex"),
+      "Wrong matched core zero bytes",
+    );
+    zeroRows.forEach(commitClocks);
+    check(
+      JSON.stringify(instrumentMetrics(zb, zeroRows, [], Histogram)) ===
+        JSON.stringify(zb.instrument),
+      "Core zero clock table differs",
+    );
+    const zs = Math.min(...zeroRows.map((w) => w.scheduledAt)),
+      ze = Math.max(...zeroRows.map((w) => w.finishedAt)),
+      hosts = [];
+    for await (const h of records(path.join(zd, "trace/raw/system-darwin.jsonl.gz"))) {
+      check(
+        h.run === ztag && h.source === source && h.slot === ztag && h.at >= zm.startedAt - 1000,
+        "Foreign zero host sample",
+      );
+      if (
+        h.at >= zs &&
+        h.at <= ze &&
+        Number.isFinite(h.otherCpu) &&
+        /used\s*=\s*[\d.]+[MG]/.test(h.swap)
+      )
+        hosts.push(h);
+    }
+    check(hosts.length > 100, "Missing core zero host samples");
+    zeroMetrics = {
+      tag: ztag,
+      definitions: Object.fromEntries(
+        Object.entries(zb.instrument.definitions).map(([k, v]) => [k, v.allPrimary]),
+      ),
+      host: {
+        swapGiB: q(
+          hosts.map((h) => {
+            const v = /used\s*=\s*([\d.]+)([MG])/.exec(h.swap);
+            return +v[1] / (v[2] === "M" ? 1024 : 1);
+          }),
+        ),
+        macCpu: q(hosts.map((h) => h.otherCpu)),
+      },
+    };
+    // [DX-T1-10] Why: effective container and thread readbacks bind the placement to both halves of this attempt.
+    // Rejected: infer isolation from the requested environment or take a reader core away unnoticed.
+    const expand = (v) =>
+      v
+        .split(",")
+        .flatMap((x) => {
+          const [a, b] = x.split("-").map(Number);
+          return b === undefined ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i);
+        })
+        .sort((a, b) => a - b)
+        .join(",");
+    for (const [ad, at] of [
+      [zd, ztag],
+      [dir, tag],
+    ]) {
+      const cs = read(path.join(ad, "containers.json")),
+        dc = read(path.join(ad, "driver-container.json"))[0];
+      for (const [role, cpus] of Object.entries({
+        tx: mode === "candidate" ? "0,2" : "0",
+        pg: "1",
+        "gw-w": "2",
+        "gw-r": "4",
+      }))
+        check(
+          expand(cs.find((c) => c.Name === "/" + at + "-" + role)?.HostConfig.CpusetCpus ?? "") ===
+            cpus,
+          "Wrong core " + role,
+        );
+      check(expand(dc.HostConfig.CpusetCpus) === "3,4,5,6,7", "Changed driver cores");
+      const tr = fs
+        .readFileSync(path.join(ad, "driver.log"), "utf8")
+        .split("\n")
+        .filter((l) => l.startsWith('{"type":"node-thread-placement"'))
+        .map(JSON.parse);
+      check(
+        tr.some((r) => r.thread === 0) && tr.filter((r) => r.thread !== 0).length >= 4,
+        "Missing core thread readbacks",
+      );
+      for (const r of tr) {
+        check(
+          r.main === "3" &&
+            r.workers === "4,5,6,7" &&
+            expand(r.allowed) === (r.thread === 0 ? "3" : "4,5,6,7"),
+          "Wrong writer/reader affinity",
+        );
+        for (const bg of r.background ?? [])
+          check(expand(bg.allowed) === "4,5,6,7", "Background on writer core");
+      }
+    }
+  }
+  const instrument = instrumentMetrics(b, writes, zeroRows, Histogram);
   check(
     JSON.stringify(instrument) === JSON.stringify(b.instrument),
     "Recorded clock table differs from exact rows",
@@ -163,6 +298,15 @@ for (const [index, mode] of modes.entries()) {
         !b.config.readerLadderOnly,
       "History workload differs",
     );
+  if (kind === "cores")
+    check(
+      b.config.matchDurationS === 450 &&
+        b.config.readerLadderOnly &&
+        b.config.maxReaders === 1024 &&
+        b.config.historyGrowthSubjects === null &&
+        b.publicationMode === "worker",
+      "Core workload differs",
+    );
   if (kind === "disk")
     check(
       b.config.matchDurationS === 450 && b.config.readerLadderOnly && b.config.maxReaders === 1024,
@@ -191,6 +335,15 @@ for (const [index, mode] of modes.entries()) {
     history: b.priorities.P4.history,
     writer: b.phases.map((p) => ({ phase: p.name, thread: p.writerThread })),
     rawBytes: t.rawBytes,
+    zero: zeroMetrics,
+    reader: b.priorities.P1.ladder.map((p) => ({
+      phase: p.phase,
+      goodput: p.goodputPerS,
+      readP99: p.read.p99Ms,
+      writerRatio: instrument.definitions.observed.phases[p.phase]?.writerRatio,
+    })),
+    l256: instrument.definitions.observed.bandsAtL256,
+    p1Bars: b.priorities.P1.bars,
     storage,
   });
 }
@@ -226,7 +379,11 @@ md.push(
   "Controls are the two baseline rows in this table. Report a gain only when it exceeds their drift. A zero-reader row is context for the loaded disk trial, not a matched semantic-oracle PASS. Raw byte seals are next to this report.",
 );
 fs.writeFileSync(path.join(session, "TRIAL.md"), md.join("\n") + "\n");
-const files = ["TRIAL.json", "TRIAL.md", ...rows.map((r) => r.tag + ".SHA256SUMS")];
+const files = [
+  "TRIAL.json",
+  "TRIAL.md",
+  ...rows.flatMap((r) => [r.tag + ".SHA256SUMS", ...(r.zero ? [r.zero.tag + ".SHA256SUMS"] : [])]),
+];
 fs.writeFileSync(
   path.join(session, "TRIAL.SHA256SUMS"),
   files

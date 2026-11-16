@@ -2,8 +2,8 @@
 # [DX-T1-9] Why: tail candidates need identical frozen inputs and baseline/candidate/baseline in one uninterrupted session.
 # Rejected: compare a storage diagnostic with a historical summary pair or release the lease between bookends.
 set -euo pipefail
-kind=${1:?witness|storage|scheduler|disk|history}; prefix=${2:?tx2-dxt1-prefix}; shift 2
-[[ $kind == witness || $kind == storage || $kind == scheduler || $kind == disk || $kind == history ]] && [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
+kind=${1:?witness|storage|scheduler|disk|history|cores}; prefix=${2:?tx2-dxt1-prefix}; shift 2
+[[ $kind == witness || $kind == storage || $kind == scheduler || $kind == disk || $kind == history || $kind == cores ]] && [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
 session_dir=$DX_STACK_EVIDENCE/$prefix-session
@@ -11,7 +11,7 @@ mkdir "$session_dir"
 git rev-parse HEAD > "$session_dir/head.txt"
 python3 - "$session_dir/request.json" "$kind" <<'PY'
 import os,json,sys
-json.dump({'kind':sys.argv[2],'candidate':os.environ.get('DX_TAIL_PG_SETTINGS'),'publication':os.environ.get('DX_PUBLICATION_MODE','worker' if sys.argv[2]=='storage' else 'deferred'),'witnessLevel':os.environ.get('DX_WITNESS_LEVEL','summary')},open(sys.argv[1],'w'),indent=2)
+json.dump({'kind':sys.argv[2],'candidate':os.environ.get('DX_TAIL_PG_SETTINGS'),'publication':os.environ.get('DX_PUBLICATION_MODE','deferred' if sys.argv[2]=='witness' else 'worker'),'witnessLevel':os.environ.get('DX_WITNESS_LEVEL','summary')},open(sys.argv[1],'w'),indent=2)
 PY
 python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
 lock=$HOME/Claude/Projects/triplex-db-2/locks/measure
@@ -67,6 +67,11 @@ for mode in "${modes[@]}"; do
   settings=(TRIPLEX_TRACE_LEVEL=summary DX_HARNESS_STORAGE=volume)
   [[ $mode != candidate ]] || settings+=(DX_HARNESS_STORAGE=root-disk)
   [[ $mode != zero ]] || workload+=(--zero-readers)
+ elif [[ $kind == cores ]]; then
+  # [DX-T1-10] Why: share the gateway core without removing a reader core, with matched zero/loaded bookends.
+  # Rejected: reuse the rejected shared-Postgres layout or compare a loaded window against a different source.
+  settings=(TRIPLEX_TRACE_LEVEL=summary DX_MATCH_DURATION_S=450 DX_CPUS_TX=0 DX_CPUS_PG=1 DX_CPUS_GW_WRITE=2 DX_CPUS_GW_READ=4 DX_CPUS_DRIVER=3,4,5,6,7 DX_MAIN_CPU=3 DX_WORKER_CPUS=4,5,6,7)
+  [[ $mode != candidate ]] || settings+=(DX_CPUS_TX=0,2)
  else
   # [DX-T1-10] Why: the original 500-subject growth remains the verdict workload; four is an explicit trial only.
   # Rejected: silently replace a frozen maintenance step or shorten history-depth verification to improve a tail.
@@ -74,15 +79,17 @@ for mode in "${modes[@]}"; do
   workload=(--rung 10k --max-readers 1024 --match-duration-s 900)
   [[ $mode != candidate ]] || workload+=(--history-growth-subjects 4)
  fi
- env "${settings[@]}" bash lab/experiments/EXP-DX1/t1/run.sh real "$tag" "${workload[@]}" "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
+ run_kind=real; [[ $kind != cores ]] || run_kind=pair
+ env "${settings[@]}" bash lab/experiments/EXP-DX1/t1/run.sh "$run_kind" "$tag" "${workload[@]}" "$@" > "$session_dir/$i-controller.log" 2>&1 & child=$!
  rc=0;wait "$child" || rc=$?;child=
  printf '%s\n' "$rc" > "$session_dir/$i-exit.txt"
  [[ $rc == 0 ]] || session_rc=$rc
  bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --inventory > "$session_dir/$i-remaining.txt"
  [[ ! -s $session_dir/$i-remaining.txt ]] || exit 1
  sh lab/bin/host-quiet.sh > "$session_dir/$i-host-after.jsonl" || true
+ [[ $rc == 0 ]] || break
 done
-if [[ $session_rc == 0 && ( $kind == scheduler || $kind == disk || $kind == history || $kind == wal ) ]]; then
+if [[ $session_rc == 0 && ( $kind == scheduler || $kind == disk || $kind == history || $kind == cores ) ]]; then
  node lab/trace/trial.mjs "$DX_STACK_EVIDENCE" "$prefix" > "$session_dir/analysis.log"
 fi
 exit "$session_rc"
