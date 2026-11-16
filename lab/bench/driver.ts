@@ -12,6 +12,8 @@ import { httpCounts } from "./lib/http-counts.ts";
 import { readLatencyRun } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 import { commitClocks, instrumentMetrics } from "../trace/instrument.mjs";
+import { idlePlan, type IdleEvent } from "./lib/idle-plan.ts";
+import { IdleKeep } from "./lib/idle-keep.ts";
 /**
  * NS north-star benchmark driver (EXP-N01, measurement semantics v2 = TARGETS 1.1, 2.1, 4.1).
  * Measures P1 to P5 on the frozen writer trace against one composition and writes one report JSON.
@@ -107,6 +109,7 @@ const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
+if (opt("idle-gaps-ms")) devFlags.push("idle-diagnostic");
 const config = {
   lane,
   rung: devSubjects ? `dev:${rungSubjects}` : rung,
@@ -142,6 +145,10 @@ const config = {
   seedBatchFacts: Number(opt("seed-batch-facts", "400")),
   schedulerTiming: opt("scheduler-timing", "precise") as "precise" | "legacy",
   historyGrowthSubjects: opt("history-growth-subjects") ? Number(opt("history-growth-subjects")) : null,
+  idleGapsMs: opt("idle-gaps-ms")?.split(",").map(Number) ?? null,
+  idleCommits: Number(opt("idle-commits", "150")),
+  idleKeep: opt("idle-keep", "none") as "none" | "http" | "refused",
+  idleRefusalProofSha256: process.env.DX_IDLE_REFUSAL_PROOF_SHA256 ?? null,
   writerMaxInFlight: Number(opt("writer-max-inflight", "32")),
   writerDeadlineMs: Number(opt("writer-deadline-ms", "30000")),
   sweepConcurrency: Number(opt("sweep-concurrency", "16")),
@@ -174,6 +181,10 @@ const config = {
 if (!["precise", "legacy"].includes(config.schedulerTiming) ||
     (config.historyGrowthSubjects !== null && (!Number.isSafeInteger(config.historyGrowthSubjects) || config.historyGrowthSubjects < 1 || config.historyGrowthSubjects > 500)))
   throw Error("Invalid scheduler timing or history growth subjects");
+if (config.idleGapsMs && (lane !== "datomic" || !config.zeroReaders || !config.readerLadderOnly ||
+    config.probe10PerS !== 0 || config.baselineWrites || config.roundPlan || config.matchDurationS ||
+    !["none", "http", "refused"].includes(config.idleKeep))) throw Error("Idle diagnostics require isolated zero-reader, no overlay and no verdict baseline");
+if (!config.idleGapsMs && config.idleKeep !== "none") throw Error("Keep-warm is diagnostic only");
 if (!["heap", "journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
 if (!["snapshot", "delta"].includes(config.readerBasisWire)) throw Error("Invalid reader basis wire mode");
 if (!["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
@@ -465,10 +476,14 @@ async function run() {
   // series under TARGETS 2.1 item 5; the plan hash and the parameters are bound in the report.
   const seriesParams: Partial<TraceParams> = pairPlan?.traceParams ?? {};
   const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
-  const traceDurationS = pairPlan ? pairPlan.durationS : 7200;
-  const events = generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
-  report.trace = { params, durationS: traceDurationS, digest: traceDigest(events), generated: traceStats(events), generatorSha256: report.generator.traceSha256, seed: config.seed };
+  const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N) : null;
+  const traceDurationS = idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
+  const events = idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
+  report.trace = { params, durationS: traceDurationS, digest: traceDigest(events), generated: traceStats(events), generatorSha256: report.generator.traceSha256, seed: config.seed,
+    ...(idle ? { diagnostic: "Fixed-gap ten-fact component probe; not the frozen verdict workload", idlePlanSha256: report.generator.benchSources["lab/bench/lib/idle-plan.ts"] } : {}) };
   log(`trace: ${events.length} events over ${traceDurationS}s, digest ${report.trace.digest}, active-set share ${report.trace.generated.activeShare.toFixed(3)}`);
+  const idleKeep = idle && config.idleKeep !== "none" ? new IdleKeep({ mode: config.idleKeep, scope: scopeName, dir: rawDir }) : null;
+  await idleKeep?.ready;
 
   // ---------------------------------------------------------------- reader workers
   const replicaHost = config.readPath === "replica" ? config.replicaThread === "worker"
@@ -751,6 +766,7 @@ async function run() {
       out.queue = queue;
       if (r.expired) { out.outcome = "unaccounted"; out.reason = "not sent: writer deadline passed"; r.job.onDone?.(-1); }
       const row = { stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
+        ...(idle ? { idleGapMs: (ev as IdleEvent).idleGapMs, idleWarmup: (ev as IdleEvent).idleWarmup } : {}),
         offsetMs: r.job.scheduledAt - traceStart, scheduledAt: r.job.scheduledAt, offeredAt: r.offeredAt, startedAt: r.startedAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, waitMs: r.waitMs, expired: r.expired, ...out };
       if (!r.expired && Number.isFinite(row.ackPublishedAt)) Object.assign(row, commitClocks(row));
       writes.push(row);
@@ -792,7 +808,7 @@ async function run() {
   // ---------------------------------------------------------------- feed consumer (P3)
   // [EXP-M01] Paired rounds measure the writer and the read probe; the P3 consumer and its crash injection stay in NS.
   const lvl = (config.levelS ?? PROFILES[profile].levelS) * 1000;
-  const crashPlan: { at: number; point: CrashPoint }[] = (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
+  const crashPlan: { at: number; point: CrashPoint }[] = idle ? [] : (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
   // [DX-H1] Why: Datomic observes the native transact-result boundary before the driver ACK; other lanes still lack observers.
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
   const publicationClock = lane === "datomic" && !pairPlan ? openHostFeedClock() : null;
@@ -893,7 +909,7 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
-  const plan = nsPlan(profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
+  const plan = idle ? idle.phases : nsPlan(profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   const phases: any[] = [];
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
   // Rejected: issuing maintenance after readers stop.
@@ -1003,6 +1019,7 @@ async function run() {
 
   // ---------------------------------------------------------------- wind down
   const endAt = now();
+  if (idleKeep) report.idleKeep = await idleKeep.close();
   if (probeTimer) clearInterval(probeTimer);
   clearInterval(queueTimer);
   if (queueContextTimer) clearInterval(queueContextTimer);

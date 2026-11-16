@@ -51,6 +51,13 @@ export DX_PG_CENSUS=${DX_PG_CENSUS:-1}
 # [DX-T1-4] Why: q8's 192-MiB window retains the benchmark's historical basis cohort; fallback decoding stays off the writer.
 # Rejected: silently inheriting the 64-MiB driver default, which caused measured historical-read gateway fallbacks. Seed batches retain q8 setup after a measured tail benefit.
 args=("$@")
+# [DX-T1-10] Why: component warming is an explicit fixed-gap diagnostic, never a full-pair setting.
+# Rejected: silently keep an endpoint or disk warm while claiming an unchanged frozen verdict workload.
+if [[ ${DX_IDLE_SENTINEL:-0} == 1 || ${DX_IDLE_REFUSAL_PROBE:-0} == 1 || ${DX_IDLE_TCP:-default} != default ]]; then
+  idle_diagnostic=false
+  for argument in ${args[@]+"${args[@]}"}; do [[ $argument != --idle-gaps-ms ]] || idle_diagnostic=true; done
+  [[ $kind == real && $idle_diagnostic == true ]] || { echo 'Idle controls require an explicit diagnostic, not a verdict' >&2; exit 2; }
+fi
 for setting in replica-history-mib replica-fallback-thread seed-batch-facts reader-basis-wire; do
   present=false
   for argument in ${args[@]+"${args[@]}"}; do [[ $argument != --$setting && $argument != --$setting=* ]] || present=true; done

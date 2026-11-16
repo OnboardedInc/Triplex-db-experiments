@@ -7,7 +7,7 @@ export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 roles=(gw-r gw-w tx pg)
 # [DX-T1] Why: interrupted startup may leave one of the runner's short-lived helpers behind.
 # Rejected: releasing a measurement lease while an owned client or writable volume survives.
-if [[ $prefix == tx2-dxt1-* ]]; then roles+=(driver health cgroups extract trace-check); fi
+if [[ $prefix == tx2-dxt1-* ]]; then roles+=(driver health cgroups extract trace-check idle-sentinel); fi
 for role in "${roles[@]}"; do
   docker rm -f "$prefix-$role" >/dev/null 2>&1 || true
 done
@@ -17,3 +17,7 @@ docker network rm "$prefix-net" >/dev/null 2>&1 || true
 if [[ ${2:-} == --volumes ]] && docker volume inspect "$prefix-pg-data" >/dev/null 2>&1; then docker volume rm "$prefix-pg-data"; fi
 
 if [[ $prefix == tx2-dxt1-* && ${2:-} == --volumes ]] && docker volume inspect "$prefix-driver" >/dev/null 2>&1; then docker volume rm "$prefix-driver"; fi
+if [[ $prefix == tx2-dxt1-* && ${2:-} == --volumes ]] && docker volume inspect "$prefix-idle-disk" >/dev/null 2>&1; then
+  [[ $(docker volume inspect --format '{{index .Labels "triplex.owner"}}' "$prefix-idle-disk") == "$prefix" ]] || exit 1
+  docker volume rm "$prefix-idle-disk"
+fi

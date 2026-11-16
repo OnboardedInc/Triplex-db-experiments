@@ -50,6 +50,13 @@ for port in "$port_w" "$port_r"; do
 done
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
+network_tuning=()
+if [[ ${DX_IDLE_TCP:-default} != default ]]; then
+  # [DX-T1-10] Why: test slow-start-after-idle only in this attempt's endpoint namespaces, leaving guest/global settings alone.
+  # Rejected: mutate the VM's global TCP setting or carry diagnostic tuning into a verdict by default.
+  [[ $prefix == tx2-dxt1-* && $DX_IDLE_TCP == 0 ]] || exit 2
+  network_tuning=(--sysctl net.ipv4.tcp_slow_start_after_idle=0)
+fi
 evidence=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H1}
 attempt="$evidence/$prefix"
 mkdir -p "$attempt/sql" "$attempt/config" "$attempt/trace/raw"
@@ -161,7 +168,7 @@ if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
 fi
 docker network create "$prefix-net" >/dev/null
 docker volume create "$prefix-pg-data" >/dev/null
-docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
+docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
   -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" postgres:17-alpine postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
@@ -177,7 +184,7 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   [[ "$file" != postgres-table.sql ]] || db=datomic
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$attempt/sql/$file" > "$attempt/sql/$file.log"
 done
-docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
+docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$trace_tx_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # A ready transactor is checked by gateway health, which creates and syncs a real SQL database.
@@ -194,7 +201,7 @@ for role in w r; do
     debug_port=8506; [[ $role == w ]] || debug_port=8507
     role_trace_java="$role_trace_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debug_port"
   fi
-  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
+  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
     ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_GW_JFR" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
@@ -227,6 +234,17 @@ fi
 node "$repo/lab/trace/components.mjs" > "$attempt/trace-components.json"
 docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_min_duration_statement; SHOW track_io_timing; SHOW track_wal_io_timing;" > "$attempt/postgres-trace-settings.txt"
 docker inspect "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" > "$attempt/containers.json"
+for role in pg tx gw-w gw-r; do docker exec "$prefix-$role" cat /proc/sys/net/ipv4/tcp_slow_start_after_idle > "$attempt/tcp-idle-$role.txt"; done
+if [[ ${DX_IDLE_SENTINEL:-0} == 1 ]]; then
+  [[ $prefix == tx2-dxt1-* ]] || exit 2
+  docker volume create --label "triplex.owner=$prefix" "$prefix-idle-disk" >/dev/null
+  docker run -d --pull never --name "$prefix-idle-sentinel" --network none --cpuset-cpus 4 --memory 128m --memory-swap 128m \
+    -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git -C "$repo" rev-parse HEAD)" \
+    -v "$prefix-idle-disk:/probe" -v "$attempt/trace/raw:/trace" -v "$repo/lab/trace/idle-sentinel.mjs:/sentinel.mjs:ro" \
+    node:22.23.2-bookworm-slim node /sentinel.mjs >/dev/null
+  docker inspect "$prefix-idle-sentinel" > "$attempt/idle-sentinel-container.json"
+  docker exec "$prefix-idle-sentinel" sh -c 'df -k /probe; findmnt -T /probe -o SOURCE,FSTYPE,TARGET' > "$attempt/idle-sentinel-mount.txt"
+fi
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc "SHOW fsync; SHOW synchronous_commit; SHOW full_page_writes; SHOW wal_sync_method;" > "$attempt/durability.txt"
 python3 - "$attempt" "$prefix" "$gateway_hash" "$port_w" "$port_r" "$publish" <<'PY'
 import json,pathlib,sys,datetime

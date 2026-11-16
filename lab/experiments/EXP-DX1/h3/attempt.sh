@@ -104,6 +104,9 @@ cleanup() {
   fi
   # [DX-T1] Why: orderly JVM shutdown dumps and converts JFR before any owned container is removed.
   # Rejected: rm -f (loses the only recording of the slow run).
+  if [[ ${DX_IDLE_SENTINEL:-0} == 1 ]] && docker inspect "$prefix-idle-sentinel" >/dev/null 2>&1; then
+    docker stop --timeout 10 "$prefix-idle-sentinel" > "$out/idle-sentinel-stop.txt" 2>&1 || true
+  fi
   for sampler in "$trace_host" "$trace_pg" "$trace_waits"; do
     if [[ -n $sampler ]]; then kill -TERM "$sampler" 2>/dev/null || true; wait "$sampler" 2>/dev/null || true; fi
   done
@@ -224,6 +227,14 @@ import fs from "node:fs";import {configuration} from "./lab/trace/components.mjs
 fs.writeFileSync(process.argv[2],JSON.stringify({...configuration(),tag:process.env.TRIPLEX_TRACE_RUN,slot:process.env.TRIPLEX_TRACE_SLOT,source:process.env.TRIPLEX_TRACE_SOURCE,startedAt:Date.now()})+"\n");
 TRACE_MANIFEST
 run_stage env DX_STACK_EVIDENCE="$stack_evidence" bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish "${cpus[@]}" ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1
+if [[ ${DX_IDLE_REFUSAL_PROBE:-0} == 1 ]]; then
+  [[ $prefix == tx2-dxt1-* ]] || exit 2
+  node lab/trace/idle-proof.mjs prepare "$out"
+  run_stage docker cp "$out/idle-refusal-input.json" "$prefix-gw-w:/tmp/idle-refusal-input.json"
+  run_stage docker exec -e 'DATOMIC_JAVA_OPTS=-Xms32m -Xmx384m -Dlogback.configurationFile=/dxh1/quiet-logback.xml' "$prefix-gw-w" /opt/datomic/bin/run -m triplex.gateway.idle-refusal /tmp/idle-refusal-input.json > "$out/idle-refusal-stdout.jsonl" 2> "$out/idle-refusal-stderr.log"
+  proof=$(node lab/trace/idle-proof.mjs qualify "$out")
+  export DX_DRIVER_ENV="${DX_DRIVER_ENV:-} DX_IDLE_REFUSAL_PROOF_SHA256=$proof"
+fi
 # [DX-T1-10] Why: an alternative harness disk needs observed guest mount identities, not Docker-volume names.
 # Rejected: assume /tmp is another disk or inspect the Mac's default Docker daemon.
 docker exec "$prefix-pg" sh -c 'cat /proc/self/mountinfo; df -k / /tmp /var/lib/postgresql/data' > "$out/guest-storage-mounts.txt"

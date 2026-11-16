@@ -64,8 +64,13 @@ cleanup() {
 trap cleanup EXIT
 # [orchestrator] Why: the layout and similar driver settings are environment variables. DX_DRIVER_ENV is a space-separated NAME=VALUE list.
 extra_env=(); for kv in ${DX_DRIVER_ENV:-}; do extra_env+=(-e "$kv"); done
+network_tuning=()
+if [[ ${DX_IDLE_TCP:-default} != default ]]; then
+  [[ $prefix == tx2-dxt1-* && $DX_IDLE_TCP == 0 ]] || exit 2
+  network_tuning=(--sysctl net.ipv4.tcp_slow_start_after_idle=0)
+fi
 # The lexical output remains under runs/; that directory is a real Docker volume during execution.
-docker create --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus "$cpus" --memory "$memory" --memory-swap "$memory" \
+docker create --pull never --name "$prefix-driver" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpus" --memory "$memory" --memory-swap "$memory" \
   --cgroupns host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v "$repo:$repo" \
   -v /Users/sam/Claude/Projects/triplex-db-2/evidence:/Users/sam/Claude/Projects/triplex-db-2/evidence \
   "${driver_mounts[@]}" -w "$repo" \
