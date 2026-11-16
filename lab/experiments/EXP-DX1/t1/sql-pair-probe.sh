@@ -33,6 +33,7 @@ root=pathlib.Path(sys.argv[1]);q=json.loads((root/'request.json').read_text())
 rows=[json.loads(l) for l in (root/'probe.jsonl').read_text().splitlines() if l.startswith('{')]
 assert len(rows)==1;r=rows[0]
 assert r['schema']=='triplex.sql-pair-probe.v1' and r['run']==q['tag'] and r['source']==q['source']
+assert r['runtimeJarSha256']=='a9ea741d54f623612370b85557bbd1144a80250253e164427fff8f8863be0ec8'
 assert q['createdAt']<=r['startedAt']<=r['endedAt']<=time.time()*1000+1000
 assert all(hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==h for p,h in q['files'].items())
 e=r['connection']['events'];assert len(e)==6 and e[0][0]=='borrow' and e[2]==['close',1] and e[3][0]=='borrow' and e[5]==['close',2]

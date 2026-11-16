@@ -1,5 +1,5 @@
 (ns triplex.gateway.sql-pair-probe
-  (:require [clojure.data.json :as json] [clojure.edn :as edn] [datomic.api]
+  (:require [clojure.data.json :as json] [clojure.edn :as edn] [clojure.java.io :as io] [datomic.api]
             [datomic.sql :as sql] [datomic.kv-sql :as kv-sql]
             [datomic.kv-cluster :as cluster] [datomic.cluster :as c])
   (:import [java.nio ByteBuffer] [java.sql SQLException Connection PreparedStatement]
@@ -10,6 +10,15 @@
 (defn proxy-for [interface handler]
   (Proxy/newProxyInstance (.getClassLoader interface) (into-array Class [interface])
     (reify InvocationHandler (invoke [_ proxy method args] (handler (.getName method) (vec args))))))
+
+(defn runtime-jar-sha []
+  ;; [DX-T1-11] Why: the failure-path reading must match the exact jar executing the counterexample.
+  ;; Rejected: trust a mutable image tag or a historical extracted jar without reading the active class's code source.
+  (let [url (.getLocation (.getCodeSource (.getProtectionDomain (Class/forName "datomic.kv_sql.KVSql"))))
+        digest (java.security.MessageDigest/getInstance "SHA-256") buffer (byte-array 65536)]
+    (with-open [input (io/input-stream url)]
+      (loop [] (let [n (.read input buffer)] (when (pos? n) (.update digest buffer 0 n) (recur)))))
+    (format "%064x" (java.math.BigInteger. 1 (.digest digest)))))
 
 (defn connection-probe []
   (let [calls (atom []) next-id (atom 0)
@@ -73,6 +82,7 @@
       (println (json/write-str {:schema "triplex.sql-pair-probe.v1"
                                :run (System/getenv "TRIPLEX_TRACE_RUN")
                                :source (System/getenv "TRIPLEX_TRACE_SOURCE")
+                               :runtimeJarSha256 (runtime-jar-sha)
                                :startedAt started :endedAt (System/currentTimeMillis)
                                :kind "pinned-jar-with-simulated-SQL-failure-not-a-real-crash-test"
                                :connection connection :original original :paired paired}))
