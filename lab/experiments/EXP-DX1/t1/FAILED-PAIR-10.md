@@ -1,0 +1,9 @@
+# First part-10 final pair: retained failure G
+
+Source `dce01797d3015f243262c70bdc6605186a090e06`, tag `tx2-dxt1-p10-final-a`. The zero and both off arms finish DONE; the full loaded driver exits 1 with status ERROR: one ReadError among 19,175,248 reads, 19,175,247 correct, zero wrong worlds. The independent oracle passes 810 commands, 53 reads and 2682 entity queries with zero mismatches/receipt violations. Oracle PASS does not override this failed all-read gate. Complete trace collection is evidence retention, not semantic acceptance.
+
+The original retained tuple (row 7494748, chunk 1829) is phase L1024, subject 7163, basis position 4021, started at 1794814001460.935, latency 2363.974 ms. Its exact trace `cf14445d5fa0ae750000000000227415` records a 2327.960-ms socket queue/write interval and no response body/first-byte span. A full exact-ID search finds no matching gateway record. The original outer error tag is only ReadError, so the transport cause remains unknown; missing sampled gateway evidence alone cannot prove a request never arrived. No correctness or latency rule is weakened, and no automatic read retry is added.
+
+New benchmark-only diagnostics retain bounded typed causes/status/reasons, trace ID, worker, phase, subject, basis and clocks while keeping the original failed tuple/count. The normal package suite passes 318 tests, with 51 external-service skips. A new full pair is required; G is never relabeled DONE or a successful verdict.
+
+Private evidence: `~/Claude/Projects/triplex-db-2/evidence/DX-T1/tx2-dxt1-p10-final-a-*`, plus `p10-failed-pair/`. The latter preserves the failed row's original chunk/intern table and will retain the complete lossless spill archive, file-level manifest and verified cleanup/restoration receipts. Raw traces and original failed reports remain unchanged. [Qualification audit](AUDIT-10.md).

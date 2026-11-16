@@ -1,5 +1,6 @@
 import { BasisWindow } from "./lib/basis-window.ts";
-import { beginTrace, withTrace, finishTrace, traceSync, traceAsync, flushTracing } from "./lib/tracing.ts";
+import { beginTrace, withTrace, finishTrace, traceSync, traceAsync, flushTracing, currentTrace, traceResource } from "./lib/tracing.ts";
+import { describeReadError } from "./lib/read-error.ts";
 import { canonicalWorld } from "./lib/canonical.ts";
 import { requireDrained } from "./lib/reader-lifecycle.ts";
 import { ReaderTurn } from "./lib/reader-turn.ts";
@@ -89,7 +90,9 @@ export async function startReader(port: any, cfg: ReaderConfig) {
   });
   const phases = new Map<number, { reads: number; reasons: Record<string, number>; straddleWait: Histogram; rawLocalSamples: number; rawFallbackSamples: number; timeOnlyReads: number; timeOnlyLocal: number }>();
   let activeReads = 0, attemptedReads = 0, completedReads = 0;
-  const finalDiagnostics = () => ({ strictRecordClocks: replica?.index.strictRecordClocks, readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
+  let readErrorCount = 0;
+  const readErrors: any[] = [];
+  const finalDiagnostics = () => ({ strictRecordClocks: replica?.index.strictRecordClocks, readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, readErrors: { count: readErrorCount, retained: readErrors }, gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
     phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, rawLocalSamples: s.rawLocalSamples, rawFallbackSamples: s.rawFallbackSamples, timeOnlyReads: s.timeOnlyReads, timeOnlyLocal: s.timeOnlyLocal, fallbackReasons: s.reasons, straddleWait: s.straddleWait.toJSON() }])) });
   let phase = -1;
   let mode = "mixed";
@@ -224,6 +227,10 @@ export async function startReader(port: any, cfg: ReaderConfig) {
         samples.push({ phase: ph, subject, basis, position, start, route: pr.route, fullCanonical: canonicalWorld(pr.triples), gatewayCanonical, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, (t.validTo?._tag === "Some" ? t.validTo.value : null), t.id]) });
     } catch (error: any) {
       records.push([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, "error", "", 0]);
+      const detail = { worker: cfg.worker, phase: ph, subject, basis: { ...basis }, position, start, end: nowAbs(), traceId: currentTrace()?.traceId ?? null, error: describeReadError(error) };
+      readErrorCount++;
+      if (readErrors.length < 16) readErrors.push(detail);
+      traceResource("reader.error", detail);
     } finally { if (evidence) splitEvents.push(evidence); activeReads--; completedReads++; }
   }
 
