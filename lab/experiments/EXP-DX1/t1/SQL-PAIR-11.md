@@ -19,7 +19,7 @@ A safe prototype needs an explicit pair identity, connection ownership through p
 
 After an uncertain COMMIT, an existing chunk must be compared byte-for-byte before a replay accepts it; ignoring a duplicate-key error alone would weaken the original failure behavior. A safe external protocol may be possible, but this probe does not establish one and does not claim it is impossible.
 
-Evidence: `evidence/DX-T1/p11-safety/SOURCE-INDEX.json` seals the decompiled reading and jar; `tx2-dxt1-p11-pair-safety-e/{request.json,probe.jsonl,qualified.json}` binds the exact source bytes, current attempt, output and observed counterexample. Attempts a–d remain, including parser/row-model mistakes; e is the completed checked probe. No database or seed was opened; no real crash/restart, differential or oracle is claimed for an unbuilt wrapper.
+Evidence: `evidence/DX-T1/p11-safety/SOURCE-INDEX.json` seals the decompiled reading and jar; `tx2-dxt1-p11-pair-safety-g/{request.json,probe.jsonl,qualified.json}` binds the exact source bytes, current attempt, output and observed counterexample. Attempts a–f remain, including parser/row-model mistakes; g is the completed probe on committed source, with the active jar SHA256 matched to the decompiled reading. No database or seed was opened; no real crash/restart, differential or oracle is claimed for an unbuilt wrapper.
 
 ```sh
 node lab/bin/heavy.mjs --label DX-T1-p11-pair-safety -- bash lab/experiments/EXP-DX1/t1/sql-pair-probe.sh tx2-dxt1-my-safety
