@@ -243,6 +243,11 @@ docker exec "$prefix-pg" sh -c 'cat /proc/self/mountinfo; df -k / /tmp /var/lib/
 if [[ $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ]]; then
   docker exec "$prefix-tx" cat /proc/cmdline > "$out/guest-kernel.txt"
   if [[ $prefix == tx2-dxt1-* ]]; then python3 -c 'import sys; assert "nohlt" in open(sys.argv[1]).read().split(), "guest nohlt condition absent"' "$out/guest-kernel.txt"; fi
+  if [[ $prefix == tx2-dxt1-* ]]; then
+    # [DX-T1-10] Why: record the guest's exposed idle driver/states instead of assuming nohlt proves a host power state.
+    # Rejected: mutate VM power policy or infer Apple hardware frequency from a Linux container.
+    docker exec "$prefix-pg" sh -c 'for f in /sys/devices/system/cpu/cpuidle/current_driver /sys/devices/system/cpu/cpuidle/current_governor_ro /sys/devices/system/cpu/cpu0/cpuidle/state*/name /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq; do if test -r "$f"; then echo "$f"; cat "$f"; fi; done' > "$out/guest-idle-capability.txt"
+  fi
 fi
 if [[ $TRIPLEX_TRACE_SYSTEM == 1 ]]; then
   node lab/trace/system-sampler.mjs "$out/trace/raw" & trace_host=$!

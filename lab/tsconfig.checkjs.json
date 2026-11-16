@@ -23,6 +23,7 @@
     "../lab/trace/idle-proof.mjs",
     "../lab/trace/idle-sentinel.mjs",
     "../lab/trace/idle-report.mjs",
+    "../lab/trace/idle-storage.mjs",
     "../lab/trace/disk-stats.mjs",
     "../lab/trace/native-settings.mjs",
     "../lab/trace/viewer.mjs",

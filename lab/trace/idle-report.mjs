@@ -19,7 +19,14 @@ const tags = standalone
       .trim()
       .split(/\s+/)
       .map((m, i) => `${prefix}-${i + 1}-${m}`);
-const output = standalone ? path.join(base, prefix, "idle-analysis") : session;
+const outputIndex = explicit.indexOf("--output-dir");
+if (outputIndex >= 0 && !explicit[outputIndex + 1]) throw Error("Missing output directory");
+const output =
+  outputIndex >= 0
+    ? path.resolve(explicit[outputIndex + 1])
+    : standalone
+      ? path.join(base, prefix, "idle-analysis")
+      : session;
 fs.mkdirSync(output, { recursive: true });
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8")),
   check = (v, m) => {
@@ -35,6 +42,7 @@ const q = (xs) => ({
 });
 const result = {
   at: new Date().toISOString(),
+  reporterSha256: sha(fs.readFileSync(new URL(import.meta.url))),
   scope:
     "Fixed-gap zero-reader diagnosis; no oracle or north-star performance acceptance. Marginal quantiles do not add; native residuals include uninstrumented handoffs and storage.",
   runs: [],
@@ -159,7 +167,7 @@ for (const [i, tag] of tags.entries()) {
       cpu = synchronousCpu(root),
       idle = w.startedAt - finish;
     finish = Math.max(finish, w.finishedAt);
-    const io = n.nativeStats["io-stats"]?.reads ?? {},
+    const io = n.nativeStats["io-stats"]?.reads,
       tx = n.nativeStats["tx-stats"] ?? {};
     rows.push({
       traceId: w.traceId,
@@ -180,8 +188,8 @@ for (const [i, tag] of tags.entries()) {
       ...cpu,
       applyMs: n.nativeStats["apply-msec"],
       functionMs: tx["tx-fn-ms"] ?? null,
-      sqlReads: io.sql ?? 0,
-      sqlReadMs: io["sql-ms"] ?? 0,
+      sqlReads: io ? (io.sql ?? 0) : null,
+      sqlReadMs: io ? (io["sql-ms"] ?? 0) : null,
       nativeStart: n.start - n.nativeStats.msec,
       nativeEnd: n.start,
       peerStart: ex.peerStart,
@@ -219,12 +227,38 @@ for (const [i, tag] of tags.entries()) {
   else check(!sentinel.length, "Unexpected disk sentinel");
   if (b.config.idleKeep === "refused") {
     const proof = fs.readFileSync(path.join(dir, "idle-refusal-proof.json"));
+    const p = JSON.parse(proof),
+      inputText = fs.readFileSync(path.join(dir, "idle-refusal-input.json"), "utf8"),
+      input = JSON.parse(inputText);
+    check(
+      p.run === tag &&
+        p.slot === tag &&
+        p.source === m.source &&
+        p.scope === input.scope &&
+        p.requestHash === sha(inputText) &&
+        input.run === tag &&
+        input.slot === tag &&
+        input.source === m.source &&
+        input.createdAt >= m.startedAt &&
+        p.startedAt >= input.createdAt - 1000 &&
+        p.endedAt >= p.startedAt &&
+        p.qualifiedAt >= p.endedAt &&
+        p.qualifiedAt <= Date.parse(b.startedAt) &&
+        p.beforeT === p.afterT &&
+        Number.isSafeInteger(p.beforeT) &&
+        p.transactions === 0 &&
+        p.datoms === 0 &&
+        p.responses.length === 25 &&
+        p.responses.every((r) => r.status === 409 && r.code === "CasConflict"),
+      "Native refusal proof content/attempt differs",
+    );
     check(
       sha(proof) === b.config.idleRefusalProofSha256 &&
         b.idleKeep.proofSha256 === b.config.idleRefusalProofSha256,
       "Warm proof hash differs",
     );
-    let count = 0;
+    let count = 0,
+      previousEnd = m.startedAt;
     for await (const call of records(path.join(dir, "driver/idle-keep.jsonl"))) {
       check(
         call.run === tag &&
@@ -232,11 +266,28 @@ for (const [i, tag] of tags.entries()) {
           call.slot === tag &&
           call.code === "CasConflict" &&
           call.clientId === b.idleKeep.clientId &&
-          call.sequence === ++count,
+          call.sequence === ++count &&
+          Number.isFinite(call.at) &&
+          Number.isFinite(call.end) &&
+          call.at >= previousEnd &&
+          call.end >= call.at &&
+          call.end <= Date.parse(b.endedAt) + 1000,
         "Warm refusal sequence/result differs",
       );
+      previousEnd = call.end;
     }
     check(count === b.idleKeep.calls, "Warm calls lost");
+    fs.appendFileSync(
+      path.join(output, tag + ".SHA256SUMS"),
+      [
+        "idle-refusal-input.json",
+        "idle-refusal-proof.json",
+        "idle-refusal-stdout.jsonl",
+        "driver/idle-keep.jsonl",
+      ]
+        .map((f) => sha(fs.readFileSync(path.join(dir, f))) + "  " + f)
+        .join("\n") + "\n",
+    );
   }
   const swaps = host.map((h) => {
     const a = /used\s*=\s*([\d.]+)([MG])/.exec(h.swap);
