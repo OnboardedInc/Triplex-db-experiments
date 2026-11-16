@@ -480,7 +480,7 @@ async function run() {
   const traceDurationS = idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
   const events = idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   report.trace = { params, durationS: traceDurationS, digest: traceDigest(events), generated: traceStats(events), generatorSha256: report.generator.traceSha256, seed: config.seed,
-    ...(idle ? { diagnostic: "Fixed-gap ten-fact component probe; not the frozen verdict workload", idlePlanSha256: report.generator.benchSources["lab/bench/lib/idle-plan.ts"] } : {}) };
+    ...(idle ? { diagnostic: "Fixed-gap ten-fact component probe; not the frozen verdict workload", idlePlanSha256: report.benchSources["lab/bench/lib/idle-plan.ts"] } : {}) };
   log(`trace: ${events.length} events over ${traceDurationS}s, digest ${report.trace.digest}, active-set share ${report.trace.generated.activeShare.toFixed(3)}`);
   const idleKeep = idle && config.idleKeep !== "none" ? new IdleKeep({ mode: config.idleKeep, scope: scopeName, dir: rawDir }) : null;
   await idleKeep?.ready;
