@@ -1924,3 +1924,23 @@ outside the VMs; waiting for Sam's go-ahead. Google Drive for desktop is install
    46-commit window. 68 primary commits over 50 ms: 46 peer wait, 13 same-subject wait, 5 network, 4 scheduler lateness.
 
 Part 11 is running: the probe for one Postgres commit per Datomic log write, and the pricing of fewer datoms per commit.
+
+## 2026-11-16 12:50 UTC: DX-T1 part 11: one Postgres commit per write is unsafe from outside; fewer datoms per commit is worth under 0.1 ms exactly; no agent running, waiting for Sam's decisions
+
+DX-T1 part 11 (`exp/DX-T1-tracing`, `324a40f2`, pushed; report `t1/REPORT-11.md`).
+1. **Menu pick 4 (pair Datomic's INSERT and UPDATE in one Postgres transaction): not safe as a simple wrapper.** The two
+   statements borrow connections separately, and after a paired rollback Datomic retries only the UPDATE, which could
+   publish a pointer to a missing chunk. A safe version would need retained, replayable INSERTs and reconciliation of
+   ambiguous commits. Nothing built; the 0.5 to 0.8 ms estimate stays unmeasured.
+2. **Menu pick 5 (fewer datoms per commit), priced by replaying 9,000 real payloads with `d/with`:** packing journal texts
+   cuts datoms 61 to 37 (medium) but almost no bytes: 0.02 ms. The combined exact shape C: about 0.09 ms at the medium
+   median, inside drift. Dropping generated change rows: about 0.9 ms, but it loses their row identities and is not exact
+   as priced. Bytes, not datom count, carry the cost (about 908 bytes per fact). Nothing built.
+3. Observed Postgres autocommits per Datomic transaction: 3.42 to 3.50.
+4. 100,000-subject pricing not run: a clone of that seed (17.5 GiB) does not fit above the disk floor (16 GiB free).
+
+**Where this leaves P2 at 10,000 subjects.** Settings, the instrument repair and the storage-layout ideas are measured.
+What remains is in Sam's hands: where the verdict's clock stops (0.4 ms), bars over at least 500 commits (removes
+one-commit misses), a keep-warm mechanism (about 3 ms at the 256-reader medians), history growth in small commits (14 to 17
+slow commits per run). With those, the projection from pair H is a pass; it needs two confirming pairs on a quiet Mac. No
+agent is running.

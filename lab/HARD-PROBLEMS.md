@@ -37,6 +37,15 @@ history-growth step writes 500 subjects in one transaction and causes 15 to 18 o
 the harness writes its own files to the database's virtual disk. Shortlist: (1) correct the instrument, (2) find the idle
 penalty, (3) separate the disks and prepare the WAL, (4) one Postgres commit per log write, (5) fewer datoms per commit.
 
+## What is left after the menu's first five picks (2026-11-16)
+
+Measured and closed: disk separation (no gain), two transactor cores (rejected twice), one Postgres commit per Datomic
+write from outside (unsafe under Datomic's retries), fewer datoms per commit (under 0.1 ms for exact layouts; 0.9 ms only by
+dropping change-row identities). Kept: scheduler repair (0.69 ms). Open and Sam's to decide: the verdict's clock boundary,
+bars over at least 500 commits, a keep-warm mechanism (3.2 ms at one commit per second), history growth in small commits.
+The remaining unknown inside the engine is the cold path itself: why durable storage and the peer and transactor threads
+cost 2.6 to 3.8 ms more after 250 ms of idleness.
+
 ## H1. The commit median sits on the engine call, and the call alone is over the 10 ms bar
 
 1. **What is hard.** P2 asks for commit p50 at most 10 ms. With zero readers and tracing off, a commit is 13.0 ms and the
