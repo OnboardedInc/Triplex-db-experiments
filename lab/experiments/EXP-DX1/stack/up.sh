@@ -18,6 +18,39 @@ if [[ ${1:-} == --logs ]]; then
   for role in pg tx gw-w gw-r; do docker logs --tail 35 "$prefix-$role" 2>&1 || true; done
   exit
 fi
+# [DX-T1-12] Why: the authorized eight-versus-six trial must change guest CPUs only under this holder's live lease and restore all eight before releasing it.
+# Rejected: invoking COLD's helper (foreign names/holder), restarting the VM, or leaving a partial offline transition after failure.
+if [[ ${1:-} == --guest-cpus ]]; then
+  [[ $prefix == tx2-dxt1-* && ( ${2:-} == eight || ${2:-} == six || ${2:-} == show ) ]] || exit 2
+  mode=$2
+  python3 - "$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" "$mode" <<'CPU_LEASE'
+import json,sys,os,shutil
+o=json.load(open(sys.argv[1]));assert o['id']=='DX-T1' and o['pid']==int(sys.argv[2]) and o['kind']=='writer-arms'
+os.kill(o['pid'],0)
+if sys.argv[3]=='six':assert shutil.disk_usage('.').free>=15*1024**3
+CPU_LEASE
+  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
+  # [DX-T1-12] Why: global CPU changes must not interfere with a running unrelated engine; stopped foreign residents are left alone.
+  # Rejected: using the measurement lease as proof that every other container is idle.
+  if [[ $mode == six ]]; then
+    [[ -z $(docker ps -q) ]] || { echo 'CPU transition requires all measured stacks to be stopped' >&2; exit 2; }
+  fi
+  trap 'docker rm -f "$prefix-cpu-control" >/dev/null 2>&1 || true' EXIT
+  trap 'exit 143' TERM INT
+  docker run --rm --pull never --privileged --network none --memory 64m --memory-swap 64m \
+    --label tx2.holder=DX-T1 --name "$prefix-cpu-control" node:22.23.2-bookworm-slim node -e '
+const fs=require("fs"),mode=process.argv[1],base="/sys/devices/system/cpu/",read=n=>fs.readFileSync(base+n,"utf8").trim();
+if(read("present")!=="0-7")throw Error("Expected exactly eight present guest CPUs");
+if(!fs.readFileSync("/proc/cmdline","utf8").split(/\s+/).includes("nohlt"))throw Error("Guest nohlt is required");
+const before=read("online"),set=(n,on)=>fs.writeFileSync(base+"cpu"+n+"/online",on?"1\n":"0\n");
+try {
+ if(mode==="six"){if(before!=="0-7")throw Error("Six-CPU transition must start with eight online");set(7,false);set(6,false);}
+ if(mode==="eight")for(let n=1;n<8;n++)if(fs.readFileSync(base+"cpu"+n+"/online","utf8").trim()!=="1")set(n,true);
+ const after=read("online");if(mode!=="show"&&after!==(mode==="six"?"0-5":"0-7"))throw Error("CPU readback differs");
+ console.log(JSON.stringify({mode,before,after,present:read("present"),nohlt:true,at:Date.now()}));
+}catch(error){for(let n=1;n<8;n++)try{set(n,true);}catch{};throw error;}' "$mode"
+  exit
+fi
 # [DX-T1-11] Why: run original SQL/retry classes with fake SQL under a verified lease, with no database or durability changes.
 # Rejected: the menu's asynchronous-INSERT trigger (a Postgres-only failure can lose a referenced chunk).
 if [[ ${1:-} == --sql-pair-probe ]]; then

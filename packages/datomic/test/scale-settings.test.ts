@@ -5,7 +5,7 @@ import {
   populationSettings,
 } from "../../../lab/experiments/EXP-DX1/t1/scale-settings.mjs";
 import { refreshVerdictEligibility } from "../../../lab/bench/lib/verdict.ts";
-it("binds admission to the actual rung and first explicit driver population in either argument order", () => {
+it("binds admission to the actual rung and last explicit driver population in either argument order", () => {
   expect(populationFromArguments([])).toEqual({ subjects: 10000, zeroReaders: false });
   for (const [rung, subjects] of [
     ["10k", 10000],
@@ -18,9 +18,12 @@ it("binds admission to the actual rung and first explicit driver population in e
   for (const args of [
     ["--subjects", "1000", "--rung", "100k"],
     ["--rung", "100k", "--subjects", "1000"],
-    ["--subjects", "1000", "--subjects", "10000"],
   ])
     expect(populationFromArguments(args).subjects).toBe(1000);
+  expect(populationFromArguments(["--subjects", "1000", "--subjects", "10000"]).subjects).toBe(
+    10000,
+  );
+  expect(populationFromArguments(["--rung", "10k", "--rung", "100k"]).subjects).toBe(100000);
   for (const args of [
     ["--rung", "bad"],
     ["--rung", "1k"],
