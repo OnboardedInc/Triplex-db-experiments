@@ -394,3 +394,22 @@ Orchestrator's reading:
 2. Priorities for classifying: Datomic now, XTDB maybe later (this softens the 2026-11-13 "don't go back to that": XTDB
    data is archived, not thrown away, and no XTDB work is started); other lanes keep only their code, on GitHub.
 3. "My drive" means Google Drive. No Drive folder is mounted on this Mac today; the plan says how to get archives there.
+
+## 2026-11-16 about 13:30 UTC: no keep-warm; find why the commit path goes cold; yes to the clock boundary, 500-commit bars and small history-growth commits
+
+The orchestrator had asked four things: (1) a commit ends when the receipt reaches the caller, 0.4 ms before the test
+stops its clock; (2) bars computed over at least 500 commits; (3) the store may keep its commit path warm with requests
+that write nothing; (4) the test's history-growth step writes in small commits. Sam, verbatim:
+
+> I don't want to do number 3. As you stated, to force it to keep warm, I'd rather deep dive into why it's not warm. Could you have a Fable agent, like a background agent on Mac's effort, go and try to figure out why that's happening so that we can fix it?
+>
+> The drive is on stream files but otherwise, I agree with 1 through 4. Do we have other ideas, though, to keep going? What would be the next stuff to go and understand? Before all of that what's the current status of our performance and scalability and all those goals against what we've currently been able to do? How far are we from those things?
+
+Orchestrator's reading:
+1. **No keep-warm mechanism.** Find the cause of the cold path and fix the cause. One Fable 5.2 agent at maximum effort
+   ("Mac's effort" is dictation for max effort) investigates in the background.
+2. **Decided yes:** the verdict's clock stops at the acknowledgement handed to the caller; bars are computed over at least
+   500 commits; history growth is written in small commits. ("I agree with 1 through 4" is read as agreement with the
+   list apart from number 3, which he declined in the sentence before.)
+3. Google Drive for desktop is on Stream files.
+4. The disk plan's go-ahead (steps 0 to 5, the 100,000-subject seed, the `default` VM) is still not given; asked again.
