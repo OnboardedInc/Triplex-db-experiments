@@ -79,9 +79,13 @@ export async function* records(file) {
 export function alignClockRecord(row, reference) {
   // [DX-T1-12] Why: Mac wall samples and stepped JFR epoch anchors have no measured bridge to the writer's boot clock.
   // Rejected: display a guessed 100-ms overlap as evidence that host I/O or a JVM pause caused one commit.
-  const jfr=row.type==="event" && (row.nativeType || /^jdk\./.test(row.name??""));
-  if (row.process === "system-darwin" || row.clock?.crossProcessQualified === false || (jfr && row.clock?.crossProcessQualified!==true))
-    return {...row,clockAlignmentQualified:false};
+  const jfr = row.type === "event" && (row.nativeType || /^jdk\./.test(row.name ?? ""));
+  if (
+    row.process === "system-darwin" ||
+    row.clock?.crossProcessQualified === false ||
+    (jfr && row.clock?.crossProcessQualified !== true)
+  )
+    return { ...row, clockAlignmentQualified: false };
   if (!row.clock || row.clock.domain !== "linux-monotonic" || !reference) return row;
   if (
     row.clock.bootId !== reference.bootId ||
@@ -353,23 +357,6 @@ export function attribute(root, gateways = [], events = [], remotes = []) {
       return { ...s, start, end };
     })
     .filter((s) => s.end > s.start);
-  const pauses = events.filter(
-    (e) =>
-      !e.estimated &&
-      ["typescript-gc", "gateway-gc"].includes(e.layer) &&
-      e.start < root.end &&
-      e.end > root.start,
-  );
-  const points = [
-    ...new Set([
-      root.start,
-      root.end,
-      ...[...spans, ...pauses].flatMap((s) => [
-        Math.max(root.start, s.start),
-        Math.min(root.end, s.end),
-      ]),
-    ]),
-  ].sort((a, b) => a - b);
   // [DX-T1] Why: sort once per request; never sort all candidates at every boundary or charge an ambient pause to a remote wait.
   // Rejected: GC overlap as causal latency, and scanning every run event for every request.
   const ordered = [...spans].sort(
@@ -378,6 +365,42 @@ export function attribute(root, gateways = [], events = [], remotes = []) {
       (rank[y.layer] ?? 0) - (rank[x.layer] ?? 0) ||
       duration(x) - duration(y),
   );
+  // [DX-T1-12] Why: a long async wait can overlap thousands of unrelated pauses; only a pause that could replace an exclusive code segment needs an attribution boundary.
+  // Rejected: split every request at every ambient GC event (quadratic work); all ambient events remain in the timeline and raw evidence.
+  const basePoints = [
+    ...new Set([root.start, root.end, ...spans.flatMap((s) => [s.start, s.end])]),
+  ].sort((a, b) => a - b);
+  const eligible = [];
+  for (let i = 1; i < basePoints.length; i++) {
+    const start = basePoints[i - 1],
+      end = basePoints[i],
+      selected = ordered.find((s) => s.start <= start && s.end >= end);
+    if (selected && ["typescript", "gateway", "peer-call"].includes(selected.layer))
+      eligible.push({ start, end, selected });
+  }
+  const pauses = events.filter(
+    (e) =>
+      !e.estimated &&
+      ["typescript-gc", "gateway-gc"].includes(e.layer) &&
+      e.start < root.end &&
+      e.end > root.start &&
+      eligible.some(
+        ({ start, end, selected: s }) =>
+          e.start < end &&
+          e.end > start &&
+          e.process === (s.process ?? root.process) &&
+          ((e.layer === "typescript-gc" &&
+            s.layer === "typescript" &&
+            e.thread === (s.thread ?? root.thread)) ||
+            (e.layer === "gateway-gc" && ["gateway", "peer-call"].includes(s.layer))),
+      ),
+  );
+  const points = [
+    ...new Set([
+      ...basePoints,
+      ...pauses.flatMap((e) => [Math.max(root.start, e.start), Math.min(root.end, e.end)]),
+    ]),
+  ].sort((a, b) => a - b);
   const layers = Object.fromEntries(LAYERS.map((k) => [k, 0])),
     steps = {};
   for (let i = 1; i < points.length; i++) {
@@ -632,9 +655,10 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
         errors.push(String(error));
       }
     }
-  const unqualifiedEvents=events.filter(e=>e.clockAlignmentQualified===false);
-  let keep=0;for(const event of events) if(event.clockAlignmentQualified!==false) events[keep++]=event;
-  events.length=keep;
+  const unqualifiedEvents = events.filter((e) => e.clockAlignmentQualified === false);
+  let keep = 0;
+  for (const event of events) if (event.clockAlignmentQualified !== false) events[keep++] = event;
+  events.length = keep;
   let invalidSpanParents = 0;
   if (manifest?.requireClockBinding)
     for (const r of requests) {
@@ -1051,7 +1075,11 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
   const hostByPhase = Object.fromEntries(
     (bench.phases ?? []).map((p) => {
       const samples = resources.filter(
-        (r) => r.process === "system-darwin" && r.clockAlignmentQualified!==false && r.at >= p.start && r.at <= p.end,
+        (r) =>
+          r.process === "system-darwin" &&
+          r.clockAlignmentQualified !== false &&
+          r.at >= p.start &&
+          r.at <= p.end,
       );
       const cpu = samples.map((r) => r.otherCpu).filter(Number.isFinite);
       return [
@@ -1102,12 +1130,19 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       reference: clockReference ?? null,
       sources: clockSources,
       invalidSpanParents,
-      unqualifiedEventCount:unqualifiedEvents.length,
-      hostCrossClockQualified:false,
+      unqualifiedEventCount: unqualifiedEvents.length,
+      hostCrossClockQualified: false,
     },
     reporterSha256: createHash("sha256")
       .update(
-        ["report.mjs", "instrument.mjs", "anatomy.mjs", "native-transactions.mjs", "cpu-profile.mjs", "viewer.mjs"]
+        [
+          "report.mjs",
+          "instrument.mjs",
+          "anatomy.mjs",
+          "native-transactions.mjs",
+          "cpu-profile.mjs",
+          "viewer.mjs",
+        ]
           .map((name) => name + "\0" + fs.readFileSync(new URL(name, import.meta.url), "utf8"))
           .join("\0"),
       )
@@ -1397,7 +1432,11 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
   );
   const relevantEvents = [...new Set(selected.flatMap((r) => contextEvents(r, contextIndexes)))];
   const relevantResources = resources
-    .filter((e) => e.clockAlignmentQualified!==false && selected.some((r) => e.at >= r.root.start - 1000 && e.at <= r.root.end + 1000))
+    .filter(
+      (e) =>
+        e.clockAlignmentQualified !== false &&
+        selected.some((r) => e.at >= r.root.start - 1000 && e.at <= r.root.end + 1000),
+    )
     .map((e) => (e.vm ? { ...e, vm: undefined } : e));
   const data = JSON.stringify({
     selected: selected.map((r) => ({ ...r, root: { ...r.root, spans: undefined } })),

@@ -427,6 +427,41 @@ describe("permanent request tracing", () => {
     api.finishTrace(t);
     await api.flushTracing();
   });
+  it("charges only eligible code pauses during a long asynchronous request", async () => {
+    const { attribute } = await import("../../../lab/trace/report.mjs");
+    const root = {
+      process: "node",
+      thread: 0,
+      root: "root",
+      traceId: "a".repeat(32),
+      start: 0,
+      end: 10000,
+      spans: [
+        { id: "own", parent: "root", name: "own", layer: "typescript", start: 0, end: 10000 },
+        { id: "rpc", parent: "own", name: "rpc", layer: "event-loop", start: 1, end: 9999 },
+      ],
+    };
+    const eligible = {
+      name: "gc",
+      layer: "typescript-gc",
+      process: "node",
+      thread: 0,
+      start: 0.25,
+      end: 0.5,
+    };
+    const ambient = Array.from({ length: 10000 }, (_, i) => ({
+      ...eligible,
+      start: 2 + i / 2,
+      end: 2.1 + i / 2,
+    }));
+    const wrongThread = { ...eligible, thread: 1, start: 0, end: 1 };
+    const result = attribute(root, [], [wrongThread, eligible, ...ambient]);
+    expect(result.layers.typescript).toBe(1.75);
+    expect(result.layers["typescript-gc"]).toBe(0.25);
+    expect(result.layers["event-loop"]).toBe(9998);
+    expect(result.unexplainedMs).toBe(0);
+    expect(result).toEqual(attribute(root, [], [eligible]));
+  });
   it("builds a bound report from recorded fixture bytes without double-counting nested spans", async () => {
     const { buildReport, attribute } = await import("../../../lab/trace/report.mjs");
     const root = {
