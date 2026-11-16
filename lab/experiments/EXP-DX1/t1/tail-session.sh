@@ -82,4 +82,7 @@ for mode in "${modes[@]}"; do
  [[ ! -s $session_dir/$i-remaining.txt ]] || exit 1
  sh lab/bin/host-quiet.sh > "$session_dir/$i-host-after.jsonl" || true
 done
+if [[ $session_rc == 0 && ( $kind == scheduler || $kind == disk || $kind == history || $kind == wal ) ]]; then
+ node lab/trace/trial.mjs "$DX_STACK_EVIDENCE" "$prefix" > "$session_dir/analysis.log"
+fi
 exit "$session_rc"
