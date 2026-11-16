@@ -43,14 +43,15 @@ export async function analyseSteadiness(base,tag) {
   const lines=name=>{const b=bytes(name);return(name.endsWith(".gz")?gunzipSync(b):b).toString("utf8").trim().split("\n").filter(Boolean).map(JSON.parse);};
   const linux=lines("trace/raw/system-linux.jsonl.gz"),host=lines("trace/raw/system-darwin.jsonl.gz"),writes=lines("driver/ns-writes.jsonl");
   for(const r of [...linux,...host]) if(r.run!==tag||r.slot!==tag||r.source!==manifest.source) throw Error("Unbound resource row");
-  const writerFile=fs.readdirSync(path.join(root,"trace/raw")).find(n=>/^node-\d+-0\.jsonl\.gz$/.test(n));
-  if(!writerFile)throw Error("Writer clock absent");
+  const writerFiles=fs.readdirSync(path.join(root,"trace/raw")).filter(n=>/^node-\d+-0\.jsonl\.gz$/.test(n));
+  if(writerFiles.length!==1)throw Error("Writer clock absent or ambiguous; refusing an arbitrary process");
+  const writerFile=writerFiles[0];
   const writerBytes=bytes("trace/raw/"+writerFile);
   const stream=Readable.from(writerBytes).pipe(createGunzip()),reader=createInterface({input:stream,crlfDelay:Infinity});
   let clock;
   try{for await(const line of reader){const r=JSON.parse(line);if(r.clock?.domain==="linux-monotonic"){if(r.run!==tag||r.slot!==tag||r.source!==manifest.source||r.thread!==0)throw Error("Unbound writer clock");clock=r.clock;break;}}}finally{reader.close();stream.destroy();}
   if(!clock)throw Error("Writer boot clock absent");
-  for(const r of linux) {if(r.clock?.bootId!==clock.bootId||!Number.isFinite(r.clock.offsetMs))throw Error("Guest boot/clock differs");r.monoAt=r.at-r.clock.offsetMs+clock.offsetMs;}
+  for(const r of linux) {if(r.clock?.domain!=="linux-monotonic"||r.clock.bootId!==clock.bootId||!Number.isFinite(r.clock.offsetMs))throw Error("Guest boot/clock differs");r.monoAt=r.at-r.clock.offsetMs+clock.offsetMs;}
   linux.sort((a,b)=>a.monoAt-b.monoAt);
   const steps=linux.slice(1).flatMap((b,i)=>{const a=linux[i],delta=b.clock.offsetMs-a.clock.offsetMs;return Math.abs(delta)>5?[{from:a.monoAt,to:b.monoAt,stepMs:delta}]:[];});
   const swaps=host.map(r=>{const m=/^Swapouts:\s+(\d+)/m.exec(r.memory??"");return m?Number(m[1]):null;});
@@ -91,7 +92,9 @@ export async function analyseSteadiness(base,tag) {
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
   const [base,out,...tags]=process.argv.slice(2);if(!base||!out||!tags.length)throw Error("steadiness.mjs EVIDENCE_BASE NEW.json TAG...");
+  const programSha256=sha(fs.readFileSync(new URL(import.meta.url))),computationSource=execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim();
   const runs=[];for(const tag of tags)runs.push(await analyseSteadiness(base,tag));
-  fs.writeFileSync(out,JSON.stringify({schema:"triplex.steadiness/1",programSha256:sha(fs.readFileSync(new URL(import.meta.url))),createdAt:Date.now(),runs},null,2)+"\n",{flag:"wx"});
+  if(programSha256!==sha(fs.readFileSync(new URL(import.meta.url))) || computationSource!==execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim())throw Error("Historical analysis source changed during attempt");
+  fs.writeFileSync(out,JSON.stringify({schema:"triplex.steadiness/1",programSha256,computationSource,createdAt:Date.now(),runs},null,2)+"\n",{flag:"wx"});
   console.log(JSON.stringify(runs.map(r=>({tag:r.tag,over100:r.over100,schedulerEpisodes:r.schedulerEpisodes.length,clockSteps:r.guestClockSteps.length,macSwapOutPages:r.macWholeArm.swapOutPages}))));
 }
