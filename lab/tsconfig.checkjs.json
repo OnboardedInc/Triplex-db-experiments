@@ -485,6 +485,7 @@
     "../scripts/xtdb-resources.mjs",
     "../tools/bootstrap/maintenance-readiness.mjs",
     "../lab/trace/stress-baseline.mjs",
-    "../lab/trace/writer-stats.mjs"
+    "../lab/trace/writer-stats.mjs",
+    "../lab/trace/layout-replay.mjs"
   ]
 }

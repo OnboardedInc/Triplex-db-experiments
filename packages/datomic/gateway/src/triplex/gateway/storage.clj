@@ -1,5 +1,6 @@
 (ns triplex.gateway.storage
   (:require [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.replay-capture :as replay-capture])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -243,6 +244,7 @@
                  (trace/attribute! :submittedAt (trace/clock))
                  (let [context (trace/transaction-context)
                        data (if context (assoc-in data [0 1 :triplex-trace] context) data)
+                       _ (replay-capture/capture! conn data input)
                        future (try (if hints (trace/span "d/transact-async" "peer-call" (d/transact-async conn data :hints hints))
                                              (trace/span "d/transact-async" "peer-call" (d/transact-async conn data)))
                                    ;; [DX-R3-P7] Why: a definitive synchronous clock refusal resolves this turn,
@@ -286,6 +288,7 @@
           completed (System/nanoTime)
           transact-micros (quot (- completed start) 1000)]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
+      (replay-capture/completed! report input)
       (trace/attribute! :datomicT (str (d/basis-t (:db-after report))))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
        :recordedAt (codec/encode-value "double" (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.tx/recorded-at))
@@ -297,6 +300,7 @@
        :delta (- (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report)))) (get input "position"))
        :datoms (count (:tx-data report))})
     (catch Exception e
+      (replay-capture/discard! input)
       (let [text (str e)]
         (when (or (= "OutcomeUnknown" (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))

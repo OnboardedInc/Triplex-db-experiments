@@ -150,6 +150,9 @@ cleanup() {
   if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
   if [[ -f $out/trace-run.json ]]; then
     node lab/trace/finalize.mjs "$out" "lab/experiments/EXP-DX1/t1/runs/$prefix" > "$out/trace-finalize.log" 2>&1 || { cat "$out/trace-finalize.log" >&2; [[ $rc != 0 ]] || rc=1; }
+    if [[ ${DX_LAYOUT_REPLAY:-0} == 1 && $rc == 0 ]]; then
+      node lab/trace/layout-replay.mjs qualify "$out" > "$out/layout-replay-qualify.log" 2>&1 || { cat "$out/layout-replay-qualify.log" >&2;rc=1; }
+    fi
   fi
   exit "$rc"
 }
@@ -272,6 +275,21 @@ if [[ ${DX_FSYNC_PROBE:-0} == 1 ]]; then
 fi
 run_stage bash lab/experiments/EXP-DX1/stack/run-in-vm.sh "$prefix" --cpus "${DX_CPUS_DRIVER:-6,7}" --memory "${DX_DRIVER_MEMORY:-3g}" -- node lab/experiments/EXP-DX1/h3/observe.mjs \
  --lane datomic --composition reach --read-path "${DX_READ_PATH:-gateway}" --profile "${DX_NS_PROFILE:-smoke}" --reader-threads "${DX_READER_THREADS:-2}" --oracle-root "${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}" --output runs/DX-H3-vm/ns-report.json "$@" > "$out/driver.log" 2>&1
+
+# [DX-T1-9] Why: end-of-run heap/TOAST inspection preserves timed workload and exactness while exposing actual free space.
+if [[ ${DX_LAYOUT_REPLAY:-0} == 1 ]]; then
+  # [DX-T1-11] Why: only after timed work ends may retained immutable peer values run speculative layouts.
+  # Rejected: a concurrent replay that contaminates the native size/latency relation or writes any layout to storage.
+  node lab/trace/layout-replay.mjs prepare "$out"
+  touch "$out/trace/raw/.layout-replay"
+  replay_ready=false
+  for ((replay_wait=0;replay_wait<300;replay_wait++)); do
+    if [[ -f $out/trace/raw/layout-replay-error.txt ]]; then cat "$out/trace/raw/layout-replay-error.txt" >&2;exit 1;fi
+    if [[ -s $out/trace/raw/layout-replay-complete.json ]]; then replay_ready=true;break;fi
+    sleep 1
+  done
+  [[ $replay_ready == true ]] || { echo 'Layout replay deadline' >&2;exit 1; }
+fi
 
 # [DX-T1-9] Why: end-of-run heap/TOAST inspection preserves timed workload and exactness while exposing actual free space.
 # Rejected: VACUUM/rewrite as a diagnostic, or letting an unavailable optional census invent a successful observation.

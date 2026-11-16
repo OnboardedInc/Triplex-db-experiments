@@ -1,6 +1,6 @@
 (ns triplex.gateway.selftest
   (:require [clojure.test :refer :all] [triplex.gateway.transaction-shape :as tx-shape] [clojure.data.json :as json] [datomic.api :as d]
-            [triplex.gateway.slim :as slim] [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
+            [triplex.gateway.slim :as slim] [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema] [triplex.gateway.layout-replay :as replay]))
 
  ;; [DX-B7] Why: old selftests predate mandatory row texts and the explicit layout/name parameters.
 ;; Rejected: bypassing the current commit API or removing the existing signed-zero/speculative assertions.
@@ -521,6 +521,36 @@
         (is (= text (:value_string (lean/decode (:v datom))))))
       (with-redefs [gateway/slim-rows? false] (gateway/create-scope! base scope-text "lean"))
       (is (= 4 (storage/value (gateway/sync-db (str base name)) (d/entid (gateway/sync-db (str base name)) [:triplex.scope/key scope-text]) :triplex.scope/rows-version)))
+      (finally (gateway/delete-scope! base scope-text)))))
+
+;; [DX-T1-11] Why: pure layout pricing must preserve original row values including escaped JSON and server clock assignment.
+;; Rejected: infer exactness from a smaller datom count or let a hypothetical layout write the real connection.
+(deftest speculative-layout-pricing
+  (let [scope-text "[\"triplex-scope-v1\",\"test\",\"dxt1\",\"layout-replay\",0]"
+        base "datomic:mem://" name (:db (gateway/create-scope! base scope-text "lean" true true))
+        uri (gateway/db-uri name) conn (gateway/connection uri)]
+    (try
+      (let [raw (d/db conn) before (d/basis-t raw)
+            db (:db-after (d/with raw (vec (concat replay/replay-schema (replay/functions)))))
+            fact {:id "fact-a" :entity_id "root" :attribute ":v" :value_type "string"
+                  :value_string "quotes \" and , commas [arrays] / slashes \\ and unicode λ" :recorded_at 100.0
+                  :recorded_position 1 :valid_from -500.0 :valid_to 5000.0 :schema_version 1 :tx_id "journal"}
+            change (assoc fact :id "change-a" :entity_id "journal" :entity_type "_Transaction"
+                              :attribute ":_tx/change" :value_type "json" :value_string nil
+                              :value_json (json/write-str {"tripleId" "fact-a" "recordedAt" 1.0 "text" "[,]\""}))
+            input (row-input {"sourceK" 0 "scopeWide" false "position" 1 "operationId" "replay-op"
+                              "newIds" ["fact-a" "change-a"] "claims" []
+                              "rows" (mapv storage/wire-row [fact change])})
+            payload (assoc (get-in (storage/tx-data raw input) [0 1]) :replay/head nil)
+            a (replay/apply-one db "A" payload) expected (replay/logical-delta (:report a))]
+        (doseq [shape replay/shapes]
+          (let [result (replay/apply-one db shape payload) delta (replay/logical-delta (:report result))]
+            (is (pos? (get-in result [:stats :fressianBytes])))
+            (is (map? (get-in result [:stats :txStats])))
+            (if (= shape "D") (is (= 1 (count delta))) (is (= expected delta)))))
+        (is (= before (d/basis-t (d/db conn))))
+        (is (= 0 (storage/head-position name (d/db conn))))
+        (is (nil? (d/entid (d/db conn) :triplex.replay/packed))))
       (finally (gateway/delete-scope! base scope-text)))))
 
 (defn -main [& _]
