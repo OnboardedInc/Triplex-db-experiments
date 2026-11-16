@@ -55,4 +55,5 @@ for mode in plain sentinel plain http plain refused plain tcp plain;do
  [[ ! -s $session_dir/$i-remaining.txt ]] || exit 1
  sh lab/bin/host-quiet.sh > "$session_dir/$i-host-after.jsonl" || true
 done
+if [[ $session_rc == 0 ]];then node lab/trace/idle-report.mjs "$DX_STACK_EVIDENCE" "$prefix" > "$session_dir/analysis.log";fi
 exit "$session_rc"

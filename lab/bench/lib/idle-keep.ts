@@ -76,8 +76,11 @@ if (!isMainThread && workerData?.idleKeep) {
   parentPort!.on("message", (m) => {
     if (m.stop) stop = true;
   });
+  const sched = () =>
+    fs.readFileSync("/proc/thread-self/schedstat", "utf8").trim().split(/\s+/).map(Number);
   const start = performance.timeOrigin + performance.now(),
-    cpu = process.cpuUsage();
+    cpu = process.cpuUsage(),
+    before = sched();
   parentPort!.postMessage({ ready: true });
   while (!stop) {
     const at = performance.timeOrigin + performance.now(),
@@ -130,7 +133,8 @@ if (!isMainThread && workerData?.idleKeep) {
     await new Promise((r) => setTimeout(r, Math.max(0, 20 - (end - at))));
   }
   const elapsedMs = performance.timeOrigin + performance.now() - start,
-    usage = process.cpuUsage(cpu);
+    usage = process.cpuUsage(cpu),
+    after = sched();
   client.close();
   await new Promise<void>((r, j) => {
     output.on("error", j);
@@ -143,7 +147,9 @@ if (!isMainThread && workerData?.idleKeep) {
       mode: cfg.mode,
       calls,
       elapsedMs,
-      cpuMs: (usage.user + usage.system) / 1000,
+      processCpuMs: (usage.user + usage.system) / 1000,
+      threadRuntimeMs: (after[0] - before[0]) / 1e6,
+      threadRunqueueMs: (after[1] - before[1]) / 1e6,
       clientId,
       proofSha256: process.env.DX_IDLE_REFUSAL_PROOF_SHA256 ?? null,
       heap: process.memoryUsage(),
