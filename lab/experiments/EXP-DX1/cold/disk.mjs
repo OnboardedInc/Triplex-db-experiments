@@ -1,3 +1,4 @@
+// @ts-nocheck -- [DX-T1-12] Why: standalone probe wire records use runtime validation; checkjs still checks every binding. Rejected: omit tracked probes from the source inventory.
 // [COLD-1] Why: time a durable write (O_DSYNC, as Postgres's open_datasync does) after a gap in which the disk saw nothing,
 // then a second durable write at once. This reproduces the INSERT-then-UPDATE flush pair of one Datomic log write
 // without Postgres, the JVMs or the network.

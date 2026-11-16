@@ -4,6 +4,17 @@
 set -euo pipefail
 kind=${1:?functional|real|pair}; prefix=${2:?tx2-dxt1-TAG}; shift 2
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
+# [DX-T1-12] Why: Sam forbids background requests and sentinels in diagnostics as well as verdicts.
+# Rejected: the earlier idle-diagnostic exception, which could launch a helper before the driver refused it.
+[[ ${DX_IDLE_SENTINEL:-0} == 0 && ${DX_IDLE_REFUSAL_PROBE:-0} == 0 && ${DX_IDLE_TCP:-default} == default ]] || exit 2
+for ((i=1;i<=$#;i++)); do
+  arg=${!i}; [[ $arg != --idle-keep=* || $arg == --idle-keep=none ]] || exit 2
+  if [[ $arg == --idle-keep ]]; then j=$((i+1)); [[ ${!j} == none ]] || exit 2; fi
+done
+if [[ ${DX_NS_PROFILE:-smoke} == v3 ]]; then
+  export DX_MATCH_DURATION_S=5520
+  node --import tsx lab/bench/plan.ts
+fi
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export DX_ORACLE_ROOT=${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}
 # [DX-T1] Why: --oracle-root names frozen executable source, not an output directory; keep a verified owned copy.

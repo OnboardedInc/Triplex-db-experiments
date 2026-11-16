@@ -2,12 +2,31 @@
 const finite = (...xs) => xs.every(Number.isFinite);
 const exact = (xs, p) =>
   xs.length ? [...xs].sort((a, b) => a - b)[Math.max(0, Math.ceil(xs.length * p) - 1)] : null;
-const summary = (xs) => ({
+const summary = (values) => { const xs = values.filter(Number.isFinite); return ({
   count: xs.length,
   p50Ms: exact(xs, 0.5),
   p99Ms: exact(xs, 0.99),
   maxMs: xs.length ? Math.max(...xs) : null,
-});
+}); };
+export const VERDICT_CLOCK = "ack/1";
+// [DX-T1-12] Why: every judged commit ends at the final receipt, even in old off runs without an offer stamp.
+// Rejected: falling back to finish or subtracting scheduler lateness (both change Sam's chosen clock).
+export function verdictEnd(w) {
+  if (!finite(w.scheduledAt, w.startedAt, w.finishedAt, w.ackPublishedAt, w.latencyMs) ||
+      w.expired || w.startedAt < w.scheduledAt || w.finishedAt < w.startedAt ||
+      w.ackPublishedAt < w.startedAt || w.ackPublishedAt > w.finishedAt + 0.001 ||
+      Math.abs(w.latencyMs - (w.finishedAt - w.scheduledAt)) > 0.001)
+    throw Error("Invalid commit acknowledgement boundary");
+  return w.ackPublishedAt;
+}
+export function verdictMs(w) {
+  const value = verdictEnd(w) - w.scheduledAt;
+  if (w.verdictClock !== undefined && w.verdictClock !== VERDICT_CLOCK)
+    throw Error("Mixed commit verdict clocks");
+  if (w.verdictMs !== undefined && (!Number.isFinite(w.verdictMs) || Math.abs(w.verdictMs - value) > 0.001))
+    throw Error("Recorded verdict differs from acknowledgement");
+  return value;
+}
 export function commitClocks(w) {
   if (
     !finite(w.scheduledAt, w.startedAt, w.finishedAt, w.ackPublishedAt, w.latencyMs, w.waitMs) ||
@@ -61,21 +80,28 @@ export function commitClocks(w) {
 // [DX-T1-10] Why: reuse the benchmark histogram and exact window populations, without changing its authoritative bars.
 // Rejected: counterfactual subtraction in the verdict or a corrected numerator against an uncorrected zero denominator.
 export function instrumentMetrics(bench, writes, baseline, Histogram) {
+  const clocked = w => {
+    const ack = verdictMs(w);
+    if (Number.isFinite(w.offeredAt) || Array.isArray(w.queue)) return { ...w, ...commitClocks(w) };
+    return { ...w, latencyToAckMs: ack, postAckMs: w.finishedAt - w.ackPublishedAt, timerLatenessMs: null, latencyCorrectedMs: null };
+  };
   const prim = writes.filter((w) => w.stream === "background" && !w.resend),
     good = prim.filter((w) => w.outcome === "committed" && !w.expired),
-    valid = good.map((w) => ({ ...w, ...commitClocks(w) }));
-  const base = baseline?.map((w) => ({ ...w, ...commitClocks(w) })) ?? null;
+    valid = good.map(clocked);
+  const base = baseline?.filter(w => w.outcome === "committed" && !w.expired).map(clocked) ?? null;
   const hist = (xs) => {
     const h = new Histogram();
-    xs.forEach((v) => h.recordMs(v));
+    xs.filter(Number.isFinite).forEach((v) => h.recordMs(v));
     return h;
   };
   const band = (w) => (w.facts <= 10 ? "5-10" : w.facts <= 25 ? "11-25" : "26-50");
-  const phases = bench.phases ?? [],
+  const phases = [...(bench.phases ?? []), ...Object.entries(bench.pooledPhases ?? {}).filter(([name]) => !(bench.phases ?? []).some(p => p.name === name)).map(([name, s]) => ({ name, ...s, end: true }))],
     phase = (n) => phases.find((p) => p.name === n),
     window = (p) => ({ from: p.start + bench.config.settleS * 1000, to: p.end });
   const inWindow = (rows, from, to) =>
     rows.filter((w) => w.scheduledAt >= from && w.scheduledAt < to);
+  const ranges = p => p.intervals?.map(x => ({ from: x.from + bench.traceStartAbsMs, to: x.to + bench.traceStartAbsMs })) ?? [window(p)];
+  const inRanges = (rows, rs) => rows.filter(w => rs.some(r => w.scheduledAt >= r.from && w.scheduledAt < r.to));
   const metric = (w, key) =>
     key === "observed" ? w.latencyMs : key === "ackOnly" ? w.latencyToAckMs : w.latencyCorrectedMs;
   const definitions = {};
@@ -89,7 +115,7 @@ export function instrumentMetrics(bench, writes, baseline, Histogram) {
       );
     const l = phase("L256"),
       ww = l && window(l),
-      loaded = ww ? inWindow(valid, ww.from, ww.to) : [];
+      loaded = ww ? inRanges(valid, ranges(l)) : [];
     const x = {
       allPrimary: summary(valid.map((w) => metric(w, key))),
       bandsAtL256: bands(loaded),
@@ -98,17 +124,13 @@ export function instrumentMetrics(bench, writes, baseline, Histogram) {
       recovery: null,
     };
     for (const p of phases.filter((p) => p.end)) {
-      const w = window(p),
-        pop = inWindow(valid, w.from, w.to),
+      const rs = ranges(p),
+        pop = inRanges(valid, rs),
         h = hist(pop.map((r) => metric(r, key)));
       const eligible =
-        base && bench.matchedBaseline?.offeredUntilTraceS * 1000 >= w.to - bench.traceStartAbsMs;
+        base && rs.every(w => bench.matchedBaseline?.offeredUntilTraceS * 1000 >= w.to - bench.traceStartAbsMs);
       const b = eligible
-        ? base.filter(
-            (r) =>
-              r.offsetMs >= w.from - bench.traceStartAbsMs &&
-              r.offsetMs < w.to - bench.traceStartAbsMs,
-          )
+        ? base.filter(r => rs.some(w => r.offsetMs >= w.from - bench.traceStartAbsMs && r.offsetMs < w.to - bench.traceStartAbsMs))
         : [];
       const bh = hist(b.map((r) => metric(r, key))),
         denom = bh.percentileMs(99),
@@ -124,19 +146,14 @@ export function instrumentMetrics(bench, writes, baseline, Histogram) {
     }
     const recovery = phase("recovery"),
       original = bench.priorities?.P1?.recovery;
-    if (recovery && original?.windows) {
-      const width = Math.min(30000, recovery.end - recovery.start),
+    if ((recovery || bench.config?.profile === "v3") && original?.windows) {
+      const width = recovery ? Math.min(30000, recovery.end - recovery.start) : 30000,
         windows = original.windows.map((r) => {
-          const from = recovery.start + r.fromS * 1000,
-            to = from + width,
-            ch = hist(inWindow(valid, from, to).map((w) => metric(w, key))),
+          const rs = r.intervals?.map(x => ({ from: x.from + bench.traceStartAbsMs, to: x.to + bench.traceStartAbsMs })) ?? [{ from: recovery.start + r.fromS * 1000, to: recovery.start + r.fromS * 1000 + width }],
+            ch = hist(inRanges(valid, rs).map((w) => metric(w, key))),
             matched =
-              base && bench.matchedBaseline?.offeredUntilTraceS * 1000 >= to - bench.traceStartAbsMs
-                ? base.filter(
-                    (w) =>
-                      w.offsetMs >= from - bench.traceStartAbsMs &&
-                      w.offsetMs < to - bench.traceStartAbsMs,
-                  )
+              base && rs.every(x => bench.matchedBaseline?.offeredUntilTraceS * 1000 >= x.to - bench.traceStartAbsMs)
+                ? base.filter(w => rs.some(x => w.offsetMs >= x.from - bench.traceStartAbsMs && w.offsetMs < x.to - bench.traceStartAbsMs))
                 : [],
             bh = hist(matched.map((w) => metric(w, key))),
             num = ch.percentileMs(99),
@@ -146,7 +163,7 @@ export function instrumentMetrics(bench, writes, baseline, Histogram) {
             r.violations === 0 &&
             r.readP99Ms !== null &&
             r.readP99Ms <= 100 &&
-            (rate === undefined || r.reads / (width / 1000) >= 0.9 * rate) &&
+            (rate === undefined || r.reads / (rs.length * width / 1000) >= 0.9 * rate) &&
             denom > 0 &&
             num !== null &&
             num <= 1.25 * denom;
@@ -159,7 +176,7 @@ export function instrumentMetrics(bench, writes, baseline, Histogram) {
   }
   return {
     schema: "triplex.instrument.v1",
-    authoritative: "observed",
+    authoritative: "ackOnly",
     correctedRule:
       "ACK minus scheduled offer minus observed scheduler lateness: counterfactual on-time offer; subject/slot waits remain. GC/event-loop lateness is removed too, so this is diagnostic, not acceptance.",
     ackRule: "ACK minus scheduled offer: actual scheduler lateness retained.",
@@ -237,11 +254,12 @@ export function idleAndPhaseMetrics(writes, phases, requests = []) {
           : "sparse";
     const c = counts[kind] ?? { commands: 0, over50: 0, totalSlowMs: 0, phases: {} };
     c.commands++;
-    if (w.latencyMs > 50) {
+    if (verdictMs(w) > 50) {
       c.over50++;
-      c.totalSlowMs += w.latencyMs;
+      c.totalSlowMs += verdictMs(w);
       c.phases[name] = (c.phases[name] ?? 0) + 1;
     }
+    c.finishOver50 = (c.finishOver50 ?? 0) + Number(w.latencyMs > 50);
     counts[kind] = c;
   }
   return {
@@ -262,7 +280,7 @@ const n = (x) => (Number.isFinite(x) ? x.toFixed(3) : "unavailable");
 export function instrumentMarkdown(m) {
   if (!m) return "";
   const rows = [];
-  const defs = ["observed", "ackOnly", "corrected"];
+  const defs = ["ackOnly", "observed", "corrected"];
   const add = (label, get, limit) =>
     rows.push(`| ${label} | ${defs.map((d) => n(get(m.definitions[d]))).join(" | ")} | ${limit} |`);
   add("All-primary p50 ms", (d) => d.allPrimary.p50Ms, "reported");
@@ -289,7 +307,7 @@ export function instrumentMarkdown(m) {
     );
   }
   add("Recovery ms", (d) => d.recovery?.recoveredAfterMs, "<=60000; unavailable is not met");
-  return `\n## Commit clock definitions (diagnostic)\n\nAuthoritative verdict: unchanged scheduled-offer to benchmark finish. ACK-only retains actual offer lateness. Corrected is a counterfactual on-time offer with the clock stopped at ACK; it also removes real GC/event-loop lateness and cannot qualify a PASS. ${m.missing} of ${m.primary} primary commands lack a qualified ACK. Non-latency P2 values and read/feed clocks are unchanged.\n\nTimer lateness p50/p99: ${n(m.timerLateness.p50Ms)}/${n(m.timerLateness.p99Ms)} ms; post-ACK p50/p99: ${n(m.postAck.p50Ms)}/${n(m.postAck.p99Ms)} ms.\n\n| Measurement | today | ACK-only | corrected diagnostic | unchanged bar |\n| --- | --- | --- | --- | --- |\n${rows.join("\n")}\n`;
+  return `\n## Commit clock definitions\n\nVerdict: scheduled offer to the final receipt handed to the caller (ack/1, Sam 2026-11-16). Actual scheduler lateness counts. Legacy finish is reported, never judged. Corrected removes observed offer lateness, including GC/event-loop stalls, and cannot qualify a PASS. ${m.missing} of ${m.primary} primary commands lack a qualified ACK. Non-latency P2 values and read/feed clocks are unchanged. Commit-based bars need at least 500 primary commits, including both sides of a ratio.\n\nTimer lateness p50/p99: ${n(m.timerLateness.p50Ms)}/${n(m.timerLateness.p99Ms)} ms; post-ACK p50/p99: ${n(m.postAck.p50Ms)}/${n(m.postAck.p99Ms)} ms.\n\n| Measurement | verdict (ACK) | legacy finish | corrected diagnostic | bar |\n| --- | --- | --- | --- | --- |\n${rows.join("\n")}\n`;
 }
 export function idleMarkdown(m) {
   if (!m) return "";

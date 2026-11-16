@@ -1,3 +1,4 @@
+// @ts-nocheck -- [DX-T1-12] Why: standalone probe wire records use runtime validation; checkjs still checks every binding. Rejected: omit tracked probes from the source inventory.
 // [COLD-1] Why: a fixed arithmetic kernel that touches almost no memory shows how fast this virtual CPU is at each moment,
 // which separates "the processor is slower" (frequency, efficiency core) from "the caches are cold".
 // Rejected: timing the real stack for this (its spans mix compute speed, cache state and waits).

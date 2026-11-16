@@ -1,5 +1,6 @@
 // @ts-nocheck -- Recorded-run JSON is validated at this boundary.
 import fs from "node:fs";
+import { verdictMs, VERDICT_CLOCK } from "./instrument.mjs";
 import path from "node:path";
 import { records, filesUnder, percentile } from "./report.mjs";
 const [base, prefix] = process.argv.slice(2),
@@ -163,16 +164,19 @@ for (const arm of arms) {
     tag,
     arm,
     level: m.level,
+    verdictClock: VERDICT_CLOCK,
+    finishP50Ms: percentile(writes.map(w => w.latencyMs), 0.5),
+    finishP99Ms: percentile(writes.map(w => w.latencyMs), 0.99),
     placement,
     source,
     digest: b.trace.digest,
     commands: writes.length,
     p50Ms: percentile(
-      writes.map((w) => w.latencyMs),
+      writes.map(verdictMs),
       0.5,
     ),
     p99Ms: percentile(
-      writes.map((w) => w.latencyMs),
+      writes.map(verdictMs),
       0.99,
     ),
     swapGiB: { min: Math.min(...swaps), median: percentile(swaps, 0.5), max: Math.max(...swaps) },

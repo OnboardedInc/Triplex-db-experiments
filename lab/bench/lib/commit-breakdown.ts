@@ -7,6 +7,8 @@ export function commitBreakdown(rows: any[]) {
     transact: (w: any) => w.transactReturnedAt - w.transactCalledAt,
     afterTransact: (w: any) => w.ackPublishedAt - w.transactReturnedAt,
     afterAck: (w: any) => w.finishedAt - w.ackPublishedAt,
+    driverBeforeAck: (w: any) => w.transactCalledAt - w.scheduledAt + w.ackPublishedAt - w.transactReturnedAt,
+    driverAfterAck: (w: any) => w.finishedAt - w.ackPublishedAt,
     publicationWitness: (w: any) => w.publicationDurableAt - w.publicationStartedAt,
     driverOwn: (w: any) =>
       w.transactCalledAt -

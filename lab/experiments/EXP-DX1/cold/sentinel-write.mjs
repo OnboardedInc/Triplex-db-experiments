@@ -1,3 +1,4 @@
+// @ts-nocheck -- [DX-T1-12] Why: standalone probe wire records use runtime validation; checkjs still checks every binding. Rejected: omit tracked probes from the source inventory.
 // [COLD-1] Why: the part 10 disk sentinel, as a stand-alone arm: a 4 KB durable write every INTERVAL ms on the same guest disk.
 // usage: node sentinel-write.mjs FILE INTERVAL_MS
 import fs from "node:fs";

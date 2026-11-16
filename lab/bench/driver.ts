@@ -11,7 +11,12 @@ import { rawLocalCoverage } from "./lib/raw-local-coverage.ts";
 import { httpCounts } from "./lib/http-counts.ts";
 import { readLatencyRun } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
-import { commitClocks, instrumentMetrics } from "../trace/instrument.mjs";
+import { commitClocks, instrumentMetrics, verdictEnd, verdictMs, VERDICT_CLOCK } from "../trace/instrument.mjs";
+import { acknowledgeReceipt } from "./lib/acknowledgement.ts";
+import { pooledPhase } from "./lib/pooled-phases.ts";
+import { applyCommitVerdicts, matchBaseline } from "./lib/verdict.ts";
+import { checkV3Trace, inIntervals, intervalMs, scheduledV3Windows, type Interval } from "./lib/verdict-plan.ts";
+import { V3_PLAN_ID, V3_OFFER_SECONDS } from "./lib/phases.ts";
 import { idlePlan, type IdleEvent } from "./lib/idle-plan.ts";
 import { IdleKeep } from "./lib/idle-keep.ts";
 /**
@@ -76,6 +81,7 @@ import { BUCKETS, HOP_SHARE, RUNGS, SEED_VALID_FROM, accountsFor, accountOfSubje
 import { REPO, runtimeApi } from "./lib/triplex.ts";
 import { pathToFileURL } from "node:url";
 const datomicMaintenanceJobs: any[] = [];
+let verdictEvents: readonly TraceEvent[] = [];
 import { chooseHistorySample, chooseSamples } from "./lib/samples.ts";
 import { seedFromManifest } from "./lib/bulk.ts";
 import { startHiccupMeter, type RoundPlan } from "./lib/noise.ts";
@@ -107,7 +113,7 @@ const output = path.resolve(opt("output") ?? "");
 if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--output must be under runs/");
 const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
-const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s", "history-growth-subjects"].filter((f) => opt(f) !== undefined);
+const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 if (opt("idle-gaps-ms")) devFlags.push("idle-diagnostic");
 const config = {
@@ -144,7 +150,7 @@ const config = {
   seedBudgetS: Number(opt("seed-budget-s", "3600")),
   seedBatchFacts: Number(opt("seed-batch-facts", "400")),
   schedulerTiming: opt("scheduler-timing", "precise") as "precise" | "legacy",
-  historyGrowthSubjects: opt("history-growth-subjects") ? Number(opt("history-growth-subjects")) : null,
+  historyGrowthSubjects: Number(opt("history-growth-subjects", "4")),
   idleGapsMs: opt("idle-gaps-ms")?.split(",").map(Number) ?? null,
   idleCommits: Number(opt("idle-commits", "150")),
   idleKeep: opt("idle-keep", "none") as "none" | "http" | "refused",
@@ -176,15 +182,19 @@ const config = {
   barrierDir: opt("barrier-dir") ?? null,
   startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
-// [DX-T1-10] Why: the scheduler repair is default, but changing frozen history batches remains explicit.
-// Rejected: silently making four-subject history growth the verdict workload or changing the authoritative finish clock.
+// [DX-T1-12] Why: Sam approved four-subject growth independently of seed batches and receipt-to-caller verdict timing.
+// Rejected: tying history command size to seeding, or releasing the subject queue earlier than the unchanged finish stamp.
 if (!["precise", "legacy"].includes(config.schedulerTiming) ||
     (config.historyGrowthSubjects !== null && (!Number.isSafeInteger(config.historyGrowthSubjects) || config.historyGrowthSubjects < 1 || config.historyGrowthSubjects > 500)))
   throw Error("Invalid scheduler timing or history growth subjects");
 if (config.idleGapsMs && (lane !== "datomic" || !config.zeroReaders || !config.readerLadderOnly ||
     config.probe10PerS !== 0 || config.baselineWrites || config.roundPlan || config.matchDurationS ||
     !["none", "http", "refused"].includes(config.idleKeep))) throw Error("Idle diagnostics require isolated zero-reader, no overlay and no verdict baseline");
-if (!config.idleGapsMs && config.idleKeep !== "none") throw Error("Keep-warm is diagnostic only");
+if (config.idleKeep !== "none" || process.env.DX_IDLE_SENTINEL === "1" || process.env.DX_IDLE_REFUSAL_PROBE === "1")
+  throw Error("Keep-warm requests and sentinels are forbidden (Sam 2026-11-16)");
+if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
+  throw Error("v3 requires its full fixed phase plan and unchanged offered rate");
+if (profile === "v3") config.matchDurationS = V3_OFFER_SECONDS;
 if (!["heap", "journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
 if (!["snapshot", "delta"].includes(config.readerBasisWire)) throw Error("Invalid reader basis wire mode");
 if (!["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
@@ -234,7 +244,9 @@ const report: Record<string, any> = latencyReceipt({
   writerHeap,
   format: "tx2-ns-report/2",
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
-  semantics: "TARGETS v2 sections 1.1, 2.1, 4.1",
+  semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
+  verdictClock: VERDICT_CLOCK,
+  verdictPlanId: profile === "v3" ? V3_PLAN_ID : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
@@ -479,6 +491,8 @@ async function run() {
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N) : null;
   const traceDurationS = idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
   const events = idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
+  verdictEvents = events;
+  if (profile === "v3") { report.verdictPlan = checkV3Trace(events); log(`v3 scheduled counts: ${JSON.stringify(report.verdictPlan.counts)}`); }
   report.trace = { params, durationS: traceDurationS, digest: traceDigest(events), generated: traceStats(events), generatorSha256: report.generator.traceSha256, seed: config.seed,
     ...(idle ? { diagnostic: "Fixed-gap ten-fact component probe; not the frozen verdict workload", idlePlanSha256: report.benchSources["lab/bench/lib/idle-plan.ts"] } : {}) };
   log(`trace: ${events.length} events over ${traceDurationS}s, digest ${report.trace.digest}, active-set share ${report.trace.generated.activeShare.toFixed(3)}`);
@@ -668,13 +682,14 @@ async function run() {
     out.outcome = "committed";
     Object.assign(out, publicationTimes.get(receipt.position));
     publicationTimes.delete(receipt.position);
-    if (ev.ackLoss) {
+    const delivered = await acknowledgeReceipt(receipt, {
+      reconcileLostAck: ev.ackLoss ? async (receipt) => {
       const retry = await traceAsync("triplex.transact", () => writer.transact(cmd.operations, meta));
       const resolved = await resolveByCommand(cmd.commandId);
       lostAck.push({ seq: ev.seq, retryTag: retry.ok ? "COMMITTED-AGAIN" : retry.tag, retryNamesOriginal: !retry.ok && retry.error?.transactionId === receipt.txId, resolvedOriginal: resolved?.txId === receipt.txId && resolved?.position === receipt.position });
       out.path = "lost-ack-resolved";
-    }
-    traceSync("driver.ack-and-subject-state", () => {
+      } : undefined,
+      updateSubject: (receipt) => traceSync("driver.ack-and-subject-state", () => {
     const pl = ids.placement(ev.subject);
     st.stamp = cmd.newStamp;
     st.stampId = receipt.triples.find((t) => t.entityId === pl && t.attribute === ":placement/stamp")!.id;
@@ -684,8 +699,10 @@ async function run() {
       st.addressId = receipt.triples.find((t) => t.entityId === ids.worker(ev.subject) && t.attribute === ":worker/address")!.id;
       st.addressValidFrom = cmd.validRange.from;
     }
+      }),
+      stamp: (receipt) => traceSync("driver.ack-and-subject-state", () => noteAck(receipt, ev.subject, { seq: ev.seq, stream: ev.stream, correction: ev.correction, correctionValidFrom: ev.correction ? cmd.validRange.from : null, stamp: cmd.newStamp })),
     });
-    const at = traceSync("driver.ack-and-subject-state", () => noteAck(receipt!, ev.subject, { seq: ev.seq, stream: ev.stream, correction: ev.correction, correctionValidFrom: ev.correction ? cmd.validRange.from : null, stamp: cmd.newStamp }));
+    const at = delivered.ackAt;
     out.ackPublishedAt = at;
     if (ev.stream === "background") {
       const result = { position: receipt.position, ackAt: at };
@@ -714,12 +731,13 @@ async function run() {
     out.transactCalledAt = now();
     const res = await writer.transact(orig.operations, orig.meta);
     out.transactReturnedAt = now();
-    out.ackPublishedAt = now();
     let how = "mismatch";
     if (res.ok) how = "COMMITTED-AGAIN";
     else if (res.tag === "CommandAlreadyCommittedError" && res.error?.transactionId === orig.receipt.txId) how = "already-committed-original";
     else if ((await resolveByCommand(orig.meta.commandId))?.txId === orig.receipt.txId) how = "resolved-by-command";
     out.outcome = how === "mismatch" || how === "COMMITTED-AGAIN" ? "unaccounted" : "duplicate-returned-original";
+    out.ackPublishedAt = now();
+    original.delete(job.ev.seq);
     resends.push({ seq: job.ev.seq, result: how, tag: res.ok ? null : res.tag });
   };
   const scheduler = new OpenLoopScheduler<Job>(jobs, {
@@ -752,7 +770,9 @@ async function run() {
           capacity: q.capacity,
           behindTraceId: q.behindTraceId,
         });
-      finishTrace(trace, { expired: r.expired, outcome: outcomes.get(okey(ev))?.outcome ?? "unknown", position:outcomes.get(okey(ev))?.position??null }, r.finishedAt);
+      const ack = outcomes.get(okey(ev))?.ackPublishedAt;
+      if (Number.isFinite(ack)) traceInterval(trace, "driver.ack", ack, ack, "typescript", undefined, { marker: true });
+      finishTrace(trace, { ackPublishedAt: ack, expired: r.expired, outcome: outcomes.get(okey(ev))?.outcome ?? "unknown", position:outcomes.get(okey(ev))?.position??null }, r.finishedAt);
       if (ev.stream === "background" && !ev.resend) {
         const list = pendingBySubject.get(ev.subject);
         if (list) { const k = list.indexOf(ev.seq); if (k >= 0) list.splice(k, 1); if (!list.length) pendingBySubject.delete(ev.subject); }
@@ -769,9 +789,12 @@ async function run() {
         ...(idle ? { idleGapMs: (ev as IdleEvent).idleGapMs, idleWarmup: (ev as IdleEvent).idleWarmup } : {}),
         offsetMs: r.job.scheduledAt - traceStart, scheduledAt: r.job.scheduledAt, offeredAt: r.offeredAt, startedAt: r.startedAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, waitMs: r.waitMs, expired: r.expired, ...out };
       if (!r.expired && Number.isFinite(row.ackPublishedAt)) Object.assign(row, commitClocks(row));
+      if (row.stream === "background" && !row.resend && row.outcome === "committed") {
+        row.verdictMs = verdictMs(row); row.verdictClock = VERDICT_CLOCK;
+      }
       writes.push(row);
       if (book && ev.stream === "background" && !ev.resend)
-        book.recordCommand({ seq: ev.seq, scheduledAt: r.job.scheduledAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, outcome: r.expired ? "expired" : out.outcome ?? "unaccounted" });
+        book.recordCommand({ seq: ev.seq, scheduledAt: r.job.scheduledAt, finishedAt: !r.expired && out.outcome === "committed" ? verdictEnd(row) : r.finishedAt, latencyMs: !r.expired && out.outcome === "committed" ? verdictMs(row) : r.latencyMs, outcome: r.expired ? "expired" : out.outcome ?? "unaccounted" });
     },
   });
   upcomingJobs = (horizonMs) => scheduler.upcoming(horizonMs);
@@ -873,7 +896,7 @@ async function run() {
   // over the seeded population from a seeded stream, so both arms issue the same pulls at the same instants. Basis:
   // the latest receipt the driver has seen (named exactly). Latency from the scheduled time; expired and failed pulls
   // are censored. Rejected: probing the hot set (it depends on each arm's own ACK timing, so the arms would diverge).
-  type ProbeJob = { key: number; scheduledAt: number; ev: { seq: number; atMs: number; subject: number }; ok?: boolean };
+  type ProbeJob = { key: number; scheduledAt: number; ev: { seq: number; atMs: number; subject: number }; ok?: boolean; responseAt?: number };
   const probeComp = pairPlan ? await openComposition(config.composition, lane, scopeName) : null;
   const probeScheduler = pairPlan
     ? new OpenLoopScheduler<ProbeJob>(probeEvents.map((ev) => ({ key: ev.seq, scheduledAt: traceStart + ev.atMs, ev })), {
@@ -885,6 +908,7 @@ async function run() {
           const t0 = performance.now();
           try {
             const pr = await probeComp!.pull(ids.placement(job.ev.subject), basis);
+            job.responseAt = now();
             const o = observe(pr);
             retainRead([PHASE_PROBE, job.ev.subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, latest.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
             job.ok = true;
@@ -893,7 +917,10 @@ async function run() {
             job.ok = false;
           }
         },
-        onDone: (r) => book!.recordProbe({ seq: r.job.ev.seq, scheduledAt: r.job.scheduledAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, ok: !r.expired && r.job.ok === true, expired: r.expired }),
+        onDone: (r) => book!.recordProbe({ seq: r.job.ev.seq, scheduledAt: r.job.scheduledAt,
+          finishedAt: !r.expired && r.job.ok ? r.job.responseAt! : r.finishedAt,
+          latencyMs: !r.expired && r.job.ok ? r.job.responseAt! - r.job.scheduledAt : r.latencyMs,
+          ok: !r.expired && r.job.ok === true, expired: r.expired }),
       })
     : null;
   const hiccup = pairPlan ? startHiccupMeter(1) : null;
@@ -947,6 +974,12 @@ async function run() {
     report.phases = phases;
     save();
   } else for (const [idx, spec] of plan.entries()) {
+    if (spec.traceFromS !== undefined) {
+      const target = traceStart + spec.traceFromS * 1000;
+      if (now() < target) await sleep(target - now());
+      if (now() - target > config.settleS * 1000)
+        throw Error(`v3 phase ${spec.name} missed its fixed start by more than settle`);
+    }
     // [DX-H4] Why: settle retained datoms before timing each matched history depth.
     // Rejected: timing immediately after growth (measures live memory-index churn).
     const historyIndex = indexClient && /^p4h(1|3|10)$/.test(spec.name)
@@ -955,29 +988,37 @@ async function run() {
     const phaseCpuStart = process.cpuUsage();
     const writerEluStart = performance.eventLoopUtilization();
     const writerDelay = monitorEventLoopDelay({ resolution: 1 }); writerDelay.enable();
-    const start = now();
-    const entry: any = { writerDiagnosticsStart: datomicWriterDiagnostics(), historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
+    const start = spec.traceFromS === undefined ? now() : traceStart + spec.traceFromS * 1000;
+    const entry: any = { actualStart: now(), pool: spec.pool, cycle: spec.cycle, writerDiagnosticsStart: datomicWriterDiagnostics(), historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
     phaseStarts.set(idx, start);
     await spill?.beginPhase(idx, start, config.settleS * 1000);
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
-    const indexJob = indexClient && /^L[0-9]+$/.test(spec.name) && spec.seconds ? (async () => {
+    const indexJob = indexClient && /^L[0-9]+(?:-[A-Z0-9]+)?$/.test(spec.name) && spec.seconds ? (async () => {
       const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
       while (now() < start + delay) await sleep(Math.max(1, start + delay - now()));
-      const waitMs = Math.max(1, Math.min(600000, Math.floor(spec.seconds! * 1000 - delay - 100)));
-      datomicMaintenanceJobs.push(await requestIndex(indexClient, indexDb, spec.name, now, waitMs));
+      const stop = start + spec.seconds! * 1000;
+      do {
+        const waitMs = Math.max(1, Math.min(profile === "v3" ? 44900 : 600000, Math.floor(stop - now() - 100)));
+        datomicMaintenanceJobs.push(await requestIndex(indexClient, indexDb, spec.name, now, waitMs));
+        if (profile !== "v3") break;
+        const next = start + delay + (Math.floor((now() - start - delay) / 45000) + 1) * 45000;
+        if (next >= stop) break;
+        await sleep(Math.max(0, next - now()));
+      } while (now() < stop - 100);
     })() : null;
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.sweep) entry.sweep = await runSweep(idx, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.seconds) {
-      await sleep(spec.seconds * 1000);
+      await sleep(Math.max(0, start + spec.seconds * 1000 - now()));
       if (!config.zeroReaders && /^p4h(1|3|10)$/.test(spec.name)) {
         const deadline = now() + 120_000;
         while ((settledReadCounts.get(idx) ?? 0) < 10_000 && now() < deadline) await sleep(250);
       }
     }
-    entry.end = now();
+    entry.actualEnd = now();
+    entry.end = spec.traceFromS === undefined ? entry.actualEnd : start + spec.seconds! * 1000;
     writerDelay.disable();
     entry.writerDiagnosticsEnd = datomicWriterDiagnostics();
     entry.writerThread = { elu: performance.eventLoopUtilization(writerEluStart).utilization, longestBlockedMs: writerDelay.max / 1e6, p99BlockedMs: writerDelay.percentile(99) / 1e6 };
@@ -1149,7 +1190,7 @@ async function run() {
   const independentOracle = (config.zeroReaders ? Promise.resolve({ status: "NOT-RUN", reason: "zero-reader baseline run" }) : pairPlan && pairPlan.readers === 0 ? Promise.resolve({ status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" }) : finalPosition === null ? Promise.resolve({ status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) }) : runOracle(finalPosition, lastAcked))
     .catch(error => ({ status: "ORACLE-ERROR", stderr: String(error) }));
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
-  else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
+  else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending, events });
   // [DX-R3-P9] Why: the cache control exposed receipt errors outside ladder windows; DONE must reject every read error too.
   // Rejected: treating zero wrong worlds as a successful zero-error proof.
   if (report.correctness?.violations || report.correctness?.errors)
@@ -1208,7 +1249,7 @@ async function run() {
     const started = now();
     const deadline = started + maxS * 1000;
     let commands = 0, assertions = 0, failures = 0;
-    const perCommand = config.historyGrowthSubjects ?? Math.max(1, Math.floor(config.seedBatchFacts / 4));
+    const perCommand = config.historyGrowthSubjects;
     if (!historyList.length) return { targetDepth: depth, reachedDepth: 1, subjects: 0, commands, assertions, failures, wallS: 0 };
     if (lateGrowth.length) return { targetDepth: depth, reachedDepth: Math.min(...historyList.map((i) => historyVersion.get(i) ?? 0)) + 1, subjects: historyList.length, commands, assertions, failures, wallS: 0, incomplete: true, skipped: `an earlier growth command (${lateGrowth[0]!.cmd.commandId}) is still pending; it is never re-sent` };
     for (let v = (historyVersion.get(historyList[0]!) ?? 0) + 1; v < depth && now() < deadline; v++) {
@@ -1453,7 +1494,7 @@ const ratio = (a: number | null | undefined, b: number | null | undefined) => (a
 const bar = (id: string, value: any, limit: string, pass: boolean | null, note?: string) => ({ id, value, bar: limit, pass, ...(note ? { note } : {}) });
 const countBy = (values: string[]) => { const o: Record<string, number> = {}; for (const v of values) o[v] = (o[v] ?? 0) + 1; return o; };
 
-function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintenance: any; historyList: number[]; pendingAtEnd: number }) {
+function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintenance: any; historyList: number[]; pendingAtEnd: number; events: readonly TraceEvent[] }) {
   const analysisCpuStart = process.cpuUsage(), analysisWallStart = performance.now();
   const verdicts = readVerdicts();
   const violationKinds: Record<string, number> = {};
@@ -1477,6 +1518,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const w = windowOf(phase);
     const secs = Math.max(0.001, (w.to - w.from) / 1000);
     const read = new Histogram();
+    const goodputBySecond = Array.from({ length: Math.ceil(secs) }, (_, i) => ({ correct: 0, seconds: Math.min(1, secs - i) }));
     let reads = 0, correct = 0, violations = 0, errors = 0, hotReads = 0, splitReads = 0, splitForced = 0, splitCorrect = 0;
     const byBasis = [0, 0, 0];
     const routes: Record<string, number> = {};
@@ -1489,7 +1531,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       if (r[R.phase] !== phase.idx || r[R.start] < w.from || r[R.start] + r[R.latency] > w.to) return;
       reads++;
       const v = VERDICTS[verdicts[k]!]!;
-      if (v.ok) { correct++; read.recordMs(r[R.latency]); } else if (v.kind === "error") errors++; else violations++;
+      if (v.ok) { correct++; read.recordMs(r[R.latency]); const bin = Math.min(goodputBySecond.length - 1, Math.floor((r[R.start] + r[R.latency] - w.from) / 1000)); goodputBySecond[bin]!.correct++; } else if (v.kind === "error") errors++; else violations++;
       const lw = lastAckBefore(r[R.subject], r[R.start]);
       if (lw !== null && r[R.start] - lw <= 60_000) hotReads++;
       byBasis[r[R.basisKind]]!++;
@@ -1510,7 +1552,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     });
     const commits = background.filter((x) => x.scheduledAt >= w.from && x.scheduledAt < w.to && x.outcome === "committed");
     const commit = new Histogram();
-    for (const c of commits) commit.recordMs(c.latencyMs);
+    for (const c of commits) commit.recordMs(verdictMs(c));
     const matched = baseline ? matchedBaseline(baseline, w.from - ctx.traceStart, w.to - ctx.traceStart) : null;
     const lag = new Histogram();
     for (const l of lagRows) if (l.at >= w.from && l.at < w.to) lag.recordMs(l.lagMs);
@@ -1521,29 +1563,43 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const eng = engineSamples.filter((e) => e.t >= w.from && e.t < w.to);
     const maxWorkerElu = workerEluMean.length ? Math.max(...workerEluMean) : null;
     const maint = (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, phase.name, w.from, w.to) : e.t >= w.from && e.t < w.to).length;
+    const maintenanceWindows = Array.from({ length: Math.ceil(secs / 45) }, (_, i) => {
+      const from = w.from + i * 45000, to = Math.min(w.to, from + 45000);
+      return { phase: phase.name, from, to, completed: (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, phase.name, from, to) : e.t >= from && e.t < to).length };
+    });
     const marks = watermarkSamples.filter((s) => s.t >= w.from && s.t < w.to).map((s) => s.marks["source"] ?? 0);
     return {
       phase: phase.name, readers: phase.readers, mode: phase.mode, windowS: Math.round(secs * 10) / 10, overlapsBurst: phase.overlapsBurst,
-      reads, correct, violations, errors, goodputPerS: correct / secs, read: read.summary(),
+      reads, correct, violations, errors, goodputBySecond, goodputPerS: correct / secs, read: read.summary(),
       hotShare: reads ? hotReads / reads : null, basisMix: { latest: byBasis[0], lastHour: byBasis[1], pastValidTime: byBasis[2] },
       split: { reads: splitReads, straddledATraceCommand: splitForced, straddledCorrect: splitCorrect },
       routing: { routes, languages, fallbackShare: reads ? (routes["fallback"] ?? 0) / reads : null, localShare: reads ? (routes["replica"] ?? 0) / reads : null, waitedReads: waited, watermarkWait: watermarkWait.summary(), watermarkWaitMs: 10 },
       buckets: Object.fromEntries(Object.entries(buckets).map(([k, h]) => [k, { ...h.summary(), meanBytes: bytesBy[k]!.sum / bytesBy[k]!.count }])),
-      writer: { commits: commits.length, commit: commit.summary(), maxLatencyMs: commits.length ? Math.max(...commits.map((c) => c.latencyMs)) : null, matchedZeroReader: matched },
+      writer: { commits: commits.length, commit: commit.summary(), maxLatencyMs: commits.length ? Math.max(...commits.map((c) => verdictMs(c))) : null, matchedZeroReader: matched },
       feedLag: lag.summary(),
-      maintenanceEvents: maint,
+      maintenanceEvents: maint, maintenanceWindows, maintenanceDensityMet: maintenanceWindows.every(w => w.completed >= 1),
       watermarks: marks.length ? { source: { min: coordinate(Math.min(...marks)), max: coordinate(Math.max(...marks)) } } : null,
       client: { workerEluMean, maxWorkerElu, mainElu: mainEluMean,
         processCpuMsPerLocalReadUpperBound: (routes["replica"] ?? 0) > 0 ? phase.clientCpuMs / routes["replica"] : null,
         saturated: (maxWorkerElu ?? 0) > 0.9 || (mainEluMean ?? 0) > 0.9 },
       engine: { containers: Object.fromEntries(containers.map(name => [name, { cpuPercentMean: mean(eng.map(e => e.containers[name]?.cpuPercent).filter((n): n is number => n !== undefined)) }])), cpuPercentMean: mean(eng.map((e) => e.cpuPercent)), samples: eng.length, peakMemBytes: eng.length ? Math.max(...eng.map((e) => e.memBytes)) : null },
       _read: read,
-      _commit: commit,
+      _commit: commit, _feedLag: lag, _buckets: buckets,
     };
   };
   const stats: Record<string, any> = {};
   for (const phase of ctx.phases) if (phase.end && phase.measured) stats[phase.name] = levelStats(phase);
-  const strip = (s: any) => { if (!s) return s; const { _read, _commit, ...rest } = s; return rest; };
+  if (profile === "v3") {
+    const windows = scheduledV3Windows();
+    for (const name of ["L256", "L1024"] as const) {
+      const members = ctx.phases.filter(p => p.pool === name).map(p => stats[p.name]);
+      const ref = baseline ? matchBaseline(baseline, windows[name], ctx.events.filter(e => !e.resend && e.stream === "background"), (report.matchedBaseline?.offeredUntilTraceS ?? 0) * 1000, "ack") : null;
+      stats[name] = pooledPhase(name, members, windows[name], ref ? { ...ref, rows: undefined, values: undefined } : null);
+    }
+    const first = ctx.phases.find(p => p.name === "L256-A");
+    if (first?.end) stats["L256-legacy"] = levelStats({ ...first, end: first.start + 45000 });
+  }
+  const strip = (s: any) => s ? Object.fromEntries(Object.entries(s).filter(([k]) => !k.startsWith("_"))) : s;
   const L = (n: string) => stats[n];
 
   // ---------------- P1
@@ -1553,7 +1609,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     if (m?.p99Ms) return { value: ratio(s.writer.commit.p99Ms, m.p99Ms), basis: "matched zero-reader run, same trace-time window" };
     return { value: ratio(s.writer.commit.p99Ms, L("baseline")?.writer.commit.p99Ms), basis: "UNMATCHED: in-run baseline phase (different trace segment); cannot close NS.P1" };
   };
-  const recovery = recoveryWindows(ctx.phases.find((p) => p.name === "recovery"), L("L256"), baseline, ctx.traceStart);
+  const recovery = recoveryWindows(ctx.phases.filter((p) => p.name === "recovery" || p.pool === "recovery"), L("L256"), baseline, ctx.traceStart);
   const ladder = ["L1", "L4", "L16", "L64", "L256", "L1024"].map(L).filter(Boolean);
   const r256 = writerRatio(L("L256")), r1024 = writerRatio(L("L1024"));
   const unmatched = (r: any) => (r?.basis?.startsWith("UNMATCHED") ? false : null);
@@ -1563,7 +1619,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     writerWaitAttribution: { method: "matched-phase comparison against the zero-reader run of the same trace", baselineRun: config.baselineWrites, engineWaitEvidence: lane === "xtdb" ? "none exposed: XTDB has no read-path locks (TARGETS 1.1 P1 item 5)" : lane === "datomic" ? "not exposed: Datomic transactor/write-queue wait metrics unavailable" : "not exposed: no QLever broker queue in this composition" },
     bars: [
       bar("NS-P1-VIOLATIONS-MAX (L256)", L("L256")?.violations ?? null, "= 0", L("L256") ? L("L256").violations === 0 : null),
-      bar("NS-P1-GOODPUT-256-VS-64", ratio(L("L256")?.goodputPerS, L("L64")?.goodputPerS), ">= 1.0", L("L256") && L("L64") ? L("L256").goodputPerS >= L("L64").goodputPerS : null),
+      bar("NS-P1-GOODPUT-256-VS-64", ratio((L("L256-legacy") ?? L("L256"))?.goodputPerS, L("L64")?.goodputPerS), ">= 1.0", L("L256") && L("L64") ? (L("L256-legacy") ?? L("L256")).goodputPerS >= L("L64").goodputPerS : null),
       bar("NS-P1-READ-P99-256-MS", L("L256")?.read.p99Ms ?? null, "<= 100", L("L256")?.read.p99Ms != null ? L("L256").read.p99Ms <= 100 : null),
       bar("NS-P1-WRITER-P99-RATIO-256", r256?.value ?? null, "<= 1.25", unmatched(r256) ?? (r256?.value != null ? r256.value <= 1.25 : null), r256?.basis),
       bar("NS-P1-WRITER-WAIT-MAX-MS (L256)", L("L256")?.writer.maxLatencyMs ?? null, "<= 2000", L("L256")?.writer.maxLatencyMs != null ? L("L256").writer.maxLatencyMs <= 2000 : null),
@@ -1574,15 +1630,15 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("1.1 P1.1 hot-set share of reads (min over ladder levels)", ladder.length ? Math.min(...ladder.map((s) => s.hotShare ?? 0)) : null, ">= 0.5", ladder.length ? ladder.every((s) => (s.hotShare ?? 0) >= 0.5) : null),
       bar("1.1 P1.2 split reads straddling a frozen-trace command, all correct", ladder.reduce((s, x) => s + x.split.straddledATraceCommand, 0), "> 0 and all correct", ladder.length ? ladder.some((s) => s.split.straddledATraceCommand > 0) && ladder.every((s) => s.split.straddledATraceCommand === s.split.straddledCorrect) : null, "step 1 before the trace command's ACK, step 2 after; the driver adds no writes (RULINGS Q31b)"),
       bar("4.1.5 fallback share per window (reported)", ladder.map((s) => s.routing.fallbackShare), "reported", null, "Replica-eligible reads are local; unresolved cuts use the gateway"),
-      bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every window >= 1", ladder.length ? ladder.every((s) => s.maintenanceEvents >= 1) : null, lane === "datomic" ? "completed request-index job with request/completion timestamps inside the measured window" : "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
+      bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every 45 s >= 1", ladder.length ? ladder.every((s) => s.maintenanceDensityMet) : null, lane === "datomic" ? "completed request-index job with request/completion timestamps inside the measured window" : "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
     ],
   };
 
   // ---------------- P2
-  const bands = (rows: any[]) => Object.fromEntries(["5-10", "11-25", "26-50"].map((b) => { const h = new Histogram(); for (const w of rows) if (bandOf(w.facts) === b) h.recordMs(w.latencyMs); return [b, h.summary()]; })) as Record<string, any>;
+  const bands = (rows: any[]) => Object.fromEntries(["5-10", "11-25", "26-50"].map((b) => { const h = new Histogram(); for (const w of rows) if (bandOf(w.facts) === b) h.recordMs(verdictMs(w)); return [b, h.summary()]; })) as Record<string, any>;
   const committed = background.filter((w) => w.outcome === "committed");
   const l256 = ctx.phases.find((p) => p.name === "L256");
-  const in256 = l256?.end ? committed.filter((w) => w.scheduledAt >= windowOf(l256).from && w.scheduledAt < windowOf(l256).to) : [];
+  const in256 = profile === "v3" ? committed.filter(w => inIntervals(w.offsetMs, scheduledV3Windows().L256)) : l256?.end ? committed.filter((w) => w.scheduledAt >= windowOf(l256).from && w.scheduledAt < windowOf(l256).to) : [];
   const b256 = bands(in256);
   const byOutcome = countBy(writes.filter((w) => !w.resend).map((w) => `${w.stream}:${w.outcome ?? "unaccounted"}`));
   const unaccounted = writes.filter((w) => (w.outcome ?? "unaccounted") === "unaccounted").length + ctx.pendingAtEnd;
@@ -1597,14 +1653,14 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const lostOk = lostAck.filter((r) => r.resolvedOriginal && r.retryTag !== "COMMITTED-AGAIN").length;
   const progress = p2Progress(background, ctx.traceStart);
   const probeHist = new Histogram();
-  for (const w of writes) if (w.stream === "probe10" && w.outcome === "committed") probeHist.recordMs(w.latencyMs);
+  for (const w of writes) if (w.stream === "probe10" && w.outcome === "committed") probeHist.recordMs(verdictMs(w));
   const p2 = {
     bandsAtL256: b256, bandsAll: bands(committed), bandsSteady: bands(committed.filter((w) => !w.burst)), bandsBurst: bands(committed.filter((w) => w.burst)),
     accounting: { byStreamAndOutcome: byOutcome, resendsByResult: countBy(resends.map((r) => r.result)), unaccounted, pendingAtEnd: ctx.pendingAtEnd, errorTags: countBy(writes.flatMap((w) => w.tags ?? [])) },
     readYourOwnWrite: { pulls: ryowRows.length, correct: ryowOk, pull: ryowHist.summary(), watermarkWait: ryowWait.summary(), fallbackReasons: ryowFallbackReasons, routes: countBy(ryowRows.map(x => x.r[R.route])), failures: ryowRows.filter((x) => !x.v.ok).slice(0, 5).map((x) => ({ kind: x.v.kind, subject: x.r[R.subject], position: x.r[R.basisPosition] })) },
     duplicates: { resends: resends.length, considered: dupConsidered.length, returnedOriginal: dupOk },
     lostAck: { simulated: lostAck.length, returnedOriginal: lostOk, retryTags: countBy(lostAck.map((r) => r.retryTag)) },
-    breakdown: { units: "ms", note: "driverOwn includes offer queueing, all post-transact completion work (including after ACK), and any awaited durable publication witness inside transact (deferred witness durations are separate); medians are per-command sums, not sums of medians; all latency bars remain unchanged",
+    breakdown: { units: "ms", note: "driverBeforeAck counts apparatus before the final receipt; driverAfterAck is reported but never judged. driverOwn retains the legacy full-finish diagnostic. Publication witness timings remain separate; per-command segment quantiles do not add",
       byPhase: Object.fromEntries(ctx.phases.map(p => [p.name, commitBreakdown(committed.filter(w => w.scheduledAt >= p.start && w.scheduledAt < p.end))])),
       burst: commitBreakdown(committed.filter(w => w.burst)), all: commitBreakdown(committed) },
     probe10Diagnostic: { note: "diagnostic only (TARGETS 1.1 P2 item 2); overlay stream, not part of any bar", commit: probeHist.summary() },
@@ -1682,7 +1738,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   });
   const historyEligible = historyDepthsComplete(ctx.phases.filter(p => p.history).map(p => p.history), ctx.historyList.length) && historyInvalid.length === 0;
   const p4 = {
-    weightedMix: mix ? { read: mix.read, buckets: mix.buckets } : null,
+    weightedMix: mix ? { read: mix.read, buckets: mix.buckets, correct: mix.correct, errors: mix.errors, violations: mix.violations, goodputPerS: mix.goodputPerS } : null,
     history: { eligibleForDepthComparison: historyEligible, invalid: historyInvalid, indexing: ctx.phases.filter(p => p.historyIndex).map(p => p.historyIndex), ratios: { mean: ratio(h10?.read.meanMs, h1?.read.meanMs), p50: ratio(h10?.read.p50Ms, h1?.read.p50Ms), p99: ratio(h10?.read.p99Ms, h1?.read.p99Ms) }, sampleSubjects: ctx.historyList.length, growth: ctx.phases.filter((p) => p.history).map((p) => p.history), depth1: h1?.read ?? null, depth3: h3?.read ?? null, depth10: h10?.read ?? null, clientBytes: { depth1: phaseBytes(h1), depth3: phaseBytes(h3), depth10: phaseBytes(h10) }, engineBytesRead: "not measured: neither engine exposes bytes read per query here (seam)" },
     throughput: { bestLevel: best?.phase ?? null, goodputPerS: best?.goodputPerS ?? null, engineCpuQuotaCores: engineCpus, pullsPerSPerQuotaCore: quotaRate, engineCpuPercentMean: best?.engine.cpuPercentMean ?? null, pullsPerSPerUsedCore: best?.engine.cpuPercentMean ? best.goodputPerS / (best.engine.cpuPercentMean / 100) : null, hostClientCpu: cpu, hostBrokerCpu: "none in this composition (no broker process)" },
     bars: [
@@ -1737,10 +1793,12 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
   report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
+  report.pooledPhases = Object.fromEntries(["L256", "L1024", "L256-legacy"].filter(n => stats[n]).map(n => [n, strip(stats[n])]));
   report.instrument = instrumentMetrics(report, writes, baseline, Histogram);
   report.compositionIdentity = { ...report.composition, watermarkSamples: watermarkSamples.length, note: "image digest, config hash and slot per assignment are bound by the gate (lab/bin/gate.mjs NS)" };
   report.secondary = { bulkLane: "not measured (seed uses the bulk lane without live reads)", retroactiveCorrections: p3.bars[7], explainAtOldBasis: "past-valid-time reads are 5% of the P1 mix; bit-for-bit audit repeats are not measured" };
-  report.histograms = Object.fromEntries(Object.entries(stats).flatMap(([name, s]: any) => [[`${name}.read`, s._read.toJSON()], [`${name}.commit`, s._commit.toJSON()]]));
+  report.histograms = Object.fromEntries(Object.entries(stats).flatMap(([name, s]: any) => [[`${name}.read`, s._read.toJSON()], [`${name}.commit`, s._commit.toJSON()], [`${name}.feedLag`, s._feedLag.toJSON()], ...Object.entries(s._buckets).map(([b, h]: any) => [`${name}.${b}`, h.toJSON()])]));
+  applyCommitVerdicts(report, writes, baseline, ctx.events);
   const analysisCpu = process.cpuUsage(analysisCpuStart), fullAnalysisCpuMs = (analysisCpu.user + analysisCpu.system) / 1000;
   report.verificationCost = { verdicts: judgingCost, fullAnalysisCpuMs, fullAnalysisWallMs: performance.now() - analysisWallStart,
     fullAnalysisCpuMsPerRead: fullAnalysisCpuMs / records.length,
@@ -1789,43 +1847,68 @@ function loadBaselineWrites(): any[] | null {
   report.matchedBaseline = { traceDigest: baselineReport.trace.digest, offeredUntilTraceS: baselineReport.writer?.offeredUntilTraceS,
     source: config.baselineWrites, sha256: createHash("sha256").update(fs.readFileSync(config.baselineWrites)).digest("hex") };
   const rows = readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
-  if (baselineReport.status !== "DONE" || baselineReport.writer?.pendingAtEnd !== 0 ||
-      rows.some(w => w.outcome !== "committed") || baselineReport.correctness?.violations || baselineReport.correctness?.errors ||
+  if (!["DONE", "ERROR"].includes(baselineReport.status) || !baselineReport.correctness ||
+      baselineReport.correctness.violations !== 0 || baselineReport.correctness.errors !== 0 ||
       JSON.stringify(baselineReport.benchSources) !== JSON.stringify(report.benchSources))
-    throw Error("Matched baseline is incomplete, incorrect or uses different harness source");
+    throw Error("Matched baseline is incorrect, active or uses different harness source");
+  if (baselineReport.verdictClock !== VERDICT_CLOCK || baselineReport.verdictPlanId !== report.verdictPlanId)
+    throw Error("Matched baseline clock or phase plan differs");
+  for (const row of rows) if (row.outcome === "committed" && !row.expired) verdictMs(row);
+  report.matchedBaseline.incompleteCommands = rows.filter(w => w.outcome !== "committed" || w.expired).length;
+  report.matchedBaseline.pendingAtEnd = baselineReport.writer?.pendingAtEnd ?? null;
   return rows;
 }
 function matchedBaseline(rows: any[], fromOffset: number, toOffset: number) {
-  if (!(report.matchedBaseline?.offeredUntilTraceS * 1000 >= toOffset)) return {commits:0,p50Ms:null,p99Ms:null,invalid:"zero-reader trace does not cover this entire window"};
-  const h = new Histogram();
-  for (const w of rows) if (w.offsetMs >= fromOffset && w.offsetMs < toOffset && w.outcome === "committed") h.recordMs(w.latencyMs);
-  return { commits: h.count, p50Ms: h.percentileMs(50), p99Ms: h.percentileMs(99) };
+  const result = matchBaseline(rows, [{ from: fromOffset, to: toOffset }], verdictEvents.filter(e => !e.resend && e.stream === "background"),
+    (report.matchedBaseline?.offeredUntilTraceS ?? 0) * 1000, "ack");
+  const { rows: _rows, values: _values, ...summary } = result;
+  return summary;
 }
-/** Load contract: 30 s windows sliding by 5 s after stress; recovery = end of the first window meeting every 256-level bar. */
-function recoveryWindows(phase: any, l256: any, baseline: any[] | null, traceStart: number) {
-  if (!phase?.end) return null;
-  const width = Math.min(30_000, phase.end - phase.start), step = 5_000;
-  const windows: any[] = [];
-  let recoveredAfterMs: number | null = null;
-  for (let from = phase.start; from + width <= phase.end + 1; from += step) {
-    const to = from + width;
-    const h = new Histogram();
-    let violations = 0;
-    for (const r of records) {
-      if (r[R.phase] !== phase.idx || r[R.start] < from || r[R.start] + r[R.latency] > to) continue;
+/** [DX-T1-12] Why: recovery pools the same 30-second offset over all cycles, with matched baseline commands and the 500 floor.
+ * Rejected: selecting the easiest single recovery cycle or changing the time the point estimate represents. */
+function recoveryWindows(phases: any[], l256: any, baseline: any[] | null, traceStart: number) {
+  if (!phases.length || phases.some(p => !p.end)) return null;
+  const width = Math.min(30000, ...phases.map(p => p.end - p.start)), windows: any[] = [];
+  const cycleWindows = new Map<string, any[]>(phases.map(p => [p.name, []]));
+  const good = writes.filter(x => x.stream === "background" && !x.resend && x.outcome === "committed" && !x.expired);
+  for (let offset = 0; offset + width <= Math.min(...phases.map(p => p.end - p.start)) + 1; offset += 5000) {
+    const intervals = phases.map(p => ({ from: p.start - traceStart + offset, to: p.start - traceStart + offset + width }));
+    const h = new Histogram(); let violations = 0;
+    for (const p of phases) {
+      const one = new Histogram(); let invalidReads = 0;
+      visitPhase(p.idx, (r) => {
+      const from = p.start + offset, to = from + width;
+      if (r[R.start] < from || r[R.start] + r[R.latency] > to) return;
       const v = judgeRead(r);
-      if (v.ok) h.recordMs(r[R.latency]); else if (v.kind !== "error") violations++;
+      if (v.ok) { h.recordMs(r[R.latency]); one.recordMs(r[R.latency]); } else if (v.kind !== "error") { violations++; invalidReads++; }
+      });
+      const from = p.start - traceStart + offset, interval = [{ from, to: from + width }];
+      const commit = new Histogram(); good.filter(x => inIntervals(x.offsetMs, interval)).forEach(x => commit.recordMs(verdictMs(x)));
+      const ref = baseline ? matchBaseline(baseline, interval, verdictEvents.filter(e => !e.resend && e.stream === "background"), (report.matchedBaseline?.offeredUntilTraceS ?? 0) * 1000, "ack") : null;
+      cycleWindows.get(p.name)!.push({ fromS: offset/1000, n: commit.count, denominatorN: ref?.commits ?? 0, readP99Ms: one.percentileMs(99), commitP99Ms: commit.percentileMs(99),
+        descriptiveMeets: invalidReads === 0 && (one.percentileMs(99) ?? Infinity) <= 100 && (!l256 || one.count / (width/1000) >= .9*l256.goodputPerS) &&
+          !ref?.invalid && !!ref?.p99Ms && (commit.percentileMs(99) ?? Infinity) <= 1.25*ref.p99Ms,
+        diagnosticOnly: true });
     }
     const ch = new Histogram();
-    for (const x of writes) if (x.stream === "background" && !x.resend && x.scheduledAt >= from && x.scheduledAt < to && x.outcome === "committed") ch.recordMs(x.latencyMs);
-    const matched = baseline ? matchedBaseline(baseline, from - traceStart, to - traceStart) : null;
-    const readP99 = h.percentileMs(99), commitP99 = ch.percentileMs(99);
-    const goodput = h.count / (width / 1000);
-    const meets = violations === 0 && readP99 !== null && readP99 <= 100 && (l256 ? goodput >= 0.9 * l256.goodputPerS : true) && (matched?.p99Ms ? commitP99 !== null && commitP99 <= 1.25 * matched.p99Ms : false);
-    windows.push({ fromS: (from - phase.start) / 1000, reads: h.count, violations, readP99Ms: readP99, commitP99Ms: commitP99, matchedZeroReaderP99Ms: matched?.p99Ms ?? null, meets });
-    if (meets && recoveredAfterMs === null) recoveredAfterMs = to - phase.start;
+    for (const x of writes) if (x.stream === "background" && !x.resend && x.outcome === "committed" && !x.expired && inIntervals(x.offsetMs, intervals)) ch.recordMs(verdictMs(x));
+    const matched = baseline ? matchBaseline(baseline, intervals, verdictEvents.filter(e => !e.resend && e.stream === "background"),
+      (report.matchedBaseline?.offeredUntilTraceS ?? 0) * 1000, "ack") : null;
+    const readP99 = h.percentileMs(99), commitP99 = ch.percentileMs(99), goodput = h.count / (phases.length * width / 1000);
+    const meets = ch.count >= 500 && (matched?.commits ?? 0) >= 500 && !matched?.invalid && violations === 0 && readP99 !== null && readP99 <= 100 &&
+      (!l256 || goodput >= 0.9 * l256.goodputPerS) && !!matched?.p99Ms && commitP99 !== null && commitP99 <= 1.25 * matched.p99Ms;
+    windows.push({ fromS: offset / 1000, windowMs: width, intervals, cycles: phases.length, reads: h.count, violations, readP99Ms: readP99,
+      n: ch.count, denominatorN: matched?.commits ?? 0, commitP99Ms: commitP99, matchedZeroReaderP99Ms: matched?.p99Ms ?? null, meets });
   }
-  return { windows, recoveredAfterMs, note: baseline ? null : "no matched zero-reader run: the writer part of the 256-level bar cannot be judged, so recovery cannot be shown" };
+  const first = windows.find(w => w.meets);
+  const cycles = phases.map(p => {
+    const windows = cycleWindows.get(p.name)!, first = windows.find(w => w.descriptiveMeets);
+    return { name: p.name, cycle: p.cycle, start: p.start, end: p.end, windows,
+      descriptiveRecoveryMs: first ? first.fromS * 1000 + width : null, diagnosticOnly: true };
+  });
+  return { windows, recoveredAfterMs: first ? first.fromS * 1000 + width : null,
+    cycles, slowestCycle: [...cycles].sort((a,b) => (b.descriptiveRecoveryMs ?? Infinity) - (a.descriptiveRecoveryMs ?? Infinity))[0],
+    note: "Every pooled offset requires 500 commits per side; individual cycle counts remain diagnostic" };
 }
 function cpuUse() {
   if (cpuMarks.length < 2) return null;

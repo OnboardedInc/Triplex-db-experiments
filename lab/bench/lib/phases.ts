@@ -19,15 +19,20 @@ export interface PhaseSpec {
   readonly mode?: "mixed" | "weighted" | "sample";
   readonly measured: boolean;
   readonly ladder?: boolean;
+  readonly traceFromS?: number;
+  readonly pool?: "L256" | "L1024" | "recovery";
+  readonly cycle?: number;
 }
 export const PROFILES = {
   acceptance: { warmupS: 120, levelS: 600, recoveryS: 120 },
   screening: { warmupS: 30, levelS: 120, recoveryS: 90 },
   smoke: { warmupS: 15, levelS: 45, recoveryS: 60 },
+  v3: { warmupS: 15, levelS: 45, recoveryS: 60 },
 } as const;
 export type Profile = keyof typeof PROFILES;
 
 export function nsPlan(profile: Profile, zeroReaders = false): PhaseSpec[] {
+  if (profile === "v3") return v3Plan(zeroReaders);
   const p = PROFILES[profile];
   const r = (n: number) => (zeroReaders ? 0 : n);
   return [
@@ -44,4 +49,38 @@ export function nsPlan(profile: Profile, zeroReaders = false): PhaseSpec[] {
     { name: "presweep", readers: r(64), seconds: p.levelS, measured: true },
     { name: "sweep", readers: r(64), sweep: !zeroReaders, seconds: zeroReaders ? p.levelS : undefined, maxS: 1800, measured: true },
   ];
+}
+
+export const V3_PLAN_ID = "ns-v3/1";
+export const V3_OFFER_SECONDS = 5520;
+// [DX-T1-12] Why: fixed trace offsets enlarge samples without raising the frozen offer rate or mixing bursts into steady windows.
+// Rejected: lengthening the old ladder serially (the long windows would land on different burst phases).
+function v3Plan(zeroReaders: boolean): PhaseSpec[] {
+  const r = (n: number) => zeroReaders ? 0 : n;
+  const prefix = nsPlan("smoke", zeroReaders).slice(0, 6);
+  let offset = 0;
+  const fixed = (p: PhaseSpec): PhaseSpec => {
+    const item = { ...p, traceFromS: offset };
+    offset += p.seconds!;
+    return item;
+  };
+  const plan = prefix.map(fixed);
+  for (let block = 0; block < 4; block++) {
+    plan.push(fixed({ name: `L256-${"ABCD"[block]}`, readers: r(256), seconds: 480,
+      measured: true, ladder: true, pool: "L256" }));
+    plan.push(fixed({ name: `hold-${block + 2}`, readers: r(block % 2 ? 16 : 0), seconds: 120, measured: false }));
+  }
+  for (let group = 0; group < 4; group++) {
+    plan.push(fixed({ name: `lead-${group + 1}`, readers: r(256), seconds: 60, measured: false }));
+    for (let i = 0; i < 4; i++) {
+      const cycle = group * 4 + i + 1;
+      plan.push(fixed({ name: `L1024-${cycle}`, readers: r(1024), seconds: 45,
+        measured: true, ladder: true, pool: "L1024", cycle }));
+      plan.push(fixed({ name: `recovery-${cycle}`, readers: r(256), seconds: 60,
+        measured: true, pool: "recovery", cycle }));
+    }
+    plan.push(fixed({ name: `hold-${group + 6}`, readers: r(group % 2 ? 16 : 0), seconds: 120, measured: false }));
+  }
+  if (offset !== 5040) throw Error("Invalid v3 fixed phase prefix");
+  return [...plan, ...nsPlan("smoke", zeroReaders).slice(9)];
 }

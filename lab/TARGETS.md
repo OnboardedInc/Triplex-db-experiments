@@ -1,4 +1,4 @@
-# Targets: how the hill-climb measures Sam's five priorities (v2, 2026-11-07)
+# Targets: how the hill-climb measures Sam's five priorities (v3, Sam decisions 2026-11-16)
 
 The north star is fixed in `lab/NORTH-STAR.md`. This file is the orchestrator's interpretation of it and of the rest
 of Sam's pasted message (`lab/research/SAM-pasted-targets-2026-11-07.md`). Sam confirmed the restatement on
@@ -14,15 +14,22 @@ Every priority is measured on the same fixed writer trace (section 2) with reads
 
 | # | Priority (Sam's words, abridged) | Measurement | Provisional bar |
 | --- | --- | --- | --- |
-| P1 | Many concurrent reads, each pinned to an exact point in time, that never block writers | Closed-loop readers at 1, 4, 16, 64, 256 (and 1,024 stress). Every read names its basis (valid time and record time or tx). Record correctness-qualified read goodput and p99 per level, and writer commit latency and throughput per level. | At 256 readers: zero correctness violations; read goodput does not fall from the 64-reader level; read p99 ≤ 100 ms; writer commit p99 ≤ 1.25x its zero-reader baseline and no command waits more than 2 s. At 1,024: zero violations, goodput ≥ 0.9 of the 256 level, writer commit p99 ≤ 2x baseline, back to the 256-level bar within 60 s after stress. |
-| P2 | Small, atomic, idempotent commits per subject, with low latency | Commit latency for one command of 10 facts about one subject (also 5 and 50); read-your-own-write; duplicate and lost-ACK handling. | Commit p50 ≤ 10 ms and p99 ≤ 50 ms (10 facts, with P1's 256 readers running). The pull at the returned tx sees the commit 100% of the time with no extra wait. Duplicates and lost ACKs return the original receipt 100% of the time. |
+| P1 | Many concurrent reads, each pinned to an exact point in time, that never block writers | Closed-loop readers at 1, 4, 16, 64, 256 (and 1,024 stress). Every read names its basis (valid time and record time or tx). Record correctness-qualified read goodput and p99 per level, and writer commit latency and throughput per level. | At 256 readers: zero correctness violations; read goodput does not fall from the 64-reader level; read p99 ≤ 100 ms; writer commit p99 ≤ 1.25x its zero-reader baseline and no command waits more than 2 s. At 1,024: zero violations, goodput ≥ 0.9 of the 256 level, writer commit p99 ≤ 2x baseline, back to the 256-level bar within 60 s after stress (judged over at least 16 stress cycles, each 30-s window pooled across cycles). |
+| P2 | Small, atomic, idempotent commits per subject, with low latency | Commit latency for one command of 10 facts about one subject (also 5 and 50); read-your-own-write; duplicate and lost-ACK handling. | Commit p50 ≤ 10 ms and p99 ≤ 50 ms (10 facts, with P1's 256 readers running), from scheduled offer to the receipt handed to the caller. The pull at the returned tx sees the commit 100% of the time with no extra wait. Duplicates and lost ACKs return the original receipt 100% of the time. |
 | P3 | An ordered, resumable change feed, so the runtime knows which subjects to re-run | Feed entries carry tx, entity, attribute and the valid-time range affected. Lag from commit to "affected subjects known". Gaps, order per subject, resume after restart. | Zero gaps and zero order violations per subject over a run; resume from a checkpoint replays exactly; lag p99 ≤ 250 ms with P1's 256 readers running. |
-| P4 | A fast path to current values, kept separate from history | Subject pull: one subject's world at the current basis, a bounded subgraph of 3 to 6 hops and 50 to 2,000 facts. Throughput per engine core; whether current reads touch history. | Single-client pull p50 ≤ 5 ms and p99 ≤ 25 ms; at least 1,100 pulls/s per engine core; current-pull latency and bytes read stay flat as retained history grows (depths 1, 3, 10). |
-| P5 | Release activation: re-evaluating up to 100k subjects without hurting live traffic | Sweep 100k subjects (pull each at one pinned basis) while the writer trace and 64 live readers run. | Sweep wall time ≤ 100 s (about 1,100 pulls/s/core on one core; the reconciler reference is 0.8 ms per worker); live read p99 and writer commit p99 each ≤ 1.5x their no-sweep values; the long snapshot never blocks writers or unrelated compaction. |
+| P4 | A fast path to current values, kept separate from history | Subject pull: one subject's world at the current basis, a bounded subgraph of 3 to 6 hops and 50 to 2,000 facts. Throughput of the whole 8-CPU machine (Sam, 2026-11-13), engine/runtime split free; whether current reads touch history. | Single-client pull p50 ≤ 5 ms and p99 ≤ 25 ms; at least 4,400 correct weighted-mix pulls/s in total; current-pull latency and bytes read stay flat as retained history grows (depths 1, 3, 10). |
+| P5 | Release activation: re-evaluating up to 100k subjects without hurting live traffic | Sweep 100k subjects (pull each at one pinned basis) while the writer trace and 64 live readers run. | Sweep wall time ≤ 100 s (about 1,100 pulls/s/core on one core; the reconciler reference is 0.8 ms per worker); live read p99 and writer commit p99 each ≤ 1.5x their no-sweep values (writer ratio needs at least 500 commits per side, pooled over repeated sweeps); the long snapshot never blocks writers or unrelated compaction. |
 
-### 1.1 Measurement semantics (v2, frozen before any comparison; Codex plan-v2 review findings 1 to 5)
+### 1.1 Measurement semantics (v3; Sam 2026-11-16; older runs retain their original rules)
 
 The bars above only count when measured under these definitions. A run that departs from them cannot close an NS obligation.
+
+**Sample size (Sam, 2026-11-16).** Every commit-based bar is computed over at least 500 committed primary commits (ratios: at least
+500 on each side; band bars: at least 500 of that band). Fewer is UNJUDGED and counts as not met. Windows pool repeated blocks of one
+run at fixed trace offsets that never overlap a burst or its 60-s drain; burst commits never enter a steady-level pool. Each bar
+reports n and a seeded bootstrap interval; the verdict uses the point estimate. The `v3` profile offers 5,520 seconds of the same
+frozen trace without raising its rate; `smoke` remains diagnostic. Exact scheduled counts, including underfilled recovery pools and
+the 26-to-50 band, are printed before a run. No keep-warm requests, sentinels or background warming are allowed.
 
 **P1 pinned reads that never block writers.**
 1. Readers and writers share one hot set: at least 50% of reads target subjects written in the previous 60 s (section 2.1 active set).
@@ -30,18 +37,21 @@ The bars above only count when measured under these definitions. A run that depa
    trace already holds for that subject: step 1 before that command's ACK, step 2 after it. The driver adds no writes of its own, so
    faster readers never change the write load (Codex round 2, finding 19). The answer must equal the oracle's answer at the requested
    basis, never the latest state.
-3. Every P1 window contains at least one maintenance event (XTDB compaction; QLever index rebuild or delta merge; index-layer catch-up).
+3. Every 45 s of measured P1 level time contains at least one completed maintenance event (XTDB compaction; QLever index rebuild or delta merge; index-layer catch-up).
 4. The driver records the basis it requested (from the receipts it observed) independently of anything the engine echoes; the verifier
    checks every sampled answer at the driver-recorded basis.
-5. Writer waits caused by readers are attributed two ways: writer latency at each reader level against the zero-reader run on the same
-   trace segment and burst phase, and engine-side wait evidence where the engine exposes it (QLever broker queue wait; XTDB has no
+5. Writer waits caused by readers are attributed two ways: writer latency at each reader level against the zero-reader run over identical pooled
+   trace intervals and burst phase, on the same clock, and engine-side wait evidence where the engine exposes it (QLever broker queue wait; XTDB has no
    read-path locks, so its evidence is the matched-phase comparison).
 
 **P2 commits.**
-1. Open loop: commands are offered on the frozen schedule (section 2.1); latency runs from the scheduled offer time to the published ACK
-   (the ACK is sent only after the commit is durable and readable), so queueing behind other writers counts.
+1. Open loop: commands are offered on the frozen schedule (section 2.1); latency runs from the scheduled offer time to the published ACK:
+   the instant the final receipt (after any lost-ACK retry) is handed to the caller, before benchmark bookkeeping (`ackPublishedAt`,
+   Sam 2026-11-16). The ACK is sent only after the commit is durable and readable; the later finish stamp is reported, never judged.
+   Queueing behind other writers still counts.
 2. The bars apply to the trace's own commands, reported per size band (5 to 10, 11 to 25, 26 to 50 facts); the p50 ≤ 10 ms and p99 ≤ 50 ms
-   bars apply to the 5-to-10 band and the 11-to-25 band, and the 26-to-50 band reports p99 against a provisional 100 ms. The 10-fact
+   bars apply to the 5-to-10 band and the 11-to-25 band of pooled steady 256-reader windows (burst commits judged separately per band);
+   the 26-to-50 band reports p99 against a provisional 100 ms. The 10-fact
    probe stays as a diagnostic only.
 3. Every offered command is accounted for: committed with a receipt, rejected with a typed error, or a typed conflict. Zero unaccounted.
 4. Progress, not just accounting (Codex round 2, finding 2): every oracle-valid command in the trace must publish. Typed rejections count
@@ -66,8 +76,8 @@ The bars above only count when measured under these definitions. A run that depa
    The p50 ≤ 5 ms and p99 ≤ 25 ms bars apply to the weighted mix; each bucket reports its own p50 and p99, and the largest bucket has a
    provisional p99 ≤ 50 ms.
 2. History flatness uses one matched sample of 1,000 subjects: measure at history depth 1, add corrections to the same subjects to depth 3
-   and then 10, and measure again. The bar is p99 and bytes read at depth 10 ≤ 1.1x depth 1 (RULINGS Q16, Q27).
-3. "Per engine core" uses the CPU quota bound in the receipt; host-side broker and kernel CPU are reported next to engine-core throughput.
+   and then 10, in commits of 4 subjects (Sam, 2026-11-16), and measure again. The bar is p99 and bytes read at depth 10 ≤ 1.1x depth 1 (RULINGS Q16, Q27).
+3. Throughput is correct weighted-mix pulls per second of measured wall time on the whole machine; per-core figures are reported only.
 
 **P5 release activation.**
 1. A sweep evaluates release R against the world definition W0 (section 6.1) for every subject in R's scope at one shared basis, and the

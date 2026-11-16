@@ -7,11 +7,15 @@ exec 8>&1 9>&2
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 kind=${1:?functional|medium|real}; prefix=${2:?prefix}; shift 2
 [[ $prefix =~ ^tx2-dx[a-z0-9-]+$ ]] || exit 2
+if [[ $prefix == tx2-dxt1-* ]]; then
+  [[ ${DX_IDLE_SENTINEL:-0} == 0 && ${DX_IDLE_REFUSAL_PROBE:-0} == 0 && ${DX_IDLE_TCP:-default} == default ]] || exit 2
+fi
 # [DX-H4] Why: each arm needs a fresh physical stack and identical immutable arguments.
 # Rejected: the in-run baseline phase (a different frozen-trace segment).
 if [[ $kind == pair ]]; then
   root=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H4}
   duration=${DX_MATCH_DURATION_S:-900}
+  [[ ${DX_NS_PROFILE:-smoke} != v3 ]] || duration=5520
   # [DX-R3] Why: a parent cancelled while waiting for a child arm must stop that same owned child before returning.
   # Rejected: leaving a queued real-arm shell orphaned after the pair's heavy wrapper receives TERM.
   pair_child=
@@ -48,6 +52,7 @@ if [[ $kind == pair ]]; then
     trap pair_cleanup EXIT
     trap 'exit 143' TERM INT
     pair_limit_ms=2580000; [[ $pair_id != DX-T1 ]] || pair_limit_ms=3600000
+    [[ ${DX_NS_PROFILE:-smoke} != v3 ]] || pair_limit_ms=14400000
     node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$pair_limit_ms" & pair_watchdog=$!
   fi
   pair_rc=0

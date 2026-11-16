@@ -7,6 +7,9 @@ export interface CommitClocks {
   postAckMs: number;
 }
 export function commitClocks(row: unknown): CommitClocks;
+export const VERDICT_CLOCK: "ack/1";
+export function verdictEnd(row: unknown): number;
+export function verdictMs(row: unknown): number;
 export function instrumentMetrics(
   bench: unknown,
   writes: readonly unknown[],
@@ -19,3 +22,4 @@ export function idleAndPhaseMetrics(
   requests?: readonly unknown[],
 ): any;
 export function instrumentMarkdown(metrics: unknown): string;
+export function idleMarkdown(metrics: unknown): string;

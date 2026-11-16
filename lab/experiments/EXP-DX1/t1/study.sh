@@ -39,7 +39,9 @@ PY_RESTORE
 }
 trap cleanup EXIT
 trap 'exit 143' TERM INT
-node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),5400000)' "$$" & watchdog=$!
+study_limit_ms=5400000
+[[ ${DX_NS_PROFILE:-smoke} != v3 ]] || study_limit_ms=18000000
+node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$study_limit_ms" & watchdog=$!
 run_stage() {
  [[ $(git rev-parse HEAD) == $(cat "$session_dir/head.txt") ]] || exit 2
  local stage_rc=0; "$@" & child=$!;wait "$child" || stage_rc=$?;child=;return "$stage_rc"
@@ -56,7 +58,7 @@ for arm in off-before pair off-after;do
   [[ $study_level != full ]] || collectors=(TRIPLEX_TRACE_COMPONENTS=node,gateway,tx-jfr,gw-jfr,postgres)
   run_stage env TRIPLEX_TRACE_LEVEL="$study_level" ${collectors[@]+"${collectors[@]}"} bash lab/experiments/EXP-DX1/t1/run.sh pair "$prefix" --rung 10k "$@" > "$session_dir/$arm-controller.log" 2>&1 || stage_rc=$?
  else
-  run_stage env TRIPLEX_TRACE_LEVEL=off DX_NODE_PROFILE=0 bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-$arm" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$arm-controller.log" 2>&1 || stage_rc=$?
+  run_stage env TRIPLEX_TRACE_LEVEL=off DX_NODE_PROFILE=0 DX_NS_PROFILE=smoke bash lab/experiments/EXP-DX1/t1/run.sh real "$prefix-$arm" --rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 "$@" > "$session_dir/$arm-controller.log" 2>&1 || stage_rc=$?
  fi
  printf '%s\n' "$stage_rc" > "$session_dir/$arm-exit.txt"
  if [[ $stage_rc != 0 ]];then

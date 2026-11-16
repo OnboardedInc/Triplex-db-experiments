@@ -18,8 +18,8 @@ for name,priority in p.items():
   if b['pass'] is False and m and isinstance(b['value'],(float,int)):
    target=float(m[2]);distance=(b['value']-target) if m[1]=='<=' else (target-b['value']) if m[1]=='>=' else abs(b['value']-target)
    delta=(f'{distance:.3f} '+('above' if m[1]=='<=' else 'below' if m[1]=='>=' else 'from')+' threshold') if distance>0 else 'qualification missing; numeric threshold met'
-  rows.append([name,b['id'],j(b['value']),b['bar'],'MET' if b['pass'] is True else 'MISS' if b['pass'] is False else 'UNVERIFIED',delta,b.get('note','')])
-table(['Priority','Bar','Observed','Required','Driver verdict','Miss amount','Qualification'],rows)
+  rows.append([name,b['id'],j(b['value']),b.get('n','unavailable'),b.get('denominatorN',''),j(b.get('interval90')),b['bar'],'MET' if b['pass'] is True else 'MISS' if b['pass'] is False else b.get('status','UNJUDGED'),delta,b.get('note','')])
+table(['Priority','Bar','Observed','n','denominator n','90% bootstrap interval','Required','Driver verdict','Miss amount','Qualification'],rows)
 print('## Writer pending at every phase boundary\n')
 lines=[line for line in (root/'driver.log').read_text().splitlines() if 'phase ' in line and 'writer pending' in line]
 print('```text\n'+'\n'.join(lines)+'\n```\n')
@@ -58,7 +58,7 @@ def compact(value):
 print('Raw time series and full long arrays remain in the retained ns-report.json; the following counter summaries omit series and sample long arrays.\n')
 for name,value in [('P2 duplicates',p.get('P2',{}).get('duplicates')),('P2 lost ACK',p.get('P2',{}).get('lostAck')),('P2 accounting',p.get('P2',{}).get('accounting')),('P2 read-your-own-write',p.get('P2',{}).get('readYourOwnWrite')),('P2 progress',p.get('P2',{}).get('progress')),('P3',{k:v for k,v in p.get('P3',{}).items() if k!='bars'}),('P5',{k:v for k,v in p.get('P5',{}).items() if k!='bars'}),('correctness',r.get('correctness')),('oracle',r.get('oracle')),('client',r.get('client')),('invalidReasons',r.get('invalidReasons')),('writer',r.get('writer'))]:
  print(f'### {name}\n\n```json\n{json.dumps(compact(value),indent=2)}\n```\n')
-print('Additional validity limits: smoke profile; matched baseline covers the same trace windows (identity above); any development overrides in config; direct-subject affected sets are diagnostic; P5 evaluates/publishes no W0 release; engine bytes read unmeasured. DONE means completed reporting, not all bars met.\n')
+print('Profile: `'+str(r.get('config',{}).get('profile'))+'`; verdict clock: `'+str(r.get('verdictClock','legacy finish'))+'`. Additional validity limits: matched baseline must cover the same trace windows; development overrides cannot qualify; direct-subject affected sets are diagnostic; P5 evaluates/publishes no W0 release; engine bytes read unmeasured. Underfilled bars are UNJUDGED and count as not met. DONE means completed reporting, not all bars met.\n')
 print('## Gateway scan counters\n')
 scan=root/'driver/scan-stats.jsonl'
 if scan.exists():

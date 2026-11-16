@@ -111,7 +111,7 @@ const row = (seq = 1) => ({
   ],
 });
 describe("commit clocks", () => {
-  it("retains subject/slot waits and keeps original offer-to-finish latency authoritative", () => {
+  it("retains subject/slot waits and reports legacy offer-to-finish latency", () => {
     const w = row(),
       c = commitClocks(w);
     expect(c.latencyToAckMs).toBe(15);
@@ -145,7 +145,7 @@ it("reports all three clocks with a corrected matched denominator, without modif
   const before = JSON.stringify(b),
     w = row();
   const m = instrumentMetrics(b, [w], [w], Histogram);
-  expect(m.authoritative).toBe("observed");
+  expect(m.authoritative).toBe("ackOnly");
   expect(m.definitions.observed.phases.L256.writerRatio).toBeCloseTo(1, 4);
   expect(m.definitions.corrected.phases.L256.writerRatio).toBeCloseTo(1, 4);
   expect(m.definitions.corrected.bandsAtL256["5-10"].p50Ms).toBeCloseTo(14.3);
@@ -153,15 +153,16 @@ it("reports all three clocks with a corrected matched denominator, without modif
   expect(instrumentMarkdown(m)).toContain("cannot qualify a PASS");
 });
 it("uses every earlier active request and attributes growth versus sparse by scheduled offer", () => {
-  const long = { ...row(), scheduledAt: 0, startedAt: 0, finishedAt: 1000, latencyMs: 1000 };
+  const long = { ...row(), scheduledAt: 0, startedAt: 0, ackPublishedAt: 999, finishedAt: 1000, latencyMs: 1000 };
   const many = Array.from({ length: 50 }, (_, k) => ({
     ...row(k + 2),
     scheduledAt: k + 1,
     startedAt: k + 1,
+    ackPublishedAt: k + 1.05,
     finishedAt: k + 1.1,
     latencyMs: 0.1,
   }));
-  const behind = { ...row(90), scheduledAt: 100, startedAt: 100, finishedAt: 160, latencyMs: 60 };
+  const behind = { ...row(90), scheduledAt: 100, startedAt: 100, ackPublishedAt: 159, finishedAt: 160, latencyMs: 60 };
   const m = idleAndPhaseMetrics(
     [long, ...many, behind],
     [

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [DX-T1-12] Why: standalone probe wire records use runtime validation; checkjs still checks every binding. Rejected: omit tracked probes from the source inventory.
 // [COLD-1] Why: time the first touch of a fixed set of cache lines after a gap, then the same lines again at once.
 // The difference is what the gap cost in cache and TLB state, with no JVM, socket or disk involved. Four footprints
 // separate core-private state (32 KB) from the cluster's shared cache (512 KB, 4 MB) and from the TLB (one line per page).

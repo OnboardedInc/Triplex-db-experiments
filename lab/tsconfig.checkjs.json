@@ -487,6 +487,11 @@
     "../lab/trace/stress-baseline.mjs",
     "../lab/trace/writer-stats.mjs",
     "../lab/trace/layout-replay.mjs",
-    "../lab/trace/layout-calibration.mjs"
+    "../lab/trace/layout-calibration.mjs",
+    "../lab/experiments/EXP-DX1/cold/cold.mjs",
+    "../lab/experiments/EXP-DX1/cold/disk.mjs",
+    "../lab/experiments/EXP-DX1/cold/sentinel-write.mjs",
+    "../lab/experiments/EXP-DX1/cold/speed.mjs",
+    "../lab/trace/host-admission.mjs"
   ]
 }
