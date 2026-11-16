@@ -18,6 +18,24 @@ if [[ ${1:-} == --logs ]]; then
   for role in pg tx gw-w gw-r; do docker logs --tail 35 "$prefix-$role" 2>&1 || true; done
   exit
 fi
+# [DX-T1-11] Why: run original SQL/retry classes with fake SQL under a verified lease, with no database or durability changes.
+# Rejected: the menu's asynchronous-INSERT trigger (a Postgres-only failure can lose a referenced chunk).
+if [[ ${1:-} == --sql-pair-probe ]]; then
+  [[ $prefix == tx2-dxt1-* ]] || exit 2
+  python3 - "$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" <<'PAIR_LEASE'
+import json,sys
+o=json.load(open(sys.argv[1]));assert o['id']=='DX-T1' and o['pid']==int(sys.argv[2]) and o['kind']=='writer-arms'
+PAIR_LEASE
+  export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
+  trap 'docker rm -f "$prefix-probe" >/dev/null 2>&1 || true' EXIT
+  trap 'exit 143' TERM INT
+  docker run --rm --pull never --name "$prefix-probe" --network none --memory 768m --memory-swap 768m --cpuset-cpus 0 \
+    -e 'DATOMIC_JAVA_OPTS=-Xms64m -Xmx512m' -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)" \
+    -v "$PWD/packages/datomic/gateway:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run \
+    tx2-datomic:1.0.7745-da00 -m triplex.gateway.sql-pair-probe
+  exit
+fi
 tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec=
 # [DX-S3] Why: tune placement, heap and durable storage without changing existing callers.
 # Rejected: replacing defaults globally (would change other agents' measurements).
