@@ -13,7 +13,7 @@ printf '%s\n' 'plain sentinel plain http plain refused plain tcp plain' > "$sess
 python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
 lock=$HOME/Claude/Projects/triplex-db-2/locks/measure
 while ! mkdir "$lock" 2>/dev/null;do sleep 5;done
-printf '{"id":"DX-T1","pid":%s,"kind":"idle-components"}\n' "$$" > "$lock/owner.json"
+printf '{"id":"DX-T1","pid":%s,"kind":"writer-arms"}\n' "$$" > "$lock/owner.json"
 export DX_R3_PAIR_LEASE_PID=$$ DX_PAIR_LEASE_ID=DX-T1
 child= watchdog=
 cleanup() {
@@ -54,6 +54,7 @@ for mode in plain sentinel plain http plain refused plain tcp plain;do
  bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --inventory > "$session_dir/$i-remaining.txt"
  [[ ! -s $session_dir/$i-remaining.txt ]] || exit 1
  sh lab/bin/host-quiet.sh > "$session_dir/$i-host-after.jsonl" || true
+ [[ $rc == 0 ]] || break
 done
 if [[ $session_rc == 0 ]];then node lab/trace/idle-report.mjs "$DX_STACK_EVIDENCE" "$prefix" > "$session_dir/analysis.log";fi
 exit "$session_rc"
