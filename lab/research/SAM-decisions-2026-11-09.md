@@ -433,3 +433,10 @@ Orchestrator's reading:
 3. The orchestrator's answer on size: finish the 10,000-subject work in two short steps (apply the verdict rules and
    confirm; fix the cold path if its cause is found) and start the 100,000-subject reading as soon as disk allows, without
    waiting for a perfect pass at 10,000.
+
+## 2026-11-16 about 15:00 UTC: two short steps at 10,000 subjects, then 100,000, without waiting for a perfect pass
+
+Sam, verbatim: "explain the 1-5 help things for me in much more detail ELIF. And I agree with your two short steps @ 10k and then going up, not waiting for perfect pass"
+
+Decided: (1) apply the three verdict-rule decisions and confirm with two full runs; (2) fix the cold path if its cause is
+found; then go to 100,000 subjects without waiting for every 10,000-subject bar to pass.
