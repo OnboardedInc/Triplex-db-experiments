@@ -440,3 +440,28 @@ Sam, verbatim: "explain the 1-5 help things for me in much more detail ELIF. And
 
 Decided: (1) apply the three verdict-rule decisions and confirm with two full runs; (2) fix the cold path if its cause is
 found; then go to 100,000 subjects without waiting for every 10,000-subject bar to pass.
+
+## 2026-11-16 about 18:00 UTC: disk plan approved; nightly window 7 pm to 7 am; durability option A; valid time only; a cloud machine is acceptable
+
+The orchestrator had listed five ways Sam could help (the disk plan, quiet windows, the durability question, backdated
+record time, a reading on another machine). Sam, verbatim:
+
+> Regarding your earlier 5 questions a few messages ago:
+> 1. For disk plan, I feel like you ahve much more space you are takign up if you look carefull at what you're doing. But yes you can zip things up and save them, but why do we need the old evidence in the first place? Isn't the results recorded? And you can just remove the older default VM completely, but zip up it and save it for now.
+> 2. The mac is yours every night at 7pm. You can close all that stuff and have it until 7am the next day, when you should reopen those for me.
+> 3. recommendation A is fine
+> 4. Yes lets do your recommendation, I love that one.
+> 5. Ok what is the easiest way to get that machine in the cloud for you? I can pay
+> also is there anything else I need to answer now?
+
+Orchestrator's reading:
+1. **Disk plan: go.** Archive to Google Drive and remove locally. Old raw evidence is not needed on the disk because
+   results are recorded in the committed reports; it is zipped and saved, not kept. The older `default` colima VM is
+   archived to Drive and then removed completely.
+2. **Standing nightly window:** every night from 19:00 to 07:00 local time the Mac is the project's. The orchestrator may
+   close Chrome, Slack, Paste and similar apps at 19:00 and must reopen them at 07:00.
+3. **Durability:** option A. The VM's best-effort disk sync is the accepted test condition; commits hit by a proven
+   disk stall are reported on a separate line.
+4. **Record time:** backdated valid time only in live scopes (strict record clocks there, fast local reads); a separate
+   import scope type accepts backdated record time for migrations.
+5. **Another machine:** Sam will pay for a cloud machine; the orchestrator proposes the easiest setup.
