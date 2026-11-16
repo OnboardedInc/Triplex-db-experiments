@@ -3,14 +3,14 @@ import { qualifyReplay, sha256 } from "../../../lab/trace/layout-replay.mjs";
 
 function fixture() {
   const manifest = { tag: "run", slot: "run", source: "source", startedAt: 1 };
-  const captures = Array.from({ length: 300 }, (_, i) => ({ operationId: `op${i}`, facts: i < 100 ? 7 : i < 200 ? 17 : 35,
+  const captures = Array.from({ length: 300 }, (_, i) => ({ schema: "triplex.layout-capture.v1", run: "run", source: "source", slot: "run", operationId: `op${i}`, facts: i < 100 ? 7 : i < 200 ? 17 : 35,
     band: i < 100 ? "small" : i < 200 ? "medium" : "large", basisT: 10 + i, datomicT: 11 + i, capturedAt: 5,
     dataEdn: `[[:function {:operation "op${i}"}]]` }));
   const selectionText = JSON.stringify({ ...manifest, run: "run", createdAt: 6,
     commands: captures.map(c => ({ operationId: c.operationId, facts: c.facts })) });
   const rows = captures.flatMap(c => ["A", "B", "C", "D", "E"].flatMap(shape => [0, 1].map(round => ({
-    schema: "triplex.layout-replay.v1", source: "source", run: "run", slot: "run", startedAt: 7,
-    ...c, dataEdn: undefined, payloadSha256: sha256(c.dataEdn), shape, round, wallMs: 1, txStats: { "tx-fn-ms": .5 },
+    ...c, schema: "triplex.layout-replay.v1", source: "source", run: "run", slot: "run", startedAt: 7,
+    dataEdn: undefined, payloadSha256: sha256(c.dataEdn), shape, round, wallMs: 1, txStats: { "tx-fn-ms": .5 },
     datoms: 40, fressianBytes: 10000, valueUtf8Bytes: 9000, ioStats: { api: "with", reads: { avet: 2 } },
     logicalDeltaEqual: shape !== "D", omittedLogicalRows: shape === "D" ? 10 : 0,
   }))));

@@ -27,7 +27,8 @@ export function qualifyReplay(bundle, manifest, now = Date.now()) {
   const expected = new Map();
   for (const c of captures) {
     const w = commands.get(c.operationId);
-    requireThat(w && !expected.has(c.operationId) && w.facts === c.facts && c.band === factBand(c.facts) &&
+    requireThat(w && c.schema === "triplex.layout-capture.v1" && c.run === manifest.tag && c.source === manifest.source && c.slot === manifest.slot &&
+      !expected.has(c.operationId) && w.facts === c.facts && c.band === factBand(c.facts) &&
       Number.isSafeInteger(c.basisT) && Number.isSafeInteger(c.datomicT) && c.basisT < c.datomicT &&
       c.datomicT <= complete.basisBefore && Number.isFinite(c.capturedAt) &&
       manifest.startedAt <= c.capturedAt && c.capturedAt <= selection.createdAt && typeof c.dataEdn === "string" && c.dataEdn.length > 10,

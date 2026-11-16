@@ -179,7 +179,12 @@
         captures (mapv #(dissoc % :db :conn) samples)
         _ (spit (io/file root "layout-payloads.edn") (pr-str captures))
         _ (spit (io/file root "layout-captures.jsonl")
-                (apply str (map #(str (json/write-str (assoc (dissoc % :data) :dataEdn (pr-str (:data %)))) "\n") captures)))
+                (apply str (map #(str (json/write-str (assoc (dissoc % :data)
+                                                           :schema "triplex.layout-capture.v1"
+                                                           :run (System/getenv "TRIPLEX_TRACE_RUN")
+                                                           :source (System/getenv "TRIPLEX_TRACE_SOURCE")
+                                                           :slot (System/getenv "TRIPLEX_TRACE_SLOT")
+                                                           :dataEdn (pr-str (:data %)))) "\n") captures)))
         counts (frequencies (map :band samples))
         _ (when-not (= {"small" 100 "medium" 100 "large" 100} counts)
             (throw (ex-info "Replay requires exactly 100 captured payloads per band" {:counts counts})))
