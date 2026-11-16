@@ -77,6 +77,10 @@ export async function* records(file) {
 // [DX-T1-2] Why: JVM nanoTime and Node hrtime use the same Linux boot clock even when startup wall anchors differ.
 // Rejected: infer network time from a gateway clipped away by clock skew, or silently guess an offset from a request duration.
 export function alignClockRecord(row, reference) {
+  // [DX-T1-12] Why: Mac wall samples and stepped JFR epoch anchors have no measured bridge to the writer's boot clock.
+  // Rejected: display a guessed 100-ms overlap as evidence that host I/O or a JVM pause caused one commit.
+  if (row.process === "system-darwin" || row.clock?.crossProcessQualified === false)
+    return {...row,clockAlignmentQualified:false};
   if (!row.clock || row.clock.domain !== "linux-monotonic" || !reference) return row;
   if (
     row.clock.bootId !== reference.bootId ||
@@ -627,6 +631,9 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
         errors.push(String(error));
       }
     }
+  const unqualifiedEvents=events.filter(e=>e.clockAlignmentQualified===false);
+  let keep=0;for(const event of events) if(event.clockAlignmentQualified!==false) events[keep++]=event;
+  events.length=keep;
   let invalidSpanParents = 0;
   if (manifest?.requireClockBinding)
     for (const r of requests) {
@@ -1043,7 +1050,7 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
   const hostByPhase = Object.fromEntries(
     (bench.phases ?? []).map((p) => {
       const samples = resources.filter(
-        (r) => r.process === "system-darwin" && r.at >= p.start && r.at <= p.end,
+        (r) => r.process === "system-darwin" && r.clockAlignmentQualified!==false && r.at >= p.start && r.at <= p.end,
       );
       const cpu = samples.map((r) => r.otherCpu).filter(Number.isFinite);
       return [
@@ -1054,7 +1061,7 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
           otherCpuP99: percentile(cpu, 0.99),
           otherCpuMax: cpu.length ? Math.max(...cpu) : null,
           busySamples: cpu.filter((v) => v > 150).length,
-          rule: "diagnostic host-quiet heuristic; not a performance acceptance gate",
+          rule: "Mac samples require a measured cross-clock bridge for phase attribution; whole-run host context remains in raw samples and the session study",
         },
       ];
     }),
@@ -1094,6 +1101,8 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       reference: clockReference ?? null,
       sources: clockSources,
       invalidSpanParents,
+      unqualifiedEventCount:unqualifiedEvents.length,
+      hostCrossClockQualified:false,
     },
     reporterSha256: createHash("sha256")
       .update(
@@ -1187,7 +1196,7 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
     "",
     "Units: ms; n/a means not causally measured (including closed transactor/storage shares), not zero work. TypeScript share is a fraction. Quantiles are per column (their values do not add). TypeScript own code is instrumented Node scope wall time excluding observed remote waits/GC, not on-CPU time; it can include unmeasured scheduling waits. Event-loop wait records explicit worker RPC handoff/reply waits after subtracting linked worker/socket/server work. Other per-request event-loop delay is not causally measured (n/a when no RPC); timestamped timer drift is an estimated overlay. Driver offer queue is separate. Peer-wait includes network, transactor queue and storage; these internal shares remain unknown unless independently correlated. No unrelated Postgres or JFR event is assigned to a transaction.",
     "",
-    `Linux clock alignment: ${clockReference ? `shared boot monotonic clock; ${clockSources.length} source calibrations, offsets preserved in raw traces and trace-summary.json` : "legacy wall anchors; cross-process timing may be skewed"}.`,
+    `Linux clock alignment: ${clockReference ? `shared boot monotonic clock; ${clockSources.length} source calibrations, offsets preserved in raw traces and trace-summary.json` : "legacy wall anchors; cross-process timing may be skewed"}. ${unqualifiedEvents.length} JFR events with discontinuous anchors are retained raw but not overlaid; Mac wall samples are whole-run context, not per-commit overlap evidence.`,
     "",
     "Network is residual socket wait around matched gateway spans, including callback scheduling uncertainty. Gateway receive begins at Jetty dispatch: earlier Jetty/socket queue is invisible. Node and gateway observations with the same Linux boot ID are aligned through their measured monotonic offsets. Other host/epoch-only overlays remain approximate. Response-first-byte includes network and callback scheduling; no finer causal claim is made.",
     "",
@@ -1420,7 +1429,7 @@ function html(finding, data, tag) {
 <label>Phase <select id="phase"><option value="">All</option></select></label> <label>Kind <select id="kind"><option value="">All</option><option>commit</option><option>read</option></select></label> <label><input type="checkbox" id="events" checked>Overlapping pauses and work</label><div id="view"></div><pre id="tip">Hover over a span to inspect it.</pre><script type="application/json" id="data">${data}</script><script>
 const data=JSON.parse(document.getElementById('data').textContent),phase=document.getElementById('phase'),kind=document.getElementById('kind'),show=document.getElementById('events'),view=document.getElementById('view'),tip=document.getElementById('tip');
 for(const name of [...new Set(data.selected.map(r=>r.priority+' / '+r.name))]) {const o=document.createElement('option');o.textContent=o.value=name;phase.append(o);}
-function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms'+(r.replicaPublication?' · replica publication '+r.replicaPublication.msAfterRootEnd.toFixed(3)+' ms relative to end':'');c.append(desc);if(r.cpuProfile?.points?.length){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.textContent='Writer CPU sample points';line.append(label);for(const p of r.cpuProfile.points){const dot=document.createElement('span');dot.className='bar';dot.style.background='#e6b45d';dot.style.width='2px';dot.style.left=(240+680*(p.at-r.root.start)/Math.max(.001,r.wallMs))+'px';dot.onmouseenter=()=>tip.textContent=JSON.stringify(p,null,2);line.append(dot);}c.append(line);}const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,cpuProfile:r.cpuProfile,schedulerLateProfile:r.schedulerLateProfile,nativeTransactions:r.nativeTransactions,replicaPublication:r.replicaPublication,resources:data.resources.filter(x=>x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
+function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms'+(r.replicaPublication?' · replica publication '+r.replicaPublication.msAfterRootEnd.toFixed(3)+' ms relative to end':'');c.append(desc);if(r.cpuProfile?.points?.length){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.textContent='Writer CPU sample points';line.append(label);for(const p of r.cpuProfile.points){const dot=document.createElement('span');dot.className='bar';dot.style.background='#e6b45d';dot.style.width='2px';dot.style.left=(240+680*(p.at-r.root.start)/Math.max(.001,r.wallMs))+'px';dot.onmouseenter=()=>tip.textContent=JSON.stringify(p,null,2);line.append(dot);}c.append(line);}const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,cpuProfile:r.cpuProfile,schedulerLateProfile:r.schedulerLateProfile,nativeTransactions:r.nativeTransactions,replicaPublication:r.replicaPublication,resources:data.resources.filter(x=>x.clockAlignmentQualified!==false&&x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
 phase.onchange=kind.onchange=show.onchange=render;kind.value="commit";const preferred=[...phase.options].find(o=>o.value==="P2 / L256");if(preferred)phase.value=preferred.value;render();</script>`;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

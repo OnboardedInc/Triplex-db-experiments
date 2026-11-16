@@ -167,14 +167,16 @@ check_resources() {
   phase=$1
   df -k . > "$out/disk-$phase.txt"
   docker stats --no-stream --format '{{json .}}' > "$out/stats-$phase.jsonl"
-  python3 - "$out" "$phase" <<'PY2'
+  docker info --format '{{.MemTotal}}' > "$out/guest-memory-$phase.txt"
+  python3 - "$out" "$phase" "${DX_EXPECTED_RESIDENT_GIB:-8}" <<'PY2'
 import json,re,sys,shutil
 rows=[json.loads(l) for l in open(sys.argv[1]+'/stats-'+sys.argv[2]+'.jsonl')]
 units={'B':1,'KiB':1024,'MiB':1024**2,'GiB':1024**3}
 used=0
 for r in rows:
  m=re.search(r'([\d.]+)([KMG]?i?B)',r['MemUsage'].split('/')[0].strip()); used+=float(m[1])*units[m[2]]
-if sys.argv[2]=='admitted': assert 20*1024**3-used>=8*1024**3, 'less than 8 GiB VM memory free at admission'
+total=int(open(sys.argv[1]+'/guest-memory-'+sys.argv[2]+'.txt').read())
+if sys.argv[2]=='admitted': assert total-used>=(float(sys.argv[3])+.5)*1024**3, 'guest total minus active containers cannot fit the population resident prior and 0.5 GiB headroom'
 assert shutil.disk_usage('.').free>=15*1024**3, 'less than 15 GiB host disk free'
 PY2
 }

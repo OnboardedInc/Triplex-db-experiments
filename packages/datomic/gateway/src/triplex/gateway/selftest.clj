@@ -553,6 +553,40 @@
         (is (nil? (d/entid (d/db conn) :triplex.replay/packed))))
       (finally (gateway/delete-scope! base scope-text)))))
 
+;; [DX-T1-12] Why: native normal tests must cover bounded identity lookup and quiet metrics before a 100k reading.
+;; Rejected: a textual port counted as a scale/exactness PASS; these checks still owe a fresh JVM execution.
+(deftest bounded-id-memo-and-current-identity-cut
+  (let [m (reach/bounded-id-map 2 1024) calls (atom []) current (Object.) historical (Object.)]
+    (.putIfAbsent m "a" 1) (.putIfAbsent m "b" 2)
+    (is (= 2 (.size m))) (is (= 324 @m))
+    (.putIfAbsent m "c" 3) (is (= 1 (.size m))) (is (nil? (.get m "a")))
+    (is (= 162 @m))
+    (.clear m) (is (zero? @m))
+    (let [memo (reach/bounded-id-map 10 4096) cfg {:entity-ids memo :identity-db current}]
+      (with-redefs [d/entid (fn [db [_ id]] (swap! calls conj [db id]) (when (= id "present") 42))]
+        (is (= 42 (reach/entity-id historical "test" "present" cfg)))
+        (is (= 42 (reach/entity-id historical "test" "present" cfg)))
+        (is (nil? (reach/entity-id historical "test" "missing" cfg)))
+        (is (nil? (reach/entity-id historical "test" "missing" cfg)))
+        (is (= [[current "present"] [current "missing"] [current "missing"]] @calls))))))
+(deftest quiet-metrics-and-native-io-context
+  (let [rows (atom []) calls (atom [])]
+    (with-redefs [triplex.gateway.trace/enabled true triplex.gateway.trace/native-enabled false
+                  triplex.gateway.trace/emit! #(swap! rows conj %)
+                  storage/transaction-hints (fn [& _] nil)
+                  d/transact-async (fn [_ _ & opts] (swap! calls conj opts) (delay {}))]
+      (triplex.gateway.trace/metrics {:ObjectCacheMisses 2})
+      (is (= {:ObjectCacheMisses 2} (:metrics (first @rows))))
+      (storage/submit! nil [] {} (atom {}))
+      (is (= '(:io-context :triplex.gateway/commit) (first @calls))))))
+(deftest object-cache-metric-shapes-do-not-invent-a-hit-rate
+  (let [summary (triplex.gateway.trace/counter-summary {:ObjectCache {:sum 9 :count 10} :UnknownMetric 3})]
+    (is (= 0.9 (get-in summary [:objectCache :hitRate])))
+    (is (= 1 (get-in summary [:objectCache :misses])))
+    (is (= "unavailable: index-job completion is not processor adoption; no exact adoption boundary recorded" (:adoptionTimesStatus summary))))
+  (doseq [value [nil 0.9 {:sum 0 :count 0} {:sum 11 :count 10} {:sum 1 :count Double/POSITIVE_INFINITY}]]
+    (is (nil? (get-in (triplex.gateway.trace/counter-summary {:ObjectCache value}) [:objectCache :hitRate])))))
+
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]
     (println (json/write-str result))

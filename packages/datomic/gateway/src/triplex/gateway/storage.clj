@@ -245,8 +245,11 @@
                  (let [context (trace/transaction-context)
                        data (if context (assoc-in data [0 1 :triplex-trace] context) data)
                        _ (replay-capture/capture! conn data input)
-                       future (try (if hints (trace/span "d/transact-async" "peer-call" (d/transact-async conn data :hints hints))
-                                             (trace/span "d/transact-async" "peer-call" (d/transact-async conn data)))
+                       ;; [DX-T1-12] Why: return native tx-with reads on this exact report without synchronous logging; the map is not peer-storage I/O.
+                       ;; Source: https://docs.datomic.com/clojure/index.html#datomic.api/transact-async
+                       ;; Rejected: infer per-commit storage reads from a concurrent process-wide cache delta.
+                       options (concat (when hints [:hints hints]) (when trace/enabled [:io-context :triplex.gateway/commit]))
+                       future (try (trace/span "d/transact-async" "peer-call" (apply d/transact-async conn data options))
                                    ;; [DX-R3-P7] Why: a definitive synchronous clock refusal resolves this turn,
                                    ;; just like a failed transaction future; the retry owns the next sequence.
                                    ;; Rejected: leaving next unchanged while the adapter has consumed the send.
@@ -290,6 +293,8 @@
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       (replay-capture/completed! report input)
       (trace/attribute! :datomicT (str (d/basis-t (:db-after report))))
+      (trace/attribute! :transactionIoStats (:io-stats report))
+      (trace/attribute! :peerStorageReadsStatus "not exposed: transaction io-stats describe transactor tx-with, not independent peer reads")
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
        :recordedAt (codec/encode-value "double" (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.tx/recorded-at))
        :transactMicros transact-micros

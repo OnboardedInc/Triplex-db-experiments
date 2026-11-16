@@ -17,6 +17,24 @@ if [[ ${DX_NS_PROFILE:-smoke} == v3 ]]; then
 fi
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export DX_ORACLE_ROOT=${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}
+if [[ $kind == real || $kind == pair ]]; then
+  # [DX-T1-12] Why: reject short disk before Docker admission, then read the real guest total for population settings.
+  # Rejected: the old hardcoded 20-GiB guest, or a 100k reader arm in a 16-GiB guest.
+  python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
+  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
+  subjects=10000; zero=()
+  for ((i=1;i<=$#;i++)); do
+    arg=${!i}; j=$((i+1))
+    if [[ $arg == --rung && ${!j} == 100k ]]; then subjects=100000; fi
+    if [[ $arg == --subjects ]]; then subjects=${!j}; fi
+    [[ $arg != --zero-readers ]] || zero=(--zero-readers)
+  done
+  guest_bytes=$(docker info --format '{{.MemTotal}}')
+  mkdir -p "$DX_STACK_EVIDENCE/$prefix"
+  node lab/experiments/EXP-DX1/t1/scale-settings.mjs --subjects "$subjects" --guest-bytes "$guest_bytes" ${zero[@]+"${zero[@]}"} --output "$DX_STACK_EVIDENCE/$prefix/population-settings.json"
+  scale_shell=$(node lab/experiments/EXP-DX1/t1/scale-settings.mjs --subjects "$subjects" --guest-bytes "$guest_bytes" ${zero[@]+"${zero[@]}"} --shell)
+  eval "$scale_shell"
+fi
 # [DX-T1] Why: --oracle-root names frozen executable source, not an output directory; keep a verified owned copy.
 # Rejected: silently pointing it at an empty evidence folder or changing the independent oracle's implementation.
 if [[ $DX_ORACLE_ROOT == "$DX_STACK_EVIDENCE/oracle" ]]; then
@@ -69,12 +87,13 @@ if [[ ${DX_IDLE_SENTINEL:-0} == 1 || ${DX_IDLE_REFUSAL_PROBE:-0} == 1 || ${DX_ID
   for argument in ${args[@]+"${args[@]}"}; do [[ $argument != --idle-gaps-ms ]] || idle_diagnostic=true; done
   [[ $kind == real && $idle_diagnostic == true ]] || { echo 'Idle controls require an explicit diagnostic, not a verdict' >&2; exit 2; }
 fi
-for setting in replica-history-mib replica-fallback-thread seed-batch-facts reader-basis-wire; do
+for setting in replica-history-mib replica-world-cache-mib replica-fallback-thread seed-batch-facts reader-basis-wire; do
   present=false
   for argument in ${args[@]+"${args[@]}"}; do [[ $argument != --$setting && $argument != --$setting=* ]] || present=true; done
   if [[ $present == false ]]; then
     case "$setting" in
-      replica-history-mib) args+=(--replica-history-mib 192);;
+      replica-history-mib) args+=(--replica-history-mib "${DX_REPLICA_HISTORY_MIB:-192}");;
+      replica-world-cache-mib) args+=(--replica-world-cache-mib "${DX_REPLICA_WORLD_CACHE_MIB:-32}");;
       replica-fallback-thread) args+=(--replica-fallback-thread worker);;
       seed-batch-facts) args+=(--seed-batch-facts 2000);;
       reader-basis-wire) args+=(--reader-basis-wire delta);;

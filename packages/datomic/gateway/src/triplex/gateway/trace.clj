@@ -110,6 +110,21 @@
                 (assoc-in [:headers "Content-Length"] (str (alength ^bytes bytes)))
                 (assoc-in [:headers "traceparent"] (str "00-" trace "-" root "-01"))))
           (catch Throwable error (attribute! :failed true) (finish! state) (throw error)))))))
+;; [DX-T1-12] Why: the documented ObjectCache distribution counts requests and sums hits; invalid or empty shapes stay unknown.
+;; Source: https://docs.datomic.com/operation/monitoring.html
+;; Rejected: infer a ratio from a numeric gauge, or report an index-job duration as an adoption boundary.
+(defn counter-summary [metrics]
+  (let [cache (:ObjectCache metrics) hits (when (map? cache) (:sum cache)) requests (when (map? cache) (:count cache))
+        valid (and (number? hits) (number? requests) (Double/isFinite (double hits))
+                   (Double/isFinite (double requests)) (pos? requests) (<= 0 hits requests))]
+    {:objectCache {:requests (when valid requests) :hits (when valid hits) :misses (when valid (- requests hits))
+                   :hitRate (when valid (/ (double hits) (double requests)))
+                   :status (if valid "callback interval; process-wide" "unavailable: missing, empty or unsupported metric shape")}
+     :memoryIndexMB (:MemoryIndexMB metrics)
+     :indexJobMsec (:CreateEntireIndexMsec metrics)
+     :adoptionTimesStatus "unavailable: index-job completion is not processor adoption; no exact adoption boundary recorded"}))
 ;; Official callback accepts unknown numeric/map metrics; no credentials or database names are recorded.
 (defn metrics [metrics]
-  (when native-enabled (emit! {:type "metrics" :at (clock) :metrics metrics})))
+  ;; [DX-T1-12] Why: cache and index metrics use the buffered recorder even when synchronous vendor INFO logs are quiet.
+  ;; Rejected: require native file logging merely to see cache hit rates or index pressure.
+  (when (or enabled jfr-enabled native-enabled) (emit! {:type "metrics" :at (clock) :metrics metrics :counters (counter-summary metrics)})))

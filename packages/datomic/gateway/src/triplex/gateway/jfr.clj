@@ -86,13 +86,19 @@
         stack (.getStackTrace event)]
     {:thread (when thread (.getJavaThreadId thread)) :threadName (when thread (.getJavaName thread))
      :fields (into {} (keep (fn [k] (when (.hasField event k) [k (.getValue event k)]))
-                         ["host" "address" "port" "bytesRead" "bytesWritten" "timeout" "endOfStream"]))
+                         ["host" "address" "port" "bytesRead" "bytesWritten" "timeout" "endOfStream"
+                          "compileId" "compiler" "compileLevel" "isOsr" "codeSize" "inlinedBytes" "succeeded" "phase"]))
+     :compiledMethod (when (.hasField event "method")
+                       (let [method (.getValue event "method")]
+                         (when method (str (.getName (.getType method)) "/" (.getName method)))))
      :stack (when stack (mapv (fn [frame] (let [method (.getMethod frame)]
                                  (str (.getName (.getType method)) "/" (.getName method) ":" (.getLineNumber frame))))
                               (take 32 (.getFrames stack))))}))
 (defn export! [file process identity]
   (let [points (clock-points file) offset (get-in identity [:clock :offsetMs])
-        uncertainty (reduce max 0 (map #(nth % 2) points))]
+        uncertainty (reduce max 0 (map #(nth % 2) points))
+        discontinuities (vec (keep (fn [[[a am] [b bm]]]
+                                    (let [delta (- (- b a) (- bm am))] (when (> (Math/abs (double delta)) 5.0) delta))) (partition 2 1 points)))]
     (when-not (and (number? offset) (>= (count points) 2)) (throw (IllegalStateException. "JFR clock binding incomplete")))
     (with-open [r (RecordingFile. (Paths/get file (make-array String 0)))
                 w (BufferedWriter. (FileWriter. (str file ".jsonl")))]
@@ -104,9 +110,12 @@
                     layer (cond transaction "transactor" (= name "jdk.GCPhasePause") (if (= process "tx") "transactor-gc" "gateway-gc")
                                 (str/includes? name "Safepoint") "jvm-safepoint" :else "jvm-event")]
                 (.write w (str (json/write-str (merge identity detail (when native (native-stats event)) (when transaction {:nativeType name :traceId (.getString event "traceId") :parent (.getString event "parentSpanId") :id (.getString event "spanId")}) {:type "event" :name (cond transaction "transactor.triplex-function" native "datomic.tx/process" :else name) :layer layer :process process
-                             :clock (assoc (:clock identity) :uncertaintyMs (+ uncertainty 0.001))
+                             ;; [DX-T1-12] Why: JFR duration ticks survive wall steps; a discontinuous epoch anchor cannot locate an event on another process's trace.
+                             ;; Rejected: stretch a pause across a guest clock step or infer a Mac/guest overlap without a clock bridge.
+                             :clock (assoc (:clock identity) :uncertaintyMs (+ uncertainty 0.001) :crossProcessQualified (empty? discontinuities) :jfrAnchorStepsMs discontinuities)
                              :start (+ offset (monotonic-at points (millis (.getStartTime event))))
-                             :end (+ offset (monotonic-at points (millis (.getEndTime event))))})) "\n"))
+                             :jfrDurationMs (/ (double (.toNanos (.getDuration event))) 1000000.0)
+                             :end (+ offset (monotonic-at points (millis (.getStartTime event))) (/ (double (.toNanos (.getDuration event))) 1000000.0))})) "\n"))
                 (recur (inc count))))))))))
 (defn sha256 [file]
   (let [digest (java.security.MessageDigest/getInstance "SHA-256") buffer (byte-array 65536)]

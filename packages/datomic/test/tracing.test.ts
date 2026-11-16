@@ -920,3 +920,28 @@ describe("committed raw evidence checksums", () => {
     await expect(verifiedRawManifest(dir)).rejects.toThrow(/checksum/);
   });
 });
+
+it("keeps unbridged Mac samples and stepped JFR anchors out of cross-process overlaps", async () => {
+  const { alignClockRecord } = await import("../../../lab/trace/report.mjs");
+  const reference = { domain: "linux-monotonic", bootId: "boot", offsetMs: 1000 };
+  expect(
+    alignClockRecord({ process: "system-darwin", at: 2000 }, reference).clockAlignmentQualified,
+  ).toBe(false);
+  expect(
+    alignClockRecord(
+      {
+        process: "tx",
+        start: 2000,
+        end: 2010,
+        clock: { ...reference, crossProcessQualified: false },
+      },
+      reference,
+    ).clockAlignmentQualified,
+  ).toBe(false);
+  const aligned = alignClockRecord(
+    { process: "gw-w", start: 2000, end: 2010, clock: { ...reference, offsetMs: 1200 } },
+    reference,
+  );
+  expect(aligned.start).toBe(1800);
+  expect(aligned.end - aligned.start).toBe(10);
+});
