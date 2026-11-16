@@ -8,7 +8,6 @@ import { refreshVerdictEligibility } from "../../../lab/bench/lib/verdict.ts";
 it("binds admission to the actual rung and first explicit driver population in either argument order", () => {
   expect(populationFromArguments([])).toEqual({ subjects: 10000, zeroReaders: false });
   for (const [rung, subjects] of [
-    ["1k", 1000],
     ["10k", 10000],
     ["100k", 100000],
   ] as const)
@@ -22,7 +21,13 @@ it("binds admission to the actual rung and first explicit driver population in e
     ["--subjects", "1000", "--subjects", "10000"],
   ])
     expect(populationFromArguments(args).subjects).toBe(1000);
-  for (const args of [["--rung", "bad"], ["--subjects", "0"], ["--subjects"], ["--rung"]])
+  for (const args of [
+    ["--rung", "bad"],
+    ["--rung", "1k"],
+    ["--subjects", "0"],
+    ["--subjects"],
+    ["--rung"],
+  ])
     expect(() => populationFromArguments(args)).toThrow();
 });
 it("uses one population table and refuses a 100k reader arm in 16 GiB", () => {

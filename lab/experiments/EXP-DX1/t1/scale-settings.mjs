@@ -4,12 +4,12 @@ import path from "node:path";
 import fs from "node:fs";
 export const GiB=1024**3;
 // [DX-T1-12] Why: admission must name the actual driver population; an explicit subjects override wins regardless of flag order.
-// Rejected: a shell loop that labels 1k as 10k, or lets a later rung overwrite the driver's explicit subjects value.
+// Rejected: label an explicit 1k diagnostic as 10k, invent a new rung, or let a later rung overwrite explicit subjects.
 export function populationFromArguments(args) {
   const at=key=>{const i=args.indexOf(key);return i<0?undefined:args[i+1];};
   const explicit=at("--subjects"),rung=at("--rung")??"10k";
   if(args.includes("--subjects")&&explicit===undefined || args.includes("--rung")&&at("--rung")===undefined)throw Error("Missing population argument");
-  const subjects=explicit===undefined?({"1k":1000,"10k":10000,"100k":100000})[rung]:Number(explicit);
+  const subjects=explicit===undefined?({"10k":10000,"100k":100000})[rung]:Number(explicit);
   if(!Number.isSafeInteger(subjects)||subjects<1||subjects>100000)throw Error("Invalid driver population");
   return {subjects,zeroReaders:args.includes("--zero-readers")};
 }
