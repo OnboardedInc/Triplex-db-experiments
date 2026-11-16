@@ -26,6 +26,17 @@ this reading: with Chrome, Slack and Paste open the same build read 204 ms and 1
    datoms. Any of these is a new stored layout: seeds must be rebuilt and the 100,000-subject seed took hours. DX-T1 part 8
    is prototyping on new 1,000 and 10,000-subject seeds.
 
+## The idea menu (2026-11-15)
+
+`lab/research/LEAPFROG-MENU-2026-11-15.md` (34 candidates, 9 more that need Sam's decision, four plans, five builder
+briefs) and `LEAPFROG-SUMMARY-2026-11-15.md`, written by one Fable agent at extra-high effort from the code, the traces and
+the saved records of pairs C, A and F. Its findings that change this list: the 256-reader median miss also appears with zero
+readers in the same window, and a commit after a quiet gap of 250 ms costs 2.6 to 3.8 ms more than a warm one (cause
+unknown); the test's timer starts commits 0.6 to 0.7 ms late and stops the clock 0.4 ms after the acknowledgement; its
+history-growth step writes 500 subjects in one transaction and causes 15 to 18 of the slow commits per run; with readers
+the harness writes its own files to the database's virtual disk. Shortlist: (1) correct the instrument, (2) find the idle
+penalty, (3) separate the disks and prepare the WAL, (4) one Postgres commit per log write, (5) fewer datoms per commit.
+
 ## H1. The commit median sits on the engine call, and the call alone is over the 10 ms bar
 
 1. **What is hard.** P2 asks for commit p50 at most 10 ms. With zero readers and tracing off, a commit is 13.0 ms and the
