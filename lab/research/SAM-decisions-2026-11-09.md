@@ -413,3 +413,23 @@ Orchestrator's reading:
    list apart from number 3, which he declined in the sentence before.)
 3. Google Drive for desktop is on Stream files.
 4. The disk plan's go-ahead (steps 0 to 5, the 100,000-subject seed, the `default` VM) is still not given; asked again.
+
+## 2026-11-16 about 14:30 UTC: Opus analysts on the other open questions while the cold-path investigation runs; is it time for 100,000 subjects
+
+Sam, verbatim:
+
+> How much disk space do we need? I think I got rid of enough stuff that you could run now. Can you check?
+>
+> For the other things that you want to analyze while the Fable agent runs, can you have other Opus agents on High Go look at those other things that you want to understand? Don't have them test in big amounts yet because of the Fable run but it is interesting. Unless Fable's doing giant runs, I guess you can wait for it to be done and investigate some of that stuff.
+>
+> What more do we need to do and what more can I help you to do to test at this size and get ready to test at the next size? Do we have to do more at this size or do you think it's time to actually go up to the 100,000-subject lot?
+
+Orchestrator's reading:
+1. Disk checked: 14.9 GiB free, below the 15 GiB floor; what Sam removed did not raise free space on this volume.
+2. Five Opus agents at high effort, read-only (no containers, builds, tests or benchmarks, because the cold-path runs are
+   timed), each writing one report under `~/Claude/Projects/triplex-db-2/research/2026-11-16-next/`: per-fact commit cost,
+   the writer's garbage collection, the plan for 100,000 subjects, the specification of the three verdict-rule decisions,
+   and the steadiness of the test bench (virtual disk flushes, CPU cores, a verdict protocol).
+3. The orchestrator's answer on size: finish the 10,000-subject work in two short steps (apply the verdict rules and
+   confirm; fix the cold path if its cause is found) and start the 100,000-subject reading as soon as disk allows, without
+   waiting for a perfect pass at 10,000.
