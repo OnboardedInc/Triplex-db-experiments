@@ -3,6 +3,16 @@ import { pathToFileURL } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
 export const GiB=1024**3;
+// [DX-T1-12] Why: admission must name the actual driver population; an explicit subjects override wins regardless of flag order.
+// Rejected: a shell loop that labels 1k as 10k, or lets a later rung overwrite the driver's explicit subjects value.
+export function populationFromArguments(args) {
+  const at=key=>{const i=args.indexOf(key);return i<0?undefined:args[i+1];};
+  const explicit=at("--subjects"),rung=at("--rung")??"10k";
+  if(args.includes("--subjects")&&explicit===undefined || args.includes("--rung")&&at("--rung")===undefined)throw Error("Missing population argument");
+  const subjects=explicit===undefined?({"1k":1000,"10k":10000,"100k":100000})[rung]:Number(explicit);
+  if(!Number.isSafeInteger(subjects)||subjects<1||subjects>100000)throw Error("Invalid driver population");
+  return {subjects,zeroReaders:args.includes("--zero-readers")};
+}
 export function populationSettings(subjects, guestBytes, zeroReaders=false) {
   if(!Number.isSafeInteger(subjects) || subjects<1 || subjects>100000 || !Number.isSafeInteger(guestBytes) || guestBytes<GiB) throw Error("Invalid readiness population/memory");
   const large=subjects>10000, roomy=guestBytes>=23*GiB;
@@ -34,11 +44,12 @@ export function populationSettings(subjects, guestBytes, zeroReaders=false) {
     reason:admitted?null:"population/readers do not fit this guest; never resize the VM automatically"};
 }
 if(process.argv[1] && import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
-  const args=process.argv.slice(2),at=k=>args[args.indexOf(k)+1];
-  const settings=populationSettings(Number(at("--subjects")),Number(at("--guest-bytes")),args.includes("--zero-readers"));
-  if(args.includes("--shell")) {
+  const args=process.argv.slice(2),marker=args.indexOf("--driver-args"),own=marker<0?args:args.slice(0,marker),at=k=>own[own.indexOf(k)+1];
+  const population=marker<0?{subjects:Number(at("--subjects")),zeroReaders:own.includes("--zero-readers")}:populationFromArguments(args.slice(marker+1));
+  const settings=populationSettings(population.subjects,Number(at("--guest-bytes")),population.zeroReaders);
+  if(own.includes("--shell")) {
     if(!settings.admitted) throw Error(settings.reason);
     for(const [k,v] of Object.entries(settings.env)) if(process.env[k]===undefined) console.log(`export ${k}='${String(v).replaceAll("'","'\\''")}'`);
-  } else if(args.includes("--output")) fs.writeFileSync(at("--output"),JSON.stringify(settings,null,2)+"\n",{flag:"wx"});
+  } else if(own.includes("--output")) fs.writeFileSync(at("--output"),JSON.stringify(settings,null,2)+"\n",{flag:"wx"});
   else console.log(JSON.stringify(settings,null,2));
 }

@@ -1,6 +1,30 @@
 import { expect, it } from "vitest";
-import { GiB, populationSettings } from "../../../lab/experiments/EXP-DX1/t1/scale-settings.mjs";
+import {
+  GiB,
+  populationFromArguments,
+  populationSettings,
+} from "../../../lab/experiments/EXP-DX1/t1/scale-settings.mjs";
 import { refreshVerdictEligibility } from "../../../lab/bench/lib/verdict.ts";
+it("binds admission to the actual rung and first explicit driver population in either argument order", () => {
+  expect(populationFromArguments([])).toEqual({ subjects: 10000, zeroReaders: false });
+  for (const [rung, subjects] of [
+    ["1k", 1000],
+    ["10k", 10000],
+    ["100k", 100000],
+  ] as const)
+    expect(populationFromArguments(["--rung", rung, "--zero-readers"])).toEqual({
+      subjects,
+      zeroReaders: true,
+    });
+  for (const args of [
+    ["--subjects", "1000", "--rung", "100k"],
+    ["--rung", "100k", "--subjects", "1000"],
+    ["--subjects", "1000", "--subjects", "10000"],
+  ])
+    expect(populationFromArguments(args).subjects).toBe(1000);
+  for (const args of [["--rung", "bad"], ["--subjects", "0"], ["--subjects"], ["--rung"]])
+    expect(() => populationFromArguments(args)).toThrow();
+});
 it("uses one population table and refuses a 100k reader arm in 16 GiB", () => {
   for (const subjects of [1000, 10000]) {
     const p = populationSettings(subjects, Math.floor(15.5 * GiB));

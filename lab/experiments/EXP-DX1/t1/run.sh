@@ -22,17 +22,10 @@ if [[ $kind == real || $kind == pair ]]; then
   # Rejected: the old hardcoded 20-GiB guest, or a 100k reader arm in a 16-GiB guest.
   python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
   export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
-  subjects=10000; zero=()
-  for ((i=1;i<=$#;i++)); do
-    arg=${!i}; j=$((i+1))
-    if [[ $arg == --rung && ${!j} == 100k ]]; then subjects=100000; fi
-    if [[ $arg == --subjects ]]; then subjects=${!j}; fi
-    [[ $arg != --zero-readers ]] || zero=(--zero-readers)
-  done
   guest_bytes=$(docker info --format '{{.MemTotal}}')
   mkdir -p "$DX_STACK_EVIDENCE/$prefix"
-  node lab/experiments/EXP-DX1/t1/scale-settings.mjs --subjects "$subjects" --guest-bytes "$guest_bytes" ${zero[@]+"${zero[@]}"} --output "$DX_STACK_EVIDENCE/$prefix/population-settings.json"
-  scale_shell=$(node lab/experiments/EXP-DX1/t1/scale-settings.mjs --subjects "$subjects" --guest-bytes "$guest_bytes" ${zero[@]+"${zero[@]}"} --shell)
+  node lab/experiments/EXP-DX1/t1/scale-settings.mjs --guest-bytes "$guest_bytes" --output "$DX_STACK_EVIDENCE/$prefix/population-settings.json" --driver-args "$@"
+  scale_shell=$(node lab/experiments/EXP-DX1/t1/scale-settings.mjs --guest-bytes "$guest_bytes" --shell --driver-args "$@")
   eval "$scale_shell"
 fi
 # [DX-T1] Why: --oracle-root names frozen executable source, not an output directory; keep a verified owned copy.
