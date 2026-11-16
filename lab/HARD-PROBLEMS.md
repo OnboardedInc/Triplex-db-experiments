@@ -46,6 +46,23 @@ bars over at least 500 commits, a keep-warm mechanism (3.2 ms at one commit per 
 The remaining unknown inside the engine is the cold path itself: why durable storage and the peer and transactor threads
 cost 2.6 to 3.8 ms more after 250 ms of idleness.
 
+## The cold path, explained (2026-11-16, Fable agent at maximum effort; `~/Claude/Projects/triplex-db-2/research/2026-11-16-cold-path/`)
+
+Sam declined a keep-warm mechanism and asked for the cause. Nothing in Triplex, Datomic or Postgres is slow to wake up.
+1. **Processor caches (pause):** all six performance cores share one 16 MB cache; other work on the Mac overwrites the
+   commit path within 50 to 250 ms. 0.7 ms after 250 ms, 1.8 ms after 1 s. A 4 MB memory probe shows the same curve whether
+   it sleeps or busy-waits. No setting removes it; it shrinks with the size of the commit path.
+2. **The Mac's storage path (pause):** the first durable write after about 50 ms without disk activity is 0.3 to 0.45 ms
+   slower, on the Mac itself with no VM. 0.4 ms after 250 ms, 0.7 ms after 1 s.
+3. **Efficiency cores (no pause needed):** eight spinning virtual CPUs on six performance cores put each on an efficiency
+   core a quarter of the time; with six online, 0.7 to 2.1% of the time. Estimated 1.3 to 1.8 ms on every commit. Fix: six
+   virtual CPUs online. The commit-level confirmation is owed (disk and host were not quiet).
+4. **JVM warm-up (no pause needed):** gateway and transactor keep speeding up for about 5,000 commits (8.7 ms after 500 to
+   1,000 commits, 7.0 to 7.3 ms after 5,000). Compilers inferred, not observed. Fix: a one-time warm-up before judged
+   phases or lower compile thresholds. Part 10's "refused request" gain of 3.2 ms included 1.3 to 1.9 ms of this.
+Ruled out with evidence: TCP after idle, TLS, JVM pauses, V8 collections, the WAL writer, guest timers, processor
+frequency, the VM's disk thread. Scripts on branch `exp/COLD-1`.
+
 ## H1. The commit median sits on the engine call, and the call alone is over the 10 ms bar
 
 1. **What is hard.** P2 asks for commit p50 at most 10 ms. With zero readers and tracing off, a commit is 13.0 ms and the

@@ -1979,3 +1979,17 @@ Next build (Codex, `~/Claude/Projects/triplex-db-2/agents/prompts/DX-T1-resume12
 investigation has finished its timed runs: the verdict rules, the exact per-fact and client fixes, the 100,000-subject
 readiness items, the WAL-on-its-own-disk diagnostic, two confirming pairs. Mac disk 13 to 15 GiB free; the disk plan
 still waits for Sam's go-ahead.
+
+## 2026-11-16 17:20 UTC: the cold path is explained (caches, the Mac's storage path, efficiency cores, JVM warm-up); Codex part 12 launched; disk 11 GiB
+
+Cold-path investigation (one Fable agent at maximum effort, 1 h 50 min; `research/2026-11-16-cold-path/SUMMARY.md` and
+`COLD-PATH.md`; scripts on `exp/COLD-1`, `9afe4345`, pushed). Four causes, detail in `lab/HARD-PROBLEMS.md`: processor
+caches overwritten during a pause (0.7 ms after 250 ms, 1.8 ms after 1 s); the Mac's storage path idling (0.4 and 0.7 ms);
+each virtual CPU on an efficiency core a quarter of the time with eight spinning virtual CPUs (estimated 1.3 to 1.8 ms on
+every commit; six online removes it); gateway and transactor not at full speed for about 5,000 commits (about 0.5 ms in the
+256-reader phase). No sleep, timer or wake-up is at fault. Owed: the commit-level run with six virtual CPUs, refused
+because free disk fell to 11.0 GiB and swap rose to 12.4 GiB while the Mac was in use.
+
+Codex part 12 is running from `agents/prompts/DX-T1-resume12.md`: verdict rules, six-CPU and warm-up experiments,
+per-fact and client fixes, 100,000-subject readiness, two confirming pairs. Runs are refused under 15 GiB free; the code
+work proceeds and the runs wait for disk.
