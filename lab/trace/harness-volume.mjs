@@ -61,7 +61,7 @@ async function main() {
     const actual = guest(
       "create",
       common +
-        `fs.mkdirSync(root,{mode:448});fs.writeFileSync(p.join(root,'.harness-owner.json'),JSON.stringify(input),{flag:'wx'});const fd=fs.openSync(p.join(root,'.harness-owner.json'),'r');fs.fsyncSync(fd);fs.closeSync(fd);const stat=fs.statfsSync(root);if(stat.type!==0xef53)throw Error('Harness root is not ext4');console.log(JSON.stringify({owner:input,filesystemType:stat.type,device:fs.statSync(root).dev,bootId:fs.readFileSync('/proc/sys/kernel/random/boot_id','utf8').trim(),mount:fs.readFileSync('/proc/self/mountinfo','utf8').split('\\n').find(l=>l.includes(' /owned '))}));`,
+        `fs.mkdirSync(root,{mode:448});fs.writeFileSync(p.join(root,'.harness-owner.json'),JSON.stringify(input),{flag:'wx'});const fd=fs.openSync(p.join(root,'.harness-owner.json'),'r');fs.fsyncSync(fd);fs.closeSync(fd);const stat=fs.statfsSync(root);if(stat.type!==0xef53)throw Error('Harness root is not ext4');console.log(JSON.stringify({owner:input,filesystemType:stat.type,deviceNumber:fs.statSync(root).dev,bootId:fs.readFileSync('/proc/sys/kernel/random/boot_id','utf8').trim(),mount:fs.readFileSync('/proc/self/mountinfo','utf8').split('\\n').find(l=>l.includes(' /owned '))}));`,
       owner,
     );
     if (JSON.stringify(actual.owner) !== JSON.stringify(owner) || !actual.mount?.includes("ext4"))
