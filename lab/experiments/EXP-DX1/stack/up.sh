@@ -26,7 +26,7 @@ if [[ ${1:-} == --sql-pair-probe ]]; then
 import json,sys
 o=json.load(open(sys.argv[1]));assert o['id']=='DX-T1' and o['pid']==int(sys.argv[2]) and o['kind']=='writer-arms'
 PAIR_LEASE
-  export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
+  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
   trap 'docker rm -f "$prefix-probe" >/dev/null 2>&1 || true' EXIT
   trap 'exit 143' TERM INT
   docker run --rm --pull never --name "$prefix-probe" --network none --memory 768m --memory-swap 768m --cpuset-cpus 0 \
@@ -34,6 +34,46 @@ PAIR_LEASE
     -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)" \
     -v "$PWD/packages/datomic/gateway:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run \
     tx2-datomic:1.0.7745-da00 -m triplex.gateway.sql-pair-probe
+  exit
+fi
+# [DX-T1-11] Why: size the sealed seed read-only before admitting a clone; disk headroom is an observed limit.
+# Rejected: start Postgres on the sealed volume or assume a large clone fits from an old free-space figure.
+if [[ ${1:-} == --seed-size ]]; then
+  [[ $prefix == tx2-dxt1-* && ${2:-} == tx2-dxs5-seed-100000-pg-data ]] || exit 2
+  python3 - "$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" <<'SEED_LEASE'
+import json,sys,shutil
+o=json.load(open(sys.argv[1]));assert o['id']=='DX-T1' and o['pid']==int(sys.argv[2]) and o['kind']=='writer-arms'
+assert shutil.disk_usage('.').free>=15*1024**3
+SEED_LEASE
+  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
+  [[ -z $(docker ps -q --filter "volume=$2") ]] || exit 2
+  trap 'docker rm -f "$prefix-probe" >/dev/null 2>&1 || true' EXIT
+  trap 'exit 143' TERM INT
+  docker create --pull never --name "$prefix-probe" --network none --read-only --memory 64m --memory-swap 64m \
+    -v "$2:/data:ro" node:22.23.2-bookworm-slim sh -c 'du -sk /data; du -sk --apparent-size /data' >/dev/null
+  docker inspect "$prefix-probe" >&2
+  docker start -a "$prefix-probe"
+  exit
+fi
+# [DX-T1-11] Why: check original EDN claim/row identities in the pinned runtime with only read-only input mounts.
+# Rejected: infer non-row metadata equivalence from the replay's row-delta check.
+if [[ ${1:-} == --layout-input-audit ]]; then
+  [[ $prefix == tx2-dxt1-* && -f ${2:-} ]] || exit 2
+  python3 - "$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" <<'INPUT_LEASE'
+import json,sys,shutil
+o=json.load(open(sys.argv[1]));assert o['id']=='DX-T1' and o['pid']==int(sys.argv[2]) and o['kind']=='writer-arms'
+assert shutil.disk_usage('.').free>=15*1024**3
+INPUT_LEASE
+  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
+  trap 'docker rm -f "$prefix-probe" >/dev/null 2>&1 || true' EXIT
+  trap 'exit 143' TERM INT
+  input_dir=$(cd "$(dirname "$2")" && pwd)
+  docker run --rm --pull never --name "$prefix-probe" --network none --read-only --memory 768m --memory-swap 768m \
+    --tmpfs /tmp:rw,size=64m -e 'DATOMIC_JAVA_OPTS=-Xms64m -Xmx512m -Dtriplex.codec.spec=/opt/spec/codec-spec.json' \
+    -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)" \
+    -v "$input_dir:/inputs:ro" -v "$PWD/packages/datomic/gateway:/opt/gateway:ro" \
+    -v "$PWD/packages/datomic/src/codec-spec.json:/opt/spec/codec-spec.json:ro" --entrypoint /opt/datomic/bin/run \
+    tx2-datomic:1.0.7745-da00 -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
   exit
 fi
 tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec=

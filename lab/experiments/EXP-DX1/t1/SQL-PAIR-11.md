@@ -17,6 +17,8 @@ A zero-row conditional UPDATE is not an SQL exception: today the chunk may remai
 
 A safe prototype needs an explicit pair identity, connection ownership through pool close/reborrow, and a retained/replayable INSERT across every retry, reconnect and ambiguous COMMIT. It must also keep unrelated index/log-tree INSERTs durable before reporting success to their publisher; a 1-ms timer and a thread-local held value do not establish that cross-thread ordering. None is implemented. The menu's `synchronous_commit=off` trigger violates this task's durability rule and is not run. The 0.5–0.8-ms menu saving remains a hypothesis, not a measured saving here. A storage-boundary API returning only after the combined durable transaction is the clearer later design.
 
+After an uncertain COMMIT, an existing chunk must be compared byte-for-byte before a replay accepts it; ignoring a duplicate-key error alone would weaken the original failure behavior. A safe external protocol may be possible, but this probe does not establish one and does not claim it is impossible.
+
 Evidence: `evidence/DX-T1/p11-safety/SOURCE-INDEX.json` seals the decompiled reading and jar; `tx2-dxt1-p11-pair-safety-e/{request.json,probe.jsonl,qualified.json}` binds the exact source bytes, current attempt, output and observed counterexample. Attempts a–d remain, including parser/row-model mistakes; e is the completed checked probe. No database or seed was opened; no real crash/restart, differential or oracle is claimed for an unbuilt wrapper.
 
 ```sh
