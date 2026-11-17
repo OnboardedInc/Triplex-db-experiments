@@ -127,11 +127,13 @@ if [[ $operation == seed ]];then driver=(lab/experiments/EXP-DX1/t1/w0-seed.ts "
 mkdir -p "$out/state"
 run_driver() {
   local log=$1;shift
+# [DX-T1-14] Why: seed, fresh verification and activation each start as PID 1, but every phase needs its own immutable recorder shard.
+# Rejected: reuse node-1 filenames and silently lose later phase traces after exclusive creation fails.
 (trap - EXIT TERM INT;exec docker run --ulimit core=0 --rm --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 3,4,5,6,7 --memory "$DX_DRIVER_MEMORY" --memory-swap "$DX_DRIVER_MEMORY" \
   -v "$PWD:$PWD:ro" -v "$out:$out" -v "$out/state:/state" -v "$prefix-tools:/tool:ro" -w "$PWD" \
   -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin -e "NODE_OPTIONS=--max-old-space-size=$DX_DRIVER_HEAP_MB" \
   -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 \
-  -e DX_STRICT_RECORD_CLOCKS=0 -e TRIPLEX_TRACE_LEVEL=summary -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(cat "$out/head.txt")" -e TRIPLEX_TRACE_DIR=/state/trace/raw -e TRIPLEX_TRACE_PROCESS=node \
+  -e DX_STRICT_RECORD_CLOCKS=0 -e TRIPLEX_TRACE_LEVEL=summary -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(cat "$out/head.txt")" -e TRIPLEX_TRACE_DIR=/state/trace/raw -e "TRIPLEX_TRACE_PROCESS=node-${log%.log}" \
   -e "DX_ACTIVATION_NONCE=$nonce" -e "DX_ACTIVATION_BUILD_SHA256=$build_sha" \
   -e TX2_W0_POINT_JOURNAL=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 -e "DX_R1_DEADLINE=$(node -e 'console.log(Date.parse(process.argv[1]))' "$DX_ACTIVATION_STOP_AT")" \
   python:3.13-slim /tool/node --expose-gc --experimental-strip-types "$@" > "$out/$log" 2>&1) & child=$!
