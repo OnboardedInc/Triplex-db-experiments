@@ -5,6 +5,17 @@
 # that the same code did not show an hour earlier. This Mac has 6 performance cores for an 8-vCPU VM; anything else that is
 # busy pushes vCPUs onto efficiency cores.
 # usage: lab/bin/host-quiet.sh [max-other-cpu-percent, default 150] ; add --wait N to retry every 60 s for up to N minutes
+# [DX-T1-14] Why: the physical Linux study records native host context, without pretending it has a Mac outside a VM.
+# Rejected: fabricate Mac swap/CPU observations or fail a Linux study on unavailable Darwin commands.
+if [ "$(uname -s)" = Linux ]; then
+  [ "${DX_BARE_METAL:-0}" = 1 ] || exit 2
+  python3 - <<'PY_LINUX'
+import json,time
+m={k:int(v.split()[0])*1024 for k,v in (l.split(':',1) for l in open('/proc/meminfo')) if k in ('MemTotal','MemAvailable','SwapTotal','SwapFree')}
+print(json.dumps({'at':time.time()*1000,'hostPlatform':'linux-bare-metal','load':open('/proc/loadavg').read().split()[:3],'memory':m,'quiet':None,'scope':'context only; no Mac quiet qualification on this host'}))
+PY_LINUX
+  exit 0
+fi
 max=150; wait=0
 while [ $# -gt 0 ]; do case "$1" in --wait) wait=$2; shift 2;; *) max=$1; shift;; esac; done
 sample() {

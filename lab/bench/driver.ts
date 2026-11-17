@@ -172,6 +172,7 @@ const config = {
   oracleMaxReads: Number(opt("oracle-max-reads", "24")),
   splitShare: 0.1,
   probe10PerS: Number(opt("probe10-per-s", "1")),
+  publicationWaitMs: Number(process.env.DX_PUBLICATION_WAIT_MS ?? "5000"),
   historySample: Number(opt("history-sample", "1000")),
   p5Mutations: 10,
   oracleRoot: opt("oracle-root") ?? null,
@@ -186,6 +187,9 @@ const config = {
 };
 // [DX-T1-12] Why: Sam approved four-subject growth independently of seed batches and receipt-to-caller verdict timing.
 // Rejected: tying history command size to seeding, or releasing the subject queue earlier than the unchanged finish stamp.
+// [DX-T1-14] Why: a scale diagnostic must await its real captured witness through a long writer GC, then report the full lag.
+// Rejected: invent a publication time, omit delayed rows, or change any judged latency/lag threshold.
+if(!Number.isSafeInteger(config.publicationWaitMs)||config.publicationWaitMs<1||config.publicationWaitMs>120_000)throw Error("Invalid publication witness wait");
 if (!["precise", "legacy"].includes(config.schedulerTiming) ||
     (config.historyGrowthSubjects !== null && (!Number.isSafeInteger(config.historyGrowthSubjects) || config.historyGrowthSubjects < 1 || config.historyGrowthSubjects > 500)))
   throw Error("Invalid scheduler timing or history growth subjects");
@@ -856,12 +860,12 @@ async function run() {
     feed = new SideThread({dir:rawDir,epoch:`${scopeName}#0`,startAfter:seed.lastPosition,
       lane,composition:config.composition,scope:scopeName,publication:!!publicationWriter,
       feedPeer: replicaHost ? config.replicaPeer : "writer",
-      crashes:crashPlan,publicationWaitMs:5000,pollTimeoutMs:120_000},log);
+      crashes:crashPlan,publicationWaitMs:config.publicationWaitMs,pollTimeoutMs:120_000},log);
     feed.dir=rawDir;
     await feed.ready;
   } else {
   feed = pairPlan ? null : new FeedConsumer({
-    publicationWaitMs: lane === "datomic" ? 5000 : 0,
+    publicationWaitMs: lane === "datomic" ? config.publicationWaitMs : 0,
     // [DX-H3] Why: match the existing 120-second final feed catch-up budget. Rejected: 30 seconds (censored a small poll that the earlier run completed).
     pollTimeoutMs: lane === "datomic" ? 120_000 : 0,
     dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,

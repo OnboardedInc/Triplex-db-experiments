@@ -16,7 +16,7 @@ export function populationFromArguments(args) {
 export function populationSettings(subjects, guestBytes, zeroReaders=false) {
   if(!Number.isSafeInteger(subjects) || subjects<1 || subjects>100000 || !Number.isSafeInteger(guestBytes) || guestBytes<GiB) throw Error("Invalid readiness population/memory");
   const large=subjects>10000, roomy=guestBytes>=23*GiB;
-  const env={DX_TX_MEMORY:"4g",DX_TX_HEAP:"3g",DX_TX_JAVA_OPTS:"-Xms256m -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=200",
+  const env={DX_PUBLICATION_WAIT_MS:large?"30000":"5000",DX_TX_MEMORY:"4g",DX_TX_HEAP:"3g",DX_TX_JAVA_OPTS:"-Xms256m -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=200",
     DX_TX_OBJECT_CACHE:"1280m",DX_PG_MEMORY:"2g",DX_GW_WRITE_MEMORY:"3g",DX_GW_READ_MEMORY:"3g",DX_DRIVER_MEMORY:"8g",DX_DRIVER_HEAP_MB:"6144",
     DX_GW_WRITE_JAVA_OPTS:"-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g",
     DX_GW_READ_JAVA_OPTS:"-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1g",

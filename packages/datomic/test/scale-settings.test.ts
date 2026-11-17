@@ -39,6 +39,7 @@ it("uses one population table and refuses a 100k reader arm in 16 GiB", () => {
     const p = populationSettings(subjects, Math.floor(15.5 * GiB));
     expect(p.admitted).toBe(true);
     expect(p.env.DX_TX_OBJECT_CACHE).toBe("1280m");
+    expect(p.env.DX_PUBLICATION_WAIT_MS).toBe("5000");
     expect(p.env.DX_ID_CACHE_ENTRIES).toBe("2097152");
     expect(p.driverArgs).toEqual([
       "--replica-history-mib",
@@ -53,6 +54,7 @@ it("uses one population table and refuses a 100k reader arm in 16 GiB", () => {
   expect(small.env.DX_GW_READ_MEMORY).toBe("1792m");
   expect(small.env.DX_DRIVER_MEMORY).toBe("8g");
   expect(small.env.DX_DRIVER_HEAP_MB).toBe("4096");
+  expect(small.env.DX_PUBLICATION_WAIT_MS).toBe("30000");
   const big = populationSettings(100000, Math.floor(23.5 * GiB));
   expect(big.admitted).toBe(true);
   expect(big.env.DX_TX_OBJECT_CACHE).toBe("2560m");

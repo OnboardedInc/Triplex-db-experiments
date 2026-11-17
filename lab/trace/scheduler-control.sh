@@ -4,8 +4,8 @@
 set -euo pipefail
 mode=${1:?enable|restore|recover}; prefix=${2:?owned-prefix}; out=${3:?evidence-dir}
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ && ( $mode == enable || $mode == restore || $mode == recover ) ]] || exit 2
-export DOCKER_HOST="unix://$HOME/.colima/triplex2/docker.sock"
-lease="$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json"
+source "$(dirname "${BASH_SOURCE[0]}")/../experiments/EXP-DX1/stack/platform.sh"
+lease="$DX_LAB_ROOT/locks/measure/owner.json"
 # [DX-T1-6] Why: a dead startup owner cannot run its EXIT trap; recovery must retain the original state and prove empty ownership.
 # Rejected: deleting the lease first, rewriting the old scheduler receipt, or restoring another attempt's setting.
 if [[ $mode == recover ]]; then

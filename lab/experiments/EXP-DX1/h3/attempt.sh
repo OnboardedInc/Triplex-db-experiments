@@ -4,7 +4,7 @@ set -euo pipefail
 # [DX-R3-P8] Why: EXIT may run inside a redirected failing stage; restore the caller stream before reading stage logs.
 # Rejected: inheriting that redirection (cat driver.log recursively appends to itself until disk exhaustion).
 exec 8>&1 9>&2
-export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
+source "$(dirname "${BASH_SOURCE[0]}")/../stack/platform.sh"
 kind=${1:?functional|medium|real}; prefix=${2:?prefix}; shift 2
 [[ $prefix =~ ^tx2-dx[a-z0-9-]+$ ]] || exit 2
 if [[ $prefix == tx2-dxt1-* ]]; then
@@ -13,7 +13,7 @@ fi
 # [DX-H4] Why: each arm needs a fresh physical stack and identical immutable arguments.
 # Rejected: the in-run baseline phase (a different frozen-trace segment).
 if [[ $kind == pair ]]; then
-  root=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H4}
+  root=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/DX-H4}
   duration=${DX_MATCH_DURATION_S:-900}
   if [[ ${DX_NS_PROFILE:-smoke} == v3 ]]; then duration=$(node --import tsx lab/bench/plan.ts --seconds --strict); fi
   # [DX-R3] Why: a parent cancelled while waiting for a child arm must stop that same owned child before returning.
@@ -25,7 +25,7 @@ if [[ $kind == pair ]]; then
   # Rejected: releasing the lock between arms, or silently extending a single-arm diagnostic lease.
   if [[ ( $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ) && -z ${DX_R3_PAIR_LEASE_PID:-} ]]; then
     pair_id=DX-R3; [[ $prefix != tx2-dxt1-* ]] || pair_id=DX-T1
-    pair_lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
+    pair_lock=$DX_LAB_ROOT/locks/measure
     python3 -c 'import shutil; assert shutil.disk_usage(".").free >= 15*1024**3'
     if [[ ${DX_R3_TRY_LOCK:-0} == 1 ]]; then
       if ! mkdir "$pair_lock" 2>/dev/null; then echo 'DX-R3 pair lock busy; no resources created'; exit 75; fi
@@ -82,9 +82,9 @@ if [[ -n ${DX_NIGHT_WINDOW:-} ]]; then
   night_minutes=15; [[ ${DX_NS_PROFILE:-smoke} != v3 ]] || night_minutes=140
   node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" "$night_minutes" >/dev/null
 fi
-export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
+source "$(dirname "${BASH_SOURCE[0]}")/../stack/platform.sh"
 agent=$(printf '%s' "$prefix" | cut -d- -f2 | tr '[:lower:]' '[:upper:]' | sed 's/^DX/DX-/')
-export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/$agent}
+export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/$agent}
 out=$DX_STACK_EVIDENCE/$prefix
 [[ ! -e $out/arguments.txt ]] || { echo "refusing reused run tag: $prefix" >&2; exit 2; }
 mkdir -p "$out"
@@ -100,7 +100,7 @@ rows={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in sorted
 pathlib.Path(sys.argv[1]+'/source-build-hashes.json').write_text(json.dumps(rows,indent=2)+'\n')
 PY2
 fi
-lock=/Users/sam/Claude/Projects/triplex-db-2/locks/measure
+lock=$DX_LAB_ROOT/locks/measure
 held=false; watchdog=; operational=; child=; trace_host=; trace_pg=; trace_waits=
 cleanup() {
   rc=$?; trap - EXIT TERM INT
@@ -115,6 +115,9 @@ cleanup() {
     docker cp "$prefix-driver:/driver/." "$out/driver/" || { echo 'driver evidence copy failed; retain lock' >&2; exit 1; }
     docker rm -f "$prefix-driver"
   fi
+  # [DX-T1-14] Why: retain pre-shutdown OOM/restart state rather than inferring it from sparse memory samples.
+  # Rejected: overwriting a native failure with the expected shutdown/TERM state.
+  for role in pg tx gw-w gw-r;do docker container inspect "$prefix-$role" > "$out/$role-container-at-cleanup.json" 2> "$out/$role-container-inspect-errors.txt" || true;done
   # [DX-T1] Why: orderly JVM shutdown dumps and converts JFR before any owned container is removed.
   # Rejected: rm -f (loses the only recording of the slow run).
   if [[ ${DX_IDLE_SENTINEL:-0} == 1 ]] && docker inspect "$prefix-idle-sentinel" >/dev/null 2>&1; then
@@ -268,14 +271,14 @@ docker exec "$prefix-pg" sh -c 'cat /proc/self/mountinfo; df -k / /tmp /var/lib/
 # Rejected: assuming nohlt survives an orchestrator restart.
 if [[ $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ]]; then
   docker exec "$prefix-tx" cat /proc/cmdline > "$out/guest-kernel.txt"
-  if [[ $prefix == tx2-dxt1-* ]]; then python3 -c 'import sys; assert "nohlt" in open(sys.argv[1]).read().split(), "guest nohlt condition absent"' "$out/guest-kernel.txt"; fi
+  if [[ $prefix == tx2-dxt1-* && ${DX_BARE_METAL:-0} != 1 ]]; then python3 -c 'import sys; assert "nohlt" in open(sys.argv[1]).read().split(), "guest nohlt condition absent"' "$out/guest-kernel.txt"; fi
   if [[ $prefix == tx2-dxt1-* ]]; then
     # [DX-T1-10] Why: record the guest's exposed idle driver/states instead of assuming nohlt proves a host power state.
     # Rejected: mutate VM power policy or infer Apple hardware frequency from a Linux container.
     docker exec "$prefix-pg" sh -c 'for f in /sys/devices/system/cpu/cpuidle/current_driver /sys/devices/system/cpu/cpuidle/current_governor_ro /sys/devices/system/cpu/cpu0/cpuidle/state*/name /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq; do if test -r "$f"; then echo "$f"; cat "$f"; fi; done' > "$out/guest-idle-capability.txt"
   fi
 fi
-if [[ $TRIPLEX_TRACE_SYSTEM == 1 ]]; then
+if [[ $TRIPLEX_TRACE_SYSTEM == 1 && ${DX_BARE_METAL:-0} != 1 ]]; then
   node lab/trace/system-sampler.mjs "$out/trace/raw" & trace_host=$!
 fi
 if [[ $TRIPLEX_TRACE_POSTGRES == 1 ]]; then

@@ -1,21 +1,46 @@
 #!/usr/bin/env bash
 # [DX-H1] Why: separate peers and durable SQL storage measure the intended topology. Rejected: dev storage (single process).
 set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
 # [DX-T1] Why: read owned startup logs through the same scoped runner, before a health deadline expires.
 # Rejected: reaching an unrelated Docker context or losing the first JVM startup error behind retries.
 if [[ ${1:-} == --inventory ]]; then
-  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
   docker ps -a --filter "name=^/${prefix}-" --format '{{.Names}}'
   docker volume ls --filter "name=^${prefix}-" --format '{{.Name}}'
   docker network ls --filter "name=^${prefix}-" --format '{{.Name}}'
   exit
 fi
 if [[ ${1:-} == --logs ]]; then
-  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
   for role in pg tx gw-w gw-r; do docker logs --tail 35 "$prefix-$role" 2>&1 || true; done
+  exit
+fi
+# [DX-T1-14] Why: virtiofs can retain an unlinked crash file until its guest dentry is revalidated.
+# Rejected: restart the VM, flush global caches, or truncate a file without its verified private archive.
+if [[ ${1:-} == --revalidate-core ]];then
+  [[ $prefix == tx2-dxt1-* && $# == 2 ]] || exit 2
+  artifact=$2
+  python3 - "$DX_LAB_ROOT/locks/measure/owner.json" "$prefix" "$artifact" "$DX_EVIDENCE_ROOT/DX-T1" <<'CORE_LEASE'
+import json,pathlib,os,sys
+lease=json.load(open(sys.argv[1]));assert lease['id']=='DX-T1' and lease['prefix']==sys.argv[2] and lease['kind']=='cleanup';os.kill(lease['pid'],0)
+p=pathlib.Path(sys.argv[3]).resolve();assert p.is_relative_to(pathlib.Path(sys.argv[4]).resolve())
+r=json.loads((p/'CORE.json').read_text());assert r['originalSha256']==r['roundTripSha256'] and (p/'writer-incomplete.core.zst').is_file()
+CORE_LEASE
+  repo=$(cd "$(dirname "$0")/../../../.." && pwd)
+  reclaim=${DX_CORE_RECLAIM_INODES:-0};[[ $reclaim == 0 || $reclaim == 1 ]] || exit 2
+  privilege=()
+  if [[ $reclaim == 1 ]];then
+    # [DX-T1-14] Why: an unlinked owned core can stay open through an unused virtiofs inode after all its containers stop.
+    # Rejected: drop file-data caches, stop a shared resident, or restart/reconfigure the VM.
+    [[ -z $(docker ps -q) ]] || { echo 'Inode reclaim requires all containers stopped' >&2;exit 2; }
+    privilege=(--privileged)
+  fi
+  trap 'docker rm -f "$prefix-core-cache" >/dev/null 2>&1 || true' EXIT
+  docker run --rm --pull never --name "$prefix-core-cache" --ulimit core=0 --network none --memory 64m --memory-swap 64m "${privilege[@]}" \
+    -v "$repo:$repo:ro" -v "$artifact:$artifact:ro" node:22.23.2-bookworm-slim node -e '
+const fs=require("fs");if(process.argv[1]==="1"){if(fs.readFileSync("/proc/sys/kernel/random/boot_id","utf8").trim()!==process.argv[2])throw Error("Guest identity changed");fs.writeFileSync("/proc/sys/vm/drop_caches","2\n");console.log(JSON.stringify({operation:"unused inode/dentry reclaim",bootId:process.argv[2]}));}for(const p of process.argv.slice(3)){try{const s=fs.statSync(p);console.log(JSON.stringify({name:p.split("/").at(-1),exists:true,bytes:s.size,links:s.nlink}));}catch(e){if(e.code!=="ENOENT")throw e;console.log(JSON.stringify({name:p.split("/").at(-1),exists:false}));}}' "$reclaim" "${DX_CORE_GUEST_BOOT_ID:-}" "$repo/core" "$artifact/writer-incomplete.core"
   exit
 fi
 # [DX-T1-12] Why: the authorized eight-versus-six trial must change guest CPUs only under this holder's live lease and restore all eight before releasing it.
@@ -23,13 +48,12 @@ fi
 if [[ ${1:-} == --guest-cpus ]]; then
   [[ $prefix == tx2-dxt1-* && ( ${2:-} == eight || ${2:-} == six || ${2:-} == show ) ]] || exit 2
   mode=$2
-  python3 - "$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" "$mode" <<'CPU_LEASE'
+  python3 - "$DX_LAB_ROOT/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" "$mode" <<'CPU_LEASE'
 import json,sys,os,shutil
 o=json.load(open(sys.argv[1]));assert o['id']=='DX-T1' and o['pid']==int(sys.argv[2]) and o['kind']=='writer-arms'
 os.kill(o['pid'],0)
 if sys.argv[3]=='six':assert shutil.disk_usage('.').free>=15*1024**3
 CPU_LEASE
-  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
   # [DX-T1-12] Why: global CPU changes must not interfere with a running unrelated engine; stopped foreign residents are left alone.
   # Rejected: using the measurement lease as proof that every other container is idle.
   if [[ $mode == six ]]; then
@@ -55,11 +79,10 @@ fi
 # Rejected: the menu's asynchronous-INSERT trigger (a Postgres-only failure can lose a referenced chunk).
 if [[ ${1:-} == --sql-pair-probe ]]; then
   [[ $prefix == tx2-dxt1-* ]] || exit 2
-  python3 - "$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" <<'PAIR_LEASE'
+  python3 - "$DX_LAB_ROOT/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" <<'PAIR_LEASE'
 import json,sys
 o=json.load(open(sys.argv[1]));assert o['id']=='DX-T1' and o['pid']==int(sys.argv[2]) and o['kind']=='writer-arms'
 PAIR_LEASE
-  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
   trap 'docker rm -f "$prefix-probe" >/dev/null 2>&1 || true' EXIT
   trap 'exit 143' TERM INT
   docker run --rm --pull never --name "$prefix-probe" --network none --memory 768m --memory-swap 768m --cpuset-cpus 0 \
@@ -73,12 +96,11 @@ fi
 # Rejected: start Postgres on the sealed volume or assume a large clone fits from an old free-space figure.
 if [[ ${1:-} == --seed-size ]]; then
   [[ $prefix == tx2-dxt1-* && ${2:-} == tx2-dxs5-seed-100000-pg-data ]] || exit 2
-  python3 - "$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" <<'SEED_LEASE'
+  python3 - "$DX_LAB_ROOT/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" <<'SEED_LEASE'
 import json,sys,shutil
 o=json.load(open(sys.argv[1]));assert o['id']=='DX-T1' and o['pid']==int(sys.argv[2]) and o['kind']=='writer-arms'
 assert shutil.disk_usage('.').free>=15*1024**3
 SEED_LEASE
-  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
   [[ -z $(docker ps -q --filter "volume=$2") ]] || exit 2
   trap 'docker rm -f "$prefix-probe" >/dev/null 2>&1 || true' EXIT
   trap 'exit 143' TERM INT
@@ -92,12 +114,11 @@ fi
 # Rejected: infer non-row metadata equivalence from the replay's row-delta check.
 if [[ ${1:-} == --layout-input-audit ]]; then
   [[ $prefix == tx2-dxt1-* && -f ${2:-} ]] || exit 2
-  python3 - "$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" <<'INPUT_LEASE'
+  python3 - "$DX_LAB_ROOT/locks/measure/owner.json" "${DX_R3_PAIR_LEASE_PID:?}" <<'INPUT_LEASE'
 import json,sys,shutil
 o=json.load(open(sys.argv[1]));assert o['id']=='DX-T1' and o['pid']==int(sys.argv[2]) and o['kind']=='writer-arms'
 assert shutil.disk_usage('.').free>=15*1024**3
 INPUT_LEASE
-  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
   trap 'docker rm -f "$prefix-probe" >/dev/null 2>&1 || true' EXIT
   trap 'exit 143' TERM INT
   input_dir=$(cd "$(dirname "$2")" && pwd)
@@ -109,7 +130,7 @@ INPUT_LEASE
     tx2-datomic:1.0.7745-da00 -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
   exit
 fi
-tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec=
+tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
 # [DX-S3] Why: tune placement, heap and durable storage without changing existing callers.
 # Rejected: replacing defaults globally (would change other agents' measurements).
 # [orchestrator merge] Flags (DX-S3) win; DX_* environment variables (DX-H3) are the fallback; then the old defaults.
@@ -122,6 +143,7 @@ quiet_loggers=${DX_QUIET_LOGS:-0} encrypt_channel=${DX_ENCRYPT_CHANNEL:-true} na
 while (($#)); do
   case "$1" in
     --no-publish) publish=false; shift; continue;;
+    --clone-seed) seed_volume=$2;;
     --cpus-tx) tx=$2;; --cpus-pg) pg=$2;;
     --cpus-gw-write) gw_w=$2;; --cpus-gw-read) gw_r=$2;;
     --pg-memory) pg_mem=$2;; --tx-memory) tx_mem=$2;; --gw-memory) gw_mem=$2;;
@@ -139,7 +161,6 @@ done
 for port in "$port_w" "$port_r"; do
   [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 && "$port" != 15442 && "$port" != 17019 ]] || exit 2
 done
-export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 network_tuning=()
 if [[ ${DX_IDLE_TCP:-default} != default ]]; then
@@ -148,7 +169,7 @@ if [[ ${DX_IDLE_TCP:-default} != default ]]; then
   [[ $prefix == tx2-dxt1-* && $DX_IDLE_TCP == 0 ]] || exit 2
   network_tuning=(--sysctl net.ipv4.tcp_slow_start_after_idle=0)
 fi
-evidence=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H1}
+evidence=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/DX-H1}
 attempt="$evidence/$prefix"
 mkdir -p "$attempt/sql" "$attempt/config" "$attempt/trace/raw"
 [[ ! -e "$attempt/stack.json" ]] || { echo "use a fresh prefix; evidence already exists" >&2; exit 2; }
@@ -258,7 +279,40 @@ if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
     --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
 docker network create "$prefix-net" >/dev/null
-docker volume create "$prefix-pg-data" >/dev/null
+# [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
+# Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
+if [[ -n $seed_volume ]];then
+  [[ $prefix == tx2-dxt1-* && ( $seed_volume == tx2-dxh5-seed-1000-pg-data || $seed_volume == tx2-dxh8-seed-10000-pg-data || $seed_volume == tx2-dxs5-seed-100000-pg-data ) ]] || exit 2
+  python3 - "$DX_LAB_ROOT/locks/measure/owner.json" "$prefix" <<'CLONE_LEASE'
+import json,os,sys
+r=json.load(open(sys.argv[1]));assert r['id']=='DX-T1' and r['kind']=='activation' and r['prefix']==sys.argv[2];os.kill(r['pid'],0)
+CLONE_LEASE
+  [[ -z $(docker ps -q --filter "volume=$seed_volume") ]] || { echo 'Sealed source is active' >&2;exit 2; }
+  if docker volume inspect "$prefix-pg-data" >/dev/null 2>&1;then echo 'Refusing an existing clone destination' >&2;exit 2;fi
+  docker volume create "$prefix-pg-data" >/dev/null
+  docker create --pull never --name "$prefix-seed-copy" --read-only --network none --memory 128m --memory-swap 128m \
+    -v "$seed_volume:/from:ro" -v "$prefix-pg-data:/to" --entrypoint /bin/sh postgres:17-alpine -eu -c '
+      test "$(cat /from/PG_VERSION)" = 17
+      test -z "$(find /from -type l -print)"
+      cp -a /from/. /to/
+      cd /from; find . -type f -exec sha256sum {} \; > /to/.clone-sha256
+      cd /to; sha256sum -c .clone-sha256; rm .clone-sha256
+    ' >/dev/null
+  trap 'docker rm -f "$prefix-seed-copy" >/dev/null 2>&1 || true' EXIT
+  docker inspect "$prefix-seed-copy" > "$attempt/seed-clone-container.json"
+  python3 - "$attempt/seed-clone-container.json" "$seed_volume" "$prefix" <<'CLONE_MOUNTS'
+import json,sys
+r=json.load(open(sys.argv[1]))[0];m={x['Destination']:x for x in r['Mounts']}
+assert m['/from']['Name']==sys.argv[2] and m['/from']['RW'] is False
+assert m['/to']['Name']==sys.argv[3]+'-pg-data' and m['/to']['RW'] is True
+CLONE_MOUNTS
+  docker start -a "$prefix-seed-copy" > "$attempt/seed-clone-verified.sha256.log"
+  [[ $(docker inspect --format '{{.State.ExitCode}}' "$prefix-seed-copy") == 0 ]] || exit 1
+  docker rm "$prefix-seed-copy" >/dev/null
+  trap - EXIT
+else
+  docker volume create "$prefix-pg-data" >/dev/null
+fi
 docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
   -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" postgres:17-alpine postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
@@ -270,11 +324,13 @@ for ((i=0;i<90;i++)); do
 done
 [[ $ready == true ]] || { echo "Postgres TCP startup timed out" >&2; exit 1; }
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
+if [[ -z $seed_volume ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
   [[ "$file" != postgres-table.sql ]] || db=datomic
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$attempt/sql/$file" > "$attempt/sql/$file.log"
 done
+fi
 docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$trace_tx_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"

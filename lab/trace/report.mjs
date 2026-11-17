@@ -946,7 +946,7 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
     }
   }
   if (manifest?.requireSystem) {
-    if (!resources.some((r) => r.process === "system-darwin" && r.swap !== null && r.cpu !== null))
+    if (manifest.hostPlatform !== "linux-bare-metal" && !resources.some((r) => r.process === "system-darwin" && r.swap !== null && r.cpu !== null))
       errors.push("Mac CPU/swap collector missing");
     if (
       !resources.some(

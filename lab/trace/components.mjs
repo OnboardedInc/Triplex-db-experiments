@@ -29,6 +29,7 @@ export function configuration(env = process.env) {
   const system = !!env.TRIPLEX_TRACE_SESSION || level !== "off";
   return {
     level,
+    hostPlatform: env.DX_HOST_PLATFORM ?? "darwin-colima",
     components,
     nodeEnabled: has("node"),
     gatewayEnabled: has("gateway"),

@@ -2,6 +2,7 @@
 # [DX-T1] Why: a single public entrypoint pins exact local reads and the permanent trace destination.
 # Rejected: ad hoc per-command environment settings that can silently differ between matched arms.
 set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/../stack/platform.sh"
 kind=${1:?functional|real|pair}; prefix=${2:?tx2-dxt1-TAG}; shift 2
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
 # [DX-T1-12] Why: Sam forbids background requests and sentinels in diagnostics as well as verdicts.
@@ -15,13 +16,12 @@ if [[ ${DX_NS_PROFILE:-smoke} == v3 ]]; then
   DX_MATCH_DURATION_S=$(node --import tsx lab/bench/plan.ts --seconds --strict); export DX_MATCH_DURATION_S
   node --import tsx lab/bench/plan.ts --strict
 fi
-export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
+export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/DX-T1}
 export DX_ORACLE_ROOT=${DX_ORACLE_ROOT:-$DX_STACK_EVIDENCE/oracle}
 if [[ $kind == real || $kind == pair ]]; then
   # [DX-T1-12] Why: reject short disk before Docker admission, then read the real guest total for population settings.
   # Rejected: the old hardcoded 20-GiB guest, or a 100k reader arm in a 16-GiB guest.
   python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
-  export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
   guest_bytes=$(docker info --format '{{.MemTotal}}')
   mkdir -p "$DX_STACK_EVIDENCE/$prefix"
   node lab/experiments/EXP-DX1/t1/scale-settings.mjs --guest-bytes "$guest_bytes" --output "$DX_STACK_EVIDENCE/$prefix/population-settings.json" --driver-args "$@"

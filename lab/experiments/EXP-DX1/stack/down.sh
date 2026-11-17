@@ -3,11 +3,11 @@ set -euo pipefail
 prefix=${1:?usage: down.sh PREFIX [--volumes]}
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
 [[ $# == 1 || ($# == 2 && $2 == --volumes) ]] || exit 2
-export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
+source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
 roles=(gw-r gw-w tx pg)
 # [DX-T1] Why: interrupted startup may leave one of the runner's short-lived helpers behind.
 # Rejected: releasing a measurement lease while an owned client or writable volume survives.
-if [[ $prefix == tx2-dxt1-* ]]; then roles+=(driver health cgroups extract trace-check idle-sentinel); fi
+if [[ $prefix == tx2-dxt1-* ]]; then roles+=(driver health cgroups extract trace-check idle-sentinel seed-copy core-cache); fi
 for role in "${roles[@]}"; do
   docker rm -f "$prefix-$role" >/dev/null 2>&1 || true
 done

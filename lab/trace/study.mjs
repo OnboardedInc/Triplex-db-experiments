@@ -152,7 +152,10 @@ for (const arm of arms) {
       }
       if (r.process === "system-linux" && Object.keys(r.cgroups ?? {}).length >= 4) vm++;
     }
-  if (!swaps.length || !macCpu.length || !vm) throw Error("Missing host/VM observations");
+  // [DX-T1-14] Why: a native Linux run has no Mac outside a VM; its exact platform is declared before collection.
+  // Rejected: invent zero Mac CPU/swap or waive native cgroup coverage.
+  const physicalLinux=m.hostPlatform==="linux-bare-metal";
+  if (!vm || (!physicalLinux && (!swaps.length || !macCpu.length))) throw Error("Missing host/VM observations");
   const writes = [];
   for await (const w of records(path.join(dir, "driver/ns-writes.jsonl")))
     if (w.stream === "background" && !w.resend) writes.push(w);
@@ -186,7 +189,8 @@ for (const arm of arms) {
     commands: writes.length,
     p50Ms: percentile(writes.map(verdictMs), 0.5),
     p99Ms: percentile(writes.map(verdictMs), 0.99),
-    swapGiB: { min: Math.min(...swaps), median: percentile(swaps, 0.5), max: Math.max(...swaps) },
+    hostPlatform: m.hostPlatform ?? "darwin-colima",
+    swapGiB: { min: swaps.length?Math.min(...swaps):null, median: percentile(swaps, 0.5), max: swaps.length?Math.max(...swaps):null },
     macCpu: { median: percentile(macCpu, 0.5), p99: percentile(macCpu, 0.99) },
     oracle: b.oracle,
     gates,
@@ -205,6 +209,7 @@ for (const r of rows) {
   r.controlP50Ms = off50;
   r.controlP99Ms = off99;
 }
+const format = (value, digits = 3) => Number.isFinite(value) ? value.toFixed(digits) : "unavailable";
 const text = [
   "# " + prefix,
   "",
@@ -214,7 +219,7 @@ const text = [
   "| --- | ---: | ---: | --- | --- | --- |",
   ...rows.map(
     (r) =>
-      `| ${r.arm} / ${r.level} | ${r.p50Ms.toFixed(3)} | ${r.p99Ms.toFixed(3)} | ${off50.toFixed(3)} / ${off99.toFixed(3)} | ${r.swapGiB.median.toFixed(3)} (${r.swapGiB.min.toFixed(3)}-${r.swapGiB.max.toFixed(3)}) | ${r.macCpu.median.toFixed(1)} / ${r.macCpu.p99.toFixed(1)} |`,
+      `| ${r.arm} / ${r.level} | ${r.p50Ms.toFixed(3)} | ${r.p99Ms.toFixed(3)} | ${off50.toFixed(3)} / ${off99.toFixed(3)} | ${format(r.swapGiB.median)} (${format(r.swapGiB.min)}-${format(r.swapGiB.max)}) | ${format(r.macCpu.median,1)} / ${format(r.macCpu.p99,1)} |`,
   ),
   "",
   `Controls: ${controls.map((r) => r.tag).join(", ")}. The following values/flags are copied from the existing benchmark gates, not independently certified.`,
@@ -241,7 +246,7 @@ for (const r of rows.filter((r) => r.arm.endsWith("ladder")))
     const p = r.scheduler?.[phase];
     if (p)
       text.push(
-        `| ${r.arm} | ${p.readers} | ${p.spanMs?.toFixed(3)} | ${p.runtimeMs?.toFixed(3)} | ${p.runqueueMs?.toFixed(3) ?? "n/a"} | ${r.level} | ${r.swapGiB.median.toFixed(3)} | ${off50.toFixed(3)} |`,
+        `| ${r.arm} | ${p.readers} | ${p.spanMs?.toFixed(3)} | ${p.runtimeMs?.toFixed(3)} | ${p.runqueueMs?.toFixed(3) ?? "n/a"} | ${r.level} | ${format(r.swapGiB.median)} | ${off50.toFixed(3)} |`,
       );
   }
 text.push("");

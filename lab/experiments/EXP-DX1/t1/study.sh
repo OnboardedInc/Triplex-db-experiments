@@ -4,7 +4,8 @@
 set -euo pipefail
 prefix=${1:?tx2-dxt1-prefix};shift
 [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
-export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
+source "$(dirname "${BASH_SOURCE[0]}")/../stack/platform.sh"
+export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
 session_dir=$DX_STACK_EVIDENCE/$prefix-session
 mkdir "$session_dir"
@@ -18,7 +19,7 @@ quiet_rc=0
 sh lab/bin/host-quiet.sh --wait "${DX_QUIET_WAIT_MIN:-0}" > "$session_dir/quiet-admission.jsonl" || quiet_rc=$?
 printf '%s\n' "$quiet_rc" > "$session_dir/quiet-admission-exit.txt"
 python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
-lock=$HOME/Claude/Projects/triplex-db-2/locks/measure
+lock=$DX_LAB_ROOT/locks/measure
 while ! mkdir "$lock" 2>/dev/null;do sleep 5;done
 printf '{"id":"DX-T1","pid":%s,"kind":"full-pair"}\n' "$$" > "$lock/owner.json"
 export DX_R3_PAIR_LEASE_PID=$$ DX_PAIR_LEASE_ID=DX-T1

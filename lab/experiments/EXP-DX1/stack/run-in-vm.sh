@@ -10,10 +10,10 @@ while [[ ${1:-} != -- ]]; do
   shift 2
 done
 shift
-export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
+source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 agent=$(printf '%s' "$prefix" | cut -d- -f2 | tr '[:lower:]' '[:upper:]' | sed 's/^DX/DX-/')
-evidence=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/$agent}/$prefix
+evidence=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/$agent}/$prefix
 mkdir -p "$evidence/driver" "$evidence/oracle-bridge"
 bridge_pid=
 docker image inspect node:22.23.2-bookworm-slim >/dev/null
@@ -77,11 +77,11 @@ if [[ ${DX_IDLE_TCP:-default} != default ]]; then
   network_tuning=(--sysctl net.ipv4.tcp_slow_start_after_idle=0)
 fi
 # The lexical output remains under runs/; that directory is a real Docker volume during execution.
-# [DX-T1-14] Why: a failed heap must leave stderr/exit state, without a multi-GiB core dump into the source bind mount.
-# Rejected: change the guest's global core policy, or delete the only crash evidence without a lossless retained copy.
+# [DX-T1-14] Why: a failed heap must retain stderr/exit state without a multi-GiB dump into the source bind mount.
+# Rejected: changing the host/guest global core policy.
 docker create --ulimit core=0 --pull never --name "$prefix-driver" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpus" --memory "$memory" --memory-swap "$memory" \
   --cgroupns host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v "$repo:$repo" \
-  -v /Users/sam/Claude/Projects/triplex-db-2/evidence:/Users/sam/Claude/Projects/triplex-db-2/evidence \
+  -v "$DX_EVIDENCE_ROOT:$DX_EVIDENCE_ROOT" \
   "${driver_mounts[@]}" -w "$repo" \
   -e "TRIPLEX_TRACE_CPU_PROFILE=${DX_NODE_PROFILE:-0}" -e "TRIPLEX_TRACE_NODE=${TRIPLEX_TRACE_NODE:-1}" -e "TRIPLEX_TRACE_SESSION=${TRIPLEX_TRACE_SESSION:-}" -e "TRIPLEX_TRACE_SYSTEM=${TRIPLEX_TRACE_SYSTEM:-0}" \
   -e "TRIPLEX_TRACE_LEVEL=${TRIPLEX_TRACE_LEVEL:-off}" -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git -C "$repo" rev-parse HEAD)" -e TRIPLEX_TRACE_DIR=/driver/trace/raw -e TRIPLEX_TRACE_PROCESS=node -e "TRIPLEX_TRACE_DEBUG=${TRIPLEX_TRACE_DEBUG:-0}" \
