@@ -52,3 +52,13 @@ Acceptance is unchanged. `lab/TARGETS.md` is explicitly authorized scope-source 
 | `lab/TARGETS.md` | `fd89c0e1885802e496423be0f242ee0ee6d39f9b213012a1015fba7dbca63e7e` | `0200ad2b15f19e8b4bce72e6d78c0de2a33f94ba27b056a21dad6b873cdcf513` |
 
 `p12/pinned-a.json` found no acceptance hash equal to a changed file at the part-11 base. No acceptance pin, generated contract or ruling was edited.
+
+Final follow-up evidence supersedes the earlier owed-native/export notes above: native-d completed the full 1k grouping and 200k differential plus oracle; the three 10k smoke reader arms all have exact model observations and oracle PASS. The seven full JIT arms exported qualified native compilation recordings. None is a v3 performance qualification. Native grouping replays a 200-second generated prefix on all 1,000 subjects, not a full native 7,200-second arm.
+
+| Final reporting site | Content | Freshness | Binding / limit |
+| --- | --- | --- | --- |
+| `p12/cpu-price.py` / raw-row validator | Verifies consumed seals, complete exact cohorts, common build, slot, policy/placement, actual zero OOM counters; recomputes ACK percentiles through the one common accessor. | Six exclusive completed arms and three distinct driver pairs; observed controller cleanup and CPU restoration. | Six unique driver IDs; 293 source preimages match the recorded Git head; fixed frozen trace/grouping. Gains are diagnostic; six rejected, no performance PASS. |
+| Table renderers / ACK reproduction | Copies producer flags/counts/intervals, checks all old ACK values within .001 and no legacy differences. | New analyses from sealed records; historical and fresh observations labelled separately. | Original producer/input hashes in the final manifest; unknown histograms/clock joins stay unknown. No new oracle verdict is inferred. |
+| Failed-attempt compression | Every tar member and every additionally compressed capture decodes to its original size/SHA; originals are rehashed before removal; durable archive and journal are synced first. | Quiescent failed b attempt, no measurement lease, exclusive archive/journals. | Exact owned tag/source and 8,513 named files; only verified originals removed. Tar/Zstandard bytes and per-file original hashes retained privately; no semantic PASS. |
+
+The initial hash-only pin scan did not detect already-lagging pins by path. The final path-based authority audit finds one: `lab/TARGETS.md`, pinned by `obligations.json`. [PINS-12.md](PINS-12.md) lists the authority pin, part-11 old hash and new full SHA256. Acceptance files remain unchanged.
