@@ -494,6 +494,7 @@
     "../lab/experiments/EXP-DX1/t1/night.mjs",
     "../lab/experiments/EXP-DX1/t1/night-window.mjs",
     "../lab/trace/native-counters.mjs",
-    "../lab/trace/scale-reading.mjs"
+    "../lab/trace/scale-reading.mjs",
+    "../lab/trace/memory-reading.mjs"
   ]
 }
