@@ -1,4 +1,5 @@
 import { traceSync, traceWork, traceAsync } from "./tracing.ts";
+import { initializeReplicaClient } from "./replica-initialize.ts";
 import { CutCache } from "./cut-cache.ts";
 import { Option } from "effect";
 import { pathToFileURL } from "node:url";
@@ -405,7 +406,7 @@ export class ReplicaReadHost {
     const client = new api.DatomicClient(
       endpoint,
     );
-    const db = await client.create(
+    const db = await initializeReplicaClient(client,
       runtimeApi.DatabaseScope.test(scope),
       process.env.TRIPLEX_DATOMIC_LAYOUT ?? "lean",
     );

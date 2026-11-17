@@ -11,6 +11,70 @@ import {
   validateTagged,
   type TaggedValue,
 } from "../src/index.js";
+import { initializeReplicaClient } from "../../../lab/bench/lib/replica-initialize.ts";
+
+it("allows a separate scope-open deadline while preserving subsequent read deadlines", async () => {
+  const calls: { path: string | undefined; body: string }[] = [];
+  const server = http.createServer((req, res) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      calls.push({ path: req.url, body });
+      setTimeout(() => {
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            db: "s2-test",
+            created: false,
+            layout: "lean",
+            schemaHash: "test",
+            strictRecordClocks: true,
+          }),
+        );
+      }, 60);
+    });
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  if (!address || typeof address === "string") throw Error("No address");
+  const client = new DatomicClient(`http://127.0.0.1:${address.port}`, 20);
+  try {
+    await expect(client.create("test-scope", "lean", false, 1000)).resolves.toMatchObject({
+      db: "s2-test",
+      strictRecordClocks: true,
+    });
+    expect(client.timeoutMs).toBe(20);
+    expect(JSON.parse(calls[0]!.body)).toEqual({
+      scope: "test-scope",
+      layout: "lean",
+      strictRecordClocks: false,
+    });
+    await expect(client.health()).rejects.toBeInstanceOf(DatomicTransportError);
+    const seen: unknown[][] = [];
+    await initializeReplicaClient(
+      {
+        create: (async (...args: unknown[]) => {
+          seen.push(args);
+          return { db: "s2-test" };
+        }) as DatomicClient["create"],
+      },
+      "bound-scope",
+      "lean",
+    );
+    expect(seen).toEqual([["bound-scope", "lean", false, 35_000]]);
+    expect(() => initializeReplicaClient(client, "test-scope", "invalid")).toThrow(
+      "Invalid replica layout",
+    );
+  } finally {
+    client.close();
+    server.closeAllConnections();
+    server.close();
+    await once(server, "close");
+  }
+});
 
 // [EXP-DA00] Why: identical external vectors test both implementations. Rejected: TS-only happy-path fixtures.
 describe("tagged codec", () => {

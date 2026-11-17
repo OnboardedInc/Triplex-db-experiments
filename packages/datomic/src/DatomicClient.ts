@@ -711,12 +711,18 @@ export class DatomicClient {
     scope: string,
     layout: "lean" | "legacy" = "legacy",
     strictRecordClocks = false,
+    timeoutMs = this.timeoutMs,
   ): Promise<DatomicDatabase> {
-    const result = await this.request<DatomicDatabase>("POST", "/v1/db/create", {
-      scope,
-      layout,
-      strictRecordClocks,
-    });
+    const result = await this.request<DatomicDatabase>(
+      "POST",
+      "/v1/db/create",
+      {
+        scope,
+        layout,
+        strictRecordClocks,
+      },
+      timeoutMs,
+    );
     // [DX-B5-L6] Why: compact writes follow the actual immutable scope layout, including a reopened scope.
     // Rejected: trusting only the requested layout (could compact a pre-existing legacy scope).
     this.layouts.set(result.db, result.layout === "lean" ? "lean" : "legacy");

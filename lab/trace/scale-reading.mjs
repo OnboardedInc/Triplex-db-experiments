@@ -3,9 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
-import { records, percentile } from "./report.mjs";
+import { records, percentile, alignClockRecord } from "./report.mjs";
 import { verdictMs } from "./instrument.mjs";
 import { verifiedRawManifest } from "./pack-oracle.mjs";
+import { nativeCounterSummary } from "./native-counters.mjs";
 const sha = (x) => createHash("sha256").update(x).digest("hex");
 const stats = (xs) => ({ n: xs.length, p50: percentile(xs, .5), p99: percentile(xs, .99), total: xs.reduce((a,b)=>a+b,0) });
 const number = (n) => Number.isFinite(n) ? n.toFixed(3) : "unknown";
@@ -52,7 +53,7 @@ export async function readScaleRun(directory) {
   inputs.push({path:"verified raw and terminal metadata manifest",sha256:sha(sealed)});
   const writeText=fs.readFileSync(path.join(directory,"driver/ns-writes.jsonl"),"utf8"), writes=writeText.trim().split("\n").filter(Boolean).map(JSON.parse);
   const primary=writes.filter(w=>w.stream==="background"&&!w.resend);
-  const native=[],gateways=[],linux=[],host=[];
+  const native=[],gateways=[],linux=[],host=[],counterRows=[];
   const bound=async(name,accept,into)=>{
     const file=path.join(directory,"trace/raw",name);
     if (!fs.existsSync(file)) return;
@@ -62,6 +63,10 @@ export async function readScaleRun(directory) {
   await bound("gw-w.jsonl.gz",r=>r.type==="request"&&r.kind==="commit"&&r.attributes?.datomicT,gateways);
   await bound("system-linux.jsonl.gz",()=>true,linux);
   await bound("system-darwin.jsonl.gz",()=>true,host);
+  await bound("tx.jsonl.gz",r=>["metrics","index-adoption","native-counter-state"].includes(r.type),counterRows);
+  nativeCounterSummary(manifest,counterRows);
+  const reference=summary.clockAlignment?.reference;
+  const timedCounters=counterRows.map(r=>alignClockRecord(r,reference));
   const joined=nativeByCommit(manifest,primary,gateways,native);
   const phaseRows=(bench.phases??[]).map(p=>{
     const rows=joined.filter(x=>x.write.scheduledAt>=p.start && x.write.scheduledAt<p.end);
@@ -70,20 +75,28 @@ export async function readScaleRun(directory) {
     // [DX-T1-14] Why: Datomic elides zero-valued tiers in a present reads map; an absent entire map remains unobserved.
     // Rejected: averaging SQL reads only over cold commits, which overstates the population-wide cold-read rate.
     const column=k=>stats(reads.map(r=>r[k]??0).filter(Number.isFinite));
+    const callbacks=timedCounters.filter(r=>r.type==="metrics"&&r.at>=p.start&&r.at<p.end&&r.counters?.objectCache?.requests>0);
+    const cacheRequests=callbacks.reduce((n,r)=>n+r.counters.objectCache.requests,0),cacheHits=callbacks.reduce((n,r)=>n+r.counters.objectCache.hits,0);
+    const adoptions=timedCounters.filter(r=>r.type==="index-adoption"&&r.start<p.end&&r.end>=p.start);
+    const after=committed.filter(x=>adoptions.some(a=>a.databaseHash===x.gateway?.attributes?.databaseHash&&x.write.scheduledAt>=a.end&&x.write.scheduledAt<a.end+2000));
     return {name:p.name,readers:p.readers,offered:rows.length,committed:committed.length,expired:rows.filter(x=>x.write.expired).length,
       ackMs:stats(committed.map(x=>verdictMs(x.write))),finishMs:stats(committed.map(x=>x.write.latencyMs)),
       nativeObserved:samples.length,readCounterCommits:reads.length,coldCommits:reads.filter(r=>(r.sql??0)>0).length,
       storageTierReads:{objectCache:column("ocache"),sql:column("sql"),sqlMs:column("sql-ms"),aevt:column("aevt"),avet:column("avet"),eavt:column("eavt")},
-      datoms:stats(samples.map(s=>s["datom-count"]).filter(Number.isFinite)),nativeProcessMs:stats(samples.map(s=>s.msec)),applyMs:stats(samples.map(s=>s["apply-msec"])),anatomy:anatomy.phases[p.name]??null};
+      datoms:stats(samples.map(s=>s["datom-count"]).filter(Number.isFinite)),nativeProcessMs:stats(samples.map(s=>s.msec)),applyMs:stats(samples.map(s=>s["apply-msec"])),anatomy:anatomy.phases[p.name]??null,
+      objectCache:{callbacks:callbacks.length,requests:cacheRequests||null,hits:cacheRequests?cacheHits:null,hitRate:cacheRequests?cacheHits/cacheRequests:null,scope:"callback intervals ending in this phase; process-wide, not exclusive per-request"},
+      adoptions:adoptions.map(a=>({databaseHash:a.databaseHash,start:a.start,end:a.end,durationMs:a.end-a.start,completed:a.completed})),afterAdoption2s:{ackMs:stats(after.map(x=>verdictMs(x.write))),coldCommits:after.filter(x=>(x.native?.nativeStats?.["io-stats"]?.reads?.sql??0)>0).length}};
   });
   const memory={};
   for(const row of linux) {
     if(row.run!==manifest.tag||row.source!==manifest.source||row.slot!==manifest.slot)throw Error("Foreign resource row");
-    for(const [role,c] of Object.entries(row.cgroups??{})) {
+    for(const [group,c] of Object.entries(row.cgroups??{})) {
+      const role=group.replace(manifest.tag+"-","");
       const value=Number(c["memory.current"]), events=Object.fromEntries((c["memory.events"]??"").trim().split("\n").filter(Boolean).map(s=>{const[k,v]=s.split(/\s+/);return[k,Number(v)];}));
-      memory[role]??={sampledPeakBytes:0,oom:0,oomKill:0};
-      if(Number.isFinite(value))memory[role].sampledPeakBytes=Math.max(memory[role].sampledPeakBytes,value);
-      memory[role].oom=Math.max(memory[role].oom,events.oom??0);memory[role].oomKill=Math.max(memory[role].oomKill,events.oom_kill??0);
+      memory[role]??={sampledPeakBytes:null,samples:0,oom:null,oomKill:null};
+      if(Number.isFinite(value)&&value>0){memory[role].sampledPeakBytes=Math.max(memory[role].sampledPeakBytes??0,value);memory[role].samples++;}
+      if(Number.isFinite(events.oom))memory[role].oom=Math.max(memory[role].oom??0,events.oom);
+      if(Number.isFinite(events.oom_kill))memory[role].oomKill=Math.max(memory[role].oomKill??0,events.oom_kill);
     }
   }
   for(const name of ["containers.json","driver-container.json"]) {
@@ -95,10 +108,29 @@ export async function readScaleRun(directory) {
     const r=JSON.parse(line);for(const [role,p] of Object.entries(r.peers??{}))if(p.status===200){const c=JSON.parse(p.body);gatewayCaches[role]={observedAt:r.at,...c};}
   }
   const storageFile=path.join(directory,"scale-storage.jsonl"),storage=fs.existsSync(storageFile)?fs.readFileSync(storageFile,"utf8").trim().split("\n").filter(Boolean).map(JSON.parse):[];
+  // [DX-T1-14] Why: PostgreSQL epochs need the contemporaneous guest boot-clock anchor, especially after a clock step.
+  // Rejected: align a Mac epoch or an ambiguous stepped timestamp to a transaction by proximity.
+  const guestEpoch=t=>{
+    const anchors=linux.filter(r=>r.clock?.domain==="linux-monotonic"&&Math.abs(r.at-t)<1500);
+    if(!reference||!anchors.length||anchors.some(r=>r.clock.bootId!==reference.bootId)||Math.max(...anchors.map(r=>r.clock.offsetMs))-Math.min(...anchors.map(r=>r.clock.offsetMs))>2)return null;
+    const a=anchors.sort((a,b)=>Math.abs(a.at-t)-Math.abs(b.at-t))[0];return t-a.clock.offsetMs+reference.offsetMs;
+  };
+  const storageTimed=storage.map(r=>({...r,writerAt:guestEpoch(r.at)})).filter(r=>r.writerAt!==null);
+  const timedGateways=gateways.map(r=>alignClockRecord(r,reference));
+  for(const p of phaseRows){
+    const phase=bench.phases.find(x=>x.name===p.name),samples=storageTimed.filter(r=>r.writerAt>=phase.start&&r.writerAt<=phase.end),first=samples[0],last=samples.at(-1);
+    const count=first&&last?new Set(timedGateways.filter(g=>g.end>first.writerAt&&g.end<=last.writerAt).map(g=>g.attributes.databaseHash+":"+g.attributes.datomicT)).size:0;
+    const commits=first&&last?last.database.xact_commit-first.database.xact_commit:null;
+    p.postgres={samples:samples.length,windowMs:first&&last?last.writerAt-first.writerAt:null,commits,acknowledgedNativeTransactions:count,aggregateCommitsPerTransaction:count&&commits!==null?commits/count:null,scope:"collector window; includes administrative samplers, heartbeat and indexing; not isolated transaction or WAL-sync count"};
+  }
   const swaps=host.flatMap(r=>{const m=/used\s*=\s*([\d.]+)M/.exec(r.swap??"");return m?[Number(m[1])/1024]:[];});
+  const guestAvailable=linux.flatMap(r=>{const m=/^MemAvailable:\s+(\d+) kB/m.exec(r.vm?.["/proc/meminfo"]??"");return m?[Number(m[1])*1024]:[];});
   const transactionFile=path.join(directory,"transaction-shape.json");
+  const sourceBuild=json("source-build-hashes.json");
+  const measuredCode=Object.entries(sourceBuild).filter(([name])=>/^(?:packages\/(?:core|datomic|host)\/|lab\/bench\/|lab\/experiments\/EXP-DX1\/(?:stack|h3|h4)\/)/.test(name));
   return {schema:"triplex.scale-reading/1",classification:"busy host; diagnostic, no verdict",tag:manifest.tag,source:manifest.source,level:manifest.level,subjects:bench.config.rungSubjects,
-    inputs,seed:bench.seed,writer:bench.writer,phases:phaseRows,memory,nativeCounters:caches,gatewayCaches,replica:bench.replica,readerDiagnostics:bench.readerFinalDiagnostics,
+    measuredCodeSha256:sha(JSON.stringify(measuredCode)),
+    inputs,seed:bench.seed,writer:bench.writer,phases:phaseRows,memory,guestAvailableBytes:{samples:guestAvailable.length,min:guestAvailable.length?Math.min(...guestAvailable):null},nativeCounters:caches,gatewayCaches,replica:bench.replica,readerDiagnostics:bench.readerFinalDiagnostics,writerDiagnostics:bench.writerSourceDiagnostics,expectedStateCache:bench.expectedStateCache,
     host:{swapGiB:stats(swaps),otherCpuPercent:stats(host.map(r=>r.otherCpu).filter(Number.isFinite)),cpuDefinition:"legacy ps process-lifetime percentage gauge; no host/guest per-request alignment"},
     storage,transactionShape:fs.existsSync(transactionFile)?json("transaction-shape.json"):null,
     nativeCoverage:{committed:joined.filter(x=>x.write.outcome==="committed"&&!x.write.expired).length,observed:joined.filter(x=>x.native).length},
@@ -115,7 +147,7 @@ export function scaleMarkdown(runs) {
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
   const [output,...directories]=process.argv.slice(2);if(!output||directories.length!==2)throw Error("scale-reading.mjs NEW_OUTPUT_DIR RUN_100K RUN_10K");
   const runs=[];for(const directory of directories)runs.push(await readScaleRun(path.resolve(directory)));
-  if(runs[0].subjects!==100000||runs[1].subjects!==10000||runs[0].level!==runs[1].level)throw Error("Unmatched population/collector comparison");
+  if(runs[0].subjects!==100000||runs[1].subjects!==10000||runs[0].level!==runs[1].level||runs[0].measuredCodeSha256!==runs[1].measuredCodeSha256)throw Error("Unmatched population/collector/measured-code comparison");
   fs.mkdirSync(output,{recursive:false});fs.writeFileSync(path.join(output,"SCALE.json"),JSON.stringify({createdAt:Date.now(),programSha256:sha(fs.readFileSync(new URL(import.meta.url))),runs},null,2)+"\n",{flag:"wx"});
   fs.writeFileSync(path.join(output,"SCALE.md"),scaleMarkdown(runs),{flag:"wx"});
 }
