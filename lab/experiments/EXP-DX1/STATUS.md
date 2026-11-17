@@ -1993,3 +1993,33 @@ because free disk fell to 11.0 GiB and swap rose to 12.4 GiB while the Mac was i
 Codex part 12 is running from `agents/prompts/DX-T1-resume12.md`: verdict rules, six-CPU and warm-up experiments,
 per-fact and client fixes, 100,000-subject readiness, two confirming pairs. Runs are refused under 15 GiB free; the code
 work proceeds and the runs wait for disk.
+
+## 2026-11-17 14:50 UTC: disk fixed (62.9 GiB free); part 12 built the verdict rules; last night's window did not run; part 13 prepares tonight
+
+**Disk.** ORCH-DISK2 (Codex) archived 36.8 GiB of finished-lane evidence and old stores to Google Drive as 93 verified
+archives, removed 6.9 GiB of clean clones and duplicate build contexts, and archived the old `default` colima VM (ledger
+`~/Claude/Projects/triplex-db-2/disk-audit-2026-11-15/ARCHIVE-LEDGER.md`, report beside it). The orchestrator then deleted
+that VM and its 15 GB data disk, and released the local copies of the uploaded archives (a small Swift tool calling
+`evictUbiquitousItem`, kept at `~/Claude/Projects/triplex-db-2/tools/bin/drive-evict`; Drive for desktop did not release
+them by itself). One archive was downloaded back and its sha256 matched the ledger. Mac free space 8.8 to 62.9 GiB.
+
+**The nightly window of 2026-11-16 did not run.** The session's scheduled jobs did not fire and both agents' exit notices
+arrived only the next morning; the apps were not closed and no timed run was made. The schedule is still in place for
+tonight (about 19:30 and 07:05 local).
+
+**DX-T1 part 12** (`exp/DX-T1-tracing`, `3b80aa5d`, pushed; `t1/REPORT-12.md`, `t1/VERDICT-12.md`):
+1. The acknowledgement clock drives every commit bar; saved pairs C, A, F, G, H reproduce to 0.001 ms. Pair H rescored:
+   all-primary p99 48.24 ms with a 90% interval of 44.3 to 51.2 (crosses the 50 ms bar); medium burst median 10.30 (10.11
+   to 10.43). Bars under 500 commits are unjudged.
+2. `v3` profile built on the unchanged trace: 2,149 commits at 256 readers (1,261 / 682 / 206 by band), 740 at 1,024
+   readers, recovery pools 474 to 497 (just under 500: being fixed in part 13). Four-subject history growth is the default.
+3. **Early JVM compilation** (lower compile thresholds, no warm-up): 3.11 ms gained at a 250 ms gap, beyond 0.92 ms drift.
+   Selected for v3.
+4. **Six virtual CPUs:** 1.62 ms gained with zero readers; with readers the gain is inside drift and reader capacity
+   falls sharply. Eight stays the default.
+5. Checked-row per-fact prototype: 0.30 ms against 0.73 ms drift, opt-in. Client fixes (clock-map cleanup, yielding
+   large-body encoding, smaller cache budgets, writer retention and lookup) built, unpriced.
+6. 100,000-subject admission and first-reading tools built; two native counters owed. No v3 pair yet (host and disk gates).
+
+Part 13 (daytime, no timed runs): recovery pools to at least 520 commits, the two counters, the night host gate, one
+`night.sh` for two v3 pairs tonight.
