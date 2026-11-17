@@ -135,6 +135,63 @@ export class Replica {
   ) {
     if (!Number.isFinite(validAt)) throw new TypeError("Explicit valid time required");
   }
+  // [DX-S5] Why: hand an already verified immutable image to a follower/read isolate without re-reading or duplicating its packed base.
+  // Rejected: private-field access in the harness or a second 4.6 GB bootstrap for every reader worker.
+  static fromImage(source: ReplicaSource, image: ReplicaImage): Replica {
+    position(image.position);
+    const replica = new Replica(source, image.validAt);
+    if (new Set(image.entities.map(([id]) => id)).size !== image.entities.length)
+      throw new ReplicaInvalid("Duplicate image entity");
+    replica.baseImage = image.shared;
+    replica.entities = new OverlayTable(
+      image.shared ? new SharedIndex(image.shared) : new Map<string, PackedEntity>(),
+      new Map(image.entities),
+    );
+    replica.watermark = image.position;
+    replica.valid = true;
+    return replica;
+  }
+  // [DX-S5] Why: reader isolates accept one complete ordered cut, checking its predecessor bytes before any mutation.
+  // Rejected: applying unchecked partial deltas or using a latest-head snapshot to repair a gap silently.
+  applyUpdate(update: ReplicaUpdate): void {
+    try {
+      if (!this.valid || !update.valid || update.reset || update.position !== this.watermark + 1)
+        throw new ReplicaInvalid("Mirror gap, reset or invalidation");
+      const ids = new Set<string>();
+      for (const [id, previous, next] of update.changes) {
+        const current = this.entities.get(id);
+        if (
+          ids.has(id) ||
+          !Number.isSafeInteger(next.revision) ||
+          next.revision < 0 ||
+          (current === undefined) !== (previous === undefined) ||
+          (current &&
+            previous &&
+            (current.revision !== previous.revision || !equalBytes(current, previous)))
+        )
+          throw new ReplicaInvalid("Mirror predecessor mismatch");
+        ids.add(id);
+      }
+      for (const [id, , next] of update.changes) this.entities.set(id, next);
+      this.onUpdate?.(update);
+      this.advance(update.position);
+    } catch (error) {
+      this.invalidate(error);
+    }
+  }
+  // [DX-S5] Why: hand off one immutable shared overlay instead of cloning its million-entry Map into three isolates (100k B confirmed cgroup OOM).
+  // Rejected: a full-base copy or a larger driver cap; unchanged and overridden packed bytes remain shared and historical snapshots stay immutable.
+  compact(): void {
+    if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
+    if (!this.entities.delta.size) return;
+    const next = shareIndex(this.entities.delta);
+    this.baseImage = {
+      ...next,
+      ...(this.baseImage ? { parent: this.baseImage } : {}),
+      packedBytes: this.entities.bytes,
+    };
+    this.entities = new OverlayTable(new SharedIndex(this.baseImage));
+  }
   get position(): number {
     return this.watermark;
   }
@@ -415,6 +472,18 @@ export class Replica {
     if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
     return walk(this.entities, this.validAt, subjectId);
   }
+  snapshotSubject(subjectId: string): ReplicaSnapshot {
+    if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
+    // [DX-S5] Why: capture one complete reachable world synchronously at the current cut, sharing only immutable packed buffers.
+    // Rejected: cloning the entire accumulated overlay for every live read (100k profiles spent most CPU copying/counting and collecting it).
+    const entities = new Map<string, PackedEntity>();
+    walk(this.entities, this.validAt, subjectId, entities);
+    return new ReplicaSnapshot({
+      position: this.watermark,
+      validAt: this.validAt,
+      entities: [...entities],
+    });
+  }
   start(): void {
     if (!this.configured) throw new ReplicaInvalid("Bootstrap roots required before following");
     if (this.following) return;
@@ -449,12 +518,18 @@ function equalBytes(a: PackedEntity, b: PackedEntity) {
   return x.length === y.length && x.every((v, i) => v === y[i]);
 }
 
-function walk(entities: EntityTable, validAt: number, subjectId: string): SweepRow[] {
+function walk(
+  entities: EntityTable,
+  validAt: number,
+  subjectId: string,
+  captured?: Map<string, PackedEntity>,
+): SweepRow[] {
   const seen = new Set([subjectId]),
     rows: SweepRow[] = [];
   for (const id of seen) {
     const entity = entities.get(id);
     if (!entity) throw new ReplicaInvalid("Missing referenced entity: " + id);
+    captured?.set(id, entity);
     for (const row of unpackEntity(id, entity, validAt)) {
       rows.push(row);
       if (row.value.type === "ref") seen.add(row.value.value);

@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import { SharedIndex } from "../src/replica/sharedIndex.js";
 import { Replica, ReplicaSnapshot, type ReplicaSource } from "../src/replica/Replica.js";
 import type { SweepRow } from "../src/sweepRows.js";
 import { encodeRowText } from "../src/rowText.js";
@@ -92,6 +93,151 @@ function fixture() {
   };
 }
 describe("packed replica", () => {
+  it("compacts only the overlay into shared layers without changing bytes, enumeration or held cuts", async () => {
+    const f = fixture(),
+      owner = new Replica(f.source, 0);
+    await owner.bootstrap(["root"]);
+    const first = await owner.snapshotAt(1),
+      base = first.sharedImage().shared!;
+    f.commit([
+      ["shared", [row("shared", "after", { type: "string", value: "second" }, 2)]],
+      ...Array.from({ length: 2000 }, (_, i): [string, SweepRow[]] => [
+        "unrelated" + i,
+        [row("unrelated" + i, "u" + i, { type: "boolean", value: true }, 2)],
+      ]),
+    ]);
+    await owner.followOnce();
+    const before = await owner.snapshotAt(2),
+      bytes = owner.bytes;
+    const world = before.world("root");
+    owner.compact();
+    const compact = await owner.snapshotAt(2),
+      image = compact.sharedImage();
+    expect(image.entities).toHaveLength(0);
+    expect(image.shared!.parent!.index).toBe(base.index);
+    expect(compact.world("root")).toEqual(world);
+    expect(owner.bytes).toBe(bytes);
+    expect(compact.image().entities).toHaveLength(2002);
+    expect(new Set(compact.image().entities.map(([id]) => id)).size).toBe(2002);
+    const restored = Replica.fromImage(f.source, structuredClone(image));
+    expect(restored.world("root")).toEqual(world);
+    expect(restored.bytes).toBe(bytes);
+    f.commit([["shared", []]]);
+    await owner.followOnce();
+    owner.compact();
+    const empty = await owner.snapshotAt(3);
+    expect(empty.sharedImage().shared!.parent!.index).toBe(image.shared!.index);
+    expect(empty.world("root")).toHaveLength(1);
+    expect(empty.image().entities).toHaveLength(2002);
+    expect(empty.bytes).toBe(owner.bytes);
+    expect(first.world("root").find((r) => r.entityId === "shared")!.value.value).toBe("before");
+    expect(before.world("root")).toEqual(world);
+    expect(compact.world("root")).toEqual(world);
+  });
+  it("hands a compact image to a current mirror and rejects gaps and changed predecessor bytes atomically", async () => {
+    const f = fixture(),
+      owner = new Replica(f.source, 0);
+    await owner.bootstrap(["root"]);
+    const image = (await owner.snapshotAt(1)).sharedImage();
+    const mirror = Replica.fromImage(f.source, structuredClone(image));
+    const held = await mirror.snapshotAt(1);
+    let update: import("../src/replica/Replica.js").ReplicaUpdate | undefined;
+    owner.onUpdate = (value) => {
+      update = value;
+    };
+    f.commit([["shared", [row("shared", "s2", { type: "string", value: "after" }, 2)]]]);
+    await owner.followOnce();
+    mirror.applyUpdate(structuredClone(update!));
+    expect(mirror.position).toBe(2);
+    expect(mirror.world("root")).toEqual(owner.world("root"));
+    expect(held.world("root").find((r) => r.entityId === "shared")!.value.value).toBe("before");
+    expect(mirror.bytes).toBe(owner.bytes);
+    expect(() => mirror.applyUpdate(update!)).toThrow("gap");
+    expect(mirror.isValid).toBe(false);
+    const wrong = Replica.fromImage(f.source, image);
+    const bad = {
+      ...update!,
+      changes: update!.changes.map(([id, , next]) => [id, next, next] as const),
+    };
+    expect(() => wrong.applyUpdate(bad)).toThrow("predecessor");
+    const sameRevision = Replica.fromImage(f.source, image);
+    const { packEntity } = await import("../src/replica/packed.js");
+    const wrongBytes = packEntity(1, [row("shared", "s", { type: "string", value: "wrong" })]);
+    expect(() =>
+      sameRevision.applyUpdate({
+        ...update!,
+        changes: update!.changes.map(([id, , next]) => [id, wrongBytes, next] as const),
+      }),
+    ).toThrow("predecessor");
+    expect(wrong.position).toBe(1);
+    expect(wrong.isValid).toBe(false);
+    const reset = Replica.fromImage(f.source, image);
+    expect(() => reset.applyUpdate({ ...update!, reset: true })).toThrow("reset");
+    const duplicate = Replica.fromImage(f.source, image);
+    expect(() =>
+      duplicate.applyUpdate({ ...update!, changes: [...update!.changes, ...update!.changes] }),
+    ).toThrow("predecessor");
+  });
+  it("captures a subject closure at one cut without scanning unrelated overlay entries", async () => {
+    const f = fixture(),
+      replica = new Replica(f.source, 0);
+    expect(() => replica.snapshotSubject("root")).toThrow("rebuild");
+    await replica.bootstrap(["root"]);
+    const original = replica.snapshotSubject("root");
+    f.commit([
+      [
+        "root",
+        [
+          row("root", "r", { type: "ref", value: "shared" }, 2),
+          row("root", "e", { type: "ref", value: "empty" }, 2),
+        ],
+      ],
+      ["shared", [row("shared", "long", { type: "string", value: "replacement".repeat(30) }, 2)]],
+      ["empty", []],
+      ...Array.from({ length: 2000 }, (_, i): [string, SweepRow[]] => [
+        "unrelated" + i,
+        [row("unrelated" + i, "u" + i, { type: "boolean", value: true }, 2)],
+      ]),
+    ]);
+    await replica.followOnce();
+    const full = await replica.snapshotAt(2),
+      lookup = vi.spyOn(SharedIndex.prototype, "get");
+    expect(full.image().entities).toHaveLength(2003);
+    expect(full.world("unrelated0")[0]!.value).toEqual({ type: "boolean", value: true });
+    let frozen: ReplicaSnapshot;
+    try {
+      frozen = replica.snapshotSubject("root");
+      for (let i = 0; i < 20; i++) expect(replica.snapshotSubject("root").position).toBe(2);
+      expect(lookup.mock.calls.length).toBeLessThan(200);
+    } finally {
+      lookup.mockRestore();
+    }
+    expect(frozen!.world("root")).toEqual(full.world("root"));
+    expect(frozen!.world("empty")).toEqual([]);
+    expect(
+      frozen!
+        .image()
+        .entities.map(([id]) => id)
+        .sort(),
+    ).toEqual(["empty", "root", "shared"]);
+    expect(() => frozen!.world("unrelated0")).toThrow("Missing");
+    const actualBytes = frozen!
+      .image()
+      .entities.reduce((n, [, e]) => n + (e.byteLength ?? e.buffer.byteLength), 0);
+    expect(frozen!.bytes).toBe(actualBytes);
+    expect(new ReplicaSnapshot(frozen!.sharedImage()).world("root")).toEqual(full.world("root"));
+    f.commit([["shared", []]]);
+    await replica.followOnce();
+    expect(replica.snapshotSubject("root").position).toBe(3);
+    expect(
+      replica
+        .snapshotSubject("root")
+        .world("root")
+        .map((r) => r.id),
+    ).toEqual(["e", "r"]);
+    expect(frozen!.world("root")[2]!.id).toBe("long");
+    expect(original.world("root")[1]!.value.value).toBe("before");
+  });
   it("bootstraps, follows shared changes/retractions/new refs, and isolates snapshots", async () => {
     const f = fixture(),
       replica = new Replica(f.source, 0);
