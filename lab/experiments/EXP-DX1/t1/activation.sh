@@ -26,7 +26,10 @@ source "$(dirname "${BASH_SOURCE[0]}")/../stack/platform.sh"
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/DX-T1}
 out=$DX_STACK_EVIDENCE/$prefix
 mkdir "$out"
-stop_ms=$(node -e 'const s=process.argv[1];if(!/(Z|[+-]\d\d:\d\d)$/.test(s??""))throw Error("Timezone required");const d=Date.parse(s)-Date.now();if(!Number.isFinite(d)||d<=0)throw Error("Deadline passed");console.log(d)' "${DX_ACTIVATION_STOP_AT:?cleanup deadline required}")
+remaining_ms() {
+  node -e 'const s=process.argv[1];if(!/(Z|[+-]\d\d:\d\d)$/.test(s??""))throw Error("Timezone required");const d=Date.parse(s)-Date.now();if(!Number.isFinite(d)||d<=0)throw Error("Deadline passed");console.log(d)' "${DX_ACTIVATION_STOP_AT:?cleanup deadline required}"
+}
+stop_ms=$(remaining_ms)
 guest_bytes=$(docker info --format '{{.MemTotal}}')
 docker image inspect tx2-datomic:1.0.7745-da00 postgres:17-alpine node:22.23.2-bookworm-slim python:3.13-slim >/dev/null
 if [[ $subjects == 100000 ]];then
@@ -43,7 +46,9 @@ export TRIPLEX_TRACE_LEVEL=summary TRIPLEX_TRACE_COMPONENTS=node,gateway
 eval "$(node lab/trace/components.mjs --shell)"
 python3 -c 'import shutil;assert shutil.disk_usage(".").free>=28*1024**3'
 lock=$DX_LAB_ROOT/locks/measure
-while ! mkdir "$lock" 2>/dev/null;do sleep 5;done
+# [DX-T1-14] Why: the absolute cleanup cutoff must include time waiting for another holder.
+# Rejected: start a stale relative timer after a long lease wait, or keep waiting beyond the declared cutoff.
+while ! mkdir "$lock" 2>/dev/null;do remaining_ms >/dev/null;sleep 5;done
 printf '{"id":"DX-T1","pid":%s,"prefix":"%s","kind":"activation"}\n' "$$" "$prefix" > "$lock/owner.json"
 child= timer= resources=false
 cleanup() {
@@ -67,6 +72,7 @@ cleanup() {
 }
 trap cleanup EXIT
 trap 'exit 143' TERM INT
+stop_ms=$(remaining_ms)
 node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$stop_ms" & timer=$!
 git diff --quiet && git diff --cached --quiet || { echo 'Commit source before the activation smoke' >&2;exit 2; }
 git ls-files --error-unmatch lab/experiments/EXP-DX1/t1/activation.sh lab/experiments/EXP-DX1/t1/activation-driver.ts lab/experiments/EXP-DX1/t1/w0-seed.ts >/dev/null

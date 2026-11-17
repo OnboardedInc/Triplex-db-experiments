@@ -496,6 +496,7 @@
     "../lab/trace/native-counters.mjs",
     "../lab/trace/scale-reading.mjs",
     "../lab/trace/memory-reading.mjs",
-    "../lab/trace/activation-result.mjs"
+    "../lab/trace/activation-result.mjs",
+    "../lab/trace/scale-forensics.mjs"
   ]
 }

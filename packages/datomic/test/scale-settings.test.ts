@@ -50,7 +50,9 @@ it("uses one population table and refuses a 100k reader arm in 16 GiB", () => {
   }
   expect(populationSettings(100000, Math.floor(15.5 * GiB), false).admitted).toBe(false);
   const small = populationSettings(100000, Math.floor(15.5 * GiB), true);
-  expect(small.admitted).toBe(true);
+  expect(small.admitted).toBe(false);
+  expect(small.reason).toContain("OOM-killed");
+  expect(small.residentGiB).toBe(18);
   expect(small.env.DX_GW_READ_MEMORY).toBe("1792m");
   expect(small.env.DX_DRIVER_MEMORY).toBe("8g");
   expect(small.env.DX_DRIVER_HEAP_MB).toBe("4096");

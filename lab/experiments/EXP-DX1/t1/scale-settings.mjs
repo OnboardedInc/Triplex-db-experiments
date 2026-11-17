@@ -26,7 +26,9 @@ export function populationSettings(subjects, guestBytes, zeroReaders=false) {
   env.DX_REPLICA_HISTORY_MIB=driverArgs[1];env.DX_REPLICA_WORLD_CACHE_MIB=driverArgs[3];
   let residentGiB=zeroReaders?9.9:13.7;
   if(large) {
-    residentGiB=zeroReaders&&!roomy?14.5:22.5;
+    // [DX-T1-14] Why: the 4-GiB/8-GiB zero-reader 100k trial was OOM-killed with only 79 MiB guest headroom, below its local cap.
+    // Rejected: keep admitting the disproven 14.5-GiB estimate; 18 GiB is a conservative new resident allowance, not a measured fit.
+    residentGiB=zeroReaders&&!roomy?18:22.5;
     env.DX_GW_WRITE_ENTITY_CACHE_BYTES=String(512*1024**2);
     env.DX_GW_READ_MEMORY="1792m";
     env.DX_GW_READ_JAVA_OPTS="-Xms256m -Xmx1280m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=512m";
@@ -42,8 +44,8 @@ export function populationSettings(subjects, guestBytes, zeroReaders=false) {
   env.DX_EXPECTED_RESIDENT_GIB=String(residentGiB);
   const admitted=(!large || zeroReaders || roomy) && guestBytes>=(residentGiB+.5)*GiB;
   return {schema:"triplex.population-settings/1",subjects,guestBytes,zeroReaders,admitted,residentGiB,env,driverArgs,
-    estimate:large?"inferred 100k resident prior; requires native 1k/10k proof before a 100k reading":"observed 10k resident prior, not a hard fit proof",
-    reason:admitted?null:"population/readers do not fit this guest; never resize the VM automatically"};
+    estimate:large?"100k 16-GiB trial failed by kernel OOM; larger resident allowance is inferred and still needs a complete native fit proof":"observed 10k resident prior, not a hard fit proof",
+    reason:admitted?null:(large?"100k 16-GiB zero-reader trial OOM-killed; population/readers need a larger qualified budget; never resize automatically":"population/readers do not fit this guest; never resize the VM automatically")};
 }
 if(process.argv[1] && import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
   const args=process.argv.slice(2),marker=args.indexOf("--driver-args"),own=marker<0?args:args.slice(0,marker),at=k=>own[own.indexOf(k)+1];

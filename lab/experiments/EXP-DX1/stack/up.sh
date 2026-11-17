@@ -17,6 +17,23 @@ if [[ ${1:-} == --logs ]]; then
   for role in pg tx gw-w gw-r; do docker logs --tail 35 "$prefix-$role" 2>&1 || true; done
   exit
 fi
+# [DX-T1-14] Why: distinguish a guest-global OOM from an owned cgroup limit using the kernel's exact boot and container identity.
+# Rejected: infer the victim from RSS, clear the ring buffer, enable tracing, or grant a helper access while another stack runs.
+if [[ ${1:-} == --kernel-log ]];then
+  [[ $prefix == tx2-dxt1-* && $# == 2 && $2 =~ ^[a-f0-9-]{36}$ ]] || exit 2
+  expected_boot=$2
+  python3 - "$DX_LAB_ROOT/locks/measure/owner.json" "$prefix" <<'KERNEL_LEASE'
+import json,os,sys
+r=json.load(open(sys.argv[1]));assert r['id']=='DX-T1' and r['prefix']==sys.argv[2] and r['kind']=='diagnostics';os.kill(r['pid'],0)
+KERNEL_LEASE
+  [[ -z $(docker ps -q) ]] || { echo 'Kernel collection requires all containers stopped' >&2;exit 2; }
+  trap 'docker rm -f "$prefix-kernel" >/dev/null 2>&1 || true' EXIT
+  trap 'exit 143' TERM INT
+  docker run --rm --pull never --read-only --name "$prefix-kernel" --ulimit core=0 --network none \
+    --memory 64m --memory-swap 64m --cap-drop ALL --cap-add SYSLOG --entrypoint /bin/sh postgres:17-alpine \
+    -c 'actual=$(cat /proc/sys/kernel/random/boot_id);test "$actual" = "$1" || exit 2;printf "boot_id=%s\n" "$actual";cat /proc/uptime;dmesg' sh "$expected_boot"
+  exit
+fi
 # [DX-T1-14] Why: virtiofs can retain an unlinked crash file until its guest dentry is revalidated.
 # Rejected: restart the VM, flush global caches, or truncate a file without its verified private archive.
 if [[ ${1:-} == --revalidate-core ]];then
