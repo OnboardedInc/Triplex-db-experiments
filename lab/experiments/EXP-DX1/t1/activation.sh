@@ -73,7 +73,9 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 143' TERM INT
 stop_ms=$(remaining_ms)
-node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$stop_ms" & timer=$!
+# [DX-T1-14] Why: Bash 3 reports BASH_SUBSHELL=0 for some failing asynchronous expansions; only the controller may clean its lease.
+# Rejected: a subshell-level guard; every background child clears inherited controller traps before expanding its command.
+(trap - EXIT TERM INT;exec node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$stop_ms") & timer=$!
 git diff --quiet && git diff --cached --quiet || { echo 'Commit source before the activation smoke' >&2;exit 2; }
 git ls-files --error-unmatch lab/experiments/EXP-DX1/t1/activation.sh lab/experiments/EXP-DX1/t1/activation-driver.ts lab/experiments/EXP-DX1/t1/w0-seed.ts >/dev/null
 git rev-parse HEAD > "$out/head.txt"
@@ -106,11 +108,11 @@ python3 -c 'import shutil;assert shutil.disk_usage(".").free>=28*1024**3'
 [[ $(docker info --format '{{.MemTotal}}') == "$guest_bytes" ]] || { echo 'Guest changed during admission' >&2;exit 2; }
 resources=true
 extra=();[[ $operation != clone ]] || extra=(--clone-seed "$seed")
-bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish --cpus-tx 0 --cpus-pg 1 --cpus-gw-write 2 --cpus-gw-read 4 \
+(trap - EXIT TERM INT;exec bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish --cpus-tx 0 --cpus-pg 1 --cpus-gw-write 2 --cpus-gw-read 4 \
   --tx-memory "$DX_TX_MEMORY" --pg-memory "$DX_PG_MEMORY" \
   --tx-java-opts "$DX_TX_JAVA_OPTS" --memory-index-threshold "$DX_INDEX_THRESHOLD" --memory-index-max "$DX_INDEX_MAX" --object-cache-max "$DX_TX_OBJECT_CACHE" \
   --pg-settings '-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_sync_method=open_datasync' \
-  "${extra[@]}" > "$out/up.log" 2>&1 & child=$!
+  ${extra[@]+"${extra[@]}"} > "$out/up.log" 2>&1) & child=$!
 wait "$child";child=
 docker volume create "$prefix-tools" >/dev/null
 docker create --pull never --name "$prefix-extract" -v "$prefix-tools:/tool" node:22.23.2-bookworm-slim sh -c 'cp /usr/local/bin/node /tool/node; cp /usr/lib/*-linux-gnu/libstdc++.so.6 /usr/lib/*-linux-gnu/libgcc_s.so.1 /tool/' >/dev/null
@@ -125,14 +127,14 @@ if [[ $operation == seed ]];then driver=(lab/experiments/EXP-DX1/t1/w0-seed.ts "
 mkdir -p "$out/state"
 run_driver() {
   local log=$1;shift
-docker run --ulimit core=0 --rm --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 3,4,5,6,7 --memory "$DX_DRIVER_MEMORY" --memory-swap "$DX_DRIVER_MEMORY" \
+(trap - EXIT TERM INT;exec docker run --ulimit core=0 --rm --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 3,4,5,6,7 --memory "$DX_DRIVER_MEMORY" --memory-swap "$DX_DRIVER_MEMORY" \
   -v "$PWD:$PWD:ro" -v "$out:$out" -v "$out/state:/state" -v "$prefix-tools:/tool:ro" -w "$PWD" \
   -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin -e "NODE_OPTIONS=--max-old-space-size=$DX_DRIVER_HEAP_MB" \
   -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 \
   -e DX_STRICT_RECORD_CLOCKS=0 -e TRIPLEX_TRACE_LEVEL=summary -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(cat "$out/head.txt")" -e TRIPLEX_TRACE_DIR=/state/trace/raw -e TRIPLEX_TRACE_PROCESS=node \
   -e "DX_ACTIVATION_NONCE=$nonce" -e "DX_ACTIVATION_BUILD_SHA256=$build_sha" \
   -e TX2_W0_POINT_JOURNAL=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 -e "DX_R1_DEADLINE=$(node -e 'console.log(Date.parse(process.argv[1]))' "$DX_ACTIVATION_STOP_AT")" \
-  python:3.13-slim /tool/node --expose-gc --experimental-strip-types "$@" > "$out/$log" 2>&1 & child=$!
+  python:3.13-slim /tool/node --expose-gc --experimental-strip-types "$@" > "$out/$log" 2>&1) & child=$!
 wait "$child";child=
 }
 run_driver driver.log "${driver[@]}"
