@@ -136,6 +136,14 @@ frequency, the VM's disk thread. Scripts on branch `exp/COLD-1`.
 3. **Directions not tried.** Cache budgets sized to the population; a commit path whose cost does not grow with the number
    of subjects (find what grows: index depth, cache misses, segment fetches); activation that yields to commits.
 
+   **First reading on current code (2026-11-17, busy host, zero readers; `t1/READING-14.md` on `exp/DX-T1-tracing`):** the
+   run seeded 3.85 million assertions and served 786 of 900 s before the guest ran out of memory. Driver memory doubles
+   (3.6 to 7.8 GiB) for ten times the population and is the first blocker; serial-point SQL reads per commit go 1.4 to 3.3
+   and native apply 8.5 to 18.5 ms; index adoptions 12 to 43; the transactor object cache still hits 99.8%; datoms per
+   commit are unchanged. A follower's scope reopen returned HTTP 503 after 4.1 s of peer sync waits. Directions: cut the
+   duplicated retained state in the driver (population, replica, model); a 24 GiB guest at night; transactor cache and
+   index settings measured with real memory headroom; fix repeated scope metadata and catch-up work in follower recovery.
+
 ## H6. The transactor is closed source: reverse engineered on 2026-11-13 (Sam's direction)
 
 1. **Done.** Agent DX-RE1 (Opus, extra-high effort, with the `reverse-engineer-anything` method) read the transactor from

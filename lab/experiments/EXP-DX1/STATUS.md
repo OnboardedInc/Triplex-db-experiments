@@ -2035,3 +2035,31 @@ JVM compilation and, if 140 minutes remain, an eight/six/eight virtual CPU contr
 The session's scheduled jobs for the first nightly window fired 14 hours late, so the window was lost. Tonight a plain
 process runs it: `~/Claude/Projects/triplex-db-2/tools/bin/night-window.sh` (started 16:47 UTC, log under
 `evidence/ORCH-night/`) closes Chrome, Slack and Paste at 19:30 local, runs `night.sh`, and reopens the apps at 06:58.
+
+## 2026-11-17 23:20 UTC: first 100,000-subject reading on current code: seeded and ran 786 of 900 s, then the guest ran out of memory; three blockers named
+
+DX-T1 part 14 (`exp/DX-T1-tracing`, `e2f92c31`, pushed; `t1/REPORT-14.md`, `t1/READING-14.md`). Daytime, busy host (swap 15.7
+to 19.1 GiB, Mac CPU outside the VM above one core): diagnostics only, no verdict. Zero readers in both arms.
+
+| | 10,000 neighbour | 100,000 reading |
+| --- | ---: | ---: |
+| Seed: assertions; seconds | 384,785; 144 | 3,848,930; 1,562 |
+| Table bytes before offers | 104 MB | 1,183 MB |
+| Primary acknowledgements | 7,408 of 7,408 | 6,178, then the driver was killed at T+786 s |
+| Initial-phase serial SQL reads per commit; commits with SQL reads | 1.41; 23 of 49 | 3.27; 36 of 49 |
+| Initial-phase native apply p50 | 8.5 ms | 18.5 ms |
+| Transactor object-cache hit rate | 99.61% | 99.82% |
+| Index adoptions completed | 12 | 43 |
+| Driver memory peak (limit 8 GiB) | 3.63 GiB | 7.84 GiB |
+| Datoms per commit, p50 / p99 | 47 / 123 | 47 / 123 |
+
+Blockers at this size: (1) memory: the driver's retained population, replica and model reached 7.84 GiB and guest
+available memory fell to 79 MiB; the kernel killed the driver (guest-wide, not its own cap); a 16 GiB guest does not fit,
+18 GiB is an estimate; (2) cold storage reads at the transactor's serial point (reads per commit 1.4 to 3.3, apply 8.5 to
+18.5 ms); (3) follower recovery: reopening a scope returned HTTP 503 after 4.1 s in three peer sync waits. Three earlier
+attempts failed on limits sized for 10,000 subjects (writer headroom, isolate heaps, crash dumps), now fixed. The
+activation harness from `exp/DX-S5-seed-100k` is ported and proven at 1,000 subjects (all worlds, oracle outputs and
+published states equal); activation at 100,000 needs at least 23 GiB of guest memory. `t1/bare-metal.sh` prepares a rented
+Linux server run; untested on a real server. Mac free disk 101.8 GiB.
+
+Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 local on source `e2f92c31`.
