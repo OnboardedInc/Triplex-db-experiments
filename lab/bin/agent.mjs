@@ -25,7 +25,9 @@ import { fileURLToPath } from 'node:url';
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LEDGER = join(REPO, 'lab', 'agents', 'ledger.jsonl');
 const DURABLE = '/Users/sam/Claude/Projects/triplex-db-2/agents';
-const MODEL = 'gpt-6.1-sol';
+// [PROTOCOL 2026-11-17] Why: Sam, 2026-11-17: "When you run the Codex agents from now on, make sure you use Codex 6.2 Sol
+// instead of just 6.1. It's new!" Verified accepted by codex-cli 0.169.0. Rejected: staying on gpt-6.1-sol.
+const MODEL = 'gpt-6.2-sol';
 // [PROTOCOL 2026-11-12] Why: Sam on resuming, 2026-11-12: "only use codex sol agents on max effort to build things? you should
 // not use claude for things I want to save your usage". Both roles now run at max; no Claude agent is launched for this work.
 // Rejected: keeping medium for builders (the 2026-11-09 setting, superseded by this instruction).
