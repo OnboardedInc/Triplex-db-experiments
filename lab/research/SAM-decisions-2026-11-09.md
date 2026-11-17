@@ -465,3 +465,10 @@ Orchestrator's reading:
 4. **Record time:** backdated valid time only in live scopes (strict record clocks there, fast local reads); a separate
    import scope type accepts backdated record time for migrations.
 5. **Another machine:** Sam will pay for a cloud machine; the orchestrator proposes the easiest setup.
+
+## 2026-11-17 about 23:40 UTC: Codex agents run on gpt-6.2-sol from now on
+
+Sam, verbatim: "When you run the Codex agents from now on, make sure you use Codex 6.2 Sol instead of just 6.1. It's new!"
+
+Done: `lab/bin/agent.mjs` passes `gpt-6.2-sol` (effort still `max` for both roles). A one-word test confirmed
+codex-cli 0.169.0 accepts the model.
