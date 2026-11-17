@@ -10,14 +10,17 @@ python3 - "$HOME/Claude/Projects/triplex-db-2/locks/measure/owner.json" "$prefix
 import json,os,sys
 r=json.load(open(sys.argv[1]));assert r['id']=='DX-T1' and r.get('prefix')==sys.argv[2];os.kill(r['pid'],0)
 PY_LEASE
-id=$(docker inspect --format '{{.Id}}' "$prefix-driver")
+id=$(docker container inspect --format '{{.Id}}' "$prefix-driver")
 dest=$out/scale-memory-$(date +%s).json
-[[ ! -e $dest ]] || exit 2
-docker exec "$prefix-driver" taskset -c 4 node lab/trace/memory-reading.mjs > "$dest"
-[[ $(docker inspect --format '{{.Id}}' "$prefix-driver") == "$id" ]] || exit 2
-python3 - "$dest" "$out/trace-run.json" "$id" <<'PY_BIND'
+[[ ! -e $dest && ! -e $dest.partial ]] || exit 2
+# [DX-T1-14] Why: a driver exiting during observation leaves forensic partial bytes, never a seemingly complete reading.
+# Rejected: parse a half-written snapshot or let Docker's same-named volume stand in for the original container.
+docker exec "$prefix-driver" taskset -c 4 node lab/trace/memory-reading.mjs > "$dest.partial"
+[[ $(docker container inspect --format '{{.Id}}' "$prefix-driver") == "$id" ]] || exit 2
+python3 - "$dest.partial" "$out/trace-run.json" "$id" <<'PY_BIND'
 import json,sys,pathlib
 p=pathlib.Path(sys.argv[1]);r=json.loads(p.read_text());m=json.load(open(sys.argv[2]))
 assert r['run']==m['tag'] and r['source']==m['source'] and r['slot']==m['slot']
 r['driverContainerId']=sys.argv[3];p.write_text(json.dumps(r,indent=2)+'\n')
 PY_BIND
+mv "$dest.partial" "$dest"

@@ -30,7 +30,9 @@ export function populationSettings(subjects, guestBytes, zeroReaders=false) {
     env.DX_GW_WRITE_ENTITY_CACHE_BYTES=String(512*1024**2);
     env.DX_GW_READ_MEMORY="1792m";
     env.DX_GW_READ_JAVA_OPTS="-Xms256m -Xmx1280m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=512m";
-    env.DX_DRIVER_MEMORY=roomy?"12g":"7680m";env.DX_DRIVER_HEAP_MB=roomy?"8192":"6144";
+    // [DX-T1-14] Why: the 100k bootstrap shares one 7.5-GiB cgroup across the seed and replica isolates.
+    // Rejected: each isolate's old 6-GiB heap allowance (the first 100k bootstrap died near its process cap despite guest headroom).
+    env.DX_DRIVER_MEMORY=roomy?"12g":"7680m";env.DX_DRIVER_HEAP_MB=roomy?"8192":"3072";
     if(roomy) {
       Object.assign(env,{DX_TX_MEMORY:"6g",DX_TX_HEAP:"5g",DX_TX_OBJECT_CACHE:"2560m",DX_TX_JAVA_OPTS:"-Xms256m -Xmx5g -XX:+UseG1GC -XX:MaxGCPauseMillis=200",DX_PG_MEMORY:"3g",DX_GW_WRITE_MEMORY:"3584m",DX_GW_READ_MEMORY:"2560m",
         DX_GW_WRITE_JAVA_OPTS:"-Xms1g -Xmx2560m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=1536m"});

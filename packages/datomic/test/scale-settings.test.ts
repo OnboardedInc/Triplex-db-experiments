@@ -51,6 +51,8 @@ it("uses one population table and refuses a 100k reader arm in 16 GiB", () => {
   const small = populationSettings(100000, Math.floor(15.5 * GiB), true);
   expect(small.admitted).toBe(true);
   expect(small.env.DX_GW_READ_MEMORY).toBe("1792m");
+  expect(small.env.DX_DRIVER_MEMORY).toBe("7680m");
+  expect(small.env.DX_DRIVER_HEAP_MB).toBe("3072");
   const big = populationSettings(100000, Math.floor(23.5 * GiB));
   expect(big.admitted).toBe(true);
   expect(big.env.DX_TX_OBJECT_CACHE).toBe("2560m");

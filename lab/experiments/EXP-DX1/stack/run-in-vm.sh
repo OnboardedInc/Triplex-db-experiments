@@ -55,6 +55,13 @@ cleanup() {
   rc=$?
   trap - EXIT
   if [[ -n $bridge_pid ]]; then kill "$bridge_pid" 2>/dev/null || true; wait "$bridge_pid" 2>/dev/null || true; fi
+  # [DX-T1-14] Why: preserve the driver's actual exit/OOM state before removing its cgroup, including interrupted clients.
+  # Rejected: infer an OOM from a near-limit sample after cleanup has destroyed the terminal evidence.
+  docker container inspect "$prefix-driver" > "$evidence/driver-container-at-cleanup.json" || exit 1
+  if [[ $(docker container inspect --format '{{.State.Running}}' "$prefix-driver") == true ]];then
+    docker stop --time 10 "$prefix-driver" > "$evidence/driver-stop-requested.txt" || exit 1
+  fi
+  docker container inspect "$prefix-driver" > "$evidence/driver-container-final.json" || exit 1
   # Copy even after command failure; retain container and volume if copy fails.
   docker cp "$prefix-driver:/driver/." "$evidence/driver/" || exit 1
   docker rm -f "$prefix-driver" >/dev/null

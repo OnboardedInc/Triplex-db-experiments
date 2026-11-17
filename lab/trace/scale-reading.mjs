@@ -103,6 +103,17 @@ export async function readScaleRun(directory) {
     const file=path.join(directory,name);if(!fs.existsSync(file))continue;
     for(const c of json(name)) {const role=c.Name.replace(/^\//,"").replace(manifest.tag+"-","");if(memory[role])memory[role].limitBytes=c.HostConfig.Memory;}
   }
+  const driverFile=path.join(directory,"driver-container.json"),driverId=fs.existsSync(driverFile)?json("driver-container.json")[0].Id:null;
+  for(const name of fs.readdirSync(directory).filter(x=>/^scale-memory-\d+\.json$/.test(x))){
+    const r=json(name);
+    if(r.schema!=="triplex.memory-reading/1"||r.run!==manifest.tag||r.slot!==manifest.slot||r.source!==manifest.source||r.driverContainerId!==driverId||
+       !Number.isFinite(r.at)||r.at<manifest.startedAt-1000||r.clock?.bootId!==reference?.bootId)throw Error("Foreign/stale kernel memory reading");
+    for(const [role,m] of Object.entries(r.memory??{})){
+      if(!memory[role]||!Number.isSafeInteger(m.peakBytes)||m.peakBytes<0||m.limitBytes!==memory[role].limitBytes)throw Error("Kernel memory role/limit mismatch");
+      memory[role].kernelPeakBytes=Math.max(memory[role].kernelPeakBytes??0,m.peakBytes);
+      memory[role].kernelPeakObservations=(memory[role].kernelPeakObservations??0)+1;
+    }
+  }
   const caches=json("NATIVE-COUNTERS.json"), scanFile=path.join(directory,"driver/scan-stats.jsonl"),gatewayCaches={};
   if(fs.existsSync(scanFile))for(const line of fs.readFileSync(scanFile,"utf8").trim().split("\n")){
     const r=JSON.parse(line);for(const [role,p] of Object.entries(r.peers??{}))if(p.status===200){const c=JSON.parse(p.body);gatewayCaches[role]={observedAt:r.at,...c};}
@@ -134,7 +145,7 @@ export async function readScaleRun(directory) {
     host:{swapGiB:stats(swaps),otherCpuPercent:stats(host.map(r=>r.otherCpu).filter(Number.isFinite)),cpuDefinition:"legacy ps process-lifetime percentage gauge; no host/guest per-request alignment"},
     storage,transactionShape:fs.existsSync(transactionFile)?json("transaction-shape.json"):null,
     nativeCoverage:{committed:joined.filter(x=>x.write.outcome==="committed"&&!x.write.expired).length,observed:joined.filter(x=>x.native).length},
-    limitations:["No verdict on a busy host or sparse diagnostic pools", "Postgres sample transaction deltas include administrative samplers, heartbeat and indexing; no exact per-Datomic-transaction WAL attribution", "Cache callbacks include setup; missing counters remain unknown", "Memory peaks are one-second sampled, not kernel high-water marks"]};
+    limitations:["No verdict on a busy host or sparse diagnostic pools", "Postgres sample transaction deltas include administrative samplers, heartbeat and indexing; no exact per-Datomic-transaction WAL attribution", "Cache callbacks include setup; missing counters remain unknown", "Memory includes one-second sampled peaks and separately labelled kernel peaks only through the last bound live observation"]};
 }
 
 export function scaleMarkdown(runs) {
