@@ -26,6 +26,10 @@ export function refreshVerdictEligibility(report: any) {
   report.verdict.allMet=report.verdict.barsOnlyAllMet && reasons.length===0;
 }
 export function reportWindows(report: any) {
+  // [DX-T1-13] Why: a recovery-plan extension must never silently rescore an older v3 arm on new trace offsets.
+  // Rejected: using the profile label alone as proof of the exact schedule version.
+  if (report.config.profile === "v3" && report.verdictPlanId !== V3_PLAN_ID)
+    throw Error("Unsupported v3 plan identity; rescore with its matching source revision");
   if (report.verdictPlanId === V3_PLAN_ID || report.config.profile === "v3") return scheduledV3Windows();
   const interval = (name: string) => {
     const p = report.phases.find((p: any) => p.name === name);

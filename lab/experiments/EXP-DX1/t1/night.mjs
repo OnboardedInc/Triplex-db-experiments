@@ -1,3 +1,4 @@
+// @ts-nocheck -- [DX-T1-13] Why: sealed manifests and runtime report shapes are validated before their flags are rendered. Rejected: unchecked byte, clock or source assumptions; binding diagnostics still run.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -5,11 +6,17 @@ import { createHash } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { nightWindow, checkNightWindow } from "./night-window.mjs";
-import { checkV3Trace, assertRequiredPlanCounts } from "../../../bench/lib/verdict-plan.ts";
+import {
+  checkV3Trace,
+  assertRequiredPlanCounts,
+  poolRows,
+} from "../../../bench/lib/verdict-plan.ts";
 import { generateTrace } from "../../../bench/lib/trace.ts";
 import { collectHostGate, evaluateHostGate } from "../../../trace/host-admission.mjs";
 import { records, filesUnder, percentile } from "../../../trace/report.mjs";
-import { applyCommitVerdicts } from "../../../bench/lib/verdict.ts";
+import { applyCommitVerdicts, committedRows, reportWindows } from "../../../bench/lib/verdict.ts";
+import { verdictMs } from "../../../trace/instrument.mjs";
+import { nativeBookendComparison } from "../../../trace/native-settings.mjs";
 const read = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const hash = (b) => createHash("sha256").update(b).digest("hex");
 const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -73,12 +80,13 @@ export function renderNightSummary(night, reference, observations) {
     "",
     `ACK clock, minimum 500 committed primaries; 90% bootstrap intervals. Plan ${night.planId}, source ${night.source}.`,
     "Historical H is rescored; it is not a same-session control. 26–50 band and P5 remain unjudged when underfilled; no missing result is a pass.",
+    "MET/MISS are observed point flags; an unqualified run cannot establish acceptance.",
     "",
   ];
   for (const o of observations)
     lines.push(
       o.valid
-        ? `${o.label}: ${o.met} MET / ${o.missed} MISS / ${o.unjudged} UNJUDGED; oracle ${o.oracle}; summary tracing; swap ${scalar(o.swapGiB)} GiB, non-VM CPU ${scalar(o.macCpuMedian)}%; off ACK p50/p99 ${o.controls.map((c) => `${scalar(c.p50)}/${scalar(c.p99)} (swap ${scalar(c.swapGiB)}, CPU ${scalar(c.macCpuMedian)}%)`).join("; ")} ms.`
+        ? `${o.label}: ${o.met} MET / ${o.missed} MISS / ${o.unjudged} UNJUDGED; ${o.qualified ? "run qualified" : "run UNQUALIFIED: " + (o.qualificationReasons ?? []).join("; ")}; oracle ${o.oracle}; summary tracing; swap ${scalar(o.swapGiB)} GiB, non-VM CPU ${scalar(o.macCpuMedian)}%; off ACK p50/p99 ${o.controls.map((c) => `${scalar(c.p50)}/${scalar(c.p99)} (swap ${scalar(c.swapGiB)}, CPU ${scalar(c.macCpuMedian)}%)`).join("; ")} ms.`
         : `${o.label}: INCOMPLETE / UNJUDGED — ${o.reason}`,
     );
   if (!observations.length) lines.push("No completed pairs yet.");
@@ -104,7 +112,12 @@ export function renderNightSummary(night, reference, observations) {
 }
 // [DX-T1-13] Why: a readable night table is derived only from sealed completed bytes with this night's source, slot, clock and oracle.
 // Rejected: a successful shell exit, an old ns-report.json or copying an aggregate PASS into a new run.
-async function checkedArm(root, tag, night, { loaded = false, off = false } = {}) {
+async function checkedArm(
+  root,
+  tag,
+  night,
+  { loaded = false, off = false, diagnostic = false } = {},
+) {
   const dir = path.join(root, tag),
     seal = fs.readFileSync(path.join(dir, "SHA256SUMS"), "utf8");
   const sealed = new Map(
@@ -127,6 +140,7 @@ async function checkedArm(root, tag, night, { loaded = false, off = false } = {}
     "trace-summary.json",
     "trace/SHA256SUMS",
     "night-host-gate.json",
+    "driver-container.json",
   ]) {
     const bytes = fs.readFileSync(path.join(dir, name));
     if (!sealed.has(name) || sealed.get(name) !== hash(bytes))
@@ -154,6 +168,7 @@ async function checkedArm(root, tag, night, { loaded = false, off = false } = {}
     b.seed?.seededSubjects !== 10000 ||
     b.config.readPath !== "replica" ||
     !b.config.strictRecordClocks ||
+    b.config.splitTarget !== "pending" ||
     b.config.zeroReaders !== !loaded ||
     m.level !== (off ? "off" : "summary") ||
     t.source !== night.source ||
@@ -163,9 +178,9 @@ async function checkedArm(root, tag, night, { loaded = false, off = false } = {}
     throw Error("unfinished, stale or foreign arm " + tag);
   if (
     !off &&
-    (b.config.profile !== "v3" ||
-      b.config.matchDurationS !== night.offeredSeconds ||
-      b.verdictPlanId !== night.planId ||
+    (b.config.profile !== (diagnostic ? "smoke" : "v3") ||
+      b.config.matchDurationS !== (diagnostic ? 900 : night.offeredSeconds) ||
+      (!diagnostic && b.verdictPlanId !== night.planId) ||
       b.verdictClock !== "ack/1" ||
       b.config.readerLadderOnly)
   )
@@ -253,6 +268,10 @@ export async function summarizePair(root, prefix, night, label) {
       for (const [p, priority] of Object.entries(recomputed.priorities))
         if (JSON.stringify(priority.bars) !== JSON.stringify(arm.report.priorities[p]?.bars))
           throw Error("bar differs from sealed primary observations: " + arm.tag);
+      arm.qualification = recomputed.verdict?.runQualification ?? {
+        eligible: false,
+        reasons: ["qualification unavailable"],
+      };
     }
     const loaded = arms[2],
       bars = Object.values(loaded.report.priorities).flatMap((p) => p.bars ?? []),
@@ -276,6 +295,8 @@ export async function summarizePair(root, prefix, night, label) {
       missed: bars.filter((b) => b.pass === false).length,
       unjudged: bars.filter((b) => b.pass !== true && b.pass !== false).length,
       oracle: loaded.report.oracle.status,
+      qualified: loaded.qualification.eligible === true,
+      qualificationReasons: loaded.qualification.reasons,
       controls,
       swapGiB: loaded.swapGiB,
       macCpuMedian: loaded.macCpuMedian,
@@ -284,6 +305,61 @@ export async function summarizePair(root, prefix, night, label) {
   } catch (error) {
     return { valid: false, label, tag: prefix, reason: error.message };
   }
+}
+export async function summarizeCpuComparison(root, prefix, night) {
+  const observations = [];
+  let commonSource;
+  for (const [i, mode] of ["eight", "six", "eight"].entries()) {
+    const tag = `${prefix}-${i + 1}-${mode}`;
+    const zero = await checkedArm(root, tag + "-zero", night, { diagnostic: true });
+    const loaded = await checkedArm(root, tag + "-ladder", night, {
+      loaded: true,
+      diagnostic: true,
+    });
+    if (
+      zero.sourceHashes !== loaded.sourceHashes ||
+      (commonSource && commonSource !== zero.sourceHashes)
+    )
+      throw Error("CPU comparison source/build differs");
+    commonSource = zero.sourceHashes;
+    const config = read(path.join(root, tag + "-ladder", "driver-container.json"))[0];
+    if (config.HostConfig.CpusetCpus !== (mode === "six" ? "3,4,5" : "3,4,5,6,7"))
+      throw Error("CPU comparison placement differs");
+    const bars = Object.values(loaded.report.priorities).flatMap((p) => p.bars ?? []);
+    const recomputed = structuredClone(loaded.report);
+    applyCommitVerdicts(
+      recomputed,
+      loaded.writes,
+      zero.writes,
+      generateTrace({ seed: "ns-v2", subjects: 10000, durationS: 7200 }),
+    );
+    if (
+      JSON.stringify(Object.values(recomputed.priorities).flatMap((p) => p.bars ?? [])) !==
+      JSON.stringify(bars)
+    )
+      throw Error("CPU comparison bars differ from raw primaries");
+    const at256 = poolRows(
+      committedRows(loaded.writes),
+      reportWindows(loaded.report).L256,
+      false,
+    ).map(verdictMs);
+    observations.push({
+      label: `${mode} ${i + 1}`,
+      tag,
+      zero: zero.report.priorities.P2.allPrimary,
+      loaded: loaded.report.priorities.P2.allPrimary,
+      at256: { count: at256.length, p50Ms: percentile(at256, 0.5), p99Ms: percentile(at256, 0.99) },
+      bars,
+      oracle: loaded.report.oracle.status,
+      swapGiB: loaded.swapGiB,
+      macCpuMedian: loaded.macCpuMedian,
+      inputs: [
+        { tag: zero.tag, hashes: zero.inputs },
+        { tag: loaded.tag, hashes: loaded.inputs },
+      ],
+    });
+  }
+  return observations;
 }
 async function main() {
   const plan = checkV3Trace(generateTrace({ seed: "ns-v2", subjects: 10000, durationS: 7200 }));
@@ -319,14 +395,11 @@ async function main() {
     return;
   }
   if (args.length) throw Error("Usage: night.sh [--plan]");
-  checkNightWindow(window);
+  checkNightWindow(window, Date.now(), 300);
   if (git("status", "--porcelain", "--untracked-files=no"))
     throw Error("Night requires clean committed tracked source");
   const source = git("rev-parse", "HEAD"),
-    tag = `tx2-dxt1-night-${window.date.replaceAll("-", "")}-${new Date()
-      .toISOString()
-      .replace(/[-:.TZ]/g, "")
-      .toLowerCase()}`,
+    tag = `tx2-dxt1-night-${window.date.replaceAll("-", "")}-${new Date().toISOString().slice(11).replace(/[:.Z]/g, "")}`,
     root =
       process.env.DX_STACK_EVIDENCE ??
       path.join(os.homedir(), "Claude/Projects/triplex-db-2/evidence/DX-T1"),
@@ -406,7 +479,7 @@ async function main() {
     if (!gate.eligible) throw Error("Night host gate REFUSED: " + gate.issues.join("; "));
     for (let i = 1; i <= 2; i++) {
       if (night.issue) throw Error(night.issue);
-      checkNightWindow(night, Date.now(), 250);
+      checkNightWindow(night, Date.now(), 300);
       const prefix = tag + "-pair" + i,
         code = await run("bash", [baseScript + "v3.sh", prefix], {}, `pair${i}.log`);
       observations.push(await summarizePair(root, prefix, night, `Pair ${i}`));
@@ -431,6 +504,46 @@ async function main() {
         "cpu-comparison.log",
       );
       night.cpuStatus = `eight/six/eight loaded diagnostic exit ${code}; ${tag}-cpus-session/ (every bar, host context and oracle retained; no automatic default change)`;
+      if (code === 0) {
+        const cpu = await summarizeCpuComparison(root, tag + "-cpus", night);
+        const zeroComparison = nativeBookendComparison(
+          [cpu[0].zero.p50Ms, cpu[2].zero.p50Ms],
+          [cpu[1].zero.p50Ms],
+        );
+        const loadedComparison = nativeBookendComparison(
+          [cpu[0].at256.p50Ms, cpu[2].at256.p50Ms],
+          [cpu[1].at256.p50Ms],
+        );
+        fs.writeFileSync(
+          path.join(out, "CPU-COMPARISON.json"),
+          JSON.stringify({ arms: cpu, zeroComparison, loadedComparison }, null, 2) + "\n",
+          { flag: "wx" },
+        );
+        const lines = [
+          "# Eight / six / eight (diagnostic)",
+          "",
+          "ACK clock; current session only. Sparse bars remain unjudged; eight CPUs stays the default.",
+          "",
+          `Zero-reader all-primary median comparison: ${JSON.stringify(zeroComparison)}. L256 median comparison: ${JSON.stringify(loadedComparison)} (sparse diagnostic cohort).`,
+          "",
+          "| arm | zero all-primary p50/p99 ms | loaded all-primary p50/p99 ms | L256 p50/p99 ms (n) | loaded swap GiB / Mac CPU% | oracle |",
+          "| --- | --- | --- | --- | --- | --- |",
+          ...cpu.map(
+            (c) =>
+              `| ${c.label} | ${scalar(c.zero.p50Ms)}/${scalar(c.zero.p99Ms)} | ${scalar(c.loaded.p50Ms)}/${scalar(c.loaded.p99Ms)} | ${scalar(c.at256.p50Ms)}/${scalar(c.at256.p99Ms)} (${c.at256.count}) | ${scalar(c.swapGiB)} / ${scalar(c.macCpuMedian)} | ${c.oracle} |`,
+          ),
+          "",
+          "| bar | eight before | six | eight after |",
+          "| --- | --- | --- | --- |",
+          ...cpu[0].bars.map(
+            (b) =>
+              `| ${b.id} (${b.bar}) | ${cpu.map((c) => barCell(c.bars.find((v) => v.id === b.id))).join(" | ")} |`,
+          ),
+          "",
+        ];
+        fs.writeFileSync(path.join(out, "CPU-COMPARISON.md"), lines.join("\n"), { flag: "wx" });
+        night.cpuStatus += "; CPU-COMPARISON.md contains all bars and controls";
+      }
     } else night.cpuStatus = "skipped: fewer than 140 minutes remain before06:45";
   } catch (error) {
     night.issue = error.message;
@@ -442,5 +555,11 @@ async function main() {
     console.log(path.join(out, "NIGHT-" + night.date + ".md"));
   }
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
-  await main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    await main();
+  } catch (error) {
+    console.error("Night REFUSED: " + error.message);
+    process.exitCode = 75;
+  }
+}

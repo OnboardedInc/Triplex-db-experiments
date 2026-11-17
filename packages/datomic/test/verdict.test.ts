@@ -18,7 +18,11 @@ import {
 } from "../../../lab/bench/lib/verdict-plan.ts";
 import { nsPlan } from "../../../lab/bench/lib/phases.ts";
 import { generateTrace, traceDigest } from "../../../lab/bench/lib/trace.ts";
-import { applyCommitVerdicts, matchBaseline } from "../../../lab/bench/lib/verdict.ts";
+import {
+  applyCommitVerdicts,
+  matchBaseline,
+  reportWindows,
+} from "../../../lab/bench/lib/verdict.ts";
 import {
   evaluateHostGate,
   parseProcessTimes,
@@ -371,6 +375,11 @@ describe("frozen v3 plan", () => {
           (e) => e.atMs < 900000,
         ),
       ),
+    );
+  });
+  it("refuses an older v3 plan rather than silently applying the new offsets", () => {
+    expect(() => reportWindows({ config: { profile: "v3" }, verdictPlanId: "ns-v3/1" })).toThrow(
+      "matching source revision",
     );
   });
   it("pools by concatenation, rejecting overlap, duplicates and bursts", () => {

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [DX-T1-13] Why: native JSON shapes are validated at this heterogeneous telemetry boundary. Rejected: unchecked byte, clock or source assumptions; binding diagnostics still run.
 import fs from "node:fs";
 import path from "node:path";
 import { filesUnder, records } from "./report.mjs";
@@ -48,6 +49,7 @@ export function nativeCounterSummary(manifest, rows) {
       )
         throw Error("Invalid adoption boundary");
       adoptions.push({
+        clock: r.clock ?? null,
         databaseHash: r.databaseHash,
         start: r.start,
         end: r.end,
@@ -76,6 +78,14 @@ export function nativeCounterSummary(manifest, rows) {
     indexAdoptions: {
       observer: states.at(-1) ?? { status: "unavailable: no callback status" },
       observed: adoptions.length,
+      completed: adoptions.filter((a) => a.completed).length,
+      basisAdvances: adoptions.filter(
+        (a) =>
+          a.completed &&
+          Number.isFinite(a.indexBasisBefore) &&
+          Number.isFinite(a.indexBasisAfter) &&
+          a.indexBasisAfter > a.indexBasisBefore,
+      ).length,
       events: adoptions,
       scope:
         "processor entry/return, including setup and all database hashes; missing observer status never means zero adoptions",

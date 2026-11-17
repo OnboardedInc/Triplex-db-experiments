@@ -8,13 +8,9 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "allowImportingTsExtensions": true,
-    "lib": [
-      "ESNext"
-    ]
+    "lib": ["ESNext"]
   },
   "files": [
     "../lab/trace/instrument.mjs",
@@ -494,6 +490,9 @@
     "../lab/experiments/EXP-DX1/cold/speed.mjs",
     "../lab/trace/host-admission.mjs",
     "../lab/experiments/EXP-DX1/t1/scale-settings.mjs",
-    "../lab/trace/steadiness.mjs"
+    "../lab/trace/steadiness.mjs",
+    "../lab/experiments/EXP-DX1/t1/night.mjs",
+    "../lab/experiments/EXP-DX1/t1/night-window.mjs",
+    "../lab/trace/native-counters.mjs"
   ]
 }

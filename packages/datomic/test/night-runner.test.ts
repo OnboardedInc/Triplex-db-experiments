@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { gzipSync } from "node:zlib";
 import { applyCommitVerdicts } from "../../../lab/bench/lib/verdict.ts";
 import { generateTrace } from "../../../lab/bench/lib/trace.ts";
@@ -13,6 +14,7 @@ import {
 import {
   renderNightSummary,
   summarizePair,
+  summarizeCpuComparison,
   nightEnvironment,
 } from "../../../lab/experiments/EXP-DX1/t1/night.mjs";
 import { nativeCounterSummary } from "../../../lab/trace/native-counters.mjs";
@@ -60,6 +62,34 @@ describe("night window and summaries", () => {
     expect(nightWindow(0, "2026-03-07").endAt - nightWindow(0, "2026-03-07").startAt).toBe(
       10.25 * 3600000,
     );
+  });
+  it("refuses a real-arm controller before it creates attempt files, before opening or after closing the local window", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dxt1-cutoff-")),
+      root = new URL("../../../", import.meta.url).pathname;
+    try {
+      for (const date of ["2020-01-01", "2040-01-01"]) {
+        const file = path.join(dir, date + ".json");
+        fs.writeFileSync(file, JSON.stringify(nightWindow(0, date)));
+        try {
+          execFileSync(
+            "bash",
+            ["lab/experiments/EXP-DX1/h3/attempt.sh", "real", "tx2-dxt1-cutoff-fixture"],
+            {
+              cwd: root,
+              env: { ...process.env, DX_STACK_EVIDENCE: dir, DX_NIGHT_WINDOW: file },
+              stdio: "pipe",
+            },
+          );
+          expect.fail("cutoff must refuse");
+        } catch (error: any) {
+          expect(error.status).toBe(75);
+          expect(String(error.stderr)).toContain("Night arm refused");
+        }
+      }
+      expect(fs.existsSync(path.join(dir, "tx2-dxt1-cutoff-fixture"))).toBe(false);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
   it("shows absent, sparse and failed bars without promoting a historical estimate", () => {
     const bar = {
@@ -137,6 +167,7 @@ describe("night window and summaries", () => {
             zeroReaders: !loaded,
             readPath: "replica",
             strictRecordClocks: true,
+            splitTarget: "pending",
             matchDurationS: 5910,
           },
           trace: { digest: night.traceDigest },
@@ -178,6 +209,10 @@ describe("night window and summaries", () => {
           context: { diskFreeBytes: 30 * 1024 ** 3 },
         };
         fs.writeFileSync(path.join(dir, "night-host-gate.json"), JSON.stringify(gate));
+        fs.writeFileSync(
+          path.join(dir, "driver-container.json"),
+          JSON.stringify([{ HostConfig: { CpusetCpus: "3,4,5,6,7" } }]),
+        );
         for (const [name, value] of Object.entries({
           "head.txt": source,
           "source-build-hashes.json": "{}",
@@ -216,11 +251,87 @@ describe("night window and summaries", () => {
       b.oracle.reads = 5;
       fs.writeFileSync(file, JSON.stringify(b));
       seal(dir);
+      b.client = { invalid: true };
+      fs.writeFileSync(file, JSON.stringify(b));
+      seal(dir);
+      const unqualified = await summarizePair(root, prefix, night, "pair");
+      expect(unqualified.valid).toBe(true);
+      expect(unqualified.qualified).toBe(false);
+      expect(unqualified.qualificationReasons).toContain("invalid or saturated run");
+      delete b.client;
+      fs.writeFileSync(file, JSON.stringify(b));
+      seal(dir);
       expect(
         (await summarizePair(root, prefix, { ...night, startedAt: now }, "pair")).reason,
       ).toContain("stale");
       fs.appendFileSync(file, " ");
       expect((await summarizePair(root, prefix, night, "pair")).reason).toContain("seal differs");
+      const cpuPrefix = "tx2-dxt1-cpu-fixture",
+        template = path.join(root, prefix + "-zero");
+      for (const [i, mode] of ["eight", "six", "eight"].entries())
+        for (const loaded of [false, true]) {
+          const tag = `${cpuPrefix}-${i + 1}-${mode}-${loaded ? "ladder" : "zero"}`,
+            destination = path.join(root, tag);
+          fs.cpSync(template, destination, { recursive: true });
+          const b = JSON.parse(
+            fs.readFileSync(path.join(destination, "driver/ns-report.json"), "utf8"),
+          );
+          b.config.profile = "smoke";
+          b.config.matchDurationS = 900;
+          b.config.zeroReaders = !loaded;
+          b.verdictPlanId = "legacy-smoke";
+          const writes = fs
+            .readFileSync(path.join(destination, "driver/ns-writes.jsonl"), "utf8")
+            .trim()
+            .split("\n")
+            .map((line) => JSON.parse(line));
+          applyCommitVerdicts(
+            b,
+            writes,
+            loaded ? writes : null,
+            generateTrace({ seed: "ns-v2", subjects: 10000, durationS: 7200 }),
+          );
+          fs.writeFileSync(path.join(destination, "driver/ns-report.json"), JSON.stringify(b));
+          const m = JSON.parse(fs.readFileSync(path.join(destination, "trace-run.json"), "utf8"));
+          m.tag = tag;
+          m.slot = tag;
+          fs.writeFileSync(path.join(destination, "trace-run.json"), JSON.stringify(m));
+          fs.writeFileSync(
+            path.join(destination, "driver-container.json"),
+            JSON.stringify([
+              { HostConfig: { CpusetCpus: mode === "six" ? "3,4,5" : "3,4,5,6,7" } },
+            ]),
+          );
+          const packed = gzipSync(
+            JSON.stringify({
+              process: "system-darwin",
+              run: tag,
+              slot: tag,
+              source,
+              at: now,
+              otherCpu: 10,
+              swap: "used = 4096M",
+            }) + "\n",
+          );
+          fs.writeFileSync(path.join(destination, "trace/raw/system-host.jsonl.gz"), packed);
+          fs.writeFileSync(
+            path.join(destination, "trace/SHA256SUMS"),
+            createHash("sha256").update(packed).digest("hex") + "  system-host.jsonl.gz\n",
+          );
+          seal(destination);
+        }
+      const cpu = await summarizeCpuComparison(root, cpuPrefix, night);
+      expect(cpu.map((c) => c.label)).toEqual(["eight 1", "six 2", "eight 3"]);
+      expect(cpu[1].at256.count).toBe(0);
+      const wrongPlacement = path.join(root, cpuPrefix + "-2-six-ladder");
+      fs.writeFileSync(
+        path.join(wrongPlacement, "driver-container.json"),
+        JSON.stringify([{ HostConfig: { CpusetCpus: "3,4,5,6,7" } }]),
+      );
+      seal(wrongPlacement);
+      await expect(summarizeCpuComparison(root, cpuPrefix, night)).rejects.toThrow(
+        "placement differs",
+      );
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

@@ -643,12 +643,32 @@ describe("permanent request tracing", () => {
       attributes: { position: "17", operationId: "operation-17" },
     };
     writeFileSync(path.join(dir, "trace/raw/witness.jsonl"), JSON.stringify(witness) + "\n");
+    const adoption = {
+      type: "index-adoption",
+      name: "datomic.process-new-index",
+      layer: "transactor",
+      process: "tx",
+      thread: 84,
+      run: "fixture",
+      source: "source",
+      slot: "slot",
+      start: 1001,
+      end: 1003,
+      clock: { domain: "linux-monotonic", bootId: "fixture", offsetMs: 0 },
+    };
+    writeFileSync(path.join(dir, "trace/raw/adoption.jsonl"), JSON.stringify(adoption) + "\n");
     const report = await buildReport(dir);
     expect(report.complete).toBe(true);
     const chrome = JSON.parse(readFileSync(path.join(dir, "trace.chrome.json"), "utf8"));
     expect(
       chrome.traceEvents.some((e: any) => e.name === witness.name && String(e.tid).includes("7")),
     ).toBe(true);
+    expect(
+      chrome.traceEvents.some((e: any) => e.name === adoption.name && String(e.tid).includes("84")),
+    ).toBe(true);
+    expect(
+      attribute(sender, [remoteGateway], [adoption], [workerRoot]).layers.transactor,
+    ).toBeNull();
     writeFileSync(
       path.join(dir, "trace/raw/witness.jsonl"),
       JSON.stringify({ ...witness, workerThread: 0 }) + "\n",

@@ -1,4 +1,5 @@
 export function barCell(bar: any): string;
+export function summarizeCpuComparison(root: string, prefix: string, night: any): Promise<any[]>;
 export function nightEnvironment(
   base: Record<string, string>,
   root: string,

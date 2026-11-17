@@ -52,7 +52,9 @@ if [[ $kind == pair ]]; then
     trap pair_cleanup EXIT
     trap 'exit 143' TERM INT
     pair_limit_ms=2580000; [[ $pair_id != DX-T1 ]] || pair_limit_ms=3600000
-    [[ ${DX_NS_PROFILE:-smoke} != v3 ]] || pair_limit_ms=14400000
+    # [DX-T1-13] Why: 197 minutes of fixed offers plus lossless spill/oracle verification can exceed the old four-hour supervisor.
+    # Rejected: shortening the measured plan or cutting off its final independent check.
+    [[ ${DX_NS_PROFILE:-smoke} != v3 ]] || pair_limit_ms=18000000
     node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$pair_limit_ms" & pair_watchdog=$!
   fi
   pair_rc=0
@@ -77,7 +79,7 @@ fi
 # [DX-T1-13] Why: a pair can cross the morning cutoff between its zero and loaded arms; check each real arm before resources exist.
 # Rejected: guarding only the outer night shell or shortening a judged phase to finish by morning.
 if [[ -n ${DX_NIGHT_WINDOW:-} ]]; then
-  night_minutes=15; [[ ${DX_NS_PROFILE:-smoke} != v3 ]] || night_minutes=125
+  night_minutes=15; [[ ${DX_NS_PROFILE:-smoke} != v3 ]] || night_minutes=140
   node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" "$night_minutes" >/dev/null
 fi
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock

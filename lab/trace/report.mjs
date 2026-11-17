@@ -598,6 +598,12 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
             if (r.name.startsWith("jdk.") || r.nativeType?.startsWith("triplex."))
               jfrCounts.set(r.process, (jfrCounts.get(r.process) ?? 0) + 1);
           }
+        } else if (r.type === "index-adoption") {
+          // [DX-T1-13] Why: actual processor adoptions belong on routine timelines, with their boot-clock binding and no causal request assignment.
+          // Rejected: a JFR label (these intervals come directly from nanoTime) or adding coincident adoption time to a commit's exclusive share.
+          if (!validSpan(r) || r.process !== "tx" || r.clock?.domain !== "linux-monotonic")
+            throw Error("Invalid processor adoption event");
+          events.push({ ...r, type: "event", causal: false });
         } else if (r.type === "jfr-complete") completions.push(r);
         else if (r.type === "resource" || r.type === "metrics") {
           resources.push(r);

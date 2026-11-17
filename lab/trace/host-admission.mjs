@@ -90,24 +90,9 @@ export async function collectHostGate(count = 60) {
     await new Promise((r) => setTimeout(r, Math.max(1, 1000 - (performance.now() - previousAt))));
     const s = { at: Date.now(), monoMs: performance.now() };
     try {
-      const vm = native("/usr/bin/vm_stat", []),
-        page = Number(/page size of (\d+)/.exec(vm)?.[1]);
-      const counter = (name) => Number(new RegExp("^" + name + ":\\s+(\\d+)", "m").exec(vm)?.[1]);
-      s.freeInactiveBytes = (counter("Pages free") + counter("Pages inactive")) * page;
-      s.compressions = counter("Compressions");
-      s.swapouts = counter("Swapouts");
       s.swapBytes =
         Number(/used = ([\d.]+)M/.exec(native("/usr/sbin/sysctl", ["vm.swapusage"]))?.[1]) *
         1024 ** 2;
-      s.pressure = Number(
-        native("/usr/sbin/sysctl", ["-n", "kern.memorystatus_vm_pressure_level"]).trim(),
-      );
-      s.load1 = Number(
-        native("/usr/sbin/sysctl", ["-n", "vm.loadavg"])
-          .replace(/[{}]/g, "")
-          .trim()
-          .split(/\s+/)[0],
-      );
       const current = parseProcessTimes(native("/bin/ps", ["-A", "-o", "pid=,time=,comm="])),
         currentAt = performance.now();
       s.otherCpu = processCpuInterval(previous, current, currentAt - previousAt);
@@ -122,6 +107,27 @@ export async function collectHostGate(count = 60) {
       ];
     } catch (e) {
       s.error = String(e.message);
+    }
+    // [DX-T1-13] Why: absent diagnostic gauges must not prevent a quiet host's required CPU/swap/app observation.
+    // Rejected: putting optional pressure/load commands in the required native-counter try block.
+    try {
+      const vm = native("/usr/bin/vm_stat", []),
+        page = Number(/page size of (\d+)/.exec(vm)?.[1]);
+      const counter = (name) => Number(new RegExp("^" + name + ":\\s+(\\d+)", "m").exec(vm)?.[1]);
+      s.freeInactiveBytes = (counter("Pages free") + counter("Pages inactive")) * page;
+      s.compressions = counter("Compressions");
+      s.swapouts = counter("Swapouts");
+      s.pressure = Number(
+        native("/usr/sbin/sysctl", ["-n", "kern.memorystatus_vm_pressure_level"]).trim(),
+      );
+      s.load1 = Number(
+        native("/usr/sbin/sysctl", ["-n", "vm.loadavg"])
+          .replace(/[{}]/g, "")
+          .trim()
+          .split(/\s+/)[0],
+      );
+    } catch (error) {
+      s.diagnosticError = String(error.message);
     }
     samples.push(s);
   }

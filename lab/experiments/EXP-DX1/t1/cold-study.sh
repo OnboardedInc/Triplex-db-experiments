@@ -36,6 +36,7 @@ RESTORE
 trap cleanup EXIT
 trap 'exit 143' TERM INT
 node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),10800000)' "$$" & watchdog=$!
+[[ -z ${DX_NIGHT_WINDOW:-} ]] || node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" 140 >/dev/null
 bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --guest-cpus show > "$out/cpu-original.json"
 python3 - "$out/cpu-original.json" <<'ORIGINAL'
 import json,sys

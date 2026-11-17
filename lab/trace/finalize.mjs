@@ -119,7 +119,7 @@ if (!renderOnly) {
 }
 const copy = process.argv[3];
 const result = await buildReport(run, { copyTo: copy });
-if (!result.disabled) {
+if (!("disabled" in result && result.disabled)) {
   const counters = await buildNativeCounters(run);
   for (const destination of [run, ...(copy ? [copy] : [])]) {
     fs.writeFileSync(

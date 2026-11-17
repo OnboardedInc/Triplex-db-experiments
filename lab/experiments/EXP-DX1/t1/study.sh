@@ -40,7 +40,9 @@ PY_RESTORE
 trap cleanup EXIT
 trap 'exit 143' TERM INT
 study_limit_ms=5400000
-[[ ${DX_NS_PROFILE:-smoke} != v3 ]] || study_limit_ms=18000000
+# [DX-T1-13] Why: retain both off bookends and full verification around the five-hour v3 pair budget; the night deadline is independently stricter.
+# Rejected: the prior supervisor stopping a completed offer window before its oracle/report is durable.
+[[ ${DX_NS_PROFILE:-smoke} != v3 ]] || study_limit_ms=21600000
 node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$study_limit_ms" & watchdog=$!
 run_stage() {
  [[ $(git rev-parse HEAD) == $(cat "$session_dir/head.txt") ]] || exit 2
