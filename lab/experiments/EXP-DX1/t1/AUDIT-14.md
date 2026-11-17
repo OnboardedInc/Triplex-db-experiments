@@ -1,0 +1,13 @@
+North star: P2 and P5 scale diagnosis, with exact population and durable acknowledgements preserved.
+
+This is an observation audit, not a benchmark PASS or an independent review.
+
+| Site producing a qualification or receipt | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `first-100k.sh` completed-population guard | DONE, complete seed, closed-form assertion count and exact subject count | Fresh run tags refused by `run.sh`/`attempt.sh`; reads only after this child exits | Session head, explicit population and this arm's output path |
+| `scale-observe.sh` collector admission | Existing trace manifest, administrative statistics only | Live measurement lease PID checked before each sample | DX-T1 lease prefix, run/source/slot and collector SHA256 retained |
+| `scale-reading.mjs` diagnostic ingestion | Original compressed/decoded evidence seals verified; complete seed required; invalid or duplicate native totals refused | Fresh database/t referenced by this attempt's acknowledged trace; historical observations never promoted to a new verdict | Exact database hash/t, trace ID, source, slot, tag and raw/terminal SHA256 seals |
+
+Missing native observations remain unknown. Native durations can be counted by identity without claiming their location on an unqualified cross-process clock. Postgres deltas include samplers, indexing and heartbeat; they are not exact isolated application-transaction counts.
+
+No acceptance contract, pinned target, frozen trace, night controller, v3 profile, durability setting or latency boundary is changed.
