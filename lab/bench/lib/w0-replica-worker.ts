@@ -1,7 +1,7 @@
 import { performance } from "node:perf_hooks";
 import { serialize } from "node:v8";
 import { parentPort, workerData } from "node:worker_threads";
-import { ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
+import { ReplicaSnapshot, flushTracing } from "../../../packages/datomic/dist/index.js";
 import { W0, worldOf, worldSha256, w0Basis } from "./w0-world.ts";
 const snapshot = new ReplicaSnapshot(workerData.image);
 const basis = w0Basis({ position: snapshot.position, validAt: snapshot.validAt });
@@ -9,7 +9,12 @@ const releases: W0.CompiledRelease[] = workerData.releases;
 let phaseStart = performance.now(),
   phaseElu = performance.eventLoopUtilization(),
   phaseCpu = process.threadCpuUsage();
-parentPort!.on("message", (m) => {
+parentPort!.on("message", async (m) => {
+  if (m.type === "close") {
+    await flushTracing();
+    parentPort!.close();
+    return;
+  }
   if (m.type === "begin") {
     phaseStart = performance.now();
     phaseElu = performance.eventLoopUtilization();
@@ -51,10 +56,18 @@ parentPort!.on("message", (m) => {
       // Rejected: JSON coercion (BigInt/negative-zero loss) or dropping outputs to make the 11 GiB cap fit.
       records:
         workerData.compactRecords || releases.length > 1
-          ? records.map(({ candidates, ...record }: { candidates: readonly unknown[]; [key: string]: unknown }) => ({
-              ...record,
-              encodedCandidates: serialize(candidates),
-            }))
+          ? records.map(
+              ({
+                candidates,
+                ...record
+              }: {
+                candidates: readonly unknown[];
+                [key: string]: unknown;
+              }) => ({
+                ...record,
+                encodedCandidates: serialize(candidates),
+              }),
+            )
           : records,
       cpuSeconds: (cpu.user + cpu.system) / 1e6,
       wallMs: performance.now() - started,

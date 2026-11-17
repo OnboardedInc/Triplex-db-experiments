@@ -1,3 +1,27 @@
+import type { Worker } from "node:worker_threads";
+
+// [DX-T1-14] Why: normal shutdown must let an isolate close its recorder before releasing the thread.
+// Rejected: immediate termination (left header-only gzip shards); bounded fallback preserves failure cleanup and reports incomplete telemetry.
+export async function finishW0Worker(worker: Worker, closeMessage?: unknown): Promise<void> {
+  if (worker.threadId < 0) return;
+  await new Promise<void>((resolve) => {
+    let finished = false;
+    const complete = () => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      worker.off("exit", complete);
+      resolve();
+    };
+    const timer = setTimeout(() => {
+      console.error("W0 worker tracing drain timed out; trace evidence is incomplete");
+      void worker.terminate().then(complete, complete);
+    }, 10_000);
+    worker.once("exit", complete);
+    if (closeMessage !== undefined) worker.postMessage(closeMessage);
+  });
+}
+
 // [DX-S5] Why: overlap independent immutable reads and stateless oracle calls while retaining every result and exact order.
 // Rejected: sampling subjects or raising the hold deadline to accommodate avoidable serial transport waits.
 function check(n: number) {

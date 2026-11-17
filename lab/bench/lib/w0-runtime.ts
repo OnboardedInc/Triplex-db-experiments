@@ -6,6 +6,7 @@ import path from "node:path";
 import type { Replica } from "../../../packages/datomic/dist/index.js";
 import { offerLiveWrite, finishLiveWrite } from "./w0-outbox.ts";
 import { percentile } from "./w0-traffic.ts";
+import { finishW0Worker } from "./w0-parallel.ts";
 import type { startW0Live } from "./w0-replica-live.ts";
 const workerUrl = new URL("./w0-runtime-worker.ts", import.meta.url);
 // [DX-S5] Why: openTriples routes every worker to READ_URLS by default, including a writer worker unless its environment is explicit.
@@ -90,7 +91,7 @@ export async function startRuntimeFollower(
       owner.worker.postMessage({ type: "stop" });
       const result = await owner.stopped;
       if (replica.position !== result.position) throw Error("follower/main final cut mismatch");
-      await owner.worker.terminate();
+      await finishW0Worker(owner.worker);
       return result.metrics;
     },
     metrics() {
@@ -245,7 +246,7 @@ export async function startThreadedW0Live(
               pending--;
               finishLiveWrite();
             }
-            await Promise.all([writer, ...readers].map((thread) => thread.worker.terminate()));
+            await Promise.all([writer, ...readers].map((thread) => finishW0Worker(thread.worker)));
           }
         })()),
     };

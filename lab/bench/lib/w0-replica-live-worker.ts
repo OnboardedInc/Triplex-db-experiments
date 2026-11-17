@@ -2,6 +2,7 @@
 import "./w0-cache.ts";
 import { parentPort, workerData } from "node:worker_threads";
 import { inspect } from "node:util";
+import { flushTracing } from "../../../packages/datomic/dist/index.js";
 import { openComposition } from "./composition.ts";
 import { W0, V_W0 } from "./w0-world.ts";
 import { Rng, seedOf } from "./rng.ts";
@@ -49,5 +50,6 @@ try {
   port.postMessage({ type: "failure", error: inspect(error, { depth: 8 }) });
 } finally {
   await comp.close();
+  await flushTracing();
   port.close();
 }

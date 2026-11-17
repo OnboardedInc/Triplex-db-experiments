@@ -1,5 +1,6 @@
 import { deserialize } from "node:v8";
 import { Worker } from "node:worker_threads";
+import { finishW0Worker } from "./w0-parallel.ts";
 import { Replica, type ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
 import type { CompositionHandle } from "./composition.ts";
 import {
@@ -233,7 +234,7 @@ async function evaluateSnapshot(
       position: snapshot.position,
     };
   } finally {
-    await Promise.all(threads.map((w) => w.terminate()));
+    await Promise.all(threads.map((w) => finishW0Worker(w, { type: "close" })));
   }
 }
 // [DX-R1] Why: compare work-item identities/payloads with the stored outbox state, not an earlier preview's answers.

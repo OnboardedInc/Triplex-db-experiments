@@ -3,7 +3,7 @@
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import { inspect } from "node:util";
-import { Replica, DatomicClient } from "../../../packages/datomic/dist/index.js";
+import { Replica, DatomicClient, flushTracing } from "../../../packages/datomic/dist/index.js";
 import { openComposition } from "./composition.ts";
 import { startW0Live, localReadTurns } from "./w0-replica-live.ts";
 import { W0 } from "./w0-world.ts";
@@ -51,6 +51,7 @@ try {
         port.postMessage({ type: "failure", error: inspect(error, { depth: 8 }) });
       } finally {
         await comp.close();
+        await flushTracing();
         port.close();
       }
     });
@@ -103,6 +104,7 @@ try {
     subscribers.forEach((subscriber) => subscriber.close());
     client.close();
     await comp.close();
+    await flushTracing();
     port.close();
   } else if (workerData.role === "reader") {
     const source = {
@@ -190,9 +192,11 @@ try {
       position: replica!.position,
     });
     feed.close();
+    await flushTracing();
     port.close();
   } else throw Error("unknown runtime worker role");
 } catch (error) {
   port.postMessage({ type: "failure", error: inspect(error, { depth: 8 }), metrics: metrics() });
+  await flushTracing();
   port.close();
 }

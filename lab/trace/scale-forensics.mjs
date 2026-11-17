@@ -70,7 +70,7 @@ export async function forensicScale(directory, output) {
     path.basename(directory) !== manifest.tag ||
     manifest.slot !== manifest.tag ||
     !/^[a-f0-9]{40}$/.test(manifest.source) ||
-    bench.status === "DONE" ||
+    !["RUNNING", "DONE"].includes(bench.status) ||
     !bench.config.zeroReaders ||
     !bench.seed.complete ||
     bench.seed.seededSubjects !== bench.config.rungSubjects ||
@@ -236,7 +236,10 @@ export async function forensicScale(directory, output) {
       applyMs: stats(samples.map((s) => s["apply-msec"])),
       peerMs: stats(attrs.map((a) => a.layers["peer-wait"])),
       layers: Object.fromEntries(
-        LAYERS.map((k) => [k, stats(attrs.map((a) => a.layers[k]).filter(Number.isFinite))]),
+        LAYERS.map((k) => [
+          k,
+          stats(k === "gateway-gc" ? [] : attrs.map((a) => a.layers[k]).filter(Number.isFinite)),
+        ]),
       ),
       typescriptShare: stats(attrs.map((a) => a.typescriptShare)),
       adoptions: adoptions.map((r) => ({
@@ -289,7 +292,12 @@ export async function forensicScale(directory, output) {
   });
   const result = {
     schema: "triplex.scale-forensics/1",
-    classification: "BUSY HOST; INCOMPLETE CENSORED SUBSET; NO VERDICT",
+    classification:
+      bench.status === "DONE"
+        ? "BUSY HOST; CLOSED ACK SUBSET FROM COMPLETED DRIVER; NO VERDICT"
+        : "BUSY HOST; INCOMPLETE CENSORED SUBSET; NO VERDICT",
+    driverReportStatus: bench.status,
+    traceCollectionComplete: summary.complete === true,
     tag: manifest.tag,
     source: manifest.source,
     analysisProgramSha256: sha(fs.readFileSync(new URL(import.meta.url))),
@@ -309,7 +317,7 @@ export async function forensicScale(directory, output) {
     terminal: { ...terminal.State },
     observedClosedAcknowledgements: acknowledged.length,
     completeOfferDenominator: null,
-    missingTail: true,
+    missingTail: bench.status !== "DONE" || summary.complete !== true,
     phaseRows,
     memory,
     minObservedGuestAvailableBytes: minAvailable,
@@ -327,8 +335,8 @@ export async function forensicScale(directory, output) {
     warnings: [
       ...summary.errors,
       ...warnings,
-      "Only closed committed background ACK markers retained before death. Offered, expired, missing ACKs and the unsaved tail remain unknown. No reconstructed writer file or verdict.",
-      "Layer quantiles are clipped to the observed ACK; native counters join by database/t. SQL timing has no per-transaction causal attribution. Missing GC/JFR layers remain unknown.",
+      "Closed committed background ACK markers only. This tool does not assess offered/expired denominators; incomplete or truncated inputs retain an unknown tail. No reconstructed writer file or verdict.",
+      "Layer quantiles are clipped to the observed ACK; native counters join by database/t. SQL timing has no per-transaction causal attribution. This tool does not attribute JVM pauses, so gateway GC is unknown, never a measured zero.",
     ],
   };
   fs.mkdirSync(path.dirname(output), { recursive: true });
@@ -337,6 +345,6 @@ export async function forensicScale(directory, output) {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const [directory, output] = process.argv.slice(2);
-  if (!directory || !output) throw Error("scale-forensics.mjs INCOMPLETE_RUN NEW_JSON");
+  if (!directory || !output) throw Error("scale-forensics.mjs TERMINAL_RUN NEW_JSON");
   await forensicScale(directory, output);
 }

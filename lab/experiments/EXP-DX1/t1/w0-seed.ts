@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { gzipSync, gunzipSync } from "node:zlib";
+import { flushTracing } from "../../../../packages/datomic/dist/index.js";
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { seedCommands, seedW0 } from "../../../bench/lib/w0-seed.ts";
 import { readW0Fingerprint } from "../../../bench/lib/w0-fingerprint.ts";
@@ -226,4 +227,5 @@ try {
   }
 } finally {
   await comp.close();
+  await flushTracing();
 }
