@@ -77,7 +77,9 @@ if [[ ${DX_IDLE_TCP:-default} != default ]]; then
   network_tuning=(--sysctl net.ipv4.tcp_slow_start_after_idle=0)
 fi
 # The lexical output remains under runs/; that directory is a real Docker volume during execution.
-docker create --pull never --name "$prefix-driver" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpus" --memory "$memory" --memory-swap "$memory" \
+# [DX-T1-14] Why: a failed heap must leave stderr/exit state, without a multi-GiB core dump into the source bind mount.
+# Rejected: change the guest's global core policy, or delete the only crash evidence without a lossless retained copy.
+docker create --ulimit core=0 --pull never --name "$prefix-driver" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpus" --memory "$memory" --memory-swap "$memory" \
   --cgroupns host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v "$repo:$repo" \
   -v /Users/sam/Claude/Projects/triplex-db-2/evidence:/Users/sam/Claude/Projects/triplex-db-2/evidence \
   "${driver_mounts[@]}" -w "$repo" \
