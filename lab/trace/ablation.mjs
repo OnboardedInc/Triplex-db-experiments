@@ -659,24 +659,12 @@ if (
   new Set(rows.map((r) => r.commands)).size !== 1
 )
   throw Error("Workload/denominator changed inside session");
-const controls = rows.filter(
-    (r) =>
-      r.arm ===
-      ([
-        "publication-floor",
-        "publication-defer",
-        "record-clock-floor",
-        "record-clock-256",
-        "cpu-floor",
-        "fallback-floor",
-        "history-256",
-        "seed-floor",
-        "writer-256",
-      ].includes(kind) || !!nativeKind
-        ? "baseline"
-        : "off"),
-  ),
-  off50 = controls.reduce((s, r) => s + r.p50Ms, 0) / controls.length,
+// [DX-T1-12] Why: the executed protocol already declares its bookend names; per-fact trials use baseline, not off.
+// Rejected: a second incomplete kind list that loses valid controls after all measured arms finish.
+const baselineControlled = arms[0] === "baseline";
+const controls = rows.filter((r) => r.arm === (baselineControlled ? "baseline" : "off"));
+if (controls.length !== 2) throw Error("Declared protocol requires two completed bookend controls");
+const off50 = controls.reduce((s, r) => s + r.p50Ms, 0) / controls.length,
   off99 = controls.reduce((s, r) => s + r.p99Ms, 0) / controls.length;
 for (const r of rows) {
   r.controlTags = controls.map((c) => c.tag);
@@ -688,7 +676,7 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${readerDiagnostic ? (stressDiagnostic ? "frozen 450-second stress diagnostic (normal 45-second levels, not a full verdict)" : "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)") : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim. Host context spans first scheduled to last finished primary commit; post-run oracle CPU is excluded.`,
+  `Source ${source}; one session, common host/VM sampling, 10,000 subjects, ${readerDiagnostic ? (stressDiagnostic ? "frozen 450-second stress diagnostic (normal 45-second levels, not a full verdict)" : "frozen 300-second reader-ladder diagnostic (normal 45-second levels, not a full verdict)") : "frozen 200-second zero-reader segment"}. Control is mean bookend control-arm quantiles; no pooled-percentile claim. Mac context is whole-arm, including post-run verification; no exact guest-phase attribution is qualified.`,
   "",
   "| arm / level | p50 ms | p99 ms | control p50 / p99 ms | p50 delta ms / % | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
   "| --- | ---: | ---: | --- | --- | --- | --- |",
@@ -723,7 +711,7 @@ if (stressDiagnostic) text.push(
 const candidates = rows.filter((r) => r.arm !== "baseline" && r.arm !== "off");
 if (readerDiagnostic)
   text.push(
-    "| arm | L256 small commit p50 / p99 ms | L256 read p99 ms | correct pulls/s | phase swap GiB / Mac CPU % |",
+    "| arm | L256 small commit p50 / p99 ms | L256 read p99 ms | correct pulls/s | whole-arm swap GiB / Mac CPU % |",
     "| --- | --- | ---: | ---: | --- |",
     ...rows.map(
       (r) =>
@@ -759,7 +747,7 @@ const result = {
       "history-256",
       "seed-floor",
       "writer-256",
-    ].includes(kind) || !!nativeKind
+    ].includes(kind) || !!nativeKind || !!perFactKind
       ? {
           p50Ms: compare(
             controls.map((r) => r.p50Ms),
