@@ -2023,3 +2023,15 @@ tonight (about 19:30 and 07:05 local).
 
 Part 13 (daytime, no timed runs): recovery pools to at least 520 commits, the two counters, the night host gate, one
 `night.sh` for two v3 pairs tonight.
+
+## 2026-11-17 16:50 UTC: part 13 done; tonight's two v3 pairs are armed on a runner that does not depend on the session
+
+DX-T1 part 13 (`exp/DX-T1-tracing`, `f87308a3`, pushed; `t1/REPORT-13.md`): recovery pools now 540 to 557 commits (two more
+stress-and-recovery cycles, +13 minutes per pair); both native counters work with quiet logging (transactor cache 99.2%
+hits in a 1,000-subject smoke; nine index-adoption intervals); the night host gate checks swap under 6 GiB, Mac CPU outside
+the VM under 25% of a core, 20 GiB free and the three named apps closed; `t1/night.sh` runs two full v3 pairs with early
+JVM compilation and, if 140 minutes remain, an eight/six/eight virtual CPU contrast. Two pairs need at least 6 h 47 min.
+
+The session's scheduled jobs for the first nightly window fired 14 hours late, so the window was lost. Tonight a plain
+process runs it: `~/Claude/Projects/triplex-db-2/tools/bin/night-window.sh` (started 16:47 UTC, log under
+`evidence/ORCH-night/`) closes Chrome, Slack and Paste at 19:30 local, runs `night.sh`, and reopens the apps at 06:58.
