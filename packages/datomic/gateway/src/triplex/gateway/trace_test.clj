@@ -1,5 +1,24 @@
 (ns triplex.gateway.trace-test
-  (:require [clojure.test :refer :all] [triplex.gateway.trace :as trace] [ring.core.protocols :as protocols] [triplex.gateway.main] [triplex.gateway.jfr :as jfr] [triplex.gateway.commit :as commit] [clojure.data.json :as json]))
+  (:require [clojure.test :refer :all] [triplex.gateway.trace :as trace] [triplex.gateway.native-counters :as counters] [ring.core.protocols :as protocols] [triplex.gateway.main] [triplex.gateway.jfr :as jfr] [triplex.gateway.commit :as commit] [clojure.data.json :as json]))
+;; [DX-T1-13] Why: instrumentation must preserve the exact result/exception even when the observer fails; interval counters must not invent cache hits.
+;; Rejected: a test that only checks an event label or a configured logger name.
+(deftest quiet-native-counters
+  (is (= {:requests 10 :hits 7 :misses 3 :hitRate 0.7 :status "callback interval; process-wide"}
+         (:objectCache (trace/counter-summary {:ObjectCache {:count 10 :sum 7}}))))
+  (doseq [metric [nil 3 {:count 0 :sum 0} {:count 2 :sum 3} {:count 2 :sum Double/NaN}]]
+    (is (nil? (get-in (trace/counter-summary {:ObjectCache metric}) [:objectCache :hitRate]))))
+  (let [ref (atom {:indexBasisT 10}) rows (atom []) calls (atom 0) tick (atom 100)
+        observed (counters/observe-adoption (fn [update ctx] (swap! calls inc) (reset! (:db-ref ctx) {:indexBasisT (:t update)}) :result)
+                   #(swap! tick inc) #(swap! rows conj %))]
+    (is (= :result (observed {:t 20} {:db-ref ref :db-id "fixture"})))
+    (is (= 1 @calls))
+    (is (= {:indexBasisBefore 10 :indexBasisAfter 20 :completed true :start 101 :end 102}
+           (select-keys (first @rows) [:indexBasisBefore :indexBasisAfter :completed :start :end])))
+    (is (= 64 (count (:databaseHash (first @rows))))))
+  (let [failure (ex-info "original" {})]
+    (try ((counters/observe-adoption (fn [_ _] (throw failure)) #(throw (Exception. "clock")) #(throw (Exception. "output"))) {} {})
+      (is false "original must throw") (catch Throwable error (is (identical? failure error)))))
+  (is (= :exact ((counters/observe-adoption (fn [_ _] :exact) #(throw (Exception. "clock")) #(throw (Exception. "output"))) {} {}))))
 ;; [DX-T1] Why: exercise actual Ring response write, parent nesting and counter isolation.
 ;; Rejected: only testing a regular expression or manufacturing a gateway result in TypeScript.
 (deftest propagated-parent-and-written-response

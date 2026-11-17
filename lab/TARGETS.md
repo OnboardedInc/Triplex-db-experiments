@@ -27,9 +27,9 @@ The bars above only count when measured under these definitions. A run that depa
 **Sample size (Sam, 2026-11-16).** Every commit-based bar is computed over at least 500 committed primary commits (ratios: at least
 500 on each side; band bars: at least 500 of that band). Fewer is UNJUDGED and counts as not met. Windows pool repeated blocks of one
 run at fixed trace offsets that never overlap a burst or its 60-s drain; burst commits never enter a steady-level pool. Each bar
-reports n and a seeded bootstrap interval; the verdict uses the point estimate. The `v3` profile offers 5,520 seconds of the same
-frozen trace without raising its rate; `smoke` remains diagnostic. Exact scheduled counts, including underfilled recovery pools and
-the 26-to-50 band, are printed before a run. No keep-warm requests, sentinels or background warming are allowed.
+reports n and a seeded bootstrap interval; the verdict uses the point estimate. The `v3` profile offers 5,910 seconds of the same
+frozen trace without raising its rate; its 18 stress/recovery cycles plan at least 520 commits in each required recovery pool
+(Sam's 2026-11-17 correction). `smoke` remains diagnostic. Exact scheduled counts, including the underfilled 26–50-fact band, are printed before a run. No keep-warm requests, sentinels or background warming are allowed.
 
 **P1 pinned reads that never block writers.**
 1. Readers and writers share one hot set: at least 50% of reads target subjects written in the previous 60 s (section 2.1 active set).

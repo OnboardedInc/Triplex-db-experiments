@@ -1,6 +1,6 @@
 (ns triplex.gateway.trace
   (:require [clojure.data.json :as json] [clojure.string :as str] [ring.core.protocols :as protocols] [triplex.gateway.jfr :as jfr]
-            [triplex.gateway.native-settings])
+            [triplex.gateway.native-settings] [triplex.gateway.native-counters :as native-counters])
   (:import [java.io BufferedWriter FileWriter File]
            [java.nio.file Files Paths]
            [java.util UUID] [org.slf4j MDC]
@@ -44,14 +44,24 @@
   (try (when-let [^BufferedWriter w @writer]
          (locking w (.write w (str (json/write-str (merge identity-fields row)) "\n"))))
        (catch Exception _ (binding [*out* *err*] (println "Triplex trace output failed; evidence incomplete")))))
-(defn flush! [] (when (realized? writer) (when-let [^BufferedWriter w @writer] (locking w (.flush w)))))
+(defn flush! []
+  (when (= "tx" (:process identity-fields)) (native-counters/drain! emit!))
+  (when (realized? writer) (when-let [^BufferedWriter w @writer] (locking w (.flush w)))))
 (when (or enabled jfr-enabled native-enabled)
   (when jfr-enabled (jfr/install! (:process identity-fields) identity-fields))
-  (let [t (Thread. ^Runnable (fn [] (while true (Thread/sleep 1000) (when jfr-enabled (jfr/clock-sample!)) (flush!)
+  (let [t (Thread. ^Runnable (fn [] (while true (Thread/sleep 1000)
+        (when (= "tx" (:process identity-fields))
+          (let [before (native-counters/status) after (native-counters/install! clock)]
+            (when (not= (:status before) (:status after))
+              (emit! {:type "native-counter-state" :at (clock) :counters {:indexAdoptions (native-counters/status)}}))))
+        (when jfr-enabled (jfr/clock-sample!)) (flush!)
         (when-let [dir (System/getenv "TRIPLEX_TRACE_DIR")]
           (when (and jfr-enabled (.exists (File. (str dir "/.finish")))) (jfr/finish! (:process identity-fields) identity-fields))))) "triplex-trace-flush")]
     (.setDaemon t true) (.start t))
-  (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable flush!)))
+  (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable (fn []
+    (when (= "tx" (:process identity-fields))
+      (emit! {:type "native-counter-state" :at (clock) :counters {:indexAdoptions (native-counters/status)}}))
+    (flush!)))))
 (defn parse-parent [value]
   (when (string? value)
     (when-let [[_ trace parent] (re-matches #"00-([0-9a-f]{32})-([0-9a-f]{16})-0[01]" value)]
@@ -122,7 +132,7 @@
                    :status (if valid "callback interval; process-wide" "unavailable: missing, empty or unsupported metric shape")}
      :memoryIndexMB (:MemoryIndexMB metrics)
      :indexJobMsec (:CreateEntireIndexMsec metrics)
-     :adoptionTimesStatus "unavailable: index-job completion is not processor adoption; no exact adoption boundary recorded"}))
+     :indexAdoptions (native-counters/status)}))
 ;; Official callback accepts unknown numeric/map metrics; no credentials or database names are recorded.
 (defn metrics [metrics]
   ;; [DX-T1-12] Why: cache and index metrics use the buffered recorder even when synchronous vendor INFO logs are quiet.

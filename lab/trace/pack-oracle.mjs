@@ -24,54 +24,116 @@ const sync = (file) => {
 // [DX-T1-8] Why: the small committed manifest must seal the retained raw bytes as well as rendered reports.
 // Rejected: a report-only checksum list that makes reviewers locate an unanchored private raw manifest.
 export async function verifiedRawManifest(directory) {
-  const raw = path.join(directory, "trace/raw"), manifest = path.join(directory, "trace/SHA256SUMS");
-  const text = fs.readFileSync(manifest, "utf8"), seen = new Set(), rows = [];
+  const raw = path.join(directory, "trace/raw"),
+    manifest = path.join(directory, "trace/SHA256SUMS");
+  const text = fs.readFileSync(manifest, "utf8"),
+    seen = new Set(),
+    rows = [];
   for (const line of text.split("\n").filter(Boolean)) {
     const match = /^([a-f0-9]{64})  (.+)$/.exec(line);
     if (!match) throw Error("Invalid raw checksum record");
     const [, expected, name] = match;
-    if (path.isAbsolute(name) || name.includes("\\") || name.split("/").some(p => !p || p === "." || p === "..") || seen.has(name))
+    if (
+      path.isAbsolute(name) ||
+      name.includes("\\") ||
+      name.split("/").some((p) => !p || p === "." || p === "..") ||
+      seen.has(name)
+    )
       throw Error("Invalid raw checksum path");
     const file = path.join(raw, name);
-    if (!fs.lstatSync(file).isFile() || fs.lstatSync(file).isSymbolicLink() || !fs.realpathSync(file).startsWith(fs.realpathSync(raw) + path.sep) || (await digest(fs.createReadStream(file))).sha256 !== expected)
+    if (
+      !fs.lstatSync(file).isFile() ||
+      fs.lstatSync(file).isSymbolicLink() ||
+      !fs.realpathSync(file).startsWith(fs.realpathSync(raw) + path.sep) ||
+      (await digest(fs.createReadStream(file))).sha256 !== expected
+    )
       throw Error("Raw checksum bytes mismatch");
-    seen.add(name); rows.push(`${expected}  trace/raw/${name}`);
+    seen.add(name);
+    rows.push(`${expected}  trace/raw/${name}`);
   }
-  const walk = (dir, prefix = "") => fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => {
-    if (e.isSymbolicLink() || (!e.isDirectory() && !e.isFile())) throw Error("Invalid raw checksum entry");
-    const name = prefix + e.name;
-    return e.isDirectory() ? walk(path.join(dir, e.name), name + "/") : [name];
-  });
+  const walk = (dir, prefix = "") =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+      if (e.isSymbolicLink() || (!e.isDirectory() && !e.isFile()))
+        throw Error("Invalid raw checksum entry");
+      const name = prefix + e.name;
+      return e.isDirectory() ? walk(path.join(dir, e.name), name + "/") : [name];
+    });
   const actualFiles = walk(raw);
-  if (actualFiles.length !== seen.size || actualFiles.some(name => !seen.has(name))) throw Error("Incomplete raw checksum manifest");
+  if (actualFiles.length !== seen.size || actualFiles.some((name) => !seen.has(name)))
+    throw Error("Incomplete raw checksum manifest");
   const journal = path.join(directory, "ORACLE-ARCHIVE.jsonl");
   if (fs.existsSync(journal)) {
     const manifest = JSON.parse(fs.readFileSync(path.join(directory, "trace-run.json"), "utf8"));
     const records = fs.readFileSync(journal, "utf8").trim().split("\n").map(JSON.parse);
-    const files = records.filter(r => r.type === "file"), end = records.at(-1);
-    if (manifest.slot !== manifest.tag || !/^[a-f0-9]{40}$/.test(manifest.source ?? "") || fs.readFileSync(path.join(directory, "head.txt"), "utf8").trim() !== manifest.source ||
-        records[0]?.type !== "oracle-archive" || end?.type !== "complete" || end.files !== files.length ||
-        records.some(r => r.tag !== manifest.tag || r.source !== manifest.source)) throw Error("Oracle checksum binding mismatch");
-    if (![manifest.startedAt, records[0].startedAt, end.at].every(Number.isFinite) || records[0].startedAt < manifest.startedAt || end.at < records[0].startedAt || end.at > Date.now() + 1000)
+    const files = records.filter((r) => r.type === "file"),
+      end = records.at(-1);
+    if (
+      manifest.slot !== manifest.tag ||
+      !/^[a-f0-9]{40}$/.test(manifest.source ?? "") ||
+      fs.readFileSync(path.join(directory, "head.txt"), "utf8").trim() !== manifest.source ||
+      records[0]?.type !== "oracle-archive" ||
+      end?.type !== "complete" ||
+      end.files !== files.length ||
+      records.some((r) => r.tag !== manifest.tag || r.source !== manifest.source)
+    )
+      throw Error("Oracle checksum binding mismatch");
+    if (
+      ![manifest.startedAt, records[0].startedAt, end.at].every(Number.isFinite) ||
+      records[0].startedAt < manifest.startedAt ||
+      end.at < records[0].startedAt ||
+      end.at > Date.now() + 1000
+    )
       throw Error("Oracle checksum clock mismatch");
     const archives = new Set();
     for (const r of files) {
-      if (r.archive !== r.original + ".gz" || path.isAbsolute(r.archive) || r.archive.includes("\\") || r.archive.split("/").some(p => !p || p === "." || p === "..") ||
-          r.originalSha256 !== r.decodedSha256 || !Number.isFinite(r.at) || r.at < records[0].startedAt || r.at > end.at || archives.has(r.archive))
+      if (
+        r.archive !== r.original + ".gz" ||
+        path.isAbsolute(r.archive) ||
+        r.archive.includes("\\") ||
+        r.archive.split("/").some((p) => !p || p === "." || p === "..") ||
+        r.originalSha256 !== r.decodedSha256 ||
+        !Number.isFinite(r.at) ||
+        r.at < records[0].startedAt ||
+        r.at > end.at ||
+        archives.has(r.archive)
+      )
         throw Error("Oracle checksum record mismatch");
       archives.add(r.archive);
       const file = path.join(directory, r.archive);
-      if (!fs.lstatSync(file).isFile() || !fs.realpathSync(file).startsWith(fs.realpathSync(directory) + path.sep)) throw Error("Oracle checksum path mismatch");
-      const packed = await digest(fs.createReadStream(file)), decoded = await digest(fs.createReadStream(file).pipe(createGunzip()));
-      if (packed.sha256 !== r.archiveSha256 || packed.bytes !== r.archiveBytes || decoded.sha256 !== r.originalSha256 || decoded.bytes !== r.originalBytes)
+      if (
+        !fs.lstatSync(file).isFile() ||
+        !fs.realpathSync(file).startsWith(fs.realpathSync(directory) + path.sep)
+      )
+        throw Error("Oracle checksum path mismatch");
+      const packed = await digest(fs.createReadStream(file)),
+        decoded = await digest(fs.createReadStream(file).pipe(createGunzip()));
+      if (
+        packed.sha256 !== r.archiveSha256 ||
+        packed.bytes !== r.archiveBytes ||
+        decoded.sha256 !== r.originalSha256 ||
+        decoded.bytes !== r.originalBytes
+      )
         throw Error("Oracle checksum bytes mismatch");
       rows.push(`${packed.sha256}  ${r.archive}`);
     }
   }
-  for (const name of ["trace/SHA256SUMS", "trace-run.json", "head.txt", "source-build-hashes.json", "driver/ns-report.json", "driver/ns-writes.jsonl", "containers.json", "driver-container.json", "config/sql.properties", "ORACLE-ARCHIVE.jsonl"]) {
+  for (const name of [
+    "trace/SHA256SUMS",
+    "trace-run.json",
+    "head.txt",
+    "source-build-hashes.json",
+    "driver/ns-report.json",
+    "driver/ns-writes.jsonl",
+    "containers.json",
+    "driver-container.json",
+    "config/sql.properties",
+    "ORACLE-ARCHIVE.jsonl",
+    "night-host-gate.json",
+  ]) {
     const file = path.join(directory, name);
     if (fs.existsSync(file)) {
-      if (!fs.lstatSync(file).isFile() || fs.lstatSync(file).isSymbolicLink()) throw Error("Invalid evidence metadata path");
+      if (!fs.lstatSync(file).isFile() || fs.lstatSync(file).isSymbolicLink())
+        throw Error("Invalid evidence metadata path");
       rows.push(`${(await digest(fs.createReadStream(file))).sha256}  ${name}`);
     }
   }

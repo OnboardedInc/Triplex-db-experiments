@@ -12,7 +12,7 @@ for ((i=1;i<=$#;i++)); do
   if [[ $arg == --idle-keep ]]; then j=$((i+1)); [[ ${!j} == none ]] || exit 2; fi
 done
 if [[ ${DX_NS_PROFILE:-smoke} == v3 ]]; then
-  export DX_MATCH_DURATION_S=5520
+  DX_MATCH_DURATION_S=$(node --import tsx lab/bench/plan.ts --seconds --strict); export DX_MATCH_DURATION_S
   node --import tsx lab/bench/plan.ts --strict
 fi
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}

@@ -19,7 +19,11 @@ import {
 import { nsPlan } from "../../../lab/bench/lib/phases.ts";
 import { generateTrace, traceDigest } from "../../../lab/bench/lib/trace.ts";
 import { applyCommitVerdicts, matchBaseline } from "../../../lab/bench/lib/verdict.ts";
-import { evaluateHostGate } from "../../../lab/trace/host-admission.mjs";
+import {
+  evaluateHostGate,
+  parseProcessTimes,
+  processCpuInterval,
+} from "../../../lab/trace/host-admission.mjs";
 import { buildHistoryGrowth } from "../../../lab/bench/lib/commands.ts";
 import { Digest } from "../../../lab/bench/lib/rng.ts";
 import {
@@ -254,7 +258,7 @@ describe("receipt-to-caller verdict", () => {
   });
 });
 
-it("strict passive host admission refuses missing counters, swapping, apps, disk and recent clock steps", () => {
+it("night admission implements the four conditions without historical pressure, app or clock-log blockers", () => {
   const samples = Array.from({ length: 60 }, (_, i) => ({
     monoMs: i * 1000,
     swapBytes: 4 * 1024 ** 3,
@@ -277,19 +281,14 @@ it("strict passive host admission refuses missing counters, swapping, apps, disk
     recentGuestClockSteps: 0,
   };
   expect(evaluateHostGate(samples, context).eligible).toBe(true);
-  for (const changed of [
-    { diskFreeBytes: 19 * 1024 ** 3 },
-    { recentGuestClockSteps: 1 },
-    { clockLogObserved: false },
-    { acPower: false },
-  ])
+  for (const changed of [{ diskFreeBytes: 19 * 1024 ** 3 }, { diskFreeBytes: NaN }])
     expect(evaluateHostGate(samples, { ...context, ...changed }).eligible).toBe(false);
   for (const changed of [
-    { swapouts: 1 },
-    { compressions: 10000 },
+    { swapBytes: 6 * 1024 ** 3 },
     { busyApps: ["Chrome"] },
     { error: "missing" },
-    { otherCpu: 60 },
+    { otherCpu: 25 },
+    { otherCpu: NaN },
   ])
     expect(
       evaluateHostGate(
@@ -298,22 +297,43 @@ it("strict passive host admission refuses missing counters, swapping, apps, disk
       ).eligible,
     ).toBe(false);
   expect(evaluateHostGate([], context).eligible).toBe(false);
+  expect(
+    evaluateHostGate(
+      samples.map((s) => ({
+        ...s,
+        pressure: 2,
+        freeInactiveBytes: 1,
+        load1: 20,
+        compressions: 20000,
+        swapouts: 1,
+      })),
+      { ...context, acPower: false, clockLogObserved: false, recentGuestClockSteps: 10 },
+    ).eligible,
+  ).toBe(true);
+  const before = parseProcessTimes(
+    " 1 01:00.00 /a/Codex\n 2 10:00.00 /a/com.apple.Virtualization.VirtualMachine",
+  );
+  const after = parseProcessTimes(
+    " 1 01:00.20 /a/Codex\n 2 10:07.00 /a/com.apple.Virtualization.VirtualMachine",
+  );
+  expect(processCpuInterval(before, after, 1000)).toBeCloseTo(20);
+  expect(() => parseProcessTimes("unreadable")).toThrow();
 });
 
 describe("frozen v3 plan", () => {
   const events = generateTrace({ seed: "ns-v2", subjects: 10000, durationS: 7200 });
-  it("refuses native admission for the specified plan's sparse required recovery windows", () => {
+  it("admits the extended plan but refuses any planned required pool below 520", () => {
     const plan = checkV3Trace(events);
-    expect(() => assertRequiredPlanCounts({ ...plan, unjudged: [] })).toThrow("recovery");
+    expect(() => assertRequiredPlanCounts(plan)).not.toThrow();
     expect(() =>
       assertRequiredPlanCounts({
         ...plan,
         counts: {
           ...plan.counts,
-          recovery: plan.counts.recovery.map((r) => ({ ...r, total: 500 })),
+          recovery: plan.counts.recovery.map((r) => ({ ...r, total: 519 })),
         },
       }),
-    ).not.toThrow();
+    ).toThrow("520");
   });
   it("retains the prefix, rate, stress cycles and exact phase offsets", () => {
     const plan = nsPlan("v3"),
@@ -325,17 +345,26 @@ describe("frozen v3 plan", () => {
       [1440, 480],
       [2040, 480],
     ]);
-    expect(plan.filter((p) => p.pool === "L1024")).toHaveLength(16);
-    expect(plan.filter((p) => p.pool === "recovery")).toHaveLength(16);
+    expect(plan.filter((p) => p.pool === "L1024")).toHaveLength(18);
+    expect(plan.filter((p) => p.pool === "recovery")).toHaveLength(18);
     expect(plan.find((p) => p.name === "hold-9")!.traceFromS! + 120).toBe(5040);
     expect(check.counts.L256).toEqual({
       total: 2149,
       bands: { "5-10": 1261, "11-25": 682, "26-50": 206 },
     });
-    expect(check.counts.L1024.total).toBe(740);
-    expect(check.counts.recovery.map((r) => r.total)).toEqual([497, 497, 487, 486, 474, 489, 482]);
+    expect(check.counts.L1024.total).toBe(854);
+    expect(check.counts.recovery.map((r) => r.total)).toEqual([557, 557, 552, 553, 540, 551, 543]);
     expect(check.complete500Coverage).toBe(false);
-    expect(check.unjudged).toHaveLength(8);
+    expect(check.unjudged).toEqual(["L256 26-50"]);
+    expect(check.offeredSeconds).toBe(5910);
+    expect(
+      plan.filter((p) => p.cycle && p.cycle >= 17).map((p) => [p.name, p.traceFromS, p.seconds]),
+    ).toEqual([
+      ["L1024-17", 5100, 45],
+      ["recovery-17", 5145, 60],
+      ["L1024-18", 5205, 45],
+      ["recovery-18", 5250, 60],
+    ]);
     expect(JSON.stringify(events.filter((e) => e.atMs < 900000))).toBe(
       JSON.stringify(
         generateTrace({ seed: "ns-v2", subjects: 10000, durationS: 900 }).filter(

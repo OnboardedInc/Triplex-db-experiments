@@ -15,7 +15,7 @@ fi
 if [[ $kind == pair ]]; then
   root=${DX_STACK_EVIDENCE:-/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H4}
   duration=${DX_MATCH_DURATION_S:-900}
-  [[ ${DX_NS_PROFILE:-smoke} != v3 ]] || duration=5520
+  if [[ ${DX_NS_PROFILE:-smoke} == v3 ]]; then duration=$(node --import tsx lab/bench/plan.ts --seconds --strict); fi
   # [DX-R3] Why: a parent cancelled while waiting for a child arm must stop that same owned child before returning.
   # Rejected: leaving a queued real-arm shell orphaned after the pair's heavy wrapper receives TERM.
   pair_child=
@@ -73,6 +73,12 @@ if [[ $kind == pair ]]; then
   pair_arm bash "$0" real "$prefix-ladder" "$@" --baseline-writes "$root/$prefix-ladder/input/ns-writes.jsonl" --match-duration-s "$duration" || ladder_rc=$?
   [[ $pair_rc != 0 ]] || pair_rc=$ladder_rc
   exit "$pair_rc"
+fi
+# [DX-T1-13] Why: a pair can cross the morning cutoff between its zero and loaded arms; check each real arm before resources exist.
+# Rejected: guarding only the outer night shell or shortening a judged phase to finish by morning.
+if [[ -n ${DX_NIGHT_WINDOW:-} ]]; then
+  night_minutes=15; [[ ${DX_NS_PROFILE:-smoke} != v3 ]] || night_minutes=125
+  node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" "$night_minutes" >/dev/null
 fi
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 agent=$(printf '%s' "$prefix" | cut -d- -f2 | tr '[:lower:]' '[:upper:]' | sed 's/^DX/DX-/')
@@ -200,7 +206,15 @@ if [[ $prefix == tx2-dxr3-* && -z ${DX_R3_PAIR_LEASE_PID:-} ]]; then
   node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),1140000)' "$$" & watchdog=$!
 fi
 run_stage() { "$@" & child=$!; wait "$child"; child=; }
+if [[ -n ${DX_NIGHT_WINDOW:-} ]]; then
+  night_remaining=$(node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" "$night_minutes")
+  node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$night_remaining" & watchdog=$!
+fi
 check_resources admitted
+if [[ -n ${DX_NIGHT_WINDOW:-} ]]; then
+  node lab/trace/host-admission.mjs "$out/night-host-gate.json" || exit 75
+  node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" "$night_minutes" >/dev/null
+fi
 eval "$(node lab/trace/components.mjs --shell)"
 if [[ $prefix == tx2-dxt1-* && ${TRIPLEX_TRACE_SYSTEM:-0} == 1 ]]; then bash lab/trace/scheduler-control.sh enable "$prefix" "$out"; fi
 if [[ $kind == functional ]]; then

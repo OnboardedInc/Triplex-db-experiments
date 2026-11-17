@@ -1,0 +1,771 @@
+{
+  "schema": "triplex.historical-reference/1",
+  "label": "H",
+  "historical": true,
+  "freshExecution": false,
+  "eligibleForNewRunVerdict": false,
+  "originalRescoreSha256": "8f6d15398168ef1b005c76b225bdcb7d65437ccab0d3de6042a087931bd07506",
+  "sealCommit": "3b80aa5dab4694c4ecbaf15a0c9638d6b8536c3c",
+  "sealPath": "lab/experiments/EXP-DX1/t1/EVIDENCE-12-SHA256SUMS",
+  "sealEntry": "p12/rescore-H-12final.json",
+  "input": {
+    "tag": "tx2-dxt1-p10-final-b-ladder",
+    "source": "f846bcd77f7858836861a5efb1d3c6fc15d2d22a",
+    "slot": "tx2-dxt1-p10-final-b-ladder",
+    "level": "summary",
+    "reportSha256": "9b4f8ba594a32da9c30c480c13635a21b37112ca35286e3f34e3b2c6fe111b6c",
+    "writesSha256": "62b7720866d5ba886b8a8a846960060184f0b3ee299d8b4a82f81bc2a88af976",
+    "anchorPath": "lab/experiments/EXP-DX1/t1/runs/tx2-dxt1-p10-final-b-ladder/SHA256SUMS",
+    "anchorSha256": "4d03e6407abe061daf9a322ba31b1d8a854c0f322d5ce56eae7be5f8dc0e449b",
+    "extraAnchors": [
+      {
+        "path": "lab/experiments/EXP-DX1/t1/EVIDENCE-10.SHA256SUMS",
+        "sha256": "4b0f458e3edab31b18b0a6bfbf365731707f8a0c5ba1152230b91f89aed0aeca"
+      }
+    ],
+    "rawSealSha256": "0954ea07089343af3ce82480d1f4d6fbca9c11c921358b38dbddf74faf427e3e",
+    "unrelatedChanges": [],
+    "qualification": "Only original anchored rescore inputs qualify this historical computation; raw/oracle archive changes are disclosed and cannot qualify a fresh oracle verdict"
+  },
+  "baseline": {
+    "tag": "tx2-dxt1-p10-final-b-zero",
+    "source": "f846bcd77f7858836861a5efb1d3c6fc15d2d22a",
+    "slot": "tx2-dxt1-p10-final-b-zero",
+    "level": "summary",
+    "reportSha256": "29c833b15e21992c3c312d86ab99b1fc138e3e42fbafaa1965aff3470996c775",
+    "writesSha256": "cd6335961f25598fb39acc28b0b2f9156b0c719c7ceb03100ec3549e663230bc",
+    "anchorPath": "lab/experiments/EXP-DX1/t1/runs/tx2-dxt1-p10-final-b-zero/SHA256SUMS",
+    "anchorSha256": "abdebd5673b85731f616abc65ea1ac577ab802c34979fb63767c8b69d861a68d",
+    "extraAnchors": [
+      {
+        "path": "lab/experiments/EXP-DX1/t1/EVIDENCE-10.SHA256SUMS",
+        "sha256": "4b0f458e3edab31b18b0a6bfbf365731707f8a0c5ba1152230b91f89aed0aeca"
+      }
+    ],
+    "rawSealSha256": "c230074bda253debae3e4b53696464dd2643c411d5bf81030905591c7ba48ebc",
+    "unrelatedChanges": [],
+    "qualification": "Only original anchored rescore inputs qualify this historical computation; raw/oracle archive changes are disclosed and cannot qualify a fresh oracle verdict"
+  },
+  "computationSource": "2409bdada6be6cb7f17d1aa71f31da90a72f01af",
+  "clock": "ack/1",
+  "minimumCommits": 500,
+  "bars": [
+    {
+      "id": "NS-P1-VIOLATIONS-MAX (L256)",
+      "value": 0,
+      "bar": "= 0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P1-GOODPUT-256-VS-64",
+      "value": 0.995609062248171,
+      "bar": ">= 1.0",
+      "pass": false,
+      "n": 1922038,
+      "denominatorN": 1930528,
+      "sampleUnit": "correct reads per side",
+      "interval90": null,
+      "intervalUnavailable": "original record lacks one-second goodput bins"
+    },
+    {
+      "id": "NS-P1-READ-P99-256-MS",
+      "value": 6.175,
+      "bar": "<= 100",
+      "pass": true,
+      "n": 1922038,
+      "sampleUnit": "correct observations",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 6.175,
+        "high": 6.207,
+        "seed": 3848504848,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      }
+    },
+    {
+      "id": "NS-P1-WRITER-P99-RATIO-256",
+      "value": 4.210986028746608,
+      "bar": "<= 1.25",
+      "pass": null,
+      "n": 46,
+      "denominatorN": 46,
+      "sampleUnit": "committed primary on each side",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "numeratorP99Ms": 102.282958984375,
+      "denominatorP99Ms": 24.28955078125,
+      "status": "UNJUDGED (n<500 on one or both sides)",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 1.4669112473615438,
+        "high": 5.161401995811261,
+        "seed": 2740892890,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "numerator": {
+          "value": 1.7313800381947935,
+          "pointPass": false,
+          "judged": false
+        },
+        "denominator": {
+          "value": 4.576398750355013,
+          "pointPass": false,
+          "judged": false
+        }
+      }
+    },
+    {
+      "id": "NS-P1-WRITER-WAIT-MAX-MS (L256)",
+      "value": 102.282958984375,
+      "bar": "<= 2000",
+      "pass": null,
+      "n": 46,
+      "sampleUnit": "committed primary",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "estimator": "exact",
+      "status": "UNJUDGED (n<500)",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 18.217041015625,
+        "high": 102.282958984375,
+        "seed": 4077409882,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "n": 45,
+        "value": 42.054443359375,
+        "pointPass": true,
+        "judged": false
+      }
+    },
+    {
+      "id": "NS-P1-VIOLATIONS-MAX (L1024)",
+      "value": 0,
+      "bar": "= 0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P1-GOODPUT-1024-VS-256",
+      "value": 1.137928477117842,
+      "bar": ">= 0.9",
+      "pass": true,
+      "n": 2187206,
+      "denominatorN": 1922038,
+      "sampleUnit": "correct reads per side",
+      "interval90": null,
+      "intervalUnavailable": "original record lacks one-second goodput bins"
+    },
+    {
+      "id": "NS-P1-WRITER-P99-RATIO-1024",
+      "value": 0.7769428368961852,
+      "bar": "<= 2",
+      "pass": null,
+      "n": 46,
+      "denominatorN": 46,
+      "sampleUnit": "committed primary on each side",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "numeratorP99Ms": 38.545166015625,
+      "denominatorP99Ms": 49.611328125,
+      "status": "UNJUDGED (n<500 on one or both sides)",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 0.5618135112790835,
+        "high": 1.7276845802829848,
+        "seed": 1541460018,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "numerator": {
+          "value": 0.6367957954411244,
+          "pointPass": true,
+          "judged": false
+        },
+        "denominator": {
+          "value": 1.3949549390351652,
+          "pointPass": true,
+          "judged": false
+        }
+      }
+    },
+    {
+      "id": "NS-P1-RECOVERY-MS",
+      "value": null,
+      "bar": "<= 60000",
+      "pass": null,
+      "n": 36,
+      "denominatorN": 36,
+      "status": "UNJUDGED (recovery window incomplete or n<500)",
+      "verdictClock": "ack/1",
+      "interval90": null,
+      "note": "offset windows pooled across stress cycles; interval is the qualifying writer ratio's",
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "1.1 P1.1 hot-set share of reads (min over ladder levels)",
+      "value": 0.5955831320872382,
+      "bar": ">= 0.5",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "1.1 P1.2 split reads straddling a frozen-trace command, all correct",
+      "value": 72423,
+      "bar": "> 0 and all correct",
+      "pass": true,
+      "note": "step 1 before the trace command's ACK, step 2 after; the driver adds no writes (RULINGS Q31b)",
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "4.1.5 fallback share per window (reported)",
+      "value": [
+        1.1965544019441616e-6, 2.4293133737536984e-5, 0.00034528764873075055, 0,
+        1.5608432299465465e-5, 0.00018242451785519974
+      ],
+      "bar": "reported",
+      "pass": null,
+      "note": "Replica-eligible reads are local; unresolved cuts use the gateway",
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "1.1 P1.3 a maintenance event in every P1 window",
+      "value": [1, 1, 1, 1, 1, 1],
+      "bar": "every window >= 1",
+      "pass": true,
+      "note": "completed request-index job with request/completion timestamps inside the measured window",
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 5-10 band p50 ms (L256)",
+      "value": 10.239,
+      "bar": "<= 10",
+      "pass": null,
+      "n": 29,
+      "sampleUnit": "committed primary",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "estimator": "histogram",
+      "status": "UNJUDGED (n<500)",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 9.727,
+        "high": 11.519,
+        "seed": 1013384965,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "n": 28,
+        "value": 10.239,
+        "pointPass": false,
+        "judged": false
+      }
+    },
+    {
+      "id": "NS-P2 5-10 band p99 ms (L256)",
+      "value": 102.282958984375,
+      "bar": "<= 50",
+      "pass": null,
+      "n": 29,
+      "sampleUnit": "committed primary",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "estimator": "histogram",
+      "status": "UNJUDGED (n<500)",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 35.630615234375,
+        "high": 102.282958984375,
+        "seed": 3808131907,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "n": 28,
+        "value": 42.054443359375,
+        "pointPass": true,
+        "judged": false
+      }
+    },
+    {
+      "id": "NS-P2 11-25 band p50 ms (L256)",
+      "value": 12.031,
+      "bar": "<= 10",
+      "pass": null,
+      "n": 16,
+      "sampleUnit": "committed primary",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "estimator": "histogram",
+      "status": "UNJUDGED (n<500)",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 11.327,
+        "high": 13.183,
+        "seed": 2747567436,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "n": 15,
+        "value": 12.031,
+        "pointPass": false,
+        "judged": false
+      }
+    },
+    {
+      "id": "NS-P2 11-25 band p99 ms (L256)",
+      "value": 17.983154296875,
+      "bar": "<= 50",
+      "pass": null,
+      "n": 16,
+      "sampleUnit": "committed primary",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "estimator": "histogram",
+      "status": "UNJUDGED (n<500)",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 15.886474609375,
+        "high": 17.983154296875,
+        "seed": 2726422822,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "n": 15,
+        "value": 16.987548828125,
+        "pointPass": true,
+        "judged": false
+      }
+    },
+    {
+      "id": "NS-P2 26-50 band p99 ms (L256, provisional)",
+      "value": 14.053466796875,
+      "bar": "<= 100",
+      "pass": null,
+      "n": 1,
+      "sampleUnit": "committed primary",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "estimator": "histogram",
+      "status": "UNJUDGED (n<500)",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 14.053466796875,
+        "high": 14.053466796875,
+        "seed": 459372895,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "n": 0,
+        "value": null,
+        "pointPass": false,
+        "judged": false
+      }
+    },
+    {
+      "id": "NS-P2 every offered command accounted",
+      "value": 0,
+      "bar": "= 0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 every oracle-valid trace command published",
+      "value": "7408/7408",
+      "bar": "all",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 typed rejections only for deliberately invalid commands",
+      "value": 0,
+      "bar": "= 0 (the trace holds no invalid commands yet)",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 typed conflicts only where the oracle finds a CAS race",
+      "value": 0,
+      "bar": "= 0 (serial per subject: the trace has no CAS race)",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 steady-state queue <= 2 s of offered rate",
+      "value": 2,
+      "bar": "<= 2.19 commands",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 queue drains within 60 s after each burst",
+      "value": [0.023116943359383413, 0.17938525390627547],
+      "bar": "every burst <= 60 s",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 read-your-own-write at the returned tx",
+      "value": 1,
+      "bar": "= 1.0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 duplicates return the original receipt",
+      "value": 1,
+      "bar": "= 1.0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 lost ACKs return the original receipt",
+      "value": 1,
+      "bar": "= 1.0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 no expired primary commands",
+      "value": 0,
+      "bar": "= 0",
+      "pass": true,
+      "n": 7408,
+      "status": "MET",
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P2 all-primary p99 ms",
+      "value": 48.241943359375,
+      "bar": "<= 50",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "committed primary",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "estimator": "exact",
+      "status": "MET",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 44.341552734375,
+        "high": 51.171142578125,
+        "seed": 1716727276,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "n": 7407,
+        "value": 47.93798828125,
+        "pointPass": true,
+        "judged": true
+      }
+    },
+    {
+      "id": "NS-P2 burst 5-10 band p50 ms",
+      "value": 8.511,
+      "bar": "<= 10",
+      "pass": true,
+      "n": 3972,
+      "sampleUnit": "committed primary",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "estimator": "histogram",
+      "status": "MET",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 8.383,
+        "high": 8.575,
+        "seed": 1703066813,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "n": 3971,
+        "value": 8.511,
+        "pointPass": true,
+        "judged": true
+      }
+    },
+    {
+      "id": "NS-P2 burst 11-25 band p50 ms",
+      "value": 10.303,
+      "bar": "<= 10",
+      "pass": false,
+      "n": 1895,
+      "sampleUnit": "committed primary",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "estimator": "histogram",
+      "status": "MISS",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 10.111,
+        "high": 10.431,
+        "seed": 2580031979,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      },
+      "leaveSlowestOut": {
+        "n": 1894,
+        "value": 10.303,
+        "pointPass": false,
+        "judged": true
+      }
+    },
+    {
+      "id": "NS-P3 gaps",
+      "value": 0,
+      "bar": "= 0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P3 per-subject order violations",
+      "value": 0,
+      "bar": "= 0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P3 visible duplicate effects",
+      "value": 0,
+      "bar": "= 0",
+      "pass": true,
+      "note": "replay attempts (allowed): 1",
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P3 resume from checkpoint replays exactly",
+      "value": true,
+      "bar": "= true",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P3 crash injection at three points",
+      "value": 3,
+      "bar": "= 3",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P3 lag p99 ms at L256",
+      "value": 22.5,
+      "bar": "<= 250",
+      "pass": null,
+      "n": 46,
+      "observations": 89,
+      "sampleUnit": "committed primary cohort; feed observations also include probe commits",
+      "minimum": 500,
+      "status": "UNJUDGED (n<500)",
+      "interval90": null
+    },
+    {
+      "id": "NS-P3 affected-subject set matches",
+      "value": 0,
+      "bar": "= 0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P3 corrections report their valid-time range",
+      "value": 1,
+      "bar": "= 1.0",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P4 weighted-mix pull p50 ms",
+      "value": 0.029,
+      "bar": "<= 5",
+      "pass": true,
+      "n": 788897,
+      "sampleUnit": "correct observations",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 0.029,
+        "high": 0.029,
+        "seed": 2091030863,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      }
+    },
+    {
+      "id": "NS-P4 weighted-mix pull p99 ms",
+      "value": 0.212,
+      "bar": "<= 25",
+      "pass": true,
+      "n": 788897,
+      "sampleUnit": "correct observations",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 0.211,
+        "high": 0.213,
+        "seed": 3628076871,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      }
+    },
+    {
+      "id": "NS-P4 largest bucket p99 ms (provisional)",
+      "value": 0.299,
+      "bar": "<= 50",
+      "pass": true,
+      "n": 116950,
+      "sampleUnit": "correct observations",
+      "interval90": null,
+      "intervalUnavailable": "original record has no complete histogram"
+    },
+    {
+      "id": "NS-P4 history flatness p99 depth10 / depth1",
+      "value": 1.0214285714285714,
+      "bar": "<= 1.1",
+      "pass": true,
+      "note": "requires complete growth to depths 3 and 10 on the full sample",
+      "n": 1517662,
+      "denominatorN": 1549084,
+      "sampleUnit": "correct reads per side",
+      "interval90": {
+        "confidence": 0.9,
+        "low": 1.0141843971631206,
+        "high": 1.028776978417266,
+        "seed": 1282454191,
+        "replicates": 512,
+        "method": "iid empirical percentile bootstrap via order-statistic ranks; ratio cohorts independent; interval reported, point estimate judged"
+      }
+    },
+    {
+      "id": "NS-P4 history flatness bytes read depth10 / depth1",
+      "value": null,
+      "bar": "<= 1.1",
+      "pass": null,
+      "note": "engine bytes read are not measured (seam); client-observed bytes are reported",
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P4 correct weighted pulls/s whole machine",
+      "value": 18345.833971389802,
+      "bar": ">= 4400",
+      "pass": true,
+      "n": 788897,
+      "sampleUnit": "correct weighted-mix pulls",
+      "interval90": null,
+      "note": "whole 8-CPU machine; per-core figure reported separately"
+    },
+    {
+      "id": "NS-P5 sweep evaluates the release (W0) and publishes through the outbox",
+      "value": false,
+      "bar": "= true",
+      "pass": false,
+      "note": "evaluate(subjectWorld, release) is not implemented; publish(evaluations) through the outbox is not implemented",
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P5 wall s for 100k subjects incl. evaluation and publication",
+      "value": null,
+      "bar": "<= 100",
+      "pass": false,
+      "note": "fetch-only diagnostic: 9 s extrapolated",
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P5 exact coverage",
+      "value": true,
+      "bar": "= true",
+      "pass": true,
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P5 post-capture mutations do not leak into the sweep",
+      "value": "10/10",
+      "bar": "all at basis",
+      "pass": true,
+      "note": "requires committed positions past capture; observed: [4788,4792,4789,4795,4790,4793,4796,4794,4797,4791]",
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    },
+    {
+      "id": "NS-P5 live read p99 during sweep / presweep",
+      "value": null,
+      "bar": "<= 1.5",
+      "pass": null,
+      "n": 0,
+      "denominatorN": 1784245,
+      "sampleUnit": "correct reads per side",
+      "interval90": null
+    },
+    {
+      "id": "NS-P5 writer commit p99 during sweep / presweep",
+      "value": null,
+      "bar": "<= 1.5",
+      "pass": null,
+      "n": 0,
+      "denominatorN": 56,
+      "sampleUnit": "committed primary on each side",
+      "minimum": 500,
+      "verdictClock": "ack/1",
+      "numeratorP99Ms": null,
+      "denominatorP99Ms": 58.70458984375,
+      "status": "UNJUDGED (n<500 on one or both sides)",
+      "interval90": null,
+      "leaveSlowestOut": {
+        "numerator": {
+          "value": null,
+          "pointPass": false,
+          "judged": false
+        },
+        "denominator": {
+          "value": null,
+          "pointPass": false,
+          "judged": false
+        }
+      }
+    },
+    {
+      "id": "NS-P5 throttled variant overlapping compaction",
+      "value": null,
+      "bar": "run",
+      "pass": false,
+      "note": "needs evaluate and an observable compaction or rebuild to overlap (seam)",
+      "n": 7408,
+      "sampleUnit": "primary cohort (non-latency obligation)"
+    }
+  ]
+}

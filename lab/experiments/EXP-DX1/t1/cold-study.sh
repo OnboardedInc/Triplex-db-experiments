@@ -50,6 +50,7 @@ esac
 printf '%s\n' "${modes[@]}" > "$out/modes.txt"
 i=0
 for mode in "${modes[@]}";do
+ [[ -z ${DX_NIGHT_WINDOW:-} ]] || node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" 40 >/dev/null
  i=$((i+1));tag=$prefix-$i-$mode
  printf 'Starting %s arm %s (%s)\n' "$study" "$i" "$mode"
  [[ $(git rev-parse HEAD) == $(cat "$out/head.txt") ]] || exit 2

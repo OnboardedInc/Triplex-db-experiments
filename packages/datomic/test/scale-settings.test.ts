@@ -4,6 +4,7 @@ import {
   populationFromArguments,
   populationSettings,
 } from "../../../lab/experiments/EXP-DX1/t1/scale-settings.mjs";
+import { V3_PLAN_ID } from "../../../lab/bench/lib/phases.ts";
 import { refreshVerdictEligibility } from "../../../lab/bench/lib/verdict.ts";
 it("binds admission to the actual rung and last explicit driver population in either argument order", () => {
   expect(populationFromArguments([])).toEqual({ subjects: 10000, zeroReaders: false });
@@ -60,7 +61,7 @@ it("a completed bar table cannot qualify an active, diagnostic, incorrect or ora
   const r: any = {
     verdict: { barsOnlyAllMet: true, clock: "ack/1" },
     verdictClock: "ack/1",
-    verdictPlanId: "ns-v3/1",
+    verdictPlanId: V3_PLAN_ID,
     status: "RUNNING",
     config: { profile: "v3", devOverrides: [] },
     oracle: {

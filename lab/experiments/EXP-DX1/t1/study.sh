@@ -70,4 +70,4 @@ for arm in off-before pair off-after;do
 done
 [[ $session_rc == 0 ]] || exit "$session_rc"
 python3 lab/experiments/EXP-DX1/h4/summarize.py "$DX_STACK_EVIDENCE/$prefix-ladder" > "$session_dir/TABLES.md"
-node lab/trace/study.mjs "$DX_STACK_EVIDENCE" "$prefix" > "$session_dir/analysis.log"
+node --import tsx lab/trace/study.mjs "$DX_STACK_EVIDENCE" "$prefix" > "$session_dir/analysis.log"

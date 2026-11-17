@@ -1,5 +1,6 @@
 import { packOracle, verifiedRawManifest } from "./pack-oracle.mjs";
 import { buildWriterStats, writerStatsMarkdown } from "./writer-stats.mjs";
+import { buildNativeCounters, nativeCountersMarkdown } from "./native-counters.mjs";
 // Command-line run manifests are validated by the report reader.
 import fs from "node:fs";
 import path from "node:path";
@@ -82,7 +83,12 @@ if (!renderOnly) {
     // [DX-T1-7] Why: helper changes can alter appended statistics while the base report renderer stays unchanged.
     // Rejected: keying recovery only by the base renderer and losing an intermediate cited writer table.
     const oldContent = createHash("sha256");
-    for (const name of ["TRACE-REPORT.md", "WRITER-STATS.json", "trace-summary.json"])
+    for (const name of [
+      "TRACE-REPORT.md",
+      "WRITER-STATS.json",
+      "NATIVE-COUNTERS.json",
+      "trace-summary.json",
+    ])
       if (fs.existsSync(path.join(run, name)))
         oldContent.update(name).update(fs.readFileSync(path.join(run, name)));
     const revision = path.join(
@@ -99,6 +105,7 @@ if (!renderOnly) {
       "trace.chrome.json",
       "trace-summary.json",
       "WRITER-STATS.json",
+      "NATIVE-COUNTERS.json",
       "SHA256SUMS",
       "INDEX.md",
     ])
@@ -112,6 +119,17 @@ if (!renderOnly) {
 }
 const copy = process.argv[3];
 const result = await buildReport(run, { copyTo: copy });
+if (!result.disabled) {
+  const counters = await buildNativeCounters(run);
+  for (const destination of [run, ...(copy ? [copy] : [])]) {
+    fs.writeFileSync(
+      path.join(destination, "NATIVE-COUNTERS.json"),
+      JSON.stringify(counters, null, 2) + "\n",
+      { flag: renderOnly ? "w" : "wx" },
+    );
+    fs.appendFileSync(path.join(destination, "TRACE-REPORT.md"), nativeCountersMarkdown(counters));
+  }
+}
 // [DX-T1-7] Why: every completed traced run must expose writer heap/GC/stall counts without another analysis command.
 // Rejected: a standalone diagnostic that leaves routine run reports unable to show the retained-heap cause.
 const benchmarkFile = path.join(run, "driver/ns-report.json");
@@ -137,6 +155,7 @@ const reportFiles = [
   "trace.html",
   "trace.chrome.json",
   "trace-summary.json",
+  ...(fs.existsSync(path.join(run, "NATIVE-COUNTERS.json")) ? ["NATIVE-COUNTERS.json"] : []),
   ...(fs.existsSync(path.join(run, "WRITER-STATS.json")) ? ["WRITER-STATS.json"] : []),
   ...(fs.existsSync(path.join(run, "COMMIT-ANATOMY.md"))
     ? ["COMMIT-ANATOMY.md", "commit-anatomy.json"]

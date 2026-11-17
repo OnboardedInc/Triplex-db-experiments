@@ -22,5 +22,6 @@ pathlib.Path(sys.argv[1],'disk-budget.json').write_text(json.dumps({'freeBytes':
 if free<needed: raise SystemExit(f'v3 lossless spill requires {needed/1024**3:.2f} GiB free; no containers created')
 PY
 [[ $plan_rc == 0 && $host_rc == 0 && $disk_rc == 0 ]] || exit 75
-export DX_NS_PROFILE=v3 DX_MATCH_DURATION_S=5520
+export DX_NS_PROFILE=v3
+DX_MATCH_DURATION_S=$(node --import tsx lab/bench/plan.ts --seconds --strict); export DX_MATCH_DURATION_S
 exec bash lab/experiments/EXP-DX1/t1/study.sh "$prefix" "$@"

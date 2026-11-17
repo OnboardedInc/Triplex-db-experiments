@@ -1,6 +1,7 @@
 // @ts-nocheck -- Recorded-run JSON is validated at this boundary.
 import fs from "node:fs";
 import { verdictMs, VERDICT_CLOCK } from "./instrument.mjs";
+import { V3_OFFER_SECONDS, V3_PLAN_ID } from "../bench/lib/phases.ts";
 import path from "node:path";
 import { records, filesUnder, percentile } from "./report.mjs";
 const [base, prefix] = process.argv.slice(2),
@@ -64,7 +65,13 @@ for (const arm of arms) {
   const off = arm.startsWith("off");
   if (m.level !== (off ? "off" : pairLevel) || (off ? !t.disabled : !t.complete))
     throw Error("Wrong/incomplete trace level");
-  if (!off && (b.config.matchDurationS !== 900 || b.config.readerLadderOnly))
+  const expectedDuration = b.config.profile === "v3" ? V3_OFFER_SECONDS : 900;
+  if (
+    !off &&
+    (b.config.matchDurationS !== expectedDuration ||
+      b.config.readerLadderOnly ||
+      (b.config.profile === "v3" && b.verdictPlanId !== V3_PLAN_ID))
+  )
     throw Error("Full pair was shortened/changed");
   if (b.config.zeroReaders !== !arm.endsWith("ladder")) throw Error("Wrong reader arm");
   let placement;
@@ -165,20 +172,20 @@ for (const arm of arms) {
     arm,
     level: m.level,
     verdictClock: VERDICT_CLOCK,
-    finishP50Ms: percentile(writes.map(w => w.latencyMs), 0.5),
-    finishP99Ms: percentile(writes.map(w => w.latencyMs), 0.99),
+    finishP50Ms: percentile(
+      writes.map((w) => w.latencyMs),
+      0.5,
+    ),
+    finishP99Ms: percentile(
+      writes.map((w) => w.latencyMs),
+      0.99,
+    ),
     placement,
     source,
     digest: b.trace.digest,
     commands: writes.length,
-    p50Ms: percentile(
-      writes.map(verdictMs),
-      0.5,
-    ),
-    p99Ms: percentile(
-      writes.map(verdictMs),
-      0.99,
-    ),
+    p50Ms: percentile(writes.map(verdictMs), 0.5),
+    p99Ms: percentile(writes.map(verdictMs), 0.99),
     swapGiB: { min: Math.min(...swaps), median: percentile(swaps, 0.5), max: Math.max(...swaps) },
     macCpu: { median: percentile(macCpu, 0.5), p99: percentile(macCpu, 0.99) },
     oracle: b.oracle,
@@ -201,7 +208,7 @@ for (const r of rows) {
 const text = [
   "# " + prefix,
   "",
-  `Source ${source}. ${partial ? "PARTIAL SESSION: closing off control refused for disk; opening control only. " : ""}One measurement hold, 200-second off references and the unchanged full 900-second zero/ladder pair. Control and pair workloads differ in duration; off figures show host/session context, not a matched reader-load improvement claim.`,
+  `Source ${source}. ${partial ? "PARTIAL SESSION: closing off control refused for disk; opening control only. " : ""}One measurement hold, 200-second off references and the full matched zero/ladder pair. Control and pair workloads differ in duration; off figures show host/session context, not a matched reader-load improvement claim.`,
   "",
   "| arm / tracing | primary p50 ms | primary p99 ms | off control p50 / p99 ms | swap GiB median (min-max) | Mac non-VM CPU median / p99 % |",
   "| --- | ---: | ---: | --- | --- | --- |",
