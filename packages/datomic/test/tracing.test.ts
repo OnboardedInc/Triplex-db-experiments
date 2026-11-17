@@ -14,6 +14,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
+import { createHash } from "node:crypto";
 import { unpackHtml } from "../../../lab/trace/viewer.mjs";
 const directories: string[] = [];
 afterEach(() => {
@@ -768,6 +769,23 @@ describe("permanent request tracing", () => {
     expect(report.coverage.atLeast95Percent).toBe(1);
     expect(report.commits).toBe(1);
     expect(readFileSync(path.join(dir, "TRACE-REPORT.md"), "utf8")).toContain(root.traceId);
+    const raw = readFileSync(path.join(dir, "trace/raw/fixture.jsonl"));
+    writeFileSync(
+      path.join(dir, "trace/SHA256SUMS"),
+      createHash("sha256").update(raw).digest("hex") + "  fixture.jsonl\n",
+    );
+    const replay = spawnSync(
+      process.execPath,
+      [
+        new URL("../../../lab/trace/finalize.mjs", import.meta.url).pathname,
+        dir,
+        "--render-only",
+        "--no-register",
+      ],
+      { cwd: dir, encoding: "utf8" },
+    );
+    expect(replay.status, replay.stderr + replay.stdout).toBe(0);
+    expect(readdirSync(dir)).not.toContain("--render-only");
   });
 });
 

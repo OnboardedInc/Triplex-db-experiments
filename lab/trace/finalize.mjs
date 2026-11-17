@@ -9,7 +9,16 @@ import { createGzip } from "node:zlib";
 import { createHash } from "node:crypto";
 import { buildReport, filesUnder } from "./report.mjs";
 import { registerRun } from "../bin/trace-store.mjs";
-const run = path.resolve(process.argv[2]);
+// [DX-T1-13] Why: an omitted copy destination must not turn a renderer flag into a directory in the caller's worktree.
+// Rejected: reading argv[3] as a path even when it is --render-only.
+const arguments_ = process.argv.slice(2),
+  knownFlags = new Set(["--render-only", "--no-register"]);
+if (arguments_.some((a) => a.startsWith("--") && !knownFlags.has(a)))
+  throw Error("Unknown finalize flag");
+const positional = arguments_.filter((a) => !knownFlags.has(a));
+if (!positional.length || positional.length > 2)
+  throw Error("Usage: finalize RUN [COPY] [--render-only] [--no-register]");
+const run = path.resolve(positional[0]);
 const raw = path.join(run, "trace/raw");
 fs.mkdirSync(raw, { recursive: true });
 const renderOnly = process.argv.includes("--render-only");
@@ -117,7 +126,7 @@ if (!renderOnly) {
         );
   }
 }
-const copy = process.argv[3];
+const copy = positional[1];
 const result = await buildReport(run, { copyTo: copy });
 if (!("disabled" in result && result.disabled)) {
   const counters = await buildNativeCounters(run);
