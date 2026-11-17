@@ -16,6 +16,37 @@ const stats = (xs) => ({
 });
 const number = (n) => (Number.isFinite(n) ? n.toFixed(3) : "unknown");
 
+// [DX-T1-14] Why: missing clock-qualified samples must not turn a multi-minute interval into one phase's PG cost.
+// Rejected: nearest surviving samples regardless of age, counter resets, or changing database identity.
+export function validPostgresBracket(phase, first, last) {
+  return !!(
+    first &&
+    last &&
+    Number.isFinite(phase.start) &&
+    Number.isFinite(phase.end) &&
+    phase.start <= phase.end &&
+    Number.isFinite(first.writerAt) &&
+    Number.isFinite(last.writerAt) &&
+    first.writerAt <= phase.start &&
+    phase.start - first.writerAt <= 35_000 &&
+    last.writerAt >= phase.end &&
+    last.writerAt - phase.end <= 35_000 &&
+    /^[1-9][0-9]*$/.test(String(first.database?.datid)) &&
+    first.database.datid === last.database?.datid &&
+    first.database?.datname === "datomic" &&
+    last.database?.datname === "datomic" &&
+    first.database?.stats_reset === last.database?.stats_reset &&
+    Object.hasOwn(first.database, "stats_reset") &&
+    (first.database.stats_reset === null || typeof first.database.stats_reset === "string") &&
+    typeof first.wal?.stats_reset === "string" &&
+    first.wal.stats_reset.length > 0 &&
+    first.wal.stats_reset === last.wal?.stats_reset &&
+    Number.isSafeInteger(first.database?.xact_commit) &&
+    Number.isSafeInteger(last.database?.xact_commit) &&
+    last.database.xact_commit >= first.database.xact_commit
+  );
+}
+
 // [DX-T1-14] Why: native counters join through the acknowledged database/t and request trace, independently of epoch clock steps.
 // Rejected: nearest-time joins, duplicate native events, or calling absent serial-point observations cache hits.
 export function nativeByCommit(manifest, writes, gateways, native) {
@@ -357,7 +388,8 @@ export async function readScaleRun(directory, { anatomyDirectory = directory } =
               .map((g) => g.attributes.databaseHash + ":" + g.attributes.datomicT),
           ).size
         : 0;
-    const commits = first && last ? last.database.xact_commit - first.database.xact_commit : null;
+    const qualified = validPostgresBracket(phase, before, after);
+    const commits = qualified ? after.database.xact_commit - before.database.xact_commit : null;
     p.gatewayCaches = Object.fromEntries(
       gatewaySnapshots
         .filter((r) => {
@@ -370,13 +402,16 @@ export async function readScaleRun(directory, { anatomyDirectory = directory } =
       samples: samples.length,
       start: first?.writerAt ?? null,
       end: last?.writerAt ?? null,
-      bracketsPhase: !!before && !!after,
+      bracketsPhase: qualified,
+      unqualifiedReason: qualified
+        ? null
+        : "No unchanged PG counter epoch bracket within 35s per phase edge",
       windowMs: first && last ? last.writerAt - first.writerAt : null,
       commits,
       acknowledgedNativeTransactions: count,
       aggregateCommitsPerTransaction: count && commits !== null ? commits / count : null,
       scope:
-        "nearest collector window bracketing this phase (up to 30s extra on each side); includes administrative samplers, heartbeat and indexing; not isolated transaction or WAL-sync count",
+        "qualified collector window within 35s of each phase edge; includes administrative samplers, heartbeat and indexing; not isolated transaction or WAL-sync count; stale/missing/reset brackets yield no ratio",
     };
   }
   const swaps = host.flatMap((r) => {

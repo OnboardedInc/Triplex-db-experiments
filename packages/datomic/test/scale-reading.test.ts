@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nativeByCommit } from "../../../lab/trace/scale-reading.mjs";
+import { nativeByCommit, validPostgresBracket } from "../../../lab/trace/scale-reading.mjs";
 
 const manifest = { tag: "tx2-dxt1-test", source: "a".repeat(40), slot: "tx2-dxt1-test" };
 const identity = { run: manifest.tag, source: manifest.source, slot: manifest.slot };
@@ -15,6 +15,57 @@ const native = {
   datomicT: "1234",
   nativeStats: { msec: 7, "apply-msec": 3, "io-stats": { reads: { ocache: 42 } } },
 };
+
+describe("phase Postgres observation brackets", () => {
+  const phase = { start: 100_000, end: 110_000 };
+  const first = {
+    writerAt: 90_000,
+    database: { datid: 16384, datname: "datomic", stats_reset: "epoch-1", xact_commit: 50 },
+    wal: { stats_reset: "wal-epoch-1" },
+  };
+  const last = {
+    writerAt: 120_000,
+    database: { ...first.database, xact_commit: 90 },
+    wal: first.wal,
+  };
+  it("accepts a nearby unchanged counter epoch on both sides of the phase", () => {
+    expect(validPostgresBracket(phase, first, last)).toBe(true);
+    expect(
+      validPostgresBracket(
+        phase,
+        { ...first, database: { ...first.database, datid: "16384", stats_reset: null } },
+        { ...last, database: { ...last.database, datid: "16384", stats_reset: null } },
+      ),
+    ).toBe(true);
+  });
+  it("refuses stale, missing, reversed, or non-bracketing observations", () => {
+    for (const [before, after] of [
+      [null, last],
+      [first, null],
+      [{ ...first, writerAt: 64_999 }, last],
+      [first, { ...last, writerAt: 145_001 }],
+      [{ ...first, writerAt: 100_001 }, last],
+      [first, { ...last, writerAt: 109_999 }],
+      [last, first],
+    ])
+      expect(validPostgresBracket(phase, before, after)).toBe(false);
+  });
+  it("refuses reset, regressing, foreign, or unidentified database counters", () => {
+    for (const database of [
+      { ...last.database, datid: 16385 },
+      { ...last.database, datname: "other" },
+      { ...last.database, stats_reset: "epoch-2" },
+      { ...last.database, xact_commit: 49 },
+      { ...last.database, xact_commit: NaN },
+    ])
+      expect(validPostgresBracket(phase, first, { ...last, database })).toBe(false);
+    expect(validPostgresBracket(phase, { writerAt: 90_000 }, { writerAt: 120_000 })).toBe(false);
+    expect(validPostgresBracket(phase, first, { ...last, wal: { stats_reset: "other" } })).toBe(
+      false,
+    );
+    expect(validPostgresBracket(phase, first, { ...last, wal: {} })).toBe(false);
+  });
+});
 
 describe("100k diagnostic counter identities", () => {
   it("joins the observed native counter to the exact acknowledged database/t and trace", () => {
