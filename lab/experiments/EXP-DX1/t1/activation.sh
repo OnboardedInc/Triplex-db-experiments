@@ -109,7 +109,9 @@ wait "$child";child=
 docker volume create "$prefix-tools" >/dev/null
 docker create --pull never --name "$prefix-extract" -v "$prefix-tools:/tool" node:22.23.2-bookworm-slim sh -c 'cp /usr/local/bin/node /tool/node; cp /usr/lib/*-linux-gnu/libstdc++.so.6 /usr/lib/*-linux-gnu/libgcc_s.so.1 /tool/' >/dev/null
 docker start -a "$prefix-extract" > "$out/tools.log";docker rm "$prefix-extract" >/dev/null
-args=(--rung "$subjects" --scope "$scope" --workers 2 --runtime-workers --seed-fingerprint --publish --publication-id "$prefix" --publication-size 32 --publication-inflight 1 --r1-publication-size 128 --r1-publication-inflight 4 --oracle-processes 2 --batch-oracle --oracle-concurrency 4 --verification-pages 2 --reader-mode replica --record-dir "$out/http" --traffic-dir "$out/traffic")
+# [DX-T1-14] Why: the native clone smoke exposed that full-history statistics are collected only by the independent journal fold.
+# Rejected: weaken the receipt's missing-history guard or count acknowledged publication commands as durable storage readback.
+args=(--rung "$subjects" --scope "$scope" --workers 2 --runtime-workers --seed-fingerprint --journal-counts --publish --publication-id "$prefix" --publication-size 32 --publication-inflight 1 --r1-publication-size 128 --r1-publication-inflight 4 --oracle-processes 2 --batch-oracle --oracle-concurrency 4 --verification-pages 2 --reader-mode replica --record-dir "$out/http" --traffic-dir "$out/traffic")
 [[ $traffic != live ]] || args+=(--live --require-healthy-baseline --traffic-offset-s 120 --baseline-ms 100000 --live-warmup-ms 10000 --reader-workers 2)
 [[ $subjects != 100000 || $operation != clone ]] || args+=(--seed-position 4338757 --activation-at-seed)
 driver=(lab/experiments/EXP-DX1/t1/activation-driver.ts "${args[@]}")

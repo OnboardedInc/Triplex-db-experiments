@@ -57,6 +57,12 @@ describe("activation diagnostic receipt", () => {
         qualifyActivation([{ ...envelope, result: { ...result, [key]: {} } }], expected),
       ).toThrow("Incomplete");
   });
+  it("refuses a completed world comparison without independent journal readback", () => {
+    for (const fullHistoryCounts of [undefined, []])
+      expect(() =>
+        qualifyActivation([{ ...envelope, result: { ...result, fullHistoryCounts } }], expected),
+      ).toThrow("Incomplete");
+  });
   it("refuses stale nonce, source, program, slot or run", () => {
     for (const key of ["nonce", "source", "programSha256", "sourceManifestSha256", "slot", "run"])
       expect(() => qualifyActivation([{ ...envelope, [key]: "stale" }], expected)).toThrow(
