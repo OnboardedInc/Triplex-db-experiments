@@ -186,6 +186,12 @@ export function summarizeCommitPhases(roots, exchanges) {
           missingExchanges: partitions.filter((p) => !p.attempts).length,
           overlappingExchanges: partitions.filter((p) => p.overlapMs > 0.001).length,
           wallMs: values((r) => r.wallMs),
+          // [DX-T1-14] Why: the population reading needs all measured layers/HTTP steps for the same primary phase cohort.
+          // Rejected: peer-only phase rows, adding quantiles, or replacing unobserved layers with zero.
+          layerMs: Object.fromEntries([...new Set(group.flatMap(r=>Object.keys(r.layers??{})))].map(layer=>[layer,values(r=>r.layers?.[layer])])),
+          stepMs: Object.fromEntries([...new Set(sequential.flatMap(p=>Object.keys(p.steps)))].map(step=>[step,stats(sequential.map(p=>p.steps[step]).filter(Number.isFinite))])),
+          typescriptShare: values(r=>r.typescriptMs/r.wallMs),
+          boundary: "offer to benchmark finish; ACK latency is separately reported without subtracting any work",
           typescriptOwnMs: values((r) => r.layers?.typescript),
           cpuMs: values((r) => r.cpuRuntimeMs),
           runqueueMs: values((r) => r.cpuRunqueueMs),

@@ -40,7 +40,7 @@ describe("commit anatomy observations", () => {
         name: "L256",
         wallMs: 40,
         writer: { facts: 20 },
-        layers: { typescript: 6 },
+        layers: { typescript: 6, postgres: null },
       },
     ];
     const exchanges = [
@@ -59,6 +59,9 @@ describe("commit anatomy observations", () => {
       nativeObserved: 0,
       nativeProcessMs: { n: 0, p50: null, p99: null },
     });
+    expect(phases.L256.layerMs.typescript).toEqual({ n: 2, p50: 4, p99: 6 });
+    expect(phases.L256.layerMs.postgres).toEqual({ n: 0, p50: null, p99: null });
+    expect(phases.L256.stepMs["peer transact wait"]).toEqual({ n: 1, p50: 12, p99: 12 });
     expect(phases["L256 / 5-10 facts"].commits).toBe(1);
     expect(phases["L256 / 5-10 facts"].peerWaitMs.p50).toBe(12);
     expect(() => summarizeCommitPhases([roots[0], roots[0]], exchanges)).toThrow("duplicate");
