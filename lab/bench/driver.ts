@@ -15,7 +15,7 @@ import { commitClocks, instrumentMetrics, verdictEnd, verdictMs, VERDICT_CLOCK }
 import { acknowledgeReceipt } from "./lib/acknowledgement.ts";
 import { pooledPhase } from "./lib/pooled-phases.ts";
 import { applyCommitVerdicts, matchBaseline, refreshVerdictEligibility } from "./lib/verdict.ts";
-import { checkV3Trace, inIntervals, intervalMs, scheduledV3Windows, type Interval } from "./lib/verdict-plan.ts";
+import { checkV3Trace, inIntervals, intervalMs, scheduledV3Windows, settledPhaseWindow, type Interval } from "./lib/verdict-plan.ts";
 import { V3_PLAN_ID, V3_OFFER_SECONDS } from "./lib/phases.ts";
 import { idlePlan, type IdleEvent } from "./lib/idle-plan.ts";
 import { IdleKeep } from "./lib/idle-keep.ts";
@@ -1474,7 +1474,7 @@ async function maintenanceEvents(traceStart: number) {
 // ---------------------------------------------------------------- analysis
 
 function windowOf(phase: any) {
-  return { from: phase.start + config.settleS * 1000, to: phase.end };
+  return settledPhaseWindow(phase.start, phase.end, config.settleS * 1000);
 }
 function judgeRead(r: ReadRecord) {
   // [DX-R3] Why: unsupported returned values are wrong reads, not transport failures.
@@ -1536,7 +1536,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const w = windowOf(phase);
     const secs = Math.max(0.001, (w.to - w.from) / 1000);
     const read = new Histogram();
-    const goodputBySecond = Array.from({ length: Math.ceil(secs) }, (_, i) => ({ correct: 0, seconds: Math.min(1, secs - i) }));
+    const goodputBySecond = w.invalid ? [] : Array.from({ length: Math.ceil(secs) }, (_, i) => ({ correct: 0, seconds: Math.min(1, secs - i) }));
     let reads = 0, correct = 0, violations = 0, errors = 0, hotReads = 0, splitReads = 0, splitForced = 0, splitCorrect = 0;
     const byBasis = [0, 0, 0];
     const routes: Record<string, number> = {};
@@ -1571,7 +1571,8 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const commits = background.filter((x) => x.scheduledAt >= w.from && x.scheduledAt < w.to && x.outcome === "committed" && !x.expired);
     const commit = new Histogram();
     for (const c of commits) commit.recordMs(verdictMs(c));
-    const matched = baseline ? matchedBaseline(baseline, w.from - ctx.traceStart, w.to - ctx.traceStart) : null;
+    const matched = baseline ? w.invalid ? { commits: 0, expected: 0, invalid: w.invalid, p50Ms: null, p99Ms: null }
+      : matchedBaseline(baseline, w.from - ctx.traceStart, w.to - ctx.traceStart) : null;
     const lag = new Histogram();
     for (const l of lagRows) if (l.at >= w.from && l.at < w.to) lag.recordMs(l.lagMs);
     const elus = new Map<number, number[]>();
@@ -1581,21 +1582,21 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const eng = engineSamples.filter((e) => e.t >= w.from && e.t < w.to);
     const maxWorkerElu = workerEluMean.length ? Math.max(...workerEluMean) : null;
     const maint = (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, phase.name, w.from, w.to) : e.t >= w.from && e.t < w.to).length;
-    const maintenanceWindows = Array.from({ length: Math.ceil(secs / 45) }, (_, i) => {
+    const maintenanceWindows = w.invalid ? [] : Array.from({ length: Math.ceil(secs / 45) }, (_, i) => {
       const from = w.from + i * 45000, to = Math.min(w.to, from + 45000);
       return { phase: phase.name, from, to, completed: (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, phase.name, from, to) : e.t >= from && e.t < to).length };
     });
     const marks = watermarkSamples.filter((s) => s.t >= w.from && s.t < w.to).map((s) => s.marks["source"] ?? 0);
     return {
-      phase: phase.name, readers: phase.readers, mode: phase.mode, windowS: Math.round(secs * 10) / 10, overlapsBurst: phase.overlapsBurst,
-      reads, correct, violations, errors, goodputBySecond, goodputPerS: correct / secs, read: read.summary(),
+      phase: phase.name, readers: phase.readers, mode: phase.mode, windowS: w.invalid ? 0 : Math.round(secs * 10) / 10, windowInvalid: w.invalid, overlapsBurst: phase.overlapsBurst,
+      reads, correct, violations, errors, goodputBySecond, goodputPerS: w.invalid ? null : correct / secs, read: read.summary(),
       hotShare: reads ? hotReads / reads : null, basisMix: { latest: byBasis[0], lastHour: byBasis[1], pastValidTime: byBasis[2] },
       split: { reads: splitReads, straddledATraceCommand: splitForced, straddledCorrect: splitCorrect },
       routing: { routes, languages, fallbackShare: reads ? (routes["fallback"] ?? 0) / reads : null, localShare: reads ? (routes["replica"] ?? 0) / reads : null, waitedReads: waited, watermarkWait: watermarkWait.summary(), watermarkWaitMs: 10 },
       buckets: Object.fromEntries(Object.entries(buckets).map(([k, h]) => [k, { ...h.summary(), meanBytes: bytesBy[k]!.sum / bytesBy[k]!.count }])),
       writer: { commits: commits.length, commit: commit.summary(), maxLatencyMs: commits.length ? Math.max(...commits.map((c) => verdictMs(c))) : null, matchedZeroReader: matched },
       feedLag: lag.summary(),
-      maintenanceEvents: maint, maintenanceWindows, maintenanceDensityMet: maintenanceWindows.every(w => w.completed >= 1),
+      maintenanceEvents: maint, maintenanceWindows, maintenanceDensityMet: !w.invalid && maintenanceWindows.every(w => w.completed >= 1),
       watermarks: marks.length ? { source: { min: coordinate(Math.min(...marks)), max: coordinate(Math.max(...marks)) } } : null,
       client: { workerEluMean, maxWorkerElu, mainElu: mainEluMean,
         processCpuMsPerLocalReadUpperBound: (routes["replica"] ?? 0) > 0 ? phase.clientCpuMs / routes["replica"] : null,

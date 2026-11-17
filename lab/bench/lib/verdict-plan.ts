@@ -3,6 +3,14 @@ import { nsPlan, V3_PLAN_ID, V3_OFFER_SECONDS } from "./phases.ts";
 import { TRACE_DEFAULTS, traceDigest, type TraceEvent } from "./trace.ts";
 
 export interface Interval { readonly from: number; readonly to: number }
+// [DX-T1-12] Why: a fast diagnostic sweep may finish before settle ends; retain its empty cohort as unjudged instead of passing a reversed interval to baseline matching.
+// Rejected: relax pooled-interval validation or extend the sweep to manufacture observations.
+export function settledPhaseWindow(start: number, end: number, settleMs: number) {
+  if (![start, end, settleMs].every(Number.isFinite) || end < start || settleMs < 0)
+    throw Error("Invalid phase bounds or settle period");
+  const from = start + settleMs;
+  return { from, to: end, invalid: from >= end ? "phase ended before a settled observation window existed" : null };
+}
 export const factBand = (n: number) => n <= 10 ? "5-10" : n <= 25 ? "11-25" : "26-50";
 export function checkedIntervals(intervals: readonly Interval[]): Interval[] {
   const result = [...intervals].sort((a, b) => a.from - b.from);

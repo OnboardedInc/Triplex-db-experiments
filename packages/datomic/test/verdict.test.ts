@@ -12,6 +12,7 @@ import {
   checkV3Trace,
   assertRequiredPlanCounts,
   checkedIntervals,
+  settledPhaseWindow,
   poolRows,
   scheduledV3Windows,
 } from "../../../lab/bench/lib/verdict-plan.ts";
@@ -174,6 +175,16 @@ describe("receipt-to-caller verdict", () => {
     expect(matchBaseline([], [{ from: 100, to: 200 }], expected, 200, "ack").invalid).toContain(
       "missing",
     );
+  });
+  it("leaves a sweep that finishes before settle unjudged without relaxing interval guards", () => {
+    const empty = settledPhaseWindow(640223.368, 641565.323, 2000);
+    expect(empty.invalid).toContain("settled observation");
+    expect(empty.from).toBeGreaterThan(empty.to);
+    expect(() => checkedIntervals([empty])).toThrow("Invalid");
+    expect(settledPhaseWindow(10, 12, 2).invalid).not.toBeNull();
+    expect(settledPhaseWindow(10, 30, 2)).toEqual({ from: 12, to: 30, invalid: null });
+    expect(() => settledPhaseWindow(30, 10, 2)).toThrow("Invalid phase");
+    expect(() => settledPhaseWindow(10, 30, -2)).toThrow("Invalid phase");
   });
   it("never rescales expired or missing expiration metadata into a clean publication result", () => {
     const report = () => ({
