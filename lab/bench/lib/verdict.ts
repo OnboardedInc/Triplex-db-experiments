@@ -139,7 +139,9 @@ export function applyCommitVerdicts(report: any, writes: readonly any[], baselin
     const quantile = (p: string, text: string, key: string, q = 0.99) => {
       const bar = find(p, text), h = hist(key);
       if (!bar) return;
-      Object.assign(bar, { n: h?.count ?? null, sampleUnit: "correct observations", interval90: h ? bootstrap90(histogramDistribution(h), q, text) : null,
+      const [phaseName, metric] = key.split("."), summary = phase(phaseName!);
+      const count = metric === "read" ? summary?.read?.count : summary?.buckets?.[metric!]?.count;
+      Object.assign(bar, { n: h?.count ?? count ?? null, sampleUnit: "correct observations", interval90: h ? bootstrap90(histogramDistribution(h), q, text) : null,
         intervalUnavailable: h ? undefined : "original record has no complete histogram" });
     };
     quantile("P1", "NS-P1-READ-P99-256-MS", "L256.read");
@@ -171,7 +173,7 @@ export function applyCommitVerdicts(report: any, writes: readonly any[], baselin
       interval90: lagHist ? bootstrap90(histogramDistribution(lagHist, "feed-lag/1"), 0.99, lag.id) : null });
     const first900 = good.filter(w => w.offsetMs < 900000);
     report.verdictDiagnostics = { prefix900: { count: first900.length,
-      p99Ms: percentile(distribution(values(first900), id, "exact"), 0.99) },
+      p99Ms: percentile(distribution(values(first900), id, "exact"), 0.99), interval90: bootstrap90(distribution(values(first900), id, "exact"), 0.99, "prefix900") },
       blocks: report.phases.filter((p: any) => p.pool === "L256" || p.pool === "L1024").map((p: any) => {
         const xs = good.filter(w => w.offsetMs >= p.start - report.traceStartAbsMs + report.config.settleS * 1000 && w.offsetMs < p.end - report.traceStartAbsMs);
         const d = distribution(values(xs), id), point = percentile(d, 0.99), pooled = find("P1", `NS-P1-WRITER-P99-RATIO-${p.pool.slice(1)}`);
@@ -186,7 +188,8 @@ export function applyCommitVerdicts(report: any, writes: readonly any[], baselin
   }
   report.verdictClock = id;
   for (const p of Object.values(priorities) as any[]) for (const b of p.bars ?? []) {
-    b.n ??= good.length;
+    // [DX-T1-12] Why: an explicitly unknown read count is not the primary-commit count. Rejected: nullish fallback that invents a histogram denominator in historical rescoring.
+    if (!("n" in b)) b.n = good.length;
     b.sampleUnit ??= "primary cohort (non-latency obligation)";
   }
   report.verdict = { schema: "ns-verdict/3", minimumCommits: minimum, clock: id,

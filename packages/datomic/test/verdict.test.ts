@@ -216,6 +216,42 @@ describe("receipt-to-caller verdict", () => {
       ).toBe(expected);
     }
   });
+  it("uses a recorded read count and preserves an unknown one when the histogram is absent", () => {
+    for (const count of [12345, undefined]) {
+      const r: any = {
+        config: { profile: "smoke", settleS: 2 },
+        traceStartAbsMs: 0,
+        phases: [{ name: "p4mix", stats: { buckets: { "bucket:large": { count } } } }],
+        priorities: {
+          P1: { bars: [], ladder: [] },
+          P2: { bars: [] },
+          P3: { bars: [] },
+          P5: { bars: [] },
+          P4: {
+            bars: [
+              {
+                id: "NS-P4 largest bucket p99 ms (provisional)",
+                value: 1,
+                bar: "<= 50",
+                pass: true,
+              },
+            ],
+          },
+        },
+      };
+      applyCommitVerdicts(
+        r,
+        Array.from({ length: 500 }, (_, i) => ({ ...row(i, i * 1000), facts: 7 })),
+        null,
+        [],
+      );
+      const b = r.priorities.P4.bars[0];
+      expect(b.n).toBe(count ?? null);
+      expect(b.interval90).toBeNull();
+      expect(b.intervalUnavailable).toContain("no complete histogram");
+      expect(b.sampleUnit).toBe("correct observations");
+    }
+  });
 });
 
 it("strict passive host admission refuses missing counters, swapping, apps, disk and recent clock steps", () => {
