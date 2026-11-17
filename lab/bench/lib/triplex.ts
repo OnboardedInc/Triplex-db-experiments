@@ -64,7 +64,9 @@ export async function openTriples(
     // [DX-R3-P9] Why: the writer bisection varies only the immutable policy at fresh scope creation.
     // Rejected: changing adapter defaults or mutating the policy of existing data.
     const creator = new api.DatomicClient(url);
-    try { await creator.create(runtimeApi.DatabaseScope.test(scopeName), process.env.TRIPLEX_DATOMIC_LAYOUT ?? "legacy", process.env.DX_STRICT_RECORD_CLOCKS !== "0"); }
+    // [DX-T1-14] Why: a cold 100k scope reopen took 5.4s; startup must use the runtime's 35s initialization allowance.
+    // Rejected: repeat/prefetch the request, change the stored strict policy, or extend any later read deadline.
+    try { await creator.create(runtimeApi.DatabaseScope.test(scopeName), process.env.TRIPLEX_DATOMIC_LAYOUT ?? "legacy", process.env.DX_STRICT_RECORD_CLOCKS !== "0", 35_000); }
     finally { creator.close(); }
     return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, serverRecordTime: process.env.DX_SERVER_RECORD_TIME !== "0", predecessorCacheBytes: WRITER_PREDECESSOR_CACHE_MIB * 1024 ** 2, predecessorAttributes: isMainThread ? NS_PREDECESSOR_ATTRIBUTES : [], ...(!isMainThread && workerData?.entityCacheBytes ? { entityCacheBytes: workerData.entityCacheBytes } : {}), ...(process.env.TRIPLEX_DATOMIC_LAYOUT ? { layout: process.env.TRIPLEX_DATOMIC_LAYOUT } : {}), ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
   })() : await qualification.loadQualificationBackend(lane);

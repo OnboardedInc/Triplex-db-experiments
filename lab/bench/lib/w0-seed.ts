@@ -98,6 +98,13 @@ export async function seedW0(
   checkpoint?: () => Promise<void>,
   concurrency = 1,
   serialPrefix = 0,
+  range?: {
+    from: number;
+    through: number;
+    latest: Map<string, string>;
+    discardLog?: boolean;
+    boundedState?: boolean;
+  },
 ) {
   // [DX-H5] Why: W0's immutable fingerprint includes reference commit positions.
   // Rejected: silently accepting reordered concurrent seed commands as the reference world.
@@ -105,14 +112,20 @@ export async function seedW0(
     throw Error("invalid seed concurrency");
   if (!Number.isSafeInteger(serialPrefix) || serialPrefix < 0)
     throw Error("invalid serial seed prefix");
-  if ((await comp.currentPosition()) !== 0) throw new Error("W0 seed requires fresh scope");
+  // [DX-S5] Why: ranges resume only at the observed dense head, with scalar identities restored from durable journals.
+  // Rejected: replaying committed writes (duplicates can conceal an incorrect recovery position).
+  const from = range?.from ?? 0;
+  const through = range?.through ?? W0.populationBasis(W0.rung(N)).tx;
+  if (!Number.isSafeInteger(from) || !Number.isSafeInteger(through) || from < 0 || through < from)
+    throw Error("invalid seed range");
+  if ((await comp.currentPosition()) !== from) throw new Error("W0 seed head mismatch");
   const seedStarted = performance.now();
   const Rseed = W0.rung(N);
-  const fd = fs.openSync(logFile, "wx"),
-    latest = new Map<string, string>();
+  const fd = fs.openSync(logFile, range?.discardLog ? "w" : "wx"),
+    latest = range?.latest ?? new Map<string, string>();
   let assertions = 0,
     retractions = 0,
-    position = 0;
+    position = from;
   const commandsHash = (await import("node:crypto")).createHash("sha256");
   // [DX-H6] Why: submit the one reference stream in order, retaining bounded ACKs and scalar dependencies.
   // Rejected: per-subject concurrent producers (their arrival positions differ from the reference).
@@ -123,14 +136,14 @@ export async function seedW0(
     const { c, operations, commandId, ack } = pending.shift()!;
     const result = await ack;
     if (!result.ok || result.value.position !== c.position) {
-      fs.writeFileSync(
-        logFile + ".failure.json",
+      const failure =
         JSON.stringify(
           { expectedPosition: c.position, commandId, operations, result },
           (_key, value) => (typeof value === "bigint" ? value.toString() : value),
           2,
-        ) + "\n",
-      );
+        ) + "\n";
+      if (range?.discardLog) console.error(failure);
+      else fs.writeFileSync(logFile + ".failure.json", failure);
       if (!result.ok) throw new Error(`seed ${c.position}: ${result.tag}`);
       throw new Error(`reference position mismatch ${c.position} != ${result.value.position}`);
     }
@@ -141,17 +154,38 @@ export async function seedW0(
     assertions += c.rows.length;
     retractions += operations.length - c.rows.length;
     position = c.position;
-    const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
-    fs.writeSync(fd, line);
-    commandsHash.update(line);
+    // [DX-S5] Why: the discarded receipt stream is neither evidence nor an acceptance input; canonicalizing it saturated the seed driver.
+    // Rejected: hashing unretained bytes while the real stored-world and native-history checks wait.
+    if (!range?.discardLog) {
+      const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
+      fs.writeSync(fd, line);
+      commandsHash.update(line);
+    }
     if (position % 1000 === 0)
       console.error(
-        `[DX-H6 seed] ${position} commands, ${(position / ((performance.now() - seedStarted) / 1000)).toFixed(1)} commands/s, window ${concurrency}`,
+        `[DX-H6 seed] ${position} commands, ${((position - from) / ((performance.now() - seedStarted) / 1000)).toFixed(1)} commands/s, window ${concurrency}`,
       );
     await checkpoint?.();
   };
+  let activeRoot: string | undefined;
+  const completedRoots = new Set<string>();
   try {
     for (const c of seedCommands(N)) {
+      if (range?.boundedState) {
+        // [DX-S5] Why: W0 finishes each root before the next; past scalar IDs can never be needed by later seed commands.
+        // Rejected: retaining tens of millions of answer scalar IDs until the last subject (unbounded checkpoint/heap).
+        const root = c.rows[0]![0];
+        if (root !== activeRoot) {
+          if (completedRoots.has(root)) throw Error("seed root was revisited");
+          if (activeRoot !== undefined) completedRoots.add(activeRoot);
+          if (c.position > from) latest.clear();
+          activeRoot = root;
+        }
+        if (c.position > from && c.rows.some(([e]) => e !== root && !e.startsWith(root + "/")))
+          throw Error("seed command is not root-local");
+      }
+      if (c.position <= from) continue;
+      if (c.position > through) break;
       while (
         pending.length >= (c.position <= serialPrefix ? 1 : concurrency) ||
         c.rows.some(([e, a]) => !many.has(a) && pendingKeys.has(e + "\0" + a))
@@ -190,9 +224,8 @@ export async function seedW0(
     while (pending.length) await drain();
   } finally {
     const unresolved = await Promise.allSettled(pending.map((p) => p.ack));
-    if (pending.length)
-      fs.writeFileSync(
-        logFile + ".unconsumed.ndjson",
+    if (pending.length) {
+      const unresolvedText =
         pending
           .map((p, i) =>
             JSON.stringify(
@@ -205,13 +238,15 @@ export async function seedW0(
               (_key, value) => (typeof value === "bigint" ? value.toString() : value),
             ),
           )
-          .join("\n") + "\n",
-      );
+          .join("\n") + "\n";
+      if (range?.discardLog) console.error(unresolvedText);
+      else fs.writeFileSync(logFile + ".unconsumed.ndjson", unresolvedText);
+    }
     fs.closeSync(fd);
   }
   const R = W0.rung(N),
     basis = W0.populationBasis(R);
-  if (position !== basis.tx) throw new Error("population basis mismatch");
+  if (position !== through) throw new Error("population range mismatch");
   const commandWallMs = performance.now() - seedStarted;
   const countsStarted = performance.now();
   const counts = await comp.storeCounts();
@@ -225,22 +260,26 @@ export async function seedW0(
     requestedInFlight: concurrency,
     peakInFlight,
     commandWallMs,
-    commandCommandsPerS: position / (commandWallMs / 1000),
+    ...(range
+      ? { fromPosition: from, throughPosition: through, seededCommands: position - from }
+      : {}),
+    commandCommandsPerS: (position - from) / (commandWallMs / 1000),
     countsWallMs,
     spec: "W0-1.1.2",
     seed: "W0-pop-1",
     N,
     L: R.L,
     K: R.K,
-    basis,
+    basis: range ? { ...basis, tx: through } : basis,
     assertions,
     retractions,
     commands: position,
-    logSha256: commandsHash.digest("hex"),
+    logSha256: range?.discardLog ? "not-recorded" : commandsHash.digest("hex"),
+    receiptLogRetained: !range?.discardLog,
     counts,
     releaseHashes: [W0.R1.hash, W0.R2.hash, W0.R3.hash],
     wallMs: performance.now() - seedStarted,
-    commandsPerS: position / ((performance.now() - seedStarted) / 1000),
+    commandsPerS: (position - from) / ((performance.now() - seedStarted) / 1000),
     mapper: sha256(fs.readFileSync(new URL("./w0-seed.ts", import.meta.url))),
   };
 }

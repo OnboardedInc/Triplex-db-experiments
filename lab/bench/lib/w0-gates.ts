@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
 import { canonical, sha256 } from "./w0-world.ts";
 export function equalBytes(gate: string, observed: string, expected: string) {
@@ -27,12 +27,11 @@ export function requireFingerprint(observed: any, oracle: any, N: number) {
       throw new Error("G0 fingerprint mismatch: " + k);
 }
 export class DomainOracle {
-  child = spawn("python3", ["-I", new URL("./w0-oracle.py", import.meta.url).pathname], {
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+  child: ChildProcessWithoutNullStreams;
   queue: { resolve: (s: string) => void; reject: (e: any) => void }[] = [];
   error: Error | undefined;
-  constructor() {
+  constructor(entrypoint = new URL("./w0-oracle.py", import.meta.url).pathname) {
+    this.child = spawn("python3", ["-I", entrypoint], { stdio: ["pipe", "pipe", "pipe"] });
     let stderr = "";
     this.child.stderr.on("data", (d) => (stderr += d));
     createInterface({ input: this.child.stdout }).on("line", (line) => {
@@ -62,6 +61,24 @@ export class DomainOracle {
   }
   close() {
     this.child.stdin.end();
+  }
+}
+// [DX-S5] Why: after activation the driver has idle cores, but one Python pipe serialized the full 100k oracle.
+// Rejected: sampling or changing O-DOMAIN; each isolated child receives the original complete request bytes.
+export class DomainOraclePool {
+  readonly children: DomainOracle[];
+  private next = 0;
+  constructor(entrypoint: string | undefined, count = 1) {
+    if (!Number.isSafeInteger(count) || count < 1 || count > 4)
+      throw Error("invalid oracle process count");
+    this.children = Array.from({ length: count }, () => new DomainOracle(entrypoint));
+  }
+  call(op: string, input: unknown): Promise<string> {
+    const child = this.children[this.next++ % this.children.length]!;
+    return child.call(op, input);
+  }
+  close() {
+    for (const child of this.children) child.close();
   }
 }
 export function wireRecord(r: any) {
