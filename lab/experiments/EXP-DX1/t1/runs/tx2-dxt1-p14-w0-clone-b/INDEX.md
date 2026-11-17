@@ -6,4 +6,4 @@ Fresh clone of the sealed 1k W0 source, current stack, source `c165501b0b77c9301
 
 All 1,000 worlds, 1,000 independent Python outputs and 1,000 durable published states compared equal. The independent journal fold matched stored history counts. Input position 42,775; published position 42,786. The receipt binds this attempt's nonce, source/build manifest and exact log SHA256.
 
-Reports/receipt and source hashes are included here; original logs, compressed traces, image IDs, clone checksums and source readback remain under `$EVIDENCE_ROOT/DX-T1/tx2-dxt1-p14-w0-clone-b/`. Cleanup exited zero with an empty owned inventory and no lease. No timing acceptance is inferred from this 1k smoke.
+The index and checksums are committed here; the exact receipt, source hashes, original logs, compressed traces, image IDs, clone checksums and source readback remain under `$EVIDENCE_ROOT/DX-T1/tx2-dxt1-p14-w0-clone-b/`. Cleanup exited zero with an empty owned inventory and no lease. No timing acceptance is inferred from this 1k smoke.
