@@ -2105,3 +2105,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   per burst grew 23, 28, 29, 26, 50, 131, 171, 86, 136, 180. Of the slow burst time, 58.7% is the driver (scheduler
   lateness 51 s, same-subject waits 25 s, main-thread GC), 19.9% socket and callback, 21.4% gateway and peer. The
   read-your-own-write checks backed up to 1,378 queued and 450 s. A first driver fix did not show a gain on a busy host.
+
+## 2026-11-18 19:50 UTC (14:50 local): first bare-metal arm in; part 15 done; DX-DRV1 launched
+
+- **Bare metal, v3 zero arm at 10,000 subjects (`tx2-dxt1-bm1-pair-a-zero`, source `97fa9123`, ACK clock, n=38,826).**
+  L256 pool: 5-10 band p50 4.863 [4.74, 4.99], p99 21.375; 11-25 band p50 6.431 [6.27, 6.59], p99 54.271 [28.93, 56.83]
+  (n=682); 26-50 p99 49.151 (n=206, unjudged); burst medians 3.647 / 5.151; feed lag p99 22.399; all-commit p99
+  132.461 [106.23, 163.85] (burst p99 185 to 198, max 825); seed 93.8 s. Disk: 8 KiB write + fdatasync p50 0.0265 ms.
+  Reading: the Mac's median misses were the Mac (9.343 / 11.071 there); the all-commit tail is not (109.129 there).
+  The ladder arm of the pair is running; one arm is not a verdict.
+- **Part 15 finished 14:38 local (`10a39538`, pushed; `REPORT-15.md`).** Night arm admission retries for 20 minutes and
+  every finished arm is kept; follower reopen fixed (16 of 16 HTTP 200 at 100,000 subjects); 100,000 subjects now
+  finishes in the 16 GiB guest with zero and 16 readers (driver 6.5 GiB cap); a complete 64-reader arm is still owed;
+  cold-read candidates written (double the object cache; short unique identity instead of history AVET scans).
+- **Night runner:** outer retries now end at 01:45 and a VM restart keeps the Docker context (`--activate=false`), both
+  from part 15's advice. It also stops and restores the default colima VM (local dev) for the window.
+- **DX-DRV1 (Codex gpt-6.2-sol, max; branch `exp/DX-DRV1-driver-tail`, brief `DX-DRV1.md`)**: attribute the tail on the
+  bare-metal arm, fix the driver's share behind an option, leave a three-arm server A/B script. Stops 18:50 local.
+- Cloud spend at 14:26 local: 2.98 h, $3.25.
