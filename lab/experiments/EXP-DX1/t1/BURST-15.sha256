@@ -1,0 +1,17 @@
+806280cf04763f3ff73c74efb676d5628efcfe1ff43734bdd9e82f6063f1163a  p15/broadcast-unit.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  p15/burst-a-session.log
+fb3669a9ef7be8aecbe9dbf6f9288c871f6a6c66f59c1a0d791b1b14ce3b36cc  p15/night-tail-bound.json
+76bfd04785b7c32ced00d7227e053085550ff80dac288a9af05018efda849bbb  p15/night-tail-bound.log
+6fa14bce23a6721583fe3162852283544bd424a3caff0e2d7d8affeaba8dabb5  p15/night-tail-bound.mjs
+c5c867b238af3c3962abdd8060081cc9e3ea52acbc7854f7d91928e1deed4da9  tx2-dxt1-night-20261117-023035297-pair1-zero/SHA256SUMS
+4d03e6407abe061daf9a322ba31b1d8a854c0f322d5ce56eae7be5f8dc0e449b  tx2-dxt1-p10-final-b-ladder/SHA256SUMS
+abdebd5673b85731f616abc65ea1ac577ab802c34979fb63767c8b69d861a68d  tx2-dxt1-p10-final-b-zero/SHA256SUMS
+5c72472f636bd094bf9e4793e7baed26dc7e27a60186831de5978e3e33cef4a3  tx2-dxt1-p15-burst-a-1-baseline/SHA256SUMS
+6e147de02b83564c1f94113b3b5964c0ae04c278cc929c51972543f6eca453fa  tx2-dxt1-p15-burst-a-2-candidate/SHA256SUMS
+d7992c549b597bd28b4e64da88b565b10b40cc1524e5eed0a9d39d6c270e1c3e  tx2-dxt1-p15-burst-a-3-baseline/SHA256SUMS
+9fcb378e367d5d277112cfa59b1617a15d1372d4d4a7c1c290d16cc8833f6931  tx2-dxt1-p15-burst-a-session/TRIAL.SHA256SUMS
+1b86140a5ecd49892e32c7ba044ede317151193a6eaf9ea439fa9e31c2ee2787  tx2-dxt1-p15-burst-a-session/TRIAL.json
+9015947b51fc4427783c3bfbff4a3d383473df534873b4bdca5b50160abf6074  tx2-dxt1-p15-burst-a-session/TRIAL.md
+aff46acc5db2372badc54aefb80d40cee6fa53c4499e1dc1620da65f9a0b6a3a  tx2-dxt1-p15-burst-a-session/analysis.log
+34b74da70dd47c76480a15cde4bde99efe2d1a2ecf1dc377b757bb5f089a6317  tx2-dxt1-p15-burst-a-session/head.txt
+0ec070407bdf2e4157eec48d216f8560e6cb52bc3a35638ac757a3a5e1c2c20a  tx2-dxt1-p15-burst-a-session/request.json
