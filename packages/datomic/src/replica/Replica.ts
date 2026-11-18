@@ -359,7 +359,7 @@ export class Replica {
           position: cut,
           reset: true,
           valid: true,
-          changes: [...next].map(([id, e]) => [id, undefined, e] as const),
+          changes: Array.from(next, ([id, e]) => [id, undefined, e] as const),
         });
         this.advance(cut);
       } catch (e) {

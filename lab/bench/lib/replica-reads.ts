@@ -17,6 +17,8 @@ const api = await import(pathToFileURL(`${REPO}/packages/datomic/dist/index.js`)
 if (api.REPLICA_ROW_WIDTH !== 56) throw Error("Replica packed API/build layout mismatch");
 type Prepared = PackedEntity & {
   stats: SharedArrayBuffer;
+  statsOffset?: number;
+  statsBytes?: number;
   refs: readonly { id: string; from: number; to: number }[];
   additionalBytes: number;
   publicComplete: boolean;
@@ -29,6 +31,22 @@ function freezePublic<T>(value: T): T {
   return value;
 }
 const STAT_WIDTH = 64;
+
+// [DX-T1-15] Why: share fixed-width statistics from the initial population in immutable slices.
+// Rejected: a backing store and wrapper per entity during 100k bootstrap, or pinning a slab for each later short-lived update.
+export class BootstrapStatsSlabs {
+  private buffer = new SharedArrayBuffer(0);
+  private offset = 0;
+  take(bytes: number): DataView<SharedArrayBuffer> {
+    if (this.offset + bytes > this.buffer.byteLength) {
+      this.buffer = new SharedArrayBuffer(Math.max(1024 ** 2, bytes));
+      this.offset = 0;
+    }
+    const view = new DataView(this.buffer, this.offset, bytes);
+    this.offset += bytes;
+    return view;
+  }
+}
 
 // [DX-R3] Why: public callers see the gateway Triple contract, including actual Effect Options.
 // Rejected: returning physical positions or numeric interval ends as a different public payload.
@@ -76,7 +94,7 @@ function allRows(id: string, packed: PackedEntity) {
 }
 // [DX-R3] Why: shared numeric prefix contributions hash each fact once; references keep one interval each.
 // Rejected: JS object summaries plus repeated reference strings for every boundary/version (D exhausted the 2 GiB heap).
-export function prepareEntity(id: string, packed: PackedEntity): Prepared {
+export function prepareEntity(id: string, packed: PackedEntity, slabs?: BootstrapStatsSlabs): Prepared {
   type Part = { a: number; b: number; bytes: number; stamp: number; stamps: number };
   const events = new Map<number, { sign: number; part: Part }[]>();
   const refs: { id: string; from: number; to: number }[] = [];
@@ -119,8 +137,8 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
     if (row.value.type === "ref") refs.push({ id: row.value.value, from, to });
   }
   const bounds = [...new Set([-Infinity, Infinity, ...events.keys()])].sort((a, b) => a - b);
-  const stats = new SharedArrayBuffer((bounds.length - 1) * STAT_WIDTH),
-    view = new DataView(stats);
+  const bytesNeeded = (bounds.length - 1) * STAT_WIDTH;
+  const view = slabs ? slabs.take(bytesNeeded) : new DataView(new SharedArrayBuffer(bytesNeeded));
   let a = 0,
     b = 0,
     facts = 0,
@@ -148,10 +166,11 @@ export function prepareEntity(id: string, packed: PackedEntity): Prepared {
   return {
     ...packed,
     publicComplete,
-    stats,
+    stats: view.buffer,
+    ...(slabs ? { statsOffset: view.byteOffset, statsBytes: view.byteLength } : {}),
     refs,
     additionalBytes:
-      256 + stats.byteLength + refs.reduce((n, ref) => n + 96 + ref.id.length * 2, 0),
+      256 + view.byteLength + refs.reduce((n, ref) => n + 96 + ref.id.length * 2, 0),
   };
 }
 // [DX-R3-P8] Why: cached worlds retain packed versions, never materialized public rows from another read.
@@ -268,7 +287,7 @@ export class ReplicaReader {
           if (!prepared.stats || !prepared.publicComplete) { complete = false; return []; }
           let view = statViews.get(packed);
           if (!view) {
-            view = new DataView(prepared.stats);
+            view = new DataView(prepared.stats, prepared.statsOffset, prepared.statsBytes);
             statViews.set(packed, view);
           }
           let lo = 0,
@@ -363,7 +382,11 @@ export class ReplicaReadHost {
   readonly timings: Map<number, { availableAt?: number; receivedAt: number }>;
   private closeClient: (() => void) | undefined;
   private listeners = new Set<(delta: ReadDelta) => void>();
-  private constructor(source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean, clockEnds = new Map<number, number>(), timings = new Map<number, { availableAt?: number; receivedAt: number }>()) {
+  private constructor(
+    source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean,
+    clockEnds: Map<number, number>, timings: Map<number, { availableAt?: number; receivedAt: number }>,
+    compactBootstrap: boolean,
+  ) {
     this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks);
     this.times = times;
     this.clockEnds = clockEnds;
@@ -376,16 +399,20 @@ export class ReplicaReadHost {
       const clock = update.reset && initialized ? NaN : times.get(update.position);
       if (update.reset) initialized = true;
       if (update.reset && !update.valid) times.clear();
+      // [DX-T1-15] Why: before the first reader subscribes, prepare the verified bootstrap in the retained index directly.
+      // Rejected: keeping both full deltas alive, or delivering an unprepared delta to an already subscribed reader.
+      const slabs = compactBootstrap && update.reset && update.valid && !this.listeners.size ? new BootstrapStatsSlabs() : undefined;
       const delta: ReadDelta = {
         ...update,
-        changes: update.changes.map(([id, previous, entity]: any) => [
+        changes: slabs ? update.changes : update.changes.map(([id, previous, entity]: any) => [
           id,
           previous,
           prepareEntity(id, entity),
         ]),
         ...(clock !== undefined && (!update.reset || Number.isFinite(clock)) ? { recordTime: clock, clockEnd: clockEnds.get(update.position) } : {}),
       };
-      traceSync("replica.apply-delta", () => this.index.apply(delta));
+      traceSync("replica.apply-delta", () => this.index.apply(delta,
+        slabs ? (id, entity) => prepareEntity(id, entity, slabs) : undefined));
       if (delta.valid) this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now(), ...timings.get(delta.position) });
       timings.delete(delta.position);
       times.delete(update.position);
@@ -421,7 +448,9 @@ export class ReplicaReadHost {
     const capability = await client.request("POST", `/v2/db/${db.db}/reach-many`, {
       replicaCapability: true, basis: { recordedPosition: initial.position, validAt: Date.now() },
     });
-    const host = new ReplicaReadHost(source, times, historyBytes, capability.supported === true && capability.strictRecordClocks === true, clockEnds, timings);
+    const host = new ReplicaReadHost(source, times, historyBytes,
+      capability.supported === true && capability.strictRecordClocks === true, clockEnds, timings,
+      roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1");
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
     host.replica.start();

@@ -48,15 +48,16 @@ export function populationSettings(subjects, guestBytes, zeroReaders=false, boun
     // Rejected: the part 14 RSS estimate that permitted a guest-wide OOM, or reducing correctness coverage to fit.
     if ((subjects !== 1000 && subjects !== 100000) || guestBytes >= 17*GiB)
       throw Error("Bounded memory trial requires 1,000 or 100,000 subjects in the 16-GiB guest");
+    // The first 5.25-GiB driver hit its cgroup in bootstrap with at least 4.69 GiB free in the guest.
     const limitsMiB = {
-      DX_TX_MEMORY:4096, DX_PG_MEMORY:1792, DX_GW_WRITE_MEMORY:2304,
-      DX_GW_READ_MEMORY:1792, DX_DRIVER_MEMORY:5376,
+      DX_TX_MEMORY:3584, DX_PG_MEMORY:1536, DX_GW_WRITE_MEMORY:1792,
+      DX_GW_READ_MEMORY:1792, DX_DRIVER_MEMORY:6656,
     };
     residentGiB = Object.values(limitsMiB).reduce((sum, mib) => sum + mib, 0) / 1024;
     for (const [key, mib] of Object.entries(limitsMiB)) env[key] = String(mib) + "m";
     Object.assign(env, {
       DX_BOUNDED_MEMORY_TRIAL:"1", DX_DRIVER_HEAP_MB:"4096", DX_WRITER_HEAP_TUNING:"0",
-      DX_GW_WRITE_JAVA_OPTS:"-Xms256m -Xmx1792m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=768m",
+      DX_GW_WRITE_JAVA_OPTS:"-Xms256m -Xmx1280m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=640m",
       DX_GW_READ_JAVA_OPTS:"-Xms256m -Xmx1280m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=512m",
       DX_GW_WRITE_ENTITY_CACHE_BYTES:String(64*1024**2), DX_GW_READ_ENTITY_CACHE_BYTES:String(64*1024**2),
       DX_REPLICA_HISTORY_MIB:"192", DX_REPLICA_WORLD_CACHE_MIB:"8",

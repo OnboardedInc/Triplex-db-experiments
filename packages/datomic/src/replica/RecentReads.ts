@@ -56,7 +56,7 @@ export class RecentReads {
       throw new TypeError("Invalid recent-read budget");
   }
   get strictRecordClocks(): boolean { return this.strictClocks; }
-  apply(delta: ReadDelta): void {
+  apply(delta: ReadDelta, prepare?: (id: string, entity: PackedEntity) => PackedEntity): void {
     if (delta.reset) {
       this.current.clear();
       this.history.clear();
@@ -87,6 +87,12 @@ export class RecentReads {
           !equalPackedBytes(old.entity, previous))
       )
         throw new Error("Recent read predecessor mismatch");
+      // [DX-T1-15] Why: attach read accelerators directly to a verified packed slice during a large bootstrap.
+      // Rejected: a second full delta allocation, or allowing preparation to substitute a different payload or revision.
+      const prepared = prepare ? prepare(id, entity) : entity;
+      if (prepared !== entity && (prepared.buffer !== entity.buffer || prepared.offset !== entity.offset ||
+          prepared.byteLength !== entity.byteLength || prepared.revision !== entity.revision))
+        throw new Error("Recent read preparation changed packed slice");
       if (old) {
         const version = { from: old.from, until: delta.position, entity: old.entity };
         const versions = this.history.get(id) ?? [];
@@ -95,7 +101,7 @@ export class RecentReads {
         this.retired.push({ id, version });
         this.retainedBytes += footprint(old.entity);
       }
-      this.current.set(id, { from: delta.position, entity });
+      this.current.set(id, { from: delta.position, entity: prepared });
     }
     this.position = delta.position;
     if (delta.recordTime !== undefined) this.noteTime(delta.recordTime, delta.position, delta.clockEnd);
@@ -251,7 +257,9 @@ export class RecentReads {
       floor: this.floor,
       position: this.position,
       valid: this.valid,
-      entities: [...this.current].map(([id, x]) => [id, x.from, x.entity]),
+      // [DX-T1-15] Why: a big image needs one set of entries for the wire.
+      // Rejected: retaining a second million-entry array while preparing the reader image.
+      entities: Array.from(this.current, ([id, x]) => [id, x.from, x.entity]),
       history: [...this.history],
       times: [...this.times],
       timeSafe: this.timeSafe,
@@ -260,7 +268,9 @@ export class RecentReads {
     };
   }
   install(image: ReadImage): void {
-    this.current = new Map(image.entities.map(([id, from, entity]) => [id, { from, entity }]));
+    const current = new Map<string, { from: number; entity: PackedEntity }>();
+    for (const [id, from, entity] of image.entities) current.set(id, { from, entity });
+    this.current = current;
     this.history = new Map(image.history.map(([id, versions]) => [id, [...versions]]));
     this.retired = [...this.history]
       .flatMap(([id, versions]) => versions.map((version) => ({ id, version })))
