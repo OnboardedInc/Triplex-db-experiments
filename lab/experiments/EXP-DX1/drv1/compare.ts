@@ -153,7 +153,7 @@ async function readArm(
     report.writer.expired === 0 &&
       report.writer.pendingAtEnd === 0 &&
       report.writer.completed === report.writer.offered &&
-      Math.abs(report.writer.offeredUntilTraceS - V3_OFFER_SECONDS) < 0.002,
+      report.writer.offeredUntilTraceS * 1000 >= offered.at(-1)!.atMs,
     "writer did not finish every offer",
   );
 

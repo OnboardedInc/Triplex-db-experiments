@@ -3,7 +3,7 @@ Timing and Node work in the test tool account for 61% of the slow burst time, up
 The sender heap grew from 478 to 1,494 MiB. Its garbage collection overlapped 14.6 s of delayed offers in slow bursts.
 Hot subjects must still take turns. Their observed waits add 22.0 s, and the gateway and peer add 18.3 s.
 Keeping those waits gives a projected p99 of 45.904 ms. Keeping all socket and callback time raises it to 55.744 ms.
-The saved trace leaves room to reach the bar. It cannot tell how much of the socket and callback time the driver fix will recover.
+The saved trace leaves room to reach the bar. The socket and callback time still needs a matched test.
 North star P2 measures the time from a scheduled offer to the final receipt for each small atomic commit.
 Scope, priority and bars follow [SCOPE](../../../SCOPE.md), [NORTH-STAR](../../../NORTH-STAR.md) and [TARGETS](../../../TARGETS.md).
 
@@ -35,7 +35,16 @@ All 38,826 rows on each arm join sealed source/slot/boot/clock, writer/native co
 The candidate uses `--expected-state-retention worker-journal` and `--receipt-capture replica-worker`. The bookends use `heap` and `sender`. The first option moves full expected-state capture off the sender. The second moves receipt reads, fallback callbacks and batched spill retention off the sender.
 The Mac 1k smoke checked 59/59 receipt-pinned worlds including 15 real gateway fallbacks, with 0 expirations and 104/104 exact feed replays. Journal queue peak was 2/256 frames. The 10k candidate offered all ten bursts, then hit the extra 30-second observer deadline. The candidate now drains within the arm cutoff and records drain time. The retry uses the six-burst prefix.
 Audit. The journal worker sequences fresh frames, seals readback bytes and restores them against run/source/slot/population and the submitted frame count. Receipt capture requires a fresh per-attempt spill ACK for every tuple, then joins each tuple to one actual ACK at its exact subject and basis. The same full digest, stamp and count checker judges every row.
-The frozen profile, ACK definition, contract pins and acceptance bars are unchanged. Targeted journal and spill tests passed. Bench-wide TypeScript reports pre-existing errors in three untouched scripts.
+The full server runner uses the frozen profile, original ACK definition and contract pins. Three targeted tests and reporter TypeScript checks passed. Bench-wide TypeScript reports existing errors in three untouched scripts.
 
 [Server queue](queue.sh) takes a batch ID and UTC cutoff. It builds the exact checkout, runs three fresh 10k v3 zero-reader arms in old/new/old order, and writes checksummed bundles, per-second offer lateness, and `COMPARISON.md`. The plan and local refusal path were checked. Full bare-metal execution is pending the next bench window.
 Audit. The comparison requires fresh controller timing and cleanup, same-source and same-build hashes, sealed write and report bytes, exact frozen offers including resends, full read and feed checks, and decoded journal hashes for the candidate. It recomputes the unchanged ACK bar and leaves failed arms unavailable.
+
+| Mac at 10k | Primaries | ACK p99 ms | Sender heap peak MiB | Sender GC s | Offer lateness s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Saved two-gateway Mac, first six bursts (3,300 s) | 23,097 | 55.703 | 1,017.5 | 15.552 | 14.204 |
+| Busy standalone Mac, new, six bursts (3,300 s) | 23,097 | 8,857.805 | 495.2 | 12.884 | 45.507 |
+| Busy standalone Mac, new, matched 900 s | 7,408 | 12,404.595 | 265.7 | 3.939 | 20.662 |
+| Busy standalone Mac, old afterward, matched 900 s | 7,408 | 144.858 | 507.5 | 3.402 | 4.145 |
+The new arm matched 23,097/23,097 receipt-pinned reads and replayed 26,258 feed entries exactly. Capture and gateway fallback queues peaked at 2,248 and 2,138. Final drain took 498 s. The journal peaked at 12/256 frames. The old control matched all 7,408 reads with 174 peak fallbacks. Both had zero expirations.
+Standalone trials used fresh scopes in one H2-backed slot. Starting non-VM CPU was 251% new and 84% old, with about 25 GB swap in both. Same-subject waits accounted for 82% of the new arm's slow wall. Sender heap fell, while GC and offer-lateness improvement remain unproven. Slot and locks released at 18:25. [Evidence checksums relative to the evidence root](MAC.sha256).
