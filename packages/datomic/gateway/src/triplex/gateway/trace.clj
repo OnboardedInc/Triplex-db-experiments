@@ -95,7 +95,11 @@
                (swap! *request* (fn [r#] (if (< (count (:spans r#)) 8192) (update r# :spans conj record#) (update r# :truncated inc)))))))))))
 (defn finish! [request]
   (let [r (assoc @request :end (clock)) duration (- (:end r) (:start r))]
-    (when (or (= level "full") (= (:kind r) "commit") (>= duration 50) (sampled? (:traceId r))) (emit! r))))
+    ;; [DX-T1-15] Why: a scope open is rare, and its peer-sync count must survive successful fast follower recovery.
+    ;; Rejected: inferring the sync count from a sampled absence, or turning on full tracing for every read.
+    (when (or (= level "full") (= (:kind r) "commit") (= (:name r) "gateway /v1/db/create")
+              (>= duration 50) (sampled? (:traceId r)))
+      (emit! r))))
 (defn handler [f request]
   (if-not enabled (let [r (f request) p (parse-parent (get-in request [:headers "traceparent"]))]
                    (cond-> r p (assoc-in [:headers "traceparent"] (str "00-" (:trace p) "-" (id) "-01"))))

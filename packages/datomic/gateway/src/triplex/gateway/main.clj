@@ -63,7 +63,9 @@
         conn (connection uri)
         initial (sync-db uri)
         _ (assert-scope initial scope)
-        initialized (if (stored-scope initial)
+        existing (some? (stored-scope initial))
+        _ (trace/attribute! :scopeReopen existing)
+        initialized (if existing
                       initial
                       (let [after-schema (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema)))]
                         (assert-scope after-schema scope)
