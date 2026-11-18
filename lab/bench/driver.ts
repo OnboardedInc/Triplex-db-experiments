@@ -116,6 +116,8 @@ fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 if (flag("legacy-empty-basis-broadcast")) devFlags.push("legacy-empty-basis-broadcast");
+const boundedMemoryTrial = process.env.DX_BOUNDED_MEMORY_TRIAL === "1";
+if (boundedMemoryTrial) devFlags.push("bounded-memory-trial");
 if (opt("idle-gaps-ms")) devFlags.push("idle-diagnostic");
 if(Number(opt("writer-deadline-ms","30000"))!==30000) devFlags.push("writer-deadline-ms");
 const config = {
@@ -168,7 +170,7 @@ const config = {
   rateScale: Number(opt("rate-scale", "1")),
   levelS: opt("level-s") ? Number(opt("level-s")) : null,
   compactModel: process.env.DX_MODEL_COMPACT === "1",
-  expectedStateRetention: opt("expected-state-retention", "heap") as "heap" | "journal",
+  expectedStateRetention: opt("expected-state-retention", process.env.DX_EXPECTED_STATE_RETENTION || "heap") as "heap" | "journal",
   oracleSampleSubjects: Number(opt("oracle-subjects", "12")),
   oracleRate: Number(opt("oracle-rate", "0.01")),
   oracleMaxReads: Number(opt("oracle-max-reads", "24")),
@@ -205,6 +207,14 @@ if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.lega
   throw Error("v3 requires its full fixed phase plan and unchanged offered rate");
 if (profile === "v3") config.matchDurationS = V3_OFFER_SECONDS;
 if (!["heap", "journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
+// [DX-T1-15] Why: the bounded reader trial admits one replica index copy and up to 64 logical readers.
+// Rejected: tuning caps for a short diagnostic while silently starting the normal four-worker ladder and sweeper.
+if (boundedMemoryTrial && (lane !== "datomic" || profile !== "smoke" || config.readPath !== "replica" ||
+    ![1000, 100000].includes(rungSubjects) || config.expectedStateRetention !== "journal" || !config.compactModel ||
+    config.replicaHistoryMiB !== 192 || config.replicaWorldCacheMiB !== 8 ||
+    (!config.zeroReaders && (!config.readerLadderOnly || config.readerThreads !== 1 ||
+      !Number.isSafeInteger(config.maxReaders) || config.maxReaders! < 1 || config.maxReaders! > 64))))
+  throw Error("Invalid bounded-memory trial: require exact local reads, compact journal, fixed replica budgets and a bounded reader ladder");
 if (!["snapshot", "delta"].includes(config.readerBasisWire)) throw Error("Invalid reader basis wire mode");
 if (!["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
 // [DX-H7] Why: bound aggregate reader and writer cache estimates below half the 8 GiB client grant.
