@@ -472,3 +472,10 @@ Sam, verbatim: "When you run the Codex agents from now on, make sure you use Cod
 
 Done: `lab/bin/agent.mjs` passes `gpt-6.2-sol` (effort still `max` for both roles). A one-word test confirmed
 codex-cli 0.169.0 accepts the model.
+
+## 2026-11-18 06:42 local: Sam asks for progress the morning after the first night window
+
+Sam, verbatim: "any other progress?"
+
+Orchestrator's reading: a status question, no decision. Answered with the night's outcome (one arm of four completed)
+and started the day's work without waiting, as agreed on 2026-11-17 ("I will start step 1 in the morning").

@@ -2063,3 +2063,21 @@ published states equal); activation at 100,000 needs at least 23 GiB of guest me
 Linux server run; untested on a real server. Mac free disk 101.8 GiB.
 
 Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 local on source `e2f92c31`.
+
+## 2026-11-18 11:50 UTC (06:50 local): first night window, one arm of pair 1 completed; part 15 launched
+
+- **What ran.** Night runner admitted at 21:30 local on 2026-11-17 after a VM restart (Mac swap 11.3 to 4.8 GiB), display
+  sleep and pausing mediaanalysisd/photoanalysisd. The v3 zero-reader arm ran its full 5,910 s (tag
+  `tx2-dxt1-night-20261117-023035297-pair1-zero`, status DONE, 38,826 primaries). The host check in front of the ladder
+  arm then refused at a Mac CPU median of 26.0% against 25%, the pair ended, pair 2 never started.
+- **Zero-arm readings (ACK clock, host admitted at 23.0 to 23.9% CPU, so marginal).** 5-10 band p50 9.343 ms
+  [9.215, 9.471] and p99 36.095 (n=1,261); 11-25 band p50 11.071 [10.879, 11.263] and p99 37.375 (n=682); 26-50 band
+  p99 56.831 (n=206, unjudged); feed lag p99 23.4 ms; all-commit p99 109.129 [98.8, 120.8] at n=38,826 against 50;
+  burst medians 7.679 / 9.599, burst p99 141.3 / 111.1 / 133.1. Pair H's all-commit p99 was 48.24 at n=7,408 on the old
+  profile. Not yet known whether the 109 ms is the driver, v3's larger burst share, the host or the product path.
+- **Runner changed** (`night-window.sh` under the project folder's `tools/bin`): restarts the VM once if swap stays
+  high, sleeps the display, pauses the two photo-analysis daemons until 06:57, restarts `night.sh` after any failure
+  until 02:30. Backup of the old script beside it.
+- **Part 15 (Codex gpt-6.2-sol, max; brief `DX-T1-resume15.md`).** (1) between-arm host check waits and re-samples,
+  records top processes, completed arms are always reported; (2) decompose the 109 ms from saved traces; (3) driver
+  memory and follower reopen at 100,000 subjects. Hard stop 18:45/19:00 local.
