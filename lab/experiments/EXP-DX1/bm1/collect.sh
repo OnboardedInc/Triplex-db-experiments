@@ -48,7 +48,7 @@ for tag in "$@"; do
     trap - EXIT
   fi
   (cd "$dest/transfer"; shasum -a 256 -c TRANSFER.sha256 >/dev/null)
-  if [[ -f $dest/trace-summary.json ]]; then
+  if [[ -f $dest/trace-summary.json && -f $dest/trace.html ]]; then
     # [DX-BM1] Why: the shared registry keys on the directory name; the copied report retains its original slot.
     # Rejected: renaming the scope in the evidence or indexing the archive without its observed trace summary.
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register "$dest"

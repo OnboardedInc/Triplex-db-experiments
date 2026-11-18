@@ -112,7 +112,8 @@ function registerIncompleteBenchmark(dir) {
 function registerRow(row) {
   const all = rows();
   const old = all.find((r) => r.tag === row.tag);
-  if (old && old.html !== row.html) throw Error("Duplicate trace tag at another path");
+  if (old && old.html !== row.html && (old.raw !== row.raw || fs.existsSync(old.html)))
+    throw Error("Duplicate trace tag at another path");
   save([...all.filter((r) => r.tag !== row.tag), row]);
   return row;
 }

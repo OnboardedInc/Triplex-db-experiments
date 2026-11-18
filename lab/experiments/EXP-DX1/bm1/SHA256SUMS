@@ -1,6 +1,9 @@
-0855e0b401b9f40bac8c13eac29782675e006963cc8cc792ad473c4bdb3c0279  machine/SHA256SUMS
+79a62fb642d17b08171ed36c06998f69e36df5d4a55f101dc737e09a7803c260  machine/SHA256SUMS
 4debfe017b140159ecff1ae9ce2d9a6d74471a5e12c8fe1e25eb3078f3ef38d5  tx2-dxt1-bm1-20261118-gaps-analysis/transfer/TRANSFER.sha256
 832cae599538f250fd900d4d011dd0a8ab49cc004ccb829871e6320a15d8d9e9  tx2-dxt1-bm1-20261118-gaps/transfer/TRANSFER.sha256
+061d0760ebb9f08bccf8584125d6c717aa327f25ed95a0bc2323a180af1060bd  tx2-dxt1-bm1-20261118r-retry-ladder/transfer/TRANSFER.sha256
+9dd20d12a012d169476a7ce7f33cf2265391dc506369779cea780b88dbdbad18  tx2-dxt1-bm1-20261118r-scale-setup/transfer/TRANSFER.sha256
+463013881e013887492f004fb1827916fbe104e2252d1373b73378e447d51961  tx2-dxt1-bm1-20261118r-scale-upstream/transfer/TRANSFER.sha256
 59b31487c353071103ea724add025a17fc049db9ce590b94099130b8eeef7b76  tx2-dxt1-bm1-pair-a-controller/transfer/TRANSFER.sha256
 9efe2d0d0eebe59c762c7946dea9da145373372084463399954f5397193aa67b  tx2-dxt1-bm1-pair-a-ladder/transfer/TRANSFER.sha256
 afbb4326e2147a58cfaf283df95f7e14b58d8aa17ee546d3679b3482ff4f5ea1  tx2-dxt1-bm1-pair-a-off-after/transfer/TRANSFER.sha256
@@ -12,3 +15,5 @@ b2b0cab7acb33d1425ba19a742dc570c8288dc3956b6d2c750fd7d06edf84f37  tx2-dxt1-bm1-s
 42777d09aef52b3f6af74bee8d277e98754090bfa0d3fea5284d9bcb49c759b7  tx2-dxt1-bm1-smoke-b/driver/ns-report.json
 0d35efb40f4d50f2b90934f73547420258ca1c7060c3bea345d7e54972f4d7df  tx2-dxt1-bm1-pair-a-zero/SHA256SUMS
 546d96a15d241a38cbf01699509f08e393561c3fd156ddf92a1d1b85109faf6b  tx2-dxt1-bm1-20261118-gaps/derived/ACK-GAPS.json
+dc2f396cd0bf7fe4da7f99626bedba83e09bb83d9fae439f92350f1b1761d7a9  tx2-dxt1-bm1-20261118r-retry-ladder/driver/ns-report.json
+58a12750df7ffe96266921c5ab582aaa39a82fee0b24e976a30c468c8b41c170  tx2-dxt1-bm1-20261118r-retry-ladder/trace-finalize.log

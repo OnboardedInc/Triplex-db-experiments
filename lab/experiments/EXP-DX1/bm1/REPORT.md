@@ -1,60 +1,60 @@
 # DX-BM1 bare-metal bench
 
-With zero readers, the same 38,826 commits reached the caller in 4.72 ms at the median, down from 9.03 ms on the Mac.
-The scheduled medium-commit cohort moved from 11.07 to 6.43 ms at the median. The medium p99 was 54.27 ms, above its 50 ms bar.
-Overall p99 stayed above 50 ms at 132.46 ms [106.23, 163.85]. The Mac's v3 zero-reader p99 was 109.13 ms [98.77, 120.83].
-Late dispatch and per-subject queues dominate several worst zero-reader commits. Outside-request work reached 93.50 ms p99 and peer wait 32.49 ms. The last five bursts hold 537 of 661 burst ACKs over 50 ms.
-The root drive's 8 KiB fdatasync was 0.0265 ms at the median and 0.0876 ms p99 across 898,163 samples. The Mac VM floor was about 0.4–0.7 ms.
-The 1k smoke matched 53 independent reads and 2,997 entity queries. The first attempt stopped at a missing W0 build. Both attempts are sealed.
-The loaded driver hit its 8 GiB limit after 52 minutes and the renderer also ran out of heap. The matched retry is running with a 32 GiB driver cap. The 250 ms and 1 s gap trials measured −0.16 [−1.08, +0.44] and −0.29 [−1.32, +0.37] ms versus 10 ms, n=150 each. Both intervals include zero.
-**North star.** P1–P4 via the full pair and P5 via live 100k activation. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+Median ACK time with zero readers fell from 9.03 ms on the Mac to 4.72 ms on Linux over the same 38,826 commits.
+With 256 readers, small and medium medians were 6.08 and 7.62 ms against 10 ms. The medium p99 still exceeded 50 ms at 54.78. Overall p99 was 132.46 ms without readers and 326.19 ms with readers.
+The 256-reader writer ratio was 1.13, and reads reached 6.88 ms p99. At 1,024 readers, goodput dropped to 36% of its 256-reader level. Current pulls reached 2,293/s against 4,400/s.
+The loaded retry had one read error across 89.38 million observations and produced no independent replay output. Its readings remain unjudged. The original loaded driver hit 8 GiB; the retry used a 32 GiB cap.
+The root drive's 8 KiB fdatasync was 0.0265/0.0876 ms p50/p99, n=898,163. Late dispatch and same-subject queues dominated several worst zero-reader commits. Socket waits dominated several worst loaded commits.
+The 250 ms and 1 s gap trials measured −0.16 [−1.08, +0.44] and −0.29 [−1.32, +0.37] ms versus 10 ms, n=150 each. Both intervals include zero.
+The 1k smoke matched all 53 independent sampled reads and 2,997 queries. The 100k zero-reader run has started on the pushed tracing tip, with reader and activation stages queued.
+**North star.** P1–P4 via v3, P5 via live 100k activation. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
-| Bar (threshold) | Mac H loaded | Mac v3 zero | Linux v3 zero | Linux v3 loaded |
+| Bar (threshold) | Mac H loaded | Mac v3 zero | Linux v3 zero | Linux v3 loaded retry |
 | --- | --- | --- | --- | --- |
-| NS-P1-VIOLATIONS-MAX (L256) (= 0)<br>NS-P1-VIOLATIONS-MAX (L1024) (= 0) | within 0 · 7408 · —<br>within 0 · 7408 · — | Unjudged — · 0 · —<br>Unjudged — · 0 · — | — Unjudged · 0 · —<br>— Unjudged · 0 · — | Unjudged · pending<br>Unjudged · pending |
-| NS-P1-GOODPUT-256-VS-64 (>= 1.0) | miss 0.996 · 1922038/1930528 · — | Unjudged — · 0/0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P1-READ-P99-256-MS (<= 100) | within 6.175 · 1922038 · [6.175,6.207] | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P1-WRITER-P99-RATIO-256 (<= 1.25) | Unjudged 4.211 · 46/46 · [1.467,5.161] | Unjudged — · 2149/0 · — | — Unjudged · 2,149/0 · — | Unjudged · pending |
-| NS-P1-WRITER-WAIT-MAX-MS (L256) (<= 2000) | Unjudged 102.283 · 46 · [18.217,102.283] | within 303.815 · 2149 · [86.945,303.815] | 86.041 within · 2,149 · [82.860, 86.041] | Unjudged · pending |
-| NS-P1-GOODPUT-1024-VS-256 (>= 0.9) | within 1.138 · 2187206/1922038 · — | Unjudged — · 0/0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P1-WRITER-P99-RATIO-1024 (<= 2) | Unjudged 0.777 · 46/46 · [0.562,1.728] | Unjudged — · 854/0 · — | — Unjudged · 854/0 · — | Unjudged · pending |
-| NS-P1-RECOVERY-MS (<= 60000) | Unjudged — · 36/36 · — | Unjudged — · 540/0 · — | — Unjudged · 540/0 · — | Unjudged · pending |
-| 1.1 P1.1 hot-set share of reads (min over ladder levels) (>= 0.5) | within 0.596 · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| 1.1 P1.2 split reads straddling a frozen-trace command, all correct (> 0 and all correct) | within 72423 · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| 4.1.5 fallback share per window (reported) (reported) | Unjudged [0.0000011965544019441616,0.000024293133737536984,0.00034528764873075055,0,0.000015608432299465465,0.00018242451785519974] · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| 1.1 P1.3 a maintenance event in every P1 window (every window >= 1) | within [1,1,1,1,1,1] · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P2 5-10 band p50 ms (L256) (<= 10) | Unjudged 10.239 · 29 · [9.727,11.519] | within 9.343 · 1261 · [9.215,9.471] | 4.863 within · 1,261 · [4.735, 4.991] | Unjudged · pending |
-| NS-P2 5-10 band p99 ms (L256) (<= 50) | Unjudged 102.283 · 29 · [35.631,102.283] | within 36.095 · 1261 · [27.775,46.079] | 21.375 within · 1,261 · [17.919, 31.231] | Unjudged · pending |
-| NS-P2 11-25 band p50 ms (L256) (<= 10) | Unjudged 12.031 · 16 · [11.327,13.183] | miss 11.071 · 682 · [10.879,11.263] | 6.431 within · 682 · [6.271, 6.591] | Unjudged · pending |
-| NS-P2 11-25 band p99 ms (L256) (<= 50) | Unjudged 17.983 · 16 · [15.886,17.983] | within 37.375 · 682 · [26.879,47.359] | 54.271 miss · 682 · [28.927, 56.831] | Unjudged · pending |
-| NS-P2 26-50 band p99 ms (L256, provisional) (<= 100) | Unjudged 14.053 · 1 · [14.053,14.053] | Unjudged 56.831 · 206 · [35.583,77.844] | 49.151 Unjudged · 206 · [36.095, 82.860] | Unjudged · pending |
-| NS-P2 every offered command accounted (= 0)<br>NS-P2 typed rejections only for deliberately invalid commands (= 0 (the trace holds no invalid commands yet))<br>NS-P2 typed conflicts only where the oracle finds a CAS race (= 0 (serial per subject: the trace has no CAS race))<br>NS-P2 no expired primary commands (= 0) | within 0 · 7408 · —<br>within 0 · 7408 · —<br>within 0 · 7408 · —<br>within 0 · 7408 · — | within 0 · 38826 · —<br>within 0 · 38826 · —<br>within 0 · 38826 · —<br>within 0 · 38826 · — | 0 within · 38,826 · —<br>0 within · 38,826 · —<br>0 within · 38,826 · —<br>0 within · 38,826 · — | Unjudged · pending<br>Unjudged · pending<br>Unjudged · pending<br>Unjudged · pending |
-| NS-P2 every oracle-valid trace command published (all) | within 7408/7408 · 7408 · — | within 38826/38826 · 38826 · — | 38826/38826 within · 38,826 · — | Unjudged · pending |
-| NS-P2 steady-state queue <= 2 s of offered rate (<= 2.19 commands) | within 2 · 7408 · — | within 2 · 38826 · — | 1 within · 38,826 · — | Unjudged · pending |
-| NS-P2 queue drains within 60 s after each burst (every burst <= 60 s) | within [0.023116943359383413,0.17938525390627547] · 7408 · — | within [0.027684570312487722,0.10108374023434408,0.15426684570320504,0.3059790039062591,0.4230327148438846,0.701806396484244,0.8494689941408069,0.4327033691406541,0.9195048828123618,0.6313703613277539] · 38826 · — | 10 windows, min 0.032, max 1.014 within · 38,826 · — | Unjudged · pending |
-| NS-P2 read-your-own-write at the returned tx (= 1.0)<br>NS-P2 duplicates return the original receipt (= 1.0)<br>NS-P2 lost ACKs return the original receipt (= 1.0) | within 1 · 7408 · —<br>within 1 · 7408 · —<br>within 1 · 7408 · — | within 1 · 38826 · —<br>within 1 · 38826 · —<br>within 1 · 38826 · — | 1 within · 38,826 · —<br>1 within · 38,826 · —<br>1 within · 38,826 · — | Unjudged · pending<br>Unjudged · pending<br>Unjudged · pending |
-| NS-P2 all-primary p99 ms (<= 50) | within 48.242 · 7408 · [44.342,51.171] | miss 109.129 · 38826 · [98.766,120.832] | 132.461 miss · 38,826 · [106.233, 163.846] | Unjudged · pending |
-| NS-P2 burst 5-10 band p50 ms (<= 10) | within 8.511 · 3972 · [8.383,8.575] | within 7.679 · 19838 · [7.647,7.743] | 3.647 within · 19,838 · [3.631, 3.663] | Unjudged · pending |
-| NS-P2 burst 11-25 band p50 ms (<= 10) | miss 10.303 · 1895 · [10.111,10.431] | within 9.599 · 9881 · [9.535,9.663] | 5.151 within · 9,881 · [5.119, 5.183] | Unjudged · pending |
-| NS-P3 gaps (= 0)<br>NS-P3 per-subject order violations (= 0)<br>NS-P3 visible duplicate effects (= 0) | within 0 · 7408 · —<br>within 0 · 7408 · —<br>within 0 · 7408 · — | within 0 · 38826 · —<br>within 0 · 38826 · —<br>within 0 · 38826 · — | 0 within · 38,826 · —<br>0 within · 38,826 · —<br>0 within · 38,826 · — | Unjudged · pending<br>Unjudged · pending<br>Unjudged · pending |
-| NS-P3 resume from checkpoint replays exactly (= true) | within true · 7408 · — | within true · 38826 · — | true within · 38,826 · — | Unjudged · pending |
-| NS-P3 crash injection at three points (= 3) | within 3 · 7408 · — | within 3 · 38826 · — | 3 within · 38,826 · — | Unjudged · pending |
-| NS-P3 lag p99 ms at L256 (<= 250) | Unjudged 22.500 · 46 · — | within 23.423 · 2149 · [22.271,24.575] | 22.399 within · 2,149 · [21.119, 24.959] | Unjudged · pending |
-| NS-P3 affected-subject set matches (= 0)<br>NS-P3 corrections report their valid-time range (= 1.0) | within 0 · 7408 · —<br>within 1 · 7408 · — | within 0 · 38826 · —<br>within 1 · 38826 · — | 0 within · 38,826 · —<br>1 within · 38,826 · — | Unjudged · pending<br>Unjudged · pending |
-| NS-P4 weighted-mix pull p50 ms (<= 5) | within 0.029 · 788897 · [0.029,0.029] | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P4 weighted-mix pull p99 ms (<= 25) | within 0.212 · 788897 · [0.211,0.213] | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P4 largest bucket p99 ms (provisional) (<= 50) | within 0.299 · 116950 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P4 history flatness p99 depth10 / depth1 (<= 1.1) | within 1.021 · 1517662/1549084 · [1.014,1.029] | Unjudged — · 0/0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P4 history flatness bytes read depth10 / depth1 (<= 1.1) | Unjudged — · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P4 correct weighted pulls/s whole machine (>= 4400) | within 18345.834 · 788897 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | Unjudged · pending |
-| NS-P5 sweep evaluates the release (W0) and publishes through the outbox (= true) | miss false · 7408 · — | — | Unjudged · pending | Unjudged · pending |
-| NS-P5 wall s for 100k subjects incl. evaluation and publication (<= 100) | miss — · 7408 · — | — | Unjudged · pending | Unjudged · pending |
-| NS-P5 exact coverage (= true)<br>NS-P5 post-capture mutations do not leak into the sweep (all at basis) | within true · 7408 · —<br>within 10/10 · 7408 · — | —<br>— | Unjudged · pending<br>Unjudged · pending | Unjudged · pending<br>Unjudged · pending |
-| NS-P5 live read p99 during sweep / presweep (<= 1.5) | Unjudged — · 0/1784245 · — | — | Unjudged · pending | Unjudged · pending |
-| NS-P5 writer commit p99 during sweep / presweep (<= 1.5) | Unjudged — · 0/56 · — | — | Unjudged · pending | Unjudged · pending |
-| NS-P5 throttled variant overlapping compaction (run) | miss — · 7408 · — | — | Unjudged · pending | Unjudged · pending |
+| NS-P1-VIOLATIONS-MAX (L256) (= 0)<br>NS-P1-VIOLATIONS-MAX (L1024) (= 0) | within 0 · 7408 · —<br>within 0 · 7408 · — | Unjudged — · 0 · —<br>Unjudged — · 0 · — | — Unjudged · 0 · —<br>— Unjudged · 0 · — | 0 Unjudged · 38,826 · —<br>0 Unjudged · 38,826 · — |
+| NS-P1-GOODPUT-256-VS-64 (>= 1.0) | miss 0.996 · 1922038/1930528 · — | Unjudged — · 0/0 · — | — Unjudged · 0 · — | 1.021 Unjudged · 2,518,131/2,466,969 · [0.931, 1.131] |
+| NS-P1-READ-P99-256-MS (<= 100) | within 6.175 · 1922038 · [6.175,6.207] | Unjudged — · 0 · — | — Unjudged · 0 · — | 6.879 Unjudged · 57,229,420 · [6.879, 6.879] |
+| NS-P1-WRITER-P99-RATIO-256 (<= 1.25) | Unjudged 4.211 · 46/46 · [1.467,5.161] | Unjudged — · 2149/0 · — | — Unjudged · 2,149/0 · — | 1.131 Unjudged · 2,149/2,149 · [0.965, 1.663] |
+| NS-P1-WRITER-WAIT-MAX-MS (L256) (<= 2000) | Unjudged 102.283 · 46 · [18.217,102.283] | within 303.815 · 2149 · [86.945,303.815] | 86.041 within · 2,149 · [82.860, 86.041] | 127.111 Unjudged · 2,149 · [72.693, 127.111] |
+| NS-P1-GOODPUT-1024-VS-256 (>= 0.9) | within 1.138 · 2187206/1922038 · — | Unjudged — · 0/0 · — | — Unjudged · 0 · — | 0.361 Unjudged · 8,374,291/57,229,420 · [0.326, 0.396] |
+| NS-P1-WRITER-P99-RATIO-1024 (<= 2) | Unjudged 0.777 · 46/46 · [0.562,1.728] | Unjudged — · 854/0 · — | — Unjudged · 854/0 · — | 1.145 Unjudged · 854/854 · [0.869, 1.655] |
+| NS-P1-RECOVERY-MS (<= 60000) | Unjudged — · 36/36 · — | Unjudged — · 540/0 · — | — Unjudged · 540/0 · — | — Unjudged · 540/540 · — |
+| 1.1 P1.1 hot-set share of reads (min over ladder levels) (>= 0.5) | within 0.596 · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | 0.596 Unjudged · 38,826 · — |
+| 1.1 P1.2 split reads straddling a frozen-trace command, all correct (> 0 and all correct) | within 72423 · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | 523,274 Unjudged · 38,826 · — |
+| 4.1.5 fallback share per window (reported) (reported) | Unjudged [0.0000011965544019441616,0.000024293133737536984,0.00034528764873075055,0,0.000015608432299465465,0.00018242451785519974] · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | 6 windows, min 0, max 0.008 Unjudged · 38,826 · — |
+| 1.1 P1.3 a maintenance event in every P1 window (every window >= 1) | within [1,1,1,1,1,1] · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | 6 windows, min 1, max 44 Unjudged · 38,826 · — |
+| NS-P2 5-10 band p50 ms (L256) (<= 10) | Unjudged 10.239 · 29 · [9.727,11.519] | within 9.343 · 1261 · [9.215,9.471] | 4.863 within · 1,261 · [4.735, 4.991] | 6.079 Unjudged · 1,261 · [5.951, 6.239] |
+| NS-P2 5-10 band p99 ms (L256) (<= 50) | Unjudged 102.283 · 29 · [35.631,102.283] | within 36.095 · 1261 · [27.775,46.079] | 21.375 within · 1,261 · [17.919, 31.231] | 35.071 Unjudged · 1,261 · [26.367, 42.751] |
+| NS-P2 11-25 band p50 ms (L256) (<= 10) | Unjudged 12.031 · 16 · [11.327,13.183] | miss 11.071 · 682 · [10.879,11.263] | 6.431 within · 682 · [6.271, 6.591] | 7.615 Unjudged · 682 · [7.455, 7.807] |
+| NS-P2 11-25 band p99 ms (L256) (<= 50) | Unjudged 17.983 · 16 · [15.886,17.983] | within 37.375 · 682 · [26.879,47.359] | 54.271 miss · 682 · [28.927, 56.831] | 54.783 Unjudged · 682 · [40.191, 60.415] |
+| NS-P2 26-50 band p99 ms (L256, provisional) (<= 100) | Unjudged 14.053 · 1 · [14.053,14.053] | Unjudged 56.831 · 206 · [35.583,77.844] | 49.151 Unjudged · 206 · [36.095, 82.860] | 70.655 Unjudged · 206 · [44.031, 72.693] |
+| NS-P2 every offered command accounted (= 0)<br>NS-P2 typed rejections only for deliberately invalid commands (= 0 (the trace holds no invalid commands yet))<br>NS-P2 typed conflicts only where the oracle finds a CAS race (= 0 (serial per subject: the trace has no CAS race))<br>NS-P2 no expired primary commands (= 0) | within 0 · 7408 · —<br>within 0 · 7408 · —<br>within 0 · 7408 · —<br>within 0 · 7408 · — | within 0 · 38826 · —<br>within 0 · 38826 · —<br>within 0 · 38826 · —<br>within 0 · 38826 · — | 0 within · 38,826 · —<br>0 within · 38,826 · —<br>0 within · 38,826 · —<br>0 within · 38,826 · — | 0 Unjudged · 38,826 · —<br>0 Unjudged · 38,826 · —<br>0 Unjudged · 38,826 · —<br>0 Unjudged · 38,826 · — |
+| NS-P2 every oracle-valid trace command published (all) | within 7408/7408 · 7408 · — | within 38826/38826 · 38826 · — | 38826/38826 within · 38,826 · — | 38826/38826 Unjudged · 38,826 · — |
+| NS-P2 steady-state queue <= 2 s of offered rate (<= 2.19 commands) | within 2 · 7408 · — | within 2 · 38826 · — | 1 within · 38,826 · — | 2 Unjudged · 38,826 · — |
+| NS-P2 queue drains within 60 s after each burst (every burst <= 60 s) | within [0.023116943359383413,0.17938525390627547] · 7408 · — | within [0.027684570312487722,0.10108374023434408,0.15426684570320504,0.3059790039062591,0.4230327148438846,0.701806396484244,0.8494689941408069,0.4327033691406541,0.9195048828123618,0.6313703613277539] · 38826 · — | 10 windows, min 0.032, max 1.014 within · 38,826 · — | 10 windows, min 0.018, max 0.961 Unjudged · 38,826 · — |
+| NS-P2 read-your-own-write at the returned tx (= 1.0)<br>NS-P2 duplicates return the original receipt (= 1.0)<br>NS-P2 lost ACKs return the original receipt (= 1.0) | within 1 · 7408 · —<br>within 1 · 7408 · —<br>within 1 · 7408 · — | within 1 · 38826 · —<br>within 1 · 38826 · —<br>within 1 · 38826 · — | 1 within · 38,826 · —<br>1 within · 38,826 · —<br>1 within · 38,826 · — | 1 Unjudged · 38,826 · —<br>1 Unjudged · 38,826 · —<br>1 Unjudged · 38,826 · — |
+| NS-P2 all-primary p99 ms (<= 50) | within 48.242 · 7408 · [44.342,51.171] | miss 109.129 · 38826 · [98.766,120.832] | 132.461 miss · 38,826 · [106.233, 163.846] | 326.192 Unjudged · 38,826 · [304.102, 354.593] |
+| NS-P2 burst 5-10 band p50 ms (<= 10) | within 8.511 · 3972 · [8.383,8.575] | within 7.679 · 19838 · [7.647,7.743] | 3.647 within · 19,838 · [3.631, 3.663] | 4.127 Unjudged · 19,838 · [4.079, 4.127] |
+| NS-P2 burst 11-25 band p50 ms (<= 10) | miss 10.303 · 1895 · [10.111,10.431] | within 9.599 · 9881 · [9.535,9.663] | 5.151 within · 9,881 · [5.119, 5.183] | 5.599 Unjudged · 9,881 · [5.567, 5.663] |
+| NS-P3 gaps (= 0)<br>NS-P3 per-subject order violations (= 0)<br>NS-P3 visible duplicate effects (= 0) | within 0 · 7408 · —<br>within 0 · 7408 · —<br>within 0 · 7408 · — | within 0 · 38826 · —<br>within 0 · 38826 · —<br>within 0 · 38826 · — | 0 within · 38,826 · —<br>0 within · 38,826 · —<br>0 within · 38,826 · — | 0 Unjudged · 38,826 · —<br>0 Unjudged · 38,826 · —<br>0 Unjudged · 38,826 · — |
+| NS-P3 resume from checkpoint replays exactly (= true) | within true · 7408 · — | within true · 38826 · — | true within · 38,826 · — | true Unjudged · 38,826 · — |
+| NS-P3 crash injection at three points (= 3) | within 3 · 7408 · — | within 3 · 38826 · — | 3 within · 38,826 · — | 3 Unjudged · 38,826 · — |
+| NS-P3 lag p99 ms at L256 (<= 250) | Unjudged 22.500 · 46 · — | within 23.423 · 2149 · [22.271,24.575] | 22.399 within · 2,149 · [21.119, 24.959] | 27.519 Unjudged · 2,149 · [25.599, 29.951] |
+| NS-P3 affected-subject set matches (= 0)<br>NS-P3 corrections report their valid-time range (= 1.0) | within 0 · 7408 · —<br>within 1 · 7408 · — | within 0 · 38826 · —<br>within 1 · 38826 · — | 0 within · 38,826 · —<br>1 within · 38,826 · — | 0 Unjudged · 38,826 · —<br>1 Unjudged · 38,826 · — |
+| NS-P4 weighted-mix pull p50 ms (<= 5) | within 0.029 · 788897 · [0.029,0.029] | Unjudged — · 0 · — | — Unjudged · 0 · — | 0.036 Unjudged · 98,592 · [0.036, 0.036] |
+| NS-P4 weighted-mix pull p99 ms (<= 25) | within 0.212 · 788897 · [0.211,0.213] | Unjudged — · 0 · — | — Unjudged · 0 · — | 5.695 Unjudged · 98,592 · [5.471, 5.983] |
+| NS-P4 largest bucket p99 ms (provisional) (<= 50) | within 0.299 · 116950 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | 14.079 Unjudged · 14,645 · [10.623, 15.807] |
+| NS-P4 history flatness p99 depth10 / depth1 (<= 1.1) | within 1.021 · 1517662/1549084 · [1.014,1.029] | Unjudged — · 0/0 · — | — Unjudged · 0 · — | 0.017 Unjudged · 1,415,214/111,161 · [0.017, 0.018] |
+| NS-P4 history flatness bytes read depth10 / depth1 (<= 1.1) | Unjudged — · 7408 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | — Unjudged · 38,826 · — |
+| NS-P4 correct weighted pulls/s whole machine (>= 4400) | within 18345.834 · 788897 · — | Unjudged — · 0 · — | — Unjudged · 0 · — | 2292.865 Unjudged · 98,592 · [2120.584, 2437.541] |
+| NS-P5 sweep evaluates the release (W0) and publishes through the outbox (= true) | miss false · 7408 · — | — | Unjudged · unavailable | false Unjudged · 38,826 · — |
+| NS-P5 wall s for 100k subjects incl. evaluation and publication (<= 100) | miss — · 7408 · — | — | Unjudged · unavailable | — Unjudged · 38,826 · — |
+| NS-P5 exact coverage (= true)<br>NS-P5 post-capture mutations do not leak into the sweep (all at basis) | within true · 7408 · —<br>within 10/10 · 7408 · — | —<br>— | Unjudged · unavailable<br>Unjudged · unavailable | true Unjudged · 38,826 · —<br>10/10 Unjudged · 38,826 · — |
+| NS-P5 live read p99 during sweep / presweep (<= 1.5) | Unjudged — · 0/1784245 · — | — | Unjudged · unavailable | — Unjudged · 0/937,018 · — |
+| NS-P5 writer commit p99 during sweep / presweep (<= 1.5) | Unjudged — · 0/56 · — | — | Unjudged · unavailable | — Unjudged · 0/55 · — |
+| NS-P5 throttled variant overlapping compaction (run) | miss — · 7408 · — | — | Unjudged · unavailable | — Unjudged · 38,826 · — |
 
-Each cell gives the point, status, sample size and 90% interval when recorded. H is an older loaded profile. The Mac v3 column used zero readers. [Mac context](../t1/NIGHT-2026-11-17.md)
-Linux source `97fa9123`, upstream `1e869067`. Performance governor, SMT on, idle settings as delivered, TX 0, PG 1, write gateway 2, driver main 3, read gateway 4, workers 5–7. [Sealed evidence](SHA256SUMS)
-Audit. Smoke binds the replay bytes, rows, source, slot and clock. Gap analysis binds the five input hashes, ACK timestamps, 450 unique committed commands and no-warm configuration. Transfer and indexing bind the archive bytes and collection tag. Activation indexing also checks source, slot, nonce and log/attempt hashes.
-The acceptance pins and bars are unchanged. The trace summarizes named waits. Native serial-point counters are unavailable in the summary-traced pair.
+Cells give point, status, n and 90% interval where recorded. H is an older loaded profile. The Linux loaded retry used the byte-identical zero inputs after an interrupted pair. [Mac evidence](../t1/NIGHT-2026-11-17.md)
+10k source `97fa9123`. Performance governor, SMT on, idle controls as delivered, TX 0, PG 1, write gateway 2, driver main 3, read gateway 4, workers 5–7. [Sealed evidence](SHA256SUMS)
+Audit. Smoke binds the replay bytes, exact rows, source, slot and clock. Gaps bind 450 unique ACKs and the no-warm configuration. Collection binds transfer bytes and tags. The activation index checks the source, slot, nonce and exact attempt/log hashes. The controller verifies both baseline hashes and the frozen plan and verdict sources. Rerendering verifies the original raw hashes.
+The acceptance pins and bars are unchanged. The retry hit a Chrome JSON string limit after emitting its report. The original raw data is sealed and a streamed render is queued. [Handoff](HANDOFF.md)
