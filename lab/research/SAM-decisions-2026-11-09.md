@@ -489,3 +489,11 @@ Orchestrator's reading: standing permission to order and run Latitude.sh servers
 $100 of credit. This replaces my earlier condition of showing the price and waiting for a "go" before each order. I
 still state the hourly price and the running total each time I report, delete every server when its run ends, and send
 nothing personal to the machine (public repository clone only, the bench SSH key only).
+
+## 2026-11-18 about 12:30 local: Sam's local dev stack
+
+Sam, verbatim: "can you get my local running again?"
+
+Orchestrator's reading: his local Onboarded development stack (the colima default profile, five containers) was
+stopped. Started the VM and the five containers and checked each service answers. The nightly runner now stops that VM
+at the window's start and restarts it with its containers at 06:58, and puts the docker context back as it found it.
