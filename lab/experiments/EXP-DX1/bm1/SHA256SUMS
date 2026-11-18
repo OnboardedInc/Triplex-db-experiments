@@ -2,3 +2,6 @@
 38a9783eac609a349510afa68e046845b8d4e25d6b313ab15f6df71dd15dc918  tx2-dxt1-bm1-smoke-a/transfer/TRANSFER.sha256
 b2b0cab7acb33d1425ba19a742dc570c8288dc3956b6d2c750fd7d06edf84f37  tx2-dxt1-bm1-smoke-b/transfer/TRANSFER.sha256
 42777d09aef52b3f6af74bee8d277e98754090bfa0d3fea5284d9bcb49c759b7  tx2-dxt1-bm1-smoke-b/driver/ns-report.json
+0ca265c1e1aaf833f1ba81ace3a90d3e38f9ecc9a63913ad8d3dcc1fa70c7dc2  tx2-dxt1-bm1-pair-a-off-before/transfer/TRANSFER.sha256
+680c8f85d201499302bcc231604053a8714b1f0fb4bd7a5d37a913f11739e4f4  tx2-dxt1-bm1-pair-a-zero/transfer/TRANSFER.sha256
+0d35efb40f4d50f2b90934f73547420258ca1c7060c3bea345d7e54972f4d7df  tx2-dxt1-bm1-pair-a-zero/SHA256SUMS
