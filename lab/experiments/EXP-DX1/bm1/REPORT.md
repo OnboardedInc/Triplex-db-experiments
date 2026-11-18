@@ -3,10 +3,10 @@
 With zero readers, the same 38,826 commits reached the caller in 4.72 ms at the median, down from 9.03 ms on the Mac.
 The scheduled medium-commit cohort moved from 11.07 to 6.43 ms at the median. The medium p99 was 54.27 ms, above its 50 ms bar.
 Overall p99 stayed above 50 ms at 132.46 ms [106.23, 163.85]. The Mac's v3 zero-reader p99 was 109.13 ms [98.77, 120.83].
-In the zero-reader anatomy, work outside the transact request reached 93.50 ms p99 and peer wait reached 32.49 ms. Late dispatch and per-subject queues dominate several of the worst commits.
+Late dispatch and per-subject queues dominate several worst zero-reader commits. Outside-request work reached 93.50 ms p99 and peer wait 32.49 ms. The last five bursts hold 537 of 661 burst ACKs over 50 ms.
 The root drive's 8 KiB fdatasync was 0.0265 ms at the median and 0.0876 ms p99 across 898,163 samples. The Mac VM floor was about 0.4–0.7 ms.
 The 1k smoke matched 53 independent reads and 2,997 entity queries. The first attempt stopped at a missing W0 build. Both attempts are sealed.
-The loaded driver hit its 8 GiB container limit after 52 minutes. The untimed trace renderer also ran out of heap. Both failures are retained, and the loaded results remain unjudged.
+The loaded driver hit its 8 GiB limit after 52 minutes and the renderer also ran out of heap. The matched retry is running with a 32 GiB driver cap. The 250 ms and 1 s gap trials measured −0.16 [−1.08, +0.44] and −0.29 [−1.32, +0.37] ms versus 10 ms, n=150 each. Both intervals include zero.
 **North star.** P1–P4 via the full pair and P5 via live 100k activation. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 | Bar (threshold) | Mac H loaded | Mac v3 zero | Linux v3 zero | Linux v3 loaded |
@@ -56,5 +56,5 @@ The loaded driver hit its 8 GiB container limit after 52 minutes. The untimed tr
 
 Each cell gives the point, status, sample size and 90% interval when recorded. H is an older loaded profile. The Mac v3 column used zero readers. [Mac context](../t1/NIGHT-2026-11-17.md)
 Linux source `97fa9123`, upstream `1e869067`. Performance governor, SMT on, idle settings as delivered, TX 0, PG 1, write gateway 2, driver main 3, read gateway 4, workers 5–7. [Sealed evidence](SHA256SUMS)
-Audit. Smoke checks case bytes and exact observed rows against this run's source, slot and clock. Transfer checks terminal archives and collection tags. Activation indexing checks source, slot, nonce, log and attempt bytes.
+Audit. Smoke binds the replay bytes, rows, source, slot and clock. Gap analysis binds the five input hashes, ACK timestamps, 450 unique committed commands and no-warm configuration. Transfer and indexing bind the archive bytes and collection tag. Activation indexing also checks source, slot, nonce and log/attempt hashes.
 The acceptance pins and bars are unchanged. The trace summarizes named waits. Native serial-point counters are unavailable in the summary-traced pair.

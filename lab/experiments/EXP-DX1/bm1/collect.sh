@@ -51,6 +51,8 @@ for tag in "$@"; do
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register "$dest"
   elif [[ $tag == tx2-dxt1-bm1-*-activation ]]; then
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register-activation "$dest"
+  elif [[ -f $dest/trace-run.json ]]; then
+    TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register-incomplete-benchmark "$dest"
   fi
   printf 'Collected %s\n' "$dest"
 done

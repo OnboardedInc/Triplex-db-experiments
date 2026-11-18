@@ -87,6 +87,28 @@ export function registerActivation(dir) {
   });
 }
 
+// [DX-BM1] Why: an OOM in the renderer can still leave an attributed, terminal evidence bundle.
+// Rejected: using a missing viewer as a reason to omit the original failure from the index.
+function registerIncompleteBenchmark(dir) {
+  dir = path.resolve(dir);
+  const tag = path.basename(dir);
+  const source = fs.readFileSync(path.join(dir, "head.txt"), "utf8").trim();
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, "trace-run.json"), "utf8"));
+  const transfer = fs.readFileSync(path.join(dir, "transfer", "collection-tag.txt"), "utf8").trim();
+  if (!/^tx2-dxt1-bm1-[a-z0-9-]+$/.test(tag) || transfer !== tag || manifest.tag !== tag ||
+      manifest.slot !== tag || manifest.source !== source || manifest.hostPlatform !== "linux-bare-metal")
+    throw Error("Unbound terminal benchmark bundle");
+  return registerRow({
+    date: new Date().toISOString(),
+    tag,
+    source,
+    subjects: null,
+    result: "Terminal raw evidence and logs retained. Trace summary unavailable.",
+    html: path.join(dir, "transfer", "reports.tar.zst"),
+    raw: path.join(dir, "trace", "raw"),
+  });
+}
+
 function registerRow(row) {
   const all = rows();
   const old = all.find((r) => r.tag === row.tag);
@@ -139,6 +161,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   const [command, arg, ...rest] = process.argv.slice(2);
   if (command === "register") console.log(JSON.stringify(registerRun(arg)));
   else if (command === "register-activation") console.log(JSON.stringify(registerActivation(arg)));
+  else if (command === "register-incomplete-benchmark")
+    console.log(JSON.stringify(registerIncompleteBenchmark(arg)));
   else if (command === "list")
     console.log(
       rows()
@@ -149,5 +173,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     const i = rest.indexOf("--to");
     if (i < 0 || !rest[i + 1]) throw Error("archive TAG --to DIR");
     console.log(JSON.stringify(archive(arg, rest[i + 1])));
-  } else throw Error("trace-store.mjs list | archive TAG --to DIR | register RUN_DIR | register-activation RUN_DIR");
+  } else throw Error("trace-store.mjs list | archive TAG --to DIR | register RUN_DIR | register-activation RUN_DIR | register-incomplete-benchmark RUN_DIR");
 }

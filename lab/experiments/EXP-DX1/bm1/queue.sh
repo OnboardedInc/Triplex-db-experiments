@@ -120,9 +120,11 @@ else
     --idle-gaps-ms 10,250,1000 --idle-commits 150 --idle-warmup-commits 0
 fi
 if [[ -s $DX_STACK_EVIDENCE/$gap/driver/ns-report.json ]]; then
-  node lab/trace/idle-report.mjs "$DX_STACK_EVIDENCE" "$gap" --standalone \
-    > "$logs/$gap.analysis.log" 2>&1 || true
-  seal "$gap-analysis" "$DX_STACK_EVIDENCE/$gap/idle-analysis" "$logs/$gap.analysis.log"
+  gap_reading=$queue_dir/gap-reading
+  mkdir "$gap_reading"
+  python3 "$runner/gap-reading.py" "$DX_STACK_EVIDENCE/$gap" \
+    > "$gap_reading/ACK-GAPS.json" 2> "$logs/$gap.analysis.log" || true
+  seal "$gap-reading" "$gap_reading" "$logs/$gap.analysis.log"
 fi
 
 # [DX-BM1] Why: the rental has room for the reader cache growth and the untimed renderer.
