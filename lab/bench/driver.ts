@@ -115,6 +115,7 @@ const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
+if (flag("legacy-empty-basis-broadcast")) devFlags.push("legacy-empty-basis-broadcast");
 if (opt("idle-gaps-ms")) devFlags.push("idle-diagnostic");
 if(Number(opt("writer-deadline-ms","30000"))!==30000) devFlags.push("writer-deadline-ms");
 const config = {
@@ -124,6 +125,7 @@ const config = {
   profile,
   zeroReaders: flag("zero-readers"),
   readerBasisWire: opt("reader-basis-wire", "snapshot") as "snapshot" | "delta",
+  legacyEmptyBasisBroadcast: flag("legacy-empty-basis-broadcast"),
   matchDurationS: opt("match-duration-s") ? Number(opt("match-duration-s")) : null,
   baselineWrites: opt("baseline-writes") ?? null,
   devOverrides: devFlags,
@@ -199,7 +201,7 @@ if (config.idleGapsMs && (lane !== "datomic" || !config.zeroReaders || !config.r
 if (config.idleKeep !== "none" || process.env.DX_IDLE_SENTINEL === "1" || process.env.DX_IDLE_REFUSAL_PROBE === "1")
   throw Error("Keep-warm requests and sentinels are forbidden (Sam 2026-11-16)");
 if(opt("idle-warmup-commits") && !config.idleGapsMs) throw Error("One-time warmup count is currently a fixed-gap diagnostic control, not an adopted v3 policy");
-if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
+if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.legacyEmptyBasisBroadcast || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
   throw Error("v3 requires its full fixed phase plan and unchanged offered rate");
 if (profile === "v3") config.matchDurationS = V3_OFFER_SECONDS;
 if (!["heap", "journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
@@ -613,8 +615,11 @@ async function run() {
     basisBroadcast.wall.recordMs(attrs.wallMs);
     }, attrs, true);
   };
-  broadcast();
-  const basisTimer = setInterval(broadcast, 100);
+  // [DX-T1-15] Why: v3 zero did 59,048 growing receipt scans and sent no messages, including a 277 ms writer-thread pause.
+  // Rejected: scanning the full receipt history when there is no subscriber, or dropping any RYOW or feed observation.
+  const sendBasis = workers.length > 0 || config.legacyEmptyBasisBroadcast;
+  if (sendBasis) broadcast();
+  const basisTimer = sendBasis ? setInterval(broadcast, 100) : undefined;
   const setReaders = (phase: number, wantedReaders: number, mode: string) => {
     const readers = config.maxReaders === null ? wantedReaders : Math.min(wantedReaders, config.maxReaders);
     workers.forEach((w, k) => w.postMessage({ type: "level", phase, readers: Math.floor(readers / workers.length) + (k < readers % workers.length ? 1 : 0), mode }));

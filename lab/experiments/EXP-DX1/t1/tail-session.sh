@@ -2,8 +2,9 @@
 # [DX-T1-9] Why: tail candidates need identical frozen inputs and baseline/candidate/baseline in one uninterrupted session.
 # Rejected: compare a storage diagnostic with a historical summary pair or release the lease between bookends.
 set -euo pipefail
-kind=${1:?witness|storage|scheduler|disk|history|cores}; prefix=${2:?tx2-dxt1-prefix}; shift 2
-[[ $kind == witness || $kind == storage || $kind == scheduler || $kind == disk || $kind == history || $kind == cores ]] && [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
+kind=${1:?witness|storage|scheduler|disk|history|cores|empty-basis}; prefix=${2:?tx2-dxt1-prefix}; shift 2
+[[ $kind == witness || $kind == storage || $kind == scheduler || $kind == disk || $kind == history || $kind == cores || $kind == empty-basis ]] && [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
+source "$(dirname "${BASH_SOURCE[0]}")/../stack/platform.sh"
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence/DX-T1}
 export TRIPLEX_TRACE_SESSION=$prefix
 session_dir=$DX_STACK_EVIDENCE/$prefix-session
@@ -63,6 +64,12 @@ for mode in "${modes[@]}"; do
   settings=(TRIPLEX_TRACE_LEVEL=summary DX_HARNESS_STORAGE=volume)
   workload=(--rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200 --scheduler-timing legacy)
   [[ $mode != candidate ]] || workload+=(--scheduler-timing precise)
+ elif [[ $kind == empty-basis ]]; then
+  # [DX-T1-15] Why: compare the first frozen burst intact with only the otherwise unused zero-reader broadcast changed.
+  # Rejected: retiming the burst, dropping RYOW, or running it before both bookends can be observed.
+  settings=(TRIPLEX_TRACE_LEVEL=summary DX_HARNESS_STORAGE=volume DX_NS_PROFILE=smoke DX_COMPILER_POLICY=early DX_TRANSACTION_CENSUS=0 DX_PG_CENSUS=0)
+  workload=(--rung 10k --zero-readers --reader-ladder-only --max-readers 0 --level-s 20 --match-duration-s 200)
+  [[ $mode == candidate ]] || workload+=(--legacy-empty-basis-broadcast)
  elif [[ $kind == disk ]]; then
   settings=(TRIPLEX_TRACE_LEVEL=summary DX_HARNESS_STORAGE=volume)
   [[ $mode != candidate ]] || settings+=(DX_HARNESS_STORAGE=root-disk)
@@ -89,7 +96,7 @@ for mode in "${modes[@]}"; do
  sh lab/bin/host-quiet.sh > "$session_dir/$i-host-after.jsonl" || true
  [[ $rc == 0 ]] || break
 done
-if [[ $session_rc == 0 && ( $kind == scheduler || $kind == disk || $kind == history || $kind == cores ) ]]; then
+if [[ $session_rc == 0 && ( $kind == scheduler || $kind == disk || $kind == history || $kind == cores || $kind == empty-basis ) ]]; then
  node lab/trace/trial.mjs "$DX_STACK_EVIDENCE" "$prefix" > "$session_dir/analysis.log"
 fi
 exit "$session_rc"
