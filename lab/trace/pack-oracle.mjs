@@ -124,6 +124,8 @@ export async function verifiedRawManifest(directory) {
     "source-build-hashes.json",
     "driver/ns-report.json",
     "driver/ns-writes.jsonl",
+    "input/ns-writes.jsonl",
+    "input/ns-report.json",
     "containers.json",
     "driver-container.json",
     "config/sql.properties",

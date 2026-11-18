@@ -18,6 +18,75 @@ import {
   nightEnvironment,
 } from "../../../lab/experiments/EXP-DX1/t1/night.mjs";
 import { nativeCounterSummary } from "../../../lab/trace/native-counters.mjs";
+import {
+  ARM_RETRY_MS,
+  HOST_SAMPLE_MS,
+  parseProcessTimes,
+  processCpuSample,
+  topProcessCpu,
+  waitForArmHost,
+} from "../../../lab/trace/host-admission.mjs";
+
+describe("passive per-arm admission", () => {
+  const refused = { eligible: false, issues: ["CPU 26.0%"] };
+  const admitted = { eligible: true, issues: [] };
+  function clock(results: (typeof refused)[], latest = Infinity) {
+    let now = 0;
+    const starts: number[] = [],
+      logged: (typeof refused)[] = [];
+    return {
+      starts,
+      logged,
+      options: {
+        checkTime: (at: number) => {
+          if (at > latest) throw Error("cutoff");
+        },
+        onSample: (gate: typeof refused) => logged.push(gate),
+        collect: async () => {
+          starts.push(now);
+          now += HOST_SAMPLE_MS;
+          return results.shift() ?? refused;
+        },
+        pause: async (ms: number) => {
+          now += ms;
+        },
+        wallNow: () => now,
+        monoNow: () => now,
+      },
+    };
+  }
+  it("settles first, retains every refusal, and takes a fresh passing sample", async () => {
+    const f = clock([refused, refused, admitted]);
+    const result = await waitForArmHost(f.options);
+    expect(f.starts).toEqual([60_000, 120_000, 180_000]);
+    expect(f.logged).toEqual([refused, refused, admitted]);
+    expect(result).toEqual({ gate: admitted, attempts: 3, reason: null });
+  });
+  it("bounds repeated refusals and does not start a sample across the nightly cutoff", async () => {
+    const f = clock([]);
+    expect((await waitForArmHost(f.options)).reason).toContain("20-minute");
+    expect(f.starts.at(-1)! + HOST_SAMPLE_MS).toBeLessThanOrEqual(HOST_SAMPLE_MS + ARM_RETRY_MS);
+    const cutoff = clock([refused, admitted], 180_000);
+    expect((await waitForArmHost(cutoff.options)).reason).toBe("cutoff");
+    expect(cutoff.logged).toEqual([refused]);
+  });
+  it("ranks names by measured CPU time across uneven intervals, without the VM or sampler", () => {
+    const raw = (a: string, b: string, c: string, d: string, t: string) =>
+      parseProcessTimes(
+        `1 ${a} /private/app/Helper Name\n2 ${b} /bin/Helper Name\n3 ${c} /bin/Virtualization\n4 ${d} /bin/node\n5 ${t} /usr/sbin/worker`,
+      );
+    const a = raw("0:00.00", "0:00.00", "0:00.00", "0:00.00", "0:00.00");
+    const b = raw("0:00.10", "0:00.10", "0:08.00", "0:00.05", "0:00.10");
+    const c = raw("0:00.20", "0:00.10", "0:18.00", "0:00.08", "0:00.12");
+    const samples = [processCpuSample(a, b, 1_000, 4), processCpuSample(b, c, 2_000, 4)];
+    expect(samples[0]!.otherCpu).toBe(30);
+    expect(topProcessCpu(samples)).toEqual([
+      { name: "Helper Name", percent: 10 },
+      { name: "worker", percent: 4 },
+    ]);
+    expect(topProcessCpu([{ otherCpu: 30 }])).toBeNull();
+  });
+});
 
 describe("night window and summaries", () => {
   it("pins kept settings and drops a previous diagnostic's overrides", () => {
@@ -115,6 +184,7 @@ describe("night window and summaries", () => {
       source = "a".repeat(40),
       now = Date.now();
     const night = {
+      tag: prefix,
       source,
       startedAt: now - 120000,
       endAt: now + 10000,
@@ -244,6 +314,48 @@ describe("night window and summaries", () => {
       const dir = path.join(root, prefix + "-ladder"),
         file = path.join(dir, "driver/ns-report.json"),
         b = JSON.parse(fs.readFileSync(file, "utf8"));
+      const sealFile = path.join(dir, "SHA256SUMS");
+      fs.renameSync(sealFile, sealFile + ".away");
+      const partial = await summarizePair(root, prefix, night, "Pair 1", 75);
+      expect(partial.valid).toBe(false);
+      expect(partial.arms.map((arm: any) => [arm.suffix, arm.valid])).toEqual([
+        ["off-before", true],
+        ["zero", true],
+        ["ladder", false],
+        ["off-after", true],
+      ]);
+      const summary = renderNightSummary(night, { bars: [] }, [partial]);
+      expect(summary).toContain("Pair 1 zero (arm only)");
+      expect(summary).toContain("NS-P2 all-primary p99 ms");
+      expect(summary).toContain("INCOMPLETE / UNJUDGED");
+      expect(summary).not.toContain("ENOENT");
+      fs.renameSync(sealFile + ".away", sealFile);
+      const gateFile = path.join(dir, "night-host-gate.json");
+      const previousGate = fs.readFileSync(gateFile, "utf8");
+      fs.writeFileSync(
+        gateFile,
+        JSON.stringify({
+          ...JSON.parse(previousGate),
+          tag: prefix + "-ladder",
+          source,
+          nightTag: night.tag,
+          nightStartedAt: night.startedAt,
+        }),
+      );
+      const zeroDir = path.join(root, prefix + "-zero"),
+        input = path.join(dir, "input");
+      fs.mkdirSync(input);
+      for (const name of ["ns-report.json", "ns-writes.jsonl"])
+        fs.copyFileSync(path.join(zeroDir, "driver", name), path.join(input, name));
+      seal(dir);
+      expect((await summarizePair(root, prefix, night, "pair")).valid).toBe(true);
+      fs.appendFileSync(path.join(input, "ns-writes.jsonl"), "\n");
+      seal(dir);
+      expect((await summarizePair(root, prefix, night, "pair")).reason).toContain(
+        "baseline differs",
+      );
+      fs.writeFileSync(gateFile, previousGate);
+      fs.rmSync(input, { recursive: true });
       b.oracle.reads = 0;
       fs.writeFileSync(file, JSON.stringify(b));
       seal(dir);

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { hostGateLine, waitForArmHost } from "../../../trace/host-admission.mjs";
 const zone = "America/New_York";
 /** @param {number} ms */
 const parts = (ms) =>
@@ -71,9 +72,47 @@ export function checkNightWindow(window, now = Date.now(), minimumMinutes = 0) {
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    const window = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
-    const result = checkNightWindow(window, Date.now(), Number(process.argv[3] ?? 0));
-    console.log(result.remainingMs);
+    const [file, minutes = "0", operation, tag, source, output] = process.argv.slice(2);
+    const window = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (operation === "--admit-arm") {
+      if (
+        !/^tx2-dxt1-[a-z0-9-]+$/.test(tag) ||
+        !/^[a-f0-9]{40}$/.test(source) ||
+        path.basename(output ?? "") !== tag ||
+        window.source !== source ||
+        !tag.startsWith(window.tag + "-")
+      )
+        throw Error("Night arm admission identity differs from this session");
+      /** @param {string} name @param {unknown} value */
+      const save = (name, value) =>
+        fs.writeFileSync(path.join(output, name), JSON.stringify(value, null, 2) + "\n", {
+          flag: "wx",
+        });
+      const identity = { tag, source, nightTag: window.tag, nightStartedAt: window.startedAt };
+      const result = await waitForArmHost({
+        checkTime: (now) => checkNightWindow(window, now, Number(minutes)),
+        onSample: (gate, sample) => {
+          save(`night-host-gate-${String(sample).padStart(2, "0")}.json`, {
+            ...gate,
+            ...identity,
+            sample,
+          });
+          console.log(`${tag} sample ${sample} — ${hostGateLine(gate)}`);
+        },
+      }).catch((error) => ({ gate: null, attempts: 0, reason: error.message }));
+      if (result.gate)
+        save("night-host-gate.json", { ...result.gate, ...identity, sample: result.attempts });
+      if (result.reason) {
+        const reason = `Refused before ${tag.split("-").at(-1)}: ${result.reason}`;
+        save("night-host-refusal.json", { ...identity, reason });
+        console.error(reason);
+        process.exitCode = 75;
+      }
+    } else {
+      if (operation !== undefined) throw Error("Invalid night window operation");
+      const result = checkNightWindow(window, Date.now(), Number(minutes));
+      console.log(result.remainingMs);
+    }
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 75;

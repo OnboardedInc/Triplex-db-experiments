@@ -101,11 +101,18 @@ pathlib.Path(sys.argv[1]+'/source-build-hashes.json').write_text(json.dumps(rows
 PY2
 fi
 lock=$DX_LAB_ROOT/locks/measure
-held=false; watchdog=; operational=; child=; trace_host=; trace_pg=; trace_waits=
+held=false; stack_started=false; watchdog=; operational=; child=; trace_host=; trace_pg=; trace_waits=
 cleanup() {
   rc=$?; trap - EXIT TERM INT
   exec 1>&8 2>&9
   if [[ -n $watchdog ]]; then kill "$watchdog" 2>/dev/null || true; wait "$watchdog" 2>/dev/null || true; fi
+  # [DX-T1-15] Why: refusal is terminal before scheduler, stack or recorder startup.
+  # Rejected: signalling nonexistent trace collectors or finalizing a directory without a run.
+  if [[ $stack_started == false ]]; then
+    if [[ -n $child ]]; then kill -TERM "$child" 2>/dev/null || true; wait "$child" 2>/dev/null || true; fi
+    if [[ $held == true ]]; then rm "$lock/owner.json"; rmdir "$lock"; fi
+    exit "$rc"
+  fi
   if [[ $prefix == tx2-dxr3-* ]] && docker container inspect "$prefix-driver" >/dev/null 2>&1; then
     docker stop --time 10 "$prefix-driver" || true
   fi
@@ -126,7 +133,7 @@ cleanup() {
   for sampler in "$trace_host" "$trace_pg" "$trace_waits"; do
     if [[ -n $sampler ]]; then kill -TERM "$sampler" 2>/dev/null || true; wait "$sampler" 2>/dev/null || true; fi
   done
-  if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off ]]; then
+  if [[ ${TRIPLEX_TRACE_LEVEL:-off} != off && -d $out/trace/raw ]]; then
     touch "$out/trace/raw/.finish"
     jfr_roles=(); [[ ${TRIPLEX_TRACE_TX_JFR:-0} != 1 ]] || jfr_roles+=(tx)
     [[ ${TRIPLEX_TRACE_GW_JFR:-0} != 1 ]] || jfr_roles+=(gw-w gw-r)
@@ -210,17 +217,20 @@ trap 'exit 143' TERM INT
 if [[ $prefix == tx2-dxr3-* && -z ${DX_R3_PAIR_LEASE_PID:-} ]]; then
   node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),1140000)' "$$" & watchdog=$!
 fi
-run_stage() { "$@" & child=$!; wait "$child"; child=; }
+run_stage() { local stage_rc=0; "$@" & child=$!; wait "$child" || stage_rc=$?; child=; return "$stage_rc"; }
 if [[ -n ${DX_NIGHT_WINDOW:-} ]]; then
   night_remaining=$(node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" "$night_minutes")
   node -e 'setTimeout(()=>process.kill(Number(process.argv[1]),"SIGTERM"),Number(process.argv[2]))' "$$" "$night_remaining" & watchdog=$!
 fi
 check_resources admitted
 if [[ -n ${DX_NIGHT_WINDOW:-} ]]; then
-  node lab/trace/host-admission.mjs "$out/night-host-gate.json" || exit 75
+  # [DX-T1-15] Why: the previous child including finalization has exited and this arm's resource checks are done.
+  # Rejected: starting a passive sample concurrently with previous-arm rendering, hashing or Docker copying.
+  run_stage node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" "$night_minutes" --admit-arm "$prefix" "$(cat "$out/head.txt")" "$out" || exit 75
   node lab/experiments/EXP-DX1/t1/night-window.mjs "$DX_NIGHT_WINDOW" "$night_minutes" >/dev/null
 fi
 eval "$(node lab/trace/components.mjs --shell)"
+stack_started=true
 if [[ $prefix == tx2-dxt1-* && ${TRIPLEX_TRACE_SYSTEM:-0} == 1 ]]; then bash lab/trace/scheduler-control.sh enable "$prefix" "$out"; fi
 if [[ $kind == functional ]]; then
   export DX_TX_HEAP=1g DX_TX_MEMORY=1500m DX_GW_WRITE_HEAP=768m DX_GW_READ_HEAP=768m TX2_ENGINE_CPUS=1

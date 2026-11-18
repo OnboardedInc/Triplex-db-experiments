@@ -5,8 +5,11 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
+import { setTimeout as sleep } from "node:timers/promises";
 const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] ?? null;
 const native = (command, args) => execFileSync(command, args, { encoding: "utf8", timeout: 5000 });
+export const HOST_SAMPLE_MS = 60_000;
+export const ARM_RETRY_MS = 20 * HOST_SAMPLE_MS;
 // [DX-T1-13] Why: night admission implements Sam's four explicit conditions; pressure, power and clock observations remain visible diagnostics.
 // Rejected: lifetime ps CPU percentages or extra memory/log-path blockers that refuse an otherwise quiet Mac.
 export function evaluateHostGate(samples, context) {
@@ -38,6 +41,7 @@ export function evaluateHostGate(samples, context) {
     swapMaxGiB: swapMax,
     macCpuMedian: cpu,
     cpuUnit: "percent of one core; interval process CPU deltas, VM excluded",
+    topProcesses: topProcessCpu(samples),
     context,
     diagnostics: {
       pressure: [...new Set(samples.map((s) => s.pressure))],
@@ -66,20 +70,48 @@ export function parseProcessTimes(text) {
   if (!rows.size) throw Error("Empty native process inventory");
   return rows;
 }
-export function processCpuInterval(previous, current, elapsedMs) {
-  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) throw Error("Invalid native CPU interval");
-  let cpuMs = 0;
+function processCpuDeltas(previous, current, samplerPid) {
+  const deltas = new Map();
   for (const [pid, row] of current) {
     const old = previous.get(pid);
     if (
+      pid !== samplerPid &&
       old &&
       old.name === row.name &&
-      row.cpuMs >= old.cpuMs &&
+      row.cpuMs > old.cpuMs &&
       !/Virtualization|qemu-system|limactl/.test(row.name)
-    )
-      cpuMs += row.cpuMs - old.cpuMs;
+    ) {
+      deltas.set(row.name, (deltas.get(row.name) ?? 0) + row.cpuMs - old.cpuMs);
+    }
   }
-  return (100 * cpuMs) / elapsedMs;
+  return [...deltas];
+}
+function totalCpu(deltas, elapsedMs) {
+  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) throw Error("Invalid native CPU interval");
+  return (100 * deltas.reduce((sum, [, ms]) => sum + ms, 0)) / elapsedMs;
+}
+export function processCpuInterval(previous, current, elapsedMs) {
+  return processCpuSample(previous, current, elapsedMs).otherCpu;
+}
+export function processCpuSample(previous, current, elapsedMs, samplerPid = -1) {
+  const processCpuMs = processCpuDeltas(previous, current, samplerPid);
+  return { processElapsedMs: elapsedMs, processCpuMs, otherCpu: totalCpu(processCpuMs, elapsedMs) };
+}
+// [DX-T1-15] Why: rank actual interval CPU time by executable basename across the complete sampled window.
+// Rejected: lifetime ps percentages, arguments/paths in the evidence, or treating a process absent at either endpoint as observed.
+export function topProcessCpu(samples) {
+  const totals = new Map();
+  let elapsedMs = 0;
+  for (const sample of samples) {
+    if (!Array.isArray(sample.processCpuMs) || !(sample.processElapsedMs > 0)) continue;
+    elapsedMs += sample.processElapsedMs;
+    for (const [name, ms] of sample.processCpuMs) totals.set(name, (totals.get(name) ?? 0) + ms);
+  }
+  if (elapsedMs === 0) return null; // Older receipts contain only the total.
+  return [...totals]
+    .sort(([a, ams], [b, bms]) => bms - ams || a.localeCompare(b))
+    .slice(0, 10)
+    .map(([name, ms]) => ({ name, percent: (100 * ms) / elapsedMs }));
 }
 export async function collectHostGate(count = 60) {
   if (os.platform() !== "darwin") throw Error("Strict host admission requires the Mac host");
@@ -95,7 +127,7 @@ export async function collectHostGate(count = 60) {
         1024 ** 2;
       const current = parseProcessTimes(native("/bin/ps", ["-A", "-o", "pid=,time=,comm="])),
         currentAt = performance.now();
-      s.otherCpu = processCpuInterval(previous, current, currentAt - previousAt);
+      Object.assign(s, processCpuSample(previous, current, currentAt - previousAt, process.pid));
       previous = current;
       previousAt = currentAt;
       s.busyApps = [
@@ -167,16 +199,68 @@ export async function collectHostGate(count = 60) {
   }
   return { ...evaluateHostGate(samples, context), samplesRaw: samples };
 }
+
+// [DX-T1-15] Why: prior-arm host work and kernel writeback get a passive 60s settle; refusals get independent one-minute windows.
+// Rejected: relaxing the 25% bar, reusing a prior gate, or starting after the arm's time reservation has expired.
+export async function waitForArmHost({
+  checkTime,
+  onSample,
+  collect = collectHostGate,
+  pause = sleep,
+  wallNow = Date.now,
+  monoNow = () => performance.now(),
+}) {
+  // Real 60-s collections include small ps/sysctl overhead. Reserve an extra second at each window boundary.
+  const sampleReserveMs = HOST_SAMPLE_MS + 1_000;
+  checkTime(wallNow() + HOST_SAMPLE_MS + sampleReserveMs);
+  await pause(HOST_SAMPLE_MS);
+  const deadline = monoNow() + ARM_RETRY_MS;
+  let last = null,
+    attempts = 0;
+  while (monoNow() + sampleReserveMs <= deadline) {
+    try {
+      checkTime(wallNow() + sampleReserveMs);
+    } catch (error) {
+      return { gate: last, attempts, reason: error.message };
+    }
+    const started = monoNow();
+    last = await collect();
+    attempts++;
+    onSample(last, attempts);
+    if (last.eligible) {
+      try {
+        checkTime(wallNow());
+      } catch (error) {
+        return { gate: last, attempts, reason: error.message };
+      }
+      if (monoNow() <= deadline) return { gate: last, attempts, reason: null };
+      break;
+    }
+    const delay = Math.max(0, HOST_SAMPLE_MS - (monoNow() - started));
+    if (monoNow() + delay + sampleReserveMs > deadline) break;
+    if (delay) await pause(delay);
+  }
+  return {
+    gate: last,
+    attempts,
+    reason: `20-minute retry window exhausted${last?.issues.length ? ": " + last.issues.join("; ") : ""}`,
+  };
+}
+export function hostGateLine(result) {
+  const top = result.topProcesses
+    ?.map(({ name, percent }) => `${name} ${percent.toFixed(1)}%`)
+    .join(", ");
+  const status = result.eligible
+    ? `Night host gate admitted: swap ${result.swapGiB.toFixed(3)} GiB, Mac CPU ${result.macCpuMedian.toFixed(1)}%, disk ${(result.context.diskFreeBytes / 1024 ** 3).toFixed(2)} GiB; named apps closed`
+    : `Night host gate REFUSED: ${result.issues.join("; ")}`;
+  return `${status}${top ? `; top CPU ${top}` : ""}`;
+}
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const result = await collectHostGate();
   const text = JSON.stringify(result, null, 2) + "\n";
   if (process.argv[2]) {
     fs.writeFileSync(process.argv[2], text, { flag: "wx" });
-    console.log(
-      result.eligible
-        ? `Night host gate admitted: swap ${result.swapGiB.toFixed(3)} GiB, Mac CPU ${result.macCpuMedian.toFixed(1)}%, disk ${(result.context.diskFreeBytes / 1024 ** 3).toFixed(2)} GiB; named apps closed`
-        : `Night host gate REFUSED: ${result.issues.join("; ")}`,
-    );
+    console.log(hostGateLine(result));
   } else process.stdout.write(text);
   process.exitCode = result.eligible ? 0 : 1;
 }

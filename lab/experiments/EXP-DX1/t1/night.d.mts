@@ -11,4 +11,5 @@ export function summarizePair(
   prefix: string,
   night: any,
   label: string,
+  controllerExit?: number,
 ): Promise<any>;

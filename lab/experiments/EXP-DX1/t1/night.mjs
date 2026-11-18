@@ -12,7 +12,13 @@ import {
   poolRows,
 } from "../../../bench/lib/verdict-plan.ts";
 import { generateTrace } from "../../../bench/lib/trace.ts";
-import { collectHostGate, evaluateHostGate } from "../../../trace/host-admission.mjs";
+import {
+  ARM_RETRY_MS,
+  HOST_SAMPLE_MS,
+  collectHostGate,
+  evaluateHostGate,
+  hostGateLine,
+} from "../../../trace/host-admission.mjs";
 import { records, filesUnder, percentile } from "../../../trace/report.mjs";
 import { applyCommitVerdicts, committedRows, reportWindows } from "../../../bench/lib/verdict.ts";
 import { verdictMs } from "../../../trace/instrument.mjs";
@@ -73,34 +79,48 @@ export const barCell = (b) =>
     ? "unavailable"
     : `${b.pass === true ? "MET" : b.pass === false ? "MISS" : "UNJUDGED"} ${scalar(b.value)}; n=${b.n ?? "?"}${b.denominatorN !== undefined ? "/" + (b.denominatorN ?? "?") : ""}; CI${b.id.includes("RECOVERY-MS") ? " (qualifying writer ratio)" : ""} ${b.interval90 ? `[${scalar(b.interval90.low)},${scalar(b.interval90.high)}]` : "unavailable"}`;
 export function renderNightSummary(night, reference, observations) {
-  const complete = observations.filter((o) => o.valid),
-    bars = reference.bars;
+  const bars = reference.bars;
+  const columns = [];
   const lines = [
     `# NIGHT-${night.date}`,
     "",
     `ACK clock, minimum 500 committed primaries; 90% bootstrap intervals. Plan ${night.planId}, source ${night.source}.`,
     "Historical H is rescored; it is not a same-session control. 26–50 band and P5 remain unjudged when underfilled; no missing result is a pass.",
     "MET/MISS are observed point flags; an unqualified run cannot establish acceptance.",
+    "The zero arm has no reader workload. Its scheduled L256 cohort is a zero-reader measurement.",
     "",
   ];
-  for (const o of observations)
+  for (const o of observations) {
     lines.push(
       o.valid
-        ? `${o.label}: ${o.met} MET / ${o.missed} MISS / ${o.unjudged} UNJUDGED; ${o.qualified ? "run qualified" : "run UNQUALIFIED: " + (o.qualificationReasons ?? []).join("; ")}; oracle ${o.oracle}; summary tracing; swap ${scalar(o.swapGiB)} GiB, non-VM CPU ${scalar(o.macCpuMedian)}%; off ACK p50/p99 ${o.controls.map((c) => `${scalar(c.p50)}/${scalar(c.p99)} (swap ${scalar(c.swapGiB)}, CPU ${scalar(c.macCpuMedian)}%)`).join("; ")} ms.`
+        ? `${o.label}: ${o.met} MET / ${o.missed} MISS / ${o.unjudged} UNJUDGED; ${o.qualified ? "run qualified" : "run UNQUALIFIED: " + (o.qualificationReasons ?? []).join("; ")}; oracle ${o.oracle}.`
         : `${o.label}: INCOMPLETE / UNJUDGED — ${o.reason}`,
     );
+    for (const arm of o.arms ?? []) {
+      if (!arm.valid) {
+        lines.push(`- ${arm.suffix}: ${arm.reason}.`);
+        continue;
+      }
+      lines.push(
+        `- ${arm.suffix} completed. ${arm.level} tracing, swap ${scalar(arm.swapGiB)} GiB, non-VM CPU ${scalar(arm.macCpuMedian)}%, oracle ${arm.oracle}. ACK p50/p99 ${scalar(arm.allPrimary.p50Ms)}/${scalar(arm.allPrimary.p99Ms)} ms, n=${arm.allPrimary.count}.`,
+      );
+      if (arm.suffix === "zero" || (arm.suffix === "ladder" && !o.valid))
+        columns.push({ label: `${o.label} ${arm.suffix} (arm only)`, bars: arm.bars });
+    }
+    columns.push({ label: o.label, bars: o.valid ? o.bars : null });
+  }
   if (!observations.length) lines.push("No completed pairs yet.");
   if (night.issue) lines.push("Night status: " + night.issue);
   lines.push(
     "",
-    `| Bar (threshold) | H (historical) | ${observations.map((o) => o.label).join(" | ") || "Tonight"} |`,
-    `| --- | --- | ${observations.map(() => "---").join(" | ") || "---"} |`,
+    `| Bar (threshold) | H (historical) | ${columns.map((o) => o.label).join(" | ") || "Tonight"} |`,
+    `| --- | --- | ${columns.map(() => "---").join(" | ") || "---"} |`,
   );
   const all = new Map(bars.map((b) => [b.id, b]));
-  for (const o of complete) for (const b of o.bars) if (!all.has(b.id)) all.set(b.id, b);
+  for (const o of columns) for (const b of o.bars ?? []) if (!all.has(b.id)) all.set(b.id, b);
   for (const [id, b] of all)
     lines.push(
-      `| ${id.replaceAll("|", "/")} (${b.bar}) | ${barCell(bars.find((x) => x.id === id)).replaceAll("|", "/")} | ${observations.map((o) => (o.valid ? barCell(o.bars.find((x) => x.id === id)) : "UNJUDGED")).join(" | ") || "pending"} |`,
+      `| ${id.replaceAll("|", "/")} (${b.bar}) | ${barCell(bars.find((x) => x.id === id)).replaceAll("|", "/")} | ${columns.map((o) => (o.bars ? barCell(o.bars.find((x) => x.id === id)) : "UNJUDGED")).join(" | ") || "pending"} |`,
     );
   lines.push(
     "",
@@ -158,6 +178,23 @@ async function checkedArm(
     m.startedAt - gate.samplesRaw.at(-1).at > 300000
   )
     throw Error("stale or refused night host gate");
+  // [DX-T1-15] Why: newly sampled gates name the precise arm and session; saved pre-upgrade arms retain their original seal/time proof.
+  // Rejected: permitting a neighbouring arm's gate when an explicit identity is available.
+  if (
+    ("topProcesses" in gate || "tag" in gate) &&
+    (gate.tag !== tag ||
+      gate.source !== night.source ||
+      gate.nightTag !== night.tag ||
+      gate.nightStartedAt !== night.startedAt)
+  )
+    throw Error("foreign arm host gate");
+  if (loaded && gate.tag) {
+    for (const name of ["input/ns-writes.jsonl", "input/ns-report.json"]) {
+      const digest = hash(fs.readFileSync(path.join(dir, name)));
+      if (digest !== sealed.get(name)) throw Error("run seal differs: " + name);
+      inputs[name] = digest;
+    }
+  }
   if (
     m.tag !== tag ||
     m.slot !== tag ||
@@ -249,62 +286,153 @@ async function checkedArm(
     macCpuMedian: percentile(cpus, 0.5),
   };
 }
-export async function summarizePair(root, prefix, night, label) {
-  try {
-    const arms = [];
-    for (const suffix of ["off-before", "zero", "ladder", "off-after"])
-      arms.push(
-        await checkedArm(root, `${prefix}-${suffix}`, night, {
-          loaded: suffix === "ladder",
-          off: suffix.startsWith("off-"),
-        }),
-      );
-    if (new Set(arms.map((a) => a.sourceHashes)).size !== 1)
-      throw Error("source/build changed across arms");
-    const events = generateTrace({ seed: "ns-v2", subjects: 10000, durationS: 7200 });
-    for (const arm of arms) {
-      const recomputed = structuredClone(arm.report);
-      applyCommitVerdicts(recomputed, arm.writes, arm === arms[2] ? arms[1].writes : null, events);
-      for (const [p, priority] of Object.entries(recomputed.priorities))
-        if (JSON.stringify(priority.bars) !== JSON.stringify(arm.report.priorities[p]?.bars))
-          throw Error("bar differs from sealed primary observations: " + arm.tag);
-      arm.qualification = recomputed.verdict?.runQualification ?? {
-        eligible: false,
-        reasons: ["qualification unavailable"],
-      };
-    }
-    const loaded = arms[2],
-      bars = Object.values(loaded.report.priorities).flatMap((p) => p.bars ?? []),
-      controls = arms
-        .filter((a) => a.tag.includes("-off-"))
-        .map((a) => ({
-          tag: a.tag,
-          p50: a.report.priorities.P2.allPrimary?.p50Ms,
-          p99: a.report.priorities.P2.allPrimary?.p99Ms,
-          swapGiB: a.swapGiB,
-          macCpuMedian: a.macCpuMedian,
-        }));
-    if (controls.some((c) => !Number.isFinite(c.p50) || !Number.isFinite(c.p99)))
-      throw Error("missing off ACK control");
-    return {
-      valid: true,
-      label,
-      tag: prefix,
-      bars,
-      met: bars.filter((b) => b.pass === true).length,
-      missed: bars.filter((b) => b.pass === false).length,
-      unjudged: bars.filter((b) => b.pass !== true && b.pass !== false).length,
-      oracle: loaded.report.oracle.status,
-      qualified: loaded.qualification.eligible === true,
-      qualificationReasons: loaded.qualification.reasons,
-      controls,
-      swapGiB: loaded.swapGiB,
-      macCpuMedian: loaded.macCpuMedian,
-      inputs: arms.map((a) => ({ tag: a.tag, hashes: a.inputs })),
-    };
-  } catch (error) {
-    return { valid: false, label, tag: prefix, reason: error.message };
+const armSuffixes = ["off-before", "zero", "ladder", "off-after"];
+const needsBaseline = (bar) =>
+  bar.id.startsWith("NS-P1-WRITER-P99-RATIO-") || bar.id === "NS-P1-RECOVERY-MS";
+const reportBars = (report) => Object.values(report.priorities).flatMap((p) => p.bars ?? []);
+
+function missingArmReason(root, tag, night, suffix) {
+  const dir = path.join(root, tag);
+  const recorded = path.join(dir, "night-host-refusal.json");
+  if (fs.existsSync(recorded)) {
+    const r = read(recorded);
+    if (
+      r.tag === tag &&
+      r.source === night.source &&
+      r.nightTag === night.tag &&
+      r.nightStartedAt === night.startedAt &&
+      typeof r.reason === "string"
+    )
+      return r.reason;
   }
+  // [DX-T1-15] Why: a historical refusal used an unbound host-gate file in the exact arm directory.
+  // Rejected: treating the absent final seal as a parser crash, or using that retrospective observation as admission.
+  const gateFile = path.join(dir, "night-host-gate.json"),
+    headFile = path.join(dir, "head.txt");
+  if (
+    fs.existsSync(gateFile) &&
+    fs.existsSync(headFile) &&
+    fs.readFileSync(headFile, "utf8").trim() === night.source
+  ) {
+    const gate = read(gateFile);
+    const sampledAt = gate.samplesRaw?.[0]?.at;
+    if (sampledAt >= night.startedAt && sampledAt < night.endAt) {
+      const checked = evaluateHostGate(gate.samplesRaw ?? [], gate.context ?? {});
+      if (!checked.eligible) return `Refused before ${suffix}: ${checked.issues.join("; ")}`;
+    }
+  }
+  return `${suffix} has no completed sealed arm`;
+}
+
+function zeroArmBars(report) {
+  // [DX-T1-15] Why: a 0/0 throughput comparator and an absent reader workload cannot meet a read bar.
+  // Rejected: copying the driver's zero-reader placeholder flags into a user-facing read result.
+  return Object.entries(report.priorities).flatMap(([priority, p]) =>
+    (p.bars ?? []).map((b) =>
+      (priority === "P4" &&
+        !(b.n > 0 && b.sampleUnit !== "primary cohort (non-latency obligation)")) ||
+      (priority === "P1" && !b.id.startsWith("NS-P1-WRITER-") && b.id !== "NS-P1-RECOVERY-MS")
+        ? { ...b, value: null, pass: null, n: 0, interval90: null, status: "UNJUDGED (no readers)" }
+        : b,
+    ),
+  );
+}
+
+// [DX-T1-15] Why: a missing ladder or bookend cannot erase verified zero observations or grant a pair verdict.
+// Rejected: loading all four seals before inspecting any arm, or carrying loaded ratios without their zero denominator.
+export async function summarizePair(root, prefix, night, label, controllerExit = 0) {
+  const arms = [],
+    checked = [];
+  const events = generateTrace({ seed: "ns-v2", subjects: 10000, durationS: 7200 });
+  let zero = null;
+  for (const suffix of armSuffixes) {
+    const tag = `${prefix}-${suffix}`,
+      loaded = suffix === "ladder",
+      off = suffix.startsWith("off-");
+    try {
+      if (!fs.existsSync(path.join(root, tag, "SHA256SUMS")))
+        throw Error(missingArmReason(root, tag, night, suffix));
+      const arm = await checkedArm(root, tag, night, { loaded, off });
+      const recomputed = structuredClone(arm.report);
+      const baseline = loaded && zero?.sourceHashes === arm.sourceHashes ? zero.writes : null;
+      if (
+        baseline &&
+        arm.inputs["input/ns-writes.jsonl"] &&
+        (arm.inputs["input/ns-writes.jsonl"] !== zero.inputs["driver/ns-writes.jsonl"] ||
+          arm.inputs["input/ns-report.json"] !== zero.inputs["driver/ns-report.json"])
+      )
+        throw Error("loaded arm baseline differs from sealed zero arm");
+      const comparableBars = (report) =>
+        reportBars(report).filter((b) => !loaded || baseline || !needsBaseline(b));
+      applyCommitVerdicts(recomputed, arm.writes, baseline, events);
+      if (
+        JSON.stringify(comparableBars(recomputed)) !== JSON.stringify(comparableBars(arm.report)) ||
+        JSON.stringify(recomputed.priorities.P2.allPrimary) !==
+          JSON.stringify(arm.report.priorities.P2.allPrimary)
+      )
+        throw Error("bar differs from sealed primary observations: " + arm.tag);
+      const bars = loaded ? reportBars(recomputed) : zeroArmBars(recomputed),
+        allPrimary = recomputed.priorities.P2.allPrimary;
+      if (!Number.isFinite(allPrimary.p50Ms) || !Number.isFinite(allPrimary.p99Ms))
+        throw Error("missing ACK observations");
+      arms.push({
+        valid: true,
+        suffix,
+        tag,
+        level: off ? "off" : "summary",
+        bars,
+        allPrimary,
+        oracle: arm.report.oracle?.status ?? "unavailable",
+        swapGiB: arm.swapGiB,
+        macCpuMedian: arm.macCpuMedian,
+        qualification: recomputed.verdict.runQualification,
+        inputs: arm.inputs,
+      });
+      checked.push(arm);
+      if (suffix === "zero") zero = arm;
+    } catch (error) {
+      const reason =
+        error.code === "ENOENT" ? `${suffix} is missing a required sealed input` : error.message;
+      arms.push({ valid: false, suffix, tag, reason });
+    }
+  }
+  const loaded = arms[2];
+  const inputs = checked.map((a) => ({ tag: a.tag, hashes: a.inputs }));
+  const reason =
+    arms.find((a) => !a.valid)?.reason ||
+    (new Set(checked.map((a) => a.sourceHashes)).size !== 1
+      ? "source/build changed across arms"
+      : null) ||
+    (controllerExit !== 0
+      ? `controller exit ${controllerExit}; see ${label.toLowerCase().replaceAll(" ", "")}.log`
+      : null);
+  if (reason) return { valid: false, label, tag: prefix, reason, arms, inputs };
+  const { bars } = loaded;
+  return {
+    valid: true,
+    label,
+    tag: prefix,
+    bars,
+    arms,
+    inputs,
+    met: bars.filter((b) => b.pass === true).length,
+    missed: bars.filter((b) => b.pass === false).length,
+    unjudged: bars.filter((b) => b.pass !== true && b.pass !== false).length,
+    oracle: loaded.oracle,
+    qualified: loaded.qualification?.eligible === true,
+    qualificationReasons: loaded.qualification?.reasons ?? ["qualification unavailable"],
+    controls: arms
+      .filter((a) => a.level === "off")
+      .map((a) => ({
+        tag: a.tag,
+        p50: a.allPrimary.p50Ms,
+        p99: a.allPrimary.p99Ms,
+        swapGiB: a.swapGiB,
+        macCpuMedian: a.macCpuMedian,
+      })),
+    swapGiB: loaded.swapGiB,
+    macCpuMedian: loaded.macCpuMedian,
+  };
 }
 export async function summarizeCpuComparison(root, prefix, night) {
   const observations = [];
@@ -383,6 +511,10 @@ async function main() {
             "optional eight/six/eight loaded contrast",
           ],
           admissionDiskGiB: 47,
+          perArmHostWait: {
+            settleSeconds: HOST_SAMPLE_MS / 1000,
+            retryMinutes: ARM_RETRY_MS / 60000,
+          },
           compiler: "early (0.1)",
           tracing: "summary",
           splitRead: "pending",
@@ -394,7 +526,43 @@ async function main() {
     );
     return;
   }
-  if (args.length) throw Error("Usage: night.sh [--plan]");
+  if (args[0] === "--render-saved" && args.length === 2) {
+    const saved = path.resolve(args[1]),
+      night = read(path.join(saved, "night.json"));
+    if (
+      path.basename(saved) !== night.tag ||
+      !/^tx2-dxt1-night-[0-9-]+$/.test(night.tag) ||
+      !/^[a-f0-9]{40}$/.test(night.source) ||
+      night.planId !== plan.id ||
+      night.traceDigest !== plan.traceDigest ||
+      night.offeredSeconds !== plan.offeredSeconds
+    )
+      throw Error("Saved night identity or plan differs");
+    checkNightWindow(night, night.startedAt);
+    const root = path.dirname(saved);
+    const observations = [];
+    for (let i = 1; i <= 2; i++) {
+      const prefix = night.tag + "-pair" + i;
+      if (!fs.existsSync(path.join(saved, `pair${i}.log`))) break;
+      const exitFile = path.join(saved, `pair${i}-exit.txt`);
+      const exit = fs.existsSync(exitFile) ? fs.readFileSync(exitFile, "utf8").trim() : "";
+      observations.push(
+        await summarizePair(
+          root,
+          prefix,
+          night,
+          `Pair ${i}`,
+          /^(0|[1-9]\d*)$/.test(exit) ? Number(exit) : 75,
+        ),
+      );
+    }
+    if (observations.length < 2) night.issue = `Pair ${observations.length + 1} did not start.`;
+    process.stdout.write(
+      renderNightSummary(night, read(baseScript + "H-REFERENCE.json"), observations),
+    );
+    return;
+  }
+  if (args.length) throw Error("Usage: night.sh [--plan | --render-saved SAVED_NIGHT_DIR]");
   checkNightWindow(window, Date.now(), 300);
   if (git("status", "--porcelain", "--untracked-files=no"))
     throw Error("Night requires clean committed tracked source");
@@ -476,13 +644,14 @@ async function main() {
     fs.writeFileSync(path.join(out, "host-gate.json"), JSON.stringify(gate, null, 2) + "\n", {
       flag: "wx",
     });
-    if (!gate.eligible) throw Error("Night host gate REFUSED: " + gate.issues.join("; "));
+    if (!gate.eligible) throw Error(hostGateLine(gate));
     for (let i = 1; i <= 2; i++) {
       if (night.issue) throw Error(night.issue);
       checkNightWindow(night, Date.now(), 300);
       const prefix = tag + "-pair" + i,
         code = await run("bash", [baseScript + "v3.sh", prefix], {}, `pair${i}.log`);
-      observations.push(await summarizePair(root, prefix, night, `Pair ${i}`));
+      fs.writeFileSync(path.join(out, `pair${i}-exit.txt`), `${code}\n`, { flag: "wx" });
+      observations.push(await summarizePair(root, prefix, night, `Pair ${i}`, code));
       update();
       if (code !== 0 || !observations.at(-1).valid)
         throw Error(`Pair ${i} incomplete (exit ${code}); see pair${i}.log`);
