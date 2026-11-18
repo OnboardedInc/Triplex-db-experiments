@@ -3,16 +3,17 @@
 # Rejected: exporting a Mac image/seed, running emulated images, or installing anything on the owner's Mac.
 set -euo pipefail
 mode=${1:---plan}; commit=${2:?full public repository commit}; work=${3:-$HOME/triplex-bare-metal}
-[[ $mode == --plan || $mode == --run ]] && [[ $commit =~ ^[0-9a-f]{40}$ ]] || exit 2
+[[ $mode == --plan || $mode == --prepare || $mode == --run ]] && [[ $commit =~ ^[0-9a-f]{40}$ ]] || exit 2
 if [[ $mode == --plan ]]; then
   printf '%s\n' "Ubuntu 24.04 physical host; x86_64 or arm64; at least 8 CPUs, 24 GiB RAM and 80 GiB free."
   printf '%s\n' "Public source: OnboardedInc/Triplex-db-experiments at $commit; pinned Datomic 1.0.7745 distribution SHA256 from that checkout."
   printf '%s\n' 'Install Docker from Ubuntu; native Temurin/Node/Postgres images; pinned pnpm; local 1k correctness smoke, self-seeded 10k v3 off/zero/loaded/off, fixed-gap diagnostics; collect a checksummed archive.'
+  printf '%s\n' 'Use --prepare to stop at the built toolchain and images.'
   printf '%s\n' 'No Mac source, dependency cache, seed, credential, VM or keep-warm request is required. This plan performs no installation or network call.'
   exit
 fi
 [[ $(uname -s) == Linux ]] || { echo 'Refusing installation outside Linux' >&2; exit 2; }
-if [[ $EUID != 0 ]];then exec sudo bash "$0" --run "$commit" "$work";fi
+if [[ $EUID != 0 ]];then exec sudo bash "$0" "$mode" "$commit" "$work";fi
 [[ $work == /* && $work != / && $work != *$'\n'* ]] || exit 2
 source /etc/os-release
 [[ $ID == ubuntu && $VERSION_ID == 24.04 ]] || { echo 'Ubuntu 24.04 required' >&2;exit 2; }
@@ -41,8 +42,8 @@ archive_reports() {
   rc=$?;trap - EXIT TERM INT
   printf '%s\n' "$rc" > "$work/results/bootstrap.exit"
   if [[ -d $DX_STACK_EVIDENCE ]];then
-    find "$DX_STACK_EVIDENCE" -type f \( -name 'REPORT*' -o -name '*REPORT.md' -o -name 'TABLES.md' -o -name 'VERDICT*.md' -o -name 'trace.html' -o -name 'SHA256SUMS' -o -name 'commit-anatomy.json' \) -print0 > "$work/results/report-files.list0"
-    tar --null -T "$work/results/report-files.list0" -C "$work" -c -I 'zstd -3' -f "$work/reports.tar.zst.tmp" results bootstrap.log
+    (cd "$work"; find state/evidence/DX-T1 -type f \( -name '*REPORT.md' -o -name 'TABLES.md' -o -name 'VERDICT*.md' -o -name 'trace.html' -o -name 'SHA256SUMS' -o -name 'COMMIT-ANATOMY.md' -o -name 'commit-anatomy.json' -o -name 'ns-report.json' \) -print0) > "$work/results/report-files.list0"
+    tar -C "$work" --null -T "$work/results/report-files.list0" -c -I 'zstd -3' -f "$work/reports.tar.zst.tmp" results bootstrap.log
     mv "$work/reports.tar.zst.tmp" "$work/results/reports.tar.zst"
     sha256sum "$work/results/reports.tar.zst" > "$work/results/reports.tar.zst.sha256"
   fi
@@ -74,7 +75,10 @@ PY_DOWNLOADS
 export PATH=$work/tools/bin:$PATH COREPACK_HOME=$work/corepack
 corepack enable --install-directory "$work/tools/bin"
 pnpm --store-dir "$work/pnpm-store" install --frozen-lockfile
-node lab/bin/heavy.mjs --label DX-T1-native-build -- node_modules/.bin/turbo run build --filter=@triplex-build/triplex-datomic --filter=@triplex-build/triplex-host --filter=@triplex-build/triplex-qualification
+# [DX-BM1] Why: the 1k smoke imports W0's public dist export on a clean Linux checkout.
+# Rejected: assuming the package is built transitively by the three existing targets (the first smoke stopped at ERR_MODULE_NOT_FOUND).
+node lab/bin/heavy.mjs --label DX-BM1-native-build -- node_modules/.bin/turbo run build --filter=@triplex-build/triplex-datomic --filter=@triplex-build/triplex-host --filter=@triplex-build/triplex-qualification --filter=@triplex-build/w0
+test -s packages/w0/dist/index.js
 curl -fsSLo "$work/downloads/datomic-pro-1.0.7745.zip" https://datomic-pro-downloads.s3.amazonaws.com/1.0.7745/datomic-pro-1.0.7745.zip
 python3 - "$work" <<'PY_DATOMIC'
 import hashlib,json,pathlib,shutil,sys,zipfile
@@ -101,6 +105,7 @@ node lab/bin/heavy.mjs --label DX-T1-native-image -- docker build --platform "li
 docker image inspect tx2-datomic:1.0.7745-da00 node:22.23.2-bookworm-slim postgres:17-alpine > "$work/results/images.json"
 [[ $(docker image inspect --format '{{.Architecture}}' tx2-datomic:1.0.7745-da00) == "$arch" ]] || exit 2
 lscpu > "$work/results/lscpu.txt";lsblk -o NAME,TYPE,SIZE,FSTYPE,MOUNTPOINTS > "$work/results/disks.txt"
+[[ $mode != --prepare ]] || exit 0
 export DX_COMPILER_POLICY=early DX_NATIVE_GATES=0
 # [DX-T1-14] Why: correctness smoke precedes the self-seeded 10k study; no sealed Mac volume is an input.
 # Rejected: downloading private seeds or omitting the loaded arm's independent oracle.
