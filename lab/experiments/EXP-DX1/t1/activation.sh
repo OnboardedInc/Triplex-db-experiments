@@ -15,7 +15,7 @@ if [[ $operation == seed ]];then scope=dxt1-w0-$subjects-$prefix;fi
 if [[ $mode == --plan ]];then
   printf '%s\n' "Diagnostic W0 $operation/$traffic: $subjects subjects, scope $scope; sealed source ${seed} is read-only and cloned, never reused in place."
   printf '%s\n' 'Current stack/up.sh; raised id memo; early compilation; WARN file logging; fsync/synchronous_commit on; full independent fingerprint and publication readback.'
-  printf '%s\n' '100k activation requires at least 24 GiB guest memory; this script never resizes it. Today only the 1k smoke is authorized.'
+  printf '%s\n' '100k activation requires a nominal 24 GiB guest. This script does not resize it.'
   printf '%s\n' 'Execution requires DX_ACTIVATION_STOP_AT with an explicit timezone; no keep-warm mechanism.'
   exit
 fi
@@ -48,8 +48,16 @@ python3 -c 'import shutil;assert shutil.disk_usage(".").free>=28*1024**3'
 lock=$DX_LAB_ROOT/locks/measure
 # [DX-T1-14] Why: the absolute cleanup cutoff must include time waiting for another holder.
 # Rejected: start a stale relative timer after a long lease wait, or keep waiting beyond the declared cutoff.
-while ! mkdir "$lock" 2>/dev/null;do remaining_ms >/dev/null;sleep 5;done
-printf '{"id":"DX-T1","pid":%s,"prefix":"%s","kind":"activation"}\n' "$$" "$prefix" > "$lock/owner.json"
+lease_owned=false
+if [[ -n ${DX_SCALE_NIGHT_LEASE_PID:-} ]]; then
+  # [DX-T1-15] Why: the campaign owns VM isolation until its verified restore, including between activation and cleanup.
+  # Rejected: release/reacquire the lock around activation (a new holder could enter before restoration).
+  node lab/experiments/EXP-DX1/t1/scale-night-lease.mjs "$lock/owner.json" "$DX_SCALE_NIGHT_LEASE_PID" "$prefix" activation
+else
+  while ! mkdir "$lock" 2>/dev/null;do remaining_ms >/dev/null;sleep 5;done
+  lease_owned=true
+  printf '{"id":"DX-T1","pid":%s,"prefix":"%s","kind":"activation"}\n' "$$" "$prefix" > "$lock/owner.json"
+fi
 child= timer= resources=false
 cleanup() {
   rc=$?;trap - EXIT TERM INT
@@ -66,7 +74,7 @@ cleanup() {
   fi
   bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --inventory > "$out/remaining.txt"
   [[ ! -s $out/remaining.txt ]] || { echo 'Resources remain; retaining lease' >&2;exit 1; }
-  rm "$lock/owner.json";rmdir "$lock"
+  if [[ $lease_owned == true ]]; then rm "$lock/owner.json";rmdir "$lock"; fi
   printf '%s\n' "$rc" > "$out/exit.txt"
   exit "$rc"
 }
