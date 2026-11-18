@@ -1,10 +1,11 @@
 import { captureTraceContext, continueTrace, traceAsync } from "./tracing.ts";
 import { GatewayObserver } from "./gateway-observer.ts";
-import { Worker, MessageChannel } from "node:worker_threads";
+import { Worker, MessageChannel, type MessagePort } from "node:worker_threads";
 import { readObservation, type ReadObservation } from "./read-observation.ts";
 import { Histogram } from "./hist.ts";
 import { replicaEndpoint, restoreReplicaReply } from "./replica-reads.ts";
 import type { Basis, PullResult, CompositionHandle } from "./composition.ts";
+import type { ReaderConfig } from "../reader-worker.ts";
 
 // [DX-R3] Why: all follower application and RYOW index work stays off the commit issuer, including metadata allocation.
 // Rejected: a parent-side mirror that still validates/applies every changed entity and contributes GC stalls.
@@ -29,9 +30,10 @@ export class ReplicaThread {
     this.endpoint = replicaEndpoint(process.env, cfg.peer);
     this.worker = new Worker(new URL("./replica-worker.ts", import.meta.url), {
       workerData: { ...cfg, sourceEndpoint: this.endpoint },
-      // [DX-R3] Why: an exact receipt fallback must use W, even while the independent follower is served by R.
-      // Rejected: a stale read-peer RYOW fallback; sourceEndpoint binds the follower's actual peer separately.
-      env: replicaThreadEnvironment(process.env),
+      // [DX-T1-15] Why: a shared reader retains the same read peer as a dedicated reader.
+      // RYOW fallback still runs in the parent or its observer. SourceEndpoint separately binds the feed.
+      // Rejected: silently sending logical readers to the writer's gateway in the memory trial.
+      env: cfg.sharedReaderIndex ? process.env : replicaThreadEnvironment(process.env),
     });
     const failed = (error: Error) => {
       this.fail = error; reject(error); this.closeReply?.();
@@ -73,6 +75,24 @@ export class ReplicaThread {
     const { port1, port2 } = new MessageChannel();
     this.worker.postMessage({ type: "connect", port: port1 }, [port1]);
     return port2;
+  }
+  startSharedReader(reader: ReaderConfig, observationPort?: MessagePort) {
+    const { port1, port2 } = new MessageChannel();
+    const control = port1 as MessagePort & { terminate(): Promise<void> };
+    const error = (cause: Error) => control.emit("error", cause);
+    const exit = () => control.close();
+    this.worker.on("error", error);
+    this.worker.once("exit", exit);
+    control.once("close", () => {
+      this.worker.off("error", error);
+      this.worker.off("exit", exit);
+      control.emit("exit", 0);
+    });
+    control.terminate = async () => control.close();
+    this.worker.postMessage({
+      type: "start-shared-reader", control: port2, reader: { ...reader, observationPort },
+    }, observationPort ? [port2, observationPort] : [port2]);
+    return control;
   }
   pull(root: string, basis: Basis): Promise<PullResult> {
     if (this.fail) return Promise.reject(this.fail);

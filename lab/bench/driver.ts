@@ -149,6 +149,7 @@ const config = {
   replicaFeed: opt("replica-feed", "inline") as "legacy" | "inline",
   readerLadderOnly: flag("reader-ladder-only"),
   readerThreads: Number(opt("reader-threads", "4")),
+  sharedReaderIndex: boundedMemoryTrial && !flag("zero-readers"),
   readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", opt("read-path", "gateway") === "replica" ? "16" : lane === "datomic" ? "640" : "128")),
   writerPredecessorCacheMiB: lane === "datomic" ? WRITER_PREDECESSOR_CACHE_MIB : 0,
   readerSubjectAffinity: lane === "datomic" && !flag("no-reader-affinity"),
@@ -212,7 +213,7 @@ if (!["heap", "journal"].includes(config.expectedStateRetention)) throw Error("I
 if (boundedMemoryTrial && (lane !== "datomic" || profile !== "smoke" || config.readPath !== "replica" ||
     ![1000, 100000].includes(rungSubjects) || config.expectedStateRetention !== "journal" || !config.compactModel ||
     config.replicaHistoryMiB !== 192 || config.replicaWorldCacheMiB !== 8 ||
-    (!config.zeroReaders && (!config.readerLadderOnly || config.readerThreads !== 1 ||
+    (!config.zeroReaders && (!config.readerLadderOnly || config.readerThreads !== 1 || config.replicaThread !== "worker" ||
       !Number.isSafeInteger(config.maxReaders) || config.maxReaders! < 1 || config.maxReaders! > 64))))
   throw Error("Invalid bounded-memory trial: require exact local reads, compact journal, fixed replica budgets and a bounded reader ladder");
 if (!["snapshot", "delta"].includes(config.readerBasisWire)) throw Error("Invalid reader basis wire mode");
@@ -527,7 +528,10 @@ async function run() {
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
       composition: config.composition, roots: Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
-      worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer }, aux)
+      worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer,
+      sharedReaderIndex: config.sharedReaderIndex,
+      ...(config.sharedReaderIndex ? { worker: 0, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2 } : {}),
+    }, aux)
     : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
       scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
@@ -579,8 +583,18 @@ async function run() {
     const directReplica = replicaHost && "connect" in replicaHost ? replicaHost : undefined;
     const unsubscribe = mainReplicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
     const observationPort = spill?.connect();
-    const replicaPort = directReplica?.connect();
-    const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: { ...cfg, observationPort, replicaPort }, transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : [])], env: process.env });
+    let worker;
+    if (config.sharedReaderIndex) {
+      if (!directReplica) throw Error("The shared reader requires the replica worker");
+      worker = directReplica.startSharedReader(cfg, observationPort);
+    } else {
+      const replicaPort = directReplica?.connect();
+      worker = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), {
+        workerData: { ...cfg, observationPort, replicaPort, readerEntrypoint: true },
+        transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : [])],
+        env: process.env,
+      });
+    }
     const life = new ReaderLifecycle(); readerLives.push({ worker: w, life });
     worker.on("error", (error: unknown) => life.error(error));
     worker.on("exit", (code: number) => life.exit(code));

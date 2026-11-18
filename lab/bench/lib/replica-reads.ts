@@ -412,7 +412,7 @@ export class ReplicaReadHost {
         ...(clock !== undefined && (!update.reset || Number.isFinite(clock)) ? { recordTime: clock, clockEnd: clockEnds.get(update.position) } : {}),
       };
       traceSync("replica.apply-delta", () => this.index.apply(delta,
-        slabs ? (id, entity) => prepareEntity(id, entity, slabs) : undefined));
+        slabs ? (id: string, entity: PackedEntity) => prepareEntity(id, entity, slabs) : undefined));
       if (delta.valid) this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now(), ...timings.get(delta.position) });
       timings.delete(delta.position);
       times.delete(update.position);

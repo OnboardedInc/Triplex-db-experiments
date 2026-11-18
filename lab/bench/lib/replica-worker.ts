@@ -16,6 +16,7 @@ try {
   const local = new ReplicaReader(cfg.historyBytes, host.index, cfg.worldCacheBytes ?? 32 * 1024 ** 2);
   const indexStats = () => ({ floor: host.index.floor, position: host.index.position, historyBytes: host.index.historyBytes, positions: host.index.positions, maxBytes: host.index.maxBytes });
   const readers = new Set<import("node:worker_threads").MessagePort>();
+  let sharedReader = false;
   let bytes = host.replica.bytes;
   // [DX-R3] Why: per-position application times must survive a late stop and stay off the commit issuer.
   // Rejected: retaining the only application witness in the parent's RAM until final analysis.
@@ -49,6 +50,21 @@ try {
       m.port.postMessage({ type: "replica-image", image: host.index.image() });
       readers.add(m.port);
       m.port.on("close", () => readers.delete(m.port));
+    }
+    if (m.type === "start-shared-reader") {
+      const control = m.control as import("node:worker_threads").MessagePort;
+      try {
+        if (!cfg.sharedReaderIndex || sharedReader) throw Error("The bounded replica admits one shared reader loop");
+        sharedReader = true;
+        const { startReader } = await import("../reader-worker.ts");
+        await startReader(control, m.reader, {
+          index: host.index,
+          subscribe: (notify) => host.subscribe(notify),
+        });
+      } catch (error) {
+        control.postMessage({ type: "error", message: String(error) });
+        control.close();
+      }
     }
     if (m.type === "close") { await host.close(); if (appliedLog !== undefined) fs.closeSync(appliedLog); for (const reader of readers) reader.close(); await flushTracing(); port!.postMessage({ type: "closed" }); port!.close(); }
   };

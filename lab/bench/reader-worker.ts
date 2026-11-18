@@ -39,7 +39,7 @@ import { Rng, seedOf } from "./lib/rng.ts";
 import { BUCKETS, HOP_SHARE, ids, subjectInCell, type Bucket, type Hop } from "./lib/world.ts";
 import { observe, type ReadRecord } from "./lib/observe.ts";
 
-type ReaderConfig = {
+export type ReaderConfig = {
   replicaWorldCacheBytes?: number;
   replicaPort?: import("node:worker_threads").MessagePort;
   observationPort?: import("node:worker_threads").MessagePort;
@@ -65,20 +65,33 @@ type ReaderConfig = {
   splitShare: number;
 };
 
+type SharedReplica = {
+  index: import("../../packages/datomic/dist/index.js").RecentReads;
+  subscribe(notify: () => void): () => void;
+};
+
 /** Run one reader "thread" on a message port: a worker's parentPort, or a MessageChannel port in-thread
  * (the `memory` composition keeps its store in one thread). */
-export async function startReader(port: any, cfg: ReaderConfig) {
+export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedReplica) {
+  if (shared && (cfg.readPath !== "replica" || cfg.replicaImage || cfg.replicaPort))
+    throw Error("A shared reader must use the live replica index");
   const nowAbs = () => performance.timeOrigin + performance.now();
   const DAY = 86_400_000;
 
   let comp: CompositionHandle;
-  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, undefined, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2) : undefined;
+  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, shared?.index, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2) : undefined;
   if (replica && cfg.replicaImage) replica.install(cfg.replicaImage);
   const turn = new ReaderTurn();
   const loopDelay = monitorEventLoopDelay({ resolution: 1 });
   loopDelay.enable();
   const deltaLag = new Histogram();
   let deltas = 0;
+  // [DX-T1-15] Why: the bounded ladder reads the already validated live index on its owning isolate.
+  // Rejected: cloning the million-entry index beside the follower or falling back to a different basis to fit.
+  const unsubscribe = shared?.subscribe(() => {
+    deltas++;
+    replica!.notify();
+  });
   let replicaReadyResolve: (() => void) | undefined;
   const replicaReady = cfg.replicaPort ? new Promise<void>(resolve => { replicaReadyResolve = resolve; }) : Promise.resolve();
   cfg.replicaPort?.on("message", msg => {
@@ -305,6 +318,18 @@ export async function startReader(port: any, cfg: ReaderConfig) {
     }
   }, 500);
 
+  if (shared) port.once("close", () => {
+    if (stopping) return;
+    stopping = true;
+    wanted = 0;
+    for (const resolve of waiting.values()) resolve(null);
+    clearInterval(flush);
+    loopDelay.disable();
+    unsubscribe?.();
+    cfg.observationPort?.close();
+    void comp?.close().catch(() => {});
+  });
+
   port.on("message", async (msg: any) => {
     if (msg.type === "replica-delta") {
       deltas++;
@@ -351,21 +376,30 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       while (observationPending.size) await new Promise(resolve => setTimeout(resolve, 1));
       cfg.observationPort?.close();
       cfg.replicaPort?.close();
+      unsubscribe?.();
       const diagnostics = finalDiagnostics();
       await comp.close().catch(() => {});
-      await flushTracing();
+      if (!shared) await flushTracing();
       port.postMessage({ type: "stopped", httpCounts: httpCounts(), diagnostics });
     }
   });
 
   try {
     comp = await openComposition(cfg.composition, cfg.lane, cfg.scope);
+    if (stopping) { await comp.close(); return; }
     await replicaReady;
     port.postMessage({ type: "ready" });
   } catch (error: any) {
+    clearInterval(flush);
+    loopDelay.disable();
+    unsubscribe?.();
+    cfg.observationPort?.close();
     port.postMessage({ type: "error", message: String(error?.stack ?? error) });
   }
 
 }
 
-if (!isMainThread && parentPort) void startReader(parentPort, workerData as ReaderConfig);
+// [DX-T1-15] Why: the replica isolate imports the same reader loop without starting it on its own control port.
+// Rejected: treating every non-main import as the dedicated reader entrypoint.
+if (!isMainThread && parentPort && workerData?.readerEntrypoint === true)
+  void startReader(parentPort, workerData as ReaderConfig);
