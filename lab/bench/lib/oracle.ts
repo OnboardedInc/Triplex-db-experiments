@@ -13,7 +13,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { requireOracleBinding } from "./oracle-output.ts";
+import { readOracleOutput, requireOracleBinding } from "./oracle-output.ts";
 import { oraclePublicValue } from "./oracle-public-value.ts";
 import { memberOf } from "./world.ts";
 import type { RecordedCommand } from "./seed.ts";
@@ -96,8 +96,18 @@ export function checkWithOracle(opts: { oracleRoot: string; dir: string; caseDoc
     exitCode = error.status ?? -1;
     if (!fs.existsSync(outFile)) return { status: "ORACLE-ERROR", exitCode, stderr: String(error.stderr ?? error.message).slice(0, 2000), reads: 0, mismatches: [] as any[] };
   }
-  const out = JSON.parse(fs.readFileSync(outFile, "utf8"));
-  requireOracleBinding(out, caseText, opts.caseDoc);
+  return compareOracleOutput({
+    out: readOracleOutput(outFile), caseText, caseDoc: opts.caseDoc, reads: opts.reads,
+    exitCode, oracleMs: Date.now() - started,
+  });
+}
+
+export function compareOracleOutput(opts: {
+  out: any; caseText: string; caseDoc: any; reads: readonly OracleSampleRead[];
+  exitCode: number; oracleMs: number;
+}) {
+  const { out, exitCode } = opts;
+  requireOracleBinding(out, opts.caseText, opts.caseDoc);
   const expectedByRead = new Map<number, Map<string, Set<string>>>();
   for (const q of out.queries ?? []) {
     const [k, e] = String(q.id).split("|");
@@ -132,7 +142,7 @@ export function checkWithOracle(opts: { oracleRoot: string; dir: string; caseDoc
     exitCode,
     reads: opts.reads.length,
     entityQueries: (out.queries ?? []).length,
-    oracleMs: Date.now() - started,
+    oracleMs: opts.oracleMs,
     mismatches: mismatches.slice(0, 20),
     mismatchCount: mismatches.length,
   };
