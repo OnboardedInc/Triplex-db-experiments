@@ -190,6 +190,16 @@ evidence=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/DX-H1}
 attempt="$evidence/$prefix"
 mkdir -p "$attempt/sql" "$attempt/config" "$attempt/trace/raw"
 [[ ! -e "$attempt/stack.json" ]] || { echo "use a fresh prefix; evidence already exists" >&2; exit 2; }
+# [DX-BM1] Why: separate only WAL from the root data volume under the same durability settings.
+# Rejected: relocating the database or changing synchronous_commit (either would confound the WAL A/B).
+wal_mount=()
+if [[ -n ${DX_BM1_WAL_MOUNT:-} ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxt1-bm1-[a-z0-9]+-wal-ssd$ && $publish == false && -z $seed_volume ]]
+  [[ $(findmnt -nro SOURCE --mountpoint "$DX_BM1_WAL_MOUNT") == /dev/nvme1n1 ]]
+  wal_dir=$DX_BM1_WAL_MOUNT/$prefix
+  mkdir -m 0700 "$wal_dir"
+  wal_mount=(-e POSTGRES_INITDB_WALDIR=/wal --mount "type=bind,source=$wal_dir,target=/wal")
+fi
 for role in pg tx gw-w gw-r extract; do
   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then echo "container already exists: $prefix-$role" >&2; exit 2; fi
 done
@@ -331,7 +341,7 @@ else
   docker volume create "$prefix-pg-data" >/dev/null
 fi
 docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
-  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" postgres:17-alpine postgres $pg_settings >/dev/null
+  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
 ready=false
@@ -340,6 +350,21 @@ for ((i=0;i<90;i++)); do
   sleep 1
 done
 [[ $ready == true ]] || { echo "Postgres TCP startup timed out" >&2; exit 1; }
+if [[ ${DX_BM1_WAL_AB:-0} == 1 ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxt1-bm1-[a-z0-9]+-wal-(root|ssd)$ ]]
+  docker exec "$prefix-pg" sh -ceu '
+    data=$(psql -X -Atq -U postgres -c "SHOW data_directory")
+    wal=$(readlink -f "$data/pg_wal")
+    if [ "$1" = ssd ]; then
+      test "$wal" = /wal
+      test "$(stat -c %d "$data")" != "$(stat -c %d "$wal")"
+    else
+      test "$wal" = "$data/pg_wal"
+    fi
+    printf "data=%s wal=%s\n" "$data" "$wal"
+    df -P "$data" "$wal"
+  ' sh "${wal_dir:+ssd}" > "$attempt/wal-placement.txt"
+fi
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
 if [[ -z $seed_volume ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
