@@ -2123,3 +2123,24 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **DX-DRV1 (Codex gpt-6.2-sol, max; branch `exp/DX-DRV1-driver-tail`, brief `DX-DRV1.md`)**: attribute the tail on the
   bare-metal arm, fix the driver's share behind an option, leave a three-arm server A/B script. Stops 18:50 local.
 - Cloud spend at 14:26 local: 2.98 h, $3.25.
+
+## 2026-11-18 23:46 UTC (18:46 local): day closed; three agents done; bench queue runs overnight
+
+- **Bare metal, first pair (`REPORT.md` on `exp/DX-BM1-bare-metal`, `1dc64444`).** Zero arm as recorded above. Loaded
+  retry is UNJUDGED (one read error in 89.38 M observations, independent replay incomplete; first attempt hit the 8 GiB
+  driver cap, retry ran at 32 GiB): L256 medians 6.079 / 7.615 ms, writer p99 ratio at 256 readers 1.131
+  [0.965, 1.663], read p99 6.879 ms, goodput 1,024 vs 256 at 0.361, weighted pulls 2,293/s, all-commit p99 326.2 ms.
+  The 1,024-reader goodput and the P4 rate are far below the Mac's (1.138; 18,346/s) and are not believed until
+  diagnosed. Fixed gaps: 250 ms and 1 s cost -0.16 [-1.08, +0.44] and -0.29 [-1.32, +0.37] ms against 10 ms, n=150
+  each: no cold path on bare metal. 100,000 subjects: seed 824 s; zero arm closed 7,408 primaries, no expirations;
+  reader arm matched 16.55 M reads against the driver model, independent replay pending.
+- **DX-DRV1 (`exp/DX-DRV1-driver-tail`, `4d1bdb6e`, `drv1/REPORT.md`).** On the bare-metal zero arm, sender scheduling
+  and Node work are 61% of slow burst wall (42% on the Mac); sender heap 478 to 1,494 MiB; bursts 6 to 10 hold 81% of
+  outliers. Projection with a perfect sender: 45.9 ms p99 (socket and callback also removed) to 55.7 ms (kept).
+  Product remainder: same-subject waits 22.0 s; gateway and peer above 50 ms alone on 188 of 38,826 commits. Fix built
+  behind options (journal and receipt capture off the writer); Mac check exact on 23,097 reads, sender heap 508 to
+  266 MiB over a two-burst prefix; no timing claim on the busy host.
+- **Overnight on the bench server:** 100,000-subject activation, timeline recovery, two v3 pairs, WAL A/B if time
+  permits (queue cutoff 16:27 local on 2026-11-19). A waiter starts the DX-DRV1 old/new/old comparison (about 5.5 h)
+  when that queue ends. Cloud spend at 18:46 local: 7.3 h, about $8.
+- **Mac tonight:** runner armed for 19:30 local from `dx-t1` at `10a39538`.
