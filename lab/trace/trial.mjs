@@ -13,7 +13,8 @@ const session = path.join(base, prefix + "-session");
 const read = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
 const source = fs.readFileSync(path.join(session, "head.txt"), "utf8").trim();
 const { kind } = read(path.join(session, "request.json"));
-if (!["scheduler", "disk", "history", "cores"].includes(kind)) throw Error("Unsupported trial");
+if (!["scheduler", "disk", "history", "cores", "empty-basis"].includes(kind))
+  throw Error("Unsupported trial");
 const modes =
   kind === "disk"
     ? ["zero", "baseline", "candidate", "baseline"]
@@ -28,7 +29,7 @@ const check = (ok, message) => {
   if (!ok) throw Error(message);
 };
 const rows = [];
-let build;
+let build, burstIdentities;
 for (const [index, mode] of modes.entries()) {
   const i = index + 1,
     rootTag = `${prefix}-${i}-${mode}`,
@@ -246,7 +247,7 @@ for (const [index, mode] of modes.entries()) {
       return [e.slice(0, at), e.slice(at + 1)];
     }),
   );
-  const zero = kind === "scheduler" || mode === "zero";
+  const zero = kind === "scheduler" || kind === "empty-basis" || mode === "zero";
   check(
     b.config.zeroReaders === zero &&
       (zero
@@ -291,6 +292,39 @@ for (const [index, mode] of modes.entries()) {
       "Scheduler candidate differs",
     );
   else check(b.config.schedulerTiming === "precise", "Scheduler changed in storage/history trial");
+  let burst = null;
+  if (kind === "empty-basis") {
+    const observed = b.readerBasisBroadcast;
+    check(
+      b.config.zeroReaders &&
+        b.config.legacyEmptyBasisBroadcast === (mode === "baseline") &&
+        b.config.matchDurationS === 200 &&
+        b.config.readerLadderOnly &&
+        b.config.maxReaders === 0 &&
+        observed.messages === 0 &&
+        observed.ackItems === 0 &&
+        (mode === "candidate" ? observed.ticks === 0 : observed.ticks > 0) &&
+        b.priorities.P2.readYourOwnWrite.pulls === primary.length &&
+        b.priorities.P2.readYourOwnWrite.correct === primary.length,
+      "Empty-basis diagnostic/readback differs",
+    );
+    const cohort = primary.filter((w) => w.burst).sort((a, b) => a.seq - b.seq);
+    const identity = JSON.stringify(
+      cohort.map((w) => [w.seq, w.subject, w.facts, Math.round(w.offsetMs * 1000)]),
+    );
+    check(
+      cohort.length === 3262 && (burstIdentities === undefined || burstIdentities === identity),
+      "Frozen first-burst cohort differs",
+    );
+    burstIdentities = identity;
+    const ack = cohort.map((w) => w.ackPublishedAt - w.scheduledAt);
+    burst = {
+      ...q(ack),
+      over50: ack.filter((v) => v > 50).length,
+      lateness: q(cohort.map((w) => w.offeredAt - w.scheduledAt)),
+      broadcast: observed,
+    };
+  }
   if (kind === "history")
     check(
       b.config.historyGrowthSubjects === (mode === "candidate" ? 4 : null) &&
@@ -330,6 +364,7 @@ for (const [index, mode] of modes.entries()) {
     postAck: instrument.postAck,
     host: { swapGiB: q(swaps), macCpu: q(host.map((h) => h.otherCpu)) },
     phaseTypes: phases.phaseTypes,
+    burst,
     idle: phases.groups,
     oracle: b.oracle,
     history: b.priorities.P4.history,
@@ -361,7 +396,7 @@ const f = (n) => (Number.isFinite(n) ? n.toFixed(3) : "n/a");
 const md = [
   `# ${prefix}`,
   "",
-  `Source ${source}; summary tracing; ${kind} trial, one uninterrupted session. Authoritative offer-to-finish remains the verdict. ACK-only retains lateness; corrected also subtracts actual lateness and is diagnostic.`,
+  `Source ${source}. Busy-host diagnostic. Summary tracing, ${kind} trial, one uninterrupted session. ACK retains lateness and stops at the receipt. The corrected column also subtracts actual lateness.`,
   "",
   "| arm | original p50/p99 ms | ACK-only p50/p99 | corrected p50/p99 | lateness p50/p99 ms | swap GiB | Mac CPU p50/p99 % | >50 burst/growth/sparse |",
   "| --- | --- | --- | --- | --- | --- | --- | --- |",
@@ -378,6 +413,16 @@ md.push(
   "",
   "Controls are the two baseline rows in this table. Report a gain only when it exceeds their drift. A zero-reader row is context for the loaded disk trial, not a matched semantic-oracle PASS. Raw byte seals are next to this report.",
 );
+if (kind === "empty-basis")
+  md.push(
+    "| Arm | First frozen burst ACK p50/p99 ms | Commits >50 ms | Offer lateness p99 ms | Empty broadcast ticks / max ms |",
+    "| --- | ---: | ---: | ---: | ---: |",
+    ...rows.map(
+      (r) =>
+        `| ${r.mode} | ${f(r.burst.p50)}/${f(r.burst.p99)} | ${r.burst.over50}/${r.burst.count} | ${f(r.burst.lateness.p99)} | ${r.burst.broadcast.ticks}/${f(r.burst.broadcast.wall.maxMs)} |`,
+    ),
+    "",
+  );
 fs.writeFileSync(path.join(session, "TRIAL.md"), md.join("\n") + "\n");
 const files = [
   "TRIAL.json",

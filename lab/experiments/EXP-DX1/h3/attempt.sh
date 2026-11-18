@@ -200,7 +200,9 @@ PY2
 }
 check_resources before
 if [[ $kind =~ ^(functional|medium|real)$ ]]; then
-  if [[ ( $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ) && -n ${DX_R3_PAIR_LEASE_PID:-} ]]; then
+  if [[ $prefix == tx2-dxt1-* && $kind == real && -n ${DX_SCALE_NIGHT_LEASE_PID:-} ]]; then
+    node lab/experiments/EXP-DX1/t1/scale-night-lease.mjs "$lock/owner.json" "$DX_SCALE_NIGHT_LEASE_PID" "$prefix" bench
+  elif [[ ( $prefix == tx2-dxr3-* || $prefix == tx2-dxt1-* ) && -n ${DX_R3_PAIR_LEASE_PID:-} ]]; then
     python3 - "$lock/owner.json" "$DX_R3_PAIR_LEASE_PID" "${DX_PAIR_LEASE_ID:-DX-R3}" <<'LEASE'
 import json,sys
 owner=json.load(open(sys.argv[1])); assert owner['id']==sys.argv[3] and owner['kind'] in ('full-pair','writer-arms') and owner['pid']==int(sys.argv[2])

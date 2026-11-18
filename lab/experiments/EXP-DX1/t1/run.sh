@@ -12,6 +12,11 @@ for ((i=1;i<=$#;i++)); do
   arg=${!i}; [[ $arg != --idle-keep=* || $arg == --idle-keep=none ]] || exit 2
   if [[ $arg == --idle-keep ]]; then j=$((i+1)); [[ ${!j} == none ]] || exit 2; fi
 done
+bounded=()
+if [[ ${DX_BOUNDED_MEMORY_TRIAL:-0} == 1 ]]; then
+  [[ $kind == real && ${DX_NS_PROFILE:-smoke} == smoke ]] || { echo 'Bounded memory trial requires a single smoke arm' >&2; exit 2; }
+  bounded=(--bounded-trial)
+fi
 if [[ ${DX_NS_PROFILE:-smoke} == v3 ]]; then
   DX_MATCH_DURATION_S=$(node --import tsx lab/bench/plan.ts --seconds --strict); export DX_MATCH_DURATION_S
   node --import tsx lab/bench/plan.ts --strict
@@ -24,8 +29,8 @@ if [[ $kind == real || $kind == pair ]]; then
   python3 -c 'import shutil;assert shutil.disk_usage(".").free>=15*1024**3'
   guest_bytes=$(docker info --format '{{.MemTotal}}')
   mkdir -p "$DX_STACK_EVIDENCE/$prefix"
-  node lab/experiments/EXP-DX1/t1/scale-settings.mjs --guest-bytes "$guest_bytes" --output "$DX_STACK_EVIDENCE/$prefix/population-settings.json" --driver-args "$@"
-  scale_shell=$(node lab/experiments/EXP-DX1/t1/scale-settings.mjs --guest-bytes "$guest_bytes" --shell --driver-args "$@")
+  node lab/experiments/EXP-DX1/t1/scale-settings.mjs --guest-bytes "$guest_bytes" "${bounded[@]+"${bounded[@]}"}" --output "$DX_STACK_EVIDENCE/$prefix/population-settings.json" --driver-args "$@"
+  scale_shell=$(node lab/experiments/EXP-DX1/t1/scale-settings.mjs --guest-bytes "$guest_bytes" "${bounded[@]+"${bounded[@]}"}" --shell --driver-args "$@")
   eval "$scale_shell"
   node lab/experiments/EXP-DX1/t1/jvm-policy.mjs "$DX_STACK_EVIDENCE/$prefix/compiler-policy.json"
   compiler_shell=$(node lab/experiments/EXP-DX1/t1/jvm-policy.mjs --shell)

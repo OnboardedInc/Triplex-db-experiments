@@ -1,5 +1,6 @@
 (ns triplex.gateway.commit
-  (:require [clojure.walk :as walk] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.schema :as schema]))
+  (:require [clojure.walk :as walk] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.schema :as schema]
+            [triplex.gateway.trace :as trace]))
 
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
@@ -178,10 +179,15 @@
 ;; Rejected: an unversioned remote helper or compressing before server clock assignment.
 (def code (instrument-code (walk/postwalk-replace {'slim-row-code slim/encoder-code} operation-code)))
 (def source-hash (schema/sha256 (pr-str code)))
-(defn install! [conn scope]
-  (let [db (d/db conn) e (d/entid db [:triplex.scope/key scope])]
-    (when-not (= source-hash (:v (first (d/datoms db :eavt e :triplex.scope/commit-fn-hash))))
-      @(d/transact conn [{:db/ident :triplex/commit
-                         :db/fn (d/function {:lang :clojure :params '[db payload]
-                                            :requires '[[datomic.api :as d] [clojure.data.json :as json]] :code code})}
-                        [:db/add e :triplex.scope/commit-fn-hash source-hash]]))))
+(defn install!
+  ([conn scope] (install! conn scope (d/db conn)))
+  ([conn scope observed]
+   (let [entity (d/entid observed [:triplex.scope/key scope])]
+     (if (= source-hash (:v (first (d/datoms observed :eavt entity :triplex.scope/commit-fn-hash))))
+       observed
+       (:db-after
+        (trace/span "d/transact" "peer-wait"
+          @(d/transact conn [{:db/ident :triplex/commit
+                             :db/fn (d/function {:lang :clojure :params '[db payload]
+                                                :requires '[[datomic.api :as d] [clojure.data.json :as json]] :code code})}
+                            [:db/add entity :triplex.scope/commit-fn-hash source-hash]])))))))

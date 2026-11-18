@@ -115,6 +115,9 @@ const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
+if (flag("legacy-empty-basis-broadcast")) devFlags.push("legacy-empty-basis-broadcast");
+const boundedMemoryTrial = process.env.DX_BOUNDED_MEMORY_TRIAL === "1";
+if (boundedMemoryTrial) devFlags.push("bounded-memory-trial");
 if (opt("idle-gaps-ms")) devFlags.push("idle-diagnostic");
 if(Number(opt("writer-deadline-ms","30000"))!==30000) devFlags.push("writer-deadline-ms");
 const config = {
@@ -124,6 +127,7 @@ const config = {
   profile,
   zeroReaders: flag("zero-readers"),
   readerBasisWire: opt("reader-basis-wire", "snapshot") as "snapshot" | "delta",
+  legacyEmptyBasisBroadcast: flag("legacy-empty-basis-broadcast"),
   matchDurationS: opt("match-duration-s") ? Number(opt("match-duration-s")) : null,
   baselineWrites: opt("baseline-writes") ?? null,
   devOverrides: devFlags,
@@ -145,6 +149,7 @@ const config = {
   replicaFeed: opt("replica-feed", "inline") as "legacy" | "inline",
   readerLadderOnly: flag("reader-ladder-only"),
   readerThreads: Number(opt("reader-threads", "4")),
+  sharedReaderIndex: boundedMemoryTrial && !flag("zero-readers"),
   readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", opt("read-path", "gateway") === "replica" ? "16" : lane === "datomic" ? "640" : "128")),
   writerPredecessorCacheMiB: lane === "datomic" ? WRITER_PREDECESSOR_CACHE_MIB : 0,
   readerSubjectAffinity: lane === "datomic" && !flag("no-reader-affinity"),
@@ -166,7 +171,7 @@ const config = {
   rateScale: Number(opt("rate-scale", "1")),
   levelS: opt("level-s") ? Number(opt("level-s")) : null,
   compactModel: process.env.DX_MODEL_COMPACT === "1",
-  expectedStateRetention: opt("expected-state-retention", "heap") as "heap" | "journal",
+  expectedStateRetention: opt("expected-state-retention", process.env.DX_EXPECTED_STATE_RETENTION || "heap") as "heap" | "journal",
   oracleSampleSubjects: Number(opt("oracle-subjects", "12")),
   oracleRate: Number(opt("oracle-rate", "0.01")),
   oracleMaxReads: Number(opt("oracle-max-reads", "24")),
@@ -199,10 +204,18 @@ if (config.idleGapsMs && (lane !== "datomic" || !config.zeroReaders || !config.r
 if (config.idleKeep !== "none" || process.env.DX_IDLE_SENTINEL === "1" || process.env.DX_IDLE_REFUSAL_PROBE === "1")
   throw Error("Keep-warm requests and sentinels are forbidden (Sam 2026-11-16)");
 if(opt("idle-warmup-commits") && !config.idleGapsMs) throw Error("One-time warmup count is currently a fixed-gap diagnostic control, not an adopted v3 policy");
-if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
+if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.legacyEmptyBasisBroadcast || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
   throw Error("v3 requires its full fixed phase plan and unchanged offered rate");
 if (profile === "v3") config.matchDurationS = V3_OFFER_SECONDS;
 if (!["heap", "journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
+// [DX-T1-15] Why: the bounded reader trial admits one replica index copy and up to 64 logical readers.
+// Rejected: tuning caps for a short diagnostic while silently starting the normal four-worker ladder and sweeper.
+if (boundedMemoryTrial && (lane !== "datomic" || profile !== "smoke" || config.readPath !== "replica" ||
+    ![1000, 100000].includes(rungSubjects) || config.expectedStateRetention !== "journal" || !config.compactModel ||
+    config.replicaHistoryMiB !== 192 || config.replicaWorldCacheMiB !== 8 ||
+    (!config.zeroReaders && (!config.readerLadderOnly || config.readerThreads !== 1 || config.replicaThread !== "worker" ||
+      !Number.isSafeInteger(config.maxReaders) || config.maxReaders! < 1 || config.maxReaders! > 64))))
+  throw Error("Invalid bounded-memory trial: require exact local reads, compact journal, fixed replica budgets and a bounded reader ladder");
 if (!["snapshot", "delta"].includes(config.readerBasisWire)) throw Error("Invalid reader basis wire mode");
 if (!["main", "worker"].includes(config.replicaFallbackThread) || !Number.isSafeInteger(config.replicaWorldCacheMiB) || config.replicaWorldCacheMiB < 0 || config.replicaWorldCacheMiB > 512) throw Error("invalid expectation, fallback or world-cache control");
 // [DX-H7] Why: bound aggregate reader and writer cache estimates below half the 8 GiB client grant.
@@ -515,7 +528,10 @@ async function run() {
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
       composition: config.composition, roots: Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
-      worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer }, aux)
+      worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer,
+      sharedReaderIndex: config.sharedReaderIndex,
+      ...(config.sharedReaderIndex ? { worker: 0, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2 } : {}),
+    }, aux)
     : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
       scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
@@ -567,8 +583,18 @@ async function run() {
     const directReplica = replicaHost && "connect" in replicaHost ? replicaHost : undefined;
     const unsubscribe = mainReplicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
     const observationPort = spill?.connect();
-    const replicaPort = directReplica?.connect();
-    const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: { ...cfg, observationPort, replicaPort }, transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : [])], env: process.env });
+    let worker;
+    if (config.sharedReaderIndex) {
+      if (!directReplica) throw Error("The shared reader requires the replica worker");
+      worker = directReplica.startSharedReader(cfg, observationPort);
+    } else {
+      const replicaPort = directReplica?.connect();
+      worker = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), {
+        workerData: { ...cfg, observationPort, replicaPort, readerEntrypoint: true },
+        transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : [])],
+        env: process.env,
+      });
+    }
     const life = new ReaderLifecycle(); readerLives.push({ worker: w, life });
     worker.on("error", (error: unknown) => life.error(error));
     worker.on("exit", (code: number) => life.exit(code));
@@ -613,8 +639,11 @@ async function run() {
     basisBroadcast.wall.recordMs(attrs.wallMs);
     }, attrs, true);
   };
-  broadcast();
-  const basisTimer = setInterval(broadcast, 100);
+  // [DX-T1-15] Why: v3 zero did 59,048 growing receipt scans and sent no messages, including a 277 ms writer-thread pause.
+  // Rejected: scanning the full receipt history when there is no subscriber, or dropping any RYOW or feed observation.
+  const sendBasis = workers.length > 0 || config.legacyEmptyBasisBroadcast;
+  if (sendBasis) broadcast();
+  const basisTimer = sendBasis ? setInterval(broadcast, 100) : undefined;
   const setReaders = (phase: number, wantedReaders: number, mode: string) => {
     const readers = config.maxReaders === null ? wantedReaders : Math.min(wantedReaders, config.maxReaders);
     workers.forEach((w, k) => w.postMessage({ type: "level", phase, readers: Math.floor(readers / workers.length) + (k < readers % workers.length ? 1 : 0), mode }));

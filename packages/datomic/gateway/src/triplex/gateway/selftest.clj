@@ -85,6 +85,27 @@
     (is (thrown? Exception (gateway/assert-scope db "other")))
     (is (:deleted (gateway/delete-scope! base scope)))
     (is (thrown? Exception (gateway/scope-name "[\"triplex-scope-v1\",\"test\",\"t\",\"d\",\"1\"]")))))
+;; [DX-T1-15] Why: a real initialized scope can reopen with exactly one sync and no metadata transaction.
+;; Rejected: inferring this from a mocked database or exercising only the new-scope path.
+(deftest initialized-scope-reopen-uses-one-peer-cut
+  (let [base "datomic:mem://"
+        scope "[\"triplex-scope-v1\",\"test\",\"tenant\",\"single-reopen\",1]"
+        created (gateway/create-scope! base scope "lean" true true)
+        name (:db created)
+        sync-db gateway/sync-db
+        syncs (atom 0)]
+    (try
+      (let [conn (gateway/connection (str base name))
+            before (d/basis-t (d/db conn))]
+        (with-redefs [gateway/sync-db (fn [uri]
+                                      (when (> (swap! syncs inc) 1) (throw (Exception. "Repeated sync")))
+                                      (sync-db uri))
+                      d/transact (fn [& _] (throw (Exception. "Reopen attempted a metadata write")))]
+          (is (= (assoc created :created false) (gateway/create-scope! base scope "legacy" false false))))
+        (is (= 1 @syncs))
+        (is (= before (d/basis-t (d/db conn)))))
+      (finally (gateway/delete-scope! base scope)))))
+
 (deftest speculative-fact-store
   (let [base "datomic:mem://" scope "[\"triplex-scope-v1\",\"test\",\"tenant\",\"da01-speculation\",1]"
         name (:db (gateway/create-scope! base scope "legacy")) uri (str base name) conn (gateway/connection uri)

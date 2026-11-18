@@ -11,6 +11,8 @@ import {
 import { packHtml } from "./viewer.mjs";
 import { instrumentMarkdown, idleAndPhaseMetrics, idleMarkdown } from "./instrument.mjs";
 import { createHash } from "node:crypto";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import path from "node:path";
 import { createGunzip } from "node:zlib";
 import { createInterface } from "node:readline";
@@ -67,6 +69,18 @@ export function filesUnder(dir) {
           ? filesUnder(path.join(dir, e.name))
           : [path.join(dir, e.name)],
     );
+}
+
+// [DX-BM1] Why: the full native v3 timeline exceeded V8's maximum string length.
+// Rejected: dropping trace events or raising the renderer heap to address a per-string limit.
+function* chromeJson(events, metadata) {
+  yield '{"traceEvents":[';
+  const chunk = 512;
+  for (let start = 0; start < events.length; start += chunk) {
+    if (start) yield ",";
+    yield events.slice(start, start + chunk).map((event) => JSON.stringify(event)).join(",");
+  }
+  yield `],"displayTimeUnit":"ms","metadata":${JSON.stringify(metadata)}}\n`;
 }
 export async function* records(file) {
   const stream = fs.createReadStream(file);
@@ -1428,14 +1442,13 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
         },
       });
   }
-  fs.writeFileSync(
-    path.join(rootDir, "trace.chrome.json"),
-    JSON.stringify({
-      traceEvents: chrome,
-      displayTimeUnit: "ms",
-      metadata: { tag, source: summary.source },
-    }) + "\n",
+  const chromePath = path.join(rootDir, "trace.chrome.json");
+  const chromeTemp = chromePath + ".tmp";
+  await pipeline(
+    Readable.from(chromeJson(chrome, { tag, source: summary.source })),
+    fs.createWriteStream(chromeTemp),
   );
+  fs.renameSync(chromeTemp, chromePath);
   const relevantEvents = [...new Set(selected.flatMap((r) => contextEvents(r, contextIndexes)))];
   const relevantResources = resources
     .filter(

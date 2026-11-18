@@ -13,7 +13,7 @@ export function populationFromArguments(args) {
   if(!Number.isSafeInteger(subjects)||subjects<1||subjects>100000)throw Error("Invalid driver population");
   return {subjects,zeroReaders:args.includes("--zero-readers")};
 }
-export function populationSettings(subjects, guestBytes, zeroReaders=false) {
+export function populationSettings(subjects, guestBytes, zeroReaders=false, boundedTrial=false) {
   if(!Number.isSafeInteger(subjects) || subjects<1 || subjects>100000 || !Number.isSafeInteger(guestBytes) || guestBytes<GiB) throw Error("Invalid readiness population/memory");
   const large=subjects>10000, roomy=guestBytes>=23*GiB;
   const env={DX_PUBLICATION_WAIT_MS:large?"30000":"5000",DX_TX_MEMORY:"4g",DX_TX_HEAP:"3g",DX_TX_JAVA_OPTS:"-Xms256m -Xmx3g -XX:+UseG1GC -XX:MaxGCPauseMillis=200",
@@ -41,18 +41,48 @@ export function populationSettings(subjects, guestBytes, zeroReaders=false) {
       env.DX_PG_SETTINGS="-c shared_buffers=1GB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_buffers=64MB -c wal_sync_method=open_datasync";
     }
   }
+  if (large || boundedTrial)
+    Object.assign(env, {DX_MODEL_COMPACT:"1", DX_EXPECTED_STATE_RETENTION:"journal"});
+  if (boundedTrial) {
+    // [DX-T1-15] Why: bound the whole 16-GiB stack and move the complete expectation model out of the live writer.
+    // Rejected: the part 14 RSS estimate that permitted a guest-wide OOM, or reducing correctness coverage to fit.
+    if ((subjects !== 1000 && subjects !== 100000) || guestBytes >= 17*GiB)
+      throw Error("Bounded memory trial requires 1,000 or 100,000 subjects in the 16-GiB guest");
+    // The first 5.25-GiB driver hit its cgroup in bootstrap with at least 4.69 GiB free in the guest.
+    const limitsMiB = {
+      DX_TX_MEMORY:3584, DX_PG_MEMORY:1536, DX_GW_WRITE_MEMORY:1792,
+      DX_GW_READ_MEMORY:1792, DX_DRIVER_MEMORY:6656,
+    };
+    residentGiB = Object.values(limitsMiB).reduce((sum, mib) => sum + mib, 0) / 1024;
+    for (const [key, mib] of Object.entries(limitsMiB)) env[key] = String(mib) + "m";
+    Object.assign(env, {
+      DX_BOUNDED_MEMORY_TRIAL:"1", DX_DRIVER_HEAP_MB:"4096", DX_WRITER_HEAP_TUNING:"0",
+      DX_GW_WRITE_JAVA_OPTS:"-Xms256m -Xmx1280m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=640m",
+      DX_GW_READ_JAVA_OPTS:"-Xms256m -Xmx1280m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Ddatomic.objectCacheMax=512m",
+      DX_GW_WRITE_ENTITY_CACHE_BYTES:String(64*1024**2), DX_GW_READ_ENTITY_CACHE_BYTES:String(64*1024**2),
+      DX_REPLICA_HISTORY_MIB:"192", DX_REPLICA_WORLD_CACHE_MIB:"8",
+      DX_PG_SETTINGS:"-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_buffers=64MB -c wal_sync_method=open_datasync",
+      DX_PUBLICATION_WAIT_MS:"30000", DX_HARNESS_STORAGE:"volume",
+    });
+    driverArgs[1] = env.DX_REPLICA_HISTORY_MIB;
+    driverArgs[3] = env.DX_REPLICA_WORLD_CACHE_MIB;
+  }
   env.DX_EXPECTED_RESIDENT_GIB=String(residentGiB);
-  const admitted=(!large || zeroReaders || roomy) && guestBytes>=(residentGiB+.5)*GiB;
-  return {schema:"triplex.population-settings/1",subjects,guestBytes,zeroReaders,admitted,residentGiB,env,driverArgs,
-    estimate:large?"100k 16-GiB trial failed by kernel OOM; larger resident allowance is inferred and still needs a complete native fit proof":"observed 10k resident prior, not a hard fit proof",
-    reason:admitted?null:(large?"100k 16-GiB zero-reader trial OOM-killed; population/readers need a larger qualified budget; never resize automatically":"population/readers do not fit this guest; never resize the VM automatically")};
+  const admitted=(boundedTrial || !large || zeroReaders || roomy) && guestBytes>=(residentGiB+.5)*GiB;
+  return {schema:"triplex.population-settings/1",subjects,guestBytes,zeroReaders,boundedTrial,admitted,residentGiB,env,driverArgs,
+    estimate:boundedTrial?"hard aggregate container limits plus 0.5 GiB guest reserve; completion still requires a native fit proof":
+      large?"100k 16-GiB trial failed by kernel OOM; larger resident allowance is inferred and still needs a complete native fit proof":"observed 10k resident prior, not a hard fit proof",
+    reason:admitted?null:(!boundedTrial&&large?"100k 16-GiB zero-reader trial OOM-killed; population/readers need a larger qualified budget; never resize automatically":"population/readers do not fit this guest; never resize the VM automatically")};
 }
 if(process.argv[1] && import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
   const args=process.argv.slice(2),marker=args.indexOf("--driver-args"),own=marker<0?args:args.slice(0,marker),at=k=>own[own.indexOf(k)+1];
   const population=marker<0?{subjects:Number(at("--subjects")),zeroReaders:own.includes("--zero-readers")}:populationFromArguments(args.slice(marker+1));
-  const settings=populationSettings(population.subjects,Number(at("--guest-bytes")),population.zeroReaders);
+  const settings=populationSettings(population.subjects,Number(at("--guest-bytes")),population.zeroReaders,own.includes("--bounded-trial"));
   if(own.includes("--shell")) {
     if(!settings.admitted) throw Error(settings.reason);
+    if (settings.boundedTrial) for (const [key, value] of Object.entries(settings.env))
+      if (process.env[key] !== undefined && process.env[key] !== value)
+        throw Error("Conflicting trial override: " + key);
     for(const [k,v] of Object.entries(settings.env)) if(process.env[k]===undefined) console.log(`export ${k}='${String(v).replaceAll("'","'\\''")}'`);
   } else if(own.includes("--output")) fs.writeFileSync(at("--output"),JSON.stringify(settings,null,2)+"\n",{flag:"wx"});
   else console.log(JSON.stringify(settings,null,2));

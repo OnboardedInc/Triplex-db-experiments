@@ -5,10 +5,10 @@ set -euo pipefail
 mode=${1:---plan}
 if [[ $mode == --plan ]]; then
   printf '%s\n' 'Wait for first v3 pair; seal its evidence; fixed gaps; latest pushed 100k zero/reader/activation; second v3 pair; WAL A/B if the deadline allows.'
-  printf '%s\n' 'Resume seals the finished original gap run, repeats the failed loaded arm, and reserves two full pairs within budget.'
+  printf '%s\n' 'Resume repeats the failed loaded arm. Continue takes over after the already-started 100k zero arm and uses the patched source for the two full pairs.'
   exit
 fi
-[[ ( $mode == --run || $mode == --resume ) && $# == 4 && $EUID == 0 &&
+[[ ( $mode == --run || $mode == --resume || $mode == --continue ) && $# == 4 && $EUID == 0 &&
   $(uname -s) == Linux && $(systemd-detect-virt) == none ]] || exit 2
 root=/var/tmp/triplex-bm1
 first=$root/first-b
@@ -110,7 +110,9 @@ seal tx2-dxt1-bm1-pair-a-controller "$DX_STACK_EVIDENCE/tx2-dxt1-bm1-pair-a-sess
   "$root/study-a.log" "$logs/first-study-status.txt"
 
 gap=$prefix-gaps
-if [[ $mode == --resume ]]; then
+if [[ $mode == --continue ]]; then
+  gap=tx2-dxt1-bm1-20261118-gaps
+elif [[ $mode == --resume ]]; then
   gap=tx2-dxt1-bm1-20261118-gaps
   seal "$gap" "$DX_STACK_EVIDENCE/$gap" "$root/queue-20261118/logs/$gap.log"
 else
@@ -119,7 +121,7 @@ else
     --zero-readers --reader-ladder-only --max-readers 0 --idle-keep none --probe10-per-s 0 \
     --idle-gaps-ms 10,250,1000 --idle-commits 150 --idle-warmup-commits 0
 fi
-if [[ -s $DX_STACK_EVIDENCE/$gap/driver/ns-report.json ]]; then
+if [[ $mode != --continue && -s $DX_STACK_EVIDENCE/$gap/driver/ns-report.json ]]; then
   gap_reading=$queue_dir/gap-reading
   mkdir "$gap_reading"
   python3 "$runner/gap-reading.py" "$DX_STACK_EVIDENCE/$gap" \
@@ -183,17 +185,55 @@ prepare_scale() {
   seal "$prefix-scale-upstream" "$queue_dir/scale/results" "$logs/scale-upstream.txt"
 }
 
-if prepare_scale; then
-  zero=$prefix-scale-zero
+continue_scale() {
+  # [DX-BM1] Why: let the running zero-reader child close before replacing its paused queue parent.
+  # Rejected: stopping the measured arm or starting a second Docker stack during finalization.
+  local unit=triplex-bm1-queue-resume.service
+  local owner group upstream
+  local prior=$root/queue-20261118r
+  owner=$(systemctl show "$unit" -p MainPID --value) || return
+  group=$(systemctl show "$unit" -p ControlGroup --value) || return
+  [[ $owner =~ ^[1-9][0-9]+$ && $group == /* && $(ps -o stat= -p "$owner") == T* ]] || return 2
+  cp "$prior/logs/scale-upstream.txt" "$logs/scale-upstream.txt" || return
+  upstream=$(sed -n '2s/[[:space:]].*//p' "$logs/scale-upstream.txt") || return
+  [[ $upstream =~ ^[a-f0-9]{40}$ && $(cat "$prior/scale/results/bootstrap.exit") == 0 ]] || return 2
+  printf '%s waiting for old queue zero child to close\n' "$(stamp)"
+  while grep -qvFx "$owner" "/sys/fs/cgroup$group/cgroup.procs"; do
+    (( $(date +%s) + 780 < cutoff )) || return 75
+    sleep 600
+  done
+  use_checkout "$prior/scale" || return
+  [[ $(git rev-parse HEAD) == "$upstream" && ! -e $DX_BARE_METAL_ROOT/locks/measure && -z $(docker ps -q) ]] || return 2
+  systemctl kill --kill-whom=main --signal=TERM "$unit" || return
+  systemctl kill --kill-whom=main --signal=CONT "$unit" || true
+  zero=tx2-dxt1-bm1-20261118r-scale-zero
+  seal "$zero" "$DX_STACK_EVIDENCE/$zero" "$prior/logs/$zero.log" "$logs/scale-upstream.txt"
+}
+
+scale_ready=false
+if [[ $mode == --continue ]]; then
+  continue_scale || { echo 'Could not verify that the old zero-reader arm released the bench' >&2; exit 75; }
+  scale_ready=true
+elif prepare_scale; then
+  scale_ready=true
+fi
+if [[ $scale_ready == true ]]; then
+  zero=${zero:-$prefix-scale-zero}
   reader=$prefix-scale-reader
   scale_args=(--subjects 100000 --match-duration-s 900 --seed-budget-s 6900 --writer-deadline-ms 600000 --history-growth-subjects 4)
   scale_env=(DX_NS_PROFILE=smoke TRIPLEX_TRACE_LEVEL=full DX_DRIVER_MEMORY=24g
     DX_EXPECTED_RESIDENT_GIB=40 "NODE_OPTIONS=$renderer_heap")
-  run_step "$zero" 9000 1800 "$DX_STACK_EVIDENCE/$zero" \
-    env "${scale_env[@]}" bash "$t1/run.sh" real "$zero" --zero-readers "${scale_args[@]}"
+  if [[ $mode != --continue ]]; then
+    run_step "$zero" 9000 1800 "$DX_STACK_EVIDENCE/$zero" \
+      env "${scale_env[@]}" bash "$t1/run.sh" real "$zero" --zero-readers "${scale_args[@]}"
+  fi
   baseline=$DX_STACK_EVIDENCE/$zero/driver/ns-writes.jsonl
   matched=()
-  if [[ $(cat "$logs/$zero.exit") == 0 && -s $baseline ]]; then
+  if [[ -s $baseline ]] &&
+    (cd "$(dirname "$(dirname "$baseline")")" &&
+     [[ $(grep -Ec '  driver/ns-(report[.]json|writes[.]jsonl)$' SHA256SUMS) == 2 ]] &&
+     grep -E '  driver/ns-(report[.]json|writes[.]jsonl)$' SHA256SUMS | sha256sum -c &&
+     python3 -c 'import json; r=json.load(open("driver/ns-report.json")); assert r["status"]=="DONE" and r["seed"]["seededSubjects"]==100000 and r["seed"]["complete"]'); then
     mkdir -p "$DX_STACK_EVIDENCE/$reader/input"
     cp "$DX_STACK_EVIDENCE/$zero"/driver/ns-{report.json,writes.jsonl} "$DX_STACK_EVIDENCE/$reader/input/"
     matched=(--baseline-writes "$DX_STACK_EVIDENCE/$reader/input/ns-writes.jsonl")
@@ -228,7 +268,25 @@ use_checkout "$first"
 [[ $(git rev-parse HEAD) == "$first_source" ]]
 while read -r image_id image_name; do docker image tag "$image_id" "$image_name"; done < "$remembered_images"
 suffixes=(b)
-if [[ $mode == --resume ]]; then suffixes+=(c); fi
+if [[ $mode != --run ]]; then suffixes+=(c); fi
+if [[ $mode == --continue ]]; then
+  # [DX-BM1] Why: both fresh comparisons need the larger-case oracle and streaming report writer.
+  # Rejected: repeating a known renderer problem or using a different trace or threshold.
+  run_step "$prefix-v3-setup" 3600 900 "$queue_dir/v3/results" \
+    bash "$runner/../t1/bare-metal.sh" --prepare "$runner_source" "$queue_dir/v3"
+  if [[ $(cat "$logs/$prefix-v3-setup.exit") == 0 ]]; then
+    use_checkout "$queue_dir/v3"
+    for file in lab/TARGETS.md lab/bench/lib/{phases,trace,verdict,verdict-plan,verdict-statistics}.ts; do
+      [[ $(git rev-parse "HEAD:$file") == "$(git -C "$first/repository" rev-parse "HEAD:$file")" ]]
+    done
+    original=$first/state/evidence/DX-T1/tx2-dxt1-bm1-20261118r-retry-ladder
+    render=$queue_dir/retry-render
+    run_step "$prefix-retry-render" 1800 1200 "$render" env NODE_OPTIONS="$renderer_heap" \
+      bash "$runner/recover-trace.sh" "$original" "$queue_dir/retry-render-inputs" "$render"
+  else
+    suffixes=()
+  fi
+fi
 for suffix in "${suffixes[@]}"; do
   pair=$prefix-pair-$suffix
   run_step "$pair" 21600 13800 "$DX_STACK_EVIDENCE/$pair-session" \

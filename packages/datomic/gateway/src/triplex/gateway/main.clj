@@ -38,14 +38,14 @@
   ([uri scope layout head-v2 strict-clocks]
   ;; [EXP-DA01] Why: a stale first opener must never reset a writer's position. Rejected: check-then-upsert of the scope header (concurrent initialization race).
   (try
-    (trace/span "d/transact" "peer-wait" @(d/transact (connection uri)
+    (:db-after (trace/span "d/transact" "peer-wait" @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
         (cond-> {:triplex.scope/key scope :triplex.scope/strict-record-clocks (boolean strict-clocks) :triplex.scope/position 0 :triplex.scope/position-regular true :triplex.scope/rows-version (if (= layout "lean") (if slim-rows? 4 3) 2) :triplex.scope/feed-version 2 :triplex.scope/schema-hash schema/schema-hash}
-          head-v2 (assoc :triplex.scope/head-version 2))]))
+          head-v2 (assoc :triplex.scope/head-version 2))])))
     (catch Exception e
       (let [current (sync-db uri)]
         (assert-scope current scope)
-        (when-not (stored-scope current) (throw e)))))))
+        (if (stored-scope current) current (throw e)))))))
 (defn create-scope!
   ([base scope] (create-scope! base scope "legacy" false))
   ([base scope layout] (create-scope! base scope layout true))
@@ -55,19 +55,32 @@
   ;; Rejected: upgrading existing scopes (older/importing writers may regress their clocks).
   (when-not (instance? Boolean strict-clocks) (codec/invalid "strictRecordClocks must be boolean"))
   (when-not (#{"legacy" "lean"} layout) (codec/invalid "Unknown layout"))
-  (let [name (scope-name scope) uri (db-uri name) created (d/create-database uri) conn (connection uri)]
-    (assert-scope (sync-db uri) scope)
-    (when-not (stored-scope (sync-db uri))
-      (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
-      (assert-scope (sync-db uri) scope)
-      (initialize-scope! uri scope layout head-v2 strict-clocks))
-    (when-not (= schema/schema-hash (:triplex.scope/schema-hash (d/entity (sync-db uri) [:triplex.scope/key scope])))
-      (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
-      (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))
-    (commit/install! conn scope)
+  ;; [DX-T1-15] Why: a follower reopen needs one fresh peer cut, and schema or function writes already return their exact db-after.
+  ;; Rejected: a no-argument sync for each metadata lookup (the third timed out on the populated 100k scope), or using a stale peer value without sync.
+  (let [name (scope-name scope)
+        uri (db-uri name)
+        created (d/create-database uri)
+        conn (connection uri)
+        initial (sync-db uri)
+        _ (assert-scope initial scope)
+        existing (some? (stored-scope initial))
+        _ (trace/attribute! :scopeReopen existing)
+        initialized (if existing
+                      initial
+                      (let [after-schema (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema)))]
+                        (assert-scope after-schema scope)
+                        (if (stored-scope after-schema)
+                          after-schema
+                          (initialize-scope! uri scope layout head-v2 strict-clocks))))
+        schema-ready (if (= schema/schema-hash (:triplex.scope/schema-hash (d/entity initialized [:triplex.scope/key scope])))
+                       initialized
+                       (do
+                         (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
+                         (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
+        current (commit/install! conn scope schema-ready)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
-             :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity (sync-db uri) [:triplex.scope/key scope])))}
-      (lean/enabled? (trace/span "d/db" "peer-call" (d/db conn))) (assoc :layout "lean")))))
+             :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
+      (lean/enabled? current) (assoc :layout "lean")))))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (db-uri name)]
     (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))

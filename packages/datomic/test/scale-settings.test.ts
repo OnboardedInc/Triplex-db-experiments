@@ -98,3 +98,16 @@ it("a completed bar table cannot qualify an active, diagnostic, incorrect or ora
     expect(c.verdict.allMet).toBe(false);
   }
 });
+
+it("bounds the opt-in population diagnostic with all five container limits and a guest reserve", () => {
+  const trial = populationSettings(100000, Math.floor(15.584 * GiB), false, true);
+  expect(trial.admitted).toBe(true);
+  expect(trial.residentGiB).toBe(15);
+  const roles = ["TX", "PG", "GW_WRITE", "GW_READ", "DRIVER"];
+  expect(roles.reduce((sum, role) => sum + parseInt(trial.env[`DX_${role}_MEMORY`]), 0)).toBe(15360);
+  expect(trial.env.DX_EXPECTED_STATE_RETENTION).toBe("journal");
+  expect(trial.env.DX_MODEL_COMPACT).toBe("1");
+  expect(populationSettings(100000, 15 * GiB, true, true).admitted).toBe(false);
+  expect(() => populationSettings(100000, 24 * GiB, true, true)).toThrow();
+  expect(() => populationSettings(10000, 16 * GiB, true, true)).toThrow();
+});
