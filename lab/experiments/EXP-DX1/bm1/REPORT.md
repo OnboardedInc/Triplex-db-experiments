@@ -6,7 +6,7 @@ Overall p99 stayed above 50 ms at 132.46 ms [106.23, 163.85]. The Mac's v3 zero-
 In the zero-reader anatomy, work outside the transact request reached 93.50 ms p99 and peer wait reached 32.49 ms. Late dispatch and per-subject queues dominate several of the worst commits.
 The root drive's 8 KiB fdatasync was 0.0265 ms at the median and 0.0876 ms p99 across 898,163 samples. The Mac VM floor was about 0.4–0.7 ms.
 The 1k smoke matched 53 independent reads and 2,997 entity queries. The first attempt stopped at a missing W0 build. Both attempts are sealed.
-The loaded arm is running. The queue will follow with fixed gaps, 100k zero and loaded, W0 activation, the repeat, and a budget-gated WAL A/B.
+The loaded driver hit its 8 GiB container limit after 52 minutes. The untimed trace renderer also ran out of heap. Both failures are retained, and the loaded results remain unjudged.
 **North star.** P1–P4 via the full pair and P5 via live 100k activation. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 | Bar (threshold) | Mac H loaded | Mac v3 zero | Linux v3 zero | Linux v3 loaded |

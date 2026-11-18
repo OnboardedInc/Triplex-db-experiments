@@ -5,10 +5,11 @@ set -euo pipefail
 mode=${1:---plan}
 if [[ $mode == --plan ]]; then
   printf '%s\n' 'Wait for first v3 pair; seal its evidence; fixed gaps; latest pushed 100k zero/reader/activation; second v3 pair; WAL A/B if the deadline allows.'
-  printf '%s\n' 'Every executed stage logs an exit and uses a new tag; the bench cutoff includes time for final collection.'
+  printf '%s\n' 'Resume seals the finished original gap run, repeats the failed loaded arm, and reserves two full pairs within budget.'
   exit
 fi
-[[ $mode == --run && $# == 4 && $EUID == 0 && $(uname -s) == Linux && $(systemd-detect-virt) == none ]] || exit 2
+[[ ( $mode == --run || $mode == --resume ) && $# == 4 && $EUID == 0 &&
+  $(uname -s) == Linux && $(systemd-detect-virt) == none ]] || exit 2
 root=/var/tmp/triplex-bm1
 first=$root/first-b
 batch=${2:?new batch id}
@@ -109,14 +110,42 @@ seal tx2-dxt1-bm1-pair-a-controller "$DX_STACK_EVIDENCE/tx2-dxt1-bm1-pair-a-sess
   "$root/study-a.log" "$logs/first-study-status.txt"
 
 gap=$prefix-gaps
-run_step "$gap" 1800 900 "$DX_STACK_EVIDENCE/$gap" \
-  env DX_NS_PROFILE=smoke TRIPLEX_TRACE_LEVEL=full bash "$t1/run.sh" real "$gap" --rung 10k \
-  --zero-readers --reader-ladder-only --max-readers 0 --idle-keep none --probe10-per-s 0 \
-  --idle-gaps-ms 10,250,1000 --idle-commits 150 --idle-warmup-commits 0
+if [[ $mode == --resume ]]; then
+  gap=tx2-dxt1-bm1-20261118-gaps
+  seal "$gap" "$DX_STACK_EVIDENCE/$gap" "$root/queue-20261118/logs/$gap.log"
+else
+  run_step "$gap" 1800 900 "$DX_STACK_EVIDENCE/$gap" \
+    env DX_NS_PROFILE=smoke TRIPLEX_TRACE_LEVEL=full bash "$t1/run.sh" real "$gap" --rung 10k \
+    --zero-readers --reader-ladder-only --max-readers 0 --idle-keep none --probe10-per-s 0 \
+    --idle-gaps-ms 10,250,1000 --idle-commits 150 --idle-warmup-commits 0
+fi
 if [[ -s $DX_STACK_EVIDENCE/$gap/driver/ns-report.json ]]; then
   node lab/trace/idle-report.mjs "$DX_STACK_EVIDENCE" "$gap" --standalone \
     > "$logs/$gap.analysis.log" 2>&1 || true
   seal "$gap-analysis" "$DX_STACK_EVIDENCE/$gap/idle-analysis" "$logs/$gap.analysis.log"
+fi
+
+# [DX-BM1] Why: the rental has room for the reader cache growth and the untimed renderer.
+# Rejected: shortening the v3 schedule or losing the first 8-GiB OOM receipt.
+retry_driver_memory=32g
+renderer_heap=--max-old-space-size=24576
+if [[ $mode == --resume ]]; then
+  zero_dir=$DX_STACK_EVIDENCE/tx2-dxt1-bm1-pair-a-zero
+  retry=$prefix-retry-ladder
+  retry_dir=$DX_STACK_EVIDENCE/$retry
+  if (cd "$zero_dir"; grep -E '  driver/ns-(report.json|writes.jsonl)$' SHA256SUMS | sha256sum -c); then
+    mkdir -p "$retry_dir/input"
+    cp "$zero_dir"/driver/ns-{report.json,writes.jsonl} "$retry_dir/input/"
+    grep -E '  driver/ns-(report.json|writes.jsonl)$' "$zero_dir/SHA256SUMS" > "$retry_dir/zero-input.SHA256SUMS"
+    duration=$(node --import tsx lab/bench/plan.ts --seconds --strict)
+    run_step "$retry" 14400 6900 "$retry_dir" \
+      env DX_NS_PROFILE=v3 TRIPLEX_TRACE_LEVEL=summary TRIPLEX_TRACE_SESSION="$prefix-retry" \
+      DX_DRIVER_MEMORY="$retry_driver_memory" NODE_OPTIONS="$renderer_heap" \
+      bash "$t1/run.sh" real "$retry" --rung 10k --match-duration-s "$duration" \
+      --baseline-writes "$retry_dir/input/ns-writes.jsonl"
+  else
+    printf '%s retry refused: original baseline bytes do not match the seal\n' "$(stamp)" >&2
+  fi
 fi
 
 remembered_images=$logs/first-images.txt
@@ -156,15 +185,19 @@ if prepare_scale; then
   zero=$prefix-scale-zero
   reader=$prefix-scale-reader
   scale_args=(--subjects 100000 --match-duration-s 900 --seed-budget-s 6900 --writer-deadline-ms 600000 --history-growth-subjects 4)
+  scale_env=(DX_NS_PROFILE=smoke TRIPLEX_TRACE_LEVEL=full DX_DRIVER_MEMORY=24g
+    DX_EXPECTED_RESIDENT_GIB=40 "NODE_OPTIONS=$renderer_heap")
   run_step "$zero" 9000 1800 "$DX_STACK_EVIDENCE/$zero" \
-    env DX_NS_PROFILE=smoke TRIPLEX_TRACE_LEVEL=full bash "$t1/run.sh" real "$zero" --zero-readers "${scale_args[@]}"
+    env "${scale_env[@]}" bash "$t1/run.sh" real "$zero" --zero-readers "${scale_args[@]}"
   baseline=$DX_STACK_EVIDENCE/$zero/driver/ns-writes.jsonl
   matched=()
   if [[ $(cat "$logs/$zero.exit") == 0 && -s $baseline ]]; then
-    matched=(--baseline-writes "$baseline")
+    mkdir -p "$DX_STACK_EVIDENCE/$reader/input"
+    cp "$DX_STACK_EVIDENCE/$zero"/driver/ns-{report.json,writes.jsonl} "$DX_STACK_EVIDENCE/$reader/input/"
+    matched=(--baseline-writes "$DX_STACK_EVIDENCE/$reader/input/ns-writes.jsonl")
   fi
   run_step "$reader" 9000 1800 "$DX_STACK_EVIDENCE/$reader" \
-    env DX_NS_PROFILE=smoke TRIPLEX_TRACE_LEVEL=full bash "$t1/run.sh" real "$reader" "${scale_args[@]}" "${matched[@]}"
+    env "${scale_env[@]}" bash "$t1/run.sh" real "$reader" "${scale_args[@]}" "${matched[@]}"
   for arm in "$zero" "$reader"; do
     run=$DX_STACK_EVIDENCE/$arm
     if [[ -s $run/trace-summary.json ]]; then
@@ -180,7 +213,8 @@ if prepare_scale; then
   install_python=$logs/python-image.log
   if docker pull --platform "linux/$(docker info --format '{{.Architecture}}' | sed 's/x86_64/amd64/;s/aarch64/arm64/')" python:3.13-slim > "$install_python" 2>&1; then
     run_step "$activation" 14400 1800 "$DX_STACK_EVIDENCE/$activation" \
-      env DX_ACTIVATION_STOP_AT="$stop" bash "$t1/activation.sh" --execute "$activation" 100000 seed live
+      env DX_ACTIVATION_STOP_AT="$stop" DX_DRIVER_MEMORY=24g NODE_OPTIONS="$renderer_heap" \
+      bash "$t1/activation.sh" --execute "$activation" 100000 seed live
   else
     printf '%s image pull failed %s\n' "$(stamp)" "$activation" >&2
   fi
@@ -191,9 +225,15 @@ fi
 use_checkout "$first"
 [[ $(git rev-parse HEAD) == "$first_source" ]]
 while read -r image_id image_name; do docker image tag "$image_id" "$image_name"; done < "$remembered_images"
-pair=$prefix-pair-b
-run_step "$pair" 21600 12300 "$DX_STACK_EVIDENCE/$pair-session" env DX_NS_PROFILE=v3 bash "$t1/study.sh" "$pair"
-if [[ ! -e $DX_BARE_METAL_ROOT/locks/measure && -z $(docker ps -q) ]]; then seal_study "$pair"; fi
+suffixes=(b)
+if [[ $mode == --resume ]]; then suffixes+=(c); fi
+for suffix in "${suffixes[@]}"; do
+  pair=$prefix-pair-$suffix
+  run_step "$pair" 21600 13800 "$DX_STACK_EVIDENCE/$pair-session" \
+    env DX_NS_PROFILE=v3 DX_DRIVER_MEMORY="$retry_driver_memory" NODE_OPTIONS="$renderer_heap" \
+    bash "$t1/study.sh" "$pair"
+  if [[ ! -e $DX_BARE_METAL_ROOT/locks/measure && -z $(docker ps -q) ]]; then seal_study "$pair"; fi
+done
 
 wal_ab() {
   local device=/dev/nvme1n1 mount_dir=$queue_dir/wal-ssd
