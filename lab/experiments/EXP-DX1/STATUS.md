@@ -2081,3 +2081,11 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Part 15 (Codex gpt-6.2-sol, max; brief `DX-T1-resume15.md`).** (1) between-arm host check waits and re-samples,
   records top processes, completed arms are always reported; (2) decompose the 109 ms from saved traces; (3) driver
   memory and follower reopen at 100,000 subjects. Hard stop 18:45/19:00 local.
+
+## 2026-11-18 12:05 UTC (07:05 local): night window closed
+
+- Chrome, Slack and Paste running again (runner reopened Slack and Paste at 06:58 local; Chrome was already open at
+  06:45). mediaanalysisd/photoanalysisd resumed at 06:57. No timed arm was running at the close.
+- Host: triplex2 VM at 8 vCPU / 16 GiB (never raised overnight), docker context `default`, no containers, Mac swap
+  9.9 GiB, 112 GiB free. From here the host is busy: nothing timed today is a verdict.
+- Running: Codex part 15 (started 06:48 local). Tonight's runner armed for 19:30 local.
