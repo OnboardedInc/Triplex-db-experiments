@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import {oracleTimeouts} from '../../../bench/lib/oracle-budget.mjs';
 // [DX-H3] Why: the local Node image has no Python; exact offline oracle bytes can run on the host after measurement.
 // Rejected: installing Python, translating the independent oracle or manufacturing an oracle verdict.
 // [DX-T1-15] Why: the 100k oracle's 1.4-GiB result must cross the bridge without a whole-file client buffer.
@@ -23,7 +24,7 @@ if(mode==='client') {
  const req={id,sha256,cli};
  fs.writeFileSync(path.join(dir,id+'.request.tmp'),JSON.stringify(req));
  fs.renameSync(path.join(dir,id+'.request.tmp'),path.join(dir,id+'.request'));
- const deadline=Date.now()+900000;
+ const deadline=Date.now()+oracleTimeouts(fs.statSync(input).size).bridgeMs;
  const sleep=new Int32Array(new SharedArrayBuffer(4));
  const response=path.join(dir,id+'.response');
  while(!fs.existsSync(response)) {if(Date.now()>deadline)throw Error('oracle host bridge timeout');Atomics.wait(sleep,0,0,50);}
@@ -46,8 +47,11 @@ if(mode==='client') {
      const r=JSON.parse(fs.readFileSync(path.join(dir,file),'utf8'));
      const input=path.join(dir,r.id+'.case'),output=path.join(dir,r.id+'.output');
      if(fileHash(input)!==r.sha256)throw Error('oracle input changed');
-     const result=spawnSync('python3',['-I',r.cli,input,'-o',output],{encoding:'utf8',timeout:900000,maxBuffer:64<<20});
-     const receipt={id:r.id,sha256:r.sha256,code:result.status??1,stderr:result.stderr??String(result.error??''),outputSha256:fs.existsSync(output)?fileHash(output):null};
+     const result=spawnSync('python3',['-I',r.cli,input,'-o',output],{
+       encoding:'utf8',timeout:oracleTimeouts(fs.statSync(input).size).runMs,maxBuffer:64<<20,
+     });
+     const stderr=[result.error?.message,result.stderr].filter(Boolean).join('\n');
+     const receipt={id:r.id,sha256:r.sha256,code:result.status??1,stderr,outputSha256:fs.existsSync(output)?fileHash(output):null};
      fs.writeFileSync(path.join(dir,r.id+'.response.tmp'),JSON.stringify(receipt));
      fs.renameSync(path.join(dir,r.id+'.response.tmp'),path.join(dir,r.id+'.response'));
    }

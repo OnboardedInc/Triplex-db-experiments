@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { expect, it } from "vitest";
+import { oracleTimeouts } from "../../../lab/bench/lib/oracle-budget.mjs";
 import {
   readBoundedOracleEnvelope,
   requireOracleBinding,
@@ -54,4 +55,15 @@ it("refuses a truncated, duplicate or incomplete envelope and an incomplete quer
   expect(() => read(output({ ...fixture, queries: undefined }))).toThrow(/field|incomplete/i);
   expect(() => requireOracleBinding(read(output({ ...fixture, queries: [] })), input, caseDoc))
     .toThrow(/coverage/);
+});
+
+it("reserves transport time after the regular and large independent replay deadlines", () => {
+  const regular = oracleTimeouts(128 * 1024 ** 2);
+  const large = oracleTimeouts(128 * 1024 ** 2 + 1);
+  expect(regular.runMs).toBe(900_000);
+  expect(large.runMs).toBe(1_800_000);
+  for (const { runMs, bridgeMs, clientMs } of [regular, large]) {
+    expect(bridgeMs - runMs).toBe(30_000);
+    expect(clientMs - bridgeMs).toBe(30_000);
+  }
 });

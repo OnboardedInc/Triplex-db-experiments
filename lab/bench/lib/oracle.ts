@@ -13,6 +13,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { oracleTimeouts } from "./oracle-budget.mjs";
 import { readOracleOutput, requireOracleBinding } from "./oracle-output.ts";
 import { oraclePublicValue } from "./oracle-public-value.ts";
 import { memberOf } from "./world.ts";
@@ -89,22 +90,23 @@ export function checkWithOracle(opts: { oracleRoot: string; dir: string; caseDoc
   let exitCode = 0;
   try {
     const bridge = process.env["TX2_ORACLE_BRIDGE"];
+    const { runMs, clientMs } = oracleTimeouts(Buffer.byteLength(caseText));
     // [DX-H3] Why: keep the frozen Python oracle when the local VM image lacks Python.
     // Rejected: reimplementing its semantics in the harness or changing expected bytes.
-    execFileSync(bridge ? process.execPath : "python3", [...(bridge ? [path.resolve("lab/experiments/EXP-DX1/h3/oracle-bridge.mjs"), "client", bridge] : []), "-I", cli, caseFile, "-o", outFile], { stdio: ["ignore", "ignore", "pipe"], maxBuffer: 64 << 20, timeout: 900_000 });
+    execFileSync(bridge ? process.execPath : "python3", [...(bridge ? [path.resolve("lab/experiments/EXP-DX1/h3/oracle-bridge.mjs"), "client", bridge] : []), "-I", cli, caseFile, "-o", outFile], { stdio: ["ignore", "ignore", "pipe"], maxBuffer: 64 << 20, timeout: bridge ? clientMs : runMs });
   } catch (error: any) {
     exitCode = error.status ?? -1;
     if (!fs.existsSync(outFile)) return { status: "ORACLE-ERROR", exitCode, stderr: String(error.stderr ?? error.message).slice(0, 2000), reads: 0, mismatches: [] as any[] };
   }
-  return compareOracleOutput({
-    out: readOracleOutput(outFile), caseText, caseDoc: opts.caseDoc, reads: opts.reads,
-    exitCode, oracleMs: Date.now() - started,
+  const result = compareOracleOutput({
+    out: readOracleOutput(outFile), caseText, caseDoc: opts.caseDoc, reads: opts.reads, exitCode,
   });
+  return { ...result, oracleMs: Date.now() - started };
 }
 
 export function compareOracleOutput(opts: {
   out: any; caseText: string; caseDoc: any; reads: readonly OracleSampleRead[];
-  exitCode: number; oracleMs: number;
+  exitCode: number; oracleMs?: number;
 }) {
   const { out, exitCode } = opts;
   requireOracleBinding(out, opts.caseText, opts.caseDoc);
