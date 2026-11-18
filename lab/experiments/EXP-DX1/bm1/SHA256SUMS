@@ -21,3 +21,7 @@ dc2f396cd0bf7fe4da7f99626bedba83e09bb83d9fae439f92350f1b1761d7a9  tx2-dxt1-bm1-2
 e41719e4a1ab915938adf4e9957bc4500127638b50cd244843129c12b21742e5  tx2-dxt1-bm1-20261118r-scale-zero/derived/SCALE-READING.md
 57800a6ae1f38482feafb3ae152a72592e8d2b4735f4906cc6799236786508a3  tx2-dxt1-bm1-20261118r-scale-zero/derived/SCALE-BANDS.json
 dd0bb164e6d4032ccff54e982c260fec01af57d70d3f3ce2a4ee7c676f699520  tx2-dxt1-bm1-20261118r-scale-zero/derived/SCALE-DETAILS.json
+8feb46b55e0e8b2bf93cb612af30775b42ac89786cf88a8c551b6e19bc9c28ba  reader-wind-down/checkpoint.tar.gz
+1b6e345fb6d3a82bcfcc53cc7ce8c300c28a1d82927871dd85caa20b3ef5303c  reader-wind-down/CHECKPOINT.json
+ae905ce47701c4697c9a3b3d3c52bfb5ccb9f19368a2ce191b1165d1fc296f02  reader-wind-down/READING.md
+3f27f948f5a33a242a123113542f36c83db8c3dd95eb4f4f84e5ff7812c128c2  monitor.log

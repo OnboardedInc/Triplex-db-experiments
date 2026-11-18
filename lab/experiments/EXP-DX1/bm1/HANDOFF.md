@@ -4,9 +4,9 @@
 
 The bench server runs native Linux. The first study, `triplex-bm1-study-a.service`, retained the zero arm and both controls. Its loaded driver reached the 8 GiB cgroup limit after 52 minutes. Source `97fa91233d2a42807aa0922e237111e08f412544`, tag stem `tx2-dxt1-bm1-pair-a`. The smoke had reached exactness from the same checkout and image set.
 
-`triplex-bm1-queue-final-b.service` runs pushed `a1698d54ea0ead7ac24e2d8a12bc851da4fae629`, batch `20261118d`. It took over after the 100k zero child released its resources and started the 100k reader at 17:49 EST. Both scale arms and W0 activation use the public tracing tip `10a3953869fff8d4fd9f8ee0c5fe6fbda93e1fc5` selected at 17:08 EST. It includes all three driver-memory and reopen commits named in the brief.
+`triplex-bm1-queue-final-b.service` runs pushed `a1698d54ea0ead7ac24e2d8a12bc851da4fae629`, batch `20261118d`. It took over after the 100k zero child released its resources and started the 100k reader at 17:49 EST. Both scale arms and W0 activation use the public tracing tip `10a3953869fff8d4fd9f8ee0c5fe6fbda93e1fc5` selected at 17:08 EST. It includes all three driver-memory and reopen commits named in the brief. The 100k reader arm finished its timed schedule and drained both sides of the feed. The 18:39 EST checkpoint is sealed on the Mac under `DX-BM1/reader-wind-down`. Independent replay and the terminal bundle were pending. The Mac watcher stopped at handoff, and later bundles can be collected with the commands below.
 
-The original fixed-gap measurement and the loaded retry are on the Mac. The retry completed the full schedule with a 32 GiB driver cap, one read error, no completed replay output, and a Chrome renderer string limit. The queue also recovers the original timeline from its sealed raw inputs, then runs two full pairs on the patched pushed source. The frozen plan and verdict source hashes must still equal the first study's. The 100k stages allow 24 GiB for the driver. The optional WAL A/B runs only with the required budget and a blank second drive. The kernel exposes no cpuidle state controls.
+The original fixed-gap measurement and the loaded retry are on the Mac. The retry completed the full schedule with a 32 GiB driver cap, one read error, no completed replay output, and a Chrome renderer string limit. The queue also recovers the original timeline from its sealed raw inputs, then runs two full pairs on the patched pushed source. The frozen plan and verdict source hashes must still equal the first study's. The 100k stages allow 24 GiB for the driver. W0 retains the upstream diagnostic CPU placement, which shares CPU 4 between its driver mask and read gateway. The optional WAL A/B requires enough budget and a blank second drive. The kernel exposes no cpuidle state controls.
 
 | Stage | Expected elapsed | Ceiling |
 | --- | ---: | ---: |
@@ -25,6 +25,7 @@ bench() {
 }
 bench 'systemctl show triplex-bm1-queue-resume triplex-bm1-queue-final-b -p ActiveState -p SubState -p ExecMainStatus'
 bench 'tail -n 30 /var/tmp/triplex-bm1/study-a.log /var/tmp/triplex-bm1/queue.log'
+bench 'tail -n 12 /var/tmp/triplex-bm1/queue-20261118r/scale/state/evidence/DX-T1/tx2-dxt1-bm1-20261118d-scale-reader/driver.log'
 bench 'find /var/tmp/triplex-bm1/queue-20261118d/logs -name "*.exit" -print -exec cat {} \;'
 bench 'find /var/tmp/triplex-bm1/bundles -mindepth 2 -maxdepth 2 -name TRANSFER.sha256 -printf "%h\n" | sort'
 ```
@@ -35,7 +36,8 @@ Collect each sealed bundle from the Mac. The script verifies the bytes before pu
 tag=tx2-dxt1-bm1-pair-a-zero
 bash lab/experiments/EXP-DX1/bm1/collect.sh "$BENCH_SERVER" "$tag"
 while IFS= read -r tag; do
-  bash lab/experiments/EXP-DX1/bm1/collect.sh "$BENCH_SERVER" "$tag" || break
+  bash lab/experiments/EXP-DX1/bm1/collect.sh "$BENCH_SERVER" "$tag" ||
+    printf 'Collection failed for %s\n' "$tag" >&2
 done < <(bench 'find /var/tmp/triplex-bm1/bundles -mindepth 2 -maxdepth 2 -name TRANSFER.sha256 -printf "%h\n" | sed "s|.*/||" | sort')
 ```
 
