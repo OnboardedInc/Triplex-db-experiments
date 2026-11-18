@@ -32,7 +32,10 @@ for tag in "$@"; do
     done < "$stage/transfer/TRANSFER.sha256"
     (cd "$stage/transfer"; shasum -a 256 -c TRANSFER.sha256)
     [[ $(cat "$stage/transfer/collection-tag.txt") == "$tag" ]]
-    zstd -dc "$stage/transfer/reports.tar.zst" | tar -xf - -C "$stage"
+    # [DX-BM1] Why: an interrupted ladder can leave tens of GiB of exact observation chunks.
+    # Rejected: expanding those chunks a second time on the Mac when the verified report archive already preserves them.
+    zstd -dc "$stage/transfer/reports.tar.zst" | tar -xf - -C "$stage" \
+      --exclude '*/observations-ns*/[0-9]*.f64' --exclude '*/observations-ns*/[0-9]*.json'
     if [[ -f $stage/transfer/raw.tar.zst ]]; then
       zstd -dc "$stage/transfer/raw.tar.zst" | tar -xf - -C "$stage"
     fi

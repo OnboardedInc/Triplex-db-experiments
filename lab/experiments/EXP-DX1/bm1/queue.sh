@@ -100,7 +100,9 @@ while [[ $(systemctl show triplex-bm1-study-a -p ActiveState --value) =~ ^(activ
 done
 systemctl show triplex-bm1-study-a -p ActiveState -p Result -p ExecMainStatus > "$logs/first-study-status.txt" || true
 test ! -e "$DX_BARE_METAL_ROOT/locks/measure"
-test -z "$(docker ps -q)"
+# [DX-BM1] Why: continuation is admitted while the prior batch's isolated scale child is still running.
+# Rejected: require global quiescence before reaching the explicit wait for that child.
+if [[ $mode != --continue ]]; then test -z "$(docker ps -q)"; fi
 seal tx2-dxt1-bm1-smoke-a "$root/first/state/evidence/DX-T1/tx2-dxt1-native-smoke" \
   "$root/first/bootstrap.log" "$root/first-controller.log"
 seal tx2-dxt1-bm1-smoke-b "$DX_STACK_EVIDENCE/tx2-dxt1-native-smoke" \
