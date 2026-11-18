@@ -26,7 +26,7 @@ function save(all) {
       all
         .map(
           (r) =>
-            `| ${r.date} | ${r.tag} | ${r.source} | ${r.subjects} | ${r.result.replaceAll("|", "/")} | [trace.html](${r.html}) | ${r.raw} | ${bytes(r.raw)} |`,
+            `| ${r.date} | ${r.tag} | ${r.source} | ${r.subjects} | ${r.result.replaceAll("|", "/")} | [${path.basename(r.html)}](${r.html}) | ${r.raw} | ${bytes(r.raw)} |`,
         )
         .join("\n") +
       "\n",
@@ -40,7 +40,7 @@ export function registerRun(dir) {
   const s = JSON.parse(fs.readFileSync(path.join(dir, "trace-summary.json"), "utf8"));
   const reportPath = path.join(dir, "driver/ns-report.json");
   const b = fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, "utf8")) : {};
-  const row = {
+  return registerRow({
     date: new Date().toISOString(),
     tag: path.basename(dir),
     source: s.source,
@@ -48,7 +48,46 @@ export function registerRun(dir) {
     result: s.finding,
     html: path.join(dir, "trace.html"),
     raw: path.join(dir, "trace/raw"),
-  };
+  });
+}
+
+// [DX-BM1] Why: W0 activation retains an independent check and raw phase traces under its own schema.
+// Rejected: manufacturing a North Star trace summary or dropping the activation from the shared index.
+export function registerActivation(dir) {
+  dir = path.resolve(dir);
+  const tag = path.basename(dir);
+  const transfer = path.join(dir, "transfer", "collection-tag.txt");
+  if (!/^tx2-dxt1-bm1-[a-z0-9]+-activation$/.test(tag) || fs.readFileSync(transfer, "utf8").trim() !== tag)
+    throw Error("Unbound activation collection");
+  const attemptFile = path.join(dir, "activation-attempt.json");
+  const checkFile = path.join(dir, "ACTIVATION-CHECK.json");
+  const headFile = path.join(dir, "head.txt");
+  const attempt = fs.existsSync(attemptFile) ? JSON.parse(fs.readFileSync(attemptFile, "utf8")) : null;
+  const source = fs.existsSync(headFile) ? fs.readFileSync(headFile, "utf8").trim() : null;
+  if (attempt &&
+      (attempt.run !== tag || attempt.slot !== tag || attempt.source !== source ||
+       !/^[a-f0-9]{40}$/.test(source ?? "") || !/^[a-f0-9-]{36}$/.test(attempt.nonce ?? "")))
+    throw Error("Foreign activation attempt");
+  const result = fs.existsSync(checkFile) ? JSON.parse(fs.readFileSync(checkFile, "utf8")) : null;
+  if (result &&
+      (!attempt || result.run !== tag || result.slot !== tag || result.source !== source ||
+       result.nonce !== attempt.nonce || result.attemptSha256 !== hash(attemptFile) ||
+       result.logSha256 !== hash(path.join(dir, "activation.log"))))
+    throw Error("Foreign activation check or changed source evidence");
+  return registerRow({
+    date: new Date().toISOString(),
+    tag,
+    source,
+    subjects: attempt?.subjects ?? null,
+    result: result
+      ? "Independent activation comparisons recorded. Performance unjudged."
+      : "Activation controller output retained. Terminal independent check unavailable.",
+    html: result ? checkFile : path.join(dir, "transfer", "reports.tar.zst"),
+    raw: path.join(dir, "state", "trace", "raw"),
+  });
+}
+
+function registerRow(row) {
   const all = rows();
   const old = all.find((r) => r.tag === row.tag);
   if (old && old.html !== row.html) throw Error("Duplicate trace tag at another path");
@@ -99,6 +138,7 @@ export function archive(tag, to) {
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const [command, arg, ...rest] = process.argv.slice(2);
   if (command === "register") console.log(JSON.stringify(registerRun(arg)));
+  else if (command === "register-activation") console.log(JSON.stringify(registerActivation(arg)));
   else if (command === "list")
     console.log(
       rows()
@@ -109,5 +149,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     const i = rest.indexOf("--to");
     if (i < 0 || !rest[i + 1]) throw Error("archive TAG --to DIR");
     console.log(JSON.stringify(archive(arg, rest[i + 1])));
-  } else throw Error("trace-store.mjs list | archive TAG --to DIR | register RUN_DIR");
+  } else throw Error("trace-store.mjs list | archive TAG --to DIR | register RUN_DIR | register-activation RUN_DIR");
 }

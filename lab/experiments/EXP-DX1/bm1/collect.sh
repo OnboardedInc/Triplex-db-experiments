@@ -7,7 +7,9 @@ shift
 [[ $bench =~ ^ubuntu@[a-zA-Z0-9.:-]+$ && $# -gt 0 ]] || exit 2
 root=${DX_BM1_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence}
 repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
-ssh_bench=(ssh -F /dev/null -i "${DX_BENCH_KEY:-$HOME/.ssh/triplex_bench_ed25519}"
+# [DX-BM1] Why: every fetch must leave stdin with the checksum-list loop.
+# Rejected: letting the first SSH process consume the remaining manifest rows.
+ssh_bench=(ssh -n -F /dev/null -i "${DX_BENCH_KEY:-$HOME/.ssh/triplex_bench_ed25519}"
   -o IdentitiesOnly=yes -o ForwardAgent=no -o BatchMode=yes -o StrictHostKeyChecking=yes "$bench")
 umask 077
 mkdir -p "$root/DX-BM1"
@@ -47,6 +49,8 @@ for tag in "$@"; do
     # [DX-BM1] Why: the shared registry keys on the directory name; the copied report retains its original slot.
     # Rejected: renaming the scope in the evidence or indexing the archive without its observed trace summary.
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register "$dest"
+  elif [[ $tag == tx2-dxt1-bm1-*-activation ]]; then
+    TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register-activation "$dest"
   fi
   printf 'Collected %s\n' "$dest"
 done

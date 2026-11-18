@@ -1,0 +1,4 @@
+0855e0b401b9f40bac8c13eac29782675e006963cc8cc792ad473c4bdb3c0279  machine/SHA256SUMS
+38a9783eac609a349510afa68e046845b8d4e25d6b313ab15f6df71dd15dc918  tx2-dxt1-bm1-smoke-a/transfer/TRANSFER.sha256
+b2b0cab7acb33d1425ba19a742dc570c8288dc3956b6d2c750fd7d06edf84f37  tx2-dxt1-bm1-smoke-b/transfer/TRANSFER.sha256
+42777d09aef52b3f6af74bee8d277e98754090bfa0d3fea5284d9bcb49c759b7  tx2-dxt1-bm1-smoke-b/driver/ns-report.json

@@ -20,7 +20,8 @@ The pair uses summary tracing and the ACK clock. Its 128 GiB observation limit a
 
 Mac H is an older loaded profile. The v3 Mac arm ran with zero readers. [Mac estimators and intervals](../t1/NIGHT-2026-11-17.md)
 Both drives identify as Micron 7500 PRO with no volatile write cache reported by NVMe Identify. Micron specifies enterprise power-loss protection for this series. [Exact part](https://sg.micron.com/products/storage/ssd/data-center-ssd/7500-ssd/part-catalog/part-detail/mtfdkcc960tgp-1bk1jabyy) · [Specification](https://in.micron.com/content/dam/micron/global/public/products/data-sheet/ssd/7500-ssd-tech-prod-spec.pdf)
-The first run uses pushed `97fa9123`, based on the verified upstream `1e869067`. First failure and delivered machine facts are in the durable `DX-BM1` evidence directory.
+The first run uses pushed `97fa9123`, based on the verified upstream `1e869067`. Delivered facts and the failed and exact smoke receipts are sealed in [SHA256SUMS](SHA256SUMS).
 Admission audit. `smoke-check.py` checks the sealed trace files and exact read counts, verifies the independent output's case digest and query identities, and binds its random case ID, clock, source and slot to this smoke.
 Transfer audit. `bundle.sh` archives terminal item directories and publishes their hashes with a fresh tag. `collect.sh` verifies those hashes and the tag before adding the evidence to the Mac index. Neither assigns a benchmark verdict.
+Activation-index audit. The index checks the recorded attempt and log hashes, source, slot and nonce before linking an independent check.
 The acceptance contract and its pinned files are unchanged. The bench has not run the fixed-gap comparison, 100k arms, activation, repeat or WAL A/B.
