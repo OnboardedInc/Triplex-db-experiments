@@ -140,19 +140,17 @@ export class ReplicaThread {
     const progress = this.receiptProgress;
     if (this.fail) throw this.fail;
     if (!progress || this.receiptDrain) throw Error("Receipt capture is unavailable");
-    let timer: NodeJS.Timeout | undefined;
-    try {
-      const value = await new Promise<{ retained: number; fallbackReasons: Record<string, number> }>((resolve, reject) => {
-        this.receiptDrain = { resolve, reject };
-        timer = setTimeout(() => reject(Error("Receipt captures did not drain in 30 seconds")), 30_000);
-        this.worker.postMessage({ type: "drain-receipts", count: this.receiptSubmitted });
-      });
-      if (value.retained !== this.receiptSubmitted || Atomics.load(progress, 0) !== this.receiptSubmitted)
-        throw Error("Receipt capture acknowledgement mismatch");
-      return { ...value, submitted: this.receiptSubmitted, capacity: MAX_RECEIPT_CAPTURES, peakOutstanding: this.receiptPeak };
-    } finally {
-      clearTimeout(timer);
-    }
+    // [DX-DRV1] Why: the legacy fallback worker already drains its submitted reads after offers end.
+    // Rejected: a new 30-second deadline on exact spill acknowledgements (the ten-burst Mac attempt hit it).
+    const start = performance.now();
+    const value = await new Promise<{ retained: number; fallbackReasons: Record<string, number> }>((resolve, reject) => {
+      this.receiptDrain = { resolve, reject };
+      this.worker.postMessage({ type: "drain-receipts", count: this.receiptSubmitted });
+    });
+    if (value.retained !== this.receiptSubmitted || Atomics.load(progress, 0) !== this.receiptSubmitted)
+      throw Error("Receipt capture acknowledgement mismatch");
+    return { ...value, submitted: this.receiptSubmitted, capacity: MAX_RECEIPT_CAPTURES,
+      peakOutstanding: this.receiptPeak, drainMs: performance.now() - start };
   }
   async close() {
     try {
