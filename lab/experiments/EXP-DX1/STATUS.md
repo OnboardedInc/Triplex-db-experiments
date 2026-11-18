@@ -2089,3 +2089,19 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - Host: triplex2 VM at 8 vCPU / 16 GiB (never raised overnight), docker context `default`, no containers, Mac swap
   9.9 GiB, 112 GiB free. From here the host is busy: nothing timed today is a verdict.
 - Running: Codex part 15 (started 06:48 local). Tonight's runner armed for 19:30 local.
+
+## 2026-11-18 16:45 UTC (11:45 local): bare-metal server ordered; DX-BM1 launched; part 15 progress
+
+- **Sam connected Latitude.sh and added $100 of credit** (verbatim in SAM-decisions). Ordered one server at 11:27 local:
+  f4.metal.small, AMD EPYC 4484PX 12 cores / 24 threads, 93 GiB, 2 x 894 GiB NVMe, Ubuntu 24.04, Dallas, $1.09 per
+  hour, hourly billing. Provider firewall allows TCP 22 only (checked from the Mac). Spend ledger and server id live in
+  the project folder under `cloud/LEDGER.md`, not in this public repository.
+- **DX-BM1 (Codex gpt-6.2-sol, max; branch `exp/DX-BM1-bare-metal`, brief `DX-BM1.md`)** operates it over ssh: bootstrap
+  and 1,000-subject smoke, then one v3 pair at 10,000 subjects, the fixed-gap arms, 100,000 subjects (zero, readers,
+  activation), a second v3 pair. Budget 30 server-hours. It exits by 18:50 local with the rest queued detached.
+- **Part 15 so far (dx-t1, pushed to `1e869067`, later commits local).** Section 1 landed: between-arm admission
+  retries and completed arms are kept. Section 2 (`BURST-15.md`): the 109 ms all-commit p99 is a late-run tail. The
+  first 900 s of last night's arm, the same commands as pair H, scored 42.1 ms against H's 50.3 and 48.2. Slow commits
+  per burst grew 23, 28, 29, 26, 50, 131, 171, 86, 136, 180. Of the slow burst time, 58.7% is the driver (scheduler
+  lateness 51 s, same-subject waits 25 s, main-thread GC), 19.9% socket and callback, 21.4% gateway and peer. The
+  read-your-own-write checks backed up to 1,378 queued and 450 s. A first driver fix did not show a gain on a busy host.

@@ -479,3 +479,13 @@ Sam, verbatim: "any other progress?"
 
 Orchestrator's reading: a status question, no decision. Answered with the night's outcome (one arm of four completed)
 and started the day's work without waiting, as agreed on 2026-11-17 ("I will start step 1 in the morning").
+
+## 2026-11-18 about 07:15 local: Latitude.sh is connected, with a $100 budget
+
+Sam, verbatim: "ok I connected to latitude and added $100 in credits, please go and run things there as needed, be
+careful with the credits though, test things that really matter and teach you things and progress our goals"
+
+Orchestrator's reading: standing permission to order and run Latitude.sh servers without asking each time, inside the
+$100 of credit. This replaces my earlier condition of showing the price and waiting for a "go" before each order. I
+still state the hourly price and the running total each time I report, delete every server when its run ends, and send
+nothing personal to the machine (public repository clone only, the bench SSH key only).
