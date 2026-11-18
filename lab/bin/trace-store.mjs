@@ -103,7 +103,7 @@ function registerIncompleteBenchmark(dir) {
     tag,
     source,
     subjects: null,
-    result: "Terminal raw evidence and logs retained. Trace summary unavailable.",
+    result: "Timeline export incomplete. Terminal raw evidence and logs retained.",
     html: path.join(dir, "transfer", "reports.tar.zst"),
     raw: path.join(dir, "trace", "raw"),
   });

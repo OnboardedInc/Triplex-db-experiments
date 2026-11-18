@@ -4,13 +4,13 @@
 
 The bench server runs native Linux. The first study, `triplex-bm1-study-a.service`, retained the zero arm and both controls. Its loaded driver reached the 8 GiB cgroup limit after 52 minutes. Source `97fa91233d2a42807aa0922e237111e08f412544`, tag stem `tx2-dxt1-bm1-pair-a`. The smoke had reached exactness from the same checkout and image set.
 
-`triplex-bm1-queue-final-b.service` runs pushed `a1698d54ea0ead7ac24e2d8a12bc851da4fae629`, batch `20261118d`. It waits for the running 100k zero child from batch `20261118r` to finish, checks that its resources were released, then takes over. Both that zero child and the next reader and W0 activation stages use the public tracing tip `10a3953869fff8d4fd9f8ee0c5fe6fbda93e1fc5` selected at 17:08 EST. It includes all three driver-memory and reopen commits named in the brief.
+`triplex-bm1-queue-final-b.service` runs pushed `a1698d54ea0ead7ac24e2d8a12bc851da4fae629`, batch `20261118d`. It took over after the 100k zero child released its resources and started the 100k reader at 17:49 EST. Both scale arms and W0 activation use the public tracing tip `10a3953869fff8d4fd9f8ee0c5fe6fbda93e1fc5` selected at 17:08 EST. It includes all three driver-memory and reopen commits named in the brief.
 
 The original fixed-gap measurement and the loaded retry are on the Mac. The retry completed the full schedule with a 32 GiB driver cap, one read error, no completed replay output, and a Chrome renderer string limit. The queue also recovers the original timeline from its sealed raw inputs, then runs two full pairs on the patched pushed source. The frozen plan and verdict source hashes must still equal the first study's. The 100k stages allow 24 GiB for the driver. The optional WAL A/B runs only with the required budget and a blank second drive. The kernel exposes no cpuidle state controls.
 
 | Stage | Expected elapsed | Ceiling |
 | --- | ---: | ---: |
-| 100k zero, then 100k readers | 45–90 min each | 2½ h each |
+| 100k readers, after the completed zero | 45–90 min | 2½ h |
 | 100k W0 seed, readback, live activation and verification | 1–3 h | 4 h |
 | Rebuild patched runner and recover the earlier timeline | 10–35 min | 1½ h |
 | Two complete v3 pairs | 3½–5 h each | 6 h each |

@@ -6,7 +6,7 @@ The 256-reader writer ratio was 1.13, and reads reached 6.88 ms p99. At 1,024 re
 The loaded retry had one read error across 89.38 million observations and produced no independent replay output. Its readings remain unjudged. The original loaded driver hit 8 GiB; the retry used a 32 GiB cap.
 The root drive's 8 KiB fdatasync was 0.0265/0.0876 ms p50/p99, n=898,163. Late dispatch and same-subject queues dominated several worst zero-reader commits. Socket waits dominated several worst loaded commits.
 The 250 ms and 1 s gap trials measured −0.16 [−1.08, +0.44] and −0.29 [−1.32, +0.37] ms versus 10 ms, n=150 each. Both intervals include zero.
-The 1k smoke matched all 53 independent sampled reads and 2,997 queries. The 100k zero-reader run has started on the pushed tracing tip, with reader and activation stages queued.
+The 100k zero-reader arm seeded 100,000 subjects in 824 s and closed 7,408 primary commits with no expirations or read errors. Its driver peaked at 8.56 GiB in sampled cgroup memory. The matched 100k reader arm is running.
 **North star.** P1–P4 via v3, P5 via live 100k activation. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 | Bar (threshold) | Mac H loaded | Mac v3 zero | Linux v3 zero | Linux v3 loaded retry |
@@ -55,6 +55,6 @@ The 1k smoke matched all 53 independent sampled reads and 2,997 queries. The 100
 | NS-P5 throttled variant overlapping compaction (run) | miss — · 7408 · — | — | Unjudged · unavailable | — Unjudged · 38,826 · — |
 
 Cells give point, status, n and 90% interval where recorded. H is an older loaded profile. The Linux loaded retry used the byte-identical zero inputs after an interrupted pair. [Mac evidence](../t1/NIGHT-2026-11-17.md)
-10k source `97fa9123`. Performance governor, SMT on, idle controls as delivered, TX 0, PG 1, write gateway 2, driver main 3, read gateway 4, workers 5–7. [Sealed evidence](SHA256SUMS)
-Audit. Smoke binds the replay bytes, exact rows, source, slot and clock. Gaps bind 450 unique ACKs and the no-warm configuration. Collection binds transfer bytes and tags. The activation index checks the source, slot, nonce and exact attempt/log hashes. The controller verifies both baseline hashes and the frozen plan and verdict sources. Rerendering verifies the original raw hashes.
+10k source `97fa9123`. Performance governor, SMT on, idle controls as delivered, TX 0, PG 1, write gateway 2, driver main 3, read gateway 4, workers 5–7. The 100k zero bands, serial SQL and peak memory are in `tx2-dxt1-bm1-20261118r-scale-zero/derived/SCALE-READING.md`. [Sealed evidence](SHA256SUMS)
+Audit. The 1k smoke's 53 sampled reads and 2,997 queries bind exact case bytes, source, slot and clock. Gap and scale metrics bind sealed ACKs and native counters. Collection binds transfer bytes and tags. Activation indexing checks source, slot, nonce and log/attempt hashes. The controller verifies both baseline hashes, the frozen plan and verdict sources, and original raw input for rerendering.
 The acceptance pins and bars are unchanged. The retry hit a Chrome JSON string limit after emitting its report. The original raw data is sealed and a streamed render is queued. [Handoff](HANDOFF.md)
