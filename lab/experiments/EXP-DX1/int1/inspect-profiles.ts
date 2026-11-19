@@ -23,7 +23,16 @@ export function inspectProfiles(dir: string) {
   verifyLatencies(dir, result, binding, input.attempt, input);
   const phases = fs.readFileSync(path.join(dir, "phases.jsonl"), "utf8").trim().split("\n").map(s => JSON.parse(s));
   const identities = new Map<string,string>(), witnesses = new Set<string>(), roles = [];
-  for (const [stage, name] of [["seed-only", "after-cold-import"], ["two-percent", "after-activity"]]) {
+  const stages = [["seed-only", "after-cold-import"], ["two-percent", "after-activity"]];
+  if (input.policy?.seedFeed === "after-sampling") {
+    const proof = read("seed-feed-proof.json");
+    assert.equal(proof.binding,binding);
+    assert.deepEqual(proof.scopes,[account.scope]);
+    assert.deepEqual(proof.checks,result.seedFeedChecks);
+    assert(proof.checks[0].facts === account.facts && proof.checks[0].count > 0 && proof.wallMs > 0);
+    stages.push(["after-seed-feed-proof","after-seed-feed-proof"]);
+  }
+  for (const [stage, name] of stages) {
     const profile = read(stage + "-profile.json");
     const phase = phases.filter(x => x.label === name);
     assert.equal(phase.length, 1);

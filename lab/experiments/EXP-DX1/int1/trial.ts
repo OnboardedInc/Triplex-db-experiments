@@ -494,7 +494,13 @@ async function trial() {
   const before = await phase("after-activity");
   if (seedOnly) await gatewayProfiles(stack, dir!, "two-percent", binding);
   const seedFeedChecks = [];
+  const proofStarted = now();
   for (const a of accounts) seedFeedChecks.push(await a.verifySeedFeed(lease.checkpoint));
+  if (policy.seedFeed) {
+    save("seed-feed-proof.json", { binding, wallMs: now() - proofStarted, scopes: accounts.map(a => a.comp.scopeName), checks: seedFeedChecks });
+    await phase("after-seed-feed-proof");
+    if (seedOnly) await gatewayProfiles(stack,dir!,"after-seed-feed-proof",binding);
+  }
   let sender, regularDeep, regularTenant, placements, identities;
   if (mode === "int1-proof") {
     const proofs = await import("./receipt-proof.ts");
