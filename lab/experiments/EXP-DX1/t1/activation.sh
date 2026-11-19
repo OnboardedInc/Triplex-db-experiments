@@ -110,7 +110,7 @@ git ls-files --error-unmatch lab/experiments/EXP-DX1/t1/activation.sh lab/experi
 git rev-parse HEAD > "$out/head.txt"
 python3 - "$out/source.SHA256SUMS" <<'BUILD_BYTES'
 import hashlib,pathlib,subprocess,sys
-files=subprocess.check_output(['git','ls-files','-z','lab/bench/lib/w0-*','lab/oracles/domain','lab/world/W0','packages/w0','pnpm-lock.yaml','package.json','packages/datomic','lab/experiments/EXP-DX1/t1/activation.sh','lab/experiments/EXP-DX1/t1/activation-driver.ts','lab/experiments/EXP-DX1/t1/w0-seed.ts']).split(b'\0')
+files=subprocess.check_output(['git','ls-files','-z','lab/bench/lib/w0-*','lab/experiments/EXP-DX1/act2/*.ts','lab/oracles/domain','lab/world/W0','packages/w0','pnpm-lock.yaml','package.json','packages/datomic','lab/experiments/EXP-DX1/t1/activation.sh','lab/experiments/EXP-DX1/t1/activation-driver.ts','lab/experiments/EXP-DX1/t1/w0-seed.ts']).split(b'\0')
 with open(sys.argv[1],'x') as out:
  for name in files:
   if name:
@@ -205,6 +205,10 @@ run_driver() {
 wait "$child";child=
   progress "finished $log"
 }
+# [DX-ACT2] Why: qualify the two-window oracle on this gateway before the first large seed command. Rejected: a Mac receipt or a smoke after seeding.
+if [[ $subjects == 100000 && ( $operation == seed || $operation == seed-only ) ]]; then
+  run_driver preflight.log lab/experiments/EXP-DX1/act2/preflight-runner.ts "$out/act2-preflight" "$(cat "$out/head.txt")" "$prefix" "$nonce"
+fi
 run_driver driver.log "${driver[@]}"
 if [[ $operation == seed || $operation == seed-only ]];then
   # [DX-T1-14] Why: a durable checkpoint proves progress, while a fresh full readback proves the seeded world.

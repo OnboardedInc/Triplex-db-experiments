@@ -1085,7 +1085,7 @@ export async function runReplicaDriver(argv: string[]) {
         // [DX-R1] Why: the runtime follows writes in both no-sweep and sweep arms, so only evaluation/publication differs.
         // Rejected: pausing follow during baseline (creates an artificial backlog and omits normal replica cost).
         await startFollowing();
-        traffic = await startTraffic({ ...liveOptions, id: "baseline", entityWindow: act1 ? "baseline" : undefined });
+        traffic = await startTraffic({ ...liveOptions, id: "baseline" });
         await new Promise((r) => setTimeout(r, Number(opt("baseline-ms", "30000"))));
         report.baseline = await traffic.stop();
         traffic = undefined;
@@ -1100,7 +1100,7 @@ export async function runReplicaDriver(argv: string[]) {
           assertBaselineHeadroom(report.baseline, logicalReaders);
         traffic = undefined;
         collectLiveLag = true;
-        traffic = await startTraffic({ ...liveOptions, id: "sweep", entityWindow: act1 ? "sweep" : undefined });
+        traffic = await startTraffic({ ...liveOptions, id: "sweep" });
       },
     });
     if ("selector" in result) report.act1.selector = result.selector;

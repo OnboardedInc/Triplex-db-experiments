@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import { deepEvaluations } from "./deep-evaluations.ts";
 import type { CompositionHandle, Receipt } from "./composition.ts";
 import { DomainOraclePool } from "./w0-gates.ts";
 import { publishChanged } from "./w0-replica.ts";
@@ -12,7 +13,7 @@ import { ids, subjectOf } from "./world.ts";
 import { taskId } from "./deep-world.ts";
 
 const pageSize = 32;
-const businessTime = (ms: number) => new Date(ms).toISOString().replace(/Z$/, "000Z");
+export const businessTime = (ms: number) => new Date(ms).toISOString().replace(/Z$/, "000Z");
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 const indexRows = (rows: readonly WorldRow[]) => {
   const bySubject = new Map<number, WorldRow[]>();
@@ -96,15 +97,92 @@ export function policyWorld(i: number, rows: readonly WorldRow[], basis: Positio
   return { subject, facts };
 }
 
+export const deepGroups = (first: number, count: number) =>
+  Array.from({ length: Math.ceil(count / pageSize) }, (_, p) =>
+    Array.from(
+      { length: Math.min(pageSize, count - p * pageSize) },
+      (_, i) => first + p * pageSize + i,
+    ),
+  );
+export async function readDeepWorlds(
+  comp: CompositionHandle,
+  group: number[],
+  cut: PositionBasis,
+  accountKey?: string,
+) {
+  const basis = { position: cut.position, validAt: cut.validAt };
+  const page = await comp.sweepPage(group.map(ids.placement), basis);
+  assert.deepEqual(page.reportedBasis, basis);
+  const rows = indexRows(page.rows);
+  return group.map((i) => {
+    const body = rows.get(i) ?? [];
+    if (accountKey)
+      assert.deepEqual(
+        body
+          .filter((r) => r.entityId === ids.placement(i) && r.attribute === ":subject/account")
+          .map((r) => r.value.value),
+        [accountKey],
+        "Release subject belongs to another account",
+      );
+    return policyWorld(i, body, basis);
+  });
+}
+
 type Release = "R1" | "R2";
 type Cut = PositionBasis & { txId: string; assertion: string };
+export async function activateDeepRelease(
+  comp: CompositionHandle,
+  run: string,
+  name: Release,
+  startedAt: number,
+  prior?: Cut,
+) {
+  const release = W0[name],
+    entity = `deep-release:${run}`;
+  const ops = [
+    ...(name === "R2" ? [{ op: "retract", id: prior!.assertion }] : []),
+    {
+      op: "assert",
+      entityId: entity,
+      attribute: ":release/hash",
+      value: { type: "string", value: release.hash },
+      validFrom: 0,
+    },
+  ];
+  const change = await comp.transact(ops, {
+    commandId: `${run}:activate:${name}`,
+    actor: "deep-activation",
+    preconditions: name === "R2" ? [{ _tag: "TripleLive", id: prior!.assertion }] : [],
+  });
+  if (!change.ok) throw Error(`Activation failed: ${change.tag}`);
+  const asserted = change.value.triples;
+  assert.equal(asserted.length, 1);
+  assert.equal(asserted[0]!.value.value, release.hash);
+  return {
+    position: change.value.position,
+    validAt: startedAt,
+    txId: change.value.txId,
+    assertion: asserted[0]!.id,
+  };
+}
 export class DeepActivation {
   private readonly cuts = new Map<Release, Cut>();
   private readonly directory: string;
   private readonly subjects: number;
   private readonly run: string;
   private readonly firstSubject: number;
-  constructor(directory: string, people: number, run: string, firstSubject = 0) {
+  private readonly workers: number;
+  private readonly accountKey?: string;
+  constructor(
+    directory: string,
+    people: number,
+    run: string,
+    firstSubject = 0,
+    workers = 1,
+    accountKey?: string,
+  ) {
+    this.accountKey = accountKey;
+    this.workers = workers;
     this.firstSubject = firstSubject;
     this.directory = directory;
     this.subjects = people;
@@ -128,34 +206,8 @@ export class DeepActivation {
       },
     };
     const release = W0[name],
-      entity = `deep-release:${this.run}`,
-      prior = this.cuts.get("R1");
-    const ops = [
-      ...(name === "R2" ? [{ op: "retract", id: prior!.assertion }] : []),
-      {
-        op: "assert",
-        entityId: entity,
-        attribute: ":release/hash",
-        value: { type: "string", value: release.hash },
-        validFrom: 0,
-      },
-    ];
-    const startedAt = Date.now();
-    const change = await observed.transact(ops, {
-      commandId: `${this.run}:activate:${name}`,
-      actor: "deep-activation",
-      preconditions: name === "R2" ? [{ _tag: "TripleLive", id: prior!.assertion }] : [],
-    });
-    if (!change.ok) throw Error(`Activation failed: ${change.tag}`);
-    const asserted = change.value.triples;
-    assert.equal(asserted.length, 1);
-    assert.equal(asserted[0]!.value.value, release.hash);
-    const cut = {
-      position: change.value.position,
-      validAt: startedAt,
-      txId: change.value.txId,
-      assertion: asserted[0]!.id,
-    };
+      startedAt = Date.now();
+    const cut = await activateDeepRelease(observed, this.run, name, startedAt, this.cuts.get("R1"));
     this.cuts.set(name, cut);
     const mutation = captured?.(cut);
     mutation?.catch(() => {});
@@ -167,38 +219,27 @@ export class DeepActivation {
       W0.placementId(this.firstSubject + i),
     );
     try {
-      for (let n = 0; n < this.subjects; n += pageSize) {
-        const group = Array.from(
-          { length: Math.min(pageSize, this.subjects - n) },
-          (_, j) => this.firstSubject + n + j,
-        );
-        const page = await comp.sweepPage(group.map(ids.placement), {
-          position: cut.position,
-          validAt: cut.validAt,
-        });
-        assert.equal(page.reportedBasis?.position, cut.position);
-        assert.equal(page.reportedBasis?.validAt, cut.validAt);
-        const rows = indexRows(page.rows),
-          lines: string[] = [];
-        for (const i of group) {
-          const world = policyWorld(i, rows.get(i) ?? [], cut),
-            result = W0.sweepSubject(world, release, {
-              tx: cut.position,
-              validTime: businessTime(cut.validAt),
-            });
-          if ("error" in result) throw Error(`${name} evaluation failed: ${result.error}`);
-          lines.push(JSON.stringify([i, hash(canonical(world)), hash(result.json)]) + "\n");
-          records.push(result.record);
-        }
-        const bytes = lines.join("");
+      const groups = deepGroups(this.firstSubject, this.subjects);
+      const basis = { tx: cut.position, validTime: businessTime(cut.validAt) };
+      for await (const { group, records: evaluated } of deepEvaluations(
+        groups,
+        name,
+        basis,
+        this.workers,
+        (group) => readDeepWorlds(comp, group, cut, this.accountKey),
+      )) {
+        const bytes = evaluated
+          .map((r, j) => JSON.stringify([group[j], r.worldSha256, r.outputSha256]) + "\n")
+          .join("");
         fs.writeFileSync(fd, bytes);
         sum.update(bytes);
-        if (n % (pageSize * 32) === 0)
+        for (const r of evaluated) records.push(r.record);
+        if ((group[0]! - this.firstSubject) % (pageSize * 32) === 0)
           console.log(
             JSON.stringify({
               event: "deep-activation-progress",
               release: name,
-              through: n + group.length,
+              through: records.length,
             }),
           );
       }
@@ -268,6 +309,7 @@ export class DeepActivation {
       publications: result.commits,
       publicationPosition,
       layout: "page-cut",
+      evaluators: this.workers,
       coverage,
       changed: result.changed,
       startedAt,

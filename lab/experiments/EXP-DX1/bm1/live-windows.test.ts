@@ -10,13 +10,13 @@ test("repeating a live command across windows preserves a valid W0 world and wit
     seq: 2299, subject: 6011, atMs: 159750, facts: 12, kind: "agent", correction: true,
     ackLoss: false, resend: false, burst: true, active: true, stream: "background",
   };
-  const baseline = mapW0Trace(event, "baseline");
-  const sweep = mapW0Trace(event, "sweep");
-  const repeated = mapW0Trace({ ...event, resend: true }, "baseline");
+  const baseline = mapW0Trace(event, 1);
+  const sweep = mapW0Trace(event, 2);
+  const repeated = mapW0Trace({ ...event, resend: true }, 1);
   const old = mapW0Trace(event);
   assert.deepEqual(baseline, repeated);
   assert.equal(sweep.validFrom, baseline.validFrom);
-  assert.equal(sweep.commandId, baseline.commandId);
+  assert.notEqual(sweep.commandId, baseline.commandId);
   assert.equal(baseline.rows.length, event.facts);
   assert.equal(sweep.rows.length, event.facts);
   const subject = W0.placementId(event.subject);
