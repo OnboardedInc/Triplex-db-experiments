@@ -10,6 +10,7 @@ const integrated = [
   "int1-thin",
   "int1-deep",
   "int1-proof",
+  "int1-cold-probe",
   "int1-idle",
   "int1-pooled",
   "int1-isolated",
@@ -155,6 +156,8 @@ function setup(compact: boolean) {
   const readMode = process.env.DX_TOUCHED_READ_MODE ?? "following";
   const peerGc = process.env.DX_INT1_PEER_GC ?? "g1";
   const seedFeed = process.env.DX_INT1_SEED_FEED ?? "immediate";
+  const rowWire = process.env.DX_INT1_ROW_WIRE ?? "plain";
+  assert(rowWire === "plain" || (rowWire === "gzip" && readMode === "validated"));
   assert(["immediate","after-sampling"].includes(seedFeed));
   if (seedFeed === "after-sampling") assert(mode === "int1-deep" || mode === "int1-thin");
   assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
@@ -181,7 +184,7 @@ function setup(compact: boolean) {
   write(file, cfg);
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
-  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode, peerGc, seedFeed, isolatedVolume: compact });
+  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode, peerGc, seedFeed, rowWire, isolatedVolume: compact });
   return slots;
 }
 function witness(slot: string) {
@@ -246,6 +249,7 @@ function bind() {
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
       peerGc: attempt.peerGc,
       seedFeed: attempt.seedFeed,
+      rowWire: attempt.rowWire,
       peers,
       cacheDiagnostic: fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")),
     },
@@ -272,6 +276,8 @@ if (action === "--guest") {
     DX_INT1_GATEWAYS: stack.managed.gwPolicy ?? "original",
     DX_INT1_PEER_GC: stack.managed.peerGc ?? "g1",
     DX_INT1_SEED_FEED: stack.managed.seedFeed ?? "immediate",
+    DX_INT1_ROW_WIRE: stack.managed.rowWire ?? "plain",
+    TRIPLEX_DATOMIC_FAST_PATHS: [...(process.env.TRIPLEX_DATOMIC_FAST_PATHS ?? "").split(",").filter(x => x && x !== "demand-gzip"), ...(stack.managed.rowWire === "gzip" ? ["demand-gzip"] : [])].join(","),
   });
   if (stack.managed.compact) {
     let ready = false;

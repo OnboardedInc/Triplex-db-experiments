@@ -2,7 +2,8 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { channel } from "node:diagnostics_channel";
 import type { ClientRequest } from "node:http";
 
-interface Exchange { route: string; bytes: number; toHeadersMs?: number; responseMs?: number; gatewayMs?: number }
+interface Exchange { route: string; bytes: number; toHeadersMs?: number; responseMs?: number; gatewayMs?: number; gzipRows?: boolean }
+const envelope = Buffer.from('{"gzipRows":"');
 export function coldReadProfiler() {
   const current = new AsyncLocalStorage<Exchange[]>();
   // [DX-THIN1] Why: time real HTTP exchanges on a requested read, including a revision repair. Rejected: treating a logical fallback count as a transport profile.
@@ -16,8 +17,12 @@ export function coldReadProfiler() {
       record.toHeadersMs = performance.now() - start;
       const us = response.headers["x-tx2-gateway-micros"];
       if (typeof us === "string" && /^\d+$/.test(us)) record.gatewayMs = Number(us) / 1000;
-      response.on("data", (b: Buffer) => { record.bytes += b.length; });
-      response.once("end", () => { record.responseMs = performance.now() - start; });
+      const prefix = Buffer.alloc(envelope.length);
+      response.on("data", (b: Buffer) => {
+        if (record.bytes < prefix.length) b.copy(prefix, record.bytes, 0, prefix.length - record.bytes);
+        record.bytes += b.length;
+      });
+      response.once("end", () => { record.responseMs = performance.now() - start; record.gzipRows = prefix.equals(envelope); });
     });
   });
   return async function profile<T>(read: () => Promise<T>) {

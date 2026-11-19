@@ -1,7 +1,14 @@
 import { ByteCache } from "./ByteCache.js";
 import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { createHash, randomUUID } from "node:crypto";
-import { decodeEntity, reachResponse, type CachedEntity, type ReachWire } from "./reach.js";
+import {
+  decodeEntity,
+  decodeReachPage,
+  reachResponse,
+  type CachedEntity,
+  type ReachPage,
+  type ReachWire,
+} from "./reach.js";
 import { databaseName } from "./scopeName.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -498,13 +505,24 @@ export class DatomicClient {
   // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
   // Rejected: accepting a missing reference as an empty entity.
   private readonly reachInflight = new Set<Promise<void>>();
-  async readDemandWorld(scope: string, root: string, basis: ResolvedTemporalBasis) {
+  async readDemandWorld(
+    scope: string,
+    root: string,
+    basis: ResolvedTemporalBasis,
+    gzipRows = fastPathEnabled("demand-gzip"),
+  ) {
     // [DX-THIN1] Why: one native cut validates every cached entity revision and returns all missing rows. Rejected: following the whole import journal to keep untouched worlds current.
-    const found = await this.reachEntities(databaseName(scope), [root], basis, true);
+    const found = await this.reachEntities(databaseName(scope), [root], basis, true, gzipRows);
     if (!found) return undefined;
     for (const entity of found.entities.values()) {
-      if (entity.storedRows.some(row => !Number.isSafeInteger(row.recorded_position) ||
-        row.recorded_position < 1 || row.recorded_position > found.position))
+      if (
+        entity.storedRows.some(
+          (row) =>
+            !Number.isSafeInteger(row.recorded_position) ||
+            row.recorded_position < 1 ||
+            row.recorded_position > found.position,
+        )
+      )
         throw new TypeError("Demand row outside its selected position");
     }
     const world = reachResponse(root, found.entities, basis, found.closures[0]![1]);
@@ -515,9 +533,10 @@ export class DatomicClient {
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage = false,
+    gzipRows = false,
   ) {
     return tracedRequest("read", "client.reach", {}, () =>
-      this.reachEntitiesTraced(db, roots, basis, rowPage),
+      this.reachEntitiesTraced(db, roots, basis, rowPage, gzipRows),
     );
   }
   private async reachEntitiesTraced(
@@ -525,6 +544,7 @@ export class DatomicClient {
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage: boolean,
+    gzipRows: boolean,
   ) {
     const older = [...this.reachInflight];
     let ingested!: () => void;
@@ -533,7 +553,7 @@ export class DatomicClient {
     });
     this.reachInflight.add(ready);
     try {
-      return await this.fetchReachEntities(db, roots, basis, rowPage, older, ingested);
+      return await this.fetchReachEntities(db, roots, basis, rowPage, gzipRows, older, ingested);
     } finally {
       ingested();
       this.reachInflight.delete(ready);
@@ -546,23 +566,25 @@ export class DatomicClient {
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage: boolean,
+    gzipRows: boolean,
     older: readonly Promise<void>[],
     ingested: () => void,
   ) {
+    const page = async (route: string, input: Record<string, unknown>) => {
+      if (!gzipRows) return this.request<ReachWire>("POST", route, input);
+      const wire = await this.request<ReachPage>("POST", route, { ...input, gzipRows: true });
+      return decodeReachPage(wire, this.maxResponseBytes);
+    };
     let requests = 0;
     for (let attempt = 0; attempt < 2; attempt++) {
       requests++;
-      const response = await this.request<ReachWire>(
-        "POST",
-        `/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`,
-        {
-          ...(roots.length === 1 ? { root: roots[0] } : { roots }),
-          basis,
-          ...(rowPage ? { rowPage: true } : {}),
-          session: this.reachSession,
-          ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
-        },
-      );
+      const response = await page(`/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`, {
+        ...(roots.length === 1 ? { root: roots[0] } : { roots }),
+        basis,
+        ...(rowPage ? { rowPage: true } : {}),
+        session: this.reachSession,
+        ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
+      });
       if (response.declined !== undefined) {
         this.reachDiagnostics.declines[response.declined] =
           (this.reachDiagnostics.declines[response.declined] ?? 0) + 1;
@@ -657,7 +679,7 @@ export class DatomicClient {
             this.reachDiagnostics.needEntities += need.length;
             try {
               requests++;
-              const repair = await this.request<ReachWire>("POST", `/v2/db/${db}/reach-many`, {
+              const repair = await page(`/v2/db/${db}/reach-many`, {
                 roots,
                 need: need.map(([id]) => id),
                 session: this.reachSession,

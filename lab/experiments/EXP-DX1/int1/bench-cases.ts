@@ -15,7 +15,7 @@ export const cases = [
 export type BenchCase = (typeof cases)[number];
 const read = (file: string) => JSON.parse(fs.readFileSync(file, "utf8"));
 export function verifyLatencies(dir: string, r: any, binding: string, attempt: string,
-  options?: { spread: boolean; seedOnly: boolean }) {
+  options?: { spread: boolean; seedOnly: boolean; policy?: { rowWire?: string } }) {
   assert.equal(r.latencyReceipt.file, "latency-samples.json");
   const durations = fs.readFileSync(path.join(dir, r.latencyReceipt.file));
   assert.equal(createHash("sha256").update(durations).digest("hex"), r.latencyReceipt.sha256);
@@ -37,6 +37,7 @@ export function verifyLatencies(dir: string, r: any, binding: string, attempt: s
           const d = first.diagnostic;
           assert(d && Number.isFinite(d.workerMs) && d.workerMs >= 0 && d.workerMs <= first.ms);
           assert.equal(d.exchanges.length, first.roundTrips);
+          if (options.policy?.rowWire === "gzip") assert(d.exchanges.every((x: any) => x.gzipRows === true));
           assert(d.exchanges.every((x: any) => ["reach", "reach-many"].includes(x.route) &&
             x.bytes > 0 && x.responseMs >= x.toHeadersMs && x.toHeadersMs >= 0));
         }
@@ -151,7 +152,7 @@ export async function verifyPages(dir: string, decision: any, first: number, cou
   assert.equal(sum.digest("hex"), decision.receipts);
   assert.equal(raw.digest("hex"), decision.receipts);
 }
-export async function verifyDeepColdProbe(dir: string, deep: any, binding: string, attempt: string) {
+export async function verifyDeepColdProbe(dir: string, deep: any, binding: string, attempt: string, rowWire?: string) {
   const { sha256, V_W0 } = await import("../../../bench/lib/w0-world.ts");
   const { seedFacts } = await import("./account.ts");
   const { compareOracleOutput } = await import("../../../bench/lib/oracle.ts");
@@ -170,6 +171,7 @@ export async function verifyDeepColdProbe(dir: string, deep: any, binding: strin
     assert(Number.isFinite(sample.ms) && sample.ms >= 0);
     assert.equal(sample.rows, seedFacts("deep", id).filter(op => op.validFrom <= V_W0).length);
     assert(sample.requests > 0 && sample.diagnostic.exchanges.length === sample.requests);
+    if (rowWire === "gzip") assert(sample.diagnostic.exchanges.every((x: any) => x.gzipRows === true));
     assert(sample.diagnostic.exchanges.every((x: any) => ["reach", "reach-many"].includes(x.route) && x.bytes > 0 && x.responseMs >= x.toHeadersMs));
   }
   const ms = probe.output.map((x: any) => x.ms).sort((a: number,b: number) => a-b);
@@ -234,7 +236,7 @@ export async function verifyCase(
   assert.equal(r.size, spec.size);
   assert.deepEqual(inputs.containers, stack.containers);
   verifyLatencies(dir, r, binding, inputs.attempt, inputs);
-  if (spec.key === "thin-1m") await verifyDeepColdProbe(dir, r.benchDeepCold, binding, inputs.attempt);
+  if (spec.key === "thin-1m") await verifyDeepColdProbe(dir, r.benchDeepCold, binding, inputs.attempt, inputs.policy.rowWire);
   assert.equal(r.accounts.length, spec.accounts);
   assert.equal(new Set(r.accounts.map((a: any) => a.scope)).size, spec.scopes);
   assert.equal(r.activation.length, 2 * spec.accounts);

@@ -36,7 +36,7 @@ assert(
     size > 0,
 );
 assert(
-  ["int1-thin", "int1-deep", "int1-proof", "int1-idle", "int1-pooled", "int1-isolated"].includes(
+  ["int1-thin", "int1-deep", "int1-proof", "int1-cold-probe", "int1-idle", "int1-pooled", "int1-isolated"].includes(
     mode!,
   ),
 );
@@ -84,6 +84,7 @@ const attempt = randomUUID(),
   seedOnly = process.env.DX_INT1_CENSUS === "seed-only",
   policy = { readMode: process.env.DX_TOUCHED_READ_MODE ?? "following", gateways: process.env.DX_INT1_GATEWAYS ?? "original",
     ...(process.env.DX_INT1_PEER_GC === "elastic" ? { peerGc: "elastic" } : {}),
+    ...(process.env.DX_INT1_ROW_WIRE === "gzip" ? { rowWire: "gzip" } : {}),
     ...(process.env.DX_INT1_SEED_FEED === "after-sampling" ? { seedFeed: "after-sampling" } : {}) },
   gatewaySource = stack.gatewaySourceSha256 as string,
   binding = digest(
@@ -305,6 +306,7 @@ async function deepColdProbe() {
       const start = now(), result = await client.pull(scope, rootOf("deep", id), a.head, V_W0, true);
       const ms = now() - start;
       a.verify(id, a.head, V_W0, result);
+      if (policy.rowWire === "gzip") assert(result.diagnostic.exchanges.length === result.roundTrips && result.diagnostic.exchanges.every((x: any) => x.gzipRows === true));
       output.push({ id, tasks: deepShape(id).tasks, ms, rows: result.triples.length, requests: result.roundTrips, diagnostic: result.diagnostic });
     }
     const filename = "deep-cold-reads.json";
@@ -421,6 +423,13 @@ async function placementProof() {
 async function trial() {
   await lease.checkpoint();
   await phase("empty");
+  if (mode === "int1-cold-probe") {
+    assert(size === 200 && spread && policy.readMode === "validated");
+    const benchDeepCold = await deepColdProbe();
+    const { verifyDeepColdProbe } = await import("./bench-cases.ts");
+    await verifyDeepColdProbe(dir!, benchDeepCold, binding, attempt, policy.rowWire);
+    return { benchDeepCold };
+  }
   if (mode === "int1-idle") {
     for (let i = 0; i < size; i++) {
       await lease.checkpoint();
