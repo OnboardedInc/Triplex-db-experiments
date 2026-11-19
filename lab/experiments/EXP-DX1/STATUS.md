@@ -2184,3 +2184,18 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   activation publication found by the idea agent, then the release selector), IDEA-W1 / R1 / T1 / A1 (done within 20
   minutes; menus in the private folder `research/2026-11-19-scale-ideas/`).
 - **No Mac night run tonight** (orchestrator's choice; the session crons for it are cancelled).
+
+## 2026-11-19 18:05 UTC (13:05 local): sender fix confirmed; the timed activation was not a correct activation
+
+- **Sender fix, old / new / old on bare metal (`drv1a`, n=38,826 each): all-commit p99 140.5 / 41.7 / 141.6 ms** (bar
+  50); burst p99 160 to 251 / 43 to 46 / 179 to 189; medians 4.67 / 4.65 / 4.63. The tail was the test sender.
+- **DX-ACT1 (`exp/DX-ACT1-activation`, `291180fc`, `act1/REPORT.md`).** Three delayed-result schedules reproduce an
+  older result overwriting a newer decision: the benchmark publisher wrote no durable guard for unchanged subjects and
+  both checkers dropped that part of the oracle (884 of 1,000 guards missing or stale). W0's publication rule is
+  correct. So the 73.78 s for 100,000 subjects measured incomplete work. With a per-subject guard fact (89 bytes) the
+  projection is about 320 s at 100,000 and 53 minutes for ten accounts in series (local ratio, not measured on the
+  bench). The narrow-release selector skipped evaluation for 675 of 1,000 subjects with exact outputs.
+- **Redirected:** DX-BM1 stopped and resumed on Astra (`DX-BM1-resume2.md`): one v3 pair with the new sender and six
+  reader cores, then DX-ACT1's bench (correct activation at 100,000 with 256 live readers). DX-ACT1 resumed
+  (`DX-ACT1-resume1.md`): a design in which an unchanged subject costs no write (scope-level cut guard, batched
+  guards, or paged coverage records), and parallel evaluation.
