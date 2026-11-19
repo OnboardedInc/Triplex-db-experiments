@@ -159,19 +159,31 @@ export async function admitLive(
   beforeCommit?: () => Promise<void>,
 ) {
   assert(q.scope === store.scope && q.format === format, "Foreign live proposal");
-  const p = await store.head();
-  if (p !== q.basis.tx) return { status: "stale" } as const;
+  const current = await store.head(),
+    p = q.basis.tx,
+    id = "lazy/live/" + q.witness;
+  const claimed = await store.lookup(id);
+  if (current !== p && !claimed) return { status: "stale" } as const;
+  if (claimed) {
+    assert(claimed.actor === "lazy/live" && claimed.commandId === id);
+    assert.deepEqual(JSON.parse(claimed.correlationId).context, q);
+  }
   const c = await store.controls(p);
   if (c.at !== q.basis.validTime) return { status: "stale" } as const;
-  const evald = await calculate(store, format, q.subject, q.basis, c, c);
+  const latest = current === p ? c : await store.controls(current);
+  if (claimed && maskVersion(c) !== maskVersion(latest))
+    return { status: "redacted-receipt", txId: claimed.txId, position: claimed.position } as const;
+  const evald = await calculate(store, format, q.subject, q.basis, c, latest);
   assert.equal(evald.witness, q.witness, "Untrusted or changed computation");
   if (W0.isFailure(evald.output)) return { status: "error", error: evald.output.error } as const;
   if (progress(c).done < c.input || progress(c).open) return { status: "deferred" } as const;
   const { ops } = await changes(store, p, W0.recordOf(evald.output));
-  if (beforeCommit) await beforeCommit();
-  if (!ops.length) return { status: (await store.head()) === p ? "unchanged" : "stale" } as const;
+  if (!ops.length) {
+    if (beforeCommit) await beforeCommit();
+    return { status: (await store.head()) === p ? "unchanged" : "stale" } as const;
+  }
   try {
-    const r = await store.commit("lazy/live/" + q.witness, "lazy/live", ops, p, q);
+    const r = await store.commit(id, "lazy/live", ops, p, q, beforeCommit);
     return { status: "accepted", receipt: r } as const;
   } catch (e) {
     if (e instanceof Conflict) return { status: "stale" } as const;

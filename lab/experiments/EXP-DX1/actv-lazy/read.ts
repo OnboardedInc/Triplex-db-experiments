@@ -21,6 +21,10 @@ export type Pin =
   | { position: number; validTime: string }
   | { recordedAt: number; validTime: string }
   | { validTime?: string };
+export const rosterSeal = (ids: readonly string[]) => ({
+  n: ids.length,
+  hash: sha256(canonical(ids)),
+});
 export const rosterRoot = (page: number) => "members/page/" + page;
 export async function resolvePin(s: Store, pin: Pin, head: number) {
   if ("position" in pin) {
@@ -108,6 +112,7 @@ export class LazyReader {
         barrier = maskVersion(latest);
       if (barrier !== this.erased) {
         this.cache.clear();
+        if (this.replica && this.replica.erasure !== barrier) this.replica = undefined;
         this.used = 0;
         this.erased = barrier;
       }

@@ -9,6 +9,7 @@ import { openComposition } from "../../../bench/lib/composition.ts";
 import { canonical, sha256, W0, type WorldRow } from "../../../bench/lib/w0-world.ts";
 
 export const RELEASE = "lazy/account/releases",
+  ORIGIN = "lazy/account/origin",
   CLOCK = "lazy/account/clock",
   MASK = "lazy/account/erasure",
   CURSOR = "lazy/account/dispatcher";
@@ -73,6 +74,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     ops: readonly any[],
     expected: number,
     context: unknown = null,
+    afterFence?: () => Promise<void>,
   ) {
     assert(id.length && Number.isSafeInteger(expected) && expected >= 0);
     const correlationId = canonical({ context, hash: sha256(wireBytes([scope, id, actor, ops])) });
@@ -114,7 +116,15 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
       h.storage.withTransaction(
         Effect.gen(function* () {
           yield* requireDatomicSourcePosition(key, expected);
-          return yield* h.triples.transact(ops, { commandId: id, actor, correlationId });
+          if (afterFence) yield* Effect.promise(afterFence);
+          return yield* h.triples.transact(ops, {
+            commandId: id,
+            actor,
+            correlationId,
+            preconditions: ops
+              .filter((o) => o.op === "retract")
+              .map((o) => ({ _tag: "TripleLive", id: o.id })),
+          });
         }),
       ),
     );
@@ -131,23 +141,16 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
         String(exit.cause?.reasons?.[0]?.error?.message ?? exit._tag),
     );
   }
-  let firstId: string | undefined;
-  async function generation(p: number) {
-    if (!p) return "uninitialized";
-    if (!firstId) {
-      const first = (await comp.feedPage(0, 1)).transactions[0];
-      assert(
-        first?.position === 1 &&
-          first.actor === "lazy/input" &&
-          JSON.parse(first.correlationId).context.profile === profile,
-        "Foreign source profile or generation",
-      );
-      firstId = String(first.txId);
-    }
-    return firstId;
-  }
-  async function controls(p: number) {
-    const all = await rows([RELEASE, CLOCK, MASK, CURSOR], p);
+  async function controls(p: number, inputOnly = false) {
+    const all = await rows(
+      inputOnly ? [RELEASE, CLOCK, ORIGIN] : [RELEASE, CLOCK, MASK, CURSOR, ORIGIN],
+      p,
+    );
+    const birth = all.find(
+      (r) => r.position === 1 && (r.entityId === ORIGIN || r.entityId === RELEASE),
+    );
+    if (p)
+      assert(birth && value(birth).profile === profile, "Foreign source profile or generation");
     const releases = all
       .filter((r) => r.entityId === RELEASE)
       .map((r) => ({ ...value(r), tx: r.position, id: r.id }));
@@ -166,7 +169,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
       ...masks.map((r) => r.position),
     );
     return {
-      generation: await generation(p),
+      generation: birth?.id ?? "uninitialized",
       releases,
       at,
       clock: clocks[0],
@@ -189,7 +192,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     }
     for (;;) {
       const p = await comp.currentPosition(),
-        c = await controls(p);
+        c = await controls(p, true);
       assert(event.at >= c.at, "Business slots must be monotone");
       let writes: any[];
       if (event.kind === "activation") {
@@ -200,7 +203,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
             event.from &&
             W0.isInstant(event.from),
         );
-        writes = [fact(RELEASE, "lazy/activation", event)];
+        writes = [fact(RELEASE, "lazy/activation", { ...event, profile })];
       } else {
         assert(
           ops.every((o) => o.op === "retract" || !o.entityId.startsWith("lazy/")),
@@ -221,6 +224,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
           ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
           fact(CLOCK, "lazy/slot", event),
         ];
+        if (!p) writes.push(fact(ORIGIN, "lazy/generation", { profile }));
         if (event.kind === "erase") {
           assert(event.subject && event.attribute);
           writes.push(fact(MASK, "lazy/redact", event));
@@ -241,7 +245,6 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
   return {
     scope,
     profile,
-    generation,
     counters,
     comp,
     rows,

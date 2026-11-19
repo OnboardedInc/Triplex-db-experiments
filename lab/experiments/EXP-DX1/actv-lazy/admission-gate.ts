@@ -44,7 +44,15 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
       return s.commit("test/close/" + c.input, "test/baseline", cursorOps(c, { done: c.input }), p);
     };
     await closeInput();
-    const first = await admitLive(s, "w0", await propose(s, "w0", subject));
+    const initialProposal = await propose(s, "w0", subject);
+    const first = await admitLive(s, "w0", initialProposal);
+    if (first.status === "accepted") {
+      await s.close();
+      s = await openStore(name);
+      const retry = await admitLive(s, "w0", initialProposal);
+      assert(retry.status === "accepted");
+      assert.deepEqual(retry.receipt, first.receipt);
+    }
     assert.equal(first.status, schedule === "first" ? "unchanged" : "accepted");
     const change = await s.input("source-15", { kind: "source", at: earlier }, [
       { op: "retract", id: base.changes[3].tripleId },
