@@ -8,6 +8,7 @@ import {
   bindPublicationProfiles,
   outboxEntity,
   type PublicationOptions,
+  type OutboxStore,
 } from "./w0-outbox.ts";
 import { W0, canonical, requirePosition } from "./w0-world.ts";
 
@@ -240,7 +241,7 @@ async function evaluateSnapshot(
 // [DX-R1] Why: compare work-item identities/payloads with the stored outbox state, not an earlier preview's answers.
 // Rejected: comparing full records (basis/release changes would force no-op publications for every subject).
 export async function publishChanged(
-  comp: CompositionHandle,
+  comp: OutboxStore,
   records: Pick<readonly W0.EvaluationRecord[], "length" | "slice">,
   options: ReplicaEvaluationOptions["publication"] = {},
 ) {
@@ -280,9 +281,13 @@ export async function publishChanged(
     responses.push(null);
     const task = (async () => {
       responses[index] =
-        options.readStates || options.frameSize || options.inflight
+        options.layout || options.readStates || options.frameSize || options.inflight
           ? await publishRecords(comp, frame, { ...options, stateRows: rows })
           : await comp.publishOutbox(frame);
+      const response = responses[index];
+      changed += options.layout ? response.changed : frame.length;
+      commits += options.layout ? Number(response.committed) : 1;
+      if (options.layout) stateReadMs += response.timing?.stateReadMs ?? 0;
     })();
     active.add(task);
     void task
@@ -292,12 +297,16 @@ export async function publishChanged(
       .finally(() => active.delete(task));
     if (active.size >= inflight) await Promise.race(active);
     if (options.gapMs) await new Promise((r) => setTimeout(r, options.gapMs));
-    changed += frame.length;
-    commits++;
   };
   try {
     for (let i = 0; i < records.length; i += 64) {
       const page = records.slice(i, i + 64);
+      if (options.layout) {
+        // [DX-ACT1] Why: the publisher must see guard-only records and retry the original command on a lost ACK. Rejected: filtering against a potentially stale replica before checking the claim.
+        pending.push(...page);
+        while (pending.length >= frameSize) await flush(frameSize);
+        continue;
+      }
       const stateStarted = performance.now();
       const stored = options.readStates
         ? { rows: options.readStates(page.map((r) => outboxEntity(r.subject))) }
@@ -358,7 +367,7 @@ export async function publishChanged(
   }
   await Promise.all(active);
   if (failure) throw failure;
-  bindPublicationProfiles(responses);
+  if (!options.layout) bindPublicationProfiles(responses);
   return {
     changed,
     commits,
