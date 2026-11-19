@@ -69,12 +69,14 @@ try {
       assert.equal(r.signal, "SIGKILL", p + " " + r.stderr);
       kills.push(p);
     };
+    const bootstrap=new Dispatcher(s);try{await bootstrap.drain();}finally{bootstrap.close();}
     kill("before-release");
     assert.equal(await s.lookup("r1"), null);
     kill("lost-release");
     const original = await s.lookup("r1");
     assert.deepEqual(await activation(s, "r1", W0.R1, at), original);
     for (const p of ["after-pull", "after-cache", "before-commit", "after-commit"]) kill(p);
+    const debtsAfterKill=await s.rows([pendingRoot(subject)],await s.head());assert.equal(debtsAfterKill.length,1);
     const d = new Dispatcher(s);
     try {
       await d.drain();
