@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { memoryComposition } from "../../../bench/lib/memory.ts";
+import { pageRoots } from "../../../bench/lib/w0-page-outbox.ts";
+import { readOutboxAt } from "../../../bench/lib/w0-outbox-state.ts";
+import { pageWireState } from "../../../bench/lib/w0-page-check.ts";
 import { outboxEntity } from "../../../bench/lib/w0-outbox.ts";
 import { W0, V_W0, canonical } from "../../../bench/lib/w0-world.ts";
 import type { OutboxStore } from "../../../bench/lib/w0-outbox.ts";
@@ -13,7 +16,16 @@ export const open = async (scope: string) =>
       ? (await import("./sqlite.ts")).sqliteStore(process.env.DX_ACT1_SQLITE_DIR, scope)
       : memoryComposition("datomic", scope);
 
-export async function observe(comp: OutboxStore, subjects: string[], position: number) {
+export async function observe(
+  comp: OutboxStore,
+  subjects: string[],
+  position: number,
+  layout?: string,
+) {
+  if (layout === "page-cut") {
+    const page = await readOutboxAt(comp, pageRoots(subjects), position);
+    return subjects.map((id) => JSON.parse(canonical(pageWireState(page.rows, id))));
+  }
   const page = await comp.sweepPage(subjects.map(outboxEntity), { position, validAt: V_W0 });
   assert.deepEqual(page.reportedBasis, { position, validAt: V_W0 });
   // [DX-ACT1] Why: decode the durable layout independently of the publisher's decoder. Rejected: reading its returned state or trusting its changed counter.

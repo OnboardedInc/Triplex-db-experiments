@@ -4,7 +4,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { checkSweep, programInputs, requestPath, sha } from "./bench-proof.ts";
+import { checkSweep, nativeScheduleNames, programInputs, requestPath, sha } from "./bench-proof.ts";
 
 test("bench collector binds stage, native schedules, source and complete coverage before exposing ratios", () => {
   const out = mkdtempSync(join(tmpdir(), "act1-proof-"));
@@ -20,14 +20,28 @@ test("bench collector binds stage, native schedules, source and complete coverag
     manifest = sha(readFileSync(file)) + "  " + file + "\n",
     build = sha(manifest);
   writeFileSync(join(out, "source.SHA256SUMS"), manifest);
-  writeFileSync(join(out, "act1-schedules.tap"), "synthetic collector input");
-  put("act1-schedules.json", {
-    source,
-    slot,
-    nonce,
-    request: sha(readFileSync(requestPath(slot))),
-    tap: sha("synthetic collector input"),
-  });
+  const tap = [
+    "TAP version 13",
+    ...nativeScheduleNames.map((name, i) => `ok ${i + 1} - ${name}`),
+    "1..23",
+    "# tests 23",
+    "# pass 23",
+    "# fail 0",
+    "# cancelled 0",
+    "# skipped 0",
+    "# todo 0",
+  ].join("\n");
+  const schedules = (text: string) => {
+    writeFileSync(join(out, "act1-schedules.tap"), text);
+    put("act1-schedules.json", {
+      source,
+      slot,
+      nonce,
+      request: sha(readFileSync(requestPath(slot))),
+      tap: sha(text),
+    });
+  };
+  schedules(tap);
   put("activation-attempt.json", {
     source,
     slot,
@@ -59,6 +73,12 @@ test("bench collector binds stage, native schedules, source and complete coverag
     act1: {
       arm,
       layout: "guard-fact",
+      outcome: "exact",
+      workers: 2,
+      guardMismatches: 0,
+      coordinatorCpu: 6,
+      evalCpus: [7],
+      liveCpus: Array.from({ length: 2 }, () => ({ readers: [3, 5], writer: 6, follower: 6 })),
       activationFacts: [
         {
           id: "first",
@@ -78,6 +98,7 @@ test("bench collector binds stage, native schedules, source and complete coverag
     },
     trace: sha("trace"),
     comparedSha256: sha("fixture full reference"),
+    expectedSha256: sha("fixture full reference"),
     roster,
     evaluationMs: 7500,
     publicationMs: 12345,
@@ -97,6 +118,9 @@ test("bench collector binds stage, native schedules, source and complete coverag
   assert.equal(valid.wallSeconds, 19.845);
   assert.equal(valid.coldWallSeconds, 34.845);
   assert.equal(valid.fullWindowAnd500PerSide, true);
+  schedules(tap.replace(nativeScheduleNames[0]!, "unrelated passing case"));
+  assert.throws(() => checkSweep(out, request), /Incomplete native schedule set/);
+  schedules(tap);
   for (const diff of [
     { nonce: randomUUID() },
     { roster: sha("short") },
@@ -111,6 +135,36 @@ test("bench collector binds stage, native schedules, source and complete coverag
   const fewer = { ...row, baseline: { ...row.baseline, count: 499 } };
   put("act1-sweep.json", { ...proof, matched: { ...proof.matched, commit: fewer } });
   assert.equal(checkSweep(out, request).fullWindowAnd500PerSide, false);
+  const standard = JSON.parse(readFileSync("lab/world/W0/releases/index.json", "utf8")).R2;
+  for (const arm of ["standard-pages", "standard-historical"] as const) {
+    const req = { ...request, arm },
+      historic = arm === "standard-historical";
+    writeFileSync(requestPath(slot), JSON.stringify(req));
+    const gates = JSON.parse(readFileSync(join(out, "act1-schedules.json"), "utf8"));
+    put("act1-schedules.json", { ...gates, request: sha(readFileSync(requestPath(slot))) });
+    const sample = {
+      ...proof,
+      changed: historic ? 9798 : 100000,
+      comparedSha256: historic ? sha("wrong guards") : proof.expectedSha256,
+      act1: {
+        ...proof.act1,
+        arm,
+        evalCpus: [7, 8],
+        releaseHash: standard,
+        activationFacts: proof.act1.activationFacts.map((m, i) =>
+          i === 1 ? { ...m, hash: standard } : m,
+        ),
+        outcome: historic ? "incorrect-historical-control" : "exact",
+        layout: historic ? "historical" : "page-cut",
+        guardMismatches: historic ? 90202 : 0,
+        pageCoverage: { roster, size: 100000, pages: 391, receipts: sha("receipts") },
+      },
+    };
+    put("act1-sweep.json", sample);
+    assert.equal(checkSweep(out, req).outcome, sample.act1.outcome);
+    put("act1-sweep.json", { ...sample, act1: { ...sample.act1, guardMismatches: 1 } });
+    assert.throws(() => checkSweep(out, req));
+  }
 });
 
 test("traffic ratios reproduce from both fresh raw windows and reject an edited sample", async () => {

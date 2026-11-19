@@ -9,6 +9,8 @@ import { startW0Live, localReadTurns } from "./w0-replica-live.ts";
 import { W0 } from "./w0-world.ts";
 import { adaptiveReplicaFeed } from "./w0-parallel.ts";
 import { Rng, seedOf } from "./rng.ts";
+import { pinWorker } from "./w0-cpus.ts";
+const assignedCpu = pinWorker(workerData.role, workerData.worker ?? 0);
 const port = parentPort!;
 const origin = () => performance.timeOrigin + performance.now();
 const beginning = performance.eventLoopUtilization();
@@ -16,6 +18,7 @@ const cpuStart = process.threadCpuUsage();
 const wallStart = performance.now();
 const metrics = () => ({
   role: workerData.role,
+  cpuAssignment: assignedCpu,
   worker: workerData.worker,
   elu: performance.eventLoopUtilization(beginning),
   threadCpu: process.threadCpuUsage(cpuStart),
