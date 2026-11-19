@@ -4,7 +4,7 @@
 
 The three sender arms completed and their bundles and checksummed COMPARISON.md are on the Mac under evidence/DX-BM1. The new sender measured 41.705 ms all-primary p99 with 38,826 correct receipt reads. The older 73.78 s activation omitted durable guards. Its retained seed supplies fresh, verified private clones for the corrected experiment.
 
-Batch `p3` launched at 13:03 EST from pushed commit `f37731a7cbfaef894affdfe19472844b2aa2b141`. Native preparation exited 0. The narrow-full arm started at 13:04. ACT1 gets three hours for native schedules and the narrow full, selector and standard full releases with 256 live readers. The v3 pair follows with a five-hour ceiling, replica-worker receipt capture, worker-journal retention, six reader cores and both off bookends.
+Batch `p3` launched at 13:03 EST from pushed commit `f37731a7cbfaef894affdfe19472844b2aa2b141`. Native preparation exited 0. The narrow-full arm started at 13:04 and passed all 13 native schedules. Its source, slot, nonce and schedule bytes were verified on the Mac. ACT1 gets three hours for narrow full, narrow selector and standard full with 256 live readers. The v3 pair follows with a five-hour ceiling, replica-worker receipt capture, worker-journal retention, six reader cores and both off bookends.
 
 The working handover is about 20:00–20:30 EST November 19. The controller reserves the final 15 minutes for archives before the 21:30 EST outer cutoff. The bench is available to DX-SCALE1 when its STATUS line reads FREE followed by the UTC release time. Both the parent and nested units have stop hooks. Only the orchestrator handles the rented server.
 

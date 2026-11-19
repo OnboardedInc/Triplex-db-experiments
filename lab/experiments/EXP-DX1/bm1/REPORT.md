@@ -1,7 +1,7 @@
 # DX-BM1 bare-metal bench
 
 The new sender brought zero-reader ACK p99 down to 41.7 ms. The old sender measured 140.5 and 141.6 ms on either side, with 38,826 commits per arm. The new six-core loaded pair awaits measurement.
-A correct 100k activation must durably guard every subject. The older 73.78 s sweep skipped guards for unchanged decisions. DX-ACT1 reproduced a stale overwrite and found 884 missing or stale guards among 1,000 subjects. The 320 s figure is a projection. [Guarded schedules](../act1/REPORT.md)
+A correct 100k activation must durably guard every subject. The older 73.78 s sweep skipped unchanged subjects’ guards. DX-ACT1 found 884 missing or stale among 1,000. All 13 correctness schedules ran successfully on the bench for the first guarded arm. Its 100k cost is still pending. [Guarded schedules](../act1/REPORT.md)
 Both Mac pairs remain unjudged after their 8 GiB reader containers hit the memory limit mid-ladder. The Mac zero arms measured 8.84/94.73 and 8.83/71.39 ms ACK p50/p99. About eight overnight idle bench hours cost $8.72. [Mac recovery](MAC-NIGHT-2026-11-18.md)
 The 10k retry’s only read error was a socket reset before a result on a fallback at L256-B. Worker 2, subject 764, position 6983, trace `a654f87b197696560000000000accaed`.
 The old Linux loaded run measured 6.08 and 7.62 ms for small and medium median ACKs. The comparison bundles and their driver, heap and clock measurements are sealed on the Mac. [Evidence manifest](SHA256SUMS)
