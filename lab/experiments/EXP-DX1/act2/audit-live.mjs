@@ -150,9 +150,10 @@ try {
   assert.equal(observed.at(-1), r2.publicationPosition);
   fs.writeFileSync(
     path.join(raw, "direct.json"),
-    canonical({ binding, run, r1, r2, verified }) + "\n",
+    canonical({ binding, run, r1: { ...r1, mutations: r1.mutations ?? [] }, r2, verified }) + "\n",
     { flag: "wx" },
   );
+  assert.equal(inputs(), binding.sourceInputs);
   assert.equal(stamps.size, 2);
   assert(fs.readFileSync(ownerFile).equals(owner));
   assert.equal(sha256(fs.readFileSync(import.meta.filename)), verifier);
