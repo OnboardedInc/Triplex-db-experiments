@@ -95,6 +95,10 @@ export class Evidence {
     readonly shape: "deep" | "mixed" = "deep",
     readonly faultCell: "all" | "tail-burst" = "all",
   ) {
+    assert(
+      shape === "deep" || ["one-failover", "one-backup", "one-sync", "one-whole"].includes(mode),
+      "This mode has a fixed population",
+    );
     fs.mkdirSync(parent, { recursive: true });
     this.dir = path.join(parent, mode + "-" + this.nonce);
     fs.mkdirSync(this.dir);

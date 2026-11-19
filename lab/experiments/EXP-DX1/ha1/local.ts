@@ -50,6 +50,10 @@ export async function localDrill(opts: any, config: any, manager: any) {
       ? ["pg", "target", "tool", "active", "write"].includes(r)
       : mode === "move" || mode.startsWith("one-") || r !== "target",
   );
+  const people = Number(opts.people ?? 4);
+  const smallLogicalCopy =
+    mode === "one-account" && Number.isSafeInteger(people) && people > 0 && people <= 256;
+  const forecastBytes = (smallLogicalCopy ? 1.5 : mode.startsWith("one-") ? 3 : 1) * 2 ** 30;
   const bytes = wanted.reduce((n, [, mb]) => n + mb * 2 ** 20, 0);
   assert(bytes <= info.memBytes);
   let acquired = false,
@@ -85,7 +89,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
             const req = {
               container: "tx2-ha1-admission",
               memBytes: bytes,
-              diskForecastBytes: (mode.startsWith("one-") ? 3 : 1) * 2 ** 30,
+              diskForecastBytes: forecastBytes,
             };
             const pol = {
               ...config,
@@ -166,15 +170,9 @@ export async function localDrill(opts: any, config: any, manager: any) {
         return (out.stdout + (args[0] === "logs" ? out.stderr : "")).trim();
       },
     };
-    await drill(
-      e!,
-      site,
-      site,
-      { people: Number(opts.people ?? 4), scopes: 3, capacity: "local" },
-      () => {
-        clean = true;
-      },
-    );
+    await drill(e!, site, site, { people, scopes: 3, capacity: "local" }, () => {
+      clean = true;
+    });
   } finally {
     if (measured) {
       const f = path.join(parentLease, "owner.json");

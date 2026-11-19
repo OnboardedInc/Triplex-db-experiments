@@ -150,10 +150,27 @@ export async function oneAccount(s: Stack, people: number) {
   const code = (e: unknown) => (e instanceof PlacementError ? e.code : errorCode(e));
   const typed = async (p: Promise<unknown>, expected: string) =>
     assert.rejects(p, (e) => code(e) === expected);
+  const storageSamples: { stage: string; bytes: number }[] = [];
+  const sampleStorage = async (stage: string) => {
+    if (s.a !== s.b) return;
+    const sizes = await Promise.all(
+      (["pg", "target"] as const).map((role) => s.exec(role, "sh", "-ceu", 'du -sk "$PGDATA"')),
+    );
+    const bytes = sizes.reduce((n, line) => n + Number(line.split(/\s/)[0]) * 1024, 0);
+    assert(Number.isSafeInteger(bytes) && bytes > 0);
+    storageSamples.push({ stage, bytes });
+    s.e.log("account-storage", { stage, bytes });
+    if (people <= 256)
+      assert(
+        bytes < 1.25 * 2 ** 30,
+        "Local logical-copy clusters approached their 1.5 GiB reservation",
+      );
+  };
   let busy = false,
     neighborTask: Promise<void> | undefined;
   const neighbors: { start: number; end: number; receipt: Receipt }[] = [];
   try {
+    await sampleStorage("initial");
     await directory.init();
     await red.post("init", { mode: "serving", source: a.db }, true);
     await blue.post("init", { mode: "serving", source: a.db }, true);
@@ -220,7 +237,11 @@ export async function oneAccount(s: Stack, people: number) {
     const originNext = String(BigInt(pin.t.v) + 1n),
       cursor = { account: "red", after: (await red.lookup(pin.operationId)).sequence };
     const seedAt = clock();
-    for (let k = 0; k < people; k++) await commit(red, incoming("red", "seed-" + k, 160));
+    for (let k = 0; k < people; k++) {
+      await commit(red, incoming("red", "seed-" + k, 160));
+      if ((k + 1) % 64 === 0) await sampleStorage("seed " + (k + 1));
+    }
+    await sampleStorage("seed complete");
     s.e.log("account-seeded", {
       database: a.db,
       account: red.account,
@@ -270,6 +291,7 @@ export async function oneAccount(s: Stack, people: number) {
     })();
     await Promise.all([restart().copy(high), liveChanges]);
     const complete = await restart().copy((await red.state()).sequence);
+    await sampleStorage("live copy verified");
     const pre = (await copy.state()).verified;
     s.e.log("account-preverified", { source: a.db, target: b.db, sequence: pre });
     await commit(red, incoming("red", "last-delta", 3));
@@ -401,7 +423,9 @@ export async function oneAccount(s: Stack, people: number) {
     await typed(copy.lookup(neighborGap.operationId), "ScopeMismatch");
     assert.equal((await green.state()).sequence, 7);
     assert.equal((await blue.state()).sequence, neighbors.length + 2);
+    await sampleStorage("post-cut audit");
     const result = {
+      storageSamples,
       people,
       facts: people * 160,
       seedMs: beforeCopy - seedAt,
