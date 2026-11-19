@@ -2237,3 +2237,33 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   made of; one-lookup identity check for the serial-point reads).
 - Servers: first runs DX-ACT1's guard bench then the judged v3 pair (DX-BM1); second runs the deep and many-scope
   campaign (DX-SCALE1).
+
+## 2026-11-19 20:30 UTC (15:30 local): four builder results; Mac disk incident; server time is now the bottleneck
+
+- **Mac disk fell to 6 GiB free** (seven builders, 22 GiB of bench evidence copied in, last night's 20 GiB of raw data, VM
+  disk at 80 GiB). Freed to 43 GiB: removed the read-observation spill and large raw files of the two unrecoverable
+  Mac reader arms of 2026-11-18 (a `REMOVED-RAW.txt` is left in each; analysis is `bm1/MAC-NIGHT-2026-11-18.md`),
+  removed the unused sealed 100,000-subject seed volume in the VM (18.8 GiB, regenerable; 100,000-subject work is on
+  the bench servers now) and trimmed the VM disk. A watcher wakes the orchestrator under 15 GiB.
+- **DX-W1 part 1 (`5ff0793a`):** with the fixed sender the save at p99 (41.70 ms) waited 39.81 ms for Datomic, which
+  spent 3.24 ms computing it; 421 of 629 saves above 30 ms were mostly peer wait; 72 waited behind an earlier save on
+  the same subject; three of ten bursts still exceed 50 ms at p99. One-lookup history range check built behind
+  `TRIPLEX_DATOMIC_FAST_PATHS=history-range`, conflict outcomes identical locally. **Part 2 (`502c8897`):** opt-in group
+  commit: 64 saves outstanding on the Mac VM, 53.8 saves/s individually against 76.2 grouped, p99 1,906 to 987 ms, 128
+  saves durable in 17 transactions, each with its own receipt; oracle exact; original grouped receipt recovered after
+  gateway and transactor restarts. Bench commands `w1trial01` and `--group grpw1a` unrun.
+- **DX-HA1 part 1 (`ebff8288`, Mac VM, three small accounts):** first correct new receipt after killing the active
+  transactor 16.63 s (standby on the same storage), write gateway 4.46 to 4.55 s, read gateway 0.23 s, Postgres
+  restart 4.61 s, synchronous Postgres copy promoted 19.70 s; all 736 commands exactly once. Moving 20,480 facts
+  paused writes 41.8 to 42.6 s; verification alone projects to 32 minutes at 16 million facts. Part 2 running (one
+  large database: failure by size, machine loss, size-independent move).
+- **DX-ACT1 part 3 (`eb154ca8`):** import lane resumable through three kills, lost acknowledgement returns the original
+  receipt, snapshot and full-history imports match 122 oracle queries; locally 26 to 556 facts/s under live traffic,
+  neighbour read / commit p99 1.14 / 0.99 times baseline, importing account's commit p99 up to 7.92 times, longest live
+  wait behind a bulk transaction 1.91 s. The 3,000 facts/s target is unverified; bench command `import1/control.ts
+  --campaign` unrun.
+- **Bench server 1:** DX-ACT1's guard bench passed its 13 schedules, then stopped at 100,000 subjects when the oracle
+  rejected subject 6011's live-head facts (two live windows reused answer identities); DX-ACT2 is finding out whether
+  that is the bench or the product. The judged v3 pair (new sender, six reader cores) has run since 13:53 local.
+- Unrun bench commands now outnumber server hours: range check, group commit, import campaign, two-server failover,
+  thin 1M/4M, correct activation.
