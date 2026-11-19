@@ -10,9 +10,9 @@ import { runWindow, type Offer, type Profile } from "./workload.ts";
 import type { Cut } from "./journal.ts";
 import { hash } from "./store.ts";
 
-export function inputPins() {
+export function inputPins(revision?: string) {
   const base = new URL("./", import.meta.url);
-  return Object.fromEntries(
+  const observed = Object.fromEntries(
     [
       "census.ts",
       "deep.ts",
@@ -30,6 +30,17 @@ export function inputPins() {
       .sort()
       .map((n) => [n, sha256(fs.readFileSync(new URL(n, base)))]),
   );
+  if (revision) {
+    assert(/^[a-f0-9]{40}$/.test(revision));
+    for (const [file, digest] of Object.entries(observed)) {
+      const original = execFileSync("git", [
+        "show",
+        revision + ":lab/experiments/EXP-DX1/notify1/" + file,
+      ]);
+      assert.equal(digest, sha256(original), "Publication source changed: " + file);
+    }
+  }
+  return observed;
 }
 export async function fixtureProfile(
   store: CompositionHandle,
@@ -84,7 +95,7 @@ export async function measuredPair(
   priority = false,
   independent = false,
 ) {
-  const pins = inputPins();
+  const pins = inputPins(source);
   const native = process.env.NOTIFY_NATIVE === "1" || deep;
   const open = (name: string) =>
     native

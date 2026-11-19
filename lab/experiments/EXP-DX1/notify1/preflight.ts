@@ -5,13 +5,14 @@ import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { guardSeed } from "../act2/preflight-runner.ts";
 import { sha256 } from "../../../bench/lib/w0-world.ts";
-import { measuredPair } from "./rung.ts";
+import { inputPins, measuredPair } from "./rung.ts";
 
 export async function preflight(
   dir: string,
   binding: { source: string; slot: string; nonce: string },
 ) {
   try {
+    const pins = inputPins(binding.source);
     const identity = guardSeed(path.join(dir, "act2-preflight"), binding, {
       ...process.env,
       TRIPLEX_TRACE_SOURCE: binding.source,
@@ -40,6 +41,7 @@ export async function preflight(
     );
     const receipt = {
       binding,
+      inputPins: pins,
       windowIdentity: identity.binding,
       oracle: identity.oracleSha256,
       noticeAttempt: pair.nonce,
@@ -47,6 +49,7 @@ export async function preflight(
       subjects: proof.subjects,
       offers: pair.dispatch.saveCount,
     };
+    assert.deepEqual(inputPins(binding.source), pins);
     fs.writeFileSync(path.join(dir, "preflight-receipt.json"), JSON.stringify(receipt) + "\n", {
       flag: "wx",
     });

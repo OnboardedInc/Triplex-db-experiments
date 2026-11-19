@@ -28,6 +28,7 @@ export function inspectPair(dir: string) {
       assert.equal(digest(fs.readFileSync(path.join(parent, "owner.json"))), b.owner);
     const pre = JSON.parse(fs.readFileSync(path.join(parent, "preflight-receipt.json"), "utf8"));
     assert.deepEqual(pre.binding, { source, slot, nonce: b.nonce });
+    assert.deepEqual(pre.inputPins, result.inputs);
     if (path.basename(dir) === "notice-preflight") {
       assert.equal(pre.noticeAttempt, nonce);
       assert.equal(pre.noticeDigest, result.dispatch.proof.orderedEffectSha256);
