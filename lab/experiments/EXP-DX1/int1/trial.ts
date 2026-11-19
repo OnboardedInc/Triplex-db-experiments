@@ -282,6 +282,32 @@ function replay(a: Account, key = String(accounts.indexOf(a))) {
   fs.writeFileSync(path.join(dest, "observed.json"), JSON.stringify(samples), { flag: "wx" });
   return result;
 }
+async function deepColdProbe() {
+  const scope = "int1-" + attempt + "-deep-cold", comp = await openComposition("reach", "datomic", scope);
+  const client = startReader(binding + "-deep-cold");
+  const a = new Account(comp, "deep", digest(binding + "/" + scope), 0, 10000,
+    new DatabaseSync(path.join(dir!, "deep-cold.sqlite")));
+  const subjects = Array.from({ length: 200 }, (_, b) => activePerson(b, 10000, true));
+  try {
+    assert.equal(await comp.currentPosition(), 0);
+    for (const id of subjects) { await lease.checkpoint(); await a.seed([id]); }
+    await client.open(scope);
+    const stats = await readerStats(client);
+    assert.equal(stats.scopes[scope].entries, 0);
+    const output = [];
+    for (const id of subjects) {
+      await lease.checkpoint();
+      const start = now(), result = await client.pull(scope, rootOf("deep", id), a.head, V_W0, true);
+      const ms = now() - start;
+      a.verify(id, a.head, V_W0, result);
+      output.push({ id, tasks: deepShape(id).tasks, ms, rows: result.triples.length, requests: result.roundTrips, diagnostic: result.diagnostic });
+    }
+    const filename = "deep-cold-reads.json";
+    save(filename, { binding, scope, position: a.head, output });
+    return { scope, position: a.head, subjects: output.length, file: filename,
+      sha256: digest(fs.readFileSync(path.join(dir!, filename))), latency: quant(output.map(x => x.ms)), replay: replay(a, "deep-cold") };
+  } finally { await client.close(); a.db.close(); await comp.close(); }
+}
 async function release(a: Account, next: W0.CompiledRelease, afterCapture?: () => Promise<void>) {
   const wr = await a.comp.transact(
     [
@@ -615,6 +641,10 @@ async function trial() {
     }
   }
   const replayResults = accounts.map((a) => replay(a));
+  // [DX-THIN1] Why: the four physical placements contain no 34-task person. Measure the five-class mix once on a fresh read scope after the wide arm's own census. Rejected: relabelling a thin read or changing a small account's roster.
+  const benchDeepCold = ((mode === "int1-thin" && size === 1000000 && process.env.DX_BARE_METAL === "1") ||
+    (mode === "int1-proof" && policy.readMode === "validated"))
+    ? await deepColdProbe() : undefined;
   const latencyFile = "latency-samples.json";
   const samples = { cold, commit, resident: hot, ryow: own };
   // [DX-INT1] Why: preserve every timed observation after the measurement window so the physical collector can recompute both percentiles.
@@ -652,6 +682,7 @@ async function trial() {
     identities,
     schedules,
     moving,
+    benchDeepCold,
   };
 }
 try {

@@ -199,6 +199,33 @@ export async function verifyCase(
   assert.equal(r.size, spec.size);
   assert.deepEqual(inputs.containers, stack.containers);
   verifyLatencies(dir, r, binding, inputs.attempt, inputs);
+  if (spec.key === "thin-1m") {
+    const deep = r.benchDeepCold;
+    assert.equal(deep.file, "deep-cold-reads.json");
+    const raw = fs.readFileSync(path.join(dir, deep.file));
+    assert.equal(sha256(raw), deep.sha256);
+    const probe = JSON.parse(raw.toString());
+    assert.deepEqual([probe.scope, probe.binding, probe.position], ["int1-" + inputs.attempt + "-deep-cold", binding, 200]);
+    assert.deepEqual([deep.scope, deep.position, deep.subjects], [probe.scope, probe.position, 200]);
+    assert.equal(probe.output.length, 200);
+    for (const [n, sample] of probe.output.entries()) {
+      const id = activePerson(n, 10000, true);
+      assert.equal(sample.id, id);
+      assert.equal(sample.tasks, deepTasks(id));
+      assert(Number.isFinite(sample.ms) && sample.ms >= 0 && sample.rows > 0);
+      assert(sample.requests > 0 && sample.diagnostic.exchanges.length === sample.requests);
+    }
+    const ms = probe.output.map((x: any) => x.ms).sort((a: number,b: number) => a-b);
+    assert.deepEqual(deep.latency, { n: 200, p50: ms[99], p99: ms[197] });
+    const replay = path.join(dir, "replay-deep-cold");
+    const caseText = fs.readFileSync(path.join(replay, "oracle-case.json"), "utf8");
+    const caseDoc = JSON.parse(caseText);
+    assert.equal(caseDoc.caseId, "int1-" + sha256(binding + "/" + probe.scope));
+    const checks = compareOracleOutput({ out: readOracleOutput(path.join(replay, "oracle-expected.json")),
+      caseText, caseDoc, reads: read(path.join(replay, "observed.json")), exitCode: deep.replay.exitCode });
+    assert(checks.status === "PASS" && checks.reads === deep.replay.reads && checks.reads > 0);
+    assert.equal(checks.entityQueries, deep.replay.entityQueries);
+  }
   assert.equal(r.accounts.length, spec.accounts);
   assert.equal(new Set(r.accounts.map((a: any) => a.scope)).size, spec.scopes);
   assert.equal(r.activation.length, 2 * spec.accounts);
@@ -373,6 +400,7 @@ export async function verifyCase(
     seedAckMs: r.seedAckMs,
     seedEndToEndMs: r.seedMs,
     latencyMs: r.latency,
+    deepCold: r.benchDeepCold,
     phases: phases.map((p) => ({
       name: p.label,
       disk: p.native.disk,

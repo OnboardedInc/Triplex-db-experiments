@@ -55,7 +55,7 @@ export async function proveEvictedIdentities(attempt: string) {
         }),
         (error: unknown) =>
           error instanceof DatomicHttpError &&
-          error.status === 409 &&
+          error.status === 400 &&
           error.code === "IdentityConflict",
       );
       assert.equal(await handle.currentPosition(), position);

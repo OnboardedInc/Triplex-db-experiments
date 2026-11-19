@@ -14,6 +14,7 @@ if (action === "--plan") {
         readers: "reach-touched, revision-validated on demand",
         gateways: "32 MiB peer object cache, 8 MiB row cache, 4096 ID and session entries",
         activity: "2%",
+        deepCold: "200 first reads across all five task classes after the first wide case",
         releases: ["R1", "EAD selector R2"],
         comparison: "same 100 account rosters, command intents and guarded decisions",
         usage: "control.ts launch BATCH UTC_CUTOFF",
