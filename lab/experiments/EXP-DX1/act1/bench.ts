@@ -15,6 +15,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import {
   workerTrials,
   workerFinding,
+  liveBaselineMs,
   checkSweep,
   checkTraffic,
   programInputs,
@@ -44,7 +45,13 @@ if (mode === "--plan") {
     "Run the EAD full/selector pair, standard guard-fact, fourth-arm page coverage and a fresh incorrect historical control. --workers 1,2,3,4,5 repeats the page arm on fresh clones. --hours 6 budgets the longer ladder.",
   );
   console.log(
-    JSON.stringify({ hours, trials, liveReaderCpus: [3, 5], evaluatorCpus: [7, 8, 9, 10, 11] }),
+    JSON.stringify({
+      hours,
+      trials,
+      liveBaselineMs,
+      liveReaderCpus: [3, 5],
+      evaluatorCpus: [7, 8, 9, 10, 11],
+    }),
   );
 } else {
   assert.equal(mode, "--execute");

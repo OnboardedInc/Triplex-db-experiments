@@ -12,6 +12,7 @@ export const armNames = [
   "standard-pages",
 ] as const;
 export type Arm = (typeof armNames)[number] | "standard-historical";
+export const liveBaselineMs = 360_000;
 export const sha = (data: string | Buffer) => createHash("sha256").update(data).digest("hex");
 const delayed = [
   "held pay change",
@@ -121,7 +122,8 @@ export function benchArguments(argv: string[], slot: string, source: string, non
     { flag: "wx" },
   );
   const args = [...argv];
-  args[args.indexOf("--baseline-ms") + 1] = "180000";
+  // [DX-ACT1] Why: the timed individual-guard control projects above four minutes. Rejected: a shorter baseline that necessarily drops the control's final traffic while matching the sweep.
+  args[args.indexOf("--baseline-ms") + 1] = String(liveBaselineMs);
   args[args.indexOf("--workers") + 1] = String(workers);
   args[args.indexOf("--r1-publication-inflight") + 1] = "1";
   const layout =
