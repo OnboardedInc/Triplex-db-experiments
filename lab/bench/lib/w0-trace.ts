@@ -1,9 +1,11 @@
 import type { TraceEvent } from "./trace.ts";
 import { W0, V_W0, triplexValue } from "./w0-world.ts";
-export function mapW0Trace(ev: TraceEvent, window?: "baseline" | "sweep") {
-  // [DX-BM1] Why: the two live windows replay the same sequence on one database. Their owned entities need distinct identities.
-  // Rejected: collapsing duplicate facts during evaluation, which would hide a real cardinality error.
-  const suffix = (window ? window + "-" : "") + "t" + ev.seq;
+export function mapW0Trace(ev: TraceEvent, window?: number) {
+  // [DX-ACT2] Why: the durable window position is unique within this scope, even when the same trace repeats. Base 36 fits W0's 32-character local ID. Rejected: a shortened request hash with a possible collision.
+  if (window !== undefined && (!Number.isSafeInteger(window) || window < 1))
+    throw Error("Invalid live window position");
+  const suffix =
+    window === undefined ? "t" + ev.seq : "w" + window.toString(36) + "-t" + ev.seq.toString(36);
   const S = W0.placementId(ev.subject),
     id = `${S}/ans:${suffix}`;
   const validFrom = V_W0 + Math.floor(ev.atMs) - (ev.correction ? 30 * 86400000 : 0);
@@ -30,7 +32,7 @@ export function mapW0Trace(ev: TraceEvent, window?: "baseline" | "sweep") {
     if (rows.length < ev.facts) rows.push([a, "value", String(ev.seq)]);
   }
   return {
-    commandId: `p5:trace:${ev.seq}`,
+    commandId: (window === undefined ? "" : window + ":") + `p5:trace:${ev.seq}`,
     validFrom,
     rows,
     operations: rows.map(([entityId, attribute, v]) => ({
