@@ -1,8 +1,11 @@
 import type { TraceEvent } from "./trace.ts";
 import { W0, V_W0, triplexValue } from "./w0-world.ts";
-export function mapW0Trace(ev: TraceEvent) {
+export function mapW0Trace(ev: TraceEvent, window?: "baseline" | "sweep") {
+  // [DX-BM1] Why: the two live windows replay the same sequence on one database. Their owned entities need distinct identities.
+  // Rejected: collapsing duplicate facts during evaluation, which would hide a real cardinality error.
+  const suffix = (window ? window + "-" : "") + "t" + ev.seq;
   const S = W0.placementId(ev.subject),
-    id = `${S}/ans:t${ev.seq}`;
+    id = `${S}/ans:${suffix}`;
   const validFrom = V_W0 + Math.floor(ev.atMs) - (ev.correction ? 30 * 86400000 : 0);
   // [EXP-P5] Why: ballast answer chains preserve the frozen fact count without introducing unknown attributes or shared writes. Rejected: changing a location (round A has no shared-entity fanout).
   const rows: [string, string, any][] = [];
@@ -10,7 +13,7 @@ export function mapW0Trace(ev: TraceEvent) {
     rows.push([S, "everifySubmitResult", ev.seq % 2 ? "accepted" : "rejected"]);
   else if (ev.kind === "runtime") rows.push([S, "bgcStatus", ev.seq % 2 ? "clear" : "consider"]);
   else if (ev.kind === "agent") {
-    const d = `${S}/dec:t${ev.seq}`;
+    const d = `${S}/dec:${suffix}`;
     rows.push(
       [S, "decisions", d],
       [d, "target", "bgc.adjudication"],
