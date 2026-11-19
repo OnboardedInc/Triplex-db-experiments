@@ -17,7 +17,15 @@ export const head = () =>
 export const runFile = promisify(execFile);
 export const clock = () => performance.now();
 export { sleep };
-export const modes = ["failures", "move", "replication"] as const;
+export const modes = [
+  "failures",
+  "move",
+  "replication",
+  "one-failover",
+  "one-backup",
+  "one-whole",
+  "one-account",
+] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
   pg: 192,
@@ -30,7 +38,7 @@ export const roles = {
 } as const;
 export type Role = keyof typeof roles;
 export function modeOf(s: string): Mode {
-  assert(modes.includes(s as Mode), "Choose failures, move or replication");
+  assert(modes.includes(s as Mode), "Unknown HA experiment");
   return s as Mode;
 }
 export async function until<T>(label: string, fn: () => Promise<T | undefined>, ms = 120000) {

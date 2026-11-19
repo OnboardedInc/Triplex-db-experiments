@@ -3,6 +3,7 @@ import { Evidence, inputs } from "./common.ts";
 import { Stack, type Site } from "./stack.ts";
 import { replication } from "./replication.ts";
 import { move } from "./move.ts";
+import { oneFailover } from "./one-failover.ts";
 import { failures } from "./failures.ts";
 export async function drill(
   e: Evidence,
@@ -14,7 +15,11 @@ export async function drill(
   const s = new Stack(e, a, b);
   let result: unknown;
   try {
-    assert(Number.isSafeInteger(profile.people) && profile.people > 0 && profile.people <= 100000);
+    assert(
+      Number.isSafeInteger(profile.people) &&
+        profile.people > 0 &&
+        profile.people <= (e.mode.startsWith("one-") ? 1500000 : 100000),
+    );
     await s.open();
     if (e.mode === "failures")
       result = await failures(
@@ -23,7 +28,9 @@ export async function drill(
         profile.capacity === "two-host" ? profile.people : 0,
       );
     else if (e.mode === "move") result = await move(s, profile.people);
-    else result = await replication(s);
+    else if (e.mode === "replication") result = await replication(s);
+    else if (e.mode === "one-failover") result = await oneFailover(s, profile.people);
+    else throw Error("One-database experiment not installed");
   } catch (err: any) {
     e.write("failure", {
       name: err.name,

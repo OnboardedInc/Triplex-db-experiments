@@ -330,7 +330,9 @@ export class Stack {
           (site.privateAddress ? "1400" : "288") +
           "m -XX:ActiveProcessorCount=2 /tmp/ha1.properties",
       ],
-      this.a !== this.b && this.e.mode === "failures" ? 4334 : undefined,
+      this.a !== this.b && (this.e.mode === "failures" || this.e.mode === "one-failover")
+        ? 4334
+        : undefined,
     );
   }
   async broker(role: "active" | "standby") {
@@ -361,7 +363,10 @@ export class Stack {
           "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m",
       ],
       "/opt/datomic/bin/run",
-      ["-m", "triplex.gateway.main"],
+      [
+        "-m",
+        this.e.mode.startsWith("one-") ? "triplex.gateway.ha-observer" : "triplex.gateway.main",
+      ],
       8080,
     );
     return this.endpoint(role);

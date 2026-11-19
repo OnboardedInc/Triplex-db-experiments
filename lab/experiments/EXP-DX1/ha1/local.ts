@@ -31,7 +31,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
   const wanted = Object.entries(roles).filter(([r]) =>
     mode === "replication"
       ? ["pg", "target", "tool", "active", "write"].includes(r)
-      : mode === "move" || r !== "target",
+      : mode === "move" || mode.startsWith("one-") || r !== "target",
   );
   const bytes = wanted.reduce((n, [, mb]) => n + mb * 2 ** 20, 0);
   assert(bytes <= info.memBytes);
@@ -59,7 +59,11 @@ export async function localDrill(opts: any, config: any, manager: any) {
             if (fs.existsSync(info.lockDir) || fs.existsSync(parentLease)) return;
             const live = listTx2Containers({ all: true });
             if (live.some((c: any) => c.name === info.container)) return;
-            const req = { container: e.prefix, memBytes: bytes, diskForecastBytes: 2 ** 30 };
+            const req = {
+              container: e.prefix,
+              memBytes: bytes,
+              diskForecastBytes: (mode.startsWith("one-") ? 3 : 1) * 2 ** 30,
+            };
             const pol = {
               ...config,
               pool: {
@@ -108,7 +112,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
                 state: "drill",
                 memBytes: mb * 2 ** 20,
                 cpus: 1.5,
-                diskForecastBytes: role === "pg" ? 2 ** 30 : 0,
+                diskForecastBytes: role === "pg" ? req.diskForecastBytes : 0,
               });
             reserved = true;
           });
