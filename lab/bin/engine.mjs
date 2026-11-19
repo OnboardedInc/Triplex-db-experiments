@@ -713,6 +713,11 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
+  // [DX-HA1] Why: destructive process drills need an exclusive, pool-admitted SQL topology. Rejected: killing roles in a resident slot.
+  if (command === 'ha1') {
+    const { localDrill } = await import('../experiments/EXP-DX1/ha1/local.ts');
+    return localDrill(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
+  }
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');

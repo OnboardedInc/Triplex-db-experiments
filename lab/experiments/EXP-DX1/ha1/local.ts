@@ -1,0 +1,160 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import {
+  admission,
+  appendEvent,
+  dockerArgs,
+  DOCKER_HOST,
+  listTx2Containers,
+  readOwner,
+  slotInfo,
+  vmDisk,
+  withPool,
+} from "../../../bin/lib.mjs";
+import { Evidence, modeOf, roles, root, runFile, sleep } from "./common.ts";
+import { drill } from "./run.ts";
+import type { Site } from "./stack.ts";
+
+export async function localDrill(opts: any, config: any, manager: any) {
+  assert.equal(process.platform, "darwin");
+  assert.equal(opts.holder, "DX-HA1");
+  assert.equal(dockerArgs([])[1], DOCKER_HOST);
+  assert(["s1", "s2", "s3"].includes(opts.slot));
+  const mode = modeOf(opts.experiment),
+    info = slotInfo(config, "datomic", opts.slot);
+  const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
+  const e = new Evidence(path.join(folder, "evidence", "DX-HA1"), mode, opts.slot);
+  console.log(e.dir);
+  // [DX-HA1] Why: each child cap has a matching live reservation and unique name. Rejected: reusing a retained slot volume or double-counting a single opaque stack.
+  const wanted = Object.entries(roles).filter(([r]) =>
+    mode === "replication"
+      ? ["pg", "target", "tool", "active", "write"].includes(r)
+      : mode === "move" || r !== "target",
+  );
+  const bytes = wanted.reduce((n, [, mb]) => n + mb * 2 ** 20, 0);
+  assert(bytes <= info.memBytes);
+  let acquired = false,
+    reserved = false,
+    clean = false;
+  const parentLease = path.join(folder, "locks", "measure");
+  let measured = false;
+  try {
+    for (;;) {
+      const disk = fs.statfsSync(root);
+      assert(disk.bavail * disk.bsize >= 5 * 2 ** 30, "Host disk floor");
+      if (!fs.existsSync(info.lockDir) && !fs.existsSync(parentLease)) {
+        try {
+          await withPool((ledger: any) => {
+            manager.assertMeasureAdmission(opts.holder);
+            if (fs.existsSync(info.lockDir) || fs.existsSync(parentLease)) return;
+            const live = listTx2Containers({ all: true });
+            if (live.some((c: any) => c.name === info.container)) return;
+            const req = { container: e.prefix, memBytes: bytes, diskForecastBytes: 2 ** 30 };
+            const pol = {
+              ...config,
+              pool: {
+                ...config.pool,
+                memLimitBytes: Math.min(config.pool.memLimitBytes, 15 * 2 ** 30),
+              },
+            };
+            if (
+              !admission({
+                config: pol,
+                reservations: ledger.reservations,
+                running: live,
+                request: req,
+                diskUsedBytes: vmDisk(config).usedBytes,
+              }).ok
+            )
+              return;
+            try {
+              fs.mkdirSync(parentLease);
+            } catch (err: any) {
+              if (err.code === "EEXIST") return;
+              throw err;
+            }
+            measured = true;
+            fs.writeFileSync(
+              path.join(parentLease, "owner.json"),
+              JSON.stringify({
+                id: "DX-HA1",
+                pid: process.pid,
+                nonce: e.nonce,
+                slot: opts.slot,
+                at: new Date().toISOString(),
+              }),
+              { flag: "wx" },
+            );
+            const slot = manager.acquireSlot(info, opts.holder, "DX-HA1");
+            assert(slot.created);
+            acquired = true;
+            for (const [role, mb] of wanted)
+              ledger.reservations.push({
+                container: e.prefix + "-" + role,
+                holder: opts.holder,
+                lane: "datomic",
+                slot: opts.slot,
+                pid: process.pid,
+                state: "drill",
+                memBytes: mb * 2 ** 20,
+                cpus: 1.5,
+                diskForecastBytes: role === "pg" ? 2 ** 30 : 0,
+              });
+            reserved = true;
+          });
+        } catch (err: any) {
+          if (err.code !== "REFUSED") throw err;
+        }
+      }
+      if (reserved) break;
+      await sleep(5000);
+    }
+    const site: Site = {
+      key: "local",
+      repo: root,
+      datomicId: config.lanes.datomic.imageId,
+      docker: async (args, options = {}) => {
+        const out = await runFile("docker", dockerArgs(args), {
+          encoding: "utf8",
+          maxBuffer: 16 * 2 ** 20,
+          timeout: 120000,
+          ...options,
+        });
+        return (out.stdout + (args[0] === "logs" ? out.stderr : "")).trim();
+      },
+    };
+    await drill(
+      e,
+      site,
+      site,
+      { people: Number(opts.people ?? 4), scopes: 3, capacity: "local" },
+      () => {
+        clean = true;
+      },
+    );
+  } finally {
+    if (measured) {
+      const f = path.join(parentLease, "owner.json");
+      assert.equal(JSON.parse(fs.readFileSync(f, "utf8")).nonce, e.nonce);
+      fs.unlinkSync(f);
+      fs.rmdirSync(parentLease);
+    }
+    if (reserved && clean)
+      await withPool((ledger: any) => {
+        ledger.reservations = ledger.reservations.filter(
+          (v: any) =>
+            !wanted.some(
+              ([r]) =>
+                v.container === e.prefix + "-" + r &&
+                v.holder === opts.holder &&
+                v.pid === process.pid,
+            ),
+        );
+        appendEvent({ event: "ha1-released", holder: opts.holder, prefix: e.prefix });
+      });
+    if (acquired && (!reserved || clean) && readOwner(info)?.pid === process.pid)
+      manager.releaseSlot(info);
+  }
+}
