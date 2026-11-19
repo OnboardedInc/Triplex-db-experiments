@@ -1,0 +1,184 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, writeFileSync, createReadStream, realpathSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
+
+export const armNames = ["narrow-full", "narrow-selector", "standard-full"] as const;
+export type Arm = (typeof armNames)[number];
+export const sha = (data: string | Buffer) => createHash("sha256").update(data).digest("hex");
+const extraFiles = ["bench.ts", "bench-proof.ts", "guard.test.ts", "check.ts"].map(
+  (f) => "lab/experiments/EXP-DX1/act1/" + f,
+);
+export const programInputs = () =>
+  Object.fromEntries(
+    [
+      ...extraFiles,
+      "lab/world/W0/cases/C01-base-r1.json",
+      "lab/bench/lib/memory.ts",
+      "lab/bench/lib/composition.ts",
+      "lab/bench/lib/sweep.ts",
+      "lab/bench/lib/trace.ts",
+      "lab/experiments/EXP-DX1/bm1/queue-day.sh",
+    ].map((f) => [f, sha(readFileSync(f))]),
+  );
+
+export function requestPath(slot: string) {
+  assert.match(slot, /^tx2-dxt1-bm1-[a-z0-9]{1,12}-activation-a$/);
+  return join("runs", "act1-requests", slot + ".json");
+}
+export function benchArguments(argv: string[], slot: string, source: string, nonce: string) {
+  if (!/^tx2-dxt1-bm1-act[a-z0-9]{9}-activation-a$/.test(slot)) return argv;
+  const bytes = readFileSync(requestPath(slot));
+  const request = JSON.parse(bytes.toString());
+  assert.equal(request.slot, slot);
+  assert.equal(request.source, source);
+  assert.ok(armNames.includes(request.arm));
+  assert.deepEqual(request.inputs, programInputs());
+  const option = (k: string) => argv[argv.indexOf(k) + 1];
+  assert.equal(option("--publication-id"), slot);
+  assert.equal(option("--rung"), "100000");
+  assert.equal(option("--seed-position"), "4338757");
+  assert.ok(argv.includes("--live") && argv.includes("--post-capture"));
+  const dir = join(option("--record-dir"), "..");
+  // [DX-ACT1] Why: exercise the current gateway's real claim and CAS paths before touching the retained population. Rejected: inferring gateway support from the host-only smoke.
+  const tap = spawnSync(
+    process.execPath,
+    ["--experimental-strip-types", "--test", "lab/experiments/EXP-DX1/act1/guard.test.ts"],
+    { encoding: "utf8", timeout: 360000, env: { ...process.env, DX_ACT1_NATIVE: "1" } },
+  );
+  writeFileSync(join(dir, "act1-schedules.tap"), tap.stdout + tap.stderr, { flag: "wx" });
+  assert.equal(tap.status, 0, "Native guard schedules failed");
+  assert.match(tap.stdout, /^# pass 13$/m);
+  assert.match(tap.stdout, /^# fail 0$/m);
+  assert.match(tap.stdout, /^# skipped 0$/m);
+  writeFileSync(
+    join(dir, "act1-schedules.json"),
+    JSON.stringify({ slot, source, nonce, request: sha(bytes), tap: sha(tap.stdout + tap.stderr) }),
+    { flag: "wx" },
+  );
+  const args = [...argv];
+  args[args.indexOf("--baseline-ms") + 1] = "180000";
+  return [...args, "--publication-layout", "guard-fact", "--act1-arm", request.arm];
+}
+
+export function checkSweep(out: string, request: { slot: string; arm: Arm; source: string }) {
+  const load = (f: string) => JSON.parse(readFileSync(join(out, f), "utf8"));
+  const a = load("activation-attempt.json"),
+    s = load("act1-sweep.json"),
+    gates = load("act1-schedules.json");
+  const requested = readFileSync(requestPath(request.slot)),
+    sealed = JSON.parse(requested.toString());
+  assert.deepEqual(
+    [sealed.source, sealed.slot, sealed.arm],
+    [request.source, request.slot, request.arm],
+  );
+  assert.deepEqual(sealed.inputs, programInputs());
+  assert.equal(s.slot, request.slot);
+  assert.equal(s.slot, a.slot);
+  assert.equal(a.run, a.slot);
+  assert.equal(s.scope, a.scope);
+  assert.equal(s.source, request.source);
+  assert.equal(s.source, a.source);
+  assert.equal(s.nonce, a.nonce);
+  assert.equal(gates.source, a.source);
+  assert.equal(gates.slot, a.slot);
+  assert.equal(gates.nonce, a.nonce);
+  assert.equal(gates.request, sha(requested));
+  assert.equal(gates.tap, sha(readFileSync(join(out, "act1-schedules.tap"))));
+  assert.equal(s.build, sha(readFileSync(join(out, "source.SHA256SUMS"))));
+  assert.equal(s.build, a.sourceManifestSha256);
+  assert.deepEqual(
+    [a.subjects, s.N, s.checked, s.statesCompared, s.changed, s.liveReaders],
+    [100000, 100000, 100000, 100000, 100000, 256],
+  );
+  assert.equal(s.initialPosition, 4338757);
+  assert.ok(s.statePosition > s.cut && s.cut > s.r1Position && s.r1Position > s.initialPosition);
+  assert.equal(s.act1.arm, request.arm);
+  assert.equal(s.act1.layout, "guard-fact");
+  assert.match(s.comparedSha256, /^[a-f0-9]{64}$/);
+  assert.match(s.trace, /^[a-f0-9]{64}$/);
+  assert.match(s.act1.releaseHash, /^sha256:[a-f0-9]{64}$/);
+  const roster = Array.from({ length: s.N }, (_, i) => "pl:s" + String(i).padStart(8, "0"));
+  assert.equal(s.roster, sha(JSON.stringify(roster)));
+  assert.ok(
+    s.postCapture?.captured === s.cut &&
+      s.postCapture.current > s.cut &&
+      new Set(s.postCapture.subjects).size === 1000 &&
+      new Set(s.postCapture.negativeSubjects).size === 1000,
+  );
+  const members = new Set(roster);
+  const witnesses: string[] = [...s.postCapture.subjects, ...s.postCapture.negativeSubjects];
+  assert.equal(witnesses.length, 2000);
+  assert.equal(new Set(witnesses).size, 2000);
+  assert.ok(witnesses.every((id) => members.has(id)));
+  if (request.arm === "narrow-selector") {
+    const c = s.act1.selector;
+    assert.ok(c.candidates > 0 && c.excluded > 0);
+    assert.equal(c.roster, s.roster);
+    assert.equal(c.candidates + c.excluded, s.N);
+    assert.equal(c.full, 0);
+  }
+  const wallSeconds = (s.evaluationMs + s.publicationMs) / 1000;
+  assert.ok(Number.isFinite(wallSeconds) && wallSeconds > 0 && s.matched.matchedWindowMs > 0);
+  for (const kind of ["read", "commit"]) {
+    const metric = s.matched[kind];
+    for (const arm of [metric.baseline, metric.sweep])
+      assert.ok(
+        Number.isInteger(arm.count) && arm.count > 0 && Number.isFinite(arm.p99) && arm.p99 > 0,
+      );
+    assert.equal(metric.p99Ratio, metric.sweep.p99 / metric.baseline.p99);
+  }
+  // [DX-ACT1] Why: hash every source and built byte again after the state checks. Rejected: promoting an old sweep, an underfilled ratio, or a completed process alone.
+  for (const line of readFileSync(join(out, "source.SHA256SUMS"), "utf8").trimEnd().split("\n")) {
+    const m = /^([0-9a-f]{64})  ([^\n]+)$/.exec(line);
+    assert.ok(m);
+    assert.ok(!m[2]!.startsWith("/") && !m[2]!.split("/").includes(".."));
+    assert.equal(sha(readFileSync(m[2]!)), m[1]);
+  }
+  return {
+    arm: request.arm,
+    scope: s.scope,
+    slot: s.slot,
+    source: s.source,
+    build: s.build,
+    trace: s.trace,
+    roster: s.roster,
+    comparedSha256: s.comparedSha256,
+    release: s.act1.releaseHash,
+    cut: s.cut,
+    r1: s.r1Position,
+    wallSeconds,
+    coldWallSeconds: wallSeconds + (s.act1.selector?.buildMs ?? 0) / 1000,
+    evaluationSeconds: s.evaluationMs / 1000,
+    publicationSeconds: s.publicationMs / 1000,
+    selector: s.act1.selector,
+    matched: s.matched,
+    fullWindowAnd500PerSide:
+      s.matched.fullSweepCovered &&
+      Math.min(s.matched.commit.baseline.count, s.matched.commit.sweep.count) >= 500,
+    fullHistoryEnvelope: existsSync(join(out, "ACTIVATION-CHECK.json")),
+    classification: "diagnostic",
+  };
+}
+
+export async function checkTraffic(out: string) {
+  const { matchW0Live } = await import("../../../bench/lib/w0-replica-live.ts");
+  const s = JSON.parse(readFileSync(join(out, "act1-sweep.json"), "utf8"));
+  const [before, during] = s.traffic;
+  const digests: string[] = [];
+  for (const [i, window] of [before, during].entries()) {
+    assert.equal(window.readers, 256);
+    assert.equal(window.failures, 0);
+    assert.ok(window.offered > 0);
+    assert.equal(window.acknowledged, window.offered);
+    assert.equal(window.generatorTraceSha256, s.trace);
+    const file = resolve(out, "traffic", (i ? "sweep" : "baseline") + "-traffic.ndjson");
+    assert.equal(realpathSync(window.raw), realpathSync(file));
+    const hash = createHash("sha256");
+    for await (const chunk of createReadStream(file)) hash.update(chunk);
+    digests.push(hash.digest("hex"));
+  }
+  assert.deepEqual(matchW0Live(before, during), s.matched);
+  return digests;
+}

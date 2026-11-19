@@ -15,10 +15,18 @@ export async function sqliteStore(directory: string, scope: string) {
   const triples = await rt.runPromise(Effect.service(Triples));
   const sql = await rt.runPromise(Effect.service(SqlClient.SqlClient));
   await rt.runPromise(sql`PRAGMA synchronous = FULL`);
-  const h: TriplesHandle = { scope, triples, backend: { name: "sqlite", url: "", queryPath: "sqlite" },
-    storage: await rt.runPromise(Effect.service(StorageAdapter)), run: (effect) => rt.runPromise(effect) as Promise<any>,
-    runExit: (effect) => rt.runPromiseExit(effect), close: () => rt.dispose() };
-  const outcome = async <A>(effect: Parameters<TriplesHandle["runExit"]>[0]): Promise<Outcome<A>> => {
+  const h: TriplesHandle = {
+    scope,
+    triples,
+    backend: { name: "sqlite", url: "", queryPath: "sqlite" },
+    storage: await rt.runPromise(Effect.service(StorageAdapter)),
+    run: (effect) => rt.runPromise(effect) as Promise<any>,
+    runExit: (effect) => rt.runPromiseExit(effect),
+    close: () => rt.dispose(),
+  };
+  const outcome = async <A>(
+    effect: Parameters<TriplesHandle["runExit"]>[0],
+  ): Promise<Outcome<A>> => {
     const exit = await h.runExit(effect);
     if (exit._tag === "Success") return { ok: true, value: exit.value };
     const first = exit.cause.reasons[0];
@@ -26,10 +34,12 @@ export async function sqliteStore(directory: string, scope: string) {
   };
   // [DX-ACT1] Why: price an actual durable Triplex commit with checkpoint and reopen on this host. Rejected: treating the memory composition's ACK time as durable service time.
   const store: OutboxStore & { close(): Promise<void> } = {
-    currentPosition: () => h.run(triples.currentPosition()), sweepPage: portableSweep(h).page,
+    currentPosition: () => h.run(triples.currentPosition()),
+    sweepPage: portableSweep(h).page,
     transact: (ops, meta) => outcome(h.triples.transact(ops, meta)),
     transactionByCommand: (id) => outcome(triples.transactionByCommand(id)),
-    publishOutbox: (records) => publishRecords(store, records), close: h.close,
+    publishOutbox: (records) => publishRecords(store, records),
+    close: h.close,
   };
   return store;
 }

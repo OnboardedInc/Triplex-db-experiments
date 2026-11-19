@@ -319,6 +319,8 @@ export async function publishChanged(
         rows.push(row);
         pendingRows.set(row.entityId, rows);
       }
+      if (stored.rows.some((r) => r.attribute === "p5/guard"))
+        throw Error("Guarded outbox requires a guarded publisher");
       const states = new Map<string, W0.OutboxState>();
       for (const row of stored.rows)
         if (row.attribute === "p5/state") {

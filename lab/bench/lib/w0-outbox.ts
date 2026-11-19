@@ -4,7 +4,10 @@ import { measureW0Http } from "./w0-http.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { W0, canonical, sha256 } from "./w0-world.ts";
 import { guardedFrame, type GuardLayout } from "./w0-guarded.ts";
-export type OutboxStore = Pick<CompositionHandle, "currentPosition" | "sweepPage" | "transactionByCommand" | "transact" | "publishOutbox">;
+export type OutboxStore = Pick<
+  CompositionHandle,
+  "currentPosition" | "sweepPage" | "transactionByCommand" | "transact" | "publishOutbox"
+>;
 export const outboxEntity = (subject: string) =>
   "p5:outbox:" +
   (process.env.TX2_W0_OUTBOX_NAMESPACE ? process.env.TX2_W0_OUTBOX_NAMESPACE + ":" : "") +
@@ -72,8 +75,11 @@ export async function publishRecords(
     try {
       return await guardedFrame(comp, records, outboxEntity, options.layout, async () => {
         const since = performance.now();
-        while (options.yieldToWriter && liveWriterBacklog > 0 &&
-          performance.now() - since < (options.maxWriterYieldMs ?? 50))
+        while (
+          options.yieldToWriter &&
+          liveWriterBacklog > 0 &&
+          performance.now() - since < (options.maxWriterYieldMs ?? 50)
+        )
           await new Promise((resolve) => setTimeout(resolve, 1));
       });
     } finally {
@@ -145,6 +151,8 @@ export async function publishRecords(
     for (const record of records) {
       const entityId = outboxEntity(record.subject);
       const old = { triples: states.get(entityId) ?? [] };
+      if (old.triples.some((t) => t.attribute === "p5/guard"))
+        throw Error("Guarded outbox requires a guarded publisher");
       const previous = old.triples.find((t) => t.attribute === "p5/state");
       const state = previous ? reviveState(JSON.parse(previous.value.value)) : W0.EMPTY_OUTBOX;
       const result = W0.publish(state, [record]);
