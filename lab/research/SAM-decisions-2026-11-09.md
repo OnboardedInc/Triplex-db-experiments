@@ -652,3 +652,22 @@ output is durably stored, every owed notification is durably recorded; sending f
 on the owed-notification record and dispatcher, which both remaining designs (LAZY, DELTA) need. (3) The working name
 is "Triplex DB". A short explainer page was published as a private artifact; its source is kept in the private
 project folder under `artifacts/`.
+
+## 2026-11-19 about 18:45 local: understand first, predict, then run; do not queue analysis behind servers
+
+Sam, verbatim:
+- "ok so how is all of this going to affect our runs later? is there more problems then just these 3?"
+- "Why is number 9 in the problems list going to be worked on Saturday? It's confusing. Why aren't we doing these as
+  fast as possible and using Astro agents on Macs to figure things out? Do we need to run everything on the machine?
+  Can we run things here?" (dictated: Astra agents on max)
+- "Just keep being proactive about clearing out the problems and understanding them more deeply before we just run a
+  thing to test it. Really confirm your hypotheses as best you can."
+
+Orchestrator's reading: a correction to how I was working. I had been treating the servers as the place where
+understanding happens and scheduling problems by server availability. From now each open problem has an analyst or
+builder on it immediately; what needs absolute timing on bare metal is separated from what is mechanism, counts,
+bytes, correctness or a model from saved traces; and every server run has a written prediction before it starts.
+Launched at 18:53 local, Codex gpt-6.2-astra at max: PRED-QUEUE (the one commit queue), PRED-GROWTH (what grows with
+data), PRED-LOAD (loading and importing), PRED-HA (a second copy and failure at size; the ping between the two
+servers is 0.089 ms), PRED-READERS (the judged pair's read-side misses); DX-STG1 was put on explaining the
+notification rate before any server run of it. Output: private folder `research/2026-11-19-predictions/`.

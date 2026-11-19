@@ -2288,3 +2288,28 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   lookups derived from rule declarations for all seven W0 parameter kinds), DX-STG1 on STAGED.
 - Servers: first on the judged v3 pair, then the write tests (`DX-BM1-resume3.md` ready); second on the deep and
   one-database campaign (DX-SCALE1 part 4, with DX-ACT2's fix before its activation arm).
+
+## 2026-11-20 00:00 UTC (19:00 local, 2026-11-19): first eligible-length v3 pair on bare metal; analysts launched
+
+- **Pair `p3r` (new sender, six reader cores, 38,826 commits per arm; `bm1/REPORT.md` on `exp/DX-BM1-bare-metal`).**
+  All-commit ACK p99 36.11 ms with zero readers and 45.08 ms loaded (bar 50); L256 medians 6.05 / 7.52 ms (bar 10);
+  feed lag p99 26.50 ms (bar 250); 143,900,955 reads exact, independent replay matched 351 sampled reads and 18,857
+  entity queries. Misses: writer p99 ratio at 256 readers 1.478 (bar 1.25); goodput at 1,024 readers 0.422 of the
+  256-reader rate (bar 0.9); weighted pulls 3,490/s (bar 4,400); recovery, maintenance density and steady writer
+  queue. **The loaded arm is ineligible for a verdict**: all six reader workers of the driver were at 99.8 to 100%
+  event-loop utilisation at 1,024 readers.
+- **DX-ACT2 part 2 (`5c7b3985`, DELTA, Mac VM):** first verified read after Publish 0.081 s (broad) and 0.300 s (narrow)
+  at 10,000 subjects; 1.425 s and 2.209 s when a save races the seal (saves and the release guard the same account
+  head); concrete changes reopened in 8.8 s, dispatch 16.4 s; lookups derived from rule declarations for all seven
+  W0 parameter kinds; indexes raise WAL per fact from 3,992 to 7,175 bytes. Part 3 running (no starvation of the
+  seal, what is durable at commit, index cost at most 15%).
+- **DX-STG1 part 2 (`df2424d2`, notifications):** owed record durable in 21 to 68 ms with four database changes at
+  10,000 subjects; exactly once and in order through a lost acknowledgement, a newer save and a killed gateway; but
+  only 10 to 21 notices per second within the live-traffic limits on the Mac VM. Part 3: explain the rate first.
+- **DX-HA1 part 2 (`434dc7d7`, Mac VM):** writes resume 8.50 to 24.95 s after transactor loss up to 2.9 M facts, all 1,978
+  pinned reads succeeded; whole-database move 15.5 s pause; single-account move out of a shared database 0.47 to
+  0.71 s; backups alone lose 8 to 154 acknowledged writes, a synchronous Postgres copy loses none.
+- **DX-INT1 (`316e4c50`):** one merged branch; per untouched subject the read gateway holds 2,390 (thin) to 53,025
+  (deep) bytes and the write gateway 4,089 to 44,789; the touched reader's index grows 0 bytes. Part 3 running.
+- **Sam's decisions (SAM-decisions):** one-second definition accepted; no prepared releases (staging closed); understand
+  and predict before running. Five max-effort analysts launched 18:53 to 18:58 local.
