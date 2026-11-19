@@ -6,7 +6,8 @@ bench=${1:?SSH destination for the bench server}
 shift
 [[ $bench =~ ^ubuntu@[a-zA-Z0-9.:-]+$ && $# -gt 0 ]] || exit 2
 root=${DX_BM1_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence}
-repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
+repo=${DX_BM1_CATALOG_ROOT:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel)}
+[[ -f $repo/lab/bin/trace-store.mjs ]] || exit 2
 # [DX-BM1] Why: every fetch must leave stdin with the checksum-list loop.
 # Rejected: letting the first SSH process consume the remaining manifest rows.
 ssh_bench=(ssh -n -F /dev/null -i "${DX_BENCH_KEY:-$HOME/.ssh/triplex_bench_ed25519}"
