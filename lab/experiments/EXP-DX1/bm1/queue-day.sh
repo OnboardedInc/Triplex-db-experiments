@@ -21,6 +21,7 @@ prefix=tx2-dxt1-bm1-$batch
 runner=$(cd "$(dirname "$0")" && pwd)
 runner_source=$(git -C "$runner" rev-parse HEAD)
 cutoff=$(date -u -d "$stop" +%s)
+schedstats=/proc/sys/kernel/sched_schedstats
 t1=lab/experiments/EXP-DX1/t1
 bm1=lab/experiments/EXP-DX1/bm1
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0
@@ -73,7 +74,7 @@ owned_resources() {
 }
 
 cleanup_item() {
-  local item=$1 attempt=${2:-first} id name names kind pass arm dest file
+  local item=$1 attempt=${2:-first} id name names kind pass arm dest file prior
   local ids
   local cleanup=$logs/$item-cleanup
   mkdir -p "$cleanup"
@@ -120,6 +121,15 @@ cleanup_item() {
     [[ -s $cleanup/remaining.txt ]] || break
   done
   [[ ! -s $cleanup/remaining.txt ]] || { printf '%s\n' 'Owned resources remain'; exit 1; }
+  # [DX-BM1] Why: the cgroup deadline can arrive before the study restores its borrowed kernel setting.
+  # Rejected: release the exclusive lease and carry forward another arm's scheduler condition.
+  if [[ $item == pair && -f $logs/pair-schedstats.before ]]; then
+    prior=$(cat "$logs/pair-schedstats.before")
+    [[ $prior == 0 || $prior == 1 ]]
+    if [[ $(cat "$schedstats") != "$prior" ]]; then printf '%s\n' "$prior" > "$schedstats"; fi
+    [[ $(cat "$schedstats") == "$prior" ]]
+    printf '%s\n' "$prior" > "$cleanup/schedstats-after.txt"
+  fi
   if [[ $item != setup && -d $work/state/locks/measure ]]; then
     local lock=$work/state/locks/measure
     if [[ -f $lock/owner.json ]]; then
@@ -285,6 +295,9 @@ run_stage() {
   fi
   unit=triplex-bm1-$batch-$item
   item_stop=$(date -u -d "@$((now + ceiling))" '+%FT%TZ')
+  if [[ $item == pair ]]; then
+    cat "$schedstats" > "$logs/pair-schedstats.before" || return 76
+  fi
   printf '%s\n' "$item" > "$day/active-item"
   status "$item" running "$next"
   systemd-run --wait --unit="$unit" \
