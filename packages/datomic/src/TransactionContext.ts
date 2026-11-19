@@ -1,6 +1,6 @@
 // [EXP-DA01] Why: fiber-local savepoints isolate staged callbacks. Rejected: global mutable transaction state (cross-fiber leaks).
 import { ReadError } from "@triplex-build/triplex/runtime";
-import { Context } from "effect";
+import { Context, Effect } from "effect";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import type { DatomicClient } from "./DatomicClient.js";
 
@@ -10,6 +10,7 @@ export interface DatomicClaim {
   readonly timestamp: number;
 }
 export interface TransactionState {
+  importInstant?: number;
   readonly diagnostic?: import("./DatomicClient.js").DatomicCommitAttempt | undefined;
   readonly order?:
     | { ticket?: import("./CommitOrder.js").OrderedCommit; instant?: number }
@@ -44,3 +45,25 @@ export const CurrentTransactions = Context.Reference<ReadonlyMap<symbol, Transac
 // [DX-B3-M3] Why: unsupported reads restart before submission under the replay-safe callback contract.
 // Rejected: answering an entity or pattern read from an incomplete by-id cache.
 export class DatomicOptimisticRestart extends ReadError {}
+
+// [DX-ACT1] Why: a source clock belongs to one explicitly provisioned history-import database and one Effect. Rejected: a mutable process clock that could backdate a concurrent live save.
+export const ImportClock = Context.Reference<{ scope: string; instant: number } | undefined>(
+  "triplex/datomic/history-import-clock",
+  { defaultValue: () => undefined },
+);
+export const withDatomicImportClock = <A, E, R>(
+  scope: string,
+  instant: number,
+  write: Effect.Effect<A, E, R>,
+) => {
+  const identity = JSON.parse(scope);
+  if (
+    !Array.isArray(identity) ||
+    identity[0] !== "triplex-scope-v1" ||
+    !/^import-history-.+/.test(identity[3]) ||
+    !Number.isFinite(instant) ||
+    instant < 0
+  )
+    throw new TypeError("A named history-import database and finite source instant are required");
+  return Effect.provideService(write, ImportClock, { scope, instant });
+};
