@@ -7,14 +7,14 @@ The first shared resource to reach its limit is still unknown.
 Three changes to test are another sender core for offer delays, a larger transactor cache for repeated SQL reads, and smaller per-save work at the serial commit point. Their effects are unmeasured.
 The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. PostgreSQL grew by 594.29 bytes per fact and the volume including WAL grew by 1214.95 bytes per fact (one seed).
 
-The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 69.12 ms (90% interval 65.28–72.70 ms), above the 50 ms bar. Peak simultaneous client and engine memory was 21.87 GiB.
+The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 69.12 ms (90% interval 65.28–72.70 ms), above the 50 ms bar. Peak simultaneous client and engine memory was 21.87 GiB. The first reader attempt routed all 77,838 reads at L1, L4, L16, L64 through the gateway and failed replica coverage.
 
 **Bench measurements**
 
 | Item and arm | Scope | Commit p50 ms | Commit p99 ms | L256 read p99 ms | L256 feed p99 ms | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 zero | account 1 | 5.09 · 56505 [5.09, 5.12] | 69.12 · 56505 [65.28, 72.70] | — | 20.09 · 2895 [19.20, 20.35] | Observed · arm-d19-i1-zero-a |
-| 1 reader | account 1 | — | — | — | — | success · arm-d19-i1-reader-a |
+| 1 reader | account 1 | — | — | — | — | Incomplete · arm-d19-i1-reader-a |
 
 **Shared resources**
 
@@ -46,7 +46,7 @@ The tenant build passed 16 focused checks, 1,567 package tests and 18 additional
 - `tenants.ts`, `tenant-proof.ts` and the NS driver bind fresh empty or verified restored scopes, per-account intent and population hashes, receipt IDs and positions to the pinned two-root and catalog queries. O-REPLAY checks both roots. O-DOMAIN checks the activated account at each published page cut.
 - `tenant-feed.ts` and `tenant-metrics.ts` route effects and advance each tenant cursor in the same SQLite transaction as the physical checkpoint. They verify source, epoch, receipt positions and each account’s observed subjects. Each quiet-account ratio uses correct reads, receipt-clock commits and witnessed lag from the same phase and identity. Aggregate throughput counts actual primary acknowledgements.
 - `seed-image.ts` verifies the sealed PostgreSQL bytes, original scope, source, seed identity and original command receipts after restoration. `seed-anatomy.ts` binds serial SQL counts and adoption timestamps to the assigned source and slot. Missing observations stay unjudged.
-- The merged ACT1 collector checks the full native schedule and page coverage from this attempt, then compares the sealed seed hash, worker count, clone nonce, source and slot. Its negative controls substitute a different snapshot and a different passing schedule.
+- The merged ACT1 collector checks the full native schedule and page coverage from this attempt, then compares the sealed seed hash, worker count, clone nonce, source and slot. The reader starts its live feed after every worker installs the same verified seed cut. The feed measures each witnessed source position immediately after its SQLite commit, including pages followed by an injected crash.
 
 - `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file and physical database to its nonce, source, slot and account. Each scope stays live until every R2 completion marker agrees with that cohort.
 - The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The interference and small-account plans bind each scope’s business commands to a new frozen schedule. Their windows fix the sentinel’s offers and reader counts. After timed small-account traffic drains, `tenant-checks.ts` submits a tagged correction per account, loses its ACK and verifies the duplicate and original receipt against the durable tenant cursor.

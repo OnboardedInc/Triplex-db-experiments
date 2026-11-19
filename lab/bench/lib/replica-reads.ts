@@ -381,11 +381,12 @@ export class ReplicaReadHost {
   private clockEnds: Map<number, number>;
   readonly timings: Map<number, { availableAt?: number; receivedAt: number }>;
   private closeClient: (() => void) | undefined;
+  private beginAfterImages?: () => void;
   private listeners = new Set<(delta: ReadDelta) => void>();
   private constructor(
     source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean,
-    clockEnds: Map<number, number>, timings: Map<number, { availableAt?: number; receivedAt: number }>,
-    compactBootstrap: boolean, population: "all" | "touched", validAt: number,
+    clockEnds = new Map<number, number>(), timings = new Map<number, { availableAt?: number; receivedAt: number }>(),
+    compactBootstrap = false, population: "all" | "touched" = "all", validAt = Date.now(),
   ) {
     this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks);
     this.times = times;
@@ -404,18 +405,19 @@ export class ReplicaReadHost {
       if (update.reset && !update.valid) times.clear();
       // [DX-T1-15] Why: before the first reader subscribes, prepare the verified bootstrap in the retained index directly.
       // Rejected: keeping both full deltas alive, or delivering an unprepared delta to an already subscribed reader.
-      const slabs = compactBootstrap && update.reset && update.valid && !this.listeners.size ? new BootstrapStatsSlabs() : undefined;
+      const slabs = compactBootstrap && update.reset && update.valid ? new BootstrapStatsSlabs() : undefined;
+      const prepareInIndex = slabs && !this.listeners.size;
       const delta: ReadDelta = {
         ...update,
-        changes: slabs ? update.changes : update.changes.map(([id, previous, entity]: any) => [
+        changes: prepareInIndex ? update.changes : update.changes.map(([id, previous, entity]: any) => [
           id,
           previous,
-          prepareEntity(id, entity),
+          prepareEntity(id, entity, slabs),
         ]),
         ...(clock !== undefined && (!update.reset || Number.isFinite(clock)) ? { recordTime: clock, clockEnd: clockEnds.get(update.position) } : {}),
       };
       traceSync("replica.apply-delta", () => this.index.apply(delta,
-        slabs ? (id: string, entity: PackedEntity) => prepareEntity(id, entity, slabs) : undefined));
+        prepareInIndex ? (id: string, entity: PackedEntity) => prepareEntity(id, entity, slabs) : undefined));
       if (delta.valid && population === "all") this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now(), ...timings.get(delta.position) });
       timings.delete(delta.position);
       times.delete(update.position);
@@ -435,6 +437,7 @@ export class ReplicaReadHost {
     population: "all" | "touched" = "all",
     firstReadRoot?: string,
     validAt = Date.now(),
+    afterReaderImages = false,
   ) {
     const client = new api.DatomicClient(
       endpoint,
@@ -446,7 +449,7 @@ export class ReplicaReadHost {
     );
     const timed = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), population === "all" && feed === "inline" ? validAt : undefined);
     const { times, clockEnds, timings } = timed;
-    const source = boundedReplicaFeed(timed.source);
+    const source = boundedReplicaFeed(timed.source, afterReaderImages);
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
     const witness = population === "touched" ? firstReadRoot : roots[0];
@@ -463,15 +466,25 @@ export class ReplicaReadHost {
     }
     const host = new ReplicaReadHost(source, times, historyBytes,
       capability.supported === true && capability.strictRecordClocks === true, clockEnds, timings,
-      roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population, validAt);
+      afterReaderImages || roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population, validAt);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
-    host.replica.start();
+    if (afterReaderImages) {
+      // [DX-SCALE1] Why: cloning the seed into six readers blocked the first feed request for 219 seconds. Rejected: stretching the deadline or issuing traffic during setup.
+      host.beginAfterImages = () => { client.agent.destroy(); host.replica.start(); };
+    } else host.replica.start();
     return host;
     } catch (error) {
       client.close();
       throw error;
     }
+  }
+  followAfterImages(seedPosition: number) {
+    if (!this.beginAfterImages || !this.index.valid || this.index.position !== seedPosition)
+      throw Error("Reader images must share the original verified seed cut");
+    const begin = this.beginAfterImages;
+    this.beginAfterImages = undefined;
+    begin();
   }
   subscribe(listener: (delta: ReadDelta) => void) {
     this.listeners.add(listener);
@@ -520,8 +533,19 @@ export async function bootstrapClock(source: { page(...args: any[]): Promise<any
 
 // [DX-R3-P8] Why: four journals bound CPU/packing bursts between long polls without changing ordered content.
 // Rejected: waiting to pack sixteen growing hot worlds before requesting the next page.
-export function boundedReplicaFeed<T extends { feed(after: number, limit: number, waitMs: number): Promise<any> }>(source: T): T {
-  return { ...source, feed: (after: number, limit: number, waitMs: number) => source.feed(after, Math.min(limit, 4), waitMs) };
+export function boundedReplicaFeed<T extends { feed(after: number, limit: number, waitMs: number): Promise<any> }>(source: T, retryDroppedSocket = false): T {
+  return { ...source, async feed(after: number, limit: number, waitMs: number) {
+    const fetch = () => source.feed(after, Math.min(limit, 4), waitMs);
+    try { return await fetch(); }
+    catch (error) {
+      // [DX-SCALE1] Why: a read-only poll may lose its connection while a seed image is distributed. Rejected: retrying malformed bytes, advancing the cursor or silently swallowing repeated failures.
+      if (!retryDroppedSocket || !(error instanceof Error) || !(error instanceof api.DatomicTransportError)) throw error;
+      const code = (error.cause as NodeJS.ErrnoException | undefined)?.code;
+      if (code !== "ECONNRESET" && code !== "EPIPE" && error.message !== "Gateway deadline exceeded") throw error;
+      process.stderr.write(`Replica feed retry at position ${after}: ${code ?? "deadline"}\n`);
+      return fetch();
+    }
+  } };
 }
 
 // [DX-R3-P8] Why: equal native cuts do not prove an arbitrary caller clock equals the journal clock.

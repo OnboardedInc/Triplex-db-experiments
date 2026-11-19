@@ -98,6 +98,19 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       ? `${s.summary.perScope.map((p: any) => round(p.deep.r2.wallMs / 1000)).join(", ")} s across ${s.summary.scopeCount} sweeps, with ${s.summary.perScope.reduce((n: number, p: any) => n + (p.deep.activationOracle?.checked ?? 0), 0)} independently checked people`
       : "pending";
   const emptied = stages.find((s) => s.resources?.firstObservedEngineOOM);
+  const firstReader = stages.find(s => s.attempt.item === 1 && s.attempt.mode === "reader" && !s.summary);
+  let incompleteReader = "";
+  if (firstReader) {
+    const run = load(path.join(evidence, firstReader.tag, "summaries/s0"), "ns-report.json");
+    if (run?.deep?.identity && Array.isArray(run.phases)) {
+      assert(run.deep.identity.source === firstReader.attempt.source && run.deep.identity.nonce === firstReader.attempt.nonce && run.deep.identity.slot === firstReader.attempt.slot);
+      const missed = run.phases.filter((p: any) => {
+        const observed = run.phaseProgress?.[p.idx];
+        return /^L[0-9]+$/.test(p.name) && p.actualEnd > p.actualStart && observed?.reads > 0 && observed.routes.fallback === observed.reads;
+      });
+      if (missed.length) incompleteReader = ` The first reader attempt routed all ${missed.reduce((n: number,p: any)=>n+run.phaseProgress[p.idx].reads,0).toLocaleString("en-US")} reads at ${missed.map((p: any)=>p.name).join(", ")} through the gateway and failed replica coverage.`;
+    }
+  }
   const refused = stages.find((s) => s.terminal.service === "capacity-refused");
   const partialTen =
     recent(5, "seed") ??
@@ -127,7 +140,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "",
     ...(base?.summary
       ? [
-          `The zero-reader 10k arm acknowledged ${base.summary.commit.p99.n.toLocaleString("en-US")} primary commands. Commit p99 was ${round(base.summary.commit.p99.value)} ms (90% interval ${round(base.summary.commit.p99.interval90.low)}–${round(base.summary.commit.p99.interval90.high)} ms), above the 50 ms bar. Peak simultaneous client and engine memory was ${round(base.size.simultaneousPeakBytes / 1024 ** 3)} GiB.`,
+          `The zero-reader 10k arm acknowledged ${base.summary.commit.p99.n.toLocaleString("en-US")} primary commands. Commit p99 was ${round(base.summary.commit.p99.value)} ms (90% interval ${round(base.summary.commit.p99.interval90.low)}–${round(base.summary.commit.p99.interval90.high)} ms), ${base.summary.commit.p99.value > 50 ? "above" : "within"} the 50 ms bar. Peak simultaneous client and engine memory was ${round(base.size.simultaneousPeakBytes / 1024 ** 3)} GiB.${incompleteReader}`,
         ]
       : []),
     "",
@@ -152,7 +165,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         const sentinel = id === "account 1",
           c = sentinel ? m?.perScope?.[0]?.commit : m?.commit;
         lines.push(
-          `| ${item} ${mode} | ${id} | ${metric(c?.p50)} | ${metric(c?.p99)} | ${metric(bar(s, "NS-P1-READ-P99-256-MS", sentinel))} | ${metric(bar(s, "NS-P3 lag p99 ms at L256", sentinel))} | ${m?.invalid?.length ? "Unjudged" : m ? "Observed" : s.terminal.service} · ${s.tag} |`,
+          `| ${item} ${mode} | ${id} | ${metric(c?.p50)} | ${metric(c?.p99)} | ${metric(bar(s, "NS-P1-READ-P99-256-MS", sentinel))} | ${metric(bar(s, "NS-P3 lag p99 ms at L256", sentinel))} | ${m?.invalid?.length ? "Unjudged" : m ? "Observed" : s.terminal.service === "success" ? "Incomplete" : s.terminal.service} · ${s.tag} |`,
         );
       }
     }
@@ -261,7 +274,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- `tenants.ts`, `tenant-proof.ts` and the NS driver bind fresh empty or verified restored scopes, per-account intent and population hashes, receipt IDs and positions to the pinned two-root and catalog queries. O-REPLAY checks both roots. O-DOMAIN checks the activated account at each published page cut.",
     "- `tenant-feed.ts` and `tenant-metrics.ts` route effects and advance each tenant cursor in the same SQLite transaction as the physical checkpoint. They verify source, epoch, receipt positions and each account’s observed subjects. Each quiet-account ratio uses correct reads, receipt-clock commits and witnessed lag from the same phase and identity. Aggregate throughput counts actual primary acknowledgements.",
     "- `seed-image.ts` verifies the sealed PostgreSQL bytes, original scope, source, seed identity and original command receipts after restoration. `seed-anatomy.ts` binds serial SQL counts and adoption timestamps to the assigned source and slot. Missing observations stay unjudged.",
-    "- The merged ACT1 collector checks the full native schedule and page coverage from this attempt, then compares the sealed seed hash, worker count, clone nonce, source and slot. Its negative controls substitute a different snapshot and a different passing schedule.",
+    "- The merged ACT1 collector checks the full native schedule and page coverage from this attempt, then compares the sealed seed hash, worker count, clone nonce, source and slot. The reader starts its live feed after every worker installs the same verified seed cut. The feed measures each witnessed source position immediately after its SQLite commit, including pages followed by an injected crash.",
     "",
     "- `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file and physical database to its nonce, source, slot and account. Each scope stays live until every R2 completion marker agrees with that cohort.",
     "- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The interference and small-account plans bind each scope’s business commands to a new frozen schedule. Their windows fix the sentinel’s offers and reader counts. After timed small-account traffic drains, `tenant-checks.ts` submits a tagged correction per account, loses its ACK and verifies the duplicate and original receipt against the durable tenant cursor.",

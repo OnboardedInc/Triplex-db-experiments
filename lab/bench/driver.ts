@@ -671,12 +671,13 @@ async function run() {
   await idleKeep?.ready;
 
   // ---------------------------------------------------------------- reader workers
+  const afterReaderImages = Boolean(deep && !config.zeroReaders && !config.sharedReaderIndex && pairPlan?.readers !== 0);
   const replicaHost = config.readPath === "replica" ? config.replicaThread === "worker"
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
       composition: config.composition, roots: Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
       worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer,
-      sharedReaderIndex: config.sharedReaderIndex,
+      sharedReaderIndex: config.sharedReaderIndex, afterReaderImages,
       receiptSpill: config.receiptCapture === "replica-worker" ? spill!.connect() : undefined,
       ...(config.sharedReaderIndex ? { worker: 0, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2 } : {}),
     }, aux)
@@ -768,6 +769,9 @@ async function run() {
   // Rejected: starting worker 99 from runSweep while the frozen writer is already issuing commands.
   const preparedSweeper = replicaHost && !tenantSpec && !deepSmoke && !activationOnly && !interferenceOnly && !smallOnly && !config.zeroReaders && !config.readerLadderOnly
     ? await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 }) : undefined;
+  // [DX-SCALE1] Why: READY follows actual seed image installation on every reader, including the sweep worker. Rejected: a timer or a socket deadline larger than one image transfer.
+  if (afterReaderImages && replicaHost && "connect" in replicaHost)
+    await replicaHost.followAfterImages(workers.length + Number(Boolean(preparedSweeper)));
   let basisCursor: number | null = null;
   const basisBroadcast = { messages: 0, ackItems: 0, ticks: 0, wall: new Histogram() };
   const broadcast = () => {

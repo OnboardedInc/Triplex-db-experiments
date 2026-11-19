@@ -267,6 +267,8 @@ async function run(step: Step) {
       summary.nonce === a.nonce &&
       summary.slot === a.slot &&
       summary.scopeCount === a.spec.scopes &&
+      summary.perScope.length === a.spec.scopes &&
+      new Set(summary.perScope.map((s: any) => s.account)).size === a.spec.scopes &&
       summary.perScope.every((s: any) => {
         const o = s.observations;
         assert(Number.isInteger(s.account) && s.account >= 0 && s.account < a.spec.scopes);
@@ -298,7 +300,7 @@ async function run(step: Step) {
           o.committed === o.primaries
         );
       })
-    : t.scopeReports === 0;
+    : verified && t.scopeReports === 0 && (step.mode === "seed" || exists(path.join(base, "database-limit.json")));
   return {
     success: t.service === "success" && verified && correctness,
     capacity: t.service === "capacity-refused",
@@ -307,6 +309,14 @@ async function run(step: Step) {
     correctness,
     invalid: summary?.invalid,
   };
+}
+// [DX-SCALE1] Why: a reader fix needs a fresh zero on the same source; both attempts remain in the item's failure count. Rejected: comparing different revisions or letting another item bypass a failure.
+export function resumesItem(failed: Step, retry: Step, next?: Step) {
+  if (retry.item !== failed.item || retry.layout !== failed.layout || retry.retryOf !== failed.tag) return false;
+  if (retry.mode === failed.mode) return true;
+  return failed.mode === "reader" && retry.mode === "zero" && retry.source !== failed.source &&
+    next?.item === retry.item && next.mode === "reader" && next.layout === retry.layout && next.source === retry.source &&
+    next.baseline === retry.tag && next.retryOf === failed.tag;
 }
 // [DX-SCALE1] Why: each phase must survive a disconnected Mac, release its systemd cgroup and retain an independently identifiable terminal attempt. Rejected: a background SSH stream or proceeding after a second failed experiment.
 async function main() {
@@ -335,7 +345,7 @@ async function main() {
       if (
         !last.success &&
         !last.capacity &&
-        (step.item !== last.item || step.mode !== last.mode || step.retryOf !== last.tag)
+        !resumesItem(last, step, p.steps[p.steps.indexOf(step) + 1])
       ) {
         state({ stage: "first-failure-needs-retry", item: last.item, ledger });
         process.exitCode = 1;
