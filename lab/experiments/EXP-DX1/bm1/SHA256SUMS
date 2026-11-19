@@ -68,3 +68,4 @@ b5dd477832a3753928180cce61e6b2de7c221a13d0c2fad23bb13f9f83eabec1  drv1a/catalog.
 8756ac154186874ce5b9db4bb69360beff1f6e58087e81e503d8013fef1fe5de  drv1a/mixed-spill.log
 84ffe9ed45f317caf591c343ca717ac8828238deaaf36fab8b5499db8d3c2edd  drv1a/afternoon-launch.log
 15ab6d06400d53454875185e4339f8ac12c09e94960033512318f54d8caad38a  tx2-dxt1-bm1-p3-setup/transfer/TRANSFER.sha256
+91ed2b40f1a0d016b8f6f7ad0ba3a45f9a3f9f9dd9a183129178bef1c62b2fa3  drv1a/guarded-schedules/tx2-dxt1-bm1-actab8325281-activation-a/SHA256SUMS
