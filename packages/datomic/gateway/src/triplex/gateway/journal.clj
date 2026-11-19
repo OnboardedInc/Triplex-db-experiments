@@ -41,17 +41,18 @@
       (admission/execute admission/journals (fn []
         (let [;; [DX-B6-5] Why: an explicit basis selects a cut after freshness, rather than exposing later journals.
           ;; Rejected: waiting for R and then enumerating the current head unconditionally.
-          db (if-let [basis (get input "basis")] (first (reach/select-db name current basis)) current)
+          [db _ _ _ inner] (if-let [basis (get input "basis")] (reach/select-db name current basis) [current])
+          cut-head (or (:position inner) (storage/head-position name db))
           ;; Physical positions are monotonic; nested logical journals are sorted within each physical commit.
           journals (mapcat (fn [tx]
                              (let [links (vec (d/datoms db :eavt (:e tx) :triplex.tx/journals))]
                                (sort-by second
                                  (for [link links
                                        :let [e (:v link) p (value db e :triplex.journal/position)]
-                                       :when (> p after)] [e p (:v tx)]))))
+                                       :when (< after p (inc cut-head))] [e p (if (and (d/entid db :triplex.group/position) (d/entid db [:triplex.group/position p])) p (:v tx))]))))
                            (d/index-range db :triplex.tx/position (inc after) nil))
           out (StringBuilder.)]
-      (.append out "{\"availableAt\":") (.append out (System/currentTimeMillis)) (.append out ",\"head\":") (.append out (str (storage/head-position name db))) (.append out ",\"transactions\":[")
+      (.append out "{\"availableAt\":") (.append out (System/currentTimeMillis)) (.append out ",\"head\":") (.append out (str cut-head)) (.append out ",\"transactions\":[")
       (doseq [[i [e p]] (map-indexed vector (take limit journals))]
         (when (value db e :triplex.entity/row-overflow) (reach/decline! "row-overflow"))
         (when (pos? i) (.append out ","))

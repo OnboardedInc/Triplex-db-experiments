@@ -56,6 +56,13 @@ export class RecentReads {
       throw new TypeError("Invalid recent-read budget");
   }
   get strictRecordClocks(): boolean { return this.strictClocks; }
+  // [DX-THIN1] Why: the first exact page proves membership starting at this cut only.
+  // Rejected: synthesizing a journal or backdating an entity to the bootstrap floor.
+  admit(position: number, entries: ReadonlyMap<string, PackedEntity>): void {
+    if (!this.valid || this.position !== position) throw new Error("Admission cut mismatch");
+    for (const id of entries.keys()) if (this.current.has(id)) throw new Error("Duplicate admission");
+    for (const [id, entity] of entries) this.current.set(id, { from: position, entity });
+  }
   apply(delta: ReadDelta, prepare?: (id: string, entity: PackedEntity) => PackedEntity): void {
     if (delta.reset) {
       this.current.clear();

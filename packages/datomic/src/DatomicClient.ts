@@ -225,6 +225,7 @@ export class DatomicClient {
     readonly timeoutMs = 5000,
     readonly maxResponseBytes = 64 * 1024 ** 2,
     readonly cacheOptions: {
+      readonly groupAccount?: string;
       readonly entityCacheBytes?: number;
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
@@ -819,6 +820,7 @@ export class DatomicClient {
     db: string,
     input: {
       onSent?: () => void;
+      groupAccount?: string;
       clientId?: string;
       sendSequence?: number;
       replaySafe?: boolean;
@@ -880,6 +882,7 @@ export class DatomicClient {
       compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
     const body = {
       ...wireInput,
+      ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
       rows,
       ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
@@ -964,6 +967,83 @@ export class DatomicClient {
         };
     }
     return response;
+  }
+  // [DX-W1] Why: all retries of one claimed command return its original durable logical receipt, including after an ambiguous transport failure.
+  // Rejected: retrying a write after an unknown ACK or returning the last member of its physical transaction.
+  async transactCommand(db: string, input: Parameters<DatomicClient["transact"]>[1]) {
+    if (input.claims.length !== 1) throw new TypeError("One command claim is required");
+    const claim = input.claims[0]!;
+    type Result = {
+      operationId: string;
+      position: TaggedValue;
+      t: TaggedValue;
+      recordedAt: TaggedValue;
+    };
+    const receipt = (txId: string, ack: Result) => {
+      const p = validateTagged(ack.position),
+        t = validateTagged(ack.t),
+        clock = validateTagged(ack.recordedAt);
+      if (
+        typeof ack.operationId !== "string" ||
+        !ack.operationId ||
+        p.t !== "long" ||
+        !Number.isSafeInteger(Number(p.v)) ||
+        Number(p.v) < 1 ||
+        t.t !== "long" ||
+        BigInt(t.v) < 1n ||
+        clock.t !== "double" ||
+        !Number.isFinite(clock.v)
+      )
+        throw new TypeError("Invalid command receipt");
+      return {
+        commandId: claim.commandId,
+        txId,
+        operationId: ack.operationId,
+        position: Number(p.v),
+        t: String(t.v),
+        recordedAt: Number(clock.v),
+      };
+    };
+    try {
+      const ack = (await this.transact(db, input)) as Result;
+      if (ack.operationId !== input.operationId) throw new TypeError("Commit operation mismatch");
+      return receipt(claim.txId, ack);
+    } catch (error) {
+      if (
+        !(
+          error instanceof DatomicTransportError ||
+          (error instanceof DatomicHttpError &&
+            ["CommandConflict", "OperationDuplicate", "OutcomeUnknown"].includes(error.code))
+        )
+      )
+        throw error;
+      const deadline = performance.now() + this.timeoutMs;
+      do {
+        const remaining = Math.max(1, Math.ceil(deadline - performance.now()));
+        try {
+          const found = await this.request<{
+            txId: string | null;
+            receipt?: Result & { status: string };
+            commandId?: string;
+          }>(
+            "POST",
+            `/v1/db/${db}/claim`,
+            { commandId: claim.commandId, receipt: true },
+            remaining,
+          );
+          if (found.txId) {
+            if (found.commandId !== claim.commandId || found.receipt?.status !== "committed")
+              throw new TypeError("Stored command receipt mismatch");
+            return receipt(found.txId, found.receipt);
+          }
+        } catch (readError) {
+          if (!(readError instanceof DatomicTransportError)) throw readError;
+        }
+        const left = deadline - performance.now();
+        if (left > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(25, left)));
+      } while (performance.now() < deadline);
+      throw error;
+    }
   }
   operation(
     db: string,
