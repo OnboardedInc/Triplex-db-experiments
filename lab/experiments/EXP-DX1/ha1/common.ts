@@ -92,6 +92,7 @@ export class Evidence {
     parent: string,
     readonly mode: Mode,
     readonly slot: string,
+    readonly shape: "deep" | "mixed" = "deep",
   ) {
     fs.mkdirSync(parent, { recursive: true });
     this.dir = path.join(parent, mode + "-" + this.nonce);
@@ -100,6 +101,7 @@ export class Evidence {
       nonce: this.nonce,
       mode,
       slot,
+      shape,
       source: this.source,
       utc: new Date().toISOString(),
     });

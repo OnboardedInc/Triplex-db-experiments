@@ -256,9 +256,15 @@ export async function oneAccount(s: Stack, people: number) {
       receipt,
       end: clock(),
     }));
+    const throughout = readReceipt(red, pin, subject).then((rows) => {
+      assert.deepEqual(rows, oldView);
+      return clock();
+    });
     const delta = await restart().switch(await red.state());
     const [firstNew, inside] = await Promise.all([pending, canary]);
     const end = firstNew.at;
+    const readAt = await throughout;
+    assert(readAt >= start && readAt <= end);
     assert(inside.end >= start && inside.end <= end, "Neighbor must commit while red is paused");
     assert(delta.checked === 1 && delta.facts === 3);
     busy = false;
@@ -299,6 +305,38 @@ export async function oneAccount(s: Stack, people: number) {
         assert(item);
         assert.deepEqual(e.receipt, item.receipt);
         assert.equal(e.observedFacts, item.input.rows.length);
+        const tx = item.input.claims[0]!;
+        assert.deepEqual(e.feed, {
+          positions: [String(e.sequence)],
+          commandIds: [tx.commandId],
+          txIds: [tx.txId],
+          operationId: item.input.operationId,
+          stamp: String(tx.timestamp),
+          stampStatus: "decided",
+          changes: item.input.rows
+            .map((r) => ({
+              op: item.input.newIds.includes(r.id) ? "assert" : "retract",
+              entity: r.entity_id,
+              attribute: r.attribute,
+              assertionId: r.id,
+              validFrom: r.valid_from,
+              validTo: r.valid_to,
+              position: String(e.sequence),
+            }))
+            .sort((x, y) => (x.assertionId < y.assertionId ? -1 : 1)),
+        });
+        if (item.input.newIds.length === item.input.rows.length) {
+          const actual = await readReceipt(copy, item.receipt, item.input.rows[0]!.entity_id);
+          const values = new Map(actual.map((r) => [r["id"].v, r]));
+          assert.equal(values.size, item.input.rows.length);
+          for (const r of item.input.rows) {
+            const v = values.get(r.id);
+            assert(v);
+            assert.equal(v["value_string"].v, r.value_string);
+            assert.equal(v["valid_from"].v, r.valid_from);
+            assert.equal(v["recorded_position"].v, item.receipt.position.v);
+          }
+        }
         checked++;
       }
       after = src.next;
@@ -321,6 +359,7 @@ export async function oneAccount(s: Stack, people: number) {
       verifiedBeforeFence: pre,
       finalDelta: delta,
       pauseMs: end - start,
+      pinnedReadDuringCutMs: readAt - start,
       pendingWaitMs: end - attempted,
       neighborCommits: neighbors.length + 2,
       neighborDuringCutMs: inside.end - start,

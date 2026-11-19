@@ -59,6 +59,11 @@
         (-> r (assoc-in ["t" "v"] (str (+ (:ha/end-t owner) (- (d/tx->t (:db/id entry)) activation))))
               (assoc-in ["position" "v"] (str (+ (:ha/end-p owner) (- (:triplex.tx/position entry) (store/head-position (d/as-of db activation)))))))
         r))))
+;; [DX-HA1] Why: JSON numbers round-trip an integral tagged double through JavaScript as an integer. Rejected: dropping the recorded time or accepting a changed type tag to match a pin.
+(defn same-receipt? [left right]
+  (let [path ["recordedAt" "v"] a (get-in left path) b (get-in right path)]
+    (and (number? a) (number? b) (= "double" (get-in left ["recordedAt" "t"]))
+         (= (assoc-in left path (double a)) (assoc-in right path (double b))))))
 (defn key-at [tenant n] (format "%s/%016d" tenant (long n)))
 (defn meta-state [db tenant]
   (let [e (d/entity db [:ha/account tenant])]
@@ -112,7 +117,7 @@
                               (check (and (= tenant (:ha/tenant e)) (= bytes (:ha/body e))
                                           (or (nil? import) (and (= (get import "sequence") (:ha/seq e))
                                               (= (get import "digest") (:ha/digest e))
-                                              (= (get import "receipt") (receipt cut e))))) "OperationPayloadConflict")
+                                              (same-receipt? (get import "receipt") (receipt cut e))))) "OperationPayloadConflict")
                               (receipt cut e))))]
     (or (existing db)
         (let [x (cond-> {:body bytes :body-hash sha :tx-key tx}
@@ -131,11 +136,11 @@
       (let [input (main/request-json (:body req)) txn (= (:uri req) (str "/v1/db/" name "/transact"))
             op (if txn "write" (last (str/split (:uri req) #"/"))) tenant (get input "haAccount") gen (get input "haGeneration")
             db (d/db conn) admin (= secret (get-in req [:headers "x-ha1-admin"]))
-            _ (check (and (or txn (= (:uri req) (str "/ha1/shared/" op))) (string? tenant) (re-matches #"[a-z0-9-]{1,64}" tenant)) "UnsupportedRoute")
+            _ (check (and (or txn (and (= name (get input "haDatabase")) (= (:uri req) (str "/ha1/shared/" op)))) (string? tenant) (re-matches #"[a-z0-9-]{1,64}" tenant)) "UnsupportedRoute")
             _ (when (#{"init" "export" "import" "verify" "fence" "activate"} op) (check admin "AdminRequired"))
             result (case op
              "state" (meta-state db tenant)
-             "init" (let [mode (get input "mode")] (check (#{"importing" "serving"} mode) "InvalidPlacement")
+             "init" (let [mode (get input "mode")] (check (and (#{"importing" "serving"} mode) (= (= mode "serving") (= name (get input "source")))) "InvalidPlacement")
                       (meta-state (post! conn tenant gen :init {:mode mode :source (get input "source")}) tenant))
              "write" (let [r (transact! name conn tenant gen :write (dissoc input "haAccount" "haGeneration" "attemptId") nil)]
                        (assoc r "delta" (- (Long/parseLong (get-in r ["position" "v"])) (get input "position"))))
@@ -169,7 +174,7 @@
                                       (:ha/seq (d/entity db (:e datom))))))]
                         {:account tenant :sequence (or seq 0)})
              "read" (let [e (entry-at db tenant (get input "sequence"))
-                           _ (check (= (get input "receipt") (json/read-str (json/write-str (receipt db e)))) "PinMismatch")
+                           _ (check (same-receipt? (get input "receipt") (receipt db e)) "PinMismatch")
                            id (get input "id") subj (get input "subject")
                            _ (check (and (not= (some? id) (some? subj)) (owned? tenant (or id subj))) "ScopeMismatch")]
                       {:rows (rows-at name db tenant e (merge (if id {"id" id} {"entityIds" [subj]})

@@ -219,6 +219,7 @@ export async function oneBackup(s: Stack, people: number) {
     await s.remove("write");
     await s.remove("active");
     await s.remove("pg");
+    const sourceIsolationMs = clock() - loss.from;
     const measureRestore = async (
       kind: "wal" | "datomic",
       cut: string,
@@ -320,6 +321,16 @@ export async function oneBackup(s: Stack, people: number) {
     });
     const result = {
       population,
+      sourceIsolationMs,
+      datFullFacts: oldInputs
+        .filter((i) => BigInt(ac.receipts.get(i.operationId)!.t.v) <= BigInt(baselineT))
+        .reduce((n, i) => n + i.newIds.length, 0),
+      datDeltaFacts: oldInputs
+        .filter((i) => {
+          const t = BigInt(ac.receipts.get(i.operationId)!.t.v);
+          return t > BigInt(baselineT) && t <= BigInt(finalT);
+        })
+        .reduce((n, i) => n + i.newIds.length, 0),
       pgBaseMs,
       pgBaseBytes,
       baseEnd,

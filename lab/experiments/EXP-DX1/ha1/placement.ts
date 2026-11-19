@@ -61,6 +61,7 @@ export class AccountEndpoint {
       },
       body: JSON.stringify({
         ...body,
+        haDatabase: this.place.db,
         haAccount: this.account,
         haGeneration: this.place.generation,
       }),
@@ -190,6 +191,7 @@ export class AccountMove {
     assert.deepEqual(actual, seal);
     assert(
       seal.mode === "fenced" &&
+        seal.source === this.source.place.db &&
         seal.account === this.source.account &&
         seal.target === this.target.place.db &&
         seal.generation === this.source.place.generation &&

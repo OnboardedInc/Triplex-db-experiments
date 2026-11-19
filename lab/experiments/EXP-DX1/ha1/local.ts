@@ -30,7 +30,9 @@ export async function localDrill(opts: any, config: any, manager: any) {
     e: Evidence;
   const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
   function declare(slot: string) {
-    const attempt = new Evidence(path.join(folder, "evidence", "DX-HA1"), mode, slot);
+    const shape = opts["population-shape"] ?? "deep";
+    assert(shape === "deep" || shape === "mixed");
+    const attempt = new Evidence(path.join(folder, "evidence", "DX-HA1"), mode, slot, shape);
     console.log(attempt.dir);
     return attempt;
   }

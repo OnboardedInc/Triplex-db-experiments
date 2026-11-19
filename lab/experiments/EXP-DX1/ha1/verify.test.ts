@@ -4,7 +4,8 @@ import { Account } from "../../../../packages/datomic/test/ha1-account.ts";
 import { Satellite } from "./satellite.ts";
 import { projection } from "./projection.ts";
 import { backupCut, vendorResult } from "./move.ts";
-import { loopback } from "./common.ts";
+import { AccountEndpoint, AccountMove, readReceipt } from "./placement.ts";
+import { hash, loopback } from "./common.ts";
 test("recovery rejects a changed receipt, wrong tenant and corrupt feed interval", () => {
   const ac = new Account("test-run-scope", "http://" + loopback, "http://" + loopback);
   try {
@@ -123,4 +124,124 @@ test("second host only mutates the container created for this attempt", async ()
     }),
     { name: "AssertionError" },
   );
+});
+
+test("logical copy refuses a changed value digest and never advances its checkpoint", async () => {
+  const place = { endpoint: "http://" + loopback, db: "old", generation: 1 };
+  const source = new AccountEndpoint("red", place),
+    dest = new AccountEndpoint("red", { ...place, db: "new", generation: 2 });
+  const body = '{"operationId":"red~one"}',
+    digest = hash(":1:" + hash(body));
+  const receipt = {
+    operationId: "red~one",
+    position: { t: "long", v: "1" },
+    t: { t: "long", v: "1008" },
+    recordedAt: { t: "double", v: 1000 },
+  } as const;
+  const entry = {
+    account: "red",
+    sequence: 1,
+    prev: "",
+    digest,
+    body,
+    receipt,
+    feed: { changes: [] },
+    valueHash: "expected",
+    observedFacts: 1,
+  };
+  const directory = {
+    current: async () => place,
+    publish: async () => {
+      throw Error("unexpected publication");
+    },
+  };
+  let verifies = 0;
+  try {
+    source.page = async () => ({ account: "red", after: 0, next: 1, entries: [entry] });
+    dest.state = async () => ({
+      account: "red",
+      mode: "importing",
+      source: "old",
+      target: null,
+      generation: 2,
+      sequence: 0,
+      digest: "",
+      verified: 0,
+      sealT: null,
+      sealP: null,
+    });
+    dest.page = async () => ({
+      account: "red",
+      after: 0,
+      next: 1,
+      entries: [{ ...entry, valueHash: "corrupt" }],
+    });
+    dest.post = async <T>(op: string) => {
+      if (op === "verify") verifies++;
+      return receipt as T;
+    };
+    await assert.rejects(new AccountMove(source, dest, directory).copy(1), {
+      name: "AssertionError",
+    });
+    assert.equal(verifies, 0);
+    source.page = async () => ({
+      account: "red",
+      after: 0,
+      next: 1,
+      entries: [{ ...entry, body: body + " " }],
+    });
+    await assert.rejects(new AccountMove(source, dest, directory).copy(1), {
+      name: "AssertionError",
+    });
+    assert.equal(verifies, 0);
+  } finally {
+    source.close();
+    dest.close();
+  }
+});
+test("logical migration refuses another physical database, stale generation or forged old pin", async () => {
+  const p = { db: "original", generation: 1, endpoint: "http://" + loopback };
+  const src = new AccountEndpoint("red", p),
+    dst = new AccountEndpoint("red", { ...p, db: "new", generation: 2 });
+  const receipt = {
+    operationId: "red~a",
+    position: { t: "long", v: "2" },
+    t: { t: "long", v: "1000" },
+    recordedAt: { t: "double", v: 5 },
+  } as const;
+  let writes = 0;
+  try {
+    const dir = {
+      current: async () => p,
+      publish: async () => {
+        writes++;
+      },
+    };
+    const seal = {
+      mode: "fenced",
+      account: "red",
+      source: "original",
+      target: "foreign",
+      generation: 1,
+      verified: 0,
+      sequence: 1,
+      digest: "bound",
+      sealT: 1005,
+      sealP: 3,
+    } as const;
+    src.state = async () => seal;
+    await assert.rejects(new AccountMove(src, dst, dir).switch(seal), { name: "AssertionError" });
+    assert.equal(writes, 0);
+    await assert.rejects(new AccountMove(src, dst, dir).switch({ ...seal, generation: 2 }), {
+      name: "AssertionError",
+    });
+    assert.equal(writes, 0);
+    dst.lookup = async () => ({ found: true, sequence: 1, receipt });
+    await assert.rejects(readReceipt(dst, { ...receipt, t: { t: "long", v: "1001" } }, "red~a"), {
+      name: "AssertionError",
+    });
+  } finally {
+    src.close();
+    dst.close();
+  }
 });

@@ -8,7 +8,8 @@ import path from "node:path";
 import { drill } from "./run.ts";
 import type { Site } from "./stack.ts";
 
-const [mode, tag, sha, addrA, addrB, remoteImage, store, campaign, people] = process.argv.slice(2);
+const [mode, tag, sha, addrA, addrB, remoteImage, store, campaign, people, shape = "deep"] =
+  process.argv.slice(2);
 assert(process.platform === "linux" && head() === sha && sha?.match(/^[a-f0-9]{40}$/));
 assert(tag && /^[a-z][a-z0-9-]{2,40}$/.test(tag) && mode && addrA !== addrB);
 export function privateAddress(s: string) {
@@ -76,7 +77,8 @@ try {
     "one-account": "100,1000,10000",
     "one-sync": "1000",
   };
-  const sizes = (people ?? defaults[mode]!).split(",").map(Number);
+  assert(shape === "deep" || shape === "mixed");
+  const sizes = (people || defaults[mode]!).split(",").map(Number);
   assert(
     sizes.length &&
       sizes.every(
@@ -86,12 +88,12 @@ try {
   );
   fs.writeFileSync(
     path.join(store, "campaign.json"),
-    JSON.stringify({ tag, sha, mode, campaign, sizes }) + "\n",
+    JSON.stringify({ tag, sha, mode, campaign, sizes, shape }) + "\n",
     { flag: "wx" },
   );
   const points: MovePoint[] = [];
   for (const n of sizes) {
-    const e = new Evidence(store, modeOf(mode), tag);
+    const e = new Evidence(store, modeOf(mode), tag, shape);
     process.stdout.write("@attempt " + JSON.stringify({ nonce: e.nonce, prefix: e.prefix }) + "\n");
     await drill(e, a, b, { people: n, scopes: 5, capacity: "two-host" }, () => {});
     if (mode === "move") {

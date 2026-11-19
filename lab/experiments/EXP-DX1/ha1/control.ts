@@ -171,7 +171,8 @@ try {
       remoteImage,
       store,
       campaign,
-      ...(process.env["HA1_PEOPLE"] ? [process.env["HA1_PEOPLE"]] : []),
+      process.env["HA1_PEOPLE"] ?? "",
+      process.env["HA1_BENCH_SHAPE"] ?? "deep",
     ];
   const child = spawn("ssh", argv(0, remoteArgs), { stdio: ["pipe", "pipe", "inherit"] });
   const done = new Promise<number | null>((ok, fail) => {
@@ -282,6 +283,8 @@ try {
       assert.equal(attempt.source.git, sha);
       assert.equal(attempt.slot, tag);
       assert.equal(attempt.mode, mode);
+      assert.equal(attempt.shape, declaration.shape);
+      assert.equal(declaration.shape, process.env["HA1_BENCH_SHAPE"] ?? "deep");
       assert.deepEqual(summary.source, attempt.source);
       assert.equal(summary.slot, tag);
       assert.equal(summary.nonce, nonce);

@@ -74,7 +74,9 @@ export async function oneFailover(s: Stack, people: number) {
               assert.deepEqual(
                 sorted(rows),
                 sorted(
-                  input.rows.map((r) => ({ ...r, recorded_position: basis.recordedPosition })),
+                  input.rows
+                    .filter((r) => r.entity_id === id)
+                    .map((r) => ({ ...r, recorded_position: basis.recordedPosition })),
                 ),
               );
             } else await ac.pinned(point);

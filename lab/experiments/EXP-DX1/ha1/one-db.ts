@@ -77,6 +77,16 @@ export async function populate(s: Stack, ac: Account, people: number, seedBudget
   let n = 0,
     reason = "requested size",
     bytes = initial;
+  let wideSubjects = 0,
+    smallSubjects = 0;
+  const wide = [0, 0, 0],
+    small = new Set<number>();
+  const seed = async (batch: ReturnType<Account["intent"]>[]) => {
+    for (let j = 0; j < batch.length; j += 4) {
+      const results = await Promise.allSettled(batch.slice(j, j + 4).map((v) => ac.send(v)));
+      for (const result of results) if (result.status === "rejected") throw result.reason;
+    }
+  };
   while (n < people) {
     if (s.a === s.b) {
       const f = fs.statfsSync(root);
@@ -99,8 +109,24 @@ export async function populate(s: Stack, ac: Account, people: number, seedBudget
       const batch = [];
       for (let j = 0; j < 4 && n < end; j++, n++)
         batch.push(ac.intent("seed-" + n, 160, "tenant-" + (n % 10) + "/person-" + n));
-      const results = await Promise.allSettled(batch.map((v) => ac.send(v)));
-      for (const r of results) if (r.status === "rejected") throw r.reason;
+      if (s.e.shape === "mixed") {
+        // [DX-HA1] Why: approach the declared combined account mix on the same log. Rejected: multiplying a deep-only dataset by total facts and calling it a wide-tenant measurement.
+        for (const [i, perMillion] of [225000, 150000, 60000].entries()) {
+          const count = Math.floor((n * perMillion) / 1000000);
+          while (wide[i]! < count) {
+            const k = wide[i]!;
+            wide[i] = k + 1;
+            batch.push(ac.intent("wide-" + i + "-" + k, 160, "wide-" + i + "/group-" + k, 20));
+            wideSubjects += 20;
+          }
+        }
+        while (smallSubjects < Math.floor(n / 200)) {
+          const k = smallSubjects++;
+          small.add(k % 100);
+          batch.push(ac.intent("small-" + k, 80, "small-" + (k % 100) + "/person-" + k));
+        }
+      }
+      await seed(batch);
     }
     if (n % 256 === 0 || n === people) {
       bytes = await pgBytes(s);
@@ -114,8 +140,12 @@ export async function populate(s: Stack, ac: Account, people: number, seedBudget
   const result = {
     requested: people,
     people: n,
-    facts: n * 160,
-    tenantCount: Math.min(n, 10),
+    facts: n * 160 + wideSubjects * 8 + smallSubjects * 80,
+    shape: s.e.shape,
+    deepSubjects: n,
+    wideSubjects,
+    smallSubjects,
+    tenantCount: Math.min(n, 10) + wide.filter((x) => x > 0).length + small.size,
     reason,
     seedMs: clock() - start,
     bytes: await pgBytes(s),

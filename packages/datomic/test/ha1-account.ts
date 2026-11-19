@@ -74,16 +74,25 @@ export class Account {
     this.w = new DatomicClient(write, 2200);
     this.r = new DatomicClient(read, 2600);
   }
-  intent(label: string, width = 1, person = "witness"): Input {
+  intent(label: string, width = 1, person = "witness", subjectsPerCommand = 1): Input {
+    assert(
+      Number.isInteger(subjectsPerCommand) &&
+        subjectsPerCommand > 0 &&
+        width % subjectsPerCommand === 0,
+    );
     const op = this.key + "-" + label,
       tx = op + "/tx",
       stamp = 1000000 + this.inputs.length + 1;
     const subject = this.key + "/" + person;
     assert(!this.byOperation.has(op));
+    const subjectAt = (k: number) =>
+      subjectsPerCommand === 1
+        ? subject
+        : subject + "/s-" + Math.floor(k / (width / subjectsPerCommand));
     const makeRows = (): TripleRow[] =>
       Array.from({ length: width }, (_, k) => ({
         id: op + "/fact-" + k,
-        entity_id: subject,
+        entity_id: subjectAt(k),
         entity_type: "Subject",
         attribute: "ha/value-" + k,
         value_type: "string",
@@ -120,10 +129,13 @@ export class Account {
       claims: [{ commandId: op + "/command", txId: tx, timestamp: stamp }],
     };
     this.byOperation.set(op, input);
-    this.subjectOf.set(op, subject);
-    const group = this.bySubject.get(subject) ?? [];
-    group.push(input);
-    this.bySubject.set(subject, group);
+    this.subjectOf.set(op, subjectAt(0));
+    for (let n = 0; n < subjectsPerCommand; n++) {
+      const id = subjectAt(n * (width / subjectsPerCommand));
+      const group = this.bySubject.get(id) ?? [];
+      group.push(input);
+      this.bySubject.set(id, group);
+    }
     this.inputs.push(input);
     return input;
   }
