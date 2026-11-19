@@ -8,7 +8,9 @@ const outputFields = [
 const comparisonFields = new Set([
   "format", "oracle", "caseId", "caseSha256", "verdict", "divergedAtCommand", "receiptConsistency", "queries",
 ]);
-const maxComparisonBytes = 64 * 1024 ** 2;
+// [DX-BM1] Why: the observed three-worker 10k case had 46 MiB of queries, and each active worker owes per-phase witnesses.
+// Rejected: discarding witnesses to fit 64 MiB or parsing the entire oracle state for the six-worker arm.
+const maxComparisonBytes = 192 * 1024 ** 2;
 
 function readAt(fd: number, buffer: Buffer, position: number) {
   let filled = 0;

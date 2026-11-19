@@ -57,6 +57,21 @@ it("refuses a truncated, duplicate or incomplete envelope and an incomplete quer
     .toThrow(/coverage/);
 });
 
+it("keeps the full query projection above the old comparison limit", () => {
+  const size = 65 * 1024 ** 2;
+  const row = { entityId: "root", attribute: "payload", value: "a".repeat(size) + "verified end" };
+  const result = read(
+    output({
+      ...fixture,
+      queries: [{ ...fixture.queries[0]!, result: { raw: [row] } }],
+    }),
+  );
+  requireOracleBinding(result, input, caseDoc);
+  const actual = result.queries[0].result.raw[0].value;
+  expect(actual.length).toBe(size + "verified end".length);
+  expect(actual.endsWith("verified end")).toBe(true);
+});
+
 it("reserves transport time after the regular and large independent replay deadlines", () => {
   const regular = oracleTimeouts(64 * 1024 ** 2);
   const large = oracleTimeouts(64 * 1024 ** 2 + 1);
