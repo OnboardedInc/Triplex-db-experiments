@@ -30,7 +30,14 @@ const manager = (args: string[]) =>
       cwd: repo,
       encoding: "utf8",
       maxBuffer: 32 << 20,
-      env: { ...process.env, TX2_CONFIG_DIR: dir },
+      env: {
+        ...process.env,
+        TX2_CONFIG_DIR: dir,
+        TX2_SLOTS_FILE: file,
+        TX2_LOCKS_DIR: path.join(main, "lab/locks"),
+        TX2_ENGINE_DIR: path.join(main, "runs/engines"),
+        TX2_DOCKER_HOST: read(path.join(main, "lab/config/slots.json")).dockerHost,
+      },
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
@@ -69,12 +76,31 @@ function prepare() {
   );
   // [DX-THIN1] Why: keep the pool, exclusive slot names, ports and ownership checks common to every worktree.
   // Rejected: substituting a private pool ledger or changing the tag of a resident image.
+  fs.copyFileSync(
+    fileURLToPath(new URL("./cache-charge.ts", import.meta.url)),
+    path.join(imageFolder, "cache-charge.ts"),
+  );
+  const diagnosticJdk = process.env.DX_THIN_DIAGNOSTIC_JDK;
+  if (diagnosticJdk) {
+    const expected = "e3522e707fc7dbe2a72c30746b1e7068301a0213ecd213d4491f35a14eb55578";
+    assert.equal(
+      createHash("sha256").update(fs.readFileSync(diagnosticJdk)).digest("hex"),
+      expected,
+      "Unexpected Temurin 21 diagnostic JDK",
+    );
+    fs.copyFileSync(diagnosticJdk, path.join(imageFolder, "diagnostic-jdk.tar.gz"));
+    fs.appendFileSync(
+      recipe,
+      "RUN mkdir -p /opt/thin-jdk && tar --strip-components=1 -xzf /config/diagnostic-jdk.tar.gz -C /opt/thin-jdk && /opt/thin-jdk/bin/jcmd -h >/dev/null\n",
+    );
+  }
   const cfg = read(path.join(main, "lab/config/slots.json"));
   cfg.lanes.datomic.image =
     "tx2-dxthin-managed:" +
     createHash("sha256")
       .update(fs.readFileSync(recipe))
       .update(fs.readFileSync(path.join(imageFolder, "slot.ts")))
+      .update(fs.readFileSync(path.join(imageFolder, "cache-charge.ts")))
       .digest("hex")
       .slice(0, 16);
   write(file, cfg);
@@ -143,7 +169,11 @@ function bind() {
     readUrl: peers[1]!.endpoint,
     gatewaySourceSha256: peers[0]!.source,
     buildInputsSha256: cfg.lanes.datomic.buildInputsSha256,
-    managed: { nonce: attempt.nonce, peers },
+    managed: {
+      nonce: attempt.nonce,
+      peers,
+      cacheDiagnostic: fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")),
+    },
     containers: peers.map((p) => ({ name: p.name, id: p.id, imageId: p.imageId })),
   });
 }

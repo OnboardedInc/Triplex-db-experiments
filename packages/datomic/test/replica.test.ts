@@ -94,6 +94,40 @@ function fixture() {
   };
 }
 describe("packed replica", () => {
+  it("cannot miss a cold write while a hot replacement page is in flight", async () => {
+    const f = fixture(), owner = new Replica(f.source, 0, "touched"), index = new RecentReads();
+    owner.onUpdate = delta => index.apply(delta);
+    owner.onAdmission = (p, e) => index.admit(p, e);
+    await owner.bootstrap([], 1);
+    await owner.admit("root", 1, 0);
+    let entered!: () => void, resume!: () => void;
+    const fetching = new Promise<void>(resolve => { entered=resolve; });
+    const gate = new Promise<void>(resolve => { resume=resolve; });
+    const page = f.source.page.bind(f.source);
+    f.source.page = async (roots, basis, need) => {
+      if (need) { entered(); await gate; }
+      return page(roots,basis,need);
+    };
+    f.commit([["root", []], ["cold", [row("cold","new",{type:"string",value:"v"},2)]]]);
+    const change = owner.followOnce();
+    await fetching;
+    expect(await owner.admit("cold", 1, 0)).toBe(false);
+    resume(); await change;
+    expect(index.pull("cold", {recordedPosition:2,validAt:0})).toBeUndefined();
+    await owner.admit("cold",2,0);
+    expect(index.pull("cold", {recordedPosition:2,validAt:0})!.rows[0]!.id).toBe("new");
+    expect(index.pull("cold", {recordedPosition:1,validAt:0})).toBeUndefined();
+  });
+  it("rejects a first-touch page with a wrong cut or extra unrequested entities",async()=>{
+    const f=fixture(), owner=new Replica(f.source,0,"touched");
+    await owner.bootstrap([],1);
+    const page=f.source.page.bind(f.source);
+    f.source.page=async(...args)=>({...await page(...args),position:2});
+    await expect(owner.admit("root",1,0)).rejects.toThrow("basis");
+    f.source.page=async(...args)=>{const r=await page(...args);r.entities.push(["outside",0,[]]);return r;};
+    await expect(owner.admit("root",1,0)).rejects.toThrow("closure");
+    expect(owner.bytes).toBe(0);
+  });
   it("admits one exact closure, leaves cold journals on disk and never backdates admission", async () => {
     const f = fixture(), page = vi.spyOn(f.source, "page");
     const owner = new Replica(f.source, 0, "touched"), index = new RecentReads();

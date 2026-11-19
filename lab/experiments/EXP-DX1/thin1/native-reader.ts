@@ -30,6 +30,7 @@ interface Request {
 }
 interface Stats {
   rss: number;
+  unloadedRss: number;
   packed: number;
   history: number;
   position: number;
@@ -192,7 +193,10 @@ export async function nativeReader(input: Input) {
     },
   };
 }
-if (process.argv[2] === "--reader-child" && process.send)
+if (process.argv[2] === "--reader-child" && process.send) {
+  // [DX-THIN1] Why: the guest parent owns the reader and its journal subscription for this attempt.
+  // Rejected: keeping a follower polling after a failed controller or cutoff.
+  process.once("disconnect", () => process.exit(0));
   process.once("message", (input: Input) => {
     void serve(input).catch((error) => {
       process.send!({ id: 0, binding: input.binding, error: String(error) }, () =>
@@ -200,3 +204,4 @@ if (process.argv[2] === "--reader-child" && process.send)
       );
     });
   });
+}

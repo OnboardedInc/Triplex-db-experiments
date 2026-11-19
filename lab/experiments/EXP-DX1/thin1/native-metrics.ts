@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { isIPv4 } from "node:net";
 
 export interface Stack {
   prefix: string;
@@ -19,6 +20,18 @@ export interface Stack {
     }[];
   };
 }
+export function metricEndpoint(address: string, endpoint: "/metrics" | "/sample-object-cache") {
+  const url = new URL(address);
+  const [net, subnet] = url.hostname.split(".").map(Number);
+  assert(url.protocol === "http:" && url.port === "8989" && isIPv4(url.hostname));
+  assert(
+    net === 10 ||
+      (net === 172 && subnet! >= 16 && subnet! <= 31) ||
+      (net === 192 && subnet === 168),
+  );
+  assert(!url.username && !url.password && url.pathname === "/metrics" && !url.search && !url.hash);
+  return new URL(endpoint, url);
+}
 async function managedMetrics(stack: Stack) {
   const managed = stack.managed!;
   const { secret } = JSON.parse(fs.readFileSync(process.env.DX_THIN_CREDENTIAL!, "utf8"));
@@ -31,8 +44,9 @@ async function managedMetrics(stack: Stack) {
     assert.equal(owner.mode, "exclusive");
     assert.equal(owner.createdAt, peer.createdAt);
     assert.equal(owner.container, stack.containers.find((c) => c.id === peer.id)?.name);
-    const response = await fetch(peer.metrics, {
+    const response = await fetch(metricEndpoint(peer.metrics, "/metrics"), {
       headers: { authorization: "Bearer " + secret },
+      redirect: "error",
       signal: AbortSignal.timeout(30_000),
     });
     assert(response.ok);

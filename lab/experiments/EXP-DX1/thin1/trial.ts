@@ -26,10 +26,12 @@ import { nativeMetrics } from "./native-metrics.ts";
 import { IntentLog } from "./intent-log.ts";
 import { firstValid, person, seedHead, seedPosition, width } from "./population.ts";
 import { trialStore } from "./trial-store.ts";
+import { sampleObjectCache } from "./cache-metrics.ts";
+import { checkEntry } from "./entry-check.ts";
 import { measurementWindow } from "./measure.ts";
 import { domainCheck } from "./domain-check.ts";
 
-const [kind, mode, rung, dir] = process.argv.slice(2),
+const [kind, mode, rung, dir = ""] = process.argv.slice(2),
   size = Number(rung);
 assert(
   (kind === "fixture" || kind === "live") &&
@@ -125,6 +127,7 @@ const log = new IntentLog(path.join(dir, "intents.sqlite"), size, scope);
 const roster = new ThinRoster(path.join(dir, "roster.sqlite"), binding);
 let remote: Awaited<ReturnType<typeof nativeReader>> | undefined;
 let held: ReplicaSnapshot | undefined;
+const costOnly = stack?.managed?.cacheDiagnostic === true;
 const phase = async (name: string) => {
   global.gc!();
   fs.appendFileSync(
@@ -136,6 +139,7 @@ const phase = async (name: string) => {
       ...process.memoryUsage(),
       reader: await remote?.stats(),
       native: stack ? await nativeMetrics(stack) : undefined,
+      objectCache: costOnly ? await sampleObjectCache(stack) : undefined,
     }) + "\n",
   );
   console.log(name);
@@ -230,7 +234,7 @@ async function read(i: number, p: number, v: number, measure: string) {
     if (p >= base + i / 50 + 1) sampleInputs.add(base + i / 50 + 1);
   }
 }
-try {
+async function execute() {
   await lease.checkpoint();
   await phase("empty");
   const seedStart = performance.now();
@@ -241,7 +245,7 @@ try {
   }
   const seedMs = performance.now() - seedStart;
   await phase("seeded");
-  if (kind === "live")
+  if (kind === "live" && (mode === "all" || mode === "touched"))
     remote = await nativeReader({
       scope,
       binding,
@@ -289,6 +293,24 @@ try {
     ? await remote.stats()
     : { position: copy.position, packed: copy.bytes, history: index.historyBytes };
   assert.equal(resident.position, end);
+  if (costOnly) {
+    assert(kind === "live" && mode === "all");
+    lease.release();
+    save("cache-cost.json", {
+      kind: "separate native cache occupancy diagnostic",
+      size,
+      source,
+      binding,
+      slot,
+      reads,
+      commits: active,
+      checkedJournalPositions: roster.head,
+      seedPacked,
+      activePacked: resident.packed,
+    });
+    if (size <= 10000) await checkEntry(dir!, stack, source);
+    return;
+  }
   await drain(0, end);
   const expected = rosterDigest(
     (function* () {
@@ -430,6 +452,9 @@ try {
     domain,
     publishedReadback: store.readback ? publishedReadback : null,
   });
+}
+try {
+  await execute();
 } finally {
   lease.release();
   await remote?.close();

@@ -1,4 +1,6 @@
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -42,6 +44,52 @@ const options = (at: number) => ({
   },
 });
 describe("pinned import certificates", () => {
+  it("matches the complete independent output of all eligible releases for answer-only projections", () => {
+    const basis = { tx: 9, validTime: W0.POPULATION_VALID_TIME };
+    const releases = [W0.R1, W0.R2, W0.R3];
+    const oracle = fileURLToPath(new URL("../../../bench/lib/w0-oracle-batch.py", import.meta.url));
+    const facts = intent(0).map((op) => ({
+      e: op.entityId,
+      a: op.attribute,
+      v: op.value.value,
+      tx: 1,
+    }));
+    for (const rows of [[], facts.slice(0, 1), facts]) {
+      const input = {
+        op: "evaluate-many",
+        input: {
+          world: { subject, facts: rows },
+          requests: releases.map((release) => ({ release: release.name, basis })),
+        },
+      };
+      const expected = JSON.parse(
+        execFileSync("python3", ["-I", "-B", oracle], {
+          encoding: "utf8",
+          input: JSON.stringify(input) + "\n",
+        }),
+      );
+      expect(expected).toHaveLength(releases.length);
+      for (const [i, release] of releases.entries()) {
+        const projected = W0.sweepSubject({ subject, facts: [] }, release, basis);
+        if ("error" in projected) throw Error(projected.error);
+        expect(projected.json).toEqual(expected[i]);
+      }
+    }
+  });
+  it("fully evaluates an unfamiliar release even when the imported subject is certified", async () => {
+    const { roster } = make();
+    try {
+      roster.apply(binding, tx(1));
+      const doc = structuredClone(W0.R2.doc);
+      const ot = doc.rules.find((rule) => rule.id === "OT")!;
+      Object.assign(ot.params, { thresholdMinutes: 2000 });
+      const release = W0.compileRelease(doc);
+      expect(W0.RELEASES_BY_HASH.has(release.hash)).toBe(false);
+      await expect(roster.activate({ ...options(1), release })).rejects.toThrow("full read");
+    } finally {
+      roster.close();
+    }
+  });
   it("retains the original basis across a later write and restart; absence still creates work", async () => {
     const { file, roster } = make();
     const initial = tx(1),

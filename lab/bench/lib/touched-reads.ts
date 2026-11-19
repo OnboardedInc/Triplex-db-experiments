@@ -1,6 +1,17 @@
-import { Replica } from "../../../packages/datomic/dist/index.js";
+import {
+  DatomicHttpError,
+  DatomicTransportError,
+  Replica,
+} from "../../../packages/datomic/dist/index.js";
 import type { Basis, CompositionHandle, PullResult } from "./composition.ts";
 import { ReplicaReader, ReplicaReadHost, replicaEndpoint } from "./replica-reads.ts";
+
+function unavailable(error: unknown) {
+  return (
+    error instanceof DatomicTransportError ||
+    (error instanceof DatomicHttpError && [404, 429, 502, 503, 504].includes(error.status))
+  );
+}
 
 export function touchedPull(
   reader: ReplicaReader,
@@ -17,7 +28,15 @@ export function touchedPull(
       // [DX-THIN1] Why: only the existing clock resolver can turn a time-only request into a proven position.
       // Rejected: a writer receipt hint or the position echoed alongside a time-selected gateway response.
       const cut = reader.index.resolve(basis);
-      if (cut === undefined || !(await replica.admit(root, cut, basis.validAt))) return gateway();
+      if (cut === undefined) return gateway();
+      try {
+        if (!(await replica.admit(root, cut, basis.validAt))) return gateway();
+      } catch (error) {
+        // [DX-THIN1] Why: the exact read path can still serve the request when the optional replica endpoint is unavailable.
+        // Rejected: suppressing a malformed closure or different row bytes at the same proven cut.
+        if (unavailable(error)) return gateway();
+        throw error;
+      }
       const result = await reader.pullAt(root, basis, gateway);
       return { ...result, roundTrips: result.roundTrips + 1 };
     },
@@ -64,6 +83,7 @@ export function touchedComposition(base: CompositionHandle): CompositionHandle {
         return base.pull(root, basis, between);
       opened ??= open(root).catch((error) => {
         opened = undefined;
+        if (unavailable(error)) return undefined;
         throw error;
       });
       const copy = await opened;

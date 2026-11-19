@@ -23,7 +23,7 @@ import { FullRowModel } from "../../../bench/lib/full-row-model.ts";
 const [role, rung, output] = process.argv.slice(2);
 const size = Number(rung);
 assert(
-  ["reader", "touched-reader", "model"].includes(role!) &&
+  ["reader", "touched-reader", "current-map", "model"].includes(role!) &&
     Number.isSafeInteger(size) &&
     size > 0 &&
     size % 50 === 0 &&
@@ -54,7 +54,51 @@ const base = seedHead(size),
   touched = size / 50;
 const initial = snapshot();
 const measurements: Record<string, unknown> = { initial };
-if (role !== "model") {
+if (role === "current-map") {
+  const data = fixture(size),
+    replica = new Replica(data.source, firstValid + 1000);
+  await replica.bootstrap(
+    Array.from({ length: size }, (_, n) => person(n)),
+    base,
+  );
+  const cut = await replica.snapshotAt(base),
+    index = new RecentReads();
+  measurements.packedOnly = snapshot();
+  // [DX-THIN1] Why: stage the actual current Map against the same already-resident packed backing.
+  // Rejected: counting the backing slabs twice or assigning the replica's entire RSS to Map nodes.
+  index.apply({
+    position: base,
+    valid: true,
+    reset: true,
+    changes: cut.image().entities.map(([id, e]) => [id, undefined, e]),
+  });
+  measurements.withCurrentMap = snapshot();
+  replica.onUpdate = (update) => index.apply(update);
+  data.writes(touched);
+  while (replica.position < base + touched) await replica.followOnce();
+  measurements.withHistory = { ...snapshot(), historyBytes: index.historyBytes };
+  assert.equal(
+    index.pull(person(0), { recordedPosition: base + touched, validAt: firstValid + 1000 })?.rows
+      .length,
+    width + 1,
+  );
+  const activeCut = await replica.snapshotAt(base + touched),
+    activeIndex = new RecentReads();
+  measurements.activePackedOnly = snapshot();
+  activeIndex.apply({
+    position: base + touched,
+    valid: true,
+    reset: true,
+    changes: activeCut.image().entities.map(([id, e]) => [id, undefined, e]),
+  });
+  measurements.activeWithCurrentMap = snapshot();
+  assert.equal(
+    activeIndex.pull(person(0), { recordedPosition: base + touched, validAt: firstValid + 1000 })
+      ?.rows.length,
+    width + 1,
+  );
+  assert(replica.bytes > 0 && cut.bytes > 0 && activeCut.bytes > 0 && index.historyBytes > 0);
+} else if (role !== "model") {
   const sparse = role === "touched-reader";
   const data = fixture(size),
     index = new RecentReads(),

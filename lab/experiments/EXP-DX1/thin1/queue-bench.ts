@@ -210,6 +210,27 @@ write(owner, { id: "DX-THIN1", pid: process.pid, unit, source: head, day });
 write(path.join(day, "batch.json"), { source: head, unit, utc, rungs });
 try {
   status("building");
+  const topology = run("lscpu", ["-p=CPU,CORE,SOCKET"]);
+  fs.writeFileSync(path.join(day, "topology.csv"), topology + "\n", { flag: "wx" });
+  const cores = new Map<string, string>();
+  for (const line of topology.split("\n").filter((line) => !line.startsWith("#"))) {
+    const [cpu, core, socket] = line.split(",");
+    assert(cpu && core && socket && [cpu, core, socket].every((n) => /^\d+$/.test(n)));
+    const physical = socket + "/" + core;
+    if (!cores.has(physical)) cores.set(physical, cpu);
+  }
+  // [DX-THIN1] Why: bind the driver and reader away from both JVMs and Postgres on the prepared physical server.
+  // Rejected: assuming adjacent logical CPU numbers always represent distinct physical cores.
+  const cpus = [...cores.values()];
+  assert(cpus.length >= 8, "The queue needs eight distinct physical cores");
+  const placement = {
+    transactor: cpus[0]!,
+    postgres: cpus[1]!,
+    writer: cpus.slice(2, 4).join(","),
+    readGateway: cpus.slice(4, 6).join(","),
+    clients: cpus.slice(6, 8).join(","),
+  };
+  write(path.join(day, "placement.json"), placement);
   run(
     "pnpm",
     ["--store-dir", path.join(work, "pnpm-store"), "install", "--frozen-lockfile", "--offline"],
@@ -246,13 +267,13 @@ try {
           "lab/experiments/EXP-DX1/stack/up.sh",
           tag,
           "--cpus-tx",
-          "0",
+          placement.transactor,
           "--cpus-pg",
-          "1",
+          placement.postgres,
           "--cpus-gw-write",
-          "2,3",
+          placement.writer,
           "--cpus-gw-read",
-          "4,5",
+          placement.readGateway,
         ],
         600,
       );
@@ -269,8 +290,11 @@ try {
       let trial;
       try {
         trial = spawnSync(
-          node,
+          "taskset",
           [
+            "--cpu-list",
+            placement.clients,
+            node,
             ...nodeArgs,
             path.join(repo, "lab/experiments/EXP-DX1/thin1/trial.ts"),
             "live",
@@ -290,11 +314,41 @@ try {
       }
       assert.equal(trial.status, 0, "Trial failed or timed out; inspect rung log");
       const result = json(path.join(dest, "result.json"));
+      const inputs = json(path.join(dest, "inputs.json"));
+      assert.equal(inputs.scope, "dxthin-" + inputs.attempt);
+      assert.equal(inputs.source, head);
+      assert.equal(inputs.slot, tag);
+      assert.deepEqual(inputs.containers, stack.containers);
+      const binding = createHash("sha256")
+        .update(
+          JSON.stringify([
+            head,
+            inputs.inputs,
+            tag,
+            stack.containers,
+            inputs.attempt,
+            inputs.scope,
+            size,
+            "touched",
+          ]),
+        )
+        .digest("hex");
+      assert.equal(result.binding, binding);
+      assert.equal(inputs.binding, binding);
+      assert.equal(result.activation.binding, binding);
       assert.equal(result.source, head);
       assert.equal(result.slot, tag);
       assert.equal(result.size, size);
       assert.equal(result.active, size / 50);
       assert.equal(result.activation.coverage.count, size);
+      assert.equal(result.activation.evaluated + result.activation.dismissed, size);
+      assert.equal(result.publishedReadback, size);
+      assert.equal(result.ryow, size / 50);
+      assert.equal(result.reads, (size / 50) * 6.5);
+      assert.equal(result.feedPositions, Math.ceil(size / 32) + size / 50);
+      assert.equal(result.replayedPositions, result.feedPositions);
+      assert(result.oracle.entityQueries === result.oracle.reads * 4 && result.oracle.reads > 0);
+      assert(result.domain.checked > 0 && result.domain.checked <= size);
       const list = fs.readdirSync(dest, { recursive: true, encoding: "utf8" }).sort();
       const sums = fs.openSync(path.join(dest, "SHA256SUMS"), "wx");
       try {
@@ -302,7 +356,12 @@ try {
           if (fs.statSync(path.join(dest, file)).isFile()) {
             const h = createHash("sha256");
             for await (const bytes of fs.createReadStream(path.join(dest, file))) h.update(bytes);
-            fs.writeSync(sums, h.digest("hex") + "  " + file + "\n");
+            const hash = h.digest("hex");
+            if (file === "activation-records.jsonl") {
+              assert.equal(hash, result.activation.recordsSha256);
+              assert.equal(hash, result.domain.recordsSha256);
+            }
+            fs.writeSync(sums, hash + "  " + file + "\n");
           }
       } finally {
         fs.closeSync(sums);
