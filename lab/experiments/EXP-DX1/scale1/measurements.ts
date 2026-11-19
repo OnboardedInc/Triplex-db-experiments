@@ -18,6 +18,13 @@ import { VERDICT_CLOCK, verdictMs } from "../../../trace/instrument.mjs";
 import { frozenDeep, requireIdentity, type DeepIdentity } from "../../../bench/lib/deep-profile.ts";
 import { compareOracleOutput } from "../../../bench/lib/oracle.ts";
 import { readOracleOutput } from "../../../bench/lib/oracle-output.ts";
+import {
+  interferenceId,
+  interferenceTrace,
+  interferencePhases,
+  interferenceSeconds,
+} from "./interference.ts";
+import { smallTrace, smallId, smallSeconds, smallPhases, smallScope } from "./small-plan.ts";
 import { deepPopulation, DEEP_PROFILE } from "../../../bench/lib/deep-world.ts";
 
 export async function fileHash(file: string) {
@@ -40,7 +47,13 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   assert.deepEqual(report.deep.identity, id);
   assert.deepEqual(actualSeed.identity, id);
   assert.deepEqual(report.deep.seed, actualSeed.seed);
-  const plan = frozenDeep(id.account, id.people),
+  const mix = id.arm === "interference",
+    small = id.arm === "small";
+  const plan = small
+      ? smallTrace(id.account)
+      : mix
+        ? interferenceTrace(id.account)
+        : frozenDeep(id.account, id.people),
     expectedCount = deepPopulation(id.people).facts;
   assert.equal(report.deep.profile, DEEP_PROFILE);
   assert.equal(report.config.profile, "deep");
@@ -62,17 +75,35 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   ]);
   assert.equal(
     report.scope,
-    `ns-datomic-deep${id.people === 10000 ? "10k" : "100k"}-deep-${id.nonce}-s${id.account}`,
+    small
+      ? smallScope(id.nonce, id.account)
+      : `ns-datomic-deep${id.people === 10000 ? "10k" : "100k"}-deep-${id.nonce}-s${id.account}`,
   );
   assert.equal(report.traceStartAbsMs, commonStart);
   assert.equal(report.verdictClock, VERDICT_CLOCK);
-  assert.equal(report.verdictPlanId, id.arm === "activation" ? "deep-activation/1" : V3_PLAN_ID);
+  assert.equal(
+    report.verdictPlanId,
+    id.arm === "activation"
+      ? "deep-activation/1"
+      : small
+        ? smallId
+        : mix
+          ? interferenceId
+          : V3_PLAN_ID,
+  );
   for (const [file, hash] of Object.entries(report.benchSources))
     assert.equal(await fileHash(file), hash, `Harness source mismatch ${file}`);
   const hashes = Object.fromEntries(
     await Promise.all(Object.entries(files).map(async ([k, f]) => [k, await fileHash(f)])),
   );
-  const duration = id.arm === "activation" ? report.writer.offeredUntilTraceS : V3_OFFER_SECONDS;
+  const duration =
+    id.arm === "activation"
+      ? report.writer.offeredUntilTraceS
+      : small
+        ? smallSeconds
+        : mix
+          ? interferenceSeconds
+          : V3_OFFER_SECONDS;
   assert(Number.isFinite(duration) && duration > 0);
   const expected = new Map(
     plan.events.filter((e) => e.atMs < duration * 1000).map((e) => [`${e.seq}/${e.resend}`, e]),
@@ -83,6 +114,17 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   const seenPositions = new Set<number>(),
     invalid: string[] =
       duration > 7200 ? ["Activation exceeded the frozen 7,200-second live traffic horizon"] : [];
+  const mixPhases = small ? smallPhases(id.account) : mix ? interferencePhases(id.account) : [];
+  if (mix || small)
+    assert.deepEqual(
+      report.phases.map((p: any) => [p.name, p.readers, p.start, p.end]),
+      mixPhases.map((p) => [
+        p.name,
+        p.readers,
+        commonStart + p.traceFromS * 1000,
+        commonStart + (p.traceFromS + p.seconds) * 1000,
+      ]),
+    );
   let primaries = 0,
     committed = 0,
     expired = 0,
@@ -130,11 +172,18 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     committed++;
     values.all!.push(ms);
     for (const level of ["L256", "L1024"] as const)
-      if (inIntervals(w.offsetMs, windows[level])) {
+      if (!mix && !small && inIntervals(w.offsetMs, windows[level])) {
         assert(!w.burst);
         values[level]!.push(ms);
         (values[`${level}/${factBand(w.facts)}`] ??= []).push(ms);
       }
+    if (mix || small)
+      for (const p of mixPhases)
+        if (
+          w.offsetMs >= (p.traceFromS + 2) * 1000 &&
+          w.offsetMs < (p.traceFromS + p.seconds) * 1000
+        )
+          (values["mix/" + p.name] ??= []).push(ms);
     if (w.burst) (values[`burst/${factBand(w.facts)}`] ??= []).push(ms);
     if (id.arm === "activation")
       for (const name of ["presweep", "activation"]) {
@@ -233,7 +282,13 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     id.arm === "activation" &&
     (report.deep.activationOracle?.checked !== id.people ||
       report.deep.activationOracle.guardComparisons !== 2 * id.people ||
-      report.deep.r2?.layout !== "guard-fact" ||
+      report.deep.r2?.layout !== "page-cut" ||
+      [report.deep.r1, report.deep.r2].some(
+        (a) =>
+          a?.coverage?.size !== id.people ||
+          a.coverage.pages !== Math.ceil(id.people / 256) ||
+          a.publications !== a.coverage.pages,
+      ) ||
       !report.deep.activationTraffic ||
       report.deep.activationTraffic.trafficHeldThrough <
         report.deep.activationTraffic.lastSweepEndedAt ||
@@ -400,6 +455,35 @@ export function cohort(
   const perScope = scopes.map((s) => ({
     commitHistogram: compactCommit(s.values.all!),
     commit: commit(s.values.all!),
+    interference:
+      first.id.arm === "interference" || first.id.arm === "small"
+        ? (first.id.arm === "small"
+            ? smallPhases(s.id.account)
+            : interferencePhases(s.id.account)
+          ).map((p) => {
+            const from = s.interval.from + p.traceFromS * 1000,
+              to = from + p.seconds * 1000;
+            const dist = (key: string) => {
+              const data = s.report.histograms[p.name + "." + key];
+              if (!data) return null;
+              const d = histogramDistribution(Histogram.fromJSON(data));
+              return {
+                value: percentile(d, 0.99),
+                n: d.n,
+                interval90: bootstrap90(d, 0.99, p.name + "/" + key),
+              };
+            };
+            return {
+              window: p.name,
+              from,
+              to,
+              readers: p.readers,
+              commit: commit(s.values["mix/" + p.name] ?? []),
+              read: dist("read"),
+              feedLag: dist("feedLag"),
+            };
+          })
+        : undefined,
     account: s.id.account,
     scope: s.scope,
     ackMinutes: s.ackMinutes,
@@ -441,7 +525,8 @@ export function cohort(
       commit: commit(all.all!),
       arm: first.id.arm,
       scopeCount: scopes.length,
-      peoplePerScope: first.id.people,
+      peoplePerScope: first.id.arm === "small" ? null : first.id.people,
+      peopleByScope: scopes.map((s) => s.id.people),
       commonWindow: {
         from: first.interval.from,
         to: Math.min(...scopes.map((s) => s.interval.to)),

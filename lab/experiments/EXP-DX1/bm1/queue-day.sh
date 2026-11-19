@@ -279,19 +279,21 @@ case $mode in
   --item) [[ $# == 5 && -d $logs ]] || exit 2; run_item "$4" "$5"; exit ;;
   --cleanup) [[ $# == 4 || ($# == 5 && $5 == retry) ]] && [[ -d $logs ]] || exit 2; cleanup_item "$4" "${5:-first}"; exit ;;
   --reconcile) [[ $# == 3 ]] || exit 2; reconcile_controller; exit ;;
-  --launch)
+  --launch|--launch-pair)
     [[ $# == 3 && ! -e $day && $runner != *[[:space:]]* ]] || exit 2
     state=$(systemctl show triplex-drv1-wait -p ActiveState --value)
     [[ $state == inactive || $state == failed ]] || exit 75
     lifetime=$((cutoff - $(date +%s) + 180))
     ((lifetime > 600)) || exit 75
+    run_mode=--run
+    [[ $mode != --launch-pair ]] || run_mode=--run-pair
     exec systemd-run --no-block --unit="triplex-bm1-$batch-queue" \
       --property=KillMode=control-group --property="RuntimeMaxSec=${lifetime}s" \
       --property=TimeoutStopSec=180s \
       --property="ExecStopPost=/bin/bash $runner/queue-day.sh --reconcile $batch $stop" \
-      /bin/bash "$runner/queue-day.sh" --run "$batch" "$stop"
+      /bin/bash "$runner/queue-day.sh" "$run_mode" "$batch" "$stop"
     ;;
-  --run) [[ $# == 3 ]] || exit 2 ;;
+  --run|--run-pair) [[ $# == 3 ]] || exit 2 ;;
   *) exit 2 ;;
 esac
 
@@ -302,7 +304,7 @@ flock -n 9 || exit 75
 mkdir "$day" "$logs"
 exec >> "$logs/queue.log" 2>&1
 final=failed
-trap 'if [[ -e $day/active-item ]]; then status queue "$final" reconcile; else release_bench || status queue "$final" inspect; fi' EXIT
+trap 'if [[ -e $day/active-item ]]; then status queue "$final" reconcile; elif [[ ! -s $work/state/evidence/DX-T1/$prefix-pair-zero/driver/ns-writes.jsonl ]]; then status queue failed-before-measurement recover; else release_bench || status queue "$final" inspect; fi' EXIT
 trap 'exit 143' TERM INT
 status queue preflight setup
 systemctl show triplex-drv1-wait -p ActiveState -p Result -p ExecMainStatus > "$logs/comparison-terminal.txt"
@@ -356,6 +358,9 @@ run_stage() {
     --property=TimeoutStopSec=150s \
     --property="ExecStopPost=/bin/bash $runner/queue-day.sh --cleanup $batch $stop $item" \
     /bin/bash "$runner/queue-day.sh" --item "$batch" "$stop" "$item" "$item_stop" || rc=$?
+  # [DX-BM1] Why: systemd may report a requested service stop as success. Preserve it as an interrupted guarded series.
+  # Rejected: treating a stopped controller as three independently verified arms.
+  if [[ $item == guarded && $rc == 0 && ! -s $day/guarded/comparison.json ]]; then rc=1; fi
   printf '%s\n' "$rc" > "$logs/$item.exit"
   printf '%s terminal %s exit=%s\n' "$(stamp)" "$item" "$rc"
   if [[ $(cat "$logs/$item-cleanup/result" 2>/dev/null) != clean ]]; then
@@ -386,9 +391,11 @@ run_stage() {
 }
 
 archive_failed=0
-if run_stage setup guarded 2100 150; then
+first=guarded
+[[ $mode != --run-pair ]] || first=pair
+if run_stage setup "$first" 2100 150; then
   activation_rc=0
-  run_stage guarded pair 10800 600 || activation_rc=$?
+  if [[ $first == guarded ]]; then run_stage guarded pair 10800 600 || activation_rc=$?; fi
   pair_rc=0
   run_stage pair collect 18000 12600 || pair_rc=$?
   printf '%s\n' "$activation_rc" > "$logs/activation-final.exit"

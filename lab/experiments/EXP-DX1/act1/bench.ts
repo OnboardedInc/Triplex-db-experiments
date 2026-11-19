@@ -122,7 +122,8 @@ if (mode === "--plan") {
   } else {
     assert.equal(spawnSync("flock", ["-n", "3"], { stdio: ["ignore", "ignore", "inherit", lock!] }).status, 0, "BM1 day queue busy");
   }
-  const output = batchOwner ? join(root, "day-" + batchOwner, "guarded") : join(root, "act1-" + randomBytes(6).toString("hex"));
+  const runId = "act1-" + randomBytes(6).toString("hex");
+  const output = batchOwner ? join(root, "day-" + batchOwner, "guarded") : join(root, runId);
   const deadline = Date.now() + hours * 3600000;
   const stamp = (n: number) => new Date(n).toISOString().replace(/\.\d{3}Z$/, "Z");
   const writable = (path: string, data: unknown) =>

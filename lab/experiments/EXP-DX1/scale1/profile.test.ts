@@ -197,6 +197,12 @@ async function exercise(scope: string, backend: string, account: number) {
       b = await act.execute(comp, "R2", () => {});
     const verified = await act.verify(comp, a, b);
     assert.equal(verified.checked, people);
+    assert.equal(verified.guardComparisons, people * 2);
+    assert(
+      [a, b].every(
+        (x) => x.layout === "page-cut" && x.coverage?.size === people && x.coverage.pages === 1,
+      ),
+    );
     assert(b.cut.position > a.cut.position);
     return {
       scope,

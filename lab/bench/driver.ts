@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { smallId, smallPhases, smallTrace, smallSeconds, smallPeople } from "../experiments/EXP-DX1/scale1/small-plan.ts";
+import { interferenceId, interferencePhases, interferenceTrace, interferenceSeconds } from "../experiments/EXP-DX1/scale1/interference.ts";
 import assert from "node:assert/strict";
 import { DeepActivation } from "./lib/deep-activation.ts";
 import { DEEP_PROFILE, DEEP_RUNGS, deepCells, deepPopulation } from "./lib/deep-world.ts";
@@ -115,21 +117,26 @@ const devSubjects = opt("subjects");
 if (!["xtdb", "qlever", "datomic"].includes(lane)) throw new Error("--lane xtdb|qlever|datomic is required");
 const deepSmoke = opt("profile") === "deep-smoke";
 const deep = opt("profile") === "deep" || deepSmoke;
-const availableRungs: Record<string, number> = deepSmoke ? { "deep-smoke-40": 40 } : deep ? DEEP_RUNGS : RUNGS;
+const smallOnly = deep && flag("deep-small-scopes");
+const availableRungs: Record<string, number> = smallOnly ? {"deep-small-100":100,"deep-small-2000":2000} : deepSmoke ? { "deep-smoke-40": 40 } : deep ? DEEP_RUNGS : RUNGS;
 if (!devSubjects && !Object.hasOwn(availableRungs, rung)) throw new Error(`--rung must be one of ${Object.keys(availableRungs).join("|")}`);
 const profile = opt("profile", "smoke") as Profile | "deep" | "deep-smoke";
 const activationOnly = deep && flag("deep-activation"), seedOnly = deep && flag("deep-seed-only");
+const interferenceOnly = deep && flag("deep-interference");
+if (smallOnly && (activationOnly || seedOnly || interferenceOnly || deepSmoke || flag("zero-readers"))) throw Error("Small scope study requires its separate low-rate arm");
+if (interferenceOnly && (activationOnly || seedOnly || deepSmoke || flag("zero-readers") || rung !== "deep-10k")) throw Error("Interference requires the complete deep-10k cohort");
 if ((activationOnly || seedOnly) && (flag("zero-readers") || activationOnly && seedOnly)) throw Error("Choose one deep arm");
-const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly;
+const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly && !interferenceOnly && !smallOnly;
 if (!deep && !(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
 const rungSubjects = devSubjects ? Number(devSubjects) : availableRungs[rung]!;
 const deepAccount = Number(opt("deep-account", "0"));
-const deepId = deep ? { source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
+const deepId = deep ? { source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: smallOnly ? "small" : seedOnly ? "seed" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
 if (deepId) {
   requireIdentity(deepId);
   if (!opt("deep-barrier") || devSubjects || lane !== "datomic" || opt("seed-manifest") || opt("round-plan") || opt("idle-gaps-ms") || opt("oracle-root") === undefined || opt("seed", deepSeed(deepAccount)) !== deepSeed(deepAccount)) throw Error("Deep requires its named Datomic rung, independent oracle, account seed, and start barrier");
 }
-const deepPlan = deep ? frozenDeep(deepAccount, rungSubjects) : undefined;
+if(smallOnly) assert.equal(rungSubjects,smallPeople(deepAccount));
+const deepPlan = smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined;
 const deepWriter = deepPlan ? new DeepWriter(deepPlan.activeSubjects) : undefined;
 const deepWitness = deep ? new DeepSeedWitness() : undefined;
 const cells = deep ? deepCells(rungSubjects) : undefined;
@@ -292,6 +299,10 @@ const log = (line: string) => {
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
 const BENCH_FILES = ["lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
+if(smallOnly||interferenceOnly) {
+  const names=smallOnly?["small-plan.ts","small-pins.json"]:["interference.ts","interference-pins.json"];
+  BENCH_FILES.push(...names.map(n=>"lab/experiments/EXP-DX1/scale1/"+n));
+}
 
 const report: Record<string, any> = latencyReceipt({
   writerHeap,
@@ -299,7 +310,7 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: fullLength ? V3_PLAN_ID : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
+  verdictPlanId: fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
@@ -514,10 +525,11 @@ async function run() {
   const oracleSubjects = chooseSamples(rungSubjects, config.oracleSampleSubjects);
   if (deepPlan && cells) {
     for (const b of ["small", "medium", "large"] as const) for (const h of [3, 4, 6] as const) {
-      const subject = cells.pick(b, h, .5); if (deepSmoke && subject === null) continue; assert(subject !== null); oracleSubjects.push(subject);
+      const subject = cells.pick(b, h, .5); if ((deepSmoke || smallOnly) && subject === null) continue; assert(subject !== null); oracleSubjects.push(subject);
     }
     for (const kind of ["person", "system", "agent", "runtime"]) {
       const event = deepPlan.events.find(e => e.kind === kind && (kind !== "person" || e.deep.closes));
+      if(smallOnly && !event)continue;
       assert(event); oracleSubjects.push(event.subject);
     }
   }
@@ -683,7 +695,7 @@ async function run() {
     worker.on("exit", (code: number) => life.exit(code));
     const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (life.acknowledgeStop(), workerHttpCounts.push({ worker: w, counts: m.httpCounts }), readerFinalDiagnostics.push({ worker: w, diagnostics: m.diagnostics }), resolve())));
     await new Promise<void>((resolve, reject) => {
-      worker.on("message", (m: any) => { if (m.type === "ready") resolve(); else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
+      worker.on("message", (m: any) => { if (m.type === "ready") { if(smallOnly)(report.deep.readerIsolates??=[]).push({worker:w,heapUsed:m.memory.heapUsed,heapTotal:m.memory.heapTotal,external:m.memory.external,at:Date.now()}); resolve(); } else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
       worker.on("error", reject);
     });
     unsubscribe?.();
@@ -699,7 +711,7 @@ async function run() {
   }
   // [DX-R3] Why: cloning/installing the full window is bootstrap work, not a multi-second sweep-time writer stall.
   // Rejected: starting worker 99 from runSweep while the frozen writer is already issuing commands.
-  const preparedSweeper = replicaHost && !deepSmoke && !activationOnly && !config.zeroReaders && !config.readerLadderOnly
+  const preparedSweeper = replicaHost && !deepSmoke && !activationOnly && !interferenceOnly && !smallOnly && !config.zeroReaders && !config.readerLadderOnly
     ? await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 }) : undefined;
   let basisCursor: number | null = null;
   const basisBroadcast = { messages: 0, ackItems: 0, ticks: 0, wall: new Histogram() };
@@ -729,7 +741,7 @@ async function run() {
   const basisTimer = sendBasis ? setInterval(broadcast, 100) : undefined;
   const setReaders = (phase: number, wantedReaders: number, mode: string) => {
     const readers = config.maxReaders === null ? wantedReaders : Math.min(wantedReaders, config.maxReaders);
-    workers.forEach((w, k) => w.postMessage({ type: "level", phase, readers: Math.floor(readers / workers.length) + (k < readers % workers.length ? 1 : 0), mode }));
+    workers.forEach((w, k) => w.postMessage({ type: "level", phase, interReadMs:smallOnly && (deepAccount!==0 || phase===2) ? 15000:0, readers: Math.floor(readers / workers.length) + (k < readers % workers.length ? 1 : 0), mode }));
   };
 
   // ---------------------------------------------------------------- writer (open loop)
@@ -1068,7 +1080,7 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
-  const plan: ReturnType<typeof nsPlan> = activation ? [
+  const plan: ReturnType<typeof nsPlan> = smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
@@ -1088,7 +1100,7 @@ async function run() {
   }
   await sleep(Math.max(0, traceStart - now()));
   if (deep) void watermarkSampler(aux);
-  if (deep && fullLength) scheduler.setUntil(traceStart + V3_OFFER_SECONDS * 1000);
+  if (deep && (fullLength || interferenceOnly || smallOnly)) scheduler.setUntil(traceStart + (smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : V3_OFFER_SECONDS) * 1000);
   scheduler.start();
   probeScheduler?.start();
   if (config.probe10PerS > 0) probeTimer = setInterval(() => void overlay("probe10", probeRng.int(N), 10), 1000 / config.probe10PerS);
@@ -1449,7 +1461,7 @@ async function run() {
     const verifier = await openComposition(config.composition, lane, scopeName);
     try { report.deep.activationOracle = await activation.verify(verifier, report.deep.r1, report.deep.r2); } finally { await verifier.close(); }
   }
-  const incompleteHistory = !deepSmoke && !activation && !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
+  const incompleteHistory = !deepSmoke && !interferenceOnly && !smallOnly && !activation && !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
   if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");
   if (finalizationErrors.length) {
     report.invalidReasons = [...(report.invalidReasons ?? []), ...finalizationErrors];
