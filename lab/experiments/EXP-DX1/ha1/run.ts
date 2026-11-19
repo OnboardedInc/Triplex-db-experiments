@@ -16,7 +16,12 @@ export async function drill(
   try {
     assert(Number.isSafeInteger(profile.people) && profile.people > 0 && profile.people <= 100000);
     await s.open();
-    if (e.mode === "failures") result = await failures(s, profile.scopes);
+    if (e.mode === "failures")
+      result = await failures(
+        s,
+        profile.scopes,
+        profile.capacity === "two-host" ? profile.people : 0,
+      );
     else if (e.mode === "move") result = await move(s, profile.people);
     else result = await replication(s);
   } catch (err: any) {

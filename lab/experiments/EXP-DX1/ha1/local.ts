@@ -105,7 +105,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
             reserved = true;
           });
         } catch (err: any) {
-          if (err.code !== "REFUSED") throw err;
+          if (err.code !== "REFUSED" || measured) throw err;
         }
       }
       if (reserved) break;
