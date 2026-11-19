@@ -102,13 +102,15 @@
     (mapv #(normalized-row db %) rows)))
 (defn record [conn db e]
   (let [native (d/tx->t (:db/id e)) log-entry (first (d/tx-range (d/log conn) native (inc native)))
-        public (:transaction (feed/project db log-entry)) seq (:ha/seq e)]
+        public (:transaction (feed/project db log-entry)) seq (:ha/seq e)
+        original (receipt db e) position (get-in original ["position" "v"])]
     (let [cut (d/as-of db native)
           rows (mapv (fn [id] (let [eid (d/entid cut [:f/id id])]
                                 (check (some? eid) "MissingFact") (normalized-row db (store/wire-row (store/row cut eid)))))
                      (sort (distinct (map :assertionId (:changes public)))))]
-     {:observedFacts (count rows) :valueHash (schema/sha256 (json/write-str (canonical rows))) :sequence seq :account (:ha/tenant e) :prev (:ha/prev e) :digest (:ha/digest e) :receipt (receipt db e)
-     :feed (-> public (assoc :positions [(str seq)]) (update :changes (fn [cs] (mapv #(assoc % :position (str seq)) cs))))
+     {:observedFacts (count rows) :valueHash (schema/sha256 (json/write-str (canonical rows))) :sequence seq :account (:ha/tenant e) :prev (:ha/prev e) :digest (:ha/digest e) :receipt original
+     ;; [DX-HA1] Why: subscribers retain native receipt coordinates even when other tenants filled the intervening positions. Rejected: exposing the account sequence as the historical transaction position.
+     :feed (-> public (assoc :positions [position]) (update :changes (fn [cs] (mapv #(assoc % :position position) cs))))
      :body (:ha/body e)})))
 (defn transact! [name conn tenant gen action body import]
   (let [db (d/db conn) tx (validate-body tenant body) bytes (json/write-str (canonical body))

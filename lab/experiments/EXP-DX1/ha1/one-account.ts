@@ -345,7 +345,7 @@ export async function oneAccount(s: Stack, people: number) {
         assert.equal(e.observedFacts, item.input.rows.length);
         const tx = item.input.claims[0]!;
         assert.deepEqual(e.feed, {
-          positions: [String(e.sequence)],
+          positions: [item.receipt.position.v],
           commandIds: [tx.commandId],
           txIds: [tx.txId],
           operationId: item.input.operationId,
@@ -359,7 +359,7 @@ export async function oneAccount(s: Stack, people: number) {
               assertionId: r.id,
               validFrom: r.valid_from,
               validTo: r.valid_to,
-              position: String(e.sequence),
+              position: item.receipt.position.v,
             }))
             .sort((x, y) => (x.assertionId < y.assertionId ? -1 : 1)),
         });
