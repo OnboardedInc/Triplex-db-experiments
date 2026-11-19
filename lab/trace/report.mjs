@@ -8,14 +8,15 @@ import {
   validateCommandTrace,
   validateWriterBoundary,
 } from "./anatomy.mjs";
-import { packHtml } from "./viewer.mjs";
+import { timelineDocument } from "./viewer.mjs";
+import { writeChromeTrace, writeStreamedFile } from "./render-output.mjs";
+import { TraceReportIndex } from "./report-index.mjs";
 import { instrumentMarkdown, idleAndPhaseMetrics, idleMarkdown } from "./instrument.mjs";
 import { createHash } from "node:crypto";
-import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import path from "node:path";
 import { createGunzip } from "node:zlib";
-import { createInterface } from "node:readline";
+import { StringDecoder } from "node:string_decoder";
 import { pathToFileURL } from "node:url";
 
 export const LAYERS = [
@@ -71,22 +72,36 @@ export function filesUnder(dir) {
     );
 }
 
-// [DX-BM1] Why: the full native v3 timeline exceeded V8's maximum string length.
-// Rejected: dropping trace events or raising the renderer heap to address a per-string limit.
-function* chromeJson(events, metadata) {
-  yield '{"traceEvents":[';
-  const chunk = 512;
-  for (let start = 0; start < events.length; start += chunk) {
-    if (start) yield ",";
-    yield events.slice(start, start + chunk).map((event) => JSON.stringify(event)).join(",");
-  }
-  yield `],"displayTimeUnit":"ms","metadata":${JSON.stringify(metadata)}}\n`;
-}
 export async function* records(file) {
   const stream = fs.createReadStream(file);
-  const input = file.endsWith(".gz") ? stream.pipe(createGunzip()) : stream;
-  for await (const line of createInterface({ input, crlfDelay: Infinity }))
-    if (line.trim()) yield JSON.parse(line);
+  const input = file.endsWith(".gz") ? createGunzip() : stream;
+  let pumpError;
+  const pump = input === stream ? null : pipeline(stream, input).catch((error) => {
+    pumpError = error;
+  });
+  const decoder = new StringDecoder("utf8");
+  let remainder = "";
+  // [DX-BM1] Why: a killed recorder can leave complete rows followed by an incomplete gzip member.
+  // Rejected: readline's detached input error, or allowing a truncated member to qualify as complete.
+  try {
+    for await (const chunk of input) {
+      const text = remainder + decoder.write(chunk);
+      let start = 0, end;
+      while ((end = text.indexOf("\n", start)) >= 0) {
+        const line = text.slice(start, end);
+        if (line.trim()) yield JSON.parse(line);
+        start = end + 1;
+      }
+      remainder = text.slice(start);
+    }
+    await pump;
+    if (pumpError) throw pumpError;
+    remainder += decoder.end();
+    if (remainder.trim()) yield JSON.parse(remainder);
+  } finally {
+    input.destroy();
+    await pump;
+  }
 }
 // [DX-T1-2] Why: JVM nanoTime and Node hrtime use the same Linux boot clock even when startup wall anchors differ.
 // Rejected: infer network time from a gateway clipped away by clock skew, or silently guess an offset from a request duration.
@@ -152,53 +167,111 @@ function validSpan(s) {
     s.end >= s.start
   );
 }
-// [DX-T1] Why: integrate the union of intervals, choosing the innermost named work, never summing nested wall times.
-// Rejected: adding independent p99s or treating an unrelated storage/JFR event as a causal child.
-function intervalIndex(rows) {
-  const sorted = [...rows].sort((a, b) => a.start - b.start),
-    ends = [];
-  let max = -Infinity;
-  for (const e of sorted) {
-    max = Math.max(max, e.end);
-    ends.push(max);
+function* contextEvents(row, index) {
+  const { start, end } = row.root;
+  for (const event of index.overlap(start, end, "e.layer != 'jvm-event'"))
+    if (!event.traceId || event.traceId !== row.traceId) yield event;
+  const threads = new Map(row.spans.map((span) => [
+    `${span.process}:${span.thread}`, [span.process, span.thread],
+  ]));
+  for (const [process, thread] of threads.values())
+    for (const event of index.overlap(start, end,
+      "e.layer = 'jvm-event' AND e.process IS ? AND e.thread IS ?", process ?? null, thread ?? null))
+      if (!event.traceId || event.traceId !== row.traceId) yield event;
+}
+function* chromeEvents(selected, index) {
+  const processIds = new Map();
+  function* onProcess(name, event) {
+    if (!processIds.has(name)) {
+      const id = processIds.size + 1;
+      processIds.set(name, id);
+      yield { name: "process_name", ph: "M", pid: id, tid: 0, args: { name } };
+    }
+    yield { ...event, pid: processIds.get(name) };
   }
-  return {
-    overlap(start, end) {
-      let lo = 0,
-        hi = sorted.length;
-      while (lo < hi) {
-        const mid = (lo + hi) >>> 1;
-        if (sorted[mid].start < end) lo = mid + 1;
-        else hi = mid;
-      }
-      const out = [];
-      for (let i = lo - 1; i >= 0 && ends[i] > start; i--)
-        if (sorted[i].end > start) out.push(sorted[i]);
-      return out;
-    },
-  };
-}
-function groupedIndex(rows, key) {
-  const map = new Map();
-  for (const r of rows) {
-    const k = key(r),
-      list = map.get(k) ?? [];
-    list.push(r);
-    map.set(k, list);
+  const start = Math.min(...selected.map((r) => r.root.start));
+  for (const r of selected) {
+    for (const p of r.cpuProfile?.points ?? [])
+      yield* onProcess(r.root.process, {
+        name: "CPU sample " + p.stack[0],
+        cat: "cpu-sample",
+        ph: "i",
+        s: "t",
+        ts: (p.at - start) * 1000,
+        tid: r.root.thread,
+        args: { traceId: r.traceId, stack: p.stack, sampled: true },
+      });
+    const spanRows = [
+      {
+        name: r.root.name,
+        layer: r.root.kind,
+        start: r.root.start,
+        end: r.root.end,
+        process: r.root.process,
+        thread: r.root.thread,
+      },
+      ...r.spans,
+    ];
+    for (const s of spanRows)
+      yield* onProcess(s.process ?? r.root.process, {
+        name: s.name,
+        cat: s.layer,
+        ph: "X",
+        ts: (s.start - start) * 1000,
+        dur: duration(s) * 1000,
+        tid: s.thread ?? r.root.thread,
+        args: { traceId: r.traceId, phase: r.name, priority: r.priority },
+      });
+    if (r.replicaPublication) {
+      const p = r.replicaPublication,
+        flowId = "position-" + r.traceId;
+      yield* onProcess(p.process, {
+        name: "replica publication (position link)",
+        cat: "replica",
+        ph: "X",
+        ts: (p.start - start) * 1000,
+        dur: duration(p) * 1000,
+        tid: p.thread,
+        args: { traceId: r.traceId, feedTraceId: p.traceId, position: r.writer.position },
+      });
+      yield* onProcess(r.root.process, {
+        name: "commit to replica position link",
+        cat: "replica",
+        ph: "s",
+        ts: (r.root.start - start) * 1000,
+        tid: r.root.thread,
+        id: flowId,
+      });
+      yield* onProcess(p.process, {
+        name: "commit to replica position link",
+        cat: "replica",
+        ph: "f",
+        ts: (p.start - start) * 1000,
+        tid: p.thread,
+        id: flowId,
+        bp: "e",
+      });
+    }
+    for (const e of contextEvents(r, index))
+      yield* onProcess(e.process, {
+        name: e.name,
+        cat: e.layer,
+        ph: "X",
+        ts: (e.start - start) * 1000,
+        dur: duration(e) * 1000,
+        tid: e.thread ?? 0,
+        args: {
+          overlapsTrace: r.traceId,
+          estimated: !!e.estimated,
+          originalStartMs: e.start,
+          originalEndMs: e.end,
+        },
+      });
   }
-  return new Map([...map].map(([k, v]) => [k, intervalIndex(v)]));
 }
-function contextEvents(row, indexes) {
-  const events = indexes.general.overlap(row.root.start, row.root.end),
-    keys = new Set(row.spans.map((s) => `${s.process}:${s.thread}`));
-  for (const key of keys)
-    events.push(...(indexes.threads.get(key)?.overlap(row.root.start, row.root.end) ?? []));
-  return events.filter((e) => !e.traceId || e.traceId !== row.traceId);
-}
-function pressureEvents(resources) {
-  const events = [],
-    previous = new Map();
-  for (const sample of [...resources].sort((a, b) => a.at - b.at))
+function* pressureEvents(resources) {
+  const previous = new Map();
+  for (const sample of resources)
     for (const [container, stats] of Object.entries(sample.cgroups ?? {})) {
       const counters = Object.fromEntries(
         (stats["cpu.stat"] ?? "")
@@ -210,7 +283,7 @@ function pressureEvents(resources) {
       );
       const old = previous.get(container);
       if (old && counters.throttled_usec > old.throttled)
-        events.push({
+        yield {
           type: "event",
           name: `${container} CPU throttled ${(counters.throttled_usec - old.throttled) / 1000}ms in sample`,
           layer: "throttling",
@@ -219,10 +292,9 @@ function pressureEvents(resources) {
           start: old.at,
           end: sample.at,
           estimated: true,
-        });
+        };
       previous.set(container, { at: sample.at, throttled: counters.throttled_usec });
     }
-  return events;
 }
 // [DX-T1] Why: wire propagation must bind both the trace and the exact sending span, including multi-hop fallback.
 // Rejected: joining requests by trace ID alone or treating a missing worker as TypeScript own work.
@@ -485,40 +557,44 @@ function phaseOf(r, phases) {
             : "P1";
   return { name, priority, readers: phase?.readers ?? null };
 }
-function table(rows, label) {
-  const columns = [
-    "wallMs",
-    "cpuRuntimeMs",
-    "cpuRunqueueMs",
-    "cpuScopeWallMs",
-    ...LAYERS,
-    "typescriptMs",
-    "typescriptShare",
-    "unexplainedMs",
-  ];
-  const get = (r, k) => r.layers[k] ?? r[k];
+const measures = [
+  "wallMs", "cpuRuntimeMs", "cpuRunqueueMs", "cpuScopeWallMs", ...LAYERS,
+  "typescriptMs", "typescriptShare", "unexplainedMs",
+];
+
+function table(quantiles) {
   const lines = [
-    `| ${label} | ${columns.join(" | ")} |`,
-    `| --- | ${columns.map(() => "---:").join(" | ")} |`,
+    `| quantile | ${measures.join(" | ")} |`,
+    `| --- | ${measures.map(() => "---:").join(" | ")} |`,
   ];
-  for (const p of [0.5, 0.99])
-    lines.push(
-      `| p${p * 100} | ${columns
-        .map((k) =>
-          n(
-            percentile(
-              rows.map((r) => get(r, k)),
-              p,
-            ),
-          ),
-        )
-        .join(" | ")} |`,
-    );
+  for (const [i, label] of ["p50", "p99"].entries())
+    lines.push(`| ${label} | ${quantiles.map((pair) => n(pair[i])).join(" | ")} |`);
   return lines.join("\n");
 }
-export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
+
+async function findWriterClock(input, manifest) {
+  for (const file of input) {
+    try {
+      for await (const row of records(file))
+        if (row.type === "request" && row.name === "driver.commit" && row.thread === 0 &&
+            row.clock?.domain === "linux-monotonic" &&
+            (!manifest || (row.run === manifest.tag && row.source === manifest.source && row.slot === manifest.slot)))
+          return row;
+    } catch {
+      // Full ingestion records source and corruption diagnostics.
+    }
+  }
+  return null;
+}
+
+export async function buildReport(runDir, { copyTo, anatomyTo, outputTo } = {}) {
   const rootDir = path.resolve(runDir),
     tag = path.basename(rootDir);
+  const outputDir = outputTo ? path.resolve(outputTo) : rootDir;
+  if (outputTo) {
+    if (anatomyTo) throw Error("Choose one derivation output directory");
+    fs.mkdirSync(outputDir, { mode: 0o700 });
+  }
   const reportFile = path.join(rootDir, "driver/ns-report.json");
   const bench = fs.existsSync(reportFile) ? JSON.parse(fs.readFileSync(reportFile, "utf8")) : {};
   const manifestFile = path.join(rootDir, "trace-run.json");
@@ -555,12 +631,12 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       "trace-summary.json": JSON.stringify(summary, null, 2) + "\n",
     };
     for (const [name, bytes] of Object.entries(outputs))
-      fs.writeFileSync(path.join(rootDir, name), bytes);
+      fs.writeFileSync(path.join(outputDir, name), bytes);
     if (copyTo) {
       fs.mkdirSync(copyTo, { recursive: true });
       for (const name of Object.keys(outputs))
         fs.copyFileSync(
-          path.join(rootDir, name),
+          path.join(outputDir, name),
           path.join(copyTo, name),
           fs.constants.COPYFILE_FICLONE,
         );
@@ -571,258 +647,154 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
   const input = filesUnder(path.join(rootDir, "trace/raw")).filter((f) =>
     /\.jsonl(\.gz)?$/.test(f),
   );
-  const requests = [],
-    events = [],
-    resources = [],
-    histograms = [],
-    metadata = [],
-    completions = [],
-    profileClocks = [],
-    jfrCounts = new Map();
-  const errors = [];
+  const index = new TraceReportIndex(outputDir, manifest?.startedAt ?? 0, measures);
+  try {
+    return await buildIndexedReport(rootDir, outputDir, bench, manifest, index, input,
+      { nodeEnabled, copyTo, anatomyTo });
+  } finally {
+    index.close();
+  }
+}
+
+async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, input,
+  { nodeEnabled, copyTo, anatomyTo }) {
+  const tag = path.basename(rootDir);
+  const writerClock = await findWriterClock(input, manifest);
+  const clockReference = writerClock?.clock;
+  const clockSources = [];
+  const histograms = [], completions = [], profileClocks = [];
+  const errors = [], jfrCounts = new Map();
+  let errorCount = 0;
+  function recordError(message) {
+    errorCount++;
+    if (errors.length < 100) errors.push(message);
+  }
+  let invalidSpanParents = 0, unqualifiedEventCount = 0, resourceCount = 0;
+  let metadataCount = 0, exactTop20 = true;
+  if (manifest?.requireClockBinding && !clockReference)
+    recordError("Writer Linux boot-clock binding missing");
+  function align(row) {
+    try {
+      const aligned = alignClockRecord(row, clockReference);
+      if (row.clock && clockReference &&
+          !clockSources.some((x) => x.process === row.process && x.offsetMs === row.clock.offsetMs))
+        clockSources.push({
+          process: row.process, offsetMs: row.clock.offsetMs,
+          shiftMs: aligned.clockAlignmentMs, uncertaintyMs: row.clock.uncertaintyMs,
+        });
+      return aligned;
+    } catch (error) {
+      recordError(String(error));
+      return row;
+    }
+  }
+  function addEvent(row) {
+    const aligned = align(row);
+    if (aligned.clockAlignmentQualified !== false) index.addEvent(aligned);
+    else unqualifiedEventCount++;
+  }
   for (const file of input) {
     let footer = false;
     try {
       for await (const r of records(file)) {
-        if (
-          manifest &&
-          (r.run !== manifest.tag || r.source !== manifest.source || r.slot !== manifest.slot)
-        ) {
-          errors.push(`Binding mismatch in ${path.basename(file)}`);
+        if (manifest && (r.run !== manifest.tag || r.source !== manifest.source || r.slot !== manifest.slot)) {
+          recordError(`Binding mismatch in ${path.basename(file)}`);
           continue;
         }
         if (r.type === "cpu-profile-clock") profileClocks.push(r);
         else if (r.type === "request") {
           if (manifest && r.start < manifest.startedAt - 1000)
-            errors.push(`Stale request in ${path.basename(file)}`);
-          if (
-            r.schema !== "triplex.trace.v1" ||
-            !/^[0-9a-f]{32}$/.test(r.traceId) ||
-            !Number.isFinite(r.start) ||
-            !Number.isFinite(r.end) ||
-            r.end < r.start ||
-            !Array.isArray(r.spans) ||
-            !r.spans.every(validSpan)
-          )
+            recordError(`Stale request in ${path.basename(file)}`);
+          if (r.schema !== "triplex.trace.v1" || !/^[0-9a-f]{32}$/.test(r.traceId) ||
+              !Number.isFinite(r.start) || !Number.isFinite(r.end) || r.end < r.start ||
+              !Array.isArray(r.spans) || !r.spans.every(validSpan))
             throw Error("invalid request record");
-          requests.push(r);
+          if (manifest?.requireClockBinding) {
+            if (!r.clock) recordError("Request clock binding missing: " + r.traceId);
+            const ids = new Set([r.root, ...r.spans.map((s) => s.id)]);
+            for (const span of r.spans) if (!ids.has(span.parent)) invalidSpanParents++;
+          }
+          const aligned = align(r);
+          index.addRequest(aligned);
+          // [DX-T1] Why: link asynchronous replica work by its validated logical position.
+          // Rejected: using the feed poll's unrelated trace ID or including its work in commit latency.
+          if (aligned.name === "replica.follow")
+            for (const span of aligned.spans)
+              if (span.name === "replica.publish" && Number.isSafeInteger(span.attributes?.position))
+                index.setPublication(span.attributes.position, {
+                  ...span, process: aligned.process, thread: aligned.thread,
+                  traceId: aligned.traceId, type: "event",
+                });
         } else if (r.type === "event") {
           if (validSpan(r)) {
-            events.push(r);
+            addEvent(r);
             if (r.name.startsWith("jdk.") || r.nativeType?.startsWith("triplex."))
               jfrCounts.set(r.process, (jfrCounts.get(r.process) ?? 0) + 1);
           }
         } else if (r.type === "index-adoption") {
-          // [DX-T1-13] Why: actual processor adoptions belong on routine timelines, with their boot-clock binding and no causal request assignment.
-          // Rejected: a JFR label (these intervals come directly from nanoTime) or adding coincident adoption time to a commit's exclusive share.
+          // [DX-T1-13] Why: place actual processor adoptions on the boot clock without attributing causality.
+          // Rejected: labelling direct nanoTime intervals as JFR events.
           if (!validSpan(r) || r.process !== "tx" || r.clock?.domain !== "linux-monotonic")
             throw Error("Invalid processor adoption event");
-          events.push({ ...r, type: "event", causal: false });
+          addEvent({ ...r, type: "event", causal: false });
         } else if (r.type === "jfr-complete") completions.push(r);
         else if (r.type === "resource" || r.type === "metrics") {
-          resources.push(r);
-          // [DX-T1-9] Why: a producer forwards its private witness worker's measured interval on the same process clock.
-          // Rejected: attributing off-thread SQLite to writer-thread code or using the parent's message round-trip as storage time.
+          index.addResource(align(r));
+          resourceCount++;
+          // [DX-T1-9] Why: the producer forwards the measured witness interval on the process clock.
+          // Rejected: assigning off-thread SQLite time to the writer or using the RPC round trip.
           if (r.name === "driver.publication.persist-worker") {
-            if (
-              !Number.isSafeInteger(r.workerThread) ||
-              r.workerThread <= 0 ||
-              !validSpan(r) ||
-              !r.attributes?.operationId ||
-              !r.attributes?.position
-            )
+            if (!Number.isSafeInteger(r.workerThread) || r.workerThread <= 0 || !validSpan(r) ||
+                !r.attributes?.operationId || !r.attributes?.position)
               throw Error("Invalid publication worker interval");
-            events.push({ ...r, type: "event", thread: r.workerThread });
+            addEvent({ ...r, type: "event", thread: r.workerThread });
           }
-        } else if (r.type === "metadata") metadata.push(r);
-        else if (r.type === "histograms") {
+        } else if (r.type === "metadata") {
+          metadataCount++;
+          exactTop20 &&= r.topReadsPerPhase === 20;
+        } else if (r.type === "histograms") {
           footer = true;
           histograms.push(r);
-          if (r.failure) errors.push("Recorder reported failure");
+          if (r.failure) recordError("Recorder reported failure");
         }
       }
       if (path.basename(file).startsWith("node-") && !footer)
-        errors.push(`Missing drain footer in ${path.basename(file)}`);
+        recordError(`Missing drain footer in ${path.basename(file)}`);
     } catch (error) {
-      errors.push(`${path.basename(file)}: ${error.message}`);
+      if (error.code === "ERR_SQLITE_ERROR") throw error;
+      recordError(`${path.basename(file)}: ${error.message}`);
     }
   }
-  const clockReference = requests.find(
-    (r) => r.name === "driver.commit" && r.thread === 0 && r.clock?.domain === "linux-monotonic",
-  )?.clock;
-  const clockSources = [];
-  if (manifest?.requireClockBinding && !clockReference)
-    errors.push("Writer Linux boot-clock binding missing");
-  for (const rows of [requests, events, resources])
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
-      if (manifest?.requireClockBinding && r.type === "request" && !r.clock)
-        errors.push("Request clock binding missing: " + r.traceId);
-      try {
-        rows[i] = alignClockRecord(r, clockReference);
-        if (
-          r.clock &&
-          clockReference &&
-          !clockSources.some((x) => x.process === r.process && x.offsetMs === r.clock.offsetMs)
-        )
-          clockSources.push({
-            process: r.process,
-            offsetMs: r.clock.offsetMs,
-            shiftMs: rows[i].clockAlignmentMs,
-            uncertaintyMs: r.clock.uncertaintyMs,
-          });
-      } catch (error) {
-        errors.push(String(error));
-      }
-    }
-  const unqualifiedEvents = events.filter((e) => e.clockAlignmentQualified === false);
-  let keep = 0;
-  for (const event of events) if (event.clockAlignmentQualified !== false) events[keep++] = event;
-  events.length = keep;
-  let invalidSpanParents = 0;
-  if (manifest?.requireClockBinding)
-    for (const r of requests) {
-      const ids = new Set([r.root, ...r.spans.map((s) => s.id)]);
-      for (const span of r.spans) if (!ids.has(span.parent)) invalidSpanParents++;
-    }
+  index.finishInputs();
   if (invalidSpanParents)
-    errors.push(
-      `${invalidSpanParents} spans have a missing local parent (context or retention bug)`,
-    );
-  const replicaPublications = new Map();
-  // [DX-T1] Why: asynchronous replica work links by the validated logical position within this one benchmark scope.
-  // Rejected: assigning a feed poll's unrelated trace ID to the original writer, or adding post-ACK work to commit latency.
-  for (const request of requests)
-    if (request.name === "replica.follow")
-      for (const span of request.spans)
-        if (span.name === "replica.publish" && Number.isSafeInteger(span.attributes?.position)) {
-          const event = {
-            ...span,
-            process: request.process,
-            thread: request.thread,
-            traceId: request.traceId,
-            type: "event",
-          };
-          replicaPublications.set(span.attributes.position, event);
-        }
-  events.push(...pressureEvents(resources));
-  const gateways = new Map();
-  for (const r of requests)
-    if (r.name.startsWith("gateway ")) {
-      const list = gateways.get(r.traceId) ?? [];
-      list.push(r);
-      gateways.set(r.traceId, list);
-    }
-  let roots = requests.filter(
-    (r) =>
-      r.name === "driver.commit" ||
-      r.name === "driver.expired" ||
-      r.name === "reader.pull" ||
-      r.name === "driver.ryow",
-  );
-  const ownedIds = new Set(roots.map((r) => r.traceId));
-  roots.push(
-    ...requests.filter(
-      (r) =>
-        !ownedIds.has(r.traceId) &&
-        (r.name === "replica.follow" || /^http .*\/(transactions|journal)$/.test(r.name)),
-    ),
-  );
-  if (!roots.length) roots = requests.filter((r) => r.name.startsWith("http "));
-  const byTrace = new Map();
-  for (const request of requests) {
-    const list = byTrace.get(request.traceId) ?? [];
-    list.push(request);
-    byTrace.set(request.traceId, list);
-  }
-  const linked = (r) => traceChildren(r, byTrace.get(r.traceId) ?? []);
-  const nativeFunctions = events.filter((e) => e.nativeType === "triplex.TransactionFunction");
-  for (const e of nativeFunctions) {
-    const candidates = byTrace.get(e.traceId) ?? [];
-    const parent = candidates
-      .flatMap((r) => r.spans)
+    recordError(`${invalidSpanParents} spans have a missing local parent (context or retention bug)`);
+  for (const event of pressureEvents(index.pressureSamples())) index.addEvent(event);
+
+  const linked = (root) => traceChildren(root,
+    [...index.requests(root.traceId)].filter((request) => request.root !== root.root));
+  const functionFilter = "native_type = 'triplex.TransactionFunction'";
+  const statsFilter = "native_type = 'triplex.NativeTransaction'";
+  for (const e of index.events(functionFilter)) {
+    const candidates = [...index.requests(e.traceId ?? "")];
+    const parent = candidates.flatMap((r) => r.spans)
       .find((s) => s.id === e.parent && s.layer === "peer-wait");
-    if (
-      e.process !== "tx" ||
-      !/^[0-9a-f]{16}$/.test(e.id ?? "") ||
-      !parent ||
-      e.start < parent.start - 0.1 ||
-      e.end > parent.end + 0.1
-    )
-      errors.push("Unbound or out-of-window native transaction function event");
+    if (e.process !== "tx" || !/^[0-9a-f]{16}$/.test(e.id ?? "") || !parent ||
+        e.start < parent.start - 0.1 || e.end > parent.end + 0.1)
+      recordError("Unbound or out-of-window native transaction function event");
   }
-  const pauseIndex = intervalIndex(
-    events.filter(
-      (e) =>
-        ["typescript-gc", "gateway-gc"].includes(e.layer) ||
-        e.nativeType === "triplex.TransactionFunction",
-    ),
-  );
-  const workIndex = groupedIndex(
-    events.filter((e) => e.layer === "typescript"),
-    (e) => `${e.process}:${e.thread}`,
-  );
-  const contextIndexes = {
-    general: intervalIndex(events.filter((e) => e.layer !== "jvm-event")),
-    threads: groupedIndex(
-      events.filter((e) => e.layer === "jvm-event"),
-      (e) => `${e.process}:${e.thread}`,
-    ),
-  };
-  let missingReceivers = 0;
-  const evaluated = roots.map((r) => {
-    const children = linked(r),
-      nodes = [r, ...children];
-    for (const node of nodes)
-      for (const span of node.spans)
-        if (span.name.startsWith("rpc.") && !children.some((child) => child.parent === span.id))
-          missingReceivers++;
-    return {
-      root: r,
-      allTruncated: nodes.reduce((n, node) => n + (node.truncated ?? 0), 0),
-      ...attribute(
-        r,
-        children.filter((c) => c.name.startsWith("gateway ")),
-        pauseIndex.overlap(r.start, r.end),
-        children.filter((c) => !c.name.startsWith("gateway ")),
-      ),
-      ...phaseOf(r, bench.phases ?? []),
-    };
-  });
-  if (missingReceivers)
-    errors.push(`${missingReceivers} worker RPC spans have no bound receiver trace`);
-  const nativeTransactions = events.filter((e) => e.nativeType === "triplex.NativeTransaction");
-  for (const row of evaluated) {
-    row.nativeTransactions = [];
-    for (const gateway of linked(row.root).filter((r) => r.name.startsWith("gateway "))) {
-      try {
-        const native = bindNativeTransaction(gateway, nativeTransactions);
-        if (
-          native &&
-          !row.nativeTransactions.some(
-            (n) => n.databaseHash === native.databaseHash && n.datomicT === native.datomicT,
-          )
-        )
-          row.nativeTransactions.push(native);
-      } catch (error) {
-        errors.push(String(error));
-      }
-    }
-  }
-  const commits = evaluated.filter((r) => r.root.kind === "commit");
-  const denom = commits;
-  const explained = denom.filter((r) => r.explained >= 0.95 && !r.allTruncated).length;
-  // Content/freshness/binding: compare the observed per-command trace against this run's actual writer rows.
+  // Content, freshness and binding come from this run's actual writer rows and matched roots.
   const writesFile = path.join(rootDir, "driver/ns-writes.jsonl");
   const deferredWriters = [];
   const allWriterRows = [];
   let writes = 0,
     missingCommits = 0;
-  const byId = new Map(commits.map((r) => [r.traceId, r]));
-  const ids = new Set(byId.keys());
   if (fs.existsSync(writesFile))
     for await (const w of records(writesFile)) {
-      allWriterRows.push(w);
+      const { traceId, startedAt, finishedAt, expired, stream, resend, outcome, facts,
+        ackPublishedAt, transactCalledAt, transactReturnedAt, scheduledAt, latencyMs,
+        verdictClock, verdictMs } = w;
+      allWriterRows.push({ traceId, startedAt, finishedAt, expired, stream, resend, outcome, facts,
+        ackPublishedAt, transactCalledAt, transactReturnedAt, scheduledAt, latencyMs, verdictClock, verdictMs });
       writes++;
       if (!nodeEnabled) continue;
       if (
@@ -830,14 +802,14 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
         ((w.stream === "background" && !w.resend) || w.publicationDeferred)
       )
         deferredWriters.push(w);
-      if (!w.traceId || !ids.has(w.traceId)) missingCommits++;
+      const root = w.traceId ? index.commit(w.traceId) : null;
+      if (!root) missingCommits++;
       else {
-        const trace = byId.get(w.traceId);
         if (manifest?.writerBoundary) {
           try {
-            validateWriterBoundary(w, trace.root);
+            validateWriterBoundary(w, root);
           } catch (error) {
-            errors.push(String(error));
+            recordError(String(error));
           }
         }
         if (
@@ -847,16 +819,16 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
           !w.resend
         ) {
           try {
-            validateCommandTrace(w, [trace.root, ...linked(trace.root)]);
+            validateCommandTrace(w, [root, ...linked(root)]);
           } catch (error) {
-            errors.push(String(error));
+            recordError(String(error));
           }
         }
-        if (Number.isFinite(w.scheduledAt) && Math.abs(trace.root.start - w.scheduledAt) > 1)
-          errors.push("Writer/trace offer timestamp mismatch");
+        if (Number.isFinite(w.scheduledAt) && Math.abs(root.start - w.scheduledAt) > 1)
+          recordError("Writer/trace offer timestamp mismatch");
         if (manifest?.queueExpected) {
           const queue = w.queue;
-          if (!Array.isArray(queue)) errors.push("Writer queue partition absent");
+          if (!Array.isArray(queue)) recordError("Writer queue partition absent");
           else {
             const valid = queue.every(
               (q) =>
@@ -867,14 +839,14 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
                 q.inFlight >= 0 &&
                 q.capacity > 0 &&
                 (q.cause !== "slot" || q.inFlight >= q.capacity) &&
-                (q.cause !== "subject" || ids.has(q.behindTraceId)),
+                (q.cause !== "subject" || (q.behindTraceId && index.commit(q.behindTraceId))),
             );
             const total = queue.reduce((n, q) => n + q.end - q.start, 0);
             if (!valid || Math.abs(total - w.waitMs) > 0.5)
-              errors.push("Writer queue partition content/binding mismatch");
+              recordError("Writer queue partition content/binding mismatch");
           }
         }
-        trace.writer = {
+        index.setWriter(w.traceId, {
           facts: w.facts,
           resend: !!w.resend,
           outcome: w.outcome,
@@ -883,52 +855,21 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
           burst: w.burst,
           position: w.position,
           queue: w.queue ?? null,
-        };
+        });
         if (
-          Number.isFinite(trace.root.attributes.position) &&
+          Number.isFinite(root.attributes?.position) &&
           Number.isFinite(w.position) &&
-          trace.root.attributes.position !== w.position
+          root.attributes.position !== w.position
         )
-          errors.push("Writer/trace position mismatch");
-        const publication = replicaPublications.get(w.position);
-        if (publication)
-          trace.replicaPublication = {
-            ...publication,
-            msAfterRootEnd: publication.end - trace.root.end,
-          };
+          recordError("Writer/trace position mismatch");
       }
     }
-  else errors.push("Writer file absent: cannot establish complete commit denominator");
+  else recordError("Writer file absent: cannot establish complete commit denominator");
   if (missingCommits)
-    errors.push(`${missingCommits}/${writes} writer observations lack a matching trace`);
-  if (manifest?.requireTransactorStats) {
-    const missing = commits.filter(
-      (r) =>
-        r.writer?.stream === "background" &&
-        !r.writer.resend &&
-        r.writer.outcome === "committed" &&
-        !r.nativeTransactions.length,
-    );
-    if (missing.length)
-      errors.push(`${missing.length} committed commands lack exact database/t native stats`);
-  }
-  if (manifest?.requireTransactorFunction) {
-    const unobserved = commits.filter(
-      (r) =>
-        r.writer?.stream === "background" &&
-        !r.writer.resend &&
-        r.writer.outcome === "committed" &&
-        !r.spans.some((s) => s.nativeType === "triplex.TransactionFunction"),
-    );
-    if (unobserved.length)
-      errors.push(
-        `${unobserved.length} committed commands lack a bound native transaction-function interval`,
-      );
-  }
-  if (!manifest) errors.push("Run binding manifest absent");
+    recordError(`${missingCommits}/${writes} writer observations lack a matching trace`);
+  if (!manifest) recordError("Run binding manifest absent");
   if (nodeEnabled && !histograms.length)
-    errors.push("No final Node histograms: recorder drain not proven");
-  if (nodeEnabled && !denom.length) errors.push("No commit traces");
+    recordError("No final Node histograms: recorder drain not proven");
   for (const role of manifest?.requiredJfr ?? []) {
     const c = completions.find((r) => r.role === role);
     const file = path.join(rootDir, "trace/raw", role + ".jfr.gz");
@@ -940,7 +881,7 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       c.recordingStart < manifest.startedAt - 1000 ||
       c.at < Date.parse(bench.endedAt ?? "") - 1000
     ) {
-      errors.push(`Missing/stale/inconsistent JFR export for ${role}`);
+      recordError(`Missing/stale/inconsistent JFR export for ${role}`);
       continue;
     }
     try {
@@ -954,25 +895,28 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
         hash.update(chunk);
       }
       if (header !== "464c5200" || bytes < 68 || hash.digest("hex") !== c.fileSha256)
-        errors.push(`JFR bytes mismatch for ${role}`);
+        recordError(`JFR bytes mismatch for ${role}`);
     } catch (error) {
-      errors.push(`JFR verification failed for ${role}: ${error.message}`);
+      recordError(`JFR verification failed for ${role}: ${error.message}`);
     }
   }
+  function hasResource(process, predicate) {
+    for (const sample of index.resources("process = ?", process))
+      if (predicate(sample)) return true;
+    return false;
+  }
   if (manifest?.requireSystem) {
-    if (manifest.hostPlatform !== "linux-bare-metal" && !resources.some((r) => r.process === "system-darwin" && r.swap !== null && r.cpu !== null))
-      errors.push("Mac CPU/swap collector missing");
+    if (manifest.hostPlatform !== "linux-bare-metal" && !hasResource("system-darwin", (r) => r.swap !== null && r.cpu !== null))
+      recordError("Mac CPU/swap collector missing");
     if (
-      !resources.some(
-        (r) => r.process === "system-linux" && Object.keys(r.cgroups ?? {}).length >= 4,
-      )
+      !hasResource("system-linux", (r) => Object.keys(r.cgroups ?? {}).length >= 4)
     )
-      errors.push("VM/cgroup collector missing");
+      recordError("VM/cgroup collector missing");
     if (
       (manifest.requirePostgres ?? true) &&
-      !resources.some((r) => r.process === "postgres" && r.activity)
+      !hasResource("postgres", (r) => r.activity)
     )
-      errors.push("Postgres wait/WAL/IO collector missing");
+      recordError("Postgres wait/WAL/IO collector missing");
   }
 
   let cpuProfile = null;
@@ -982,125 +926,164 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       manifest,
       profileClocks,
       clockReference,
-      requests.find((r) => r.name === "driver.commit" && r.thread === 0)?.process,
+      writerClock?.process,
       Date.parse(bench.endedAt ?? ""),
     );
   } catch (error) {
-    errors.push(String(error));
+    recordError(String(error));
   }
-  if (cpuProfile)
-    for (const r of evaluated.filter(
-      (r) => r.root.process === cpuProfile.process && r.root.thread === cpuProfile.thread,
-    )) {
-      r.cpuProfile = cpuProfile.window(r.root.start, r.root.end);
-      const late = r.root.spans
-        .filter((s) => s.name === "driver.queue.scheduler-late")
-        .sort((a, b) => b.end - b.start - (a.end - a.start))[0];
-      if (late)
-        r.schedulerLateProfile = {
-          start: late.start,
-          end: late.end,
-          ...cpuProfile.window(late.start, late.end),
-        };
+  const groups = new Map(), phases = bench.phases ?? [], slow = [], commits = [];
+  const phaseCounters = phases.map((phase) => ({ phase, samples: 0, first: null, last: null }));
+  const keepSlow = (list, row, capacity) => {
+    const before = list.findIndex((existing) => existing.wallMs < row.wallMs);
+    if (before >= 0) list.splice(before, 0, row);
+    else if (list.length < capacity) list.push(row);
+    if (list.length > capacity) list.pop();
+  };
+  function addGroup(key, row) {
+    let group = groups.get(key);
+    if (!group) {
+      group = { id: groups.size, count: 0, slow: [] };
+      groups.set(key, group);
     }
-  for (const r of evaluated)
-    r.overlappingWork = (
-      workIndex.get(`${r.root.process}:${r.root.thread}`)?.overlap(r.root.start, r.root.end) ?? []
-    )
-      .filter((e) => !e.traceId || e.traceId !== r.traceId)
-      .map((e) => ({
-        name: e.name,
-        overlapMs: Math.min(e.end, r.root.end) - Math.max(e.start, r.root.start),
-      }))
-      .sort((a, b) => b.overlapMs - a.overlapMs)
-      .slice(0, 5);
-  const groups = new Map();
-  for (const r of evaluated) {
-    const key = `${r.priority} / ${r.name} / ${r.root.kind}`;
-    const group = groups.get(key) ?? [];
-    group.push(r);
-    groups.set(key, group);
-    if (
-      r.root.kind === "commit" &&
-      r.writer?.stream === "background" &&
-      r.writer.facts >= 5 &&
-      r.writer.facts <= 10
-    ) {
-      const bandKey = `${r.priority} / ${r.name} / commit / 5-10 facts`,
-        band = groups.get(bandKey) ?? [];
-      band.push(r);
-      groups.set(bandKey, band);
-    }
+    group.count++;
+    keepSlow(group.slow, row, 20);
+    index.addMetrics(group.id, row);
   }
-  if (manifest?.requiredJfr && !manifest.requiredJfr.includes("gw-w")) {
-    for (const rows of groups.values()) for (const r of rows) r.layers["gateway-gc"] = null;
-  }
-  const selected = [];
-  const selectedIds = new Set();
-  for (const group of groups.values())
-    for (const r of [...group].sort((a, b) => b.wallMs - a.wallMs).slice(0, 20))
-      if (!selectedIds.has(r.traceId)) {
-        selectedIds.add(r.traceId);
-        selected.push(r);
+  let requestCount = 0, explained = 0, missingReceivers = 0, missingStats = 0, missingFunctions = 0;
+  const schedulerProfiles = [];
+  for (const root of index.roots()) {
+    requestCount++;
+    const children = linked(root);
+    const nodes = [root, ...children];
+    for (const node of nodes)
+      for (const span of node.spans)
+        if (span.name.startsWith("rpc.") && !children.some((child) => child.parent === span.id))
+          missingReceivers++;
+    const gateways = children.filter((child) => child.name.startsWith("gateway "));
+    const row = {
+      root,
+      allTruncated: nodes.reduce((sum, node) => sum + (node.truncated ?? 0), 0),
+      ...attribute(root, gateways,
+        [...index.overlap(root.start, root.end,
+          "e.layer IN ('typescript-gc', 'gateway-gc') OR e.native_type = 'triplex.TransactionFunction'")],
+        children.filter((child) => !child.name.startsWith("gateway "))),
+      ...phaseOf(root, phases),
+      nativeTransactions: [],
+    };
+    for (const gateway of gateways) {
+      const hash = gateway.attributes?.databaseHash, t = gateway.attributes?.datomicT;
+      if (!hash || t === undefined) continue;
+      try {
+        const native = bindNativeTransaction(gateway, [...index.events(
+          statsFilter + " AND database_hash = ? AND native_t = ?", hash, String(t))]);
+        if (native && !row.nativeTransactions.some(
+          (old) => old.databaseHash === native.databaseHash && old.datomicT === native.datomicT))
+          row.nativeTransactions.push(native);
+      } catch (error) {
+        recordError(String(error));
       }
-  const slow = [...commits].sort((a, b) => b.wallMs - a.wallMs).slice(0, 5);
-  for (const r of slow) {
-    r.queueDetails = r.root.spans
-      .filter((s) => s.name.startsWith("driver.queue."))
-      .map((s) => ({ cause: s.name, ms: s.end - s.start, ...s.attributes }))
-      .sort((a, b) => b.ms - a.ms);
-    const executing = r.root.spans.find((s) => s.name === "driver.execute")?.start ?? r.root.end;
-    r.queueContexts = resources
-      .filter(
-        (x) =>
-          x.name === "writer.queue-context" &&
-          x.process === r.root.process &&
-          x.at >= r.root.start &&
-          x.at <= executing,
-      )
-      .map((x) => ({ at: x.at, inFlight: x.inFlight, capacity: x.capacity, active: x.active }))
-      .slice(0, 40);
+    }
+    if (cpuProfile && root.process === cpuProfile.process && root.thread === cpuProfile.thread) {
+      row.cpuProfile = cpuProfile.window(root.start, root.end);
+      const late = root.spans.filter((span) => span.name === "driver.queue.scheduler-late")
+        .sort((left, right) => duration(right) - duration(left))[0];
+      if (late) row.schedulerLateProfile = { start: late.start, end: late.end, ...cpuProfile.window(late.start, late.end) };
+    }
+    const sameThread = [];
+    for (const event of index.overlap(root.start, root.end,
+      "e.layer = 'typescript' AND e.process IS ? AND e.thread IS ?", root.process ?? null, root.thread ?? null)) {
+      if (event.traceId && event.traceId === row.traceId) continue;
+      const wallMs = Math.min(event.end, root.end) - Math.max(event.start, root.start);
+      keepSlow(sameThread, { name: event.name, wallMs }, 5);
+    }
+    row.overlappingWork = sameThread.map(({ name, wallMs }) => ({ name, overlapMs: wallMs }));
+    if (manifest?.requiredJfr && !manifest.requiredJfr.includes("gw-w")) row.layers["gateway-gc"] = null;
+    if (root.kind === "commit") {
+      if (row.explained >= 0.95 && !row.allTruncated) explained++;
+      const writer = index.writer(root.traceId);
+      if (writer) {
+        row.writer = writer;
+        const publication = index.publication(writer.position);
+        if (publication) row.replicaPublication = { ...publication, msAfterRootEnd: publication.end - root.end };
+        if (writer.stream === "background" && !writer.resend && writer.outcome === "committed") {
+          if (!row.nativeTransactions.length) missingStats++;
+          if (!row.spans.some((span) => span.nativeType === "triplex.TransactionFunction")) missingFunctions++;
+        }
+      }
+      for (const sample of [root.schedulerStart, root.schedulerEnd,
+        ...root.spans.flatMap((span) => [span.schedulerStart, span.schedulerEnd])]) {
+        if (!sample) continue;
+        for (const counter of phaseCounters)
+          if (sample.at >= counter.phase.start && sample.at <= counter.phase.end) {
+            counter.samples++;
+            if (!counter.first || sample.at < counter.first.at) counter.first = sample;
+            if (!counter.last || sample.at >= counter.last.at) counter.last = sample;
+          }
+      }
+      const late = row.schedulerLateProfile;
+      if (late && late.end - late.start >= 20)
+        keepSlow(schedulerProfiles, { traceId: row.traceId, name: row.name, late, wallMs: duration(late) }, 20);
+      keepSlow(slow, row, 5);
+      // [DX-BM1] Why: anatomy consumes the commit cohort's exact scalars and looks up spans only when needed.
+      // Rejected: keeping a second in-heap copy of spans derived from every request.
+      const detailId = index.retainCommit(row);
+      const { root: _root, spans: _spans, cpuProfile: _cpu, schedulerLateProfile: _late, ...compact } = row;
+      commits.push({
+        ...compact,
+        get root() { return index.commitDetails(detailId).root; },
+        get spans() { return index.commitDetails(detailId).spans; },
+      });
+    }
+    const key = `${row.priority} / ${row.name} / ${root.kind}`;
+    addGroup(key, row);
+    if (root.kind === "commit" && row.writer?.stream === "background" &&
+        row.writer.facts >= 5 && row.writer.facts <= 10)
+      addGroup(key + " / 5-10 facts", row);
   }
-  const schedulerByPhase = Object.fromEntries(
-    (bench.phases ?? []).map((p) => {
-      const samples = commits
-          .flatMap((r) => [
-            r.root.schedulerStart,
-            r.root.schedulerEnd,
-            ...r.root.spans.flatMap((s) => [s.schedulerStart, s.schedulerEnd]),
-          ])
-          .filter((x) => x && x.at >= p.start && x.at <= p.end)
-          .sort((a, b) => a.at - b.at),
-        first = samples[0],
-        last = samples.at(-1);
-      return [
-        p.name,
-        {
-          readers: p.readers,
-          samples: samples.length,
-          spanMs: first && last ? last.at - first.at : null,
-          runtimeMs: first && last ? (last.runtimeNs - first.runtimeNs) / 1e6 : null,
-          runqueueMs:
-            first && last && first.waitEnabled && last.waitEnabled
-              ? (last.runqueueNs - first.runqueueNs) / 1e6
-              : null,
-          waitEnabled: !!first?.waitEnabled,
-        },
-      ];
-    }),
-  );
+  if (missingReceivers) recordError(`${missingReceivers} worker RPC spans have no bound receiver trace`);
+  if (manifest?.requireTransactorStats && missingStats)
+    recordError(`${missingStats} committed commands lack exact database/t native stats`);
+  if (manifest?.requireTransactorFunction && missingFunctions)
+    recordError(`${missingFunctions} committed commands lack a bound native transaction-function interval`);
+  if (nodeEnabled && !commits.length) recordError("No commit traces");
+  const selected = [], selectedIds = new Set();
+  for (const group of groups.values())
+    for (const row of group.slow)
+      if (!selectedIds.has(row.traceId)) {
+        selectedIds.add(row.traceId);
+        selected.push(row);
+      }
+  for (const row of slow) {
+    row.queueDetails = row.root.spans.filter((span) => span.name.startsWith("driver.queue."))
+      .map((span) => ({ cause: span.name, ms: duration(span), ...span.attributes }))
+      .sort((left, right) => right.ms - left.ms);
+    const executing = row.root.spans.find((span) => span.name === "driver.execute")?.start ?? row.root.end;
+    row.queueContexts = [];
+    for (const sample of index.resources("name = 'writer.queue-context' AND process = ? AND at BETWEEN ? AND ?",
+      row.root.process, row.root.start, executing)) {
+      const { at, inFlight, capacity, active } = sample;
+      row.queueContexts.push({ at, inFlight, capacity, active });
+      if (row.queueContexts.length === 40) break;
+    }
+  }
+  const schedulerByPhase = Object.fromEntries(phaseCounters.map(({ phase, samples, first, last }) => [
+    phase.name, {
+      readers: phase.readers, samples,
+      spanMs: first && last ? last.at - first.at : null,
+      runtimeMs: first && last ? (last.runtimeNs - first.runtimeNs) / 1e6 : null,
+      runqueueMs: first?.waitEnabled && last?.waitEnabled ? (last.runqueueNs - first.runqueueNs) / 1e6 : null,
+      waitEnabled: !!first?.waitEnabled,
+    },
+  ]));
+  for (const group of groups.values()) group.quantiles = index.quantiles(group.id);
   const finding = slow.length
     ? `The slowest observed commits spent their largest exclusive interval in ${slow.map((r) => `\`${r.steps[0]?.[0] ?? "unknown"}\` (${n(r.steps[0]?.[1])} ms, trace \`${r.traceId}\`)`).join("; ")}. These are observed spans, not proof of the transactor's internal cause.`
     : "No commit traces were observed; the cause of slow commits is not established.";
   const hostByPhase = Object.fromEntries(
     (bench.phases ?? []).map((p) => {
-      const samples = resources.filter(
-        (r) =>
-          r.process === "system-darwin" &&
-          r.clockAlignmentQualified !== false &&
-          r.at >= p.start &&
-          r.at <= p.end,
-      );
+      const samples = [...index.resources(
+        "process = 'system-darwin' AND qualified = 1 AND at BETWEEN ? AND ?", p.start, p.end)];
       const cpu = samples.map((r) => r.otherCpu).filter(Number.isFinite);
       return [
         p.name,
@@ -1126,18 +1109,19 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
         throw Error("Deferred witness drain unproven");
       deferredOrder = validateDeferredOrder(
         deferredWriters,
-        events.filter((e) => e.name === "driver.publication.persist-deferred"),
+        index.events("name = ?", "driver.publication.persist-deferred"),
         manifest,
         Date.parse(bench.endedAt),
       );
     } catch (error) {
-      errors.push("Deferred witness order: " + error.message);
+      recordError("Deferred witness order: " + error.message);
     }
   }
   const rawBytes = filesUnder(path.join(rootDir, "trace/raw")).reduce(
     (sum, f) => sum + fs.statSync(f).size,
     0,
   );
+  if (errorCount > errors.length) errors.push(`${errorCount - errors.length} further trace validation errors`);
   const summary = {
     schema: "triplex.trace-report.v1",
     tag,
@@ -1150,7 +1134,7 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       reference: clockReference ?? null,
       sources: clockSources,
       invalidSpanParents,
-      unqualifiedEventCount: unqualifiedEvents.length,
+      unqualifiedEventCount,
       hostCrossClockQualified: false,
     },
     reporterSha256: createHash("sha256")
@@ -1162,6 +1146,8 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
           "native-transactions.mjs",
           "cpu-profile.mjs",
           "viewer.mjs",
+          "render-output.mjs",
+          "report-index.mjs",
         ]
           .map((name) => name + "\0" + fs.readFileSync(new URL(name, import.meta.url), "utf8"))
           .join("\0"),
@@ -1169,15 +1155,15 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       .digest("hex"),
     finding,
     schedulerByPhase,
-    requests: roots.length,
+    requests: requestCount,
     commits: commits.length,
     writerRows: writes,
     missingCommits,
     missingReceivers,
     coverage: {
-      denominator: denom.length,
+      denominator: commits.length,
       atLeast95Percent: explained,
-      fraction: denom.length ? explained / denom.length : null,
+      fraction: commits.length ? explained / commits.length : null,
       target: 0.99,
     },
     rawBytes,
@@ -1187,32 +1173,21 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
     readRetention: {
       slowMs: 50,
       sample: 1024,
-      exactTop20: metadata.length > 0 && metadata.every((r) => r.topReadsPerPhase === 20),
+      exactTop20: metadataCount > 0 && exactTop20,
     },
     collectors: {
       jfr: completions,
-      resources: resources.length,
+      resources: resourceCount,
       writerCpuProfile: cpuProfile
         ? { samples: cpuProfile.samples, backsteps: cpuProfile.backsteps, clockBound: true }
         : null,
-      transactorFunctionEvents: nativeFunctions.length,
-      nativeTransactionStats: nativeTransactions.length,
+      transactorFunctionEvents: index.eventCount(functionFilter),
+      nativeTransactionStats: index.eventCount(statsFilter),
     },
     hostByPhase,
     groups: Object.fromEntries(
-      [...groups].map(([k, rows]) => [
-        k,
-        {
-          count: rows.length,
-          p50Ms: percentile(
-            rows.map((r) => r.wallMs),
-            0.5,
-          ),
-          p99Ms: percentile(
-            rows.map((r) => r.wallMs),
-            0.99,
-          ),
-        },
+      [...groups].map(([key, { count, quantiles }]) => [
+        key, { count, p50Ms: quantiles[0][0], p99Ms: quantiles[0][1] },
       ]),
     ),
     slowest: slow.map(({ root: _root, spans: _spans, ...rest }) => rest),
@@ -1231,8 +1206,8 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       bench,
       manifest,
       commits,
-      resources,
-      childrenOf: (root) => traceChildren(root, requests),
+      resources: index.resources("process = ?", "postgres"),
+      childrenOf: linked,
       outputDir,
       reporterSha256: summary.reporterSha256,
       complete: summary.complete,
@@ -1248,11 +1223,11 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
     "",
     `Recorders: ${(manifest?.components ?? ["legacy configuration"]).join(", ")}. The summary default keeps Node/gateway spans and system sampling. Full adds JVM JFR, native Datomic logs/metrics and Postgres statement/wait tracing. Without JFR, gateway own scope can include unmeasured JVM GC/safepoints; that GC share is n/a.`,
     "",
-    `Commit coverage: ${explained}/${denom.length} (${n(denom.length ? (100 * explained) / denom.length : NaN)}%) have at least 95% of wall time covered by named layer spans. Target: 99%. Writer trace completeness: ${nodeEnabled ? `${writes - missingCommits}/${writes}` : "n/a (Node recorder ablated)"}. Raw trace bytes: ${rawBytes}.`,
+    `Commit coverage: ${explained}/${commits.length} (${n(commits.length ? (100 * explained) / commits.length : NaN)}%) have at least 95% of wall time covered by named layer spans. Target: 99%. Writer trace completeness: ${nodeEnabled ? `${writes - missingCommits}/${writes}` : "n/a (Node recorder ablated)"}. Raw trace bytes: ${rawBytes}.`,
     "",
     "Units: ms; n/a means not causally measured (including closed transactor/storage shares), not zero work. TypeScript share is a fraction. Quantiles are per column (their values do not add). TypeScript own code is instrumented Node scope wall time excluding observed remote waits/GC, not on-CPU time; it can include unmeasured scheduling waits. Event-loop wait records explicit worker RPC handoff/reply waits after subtracting linked worker/socket/server work. Other per-request event-loop delay is not causally measured (n/a when no RPC); timestamped timer drift is an estimated overlay. Driver offer queue is separate. Peer-wait includes network, transactor queue and storage; these internal shares remain unknown unless independently correlated. No unrelated Postgres or JFR event is assigned to a transaction.",
     "",
-    `Linux clock alignment: ${clockReference ? `shared boot monotonic clock; ${clockSources.length} source calibrations, offsets preserved in raw traces and trace-summary.json` : "legacy wall anchors; cross-process timing may be skewed"}. ${unqualifiedEvents.length} JFR events without continuous-anchor proof are retained raw but not overlaid; Mac wall samples are whole-run context, not per-commit overlap evidence.`,
+    `Linux clock alignment: ${clockReference ? `shared boot monotonic clock; ${clockSources.length} source calibrations, offsets preserved in raw traces and trace-summary.json` : "legacy wall anchors; cross-process timing may be skewed"}. ${unqualifiedEventCount} JFR events without continuous-anchor proof are retained raw but not overlaid; Mac wall samples are whole-run context, not per-commit overlap evidence.`,
     "",
     "Network is residual socket wait around matched gateway spans, including callback scheduling uncertainty. Gateway receive begins at Jetty dispatch: earlier Jetty/socket queue is invisible. Node and gateway observations with the same Linux boot ID are aligned through their measured monotonic offsets. Other host/epoch-only overlays remain approximate. Response-first-byte includes network and callback scheduling; no finer causal claim is made.",
     "",
@@ -1298,35 +1273,24 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
       "| trace | phase | late ms | samples | top sampled functions | long gaps |",
       "| --- | --- | ---: | ---: | --- | ---: |",
     );
-    for (const r of [...commits]
-      .filter(
-        (r) =>
-          r.schedulerLateProfile && r.schedulerLateProfile.end - r.schedulerLateProfile.start >= 20,
-      )
-      .sort(
-        (a, b) =>
-          b.schedulerLateProfile.end -
-          b.schedulerLateProfile.start -
-          (a.schedulerLateProfile.end - a.schedulerLateProfile.start),
-      )
-      .slice(0, 20)) {
-      const p = r.schedulerLateProfile;
+    for (const r of schedulerProfiles) {
+      const p = r.late;
       lines.push(
         `| ${r.traceId} | ${r.name} | ${n(p.end - p.start)} | ${p.samples} | ${p.top.map(([f, c]) => f + " (" + c + ")").join("; ")} | ${p.longGaps} |`,
       );
     }
     lines.push("");
   }
-  for (const [key, rows] of groups) {
+  for (const [key, group] of groups) {
     lines.push(
-      `## ${key} (${rows.length} retained requests)`,
+      `## ${key} (${group.count} retained requests)`,
       "",
-      table(rows, "quantile"),
+      table(group.quantiles),
       "",
       `| slowest trace | wall ms | ${LAYERS.join(" | ")} | TypeScript ms | TypeScript share | unexplained ms | largest step | overlapping same-thread work |`,
       `| --- | ---: | ${LAYERS.map(() => "---:").join(" | ")} | ---: | ---: | ---: | --- | --- |`,
     );
-    for (const r of [...rows].sort((a, b) => b.wallMs - a.wallMs).slice(0, 20))
+    for (const r of group.slow)
       lines.push(
         `| ${r.traceId} | ${n(r.wallMs)} | ${LAYERS.map((k) => n(r.layers[k])).join(" | ")} | ${n(r.typescriptMs)} | ${n(r.typescriptShare)} | ${n(r.unexplainedMs)} | ${r.steps[0]?.[0] ?? "unknown"} | ${r.overlappingWork.map((e) => e.name + " " + n(e.overlapMs) + "ms").join("; ") || "none observed"} |`,
       );
@@ -1340,171 +1304,64 @@ export async function buildReport(runDir, { copyTo, anatomyTo } = {}) {
     "JFR GC/safepoint/thread-park/socket events, transactor callback metrics, PostgreSQL duration/checkpoint/autovacuum logs, pg_stat_activity/wal/io samples, cgroup throttling/pressure/memory/io and Mac CPU/swap are retained when available. Native JFR transaction-function spans, when present, bind the authored Triplex function to its exact peer-await span; the transactor column is this function wall time, not exclusive CPU. Remaining uninstrumented Datomic internals and individual Postgres statements cannot be causally split without a transaction identifier; the table deliberately leaves these shares unknown. Samples are not request-specific proof. See trace-run.json and collection-errors.txt for unavailable collectors.",
     "",
   );
-  summary.instrumentIdle = idleAndPhaseMetrics(allWriterRows, bench.phases ?? [], requests);
+  summary.instrumentIdle = idleAndPhaseMetrics(allWriterRows, phases, (traceId) => index.requests(traceId));
   lines.push(instrumentMarkdown(bench.instrument), idleMarkdown(summary.instrumentIdle));
-  fs.writeFileSync(path.join(rootDir, "TRACE-REPORT.md"), lines.join("\n"));
+  fs.writeFileSync(path.join(outputDir, "TRACE-REPORT.md"), lines.join("\n"));
   fs.writeFileSync(
-    path.join(rootDir, "trace-summary.json"),
+    path.join(outputDir, "trace-summary.json"),
     JSON.stringify(summary, null, 2) + "\n",
   );
-  const chrome = [];
-  const processIds = new Map();
-  const pidFor = (name) => {
-    if (!processIds.has(name)) {
-      const id = processIds.size + 1;
-      processIds.set(name, id);
-      chrome.push({ name: "process_name", ph: "M", pid: id, tid: 0, args: { name } });
-    }
-    return processIds.get(name);
-  };
-  const start = Math.min(...selected.map((r) => r.root.start));
-  for (const r of selected) {
-    for (const p of r.cpuProfile?.points ?? [])
-      chrome.push({
-        name: "CPU sample " + p.stack[0],
-        cat: "cpu-sample",
-        ph: "i",
-        s: "t",
-        ts: (p.at - start) * 1000,
-        pid: pidFor(r.root.process),
-        tid: r.root.thread,
-        args: { traceId: r.traceId, stack: p.stack, sampled: true },
-      });
-    const spanRows = [
-      {
-        name: r.root.name,
-        layer: r.root.kind,
-        start: r.root.start,
-        end: r.root.end,
-        process: r.root.process,
-        thread: r.root.thread,
-      },
-      ...r.spans,
-    ];
-    for (const s of spanRows)
-      chrome.push({
-        name: s.name,
-        cat: s.layer,
-        ph: "X",
-        ts: (s.start - start) * 1000,
-        dur: duration(s) * 1000,
-        pid: pidFor(s.process ?? r.root.process),
-        tid: s.thread ?? r.root.thread,
-        args: { traceId: r.traceId, phase: r.name, priority: r.priority },
-      });
-    if (r.replicaPublication) {
-      const p = r.replicaPublication,
-        flowId = "position-" + r.traceId;
-      chrome.push({
-        name: "replica publication (position link)",
-        cat: "replica",
-        ph: "X",
-        ts: (p.start - start) * 1000,
-        dur: duration(p) * 1000,
-        pid: pidFor(p.process),
-        tid: p.thread,
-        args: { traceId: r.traceId, feedTraceId: p.traceId, position: r.writer.position },
-      });
-      chrome.push({
-        name: "commit to replica position link",
-        cat: "replica",
-        ph: "s",
-        ts: (r.root.start - start) * 1000,
-        pid: pidFor(r.root.process),
-        tid: r.root.thread,
-        id: flowId,
-      });
-      chrome.push({
-        name: "commit to replica position link",
-        cat: "replica",
-        ph: "f",
-        ts: (p.start - start) * 1000,
-        pid: pidFor(p.process),
-        tid: p.thread,
-        id: flowId,
-        bp: "e",
-      });
-    }
-    for (const e of contextEvents(r, contextIndexes))
-      chrome.push({
-        name: e.name,
-        cat: e.layer,
-        ph: "X",
-        ts: (e.start - start) * 1000,
-        dur: duration(e) * 1000,
-        pid: pidFor(e.process),
-        tid: e.thread ?? 0,
-        args: {
-          overlapsTrace: r.traceId,
-          estimated: !!e.estimated,
-          originalStartMs: e.start,
-          originalEndMs: e.end,
-        },
-      });
-  }
-  const chromePath = path.join(rootDir, "trace.chrome.json");
-  const chromeTemp = chromePath + ".tmp";
-  await pipeline(
-    Readable.from(chromeJson(chrome, { tag, source: summary.source })),
-    fs.createWriteStream(chromeTemp),
+  await writeChromeTrace(
+    path.join(outputDir, "trace.chrome.json"),
+    chromeEvents(selected, index),
+    { tag, source: summary.source },
   );
-  fs.renameSync(chromeTemp, chromePath);
-  const relevantEvents = [...new Set(selected.flatMap((r) => contextEvents(r, contextIndexes)))];
-  const relevantResources = resources
-    .filter(
-      (e) =>
-        e.clockAlignmentQualified !== false &&
-        selected.some((r) => e.at >= r.root.start - 1000 && e.at <= r.root.end + 1000),
-    )
-    .map((e) => (e.vm ? { ...e, vm: undefined } : e));
-  const data = JSON.stringify({
-    selected: selected.map((r) => ({ ...r, root: { ...r.root, spans: undefined } })),
-    events: relevantEvents,
-    resources: relevantResources,
-  }).replaceAll("<", "\\u003c");
-  fs.writeFileSync(path.join(rootDir, "trace.html"), packHtml(html(finding, data, tag)));
+  function* nearbyResources(row) {
+    for (const resource of index.resources("qualified = 1 AND at BETWEEN ? AND ?",
+      row.root.start - 1000, row.root.end + 1000))
+      yield resource.vm ? { ...resource, vm: undefined } : resource;
+  }
+  await writeStreamedFile(path.join(outputDir, "trace.html"), timelineDocument({
+    tag, finding, cards: selected,
+    context: (row) => contextEvents(row, index),
+    resources: nearbyResources,
+  }));
   if (copyTo) {
     fs.mkdirSync(copyTo, { recursive: true });
     for (const f of ["TRACE-REPORT.md", "trace.html", "trace.chrome.json", "trace-summary.json"])
-      fs.copyFileSync(path.join(rootDir, f), path.join(copyTo, f), fs.constants.COPYFILE_FICLONE);
+      fs.copyFileSync(path.join(outputDir, f), path.join(copyTo, f), fs.constants.COPYFILE_FICLONE);
   }
   await writeAnatomy(rootDir, {
     bench,
     manifest,
-    requests,
     commits,
-    resources,
-    childrenOf: (root) => traceChildren(root, requests),
+    resources: index.resources("process = ?", "postgres"),
+    childrenOf: linked,
     copyTo,
+    outputDir,
     reporterSha256: summary.reporterSha256,
     complete: summary.complete,
   });
   return summary;
 }
-function html(finding, data, tag) {
-  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Triplex trace ${esc(tag)}</title>
-<style>body{margin:24px;background:#111822;color:#dde9f5;font:14px system-ui}h1{font-size:24px}p{max-width:1200px;line-height:1.5}select,input,button{background:#23364c;color:white;padding:8px;border:1px solid #567;border-radius:5px}.card{background:#1a2635;margin:18px 0;padding:16px;overflow:auto;border-radius:8px}.lane{position:relative;height:26px;min-width:920px;border-bottom:1px solid #314057}.label{display:inline-block;width:240px;overflow:hidden;font-size:11px;white-space:nowrap}.bar{position:absolute;top:3px;height:19px;border-radius:3px;min-width:1px;background:#69c8a0;cursor:crosshair}.typescript{background:#69c8a0}.gateway{background:#9bb4ff}.peer-wait,.peer-call{background:#dfb878}.driver-queue{background:#e88b82}.typescript-gc,.gateway-gc{background:#f38ace}.network{background:#86d7ed}.event-loop{background:#f9de66}.jvm-event{background:#8392a5}.jvm-safepoint{background:#dc9ee2}.throttling{background:#e8a161}.context-label{color:#c4a3e5}.muted{color:#91a5bd}pre{white-space:pre-wrap}#tip{position:fixed;bottom:0;background:#07101c;padding:12px;left:0;right:0;max-height:180px;overflow:auto}summary{cursor:pointer}svg{background:#122030}</style>
-<h1>Triplex request timeline · ${esc(tag)}</h1><p>${esc(finding)}</p><p class="muted">Offline evidence. Each row has its own wall-time scale. Hover for span, thread, timestamp and trace ID. Orange is peer wait (network + transactor + storage); it is not a claim about internal transactor CPU. Pink GC and yellow estimated timer drift are overlapping observations.</p>
-<label>Phase <select id="phase"><option value="">All</option></select></label> <label>Kind <select id="kind"><option value="">All</option><option>commit</option><option>read</option></select></label> <label><input type="checkbox" id="events" checked>Overlapping pauses and work</label><div id="view"></div><pre id="tip">Hover over a span to inspect it.</pre><script type="application/json" id="data">${data}</script><script>
-const data=JSON.parse(document.getElementById('data').textContent),phase=document.getElementById('phase'),kind=document.getElementById('kind'),show=document.getElementById('events'),view=document.getElementById('view'),tip=document.getElementById('tip');
-for(const name of [...new Set(data.selected.map(r=>r.priority+' / '+r.name))]) {const o=document.createElement('option');o.textContent=o.value=name;phase.append(o);}
-function render(){view.replaceChildren();for(const r of data.selected.filter(r=>(!phase.value||r.priority+' / '+r.name===phase.value)&&(!kind.value||r.root.kind===kind.value))){const c=document.createElement('div');c.className='card';const title=document.createElement('h3');title.textContent=r.priority+' / '+r.name+' / '+r.root.kind+' · '+r.wallMs.toFixed(3)+' ms';c.append(title);const desc=document.createElement('p');desc.textContent=r.traceId+' · TypeScript '+(100*r.typescriptShare).toFixed(1)+'% · unexplained '+r.unexplainedMs.toFixed(3)+' ms'+(r.replicaPublication?' · replica publication '+r.replicaPublication.msAfterRootEnd.toFixed(3)+' ms relative to end':'');c.append(desc);if(r.cpuProfile?.points?.length){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.textContent='Writer CPU sample points';line.append(label);for(const p of r.cpuProfile.points){const dot=document.createElement('span');dot.className='bar';dot.style.background='#e6b45d';dot.style.width='2px';dot.style.left=(240+680*(p.at-r.root.start)/Math.max(.001,r.wallMs))+'px';dot.onmouseenter=()=>tip.textContent=JSON.stringify(p,null,2);line.append(dot);}c.append(line);}const spans=[...r.spans].sort((a,b)=>a.start-b.start);if(show.checked)spans.push(...data.events.filter(e=>e.start<r.root.end&&e.end>r.root.start&&(e.layer!=="jvm-event"||r.spans.some(s=>s.process===e.process&&s.thread===e.thread))).sort((a,b)=>a.start-b.start));for(const s of spans){const line=document.createElement('div');line.className='lane';const label=document.createElement('span');label.className='label';label.title=s.name;label.textContent=(s.process||r.root.process)+'/t'+(s.thread??r.root.thread)+' · '+s.name;line.append(label);const bar=document.createElement('div');bar.className='bar '+s.layer;const a=Math.max(s.start,r.root.start),b=Math.min(s.end,r.root.end);bar.style.left=(240+680*(a-r.root.start)/Math.max(.001,r.wallMs))+'px';bar.style.width=Math.max(1,680*(b-a)/Math.max(.001,r.wallMs))+'px';bar.onmouseenter=()=>tip.textContent=JSON.stringify({...s,traceId:r.traceId,durationMs:s.end-s.start},null,2);line.append(bar);c.append(line);}const d=document.createElement('details'),su=document.createElement('summary'),pre=document.createElement('pre');su.textContent='Layer breakdown and overlapping system samples';pre.textContent=JSON.stringify({layers:r.layers,cpuProfile:r.cpuProfile,schedulerLateProfile:r.schedulerLateProfile,nativeTransactions:r.nativeTransactions,replicaPublication:r.replicaPublication,resources:data.resources.filter(x=>x.clockAlignmentQualified!==false&&x.at>=r.root.start-1000&&x.at<=r.root.end+1000)},null,2);d.append(su,pre);c.append(d);view.append(c);}}
-phase.onchange=kind.onchange=show.onchange=render;kind.value="commit";const preferred=[...phase.options].find(o=>o.value==="P2 / L256");if(preferred)phase.value=preferred.value;render();</script>`;
-}
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const dir = process.argv[2];
-  if (!dir) throw Error("usage: report.mjs RUN_DIR [--copy-to DIR] [--anatomy-to DIR]");
+  if (!dir) throw Error("usage: report.mjs RUN_DIR [--copy-to DIR] [--anatomy-to DIR] [--output-to NEW_DIR]");
   const i = process.argv.indexOf("--copy-to"),
-    a = process.argv.indexOf("--anatomy-to");
+    a = process.argv.indexOf("--anatomy-to"),
+    o = process.argv.indexOf("--output-to");
   // [DX-T1-6] Why: malformed analysis arguments must not fall through to rewriting the original reports.
   // Rejected: treating a missing output argument as the normal mutable render mode.
   if (a >= 0 && (!process.argv[a + 1] || process.argv[a + 1].startsWith("--")))
     throw Error("Missing anatomy output directory");
+  if (o >= 0 && (!process.argv[o + 1] || process.argv[o + 1].startsWith("--")))
+    throw Error("Missing report output directory");
   console.log(
     JSON.stringify(
       await buildReport(dir, {
         copyTo: i >= 0 ? process.argv[i + 1] : undefined,
         anatomyTo: a >= 0 ? process.argv[a + 1] : undefined,
+        outputTo: o >= 0 ? process.argv[o + 1] : undefined,
       }),
     ),
   );

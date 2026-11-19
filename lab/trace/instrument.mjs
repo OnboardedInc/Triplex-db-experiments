@@ -197,11 +197,13 @@ export function idleAndPhaseMetrics(writes, phases, requests = []) {
     byId = new Map(),
     counts = {};
   let lastFinish = -Infinity;
-  for (const r of requests) {
-    const list = byId.get(r.traceId) ?? [];
-    list.push(r);
-    byId.set(r.traceId, list);
-  }
+  const requestFor = typeof requests === "function" ? requests : (id) => byId.get(id) ?? [];
+  if (typeof requests !== "function")
+    for (const r of requests) {
+      const list = byId.get(r.traceId) ?? [];
+      list.push(r);
+      byId.set(r.traceId, list);
+    }
   for (const w of sorted) {
     const gap = w.startedAt - lastFinish;
     lastFinish = Math.max(lastFinish, w.finishedAt);
@@ -236,7 +238,7 @@ export function idleAndPhaseMetrics(writes, phases, requests = []) {
       g.before.push(w.transactCalledAt - w.startedAt);
       g.after.push(w.ackPublishedAt - w.transactReturnedAt);
     }
-    for (const r of byId.get(w.traceId) ?? [])
+    for (const r of w.traceId ? requestFor(w.traceId) : [])
       if (r.process === "gw-w") {
         const spans = r.spans ?? [];
         const peer = spans.filter((s) => s.layer === "peer-wait");

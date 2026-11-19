@@ -141,9 +141,19 @@ export function aggregateExchanges(root, exchanges) {
     steps,
   };
 }
+function exchangesByTrace(exchanges) {
+  const byTrace = new Map();
+  for (const exchange of exchanges) {
+    const group = byTrace.get(exchange.traceId) ?? [];
+    group.push(exchange);
+    byTrace.set(exchange.traceId, group);
+  }
+  return byTrace;
+}
 // [DX-T1-6] Why: the 256-reader peer/CPU floor must use all commits in that phase, not selected slow traces or a mixed-load median.
 // Rejected: reporting an all-run quantile as a steady-reader result or counting missing native observations as zero.
 export function summarizeCommitPhases(roots, exchanges) {
+  const byTrace = exchangesByTrace(exchanges);
   const groups = new Map(),
     seen = new Set();
   for (const root of roots) {
@@ -160,7 +170,7 @@ export function summarizeCommitPhases(roots, exchanges) {
   }
   return Object.fromEntries(
     [...groups].map(([key, group]) => {
-      const partitions = group.map((root) => aggregateExchanges(root, exchanges));
+      const partitions = group.map((root) => aggregateExchanges(root, byTrace.get(root.traceId) ?? []));
       const sequential = partitions.filter((p) => p.attempts && p.steps);
       const native = [],
         send = [],
@@ -168,9 +178,7 @@ export function summarizeCommitPhases(roots, exchanges) {
       for (const root of group) {
         if (root.nativeTransactions?.length !== 1) continue;
         const metric = root.nativeTransactions[0];
-        const exchange = exchanges.find(
-          (e) => e.traceId === root.traceId && e.gatewayRoot === metric.gatewayRoot,
-        );
+        const exchange = byTrace.get(root.traceId)?.find((row) => row.gatewayRoot === metric.gatewayRoot);
         if (!exchange) continue;
         const legs = nativeWaitLegs(exchange, metric);
         native.push(metric.nativeStats);
@@ -498,8 +506,11 @@ export async function writeAnatomy(
   const steps = Object.fromEntries(
     stepNames.map((k) => [k, stats(exchanges.map((e) => e.steps[k]))]),
   );
-  const perCommit = roots.map((r) => aggregateExchanges(r, exchanges));
-  const outside = roots.map((r) => outsideAnatomy(r, exchanges));
+  // [DX-BM1] Why: every primary queries only its own exchange cohort.
+  // Rejected: rescanning the full attempt for each commit during an overnight finalizer.
+  const byTrace = exchangesByTrace(exchanges);
+  const perCommit = roots.map((r) => aggregateExchanges(r, byTrace.get(r.traceId) ?? []));
+  const outside = roots.map((r) => outsideAnatomy(r, byTrace.get(r.traceId) ?? []));
   const outsideNames = [...new Set(outside.flatMap((r) => Object.keys(r.groups)))];
   const outsideSteps = Object.fromEntries(
     outsideNames.map((k) => [k, stats(outside.map((r) => r.groups[k] ?? 0))]),
@@ -515,8 +526,12 @@ export async function writeAnatomy(
   const commitSteps = Object.fromEntries(
     stepNames.map((k) => [k, stats(sequential.map((e) => e.steps[k] ?? 0))]),
   );
-  const wal = resources.filter((r) => r.process === "postgres" && r.wal);
-  const first = wal[0], last = wal.at(-1);
+  let first, last;
+  for (const row of resources)
+    if (row.process === "postgres" && row.wal) {
+      first ??= row;
+      last = row;
+    }
   const walDelta =
     first && last && first !== last && first.wal.stats_reset === last.wal.stats_reset
       ? Object.fromEntries(
@@ -540,9 +555,7 @@ export async function writeAnatomy(
     ackResidual = [];
   for (const root of roots)
     for (const metric of root.nativeTransactions ?? []) {
-      const e = exchanges.find(
-        (e) => e.traceId === root.traceId && e.gatewayRoot === metric.gatewayRoot,
-      );
+      const e = byTrace.get(root.traceId)?.find((row) => row.gatewayRoot === metric.gatewayRoot);
       if (e) {
         nativeResidual.push(e.peerEnd - e.peerStart - metric.nativeStats.msec);
         const legs = nativeWaitLegs(e, metric);

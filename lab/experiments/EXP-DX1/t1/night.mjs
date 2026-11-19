@@ -321,6 +321,21 @@ function missingArmReason(root, tag, night, suffix) {
       if (!checked.eligible) return `Refused before ${suffix}: ${checked.issues.join("; ")}`;
     }
   }
+  // [DX-BM1] Why: a failed reader can have a raw trace seal and a still-running checkpoint.
+  // Rejected: treating a renderer failure after OOM as proof that the timed arm finished.
+  const finalContainer = path.join(dir, "driver-container-final.json");
+  const manifestFile = path.join(dir, "trace-run.json");
+  if (suffix === "ladder" && fs.existsSync(finalContainer) && fs.existsSync(manifestFile)) {
+    const [driver] = read(finalContainer);
+    const manifest = read(manifestFile);
+    const env = driver?.Config?.Env ?? [];
+    if (manifest.tag === tag && manifest.slot === tag && manifest.source === night.source &&
+        manifest.startedAt >= night.startedAt && manifest.startedAt < night.endAt &&
+        driver?.Name === "/" + tag + "-driver" && driver.State?.OOMKilled &&
+        env.includes("TRIPLEX_TRACE_RUN=" + tag) && env.includes("TRIPLEX_TRACE_SOURCE=" + night.source) &&
+        !fs.existsSync(path.join(dir, "driver/ns-writes.jsonl")))
+      return "reader driver OOM before terminal writer rows and independent replay";
+  }
   return `${suffix} has no completed sealed arm`;
 }
 
