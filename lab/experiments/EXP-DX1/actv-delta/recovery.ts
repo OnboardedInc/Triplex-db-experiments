@@ -34,12 +34,13 @@ export async function originalObject<T>(
           row.value?.type !== "string"
         )
           continue;
-        const obj = JSON.parse(row.value.value) as { hash: string; value: T };
-        if (obj.hash !== hash([db.account, key, obj.value]) || !matches(obj.value)) continue;
+        assert(typeof row.tripleId === "string" && row.validFrom === 0);
+        const recovered = await db.decode<T>(key, row.tripleId, cursor, row.value.value);
+        if (!matches(recovered.value)) continue;
         const claim = await db.comp.transactionByCommand(tx.commandId);
         assert(claim.ok && claim.value?.position === cursor && claim.value.txId === tx.txId);
         assert(typeof row.tripleId === "string" && row.validFrom === 0);
-        return { value: obj.value, hash: obj.hash, id: row.tripleId, position: cursor };
+        return recovered;
       }
     }
   }

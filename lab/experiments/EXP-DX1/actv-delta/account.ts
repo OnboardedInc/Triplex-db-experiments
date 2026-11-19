@@ -4,7 +4,14 @@ import assert from "node:assert/strict";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 import { checkCensus, ordered } from "./lookup.ts";
 import { compilerVersion, differences } from "./rules.ts";
-import { buildPage, width, onlyJurisdictions, selectPage, type Page } from "./pages.ts";
+import {
+  buildPage,
+  width,
+  onlyJurisdictions,
+  coversDocuments,
+  selectPage,
+  type Page,
+} from "./pages.ts";
 import { Objects, hash, Conflict, type Cell, type Patch } from "./store.ts";
 import {
   epoch,
@@ -283,6 +290,7 @@ export class Account {
     return t;
   }
   async refs(h: Head, p: number, keys: string[]) {
+    if (!keys.length) return new Map<string, Cell<RefMap>>();
     const root = await this.tree(h, p),
       cs = await this.db.many<RefMap>(keys, p);
     for (const k of keys) {
@@ -300,8 +308,13 @@ export class Account {
     }
     return cs;
   }
-  async pages(h: Head, position: number, nums: number[]) {
-    const root = await this.tree(h, position),
+  async pages(h: Head, position: number, nums: number[], certified?: Cell<Tree>) {
+    if (certified)
+      assert(
+        certified.position <= position && hash(certified.value) === h.root,
+        "incorrect supplied index root",
+      );
+    const root = certified ?? (await this.tree(h, position)),
       rows = await this.db.many<Page>(
         nums.map((i) => "page:" + i),
         position,
@@ -376,11 +389,12 @@ export class Account {
     position: number,
     valid?: string,
     known?: Head,
+    inputs?: { rows: Map<string, Cell<Body>>; masks: Map<string, Cell<Mask>> },
   ): Promise<Map<string, View>> {
     const h = known ?? (await this.head(position)).value,
       t = valid ?? h.basis.validTime;
-    const rows = await this.db.many<Body>(ids.map(keyOf), position),
-      masks = await this.masks(ids),
+    const rows = inputs?.rows ?? (await this.db.many<Body>(ids.map(keyOf), position)),
+      masks = inputs?.masks ?? (await this.masks(ids)),
       result = new Map<string, View>();
     const earliest = Math.min(...[...rows.values()].map((c) => c.value.seen));
     const seqs = h.activations
@@ -779,7 +793,11 @@ export class Account {
       next = resolve(activations, valid),
       diff = W0.diff(old, next);
     const full =
-      !h.indexed || valid !== h.indexedAt || valid !== h.basis.validTime || diff.includes("EVSUB");
+      !h.indexed ||
+      !coversDocuments(old, next) ||
+      valid !== h.indexedAt ||
+      valid !== h.basis.validTime ||
+      diff.includes("EVSUB");
     const event: Recipe = {
       kind: "release",
       seq,

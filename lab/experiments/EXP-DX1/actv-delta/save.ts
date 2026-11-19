@@ -3,7 +3,7 @@ import { W0 } from "../../../bench/lib/w0-world.ts";
 import { expand } from "./dispatch.ts";
 import { Account } from "./account.ts";
 import { hash, type Patch } from "./store.ts";
-import { updatePage } from "./pages.ts";
+import { updatePage, indexAttributes } from "./pages.ts";
 import {
   evaluate,
   resolve,
@@ -101,19 +101,32 @@ export async function save(
             .concat(sharedIds.flatMap((e) => refs.get(refKey(e))?.value[e] ?? [])),
         ),
       ];
-      const tree = await account.tree(h, p),
-        newTree = structuredClone(tree.value),
-        pages = await account.pages(h, p, numbers);
+      const touchesLinks = edits.some((e) => e.a === "location" || e.a === "jurisdiction"),
+        indexedChange =
+          h.indexed &&
+          edits.some(
+            (e) =>
+              indexAttributes.has(e.a) &&
+              e.from <= h.indexedAt &&
+              (!e.until || h.indexedAt < e.until),
+          ),
+        needsPages = indexedChange || touchesLinks || sharedIds.length > 0,
+        tree = needsPages ? await account.tree(h, p) : undefined,
+        newTree = tree ? structuredClone(tree.value) : undefined,
+        pages = needsPages ? await account.pages(h, p, numbers, tree) : undefined;
       const touched = new Set<string>(),
         refAdds = new Map<string, Set<number>>();
-      for (const [n, page] of pages) {
-        const ids = sharedIds.length
-            ? page.value.roster
-            : page.value.roster.filter((s) => direct.has(s)),
-          cells = await db.many<Body>(
-            ids.map((s) => "point:" + s),
-            p,
-          ),
+      for (const n of numbers) {
+        const page = pages?.get(n),
+          ids = sharedIds.length
+            ? page!.value.roster
+            : [...direct].filter((s) => directBodies.get("point:" + s)!.value.page === n),
+          cells = sharedIds.length
+            ? await db.many<Body>(
+                ids.map((s) => "point:" + s),
+                p,
+              )
+            : directBodies,
           masks = await account.masks(ids),
           worlds: W0.World[] = [];
         const prepared = new Map<string, { old: Body; next: Body; mask: Mask | undefined }>();
@@ -157,7 +170,11 @@ export async function save(
           prepared.set(s, { old, next, mask });
           touched.add(s);
         }
-        const previous = await account.views([...prepared.keys()], p, undefined, h);
+        // [DX-ACT2] Why: source and prior publication already share this exact guarded cut. Rejected: reading the same subject and erasure rows twice in one save.
+        const previous = await account.views([...prepared.keys()], p, undefined, h, {
+          rows: cells,
+          masks,
+        });
         for (const s of ids) {
           const key = "point:" + s,
             cell = cells.get(key)!,
@@ -182,14 +199,25 @@ export async function save(
             applied = W0.publish(previous.get(s)!.state, [W0.recordOf(o)]);
           x.next.state = stateText(applied.state);
           patches.push({ key, prior: cell, value: account.keys.convert(x.next, "write", m) });
-          for (const ref of references(w)) {
+          for (const ref of touchesLinks ? references(w) : []) {
             const v = refAdds.get(ref) ?? new Set<number>();
             v.add(n);
             refAdds.set(ref, v);
           }
-          worlds.push(w);
+          if (needsPages)
+            worlds.push(
+              h.indexedAt === basis.validTime
+                ? w
+                : worldOf(x.next, { ...basis, validTime: h.indexedAt }, m),
+            );
         }
-        const refreshed = updatePage(page.value, worlds, basis, h.indexed),
+        if (!page || !newTree || (!indexedChange && !touchesLinks && !sharedIds.length)) continue;
+        const refreshed = updatePage(
+            page.value,
+            worlds,
+            { ...basis, validTime: h.indexedAt },
+            h.indexed,
+          ),
           digest = hash(refreshed);
         if (digest !== newTree.pages[n]) {
           newTree.pages[n] = digest;
@@ -212,11 +240,12 @@ export async function save(
         }
       }
       for (const [key, value] of updated) {
-        newTree.refs[key] = hash(value);
+        newTree!.refs[key] = hash(value);
         patches.push({ key, value, prior: refCells.get(key) });
       }
-      const root = hash(newTree);
-      if (root !== h.root) patches.push({ key: "tree", value: newTree, prior: tree });
+      const root = newTree ? hash(newTree) : h.root;
+      if (newTree && tree && root !== h.root)
+        patches.push({ key: "tree", value: newTree, prior: tree });
       const event: Recipe = {
         kind: "save",
         seq,

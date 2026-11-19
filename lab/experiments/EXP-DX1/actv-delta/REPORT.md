@@ -4,7 +4,7 @@ Sixty-four readers ran while two accounts submitted everyday saves and bursts of
 Two of the 201 releases took over a second. The slowest took 1.295 seconds.
 After the database restarted, a fresh reader recovered all 11,960 changed rows and 997 owed notices from the broad release.
 The narrow release recovered all 38 flag changes and owed no notices. Neither release had written a concrete output chunk.
-The cost of maintaining the smaller indexes is being measured on everyday saves.
+The first index change cut daily log overhead from 80% to 37.8%. The target is 15%.
 The 100,000-person result still requires a server run.
 
 **Loaded publication and evidence audit**
@@ -24,5 +24,7 @@ crash.writer and recoverPower killed the issuing process immediately after the n
 The durable representation is the immutable release recipe, its authenticated epoch history, source/index cut and actual prior outbox. A consumer can recover every changed value and lifecycle sequence without a materialized result row. Subsequent saves reference that history by hash. The test covers process and storage-service crashes on the same host.
 
 The pinned NOTIFY1 host read the seed, two releases and an intervening save through the existing feed. Its delivered rows matched independent Python output, including order and payload.
+
+The first compact-index run alternated the order of ten paired 50-save blocks. Each arm committed 6,549 facts in 500 saves and recovered ten duplicates. Without/with indexes the WAL cost was 3,599/4,958 bytes per fact, database growth 3,480/4,782 and acknowledgment 7.57/7.75 ms per fact. price.run compared the same trace and receipts, the 62 touched people against Python and physical PostgreSQL size/LSN boundaries. Objects.decode verifies the original cut and logical page digest after applying a sparse patch. The tests also check the census complement, closed cases, old page versions and the full fallback for a newly tracked document type.
 
 No acceptance pins or frozen workloads changed. Part 2’s original evidence is retained in [its manifest](SHA256SUMS).
