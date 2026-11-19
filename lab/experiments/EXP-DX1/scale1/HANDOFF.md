@@ -3,7 +3,7 @@
 Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
 
 <!-- state -->
-2026-11-19 20:34 UTC. The matched 10k reader started at 20:32:20 UTC on the original runtime. Its execution ceiling is 00:32 UTC November 20, followed by bounded cleanup. The zero arm completed every check, released its stack at 20:28:54 UTC and has been transferred and indexed. A shell handoff exited before launching the reader. The replacement controller started it 3 minutes 26 seconds after cleanup with a verified 64 GiB observation allowance.
+2026-11-19T21:07:07.545Z · Collected arm-d19-i1-reader-a with service result success, 0 physical-scope report(s) and verified cleanup.
 <!-- end state -->
 
 With the dedicated destination set in `BENCH_SERVER`, this command shows the queue, bounded units and stage files.
