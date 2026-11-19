@@ -82,6 +82,21 @@ The bars above only count when measured under these definitions. A run that depa
 not push live read p99 past 1.5x); retroactive corrections ("wrong since October": the feed reports the valid-time range and
 explain at the old basis still shows the old belief); explain and audit at a past point in time (reproduces bit for bit).
 
+### 1.2 Priorities 6 to 9 (added 2026-11-19; provisional bars, to be fixed after the first multi-account readings)
+
+| Priority | Measurement | Provisional bar |
+| --- | --- | --- |
+| 6. A busy account must not slow a quiet one | A quiet scope's commit p99, pinned-read p99 and feed-lag p99 while neighbouring scopes on the same stack burst, activate a release or import, divided by the same scope's values alone on the machine | each ratio <= 1.25; zero wrong reads; no expired commands |
+| 7. Cost follows activity, not size | Resident bytes per never-touched subject in readers and gateways; resident bytes and threads per idle scope in every role; first exact read of a cold subject | <= 64 bytes per never-touched subject outside Postgres; idle scope cost reported per role; cold first read p99 <= 100 ms |
+| 8. Bringing an account in must not hurt live traffic | Import of a deep account (16 million facts) and of a wide account (4.5 million subjects) into its own scope while other scopes carry the fixed workload | live read p99 and commit p99 in other scopes <= 1.5 times baseline; import rate reported, target >= 3,000 facts per second |
+| 9. An account survives a machine failure and can be moved | Time from loss of the active transactor to the first correct new receipt per scope; time and pause to move one scope to another machine; original receipts, pinned read bases and feed positions valid afterwards | zero acknowledged writes lost; the time bars wait for Sam's answer on seconds against minutes |
+
+Scale for these and for priorities 1 to 5 from here on: the `deep` population (about 160 current facts per subject),
+ten deep scopes at once, one hundred small scopes at once, and a `thin` population of 1 to 4.5 million subjects.
+Priority 5's bar is read per account (100,000 subjects in 100 s for one account's activation), and a correct
+activation never lets a late older result replace a newer decision (the per-subject or per-page guard is part of the
+measured work since 2026-11-19).
+
 ## 2. The fixed workload (from the paste)
 
 | Item | Value |
