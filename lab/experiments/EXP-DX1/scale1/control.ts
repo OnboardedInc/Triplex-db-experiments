@@ -360,8 +360,8 @@ else if (action === "prepare") {
   const build = `${root}/build-${sha}`,
     opts = args.slice(3);
   assert(
-    /^[1-4]$/.test(args[0] ?? "") &&
-      ["zero", "reader", "activation", "seed"].includes(args[2] ?? ""),
+    /^[1-5]$/.test(args[0] ?? "") &&
+      ["zero", "reader", "activation", "seed", "interference"].includes(args[2] ?? ""),
   );
   for (let i = 0; i < opts.length; i += 2) {
     assert(["--sizing", "--baseline"].includes(opts[i]!));

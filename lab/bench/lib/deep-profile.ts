@@ -95,13 +95,22 @@ export interface DeepIdentity {
   slot: string;
   account: number;
   people: number;
-  arm: "zero" | "reader" | "activation" | "seed";
+  arm: "zero" | "reader" | "activation" | "seed" | "interference" | "small";
 }
 export function requireIdentity(id: DeepIdentity) {
   assert.match(id.nonce, /^[a-f0-9-]{36}$/);
   assert.match(id.source, /^[a-f0-9]{40}$/);
   assert.match(id.slot, /^tx2-dxscale1-[a-z0-9-]+$/);
-  assert(["zero", "reader", "activation", "seed"].includes(id.arm));
+  assert(["zero", "reader", "activation", "seed", "interference", "small"].includes(id.arm));
+  if (id.arm === "small") {
+    assert(
+      Number.isInteger(id.account) &&
+        id.account >= 0 &&
+        id.account < 100 &&
+        id.people === (id.account === 0 || id.account >= 91 ? 2000 : 100),
+    );
+    return;
+  }
   assert(
     ([10000, 100000].includes(id.people) ||
       (id.people === 40 && id.slot.startsWith("tx2-dxscale1-smoke-"))) &&

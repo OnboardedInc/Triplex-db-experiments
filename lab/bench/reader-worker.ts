@@ -280,6 +280,8 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         if (keepRows) { rawPending.add(readPhase); if (!replica) rawSamples++; }
         try { await readOnce(picked.subject, basis, kind, position, readPhase, { keepRows, straddleSeq, assignedAt, hotPick: picked.hotPick }); }
         finally { if (keepRows) rawPending.delete(readPhase); }
+        // [DX-SCALE1] Why: low-traffic accounts have a real reader without turning each small scope into a saturated read loop. Rejected: zero readers in active accounts or sleeping on the sentinel's comparison windows.
+        if(interReadMs) {const next=performance.now()+interReadMs;while(!stopping&&id<wanted&&phase===readPhase&&performance.now()<next) await new Promise<void>(resolve=>setTimeout(resolve,Math.min(250,next-performance.now())));}
         // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
         // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
         if (replica) {
@@ -293,6 +295,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     }
   }
 
+  let interReadMs=0;
   const loops = new Set<number>();
   function setLevel(n: number) {
     wanted = n;
@@ -341,6 +344,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       replica?.apply(msg.delta);
     } else if (msg.type === "level") {
       phase = msg.phase;
+      interReadMs=msg.interReadMs??0;
       mode = msg.mode ?? "mixed";
       setLevel(msg.readers);
     } else if (msg.type === "basis" || msg.type === "basis-delta") {

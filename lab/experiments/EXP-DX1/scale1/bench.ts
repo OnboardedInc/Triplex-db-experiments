@@ -29,11 +29,15 @@ export const items = [
   { people: 10000, scopes: 1 },
   { people: 100000, scopes: 1 },
   { people: 10000, scopes: 10 },
+  { people: 290, scopes: 100 },
   { people: 100000, scopes: 10 },
 ] as const;
 const GiB = 1024 ** 3,
   script = fileURLToPath(import.meta.url),
-  repo = path.resolve(path.dirname(script), "../../../.."),
+  operatorRepo = path.resolve(path.dirname(script), "../../../.."),
+  repo = process.env.DX_SCALE1_RUNTIME_REPO
+    ? path.resolve(process.env.DX_SCALE1_RUNTIME_REPO)
+    : operatorRepo,
   root = "/var/tmp/triplex-scale1";
 const getopt = (key: string) => {
   const i = process.argv.indexOf(`--${key}`);
@@ -516,6 +520,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     ];
     if (mode === "zero") args.push("--zero-readers");
     if (mode === "activation") args.push("--deep-activation");
+    if (mode === "interference") args.push("--deep-interference");
     if (mode === "seed") args.push("--deep-seed-only");
     if (mode === "reader")
       args.push(
@@ -1021,12 +1026,14 @@ async function main() {
   assert(
     Number.isSafeInteger(item) &&
       item >= 1 &&
-      item <= 4 &&
+      item <= 5 &&
       tag &&
       /^[a-z][a-z0-9-]{2,40}$/.test(tag) &&
       mode &&
-      ["zero", "reader", "activation", "seed"].includes(mode),
+      ["zero", "reader", "activation", "seed", "interference"].includes(mode),
   );
+  assert(item !== 4, "The heterogeneous 100-scope item uses its own population runner");
+  assert(mode !== "interference" || item === 3);
   const prefix = `tx2-dxscale1-${tag}`,
     dir = path.join(root, tag),
     source = call("git", ["rev-parse", "HEAD"]);
@@ -1042,9 +1049,30 @@ async function main() {
   released();
   fs.mkdirSync(root, { recursive: true, mode: 0o700 });
   assert(!fs.existsSync(dir));
+  if (process.env.DX_SCALE1_RUNTIME_REPO)
+    assert.equal(fs.realpathSync(repo), path.join(root, "build-" + source, "repository"));
   const sourceGit = ["-c", "credential.helper=", "-c", "http.extraHeader="];
-  call("git", [...sourceGit, "fetch", "origin", "refs/heads/exp/DX-BM1-bare-metal"], 60000);
-  call("git", ["merge-base", "--is-ancestor", "FETCH_HEAD", source]);
+  // [DX-SCALE1] Why: a reader must execute the identical public revision as its zero arm even if the other bench publishes during the 5,910-second trace. Rejected: mixing sender or guard versions inside a pair, or silently ignoring upstream changes.
+  const originHeads: Record<string, { head: string; changes: string[] }> = {};
+  for (const ref of ["exp/DX-BM1-bare-metal", "exp/DX-ACT1-activation"]) {
+    call("git", [...sourceGit, "fetch", "origin", "refs/heads/" + ref], 60000);
+    const head = call("git", ["rev-parse", "FETCH_HEAD"]),
+      ancestor = call("git", ["merge-base", head, source]);
+    const changes =
+      ancestor === head
+        ? []
+        : call("git", ["diff", "--name-only", ancestor, head]).split("\n").filter(Boolean);
+    const paired =
+      mode === "reader" &&
+      getopt("baseline") &&
+      /^[a-z][a-z0-9-]{2,40}$/.test(getopt("baseline")!) &&
+      get(path.join(root, getopt("baseline")!, "attempt.json")).source === source;
+    assert(
+      paired || changes.every((n) => /\.md$|SHA256SUMS$|\.sha256$|\.test\.[cm]?ts$/.test(n)),
+      "New upstream executable inputs require an integrated source revision: " + ref,
+    );
+    originHeads[ref] = { head, changes };
+  }
   assert.equal(call("git", ["status", "--porcelain", "--untracked-files=no"]), "");
   for (const xs of Object.values(childrenInventory(prefix))) assert.equal(xs.length, 0);
   const topology = call("lscpu", ["-p=CPU,CORE,SOCKET"])
@@ -1086,6 +1114,7 @@ async function main() {
     item,
     ceiling,
     clientBudget,
+    originHeads,
     capacity,
     baselineTag,
     at: Date.now(),
@@ -1099,7 +1128,12 @@ async function main() {
     process.exitCode = 75;
     return;
   }
-  const loader = [process.execPath, "--import", "tsx", script],
+  const loader = [
+      process.execPath,
+      "--import",
+      "tsx",
+      path.join(repo, "lab/experiments/EXP-DX1/scale1/bench.ts"),
+    ],
     unit = `triplex-scale1-${tag}`;
   const post = [...loader, "cleanup", String(item), tag, mode].join(" ");
   assert(!repo.includes(" "));

@@ -76,9 +76,9 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   const recent = (item: number, mode: string) =>
     stages.filter((s) => s.attempt.item === item && s.attempt.mode === mode).at(-1);
   const one = recent(2, "reader"),
-    ten = recent(4, "reader"),
+    ten = recent(5, "reader"),
     a1 = recent(2, "activation"),
-    a10 = recent(4, "activation"),
+    a10 = recent(5, "activation"),
     base = recent(1, "zero");
   const cost = (s: Stage | undefined) =>
     s?.summary
@@ -93,8 +93,8 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   const emptied = stages.find((s) => s.resources?.firstObservedEngineOOM);
   const refused = stages.find((s) => s.terminal.service === "capacity-refused");
   const partialTen =
-    recent(4, "seed") ??
-    stages.filter((s) => s.attempt.item === 4 && !s.summary && s.partial?.scopes.length).at(-1);
+    recent(5, "seed") ??
+    stages.filter((s) => s.attempt.item === 5 && !s.summary && s.partial?.scopes.length).at(-1);
   const partialPeople =
     partialTen?.partial?.scopes.reduce(
       (n: number, s: any) => n + (s.progress?.subjects ?? s.people ?? 0),
@@ -112,14 +112,14 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
         : "The first shared resource to reach its limit is still unknown.",
     "Three experiments could distinguish the limits. Give senders another physical core if offer delays dominate, enlarge the transactor object cache if storage misses dominate, and distribute databases across transactors if their JVM saturates.",
-    `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `Its measured PostgreSQL allocation is ${round(base.disk.bytesPerFact)} bytes per fact.` : "Bytes per fact on the bench await the first completed seed measurement."}`,
+    `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `Its measured PostgreSQL allocation is ${round(base.disk.bytesPerFact)} bytes per fact.` : "The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack)."}`,
     "",
     "**Bench measurements**",
     "",
     "| Item and arm | Scope | Commit p50 ms | Commit p99 ms | L256 read p99 ms | L256 feed p99 ms | Status |",
     "| --- | --- | --- | --- | --- | --- | --- |",
   ];
-  for (let item = 1; item <= 4; item++) {
+  for (let item = 1; item <= 5; item++) {
     const modes = item === 1 ? ["zero", "reader"] : ["zero", "reader", "activation", "seed"];
     for (const mode of modes) {
       const s = recent(item, mode);
@@ -142,7 +142,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   }
   for (const [singleItem, tenItem] of [
     [1, 3],
-    [2, 4],
+    [2, 5],
   ] as const) {
     const a = recent(singleItem, "reader"),
       b = recent(tenItem, "reader");
@@ -192,9 +192,8 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       );
     }
   }
-  if (!stages.length)
-    lines.push("| 1–4 | 1 or 10 | — | — | — | — | Dedicated bench preparation |");
-  const readers = [1, 2, 3, 4]
+  if (!stages.length) lines.push("| 1–5 | 1 or 10 | — | — | — | — | Dedicated bench preparation |");
+  const readers = [1, 2, 3, 5]
     .map((i) => recent(i, "reader"))
     .filter((s): s is Stage => Boolean(s?.resources?.engines && s.size));
   lines.push(
@@ -241,11 +240,11 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "**Audit of evidence and verdicts**",
     "",
     "- `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file and physical database to its nonce, source, slot and account. Each scope stays live until every R2 completion marker agrees with that cohort.",
-    "- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The run records the new trace identity and the frozen phase plan.",
+    "- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The interference and small-account plans bind each scope’s business commands to a new frozen schedule. Their windows set the sentinel’s offers and reader counts before measuring.",
     "- `deep-activation.ts` binds each fresh release receipt to its cut, hashes each evaluated world/output, re-reads the same cut, and checks each release fact, output, outbox and durable per-person guard against the independent evaluate and publish operations at both cuts.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals.",
-    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes every transferred summary and binds source, scope and arm before rendering.",
+    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes every transferred summary and binds source, scope and arm before rendering. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
     "- The functional tests use new databases and real public receipts. They check replacement semantics, duplicate receipts, independent replay and publication. The first slot lacked the current write endpoint. A later terminal read timed out on a closed replica. The retry used the source-matched gateway and a live source read at each recorded position.",
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
