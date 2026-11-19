@@ -174,6 +174,12 @@ export async function oneAccount(s: Stack, people: number) {
     };
     const correction = { ...r2, rows: [{ ...r2.rows[0]!, valid_from: 20 }, retired] };
     const edit = await commit(red, correction);
+    const retryWithoutHint = new AccountEndpoint("red", a);
+    try {
+      assert.deepEqual(await retryWithoutHint.commit(correction), edit);
+    } finally {
+      retryWithoutHint.close();
+    }
     const linkRaw = incoming("red", "link"),
       reference = {
         ...linkRaw,
@@ -215,6 +221,12 @@ export async function oneAccount(s: Stack, people: number) {
       cursor = { account: "red", after: (await red.lookup(pin.operationId)).sequence };
     const seedAt = clock();
     for (let k = 0; k < people; k++) await commit(red, incoming("red", "seed-" + k, 160));
+    s.e.log("account-seeded", {
+      database: a.db,
+      account: red.account,
+      subjects: people,
+      facts: people * 160,
+    });
     const lost = incoming("red", "lost"),
       p = await ackProxy(a.endpoint),
       fwd = new AccountEndpoint("red", { ...a, endpoint: p.url });
@@ -259,6 +271,7 @@ export async function oneAccount(s: Stack, people: number) {
     await Promise.all([restart().copy(high), liveChanges]);
     const complete = await restart().copy((await red.state()).sequence);
     const pre = (await copy.state()).verified;
+    s.e.log("account-preverified", { source: a.db, target: b.db, sequence: pre });
     await commit(red, incoming("red", "last-delta", 3));
     const finalInput = incoming("red", "resume", 2);
     const start = clock(),

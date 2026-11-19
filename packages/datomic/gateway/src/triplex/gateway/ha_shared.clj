@@ -148,7 +148,10 @@
              "state" (meta-state db tenant)
              "init" (let [mode (get input "mode")] (check (and (#{"importing" "serving"} mode) (= (= mode "serving") (= name (get input "source")))) "InvalidPlacement")
                       (meta-state (post! conn tenant gen :init {:mode mode :source (get input "source")}) tenant))
-             "write" (let [r (transact! name conn tenant gen :write (dissoc input "haAccount" "haGeneration" "attemptId") nil)]
+             "write" (let [hint (get input "basisT")
+                           _ (check (or (nil? hint) (and (string? hint) (re-matches #"[0-9]+" hint))) "InvalidBasisHint")
+                           ;; [DX-HA1] Why: the public peer client may attach its last observed t to a blind append. Rejected: hashing this transport synchronization hint into the command identity across retries.
+                           r (transact! name conn tenant gen :write (dissoc input "haAccount" "haGeneration" "attemptId" "basisT") nil)]
                        (assoc r "delta" (- (Long/parseLong (get-in r ["position" "v"])) (get input "position"))))
              "import" (let [entry (get input "entry")] (check (= tenant (get entry "account")) "ScopeMismatch")
                         (transact! name conn tenant gen :copy (json/read-str (get entry "body")) entry))
