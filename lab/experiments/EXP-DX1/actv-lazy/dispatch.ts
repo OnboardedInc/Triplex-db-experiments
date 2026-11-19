@@ -96,6 +96,8 @@ export class Dispatcher {
           throw Error("UnrecoverableProtectedEvent: unpaid transition predates erasure");
         const x = evaluate(s, this.format, worlds[i]!, b, historical, c);
         if (W0.isFailure(x.output)) throw Error("Unresolved W0 candidate: " + x.output.error);
+        if (x.output.workItems.some((w) => w.rule === "EVSUB"))
+          throw Error("ProtectedSubscriberNeedsRuling");
         const change = itemChanges(
           ledger.filter((r) => r.entityId === itemRoot(subject)),
           W0.recordOf(x.output),
@@ -251,9 +253,7 @@ export class Receiver {
       const { r, d } = ordered[0]!;
       assert.equal(d.subject, subject);
       if (requested) assert.equal(r.id, requested, "Earlier unacknowledged subject delivery");
-      const control = await store.controls(p);
-      if (d.rule === "EVSUB" && control.masks.some((m) => m.position > r.position))
-        throw Error("ProtectedDeliveryNeedsRuling");
+      if (d.rule === "EVSUB") throw Error("ProtectedDeliveryNeedsRuling");
       hook?.("before-receive");
       this.apply(d);
       hook?.("after-receive");

@@ -9,7 +9,16 @@ import {
 } from "../../../bench/lib/w0-world.ts";
 import { readDeepWorlds } from "../../../bench/lib/deep-activation.ts";
 import { parseOutbox } from "../../../bench/lib/w0-outbox-state.ts";
-import { Conflict, CURSOR, fact, millis, value, type Controls, type Store } from "./store.ts";
+import {
+  Conflict,
+  CURSOR,
+  fact,
+  membership,
+  millis,
+  value,
+  type Controls,
+  type Store,
+} from "./store.ts";
 
 export type Format = "w0" | "act2-deep";
 export type Point = { tx: number; validTime: string };
@@ -173,10 +182,18 @@ export async function admitLive(
   const latest = current === p ? c : await store.controls(current);
   if (claimed && maskVersion(c) !== maskVersion(latest))
     return { status: "redacted-receipt", txId: claimed.txId, position: claimed.position } as const;
+  const members = await store.rows([membership(q.subject)], p);
+  if (!members.length) return { status: "outside-roster" } as const;
+  assert(
+    members.length === 1 && value(members[0]!).subject === q.subject,
+    "Ambiguous native membership",
+  );
   const evald = await calculate(store, format, q.subject, q.basis, c, latest);
   assert.equal(evald.witness, q.witness, "Untrusted or changed computation");
   if (W0.isFailure(evald.output)) return { status: "error", error: evald.output.error } as const;
   if (progress(c).done < c.input || progress(c).open) return { status: "deferred" } as const;
+  if (evald.output.workItems.some((w) => w.rule === "EVSUB"))
+    throw Error("ProtectedSubscriberNeedsRuling");
   const { ops } = await changes(store, p, W0.recordOf(evald.output));
   if (!ops.length) {
     if (beforeCommit) await beforeCommit();

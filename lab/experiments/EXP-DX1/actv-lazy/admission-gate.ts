@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { W0, canonical, triplexValue, sha256 } from "../../../bench/lib/w0-world.ts";
-import { activation, Conflict, millis, openStore } from "./store.ts";
+import { activation, fact, millis, openStore } from "./store.ts";
 import { calculate, admitLive, cursorOps, itemRoot, propose } from "./decision.ts";
 const dir = process.argv[2]!,
   id = randomUUID(),
@@ -37,6 +37,7 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
       add("jur:fixture", "stateMinWageCents", 1650),
       add(subject, "payRateCents", schedule === "first" ? 1650 : 1600),
       add(subject, "bgcStatus", "clear"),
+      fact("members/page/0", "lazy/members", [subject]),
     ]);
     const closeInput = async () => {
       const p = await s.head(),
@@ -129,6 +130,8 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
         "stale",
       );
     }
+    const outsider = await propose(s, "w0", "pl:never-enrolled");
+    assert.equal((await admitLive(s, "w0", outsider)).status, "outside-roster");
     const authentic = await propose(s, "w0", subject);
     await assert.rejects(admitLive(s, "w0", { ...authentic, witness: "unearned" }), /Untrusted/);
     assert.equal(await s.head(), before);

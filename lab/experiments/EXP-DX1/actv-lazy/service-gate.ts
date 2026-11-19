@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { W0, canonical, triplexValue } from "../../../bench/lib/w0-world.ts";
 import { openStore, fact, activation } from "./store.ts";
 import { rosterRoot, rosterSeal } from "./read.ts";
-import { Receiver } from "./dispatch.ts";
+import { Dispatcher, Receiver } from "./dispatch.ts";
 import { NoticeService } from "./service.ts";
 const dir = process.argv[2]!,
   s = await openStore("lazy-service-" + randomUUID()),
@@ -47,6 +47,23 @@ try {
   const cut = await s.head();
   await service.settled();
   assert.equal(await s.head(), cut);
+  const protectedScope = await openStore("lazy-eligibility-" + randomUUID()),
+    guard = new Dispatcher(protectedScope);
+  try {
+    await protectedScope.input("person", { kind: "baseline", at }, [
+      fact(rosterRoot(0), "lazy/members", [person]),
+      fact("members/seal", "lazy/roster-seal", rosterSeal([person])),
+      add(person, "ssn", "000000000"),
+    ]);
+    await guard.drain();
+    await activation(protectedScope, "release", W0.R1, at);
+    const prior = await protectedScope.head();
+    await assert.rejects(guard.drain(), /ProtectedSubscriberNeedsRuling/);
+    assert.equal(await protectedScope.head(), prior);
+  } finally {
+    guard.close();
+    await protectedScope.close();
+  }
   writeFileSync(
     join(dir, "idle-service.json"),
     canonical({
