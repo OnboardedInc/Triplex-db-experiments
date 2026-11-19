@@ -37,10 +37,11 @@ for tag in "$@"; do
     if [[ $tag =~ ^tx2-dxt1-drv1-[a-z0-9]+-[abc]$ ]]; then
       [[ -s $stage/transfer/runner-source.txt && -s $stage/transfer/$tag.exit && -s $stage/transfer/reports.tar.zst ]]
     fi
-    # [DX-BM1] Why: an interrupted ladder can leave tens of GiB of exact observation chunks.
-    # Rejected: expanding those chunks a second time on the Mac when the verified report archive already preserves them.
+    # [DX-BM1] Why: the sealed archive already contains full observation chunks, oracle transport copies and the W0 HTTP corpus.
+    # Rejected: expanding those bulky duplicates into the remaining Mac disk before collecting all three activations.
     zstd -dc "$stage/transfer/reports.tar.zst" | tar -xf - -C "$stage" \
-      --exclude '*/observations-ns*/[0-9]*.f64' --exclude '*/observations-ns*/[0-9]*.json'
+      --exclude '*/observations-ns*/[0-9]*.f64' --exclude '*/observations-ns*/[0-9]*.json' \
+      --exclude './http/*' --exclude './oracle-bridge/*.output' --exclude './oracle-bridge/*.case'
     if [[ -f $stage/transfer/raw.tar.zst ]]; then
       zstd -dc "$stage/transfer/raw.tar.zst" | tar -xf - -C "$stage"
     fi

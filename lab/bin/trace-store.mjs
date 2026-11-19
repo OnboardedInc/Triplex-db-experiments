@@ -15,7 +15,17 @@ function rows() {
   return fs.existsSync(registry) ? JSON.parse(fs.readFileSync(registry, "utf8")) : [];
 }
 const bytes = (dir) => filesUnder(dir).reduce((sum, f) => sum + fs.statSync(f).size, 0);
-const hash = (f) => createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+function hash(file) {
+  const fd = fs.openSync(file, "r");
+  const digest = createHash("sha256"), block = Buffer.allocUnsafe(1024 * 1024);
+  try {
+    for (let n; (n = fs.readSync(fd, block, 0, block.length, null)) > 0;)
+      digest.update(block.subarray(0, n));
+    return digest.digest("hex");
+  } finally {
+    fs.closeSync(fd);
+  }
+}
 function save(all) {
   fs.mkdirSync(base, { recursive: true });
   fs.writeFileSync(registry + ".tmp", JSON.stringify(all, null, 2) + "\n");
@@ -101,17 +111,60 @@ export function registerActivation(dir) {
        result.nonce !== attempt.nonce || result.attemptSha256 !== hash(attemptFile) ||
        result.logSha256 !== hash(logFile)))
     throw Error("Foreign activation check or changed source evidence");
+  // [DX-BM1] Why: ACT1 seals its complete guarded readback before the optional whole-history audit.
+  // Rejected: indexing an unverified measurement or substituting the legacy guard-blind check.
+  const guardedFile = path.join(dir, "act1-verified.json");
+  const guarded = fs.existsSync(guardedFile) ? JSON.parse(fs.readFileSync(guardedFile, "utf8")) : null;
+  if (guarded) {
+    const sweepFile = path.join(dir, "act1-sweep.json"), sweep = JSON.parse(fs.readFileSync(sweepFile, "utf8"));
+    const schedule = JSON.parse(fs.readFileSync(path.join(dir, "act1-schedules.json"), "utf8"));
+    if (!attempt || guarded.slot !== tag || guarded.source !== source || guarded.scope !== attempt.scope ||
+        sweep.source !== source || sweep.slot !== tag || sweep.nonce !== attempt.nonce ||
+        schedule.slot !== tag || schedule.source !== source || schedule.nonce !== attempt.nonce ||
+        schedule.tap !== hash(path.join(dir, "act1-schedules.tap")) ||
+        guarded.build !== attempt.sourceManifestSha256 || guarded.build !== hash(path.join(dir, "source.SHA256SUMS")) ||
+        sweep.build !== guarded.build || guarded.rawSha256 !== hash(sweepFile) ||
+        sweep.checked !== 100000 || sweep.statesCompared !== 100000 || sweep.changed !== 100000 ||
+        sweep.liveReaders !== 256 || sweep.act1?.arm !== guarded.arm ||
+        !Array.isArray(guarded.trafficSha256) || guarded.trafficSha256.length !== 2 ||
+        ["baseline", "sweep"].some((phase, i) => guarded.trafficSha256[i] !== hash(path.join(dir, "traffic", phase + "-traffic.ndjson"))))
+      throw Error("Guarded activation readback or traffic bytes differ");
+  }
   return registerRow({
     date: new Date().toISOString(),
     tag,
     source,
     subjects: attempt?.subjects ?? null,
-    result: result
+    result: guarded ? ("Guarded 100k " + guarded.arm + " readback and live traffic verified. Diagnostic.") : result
       ? "Independent activation comparisons recorded. Performance unjudged."
       : "Activation controller output retained. Terminal independent check unavailable.",
-    html: result ? checkFile : path.join(dir, "transfer", "reports.tar.zst"),
+    html: guarded ? guardedFile : result ? checkFile : path.join(dir, "transfer", "reports.tar.zst"),
     raw: path.join(dir, "state", "trace", "raw"),
   });
+}
+
+// [DX-BM1] Why: the group comparison has its own reproducible table and three distinct terminal slots.
+// Rejected: cataloguing a controller exit or one arm's p99 as the whole comparison.
+function registerSenderComparison(dir) {
+  dir = path.resolve(dir);
+  const batch = path.basename(dir), prefix = "tx2-dxt1-drv1-" + batch;
+  const logs = path.join(dir, "controller", "logs");
+  const source = fs.readFileSync(path.join(logs, "runner-source.txt"), "utf8").trim();
+  const html = path.join(dir, "COMPARISON.md");
+  if (!/^[a-z0-9]{1,12}$/.test(batch) || !/^[a-f0-9]{40}$/.test(source) ||
+      hash(html) !== hash(path.join(dir, "pinned-replay", "COMPARISON.md")) ||
+      !fs.readFileSync(path.join(dir, "controller", "QUEUE.SHA256SUMS"), "utf8").split("\n").includes(hash(html) + "  COMPARISON.md"))
+    throw Error("Unbound sender comparison");
+  for (const arm of ["a", "b", "c"]) {
+    const tag = prefix + "-" + arm, run = path.join(path.dirname(dir), tag);
+    if (fs.readFileSync(path.join(run, "head.txt"), "utf8").trim() !== source ||
+        fs.readFileSync(path.join(run, "transfer", "collection-tag.txt"), "utf8").trim() !== tag ||
+        fs.readFileSync(path.join(logs, tag + ".exit"), "utf8").trim() !== "0" ||
+        hash(path.join(logs, tag + ".lateness.tsv")) !== hash(path.join(dir, "pinned-replay", "logs", tag + ".lateness.tsv")))
+      throw Error("Missing or foreign sender comparison arm");
+  }
+  return registerRow({date: new Date().toISOString(), tag: prefix + "-comparison", source, subjects: 10000,
+    result: "Three full zero-reader arms. The source-pinned replay reproduced the comparison and all three timing series.", html, raw: logs});
 }
 
 // [DX-BM1] Why: an OOM in the renderer can still leave an attributed, terminal evidence bundle.
@@ -188,6 +241,7 @@ export function archive(tag, to) {
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const [command, arg, ...rest] = process.argv.slice(2);
   if (command === "register") console.log(JSON.stringify(registerRun(arg)));
+  else if (command === "register-sender-comparison") console.log(JSON.stringify(registerSenderComparison(arg)));
   else if (command === "register-recovered" && rest.length === 1)
     console.log(JSON.stringify(registerRecoveredTrace(arg, rest[0])));
   else if (command === "register-activation") console.log(JSON.stringify(registerActivation(arg)));
