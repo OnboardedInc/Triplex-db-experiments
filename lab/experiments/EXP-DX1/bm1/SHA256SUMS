@@ -84,3 +84,5 @@ a19adbf05dacb5634e77fa9356d9f0e755419d277a1df4e70a8ffce663618e41  drv1a/dx-bm1-b
 f059eb3d55c46ee92a73c54b63039f1d19f01425b281eceb257d3624ad715590  drv1a/dx-bm1-bench-unit-host.log
 19ffa70b601489337645363f9f1144a583020a89610f2e7149f0ddc6706dad6e  drv1a/dx-bm1-bench-verified.log
 39cb47f6fa89e99f7b443957e76fc6b97964cb0c486de5cc6912f6d45f09810a  drv1a/dx-bm1-bench-all.log
+9be0abd3d1f3c24a6f11b3e2b237ba51f2dc8312fa369d567fccf39d810cfe85  drv1a/deferred-registration.log
+fc39bc3ba4fbf02c0c2b51793c6d7f9912fc92803ba68395ca8b0da360289c6b  drv1a/clone-verified.ndjson
