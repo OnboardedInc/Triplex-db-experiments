@@ -218,7 +218,7 @@ if (action === "--cleanup") {
       if (stage === "proof") {
         run([bench + "proof.ts", "--native-proof", join(dir, "oracle")]);
         run([bench + "edges.ts", join(dir, "edges")]);
-        run([bench + "price.ts", join(dir, "price"), "100"]);
+        run([bench + "price.ts", join(dir, "price"), "10000"]);
         run([bench + "behind.ts", join(dir, "behind.json")]);
         run([bench + "fair.ts", join(dir, "fair")]);
         const sizing = [];
