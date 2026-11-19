@@ -1,6 +1,6 @@
 # DX-BM1 bare-metal bench
 
-The new sender brought zero-reader ACK p99 down to 41.7 ms. The old sender measured 140.5 and 141.6 ms on either side, with 38,826 commits per arm. The full six-reader-core pair started at 13:53 EST on `11cb89fe`.
+The new sender repeated its improvement with a zero-reader ACK p99 of 36.11 ms [34.40, 38.11] across 38,826 commits. The earlier old/new/old comparison measured 140.5, 41.7 and 141.6 ms. The 10k pair on `11cb89fe` is awaiting its loaded reading.
 All 13 guarded correctness schedules ran on Datomic. At 100k, two live windows reused the same answer IDs. The independent oracle accepted all 165 visible seed facts for subject 6011, then rejected its 175 live-head facts. R1 stopped before timed R2. A correct 100k activation cost remains unmeasured. The earlier 73.78 s omitted durable guards. [Guarded schedules](../act1/REPORT.md)
 Both Mac pairs remain unjudged after their 8 GiB reader containers hit the memory limit mid-ladder. The Mac zero arms measured 8.84/94.73 and 8.83/71.39 ms ACK p50/p99. About eight overnight idle bench hours cost $8.72. [Mac recovery](MAC-NIGHT-2026-11-18.md)
 The 10k retry’s only read error was a socket reset before a result on a fallback at L256-B. Worker 2, subject 764, position 6983, trace `a654f87b197696560000000000accaed`.
