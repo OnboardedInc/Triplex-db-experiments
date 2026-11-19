@@ -1,24 +1,24 @@
-Activation changes the rules that a new account screen uses. A screen pinned before the change still sees the earlier answer.
-One account write switched the rules for both 1,000 and 10,000 people. The switch visited zero people.
-In the first local runs a fresh process returned the right answer 711–876 ms after the offer at 1,000 people and 777–1,062 ms at 10,000.
-One wage switch missed one second. Its write took 288 ms and its first verified response took another 774 ms.
-At 10,000 people the median first read in an existing process took 10.5 ms, a repeat took 5.9 ms and an unchanged reconciliation took 18.4 ms.
-The wage change owed 1,650 notices at that size. Recording them took 19.6 s and applying them at the receiver took another 67.8 s.
-The overtime change owed zero notices, including for people who never opened a screen. Screens and notices have different completion times.
-The 100,000-person live-traffic test is outstanding. A one-second deadline for the last recipient or unrecoverable protected evidence would rule out this design for those uses.
+Activation changes which rules a new screen uses. A screen pinned before the change keeps its earlier answer.
+Each release wrote one account fact and visited zero people at both 1,000 and 10,000 people.
+Six of twelve local switches took at least one second from offer to the first correct answer in a fresh process. The slowest took 1.925 s.
+On the 10,000-person wage repeat, the write took 254 ms. The first verified answer arrived another 951 ms later.
+At that size, a first read in a running process took 20.5 ms at the median, a repeat took 11.1 ms and an unchanged reconciliation took 29.9 ms.
+The wage edit owed 1,650 notices. Recording them took 25.6 s and applying them took another 94.3 s. The overtime edit owed none.
+A live save offered during a 64-person notification batch took 1.399 s to acknowledge. The 100,000-person live-traffic test remains open.
+A one-second deadline for the last notice would rule out this design for broad edits. Protected submissions also need a decision about what may survive erasure.
 
 ### Local evidence
 
-The first paired population runs used source `9d2fa21f3`, fresh native Datomic volumes and compact W0 facts. These diagnostics price the design on the shared Mac. [Proposed rule](RULE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+The first diagnostics at `9d2fa21f3` used separate native volumes. The repeats at `c4a0505fb` ran independent compact W0 scopes on one fresh stack after the queue probe. The table gives the repeats. [Proposed rule](RULE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 | People | Facts | Offer to durable, R1/R2/R3 (ms) | Durable to first cold answer (ms) | First/repeat/ordinary median (ms) | R2 changed and applied | Receiver effects/s |
 |---:|---:|---|---|---|---:|---:|
-| 1,000 | 4,109 | 54/30/25 | 822/680/724 | 13.8/7.6/17.7 | 166 | 20.6 |
-| 10,000 | 40,898 | 30/288/54 | 795/774/723 | 10.5/5.9/18.4 | 1,650 | 24.4 |
+| 1,000 | 4,109 | 185/59/38 | 1740/1096/1246 | 28.6/14.8/47.7 | 166 | 9.6 |
+| 10,000 | 40,898 | 43/254/54 | 951/951/1005 | 20.5/11.1/29.9 | 1,650 | 17.5 |
 
-Each size had three switches, 72 misses, 72 hits, 48 ordinary no-change reconciles and eight real saves. All 33,000 pinned outputs matched Python. The backdated two-hop correction added another 1,000 checks.
-Every switch used 12 native HTTP requests and one 1,009–1,012-byte journal receipt. The first cold column includes process startup. No keep-warm work ran. R1 explicitly migrated all members. R2 sought qualifying locations and pay ranges. R3 examined zero release-only owners.
-At 1,000/10,000 the eight saves took median 39.2/44.8 ms plus 43.3/47.2 ms for index maintenance and publication. Four item states changed at each size. The account cursor also advances over no-change source inputs.
+Per size and attempt we checked three switches, 72 cache misses, 72 hits, 48 no-change reconciles and eight real saves. Python matched 66,000 pinned outputs plus 2,000 more after backdated two-hop changes. The initial 10,000-person wage switch also exceeded one second at 1.062 s.
+Every marker used 12 native HTTP requests and a 1,009–1,012-byte journal receipt. Cold times include process startup. No keep-warm work ran. R1 migrated the whole initial roster. R2 sought qualifying locations and pay ranges. R3 examined zero release-only owners.
+At 1,000/10,000 the eight saves took median 108.9/62.8 ms plus 236.0/107.4 ms for reconciliation and publication. Four genuine worker claims changed items at each size. Four no-change inputs advanced only the account cursor.
 The final native proof at `eda1ed132` passed six admission schedules through the real cursor, 19 pinned reads and all 23 inherited publication schedules. Nine actual process kills covered the marker, cache, publisher, recipient and ACK. A raced location move, first local floor, equality retirement and two-hop correction produced all six independently expected notices. The rollback fixture applied seven ordered effects.
 
 ### What the new rule promises
@@ -36,10 +36,10 @@ The pilot covers the stock W0 releases. Protected E-Verify submission is exclude
 - `Projection.advance/Dispatcher.step` verify contiguous native source, original command bytes, sealed roster, ordered event and range, prior cursor and native commit. `Receiver.send/drain` verify generation, pending content, per-person order, original applied bytes and native acknowledgement.
 - `negative/projection/admission/read/dispatch/dependency/boundary/service/crash/pressure` use fresh fixtures. Their checks cover an independent 180-world index grid, three historical failures, delayed decisions, real races and restarts, changed dependency edges, native cursor binding, unpaid effects and the receiver.
 - `seed/price/local` bind the observed native population and roster to a fresh scope, source and built-module hashes, owner, slot, volume and image. Python checks every output, item delta and ordered delivery. Pricing checks the exact marker, zero roster visits, every normal reconcile and the final receiver database.
-- Durable raw evidence is under `evidence/DX-ACT1/actv-lazy/`. The first paired runs are `rung1000-b` and `rung10000-b`. The final functional receipts are in `proof-d`. Its volume and both priced volumes were removed. All 174 frozen W0 tests and five experiment tests passed. No acceptance pin moved. [Evidence checksums](SHA256SUMS)
+- Raw evidence under `evidence/DX-ACT1/actv-lazy/` includes `proof-d`, `rung1000-b`, `rung10000-b`, the final `price-d/{queue,1000,10000}` and the separate queue probe. The repeat window closed after both verified price files. All completed native volumes were removed. All 174 frozen W0 tests and five experiment tests passed. No acceptance pin moved. [Checksums](SHA256SUMS)
 
 ### Dedicated bench
 
 On the prepared server checkout run `DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/scale1/bench.ts launch 2 lazy-$(date -u +%Y%m%d%H%M%S) activation --publication lazy`. The 1,000-person preflight precedes 100,000 deep subjects, 64 and 256 readers, and 100 switches per load. [Runner](../scale1/bench.ts)
-The runner verifies all pinned reader hashes and oracle item transitions after each active window. It compares every native outbox and recipient byte, checks redo receipts, contiguous affected-owner feed lag, an actual follower hold and a pause over unpaid notices. Quiet scopes have a separate quiet-alone baseline.
+The runner verifies all pinned reader hashes and oracle item transitions after each active window. It compares every native outbox and recipient byte, checks redo receipts, contiguous affected-owner feed lag, an actual follower hold and a pause over unpaid notices. The active read/commit p99 screen is 1.5× its matched baseline. The quiet read/commit/feed screen is 1.25× quiet traffic alone.
 `bench/window/checkPush` and the SCALE1 collector bind the frozen trace, per-window commands, receiver rows, oracle denominator, source/build inventory, slot, container IDs and attempt nonce. A missing own-release response counts as a miss. Source, hardware samples, closed database hashes and paired raw observations accompany the separate latency and interference screens.
