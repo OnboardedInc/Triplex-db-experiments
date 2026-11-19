@@ -3,27 +3,28 @@
 North star. Measure pinned reads, offer-to-ACK commits, feed lag, current worlds and verified release activation on one and ten independent deep accounts. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 <!-- state -->
-At 18:21 UTC November 19, BM1’s p3 controller was running the narrow full activation. Its guarded stage has a three-hour ceiling, followed by a five-hour v3 pair. BM1 estimates handover at 20:00–20:30 EST and sets an outer cutoff of 21:30 EST. The timestamped FREE marker and inactive units release the bench. DX-SCALE1 has no remote job. Its tested local branch is exp/DX-SCALE1-deep-accounts. The initial public ref is absent. The lab’s no-push rule leaves initial publication with the orchestrator. The task requests report pushes after measured items.
+The dedicated server was delivered on November 19 with SMT enabled, the powersave governor, 93.4 GiB of memory and two 894.3 GiB NVMe devices. The operating system occupies one device and the other arrived unformatted. The delivery receipt was captured before enabling performance mode. Native prerequisites are installed. The first queued measurement is the one-scope 10k zero-reader arm.
 <!-- end state -->
 
-With `BENCH_SERVER` set from the private brief, this one read-only command shows the previous controller, its terminal status, every scale unit and each arm's stage.
+With `BENCH_SERVER` set from the private brief, this one read-only command shows every dedicated unit and each arm’s stage.
 
 ```sh
 node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 ```
 
-After BM1’s timestamped FREE handoff, `control.ts prepare` builds the exact published revision from anonymous HTTPS. Its ceiling is 35 minutes. Each `launch` refreshes BM1, checks the tested public head, checks the dedicated daemon, and starts a separate systemd unit with process-group and stack cleanup. Use a fresh tag for each attempt. The runner retains failures and aborts an arm after 15 minutes without workload evidence progress. A bound O-REPLAY process making CPU progress gets its original 15-, 60- or 90-minute size-dependent ceiling.
+On this assigned machine, `control.ts prepare` builds the exact published revision from anonymous HTTPS. Its ceiling is 35 minutes. Each `launch` refreshes BM1, checks the tested public head, checks the dedicated daemon, and starts a separate systemd unit with process-group and stack cleanup. Use a fresh tag for each attempt. The runner retains failures and aborts an arm after 15 minutes without workload evidence progress. A bound O-REPLAY process making CPU progress gets its original 15-, 60- or 90-minute size-dependent ceiling.
 
 | Order | People × scopes | Arms | Maximum time per arm |
 | --- | --- | --- | --- |
 | 1 | 10,000 × 1 | zero then reader | 4 h each |
 | 2 | 100,000 × 1 | zero, reader, activation | 8 h, 8 h, 10 h |
 | 3 | 10,000 × 10 | zero, reader, activation | 4 h, 4 h, 10 h |
-| 4 | 100,000 × 10 | zero, reader, activation, or bounded parallel seed if only seeding fits | 8 h, 8 h, 10 h |
+| 4 | 90 × 100 people and 10 × 2,000 | Idle footprint, live sentinel and restart | Bounded dedicated diagnostic |
+| 5 | 100,000 × 10 | zero, reader, activation, or bounded parallel seed if only seeding fits | 8 h, 8 h, 10 h |
 
-Once the tested revision is published, `control.ts campaign BATCH` runs the ordered sequence from the Mac. It polls the prior queue locally, prepares the public checkout, waits for each cleanup and transfer, and uses the measured sizing from the matching single-account rung. Reusing the batch resumes from its verified terminal files. Set `DX_SCALE1_SOURCE` to retain the tested runtime revision across report-only commits.
+Once the tested revision is published, `control.ts campaign BATCH` runs the ordered sequence from the Mac. It validates the machine assignment, prepares the public checkout, waits for each cleanup and transfer, and uses the measured sizing from the matching single-account rung. Reusing the batch resumes from its verified terminal files. Set `DX_SCALE1_SOURCE` to retain the tested runtime revision across report-only commits.
 
-The command takes `launch ITEM FRESH-TAG zero|reader|activation|seed`. For a reader, pass `--baseline ZERO-TAG`. Use `--sizing SINGLE-ARM-TAG` for an observed memory and disk estimate. Item 4 prefers the single-100k sizing receipt and can use the 10k receipt or the stated priors when a larger trial is partial. A capacity refusal leaves its arithmetic in the attempt directory before any engines start. Examples use shell variables for the deployment and attempt names.
+The command takes `launch ITEM FRESH-TAG zero|reader|activation|seed`. For a reader, pass `--baseline ZERO-TAG`. Use `--sizing SINGLE-ARM-TAG` for an observed memory and disk estimate. Item 5 prefers the single-100k sizing receipt and can use the 10k receipt or the stated priors when a larger trial is partial. A capacity refusal leaves its arithmetic in the attempt directory before any engines start. Examples use shell variables for the deployment and attempt names.
 
 ```sh
 node --import tsx lab/experiments/EXP-DX1/scale1/control.ts launch 1 "$ZERO_TAG" zero

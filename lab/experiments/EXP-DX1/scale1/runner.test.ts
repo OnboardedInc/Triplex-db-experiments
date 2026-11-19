@@ -6,7 +6,7 @@ import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { capacity } from "./bench.ts";
-import { bm1Released } from "./source.ts";
+import { dedicatedHost } from "./source.ts";
 import { cohort, type ScopeMeasurement } from "./measurements.ts";
 import { requireIdentity, DeepSeedWitness } from "../../../bench/lib/deep-profile.ts";
 import { deepOwnFacts } from "../../../bench/lib/deep-world.ts";
@@ -132,13 +132,9 @@ test("pooling weights observed calls and binds independent databases and a commo
   assert.throws(() => cohort([a, b], 2), /Duplicate Datomic database/);
 });
 
-test("ownership transfers only on BM1's completed UTC cleanup marker", () => {
-  assert(bm1Released("FREE 2026-11-18T23:00:00Z\n"));
-  for (const message of [
-    "item=queue state=finished",
-    "FREE 2026-02-30T04:00:00Z",
-    "FREE 2099-11-18T23:00:00Z",
-    "FREE",
-  ])
-    assert(!bm1Released(message));
+test("the dedicated assignment binds machine, delivery and active governor", () => {
+  const a = { role: "DX-SCALE1", machineIdSha256: "a".repeat(64), deliveredSha256: "b".repeat(64) };
+  dedicatedHost(a, a.machineIdSha256, a.deliveredSha256, ["performance"], "1");
+  assert.throws(() => dedicatedHost(a, "c".repeat(64), a.deliveredSha256, ["performance"], "1"));
+  assert.throws(() => dedicatedHost(a, a.machineIdSha256, a.deliveredSha256, ["powersave"], "1"));
 });

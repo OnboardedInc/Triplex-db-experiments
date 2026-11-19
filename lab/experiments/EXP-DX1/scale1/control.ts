@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { catalog } from "./catalog.ts";
 import { updateReport } from "./owner-report.ts";
 import { fileHash } from "./measurements.ts";
-import { activeUnitArgs, bm1Released, priorUnits, summaryFiles } from "./source.ts";
+import { activeUnitArgs, summaryFiles } from "./source.ts";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../.."),
   root = "/var/tmp/triplex-scale1",
@@ -22,6 +22,10 @@ assert(
   dest && /^[a-z0-9_]+@[a-zA-Z0-9.-]+$/.test(dest),
   "Set BENCH_SERVER to the destination provided in the brief",
 );
+const checkedRevision = (s: string) => {
+  assert.match(s, /^[a-f0-9]{40}$/);
+  return s;
+};
 const ssh = [
   "-n",
   "-F",
@@ -66,7 +70,7 @@ function updateHandoff(line: string) {
 }
 function state() {
   const script =
-    'date -u; systemctl list-units --all --no-pager "triplex-drv1-*" "triplex-bm1-*"; test ! -f /var/tmp/triplex-bm1/STATUS || cat /var/tmp/triplex-bm1/STATUS; systemctl list-units --all --no-pager "triplex-scale1-*"; test ! -d "$1" || find "$1" -mindepth 2 -maxdepth 2 -name STATUS.json -print -exec cat {} \\;';
+    'date -u; systemctl list-units --all --no-pager "triplex-scale1-*"; test ! -d "$1" || find "$1" -mindepth 2 -maxdepth 2 -name STATUS.json -print -exec cat {} \\;';
   return sudo("sh", "-c", script, "state", root);
 }
 function source() {
@@ -125,9 +129,20 @@ function source() {
   return { sha, url, base };
 }
 function released() {
-  const s = sudo("cat", "/var/tmp/triplex-bm1/STATUS");
-  assert(bm1Released(s), "BM1 has not published its timestamped FREE handoff");
-  assert.equal(remote("systemctl", ...activeUnitArgs, ...priorUnits), "");
+  const assignment = JSON.parse(sudo("cat", root + "/platform/dedicated.json"));
+  assert(
+    assignment.role === "DX-SCALE1" &&
+      assignment.machineIdSha256 === sudo("sha256sum", "/etc/machine-id").split(/\s/)[0],
+  );
+  assert.equal(
+    remote(
+      "systemctl",
+      ...activeUnitArgs,
+      "triplex-scale1-prepare-*.service",
+      "triplex-scale1-arm-*.service",
+    ),
+    "",
+  );
   assert.equal(sudo("env", "DOCKER_HOST=unix:///var/run/docker.sock", "docker", "ps", "-q"), "");
 }
 async function collect(tag: string) {
@@ -224,15 +239,6 @@ async function campaign(label: string) {
       await sleep(45000);
     }
   };
-  // [DX-SCALE1] Why: poll locally until BM1 publishes terminal ownership and its service drains. Rejected: reserving the remote machine or installing a remote waiter during someone else's window.
-  await until(
-    () => {
-      if (!exists("/var/tmp/triplex-bm1/STATUS")) return false;
-      const status = sudo("cat", "/var/tmp/triplex-bm1/STATUS");
-      return bm1Released(status) && remote("systemctl", ...activeUnitArgs, ...priorUnits) === "";
-    },
-    Date.now() + 24 * 3600000,
-  );
   const endedWithoutEvidence = (unit: string, since: number) => {
     const status = remote("systemctl", "show", unit, "-p", "ActiveState", "--value");
     return status === "failed" || (status === "inactive" && Date.now() - since > 90_000);
@@ -315,7 +321,7 @@ else if (action === "prepare") {
   released();
   const src = `${root}/source-${sha}`,
     build = `${root}/build-${sha}`;
-  // [DX-SCALE1] Why: the bench obtains every source byte by anonymous HTTPS after the previous controller has released it. Rejected: copying local source, caches, SSH configuration or credentials to the bench.
+  // [DX-SCALE1] Why: the bench obtains every source byte by anonymous HTTPS on the assigned machine. Rejected: copying local source, caches, SSH configuration or credentials to the bench.
   const boot =
     'set -eu; test ! -e "$2"; mkdir -p "$1"; git -c credential.helper= clone --no-checkout "$4" "$2"; git -C "$2" checkout --detach "$5"; test "$(git -C "$2" rev-parse HEAD)" = "$5"; cd "$2"; exec bash lab/experiments/EXP-DX1/t1/bare-metal.sh --prepare "$5" "$3"';
   console.log(
@@ -328,7 +334,14 @@ else if (action === "prepare") {
       "--setenv=GIT_TERMINAL_PROMPT=0",
       "--setenv=GIT_CONFIG_GLOBAL=/dev/null",
       "--setenv=GIT_CONFIG_NOSYSTEM=1",
-      "--setenv=DX_NATIVE_BOOTSTRAP_CACHE=/var/tmp/triplex-bm1/queue-20261118r/scale",
+      ...(process.env.DX_SCALE1_BUILD_CACHE
+        ? [
+            "--setenv=DX_NATIVE_BOOTSTRAP_CACHE=" +
+              root +
+              "/build-" +
+              checkedRevision(process.env.DX_SCALE1_BUILD_CACHE),
+          ]
+        : []),
       "sh",
       "-c",
       boot,

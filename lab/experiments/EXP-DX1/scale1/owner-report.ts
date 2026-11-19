@@ -193,7 +193,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     }
   }
   if (!stages.length)
-    lines.push("| 1–4 | 1 or 10 | — | — | — | — | Awaiting bench release and public source |");
+    lines.push("| 1–4 | 1 or 10 | — | — | — | — | Dedicated bench preparation |");
   const readers = [1, 2, 3, 4]
     .map((i) => recent(i, "reader"))
     .filter((s): s is Stage => Boolean(s?.resources?.engines && s.size));
@@ -225,7 +225,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "",
     "Cells give estimate · n [90% interval] where available. The regular arms target 5,910 seconds of offers. Each transferred summary retains every per-account bar, pooled sample distributions and the count of accounts meeting each obligation.",
     "",
-    "Before handoff, a read-only capacity check found 87.5 GiB available RAM and 638.0 GiB free disk. With the stated priors, ten 100k seeds would fit on disk in waves of two. The 1,639 GiB live-memory estimate requires calibration on the 10k baseline. These figures are estimates. [Assumptions](PROFILE.md)",
+    "The dedicated server arrived with 93.4 GiB RAM, 12 physical cores and two 894.3 GiB NVMe devices. The baseline uses the root device, SMT enabled, the performance governor and six reader cores. The second device arrived unformatted. [Assumptions](PROFILE.md)",
     "",
     "**Population and checks**",
     "",

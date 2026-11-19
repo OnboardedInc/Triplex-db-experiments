@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,8 +18,7 @@ import { compressTraces } from "./archive.ts";
 import { resources } from "./resources.ts";
 import {
   activeUnitArgs,
-  bm1Released,
-  priorUnits,
+  dedicatedHost,
   stageReplay,
   sourceInventory,
   summaryFiles,
@@ -83,15 +82,28 @@ function spawnResult(cmd: string, args: string[]) {
   }
 }
 function released() {
-  const f = "/var/tmp/triplex-bm1/STATUS";
-  assert(
-    fs.existsSync(f) && bm1Released(fs.readFileSync(f, "utf8")),
-    "BM1 has not published its timestamped FREE handoff",
+  const platform = path.join(root, "platform"),
+    base = "/sys/devices/system/cpu/cpufreq";
+  const sum = (p: string) => createHash("sha256").update(fs.readFileSync(p)).digest("hex");
+  const governors = fs
+    .readdirSync(base)
+    .filter((n) => /^policy\d+$/.test(n))
+    .map((n) => fs.readFileSync(path.join(base, n, "scaling_governor"), "utf8").trim());
+  dedicatedHost(
+    get(path.join(platform, "dedicated.json")),
+    sum("/etc/machine-id"),
+    sum(path.join(platform, "delivered.txt")),
+    governors,
+    fs.readFileSync("/sys/devices/system/cpu/smt/active", "utf8").trim(),
   );
   assert.equal(
-    call("systemctl", [...activeUnitArgs, ...priorUnits, "triplex-scale1-*.service"]),
+    call("systemctl", [
+      ...activeUnitArgs,
+      "triplex-scale1-prepare-*.service",
+      "triplex-scale1-arm-*.service",
+    ]),
     "",
-    "A previous bench unit is still active",
+    "An earlier native arm is still active",
   );
   assert.equal(docker("ps", "-q"), "", "Another stack is running");
 }
@@ -402,7 +414,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--cpus-gw-write",
       planCpus.writerGateway,
       "--cpus-gw-read",
-      planCpus.readerGateway,
+      planCpus.readerGateway.split(",")[0]!,
       "--pg-memory",
       "6g",
       "--tx-memory",
@@ -416,8 +428,17 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     ],
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
+  // [DX-SCALE1] Why: the shared startup helper accepts guest CPU indices 0–7. Apply the full native cpuset before opening any databases. Rejected: shifting BM1’s physical read gateway or measuring startup placement as steady state.
+  docker("update", "--cpuset-cpus", planCpus.readerGateway, prefix + "-gw-r");
   const engines = placement(prefix),
     before = snapshot(prefix);
+  for (const [role, cpus] of Object.entries({
+    pg: planCpus.postgres,
+    tx: planCpus.transactor,
+    "gw-w": planCpus.writerGateway,
+    "gw-r": planCpus.readerGateway,
+  }))
+    assert.equal(engines[role].cpus, cpus);
   write(path.join(dir, "placement.json"), engines);
   write(path.join(dir, "disk-before.json"), before);
   const raw: string[] = [],
@@ -1024,7 +1045,7 @@ async function main() {
   const sourceGit = ["-c", "credential.helper=", "-c", "http.extraHeader="];
   call("git", [...sourceGit, "fetch", "origin", "refs/heads/exp/DX-BM1-bare-metal"], 60000);
   call("git", ["merge-base", "--is-ancestor", "FETCH_HEAD", source]);
-  assert.equal(call("git", ["status", "--porcelain"]), "");
+  assert.equal(call("git", ["status", "--porcelain", "--untracked-files=no"]), "");
   for (const xs of Object.values(childrenInventory(prefix))) assert.equal(xs.length, 0);
   const topology = call("lscpu", ["-p=CPU,CORE,SOCKET"])
     .split("\n")
@@ -1096,6 +1117,11 @@ async function main() {
     "flock",
     "-n",
     path.join(root, "exclusive.lock"),
+    process.execPath,
+    "lab/bin/heavy.mjs",
+    "--label",
+    "DX-SCALE1-native",
+    "--",
     ...loader,
     "run",
     String(item),
