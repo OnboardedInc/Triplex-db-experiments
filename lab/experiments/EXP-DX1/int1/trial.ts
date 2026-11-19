@@ -82,7 +82,8 @@ const inputs = Object.fromEntries(
 const attempt = randomUUID(),
   spread = process.env.DX_INT1_COHORT === "spread",
   seedOnly = process.env.DX_INT1_CENSUS === "seed-only",
-  policy = { readMode: process.env.DX_TOUCHED_READ_MODE ?? "following", gateways: process.env.DX_INT1_GATEWAYS ?? "original" },
+  policy = { readMode: process.env.DX_TOUCHED_READ_MODE ?? "following", gateways: process.env.DX_INT1_GATEWAYS ?? "original",
+    ...(process.env.DX_INT1_PEER_GC === "elastic" ? { peerGc: "elastic" } : {}) },
   binding = digest(
     canonical([source, inputs, attempt, mode, size, stack.prefix, stack.containers, spread, seedOnly, policy]),
   );
