@@ -124,6 +124,9 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       });
       if (missed.length)
         incompleteReader = ` The first reader attempt routed all ${missed.reduce((n: number, p: any) => n + run.phaseProgress[p.idx].reads, 0).toLocaleString("en-US")} reads at ${missed.map((p: any) => p.name).join(", ")} through the gateway and failed replica coverage.`;
+      const diagnostic = "evidence/" + firstReader.tag + "-diagnostic.md";
+      if (incompleteReader && fs.existsSync(path.join(here, diagnostic)))
+        incompleteReader += " [Matched client and gateway timing](" + diagnostic + ")";
     }
   }
   const refused = stages.find((s) => s.terminal.service === "capacity-refused");

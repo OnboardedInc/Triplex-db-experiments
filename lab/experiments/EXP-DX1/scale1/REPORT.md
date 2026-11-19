@@ -7,7 +7,7 @@ The first shared resource to reach its limit is still unknown.
 Three changes to test are grouping queued saves, reducing per-save work at the serial commit point, and publishing a release with a constant number of writes. Their effects on the full account are unmeasured.
 The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. PostgreSQL grew by 594.29 bytes per fact and the volume including WAL grew by 1214.95 bytes per fact (one seed).
 
-The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 69.12 ms (90% interval 65.28–72.70 ms), above the 50 ms bar. Peak simultaneous client and engine memory was 21.87 GiB. The first reader attempt routed all 77,838 reads at L1, L4, L16, L64 through the gateway and failed replica coverage.
+The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 69.12 ms (90% interval 65.28–72.70 ms), above the 50 ms bar. Peak simultaneous client and engine memory was 21.87 GiB. The first reader attempt routed all 77,838 reads at L1, L4, L16, L64 through the gateway and failed replica coverage. [Matched client and gateway timing](evidence/arm-d19-i1-reader-a-diagnostic.md)
 
 **Bench measurements**
 
