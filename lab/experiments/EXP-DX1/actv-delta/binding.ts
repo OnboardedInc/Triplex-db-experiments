@@ -44,7 +44,7 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
                   "bench-rung",
                   "page-control",
                   "v3",
-                  ...(mode === "rungs" ? [] : ["deep", "server", "preflight"]),
+                  ...(mode === "rungs" ? [] : ["deep", "server", "preflight", "full.test"]),
                 ]),
         ].includes(path.basename(p).replace(/\.[^.]+$/, "")) ||
           path.basename(p) === mode + ".ts"),

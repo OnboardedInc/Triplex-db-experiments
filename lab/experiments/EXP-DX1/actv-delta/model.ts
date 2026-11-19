@@ -48,6 +48,7 @@ export type Recipe = {
   root: string;
   census: string;
   shape: "packed" | "recipe" | "full" | "live";
+  fullCheck?: { people: number; digest: string };
   packed?: string[];
   flags?: [string, boolean, boolean][];
   subjects?: string[];

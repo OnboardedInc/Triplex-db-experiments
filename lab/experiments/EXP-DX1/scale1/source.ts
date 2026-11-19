@@ -42,6 +42,7 @@ export function sourceInventory(repo: string) {
       "lab/world/W0",
       "lab/experiments/EXP-DX1/scale1",
       "lab/experiments/EXP-DX1/act2",
+      "lab/experiments/EXP-DX1/actv-delta",
       "lab/experiments/EXP-DX1/stack",
       "packages/datomic/gateway",
       "pnpm-lock.yaml",

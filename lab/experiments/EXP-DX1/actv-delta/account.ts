@@ -1,4 +1,5 @@
 import { originalObject, MissingOriginal } from "./recovery.ts";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { W0 } from "../../../bench/lib/w0-world.ts";
@@ -385,6 +386,22 @@ export class Account {
       flags: flags.sort((a, b) => ordered(a[0], b[0])),
     };
   }
+  private async checkFull(event: Recipe) {
+    const prior = (await this.head(event.sourceCut)).value,
+      census = await this.censusAt(prior, event.sourceCut),
+      next = W0.compileRelease(event.next),
+      digest = createHash("sha256");
+    // [DX-ACT2] Why: an unindexed rule or clock crossing must validate the full input and actual publication predecessor before acknowledging coverage. Rejected: deferring this first validation to the dispatcher (a bad subject would surface after ACK).
+    for (let i = 0; i < census.length; i += width) {
+      const views = await this.views(census.slice(i, i + width), event.sourceCut, undefined, prior);
+      for (const [s, view] of views) {
+        const output = evaluate(worldOf(view.body, event.basis), next, event.basis),
+          published = W0.publish(view.state, [W0.recordOf(output)]);
+        digest.update(hash([s, W0.outputJson(output), W0.publishJson(published)]) + "\n");
+      }
+    }
+    return { people: census.length, digest: digest.digest("hex") };
+  }
   async command(
     id: string,
     request: string,
@@ -485,6 +502,7 @@ export class Account {
             assert.equal(event.packed.length, event.flags.length);
           }
         }
+        if (event.shape === "full") event.fullCheck = await this.checkFull(event);
         return { head: { ...h, seq, releaseSeq: seq, basis, activations }, event, patches: [] };
       },
       options.beforeCas,
