@@ -3,11 +3,17 @@ import { measureHttp } from "./http-counts.ts";
 import { measureW0Http } from "./w0-http.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { W0, canonical, sha256 } from "./w0-world.ts";
+import { guardedFrame, type GuardLayout } from "./w0-guarded.ts";
+export type OutboxStore = Pick<
+  CompositionHandle,
+  "currentPosition" | "sweepPage" | "transactionByCommand" | "transact" | "publishOutbox"
+>;
 export const outboxEntity = (subject: string) =>
   "p5:outbox:" +
   (process.env.TX2_W0_OUTBOX_NAMESPACE ? process.env.TX2_W0_OUTBOX_NAMESPACE + ":" : "") +
   subject;
 export interface PublicationOptions {
+  layout?: GuardLayout;
   frameSize?: number;
   inflight?: number;
   stateRows?: readonly import("./w0-world.ts").WorldRow[];
@@ -24,12 +30,12 @@ export const offerLiveWrite = () => {
 export const finishLiveWrite = () => {
   if (--liveWriterBacklog < 0) throw Error("negative writer backlog");
 };
-const submissionTails = new WeakMap<CompositionHandle, Promise<void>>();
+const submissionTails = new WeakMap<OutboxStore, Promise<void>>();
 const publicationLimit = Number(process.env.TX2_W0_PUBLISH_INFLIGHT ?? "2");
 if (!Number.isSafeInteger(publicationLimit) || publicationLimit < 1 || publicationLimit > 32)
   throw Error("invalid publication capacity");
-const capacities = new WeakMap<CompositionHandle, { active: number; waiting: (() => void)[] }>();
-async function publicationSlot(comp: CompositionHandle, limit: number) {
+const capacities = new WeakMap<OutboxStore, { active: number; waiting: (() => void)[] }>();
+async function publicationSlot(comp: OutboxStore, limit: number) {
   let state = capacities.get(comp);
   if (!state) {
     state = { active: 0, waiting: [] };
@@ -49,7 +55,7 @@ async function publicationSlot(comp: CompositionHandle, limit: number) {
   };
 }
 export async function publishRecords(
-  comp: CompositionHandle,
+  comp: OutboxStore,
   records: readonly W0.EvaluationRecord[],
   options: PublicationOptions = {},
 ) {
@@ -64,6 +70,22 @@ export async function publishRecords(
     new Set(records.map((r) => r.subject)).size !== records.length
   )
     throw new Error("outbox frame must contain bounded distinct subjects");
+  if (options.layout) {
+    const release = await publicationSlot(comp, options.inflight ?? publicationLimit);
+    try {
+      return await guardedFrame(comp, records, outboxEntity, options.layout, async () => {
+        const since = performance.now();
+        while (
+          options.yieldToWriter &&
+          liveWriterBacklog > 0 &&
+          performance.now() - since < (options.maxWriterYieldMs ?? 50)
+        )
+          await new Promise((resolve) => setTimeout(resolve, 1));
+      });
+    } finally {
+      release();
+    }
+  }
   // [DX-H6] Why: prepare disjoint pages concurrently, then submit in invocation order without waiting for prior ACKs.
   // Rejected: serial state reads/build/ACK across all pages.
   const previousSubmission = submissionTails.get(comp) ?? Promise.resolve();
@@ -129,6 +151,8 @@ export async function publishRecords(
     for (const record of records) {
       const entityId = outboxEntity(record.subject);
       const old = { triples: states.get(entityId) ?? [] };
+      if (old.triples.some((t) => t.attribute === "p5/guard"))
+        throw Error("Guarded outbox requires a guarded publisher");
       const previous = old.triples.find((t) => t.attribute === "p5/state");
       const state = previous ? reviveState(JSON.parse(previous.value.value)) : W0.EMPTY_OUTBOX;
       const result = W0.publish(state, [record]);

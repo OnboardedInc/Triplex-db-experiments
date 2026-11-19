@@ -26,12 +26,17 @@ for tag in "$@"; do
       [[ $hash =~ ^[0-9a-f]{64}$ ]] || exit 2
       case $name in
         reports.tar.zst|raw.tar.zst|controller.tar.zst|bench-condition.txt|fsync.json|preflight.log|raw-transfer.txt|collection-tag.txt) ;;
+        cutoff.txt|runner-source.txt|"$tag.log"|"$tag.exit")
+          [[ $tag =~ ^tx2-dxt1-drv1-[a-z0-9]+-[abc]$ ]] || exit 2 ;;
         *) echo "Unexpected archive member: $name" >&2; exit 2 ;;
       esac
       "${ssh_bench[@]}" "sudo -n cat '$remote/$name'" > "$stage/transfer/$name"
     done < "$stage/transfer/TRANSFER.sha256"
     (cd "$stage/transfer"; shasum -a 256 -c TRANSFER.sha256)
     [[ $(cat "$stage/transfer/collection-tag.txt") == "$tag" ]]
+    if [[ $tag =~ ^tx2-dxt1-drv1-[a-z0-9]+-[abc]$ ]]; then
+      [[ -s $stage/transfer/runner-source.txt && -s $stage/transfer/$tag.exit && -s $stage/transfer/reports.tar.zst ]]
+    fi
     # [DX-BM1] Why: an interrupted ladder can leave tens of GiB of exact observation chunks.
     # Rejected: expanding those chunks a second time on the Mac when the verified report archive already preserves them.
     zstd -dc "$stage/transfer/reports.tar.zst" | tar -xf - -C "$stage" \
@@ -43,7 +48,10 @@ for tag in "$@"; do
     for file in delivered.txt delivered-nvme.txt; do
       [[ ! -f $root/DX-BM1/machine/$file ]] || cp "$root/DX-BM1/machine/$file" "$stage/machine/"
     done
-    for file in bench-condition.txt fsync.json preflight.log; do cp "$stage/transfer/$file" "$stage/machine/"; done
+    for file in bench-condition.txt fsync.json preflight.log; do
+      if [[ -f $stage/transfer/$file ]]; then cp "$stage/transfer/$file" "$stage/machine/"; fi
+    done
+    if [[ -f $stage/transfer/runner-source.txt ]]; then cmp "$stage/head.txt" "$stage/transfer/runner-source.txt"; fi
     mv "$stage" "$dest"
     trap - EXIT
   fi

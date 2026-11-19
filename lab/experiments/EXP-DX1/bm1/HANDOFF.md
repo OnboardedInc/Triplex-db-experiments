@@ -2,18 +2,11 @@
 
 **North star.** P5 uses a fresh 100k W0 run under 64 live readers. P1–P4 use one full v3 pair and both tracing-off controls. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
-The overnight 100k reader and its failed replay are collected. The old W0 run finished its live measurement and independent outbox comparisons and timed out before producing its terminal envelope. Its source volume and the prior attempt remain available. The day run reads that volume through a fresh private clone, rechecks the seed fingerprint at position 4,338,757, and uses a new publication namespace. [Report](REPORT.md)
+The three sender arms completed and their bundles and checksummed COMPARISON.md are on the Mac under evidence/DX-BM1. The new sender measured 41.705 ms all-primary p99 with 38,826 correct receipt reads. The older 73.78 s activation omitted durable guards. Its retained seed supplies fresh, verified private clones for the corrected experiment.
 
-At the last prelaunch check, `triplex-drv1-wait.service` was active and had started its second arm at 09:15 EST. It owns the bench until it exits and the daemon has no running containers. The day batch is `d19`, with controller `triplex-bm1-d19-queue.service` and cleanup hooks for each separate child cgroup. The controller retries a failed stop hook once the unit has drained. An interrupted pair restores the captured scheduler setting and can retain compact driver evidence in `driver-at-stop/`.
+The afternoon batch is p3. The controller prepares a native checkout, runs DX-ACT1 first, then runs the 10k pair. ACT1 gets three hours for native schedules and the narrow full, selector and standard full releases with 256 live readers. The v3 pair gets five hours and uses replica-worker receipt capture, worker-journal retention, six reader cores and both off bookends. This order protects the complete pair against the afternoon handover limit.
 
-| Stage | Expected elapsed | Ceiling |
-| --- | ---: | ---: |
-| Prepare pushed revision using verified bench caches | 5–25 min | 35 min |
-| 1k W0 live smoke | 4–12 min | 25 min |
-| 100k retained-seed clone, readback, live activation and history verification | 45–100 min | 2 h total, including any retry |
-| One full 10k v3 pair, bookends, streamed reports and independent replay | 3½–4½ h | 4 h 50 min, subject to the end of the window |
-
-The working cutoff is **20:00 EST November 19** (01:00 UTC November 20). The controller reserves the last 15 minutes for final packaging. The terminal queue line gives its actual finish time. Release the bench after all available bundles have passed their Mac transfer checks and the stop hooks show empty inventories. The earlier cutoff estimate belonged to the overnight run.
+The working handover is about 20:00–20:30 EST November 19. The controller reserves the final 15 minutes for archives before the 21:30 EST outer cutoff. The bench is available to DX-SCALE1 when its STATUS line reads FREE followed by the UTC release time. Both the parent and nested units have stop hooks. Only the orchestrator handles the rented server.
 
 Set `BENCH_SERVER` to the SSH destination in the brief. Poll every 10 to 15 minutes while timing is active.
 
@@ -24,10 +17,10 @@ bench() {
     -o StrictHostKeyChecking=yes "$BENCH_SERVER" "$@"
 }
 bench 'sudo -n cat /var/tmp/triplex-bm1/STATUS'
-bench 'systemctl show triplex-drv1-wait triplex-bm1-d19-queue -p ActiveState -p Result -p ExecMainStatus'
-bench 'sudo -n tail -n 24 /var/tmp/triplex-bm1/day-d19/logs/queue.log'
-bench 'sudo -n find /var/tmp/triplex-bm1/day-d19/logs -name "*.exit" -o -name "remaining.txt"'
-bench 'sudo -n find /var/tmp/triplex-bm1/day-d19/checkout/state/evidence/DX-T1 -maxdepth 2 -name activation.log -exec tail -c 1200 {} \;'
+bench 'systemctl show triplex-bm1-p3-queue triplex-bm1-p3-guarded triplex-bm1-p3-pair -p ActiveState -p Result -p ExecMainStatus'
+bench 'sudo -n tail -n 24 /var/tmp/triplex-bm1/day-p3/logs/queue.log'
+bench 'sudo -n find /var/tmp/triplex-bm1/day-p3/logs -name "*.exit" -o -name "remaining.txt"'
+bench 'sudo -n tail -n 8 /var/tmp/triplex-bm1/day-p3/logs/guarded.log'
 ```
 
 Collect published bundles from the Mac. The script validates the transfer manifest and actual bytes before indexing the evidence. Partial failures and their cleanup logs are retained. `raw-transfer.txt` gives the size and hash when a raw archive exceeds the 4 GiB transfer policy.
@@ -36,7 +29,7 @@ Collect published bundles from the Mac. The script validates the transfer manife
 while IFS= read -r tag; do
   bash lab/experiments/EXP-DX1/bm1/collect.sh "$BENCH_SERVER" "$tag" || \
     printf 'Collection failed for %s\n' "$tag" >&2
-done < <(bench 'sudo -n find /var/tmp/triplex-bm1/bundles -mindepth 2 -maxdepth 2 -name TRANSFER.sha256 -printf "%h\n" | sed "s|.*/||" | grep "^tx2-dxt1-bm1-d19-" | sort')
+done < <(bench 'sudo -n find /var/tmp/triplex-bm1/bundles -mindepth 2 -maxdepth 2 -name TRANSFER.sha256 -printf "%h\n" | sed "s|.*/||" | grep -E "^tx2-dxt1-bm1-(p3-|act[0-9a-f]{9}-activation-a$)" | sort')
 ```
 
 A terminal failure with missing bundles or a nonempty `remaining.txt` requires checking its corresponding `logs/<item>-cleanup/cleanup.log` and run output before release. The retained November 18 seed volume belongs to its original attempt and is outside the scoped day teardown.

@@ -22,6 +22,10 @@ import {
   triplexValue,
   worldSha256,
 } from "./w0-world.ts";
+import { eadRelease } from "./w0-selector.ts";
+import { selectorOracle } from "./w0-selector-oracle.ts";
+import { evaluateSelected } from "./w0-selector-sweep.ts";
+import type { GuardLayout } from "./w0-guarded.ts";
 import { subjectList } from "./sweep.ts";
 import { outboxEntity } from "./w0-outbox.ts";
 import { evaluateAll, compactCandidateReferences } from "./w0-replica.ts";
@@ -148,15 +152,44 @@ export async function runReplicaDriver(argv: string[]) {
   }
   if (!["gateway", "replica"].includes(opt("reader-mode", "gateway")))
     throw Error("invalid reader mode");
-  const publication = argv.includes("--publication-inflight")
-    ? {
-        inflight: Number(opt("publication-inflight")),
-        frameSize: Number(opt("publication-size", "64")),
-        gapMs: Number(opt("publication-gap-ms", "0")),
-        yieldToWriter: argv.includes("--publication-yield-writer"),
-        maxWriterYieldMs: Number(opt("publication-yield-ms", "50")),
-      }
-    : undefined;
+  const layoutName = opt("publication-layout"),
+    act1 = opt("act1-arm");
+  if (
+    argv.includes("--publication-layout") &&
+    !["historical", "full-state", "guard-fact"].includes(layoutName)
+  )
+    throw Error("Unknown publication layout");
+  const layout =
+    layoutName && layoutName !== "historical" ? (layoutName as GuardLayout) : undefined;
+  if (
+    act1 &&
+    (!["narrow-full", "narrow-selector", "standard-full"].includes(act1) ||
+      layout !== "guard-fact" ||
+      !opt("record-dir") ||
+      !publicationId ||
+      !argv.includes("--publish") ||
+      publicationTrials.length ||
+      argv.includes("--candidates"))
+  )
+    throw Error("Invalid guarded activation arm");
+  if (
+    layoutName &&
+    (publicationTrials.length || candidateVerification || argv.includes("--candidates"))
+  )
+    throw Error("Guarded comparison requires one release");
+  const narrow = act1 === "narrow-full" || act1 === "narrow-selector";
+  const activeRelease = narrow ? eadRelease() : W0.R2;
+  const publication =
+    argv.includes("--publication-inflight") || layoutName
+      ? {
+          layout,
+          inflight: Number(opt("publication-inflight", "1")),
+          frameSize: Number(opt("publication-size", "64")),
+          gapMs: Number(opt("publication-gap-ms", "0")),
+          yieldToWriter: argv.includes("--publication-yield-writer"),
+          maxWriterYieldMs: Number(opt("publication-yield-ms", "50")),
+        }
+      : undefined;
   if (
     publication &&
     (!Number.isFinite(publication.maxWriterYieldMs) ||
@@ -379,12 +412,17 @@ export async function runReplicaDriver(argv: string[]) {
     }
   }
   const replica = new Replica(base, V_W0),
-    batchOracle = argv.includes("--batch-oracle"),
+    batchOracle = argv.includes("--batch-oracle") && !layoutName,
     oracle = new DomainOraclePool(
-      batchOracle ? new URL("./w0-oracle-batch.py", import.meta.url).pathname : undefined,
+      narrow
+        ? selectorOracle(recordDir + "/..", activeRelease)
+        : batchOracle
+          ? new URL("./w0-oracle-batch.py", import.meta.url).pathname
+          : undefined,
       oracleProcesses,
     );
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
+  if (layoutName) report.act1 = { layout: layoutName, arm: act1, releaseHash: activeRelease.hash };
   report.capacityBaselines = capacityBaselines;
   report.nodeHeapLimitBytes = getHeapStatistics().heap_size_limit;
   // [DX-S5] Why: report actual all-subject oracle time separately from activation and storage readback.
@@ -642,7 +680,9 @@ export async function runReplicaDriver(argv: string[]) {
     // [DX-S5] Why: first use may append activation/outbox records, but its application input stays at the sealed cut.
     // Rejected: quietly moving the requested sealed input basis to the later activation transaction.
     const pinnedInput =
-      seedPosition !== undefined ? await replica.snapshotAt(seedPosition) : undefined;
+      seedPosition !== undefined && !layoutName
+        ? await replica.snapshotAt(seedPosition)
+        : undefined;
     const bootstrapEquality = await equalWorlds(cut, argv.includes("--seed-fingerprint"));
     report.bootstrapWorlds = bootstrapEquality.worlds;
     report.subjectSnapshotWorlds = bootstrapEquality.subjectSnapshots;
@@ -767,7 +807,7 @@ export async function runReplicaDriver(argv: string[]) {
             op: "assert",
             entityId: "p5:tenant" + (publicationId ? ":" + publicationId : ""),
             attribute: "p5/activation",
-            value: { type: "string", value: "R1" },
+            value: { type: "string", value: act1 ? W0.R1.hash : "R1" },
             validFrom: V_W0,
           },
         ],
@@ -843,7 +883,7 @@ export async function runReplicaDriver(argv: string[]) {
             op: "assert",
             entityId: "p5:tenant" + (publicationId ? ":" + publicationId : ""),
             attribute: "p5/activation",
-            value: { type: "string", value: "R2" },
+            value: { type: "string", value: act1 ? activeRelease.hash : "R2" },
             validFrom: V_W0,
           },
         ],
@@ -897,10 +937,24 @@ export async function runReplicaDriver(argv: string[]) {
     };
     if (threaded) replica.compact();
     const publicationView = await replica.snapshotAt(replica.position);
-    const result = await evaluateAll({
+    // [DX-ACT1] Why: a retained seed proves the initial population. Live R1 and the following release each need their own committed basis or the guard-only cost disappears. Rejected: publishing both releases at the same retained seed position.
+    if (layoutName && argv.includes("--publish") && cut <= r1Position)
+      throw Error("Release basis did not advance");
+    const runSweep =
+      act1 === "narrow-selector"
+        ? (options: Parameters<typeof evaluateAll>[0]) =>
+            evaluateSelected(options, {
+              dir: recordDir + "/../selector",
+              attempt: process.env.DX_ACTIVATION_NONCE!,
+              scope,
+              source: process.env.DX_ACTIVATION_BUILD_SHA256!,
+              generation: publicationId,
+            })
+        : evaluateAll;
+    const result = await runSweep({
       replica,
       subjects,
-      releases: W0.R2,
+      releases: activeRelease,
       position: cut,
       workers,
       compactRecords: threaded,
@@ -1020,6 +1074,7 @@ export async function runReplicaDriver(argv: string[]) {
         traffic = await startTraffic({ ...liveOptions, id: "sweep" });
       },
     });
+    if ("selector" in result) report.act1.selector = result.selector;
     if (traffic) {
       report.live = await traffic.stop();
       traffic = undefined;
@@ -1086,7 +1141,7 @@ export async function runReplicaDriver(argv: string[]) {
         exactness: "pending",
         N,
         scope,
-        releaseHash: W0.R2.hash,
+        releaseHash: activeRelease.hash,
         subjects: result.records.length,
         cut,
         evaluation: report.evaluation,
@@ -1110,8 +1165,33 @@ export async function runReplicaDriver(argv: string[]) {
       expectedR1Changed = 0,
       expectedR2Changed = 0;
     const expectedTrialStates = new Map<string, string>();
+    const act1Comparisons = new Map<string, string>();
     const finalPosition = await comp.currentPosition();
     report.publishedStatePosition = finalPosition;
+    if (act1) {
+      const entityId = "p5:tenant:" + publicationId;
+      const activationFacts = [];
+      for (const [position, hash] of [
+        [r1Position, W0.R1.hash],
+        [cut, activeRelease.hash],
+      ] as const) {
+        const basis = { position, validAt: V_W0 };
+        const page = await recordedPage([entityId], basis);
+        const markers = page.rows.filter(
+          (r) => r.entityId === entityId && r.attribute === "p5/activation",
+        );
+        if (
+          canonical(page.reportedBasis) !== canonical(basis) ||
+          markers.length !== 1 ||
+          markers[0]!.position !== position ||
+          markers[0]!.value.type !== "string" ||
+          markers[0]!.value.value !== hash
+        )
+          throw Error("Stored activation differs from the release evaluated at this cut");
+        activationFacts.push({ id: markers[0]!.id, entityId, position, hash });
+      }
+      report.act1.activationFacts = activationFacts;
+    }
     const wireState = (state: any) => ({
       ...state,
       items: state.items.map((i: any) => ({
@@ -1136,6 +1216,11 @@ export async function runReplicaDriver(argv: string[]) {
       if (next.error) throw new Error("Oracle publication error " + next.error);
       const changed =
         next.deliveries.length > 0 || canonical(next.state.items) !== canonical(previous.items);
+      if (layoutName)
+        return {
+          changed: layout ? canonical(next.state) !== canonical(previous) : changed,
+          state: next.state,
+        };
       return { changed, state: changed ? next.state : previous };
     };
     const recordOffsets = Array.from(
@@ -1204,7 +1289,17 @@ export async function runReplicaDriver(argv: string[]) {
         };
         if (canonical(normalizedRecord) !== canonical(recordOf(expectedOutput)))
           throw new Error("Independent Python record mismatch " + r.subject);
-        const slow = W0.sweepSubject(world, W0.R2, {
+        if ("selection" in r) {
+          const eads = new Set(
+            world.facts.filter((f) => f.a === "docType" && f.v === "ead").map((f) => f.e),
+          );
+          const depends = world.facts.some(
+            (f) => f.e === r.subject && f.a === "documents" && eads.has(String(f.v)),
+          );
+          if (r.selection !== (depends ? "candidate" : "excluded"))
+            throw Error("Selector differs from source edges");
+        }
+        const slow = W0.sweepSubject(world, activeRelease, {
           tx: cut,
           validTime: W0.POPULATION_VALID_TIME,
         });
@@ -1237,9 +1332,32 @@ export async function runReplicaDriver(argv: string[]) {
           const actual = rows.length
             ? wireState(JSON.parse(rows[0].value.value))
             : { items: [], pending: [], subjects: [] };
+          if (layout === "guard-fact") {
+            const guards = states.rows.filter(
+              (row) => row.entityId === outboxEntity(r.subject) && row.attribute === "p5/guard",
+            );
+            if (guards.length !== 1) throw Error("Missing or ambiguous published guard");
+            actual.subjects = [JSON.parse(guards[0]!.value.value)];
+          }
           const expectedBytes = canonical(expectedState);
           if (canonical(actual) !== expectedBytes)
             throw new Error("Independent published state mismatch " + r.subject);
+          if (act1) {
+            if (act1Comparisons.has(r.subject)) throw Error("Duplicate activation comparison");
+            act1Comparisons.set(
+              r.subject,
+              createHash("sha256")
+                .update(
+                  canonical([
+                    r.subject,
+                    r.worldSha256,
+                    W0.outputJson(r.candidates[0].output),
+                    actual,
+                  ]),
+                )
+                .digest("hex"),
+            );
+          }
           if (publicationTrials.length) expectedTrialStates.set(r.subject, expectedBytes);
           statesCompared++;
         }
@@ -1278,6 +1396,72 @@ export async function runReplicaDriver(argv: string[]) {
         matched: report.matched,
       }),
     );
+    if (act1) {
+      const nonce = process.env.DX_ACTIVATION_NONCE,
+        source = process.env.TRIPLEX_TRACE_SOURCE;
+      const slot = process.env.TRIPLEX_TRACE_SLOT,
+        build = process.env.DX_ACTIVATION_BUILD_SHA256;
+      if (
+        !nonce ||
+        !source ||
+        !build ||
+        slot !== publicationId ||
+        checked !== N ||
+        statesCompared !== N ||
+        !report.matched
+      )
+        throw Error("Incomplete guarded activation readback");
+      const compared = createHash("sha256");
+      for (const id of subjects) {
+        const digest = act1Comparisons.get(id);
+        if (!digest) throw Error("Uncovered roster ordinal");
+        compared.update(digest);
+      }
+      const dest = recordDir + "/../act1-sweep.json";
+      fs.writeFileSync(
+        dest + ".partial",
+        JSON.stringify({
+          nonce,
+          source,
+          slot,
+          build,
+          scope,
+          N,
+          checked,
+          statesCompared,
+          act1: report.act1,
+          r1Position,
+          cut,
+          statePosition: finalPosition,
+          initialPosition: report.bootstrap.position,
+          liveReaders: logicalReaders,
+          roster: createHash("sha256").update(canonical(subjects)).digest("hex"),
+          comparedSha256: compared.digest("hex"),
+          trace: report.baseline.generatorTraceSha256,
+          evaluationMs: report.evaluation.passWallMs,
+          publicationMs: report.publication.wallMs,
+          changed: report.publication.changed,
+          matched: report.matched,
+          traffic: [report.baseline, report.live].map((window) => ({
+            raw: window.raw,
+            seed: window.seed,
+            offsetS: window.offsetS,
+            warmupMs: window.warmupMs,
+            generatorTraceSha256: window.generatorTraceSha256,
+            startedAtMs: window.startedAtMs,
+            windowMs: window.windowMs,
+            readers: window.readers,
+            offered: window.offered,
+            acknowledged: window.acknowledged,
+            failures: window.failures,
+          })),
+          postCapture: report.postCapture,
+        }) + "\n",
+        { flag: "wx" },
+      );
+      fs.linkSync(dest + ".partial", dest);
+      fs.unlinkSync(dest + ".partial");
+    }
     const references = argv.includes("--candidates")
       ? compactCandidateReferences(result.records, Boolean(publicationTrials.length))
       : { candidates: [], worlds: [] };

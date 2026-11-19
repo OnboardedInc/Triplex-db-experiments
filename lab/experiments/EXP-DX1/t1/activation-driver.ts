@@ -25,7 +25,13 @@ const programSha256 = createHash("sha256")
   .digest("hex");
 const started = process.hrtime.bigint();
 try {
-  const result = await runReplicaDriver(process.argv.slice(2));
+  let args = process.argv.slice(2);
+  // [DX-ACT1] Why: the read-only mounted checkout transports this stage's explicit experiment options into the existing managed stack. Rejected: forwarding arbitrary shell arguments or changing the frozen driver defaults.
+  if (/^tx2-dxt1-bm1-act[a-z0-9]{9}-activation-a$/.test(run!)) {
+    const { benchArguments } = await import("../act1/bench-proof.ts");
+    args = benchArguments(args, run!, source!, nonce!);
+  }
+  const result = await runReplicaDriver(args);
   console.log(
     JSON.stringify({
       schema: "triplex.activation-envelope/1",

@@ -5,7 +5,7 @@ set -euo pipefail
 
 mode=${1:---plan}
 if [[ $mode == --plan ]]; then
-  printf '%s\n' 'After the driver comparison releases the native bench: prepare, prove 1k W0, clone and reverify the retained 100k seed, run one v3 pair.'
+  printf '%s\n' 'Prepare, run three guarded 100k activations with 256 live readers, then one full new-sender v3 pair on six reader cores.'
   printf '%s\n' 'Run as root from the named pushed checkout: queue-day.sh --launch BATCH UTC_CUTOFF'
   exit
 fi
@@ -36,6 +36,26 @@ status() {
   chmod 0644 "$temporary"
   mv -T "$temporary" "$root/STATUS"
 }
+release_bench() {
+  local temporary running kind item remaining slots tag child
+  running=$(timeout 15s docker ps -q) || return 1
+  [[ -z $running && ! -e $day/active-item && ! -e $work/state/locks/measure ]] || return 1
+  for item in guarded pair; do
+    for kind in containers networks volumes; do
+      remaining=$(owned_resources "$item" "$kind") || return 1
+      [[ -z $remaining ]] || return 1
+    done
+  done
+  slots=$(owned_tags guarded) || return 1
+  for tag in $slots; do
+    child=${tag#tx2-dxt1-bm1-}; child=${child%-activation-a}
+    [[ ! -e $root/day-$child/checkout/state/locks/measure ]] || return 1
+  done
+  temporary=$(mktemp "$root/.STATUS.XXXXXX")
+  printf 'FREE %s\n' "$(stamp)" > "$temporary"
+  chmod 0644 "$temporary"
+  mv -T "$temporary" "$root/STATUS"
+}
 use_checkout() {
   export PATH="$work/tools/bin:$PATH" DOCKER_CONFIG=$work/docker-config
   export DX_BARE_METAL=1 DX_BARE_METAL_ROOT=$work/state
@@ -50,6 +70,16 @@ use_checkout() {
 owned_tags() {
   case $1 in
     setup) return 0 ;;
+    guarded)
+      python3 - "$day/guarded" "$runner_source" <<'GUARDED_SLOTS'
+import json,pathlib,re,sys
+for file in sorted(pathlib.Path(sys.argv[1]).glob('*-request.json')):
+    r=json.loads(file.read_bytes())
+    assert r['arm'] in ('narrow-full','narrow-selector','standard-full') and file.name==r['arm']+'-request.json'
+    assert re.fullmatch(r'tx2-dxt1-bm1-act[a-f0-9]{9}-activation-a',r['slot']) and r['source']==sys.argv[2]
+    print(r['slot'])
+GUARDED_SLOTS
+      ;;
     smoke|activation-a|activation-b) printf '%s\n' "$prefix-$1" ;;
     pair) printf '%s\n' "$prefix-pair-"off-before "$prefix-pair-"zero "$prefix-pair-"ladder "$prefix-pair-"off-after ;;
     *) return 2 ;;
@@ -80,6 +110,25 @@ cleanup_item() {
   mkdir -p "$cleanup"
   exec >> "$cleanup/cleanup.log" 2>&1
   printf '%s stop attempt=%s result=%s code=%s status=%s\n' "$(stamp)" "$attempt" "${SERVICE_RESULT:-manual}" "${EXIT_CODE:-}" "${EXIT_STATUS:-}"
+  if [[ $item == guarded ]]; then
+    local slot child_batch child_day
+    names=$(owned_tags guarded)
+    for slot in $names; do
+      child_batch=${slot#tx2-dxt1-bm1-}; child_batch=${child_batch%-activation-a}
+      child_day=$root/day-$child_batch
+      if [[ -d $child_day/logs && ! -f $child_day/logs/activation-a-cleanup/result ]]; then
+        timeout 155s systemctl stop "triplex-bm1-$child_batch-activation-a" || {
+          local state
+          state=$(systemctl show "triplex-bm1-$child_batch-activation-a" -p ActiveState --value)
+          [[ $state == inactive || $state == failed ]]
+        }
+        if [[ ! -f $child_day/logs/activation-a-cleanup/result ]]; then
+          /bin/bash "$runner/queue-day.sh" --cleanup "$child_batch" "$stop" activation-a retry
+        fi
+      fi
+      [[ ! -e $child_day/checkout/state/locks/measure ]]
+    done
+  fi
   # Capture before force removal. This only runs after systemd has signalled the whole stage cgroup.
   owned_resources "$item" containers > "$cleanup/containers-$attempt.txt"
   while read -r id name; do
@@ -176,7 +225,7 @@ reconcile_controller() {
       retry_cleanup "$item" || { status "$item" teardown-failed collect; return 1; }
     fi
     rm -- "$day/active-item"
-    status "$item" controller-interrupted collect
+    release_bench || { status "$item" teardown-failed inspect; return 1; }
   fi
 }
 
@@ -218,8 +267,10 @@ run_item() {
     activation-a|activation-b)
       export DX_ACTIVATION_RETAINED_RUN=$root/queue-20261118r/scale/state/evidence/DX-T1/tx2-dxt1-bm1-20261118d-activation
       DX_ACTIVATION_STOP_AT=$item_stop bash "$t1/activation.sh" --execute "$prefix-$item" 100000 retained live ;;
+    guarded)
+      DX_BM1_GUARDED_BATCH=$batch node lab/bin/heavy.mjs --label DX-BM1-guarded -- node --experimental-strip-types lab/experiments/EXP-DX1/act1/bench.ts --execute ;;
     pair)
-      DX_NS_PROFILE=v3 DX_STUDY_LEVEL=summary bash "$t1/study.sh" "$prefix-pair" --idle-keep none ;;
+      DX_NS_PROFILE=v3 DX_STUDY_LEVEL=summary bash "$t1/study.sh" "$prefix-pair" --idle-keep none --receipt-capture replica-worker --expected-state-retention worker-journal ;;
     *) exit 2 ;;
   esac
 }
@@ -251,7 +302,7 @@ flock -n 9 || exit 75
 mkdir "$day" "$logs"
 exec >> "$logs/queue.log" 2>&1
 final=failed
-trap 'status queue "$final" collect' EXIT
+trap 'if [[ -e $day/active-item ]]; then status queue "$final" reconcile; else release_bench || status queue "$final" inspect; fi' EXIT
 trap 'exit 143' TERM INT
 status queue preflight setup
 systemctl show triplex-drv1-wait -p ActiveState -p Result -p ExecMainStatus > "$logs/comparison-terminal.txt"
@@ -320,6 +371,13 @@ run_stage() {
     done
   elif [[ $item == setup ]]; then
     seal_run "$prefix-$item" "$work/results" "$item" "$logs/$item-cleanup/"* || archive_failed=1
+  elif [[ $item == guarded ]]; then
+    local child_batch
+    for tag in $(owned_tags guarded); do
+      child_batch=${tag#tx2-dxt1-bm1-}; child_batch=${child_batch%-activation-a}
+      seal_run "$tag" "$root/day-$child_batch/checkout/state/evidence/DX-T1/$tag" "$item" || archive_failed=1
+    done
+    seal_run "$prefix-guarded" "$day/guarded" "$item" "$logs/$item-cleanup/"* || archive_failed=1
   else
     tag=$prefix-$item
     seal_run "$tag" "$evidence/$tag" "$item" "$logs/$item-cleanup/"* || archive_failed=1
@@ -328,26 +386,11 @@ run_stage() {
 }
 
 archive_failed=0
-if run_stage setup smoke 2100 150; then
-  smoke_rc=0
-  run_stage smoke activation-a 1500 600 || smoke_rc=$?
-  activation_rc=$smoke_rc
-  if ((smoke_rc == 0)); then
-    # Reserve the two frozen 5,910-second arms and bookends. An earlier activation failure can retry inside the same two hours.
-    activation_started=$(date +%s)
-    activation_limit=$((activation_started + 7200))
-    pair_reserve=15300
-    next_stop=$((cutoff - pair_reserve))
-    if ((activation_limit > next_stop)); then activation_limit=$next_stop; fi
-    activation_rc=0
-    run_stage activation-a pair "$((activation_limit - $(date +%s)))" 1500 || activation_rc=$?
-    if ((activation_rc != 0 && activation_rc != 76 && activation_limit - $(date +%s) >= 1800)); then
-      activation_rc=0
-      run_stage activation-b pair "$((activation_limit - $(date +%s)))" 1800 || activation_rc=$?
-    fi
-  fi
+if run_stage setup guarded 2100 150; then
+  activation_rc=0
+  run_stage guarded pair 10800 600 || activation_rc=$?
   pair_rc=0
-  run_stage pair collect 17400 12600 || pair_rc=$?
+  run_stage pair collect 18000 12600 || pair_rc=$?
   printf '%s\n' "$activation_rc" > "$logs/activation-final.exit"
   printf '%s\n' "$pair_rc" > "$logs/pair-final.exit"
   final=finished
