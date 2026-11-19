@@ -1,11 +1,12 @@
 # Integrated account evidence
 
-The manifest paths are relative to the durable `evidence/DX-THIN1/int1` directory. Run `shasum -a 256 -c SHA256SUMS` there with the manifest from this branch.
+The manifest paths are relative to the durable `evidence/DX-THIN1/int1` directory. Linked oracle source directories are recorded in `checks/oracle-sources/index.json`, with one durable Git archive per source tree. The manifest covers regular evidence files without traversing these links or hashing SQLite shared-memory locks. Run `shasum -a 256 -c SHA256SUMS` there with the manifest from this branch.
 
 | Directory or files | What to inspect |
 | --- | --- |
 | `proof-b`, `proof-c` | Fresh native thin and deep scopes, full metadata from original command receipts, independent Python replay, release evaluations, durable page readbacks and 23 publication schedules. The second proof interposes a genuine write after capture and runs the sender’s independent receipt worker and the ordinary deep activation. |
 | `idle-c`, `thin-c` | Two-slot SQL stack. Compare one and eight idle scopes. For the wide case compare the same 1,000 already-read people before and after adding 98,000 untouched people. Check the second 1% on its first real reads after import. |
+| `proof-h` | Final small native proof with both ordinary full-world checks, a tenant at ordinal 254 crossing a page boundary, a same-page neighbor, and eight real accounts in both placements. Each account has its own seed, catalog, membership and release receipts. |
 | `idle-h`, `deep-h` | One ordinary exclusive slot with two independent gateway JVMs. Eight idle scopes and 10,000 deep people were measured separately. The 9,800 new cold people were counted in the ledger at both measured reader watermarks. |
 | `moving-*.json` | Guest process memory over two traversals of 48,000 distinct eight-fact subjects at a fixed receipt. Pair A kept a synthetic microtask chain alive. Pairs B and C yield to the event loop before GC so discarded weak references can be collected. Pair C also binds the executed binaries, sources, guest boot and attempt. |
 | `thin-b`, `deep-c`, `checks` | First failed observation and first failed dense import, package and focused test logs, frozen input and source-tree checks, controller validation and manager release records. |
