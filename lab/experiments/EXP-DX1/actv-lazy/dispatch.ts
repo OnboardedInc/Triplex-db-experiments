@@ -11,6 +11,7 @@ import {
   pendingRoot,
   progress,
   type Format,
+  type Proposal,
 } from "./decision.ts";
 import { Projection, type Plan } from "./projection.ts";
 import { Conflict, value, type Store } from "./store.ts";
@@ -18,8 +19,8 @@ import { Conflict, value, type Store } from "./store.ts";
 export class Dispatcher {
   private projection: Projection;
   private active?: Plan;
+  private work: Promise<void> = Promise.resolve();
   private lastClosed?: Pick<Plan, "event" | "id" | "digest">;
-  private checkedCursor?: string;
   readonly store: Store;
   readonly format: Format;
   readonly pageSize: number;
@@ -89,29 +90,30 @@ export class Dispatcher {
     }
     check(this.lastClosed);
   }
-  async step(hook?: (where: "before-commit" | "after-commit", command: string) => Promise<void>) {
+  step(
+    hook?: (where: "before-commit" | "after-commit", command: string) => Promise<void>,
+    claim?: { proposal: Proposal; atFence?: () => Promise<void> },
+  ) {
+    const result = this.work.then(() => this.stepAtHead(hook, claim));
+    this.work = result.then(
+      () => {},
+      () => {},
+    );
+    return result;
+  }
+  private async stepAtHead(
+    hook?: (where: "before-commit" | "after-commit", command: string) => Promise<void>,
+    claim?: { proposal: Proposal; atFence?: () => Promise<void> },
+  ) {
     for (;;) {
       const s = this.store,
         p = await s.head(),
-        c = await s.controls(p),
+        q = claim?.proposal;
+      if (q && (p !== q.basis.tx || s.scope !== q.scope || this.format !== q.format)) return;
+      const c = await s.controls(p),
         cur = progress(c),
         plan = await this.plan(cur, p);
-      if (c.cursor && this.checkedCursor !== c.cursor.id) {
-        const t = (await s.comp.feedPage(c.cursor.position - 1, 1)).transactions[0];
-        assert(
-          t?.actor === "lazy/event" &&
-            t.position === c.cursor.position &&
-            t.changes.some(
-              (x: any) =>
-                x.op === "assert" &&
-                x.tripleId === c.cursor!.id &&
-                x.value.value === canonical(cur),
-            ),
-          "Unbound dispatcher cursor receipt",
-        );
-        assert.deepEqual(JSON.parse(t.correlationId).context.next, cur);
-        this.checkedCursor = c.cursor.id;
-      }
+      if (c.cursor) assert(await s.cursorReceipt(c.cursor), "Unbound dispatcher cursor receipt");
       if (!plan) {
         assert(!cur.open && cur.done >= c.input, "Unclosed source prefix");
         return;
@@ -128,6 +130,18 @@ export class Dispatcher {
       assert(sl && first <= end && (!first || cur.open.last === sl.subjects[first - 1]));
       const ids = sl.subjects.slice(first, end),
         b = { tx: sl.cut, validTime: sl.at };
+      if (
+        q &&
+        (cur.open ||
+          plan.event !== p ||
+          plan.slices.length !== 1 ||
+          sl.cut !== p ||
+          sl.at !== q.basis.validTime ||
+          c.at !== sl.at ||
+          sl.subjects.length !== 1 ||
+          ids[0] !== q.subject)
+      )
+        return;
       const historical = await s.controls(sl.cut),
         ops: any[] = [],
         deliveries: W0.Delivery[] = [];
@@ -138,6 +152,7 @@ export class Dispatcher {
         if (c.masks.some((r) => r.position > sl.cut))
           throw Error("UnrecoverableProtectedEvent: unpaid transition predates erasure");
         const x = evaluate(s, this.format, worlds[i]!, b, historical, c);
+        if (q) assert.equal(x.witness, q.witness, "Untrusted ordinary event claim");
         if (W0.isFailure(x.output)) throw Error("Unresolved W0 candidate: " + x.output.error);
         if (x.output.workItems.some((w) => w.rule === "EVSUB"))
           throw Error("ProtectedSubscriberNeedsRuling");
@@ -165,7 +180,8 @@ export class Dispatcher {
               },
             }
           : { done: plan.event, eventId: plan.id, digest: plan.digest };
-      const command = ["lazy/event", plan.id, ix, first].join("/");
+      if (q && !changedSubjects.length) return;
+      const command = q ? "lazy/live/" + q.witness : ["lazy/event", plan.id, ix, first].join("/");
       const context = {
         event: plan.event,
         eventId: plan.id,
@@ -179,6 +195,7 @@ export class Dispatcher {
         keys: sha256(canonical(ids)),
         prior: sha256(canonical(cur)),
         next,
+        ...(q ? { ordinary: q } : {}),
       };
       await hook?.("before-commit", command);
       try {
@@ -188,6 +205,7 @@ export class Dispatcher {
           [...ops, ...cursorOps(c, next)],
           p,
           context,
+          claim?.atFence,
         );
         const nextRow = receipt.changes.at(-1);
         assert(
@@ -195,7 +213,6 @@ export class Dispatcher {
             nextRow.entityId === "lazy/account/dispatcher" &&
             nextRow.value.value === canonical(next),
         );
-        this.checkedCursor = nextRow.tripleId;
         await hook?.("after-commit", command);
         return {
           event: plan.event,

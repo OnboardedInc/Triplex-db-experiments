@@ -270,6 +270,39 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     }
   }
   let verifiedEffects = 0;
+  let verifiedCursor: string | undefined;
+  async function cursorReceipt(row: WorldRow | undefined) {
+    if (!row) return false;
+    if (row.id === verifiedCursor) return true;
+    const cur = value(row),
+      t = (await comp.feedPage(row.position - 1, 1)).transactions[0];
+    if (
+      t?.actor !== "lazy/event" ||
+      t.position !== row.position ||
+      !t.changes.some(
+        (c: any) =>
+          c.op === "assert" &&
+          c.tripleId === row.id &&
+          c.entityId === CURSOR &&
+          c.value.value === canonical(cur),
+      ) ||
+      canonical(JSON.parse(t.correlationId).context.next) !== canonical(cur)
+    )
+      return false;
+    if (cur.done) {
+      const original = (await comp.feedPage(cur.done - 1, 1)).transactions[0];
+      if (
+        original?.actor !== "lazy/input" ||
+        original.position !== cur.done ||
+        original.txId !== cur.eventId ||
+        typeof cur.digest !== "string" ||
+        !/^[a-f0-9]{64}$/.test(cur.digest)
+      )
+        return false;
+    }
+    verifiedCursor = row.id;
+    return true;
+  }
   async function effectsClear(cursorPosition: number, p: number) {
     let at = Math.max(cursorPosition, Math.min(p, verifiedEffects));
     while (at < p) {
@@ -293,6 +326,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     profile,
     counters,
     effectsClear,
+    cursorReceipt,
     comp,
     rows,
     lookup,

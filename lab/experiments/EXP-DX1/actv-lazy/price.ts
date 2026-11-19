@@ -1,3 +1,4 @@
+import { parseOutbox } from "../../../bench/lib/w0-outbox-state.ts";
 import { bytes as wireBytes } from "../import1/source.ts";
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
@@ -336,6 +337,17 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
           deltas: W0.Delivery[] = [];
         let cursorWrites = 0,
           changed = 0;
+        const q = await propose(s, format, subject),
+          decision = await admitLive(s, format, q, undefined, d);
+        assert(decision.status === "accepted" || decision.status === "deferred");
+        if (decision.status === "accepted") {
+          cursorWrites++;
+          for (const row of decision.receipt.changes)
+            if (row.op === "assert") {
+              if (row.attribute === "lazy/items") changed++;
+              if (row.attribute === "lazy/delivery") deltas.push(parseOutbox(row.value.value));
+            }
+        }
         await d.drain((r) => {
           cursorWrites++;
           changed += r.changedSubjects.length;
@@ -379,6 +391,7 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
           changed,
           delivered,
           cursorWrites,
+          ordinaryAdmission: decision.status,
           saveMs: saved - start,
           reconcileMs: published - saved,
           receiverMs: end - published,

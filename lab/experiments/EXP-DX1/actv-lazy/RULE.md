@@ -12,6 +12,8 @@ Capture the authoritative position and the requested valid instant at read start
 
 Ordinary proposals name a scope, generation-bound computation, subject, source position and authorized live business instant. The service assigns the instant. A worker may present a proposal for validation but cannot supply replacement work items. Recompute from the authoritative world and compare the full witness. Verify enrollment, previous item state and the absence of an earlier unclosed source event. Compare the original position again against the native transactor’s actual predecessor in the same commit as the item and pending changes. This conservative comparison also retries on unrelated same-account writes.
 
+The account consumer can accept an ordinary worker’s own current single-person source event. It verifies the ordered event identity and binds the original witness, items, pending keys and cursor in the same transaction. Earlier debt, a partial range or a multi-person event stays with the dispatcher. A closed cursor must trace back to its native publication and source receipt.
+
 An ordinary no-change reconciliation has a read response and zero subject writes. It has no durable per-call receipt. A changed command can recover its original receipt after restart. W0 C82 exposes a subject guard after a no-op and C123 accepts different supplied records at equal clocks. Those pure operations retain their existing behavior. A live application cannot mint two different genuine decisions over identical inputs. [W0 sections 8.8–8.9](../../../world/W0/SPEC.md)
 
 ## Pushed work

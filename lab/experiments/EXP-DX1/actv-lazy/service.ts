@@ -1,7 +1,7 @@
 import { Dispatcher, Receiver } from "./dispatch.ts";
 import { millis, type Event, type Store } from "./store.ts";
 import type { W0 } from "../../../bench/lib/w0-world.ts";
-import type { Format } from "./decision.ts";
+import { admitLive, propose, type Format } from "./decision.ts";
 
 // [DX-ACT1] Why: the native feed is the durable work queue. A release wake costs no subject visit, and only a real future boundary arms a timer. Rejected: polling every idle account or making publication wait for recipients.
 export class NoticeService {
@@ -51,6 +51,12 @@ export class NoticeService {
   }
   save(id: string, ops: readonly any[]) {
     return this.submit(id, (at) => ({ kind: "source", at }), ops);
+  }
+  async reconcile(subject: string) {
+    const q = await propose(this.store, this.worker.format, subject);
+    const r = await admitLive(this.store, this.worker.format, q, undefined, this.worker);
+    if (r.status === "accepted" || r.status === "deferred") this.wake();
+    return r;
   }
   wake() {
     if (this.closed || this.failure) return;

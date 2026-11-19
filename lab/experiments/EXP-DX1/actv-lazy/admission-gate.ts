@@ -6,6 +6,8 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { W0, canonical, triplexValue, sha256 } from "../../../bench/lib/w0-world.ts";
 import { activation, fact, millis, openStore } from "./store.ts";
+import { rosterSeal } from "./read.ts";
+import { Dispatcher } from "./dispatch.ts";
 import { calculate, admitLive, cursorOps, itemRoot, pendingRoot, propose } from "./decision.ts";
 const dir = process.argv[2]!,
   id = randomUUID(),
@@ -29,10 +31,22 @@ const add = (
 const results = [];
 for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
   const name = "lazy-" + id + "-" + schedule;
-  let s = await openStore(name);
+  let s = await openStore(name),
+    worker = new Dispatcher(s);
+  const reopen = async () => {
+    worker.close();
+    await s.close();
+    s = await openStore(name);
+    worker = new Dispatcher(s);
+  };
   try {
+    const closeInput = () => worker.drain();
+    await s.input("empty-roster", { kind: "baseline", at: earlier }, [
+      fact("members/seal", "lazy/roster-seal", rosterSeal([])),
+    ]);
     const initial = await activation(s, "activation-1", W0.R1, earlier);
     assert.equal(initial.changes.length, 1);
+    await closeInput();
     const base = await s.input("source-10", { kind: "source", at: earlier }, [
       add(subject, "location", "loc:fixture"),
       add("loc:fixture", "jurisdiction", "jur:fixture"),
@@ -40,19 +54,14 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
       add(subject, "payRateCents", schedule === "first" ? 1650 : 1600),
       add(subject, "bgcStatus", "clear"),
       fact("members/page/0", "lazy/members", [subject]),
+      fact("members/seal", "lazy/roster-seal", rosterSeal([subject])),
     ]);
-    const closeInput = async () => {
-      const p = await s.head(),
-        c = await s.controls(p);
-      return s.commit("test/close/" + c.input, "test/baseline", cursorOps(c, { done: c.input }), p);
-    };
-    await closeInput();
+    if (schedule === "first") await closeInput();
     const initialProposal = await propose(s, "w0", subject);
-    const first = await admitLive(s, "w0", initialProposal);
+    const first = await admitLive(s, "w0", initialProposal, undefined, worker);
     if (first.status === "accepted") {
-      await s.close();
-      s = await openStore(name);
-      const retry = await admitLive(s, "w0", initialProposal);
+      await reopen();
+      const retry = await admitLive(s, "w0", initialProposal, undefined, worker);
       assert(retry.status === "accepted");
       assert.deepEqual(retry.receipt, first.receipt);
     }
@@ -61,14 +70,19 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
       { op: "retract", id: base.changes[3].tripleId },
       add(subject, "payRateCents", 1500, 0, schedule === "time" ? millis(at) : undefined),
     ]);
-    await closeInput();
     const held = await propose(s, "w0", subject);
     if (schedule === "serial") {
       const other = await openStore(name);
       try {
-        const result = await admitLive(s, "w0", held, async () => {
-          await activation(other, "activation-2", W0.R2, at);
-        });
+        const result = await admitLive(
+          s,
+          "w0",
+          held,
+          async () => {
+            await activation(other, "activation-2", W0.R2, at);
+          },
+          worker,
+        );
         assert.equal(result.status, "stale");
       } finally {
         await other.close();
@@ -101,12 +115,15 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
         ),
       ]);
     }
+    assert.equal(
+      (await admitLive(s, "w0", await propose(s, "w0", subject), undefined, worker)).status,
+      "deferred",
+    );
     await closeInput();
     const fresh = await propose(s, "w0", subject);
     const live = await admitLive(s, "w0", fresh);
     const before = await s.head();
-    await s.close();
-    s = await openStore(name);
+    await reopen();
     assert.equal((await activation(s, "activation-1", W0.R1, earlier)).txId, initial.txId);
     assert.equal((await admitLive(s, "w0", held)).status, "stale");
     if (schedule === "time") {
@@ -144,7 +161,24 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
     const oracle = new DomainOracle();
     let expected: any = { subjects: [], items: [], pending: [] };
     try {
-      for (const q of [initialProposal, fresh]) {
+      const events: { basis: { tx: number; validTime: string } }[] = [];
+      let cursor = 0,
+        previousAt = earlier;
+      while (cursor < before) {
+        const page = await s.comp.feedPage(cursor, 16);
+        assert(page.transactions.length);
+        for (const r of page.transactions) {
+          if (r.position > before) break;
+          assert.equal(r.position, ++cursor);
+          if (r.actor !== "lazy/input" || r.position < base.position) continue;
+          const time = JSON.parse(r.correlationId).context.event.at;
+          if (schedule === "time" && previousAt < at && time >= at)
+            events.push({ basis: { tx: r.position - 1, validTime: at } });
+          events.push({ basis: { tx: r.position, validTime: time } });
+          previousAt = time;
+        }
+      }
+      for (const q of events) {
         const source = new Map<string, any>(),
           activations = [];
         let cursor = 0;
@@ -211,6 +245,15 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
       });
       assert(raw.ok);
       assert.equal((await admitLive(s, "w0", await propose(s, "w0", subject))).status, "deferred");
+      const pos = await s.head(),
+        controls = await s.controls(pos);
+      await s.commit(
+        "unbound-cursor",
+        "unclassified",
+        cursorOps(controls, { done: controls.input }),
+        pos,
+      );
+      assert.equal((await admitLive(s, "w0", await propose(s, "w0", subject))).status, "deferred");
     }
     results.push({
       schedule,
@@ -225,6 +268,7 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
       items: sha256(canonical(stored)),
     });
   } finally {
+    worker.close();
     await s.close();
   }
 }
