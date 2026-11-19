@@ -5,13 +5,23 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { capacity } from "./bench.ts";
+import { capacity, sameCampaignInputs } from "./bench.ts";
 import { dedicatedHost } from "./source.ts";
 import { cohort, type ScopeMeasurement } from "./measurements.ts";
 import { requireIdentity, DeepSeedWitness } from "../../../bench/lib/deep-profile.ts";
 import { deepOwnFacts } from "../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { randomUUID } from "node:crypto";
+
+test("an independent publisher change cannot admit a changed guarded-arm dependency", () => {
+  const ref = "exp/DX-ACT1-activation",
+    lazy = "lab/experiments/EXP-DX1/actv-lazy/dispatch-gate.ts",
+    guard = "lab/experiments/EXP-DX1/act2/preflight.ts";
+  assert(sameCampaignInputs(ref, [lazy]));
+  assert(!sameCampaignInputs(ref, [lazy], "lazy"));
+  assert(!sameCampaignInputs("exp/DX-BM1-bare-metal", [lazy]));
+  assert(!sameCampaignInputs(ref, [lazy, guard]));
+});
 
 // [DX-SCALE1] Why: one independently pipelined database does not reserve a second shared engine heap. Rejected: allowing live traffic on a seed-only grant, or treating installed disk capacity as available space.
 test("resource arithmetic reserves separate drivers, shared engines once and bounded parallel seed waves", () => {

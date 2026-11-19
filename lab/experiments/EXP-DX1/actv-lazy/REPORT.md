@@ -36,7 +36,7 @@ The pilot covers the stock W0 releases. Protected E-Verify submission is exclude
 - `Projection.advance/Dispatcher.step` verify contiguous native source, original command bytes, sealed roster, ordered event and range, prior cursor and native commit. `Receiver.send/drain` verify generation, pending content, per-person order, original applied bytes and native acknowledgement.
 - `negative/projection/admission/read/dispatch/dependency/boundary/service/crash/pressure` use fresh fixtures. Their checks cover an independent 180-world index grid, three historical failures, delayed decisions, real races and restarts, changed dependency edges, native cursor binding, unpaid effects and the receiver.
 - `seed/price/local` bind the observed native population and roster to a fresh scope, source and built-module hashes, owner, slot, volume and image. Python checks every output, item delta and ordered delivery. Pricing checks the exact marker, zero roster visits, every normal reconcile and the final receiver database.
-- Durable raw evidence is under `evidence/DX-ACT1/actv-lazy/`. The first paired runs are `rung1000-b` and `rung10000-b`. Both native volumes were removed. The public changes leave the acceptance contract, v3 trace and W0 files unchanged.
+- Durable raw evidence is under `evidence/DX-ACT1/actv-lazy/`. The first paired runs are `rung1000-b` and `rung10000-b`. Both native volumes were removed. No acceptance pin moved. [Evidence checksums](SHA256SUMS)
 
 ### Dedicated bench
 

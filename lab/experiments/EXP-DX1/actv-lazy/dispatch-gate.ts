@@ -84,9 +84,22 @@ try {
   assert(original);
   await reopen();
   assert.deepEqual(await store.lookup(lostCommand), original);
-  const contender=new Dispatcher(store,"w0",1),go=Promise.withResolvers<void>();let arrived=0;
-  const barrier=async(z:string)=>{if(z==="before-commit"){if(++arrived===2)go.resolve();await go.promise;}};
-  try{const [a,b]=await Promise.all([consumer.step(barrier),contender.step(barrier)]);assert(a&&b&&a.receipt.txId===b.receipt.txId);assert(a.changedSubjects.length>0);}finally{contender.close();}
+  const contender = new Dispatcher(store, "w0", 1),
+    go = Promise.withResolvers<void>();
+  let arrived = 0;
+  const barrier = async (z: string) => {
+    if (z === "before-commit") {
+      if (++arrived === 2) go.resolve();
+      await go.promise;
+    }
+  };
+  try {
+    const [a, b] = await Promise.all([consumer.step(barrier), contender.step(barrier)]);
+    assert(a && b && a.receipt.txId === b.receipt.txId);
+    assert(a.changedSubjects.length > 0);
+  } finally {
+    contender.close();
+  }
   await consumer.drain((r) =>
     events.push({
       id: r.id,
@@ -152,9 +165,12 @@ try {
   const rxFile = join(dir, "recipient.sqlite");
   let rx = new Receiver(rxFile, scope, seed.txId);
   try {
-    const firstDelivery=before.get(one)![0]!;
-    const cross=(await store.rows([pendingRoot(one)],p)).find(row=>parseOutbox(row.value.value).id!==firstDelivery.id)!;
-    assert(cross);await assert.rejects(rx.send(store,one,cross.id),/Earlier unacknowledged/);
+    const firstDelivery = before.get(one)![0]!;
+    const cross = (await store.rows([pendingRoot(one)], p)).find(
+      (row) => parseOutbox(row.value.value).id !== firstDelivery.id,
+    )!;
+    assert(cross);
+    await assert.rejects(rx.send(store, one, cross.id), /Earlier unacknowledged/);
     const later = (await store.rows([pendingRoot(one)], p)).find(
       (r) => parseOutbox(r.value.value).seq === 2n,
     )!;
