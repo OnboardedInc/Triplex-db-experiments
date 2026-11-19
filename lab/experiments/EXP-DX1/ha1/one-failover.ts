@@ -50,7 +50,44 @@ export async function oneFailover(s: Stack, people: number) {
       try {
         const loadStart = clock();
         await sleep(1600);
-        const fault = await s.kill(active);
+        let atFault = before;
+        const fault = await s.kill(active, async () => {
+          atFault = await state(ac);
+        });
+        const cacheProbe = (async () => {
+          const input = ac.inputs[Math.min(population.people - 1, 1 + j)]!,
+            point = ac.receipts.get(input.operationId)!;
+          const id = input.rows[0]!.entity_id,
+            basis = { validAt: 10, recordedPosition: Number(point.position.v) };
+          const counters = () =>
+            ac.r
+              .request<{ entityCache: unknown; idMemo: unknown }>("GET", "/v2/admin/scan-stats")
+              .then((v) => ({ entityCache: v.entityCache, idMemo: v.idMemo }));
+          const prior = await counters(),
+            timings = [];
+          for (const warmth of ["first access", "repeat"]) {
+            const t = clock(),
+              v = await ac.r.reachEntities(ac.db, [id], basis);
+            if (v) {
+              const rows = v.entities.get(id)!.storedRows;
+              const sorted = (a: typeof rows) => [...a].sort((x, y) => x.id.localeCompare(y.id));
+              assert.deepEqual(
+                sorted(rows),
+                sorted(
+                  input.rows.map((r) => ({ ...r, recorded_position: basis.recordedPosition })),
+                ),
+              );
+            } else await ac.pinned(point);
+            timings.push({
+              warmth,
+              ms: clock() - t,
+              path: v ? "reach" : "pinned rows",
+              facts: input.rows.length,
+            });
+          }
+          return { prior, after: await counters(), timings };
+        })();
+        cacheProbe.catch(() => {});
         offering = false;
         const observeBroker = until("elected peer endpoint", async () =>
           (await s.broker(other)) ? clock() : undefined,
@@ -95,8 +132,20 @@ export async function oneFailover(s: Stack, people: number) {
         const preAcks = [...ac.arrivals.values()].filter(
           (t) => t >= loadStart && t <= fault.from,
         ).length;
+        const indexAtFault = atFault.indexBasis;
+        const unindexedInputs =
+          indexAtFault === null
+            ? null
+            : ac.inputs.filter((i) => {
+                const t = BigInt(ac.receipts.get(i.operationId)!.t.v);
+                return t > BigInt(indexAtFault) && t <= BigInt(atFault.basis);
+              });
         const row = {
           cell,
+          atFault,
+          unindexedFacts: unindexedInputs?.reduce((n, i) => n + i.newIds.length, 0),
+          unindexedCommands: unindexedInputs?.length,
+          cache: await cacheProbe,
           ordinaryAcksPerSecond: (preAcks * 1000) / (fault.from - loadStart),
           before,
           index,

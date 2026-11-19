@@ -6,7 +6,14 @@ import {
   errorCode,
   immutable,
 } from "../../../../packages/datomic/test/ha1-account.ts";
-import { healthyBroker, populate, receipts, verifySuffix, requestIndex } from "./one-db.ts";
+import {
+  healthyBroker,
+  populate,
+  receipts,
+  verifySuffix,
+  requestIndex,
+  pinnedLoop,
+} from "./one-db.ts";
 import { conninfo, drop, latency, replicationRole, traffic } from "./one-backup.ts";
 import { ackProxy } from "./ack-proxy.ts";
 import type { Stack } from "./stack.ts";
@@ -138,92 +145,136 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
       p.close();
       client.close();
     }
+    // [DX-HA1] Why: deploy the destination peer while business traffic pays for the live copy. Rejected: launching a cold gateway after fencing or polling it with synthetic transactions.
+    await s.gateway("read", s.b, "target", "moving");
+    const destination = await s.ready("read");
+    let monitor: ReturnType<typeof pinnedLoop> | undefined;
+    if (!measureSync) monitor = pinnedLoop(ac, old);
     const frozen = clock();
-    await s.sql("pg", "ALTER ROLE moving NOLOGIN");
-    await s.sql(
-      "pg",
-      "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename='moving'",
-    );
-    assert.equal(
-      await s.sql("pg", "SELECT count(*) FROM pg_stat_activity WHERE usename='moving'"),
-      "0",
-    );
-    const lsn = await s.sql("pg", "SELECT pg_current_wal_flush_lsn()");
-    assert.match(lsn, /^[0-9A-F]+\/[0-9A-F]+$/);
-    await until(
-      "durable on target",
-      async () =>
-        (await s.sql(
+    try {
+      if (measureSync) await s.sql("pg", "ALTER ROLE moving NOLOGIN");
+      else {
+        await s.sql(
           "pg",
-          "SELECT flush_lsn >= '" +
-            lsn +
-            "' AND sync_state='sync' FROM pg_stat_replication WHERE application_name='ha1standby'",
-        )) === "t" || undefined,
-    );
-    const durable = clock();
-    await s.kill("pg");
-    await s.remove("pg");
-    await s.remove("write");
-    await s.remove("active");
-    const fenced = clock();
-    assert.equal(await s.sql("target", "SELECT pg_promote(true,60)"), "t");
-    assert.equal(
-      await s.sql(
-        "target",
-        "SELECT NOT pg_is_in_recovery() AND pg_last_wal_replay_lsn() >= '" + lsn + "'",
-      ),
-      "t",
-    );
-    // [DX-HA1] Why: the physical copy inherited NOLOGIN from the old writer fence. Rejected: enabling target writers before old-primary removal and confirmed replay.
-    await s.sql("target", "ALTER ROLE moving LOGIN");
-    const promoted = clock();
-    await s.tx("active", s.b, "target", "moving");
-    await healthyBroker(s, "active");
-    const elected = clock();
-    await s.gateway("write", s.b, "target", "moving");
-    const next = await s.ready("write");
-    ac.changeEndpoint(next, next);
-    const gateway = clock();
-    assert.deepEqual(await ac.send(pending), original);
-    await ac.pinned(old);
-    const fresh = await ac.send(ac.intent("new-site"));
-    const end = clock();
-    await receipts(ac);
-    const feed = await verifySuffix(ac, cursor, [pending, ac.inputs.at(-1)!]);
-    await ac.pinned(fresh);
-    const cost = (sync: boolean) => {
-      const selected = blocks.filter((b) => b.sync === sync);
-      return selected.length
-        ? {
-            ...latency(selected.flatMap((b) => b.ms)),
-            blockP99: selected.map((b) => latency(b.ms).p99),
-          }
-        : null;
-    };
-    const result = {
-      population,
-      copyMs,
-      concurrentCopyWrites: live.samples.length,
-      cluster,
-      lsn,
-      pauseMs: end - frozen,
-      catchupMs: durable - frozen,
-      oldRoleRemovalMs: fenced - durable,
-      promotionMs: promoted - fenced,
-      txRecoveryMs: elected - promoted,
-      gatewayMs: gateway - elected,
-      clientMs: end - gateway,
-      validatedBeforeCut: ac.inputs.length - 3,
-      finalGateChecks: 2,
-      original,
-      fresh,
-      feed,
-      localFlush: cost(false),
-      synchronous: cost(true),
-      auditedReceipts: ac.receipts.size,
-    };
-    s.e.write("whole-database", { nonce: s.e.nonce, result, blocks, copyWrites: live.samples });
-    return result;
+          "REVOKE ALL ON TABLE datomic_kvs FROM moving; GRANT SELECT ON TABLE datomic_kvs TO moving",
+          "moving",
+        );
+        assert.equal(
+          await s.sql(
+            "pg",
+            "SELECT has_table_privilege('moving','datomic_kvs','SELECT') AND NOT (has_table_privilege('moving','datomic_kvs','INSERT') OR has_table_privilege('moving','datomic_kvs','UPDATE') OR has_table_privilege('moving','datomic_kvs','DELETE') OR has_table_privilege('moving','datomic_kvs','TRUNCATE'))",
+            "moving",
+          ),
+          "t",
+        );
+      }
+      if (measureSync)
+        await s.sql(
+          "pg",
+          "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename='moving'",
+        );
+      if (measureSync)
+        assert.equal(
+          await s.sql("pg", "SELECT count(*) FROM pg_stat_activity WHERE usename='moving'"),
+          "0",
+        );
+      const lsn = await s.sql("pg", "SELECT pg_current_wal_flush_lsn()");
+      assert.match(lsn, /^[0-9A-F]+\/[0-9A-F]+$/);
+      await until(
+        "durable on target",
+        async () =>
+          (await s.sql(
+            "pg",
+            "SELECT flush_lsn >= '" +
+              lsn +
+              "' AND sync_state='sync' FROM pg_stat_replication WHERE application_name='ha1standby'",
+          )) === "t" || undefined,
+      );
+      const durable = clock();
+      if (measureSync) {
+        await s.kill("pg");
+        await s.remove("pg");
+        await s.remove("write");
+      }
+      await s.kill("active");
+      const fenced = clock();
+      assert.equal(await s.sql("target", "SELECT pg_promote(true,60)"), "t");
+      assert.equal(
+        await s.sql(
+          "target",
+          "SELECT NOT pg_is_in_recovery() AND pg_last_wal_replay_lsn() >= '" + lsn + "'",
+        ),
+        "t",
+      );
+      // [DX-HA1] Why: the physical copy inherited NOLOGIN from the old writer fence. Rejected: enabling target writers before old-primary removal and confirmed replay.
+      if (measureSync) await s.sql("target", "ALTER ROLE moving LOGIN");
+      else await s.sql("target", "GRANT ALL ON TABLE datomic_kvs TO moving", "moving");
+      const promoted = clock();
+      await s.tx("standby", s.b, "target", "moving");
+      await healthyBroker(s, "standby");
+      const elected = clock();
+      const priorWrite = ac.w,
+        priorRead = ac.r;
+      ac.w = new DatomicClient(destination, 2200);
+      const destRead = new DatomicClient(destination, 2600);
+      await ac.pinned(old, destRead);
+      ac.r = destRead;
+      const gateway = clock();
+      assert.deepEqual(await ac.send(pending), original);
+      await ac.pinned(old);
+      const fresh = await ac.send(ac.intent("new-site"));
+      const end = clock();
+      const polls = monitor ? await monitor.finish() : [];
+      if (monitor) {
+        assert(polls.some((v) => v.code === "ok" && v.end >= frozen && v.start <= end));
+      }
+      priorRead.close();
+      priorWrite.close();
+      if (!measureSync) {
+        await s.remove("pg");
+        await s.remove("write");
+      }
+      await receipts(ac);
+      const feed = await verifySuffix(ac, cursor, [pending, ac.inputs.at(-1)!]);
+      await ac.pinned(fresh);
+      const cost = (sync: boolean) => {
+        const selected = blocks.filter((b) => b.sync === sync);
+        return selected.length
+          ? {
+              ...latency(selected.flatMap((b) => b.ms)),
+              blockP99: selected.map((b) => latency(b.ms).p99),
+            }
+          : null;
+      };
+      const result = {
+        population,
+        copyMs,
+        concurrentCopyWrites: live.samples.length,
+        cluster,
+        lsn,
+        pauseMs: end - frozen,
+        catchupMs: durable - frozen,
+        oldRoleRemovalMs: fenced - durable,
+        promotionMs: promoted - fenced,
+        txRecoveryMs: elected - promoted,
+        gatewayMs: gateway - elected,
+        clientMs: end - gateway,
+        validatedBeforeCut: ac.inputs.length - 3,
+        pinnedPolls: polls.length,
+        pinnedErrors: polls.filter((p) => p.code !== "ok").length,
+        finalGateChecks: 2,
+        original,
+        fresh,
+        feed,
+        localFlush: cost(false),
+        synchronous: cost(true),
+        auditedReceipts: ac.receipts.size,
+      };
+      s.e.write("whole-database", { nonce: s.e.nonce, result, blocks, copyWrites: live.samples });
+      return result;
+    } finally {
+      if (monitor) await monitor.finish();
+    }
   } finally {
     ac.close();
   }

@@ -347,6 +347,12 @@ export class Stack {
       )) === "active"
     );
   }
+  sharedScope(role: "write" | "read") {
+    return JSON.stringify(["triplex-scope-v1", "ha1", this.e.prefix + "-" + role, "shared", 0]);
+  }
+  sharedDb(role: "write" | "read") {
+    return "s2-" + Buffer.from(this.sharedScope(role)).toString("base64url");
+  }
   async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string) {
     const size = site.privateAddress ? "1600" : "320";
     await this.start(
@@ -354,6 +360,14 @@ export class Stack {
       site,
       [
         "-e",
+        ...(this.e.mode === "one-account"
+          ? [
+              "HA1_SHARED_SCOPE=" + this.sharedScope(role),
+              "-e",
+              "HA1_ADMIN_TOKEN=" + this.admin,
+              "-e",
+            ]
+          : []),
         "DATOMIC_URI_TEMPLATE=" + this.uri(pg, store, "{db}", site),
         "-e",
         "GATEWAY_SOURCE_SHA256=" + this.e.source.gateway,
@@ -365,7 +379,11 @@ export class Stack {
       "/opt/datomic/bin/run",
       [
         "-m",
-        this.e.mode.startsWith("one-") ? "triplex.gateway.ha-observer" : "triplex.gateway.main",
+        this.e.mode === "one-account"
+          ? "triplex.gateway.ha-shared"
+          : this.e.mode.startsWith("one-")
+            ? "triplex.gateway.ha-observer"
+            : "triplex.gateway.main",
       ],
       8080,
     );

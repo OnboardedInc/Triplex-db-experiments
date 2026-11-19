@@ -21,12 +21,19 @@ export async function localDrill(opts: any, config: any, manager: any) {
   assert.equal(process.platform, "darwin");
   assert.equal(opts.holder, "DX-HA1");
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
-  assert(["s1", "s2", "s3"].includes(opts.slot));
-  const mode = modeOf(opts.experiment),
-    info = slotInfo(config, "datomic", opts.slot);
+  assert(["auto", "s1", "s2", "s3"].includes(opts.slot));
+  const mode = modeOf(opts.experiment);
+  const slots = (opts.slot === "auto" ? ["s2", "s3", "s1"] : [opts.slot]).map((id) =>
+    slotInfo(config, "datomic", id),
+  );
+  let info = slots[0],
+    e: Evidence;
   const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
-  const e = new Evidence(path.join(folder, "evidence", "DX-HA1"), mode, opts.slot);
-  console.log(e.dir);
+  function declare(slot: string) {
+    const attempt = new Evidence(path.join(folder, "evidence", "DX-HA1"), mode, slot);
+    console.log(attempt.dir);
+    return attempt;
+  }
   // [DX-HA1] Why: each child cap has a matching live reservation and unique name. Rejected: reusing a retained slot volume or double-counting a single opaque stack.
   const wanted = Object.entries(roles).filter(([r]) =>
     mode === "replication"
@@ -44,6 +51,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
     for (;;) {
       const disk = fs.statfsSync(root);
       if (disk.bavail * disk.bsize < 5 * 2 ** 30) {
+        e = declare(opts.slot);
         e.write("admission-refused", {
           nonce: e.nonce,
           freeBytes: disk.bavail * disk.bsize,
@@ -52,15 +60,20 @@ export async function localDrill(opts: any, config: any, manager: any) {
         });
         throw Error("Host disk floor");
       }
-      if (!fs.existsSync(info.lockDir) && !fs.existsSync(parentLease)) {
+      if (slots.some((slot) => !fs.existsSync(slot.lockDir)) && !fs.existsSync(parentLease)) {
         try {
           await withPool((ledger: any) => {
             manager.assertMeasureAdmission(opts.holder);
-            if (fs.existsSync(info.lockDir) || fs.existsSync(parentLease)) return;
+            if (fs.existsSync(parentLease)) return;
             const live = listTx2Containers({ all: true });
-            if (live.some((c: any) => c.name === info.container)) return;
+            const candidate = slots.find(
+              (slot) =>
+                !fs.existsSync(slot.lockDir) && !live.some((c: any) => c.name === slot.container),
+            );
+            if (!candidate) return;
+            info = candidate;
             const req = {
-              container: e.prefix,
+              container: "tx2-ha1-admission",
               memBytes: bytes,
               diskForecastBytes: (mode.startsWith("one-") ? 3 : 1) * 2 ** 30,
             };
@@ -88,13 +101,14 @@ export async function localDrill(opts: any, config: any, manager: any) {
               throw err;
             }
             measured = true;
+            e = declare(info.slot);
             fs.writeFileSync(
               path.join(parentLease, "owner.json"),
               JSON.stringify({
                 id: "DX-HA1",
                 pid: process.pid,
                 nonce: e.nonce,
-                slot: opts.slot,
+                slot: info.slot,
                 at: new Date().toISOString(),
               }),
               { flag: "wx" },
@@ -107,7 +121,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
                 container: e.prefix + "-" + role,
                 holder: opts.holder,
                 lane: "datomic",
-                slot: opts.slot,
+                slot: info.slot,
                 pid: process.pid,
                 state: "drill",
                 memBytes: mb * 2 ** 20,
@@ -138,7 +152,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
       },
     };
     await drill(
-      e,
+      e!,
       site,
       site,
       { people: Number(opts.people ?? 4), scopes: 3, capacity: "local" },
@@ -149,7 +163,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
   } finally {
     if (measured) {
       const f = path.join(parentLease, "owner.json");
-      assert.equal(JSON.parse(fs.readFileSync(f, "utf8")).nonce, e.nonce);
+      assert.equal(JSON.parse(fs.readFileSync(f, "utf8")).nonce, e!.nonce);
       fs.unlinkSync(f);
       fs.rmdirSync(parentLease);
     }

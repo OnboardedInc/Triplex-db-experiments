@@ -4,6 +4,7 @@ import { Stack, type Site } from "./stack.ts";
 import { replication } from "./replication.ts";
 import { move } from "./move.ts";
 import { oneBackup } from "./one-backup.ts";
+import { oneAccount } from "./one-account.ts";
 import { oneWhole } from "./one-whole.ts";
 import { oneFailover } from "./one-failover.ts";
 import { failures } from "./failures.ts";
@@ -35,6 +36,7 @@ export async function drill(
     else if (e.mode === "one-backup") result = await oneBackup(s, profile.people);
     else if (e.mode === "one-whole" || e.mode === "one-sync")
       result = await oneWhole(s, profile.people, e.mode === "one-sync");
+    else if (e.mode === "one-account") result = await oneAccount(s, profile.people);
     else throw Error("One-database experiment not installed");
   } catch (err: any) {
     e.write("failure", {
