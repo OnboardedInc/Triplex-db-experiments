@@ -4,7 +4,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { W0, canonical, triplexValue, sha256 } from "../../../bench/lib/w0-world.ts";
 import { activation, Conflict, millis, openStore } from "./store.ts";
-import { admitLive, cursorOps, itemRoot, propose } from "./decision.ts";
+import { calculate, admitLive, cursorOps, itemRoot, propose } from "./decision.ts";
 const dir = process.argv[2]!,
   id = randomUUID(),
   at = W0.POPULATION_VALID_TIME,
@@ -106,11 +106,31 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
     s = await openStore(name);
     assert.equal((await activation(s, "activation-1", W0.R1, earlier)).txId, initial.txId);
     assert.equal((await admitLive(s, "w0", held)).status, "stale");
-    if (schedule === "time")
+    if (schedule === "time") {
+      const controls = await s.controls(before),
+        basis = { tx: before, validTime: earlier };
+      const historical = await calculate(s, "w0", subject, basis, controls, controls);
       assert.equal(
-        (await admitLive(s, "w0", { ...fresh, basis: { tx: before, validTime: earlier } })).status,
+        JSON.parse(historical.json).workItems.find(
+          (w: any) => w.kind === "notify.pay-below-minimum",
+        ).payload.payRateCents,
+        1500,
+      );
+      assert.equal(
+        (
+          await admitLive(s, "w0", {
+            scope: name,
+            format: "w0",
+            subject,
+            basis,
+            witness: historical.witness,
+          })
+        ).status,
         "stale",
       );
+    }
+    const authentic = await propose(s, "w0", subject);
+    await assert.rejects(admitLive(s, "w0", { ...authentic, witness: "unearned" }), /Untrusted/);
     assert.equal(await s.head(), before);
     const noop = await admitLive(s, "w0", await propose(s, "w0", subject));
     assert.equal(noop.status, "unchanged");

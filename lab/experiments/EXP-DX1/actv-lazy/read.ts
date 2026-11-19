@@ -178,7 +178,14 @@ export class LazyReader {
   }
   async list(
     pin: Pin,
-    token?: { scope: string; position: number; validTime: string; page: number; previous: string },
+    token?: {
+      scope: string;
+      position: number;
+      validTime: string;
+      page: number;
+      previous: string;
+      generation: string;
+    },
   ) {
     const offered = this.now();
     const s = this.store,
@@ -188,6 +195,11 @@ export class LazyReader {
       v = token?.validTime ?? pin.validTime ?? offered;
     if (token) {
       assert.equal(token.scope, s.scope);
+      assert.equal(token.generation, c.generation);
+      if ("position" in pin || "recordedAt" in pin)
+        assert.equal(await resolvePin(s, pin, head), token.position);
+      if (pin.validTime !== undefined) assert.equal(pin.validTime, token.validTime);
+
       assert(Number.isSafeInteger(token.page) && token.page > 0);
       const prior = await s.rows([rosterRoot(token.page - 1)], p);
       assert.equal(token.previous, sha256(canonical(prior)));
@@ -208,6 +220,7 @@ export class LazyReader {
         validTime: v,
         page: page + 1,
         previous: sha256(canonical(rows)),
+        generation: c.generation,
       },
     };
   }
