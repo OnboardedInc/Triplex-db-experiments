@@ -83,6 +83,7 @@ if (binding.mode === "--proof") {
     "boundary-gate.ts",
     "crash.ts",
     "service-gate.ts",
+    "pressure.ts",
   ])
     run(f, [dir]);
   const buf = execFileSync(
