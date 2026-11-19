@@ -653,7 +653,8 @@ async function run() {
   const seriesParams: Partial<TraceParams> = pairPlan?.traceParams ?? {};
   const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
-  const traceDurationS = idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
+  const lastTenantWindow = tenantSpec && deepId ? tenantWindows(tenantSpec, deepId.arm).at(-1) : undefined;
+  const traceDurationS = lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
   if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: DEEP_RATE * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
   const events = deepPlan ? deepPlan.events : idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   if (!tenantSpec && config.receiptCapture === "replica-worker" &&
@@ -748,7 +749,7 @@ async function run() {
     worker.on("exit", (code: number) => life.exit(code));
     const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (life.acknowledgeStop(), workerHttpCounts.push({ worker: w, counts: m.httpCounts }), readerFinalDiagnostics.push({ worker: w, diagnostics: m.diagnostics }), resolve())));
     await new Promise<void>((resolve, reject) => {
-      worker.on("message", (m: any) => { if (m.type === "ready") { if(smallOnly)(report.deep.readerIsolates??=[]).push({worker:w,heapUsed:m.memory.heapUsed,heapTotal:m.memory.heapTotal,external:m.memory.external,at:Date.now()}); resolve(); } else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
+      worker.on("message", (m: any) => { if (m.type === "ready") { if(smallOnly || tenantSpec?.study==="small")(report.deep.readerIsolates??=[]).push({worker:w,heapUsed:m.memory.heapUsed,heapTotal:m.memory.heapTotal,external:m.memory.external,at:Date.now()}); resolve(); } else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
       worker.on("error", reject);
     });
     unsubscribe?.();
@@ -1854,7 +1855,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     assert.equal(observed.feed.missing,0,"Account feed views did not cover exactly the committed subjects");
     const bytes=JSON.stringify({identity:deepId,database:report.deep.database,traceStart:ctx.traceStart,...observed});
     fs.writeFileSync(path.join(rawDir,"tenant-observations.json"),bytes,{flag:"wx"});
-    report.deep.tenantObservationsSha256=sha256File(path.join(rawDir,"tenant-observations.json"));
+    report.deep.tenantObservationsSha256 = sha256File(path.relative(REPO, path.join(rawDir, "tenant-observations.json")));
   }
   const lastAckBefore = (subject: number, t: number): number | null => {
     let best: number | null = null;

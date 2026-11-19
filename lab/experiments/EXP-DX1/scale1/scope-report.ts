@@ -216,13 +216,15 @@ export function scopeReport(reportFile: string, runs: Run[]) {
     }
     if (s.summary && s.attempt.item === 4) {
       const readers = s.summary.perScope
-        .filter((p: any) => p.account !== 0)
+        .filter((p: any) => s.attempt.layout === "pooled" || p.account !== 0)
         .flatMap((p: any) => p.deep.readerIsolates ?? [])
         .map((w: any) => w.heapUsed / MI);
       if (readers.length)
         lines.push(
           "",
-          "Per idle application reader at startup, median isolate heap was " +
+          (s.attempt.layout === "pooled"
+            ? "For the shared reader workers, median startup isolate heap was "
+            : "Per idle application reader, median startup isolate heap was ") +
             fmt(quantile(readers, 0.5)) +
             " MiB and p99 was " +
             fmt(quantile(readers, 0.99)) +

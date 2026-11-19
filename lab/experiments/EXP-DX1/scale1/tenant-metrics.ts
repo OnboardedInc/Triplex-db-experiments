@@ -97,6 +97,7 @@ export function tenantObservations(
       after: view.after,
       high: view.high,
       checkpoint: view.checkpoint,
+      cursors: view.cursors,
     },
     windows: result.map((p) => ({
       name: p.name,

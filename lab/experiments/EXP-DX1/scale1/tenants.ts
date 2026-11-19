@@ -170,7 +170,7 @@ export class TenantWriters {
   }
 }
 type Position = { position: number; validAt: number };
-// The directory links are strings so a pinned traversal counts subjects without fetching every business fact.
+// [DX-SCALE1] Why: string directory links let one cut count actual membership in bounded pages. Rejected: pulling every business fact into memory to count people.
 export async function tenantQueries(
   comp: CompositionHandle,
   accounts: readonly Account[],

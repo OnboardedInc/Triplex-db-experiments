@@ -164,10 +164,18 @@ test("tenant feed cursors select only durably affected members and reject anothe
     accounts = tenantAccounts(pooled);
   try {
     db.exec(
-      "CREATE TABLE checkpoints(consumer,source,token); CREATE TABLE affected(consumer,epoch,position,subject); INSERT INTO checkpoints VALUES('dependency-index','source-test','5'); INSERT INTO affected VALUES('dependency-index','0','3','0'),('dependency-index','0','4','5'),('other','0','5','3');",
+      "CREATE TABLE checkpoints(consumer,source,token); CREATE TABLE affected(consumer,epoch,position,subject); INSERT INTO checkpoints VALUES('dependency-index','source-test','5');",
     );
     installTenantViews(file, accounts);
+    db.exec(
+      "INSERT INTO affected VALUES('dependency-index','0','3','0'),('dependency-index','0','4','5'),('other','0','5','3');",
+    );
+    db.exec("BEGIN; INSERT INTO affected VALUES('dependency-index','0','5','2'); ROLLBACK;");
+    assert.throws(() =>
+      db.exec("INSERT INTO affected VALUES('dependency-index','0','5','not-a-subject')"),
+    );
     const view = tenantFeedAt(file, accounts, "source-test", 5, 3);
+    assert.deepEqual(view.cursors, { "account-001": 3, "account-002": 4 });
     assert.deepEqual([...view.matched], [[4, new Map([[5, "account-002"]])]]);
     assert.throws(() => tenantFeedAt(file, accounts, "other", 5, 3));
     assert.throws(() => tenantFeedAt(file, accounts, "source-test", 6, 3));
@@ -210,7 +218,15 @@ test("interference uses actual acknowledged throughput and keeps a missing quiet
     one = group(560, 1),
     busy = group(550, 2),
     empty = group(0, 0);
-  const feed = { matched: 0, missing: 0, sha256: "a".repeat(64), after: 0, high: 1, checkpoint: 1 };
+  const feed = {
+    cursors: {},
+    matched: 0,
+    missing: 0,
+    sha256: "a".repeat(64),
+    after: 0,
+    high: 1,
+    checkpoint: 1,
+  };
   const phases = [
     { name: "one", from: 0, to: 350000, accounts: { "account-001": one, "account-002": empty } },
     {

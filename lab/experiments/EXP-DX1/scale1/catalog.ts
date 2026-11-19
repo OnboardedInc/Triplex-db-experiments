@@ -48,7 +48,15 @@ export async function catalog(
   const cohort = fs.existsSync(path.join(summary, "summary.json"))
     ? JSON.parse(fs.readFileSync(path.join(summary, "summary.json"), "utf8"))
     : null;
-  const finding = `${attempt.spec.scopes} × ${attempt.spec.people} deep people, ${attempt.mode}, ${terminal.scopeReports} complete scope reports, ${cohort?.invalid.length ?? "unknown"} invalid observations, service ${terminal.service}`;
+  const population = attempt.layout
+    ? attempt.spec.accounts +
+      " accounts in " +
+      attempt.spec.scopes +
+      " databases, " +
+      attempt.spec.scopes * attempt.spec.people +
+      " deep people"
+    : attempt.spec.scopes + " × " + attempt.spec.people + " deep people";
+  const finding = `${population}, ${attempt.mode}, ${terminal.scopeReports} complete scope reports, ${cohort?.invalid.length ?? "unknown"} invalid observations, service ${terminal.service}`;
   const rows: string[] = [];
   for (const s of cohort?.perScope ?? []) {
     const f = path.join(summary, `s${s.account}`, "ns-report.json");

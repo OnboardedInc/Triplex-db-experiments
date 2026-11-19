@@ -232,6 +232,22 @@ async function collect(tag: string) {
   }
   fs.writeFileSync(path.join(dir, "transfer.json"), JSON.stringify(entry, null, 2) + "\n");
   await catalog(evidence, dir, terminal, entry, repo);
+  // [DX-SCALE1] Why: a public, per-attempt manifest identifies the durable summary archive and the manifest of raw bytes even if the large raw archive stays on the bench. Rejected: committing raw traces or relying on an editable index entry alone.
+  const proofDir = path.join(repo, "lab/experiments/EXP-DX1/scale1/evidence");
+  fs.mkdirSync(proofDir, { recursive: true });
+  const proof = path.join(proofDir, tag + ".sha256");
+  const manifest = [entry.summary.name, "transfer.json"].map((name) => ({
+    name,
+    filepath: path.join(dir, name),
+  }));
+  const bytes =
+    (
+      await Promise.all(
+        manifest.map(async (f) => (await fileHash(f.filepath)) + "  " + tag + "/" + f.name),
+      )
+    ).join("\n") + "\n";
+  if (fs.existsSync(proof)) assert.equal(fs.readFileSync(proof, "utf8"), bytes);
+  else fs.writeFileSync(proof, bytes, { flag: "wx" });
   updateReport(path.join(evidence, "DX-SCALE1"));
   updateHandoff(
     `Collected ${tag}. The service result was ${terminal.service}, with ${terminal.scopeReports} scope reports. The terminal cleanup inventory was empty.`,
