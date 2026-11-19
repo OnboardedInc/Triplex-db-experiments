@@ -10,6 +10,28 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { gzipSync, gunzipSync } from "node:zlib";
 import { records } from "./report.mjs";
+import { TraceReportIndex } from "./report-index.mjs";
+
+test("root tiers retain their original order, suppress owned followers and admit HTTP fallback", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "triplex-root-order-"));
+  const index = new TraceReportIndex(dir, 0, ["wallMs"]);
+  try {
+    const add = (name, traceId) => index.addRequest({ name, traceId });
+    add("http GET /other", "http");
+    index.finishInputs();
+    assert.deepEqual([...index.roots()].map((r) => r.traceId), ["http"]);
+    add("replica.follow", "owned");
+    add("http GET /journal", "journal");
+    add("reader.pull", "read");
+    add("driver.commit", "owned");
+    add("replica.follow", "follow");
+    index.finishInputs();
+    assert.deepEqual([...index.roots()].map((r) => r.traceId), ["read", "owned", "journal", "follow"]);
+  } finally {
+    index.close();
+    fs.rmdirSync(dir);
+  }
+});
 
 test("a truncated gzip rejects on the iterator after yielding its complete rows", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "triplex-truncated-trace-"));

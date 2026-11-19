@@ -128,14 +128,18 @@ export class TraceReportIndex {
     ).get();
   }
 
-  roots() {
-    return decode(
-      this.prepare(
-        "SELECT r.data FROM requests r WHERE " +
-          (this.fallback ? "r.tier = 2" : rootCriteria) +
-          " ORDER BY r.tier, r.id",
-      ).iterate(),
-    );
+  *roots() {
+    // [DX-BM1] Why: the six-core trace made SQLite sort several GiB of request payloads for the OR across tiers.
+    // Rejected: changing the root order or dropping follower requests. Each fixed tier can walk its existing (tier,id) index.
+    const tier = this.prepare("SELECT data FROM requests WHERE tier = ? ORDER BY id");
+    if (this.fallback) {
+      yield* decode(tier.iterate(2));
+      return;
+    }
+    yield* decode(tier.iterate(0));
+    yield* decode(this.prepare(`SELECT r.data FROM requests r WHERE r.tier = 1 AND NOT EXISTS
+      (SELECT 1 FROM requests owner WHERE owner.trace_id = r.trace_id AND owner.tier = 0)
+      ORDER BY r.id`).iterate());
   }
 
   commit(traceId) {
