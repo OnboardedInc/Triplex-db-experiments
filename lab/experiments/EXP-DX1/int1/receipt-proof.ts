@@ -4,7 +4,9 @@ import path from "node:path";
 import { ReplicaThread } from "../../../bench/lib/replica-thread.ts";
 import { SpillThread } from "../../../bench/lib/spill-thread.ts";
 import { R, observe } from "../../../bench/lib/observe.ts";
-import { V_W0, canonical } from "../../../bench/lib/w0-world.ts";
+import { V_W0, W0, canonical } from "../../../bench/lib/w0-world.ts";
+import { pageRoots } from "../../../bench/lib/w0-page-outbox.ts";
+import { pageWireState } from "../../../bench/lib/w0-page-check.ts";
 import type { Basis, CompositionHandle } from "../../../bench/lib/composition.ts";
 import { Account, rootOf, seedFacts } from "./account.ts";
 import { DeepProjectionIndex } from "../../../bench/lib/deep-projection-index.ts";
@@ -19,6 +21,16 @@ export async function regularDeepProof(comp: CompositionHandle, dir: string, sco
   const size = 6;
   const tenant = scoped ? { index: 1, key: keyFor(1), first: 254, people: size } : undefined;
   const firstPerson = tenant?.first ?? 0;
+  const neighbor = scoped
+    ? { index: 0, key: keyFor(0), first: firstPerson - 1, people: 1 }
+    : undefined;
+  if (neighbor) {
+    const receipt = await comp.transact(
+      seedFacts("deep", neighbor.first, neighbor.first, neighbor),
+      { actor: "import", commandId: "neighbor-seed" },
+    );
+    assert(receipt.ok && receipt.value.position === 1);
+  }
   const seed = await comp.transact(
     Array.from({ length: size }, (_, i) =>
       seedFacts("deep", firstPerson + i, firstPerson, tenant),
@@ -60,10 +72,19 @@ export async function regularDeepProof(comp: CompositionHandle, dir: string, sco
   assert.equal(comp.touchedUsage?.().admissions, before?.admissions);
   const verified = await act.verify(comp, first, second);
   assert.equal(verified.guardComparisons, size * 2);
+  if (neighbor) {
+    const subject = W0.placementId(neighbor.first),
+      basis = { position: verified.finalPosition, validAt: second.cut.validAt };
+    const page = await comp.sweepPage(pageRoots([subject]), basis);
+    assert.deepEqual(page.reportedBasis, basis);
+    assert(page.rows.some((row) => row.entityId === pageRoots([subject])[0]));
+    assert.deepEqual(pageWireState(page.rows, subject), { items: [], pending: [], subjects: [] });
+  }
   return {
     scope,
     seed: cut,
     firstPerson,
+    neighbor: neighbor?.key,
     pages: first.coverage.pages,
     imported,
     sourcePulls: sources.length,
