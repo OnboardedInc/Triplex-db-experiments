@@ -27,8 +27,28 @@ Sam's words, verbatim:
 4. **Specifics are adjustable.** The rest of Sam's pasted message (verbatim in
    `lab/research/SAM-pasted-targets-2026-11-07.md`, everything after its "Saved" line) is a suggestion. The
    orchestrator's current interpretation of it, including requirements, metrics, benchmarks and the per-layer
-   engine design, lives in `lab/TARGETS.md` and may change per database as evidence arrives. This file does not change.
+   engine design, lives in `lab/TARGETS.md` and may change per database as evidence arrives. This file changes only when
+   Sam adds to it (see the section of 2026-11-19 below).
 5. **Both engines stay in.** Sam, 2026-11-07: "do not rule out QLever ... It's ok that it fails on that [exact int64
    and decimal], we can figure out how to handle that some other way." No suggested gate eliminates an engine; a gap
    becomes a design problem for that engine, solved some other way. Sam later corrected the numeric requirement itself to
    "no silent precision loss" (`lab/research/SAM-pasted-numbers-2026-11-07.md`; see `lab/SCOPE.md` section 2 item 4).
+
+## Added by Sam on 2026-11-19: four priorities for running many accounts at scale
+
+Sam's direction that day: "we need this to be at scale ASAP ... We're growing rapidly so that is the scale we need", and,
+on the four priorities below as the orchestrator proposed them: "Yes to the other proposed priorities. You should add
+all of those and let's work towards them." The first five and their order are unchanged. Sam has not ranked these four
+against each other or against the first five; until he does they follow priority 5 in the order written. The wording
+is the orchestrator's and the example bars in `lab/TARGETS.md` section 1.2 are provisional.
+
+6. A busy account must not slow a quiet one: accounts share machines, and one account's burst, release activation or
+   import must not move another account's reads, commits or feed.
+7. Cost follows activity, not size: a subject nobody has touched, and an account that is idle, cost disk and almost
+   nothing else.
+8. Bringing an account in must not hurt live traffic: imports and migrations run beside live reads and commits.
+9. An account survives a machine failure and can be moved to another machine without losing an acknowledged write.
+
+The scale these are judged at (production data of 2026-11-19, no customer named here): ten deep accounts of about
+100,000 subjects with about 160 current facts each, a handful of wide accounts of 0.5 to 4.5 million subjects with a
+few facts each, and on the order of a hundred small and mid-sized accounts, all served together.
