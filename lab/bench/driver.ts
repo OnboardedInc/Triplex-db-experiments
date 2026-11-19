@@ -4,6 +4,7 @@ import {tenantAccounts, accountOfSubject as tenantOf, tenantQueries, tenantRows,
 import {tenantPlan,tenantPhases,tenantWindows,tenantReaders,tenantTraceId} from "../experiments/EXP-DX1/scale1/tenant-traffic.ts";
 import {checkImage} from "../experiments/EXP-DX1/scale1/seed-image.ts";
 import {MembershipProof,tenantRelease} from "../experiments/EXP-DX1/scale1/tenant-proof.ts";
+import {challengeTenants} from "../experiments/EXP-DX1/scale1/tenant-checks.ts";
 import {tenantFeedAt} from "../experiments/EXP-DX1/scale1/tenant-feed.ts";
 import {tenantObservations} from "../experiments/EXP-DX1/scale1/tenant-metrics.ts";
 import {TenantScheduler} from "../experiments/EXP-DX1/scale1/tenant-scheduler.ts";
@@ -922,7 +923,7 @@ async function run() {
     traceSync("driver.expected-state.add-commit", () => modelWriter.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream }));
     // [DX-T1-12] Why: only planned resends need original payload/receipt retention, and the frozen trace names them in advance.
     // Rejected: retain full duplicate copies for every commit until shutdown.
-    if (ev.stream === "background" && resendSequences.has(ev.seq)) original.set(ev.seq, { operations: cmd.operations, meta, receipt });
+    if ((ev.stream === "background" && resendSequences.has(ev.seq)) || ev.stream.startsWith("tenant-check-")) original.set(ev.seq, { operations: cmd.operations, meta, receipt });
     out.position = receipt.position;
     if (oracleRecordSet.has(ev.subject))
       traceSync("driver.oracle-record", () => recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt!.txId, position: receipt!.position, instant: receipt!.instant, assertionIds: alignAssertIds(cmd.operations, receipt!) } }));
@@ -1047,7 +1048,7 @@ async function run() {
 
   // ---------------------------------------------------------------- feed consumer (P3)
   // [EXP-M01] Paired rounds measure the writer and the read probe; the P3 consumer and its crash injection stay in NS.
-  const lvl = (deepSmoke ? 5 : config.levelS ?? PROFILES[profile === "deep" ? "v3" : profile === "deep-smoke" ? "smoke" : profile].levelS) * 1000;
+  const lvl = (tenantSpec?.study==="smoke" ? 2 : deepSmoke ? 5 : config.levelS ?? PROFILES[profile === "deep" ? "v3" : profile === "deep-smoke" ? "smoke" : profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = idle ? [] : (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
   // [DX-H1] Why: Datomic observes the native transact-result boundary before the driver ACK; other lanes still lack observers.
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
@@ -1332,6 +1333,17 @@ async function run() {
   // never mistaken for a feed gap.
   const inFlightDeadline = now() + 300_000;
   while (scheduler.inFlightCount > 0 && now() < inFlightDeadline) await sleep(250);
+  if(tenants && (tenantSpec?.study==="small" || tenantSpec?.study==="smoke")){
+    assert(scheduler.inFlightCount===0 && scheduler.pending===0,"Timed tenant writes still in progress");
+    const startedAt=now(),checks=await challengeTenants(tenants,startedAt+10,schedulerOptions);
+    report.deep.tenantChecks={identity:deepId,startedAt,timedEnd:endAt,checks:checks.map(c=>{
+      const primary=outcomes.get(c.stream+":"+c.seq+":0"),resend=outcomes.get(c.stream+":"+c.seq+":1");
+      const lost=lostAck.find(r=>r.seq===c.seq),ack=ackOf.get(primary?.position);
+      assert(primary?.outcome==="committed" && primary.path==="lost-ack-resolved" && resend?.outcome==="duplicate-returned-original");
+      assert(lost?.resolvedOriginal && lost.retryNamesOriginal && lost.retryTag==="CommandAlreadyCommittedError" && ack?.correction && ack.subject===c.subject);
+      return {...c,commandId:primary.commandId,position:primary.position,lost,duplicate:resend.outcome,validFrom:ack.correctionValidFrom};
+    })};
+  }
   const inFlightAtFeedTarget = scheduler.inFlightCount;
   deepStage(`flushing publications with ${inFlightAtFeedTarget} writes in flight`);
   report.writerSourceDiagnostics.end = datomicWriterDiagnostics();

@@ -118,7 +118,11 @@ export class ImportRun {
       Number.isSafeInteger(policy.facts) &&
         policy.facts > 0 &&
         policy.facts <= policy.maxFacts &&
+        Number.isSafeInteger(policy.maxFacts) &&
+        policy.maxFacts <= 2048 &&
+        Number.isSafeInteger(policy.maxBytes) &&
         policy.maxBytes > 0 &&
+        policy.maxBytes <= 2 * 1024 * 1024 &&
         policy.duty === lane.duty,
     );
     assert.equal(target.mode, source.header.mode);
@@ -149,10 +153,22 @@ export class ImportRun {
         );
       const id = run.key + "/manifest",
         meta = { actor: "bulk-import", commandId: id, correlationId: run.binding };
-      const original = await run.claim(id, () =>
-        target.write([], meta, source.header.mode === "history" ? 0 : undefined),
+      // [DX-ACT1] Why: starting two accounts also submits durable transactions. Rejected: bypassing bulk admission for empty manifests (concurrent starts can queue behind each other).
+      const { record } = await run.claim(id, () =>
+        lane.bulk(target.scopeName, () =>
+          target.write([], meta, source.header.mode === "history" ? 0 : undefined),
+        ),
       );
-      assert(original.record.correlationId === run.binding && original.record.changes.length === 0);
+      assert(
+        record.commandId === id &&
+          record.actor === meta.actor &&
+          record.correlationId === run.binding &&
+          record.changes.length === 0 &&
+          Number.isSafeInteger(record.position) &&
+          record.position > 0 &&
+          typeof record.txId === "string" &&
+          (source.header.mode !== "history" || record.instant === 0),
+      );
       run.db.prepare("INSERT OR IGNORE INTO session VALUES(?)").run(run.binding);
       const tail = run.last();
       if (tail) {

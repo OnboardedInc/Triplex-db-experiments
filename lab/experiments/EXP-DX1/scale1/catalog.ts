@@ -58,14 +58,54 @@ export async function catalog(
     : attempt.spec.scopes + " × " + attempt.spec.people + " deep people";
   const finding = `${population}, ${attempt.mode}, ${terminal.scopeReports} complete scope reports, ${cohort?.invalid.length ?? "unknown"} invalid observations, service ${terminal.service}`;
   const rows: string[] = [];
+  const physicalSeeds: { database: string; people: number; reportSha256: string }[] = [];
   for (const s of cohort?.perScope ?? []) {
     const f = path.join(summary, `s${s.account}`, "ns-report.json");
     assert.equal(await fileHash(f), s.hashes.report);
     const r = JSON.parse(fs.readFileSync(f, "utf8"));
+    assert.deepEqual(r.deep.identity, {
+      ...r.deep.identity,
+      nonce: attempt.nonce,
+      source: attempt.source,
+      slot: attempt.slot,
+      account: s.account,
+    });
+    assert(r.seed.complete && r.seed.seededSubjects === r.deep.seed.people);
+    physicalSeeds.push({
+      database: s.database,
+      people: r.seed.seededSubjects,
+      reportSha256: s.hashes.report,
+    });
     for (const p of r.phases ?? [])
       rows.push(
         `<tr><td>${esc(s.account)}</td><td>${esc(p.name)}</td><td>${esc(new Date(p.start).toISOString())}</td><td>${esc(((p.end - p.start) / 1000).toFixed(2))}</td><td>${esc(p.readers)}</td><td>${esc(p.stats?.correct ?? "—")}</td></tr>`,
       );
+  }
+  if (physicalSeeds.length) {
+    assert(
+      physicalSeeds.length === terminal.scopeReports &&
+        new Set(physicalSeeds.map((s) => s.database)).size === physicalSeeds.length,
+    );
+    const dest = path.join(dir, "driver", "ns-report.json");
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    // [DX-SCALE1] Why: the shared trace index reads its subject denominator from this filename. Rejected: a blank count or the planned population when only part of a cohort was verified.
+    if (physicalSeeds.length === 1) {
+      const original = path.join(summary, "s0/ns-report.json");
+      if (!fs.existsSync(dest)) fs.linkSync(original, dest);
+      assert.equal(await fileHash(dest), physicalSeeds[0]!.reportSha256);
+    } else {
+      const index = {
+        format: "DX-SCALE1/collected-scope-count/1",
+        source: attempt.source,
+        slot: attempt.slot,
+        nonce: attempt.nonce,
+        physicalSeeds,
+        seed: { seededSubjects: physicalSeeds.reduce((n, s) => n + s.people, 0) },
+      };
+      const bytes = JSON.stringify(index) + "\n";
+      if (!fs.existsSync(dest)) fs.writeFileSync(dest, bytes, { flag: "wx" });
+      else assert.equal(fs.readFileSync(dest, "utf8"), bytes);
+    }
   }
   fs.writeFileSync(
     path.join(dir, "trace.html"),

@@ -46,6 +46,7 @@ export interface Source {
   header: Header;
   group(i: number): Group;
 }
+const named = (v: unknown): v is string => typeof v === "string" && v.length > 0;
 export function validate(g: Group, h: Header, ordinal: number) {
   const keys = (v: object, allowed: string[]) =>
     assert(
@@ -62,10 +63,16 @@ export function validate(g: Group, h: Header, ordinal: number) {
   for (const op of g.ops) {
     if (op.op === "retract") {
       keys(op, ["op", "target"]);
-      assert(h.mode === "history" && op.target);
+      assert(h.mode === "history" && named(op.target));
       continue;
     }
-    assert(op.op === "assert" && op.ref && !refs.has(op.ref) && op.entityId && op.attribute);
+    assert(
+      op.op === "assert" &&
+        named(op.ref) &&
+        !refs.has(op.ref) &&
+        named(op.entityId) &&
+        named(op.attribute),
+    );
     keys(op, ["op", "ref", "entityId", "attribute", "value", "validFrom", "validTo"]);
     refs.add(op.ref);
     assert(
@@ -78,7 +85,10 @@ export function validate(g: Group, h: Header, ordinal: number) {
     keys(v, v.type === "blob" ? ["type", "value", "mimeType", "size"] : ["type", "value"]);
     switch (v.type) {
       case "integer":
-        assert(/^-?(0|[1-9][0-9]*)$/.test(v.value) && v.value !== "-0");
+        assert(
+          typeof v.value === "string" && /^-?(0|[1-9][0-9]*)$/.test(v.value) && v.value !== "-0",
+          "An exact integer requires a canonical decimal string",
+        );
         break;
       case "string":
       case "ref":
@@ -93,7 +103,10 @@ export function validate(g: Group, h: Header, ordinal: number) {
         break;
       case "blob":
         assert(
-          typeof v.value === "string" && v.mimeType && Number.isSafeInteger(v.size) && v.size >= 0,
+          typeof v.value === "string" &&
+            named(v.mimeType) &&
+            Number.isSafeInteger(v.size) &&
+            v.size >= 0,
         );
         break;
       default:
@@ -103,8 +116,8 @@ export function validate(g: Group, h: Header, ordinal: number) {
 }
 export function fileSource(file: string, meta: Omit<Header, "seal">, input?: Iterable<Group>) {
   assert(
-    meta.source &&
-      meta.generation &&
+    named(meta.source) &&
+      named(meta.generation) &&
       ["snapshot", "history"].includes(meta.mode) &&
       Number.isSafeInteger(meta.groups) &&
       meta.groups >= 0 &&

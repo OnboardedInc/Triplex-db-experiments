@@ -5,13 +5,15 @@ Ten accounts of 100,000 people sharing one database — awaiting a completed bar
 Activation for one account is pending. Activation for one account among ten in one database is pending.
 The first shared resource to reach its limit is still unknown.
 Three changes to test are another sender core for offer delays, a larger transactor cache for repeated SQL reads, and smaller per-save work at the serial commit point. Their effects are unmeasured.
-The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack).
+The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. PostgreSQL grew by 594.29 bytes per fact and the volume including WAL grew by 1214.95 bytes per fact (one seed).
+
+The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 69.12 ms (90% interval 65.28–72.70 ms), above the 50 ms bar. Peak simultaneous client and engine memory was 21.87 GiB.
 
 **Bench measurements**
 
 | Item and arm | Scope | Commit p50 ms | Commit p99 ms | L256 read p99 ms | L256 feed p99 ms | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 zero | 1 | — | — | — | — | Running on the dedicated bench |
+| 1 zero | account 1 | 5.09 · 56505 [5.09, 5.12] | 69.12 · 56505 [65.28, 72.70] | — | 20.09 · 2895 [19.20, 20.35] | Observed · arm-d19-i1-zero-a |
 
 **Shared resources**
 
@@ -36,7 +38,7 @@ Ten full accounts store 160,452,550 business facts and 2,003,920 tenant and rost
 
 Local Datomic functional checks drove two 40-person accounts through the zero-reader, reader and guarded activation arms. All 10,319,892 observed reads matched the model. O-REPLAY matched 262 sampled reads across 8,097 entity queries. The worker matched all 523 receipt reads. O-DOMAIN matched 160 stored decisions across 80 people and two releases, including two R2 decisions whose work items stayed unchanged. [Evidence manifest](SHA256SUMS)
 
-The tenant build passed 16 focused checks, 1,567 package tests and 18 additional Node tests. The package suites skipped 102 opt-in tests. All 116 seed digests and the logical offers and reader windows reproduced. The eight-person cross-account and release tests used the in-memory store. A local Datomic run returned both accounts in one gateway request and exposed a report-file path error during finalization. [Evidence manifest](SHA256SUMS)
+The tenant build passed 16 focused checks, 1,567 package tests and 18 additional Node tests. The package suites skipped 102 opt-in tests. All 116 seed digests and the logical offers and reader windows reproduced. On fresh local Datomic databases, 1,613,811 of 1,613,811 reads matched. O-REPLAY checked 110 reads across 3,402 entity queries. All 40 acknowledged writes reached their correct tenant feed. One gateway request read two accounts at position 22 and the pinned count was eight. The separate databases reached positions 8 and 14. A prior local attempt exposed a report-file lookup error, corrected before these trials. [Evidence manifest](SHA256SUMS)
 
 **Audit of evidence and verdicts**
 
@@ -46,7 +48,7 @@ The tenant build passed 16 focused checks, 1,567 package tests and 18 additional
 - The merged ACT1 collector checks the full native schedule and page coverage from this attempt, then compares the sealed seed hash, worker count, clone nonce, source and slot. Its negative controls substitute a different snapshot and a different passing schedule.
 
 - `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file and physical database to its nonce, source, slot and account. Each scope stays live until every R2 completion marker agrees with that cohort.
-- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The interference and small-account plans bind each scope’s business commands to a new frozen schedule. Their windows set the sentinel’s offers and reader counts before measuring.
+- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The interference and small-account plans bind each scope’s business commands to a new frozen schedule. Their windows fix the sentinel’s offers and reader counts. After timed small-account traffic drains, `tenant-checks.ts` submits a tagged correction per account, loses its ACK and verifies the duplicate and original receipt against the durable tenant cursor.
 - `deep-activation.ts` binds each fresh release receipt to its cut, hashes each evaluated world/output, re-reads the same cut, and checks both release facts and the immutable roster, range, commit and receipt hash for each 256-person page. The independent decoder compares every person’s fenced state with O-DOMAIN at both cuts.
 - `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.
 - `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.

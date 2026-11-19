@@ -314,10 +314,12 @@ export async function campaign(
   chosen = 1,
   localMs = 2400,
   controlFirst = false,
+  only?: number,
 ) {
   mkdirSync(root);
   const full = mode !== "local";
   assert(Number.isInteger(chosen) && profiles[chosen]);
+  if (only !== undefined) assert(mode === "local" && Number.isInteger(only) && profiles[only]);
   assert(["local", "screen", "deep", "thin"].includes(mode));
   let binding: string | undefined;
   if (full) {
@@ -357,7 +359,11 @@ export async function campaign(
           },
         ];
   const rows = [];
-  for (const a of arms.filter((a) => mode !== "screen" || a.name === "p" + chosen)) {
+  for (const a of arms.filter(
+    (a) =>
+      (mode !== "screen" || a.name === "p" + chosen) &&
+      (only === undefined || a.name === "p" + only),
+  )) {
     const before =
       !full && controlFirst
         ? await arm(join(root, a.name + "-control"), a, false, localMs, localMs)
@@ -394,4 +400,7 @@ if (process.argv[1] === import.meta.filename)
     Number(process.argv[4] ?? 1),
     Number(process.argv[5] ?? 2400),
     process.argv.includes("--control-first"),
+    process.argv.includes("--profile")
+      ? Number(process.argv[process.argv.indexOf("--profile") + 1])
+      : undefined,
   );
