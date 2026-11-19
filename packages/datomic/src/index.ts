@@ -70,4 +70,4 @@ export * from "./replica/index.js";
 export { resumeCommitOrder } from "./CommitOrder.js";
 export * from "./tracing.js";
 
-export { withDatomicImportClock } from "./TransactionContext.js";
+export { requireDatomicSourcePosition, withDatomicImportClock } from "./TransactionContext.js";

@@ -441,6 +441,7 @@ function acquireSlot(info, holder, experiment) {
     let owner = readOwner(info);
     for (let i = 0; !owner && i < 25; i++) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200); owner = readOwner(info); }
     if (!owner) fail('REFUSED', `${info.lockDir} exists without owner.json; inspect and remove it by hand if abandoned`);
+    if (owner.volume !== info.volume) fail('REFUSED', 'Existing slot owns a different volume');
     if (owner.holder !== holder && info.mode !== 'resident')
       fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}" (${owner.experiment ?? 'no experiment'}) since ${owner.createdAt}`);
     return { owner, created: false };
@@ -540,6 +541,8 @@ async function up(config, info, opts) {
 async function down(config, info, opts) {
   const holder = defaultHolder(opts);
   const owner = readOwner(info);
+  if ((owner && owner.volume !== info.volume) || (!owner && process.env.TX2_EXCLUSIVE_VOLUME_ID))
+    fail('REFUSED', 'Isolated volume cleanup requires its exact slot owner');
   if (owner && owner.holder !== holder && !opts.force)
     fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; pass --force only if you own it`);
   // [EXP-X05] A follower outliving its writer would block the next writer start (volumeGuard) and keep
@@ -717,7 +720,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
-  const info = slotInfo(config, options.lane, options.slot);
+  const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
   // [EXP-QG1] Why: overrides never reach shared residents; effective bytes bind the run.
   // Rejected: changing slots.json for everyone during a measurement window.
   if (options['qlever-memory'] || options['qlever-seed-dir']) {
