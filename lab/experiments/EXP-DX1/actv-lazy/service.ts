@@ -1,5 +1,5 @@
 import { Dispatcher, Receiver } from "./dispatch.ts";
-import { activation, millis, type Event, type Store } from "./store.ts";
+import { millis, type Event, type Store } from "./store.ts";
 import type { W0 } from "../../../bench/lib/w0-world.ts";
 import type { Format } from "./decision.ts";
 
@@ -24,16 +24,33 @@ export class NoticeService {
     this.worker = new Dispatcher(store, format);
     this.receiver = receiver;
     this.now = now;
+    this.wake();
   }
-  async activate(id: string, release: W0.CompiledRelease, at: string, from = at) {
-    const receipt = await activation(this.store, id, release, at, from);
+  private async submit(id: string, make: (at: string) => Event, ops: readonly any[]) {
+    // [DX-ACT1] Why: a worker cannot assign its own live clock, and an ACK retry must reuse the already assigned slot. Rejected: folding each retry's new wall time into the original business command.
+    const original = await this.store.lookup(id);
+    const slot = (r: any) => JSON.parse(r.correlationId).context.event.at as string;
+    const at = original ? slot(original) : this.now();
+    let receipt;
+    try {
+      receipt = await this.store.input(id, make(at), ops);
+    } catch (e) {
+      const winner = await this.store.lookup(id);
+      if (!winner || original) throw e;
+      receipt = await this.store.input(id, make(slot(winner)), ops);
+    }
     this.wake();
     return receipt;
   }
-  async save(id: string, event: Event, ops: readonly any[]) {
-    const receipt = await this.store.input(id, event, ops);
-    this.wake();
-    return receipt;
+  activate(id: string, release: W0.CompiledRelease, from?: string) {
+    return this.submit(
+      id,
+      (at) => ({ kind: "activation", at, from: from ?? at, release: release.hash }),
+      [],
+    );
+  }
+  save(id: string, ops: readonly any[]) {
+    return this.submit(id, (at) => ({ kind: "source", at }), ops);
   }
   wake() {
     if (this.closed || this.failure) return;

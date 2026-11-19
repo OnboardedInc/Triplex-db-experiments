@@ -31,14 +31,16 @@ const receiver = new Receiver(join(dir, "offline-recipient.sqlite"), s.scope, fi
 let now = at,
   service = new NoticeService(s, receiver, "w0", () => now);
 try {
-  await service.activate("first", W0.R1, at);
+  const original = await service.activate("first", W0.R1);
   await service.settled();
   assert.equal(receiver.effects().length, 0);
   await service.close();
   await activation(s, "unwoken", W0.R2, at, "2026-11-05T00:00:00.000000Z");
   now = "2026-11-05T00:00:01.000000Z";
   service = new NoticeService(s, receiver, "w0", () => now);
-  service.wake();
+  await service.settled();
+  assert.deepEqual(await service.activate("first", W0.R1), original);
+  await assert.rejects(service.activate("first", W0.R2));
   await service.settled();
   assert.deepEqual(
     receiver.effects().map((x) => [x.kind, String(x.seq)]),
