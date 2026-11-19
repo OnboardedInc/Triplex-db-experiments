@@ -73,19 +73,35 @@ owned_resources() {
 }
 
 cleanup_item() {
-  local item=$1 id name names kind pass
+  local item=$1 attempt=${2:-first} id name names kind pass arm dest file
   local ids
   local cleanup=$logs/$item-cleanup
   mkdir -p "$cleanup"
   exec >> "$cleanup/cleanup.log" 2>&1
-  printf '%s stop result=%s code=%s status=%s\n' "$(stamp)" "${SERVICE_RESULT:-manual}" "${EXIT_CODE:-}" "${EXIT_STATUS:-}"
+  printf '%s stop attempt=%s result=%s code=%s status=%s\n' "$(stamp)" "$attempt" "${SERVICE_RESULT:-manual}" "${EXIT_CODE:-}" "${EXIT_STATUS:-}"
   # Capture before force removal. This only runs after systemd has signalled the whole stage cgroup.
-  owned_resources "$item" containers > "$cleanup/containers-before.txt"
+  owned_resources "$item" containers > "$cleanup/containers-$attempt.txt"
   while read -r id name; do
     [[ -n $id ]] || continue
     timeout 8s docker logs --tail 4000 --timestamps "$id" > "$cleanup/$name.log" 2>&1 || true
     timeout 8s docker inspect "$id" > "$cleanup/$name.inspect.json" 2>&1 || true
-  done < "$cleanup/containers-before.txt"
+    # [DX-BM1] Why: a killed driver shell can leave its last observations inside its owned volume.
+    # Rejected: blocking forced teardown on the whole spill, or losing the compact evidence with the volume.
+    if [[ $item == pair && $name == "$prefix-pair-"*"-driver" ]]; then
+      arm=${name%-driver}
+      dest=$work/state/evidence/DX-T1/$arm
+      if [[ -d $dest && ! -s $dest/driver/ns-report.json ]]; then
+        mkdir -p "$dest/driver-at-stop"
+        for file in ns-report.json ns-writes.jsonl ns-full-read-samples.jsonl; do
+          if timeout 5s docker cp "$id:/driver/$file" "$dest/driver-at-stop/$file.tmp"; then
+            mv -T "$dest/driver-at-stop/$file.tmp" "$dest/driver-at-stop/$file"
+          else
+            rm -f -- "$dest/driver-at-stop/$file.tmp"
+          fi
+        done
+      fi
+    fi
+  done < "$cleanup/containers-$attempt.txt"
   for pass in 1 2 3; do
     for kind in containers networks volumes; do
       names=$(owned_resources "$item" "$kind")
@@ -122,6 +138,15 @@ LEASE
   printf '%s\n' clean > "$cleanup/result"
 }
 
+# [DX-BM1] Why: a failed stop hook may reflect a transient Docker failure after the shell cgroup is already gone.
+# Rejected: advancing with an unknown inventory, or skipping the next arm before rechecking a drained unit.
+retry_cleanup() {
+  local item=$1 state
+  state=$(timeout 10s systemctl show "triplex-bm1-$batch-$item" -p ActiveState --value) || return 1
+  [[ $state == inactive || $state == failed ]] || return 1
+  timeout --kill-after=5s 130s /bin/bash "$runner/queue-day.sh" --cleanup "$batch" "$stop" "$item" retry
+}
+
 # [DX-BM1] Why: the child cgroup belongs to the stage even if the controller itself is killed.
 # Rejected: leave an independent systemd unit running after losing its collector.
 reconcile_controller() {
@@ -138,7 +163,7 @@ reconcile_controller() {
         { status "$item" teardown-failed collect; return 1; }
     fi
     if [[ $(cat "$logs/$item-cleanup/result" 2>/dev/null) != clean ]]; then
-      (cleanup_item "$item") || { status "$item" teardown-failed collect; return 1; }
+      retry_cleanup "$item" || { status "$item" teardown-failed collect; return 1; }
     fi
     rm -- "$day/active-item"
     status "$item" controller-interrupted collect
@@ -191,7 +216,7 @@ run_item() {
 
 case $mode in
   --item) [[ $# == 5 && -d $logs ]] || exit 2; run_item "$4" "$5"; exit ;;
-  --cleanup) [[ $# == 4 && -d $logs ]] || exit 2; cleanup_item "$4"; exit ;;
+  --cleanup) [[ $# == 4 || ($# == 5 && $5 == retry) ]] && [[ -d $logs ]] || exit 2; cleanup_item "$4" "${5:-first}"; exit ;;
   --reconcile) [[ $# == 3 ]] || exit 2; reconcile_controller; exit ;;
   --launch)
     [[ $# == 3 && ! -e $day && $runner != *[[:space:]]* ]] || exit 2
@@ -218,6 +243,7 @@ exec >> "$logs/queue.log" 2>&1
 final=failed
 trap 'status queue "$final" collect' EXIT
 trap 'exit 143' TERM INT
+status queue preflight setup
 systemctl show triplex-drv1-wait -p ActiveState -p Result -p ExecMainStatus > "$logs/comparison-terminal.txt"
 state=$(systemctl show triplex-drv1-wait -p ActiveState --value)
 [[ $state == inactive || $state == failed ]] || { echo 'Comparison still owns the bench'; exit 75; }
@@ -268,8 +294,9 @@ run_stage() {
     /bin/bash "$runner/queue-day.sh" --item "$batch" "$stop" "$item" "$item_stop" || rc=$?
   printf '%s\n' "$rc" > "$logs/$item.exit"
   printf '%s terminal %s exit=%s\n' "$(stamp)" "$item" "$rc"
-  [[ $(cat "$logs/$item-cleanup/result" 2>/dev/null) == clean ]] ||
-    { echo "Teardown failed for $item"; return 76; }
+  if [[ $(cat "$logs/$item-cleanup/result" 2>/dev/null) != clean ]]; then
+    retry_cleanup "$item" || { echo "Teardown failed for $item"; return 76; }
+  fi
   rm -- "$day/active-item"
   status "$item" archiving "$next"
   local evidence=$work/state/evidence/DX-T1 tag suffix

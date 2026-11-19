@@ -4,7 +4,7 @@
 
 The overnight 100k reader and its failed replay are collected. The old W0 run finished its live measurement and independent outbox comparisons and timed out before producing its terminal envelope. Its source volume and the prior attempt remain available. The day run reads that volume through a fresh private clone, rechecks the seed fingerprint at position 4,338,757, and uses a new publication namespace. [Report](REPORT.md)
 
-At the last prelaunch check, `triplex-drv1-wait.service` was active and had started its first timed arm at 07:26 EST. It owns the bench until it exits and the daemon has no running containers. The day batch is `d19`, with controller `triplex-bm1-d19-queue.service` and cleanup hooks for each separate child cgroup.
+At the last prelaunch check, `triplex-drv1-wait.service` was active and had started its first timed arm at 07:26 EST. It owns the bench until it exits and the daemon has no running containers. The day batch is `d19`, with controller `triplex-bm1-d19-queue.service` and cleanup hooks for each separate child cgroup. The controller retries a failed stop hook once the unit has drained. An interrupted pair can retain compact driver evidence in `driver-at-stop/`.
 
 | Stage | Expected elapsed | Ceiling |
 | --- | ---: | ---: |
