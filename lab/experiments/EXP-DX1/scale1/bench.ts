@@ -484,13 +484,22 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         "--baseline-writes",
         path.join(repo, "runs", "DX-SCALE1", refs, `s${i}`, "ns-writes.jsonl"),
       );
-    const heapMiB = Math.floor(
-      Math.min(
-        spec.scopes === 1 ? 40 * GiB : 6 * GiB,
-        (attempt.clientBudget / spec.scopes) * 0.75,
-      ) /
-        1024 ** 2,
-    );
+    // [DX-SCALE1] Why: the sentinel must have the same per-isolate heap in its one- and ten-account arms. Rejected: shrinking only the loaded account and attributing its extra GC to neighbor traffic.
+    const heapMiB =
+      mode === "seed"
+        ? Math.min(
+            6144,
+            Math.floor(((attempt.clientBudget / budget.seedParallelism) * 0.75) / 1024 ** 2),
+          )
+        : spec.people === 10000
+          ? 6144
+          : 32768;
+    write(path.join(out, "client-limits.json"), {
+      heapMiB,
+      sharedCgroupBytes: attempt.clientBudget,
+      readerWorkers: 6,
+      cpus: planCpus,
+    });
     const child = spawn("taskset", args, {
       cwd: repo,
       stdio: ["ignore", fd, fd],
@@ -866,7 +875,12 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     for (const name of fs.readdirSync(raw).filter((n) => /^s[0-9]$/.test(n))) {
       const sub = path.join(compact, name);
       fs.mkdirSync(sub);
-      for (const file of ["ns-report.json", "seed-observed.json", "identity.json"])
+      for (const file of [
+        "ns-report.json",
+        "seed-observed.json",
+        "identity.json",
+        "client-limits.json",
+      ])
         if (fs.existsSync(path.join(raw, name, file)))
           fs.copyFileSync(path.join(raw, name, file), path.join(sub, file));
     }

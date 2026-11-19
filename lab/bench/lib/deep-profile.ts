@@ -200,3 +200,50 @@ export function releaseDeepStart(dir: string, identities: readonly DeepIdentity[
   );
   fs.renameSync(release + ".tmp", release);
 }
+
+export async function finishDeepActivations(
+  dir: string,
+  id: DeepIdentity,
+  endedAt: number,
+  cut: number,
+) {
+  const release = JSON.parse(fs.readFileSync(path.join(dir, "release.json"), "utf8"));
+  requireIdentity(id);
+  assert(
+    id.arm === "activation" &&
+      release.nonce === id.nonce &&
+      release.source === id.source &&
+      release.slot === id.slot,
+  );
+  const file = path.join(dir, `s${id.account}.activation.json`);
+  assert(Number.isSafeInteger(cut) && cut > 0 && endedAt >= release.start);
+  fs.writeFileSync(file + ".tmp", JSON.stringify({ identity: id, endedAt, cut }), { flag: "wx" });
+  fs.renameSync(file + ".tmp", file);
+  const names = Object.keys(release.armed),
+    deadline = release.start + 7_200_000;
+  assert.deepEqual(release.armed[`s${id.account}`].identity, id);
+  // [DX-SCALE1] Why: the last account's sweep must still see nine actual writers, feed consumers and reader sets. Rejected: stopping each account's traffic when its own faster sweep finishes.
+  while (Date.now() < deadline) {
+    if (names.every((n) => fs.existsSync(path.join(dir, `${n}.activation.json`)))) {
+      const ends = names.map((n) => {
+        const row = JSON.parse(fs.readFileSync(path.join(dir, `${n}.activation.json`), "utf8"));
+        assert.deepEqual(row.identity, release.armed[n].identity);
+        assert(
+          Number.isSafeInteger(row.endedAt) &&
+            row.endedAt >= release.start &&
+            row.endedAt <= Date.now() &&
+            Number.isSafeInteger(row.cut) &&
+            row.cut > 0,
+        );
+        return row.endedAt as number;
+      });
+      return {
+        accounts: names.length,
+        lastSweepEndedAt: Math.max(...ends),
+        trafficHeldThrough: Date.now(),
+      };
+    }
+    await sleep(100);
+  }
+  throw Error("The frozen live trace expired before every activation completed");
+}

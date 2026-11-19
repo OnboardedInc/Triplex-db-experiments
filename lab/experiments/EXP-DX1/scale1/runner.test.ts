@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { capacity } from "./bench.ts";
+import { cohort, type ScopeMeasurement } from "./measurements.ts";
 import { requireIdentity, DeepSeedWitness } from "../../../bench/lib/deep-profile.ts";
 import { deepOwnFacts } from "../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
@@ -78,4 +79,51 @@ test("raw trace compression reproduces the exact bytes and keeps baseline inputs
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// [DX-SCALE1] Why: a hot minority scope changes a per-account tail without dominating a pooled tail. Rejected: averaging scope percentiles or reusing the same database twice.
+test("pooling weights observed calls and binds independent databases and a common start", () => {
+  const make = (account: number, values: number[]) =>
+    ({
+      id: {
+        account,
+        source: "a".repeat(40),
+        slot: "tx2-dxscale1-test",
+        arm: "reader",
+        people: 10000,
+        nonce: "same",
+      },
+      scope: `scope-${account}`,
+      interval: { from: 12, to: 22 },
+      invalid: [] as string[],
+      hashes: {},
+      offered: values.length,
+      primaries: values.length,
+      committed: values.length,
+      resends: 0,
+      missing: 0,
+      ackMinutes: [],
+      values: { all: values, L256: values },
+      report: {
+        deep: { database: `database-${account}` },
+        priorities: { P2: { bars: [{ id: "witness", pass: account === 0 }] } },
+      },
+    }) as ScopeMeasurement;
+  const a = make(0, [100]),
+    b = make(1, Array(1000).fill(1));
+  const m = cohort([a, b], 2).summary;
+  assert.equal(m.commit.p99.n, 1001);
+  assert(m.commit.p99.value! < 2 && m.perScope[0]!.commit.p99.value === 100);
+  assert.deepEqual(m.jointObligations[0], {
+    id: "witness",
+    withinScopes: 1,
+    missedScopes: 1,
+    unjudgedScopes: 0,
+    scopes: 2,
+  });
+  b.invalid.push("oracle incomplete");
+  assert.equal(cohort([a, b], 2).summary.pooledBars[0].pass, null);
+  assert.throws(() => cohort([a], 2));
+  b.report.deep.database = a.report.deep.database;
+  assert.throws(() => cohort([a, b], 2), /Duplicate Datomic database/);
 });

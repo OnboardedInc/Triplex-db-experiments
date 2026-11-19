@@ -23,7 +23,9 @@ fs.writeFileSync(
   path.join(dir, "source.json"),
   JSON.stringify({ source, tree, oracle: stageReplay(process.cwd(), oracle) }),
 );
-const activation = process.argv.includes("--activation");
+const activation = process.argv.includes("--activation"),
+  zero = process.argv.includes("--zero");
+assert(!(activation && zero));
 const clients = [0, 1].map((account) => {
   const out = path.join(dir, `s${account}`);
   fs.mkdirSync(out);
@@ -61,6 +63,7 @@ const clients = [0, 1].map((account) => {
       "--output",
       path.join(out, "ns-report.json"),
       ...(activation ? ["--deep-activation"] : []),
+      ...(zero ? ["--zero-readers"] : []),
       "--seed-batch-facts",
       "600",
     ],
@@ -147,6 +150,7 @@ try {
     commonStart: r.traceStartAbsMs,
     status: r.status,
     activation: r.deep.activationOracle,
+    activationTraffic: r.deep.activationTraffic,
     oracle: r.oracle,
     correctness: r.correctness,
     feed: r.priorities?.P3?.bars,
@@ -156,7 +160,13 @@ try {
   assert.deepEqual(codes, [0, 0]);
   if (activation)
     for (const r of reports)
-      assert(r.deep.activationOracle?.checked === 40 && r.deep.r2.mutations?.length === 10);
+      assert(
+        r.deep.activationOracle?.checked === 40 &&
+          r.deep.r2.mutations?.length === 10 &&
+          r.deep.activationTraffic?.accounts === 2 &&
+          r.deep.activationTraffic.trafficHeldThrough >=
+            Math.max(...reports.map((peer) => peer.deep.r2.endedAt)),
+      );
   for (const r of reports) {
     assert(
       r.traceStartAbsMs === start &&

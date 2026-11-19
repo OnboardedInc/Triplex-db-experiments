@@ -209,6 +209,10 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     "NS-P2 every offered command accounted",
     "NS-P2 every oracle-valid trace command published",
     "NS-P2 read-your-own-write at the returned tx",
+    "NS-P2 duplicates return the original receipt",
+    "NS-P2 lost ACKs return the original receipt",
+    "NS-P3 crash injection at three points",
+    "NS-P3 corrections report their valid-time range",
     "NS-P3 gaps",
     "NS-P3 per-subject order violations",
     "NS-P3 visible duplicate effects",
@@ -216,7 +220,17 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     "NS-P3 affected-subject set matches",
   ])
     if (checks.find((b) => b.id === id)?.pass !== true) invalid.push(id);
-  if (id.arm === "activation" && report.deep.activationOracle?.checked !== id.people)
+  if (
+    id.arm === "activation" &&
+    (report.deep.activationOracle?.checked !== id.people ||
+      !report.deep.activationTraffic ||
+      report.deep.activationTraffic.trafficHeldThrough <
+        report.deep.activationTraffic.lastSweepEndedAt ||
+      report.deep.r2?.mutations?.length !== 10 ||
+      !report.deep.r2.mutations.every(
+        (m: { position: number }) => m.position > report.deep.r2.cut.position,
+      ))
+  )
     invalid.push("Incomplete activation outbox verification");
   return {
     id,
@@ -270,6 +284,20 @@ export function cohort(
     ),
   );
   const invalid = scopes.flatMap((s) => s.invalid.map((r) => `s${s.id.account}: ${r}`));
+  if (first.id.arm === "activation") {
+    const end = Math.max(...scopes.map((s) => s.report.deep.r2?.endedAt ?? Infinity));
+    for (const s of scopes) {
+      const traffic = s.report.deep.activationTraffic;
+      if (
+        !traffic ||
+        traffic.accounts !== expectedScopes ||
+        traffic.lastSweepEndedAt !== end ||
+        traffic.trafficHeldThrough < end ||
+        s.interval.to < end
+      )
+        invalid.push(`s${s.id.account}: incomplete shared activation window`);
+    }
+  }
   const all: Quantities = {};
   for (const s of scopes)
     for (const [name, xs] of Object.entries(s.values)) {
@@ -353,7 +381,13 @@ export function cohort(
     p50: metric(xs, 0.5, "deep/all/p50"),
     p99: metric(xs, 0.99, "deep/all/p99"),
   });
+  const compactCommit = (xs: number[]) => {
+    const h = new Histogram();
+    for (const v of xs) h.recordMs(v);
+    return h.toJSON();
+  };
   const perScope = scopes.map((s) => ({
+    commitHistogram: compactCommit(s.values.all!),
     commit: commit(s.values.all!),
     account: s.id.account,
     scope: s.scope,

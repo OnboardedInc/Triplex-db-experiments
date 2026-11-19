@@ -1,4 +1,11 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
+import { Histogram } from "../../../bench/lib/hist.ts";
+import {
+  bootstrap90,
+  histogramDistribution,
+  percentile,
+} from "../../../bench/lib/verdict-statistics.ts";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -55,11 +62,13 @@ export function updateReport(evidence: string) {
     base = recent(1, "zero");
   const cost = (s: Stage | undefined) =>
     s?.summary
-      ? `${metric(s.summary.commit.p99)} ms commit p99, ${metric(bar(s, "NS-P1-READ-P99-256-MS"))} ms read p99, ${round((s.size?.sharedPeakBytes + s.size?.driverPeakBytes * s.summary.scopeCount) / 1024 ** 3)} GiB summed component peaks, ${round(s.disk?.bytesPerFact)} database bytes per current fact`
-      : "awaiting a completed bare-metal reader arm";
+      ? `${metric(s.summary.commit.p99)} ms commit p99, ${metric(bar(s, "NS-P1-READ-P99-256-MS"))} ms read p99, ${round(s.size?.simultaneousPeakBytes / 1024 ** 3)} GiB simultaneous client and engine cgroup peak, ${round(s.disk?.bytesPerFact)} database bytes per current fact${s.summary.invalid.length ? " (unjudged)" : ""}`
+      : s?.terminal.service === "capacity-refused"
+        ? `capacity refused on ${s.attempt.capacity.limits.join(" and ")}`
+        : "awaiting a completed bare-metal reader arm";
   const act = (s: Stage | undefined) =>
     s?.summary
-      ? `${s.summary.perScope.map((p: any) => round(p.deep.r2.wallMs / 1000)).join(", ")} s; ${s.summary.perScope.reduce((n: number, p: any) => n + (p.deep.activationOracle?.checked ?? 0), 0)} independently checked people`
+      ? `${s.summary.perScope.map((p: any) => round(p.deep.r2.wallMs / 1000)).join(", ")} s across ${s.summary.scopeCount} sweeps, with ${s.summary.perScope.reduce((n: number, p: any) => n + (p.deep.activationOracle?.checked ?? 0), 0)} independently checked people`
       : "pending";
   const emptied = stages.find((s) => s.resources?.firstObservedEngineOOM);
   const lines = [
@@ -100,6 +109,58 @@ export function updateReport(evidence: string) {
       }
     }
   }
+  for (const [singleItem, tenItem] of [
+    [1, 3],
+    [2, 4],
+  ] as const) {
+    const a = recent(singleItem, "reader"),
+      b = recent(tenItem, "reader");
+    if (!a?.summary || !b?.summary) continue;
+    const pair = [a, b].map((s) => {
+      const f = fs.readFileSync(path.join(evidence, s.tag, "summaries/s0/ns-report.json"));
+      if (createHash("sha256").update(f).digest("hex") !== s.summary.perScope[0].hashes.report)
+        throw Error("Account comparison input mismatch");
+      return JSON.parse(f.toString());
+    });
+    const [alone, together] = pair;
+    const same =
+      alone.deep.trace === together.deep.trace &&
+      alone.deep.seed.sha256 === together.deep.seed.sha256 &&
+      JSON.stringify(alone.benchSources) === JSON.stringify(together.benchSources) &&
+      JSON.stringify(a.attempt.cpus) === JSON.stringify(b.attempt.cpus);
+    if (!same) {
+      lines.push(
+        "",
+        `Account 0 at ${a.attempt.spec.people} people has differing comparison inputs. Its interference ratio is unjudged.`,
+      );
+      continue;
+    }
+    const ratio = (label: string, x: any, y: any) => {
+      if (!x || !y) return "—";
+      const d = histogramDistribution(Histogram.fromJSON(x), label),
+        n = histogramDistribution(Histogram.fromJSON(y), label),
+        den = percentile(d, 0.99),
+        num = percentile(n, 0.99);
+      if (!den || num === null) return "—";
+      const ci = bootstrap90(n, 0.99, label, d);
+      return `${round(num / den)}× (n=${n.n}/${d.n}${ci ? `, 90% [${round(ci.low)}, ${round(ci.high)}]` : ""})`;
+    };
+    const a0 = a.summary.perScope[0],
+      b0 = b.summary.perScope[0];
+    lines.push(
+      "",
+      `With nine busy neighbors, account 0 at ${a.attempt.spec.people} people had commit p99 ${ratio("ACK", a0.commitHistogram, b0.commitHistogram)}, L256 read p99 ${ratio("reads", alone.histograms["L256.read"], together.histograms["L256.read"])}, and feed lag p99 ${ratio("lag", alone.histograms["L256.feedLag"], together.histograms["L256.feedLag"])} relative to running alone.${a.summary.invalid.length || b.summary.invalid.length ? " These observations are unjudged." : ""}`,
+    );
+    const soloAct = recent(singleItem, "activation"),
+      multiAct = recent(tenItem, "activation");
+    if (soloAct?.summary && multiAct?.summary) {
+      const first = soloAct.summary.perScope[0].deep.r2,
+        second = multiAct.summary.perScope[0].deep.r2;
+      lines.push(
+        `Account 0 activation took ${round(second.wallMs / 1000)} s with neighbors and ${round(first.wallMs / 1000)} s alone, one sweep per side.`,
+      );
+    }
+  }
   if (!stages.length)
     lines.push("| 1–4 | 1 or 10 | — | — | — | — | Awaiting bench release and public source |");
   lines.push(
@@ -128,6 +189,7 @@ export function updateReport(evidence: string) {
     "",
     "The acceptance contract and frozen v3 verdict rules retain their original pins. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
   );
+  while (lines.length > 60 && lines.includes("")) lines.splice(lines.lastIndexOf(""), 1);
   if (lines.length > 60) throw Error("Owner report exceeds 60 lines");
   fs.writeFileSync(path.join(here, "REPORT.md"), lines.join("\n") + "\n");
 }

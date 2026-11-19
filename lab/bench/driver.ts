@@ -4,7 +4,7 @@ import { DeepActivation } from "./lib/deep-activation.ts";
 import { DEEP_PROFILE, DEEP_RUNGS, deepCells, deepPopulation } from "./lib/deep-world.ts";
 import { DEEP_RATE, deepSeed, type DeepEvent } from "./lib/deep-trace.ts";
 import { DeepWriter } from "./lib/deep-command.ts";
-import { DeepSeedWitness, deepBarrier, confirmDeepStart, frozenDeep, requireIdentity, type DeepIdentity } from "./lib/deep-profile.ts";
+import { DeepSeedWitness, deepBarrier, confirmDeepStart, finishDeepActivations, frozenDeep, requireIdentity, type DeepIdentity } from "./lib/deep-profile.ts";
 import { configureWriterHeap } from "./lib/writer-heap.ts";
 import { suffixDelta } from "./lib/basis-window.ts";
 import { DeferredPublications } from "./lib/deferred-publication.ts";
@@ -1066,8 +1066,8 @@ async function run() {
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
-    { name: "warmup", readers: 1, seconds: 5, measured: false },
-    { name: "L4", readers: 4, seconds: 25, measured: true, ladder: true, mode: "mixed" },
+    { name: "warmup", readers: config.zeroReaders ? 0 : 1, seconds: 5, measured: false },
+    { name: "L4", readers: config.zeroReaders ? 0 : 4, seconds: 25, measured: true, ladder: true, mode: "mixed" },
   ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   const phases: any[] = [];
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
@@ -1188,6 +1188,11 @@ async function run() {
       verification: "PENDING final all-ACK model comparison; observed arrivals include settle and may omit in-flight reads" }]));
     report.phases = phases;
     save();
+  }
+  if (activation && deepId) {
+    report.deep.activationTraffic = await finishDeepActivations(
+      path.resolve(opt("deep-barrier")!), deepId, report.deep.r2.endedAt, report.deep.r2.cut.position,
+    );
   }
   if (config.matchDurationS) {
     const until = traceStart + config.matchDurationS * 1000;
@@ -2065,7 +2070,7 @@ function p2Progress(background: any[], traceStart: number) {
 function loadBaselineWrites(): any[] | null {
   if (!config.baselineWrites) return null;
   const baselineReport = JSON.parse(fs.readFileSync(path.join(path.dirname(config.baselineWrites), "ns-report.json"), "utf8"));
-  if (deepId && (baselineReport.deep?.identity?.arm !== "zero" || baselineReport.deep.identity.account !== deepAccount || baselineReport.deep.identity.source !== deepId.source || baselineReport.deep.identity.nonce === deepId.nonce || baselineReport.deep.trace !== report.deep.trace || baselineReport.deep.seed.sha256 !== report.deep.seed.sha256 || baselineReport.config.profile !== "deep")) throw Error("Deep baseline belongs to a different source, population, trace or account");
+  if (deepId && (baselineReport.deep?.identity?.arm !== "zero" || baselineReport.deep.identity.account !== deepAccount || baselineReport.deep.identity.source !== deepId.source || baselineReport.deep.identity.nonce === deepId.nonce || baselineReport.deep.trace !== report.deep.trace || baselineReport.deep.seed.sha256 !== report.deep.seed.sha256 || baselineReport.config.profile !== config.profile)) throw Error("Deep baseline belongs to a different source, population, trace or account");
   if (baselineReport.config?.zeroReaders !== true || baselineReport.trace?.digest !== report.trace.digest ||
       baselineReport.config?.rungSubjects !== config.rungSubjects || baselineReport.config?.composition !== config.composition ||
       baselineReport.config?.lane !== lane || baselineReport.config?.seed !== config.seed)
