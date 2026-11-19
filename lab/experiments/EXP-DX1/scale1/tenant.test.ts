@@ -18,6 +18,18 @@ import {
 import { tenantPlan, tenantWindows, tenantReaders } from "./tenant-traffic.ts";
 import { MembershipProof } from "./tenant-proof.ts";
 import { installTenantViews, tenantFeedAt } from "./tenant-feed.ts";
+
+test("a seed-only million-person attempt binds the complete population and schedules no traffic", () => {
+  const spec = { study: "million", topology: "pooled", physical: 0 } as const;
+  const plan = tenantPlan(spec, "seed");
+  assert.equal(
+    plan.accounts.reduce((n, a) => n + a.people, 0),
+    1000000,
+  );
+  assert.equal(plan.populationSha256, tenantSeedPin(spec));
+  assert.deepEqual(plan.events, []);
+  assert.deepEqual(tenantWindows(spec, "seed"), []);
+});
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { seedOps } from "../../../bench/lib/commands.ts";
 import { ids } from "../../../bench/lib/world.ts";

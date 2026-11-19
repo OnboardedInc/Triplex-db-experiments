@@ -163,7 +163,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     );
   const challengeRows = new Map<string, any>();
   const allBurst =
-    id.tenant?.study === "interference" && id.tenant.topology === "pooled"
+    id.tenant?.study === "interference"
       ? report.phases.find((p: any) => p.name === "all-burst")
       : undefined;
   const burstFrom = allBurst ? allBurst.start + report.config.settleS * 1000 : 0;

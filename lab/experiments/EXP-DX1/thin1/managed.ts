@@ -32,6 +32,7 @@ const write = (file: string, data: unknown) =>
 const imageFolder = path.join(dir, "lab/config/datomic");
 const manager = (args: string[]) => {
   const argv = ["lab/bin/engine.mjs", ...args, "--lane", "datomic", "--holder", "DX-THIN1"];
+  const attempt = args.includes("--slot") && fs.existsSync(cred) ? read(cred) : undefined;
   const options = {
     cwd: repo,
     encoding: "utf8" as const,
@@ -43,6 +44,7 @@ const manager = (args: string[]) => {
       TX2_LOCKS_DIR: path.join(main, "lab/locks"),
       TX2_ENGINE_DIR: path.join(main, "runs/engines"),
       TX2_DOCKER_HOST: read(path.join(main, "lab/config/slots.json")).dockerHost,
+      ...(attempt?.isolatedVolume ? { TX2_EXCLUSIVE_VOLUME_ID: attempt.nonce } : {}),
     },
   };
   if (args[0] === "logs") {
@@ -145,7 +147,6 @@ function setup(compact: boolean) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
     const settings = (cfg.slots.datomic[slot] = { ...original[slot] });
-    if (compact) settings.attemptVolumeNonce = nonce;
     settings.gatewayOpts =
       (gwPolicy === "demand" ? "-Xms64m -Xmx384m -Ddxthin.cache=demand -Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps"
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
@@ -162,7 +163,7 @@ function setup(compact: boolean) {
   write(file, cfg);
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
-  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode });
+  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode, isolatedVolume: compact });
   return slots;
 }
 function witness(slot: string) {
@@ -373,7 +374,7 @@ if (action === "--guest") {
             fs.realpathSync(o.worktree) === fs.realpathSync(repo)
           )
             if (compact) {
-              assert.equal(o.volume, o.container + "-" + read(cred).nonce + "-data");
+              assert.equal(o.volume, o.container + "-data-" + read(cred).nonce);
               manager(["down", "--slot", slot, "--remove-volume"]);
             } else manager(["down", "--slot", slot, "--note", "Retain the owned SQL attempt"]);
         }

@@ -118,7 +118,7 @@ export function appendEvent(event) {
 
 export function loadSlots() { return readJson(SLOTS_FILE); }
 
-export function slotInfo(config, lane, slot) {
+export function slotInfo(config, lane, slot, trial = undefined) {
   const laneConf = config.lanes[lane];
   if (!laneConf) fail('USAGE', `Unknown lane ${lane}; choose ${Object.keys(config.lanes).join('|')}`);
   const slotConf = config.slots[lane][slot];
@@ -130,8 +130,12 @@ export function slotInfo(config, lane, slot) {
   const nonce = slotConf.attemptVolumeNonce;
   if (nonce !== undefined && (lane !== 'datomic' || slotConf.mode !== 'exclusive' || !/^[a-f0-9]{20}$/.test(nonce)))
     fail('CONFIG', 'Attempt volumes require an exclusive Datomic slot and a fresh nonce');
+  if (trial && (slotConf.mode !== 'exclusive' || !/^[a-z0-9]{16,32}$/.test(trial))) fail('CONFIG', 'An isolated volume requires an exclusive slot and a trial ID');
+  // [DX-ACT1] Why: an experiment can discard its own data without deleting another holder's retained volume. Rejected: a new slot name (would bypass the canonical slot lock and port).
+  if (trial && nonce) fail('CONFIG', 'A slot has only one attempt volume');
+  // [DX-THIN1] Why: an already acquired reservation must resolve its original volume on cleanup during an upgrade. Rejected: deriving an existing mount from the newer naming convention.
   return {
-    lane, slot, ...slotConf, laneConf, container, volume: nonce ? `${container}-${nonce}-data` : `${container}-data`,
+    lane, slot, ...slotConf, laneConf, container, volume: trial ? `${container}-data-${trial}` : nonce ? `${container}-${nonce}-data` : `${container}-data`,
     endpoint: laneConf.urlTemplate.replace('{port}', String(port)),
     lockDir: path.join(LOCKS, `${lane}-${slot}`),
     ownerFile: path.join(LOCKS, `${lane}-${slot}`, 'owner.json'),

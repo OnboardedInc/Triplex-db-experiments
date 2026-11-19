@@ -631,7 +631,7 @@ async function run() {
   const activation = releaseTarget
     ? new DeepActivation(rawDir, releaseTarget.people, runTag + ":" + releaseTarget.key, releaseTarget.first, nextRelease, releaseTarget, Number(opt("deep-evaluators") ?? 2))
     : activationOnly && !tenantSpec ? new DeepActivation(rawDir, rungSubjects, runTag, 0, nextRelease) : undefined;
-  const measureBurst = tenantSpec?.study === "interference" && tenantSpec.topology === "pooled";
+  const measureBurst = tenantSpec?.study === "interference";
   const meter = (activation || measureBurst) && config.composition !== "memory"
     ? new DeepCommitMeter("s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url")) : undefined;
   if (meter) observeNativeReceipt(meter.observe.bind(meter));

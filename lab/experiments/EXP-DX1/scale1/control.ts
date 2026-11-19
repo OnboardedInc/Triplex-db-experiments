@@ -178,12 +178,23 @@ async function collect(tag: string) {
     return (
       total +
       fs.statSync(path.join(otherDir, "summaries.tar.zst")).size +
-      fs.statSync(path.join(otherDir, "transfer.json")).size
+      fs.statSync(path.join(otherDir, "transfer.json")).size +
+      fs
+        .readdirSync(path.dirname(identity), { recursive: true, encoding: "utf8" })
+        .reduce((sum, f) => {
+          const stat = fs.lstatSync(path.join(path.dirname(identity), f));
+          return sum + (stat.isFile() ? stat.size : 0);
+        }, 0)
     );
   }, 0);
   // [DX-SCALE1] Why: the Mac's 500 MiB transfer budget covers all attempts and arms of this item. Rejected: downloading a raw archive when its compressed size happens to fit.
+  const unpacked = Number(sudo("du", "-sb", "--", root + "/" + tag + "/transfer").split(/\s/)[0]);
+  assert(Number.isSafeInteger(unpacked) && unpacked > 0);
   assert(
-    priorBytes + entry.summary.bytes + Buffer.byteLength(JSON.stringify(entry, null, 2)) <
+    priorBytes +
+      entry.summary.bytes +
+      unpacked +
+      Buffer.byteLength(JSON.stringify(entry, null, 2)) <
       500 * 1024 ** 2,
     "Item summary transfers would exceed 500 MiB",
   );

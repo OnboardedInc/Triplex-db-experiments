@@ -30,6 +30,7 @@ export type TenantWindow = {
 export const tenantTraceId = "deep-tenants/1";
 export function tenantWindows(s: TenantSpec, arm: string): TenantWindow[] {
   const list: TenantWindow[] = [];
+  if (s.study === "million" && arm === "seed") return list;
   let from = 0;
   const add = (
     name: string,
@@ -92,6 +93,8 @@ export function tenantPhases(
   }));
 }
 function perTenant(a: Account, s: TenantSpec, arm: string) {
+  // [DX-SCALE1] Why: a seed-only grant has no live offers or readers. Rejected: allocating a ten-account live trace when only the population and its native growth are measured.
+  if (s.study === "million" && arm === "seed") return [];
   const windows = tenantWindows(s, arm);
   const plain = makeDeepTrace(
     deepSeed(a.index),

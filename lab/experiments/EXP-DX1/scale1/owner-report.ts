@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import assert from "node:assert/strict";
 import { scopeReport } from "./scope-report.ts";
+import { functionalNote } from "./functional-note.ts";
 import { summaryFiles } from "./source.ts";
 import { createHash } from "node:crypto";
 import { Histogram } from "../../../bench/lib/hist.ts";
@@ -123,6 +124,9 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       });
       if (missed.length)
         incompleteReader = ` The first reader attempt routed all ${missed.reduce((n: number, p: any) => n + run.phaseProgress[p.idx].reads, 0).toLocaleString("en-US")} reads at ${missed.map((p: any) => p.name).join(", ")} through the gateway and failed replica coverage.`;
+      const diagnostic = "evidence/" + firstReader.tag + "-diagnostic.md";
+      if (incompleteReader && fs.existsSync(path.join(here, diagnostic)))
+        incompleteReader += " [Matched client and gateway timing](" + diagnostic + ")";
     }
   }
   const refused = stages.find((s) => s.terminal.service === "capacity-refused");
@@ -297,13 +301,13 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- `seed-image.ts` verifies the sealed PostgreSQL bytes, original scope, source, seed identity and original command receipts after restoration. `seed-anatomy.ts` binds serial SQL counts and adoption timestamps to the assigned source and slot. Missing observations stay unjudged.",
     "- The merged ACT1 collector checks the full native schedule and page coverage from this attempt, then compares the sealed seed hash, worker count, clone nonce, source and slot. The reader starts its live feed after every worker installs the same verified seed cut. The feed measures each witnessed source position immediately after its SQLite commit, including pages followed by an injected crash.",
     "",
-    "- `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file and physical database to its nonce, source, slot and account. Each scope stays live until every R2 completion marker agrees with that cohort.",
+    "- `deep-profile.ts` checks a fresh empty scope, acknowledged seed contents and IDs, population counts and frozen hashes. A seed-only grant checks the same population with an independently pinned empty offer schedule. The coordinator binds each ready file and physical database to its nonce, source, slot and account. The six-worker startup fixture requires a full canonical replica-to-gateway comparison on its own cut.",
     "- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The interference and small-account plans bind each scope’s business commands to a new frozen schedule. Their windows fix the sentinel’s offers and reader counts. After timed small-account traffic drains, `tenant-checks.ts` submits a tagged correction per account, loses its ACK and verifies the duplicate and original receipt against the durable tenant cursor.",
     "- `deep-activation.ts` checks the observed release, each page receipt and its changed bodies against the source cut, roster hashes and O-DOMAIN. `deep-commit-meter.ts` binds native transaction IDs, members, datoms and logical change rows to actual source replies. `measurements.ts` opens the new attempt’s receipt ledger, rehashes its bytes, validates its source, nonce and database, and recomputes the reported release and burst rates.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
-    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes every transferred summary and binds source, scope and arm before rendering. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
-    "- The replacement feed check observed every committed page before the injected post-checkpoint crash. Two fresh local tenant layouts matched all 2,025,863 reads and four post-window correction receipts. Data from these small fixtures establish functional coverage. The integrated Datomic package passed 408 tests and skipped 52 opt-in tests. [Functional evidence](evidence/part4-functional.sha256)",
+    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
+    "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
   );
