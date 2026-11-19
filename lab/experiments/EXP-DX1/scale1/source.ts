@@ -65,3 +65,23 @@ export function sourceInventory(repo: string) {
     ),
   };
 }
+
+// [DX-SCALE1] Why: BM1 writes FREE only after inventory, leases and child stacks drain. Rejected: accepting an intermediate queue status, a scheduled cutoff or an older inactive unit.
+export function bm1Released(status: string) {
+  const stamp = /^FREE (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)$/.exec(status.trim())?.[1];
+  if (!stamp) return false;
+  const time = Date.parse(stamp);
+  return (
+    Number.isFinite(time) &&
+    new Date(time).toISOString().replace(".000Z", "Z") === stamp &&
+    time <= Date.now()
+  );
+}
+export const priorUnits = ["triplex-bm1-*.service", "triplex-drv1-*.service"];
+export const activeUnitArgs = [
+  "list-units",
+  "--type=service",
+  "--state=activating,active,deactivating,reloading",
+  "--no-legend",
+  "--plain",
+];

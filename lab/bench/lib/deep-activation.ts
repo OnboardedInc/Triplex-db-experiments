@@ -160,6 +160,7 @@ export class DeepActivation {
       fd = fs.openSync(file, "wx"),
       sum = createHash("sha256");
     let publications = 0,
+      publicationPosition = cut.position,
       changed = 0;
     try {
       for (let n = 0; n < this.subjects; n += pageSize) {
@@ -185,7 +186,21 @@ export class DeepActivation {
           lines.push(JSON.stringify([i, hash(canonical(world)), hash(result.json)]) + "\n");
           return result.record;
         });
-        const ack = await publishChanged(observed, records, { frameSize: pageSize, inflight: 1 });
+        // [DX-SCALE1] Why: an unchanged work item still needs a newer durable guard. Rejected: prefiltering equal items, which previously discarded the decision for unchanged people.
+        const ack = await publishChanged(observed, records, {
+          layout: "guard-fact",
+          frameSize: pageSize,
+          inflight: 1,
+        });
+        for (const response of ack.responses)
+          if (response.committed) {
+            assert(
+              response.txId &&
+                Number.isSafeInteger(response.position) &&
+                response.position > cut.position,
+            );
+            publicationPosition = Math.max(publicationPosition, response.position);
+          }
         assert(ack.responses.every((r) => !r.retry));
         publications += ack.commits;
         changed += ack.changed;
@@ -212,6 +227,8 @@ export class DeepActivation {
       cut,
       subjects: this.subjects,
       publications,
+      publicationPosition,
+      layout: "guard-fact",
       changed,
       startedAt,
       endedAt,
@@ -222,11 +239,30 @@ export class DeepActivation {
   }
   async verify(
     comp: CompositionHandle,
-    r1: { outputSha256: string },
-    r2: { outputSha256: string; changed: number; mutations?: unknown },
+    r1: { outputSha256: string; publicationPosition: number; changed: number },
+    r2: { outputSha256: string; publicationPosition: number; changed: number; mutations?: unknown },
   ) {
     const sourceCuts = [this.cuts.get("R1")!, this.cuts.get("R2")!] as const,
       final = await comp.currentPosition();
+    const results = [r1, r2];
+    // [DX-SCALE1] Why: match both committed release facts and the outbox after each sweep to their actual immutable cuts. Rejected: validating R2 at the current head while silently accepting a missing R1 guard.
+    for (const [k, c] of sourceCuts.entries()) {
+      assert(
+        results[k]!.publicationPosition > c.position && results[k]!.publicationPosition <= final,
+      );
+      const entity = `deep-release:${this.run}`,
+        page = await comp.sweepPage([entity], { position: c.position, validAt: c.validAt });
+      assert.deepEqual(page.reportedBasis, { position: c.position, validAt: c.validAt });
+      const rows = page.rows.filter(
+        (row) => row.entityId === entity && row.attribute === ":release/hash",
+      );
+      assert.equal(rows.length, 1);
+      assert(
+        rows[0]!.id === c.assertion &&
+          rows[0]!.position === c.position &&
+          rows[0]!.value.value === [W0.R1.hash, W0.R2.hash][k],
+      );
+    }
     const logs = ["R1", "R2"].map((release, k) => {
       const bytes = fs.readFileSync(
         path.join(this.directory, `deep-${release}-evaluations.jsonl`),
@@ -266,12 +302,10 @@ export class DeepActivation {
         );
       }
     }
-    const oracle = new DomainOraclePool(
-      new URL("./w0-oracle-batch.py", import.meta.url).pathname,
-      2,
-    );
+    const oracle = new DomainOraclePool(new URL("./w0-oracle.py", import.meta.url).pathname, 2);
     let checked = 0,
-      changed = 0;
+      itemChanges = 0;
+    const changed = [0, 0];
     try {
       for (let n = 0; n < this.subjects; n += pageSize) {
         const group = Array.from(
@@ -288,11 +322,19 @@ export class DeepActivation {
           assert.equal(p.reportedBasis.validAt, sourceCuts[k]!.validAt);
           return indexRows(p.rows);
         });
-        const states = await comp.sweepPage(
-          group.map((i) => outboxEntity(W0.placementId(i))),
-          { position: final, validAt: sourceCuts[1].validAt },
+        const states = await Promise.all(
+          results.map((result, k) =>
+            comp.sweepPage(
+              group.map((i) => outboxEntity(W0.placementId(i))),
+              { position: result.publicationPosition, validAt: sourceCuts[k]!.validAt },
+            ),
+          ),
         );
-        assert.equal(states.reportedBasis?.position, final);
+        for (const [k, s] of states.entries())
+          assert.deepEqual(s.reportedBasis, {
+            position: results[k]!.publicationPosition,
+            validAt: sourceCuts[k]!.validAt,
+          });
         await Promise.all(
           group.map(async (i) => {
             const worlds = sourceCuts.map((c, k) => policyWorld(i, by[k]!.get(i) ?? [], c));
@@ -305,33 +347,57 @@ export class DeepActivation {
               tx: c.position,
               validTime: businessTime(c.validAt),
             }));
-            const expected = JSON.parse(
-              await oracle.call("activation-check", {
-                r1World: worlds[0],
-                world: worlds[1],
-                basisR1: bases[0],
-                basisR2: bases[1],
-              }),
-            );
-            const first = await oracle.call("evaluate", {
-              world: worlds[0],
-              release: "R1",
-              basis: bases[0],
-            });
-            assert.equal(JSON.parse(logs[0]![i]!)[2], hash(first));
-            assert.equal(JSON.parse(logs[1]![i]!)[2], hash(expected.R2));
-            const matches = states.rows.filter(
-              (r) => r.entityId === outboxEntity(W0.placementId(i)) && r.attribute === "p5/state",
-            );
-            assert(matches.length <= 1);
-            const state = matches.length
-              ? JSON.parse(matches[0]!.value.value)
-              : { items: [], pending: [], subjects: [] };
-            for (const a of [...state.items, ...state.pending])
-              if (typeof a.payload === "string") a.payload = JSON.parse(a.payload);
-            assert.equal(canonical(state), canonical(expected.state));
+            let previous: any = { items: [], pending: [], subjects: [] };
+            for (const [k, release] of ["R1", "R2"].entries()) {
+              const output = await oracle.call("evaluate", {
+                world: worlds[k],
+                release,
+                basis: bases[k],
+              });
+              const { basis, subject, workItems, release: releaseHash } = JSON.parse(output);
+              assert.equal(subject, W0.placementId(i));
+              assert.equal(JSON.parse(logs[k]![i]!)[2], hash(output));
+              const published = JSON.parse(
+                await oracle.call("publish", {
+                  state: previous,
+                  evaluations: [{ basis, subject, workItems, release: releaseHash }],
+                }),
+              );
+              assert(Array.isArray(published.deliveries) && published.state.subjects.length === 1);
+              const entity = outboxEntity(subject),
+                rows = states[k]!.rows.filter((row) => row.entityId === entity);
+              const single = (attribute: string) => {
+                const found = rows.filter((row) => row.attribute === attribute);
+                assert(
+                  found.length <= 1 &&
+                    found.every(
+                      (row) =>
+                        row.value.type === "string" &&
+                        row.position <= results[k]!.publicationPosition,
+                    ),
+                );
+                return found[0];
+              };
+              const body = single("p5/state"),
+                guard = single("p5/guard");
+              assert(guard && guard.position > sourceCuts[k]!.position);
+              const actual = body
+                ? JSON.parse(body.value.value)
+                : { items: [], pending: [], subjects: [] };
+              assert.equal(actual.subjects.length, 0);
+              actual.subjects = [JSON.parse(guard.value.value)];
+              for (const work of [...actual.items, ...actual.pending])
+                if (typeof work.payload === "string") work.payload = JSON.parse(work.payload);
+              assert.equal(canonical(actual), canonical(published.state));
+              changed[k]! += Number(canonical(published.state) !== canonical(previous));
+              if (k === 1)
+                itemChanges += Number(
+                  published.deliveries.length > 0 ||
+                    canonical(published.state.items) !== canonical(previous.items),
+                );
+              previous = published.state;
+            }
             checked++;
-            changed += Number(expected.r2Changed);
           }),
         );
         if (n % (pageSize * 32) === 0)
@@ -341,10 +407,12 @@ export class DeepActivation {
       oracle.close();
     }
     assert.equal(checked, this.subjects);
-    assert.equal(changed, r2.changed);
+    assert.deepEqual(changed, [r1.changed, r2.changed]);
     return {
       checked,
-      changed,
+      guardComparisons: checked * 2,
+      changed: changed[1],
+      itemChanges,
       finalPosition: final,
       domain: "O-DOMAIN",
       releaseHashes: [W0.R1.hash, W0.R2.hash],

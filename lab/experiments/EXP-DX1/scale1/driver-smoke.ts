@@ -54,6 +54,10 @@ const clients = [0, 1].map((account) => {
       "replica",
       "--replica-fallback-thread",
       "worker",
+      "--receipt-capture",
+      "replica-worker",
+      "--expected-state-retention",
+      "worker-journal",
       "--reader-basis-wire",
       "delta",
       "--reader-threads",
@@ -149,6 +153,7 @@ try {
     trace: r.deep.trace,
     commonStart: r.traceStartAbsMs,
     status: r.status,
+    receiptCapture: r.receiptCapture,
     activation: r.deep.activationOracle,
     activationTraffic: r.deep.activationTraffic,
     oracle: r.oracle,
@@ -162,6 +167,7 @@ try {
     for (const r of reports)
       assert(
         r.deep.activationOracle?.checked === 40 &&
+          r.deep.activationOracle.guardComparisons === 80 &&
           r.deep.r2.mutations?.length === 10 &&
           r.deep.activationTraffic?.accounts === 2 &&
           r.deep.activationTraffic.trafficHeldThrough >=
@@ -171,6 +177,9 @@ try {
     assert(
       r.traceStartAbsMs === start &&
         r.status === "DONE" &&
+        r.receiptCapture?.matched > 0 &&
+        r.receiptCapture.missing === 0 &&
+        r.receiptCapture.mismatches === 0 &&
         r.correctness.reads > 0 &&
         r.correctness.correct === r.correctness.reads &&
         r.oracle.status === "PASS" &&

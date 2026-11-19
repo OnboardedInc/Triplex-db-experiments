@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { catalog } from "./catalog.ts";
 import { updateReport } from "./owner-report.ts";
 import { fileHash } from "./measurements.ts";
+import { activeUnitArgs, bm1Released, priorUnits } from "./source.ts";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../.."),
   root = "/var/tmp/triplex-scale1",
@@ -65,7 +66,7 @@ function updateHandoff(line: string) {
 }
 function state() {
   const script =
-    'date -u; systemctl show triplex-drv1-wait triplex-bm1-d19-queue -p Id -p ActiveState -p Result; test ! -f /var/tmp/triplex-bm1/STATUS || cat /var/tmp/triplex-bm1/STATUS; systemctl list-units --all --no-pager "triplex-scale1-*"; test ! -d "$1" || find "$1" -mindepth 2 -maxdepth 2 -name STATUS.json -print -exec cat {} \\;';
+    'date -u; systemctl list-units --all --no-pager "triplex-drv1-*" "triplex-bm1-*"; test ! -f /var/tmp/triplex-bm1/STATUS || cat /var/tmp/triplex-bm1/STATUS; systemctl list-units --all --no-pager "triplex-scale1-*"; test ! -d "$1" || find "$1" -mindepth 2 -maxdepth 2 -name STATUS.json -print -exec cat {} \\;';
   return sudo("sh", "-c", script, "state", root);
 }
 function source() {
@@ -125,16 +126,8 @@ function source() {
 }
 function released() {
   const s = sudo("cat", "/var/tmp/triplex-bm1/STATUS");
-  assert(
-    /^item=queue state=(finished|finished-with-failures|setup-failed|archive-failed)\b/.test(s),
-    "BM1 still owns the server",
-  );
-  for (const unit of ["triplex-bm1-d19-queue", "triplex-drv1-wait"])
-    assert(
-      ["inactive", "failed"].includes(
-        remote("systemctl", "show", unit, "-p", "ActiveState", "--value"),
-      ),
-    );
+  assert(bm1Released(s), "BM1 has not published its timestamped FREE handoff");
+  assert.equal(remote("systemctl", ...activeUnitArgs, ...priorUnits), "");
   assert.equal(sudo("env", "DOCKER_HOST=unix:///var/run/docker.sock", "docker", "ps", "-q"), "");
 }
 async function collect(tag: string) {
@@ -235,14 +228,7 @@ async function campaign(label: string) {
     () => {
       if (!exists("/var/tmp/triplex-bm1/STATUS")) return false;
       const status = sudo("cat", "/var/tmp/triplex-bm1/STATUS");
-      return (
-        /^item=queue state=(finished|finished-with-failures|setup-failed|archive-failed)\b/.test(
-          status,
-        ) &&
-        ["inactive", "failed"].includes(
-          remote("systemctl", "show", "triplex-bm1-d19-queue", "-p", "ActiveState", "--value"),
-        )
-      );
+      return bm1Released(status) && remote("systemctl", ...activeUnitArgs, ...priorUnits) === "";
     },
     Date.now() + 24 * 3600000,
   );

@@ -16,7 +16,7 @@ import {
 } from "./measurements.ts";
 import { compressTraces } from "./archive.ts";
 import { resources } from "./resources.ts";
-import { stageReplay, sourceInventory } from "./source.ts";
+import { activeUnitArgs, bm1Released, priorUnits, stageReplay, sourceInventory } from "./source.ts";
 import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-profile.ts";
 
 export const items = [
@@ -59,9 +59,9 @@ const planCpus = {
   transactor: "0",
   postgres: "1",
   writerGateway: "2",
-  readerGateway: "4,5",
+  readerGateway: "4,8",
   senders: "3",
-  readers: "6,7,8,9,10,11",
+  readers: "5,6,7,9,10,11",
 };
 function physical() {
   assert(process.platform === "linux" && process.getuid?.() === 0);
@@ -78,31 +78,13 @@ function spawnResult(cmd: string, args: string[]) {
 function released() {
   const f = "/var/tmp/triplex-bm1/STATUS";
   assert(
-    fs.existsSync(f) &&
-      /^item=queue state=(finished|finished-with-failures|setup-failed|archive-failed)\b/.test(
-        fs.readFileSync(f, "utf8"),
-      ),
-    "BM1 has not published terminal handoff",
+    fs.existsSync(f) && bm1Released(fs.readFileSync(f, "utf8")),
+    "BM1 has not published its timestamped FREE handoff",
   );
-  for (const unit of ["triplex-drv1-wait", "triplex-bm1-d19-queue"]) {
-    assert(
-      ["inactive", "failed"].includes(
-        call("systemctl", ["show", unit, "-p", "ActiveState", "--value"]),
-      ),
-      `Prior unit ${unit} is active`,
-    );
-  }
   assert.equal(
-    call("systemctl", [
-      "list-units",
-      "--type=service",
-      "--state=activating,active,deactivating",
-      "--no-legend",
-      "--plain",
-      "triplex-scale1-*.service",
-    ]),
+    call("systemctl", [...activeUnitArgs, ...priorUnits, "triplex-scale1-*.service"]),
     "",
-    "A previous scale unit is still active",
+    "A previous bench unit is still active",
   );
   assert.equal(docker("ps", "-q"), "", "Another stack is running");
 }
@@ -432,7 +414,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     write(path.join(out, "identity.json"), identity);
     const args = [
       "-c",
-      "3,6,7,8,9,10,11",
+      [planCpus.senders, planCpus.readers].join(","),
       process.execPath,
       "--import",
       "tsx",
@@ -474,7 +456,9 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--seed-budget-s",
       String(attempt.ceiling),
       "--expected-state-retention",
-      mode === "seed" ? "heap" : "journal",
+      mode === "seed" ? "heap" : "worker-journal",
+      "--receipt-capture",
+      mode === "seed" ? "sender" : "replica-worker",
     ];
     if (mode === "zero") args.push("--zero-readers");
     if (mode === "activation") args.push("--deep-activation");

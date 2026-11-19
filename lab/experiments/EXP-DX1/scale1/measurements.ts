@@ -44,6 +44,8 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     expectedCount = deepPopulation(id.people).facts;
   assert.equal(report.deep.profile, DEEP_PROFILE);
   assert.equal(report.config.profile, "deep");
+  assert.equal(report.config.receiptCapture, "replica-worker");
+  assert.equal(report.config.expectedStateRetention, "worker-journal");
   assert.equal(report.deep.trace, plan.sha256);
   assert.equal(report.deep.seed.sha256, plan.populationSha256);
   assert.equal(report.deep.seed.facts, expectedCount);
@@ -141,6 +143,13 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
           values[name]!.push(ms);
       }
   }
+  if (
+    !report.receiptCapture ||
+    report.receiptCapture.missing !== 0 ||
+    report.receiptCapture.mismatches !== 0 ||
+    report.receiptCapture.matched !== committed
+  )
+    invalid.push("Worker receipt observations differ from committed primaries");
   if (expected.size || primaries !== committed || expired)
     invalid.push(
       `${expected.size} missing offers, ${primaries - committed} unsuccessful primaries, ${expired} expired`,
@@ -223,6 +232,8 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   if (
     id.arm === "activation" &&
     (report.deep.activationOracle?.checked !== id.people ||
+      report.deep.activationOracle.guardComparisons !== 2 * id.people ||
+      report.deep.r2?.layout !== "guard-fact" ||
       !report.deep.activationTraffic ||
       report.deep.activationTraffic.trafficHeldThrough <
         report.deep.activationTraffic.lastSweepEndedAt ||
