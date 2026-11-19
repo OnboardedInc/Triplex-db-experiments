@@ -56,6 +56,7 @@ export async function evaluateSelected(
     coverage: ReturnType<typeof import("./w0-selector.ts").selectRelease>;
     cpuSeconds: number;
     checkpointBytes: number;
+    cpuAssignment?: number;
   }>();
   const records: ReplicaEvaluation[] = [];
   void done.promise.catch(() => {});
@@ -108,6 +109,7 @@ export async function evaluateSelected(
       replicaBytes: view.bytes,
       subjectsPerSecond: (records.length * 1000) / evaluationWallMs,
       selector: {
+        cpuAssignment: terminal.cpuAssignment,
         buildMs: build.buildMs,
         indexBytes: build.indexBytes,
         sealSha256: build.sealSha256,
