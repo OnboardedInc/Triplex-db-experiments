@@ -96,7 +96,10 @@ ten deep scopes at once, one hundred small scopes at once, and a `thin` populati
 Priority 5's bar is read per account (100,000 subjects in 100 s for one account's activation); when one release goes to
 every account, accounts may finish one after another (Sam, 2026-11-19: "they don't all need to update in the same 100
 seconds. They can finish one after another"); and a correct
-activation never lets a late older result replace a newer decision (the per-subject or per-page guard is part of the
+activation never lets a late older result replace a newer decision. **Sam's target for activation since 2026-11-19 is
+under one second** ("I want it to be sub-1 second. That's what we're looking to do"); the 100 s bar stays as the
+floor until a design states which of these it delivers in under a second: new-release answers on every read, changed
+outputs durably stored, deliveries emitted, coverage proven. Meanwhile it never lets a late older result replace a newer decision (the per-subject or per-page guard is part of the
 measured work since 2026-11-19).
 
 ## 2. The fixed workload (from the paste)
