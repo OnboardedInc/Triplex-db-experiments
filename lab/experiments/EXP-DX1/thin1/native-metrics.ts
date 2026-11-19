@@ -44,12 +44,23 @@ async function managedMetrics(stack: Stack) {
     assert.equal(owner.mode, "exclusive");
     assert.equal(owner.createdAt, peer.createdAt);
     assert.equal(owner.container, stack.containers.find((c) => c.id === peer.id)?.name);
-    const response = await fetch(metricEndpoint(peer.metrics, "/metrics"), {
+    // [DX-INT1] Why: Postgres children and WAL files can disappear during a census. Retry an entire fresh observation while the workload is stopped at the phase boundary.
+    // Rejected: keeping old RSS or disk bytes to fill a missing observation.
+    let response:Response|undefined;
+    const errors:string[]=[];
+    for(let attempt=0;attempt<5;attempt++){
+      response=await fetch(metricEndpoint(peer.metrics, "/metrics"), {
       headers: { authorization: "Bearer " + secret },
       redirect: "error",
       signal: AbortSignal.timeout(30_000),
     });
-    assert(response.ok);
+      if(response.ok)break;
+      const detail=(await response.text()).replaceAll(secret,"[redacted]").slice(0,500);
+      errors.push(peer.role+" "+response.status+" "+detail);
+      if(response.status<500)throw Error("Metrics request refused: "+errors.join(" | "));
+      await new Promise(resolve=>setTimeout(resolve,250));
+    }
+    assert(response?.ok,"Fresh metrics unavailable: "+errors.join(" | "));
     const data = (await response.json()) as any;
     assert.equal(data.nonce, managed.nonce);
     assert.equal(data.containerId, peer.id);
@@ -58,6 +69,7 @@ async function managedMetrics(stack: Stack) {
     for (const [name, bytes] of Object.entries(data.rssBytes)) {
       assert(Number(bytes) > 0);
       roles[name] = { rssBytes: Number(bytes), threads: data.threads?.[name] };
+      if(data.threads) assert(Number.isSafeInteger(data.threads[name]) && data.threads[name]>0);
     }
     if (peer.role === "write") {
       disk = data.disk;

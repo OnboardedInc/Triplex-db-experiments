@@ -162,22 +162,24 @@ export class DeepActivation {
       sum = createHash("sha256");
     const records: W0.EvaluationRecord[] = [];
     const roster = Array.from({ length: this.subjects }, (_, i) => W0.placementId(i));
+    const projection = comp.name==='reach-touched' ? new (await import('./deep-projection-index.ts')).DeepProjectionIndex(path.join(this.directory,'deep-policy.sqlite'),hash(canonical([this.run,comp.scopeName,comp.backend.url,'deep/1',...['deep-activation','deep-projection-index','deep-world'].map(f=>hash(fs.readFileSync(new URL('./'+f+'.ts',import.meta.url),'utf8')))])),policyWorld) : undefined;
     try {
+      if(projection)await projection.catchUp(comp,{position:cut.position,validAt:cut.validAt});
       for (let n = 0; n < this.subjects; n += pageSize) {
         const group = Array.from(
           { length: Math.min(pageSize, this.subjects - n) },
           (_, j) => n + j,
         );
-        const page = await comp.sweepPage(group.map(ids.placement), {
-          position: cut.position,
-          validAt: cut.validAt,
-        });
-        assert.equal(page.reportedBasis?.position, cut.position);
-        assert.equal(page.reportedBasis?.validAt, cut.validAt);
-        const rows = indexRows(page.rows),
-          lines: string[] = [];
+        const basis={position:cut.position,validAt:cut.validAt};
+        let worlds: Map<number,W0.World>;
+        if(projection) worlds=await projection.worlds(comp,group,basis);
+        else {
+          const page=await comp.sweepPage(group.map(ids.placement),basis);assert.deepEqual(page.reportedBasis,basis);
+          const rows=indexRows(page.rows);worlds=new Map(group.map(i=>[i,policyWorld(i,rows.get(i)??[],cut)]));
+        }
+        const lines:string[]=[];
         for (const i of group) {
-          const world = policyWorld(i, rows.get(i) ?? [], cut),
+          const world = worlds.get(i)!,
             result = W0.sweepSubject(world, release, {
               tx: cut.position,
               validTime: businessTime(cut.validAt),
@@ -200,6 +202,7 @@ export class DeepActivation {
       }
       fs.fsyncSync(fd);
     } finally {
+      projection?.close();
       fs.closeSync(fd);
     }
     // [DX-SCALE1] Why: ACT1's page claims must bind a range to the entire independently ordered account roster, release and cut. Rejected: treating each 32-person gateway read as a separate complete release.

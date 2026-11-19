@@ -18,6 +18,7 @@ import { measurementWindow } from "../thin1/measure.ts";
 import { startReader, processSize } from "./reader.ts";
 import { Account, rootOf, digest, type Shape } from "./account.ts";
 import { activate, eadRelease } from "./activation.ts";
+import { smallPeople } from "../scale1/small-plan.ts";
 import { pageNamespace } from "../../../bench/lib/w0-page-outbox.ts";
 
 const [, mode, rung, dir] = process.argv.slice(2),
@@ -48,6 +49,8 @@ const paths = git(
   "--exclude-standard",
   "--",
   "lab/experiments/EXP-DX1/int1",
+  "lab/experiments/EXP-DX1/scale1/small-plan.ts",
+  "lab/experiments/EXP-DX1/scale1/small-pins.json",
   "lab/experiments/EXP-DX1/thin1",
   "lab/bench/lib",
   "packages/datomic/src/replica",
@@ -245,14 +248,19 @@ async function trial() {
     await open("thin", "thin", size);
     await open("deep", "deep", size);
   } else if (mode === "int1-isolated" || mode === "int1-pooled") {
-    for (let n = 0; n < 100; n++)
+    let first = 0;
+    for (let n = 0; n < 100; n++) {
+      const people = smallPeople(n);
       await open(
         "account" + n,
-        "thin",
-        size,
-        n * size,
+        "deep",
+        people,
+        first,
         mode === "int1-pooled" ? accounts[0] : undefined,
       );
+      first += people;
+    }
+    assert.equal(first, size);
   } else await open("population", mode === "int1-deep" ? "deep" : "thin", size);
   await phase("scopes-open");
   const seedStart = now();

@@ -13,15 +13,31 @@ import type {
 import { policyWorld } from "../../../bench/lib/deep-activation.ts";
 import { deepOwnFacts } from "../../../bench/lib/deep-world.ts";
 import { W0, V_W0, worldOf, type WorldRow } from "../../../bench/lib/w0-world.ts";
-import { ids, SEED_VALID_FROM } from "../../../bench/lib/world.ts";
+import { ids, SEED_VALID_FROM, subjectOf } from "../../../bench/lib/world.ts";
 import { intent, person } from "../thin1/population.ts";
 export const digest = (s: string | Buffer) => createHash("sha256").update(s).digest("hex");
 export type Shape = "thin" | "deep";
 export const policyId = (i: number) => W0.placementId(i);
 export const rootOf = (shape: Shape, i: number) =>
   shape === "deep" ? ids.placement(i) : policyId(i);
-export function seedFacts(shape: Shape, i: number) {
-  if (shape === "deep") return seedOps(deepOwnFacts(i));
+export function seedFacts(shape: Shape, i: number, first = 0) {
+  if (shape === "deep") {
+    const local = i - first,
+      rows = seedOps(deepOwnFacts(local));
+    if (!first) return rows;
+    // [DX-INT1] Why: both placements use the same account-local deep fixture, with disjoint public IDs when accounts share a physical scope.
+    // Rejected: changing field values and task distributions by generating later accounts at global ordinals.
+    const remap = (id: string) => {
+      assert.equal(subjectOf(id), local);
+      return id.replace(/:\d{8}/, ":" + String(i).padStart(8, "0"));
+    };
+    return rows.map((op) => ({
+      ...op,
+      entityId: remap(op.entityId),
+      value:
+        op.value.type === "ref" ? { ...op.value, value: remap(String(op.value.value)) } : op.value,
+    }));
+  }
   const to = (s: string) => s.replace(person(i), policyId(i));
   return intent(i).map((op) => ({
     ...op,
@@ -81,7 +97,7 @@ export class Account {
       : worldOf(policyId(i), rows);
   }
   async seed(members: number[]) {
-    const groups = members.map((i) => seedFacts(this.shape, i));
+    const groups = members.map((i) => seedFacts(this.shape, i, this.first));
     const { receipt, assigned, ops, tx } = await this.issue(groups.flat(), true);
     this.db.exec("BEGIN");
     try {
@@ -242,8 +258,8 @@ export class Account {
           roots: [
             ...new Set([
               rootOf(this.shape, i),
-              ...seedFacts(this.shape, i).map((x) => x.entityId),
-              ...seedFacts(this.shape, i)
+              ...seedFacts(this.shape, i, this.first).map((x) => x.entityId),
+              ...seedFacts(this.shape, i, this.first)
                 .filter((x) => x.value.type === "ref")
                 .map((x) => String(x.value.value)),
             ]),
@@ -293,7 +309,7 @@ export class Account {
   oracleWorld(i: number, p: number) {
     const r = this.db.prepare("SELECT born,dirty FROM people WHERE i=?").get(i)!;
     const b = Number(r.born);
-    const rows: WorldRow[] = seedFacts(this.shape, i).map((op, j) => ({
+    const rows: WorldRow[] = seedFacts(this.shape, i, this.first).map((op, j) => ({
       ...op,
       id: "intent-" + j,
       position: b,

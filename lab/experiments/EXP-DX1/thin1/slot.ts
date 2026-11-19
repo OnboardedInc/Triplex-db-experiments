@@ -83,7 +83,7 @@ const processTotal = (pid: number, metric: "rss" | "threads"): number => {
       value + (children ? children.split(/\s+/).reduce((sum, c) => sum + processTotal(Number(c), metric), 0) : 0)
     );
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return 0;
+    if (["ENOENT","ESRCH"].includes((error as NodeJS.ErrnoException).code ?? "")) return 0;
     throw error;
   }
 };
