@@ -202,7 +202,12 @@ async function runDriver(dir: string, arm: Arm, env: NodeJS.ProcessEnv, baseline
     active = undefined;
   }
 }
-async function runArm(dir: string, arm: Arm, baseline?: string) {
+export async function withStack<T>(
+  dir: string,
+  arm: Arm,
+  run: (env: NodeJS.ProcessEnv) => Promise<T>,
+  grouped?: boolean,
+) {
   const why = stopReason();
   assert(!why, why);
   assert(!stopping && !docker("ps", "-q"), "Bench is busy");
@@ -213,8 +218,7 @@ async function runArm(dir: string, arm: Arm, baseline?: string) {
   );
   assert.equal(call("git", ["rev-parse", "HEAD"]), arm.source);
   const slot = arm.slot,
-    engines = path.join(dir, "engines", slot),
-    raw = path.join(engines, "trace/raw");
+    engines = path.join(dir, "engines", slot);
   const resources = () => ({
     containers: docker("ps", "-a", "--format", "{{.Names}}")
       .split("\n")
@@ -267,6 +271,18 @@ async function runArm(dir: string, arm: Arm, baseline?: string) {
     DX_GW_WRITE_JAVA_OPTS: "-Xms256m -Xmx3g",
     DX_GW_READ_JAVA_OPTS: "-Xms256m -Xmx3g",
   };
+  if (grouped !== undefined)
+    Object.assign(env, {
+      DX_GROUP_COMMIT: grouped ? "1" : "0",
+      DX_GROUP_QUEUE_CLOCK: "1",
+      TRIPLEX_TRACE_LEVEL: "off",
+      TRIPLEX_TRACE_COMPONENTS: "",
+      TRIPLEX_TRACE_NODE: "0",
+      TRIPLEX_TRACE_GATEWAY: "0",
+      TRIPLEX_TRACE_TX_JFR: "0",
+      DX_TX_NATIVE_JFR: "0",
+      DX_NATIVE_SETTINGS_READBACK: "0",
+    });
   write(path.join(dir, "identity.json"), arm);
   const args = [
     stack("up"),
@@ -345,6 +361,11 @@ async function runArm(dir: string, arm: Arm, baseline?: string) {
         bytes: info.HostConfig.Memory,
       };
     });
+    if (grouped !== undefined) {
+      const writer = JSON.parse(docker("inspect", slot + "-gw-w"))[0];
+      assert(writer.Config.Env.includes("TX2_GROUP_COMMIT=" + Number(grouped)));
+      assert(writer.Config.Env.includes("TX2_GROUP_QUEUE_CLOCK=1"));
+    }
     env.TX2_ENGINE_CGROUPS = groups.join(",");
     env.TX2_ENGINE_CPUS = "5";
     write(path.join(dir, "placements.json"), { engines: roleInfo, sender: "3", workerCpus });
@@ -359,21 +380,7 @@ async function runArm(dir: string, arm: Arm, baseline?: string) {
     );
     assert.equal(durable, "on|on|on");
     write(path.join(dir, "durability.json"), { settings: durable });
-    await runDriver(dir, arm, env, baseline);
-    fs.writeFileSync(path.join(raw, ".finish"), "", { flag: "wx" });
-    const done = path.join(raw, "tx.jfr-complete.jsonl"),
-      deadline = Date.now() + 30 * 60000;
-    while (!fs.existsSync(done)) {
-      assert(
-        !stopping && Date.now() < deadline && !fs.existsSync(path.join(raw, "tx-jfr-error.txt")),
-        "JFR collection incomplete",
-      );
-      await sleep(1000);
-    }
-    // [DX-W1] Why: flush the writer before hashing and decoding its JSONL, and verify exact resource cleanup on any exit.
-    // Rejected: a successful child exit as evidence that the last receipts or metrics reached disk.
-    docker("stop", "--time", "30", slot + "-gw-w");
-    return await measure(dir, arm);
+    return await run(env);
   } finally {
     execFileSync("bash", [stack("down"), slot, "--volumes"], {
       cwd: repo,
@@ -387,6 +394,26 @@ async function runArm(dir: string, arm: Arm, baseline?: string) {
     assert.equal(fs.readFileSync(activeSlot, "utf8").trim(), slot);
     fs.unlinkSync(activeSlot);
   }
+}
+async function runArm(dir: string, arm: Arm, baseline?: string) {
+  const raw = path.join(dir, "engines", arm.slot, "trace/raw");
+  return withStack(dir, arm, async (env) => {
+    await runDriver(dir, arm, env, baseline);
+    fs.writeFileSync(path.join(raw, ".finish"), "", { flag: "wx" });
+    const done = path.join(raw, "tx.jfr-complete.jsonl"),
+      deadline = Date.now() + 30 * 60000;
+    while (!fs.existsSync(done)) {
+      assert(
+        !stopping && Date.now() < deadline && !fs.existsSync(path.join(raw, "tx-jfr-error.txt")),
+        "JFR collection incomplete",
+      );
+      await sleep(1000);
+    }
+    // [DX-W1] Why: flush the writer before hashing and decoding its JSONL, and verify exact resource cleanup on any exit.
+    // Rejected: a successful child exit as evidence that the last receipts or metrics reached disk.
+    docker("stop", "--time", "30", arm.slot + "-gw-w");
+    return await measure(dir, arm);
+  });
 }
 export async function campaign(root: string, source: string, batch: string) {
   assert.match(batch, /^[a-z][a-z0-9]{2,14}$/);

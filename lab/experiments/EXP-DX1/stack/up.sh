@@ -258,6 +258,12 @@ node "$repo/lab/trace/native-settings.mjs" "$attempt/config/vendor-logback.xml" 
 # Rejected: pulling a JDK image or exposing debugging ports on the Mac.
 trace_level=${TRIPLEX_TRACE_LEVEL:-off}
 trace_env=(-e "TRIPLEX_TRACE_LEVEL=$trace_level" -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SLOT=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git -C "$repo" rev-parse HEAD)" -e TRIPLEX_TRACE_DIR=/trace)
+# [DX-W1] Why: named gateway options give both measured arms the same native queue timestamp.
+# Rejected: changing the default image or enabling diagnostics for earlier studies.
+if [[ -n ${DX_GROUP_COMMIT:-} ]]; then
+  [[ $DX_GROUP_COMMIT =~ ^[01]$ && ${DX_GROUP_QUEUE_CLOCK:-0} =~ ^[01]$ ]] || exit 2
+  trace_env+=(-e "TX2_GROUP_COMMIT=$DX_GROUP_COMMIT" -e "TX2_GROUP_QUEUE_CLOCK=${DX_GROUP_QUEUE_CLOCK:-0}")
+fi
 trace_env+=(-e "TRIPLEX_NATIVE_SETTINGS_READBACK=$native_readback")
 trace_mount=(-v "$attempt/trace/raw:/trace")
 # [DX-T1-2] Why: isolate collectors with an inspected effective configuration. Rejected: inferring enabled collectors from a tag.
