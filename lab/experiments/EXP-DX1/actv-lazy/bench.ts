@@ -25,6 +25,7 @@ import { price, pct } from "./price.ts";
 import { readers } from "./traffic.ts";
 import { checkPush } from "./push-check.ts";
 import { observeFeed } from "./feed.ts";
+import { bytes as wireBytes } from "../import1/source.ts";
 const file = (p: string, x: unknown) =>
   writeFileSync(p, JSON.stringify(x, null, 2) + "\n", { flag: "wx" });
 type Stamp = { p: number; v: string };
@@ -48,6 +49,14 @@ const q = (a: number[]) => ({
   p99: pct(a, 0.99),
   max: pct(a, 1),
 });
+// [DX-ACT1] Why: frozen writer offers retain fractional milliseconds. Rejected: W0's integer-only domain codec (a correct traffic window would fail during evidence collection).
+export const offerDigest = (
+  writes: readonly { key: string; off: number; retried: boolean }[],
+  resends: readonly { key: string; off: number }[],
+) =>
+  sha256(
+    wireBytes([writes.map((r) => [r.key, r.off, r.retried]), resends.map((r) => [r.key, r.off])]),
+  );
 async function account(dir: string, n: number) {
   const s = await openStore("lazy-bench-" + randomUUID(), "act2-deep"),
     f = await seed(s, n),
@@ -580,12 +589,7 @@ async function window(
         ...reads,
         scope: acct.s.scope,
         seed: acct.f.sourceHash,
-        offers: sha256(
-          canonical([
-            w.map((r) => [r.key, r.off, r.retried]),
-            record.resends.map((r) => [r.key, r.off]),
-          ]),
-        ),
+        offers: offerDigest(w, record.resends),
         scheduled: w.length + record.resends.length,
         original: w.length,
         resends: record.resends.length,
