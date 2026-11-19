@@ -225,6 +225,20 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
       });
       disk(dir, "stage-" + i + ".json", stages.at(-1));
     }
+    let correctedAt: number | undefined;
+    function currentWorld(i: number) {
+      const world = f.world(i);
+      if (correctedAt === undefined) return world;
+      const tx = correctedAt;
+      return {
+        subject: world.subject,
+        facts: world.facts.map((row) =>
+          row.e === "jur:g0" && row.a === "stateMinWageCents"
+            ? { ...row, v: 1950, tx }
+            : row,
+        ),
+      };
+    }
     if (n === 1000 && format === "w0" && verifyAll) {
       const old = await s.head(),
         rows = await s.rows(["jur:g0"], old, valid),
@@ -239,22 +253,15 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
           validFrom: 1,
         },
       ]);
+      correctedAt = change.position;
       const h = createHash("sha256"),
         records = [];
       for (let lo = 0; lo < n; lo += 32) {
         const ids = f.roster.slice(lo, lo + 32),
           actual = await reader.readMany(ids, change.position, valid);
         for (const [j, id] of ids.entries()) {
-          const world = f.world(lo + j);
           const expected = await oracle.call("evaluate", {
-            world: {
-              subject: id,
-              facts: world.facts.map((f) =>
-                f.e === "jur:g0" && f.a === "stateMinWageCents"
-                  ? { ...f, v: 1950, tx: change.position }
-                  : f,
-              ),
-            },
+            world: currentWorld(lo + j),
             release: "R3",
             basis: { tx: change.position, validTime: valid },
           });
@@ -268,6 +275,7 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
         observed: W0.Delivery[] = [];
       await d.drain((r) => observed.push(...r.deliveries));
       assert.deepEqual(observed.map(wire), wanted.deliveries);
+      state = { ...wanted.state, pending: [] };
       disk(dir, "mutation.json", {
         tx: change.txId,
         cut: change.position,
@@ -281,9 +289,9 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
     if (format === "w0" && verifyAll) {
       await rx.drain(s);
       for (let sample = 0; sample < 8; sample++) {
-        const i = 1 + 10 * sample,
+        const i = 10 + 11 * sample,
           subject = f.roster[i]!,
-          world = f.world(i),
+          world = currentWorld(i),
           old = world.facts.find((x) => x.e === subject && x.a === "payRateCents")!;
         const start = performance.now(),
           native = (await s.rows([subject], await s.head(), valid)).find(
@@ -311,7 +319,7 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
           deltas.push(...r.deliveries);
         });
         const published = performance.now();
-        const delivered:number = await rx.drain(s),
+        const delivered: number = await rx.drain(s),
           end = performance.now();
         assert.equal(delivered, deltas.length);
         const b = { tx: source.position, validTime: valid };
