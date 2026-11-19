@@ -36,6 +36,9 @@ function slotBinding() {
   };
 }
 const slot = slotBinding();
+const engineCpu: ((container: string) => { usageUsec?: number } | null) | undefined = native
+  ? (await import(new URL("../../../bin/engine.mjs", import.meta.url).href)).cgroupOf
+  : undefined;
 if (action === "readback") {
   const expected = JSON.parse(readFileSync(join(root, "expected.json"), "utf8"));
   const comp = await open(scope!);
@@ -214,6 +217,7 @@ if (action === "readback") {
         return r;
       },
     };
+    const nativeBefore = engineCpu?.(slot.slot)?.usageUsec;
     const cpu = process.cpuUsage(),
       start = performance.now();
     const transport = await measureHttp(() =>
@@ -222,6 +226,7 @@ if (action === "readback") {
     const result = transport.value;
     const wallMs = performance.now() - start,
       usage = process.cpuUsage(cpu);
+    const nativeAfter = engineCpu?.(slot.slot)?.usageUsec;
     await store.close();
     const reopened = JSON.parse(
       execFileSync(
@@ -241,6 +246,10 @@ if (action === "readback") {
       wallMs,
       commitMs,
       cpuMs: (usage.user + usage.system) / 1000,
+      engineCpuMs:
+        nativeAfter !== undefined && nativeBefore !== undefined
+          ? (nativeAfter - nativeBefore) / 1000
+          : null,
       statePages,
       stateRows,
       headReads,
