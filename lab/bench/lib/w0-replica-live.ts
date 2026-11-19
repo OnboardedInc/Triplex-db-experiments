@@ -63,6 +63,7 @@ export async function startW0Live(o: {
   replica?: Replica;
   currentReads?: RecentReads;
   commandNamespace?: string;
+  entityWindow?: "baseline" | "sweep";
   readersDisabled?: boolean;
   writerInFlight?: number;
   writeActivity?: (pending: boolean) => void;
@@ -251,7 +252,7 @@ export async function startW0Live(o: {
       exec: async ({ event, scheduledAt }) => {
         try {
           const result = await scheduledContext.run(scheduledAt, () =>
-            applyW0Trace(namespaced, { ...event, atMs: event.atMs + o.offsetS * 1000 }),
+            applyW0Trace(namespaced, { ...event, atMs: event.atMs + o.offsetS * 1000 }, o.entityWindow),
           );
           const row = {
             kind: "write",

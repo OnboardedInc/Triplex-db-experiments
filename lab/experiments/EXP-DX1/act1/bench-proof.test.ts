@@ -12,10 +12,12 @@ test("bench collector binds stage, native schedules, source and complete coverag
   const source = "3".repeat(40),
     nonce = randomUUID(),
     arm = "narrow-selector" as const;
-  const request = { source, slot, arm, inputs: programInputs() };
+  const request = { source, slot, arm, inputs: programInputs(), seedSha256: sha("sealed snapshot") };
   mkdirSync("runs/act1-requests", { recursive: true });
   writeFileSync(requestPath(slot), JSON.stringify(request), { flag: "wx" });
   const put = (f: string, data: unknown) => writeFileSync(join(out, f), JSON.stringify(data));
+  const origin = { source, scope: "fixture", cloneSlot: slot, cloneNonce: nonce, seedSha256: request.seedSha256 };
+  put("seed-origin.json", origin);
   const file = "lab/world/W0/releases/R1.json",
     manifest = sha(readFileSync(file)) + "  " + file + "\n",
     build = sha(manifest);
@@ -97,6 +99,9 @@ test("bench collector binds stage, native schedules, source and complete coverag
   assert.equal(valid.wallSeconds, 19.845);
   assert.equal(valid.coldWallSeconds, 34.845);
   assert.equal(valid.fullWindowAnd500PerSide, true);
+  put("seed-origin.json", { ...origin, seedSha256: sha("other snapshot") });
+  assert.throws(() => checkSweep(out, request));
+  put("seed-origin.json", origin);
   for (const diff of [
     { nonce: randomUUID() },
     { roster: sha("short") },

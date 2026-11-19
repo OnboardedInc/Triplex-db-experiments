@@ -87,8 +87,8 @@ export function ratioSummary(rounds: readonly any[], seed: string) {
       })),
   };
 }
-export async function applyW0Trace(comp: CompositionHandle, event: TraceEvent) {
-  const mapped = mapW0Trace(event),
+export async function applyW0Trace(comp: CompositionHandle, event: TraceEvent, window?: "baseline" | "sweep") {
+  const mapped = mapW0Trace(event, window),
     old = await comp.transactionByCommand(mapped.commandId);
   if (!old.ok) throw new Error(old.tag);
   if (old.value) return { duplicate: true, receipt: old.value };

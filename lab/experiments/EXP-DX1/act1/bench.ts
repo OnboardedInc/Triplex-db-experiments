@@ -27,13 +27,12 @@ import {
 const mode = process.argv[2] ?? "--plan";
 const root = "/var/tmp/triplex-bm1",
   retained = join(root, "queue-20261118r/scale");
-const previous = join(retained, "state/evidence/DX-T1/tx2-dxt1-bm1-20261118d-activation");
 const rootCommand =
   "node --experimental-strip-types lab/experiments/EXP-DX1/act1/bench.ts --execute";
 if (mode === "--plan") {
   console.log(rootCommand);
   console.log(
-    "Three hours on the prepared BM1 server. Each fresh retained-seed clone runs the oracle restart schedules first, then 100,000 subjects with 256 live readers and the frozen writer trace.",
+    "Three hours on the prepared BM1 server after sealing a pristine seed. Each private clone runs the restart schedules first, then 100,000 subjects with 256 live readers and the frozen writer trace.",
   );
   console.log(
     "Run the EAD edit in full and with the selector, then run standard R1 to R2 in full. Capture read and commit p99s, counts, ratios, index construction and guarded publication. Preserve the scoped readback and clean each clone.",
@@ -43,10 +42,11 @@ if (mode === "--plan") {
   assert.equal(process.platform, "linux");
   assert.equal(process.getuid?.(), 0);
   assert.equal(spawnSync("systemd-detect-virt", { encoding: "utf8" }).stdout.trim(), "none");
-  assert.ok(
-    existsSync(join(previous, "activation-attempt.json")),
-    "BM1 retained seed provenance required",
-  );
+  const seedBatch = process.env.DX_BM1_PRISTINE_BATCH;
+  assert.ok(seedBatch && /^[a-z0-9]{1,12}$/.test(seedBatch), "DX_BM1_PRISTINE_BATCH must name the sealed seed");
+  const seedFile = join(root, "day-" + seedBatch, "pristine/seed.json");
+  assert.ok(existsSync(seedFile), "Verified pristine seed required");
+  const seedSha256 = sha(readFileSync(seedFile));
   const repo = process.cwd(),
     bm = resolve("lab/experiments/EXP-DX1/bm1/queue-day.sh");
   assert.ok(!/\s/.test(repo), "BM1 systemd stop hook needs the prepared checkout path");
@@ -167,7 +167,7 @@ if (mode === "--plan") {
       );
       if (interrupted || seconds < 300) throw Error("Bench budget exhausted before " + arm);
       const stop = stamp(Date.now() + seconds * 1000),
-        request = { slot, source, arm, inputs: programInputs() };
+        request = { slot, source, arm, inputs: programInputs(), seedSha256 };
       mkdirSync(day);
       mkdirSync(logs);
       mkdirSync(join(state, "locks"), { recursive: true });
@@ -182,7 +182,7 @@ if (mode === "--plan") {
         DX_BARE_METAL_ROOT: state,
         DX_IDLE_SENTINEL: "0",
         DX_STACK_EVIDENCE: evidence,
-        DX_ACTIVATION_RETAINED_RUN: previous,
+        DX_BM1_PRISTINE_BATCH: seedBatch,
         DX_P5_LIVE_READERS: "256",
         DX_ACTIVATION_POST_CAPTURE: "1",
         DX_ACTIVATION_VERIFY_PAGES: "4",
@@ -205,13 +205,14 @@ if (mode === "--plan") {
         "--execute",
         slot,
         "100000",
-        "retained",
+        "pristine",
         "live",
       ]);
       console.log(arm + " " + out);
       if (batchOwner) {
         const statusFile = join(root, ".STATUS-" + slot);
-        const next = armNames[ordinal + 1] ?? "pair";
+        const next = armNames[ordinal + 1] ?? process.env.DX_BM1_AFTER_GUARDED ?? "collect";
+        assert.ok([...armNames, "pair", "collect"].includes(next));
         writeFileSync(statusFile, "item=" + arm + " state=running since=" + stamp(Date.now()) + " next=" + next + "\n", {flag: "wx"});
         chmodSync(statusFile, 0o644);
         renameSync(statusFile, join(root, "STATUS"));
