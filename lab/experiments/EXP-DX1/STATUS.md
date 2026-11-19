@@ -2199,3 +2199,23 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   reader cores, then DX-ACT1's bench (correct activation at 100,000 with 256 live readers). DX-ACT1 resumed
   (`DX-ACT1-resume1.md`): a design in which an unchanged subject costs no write (scope-level cut guard, batched
   guards, or paged coverage records), and parallel evaluation.
+
+## 2026-11-19 18:40 UTC (13:40 local): second bench server for the scale campaign; three builders' first results
+
+- **Second server ordered 13:30 local** (same model, same site, $1.09 per hour) under Sam's "plan a second cloud
+  session ASAP whenever, we need this to be at scale ASAP". Reason: DX-SCALE1 was ready (deep population frozen at
+  160.45 facts per person; two 40-person accounts exact locally) but the first server is busy until about 20:30 with the
+  guarded activation and the judged v3 pair. DX-SCALE1 resumed on it (`DX-SCALE1-resume1.md`): one deep account at
+  10,000 and 100,000 people, ten scopes of 10,000, one hundred small scopes, ten scopes of 100,000.
+- DX-SCALE1 had exited because the agents' preamble said "never push" and a server needs a public ref; the preamble now
+  says agents push their own branch.
+- **DX-THIN1 (local, 100,000 thin people, busy Mac):** eager reader 4.61 kB resident per person plus 2.99 kB in the read
+  gateway; touched-only reader holds 3.09 MB of packed rows at 2% touched against 134.02 MB, resident 209 against
+  603 MiB; first historical read of a cold person 3.47 ms median, 38.55 ms p99; same 100,000 release records and
+  deliveries on both paths.
+- **DX-ACT1 part 2 (local):** page guards: one durable page update advances 256 subjects, an unchanged subject needs no
+  write of its own (391 page transactions per 100,000 subjects plus changed items); 1,000 subjects published in
+  0.326 s against 6.71 s with per-subject guards; all states match the oracle; projection 61 s per 100,000 subjects
+  with two evaluators. The server run (first server, in progress) decides.
+- Production account mix recorded privately (259 live accounts; 12 wide accounts hold 13.3 of 13.8 million people;
+  the deepest account has about a third of all tasks).
