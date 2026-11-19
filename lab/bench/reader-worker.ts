@@ -396,7 +396,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     comp = await openComposition(cfg.composition, cfg.lane, cfg.scope);
     if (stopping) { await comp.close(); return; }
     await replicaReady;
-    port.postMessage({ type: "ready" });
+    port.postMessage({ type: "ready", memory:process.memoryUsage() });
   } catch (error: any) {
     clearInterval(flush);
     loopDelay.disable();

@@ -99,9 +99,11 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   const duration =
     id.arm === "activation"
       ? report.writer.offeredUntilTraceS
-      : mix
-        ? interferenceSeconds
-        : V3_OFFER_SECONDS;
+      : small
+        ? smallSeconds
+        : mix
+          ? interferenceSeconds
+          : V3_OFFER_SECONDS;
   assert(Number.isFinite(duration) && duration > 0);
   const expected = new Map(
     plan.events.filter((e) => e.atMs < duration * 1000).map((e) => [`${e.seq}/${e.resend}`, e]),
@@ -280,7 +282,13 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     id.arm === "activation" &&
     (report.deep.activationOracle?.checked !== id.people ||
       report.deep.activationOracle.guardComparisons !== 2 * id.people ||
-      report.deep.r2?.layout !== "guard-fact" ||
+      report.deep.r2?.layout !== "page-cut" ||
+      [report.deep.r1, report.deep.r2].some(
+        (a) =>
+          a?.coverage?.size !== id.people ||
+          a.coverage.pages !== Math.ceil(id.people / 256) ||
+          a.publications !== a.coverage.pages,
+      ) ||
       !report.deep.activationTraffic ||
       report.deep.activationTraffic.trafficHeldThrough <
         report.deep.activationTraffic.lastSweepEndedAt ||
@@ -517,7 +525,8 @@ export function cohort(
       commit: commit(all.all!),
       arm: first.id.arm,
       scopeCount: scopes.length,
-      peoplePerScope: first.id.people,
+      peoplePerScope: first.id.arm === "small" ? null : first.id.people,
+      peopleByScope: scopes.map((s) => s.id.people),
       commonWindow: {
         from: first.interval.from,
         to: Math.min(...scopes.map((s) => s.interval.to)),

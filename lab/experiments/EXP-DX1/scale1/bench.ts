@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 import { deepPopulation } from "../../../bench/lib/deep-world.ts";
+import { smallPeople, smallRung } from "./small-plan.ts";
 import { deepSeed } from "../../../bench/lib/deep-trace.ts";
 import {
   cohort,
@@ -135,12 +136,17 @@ export function capacity(
   },
   arm = "reader",
 ) {
-  const facts = deepPopulation(people).facts,
+  const small = arm === "small",
+    facts = small
+      ? (90 * deepPopulation(100).facts + 10 * deepPopulation(2000).facts) / 100
+      : deepPopulation(people).facts,
     scale = facts / (observation?.facts ?? 1_604_464);
   // [DX-SCALE1] Why: one shared engine allocation plus N separate senders, replicas and lossless spills must fit. Rejected: multiplying the whole stack by ten or treating installed NVMe capacity as free space.
   const diskPerFact = observation ? observation.allocatedBytes / observation.facts : 1200;
   const db = Math.ceil(diskPerFact * facts * scopes * 1.35),
-    spillPer = Math.ceil(Math.max(2 * GiB, (observation?.spillBytes ?? 16 * GiB) * 1.35));
+    spillPer = small
+      ? Math.ceil(0.4 * GiB)
+      : Math.ceil(Math.max(2 * GiB, (observation?.spillBytes ?? 16 * GiB) * 1.35));
   const shared = Math.max(8 * GiB, (observation?.sharedPeakBytes ?? 14 * GiB) * 1.15),
     seedPer = Math.max(
       512 * 1024 ** 2,
@@ -370,6 +376,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   const spec = items[item - 1]!;
   const dir = path.join(root, tag),
     attempt = get(path.join(dir, "attempt.json"));
+  const small = mode === "small";
   const prefix = attempt.slot,
     source = call("git", ["rev-parse", "HEAD"]);
   assert.equal(source, attempt.source);
@@ -418,7 +425,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--cpus-gw-write",
       planCpus.writerGateway,
       "--cpus-gw-read",
-      planCpus.readerGateway.split(",")[0]!,
+      planCpus.readerGateway,
       "--pg-memory",
       "6g",
       "--tx-memory",
@@ -432,8 +439,6 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     ],
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
-  // [DX-SCALE1] Why: the shared startup helper accepts guest CPU indices 0–7. Apply the full native cpuset before opening any databases. Rejected: shifting BM1’s physical read gateway or measuring startup placement as steady state.
-  docker("update", "--cpuset-cpus", planCpus.readerGateway, prefix + "-gw-r");
   const engines = placement(prefix),
     before = snapshot(prefix);
   for (const [role, cpus] of Object.entries({
@@ -445,6 +450,15 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     assert.equal(engines[role].cpus, cpus);
   write(path.join(dir, "placement.json"), engines);
   write(path.join(dir, "disk-before.json"), before);
+  const binding = { source, slot: prefix, nonce: attempt.nonce };
+  if (small) {
+    status(dir, "measuring empty database opens");
+    const { openSmallScopes } = await import("./small-host.ts");
+    if (!(await openSmallScopes(dir, binding, engines, () => snapshot(prefix)))) {
+      status(dir, "database open limit observed");
+      return;
+    }
+  }
   const raw: string[] = [],
     pids: number[] = [],
     exit: (number | null)[] = [];
@@ -463,7 +477,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     exit.push(null);
     const identity: DeepIdentity = {
       account: i,
-      people: spec.people,
+      people: small ? smallPeople(i) : spec.people,
       source,
       slot: prefix,
       nonce: attempt.nonce,
@@ -484,7 +498,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--profile",
       "deep",
       "--rung",
-      spec.people === 10000 ? "deep-10k" : "deep-100k",
+      small ? smallRung(i) : spec.people === 10000 ? "deep-10k" : "deep-100k",
       "--output",
       path.join(out, "ns-report.json"),
       "--oracle-root",
@@ -500,13 +514,13 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--read-path",
       "replica",
       "--reader-threads",
-      "6",
+      small && i !== 0 ? "1" : "6",
       "--seed-batch-facts",
       "2000",
       "--replica-history-mib",
-      "192",
+      small ? "8" : "192",
       "--replica-world-cache-mib",
-      "32",
+      small ? "4" : "32",
       "--replica-fallback-thread",
       "worker",
       "--reader-basis-wire",
@@ -518,6 +532,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--receipt-capture",
       mode === "seed" ? "sender" : "replica-worker",
     ];
+    if (small)
+      args.push("--deep-small-scopes", "--oracle-rate", "0.15", "--reader-entity-cache-mib", "8");
     if (mode === "zero") args.push("--zero-readers");
     if (mode === "activation") args.push("--deep-activation");
     if (mode === "interference") args.push("--deep-interference");
@@ -528,8 +544,11 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         path.join(repo, "runs", "DX-SCALE1", refs, `s${i}`, "ns-writes.jsonl"),
       );
     // [DX-SCALE1] Why: the sentinel must have the same per-isolate heap in its one- and ten-account arms. Rejected: shrinking only the loaded account and attributing its extra GC to neighbor traffic.
-    const heapMiB =
-      mode === "seed"
+    const heapMiB = small
+      ? i === 0
+        ? 1536
+        : 768
+      : mode === "seed"
         ? Math.min(
             6144,
             Math.floor(((attempt.clientBudget / budget.seedParallelism) * 0.75) / 1024 ** 2),
@@ -540,7 +559,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     write(path.join(out, "client-limits.json"), {
       heapMiB,
       sharedCgroupBytes: attempt.clientBudget,
-      readerWorkers: 6,
+      readerWorkers: small && i !== 0 ? 1 : 6,
       cpus: planCpus,
     });
     const child = spawn("taskset", args, {
@@ -548,6 +567,9 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       stdio: ["ignore", fd, fd],
       env: {
         ...env,
+        ...(mode === "activation"
+          ? { TX2_W0_OUTBOX_NAMESPACE: "page-v1~deep-" + attempt.nonce + "-s" + i }
+          : {}),
         TRIPLEX_TRACE_DIR: path.join(out, "trace"),
         TRIPLEX_DATOMIC_LAYOUT: "lean",
         DATOMIC_URL: `http://${engines["gw-w"].address}:8080`,
@@ -578,8 +600,13 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   };
   const launchWaiting = () => {
     const cap = mode === "seed" ? budget.seedParallelism : spec.scopes;
-    while (raw.length < scheduledScopes && exit.filter((e) => e === null).length < cap)
-      launchClient(raw.length);
+    const loading = () =>
+      small
+        ? raw.filter(
+            (r, i) => exit[i] === null && !fs.existsSync(path.join(r, "seed-observed.json")),
+          ).length
+        : exit.filter((e) => e === null).length;
+    while (raw.length < scheduledScopes && loading() < (small ? 4 : cap)) launchClient(raw.length);
   };
   launchWaiting();
   let commonStart = 0,
@@ -661,6 +688,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       if (
         !commonStart &&
         mode !== "seed" &&
+        raw.length === scheduledScopes &&
         raw.every((_, i) => fs.existsSync(path.join(barrier, `s${i}.ready.json`)))
       ) {
         assert(disk);
@@ -671,7 +699,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
           assert.deepEqual({ ...ready, identity }, get(path.join(raw[i]!, "seed-observed.json")));
           scopes[`s${i}`] = ready;
         }
-        commonStart = Date.now() + 60000;
+        commonStart = Date.now() + (small ? 180000 : 60000);
         write(path.join(barrier, "go.tmp"), {
           nonce: attempt.nonce,
           slot: prefix,
@@ -779,6 +807,10 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     previous = control.values;
     baselineInvalid = control.summary.invalid.join(", ") || null;
   }
+  if (small) {
+    status(dir, "measuring recovery across 100 databases");
+    await (await import("./small-host.ts")).recoverSmallScopes(dir, binding, engines);
+  }
   const measured = cohort(found, spec.scopes, previous, baselineInvalid);
   const spillBytes = Math.max(
     ...found.map((s) =>
@@ -820,7 +852,7 @@ function partial(dir: string, tag: string) {
   const raw = path.join(repo, "runs", "DX-SCALE1", tag),
     scopes = [];
   if (fs.existsSync(raw))
-    for (const name of fs.readdirSync(raw).filter((n) => /^s[0-9]$/.test(n))) {
+    for (const name of fs.readdirSync(raw).filter((n) => /^s(?:0|[1-9][0-9]?)$/.test(n))) {
       const r = path.join(raw, name);
       const file = path.join(r, "ns-report.json"),
         log = path.join(r, "driver.log"),
@@ -907,6 +939,10 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     "anatomy.json",
     "sizing.json",
     "resource-summary.json",
+    "database-limit.json",
+    "open-scopes.json",
+    "restart.json",
+    "pre-restart.json",
     "partial.json",
     "STATUS.json",
   ]) {
@@ -915,8 +951,9 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
   }
   fs.copyFileSync(path.join(dir, "cleanup/inventory.json"), path.join(compact, "cleanup.json"));
   const sources: string[] = [];
+  if (fs.existsSync(path.join(dir, "scope-footprint"))) sources.push("-C", dir, "scope-footprint");
   if (fs.existsSync(raw)) {
-    for (const name of fs.readdirSync(raw).filter((n) => /^s[0-9]$/.test(n))) {
+    for (const name of fs.readdirSync(raw).filter((n) => /^s(?:0|[1-9][0-9]?)$/.test(n))) {
       const sub = path.join(compact, name);
       fs.mkdirSync(sub);
       for (const file of [
@@ -938,7 +975,7 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
   const seals: Record<string, Awaited<ReturnType<typeof compressTraces>>> = {};
   try {
     if (fs.existsSync(raw))
-      for (const name of fs.readdirSync(raw).filter((n) => /^s[0-9]$/.test(n)))
+      for (const name of fs.readdirSync(raw).filter((n) => /^s(?:0|[1-9][0-9]?)$/.test(n)))
         seals[name] = await compressTraces(path.join(raw, name, "trace"));
     seals.engines = await compressTraces(path.join(engineEvidence, "raw"));
     if (sources.length) {
@@ -1030,9 +1067,9 @@ async function main() {
       tag &&
       /^[a-z][a-z0-9-]{2,40}$/.test(tag) &&
       mode &&
-      ["zero", "reader", "activation", "seed", "interference"].includes(mode),
+      ["zero", "reader", "activation", "seed", "interference", "small"].includes(mode),
   );
-  assert(item !== 4, "The heterogeneous 100-scope item uses its own population runner");
+  assert((item === 4) === (mode === "small"), "Item 4 measures the heterogeneous small population");
   assert(mode !== "interference" || item === 3);
   const prefix = `tx2-dxscale1-${tag}`,
     dir = path.join(root, tag),

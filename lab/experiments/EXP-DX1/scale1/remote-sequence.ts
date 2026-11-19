@@ -16,6 +16,9 @@ type Step = {
   source: string;
   baseline?: string;
   sizing?: string;
+  sizingChoices?: string[];
+  when?: { tag: string; action: "live" | "seed-only" };
+  retryOf?: string;
   bootstrapCache?: string;
 };
 type Plan = { label: string; steps: Step[]; final: boolean };
@@ -54,7 +57,14 @@ function identified(step: Step) {
       sha(step.source),
   );
   assert(["zero", "reader", "activation", "seed", "interference", "small"].includes(step.mode));
-  for (const tag of [step.baseline, step.sizing]) if (tag) assert(safe(tag));
+  for (const tag of [
+    step.baseline,
+    step.sizing,
+    step.retryOf,
+    step.when?.tag,
+    ...(step.sizingChoices ?? []),
+  ])
+    if (tag) assert(safe(tag));
   if (step.bootstrapCache) assert(sha(step.bootstrapCache));
 }
 async function prepare(step: Step) {
@@ -127,9 +137,11 @@ async function run(step: Step) {
     if (prior)
       assert(prior.source === step.source && prior.mode === "zero" && prior.item === step.item);
     const runtime = path.join(build, "repository");
+    const sizing =
+      step.sizing ?? step.sizingChoices?.find((t) => exists(path.join(root, t, "sizing.json")));
     const opts = [
       ...(step.baseline ? ["--baseline", step.baseline] : []),
-      ...(step.sizing ? ["--sizing", step.sizing] : []),
+      ...(sizing ? ["--sizing", sizing] : []),
     ];
     const args = [
       "--experimental-strip-types",
@@ -181,11 +193,34 @@ async function run(step: Step) {
     step.mode === "seed"
       ? exists(path.join(base, "seed-summary.json")) || exists(path.join(base, "seed-disk.json"))
       : t.scopeReports > 0 || exists(path.join(base, "database-limit.json"));
+  const summary = exists(path.join(base, "summary.json"))
+    ? read(path.join(base, "summary.json"))
+    : null;
+  const correctness = summary
+    ? summary.source === a.source &&
+      summary.nonce === a.nonce &&
+      summary.scopeCount === a.spec.scopes &&
+      summary.perScope.every((s: any) => {
+        const o = s.observations;
+        return (
+          o.correctness.reads > 0 &&
+          o.correctness.reads === o.correctness.correct &&
+          !o.correctness.errors &&
+          !o.correctness.violations &&
+          o.oracle.status === "PASS" &&
+          o.oracle.receiptConsistency === "PASS" &&
+          o.missing === 0 &&
+          o.committed === o.primaries
+        );
+      })
+    : true;
   return {
-    success: t.service === "success" && verified,
+    success: t.service === "success" && verified && correctness,
     capacity: t.service === "capacity-refused",
     service: t.service,
     scopeReports: t.scopeReports,
+    correctness,
+    invalid: summary?.invalid,
   };
 }
 // [DX-SCALE1] Why: each phase must survive a disconnected Mac, release its systemd cgroup and retain an independently identifiable terminal attempt. Rejected: a background SSH stream or proceeding after a second failed experiment.
@@ -212,10 +247,35 @@ async function main() {
     }
     if (failures.length) {
       const last = ledger.at(-1);
-      if (!last.success && !last.capacity && step.item !== last.item) {
+      if (
+        !last.success &&
+        !last.capacity &&
+        (step.item !== last.item || step.mode !== last.mode || step.retryOf !== last.tag)
+      ) {
         state({ stage: "first-failure-needs-retry", item: last.item, ledger });
         process.exitCode = 1;
         return;
+      }
+    }
+    if (step.when) {
+      const ref = read(path.join(root, step.when.tag, "terminal.json")),
+        attempt = read(path.join(root, step.when.tag, "attempt.json"));
+      assert(ref.nonce === attempt.nonce && ref.cleanup && attempt.item === step.item);
+      const eligible =
+        step.when.action === "live"
+          ? ref.scopeReports > 0 && ref.service === "success"
+          : ref.service === "capacity-refused" && attempt.capacity.fitsSeed;
+      if (!eligible) {
+        ledger.push({
+          ...step,
+          success: true,
+          skipped: true,
+          reason: "condition on " + step.when.tag + " was not met",
+          at: clock(),
+        });
+        fs.writeFileSync(ledgerFile + ".new", JSON.stringify(ledger, null, 2) + "\n");
+        fs.renameSync(ledgerFile + ".new", ledgerFile);
+        continue;
       }
     }
     let outcome;

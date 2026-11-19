@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import assert from "node:assert/strict";
+import { scopeReport } from "./scope-report.ts";
 import { summaryFiles } from "./source.ts";
 import { createHash } from "node:crypto";
 import { Histogram } from "../../../bench/lib/hist.ts";
@@ -20,6 +21,9 @@ type Stage = {
   size: any;
   resources: any;
   partial: any;
+  open: any;
+  restart: any;
+  limit: any;
 };
 const load = (dir: string, f: string) =>
   fs.existsSync(path.join(dir, f)) ? JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")) : null;
@@ -70,6 +74,9 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         size: load(dir, "sizing.json"),
         resources: load(dir, "resource-summary.json"),
         partial: load(dir, "partial.json"),
+        open: load(dir, "open-scopes.json"),
+        restart: load(dir, "restart.json"),
+        limit: load(dir, "database-limit.json"),
       });
     }
   stages.sort((a, b) => a.attempt.at - b.attempt.at);
@@ -100,6 +107,10 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       (n: number, s: any) => n + (s.progress?.subjects ?? s.people ?? 0),
       0,
     ) ?? 0;
+  const detail = scopeReport(
+    file,
+    [recent(3, "interference"), recent(4, "small")].filter((s): s is Stage => !!s),
+  );
   const lines = [
     "# DX-SCALE1 · deep accounts",
     "",
@@ -241,14 +252,15 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "",
     "- `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file and physical database to its nonce, source, slot and account. Each scope stays live until every R2 completion marker agrees with that cohort.",
     "- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The interference and small-account plans bind each scope’s business commands to a new frozen schedule. Their windows set the sentinel’s offers and reader counts before measuring.",
-    "- `deep-activation.ts` binds each fresh release receipt to its cut, hashes each evaluated world/output, re-reads the same cut, and checks each release fact, output, outbox and durable per-person guard against the independent evaluate and publish operations at both cuts.",
+    "- `deep-activation.ts` binds each fresh release receipt to its cut, hashes each evaluated world/output, re-reads the same cut, and checks both release facts and the immutable roster, range, commit and receipt hash for each 256-person page. The independent decoder compares every person’s fenced state with O-DOMAIN at both cuts.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
-    "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals.",
+    "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
     "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes every transferred summary and binds source, scope and arm before rendering. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
     "- The functional tests use new databases and real public receipts. They check replacement semantics, duplicate receipts, independent replay and publication. The first slot lacked the current write endpoint. A later terminal read timed out on a closed replica. The retry used the source-matched gateway and a live source read at each recorded position.",
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
   );
+  if (detail) lines.splice(8, 0, detail + " [Scope measurements](SCOPES.md)");
   if (lines.length > 60) {
     const start = lines.indexOf("**Population and checks**"),
       end = lines.findIndex((l) => l.startsWith("Local Datomic functional checks"));

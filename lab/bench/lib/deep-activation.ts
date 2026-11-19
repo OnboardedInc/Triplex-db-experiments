@@ -5,7 +5,8 @@ import { createHash } from "node:crypto";
 import type { CompositionHandle, Receipt } from "./composition.ts";
 import { DomainOraclePool } from "./w0-gates.ts";
 import { publishChanged } from "./w0-replica.ts";
-import { outboxEntity } from "./w0-outbox.ts";
+import { pageAddress, pageRoots } from "./w0-page-outbox.ts";
+import { pageWireState } from "./w0-page-check.ts";
 import { W0, canonical, type WorldRow, type PositionBasis } from "./w0-world.ts";
 import { ids, subjectOf } from "./world.ts";
 import { taskId } from "./deep-world.ts";
@@ -159,9 +160,8 @@ export class DeepActivation {
     const file = path.join(this.directory, `deep-${name}-evaluations.jsonl`),
       fd = fs.openSync(file, "wx"),
       sum = createHash("sha256");
-    let publications = 0,
-      publicationPosition = cut.position,
-      changed = 0;
+    const records: W0.EvaluationRecord[] = [];
+    const roster = Array.from({ length: this.subjects }, (_, i) => W0.placementId(i));
     try {
       for (let n = 0; n < this.subjects; n += pageSize) {
         const group = Array.from(
@@ -176,7 +176,7 @@ export class DeepActivation {
         assert.equal(page.reportedBasis?.validAt, cut.validAt);
         const rows = indexRows(page.rows),
           lines: string[] = [];
-        const records = group.map((i) => {
+        for (const i of group) {
           const world = policyWorld(i, rows.get(i) ?? [], cut),
             result = W0.sweepSubject(world, release, {
               tx: cut.position,
@@ -184,26 +184,8 @@ export class DeepActivation {
             });
           if ("error" in result) throw Error(`${name} evaluation failed: ${result.error}`);
           lines.push(JSON.stringify([i, hash(canonical(world)), hash(result.json)]) + "\n");
-          return result.record;
-        });
-        // [DX-SCALE1] Why: an unchanged work item still needs a newer durable guard. Rejected: prefiltering equal items, which previously discarded the decision for unchanged people.
-        const ack = await publishChanged(observed, records, {
-          layout: "guard-fact",
-          frameSize: pageSize,
-          inflight: 1,
-        });
-        for (const response of ack.responses)
-          if (response.committed) {
-            assert(
-              response.txId &&
-                Number.isSafeInteger(response.position) &&
-                response.position > cut.position,
-            );
-            publicationPosition = Math.max(publicationPosition, response.position);
-          }
-        assert(ack.responses.every((r) => !r.retry));
-        publications += ack.commits;
-        changed += ack.changed;
+          records.push(result.record);
+        }
         const bytes = lines.join("");
         fs.writeFileSync(fd, bytes);
         sum.update(bytes);
@@ -220,16 +202,70 @@ export class DeepActivation {
     } finally {
       fs.closeSync(fd);
     }
+    // [DX-SCALE1] Why: ACT1's page claims must bind a range to the entire independently ordered account roster, release and cut. Rejected: treating each 32-person gateway read as a separate complete release.
+    const result = await publishChanged(observed, records, {
+      layout: "page-cut",
+      frameSize: 256,
+      inflight: 1,
+      roster: {
+        subjects: roster,
+        release: release.hash,
+        basis: { tx: BigInt(cut.position), validTime: businessTime(cut.validAt) },
+      },
+    });
+    const coverage = result.coverage;
+    assert(
+      coverage &&
+        coverage.size === this.subjects &&
+        coverage.pages === Math.ceil(this.subjects / 256) &&
+        coverage.roster === hash(canonical(roster)),
+    );
+    assert(
+      result.commits === coverage.pages &&
+        result.responses.every(
+          (r) =>
+            r.committed &&
+            !r.retry &&
+            r.txId &&
+            Number.isSafeInteger(r.position) &&
+            r.position > cut.position,
+        ),
+    );
+    const claims = result.responses.map((r) => {
+      assert(r.committed && "span" in r && r.span, "Missing immutable page range");
+      return {
+        span: r.span,
+        input: r.input,
+        txId: r.txId,
+        position: r.position,
+        members: r.members,
+      };
+    });
+    assert.equal(
+      hash(
+        canonical(
+          claims.map((r) => hash(canonical([r.span, r.input, r.txId, r.position, r.members]))),
+        ),
+      ),
+      coverage.receipts,
+    );
+    fs.writeFileSync(
+      path.join(this.directory, "deep-" + name + "-page-claims.json"),
+      canonical(claims),
+      { flag: "wx" },
+    );
+    const publicationPosition = Math.max(...claims.map((r) => Number(r.position)));
     const endedAt = Date.now(),
       mutations = await mutation;
     return {
       release: release.hash,
       cut,
       subjects: this.subjects,
-      publications,
+      publications: result.commits,
       publicationPosition,
-      layout: "guard-fact",
-      changed,
+      layout: "page-cut",
+      coverage,
+      changed: result.changed,
       startedAt,
       endedAt,
       wallMs: endedAt - startedAt,
@@ -324,10 +360,10 @@ export class DeepActivation {
         });
         const states = await Promise.all(
           results.map((result, k) =>
-            comp.sweepPage(
-              group.map((i) => outboxEntity(W0.placementId(i))),
-              { position: result.publicationPosition, validAt: sourceCuts[k]!.validAt },
-            ),
+            comp.sweepPage(pageRoots(group.map((i) => W0.placementId(i))), {
+              position: result.publicationPosition,
+              validAt: sourceCuts[k]!.validAt,
+            }),
           ),
         );
         for (const [k, s] of states.entries())
@@ -364,30 +400,15 @@ export class DeepActivation {
                 }),
               );
               assert(Array.isArray(published.deliveries) && published.state.subjects.length === 1);
-              const entity = outboxEntity(subject),
-                rows = states[k]!.rows.filter((row) => row.entityId === entity);
-              const single = (attribute: string) => {
-                const found = rows.filter((row) => row.attribute === attribute);
-                assert(
-                  found.length <= 1 &&
-                    found.every(
-                      (row) =>
-                        row.value.type === "string" &&
-                        row.position <= results[k]!.publicationPosition,
-                    ),
-                );
-                return found[0];
-              };
-              const body = single("p5/state"),
-                guard = single("p5/guard");
-              assert(guard && guard.position > sourceCuts[k]!.position);
-              const actual = body
-                ? JSON.parse(body.value.value)
-                : { items: [], pending: [], subjects: [] };
-              assert.equal(actual.subjects.length, 0);
-              actual.subjects = [JSON.parse(guard.value.value)];
-              for (const work of [...actual.items, ...actual.pending])
-                if (typeof work.payload === "string") work.payload = JSON.parse(work.payload);
+              const address = pageAddress(subject),
+                rows = states[k]!.rows;
+              const markers = rows.filter((row) => row.entityId === address.page);
+              assert(
+                markers.length === 1 &&
+                  markers[0]!.position > sourceCuts[k]!.position &&
+                  markers[0]!.position <= results[k]!.publicationPosition,
+              );
+              const actual = pageWireState(rows, subject);
               assert.equal(canonical(actual), canonical(published.state));
               changed[k]! += Number(canonical(published.state) !== canonical(previous));
               if (k === 1)

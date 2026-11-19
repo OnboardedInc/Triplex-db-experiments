@@ -206,7 +206,24 @@ async function collect(tag: string) {
   assert.equal(terminal.cleanup, true);
   if (entry.raw) {
     assert.equal(entry.raw.name, "raw.tar.zst");
-    if (entry.raw.bytes < 2 * 1024 ** 3) await transfer(entry.raw);
+    const available = fs.statfsSync(dir);
+    const copy =
+      entry.raw.bytes < 2 * 1024 ** 3 &&
+      available.bsize * available.bavail > entry.raw.bytes + 5 * 1024 ** 3;
+    if (copy) await transfer(entry.raw);
+    fs.writeFileSync(
+      path.join(dir, "raw-location.json"),
+      JSON.stringify({
+        source: entry.source,
+        nonce: entry.nonce,
+        serverTag: tag,
+        archive: entry.raw,
+        copyOnMac: copy,
+        reason: copy
+          ? "size and free space verified"
+          : "retained compressed on the server under the transfer budget",
+      }) + "\n",
+    );
   }
   fs.writeFileSync(path.join(dir, "transfer.json"), JSON.stringify(entry, null, 2) + "\n");
   await catalog(evidence, dir, terminal, entry, repo);
@@ -361,7 +378,7 @@ else if (action === "prepare") {
     opts = args.slice(3);
   assert(
     /^[1-5]$/.test(args[0] ?? "") &&
-      ["zero", "reader", "activation", "seed", "interference"].includes(args[2] ?? ""),
+      ["zero", "reader", "activation", "seed", "interference", "small"].includes(args[2] ?? ""),
   );
   for (let i = 0; i < opts.length; i += 2) {
     assert(["--sizing", "--baseline"].includes(opts[i]!));

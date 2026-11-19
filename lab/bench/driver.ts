@@ -299,6 +299,10 @@ const log = (line: string) => {
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
 const BENCH_FILES = ["lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
+if(smallOnly||interferenceOnly) {
+  const names=smallOnly?["small-plan.ts","small-pins.json"]:["interference.ts","interference-pins.json"];
+  BENCH_FILES.push(...names.map(n=>"lab/experiments/EXP-DX1/scale1/"+n));
+}
 
 const report: Record<string, any> = latencyReceipt({
   writerHeap,
@@ -687,7 +691,7 @@ async function run() {
     worker.on("exit", (code: number) => life.exit(code));
     const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (life.acknowledgeStop(), workerHttpCounts.push({ worker: w, counts: m.httpCounts }), readerFinalDiagnostics.push({ worker: w, diagnostics: m.diagnostics }), resolve())));
     await new Promise<void>((resolve, reject) => {
-      worker.on("message", (m: any) => { if (m.type === "ready") resolve(); else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
+      worker.on("message", (m: any) => { if (m.type === "ready") { if(smallOnly)(report.deep.readerIsolates??=[]).push({worker:w,heapUsed:m.memory.heapUsed,heapTotal:m.memory.heapTotal,external:m.memory.external,at:Date.now()}); resolve(); } else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
       worker.on("error", reject);
     });
     unsubscribe?.();
