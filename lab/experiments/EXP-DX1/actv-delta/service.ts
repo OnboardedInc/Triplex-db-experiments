@@ -75,9 +75,9 @@ export function writerPipeline(source: CompositionHandle) {
 
 export type Decision = { output: W0.Output; seq: number; releaseSeq: number; position: number };
 export class CurrentDecisions {
-  private readonly a: Account;
+  private readonly a: Pick<Account, "db" | "decisionsAt">;
   private queued: { id: string; ok: (d: Decision) => void; fail: (e: unknown) => void }[] = [];
-  constructor(account: Account) {
+  constructor(account: Pick<Account, "db" | "decisionsAt">) {
     this.a = account;
   }
   read(id: string): Promise<Decision> {
@@ -100,39 +100,6 @@ export class CurrentDecisions {
       }
     } catch (e) {
       for (const g of group) g.fail(e);
-    }
-  }
-}
-
-// [DX-ACT2] Why: each account admits a single command's preparation at a time; a release waits only for the already admitted save. Other gateways still meet the durable fence. Rejected: letting 55 prepared saves race for the same predecessor.
-export class AccountWriter {
-  private releases: (() => Promise<void>)[] = [];
-  private saves: (() => Promise<void>)[] = [];
-  private busy = false;
-  submit<T>(kind: "release" | "save", work: (waitMs: number) => Promise<T>): Promise<T> {
-    const at = performance.now();
-    return new Promise((ok, fail) => {
-      (kind === "release" ? this.releases : this.saves).push(async () => {
-        try {
-          ok(await work(performance.now() - at));
-        } catch (e) {
-          fail(e);
-        }
-      });
-      void this.take();
-    });
-  }
-  private async take() {
-    if (this.busy) return;
-    this.busy = true;
-    try {
-      for (;;) {
-        const next = this.releases.shift() ?? this.saves.shift();
-        if (!next) break;
-        await next();
-      }
-    } finally {
-      this.busy = false;
     }
   }
 }

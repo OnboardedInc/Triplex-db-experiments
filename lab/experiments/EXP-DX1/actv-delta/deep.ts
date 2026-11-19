@@ -174,6 +174,29 @@ export class DeepAccount {
     }
     throw Error("deep command contention limit");
   }
+  async decisionsAt(ids: string[], p: number) {
+    const debt = await this.debt(p);
+    if (!debt) return this.control.decisionsAt(ids, p);
+    const prior = (await this.control.head(debt.value.sourceBefore)).value,
+      basis = { tx: debt.position, validTime: iso(debt.value.validAt) },
+      release = resolve(prior.activations, basis.validTime);
+    const out = new Map<string, W0.Output>();
+    for (let i = 0; i < ids.length; i += 32) {
+      const group = ids.slice(i, i + 32).map((s) => {
+        const n = Number(s.slice(4));
+        assert.equal(W0.placementId(n), s);
+        return n;
+      });
+      for (const w of await readDeepWorlds(
+        this.comp,
+        group,
+        { position: p, validAt: debt.value.validAt },
+        this.db.account,
+      ))
+        out.set(w.subject, evaluate(w, release, basis));
+    }
+    return { head: { ...prior, seq: prior.seq + 1, basis }, out };
+  }
   async readAt(subject: string, p: number) {
     const debt = await this.debt(p);
     if (!debt) return this.control.readAt(subject, p);

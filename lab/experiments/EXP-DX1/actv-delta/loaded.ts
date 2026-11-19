@@ -10,7 +10,7 @@ import { Account } from "./account.ts";
 import { hash, Objects } from "./store.ts";
 import { emptyAudit, event, query, type Scheduled } from "./bench-rung.ts";
 import { seedFacts } from "./model.ts";
-import { CurrentDecisions, AccountWriter, writerPipeline, type Admission } from "./service.ts";
+import { CurrentDecisions, writerPipeline, type Admission } from "./service.ts";
 import { Window } from "./v3.ts";
 import { measured } from "./measure-lock.ts";
 
@@ -125,7 +125,7 @@ export async function loadedOffers(
   binding: Evidence,
 ) {
   assert(total >= 3 && total % 3 === 0 && arms.length > 0);
-  const admissions = arms.map(() => new AccountWriter());
+
   const samples: Trial[] = [],
     workers = Array(64).fill(0) as number[],
     reads = new Map<number, Map<string, Point>>(),
@@ -164,9 +164,7 @@ export async function loadedOffers(
           if (failure) return;
           active++;
           try {
-            await admissions[index]!.submit("save", () =>
-              arm.write(ordinal, (n, x) => timeline.add(n, x)),
-            );
+            await arm.write(ordinal, (n, x) => timeline.add(n, x));
             stats.done++;
             if (publishing) stats.during++;
           } catch (e) {
@@ -224,8 +222,11 @@ export async function loadedOffers(
             performance.now() - start < 2100)
         )
           await delay(5);
+        const cadence = performance.now();
         for (let i = group; i < Math.min(total, group + 75); i++) {
           if (failure) throw failure;
+          const wait = cadence + (i - group) * 1000 - performance.now();
+          if (wait > 0) await delay(wait);
           const name = "load-" + i,
             k = i % 3,
             at = performance.now(),
@@ -234,12 +235,9 @@ export async function loadedOffers(
             pos = pipeline.length;
           publishing = true;
           // [DX-ACT2] Why: decode the offered document after the clock starts; the only preexisting data is the ordinary parameter index. Rejected: staging or certifying the next release before Publish.
-          let accountQueue = 0;
+          const accountQueue = 0;
           const offered = W0.compileRelease(JSON.parse(JSON.stringify(releases[k]!.doc))),
-            r = await admissions[0]!.submit("release", (wait) => {
-              accountQueue = wait;
-              return a.seal(name, offered);
-            }),
+            r = await a.seal(name, offered),
             ack = performance.now();
           publishing = false;
           assert(!r.retry, "new offer was already published");
@@ -392,7 +390,7 @@ export async function run(dir: string, attempt: any) {
       const subject = W0.placementId(n + i);
       return {
         subject,
-        facts: w.facts.map((f) => ({
+        facts: w.facts.map((f): W0.Fact => ({
           ...f,
           e: f.e.replace(w.subject, subject),
           v: typeof f.v === "string" ? f.v.replace(w.subject, subject) : f.v,

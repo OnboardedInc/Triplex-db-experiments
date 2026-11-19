@@ -103,6 +103,7 @@ export class Objects {
     return {
       position: result.value.position,
       txId: result.value.txId,
+      ids: new Map(result.value.triples.map((t) => [t.entityId, t.id])),
       assertions: assertions.size,
       operations: ops.length,
       bytes: Buffer.byteLength(JSON.stringify(ops)),
