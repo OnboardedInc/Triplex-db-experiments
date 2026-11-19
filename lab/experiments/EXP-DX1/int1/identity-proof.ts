@@ -50,7 +50,8 @@ export async function proveEvictedIdentities(attempt: string) {
           newIds: [id],
           claims: [],
           rows: [
-            { ...row, recorded_position: position + 1, recorded_at: Date.now(), tx_id: command },
+            { ...row, recorded_position: position + 1, recorded_at: Date.now() + 10000,
+              tx_id: "_tx/" + String(position + 1).padStart(26, "0") },
           ],
         }),
         (error: unknown) =>

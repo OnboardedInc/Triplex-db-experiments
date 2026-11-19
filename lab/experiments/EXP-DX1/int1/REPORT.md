@@ -4,7 +4,7 @@ At 10,000 thin people the corresponding charges were 5.4 MB and 15.0 MB.
 After 2% of deep people were touched, the read gateway held another 9.2 MB of parsed rows and revisions and 0.27 MB of ID entries.
 An unopened reader’s resident memory stayed flat during both imports. The previous 225 and 1,718 bytes per person were measured with a reader already following writes.
 Among 40 deep first reads, the 34-task person took 243 ms. With the bounded reader it took 81 ms. The first read opening a new scope took 1,194 ms before and 357 ms after.
-The four requested branches are integrated. The following table is the earlier full-population comparison while the bounded gateway runs are in progress.
+On the full 10,000-person deep run, cold p99 was 49.61 ms. Read and write gateway growth fell to 1,500 and 4,587 bytes per untouched person, still over 64.
 Capacity for ten deep accounts together or one 4.5-million-person account remains unmeasured.
 
 | Role | Bytes per untouched thin person | Bytes per untouched deep person | Bytes per idle scope | Threads per idle scope |
@@ -16,6 +16,7 @@ Capacity for ten deep accounts together or one 4.5-million-person account remain
 | PostgreSQL | 10,353.5 | 147,617.8 | 1,122,889 | 0.14 |
 | Driver apparatus | 190.3 | 8,357.9 | 224,695 | 0 |
 
+The table above records the original matched runs. With the bounded profile at 10,000 deep, reader / read gateway / write gateway / transactor / PostgreSQL / driver added −3,923 / 1,500 / 4,587 / 39,795 / 149,427 / 6,287 bytes per untouched person. The negative reader value records released resident pages. All 100 cold reads made one actual HTTP request. The slower of the two 34-task reads took 54.67 ms. All 800 read comparisons, 200 read-your-own-write checks and 1,328 Python entity queries matched.
 Signed RSS differences hold the admitted people fixed. PostgreSQL process RSS can count shared pages more than once. Each arm used one fresh 3.5 GiB engine slot with two independent gateway JVMs. The reader and driver ran in separate guest processes. Idle cost is the difference between one and eight unqueried scopes divided by seven.
 The thin/deep imports contained 800,000/1,604,464 seed facts and added 2,922/120,759 bytes in PostgreSQL relations and indexes per cold person. Native read comparisons numbered 16,000/800, read-your-own-write checks 2,000/200 and Python entity queries 64/420.
 Thin first-read p50/p99 was 1.73/7.55 ms across 1,000 people. Deep p50/p99 was 18.55/103.08 ms across 100. The deterministic deep first-read sample had 117–288 facts and omitted the largest 34-task class. The deep arm retained percentiles. The wide arm also retained every latency sample for independent recomputation. Mac timings are diagnostic.
