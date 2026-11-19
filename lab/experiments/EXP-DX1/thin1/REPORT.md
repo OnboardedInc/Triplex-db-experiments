@@ -18,3 +18,14 @@ North star priorities are pinned reads, current values and activation. All timin
 | Read gateway / write gateway / transactor object cache / Postgres disk | unmeasured | unmeasured | unmeasured | unmeasured |
 
 Post-GC RSS is relative to the same fresh process before seeding. Component rows overlap. Seed denominators are 80k/800k facts, followed by one new fact for each of 200/2,000 active people. The driver model ran separately. Each subject has three owned answers.
+
+Use the Datomic `reach-touched` composition with the gateway read path. Its per-reader replica starts on first demand and follows journal identities. Historical or unproven cuts use exact gateway reads. Activation has explicit `full` and `dependencies` modes.
+W0 R2 orders a background check for a person with no status. A certified import still publishes that person's exact record. The shortcut saves the world read.
+
+**Evidence audit**
+
+- Component profiles use fresh processes, exclusive output files, guest boot IDs and exact source/build hashes. RSS includes runtime overhead.
+- Reader admission checks page content, reachable closure, cut and live generation. Only contiguous applied transactions can advance history. Pinned-read checks compare every public field to command intent and assigned receipt IDs.
+- Feed and roster replay compare every transaction to the intent log and its content hash, scoped to the fresh run, slot and inputs. SQLite commits the certificate, first possible change and cursor together.
+- Activation checks release bytes, pinned cut, ordered roster count/hash and returned subject. The driver hashes actual publication records after closing them. O-DOMAIN reconstructs the original worlds independently.
+- Frozen O-REPLAY uses a new case/output directory and checks the case digest, receipt consistency and results for every requested entity, including empty roots. Completed results require both oracle checks.

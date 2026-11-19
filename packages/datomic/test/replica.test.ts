@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { SharedIndex } from "../src/replica/sharedIndex.js";
+import { RecentReads } from "../src/replica/RecentReads.js";
 import { Replica, ReplicaSnapshot, type ReplicaSource } from "../src/replica/Replica.js";
 import type { SweepRow } from "../src/sweepRows.js";
 import { encodeRowText } from "../src/rowText.js";
@@ -93,6 +94,44 @@ function fixture() {
   };
 }
 describe("packed replica", () => {
+  it("admits one exact closure, leaves cold journals on disk and never backdates admission", async () => {
+    const f = fixture(), page = vi.spyOn(f.source, "page");
+    const owner = new Replica(f.source, 0, "touched"), index = new RecentReads();
+    owner.onUpdate = delta => index.apply(delta);
+    owner.onAdmission = (p, entries) => index.admit(p, entries);
+    await owner.bootstrap([], 1);
+    f.commit([["cold", [row("cold", "c", { type: "string", value: "cold" }, 2)]]]);
+    await owner.followOnce();
+    expect(owner.bytes).toBe(0);
+    expect(page).not.toHaveBeenCalled();
+    expect(await owner.admit("root", 2, 0)).toBe(true);
+    expect(index.pull("root", { recordedPosition: 1, validAt: 0 })).toBeUndefined();
+    const atTwo = index.pull("root", { recordedPosition: 2, validAt: 0 });
+    expect(atTwo?.rows).toHaveLength(2);
+    f.commit([["shared", [row("shared", "s3", { type: "string", value: "after" }, 3)]], ["cold", []]]);
+    await owner.followOnce();
+    expect(page.mock.calls.map(([roots]) => roots)).toEqual([["root"], ["shared"]]);
+    expect(index.pull("root", { recordedPosition: 2, validAt: 0 })).toEqual(atTwo);
+    expect(index.pull("root", { recordedPosition: 3, validAt: 0 })!.rows.at(-1)!.id).toBe("s3");
+    expect(index.pull("cold", { recordedPosition: 3, validAt: 0 })).toBeUndefined();
+  });
+  it("discards a late first-touch response after a commit, same-position rebuild or stop", async () => {
+    for (const transition of ["commit", "rebuild", "stop"]) {
+      const f = fixture(), owner = new Replica(f.source, 0, "touched");
+      await owner.bootstrap([], 1);
+      const page = f.source.page.bind(f.source);
+      let release!: () => void;
+      const pending = new Promise<void>(r => { release = r; });
+      f.source.page = async (...args) => { const reply = await page(...args); await pending; return reply; };
+      const admission = owner.admit("root", 1, 0);
+      if (transition === "commit") { f.commit([["root", []]]); await owner.followOnce(); }
+      if (transition === "rebuild") await owner.bootstrap([], 1);
+      if (transition === "stop") await owner.stop();
+      release();
+      expect(await admission).toBe(false);
+      expect(owner.bytes).toBe(0);
+    }
+  });
   it("compacts only the overlay into shared layers without changing bytes, enumeration or held cuts", async () => {
     const f = fixture(),
       owner = new Replica(f.source, 0);

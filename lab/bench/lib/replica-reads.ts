@@ -205,8 +205,8 @@ export class ReplicaReader {
     traceWork("replica.apply-delta", () => this.index.apply(delta), { position:delta.position, valid:delta.valid }, true);
     this.notify();
   }
-  notify() {
-    this.worlds.releasePromotions();
+  notify(reset = false) {
+    if (reset) this.worlds.clear(); else this.worlds.releasePromotions();
     for (const waiter of this.waiters)
       if (this.index.position >= waiter.p || !this.index.valid) waiter.done();
   }
@@ -385,13 +385,16 @@ export class ReplicaReadHost {
   private constructor(
     source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean,
     clockEnds: Map<number, number>, timings: Map<number, { availableAt?: number; receivedAt: number }>,
-    compactBootstrap: boolean,
+    compactBootstrap: boolean, population: "all" | "touched",
   ) {
     this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks);
     this.times = times;
     this.clockEnds = clockEnds;
     this.timings = timings;
-    this.replica = new api.Replica(source, Date.now());
+    this.replica = new api.Replica(source, Date.now(), population);
+    if (population === "touched") this.replica.onAdmission = (p: number, entries: ReadonlyMap<string, PackedEntity>) => {
+      this.index.admit(p, new Map(Array.from(entries, ([id, entity]) => [id, prepareEntity(id, entity)])));
+    };
     let initialized = false;
     this.replica.onUpdate = (update: any) => {
       // [DX-R3] Why: only open()'s initial cut has a gateway time/position proof; recovery images have none.
@@ -413,7 +416,7 @@ export class ReplicaReadHost {
       };
       traceSync("replica.apply-delta", () => this.index.apply(delta,
         slabs ? (id: string, entity: PackedEntity) => prepareEntity(id, entity, slabs) : undefined));
-      if (delta.valid) this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now(), ...timings.get(delta.position) });
+      if (delta.valid && population === "all") this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now(), ...timings.get(delta.position) });
       timings.delete(delta.position);
       times.delete(update.position);
       clockEnds.delete(update.position);
@@ -429,32 +432,45 @@ export class ReplicaReadHost {
     historyBytes = 64 * 1024 ** 2,
     peer: "reader" | "writer" = "reader",
     endpoint = replicaEndpoint(process.env, peer),
+    population: "all" | "touched" = "all",
+    firstReadRoot?: string,
   ) {
     const client = new api.DatomicClient(
       endpoint,
     );
+    try {
     const db = await initializeReplicaClient(client,
       runtimeApi.DatabaseScope.test(scope),
       process.env.TRIPLEX_DATOMIC_LAYOUT ?? "lean",
     );
-    const timed = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), feed === "inline" ? Date.now() : undefined);
+    const timed = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), population === "all" && feed === "inline" ? Date.now() : undefined);
     const { times, clockEnds, timings } = timed;
     const source = boundedReplicaFeed(timed.source);
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
-    times.set(initial.position, await bootstrapSourceClock(source, times, clockEnds, roots[0]!, initial.position));
+    const witness = population === "touched" ? firstReadRoot : roots[0];
+    if (witness !== undefined && initial.position > 0)
+      times.set(initial.position, await bootstrapSourceClock(source, times, clockEnds, witness, initial.position));
     // [DX-R3] Why: admission follows the actual source capability, never the requested creation policy.
     // Rejected: treating old sealed seeds as strict when reopening them cannot change their contract.
     const capability = await client.request("POST", `/v2/db/${db.db}/reach-many`, {
       replicaCapability: true, basis: { recordedPosition: initial.position, validAt: Date.now() },
     });
+    if (population === "touched") {
+      if (capability.supported !== true) throw new api.Replica.UnsupportedScope(capability.declined ?? "missing-capability");
+      source.capability = api.Replica.source(client, db.db, () => comp.currentPosition(), Date.now()).capability!;
+    }
     const host = new ReplicaReadHost(source, times, historyBytes,
       capability.supported === true && capability.strictRecordClocks === true, clockEnds, timings,
-      roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1");
+      roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
     host.replica.start();
     return host;
+    } catch (error) {
+      client.close();
+      throw error;
+    }
   }
   subscribe(listener: (delta: ReadDelta) => void) {
     this.listeners.add(listener);
