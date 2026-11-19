@@ -170,7 +170,10 @@ async function collect(tag: string) {
     const local = path.join(dir, spec.name);
     if (!fs.existsSync(local)) {
       const stat = fs.statfsSync(dir);
-      assert(stat.bavail * stat.bsize > spec.bytes + 5 * 1024 ** 3);
+      // [DX-SCALE1] Why: small terminal summaries must remain collectible as other Mac jobs consume disk. Rejected: applying the raw-archive headroom to the compact evidence needed to diagnose a failed arm.
+      const headroom =
+        spec.name === "raw.tar.zst" ? 5 * 1024 ** 3 : Math.max(64 * 1024 ** 2, 6 * spec.bytes);
+      assert(stat.bavail * stat.bsize > spec.bytes + headroom);
       const tmp = local + `.${process.pid}.partial`;
       const fd = fs.openSync(tmp, "wx");
       const child = spawn(
