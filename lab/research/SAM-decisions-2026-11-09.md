@@ -513,3 +513,28 @@ against the CLI); the agent already running on Sol finishes its job. (2) and (3)
 with customer names stays private. The sizing changes one working assumption: the largest single account is not near
 1 million subjects but already above 4 million thin ones, and the deepest account has about 100,000 subjects with
 about four times the facts per subject of the test's population.
+
+## 2026-11-19 about 11:30 local: scale is the goal; keep the server working; four xhigh idea agents
+
+Sam, verbatim (customer name replaced by "[the deepest account]"; this repository is public):
+- On my plan to delete the bench server tonight: "Why do you need to delete it? Can you just pause it?"
+- "And yes you sohuld do 1,2,3 and you can plan a second cloud session ASAP whenever, we need this to be at scale ASAP.
+  How would we handle 10 [of the deepest account]? We're growing rapidly so that is the scale we need"
+- "if you need more ideas on how to get to that scale, launch up to 4 astra 6.2 agents on XHIGH effort to brainstorm in
+  repeated waves to do research and think about things in areas you want to optimize and then think of how we could
+  build/test those experiments. Go for big swings, this is early project"
+
+Orchestrator's reading and what I did:
+1. Items 1 to 3 are approved: a test population with the deep account's shape, a read path where a never-touched
+   person costs almost nothing, and the driver tail fix. DX-SCALE1 and DX-THIN1 launched (Codex gpt-6.2-astra, max);
+   the driver comparison is running on the bench server.
+2. The target is ten deep accounts on real hardware (1 million people at about 160 facts each) plus the wide thin
+   accounts. Plans are judged against that.
+3. The bench server is not deleted tonight. It stays while it has queued work and a watcher; it is deleted when the
+   queue is empty. A powered-off bare-metal server is assumed to keep billing, so "pause" saves nothing.
+4. Four idea agents (Codex gpt-6.2-astra, xhigh, new `thinker` role in the launcher): write path, read path and
+   memory, tenancy and topology, activation and bulk movement. Three waves each; output in the private project folder
+   under `research/2026-11-19-scale-ideas/`.
+5. My own change, not asked for: no Mac night run tonight. Three nights produced no judged pair, the bench server gives
+   cleaner numbers, and without the window the agents can work and watch the server through the night. Sam's apps stay
+   open. The nightly permission stands and can be used again.
