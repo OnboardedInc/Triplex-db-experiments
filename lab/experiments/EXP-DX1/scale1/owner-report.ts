@@ -123,7 +123,13 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
         : "The first shared resource to reach its limit is still unknown.",
     "Three changes to test are another sender core for offer delays, a larger transactor cache for repeated SQL reads, and smaller per-save work at the serial commit point. Their effects are unmeasured.",
-    `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `Its measured PostgreSQL allocation is ${round(base.disk.bytesPerFact)} bytes per fact.` : "The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack)."}`,
+    `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `PostgreSQL grew by ${round(base.disk.bytesPerFact)} bytes per fact and the volume including WAL grew by ${round(base.disk.volumeBytesPerFact)} bytes per fact (one seed).` : "The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack)."}`,
+    "",
+    ...(base?.summary
+      ? [
+          `The zero-reader 10k arm acknowledged ${base.summary.commit.p99.n.toLocaleString("en-US")} primary commands. Commit p99 was ${round(base.summary.commit.p99.value)} ms (90% interval ${round(base.summary.commit.p99.interval90.low)}–${round(base.summary.commit.p99.interval90.high)} ms), above the 50 ms bar. Peak simultaneous client and engine memory was ${round(base.size.simultaneousPeakBytes / 1024 ** 3)} GiB.`,
+        ]
+      : []),
     "",
     "**Bench measurements**",
     "",
@@ -140,10 +146,10 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         mode === "activation"
           ? ["pooled"]
           : m?.scopeCount > 1
-            ? ["pooled", "account 0"]
-            : ["account 0"];
+            ? ["pooled", "account 1"]
+            : ["account 1"];
       for (const id of ids) {
-        const sentinel = id === "account 0",
+        const sentinel = id === "account 1",
           c = sentinel ? m?.perScope?.[0]?.commit : m?.commit;
         lines.push(
           `| ${item} ${mode} | ${id} | ${metric(c?.p50)} | ${metric(c?.p99)} | ${metric(bar(s, "NS-P1-READ-P99-256-MS", sentinel))} | ${metric(bar(s, "NS-P3 lag p99 ms at L256", sentinel))} | ${m?.invalid?.length ? "Unjudged" : m ? "Observed" : s.terminal.service} · ${s.tag} |`,

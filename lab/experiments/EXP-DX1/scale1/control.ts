@@ -252,8 +252,32 @@ async function collect(tag: string) {
   if (fs.existsSync(proof)) assert.equal(fs.readFileSync(proof, "utf8"), bytes);
   else fs.writeFileSync(proof, bytes, { flag: "wx" });
   updateReport(path.join(evidence, "DX-SCALE1"));
+  const live = remote("systemctl", ...activeUnitArgs, "triplex-scale1-arm-*.service");
+  const current = /triplex-scale1-(arm-[a-z0-9-]+)\.service/.exec(live)?.[1];
+  let activity = "";
+  if (current && current !== tag) {
+    const next = JSON.parse(sudo("cat", root + "/" + tags(current) + "/attempt.json"));
+    assert(
+      next.tag === current && Number.isSafeInteger(next.at) && Number.isSafeInteger(next.ceiling),
+    );
+    activity =
+      " " +
+      current +
+      " started at " +
+      new Date(next.at).toISOString() +
+      " with execution ceiling " +
+      new Date(next.at + next.ceiling * 1000).toISOString() +
+      ".";
+  }
   updateHandoff(
-    `Collected ${tag}. The service result was ${terminal.service}, with ${terminal.scopeReports} scope reports. The terminal cleanup inventory was empty.`,
+    "Collected " +
+      tag +
+      " with service result " +
+      terminal.service +
+      ", " +
+      terminal.scopeReports +
+      " physical-scope report(s) and verified cleanup." +
+      activity,
   );
   console.log(dir);
 }

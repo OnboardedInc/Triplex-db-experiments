@@ -5,13 +5,15 @@ Ten accounts of 100,000 people sharing one database — awaiting a completed bar
 Activation for one account is pending. Activation for one account among ten in one database is pending.
 The first shared resource to reach its limit is still unknown.
 Three changes to test are another sender core for offer delays, a larger transactor cache for repeated SQL reads, and smaller per-save work at the serial commit point. Their effects are unmeasured.
-The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. Its measured PostgreSQL allocation is 594.29 bytes per fact.
+The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. PostgreSQL grew by 594.29 bytes per fact and the volume including WAL grew by 1214.95 bytes per fact (one seed).
+
+The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 69.12 ms (90% interval 65.28–72.70 ms), above the 50 ms bar. Peak simultaneous client and engine memory was 21.87 GiB.
 
 **Bench measurements**
 
 | Item and arm | Scope | Commit p50 ms | Commit p99 ms | L256 read p99 ms | L256 feed p99 ms | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 zero | account 0 | 5.09 · 56505 [5.09, 5.12] | 69.12 · 56505 [65.28, 72.70] | — | 20.09 · 2895 [19.20, 20.35] | Observed · arm-d19-i1-zero-a |
+| 1 zero | account 1 | 5.09 · 56505 [5.09, 5.12] | 69.12 · 56505 [65.28, 72.70] | — | 20.09 · 2895 [19.20, 20.35] | Observed · arm-d19-i1-zero-a |
 
 **Shared resources**
 
