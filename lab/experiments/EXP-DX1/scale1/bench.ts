@@ -69,6 +69,16 @@ function status(dir: string, stage: string, notes: unknown = {}) {
   fs.renameSync(f + ".tmp", f);
 }
 const roles = ["pg", "tx", "gw-w", "gw-r"];
+// [DX-SCALE1] Why: guarded releases never load the independently dispatched lazy publisher. Rejected: blocking the next production-shaped arm on changes confined to that publisher's private files.
+export function sameCampaignInputs(ref: string, changes: string[], publication?: string) {
+  return changes.every(
+    (name) =>
+      /\.md$|SHA256SUMS$|\.sha256$|\.test\.[cm]?ts$/.test(name) ||
+      (publication === undefined &&
+        ref === "exp/DX-ACT1-activation" &&
+        name.startsWith("lab/experiments/EXP-DX1/actv-lazy/")),
+  );
+}
 const planCpus = {
   transactor: "0",
   postgres: "1",
@@ -1436,7 +1446,9 @@ async function main() {
     const changes =
       ancestor === head
         ? []
-        : call("git", ["diff", "--name-only", ancestor, head]).split("\n").filter(Boolean);
+        : call("git", ["diff", "--no-renames", "--name-only", ancestor, head])
+            .split("\n")
+            .filter(Boolean);
     if (publication === "lazy")
       assert.equal(head, source, "The lazy bench requires the exact published experiment");
     const paired =
@@ -1448,9 +1460,7 @@ async function main() {
     const pinnedStudy =
       ref === "exp/DX-ACT2-activation-100k" || ref === "exp/DX-W1-commit-tail-reads";
     assert(
-      paired ||
-        pinnedStudy ||
-        changes.every((n) => /\.md$|SHA256SUMS$|\.sha256$|\.test\.[cm]?ts$/.test(n)),
+      paired || pinnedStudy || sameCampaignInputs(ref, changes, publication),
       "New upstream executable inputs require an integrated source revision: " + ref,
     );
     originHeads[ref] = { head, changes };
