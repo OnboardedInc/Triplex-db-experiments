@@ -118,7 +118,7 @@ export function appendEvent(event) {
 
 export function loadSlots() { return readJson(SLOTS_FILE); }
 
-export function slotInfo(config, lane, slot) {
+export function slotInfo(config, lane, slot, trial = undefined) {
   const laneConf = config.lanes[lane];
   if (!laneConf) fail('USAGE', `Unknown lane ${lane}; choose ${Object.keys(config.lanes).join('|')}`);
   const slotConf = config.slots[lane][slot];
@@ -127,8 +127,10 @@ export function slotInfo(config, lane, slot) {
   if (config.forbiddenPorts.includes(port)) fail('CONFIG', `Port ${port} is forbidden`);
   for (const range of config.reservedPortRanges) if (port >= range.from && port <= range.to) fail('CONFIG', `Port ${port} belongs to ${range.owner}`);
   const container = `tx2-${lane}-${slot}`;
+  if (trial && (slotConf.mode !== 'exclusive' || !/^[a-z0-9]{16,32}$/.test(trial))) fail('CONFIG', 'An isolated volume requires an exclusive slot and a trial ID');
+  // [DX-ACT1] Why: an experiment can discard its own data without deleting another holder's retained volume. Rejected: a new slot name (would bypass the canonical slot lock and port).
   return {
-    lane, slot, ...slotConf, laneConf, container, volume: `${container}-data`,
+    lane, slot, ...slotConf, laneConf, container, volume: trial ? `${container}-data-${trial}` : `${container}-data`,
     endpoint: laneConf.urlTemplate.replace('{port}', String(port)),
     lockDir: path.join(LOCKS, `${lane}-${slot}`),
     ownerFile: path.join(LOCKS, `${lane}-${slot}`, 'owner.json'),
