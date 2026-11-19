@@ -385,13 +385,13 @@ export class ReplicaReadHost {
   private constructor(
     source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean,
     clockEnds: Map<number, number>, timings: Map<number, { availableAt?: number; receivedAt: number }>,
-    compactBootstrap: boolean, population: "all" | "touched",
+    compactBootstrap: boolean, population: "all" | "touched", validAt: number,
   ) {
     this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks);
     this.times = times;
     this.clockEnds = clockEnds;
     this.timings = timings;
-    this.replica = new api.Replica(source, Date.now(), population);
+    this.replica = new api.Replica(source, validAt, population);
     if (population === "touched") this.replica.onAdmission = (p: number, entries: ReadonlyMap<string, PackedEntity>) => {
       this.index.admit(p, new Map(Array.from(entries, ([id, entity]) => [id, prepareEntity(id, entity)])));
     };
@@ -434,6 +434,7 @@ export class ReplicaReadHost {
     endpoint = replicaEndpoint(process.env, peer),
     population: "all" | "touched" = "all",
     firstReadRoot?: string,
+    validAt = Date.now(),
   ) {
     const client = new api.DatomicClient(
       endpoint,
@@ -443,7 +444,7 @@ export class ReplicaReadHost {
       runtimeApi.DatabaseScope.test(scope),
       process.env.TRIPLEX_DATOMIC_LAYOUT ?? "lean",
     );
-    const timed = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), population === "all" && feed === "inline" ? Date.now() : undefined);
+    const timed = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), population === "all" && feed === "inline" ? validAt : undefined);
     const { times, clockEnds, timings } = timed;
     const source = boundedReplicaFeed(timed.source);
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
@@ -462,7 +463,7 @@ export class ReplicaReadHost {
     }
     const host = new ReplicaReadHost(source, times, historyBytes,
       capability.supported === true && capability.strictRecordClocks === true, clockEnds, timings,
-      roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population);
+      roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population, validAt);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
     host.replica.start();

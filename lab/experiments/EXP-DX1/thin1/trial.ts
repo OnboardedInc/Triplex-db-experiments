@@ -3,8 +3,13 @@ import { execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
-import { RecentReads, Replica } from "../../../../packages/datomic/dist/index.js";
+import {
+  RecentReads,
+  Replica,
+  type ReplicaSnapshot,
+} from "../../../../packages/datomic/dist/index.js";
 import { canonicalWorld } from "../../../bench/lib/canonical.ts";
 import type { Basis } from "../../../bench/lib/composition.ts";
 import { buildCase, checkWithOracle, type OracleSampleRead } from "../../../bench/lib/oracle.ts";
@@ -15,10 +20,13 @@ import {
 } from "../../../bench/lib/replica-reads.ts";
 import { ThinRoster, rosterDigest } from "../../../bench/lib/thin-activation.ts";
 import { touchedPull } from "../../../bench/lib/touched-reads.ts";
-import { W0 } from "../../../bench/lib/w0-world.ts";
+import { W0, worldOf } from "../../../bench/lib/w0-world.ts";
+import { nativeReader } from "./native-reader.ts";
+import { nativeMetrics } from "./native-metrics.ts";
 import { IntentLog } from "./intent-log.ts";
 import { firstValid, person, seedHead, seedPosition, width } from "./population.ts";
 import { trialStore } from "./trial-store.ts";
+import { measurementWindow } from "./measure.ts";
 import { domainCheck } from "./domain-check.ts";
 
 const [kind, mode, rung, dir] = process.argv.slice(2),
@@ -74,9 +82,15 @@ if (stack) {
   assert.equal(stack.readUrl, process.env.DATOMIC_READ_URLS);
   assert.deepEqual(
     stack.containers.map((c: { name: string }) => c.name).sort(),
-    ["gw-r", "gw-w", "pg", "tx"].map((role) => stack.prefix + "-" + role).sort(),
+    stack.managed
+      ? ["tx2-datomic-s1", "tx2-datomic-s2"]
+      : ["gw-r", "gw-w", "pg", "tx"].map((role) => stack.prefix + "-" + role).sort(),
   );
-  assert(stack.containers.every((c: { id: string }) => /^[a-f0-9]{64}$/.test(c.id)));
+  assert(
+    stack.containers.every((c: { id: string }) =>
+      (stack.managed ? /^(?:[a-f0-9]{12}|[a-f0-9]{64})$/ : /^[a-f0-9]{64}$/).test(c.id),
+    ),
+  );
 }
 const slot = stack?.prefix ?? "guest-wire-fixture";
 const binding = sha(
@@ -105,14 +119,24 @@ const base = seedHead(size),
   active = size / 50,
   end = base + active,
   validAt = firstValid + 1000;
+const lease = measurementWindow(binding, slot);
 const store = await trialStore(size, scope, kind === "live");
 const log = new IntentLog(path.join(dir, "intents.sqlite"), size, scope);
 const roster = new ThinRoster(path.join(dir, "roster.sqlite"), binding);
-const phase = (name: string) => {
+let remote: Awaited<ReturnType<typeof nativeReader>> | undefined;
+let held: ReplicaSnapshot | undefined;
+const phase = async (name: string) => {
   global.gc!();
   fs.appendFileSync(
     path.join(dir, "phases.jsonl"),
-    JSON.stringify({ phase: name, at: Date.now(), ...process.memoryUsage() }) + "\n",
+    JSON.stringify({
+      phase: name,
+      binding,
+      at: Date.now(),
+      ...process.memoryUsage(),
+      reader: await remote?.stats(),
+      native: stack ? await nativeMetrics(stack) : undefined,
+    }) + "\n",
   );
   console.log(name);
 };
@@ -132,7 +156,11 @@ const quantiles = (xs: number[]) => {
     p99: xs[Math.ceil(xs.length * 0.99) - 1],
   };
 };
-const copy = new Replica(mode === "all" ? store.inline : store.source, validAt, mode);
+const copy = new Replica(
+  mode === "all" ? store.inline : store.source,
+  Date.parse(W0.POPULATION_VALID_TIME),
+  mode,
+);
 const index = new RecentReads(),
   reader = new ReplicaReader(undefined, index);
 copy.onUpdate = (delta) => {
@@ -170,8 +198,9 @@ async function read(i: number, p: number, v: number, measure: string) {
   const basis = { recordedPosition: p, validAt: v } as Basis;
   const gateway = () => store.pull(person(i), p, v),
     start = performance.now();
-  const result =
-    mode === "touched"
+  const result = remote
+    ? await remote.pull(person(i), p, v)
+    : mode === "touched"
       ? await touchedPull(reader, copy, person(i), basis, gateway)
       : await reader.pullAt(person(i), basis, gateway);
   const actual = result.triples;
@@ -202,45 +231,71 @@ async function read(i: number, p: number, v: number, measure: string) {
   }
 }
 try {
-  phase("empty");
+  await lease.checkpoint();
+  await phase("empty");
   const seedStart = performance.now();
   for (let p = 1; p <= base; p++) {
+    if (p % 16 === 1) await lease.checkpoint();
     await scheduled(p);
     if (p % 16 === 0 || p === base) await drain(roster.head, p);
   }
   const seedMs = performance.now() - seedStart;
-  phase("seeded");
-  await copy.bootstrap(
-    mode === "all" ? Array.from({ length: size }, (_, n) => person(n)) : [],
-    base,
-  );
-  const seedPacked = copy.bytes;
-  phase("reader-ready");
+  await phase("seeded");
+  if (kind === "live")
+    remote = await nativeReader({
+      scope,
+      binding,
+      mode,
+      size,
+      position: base,
+      instant: log.command(base).receipt.instant,
+    });
+  else
+    await copy.bootstrap(
+      mode === "all" ? Array.from({ length: size }, (_, n) => person(n)) : [],
+      base,
+    );
+  const seedPacked = remote ? (await remote.stats()).packed : copy.bytes;
+  await phase("reader-ready");
+  let capture = -1;
   for (let n = 0; n < active; n++) {
+    if (n % 16 === 0) await lease.checkpoint();
     const i = n * 50,
       before = base + n,
       after = before + 1;
     const historical = Math.max(1, before - 1);
     await read(i, historical, validAt, "firstPinnedRead");
     if (n % 2 === 0) await read(i, before, validAt, "firstCurrentAdmission");
+    if (n === active - 1) {
+      capture = roster.head;
+      assert.equal(capture, before);
+      if (mode === "all") {
+        if (remote) await remote.capture(capture);
+        else held = await copy.snapshotAt(capture);
+      }
+    }
     await scheduled(after);
     await read(i, after, validAt, "ryow");
     await drain(before, after);
-    while (copy.position < after) await copy.followOnce(0, after);
+    if (remote) await remote.follow(after);
+    else while (copy.position < after) await copy.followOnce(0, after);
     await read(i, after, validAt, n % 2 ? "firstCurrentAdmission" : "residentRead");
     await read(i, after, validAt, "residentRead");
     await read(i, historical, validAt, "historical");
     await read(i, after, firstValid + 99, "historical");
   }
-  phase("active");
-  assert.equal(copy.position, end);
+  await phase("active");
+  const resident = remote
+    ? await remote.stats()
+    : { position: copy.position, packed: copy.bytes, history: index.historyBytes };
+  assert.equal(resident.position, end);
   await drain(0, end);
   const expected = rosterDigest(
     (function* () {
       for (let i = 0; i < size; i++) yield person(i);
     })(),
   );
-  const capture = Math.max(base, end - 1);
+  assert.equal(capture, end - 1);
   const basis = { tx: capture, validTime: W0.POPULATION_VALID_TIME };
   const outbox = fs.openSync(path.join(dir, "activation-records.jsonl"), "wx");
   const started = performance.now();
@@ -252,9 +307,22 @@ try {
       release: W0.R2,
       basis,
       mode: mode === "all" ? "full" : "dependencies",
-      world: store.world,
+      world:
+        mode === "touched"
+          ? store.world
+          : remote
+            ? remote.world
+            : async (id, basis) => {
+                assert(
+                  held &&
+                    held.position === basis.tx &&
+                    held.validAt === Date.parse(basis.validTime),
+                );
+                return worldOf(id, held.world(id));
+              },
       publish: async (records) => {
-        await store.publish(records);
+        await lease.checkpoint();
+        await store.publish?.(records);
         fs.writeFileSync(outbox, records.map((r) => W0.canonicalPlain(r) + "\n").join(""));
       },
     });
@@ -269,7 +337,31 @@ try {
   assert.equal(verification.digest("hex"), activation.recordsSha256);
   assert.equal(activation.evaluated + activation.dismissed, size);
   assert.equal(activation.dismissed, mode === "all" ? 0 : size - (capture - base));
-  phase("activation-recorded");
+  await phase("activation-recorded");
+  lease.release();
+  let publishedReadback = 0;
+  if (store.readback) {
+    const cut = await store.head();
+    let page: W0.EvaluationRecord[] = [];
+    for await (const line of createInterface({
+      input: fs.createReadStream(path.join(dir, "activation-records.jsonl")),
+      crlfDelay: Infinity,
+    })) {
+      const record = JSON.parse(line);
+      record.basis.tx = BigInt(record.basis.tx);
+      page.push(record);
+      if (page.length === 64) {
+        await store.readback(page, cut);
+        publishedReadback += page.length;
+        page = [];
+      }
+    }
+    if (page.length) {
+      await store.readback(page, cut);
+      publishedReadback += page.length;
+    }
+    assert.equal(publishedReadback, size);
+  }
   const selected = [...sampleInputs].sort((a, b) => a - b).map((p) => log.command(p));
   const caseDoc = buildCase({
     caseId: "dx-thin-" + binding,
@@ -327,16 +419,20 @@ try {
     feedPositions: end,
     replayedPositions: end,
     seedPacked,
-    activePacked: copy.bytes,
-    historyBytes: index.historyBytes,
+    activePacked: resident.packed,
+    historyBytes: resident.history,
     latencyMs: Object.fromEntries(Object.entries(ms).map(([k, v]) => [k, quantiles(v)])),
     activationMs,
     activation,
     oracle,
     replaySource: pin,
+    measurement: lease.stats(),
     domain,
+    publishedReadback: store.readback ? publishedReadback : null,
   });
 } finally {
+  lease.release();
+  await remote?.close();
   await copy.stop();
   roster.close();
   log.close();

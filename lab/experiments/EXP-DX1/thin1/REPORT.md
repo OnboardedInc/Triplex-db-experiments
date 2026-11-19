@@ -2,8 +2,8 @@ An eight-fact person added about 6.7 kB of resident memory per eager reader at 1
 The test driver's compact expected-value model added another 3.1 kB per person.
 Both costs arrived during import, even for people nobody subsequently read.
 These measurements ran on the 16 GiB guest with synthetic gateway rows and the existing reader and model.
-The managed slot uses Datomic dev storage and returned 404 for the current replica route. Its reservation was released.
-The cost of these rows in production Postgres and the role-specific JVM cache occupancies still need a matching stack.
+Two exclusive managed slots now run Postgres, the transactor and separate read and write gateways.
+The 10k native control added 23.6 MB to Postgres tables and indexes during seed. All 10,000 outbox states matched on readback.
 Single-machine population capacity remains unmeasured.
 North star priorities are pinned reads, current values and activation. All timings here are busy-host diagnostics.
 
@@ -29,3 +29,5 @@ W0 R2 orders a background check for a person with no status. A certified import 
 - Feed and roster replay compare every transaction to the intent log and its content hash, scoped to the fresh run, slot and inputs. SQLite commits the certificate, first possible change and cursor together.
 - Activation checks release bytes, pinned cut, ordered roster count/hash and returned subject. The driver hashes actual publication records after closing them. O-DOMAIN reconstructs the original worlds independently.
 - Frozen O-REPLAY uses a new case/output directory and checks the case digest, receipt consistency and results for every requested entity, including empty roots. Completed results require both oracle checks.
+
+The native benchmark queue runs 1M then 4M in distinct stacks. It records RSS by process, Postgres sizes, gateway cache gauges, durable receipts and all outbox states. The first 100k guest wire run checked 13,000 reads and 100,000 independent release records per arm.

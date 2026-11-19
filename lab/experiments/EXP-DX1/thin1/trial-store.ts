@@ -8,6 +8,7 @@ import {
 import { decodeReplicaRows } from "../../../../packages/datomic/dist/replica/decodeRows.js";
 import { openComposition, type Receipt, type PullResult } from "../../../bench/lib/composition.ts";
 import { publicRow } from "../../../bench/lib/replica-reads.ts";
+import { outboxEntity } from "../../../bench/lib/w0-outbox.ts";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { W0, worldOf } from "../../../bench/lib/w0-world.ts";
 import type { ImportJournal } from "../../../bench/lib/thin-activation.ts";
@@ -63,6 +64,29 @@ export async function trialStore(size: number, scope: string, live: boolean) {
       async publish(records: readonly W0.EvaluationRecord[]) {
         await base.publishOutbox(records);
       },
+      async readback(records: readonly W0.EvaluationRecord[], position: number) {
+        const cut = { position, validAt: Date.parse(W0.POPULATION_VALID_TIME) };
+        const page = await base.sweepPage(
+          records.map((r) => outboxEntity(r.subject)),
+          cut,
+        );
+        assert.deepEqual(page.reportedBasis, cut);
+        assert.equal(page.rows.length, records.length * 2);
+        for (const record of records) {
+          const expected = W0.publish(W0.EMPTY_OUTBOX, [record]);
+          const actual = page.rows.filter((r) => r.entityId === outboxEntity(record.subject));
+          assert.equal(actual.length, 2);
+          for (const [name, value] of [
+            ["p5/state", expected.state],
+            ["p5/deliveries", expected.deliveries],
+          ] as const) {
+            const row = actual.find((r) => r.attribute === name);
+            assert(row && row.value.type === "string");
+            assert.equal(row.value.value, W0.canonicalPlain(value));
+          }
+        }
+      },
+      head: base.currentPosition,
       async close() {
         client.close();
         await base.close();
@@ -151,7 +175,9 @@ export async function trialStore(size: number, scope: string, live: boolean) {
       });
       return worldOf(root, rows);
     },
-    async publish(_records: readonly W0.EvaluationRecord[]) {},
+    publish: undefined,
+    readback: undefined,
+    head: data.source.head,
     async close() {},
   };
 }
