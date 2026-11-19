@@ -1,6 +1,5 @@
 import { originalObject, MissingOriginal } from "./recovery.ts";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 import { checkCensus, ordered } from "./lookup.ts";
@@ -18,6 +17,7 @@ import {
   releaseEntry,
   type Body,
   type Head,
+  type Epochs,
   type Mask,
   type Recipe,
 } from "./model.ts";
@@ -52,29 +52,60 @@ export type View = {
   token: string;
 };
 const keyOf = (s: string) => "point:" + s;
-export const sourceFormats = hash([
-  "actv-delta/1",
-  compilerVersion,
-  ...["rules", "pages", "model", "save", "account", "store", "dispatch", "secrets", "recovery"].map(
-    (n) => hash(readFileSync(new URL(n + ".ts", import.meta.url), "utf8")),
-  ),
-]);
+// [DX-ACT2] Why: stored recipes bind the rule and encoding version; each measured binary is bound separately in the attempt. Rejected: rejecting a valid old recipe after a performance-only change to source text.
+export const sourceFormats = hash(["actv-delta/fenced-recipe/2", compilerVersion]);
+const firstFenceFormat = hash(["actv-delta/fenced-head/1", compilerVersion]);
+const legacyFormat = "85f74b77efaf2fb4e7e5d9d019049bcfc109cff98454f202ec2c1726c867d323";
 // [DX-ACT2] Why: a rollback reuses immutable rule bytes but still has a distinct epoch. Rejected: copying the entire rule book into every subsequent save.
-function packHead(h: Head): unknown {
-  const docs: Record<string, W0.ReleaseDoc> = {};
-  return {
-    ...h,
-    docs,
-    activations: h.activations.map(({ doc, ...a }) => {
-      docs[a.release] = doc;
-      return a;
-    }),
-  };
+function packEpochs(h: Head): Epochs {
+  const docs: Record<string, W0.ReleaseDoc> = {},
+    names: string[] = [],
+    times: string[] = [];
+  const epochs = h.activations.map((a) => {
+    let r = names.indexOf(a.release);
+    if (r < 0) {
+      r = names.length;
+      names.push(a.release);
+      docs[a.release] = a.doc;
+    }
+    let t = times.indexOf(a.from);
+    if (t < 0) {
+      t = times.length;
+      times.push(a.from);
+    }
+    return [r, t, a.tx, (a as typeof a & { seq?: number }).seq ?? 0];
+  });
+  return { docs, names, times, epochs };
 }
-function unpackHead(h: Head & { docs?: Record<string, W0.ReleaseDoc> }): Head {
+function unpackHead(
+  h: Head & {
+    docs?: Record<string, W0.ReleaseDoc>;
+    names?: string[];
+    times?: string[];
+    epochs?: number[][];
+  },
+): Head {
+  if (h.seedTx !== undefined && !h.activations) {
+    assert(h.releaseSeq === 0 && Number.isSafeInteger(h.seedTx));
+    const { seedTx, ...rest } = h;
+    return { ...rest, activations: [releaseEntry(W0.R1, epoch, seedTx)] };
+  }
   if (!h.docs) return h;
-  const { docs, ...rest } = h;
-  return { ...rest, activations: h.activations.map((a) => ({ ...a, doc: docs[a.release]! })) };
+  const { docs, names, times, epochs, ...fixed } = h;
+  if (epochs) {
+    assert(names && times);
+    return {
+      ...fixed,
+      activations: epochs.map(([r, t, tx, seq]) => ({
+        doc: docs[names[r!]!]!,
+        release: names[r!]!,
+        from: times[t!]!,
+        tx: tx!,
+        ...(seq ? { seq } : {}),
+      })),
+    };
+  }
+  return { ...fixed, activations: h.activations.map((a) => ({ ...a, doc: docs[a.release]! })) };
 }
 export class Account {
   readonly keys: SourceKeys;
@@ -205,11 +236,39 @@ export class Account {
       root: h.root,
     };
   }
-  private checkedHead(c: Cell<Head>) {
-    c = { ...c, value: unpackHead(c.value) };
+  private readonly histories = new Map<string, string>();
+  private async checkedHead(c: Cell<Head>) {
+    let stored = c.value;
+    if (stored.history && !stored.activations) {
+      const key = "event:" + stored.releaseSeq,
+        digest = stored.history;
+      let encoded = this.histories.get(digest);
+      if (!encoded) {
+        let rec = (await this.db.many<Recipe>([key], c.position)).get(key);
+        if (!rec || rec.hash !== digest)
+          rec = await originalObject<Recipe>(
+            this.db,
+            key,
+            c.position,
+            (v) => hash([this.db.account, key, v]) === digest,
+          );
+        assert(
+          rec.hash === digest &&
+            rec.value.kind === "release" &&
+            rec.value.seq === stored.releaseSeq &&
+            rec.value.history,
+          "missing original release history",
+        );
+        encoded = JSON.stringify(rec.value.history);
+        if (this.histories.size >= 32) this.histories.delete(this.histories.keys().next().value!);
+        this.histories.set(digest, encoded);
+      }
+      stored = { ...stored, ...JSON.parse(encoded) };
+    }
+    c = { ...c, value: unpackHead(stored) };
     assert(
       c.value.source === this.binding &&
-        c.value.compiler === sourceFormats &&
+        [sourceFormats, legacyFormat, firstFenceFormat].includes(c.value.compiler) &&
         c.value.frontier === c.value.certified,
       "uncertified source/index/publication frontier",
     );
@@ -292,7 +351,7 @@ export class Account {
   async decisionsAt(ids: string[], position: number) {
     // [DX-ACT2] Why: an answer read needs the current release and the source at one cut. Notification history is available through views. Rejected: replaying every earlier dispatch to answer a current policy question.
     const cells = await this.db.many(["head", ...ids.map(keyOf)], position),
-      head = this.checkedHead(cells.get("head") as Cell<Head>).value,
+      head = (await this.checkedHead(cells.get("head") as Cell<Head>)).value,
       release = resolve(head.activations, head.basis.validTime),
       masks = await this.masks(ids),
       out = new Map<string, W0.Output>();
@@ -493,7 +552,27 @@ export class Account {
     conditions: readonly unknown[],
   ) {
     const key = "claim:" + hash(id);
-    const patches: Patch[] = [...v.patches, { key: "head", value: packHead(v.head), prior: h }];
+    const { activations, ...fields } = v.head;
+    let head: unknown;
+    if (release) {
+      assert(v.event);
+      // [DX-ACT2] Why: the immutable release event owns the epoch dictionary. Every later source save references its authenticated bytes once. Rejected: logging hundreds of already published epochs in each ordinary save.
+      v.event.history = packEpochs(v.head);
+      head = {
+        ...fields,
+        compiler: sourceFormats,
+        history: hash([this.db.account, "event:" + v.head.seq, v.event]),
+      };
+    } else if (fields.history) head = { ...fields, compiler: sourceFormats };
+    else if (
+      !fields.releaseSeq &&
+      activations.length === 1 &&
+      activations[0]!.release === W0.R1.hash &&
+      activations[0]!.from === epoch
+    )
+      head = { ...fields, compiler: sourceFormats, seedTx: activations[0]!.tx };
+    else head = { ...fields, compiler: sourceFormats, ...packEpochs(v.head) };
+    const patches: Patch[] = [...v.patches, { key: "head", value: head, prior: h }];
     if (v.event) patches.push({ key: "event:" + v.head.seq, value: v.event });
     patches.push({ key, value: { id, request, seq: v.head.seq } });
     const r = await this.db.commit(
@@ -529,7 +608,7 @@ export class Account {
         await this.help(fence);
         continue;
       }
-      const h = this.checkedHead(cells.get("head") as Cell<Head>),
+      const h = await this.checkedHead(cells.get("head") as Cell<Head>),
         v = await run(p, h);
       if (attempt === 0) await beforeCas?.();
       try {
@@ -587,16 +666,6 @@ export class Account {
       key = "claim:" + hash(id);
     await options.beforeCas?.();
     for (;;) {
-      const p = await this.db.comp.currentPosition(),
-        rows = await this.db.many([key, "fence"], p),
-        claim = rows.get(key) as Cell<Claim> | undefined,
-        f = rows.get("fence") as Cell<Intent> | undefined;
-      if (claim) return this.replay(claim, id, request);
-      if (f) {
-        if (f.value.id === id) assert.equal(f.value.request, request, "command identity reused");
-        await this.help(f);
-        continue;
-      }
       // [DX-ACT2] Why: only publishers contend for admission. A save already at the serial point is included, and every later save checks this fence in its native transaction. Rejected: reserving the mutable source head (a burst can keep invalidating the seal).
       let admission;
       try {
@@ -609,11 +678,29 @@ export class Account {
           ],
         );
       } catch (e) {
-        if (e instanceof Conflict) continue;
-        throw e;
+        if (!(e instanceof Conflict)) throw e;
+        const p = await this.db.comp.currentPosition(),
+          rows = await this.db.many([key, "fence"], p),
+          claim = rows.get(key) as Cell<Claim> | undefined,
+          f = rows.get("fence") as Cell<Intent> | undefined;
+        if (claim) return this.replay(claim, id, request);
+        if (f) {
+          if (f.value.id === id) assert.equal(f.value.request, request, "command identity reused");
+          await this.help(f);
+          continue;
+        }
+        continue;
       }
       await options.afterFence?.();
-      const sealed = await this.finish(await this.db.get<Intent>("fence", admission.position));
+      const sealed = await this.finish(
+        {
+          value,
+          hash: hash([this.db.account, "fence", value]),
+          position: admission.position,
+          id: admission.ids.get(this.db.entity("fence"))!,
+        },
+        true,
+      );
       return {
         ...sealed,
         retry: false,
@@ -623,26 +710,27 @@ export class Account {
     }
   }
   private readonly completing = new Map<string, ReturnType<Account["completeFence"]>>();
-  private finish(f: Cell<Intent>) {
+  private finish(f: Cell<Intent>, fresh = false) {
     const pending = this.completing.get(f.id);
     if (pending) return pending;
-    const work = this.completeFence(f).finally(() => this.completing.delete(f.id));
+    const work = this.completeFence(f, fresh).finally(() => this.completing.delete(f.id));
     this.completing.set(f.id, work);
     return work;
   }
-  private async completeFence(f: Cell<Intent>) {
+  private async completeFence(f: Cell<Intent>, fresh: boolean) {
     const i = f.value,
       key = "claim:" + hash(i.id);
     assert(i.source === this.binding && i.request === hash(["seal", i.doc, i.from, i.valid]));
     await this.settleSource?.();
-    const p = await this.db.comp.currentPosition(),
-      rows = await this.db.many([key, "fence", "head"], p),
+    const p = fresh && !this.settleSource ? f.position : await this.db.comp.currentPosition(),
+      rows = await this.db.many([key, "head", "fence", "tree"], p),
       done = rows.get(key) as Cell<Claim> | undefined;
     if (done) return this.replay(done, i.id, i.request);
     assert.equal(rows.get("fence")?.id, f.id, "admitted release lost its fence");
-    const h = this.checkedHead(rows.get("head") as Cell<Head>);
+    const h = await this.checkedHead(rows.get("head") as Cell<Head>);
     let plan: Awaited<ReturnType<Build>>;
     try {
+      assert.equal(hash(rows.get("tree")?.value), h.value.root, "index root mismatch");
       plan = await this.releasePlan(p, h, i);
     } catch (e) {
       // [DX-ACT2] Why: malformed input cannot strand ordinary writers. Only reject the same fenced predecessor. Rejected: expiring a live owner's lease by wall clock.
@@ -706,7 +794,6 @@ export class Account {
       census: h.census,
       shape: full ? "full" : "recipe",
     };
-    await this.tree(h, p);
     if (event.shape === "full") event.fullCheck = await this.checkFull(event);
     return { head: { ...h, seq, releaseSeq: seq, basis, activations }, event, patches: [] };
   }

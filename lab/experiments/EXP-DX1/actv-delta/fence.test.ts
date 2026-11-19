@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
 import test from "node:test";
 import { open } from "../act1/check.ts";
 import { W0 } from "../../../bench/lib/w0-world.ts";
@@ -9,7 +11,8 @@ import { epoch } from "./model.ts";
 import { save } from "./save.ts";
 
 test("a new process can finish an admitted release and a stale save cannot invalidate the seal", async () => {
-  const comp = await open("act1-" + randomUUID()),
+  const scope = "act1-" + randomUUID(),
+    comp = await open(scope),
     db = new Objects(comp, "target"),
     a = new Account(db, "race"),
     id = "pl:a",
@@ -42,6 +45,29 @@ test("a new process can finish an admitted release and a stale save cannot inval
       [{ e: id, a: "weeklyMinutes", values: [2700], from: epoch }],
       {
         beforeCas: async () => {
+          if (process.env.DX_ACT1_NATIVE === "1") {
+            const nonce = randomUUID(),
+              child = spawnSync(
+                process.execPath,
+                ["--import", "tsx", path.join(import.meta.dirname, "fence-abandon.ts")],
+                {
+                  input: JSON.stringify({
+                    scope,
+                    nonce,
+                    binding: "race",
+                    account: "target",
+                    command: "offered",
+                  }),
+                  encoding: "utf8",
+                  timeout: 30000,
+                },
+              );
+            assert.equal(child.signal, "SIGKILL", child.stderr);
+            const witness = JSON.parse(child.stdout),
+              f = await db.get("fence", await comp.currentPosition());
+            assert.deepEqual(witness, { nonce, fence: f.hash });
+            return;
+          }
           await assert.rejects(
             a.seal("offered", W0.R2, {
               afterFence: async () => {

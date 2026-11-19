@@ -21,7 +21,18 @@ export async function local(opts, config, manager) {
   assert(
     process.platform === "darwin" && opts.holder === "DX-ACT2" && dockerArgs([])[1] === DOCKER_HOST,
   );
-  assert(["schedules", "price", "rungs", "controls", "preflight", "loaded", "crash", "solo-check"].includes(opts.run));
+  assert(
+    [
+      "schedules",
+      "price",
+      "rungs",
+      "controls",
+      "preflight",
+      "loaded",
+      "crash",
+      "solo-check",
+    ].includes(opts.run),
+  );
   const dir = path.resolve(opts.out),
     nonce = randomUUID(),
     prefix = "tx2-dxdelta-" + nonce.slice(0, 8);
@@ -266,7 +277,29 @@ export async function local(opts, config, manager) {
       },
       stdio: ["inherit", "inherit", "inherit", "ipc"],
     });
-    child.on("message", (m) => {
+    let restarts = 0;
+    child.on("message", async (m) => {
+      if (m?.type === "power") {
+        try {
+          assert(
+            opts.run === "crash" &&
+              m.nonce === nonce &&
+              m.seq === ++restarts &&
+              [1, 2].includes(restarts),
+          );
+          const { recoverPower } = await import("./power.mjs");
+          const recovered = await recoverPower({
+            created,
+            nonce,
+            endpoint: info.endpoint,
+            gateway,
+            sql,
+          });
+          child.send({ id: m.id, recovered });
+        } catch (e) {
+          child.send({ id: m.id, error: String(e) });
+        }
+      }
       if (m?.type === "storage") {
         const data = sql(
           "SELECT pg_database_size(current_database()),pg_wal_lsn_diff(pg_current_wal_insert_lsn(),'0/0')",

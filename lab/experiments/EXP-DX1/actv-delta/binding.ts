@@ -34,7 +34,10 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
           "service",
           "measure-lock",
           "fence.test",
+          "fence-abandon",
+          "notify-contract.test",
           "delayed.test",
+          ...(mode === "crash" ? ["power"] : []),
           "erasure.test",
           "recovery.test",
           ...(mode === "schedules"

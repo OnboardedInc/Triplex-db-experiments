@@ -19,7 +19,15 @@ export type Body = {
   seen: number;
 };
 export type Activation = W0.Activation & { doc: W0.ReleaseDoc };
+export type Epochs = {
+  docs: Record<string, W0.ReleaseDoc>;
+  names: string[];
+  times: string[];
+  epochs: number[][];
+};
 export type Head = {
+  history?: string;
+  seedTx?: number;
   seq: number;
   releaseSeq: number;
   basis: W0.Basis;
@@ -36,6 +44,7 @@ export type Head = {
   compiler: string;
 };
 export type Recipe = {
+  history?: Epochs;
   kind: "release" | "clock" | "save" | "seed";
   seq: number;
   parent: number;
