@@ -1,0 +1,28 @@
+# Recovery of one shared database
+
+The owner is considering one database for all accounts. The proposed ceilings are 60 seconds after transactor loss and 30 seconds for a planned move. Pinned reads and every acknowledged write must survive. The ceilings await confirmation.
+
+**Priority 9.** The single-database drills record new writes, the pinned reader, and preserved receipt identities. The first study used one database per account. [Part 1 results](PART1.md) · [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+
+**Evidence audit.** The normal engine reservation, source, mounted bytes, role IDs, nonce and cleanup bind each drill. The observer reads batched native receipts from one immutable database value. Population checks every seed receipt and full facts at three pins. Each fault compares all receipts, each live feed change and the old pin with the authored inputs. Broker and peer milestones are observed independently. Each result records attempted and admitted size. [Failure drill](one-failover.ts)
+
+At 163,840 seeded facts in ten tenants, four transactor losses resumed in 8.50–24.95 seconds. The reader saw zero errors at its historical pin. The slowest case combined a recent unindexed tail with 83 acknowledged writes/s before the fault.
+The restore drill checks the vendor manifest and cut or the PostgreSQL file manifest, archive segment, restore point and cluster identifier. Each fresh restore tests every original receipt through its cut, every missing operation after it, the historical pin and the exact subsequent feed. The synchronous-cost drill checks the streaming mode and reads back every original receipt after primary removal. [Backups](one-backup.ts) · [Physical cutover](one-whole.ts)
+
+**Cutover audit.** The physical drill proves the SQL writer fence, replica flush and replay LSN and cluster identity, then exercises the old pin, withheld acknowledgement, native feed and every original receipt. The tenant drill binds a canonical command, receipt, native feed projection and actual row-value digest to each account and sequence. It advances a durable destination checkpoint after readback and gates activation on the fenced source generation and digest. Router publication uses a persistent compare-and-swap. The same pending write and an independent neighbor time the cut. [Tenant drill](one-account.ts) · [Copy and router](placement.ts)
+
+The two-machine controller exposes five fresh-tag commands and a 160-million-fact rung. The transferred archive binds both machine identities, content hash, campaign nonce, revision and each requested size to the completed observations. [Bench commands](BENCH.md#shared-database-experiments)
+
+The 10,240-fact machine-loss drill recovered with a new receipt in 21.83 s from PostgreSQL WAL and 29.30 s from Datomic once recovery started. The archived cuts omitted 8 and 135 acknowledged writes respectively. The account pin gate caught a tagged double whose integral value crossed JSON as an integer. The corrected peer compares the declared double value and every remaining receipt field. Seven offline tests include changed destination values, command bytes, generation, target and an old pin.
+
+The 1,280-fact tenant move took 3.95 s from its fence to a new client receipt. Its last three facts crossed after the fence. The 10,240-fact physical promotion took 15.47 s with 178 successful historical reads, and 13.65 s of that pause went to the replacement transactor. The next durability runs leave asynchronous WAL shipping connected at loss and kill the synchronous primary without a final remote-flush wait. Both paths verify exact surviving data after the old storage is gone.
+
+The synchronous-primary crash recovered all 8,432 preceding receipts, including the one withheld on the wire. Across 4,096 ten-fact writes per mode, local and synchronous p99 were 76.16 and 63.44 ms. The respective medians were 11.13 and 12.52 ms. Local timing varied between blocks. The failure collector now binds vendor catch-up bytes and milliseconds to the elected role and the recovered database's native log position.
+
+At 2,078,720 seed facts, four elections recovered with intact receipts and pinned reads. All four vendor replay records matched actual operations in the recovered feed. The named capacity arm gives the largest shared-VM rung a single saturated fault. The router also supports original read bases in another tenant’s transaction and distinguishes stale source coordinates from new destination positions. The physical cut admits the new synchronous policy only after observing bounded replay lag while the old database is still taking writes.
+
+The account feed carries the original transaction positions in its events. Its independent tenant sequence drives pagination. Each copied event now checks both coordinates against the authored receipt, including gaps left by neighboring tenants.
+
+A replay gate caught the shipped TypeScript client's optional last-seen transaction hint on a blind append. The peer validates that hint and excludes it from the durable business identity. A separate client retries the identical correction without the hint and checks the original receipt. Both restore sizes completed, including a primary crash with the asynchronous WAL receiver still streaming.
+
+The final tenant client validates the operation, record time, tenant and generation at the public boundary. Its negative tests reject a valid-looking receipt from another command or clock. The shared admission code claims the free timer before hashing a candidate and releases it immediately when the pool declines the request. The full bench profiles reach a 160-million-fact store and a 16-million-fact account extraction.
