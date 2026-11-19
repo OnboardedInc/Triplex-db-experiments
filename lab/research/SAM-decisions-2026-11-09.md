@@ -497,3 +497,19 @@ Sam, verbatim: "can you get my local running again?"
 Orchestrator's reading: his local Onboarded development stack (the colima default profile, five containers) was
 stopped. Started the VM and the five containers and checked each service answers. The nightly runner now stops that VM
 at the window's start and restarts it with its containers at 06:58, and puts the docker context back as it found it.
+
+## 2026-11-19 about 09:00 local: Codex Astra 6.2 for building; size a large real account
+
+Sam asked for three things (verbatim text is kept in the private project folder under
+`research/2026-11-19-sizing/ACCOUNT-SIZING.md`, because it names a customer and this repository is public):
+1. "Can you start to use Codex, Codex Astra 6.2, on things when you build with it, as opposed to Sol? That would be good."
+2. A full account of where the work stands.
+3. To look at production data for a named large account and reason out how many entities and subjects that account
+   would hold if the product were built on this store, "Because I just don't know how big it'll be, you should figure
+   that out."
+
+Orchestrator's reading: (1) the launcher now uses `gpt-6.2-astra` at max effort for new launches and resumes (checked
+against the CLI); the agent already running on Sol finishes its job. (2) and (3) answered in chat; the sizing table
+with customer names stays private. The sizing changes one working assumption: the largest single account is not near
+1 million subjects but already above 4 million thin ones, and the deepest account has about 100,000 subjects with
+about four times the facts per subject of the test's population.
