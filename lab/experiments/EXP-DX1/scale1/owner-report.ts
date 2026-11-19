@@ -1,4 +1,6 @@
 import fs from "node:fs";
+import assert from "node:assert/strict";
+import { summaryFiles } from "./source.ts";
 import { createHash } from "node:crypto";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import {
@@ -28,7 +30,7 @@ const metric = (b: any) =>
     : "—";
 const bar = (s: Stage, id: string, scope = false) =>
   (scope ? s.summary?.perScope?.[0]?.bars : s.summary?.pooledBars)?.find((b: any) => b.id === id);
-export function updateReport(evidence: string) {
+export function updateReport(evidence: string, file = path.join(here, "REPORT.md")) {
   const stages: Stage[] = [];
   if (fs.existsSync(evidence))
     for (const tag of fs.readdirSync(evidence)) {
@@ -36,6 +38,22 @@ export function updateReport(evidence: string) {
         attempt = load(dir, "attempt.json");
       if (!attempt) continue;
       const terminal = load(dir, "terminal.json");
+      const transfer = load(path.dirname(dir), "transfer.json");
+      assert(
+        transfer?.tag === tag &&
+          transfer.source === attempt.source &&
+          transfer.nonce === attempt.nonce,
+      );
+      assert.deepEqual(summaryFiles(dir), transfer.summaryFiles);
+      const summary = load(dir, "summary.json");
+      if (summary)
+        assert(
+          summary.source === attempt.source &&
+            summary.slot === attempt.slot &&
+            summary.nonce === attempt.nonce &&
+            summary.arm === attempt.mode &&
+            summary.scopeCount === attempt.spec.scopes,
+        );
       if (
         terminal?.source !== attempt.source ||
         terminal.nonce !== attempt.nonce ||
@@ -47,7 +65,7 @@ export function updateReport(evidence: string) {
         tag,
         attempt,
         terminal,
-        summary: load(dir, "summary.json"),
+        summary,
         disk: load(dir, "seed-disk.json"),
         size: load(dir, "sizing.json"),
         resources: load(dir, "resource-summary.json"),
@@ -200,6 +218,7 @@ export function updateReport(evidence: string) {
     );
   }
   lines.push(
+    "",
     "Each engine cell gives peak cgroup memory and its highest CPU use sustained across three samples. One fully used core is 100%. Each transfer includes PostgreSQL page counters, gateway heap observations and per-scope driver measurements.",
   );
   lines.push(
@@ -217,22 +236,44 @@ export function updateReport(evidence: string) {
     "",
     "Ten full accounts target 160,452,550 current facts. The first account has 56,505 primary offers and 1,633 resends over the regular arm. The eligible daily roster is 200 or 2,000 people depending on the rung. [Profile and assumptions](PROFILE.md)",
     "",
-    "The functional Datomic trial used two four-person databases at once. Each accepted 70 primary commands. O-REPLAY checked 16 historical/current reads and 508 entity queries across both. O-DOMAIN checked eight R2 outputs and durable outbox states. The original slot image lacked the current write endpoint. The successful retry used the existing source-matched image. [Evidence manifest](SHA256SUMS)",
+    "Local Datomic functional checks drove two 40-person accounts through the zero-reader, reader and guarded activation arms. All 10,319,892 observed reads matched the model. O-REPLAY matched 262 sampled reads across 8,097 entity queries. The worker matched all 523 receipt reads. O-DOMAIN matched 160 stored decisions across 80 people and two releases, including two R2 decisions whose work items stayed unchanged. [Evidence manifest](SHA256SUMS)",
     "",
     "**Audit of evidence and verdicts**",
     "",
-    "- `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file to its nonce, source, slot and account.",
-    "- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The regular trace and phase plan have distinct identity fields.",
-    "- `deep-activation.ts` binds each fresh release receipt to its cut, hashes each evaluated world/output, re-reads the same cut, and checks both releases plus the durable R2 outbox against O-DOMAIN for every person.",
-    "- `measurements.ts` checks source-file hashes, fork exits, complete planned offers, exact receipt times and positions, and recomputes the sampled oracle comparisons from retained bytes. Missing or invalid accounts leave the pooled result unjudged.",
-    "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `control.ts` checks archive size, hash, nonce and source before indexing a transfer.",
-    "- The functional tests use new databases and real public receipts. They check replacement semantics, duplicate receipts, independent replay and publication. The renderer fix preserves fresh output destinations for derived evidence. A timed-out local terminal read was traced to a closed replica. The collector now uses the live source at both recorded positions.",
+    "- `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file and physical database to its nonce, source, slot and account. Each scope stays live until every R2 completion marker agrees with that cohort.",
+    "- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The run records the new trace identity and the frozen phase plan.",
+    "- `deep-activation.ts` binds each fresh release receipt to its cut, hashes each evaluated world/output, re-reads the same cut, and checks each release fact, output, outbox and durable per-person guard against the independent evaluate and publish operations at both cuts.",
+    "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
+    "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals.",
+    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes every transferred summary and binds source, scope and arm before rendering.",
+    "- The functional tests use new databases and real public receipts. They check replacement semantics, duplicate receipts, independent replay and publication. The first slot lacked the current write endpoint. A later terminal read timed out on a closed replica. The retry used the source-matched gateway and a live source read at each recorded position.",
     "",
-    "The acceptance contract and frozen v3 verdict rules retain their original pins. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
+    "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
   );
-  while (lines.length > 60 && lines.includes("")) lines.splice(lines.lastIndexOf(""), 1);
+  if (lines.length > 60) {
+    const start = lines.indexOf("**Population and checks**"),
+      end = lines.findIndex((l) => l.startsWith("Local Datomic functional checks"));
+    lines.splice(
+      start,
+      end - start,
+      "The full rung has 16,045,255 current facts per account. [Population and traffic assumptions](PROFILE.md)",
+      "",
+    );
+  }
+  if (lines.length > 60) {
+    for (const prefix of [
+      "Each engine cell",
+      "Cells give estimate",
+      "Before handoff, a read-only",
+    ]) {
+      if (lines.length <= 60) break;
+      const pos = lines.findIndex((l) => l.startsWith(prefix));
+      if (pos >= 0) lines.splice(pos, lines[pos + 1] === "" ? 2 : 1);
+    }
+  }
+  if (lines.length > 60) lines.splice(lines.indexOf("**Bench measurements**"), 2);
   if (lines.length > 60) throw Error("Owner report exceeds 60 lines");
-  fs.writeFileSync(path.join(here, "REPORT.md"), lines.join("\n") + "\n");
+  fs.writeFileSync(file, lines.join("\n") + "\n");
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
   updateReport(process.argv[2]!);

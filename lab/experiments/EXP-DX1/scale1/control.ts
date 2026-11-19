@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { catalog } from "./catalog.ts";
 import { updateReport } from "./owner-report.ts";
 import { fileHash } from "./measurements.ts";
-import { activeUnitArgs, bm1Released, priorUnits } from "./source.ts";
+import { activeUnitArgs, bm1Released, priorUnits, summaryFiles } from "./source.ts";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../.."),
   root = "/var/tmp/triplex-scale1",
@@ -181,6 +181,7 @@ async function collect(tag: string) {
     execFileSync("tar", ["-xf", summary, "-C", stage]);
     fs.renameSync(stage, path.join(dir, "summaries"));
   }
+  assert.deepEqual(summaryFiles(path.join(dir, "summaries")), entry.summaryFiles);
   const terminal = JSON.parse(
     fs.readFileSync(path.join(dir, "summaries", "terminal.json"), "utf8"),
   );

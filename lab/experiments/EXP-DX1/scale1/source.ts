@@ -85,3 +85,19 @@ export const activeUnitArgs = [
   "--no-legend",
   "--plain",
 ];
+
+// [DX-SCALE1] Why: previously extracted reports remain on disk across collection retries. Rejected: checking only the compressed download while reporting a changed or added loose summary.
+export function summaryFiles(directory: string) {
+  return Object.fromEntries(
+    fs
+      .readdirSync(directory, { recursive: true, encoding: "utf8" })
+      .sort()
+      .flatMap((name) => {
+        const f = path.join(directory, name),
+          stat = fs.lstatSync(f);
+        if (stat.isDirectory()) return [];
+        assert(stat.isFile() && name.endsWith(".json"), "Unexpected summary entry");
+        return [[name, digest(fs.readFileSync(f))]];
+      }),
+  );
+}

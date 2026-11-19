@@ -3,7 +3,7 @@
 North star. Measure pinned reads, offer-to-ACK commits, feed lag, current worlds and verified release activation on one and ten independent deep accounts. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 <!-- state -->
-At 17:52 UTC November 19, DX-DRV1 still owned the bench through its third arm. BM1 has priority next through its day queue. DX-SCALE1 has started no remote process. The local branch contains the driver merge. The experiment branch needs an initial public revision before the server can clone it. The lab preamble assigns pushes to the orchestrator. The task separately requests report pushes after each measured item.
+At 18:21 UTC November 19, BM1’s p3 controller was running the narrow full activation. Its guarded stage has a three-hour ceiling, followed by a five-hour v3 pair. BM1 estimates handover at 20:00–20:30 EST and sets an outer cutoff of 21:30 EST. The timestamped FREE marker and inactive units release the bench. DX-SCALE1 has no remote job. Its tested local branch is exp/DX-SCALE1-deep-accounts. The initial public ref is absent. The lab’s no-push rule leaves initial publication with the orchestrator. The task requests report pushes after measured items.
 <!-- end state -->
 
 With `BENCH_SERVER` set from the private brief, this one read-only command shows the previous controller, its terminal status, every scale unit and each arm's stage.
@@ -12,7 +12,7 @@ With `BENCH_SERVER` set from the private brief, this one read-only command shows
 node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 ```
 
-After BM1's terminal handoff, `control.ts prepare` builds the exact published revision from anonymous HTTPS. Its ceiling is 35 minutes. Each `launch` refreshes BM1, checks the tested public head, checks the dedicated daemon, and starts a separate systemd unit with process-group and stack cleanup. Use a fresh tag for each attempt. The runner retains failures and aborts an arm after 15 minutes without workload evidence progress.
+After BM1’s timestamped FREE handoff, `control.ts prepare` builds the exact published revision from anonymous HTTPS. Its ceiling is 35 minutes. Each `launch` refreshes BM1, checks the tested public head, checks the dedicated daemon, and starts a separate systemd unit with process-group and stack cleanup. Use a fresh tag for each attempt. The runner retains failures and aborts an arm after 15 minutes without workload evidence progress. A bound O-REPLAY process making CPU progress gets its original 15-, 60- or 90-minute size-dependent ceiling.
 
 | Order | People × scopes | Arms | Maximum time per arm |
 | --- | --- | --- | --- |

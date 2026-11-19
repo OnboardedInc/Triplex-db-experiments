@@ -16,7 +16,14 @@ import {
 } from "./measurements.ts";
 import { compressTraces } from "./archive.ts";
 import { resources } from "./resources.ts";
-import { activeUnitArgs, bm1Released, priorUnits, stageReplay, sourceInventory } from "./source.ts";
+import {
+  activeUnitArgs,
+  bm1Released,
+  priorUnits,
+  stageReplay,
+  sourceInventory,
+  summaryFiles,
+} from "./source.ts";
 import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-profile.ts";
 
 export const items = [
@@ -965,6 +972,7 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
       sha256: await fileHash(summary),
     },
     raw: rawArchive,
+    summaryFiles: summaryFiles(compact),
   });
   status(dir, "finished", outcome);
 }
