@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { deepOwnFacts, deepShape } from "../../../bench/lib/deep-world.ts";
-import { ids, SEED_VALID_FROM, type Value } from "../../../bench/lib/world.ts";
+import { ids, SEED_VALID_FROM, type Fact, type Value } from "../../../bench/lib/world.ts";
 
 export function bytes(x: unknown): string {
   if (typeof x === "number") {
@@ -183,6 +183,29 @@ export function fileSource(file: string, meta: Omit<Header, "seal">, input?: Ite
     throw e;
   }
 }
+// [DX-ACT1] Why: the eight-fact cohort reproduces THIN1's applicant answer references, including a missing answer value. Rejected: equal-width invented scalar attributes that skip reference reads.
+function thinFacts(i: number): Fact[] {
+  const root = ids.placement(i),
+    extra = i % 5;
+  const rows: Fact[] = [];
+  for (const [j, field] of ["source-key", "import-batch", "external-status"].entries()) {
+    if (j === 2 && extra < 2) break;
+    const answer = root + "/ans:" + j;
+    rows.push(
+      { e: root, a: "answers", v: { type: "ref", value: answer } },
+      { e: answer, a: "field", v: { type: "string", value: field } },
+    );
+    if (j < 2 || extra >= 3)
+      rows.push({ e: answer, a: "value", v: { type: "string", value: field + "-" + i } });
+  }
+  if (extra === 1 || extra === 4)
+    rows.push({
+      e: root,
+      a: "weeklyMinutes",
+      v: { type: "integer", value: String(1200 + (i % 1800)) },
+    });
+  return rows;
+}
 const populationCode = sha(
   [
     "./source.ts",
@@ -212,15 +235,7 @@ export function snapshot(
     header,
     group(i) {
       assert(i >= 0 && i < count);
-      const root = ids.placement(i);
-      const facts =
-        profile === "deep"
-          ? deepOwnFacts(i)
-          : Array.from({ length: 6 + (i % 5) }, (_, j) => ({
-              e: root,
-              a: ":thin/f" + j,
-              v: { type: "integer" as const, value: String(i * 10 + j) },
-            }));
+      const facts = profile === "deep" ? deepOwnFacts(i) : thinFacts(i);
       assert.equal(facts.length, profile === "deep" ? deepShape(i).facts : 6 + (i % 5));
       return {
         ordinal: i,
