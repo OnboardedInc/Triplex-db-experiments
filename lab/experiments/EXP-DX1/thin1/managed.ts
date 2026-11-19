@@ -154,6 +154,9 @@ function setup(compact: boolean) {
   const gwPolicy = process.env.DX_INT1_GATEWAYS ?? "original";
   const readMode = process.env.DX_TOUCHED_READ_MODE ?? "following";
   const peerGc = process.env.DX_INT1_PEER_GC ?? "g1";
+  const seedFeed = process.env.DX_INT1_SEED_FEED ?? "immediate";
+  assert(["immediate","after-sampling"].includes(seedFeed));
+  if (seedFeed === "after-sampling") assert(mode === "int1-deep" || mode === "int1-thin");
   assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
   for (const [n, slot] of slots.entries()) {
@@ -178,7 +181,7 @@ function setup(compact: boolean) {
   write(file, cfg);
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
-  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode, peerGc, isolatedVolume: compact });
+  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode, peerGc, seedFeed, isolatedVolume: compact });
   return slots;
 }
 function witness(slot: string) {
@@ -242,6 +245,7 @@ function bind() {
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
       peerGc: attempt.peerGc,
+      seedFeed: attempt.seedFeed,
       peers,
       cacheDiagnostic: fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")),
     },
@@ -267,6 +271,7 @@ if (action === "--guest") {
     DX_TOUCHED_READ_MODE: stack.managed.readMode ?? "following",
     DX_INT1_GATEWAYS: stack.managed.gwPolicy ?? "original",
     DX_INT1_PEER_GC: stack.managed.peerGc ?? "g1",
+    DX_INT1_SEED_FEED: stack.managed.seedFeed ?? "immediate",
   });
   if (stack.managed.compact) {
     let ready = false;

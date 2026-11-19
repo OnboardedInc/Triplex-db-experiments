@@ -5,6 +5,7 @@ The paths in [GATEWAY-SHA256SUMS](GATEWAY-SHA256SUMS) are relative to the durabl
 | Raw directory | Population and observations |
 | --- | --- |
 | `p3-baseline-deep-a` | 2,000 deep people, 40 active. Both native gateway JVMs were sampled after the complete seed and again after all 40 reads and writes. |
+| `p3-census-thin-b` | 100,000 thin people, 2,000 active. Includes all 1,000 cold timings, actual HTTP exchanges and an 8,000-read moving-set run at 128 KiB. |
 | `p3-census-deep-b` | 10,000 deep people, 200 active. The four import samples retain unforced role RSS. All 100 measured cold reads have real HTTP timing and response sizes. |
 | `p3-demand-deep-b` | Matched 2,000-person bounded JVM profile with 40 first reads, including the first read to open the scope. |
 | `p3-baseline-thin-a` | 10,000 thin people, 200 active. The same two phases ran on a separate reservation and fresh SQL volume. |
@@ -18,3 +19,5 @@ On the physical queue, the first wide case measures 200 previously unread deep p
 At the original deep seed, both JVMs held exactly 27,889 live `datomic.db.Datum` objects (1,115,560 shallow bytes each). The read peer had zero parsed entity keys and no reach configuration. The write peer had one 96-byte reach configuration and one 72-byte empty ID-map object. After demand, the read peer had 1,477 parsed keys (59,080 shallow bytes), two configurations and two ID-map objects. The class histogram excludes their referents from those shallow sizes. The ID memo maps entity names to native IDs. Assertion-ID uniqueness comes from the durable history. Native storage pages can serve multiple people. The write role also served the driver's independent receipt-feed checks during import.
 
 The optional managed `DX_INT1_PEER_GC=elastic` comparison keeps the peer cache, row and session budgets identical and uses a 96 MiB soft heap target with generational ZGC. The default bounded profile uses G1. The JVM profile records the actual collector and charge.
+
+The diagnostic `DX_INT1_SEED_FEED=after-sampling` stores an ordered change digest from the issued operations and their assigned IDs. It measures a writer-only seed first and then reads and verifies every original feed position before returning. The default full-population comparisons run the feed verifier during import.

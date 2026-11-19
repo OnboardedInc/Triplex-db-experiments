@@ -29,7 +29,8 @@ export function measurementWindow(binding: string, slot: string) {
   }
   return {
     release,
-    stats: () => ({ windows, grantedMs, waitMs }),
+    // [DX-THIN1] Why: the result is written before finally releases the last window. Rejected: reporting only earlier grants as total measurement time.
+    stats: () => ({ windows, grantedMs: grantedMs + (started ? performance.now() - started : 0), waitMs }),
     async checkpoint() {
       if (!dir) return;
       assert(Number.isSafeInteger(pid) && pid > 1);

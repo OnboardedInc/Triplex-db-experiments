@@ -16,6 +16,29 @@ import { smallPeople } from "../scale1/small-plan.ts";
 import { cases, verifyPages, verifyLatencies } from "./bench-cases.ts";
 import { regularDeepProof } from "./receipt-proof.ts";
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "int1-suite-"));
+test("the import-only observer replays every original seed identity after sampling", async () => {
+  const comp = await memoryComposition("datomic", "seed-feed-" + randomUUID());
+  const db = new DatabaseSync(":memory:");
+  let pages = 0, corrupt = false;
+  const observed = { ...comp, feedPage: async (...args: Parameters<typeof comp.feedPage>) => {
+    pages++;
+    const page = await comp.feedPage(...args);
+    return corrupt ? { ...page, transactions: page.transactions.map(t => ({ ...t, txId: "wrong" })) } : page;
+  } };
+  try {
+    const a = new Account(observed, "thin", randomUUID(), 0, 2, db, undefined, undefined, undefined, true);
+    await a.seed([0]); await a.seed([1]);
+    assert.equal(pages, 0);
+    const proof = await a.verifySeedFeed(async () => {});
+    assert(proof && proof.count === 2 && proof.facts === 16);
+    assert.equal(pages,2);
+    corrupt = true;
+    await assert.rejects(a.verifySeedFeed(async () => {}));
+    corrupt = false;
+    db.exec("DELETE FROM seed_feed WHERE p=1");
+    await assert.rejects(a.verifySeedFeed(async () => {}));
+  } finally { db.close(); await comp.close(); }
+});
 test("latency collection recomputes the nearest-rank statistic and rejects another attempt", () => {
   const dir = tmp(),
     file = "latency-samples.json",

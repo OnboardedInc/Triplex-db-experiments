@@ -92,6 +92,7 @@ process.env.DX_GW_WRITE_HEAP = "2g";
 if (integrated) {
   Object.assign(process.env, {
     DX_INT1_COHORT: "spread", DX_INT1_CENSUS: "held", DX_INT1_GATEWAYS: "demand", DX_TOUCHED_READ_MODE: "validated",
+    DX_INT1_PEER_GC: "g1", DX_INT1_SEED_FEED: "immediate",
   });
 }
 for (const key of [

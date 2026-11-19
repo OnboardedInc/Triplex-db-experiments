@@ -83,6 +83,7 @@ const publicRow = (op: any, id: string, r: Receipt) => ({
   retractTxId: Option.none(),
 });
 export class Account {
+  private readonly deferSeedFeed: boolean;
   readonly comp: CompositionHandle;
   readonly shape: Shape;
   readonly binding: string;
@@ -106,7 +107,9 @@ export class Account {
     cursor = { position: 0 },
     tenant?: TenantAccount,
     membership?: MembershipProof,
+    deferSeedFeed = false,
   ) {
+    this.deferSeedFeed = deferSeedFeed;
     this.tenant = tenant;
     this.membership = tenant ? (membership ?? new MembershipProof()) : undefined;
     if (tenant) assert(tenant.first === first && tenant.people === count && shape === "deep");
@@ -120,6 +123,7 @@ export class Account {
     db.exec(
       "PRAGMA cache_size=-2048; PRAGMA journal_mode=WAL; CREATE TABLE people(i INTEGER PRIMARY KEY, born INTEGER NOT NULL, policy TEXT, dirty INTEGER, hash TEXT NOT NULL); CREATE TABLE wanted(i INTEGER,p INTEGER,body TEXT,PRIMARY KEY(i,p)); CREATE TABLE tx(p INTEGER PRIMARY KEY,cmd TEXT NOT NULL,instant REAL NOT NULL,body TEXT)",
     );
+    if (this.deferSeedFeed) db.exec("CREATE TABLE seed_feed(p INTEGER PRIMARY KEY, txid TEXT NOT NULL, changes INTEGER NOT NULL, hash TEXT NOT NULL)");
   }
   get head() {
     return this.cursor.position;
@@ -266,21 +270,40 @@ export class Account {
     });
     assert.equal(ids.size, ops.length);
     assert.equal(new Set(assigned).size, ops.length);
-    const page = await this.comp.feedPage(this.head, 1);
-    const actual = page.transactions[0];
-    assert(
-      actual &&
-        actual.position === receipt.position &&
-        actual.txId === receipt.txId &&
-        actual.commandId === tx &&
-        actual.instant === receipt.instant,
-    );
-    assert.deepEqual(
-      actual.changes.map((c: any) => JSON.stringify([c.op, key(c), c.tripleId])).sort(),
-      ops.map((op, j) => JSON.stringify(["assert", key(op), assigned[j]])).sort(),
-    );
+    const changes = ops.map((op,j) => JSON.stringify(["assert", key(op), assigned[j]])).sort();
+    if (seed && this.deferSeedFeed) {
+      // [DX-THIN1] Why: price a writer that imports without also serving the verifier's full transaction feed. Rejected: omitting the independent feed check or retaining all expected changes in RAM.
+      this.db.prepare("INSERT INTO seed_feed VALUES(?,?,?,?)").run(receipt.position,receipt.txId,changes.length,digest(JSON.stringify(changes)));
+    } else {
+      const actual = await this.feedChanges(receipt.position,receipt.txId,tx,receipt.instant);
+      assert.deepEqual(actual,changes);
+    }
     this.head = receipt.position;
     return { receipt, assigned, ops, tx };
+  }
+  private async feedChanges(p: number, txid: string, command: string, instant: number): Promise<string[]> {
+    const page = await this.comp.feedPage(p-1,1);
+    const actual = page.transactions[0];
+    assert(page.transactions.length === 1 && actual && actual.position === p && actual.txId === txid &&
+      actual.commandId === command && actual.instant === instant);
+    return actual.changes.map((c: any) => JSON.stringify([c.op,key(c),c.tripleId])).sort();
+  }
+  async verifySeedFeed(checkpoint: () => Promise<void>) {
+    if (!this.deferSeedFeed) return undefined;
+    let count = 0, facts = 0;
+    const seal = createHash("sha256");
+    for (const row of this.db.prepare("SELECT s.*,t.cmd,t.instant FROM seed_feed s JOIN tx t ON t.p=s.p ORDER BY s.p").iterate()) {
+      await checkpoint();
+      const actual = await this.feedChanges(Number(row.p),String(row.txid),String(row.cmd),Number(row.instant));
+      const hash = digest(JSON.stringify(actual));
+      assert.equal(actual.length,row.changes);
+      assert.equal(hash,row.hash);
+      seal.update(JSON.stringify([this.binding,row.p,row.txid,row.cmd,row.instant,hash])+"\n");
+      count++; facts += actual.length;
+    }
+    assert.equal(count, this.db.prepare("SELECT count(DISTINCT born) AS n FROM people").get()!.n);
+    assert.equal(facts,this.facts);
+    return { count, facts, sha256: seal.digest("hex") };
   }
   async update(i: number) {
     const op = {

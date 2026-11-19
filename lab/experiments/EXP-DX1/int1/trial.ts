@@ -83,7 +83,8 @@ const attempt = randomUUID(),
   spread = process.env.DX_INT1_COHORT === "spread",
   seedOnly = process.env.DX_INT1_CENSUS === "seed-only",
   policy = { readMode: process.env.DX_TOUCHED_READ_MODE ?? "following", gateways: process.env.DX_INT1_GATEWAYS ?? "original",
-    ...(process.env.DX_INT1_PEER_GC === "elastic" ? { peerGc: "elastic" } : {}) },
+    ...(process.env.DX_INT1_PEER_GC === "elastic" ? { peerGc: "elastic" } : {}),
+    ...(process.env.DX_INT1_SEED_FEED === "after-sampling" ? { seedFeed: "after-sampling" } : {}) },
   gatewaySource = stack.gatewaySourceSha256 as string,
   binding = digest(
     canonical([source, inputs, attempt, mode, size, stack.prefix, stack.containers, spread, seedOnly, policy, gatewaySource]),
@@ -176,6 +177,7 @@ async function open(
       ? undefined
       : { index: tenantIndex, key: keyFor(tenantIndex), first, people: count },
     pooled?.membership,
+    policy.seedFeed === "after-sampling",
   );
   accounts.push(a);
   return a;
@@ -491,6 +493,8 @@ async function trial() {
   await caughtUp();
   const before = await phase("after-activity");
   if (seedOnly) await gatewayProfiles(stack, dir!, "two-percent", binding);
+  const seedFeedChecks = [];
+  for (const a of accounts) seedFeedChecks.push(await a.verifySeedFeed(lease.checkpoint));
   let sender, regularDeep, regularTenant, placements, identities;
   if (mode === "int1-proof") {
     const proofs = await import("./receipt-proof.ts");
@@ -686,6 +690,7 @@ async function trial() {
     schedules,
     moving,
     benchDeepCold,
+    ...(policy.seedFeed ? { seedFeedChecks } : {}),
   };
 }
 try {
