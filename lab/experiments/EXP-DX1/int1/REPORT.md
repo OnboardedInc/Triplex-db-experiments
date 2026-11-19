@@ -1,11 +1,11 @@
-A reader now keeps a person's facts after a real read and drops old entries when its byte budget fills.
-Adding 98,000 untouched thin people or 9,800 untouched deep people added zero bytes to the packed reader index and measured gateway caches.
-Reader process memory still grew by 225 bytes per thin person and 1,718 per deep person. Both exceeded the provisional 64-byte limit.
-The first exact cold read at the 99th percentile took 7.55 ms for thin people and 103.08 ms for deep people. The provisional limit is 100 ms.
-Over 8,000 SQL-backed reads with a moving active set, reader memory settled near 180 MiB. All returned facts matched.
-A first read spanning a release and a write returned the old value at its original point in time and the new value at the later point.
-One test stack held 100,000 thin people, and another held 10,000 deep people. Each run read and wrote 2% of them.
-The mixed production population and million-person capacity remain unproven. One command queues the two wide populations and both 100-account placements.
+The gateways retained shared database pages during import, before anyone read a person.
+At 2,000 deep people the read gateway charged 20.0 MB to Datomic’s object cache and the write gateway charged 58.1 MB. Their person-ID and row caches were empty.
+At 10,000 thin people the corresponding charges were 5.4 MB and 15.0 MB.
+After 2% of deep people were touched, the read gateway held another 9.2 MB of parsed rows and revisions and 0.27 MB of ID entries.
+An unopened reader’s resident memory stayed flat during both imports. The previous 225 and 1,718 bytes per person were measured with a reader already following writes.
+Among 40 deep first reads, the 34-task person took 243 ms. Opening the first scope took 1,194 ms including its read. Both exceeded 100 ms.
+The four requested branches are integrated. The following table is the earlier full-population comparison while the bounded gateway runs are in progress.
+Capacity for ten deep accounts together or one 4.5-million-person account remains unmeasured.
 
 | Role | Bytes per untouched thin person | Bytes per untouched deep person | Bytes per idle scope | Threads per idle scope |
 | --- | ---: | ---: | ---: | ---: |
@@ -29,6 +29,8 @@ The standard experiment uses `reach-touched` with a 16 MiB admission budget per 
 From the clean published checkout, set `BENCH_SERVER` to the assigned machine and run `node --experimental-transform-types lab/experiments/EXP-DX1/int1/control.ts launch BATCH UTC_CUTOFF`. The local controller and six-core reader affinity were exercised without a bench connection. Expect about four times the seed rows and coverage work at 4M versus 1M, with bounded reader charge. Both small arms use the same 29,000 deep people and 580 active, and must agree on every account's roster and logical outputs.
 
 The gateway study merges SCALE1 `527afd3d2`, including ACT2 `a9eb03b04` and W1 `502c8897d`. The driver and worker install seed images only for eager readers. The deep activation merge keeps the exact account roster, dependency selector, publication receipt checks and ordinary parallel evaluators. HA1 `fa8377bf2` merged cleanly. The follow-up SCALE1 merge `1646315d3` retains release and burst commit metering beside that selector. ACT2 `ff5f7bd6c` and HA1 `434dc7d77` then merged cleanly. These merges carry the original branch evidence. Fresh integrated measurements follow separately.
+
+Baseline JVM profile, decimal MB, seed → 2% touched. Thin read/write live heaps were 41.8 → 54.0 / 48.9 → 51.3, with peer charges 5.4 → 20.4 / 15.0 → 18.0. Deep live heaps were 63.6 → 82.5 / 91.4 → 91.6, with peer charges 20.0 → 45.0 / 58.1 → 58.1. Both write-side ID and row caches stayed empty. Byte arrays led all four seed histograms. Raw attribution and totals are in [GATEWAY-EVIDENCE.md](GATEWAY-EVIDENCE.md).
 
 **Evidence audit**
 
