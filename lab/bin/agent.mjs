@@ -36,7 +36,9 @@ const MODEL = 'gpt-6.2-astra';
 // [PROTOCOL 2026-11-19] Why: Sam, 2026-11-19: "launch up to 4 astra 6.2 agents on XHIGH effort to brainstorm in repeated
 // waves to do research and think about things in areas you want to optimize". The `thinker` role is that: research and
 // experiment design at xhigh, no product code. Rejected: running idea work at max (not what he asked) or through Claude.
-const EFFORT = { builder: 'max', reviewer: 'max', thinker: 'xhigh' }; // the only allowed pairs
+// [PROTOCOL 2026-11-19b] Why: Sam, later the same day, for the activation designs: "Have three Astro agents on Macs go
+// brainstorm three different directions" (dictated: Astra agents on max). `deepthinker` is the thinker role at max.
+const EFFORT = { builder: 'max', reviewer: 'max', thinker: 'xhigh', deepthinker: 'max' }; // the only allowed pairs
 // Shared state every agent must be able to write: the pnpm store, the durable project folder, git objects and worktree metadata
 // (commits from a worktree write into the main .git), and the main checkout's lock and engine ledgers (lab/bin/lib.mjs LOCKS,
 // ENGINE_DIR), so heavy.mjs and engine.mjs reservations work from inside the sandbox.
@@ -64,7 +66,7 @@ function parse(argv) {
 
 function run(role, id, promptFile, cwd, addDirs, resumeSession) { // promptFile is reassigned to the composed copy below
   const effort = EFFORT[role];
-  if (!effort) fail(`role must be builder, reviewer or thinker (got ${role})`);
+  if (!effort) fail(`role must be builder, reviewer, thinker or deepthinker (got ${role})`);
   if (!existsSync(promptFile)) fail(`prompt file ${promptFile} does not exist`);
   const dir = join(DURABLE, id);
   mkdirSync(dir, { recursive: true });
@@ -72,7 +74,7 @@ function run(role, id, promptFile, cwd, addDirs, resumeSession) { // promptFile 
   const promptCopy = join(dir, `prompt-${stamp}.md`);
   // [PROTOCOL 2026-11-08] Why: the lab rules travel with every prompt, so no Codex agent can miss them (lab/PROTOCOL.md 1).
   const preamble = readFileSync(join(REPO, 'lab', 'agents', 'CODEX-PREAMBLE.md'), 'utf8');
-  const roleText = role === 'thinker'
+  const roleText = role === 'thinker' || role === 'deepthinker'
     ? `\n## Your role: researcher and experiment designer (Codex ${MODEL}, ${effort} effort), id ${id}\nRead, search, reason and write the documents the brief asks for. You build no product code and run no containers.\n`
     : role === 'builder'
     ? `\n## Your role: code builder (Codex ${MODEL}, ${effort} effort), id ${id}\nImplement the task in your worktree, run its gates, commit, report. A separate reviewer will try to break your work.\n`
