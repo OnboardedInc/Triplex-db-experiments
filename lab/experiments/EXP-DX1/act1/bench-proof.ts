@@ -151,7 +151,7 @@ export function benchArguments(argv: string[], slot: string, source: string, non
 
 export function checkSweep(
   out: string,
-  request: { slot: string; arm: Arm; source: string; workers?: number; seedSha256:string },
+  request: { slot: string; arm: Arm; source: string; workers?: number; seedSha256: string },
 ) {
   const load = (f: string) => JSON.parse(readFileSync(join(out, f), "utf8"));
   const a = load("activation-attempt.json"),

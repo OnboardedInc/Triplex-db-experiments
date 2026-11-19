@@ -80,3 +80,7 @@ e85e6b72a04a5186b0df8e61891999a8c8661d1f7f556092b133c17f599ff933  tx2-dxt1-bm1-p
 c81c3d9dec9771719c8699547515fde873ac2d2ef78beaf44385c3775ad4569c  drv1a/guarded-schedules/tx2-dxt1-bm1-actab8325281-activation-a/fixture.SHA256SUMS
 1960609565a18ce57c65987f56765f9a21e375279d0623ff796dda247f6918d2  drv1a/pair-retry-launch.log
 cd3d6a9ab471b130414cd67aae71a0eb623656c36cba306f18ff178bf2c635e5  drv1a/pristine-source-gates.log
+a19adbf05dacb5634e77fa9356d9f0e755419d277a1df4e70a8ffce663618e41  drv1a/dx-bm1-bench-unit.log
+f059eb3d55c46ee92a73c54b63039f1d19f01425b281eceb257d3624ad715590  drv1a/dx-bm1-bench-unit-host.log
+19ffa70b601489337645363f9f1144a583020a89610f2e7149f0ddc6706dad6e  drv1a/dx-bm1-bench-verified.log
+39cb47f6fa89e99f7b443957e76fc6b97964cb0c486de5cc6912f6d45f09810a  drv1a/dx-bm1-bench-all.log

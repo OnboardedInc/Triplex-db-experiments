@@ -157,6 +157,8 @@ async function check(mode: "history" | "snapshot", groups: Group[]) {
       { position: first, validAt: 250 },
       { position: head, validAt: 250 },
       { position: head, validAt: 500 },
+      { position: first + 1, recordedAt: 800, validAt: 149 },
+      { position: head, recordedAt: 999, validAt: 125 },
       ...[99, 125, 150, 199, 200, 249, 250, 400].flatMap((validAt) =>
         [799, 800, 999, 1000, 1100, 1200].map((recordedAt) => ({ recordedAt, validAt })),
       ),
@@ -167,9 +169,8 @@ async function check(mode: "history" | "snapshot", groups: Group[]) {
         queries.push({ id: qid, kind: "entityTriples", entityId: root, cut });
         const b: any = {
           validAt: cut.validAt,
-          ...("position" in cut
-            ? { recordedPosition: cut.position }
-            : { recordedAt: cut.recordedAt }),
+          ...("position" in cut ? { recordedPosition: cut.position } : {}),
+          ...("recordedAt" in cut ? { recordedAt: cut.recordedAt } : {}),
         };
         const p = await target.pull(root, b),
           t = await touched.pull(root, b);
