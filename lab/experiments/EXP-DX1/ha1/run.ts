@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { Evidence, inputs } from "./common.ts";
 import { Stack, type Site } from "./stack.ts";
+import { move } from "./move.ts";
 import { failures } from "./failures.ts";
 export async function drill(
   e: Evidence,
@@ -15,6 +16,7 @@ export async function drill(
     assert(Number.isSafeInteger(profile.people) && profile.people > 0 && profile.people <= 100000);
     await s.open();
     if (e.mode === "failures") result = await failures(s, profile.scopes);
+    else if (e.mode === "move") result = await move(s, profile.people);
     else throw Error("Unimplemented experiment");
   } catch (err: any) {
     e.write("failure", {
