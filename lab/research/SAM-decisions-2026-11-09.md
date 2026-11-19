@@ -594,3 +594,21 @@ by the provider (the team is capped at two bare-metal servers), so the plan is t
 through Saturday midday (about $132 in total) and about $68 held back for a follow-up run on what the results show.
 Server hours are the scarce resource: every hour goes to a test that decides something for priorities 1 to 9 or for
 the one-database question, and an idle server is deleted.
+
+## 2026-11-19 about 16:00 local: priority 9 bars confirmed; activation across accounts may be sequential; writes are the focus
+
+Sam, verbatim:
+- "the targets for your bar for parity 9, by the way that you said, were provisional. Make those be marked as not
+  provisional. I confirm them."
+- "I think for a regular update across all accounts, they don't all need to update in the same 100 seconds. They can
+  finish one after another."
+- "It just seems like the rights are the problem, huh? Let's definitely focus on getting those fixed because it looks
+  like activation is super important." (dictated; "rights" is "writes")
+- He also asked how activation and Triplex work; answered in chat.
+
+Orchestrator's reading: (1) priority 9's bars are fixed: no acknowledged write lost, writes resume within 60 s of
+losing the active transactor, pinned reads continue throughout, a planned move pauses one account's writes at most
+30 s. (2) Priority 5 is per account, accounts in sequence when a release goes everywhere. (3) The write path is the
+focus: everything that turns many writes into few (page guards, the release selector, group commit, the import lane's
+pacing, the one-lookup identity check) goes first on the servers, and activation gets its valid 100,000-subject
+measurement before anything else that is not a write-path test.
