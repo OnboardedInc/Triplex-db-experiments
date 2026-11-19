@@ -18,6 +18,8 @@ const nonce = property("run"),
   role = property("role");
 assert(nonce && /^[a-f0-9]{20}$/.test(nonce) && secret && /^[a-f0-9]{40}$/.test(secret));
 assert(role === "write" || role === "read");
+const compact = property("compact") === "yes";
+assert(!compact || role === "write");
 const address = Object.values(os.networkInterfaces())
   .flat()
   .find((x) => x?.family === "IPv4" && !x.internal)!.address;
@@ -78,12 +80,18 @@ const processTotal = (pid: number, metric: "rss" | "threads"): number => {
     const file = "/proc/" + pid,
       children = fs.readFileSync(file + "/task/" + pid + "/children", "utf8").trim();
     const status = fs.readFileSync(file + "/status", "utf8");
-    const value = metric === "threads" ? Number(status.match(/^Threads:\s+(\d+)/m)?.[1] ?? 0) : Number(status.match(/^VmRSS:\s+(\d+)/m)?.[1] ?? 0) * 1024;
+    const value =
+      metric === "threads"
+        ? Number(status.match(/^Threads:\s+(\d+)/m)?.[1] ?? 0)
+        : Number(status.match(/^VmRSS:\s+(\d+)/m)?.[1] ?? 0) * 1024;
     return (
-      value + (children ? children.split(/\s+/).reduce((sum, c) => sum + processTotal(Number(c), metric), 0) : 0)
+      value +
+      (children
+        ? children.split(/\s+/).reduce((sum, c) => sum + processTotal(Number(c), metric), 0)
+        : 0)
     );
   } catch (error) {
-    if (["ENOENT","ESRCH"].includes((error as NodeJS.ErrnoException).code ?? "")) return 0;
+    if (["ENOENT", "ESRCH"].includes((error as NodeJS.ErrnoException).code ?? "")) return 0;
     throw error;
   }
 };
@@ -210,18 +218,39 @@ if (role === "write") {
     await wait(500);
   }
 }
-start(
-  role + "Gateway",
-  "taskset",
-  ["-c", process.env.GW_CPUS!, datomic + "/bin/run", "-m", "triplex.gateway.main"],
-  {
-    DATOMIC_JAVA_OPTS:
-      words.filter((x) => !x.startsWith("-Ddxthin.")).join(" ") +
-      " -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
-    DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
-    DATOMIC_URI_TEMPLATE: template,
-  },
-);
+const gateway = (label: "write" | "read", secondary = false) => {
+  // [DX-INT1] Why: run two independent gateway JVMs inside one normally reserved cgroup when using the compact Mac stack. The existing gateway startup and handler run for both.
+  // Rejected: combining the two RSS measurements, lowering the manager's disk forecast, or starting a process outside the slot.
+  let entry = ["-m", "triplex.gateway.main"];
+  if (secondary) {
+    const launcher = path.join(dir, "read-port.clj");
+    // [DX-INT1] Why: Datomic's bin/run splits inline expressions into shell words. Pass one launcher filename and preserve the complete normal gateway startup.
+    // Rejected: a replacement HTTP handler that could change read semantics for this census.
+    fs.writeFileSync(
+      launcher,
+      `(require 'triplex.gateway.main 'ring.adapter.jetty)
+(let [start ring.adapter.jetty/run-jetty]
+  (with-redefs [ring.adapter.jetty/run-jetty (fn [handler options] (start handler (assoc options :port 8081)))]
+    (triplex.gateway.main/-main)))
+`,
+      { flag: "wx", mode: 0o600 },
+    );
+    entry = [launcher];
+  }
+  start(
+    label + "Gateway",
+    "taskset",
+    ["-c", process.env.GW_CPUS!, datomic + "/bin/run", ...entry],
+    {
+      DATOMIC_JAVA_OPTS:
+        words.filter((x) => !x.startsWith("-Ddxthin.")).join(" ") +
+        " -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
+      DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
+      DATOMIC_URI_TEMPLATE: template,
+    },
+  );
+};
+gateway(role);
 let sampling = false;
 const server = http.createServer(async (req, res) => {
   if (
@@ -293,9 +322,16 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   try {
-    const rssBytes = Object.fromEntries([...pids].map(([name, c]) => [name, processTotal(c.pid!, "rss")]));
+    const requested = req.headers["x-thin-role"] ?? role;
+    assert(requested === role || (compact && requested === "read"));
+    const processes = [...pids].filter(([name]) =>
+      requested === "read" ? name === "readGateway" : name !== "readGateway",
+    );
+    const rssBytes = Object.fromEntries(
+      processes.map(([name, c]) => [name, processTotal(c.pid!, "rss")]),
+    );
     const disk =
-      role === "write"
+      requested === "write"
         ? JSON.parse(
             sql(
               "SELECT json_build_object('database',pg_database_size(current_database()),'kvsIncludingIndexes',pg_total_relation_size('datomic_kvs'),'walDirectory',(SELECT sum(size) FROM pg_ls_waldir()),'fsync',current_setting('fsync'),'synchronousCommit',current_setting('synchronous_commit'),'fullPageWrites',current_setting('full_page_writes'))",
@@ -306,13 +342,16 @@ const server = http.createServer(async (req, res) => {
     res.end(
       JSON.stringify({
         nonce,
-        role,
+        role: requested,
+        gatewayPid: pids.get(requested + "Gateway")!.pid,
         containerId,
         source: observerId,
         rssBytes,
-        threads: Object.fromEntries([...pids].map(([name, c]) => [name, processTotal(c.pid!, "threads")])),
+        threads: Object.fromEntries(
+          processes.map(([name, c]) => [name, processTotal(c.pid!, "threads")]),
+        ),
         disk,
-        objectCacheLimitBytes: role === "write" ? 192 * 1024 ** 2 : null,
+        objectCacheLimitBytes: requested === "write" ? 192 * 1024 ** 2 : null,
         cgroupBytes: Number(fs.readFileSync("/sys/fs/cgroup/memory.current", "utf8")),
       }),
     );
@@ -323,6 +362,36 @@ const server = http.createServer(async (req, res) => {
 });
 server.listen(8989, address, () =>
   console.log(
-    "DXTHIN-SLOT " + JSON.stringify({ nonce, role, address, containerId, source: observerId }),
+    "DXTHIN-SLOT " +
+      JSON.stringify({
+        nonce,
+        role,
+        address,
+        containerId,
+        source: observerId,
+        ...(compact ? { readPort: 8081 } : {}),
+      }),
   ),
 );
+
+if (compact) {
+  for (let n = 0; ; n++) {
+    let ready = false;
+    try {
+      const r = await fetch("http://" + address + ":8080/health", {
+        signal: AbortSignal.timeout(2000),
+      });
+      if (r.ok) {
+        const info = (await r.json()) as { gatewaySourceHash: string };
+        assert.equal(info.gatewaySourceHash, observerId);
+        ready = true;
+      }
+    } catch (e) {
+      if (!(e instanceof TypeError) && !(e instanceof DOMException)) throw e;
+    }
+    if (ready) break;
+    if (n >= 120) throw Error("Primary gateway startup deadline");
+    await wait(500);
+  }
+  gateway("read", true);
+}

@@ -39,3 +39,40 @@ it("declines oversized closures and negative cache entries still consume budget"
   expect(copy.retention.evictions).toBe(19);
   await copy.stop();
 });
+it("rejects an in-flight cold page from an evicted generation at the same source position", async () => {
+  const { f, copy, index } = opened(3500);
+  const p = seedHead(100),
+    v = firstValid + 1000;
+  await copy.bootstrap([], p);
+  expect(await copy.admit(person(0), p, v)).toBe(true);
+  let signal!: () => void, release!: () => void;
+  const arrived = new Promise<void>((done) => {
+    signal = done;
+  });
+  const held = new Promise<void>((done) => {
+    release = done;
+  });
+  const original = f.source.page.bind(f.source);
+  f.source.page = async (...args) => {
+    const bytes = await original(...args);
+    if (args[0][0] === person(1)) {
+      signal();
+      await held;
+    }
+    return bytes;
+  };
+  try {
+    const stale = copy.admit(person(1), p, v);
+    await arrived;
+    expect(await copy.admit(person(2), p, v)).toBe(true);
+    release();
+    expect(await stale).toBe(false);
+    expect(index.pull(person(1), { recordedPosition: p, validAt: v })).toBeUndefined();
+    expect(await copy.admit(person(1), p, v)).toBe(true);
+    expect(index.pull(person(1), { recordedPosition: p, validAt: v })?.rows).toHaveLength(8);
+    expect(copy.retention.bytes).toBeLessThanOrEqual(3500);
+  } finally {
+    release();
+    await copy.stop();
+  }
+});

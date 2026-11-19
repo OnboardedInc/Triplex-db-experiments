@@ -82,13 +82,13 @@ test("certified deep worlds avoid a source pull, dirty worlds use it, and a chan
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
-test("pooled and isolated deep accounts keep identical original intents, roster, oracle decisions and every durable guard", async () => {
+test("eight deep accounts keep identical original intents, roster, oracle decisions and every durable guard across placements", async () => {
   const arm = async (pooled: boolean) => {
     const dir = tmp(),
       handles = [] as Awaited<ReturnType<typeof memoryComposition>>[],
       accounts: Account[] = [];
     try {
-      for (let n = 0; n < 2; n++) {
+      for (let n = 0; n < 8; n++) {
         const c =
           pooled && n ? handles[0]! : await memoryComposition("datomic", "account-" + randomUUID());
         if (!handles.includes(c)) handles.push(c);
@@ -127,6 +127,11 @@ test("pooled and isolated deep accounts keep identical original intents, roster,
           assert.equal(d.oracle, 4);
           assert.equal(d.guardReadbacks, 4);
           await verifyPages(dir, d, a.first, a.count);
+          const file = path.join(dir, d.receiptFile);
+          const bytes = fs.readFileSync(file);
+          fs.writeFileSync(file, bytes.subarray(0, -1));
+          await assert.rejects(verifyPages(dir, d, a.first, a.count));
+          fs.writeFileSync(file, bytes);
           await assert.rejects(
             verifyPages(
               dir,
@@ -140,7 +145,7 @@ test("pooled and isolated deep accounts keep identical original intents, roster,
         }
         out.push([a.first, a.roster(), values]);
       }
-      assert.equal(handles.length, pooled ? 1 : 2);
+      assert.equal(handles.length, pooled ? 1 : 8);
       return out;
     } finally {
       for (const a of accounts) a.db.close();

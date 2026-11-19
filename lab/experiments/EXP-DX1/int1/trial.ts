@@ -93,6 +93,7 @@ save("inputs.json", {
   size,
   slot: stack.prefix,
   containers: stack.containers,
+  managedSlots: stack.managed?.compact ? 1 : stack.managed ? 2 : undefined,
   boot: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
 });
 process.env.TX2_W0_OUTBOX_NAMESPACE = pageNamespace("int1");

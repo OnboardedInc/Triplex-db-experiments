@@ -43,7 +43,8 @@ function load(dir: string) {
   assert.equal(inputs.size, r.size);
   assert.equal(inputs.mode, r.mode);
   assert.match(inputs.boot, /^[a-f0-9-]{36}$/);
-  assert.equal(new Set(inputs.containers.map((c: any) => c.id)).size, 2);
+  assert([1, 2].includes(inputs.managedSlots ?? 2));
+  assert.equal(new Set(inputs.containers.map((c: any) => c.id)).size, inputs.managedSlots ?? 2);
   const p = fs
     .readFileSync(path.join(dir, "phases.jsonl"), "utf8")
     .trim()

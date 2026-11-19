@@ -23,6 +23,7 @@ export async function verifyPages(dir: string, decision: any, first: number, cou
   assert.equal(decision.receiptFile, path.join(stem, "page-receipts.jsonl"));
   const file = path.join(dir, decision.receiptFile);
   const sum = createHash("sha256"),
+    raw = createHash("sha256"),
     roster = createHash("sha256").update("[");
   let through = first,
     lastPosition = decision.cut.basis.tx,
@@ -31,10 +32,9 @@ export async function verifyPages(dir: string, decision: any, first: number, cou
   assert(narrow || decision.release === W0.R1.hash);
   // [DX-INT1] Why: reconstruct each immutable range and its member mask from the requested cohort, release and source cut before accepting a rung.
   // Rejected: comparing a file hash to another string emitted by the same publisher without inspecting its contents.
-  for await (const line of createInterface({
-    input: fs.createReadStream(file),
-    crlfDelay: Infinity,
-  })) {
+  const input = fs.createReadStream(file);
+  input.on("data", (chunk) => raw.update(chunk));
+  for await (const line of createInterface({ input, crlfDelay: Infinity })) {
     const [start, seal, selector, coverage, claims] = JSON.parse(line);
     assert.equal(start, through);
     const end = Math.min(first + count, start + 256 - (start % 256));
@@ -104,6 +104,7 @@ export async function verifyPages(dir: string, decision: any, first: number, cou
   assert.equal(pages, decision.commits);
   assert.equal(roster.update("]").digest("hex"), decision.roster);
   assert.equal(sum.digest("hex"), decision.receipts);
+  assert.equal(raw.digest("hex"), decision.receipts);
 }
 export async function verifyCase(
   dir: string,
@@ -111,6 +112,7 @@ export async function verifyCase(
   head: string,
   tag: string,
   stack: any,
+  cpus: { sender: string; readers: string },
 ) {
   const { W0, canonical, sha256 } = await import("../../../bench/lib/w0-world.ts");
   const { eadRelease } = await import("../../../bench/lib/w0-selector.ts");
@@ -231,6 +233,14 @@ export async function verifyCase(
     .map((l) => JSON.parse(l));
   assert(phases.every((p) => p.binding === binding));
   for (const p of phases) {
+    assert.deepEqual(p.driver.cpus, [Number(cpus.sender)]);
+    assert.deepEqual(
+      p.reader.cpus,
+      cpus.readers
+        .split(",")
+        .map(Number)
+        .sort((a, b) => a - b),
+    );
     assert(p.driver.rssBytes > 0 && p.reader.rssBytes > 0 && p.native.disk.kvsIncludingIndexes > 0);
     for (const id of ["pg", "tx", "gw-w", "gw-r"])
       assert(p.native.roles[id].rssBytes > 0 && p.native.roles[id].threads > 0);

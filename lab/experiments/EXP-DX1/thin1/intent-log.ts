@@ -14,11 +14,11 @@ export class IntentLog {
   private select;
   private insert;
   private readonly base: number;
-  constructor(
-    file: string,
-    readonly size: number,
-    readonly scope: string,
-  ) {
+  readonly size: number;
+  readonly scope: string;
+  constructor(file: string, size: number, scope: string) {
+    this.size = size;
+    this.scope = scope;
     closeSync(openSync(file, "wx"));
     this.db = new DatabaseSync(file);
     this.db.exec(

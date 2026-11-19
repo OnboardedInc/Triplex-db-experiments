@@ -12,12 +12,36 @@ import { replicaReply, restoreReplicaReply } from "../../../bench/lib/replica-re
 
 export function processSize() {
   global.gc?.();
-  return { rssBytes: process.memoryUsage().rss, threads: fs.readdirSync("/proc/self/task").length };
+  const mask = fs
+    .readFileSync("/proc/self/status", "utf8")
+    .match(/^Cpus_allowed_list:\s*(.+)$/m)![1]!;
+  const cpus = mask
+    .trim()
+    .split(",")
+    .flatMap((part) => {
+      const [first, last = first] = part.split("-").map(Number);
+      return Array.from({ length: last - first + 1 }, (_, i) => first + i);
+    });
+  return {
+    rssBytes: process.memoryUsage().rss,
+    threads: fs.readdirSync("/proc/self/task").length,
+    cpus,
+  };
 }
 // [DX-INT1] Why: all accounts share one reader process, while its RSS, threads and retained worlds remain measurable independently of the driver.
 // Rejected: one reader OS process per account or attributing the driver's expected rows to the product.
 export function startReader(binding: string, budget?: number) {
+  const cpus = process.env.DX_BARE_METAL === "1" ? process.env.DX_INT1_READER_CPUS : undefined;
+  if (cpus) assert(/^\d+(,\d+){5}$/.test(cpus) && new Set(cpus.split(",")).size === 6);
   const child = fork(fileURLToPath(import.meta.url), ["--reader", binding], {
+    // [DX-INT1] Why: start the entire reader, including V8 workers, in the six-core BM1 reader assignment before Node initializes.
+    // Rejected: setting the JS thread's affinity after GC and network threads have inherited the sender's mask.
+    ...(cpus
+      ? {
+          execPath: "/usr/bin/taskset",
+          execArgv: ["-c", cpus, process.execPath, ...process.execArgv],
+        }
+      : {}),
     serialization: "advanced",
     env: {
       ...process.env,

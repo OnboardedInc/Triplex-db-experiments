@@ -241,14 +241,19 @@ try {
   // [DX-THIN1] Why: bind the driver and reader away from both JVMs and Postgres on the prepared physical server.
   // Rejected: assuming adjacent logical CPU numbers always represent distinct physical cores.
   const cpus = [...cores.values()];
-  assert(cpus.length >= 8, "The queue needs eight distinct physical cores");
+  assert(
+    cpus.length >= (integrated ? 12 : 8),
+    "Insufficient distinct physical cores for this queue",
+  );
   const placement = {
     transactor: cpus[0]!,
     postgres: cpus[1]!,
-    writer: cpus.slice(2, 4).join(","),
-    readGateway: cpus.slice(4, 6).join(","),
-    clients: cpus.slice(6, 8).join(","),
+    writer: integrated ? cpus[2]! : cpus.slice(2, 4).join(","),
+    readGateway: integrated ? [cpus[4], cpus[8]].join(",") : cpus.slice(4, 6).join(","),
+    clients: integrated ? cpus[3]! : cpus.slice(6, 8).join(","),
+    readers: integrated ? [5, 6, 7, 9, 10, 11].map((i) => cpus[i]).join(",") : undefined,
   };
+  if (placement.readers) process.env.DX_INT1_READER_CPUS = placement.readers;
   write(path.join(day, "placement.json"), placement);
   run(
     "pnpm",
@@ -341,7 +346,10 @@ try {
       const inputs = json(path.join(dest, "inputs.json"));
       if (integrated) {
         const plan = integratedCases.find((x) => x.key === key)!;
-        const observations = await verifyCase(dest, plan, head, tag, stack);
+        const observations = await verifyCase(dest, plan, head, tag, stack, {
+          sender: placement.clients,
+          readers: placement.readers!,
+        });
         if (key === "pooled-100") pooled = observations;
         if (key === "isolated-100") {
           assert(pooled);

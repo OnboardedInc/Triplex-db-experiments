@@ -11,8 +11,10 @@ export interface Stack {
   containers: { id: string; name: string; imageId: string }[];
   managed?: {
     nonce: string;
+    compact?: boolean;
     peers: {
       role: "write" | "read";
+      endpoint: string;
       metrics: string;
       owner: string;
       createdAt: string;
@@ -37,6 +39,7 @@ async function managedMetrics(stack: Stack) {
   const { secret } = JSON.parse(fs.readFileSync(process.env.DX_THIN_CREDENTIAL!, "utf8"));
   const roles: Record<string, { rssBytes: number; threads?: number }> = {},
     gateways: Record<string, unknown> = {};
+  const gatewayPids = new Set<number>();
   let disk, limit;
   for (const peer of managed.peers) {
     const owner = JSON.parse(fs.readFileSync(peer.owner, "utf8"));
@@ -50,7 +53,7 @@ async function managedMetrics(stack: Stack) {
     const errors: string[] = [];
     for (let attempt = 0; attempt < 5; attempt++) {
       response = await fetch(metricEndpoint(peer.metrics, "/metrics"), {
-        headers: { authorization: "Bearer " + secret },
+        headers: { authorization: "Bearer " + secret, "x-thin-role": peer.role },
         redirect: "error",
         signal: AbortSignal.timeout(30_000),
       });
@@ -66,6 +69,14 @@ async function managedMetrics(stack: Stack) {
     assert.equal(data.containerId, peer.id);
     assert.equal(data.role, peer.role);
     assert.equal(data.source, stack.gatewaySourceSha256);
+    assert.deepEqual(
+      Object.keys(data.rssBytes).sort(),
+      peer.role === "write" ? ["postgres", "transactor", "writeGateway"] : ["readGateway"],
+    );
+    if (managed.compact) {
+      assert(Number.isSafeInteger(data.gatewayPid) && data.gatewayPid > 1);
+      gatewayPids.add(data.gatewayPid);
+    }
     for (const [name, bytes] of Object.entries(data.rssBytes)) {
       assert(Number(bytes) > 0);
       roles[name] = { rssBytes: Number(bytes), threads: data.threads?.[name] };
@@ -75,7 +86,16 @@ async function managedMetrics(stack: Stack) {
       disk = data.disk;
       limit = data.objectCacheLimitBytes;
     }
-    const scan = await fetch(new URL("/v2/admin/scan-stats", owner.endpoint), {
+    const endpoint = peer.role === "read" ? stack.readUrl : stack.writeUrl;
+    assert.equal(peer.endpoint, endpoint);
+    if (!managed.compact || peer.role === "write") assert.equal(peer.endpoint, owner.endpoint);
+    else {
+      const secondary = new URL(peer.metrics);
+      secondary.pathname = "/";
+      secondary.port = "8081";
+      assert.equal(secondary.href, new URL(endpoint).href);
+    }
+    const scan = await fetch(new URL("/v2/admin/scan-stats", endpoint), {
       signal: AbortSignal.timeout(30_000),
     });
     assert(scan.ok);
@@ -85,6 +105,7 @@ async function managedMetrics(stack: Stack) {
     );
     gateways[peer.role] = { idMemo: stats.idMemo, entityCache: stats.entityCache };
   }
+  if (managed.compact) assert.equal(gatewayPids.size, 2);
   assert.deepEqual(Object.keys(roles).sort(), [
     "postgres",
     "readGateway",
