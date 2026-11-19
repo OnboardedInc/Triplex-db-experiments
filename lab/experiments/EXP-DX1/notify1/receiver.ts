@@ -21,6 +21,11 @@ export async function receiveOrdered(
   if (before) return false;
   const at = await db.head(),
     head = await db.row<Receipt>(key, at);
+  if (head && head.value.batch >= p.batch) {
+    // [DX-STG1] Why: another delivery worker can commit this packet between the first receipt lookup and the head read. Rejected: treating a genuine concurrent replay as an ordering failure or accepting a reused number with different bytes.
+    assert(await db.original(id, digest), "Missing original receiver receipt");
+    return false;
+  }
   assert(
     (head?.value.batch ?? 0) + 1 === p.batch && (head?.value.digest ?? empty(p)) === p.previous,
     "Out-of-order receiver packet",

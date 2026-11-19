@@ -6,6 +6,7 @@ import { memoryComposition } from "../../../bench/lib/memory.ts";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 import { originalWorld } from "./fixture.ts";
 import { drainHostAccounts } from "./hosts.ts";
+import { receiveOrdered } from "./receiver.ts";
 import { Documents, hash, pack, unpack } from "./store.ts";
 
 test(
@@ -118,3 +119,65 @@ test(
     }
   },
 );
+
+test("an overlapping retransmission recovers the original receipt after its first lookup missed", async () => {
+  const epoch = randomUUID(),
+    scope = "notice-receiver-race-" + epoch;
+  const storage =
+    process.env.NOTIFY_NATIVE === "1"
+      ? await openComposition("reach", "datomic", scope)
+      : memoryComposition("datomic", scope);
+  try {
+    const db = new Documents(storage, "recipient"),
+      delayed = new Documents(storage, "recipient");
+    const account = "test-account",
+      origin = hash([account, epoch]);
+    const delivery: W0.Delivery = {
+      id: "pay",
+      key: "one",
+      kind: "notify.pay-below-minimum",
+      subject: "pl:a",
+      rule: "MINWAGE",
+      payload: "{}",
+      version: "one",
+      seq: 1n,
+    };
+    const p = {
+      account,
+      epoch,
+      batch: 1,
+      previous: hash([account, epoch, "receiver-genesis"]),
+      event: 1,
+      position: 1,
+      recipe: hash(delivery),
+      start: 0,
+      through: 1,
+      deliveries: [delivery],
+    };
+    const original = delayed.original.bind(delayed),
+      missed = Promise.withResolvers<void>(),
+      resume = Promise.withResolvers<void>();
+    delayed.original = async (id, intent) => {
+      const found = await original(id, intent);
+      if (!found) {
+        missed.resolve();
+        await resume.promise;
+      }
+      return found;
+    };
+    const slow = receiveOrdered(delayed, account, p, hash(p));
+    await missed.promise;
+    try {
+      assert.equal(await receiveOrdered(db, account, p, hash(p)), true);
+    } finally {
+      resume.resolve();
+    }
+    assert.equal(await slow, false);
+    const altered = { ...p, deliveries: [{ ...delivery, payload: '{"different":true}' }] };
+    await assert.rejects(receiveOrdered(db, account, altered, hash(altered)), /content mismatch/i);
+    const effects = await db.get<string>("effects:" + origin + ":1", await db.head());
+    assert.deepEqual(unpack(effects.value), [delivery]);
+  } finally {
+    await storage.close();
+  }
+});
