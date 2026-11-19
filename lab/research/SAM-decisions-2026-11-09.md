@@ -612,3 +612,24 @@ losing the active transactor, pinned reads continue throughout, a planned move p
 focus: everything that turns many writes into few (page guards, the release selector, group commit, the import lane's
 pacing, the one-lookup identity check) goes first on the servers, and activation gets its valid 100,000-subject
 measurement before anything else that is not a write-path test.
+
+## 2026-11-19 about 16:10 local: activation in under one second; is there a way without the mark
+
+Sam, verbatim:
+- "Wait if we don't do the mark at all, is that the expensive part? Is there some other way to prevent the leftover
+  calculations or leftover things, or some other way to do it besides the mark, since this is the hard part? He said
+  that that's the expensive part so is there some other way to do it?"
+- "Can you have an Astro agent on Macs? Have three Astro agents on Macs go brainstorm three different directions of an
+  approach to make activation be way faster. I want it to be sub-1 second. That's what we're looking to do."
+  (dictated: Astra agents on max)
+- "And what do you mean, 'built today for one kind of change where only visible people the change can reach'? What
+  does that mean? What do you mean that it was built for only one kind of change? How many different kinds of changes
+  would we have to build it for?"
+
+Orchestrator's reading: the activation target is now under one second (written into `lab/TARGETS.md`; the 100 s bar
+stays as the floor until a design says what "activated" means within that second). Three Codex gpt-6.2-astra agents
+at max effort (`deepthinker` role) each take one direction: ACTV-A prepare the new release in advance and switch;
+ACTV-B no sweep and no mark, results derived on demand and admitted only if what they read is still current; ACTV-C
+compute only the difference from indexes over rule inputs. Output in the private folder
+`research/2026-11-19-activation-sub1s/`. The selector built today covers one parameter of one rule out of seven
+parameter kinds in the test world; a general mechanism derived from each rule's declared inputs is direction C's job.
