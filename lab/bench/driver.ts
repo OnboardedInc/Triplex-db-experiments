@@ -212,11 +212,13 @@ if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.lega
 if (profile === "v3") config.matchDurationS = V3_OFFER_SECONDS;
 if (!["heap", "journal", "worker-journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
 if (!["sender", "replica-worker"].includes(config.receiptCapture)) throw Error("Invalid receipt capture mode");
+// [DX-BM1] Why: ladder readers and receipt captures have distinct sequenced spill ports and both drain before final accounting.
+// Rejected: running the known slow sender on the loaded half or sharing the bounded trial's single reader isolate.
 if (config.receiptCapture === "replica-worker" &&
-    (lane !== "datomic" || !config.zeroReaders || config.readPath !== "replica" ||
+    (lane !== "datomic" || config.sharedReaderIndex || config.readPath !== "replica" ||
       config.replicaThread !== "worker" || config.replicaFallbackThread !== "worker" ||
       config.roundPlan || config.idleGapsMs))
-  throw Error("Receipt capture worker requires zero readers and threaded Datomic replica and fallback");
+  throw Error("Receipt capture requires separate threaded Datomic replica and fallback workers");
 // [DX-T1-15] Why: the bounded reader trial admits one replica index copy and up to 64 logical readers.
 // Rejected: tuning caps for a short diagnostic while silently starting the normal four-worker ladder and sweeper.
 if (boundedMemoryTrial && (lane !== "datomic" || profile !== "smoke" || config.readPath !== "replica" ||

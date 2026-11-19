@@ -1527,7 +1527,7 @@ async function buildIndexedReport(
     resources: index.resources("process = ?", "postgres"),
     childrenOf: linked,
     copyTo,
-    outputDir,
+    outputDir: outputDir === rootDir ? undefined : outputDir,
     reporterSha256: summary.reporterSha256,
     complete: summary.complete,
   });
