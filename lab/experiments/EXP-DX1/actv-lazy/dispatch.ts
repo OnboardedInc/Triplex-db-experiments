@@ -11,6 +11,7 @@ import {
   pendingRoot,
   progress,
   type Format,
+  type Proposal,
 } from "./decision.ts";
 import { Projection, type Plan } from "./projection.ts";
 import { Conflict, value, type Store } from "./store.ts";
@@ -18,6 +19,8 @@ import { Conflict, value, type Store } from "./store.ts";
 export class Dispatcher {
   private projection: Projection;
   private active?: Plan;
+  private work: Promise<void> = Promise.resolve();
+  private lastClosed?: Pick<Plan, "event" | "id" | "digest">;
   readonly store: Store;
   readonly format: Format;
   readonly pageSize: number;
@@ -46,29 +49,71 @@ export class Dispatcher {
     // [DX-ACT1] Why: a real due event survives an offline reader or dispatcher. Rejected: using the wake-up head as the cut after a later correction (each input reconstructs every earlier crossed boundary first).
     if (due >= c.at) return this.store.input("lazy/due/" + due, { kind: "due", at: due, due });
   }
-  private async plan(done: number, head: number) {
-    if (this.active && this.active.event > done) return this.active;
+  private async plan(cur: { done: number; eventId?: string; digest?: string }, head: number) {
+    const done = cur.done;
+    assert(
+      Number.isSafeInteger(done) && done >= 0 && done <= head,
+      "Impossible dispatcher frontier",
+    );
+    const check = (plan: Pick<Plan, "event" | "id" | "digest"> | undefined) => {
+      if (done)
+        assert(
+          plan && plan.event === done && plan.id === cur.eventId && plan.digest === cur.digest,
+          "Unproved closed source prefix",
+        );
+    };
+    if (this.active?.event === done) {
+      check(this.active);
+      this.lastClosed = { event: done, id: this.active.id, digest: this.active.digest };
+    }
+    if (this.active && this.active.event > done) {
+      check(this.lastClosed);
+      return this.active;
+    }
     this.active = undefined;
     while (this.projection.seen < head) {
       const page = await this.store.comp.feedPage(this.projection.seen, 16);
       assert(page.transactions.length, "Source journal has a gap");
       for (const r of page.transactions) {
-        if (r.position > head) return;
+        if (r.position > head) break;
         const plan = this.projection.advance(r);
+        if (plan?.event === done) {
+          check(plan);
+          this.lastClosed = { event: done, id: plan.id, digest: plan.digest };
+        }
         if (plan && plan.event > done) {
+          check(this.lastClosed);
           this.active = plan;
           return plan;
         }
       }
     }
+    check(this.lastClosed);
   }
-  async step(hook?: (where: "before-commit" | "after-commit", command: string) => Promise<void>) {
+  step(
+    hook?: (where: "before-commit" | "after-commit", command: string) => Promise<void>,
+    claim?: { proposal: Proposal; atFence?: () => Promise<void> },
+  ) {
+    const result = this.work.then(() => this.stepAtHead(hook, claim));
+    this.work = result.then(
+      () => {},
+      () => {},
+    );
+    return result;
+  }
+  private async stepAtHead(
+    hook?: (where: "before-commit" | "after-commit", command: string) => Promise<void>,
+    claim?: { proposal: Proposal; atFence?: () => Promise<void> },
+  ) {
     for (;;) {
       const s = this.store,
         p = await s.head(),
-        c = await s.controls(p),
+        q = claim?.proposal;
+      if (q && (p !== q.basis.tx || s.scope !== q.scope || this.format !== q.format)) return;
+      const c = await s.controls(p),
         cur = progress(c),
-        plan = await this.plan(cur.done, p);
+        plan = await this.plan(cur, p);
+      if (c.cursor) assert(await s.cursorReceipt(c.cursor), "Unbound dispatcher cursor receipt");
       if (!plan) {
         assert(!cur.open && cur.done >= c.input, "Unclosed source prefix");
         return;
@@ -85,6 +130,18 @@ export class Dispatcher {
       assert(sl && first <= end && (!first || cur.open.last === sl.subjects[first - 1]));
       const ids = sl.subjects.slice(first, end),
         b = { tx: sl.cut, validTime: sl.at };
+      if (
+        q &&
+        (cur.open ||
+          plan.event !== p ||
+          plan.slices.length !== 1 ||
+          sl.cut !== p ||
+          sl.at !== q.basis.validTime ||
+          c.at !== sl.at ||
+          sl.subjects.length !== 1 ||
+          ids[0] !== q.subject)
+      )
+        return;
       const historical = await s.controls(sl.cut),
         ops: any[] = [],
         deliveries: W0.Delivery[] = [];
@@ -95,7 +152,10 @@ export class Dispatcher {
         if (c.masks.some((r) => r.position > sl.cut))
           throw Error("UnrecoverableProtectedEvent: unpaid transition predates erasure");
         const x = evaluate(s, this.format, worlds[i]!, b, historical, c);
+        if (q) assert.equal(x.witness, q.witness, "Untrusted ordinary event claim");
         if (W0.isFailure(x.output)) throw Error("Unresolved W0 candidate: " + x.output.error);
+        if (x.output.workItems.some((w) => w.rule === "EVSUB"))
+          throw Error("ProtectedSubscriberNeedsRuling");
         const change = itemChanges(
           ledger.filter((r) => r.entityId === itemRoot(subject)),
           W0.recordOf(x.output),
@@ -110,6 +170,7 @@ export class Dispatcher {
         more || another
           ? {
               done: cur.done,
+              ...(cur.done ? { eventId: cur.eventId, digest: cur.digest } : {}),
               open: {
                 event: plan.event,
                 digest: plan.digest,
@@ -119,7 +180,8 @@ export class Dispatcher {
               },
             }
           : { done: plan.event, eventId: plan.id, digest: plan.digest };
-      const command = ["lazy/event", plan.id, ix, first].join("/");
+      if (q && !changedSubjects.length) return;
+      const command = q ? "lazy/live/" + q.witness : ["lazy/event", plan.id, ix, first].join("/");
       const context = {
         event: plan.event,
         eventId: plan.id,
@@ -133,6 +195,7 @@ export class Dispatcher {
         keys: sha256(canonical(ids)),
         prior: sha256(canonical(cur)),
         next,
+        ...(q ? { ordinary: q } : {}),
       };
       await hook?.("before-commit", command);
       try {
@@ -142,6 +205,13 @@ export class Dispatcher {
           [...ops, ...cursorOps(c, next)],
           p,
           context,
+          claim?.atFence,
+        );
+        const nextRow = receipt.changes.at(-1);
+        assert(
+          nextRow?.op === "assert" &&
+            nextRow.entityId === "lazy/account/dispatcher" &&
+            nextRow.value.value === canonical(next),
         );
         await hook?.("after-commit", command);
         return {
@@ -251,9 +321,7 @@ export class Receiver {
       const { r, d } = ordered[0]!;
       assert.equal(d.subject, subject);
       if (requested) assert.equal(r.id, requested, "Earlier unacknowledged subject delivery");
-      const control = await store.controls(p);
-      if (d.rule === "EVSUB" && control.masks.some((m) => m.position > r.position))
-        throw Error("ProtectedDeliveryNeedsRuling");
+      if (d.rule === "EVSUB") throw Error("ProtectedDeliveryNeedsRuling");
       hook?.("before-receive");
       this.apply(d);
       hook?.("after-receive");

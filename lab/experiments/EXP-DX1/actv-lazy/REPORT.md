@@ -1,19 +1,45 @@
-# LAZY activation
+Activation changes the rules that a new account screen uses. A screen pinned before the change still sees the earlier answer.
+One account write switched the rules for both 1,000 and 10,000 people. The switch visited zero people.
+In the first local runs a fresh process returned the right answer 711–876 ms after the offer at 1,000 people and 777–1,062 ms at 10,000.
+One wage switch missed one second. Its write took 288 ms and its first verified response took another 774 ms.
+At 10,000 people the median first read in an existing process took 10.5 ms, a repeat took 5.9 ms and an unchanged reconciliation took 18.4 ms.
+The wage change owed 1,650 notices at that size. Recording them took 19.6 s and applying them at the receiver took another 67.8 s.
+The overtime change owed zero notices, including for people who never opened a screen. Screens and notices have different completion times.
+The 100,000-person live-traffic test is outstanding. A one-second deadline for the last recipient or unrecoverable protected evidence would rule out this design for those uses.
 
-An account changes rules when its activation fact is durable. Each screen resolves the rules and source facts at its own requested time.
-An unopened person can still be owed a notice. The dispatcher must preserve every compulsory transition, including rollbacks.
-The earlier publisher lost all three delayed-result schedules against the independent oracle. The new mode requires a source-bound decision at the native commit point.
+### Local evidence
 
-North star P5 and P6. The proposed `lazy` mode replaces the observable per-person no-change guard and separates notification completion from read visibility. The frozen W0 and P5 coverage requirements still apply to their existing modes. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
-Audit of the negative control in `negative.test.ts`: it launches the ACT1 schedules in a new process, compares real materialized state with Python O-DOMAIN, and requires three named assertion failures. The red run at base `a9eb03b04` is in `evidence/DX-ACT1/actv-lazy/red.tap`.
-The named lazy mode uses a conservative account-position comparison. At the serialized Datomic predecessor it covers release ABA, missing facts, two-hop changes, erasure, business slot and prior ledger state. Unrelated writes in the account can cause retries. A trusted full recalculation binds every proposed output. The consumer owns compulsory past events, and ordinary publication waits for their cursor.
-In `store.commit/input` an activation asserts one account fact, checks the stored command and original receipt, and uses the native predecessor comparison. `admitLive` compares the same named scope, source position, six-digit business slot, interpreter and recalculated bytes. An unchanged result writes nothing. W0 C82 still has a subject guard and C123 still accepts unequal supplied records at equal clocks.
-The volume option binds a fresh private volume to an existing exclusive slot. The manager checks the slot owner and volume identity on reuse and cleanup. Native schedules run through the shared reservation manager.
-`LazyReader.readAt/list` pins the authoritative account position and exact six-digit valid instant, resolves the eligible release at that prefix, recomputes canonical W0 outputs or typed errors, and checks current erasure again after a miss. Its byte-bounded cache exists only on demand. Source fallback works without a follower. Pagination binds the preceding native roster page and original cut.
-The six native admission races passed in a private Datomic volume, including a separate writer between validation and submission. The first historical read test then exposed integer-only serialization of a fractional native valid-time bound. Native command hashes now retain that fraction. The W0 kernel still receives the canonical microsecond instant. The demand reader also checks the actual frozen replica’s position, valid time and erasure frontier before use.
-The durable account cursor fences chronological release and deadline events. The disposable SQL projection replays a contiguous native feed, checks original command bytes, seals an independent roster and seeks qualifying locations and pay ranges. Its R2/R3 release-only candidate set is empty. First-release migration enumerates the roster. Reopening rebuilds source postings from the journal.
-In `Projection.advance`, `Dispatcher.step` and `Receiver.send/drain`, source identity, cuts, prior cursor, exact changed items and ordered keys bind each transition. The native write advances the cursor with the items and pending keys. The receiver commits deduplication and effect together before the native ACK, with per-subject FIFO across item IDs. A protected unpaid event made unrecoverable by erasure leaves its cursor open.
-Native checks in `native-check2/` matched historical/present Python bytes, reopened receipts, unpaid rollback and reappearance notices, a due expiry despite a later correction, the erasure refusal and all 23 unmodified ACT2 publication schedules. The selector grid found all 32 wage changes in 180 worlds. Nine process-stop boundaries and the scaled runs have their own gates.
-`seed/price/local` bind the independent roster, authored values and actual seed receipts to an empty native scope. A fresh reader process receives no activation receipt. Every measured sample checks canonical bytes against Python. Per release the driver verifies all returned worlds, changed owners, ordered deliveries, native marker counts, no-write reconciles and the absence of subject/roster reads on activation. The local wrapper hashes source, built modules, oracle, exclusive slot, image and evidence before recording completion.
-Every selected owner must also belong to the sealed source roster. Erasure blocks a protected pending send, and replay stops before advancing any candidate whose original evidence may have been erased. Native ACK instrumentation is per command so a simultaneous live save cannot supply a release’s timestamp.
-The 1,000-person oracle also folds a backdated two-hop floor correction after R3. The measurement gate inspects every publisher receipt for extra subject or guard writes and compares its ordered deliveries with the full independent fold.
+The first paired population runs used source `9d2fa21f3`, fresh native Datomic volumes and compact W0 facts. These diagnostics price the design on the shared Mac. [Proposed rule](RULE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+
+| People | Facts | Offer to durable, R1/R2/R3 (ms) | Durable to first cold answer (ms) | First/repeat/ordinary median (ms) | R2 changed and applied | Receiver effects/s |
+|---:|---:|---|---|---|---:|---:|
+| 1,000 | 4,109 | 54/30/25 | 822/680/724 | 13.8/7.6/17.7 | 166 | 20.6 |
+| 10,000 | 40,898 | 30/288/54 | 795/774/723 | 10.5/5.9/18.4 | 1,650 | 24.4 |
+
+Each size had three switches, 72 misses, 72 hits, 48 ordinary no-change reconciles and eight real saves. All 33,000 pinned outputs matched Python. The backdated two-hop correction added another 1,000 checks.
+Every switch used 12 native HTTP requests and one 1,009–1,012-byte journal receipt. The first cold column includes process startup. No keep-warm work ran. R1 explicitly migrated all members. R2 sought qualifying locations and pay ranges. R3 examined zero release-only owners.
+At 1,000/10,000 the eight saves took median 39.2/44.8 ms plus 43.3/47.2 ms for index maintenance and publication. Four item states changed at each size. The account cursor also advances over no-change source inputs.
+Six isolated native admission schedules, reads across historical pins, unpaid rollback and reappearance, expiry despite a later correction, and the 23 unchanged ACT2 publication tests ran in the earlier small gate. The isolated admission fixture installed its own test cursor. The revised gate uses the real dispatcher for every transition.
+
+### What the new rule promises
+
+The account fact binds immutable release, effective instant and authorized slot. Its native assertion distinguishes a rollback. Derivation uses the exact account generation, transaction and microsecond. Cached results and replica fallbacks recheck current erasure. A listing binds its preceding roster page and cut.
+An ordinary worker can consume only its own current one-person event through the same ordered dispatcher. Native comparison against its original predecessor covers missing facts, two-hop changes and release ABA. Unrelated writes may force retries. A private receipt cannot establish a paid event frontier.
+Durable items, retirement, pending keys and the cursor commit atomically. Receiver effect and deduplication share a separate durable transaction. Earlier unacknowledged IDs block later IDs for that person. A real deadline arms a one-shot timer. Restart rebuilds the range index from the original feed.
+Frozen W0 C82 exposes a per-person no-change guard and C123 accepts differing supplied records at equal clocks. Lazy stores no such guard. Frozen P5 still requires physical enumeration. The owner must decide whether exact screen visibility and recoverable notice debt satisfy the new activation target.
+The pilot covers the stock W0 releases. Protected E-Verify submission is excluded pending a retention ruling. Recovery of an unpaid transition that needs erased evidence leaves its cursor open. Machine-loss recovery, physical shredding, a migrated outbox, the thin fleet and idle bytes remain unqualified.
+
+### Receipt and verdict audit
+
+- `store.commit/input/cursorReceipt` verifies original input and scope, native actor, changed rows, receipt identity and predecessor. `decision.admitLive` recomputes the witness, enrollment, exact slot and latest erasure. An ordinary event records its original witness inside the serialized cursor transaction.
+- `readAt/readMany/list` compare exact canonical outputs or typed errors at explicit historical cuts, check current erasure after fills, and bind pagination and demand replicas to native identities. A cold process gets neither a release receipt nor an expected answer.
+- `Projection.advance/Dispatcher.step` verify contiguous native source, original command bytes, sealed roster, ordered event and range, prior cursor and native commit. `Receiver.send/drain` verify generation, pending content, per-person order, original applied bytes and native acknowledgement.
+- `negative/projection/admission/read/dispatch/dependency/boundary/service/crash/pressure` use fresh fixtures. Their checks cover an independent 180-world index grid, three historical failures, delayed decisions, real races and restarts, changed dependency edges, native cursor binding, unpaid effects and the receiver.
+- `seed/price/local` bind the observed native population and roster to a fresh scope, source and built-module hashes, owner, slot, volume and image. Python checks every output, item delta and ordered delivery. Pricing checks the exact marker, zero roster visits, every normal reconcile and the final receiver database.
+- Durable raw evidence is under `evidence/DX-ACT1/actv-lazy/`. The first paired runs are `rung1000-b` and `rung10000-b`. Both native volumes were removed. The public changes leave the acceptance contract, v3 trace and W0 files unchanged.
+
+### Dedicated bench
+
+On the prepared server checkout run `DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/scale1/bench.ts launch 2 lazy-$(date -u +%Y%m%d%H%M%S) activation --publication lazy`. The 1,000-person preflight precedes 100,000 deep subjects, 64 and 256 readers, and 100 switches per load. [Runner](../scale1/bench.ts)
+The runner verifies all pinned reader hashes and oracle item transitions after each active window. It compares every native outbox and recipient byte, checks redo receipts, contiguous affected-owner feed lag, an actual follower hold and a pause over unpaid notices. Quiet scopes have a separate quiet-alone baseline.
+`bench/window/checkPush` and the SCALE1 collector bind the frozen trace, per-window commands, receiver rows, oracle denominator, source/build inventory, slot, container IDs and attempt nonce. A missing own-release response counts as a miss. Source, hardware samples, closed database hashes and paired raw observations accompany the separate latency and interference screens.

@@ -1,3 +1,4 @@
+import type { Dispatcher } from "./dispatch.ts";
 import assert from "node:assert/strict";
 import {
   canonical,
@@ -9,7 +10,7 @@ import {
 } from "../../../bench/lib/w0-world.ts";
 import { readDeepWorlds } from "../../../bench/lib/deep-activation.ts";
 import { parseOutbox } from "../../../bench/lib/w0-outbox-state.ts";
-import { Conflict, CURSOR, fact, millis, value, type Controls, type Store } from "./store.ts";
+import { CURSOR, fact, membership, millis, value, type Controls, type Store } from "./store.ts";
 
 export type Format = "w0" | "act2-deep";
 export type Point = { tx: number; validTime: string };
@@ -157,6 +158,7 @@ export async function admitLive(
   format: Format,
   q: Proposal,
   beforeCommit?: () => Promise<void>,
+  dispatcher?: Dispatcher,
 ) {
   assert(q.scope === store.scope && q.format === format, "Foreign live proposal");
   const current = await store.head(),
@@ -165,28 +167,45 @@ export async function admitLive(
   const claimed = await store.lookup(id);
   if (current !== p && !claimed) return { status: "stale" } as const;
   if (claimed) {
-    assert(claimed.actor === "lazy/live" && claimed.commandId === id);
-    assert.deepEqual(JSON.parse(claimed.correlationId).context, q);
+    assert(claimed.actor === "lazy/event" && claimed.commandId === id);
+    assert.deepEqual(JSON.parse(claimed.correlationId).context.ordinary, q);
   }
   const c = await store.controls(p);
   if (c.at !== q.basis.validTime) return { status: "stale" } as const;
   const latest = current === p ? c : await store.controls(current);
   if (claimed && maskVersion(c) !== maskVersion(latest))
     return { status: "redacted-receipt", txId: claimed.txId, position: claimed.position } as const;
+  const members = await store.rows([membership(q.subject)], p);
+  if (!members.length) return { status: "outside-roster" } as const;
+  assert(
+    members.length === 1 && value(members[0]!).subject === q.subject,
+    "Ambiguous native membership",
+  );
   const evald = await calculate(store, format, q.subject, q.basis, c, latest);
   assert.equal(evald.witness, q.witness, "Untrusted or changed computation");
   if (W0.isFailure(evald.output)) return { status: "error", error: evald.output.error } as const;
-  if (progress(c).done < c.input || progress(c).open) return { status: "deferred" } as const;
+  if (claimed) {
+    assert(
+      claimed.changes.some(
+        (row: any) => row.op === "assert" && row.entityId === itemRoot(q.subject),
+      ),
+    );
+    return { status: "accepted", receipt: claimed } as const;
+  }
+  if (!c.cursor || !(await store.cursorReceipt(c.cursor)) || progress(c).open)
+    return { status: "deferred" } as const;
+  if (progress(c).done !== c.input) {
+    if (c.input !== p) return { status: "deferred" } as const;
+    // [DX-ACT1] Why: a live worker may consume its own unclosed single-person event only through the same ordered plan and serialized cursor as the dispatcher. Rejected: trusting a caller-supplied paid-through position (an unpaid rollback could disappear).
+    if (!dispatcher || dispatcher.store !== store || dispatcher.format !== format)
+      return { status: "deferred" } as const;
+    const event = await dispatcher.step(undefined, { proposal: q, atFence: beforeCommit });
+    if (event) return { status: "accepted", receipt: event.receipt } as const;
+    return { status: (await store.head()) === p ? "deferred" : "stale" } as const;
+  }
+  if (!(await store.effectsClear(c.cursor.position, p))) return { status: "deferred" } as const;
   const { ops } = await changes(store, p, W0.recordOf(evald.output));
-  if (!ops.length) {
-    if (beforeCommit) await beforeCommit();
-    return { status: (await store.head()) === p ? "unchanged" : "stale" } as const;
-  }
-  try {
-    const r = await store.commit(id, "lazy/live", ops, p, q, beforeCommit);
-    return { status: "accepted", receipt: r } as const;
-  } catch (e) {
-    if (e instanceof Conflict) return { status: "stale" } as const;
-    throw e;
-  }
+  assert(!ops.length, "Paid event prefix disagrees with current items");
+  if (beforeCommit) await beforeCommit();
+  return { status: (await store.head()) === p ? "unchanged" : "stale" } as const;
 }

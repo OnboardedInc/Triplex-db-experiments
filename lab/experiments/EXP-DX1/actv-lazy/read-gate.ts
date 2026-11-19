@@ -4,8 +4,8 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { W0, canonical, sha256, triplexValue } from "../../../bench/lib/w0-world.ts";
 import { DomainOracle } from "../../../bench/lib/w0-gates.ts";
-import { activation, millis, openStore } from "./store.ts";
-import { LazyReader, captureDemand } from "./read.ts";
+import { activation, fact, millis, openStore } from "./store.ts";
+import { LazyReader, rosterRoot, captureDemand } from "./read.ts";
 const id = randomUUID(),
   s = await openStore("lazy-read-" + id),
   oracle = new DomainOracle();
@@ -133,6 +133,28 @@ try {
     (await missed.readAt(subject, { position: ssn.position, validTime: v })).json,
     after.json,
   );
+  const listed = await s.input("listing", { kind: "source", at: v }, [
+    fact(rosterRoot(0), "lazy/members", [subject]),
+    fact(rosterRoot(1), "lazy/members", ["pl:empty"]),
+  ]);
+  const list = await reader.list({ position: listed.position, validTime: v });
+  assert(list.next && list.values.length === 1);
+  assert.equal(list.values[0]!.json, (await check(listed.position, v)).json);
+  const bad = await s.input("invalid-world", { kind: "source", at: v }, [
+    {
+      op: "assert",
+      entityId: subject,
+      attribute: "payRateCents",
+      value: triplexValue("payRateCents", 99),
+      validFrom: 0,
+    },
+  ]);
+  known.push({ e: subject, a: "payRateCents", v: 99, tx: bad.position });
+  const failure = await check(bad.position, v);
+  assert.equal(JSON.parse(failure.json).error, "W0.E_CARDINALITY");
+  const second = await reader.list({}, list.next);
+  assert.equal(second.values[0]!.json, (await check(listed.position, v, "pl:empty")).json);
+  await assert.rejects(reader.list({ position: bad.position, validTime: v }, list.next));
   writeFileSync(
     join(process.argv[2]!, "reads.json"),
     canonical({ id, scope: s.scope, results, source: await s.head() }) + "\n",
