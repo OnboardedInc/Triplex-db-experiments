@@ -25,6 +25,20 @@ interface Cursor {
   batch: number;
   previous: string;
 }
+export function drainHostAccounts(
+  sink: Documents,
+  accounts: {
+    source: Documents;
+    feed: Feed;
+    afterEffect?: (p: Packet) => Promise<void>;
+  }[],
+) {
+  assert.equal(new Set(accounts.map((account) => account.source.prefix)).size, accounts.length);
+  // [DX-STG1] Why: a slow source or recipient may suspend its own batch while every other account keeps making progress. Rejected: awaiting the largest account's entire backlog before reading the next native feed.
+  return Promise.allSettled(
+    accounts.map(({ source, feed, afterEffect }) => drainHost(source, sink, feed, afterEffect)),
+  );
+}
 export async function drainHost(
   source: Documents,
   sink: Documents,
