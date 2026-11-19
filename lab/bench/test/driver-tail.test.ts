@@ -10,6 +10,8 @@ import { Model } from "../lib/model.ts";
 import { ModelJournalThread } from "../lib/model-journal-thread.ts";
 import { R, type ReadRecord } from "../lib/observe.ts";
 import { ReceiptCapture } from "../lib/receipt-capture.ts";
+import { PHASE_RYOW, receiptReadRow } from "../lib/receipt-read.ts";
+import { SpillThread } from "../lib/spill-thread.ts";
 import { ids } from "../lib/world.ts";
 
 // [DX-DRV1] Why: a worker boundary must preserve Option-backed receipt fields, range visibility and assertion identity.
@@ -133,5 +135,56 @@ test("receipt capture waits for every spill acknowledgement and retains failures
     assert.equal(observed[259]![R.digest], "260");
   } finally {
     port2.close();
+  }
+});
+
+// [DX-BM1] Why: a loaded run retains independent reader and receipt batches in the same lossless spill.
+// Rejected: proving each port separately while losing a phase or an ACK coordinate on the shared drain.
+test("loaded readers and receipt capture drain their exact rows through separate ports", async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "triplex-loaded-capture-"));
+  const spill = new SpillThread(path.join(directory, "observations"));
+  const reader = spill.connect();
+  const observed = (position: number) => ({
+    observed: { stamp: position, facts: 1, digest: "d" + position, bytes: 8, stamps: 1 },
+    route: "replica",
+    language: "Datalog",
+    waitedMs: 0,
+    depth: 1,
+    roundTrips: 0,
+    entities: 1,
+  });
+  const capture = new ReceiptCapture(
+    spill.connect(),
+    new Int32Array(new SharedArrayBuffer(4)),
+    () => 200,
+    async (input) => observed(input.basis.recordedPosition),
+  );
+  try {
+    await spill.beginPhase(4, 0, 0);
+    const ack = new Promise<number>((resolve) => reader.once("message", (m) => resolve(m.id)));
+    const readerRows = [];
+    for (let i = 1; i <= 260; i++) {
+      const basis = { recordedAt: 100, recordedPosition: i, validAt: 110 };
+      capture.add(i, { subject: i, start: 110, commitTraceId: "off", basis });
+      const row = receiptReadRow(i + 1, basis, i, 110, 1, observed(i));
+      row[R.phase] = 4;
+      readerRows.push(row);
+    }
+    reader.postMessage({ id: 1, records: readerRows, samples: [], splitEvents: [] });
+    assert.equal(await ack, 1);
+    assert.equal((await capture.finish(260)).retained, 260);
+    const rows = await spill.finish();
+    const identities: string[] = [];
+    rows.forEach((r) =>
+      identities.push([r[R.phase], r[R.subject], r[R.basisPosition], r[R.digest]].join("/")),
+    );
+    const expected = Array.from({ length: 260 }, (_, n) => n + 1).flatMap((i) => [
+      [PHASE_RYOW, i, i, "d" + i].join("/"),
+      [4, i + 1, i, "d" + i].join("/"),
+    ]);
+    assert.deepEqual(identities.sort(), expected.sort());
+  } finally {
+    reader.close();
+    fs.rmSync(directory, { recursive: true, force: true });
   }
 });
