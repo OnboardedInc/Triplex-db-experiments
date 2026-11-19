@@ -13,3 +13,4 @@ Accounts drain independently in batches of up to 64 subjects.
 
 - The first native test exposed a Triplex requirement that a TripleLive precondition accompany a retraction. The erasure read fence now uses EntityState on the observed row. Both native recovery and account fairness schedules completed on the retry.
 - Measured pairs use fresh accounts with identical seeds and offered saves, verify every observed pinned read against its source witness, and compare committed receiver bytes with the independent oracle. They record the actual activation transaction, source/owner pins, reader and writer denominators and both p99 values.
+- At 1,000 people with continuous dispatch the first matched pair recorded 25.3 broad-release notices/s. Commit p99 rose to 3.29× baseline, read p99 to 1.32×. The terminal formatter rejected fractional diagnostic timings after writing the results. The retry uses JSON for timing and adds a dispatcher pacing interval.

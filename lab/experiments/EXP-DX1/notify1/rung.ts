@@ -169,7 +169,7 @@ if (process.argv[1] === import.meta.filename) {
   const r = await measuredPair(n, dir, binding.source, binding.slot, binding.nonce, false, gap);
   assert(fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!).equals(owner));
   console.log(
-    canonical({
+    JSON.stringify({
       subjects: n,
       rate: r.dispatch.deliveriesPerSecond,
       ratios: r.ratios,
