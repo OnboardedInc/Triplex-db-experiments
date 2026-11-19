@@ -41,14 +41,19 @@ export function inspectProfiles(dir: string) {
       assert.equal(s.filename, stage + "-" + s.role + ".histogram.gz");
       const compressed = fs.readFileSync(path.join(dir,s.filename));
       assert.equal(sha(compressed),s.sha256);
-      const summary = parseHistogram(gunzipSync(compressed).toString());
+      const raw = gunzipSync(compressed).toString();
+      const summary = parseHistogram(raw);
       assert.deepEqual(summary,s.summary);
       assert.equal(s.chargedBytes,s.caches.reduce((n: number,c: any) => n + c.units*c.bytesPerUnit,0));
       const metrics = phase[0].native[s.role + "Gateway"];
+      const objects = [...raw.matchAll(/^\s*\d+:\s+(\d+)\s+(\d+)\s+(\S+)/gm)]
+        .filter(m => m[3] === "triplex.gateway.entity_cache.ParsedKey" || m[3] === "triplex.gateway.reach.ReadConfig" ||
+          m[3] === "datomic.db.Datum" || m[3]!.startsWith("triplex.gateway.reach.proxy$java.util.concurrent.ConcurrentHashMap$IDeref"))
+        .map(m => ({ class: m[3], instances: Number(m[1]), shallowBytes: Number(m[2]) }));
       roles.push({ stage, role: s.role, idMemo: metrics.idMemo.estimatedBytes,
         parsed: metrics.entityCache.entityBytes, revision: metrics.entityCache.revisionBytes,
         recent: metrics.entityCache.recentBytes, peer: s.chargedBytes, shallow: summary.bytes,
-        rss: phase[0].native.roles[s.role+"Gateway"].rssBytes });
+        rss: phase[0].native.roles[s.role+"Gateway"].rssBytes, objects });
     }
   }
   assert.equal(new Set(identities.values()).size, 2);

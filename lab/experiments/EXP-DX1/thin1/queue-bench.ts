@@ -90,13 +90,8 @@ process.env.DX_GW_WRITE_MEMORY = "3g";
 process.env.DX_GW_READ_HEAP = "2g";
 process.env.DX_GW_WRITE_HEAP = "2g";
 if (integrated) {
-  const peer = "-Xms64m -Xmx2g -Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps";
   Object.assign(process.env, {
     DX_INT1_COHORT: "spread", DX_INT1_CENSUS: "held", DX_INT1_GATEWAYS: "demand", DX_TOUCHED_READ_MODE: "validated",
-    DX_GW_WRITE_JAVA_OPTS: peer, DX_GW_READ_JAVA_OPTS: peer,
-    DX_GW_WRITE_ENTITY_CACHE_BYTES: "8388608", DX_GW_READ_ENTITY_CACHE_BYTES: "8388608",
-    DX_ID_CACHE_BYTES: "1048576", DX_ID_CACHE_ENTRIES: "4096", DX_GW_SESSION_ENTRIES: "4096",
-    DX_INDEX_THRESHOLD: "8m", DX_INDEX_MAX: "32m",
   });
 }
 for (const key of [

@@ -148,6 +148,17 @@ INPUT_LEASE
   exit
 fi
 tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
+if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then
+  # [DX-THIN1] Why: apply the same peer limits on ordinary stack launches and the physical queue. Rejected: tuning only the Mac diagnostic container.
+  demand_peer='-Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps'
+  DX_GW_WRITE_ENTITY_CACHE_BYTES=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-8388608}
+  DX_GW_READ_ENTITY_CACHE_BYTES=${DX_GW_READ_ENTITY_CACHE_BYTES:-8388608}
+  DX_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-1048576}
+  DX_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-4096}
+  DX_GW_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-4096}
+  DX_INDEX_THRESHOLD=${DX_INDEX_THRESHOLD:-8m}
+  DX_INDEX_MAX=${DX_INDEX_MAX:-32m}
+fi
 # [DX-S3] Why: tune placement, heap and durable storage without changing existing callers.
 # Rejected: replacing defaults globally (would change other agents' measurements).
 # [orchestrator merge] Flags (DX-S3) win; DX_* environment variables (DX-H3) are the fallback; then the old defaults.
@@ -434,7 +445,9 @@ for role in w r; do
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
   if [[ $role == w ]]; then mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; heap=${DX_GW_WRITE_HEAP:-}; else mem=${DX_GW_READ_MEMORY:-$gw_mem}; heap=${DX_GW_READ_HEAP:-}; fi
   # bin/run reads DATOMIC_JAVA_OPTS, not JAVA_OPTS (DX-S3). An explicit --gw-java-opts wins; else DX_GW_*_HEAP; else the launcher default (1g).
-  role_java=$gw_java; [[ -n $role_java || -z $heap ]] || role_java="-Xms256m -Xmx$heap"
+  role_java=$gw_java
+  if [[ -z $role_java && ${DX_INT1_GATEWAYS:-original} == demand ]]; then role_java="-Xms64m -Xmx${heap:-384m} $demand_peer"
+  elif [[ -z $role_java && -n $heap ]]; then role_java="-Xms256m -Xmx$heap"; fi
   if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   if [[ $role == r ]]; then role_java=${DX_GW_READ_JAVA_OPTS:-$role_java}; fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
