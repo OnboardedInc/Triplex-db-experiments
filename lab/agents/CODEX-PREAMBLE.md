@@ -18,7 +18,7 @@ human is watching this run. Your role and task follow after these rules.
    `node lab/bin/heavy.mjs --label <your id> -- <command>`. Do not start a heavy run when host disk free is below 5 GiB.
 5. **pnpm** only with `--store-dir /Users/sam/projects/triplex-db-2/.pnpm-store`; never `pnpm config set`.
 6. **Privacy.** Never send the user's email, name or personal details to any website or service; use a generic client name.
-7. **Commits.** Commit on your own branch only; never merge into main and never push. End every commit message with:
+7. **Commits.** Commit on your own branch only; never merge into main. Push your own branch to `origin` (the repository is public: no credentials, personal details, IP addresses, hostnames, home paths or customer names), because bench servers clone it; never push any other branch. End every commit message with:
    `Co-Authored-By: Codex gpt-6.2-astra <noreply@openai.com>`
 8. **Code comments** carry the reasoning: `// [EXP-ID] Why: ... Rejected: <alt> (<reason>).`
 9. **Do not spawn other agents.**
