@@ -46,21 +46,21 @@ async function managedMetrics(stack: Stack) {
     assert.equal(owner.container, stack.containers.find((c) => c.id === peer.id)?.name);
     // [DX-INT1] Why: Postgres children and WAL files can disappear during a census. Retry an entire fresh observation while the workload is stopped at the phase boundary.
     // Rejected: keeping old RSS or disk bytes to fill a missing observation.
-    let response:Response|undefined;
-    const errors:string[]=[];
-    for(let attempt=0;attempt<5;attempt++){
-      response=await fetch(metricEndpoint(peer.metrics, "/metrics"), {
-      headers: { authorization: "Bearer " + secret },
-      redirect: "error",
-      signal: AbortSignal.timeout(30_000),
-    });
-      if(response.ok)break;
-      const detail=(await response.text()).replaceAll(secret,"[redacted]").slice(0,500);
-      errors.push(peer.role+" "+response.status+" "+detail);
-      if(response.status<500)throw Error("Metrics request refused: "+errors.join(" | "));
-      await new Promise(resolve=>setTimeout(resolve,250));
+    let response: Response | undefined;
+    const errors: string[] = [];
+    for (let attempt = 0; attempt < 5; attempt++) {
+      response = await fetch(metricEndpoint(peer.metrics, "/metrics"), {
+        headers: { authorization: "Bearer " + secret },
+        redirect: "error",
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (response.ok) break;
+      const detail = (await response.text()).replaceAll(secret, "[redacted]").slice(0, 500);
+      errors.push(peer.role + " " + response.status + " " + detail);
+      if (response.status < 500) throw Error("Metrics request refused: " + errors.join(" | "));
+      await new Promise((resolve) => setTimeout(resolve, 250));
     }
-    assert(response?.ok,"Fresh metrics unavailable: "+errors.join(" | "));
+    assert(response?.ok, "Fresh metrics unavailable: " + errors.join(" | "));
     const data = (await response.json()) as any;
     assert.equal(data.nonce, managed.nonce);
     assert.equal(data.containerId, peer.id);
@@ -69,7 +69,7 @@ async function managedMetrics(stack: Stack) {
     for (const [name, bytes] of Object.entries(data.rssBytes)) {
       assert(Number(bytes) > 0);
       roles[name] = { rssBytes: Number(bytes), threads: data.threads?.[name] };
-      if(data.threads) assert(Number.isSafeInteger(data.threads[name]) && data.threads[name]>0);
+      if (data.threads) assert(Number.isSafeInteger(data.threads[name]) && data.threads[name] > 0);
     }
     if (peer.role === "write") {
       disk = data.disk;
@@ -129,7 +129,11 @@ export async function nativeMetrics(stack: Stack) {
     assert(cgroupBytes > 0 && peakBytes >= cgroupBytes);
     roles[role] = {
       container: c.id,
-      threads: docker(["top", c.id, "-eo", "nlwp"]).split("\n").slice(1).map(Number).reduce((a, b) => a + b, 0),
+      threads: docker(["top", c.id, "-eo", "nlwp"])
+        .split("\n")
+        .slice(1)
+        .map(Number)
+        .reduce((a, b) => a + b, 0),
       rssBytes: rss.reduce((sum, value) => sum + value, 0) * 1024,
       cgroupBytes,
       peakBytes,
@@ -149,7 +153,7 @@ export async function nativeMetrics(stack: Stack) {
   };
   const pg = stack.containers.find((c) => c.name === stack.prefix + "-pg")!;
   const sql =
-    "SELECT json_build_object('database',pg_database_size(current_database()),'kvsIncludingIndexes',pg_total_relation_size('datomic_kvs'),'walDirectory',(SELECT sum(size) FROM pg_ls_waldir()))";
+    "SELECT json_build_object('database',pg_database_size(current_database()),'kvsIncludingIndexes',pg_total_relation_size('datomic_kvs'),'walDirectory',(SELECT sum(size) FROM pg_ls_waldir()),'fsync',current_setting('fsync'),'synchronousCommit',current_setting('synchronous_commit'),'fullPageWrites',current_setting('full_page_writes'))";
   const disk = JSON.parse(
     docker([
       "exec",

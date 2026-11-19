@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { fork } from "node:child_process";
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import {
   openComposition,
@@ -60,6 +61,7 @@ export function startReader(binding: string, budget?: number) {
   return {
     open: (scope: string) => ask("open", { scope }),
     stats: () => ask("stats"),
+    watermark: (scope: string) => ask("watermark", { scope }),
     pull: async (scope: string, root: string, p: number, v: number) =>
       restoreReplicaReply(await ask("pull", { scope, root, p, v })),
     close: async () => {
@@ -74,6 +76,15 @@ export function startReader(binding: string, budget?: number) {
 if (process.argv[2] === "--reader" && process.send) {
   const binding = process.argv[3],
     scopes = new Map<string, CompositionHandle>();
+  const code = Object.fromEntries(
+    [
+      "lab/experiments/EXP-DX1/int1/reader.ts",
+      "lab/bench/lib/touched-reads.ts",
+      "lab/bench/lib/replica-reads.ts",
+      "packages/datomic/dist/replica/Replica.js",
+      "packages/datomic/dist/replica/RecentReads.js",
+    ].map((f) => [f, createHash("sha256").update(fs.readFileSync(f)).digest("hex")]),
+  );
   process.once("disconnect", () => process.exit(0));
   process.on("message", async (m: any) => {
     try {
@@ -86,9 +97,11 @@ if (process.argv[2] === "--reader" && process.send) {
         value = replicaReply(
           await scopes.get(m.scope)!.pull(m.root, { recordedPosition: m.p, validAt: m.v } as Basis),
         );
+      else if (m.op === "watermark") value = scopes.get(m.scope)!.touchedUsage!().position;
       else if (m.op === "stats")
         value = {
           ...processSize(),
+          code,
           scopes: Object.fromEntries([...scopes].map(([s, h]) => [s, h.touchedUsage!()])),
         };
       else if (m.op === "close") {

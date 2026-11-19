@@ -129,7 +129,7 @@ test("pooled and isolated deep accounts keep identical original intents, roster,
 test("the physical plan freezes the same 29,000 people in both 100-account placements", () => {
   const sizes = Array.from({ length: 100 }, (_, i) => smallPeople(i));
   assert.equal(
-    sizes.reduce((a, b) => a + b),
+    sizes.reduce<number>((a, b) => a + b, 0),
     29000,
   );
   assert.equal(sizes.filter((n) => n === 2000).length, 10);

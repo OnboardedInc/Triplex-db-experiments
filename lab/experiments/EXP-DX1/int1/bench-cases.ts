@@ -91,6 +91,19 @@ export async function verifyCase(
     .split("\n")
     .map((l) => JSON.parse(l));
   assert(phases.every((p) => p.binding === binding));
+  for (const p of phases) {
+    assert(p.driver.rssBytes > 0 && p.reader.rssBytes > 0 && p.native.disk.kvsIncludingIndexes > 0);
+    for (const id of ["pg", "tx", "gw-w", "gw-r"])
+      assert(p.native.roles[id].rssBytes > 0 && p.native.roles[id].threads > 0);
+    assert(
+      p.native.disk.fsync === "on" &&
+        p.native.disk.synchronousCommit === "on" &&
+        p.native.disk.fullPageWrites === "on",
+    );
+  }
+  assert(
+    Object.values(r.latency).every((q: any) => q.n > 0 && Number.isFinite(q.p50) && q.p99 >= q.p50),
+  );
   assert.deepEqual(
     phases.map((p) => p.label),
     [

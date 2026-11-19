@@ -97,7 +97,12 @@ const lease = measurementWindow(binding, stack.prefix),
   handles: CompositionHandle[] = [];
 const phases: any[] = [];
 const now = () => performance.now();
-const readerStats = () => reader.stats();
+const readerStats = async (client = reader) => {
+  const stats = await client.stats();
+  for (const [file, hash] of Object.entries(stats.code))
+    assert.equal(hash, inputs[file], "Reader input changed: " + file);
+  return stats;
+};
 async function phase(label: string) {
   const a = {
     label,
@@ -163,11 +168,16 @@ async function pull(a: Account, i: number, p: number, v = V_W0) {
 }
 async function caughtUp() {
   for (const a of accounts) {
-    const deadline = Date.now() + 120000;
-    while (true) {
-      const stats = (await readerStats()).scopes[a.comp.scopeName!];
-      if (stats.position === undefined || stats.position >= a.head) break;
-      assert(Date.now() < deadline, "reader feed did not reach cut");
+    let previous = -1,
+      changed = Date.now();
+    for (;;) {
+      const p = await reader.watermark(a.comp.scopeName!);
+      if (p === undefined || p >= a.head) break;
+      if (p > previous) {
+        previous = p;
+        changed = Date.now();
+      }
+      assert(Date.now() - changed < 120000, "Reader feed stopped advancing");
       await delay(100);
     }
   }
@@ -295,6 +305,7 @@ async function trial() {
   }
   await caughtUp();
   const before = await phase("after-activity");
+  const sender = mode==='int1-proof'?await (await import('./receipt-proof.ts')).receiptProof(accounts[1]!,dir!):undefined;
 
   const activation: any[] = [];
   let schedules = 0;
@@ -395,7 +406,7 @@ async function trial() {
           const x = await independent.pull(scope, rootOf(a.shape, i), a.head, V_W0);
           a.verify(i, a.head, V_W0, x);
           if (++read % 250 === 0) {
-            const m = await independent.stats();
+            const m = await readerStats(independent);
             assert(m.scopes[scope].bytes <= 128 * 1024);
             samples.push({ read, rss: m.rssBytes, ...m.scopes[scope] });
           }
@@ -423,6 +434,7 @@ async function trial() {
       replay: replayResults[n],
     })),
     activation,
+    sender,
     schedules,
     moving,
   };

@@ -42,7 +42,7 @@ if (action === "--plan") {
       !u.password &&
       !u.hash &&
       !u.search &&
-      u.pathname.endsWith("/Triplex-db-experiments.git"),
+      u.pathname === "/OnboardedInc/Triplex-db-experiments.git",
   );
   const published = execFileSync(
     "git",
@@ -76,6 +76,7 @@ if (action === "--plan") {
  mkdir "$1/$3"
  exec 9>"$2/dx-bm1-day.lock"
  flock -n 9
+ test -z "$(docker ps -q)"
  git -c credential.helper= clone --no-checkout "$4" "$1/$3/source"
  git -C "$1/$3/source" checkout --detach "$5"
  test "$(git -C "$1/$3/source" rev-parse HEAD)" = "$5"
@@ -94,6 +95,9 @@ if (action === "--plan") {
     "--property=KillMode=control-group",
     "--property=RuntimeMaxSec=" + seconds,
     "--setenv=DOCKER_HOST=unix:///var/run/docker.sock",
+    "--setenv=GIT_CONFIG_GLOBAL=/dev/null",
+    "--setenv=GIT_CONFIG_NOSYSTEM=1",
+    "--setenv=GIT_TERMINAL_PROMPT=0",
     "sh",
     "-c",
     body,

@@ -14,23 +14,22 @@ const size = 48000,
   v = firstValid + 1000,
   attempt = randomUUID(),
   source = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+const inputs = Object.fromEntries(
+  [
+    "lab/experiments/EXP-DX1/int1/moving.ts",
+    "lab/experiments/EXP-DX1/thin1/population.ts",
+    "packages/datomic/dist/replica/Replica.js",
+    "packages/datomic/dist/replica/RecentReads.js",
+    "packages/datomic/dist/replica/packed.js",
+    "packages/datomic/dist/replica/sharedIndex.js",
+    "lab/bench/lib/replica-reads.ts",
+    "lab/bench/lib/cut-cache.ts",
+  ].map((f) => [f, createHash("sha256").update(fs.readFileSync(f)).digest("hex")]),
+);
+const boot = fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
+  node = process.version;
 const binding = createHash("sha256")
-  .update(
-    JSON.stringify([
-      source,
-      attempt,
-      name,
-      size,
-      process.version,
-      fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8"),
-      ...[
-        "lab/experiments/EXP-DX1/int1/moving.ts",
-        "packages/datomic/dist/replica/Replica.js",
-        "packages/datomic/dist/replica/RecentReads.js",
-        "lab/bench/lib/replica-reads.ts",
-      ].map((f) => createHash("sha256").update(fs.readFileSync(f)).digest("hex")),
-    ]),
-  )
+  .update(JSON.stringify([source, attempt, name, size, node, boot, inputs]))
   .digest("hex");
 const lease = measurementWindow(binding, "guest-moving-fixture");
 const data = fixture(size),
@@ -93,7 +92,11 @@ try {
   assert(name === "unbounded" || copy.retention.evictions > 50);
   fs.writeFileSync(
     file,
-    JSON.stringify({ binding, source, attempt, size, name, reads, samples }, null, 2) + "\n",
+    JSON.stringify(
+      { binding, source, attempt, size, name, reads, samples, inputs, boot, node },
+      null,
+      2,
+    ) + "\n",
     { flag: "wx" },
   );
 } finally {
