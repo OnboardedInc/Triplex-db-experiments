@@ -118,7 +118,8 @@ export async function seedW0(
   const through = range?.through ?? W0.populationBasis(W0.rung(N)).tx;
   if (!Number.isSafeInteger(from) || !Number.isSafeInteger(through) || from < 0 || through < from)
     throw Error("invalid seed range");
-  if ((await comp.currentPosition()) !== from) throw new Error("W0 seed head mismatch");
+  if ((await comp.currentPosition()) !== from)
+    throw new Error(from === 0 ? "W0 seed needs a fresh scope at position zero" : "W0 seed head mismatch");
   const seedStarted = performance.now();
   const Rseed = W0.rung(N);
   const fd = fs.openSync(logFile, range?.discardLog ? "w" : "wx"),
