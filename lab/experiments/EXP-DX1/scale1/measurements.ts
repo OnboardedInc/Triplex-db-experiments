@@ -30,6 +30,7 @@ import { tenantPlan, tenantPhases, tenantWindows, tenantTraceId } from "./tenant
 import { compareTenants } from "./tenant-metrics.ts";
 import { smallTrace, smallId, smallSeconds, smallPhases, smallScope } from "./small-plan.ts";
 import { deepPopulation, DEEP_PROFILE } from "../../../bench/lib/deep-world.ts";
+import { DeepCommitMeter } from "../../../bench/lib/deep-commit-meter.ts";
 
 export async function fileHash(file: string) {
   const h = createHash("sha256");
@@ -161,6 +162,12 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       ]),
     );
   const challengeRows = new Map<string, any>();
+  const allBurst =
+    id.tenant?.study === "interference" && id.tenant.topology === "pooled"
+      ? report.phases.find((p: any) => p.name === "all-burst")
+      : undefined;
+  const burstFrom = allBurst ? allBurst.start + report.config.settleS * 1000 : 0;
+  const burstWrites: any[] = [];
   let primaries = 0,
     committed = 0,
     expired = 0,
@@ -171,6 +178,8 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   })) {
     if (!line) continue;
     const w = JSON.parse(line);
+    if (allBurst && w.ackPublishedAt >= burstFrom && w.ackPublishedAt < allBurst.end)
+      burstWrites.push(w);
     if (w.stream.startsWith("tenant-check-")) {
       const k = w.seq + "/" + w.resend;
       assert(!challengeRows.has(k));
@@ -315,6 +324,97 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       hashes[path.basename(f)] = await fileHash(f);
   }
   const checks = [...(report.priorities?.P2?.bars ?? []), ...(report.priorities?.P3?.bars ?? [])];
+  if (
+    report.config.composition !== "memory" &&
+    report.benchSources["lab/bench/lib/deep-commit-meter.ts"] &&
+    (report.deep.r2 || allBurst)
+  ) {
+    const seal = report.deep.nativeReceipts,
+      file = path.join(dir, "deep-native-commits.jsonl");
+    assert.deepEqual(seal.identity, id);
+    assert.equal(seal.database, db);
+    hashes["deep-native-commits.jsonl"] = await fileHash(file);
+    assert.equal(hashes["deep-native-commits.jsonl"], seal.sha256);
+    const meter = await DeepCommitMeter.read(file, id, db, seal.positions);
+    if (allBurst)
+      assert.deepEqual(
+        report.deep.allBurstQueue,
+        meter.burst(burstWrites, burstFrom, allBurst.end),
+      );
+    if (report.deep.r2) {
+      const account = id.tenant ? tenantAccounts(id.tenant).find((a) => a.index === 1) : undefined;
+      for (const [i, name] of ["R1", "R2"].entries()) {
+        const release = i === 0 ? report.deep.r1 : report.deep.r2,
+          cost = release.cost;
+        const marker = report.runTag + (account ? ":" + account.key : "") + ":activate:" + name;
+        meter.verifyFacts(release.cut.position, i === 0 ? 1 : 2);
+        assert.deepEqual(
+          cost.queue,
+          meter.release(release.cut.position, release.publicationPosition, release.wallMs, marker),
+        );
+        assert(
+          cost.evaluationCommits === 0 &&
+            cost.markerCommits === 1 &&
+            cost.mixedPages + cost.guardOnlyPages === release.coverage.pages,
+        );
+        assert(
+          cost.subjects === release.subjects &&
+            cost.changedSubjects === report.deep.activationOracle.changedItemsByRelease[i],
+        );
+        const claimsFile = path.join(dir, "deep-" + name + "-page-claims.json"),
+          claimsHash = await fileHash(claimsFile);
+        assert.equal(claimsHash, release.claimSha256);
+        hashes[path.basename(claimsFile)] = claimsHash;
+        const claims = JSON.parse(fs.readFileSync(claimsFile, "utf8"));
+        assert.equal(claims.length, release.coverage.pages);
+        const timingFile = path.join(dir, "deep-" + name + "-page-timings.json"),
+          timingHash = await fileHash(timingFile);
+        assert.equal(timingHash, release.timingSha256);
+        hashes[path.basename(timingFile)] = timingHash;
+        const timing = JSON.parse(fs.readFileSync(timingFile, "utf8"));
+        assert(
+          timing.cut === release.cut.position &&
+            timing.release === release.release &&
+            timing.pages.length === claims.length,
+        );
+        let guardFacts = 0,
+          bodyFacts = 0,
+          changed = 0,
+          mixedMs = 0,
+          guardMs = 0,
+          mixed = 0;
+        for (const [j, c] of timing.pages.entries()) {
+          assert(claims[j].position === c.position && claims[j].txId === c.txId);
+          meter.verifyFacts(c.position, c.timing.operations);
+          assert(
+            c.txId === c.timing.receiptTxId &&
+              c.position === c.timing.receiptPosition &&
+              c.position > release.cut.position &&
+              c.position <= release.publicationPosition,
+          );
+          assert(c.timing.operations === c.timing.guardFacts + c.timing.bodyFacts);
+          guardFacts += c.timing.guardFacts;
+          bodyFacts += c.timing.bodyFacts;
+          changed += c.bodies;
+          if (c.bodies) {
+            mixed++;
+            mixedMs += c.timing.publishCommitMs;
+          } else guardMs += c.timing.publishCommitMs;
+        }
+        assert.deepEqual(
+          [guardFacts, bodyFacts, changed, mixed, mixedMs, guardMs],
+          [
+            cost.guardFacts,
+            cost.bodyFacts,
+            cost.changedSubjects,
+            cost.mixedPages,
+            cost.mixedCommitMs,
+            cost.guardOnlyCommitMs,
+          ],
+        );
+      }
+    }
+  }
   for (const id of [
     "NS-P2 every offered command accounted",
     "NS-P2 every oracle-valid trace command published",

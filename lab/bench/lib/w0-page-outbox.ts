@@ -175,7 +175,9 @@ export async function publishPage(
     stateReads = 0,
     stateReadMs = 0,
     commandReads = 0,
-    publishCommitMs = 0;
+    publishCommitMs = 0,
+    bodyPrepareMs = 0,
+    guardPrepareMs = 0;
   const decode = (r: any, retry: boolean, expected?: Map<string, string>) => {
     const rows = r.changes?.filter((x: any) => x.op === "assert") ?? r.triples;
     if (
@@ -283,6 +285,7 @@ export async function publishPage(
       ops.push(assertString(id, attr, bytes));
       expected.set(id, bytes);
     };
+    const prepareBody = performance.now();
     for (const [i, r] of records.entries()) {
       const a = addresses[i]!,
         previousBand = [...prior.bases.values()].find((b) => !!(b.bits & a.bit));
@@ -315,6 +318,9 @@ export async function publishPage(
         });
       }
     }
+    const prepareGuard = performance.now(),
+      bodyFacts = ops.length;
+    bodyPrepareMs += prepareGuard - prepareBody;
     // [DX-ACT1] Why: an identified no-op live command must recover its original empty delivery after a different equal-basis decision. Rejected: recomputing it on retry after the other decision commits.
     if (!advanced && !span && eventId === undefined)
       return (
@@ -347,6 +353,7 @@ export async function publishPage(
     const preconditions = old
       ? [{ _tag: "TripleLive", id: old.id }]
       : [{ _tag: "EntityState", entityId: owner.page, tripleIds: [] }];
+    guardPrepareMs += performance.now() - prepareGuard;
     await beforeSubmit();
     const start = performance.now();
     const result = await store.transact(ops, { commandId, actor: "p5-publisher", preconditions });
@@ -363,6 +370,10 @@ export async function publishPage(
           conflicts,
           publishCommitMs,
           operations: ops.length,
+          bodyFacts,
+          guardFacts: ops.length - bodyFacts,
+          bodyPrepareMs,
+          guardPrepareMs,
           preconditions: 1,
           payloadBytes: Buffer.byteLength(JSON.stringify(ops)),
         },
