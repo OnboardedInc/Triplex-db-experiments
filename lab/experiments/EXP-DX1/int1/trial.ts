@@ -18,6 +18,7 @@ import { measurementWindow } from "../thin1/measure.ts";
 import { startReader, processSize } from "./reader.ts";
 import { Account, rootOf, digest, type Shape } from "./account.ts";
 import { activate, eadRelease } from "./activation.ts";
+import { pageNamespace } from "../../../bench/lib/w0-page-outbox.ts";
 
 const [, mode, rung, dir] = process.argv.slice(2),
   size = Number(rung);
@@ -86,6 +87,7 @@ save("inputs.json", {
   containers: stack.containers,
   boot: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
 });
+process.env.TX2_W0_OUTBOX_NAMESPACE = pageNamespace("int1");
 const lease = measurementWindow(binding, stack.prefix),
   reader = startReader(binding),
   accounts: Account[] = [],
@@ -115,19 +117,22 @@ const quant = (s: number[]) => {
     p99: a[Math.ceil(0.99 * a.length) - 1],
   };
 };
-async function open(name: string, shape: Shape, count: number, first = 0) {
-  const scope = "int1-" + attempt + "-" + name,
-    comp = await openComposition("reach", "datomic", scope);
-  handles.push(comp);
-  assert.equal(await comp.currentPosition(), 0);
-  await reader.open(scope);
+async function open(name: string, shape: Shape, count: number, first = 0, pooled?: Account) {
+  const scope = pooled?.comp.scopeName ?? "int1-" + attempt + "-" + name;
+  const comp = pooled?.comp ?? (await openComposition("reach", "datomic", scope));
+  if (!pooled) {
+    handles.push(comp);
+    assert.equal(await comp.currentPosition(), 0);
+    await reader.open(scope);
+  }
   const a = new Account(
     comp,
     shape,
-    digest(binding + "/" + scope),
+    digest(binding + "/" + scope + "/" + first),
     first,
     count,
     new DatabaseSync(path.join(dir!, name + ".sqlite")),
+    pooled?.cursor,
   );
   accounts.push(a);
   return a;
@@ -204,7 +209,7 @@ function replay(a: Account) {
   assert("entityQueries" in result && result.entityQueries === doc.queries.length);
   return result;
 }
-async function release(a: Account, next: W0.CompiledRelease) {
+async function release(a: Account, next: W0.CompiledRelease, afterCapture?: () => Promise<void>) {
   const wr = await a.comp.transact(
     [
       {
@@ -218,7 +223,11 @@ async function release(a: Account, next: W0.CompiledRelease) {
     { commandId: a.binding + "-" + next.name, actor: "release" },
   );
   assert(wr.ok && wr.value.triples.length === 1 && wr.value.triples[0]!.value.value === next.hash);
-  return await activate(a, dir!, next, wr.value.position, lease.checkpoint);
+  a.head = wr.value.position;
+  if (afterCapture) await afterCapture();
+  const decision = await activate(a, dir!, next, wr.value.position, lease.checkpoint);
+  a.head = await a.comp.currentPosition();
+  return decision;
 }
 async function trial() {
   await lease.checkpoint();
@@ -235,14 +244,16 @@ async function trial() {
   if (mode === "int1-proof") {
     await open("thin", "thin", size);
     await open("deep", "deep", size);
-  } else if (mode === "int1-isolated") {
-    for (let n = 0; n < 100; n++) await open("account" + n, "thin", size, n * size);
-  } else
-    await open(
-      "population",
-      mode === "int1-deep" ? "deep" : "thin",
-      mode === "int1-pooled" ? 100 * size : size,
-    );
+  } else if (mode === "int1-isolated" || mode === "int1-pooled") {
+    for (let n = 0; n < 100; n++)
+      await open(
+        "account" + n,
+        "thin",
+        size,
+        n * size,
+        mode === "int1-pooled" ? accounts[0] : undefined,
+      );
+  } else await open("population", mode === "int1-deep" ? "deep" : "thin", size);
   await phase("scopes-open");
   const seedStart = now();
   for (const a of accounts) {
@@ -289,22 +300,40 @@ async function trial() {
       const scope = a.comp.scopeName!,
         cut = a.head,
         i = a.first + 1;
-      const target = await openComposition("reach-touched", "datomic", scope);
-      try {
-        const split = await target.pull(
-          rootOf(a.shape, i),
-          { recordedPosition: cut, validAt: V_W0 } as Basis,
-          async () => {
-            const t = now();
-            const out = await release(a, W0.R1);
-            activation.push({ ...out, wallMs: now() - t });
-          },
-        );
-        a.verify(i, cut, V_W0, split);
-        const current = await a.comp.currentPosition();
-        a.verify(i, current, V_W0, await target.pull(rootOf(a.shape,i),{recordedPosition:current, validAt:V_W0} as Basis));
-      } finally {
-        await target.close();
+      if (mode === "int1-proof") {
+        const target = await openComposition("reach-touched", "datomic", scope);
+        try {
+          const split = await target.pull(
+            rootOf(a.shape, i),
+            { recordedPosition: cut, validAt: V_W0 } as Basis,
+            async () => {
+              const t = now();
+              const out = await release(a, W0.R1, async () => {
+                const update = await a.update(i);
+                const later = await target.pull(rootOf(a.shape, i), {
+                  recordedPosition: update.position,
+                  validAt: V_W0,
+                } as Basis);
+                a.verify(i, update.position, V_W0, later);
+                assert(later.triples.some((row) => row.id === update.triples[0]!.id));
+              });
+              activation.push({ ...out, wallMs: now() - t });
+            },
+          );
+          a.verify(i, cut, V_W0, split);
+          const after = await target.pull(rootOf(a.shape, i), {
+            recordedPosition: a.head,
+            validAt: V_W0,
+          } as Basis);
+          a.verify(i, a.head, V_W0, after);
+          assert.equal(after.triples.length, split.triples.length + 1);
+        } finally {
+          await target.close();
+        }
+      } else {
+        const t = now();
+        const out = await release(a, W0.R1);
+        activation.push({ ...out, wallMs: now() - t });
       }
       const t = now();
       const out = await release(a, eadRelease());
@@ -343,6 +372,32 @@ async function trial() {
     assert(/# fail 0\b/.test(log) && /# pass 23\b/.test(log));
     schedules = 23;
   }
+  let moving;
+  if (mode === "int1-thin" && size === 100000 && stack.managed) {
+    const a = accounts[0]!,
+      scope = a.comp.scopeName!,
+      independent = startReader(binding + "-moving", 128 * 1024);
+    const samples = [];
+    let read = 0;
+    try {
+      await independent.open(scope);
+      for (let cycle = 0; cycle < 4; cycle++)
+        for (let i = a.first; i < a.first + a.count; i += 50) {
+          if (read % 128 === 0) await lease.checkpoint();
+          const x = await independent.pull(scope, rootOf(a.shape, i), a.head, V_W0);
+          a.verify(i, a.head, V_W0, x);
+          if (++read % 250 === 0) {
+            const m = await independent.stats();
+            assert(m.scopes[scope].bytes <= 128 * 1024);
+            samples.push({ read, rss: m.rssBytes, ...m.scopes[scope] });
+          }
+        }
+      assert(samples.at(-1)!.evictions > 0);
+      moving = { scope, reads: read, budget: 128 * 1024, samples };
+    } finally {
+      await independent.close();
+    }
+  }
   const replayResults = accounts.map(replay);
   return {
     seedMs: totalSeedMs,
@@ -361,6 +416,7 @@ async function trial() {
     })),
     activation,
     schedules,
+    moving,
   };
 }
 try {

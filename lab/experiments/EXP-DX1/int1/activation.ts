@@ -44,6 +44,9 @@ export async function activate(
   );
   fs.mkdirSync(stem);
   const oracle = new DomainOracle(selectorOracle(stem, release.name === "R1" ? W0.R2 : release));
+  const receiptFile = path.join(path.basename(stem), "page-receipts.jsonl");
+  fs.writeFileSync(path.join(dir, receiptFile), "", { flag: "wx" });
+  const logical = createHash("sha256");
   const pageHashes = createHash("sha256"),
     rosterBytes = createHash("sha256").update("["),
     results = createHash("sha256");
@@ -110,7 +113,16 @@ export async function activate(
         return Number(r.position);
       });
       assert(positions.length);
-      pageHashes.update(canonical([first, seal, selection.binding, ack.coverage]) + "\n");
+      const receiptBytes =
+        canonical([
+          first,
+          seal,
+          selection.binding,
+          ack.coverage,
+          ack.responses.map((r) => ("txId" in r ? [r.txId, r.position] : null)),
+        ]) + "\n";
+      fs.appendFileSync(path.join(dir, receiptFile), receiptBytes);
+      pageHashes.update(receiptBytes);
       commits += ack.commits;
       bodies += Number(ack.bodies ?? 0);
       const native = await readOutboxAt(account.comp, pageRoots(ids), Math.max(...positions));
@@ -119,6 +131,13 @@ export async function activate(
         assert.equal(record.subject, policyId(i));
         rosterBytes.update((covered++ ? "," : "") + JSON.stringify(record.subject));
         results.update(canonical(record) + "\n");
+        logical.update(
+          canonical([
+            record.subject,
+            record.release,
+            record.workItems.map((w) => [w.id, w.kind, w.payload]),
+          ]) + "\n",
+        );
         const prior = from.get(i);
         const old = prior ? parseOutbox(String(prior.body)) : W0.EMPTY_OUTBOX;
         const next = W0.publish(old, [record]).state;
@@ -186,6 +205,8 @@ export async function activate(
     commits,
     records: results.digest("hex"),
     receipts: pageHashes.digest("hex"),
+    receiptFile,
+    logical: logical.digest("hex"),
   };
 }
 export { eadRelease };

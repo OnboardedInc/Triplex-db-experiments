@@ -5,7 +5,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const [mode = "--plan", batch, utc, work] = process.argv.slice(2);
+import { cases as integratedCases, verifyCase } from "../int1/bench-cases.ts";
+const integrated = process.argv.slice(2).includes("--int1");
+const suffix = integrated ? ["--int1"] : [];
+const [mode = "--plan", batch, utc, work] = process.argv.slice(2).filter((v) => v !== "--int1");
 const script = fileURLToPath(import.meta.url),
   repo = fileURLToPath(new URL("../../../../", import.meta.url));
 const node = process.execPath,
@@ -18,13 +21,20 @@ const run = (cmd: string, args: string[], seconds = 60) =>
     timeout: seconds * 1000,
     maxBuffer: 32 << 20,
   }).trim();
-const rungs = [1_000_000, 4_000_000];
+const scenarios = integrated
+  ? integratedCases
+  : [
+      { key: "1000000", mode: "touched", size: 1000000 },
+      { key: "4000000", mode: "touched", size: 4000000 },
+    ];
+const rungs = scenarios.map((s) => s.size);
 if (mode === "--plan") {
   console.log(
     JSON.stringify(
       {
         command: "queue-bench.ts --launch BATCH UTC_CUTOFF PREPARED_WORK_DIRECTORY",
         rungs,
+        ...(integrated ? { scenarios } : {}),
         active: "2%",
         mode: "reach-touched",
         stages: [
@@ -54,7 +64,7 @@ assert.equal(process.getuid?.(), 0);
 assert.equal(spawnSync("systemd-detect-virt", { encoding: "utf8" }).stdout.trim(), "none");
 const deadline = Date.parse(utc),
   state = path.join(work, "state"),
-  day = path.join(state, "evidence", "DX-THIN1", batch);
+  day = path.join(state, "evidence", integrated ? "DX-INT1" : "DX-THIN1", batch);
 const queueRoot = "/var/tmp/triplex-bm1",
   lease = path.join(state, "locks", "measure");
 const head = run("git", ["rev-parse", "HEAD"]);
@@ -118,7 +128,7 @@ function cleanup() {
     a.source === head &&
       a.unit === unit &&
       rungs.includes(a.size) &&
-      a.tag === prefix + "-" + a.size + "-" + a.nonce &&
+      a.tag === prefix + "-" + (a.key ?? a.size) + "-" + a.nonce &&
       /^[0-9a-f]{12}$/.test(a.nonce),
   );
   const stack = path.join(process.env.DX_STACK_EVIDENCE!, a.tag, "stack.json");
@@ -183,7 +193,7 @@ if (mode === "--launch") {
     "--property=RuntimeMaxSec=" + remaining,
     "--property=TimeoutStopSec=150",
     "--property=ExecStopPost=" +
-      [node, ...nodeArgs, script, "--cleanup", batch, utc, work].join(" "),
+      [node, ...nodeArgs, script, "--cleanup", batch, utc, work, ...suffix].join(" "),
     "flock",
     "-n",
     path.join(queueRoot, "dx-bm1-day.lock"),
@@ -194,6 +204,7 @@ if (mode === "--launch") {
     batch,
     utc,
     work,
+    ...suffix,
   ]);
   console.log(unit);
   process.exit(0);
@@ -255,15 +266,17 @@ try {
     ],
     900,
   );
-  for (const size of rungs) {
+  let pooled: unknown;
+  for (const spec of scenarios) {
+    const { size, key } = spec;
     assert(deadline - Date.now() > 600_000, "Insufficient time for another rung");
     const disk = fs.statfsSync(day, { bigint: true });
     assert(disk.bavail * disk.bsize > 5n * 1024n ** 3n);
     assert.equal(docker("ps", "-q"), "");
     const nonce = randomBytes(6).toString("hex"),
-      tag = prefix + "-" + size + "-" + nonce;
+      tag = prefix + "-" + key + "-" + nonce;
     assert.deepEqual(inventory(tag), []);
-    write(owned, { unit, source: head, size, nonce, tag });
+    write(owned, { unit, source: head, size, key, nonce, tag });
     status("starting " + size);
     try {
       run(
@@ -290,8 +303,8 @@ try {
       process.env.DATOMIC_URL = stack.writeUrl;
       process.env.DATOMIC_READ_URLS = stack.readUrl;
       status("measuring " + size);
-      const dest = path.join(day, "rung-" + size),
-        fd = fs.openSync(path.join(day, size + ".log"), "wx");
+      const dest = path.join(day, "rung-" + key),
+        fd = fs.openSync(path.join(day, key + ".log"), "wx");
       let trial;
       try {
         trial = spawnSync(
@@ -301,9 +314,12 @@ try {
             placement.clients,
             node,
             ...nodeArgs,
-            path.join(repo, "lab/experiments/EXP-DX1/thin1/trial.ts"),
+            path.join(
+              repo,
+              "lab/experiments/EXP-DX1/" + (integrated ? "int1" : "thin1") + "/trial.ts",
+            ),
             "live",
-            "touched",
+            spec.mode,
             String(size),
             dest,
           ],
@@ -320,40 +336,53 @@ try {
       assert.equal(trial.status, 0, "Trial failed or timed out; inspect rung log");
       const result = json(path.join(dest, "result.json"));
       const inputs = json(path.join(dest, "inputs.json"));
-      assert.equal(inputs.scope, "dxthin-" + inputs.attempt);
-      assert.equal(inputs.source, head);
-      assert.equal(inputs.slot, tag);
-      assert.deepEqual(inputs.containers, stack.containers);
-      const binding = createHash("sha256")
-        .update(
-          JSON.stringify([
-            head,
-            inputs.inputs,
-            tag,
-            stack.containers,
-            inputs.attempt,
-            inputs.scope,
-            size,
-            "touched",
-          ]),
-        )
-        .digest("hex");
-      assert.equal(result.binding, binding);
-      assert.equal(inputs.binding, binding);
-      assert.equal(result.activation.binding, binding);
-      assert.equal(result.source, head);
-      assert.equal(result.slot, tag);
-      assert.equal(result.size, size);
-      assert.equal(result.active, size / 50);
-      assert.equal(result.activation.coverage.count, size);
-      assert.equal(result.activation.evaluated + result.activation.dismissed, size);
-      assert.equal(result.publishedReadback, size);
-      assert.equal(result.ryow, size / 50);
-      assert.equal(result.reads, (size / 50) * 6.5);
-      assert.equal(result.feedPositions, Math.ceil(size / 32) + size / 50);
-      assert.equal(result.replayedPositions, result.feedPositions);
-      assert(result.oracle.entityQueries === result.oracle.reads * 4 && result.oracle.reads > 0);
-      assert(result.domain.checked > 0 && result.domain.checked <= size);
+      if (integrated) {
+        const plan = integratedCases.find((x) => x.key === key)!;
+        const observations = await verifyCase(dest, plan, head, tag, stack);
+        if (key === "pooled-100") pooled = observations;
+        if (key === "isolated-100") {
+          assert.deepEqual(observations, pooled);
+          write(path.join(day, "small-account-comparison.json"), {
+            source: head,
+            accounts: observations,
+          });
+        }
+      } else {
+        assert.equal(inputs.scope, "dxthin-" + inputs.attempt);
+        assert.equal(inputs.source, head);
+        assert.equal(inputs.slot, tag);
+        assert.deepEqual(inputs.containers, stack.containers);
+        const binding = createHash("sha256")
+          .update(
+            JSON.stringify([
+              head,
+              inputs.inputs,
+              tag,
+              stack.containers,
+              inputs.attempt,
+              inputs.scope,
+              size,
+              "touched",
+            ]),
+          )
+          .digest("hex");
+        assert.equal(result.binding, binding);
+        assert.equal(inputs.binding, binding);
+        assert.equal(result.activation.binding, binding);
+        assert.equal(result.source, head);
+        assert.equal(result.slot, tag);
+        assert.equal(result.size, size);
+        assert.equal(result.active, size / 50);
+        assert.equal(result.activation.coverage.count, size);
+        assert.equal(result.activation.evaluated + result.activation.dismissed, size);
+        assert.equal(result.publishedReadback, size);
+        assert.equal(result.ryow, size / 50);
+        assert.equal(result.reads, (size / 50) * 6.5);
+        assert.equal(result.feedPositions, Math.ceil(size / 32) + size / 50);
+        assert.equal(result.replayedPositions, result.feedPositions);
+        assert(result.oracle.entityQueries === result.oracle.reads * 4 && result.oracle.reads > 0);
+        assert(result.domain.checked > 0 && result.domain.checked <= size);
+      }
       const list = fs.readdirSync(dest, { recursive: true, encoding: "utf8" }).sort();
       const sums = fs.openSync(path.join(dest, "SHA256SUMS"), "wx");
       try {

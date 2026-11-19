@@ -15,10 +15,14 @@ export function processSize() {
 }
 // [DX-INT1] Why: all accounts share one reader process, while its RSS, threads and retained worlds remain measurable independently of the driver.
 // Rejected: one reader OS process per account or attributing the driver's expected rows to the product.
-export function startReader(binding: string) {
+export function startReader(binding: string, budget?: number) {
   const child = fork(fileURLToPath(import.meta.url), ["--reader", binding], {
     serialization: "advanced",
-    env: { ...process.env, DATOMIC_URL: process.env.DATOMIC_READ_URLS?.split(",")[0] },
+    env: {
+      ...process.env,
+      ...(budget ? { DX_TOUCHED_RETAIN_BYTES: String(budget) } : {}),
+      DATOMIC_URL: process.env.DATOMIC_READ_URLS?.split(",")[0],
+    },
     stdio: ["ignore", "inherit", "inherit", "ipc"],
   });
   let serial = 0;

@@ -476,7 +476,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--lane",
       "datomic",
       "--composition",
-      "reach",
+      process.env.DX_INT1_READERS === "touched" ? "reach-touched" : "reach",
       "--profile",
       "deep",
       "--rung",

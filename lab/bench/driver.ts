@@ -600,9 +600,12 @@ async function run() {
   await idleKeep?.ready;
 
   // ---------------------------------------------------------------- reader workers
+  // [DX-INT1] Why: six reading workers own their demand sets, while the independent sender receipt worker retains its ordered capture and fallback.
+  // Rejected: handing all six a population image, or routing receipt observation back through the sender.
+  const demandReaders = config.composition === "reach-touched";
   const replicaHost = config.readPath === "replica" ? config.replicaThread === "worker"
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
-      composition: config.composition, roots: Array.from({ length: N }, (_, i) => ids.placement(i)),
+      composition: config.composition, roots: demandReaders ? [] : Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
       worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer,
       sharedReaderIndex: config.sharedReaderIndex,
@@ -610,17 +613,18 @@ async function run() {
       ...(config.sharedReaderIndex ? { worker: 0, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2 } : {}),
     }, aux)
     : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
-      scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
+      scopeName, demandReaders ? [] : Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
-      config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer) : undefined;
+      config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer, undefined, demandReaders ? "touched" : "all") : undefined;
   const receiptThread = config.receiptCapture === "replica-worker" && replicaHost && "captureReceipt" in replicaHost
     ? replicaHost : undefined;
   const mainReplicaHost = replicaHost && !("connect" in replicaHost) ? replicaHost : undefined;
   const replicaLocal = mainReplicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2, mainReplicaHost.index, config.replicaWorldCacheMiB * 1024 ** 2) : undefined;
   if (mainReplicaHost && replicaLocal) {
-    mainReplicaHost.subscribe(() => replicaLocal.notify());
+    mainReplicaHost.subscribe(delta => replicaLocal.notify(delta.reset));
     const gatewayPull = aux.pull.bind(aux);
-    aux.pull = (root, basis, between) => replicaLocal.pullAt(root, basis, () => gatewayPull(root, basis), between);
+    const {touchedPull}=await import("./lib/touched-reads.ts");
+    aux.pull = (root, basis, between) => demandReaders ? touchedPull(replicaLocal,mainReplicaHost.replica,root,basis,()=>gatewayPull(root,basis),between) : replicaLocal.pullAt(root, basis, () => gatewayPull(root, basis), between);
   } else if (replicaHost && "pull" in replicaHost) {
     const remote = replicaHost;
     aux.pull = (root, basis, between) => {
@@ -628,7 +632,7 @@ async function run() {
       return remote.pull(root, basis);
     };
   }
-  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: demandReaders ? "gateway" : config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: demandReaders ? undefined : mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
@@ -659,11 +663,11 @@ async function run() {
   });
   const startWorker = async (w: number, cfg: any) => {
     const pendingDeltas: any[] = [];
-    const directReplica = replicaHost && "connect" in replicaHost ? replicaHost : undefined;
-    const unsubscribe = mainReplicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
+    const directReplica = !demandReaders && replicaHost && "connect" in replicaHost ? replicaHost : undefined;
+    const unsubscribe = demandReaders ? undefined : mainReplicaHost?.subscribe(delta => { pendingDeltas.push(delta); });
     const observationPort = spill?.connect();
     let worker;
-    if (config.sharedReaderIndex) {
+    if (config.sharedReaderIndex && !demandReaders) {
       if (!directReplica) throw Error("The shared reader requires the replica worker");
       worker = directReplica.startSharedReader(cfg, observationPort);
     } else {
@@ -684,7 +688,7 @@ async function run() {
     });
     unsubscribe?.();
     for (const delta of pendingDeltas) worker.postMessage({ type: "replica-delta", delta, sentAt: now() });
-    mainReplicaHost?.subscribe(delta => worker.postMessage({ type: "replica-delta", delta, sentAt: now() }));
+    if (!demandReaders) mainReplicaHost?.subscribe(delta => worker.postMessage({ type: "replica-delta", delta, sentAt: now() }));
     worker.on("message", onWorkerMessage(w, worker));
     return { worker, stopped: stoppedP };
   };

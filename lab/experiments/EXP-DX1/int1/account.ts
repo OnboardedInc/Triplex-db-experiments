@@ -55,12 +55,18 @@ export class Account {
     readonly first: number,
     readonly count: number,
     readonly db: DatabaseSync,
+    readonly cursor = { position: 0 },
   ) {
     db.exec(
       "PRAGMA cache_size=-2048; PRAGMA journal_mode=WAL; CREATE TABLE people(i INTEGER PRIMARY KEY, born INTEGER NOT NULL, policy TEXT, dirty INTEGER, hash TEXT NOT NULL); CREATE TABLE wanted(i INTEGER,p INTEGER,body TEXT,PRIMARY KEY(i,p)); CREATE TABLE tx(p INTEGER PRIMARY KEY,cmd TEXT NOT NULL,instant REAL NOT NULL,body TEXT)",
     );
   }
-  head = 0;
+  get head() {
+    return this.cursor.position;
+  }
+  set head(value: number) {
+    this.cursor.position = value;
+  }
   facts = 0;
   commits: number[] = [];
   reads = 0;
@@ -118,31 +124,31 @@ export class Account {
   }
   sample(i: number) {
     return (
-      i === this.first || i === this.first + 1 || i === this.first + Math.max(0, Math.floor((this.count - 1) / 50) * 50)
+      i === this.first ||
+      i === this.first + 1 ||
+      i === this.first + Math.max(0, Math.floor((this.count - 1) / 50) * 50)
     );
   }
   private saveTx(r: Receipt, cmd: string, ops: any[], ids: string[], keep: boolean) {
-    this.db
-      .prepare("INSERT INTO tx VALUES(?,?,?,?)")
-      .run(
-        r.position,
-        cmd,
-        r.instant,
-        keep
-          ? JSON.stringify({
-              commandId: cmd,
-              operations: ops,
-              actor: "import",
-              preconditions: [],
-              receipt: {
-                position: r.position,
-                instant: r.instant,
-                txId: r.txId,
-                assertionIds: ids,
-              },
-            })
-          : null,
-      );
+    this.db.prepare("INSERT INTO tx VALUES(?,?,?,?)").run(
+      r.position,
+      cmd,
+      r.instant,
+      keep
+        ? JSON.stringify({
+            commandId: cmd,
+            operations: ops,
+            actor: "import",
+            preconditions: [],
+            receipt: {
+              position: r.position,
+              instant: r.instant,
+              txId: r.txId,
+              assertionIds: ids,
+            },
+          })
+        : null,
+    );
   }
   private saveRows(i: number, ops: any[], ids: string[], r: Receipt) {
     this.db

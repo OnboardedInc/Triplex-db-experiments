@@ -111,12 +111,14 @@ function setup() {
   const cfg = read(file),
     nonce = randomBytes(10).toString("hex"),
     secret = randomBytes(20).toString("hex");
-  for (const [slot, role] of [
-    ["s2", "write"],
-    ["s1", "read"],
-  ]) {
+  // [DX-INT1] Why: every exclusive slot has the same published maximum. Let the manager adjudicate two free slots without tying up a busy builder's preferred slot.
+  // Rejected: borrowing a resident or changing the global reservation pool.
+  const slots = integrated ? ["s2", "s1", "s3"].filter(s=>!fs.existsSync(ownerFile(s))).slice(0,2) : ["s2","s1"];
+  assert.equal(slots.length,2,"Two exclusive slots are required");
+  const original=read(path.join(main,"lab/config/slots.json")).slots.datomic;
+  for (const [slot, role] of [[slots[0]!, "write"], [slots[1]!, "read"]]) {
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
-    const settings = cfg.slots.datomic[slot];
+    const settings = cfg.slots.datomic[slot] = { ...original[slot] };
     settings.gatewayOpts =
       "-Xms160m -Xmx896m -Ddatomic.objectCacheMax=192m -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
@@ -128,7 +130,8 @@ function setup() {
     if (role === "read") settings.memBytes = Math.min(settings.memBytes, 1536 * 1024 ** 2);
   }
   write(file, cfg);
-  write(cred, { nonce, secret });
+  write(cred, { nonce, secret, slots });
+  return slots;
 }
 function witness(slot: string) {
   const owner = read(ownerFile(slot)),
@@ -145,7 +148,7 @@ function witness(slot: string) {
     .at(-1);
   assert(line, "Missing live slot identity");
   const event = JSON.parse(line.slice(12));
-  assert(event.nonce === attempt.nonce && event.role === (slot === "s2" ? "write" : "read"));
+  assert(event.nonce === attempt.nonce && event.role === (slot === (attempt.slots?.[0] ?? "s2") ? "write" : "read"));
   return {
     role: event.role,
     owner: ownerFile(slot),
@@ -160,7 +163,7 @@ function witness(slot: string) {
   };
 }
 function bind() {
-  const peers = ["s2", "s1"].map(witness),
+  const peers = ((read(cred).slots ?? ["s2","s1"]) as string[]).map(witness),
     cfg = read(file),
     attempt = read(cred);
   assert(peers[0]!.source === peers[1]!.source);
@@ -218,15 +221,15 @@ if (action === "--guest") {
     );
     const disk = fs.statfsSync(repo, { bigint: true });
     assert(disk.bavail * disk.bsize > 5n * 1024n ** 3n);
-    setup();
+    const [writerSlot, readerSlot] = setup() as [string,string];
     const exp = "DX-THIN1-" + read(cred).nonce;
     try {
-      manager(["up", "--slot", "s2", "--exp", exp]);
-      const primary = witness("s2");
+      manager(["up", "--slot", writerSlot, "--exp", exp]);
+      const primary = witness(writerSlot);
       const cfg = read(file);
-      cfg.slots.datomic.s1.gatewayOpts += " -Ddxthin.primary=" + primary.address;
+      cfg.slots.datomic[readerSlot].gatewayOpts += " -Ddxthin.primary=" + primary.address;
       write(file, cfg);
-      manager(["up", "--slot", "s1", "--exp", exp]);
+      manager(["up", "--slot", readerSlot, "--exp", exp]);
       bind();
       execFileSync(
         "colima",
@@ -251,7 +254,7 @@ if (action === "--guest") {
         { cwd: repo, stdio: "inherit" },
       );
     } finally {
-      for (const slot of ["s1", "s2"])
+      for (const slot of [readerSlot, writerSlot])
         if (fs.existsSync(ownerFile(slot))) {
           const o = read(ownerFile(slot));
           if (
