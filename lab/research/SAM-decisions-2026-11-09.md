@@ -538,3 +538,20 @@ Orchestrator's reading and what I did:
 5. My own change, not asked for: no Mac night run tonight. Three nights produced no judged pair, the bench server gives
    cleaner numbers, and without the window the agents can work and watch the server through the night. Sam's apps stay
    open. The nightly permission stands and can be used again.
+
+## 2026-11-19 about 13:50 local: one database or many; priorities 6 to 9 approved
+
+Sam, verbatim: "Wait so we're going to have more than one Datomic database handling these things? Aren't atomic
+databases supposed to be able to handle hundreds of millions of records or am I crazy? Yes to the other proposed
+priorities. You should add all of those and let's work towards them."
+
+Orchestrator's reading:
+1. Priorities 6 to 9 are added to `lab/NORTH-STAR.md` (his approval quoted there), unranked among themselves, with
+   provisional bars in `lab/TARGETS.md` section 1.2.
+2. His question is a fair challenge to an assumption I inherited and never tested: one scope, and so one Datomic
+   database, per account. A single Datomic database is built to hold far more than our whole fleet (the vendor's
+   guidance is in the billions of datoms; recalled, not re-read today). One database per account buys independent
+   commit queues, moves, deletion and failure per account, and costs fixed overhead per database that Datomic is not
+   known to carry in the hundreds. The layout is now an open question to be measured, not a decision: one scope
+   holding 1,000,000 deep subjects against ten scopes of 100,000, and one hundred small scopes against the same
+   accounts pooled in one scope.
