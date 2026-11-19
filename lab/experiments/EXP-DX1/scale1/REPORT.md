@@ -5,9 +5,9 @@ Ten accounts of 100,000 people sharing one database — awaiting a completed bar
 The owner's release target is under one second. Activation for one account is pending. Activation among ten is pending.
 The first shared resource to reach its limit is still unknown.
 Three changes to test are grouping queued saves, reducing per-save work at the serial commit point, and publishing a release with a constant number of writes. Their effects on the full account are unmeasured.
-The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. PostgreSQL grew by 594.29 bytes per fact and the volume including WAL grew by 1214.95 bytes per fact (one seed).
+The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. PostgreSQL grew by 593.30 bytes per fact and the volume including WAL grew by 1213.96 bytes per fact (one seed).
 
-The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 69.12 ms (90% interval 65.28–72.70 ms), above the 50 ms bar. Peak simultaneous client and engine memory was 21.87 GiB. The first reader attempt routed all 77,838 reads at L1, L4, L16, L64 through the gateway and failed replica coverage. [Matched client and gateway timing](evidence/arm-d19-i1-reader-a-diagnostic.md)
+The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 87.04 ms (90% interval 82.43–94.21 ms), above the 50 ms bar. Peak simultaneous client and engine memory was 22.94 GiB. The first reader attempt routed all 77,838 reads at L1, L4, L16, L64 through the gateway and failed replica coverage. [Matched client and gateway timing](evidence/arm-d19-i1-reader-a-diagnostic.md)
 
 **Bench measurements**
 
@@ -15,6 +15,7 @@ The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 69.
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 zero | account 1 | 5.09 · 56505 [5.09, 5.12] | 69.12 · 56505 [65.28, 72.70] | — | 20.09 · 2895 [19.20, 20.35] | Observed · arm-d19-i1-zero-a |
 | 1 reader | account 1 | — | — | — | — | Incomplete · arm-d19-i1-reader-a |
+| 1 zero | account 1 | 5.12 · 56505 [5.09, 5.12] | 87.04 · 56505 [82.43, 94.21] | — | 19.45 · 2895 [18.82, 20.48] | Observed · arm-d19-i1-zero-b |
 
 **Shared resources**
 
