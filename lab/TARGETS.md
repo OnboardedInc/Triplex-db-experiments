@@ -98,8 +98,10 @@ every account, accounts may finish one after another (Sam, 2026-11-19: "they don
 seconds. They can finish one after another"); and a correct
 activation never lets a late older result replace a newer decision. **Sam's target for activation since 2026-11-19 is
 under one second** ("I want it to be sub-1 second. That's what we're looking to do"); the 100 s bar stays as the
-floor until a design states which of these it delivers in under a second: new-release answers on every read, changed
-outputs durably stored, deliveries emitted, coverage proven. Meanwhile it never lets a late older result replace a newer decision (the per-subject or per-page guard is part of the
+floor until a build meets this. **Definition confirmed by Sam the same day:** one second after Publish every read
+returns the new release's answers, every changed output is durably stored and every owed notification is durably
+recorded; the notifications themselves go out over the following seconds. **No release is prepared in advance**
+("there's no preparing state"): the second starts when a release is first seen. Meanwhile it never lets a late older result replace a newer decision (the per-subject or per-page guard is part of the
 measured work since 2026-11-19).
 
 ## 2. The fixed workload (from the paste)
