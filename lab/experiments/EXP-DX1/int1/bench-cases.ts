@@ -13,6 +13,11 @@ export const cases = [
   { key: "isolated-100", mode: "int1-isolated", size: 29000, accounts: 100, scopes: 100 },
 ] as const;
 export type BenchCase = (typeof cases)[number];
+export function benchRowWire(setting?: string): "plain" | "gzip" {
+  const wire = setting ?? "gzip";
+  assert(wire === "gzip" || wire === "plain", "Row wire must be gzip or plain");
+  return wire;
+}
 const read = (file: string) => JSON.parse(fs.readFileSync(file, "utf8"));
 export function verifyLatencies(dir: string, r: any, binding: string, attempt: string,
   options?: { spread: boolean; seedOnly: boolean; policy?: { rowWire?: string } }) {
@@ -192,6 +197,7 @@ export async function verifyCase(
   tag: string,
   stack: any,
   cpus: { sender: string; readers: string },
+  wire: "plain" | "gzip",
 ) {
   const { W0, canonical, sha256, V_W0 } = await import("../../../bench/lib/w0-world.ts");
   const { eadRelease } = await import("../../../bench/lib/w0-selector.ts");
@@ -223,7 +229,7 @@ export async function verifyCase(
   assert.equal(inputs.gatewaySource, stack.gatewaySourceSha256);
   assert.equal(inputs.spread, true);
   assert.equal(inputs.seedOnly, false);
-  assert.deepEqual(inputs.policy, { readMode: "validated", gateways: "demand" });
+  assert.deepEqual(inputs.policy, { readMode: "validated", gateways: "demand", ...(wire === "gzip" ? { rowWire: wire } : {}) });
   assert.equal(inputs.source, head);
   assert.equal(inputs.slot, tag);
   assert.equal(inputs.mode, spec.mode);

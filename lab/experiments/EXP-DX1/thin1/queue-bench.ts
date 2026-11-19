@@ -5,10 +5,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { cases as integratedCases, verifyCase } from "../int1/bench-cases.ts";
-const integrated = process.argv.slice(2).includes("--int1");
-const suffix = integrated ? ["--int1"] : [];
-const [mode = "--plan", batch, utc, work] = process.argv.slice(2).filter((v) => v !== "--int1");
+import { benchRowWire, cases as integratedCases, verifyCase } from "../int1/bench-cases.ts";
+const args = process.argv.slice(2);
+const integrated = args.includes("--int1");
+const wireSettings = args.filter(v => v.startsWith("--row-wire="));
+assert(wireSettings.length <= Number(integrated));
+const wire = benchRowWire(wireSettings[0]?.slice("--row-wire=".length));
+const suffix = integrated ? ["--int1", "--row-wire=" + wire] : [];
+const [mode = "--plan", batch, utc, work] = args.filter(v => v !== "--int1" && !wireSettings.includes(v));
 const script = fileURLToPath(import.meta.url),
   repo = fileURLToPath(new URL("../../../../", import.meta.url));
 const node = process.execPath,
@@ -34,7 +38,7 @@ if (mode === "--plan") {
       {
         command: "queue-bench.ts --launch BATCH UTC_CUTOFF PREPARED_WORK_DIRECTORY",
         rungs,
-        ...(integrated ? { scenarios } : {}),
+        ...(integrated ? { scenarios, rowWire: wire } : {}),
         active: "2%",
         mode: "reach-touched",
         stages: [
@@ -93,6 +97,7 @@ if (integrated) {
   Object.assign(process.env, {
     DX_INT1_COHORT: "spread", DX_INT1_CENSUS: "held", DX_INT1_GATEWAYS: "demand", DX_TOUCHED_READ_MODE: "validated",
     DX_INT1_PEER_GC: "g1", DX_INT1_SEED_FEED: "immediate",
+    DX_INT1_ROW_WIRE: wire, TRIPLEX_DATOMIC_FAST_PATHS: wire === "gzip" ? "demand-gzip" : "",
   });
 }
 for (const key of [
@@ -232,7 +237,7 @@ fs.mkdirSync(day);
 fs.mkdirSync(path.dirname(lease), { recursive: true });
 fs.mkdirSync(lease);
 write(owner, { id: holder, pid: process.pid, unit, source: head, day });
-write(path.join(day, "batch.json"), { source: head, unit, utc, rungs });
+write(path.join(day, "batch.json"), { source: head, unit, utc, rungs, ...(integrated ? { rowWire: wire } : {}) });
 try {
   status("building");
   const topology = run("lscpu", ["-p=CPU,CORE,SOCKET"]);
@@ -365,7 +370,7 @@ try {
         const observations = await verifyCase(dest, plan, head, tag, stack, {
           sender: placement.clients,
           readers: placement.readers!,
-        });
+        }, wire);
         if (key === "pooled-100") pooled = observations;
         if (key === "isolated-100") {
           assert(pooled);

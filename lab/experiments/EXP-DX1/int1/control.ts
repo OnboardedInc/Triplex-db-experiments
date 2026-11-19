@@ -3,8 +3,9 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { cases } from "./bench-cases.ts";
+import { benchRowWire, cases } from "./bench-cases.ts";
 const [action = "--plan", tag, cutoff] = process.argv.slice(2);
+const wire = benchRowWire(process.env.DX_INT1_ROW_WIRE);
 if (action === "--plan") {
   console.log(
     JSON.stringify(
@@ -14,6 +15,7 @@ if (action === "--plan") {
         readers: "reach-touched, revision-validated on demand",
         gateways: "32 MiB peer object cache, 8 MiB row cache, 4096 ID and session entries",
         activity: "2%",
+        rowWire: wire,
         deepCold: "200 first reads across all five task classes after the first wide case",
         releases: ["R1", "EAD selector R2"],
         comparison: "same 100 account rosters, command intents and guarded decisions",
@@ -86,7 +88,7 @@ if (action === "--plan") {
  bash lab/experiments/EXP-DX1/t1/bare-metal.sh --prepare "$5" "$1/$3/build"
  test "$(cat "$1/$3/build/results/bootstrap.exit")" = 0
  flock -u 9
- exec "$1/$3/build/tools/bin/node" --no-warnings --experimental-transform-types "$1/$3/build/repository/lab/experiments/EXP-DX1/thin1/queue-bench.ts" --launch "$3" "$6" "$1/$3/build" --int1`;
+ exec "$1/$3/build/tools/bin/node" --no-warnings --experimental-transform-types "$1/$3/build/repository/lab/experiments/EXP-DX1/thin1/queue-bench.ts" --launch "$3" "$6" "$1/$3/build" --int1 "--row-wire=$7"`;
   const seconds = Math.floor((Date.parse(cutoff) - Date.now()) / 1000);
   const remote = [
     "sudo",
@@ -110,6 +112,7 @@ if (action === "--plan") {
     url,
     sha,
     cutoff,
+    wire,
   ];
   const quote = (s: string) => "'" + s.replaceAll("'", "'\\''") + "'";
   execFileSync(

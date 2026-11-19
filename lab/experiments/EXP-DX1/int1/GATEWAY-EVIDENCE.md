@@ -10,6 +10,7 @@ The paths in [GATEWAY-SHA256SUMS](GATEWAY-SHA256SUMS) are relative to the durabl
 | `p3-census-deep-b` | 10,000 deep people, 200 active. The four import samples retain unforced role RSS. All 100 measured cold reads have real HTTP timing and response sizes. |
 | `p3-idle-b` | One idle scope followed by eight in the same processes. The phase source records an empty admitted set for each scope. |
 | `p3-proof-c` | Native identity eviction, all 23 schedules, Python activation and pinned replay, eight accounts in two placements, and a separate 200-person deep first-read run including both 34-task people. |
+| `p3-compressed-probe-a` | Fresh stack, same 200 deep people, native gzip verified on every actual response, independent probe replay and first-read timings. |
 | `p3-proof-b` | The reader fingerprint changed between workers. The trial rejected the attempt before producing a result. The manager log records removal of its own volume. |
 | `p3-demand-deep-b` | Matched 2,000-person bounded JVM profile with 40 first reads, including the first read to open the scope. |
 | `p3-baseline-thin-a` | 10,000 thin people, 200 active. The same two phases ran on a separate reservation and fresh SQL volume. |
