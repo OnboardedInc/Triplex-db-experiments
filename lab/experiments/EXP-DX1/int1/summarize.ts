@@ -35,6 +35,7 @@ function load(dir: string) {
         inputs.containers,
         ...(typeof inputs.spread === "boolean" ? [inputs.spread, inputs.seedOnly] : []),
         ...(inputs.policy ? [inputs.policy] : []),
+        ...(inputs.gatewaySource ? [inputs.gatewaySource] : []),
       ]),
     )
     .digest("hex");

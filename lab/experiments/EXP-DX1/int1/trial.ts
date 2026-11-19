@@ -84,9 +84,11 @@ const attempt = randomUUID(),
   seedOnly = process.env.DX_INT1_CENSUS === "seed-only",
   policy = { readMode: process.env.DX_TOUCHED_READ_MODE ?? "following", gateways: process.env.DX_INT1_GATEWAYS ?? "original",
     ...(process.env.DX_INT1_PEER_GC === "elastic" ? { peerGc: "elastic" } : {}) },
+  gatewaySource = stack.gatewaySourceSha256 as string,
   binding = digest(
-    canonical([source, inputs, attempt, mode, size, stack.prefix, stack.containers, spread, seedOnly, policy]),
+    canonical([source, inputs, attempt, mode, size, stack.prefix, stack.containers, spread, seedOnly, policy, gatewaySource]),
   );
+assert.match(gatewaySource, /^[a-f0-9]{64}$/);
 fs.mkdirSync(dir!);
 const save = (name: string, v: unknown) =>
   fs.writeFileSync(path.join(dir!, name), JSON.stringify(v, null, 2) + "\n", { flag: "wx" });
@@ -99,7 +101,7 @@ save("inputs.json", {
   size,
   slot: stack.prefix,
   containers: stack.containers,
-  spread, seedOnly, policy,
+  spread, seedOnly, policy, gatewaySource,
   managedSlots: stack.managed?.compact ? 1 : stack.managed ? 2 : undefined,
   boot: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
 });

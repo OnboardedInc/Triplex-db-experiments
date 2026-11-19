@@ -167,7 +167,7 @@ export async function verifyCase(
   const binding = createHash("sha256")
     .update(
       canonical([head, inputs.inputs, inputs.attempt, spec.mode, spec.size, tag, stack.containers,
-        inputs.spread, inputs.seedOnly, inputs.policy]),
+        inputs.spread, inputs.seedOnly, inputs.policy, stack.gatewaySourceSha256]),
     )
     .digest("hex");
   const repo = fs.realpathSync(fileURLToPath(new URL("../../../../", import.meta.url)));
@@ -184,6 +184,8 @@ export async function verifyCase(
     assert.equal(sha256(fs.readFileSync(original)), expected, file);
   }
   assert.equal(inputs.binding, binding);
+  assert.match(inputs.gatewaySource, /^[a-f0-9]{64}$/);
+  assert.equal(inputs.gatewaySource, stack.gatewaySourceSha256);
   assert.equal(inputs.spread, true);
   assert.equal(inputs.seedOnly, false);
   assert.deepEqual(inputs.policy, { readMode: "validated", gateways: "demand" });

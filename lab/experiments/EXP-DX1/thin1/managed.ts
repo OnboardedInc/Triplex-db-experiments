@@ -121,6 +121,17 @@ function prepare() {
 }
 function setup(compact: boolean) {
   if (compact) {
+    const sourceGateway = path.join(repo, "packages/datomic/gateway");
+    const imageGateway = path.join(dir, "packages/datomic/gateway");
+    const files = (folder: string) => fs.readdirSync(folder, { recursive: true, encoding: "utf8" })
+      .filter(f => fs.statSync(path.join(folder,f)).isFile()).sort();
+    const names = files(sourceGateway);
+    assert.deepEqual(names, files(imageGateway), "Gateway image file set differs");
+    for (const name of names) assert(fs.readFileSync(path.join(sourceGateway,name)).equals(
+      fs.readFileSync(path.join(imageGateway,name))), "Rebuild the changed gateway source: " + name);
+    const codec = "packages/datomic/src/codec-spec.json";
+    assert(fs.readFileSync(path.join(repo,codec)).equals(fs.readFileSync(path.join(dir,codec))),
+      "Rebuild the changed gateway codec");
     for (const name of ["slot.ts", "cache-charge.ts"]) {
       const running = fs.readFileSync(path.join(imageFolder, name));
       assert(

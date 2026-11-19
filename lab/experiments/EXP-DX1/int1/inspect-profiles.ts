@@ -12,7 +12,8 @@ export function inspectProfiles(dir: string) {
   const read = (f: string) => JSON.parse(fs.readFileSync(path.join(dir,f),"utf8"));
   const input = read("inputs.json"), result = read("result.json");
   const binding = sha(canonical([input.source, input.inputs, input.attempt, input.mode, input.size,
-    input.slot, input.containers, input.spread, input.seedOnly, ...(input.policy ? [input.policy] : [])]));
+    input.slot, input.containers, input.spread, input.seedOnly, ...(input.policy ? [input.policy] : []),
+    ...(input.gatewaySource ? [input.gatewaySource] : [])]));
   assert(input.seedOnly && input.spread && input.managedSlots === 1);
   assert.equal(input.binding, binding);
   assert.deepEqual([result.binding, result.source, result.attempt, result.slot, result.size],
@@ -32,6 +33,7 @@ export function inspectProfiles(dir: string) {
     assert.deepEqual(profile.samples.map((s: any) => s.role).sort(), ["read","write"]);
     for (const s of profile.samples) {
       assert.equal(s.containerId, input.containers[0].id);
+      if (input.gatewaySource) assert.equal(s.source,input.gatewaySource);
       assert.equal(input.slot, "tx2-dxthin-" + s.nonce);
       assert(!witnesses.has(s.witness));
       witnesses.add(s.witness);
