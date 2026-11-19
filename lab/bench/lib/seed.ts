@@ -7,6 +7,8 @@
  * Commands are applied one at a time: concurrent commits within one XTDB runtime conflict on the
  * scope position (observed 2026-11-07, `triplex-cas-conflict`), and seeding is not what is measured.
  */
+import { deepOwnFacts } from "./deep-world.ts";
+import type { DeepSeedWitness } from "./deep-profile.ts";
 import { alignAssertIds } from "./receipt.ts";
 import type { CompositionHandle, Receipt } from "./composition.ts";
 import { seedOps } from "./commands.ts";
@@ -47,6 +49,8 @@ export function alignIds(operations: readonly any[], receipt: Receipt): (string 
 
 export async function seedRung(opts: {
   comp: CompositionHandle;
+  deep?: DeepSeedWitness;
+  deepProgress?: (subjects: number, facts: number, position: number) => void;
   onReceipt?: (operations: readonly any[], receipt: Receipt) => void;
   subjects: number;
   runTag: string;
@@ -92,6 +96,7 @@ export async function seedRung(opts: {
         return receipt;
       }
       failures.push({ tag: out.tag, commandId, message: String(out.error?.message ?? out.error ?? "").slice(0, 300) });
+      if (opts.deep) opts.log(`seed: attempt ${attempt} failed for ${commandId}: ${out.tag} ${failures.at(-1)!.message}`);
       if (attempt >= 8) throw new Error(`seed command ${commandId} failed ${attempt} times: ${out.tag} ${String(out.error?.message ?? out.error ?? "").slice(0, 300)}`);
       await new Promise((r) => setTimeout(r, 500 * attempt));
     }
@@ -99,17 +104,25 @@ export async function seedRung(opts: {
   const idOf = (receipt: Receipt, e: string, a: string) => receipt.triples.find((t) => t.entityId === e && t.attribute === a)?.id;
 
   // 1. shared worlds
-  for (let a = 0; a < accounts; a++) {
+  for (let a = 0; a < (opts.deep ? 0 : accounts); a++) {
     const facts = sharedFacts(a);
     for (let k = 0; k < facts.length; k += opts.batchFacts)
       await commit(seedOps(facts.slice(k, k + opts.batchFacts)), `acct${a}.${k}`, opts.recordAccounts.has(a));
   }
-  opts.log(`seed: ${accounts} shared account worlds in ${((performance.now() - started) / 1000).toFixed(1)} s`);
+  opts.log(`seed: ${opts.deep ? 0 : accounts} shared account worlds in ${((performance.now() - started) / 1000).toFixed(1)} s`);
   // 2. subjects, version 0
   let batch: Fact[] = [], members: number[] = [];
+  let lastDeepProgress = 0;
+  const deepBatch: { subject: number; rows: Fact[] }[] = [];
   const flush = async () => {
     if (!batch.length) return;
     const receipt = await commit(seedOps(batch), `s${members[0]}-${members.at(-1)}`, members.some((i) => opts.recordSubjects.has(i)));
+    if (opts.deep) {
+      opts.deep.observe(deepBatch, receipt, SEED_VALID_FROM); deepBatch.length = 0;
+      if (performance.now() - lastDeepProgress >= 15000 || opts.deep.subjects === opts.subjects || commands === 1) {
+        opts.deepProgress?.(opts.deep.subjects, opts.deep.facts, receipt.position); lastDeepProgress = performance.now();
+      }
+    }
     for (const i of members) {
       const stampId = idOf(receipt, ids.placement(i), ":placement/stamp");
       const addressId = idOf(receipt, ids.worker(i), ":worker/address");
@@ -127,12 +140,13 @@ export async function seedRung(opts: {
   };
   let stoppedEarly = false;
   for (let i = 0; i < opts.subjects; i++) {
-    const facts = ownFacts(i, accounts);
+    const facts = opts.deep ? deepOwnFacts(i) : ownFacts(i, accounts);
     if (batch.length + facts.length > opts.batchFacts) {
       await flush();
       if (performance.now() - started > opts.budgetMs) { stoppedEarly = true; break; }
       if (commands % 100 === 0) opts.log(`seed: ${n} subjects, ${assertions} assertions, ${((performance.now() - started) / 1000).toFixed(0)} s`);
     }
+    if (opts.deep) deepBatch.push({ subject: i, rows: facts });
     batch.push(...facts);
     members.push(i);
   }

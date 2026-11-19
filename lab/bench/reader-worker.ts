@@ -1,3 +1,4 @@
+import { deepCells } from "./lib/deep-world.ts";
 import { BasisWindow } from "./lib/basis-window.ts";
 import { beginTrace, withTrace, finishTrace, traceSync, traceAsync, flushTracing, currentTrace, traceResource } from "./lib/tracing.ts";
 import { describeReadError } from "./lib/read-error.ts";
@@ -40,6 +41,7 @@ import { BUCKETS, HOP_SHARE, ids, subjectInCell, type Bucket, type Hop } from ".
 import { observe, type ReadRecord } from "./lib/observe.ts";
 
 export type ReaderConfig = {
+  deep?: boolean;
   replicaWorldCacheBytes?: number;
   replicaPort?: import("node:worker_threads").MessagePort;
   observationPort?: import("node:worker_threads").MessagePort;
@@ -77,6 +79,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     throw Error("A shared reader must use the live replica index");
   const nowAbs = () => performance.timeOrigin + performance.now();
   const DAY = 86_400_000;
+  const cells = cfg.deep ? deepCells(cfg.subjects) : undefined;
 
   let comp: CompositionHandle;
   const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, shared?.index, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2) : undefined;
@@ -156,7 +159,8 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       const bucket: Bucket = u < BUCKETS.small.share ? "small" : u < BUCKETS.small.share + BUCKETS.medium.share ? "medium" : "large";
       const w = rng.next();
       const hop: Hop = w < HOP_SHARE[3] ? 3 : w < HOP_SHARE[3] + HOP_SHARE[4] ? 4 : 6;
-      const i = subjectInCell(cfg.subjects, cfg.accounts, bucket, hop, rng.next(), rng.next(), rng.next());
+      const i = cells ? cells.pick(bucket, hop, rng.next()) : subjectInCell(cfg.subjects, cfg.accounts, bucket, hop, rng.next(), rng.next(), rng.next());
+      if (cells && i === null) throw Error(`Deep P4 sample cell is empty: ${bucket}/${hop}`);
       return { subject: i ?? rng.int(cfg.subjects), hotPick: false };
     }
     if (hot.length && rng.next() < 0.6) return { subject: hot[rng.int(hot.length)]!, hotPick: true };

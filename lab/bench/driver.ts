@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+import assert from "node:assert/strict";
+import { DeepActivation } from "./lib/deep-activation.ts";
+import { DEEP_PROFILE, DEEP_RUNGS, deepCells, deepPopulation } from "./lib/deep-world.ts";
+import { DEEP_RATE, deepSeed, type DeepEvent } from "./lib/deep-trace.ts";
+import { DeepWriter } from "./lib/deep-command.ts";
+import { DeepSeedWitness, deepBarrier, frozenDeep, requireIdentity, type DeepIdentity } from "./lib/deep-profile.ts";
 import { configureWriterHeap } from "./lib/writer-heap.ts";
 import { suffixDelta } from "./lib/basis-window.ts";
 import { DeferredPublications } from "./lib/deferred-publication.ts";
@@ -107,10 +113,26 @@ const lane = opt("lane") as "xtdb" | "qlever" | "datomic";
 const rung = opt("rung", "10k")!;
 const devSubjects = opt("subjects");
 if (!["xtdb", "qlever", "datomic"].includes(lane)) throw new Error("--lane xtdb|qlever|datomic is required");
-if (!devSubjects && !(rung in RUNGS)) throw new Error(`--rung must be one of ${Object.keys(RUNGS).join("|")}`);
-const profile = opt("profile", "smoke") as Profile;
-if (!(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
-const rungSubjects = devSubjects ? Number(devSubjects) : RUNGS[rung]!;
+const deepSmoke = opt("profile") === "deep-smoke";
+const deep = opt("profile") === "deep" || deepSmoke;
+const availableRungs: Record<string, number> = deepSmoke ? { "deep-smoke-40": 40 } : deep ? DEEP_RUNGS : RUNGS;
+if (!devSubjects && !Object.hasOwn(availableRungs, rung)) throw new Error(`--rung must be one of ${Object.keys(availableRungs).join("|")}`);
+const profile = opt("profile", "smoke") as Profile | "deep" | "deep-smoke";
+const activationOnly = deep && flag("deep-activation"), seedOnly = deep && flag("deep-seed-only");
+if ((activationOnly || seedOnly) && (flag("zero-readers") || activationOnly && seedOnly)) throw Error("Choose one deep arm");
+const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly;
+if (!deep && !(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
+const rungSubjects = devSubjects ? Number(devSubjects) : availableRungs[rung]!;
+const deepAccount = Number(opt("deep-account", "0"));
+const deepId = deep ? { source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
+if (deepId) {
+  requireIdentity(deepId);
+  if (!opt("deep-barrier") || devSubjects || lane !== "datomic" || opt("seed-manifest") || opt("round-plan") || opt("idle-gaps-ms") || opt("oracle-root") === undefined || opt("seed", deepSeed(deepAccount)) !== deepSeed(deepAccount)) throw Error("Deep requires its named Datomic rung, independent oracle, account seed, and start barrier");
+}
+const deepPlan = deep ? frozenDeep(deepAccount, rungSubjects) : undefined;
+const deepWriter = deepPlan ? new DeepWriter(deepPlan.activeSubjects) : undefined;
+const deepWitness = deep ? new DeepSeedWitness() : undefined;
+const cells = deep ? deepCells(rungSubjects) : undefined;
 const output = path.resolve(opt("output") ?? "");
 if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--output must be under runs/");
 const rawDir = path.dirname(output);
@@ -134,7 +156,7 @@ const config = {
   baselineWrites: opt("baseline-writes") ?? null,
   devOverrides: devFlags,
   composition: opt("composition", "public")!,
-  seed: opt("seed", "ns-v2")!,
+  seed: opt("seed", deep ? deepSeed(deepAccount) : "ns-v2")!,
   strictRecordClocks: process.env.DX_STRICT_RECORD_CLOCKS !== "0",
   readPath: opt("read-path", "gateway") as "gateway" | "replica",
   replicaYield: opt("replica-yield", "fair") as "loop" | "fair",
@@ -179,7 +201,7 @@ const config = {
   oracleRate: Number(opt("oracle-rate", "0.01")),
   oracleMaxReads: Number(opt("oracle-max-reads", "24")),
   splitShare: 0.1,
-  probe10PerS: Number(opt("probe10-per-s", "1")),
+  probe10PerS: Number(opt("probe10-per-s", deep ? "0" : "1")),
   publicationWaitMs: Number(process.env.DX_PUBLICATION_WAIT_MS ?? "5000"),
   historySample: Number(opt("history-sample", "1000")),
   p5Mutations: 10,
@@ -207,9 +229,9 @@ if (config.idleGapsMs && (lane !== "datomic" || !config.zeroReaders || !config.r
 if (config.idleKeep !== "none" || process.env.DX_IDLE_SENTINEL === "1" || process.env.DX_IDLE_REFUSAL_PROBE === "1")
   throw Error("Keep-warm requests and sentinels are forbidden (Sam 2026-11-16)");
 if(opt("idle-warmup-commits") && !config.idleGapsMs) throw Error("One-time warmup count is currently a fixed-gap diagnostic control, not an adopted v3 policy");
-if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.legacyEmptyBasisBroadcast || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
+if (fullLength && (config.levelS || config.readerLadderOnly || config.legacyEmptyBasisBroadcast || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
   throw Error("v3 requires its full fixed phase plan and unchanged offered rate");
-if (profile === "v3") config.matchDurationS = V3_OFFER_SECONDS;
+if (fullLength) config.matchDurationS = V3_OFFER_SECONDS;
 if (!["heap", "journal", "worker-journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
 if (!["sender", "replica-worker"].includes(config.receiptCapture)) throw Error("Invalid receipt capture mode");
 if (config.receiptCapture === "replica-worker" &&
@@ -253,7 +275,7 @@ if (pairPlan) {
   if (pairPlan.seed !== config.seed) throw new Error(`--round-plan is for seed ${pairPlan.seed}, not ${config.seed}`);
 }
 const planSha256 = config.roundPlan ? createHash("sha256").update(fs.readFileSync(path.resolve(config.roundPlan))).digest("hex") : null;
-const runTag = `ns${Date.now().toString(36)}${randomBytes(2).toString("hex")}`;
+const runTag = deepId ? `deep-${deepId.nonce}-s${deepAccount}` : `ns${Date.now().toString(36)}${randomBytes(2).toString("hex")}`;
 const bulkManifest = config.seedManifest ? JSON.parse(fs.readFileSync(path.resolve(config.seedManifest), "utf8")) : null;
 if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane !== lane || bulkManifest.seed !== config.seed))
   throw new Error(`--seed-manifest is for ${bulkManifest.lane}/${bulkManifest.subjects} subjects/seed ${bulkManifest.seed}, not ${lane}/${rungSubjects}/${config.seed}`);
@@ -275,13 +297,14 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: profile === "v3" ? V3_PLAN_ID : `ns-${profile}/2`,
+  verdictPlanId: fullLength ? V3_PLAN_ID : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
   runTag,
   scope: scopeName,
-  generator: { traceSha256: sha256File("lab/bench/lib/trace.ts"), worldSha256: sha256File("lab/bench/lib/world.ts"), seed: config.seed },
+  ...(deepId ? { deep: { profile: DEEP_PROFILE, identity: deepId } } : {}),
+  generator: { traceSha256: sha256File(deep ? "lab/bench/lib/deep-trace.ts" : "lab/bench/lib/trace.ts"), worldSha256: sha256File(deep ? "lab/bench/lib/deep-world.ts" : "lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
   harnessStorage: { requested: process.env.DX_HARNESS_STORAGE ?? "volume", filesystemType: fs.statfsSync(rawDir).type },
@@ -484,22 +507,39 @@ async function run() {
   if (!pairPlan) void engineSampler();
 
   // ---------------------------------------------------------------- seed (bulk lane)
-  const pop = populationCounts(rungSubjects);
+  const pop = deep ? deepPopulation(rungSubjects) : populationCounts(rungSubjects);
+  if (deep) assert.equal(await writer.currentPosition(), 0, "Deep scope already contains data");
   const oracleSubjects = chooseSamples(rungSubjects, config.oracleSampleSubjects);
-  const historySample = chooseHistorySample(rungSubjects, Math.min(config.historySample, Math.floor(rungSubjects / 10)), config.seed, accounts);
+  if (deepPlan && cells) {
+    for (const b of ["small", "medium", "large"] as const) for (const h of [3, 4, 6] as const) {
+      const subject = cells.pick(b, h, .5); if (deepSmoke && subject === null) continue; assert(subject !== null); oracleSubjects.push(subject);
+    }
+    for (const kind of ["person", "system", "agent", "runtime"]) {
+      const event = deepPlan.events.find(e => e.kind === kind && (kind !== "person" || e.deep.closes));
+      assert(event); oracleSubjects.push(event.subject);
+    }
+  }
+  const historySample = chooseHistorySample(rungSubjects, Math.min(config.historySample, Math.floor(rungSubjects / 10)), config.seed, accounts, cells);
   // [DX-H3] Why: a retained history batch retracts rows for every member, including non-read-sample subjects.
   // Rejected: recording only sampled subjects (O-REPLAY rejected an unknown retraction at command 304).
-  const oracleRecordSet = new Set([...oracleSubjects, ...historySample]);
+  const oracleRecordSet = new Set(deep ? oracleSubjects : [...oracleSubjects, ...historySample]);
+  if (deep) {
+    // [DX-SCALE1] Why: retain every predecessor of a sampled history transaction without shipping unrelated deep worlds to O-REPLAY. Rejected: trimming individual operations out of a retained command.
+    for (let n = 0; n < historySample.length; n += config.historyGrowthSubjects) {
+      const group = historySample.slice(n, n + config.historyGrowthSubjects);
+      if (group.some(i => oracleRecordSet.has(i))) for (const i of group) oracleRecordSet.add(i);
+    }
+  }
   log(`seed: rung ${config.rung}, ${pop.liveFactsAtSeedEnd} live facts planned (${pop.accounts} accounts, mean world ${pop.worldFacts.mean.toFixed(0)} facts)`);
   const seed = bulkManifest
     ? await seedFromManifest(bulkManifest, writer, log)
     : await seedRung({
-        comp: writer, onReceipt: (operations, receipt) => modelWriter.bindReceipt(operations, receipt, "bulk-seed"), subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
+        comp: writer, deep: deepWitness, deepProgress: (subjects, facts, position) => atomicWrite(path.join(rawDir, "seed-progress.json"), JSON.stringify({ identity: deepId, scope: scopeName, subjects, facts, position, at: Date.now() })), onReceipt: (operations, receipt) => { if (!seedOnly) { modelWriter.bindReceipt(operations, receipt, "bulk-seed"); deepWriter?.bind(receipt); } }, subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
         recordSubjects: oracleRecordSet, recordAccounts: new Set([...oracleRecordSet].map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
       });
   report.seedPath = bulkManifest ? { kind: "bulk-index", manifest: config.seedManifest, nqSha256: bulkManifest.nq.sha256, quads: bulkManifest.nq.quads } : { kind: "transact" };
   const N = seed.seededSubjects;
-  const popN = populationCounts(N, accounts);
+  const popN = deep ? (N === rungSubjects ? pop : deepPopulation(N)) : populationCounts(N, accounts);
   recordedCommands.push(...seed.recorded);
   report.seed = {
     plannedSubjects: rungSubjects, seededSubjects: N, complete: seed.complete, commands: seed.commands, assertions: seed.assertions,
@@ -508,6 +548,25 @@ async function run() {
     firstPosition: coordinate(seed.firstPosition), lastPosition: coordinate(seed.lastPosition), lastInstant: seed.lastInstant, population: { planned: pop, seeded: popN },
   };
   save();
+  if (deepPlan && deepWitness) {
+    report.deep.seed = deepWitness.finish(rungSubjects, pop.seedAssertions, deepPlan.populationSha256);
+    assert.equal(await writer.currentPosition(), report.deep.seed.position, "Seed head changed");
+    report.deep.trace = deepPlan.sha256;
+    save();
+  }
+  const activation = activationOnly ? new DeepActivation(rawDir, rungSubjects, runTag) : undefined;
+  if (deepId) atomicWrite(path.join(rawDir, "seed-observed.json"), JSON.stringify({ identity: deepId, scope: scopeName, seed: report.deep.seed, trace: report.deep.trace }));
+  if (seedOnly) {
+    report.status = "SEEDED"; save(); samplersOn = false; clearInterval(eluTimer);
+    await Promise.all([writer.close(), aux.close(), growthComp.close()]); await flushTracing(); process.exit(0);
+  }
+  if (activation) {
+    report.deep.r1 = await activation.execute(writer, "R1", (receipt, ops, actor) => {
+      modelWriter.bindReceipt(ops, receipt, actor);
+      seed.lastPosition = receipt.position; seed.lastInstant = receipt.instant;
+    });
+    save();
+  }
   const state: Map<number, SubjectState> = seed.state;
   const versionIds = seed.versionIds;
   const oracleSet = new Set(oracleSubjects.filter((i) => i < N));
@@ -524,9 +583,10 @@ async function run() {
   const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
   const traceDurationS = idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
-  const events = idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
+  if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: DEEP_RATE * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
+  const events = deepPlan ? deepPlan.events : idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   if (config.receiptCapture === "replica-worker" &&
-      events.filter(e => e.stream === "background" && !e.resend).length > MAX_RECEIPT_CAPTURES)
+      events.filter(e => e.stream === "background" && !e.resend && (!deep || e.atMs < V3_OFFER_SECONDS * 1000)).length > MAX_RECEIPT_CAPTURES)
     throw Error("Frozen trace exceeds fixed receipt-capture capacity");
   const resendSequences = new Set(events.filter(e=>e.resend).map(e=>e.seq));
   verdictEvents = events;
@@ -566,7 +626,7 @@ async function run() {
       return remote.pull(root, basis);
     };
   }
-  const workerCfg = (w: number) => ({ replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
@@ -633,7 +693,7 @@ async function run() {
   }
   // [DX-R3] Why: cloning/installing the full window is bootstrap work, not a multi-second sweep-time writer stall.
   // Rejected: starting worker 99 from runSweep while the frozen writer is already issuing commands.
-  const preparedSweeper = replicaHost && !config.zeroReaders && !config.readerLadderOnly
+  const preparedSweeper = replicaHost && !deepSmoke && !activationOnly && !config.zeroReaders && !config.readerLadderOnly
     ? await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 }) : undefined;
   let basisCursor: number | null = null;
   const basisBroadcast = { messages: 0, ackItems: 0, ticks: 0, wall: new Histogram() };
@@ -670,7 +730,7 @@ async function run() {
   type Job = { key: number; scheduledAt: number; ev: TraceEvent; onDone?: (position: number) => void };
   // [EXP-M01] Paired rounds: both arms seed, then meet at one absolute trace start, so the same command has the same
   // scheduled instant in both arms (R22 section 1: only simultaneous pairing shares this host's noise).
-  const traceStart = pairPlan ? await pairBarrier(N, report.trace.digest) : now() + 1000;
+  const traceStart = deepId ? await deepBarrier(path.resolve(opt("deep-barrier")!), deepId, { scope: scopeName, seed: report.deep.seed, trace: report.deep.trace }) : pairPlan ? await pairBarrier(N, report.trace.digest) : now() + 1000;
   report.traceStartAbsMs = traceStart;
   report.writerSourceDiagnostics = { start: datomicWriterDiagnostics() };
   report.serverRecordTime = process.env.DX_SERVER_RECORD_TIME !== "0";
@@ -710,7 +770,7 @@ async function run() {
     outcomes.set(okey(ev), out);
     if (ev.resend) return resend(job, out);
     const st = state.get(ev.subject)!;
-    const cmd = traceSync("driver.plan-and-encode-command", () => buildTraceCommand({ runTag, event: ev, state: st, scheduledAbsMs: job.scheduledAt }));
+    const cmd = traceSync("driver.plan-and-encode-command", () => deepWriter && ev.stream === "background" ? deepWriter.build(runTag, ev as DeepEvent, st, job.scheduledAt) : buildTraceCommand({ runTag, event: ev, state: st, scheduledAbsMs: job.scheduledAt }));
     if (jobsByCommandId.has(cmd.commandId)) throw Error("Duplicate active writer command identity");
     jobsByCommandId.set(cmd.commandId, job);
     out.commandId = cmd.commandId;
@@ -747,6 +807,7 @@ async function run() {
       out.path = "lost-ack-resolved";
       } : undefined,
       updateSubject: (receipt) => traceSync("driver.ack-and-subject-state", () => {
+    if (deepWriter && ev.stream === "background") deepWriter.bind(receipt);
     const pl = ids.placement(ev.subject);
     st.stamp = cmd.newStamp;
     st.stampId = receipt.triples.find((t) => t.entityId === pl && t.attribute === ":placement/stamp")!.id;
@@ -895,7 +956,7 @@ async function run() {
 
   // ---------------------------------------------------------------- feed consumer (P3)
   // [EXP-M01] Paired rounds measure the writer and the read probe; the P3 consumer and its crash injection stay in NS.
-  const lvl = (config.levelS ?? PROFILES[profile].levelS) * 1000;
+  const lvl = (config.levelS ?? PROFILES[profile === "deep" ? "v3" : profile === "deep-smoke" ? "smoke" : profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = idle ? [] : (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
   // [DX-H1] Why: Datomic observes the native transact-result boundary before the driver ACK; other lanes still lack observers.
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
@@ -1001,13 +1062,20 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
-  const plan = idle ? idle.phases : nsPlan(profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
+  const plan: ReturnType<typeof nsPlan> = activation ? [
+    { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
+    { name: "activation", readers: 64, measured: true, mode: "mixed" },
+  ] : deepSmoke ? [
+    { name: "warmup", readers: 1, seconds: 5, measured: false },
+    { name: "L4", readers: 4, seconds: 65, measured: true, ladder: true, mode: "mixed" },
+  ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   const phases: any[] = [];
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
   // Rejected: issuing maintenance after readers stop.
   const indexClient = lane === "datomic" ? new (await import(pathToFileURL(path.join(REPO,"packages/datomic/dist/index.js")).href)).DatomicClient(process.env["DATOMIC_URL"] ?? "http://127.0.0.1:8493", 601000) : null;
   const indexDb = indexClient ? (await indexClient.create(runtimeApi.DatabaseScope.test(scopeName))).db : null;
   await sleep(Math.max(0, traceStart - now()));
+  if (deep && fullLength) scheduler.setUntil(traceStart + V3_OFFER_SECONDS * 1000);
   scheduler.start();
   probeScheduler?.start();
   if (config.probe10PerS > 0) probeTimer = setInterval(() => void overlay("probe10", probeRng.int(N), 10), 1000 / config.probe10PerS);
@@ -1064,9 +1132,9 @@ async function run() {
       while (now() < start + delay) await sleep(Math.max(1, start + delay - now()));
       const stop = start + spec.seconds! * 1000;
       do {
-        const waitMs = Math.max(1, Math.min(profile === "v3" ? 44900 : 600000, Math.floor(stop - now() - 100)));
+        const waitMs = Math.max(1, Math.min(fullLength ? 44900 : 600000, Math.floor(stop - now() - 100)));
         datomicMaintenanceJobs.push(await requestIndex(indexClient, indexDb, spec.name, now, waitMs));
-        if (profile !== "v3") break;
+        if (!fullLength) break;
         const next = start + delay + (Math.floor((now() - start - delay) / 45000) + 1) * 45000;
         if (next >= stop) break;
         await sleep(Math.max(0, next - now()));
@@ -1074,6 +1142,16 @@ async function run() {
     })() : null;
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
+    else if (spec.name === "activation" && activation) {
+      report.deep.r2 = await activation.execute(writer, "R2", (receipt, ops, actor) => {
+        modelWriter.bindReceipt(ops, receipt, actor);
+        noteAck(receipt, -1, { seq: receipt.position, stream: "deep-activation", correction: false, correctionValidFrom: null, stamp: -1, subjects: [] });
+      }, async cut => {
+        const people = chooseSamples(N, 10), positions = await Promise.all(people.map(i => overlay("p5-mutation", i, 6)));
+        assert(positions.every(p => p > cut.position), "Missing post-capture mutation"); return people.map((subject,k) => ({ subject, position: positions[k] }));
+      });
+      save();
+    }
     else if (spec.sweep) entry.sweep = await runSweep(idx, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.seconds) {
       await sleep(Math.max(0, start + spec.seconds * 1000 - now()));
@@ -1202,6 +1280,16 @@ async function run() {
   report.readerBasisBroadcast = { mode: config.readerBasisWire, messages: basisBroadcast.messages, ackItems: basisBroadcast.ackItems, ticks: basisBroadcast.ticks, wall: basisBroadcast.wall.summary() };
   const finalizationErrors: string[] = readerLives.flatMap(({ worker, life }) => [...life.failures, ...(life.stopped ? [] : ["missing drained stopped acknowledgement"])].map(error => `reader ${worker}: ${error}`));
   const finalPosition = await observeFinalHead(() => writer.currentPosition(), finalizationErrors);
+  const deepSamples: any[] = [];
+  if (deep && finalPosition !== null) {
+    // [DX-SCALE1] Why: even the zero-reader arm needs independent observations of real saves and their old basis. Rejected: populating a zero-reader oracle with expected rows from the generator.
+    for (const subject of oracleSet) for (const recordedAt of [seed.lastInstant, latestInstant]) {
+      const basis = { recordedAt, validAt: Math.floor(now()) };
+      const result = await aux.pull(ids.placement(subject), basis);
+      assert(result.triples.some(t => t.entityId === ids.placement(subject) && t.attribute === ":placement/stamp"));
+      deepSamples.push({ subject, basis, observation: observe(result), rows: result.triples.map(t => [t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo?._tag === "Some" ? t.validTo.value : null, t.id]) });
+    }
+  }
   samplersOn = false;
   clearInterval(eluTimer);
   const maintenance = await maintenanceEvents(traceStart);
@@ -1277,7 +1365,7 @@ async function run() {
   report.maintenance = maintenance;
   // [DX-R3-P8] Why: both checks consume immutable post-drain inputs; overlap them after the last measured phase.
   // Rejected: serial analysis plus oracle extending a 45-minute lease, or moving either check onto live read/write paths.
-  const independentOracle = (config.zeroReaders ? Promise.resolve({ status: "NOT-RUN", reason: "zero-reader baseline run" }) : pairPlan && pairPlan.readers === 0 ? Promise.resolve({ status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" }) : finalPosition === null ? Promise.resolve({ status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) }) : runOracle(finalPosition, lastAcked))
+  const independentOracle = (config.zeroReaders && !deep ? Promise.resolve({ status: "NOT-RUN", reason: "zero-reader baseline run" }) : pairPlan && pairPlan.readers === 0 ? Promise.resolve({ status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" }) : finalPosition === null ? Promise.resolve({ status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) }) : runOracle(finalPosition, lastAcked, deepSamples))
     .catch(error => ({ status: "ORACLE-ERROR", stderr: String(error) }));
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
   else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending, events });
@@ -1291,7 +1379,7 @@ async function run() {
   report.oracle = { status: "NOT-RUN", reason: "independent oracle pending" };
   save();
   report.oracle = await independentOracle;
-  if (config.oracleRoot && !config.zeroReaders && !(pairPlan && pairPlan.readers === 0) && report.oracle.status !== "PASS")
+  if (config.oracleRoot && (deep || !config.zeroReaders) && !(pairPlan && pairPlan.readers === 0) && (report.oracle.status !== "PASS" || deep && report.oracle.modelCorrectOnSameReads !== report.oracle.reads))
     finalizationErrors.push(`Independent oracle ${report.oracle.status}`);
   // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
   // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
@@ -1315,7 +1403,11 @@ async function run() {
     report.invalidReasons = [...(report.invalidReasons ?? []), `Feed consumer failed: ${String(feedFailure)}`];
     process.exitCode = 1;
   }
-  const incompleteHistory = !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
+  if (activation) {
+    const verifier = await openComposition(config.composition, lane, scopeName);
+    try { report.deep.activationOracle = await activation.verify(verifier, report.deep.r1, report.deep.r2); } finally { await verifier.close(); }
+  }
+  const incompleteHistory = !deepSmoke && !activation && !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
   if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");
   if (finalizationErrors.length) {
     report.invalidReasons = [...(report.invalidReasons ?? []), ...finalizationErrors];
@@ -1639,7 +1731,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       watermarkWait.recordMs(r[R.waitedMs]);
       if (r[R.split] > 0) { splitReads++; if (r[R.split] === 2) { splitForced++; if (v.ok) splitCorrect++; } }
       if (v.ok) {
-        const facts = worldFactsOf(r[R.subject], accounts);
+        const facts = cells ? cells.sizes[r[R.subject]]! : worldFactsOf(r[R.subject], accounts);
         const b = facts <= 200 ? "small" : facts <= 800 ? "medium" : "large";
         for (const key of [`bucket:${b}`, `hops:${hopOf(r[R.subject])}`]) {
           (buckets[key] ??= new Histogram()).recordMs(r[R.latency]);
@@ -1688,7 +1780,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   };
   const stats: Record<string, any> = {};
   for (const phase of ctx.phases) if (phase.end && phase.measured) stats[phase.name] = levelStats(phase);
-  if (profile === "v3") {
+  if (fullLength) {
     const windows = scheduledV3Windows();
     for (const name of ["L256", "L1024"] as const) {
       const members = ctx.phases.filter(p => p.pool === name).map(p => stats[p.name]);
@@ -1716,7 +1808,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const unmatched = (r: any) => (r?.basis?.startsWith("UNMATCHED") ? false : null);
   const p1 = {
     ladder: ladder.map(strip),
-    adjacentStressGoodput:profile==="v3"?{endOfLast256:strip(stats["L256-adjacent"]),firstStress:strip(stats["L1024-1"]),
+    adjacentStressGoodput:fullLength?{endOfLast256:strip(stats["L256-adjacent"]),firstStress:strip(stats["L1024-1"]),
       ratio:ratio(stats["L1024-1"]?.goodputPerS,stats["L256-adjacent"]?.goodputPerS),diagnosticOnly:true}:null,
     recovery,
     writerWaitAttribution: { method: "matched-phase comparison against the zero-reader run of the same trace", baselineRun: config.baselineWrites, engineWaitEvidence: lane === "xtdb" ? "none exposed: XTDB has no read-path locks (TARGETS 1.1 P1 item 5)" : lane === "datomic" ? "not exposed: Datomic transactor/write-queue wait metrics unavailable" : "not exposed: no QLever broker queue in this composition" },
@@ -1741,7 +1833,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const bands = (rows: any[]) => Object.fromEntries(["5-10", "11-25", "26-50"].map((b) => { const h = new Histogram(); for (const w of rows) if (bandOf(w.facts) === b) h.recordMs(verdictMs(w)); return [b, h.summary()]; })) as Record<string, any>;
   const committed = background.filter((w) => w.outcome === "committed" && !w.expired);
   const l256 = ctx.phases.find((p) => p.name === "L256");
-  const in256 = profile === "v3" ? committed.filter(w => inIntervals(w.offsetMs, scheduledV3Windows().L256)) : l256?.end ? committed.filter((w) => w.scheduledAt >= windowOf(l256).from && w.scheduledAt < windowOf(l256).to) : [];
+  const in256 = fullLength ? committed.filter(w => inIntervals(w.offsetMs, scheduledV3Windows().L256)) : l256?.end ? committed.filter((w) => w.scheduledAt >= windowOf(l256).from && w.scheduledAt < windowOf(l256).to) : [];
   const b256 = bands(in256);
   const byOutcome = countBy(writes.filter((w) => !w.resend).map((w) => `${w.stream}:${w.outcome ?? "unaccounted"}`));
   const unaccounted = writes.filter((w) => (w.outcome ?? "unaccounted") === "unaccounted").length + ctx.pendingAtEnd;
@@ -1911,7 +2003,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
 /** TARGETS 1.1 P2 item 4 (RULINGS Q31a): progress and bounded outstanding work. */
 function p2Progress(background: any[], traceStart: number) {
   const p = { ...TRACE_DEFAULTS, burstMultiplier: config.burstMultiplier, steadyFactsPerS: TRACE_DEFAULTS.steadyFactsPerS * config.rateScale };
-  const steadyRate = p.steadyFactsPerS / (p.sizeClasses.reduce((s, c) => s + c.share * ((c.min + c.max) / 2), 0));
+  const steadyRate = deep ? DEEP_RATE : p.steadyFactsPerS / (p.sizeClasses.reduce((s, c) => s + c.share * ((c.min + c.max) / 2), 0));
   const steadyBound = 2 * steadyRate;
   const traceS = (t: number) => (t - traceStart) / 1000;
   const afterBurst = (s: number) => { for (let b = p.firstBurstAtS; b <= s; b += p.burstPeriodS) if (s < b + p.burstDurationS + 60) return true; return false; };
@@ -1942,6 +2034,7 @@ function p2Progress(background: any[], traceStart: number) {
 function loadBaselineWrites(): any[] | null {
   if (!config.baselineWrites) return null;
   const baselineReport = JSON.parse(fs.readFileSync(path.join(path.dirname(config.baselineWrites), "ns-report.json"), "utf8"));
+  if (deepId && (baselineReport.deep?.identity?.arm !== "zero" || baselineReport.deep.identity.account !== deepAccount || baselineReport.deep.identity.source !== deepId.source || baselineReport.deep.identity.nonce === deepId.nonce || baselineReport.deep.trace !== report.deep.trace || baselineReport.deep.seed.sha256 !== report.deep.seed.sha256 || baselineReport.config.profile !== "deep")) throw Error("Deep baseline belongs to a different source, population, trace or account");
   if (baselineReport.config?.zeroReaders !== true || baselineReport.trace?.digest !== report.trace.digest ||
       baselineReport.config?.rungSubjects !== config.rungSubjects || baselineReport.config?.composition !== config.composition ||
       baselineReport.config?.lane !== lane || baselineReport.config?.seed !== config.seed)
@@ -2023,9 +2116,10 @@ function cpuUse() {
 
 // ---------------------------------------------------------------- oracle (independent sample check at the driver-recorded basis)
 
-async function runOracle(finalPosition: number, lastAcked: number) {
+async function runOracle(finalPosition: number, lastAcked: number, deepSamples: any[] = []) {
   const candidates = oracleSamples.filter((s) => s.phase >= 0);
-  const selectedSamples = config.readPath === "replica" ? candidates : candidates.slice(0, config.oracleMaxReads);
+  const liveSamples = config.readPath === "replica" ? candidates : candidates.slice(0, config.oracleMaxReads);
+  const selectedSamples = [...liveSamples, ...deepSamples];
   atomicWrite(path.join(rawDir, "ns-full-read-samples.jsonl"), selectedSamples.map((sample: any) => JSON.stringify(sample)).join("\n") + "\n");
 
   if (!config.oracleRoot) return { status: "NOT-RUN", reason: "no --oracle-root (the gate extracts O-REPLAY from exp/O01-replay-oracle)" };
@@ -2035,7 +2129,10 @@ async function runOracle(finalPosition: number, lastAcked: number) {
   const result = await checkWithOracleWorker({ oracleRoot: config.oracleRoot, dir: rawDir, caseDoc, reads });
   // [DX-R3] Why: bind each oracle verdict to its exact retained attempt, not another read at the same basis.
   // Rejected: subject/time-only lookup (can attach an earlier read's verdict to this sample).
-  const modelAgrees = sampleMatches(records, selectedSamples).filter(rec => rec && judgeRead(rec).ok).length;
+  const modelAgrees = sampleMatches(records, liveSamples).filter(rec => rec && judgeRead(rec).ok).length + deepSamples.filter(s => {
+    const expected = model.expected(s.subject, s.basis.recordedAt, s.basis.validAt);
+    return expected.fullRows && expected.digest === s.observation.digest && expected.facts === s.observation.facts && expected.stamp === s.observation.stamp && s.observation.stamps === 1;
+  }).length;
   return { ...result, modelCorrectOnSameReads: modelAgrees, recordedCommands: recordedCommands.length };
 }
 

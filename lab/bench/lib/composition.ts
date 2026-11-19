@@ -125,7 +125,8 @@ export interface CompositionHandle {
 }
 
 function failureOf(exit: any): StoreFailure {
-  const failure = exit?.cause?.failures?.[0];
+  // [DX-SCALE1] Why: Effect 4 carries typed errors in reasons; lost acknowledgements need the durable original receipt. Rejected: treating a typed duplicate as an unknown rejection and submitting it eight times.
+  const failure = exit?.cause?.reasons?.[0] ?? exit?.cause?.failures?.[0];
   const error = failure?.error ?? failure?.defect ?? exit?.cause;
   // A defect (Die) has no typed tag: name it by its constructor so receipts say what failed.
   const tag = error?._tag ?? (failure?._tag === "Die" ? `Defect:${error?.name ?? error?.constructor?.name ?? "Unknown"}` : failure?._tag);
