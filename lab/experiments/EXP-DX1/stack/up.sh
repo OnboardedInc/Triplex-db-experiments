@@ -172,9 +172,28 @@ while (($#)); do
   esac
   shift 2
 done
-for cpus in "$tx" "$pg" "$gw_w" "$gw_r"; do
-  [[ "$cpus" =~ ^[0-7](,[0-7])*$ || "$cpus" =~ ^[0-7]-[0-7]$ ]] || { echo "only VM CPUs 0 through 7 are allowed" >&2; exit 2; }
-done
+if [[ ${DX_BARE_METAL:-0} == 1 ]]; then
+  # [DX-BM1] Why: the native read gateway spans cores 4 and 8. Check each requested CPU against this host's actual allocation.
+  # Rejected: carrying the eight-CPU Mac VM limit onto the 12-core bench, or allowing unavailable native CPUs.
+  python3 - "$tx" "$pg" "$gw_w" "$gw_r" <<'NATIVE_CPUS'
+import os,re,sys
+allowed=os.sched_getaffinity(0)
+for group in sys.argv[1:]:
+    cpus=set()
+    for part in group.split(','):
+        assert re.fullmatch(r'[0-9]+(?:-[0-9]+)?',part), 'invalid CPU range'
+        limits=[int(v) for v in part.split('-')]
+        first,last=limits[0],limits[-1]
+        assert first<=last<=max(allowed), 'unavailable CPU range'
+        members=set(range(first,last+1))
+        assert members<=allowed and members.isdisjoint(cpus), 'unavailable or duplicate CPU'
+        cpus.update(members)
+NATIVE_CPUS
+else
+  for cpus in "$tx" "$pg" "$gw_w" "$gw_r"; do
+    [[ "$cpus" =~ ^[0-7](,[0-7])*$ || "$cpus" =~ ^[0-7]-[0-7]$ ]] || { echo "only VM CPUs 0 through 7 are allowed" >&2; exit 2; }
+  done
+fi
 for port in "$port_w" "$port_r"; do
   [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 && "$port" != 15442 && "$port" != 17019 ]] || exit 2
 done
