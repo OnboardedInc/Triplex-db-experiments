@@ -223,6 +223,9 @@ try {
     });
     for (const count of [1, 2, 3, 4, 5]) {
       const records: W0.EvaluationRecord[] = [];
+      const evaluating = liveSave(reader, target.first, prefix + "-evaluating-" + count);
+      void evaluating.catch(() => {});
+
       for await (const evaluated of deepEvaluations(
         groups,
         name,
@@ -241,18 +244,22 @@ try {
         records.map((r) => r.subject),
         roster,
       );
+      const evaluatorSave = await evaluating;
       for (const variant of ["historical", "guard-fact", "page-cut"] as const) {
         const arm = run + "-w" + count + "-" + variant;
         process.env.TX2_W0_OUTBOX_NAMESPACE = variant === "page-cut" ? pageNamespace(arm) : arm;
         const pre = await liveSave(comp, target.first, prefix + arm + "-before");
         let during: ReturnType<typeof liveSave> | undefined;
-        // [DX-ACT2] Why: force a live write after the sweep enters publication and before its final ACK, even on the shortest local rung. Rejected: inferring overlap from two nearly equal wall-clock timestamps.
+        const publicationPositions: number[] = [];
+        // [DX-ACT2] Why: send the first native publication and the live save together, then let the remaining frames publish. Rejected: serializing the entire live operation ahead of the first native submission.
         const withTraffic = {
           ...comp,
           transact: async (...args: Parameters<typeof comp.transact>) => {
-            if (!during) during = liveSave(reader, target.first, prefix + arm + "-during");
-            await during;
-            return comp.transact(...args);
+            const publication = comp.transact(...args);
+            during ??= liveSave(reader, target.first, prefix + arm + "-during");
+            const [result] = await Promise.all([publication, during]);
+            if (result.ok) publicationPositions.push(result.value.position);
+            return result;
           },
         };
         const pub = await publishChanged(withTraffic, records, {
@@ -264,7 +271,11 @@ try {
         assert(during, "No live publication overlap");
         const mid = await during;
         const head = await comp.currentPosition();
-        assert(pre.save < mid.save && mid.save < head);
+        assert(
+          evaluatorSave.save < pre.save && pre.save < mid.save && publicationPositions.length > 1,
+        );
+        assert(mid.save < publicationPositions.at(-1)! && head === publicationPositions.at(-1));
+
         const post = await liveSave(reader, accounts[0]!.first, prefix + arm + "-after");
         assert(post.save > head);
         if (variant === "page-cut") {
@@ -312,6 +323,8 @@ try {
           missingGuards: missed,
           roster: sha256(canonical(roster)),
           coverage: pub.coverage ?? null,
+          evaluatorSave,
+          publicationPositions,
           pre,
           mid,
           post,
