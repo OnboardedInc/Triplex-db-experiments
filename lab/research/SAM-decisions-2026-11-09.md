@@ -633,3 +633,22 @@ ACTV-B no sweep and no mark, results derived on demand and admitted only if what
 compute only the difference from indexes over rule inputs. Output in the private folder
 `research/2026-11-19-activation-sub1s/`. The selector built today covers one parameter of one rule out of seven
 parameter kinds in the test world; a general mechanism derived from each rule's declared inputs is direction C's job.
+
+## 2026-11-19 about 16:45 local: the one-second definition accepted; no prepared releases; what a notification is
+
+Sam, verbatim:
+- "I think what must be true one second after pressing publish. I like your recommendation; that feels fine. No we
+  can't have any releases prepared in advance, like preparing, because you said 1 million needs 8.5 minutes. If you're
+  changing a form and then publish takes 8.5 minutes, it makes no sense. No, there's no preparing state of 8.5
+  minutes."
+- "Question: What is a notification? ... What does that mean in the speak of this kind of database? Also can you make
+  me a Claude artifact that explains Triplex DB? Let's just call it that, which is based on Datomic. You had a good
+  explanation of what activation meant but can you define what a subject is in there and then define what a
+  notification is in there and stuff? Just short and sweet"
+
+Orchestrator's reading: (1) one second after Publish: every read returns the new release's answers, every changed
+output is durably stored, every owed notification is durably recorded; sending follows over seconds (in
+`lab/TARGETS.md`). (2) The staged direction is closed: no release is prepared in advance. DX-STG1 was stopped and put
+on the owed-notification record and dispatcher, which both remaining designs (LAZY, DELTA) need. (3) The working name
+is "Triplex DB". A short explainer page was published as a private artifact; its source is kept in the private
+project folder under `artifacts/`.
