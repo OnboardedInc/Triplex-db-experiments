@@ -59,6 +59,12 @@ test("bench collector binds stage, native schedules, source and complete coverag
     act1: {
       arm,
       layout: "guard-fact",
+      outcome: "exact",
+      workers: 2,
+      guardMismatches: 0,
+      coordinatorCpu: 6,
+      evalCpus: [7],
+      liveCpus: Array.from({ length: 2 }, () => ({ readers: [3, 5], writer: 6, follower: 6 })),
       activationFacts: [
         {
           id: "first",
@@ -78,6 +84,7 @@ test("bench collector binds stage, native schedules, source and complete coverag
     },
     trace: sha("trace"),
     comparedSha256: sha("fixture full reference"),
+    expectedSha256: sha("fixture full reference"),
     roster,
     evaluationMs: 7500,
     publicationMs: 12345,

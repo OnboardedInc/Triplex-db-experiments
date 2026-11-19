@@ -3,6 +3,8 @@ import { serialize } from "node:v8";
 import { parentPort, workerData } from "node:worker_threads";
 import { ReplicaSnapshot, flushTracing } from "../../../packages/datomic/dist/index.js";
 import { W0, worldOf, worldSha256, w0Basis } from "./w0-world.ts";
+import { pinWorker } from "./w0-cpus.ts";
+const assignedCpu = pinWorker("evaluator", workerData.evalIndex);
 const snapshot = new ReplicaSnapshot(workerData.image);
 const basis = w0Basis({ position: snapshot.position, validAt: snapshot.validAt });
 const releases: W0.CompiledRelease[] = workerData.releases;
@@ -24,6 +26,7 @@ parentPort!.on("message", async (m) => {
   if (m.type === "metrics") {
     parentPort!.postMessage({
       type: "metrics",
+      cpuAssignment: assignedCpu,
       elu: performance.eventLoopUtilization(phaseElu),
       cpu: process.threadCpuUsage(phaseCpu),
       wallMs: performance.now() - phaseStart,

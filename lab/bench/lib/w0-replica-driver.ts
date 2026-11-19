@@ -25,7 +25,11 @@ import {
 import { eadRelease } from "./w0-selector.ts";
 import { selectorOracle } from "./w0-selector-oracle.ts";
 import { evaluateSelected } from "./w0-selector-sweep.ts";
-import type { GuardLayout } from "./w0-guarded.ts";
+import type { PublicationOptions } from "./w0-outbox.ts";
+import { pageRoots } from "./w0-page-outbox.ts";
+import { readOutboxAt } from "./w0-outbox-state.ts";
+import { pageWireState } from "./w0-page-check.ts";
+import { pinCoordinator, workerCount } from "./w0-cpus.ts";
 import { subjectList } from "./sweep.ts";
 import { outboxEntity } from "./w0-outbox.ts";
 import { evaluateAll, compactCandidateReferences } from "./w0-replica.ts";
@@ -156,15 +160,32 @@ export async function runReplicaDriver(argv: string[]) {
     act1 = opt("act1-arm");
   if (
     argv.includes("--publication-layout") &&
-    !["historical", "full-state", "guard-fact"].includes(layoutName)
+    !["historical", "full-state", "guard-fact", "page-cut"].includes(layoutName)
   )
     throw Error("Unknown publication layout");
   const layout =
-    layoutName && layoutName !== "historical" ? (layoutName as GuardLayout) : undefined;
+    layoutName && layoutName !== "historical"
+      ? (layoutName as PublicationOptions["layout"])
+      : undefined;
+  const paged = layout === "page-cut",
+    historical = act1 === "standard-historical";
+  const expectedLayout = historical
+    ? "historical"
+    : act1 === "standard-pages"
+      ? "page-cut"
+      : "guard-fact";
+  const coordinatorCpu = argv.includes("--act1-reserved-cores") ? pinCoordinator() : undefined;
+  if (argv.includes("--act1-reserved-cores")) workerCount(String(workers));
   if (
     act1 &&
-    (!["narrow-full", "narrow-selector", "standard-full"].includes(act1) ||
-      layout !== "guard-fact" ||
+    (![
+      "narrow-full",
+      "narrow-selector",
+      "standard-full",
+      "standard-pages",
+      "standard-historical",
+    ].includes(act1) ||
+      layoutName !== expectedLayout ||
       !opt("record-dir") ||
       !publicationId ||
       !argv.includes("--publish") ||
@@ -230,6 +251,7 @@ export async function runReplicaDriver(argv: string[]) {
   if (!scope || !Number.isSafeInteger(N) || N < 1)
     throw new Error("Existing seeded scope and positive N required");
   const subjects = subjectList(N),
+    outboxRoots = paged ? pageRoots(subjects) : subjects.map(outboxEntity),
     comp = await openComposition("reach", "datomic", scope);
   const client = new DatomicClient(
     process.env.DATOMIC_READ_URLS?.split(",")[0] ?? comp.backend.url,
@@ -422,7 +444,14 @@ export async function runReplicaDriver(argv: string[]) {
       oracleProcesses,
     );
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
-  if (layoutName) report.act1 = { layout: layoutName, arm: act1, releaseHash: activeRelease.hash };
+  if (layoutName)
+    report.act1 = {
+      layout: layoutName,
+      arm: act1,
+      releaseHash: activeRelease.hash,
+      workers,
+      coordinatorCpu,
+    };
   report.capacityBaselines = capacityBaselines;
   report.nodeHeapLimitBytes = getHeapStatistics().heap_size_limit;
   // [DX-S5] Why: report actual all-subject oracle time separately from activation and storage readback.
@@ -652,16 +681,14 @@ export async function runReplicaDriver(argv: string[]) {
       subjects.map((subject) => "p5:outbox:" + t.id + ":" + subject),
     );
     await replica.bootstrap(
-      publicationId || publication
-        ? [...subjects, ...subjects.map(outboxEntity), ...trialOutboxRoots]
-        : subjects,
+      publicationId || publication ? [...subjects, ...outboxRoots, ...trialOutboxRoots] : subjects,
       cut,
     );
     // [DX-S5] Why: configured empty roots remain explicit empty entities in snapshots, including later trial namespaces.
     // Rejected: treating Replica.world's missing-root exception as evidence of absence.
     if (trialOutboxRoots.some((id) => replica.world(id).length))
       throw Error("trial namespace already exists at seed cut");
-    if (publicationId && subjects.some((s) => replica.world(outboxEntity(s)).length))
+    if (publicationId && outboxRoots.some((id) => replica.world(id).length))
       throw Error("publication namespace already exists at seed cut");
     (globalThis as any).gc?.();
     const bootstrapImage = (await replica.snapshotAt(cut)).sharedImage();
@@ -820,7 +847,7 @@ export async function runReplicaDriver(argv: string[]) {
     const r1Snapshot = pinnedInput ?? (await replica.snapshotAt(cut)),
       r1Position = r1Snapshot.position;
     if (argv.includes("--publish")) {
-      if (publicationId && subjects.some((s) => replica.world(outboxEntity(s)).length))
+      if (publicationId && outboxRoots.some((id) => replica.world(id).length))
         throw Error("publication namespace already used at current head");
       if (threaded) replica.compact();
       const publicationView = await replica.snapshotAt(replica.position);
@@ -837,6 +864,7 @@ export async function runReplicaDriver(argv: string[]) {
           ? {
               publication: {
                 ...publication,
+                layout: historical ? "full-state" : publication.layout,
                 frameSize: Number(opt("r1-publication-size", String(publication.frameSize))),
                 inflight: Number(opt("r1-publication-inflight", String(publication.inflight))),
                 readStates: (ids) => ids.flatMap((id) => publicationView.world(id)),
@@ -1165,7 +1193,9 @@ export async function runReplicaDriver(argv: string[]) {
       expectedR1Changed = 0,
       expectedR2Changed = 0;
     const expectedTrialStates = new Map<string, string>();
-    const act1Comparisons = new Map<string, string>();
+    const act1Comparisons = new Map<string, string>(),
+      act1Expected = new Map<string, string>();
+    let guardMismatches = 0;
     const finalPosition = await comp.currentPosition();
     report.publishedStatePosition = finalPosition;
     if (act1) {
@@ -1209,7 +1239,7 @@ export async function runReplicaDriver(argv: string[]) {
       subject: output.subject,
       workItems: output.workItems,
     });
-    const applyExpected = async (previous: any, output: any) => {
+    const applyExpected = async (previous: any, output: any, useFullGuard = !!layout) => {
       const next = JSON.parse(
         await timedOracle("publish", { state: previous, evaluations: [recordOf(output)] }),
       );
@@ -1218,7 +1248,7 @@ export async function runReplicaDriver(argv: string[]) {
         next.deliveries.length > 0 || canonical(next.state.items) !== canonical(previous.items);
       if (layoutName)
         return {
-          changed: layout ? canonical(next.state) !== canonical(previous) : changed,
+          changed: useFullGuard ? canonical(next.state) !== canonical(previous) : changed,
           state: next.state,
         };
       return { changed, state: changed ? next.state : previous };
@@ -1236,12 +1266,18 @@ export async function runReplicaDriver(argv: string[]) {
           records.map((r) => r.subject),
           { position: cut, validAt: V_W0 },
         );
-        const states = argv.includes("--publish")
-          ? await recordedPage(
-              records.map((r) => outboxEntity(r.subject)),
-              { position: finalPosition, validAt: V_W0 },
+        const states = paged
+          ? await readOutboxAt(
+              { sweepPage: recordedPage },
+              pageRoots(records.map((r) => r.subject)),
+              finalPosition,
             )
-          : undefined;
+          : argv.includes("--publish")
+            ? await recordedPage(
+                records.map((r) => outboxEntity(r.subject)),
+                { position: finalPosition, validAt: V_W0 },
+              )
+            : undefined;
         return { records, gateway, states };
       },
     )) {
@@ -1306,7 +1342,7 @@ export async function runReplicaDriver(argv: string[]) {
         if ("error" in slow || canonical(slow.record) !== canonical(r.candidates[0].record))
           throw new Error("Full sweep record mismatch");
         if (states) {
-          let expectedState: any;
+          let expectedState: any, priorState: any;
           if (paired) {
             expectedR1Changed += Number(paired.r1Changed);
             expectedR2Changed += Number(paired.r2Changed);
@@ -1319,7 +1355,12 @@ export async function runReplicaDriver(argv: string[]) {
                 basis: { tx: r1Position, validTime: W0.POPULATION_VALID_TIME },
               }),
             );
-            const first = await applyExpected({ items: [], pending: [], subjects: [] }, r1);
+            const first = await applyExpected(
+              { items: [], pending: [], subjects: [] },
+              r1,
+              historical || !!layout,
+            );
+            priorState = first.state;
             const second = await applyExpected(first.state, JSON.parse(expected));
             expectedR1Changed += Number(first.changed);
             expectedR2Changed += Number(second.changed);
@@ -1329,9 +1370,11 @@ export async function runReplicaDriver(argv: string[]) {
             (row) => row.entityId === outboxEntity(r.subject) && row.attribute === "p5/state",
           );
           if (rows.length > 1) throw new Error("Ambiguous published state");
-          const actual = rows.length
-            ? wireState(JSON.parse(rows[0].value.value))
-            : { items: [], pending: [], subjects: [] };
+          const actual = paged
+            ? pageWireState(states.rows, r.subject)
+            : rows.length
+              ? wireState(JSON.parse(rows[0].value.value))
+              : { items: [], pending: [], subjects: [] };
           if (layout === "guard-fact") {
             const guards = states.rows.filter(
               (row) => row.entityId === outboxEntity(r.subject) && row.attribute === "p5/guard",
@@ -1340,10 +1383,31 @@ export async function runReplicaDriver(argv: string[]) {
             actual.subjects = [JSON.parse(guards[0]!.value.value)];
           }
           const expectedBytes = canonical(expectedState);
-          if (canonical(actual) !== expectedBytes)
-            throw new Error("Independent published state mismatch " + r.subject);
+          if (canonical(actual) !== expectedBytes) {
+            if (
+              !historical ||
+              canonical(actual) !== canonical(priorState) ||
+              canonical([actual.items, actual.pending]) !==
+                canonical([expectedState.items, expectedState.pending])
+            )
+              throw new Error("Independent published state mismatch " + r.subject);
+            guardMismatches++;
+          }
           if (act1) {
             if (act1Comparisons.has(r.subject)) throw Error("Duplicate activation comparison");
+            act1Expected.set(
+              r.subject,
+              createHash("sha256")
+                .update(
+                  canonical([
+                    r.subject,
+                    r.worldSha256,
+                    W0.outputJson(r.candidates[0].output),
+                    expectedState,
+                  ]),
+                )
+                .digest("hex"),
+            );
             act1Comparisons.set(
               r.subject,
               createHash("sha256")
@@ -1411,11 +1475,29 @@ export async function runReplicaDriver(argv: string[]) {
         !report.matched
       )
         throw Error("Incomplete guarded activation readback");
-      const compared = createHash("sha256");
+      if (historical && (!guardMismatches || guardMismatches !== N - report.publication.changed))
+        throw Error("Historical control did not reproduce the omitted guards");
+      const compared = createHash("sha256"),
+        expectedHash = createHash("sha256");
+      report.act1.guardMismatches = guardMismatches;
+      report.act1.outcome = historical ? "incorrect-historical-control" : "exact";
+      report.act1.pageCoverage = result.publication?.coverage;
+      report.act1.evalCpus =
+        "selector" in result
+          ? [result.selector.cpuAssignment]
+          : result.workerMetrics.map((m) => m.cpuAssignment);
+      if (coordinatorCpu !== undefined)
+        report.act1.liveCpus = [report.baseline, report.live].map((w) => ({
+          readers: w.threads.readers.map((r: any) => r.cpuAssignment),
+          writer: w.threads.writer.cpuAssignment,
+          follower: w.threads.followerAfter.cpuAssignment,
+        }));
+
       for (const id of subjects) {
         const digest = act1Comparisons.get(id);
         if (!digest) throw Error("Uncovered roster ordinal");
         compared.update(digest);
+        expectedHash.update(act1Expected.get(id)!);
       }
       const dest = recordDir + "/../act1-sweep.json";
       fs.writeFileSync(
@@ -1437,6 +1519,7 @@ export async function runReplicaDriver(argv: string[]) {
           liveReaders: logicalReaders,
           roster: createHash("sha256").update(canonical(subjects)).digest("hex"),
           comparedSha256: compared.digest("hex"),
+          expectedSha256: expectedHash.digest("hex"),
           trace: report.baseline.generatorTraceSha256,
           evaluationMs: report.evaluation.passWallMs,
           publicationMs: report.publication.wallMs,

@@ -1,3 +1,4 @@
+import { publishPages, publishPage } from "./w0-page-outbox.ts";
 import { deserialize } from "node:v8";
 import { Worker } from "node:worker_threads";
 import { finishW0Worker } from "./w0-parallel.ts";
@@ -9,7 +10,7 @@ import {
   type PublicationOptions,
   type OutboxStore,
 } from "./w0-outbox.ts";
-import { W0, canonical, requirePosition } from "./w0-world.ts";
+import { W0, canonical, requirePosition, w0Basis } from "./w0-world.ts";
 
 export interface ReplicaEvaluation {
   subject: string;
@@ -118,9 +119,9 @@ async function evaluateSnapshot(
   const image = snapshot.sharedImage();
   try {
     const pool = await Promise.all(
-      Array.from({ length: count }, async () => {
+      Array.from({ length: count }, async (_, evalIndex) => {
         const worker = new Worker(new URL("./w0-replica-worker.ts", import.meta.url), {
-          workerData: { image, releases, compactRecords: o.compactRecords },
+          workerData: { image, releases, evalIndex, compactRecords: o.compactRecords },
         });
         threads.push(worker);
         let dispatch!: () => void, failure: unknown;
@@ -204,10 +205,7 @@ async function evaluateSnapshot(
     const workerMetrics = await Promise.all(pool.map((thread) => thread.metrics()));
     const evaluationWallMs = performance.now() - start;
     const records = [...results].sort(([a], [b]) => a - b).flatMap(([, records]) => records);
-    if (
-      records.length !== o.subjects.length ||
-      new Set(records.map((r) => r.subject)).size !== o.subjects.length
-    )
+    if (records.length !== o.subjects.length || records.some((r, i) => r.subject !== o.subjects[i]))
       throw new Error("Replica exact coverage failed");
     let publication: Awaited<ReturnType<typeof publishChanged>> | undefined;
     if (o.publish)
@@ -217,7 +215,16 @@ async function evaluateSnapshot(
           length: records.length,
           slice: (from, to) => records.slice(from, to).map((r) => r.candidates[0]!.record),
         },
-        o.publication,
+        o.publication?.layout === "page-cut"
+          ? {
+              ...o.publication,
+              roster: {
+                subjects: o.subjects,
+                basis: { tx: BigInt(snapshot.position), validTime: w0Basis(snapshot).validTime },
+                release: releases[0]!.hash,
+              },
+            }
+          : o.publication,
       );
     return {
       records,
@@ -251,7 +258,7 @@ export async function publishChanged(
   const pending: W0.EvaluationRecord[] = [];
   const pendingRows = new Map<string, import("./w0-world.ts").WorldRow[]>();
   const active = new Set<Promise<void>>();
-  const frameSize = options.frameSize ?? 64,
+  const frameSize = options.frameSize ?? (options.layout === "page-cut" ? 256 : 64),
     inflight = options.inflight ?? 1;
   if (
     !Number.isInteger(frameSize) ||
@@ -268,6 +275,15 @@ export async function publishChanged(
     (options.maxWriterYieldMs ?? 50) > 1000
   )
     throw Error("invalid publication settings");
+  if (options.layout === "page-cut")
+    return publishPages(
+      records,
+      { ...options, frameSize },
+      (frame, span) =>
+        publishRecords(comp, frame, { ...options, frameSize, inflight: 1, span }) as ReturnType<
+          typeof publishPage
+        >,
+    );
   let stateReadMs = 0,
     failure: unknown;
 
@@ -372,6 +388,7 @@ export async function publishChanged(
   return {
     changed,
     commits,
+    coverage: undefined,
     wallMs: performance.now() - started,
     stateReadMs,
     frameSize,

@@ -3,17 +3,26 @@ import { measureHttp } from "./http-counts.ts";
 import { measureW0Http } from "./w0-http.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { W0, canonical, sha256 } from "./w0-world.ts";
+import { publishPage } from "./w0-page-outbox.ts";
 import { guardedFrame, type GuardLayout } from "./w0-guarded.ts";
 export type OutboxStore = Pick<
   CompositionHandle,
-  "currentPosition" | "sweepPage" | "transactionByCommand" | "transact" | "publishOutbox"
+  | "scopeName"
+  | "currentPosition"
+  | "sweepPage"
+  | "transactionByCommand"
+  | "transact"
+  | "publishOutbox"
 >;
 export const outboxEntity = (subject: string) =>
   "p5:outbox:" +
   (process.env.TX2_W0_OUTBOX_NAMESPACE ? process.env.TX2_W0_OUTBOX_NAMESPACE + ":" : "") +
   subject;
 export interface PublicationOptions {
-  layout?: GuardLayout;
+  layout?: GuardLayout | "page-cut";
+  roster?: import("./w0-page-outbox.ts").SweepRoster;
+  span?: import("./w0-page-outbox.ts").PageSpan;
+  eventId?: string;
   frameSize?: number;
   inflight?: number;
   stateRows?: readonly import("./w0-world.ts").WorldRow[];
@@ -73,7 +82,7 @@ export async function publishRecords(
   if (options.layout) {
     const release = await publicationSlot(comp, options.inflight ?? publicationLimit);
     try {
-      return await guardedFrame(comp, records, outboxEntity, options.layout, async () => {
+      const yieldBeforeCommit = async () => {
         const since = performance.now();
         while (
           options.yieldToWriter &&
@@ -81,7 +90,10 @@ export async function publishRecords(
           performance.now() - since < (options.maxWriterYieldMs ?? 50)
         )
           await new Promise((resolve) => setTimeout(resolve, 1));
-      });
+      };
+      if (options.layout === "page-cut")
+        return await publishPage(comp, records, options.span, yieldBeforeCommit, options.eventId);
+      return await guardedFrame(comp, records, outboxEntity, options.layout, yieldBeforeCommit);
     } finally {
       release();
     }
