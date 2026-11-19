@@ -144,3 +144,59 @@ export async function deepBarrier(
   }
   throw Error("Deep start barrier timed out");
 }
+
+// [DX-SCALE1] Why: seeding a scope does not prove its feed, gateway handle and readers are ready. Rejected: starting the fast scopes while a ninth or tenth consumer is still opening.
+export async function confirmDeepStart(
+  dir: string,
+  id: DeepIdentity,
+  database: string,
+  start: number,
+) {
+  const name = `s${id.account}`,
+    file = path.join(dir, `${name}.armed.json`),
+    body = { identity: id, database, start };
+  fs.writeFileSync(file + ".tmp", JSON.stringify(body), { flag: "wx" });
+  fs.renameSync(file + ".tmp", file);
+  while (Date.now() < start - 100) {
+    const release = path.join(dir, "release.json");
+    if (fs.existsSync(release)) {
+      const m = JSON.parse(fs.readFileSync(release, "utf8"));
+      assert(
+        m.nonce === id.nonce && m.slot === id.slot && m.source === id.source && m.start === start,
+      );
+      assert.deepEqual(m.armed[name], body);
+      return;
+    }
+    await sleep(50);
+  }
+  throw Error("Common start reached before the whole deep cohort armed");
+}
+export function releaseDeepStart(dir: string, identities: readonly DeepIdentity[], start: number) {
+  const go = JSON.parse(fs.readFileSync(path.join(dir, "go.json"), "utf8"));
+  assert.equal(go.start, start);
+  const armed = Object.fromEntries(
+    identities.map((id, i) => {
+      const name = `s${i}`;
+      requireIdentity(id);
+      assert(
+        id.account === i && id.nonce === go.nonce && id.slot === go.slot && id.source === go.source,
+      );
+      const row = JSON.parse(fs.readFileSync(path.join(dir, `${name}.armed.json`), "utf8"));
+      assert.deepEqual(row.identity, id);
+      assert.equal(row.start, start);
+      const actual = JSON.parse(Buffer.from(String(row.database).slice(3), "base64url").toString());
+      assert.deepEqual(actual, ["triplex-scope-v1", "test", "test", go.scopes[name].scope, 0]);
+      return [name, row];
+    }),
+  );
+  assert.equal(Object.keys(go.scopes).length, identities.length);
+  assert.equal(new Set(Object.values(armed).map((r) => r.database)).size, identities.length);
+  assert(Date.now() + 200 < start, "Cohort armed too late");
+  const release = path.join(dir, "release.json");
+  fs.writeFileSync(
+    release + ".tmp",
+    JSON.stringify({ nonce: go.nonce, slot: go.slot, source: go.source, start, armed }),
+    { flag: "wx" },
+  );
+  fs.renameSync(release + ".tmp", release);
+}

@@ -49,6 +49,15 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   assert.equal(report.deep.seed.facts, expectedCount);
   assert.equal(report.deep.seed.people, id.people);
   assert.equal(actualSeed.scope, report.scope);
+  const db = String(report.deep.database);
+  assert(db.startsWith("s2-"));
+  assert.deepEqual(JSON.parse(Buffer.from(db.slice(3), "base64url").toString()), [
+    "triplex-scope-v1",
+    "test",
+    "test",
+    report.scope,
+    0,
+  ]);
   assert.equal(
     report.scope,
     `ns-datomic-deep${id.people === 10000 ? "10k" : "100k"}-deep-${id.nonce}-s${id.account}`,
@@ -66,6 +75,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   const expected = new Map(
     plan.events.filter((e) => e.atMs < duration * 1000).map((e) => [`${e.seq}/${e.resend}`, e]),
   );
+  const ackMinutes = new Uint32Array(Math.ceil(Math.min(duration, 7200) / 60));
   const offered = expected.size,
     values: Quantities = { all: [], L256: [], L1024: [], presweep: [], activation: [] };
   const seenPositions = new Set<number>(),
@@ -113,6 +123,8 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     assert(Number.isFinite(ms) && ms >= 0 && w.verdictClock === VERDICT_CLOCK);
     assert(Number.isSafeInteger(w.position) && !seenPositions.has(w.position));
     seenPositions.add(w.position);
+    const minute = Math.floor((w.ackPublishedAt - commonStart) / 60000);
+    if (minute >= 0 && minute < ackMinutes.length) ackMinutes[minute]++;
     committed++;
     values.all!.push(ms);
     for (const level of ["L256", "L1024"] as const)
@@ -213,6 +225,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     hashes,
     offered,
     primaries,
+    ackMinutes: [...ackMinutes],
     committed,
     resends,
     missing: expected.size,
@@ -231,8 +244,18 @@ function mergedHistogram(scopes: ScopeMeasurement[], key: string) {
   }
   return merged;
 }
-export function cohort(scopes: ScopeMeasurement[], expectedScopes: number, previous?: Quantities) {
+export function cohort(
+  scopes: ScopeMeasurement[],
+  expectedScopes: number,
+  previous?: Quantities,
+  baselineInvalid: string | null = null,
+) {
   assert.equal(scopes.length, expectedScopes);
+  assert.equal(
+    new Set(scopes.map((s) => s.report.deep.database)).size,
+    expectedScopes,
+    "Duplicate Datomic database in cohort",
+  );
   assert(scopes.length && new Set(scopes.map((s) => s.scope)).size === scopes.length);
   const first = scopes[0]!;
   assert(
@@ -274,7 +297,7 @@ export function cohort(scopes: ScopeMeasurement[], expectedScopes: number, previ
           distribution(all[level] ?? [], VERDICT_CLOCK),
           distribution(previous[level] ?? [], VERDICT_CLOCK),
           limit,
-          { invalid: reason },
+          { invalid: reason || baselineInvalid },
         ),
       );
   for (const [id, key, p, target] of [
@@ -334,6 +357,8 @@ export function cohort(scopes: ScopeMeasurement[], expectedScopes: number, previ
     commit: commit(s.values.all!),
     account: s.id.account,
     scope: s.scope,
+    ackMinutes: s.ackMinutes,
+    database: s.report.deep.database,
     hashes: s.hashes,
     invalid: s.invalid,
     observations: {

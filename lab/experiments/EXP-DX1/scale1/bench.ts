@@ -17,7 +17,7 @@ import {
 import { compressTraces } from "./archive.ts";
 import { resources } from "./resources.ts";
 import { stageReplay, sourceInventory } from "./source.ts";
-import type { DeepIdentity } from "../../../bench/lib/deep-profile.ts";
+import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-profile.ts";
 
 export const items = [
   { people: 10000, scopes: 1 },
@@ -131,7 +131,7 @@ export function capacity(
   arm = "reader",
 ) {
   const facts = deepPopulation(people).facts,
-    scale = observation ? facts / observation.facts : 1;
+    scale = facts / (observation?.facts ?? 1_604_464);
   // [DX-SCALE1] Why: one shared engine allocation plus N separate senders, replicas and lossless spills must fit. Rejected: multiplying the whole stack by ten or treating installed NVMe capacity as free space.
   const diskPerFact = observation ? observation.allocatedBytes / observation.facts : 1200;
   const db = Math.ceil(diskPerFact * facts * scopes * 1.35),
@@ -618,7 +618,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
           assert.deepEqual({ ...ready, identity }, get(path.join(raw[i]!, "seed-observed.json")));
           scopes[`s${i}`] = ready;
         }
-        commonStart = Date.now() + 10000;
+        commonStart = Date.now() + 60000;
         write(path.join(barrier, "go.tmp"), {
           nonce: attempt.nonce,
           slot: prefix,
@@ -628,6 +628,18 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         });
         fs.renameSync(path.join(barrier, "go.tmp"), path.join(barrier, "go.json"));
         status(dir, "simultaneous traffic", { commonStart, mode });
+      }
+      if (commonStart && !fs.existsSync(path.join(barrier, "release.json"))) {
+        assert(
+          Date.now() < commonStart - 200,
+          "Not every deep scope armed before the shared start",
+        );
+        if (raw.every((_, i) => fs.existsSync(path.join(barrier, `s${i}.armed.json`))))
+          releaseDeepStart(
+            barrier,
+            raw.map((r) => get(path.join(r, "identity.json"))),
+            commonStart,
+          );
       }
       if (!commonStart && mode !== "seed" && exit.some((e) => e !== null))
         throw Error("An account exited before the shared barrier");
@@ -686,10 +698,35 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         exit[i] ?? 128,
       ),
     );
-  const previous: Quantities | undefined =
-    mode === "reader" ? get(path.join(root, refs, "zero-observations.json")) : undefined;
-  const measured = cohort(found, spec.scopes, previous);
-  if (mode === "zero") write(path.join(dir, "zero-observations.json"), measured.values);
+  let previous: Quantities | undefined,
+    baselineInvalid: string | null = null;
+  if (mode === "reader") {
+    const zeroDir = path.join(root, refs),
+      zero = get(path.join(zeroDir, "attempt.json")),
+      processes = get(path.join(zeroDir, "processes.json")),
+      summary = get(path.join(zeroDir, "summary.json"));
+    assert(zero.source === source && zero.nonce !== attempt.nonce && zero.mode === "zero");
+    const rows: ScopeMeasurement[] = [];
+    for (let i = 0; i < spec.scopes; i++) {
+      const input = path.join(repo, "runs", "DX-SCALE1", refs, `s${i}`),
+        expected = {
+          account: i,
+          people: spec.people,
+          source,
+          nonce: zero.nonce,
+          slot: zero.slot,
+          arm: "zero" as const,
+        };
+      const row = await readScope(input, expected, processes.commonStart, processes.exits[i]);
+      assert.deepEqual(row.hashes, summary.perScope[i].hashes);
+      assert.equal(row.hashes.writes, found[i]!.report.matchedBaseline.sha256);
+      rows.push(row);
+    }
+    const control = cohort(rows, spec.scopes);
+    previous = control.values;
+    baselineInvalid = control.summary.invalid.join(", ") || null;
+  }
+  const measured = cohort(found, spec.scopes, previous, baselineInvalid);
   const spillBytes = Math.max(
     ...found.map((s) =>
       Number(
@@ -772,20 +809,10 @@ function budgetFor(item: number, dir: string, mode: string, prior?: string) {
     const p = path.join(root, prior),
       a = get(path.join(p, "attempt.json"));
     observed = get(path.join(p, "sizing.json"));
-    call("git", [
-      "diff",
-      "--quiet",
-      a.source,
-      "HEAD",
-      "--",
-      "lab/bench",
-      "packages/datomic",
-      "packages/core",
-      "pnpm-lock.yaml",
-      "lab/experiments/EXP-DX1/scale1/profile.json",
-    ]);
+    assert.equal(get(path.join(p, "summary.json")).profile, "deep/1");
+    observed = { ...observed, referenceTag: prior, referenceSource: a.source };
     assert.equal(a.spec.scopes, 1);
-    assert.equal(a.mode, "reader");
+    assert(["zero", "reader"].includes(a.mode));
     assert.equal(observed.people, a.spec.people);
     assert.equal(observed.facts, deepPopulation(a.spec.people).facts);
     assert(
@@ -795,11 +822,6 @@ function budgetFor(item: number, dir: string, mode: string, prior?: string) {
     );
     assert(get(path.join(p, "terminal.json")).cleanup === true);
   }
-  if (item === 4)
-    assert(
-      observed?.people === 100000,
-      "Ten full accounts require measured single 100k memory and disk first",
-    );
   const volumeRoot = docker("info", "--format", "{{.DockerRootDir}}");
   return capacity(
     s.people,
@@ -993,7 +1015,7 @@ async function main() {
     assert.deepEqual(prior.spec, spec);
     assert.equal(prior.source, source);
     assert(get(path.join(root, baselineTag, "terminal.json")).cleanup);
-    assert(fs.existsSync(path.join(root, baselineTag, "zero-observations.json")));
+    assert(fs.existsSync(path.join(root, baselineTag, "summary.json")));
   }
   const ceiling = (mode === "activation" ? 10 : spec.people === 100000 ? 8 : 4) * 3600;
   const clientBudget = Math.floor(

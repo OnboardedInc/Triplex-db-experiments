@@ -307,13 +307,14 @@ async function campaign(label: string) {
   };
   const singles: Record<number, string> = {};
   for (const item of [1, 2, 3, 4]) {
-    const size = singles[item === 4 ? 2 : 1],
+    const size = item === 4 ? (singles[2] ?? singles[1]) : singles[1],
       opts = size ? ["--sizing", size] : [];
     const zero = await stage(item, "zero", opts);
     if (zero.terminal.service === "capacity-refused") {
       if (zero.capacity.fitsSeed) await stage(item, "seed", opts);
       continue;
     }
+    if (item <= 2 && zero.terminal.scopeReports === 1) singles[item] = zero.tag;
     assert(zero.terminal.scopeReports > 0, `Missing zero baseline for item ${item}`);
     const loaded = await stage(item, "reader", [...opts, "--baseline", zero.tag]);
     if (loaded.terminal.service === "capacity-refused") {

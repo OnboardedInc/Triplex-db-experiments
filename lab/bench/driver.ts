@@ -4,7 +4,7 @@ import { DeepActivation } from "./lib/deep-activation.ts";
 import { DEEP_PROFILE, DEEP_RUNGS, deepCells, deepPopulation } from "./lib/deep-world.ts";
 import { DEEP_RATE, deepSeed, type DeepEvent } from "./lib/deep-trace.ts";
 import { DeepWriter } from "./lib/deep-command.ts";
-import { DeepSeedWitness, deepBarrier, frozenDeep, requireIdentity, type DeepIdentity } from "./lib/deep-profile.ts";
+import { DeepSeedWitness, deepBarrier, confirmDeepStart, frozenDeep, requireIdentity, type DeepIdentity } from "./lib/deep-profile.ts";
 import { configureWriterHeap } from "./lib/writer-heap.ts";
 import { suffixDelta } from "./lib/basis-window.ts";
 import { DeferredPublications } from "./lib/deferred-publication.ts";
@@ -574,7 +574,7 @@ async function run() {
   const historyVersion = new Map<number, number>(historyList.map((i) => [i, 0]));
   latestInstant = seed.lastInstant;
   acked.push({ instant: seed.lastInstant, position: seed.lastPosition, txId: "seed-end", at: now() });
-  if (!pairPlan) void watermarkSampler(aux);
+  if (!pairPlan && !deep) void watermarkSampler(aux);
 
   // ---------------------------------------------------------------- trace (frozen generator, TARGETS 2.1)
   // [EXP-M01] A round plan names its series' trace parameters (Q60g screening: a burst every 180 s), a new comparison
@@ -1074,7 +1074,14 @@ async function run() {
   // Rejected: issuing maintenance after readers stop.
   const indexClient = lane === "datomic" ? new (await import(pathToFileURL(path.join(REPO,"packages/datomic/dist/index.js")).href)).DatomicClient(process.env["DATOMIC_URL"] ?? "http://127.0.0.1:8493", 601000) : null;
   const indexDb = indexClient ? (await indexClient.create(runtimeApi.DatabaseScope.test(scopeName))).db : null;
+  if (deepId) {
+    const scopeKey = String(runtimeApi.DatabaseScope.test(scopeName));
+    assert.equal(indexDb, `s2-${Buffer.from(scopeKey).toString("base64url")}`, "Gateway opened a different database");
+    report.deep.database = indexDb;
+    await confirmDeepStart(path.resolve(opt("deep-barrier")!),deepId,indexDb!,traceStart);
+  }
   await sleep(Math.max(0, traceStart - now()));
+  if (deep) void watermarkSampler(aux);
   if (deep && fullLength) scheduler.setUntil(traceStart + V3_OFFER_SECONDS * 1000);
   scheduler.start();
   probeScheduler?.start();

@@ -14,7 +14,13 @@ const done = (child: ReturnType<typeof spawn>) =>
   });
 // [DX-SCALE1] Why: keep raw traces losslessly compressed after the exact stack has drained. Rejected: discarding a raw file on compressor exit alone or deleting the control's baseline inputs.
 export async function compressTraces(directory: string) {
-  const seals = [];
+  const seals: {
+    file: string;
+    bytes: number;
+    sha256: string;
+    compressedBytes: number;
+    compressedSha256: string;
+  }[] = [];
   if (!fs.existsSync(directory)) return seals;
   for (const rel of fs.readdirSync(directory, { recursive: true, encoding: "utf8" }).sort()) {
     const file = path.join(directory, rel),

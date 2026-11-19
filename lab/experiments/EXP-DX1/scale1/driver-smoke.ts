@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import { releaseDeepStart } from "../../../bench/lib/deep-profile.ts";
 import { stageReplay } from "./source.ts";
 // [DX-SCALE1] Why: exercise the actual NS entry point, native replica, durable feed and oracle barrier before booking a timed arm. Rejected: treating in-process fixture success as a server run.
 const dir = path.resolve(process.argv[2] ?? ""),
@@ -107,12 +108,26 @@ try {
       return [`s${i}`, ready];
     }),
   );
-  const start = Date.now() + 3000;
+  const start = Date.now() + 15000;
   fs.writeFileSync(
     path.join(barrier, "go.tmp"),
     JSON.stringify({ scopes, slot, nonce, source, start }),
   );
   fs.renameSync(path.join(barrier, "go.tmp"), path.join(barrier, "go.json"));
+  while (![0, 1].every((i) => fs.existsSync(path.join(barrier, `s${i}.armed.json`)))) {
+    assert(
+      Date.now() < start - 250 &&
+        clients.every((c) => c.exitCode === null && c.signalCode === null),
+    );
+    await sleep(50);
+  }
+  releaseDeepStart(
+    barrier,
+    [0, 1].map(
+      (i) => JSON.parse(fs.readFileSync(path.join(barrier, `s${i}.ready.json`), "utf8")).identity,
+    ),
+    start,
+  );
   const codes = await Promise.race([
     Promise.all(endings),
     sleep(360000, undefined, { ref: false }).then(() => {
