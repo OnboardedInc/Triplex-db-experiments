@@ -125,6 +125,7 @@ d9d77b22cca53ddff41bcbe07be7e70b62660b5fc9880e85294cb66bc3c8a73f  p3-census-thin
 70eafa03d982fa5146a44f606a69baec126575bb471683f9034dc8d638a42316  p3-census-thin-b/replay-0/oracle-expected.json
 e9abb16af733d6e1285cf03ddbd5a7ba69d4f729aedebeca433e5da6b156308e  p3-census-thin-b/result.json
 1658e8db4a1db87b4bd78143521c20d574d8df015ca1cdf0b19e0fcc910948ae  p3-checks/census-full-b.json
+a736928dcf23c1fe446bd1180f87877034d2c6b6bebf380608d2f69497047d3e  p3-checks/evicted-id-check.log
 05ac68e1a89658ae04d9b77af31e5386a11fb01c8b3d450939e74e275af8c122  p3-checks/final-focused.log
 9882072c11ae192596daf3a23ea96505ed85bb579ac6cb32f48093abac402b8c  p3-checks/final-types.log
 0b20a8d214e3900096616143c06856150eb8c5c119c1379a85e9c74ddd51c7be  p3-checks/formatter-stack-control.log
@@ -141,6 +142,7 @@ a2650f2305a2278060ba5eccfde5dc61025a345622d3db4043724ec6abf59ded  p3-checks/p3-c
 9e3bce56e3c3019e54a8edcd5818ced3e77dcf339349010c0a473dcf4f952dee  p3-checks/p3-demand-deep-b-manager.log
 66e1e1209ea71a23e9e6dd6d1eddfe42108a81b1ae06b8a462b2f1edbba6e763  p3-checks/p3-idle-b-manager.log
 1af4a8c8f45815d467fcda10bb16e0bb06985c8aa5d370d31969a28355fbebb2  p3-checks/pack.log
+f40da14a19d8988d1f51d1129f8f73385597cae692a4e7580562823778ad99f2  p3-checks/pins-2319.json
 c67bea0664c10b8eb44cf0ee46b2024616b08eadcfd4ed193a4aa40f7137628c  p3-checks/pins.json
 8b8c180ec29c9909984c4dcf1c17956613929e2fe600178aec8e0d765d6b9908  p3-checks/published-datomic.log
 324d26c128c9d68f05da835ef46349c3c8ddff8fb82d8e45a89c8492a4eb1813  p3-checks/refreshed-focus-2313.log

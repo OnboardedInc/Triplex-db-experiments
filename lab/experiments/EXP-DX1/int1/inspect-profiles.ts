@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { gunzipSync } from "node:zlib";
 import { canonical } from "../../../bench/lib/w0-world.ts";
 import { parseHistogram } from "./gateway-profile.ts";
@@ -29,7 +30,23 @@ export function inspectProfiles(dir: string) {
     assert.equal(proof.binding,binding);
     assert.deepEqual(proof.scopes,[account.scope]);
     assert.deepEqual(proof.checks,result.seedFeedChecks);
-    assert(proof.checks[0].facts === account.facts && proof.checks[0].count > 0 && proof.wallMs > 0);
+    assert(proof.wallMs > 0);
+    const ledger = new DatabaseSync(path.join(dir, "population.sqlite"), { readOnly: true });
+    try {
+      const accountBinding = sha(binding + "/" + account.scope + "/" + account.first);
+      const seal = createHash("sha256");
+      let facts = 0, count = 0;
+      // [DX-THIN1] Why: reconstruct the verifier's observed feed digest from the separately sealed original receipts. Rejected: accepting two matching totals copied from the same replay.
+      for (const tx of ledger.prepare("SELECT s.*,t.cmd,t.instant FROM seed_feed s JOIN tx t ON t.p=s.p ORDER BY s.p").iterate()) {
+        assert.equal(tx.p, ++count);
+        assert(Number(tx.changes) > 0 && /^[a-f0-9]{64}$/.test(String(tx.hash)));
+        seal.update(JSON.stringify([accountBinding,tx.p,tx.txid,tx.cmd,tx.instant,tx.hash]) + "\n");
+        facts += Number(tx.changes);
+      }
+      assert(count > 0 && facts === account.facts);
+      assert.equal(count, ledger.prepare("SELECT count(DISTINCT born) AS n FROM people").get()!.n);
+      assert.deepEqual(proof.checks, [{ count, facts, sha256: seal.digest("hex") }]);
+    } finally { ledger.close(); }
     stages.push(["after-seed-feed-proof","after-seed-feed-proof"]);
   }
   for (const [stage, name] of stages) {

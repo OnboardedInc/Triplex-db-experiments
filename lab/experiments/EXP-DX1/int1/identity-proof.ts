@@ -37,8 +37,9 @@ export async function proveEvictedIdentities(attempt: string) {
     assert(row && row.id === id && row.value_string === name);
     const first = await reader.readDemandWorld(scopeKey, name, basis(1));
     assert(first && first.triples.length === 1 && first.triples[0]!.id === id);
-    const conflict = async (position: number) => {
-      const command = attempt + "-reuse-" + position;
+    const conflict = async (position: number, probe: string) => {
+      const command = attempt + "-reuse-" + probe;
+      let observed: { status: number; code: string } | undefined;
       await assert.rejects(
         writer.transact(db, {
           sourceK: position,
@@ -54,14 +55,18 @@ export async function proveEvictedIdentities(attempt: string) {
               tx_id: "_tx/" + String(position + 1).padStart(26, "0") },
           ],
         }),
-        (error: unknown) =>
-          error instanceof DatomicHttpError &&
-          error.status === 400 &&
-          error.code === "IdentityConflict",
+        (error: unknown) => {
+          if (!(error instanceof DatomicHttpError) || error.status !== 400 || error.code !== "IdentityConflict") return false;
+          observed = { status: error.status, code: error.code };
+          return true;
+        },
       );
-      assert.equal(await handle.currentPosition(), position);
+      assert(observed);
+      const headAfter = await handle.currentPosition();
+      assert.equal(headAfter, position);
+      return { probe, command, position, headAfter, ...observed };
     };
-    await conflict(1);
+    const checks = [await conflict(1, "live")];
     const retired = await handle.transact([{ op: "retract", id }], {
       commandId: attempt + "-retired",
       actor: "seed",
@@ -96,6 +101,8 @@ export async function proveEvictedIdentities(attempt: string) {
     }
     const after = await stats();
     assert(after.every((s, i) => s.idMemo.evictions > before[i].idMemo.evictions));
+    // [DX-THIN1] Why: try the retired ID while it is still evicted. Rejected: a historical read could repopulate the memo before a faulty cache-based uniqueness check.
+    checks.push(await conflict(head, "evicted"));
     // [DX-THIN1] Why: both caches have actually evicted the original positive lookup. Rejected: testing a never-used ID or inferring the conflict from the configured limit.
     for (const client of clients) {
       const old = await client.readDemandWorld(scopeKey, name, basis(1));
@@ -103,7 +110,7 @@ export async function proveEvictedIdentities(attempt: string) {
       assert.deepEqual(old?.triples, first.triples);
       assert.deepEqual(current?.triples, []);
     }
-    await conflict(head);
+    checks.push(await conflict(head, "readmitted"));
     return {
       scope,
       db,
@@ -112,7 +119,8 @@ export async function proveEvictedIdentities(attempt: string) {
       retirementTx: retired.value.txId,
       head,
       otherEntities: bound + 1,
-      outcomes: ["IdentityConflict", "IdentityConflict"],
+      checks,
+      outcomes: checks.map(c => c.code),
       evictions: after.map((s, i) => s.idMemo.evictions - before[i].idMemo.evictions),
     };
   } finally {
