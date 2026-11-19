@@ -27,7 +27,7 @@ test("seven declarations equal every independently evaluated before and after ro
   const s = "pl:edge",
     d = s + "/doc:x",
     e = s + "/doc:y",
-    f = (entity: string, a: string, v: W0.Fact["v"]) => ({ e: entity, a, v, tx: 1 });
+    f = (entity: string, a: string, v: W0.Fact["v"]): W0.Fact => ({ e: entity, a, v, tx: 1 });
   worlds.push({
     subject: s,
     facts: [

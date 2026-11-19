@@ -32,12 +32,18 @@ export class LookupIndex {
   readonly locations = new Map<string, Location>();
   readonly postings = new Map<string, Posting[]>();
   readonly censusHash: string;
+  readonly census: readonly string[];
+  readonly basis: W0.Basis;
+  readonly available: Set<W0.RuleId>;
   constructor(
-    readonly census: readonly string[],
+    census: readonly string[],
     worlds: readonly W0.World[],
-    readonly basis: W0.Basis,
-    readonly available = allIndexes(),
+    basis: W0.Basis,
+    available = allIndexes(),
   ) {
+    this.census = census;
+    this.basis = basis;
+    this.available = available;
     this.censusHash = checkCensus(
       census,
       worlds.map((w) => w.subject),
