@@ -47,7 +47,13 @@ export class DeepAccount {
         });
       },
     };
-    return new Account(new Objects(bound, this.db.account), this.binding);
+    return new Account(
+      new Objects(bound, this.db.account),
+      this.binding,
+      undefined,
+      debt ? undefined : () => this.repair(),
+      !!debt,
+    );
   }
   async debt(p: number) {
     return (await this.db.many<Debt>(["deep-debt"], p)).get("deep-debt");
@@ -124,6 +130,7 @@ export class DeepAccount {
         const repaired = await this.repair();
         return { receipt: receiptOfRecord(receipt.value), repaired, duplicate: true };
       }
+      if (await this.control.settleFence(p)) continue;
       const pending = await this.debt(p);
       if (pending) {
         await this.repair();
@@ -148,6 +155,7 @@ export class DeepAccount {
           ],
           [
             { key: "head", cell: head },
+            { key: "fence", cell: undefined },
             { key: "deep-debt", cell: undefined },
             { key: k, cell: undefined },
           ],

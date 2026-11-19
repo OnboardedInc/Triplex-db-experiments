@@ -31,6 +31,10 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
           "secrets",
           "store",
           "schedules.test",
+          "service",
+          "measure-lock",
+          "fence.test",
+          "delayed.test",
           "erasure.test",
           "recovery.test",
           ...(mode === "schedules"
@@ -42,6 +46,7 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
                   "screen",
                   "traffic",
                   "bench-rung",
+                  "loaded",
                   "page-control",
                   "v3",
                   ...(mode === "rungs" ? [] : ["deep", "server", "preflight", "full.test"]),

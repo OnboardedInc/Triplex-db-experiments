@@ -47,7 +47,9 @@ test("an unavailable protected index checks every person before ACK and rejects 
     ]);
     const before = await c.currentPosition();
     await assert.rejects(a.seal("bad", W0.R1), /W0.E_CARDINALITY/);
-    assert.equal(await c.currentPosition(), before);
+    const end = await c.currentPosition();
+    assert.deepEqual(await a.head(end), await a.head(before));
+    assert.equal((await db.many(["fence", "event:2"], end)).size, 0);
   } finally {
     await c.close();
   }

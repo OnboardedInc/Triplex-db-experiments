@@ -109,7 +109,7 @@ export function guardDelta(dir: string, binding: Identity, env: NodeJS.ProcessEn
       assert.equal(o.applied, o.notices);
       assert(
         o.position > 0 &&
-          o.writes === 4 &&
+          o.writes === 6 &&
           o.activationWorldPulls === 0 &&
           o.firstPoint &&
           o.rows >= o.people,

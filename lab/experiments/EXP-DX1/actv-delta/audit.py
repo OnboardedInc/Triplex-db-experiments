@@ -35,6 +35,22 @@ def run(op, x):
         assert x['seq']==len(history)
         history.append(x)
         return {'seq': x['seq'], 'release':w0.Release(x['doc']).hash}
+    if op == 'answers':
+        n=x['seq']; ev=history[n]; basis=ev['basis']; rel=w0.Release(ev['doc']); result=[]
+        for s in x['subjects']:
+            facts=list(worlds[s])
+            for d in history[1:n+1]:
+                if d.get('subject')!=s:continue
+                if 'worldAfter' in d:
+                    assert d['worldAfter']['subject']==s
+                    facts=list(d['worldAfter']['facts'])
+                for e in d.get('edits',[]):
+                    if not e['from']<=basis['validTime']<e.get('until','z'):continue
+                    if not e.get('append'):facts=[f for f in facts if (f['e'],f['a'])!=(e['e'],e['a'])]
+                    facts.extend(dict(e=e['e'],a=e['a'],v=v,tx=d['basis']['tx']) for v in e['values'])
+            ix=w0.validate_world({'subject':s,'facts':facts},basis['tx'])
+            result.append([s,digest(w0.evaluate_indexed(ix,rel,basis['tx'],basis['validTime']))])
+        return result
     if op == 'read':
         result = []
         for s in x['subjects']:

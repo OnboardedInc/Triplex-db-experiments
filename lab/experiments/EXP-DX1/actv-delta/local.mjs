@@ -21,7 +21,7 @@ export async function local(opts, config, manager) {
   assert(
     process.platform === "darwin" && opts.holder === "DX-ACT2" && dockerArgs([])[1] === DOCKER_HOST,
   );
-  assert(["schedules", "price", "rungs", "controls", "preflight"].includes(opts.run));
+  assert(["schedules", "price", "rungs", "controls", "preflight", "loaded", "crash", "solo-check"].includes(opts.run));
   const dir = path.resolve(opts.out),
     nonce = randomUUID(),
     prefix = "tx2-dxdelta-" + nonce.slice(0, 8);

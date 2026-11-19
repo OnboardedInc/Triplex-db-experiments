@@ -240,6 +240,7 @@ test("two releases before draining, lost acknowledgements and restart at every d
           ...g.comp,
           transact: async (...args: Parameters<typeof g.comp.transact>) => {
             const r = await g.comp.transact(...args);
+            if (!String(args[1].commandId).includes("cmd:event:")) return r;
             assert(r.ok);
             lost = r.value.position;
             throw Error("lost ACK");

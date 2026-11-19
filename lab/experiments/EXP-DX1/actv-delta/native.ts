@@ -30,6 +30,8 @@ if (mode === "schedules" || mode === "rungs") {
   for (const [name, files] of [
     ["original", ["../act1/guard.test.ts", "../act1/page.test.ts"]],
     ["delta", ["schedules.test.ts"]],
+    ["fence", ["fence.test.ts"]],
+    ["delayed", ["delayed.test.ts"]],
     ["erasure", ["erasure.test.ts"]],
     ["recovery", ["recovery.test.ts"]],
   ] as const) {
@@ -52,7 +54,24 @@ if (mode === "schedules" || mode === "rungs") {
     }
     const tap = fs.readFileSync(out, "utf8");
     if (name === "original") checkSchedules(tap);
-    else if (name === "recovery")
+    else if (name === "fence" || name === "delayed") {
+      const expected =
+        name === "fence"
+          ? [
+              "a new process can finish an admitted release and a stale save cannot invalidate the seal",
+            ]
+          : [
+              "held pay change",
+              "first item after empty evaluation",
+              "equal transaction with earlier valid time",
+            ].map((s) => "account record / " + s);
+      assert.deepEqual(
+        [...tap.matchAll(/^ok \d+ - (.+)$/gm)].map((x) => x[1]),
+        expected,
+      );
+      for (const line of ["# pass " + expected.length, "# fail 0", "# skipped 0", "# cancelled 0"])
+        assert(tap.split("\n").includes(line));
+    } else if (name === "recovery")
       assert(
         tap.includes("ok 1 - missing derived page") &&
           tap.split("\n").includes("# pass 1") &&
