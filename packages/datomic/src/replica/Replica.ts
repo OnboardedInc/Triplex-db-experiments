@@ -100,6 +100,8 @@ export class Replica {
   // [DX-R3] Why: publish complete atomic cuts and old immutable buffers to optional read indexes.
   // Rejected: exposing the mutable entity Map (workers could observe half a journal).
   onUpdate: ((update: ReplicaUpdate) => void) | undefined;
+  onAdmission: ((position: number, entries: ReadonlyMap<string, PackedEntity>) => void) | undefined;
+  private applying = false;
   private entities = new OverlayTable(new Map<string, PackedEntity>());
   private baseImage: SharedIndexImage | undefined;
   private slabs = new Slabs();
@@ -132,8 +134,10 @@ export class Replica {
   constructor(
     readonly source: ReplicaSource,
     readonly validAt: number,
+    readonly population: "all" | "touched" = "all",
   ) {
     if (!Number.isFinite(validAt)) throw new TypeError("Explicit valid time required");
+    if (population !== "all" && population !== "touched") throw new TypeError("Unknown replica population");
   }
   // [DX-S5] Why: hand an already verified immutable image to a follower/read isolate without re-reading or duplicating its packed base.
   // Rejected: private-field access in the harness or a second 4.6 GB bootstrap for every reader worker.
@@ -264,6 +268,7 @@ export class Replica {
     into: Map<string, PackedEntity>,
     need: boolean,
     allowKnown = false,
+    validAt = this.validAt,
   ) {
     if (
       response.declined !== undefined ||
@@ -319,7 +324,7 @@ export class Replica {
     });
     const missing = new Set<string>();
     for (const id of received)
-      for (const r of unpackEntity(id, into.get(id)!, this.validAt))
+      for (const r of unpackEntity(id, into.get(id)!, validAt))
         if (r.value.type === "ref" && !received.has(r.value.value)) {
           // [DX-R2] Why: unchanged reference targets retain their exact prior rows; changed targets must be in this journal.
           // Rejected: a network refresh per journal or treating an unknown target as empty.
@@ -344,6 +349,8 @@ export class Replica {
         if (unsupported !== undefined) throw new ReplicaUnsupportedScope(unsupported);
         if (p === undefined && cut < this.watermark)
           throw new ReplicaInvalid("Rebuild head regressed");
+        if (this.population === "touched" && roots.length)
+          throw new ReplicaInvalid("A touched replica starts without roots");
         const unique = [...new Set(roots)];
         if (unique.length !== roots.length) throw new ReplicaInvalid("Duplicate bootstrap root");
         this.roots = unique;
@@ -369,6 +376,40 @@ export class Replica {
   }
   followOnce(waitMs = 0, through?: number): Promise<void> {
     return this.exclusive(() => this.applyFeed(waitMs, through));
+  }
+  async admit(root: string, p: number, validAt: number): Promise<boolean> {
+    position(p);
+    if (!Number.isFinite(validAt)) throw new TypeError("Explicit valid time required");
+    const table = this.entities, generation = this.captureEpoch;
+    // [DX-THIN1] Why: a long poll can overlap a real first read. A journal already selecting its hot subset cannot.
+    // Rejected: installing after that selection (the first write to a newly admitted entity could be missed).
+    const current = () => this.valid && !this.applying && this.watermark === p &&
+      this.entities === table && this.captureEpoch === generation;
+    if (this.population !== "touched" || !current()) return false;
+    const page = await this.source.page([root], { recordedPosition: p, validAt });
+    if (!current() || page.declined !== undefined) return false;
+    const loaded = new Map<string, PackedEntity>();
+    await this.acceptPage(page, [root], p, loaded, false, false, validAt);
+    if (!current()) return false;
+    const reachable = new Map<string, PackedEntity>();
+    walk(loaded, validAt, root, reachable);
+    const closure = page.closures[0]![1];
+    if (reachable.size !== loaded.size || closure.length !== reachable.size || closure.some(id => !reachable.has(id)))
+      throw new ReplicaInvalid("Admission closure mismatch");
+    for (const [id, entity] of loaded) {
+      const present = table.get(id);
+      if (!present) continue;
+      if (present.revision !== entity.revision || !equalBytes(present, entity))
+        return this.invalidate(new ReplicaInvalid("Admission disagrees with resident cut"));
+      loaded.delete(id);
+    }
+    try {
+      for (const [id, entity] of loaded) table.set(id, entity);
+      if (loaded.size) this.onAdmission?.(p, loaded);
+      return true;
+    } catch (error) {
+      return this.invalidate(error);
+    }
   }
   private async applyFeed(waitMs: number, through?: number): Promise<void> {
     return tracedRequest("internal", "replica.follow", {}, () =>
@@ -398,12 +439,16 @@ export class Replica {
       if (!page.transactions.length && page.head > this.watermark)
         throw new ReplicaInvalid("Feed omitted journals");
       if (!page.transactions.length) await new Promise((resolve) => setTimeout(resolve, 1));
+      this.applying = true;
       for (const tx of page.transactions) {
         if (through !== undefined && tx.position > through) break;
         // [DX-R2] Why: inline replacements bind complete changed rows and new references to this exact journal cut.
         // Rejected: current-head reads; legacy sources retain the old exact-position need path.
         const changes = new Map<string, PackedEntity>();
-        if (tx.replacement !== undefined)
+        if (this.population === "touched") {
+          const resident = tx.entities.filter((id: string) => this.entities.has(id));
+          if (resident.length) await this.load(resident, tx.position, changes, true);
+        } else if (tx.replacement !== undefined)
           await this.acceptPage(
             tx.replacement,
             tx.entities,
@@ -431,6 +476,8 @@ export class Replica {
       }
     } catch (e) {
       this.invalidate(e);
+    } finally {
+      this.applying = false;
     }
   }
   caughtUpTo(p: number): Promise<void> {
