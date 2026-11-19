@@ -26,7 +26,13 @@ fs.writeFileSync(
 const activation = process.argv.includes("--activation"),
   zero = process.argv.includes("--zero");
 assert(!(activation && zero));
-const clients = [0, 1].map((account) => {
+const topology = process.argv.includes("--pooled")
+  ? "pooled"
+  : process.argv.includes("--separate")
+    ? "separate"
+    : null;
+const physical = topology === "pooled" ? [0] : [0, 1];
+const clients = physical.map((account) => {
   const out = path.join(dir, `s${account}`);
   fs.mkdirSync(out);
   const fd = fs.openSync(path.join(out, "log"), "wx");
@@ -43,7 +49,10 @@ const clients = [0, 1].map((account) => {
       "--profile",
       "deep-smoke",
       "--rung",
-      "deep-smoke-40",
+      topology ? "tenant-smoke-" + (topology === "pooled" ? 8 : 4) : "deep-smoke-40",
+      ...(topology
+        ? ["--tenant-study", "smoke", "--tenant-topology", topology, "--oracle-rate", "0.2"]
+        : []),
       "--deep-account",
       String(account),
       "--deep-nonce",
@@ -94,7 +103,7 @@ const endings = clients.map(
 );
 try {
   const limit = Date.now() + 360000;
-  while (![0, 1].every((i) => fs.existsSync(path.join(barrier, `s${i}.ready.json`)))) {
+  while (!physical.every((i) => fs.existsSync(path.join(barrier, `s${i}.ready.json`)))) {
     assert(
       Date.now() < limit && clients.every((c) => c.exitCode === null && c.signalCode === null),
       "An NS client failed before the start barrier",
@@ -102,7 +111,7 @@ try {
     await sleep(250);
   }
   const scopes = Object.fromEntries(
-    [0, 1].map((i) => {
+    physical.map((i) => {
       const { identity, ...ready } = JSON.parse(
         fs.readFileSync(path.join(barrier, `s${i}.ready.json`), "utf8"),
       );
@@ -121,7 +130,7 @@ try {
     JSON.stringify({ scopes, slot, nonce, source, start }),
   );
   fs.renameSync(path.join(barrier, "go.tmp"), path.join(barrier, "go.json"));
-  while (![0, 1].every((i) => fs.existsSync(path.join(barrier, `s${i}.armed.json`)))) {
+  while (!physical.every((i) => fs.existsSync(path.join(barrier, `s${i}.armed.json`)))) {
     assert(
       Date.now() < start - 250 &&
         clients.every((c) => c.exitCode === null && c.signalCode === null),
@@ -130,7 +139,7 @@ try {
   }
   releaseDeepStart(
     barrier,
-    [0, 1].map(
+    physical.map(
       (i) => JSON.parse(fs.readFileSync(path.join(barrier, `s${i}.ready.json`), "utf8")).identity,
     ),
     start,
@@ -141,7 +150,7 @@ try {
       throw Error("Functional driver deadline exceeded");
     }),
   ]);
-  const reports = [0, 1].map((i) =>
+  const reports = physical.map((i) =>
     JSON.parse(fs.readFileSync(path.join(dir, `s${i}/ns-report.json`), "utf8")),
   );
   const summary = reports.map((r, i) => ({
@@ -162,7 +171,22 @@ try {
     errors: r.finalizationErrors,
   }));
   fs.writeFileSync(path.join(dir, "scope-checks.json"), JSON.stringify(summary, null, 2));
-  assert.deepEqual(codes, [0, 0]);
+  assert.deepEqual(
+    codes,
+    physical.map(() => 0),
+  );
+  if (topology)
+    for (const r of reports) {
+      assert(
+        r.deep.crossAccount.proof.total === (topology === "pooled" ? 8 : 4) &&
+          r.deep.crossAccount.proof.crossAccountSingleRequest === (topology === "pooled") &&
+          r.deep.tenantObservationsSha256,
+      );
+      assert.deepEqual(
+        r.deep.crossAccount.seedProjection,
+        r.deep.crossAccount.proof.receiptProjection,
+      );
+    }
   if (activation)
     for (const r of reports)
       assert(

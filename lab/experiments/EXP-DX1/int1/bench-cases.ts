@@ -132,7 +132,7 @@ export async function verifyCase(
   stack: any,
   cpus: { sender: string; readers: string },
 ) {
-  const { W0, canonical, sha256 } = await import("../../../bench/lib/w0-world.ts");
+  const { W0, canonical, sha256, V_W0 } = await import("../../../bench/lib/w0-world.ts");
   const { eadRelease } = await import("../../../bench/lib/w0-selector.ts");
   const { compareOracleOutput } = await import("../../../bench/lib/oracle.ts");
   const { readOracleOutput } = await import("../../../bench/lib/oracle-output.ts");
@@ -173,10 +173,38 @@ export async function verifyCase(
   assert.equal(new Set(r.accounts.map((a: any) => a.scope)).size, spec.scopes);
   assert.equal(r.activation.length, 2 * spec.accounts);
   const { smallPeople } = await import("../scale1/small-plan.ts");
-  const { deepPopulation } = await import("../../../bench/lib/deep-world.ts");
+  const { tenantFacts, keyFor } = await import("../scale1/tenants.ts");
   const sizes = Array.from({ length: spec.accounts }, (_, n) =>
     spec.accounts === 1 ? spec.size : smallPeople(n),
   );
+  assert.equal(r.membership.length, spec.accounts === 1 ? 0 : spec.scopes);
+  if (spec.accounts > 1) {
+    const combined = Object.assign({}, ...r.membership.map((x: any) => x.counts));
+    assert.deepEqual(combined, Object.fromEntries(sizes.map((size, n) => [keyFor(n), size])));
+    assert.deepEqual(
+      new Set(r.membership.map((x: any) => x.scope)),
+      new Set(r.accounts.map((a: any) => a.scope)),
+    );
+    for (const m of r.membership) {
+      assert(
+        m.total === Object.values(m.counts).reduce((a: number, b) => a + Number(b), 0) &&
+          m.basis.validAt === V_W0 &&
+          Number.isSafeInteger(m.basis.position),
+      );
+      assert.equal(
+        m.receiptProjection.rows,
+        Object.values(m.counts).reduce(
+          (s: number, n) => s + Number(n) + Math.ceil(Number(n) / 256) + 1,
+          0,
+        ),
+      );
+      const logicalMembers = createHash("sha256");
+      for (const [key, people] of Object.entries(m.counts))
+        logicalMembers.update(key).update(Buffer.alloc(Number(people), 1));
+      assert.equal(logicalMembers.digest("hex"), m.ordered);
+      assert.match(m.receiptProjection.sha256Xor, /^[a-f0-9]{64}$/);
+    }
+  }
   const rows = [];
   for (const [n, a] of r.accounts.entries()) {
     const scopeName = spec.accounts === 1 ? "population" : "account" + (spec.scopes === 1 ? 0 : n);
@@ -186,7 +214,25 @@ export async function verifyCase(
       sizes.slice(0, n).reduce((a, b) => a + b, 0),
     );
     assert.equal(a.people, sizes[n]);
-    assert.equal(a.facts, spec.accounts === 1 ? a.people * 8 : deepPopulation(a.people).facts);
+    if (spec.accounts > 1) {
+      assert.equal(a.accountKey, keyFor(n));
+      const { seedFacts } = await import("./account.ts");
+      const tenant = { index: n, key: keyFor(n), first: a.first, people: a.people },
+        expected = createHash("sha256");
+      for (const active of [true, false])
+        for (let local = 0; local < a.people; local++) {
+          if ((local % 50 === 0) !== active) continue;
+          const id = a.first + local;
+          expected.update(JSON.stringify([id, seedFacts("deep", id, a.first, tenant)]) + "\n");
+        }
+      assert.equal(a.seedIntent, expected.digest("hex"));
+    }
+    assert.equal(
+      a.facts,
+      spec.accounts === 1
+        ? a.people * 8
+        : tenantFacts([{ index: n, key: keyFor(n), first: a.first, people: a.people }]),
+    );
     assert.equal(a.active, a.people / 50);
     assert.equal(a.ryow, a.active);
     assert(
@@ -233,6 +279,8 @@ export async function verifyCase(
     }
     rows.push({
       first: a.first,
+      key: a.accountKey,
+      seedIntent: a.seedIntent,
       people: a.people,
       active: a.active,
       facts: a.facts,
@@ -289,6 +337,7 @@ export async function verifyCase(
     slot: tag,
     people: sizes.reduce((a, b) => a + b, 0),
     physicalScopes: spec.scopes,
+    membership: r.membership,
     logicalAccounts: spec.accounts,
     seedPipelineMs: r.seedPipelineMs,
     seedAckMs: r.seedAckMs,

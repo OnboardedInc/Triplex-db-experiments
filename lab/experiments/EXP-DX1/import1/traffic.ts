@@ -3,6 +3,8 @@ import { fork } from "node:child_process";
 import { DatabaseSync } from "node:sqlite";
 import { setTimeout as delay } from "node:timers/promises";
 import { join } from "node:path";
+import { inspect } from "node:util";
+import { receiptOfRecord } from "../../../bench/lib/seed.ts";
 import { buildTraceCommand, type SubjectState } from "../../../bench/lib/commands.ts";
 import { deepOwnFacts, deepShape } from "../../../bench/lib/deep-world.ts";
 import { ids, SEED_VALID_FROM, type Fact } from "../../../bench/lib/world.ts";
@@ -66,8 +68,8 @@ export async function serveTraffic(s: TrafficSpec) {
               .filter(
                 (e) =>
                   e.subject % s.scopes === s.index &&
-                  e.atMs >= s.offset - 5000 &&
-                  e.atMs < s.offset + s.smallWindow + 3000,
+                  e.atMs >= s.offset &&
+                  e.atMs < s.offset + s.smallWindow,
               )
               .map((e) => e.subject),
             s.index,
@@ -97,10 +99,38 @@ export async function serveTraffic(s: TrafficSpec) {
     const flush = async () => {
       if (!batch.length) return;
       const id = s.tag + "/seed/" + seedFacts;
-      const ack = await t.transact(batch, { commandId: id, actor: "live-seed" });
-      assert(ack.ok);
-      assert.equal(ack.value.triples.length, batch.length);
-      for (const [j, a] of ack.value.triples.entries()) {
+      const meta = { commandId: id, actor: "live-seed", correlationId: sha(bytes(batch)) };
+      const submit = async () => {
+        for (let attempt = 1; ; attempt++) {
+          const result = await t.transact(batch, meta);
+          if (result.ok) return result.value;
+          const detail = inspect(result.error, { depth: 4, maxArrayLength: 3 }).slice(0, 1400);
+          console.error(
+            JSON.stringify({
+              stage: "seed",
+              scope: s.scope,
+              id,
+              facts: batch.length,
+              attempt,
+              tag: result.tag,
+              detail,
+            }),
+          );
+          // [DX-ACT1] Why: an intermittent seed response must be resolved at its original command before retry. Rejected: treating a failed ACK as proof that the target never committed.
+          const prior = await t.transactionByCommand(id);
+          if (!prior.ok) throw Error("Seed receipt lookup failed: " + prior.tag + " / " + detail);
+          if (prior.value) {
+            assert.equal(prior.value.correlationId, meta.correlationId);
+            assert.equal(prior.value.commandId, id);
+            return receiptOfRecord(prior.value);
+          }
+          if (attempt === 3) throw Error("Seed could not commit " + id + ": " + detail);
+          await delay(100 * attempt);
+        }
+      };
+      const ack = await submit();
+      assert.equal(ack.triples.length, batch.length);
+      for (const [j, a] of ack.triples.entries()) {
         const op = batch[j];
         assert.deepEqual([a.entityId, a.attribute, a.value], [op.entityId, op.attribute, op.value]);
         const i = Number(a.entityId.split(":")[1]);
@@ -120,13 +150,13 @@ export async function serveTraffic(s: TrafficSpec) {
           } as SubjectState);
       }
       seedFacts += batch.length;
-      head = ack.value.position;
+      head = ack.position;
       batch = [];
     };
     for (const i of roster) {
       const a = deepOwnFacts(i);
       assert.equal(a.length, deepShape(i).facts);
-      if (batch.length + a.length > 2000) await flush();
+      if (batch.length + a.length > (s.full ? 2000 : 384)) await flush();
       batch.push(
         ...a.map((f) => ({
           op: "assert",

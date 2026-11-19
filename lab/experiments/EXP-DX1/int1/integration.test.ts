@@ -5,12 +5,13 @@ import path from "node:path";
 import test from "node:test";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
-import { Account, policyId, seedFacts } from "./account.ts";
+import { Account, policyId, seedFacts, verifyTenants } from "./account.ts";
 import { activate, eadRelease } from "./activation.ts";
 import { DeepProjectionIndex } from "../../../bench/lib/deep-projection-index.ts";
 import { policyWorld } from "../../../bench/lib/deep-activation.ts";
 import { memoryComposition } from "../../../bench/lib/memory.ts";
 import { W0, V_W0, canonical } from "../../../bench/lib/w0-world.ts";
+import { keyFor } from "../scale1/tenants.ts";
 import { smallPeople } from "../scale1/small-plan.ts";
 import { cases, verifyPages, verifyLatencies } from "./bench-cases.ts";
 import { regularDeepProof } from "./receipt-proof.ts";
@@ -122,6 +123,8 @@ test("eight deep accounts keep identical original intents, roster, oracle decisi
           4,
           new DatabaseSync(":memory:"),
           pooled ? accounts[0]?.cursor : undefined,
+          { index: n, key: keyFor(n), first: n * 4, people: 4 },
+          pooled ? accounts[0]?.membership : undefined,
         );
         accounts.push(a);
         await a.seed([0, 1, 2, 3].map((i) => i + n * 4));
@@ -165,9 +168,16 @@ test("eight deep accounts keep identical original intents, roster, oracle decisi
           values.push(d.logical);
           a.head = await a.comp.currentPosition();
         }
-        out.push([a.first, a.roster(), values]);
+        assert.match(a.seedIntent!, /^[0-9a-f]{64}$/);
+        out.push([a.first, a.seedIntent, a.roster(), values]);
       }
       assert.equal(handles.length, pooled ? 1 : 8);
+      const membership = await verifyTenants(accounts);
+      assert.equal(membership.length, handles.length);
+      assert.equal(
+        membership.reduce((n, a) => n + a.total, 0),
+        32,
+      );
       return out;
     } finally {
       for (const a of accounts) a.db.close();
@@ -193,4 +203,22 @@ test("the physical plan freezes the same 29,000 people in both 100-account place
       [29000, 100],
     ],
   );
+});
+
+test("SCALE1 selects a nonzero tenant crossing the guarded page boundary without cold source pulls", async () => {
+  const dir = tmp(),
+    comp = await memoryComposition("datomic", "ordinary-tenant-" + randomUUID());
+  try {
+    const result = await regularDeepProof(
+      { ...comp, name: "reach-touched" },
+      path.join(dir, "tenant"),
+      true,
+    );
+    assert.equal(result.pages, 2);
+    assert.equal(result.firstPerson, 254);
+    assert.equal(result.guardComparisons, 12);
+  } finally {
+    await comp.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

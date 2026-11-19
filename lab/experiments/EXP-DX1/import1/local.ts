@@ -8,6 +8,8 @@ const dir = process.env.DX_IMPORT_EVIDENCE!,
   p = "lab/experiments/EXP-DX1/import1/",
   mode = process.argv[2];
 assert(dir && ["--proof", "--curve", "--reverse"].includes(mode!));
+const point = process.argv[3];
+if (point !== undefined) assert(mode !== "--proof" && /^[0-3]$/.test(point));
 const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trim();
 const head = git("rev-parse", "HEAD"),
   ownerFile = process.env.TRIPLEX_LAB_SLOT_OWNER!,
@@ -56,6 +58,7 @@ const attempt = {
   image: JSON.parse(config.toString()).lanes.datomic.imageId,
   source: sha(bytes(pins)),
   mode,
+  ...(point === undefined ? {} : { point: Number(point) }),
 };
 const put = (f: string, data: unknown) =>
   writeFileSync(join(dir, f), bytes(data) + "\n", { flag: "wx" });
@@ -81,6 +84,7 @@ if (mode === "--proof") {
     "1",
     "3600",
     ...(mode === "--reverse" ? ["--control-first"] : []),
+    ...(point === undefined ? [] : ["--profile", point]),
   ]);
 assert.equal(git("rev-parse", "HEAD"), head);
 assert.equal(sha(readFileSync(ownerFile)), attempt.owner);

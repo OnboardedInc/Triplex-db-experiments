@@ -16,8 +16,9 @@ import { V_W0, W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { measurementWindow } from "../thin1/measure.ts";
 import { startReader, processSize } from "./reader.ts";
-import { Account, rootOf, digest, type Shape } from "./account.ts";
+import { Account, rootOf, digest, verifyTenants, type Shape } from "./account.ts";
 import { activate, eadRelease } from "./activation.ts";
+import { keyFor } from "../scale1/tenants.ts";
 import { smallPeople } from "../scale1/small-plan.ts";
 import { deepShape } from "../../../bench/lib/deep-world.ts";
 import { pageNamespace } from "../../../bench/lib/w0-page-outbox.ts";
@@ -51,8 +52,7 @@ const paths = git(
   "--exclude-standard",
   "--",
   "lab/experiments/EXP-DX1/int1",
-  "lab/experiments/EXP-DX1/scale1/small-plan.ts",
-  "lab/experiments/EXP-DX1/scale1/small-pins.json",
+  "lab/experiments/EXP-DX1/scale1",
   "lab/experiments/EXP-DX1/act1",
   "lab/world/W0/cases",
   "lab/experiments/EXP-DX1/thin1",
@@ -131,7 +131,14 @@ const quant = (s: number[]) => {
     p99: a[Math.ceil(0.99 * a.length) - 1],
   };
 };
-async function open(name: string, shape: Shape, count: number, first = 0, pooled?: Account) {
+async function open(
+  name: string,
+  shape: Shape,
+  count: number,
+  first = 0,
+  pooled?: Account,
+  tenantIndex?: number,
+) {
   const scope = pooled?.comp.scopeName ?? "int1-" + attempt + "-" + name;
   const comp = pooled?.comp ?? (await openComposition("reach", "datomic", scope));
   if (!pooled) {
@@ -147,6 +154,10 @@ async function open(name: string, shape: Shape, count: number, first = 0, pooled
     count,
     new DatabaseSync(path.join(dir!, name + ".sqlite")),
     pooled?.cursor,
+    tenantIndex === undefined
+      ? undefined
+      : { index: tenantIndex, key: keyFor(tenantIndex), first, people: count },
+    pooled?.membership,
   );
   accounts.push(a);
   return a;
@@ -284,6 +295,8 @@ async function placementProof() {
           4,
           new DatabaseSync(path.join(dir!, key + ".sqlite")),
           shared?.cursor,
+          { index: n, key: keyFor(n), first: n * 4, people: 4 },
+          shared?.membership,
         );
         logical.push(a);
         await a.seed(Array.from({ length: 4 }, (_, j) => a.first + j));
@@ -308,19 +321,32 @@ async function placementProof() {
         outputs.push({
           first: a.first,
           roster: a.roster(),
+          key: a.tenant!.key,
+          seedIntent: a.seedIntent,
           scope: a.comp.scopeName,
           releases,
           replay: replay(a, placement + "-" + n),
         });
       }
       assert.equal(scopes.size, placement === "pooled" ? 1 : 8);
-      arms.push({ placement, scopes: scopes.size, accounts: outputs });
+      arms.push({
+        placement,
+        scopes: scopes.size,
+        accounts: outputs,
+        membership: await verifyTenants(logical),
+      });
     } finally {
       for (const a of logical) a.db.close();
     }
   }
   const signatures = arms.map((arm) =>
-    arm.accounts.map((a) => [a.first, a.roster, a.releases.map((r) => r.logical)]),
+    arm.accounts.map((a) => [
+      a.first,
+      a.key,
+      a.seedIntent,
+      a.roster,
+      a.releases.map((r) => r.logical),
+    ]),
   );
   assert.deepEqual(signatures[0], signatures[1]);
   return arms;
@@ -354,6 +380,7 @@ async function trial() {
         people,
         first,
         mode === "int1-pooled" ? accounts[0] : undefined,
+        n,
       );
       first += people;
     }
@@ -392,7 +419,7 @@ async function trial() {
   }
   await caughtUp();
   const before = await phase("after-activity");
-  let sender, regularDeep, placements;
+  let sender, regularDeep, regularTenant, placements;
   if (mode === "int1-proof") {
     const proofs = await import("./receipt-proof.ts");
     sender = await proofs.receiptProof(accounts[1]!, dir!);
@@ -405,6 +432,20 @@ async function trial() {
       regularDeep = await proofs.regularDeepProof(regular, path.join(dir!, "regular-deep"));
     } finally {
       await regular.close();
+    }
+    const tenant = await openComposition(
+      "reach-touched",
+      "datomic",
+      "int1-" + attempt + "-tenant-release",
+    );
+    try {
+      regularTenant = await proofs.regularDeepProof(
+        tenant,
+        path.join(dir!, "regular-tenant"),
+        true,
+      );
+    } finally {
+      await tenant.close();
     }
   }
 
@@ -546,6 +587,8 @@ async function trial() {
       first: a.first,
       people: a.count,
       facts: a.facts,
+      accountKey: a.tenant?.key,
+      seedIntent: a.seedIntent,
       active: Math.ceil(a.count / 50),
       reads: a.reads,
       ryow: a.ryow,
@@ -554,7 +597,9 @@ async function trial() {
     })),
     activation,
     sender,
+    membership: await verifyTenants(accounts),
     regularDeep,
+    regularTenant,
     placements,
     schedules,
     moving,

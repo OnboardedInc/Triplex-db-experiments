@@ -138,3 +138,21 @@ test("the dedicated assignment binds machine, delivery and active governor", () 
   assert.throws(() => dedicatedHost(a, "c".repeat(64), a.deliveredSha256, ["performance"], "1"));
   assert.throws(() => dedicatedHost(a, a.machineIdSha256, a.deliveredSha256, ["powersave"], "1"));
 });
+
+test("a receipt-only zero arm cannot shrink the loaded ledger below the observed reader volume", () => {
+  const gib = 1024 ** 3,
+    pilot = {
+      people: 10000,
+      facts: 1604464,
+      allocatedBytes: gib,
+      driverPeakBytes: 3 * gib,
+      seedDriverPeakBytes: gib,
+      sharedPeakBytes: 8 * gib,
+      spillBytes: 16 * 1024 ** 2,
+    };
+  const host = { memory: 92 * gib, disk: 800 * gib };
+  assert.equal(capacity(10000, 1, host, pilot, "reader").spillPer, 64 * gib);
+  const small = capacity(290, 100, host, pilot, "small");
+  assert.equal(small.sentinelSpill, 32 * gib);
+  assert.equal(small.liveDisk - small.seedDisk, 99 * small.spillPer + small.sentinelSpill);
+});

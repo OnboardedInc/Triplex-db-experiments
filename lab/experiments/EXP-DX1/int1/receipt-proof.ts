@@ -8,16 +8,21 @@ import { V_W0, canonical } from "../../../bench/lib/w0-world.ts";
 import type { Basis, CompositionHandle } from "../../../bench/lib/composition.ts";
 import { Account, rootOf, seedFacts } from "./account.ts";
 import { DeepProjectionIndex } from "../../../bench/lib/deep-projection-index.ts";
+import { keyFor } from "../scale1/tenants.ts";
 import { DeepActivation, policyWorld } from "../../../bench/lib/deep-activation.ts";
 
 // [DX-INT1] Why: run SCALE1's ordinary activation entry on certified transaction-feed data and compare both published cuts to its full-world Python oracle.
 // Rejected: proving only the population experiment's separate paged workload.
-export async function regularDeepProof(comp: CompositionHandle, dir: string) {
+export async function regularDeepProof(comp: CompositionHandle, dir: string, scoped = false) {
   assert.equal(await comp.currentPosition(), 0);
   fs.mkdirSync(dir);
   const size = 6;
+  const tenant = scoped ? { index: 1, key: keyFor(1), first: 254, people: size } : undefined;
+  const firstPerson = tenant?.first ?? 0;
   const seed = await comp.transact(
-    Array.from({ length: size }, (_, i) => seedFacts("deep", i)).flat(),
+    Array.from({ length: size }, (_, i) =>
+      seedFacts("deep", firstPerson + i, firstPerson, tenant),
+    ).flat(),
     {
       actor: "import",
       commandId: "regular-deep-seed",
@@ -34,7 +39,7 @@ export async function regularDeepProof(comp: CompositionHandle, dir: string) {
       return comp.sweepPage(...args);
     },
   };
-  const act = new DeepActivation(dir, size, scope, "ead90");
+  const act = new DeepActivation(dir, size, scope, firstPerson, "ead90", tenant);
   const imported = await act.finishImport(handle, { position: cut, validAt: seed.value.instant });
   assert(
     imported &&
@@ -58,6 +63,8 @@ export async function regularDeepProof(comp: CompositionHandle, dir: string) {
   return {
     scope,
     seed: cut,
+    firstPerson,
+    pages: first.coverage.pages,
     imported,
     sourcePulls: sources.length,
     selections: [first.selection, second.selection],

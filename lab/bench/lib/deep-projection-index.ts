@@ -4,7 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { seedOps } from "./commands.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { deepOwnFacts } from "./deep-world.ts";
-import { ids, SEED_VALID_FROM, subjectOf } from "./world.ts";
+import { ids, SEED_VALID_FROM, subjectOf, type Fact } from "./world.ts";
 import { canonical, W0, type WorldRow, type PositionBasis } from "./w0-world.ts";
 const hash = (value: unknown) => createHash("sha256").update(canonical(value)).digest("hex");
 const key = (c: any) =>
@@ -23,7 +23,14 @@ export class DeepProjectionIndex {
     );
   }
   private readonly project: Project;
-  constructor(file: string, binding: string, project: Project) {
+  private readonly seedFor: (person: number) => Fact[] | undefined;
+  constructor(
+    file: string,
+    binding: string,
+    project: Project,
+    seedFor: (person: number) => Fact[] | undefined = deepOwnFacts,
+  ) {
+    this.seedFor = seedFor;
     this.binding = binding;
     this.project = project;
     this.db = new DatabaseSync(file);
@@ -80,7 +87,9 @@ export class DeepProjectionIndex {
                 .changes
             )
               continue;
-            const expected = seedOps(deepOwnFacts(i));
+            const seed = this.seedFor(i);
+            if (!seed) continue;
+            const expected = seedOps(seed);
             let policy: string | null = null;
             if (
               rows.length === expected.length &&

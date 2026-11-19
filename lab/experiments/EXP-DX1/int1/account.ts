@@ -15,13 +15,19 @@ import { policyWorld } from "../../../bench/lib/deep-activation.ts";
 import { deepOwnFacts } from "../../../bench/lib/deep-world.ts";
 import { W0, V_W0, worldOf, type WorldRow } from "../../../bench/lib/w0-world.ts";
 import { ids, SEED_VALID_FROM, subjectOf } from "../../../bench/lib/world.ts";
+import { tenantRows, tenantQueries, type Account as TenantAccount } from "../scale1/tenants.ts";
+import { MembershipProof } from "../scale1/tenant-proof.ts";
 import { intent, person } from "../thin1/population.ts";
 export const digest = (s: string | Buffer) => createHash("sha256").update(s).digest("hex");
 export type Shape = "thin" | "deep";
 export const policyId = (i: number) => W0.placementId(i);
 export const rootOf = (shape: Shape, i: number) =>
   shape === "deep" ? ids.placement(i) : policyId(i);
-export function seedFacts(shape: Shape, i: number, first = 0) {
+export function seedFacts(shape: Shape, i: number, first = 0, tenant?: TenantAccount) {
+  if (tenant) {
+    assert(shape === "deep" && first === tenant.first);
+    return seedOps(tenantRows(tenant, i - first));
+  }
   if (shape === "deep") {
     const local = i - first,
       rows = seedOps(deepOwnFacts(local));
@@ -83,6 +89,12 @@ export class Account {
   readonly count: number;
   readonly db: DatabaseSync;
   readonly cursor: { position: number };
+  readonly tenant?: TenantAccount;
+  readonly membership?: MembershipProof;
+  private readonly seedInputs = createHash("sha256");
+  get seedIntent() {
+    return this.tenant ? this.seedInputs.copy().digest("hex") : undefined;
+  }
   constructor(
     comp: CompositionHandle,
     shape: Shape,
@@ -91,7 +103,12 @@ export class Account {
     count: number,
     db: DatabaseSync,
     cursor = { position: 0 },
+    tenant?: TenantAccount,
+    membership?: MembershipProof,
   ) {
+    this.tenant = tenant;
+    this.membership = tenant ? (membership ?? new MembershipProof()) : undefined;
+    if (tenant) assert(tenant.first === first && tenant.people === count && shape === "deep");
     this.comp = comp;
     this.shape = shape;
     this.binding = binding;
@@ -122,12 +139,15 @@ export class Account {
   }
   private original(i: number, rows: WorldRow[], p: number) {
     return this.shape === "deep"
-      ? policyWorld(i, rows, { position: p, validAt: V_W0 })
+      ? policyWorld(i, this.tenant ? rows.filter((r) => subjectOf(r.entityId) === i) : rows, {
+          position: p,
+          validAt: V_W0,
+        })
       : worldOf(policyId(i), rows);
   }
   async seed(members: number[]) {
     const started = performance.now();
-    const groups = members.map((i) => seedFacts(this.shape, i, this.first));
+    const groups = members.map((i) => seedFacts(this.shape, i, this.first, this.tenant));
     const { receipt, assigned, ops, tx } = await this.issue(groups.flat(), true);
     this.db.exec("BEGIN");
     try {
@@ -142,6 +162,7 @@ export class Account {
           }));
         // [DX-INT1] Why: certify complete ordered source assertions before persisting the policy projection. Unknown later writes require a pinned source read.
         // Rejected: rebuilding a cold person's entire closure in every reader at activation.
+        if (this.tenant) this.seedInputs.update(JSON.stringify([i, g]) + "\n");
         const certified =
           this.shape === "thin" &&
           answersOnly(
@@ -172,6 +193,7 @@ export class Account {
       this.db.exec("ROLLBACK");
       throw e;
     }
+    this.membership?.bind(receipt);
     this.facts += ops.length;
     this.seedWallMs += performance.now() - started;
   }
@@ -209,7 +231,11 @@ export class Account {
       .run(
         i,
         r.position,
-        JSON.stringify(ops.map((op, j) => ({ op, id: ids[j], instant: r.instant, txId: r.txId }))),
+        JSON.stringify(
+          ops
+            .map((op, j) => ({ op, id: ids[j], instant: r.instant, txId: r.txId }))
+            .filter((row) => !this.tenant || subjectOf(row.op.entityId) === i),
+        ),
       );
   }
   private async issue(ops: any[], seed: boolean) {
@@ -354,7 +380,7 @@ export class Account {
   oracleWorld(i: number, p: number) {
     const r = this.db.prepare("SELECT born,dirty FROM people WHERE i=?").get(i)!;
     const b = Number(r.born);
-    const rows: WorldRow[] = seedFacts(this.shape, i, this.first).map((op, j) => ({
+    const rows: WorldRow[] = seedFacts(this.shape, i, this.first, this.tenant).map((op, j) => ({
       ...op,
       id: "intent-" + j,
       position: b,
@@ -373,4 +399,32 @@ export class Account {
   async pinned(i: number, p: number, v = V_W0) {
     return this.comp.pull(rootOf(this.shape, i), { recordedPosition: p, validAt: v } as Basis);
   }
+}
+
+export async function verifyTenants(accounts: Account[]) {
+  const groups = new Map<CompositionHandle, Account[]>();
+  for (const a of accounts)
+    if (a.tenant) {
+      const group = groups.get(a.comp);
+      if (group) group.push(a);
+      else groups.set(a.comp, [a]);
+    }
+  const receipts = [];
+  for (const [comp, members] of groups) {
+    const head = await comp.currentPosition();
+    const tenantList = members.map((a) => a.tenant!);
+    const result = await tenantQueries(comp, tenantList, { position: head, validAt: V_W0 });
+    assert.deepEqual(result.receiptProjection, members[0]!.membership!.value());
+    const counts = Object.fromEntries(tenantList.map((a) => [a.key, a.people]));
+    assert.deepEqual(result.counts, counts);
+    receipts.push({
+      scope: comp.scopeName,
+      basis: result.basis,
+      counts,
+      total: result.total,
+      receiptProjection: result.receiptProjection,
+      ordered: result.membershipSha256,
+    });
+  }
+  return receipts;
 }

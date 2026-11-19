@@ -89,7 +89,9 @@ export class DeepSeedWitness {
     return { people, facts, position: this.previous, sha256 };
   }
 }
+import { tenantAccounts, type TenantSpec } from "../../experiments/EXP-DX1/scale1/tenants.ts";
 export interface DeepIdentity {
+  tenant?: TenantSpec;
   nonce: string;
   source: string;
   slot: string;
@@ -102,6 +104,11 @@ export function requireIdentity(id: DeepIdentity) {
   assert.match(id.source, /^[a-f0-9]{40}$/);
   assert.match(id.slot, /^tx2-dxscale1-[a-z0-9-]+$/);
   assert(["zero", "reader", "activation", "seed", "interference", "small"].includes(id.arm));
+  if (id.tenant) {
+    const a = tenantAccounts(id.tenant);
+    assert(id.tenant.physical === id.account && a.reduce((n, x) => n + x.people, 0) === id.people);
+    return;
+  }
   if (id.arm === "small") {
     assert(
       Number.isInteger(id.account) &&

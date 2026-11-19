@@ -10,6 +10,11 @@ import { pageWireState } from "./w0-page-check.ts";
 import { W0, canonical, type WorldRow, type PositionBasis } from "./w0-world.ts";
 import { ids, subjectOf } from "./world.ts";
 import { taskId } from "./deep-world.ts";
+import {
+  tenantRows,
+  tenantRowsId,
+  type Account as TenantAccount,
+} from "../../experiments/EXP-DX1/scale1/tenants.ts";
 import { DeepProjectionIndex } from "./deep-projection-index.ts";
 import { buildIndex, eadRelease, selectRelease, type SelectorCut } from "./w0-selector.ts";
 import { selectorOracle } from "./w0-selector-oracle.ts";
@@ -107,12 +112,20 @@ export class DeepActivation {
   private readonly subjects: number;
   private readonly run: string;
   private readonly nextRelease: W0.CompiledRelease;
+  private readonly firstSubject: number;
+  private readonly tenant?: TenantAccount;
   constructor(
     directory: string,
     people: number,
     run: string,
+    first: number | "standard" | "ead90" = 0,
     next: "standard" | "ead90" = "standard",
+    tenant?: TenantAccount,
   ) {
+    this.firstSubject = typeof first === "number" ? first : 0;
+    if (typeof first === "string") next = first;
+    this.tenant = tenant;
+    if (tenant) assert(tenant.first === this.firstSubject && tenant.people === people);
     this.nextRelease = next === "ead90" ? eadRelease() : W0.R2;
     this.directory = directory;
     this.subjects = people;
@@ -123,13 +136,43 @@ export class DeepActivation {
     const code = ["deep-activation", "deep-projection-index", "deep-world", "w0-selector"].map(
       (name) => hash(fs.readFileSync(new URL("./" + name + ".ts", import.meta.url), "utf8")),
     );
+    const tenant = this.tenant;
+    const schema = tenant
+      ? [
+          tenantRowsId,
+          tenant,
+          hash(
+            fs.readFileSync(
+              new URL("../../experiments/EXP-DX1/scale1/tenants.ts", import.meta.url),
+              "utf8",
+            ),
+          ),
+        ]
+      : "deep/1";
     const binding = hash(
-      canonical([this.run, comp.scopeName, comp.backend.url, "deep/1", ...code]),
+      canonical([
+        this.run,
+        comp.scopeName,
+        comp.backend.url,
+        this.firstSubject,
+        this.subjects,
+        schema,
+        ...code,
+      ]),
     );
+    // [DX-INT1] Why: a pooled release certifies only its account's owned facts; the tenant roster verifies durable catalog and shard assertions.
+    // Rejected: generating pooled task values from a global ordinal or including another account in the release.
+    const seedFor = tenant
+      ? (i: number) =>
+          i < tenant.first || i >= tenant.first + tenant.people
+            ? undefined
+            : tenantRows(tenant, i - tenant.first).filter((f) => subjectOf(f.e) === i)
+      : undefined;
     return new DeepProjectionIndex(
       path.join(this.directory, "deep-policy.sqlite"),
       binding,
       policyWorld,
+      seedFor,
     );
   }
   async finishImport(comp: CompositionHandle, cut: PositionBasis) {
@@ -196,7 +239,9 @@ export class DeepActivation {
       fd = fs.openSync(file, "wx"),
       sum = createHash("sha256");
     const records: W0.EvaluationRecord[] = [];
-    const roster = Array.from({ length: this.subjects }, (_, i) => W0.placementId(i));
+    const roster = Array.from({ length: this.subjects }, (_, i) =>
+      W0.placementId(this.firstSubject + i),
+    );
     const projection = this.projection(comp);
     const binding = projection?.binding;
     const selection = { full: 0, candidates: 0, excluded: 0 };
@@ -209,7 +254,10 @@ export class DeepActivation {
       // Rejected: substituting the narrow release in the frozen workload or warming a reader to evaluate a release.
       const width = projection ? 256 : pageSize;
       for (let n = 0; n < this.subjects; n += width) {
-        const group = Array.from({ length: Math.min(width, this.subjects - n) }, (_, j) => n + j);
+        const group = Array.from(
+          { length: Math.min(width, this.subjects - n) },
+          (_, j) => this.firstSubject + n + j,
+        );
         const lines: string[] = [];
         if (projection && binding) {
           const worlds = await projection.worlds(comp, group, basis);
@@ -247,7 +295,7 @@ export class DeepActivation {
             world: (id) => byId.get(id)!,
             onPage: (rows) => {
               for (const row of rows) {
-                const i = n + row.ordinal;
+                const i = this.firstSubject + n + row.ordinal;
                 assert.equal(row.subject, W0.placementId(i));
                 lines.push(
                   JSON.stringify([
@@ -312,7 +360,7 @@ export class DeepActivation {
     assert(
       coverage &&
         coverage.size === this.subjects &&
-        coverage.pages === Math.ceil(this.subjects / 256) &&
+        coverage.pages === new Set(roster.map((s) => pageAddress(s).page)).size &&
         coverage.roster === hash(canonical(roster)),
     );
     assert(
@@ -411,6 +459,8 @@ export class DeepActivation {
       for (const { subject, position } of r2.mutations) {
         assert(
           Number.isSafeInteger(subject) &&
+            subject >= this.firstSubject &&
+            subject < this.firstSubject + this.subjects &&
             Number.isSafeInteger(position) &&
             position > sourceCuts[1].position,
         );
@@ -448,7 +498,7 @@ export class DeepActivation {
       for (let n = 0; n < this.subjects; n += pageSize) {
         const group = Array.from(
           { length: Math.min(pageSize, this.subjects - n) },
-          (_, j) => n + j,
+          (_, j) => this.firstSubject + n + j,
         );
         const pages = await Promise.all(
           sourceCuts.map((c) =>
@@ -477,7 +527,7 @@ export class DeepActivation {
           group.map(async (i) => {
             const worlds = sourceCuts.map((c, k) => policyWorld(i, by[k]!.get(i) ?? [], c));
             for (let k = 0; k < 2; k++) {
-              const line = JSON.parse(logs[k]![i]!);
+              const line = JSON.parse(logs[k]![i - this.firstSubject]!);
               assert.equal(line[0], i);
               assert.equal(line[1], hash(canonical(worlds[k])));
             }
@@ -494,7 +544,7 @@ export class DeepActivation {
               });
               const { basis, subject, workItems, release: releaseHash } = JSON.parse(output);
               assert.equal(subject, W0.placementId(i));
-              assert.equal(JSON.parse(logs[k]![i]!)[2], hash(output));
+              assert.equal(JSON.parse(logs[k]![i - this.firstSubject]!)[2], hash(output));
               const published = JSON.parse(
                 await oracle.call("publish", {
                   state: previous,

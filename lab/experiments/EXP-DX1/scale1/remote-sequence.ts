@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -11,10 +12,12 @@ const exists = fs.existsSync;
 const clock = () => new Date().toISOString();
 type Step = {
   item: number;
+  layout?: "pooled" | "separate";
   mode: string;
   tag: string;
   source: string;
   baseline?: string;
+  seedImage?: string;
   sizing?: string;
   sizingChoices?: string[];
   when?: { tag: string; action: "live" | "seed-only" };
@@ -59,12 +62,14 @@ function identified(step: Step) {
   assert(["zero", "reader", "activation", "seed", "interference", "small"].includes(step.mode));
   for (const tag of [
     step.baseline,
+    step.seedImage,
     step.sizing,
     step.retryOf,
     step.when?.tag,
     ...(step.sizingChoices ?? []),
   ])
     if (tag) assert(safe(tag));
+  if (step.layout) assert(step.item >= 3 && ["pooled", "separate"].includes(step.layout));
   if (step.bootstrapCache) assert(sha(step.bootstrapCache));
 }
 async function prepare(step: Step) {
@@ -140,7 +145,9 @@ async function run(step: Step) {
     const sizing =
       step.sizing ?? step.sizingChoices?.find((t) => exists(path.join(root, t, "sizing.json")));
     const opts = [
+      ...(step.layout ? ["--account-layout", step.layout] : []),
       ...(step.baseline ? ["--baseline", step.baseline] : []),
+      ...(step.seedImage ? ["--seed-image", step.seedImage] : []),
       ...(sizing ? ["--sizing", sizing] : []),
     ];
     const args = [
@@ -171,7 +178,11 @@ async function run(step: Step) {
   }
   const a = read(attempt);
   assert(
-    a.item === step.item && a.mode === step.mode && a.source === step.source && a.tag === step.tag,
+    a.item === step.item &&
+      a.mode === step.mode &&
+      a.source === step.source &&
+      a.tag === step.tag &&
+      a.layout === step.layout,
   );
   state({ stage: "running", step, ceilingUTC: new Date(a.at + a.ceiling * 1000).toISOString() });
   await wait(
@@ -189,31 +200,105 @@ async function run(step: Step) {
       t.cleanup === true,
   );
   await wait(() => ["inactive", "failed"].includes(unitState(unit)), Date.now() + 180000);
-  const verified =
-    step.mode === "seed"
-      ? exists(path.join(base, "seed-summary.json")) || exists(path.join(base, "seed-disk.json"))
-      : t.scopeReports > 0 || exists(path.join(base, "database-limit.json"));
+  let verified = t.scopeReports === a.spec.scopes;
+  if (step.mode === "seed" && exists(path.join(base, "seed-disk.json"))) {
+    const d = read(path.join(base, "seed-disk.json")),
+      state = read(path.join(base, "partial.json"));
+    const actual = state.scopes ?? [];
+    const pins = read(
+      path.join(
+        root,
+        "build-" + a.source,
+        "repository/lab/experiments/EXP-DX1/scale1/profile.json",
+      ),
+    );
+    verified =
+      state.tag === a.tag &&
+      actual.length > 0 &&
+      actual.every((r: any) => {
+        if (!/^s[0-9]+$/.test(r.scope)) return false;
+        const seed = read(path.join(base, "transfer", r.scope, "seed-observed.json"));
+        return (
+          r.status === "SEEDED" &&
+          r.facts > 0 &&
+          r.facts === seed.seed.facts &&
+          seed.identity.source === a.source &&
+          seed.identity.nonce === a.nonce &&
+          seed.identity.slot === a.slot &&
+          seed.identity.account === Number(r.scope.slice(1)) &&
+          seed.seed.people === r.people &&
+          seed.seed.sha256 === pins.find((p: any) => p.people === r.people)?.population
+        );
+      }) &&
+      actual.reduce((n: number, r: any) => n + r.facts, 0) === d.facts &&
+      d.after.at >= a.at &&
+      d.after.at >= d.before.at;
+  }
+  if (exists(path.join(base, "database-limit.json"))) {
+    const r = read(path.join(base, "database-limit.json"));
+    verified =
+      a.item === 4 &&
+      r.source === a.source &&
+      r.slot === a.slot &&
+      r.nonce === a.nonce &&
+      r.at >= a.at &&
+      r.requested === 100 &&
+      r.opened === r.prior.length &&
+      r.opened < 100 &&
+      r.failedAccount === r.opened &&
+      r.error &&
+      r.operation &&
+      r.prior.every(
+        (d: any, i: number) =>
+          d.account === i &&
+          d.openedAt >= a.at &&
+          d.database ===
+            "s2-" +
+              Buffer.from(
+                JSON.stringify(["triplex-scope-v1", "test", "test", d.scope, 0]),
+              ).toString("base64url"),
+      );
+  }
   const summary = exists(path.join(base, "summary.json"))
     ? read(path.join(base, "summary.json"))
     : null;
   const correctness = summary
     ? summary.source === a.source &&
       summary.nonce === a.nonce &&
+      summary.slot === a.slot &&
       summary.scopeCount === a.spec.scopes &&
       summary.perScope.every((s: any) => {
         const o = s.observations;
+        assert(Number.isInteger(s.account) && s.account >= 0 && s.account < a.spec.scopes);
+        const bytes = fs.readFileSync(
+          path.join(base, "transfer", "s" + s.account, "ns-report.json"),
+        );
+        assert.equal(createHash("sha256").update(bytes).digest("hex"), s.hashes.report);
+        const run = JSON.parse(bytes.toString("utf8"));
         return (
+          run.status === "DONE" &&
+          !run.finalizationErrors?.length &&
+          !run.invalidReasons?.length &&
+          s.invalid.every(
+            (r: string) =>
+              r === "Attempt did not finish every check or a load generator saturated" &&
+              run.client?.invalid,
+          ) &&
           o.correctness.reads > 0 &&
           o.correctness.reads === o.correctness.correct &&
           !o.correctness.errors &&
           !o.correctness.violations &&
           o.oracle.status === "PASS" &&
           o.oracle.receiptConsistency === "PASS" &&
+          o.oracle.exitCode === 0 &&
+          o.oracle.mismatchCount === 0 &&
+          o.oracle.reads > 0 &&
+          o.oracle.reads === o.oracle.modelCorrectOnSameReads &&
           o.missing === 0 &&
           o.committed === o.primaries
         );
       })
-    : true;
+    : t.scopeReports === 0;
   return {
     success: t.service === "success" && verified && correctness,
     capacity: t.service === "capacity-refused",

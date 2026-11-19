@@ -24,6 +24,10 @@ import {
   interferencePhases,
   interferenceSeconds,
 } from "./interference.ts";
+import { checkImage } from "./seed-image.ts";
+import { tenantAccounts, tenantFacts, tenantScope } from "./tenants.ts";
+import { tenantPlan, tenantPhases, tenantWindows, tenantTraceId } from "./tenant-traffic.ts";
+import { compareTenants } from "./tenant-metrics.ts";
 import { smallTrace, smallId, smallSeconds, smallPhases, smallScope } from "./small-plan.ts";
 import { deepPopulation, DEEP_PROFILE } from "../../../bench/lib/deep-world.ts";
 
@@ -49,12 +53,16 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   assert.deepEqual(report.deep.seed, actualSeed.seed);
   const mix = id.arm === "interference",
     small = id.arm === "small";
-  const plan = small
-      ? smallTrace(id.account)
-      : mix
-        ? interferenceTrace(id.account)
-        : frozenDeep(id.account, id.people),
-    expectedCount = deepPopulation(id.people).facts;
+  const plan = id.tenant
+      ? tenantPlan(id.tenant, id.arm)
+      : small
+        ? smallTrace(id.account)
+        : mix
+          ? interferenceTrace(id.account)
+          : frozenDeep(id.account, id.people),
+    expectedCount = id.tenant
+      ? tenantFacts(tenantAccounts(id.tenant))
+      : deepPopulation(id.people).facts;
   assert.equal(report.deep.profile, DEEP_PROFILE);
   assert.equal(report.config.profile, "deep");
   assert.equal(report.config.receiptCapture, "replica-worker");
@@ -75,29 +83,36 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   ]);
   assert.equal(
     report.scope,
-    small
-      ? smallScope(id.nonce, id.account)
-      : `ns-datomic-deep${id.people === 10000 ? "10k" : "100k"}-deep-${id.nonce}-s${id.account}`,
+    id.tenant
+      ? (report.deep.restoredSeed?.origin.scope ?? tenantScope(id.tenant, id.nonce))
+      : small
+        ? smallScope(id.nonce, id.account)
+        : `ns-datomic-deep${id.people === 10000 ? "10k" : "100k"}-deep-${id.nonce}-s${id.account}`,
   );
   assert.equal(report.traceStartAbsMs, commonStart);
   assert.equal(report.verdictClock, VERDICT_CLOCK);
   assert.equal(
     report.verdictPlanId,
-    id.arm === "activation"
-      ? "deep-activation/1"
-      : small
-        ? smallId
-        : mix
-          ? interferenceId
-          : V3_PLAN_ID,
+    id.tenant
+      ? tenantTraceId + "/" + id.tenant.study
+      : id.arm === "activation"
+        ? "deep-activation/1"
+        : small
+          ? smallId
+          : mix
+            ? interferenceId
+            : V3_PLAN_ID,
   );
   for (const [file, hash] of Object.entries(report.benchSources))
     assert.equal(await fileHash(file), hash, `Harness source mismatch ${file}`);
   const hashes = Object.fromEntries(
     await Promise.all(Object.entries(files).map(async ([k, f]) => [k, await fileHash(f)])),
   );
-  const duration =
-    id.arm === "activation"
+  const duration = id.tenant
+    ? tenantWindows(id.tenant, id.arm).at(-1)!.pattern === "activation"
+      ? report.writer.offeredUntilTraceS
+      : (report.phases.at(-1).end - commonStart) / 1000
+    : id.arm === "activation"
       ? report.writer.offeredUntilTraceS
       : small
         ? smallSeconds
@@ -114,8 +129,26 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   const seenPositions = new Set<number>(),
     invalid: string[] =
       duration > 7200 ? ["Activation exceeded the frozen 7,200-second live traffic horizon"] : [];
-  const mixPhases = small ? smallPhases(id.account) : mix ? interferencePhases(id.account) : [];
-  if (mix || small)
+  const mixPhases = id.tenant
+    ? tenantPhases(id.tenant, id.arm)
+    : small
+      ? smallPhases(id.account)
+      : mix
+        ? interferencePhases(id.account)
+        : [];
+  if (id.tenant) {
+    for (const [i, p] of tenantWindows(id.tenant, id.arm).entries()) {
+      const x = report.phases[i];
+      assert(
+        x.name === p.name &&
+          x.readers === mixPhases[i]!.readers &&
+          x.start === commonStart + p.from * 1000 &&
+          (p.pattern === "activation"
+            ? x.end === report.deep.tenantActivation.endedAt && x.end <= x.start + p.seconds * 1000
+            : x.end === x.start + p.seconds * 1000),
+      );
+    }
+  } else if (mix || small)
     assert.deepEqual(
       report.phases.map((p: any) => [p.name, p.readers, p.start, p.end]),
       mixPhases.map((p) => [
@@ -154,6 +187,17 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       Math.abs(w.offsetMs - match.atMs) < 0.001 &&
         Math.abs(w.scheduledAt - commonStart - match.atMs) < 0.001,
     );
+    if (id.tenant) {
+      const e = match as import("./tenants.ts").TenantEvent;
+      assert(
+        w.tenant === e.tenant && w.localSeq === e.localSeq && w.localSubject === e.localSubject,
+      );
+      if (w.outcome === "committed" && !w.resend)
+        assert.equal(
+          w.commandId,
+          report.runTag + ":account-" + String(e.tenant + 1).padStart(3, "0") + ":t" + e.localSeq,
+        );
+    }
     if (w.resend) {
       resends++;
       continue;
@@ -177,7 +221,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
         values[level]!.push(ms);
         (values[`${level}/${factBand(w.facts)}`] ??= []).push(ms);
       }
-    if (mix || small)
+    if ((mix || small) && !id.tenant)
       for (const p of mixPhases)
         if (
           w.offsetMs >= (p.traceFromS + 2) * 1000 &&
@@ -279,6 +323,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   ])
     if (checks.find((b) => b.id === id)?.pass !== true) invalid.push(id);
   if (
+    !id.tenant &&
     id.arm === "activation" &&
     (report.deep.activationOracle?.checked !== id.people ||
       report.deep.activationOracle.guardComparisons !== 2 * id.people ||
@@ -298,11 +343,80 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       ))
   )
     invalid.push("Incomplete activation outbox verification");
+  if (report.deep.restoredSeed) {
+    assert.deepEqual(report.deep.restoredSeed.identity, id);
+    checkImage(report.deep.restoredSeed.origin, id);
+    assert.deepEqual(report.deep.seed, report.deep.restoredSeed.origin.seed);
+  }
+  let tenantEvidence;
+  if (id.tenant) {
+    const observed = path.join(dir, "tenant-observations.json"),
+      cross = report.deep.crossAccount;
+    hashes["tenant-observations.json"] = await fileHash(observed);
+    assert.equal(hashes["tenant-observations.json"], report.deep.tenantObservationsSha256);
+    tenantEvidence = JSON.parse(fs.readFileSync(observed, "utf8"));
+    assert.deepEqual(tenantEvidence.identity, id);
+    assert.deepEqual(cross.identity, id);
+    assert(
+      tenantEvidence.database === db &&
+        tenantEvidence.traceStart === commonStart &&
+        cross.database === db,
+    );
+    assert.deepEqual(cross.proof.receiptProjection, cross.seedProjection);
+    const actual = tenantAccounts(id.tenant);
+    assert.deepEqual(cross.proof.counts, Object.fromEntries(actual.map((a) => [a.key, a.people])));
+    assert(
+      cross.proof.total === id.people &&
+        cross.proof.crossAccountSingleRequest === actual.length > 1,
+    );
+    const rawCuts = fs
+      .readFileSync(path.join(dir, "ns-full-read-samples.jsonl"), "utf8")
+      .trimEnd()
+      .split("\n")
+      .map((l) => JSON.parse(l))
+      .filter((r) => r.source === "pinned-multi-root");
+    assert.deepEqual(
+      rawCuts.map((r) => r.subject),
+      actual.slice(0, 2).map((a) => a.first),
+    );
+    assert(
+      rawCuts.every(
+        (r) =>
+          r.basis.recordedPosition === cross.proof.basis.position &&
+          r.basis.validAt === cross.proof.basis.validAt,
+      ),
+    );
+    if (tenantEvidence.feed.missing || tenantEvidence.feed.matched !== committed)
+      invalid.push("Durable account feed did not match every acknowledged primary");
+    const target = actual.find((a) => a.index === 1);
+    if (
+      id.tenant.study === "interference" ||
+      (id.tenant.study === "million" && id.arm === "activation")
+    ) {
+      const done = report.deep.tenantActivation;
+      assert(
+        done?.identity?.source === id.source &&
+          done.identity.slot === id.slot &&
+          done.identity.nonce === id.nonce &&
+          done.account === "account-002",
+      );
+      if (
+        target &&
+        (report.deep.activationOracle?.checked !== target.people ||
+          report.deep.activationOracle?.guardComparisons !== 2 * target.people ||
+          report.deep.r2?.layout !== "page-cut" ||
+          done.cut.position !== report.deep.r2.cut.position ||
+          report.deep.r2?.mutations?.length !== Math.min(target.people, 10))
+      )
+        invalid.push("Incomplete tenant page-guard verification");
+    }
+  }
   return {
     id,
     scope: report.scope,
     interval: { from: commonStart, to: commonStart + duration * 1000 },
     hashes,
+    ...(tenantEvidence ? { tenantEvidence } : {}),
     offered,
     primaries,
     ackMinutes: [...ackMinutes],
@@ -350,7 +464,7 @@ export function cohort(
     ),
   );
   const invalid = scopes.flatMap((s) => s.invalid.map((r) => `s${s.id.account}: ${r}`));
-  if (first.id.arm === "activation") {
+  if (!first.id.tenant && first.id.arm === "activation") {
     const end = Math.max(...scopes.map((s) => s.report.deep.r2?.endedAt ?? Infinity));
     for (const s of scopes) {
       const traffic = s.report.deep.activationTraffic;
@@ -416,7 +530,7 @@ export function cohort(
           : value <= target,
     });
   }
-  if (first.id.arm === "activation") {
+  if (!first.id.tenant && first.id.arm === "activation") {
     bars.push(
       ratioBar(
         "NS-P5 writer commit p99 during sweep / presweep",
@@ -456,7 +570,7 @@ export function cohort(
     commitHistogram: compactCommit(s.values.all!),
     commit: commit(s.values.all!),
     interference:
-      first.id.arm === "interference" || first.id.arm === "small"
+      !first.id.tenant && (first.id.arm === "interference" || first.id.arm === "small")
         ? (first.id.arm === "small"
             ? smallPhases(s.id.account)
             : interferencePhases(s.id.account)
@@ -518,6 +632,22 @@ export function cohort(
   return {
     values: all,
     summary: {
+      ...(first.id.tenant
+        ? {
+            tenants: compareTenants(
+              scopes.map((s) => s.tenantEvidence),
+              tenantAccounts({ ...first.id.tenant, topology: "pooled", physical: 0 }),
+              reason,
+            ),
+            layout: first.id.tenant.topology,
+            sourceCuts: scopes.map((s) => ({
+              scope: s.scope,
+              database: s.report.deep.database,
+              basis: s.report.deep.crossAccount.proof.basis,
+              counts: s.report.deep.crossAccount.proof.counts,
+            })),
+          }
+        : {}),
       profile: DEEP_PROFILE,
       source: first.id.source,
       slot: first.id.slot,

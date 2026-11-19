@@ -1,4 +1,13 @@
 #!/usr/bin/env node
+import {seedAddress} from "./lib/world.ts";
+import {tenantAccounts, accountOfSubject as tenantOf, tenantQueries, tenantRows, tenantFacts, tenantRung, TenantWriters,type TenantSpec,type TenantEvent} from "../experiments/EXP-DX1/scale1/tenants.ts";
+import {tenantPlan,tenantPhases,tenantWindows,tenantReaders,tenantTraceId} from "../experiments/EXP-DX1/scale1/tenant-traffic.ts";
+import {checkImage} from "../experiments/EXP-DX1/scale1/seed-image.ts";
+import {MembershipProof,tenantRelease} from "../experiments/EXP-DX1/scale1/tenant-proof.ts";
+import {tenantFeedAt} from "../experiments/EXP-DX1/scale1/tenant-feed.ts";
+import {tenantObservations} from "../experiments/EXP-DX1/scale1/tenant-metrics.ts";
+import {TenantScheduler} from "../experiments/EXP-DX1/scale1/tenant-scheduler.ts";
+import type {SchedulerOptions} from "./lib/scheduler.ts";
 import { smallId, smallPhases, smallTrace, smallSeconds, smallPeople } from "../experiments/EXP-DX1/scale1/small-plan.ts";
 import { interferenceId, interferencePhases, interferenceTrace, interferenceSeconds } from "../experiments/EXP-DX1/scale1/interference.ts";
 import assert from "node:assert/strict";
@@ -117,8 +126,17 @@ const devSubjects = opt("subjects");
 if (!["xtdb", "qlever", "datomic"].includes(lane)) throw new Error("--lane xtdb|qlever|datomic is required");
 const deepSmoke = opt("profile") === "deep-smoke";
 const deep = opt("profile") === "deep" || deepSmoke;
+const tenantSpec: TenantSpec | undefined = opt("tenant-study") ? {
+  study: opt("tenant-study") as TenantSpec["study"],
+  topology: opt("tenant-topology") as TenantSpec["topology"],
+  physical: Number(opt("deep-account", "0")),
+} : undefined;
+if(tenantSpec)assert(deep&&["pooled","separate"].includes(tenantSpec.topology)&&["interference","small","million","smoke"].includes(tenantSpec.study));
+const tenants=tenantSpec?tenantAccounts(tenantSpec):undefined;
+const tenantMembership=tenants ? new MembershipProof() : undefined;
+const tenantSize = tenants?.reduce((people, account) => people + account.people, 0) ?? 0;
 const smallOnly = deep && flag("deep-small-scopes");
-const availableRungs: Record<string, number> = smallOnly ? {"deep-small-100":100,"deep-small-2000":2000} : deepSmoke ? { "deep-smoke-40": 40 } : deep ? DEEP_RUNGS : RUNGS;
+const availableRungs: Record<string, number> = tenantSpec ? { [tenantRung(tenantSpec)]: tenantSize } : smallOnly ? {"deep-small-100":100,"deep-small-2000":2000} : deepSmoke ? { "deep-smoke-40": 40 } : deep ? DEEP_RUNGS : RUNGS;
 if (!devSubjects && !Object.hasOwn(availableRungs, rung)) throw new Error(`--rung must be one of ${Object.keys(availableRungs).join("|")}`);
 const profile = opt("profile", "smoke") as Profile | "deep" | "deep-smoke";
 const activationOnly = deep && flag("deep-activation"), seedOnly = deep && flag("deep-seed-only");
@@ -126,18 +144,20 @@ const interferenceOnly = deep && flag("deep-interference");
 if (smallOnly && (activationOnly || seedOnly || interferenceOnly || deepSmoke || flag("zero-readers"))) throw Error("Small scope study requires its separate low-rate arm");
 if (interferenceOnly && (activationOnly || seedOnly || deepSmoke || flag("zero-readers") || rung !== "deep-10k")) throw Error("Interference requires the complete deep-10k cohort");
 if ((activationOnly || seedOnly) && (flag("zero-readers") || activationOnly && seedOnly)) throw Error("Choose one deep arm");
-const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly && !interferenceOnly && !smallOnly;
+const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly && !interferenceOnly && !smallOnly && !tenantSpec;
 if (!deep && !(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
 const rungSubjects = devSubjects ? Number(devSubjects) : availableRungs[rung]!;
 const deepAccount = Number(opt("deep-account", "0"));
-const deepId = deep ? { source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: smallOnly ? "small" : seedOnly ? "seed" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
+const deepId = deep ? { ...(tenantSpec?{tenant:tenantSpec}:{}), source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: tenantSpec?.study==="small" ? "small" : tenantSpec && ["smoke","interference"].includes(tenantSpec.study) ? "interference" : smallOnly ? "small" : seedOnly ? "seed" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
 if (deepId) {
   requireIdentity(deepId);
   if (!opt("deep-barrier") || devSubjects || lane !== "datomic" || opt("seed-manifest") || opt("round-plan") || opt("idle-gaps-ms") || opt("oracle-root") === undefined || opt("seed", deepSeed(deepAccount)) !== deepSeed(deepAccount)) throw Error("Deep requires its named Datomic rung, independent oracle, account seed, and start barrier");
 }
 if(smallOnly) assert.equal(rungSubjects,smallPeople(deepAccount));
-const deepPlan = smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined;
-const deepWriter = deepPlan ? new DeepWriter(deepPlan.activeSubjects) : undefined;
+const plannedTenants=tenantSpec&&deepId?tenantPlan(tenantSpec,deepId.arm):undefined;
+const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events) : undefined;
+const deepPlan = plannedTenants ?? (smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined);
+const deepWriter = deepPlan && !tenantSpec ? new DeepWriter(deepPlan.activeSubjects) : undefined;
 const deepWitness = deep ? new DeepSeedWitness() : undefined;
 const cells = deep ? deepCells(rungSubjects) : undefined;
 const output = path.resolve(opt("output") ?? "");
@@ -288,7 +308,9 @@ const runTag = deepId ? `deep-${deepId.nonce}-s${deepAccount}` : `ns${Date.now()
 const bulkManifest = config.seedManifest ? JSON.parse(fs.readFileSync(path.resolve(config.seedManifest), "utf8")) : null;
 if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane !== lane || bulkManifest.seed !== config.seed))
   throw new Error(`--seed-manifest is for ${bulkManifest.lane}/${bulkManifest.subjects} subjects/seed ${bulkManifest.seed}, not ${lane}/${rungSubjects}/${config.seed}`);
-const scopeName = bulkManifest ? bulkManifest.scope : `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`;
+const restoredSeed=opt("verified-seed-image")?JSON.parse(fs.readFileSync(opt("verified-seed-image")!,"utf8")):undefined;
+if(restoredSeed){assert(deepId && ["reader","activation"].includes(deepId.arm));assert.deepEqual(restoredSeed.identity,deepId);checkImage(restoredSeed.origin,deepId);}
+const scopeName = restoredSeed?.origin.scope ?? (bulkManifest ? bulkManifest.scope : `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`);
 const now = () => performance.timeOrigin + performance.now();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const logLines: string[] = [];
@@ -298,7 +320,8 @@ const log = (line: string) => {
   process.stderr.write(text + "\n");
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
-const BENCH_FILES = ["lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
+const tenantSources = tenantSpec ? fs.readdirSync(path.join(REPO,"lab/experiments/EXP-DX1/scale1")).filter(f=>(f.startsWith("tenant")&&!f.endsWith("test.ts"))||f==="seed-image.ts").map(f=>"lab/experiments/EXP-DX1/scale1/"+f) : [];
+const BENCH_FILES = [...tenantSources,"lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 if(smallOnly||interferenceOnly) {
   const names=smallOnly?["small-plan.ts","small-pins.json"]:["interference.ts","interference-pins.json"];
   BENCH_FILES.push(...names.map(n=>"lab/experiments/EXP-DX1/scale1/"+n));
@@ -310,13 +333,13 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
+  verdictPlanId: tenantSpec ? tenantTraceId+"/"+tenantSpec.study : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
   runTag,
   scope: scopeName,
-  ...(deepId ? { deep: { profile: DEEP_PROFILE, identity: deepId } } : {}),
+  ...(deepId ? { deep: { profile: DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
   generator: { traceSha256: sha256File(deep ? "lab/bench/lib/deep-trace.ts" : "lab/bench/lib/trace.ts"), worldSha256: sha256File(deep ? "lab/bench/lib/deep-world.ts" : "lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
@@ -468,9 +491,10 @@ const STRADDLE_HORIZON_MS = 250;
  * A subject with a frozen-trace command that is queued, in flight, or due within STRADDLE_HORIZON_MS, and that
  * command's seq; -1 when there is none (the reader then does an ordinary single pull). RULINGS Q31b.
  */
-function straddleCandidate(): { subject: number; seq: number } {
-  const keys = [...pendingBySubject.keys()];
-  const soon = upcomingJobs(STRADDLE_HORIZON_MS).filter((j) => j.ev.stream === "background" && !j.ev.resend);
+function straddleCandidate(range?: { first: number; people: number }): { subject: number; seq: number } {
+  const allowed = (s: number) => !range || s >= range.first && s < range.first + range.people;
+  const keys = [...pendingBySubject.keys()].filter(allowed);
+  const soon = upcomingJobs(STRADDLE_HORIZON_MS).filter((j) => allowed(j.key) && j.ev.stream === "background" && !j.ev.resend);
   return splitTarget(
     keys.map(subject => ({ subject, seq: pendingBySubject.get(subject)!.at(-1)! })).filter(candidate => config.splitTarget === "mixed" || !ackedBySeq.has(candidate.seq)),
     soon.map(job => ({ subject: job.key, seq: job.ev.seq })),
@@ -521,15 +545,17 @@ async function run() {
 
   // ---------------------------------------------------------------- seed (bulk lane)
   const pop = deep ? deepPopulation(rungSubjects) : populationCounts(rungSubjects);
-  if (deep) assert.equal(await writer.currentPosition(), 0, "Deep scope already contains data");
+  if(tenants){const n=tenantFacts(tenants);Object.assign(pop,{accounts:tenants.length,facts:n,seedAssertions:n,liveFactsAtSeedEnd:n});}
+  if (deep) assert.equal(await writer.currentPosition(), restoredSeed?.origin.seed.position??0, "Deep scope differs from its required starting position");
   const oracleSubjects = chooseSamples(rungSubjects, config.oracleSampleSubjects);
+  if(tenants) for(const a of tenants) oracleSubjects.push(a.first);
   if (deepPlan && cells) {
     for (const b of ["small", "medium", "large"] as const) for (const h of [3, 4, 6] as const) {
-      const subject = cells.pick(b, h, .5); if ((deepSmoke || smallOnly) && subject === null) continue; assert(subject !== null); oracleSubjects.push(subject);
+      const subject = cells.pick(b, h, .5); if ((deepSmoke || smallOnly || tenantSpec) && subject === null) continue; assert(subject !== null); oracleSubjects.push(subject);
     }
     for (const kind of ["person", "system", "agent", "runtime"]) {
       const event = deepPlan.events.find(e => e.kind === kind && (kind !== "person" || e.deep.closes));
-      if(smallOnly && !event)continue;
+      if((smallOnly || tenantSpec) && !event)continue;
       assert(event); oracleSubjects.push(event.subject);
     }
   }
@@ -548,10 +574,38 @@ async function run() {
   const seed = bulkManifest
     ? await seedFromManifest(bulkManifest, writer, log)
     : await seedRung({
-        comp: writer, deep: deepWitness, deepProgress: (subjects, facts, position) => atomicWrite(path.join(rawDir, "seed-progress.json"), JSON.stringify({ identity: deepId, scope: scopeName, subjects, facts, position, at: Date.now() })), onReceipt: (operations, receipt) => { if (!seedOnly) { modelWriter.bindReceipt(operations, receipt, "bulk-seed"); deepWriter?.bind(receipt); } }, subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
+        comp: writer,
+        deep: deepWitness,
+        restoredRunTag: restoredSeed?.origin.runTag,
+        ...(tenants ? {
+          deepRows: (i: number) => {
+            const account = tenantOf(tenants, i);
+            return tenantRows(account, i - account.first);
+          },
+          seedAddressOf: (i: number) => seedAddress(i - tenantOf(tenants, i).first),
+        } : {}),
+        deepProgress: (subjects, facts, position) => {
+          const row = JSON.stringify({ identity: deepId, scope: scopeName, subjects, facts, position, at: Date.now() });
+          if (tenants) fs.appendFileSync(path.join(rawDir, "seed-rate.jsonl"), row+"\n");
+          atomicWrite(path.join(rawDir, "seed-progress.json"), row);
+        },
+        onReceipt: (operations, receipt) => {
+          if (tenantSpec?.study === "million" && !restoredSeed) {
+            const sample = { identity: deepId, position: receipt.position, txId: receipt.txId, at: Date.now(), facts: receipt.triples.length };
+            fs.appendFileSync(path.join(rawDir, "seed-acks.jsonl"), JSON.stringify(sample)+"\n");
+          }
+          tenantMembership?.bind(receipt);
+          if (!seedOnly) {
+            modelWriter.bindReceipt(operations, receipt, "bulk-seed");
+            deepWriter?.bind(receipt);
+            tenantWriters?.bind(receipt);
+          }
+        },
+        subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
         recordSubjects: oracleRecordSet, recordAccounts: new Set([...oracleRecordSet].map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
       });
   report.seedPath = bulkManifest ? { kind: "bulk-index", manifest: config.seedManifest, nqSha256: bulkManifest.nq.sha256, quads: bulkManifest.nq.quads } : { kind: "transact" };
+  if(restoredSeed) {report.deep.restoredSeed=restoredSeed; report.seedPath={kind:"verified-seed-image",dumpSha256:restoredSeed.origin.dumpSha256,originalPosition:restoredSeed.origin.seed.position,commandReadbacks:seed.commands};}
   const N = seed.seededSubjects;
   const popN = deep ? (N === rungSubjects ? pop : deepPopulation(N)) : populationCounts(N, accounts);
   recordedCommands.push(...seed.recorded);
@@ -564,14 +618,17 @@ async function run() {
   save();
   if (deepPlan && deepWitness) {
     report.deep.seed = deepWitness.finish(rungSubjects, pop.seedAssertions, deepPlan.populationSha256);
+    if(restoredSeed) assert.deepEqual(report.deep.seed,restoredSeed.origin.seed);
     assert.equal(await writer.currentPosition(), report.deep.seed.position, "Seed head changed");
     report.deep.trace = deepPlan.sha256;
     save();
   }
-  const activation = activationOnly ? new DeepActivation(
-    rawDir, rungSubjects, runTag,
-    config.composition === "reach-touched" && process.env.DX_INT1_DEEP_RELEASE === "ead90" ? "ead90" : "standard",
-  ) : undefined;
+  const tenantReleasePhase = tenantSpec && (tenantSpec.study === "interference" || tenantSpec.study === "million" && activationOnly);
+  const releaseTarget = tenantReleasePhase ? tenants!.find(a => a.index === 1) : undefined;
+  const nextRelease = config.composition === "reach-touched" && process.env.DX_INT1_DEEP_RELEASE === "ead90" ? "ead90" : "standard";
+  const activation = releaseTarget
+    ? new DeepActivation(rawDir, releaseTarget.people, runTag + ":" + releaseTarget.key, releaseTarget.first, nextRelease, releaseTarget)
+    : activationOnly && !tenantSpec ? new DeepActivation(rawDir, rungSubjects, runTag, 0, nextRelease) : undefined;
   if (deepId) atomicWrite(path.join(rawDir, "seed-observed.json"), JSON.stringify({ identity: deepId, scope: scopeName, seed: report.deep.seed, trace: report.deep.trace }));
   if (seedOnly) {
     report.status = "SEEDED"; save(); samplersOn = false; clearInterval(eluTimer);
@@ -604,10 +661,11 @@ async function run() {
   const seriesParams: Partial<TraceParams> = pairPlan?.traceParams ?? {};
   const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
-  const traceDurationS = idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
+  const lastTenantWindow = tenantSpec && deepId ? tenantWindows(tenantSpec, deepId.arm).at(-1) : undefined;
+  const traceDurationS = lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
   if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: DEEP_RATE * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
   const events = deepPlan ? deepPlan.events : idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
-  if (config.receiptCapture === "replica-worker" &&
+  if (!tenantSpec && config.receiptCapture === "replica-worker" &&
       events.filter(e => e.stream === "background" && !e.resend && (!deep || e.atMs < V3_OFFER_SECONDS * 1000)).length > MAX_RECEIPT_CAPTURES)
     throw Error("Frozen trace exceeds fixed receipt-capture capacity");
   const resendSequences = new Set(events.filter(e=>e.resend).map(e=>e.seq));
@@ -674,7 +732,7 @@ async function run() {
       workerDiagnostics.push({ worker: w, t: msg.t, diagnostics: msg.diagnostics, memory: msg.memory, threadCpuMs: msg.threadCpuMs });
     }
     else if (msg.type === "sweep-done") sweepDone.get(msg.phase)?.(msg);
-    else if (msg.type === "split-request") worker.postMessage({ type: "split", token: msg.token, ...straddleCandidate(), assignedAt: now() });
+    else if (msg.type === "split-request") worker.postMessage({ type: "split", token: msg.token, ...straddleCandidate(msg.range), assignedAt: now() });
     else if (msg.type === "straddle") {
       const done = ackedBySeq.get(msg.seq);
       if (done) worker.postMessage({ type: "acked", token: msg.token, ...done });
@@ -703,7 +761,7 @@ async function run() {
     worker.on("exit", (code: number) => life.exit(code));
     const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (life.acknowledgeStop(), workerHttpCounts.push({ worker: w, counts: m.httpCounts }), readerFinalDiagnostics.push({ worker: w, diagnostics: m.diagnostics }), resolve())));
     await new Promise<void>((resolve, reject) => {
-      worker.on("message", (m: any) => { if (m.type === "ready") { if(smallOnly)(report.deep.readerIsolates??=[]).push({worker:w,heapUsed:m.memory.heapUsed,heapTotal:m.memory.heapTotal,external:m.memory.external,at:Date.now()}); resolve(); } else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
+      worker.on("message", (m: any) => { if (m.type === "ready") { if(smallOnly || tenantSpec?.study==="small")(report.deep.readerIsolates??=[]).push({worker:w,heapUsed:m.memory.heapUsed,heapTotal:m.memory.heapTotal,external:m.memory.external,at:Date.now()}); resolve(); } else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
       worker.on("error", reject);
     });
     unsubscribe?.();
@@ -719,7 +777,7 @@ async function run() {
   }
   // [DX-R3] Why: cloning/installing the full window is bootstrap work, not a multi-second sweep-time writer stall.
   // Rejected: starting worker 99 from runSweep while the frozen writer is already issuing commands.
-  const preparedSweeper = replicaHost && !deepSmoke && !activationOnly && !interferenceOnly && !smallOnly && !config.zeroReaders && !config.readerLadderOnly
+  const preparedSweeper = replicaHost && !tenantSpec && !deepSmoke && !activationOnly && !interferenceOnly && !smallOnly && !config.zeroReaders && !config.readerLadderOnly
     ? await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 }) : undefined;
   let basisCursor: number | null = null;
   const basisBroadcast = { messages: 0, ackItems: 0, ticks: 0, wall: new Histogram() };
@@ -749,6 +807,20 @@ async function run() {
   const basisTimer = sendBasis ? setInterval(broadcast, 100) : undefined;
   const setReaders = (phase: number, wantedReaders: number, mode: string) => {
     const readers = config.maxReaders === null ? wantedReaders : Math.min(wantedReaders, config.maxReaders);
+    if (tenants && tenantSpec && deepId && phase >= 0) {
+      const stage = tenantWindows(tenantSpec, deepId.arm)[phase]!;
+      const sets = Array.from({length: workers.length}, () => [] as {first:number; people:number; interReadMs:number; key:string}[]);
+      for (const a of tenants) {
+        const count = tenantReaders(stage, a.index);
+        for (let j = 0; j < count && workers.length; j++) {
+          const set = sets[(j + a.index) % workers.length]!;
+          set.push({first:a.first, people:a.people, key:a.key, interReadMs:stage.pattern==="low" || stage.pattern==="busy-low" && a.index!==0 ? 15000 : 0});
+        }
+      }
+      assert.equal(sets.reduce((sum,x)=>sum+x.length,0), readers);
+      workers.forEach((w,k)=>w.postMessage({type:"level", phase, mode, readers:sets[k]!.length, tenants:sets[k]}));
+      return;
+    }
     workers.forEach((w, k) => w.postMessage({ type: "level", phase, interReadMs:smallOnly && (deepAccount!==0 || phase===2) ? 15000:0, readers: Math.floor(readers / workers.length) + (k < readers % workers.length ? 1 : 0), mode }));
   };
 
@@ -796,7 +868,11 @@ async function run() {
     outcomes.set(okey(ev), out);
     if (ev.resend) return resend(job, out);
     const st = state.get(ev.subject)!;
-    const cmd = traceSync("driver.plan-and-encode-command", () => deepWriter && ev.stream === "background" ? deepWriter.build(runTag, ev as DeepEvent, st, job.scheduledAt) : buildTraceCommand({ runTag, event: ev, state: st, scheduledAbsMs: job.scheduledAt }));
+    const cmd = traceSync("driver.plan-and-encode-command", () => {
+      if (ev.stream === "background" && tenantWriters) return tenantWriters.build(runTag, ev as TenantEvent, st, job.scheduledAt);
+      if (ev.stream === "background" && deepWriter) return deepWriter.build(runTag, ev as DeepEvent, st, job.scheduledAt);
+      return buildTraceCommand({ runTag, event: ev, state: st, scheduledAbsMs: job.scheduledAt });
+    });
     if (jobsByCommandId.has(cmd.commandId)) throw Error("Duplicate active writer command identity");
     jobsByCommandId.set(cmd.commandId, job);
     out.commandId = cmd.commandId;
@@ -833,7 +909,7 @@ async function run() {
       out.path = "lost-ack-resolved";
       } : undefined,
       updateSubject: (receipt) => traceSync("driver.ack-and-subject-state", () => {
-    if (deepWriter && ev.stream === "background") deepWriter.bind(receipt);
+    if (ev.stream === "background") { deepWriter?.bind(receipt); tenantWriters?.bind(receipt); }
     const pl = ids.placement(ev.subject);
     st.stamp = cmd.newStamp;
     st.stampId = receipt.triples.find((t) => t.entityId === pl && t.attribute === ":placement/stamp")!.id;
@@ -892,7 +968,7 @@ async function run() {
     original.delete(job.ev.seq);
     resends.push({ seq: job.ev.seq, result: how, tag: res.ok ? null : res.tag });
   };
-  const scheduler = new OpenLoopScheduler<Job>(jobs, {
+  const schedulerOptions:SchedulerOptions<Job> = {
     offerTiming: config.schedulerTiming,
     observeQueue: process.env.TRIPLEX_TRACE_LEVEL !== "off" && process.env.TRIPLEX_TRACE_NODE !== "0",
     maxInFlight: config.writerMaxInFlight, deadlineMs: config.writerDeadlineMs, now, exec: execute,
@@ -937,7 +1013,7 @@ async function run() {
       out.traceId = trace?.traceId;
       out.queue = queue;
       if (r.expired) { out.outcome = "unaccounted"; out.reason = "not sent: writer deadline passed"; r.job.onDone?.(-1); }
-      const row = { stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
+      const row = { ...(tenantSpec&&ev.stream==="background"?{tenant:(ev as TenantEvent).tenant,localSeq:(ev as TenantEvent).localSeq,localSubject:(ev as TenantEvent).localSubject}:{}), stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
         ...(idle ? { idleGapMs: (ev as IdleEvent).idleGapMs, idleWarmup: (ev as IdleEvent).idleWarmup } : {}),
         offsetMs: r.job.scheduledAt - traceStart, scheduledAt: r.job.scheduledAt, offeredAt: r.offeredAt, startedAt: r.startedAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, waitMs: r.waitMs, expired: r.expired, ...out };
       if (!r.expired && Number.isFinite(row.ackPublishedAt)) Object.assign(row, commitClocks(row));
@@ -948,7 +1024,8 @@ async function run() {
       if (book && ev.stream === "background" && !ev.resend)
         book.recordCommand({ seq: ev.seq, scheduledAt: r.job.scheduledAt, finishedAt: !r.expired && out.outcome === "committed" ? verdictEnd(row) : r.finishedAt, latencyMs: !r.expired && out.outcome === "committed" ? verdictMs(row) : r.latencyMs, outcome: r.expired ? "expired" : out.outcome ?? "unaccounted" });
     },
-  });
+  };
+  const scheduler=tenants ? new TenantScheduler(jobs,schedulerOptions,tenants) : new OpenLoopScheduler<Job>(jobs,schedulerOptions);
   upcomingJobs = (horizonMs) => scheduler.upcoming(horizonMs);
   /** Overlay command (not background): offered now, joins the subject's serial queue, accounted by stream. */
   const overlay = (stream: string, subject: number, facts: number) =>
@@ -996,7 +1073,7 @@ async function run() {
   const deferredPublications = ["deferred","worker"].includes(publicationMode) && publicationWriter ? new DeferredPublications(publicationWriter, key => readProducerPublication(publicationReader, key)) : null;
   const publicationReader = publicationWriter ? openPublicationReader(path.join(rawDir, "publication.db")) : null;
   if (!pairPlan && lane === "datomic" && config.composition !== "memory") {
-    feed = new SideThread({dir:rawDir,epoch:`${scopeName}#0`,startAfter:seed.lastPosition,
+    feed = new SideThread({tenants,dir:rawDir,epoch:`${scopeName}#0`,startAfter:seed.lastPosition,
       lane,composition:config.composition,scope:scopeName,publication:!!publicationWriter,
       feedPeer: replicaHost ? config.replicaPeer : "writer",
       crashes:crashPlan,publicationWaitMs:config.publicationWaitMs,pollTimeoutMs:120_000},log);
@@ -1007,7 +1084,7 @@ async function run() {
     publicationWaitMs: lane === "datomic" ? config.publicationWaitMs : 0,
     // [DX-H3] Why: match the existing 120-second final feed catch-up budget. Rejected: 30 seconds (censored a small poll that the earlier run completed).
     pollTimeoutMs: lane === "datomic" ? 120_000 : 0,
-    dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,
+    tenants, dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,
     ...(publicationClock && publicationReader ? { measurement: { clock: publicationClock, records: publicationReader } } : {}),
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
     open: () => openComposition(config.composition, lane, scopeName), log, crashes: crashPlan,
@@ -1088,7 +1165,7 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
-  const plan: ReturnType<typeof nsPlan> = smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
+  const plan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
@@ -1180,11 +1257,12 @@ async function run() {
         modelWriter.bindReceipt(ops, receipt, actor);
         noteAck(receipt, -1, { seq: receipt.position, stream: "deep-activation", correction: false, correctionValidFrom: null, stamp: -1, subjects: [] });
       }, async cut => {
-        const people = chooseSamples(N, 10), positions = await Promise.all(people.map(i => overlay("p5-mutation", i, 6)));
+        const people = chooseSamples(releaseTarget?.people??N, 10).map(i=>i+(releaseTarget?.first??0)), positions = await Promise.all(people.map(i => overlay("p5-mutation", i, 6)));
         assert(positions.every(p => p > cut.position), "Missing post-capture mutation"); return people.map((subject,k) => ({ subject, position: positions[k] }));
       });
       save();
     }
+    else if (spec.name === "activation" && tenantReleasePhase) { /* [DX-SCALE1] Why: wait on the target’s measured release below. Rejected: holding neighbors for the whole ceiling. */ }
     else if (spec.sweep) entry.sweep = await runSweep(idx, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.seconds) {
       await sleep(Math.max(0, start + spec.seconds * 1000 - now()));
@@ -1193,8 +1271,9 @@ async function run() {
         while ((settledReadCounts.get(idx) ?? 0) < 10_000 && now() < deadline) await sleep(250);
       }
     }
+    if (spec.name==="activation" && tenantReleasePhase) report.deep.tenantActivation=await tenantRelease(path.resolve(opt("deep-barrier")!),deepId!,start,start+spec.seconds!*1000,report.deep.r2);
     entry.actualEnd = now();
-    entry.end = spec.traceFromS === undefined ? entry.actualEnd : start + spec.seconds! * 1000;
+    entry.end = spec.name==="activation" && tenantReleasePhase ? report.deep.tenantActivation.endedAt : spec.traceFromS === undefined ? entry.actualEnd : start + spec.seconds! * 1000;
     writerDelay.disable();
     entry.writerDiagnosticsEnd = datomicWriterDiagnostics();
     entry.writerThread = { elu: performance.eventLoopUtilization(writerEluStart).utilization, longestBlockedMs: writerDelay.max / 1e6, p99BlockedMs: writerDelay.percentile(99) / 1e6 };
@@ -1215,7 +1294,7 @@ async function run() {
     report.phases = phases;
     save();
   }
-  if (activation && deepId) {
+  if (activation && deepId && !tenantSpec) {
     report.deep.activationTraffic = await finishDeepActivations(
       path.resolve(opt("deep-barrier")!), deepId, report.deep.r2.endedAt, report.deep.r2.cut.position,
     );
@@ -1307,7 +1386,7 @@ async function run() {
   }
   lateGrowth.length = 0;
   deepStage("draining the feed");
-  const lastAcked = Math.max(acked.length ? Math.max(...acked.map((a) => a.position)) : seed.lastPosition, await writer.currentPosition().catch(() => 0));
+  const lastAcked = Math.max(acked.reduce((max,a)=>Math.max(max,a.position),seed.lastPosition), await writer.currentPosition().catch(() => 0));
   const feedDeadline = now() + 120_000;
   while (feed && !feedFailure && feed.checkpoint < lastAcked && now() < feedDeadline) await sleep(100);
   feedWind = feed ? { target: lastAcked, checkpointAtStop: feed.checkpoint, inFlightAtFeedTarget } : null;
@@ -1335,6 +1414,21 @@ async function run() {
     // [DX-SCALE1] Why: query the live source runtime at both exact cuts after the replica has closed. Rejected: using the auxiliary pull routed to the retired replica, or using generated rows as observed evidence.
     const cuts = [[seed.lastInstant, seed.lastPosition], [latestInstant, finalPosition]] as const;
     try {
+      if (tenants && tenantMembership) {
+        const basis={recordedAt:latestInstant,recordedPosition:finalPosition,validAt:Math.floor(now())};
+        const {worlds,...proof}=await tenantQueries(writer,tenants,{position:finalPosition,validAt:basis.validAt});
+        assert.deepEqual(proof.receiptProjection,tenantMembership.value(),"Membership at the named cut differs from actual seed receipts");
+        const normalize=(rows:unknown[][])=>rows.map(row=>JSON.stringify(row)).sort();
+        const witnesses=[];
+        for(const w of worlds) {
+          const single=await writer.pull(ids.placement(w.subject),basis);
+          const rows=w.rows.map(r=>[r.entityId,r.attribute,r.value,r.validFrom,r.validTo??null,r.id]);
+          assert.deepEqual(normalize(rows),normalize(single.triples.map(t=>[t.entityId,t.attribute,t.value,t.validFrom,t.validTo?._tag==="Some"?t.validTo.value:null,t.id])));
+          witnesses.push({subject:w.subject,account:w.account,rows:rows.length});
+          deepSamples.push({subject:w.subject,basis,observation:observe(single),rows,source:"pinned-multi-root"});
+        }
+        report.deep.crossAccount={identity:deepId,database:report.deep.database,proof,witnesses,seedProjection:tenantMembership.value()};
+      }
       for (const subject of oracleSet) for (const [recordedAt, recordedPosition] of cuts) {
         const basis = { recordedAt, recordedPosition, validAt: Math.floor(now()) };
         let timer: ReturnType<typeof setTimeout> | undefined;
@@ -1469,7 +1563,7 @@ async function run() {
     const verifier = await openComposition(config.composition, lane, scopeName);
     try { report.deep.activationOracle = await activation.verify(verifier, report.deep.r1, report.deep.r2); } finally { await verifier.close(); }
   }
-  const incompleteHistory = !deepSmoke && !interferenceOnly && !smallOnly && !activation && !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
+  const incompleteHistory = !tenantSpec && !deepSmoke && !interferenceOnly && !smallOnly && !activation && !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
   if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");
   if (finalizationErrors.length) {
     report.invalidReasons = [...(report.invalidReasons ?? []), ...finalizationErrors];
@@ -1760,6 +1854,21 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const background = writes.filter((w) => w.stream === "background" && !w.resend);
   const baseline = loadBaselineWrites();
   const lagRows = feed!.lags;
+  if(tenants && deepId) {
+    const source=JSON.stringify({route:"A0-control",dir:rawDir,epoch:scopeName+"#0"});
+    const view=tenantFeedAt(path.join(rawDir,"consumer.db"),tenants,source,feedWind!.target,report.deep.r1?.publicationPosition??report.deep.seed.position);
+    for (const [position, members] of view.matched) {
+      const ack = ackOf.get(position);
+      assert(ack, "Tenant feed contains an unknown source commit");
+      const subjects = (ack.subjects ?? [ack.subject]).filter(s => s >= 0);
+      assert.deepEqual([...members.keys()].sort((a,b)=>a-b), [...subjects].sort((a,b)=>a-b));
+    }
+    const observed=tenantObservations(tenants,ctx.phases,config.settleS*1000,fn=>records.forEach(fn),verdicts,writes,lagRows,view);
+    assert.equal(observed.feed.missing,0,"Account feed views did not cover exactly the committed subjects");
+    const bytes=JSON.stringify({identity:deepId,database:report.deep.database,traceStart:ctx.traceStart,...observed});
+    fs.writeFileSync(path.join(rawDir,"tenant-observations.json"),bytes,{flag:"wx"});
+    report.deep.tenantObservationsSha256 = sha256File(path.relative(REPO, path.join(rawDir, "tenant-observations.json")));
+  }
   const lastAckBefore = (subject: number, t: number): number | null => {
     let best: number | null = null;
     for (const c of model.commits.get(subject) ?? []) if (c.ackAtMs < t && (best === null || c.ackAtMs > best)) best = c.ackAtMs;
@@ -1828,7 +1937,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       split: { reads: splitReads, straddledATraceCommand: splitForced, straddledCorrect: splitCorrect },
       routing: { routes, languages, fallbackShare: reads ? (routes["fallback"] ?? 0) / reads : null, localShare: reads ? (routes["replica"] ?? 0) / reads : null, waitedReads: waited, watermarkWait: watermarkWait.summary(), watermarkWaitMs: 10 },
       buckets: Object.fromEntries(Object.entries(buckets).map(([k, h]) => [k, { ...h.summary(), meanBytes: bytesBy[k]!.sum / bytesBy[k]!.count }])),
-      writer: { commits: commits.length, commit: commit.summary(), maxLatencyMs: commits.length ? Math.max(...commits.map((c) => verdictMs(c))) : null, matchedZeroReader: matched },
+      writer: { commits: commits.length, commit: commit.summary(), maxLatencyMs: commits.length ? commits.reduce((high,c)=>Math.max(high,verdictMs(c)),0) : null, matchedZeroReader: matched },
       feedLag: lag.summary(),
       maintenanceEvents: maint, maintenanceWindows, maintenanceDensityMet: !w.invalid && maintenanceWindows.every(w => w.completed >= 1),
       watermarks: marks.length ? { source: { min: coordinate(Math.min(...marks)), max: coordinate(Math.max(...marks)) } } : null,
