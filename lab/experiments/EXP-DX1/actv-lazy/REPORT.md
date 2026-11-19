@@ -29,3 +29,4 @@ The service assigns live business slots from its trusted clock. An immediate rel
 Ordinary effects also prove a contiguous suffix of internal receipts after the last dispatcher checkpoint. An unclassified native writer causes deferral. An in-memory account checkpoint amortizes that verification and is rebuilt after restart.
 Ordinary-save pricing separately measures source save, projection and native cursor, and receiver service for eight real updates per rung. Python checks new, retired and unchanged item state for each, including the cost of acknowledging unchanged input.
 Ordinary pricing samples eight locations. Its independent reference carries both the corrected two-hop world and the prior durable item sequence into a subsequent save on the same location.
+The local raw samples include client CPU, HTTP request counts, size of the observed journal receipt and process memory. Server cgroup and database observations are separate.

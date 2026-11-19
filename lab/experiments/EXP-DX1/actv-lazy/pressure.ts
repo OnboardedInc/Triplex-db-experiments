@@ -3,11 +3,13 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { canonical, W0 } from "../../../bench/lib/w0-world.ts";
+import { W0 } from "../../../bench/lib/w0-world.ts";
+import { bytes } from "../import1/source.ts";
 import { Dispatcher } from "./dispatch.ts";
 import { activation, openStore, fact } from "./store.ts";
 import { rosterRoot, rosterSeal } from "./read.ts";
 const s = await openStore("lazy-fifo-" + randomUUID()),
+  liveWriter = await openStore(s.scope),
   d = new Dispatcher(s, "w0", 64),
   at = W0.POPULATION_VALID_TIME;
 const ids = Array.from({ length: 64 }, (_, i) => W0.placementId(i)),
@@ -46,12 +48,10 @@ try {
       throw Error("Missing native bulk transmission");
     }),
   ]);
-  const offered = performance.now(),
-    batch = await work,
-    release = performance.now();
-  assert(batch && batch.changedSubjects.length === 64);
   agent.addRequest = original;
-  const live = await s.input("queued", { kind: "source", at }, [
+  const offered = performance.now();
+  // [DX-ACT1] Why: the second native writer starts as soon as the bulk POST leaves the client. Rejected: awaiting the batch first (that measures an artificial client delay).
+  const queued = liveWriter.input("queued", { kind: "source", at }, [
     { op: "retract", id: base.changes[0].tripleId },
     {
       op: "assert",
@@ -61,6 +61,11 @@ try {
       validFrom: 0,
     },
   ]);
+  const [{ batch, release }, { live, ack }] = await Promise.all([
+    work.then((batch) => ({ batch, release: performance.now() })),
+    queued.then((live) => ({ live, ack: performance.now() })),
+  ]);
+  assert(batch && batch.changedSubjects.length === 64);
   assert(live.position > batch.receipt.position);
   assert.equal(batch.deliveries.length, 64);
   writeFileSync(
@@ -74,15 +79,19 @@ try {
       livePosition: live.position,
       owners: batch.changedSubjects.length,
       changes: batch.receipt.changes.length,
-      bytes: Buffer.byteLength(canonical(batch.receipt.changes)),
+      bytes: Buffer.byteLength(bytes(batch.receipt.changes)),
+      offered,
+      release,
+      ack,
       baselineMs,
-      waitMs: release - offered,
-      offerToAckMs: performance.now() - offered,
+      waitMs: Math.max(0, Math.min(release, ack) - offered),
+      offerToAckMs: ack - offered,
     }) + "\n",
     { flag: "wx" },
   );
 } finally {
   agent.addRequest = original;
   d.close();
+  await liveWriter.close();
   await s.close();
 }

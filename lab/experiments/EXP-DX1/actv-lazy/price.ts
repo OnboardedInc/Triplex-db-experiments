@@ -37,12 +37,14 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
     for (const [i, release] of [W0.R1, W0.R2, W0.R3].entries()) {
       const old = await s.head(),
         before = { ...s.counters },
+        cpuBefore = process.cpuUsage(),
         offer = performance.now();
       const observed = await measureHttp(() => activation(s, "switch-" + i, release, valid));
       const durable = s.counters.ackObserved,
         ack = observed.value,
         returned = performance.now(),
-        after = { ...s.counters };
+        after = { ...s.counters },
+        markerCpuUs = process.cpuUsage(cpuBefore);
       assert(
         ack.position === old + 1 &&
           ack.changes.length === 1 &&
@@ -82,7 +84,8 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
       });
       assert.equal(child.result.json, ref);
       const misses: number[] = [],
-        hits: number[] = [];
+        hits: number[] = [],
+        readCosts = [];
       for (let j = 0; j < Math.min(24, n); j++) {
         const k = Math.floor((j * n) / 24),
           subject = f.roster[k]!,
@@ -93,10 +96,22 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
             basis: { tx: ack.position, validTime: valid },
           });
         const t = performance.now(),
-          miss = await reader.readAt(subject, basis),
+          cpu = process.cpuUsage(),
+          missProbe = await measureHttp(() => reader.readAt(subject, basis)),
+          miss = missProbe.value,
           m = performance.now(),
-          hit = await reader.readAt(subject, basis),
+          missCpu = process.cpuUsage(cpu),
+          hitStart = process.cpuUsage(),
+          hitProbe = await measureHttp(() => reader.readAt(subject, basis)),
+          hit = hitProbe.value,
           h = performance.now();
+        readCosts.push({
+          subject,
+          missHttp: missProbe.requests,
+          hitHttp: hitProbe.requests,
+          missCpuUs: missCpu,
+          hitCpuUs: process.cpuUsage(hitStart),
+        });
         assert.equal(miss.json, expected);
         assert.equal(hit.json, expected);
         assert.equal(hit.route, "exact-cache");
@@ -104,6 +119,7 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
         hits.push(h - m);
       }
       const began = performance.now(),
+        dispatchCpu = process.cpuUsage(),
         effects: W0.Delivery[] = [],
         changed: string[] = [],
         candidates: string[] = [],
@@ -135,8 +151,11 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
         }
       });
       const outboxDone = performance.now(),
+        publisherCpuUs = process.cpuUsage(dispatchCpu),
+        receiverCpu = process.cpuUsage(),
         sent = await rx.drain(s),
         applied = performance.now();
+      const receiverCpuUs = process.cpuUsage(receiverCpu);
       assert.equal(sent, effects.length);
       assert.equal(new Set(candidates).size, candidates.length);
       if (i === 2) assert.equal(candidates.length, 0);
@@ -206,6 +225,12 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
         coldCallMs: child.callMs,
         coldPid: child.pid,
         activationHttp: observed.requests,
+        markerCpuUs,
+        publisherCpuUs,
+        receiverCpuUs,
+        readCosts,
+        markerJournalBytes: Buffer.byteLength(wireBytes(ack)),
+        rssBytes: process.memoryUsage().rss,
         activationSubjectVisits: after.subjectRoots - before.subjectRoots,
         activationRosterVisits: after.rosterRoots - before.rosterRoots,
         activationWrites: after.writes - before.writes,
@@ -233,9 +258,7 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
       return {
         subject: world.subject,
         facts: world.facts.map((row) =>
-          row.e === "jur:g0" && row.a === "stateMinWageCents"
-            ? { ...row, v: 1950, tx }
-            : row,
+          row.e === "jur:g0" && row.a === "stateMinWageCents" ? { ...row, v: 1950, tx } : row,
         ),
       };
     }
