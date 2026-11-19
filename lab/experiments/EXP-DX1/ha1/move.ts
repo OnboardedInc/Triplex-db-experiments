@@ -10,17 +10,38 @@ import { clock, hash, sleep, until } from "./common.ts";
 import type { Stack } from "./stack.ts";
 
 export function backupCut(list: string, floor: string) {
-  const match = list.match(/:t\s+\[([\d,\s]+)\]/) ?? list.match(/:ts\s+\[([\d,\s]+)\]/);
-  const cuts = match
-    ? match[1]!
-        .trim()
-        .split(/[\s,]+/)
-        .map(BigInt)
-    : Array.from(list.matchAll(/:t\s+(\d+)(?=[\s,}])/g), (m) => BigInt(m[1]!));
-  assert(cuts.length > 0);
+  // [DX-HA1] Why: the pinned CLI prints an EDN list of native t values. Rejected: scraping arbitrary numbers from warnings or segment counts.
+  const match = /^\(\s*(\d+(?:[\s,]+\d+)*)\s*\)$/.exec(list.trim());
+  assert(match, "Unrecognized list-backups output");
+  const cuts = match[1]!.split(/[\s,]+/).map(BigInt);
   const t = cuts.reduce((a, b) => (a > b ? a : b));
   assert(t >= BigInt(floor), "Backup precedes acknowledged source cut");
   return String(t);
+}
+export function vendorResult(action: string, output: string, args: string[], db: string) {
+  if (action === "list-backups") return;
+  if (action === "verify-backup") {
+    const record = output.trim().split("\n").at(-1)!;
+    assert(
+      record.includes(":event :verify-backup/complete") &&
+        /:missing-segments #\{\}/.test(record) &&
+        /:unreadable-segments \(\)/.test(record),
+      "Incomplete or unreadable backup",
+    );
+    assert.equal(record.match(/:t (\d+)(?=[,}])/)?.[1], args.at(-1));
+    assert(Number(record.match(/:total-segments (\d+)/)?.[1]) > 0);
+    assert.equal(args[1], "true");
+    return;
+  }
+  assert(output.split("\n").includes(":succeeded"), "Vendor command did not confirm success");
+  if (action === "restore-db") {
+    const record = output.trim().split("\n").at(-1)!;
+    assert(
+      record.includes(":event :restore") &&
+        record.match(/:db ([a-zA-Z0-9_-]+)(?=[,}])/)?.[1] === db,
+    );
+    assert.equal(record.match(/:basis-t (\d+)(?=[,}])/)?.[1], args.at(-1));
+  }
 }
 export async function move(s: Stack, people: number) {
   await s.tool();
@@ -74,6 +95,7 @@ export async function move(s: Stack, people: number) {
         ...args,
       );
       const clean = s.redact(stdout);
+      vendorResult(action, clean, args, a.db);
       stages.push({ action, elapsedMs: clock() - start, output: clean });
       s.e.log("vendor", stages.at(-1));
       return stdout;

@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
-import { clock, Evidence, loopback, roles, until, type Role } from "./common.ts";
+import { clock, Evidence, hash, loopback, roles, until, type Role } from "./common.ts";
 
 export interface Site {
   key: string;
@@ -132,6 +132,31 @@ export class Stack {
     m.volumes = view.Mounts.filter((v: any) => v.Type === "volume").map((v: any) => v.Name);
     this.e.log("role", { role, site: site.key, id, image, volumes: m.volumes, capMiB: mb });
     await site.docker(["start", id]);
+    if (!pgRoles.has(role)) {
+      for (const dest of ["/opt/gateway/src", "/opt/gateway/codec-spec.json"]) {
+        const mount = view.Mounts.find((m: any) => m.Destination === dest);
+        assert(mount && mount.Type === "bind" && mount.RW === false);
+      }
+      const raw = await this.exec(
+        role,
+        "sh",
+        "-ceu",
+        "cd /opt/gateway/src; find . -type f -exec sha256sum {} +",
+      );
+      const entries = raw
+        .split("\n")
+        .map((line) => {
+          const m = /^([0-9a-f]{64})  \.\/(.+)$/.exec(line);
+          assert(m);
+          return [m[2]!, m[1]!];
+        })
+        .sort((a, b) => (a[0]! < b[0]! ? -1 : 1));
+      const gateway = hash(JSON.stringify(entries)),
+        codec = (await this.exec(role, "sha256sum", "/opt/gateway/codec-spec.json")).split(" ")[0];
+      assert.equal(gateway, this.e.source.gateway);
+      assert.equal(codec, this.e.source.codec);
+      this.e.log("mounted-inputs", { id, role, gateway, codec });
+    }
   }
   async view(role: Role) {
     const m = this.members.get(role)!;

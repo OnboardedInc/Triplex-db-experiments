@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Account } from "../../../../packages/datomic/test/ha1-account.ts";
 import { projection } from "./projection.ts";
-import { backupCut } from "./move.ts";
+import { backupCut, vendorResult } from "./move.ts";
 import { loopback } from "./common.ts";
 test("recovery rejects a changed receipt, wrong tenant and corrupt feed interval", () => {
   const ac = new Account("test-run-scope", "http://" + loopback, "http://" + loopback);
@@ -47,12 +47,9 @@ test("recovery rejects a changed receipt, wrong tenant and corrupt feed interval
   }
 });
 test("selects a listed backup which covers the acknowledged cut", () => {
-  assert.equal(
-    backupCut('{:backups [{:t 1118, :connect-uri "one"} {:t 1111, :connect-uri "two"}]}', "1113"),
-    "1118",
-  );
+  assert.equal(backupCut("(1118 1111)", "1113"), "1118");
   assert.throws(() => backupCut("nothing listed, duration 1119", "1113"));
-  assert.throws(() => backupCut('{:backups [{:t 1111, :connect-uri "one"}]}', "1113"));
+  assert.throws(() => backupCut("(1111)", "1113"));
 });
 test("size model withholds an extrapolation when the third rung disagrees", () => {
   const points = [2, 4, 10].map((n) => ({
@@ -66,4 +63,21 @@ test("size model withholds an extrapolation when the third rung disagrees", () =
   const p = out.slopes as Record<string, { conditionalRange: number[] | null }>;
   assert(p["finalBytes"]!.conditionalRange);
   assert.equal(p["pauseMs"]!.conditionalRange, null);
+});
+
+test("vendor verification binds the cut and rejects unreadable segments even on a zero exit", () => {
+  const line =
+    "{:t 1818, :total-segments 36, :missing-segments #{}, :unreadable-segments (), :event :verify-backup/complete}";
+  const args = ["file:/tmp/test", "true", "1818"];
+  vendorResult("verify-backup", line, args, "s2-test");
+  assert.throws(() => vendorResult("verify-backup", line.replace("1818", "1820"), args, "s2-test"));
+  assert.throws(() => vendorResult("verify-backup", line.replace("()", "(bad)"), args, "s2-test"));
+  assert.throws(() =>
+    vendorResult(
+      "restore-db",
+      ":succeeded\n{:event :restore, :db s2-other, :basis-t 1818}",
+      args,
+      "s2-test",
+    ),
+  );
 });

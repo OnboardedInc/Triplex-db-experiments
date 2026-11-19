@@ -28,7 +28,7 @@ export async function replication(s: Stack) {
     "/bin/sh",
     [
       "-ceu",
-      'chown postgres:postgres "$PGDATA"; chmod 700 "$PGDATA"; su-exec postgres pg_basebackup -D "$PGDATA" -X stream -R -d "$HA1_CONN"; exec docker-entrypoint.sh postgres -c shared_buffers=32MB',
+      'chown postgres:postgres "$PGDATA"; chmod 700 "$PGDATA"; drop=$(command -v gosu || command -v su-exec); "$drop" postgres pg_basebackup -D "$PGDATA" -X stream -R -d "$HA1_CONN"; exec docker-entrypoint.sh postgres -c shared_buffers=32MB',
     ],
     5432,
   );

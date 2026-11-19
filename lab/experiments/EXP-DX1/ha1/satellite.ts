@@ -68,6 +68,17 @@ export class Satellite {
     } else if (["inspect", "start", "exec", "logs", "kill", "rm"].includes(verb!)) {
       const id = verb === "exec" || verb === "start" ? args[1] : args.at(-1);
       assert(id && this.containers.has(id));
+      if (verb === "exec") assert(args.length >= 3);
+      else {
+        const spec: Record<string, string[]> = {
+          inspect: ["inspect", "--type", "container", id],
+          start: ["start", id],
+          logs: ["logs", "--tail", "180", id],
+          kill: ["kill", "--signal", "KILL", id],
+          rm: ["rm", "-fv", id],
+        };
+        assert.deepEqual(args, spec[verb!]);
+      }
     } else if (verb === "image") {
       assert(
         what === "inspect" && (args[2] === "postgres:17-alpine" || this.images.includes(args[2]!)),

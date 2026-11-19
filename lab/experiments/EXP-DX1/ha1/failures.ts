@@ -272,6 +272,21 @@ export async function failures(s: Stack, scopeCount: number, people = 0) {
           })),
         });
         console.log("Recorded " + fault);
+        if (fault === "active") {
+          await s.remove("active");
+          await s.tx("active", s.a, "pg", "moving");
+          await until("replacement standby", async () => {
+            const marker = await s.exec(
+              "active",
+              "sh",
+              "-c",
+              "grep -h ':transactor/standby' log/*.log | tail -1",
+            );
+            return marker.includes(":transactor/standby") || undefined;
+          });
+          assert(!(await s.broker("active")) && (await s.broker("standby")));
+          s.e.log("standby-replaced", { id: (await s.view("active")).Id });
+        }
       } finally {
         stop = true;
         p.drop();
