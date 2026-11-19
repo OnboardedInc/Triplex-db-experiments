@@ -392,7 +392,7 @@ export async function run(dir: string, attempt: any) {
       const subject = W0.placementId(n + i);
       return {
         subject,
-        facts: w.facts.map((f) => ({
+        facts: w.facts.map((f): W0.Fact => ({
           ...f,
           e: f.e.replace(w.subject, subject),
           v: typeof f.v === "string" ? f.v.replace(w.subject, subject) : f.v,

@@ -24,8 +24,6 @@ export function validatedSubjectReader(scope: string, fallback: CompositionHandl
   const name = runtimeApi.DatabaseScope.test(scope);
   let client: DatomicClient | undefined;
   const read = async (root: string, basis: Basis): Promise<PullResult> => {
-    if (basis.recordedPosition === undefined && basis.recordedAt === undefined)
-      return fallback(root, basis);
     // [DX-THIN1] Why: allocate a client on the first real pull and validate its entire closure at the requested native cut. Rejected: replaying an idle account's import just to advance a reader watermark.
     client ??= new DatomicClient(replicaEndpoint(process.env, "reader"), 35_000, 64 * 1024 ** 2,
       { entityCacheBytes: limit - keys, reachKeyBytes: keys, predecessorAttributes: [] });
@@ -40,6 +38,9 @@ export function validatedSubjectReader(scope: string, fallback: CompositionHandl
   };
   return {
     async pull(root: string, basis: Basis, between?: () => Promise<void>) {
+      // [DX-THIN1] Why: the ordinary path owns resolution of a latest cut across a callback. Rejected: resolving latest independently on either side of a write.
+      if (basis.recordedPosition === undefined && basis.recordedAt === undefined)
+        return fallback(root, basis, between);
       const first = await read(root, basis);
       if (!between) return first;
       await between();

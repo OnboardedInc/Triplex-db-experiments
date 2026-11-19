@@ -15,7 +15,25 @@ import { keyFor } from "../scale1/tenants.ts";
 import { smallPeople } from "../scale1/small-plan.ts";
 import { cases, verifyPages, verifyLatencies } from "./bench-cases.ts";
 import { regularDeepProof } from "./receipt-proof.ts";
+import { validatedSubjectReader } from "../../../bench/lib/touched-reads.ts";
+import type { Basis } from "../../../bench/lib/composition.ts";
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "int1-suite-"));
+test("a latest read hands its interposed write to the ordinary cut resolver exactly once", async () => {
+  let opens = 0, writes = 0;
+  const write = async () => { writes++; };
+  const result = { triples: [], entities: 1, depth: 0, roundTrips: 2, route: "source", language: "ordinary", waitedMs: 0 };
+  const reader = validatedSubjectReader("latest-scope", async (root, basis, between) => {
+    opens++;
+    assert.equal(root, "person");
+    assert.deepEqual(basis, { validAt: 7 });
+    assert.equal(between, write);
+    await between();
+    return result;
+  });
+  assert.equal(await reader.pull("person", { validAt: 7 } as Basis, write), result);
+  assert.deepEqual([opens, writes, reader.usage().bytes], [1, 1, 0]);
+  reader.close();
+});
 test("the import-only observer replays every original seed identity after sampling", async () => {
   const comp = await memoryComposition("datomic", "seed-feed-" + randomUUID());
   const db = new DatabaseSync(":memory:");

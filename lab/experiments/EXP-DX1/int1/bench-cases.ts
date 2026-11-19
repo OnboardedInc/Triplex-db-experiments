@@ -25,7 +25,8 @@ export function verifyLatencies(dir: string, r: any, binding: string, attempt: s
   if (options) {
     let n = 0;
     for (const account of r.accounts) {
-      const deep = r.mode === "int1-deep" || account.accountKey !== undefined;
+      const deep = r.mode === "int1-deep" || account.accountKey !== undefined ||
+        (r.mode === "int1-proof" && account.scope === "int1-" + attempt + "-deep");
       for (let block = options.seedOnly ? 0 : 1; block * 50 < account.people; block += options.seedOnly ? 1 : 2) {
         const local = activePerson(block, account.people, options.spread);
         const first = observed.firstReads[n];
@@ -150,6 +151,38 @@ export async function verifyPages(dir: string, decision: any, first: number, cou
   assert.equal(sum.digest("hex"), decision.receipts);
   assert.equal(raw.digest("hex"), decision.receipts);
 }
+export async function verifyDeepColdProbe(dir: string, deep: any, binding: string, attempt: string) {
+  const { sha256, V_W0 } = await import("../../../bench/lib/w0-world.ts");
+  const { seedFacts } = await import("./account.ts");
+  const { compareOracleOutput } = await import("../../../bench/lib/oracle.ts");
+  const { readOracleOutput } = await import("../../../bench/lib/oracle-output.ts");
+  assert.equal(deep.file, "deep-cold-reads.json");
+  const raw = fs.readFileSync(path.join(dir, deep.file));
+  assert.equal(sha256(raw), deep.sha256);
+  const probe = JSON.parse(raw.toString());
+  assert.deepEqual([probe.scope, probe.binding, probe.position], ["int1-" + attempt + "-deep-cold", binding, 200]);
+  assert.deepEqual([deep.scope, deep.position, deep.subjects], [probe.scope, probe.position, 200]);
+  assert.equal(probe.output.length, 200);
+  for (const [n, sample] of probe.output.entries()) {
+    const id = activePerson(n, 10000, true);
+    assert.equal(sample.id, id);
+    assert.equal(sample.tasks, deepTasks(id));
+    assert(Number.isFinite(sample.ms) && sample.ms >= 0);
+    assert.equal(sample.rows, seedFacts("deep", id).filter(op => op.validFrom <= V_W0).length);
+    assert(sample.requests > 0 && sample.diagnostic.exchanges.length === sample.requests);
+    assert(sample.diagnostic.exchanges.every((x: any) => ["reach", "reach-many"].includes(x.route) && x.bytes > 0 && x.responseMs >= x.toHeadersMs));
+  }
+  const ms = probe.output.map((x: any) => x.ms).sort((a: number,b: number) => a-b);
+  assert.deepEqual(deep.latency, { n: 200, p50: ms[99], p99: ms[197] });
+  const replay = path.join(dir, "replay-deep-cold");
+  const caseText = fs.readFileSync(path.join(replay, "oracle-case.json"), "utf8");
+  const caseDoc = JSON.parse(caseText);
+  assert.equal(caseDoc.caseId, "int1-" + sha256(binding + "/" + probe.scope));
+  const checks = compareOracleOutput({ out: readOracleOutput(path.join(replay, "oracle-expected.json")),
+    caseText, caseDoc, reads: read(path.join(replay, "observed.json")), exitCode: deep.replay.exitCode });
+  assert(checks.status === "PASS" && checks.reads === deep.replay.reads && checks.reads > 0);
+  assert.equal(checks.entityQueries, deep.replay.entityQueries);
+}
 export async function verifyCase(
   dir: string,
   spec: BenchCase,
@@ -201,33 +234,7 @@ export async function verifyCase(
   assert.equal(r.size, spec.size);
   assert.deepEqual(inputs.containers, stack.containers);
   verifyLatencies(dir, r, binding, inputs.attempt, inputs);
-  if (spec.key === "thin-1m") {
-    const deep = r.benchDeepCold;
-    assert.equal(deep.file, "deep-cold-reads.json");
-    const raw = fs.readFileSync(path.join(dir, deep.file));
-    assert.equal(sha256(raw), deep.sha256);
-    const probe = JSON.parse(raw.toString());
-    assert.deepEqual([probe.scope, probe.binding, probe.position], ["int1-" + inputs.attempt + "-deep-cold", binding, 200]);
-    assert.deepEqual([deep.scope, deep.position, deep.subjects], [probe.scope, probe.position, 200]);
-    assert.equal(probe.output.length, 200);
-    for (const [n, sample] of probe.output.entries()) {
-      const id = activePerson(n, 10000, true);
-      assert.equal(sample.id, id);
-      assert.equal(sample.tasks, deepTasks(id));
-      assert(Number.isFinite(sample.ms) && sample.ms >= 0 && sample.rows > 0);
-      assert(sample.requests > 0 && sample.diagnostic.exchanges.length === sample.requests);
-    }
-    const ms = probe.output.map((x: any) => x.ms).sort((a: number,b: number) => a-b);
-    assert.deepEqual(deep.latency, { n: 200, p50: ms[99], p99: ms[197] });
-    const replay = path.join(dir, "replay-deep-cold");
-    const caseText = fs.readFileSync(path.join(replay, "oracle-case.json"), "utf8");
-    const caseDoc = JSON.parse(caseText);
-    assert.equal(caseDoc.caseId, "int1-" + sha256(binding + "/" + probe.scope));
-    const checks = compareOracleOutput({ out: readOracleOutput(path.join(replay, "oracle-expected.json")),
-      caseText, caseDoc, reads: read(path.join(replay, "observed.json")), exitCode: deep.replay.exitCode });
-    assert(checks.status === "PASS" && checks.reads === deep.replay.reads && checks.reads > 0);
-    assert.equal(checks.entityQueries, deep.replay.entityQueries);
-  }
+  if (spec.key === "thin-1m") await verifyDeepColdProbe(dir, r.benchDeepCold, binding, inputs.attempt);
   assert.equal(r.accounts.length, spec.accounts);
   assert.equal(new Set(r.accounts.map((a: any) => a.scope)).size, spec.scopes);
   assert.equal(r.activation.length, 2 * spec.accounts);
