@@ -5,13 +5,13 @@ Ten accounts of 100,000 people sharing one database — awaiting a completed bar
 Activation for one account is pending. Activation for one account among ten in one database is pending.
 The first shared resource to reach its limit is still unknown.
 Three changes to test are another sender core for offer delays, a larger transactor cache for repeated SQL reads, and smaller per-save work at the serial commit point. Their effects are unmeasured.
-The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack).
+The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. Its measured PostgreSQL allocation is 594.29 bytes per fact.
 
 **Bench measurements**
 
 | Item and arm | Scope | Commit p50 ms | Commit p99 ms | L256 read p99 ms | L256 feed p99 ms | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 zero | 1 | — | — | — | — | Running on the dedicated bench |
+| 1 zero | account 0 | 5.09 · 56505 [5.09, 5.12] | 69.12 · 56505 [65.28, 72.70] | — | 20.09 · 2895 [19.20, 20.35] | Observed · arm-d19-i1-zero-a |
 
 **Shared resources**
 
@@ -36,7 +36,7 @@ Ten full accounts store 160,452,550 business facts and 2,003,920 tenant and rost
 
 Local Datomic functional checks drove two 40-person accounts through the zero-reader, reader and guarded activation arms. All 10,319,892 observed reads matched the model. O-REPLAY matched 262 sampled reads across 8,097 entity queries. The worker matched all 523 receipt reads. O-DOMAIN matched 160 stored decisions across 80 people and two releases, including two R2 decisions whose work items stayed unchanged. [Evidence manifest](SHA256SUMS)
 
-The tenant build passed 16 focused checks, 1,567 package tests and 18 additional Node tests. The package suites skipped 102 opt-in tests. All 116 seed digests and the logical offers and reader windows reproduced. The eight-person cross-account and release tests used the in-memory store. A local Datomic run returned both accounts in one gateway request and exposed a report-file path error during finalization. [Evidence manifest](SHA256SUMS)
+The tenant build passed 16 focused checks, 1,567 package tests and 18 additional Node tests. The package suites skipped 102 opt-in tests. All 116 seed digests and the logical offers and reader windows reproduced. On fresh local Datomic databases, 1,613,811 of 1,613,811 reads matched. O-REPLAY checked 110 reads across 3,402 entity queries. All 40 acknowledged writes reached their correct tenant feed. One gateway request read two accounts at position 22 and the pinned count was eight. The separate databases reached positions 8 and 14. A prior local attempt exposed a report-file lookup error, corrected before these trials. [Evidence manifest](SHA256SUMS)
 
 **Audit of evidence and verdicts**
 

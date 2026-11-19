@@ -248,7 +248,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "",
     "Local Datomic functional checks drove two 40-person accounts through the zero-reader, reader and guarded activation arms. All 10,319,892 observed reads matched the model. O-REPLAY matched 262 sampled reads across 8,097 entity queries. The worker matched all 523 receipt reads. O-DOMAIN matched 160 stored decisions across 80 people and two releases, including two R2 decisions whose work items stayed unchanged. [Evidence manifest](SHA256SUMS)",
     "",
-    "The tenant build passed 16 focused checks, 1,567 package tests and 18 additional Node tests. The package suites skipped 102 opt-in tests. All 116 seed digests and the logical offers and reader windows reproduced. The eight-person cross-account and release tests used the in-memory store. A local Datomic run returned both accounts in one gateway request and exposed a report-file path error during finalization. [Evidence manifest](SHA256SUMS)",
+    "The tenant build passed 16 focused checks, 1,567 package tests and 18 additional Node tests. The package suites skipped 102 opt-in tests. All 116 seed digests and the logical offers and reader windows reproduced. On fresh local Datomic databases, 1,613,811 of 1,613,811 reads matched. O-REPLAY checked 110 reads across 3,402 entity queries. All 40 acknowledged writes reached their correct tenant feed. One gateway request read two accounts at position 22 and the pinned count was eight. The separate databases reached positions 8 and 14. A prior local attempt exposed a report-file lookup error, corrected before these trials. [Evidence manifest](SHA256SUMS)",
     "",
     "**Audit of evidence and verdicts**",
     "",
