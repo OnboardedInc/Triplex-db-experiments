@@ -232,20 +232,17 @@ async function campaign(label: string) {
     },
     Date.now() + 24 * 3600000,
   );
+  const endedWithoutEvidence = (unit: string, since: number) => {
+    const status = remote("systemctl", "show", unit, "-p", "ActiveState", "--value");
+    return status === "failed" || (status === "inactive" && Date.now() - since > 90_000);
+  };
   if (!exists(`${build}/results/bootstrap.exit`)) {
+    const submitted = Date.now();
     assert.equal(await invoke("prepare"), 0);
     await until(
       () => exists(`${build}/results/bootstrap.exit`),
       Date.now() + 36 * 60000,
-      () =>
-        remote(
-          "systemctl",
-          "show",
-          `triplex-scale1-prepare-${sha.slice(0, 12)}`,
-          "-p",
-          "ActiveState",
-          "--value",
-        ) === "failed",
+      () => endedWithoutEvidence("triplex-scale1-prepare-" + sha.slice(0, 12), submitted),
     );
   }
   assert.equal(sudo("cat", `${build}/results/bootstrap.exit`), "0");
@@ -275,9 +272,7 @@ async function campaign(label: string) {
     await until(
       () => exists(`${base}/transfer.json`),
       a.at + (a.ceiling + 3750) * 1000,
-      () =>
-        remote("systemctl", "show", `triplex-scale1-${tag}`, "-p", "ActiveState", "--value") ===
-        "failed",
+      () => endedWithoutEvidence("triplex-scale1-" + tag, a.at),
     );
     assert.equal(await invoke("collect", tag), 0);
     const terminal = JSON.parse(sudo("cat", `${base}/terminal.json`));

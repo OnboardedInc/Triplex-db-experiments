@@ -139,7 +139,8 @@ export function capacity(
     0,
     Math.min(scopes, Math.floor((host.disk - 15 * GiB) / (db / scopes))),
   );
-  const canSeed = Math.min(seedParallelism, seedScopeLimit) >= Math.min(2, scopes);
+  // [DX-SCALE1] Why: even a single admissible scope exposes measured seed progress on a constrained host. Rejected: refusing every partial seed when the widest feasible wave has one member.
+  const canSeed = Math.min(seedParallelism, seedScopeLimit) >= 1;
   const limits = [
     ...(host.disk < (arm === "seed" ? seedDisk : liveDisk) ? ["disk"] : []),
     ...(host.memory < (arm === "seed" ? seedMemory : liveMemory) ? ["memory"] : []),
@@ -205,6 +206,31 @@ function groupOf(pid: number) {
   const cg = fs.readFileSync(`/proc/${pid}/cgroup`, "utf8").match(/^0::(\/.*)$/m);
   assert(cg);
   return path.join("/sys/fs/cgroup", cg[1]!);
+}
+// [DX-SCALE1] Why: the frozen replay can compute for up to 90 minutes before it writes any output. Rejected: killing a working oracle at the idle timeout, or treating ordinary process existence as progress.
+function replayCpu(oracleDir: string, scopes: readonly string[]) {
+  const cli = path.join(oracleDir, "lab/oracles/replay/cli.py");
+  const cases = new Set(scopes.map((dir) => path.join(dir, "oracle-case.json")));
+  const samples = [];
+  for (const pid of fs
+    .readFileSync(path.join(groupOf(process.pid), "cgroup.procs"), "utf8")
+    .trim()
+    .split(/\s+/)) {
+    try {
+      const args = fs.readFileSync("/proc/" + pid + "/cmdline", "utf8").split("\0");
+      const i = args.indexOf(cli);
+      if (i < 1 || args[i - 1] !== "-I" || !cases.has(args[i + 1]!)) continue;
+      const stat = fs.readFileSync("/proc/" + pid + "/stat", "utf8");
+      const fields = stat
+        .slice(stat.lastIndexOf(")") + 2)
+        .trim()
+        .split(/\s+/);
+      samples.push([pid, fields[19], Number(fields[11]) + Number(fields[12])].join("/"));
+    } catch (e: any) {
+      if (e.code !== "ENOENT" && e.code !== "ESRCH") throw e;
+    }
+  }
+  return samples.sort().join(",");
 }
 function placement(prefix: string) {
   return Object.fromEntries(
@@ -566,8 +592,9 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
             .join("/"),
         )
         .join("|");
-      if (signal !== lastSignal) {
-        lastSignal = signal;
+      const observed = signal + "|" + replayCpu(oracleDir, raw);
+      if (observed !== lastSignal) {
+        lastSignal = observed;
         lastAdvance = Date.now();
       }
       if (Date.now() - lastAdvance > 15 * 60000)

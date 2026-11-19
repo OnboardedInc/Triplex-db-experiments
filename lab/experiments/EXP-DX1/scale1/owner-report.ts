@@ -17,6 +17,7 @@ type Stage = {
   disk: any;
   size: any;
   resources: any;
+  partial: any;
 };
 const load = (dir: string, f: string) =>
   fs.existsSync(path.join(dir, f)) ? JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")) : null;
@@ -50,6 +51,7 @@ export function updateReport(evidence: string) {
         disk: load(dir, "seed-disk.json"),
         size: load(dir, "sizing.json"),
         resources: load(dir, "resource-summary.json"),
+        partial: load(dir, "partial.json"),
       });
     }
   stages.sort((a, b) => a.attempt.at - b.attempt.at);
@@ -71,15 +73,26 @@ export function updateReport(evidence: string) {
       ? `${s.summary.perScope.map((p: any) => round(p.deep.r2.wallMs / 1000)).join(", ")} s across ${s.summary.scopeCount} sweeps, with ${s.summary.perScope.reduce((n: number, p: any) => n + (p.deep.activationOracle?.checked ?? 0), 0)} independently checked people`
       : "pending";
   const emptied = stages.find((s) => s.resources?.firstObservedEngineOOM);
+  const refused = stages.find((s) => s.terminal.service === "capacity-refused");
+  const partialTen =
+    recent(4, "seed") ??
+    stages.filter((s) => s.attempt.item === 4 && !s.summary && s.partial?.scopes.length).at(-1);
+  const partialPeople =
+    partialTen?.partial?.scopes.reduce(
+      (n: number, s: any) => n + (s.progress?.subjects ?? s.people ?? 0),
+      0,
+    ) ?? 0;
   const lines = [
     "# DX-SCALE1 · deep accounts",
     "",
     `One account of 100,000 people — ${cost(one)}.`,
-    `Ten accounts of 100,000 people — ${cost(ten)}.`,
+    `Ten accounts of 100,000 people — ${cost(ten)}.${partialTen ? ` The bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} attempted databases.` : ""}`,
     `Activation for one account is ${act(a1)}. Activation for ten accounts is ${act(a10)}.`,
     emptied
       ? `First recorded engine memory-limit kill was in ${emptied.resources.firstObservedEngineOOM.role}, attempt ${emptied.tag}.`
-      : "The first shared resource to reach its limit is still unknown.",
+      : refused
+        ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
+        : "The first shared resource to reach its limit is still unknown.",
     "Three experiments could distinguish the limits. Give senders another physical core if offer delays dominate, enlarge the transactor object cache if storage misses dominate, and distribute databases across transactors if their JVM saturates.",
     `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `Its measured PostgreSQL allocation is ${round(base.disk.bytesPerFact)} bytes per fact.` : "Bytes per fact on the bench await the first completed seed measurement."}`,
     "",
@@ -163,9 +176,37 @@ export function updateReport(evidence: string) {
   }
   if (!stages.length)
     lines.push("| 1–4 | 1 or 10 | — | — | — | — | Awaiting bench release and public source |");
+  const readers = [1, 2, 3, 4]
+    .map((i) => recent(i, "reader"))
+    .filter((s): s is Stage => Boolean(s?.resources?.engines && s.size));
+  lines.push(
+    "",
+    "**Shared resources**",
+    "",
+    "| Reader arm | PostgreSQL | Transactor | Write gateway | Read gateway | Transactor cache hits / requests | Lowest free disk, GiB |",
+    "| --- | --- | --- | --- | --- | --- | ---: |",
+  );
+  if (!readers.length) lines.push("| Awaiting first reader arm | — | — | — | — | — | — |");
+  for (const s of readers) {
+    const roles = ["pg", "tx", "gw-w", "gw-r"].map((role) => {
+      const e = s.resources.engines[role];
+      return e
+        ? `${round(e.maxBytes / 1024 ** 3)} GiB / ${round(e.maxBusyThreeSamples, 0)}% (n=${e.n})`
+        : "—";
+    });
+    const c = s.resources.jvms.tx;
+    lines.push(
+      `| ${s.attempt.spec.people} × ${s.attempt.spec.scopes} | ${roles.join(" | ")} | ${c?.cacheRequests ? c.cacheHits + " / " + c.cacheRequests : "—"} | ${round(s.resources.minimumFreeFilesystemBytes / 1024 ** 3)} |`,
+    );
+  }
+  lines.push(
+    "Each engine cell gives peak cgroup memory and its highest CPU use sustained across three samples. One fully used core is 100%. Each transfer includes PostgreSQL page counters, gateway heap observations and per-scope driver measurements.",
+  );
   lines.push(
     "",
     "Cells give estimate · n [90% interval] where available. The regular arms target 5,910 seconds of offers. Each transferred summary retains every per-account bar, pooled sample distributions and the count of accounts meeting each obligation.",
+    "",
+    "Before handoff, a read-only capacity check found 87.5 GiB available RAM and 638.0 GiB free disk. With the stated priors, ten 100k seeds would fit on disk in waves of two. The 1,639 GiB live-memory estimate requires calibration on the 10k baseline. These figures are estimates. [Assumptions](PROFILE.md)",
     "",
     "**Population and checks**",
     "",

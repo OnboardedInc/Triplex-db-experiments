@@ -33,6 +33,9 @@ test("resource arithmetic reserves separate drivers, shared engines once and bou
   const disk = capacity(100000, 10, { memory: 90 * GiB, disk: 52 * GiB }, measured, "seed");
   assert.equal(disk.seedScopeLimit, 2);
   assert(disk.fitsSeed && !disk.fitsLive);
+  const single = capacity(100000, 10, { memory: 90 * GiB, disk: 36 * GiB }, measured, "seed");
+  assert.equal(single.seedScopeLimit, 1);
+  assert(single.fitsSeed && !single.fitsLive);
   assert(!capacity(100000, 10, { memory: 10 * GiB, disk: 11 * GiB }, measured).fitsSeed);
 });
 test("a seed witness rejects a substituted value and a different run identity", () => {
