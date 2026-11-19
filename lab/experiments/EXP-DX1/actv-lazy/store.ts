@@ -1,3 +1,4 @@
+import { bytes as wireBytes } from "../import1/source.ts";
 import assert from "node:assert/strict";
 import {
   requireDatomicSourcePosition,
@@ -74,7 +75,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     context: unknown = null,
   ) {
     assert(id.length && Number.isSafeInteger(expected) && expected >= 0);
-    const correlationId = canonical({ context, hash: sha256(canonical([scope, id, actor, ops])) });
+    const correlationId = canonical({ context, hash: sha256(wireBytes([scope, id, actor, ops])) });
     const check = (r: any) => {
       assert(
         r &&
@@ -180,7 +181,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
         ["activation", "source", "due", "erase", "baseline"].includes(event.kind),
     );
     const prior = await lookup(id);
-    const intent = sha256(canonical([scope, id, event, ops]));
+    const intent = sha256(wireBytes([scope, id, event, ops]));
     if (prior) {
       assert.equal(prior.actor, "lazy/input");
       assert.deepEqual(JSON.parse(prior.correlationId).context, { event, intent, profile });
