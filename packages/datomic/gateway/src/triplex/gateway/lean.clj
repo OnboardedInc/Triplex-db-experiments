@@ -1,5 +1,5 @@
 (ns triplex.gateway.lean
-  (:require [triplex.gateway.slim :as slim] [datomic.api :as d] [clojure.data.json :as json] [triplex.gateway.reach :as reach]))
+  (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [clojure.data.json :as json] [triplex.gateway.reach :as reach]))
 (set! *warn-on-reflection* false)
 ;; [DX-B5-L2] Why: only row text and native history contain lean facts; no reified fallback exists.
 ;; Rejected: empty answers from :f indexes, or decoding through d/entity/d/pull/d/q.
@@ -51,17 +51,19 @@
             (d/datoms db :eavt eid :triplex.entity/row))))
 (defn rows [name db input]
   (let [history? (true? (get input "history")) basis (get input "basis")
-        cut (when-not history?
-              (try (first (reach/select-db name db basis))
+        selection (when-not history?
+              (try (reach/select-db name db basis)
                    (catch clojure.lang.ExceptionInfo e (when-not (:declined (ex-data e)) (throw e)))))
+        [cut _ _ _ inner] selection
         source (or cut db) id (get input "id") pattern (get input "pattern")
         entities (or (get input "entityIds")
                      (when-let [entity (get pattern "entityId")]
                        (when-not (.startsWith ^String entity "?") [entity])))
-        eids (cond id (when-let [datom (by-id (if cut source (d/history db)) id)] [(:e datom)])
+        eids (cond id (when-let [datom (by-id (if (and cut (not inner)) source (d/history source)) id)] [(:e datom)])
                    entities (keep #(d/entid source [:triplex.entity/id %]) (distinct entities))
-                   :else (distinct (map :e (d/datoms (if cut source (d/history db)) :aevt :triplex.entity/row))))]
+                   :else (distinct (map :e (d/datoms (if (and cut (not inner)) source (d/history source)) :aevt :triplex.entity/row))))]
     (filter #(or (nil? id) (= id (:id %)))
       (mapcat (fn [eid]
-                (if cut (map #(decode (:v %)) (live-texts source eid))
-                    (history-entity db eid))) eids))))
+                (cond inner (map #(decode (:v %)) (:datoms (group-cut/entity-slice inner eid)))
+                      cut (map #(decode (:v %)) (live-texts source eid))
+                      :else (history-entity db eid))) eids))))

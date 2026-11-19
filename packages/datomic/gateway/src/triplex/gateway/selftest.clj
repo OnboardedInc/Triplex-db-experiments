@@ -1,6 +1,6 @@
 (ns triplex.gateway.selftest
   (:require [clojure.test :refer :all] [triplex.gateway.transaction-shape :as tx-shape] [clojure.data.json :as json] [datomic.api :as d]
-            [triplex.gateway.slim :as slim] [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema] [triplex.gateway.layout-replay :as replay]))
+            [triplex.gateway.jfr :as jfr] [triplex.gateway.slim :as slim] [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema] [triplex.gateway.layout-replay :as replay]))
 
  ;; [DX-B7] Why: old selftests predate mandatory row texts and the explicit layout/name parameters.
 ;; Rejected: bypassing the current commit API or removing the existing signed-zero/speculative assertions.
@@ -607,6 +607,156 @@
     (is (string? (get-in summary [:indexAdoptions :status]))))
   (doseq [value [nil 0.9 {:sum 0 :count 0} {:sum 11 :count 10} {:sum 1 :count Double/POSITIVE_INFINITY}]]
     (is (nil? (get-in (triplex.gateway.trace/counter-summary {:ObjectCache value}) [:objectCache :hitRate])))))
+
+;; [DX-W1] Why: the installed transaction function must see used identities on the exact serialized basis.
+;; Rejected: testing only a fresh ordered seed or accepting equality between two erroneous results.
+(deftest one-history-range
+  (let [base "datomic:mem://"
+        scope (json/write-str ["triplex-scope-v1" "test" "test" (str (java.util.UUID/randomUUID)) 0])
+        name (:db (gateway/create-scope! base scope "lean" true))
+        conn (gateway/connection (str base name))
+        id (fn [c] (str (apply str (repeat 25 "W")) c))
+        row (fn [i entity] {:id i :entity_id entity :attribute ":value" :value_type "string" :value_string i
+                            :recorded_at 100.0 :recorded_position 1 :valid_from 0.0 :schema_version 1 :tx_id "tx"})
+        input (fn [items new-ids op]
+                (row-input {"sourceK" nil "scopeWide" false "span" 1 "position" 1
+                            "operationId" op "rows" (mapv storage/wire-row items) "newIds" new-ids
+                            "claims" [{"commandId" op "txId" op "timestamp" 100.0}]}))
+        fresh (fn [ids op] (input (mapv #(row % "owner") ids) ids op))
+        retired (fn [r] (assoc r :retracted_at 101.0 :retracted_position 1 :retract_tx_id "retire"))
+        commit! (fn [db in] (storage/commit! name conn db in))
+        outcome (fn [db in] (try (commit! db in) :committed
+                                 (catch Exception e (select-keys (ex-data e) [:status :code]))))
+        conflict {:status 400 :code "IdentityConflict"}
+        with-bounds (fn [in lo hi] (assoc in "historyIdentityBounds" [lo hi]))]
+    (try
+      (let [current (id "5") gone (id "8") born (id "B") legacy "imported/old"
+            _ (commit! (d/db conn) (fresh [current gone legacy] "seed"))
+            before-retire (d/db conn)
+            _ (commit! before-retire (input [(retired (row gone "owner")) (retired (row born "owner"))] [born] "retire"))
+            db (d/db conn)
+            seek d/index-range
+            ;; [DX-W1] Why: count actual lookups against the immutable history, including fallbacks in op order.
+            ;; Rejected: asserting a branch flag without seeing the bounded and per-ID index calls.
+            observe (fn [in]
+                      (let [p (second (first (storage/tx-data db in))) calls (atom [])]
+                        (with-redefs [d/index-range (fn [db a lo hi]
+                                                     (when (= a :triplex.entity/row) (swap! calls conj [lo hi]))
+                                                     (seek db a lo hi))]
+                          (try (@replay/expand-a db p) (catch Exception e
+                                                       (when-not (re-find #"TRIPLEX_IDENTITY f/id" (str e)) (throw e)))))
+                        @calls))
+            pfx storage/row-prefix]
+        (is (seq (d/index-range before-retire :triplex.entity/row (pfx gone) (str (pfx gone) "~"))))
+        (is (empty? (d/index-range db :triplex.entity/row (pfx gone) (str (pfx gone) "~"))))
+        (is (seq (d/index-range (d/history db) :triplex.entity/row (pfx gone) (str (pfx gone) "~"))))
+        (doseq [[label ids bounds expected]
+                [["empty range" [(id "4") (id "2") (id "3")] [(id "2") (id "4")] 1]
+                 ["adjacent occupied range" [(id "4") (id "6")] [(id "4") (id "6")] 3]
+                 ["only a retracted neighbor lies inside" [(id "7") (id "9")] [(id "7") (id "9")] 3]
+                 ["highest ASCII endpoint" [(id "Z") (id "Y")] [(id "Y") (id "Z")] 1]
+                 ["interleaved writers" [(id "A") (id "C") (id "9")] [(id "9") (id "C")] 4]
+                 ["mixed input" [(id "2") "odd"] [(id "2") (id "3")] 2]
+                 ["client bounds omit actual operation" [(id "1") (id "2") (id "3")] [(id "2") (id "3")] 3]
+                 ["singleton" [(id "2")] [(id "2") (id "3")] 1]
+                 ["empty command" [] [(id "2") (id "3")] 0]]]
+          (testing label
+            (let [a (fresh ids label) b (assoc a "historyIdentityBounds" bounds)
+                  apply-db (fn [in] (d/with db (storage/tx-data db in)))
+                  delta (fn [r] (mapv (fn [d] [(:e d) (:a d) (:v d) (:added d)])
+                                       (remove #(= (:a %) (d/entid db :db/txInstant)) (:tx-data r))))
+                  old (apply-db a) candidate (apply-db b) calls (observe b)]
+              (is (= (count ids) (count (observe a))))
+              (is (= expected (count calls)))
+              (when (and (= 1 expected) (> (count ids) 1))
+                (is (= [[(pfx (first bounds))
+                         (str (subs (pfx (second bounds)) 0 30) (char (inc (int (last (second bounds))))))]] calls)))
+              (is (= (delta old) (delta candidate)))
+              (let [owner-id (d/entid db [:triplex.entity/id "owner"])
+                    expected (set (map #(vector owner-id (row-text (assoc (row % "owner") :recorded_position 3)) true) ids))
+                    actual (set (for [datom (:tx-data candidate) :when (= (:a datom) (d/entid db :triplex.entity/row))]
+                                  [(:e datom) (:v datom) (:added datom)]))]
+                (is (= expected actual)))
+              (is (= (set ids) (set (for [d (:tx-data candidate)
+                                          :when (and (:added d) (= (:a d) (d/entid db :triplex.entity/row)))]
+                                      (:id (lean/decode (:v d))))))))))
+        ;; [DX-W1] Why: bench denominators require the JFR decision from this installed function call.
+        ;; Rejected: labeling all offered bounds as empty or testing only the speculative expansion.
+        (let [trace {:run scope :slot scope :source "fixture" :traceId (apply str (repeat 32 "1"))
+                     :parent (apply str (repeat 16 "2"))}
+              tmp (java.nio.file.Files/createTempFile "history-range" ".jfr" (make-array java.nio.file.attribute.FileAttribute 0))]
+          (try
+            (with-redefs [jfr/installed (atom (assoc trace :process "tx"))]
+              @jfr/transaction-factory
+              (with-open [rec (jdk.jfr.Recording.)]
+                (.enable rec "triplex.TransactionFunction") (.start rec)
+                (doseq [[lo hi] [[(id "1") (id "3")] [(id "4") (id "6")]]]
+                  (let [in (with-bounds (fresh [lo hi] "jfr") lo hi)
+                        [op payload] (first (storage/tx-data db in))]
+                    (d/with db [[op (assoc payload :triplex-trace trace)]])))
+                (.stop rec) (.dump rec tmp))
+              (let [observed (for [ev (jdk.jfr.consumer.RecordingFile/readAllEvents tmp)
+                                   :when (= "triplex.TransactionFunction" (.getName (.getEventType ev)))]
+                               [(.getString ev "traceId") (.getString ev "parentSpanId") (.getString ev "historyRange")])]
+                (is (= (mapv #(vector (:traceId trace) (:parent trace) %) ["empty" "occupied"]) observed))))
+            (finally (java.nio.file.Files/deleteIfExists tmp))))
+        (doseq [[used lo hi] [[current (id "3") current] [gone (id "7") gone] [born born (id "C")]
+                              [legacy (id "1") (id "3")] [current (id "1") (id "3")]]]
+          (let [ids (vec (distinct [lo hi used])) in (fresh ids (str "reuse-" used))]
+            (is (= conflict (outcome db in) (outcome db (with-bounds in lo hi))))))
+        (let [in (input [(retired (row current "owner")) (row (id "6") "owner")]
+                        [current (id "6")] "reassert-and-retire")]
+          (is (= conflict (outcome db in) (outcome db (with-bounds in current (id "6")))))
+          (let [stale (assoc in "sourceK" 0 "scopeWide" true)]
+            (is (= {:status 409 :code "CasConflict"} (outcome db stale) (outcome db (with-bounds stale current (id "6"))))))
+          (let [missing (assoc in "live" [(id "Z")])]
+            (is (= {:status 409 :code "CasConflict"} (outcome db missing) (outcome db (with-bounds missing current (id "6")))))))
+        (let [in (input [(retired (row current "owner")) (row (id "E") "owner") (row (id "F") "owner")]
+                        [(id "E") (id "F")] "valid-retract")
+              b (with-bounds in (id "E") (id "F"))]
+          (is (= (replay/logical-delta (d/with db (storage/tx-data db in)))
+                 (replay/logical-delta (d/with db (storage/tx-data db b))))))
+        (let [ids [(id "1") (id "1")] in (assoc (fresh ids "duplicate") "rowMode" "texts" "rowOrder" ids "rows" [])]
+          (is (= (outcome db in) (outcome db (with-bounds in (id "1") (id "2"))) {:status 400 :code "TransactionRejected"})))
+        (doseq [flag [false true]]
+          (let [same (if flag (id "N") (id "H"))
+                other (if flag (id "P") (id "J"))
+                go (promise)
+                ;; Both clients stage from the same stale view and use different owners.
+                submit (fn [owner]
+                         (future @go (let [in (input [(row same owner) (row other owner)] [same other] (str "race-" same owner))]
+                                       (outcome db (if flag (with-bounds in same other) in)))))
+                left (submit "left") right (submit "right")]
+            (deliver go true)
+            (is (= {:committed 1 conflict 1} (frequencies [@left @right])))
+            (is (= 1 (count (seq (d/index-range (d/db conn) :triplex.entity/row (pfx same) (str (pfx same) "~")))))))))
+      (finally (gateway/delete-scope! base scope)))))
+
+;; [DX-W1] Why: exercise the compact bytes emitted by the public TS client through the gateway's normal request parser.
+;; Rejected: testing only internal expanded operations or treating a receipt alone as proof of the stored rows.
+(deftest compact-identity-range-route
+  (let [text (slurp "/opt/gateway/history-range-case.json") in (json/read-str text)]
+    (doseq [enabled [false true]]
+      (let [scope (json/write-str ["triplex-scope-v1" "test" "test" (str (java.util.UUID/randomUUID)) 0])
+            base "datomic:mem://" db-name (:db (gateway/create-scope! base scope "lean"))
+            route (str "/v1/db/" db-name "/transact")
+            send (fn [^String body]
+                   (let [r (gateway/route-handler {:request-method :post :uri route
+                                                   :body (java.io.ByteArrayInputStream. (.getBytes body "UTF-8"))})
+                         data (:body r)]
+                     [(:status r) (json/read-str (if (string? data) data (String. ^bytes data "UTF-8")))]))]
+        (try
+          (let [wire (if enabled in (dissoc in "historyIdentityBounds"))
+                [status ack] (send (if enabled text (json/write-str wire)))
+                db (gateway/sync-db (str base db-name)) owner (d/entid db [:triplex.entity/id "subject"])]
+            (is (= 200 status))
+            (is (= ["save" "1"] [(get ack "operationId") (get-in ack ["position" "v"])]))
+            (is (= (set (vals (get wire "rowTexts"))) (set (map :v (d/datoms db :eavt owner :triplex.entity/row)))))
+            (let [[status err] (send (json/write-str (assoc wire "operationId" "reused" "sourceK" 1 "position" 2)))]
+              (is (= 400 status))
+              (is (= "IdentityConflict" (get err "code")))
+              (is (= (d/basis-t db) (d/basis-t (gateway/sync-db (str base db-name)))))))
+          (finally (gateway/delete-scope! base scope)))))))
 
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]
