@@ -339,3 +339,14 @@ export async function deltaFeed(
     },
   };
 }
+
+// [DX-STG1] Why: the normal LAZY service wakes a receiver after its projector catches up. Use that wake for batched native acknowledgements and retain its genuine deadline timer. Rejected: polling an idle account.
+export function lazyRecipient(store: LazyStore, sink: Documents) {
+  const source = new Documents(store.comp, "lazy-sender");
+  return {
+    drain: async (host: LazyStore) => {
+      assert.equal(host.scope, store.scope);
+      return (await drainHost(source, sink, await lazyFeed(host, await host.head()))).effects;
+    },
+  };
+}

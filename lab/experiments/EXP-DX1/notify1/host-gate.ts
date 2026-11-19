@@ -7,7 +7,7 @@ import { pathToFileURL } from "node:url";
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { DomainOracle } from "../../../bench/lib/w0-gates.ts";
 import { W0, canonical, triplexValue, sha256 } from "../../../bench/lib/w0-world.ts";
-import { deltaFeed, drainHost, eraseLazy, lazyFeed } from "./hosts.ts";
+import { deltaFeed, drainHost, eraseLazy, lazyFeed, lazyRecipient } from "./hosts.ts";
 import { Documents, hash, parse, unpack } from "./store.ts";
 import { wireDelivery } from "./verify.ts";
 
@@ -15,6 +15,7 @@ const mode = process.argv[2],
   root = path.resolve(process.argv[3]!),
   dir = process.env.NOTIFY_DIR!;
 assert(mode === "lazy" || mode === "delta");
+const protectedProbe = mode === "lazy" && process.argv[4] === "protected";
 const revision = fs.readFileSync(path.join(root, "version"), "utf8").trim();
 const load = (name: string) =>
   import(pathToFileURL(path.join(root, "lab/experiments/EXP-DX1/actv-" + mode, name + ".ts")).href);
@@ -31,6 +32,7 @@ const facts = (who: string, tx: number): W0.Fact[] => [
   { e: "jur:a", a: "stateMinWageCents", v: 1650, tx },
   { e: "loc:a", a: "localMinWageCents", v: 1700, tx },
   ...(who === s ? [{ e: who, a: "ssn", v: "000000000", tx }] : []),
+  ...(mode === "lazy" && !protectedProbe ? [{ e: who, a: "everifyStatus", v: "pending", tx }] : []),
 ];
 const sinkStore = await openComposition("reach", "datomic", "notice-sink-" + run),
   sink = new Documents(sinkStore, "recipient"),
@@ -100,37 +102,70 @@ try {
         originals.push([name, ack.position, ack.txId]);
         await expect(name, ack.position, seed.position);
       }
-      const loss = await eraseLazy(host, () => projection.drain(), "erase", s, v);
-      await expect("R2", loss.position, seed.position, loss.position);
-      const rollback = await lib.activation(host, "rollback", W0.R1, v);
-      await expect("R1", rollback.position, seed.position, loss.position);
-      originals.push(["rollback", rollback.position, rollback.txId]);
-      await projection.drain();
-      const src = new Documents(host.comp, "lazy-sender"),
-        feed = await lazyFeed(host, await host.head());
-      await assert.rejects(
-        drainHost(src, sink, feed, async () => {
-          throw Error("drop ACK");
-        }),
-        /drop ACK/,
-      );
-      projection.close();
-      await host.close();
-      host = await lib.openStore("lazy-notice-" + run);
-      projection = new dispatch.Dispatcher(host);
-      const reopened = new Documents(host.comp, "lazy-sender"),
-        latest = await lazyFeed(host, await host.head());
-      await drainHost(reopened, sink, latest);
-      assert.equal(
-        (
-          await host.rows(
-            ids.map((i) => "lazy/pending/" + i),
-            await host.head(),
-          )
-        ).length,
-        0,
-      );
-      proof = await checkEffects(reopened, feed.epoch);
+      if (protectedProbe) {
+        await assert.rejects(
+          eraseLazy(host, () => projection.drain(), "erase", s, v),
+          /ProtectedSubscriberNeedsRuling/,
+        );
+        assert.equal(await host.lookup("erase"), null);
+        const controls = await host.controls(await host.head());
+        assert.equal(controls.masks.length, 0);
+        proof = {
+          outcome: "protected subscriber refused",
+          originalRelease: originals.at(-1),
+          erasureCommitted: false,
+        };
+      } else {
+        const loss = await eraseLazy(host, () => projection.drain(), "erase", s, v);
+        await expect("R2", loss.position, seed.position, loss.position);
+        const rollback = await lib.activation(host, "rollback", W0.R1, v);
+        await expect("R1", rollback.position, seed.position, loss.position);
+        originals.push(["rollback", rollback.position, rollback.txId]);
+        await projection.drain();
+        const src = new Documents(host.comp, "lazy-sender"),
+          feed = await lazyFeed(host, await host.head());
+        await assert.rejects(
+          drainHost(src, sink, feed, async () => {
+            throw Error("drop ACK");
+          }),
+          /drop ACK/,
+        );
+        projection.close();
+        await host.close();
+        host = await lib.openStore("lazy-notice-" + run);
+        projection = new dispatch.Dispatcher(host);
+        const reopened = new Documents(host.comp, "lazy-sender"),
+          latest = await lazyFeed(host, await host.head());
+        await drainHost(reopened, sink, latest);
+        assert.equal(
+          (
+            await host.rows(
+              ids.map((i) => "lazy/pending/" + i),
+              await host.head(),
+            )
+          ).length,
+          0,
+        );
+        proof = await checkEffects(reopened, feed.epoch);
+        const serviceFile = path.join(root, "lab/experiments/EXP-DX1/actv-lazy/service.ts");
+        if (fs.existsSync(serviceFile)) {
+          const service = new (await load("service")).NoticeService(
+            host,
+            lazyRecipient(host, sink),
+            "w0",
+            () => v,
+          );
+          try {
+            const same = await service.activate("wake-control", W0.R1, v);
+            await service.settled();
+            await expect("R1", same.position, seed.position, loss.position);
+            assert.deepEqual(await checkEffects(reopened, feed.epoch), proof);
+            originals.push(["service-wake", same.position, same.txId]);
+          } finally {
+            await service.close();
+          }
+        }
+      }
     } finally {
       projection.close();
       await host.close();
