@@ -19,6 +19,8 @@ assert(
   servers.every((s) => s && /^[a-z0-9_]+@[a-zA-Z0-9.-]+$/.test(s)) && servers[0] !== servers[1],
 );
 assert(addrs.every((s) => s && /^\d+(?:\.\d+){3}$/.test(s)) && addrs[0] !== addrs[1]);
+const hours = Number(process.env["HA1_BENCH_HOURS"] ?? 6);
+assert(Number.isInteger(hours) && hours >= 1 && hours <= 72);
 const sha = head(),
   base = "/var/tmp/triplex-ha1",
   build = base + "/build-" + sha,
@@ -154,7 +156,7 @@ try {
       "--pipe",
       "--collect",
       "--unit=triplex-ha1-" + tag,
-      "--property=RuntimeMaxSec=6h",
+      "--property=RuntimeMaxSec=" + hours + "h",
       "--property=KillMode=control-group",
       "--working-directory=" + src,
       bin,

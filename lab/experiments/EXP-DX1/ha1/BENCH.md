@@ -17,3 +17,23 @@ The controller verifies the anonymous branch ref, assignment and distinct machin
 - **Replication.** A runs a PostgreSQL 17 primary and B a streaming standby. Two alternating pairs compare local flush and named synchronous standby flush at the Datomic receipt. After a remote-flush witness, the drill kills and fences the primary, promotes B, rechecks every previous command, and submits one new write. The promoted primary then has one copy until a replacement standby joins. Process loss and isolated storage are exercised. Power loss of an entire host requires a separate physical fault.
 
 For the local small drill, build the Datomic package and run `node lab/bin/heavy.mjs --label DX-HA1 -- node --import tsx lab/bin/engine.mjs ha1 --holder DX-HA1 --slot s1 --experiment failures`. Choose `move --people N` or `replication` for the other arms. The engine obtains the exclusive slot and records the actual role caps. No resident or retained slot volume is used.
+
+## Shared-database experiments
+
+Run these on the released pair. Each command acquires both machines. The first three use one physical Datomic database with ten interleaved tenant prefixes. Each subject contributes 160 current application facts. The account extraction uses two independent Datomic databases containing multiple tenants. The drills use new storage and verify the actual source revision, both machines, input hashes and exact outputs on every rung.
+
+```sh
+node --import tsx lab/experiments/EXP-DX1/ha1/control.ts one-failover shared-election
+node --import tsx lab/experiments/EXP-DX1/ha1/control.ts one-backup shared-backups
+node --import tsx lab/experiments/EXP-DX1/ha1/control.ts one-sync shared-sync
+node --import tsx lab/experiments/EXP-DX1/ha1/control.ts one-whole shared-promotion
+node --import tsx lab/experiments/EXP-DX1/ha1/control.ts one-account tenant-extraction
+```
+
+- **Transactor failure.** Seed 1,000, 10,000, 100,000 and 1,000,000 deep subjects, reaching 160 million application facts at the last rung. Four abrupt elections per rung vary recent index completion and offered writes. The source PostgreSQL storage stays on A and the two transactors alternate between A and B.
+- **Machine recovery.** Seed 1,000, 10,000 and 100,000 subjects. B stores the Datomic backup and a physical base with WAL as they arrive from A. Remove A's primary and both application processes. Verify independent fresh restores of B's captured bytes, inclusive recovery cuts, absent ACKs and the time to an actual application receipt.
+- **Commit cost.** At 1,000 subjects compare 4,096 ten-fact Datomic writes per policy in alternating blocks. B must report a streaming flush before A is destroyed and B promoted. Both the raw sample arrays and the block p99s are retained.
+- **Whole database.** At 1,000, 10,000 and 100,000 subjects a live physical standby follows A. Deploy the destination peer during precopy, then revoke the source writer, wait for the exact flushed LSN, promote B and switch writes. Historical reads may use the read-only A until B answers the same pin.
+- **One account.** At 100, 1,000 and 10,000 subjects, red moves from A to an already populated database on B. Blue writes on A throughout. An interrupted logical copy resumes from its verified checkpoint. The final fence covers at most eight one-position commands, each with at most 160 fact rows and 512 KiB of encoded input. The coordinator exercises a three-fact final change.
+
+Set `HA1_PEOPLE` to a comma-separated list of subject counts to select rungs. Set `HA1_BENCH_HOURS` to the released reservation length when the default six-hour ceiling is too short. The large-rung preparation is included in that budget. A last rung that runs out of time supplies no observation. Size here counts authored facts. Deep, wide-thin, small and long-history production mixtures require separate evidence.

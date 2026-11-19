@@ -31,7 +31,7 @@ export class Satellite {
       const opt = (k: string) => args[args.indexOf(k) + 1];
       assert(args.includes("--name") && args.includes("--network") && args.includes(label));
       assert(
-        ["target", "standby", "active", "write"].some(
+        ["target", "standby", "active", "write", "read", "tool"].some(
           (r) => opt("--name") === this.prefix + "-" + r,
         ),
       );

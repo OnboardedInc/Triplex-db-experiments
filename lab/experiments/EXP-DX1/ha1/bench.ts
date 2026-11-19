@@ -66,10 +66,24 @@ const b: Site = {
 };
 fs.mkdirSync(store, { recursive: false });
 try {
-  const sizes =
-    mode === "move"
-      ? (people ?? "500,2000,5000").split(",").map(Number)
-      : [mode === "failures" ? Number(people ?? 2000) : 1];
+  const defaults: Record<string, string> = {
+    failures: "2000",
+    move: "500,2000,5000",
+    replication: "1",
+    "one-failover": "1000,10000,100000,1000000",
+    "one-backup": "1000,10000,100000",
+    "one-whole": "1000,10000,100000",
+    "one-account": "100,1000,10000",
+    "one-sync": "1000",
+  };
+  const sizes = (people ?? defaults[mode]!).split(",").map(Number);
+  assert(
+    sizes.length &&
+      sizes.every(
+        (n) =>
+          Number.isSafeInteger(n) && n > 0 && n <= (mode.startsWith("one-") ? 1500000 : 100000),
+      ),
+  );
   fs.writeFileSync(
     path.join(store, "campaign.json"),
     JSON.stringify({ tag, sha, mode, campaign, sizes }) + "\n",
