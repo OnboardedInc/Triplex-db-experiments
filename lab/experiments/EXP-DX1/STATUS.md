@@ -2144,3 +2144,25 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   permits (queue cutoff 16:27 local on 2026-11-19). A waiter starts the DX-DRV1 old/new/old comparison (about 5.5 h)
   when that queue ends. Cloud spend at 18:46 local: 7.3 h, about $8.
 - **Mac tonight:** runner armed for 19:30 local from `dx-t1` at `10a39538`.
+
+## 2026-11-19 12:05 UTC (07:05 local): night window closed; both machines lost most of the night
+
+- **Mac handed back 06:58 local:** Chrome, Slack, Paste reopened; default colima VM and its five dev containers
+  restarted; photo analysis resumed 06:57. 58 GiB free (two attempts kept about 10 GiB of raw data each).
+- **Mac night (source `10a39538`).** Refused once at 19:43 (26.0%; top: claude 5.5%, Granola 4.2%, esbuild 3.6%), admitted
+  19:54. Two pair attempts, each about 195 minutes, both ended "ladder has no completed sealed arm": the reader arm's
+  timed part finished, then report finalisation died (`JavaScript heap out of memory`, then `RangeError: Invalid
+  string length` in `lab/trace/report.mjs` buildReport). Raw data kept (`tx2-dxt1-night-20261118-005426414-pair1-ladder`,
+  `...-041031153-pair1-ladder`). Zero arms completed: L256 medians 9.151 / 11.199 and 9.471 / 11.199 ms; all-commit
+  p99 94.7 and 71.4 ms (109.1 the night before). No pair verdict yet; re-render is in DX-BM1 part 2.
+- **Bench server overnight.** `scale-reader` (100,000 subjects) exited 1 at 23:57Z after its timed part. Activation ran
+  four hours with an empty log and was killed at its ceiling (write gateway: `read-transactor-location-failed`). Its
+  containers stayed, the next items refused ("a prior holder still owns bench resources"), the queue ended 04:00Z, and
+  the server idled eight hours; the DX-DRV1 waiter was blocked by the same containers. About 12 of 19.6 server-hours
+  were lost (about $13 of $21.3). Orchestrator fault: no watchdog, and a deliberate choice not to look during the
+  Mac's window.
+- **Recovery at 07:00 local.** Leftover container logs saved on the server, containers removed, the DX-DRV1 old/new/old
+  comparison released (about 5.5 h). DX-BM1 resumed (`DX-BM1-resume1.md`): general streamed rendering and re-render of
+  the two Mac reader arms, activation and scale-reader diagnoses, the two suspicious loaded numbers, the one read
+  error in 89.38 M observations; after 13:00 local activation at 100,000 subjects and one v3 pair with a hardened
+  queue and a status file. A plain watcher on the Mac wakes the orchestrator when the comparison ends or fails.
