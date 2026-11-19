@@ -6,7 +6,7 @@ import { openComposition } from "../../../bench/lib/composition.ts";
 import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { Documents, hash, unpack } from "./store.ts";
 import { Fixture } from "./fixture.ts";
-import { Notices, type Tail } from "./journal.ts";
+import { Notices } from "./journal.ts";
 import { Dispatcher } from "./dispatcher.ts";
 import { recipient } from "./worker.ts";
 import { wireDelivery, type Offered } from "./verify.ts";

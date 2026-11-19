@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
-import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
+import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
 import { type Census, installCensus, memberPage, width } from "./census.ts";
 import {
   Documents,
@@ -22,6 +22,7 @@ export interface Inputs {
 }
 export type Selection = { kind: "census" } | { kind: "subjects"; ids: string[] };
 export interface Request {
+  document?: W0.ReleaseDoc;
   id: string;
   kind: "activation" | "reconcile" | "erase";
   release: Release;
@@ -30,6 +31,7 @@ export interface Request {
   selection: Selection;
 }
 export interface Tail {
+  custom?: { hash: string; definition: number };
   epoch: string;
   census: Census;
   sequence: number;
@@ -41,6 +43,7 @@ export interface Tail {
   evaluator: string;
 }
 export interface Recipe {
+  definition?: number;
   version: 1;
   account: string;
   epoch: string;
@@ -118,11 +121,15 @@ export class Notices {
         r.account === this.db.prefix &&
         r.inputs === this.inputs.identity &&
         r.evaluator === interpreter &&
-        r.nextHash === releaseIdentity(r.next) &&
+        (r.definition !== undefined
+          ? Number.isSafeInteger(r.definition) && r.definition > 0 && r.definition <= n
+          : r.nextHash === releaseIdentity(r.next)) &&
         (r.kind === "activation"
-          ? r.document && "sha256:" + hash(r.document) === r.nextHash
+          ? r.document && r.document.name === r.next && "sha256:" + hash(r.document) === r.nextHash
           : r.document === null) &&
-        r.oldHash === (r.old ? releaseIdentity(r.old) : null) &&
+        (r.old
+          ? typeof r.oldHash === "string" && /^sha256:[a-f0-9]{64}$/.test(r.oldHash)
+          : r.oldHash === null) &&
         r.sourceBefore < e.at,
     );
     return e;
@@ -154,6 +161,20 @@ export class Notices {
           req.selection.ids.every((id, i, a) => W0.isPlacementId(id) && (!i || id > a[i - 1]!)),
       );
     const sequence = old.sequence + 1;
+    if (req.document)
+      assert(
+        req.kind === "activation" && req.document.name === req.release,
+        "Release document belongs to a different intent",
+      );
+    const policy = req.document ? W0.compileRelease(req.document) : W0[req.release];
+    const priorHash = old.custom?.hash ?? (old.release ? releaseIdentity(old.release) : null);
+    const custom =
+      req.kind === "activation"
+        ? policy.hash !== releaseIdentity(req.release)
+          ? { hash: policy.hash, definition: sequence }
+          : undefined
+        : old.custom;
+
     const recipe: Recipe = {
       version: 1,
       account: this.db.prefix,
@@ -162,9 +183,10 @@ export class Notices {
       parent: old.parent,
       old: old.release,
       next: req.release,
-      oldHash: old.release ? releaseIdentity(old.release) : null,
-      nextHash: releaseIdentity(req.release),
-      document: req.kind === "activation" ? W0[req.release].doc : null,
+      oldHash: priorHash,
+      nextHash: custom?.hash ?? releaseIdentity(req.release),
+      ...(custom ? { definition: custom.definition } : {}),
+      document: req.kind === "activation" ? policy.doc : null,
       from: req.from,
       validTime: req.validTime,
       request: req.id,
@@ -183,6 +205,8 @@ export class Notices {
       from: req.from,
       validTime: req.validTime,
     };
+    if (custom) next.custom = custom;
+    else delete next.custom;
     return {
       recipe,
       operations: [...this.db.change("tail", tail, next), this.db.put("event:" + sequence, recipe)],
@@ -234,9 +258,22 @@ export class Notices {
       worlds.map((w) => w.subject),
       fresh,
     );
+    let policy = W0.RELEASES_BY_HASH.get(e.value.nextHash);
+    if (!policy) {
+      assert(e.value.definition, "Unregistered release");
+      const origin = e.value.document ? e : await this.event(e.value.definition, e.at);
+      assert(
+        origin.value.kind === "activation" &&
+          origin.value.epoch === e.value.epoch &&
+          origin.value.nextHash === e.value.nextHash &&
+          origin.value.document,
+      );
+      policy = W0.compileRelease(origin.value.document);
+      assert.equal(policy.hash, e.value.nextHash);
+    }
     const by = new Map<string, Work>();
     for (const world of worlds) {
-      const result = W0.evaluateWorld(world, W0[e.value.next], {
+      const result = W0.evaluateWorld(world, policy, {
         tx: e.at,
         validTime: e.value.validTime,
       });

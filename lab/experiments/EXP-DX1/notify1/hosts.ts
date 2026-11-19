@@ -4,16 +4,7 @@ import { parseOutbox } from "../../../bench/lib/w0-outbox-state.ts";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import type { Packet } from "./dispatcher.ts";
 import { receiveOrdered } from "./receiver.ts";
-import {
-  Conflict,
-  Documents,
-  hash,
-  pack,
-  unpack,
-  type Check,
-  type Op,
-  type Store,
-} from "./store.ts";
+import { Conflict, Documents, hash, pack, unpack, type Op, type Store } from "./store.ts";
 
 type Point = { event: number; offset: number };
 type Frame = {
@@ -22,12 +13,12 @@ type Frame = {
   next: Point;
   deliveries: W0.Delivery[];
   ack?: Op[];
-  checks?: Check[];
 };
 interface Feed {
   epoch: string;
   first: Point;
   at(point: Point): Promise<Frame | null>;
+  acknowledge?(frame: Frame): Promise<void>;
 }
 interface Cursor {
   point: Point;
@@ -40,19 +31,20 @@ export async function drainHost(
   feed: Feed,
   afterEffect?: (p: Packet) => Promise<void>,
 ) {
+  const progress = new Documents(sink.store, "host-" + hash(source.prefix));
   let batches = 0,
     effects = 0;
   for (;;) {
-    const at = await source.head(),
+    const at = await progress.head(),
       key = "host-cursor:" + feed.epoch,
-      stored = await source.row<Cursor>(key, at);
+      stored = await progress.row<Cursor>(key, at);
     const c = stored?.value ?? {
       point: feed.first,
       batch: 0,
       previous: hash([source.prefix, feed.epoch, "receiver-genesis"]),
     };
     const spanKey = "host-span:" + feed.epoch + ":" + c.point.event + ":" + c.point.offset;
-    let span = await source.row<string>(spanKey, at);
+    let span = await progress.row<string>(spanKey, at);
     if (!span) {
       const planned = await feed.at(c.point);
       if (!planned) return { batches, effects };
@@ -63,15 +55,15 @@ export async function drainHost(
         frame: planned,
       });
       try {
-        await source.commit(
+        await progress.commit(
           "pin:" + spanKey + ":" + hash(bytes),
           bytes,
-          [source.put(spanKey, bytes)],
+          [progress.put(spanKey, bytes)],
           [
-            source.guard(spanKey, undefined),
+            progress.guard(spanKey, undefined),
             {
               _tag: "EntityState",
-              entityId: source.prefix + key,
+              entityId: progress.prefix + key,
               tripleIds: stored ? [stored.id] : [],
             },
           ],
@@ -80,7 +72,7 @@ export async function drainHost(
         if (e instanceof Conflict) continue;
         throw e;
       }
-      span = await source.get<string>(spanKey, await source.head());
+      span = await progress.get<string>(spanKey, await progress.head());
     }
     const pinned = unpack<{ origin: string; epoch: string; point: Point; frame: Frame }>(
       span.value,
@@ -111,13 +103,14 @@ export async function drainHost(
       next.previous = digest;
       next.batch = p.batch;
     }
-    // [DX-STG1] Why: one CAS acknowledges the exact host range, including LAZY's original pending row IDs, after durable receipt. Rejected: counting an expansion callback or ACKing each notice separately.
+    // [DX-STG1] Why: the receiver holds transport progress. The host acknowledges its original pending rows only through its own batch operation. Rejected: appending transport metadata to a source journal with a closed set of admitted writers.
+    await feed.acknowledge?.(frame);
     try {
-      await source.commit(
+      await progress.commit(
         "host-ack:" + feed.epoch + ":" + c.point.event + ":" + c.point.offset,
         [frame.id, next],
-        [...(frame.ack ?? []), ...source.change(key, stored, next)],
-        [source.guard(key, stored), ...(frame.checks ?? [])],
+        progress.change(key, stored, next),
+        [progress.guard(key, stored)],
       );
     } catch (e) {
       if (e instanceof Conflict) continue;
@@ -148,6 +141,27 @@ export async function lazyFeed(store: LazyStore, through: number): Promise<Feed>
   return {
     epoch,
     first: { event: 1, offset: 0 },
+    async acknowledge(f) {
+      const ops = f.ack ?? [];
+      if (!ops.length) return;
+      const id = "lazy/ack/notice-" + f.id,
+        context = { source: store.scope, generation: epoch, range: f.id };
+      for (;;) {
+        const p = await store.head();
+        assert.equal((await store.controls(p)).generation, epoch);
+        try {
+          const r = await store.commit(id, "lazy/ack", ops, p, context);
+          assert(r.actor === "lazy/ack" && r.commandId === id && r.txId);
+          assert.deepEqual(
+            r.changes.map((c: any) => [c.op, c.tripleId, c.retractionTxId]),
+            ops.map((o) => ["retract", o.op === "retract" ? o.id : null, r.txId]),
+          );
+          return;
+        } catch (error) {
+          if ((await store.head()) === p) throw error;
+        }
+      }
+    },
     async at(p) {
       let scan = p.event;
       while (scan <= through) {
@@ -156,7 +170,6 @@ export async function lazyFeed(store: LazyStore, through: number): Promise<Feed>
         assert(txs.length && txs.every((t, i) => t.position === scan + i && t.txId));
         const ds: W0.Delivery[] = [],
           ack: Op[] = [],
-          checks: Check[] = [],
           bindings: unknown[] = [];
         let next = p;
         for (const tx of txs) {
@@ -179,7 +192,6 @@ export async function lazyFeed(store: LazyStore, through: number): Promise<Feed>
             );
             ds.push(d);
             ack.push({ op: "retract", id: x.tripleId });
-            checks.push({ _tag: "TripleLive", id: x.tripleId });
             bindings.push([tx.position, tx.txId, x.tripleId, hash(d)]);
             if (ds.length === 64) {
               next =
@@ -199,7 +211,6 @@ export async function lazyFeed(store: LazyStore, through: number): Promise<Feed>
             next,
             deliveries: ds,
             ack,
-            checks,
           };
         scan = next.event;
       }

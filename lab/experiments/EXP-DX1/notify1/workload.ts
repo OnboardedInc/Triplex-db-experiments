@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
-import { W0 } from "../../../bench/lib/w0-world.ts";
+import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
 import { Dispatcher } from "./dispatcher.ts";
 import { Notices, type Inputs, type Cut, type Request } from "./journal.ts";
 import { Documents, hash, type Op, type Check, type Store } from "./store.ts";
@@ -294,7 +294,7 @@ export async function runWindow(opts: {
     saveP99: p99(saves.map((x) => x.ackMs)),
     readCount: reads.length,
     saveCount: saves.length,
-    offerDigest: hash(saves.map((x) => [x.seq, x.atMs])),
+    offerDigest: sha256(JSON.stringify(saves.map((x) => [x.seq, x.atMs]))),
     proof,
     history,
     reads,

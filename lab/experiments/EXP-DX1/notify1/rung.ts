@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { openComposition, type CompositionHandle } from "../../../bench/lib/composition.ts";
 import { memoryComposition } from "../../../bench/lib/memory.ts";
-import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
+import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
 import { Fixture, originalWorld } from "./fixture.ts";
 import { runWindow, type Offer, type Profile } from "./workload.ts";
 import type { Cut } from "./journal.ts";

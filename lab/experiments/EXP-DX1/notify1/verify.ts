@@ -28,10 +28,12 @@ export async function verify(
   let comparisons = 0,
     previous = 0;
   const counts: number[] = [];
+  let document: W0.ReleaseDoc | undefined;
   try {
     for (const [idx, { req, receipt }] of events.entries()) {
       assert(receipt.position > previous && receipt.txId);
       previous = receipt.position;
+      if (req.kind === "activation") document = req.document;
       const row = await a.event(idx + 1, receipt.position);
       assert(
         row.at === receipt.position &&
@@ -57,6 +59,7 @@ export async function verify(
               basis: { tx: cut.position, validTime: cut.validTime },
               release: req.release,
               worlds: input,
+              ...(document ? { document } : {}),
             }),
           ),
         );

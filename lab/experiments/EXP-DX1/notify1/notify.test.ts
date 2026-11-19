@@ -38,7 +38,7 @@ async function setup(n: number) {
   return { epoch, source, receiver, inputs, a, sink, worker: new Dispatcher(a, sink) };
 }
 test("owed batches survive two releases, a newer save, erasure, lost ACKs and restart", async () => {
-  const { epoch, source, receiver, inputs, a, sink, worker } = await setup(130);
+  const { epoch, source, receiver, inputs, a, worker } = await setup(130);
   const events: Offered[] = [];
   try {
     const append = async (req: Request) => {
@@ -50,7 +50,35 @@ test("owed batches survive two releases, a newer save, erasure, lost ACKs and re
     const initial = await append(release("initial", "R1"));
     await worker.drain();
     const broad = release("broad", "R2"),
-      { t, receipt } = await append(broad);
+      t = await a.observe();
+    const before = await source.currentPosition();
+    const interrupted = new Notices(
+      {
+        ...source,
+        transact: async () => {
+          throw Error("before activation");
+        },
+      },
+      "account",
+      inputs,
+    );
+    await assert.rejects(interrupted.append(t, broad), /before activation/);
+    assert.equal(await source.currentPosition(), before);
+    const lost = new Notices(
+      {
+        ...source,
+        transact: async (...args) => {
+          const result = await source.transact(...args);
+          assert(result.ok);
+          throw Error("lost durable source reply");
+        },
+      },
+      "account",
+      inputs,
+    );
+    await assert.rejects(lost.append(t, broad), /lost durable source reply/);
+    const { receipt } = await append(broad);
+    assert(receipt.position > before);
     assert.deepEqual(await a.append(t, broad), receipt);
     await assert.rejects(a.append(t, { ...broad, release: "R3" }), /mismatch/);
     await assert.rejects(a.append(initial.t, release("stale", "R2")), /precondition/);
@@ -181,6 +209,7 @@ test("a busy account stalled after delivery lets a quiet account finish", async 
     let resume!: () => void, stuck!: () => void;
     const stalled = new Promise<void>((r) => (resume = r)),
       entered = new Promise<void>((r) => (stuck = r));
+    quiet.worker = new Dispatcher(quiet.a, busy.sink);
     const quietDrain = quiet.worker.drain.bind(quiet.worker);
     let finished!: () => void;
     const quietComplete = new Promise<void>((r) => (finished = r));

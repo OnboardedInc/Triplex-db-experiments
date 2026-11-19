@@ -55,11 +55,28 @@ async function run() {
     );
     assert(Object.values(scaleHost.childrenInventory(p.prefix)).every((group) => !group.length));
     const disks = call("docker", ["info", "--format", "{{.DockerRootDir}}"]);
-    const budget = capacity(100000, 2, {
+    const budget = capacity(100000, 1, {
       memory: scaleHost.memory(),
       disk: scaleHost.available(disks),
     });
-    assert(budget.fitsLive, "Two fresh 100k comparison accounts and their evidence must fit");
+    // [DX-STG1] Why: sequential arms retain two source seeds but run one client cohort at a time. Rejected: charging the machine for two simultaneous reader pools.
+    const requiredDisk = budget.liveDisk + budget.db;
+    assert(
+      budget.host.disk >= requiredDisk && budget.host.memory >= budget.liveMemory,
+      "Two retained seeds and one active cohort must fit",
+    );
+    const topology = call("lscpu", ["-p=CPU,CORE,SOCKET"])
+      .split("\n")
+      .filter((x) => x && !x.startsWith("#"))
+      .map((x) => x.split(","));
+    const cores = new Map(
+      topology.map(([cpu, core, socket]) => [Number(cpu), socket + "/" + core]),
+    );
+    const assigned = Array.from({ length: 12 }, (_, i) => cores.get(i));
+    assert(
+      assigned.every(Boolean) && new Set(assigned).size === 12,
+      "Native placement needs twelve distinct physical cores",
+    );
     fs.mkdirSync(p.dir, { mode: 0o700 });
     const nonce = randomUUID(),
       clientBudget = Math.floor(budget.host.memory - budget.sharedReserve - 5 * GiB);
@@ -70,6 +87,7 @@ async function run() {
       source,
       inputs: inputPins(),
       budget,
+      requiredDisk,
       ceiling: p.ceiling,
     });
     const loader = [process.execPath, "--import", "tsx", script];

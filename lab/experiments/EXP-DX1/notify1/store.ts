@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { deflateRawSync, inflateRawSync } from "node:zlib";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { readOutboxAt } from "../../../bench/lib/w0-outbox-state.ts";
-import { canonical, sha256 } from "../../../bench/lib/w0-world.ts";
+import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 
 export type Store = Pick<
   CompositionHandle,
@@ -32,6 +32,27 @@ export interface Ack {
   txId: string;
 }
 export const hash = (v: unknown) => sha256(canonical(v));
+// [DX-STG1] Why: native valid-time bounds and offered offsets may be fractional milliseconds. W0's canonical value encoder handles exact business integers and sequences. Rejected: rounding transport time to make it a W0 integer.
+function transportBytes(value: unknown): string {
+  if (typeof value === "number" && !Number.isInteger(value)) {
+    assert(Number.isFinite(value));
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return "[" + value.map(transportBytes).join(",") + "]";
+  if (value !== null && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    return (
+      "{" +
+      Object.keys(obj)
+        .sort(W0.cmpCodePoints)
+        .map((k) => canonical(k) + ":" + transportBytes(obj[k]))
+        .join(",") +
+      "}"
+    );
+  }
+  return canonical(value);
+}
+export const transportHash = (value: unknown) => sha256(transportBytes(value));
 export class Conflict extends Error {}
 export function parse<T>(s: string): T {
   return JSON.parse(s, ((k: string, v: unknown, ctx: { source?: string }) =>
@@ -114,13 +135,14 @@ export class Documents {
       (x: any) => x.entityId === commandId && x.attribute === "notice/value" && x.op !== "retract",
     );
     assert(
-      markers.length === 1 && markers[0].value.value === canonical(hash([this.prefix, id, intent])),
+      markers.length === 1 &&
+        markers[0].value.value === canonical(transportHash([this.prefix, id, intent])),
       "Operation ID content mismatch",
     );
     return { position: r.position, txId: r.txId };
   }
   async commit(id: string, intent: unknown, ops: Op[], checks: Check[]): Promise<Ack> {
-    const claim = this.put("claim:" + hash(id), hash([this.prefix, id, intent]));
+    const claim = this.put("claim:" + hash(id), transportHash([this.prefix, id, intent]));
     const result = await this.store.transact([...ops, claim], {
       commandId: this.command(id),
       actor: "notice-v1",
