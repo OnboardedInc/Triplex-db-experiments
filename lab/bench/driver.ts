@@ -4,6 +4,7 @@ import {tenantAccounts, accountOfSubject as tenantOf, tenantQueries, tenantRows,
 import {tenantPlan,tenantPhases,tenantWindows,tenantReaders,tenantTraceId} from "../experiments/EXP-DX1/scale1/tenant-traffic.ts";
 import {checkImage} from "../experiments/EXP-DX1/scale1/seed-image.ts";
 import {MembershipProof,tenantRelease} from "../experiments/EXP-DX1/scale1/tenant-proof.ts";
+import {challengeTenants} from "../experiments/EXP-DX1/scale1/tenant-checks.ts";
 import {tenantFeedAt} from "../experiments/EXP-DX1/scale1/tenant-feed.ts";
 import {tenantObservations} from "../experiments/EXP-DX1/scale1/tenant-metrics.ts";
 import {TenantScheduler} from "../experiments/EXP-DX1/scale1/tenant-scheduler.ts";
@@ -627,7 +628,7 @@ async function run() {
   const releaseTarget = tenantReleasePhase ? tenants!.find(a => a.index === 1) : undefined;
   const nextRelease = config.composition === "reach-touched" && process.env.DX_INT1_DEEP_RELEASE === "ead90" ? "ead90" : "standard";
   const activation = releaseTarget
-    ? new DeepActivation(rawDir, releaseTarget.people, runTag + ":" + releaseTarget.key, releaseTarget.first, nextRelease, releaseTarget)
+    ? new DeepActivation(rawDir, releaseTarget.people, runTag + ":" + releaseTarget.key, releaseTarget.first, nextRelease, releaseTarget, Number(opt("deep-evaluators") ?? 2))
     : activationOnly && !tenantSpec ? new DeepActivation(rawDir, rungSubjects, runTag, 0, nextRelease) : undefined;
   if (deepId) atomicWrite(path.join(rawDir, "seed-observed.json"), JSON.stringify({ identity: deepId, scope: scopeName, seed: report.deep.seed, trace: report.deep.trace }));
   if (seedOnly) {
@@ -681,12 +682,13 @@ async function run() {
   // [DX-INT1] Why: six reading workers own their demand sets, while the independent sender receipt worker retains its ordered capture and fallback.
   // Rejected: handing all six a population image, or routing receipt observation back through the sender.
   const demandReaders = config.composition === "reach-touched";
+  const afterReaderImages = Boolean(deep && !demandReaders && !config.zeroReaders && !config.sharedReaderIndex && pairPlan?.readers !== 0);
   const replicaHost = config.readPath === "replica" ? config.replicaThread === "worker"
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
       composition: config.composition, roots: demandReaders ? [] : Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
       worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer,
-      sharedReaderIndex: config.sharedReaderIndex,
+      sharedReaderIndex: config.sharedReaderIndex, afterReaderImages,
       receiptSpill: config.receiptCapture === "replica-worker" ? spill!.connect() : undefined,
       ...(config.sharedReaderIndex ? { worker: 0, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2 } : {}),
     }, aux)
@@ -779,6 +781,9 @@ async function run() {
   // Rejected: starting worker 99 from runSweep while the frozen writer is already issuing commands.
   const preparedSweeper = replicaHost && !tenantSpec && !deepSmoke && !activationOnly && !interferenceOnly && !smallOnly && !config.zeroReaders && !config.readerLadderOnly
     ? await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 }) : undefined;
+  // [DX-SCALE1] Why: READY follows actual seed image installation on every reader, including the sweep worker. Rejected: a timer or a socket deadline larger than one image transfer.
+  if (afterReaderImages && replicaHost && "connect" in replicaHost)
+    await replicaHost.followAfterImages(workers.length + Number(Boolean(preparedSweeper)));
   let basisCursor: number | null = null;
   const basisBroadcast = { messages: 0, ackItems: 0, ticks: 0, wall: new Histogram() };
   const broadcast = () => {
@@ -934,7 +939,7 @@ async function run() {
     traceSync("driver.expected-state.add-commit", () => modelWriter.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream }));
     // [DX-T1-12] Why: only planned resends need original payload/receipt retention, and the frozen trace names them in advance.
     // Rejected: retain full duplicate copies for every commit until shutdown.
-    if (ev.stream === "background" && resendSequences.has(ev.seq)) original.set(ev.seq, { operations: cmd.operations, meta, receipt });
+    if ((ev.stream === "background" && resendSequences.has(ev.seq)) || ev.stream.startsWith("tenant-check-")) original.set(ev.seq, { operations: cmd.operations, meta, receipt });
     out.position = receipt.position;
     if (oracleRecordSet.has(ev.subject))
       traceSync("driver.oracle-record", () => recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt!.txId, position: receipt!.position, instant: receipt!.instant, assertionIds: alignAssertIds(cmd.operations, receipt!) } }));
@@ -1059,7 +1064,7 @@ async function run() {
 
   // ---------------------------------------------------------------- feed consumer (P3)
   // [EXP-M01] Paired rounds measure the writer and the read probe; the P3 consumer and its crash injection stay in NS.
-  const lvl = (deepSmoke ? 5 : config.levelS ?? PROFILES[profile === "deep" ? "v3" : profile === "deep-smoke" ? "smoke" : profile].levelS) * 1000;
+  const lvl = (tenantSpec?.study==="smoke" ? 2 : deepSmoke ? 5 : config.levelS ?? PROFILES[profile === "deep" ? "v3" : profile === "deep-smoke" ? "smoke" : profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = idle ? [] : (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
   // [DX-H1] Why: Datomic observes the native transact-result boundary before the driver ACK; other lanes still lack observers.
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
@@ -1344,6 +1349,17 @@ async function run() {
   // never mistaken for a feed gap.
   const inFlightDeadline = now() + 300_000;
   while (scheduler.inFlightCount > 0 && now() < inFlightDeadline) await sleep(250);
+  if(tenants && (tenantSpec?.study==="small" || tenantSpec?.study==="smoke")){
+    assert(scheduler.inFlightCount===0 && scheduler.pending===0,"Timed tenant writes still in progress");
+    const startedAt=now(),checks=await challengeTenants(tenants,startedAt+10,schedulerOptions);
+    report.deep.tenantChecks={identity:deepId,startedAt,timedEnd:endAt,checks:checks.map(c=>{
+      const primary=outcomes.get(c.stream+":"+c.seq+":0"),resend=outcomes.get(c.stream+":"+c.seq+":1");
+      const lost=lostAck.find(r=>r.seq===c.seq),ack=ackOf.get(primary?.position);
+      assert(primary?.outcome==="committed" && primary.path==="lost-ack-resolved" && resend?.outcome==="duplicate-returned-original");
+      assert(lost?.resolvedOriginal && lost.retryNamesOriginal && lost.retryTag==="CommandAlreadyCommittedError" && ack?.correction && ack.subject===c.subject);
+      return {...c,commandId:primary.commandId,position:primary.position,lost,duplicate:resend.outcome,validFrom:ack.correctionValidFrom};
+    })};
+  }
   const inFlightAtFeedTarget = scheduler.inFlightCount;
   deepStage(`flushing publications with ${inFlightAtFeedTarget} writes in flight`);
   report.writerSourceDiagnostics.end = datomicWriterDiagnostics();

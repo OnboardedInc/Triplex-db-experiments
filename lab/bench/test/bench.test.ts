@@ -268,6 +268,8 @@ test("feed consumer: durable checkpoints, three crash points, keyed effects neve
   );
   assert.equal(consumer.counts.redeliveryMismatches, 0);
   assert.equal(consumer.counts.entries, 30);
+  assert.deepEqual(consumer.lags.map(row => row.position), txs.map(tx => tx.position));
+  assert(consumer.lags.every(row => Number.isFinite(row.lagMs) && row.lagMs >= 0));
   const replay = await consumer.replayCheck(handle, 0);
   assert.equal(replay.exact, true);
   consumer.close();

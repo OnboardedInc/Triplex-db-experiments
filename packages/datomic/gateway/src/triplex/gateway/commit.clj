@@ -2,6 +2,35 @@
   (:require [clojure.walk :as walk] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.schema :as schema]
             [triplex.gateway.trace :as trace]))
 
+;; [DX-W1] Why: only the serialized db-before can prove a whole interval of historical prefixes empty.
+;; Rejected: trusting client bounds, checking current rows, or stopping at the largest bare prefix (its suffixes sort later).
+(def history-range-code
+  '(fn [db ops bounds]
+     (when (and (instance? java.util.List bounds) (= 2 (count bounds)))
+       (let [[low high] bounds pattern (re-pattern "[0-9A-Z]{26}")
+             supported? (fn [id] (and (string? id) (= 26 (.length ^String id)) (re-matches pattern id)))]
+         (when (and (supported? low) (supported? high) (neg? (compare low high)))
+           (loop [remaining (seq ops) seen #{}]
+             (if (seq remaining)
+               (let [op (first remaining)]
+                 (cond
+                   (and (instance? java.util.List op) (= :triplex/assert (first op)))
+                   (let [wrapped (nth op 3 nil)
+                         raw (when (and (= :triplex.entity/row (nth op 2 nil))
+                                        (instance? java.util.List wrapped) (= :triplex/row (first wrapped))
+                                        (= :row (nth wrapped 4 nil))) (second wrapped))
+                         id (when (and (string? raw) (> (.length ^String raw) 31)
+                                       (.startsWith ^String raw "2001a")) (subs raw 5 31))]
+                     (when (and (supported? id) (not (contains? seen id))
+                                (not (neg? (compare id low))) (not (pos? (compare id high))))
+                       (recur (next remaining) (conj seen id))))
+                   (or (map? op) (instance? java.util.List op)) (recur (next remaining) seen)
+                   :else nil))
+               (when (and (contains? seen low) (contains? seen high))
+                 (let [start (str "2001a" low)
+                       end (str "2001a" (subs high 0 25) (char (inc (int (.charAt ^String high 25)))))]
+                   (nil? (first (d/index-range (d/history db) :triplex.entity/row start end))))))))))))
+
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
 (def operation-code
@@ -109,13 +138,16 @@
                    (instance? java.util.Map x) (into {} (map (fn [[k v]] [k (replace-value v)]) x))
                    (instance? java.util.List x) (mapv replace-value x)
                    :else x))]
-         (let [prepared
+         (let [empty-history (when (and lean (:identity-bounds payload))
+                               (let [empty? (history-range-code db ops (:identity-bounds payload))]
+                                 (record-range-result empty?) empty?))
+               prepared
                (mapcat (fn [op]
                          (cond
                            (= :triplex/assert (first op))
                            (let [[_ entity a text] op raw (second text)
                                  id (subs raw 5 (+ 5 (Integer/parseInt raw 1 5 16)))]
-                             (when (identity-row id) (throw (ex-info "TRIPLEX_IDENTITY f/id" {})))
+                             (when (and (not empty-history) (identity-row id)) (throw (ex-info "TRIPLEX_IDENTITY f/id" {})))
                              [(replace-value [:db/add entity a text])])
                            (= :triplex/retracted-zero (first op))
                            (if (and server-clock (not= Long/MIN_VALUE (Double/doubleToRawLongBits clock)))
@@ -177,7 +209,15 @@
                           (try (.commit triplex-trace-event) (catch Throwable _ nil)))))))
 ;; [DX-T1-8] Why: embed the exact codec in the installed function hash; the transactor needs no gateway namespace.
 ;; Rejected: an unversioned remote helper or compressing before server clock assignment.
-(def code (instrument-code (walk/postwalk-replace {'slim-row-code slim/encoder-code} operation-code)))
+(defn expand-code [observe]
+  (walk/postwalk-replace {'slim-row-code slim/encoder-code 'history-range-code history-range-code
+                          'record-range-result observe} operation-code))
+;; [DX-W1] Why: JFR records the actual decision on its existing bound transaction event.
+;; Rejected: storing a diagnostic datom or running a second historical query on the peer.
+(def code (instrument-code (expand-code
+  '(fn [result] (when triplex-trace-event
+                  (try (.set triplex-trace-event 3 (cond (true? result) "empty" (false? result) "occupied" :else "ineligible"))
+                       (catch Throwable _ nil)))))))
 (def source-hash (schema/sha256 (pr-str code)))
 (defn install!
   ([conn scope] (install! conn scope (d/db conn)))

@@ -165,6 +165,7 @@ try {
     receiptCapture: r.receiptCapture,
     activation: r.deep.activationOracle,
     activationTraffic: r.deep.activationTraffic,
+    postlude: r.deep.tenantChecks,
     oracle: r.oracle,
     correctness: r.correctness,
     feed: r.priorities?.P3?.bars,
@@ -182,6 +183,19 @@ try {
           r.deep.crossAccount.proof.crossAccountSingleRequest === (topology === "pooled") &&
           r.deep.tenantObservationsSha256,
       );
+      const checks = r.deep.tenantChecks;
+      assert.deepEqual(checks.identity, r.deep.identity);
+      assert(
+        checks.checks.length === (topology === "pooled" ? 2 : 1) &&
+          checks.startedAt >= checks.timedEnd,
+      );
+      const proofBars = [...r.priorities.P2.bars, ...r.priorities.P3.bars];
+      for (const id of [
+        "NS-P2 duplicates return the original receipt",
+        "NS-P2 lost ACKs return the original receipt",
+        "NS-P3 corrections report their valid-time range",
+      ])
+        assert.equal(proofBars.find((x: any) => x.id === id)?.pass, true);
       assert.deepEqual(
         r.deep.crossAccount.seedProjection,
         r.deep.crossAccount.proof.receiptProjection,

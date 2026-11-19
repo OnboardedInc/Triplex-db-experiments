@@ -337,51 +337,53 @@ export class FeedConsumer {
         publicationLagMs(observation, captureFeedInstant(this.measurement.clock, key), record);
         publications.set(position, record!);
       }
+      const measurement = this.measurement;
+      const recordDurable = () => {
+        this.counts.durableWrites++;
+        const durableAt = this.now();
+        this.checkpoint = next;
+        for (const [position] of affected) {
+          if (this.durableKnown.has(position)) continue; // lag is taken at the first durable record of a position
+          this.durableKnown.add(position);
+          const info = this.commitOf(position);
+          this.lags.push({
+            // [DX-H1] Why: phases use epoch wall time; latency itself stays on the bound monotonic clock.
+            // Rejected: classifying host-boot hrtime as epoch time (silently empties every phase histogram).
+            at: durableAt,
+            position,
+            lagMs: publicationLagMs(
+              publications.get(position),
+              captureFeedInstant(measurement.clock, this.publicationKey(position)),
+              readProducerPublication(measurement.records, this.publicationKey(position)),
+            ),
+            lagFromAckMs: info ? Math.max(0, durableAt - info.ackAt) : null,
+          });
+          if (!info) {
+            this.pendingLag.set(position, durableAt);
+            this.counts.seenBeforeAck++;
+          }
+        }
+        for (const c of this.crashes)
+          if (
+            c.restartedAt !== undefined &&
+            c.caughtUpAt === null &&
+            this.checkpoint >= (c.target ?? 0)
+          )
+            c.caughtUpAt = durableAt;
+      };
       this.store.apply(
         this.name,
         previous,
         delivery,
         affected.flatMap(([position, subjects]) =>
-          subjects.map((subject) => ({
-            epoch: "0",
-            position: String(position),
-            subject: String(subject),
-          })),
+          subjects.map(subject => ({ epoch: "0", position: String(position), subject: String(subject) })),
         ),
-        (point: CrashPoint) => this.maybeCrash(point),
+        (point: CrashPoint) => {
+          // [DX-SCALE1] Why: the store calls after-checkpoint immediately after SQLite COMMIT. Observe that durable page before an injected crash can skip its lag samples. Rejected: guessing a lag from the restart clock.
+          if (point === "after-checkpoint") recordDurable();
+          this.maybeCrash(point);
+        },
       );
-      this.counts.durableWrites++;
-      const durableAt = this.now();
-      this.checkpoint = next;
-      for (const [position] of affected) {
-        if (this.durableKnown.has(position)) continue; // lag is taken at the first durable record of a position
-        this.durableKnown.add(position);
-        const info = this.commitOf(position);
-        this.lags.push({
-          // [DX-H1] Why: phases use epoch wall time; latency itself stays on the bound monotonic clock.
-          // Rejected: classifying host-boot hrtime as epoch time (silently empties every phase histogram).
-          at: durableAt,
-          position,
-          lagMs: publicationLagMs(
-            publications.get(position),
-            captureFeedInstant(this.measurement.clock, this.publicationKey(position)),
-            readProducerPublication(this.measurement.records, this.publicationKey(position)),
-          ),
-          lagFromAckMs: info ? Math.max(0, durableAt - info.ackAt) : null,
-        });
-        if (!info) {
-          this.pendingLag.set(position, durableAt);
-          this.counts.seenBeforeAck++;
-        }
-      }
-      for (const c of this.crashes)
-        if (
-          c.restartedAt !== undefined &&
-          c.caughtUpAt === null &&
-          this.checkpoint >= (c.target ?? 0)
-        )
-          c.caughtUpAt = durableAt;
-      this.maybeCrash("after-checkpoint");
     }
   }
   // [DX-H4] Why: feed and ACK now arrive on independent threads; every intent still gets checked.

@@ -17,7 +17,7 @@ port!.on("message", m => { if (m.type === "head-reply") { const p = heads.get(m.
 const comp = { currentPosition: () => new Promise<number>((resolve, reject) => { const id = ++serial; heads.set(id, { resolve, reject }); port!.postMessage({ type: "head", id }); }) };
 try {
   const demand = cfg.composition === "reach-touched";
-  const host = await ReplicaReadHost.open(cfg.scope, demand ? [] : cfg.roots, comp, cfg.initial, cfg.feed, cfg.historyBytes, cfg.peer, cfg.sourceEndpoint, demand ? "touched" : "all");
+  const host = await ReplicaReadHost.open(cfg.scope, demand ? [] : cfg.roots, comp, cfg.initial, cfg.feed, cfg.historyBytes, cfg.peer, cfg.sourceEndpoint, demand ? "touched" : "all", undefined, Date.now(), cfg.afterReaderImages === true);
   // [DX-R3] Why: subscribe and publish the initial cut in one turn; no journal can fall between image and deltas.
   // Rejected: requesting a snapshot and subscribing in separate parent messages.
   const local = new ReplicaReader(cfg.historyBytes, host.index, cfg.worldCacheBytes ?? 32 * 1024 ** 2);
@@ -91,6 +91,14 @@ try {
       m.port.postMessage({ type: "replica-image", image: host.index.image() });
       readers.add(m.port);
       m.port.on("close", () => readers.delete(m.port));
+    }
+    if (m.type === "follow-after-images") {
+      try {
+        if (!Number.isSafeInteger(m.readers) || m.readers < 1 || readers.size !== m.readers)
+          throw Error("Reader cohort differs from installed seed images");
+        host.followAfterImages(cfg.initial.position);
+        port!.postMessage({ type: "following-after-images" });
+      } catch (error) { port!.postMessage({ type: "error", message: String(error) }); }
     }
     if (m.type === "start-shared-reader") {
       const control = m.control as import("node:worker_threads").MessagePort;

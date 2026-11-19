@@ -87,7 +87,55 @@ export function ratioSummary(rounds: readonly any[], seed: string) {
       })),
   };
 }
-export async function applyW0Trace(comp: CompositionHandle, event: TraceEvent, window?: "baseline" | "sweep") {
+// [DX-ACT2] Why: an acknowledged window owns both its new entities and its retries across process restarts. Rejected: prefixing the receipt alone, or allocating new IDs when retrying a lost acknowledgement.
+export async function openW0Window(comp: CompositionHandle, name: string) {
+  if (!name) throw Error("Missing live window name");
+  const commandId = "p5:live-window:" + name;
+  const entity = commandId,
+    attr = "p5/window";
+  const lookup = () => comp.transactionByCommand(commandId);
+  const prior = await lookup();
+  if (!prior.ok) throw Error(prior.tag);
+  let claim = prior.value;
+  if (!claim) {
+    const saved = await comp.transact(
+      [
+        {
+          op: "assert",
+          entityId: entity,
+          attribute: attr,
+          value: { type: "string", value: name },
+          validFrom: 0,
+        },
+      ],
+      { commandId, actor: "p5-window" },
+    );
+    if (saved.ok) claim = saved.value;
+    else {
+      const raced = await lookup();
+      if (!raced.ok || !raced.value) throw Error("Live window registration failed: " + saved.tag);
+      claim = raced.value;
+    }
+  }
+  const basis = { position: claim.position, validAt: V_W0 };
+  const read = await comp.sweepPage([entity], basis);
+  const [row] = read.rows;
+  if (
+    !Number.isSafeInteger(basis.position) ||
+    basis.position < 1 ||
+    read.reportedBasis?.position !== basis.position ||
+    read.reportedBasis?.validAt !== basis.validAt ||
+    read.rows.length !== 1 ||
+    row?.position !== basis.position ||
+    row.entityId !== entity ||
+    row.attribute !== attr ||
+    row.value.type !== "string" ||
+    row.value.value !== name
+  )
+    throw Error("Live window claim differs from its pinned contents");
+  return basis.position;
+}
+export async function applyW0Trace(comp: CompositionHandle, event: TraceEvent, window?: number) {
   const mapped = mapW0Trace(event, window),
     old = await comp.transactionByCommand(mapped.commandId);
   if (!old.ok) throw new Error(old.tag);

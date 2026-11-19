@@ -8,7 +8,7 @@ import { StringDecoder } from "node:string_decoder";
 import { sha256 } from "./w0-world.ts";
 import { Worker } from "node:worker_threads";
 import { generateTrace } from "./trace.ts";
-import { applyW0Trace, percentile } from "./w0-traffic.ts";
+import { applyW0Trace, openW0Window, percentile } from "./w0-traffic.ts";
 import { pullAt, type RecentReads, type Replica } from "../../../packages/datomic/dist/index.js";
 import { Rng, seedOf } from "./rng.ts";
 import { W0 } from "./w0-world.ts";
@@ -63,12 +63,15 @@ export async function startW0Live(o: {
   replica?: Replica;
   currentReads?: RecentReads;
   commandNamespace?: string;
-  entityWindow?: "baseline" | "sweep";
   readersDisabled?: boolean;
   writerInFlight?: number;
   writeActivity?: (pending: boolean) => void;
   maxWriteRate?: number;
 }) {
+  const window = await openW0Window(
+    o.comp,
+    (o.commandNamespace ? o.commandNamespace + ":" : "") + o.id,
+  );
   const warmupMs = o.warmupMs ?? 0;
   if (!Number.isSafeInteger(warmupMs) || warmupMs < 0 || warmupMs > 60000)
     throw Error("invalid live warmup");
@@ -205,19 +208,11 @@ export async function startW0Live(o: {
     .filter((e) => e.atMs >= o.offsetS * 1000)
     .map((e) => ({ ...e, atMs: e.atMs - o.offsetS * 1000 }));
   const scheduledContext = new AsyncLocalStorage<number>();
-  const namespaced: CompositionHandle = {
+  const measured: CompositionHandle = {
     ...o.comp,
-    transactionByCommand: (id) =>
-      o.comp.transactionByCommand(
-        (o.commandNamespace ? o.commandNamespace + ":" : "") + o.id + ":" + id,
-      ),
-    transact: async (operations, meta: any) => {
+    transact: async (operations, meta) => {
       const begun = now();
-      const result = await o.comp.transact(operations, {
-        ...meta,
-        commandId:
-          (o.commandNamespace ? o.commandNamespace + ":" : "") + o.id + ":" + meta.commandId,
-      });
+      const result = await o.comp.transact(operations, meta);
       const row = {
         kind: "commit",
         started: begun,
@@ -252,7 +247,7 @@ export async function startW0Live(o: {
       exec: async ({ event, scheduledAt }) => {
         try {
           const result = await scheduledContext.run(scheduledAt, () =>
-            applyW0Trace(namespaced, { ...event, atMs: event.atMs + o.offsetS * 1000 }, o.entityWindow),
+            applyW0Trace(measured, { ...event, atMs: event.atMs + o.offsetS * 1000 }, window),
           );
           const row = {
             kind: "write",

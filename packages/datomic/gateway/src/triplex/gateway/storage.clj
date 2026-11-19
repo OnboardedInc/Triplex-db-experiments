@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:require [triplex.gateway.replay-capture :as replay-capture])
   (:import [java.util UUID]))
 
@@ -214,7 +214,7 @@
                (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                 :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
                                 :triplex.claim/tx-id (get claim "txId")}) claims))))]
-     [[:triplex/commit {:scope scope :source source :provisional position :span span
+     [[:triplex/commit (cond-> {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
                        :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
@@ -223,7 +223,9 @@
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))
                        :replay-safe (true? (get input "replaySafe")) :irregular irregular :position-irregular irregular
-                       :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}]])))
+                       :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}
+                       (and lean (get input "historyIdentityBounds"))
+                       (assoc :identity-bounds (get input "historyIdentityBounds")))]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
 ;; Rejected: a twenty-millisecond wait followed by overtaking.
 ;; [DX-M2] Why: hints prefetch the opaque commit function's reads before its serial turn.
@@ -239,7 +241,7 @@
       (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))))
 (defn submit! [conn data input timeline]
   (let [hints (transaction-hints conn data timeline)
-        submit (bound-fn []
+        solo (bound-fn []
                  (swap! timeline assoc :predecessorReady (System/nanoTime))
                  (trace/attribute! :submittedAt (trace/clock))
                  (let [context (trace/transaction-context)
@@ -249,7 +251,7 @@
                        ;; Source: https://docs.datomic.com/clojure/index.html#datomic.api/transact-async
                        ;; Rejected: infer per-commit storage reads from a concurrent process-wide cache delta.
                        options (concat (when hints [:hints hints]) (when trace/enabled [:io-context :triplex.gateway/commit]))
-                       future (try (trace/span "d/transact-async" "peer-call" (apply d/transact-async conn data options))
+                       future (try (trace/span "d/transact-async" "peer-call" (apply d/transact-async conn (group/instrument data) options))
                                    ;; [DX-R3-P7] Why: a definitive synchronous clock refusal resolves this turn,
                                    ;; just like a failed transaction future; the retry owns the next sequence.
                                    ;; Rejected: leaving next unchanged while the adapter has consumed the send.
@@ -261,7 +263,12 @@
                                          clojure.lang.IDeref (deref [_] (throw e))
                                          clojure.lang.IBlockingDeref (deref [_ _ _] (throw e)))
                                        (throw e))))]
-                   (swap! timeline assoc :submitted (System/nanoTime)) future))]
+                   (swap! timeline assoc :submitted (System/nanoTime)) future))
+        submit (if-not group/enabled solo
+                 (fn [] (try (let [p (second (first data)) current (d/db conn) class (group/classify current p input)]
+                   (group/submit! conn (merge class {:id (get input "operationId") :params p :eligible (group/eligible? current p)
+                     :prepare (fn [view] (tx-data view input (:scope p))) :solo solo})))
+                   (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
     (if-let [client (get input "clientId")]
       (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
       (submit))))
@@ -286,28 +293,34 @@
           data (try (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db)))
                     (catch Exception e (reject-ordered! conn input e)))
           start (System/nanoTime)
+          ready-ms (when group/queue-clock (System/currentTimeMillis))
           timeline (atom {:requestParsed parsed :payloadPrepared start})
           report (trace/span "peer.transact-await (includes order/network/storage)" "peer-wait" (deref (submit! conn data input timeline) 5000 ::timeout))
           completed (System/nanoTime)
-          transact-micros (quot (- completed start) 1000)]
+          transact-micros (quot (- completed start) 1000)
+          stamp (when (and group/queue-clock (not= report ::timeout))
+                  (let [db (:db-after report) text (value db (d/t->tx (d/basis-t db)) :triplex.diagnostic/native-entry)]
+                    (when text (mapv #(Long/parseLong %) (clojure.string/split text #"/")))))]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       (replay-capture/completed! report input)
       (trace/attribute! :datomicT (str (d/basis-t (:db-after report))))
       (trace/attribute! :transactionIoStats (:io-stats report))
       (trace/attribute! :peerStorageReadsStatus "not exposed: transaction io-stats describe transactor tx-with, not independent peer reads")
-      {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
-       :recordedAt (codec/encode-value "double" (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.tx/recorded-at))
+      (cond-> {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
+       :recordedAt (codec/encode-value "double" (or (get-in report [:member :clock]) (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.tx/recorded-at)))
        :transactMicros transact-micros
        :timeline (into {} (map (fn [[k v]] [k (/ (- v parsed) 1000.0)])
                               (assoc @timeline :completed completed :responsePrepared (System/nanoTime))))
        :operationId (get input "operationId")
-       :position (codec/encode-value "long" (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report)))))
-       :delta (- (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report)))) (get input "position"))
-       :datoms (count (:tx-data report))})
+       :position (codec/encode-value "long" (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))))
+       :delta (- (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))) (get input "position"))
+       :datoms (count (:tx-data report))}
+        stamp (assoc :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
+        (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e
       (replay-capture/discard! input)
       (let [text (str e)]
-        (when (or (= "OutcomeUnknown" (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (#{"OutcomeUnknown" "WriteQueueFull" "InvalidValue"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
@@ -318,11 +331,10 @@
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
 (defn operation [db id]
-  (if-let [entity (d/entid db [:triplex.tx/operation-id id])]
-    (if-let [p (value db entity :triplex.tx/position)]
-      {:status "committed" :operationId id :position (codec/encode-value "long" p) :t (codec/encode-value "long" (d/tx->t entity))
-       :recordedAt (codec/encode-value "double" (value db entity :triplex.tx/recorded-at))}
-      {:status "absent"}) {:status "absent"}))
+  (if-let [{:keys [position t clock]} (group/receipt db id)]
+    (if (nil? position) {:status "absent"} {:status "committed" :operationId id :position (codec/encode-value "long" position)
+     :t (codec/encode-value "long" t) :recordedAt (codec/encode-value "double" clock)})
+    {:status "absent"}))
 (defn head-position
   ([db]
    (scope/head-position db (:e (first (d/datoms db :aevt :triplex.scope/key)))))
@@ -404,7 +416,8 @@
     (when (some? (get basis "recordedAt"))
       (unavailable! "Position-retired subject route cannot answer a record-time basis"))
     (when-let [p (get basis "recordedPosition")]
-      (when (and (pos? p) (nil? (d/entid db [:triplex.tx/position p])))
+      (when (and (pos? p) (nil? (d/entid db [:triplex.tx/position p]))
+                 (not (and (d/entid db :triplex.group/position) (d/entid db [:triplex.group/position p]))))
         (unavailable! "Position-retired subject route cannot answer an interior logical cut")))))
 (defn subject-facts [db entity-id basis attribute]
   (assert-subject-route! db basis attribute)

@@ -64,7 +64,9 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       ? tenantFacts(tenantAccounts(id.tenant))
       : deepPopulation(id.people).facts;
   assert.equal(report.deep.profile, DEEP_PROFILE);
-  assert.equal(report.config.profile, "deep");
+  const fixture = id.tenant?.study === "smoke";
+  if (fixture) assert(id.slot.startsWith("tx2-dxscale1-smoke-"));
+  assert.equal(report.config.profile, fixture ? "deep-smoke" : "deep");
   assert.equal(report.config.receiptCapture, "replica-worker");
   assert.equal(report.config.expectedStateRetention, "worker-journal");
   assert.equal(report.deep.trace, plan.sha256);
@@ -158,6 +160,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
         commonStart + (p.traceFromS + p.seconds) * 1000,
       ]),
     );
+  const challengeRows = new Map<string, any>();
   let primaries = 0,
     committed = 0,
     expired = 0,
@@ -168,6 +171,11 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   })) {
     if (!line) continue;
     const w = JSON.parse(line);
+    if (w.stream.startsWith("tenant-check-")) {
+      const k = w.seq + "/" + w.resend;
+      assert(!challengeRows.has(k));
+      challengeRows.set(k, w);
+    }
     if (w.stream !== "background") continue;
     const key = `${w.seq}/${w.resend}`,
       match = expected.get(key);
@@ -364,6 +372,49 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     );
     assert.deepEqual(cross.proof.receiptProjection, cross.seedProjection);
     const actual = tenantAccounts(id.tenant);
+    if (id.tenant.study === "small" || report.deep.tenantChecks) {
+      const post = report.deep.tenantChecks;
+      assert.deepEqual(post.identity, id);
+      assert(
+        post.startedAt >= post.timedEnd &&
+          post.timedEnd >= report.phases.at(-1).end &&
+          post.checks.length === actual.length &&
+          challengeRows.size === 2 * actual.length,
+      );
+      for (const [i, c] of post.checks.entries()) {
+        const a = actual[i]!,
+          one = challengeRows.get(c.seq + "/false"),
+          retry = challengeRows.get(c.seq + "/true");
+        assert(
+          c.account === a.key &&
+            c.subject === a.first &&
+            c.seq === 7000000000 + a.index &&
+            one?.stream === "tenant-check-" + a.key &&
+            retry?.stream === one.stream,
+        );
+        assert(
+          one.scheduledAt >= post.startedAt &&
+            retry.scheduledAt >= one.scheduledAt &&
+            one.subject === a.first &&
+            one.commandId === c.commandId &&
+            one.position === c.position &&
+            c.position > report.deep.seed.position,
+        );
+        assert(
+          one.outcome === "committed" &&
+            one.ackLoss &&
+            one.correction &&
+            one.path === "lost-ack-resolved" &&
+            !one.expired &&
+            c.lost.resolvedOriginal &&
+            c.lost.retryNamesOriginal &&
+            c.lost.retryTag === "CommandAlreadyCommittedError" &&
+            retry.outcome === "duplicate-returned-original" &&
+            !retry.expired,
+        );
+        assert(tenantEvidence.feed.cursors[a.key] >= c.position);
+      }
+    }
     assert.deepEqual(cross.proof.counts, Object.fromEntries(actual.map((a) => [a.key, a.people])));
     assert(
       cross.proof.total === id.people &&

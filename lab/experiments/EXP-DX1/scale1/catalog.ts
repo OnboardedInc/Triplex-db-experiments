@@ -56,7 +56,7 @@ export async function catalog(
       attempt.spec.scopes * attempt.spec.people +
       " deep people"
     : attempt.spec.scopes + " × " + attempt.spec.people + " deep people";
-  const finding = `${population}, ${attempt.mode}, ${terminal.scopeReports} complete scope reports, ${cohort?.invalid.length ?? "unknown"} invalid observations, service ${terminal.service}`;
+  const finding = `${population}, ${attempt.mode}, ${terminal.scopeReports} complete scope reports, ${cohort ? cohort.invalid.length + " invalid observations" : "no terminal traffic measurement"}, service ${terminal.service}`;
   const rows: string[] = [];
   const physicalSeeds: { database: string; people: number; reportSha256: string }[] = [];
   for (const s of cohort?.perScope ?? []) {

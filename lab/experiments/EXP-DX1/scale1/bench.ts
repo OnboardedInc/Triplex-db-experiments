@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
+import { guardSeed } from "../act2/preflight-runner.ts";
 import { deepPopulation } from "../../../bench/lib/deep-world.ts";
 import { sealSeed, restoreSeed } from "./seed-image.ts";
 import {
@@ -457,8 +458,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     ],
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
-  const engines = placement(prefix),
-    before = snapshot(prefix);
+  const engines = placement(prefix);
+  let before = snapshot(prefix);
   for (const [role, cpus] of Object.entries({
     pg: planCpus.postgres,
     tx: planCpus.transactor,
@@ -470,7 +471,30 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   write(path.join(dir, "disk-before.json"), before);
   const binding = { source, slot: prefix, nonce: attempt.nonce };
   const imageTrial = attempt.layout === "pooled" && item === 5;
-  if (imageTrial && mode !== "zero") {
+  const restoring = imageTrial && !!attempt.seedImageTag;
+  if (spec.people * spec.scopes >= 100000) {
+    status(dir, "checking 1000 subjects before the large seed");
+    try {
+      const proof = guardSeed(path.join(dir, "act2-preflight"), binding, {
+        ...env,
+        DATOMIC_URL: `http://${engines["gw-w"].address}:8080`,
+        TRIPLEX_DATOMIC_LAYOUT: "lean",
+        TX2_SWEEP_STRICT: "1",
+        TRIPLEX_TRACE_DIR: path.join(dir, "act2-preflight-trace"),
+      });
+      write(path.join(dir, "preflight.json"), proof);
+      // [DX-ACT2] Why: the probe writes a separate native database on the measured stack. Account for those bytes before a cold seed; restoration replaces the probe database. Rejected: attributing the probe to the deep population.
+      const after = snapshot(prefix);
+      write(path.join(dir, "preflight-disk.json"), { binding, before, after });
+      if (!restoring) before = after;
+    } catch (e) {
+      const reason = String(e);
+      write(path.join(dir, "preflight-stop.json"), { ...binding, reason });
+      status(dir, "preflight stopped", { reason });
+      throw e;
+    }
+  }
+  if (restoring) {
     const dest: DeepIdentity = {
       ...binding,
       account: 0,
@@ -526,6 +550,9 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "-c",
       [planCpus.senders, planCpus.readers].join(","),
       process.execPath,
+      ...(mode === "activation" || tenant?.study === "interference"
+        ? ["--import", path.join(repo, "lab/experiments/EXP-DX1/scale1/evaluator-placement.mjs")]
+        : []),
       "--import",
       "tsx",
       "lab/bench/driver.ts",
@@ -576,8 +603,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--receipt-capture",
       mode === "seed" ? "sender" : "replica-worker",
     ];
-    if (imageTrial && mode !== "zero")
-      args.push("--verified-seed-image", path.join(dir, "restored-seed.json"));
+    if (restoring) args.push("--verified-seed-image", path.join(dir, "restored-seed.json"));
     if (tenant) args.push("--tenant-study", tenant.study, "--tenant-topology", tenant.topology);
     if (small)
       args.push(
@@ -1026,6 +1052,9 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
   for (const file of [
     "attempt.json",
     "replay-source.json",
+    "preflight.json",
+    "preflight-stop.json",
+    "preflight-disk.json",
     "source.json",
     "placement.json",
     "disk-before.json",
@@ -1114,6 +1143,9 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     nonce: entry.nonce,
     mode: entry.mode,
     cleanup: true,
+    ...(fs.existsSync(path.join(dir, "preflight-stop.json"))
+      ? { stopReason: get(path.join(dir, "preflight-stop.json")).reason }
+      : {}),
     service,
     endedAt: new Date().toISOString(),
     scopeReports: sum?.scopeCount ?? 0,
@@ -1138,7 +1170,7 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     raw: rawArchive,
     summaryFiles: summaryFiles(compact),
   });
-  status(dir, "finished", outcome);
+  status(dir, outcome.stopReason ? "preflight stopped" : "finished", outcome);
 }
 async function main() {
   const [op, n, tag, mode] = process.argv.slice(2);
@@ -1246,7 +1278,13 @@ async function main() {
     capacity = budgetFor(item, root, mode, getopt("sizing"));
   const baselineTag = getopt("baseline"),
     seedImageTag = getopt("seed-image");
-  if (item === 5 && layout === "pooled" && mode !== "zero") {
+  // [DX-ACT2] Why: a standalone guarded activation can seed its own pooled account scope after preflight. Rejected: borrowing the image of a zero arm from another build.
+  if (
+    item === 5 &&
+    layout === "pooled" &&
+    mode !== "zero" &&
+    (mode !== "activation" || seedImageTag)
+  ) {
     assert(seedImageTag && /^[a-z][a-z0-9-]{2,40}$/.test(seedImageTag));
     const origin = get(path.join(root, seedImageTag, "attempt.json")),
       seal = get(path.join(root, seedImageTag, "seed-image.json"));

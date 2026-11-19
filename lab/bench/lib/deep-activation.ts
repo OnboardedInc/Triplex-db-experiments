@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import { deepEvaluations } from "./deep-evaluations.ts";
 import type { CompositionHandle, Receipt } from "./composition.ts";
 import { DomainOraclePool } from "./w0-gates.ts";
 import { publishChanged } from "./w0-replica.ts";
@@ -20,7 +21,7 @@ import { buildIndex, eadRelease, selectRelease, type SelectorCut } from "./w0-se
 import { selectorOracle } from "./w0-selector-oracle.ts";
 
 const pageSize = 32;
-const businessTime = (ms: number) => new Date(ms).toISOString().replace(/Z$/, "000Z");
+export const businessTime = (ms: number) => new Date(ms).toISOString().replace(/Z$/, "000Z");
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 const indexRows = (rows: readonly WorldRow[]) => {
   const bySubject = new Map<number, WorldRow[]>();
@@ -104,8 +105,74 @@ export function policyWorld(i: number, rows: readonly WorldRow[], basis: Positio
   return { subject, facts };
 }
 
+export const deepGroups = (first: number, count: number) =>
+  Array.from({ length: Math.ceil(count / pageSize) }, (_, p) =>
+    Array.from(
+      { length: Math.min(pageSize, count - p * pageSize) },
+      (_, i) => first + p * pageSize + i,
+    ),
+  );
+export async function readDeepWorlds(
+  comp: CompositionHandle,
+  group: number[],
+  cut: PositionBasis,
+  accountKey?: string,
+) {
+  const basis = { position: cut.position, validAt: cut.validAt };
+  const page = await comp.sweepPage(group.map(ids.placement), basis);
+  assert.deepEqual(page.reportedBasis, basis);
+  const rows = indexRows(page.rows);
+  return group.map((i) => {
+    const body = rows.get(i) ?? [];
+    if (accountKey)
+      assert.deepEqual(
+        body
+          .filter((r) => r.entityId === ids.placement(i) && r.attribute === ":subject/account")
+          .map((r) => r.value.value),
+        [accountKey],
+        "Release subject belongs to another account",
+      );
+    return policyWorld(i, body, basis);
+  });
+}
+
 type Release = "R1" | "R2";
 type Cut = PositionBasis & { txId: string; assertion: string };
+export async function activateDeepRelease(
+  comp: CompositionHandle,
+  run: string,
+  name: Release,
+  startedAt: number,
+  prior?: Cut,
+  release: W0.CompiledRelease = W0[name],
+) {
+  const entity = `deep-release:${run}`;
+  const ops = [
+    ...(name === "R2" ? [{ op: "retract", id: prior!.assertion }] : []),
+    {
+      op: "assert",
+      entityId: entity,
+      attribute: ":release/hash",
+      value: { type: "string", value: release.hash },
+      validFrom: 0,
+    },
+  ];
+  const change = await comp.transact(ops, {
+    commandId: `${run}:activate:${name}`,
+    actor: "deep-activation",
+    preconditions: name === "R2" ? [{ _tag: "TripleLive", id: prior!.assertion }] : [],
+  });
+  if (!change.ok) throw Error(`Activation failed: ${change.tag}`);
+  const asserted = change.value.triples;
+  assert.equal(asserted.length, 1);
+  assert.equal(asserted[0]!.value.value, release.hash);
+  return {
+    position: change.value.position,
+    validAt: startedAt,
+    txId: change.value.txId,
+    assertion: asserted[0]!.id,
+  };
+}
 export class DeepActivation {
   private readonly cuts = new Map<Release, Cut>();
   private readonly directory: string;
@@ -114,6 +181,8 @@ export class DeepActivation {
   private readonly nextRelease: W0.CompiledRelease;
   private readonly firstSubject: number;
   private readonly tenant?: TenantAccount;
+  private readonly workers: number;
+  private readonly accountKey?: string;
   constructor(
     directory: string,
     people: number,
@@ -121,10 +190,13 @@ export class DeepActivation {
     first: number | "standard" | "ead90" = 0,
     next: "standard" | "ead90" = "standard",
     tenant?: TenantAccount,
+    workers = 1,
   ) {
     this.firstSubject = typeof first === "number" ? first : 0;
     if (typeof first === "string") next = first;
     this.tenant = tenant;
+    this.accountKey = tenant?.key;
+    this.workers = workers;
     if (tenant) assert(tenant.first === this.firstSubject && tenant.people === people);
     this.nextRelease = next === "ead90" ? eadRelease() : W0.R2;
     this.directory = directory;
@@ -204,34 +276,8 @@ export class DeepActivation {
       },
     };
     const release = name === "R1" ? W0.R1 : this.nextRelease,
-      entity = `deep-release:${this.run}`,
-      prior = this.cuts.get("R1");
-    const ops = [
-      ...(name === "R2" ? [{ op: "retract", id: prior!.assertion }] : []),
-      {
-        op: "assert",
-        entityId: entity,
-        attribute: ":release/hash",
-        value: { type: "string", value: release.hash },
-        validFrom: 0,
-      },
-    ];
-    const startedAt = Date.now();
-    const change = await observed.transact(ops, {
-      commandId: `${this.run}:activate:${name}`,
-      actor: "deep-activation",
-      preconditions: name === "R2" ? [{ _tag: "TripleLive", id: prior!.assertion }] : [],
-    });
-    if (!change.ok) throw Error(`Activation failed: ${change.tag}`);
-    const asserted = change.value.triples;
-    assert.equal(asserted.length, 1);
-    assert.equal(asserted[0]!.value.value, release.hash);
-    const cut = {
-      position: change.value.position,
-      validAt: startedAt,
-      txId: change.value.txId,
-      assertion: asserted[0]!.id,
-    };
+      startedAt = Date.now();
+    const cut = await activateDeepRelease(observed, this.run, name, startedAt, this.cuts.get("R1"), release);
     this.cuts.set(name, cut);
     const mutation = captured?.(cut);
     mutation?.catch(() => {});
@@ -249,17 +295,12 @@ export class DeepActivation {
     const basis = { position: cut.position, validAt: cut.validAt };
     let changes;
     try {
-      if (projection) changes = await projection.catchUp(comp, basis);
-      // [DX-INT1] Why: ACT1 consumes dated policy inputs independently of demand admission. The ordinary deep trace retains its release and full-evaluation semantics.
-      // Rejected: substituting the narrow release in the frozen workload or warming a reader to evaluate a release.
-      const width = projection ? 256 : pageSize;
-      for (let n = 0; n < this.subjects; n += width) {
-        const group = Array.from(
-          { length: Math.min(width, this.subjects - n) },
-          (_, j) => this.firstSubject + n + j,
-        );
-        const lines: string[] = [];
-        if (projection && binding) {
+      if (projection && binding) {
+        changes = await projection.catchUp(comp, basis);
+        const width = 256;
+        for (let n = 0; n < this.subjects; n += width) {
+          const group = Array.from({ length: Math.min(width, this.subjects - n) }, (_, j) => this.firstSubject + n + j);
+          const lines: string[] = [];
           const worlds = await projection.worlds(comp, group, basis);
           const members = group.map((i) => W0.placementId(i));
           const byId = new Map(group.map((i) => [W0.placementId(i), worlds.get(i)!]));
@@ -314,29 +355,35 @@ export class DeepActivation {
           selection.full += page.full;
           fs.unlinkSync(checkpoint);
           if (index) fs.unlinkSync(file);
-        } else {
-          const page = await comp.sweepPage(group.map(ids.placement), basis);
-          assert.deepEqual(page.reportedBasis, basis);
-          const rows = indexRows(page.rows);
-          for (const i of group) {
-            const world = policyWorld(i, rows.get(i) ?? [], cut);
-            const result = W0.sweepSubject(world, release, policyBasis);
-            if ("error" in result) throw Error(name + " evaluation failed: " + result.error);
-            lines.push(JSON.stringify([i, hash(canonical(world)), hash(result.json)]) + "\n");
-            records.push(result.record);
-          }
+          const bytes = lines.join("");
+          fs.writeFileSync(fd, bytes);
+          sum.update(bytes);
         }
-        const bytes = lines.join("");
-        fs.writeFileSync(fd, bytes);
-        sum.update(bytes);
-        if (n % (pageSize * 32) === 0)
-          console.log(
-            JSON.stringify({
-              event: "deep-activation-progress",
-              release: name,
-              through: n + group.length,
-            }),
-          );
+      } else {
+        const groups = deepGroups(this.firstSubject, this.subjects);
+        const basis = { tx: cut.position, validTime: businessTime(cut.validAt) };
+        for await (const { group, records: evaluated } of deepEvaluations(
+          groups,
+          name,
+          basis,
+          this.workers,
+          (group) => readDeepWorlds(comp, group, cut, this.accountKey),
+        )) {
+          const bytes = evaluated
+            .map((r, j) => JSON.stringify([group[j], r.worldSha256, r.outputSha256]) + "\n")
+            .join("");
+          fs.writeFileSync(fd, bytes);
+          sum.update(bytes);
+          for (const r of evaluated) records.push(r.record);
+          if ((group[0]! - this.firstSubject) % (pageSize * 32) === 0)
+            console.log(
+              JSON.stringify({
+                event: "deep-activation-progress",
+                release: name,
+                through: records.length,
+              }),
+            );
+        }
       }
       fs.fsyncSync(fd);
     } finally {
@@ -410,6 +457,7 @@ export class DeepActivation {
       ...(projection
         ? { selection, projection: changes, sourceWorldPulls: projection.sourceWorldPulls }
         : {}),
+      evaluators: projection ? 1 : this.workers,
       coverage,
       changed: result.changed,
       startedAt,
