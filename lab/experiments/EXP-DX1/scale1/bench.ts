@@ -874,7 +874,24 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     raw.every((r) => fs.existsSync(path.join(r, "seed-observed.json")))
   ) {
     const after = snapshot(prefix),
-      facts = scheduledScopes * deepPopulation(spec.people).facts;
+      facts = raw.reduce((sum, r, i) => {
+        const w = get(path.join(r, "seed-observed.json"));
+        assert.deepEqual(w.identity, get(path.join(r, "identity.json")));
+        assert(
+          w.identity.source === source &&
+            w.identity.nonce === attempt.nonce &&
+            w.identity.slot === prefix &&
+            w.identity.account === i &&
+            w.identity.arm === "seed",
+        );
+        assert(
+          w.seed.facts ===
+            (w.identity.tenant
+              ? tenantFacts(tenantAccounts(w.identity.tenant))
+              : deepPopulation(w.seed.people).facts),
+        );
+        return sum + w.seed.facts;
+      }, 0);
     disk = {
       before,
       after,
@@ -1055,7 +1072,7 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
   if (
     entry.item === 5 &&
     entry.layout === "pooled" &&
-    entry.mode === "zero" &&
+    (entry.mode === "zero" || entry.mode === "seed") &&
     fs.existsSync(path.join(seedDir, "identity.json"))
   ) {
     const identity = get(path.join(seedDir, "identity.json"));
@@ -1213,12 +1230,16 @@ async function main() {
               item: i,
               layouts: [campaignItem(i, "pooled"), campaignItem(i, "separate")],
               arms: [i === 3 ? "interference" : "small"],
+              ...(i === 3
+                ? { additionalPooledArm: "group commit with the matched all-ten burst" }
+                : {}),
             })),
             {
               item: 5,
               layouts: [campaignItem(5, "pooled")],
               arms: ["zero", "reader", "activation"],
               seedImages: 1,
+              capacityFallback: "seed-only if the live arm is refused and a seed fits",
             },
           ],
           placement: planCpus,
@@ -1361,6 +1382,7 @@ async function main() {
     item === 5 &&
     layout === "pooled" &&
     mode !== "zero" &&
+    mode !== "seed" &&
     (mode !== "activation" || seedImageTag)
   ) {
     assert(seedImageTag && /^[a-z][a-z0-9-]{2,40}$/.test(seedImageTag));

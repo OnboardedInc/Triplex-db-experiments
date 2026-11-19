@@ -14,7 +14,7 @@ const modes: Record<TenantStudy, string[]> = {
   smoke: ["interference"],
   interference: ["interference"],
   small: ["small"],
-  million: ["zero", "reader", "activation"],
+  million: ["zero", "reader", "activation", "seed"],
 };
 const choice = process.argv[2] ?? "check";
 assert(["check", "write", "check-offers", "write-windows"].includes(choice));

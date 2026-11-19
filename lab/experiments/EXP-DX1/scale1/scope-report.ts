@@ -387,6 +387,8 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
         !control.attempt.groupControl,
     );
     assert.deepEqual(control.attempt.cpus, treatment.attempt.cpus);
+    assert.deepEqual(control.attempt.spec, treatment.attempt.spec);
+    assert.equal(control.groupSettings?.gatewayImage, treatment.groupSettings?.gatewayImage);
     assert.deepEqual(
       control.summary.perScope[0].deep.logicalTraces,
       treatment.summary.perScope[0].deep.logicalTraces,
@@ -400,8 +402,8 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
       "",
       "Both arms replayed the same preceding windows. Native transaction IDs identify saves grouped into a single durable transaction. Commands carry the frozen profile’s subject and account identity. The gateway shares one scheduling class for unnamespaced entities without per-entity membership hints.",
       "",
-      "| Gateway option | Logical ACKs / seconds | Saves/s | Native transactions/s | Multi-save transactions | Fact changes/s | Pooled commit p99 ms |",
-      "| --- | --- | ---: | ---: | ---: | ---: | --- |",
+      "| Gateway option | Logical ACKs / seconds | Saves/s | Native transactions/s | Multi-save transactions | Fact changes/s | Pooled commit p99 ms | Judgement |",
+      "| --- | --- | ---: | ---: | ---: | ---: | --- | --- |",
     );
     for (const s of [control, treatment]) {
       const enable = Boolean(s.attempt.groupControl),
@@ -426,12 +428,27 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
             q.qualified ? q.multiCommandTransactions : "unjudged",
             q.qualified ? fmt(q.changedFactsPerS) : "unjudged",
             metric({ value: p.p99Ms, n: p.n, interval90: p.interval90 }),
+            s.summary.invalid.length ? "Unjudged · " + s.summary.invalid.join(", ") : "Observed",
           ].join(" | ") +
           " |",
       );
     }
     lines.push("");
-    owner = "The matched group-commit comparison completed for the ten-account burst.";
+    const speeds = [control, treatment].map((s) => {
+      const w = s.summary.tenants.windows.find((v: any) => v.name === "all-burst");
+      return (
+        fmt(w.sustainedCommitsPerS) + " saves/s (" + w.acked + " ACKs in " + fmt(w.seconds) + " s)"
+      );
+    });
+    owner =
+      "The ten-account burst sustained " +
+      speeds[0] +
+      " with grouping off and " +
+      speeds[1] +
+      " with grouping on." +
+      ([control, treatment].some((s) => s.summary.invalid.length)
+        ? " The comparison is unjudged."
+        : "");
   }
   fs.writeFileSync(file, lines.join("\n") + "\n");
   return (

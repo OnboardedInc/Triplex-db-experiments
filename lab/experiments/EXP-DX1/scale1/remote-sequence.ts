@@ -220,19 +220,32 @@ async function run(step: Step) {
     const d = read(path.join(base, "seed-disk.json")),
       state = read(path.join(base, "partial.json"));
     const actual = state.scopes ?? [];
+    const million = a.item === 5 && a.layout === "pooled";
     const pins = read(
       path.join(
         root,
         "build-" + a.source,
-        "repository/lab/experiments/EXP-DX1/scale1/profile.json",
+        "repository/lab/experiments/EXP-DX1/scale1/" +
+          (million ? "tenant-seeds.json" : "profile.json"),
       ),
     );
     verified =
       state.tag === a.tag &&
       actual.length > 0 &&
+      actual.length === a.capacity.seedScopeLimit &&
       actual.every((r: any) => {
         if (!/^s[0-9]+$/.test(r.scope)) return false;
         const seed = read(path.join(base, "transfer", r.scope, "seed-observed.json"));
+        if (million)
+          assert.deepEqual(seed.identity.tenant, {
+            study: "million",
+            topology: "pooled",
+            physical: 0,
+          });
+        else assert.equal(seed.identity.tenant, undefined);
+        const expected = million
+          ? pins["million/pooled/0"]
+          : pins.find((p: any) => p.people === r.people)?.population;
         return (
           r.status === "SEEDED" &&
           r.facts > 0 &&
@@ -242,7 +255,8 @@ async function run(step: Step) {
           seed.identity.slot === a.slot &&
           seed.identity.account === Number(r.scope.slice(1)) &&
           seed.seed.people === r.people &&
-          seed.seed.sha256 === pins.find((p: any) => p.people === r.people)?.population
+          r.people === a.spec.people &&
+          seed.seed.sha256 === expected
         );
       }) &&
       actual.reduce((n: number, r: any) => n + r.facts, 0) === d.facts &&
