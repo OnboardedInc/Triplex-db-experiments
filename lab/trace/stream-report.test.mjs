@@ -37,32 +37,62 @@ test("a full trace report streams past V8's single-string limit with a 128 MiB h
     fs.writeFileSync(path.join(root, "driver/ns-writes.jsonl"), "");
     const tag = path.basename(root);
     const binding = { run: tag, slot: tag, source: "0".repeat(40) };
-    fs.writeFileSync(path.join(root, "trace-run.json"), JSON.stringify({
-      ...binding, tag, nodeEnabled: false, level: "summary", startedAt: 1000,
-    }));
-    const retained = 20, eventName = "recorded-context-" + "x".repeat(16 * 1024);
+    fs.writeFileSync(
+      path.join(root, "trace-run.json"),
+      JSON.stringify({
+        ...binding,
+        tag,
+        nodeEnabled: false,
+        level: "summary",
+        startedAt: 1000,
+      }),
+    );
+    const retained = 20,
+      eventName = "recorded-context-" + "x".repeat(16 * 1024);
     const events = Math.ceil(constants.MAX_STRING_LENGTH / (eventName.length * retained)) + 1;
     const file = fs.openSync(path.join(raw, "synthetic.jsonl"), "wx");
     try {
       for (let i = 0; i < retained; i++)
-        fs.writeSync(file, JSON.stringify({
-          ...binding, schema: "triplex.trace.v1", type: "request", kind: "read",
-          name: "reader.pull", traceId: i.toString(16).padStart(32, "0"),
-          root: "0".repeat(16), start: 1000, end: 2000, spans: [], process: "reader", thread: 1,
-        }) + "\n");
+        fs.writeSync(
+          file,
+          JSON.stringify({
+            ...binding,
+            schema: "triplex.trace.v1",
+            type: "request",
+            kind: "read",
+            name: "reader.pull",
+            traceId: i.toString(16).padStart(32, "0"),
+            root: "0".repeat(16),
+            start: 1000,
+            end: 2000,
+            spans: [],
+            process: "reader",
+            thread: 1,
+          }) + "\n",
+        );
       for (let i = 0; i < events; i++)
-        fs.writeSync(file, JSON.stringify({
-          ...binding, type: "event", name: eventName, layer: "synthetic",
-          start: 1500 + i / events, end: 1600, process: "source", thread: 1,
-          seq: i,
-        }) + "\n");
+        fs.writeSync(
+          file,
+          JSON.stringify({
+            ...binding,
+            type: "event",
+            name: eventName,
+            layer: "synthetic",
+            start: 1500 + i / events,
+            end: 1600,
+            process: "source",
+            thread: 1,
+            seq: i,
+          }) + "\n",
+        );
     } finally {
       fs.closeSync(file);
     }
     const out = path.join(root, "rendered");
     const reporter = fileURLToPath(new URL("./report.mjs", import.meta.url));
     const { stdout } = await promisify(execFile)(
-      process.execPath, ["--max-old-space-size=128", reporter, root, "--output-to", out],
+      process.execPath,
+      ["--max-old-space-size=128", reporter, root, "--output-to", out],
       { timeout: 240_000 },
     );
     const summary = JSON.parse(stdout);
@@ -71,7 +101,8 @@ test("a full trace report streams past V8's single-string limit with a 128 MiB h
     const chrome = path.join(out, "trace.chrome.json");
     assert.ok(fs.statSync(chrome).size > constants.MAX_STRING_LENGTH);
     const token = '"cat":"synthetic"';
-    let count = 0, tail = "";
+    let count = 0,
+      tail = "";
     for await (const chunk of fs.createReadStream(chrome, { encoding: "utf8" })) {
       const text = tail + chunk;
       let offset = 0;
@@ -83,7 +114,11 @@ test("a full trace report streams past V8's single-string limit with a 128 MiB h
     }
     assert.equal(count, retained * events);
     const viewer = fs.readFileSync(path.join(out, "trace.html"), "utf8");
-    const [first, second] = [...viewer.matchAll(/data-card="0" data-sha256="([a-f0-9]{64})">([^<]+)/g)];
+    const [first, second] = [
+      ...viewer.matchAll(/data-card="0" data-sha256="([a-f0-9]{64})">([^<]+)/g),
+    ];
+    assert.ok(first && second);
+    /** @param {RegExpExecArray} match */
     const unpack = ([, digest, base64]) => {
       const bytes = gunzipSync(Buffer.from(base64, "base64"));
       assert.equal(createHash("sha256").update(bytes).digest("hex"), digest);

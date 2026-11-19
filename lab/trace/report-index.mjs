@@ -5,9 +5,13 @@ import { DatabaseSync } from "node:sqlite";
 
 const primaryNames = new Set(["driver.commit", "driver.expired", "reader.pull", "driver.ryow"]);
 const requestTier = (name) =>
-  primaryNames.has(name) ? 0 :
-    name === "replica.follow" || /^http .*\/(transactions|journal)$/.test(name) ? 1 :
-      name.startsWith("http ") ? 2 : 3;
+  primaryNames.has(name)
+    ? 0
+    : name === "replica.follow" || /^http .*\/(transactions|journal)$/.test(name)
+      ? 1
+      : name.startsWith("http ")
+        ? 2
+        : 3;
 const rootCriteria = `(r.tier = 0 OR (r.tier = 1 AND NOT EXISTS
   (SELECT 1 FROM requests owner WHERE owner.trace_id = r.trace_id AND owner.tier = 0)))`;
 
@@ -37,6 +41,8 @@ export class TraceReportIndex {
           name TEXT, native_type TEXT, database_hash TEXT, native_t TEXT, data TEXT
         );
         CREATE VIRTUAL TABLE event_windows USING rtree (id, start, end);
+        CREATE VIRTUAL TABLE pause_windows USING rtree (id, start, end);
+        CREATE VIRTUAL TABLE work_windows USING rtree (id, start, end);
         CREATE INDEX events_by_name ON events (name);
         CREATE INDEX events_by_native ON events (native_type, database_hash, native_t);
         CREATE TABLE resources (id INTEGER PRIMARY KEY, at REAL, process TEXT, name TEXT,
@@ -67,58 +73,107 @@ export class TraceReportIndex {
   }
 
   addRequest(row) {
-    this.prepare("INSERT INTO requests (trace_id, tier, kind, data) VALUES (?, ?, ?, ?)")
-      .run(row.traceId, requestTier(row.name), row.kind ?? null, JSON.stringify(row));
+    this.prepare("INSERT INTO requests (trace_id, tier, kind, data) VALUES (?, ?, ?, ?)").run(
+      row.traceId,
+      requestTier(row.name),
+      row.kind ?? null,
+      JSON.stringify(row),
+    );
   }
 
   addEvent(row) {
-    const id = this.prepare(`INSERT INTO events (start, end, layer, process, thread, name, native_type,
+    const id =
+      this.prepare(`INSERT INTO events (start, end, layer, process, thread, name, native_type,
       database_hash, native_t, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-      row.start, row.end, row.layer, row.process ?? null, row.thread ?? null, row.name,
-      row.nativeType ?? null, row.databaseHash ?? null, row.datomicT ?? null, JSON.stringify(row),
-    ).lastInsertRowid;
-    this.prepare("INSERT INTO event_windows VALUES (?, ?, ?)")
-      .run(id, row.start - this.anchor, row.end - this.anchor);
+        row.start,
+        row.end,
+        row.layer,
+        row.process ?? null,
+        row.thread ?? null,
+        row.name,
+        row.nativeType ?? null,
+        row.databaseHash ?? null,
+        row.datomicT ?? null,
+        JSON.stringify(row),
+      ).lastInsertRowid;
+    const interval = [id, row.start - this.anchor, row.end - this.anchor];
+    this.prepare("INSERT INTO event_windows VALUES (?, ?, ?)").run(...interval);
+    // [DX-BM1] Why: frequent request attribution seeks only pauses or instrumented work.
+    // Rejected: scanning unrelated overlapped metrics for every sampled read.
+    if (
+      row.layer === "typescript-gc" ||
+      row.layer === "gateway-gc" ||
+      row.nativeType === "triplex.TransactionFunction"
+    )
+      this.prepare("INSERT INTO pause_windows VALUES (?, ?, ?)").run(...interval);
+    if (row.layer === "typescript")
+      this.prepare("INSERT INTO work_windows VALUES (?, ?, ?)").run(...interval);
   }
 
   addResource(row) {
-    this.prepare("INSERT INTO resources (at, process, name, qualified, data) VALUES (?, ?, ?, ?, ?)")
-      .run(row.at ?? null, row.process ?? null, row.name ?? null,
-        row.clockAlignmentQualified !== false ? 1 : 0, JSON.stringify(row));
+    this.prepare(
+      "INSERT INTO resources (at, process, name, qualified, data) VALUES (?, ?, ?, ?, ?)",
+    ).run(
+      row.at ?? null,
+      row.process ?? null,
+      row.name ?? null,
+      row.clockAlignmentQualified !== false ? 1 : 0,
+      JSON.stringify(row),
+    );
   }
 
   finishInputs() {
-    this.fallback = !this.prepare("SELECT 1 AS found FROM requests r WHERE " + rootCriteria + " LIMIT 1").get();
+    this.fallback = !this.prepare(
+      "SELECT 1 AS found FROM requests r WHERE " + rootCriteria + " LIMIT 1",
+    ).get();
   }
 
   roots() {
-    return decode(this.prepare("SELECT r.data FROM requests r WHERE " +
-      (this.fallback ? "r.tier = 2" : rootCriteria) + " ORDER BY r.tier, r.id").iterate());
+    return decode(
+      this.prepare(
+        "SELECT r.data FROM requests r WHERE " +
+          (this.fallback ? "r.tier = 2" : rootCriteria) +
+          " ORDER BY r.tier, r.id",
+      ).iterate(),
+    );
   }
 
   commit(traceId) {
-    const result = this.prepare("SELECT r.data FROM requests r WHERE r.trace_id = ? AND r.kind = 'commit' AND " +
-      (this.fallback ? "r.tier = 2" : rootCriteria) + " ORDER BY r.tier DESC, r.id DESC LIMIT 1")
-      .get(traceId);
+    const result = this.prepare(
+      "SELECT r.data FROM requests r WHERE r.trace_id = ? AND r.kind = 'commit' AND " +
+        (this.fallback ? "r.tier = 2" : rootCriteria) +
+        " ORDER BY r.tier DESC, r.id DESC LIMIT 1",
+    ).get(traceId);
     return result ? JSON.parse(result.data) : null;
   }
 
   requests(traceId) {
-    return decode(this.prepare("SELECT data FROM requests WHERE trace_id = ? ORDER BY id").iterate(traceId));
+    return decode(
+      this.prepare("SELECT data FROM requests WHERE trace_id = ? ORDER BY id").iterate(traceId),
+    );
   }
 
-  *overlap(start, end, filter, ...args) {
+  *overlap(start, end, group, filter, ...args) {
     // [DX-BM1] Why: use the R-tree to find candidates, then apply the original double-precision boundary.
     // Rejected: letting the R-tree's single-precision envelope decide whether a request overlaps.
-    yield* decode(this.prepare(`SELECT e.data FROM event_windows w CROSS JOIN events e ON e.id = w.id
+    if (!["event", "pause", "work"].includes(group)) throw Error("unknown event window group");
+    yield* decode(
+      this.prepare(`SELECT e.data FROM ${group}_windows w CROSS JOIN events e ON e.id = w.id
       WHERE w.start < ? AND w.end > ? AND e.start < ? AND e.end > ? AND (${filter})
       ORDER BY e.start DESC, e.id DESC`).iterate(
-      end - this.anchor, start - this.anchor, end, start, ...args,
-    ));
+        end - this.anchor,
+        start - this.anchor,
+        end,
+        start,
+        ...args,
+      ),
+    );
   }
 
   events(filter, ...args) {
-    return decode(this.prepare("SELECT data FROM events WHERE " + filter + " ORDER BY id").iterate(...args));
+    return decode(
+      this.prepare("SELECT data FROM events WHERE " + filter + " ORDER BY id").iterate(...args),
+    );
   }
 
   eventCount(filter, ...args) {
@@ -126,16 +181,23 @@ export class TraceReportIndex {
   }
 
   resources(filter, ...args) {
-    return decode(this.prepare("SELECT data FROM resources WHERE " + filter + " ORDER BY id").iterate(...args));
+    return decode(
+      this.prepare("SELECT data FROM resources WHERE " + filter + " ORDER BY id").iterate(...args),
+    );
   }
 
   pressureSamples() {
-    return decode(this.prepare(`SELECT data FROM resources
-      WHERE process = 'system-linux' ORDER BY at, id`).iterate());
+    return decode(
+      this.prepare(`SELECT data FROM resources
+      WHERE process = 'system-linux' ORDER BY at, id`).iterate(),
+    );
   }
 
   setPublication(position, row) {
-    this.prepare("INSERT OR REPLACE INTO publications VALUES (?, ?)").run(position, JSON.stringify(row));
+    this.prepare("INSERT OR REPLACE INTO publications VALUES (?, ?)").run(
+      position,
+      JSON.stringify(row),
+    );
   }
 
   publication(position) {
@@ -154,8 +216,9 @@ export class TraceReportIndex {
   }
 
   retainCommit({ root, spans }) {
-    return this.prepare("INSERT INTO commit_details (data) VALUES (?)")
-      .run(JSON.stringify({ root, spans })).lastInsertRowid;
+    return this.prepare("INSERT INTO commit_details (data) VALUES (?)").run(
+      JSON.stringify({ root, spans }),
+    ).lastInsertRowid;
   }
 
   commitDetails(id) {
@@ -163,17 +226,28 @@ export class TraceReportIndex {
   }
 
   addMetrics(group, row) {
-    this.prepare("INSERT INTO metrics VALUES (" + Array(this.measures.length + 1).fill("?").join(", ") + ")")
-      .run(group, ...this.measures.map((key) => {
+    this.prepare(
+      "INSERT INTO metrics VALUES (" +
+        Array(this.measures.length + 1)
+          .fill("?")
+          .join(", ") +
+        ")",
+    ).run(
+      group,
+      ...this.measures.map((key) => {
         const value = row.layers[key] ?? row[key];
         return Number.isFinite(value) ? value : null;
-      }));
+      }),
+    );
   }
 
   quantiles(group) {
     return this.measures.map((_, i) => {
-      const column = "m" + i, condition = `group_id = ? AND ${column} IS NOT NULL`;
-      const count = this.prepare("SELECT COUNT(*) AS n FROM metrics WHERE " + condition).get(group).n;
+      const column = "m" + i,
+        condition = `group_id = ? AND ${column} IS NOT NULL`;
+      const count = this.prepare("SELECT COUNT(*) AS n FROM metrics WHERE " + condition).get(
+        group,
+      ).n;
       if (!count) return [null, null];
       const select = this.prepare(`SELECT ${column} AS v FROM metrics WHERE ${condition}
         ORDER BY ${column} LIMIT 1 OFFSET ?`);

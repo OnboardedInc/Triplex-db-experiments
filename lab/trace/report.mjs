@@ -49,6 +49,24 @@ const rank = {
   "typescript-gc": 10,
   "gateway-gc": 11,
 };
+// [DX-BM1] Why: bind the renderer sources when the process loads them.
+// Rejected: hashing a later checkout after a long derivation has already run.
+const reporterSha256 = createHash("sha256")
+  .update(
+    [
+      "report.mjs",
+      "instrument.mjs",
+      "anatomy.mjs",
+      "native-transactions.mjs",
+      "cpu-profile.mjs",
+      "viewer.mjs",
+      "render-output.mjs",
+      "report-index.mjs",
+    ]
+      .map((name) => name + "\0" + fs.readFileSync(new URL(name, import.meta.url), "utf8"))
+      .join("\0"),
+  )
+  .digest("hex");
 export const percentile = (xs, p) =>
   xs.length ? [...xs].sort((a, b) => a - b)[Math.max(0, Math.ceil(xs.length * p) - 1)] : null;
 const n = (x) => (Number.isFinite(x) ? x.toFixed(3) : "n/a");
@@ -76,9 +94,12 @@ export async function* records(file) {
   const stream = fs.createReadStream(file);
   const input = file.endsWith(".gz") ? createGunzip() : stream;
   let pumpError;
-  const pump = input === stream ? null : pipeline(stream, input).catch((error) => {
-    pumpError = error;
-  });
+  const pump =
+    input === stream
+      ? null
+      : pipeline(stream, input).catch((error) => {
+          pumpError = error;
+        });
   const decoder = new StringDecoder("utf8");
   let remainder = "";
   // [DX-BM1] Why: a killed recorder can leave complete rows followed by an incomplete gzip member.
@@ -86,7 +107,8 @@ export async function* records(file) {
   try {
     for await (const chunk of input) {
       const text = remainder + decoder.write(chunk);
-      let start = 0, end;
+      let start = 0,
+        end;
       while ((end = text.indexOf("\n", start)) >= 0) {
         const line = text.slice(start, end);
         if (line.trim()) yield JSON.parse(line);
@@ -169,14 +191,20 @@ function validSpan(s) {
 }
 function* contextEvents(row, index) {
   const { start, end } = row.root;
-  for (const event of index.overlap(start, end, "e.layer != 'jvm-event'"))
+  for (const event of index.overlap(start, end, "event", "e.layer != 'jvm-event'"))
     if (!event.traceId || event.traceId !== row.traceId) yield event;
-  const threads = new Map(row.spans.map((span) => [
-    `${span.process}:${span.thread}`, [span.process, span.thread],
-  ]));
+  const threads = new Map(
+    row.spans.map((span) => [`${span.process}:${span.thread}`, [span.process, span.thread]]),
+  );
   for (const [process, thread] of threads.values())
-    for (const event of index.overlap(start, end,
-      "e.layer = 'jvm-event' AND e.process IS ? AND e.thread IS ?", process ?? null, thread ?? null))
+    for (const event of index.overlap(
+      start,
+      end,
+      "event",
+      "e.layer = 'jvm-event' AND e.process IS ? AND e.thread IS ?",
+      process ?? null,
+      thread ?? null,
+    ))
       if (!event.traceId || event.traceId !== row.traceId) yield event;
 }
 function* chromeEvents(selected, index) {
@@ -558,8 +586,14 @@ function phaseOf(r, phases) {
   return { name, priority, readers: phase?.readers ?? null };
 }
 const measures = [
-  "wallMs", "cpuRuntimeMs", "cpuRunqueueMs", "cpuScopeWallMs", ...LAYERS,
-  "typescriptMs", "typescriptShare", "unexplainedMs",
+  "wallMs",
+  "cpuRuntimeMs",
+  "cpuRunqueueMs",
+  "cpuScopeWallMs",
+  ...LAYERS,
+  "typescriptMs",
+  "typescriptShare",
+  "unexplainedMs",
 ];
 
 function table(quantiles) {
@@ -576,9 +610,16 @@ async function findWriterClock(input, manifest) {
   for (const file of input) {
     try {
       for await (const row of records(file))
-        if (row.type === "request" && row.name === "driver.commit" && row.thread === 0 &&
-            row.clock?.domain === "linux-monotonic" &&
-            (!manifest || (row.run === manifest.tag && row.source === manifest.source && row.slot === manifest.slot)))
+        if (
+          row.type === "request" &&
+          row.name === "driver.commit" &&
+          row.thread === 0 &&
+          row.clock?.domain === "linux-monotonic" &&
+          (!manifest ||
+            (row.run === manifest.tag &&
+              row.source === manifest.source &&
+              row.slot === manifest.slot))
+        )
           return row;
     } catch {
       // Full ingestion records source and corruption diagnostics.
@@ -649,38 +690,59 @@ export async function buildReport(runDir, { copyTo, anatomyTo, outputTo } = {}) 
   );
   const index = new TraceReportIndex(outputDir, manifest?.startedAt ?? 0, measures);
   try {
-    return await buildIndexedReport(rootDir, outputDir, bench, manifest, index, input,
-      { nodeEnabled, copyTo, anatomyTo });
+    return await buildIndexedReport(rootDir, outputDir, bench, manifest, index, input, {
+      nodeEnabled,
+      copyTo,
+      anatomyTo,
+    });
   } finally {
     index.close();
   }
 }
 
-async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, input,
-  { nodeEnabled, copyTo, anatomyTo }) {
+async function buildIndexedReport(
+  rootDir,
+  outputDir,
+  bench,
+  manifest,
+  index,
+  input,
+  { nodeEnabled, copyTo, anatomyTo },
+) {
   const tag = path.basename(rootDir);
   const writerClock = await findWriterClock(input, manifest);
   const clockReference = writerClock?.clock;
   const clockSources = [];
-  const histograms = [], completions = [], profileClocks = [];
-  const errors = [], jfrCounts = new Map();
+  const histograms = [],
+    completions = [],
+    profileClocks = [];
+  const errors = [],
+    jfrCounts = new Map();
   let errorCount = 0;
   function recordError(message) {
     errorCount++;
     if (errors.length < 100) errors.push(message);
   }
-  let invalidSpanParents = 0, unqualifiedEventCount = 0, resourceCount = 0;
-  let metadataCount = 0, exactTop20 = true;
+  let invalidSpanParents = 0,
+    unqualifiedEventCount = 0,
+    resourceCount = 0;
+  let metadataCount = 0,
+    exactTop20 = true;
   if (manifest?.requireClockBinding && !clockReference)
     recordError("Writer Linux boot-clock binding missing");
   function align(row) {
     try {
       const aligned = alignClockRecord(row, clockReference);
-      if (row.clock && clockReference &&
-          !clockSources.some((x) => x.process === row.process && x.offsetMs === row.clock.offsetMs))
+      if (
+        row.clock &&
+        clockReference &&
+        !clockSources.some((x) => x.process === row.process && x.offsetMs === row.clock.offsetMs)
+      )
         clockSources.push({
-          process: row.process, offsetMs: row.clock.offsetMs,
-          shiftMs: aligned.clockAlignmentMs, uncertaintyMs: row.clock.uncertaintyMs,
+          process: row.process,
+          offsetMs: row.clock.offsetMs,
+          shiftMs: aligned.clockAlignmentMs,
+          uncertaintyMs: row.clock.uncertaintyMs,
         });
       return aligned;
     } catch (error) {
@@ -697,7 +759,10 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
     let footer = false;
     try {
       for await (const r of records(file)) {
-        if (manifest && (r.run !== manifest.tag || r.source !== manifest.source || r.slot !== manifest.slot)) {
+        if (
+          manifest &&
+          (r.run !== manifest.tag || r.source !== manifest.source || r.slot !== manifest.slot)
+        ) {
           recordError(`Binding mismatch in ${path.basename(file)}`);
           continue;
         }
@@ -705,9 +770,15 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
         else if (r.type === "request") {
           if (manifest && r.start < manifest.startedAt - 1000)
             recordError(`Stale request in ${path.basename(file)}`);
-          if (r.schema !== "triplex.trace.v1" || !/^[0-9a-f]{32}$/.test(r.traceId) ||
-              !Number.isFinite(r.start) || !Number.isFinite(r.end) || r.end < r.start ||
-              !Array.isArray(r.spans) || !r.spans.every(validSpan))
+          if (
+            r.schema !== "triplex.trace.v1" ||
+            !/^[0-9a-f]{32}$/.test(r.traceId) ||
+            !Number.isFinite(r.start) ||
+            !Number.isFinite(r.end) ||
+            r.end < r.start ||
+            !Array.isArray(r.spans) ||
+            !r.spans.every(validSpan)
+          )
             throw Error("invalid request record");
           if (manifest?.requireClockBinding) {
             if (!r.clock) recordError("Request clock binding missing: " + r.traceId);
@@ -720,10 +791,16 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
           // Rejected: using the feed poll's unrelated trace ID or including its work in commit latency.
           if (aligned.name === "replica.follow")
             for (const span of aligned.spans)
-              if (span.name === "replica.publish" && Number.isSafeInteger(span.attributes?.position))
+              if (
+                span.name === "replica.publish" &&
+                Number.isSafeInteger(span.attributes?.position)
+              )
                 index.setPublication(span.attributes.position, {
-                  ...span, process: aligned.process, thread: aligned.thread,
-                  traceId: aligned.traceId, type: "event",
+                  ...span,
+                  process: aligned.process,
+                  thread: aligned.thread,
+                  traceId: aligned.traceId,
+                  type: "event",
                 });
         } else if (r.type === "event") {
           if (validSpan(r)) {
@@ -744,8 +821,13 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
           // [DX-T1-9] Why: the producer forwards the measured witness interval on the process clock.
           // Rejected: assigning off-thread SQLite time to the writer or using the RPC round trip.
           if (r.name === "driver.publication.persist-worker") {
-            if (!Number.isSafeInteger(r.workerThread) || r.workerThread <= 0 || !validSpan(r) ||
-                !r.attributes?.operationId || !r.attributes?.position)
+            if (
+              !Number.isSafeInteger(r.workerThread) ||
+              r.workerThread <= 0 ||
+              !validSpan(r) ||
+              !r.attributes?.operationId ||
+              !r.attributes?.position
+            )
               throw Error("Invalid publication worker interval");
             addEvent({ ...r, type: "event", thread: r.workerThread });
           }
@@ -767,19 +849,30 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
   }
   index.finishInputs();
   if (invalidSpanParents)
-    recordError(`${invalidSpanParents} spans have a missing local parent (context or retention bug)`);
+    recordError(
+      `${invalidSpanParents} spans have a missing local parent (context or retention bug)`,
+    );
   for (const event of pressureEvents(index.pressureSamples())) index.addEvent(event);
 
-  const linked = (root) => traceChildren(root,
-    [...index.requests(root.traceId)].filter((request) => request.root !== root.root));
+  const linked = (root) =>
+    traceChildren(
+      root,
+      [...index.requests(root.traceId)].filter((request) => request.root !== root.root),
+    );
   const functionFilter = "native_type = 'triplex.TransactionFunction'";
   const statsFilter = "native_type = 'triplex.NativeTransaction'";
   for (const e of index.events(functionFilter)) {
     const candidates = [...index.requests(e.traceId ?? "")];
-    const parent = candidates.flatMap((r) => r.spans)
+    const parent = candidates
+      .flatMap((r) => r.spans)
       .find((s) => s.id === e.parent && s.layer === "peer-wait");
-    if (e.process !== "tx" || !/^[0-9a-f]{16}$/.test(e.id ?? "") || !parent ||
-        e.start < parent.start - 0.1 || e.end > parent.end + 0.1)
+    if (
+      e.process !== "tx" ||
+      !/^[0-9a-f]{16}$/.test(e.id ?? "") ||
+      !parent ||
+      e.start < parent.start - 0.1 ||
+      e.end > parent.end + 0.1
+    )
       recordError("Unbound or out-of-window native transaction function event");
   }
   // Content, freshness and binding come from this run's actual writer rows and matched roots.
@@ -790,11 +883,40 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
     missingCommits = 0;
   if (fs.existsSync(writesFile))
     for await (const w of records(writesFile)) {
-      const { traceId, startedAt, finishedAt, expired, stream, resend, outcome, facts,
-        ackPublishedAt, transactCalledAt, transactReturnedAt, scheduledAt, latencyMs,
-        verdictClock, verdictMs } = w;
-      allWriterRows.push({ traceId, startedAt, finishedAt, expired, stream, resend, outcome, facts,
-        ackPublishedAt, transactCalledAt, transactReturnedAt, scheduledAt, latencyMs, verdictClock, verdictMs });
+      const {
+        traceId,
+        startedAt,
+        finishedAt,
+        expired,
+        stream,
+        resend,
+        outcome,
+        facts,
+        ackPublishedAt,
+        transactCalledAt,
+        transactReturnedAt,
+        scheduledAt,
+        latencyMs,
+        verdictClock,
+        verdictMs,
+      } = w;
+      allWriterRows.push({
+        traceId,
+        startedAt,
+        finishedAt,
+        expired,
+        stream,
+        resend,
+        outcome,
+        facts,
+        ackPublishedAt,
+        transactCalledAt,
+        transactReturnedAt,
+        scheduledAt,
+        latencyMs,
+        verdictClock,
+        verdictMs,
+      });
       writes++;
       if (!nodeEnabled) continue;
       if (
@@ -906,16 +1028,14 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
     return false;
   }
   if (manifest?.requireSystem) {
-    if (manifest.hostPlatform !== "linux-bare-metal" && !hasResource("system-darwin", (r) => r.swap !== null && r.cpu !== null))
+    if (
+      manifest.hostPlatform !== "linux-bare-metal" &&
+      !hasResource("system-darwin", (r) => r.swap !== null && r.cpu !== null)
+    )
       recordError("Mac CPU/swap collector missing");
-    if (
-      !hasResource("system-linux", (r) => Object.keys(r.cgroups ?? {}).length >= 4)
-    )
+    if (!hasResource("system-linux", (r) => Object.keys(r.cgroups ?? {}).length >= 4))
       recordError("VM/cgroup collector missing");
-    if (
-      (manifest.requirePostgres ?? true) &&
-      !hasResource("postgres", (r) => r.activity)
-    )
+    if ((manifest.requirePostgres ?? true) && !hasResource("postgres", (r) => r.activity))
       recordError("Postgres wait/WAL/IO collector missing");
   }
 
@@ -932,7 +1052,10 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
   } catch (error) {
     recordError(String(error));
   }
-  const groups = new Map(), phases = bench.phases ?? [], slow = [], commits = [];
+  const groups = new Map(),
+    phases = bench.phases ?? [],
+    slow = [],
+    commits = [];
   const phaseCounters = phases.map((phase) => ({ phase, samples: 0, first: null, last: null }));
   const keepSlow = (list, row, capacity) => {
     const before = list.findIndex((existing) => existing.wallMs < row.wallMs);
@@ -950,7 +1073,11 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
     keepSlow(group.slow, row, 20);
     index.addMetrics(group.id, row);
   }
-  let requestCount = 0, explained = 0, missingReceivers = 0, missingStats = 0, missingFunctions = 0;
+  let requestCount = 0,
+    explained = 0,
+    missingReceivers = 0,
+    missingStats = 0,
+    missingFunctions = 0;
   const schedulerProfiles = [];
   for (const root of index.roots()) {
     requestCount++;
@@ -964,21 +1091,29 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
     const row = {
       root,
       allTruncated: nodes.reduce((sum, node) => sum + (node.truncated ?? 0), 0),
-      ...attribute(root, gateways,
-        [...index.overlap(root.start, root.end,
-          "e.layer IN ('typescript-gc', 'gateway-gc') OR e.native_type = 'triplex.TransactionFunction'")],
-        children.filter((child) => !child.name.startsWith("gateway "))),
+      ...attribute(
+        root,
+        gateways,
+        [...index.overlap(root.start, root.end, "pause", "1")],
+        children.filter((child) => !child.name.startsWith("gateway ")),
+      ),
       ...phaseOf(root, phases),
       nativeTransactions: [],
     };
     for (const gateway of gateways) {
-      const hash = gateway.attributes?.databaseHash, t = gateway.attributes?.datomicT;
+      const hash = gateway.attributes?.databaseHash,
+        t = gateway.attributes?.datomicT;
       if (!hash || t === undefined) continue;
       try {
-        const native = bindNativeTransaction(gateway, [...index.events(
-          statsFilter + " AND database_hash = ? AND native_t = ?", hash, String(t))]);
-        if (native && !row.nativeTransactions.some(
-          (old) => old.databaseHash === native.databaseHash && old.datomicT === native.datomicT))
+        const native = bindNativeTransaction(gateway, [
+          ...index.events(statsFilter + " AND database_hash = ? AND native_t = ?", hash, String(t)),
+        ]);
+        if (
+          native &&
+          !row.nativeTransactions.some(
+            (old) => old.databaseHash === native.databaseHash && old.datomicT === native.datomicT,
+          )
+        )
           row.nativeTransactions.push(native);
       } catch (error) {
         recordError(String(error));
@@ -986,33 +1121,51 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
     }
     if (cpuProfile && root.process === cpuProfile.process && root.thread === cpuProfile.thread) {
       row.cpuProfile = cpuProfile.window(root.start, root.end);
-      const late = root.spans.filter((span) => span.name === "driver.queue.scheduler-late")
+      const late = root.spans
+        .filter((span) => span.name === "driver.queue.scheduler-late")
         .sort((left, right) => duration(right) - duration(left))[0];
-      if (late) row.schedulerLateProfile = { start: late.start, end: late.end, ...cpuProfile.window(late.start, late.end) };
+      if (late)
+        row.schedulerLateProfile = {
+          start: late.start,
+          end: late.end,
+          ...cpuProfile.window(late.start, late.end),
+        };
     }
     const sameThread = [];
-    for (const event of index.overlap(root.start, root.end,
-      "e.layer = 'typescript' AND e.process IS ? AND e.thread IS ?", root.process ?? null, root.thread ?? null)) {
+    for (const event of index.overlap(
+      root.start,
+      root.end,
+      "work",
+      "e.process IS ? AND e.thread IS ?",
+      root.process ?? null,
+      root.thread ?? null,
+    )) {
       if (event.traceId && event.traceId === row.traceId) continue;
       const wallMs = Math.min(event.end, root.end) - Math.max(event.start, root.start);
       keepSlow(sameThread, { name: event.name, wallMs }, 5);
     }
     row.overlappingWork = sameThread.map(({ name, wallMs }) => ({ name, overlapMs: wallMs }));
-    if (manifest?.requiredJfr && !manifest.requiredJfr.includes("gw-w")) row.layers["gateway-gc"] = null;
+    if (manifest?.requiredJfr && !manifest.requiredJfr.includes("gw-w"))
+      row.layers["gateway-gc"] = null;
     if (root.kind === "commit") {
       if (row.explained >= 0.95 && !row.allTruncated) explained++;
       const writer = index.writer(root.traceId);
       if (writer) {
         row.writer = writer;
         const publication = index.publication(writer.position);
-        if (publication) row.replicaPublication = { ...publication, msAfterRootEnd: publication.end - root.end };
+        if (publication)
+          row.replicaPublication = { ...publication, msAfterRootEnd: publication.end - root.end };
         if (writer.stream === "background" && !writer.resend && writer.outcome === "committed") {
           if (!row.nativeTransactions.length) missingStats++;
-          if (!row.spans.some((span) => span.nativeType === "triplex.TransactionFunction")) missingFunctions++;
+          if (!row.spans.some((span) => span.nativeType === "triplex.TransactionFunction"))
+            missingFunctions++;
         }
       }
-      for (const sample of [root.schedulerStart, root.schedulerEnd,
-        ...root.spans.flatMap((span) => [span.schedulerStart, span.schedulerEnd])]) {
+      for (const sample of [
+        root.schedulerStart,
+        root.schedulerEnd,
+        ...root.spans.flatMap((span) => [span.schedulerStart, span.schedulerEnd]),
+      ]) {
         if (!sample) continue;
         for (const counter of phaseCounters)
           if (sample.at >= counter.phase.start && sample.at <= counter.phase.end) {
@@ -1023,31 +1176,53 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
       }
       const late = row.schedulerLateProfile;
       if (late && late.end - late.start >= 20)
-        keepSlow(schedulerProfiles, { traceId: row.traceId, name: row.name, late, wallMs: duration(late) }, 20);
+        keepSlow(
+          schedulerProfiles,
+          { traceId: row.traceId, name: row.name, late, wallMs: duration(late) },
+          20,
+        );
       keepSlow(slow, row, 5);
       // [DX-BM1] Why: anatomy consumes the commit cohort's exact scalars and looks up spans only when needed.
       // Rejected: keeping a second in-heap copy of spans derived from every request.
       const detailId = index.retainCommit(row);
-      const { root: _root, spans: _spans, cpuProfile: _cpu, schedulerLateProfile: _late, ...compact } = row;
+      const {
+        root: _root,
+        spans: _spans,
+        cpuProfile: _cpu,
+        schedulerLateProfile: _late,
+        ...compact
+      } = row;
       commits.push({
         ...compact,
-        get root() { return index.commitDetails(detailId).root; },
-        get spans() { return index.commitDetails(detailId).spans; },
+        get root() {
+          return index.commitDetails(detailId).root;
+        },
+        get spans() {
+          return index.commitDetails(detailId).spans;
+        },
       });
     }
     const key = `${row.priority} / ${row.name} / ${root.kind}`;
     addGroup(key, row);
-    if (root.kind === "commit" && row.writer?.stream === "background" &&
-        row.writer.facts >= 5 && row.writer.facts <= 10)
+    if (
+      root.kind === "commit" &&
+      row.writer?.stream === "background" &&
+      row.writer.facts >= 5 &&
+      row.writer.facts <= 10
+    )
       addGroup(key + " / 5-10 facts", row);
   }
-  if (missingReceivers) recordError(`${missingReceivers} worker RPC spans have no bound receiver trace`);
+  if (missingReceivers)
+    recordError(`${missingReceivers} worker RPC spans have no bound receiver trace`);
   if (manifest?.requireTransactorStats && missingStats)
     recordError(`${missingStats} committed commands lack exact database/t native stats`);
   if (manifest?.requireTransactorFunction && missingFunctions)
-    recordError(`${missingFunctions} committed commands lack a bound native transaction-function interval`);
+    recordError(
+      `${missingFunctions} committed commands lack a bound native transaction-function interval`,
+    );
   if (nodeEnabled && !commits.length) recordError("No commit traces");
-  const selected = [], selectedIds = new Set();
+  const selected = [],
+    selectedIds = new Set();
   for (const group of groups.values())
     for (const row of group.slow)
       if (!selectedIds.has(row.traceId)) {
@@ -1055,35 +1230,53 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
         selected.push(row);
       }
   for (const row of slow) {
-    row.queueDetails = row.root.spans.filter((span) => span.name.startsWith("driver.queue."))
+    row.queueDetails = row.root.spans
+      .filter((span) => span.name.startsWith("driver.queue."))
       .map((span) => ({ cause: span.name, ms: duration(span), ...span.attributes }))
       .sort((left, right) => right.ms - left.ms);
-    const executing = row.root.spans.find((span) => span.name === "driver.execute")?.start ?? row.root.end;
+    const executing =
+      row.root.spans.find((span) => span.name === "driver.execute")?.start ?? row.root.end;
     row.queueContexts = [];
-    for (const sample of index.resources("name = 'writer.queue-context' AND process = ? AND at BETWEEN ? AND ?",
-      row.root.process, row.root.start, executing)) {
+    for (const sample of index.resources(
+      "name = 'writer.queue-context' AND process = ? AND at BETWEEN ? AND ?",
+      row.root.process,
+      row.root.start,
+      executing,
+    )) {
       const { at, inFlight, capacity, active } = sample;
       row.queueContexts.push({ at, inFlight, capacity, active });
       if (row.queueContexts.length === 40) break;
     }
   }
-  const schedulerByPhase = Object.fromEntries(phaseCounters.map(({ phase, samples, first, last }) => [
-    phase.name, {
-      readers: phase.readers, samples,
-      spanMs: first && last ? last.at - first.at : null,
-      runtimeMs: first && last ? (last.runtimeNs - first.runtimeNs) / 1e6 : null,
-      runqueueMs: first?.waitEnabled && last?.waitEnabled ? (last.runqueueNs - first.runqueueNs) / 1e6 : null,
-      waitEnabled: !!first?.waitEnabled,
-    },
-  ]));
+  const schedulerByPhase = Object.fromEntries(
+    phaseCounters.map(({ phase, samples, first, last }) => [
+      phase.name,
+      {
+        readers: phase.readers,
+        samples,
+        spanMs: first && last ? last.at - first.at : null,
+        runtimeMs: first && last ? (last.runtimeNs - first.runtimeNs) / 1e6 : null,
+        runqueueMs:
+          first?.waitEnabled && last?.waitEnabled
+            ? (last.runqueueNs - first.runqueueNs) / 1e6
+            : null,
+        waitEnabled: !!first?.waitEnabled,
+      },
+    ]),
+  );
   for (const group of groups.values()) group.quantiles = index.quantiles(group.id);
   const finding = slow.length
     ? `The slowest observed commits spent their largest exclusive interval in ${slow.map((r) => `\`${r.steps[0]?.[0] ?? "unknown"}\` (${n(r.steps[0]?.[1])} ms, trace \`${r.traceId}\`)`).join("; ")}. These are observed spans, not proof of the transactor's internal cause.`
     : "No commit traces were observed; the cause of slow commits is not established.";
   const hostByPhase = Object.fromEntries(
     (bench.phases ?? []).map((p) => {
-      const samples = [...index.resources(
-        "process = 'system-darwin' AND qualified = 1 AND at BETWEEN ? AND ?", p.start, p.end)];
+      const samples = [
+        ...index.resources(
+          "process = 'system-darwin' AND qualified = 1 AND at BETWEEN ? AND ?",
+          p.start,
+          p.end,
+        ),
+      ];
       const cpu = samples.map((r) => r.otherCpu).filter(Number.isFinite);
       return [
         p.name,
@@ -1121,7 +1314,8 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
     (sum, f) => sum + fs.statSync(f).size,
     0,
   );
-  if (errorCount > errors.length) errors.push(`${errorCount - errors.length} further trace validation errors`);
+  if (errorCount > errors.length)
+    errors.push(`${errorCount - errors.length} further trace validation errors`);
   const summary = {
     schema: "triplex.trace-report.v1",
     tag,
@@ -1137,22 +1331,7 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
       unqualifiedEventCount,
       hostCrossClockQualified: false,
     },
-    reporterSha256: createHash("sha256")
-      .update(
-        [
-          "report.mjs",
-          "instrument.mjs",
-          "anatomy.mjs",
-          "native-transactions.mjs",
-          "cpu-profile.mjs",
-          "viewer.mjs",
-          "render-output.mjs",
-          "report-index.mjs",
-        ]
-          .map((name) => name + "\0" + fs.readFileSync(new URL(name, import.meta.url), "utf8"))
-          .join("\0"),
-      )
-      .digest("hex"),
+    reporterSha256,
     finding,
     schedulerByPhase,
     requests: requestCount,
@@ -1187,7 +1366,8 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
     hostByPhase,
     groups: Object.fromEntries(
       [...groups].map(([key, { count, quantiles }]) => [
-        key, { count, p50Ms: quantiles[0][0], p99Ms: quantiles[0][1] },
+        key,
+        { count, p50Ms: quantiles[0][0], p99Ms: quantiles[0][1] },
       ]),
     ),
     slowest: slow.map(({ root: _root, spans: _spans, ...rest }) => rest),
@@ -1304,28 +1484,37 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
     "JFR GC/safepoint/thread-park/socket events, transactor callback metrics, PostgreSQL duration/checkpoint/autovacuum logs, pg_stat_activity/wal/io samples, cgroup throttling/pressure/memory/io and Mac CPU/swap are retained when available. Native JFR transaction-function spans, when present, bind the authored Triplex function to its exact peer-await span; the transactor column is this function wall time, not exclusive CPU. Remaining uninstrumented Datomic internals and individual Postgres statements cannot be causally split without a transaction identifier; the table deliberately leaves these shares unknown. Samples are not request-specific proof. See trace-run.json and collection-errors.txt for unavailable collectors.",
     "",
   );
-  summary.instrumentIdle = idleAndPhaseMetrics(allWriterRows, phases, (traceId) => index.requests(traceId));
+  summary.instrumentIdle = idleAndPhaseMetrics(allWriterRows, phases, (traceId) =>
+    index.requests(traceId),
+  );
   lines.push(instrumentMarkdown(bench.instrument), idleMarkdown(summary.instrumentIdle));
   fs.writeFileSync(path.join(outputDir, "TRACE-REPORT.md"), lines.join("\n"));
   fs.writeFileSync(
     path.join(outputDir, "trace-summary.json"),
     JSON.stringify(summary, null, 2) + "\n",
   );
-  await writeChromeTrace(
-    path.join(outputDir, "trace.chrome.json"),
-    chromeEvents(selected, index),
-    { tag, source: summary.source },
-  );
+  await writeChromeTrace(path.join(outputDir, "trace.chrome.json"), chromeEvents(selected, index), {
+    tag,
+    source: summary.source,
+  });
   function* nearbyResources(row) {
-    for (const resource of index.resources("qualified = 1 AND at BETWEEN ? AND ?",
-      row.root.start - 1000, row.root.end + 1000))
+    for (const resource of index.resources(
+      "qualified = 1 AND at BETWEEN ? AND ?",
+      row.root.start - 1000,
+      row.root.end + 1000,
+    ))
       yield resource.vm ? { ...resource, vm: undefined } : resource;
   }
-  await writeStreamedFile(path.join(outputDir, "trace.html"), timelineDocument({
-    tag, finding, cards: selected,
-    context: (row) => contextEvents(row, index),
-    resources: nearbyResources,
-  }));
+  await writeStreamedFile(
+    path.join(outputDir, "trace.html"),
+    timelineDocument({
+      tag,
+      finding,
+      cards: selected,
+      context: (row) => contextEvents(row, index),
+      resources: nearbyResources,
+    }),
+  );
   if (copyTo) {
     fs.mkdirSync(copyTo, { recursive: true });
     for (const f of ["TRACE-REPORT.md", "trace.html", "trace.chrome.json", "trace-summary.json"])
@@ -1346,7 +1535,10 @@ async function buildIndexedReport(rootDir, outputDir, bench, manifest, index, in
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const dir = process.argv[2];
-  if (!dir) throw Error("usage: report.mjs RUN_DIR [--copy-to DIR] [--anatomy-to DIR] [--output-to NEW_DIR]");
+  if (!dir)
+    throw Error(
+      "usage: report.mjs RUN_DIR [--copy-to DIR] [--anatomy-to DIR] [--output-to NEW_DIR]",
+    );
   const i = process.argv.indexOf("--copy-to"),
     a = process.argv.indexOf("--anatomy-to"),
     o = process.argv.indexOf("--output-to");

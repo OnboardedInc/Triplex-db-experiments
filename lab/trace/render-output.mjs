@@ -6,6 +6,7 @@ import { gzipSync } from "node:zlib";
 
 // [DX-BM1] Why: hold at most one encoded row and the stream's write buffer.
 // Rejected: stringify a complete export, or batch by row count when row sizes vary.
+/** @param {string} destination @param {Iterable<string> | AsyncIterable<string>} chunks */
 export async function writeStreamedFile(destination, chunks) {
   const temporary = destination + "." + randomUUID() + ".tmp";
   try {
@@ -19,6 +20,7 @@ export async function writeStreamedFile(destination, chunks) {
   }
 }
 
+/** @param {string} destination @param {Iterable<unknown>} events @param {Record<string, unknown>} metadata */
 export function writeChromeTrace(destination, events, metadata) {
   function* document() {
     yield '{"traceEvents":[';
@@ -35,8 +37,10 @@ export function writeChromeTrace(destination, events, metadata) {
 
 // [DX-BM1] Why: an offline browser can verify and decode only the selected trace's data.
 // Rejected: embed one giant JSON value or unpack one whole HTML string before opening the viewer.
+/** @param {number} card @param {Iterable<unknown>} records */
 export function* timelineBlocks(card, records) {
   const limit = 64 * 1024;
+  /** @type {Buffer[]} */
   let parts = [];
   let size = 0;
   function block() {

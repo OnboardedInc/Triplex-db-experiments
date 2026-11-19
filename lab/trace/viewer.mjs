@@ -35,9 +35,11 @@ export function unpackHtml(html) {
   return bytes.toString("utf8");
 }
 
+/** @param {unknown} value */
 const escape = (value) =>
   String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
 
+/** @param {{tag: string, finding: string, cards: readonly any[], context: (row: any) => Iterable<unknown>, resources: (row: any) => Iterable<unknown>}} options */
 export function* timelineDocument({ tag, finding, cards, context, resources }) {
   yield `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>Triplex trace ${escape(tag)}</title>
