@@ -4,6 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
+import { activePerson } from "./cohort.ts";
+import { deepTasks } from "../../../bench/lib/deep-world.ts";
 export const cases = [
   { key: "thin-1m", mode: "int1-thin", size: 1_000_000, accounts: 1, scopes: 1 },
   { key: "thin-4m", mode: "int1-thin", size: 4_000_000, accounts: 1, scopes: 1 },
@@ -12,13 +14,30 @@ export const cases = [
 ] as const;
 export type BenchCase = (typeof cases)[number];
 const read = (file: string) => JSON.parse(fs.readFileSync(file, "utf8"));
-export function verifyLatencies(dir: string, r: any, binding: string, attempt: string) {
+export function verifyLatencies(dir: string, r: any, binding: string, attempt: string,
+  options?: { spread: boolean; seedOnly: boolean }) {
   assert.equal(r.latencyReceipt.file, "latency-samples.json");
   const durations = fs.readFileSync(path.join(dir, r.latencyReceipt.file));
   assert.equal(createHash("sha256").update(durations).digest("hex"), r.latencyReceipt.sha256);
   const observed = JSON.parse(durations.toString());
   assert.equal(observed.binding, binding);
   assert.equal(observed.attempt, attempt);
+  if (options) {
+    let n = 0;
+    for (const account of r.accounts) {
+      const deep = r.mode === "int1-deep" || account.accountKey !== undefined;
+      for (let block = options.seedOnly ? 0 : 1; block * 50 < account.people; block += options.seedOnly ? 1 : 2) {
+        const local = activePerson(block, account.people, options.spread);
+        const first = observed.firstReads[n];
+        assert(first && first.subject === account.first + local && first.scope === account.scope);
+        assert(first.position > 0 && first.rows > 0 && first.roundTrips >= 1);
+        assert.equal(first.tasks, deep ? deepTasks(local) : 0);
+        assert.equal(first.ms, observed.samples.cold[n++]);
+      }
+    }
+    assert.equal(n, observed.firstReads.length);
+    assert.equal(n, observed.samples.cold.length);
+  }
   for (const kind of ["cold", "commit", "resident", "ryow"]) {
     const values = observed.samples[kind] as number[];
     assert(values.length && values.every((t) => Number.isFinite(t) && t >= 0));
@@ -140,7 +159,8 @@ export async function verifyCase(
     r = read(path.join(dir, "result.json"));
   const binding = createHash("sha256")
     .update(
-      canonical([head, inputs.inputs, inputs.attempt, spec.mode, spec.size, tag, stack.containers]),
+      canonical([head, inputs.inputs, inputs.attempt, spec.mode, spec.size, tag, stack.containers,
+        inputs.spread, inputs.seedOnly, inputs.policy]),
     )
     .digest("hex");
   const repo = fs.realpathSync(fileURLToPath(new URL("../../../../", import.meta.url)));
@@ -157,6 +177,9 @@ export async function verifyCase(
     assert.equal(sha256(fs.readFileSync(original)), expected, file);
   }
   assert.equal(inputs.binding, binding);
+  assert.equal(inputs.spread, true);
+  assert.equal(inputs.seedOnly, false);
+  assert.deepEqual(inputs.policy, { readMode: "validated", gateways: "demand" });
   assert.equal(inputs.source, head);
   assert.equal(inputs.slot, tag);
   assert.equal(inputs.mode, spec.mode);
@@ -168,7 +191,7 @@ export async function verifyCase(
   assert.equal(r.mode, spec.mode);
   assert.equal(r.size, spec.size);
   assert.deepEqual(inputs.containers, stack.containers);
-  verifyLatencies(dir, r, binding, inputs.attempt);
+  verifyLatencies(dir, r, binding, inputs.attempt, inputs);
   assert.equal(r.accounts.length, spec.accounts);
   assert.equal(new Set(r.accounts.map((a: any) => a.scope)).size, spec.scopes);
   assert.equal(r.activation.length, 2 * spec.accounts);
@@ -221,7 +244,7 @@ export async function verifyCase(
         expected = createHash("sha256");
       for (const active of [true, false])
         for (let local = 0; local < a.people; local++) {
-          if ((local % 50 === 0) !== active) continue;
+          if ((local === activePerson(Math.floor(local / 50), a.people, true)) !== active) continue;
           const id = a.first + local;
           expected.update(JSON.stringify([id, seedFacts("deep", id, a.first, tenant)]) + "\n");
         }

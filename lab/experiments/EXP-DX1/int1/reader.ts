@@ -10,6 +10,7 @@ import {
   type CompositionHandle,
 } from "../../../bench/lib/composition.ts";
 import { replicaReply, restoreReplicaReply } from "../../../bench/lib/replica-reads.ts";
+import { validatedSubjectReader } from "../../../bench/lib/touched-reads.ts";
 
 export function processSize() {
   const before = process.memoryUsage();
@@ -103,7 +104,7 @@ export function startReader(binding: string, budget?: number) {
 }
 if (process.argv[2] === "--reader" && process.send) {
   const binding = process.argv[3],
-    scopes = new Map<string, CompositionHandle>();
+    scopes = new Map<string, Pick<CompositionHandle, "pull" | "touchedUsage" | "close">>();
   const code = Object.fromEntries(
     [
       "lab/experiments/EXP-DX1/int1/reader.ts",
@@ -120,7 +121,15 @@ if (process.argv[2] === "--reader" && process.send) {
       let value;
       if (m.op === "open") {
         assert(!scopes.has(m.scope));
-        scopes.set(m.scope, await openComposition("reach-touched", "datomic", m.scope));
+        if (process.env.DX_TOUCHED_READ_MODE === "validated") {
+          let fallback: Promise<CompositionHandle> | undefined;
+          const reader = validatedSubjectReader(m.scope, async (root, basis) => {
+            fallback ??= openComposition("reach", "datomic", m.scope);
+            return (await fallback).pull(root, basis);
+          });
+          scopes.set(m.scope, { pull: reader.pull, touchedUsage: reader.usage,
+            async close() { reader.close(); await (await fallback)?.close(); } });
+        } else scopes.set(m.scope, await openComposition("reach-touched", "datomic", m.scope));
       } else if (m.op === "pull")
         value = replicaReply(
           await scopes.get(m.scope)!.pull(m.root, { recordedPosition: m.p, validAt: m.v } as Basis),

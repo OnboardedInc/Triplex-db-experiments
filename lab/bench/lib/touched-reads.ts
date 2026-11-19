@@ -1,8 +1,11 @@
 import {
+  DatomicClient,
   DatomicHttpError,
   DatomicTransportError,
   Replica,
 } from "../../../packages/datomic/dist/index.js";
+import { isDeepStrictEqual } from "node:util";
+import { runtimeApi } from "./triplex.ts";
 import type { Basis, CompositionHandle, PullResult } from "./composition.ts";
 import { ReplicaReader, ReplicaReadHost, replicaEndpoint } from "./replica-reads.ts";
 
@@ -11,6 +14,46 @@ function unavailable(error: unknown) {
     error instanceof DatomicTransportError ||
     (error instanceof DatomicHttpError && [404, 429, 502, 503, 504].includes(error.status))
   );
+}
+
+export function validatedSubjectReader(scope: string, fallback: CompositionHandle["pull"]) {
+  const raw = Number(process.env.DX_TOUCHED_RETAIN_BYTES ?? 16 * 1024 ** 2);
+  const limit = raw === Infinity ? Number.MAX_SAFE_INTEGER : raw;
+  if (!Number.isSafeInteger(limit) || limit < 1) throw Error("Invalid demand reader budget");
+  const keys = Math.min(4 * 1024 ** 2, Math.floor(limit / 8));
+  const name = runtimeApi.DatabaseScope.test(scope);
+  let client: DatomicClient | undefined;
+  const read = async (root: string, basis: Basis): Promise<PullResult> => {
+    if (basis.recordedPosition === undefined && basis.recordedAt === undefined)
+      return fallback(root, basis);
+    // [DX-THIN1] Why: allocate a client on the first real pull and validate its entire closure at the requested native cut. Rejected: replaying an idle account's import just to advance a reader watermark.
+    client ??= new DatomicClient(replicaEndpoint(process.env, "reader"), 35_000, 64 * 1024 ** 2,
+      { entityCacheBytes: limit - keys, reachKeyBytes: keys, predecessorAttributes: [] });
+    try {
+      const world = await client.readDemandWorld(name, root, basis);
+      if (world) return { triples: world.triples, entities: world.entities, depth: world.hops - 1,
+        roundTrips: world.requests, route: "source", language: "revision-validated", waitedMs: 0 };
+    } catch (error) {
+      if (!unavailable(error)) throw error;
+    }
+    return fallback(root, basis);
+  };
+  return {
+    async pull(root: string, basis: Basis, between?: () => Promise<void>) {
+      const first = await read(root, basis);
+      if (!between) return first;
+      await between();
+      const next = await read(root, basis);
+      if (!isDeepStrictEqual(first.triples, next.triples)) throw Error("Pinned demand read changed");
+      return { ...next, roundTrips: first.roundTrips + next.roundTrips };
+    },
+    usage() {
+      const stats = client?.cacheDiagnostics();
+      return { bytes: (stats?.reach.bytes ?? 0) + (stats?.reachKeys.bytes ?? 0), limit, packed: 0, history: 0,
+        entries: stats?.reach.entries ?? 0, evictions: stats?.reach.evictions ?? 0, admissions: client?.reachDiagnostics.inlineEntities ?? 0 };
+    },
+    close() { client?.close(); client = undefined; },
+  };
 }
 
 export function touchedPull(
@@ -47,6 +90,11 @@ export function touchedPull(
 export function touchedComposition(base: CompositionHandle): CompositionHandle {
   const scope = base.scopeName;
   if (!scope) throw Error("A touched reader needs a named scope");
+  if (process.env.DX_TOUCHED_READ_MODE === "validated") {
+    const reader = validatedSubjectReader(scope, base.pull.bind(base));
+    return { ...base, name: "reach-touched", pull: reader.pull, touchedUsage: reader.usage,
+      async close() { reader.close(); await base.close(); } };
+  }
   let live: ReplicaReadHost | undefined;
   const open = async (root: string) => {
     const position = await base.currentPosition();

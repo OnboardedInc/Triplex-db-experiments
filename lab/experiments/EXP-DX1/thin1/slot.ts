@@ -19,6 +19,7 @@ const nonce = property("run"),
 assert(nonce && /^[a-f0-9]{20}$/.test(nonce) && secret && /^[a-f0-9]{40}$/.test(secret));
 assert(role === "write" || role === "read");
 const compact = property("compact") === "yes";
+const demand = property("cache") === "demand";
 assert(!compact || role === "write");
 const address = Object.values(os.networkInterfaces())
   .flat()
@@ -170,8 +171,8 @@ if (role === "write") {
     "sql-url": "jdbc:postgresql://" + primary + ":5432/datomic",
     "sql-user": "datomic",
     "sql-password": secret,
-    "memory-index-threshold": "32m",
-    "memory-index-max": "192m",
+    "memory-index-threshold": demand ? "8m" : "32m",
+    "memory-index-max": demand ? "32m" : "192m",
     "object-cache-max": "192m",
     "log-dir": dir,
     "pid-file": path.join(dir, "tx.pid"),
@@ -247,6 +248,8 @@ const gateway = (label: "write" | "read", secondary = false) => {
         " -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
       DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
       DATOMIC_URI_TEMPLATE: template,
+      ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
+        TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
     },
   );
 };
@@ -313,7 +316,7 @@ const server = http.createServer(async (req, res) => {
         stdio: ["ignore", "pipe", "pipe"],
       });
       const limit = profile ? Number.parseInt(words.find((w) => w.startsWith("-Ddatomic.objectCacheMax="))!.split("=")[1]!, 10) : 192;
-      const values = cacheCharge(file, limit * 1024 ** 2);
+      const values = cacheCharge(file, limit * 1024 ** 2, profile);
       const histogram = profile ? jcmd("GC.class_histogram") : undefined;
       assert.equal(processStat(), startTicks);
       const h = createHash("sha256");

@@ -89,6 +89,16 @@ process.env.DX_GW_READ_MEMORY = "3g";
 process.env.DX_GW_WRITE_MEMORY = "3g";
 process.env.DX_GW_READ_HEAP = "2g";
 process.env.DX_GW_WRITE_HEAP = "2g";
+if (integrated) {
+  const peer = "-Xms64m -Xmx2g -Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps";
+  Object.assign(process.env, {
+    DX_INT1_COHORT: "spread", DX_INT1_CENSUS: "held", DX_INT1_GATEWAYS: "demand", DX_TOUCHED_READ_MODE: "validated",
+    DX_GW_WRITE_JAVA_OPTS: peer, DX_GW_READ_JAVA_OPTS: peer,
+    DX_GW_WRITE_ENTITY_CACHE_BYTES: "8388608", DX_GW_READ_ENTITY_CACHE_BYTES: "8388608",
+    DX_ID_CACHE_BYTES: "1048576", DX_ID_CACHE_ENTRIES: "4096", DX_GW_SESSION_ENTRIES: "4096",
+    DX_INDEX_THRESHOLD: "8m", DX_INDEX_MAX: "32m",
+  });
+}
 for (const key of [
   "DX_IDLE_SENTINEL",
   "DX_IDLE_REFUSAL_PROBE",
@@ -310,6 +320,16 @@ try {
       process.env.DX_THIN_STACK = file;
       process.env.DATOMIC_URL = stack.writeUrl;
       process.env.DATOMIC_READ_URLS = stack.readUrl;
+      if (integrated && size >= 100000) {
+        status("checking activation before seed");
+        const { guardSeed } = await import("../act2/preflight-runner.ts");
+        const { inputs } = await import("../act2/preflight.ts");
+        const binding = { source: head, slot: tag, nonce };
+        const proof = guardSeed(path.join(day, key + "-preflight"), binding, {
+          ...process.env, TRIPLEX_TRACE_SOURCE: head, TRIPLEX_TRACE_SLOT: tag, TX2_SWEEP_STRICT: "1",
+        });
+        assert.equal(proof.sourceInputs, inputs());
+      }
       status("measuring " + size);
       const dest = path.join(day, "rung-" + key),
         fd = fs.openSync(path.join(day, key + ".log"), "wx");

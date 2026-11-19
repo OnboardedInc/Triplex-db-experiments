@@ -59,7 +59,7 @@ const paths = git(
   "lab/world/W0/cases",
   "lab/experiments/EXP-DX1/thin1",
   "lab/bench/lib",
-  "packages/datomic/src/replica",
+  "packages/datomic/src",
   "packages/w0/src",
   "lab/world/W0/releases",
   "lab/oracles",
@@ -82,8 +82,9 @@ const inputs = Object.fromEntries(
 const attempt = randomUUID(),
   spread = process.env.DX_INT1_COHORT === "spread",
   seedOnly = process.env.DX_INT1_CENSUS === "seed-only",
+  policy = { readMode: process.env.DX_TOUCHED_READ_MODE ?? "following", gateways: process.env.DX_INT1_GATEWAYS ?? "original" },
   binding = digest(
-    canonical([source, inputs, attempt, mode, size, stack.prefix, stack.containers, spread, seedOnly]),
+    canonical([source, inputs, attempt, mode, size, stack.prefix, stack.containers, spread, seedOnly, policy]),
   );
 fs.mkdirSync(dir!);
 const save = (name: string, v: unknown) =>
@@ -97,7 +98,7 @@ save("inputs.json", {
   size,
   slot: stack.prefix,
   containers: stack.containers,
-  spread, seedOnly,
+  spread, seedOnly, policy,
   managedSlots: stack.managed?.compact ? 1 : stack.managed ? 2 : undefined,
   boot: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
 });
@@ -115,6 +116,14 @@ const readerStats = async (client = reader) => {
   return stats;
 };
 async function phase(label: string) {
+  const sources: Record<string, { position: number; people: number }> = {};
+  for (const account of accounts) {
+    if (!account.count) continue;
+    const scope = account.comp.scopeName!;
+    const entry = sources[scope] ??= { position: account.head, people: 0 };
+    assert.equal(entry.position, account.head);
+    entry.people += Number(account.db.prepare("SELECT count(*) AS n FROM people").get()!.n);
+  }
   const a = {
     label,
     at: new Date().toISOString(),
@@ -122,6 +131,7 @@ async function phase(label: string) {
     driver: processSize(),
     reader: await readerStats(),
     native: await nativeMetrics(stack),
+    sources,
   };
   phases.push(a);
   fs.appendFileSync(path.join(dir!, "phases.jsonl"), JSON.stringify(a) + "\n");
@@ -434,7 +444,7 @@ async function trial() {
   await caughtUp();
   const before = await phase("after-activity");
   if (seedOnly) await gatewayProfiles(stack, dir!, "two-percent", binding);
-  let sender, regularDeep, regularTenant, placements;
+  let sender, regularDeep, regularTenant, placements, identities;
   if (mode === "int1-proof") {
     const proofs = await import("./receipt-proof.ts");
     sender = await proofs.receiptProof(accounts[1]!, dir!);
@@ -554,6 +564,10 @@ async function trial() {
     for (const [file, hash] of Object.entries(programInputs())) assert.equal(inputs[file], hash);
     schedules = nativeScheduleNames.length;
     placements = await placementProof();
+    if (policy.gateways === "demand") {
+      await lease.checkpoint();
+      identities = await (await import("./identity-proof.ts")).proveEvictedIdentities(attempt);
+    }
   }
   let moving;
   if (mode === "int1-thin" && size === 100000 && stack.managed) {
@@ -617,6 +631,7 @@ async function trial() {
     regularDeep,
     regularTenant,
     placements,
+    identities,
     schedules,
     moving,
   };

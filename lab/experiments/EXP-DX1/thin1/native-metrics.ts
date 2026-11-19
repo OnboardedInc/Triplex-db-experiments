@@ -22,6 +22,14 @@ export interface Stack {
     }[];
   };
 }
+function checkBudgets(stats: any) {
+  if (process.env.DX_INT1_GATEWAYS !== "demand") return;
+  assert.equal(stats.idMemo.limit, 4096);
+  assert.equal(stats.idMemo.byteLimit, 1 << 20);
+  assert.equal(stats.entityCache.budgetBytes, 8 << 20);
+  assert(stats.entityCache.bytes <= stats.entityCache.budgetBytes);
+  assert(stats.idMemo.maximumMapEntries <= stats.idMemo.limit);
+}
 export function metricEndpoint(address: string, endpoint: "/metrics" | "/sample-object-cache" | "/gateway-profile") {
   const url = new URL(address);
   const [net, subnet] = url.hostname.split(".").map(Number);
@@ -100,6 +108,7 @@ async function managedMetrics(stack: Stack) {
     });
     assert(scan.ok);
     const stats = (await scan.json()) as any;
+    checkBudgets(stats);
     assert(
       Number.isFinite(stats.idMemo.estimatedBytes) && Number.isFinite(stats.entityCache.bytes),
     );
@@ -142,6 +151,10 @@ export async function nativeMetrics(stack: Stack) {
     const role = c.name.slice(stack.prefix.length + 1);
     if (role.startsWith("gw-"))
       assert(info.Config.Env.includes("GATEWAY_SOURCE_SHA256=" + stack.gatewaySourceSha256));
+    if (role.startsWith("gw-") && process.env.DX_INT1_GATEWAYS === "demand") {
+      assert(info.Config.Env.includes("TX2_REACH_SESSION_ENTRIES=4096"));
+      assert(info.Config.Env.some((s: string) => s.startsWith("DATOMIC_JAVA_OPTS=") && s.split(/\s+/).includes("-Ddatomic.objectCacheMax=32m")));
+    }
     const rss = docker(["top", c.id, "-eo", "rss"]).split("\n").slice(1).map(Number);
     assert(rss.length && rss.every((x) => Number.isFinite(x) && x > 0));
     const bytes = (file: string) => Number(docker(["exec", c.id, "cat", "/sys/fs/cgroup/" + file]));
@@ -170,6 +183,7 @@ export async function nativeMetrics(stack: Stack) {
       entityCache: { bytes: number };
     };
     assert(Number.isFinite(idMemo.estimatedBytes) && Number.isFinite(entityCache.bytes));
+    checkBudgets({ idMemo, entityCache });
     return { idMemo, entityCache };
   };
   const pg = stack.containers.find((c) => c.name === stack.prefix + "-pg")!;

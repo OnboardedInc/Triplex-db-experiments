@@ -11,7 +11,8 @@ if (action === "--plan") {
       {
         branch: "exp/DX-INT1",
         cases,
-        readers: "reach-touched",
+        readers: "reach-touched, revision-validated on demand",
+        gateways: "32 MiB peer object cache, 8 MiB row cache, 4096 ID and session entries",
         activity: "2%",
         releases: ["R1", "EAD selector R2"],
         comparison: "same 100 account rosters, command intents and guarded decisions",

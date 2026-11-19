@@ -7,7 +7,7 @@ type Item = { id: number; name: string; fields: Record<string, number> };
 
 // [DX-THIN1] Why: Datomic reports object-cache requests and hits; its real byte budget is charged by a scaled Caffeine weigher.
 // Rejected: the JVM RSS delta or the configured maximum as measured occupancy. Field layouts follow OpenJDK's HPROF heapDumper.cpp.
-export function cacheCharge(file: string, configured: number) {
+export function cacheCharge(file: string, configured: number, allowUnopened = false) {
   const fd = fs.openSync(file, "r"),
     length = fs.fstatSync(fd).size,
     buf = Buffer.allocUnsafe(1 << 20);
@@ -217,8 +217,9 @@ export function cacheCharge(file: string, configured: number) {
         weigher: [w.name, scaled.name, domain.name],
       });
     }
+    const domainWeighers = [...items.values()].filter(x => x.name.startsWith("datomic.domain$create_object_cache$fn")).length;
     assert(
-      caches.length > 0,
+      caches.length > 0 || (allowUnopened && domainWeighers === 0),
       "Expected a live Datomic object cache; matched " +
         caches.length +
         " candidates " +
@@ -236,6 +237,7 @@ export function cacheCharge(file: string, configured: number) {
     return {
       chargedBytes: caches.reduce((total, c) => total + c.units * c.bytesPerUnit, 0),
       caches,
+      domainWeighers,
       hprofBytes: length,
     };
   } finally {

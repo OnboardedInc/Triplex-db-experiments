@@ -1,7 +1,8 @@
 import { ByteCache } from "./ByteCache.js";
 import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { createHash, randomUUID } from "node:crypto";
-import { decodeEntity, type CachedEntity, type ReachWire } from "./reach.js";
+import { decodeEntity, reachResponse, type CachedEntity, type ReachWire } from "./reach.js";
+import { databaseName } from "./scopeName.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
@@ -172,6 +173,7 @@ export class DatomicClient {
   private reachKeyDb: string | undefined;
   private readonly reachKeys = new Map<string, string>();
   private reachKeyBytes = 0;
+  private readonly reachKeyBudget: number;
   private cacheTimer: ReturnType<typeof setInterval> | undefined;
   cacheDiagnostics() {
     const stats = (c: {
@@ -195,7 +197,7 @@ export class DatomicClient {
       reachKeys: {
         bytes: this.reachKeyBytes,
         entries: this.reachKeys.size,
-        budgetBytes: 4 * 1024 ** 2,
+        budgetBytes: this.reachKeyBudget,
       },
     };
   }
@@ -209,8 +211,8 @@ export class DatomicClient {
     if (found !== undefined) return found;
     const key = prefix + id;
     const bytes = 128 + 2 * (id.length + key.length);
-    if (bytes <= 4 * 1024 ** 2) {
-      if (this.reachKeyBytes + bytes > 4 * 1024 ** 2) {
+    if (bytes <= this.reachKeyBudget) {
+      if (this.reachKeyBytes + bytes > this.reachKeyBudget) {
         this.reachKeys.clear();
         this.reachKeyBytes = 0;
       }
@@ -230,8 +232,12 @@ export class DatomicClient {
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
       readonly predecessorAttributes?: readonly string[];
+      readonly reachKeyBytes?: number;
     } = {},
   ) {
+    this.reachKeyBudget = cacheOptions.reachKeyBytes ?? 4 * 1024 ** 2;
+    if (!Number.isSafeInteger(this.reachKeyBudget) || this.reachKeyBudget < 0)
+      throw new RangeError("Invalid reach key budget");
     this.reachCache = new ByteCache(
       cacheOptions.entityCacheBytes ?? 16 * 1024 ** 2,
       (entity) => 256 + entity.storedRows.reduce((n, row) => n + 3 * estimateRowBytes(row), 0),
@@ -492,6 +498,18 @@ export class DatomicClient {
   // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
   // Rejected: accepting a missing reference as an empty entity.
   private readonly reachInflight = new Set<Promise<void>>();
+  async readDemandWorld(scope: string, root: string, basis: ResolvedTemporalBasis) {
+    // [DX-THIN1] Why: one native cut validates every cached entity revision and returns all missing rows. Rejected: following the whole import journal to keep untouched worlds current.
+    const found = await this.reachEntities(databaseName(scope), [root], basis, true);
+    if (!found) return undefined;
+    for (const entity of found.entities.values()) {
+      if (entity.storedRows.some(row => !Number.isSafeInteger(row.recorded_position) ||
+        row.recorded_position < 1 || row.recorded_position > found.position))
+        throw new TypeError("Demand row outside its selected position");
+    }
+    const world = reachResponse(root, found.entities, basis, found.closures[0]![1]);
+    return { ...world, entities: found.closures[0]![1].length, requests: found.requests };
+  }
   async reachEntities(
     db: string,
     roots: readonly string[],
@@ -531,7 +549,9 @@ export class DatomicClient {
     older: readonly Promise<void>[],
     ingested: () => void,
   ) {
+    let requests = 0;
     for (let attempt = 0; attempt < 2; attempt++) {
+      requests++;
       const response = await this.request<ReachWire>(
         "POST",
         `/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`,
@@ -636,6 +656,7 @@ export class DatomicClient {
             this.reachDiagnostics.needRequests++;
             this.reachDiagnostics.needEntities += need.length;
             try {
+              requests++;
               const repair = await this.request<ReachWire>("POST", `/v2/db/${db}/reach-many`, {
                 roots,
                 need: need.map(([id]) => id),
@@ -686,7 +707,7 @@ export class DatomicClient {
           )
             throw new TypeError("Reach closure binding mismatch");
         });
-        return { entities, closures: response.closures };
+        return { entities, closures: response.closures, requests, position: response.position };
       } catch {
         this.reachDiagnostics.faults++;
         return undefined;

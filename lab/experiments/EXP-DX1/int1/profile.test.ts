@@ -5,19 +5,26 @@ import { activePerson } from "./cohort.ts";
 import { parseHistogram } from "./gateway-profile.ts";
 
 test("the two-percent cold sample includes every deep task class and exact membership", () => {
-  const census = (people: number) => Array.from({ length: Math.ceil(people / 50) },
-    (_, n) => activePerson(n, people, true));
+  const census = (people: number) =>
+    Array.from({ length: Math.ceil(people / 50) }, (_, n) => activePerson(n, people, true));
   const people = census(10_000);
   assert.equal(new Set(people).size, 200);
-  assert.deepEqual([...new Set(people.map(i => deepShape(i).tasks))].sort((a,b) => a-b), [4,5,10,11,34]);
-  assert.equal(people.filter(i => deepShape(i).tasks === 34).length, 2);
+  assert.deepEqual(
+    [...new Set(people.map((i) => deepShape(i).tasks))].sort((a, b) => a - b),
+    [4, 5, 10, 11, 34],
+  );
+  assert.equal(people.filter((i) => deepShape(i).tasks === 34).length, 2);
   assert(census(103).every((id, n) => id < 103 && Math.floor(id / 50) === n));
 });
 
 test("a live histogram requires every ordinal and both totals", () => {
   const raw = "9:\n 1:  4 64 [B\n 2: 1 8 xyz\nTotal 5 72\n";
   assert.equal(parseHistogram(raw).bytes, 72);
-  for (const bad of [raw.replace("2:", "3:"), raw.replace("Total 5", "Total 4"),
-    raw.replace(" 72", " 64"), raw.replace("Total", "Partial")])
+  for (const bad of [
+    raw.replace("2:", "3:"),
+    raw.replace("Total 5", "Total 4"),
+    raw.replace(" 72", " 64"),
+    raw.replace("Total", "Partial"),
+  ])
     assert.throws(() => parseHistogram(bad));
 });

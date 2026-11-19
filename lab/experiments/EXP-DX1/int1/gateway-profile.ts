@@ -25,30 +25,64 @@ export async function gatewayProfiles(stack: Stack, dir: string, phase: string, 
   const { secret } = JSON.parse(fs.readFileSync(process.env.DX_THIN_CREDENTIAL!, "utf8"));
   const samples = [];
   for (const peer of managed.peers) {
-    const owner = JSON.parse(fs.readFileSync(peer.owner, "utf8")), witness = randomUUID();
+    const owner = JSON.parse(fs.readFileSync(peer.owner, "utf8")),
+      witness = randomUUID();
     assert.equal(owner.holder, "DX-THIN1");
     assert.equal(owner.experiment, "DX-THIN1-" + managed.nonce);
     assert.equal(owner.createdAt, peer.createdAt);
-    assert(stack.containers.some(c => c.name === owner.container && c.id === peer.id));
+    assert(stack.containers.some((c) => c.name === owner.container && c.id === peer.id));
     const res = await fetch(metricEndpoint(peer.metrics, "/gateway-profile"), {
-      method: "POST", redirect: "error", signal: AbortSignal.timeout(210000),
-      headers: { authorization: "Bearer " + secret, "x-thin-observation": witness, "x-thin-role": peer.role },
+      method: "POST",
+      redirect: "error",
+      signal: AbortSignal.timeout(210000),
+      headers: {
+        authorization: "Bearer " + secret,
+        "x-thin-observation": witness,
+        "x-thin-role": peer.role,
+      },
     });
     if (!res.ok) throw Error("Gateway profile unavailable: " + (await res.text()).slice(0, 2100));
-    const { histogram, ...data } = await res.json() as any;
-    assert.deepEqual([data.witness, data.role, data.nonce, data.source, data.containerId],
-      [witness, peer.role, managed.nonce, stack.gatewaySourceSha256, peer.id]);
+    const { histogram, ...data } = (await res.json()) as any;
+    assert.deepEqual(
+      [data.witness, data.role, data.nonce, data.source, data.containerId],
+      [witness, peer.role, managed.nonce, stack.gatewaySourceSha256, peer.id],
+    );
     assert(Number.isSafeInteger(data.pid) && data.pid > 1 && Number(data.startTicks) > 0);
     assert(histogram.startsWith(data.pid + ":") && data.before.heap.startsWith(data.pid + ":"));
     assert.match(data.hprofSha256, /^[0-9a-f]{64}$/);
-    assert(data.hprofBytes > 0 && data.caches.length && data.caches.every((c: any) =>
-      c.weigher.length === 3 && c.bytesPerUnit === 1000 && c.units >= 0 && c.maxUnits <= Math.ceil(data.limitMiB * 2 ** 20 / 1000)));
-    assert.equal(data.chargedBytes, data.caches.reduce((s: number, c: any) => s + c.units * c.bytesPerUnit, 0));
+    if (!data.caches.length) {
+      assert.equal(data.domainWeighers, 0);
+      assert(!histogram.includes("datomic.domain$create_object_cache$fn"));
+    }
+    assert(
+      data.hprofBytes > 0 &&
+        data.caches.every(
+          (c: any) =>
+            c.weigher.length === 3 &&
+            c.bytesPerUnit === 1000 &&
+            c.units >= 0 &&
+            c.maxUnits <= Math.ceil((data.limitMiB * 2 ** 20) / 1000),
+        ),
+    );
+    assert.equal(
+      data.chargedBytes,
+      data.caches.reduce((s: number, c: any) => s + c.units * c.bytesPerUnit, 0),
+    );
     const summary = parseHistogram(histogram);
-    const filename = phase + "-" + peer.role + ".histogram.gz", bytes = gzipSync(histogram);
+    const filename = phase + "-" + peer.role + ".histogram.gz",
+      bytes = gzipSync(histogram);
     fs.writeFileSync(path.join(dir, filename), bytes, { flag: "wx" });
-    samples.push({ ...data, summary, filename, sha256: createHash("sha256").update(bytes).digest("hex") });
+    samples.push({
+      ...data,
+      summary,
+      filename,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+    });
   }
-  assert.equal(new Set(samples.map(s => s.pid)).size, 2);
-  fs.writeFileSync(path.join(dir, phase + "-profile.json"), JSON.stringify({ binding, phase, samples }), { flag: "wx" });
+  assert.equal(new Set(samples.map((s) => s.pid)).size, 2);
+  fs.writeFileSync(
+    path.join(dir, phase + "-profile.json"),
+    JSON.stringify({ binding, phase, samples }),
+    { flag: "wx" },
+  );
 }

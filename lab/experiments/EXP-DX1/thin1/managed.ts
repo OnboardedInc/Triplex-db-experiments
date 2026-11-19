@@ -138,14 +138,18 @@ function setup(compact: boolean) {
     : ["s2", "s1"];
   assert.equal(slots.length, required, "Insufficient free exclusive slots");
   const original = read(path.join(main, "lab/config/slots.json")).slots.datomic;
+  const gwPolicy = process.env.DX_INT1_GATEWAYS ?? "original";
+  const readMode = process.env.DX_TOUCHED_READ_MODE ?? "following";
+  assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
     const settings = (cfg.slots.datomic[slot] = { ...original[slot] });
     if (compact) settings.attemptVolumeNonce = nonce;
     settings.gatewayOpts =
-      (compact ? "-Xms128m -Xmx600m -Ddxthin.compact=yes" : "-Xms160m -Xmx896m") +
-      " -Ddatomic.objectCacheMax=192m -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
+      (gwPolicy === "demand" ? "-Xms64m -Xmx384m -Ddxthin.cache=demand -Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps"
+        : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
+      (compact ? " -Ddxthin.compact=yes" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
       secret +
@@ -158,7 +162,7 @@ function setup(compact: boolean) {
   write(file, cfg);
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
-  write(cred, { nonce, secret, slots, compact, census, cohort });
+  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode });
   return slots;
 }
 function witness(slot: string) {
@@ -220,6 +224,7 @@ function bind() {
       nonce: attempt.nonce,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
+      gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
       peers,
       cacheDiagnostic: fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")),
     },
@@ -242,6 +247,8 @@ if (action === "--guest") {
     TRIPLEX_DATOMIC_LAYOUT: "lean",
     DX_INT1_CENSUS: stack.managed.census ?? "held",
     DX_INT1_COHORT: stack.managed.cohort ?? "stride",
+    DX_TOUCHED_READ_MODE: stack.managed.readMode ?? "following",
+    DX_INT1_GATEWAYS: stack.managed.gwPolicy ?? "original",
   });
   if (stack.managed.compact) {
     let ready = false;

@@ -33,6 +33,8 @@ function load(dir: string) {
         inputs.size,
         inputs.slot,
         inputs.containers,
+        ...(typeof inputs.spread === "boolean" ? [inputs.spread, inputs.seedOnly] : []),
+        ...(inputs.policy ? [inputs.policy] : []),
       ]),
     )
     .digest("hex");
@@ -64,7 +66,7 @@ function load(dir: string) {
       for (const [file, hash] of Object.entries(phase.reader.code))
         assert.equal(hash, inputs.inputs[file]);
   }
-  return { r, p: Object.fromEntries(p.map((x) => [x.label, x])), bind };
+  return { r, p: Object.fromEntries(p.map((x) => [x.label, x])), bind, inputs };
 }
 function count(p: any, role: (typeof roles)[number]) {
   const value = role === "reader" || role === "driver" ? p[role] : p.native.roles[role];
@@ -90,7 +92,7 @@ function deltas(a: any, b: any, denominator: number) {
   );
 }
 const population = [thin, deep].map((dir, i) => {
-  const { r, p, bind } = load(dir);
+  const { r, p, bind, inputs } = load(dir);
   assert.equal(r.mode, i ? "int1-deep" : "int1-thin");
   assert.equal(r.size, i ? 10000 : 100000);
   const a = r.accounts[0];
@@ -102,8 +104,8 @@ const population = [thin, deep].map((dir, i) => {
   assert(
     a.replay.status === "PASS" && a.replay.entityQueries >= a.replay.reads && a.replay.reads > 0,
   );
-  assert.equal(r.latency.cold.n, r.size / 100);
-  if (r.latencyReceipt) verifyLatencies(dir, r, bind, r.attempt);
+  assert.equal(r.latency.cold.n, r.size / (inputs.seedOnly ? 50 : 100));
+  if (r.latencyReceipt) verifyLatencies(dir, r, bind, r.attempt, inputs.spread === undefined ? undefined : inputs);
   const before = p["fixed-hot"],
     after = p["after-cold-import"];
   const x = before.reader.scopes[a.scope],
@@ -113,8 +115,10 @@ const population = [thin, deep].map((dir, i) => {
   const db = new DatabaseSync(path.join(dir, "population.sqlite"), { readOnly: true });
   try {
     const at = db.prepare("SELECT count(*) AS n FROM people WHERE born<=?");
-    assert.equal(at.get(x.position)?.n, a.active);
-    assert.equal(at.get(y.position)?.n, r.size);
+    const bx = before.sources?.[a.scope], by = after.sources?.[a.scope];
+    if (bx || by) assert.deepEqual([bx?.people, by?.people], [a.active, r.size]);
+    assert.equal(at.get(bx?.position ?? x.position)?.n, a.active);
+    assert.equal(at.get(by?.position ?? y.position)?.n, r.size);
     assert.equal(
       db.prepare("SELECT count(*) AS n FROM people WHERE dirty IS NOT NULL").get()?.n,
       a.active,
@@ -124,6 +128,7 @@ const population = [thin, deep].map((dir, i) => {
   }
   assert.equal(x.entries, y.entries);
   assert.equal(x.packed, y.packed);
+  assert.equal(x.bytes, y.bytes);
   const n = r.size - a.active;
   return {
     binding: bind,

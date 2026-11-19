@@ -78,6 +78,7 @@ export function reachResponse(
   root: string,
   entities: ReadonlyMap<string, CachedEntity>,
   basis: ResolvedTemporalBasis,
+  expectedClosure?: readonly string[],
 ): ReachResult {
   const seen = new Set<string>([root]);
   const triples: Triple[] = [];
@@ -104,6 +105,8 @@ export function reachResponse(
     }
     todo = next;
   }
+  if (expectedClosure && (seen.size !== expectedClosure.length || expectedClosure.some(id => !seen.has(id))))
+    throw new TypeError("Demand reach closure differs from the active references");
   return { triples, hops };
 }
 
