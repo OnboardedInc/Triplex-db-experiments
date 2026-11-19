@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { capacity, scaleHost, startScaleStack } from "../scale1/bench.ts";
 import { sourceInventory } from "../scale1/source.ts";
-import { guardSeed } from "../act2/preflight-runner.ts";
+import { preflight } from "./preflight.ts";
 import { inputPins, measuredPair } from "./rung.ts";
 
 const script = fileURLToPath(import.meta.url),
@@ -121,25 +121,22 @@ async function run() {
   call("taskset", ["-pc", "3,5,6,7,9,10,11", String(process.pid)]);
   const binding = { source, slot: p.prefix, nonce: attempt.nonce };
   // [DX-STG1] Why: require ACT2's identity gate and a complete 1k notice replay on this allocation before paying for either 100k seed. Rejected: accepting a saved Mac preflight or a launch-only success.
-  try {
-    guardSeed(path.join(p.dir, "act2-preflight"), binding, process.env);
-    const pre = path.join(p.dir, "notice-preflight");
-    fs.mkdirSync(pre);
-    const check = await measuredPair(p.preflight, pre, source, p.prefix, randomUUID(), true, 0, 4);
-    assert.equal(check.dispatch.proof?.subjects, p.preflight);
-    assert(
-      check.dispatch.proof!.eventCounts[1]! > 0 &&
-        check.dispatch.proof?.effects ===
-          check.dispatch.proof?.eventCounts.reduce((a, b) => a + b, 0),
-    );
-  } catch (e) {
-    write(path.join(p.dir, "preflight-stop.json"), { ...binding, reason: String(e) });
-    throw e;
-  }
+  await preflight(p.dir, binding);
   const large = path.join(p.dir, "deep");
   fs.mkdirSync(large);
   write(path.join(p.dir, "before-deep.json"), scaleHost.snapshot(p.prefix));
-  await measuredPair(p.subjects, large, source, p.prefix, attempt.nonce, true, 0, p.readers);
+  await measuredPair(
+    p.subjects,
+    large,
+    source,
+    p.prefix,
+    attempt.nonce,
+    true,
+    20,
+    p.readers,
+    true,
+    true,
+  );
   write(path.join(p.dir, "after-deep.json"), scaleHost.snapshot(p.prefix));
 }
 if (process.argv[1] === script) await run();

@@ -26,12 +26,17 @@ export function inputPins() {
       "store.ts",
       "verify.ts",
       "workload.ts",
+      "worker.ts",
     ]
       .sort()
       .map((n) => [n, sha256(fs.readFileSync(new URL(n, base)))]),
   );
 }
-export async function fixtureProfile(store: CompositionHandle, n: number): Promise<Profile> {
+export async function fixtureProfile(
+  store: CompositionHandle,
+  n: number,
+  interval = 100,
+): Promise<Profile> {
   const inputs = new Fixture(store),
     seed = await inputs.seed(n),
     ids = Array.from({ length: n }, (_, i) => W0.placementId(i));
@@ -39,7 +44,7 @@ export async function fixtureProfile(store: CompositionHandle, n: number): Promi
     pay = (e: Offer) => (e.seq % 2 ? 1620 : 1510);
   const offers: Offer[] = Array.from({ length: 36000 }, (_, i) => ({
     seq: i,
-    atMs: 20 + i * 100,
+    atMs: 20 + i * interval,
     subject: (i * 31) % Math.max(1, Math.ceil(n * 0.02)),
   }));
   return {
@@ -78,6 +83,7 @@ export async function measuredPair(
   gapMs = 0,
   readers = 4,
   priority = false,
+  independent = false,
 ) {
   const pins = inputPins();
   const native = process.env.NOTIFY_NATIVE === "1" || deep;
@@ -91,7 +97,10 @@ export async function measuredPair(
   for (const name of ["dispatch", "baseline"]) {
     const epoch = nonce + "-" + name,
       src = await open("notice-" + epoch),
-      receiver = await open("effects-" + epoch);
+      rxName = (independent ? "act1-notify-" : "effects-") + epoch,
+      receiver = independent
+        ? await (await import("./worker.ts")).recipient(rxName, dir)
+        : await open(rxName);
     let readPeer: CompositionHandle | undefined;
     try {
       if (deep && process.env.DATOMIC_READ_URLS) {
@@ -105,7 +114,7 @@ export async function measuredPair(
       }
       const profile = deep
         ? await (await import("./deep.ts")).deepProfile(src, n, commonTime, readPeer)
-        : await fixtureProfile(src, n);
+        : await fixtureProfile(src, n, independent ? 625 : 100);
       const run = await runWindow({
         profile,
         source: src,
@@ -113,6 +122,18 @@ export async function measuredPair(
         epoch,
         gapMs,
         readers,
+        workerJob: independent
+          ? {
+              source: src.scopeName!,
+              recipient: rxName,
+              directory: dir,
+              deep,
+              subjects: n,
+              epoch,
+              gap: gapMs,
+              priority,
+            }
+          : undefined,
         duration,
         priority,
         pace: deep ? 0 : 60,
@@ -191,6 +212,7 @@ if (process.argv[1] === import.meta.filename) {
     gap,
     4,
     process.argv[4] === "priority",
+    process.argv[5] === "independent",
   );
   assert(fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!).equals(owner));
   console.log(

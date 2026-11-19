@@ -11,6 +11,42 @@ import type { Cut } from "./journal.ts";
 import type { Op } from "./store.ts";
 import type { Profile } from "./workload.ts";
 
+export const instant = (v: string) => {
+  assert(W0.isInstant(v));
+  return Date.parse(v.slice(0, 19) + "Z") + Number(v.slice(20, 26)) / 1000;
+};
+export function deepInputs(store: CompositionHandle, n: number) {
+  const account = { index: 0, key: keyFor(0), first: 0, people: n },
+    ids = Array.from({ length: n }, (_, i) => W0.placementId(i));
+  const project = (handle: CompositionHandle) => async (s: string[], cut: Cut) => {
+    const result: W0.World[] = [];
+    for (let j = 0; j < s.length; j += 32)
+      result.push(
+        ...(await readDeepWorlds(
+          handle,
+          s.slice(j, j + 32).map((id) => Number(id.slice(4))),
+          { position: cut.position, validAt: instant(cut.validTime) },
+          account.key,
+        )),
+      );
+    return result;
+  };
+  const worlds = project(store);
+  const input = {
+    identity: "act2-native-deep-policy-v1",
+    async roster(cut: Cut) {
+      const proof = await tenantQueries(store, [account], {
+        position: cut.position,
+        validAt: instant(cut.validTime),
+      });
+      assert.equal(proof.counts[account.key], n);
+      return ids;
+    },
+    worlds,
+  };
+  return input;
+}
+
 export async function deepProfile(
   store: CompositionHandle,
   n: number,
@@ -19,7 +55,13 @@ export async function deepProfile(
 ): Promise<Profile> {
   const account = { index: 0, key: keyFor(0), first: 0, people: n };
   const plan = makeDeepTrace(deepSeed(0), n, 7200),
-    offers = plan.events,
+    offers = plan.events.map((e) => ({
+      ...e,
+      atMs: e.atMs - plan.events[0]!.atMs,
+      validTime: new Date(Math.floor(instant(date) + e.atMs - plan.events[0]!.atMs))
+        .toISOString()
+        .replace(/Z$/, "000Z"),
+    })),
     ids = Array.from({ length: n }, (_, i) => W0.placementId(i));
   const writer = new DeepWriter(new Set(offers.map((e) => e.subject)));
   // [DX-STG1] Why: bind the frozen writer's actual predecessor rows during the original deep seed, including mutable task fields. Rejected: replaying matching traffic timestamps with synthetic one-field saves on the server.
@@ -32,37 +74,12 @@ export async function deepProfile(
     },
   };
   await seedAccounts(seeding, [account]);
-  const v = Date.parse(date);
-  const project = (handle: CompositionHandle) => async (s: string[], cut: Cut) => {
-    const result: W0.World[] = [];
-    for (let j = 0; j < s.length; j += 32)
-      result.push(
-        ...(await readDeepWorlds(
-          handle,
-          s.slice(j, j + 32).map((id) => Number(id.slice(4))),
-          { position: cut.position, validAt: Date.parse(cut.validTime) },
-          account.key,
-        )),
-      );
-    return result;
-  };
-  const worlds = project(store);
-  const input = {
-    identity: "act2-native-deep-policy-v1",
-    async roster(cut: Cut) {
-      const proof = await tenantQueries(store, [account], {
-        position: cut.position,
-        validAt: Date.parse(cut.validTime),
-      });
-      assert.equal(proof.counts[account.key], n);
-      return ids;
-    },
-    worlds,
-  };
+  const input = deepInputs(store, n),
+    worlds = input.worlds;
   const by = new Map(offers.map((e) => [e.seq, e]));
   return {
     inputs: input,
-    readWorlds: project(reader),
+    readWorlds: deepInputs(reader, n).worlds,
     ids,
     validTime: date,
     offers,
@@ -71,7 +88,7 @@ export async function deepProfile(
       const event = by.get(e.seq)!;
       const page = await store.sweepPage([entities.placement(e.subject)], {
         position: cut.position,
-        validAt: v,
+        validAt: instant(cut.validTime),
       });
       const stamp = page.rows.find(
         (r) => r.entityId === entities.placement(e.subject) && r.attribute === ":placement/stamp",
@@ -92,7 +109,7 @@ export async function deepProfile(
           addressId: address.id,
           addressValidFrom: address.validFrom,
         },
-        v,
+        Math.floor(instant(e.validTime ?? date)),
       );
       return { ops: b.operations as Op[], checks: b.preconditions };
     },

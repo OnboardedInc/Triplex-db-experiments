@@ -4,7 +4,7 @@ import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 import { Dispatcher } from "./dispatcher.ts";
 import { Notices, type Inputs, type Cut, type Request } from "./journal.ts";
-import { Documents, hash, type Op, type Check } from "./store.ts";
+import { Documents, hash, type Op, type Check, type Store } from "./store.ts";
 import { type Offered, verify } from "./verify.ts";
 
 export type Offer = {
@@ -13,6 +13,7 @@ export type Offer = {
   subject: number;
   resend?: boolean;
   ackLoss?: boolean;
+  validTime?: string;
 };
 export interface Profile {
   inputs: Inputs;
@@ -29,7 +30,8 @@ const p99 = (xs: number[]) =>
 export async function runWindow(opts: {
   profile: Profile;
   source: CompositionHandle;
-  receiver: CompositionHandle;
+  receiver: Store;
+  workerJob?: import("./worker.ts").Job;
   epoch: string;
   gapMs: number;
   readers: number;
@@ -81,8 +83,10 @@ export async function runWindow(opts: {
       subject: string;
       position: number;
       world: string;
+      validTime: string;
     }[] = [];
   let through = broad.receipt.position,
+    latestValid = p.validTime,
     duration = opts.duration ?? Infinity;
   const worker = new Dispatcher(a, sink),
     prepared = new Map<number, { req: Request; ops: Op[]; checks: Check[]; initial: Offered }>();
@@ -121,10 +125,10 @@ export async function runWindow(opts: {
         kind: "reconcile",
         release: "R2",
         from: p.validTime,
-        validTime: p.validTime,
+        validTime: e.validTime ?? p.validTime,
         selection: { kind: "subjects", ids: [W0.placementId(e.subject)] },
       };
-      const input = cached ?? (await p.write(e, { position: t.at, validTime: p.validTime }));
+      const input = cached ?? (await p.write(e, { position: t.at, validTime: req.validTime }));
       const ack = await a.append(t, req, input.ops, input.checks);
       if (!cached) {
         const entry = { req, receipt: ack };
@@ -134,7 +138,10 @@ export async function runWindow(opts: {
       } else assert.deepEqual(ack, cached.initial.receipt);
       if (e.ackLoss) assert.deepEqual(await a.append(t, req, input.ops, input.checks), ack);
       acknowledged++;
-      through = Math.max(through, ack.position);
+      if (ack.position >= through) {
+        through = ack.position;
+        latestValid = req.validTime;
+      }
       saves.push({
         seq: e.seq,
         atMs: e.atMs,
@@ -153,14 +160,15 @@ export async function runWindow(opts: {
       if (scheduled >= duration) break;
       const i = (j * 37 + reader * 13) % p.ids.length,
         subject = p.ids[i]!,
-        position = through;
+        position = through,
+        validTime = latestValid;
       const t = performance.now(),
         [world] = await (p.readWorlds ?? p.inputs.worlds.bind(p.inputs))([subject], {
           position,
-          validTime: p.validTime,
+          validTime,
         });
       assert.equal(world?.subject, subject);
-      const out = W0.evaluateWorld(world!, W0.R2, { tx: position, validTime: p.validTime });
+      const out = W0.evaluateWorld(world!, W0.R2, { tx: position, validTime });
       assert(!("error" in out));
       const end = performance.now();
       reads.push({
@@ -169,55 +177,89 @@ export async function runWindow(opts: {
         latency: end - t,
         subject,
         position,
+        validTime,
         world: hash(world!.facts.map((f) => hash(f)).sort()),
       });
     }
   };
-  let drainMs: number | undefined;
+  let drainMs: number | undefined,
+    firstEffectMs: number | null = null,
+    lastEffectMs: number | null = null;
+  const onEffect = () => {
+    lastEffectMs = performance.now() - start;
+    firstEffectMs ??= lastEffectMs;
+  };
+  const abort = new AbortController();
+  let external: typeof worker.metrics | undefined;
   const run = async () => {
     if (opts.duration !== undefined) {
       await sleep(opts.duration);
       return;
     }
     try {
-      await worker.drain({ through: 2, gapMs: opts.gapMs, grant });
+      if (opts.workerJob)
+        external = await (
+          await import("./worker.ts")
+        ).separate(opts.workerJob, grant, onEffect, abort.signal);
+      else
+        await worker.drain({
+          through: 2,
+          gapMs: opts.gapMs,
+          grant: async () => {
+            abort.signal.throwIfAborted();
+            await grant?.();
+          },
+          afterReceive: async () => onEffect(),
+        });
     } finally {
       duration = performance.now() - start;
       drainMs = duration;
     }
   };
+  const jobs = [
+    run(),
+    writeLoop(),
+    ...Array.from({ length: packetReaders }, (_, i) => readLoop(i)),
+  ];
   try {
-    await Promise.all([
-      run(),
-      writeLoop(),
-      ...Array.from({ length: packetReaders }, (_, i) => readLoop(i)),
-    ]);
-  } finally {
-    duration = Math.min(duration, performance.now() - start);
+    await Promise.all(jobs);
+  } catch (e) {
+    abort.abort();
+    duration = 0;
+    await Promise.allSettled(jobs);
+    throw e;
   }
   assert(
     Number.isFinite(duration) && p.offers.at(-1)!.atMs > duration,
     "Offered trace ended before measured window",
   );
-  const dispatch = { ...worker.metrics };
+  const dispatch = { ...(external ?? worker.metrics) };
   opts.phase?.("checking exact reads and ordered receiver bytes");
-  const seen = new Map<string, string>();
+  const byCut = new Map<string, Map<string, string>>();
   for (const r of reads) {
-    const key = r.subject + "/" + r.position;
-    if (seen.has(key)) assert.equal(seen.get(key), r.world);
-    else seen.set(key, r.world);
+    const key = JSON.stringify([r.position, r.validTime]),
+      seen = byCut.get(key) ?? new Map<string, string>();
+    if (seen.has(r.subject)) assert.equal(seen.get(r.subject), r.world);
+    seen.set(r.subject, r.world);
+    byCut.set(key, seen);
   }
-  for (const [key, observed] of seen) {
-    const [subject, pos] = key.split("/");
-    const [expected] = await p.witness([subject!], {
-      position: Number(pos),
-      validTime: p.validTime,
-    });
-    assert.equal(
-      observed,
-      hash(expected!.facts.map((f) => hash(f)).sort()),
-      "Pinned live read diverged",
-    );
+  for (const [key, seen] of byCut) {
+    const [position, validTime] = JSON.parse(key),
+      subjects = [...seen.keys()];
+    for (let i = 0; i < subjects.length; i += 32) {
+      const group = subjects.slice(i, i + 32),
+        expected = await p.witness(group, { position, validTime });
+      assert.deepEqual(
+        expected.map((w) => w.subject),
+        group,
+      );
+      for (const w of expected)
+        assert.equal(
+          seen.get(w.subject),
+          hash(w.facts.map((f) => hash(f)).sort()),
+          "Pinned live read diverged",
+        );
+    }
   }
   let proof;
   if (opts.duration === undefined) {
@@ -227,6 +269,9 @@ export async function runWindow(opts: {
   }
   return {
     epoch,
+    firstEffectMs,
+    lastEffectMs,
+    dispatcherProcess: opts.workerJob ? "separate" : "application",
     scope: source.scopeName,
     receiver: receiver.scopeName,
     profile: p.inputs.identity,
