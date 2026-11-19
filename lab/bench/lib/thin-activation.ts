@@ -29,6 +29,13 @@ interface Coverage {
   sha256: string;
 }
 const digest = (bytes: string) => createHash("sha256").update(bytes).digest("hex");
+// [DX-THIN1] Why: these exact release documents were checked against the independent evaluator on original answer worlds.
+// Rejected: the whole release registry, which may gain a release that reads an answer.
+const answerIndependentReleases = new Set([
+  "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+  "sha256:7d2f4008e55f43458ae1288cb65a4cf92f3f04a40a1c6eeafb3fc754435807a9",
+  "sha256:f345d9fe4291803259021ad30ff00afecc1f48af4d4b403860b3ace52315312e",
+]);
 
 export function rosterDigest(ids: Iterable<string>): Coverage {
   const hash = createHash("sha256").update("[");
@@ -188,7 +195,7 @@ export class ThinRoster {
     );
     if (coverage.count !== expected.count || coverage.sha256 !== expected.sha256)
       throw Error("Activation coverage differs");
-    const known = W0.RELEASES_BY_HASH.has(release.hash);
+    const known = answerIndependentReleases.has(release.hash);
     const hash = createHash("sha256");
     let dismissed = 0,
       evaluated = 0,

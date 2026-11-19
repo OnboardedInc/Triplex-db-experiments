@@ -86,6 +86,13 @@ describe("pinned import certificates", () => {
       const release = W0.compileRelease(doc);
       expect(W0.RELEASES_BY_HASH.has(release.hash)).toBe(false);
       await expect(roster.activate({ ...options(1), release })).rejects.toThrow("full read");
+      const registry = W0.RELEASES_BY_HASH as Map<string, W0.CompiledRelease>;
+      registry.set(release.hash, release);
+      try {
+        await expect(roster.activate({ ...options(1), release })).rejects.toThrow("full read");
+      } finally {
+        registry.delete(release.hash);
+      }
     } finally {
       roster.close();
     }

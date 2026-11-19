@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
+import { setImmediate as nextTurn } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import {
   batchSize,
@@ -62,7 +63,9 @@ if (role === "current-map") {
     base,
   );
   const cut = await replica.snapshotAt(base),
-    index = new RecentReads();
+    index = new RecentReads(),
+    seedEntries = cut.image().entities.map(([id, e]) => [id, undefined, e] as const);
+  await nextTurn();
   measurements.packedOnly = snapshot();
   // [DX-THIN1] Why: stage the actual current Map against the same already-resident packed backing.
   // Rejected: counting the backing slabs twice or assigning the replica's entire RSS to Map nodes.
@@ -70,8 +73,9 @@ if (role === "current-map") {
     position: base,
     valid: true,
     reset: true,
-    changes: cut.image().entities.map(([id, e]) => [id, undefined, e]),
+    changes: seedEntries,
   });
+  await nextTurn();
   measurements.withCurrentMap = snapshot();
   replica.onUpdate = (update) => index.apply(update);
   data.writes(touched);
@@ -83,14 +87,17 @@ if (role === "current-map") {
     width + 1,
   );
   const activeCut = await replica.snapshotAt(base + touched),
-    activeIndex = new RecentReads();
+    activeIndex = new RecentReads(),
+    activeEntries = activeCut.image().entities.map(([id, e]) => [id, undefined, e] as const);
+  await nextTurn();
   measurements.activePackedOnly = snapshot();
   activeIndex.apply({
     position: base + touched,
     valid: true,
     reset: true,
-    changes: activeCut.image().entities.map(([id, e]) => [id, undefined, e]),
+    changes: activeEntries,
   });
+  await nextTurn();
   measurements.activeWithCurrentMap = snapshot();
   assert.equal(
     activeIndex.pull(person(0), { recordedPosition: base + touched, validAt: firstValid + 1000 })
@@ -98,6 +105,8 @@ if (role === "current-map") {
     width + 1,
   );
   assert(replica.bytes > 0 && cut.bytes > 0 && activeCut.bytes > 0 && index.historyBytes > 0);
+  assert.equal(seedEntries.length, 4 * size);
+  assert.equal(activeEntries.length, seedEntries.length);
 } else if (role !== "model") {
   const sparse = role === "touched-reader";
   const data = fixture(size),
