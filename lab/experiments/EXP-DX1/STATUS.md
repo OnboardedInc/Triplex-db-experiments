@@ -2166,3 +2166,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   the two Mac reader arms, activation and scale-reader diagnoses, the two suspicious loaded numbers, the one read
   error in 89.38 M observations; after 13:00 local activation at 100,000 subjects and one v3 pair with a hardened
   queue and a status file. A plain watcher on the Mac wakes the orchestrator when the comparison ends or fails.
+
+## 2026-11-19 17:00 UTC (12:00 local): scale work launched; driver fix reads 41.7 ms; four idea menus in
+
+- **Driver-tail comparison on bare metal (`drv1a`, source `4d1bdb6e`, v3 zero arm, 10,000 subjects, n=38,826 each).**
+  Arm a, old sender: all-commit p99 140.5 ms, burst p99 159.7 / 250.9, max 822. Arm b, new sender (journal and receipt
+  capture off the writer): all-commit p99 **41.7 ms** (bar 50), burst p99 43.0 / 46.3, max 376; L256 p99 26.6 / 30.2;
+  medians unchanged (4.65 against 4.67). Arm c (old again) is running; no claim until it brackets the result.
+- **Recovered this morning (DX-BM1 part 2):** activation of W0 for 100,000 subjects took 73.78 s with 256 live readers
+  (evaluation 50.79 s, publication 22.99 s; read / commit p99 ratios 1.462 / 0.514; 100,000 exact outbox comparisons),
+  diagnostic because its terminal checks timed out. The loaded retry's one read error was a socket reset on a
+  fallback, not a wrong read. The 1,024-reader collapse was three saturated reader workers in the driver. Both Mac
+  pairs of 2026-11-18 are unrecoverable (reader container hit its 8 GiB limit in the second 1,024-reader cycle).
+- **Sam's direction (SAM-decisions):** scale is the goal, ten deep accounts; Codex gpt-6.2-astra; server stays while
+  busy; four xhigh idea agents. Launched 11:37 to 11:56 local: DX-SCALE1 (deep-account population, many scopes on one
+  stack, tonight's bench queue), DX-THIN1 (never-touched subjects cost almost nothing), DX-ACT1 (a possible hole in
+  activation publication found by the idea agent, then the release selector), IDEA-W1 / R1 / T1 / A1 (done within 20
+  minutes; menus in the private folder `research/2026-11-19-scale-ideas/`).
+- **No Mac night run tonight** (orchestrator's choice; the session crons for it are cancelled).
