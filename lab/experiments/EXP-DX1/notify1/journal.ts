@@ -50,6 +50,7 @@ export interface Recipe {
   next: Release;
   oldHash: string | null;
   nextHash: string;
+  document: W0.ReleaseDoc | null;
   from: string;
   validTime: string;
   request: string;
@@ -116,6 +117,9 @@ export class Notices {
         r.inputs === this.inputs.identity &&
         r.evaluator === interpreter &&
         r.nextHash === releaseIdentity(r.next) &&
+        (r.kind === "activation"
+          ? r.document && "sha256:" + hash(r.document) === r.nextHash
+          : r.document === null) &&
         r.oldHash === (r.old ? releaseIdentity(r.old) : null) &&
         r.sourceBefore < e.at,
     );
@@ -158,6 +162,7 @@ export class Notices {
       next: req.release,
       oldHash: old.release ? releaseIdentity(old.release) : null,
       nextHash: releaseIdentity(req.release),
+      document: req.kind === "activation" ? W0[req.release].doc : null,
       from: req.from,
       validTime: req.validTime,
       request: req.id,

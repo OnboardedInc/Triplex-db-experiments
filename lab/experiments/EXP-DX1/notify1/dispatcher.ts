@@ -88,7 +88,11 @@ export class Dispatcher {
         e.value.selection.kind === "census" ? e.value.census.count : e.value.selection.ids.length;
     assert(ids.length === Math.min(width, size - cursor.start), "Incomplete delivery source range");
     const [work, ledgers] = await Promise.all([
-      a.work(e, ids, at),
+      a.work(e, ids, at).catch(async (error) => {
+        if ((await db.get<number>("erasure", await db.head())).id !== guard.id)
+          throw new Conflict("Erasure advanced during replay");
+        throw error;
+      }),
       db.rows<string>(ids.map(ledger), at),
     ]);
     const deliveries: W0.Delivery[] = [],
@@ -142,7 +146,10 @@ export class Dispatcher {
       "derive:" + cursor.event + ":" + cursor.start,
       [e.id, next, hash(changes)],
       [...changes, ...db.change("cursor", old, next)],
-      [db.guard("cursor", old), db.guard("erasure", guard)],
+      [
+        db.guard("cursor", old),
+        { _tag: "EntityState", entityId: db.prefix + "erasure", tripleIds: [guard.id] },
+      ],
     );
     this.metrics.visits++;
     this.metrics.evaluations += ids.length;
@@ -198,7 +205,7 @@ export class Dispatcher {
     );
     this.metrics.sinkWrites++;
   }
-  async turn(afterReceive?: (p: Packet) => Promise<void>) {
+  async turn(afterReceive?: (p: Packet) => Promise<void>, through?: number) {
     const a = this.notices,
       db = a.db,
       at = await db.head();
@@ -206,7 +213,10 @@ export class Dispatcher {
       db.get<Tail>("tail", at),
       db.row<Cursor>("cursor", at),
     ]);
-    if (!cursor?.value.pending) return this.derive(tail, cursor, at);
+    if (!cursor?.value.pending) {
+      if (through !== undefined && (cursor?.value.event ?? 1) > through) return false;
+      return this.derive(tail, cursor, at);
+    }
     const c = cursor.value,
       p = unpack<Packet>((await db.get<string>("packet:" + c.batch, at)).value),
       start = performance.now();
@@ -226,10 +236,12 @@ export class Dispatcher {
     this.metrics.deliveries += p.deliveries.length;
     return true;
   }
-  async drain(opts: { afterReceive?: (p: Packet) => Promise<void>; gapMs?: number } = {}) {
+  async drain(
+    opts: { afterReceive?: (p: Packet) => Promise<void>; gapMs?: number; through?: number } = {},
+  ) {
     for (;;) {
       try {
-        if (!(await this.turn(opts.afterReceive))) return this.metrics;
+        if (!(await this.turn(opts.afterReceive, opts.through))) return this.metrics;
       } catch (e) {
         if (!(e instanceof Conflict)) throw e;
         this.metrics.conflicts++;
