@@ -47,18 +47,26 @@ export interface Source {
   group(i: number): Group;
 }
 export function validate(g: Group, h: Header, ordinal: number) {
+  const keys = (v: object, allowed: string[]) =>
+    assert(
+      Object.keys(v).every((k) => allowed.includes(k)),
+      "Unsupported source field",
+    );
+  keys(g, ["ordinal", "id", "instant", "ops"]);
   assert.equal(g.ordinal, ordinal);
-  assert(g.id && Array.isArray(g.ops) && g.ops.length);
+  assert(typeof g.id === "string" && g.id && Array.isArray(g.ops) && g.ops.length);
   if (h.mode === "history")
     assert(typeof g.instant === "number" && Number.isFinite(g.instant) && g.instant >= 0);
   else assert.equal(g.instant, undefined);
   const refs = new Set<string>();
   for (const op of g.ops) {
     if (op.op === "retract") {
+      keys(op, ["op", "target"]);
       assert(h.mode === "history" && op.target);
       continue;
     }
     assert(op.op === "assert" && op.ref && !refs.has(op.ref) && op.entityId && op.attribute);
+    keys(op, ["op", "ref", "entityId", "attribute", "value", "validFrom", "validTo"]);
     refs.add(op.ref);
     assert(
       Number.isFinite(op.validFrom) &&
@@ -67,6 +75,7 @@ export function validate(g: Group, h: Header, ordinal: number) {
     );
     if (h.mode === "snapshot") assert(op.validFrom === h.validAt && op.validTo === undefined);
     const v = op.value;
+    keys(v, v.type === "blob" ? ["type", "value", "mimeType", "size"] : ["type", "value"]);
     switch (v.type) {
       case "integer":
         assert(/^-?(0|[1-9][0-9]*)$/.test(v.value) && v.value !== "-0");
@@ -93,6 +102,15 @@ export function validate(g: Group, h: Header, ordinal: number) {
   }
 }
 export function fileSource(file: string, meta: Omit<Header, "seal">, input?: Iterable<Group>) {
+  assert(
+    meta.source &&
+      meta.generation &&
+      ["snapshot", "history"].includes(meta.mode) &&
+      Number.isSafeInteger(meta.groups) &&
+      meta.groups >= 0 &&
+      Number.isFinite(meta.validAt) &&
+      meta.validAt >= 0,
+  );
   const db = new DatabaseSync(file);
   try {
     if (input) {
@@ -130,6 +148,30 @@ export function fileSource(file: string, meta: Omit<Header, "seal">, input?: Ite
     }
     assert.equal(n, header.groups);
     assert.equal(hash.digest("hex"), header.seal);
+    // [DX-ACT1] Why: source assertion names are global within an export and a retirement must point to a surviving earlier source assertion. Rejected: discovering an ambiguous symbol after publishing its duplicate.
+    const symbols = new DatabaseSync("");
+    try {
+      symbols.exec(
+        "CREATE TABLE refs(id TEXT PRIMARY KEY,born INTEGER NOT NULL,retired INTEGER DEFAULT 0); BEGIN",
+      );
+      const add = symbols.prepare("INSERT INTO refs(id,born) VALUES(?,?)"),
+        retire = symbols.prepare("UPDATE refs SET retired=1 WHERE id=? AND born<? AND retired=0");
+      for (const r of db.prepare("SELECT body FROM groups ORDER BY n").iterate()) {
+        const g = JSON.parse(String(r.body)) as Group;
+        for (const o of g.ops) {
+          if (o.op === "assert") add.run(o.ref, g.ordinal);
+          else
+            assert.equal(
+              retire.run(o.target, g.ordinal).changes,
+              1,
+              "Unknown, same-save or retired source assertion",
+            );
+        }
+      }
+      symbols.exec("COMMIT");
+    } finally {
+      symbols.close();
+    }
     const get = db.prepare("SELECT body FROM groups WHERE n=?");
     return {
       header,

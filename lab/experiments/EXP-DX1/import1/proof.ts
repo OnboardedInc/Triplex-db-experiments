@@ -118,7 +118,7 @@ async function check(mode: "history" | "snapshot", groups: Group[]) {
       assert.equal(r.txId, e.txId);
       const inputs = ops.map((o) => (o.op === "assert" ? { ...o, createdBy: "bulk-import" } : o));
       commands.push({
-        clock: e.instant,
+        clock: mode === "history" ? groups[e.first]!.instant : e.instant,
         meta: { actor: "bulk-import", commandId: e.command, correlationId: e.digest },
         operations: inputs,
       });

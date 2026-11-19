@@ -25,9 +25,11 @@ export type Entry = {
   facts: number;
   serviceMs: number;
   recovered: boolean;
+  receiptSha256?: string;
 };
 type Job<T> = {
   scope: string;
+  offered: number;
   work: () => Promise<T>;
   resolve: (v: T) => void;
   reject: (e: unknown) => void;
@@ -45,23 +47,33 @@ export class ImportLane {
     assert(duty > 0 && duty <= 1);
   }
   async live<T>(send: () => Promise<T>) {
-    this.liveCount++;
+    this.observeLive(1);
     try {
       return await send();
     } finally {
-      this.liveCount--;
-      this.pump();
+      this.observeLive(-1);
     }
+  }
+  observeLive(delta: number) {
+    this.liveCount += delta;
+    assert(this.liveCount >= 0);
+    if (!this.liveCount && this.timer) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+    }
+    this.pump();
   }
   bulk<T>(scope: string, work: () => Promise<T>): Promise<T> {
     return new Promise((resolve, reject) => {
-      this.queue.push({ scope, work, resolve, reject });
+      this.queue.push({ scope, offered: performance.now(), work, resolve, reject });
       this.pump();
     });
   }
   private pump() {
-    if (this.active || this.liveCount || !this.queue.length || this.timer) return;
-    const wait = this.next - performance.now();
+    if (this.active || !this.queue.length || this.timer) return;
+    // [DX-ACT1] Why: a continuous stream of live offers cannot starve the oldest import indefinitely. Rejected: overriding an in-flight transaction or waking idle scopes.
+    const now = performance.now();
+    const wait = Math.max(this.next - now, this.liveCount ? this.queue[0]!.offered + 500 - now : 0);
     if (wait > 0) {
       this.timer = setTimeout(() => {
         this.timer = undefined;
@@ -165,6 +177,28 @@ export class ImportRun {
   *entries(): Generator<Entry> {
     for (const r of this.db.prepare("SELECT body FROM entries ORDER BY first").iterate())
       yield JSON.parse(String(r.body));
+  }
+  async importAt(first: number) {
+    assert(Number.isSafeInteger(first) && first >= 0);
+    const next = this.last()?.end ?? 0;
+    if (first > next) throw Error("Gap before requested source ordinal");
+    if (first === next) await this.step();
+    const row = this.db.prepare("SELECT body FROM entries WHERE first=?").get(first);
+    assert(row, "No source transaction starts at that ordinal");
+    const e: Entry = JSON.parse(String(row.body));
+    const groups = Array.from({ length: e.end - e.first }, (_, i) => this.source.group(first + i));
+    const record = await this.lookup(e.command);
+    assert(
+      record &&
+        record.txId === e.txId &&
+        record.position === e.position &&
+        record.instant === e.instant &&
+        record.commandId === e.command,
+    );
+    assert.equal(record.correlationId, sha(bytes([this.binding, first, e.end, groups])));
+    assert.equal(record.correlationId, e.digest);
+    if (e.receiptSha256) assert.equal(sha(bytes(record)), e.receiptSha256);
+    return record;
   }
   async lookup(id: string) {
     const r = await this.target.transactionByCommand(id);
@@ -272,6 +306,10 @@ export class ImportRun {
         .filter((op) => op.op === "retract")
         .map((op) => ({ _tag: "TripleLive", id: op.id })),
     };
+    assert(
+      Buffer.byteLength(bytes([ops, meta])) <= this.policy.maxBytes,
+      "Native batch exceeds byte limit",
+    );
     let serviceMs = 0;
     const { record: r, recovered } = await this.claim(command, () =>
       this.lane.bulk(this.target.scopeName, async () => {
@@ -346,6 +384,7 @@ export class ImportRun {
       facts,
       serviceMs,
       recovered,
+      receiptSha256: sha(bytes(r)),
     };
     hooks.beforeCheckpoint?.();
     this.db.exec("BEGIN IMMEDIATE");
