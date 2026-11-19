@@ -1,12 +1,12 @@
 # DX-BM1 bare-metal bench
 
-Median ACK time with zero readers fell from 9.03 ms on the Mac to 4.72 ms on Linux over the same 38,826 commits.
-With 256 readers, small and medium medians were 6.08 and 7.62 ms against 10 ms. The medium p99 still exceeded 50 ms at 54.78. Overall p99 was 132.46 ms without readers and 326.19 ms with readers.
-The 256-reader writer ratio was 1.13, and reads reached 6.88 ms p99. At 1,024 readers, goodput dropped to 36% of its 256-reader level. Current pulls reached 2,293/s against 4,400/s.
-The loaded retry had one read error across 89.38 million observations and produced no independent replay output. Its readings remain unjudged. The original loaded driver hit 8 GiB; the retry used a 32 GiB cap.
-The root drive's 8 KiB fdatasync was 0.0265/0.0876 ms p50/p99, n=898,163. Late dispatch and same-subject queues dominated several worst zero-reader commits. Socket waits dominated several worst loaded commits.
-The 250 ms and 1 s gap trials measured −0.16 [−1.08, +0.44] and −0.29 [−1.32, +0.37] ms versus 10 ms, n=150 each. Both intervals include zero.
-The 100k zero-reader arm seeded in 824 s and completed all 7,408 primary commits. The matched reader arm seeded in 841 s and matched all 16.55 million reads against the driver model. Independent replay was pending at handoff.
+The bench sat idle for about eight hours after the overnight queue stopped, about $8.72. Its four-hour activation had seeded and measured W0, then timed out before its terminal journal and history checks.
+Both Mac pair verdicts remain unjudged. Each 8 GiB reader container was OOM-killed during the second 1,024-reader cycle. The completed Mac zero arms measured 8.84/94.73 and 8.83/71.39 ms ACK p50/p99. [Mac recovery](MAC-NIGHT-2026-11-18.md)
+The retained 100k W0 sweep took 73.78 s with 256 live readers. Read/commit p99 ratios were 1.462/0.514, and its log records 100,000 exact outbox comparisons. The missing terminal envelope leaves it diagnostic.
+The 10k retry’s only read error was a socket reset before a result on a fallback at L256-B. Worker 2, subject 764, position 6983, trace `a654f87b197696560000000000accaed`.
+Linux 10k zero-reader median ACK fell from 9.03 to 4.72 ms. Loaded small and medium medians were 6.08 and 7.62 ms. Overall p99 remained 132.46 ms zero and 326.19 ms loaded.
+The loaded driver’s three reader workers saturated at 1,024 readers. P4’s single reader also took 4,323 fallbacks in 115,796 attempts. The new pair gives readers six worker cores and keeps writer roles isolated.
+The 100k reader matched all 16.55 million reads to its model and finalized the trace. Its pinned independent replay timed out after 30 minutes. A separate replay of the same captured input is underway.
 **North star.** P1–P4 via v3, P5 via live 100k activation. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 | Bar (threshold) | Mac H loaded | Mac v3 zero | Linux v3 zero | Linux v3 loaded retry |
@@ -55,6 +55,6 @@ The 100k zero-reader arm seeded in 824 s and completed all 7,408 primary commits
 | NS-P5 throttled variant overlapping compaction (run) | miss — · 7408 · — | — | Unjudged · unavailable | — Unjudged · 38,826 · — |
 
 Cells give point, status, n and 90% interval where recorded. H is an older loaded profile. The Linux loaded retry used the byte-identical zero inputs after an interrupted pair. [Mac evidence](../t1/NIGHT-2026-11-17.md)
-10k source `97fa9123`. Performance governor, SMT on, idle controls as delivered, TX 0, PG 1, write gateway 2, driver main 3, read gateway 4, workers 5–7. The 100k ACK bands, seed, SQL and memory observations are in `tx2-dxt1-bm1-20261118r-scale-zero/derived/SCALE-READING.md` and `reader-wind-down/READING.md`. [Sealed evidence](SHA256SUMS)
-Audit. The 1k smoke's 53 sampled reads and 2,997 queries bind exact case bytes, source, slot and clock. Gap and scale metrics bind sealed ACKs and native counters. Collection binds transfer bytes and tags. The provisional reader checkpoint binds the exact source, slot, driver mount, baseline and captured bytes. Activation indexing checks source, slot, nonce and log/attempt hashes. The controller verifies both baseline hashes, the frozen plan and verdict sources, and original raw input for rerendering.
-The acceptance pins and bars are unchanged. The retry hit a Chrome JSON string limit after emitting its report. The original raw data is sealed and a streamed render is queued. [Handoff](HANDOFF.md)
+10k source `97fa9123`. Root 8 KiB fdatasync p50/p99 0.0265/0.0876 ms, n=898,163. The 250 ms and 1 s gaps give −0.16 [−1.08,+0.44] and −0.29 [−1.32,+0.37] ms versus 10 ms, n=150 each. Scale readings and the read-error row are indexed under `DX-BM1/part2`. [Sealed evidence](SHA256SUMS)
+Audit. The original 1k smoke joins exact case and read counts to source/slot/clock. Reports bind stored trace rows, writer identities and native counters. Recovery verifies input seals. Activation checks the fresh nonce, source, slot, cut, coverage and log. The full count compares every ordered journal position with stored history at the same head.
+The acceptance contract, workload and verdict sources are unchanged. The streamed renderer reproduced the completed 100k report and anatomy values. The day queue adds a scoped stop hook and waits for the driver comparison. [Handoff](HANDOFF.md)

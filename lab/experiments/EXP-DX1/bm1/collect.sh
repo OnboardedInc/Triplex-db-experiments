@@ -21,14 +21,14 @@ for tag in "$@"; do
     stage=$(mktemp -d "$root/DX-BM1/.${tag}.XXXXXX")
     trap 'rm -rf -- "$stage"' EXIT
     mkdir "$stage/transfer"
-    "${ssh_bench[@]}" "cat '$remote/TRANSFER.sha256'" > "$stage/transfer/TRANSFER.sha256"
+    "${ssh_bench[@]}" "sudo -n cat '$remote/TRANSFER.sha256'" > "$stage/transfer/TRANSFER.sha256"
     while read -r hash name; do
       [[ $hash =~ ^[0-9a-f]{64}$ ]] || exit 2
       case $name in
         reports.tar.zst|raw.tar.zst|controller.tar.zst|bench-condition.txt|fsync.json|preflight.log|raw-transfer.txt|collection-tag.txt) ;;
         *) echo "Unexpected archive member: $name" >&2; exit 2 ;;
       esac
-      "${ssh_bench[@]}" "cat '$remote/$name'" > "$stage/transfer/$name"
+      "${ssh_bench[@]}" "sudo -n cat '$remote/$name'" > "$stage/transfer/$name"
     done < "$stage/transfer/TRANSFER.sha256"
     (cd "$stage/transfer"; shasum -a 256 -c TRANSFER.sha256)
     [[ $(cat "$stage/transfer/collection-tag.txt") == "$tag" ]]
@@ -52,7 +52,7 @@ for tag in "$@"; do
     # [DX-BM1] Why: the shared registry keys on the directory name; the copied report retains its original slot.
     # Rejected: renaming the scope in the evidence or indexing the archive without its observed trace summary.
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register "$dest"
-  elif [[ $tag == tx2-dxt1-bm1-*-activation ]]; then
+  elif [[ -f $dest/ACTIVATION-CHECK.json ]]; then
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register-activation "$dest"
   elif [[ -f $dest/trace-run.json ]]; then
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register-incomplete-benchmark "$dest"

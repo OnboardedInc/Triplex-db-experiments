@@ -24,9 +24,18 @@ if systemd-detect-virt --quiet;then echo 'A VM or container is not bare metal' >
 [[ $(getconf _NPROCESSORS_ONLN) -ge 8 && $(awk '/^MemTotal:/{print $2}' /proc/meminfo) -ge 24117248 ]] || { echo 'Need eight CPUs and at least 23 GiB usable memory (24 GiB installed)' >&2;exit 2; }
 parent=$(dirname "$work");while [[ ! -d $parent ]];do parent=$(dirname "$parent");done
 [[ $(df -Pk "$parent" | awk 'NR==2{print $4}') -ge 83886080 ]] || { echo 'Need 80 GiB free before builds and spill' >&2;exit 2; }
-apt-get update
-apt-get install -y docker.io git curl ca-certificates python3 unzip zstd xz-utils util-linux
-systemctl enable --now docker
+cache=${DX_NATIVE_BOOTSTRAP_CACHE:-}
+if [[ -n $cache ]]; then
+  # [DX-BM1] Why: copy already pinned archives and the package store before a second bench session.
+  # Rejected: touching the old checkout, sharing a mutable install, or spending measurement time on repeat downloads.
+  [[ $mode == --prepare && $cache == /* && $cache != "$work" && -d $cache/results ]] || exit 2
+  dpkg-query -W docker.io git curl ca-certificates python3 unzip zstd xz-utils util-linux >/dev/null
+  systemctl is-active --quiet docker
+else
+  apt-get update
+  apt-get install -y docker.io git curl ca-certificates python3 unzip zstd xz-utils util-linux
+  systemctl enable --now docker
+fi
 mkdir -p "$work/downloads" "$work/results" "$work/tools"
 exec > >(tee "$work/bootstrap.log") 2>&1
 export DX_BARE_METAL=1 DX_BARE_METAL_ROOT=$work/state
@@ -57,8 +66,14 @@ git -C "$work/repository" checkout --detach "$commit"
 [[ $(git -C "$work/repository" rev-parse HEAD) == "$commit" ]] || exit 2
 cd "$work/repository"
 version=22.23.2
-curl -fsSLo "$work/downloads/node.tar.xz" "https://nodejs.org/dist/v$version/node-v$version-linux-$node_arch.tar.xz"
-curl -fsSLo "$work/downloads/node-SHASUMS256.txt" "https://nodejs.org/dist/v$version/SHASUMS256.txt"
+if [[ -n $cache ]]; then
+  cp -- "$cache/downloads/node.tar.xz" "$cache/downloads/node-SHASUMS256.txt" \
+    "$cache/downloads/datomic-pro-1.0.7745.zip" "$work/downloads/"
+  cp -a -- "$cache/corepack" "$cache/pnpm-store" "$work/"
+else
+  curl -fsSLo "$work/downloads/node.tar.xz" "https://nodejs.org/dist/v$version/node-v$version-linux-$node_arch.tar.xz"
+  curl -fsSLo "$work/downloads/node-SHASUMS256.txt" "https://nodejs.org/dist/v$version/SHASUMS256.txt"
+fi
 python3 - "$work/downloads" "$version" "$node_arch" <<'PY_NODE'
 import pathlib,hashlib,sys
 p=pathlib.Path(sys.argv[1]);name=f'node-v{sys.argv[2]}-linux-{sys.argv[3]}.tar.xz'
@@ -74,12 +89,16 @@ p=pathlib.Path(sys.argv[1]);f=p/'downloads/node.tar.xz'
 PY_DOWNLOADS
 export PATH=$work/tools/bin:$PATH COREPACK_HOME=$work/corepack
 corepack enable --install-directory "$work/tools/bin"
-pnpm --store-dir "$work/pnpm-store" install --frozen-lockfile
+offline=()
+if [[ -n $cache ]]; then offline=(--offline); fi
+pnpm --store-dir "$work/pnpm-store" install --frozen-lockfile "${offline[@]}"
 # [DX-BM1] Why: the 1k smoke imports W0's public dist export on a clean Linux checkout.
 # Rejected: assuming the package is built transitively by the three existing targets (the first smoke stopped at ERR_MODULE_NOT_FOUND).
 node lab/bin/heavy.mjs --label DX-BM1-native-build -- node_modules/.bin/turbo run build --filter=@triplex-build/triplex-datomic --filter=@triplex-build/triplex-host --filter=@triplex-build/triplex-qualification --filter=@triplex-build/w0
 test -s packages/w0/dist/index.js
-curl -fsSLo "$work/downloads/datomic-pro-1.0.7745.zip" https://datomic-pro-downloads.s3.amazonaws.com/1.0.7745/datomic-pro-1.0.7745.zip
+if [[ -z $cache ]]; then
+  curl -fsSLo "$work/downloads/datomic-pro-1.0.7745.zip" https://datomic-pro-downloads.s3.amazonaws.com/1.0.7745/datomic-pro-1.0.7745.zip
+fi
 python3 - "$work" <<'PY_DATOMIC'
 import hashlib,json,pathlib,shutil,sys,zipfile
 p=pathlib.Path(sys.argv[1]);archive=p/'downloads/datomic-pro-1.0.7745.zip';v=json.load(open('lab/config/datomic/verification.json'))

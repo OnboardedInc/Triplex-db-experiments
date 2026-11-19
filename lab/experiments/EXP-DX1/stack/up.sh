@@ -309,12 +309,21 @@ docker network create "$prefix-net" >/dev/null
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
 if [[ -n $seed_volume ]];then
-  [[ $prefix == tx2-dxt1-* && ( $seed_volume == tx2-dxh5-seed-1000-pg-data || $seed_volume == tx2-dxh8-seed-10000-pg-data || $seed_volume == tx2-dxs5-seed-100000-pg-data ) ]] || exit 2
+  [[ $prefix == tx2-dxt1-* ]] || exit 2
+  case $seed_volume in
+    tx2-dxh5-seed-1000-pg-data|tx2-dxh8-seed-10000-pg-data|tx2-dxs5-seed-100000-pg-data) ;;
+    tx2-dxt1-bm1-20261118d-activation-pg-data)
+      [[ ${DX_BARE_METAL:-0} == 1 && ${DX_BM1_RETAINED_SEED:-0} == 1 &&
+         $prefix == tx2-dxt1-bm1-* && -s $attempt/seed-origin.json ]] || exit 2
+      ;;
+    *) exit 2 ;;
+  esac
   python3 - "$DX_LAB_ROOT/locks/measure/owner.json" "$prefix" <<'CLONE_LEASE'
 import json,os,sys
 r=json.load(open(sys.argv[1]));assert r['id']=='DX-T1' and r['kind']=='activation' and r['prefix']==sys.argv[2];os.kill(r['pid'],0)
 CLONE_LEASE
-  [[ -z $(docker ps -q --filter "volume=$seed_volume") ]] || { echo 'Sealed source is active' >&2;exit 2; }
+  docker volume inspect "$seed_volume" > "$attempt/seed-source-volume.json"
+  [[ -z $(docker ps -q --filter "volume=$seed_volume") ]] || { echo 'Seed source is active' >&2;exit 2; }
   if docker volume inspect "$prefix-pg-data" >/dev/null 2>&1;then echo 'Refusing an existing clone destination' >&2;exit 2;fi
   docker volume create "$prefix-pg-data" >/dev/null
   docker create --pull never --name "$prefix-seed-copy" --read-only --network none --memory 128m --memory-swap 128m \
@@ -324,7 +333,9 @@ CLONE_LEASE
       cp -a /from/. /to/
       cd /from; find . -type f -exec sha256sum {} \; > /to/.clone-sha256
       cd /to; sha256sum -c .clone-sha256; rm .clone-sha256
-    ' >/dev/null
+      # This is the verified private copy. The original is mounted read-only.
+      if [ "$1" = 1 ]; then rm -f postmaster.pid; fi
+    ' sh "${DX_BM1_RETAINED_SEED:-0}" >/dev/null
   trap 'docker rm -f "$prefix-seed-copy" >/dev/null 2>&1 || true' EXIT
   docker inspect "$prefix-seed-copy" > "$attempt/seed-clone-container.json"
   python3 - "$attempt/seed-clone-container.json" "$seed_volume" "$prefix" <<'CLONE_MOUNTS'
@@ -376,6 +387,19 @@ fi
 docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$trace_tx_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
+# [DX-BM1] Why: avoid probing catalog creation before the SQL transactor announces startup.
+# Rejected: treating an early location read failure as a missing database, or unbounded health fetches.
+if [[ ${DX_STACK_WAIT_FOR_TRANSACTOR:-0} == 1 ]]; then
+  start_deadline=$((SECONDS + 120))
+  while (( SECONDS < start_deadline )); do
+    docker logs "$prefix-tx" > "$attempt/tx-startup-wait.log" 2>&1
+    if grep -Fx 'System started' "$attempt/tx-startup-wait.log" >/dev/null; then break; fi
+    [[ $(docker inspect --format '{{.State.Running}}' "$prefix-tx") == true ]] || exit 1
+    sleep 1
+  done
+  grep -Fx 'System started' "$attempt/tx-startup-wait.log" >/dev/null ||
+    { echo "Transactor startup timed out; see $attempt/tx-startup-wait.log" >&2; exit 1; }
+fi
 # A ready transactor is checked by gateway health, which creates and syncs a real SQL database.
 for role in w r; do
   if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
@@ -399,10 +423,11 @@ for role in w r; do
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false
-  for ((i=0;i<180;i++)); do
+  health_deadline=$((SECONDS + 180))
+  while (( SECONDS < health_deadline )); do
     if [[ $publish == false ]]; then
-      if docker run --rm --pull never --name "$prefix-health" --network "$prefix-net" node:22.23.2-bookworm-slim node -e "fetch('http://$prefix-gw-$role:8080/health').then(async r=>{if(!r.ok)process.exit(1); console.log(await r.text())}).catch(()=>process.exit(1))" > "$attempt/health-$role.json" 2>/dev/null; then ok=true; break; fi
-    elif curl -fsS "http://127.0.0.1:$port/health" > "$attempt/health-$role.json" 2>/dev/null; then ok=true; break; fi
+      if docker run --rm --pull never --name "$prefix-health" --network "$prefix-net" node:22.23.2-bookworm-slim node -e "fetch('http://$prefix-gw-$role:8080/health',{signal:AbortSignal.timeout(5000)}).then(async r=>{if(!r.ok)process.exit(1); console.log(await r.text())}).catch(()=>process.exit(1))" > "$attempt/health-$role.json" 2>/dev/null; then ok=true; break; fi
+    elif curl -fsS --max-time 5 "http://127.0.0.1:$port/health" > "$attempt/health-$role.json" 2>/dev/null; then ok=true; break; fi
     sleep 1
   done
   if [[ $ok != true ]]; then docker logs "$prefix-gw-$role" > "$attempt/gateway-$role.log" 2>&1; echo "gateway $role failed; see $attempt" >&2; exit 1; fi

@@ -436,11 +436,11 @@ export function* rawLiveRecords(file: string): Generator<any> {
 
 // [DX-S5] Why: admission needs actual finite latency samples and complete ACK coverage, not NaN comparisons on an empty window.
 // Rejected: allowing null/null > 5 to evaluate false and silently admit a missing baseline.
-export function assertBaselineHeadroom(summary: any) {
+export function assertBaselineHeadroom(summary: any, expectedReaders = 256) {
   const ratio = summary?.commit?.p99 / summary?.commitService?.p99;
   if (
-    summary?.readers !== 256 ||
-    !(summary?.read?.count >= 256) ||
+    summary?.readers !== expectedReaders ||
+    !(summary?.read?.count >= expectedReaders) ||
     !(summary?.commitService?.count > 0) ||
     !(summary?.commitService?.p99 > 0) ||
     !(summary?.offered > 0) ||

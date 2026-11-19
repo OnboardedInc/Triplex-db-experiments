@@ -7,6 +7,47 @@ import { seedW0 } from "../../../bench/lib/w0-seed.ts";
 import { readW0Fingerprint } from "../../../bench/lib/w0-fingerprint.ts";
 import { W0, V_W0, worldOf } from "../../../bench/lib/w0-world.ts";
 import { runReplicaDriver } from "../../../bench/lib/w0-replica-driver.ts";
+import { foldJournalForCounts } from "../h6/bulk-counts.ts";
+
+test("independent journal ranges cover every position even with short pages", async () => {
+  const visited = new Set<number>();
+  const progress: number[] = [];
+  const source = {
+    async feedPage(after: number, limit: number) {
+      return {
+        transactions: Array.from({ length: Math.min(limit, 173) }, (_, i) => {
+          const position = after + 1 + i;
+          assert(!visited.has(position));
+          visited.add(position);
+          return {
+            position,
+            txId: "tx-" + position,
+            changes: [
+              { entityId: "subject-" + (position % 40), op: "assert" },
+              ...(position % 3 === 0 ? [{ entityId: "retired", op: "retract" }] : []),
+            ],
+          };
+        }),
+      };
+    },
+  };
+  const counts = await foldJournalForCounts(source, 2_503, 4, (position) =>
+    progress.push(position),
+  );
+  assert.equal(visited.size, 2_503);
+  assert.equal(counts.assertions, 2_503);
+  assert.equal(counts.retired, 834);
+  assert.equal(counts.entities.size, 41);
+  assert.deepEqual(progress, [2_503]);
+  await assert.rejects(
+    foldJournalForCounts(
+      { feedPage: async () => ({ transactions: [{ txId: "foreign", position: 2, changes: [] }] }) },
+      1,
+      1,
+    ),
+    /identity\/gap/,
+  );
+});
 
 // [DX-S5] Why: a slow oracle consumer must not prefetch the entire 100k world, and failed reads must stay failures.
 // Rejected: testing only completion order without the retained-page bound or early iterator cleanup.
@@ -137,7 +178,9 @@ test("batched oracle equals original outputs and publication states", async () =
     boundedState: true,
   });
   const plain = new DomainOracle(),
-    batch = new DomainOracle(new URL("../../../bench/lib/w0-oracle-batch.py", import.meta.url).pathname);
+    batch = new DomainOracle(
+      new URL("../../../bench/lib/w0-oracle-batch.py", import.meta.url).pathname,
+    );
   const basis1 = { tx: through - 1, validTime: W0.POPULATION_VALID_TIME },
     basis2 = { tx: through, validTime: W0.POPULATION_VALID_TIME };
   const record = (o: any) => ({

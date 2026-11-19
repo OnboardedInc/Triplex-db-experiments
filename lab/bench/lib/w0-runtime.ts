@@ -124,8 +124,10 @@ export async function startThreadedW0Live(
   options: Parameters<typeof startW0Live>[0],
   follower: Awaited<ReturnType<typeof startRuntimeFollower>>,
   readerThreads = 2,
+  logicalReaders = 256,
 ) {
   if (![2, 3].includes(readerThreads)) throw Error("runtime needs two or three reader workers");
+  if (logicalReaders !== 64 && logicalReaders !== 256) throw Error("invalid W0 reader profile");
   const readers: ReturnType<typeof managed>[] = [];
   const readFile = path.join(options.dir, options.id + "-readers.ndjson");
   const fd = fs.openSync(readFile, "wx");
@@ -135,7 +137,9 @@ export async function startThreadedW0Live(
     let offset = 0;
     for (let worker = 0; worker < readerThreads; worker++) {
       const port = follower.subscribe();
-      const count = Math.floor(256 / readerThreads) + (worker < 256 % readerThreads ? 1 : 0);
+      const count =
+        Math.floor(logicalReaders / readerThreads) +
+        (worker < logicalReaders % readerThreads ? 1 : 0);
       const reader = managed(
         {
           role: "reader",
@@ -225,7 +229,7 @@ export async function startThreadedW0Live(
             const followerAfter = await follower.metrics();
             return {
               ...summary,
-              readers: 256,
+              readers: logicalReaders,
               readerMode: "worker-current-immutable-packed-world-fixed-valid-time",
               raw,
               read: {

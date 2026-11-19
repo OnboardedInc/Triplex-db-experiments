@@ -60,10 +60,12 @@ it("refuses a truncated, duplicate or incomplete envelope and an incomplete quer
 it("reserves transport time after the regular and large independent replay deadlines", () => {
   const regular = oracleTimeouts(64 * 1024 ** 2);
   const large = oracleTimeouts(64 * 1024 ** 2 + 1);
+  const scale = oracleTimeouts(291 * 1024 ** 2);
   expect(regular.runMs).toBe(900_000);
-  expect(large.runMs).toBe(1_800_000);
+  expect(large.runMs).toBe(3_600_000);
+  expect(scale.runMs).toBe(5_400_000);
   expect(oracleTimeouts(99_731_370)).toEqual(large);
-  for (const { runMs, bridgeMs, clientMs } of [regular, large]) {
+  for (const { runMs, bridgeMs, clientMs } of [regular, large, scale]) {
     expect(bridgeMs - runMs).toBe(30_000);
     expect(clientMs - bridgeMs).toBe(30_000);
   }

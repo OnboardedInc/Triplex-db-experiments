@@ -11,7 +11,7 @@ import { recordReplicaHttp } from "./w0-replica-record.ts";
 import { DatomicClient, Replica, RecentReads } from "../../../packages/datomic/dist/index.js";
 import { openComposition } from "./composition.ts";
 import { runtimeApi } from "./triplex.ts";
-import { openBulkCounts } from "../../experiments/EXP-DX1/h6/bulk-counts.ts";
+import { foldJournalForCounts, openBulkCounts } from "../../experiments/EXP-DX1/h6/bulk-counts.ts";
 import {
   W0,
   V_W0,
@@ -41,7 +41,18 @@ export async function runReplicaDriver(argv: string[]) {
     oracleConcurrency = Number(opt("oracle-concurrency", "1")),
     oracleProcesses = Number(opt("oracle-processes", "1")),
     verificationPages = Number(opt("verification-pages", "1")),
-    maxWriteRate = Number(opt("traffic-write-max-rate", "0"));
+    maxWriteRate = Number(opt("traffic-write-max-rate", "0")),
+    logicalReaders = Number(opt("live-readers", "256"));
+  // [DX-BM1] Why: the P5 request specifies 64 live readers, while saved S5 comparisons use 256.
+  // Rejected: silently relabel the legacy threaded population or change its default.
+  if (
+    (logicalReaders !== 64 && logicalReaders !== 256) ||
+    (logicalReaders === 64 &&
+      (!argv.includes("--runtime-workers") ||
+        opt("reader-mode") !== "replica" ||
+        !argv.includes("--live")))
+  )
+    throw Error("invalid live reader profile");
   if (!Number.isFinite(maxWriteRate) || maxWriteRate < 0) throw Error("invalid offered write rate");
   if (!Number.isSafeInteger(oracleProcesses) || oracleProcesses < 1 || oracleProcesses > 4)
     throw Error("invalid oracle process count");
@@ -370,9 +381,7 @@ export async function runReplicaDriver(argv: string[]) {
   const replica = new Replica(base, V_W0),
     batchOracle = argv.includes("--batch-oracle"),
     oracle = new DomainOraclePool(
-      batchOracle
-        ? new URL("./w0-oracle-batch.py", import.meta.url).pathname
-        : undefined,
+      batchOracle ? new URL("./w0-oracle-batch.py", import.meta.url).pathname : undefined,
       oracleProcesses,
     );
   const report: any = { classification: "DIAGNOSTIC", acceptance: false, N, scope, workers };
@@ -422,7 +431,12 @@ export async function runReplicaDriver(argv: string[]) {
   };
   const startTraffic = async (options: Parameters<typeof startW0Live>[0]) =>
     threaded && options.replica
-      ? startThreadedW0Live(options, runtimeFollower!, Number(opt("reader-workers", "2")))
+      ? startThreadedW0Live(
+          options,
+          runtimeFollower!,
+          Number(opt("reader-workers", "2")),
+          logicalReaders,
+        )
       : startW0Live(options);
   let bulkCounts: Awaited<ReturnType<typeof openBulkCounts>> | undefined;
   let verificationComp = comp;
@@ -559,7 +573,7 @@ export async function runReplicaDriver(argv: string[]) {
     report.verificationPages = verificationPages;
     // [DX-R1] Why: reuse H6's qualified full-history transport; per-entity HTTP would consume the bounded hold.
     // Rejected: replacing stored history counts with client ACK totals or changing their expected values.
-    bulkCounts = await openBulkCounts(comp);
+    bulkCounts = await openBulkCounts(verificationComp);
     comp.storeCounts = bulkCounts.count;
     if (argv.includes("--seed")) {
       if (!recordDir) throw new Error("Seed log directory required");
@@ -902,14 +916,43 @@ export async function runReplicaDriver(argv: string[]) {
         : {}),
       beforeTimedWindow: async () => {
         if (argv.includes("--post-capture")) {
-          const mutations: string[] = [];
+          // [DX-BM1] Why: a retained seed can already have live changes from an earlier attempt.
+          // Rejected: charging a pre-existing change to a mutation injected after this capture.
+          const witnessCount = Math.ceil(N / 100);
+          const candidates: string[] = [];
           for (const subject of subjects) {
-            if (mutations.length >= Math.ceil(N / 100)) break;
+            const rows = snap.world(subject);
+            if (!rows.some((row) => row.entityId === subject && row.attribute === "weeklyMinutes"))
+              continue;
+            if (
+              repeatActivation &&
+              worldCanonical(worldOf(subject, rows)) !==
+                worldCanonical(worldOf(subject, replica.world(subject)))
+            )
+              continue;
+            candidates.push(subject);
+            if (candidates.length === 2 * witnessCount) break;
+          }
+          if (candidates.length !== 2 * witnessCount)
+            throw Error("Insufficient unchanged post-capture witness subjects");
+          const mutations: string[] = [];
+          for (const subject of candidates.slice(0, witnessCount)) {
+            const before = JSON.parse(
+              await timedOracle("evaluate", {
+                world: worldOf(subject, snap.world(subject)),
+                release: "R2",
+                basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
+              }),
+            );
+            if (before.error || !Array.isArray(before.flags))
+              throw Error("Post-capture input oracle failed");
+            const overtime = before.flags.some(
+              (flag: { name: string }) => flag.name === "overtime",
+            );
             const old = snap
               .world(subject)
               .filter((r) => r.entityId === subject && r.attribute === "weeklyMinutes");
-            if (!old.length) continue;
-            const changed = Number(old[0].value.value) > 2400 ? 1200 : 3000;
+            const changed = overtime ? 0 : 10_080;
             const r = await commit(
               [
                 ...old.map((row) => ({ op: "retract", id: row.id })),
@@ -924,13 +967,6 @@ export async function runReplicaDriver(argv: string[]) {
               "post-capture:" + subject,
             );
             await followTo(r.position);
-            const before = JSON.parse(
-              await timedOracle("evaluate", {
-                world: worldOf(subject, snap.world(subject)),
-                release: "R2",
-                basis: { tx: cut, validTime: W0.POPULATION_VALID_TIME },
-              }),
-            );
             const after = JSON.parse(
               await timedOracle("evaluate", {
                 world: worldOf(subject, replica.world(subject)),
@@ -938,15 +974,17 @@ export async function runReplicaDriver(argv: string[]) {
                 basis: { tx: r.position, validTime: W0.POPULATION_VALID_TIME },
               }),
             );
-            if (before.error || after.error || canonical(before.flags) === canonical(after.flags))
+            if (
+              after.error ||
+              !Array.isArray(after.flags) ||
+              overtime === after.flags.some((flag: { name: string }) => flag.name === "overtime")
+            )
               throw new Error("Post-capture positive oracle witness absent");
             mutations.push(subject);
           }
-          if (mutations.length !== Math.ceil(N / 100))
+          if (mutations.length !== witnessCount)
             throw new Error("Insufficient post-capture positive witnesses");
-          const negatives = subjects
-            .filter((subject) => !mutations.includes(subject))
-            .slice(0, mutations.length);
+          const negatives = candidates.slice(witnessCount);
           for (const subject of negatives)
             if (
               worldCanonical(worldOf(subject, snap.world(subject))) !==
@@ -975,7 +1013,8 @@ export async function runReplicaDriver(argv: string[]) {
             queueToServiceP99: report.baseline.commit.p99 / report.baseline.commitService.p99,
           }),
         );
-        if (argv.includes("--require-healthy-baseline")) assertBaselineHeadroom(report.baseline);
+        if (argv.includes("--require-healthy-baseline"))
+          assertBaselineHeadroom(report.baseline, logicalReaders);
         traffic = undefined;
         collectLiveLag = true;
         traffic = await startTraffic({ ...liveOptions, id: "sweep" });
@@ -1568,31 +1607,44 @@ export async function runReplicaDriver(argv: string[]) {
     }
     expectedTrialStates.clear();
     if (argv.includes("--journal-counts")) {
-      // [DX-R1] Why: the candidate live arm has its own real commits after publication-state verification.
-      // Rejected: folding those new journals against the earlier publication cut.
+      // [DX-BM1] Why: one exact journal walk establishes the expected totals and the entities for the independent history read.
+      // Rejected: duplicate walks of 4.3 million entries or replacing stored history with ACK totals.
       const countPosition = await comp.currentPosition();
-      let after = 0,
-        assertions = 0,
-        retired = 0;
-      while (after < countPosition) {
-        const page = await comp.feedPage(after, Math.min(100, countPosition - after));
-        if (!page.transactions.length) throw new Error("Journal fold gap");
-        for (const tx of page.transactions) {
-          if (tx.position !== after + 1 || tx.position > countPosition)
-            throw new Error("Journal position mismatch");
-          after = tx.position;
-          for (const c of tx.changes) {
-            assertions += Number(c.op === "assert");
-            retired += Number(c.op === "retract");
-          }
-        }
-      }
-      const counts = await comp.storeCounts();
+      console.log(JSON.stringify({ kind: "journal-fold-start", position: countPosition }));
+      const journal = await foldJournalForCounts(
+        verificationComp,
+        countPosition,
+        verificationPages,
+        (after) =>
+          console.log(
+            JSON.stringify({ kind: "journal-fold-progress", after, position: countPosition }),
+          ),
+      );
+      console.log(
+        JSON.stringify({
+          kind: "history-count-start",
+          position: countPosition,
+          entities: journal.entities.size,
+        }),
+      );
+      const counts = await bulkCounts.countAt(
+        countPosition,
+        journal.entities,
+        verificationPages,
+        (entities) =>
+          console.log(
+            JSON.stringify({
+              kind: "history-count-progress",
+              entities,
+              total: journal.entities.size,
+            }),
+          ),
+      );
       if (
-        counts.position !== after ||
-        counts.assertions !== assertions ||
-        counts.retired !== retired ||
-        ("frames" in counts && counts.frames !== after)
+        counts.position !== countPosition ||
+        counts.assertions !== journal.assertions ||
+        counts.retired !== journal.retired ||
+        (await comp.currentPosition()) !== countPosition
       )
         throw new Error("Independent journal count mismatch");
       report.journalCounts = counts;
@@ -1605,7 +1657,7 @@ export async function runReplicaDriver(argv: string[]) {
       feedReads,
       feedPeer: "writer",
       bootstrapPeer: "reader",
-      liveReaders: live ? 256 : 0,
+      liveReaders: live ? logicalReaders : 0,
     };
     report.finalPosition = await comp.currentPosition();
     if (candidateVerification) {

@@ -4,7 +4,7 @@
 set -euo pipefail
 mode=${1:---plan}; prefix=${2:?tx2-dxt1-prefix}; subjects=${3:-1000}; operation=${4:-clone}; traffic=${5:-no-live}
 [[ $mode == --plan || $mode == --execute ]] && [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
-[[ $subjects == 1000 || $subjects == 10000 || $subjects == 100000 ]] && [[ $operation == clone || $operation == seed ]] || exit 2
+[[ $subjects == 1000 || $subjects == 10000 || $subjects == 100000 ]] && [[ $operation == clone || $operation == seed || $operation == retained ]] || exit 2
 [[ $traffic == live || $traffic == no-live ]] && [[ $# -le 5 ]] || exit 2
 case $subjects in
   1000) seed=tx2-dxh5-seed-1000-pg-data;scope=dxh5-w0-1000-v1;;
@@ -12,6 +12,12 @@ case $subjects in
   100000) seed=tx2-dxs5-seed-100000-pg-data;scope=dxs5-w0-100000-v1;;
 esac
 if [[ $operation == seed ]];then scope=dxt1-w0-$subjects-$prefix;fi
+retained_tag=tx2-dxt1-bm1-20261118d-activation
+if [[ $operation == retained ]];then
+  [[ $subjects == 100000 && $prefix == tx2-dxt1-bm1-* ]] || exit 2
+  seed=$retained_tag-pg-data
+  scope=dxt1-w0-100000-$retained_tag
+fi
 if [[ $mode == --plan ]];then
   printf '%s\n' "Diagnostic W0 $operation/$traffic: $subjects subjects, scope $scope; sealed source ${seed} is read-only and cloned, never reused in place."
   printf '%s\n' 'Current stack/up.sh; raised id memo; early compilation; WARN file logging; fsync/synchronous_commit on; full independent fingerprint and publication readback.'
@@ -19,6 +25,7 @@ if [[ $mode == --plan ]];then
   printf '%s\n' 'Execution requires DX_ACTIVATION_STOP_AT with an explicit timezone; no keep-warm mechanism.'
   exit
 fi
+[[ $operation != retained || ${DX_BARE_METAL:-0} == 1 ]] || exit 2
 if [[ ${DX_ACTIVATION_HEAVY:-0} != 1 ]];then
   exec env DX_ACTIVATION_HEAVY=1 node lab/bin/heavy.mjs --label "DX-T1-activation-$prefix" -- bash "$0" "$@"
 fi
@@ -26,6 +33,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/../stack/platform.sh"
 export DX_STACK_EVIDENCE=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/DX-T1}
 out=$DX_STACK_EVIDENCE/$prefix
 mkdir "$out"
+progress() { printf '%s %s %s\n' "$(date -u '+%FT%TZ')" "$prefix" "$*"; }
+progress admission
 remaining_ms() {
   node -e 'const s=process.argv[1];if(!/(Z|[+-]\d\d:\d\d)$/.test(s??""))throw Error("Timezone required");const d=Date.parse(s)-Date.now();if(!Number.isFinite(d)||d<=0)throw Error("Deadline passed");console.log(d)' "${DX_ACTIVATION_STOP_AT:?cleanup deadline required}"
 }
@@ -102,7 +111,7 @@ python3 - "$out" "$prefix" "$scope" "$subjects" "$operation" <<'ATTEMPT'
 import hashlib,json,pathlib,sys,uuid
 p=pathlib.Path(sys.argv[1]);r={'run':sys.argv[2],'slot':sys.argv[2],'source':(p/'head.txt').read_text().strip(),'scope':sys.argv[3],'subjects':int(sys.argv[4]),'nonce':str(uuid.uuid4()),'programSha256':hashlib.sha256(pathlib.Path('lab/experiments/EXP-DX1/t1/activation-driver.ts').read_bytes()).hexdigest()}
 r['sourceManifestSha256']=hashlib.sha256((p/'source.SHA256SUMS').read_bytes()).hexdigest()
-if sys.argv[4]=='100000' and sys.argv[5]=='clone':r['sealedCut']=4338757
+if sys.argv[4]=='100000' and sys.argv[5] in ('clone','retained'):r['sealedCut']=4338757
 (p/'activation-attempt.json').write_text(json.dumps(r,indent=2)+'\n')
 ATTEMPT
 nonce=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["nonce"])' "$out/activation-attempt.json")
@@ -114,9 +123,37 @@ node lab/trace/components.mjs > "$out/components.json"
 # Rejected: create containers from a pre-wait disk/memory snapshot.
 python3 -c 'import shutil;assert shutil.disk_usage(".").free>=28*1024**3'
 [[ $(docker info --format '{{.MemTotal}}') == "$guest_bytes" ]] || { echo 'Guest changed during admission' >&2;exit 2; }
+if [[ $operation == retained ]]; then
+  # [DX-BM1] Why: the first seed took three hours. Clone its quiescent volume and prove the retained cut again.
+  # Rejected: write to the original volume, or claim its interrupted activation as a fresh result.
+  [[ ${DX_BARE_METAL:-0} == 1 ]] || exit 2
+  original=${DX_ACTIVATION_RETAINED_RUN:?retained activation source directory required}
+  python3 - "$original" "$out/seed-origin.json" "$scope" "$seed" <<'RETAINED_SEED'
+import hashlib,json,pathlib,sys
+root=pathlib.Path(sys.argv[1])
+attempt=json.loads((root/'activation-attempt.json').read_text())
+assert root.name=='tx2-dxt1-bm1-20261118d-activation'
+assert attempt['scope']==sys.argv[3] and attempt['run']==attempt['slot']==root.name
+assert attempt['source']==(root/'head.txt').read_text().strip() and attempt['subjects']==100000
+seed, readback = (root/'driver.log',root/'seed-readback.log')
+def final(file):
+    return json.loads(file.read_text().splitlines()[-1])
+submitted, verified=final(seed),final(readback)
+assert submitted['event']=='chunk-seeded' and submitted['throughPosition']==4338757 and submitted['endSubjects']==100000
+assert verified['event']=='chunk-readback' and verified['scope']==attempt['scope']
+assert verified['endSubjects']==verified['N']==100000 and verified['counts']['position']==4338757
+assert verified['fingerprint']['basisTx']==4338757 and verified['fingerprint']['worlds']==verified['expected']
+receipt={'oldSource':attempt['source'],'oldSlot':attempt['slot'],'retainedVolume':sys.argv[4],
+         'scope':attempt['scope'],'position':4338757,'subjects':100000,'previousFingerprint':verified['fingerprint'],
+         'inputSha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (seed,readback,root/'activation-attempt.json')}}
+pathlib.Path(sys.argv[2]).write_text(json.dumps(receipt,indent=2)+'\n')
+RETAINED_SEED
+  export DX_BM1_RETAINED_SEED=1
+fi
 resources=true
-extra=();[[ $operation != clone ]] || extra=(--clone-seed "$seed")
-(trap - EXIT TERM INT;exec bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish --cpus-tx 0 --cpus-pg 1 --cpus-gw-write 2 --cpus-gw-read 4 \
+extra=();[[ $operation == seed ]] || extra=(--clone-seed "$seed")
+progress starting-owned-stack
+(trap - EXIT TERM INT;exec env DX_STACK_WAIT_FOR_TRANSACTOR=1 bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish --cpus-tx 0 --cpus-pg 1 --cpus-gw-write 2 --cpus-gw-read "${DX_ACTIVATION_GW_READ_CPUS:-4}" \
   --tx-memory "$DX_TX_MEMORY" --pg-memory "$DX_PG_MEMORY" \
   --tx-java-opts "$DX_TX_JAVA_OPTS" --memory-index-threshold "$DX_INDEX_THRESHOLD" --memory-index-max "$DX_INDEX_MAX" --object-cache-max "$DX_TX_OBJECT_CACHE" \
   --pg-settings '-c shared_buffers=512MB -c max_wal_size=8GB -c checkpoint_timeout=30min -c wal_sync_method=open_datasync' \
@@ -127,17 +164,20 @@ docker create --pull never --name "$prefix-extract" -v "$prefix-tools:/tool" nod
 docker start -a "$prefix-extract" > "$out/tools.log";docker rm "$prefix-extract" >/dev/null
 # [DX-T1-14] Why: the native clone smoke exposed that full-history statistics are collected only by the independent journal fold.
 # Rejected: weaken the receipt's missing-history guard or count acknowledged publication commands as durable storage readback.
-args=(--rung "$subjects" --scope "$scope" --workers 2 --runtime-workers --seed-fingerprint --journal-counts --publish --publication-id "$prefix" --publication-size 32 --publication-inflight 1 --r1-publication-size 128 --r1-publication-inflight 4 --oracle-processes 2 --batch-oracle --oracle-concurrency 4 --verification-pages 2 --reader-mode replica --record-dir "$out/http" --traffic-dir "$out/traffic")
+args=(--rung "$subjects" --scope "$scope" --workers 2 --runtime-workers --seed-fingerprint --journal-counts --publish --publication-id "$prefix" --publication-size 32 --publication-inflight 1 --r1-publication-size 128 --r1-publication-inflight 4 --oracle-processes 2 --batch-oracle --oracle-concurrency 4 --verification-pages "${DX_ACTIVATION_VERIFY_PAGES:-2}" --reader-mode replica --record-dir "$out/http" --traffic-dir "$out/traffic")
 [[ $traffic != live ]] || args+=(--live --require-healthy-baseline --traffic-offset-s 120 --baseline-ms 100000 --live-warmup-ms 10000 --reader-workers 2)
-[[ $subjects != 100000 || $operation != clone ]] || args+=(--seed-position 4338757 --activation-at-seed)
+[[ $traffic != live || ${DX_P5_LIVE_READERS:-256} == 256 ]] || args+=(--live-readers "$DX_P5_LIVE_READERS")
+[[ ${DX_ACTIVATION_POST_CAPTURE:-0} != 1 ]] || args+=(--post-capture)
+[[ $subjects != 100000 || $operation == seed ]] || args+=(--seed-position 4338757 --activation-at-seed)
 driver=(lab/experiments/EXP-DX1/t1/activation-driver.ts "${args[@]}")
 if [[ $operation == seed ]];then driver=(lab/experiments/EXP-DX1/t1/w0-seed.ts "$scope" "$subjects" "$subjects" seed);fi
 mkdir -p "$out/state"
 run_driver() {
   local log=$1;shift
+  progress "starting $log"
 # [DX-T1-14] Why: the recorder's filename uses PID/thread, so sequential PID-1 containers need distinct phase directories as well as labels.
 # Rejected: labels alone (do not change filenames), or overwriting an earlier phase's immutable trace.
-(trap - EXIT TERM INT;exec docker run --ulimit core=0 --rm --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus 3,4,5,6,7 --memory "$DX_DRIVER_MEMORY" --memory-swap "$DX_DRIVER_MEMORY" \
+(trap - EXIT TERM INT;exec docker run --ulimit core=0 --rm --pull never --name "$prefix-driver" --network "$prefix-net" --cpuset-cpus "${DX_ACTIVATION_CPUS:-3,4,5,6,7}" --memory "$DX_DRIVER_MEMORY" --memory-swap "$DX_DRIVER_MEMORY" \
   -v "$PWD:$PWD:ro" -v "$out:$out" -v "$out/state:/state" -v "$prefix-tools:/tool:ro" -w "$PWD" \
   -e LD_LIBRARY_PATH=/tool -e PATH=/tool:/usr/local/bin:/usr/bin:/bin -e "NODE_OPTIONS=--max-old-space-size=$DX_DRIVER_HEAP_MB" \
   -e "DATOMIC_URL=http://$prefix-gw-w:8080" -e "DATOMIC_READ_URLS=http://$prefix-gw-r:8080" -e TRIPLEX_DATOMIC_LAYOUT=lean -e TX2_SWEEP_STRICT=1 \
@@ -146,6 +186,7 @@ run_driver() {
   -e TX2_W0_POINT_JOURNAL=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 -e "DX_R1_DEADLINE=$(node -e 'console.log(Date.parse(process.argv[1]))' "$DX_ACTIVATION_STOP_AT")" \
   python:3.13-slim /tool/node --expose-gc --experimental-strip-types "$@" > "$out/$log" 2>&1) & child=$!
 wait "$child";child=
+  progress "finished $log"
 }
 run_driver driver.log "${driver[@]}"
 if [[ $operation == seed ]];then
@@ -167,3 +208,4 @@ for line in manifest.decode().splitlines():
  assert hashlib.sha256(p.read_bytes()).hexdigest()==expected,'Source/build changed: '+name
 SOURCE_READBACK
 node lab/trace/activation-result.mjs "$out" "$log"
+progress "exact activation envelope checked"
