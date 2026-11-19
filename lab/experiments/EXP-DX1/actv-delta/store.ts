@@ -20,8 +20,8 @@ export class Objects {
   async many<T>(keys: readonly string[], position: number): Promise<Map<string, Cell<T>>> {
     const unique = [...new Set(keys)],
       out = new Map<string, Cell<T>>();
-    for (let at = 0; at < unique.length; at += 128) {
-      const batch = unique.slice(at, at + 128),
+    for (let at = 0; at < unique.length; at += 64) {
+      const batch = unique.slice(at, at + 64),
         entities = new Map(batch.map((k) => [this.entity(k), k]));
       const basis = { position, validAt: V_W0 },
         answer = await this.comp.sweepPage([...entities.keys()], basis);

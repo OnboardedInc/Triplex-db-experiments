@@ -25,16 +25,32 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
           "oracle",
           "pages",
           "reopen",
+          "recovery",
           "rules",
           "save",
           "secrets",
           "store",
           "schedules.test",
+          "service",
+          "measure-lock",
+          "fence.test",
+          "delayed.test",
+          "erasure.test",
+          "recovery.test",
           ...(mode === "schedules"
             ? []
             : mode === "price"
               ? ["v3"]
-              : ["audit", "deep", "traffic", "bench-rung", "v3"]),
+              : [
+                  "audit",
+                  "screen",
+                  "traffic",
+                  "bench-rung",
+                  "loaded",
+                  "page-control",
+                  "v3",
+                  ...(mode === "rungs" ? [] : ["deep", "server", "preflight", "full.test"]),
+                ]),
         ].includes(path.basename(p).replace(/\.[^.]+$/, "")) ||
           path.basename(p) === mode + ".ts"),
     ),
@@ -43,10 +59,24 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
     ...files("packages/w0/dist").filter((p) => p.endsWith(".js")),
     "lab/bin/engine.mjs",
     "lab/oracles/domain/w0.py",
+    "lab/oracles/domain/population.py",
     "lab/oracles/domain/jsontok.py",
     "lab/bench/lib/composition.ts",
     "lab/bench/lib/deep-activation.ts",
     "lab/world/W0/releases/index.json",
+    ...(mode === "preflight" || mode === "server"
+      ? [
+          "scale1/bench.ts",
+          "scale1/tenants.ts",
+          "scale1/tenant-traffic.ts",
+          "scale1/tenant-windows.json",
+          "scale1/tenant-traces.json",
+          "scale1/tenant-seeds.json",
+          "act2/rung.ts",
+          "act2/preflight.ts",
+          "act2/preflight-runner.ts",
+        ].map((f) => "lab/experiments/EXP-DX1/" + f)
+      : []),
   ];
   return Object.fromEntries(
     names.map((f) => [path.relative(process.cwd(), f), sha256(readFileSync(f))]).sort(),

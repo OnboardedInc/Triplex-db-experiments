@@ -3,7 +3,7 @@ import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { Account } from "./account.ts";
 import { projection, type Difference } from "./rules.ts";
 import { Objects, Conflict, hash } from "./store.ts";
-import { encodeBig, decodeBig, type Recipe, type Head, type Body } from "./model.ts";
+import { encodeBig, decodeBig, type Recipe } from "./model.ts";
 import { width } from "./pages.ts";
 
 type Chunk = {
