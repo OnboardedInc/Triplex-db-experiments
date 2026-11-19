@@ -275,7 +275,7 @@ export async function serveTraffic(s: TrafficSpec) {
       for (const e of mine) {
         const offset = cycle * cycleMs + e.atMs - s.offset;
         if (offset < 0) continue;
-        // Resends whose original fell before this sampled window have no source claim in this fresh scope.
+        // [DX-ACT1] Why: only a truncated local window can start after the original offer. Rejected: inventing a prior receipt in a fresh scope.
         if (!cycle && e.resend && events.find((x) => !x.resend && x.seq === e.seq)!.atMs < s.offset)
           continue;
         const due = at + offset;

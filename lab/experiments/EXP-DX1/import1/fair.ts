@@ -7,7 +7,7 @@ import { ids, SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { openNative } from "./native.ts";
 import { ImportLane, ImportRun, pace } from "./lane.ts";
 import { snapshot, bytes } from "./source.ts";
-import { verifySnapshot } from "./verify.ts";
+import { verifySnapshot, touchedWitness } from "./verify.ts";
 const root = process.argv[2]!,
   id = randomUUID();
 mkdirSync(root);
@@ -19,7 +19,7 @@ const sessions = await Promise.all(
     const name = "import-live-" + id + "-" + label,
       t = await openNative(name, "snapshot"),
       reader = await openComposition("reach-touched", "datomic", name);
-    const source = snapshot("thin", 48, "joint/", id + label),
+    const source = snapshot(label === "left" ? "thin" : "deep", 48, "joint/", id + label),
       r = await ImportRun.open(t, source, p, join(root, label + ".sqlite"), lane);
     const before = await t.currentPosition(),
       entity = "joint/" + ids.placement(0);
@@ -45,11 +45,7 @@ try {
           txId: e.txId,
         });
         if (!e.first) {
-          const a = await s.pull(e.position);
-          assert.deepEqual(
-            a.triples.map((v) => [v.attribute, v.value.value]).sort(),
-            Array.from({ length: 6 }, (_, i) => [":thin/f" + i, String(i)]),
-          );
+          await touchedWitness(s.reader, s.source, 0, e.position, true);
           assert.equal((await s.pull(s.before)).triples.length, 0);
         }
       }
@@ -57,6 +53,7 @@ try {
     }),
   );
   for (const s of sessions) {
+    const initial = await s.pull(await s.t.currentPosition());
     const ack = await lane.live(() =>
       s.t.write(
         [
@@ -73,7 +70,7 @@ try {
     );
     const a = await s.pull(ack.position);
     assert.equal(a.triples.filter((r) => r.attribute === ":live")[0]!.value.value, s.label);
-    assert.equal(a.triples.length, 7);
+    assert.equal(a.triples.length, initial.triples.length + 1);
   }
   assert(sessions.every((s) => traces.filter((v) => v.label === s.label).at(-1).end === 48));
   writeFileSync(
