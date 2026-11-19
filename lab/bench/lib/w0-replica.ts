@@ -2,7 +2,6 @@ import { deserialize } from "node:v8";
 import { Worker } from "node:worker_threads";
 import { finishW0Worker } from "./w0-parallel.ts";
 import { Replica, type ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
-import type { CompositionHandle } from "./composition.ts";
 import {
   publishRecords,
   bindPublicationProfiles,
@@ -63,7 +62,7 @@ export interface ReplicaEvaluationOptions {
   beforeTimedWindow?: () => Promise<void>;
   // [DX-R1] Why: several candidates may share a preview, but publication selects one active release.
   // Rejected: racing distinct release choices through the same published outbox state.
-  publish?: CompositionHandle;
+  publish?: OutboxStore;
   publication?: PublicationOptions & {
     readStates?: (ids: readonly string[]) => readonly import("./w0-world.ts").WorldRow[];
   };

@@ -5,7 +5,7 @@ The benchmark also admitted a first item after a newer empty decision, and an ea
 The W0 product rule advances the guard correctly. The benchmark skipped the durable write, and both benchmark checkers discarded the same part of the independent answer.
 On 1,000 W0 subjects the guard fix saved all 1,000 decisions and wrote 219 bytes of asserted values per person. Rewriting the whole state took 533 bytes.
 Applying the local publication slowdown to the old bench split projects 111 seconds per 100,000, or 18.4 minutes for ten such accounts in series. The server figure is unmeasured.
-The narrow-release comparison is pending.
+Changing only the EAD document lead time skipped rule evaluation for 675 of 1,000 people. All 1,000 still received a durable decision.
 
 North star P5. The first experiment used real W0 evaluation records, a reopened in-process composition and the independent Python evaluate/publish operations. Run `node --import tsx --test lab/experiments/EXP-DX1/act1/guard.test.ts` at the initial experiment commit to reproduce all three failures.
 The historical run did not inject these schedules. Its 100,000 comparisons cannot establish durable guard correctness. [Benchmark report](../bm1/REPORT.md) · [W0 §8.8](../../../world/W0/SPEC.md) · [Targets](../../../TARGETS.md)
@@ -23,3 +23,12 @@ Projection = 50.79 s evaluation + 22.99 s × local publication wall ratio: 114.6
 The managed Datomic slot returned HTTP 404 on claim lookup and CAS preparation; it was released with its volume retained. The local costs and cross-process checks use the public SQLite adapter.
 
 Audit. guard.test.ts compares fresh scoped raw facts, receipts and receiver sequences to bare Python W0 after every reopen and both sides of a dropped ACK. price.ts binds its fresh database names, release pair, source/build/input digests and the entire independently folded roster to a separate process's durable readback; it preserves historical mismatches.
+
+## Narrow release
+
+The 0→90-day edit changed tasks or obligations for 239 subjects and changed work-item payloads for zero. Among 1,000 subjects, 325 owned a reachable EAD and 51 had no document link. The fixed-cut index stores a validated R1 result and reachable EAD membership for every subject on the independent seeded roster.
+Only a compiled R1→R2 document differing solely in the unscoped DOCEXP EAD lead-days constant qualifies. The selector regenerates release-dependent work versions for exclusions. Other edits (including standard R2), changed cut/valid time/erasure frontier, missing index or unproved page evaluate in full. A source validation error is surfaced.
+Each 256-ordinal page binds scope, generation, prior/new release, both clocks, source and index digests. Output lands before the cursor advances. Restart validates ordered IDs, both roster hashes and committed pages; an unclaimed page is recomputed. Duplicate IDs, swapped pages and foreign checkpoints are rejected.
+The local comparison took 1.37 s full and 0.60 s selected including page checks; the index build took 1.43 s. At the same cut it would take two comparable releases to recover the build cost, assuming zero maintenance between releases. Cold build plus selection was slower than full. These are local diagnostics.
+Audit. selector.test.ts checks all output bytes and all reopened terminal outboxes against the independent Python release pair and recomputes eligibility from source edges. The checkpoint is specific to one attempt, cut, release and roster. Preview coverage alone provides no P5 verdict.
+Audit. The guarded replica driver uses the bare evaluate/publish oracle on every source world, compares complete public outputs and stored states at pinned positions, and writes an exclusive sweep record bound to its attempt, source/build, slot, roster, release, trace and live reader count.

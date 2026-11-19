@@ -23,7 +23,14 @@ for (const layout of [undefined, "full-state", "guard-fact"] as const) {
         for (const [i, args] of steps.entries()) {
           const { record, wire } = await evaluation(oracle, ...args);
           expected = JSON.parse(await oracle.call("publish", { state: expected, evaluations: [wire] })).state;
-          await publishChanged(comp, [record], { layout });
+          if (layout && i === steps.length - 2) {
+            const lost = { ...comp, transact: async (...args: Parameters<CompositionHandle["transact"]>) => {
+              const durable = await comp.transact(...args); assert.ok(durable.ok); throw Error("lost guard ACK");
+            }};
+            await assert.rejects(publishChanged(lost, [record], { layout }), /lost guard ACK/);
+            await comp.close(); comp = await open(scope);
+            assert.equal((await publishChanged(comp, [record], { layout })).responses[0].retry, true);
+          } else await publishChanged(comp, [record], { layout });
           await comp.close();
           comp = await open(scope);
           const [actual] = await observe(comp, [record.subject], await comp.currentPosition());
