@@ -5,8 +5,8 @@ Both Mac pair verdicts remain unjudged. Each 8 GiB reader container was OOM-kill
 The retained 100k W0 sweep took 73.78 s with 256 live readers. Read/commit p99 ratios were 1.462/0.514, and its log records 100,000 exact outbox comparisons. The missing terminal envelope leaves it diagnostic.
 The 10k retry’s only read error was a socket reset before a result on a fallback at L256-B. Worker 2, subject 764, position 6983, trace `a654f87b197696560000000000accaed`.
 Linux 10k zero-reader median ACK fell from 9.03 to 4.72 ms. Loaded small and medium medians were 6.08 and 7.62 ms. Overall p99 remained 132.46 ms zero and 326.19 ms loaded.
-The loaded driver’s three reader workers saturated at 1,024 readers. P4’s single reader also took 4,323 fallbacks in 115,796 attempts. The new pair gives readers six worker cores and keeps writer roles isolated.
-The 100k reader matched 16.55 million model reads. Its original independent replay hit the 30-minute deadline. Offline replay of the retained bytes matched all 53 sampled reads, 4,698 entity queries and receipts.
+The loaded driver’s three reader workers saturated at 1,024 readers. At the same 256-reader load, the slowest window delivered 38× fewer reads than the fastest as fallback share rose to 6.25%. P4’s single reader took 4,323 fallbacks in 115,796 arrivals. The new pair gives readers six worker cores and keeps writer roles isolated.
+The 100k reader matched 16.55 million model reads. Its replay hit the 30-minute deadline. Offline replay matched all 53 sampled reads, 4,698 entity queries and receipts. The 10k retry’s offline replay matched all 191 sampled reads and 9,202 queries after its original 15-minute ceiling.
 **North star.** P1–P4 via v3, P5 via live 100k activation. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 | Bar (threshold) | Mac H loaded | Mac v3 zero | Linux v3 zero | Linux v3 loaded retry |
