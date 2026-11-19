@@ -555,3 +555,31 @@ Orchestrator's reading:
    known to carry in the hundreds. The layout is now an open question to be measured, not a decision: one scope
    holding 1,000,000 deep subjects against ten scopes of 100,000, and one hundred small scopes against the same
    accounts pooled in one scope.
+
+## 2026-11-19 about 14:00 local: Sam leans to one database; questions on routing, cross-account queries, the priority 9 bar, activation, and what a traditional database would give
+
+Sam, verbatim:
+- "Okay the gist is that I get that you said it's a mix. That makes sense. If it's a mix then you'd put some kind of
+  request router in front of it, kind of like Nginx or something, and that would route it to the right place. Is that
+  the way I should think about it?"
+- "Although how would I query across two different accounts? How would that work if I wanted to do a query across all
+  of our customers using the same triplex thing? Is there a way to do interwoven stuff on it or something or I don't
+  know. I don't think we should be using multiple hard databases in one process. It feels like we should be figuring
+  out how to do one. That's my guess."
+- "For Priority 9's time bar what do you think? What do other production giant enterprise companies do for Priority
+  9's time bar? When does activation happen? When would I need to be doing activation in the normal usage of stuff?"
+- "Yeah and then based on that same kind of search for the high availability, high whatever, high performance,
+  whatever, what are the benchmarks that people expect at the scale that we're talking about, right? If you're just
+  using a traditional database or something, right, what would you be thinking about?"
+
+Orchestrator's reading and actions:
+1. **Lead design changes to one database holding many accounts** (his guess, stated as a guess; the measurement
+   decides). One database per account becomes the comparison. DX-SCALE1's campaign is reordered: ten accounts inside
+   one scope, one hundred small accounts pooled in one scope, then one scope of 1,000,000 deep subjects; each against
+   the per-scope layout. "Many databases in one process" is not pursued as a design.
+2. When one database is full the next step is a second large database with a router from account to database, not a
+   database per account. Cross-account reads are native inside one database; across databases they are a
+   fan-out-and-merge or a feed-fed read model.
+3. Priority 9 provisional time bars, my recommendation pending his confirmation: writes resume within 60 s of losing
+   the active transactor with no acknowledged write lost and pinned reads continuing throughout; a planned move pauses
+   one account's writes for at most 30 s.
