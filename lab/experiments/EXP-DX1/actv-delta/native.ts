@@ -26,10 +26,12 @@ const start = stamp(),
   };
 fs.writeFileSync(path.join(dir, "attempt.json"), JSON.stringify(attempt) + "\n", { flag: "wx" });
 process.env.DELTA_ATTEMPT = dir;
-if (mode === "schedules") {
+if (mode === "schedules" || mode === "rungs") {
   for (const [name, files] of [
     ["original", ["../act1/guard.test.ts", "../act1/page.test.ts"]],
     ["delta", ["schedules.test.ts"]],
+    ["erasure", ["erasure.test.ts"]],
+    ["recovery", ["recovery.test.ts"]],
   ] as const) {
     const out = path.join(dir, name + ".tap"),
       fd = fs.openSync(out, "wx");
@@ -50,7 +52,19 @@ if (mode === "schedules") {
     }
     const tap = fs.readFileSync(out, "utf8");
     if (name === "original") checkSchedules(tap);
-    else {
+    else if (name === "recovery")
+      assert(
+        tap.includes("ok 1 - missing derived page") &&
+          tap.split("\n").includes("# pass 1") &&
+          tap.split("\n").includes("# fail 0"),
+      );
+    else if (name === "erasure") {
+      assert(
+        tap.includes("ok 1 - erasing a protected input") &&
+          tap.split("\n").includes("# pass 1") &&
+          tap.split("\n").includes("# fail 0"),
+      );
+    } else {
       const names = [
         ...fs
           .readFileSync(path.join(import.meta.dirname, "schedules.test.ts"), "utf8")
@@ -65,7 +79,8 @@ if (mode === "schedules") {
         assert(tap.split("\n").includes(line));
     }
   }
-} else {
+}
+if (mode !== "schedules") {
   const worker = await import("./" + mode + ".ts");
   await worker.run(dir, attempt);
 }

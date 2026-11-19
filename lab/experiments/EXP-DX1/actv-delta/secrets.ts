@@ -46,9 +46,17 @@ export class SourceKeys {
       closeSync(fd);
     }
   }
-  forget(s: string) {
+  forget(s: string, maskHash: string) {
     if (!this.directory) return;
     const p = this.path(s);
+    mkdirSync(this.directory!, { recursive: true, mode: 0o700 });
+    try {
+      writeFileSync(p + ".erased", maskHash, { flag: "wx", flush: true, mode: 0o600 });
+      this.sync();
+    } catch (e: any) {
+      if (e.code !== "EEXIST") throw e;
+      assert.equal(readFileSync(p + ".erased", "utf8"), maskHash);
+    }
     if (existsSync(p)) {
       unlinkSync(p);
       this.sync();
@@ -67,6 +75,10 @@ export class SourceKeys {
         return { cipher: Buffer.concat([iv, c.getAuthTag(), data]).toString("base64") };
       }
       if (v?.cipher && mode === "read") {
+        assert(
+          !existsSync(this.path(body.subject) + ".erased"),
+          "erasure frontier ahead of restored account",
+        );
         key ??= this.key(body.subject, false);
         const bytes = Buffer.from((v as Box).cipher, "base64"),
           c = createDecipheriv("aes-256-gcm", key, bytes.subarray(0, 12));

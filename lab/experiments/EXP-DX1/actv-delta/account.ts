@@ -1,8 +1,9 @@
+import { originalObject, MissingOriginal } from "./recovery.ts";
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
-import { W0, canonical } from "../../../bench/lib/w0-world.ts";
+import { W0 } from "../../../bench/lib/w0-world.ts";
 import { checkCensus, ordered } from "./lookup.ts";
-import { compilerVersion, projection } from "./rules.ts";
+import { compilerVersion, differences } from "./rules.ts";
 import { buildPage, width, onlyJurisdictions, selectPage, type Page } from "./pages.ts";
 import { Objects, hash, Conflict, type Cell, type Patch } from "./store.ts";
 import {
@@ -15,7 +16,6 @@ import {
   stateText,
   releaseEntry,
   type Body,
-  type Edit,
   type Head,
   type Mask,
   type Recipe,
@@ -41,8 +41,8 @@ const keyOf = (s: string) => "point:" + s;
 export const sourceFormats = hash([
   "actv-delta/1",
   compilerVersion,
-  ...["rules", "pages", "model", "save", "account", "store", "dispatch", "secrets"].map((n) =>
-    hash(readFileSync(new URL(n + ".ts", import.meta.url), "utf8")),
+  ...["rules", "pages", "model", "save", "account", "store", "dispatch", "secrets", "recovery"].map(
+    (n) => hash(readFileSync(new URL(n + ".ts", import.meta.url), "utf8")),
   ),
 ]);
 export class Account {
@@ -123,7 +123,7 @@ export class Account {
       const page = buildPage(batch, basis, indexed);
       tree.pages.push(hash(page));
       tree.members.push(hash(ids));
-      patches.push({ key: "page:" + number, value: page });
+      patches.push({ key: "page:" + number, value: page }, { key: "roster:" + number, value: ids });
       bytes += (await this.db.commit("seed:" + number, patches)).bytes;
     }
     tree.refs = Object.fromEntries([...refs].map(([k, v]) => [k, hash(v)]));
@@ -183,7 +183,12 @@ export class Account {
     const root = await this.tree(h, p),
       cs = await this.db.many<RefMap>(keys, p);
     for (const k of keys) {
-      const c = cs.get(k);
+      let c = cs.get(k);
+      const wanted = root.value.refs[k];
+      if (wanted && (!c || hash(c.value) !== wanted)) {
+        c = await originalObject<RefMap>(this.db, k, p, (v) => hash(v) === wanted);
+        cs.set(k, c);
+      }
       assert.equal(
         c ? hash(c.value) : undefined,
         root.value.refs[k],
@@ -200,7 +205,16 @@ export class Account {
       ),
       out = new Map<number, Cell<Page>>();
     for (const i of nums) {
-      const cell = rows.get("page:" + i);
+      const key = "page:" + i;
+      let cell = rows.get(key);
+      if (!cell || hash(cell.value) !== root.value.pages[i])
+        cell = await originalObject<Page>(
+          this.db,
+          key,
+          position,
+          (p) => hash(p) === root.value.pages[i],
+        );
+
       assert(
         cell &&
           hash(cell.value) === root.value.pages[i] &&
@@ -210,6 +224,19 @@ export class Account {
       out.set(i, cell);
     }
     return out;
+  }
+  async censusAt(h: Head, p: number) {
+    const t = await this.tree(h, p),
+      keys = t.value.members.map((_, i) => "roster:" + i),
+      cells = await this.db.many<string[]>(keys, p);
+    const ids = keys.flatMap((k, i) => {
+      const v = cells.get(k)?.value;
+      assert(v && hash(v) === t.value.members[i], "missing certified census partition");
+      return v;
+    });
+    assert.equal(hash(ids), h.census, "census digest mismatch");
+    assert.equal(ids.length, h.size);
+    return ids;
   }
   async masks(ids: string[]) {
     const latest = await this.db.comp.currentPosition();
@@ -239,13 +266,41 @@ export class Account {
     for (const id of ids) {
       const cell = rows.get(keyOf(id));
       assert(cell && cell.value.subject === id, "subject outside account census");
-      const mask = masks.get("mask:" + id)?.value,
+      let mask = masks.get("mask:" + id)?.value,
+        body: Body;
+      try {
         body = this.keys.convert(cell.value, "read", mask);
+      } catch (e) {
+        const fresh = (await this.masks([id])).get("mask:" + id)?.value;
+        if (!fresh) throw e;
+        mask = fresh;
+        body = this.keys.convert(cell.value, "read", mask);
+      }
+
       let state = stateOf(body.state);
       for (const n of seqs) {
         if (n <= body.seen) continue;
-        const event = ev.get("event:" + n)?.value;
+        const key = "event:" + n,
+          activation = h.activations.find((a) => (a as typeof a & { seq?: number }).seq === n)!;
+        let event = ev.get(key)?.value;
+        if (!event || event.seq !== n || event.basis.tx !== activation.tx) {
+          const source = await originalObject<Recipe>(
+            this.db,
+            key,
+            position,
+            (x) => x.seq === n && x.kind === "release" && x.basis.tx === activation.tx,
+          );
+          event = source.value;
+          ev.set(key, source);
+        }
+
         assert(event && event.seq === n, "missing recipe ancestor");
+        if (mask && event.basis.tx < mask.tx) {
+          const retained = mask.published?.[n];
+          assert(retained, "erasure restore lacks original publication state");
+          state = stateOf(retained);
+          continue;
+        }
         const old = resolve(
           h.activations.filter((a) => a.tx <= event.basis.tx),
           event.basis.validTime,
@@ -281,20 +336,41 @@ export class Account {
     const old = W0.compileRelease(e.old),
       next = W0.compileRelease(e.next),
       js = onlyJurisdictions(old, next);
-    let numbers = Array.from({ length: Math.ceil(h.size / width) }, (_, i) => i);
-    if (e.shape !== "full" && js !== null) {
-      const refs = await this.refs(h, e.sourceCut, js.map(refKey));
-      numbers = [...new Set(js.flatMap((j) => refs.get(refKey(j))?.value[j] ?? []))].sort(
-        (a, b) => a - b,
-      );
-    }
-    const pages = await this.pages(h, e.sourceCut, numbers),
-      subjects: string[] = [],
+    const subjects: string[] = [],
       flags: [string, boolean, boolean][] = [];
+    let numbers = Array.from({ length: Math.ceil(h.size / width) }, (_, i) => i);
+    if (e.shape === "full")
+      return {
+        subjects: await this.censusAt(h, e.sourceCut),
+        flags,
+        yielded: 0,
+        seeks: 0,
+        pages: 0,
+        full: true,
+      };
+    let pages: Map<number, Cell<Page>>;
+    try {
+      if (js !== null) {
+        const refs = await this.refs(h, e.sourceCut, js.map(refKey));
+        numbers = [...new Set(js.flatMap((j) => refs.get(refKey(j))?.value[j] ?? []))].sort(
+          (a, b) => a - b,
+        );
+      }
+      pages = await this.pages(h, e.sourceCut, numbers);
+    } catch (err) {
+      if (!(err instanceof MissingOriginal)) throw err;
+      const ids = await this.censusAt(h, e.sourceCut);
+      for (let i = 0; i < ids.length; i += width) {
+        const batch = await this.views(ids.slice(i, i + width), e.sourceCut, undefined, h);
+        for (const [id, v] of batch)
+          if (differences(worldOf(v.body, e.basis), e.basis, old, next).length) subjects.push(id);
+      }
+      return { subjects, flags, yielded: 0, seeks: 0, pages: 0, full: true };
+    }
     let yielded = 0,
       seeks = 0;
     for (const cell of pages.values()) {
-      const p = selectPage(cell.value, old, next, e.basis, e.shape === "full");
+      const p = selectPage(cell.value, old, next, e.basis, false);
       subjects.push(...p.subjects);
       flags.push(...p.flags);
       yielded += p.yielded;
@@ -305,6 +381,7 @@ export class Account {
       yielded,
       seeks,
       pages: pages.size,
+      full: false,
       flags: flags.sort((a, b) => ordered(a[0], b[0])),
     };
   }
@@ -389,7 +466,7 @@ export class Account {
           seq,
           parent: h.seq,
           parentHash: c.hash,
-          sourceCut: p,
+          sourceCut: c.position,
           old: old.doc,
           next: next.doc,
           basis,
@@ -401,9 +478,12 @@ export class Account {
         await this.tree(h, p);
         if (event.shape === "packed") {
           const match = await this.selected(event);
-          event.packed = match.subjects;
-          event.flags = match.flags;
-          assert.equal(event.packed.length, event.flags.length);
+          if (match.full) event.shape = "full";
+          else {
+            event.packed = match.subjects;
+            event.flags = match.flags;
+            assert.equal(event.packed.length, event.flags.length);
+          }
         }
         return { head: { ...h, seq, releaseSeq: seq, basis, activations }, event, patches: [] };
       },

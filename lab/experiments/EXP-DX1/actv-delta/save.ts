@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { W0, canonical } from "../../../bench/lib/w0-world.ts";
+import { W0 } from "../../../bench/lib/w0-world.ts";
 import { expand } from "./dispatch.ts";
-import { Account, type View } from "./account.ts";
+import { Account } from "./account.ts";
 import { hash, type Patch } from "./store.ts";
 import { updatePage } from "./pages.ts";
 import {
@@ -28,6 +28,7 @@ export type SaveOptions = {
   nativeOps?: readonly unknown[];
   nativePreconditions?: readonly unknown[];
   originTx?: number;
+  touch?: string;
   trace?: { key: string; value: { token: string } };
 };
 export async function save(
@@ -36,7 +37,7 @@ export async function save(
   edits: readonly Edit[],
   options: SaveOptions = {},
 ) {
-  assert(edits.length > 0 || options.erase);
+  assert(edits.length > 0 || options.erase || (options.touch && W0.isPlacementId(options.touch)));
   for (const e of edits) {
     assert(W0.isInstant(e.from) && (!e.until || (W0.isInstant(e.until) && e.from < e.until)));
     assert(e.e.startsWith("loc:") || e.e.startsWith("jur:") || subjectOf(e.e));
@@ -50,6 +51,7 @@ export async function save(
       options.nativePreconditions ?? [],
       options.originTx ?? null,
       options.trace ?? null,
+      options.touch ?? null,
     ]);
   const result = await account.command(
     id,
@@ -69,6 +71,7 @@ export async function save(
         edits.map((e) => subjectOf(e.e)).filter((s): s is string => !!s),
       );
       if (options.erase) direct.add(options.erase);
+      if (options.touch) direct.add(options.touch);
       const sharedIds = [...new Set(edits.filter((e) => !subjectOf(e.e)).map((e) => e.e))];
       const refs = await account.refs(h, p, [...new Set(sharedIds.map(refKey))]);
       const shared = await db.many<Shared>(
@@ -160,9 +163,18 @@ export async function save(
             cell = cells.get(key)!,
             x = prepared.get(s);
           if (!x) continue;
-          const m = options.erase === s ? { from: basis.validTime, tx } : x.mask;
+          const m: Mask | undefined =
+            options.erase === s ? { from: basis.validTime, tx, published: {} } : x.mask;
           if (options.erase === s) {
-            assert(!x.mask, "already erased");
+            assert(!x.mask && m, "already erased");
+            // [DX-ACT2] Why: old domain reads must mask the fact, while an already published notice keeps its actual active/retired state. Rejected: recomputing historical delivery state with an erased input.
+            for (const a of h.activations) {
+              const n = (a as typeof a & { seq?: number }).seq;
+              if (!n) continue;
+              const at = await db.get<Recipe>("event:" + n, p);
+              m.published![n] = stateText((await account.readAt(s, at.position)).state);
+            }
+
             patches.push({ key: "mask:" + s, value: m });
           }
           const w = worldOf(x.next, basis, m),
@@ -238,6 +250,9 @@ export async function save(
     options.nativeOps,
     options.nativePreconditions,
   );
-  if (options.erase) account.keys.forget(options.erase);
+  if (options.erase) {
+    const mask = await account.db.get<Mask>("mask:" + options.erase, result.position);
+    account.keys.forget(options.erase, hash(mask.value));
+  }
   return result;
 }

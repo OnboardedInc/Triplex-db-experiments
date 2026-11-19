@@ -6,7 +6,6 @@ import { fork } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   admission,
-  appendEvent,
   docker,
   dockerArgs,
   DOCKER_HOST,
@@ -22,12 +21,12 @@ export async function local(opts, config, manager) {
   assert(
     process.platform === "darwin" && opts.holder === "DX-ACT2" && dockerArgs([])[1] === DOCKER_HOST,
   );
-  assert(["schedules", "price", "rungs", "preflight"].includes(opts.run));
+  assert(["schedules", "price", "rungs", "controls", "preflight"].includes(opts.run));
   const dir = path.resolve(opts.out),
     nonce = randomUUID(),
     prefix = "tx2-dxdelta-" + nonce.slice(0, 8);
   fs.mkdirSync(dir, { recursive: false });
-  const caps = { pg: 256, tx: 640, gw: 1024 },
+  const caps = { pg: 256, tx: 896, gw: 1024 },
     labels = ["--label", "delta.attempt=" + nonce],
     names = Object.keys(caps).map((r) => prefix + "-" + r);
   const attempt = { nonce, run: opts.run, prefix, source: process.env.DELTA_SOURCE ?? null };
@@ -173,7 +172,7 @@ export async function local(opts, config, manager) {
       "object-cache-max=64m",
     ].join("\n");
     const boot =
-      "set -eu; cat /opt/datomic/bin/sql/postgres-table.sql; while [ ! -f /tmp/delta.ready ]; do sleep 1; done; printenv DELTA_PROPERTIES > /tmp/delta.properties; exec bin/transactor -Xms128m -Xmx354m -XX:ActiveProcessorCount=2 /tmp/delta.properties";
+      "set -eu; cat /opt/datomic/bin/sql/postgres-table.sql; while [ ! -f /tmp/delta.ready ]; do sleep 1; done; printenv DELTA_PROPERTIES > /tmp/delta.properties; exec bin/transactor -Xms128m -Xmx448m -XX:ActiveProcessorCount=2 /tmp/delta.properties";
     start("tx", image, ["-e", "DELTA_PROPERTIES=" + props], "/bin/sh", ["-c", boot]);
     sql(docker(["exec", tx, "cat", "/opt/datomic/bin/sql/postgres-table.sql"]));
     docker(["exec", tx, "touch", "/tmp/delta.ready"]);

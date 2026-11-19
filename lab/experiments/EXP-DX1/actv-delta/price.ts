@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { openComposition } from "../../../bench/lib/composition.ts";
-import { W0, canonical } from "../../../bench/lib/w0-world.ts";
+import { W0 } from "../../../bench/lib/w0-world.ts";
 import { generateTrace, traceDigest } from "../../../bench/lib/trace.ts";
 import { percentile } from "../../../bench/lib/w0-traffic.ts";
 import { DomainOracle } from "../../../bench/lib/w0-gates.ts";

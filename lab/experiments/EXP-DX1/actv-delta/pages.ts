@@ -1,14 +1,6 @@
 import assert from "node:assert/strict";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
-import {
-  allIndexes,
-  bounds,
-  bucket,
-  derive,
-  describe,
-  type Location,
-  type Posting,
-} from "./rules.ts";
+import { allIndexes, bounds, bucket, derive, describe, type Location } from "./rules.ts";
 import { ordered } from "./lookup.ts";
 export const width = 96;
 export const nativeIndexes = () => {
