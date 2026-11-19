@@ -426,6 +426,7 @@ async function execute() {
   assert("entityQueries" in oracle);
   assert.equal(oracle.entityQueries, samples.length * 4);
   const domain = await domainCheck(root, dir, size, basis, activation.recordsSha256);
+  if (stack && size <= 100) await checkEntry(dir, stack, source);
   save("result.json", {
     kind,
     source,

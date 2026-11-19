@@ -32,6 +32,19 @@ export async function checkEntry(
     const repeat = await target.pull(person(0), b);
     assert.equal(repeat.route, "replica");
     assert.equal(canonicalWorld(repeat.triples), canonicalWorld(log.rows(0, 1, b.validAt)));
+    // [DX-THIN1] Why: these subjects have never been read at any cut; the reader and the scope are already open.
+    // Rejected: treating a current read after read-your-own-write as a first admission.
+    const firstCurrent: { subject: string; ms: number }[] = [];
+    for (const i of log.indices(1).slice(3)) {
+      const subject = person(i),
+        start = performance.now();
+      const first = await target.pull(subject, b);
+      firstCurrent.push({ subject, ms: performance.now() - start });
+      assert.equal(canonicalWorld(first.triples), canonicalWorld(log.rows(i, 1, b.validAt)));
+      const local = await target.pull(subject, b);
+      assert.equal(local.route, "replica");
+      assert.equal(canonicalWorld(local.triples), canonicalWorld(first.triples));
+    }
     const original = await target.pull(person(1), {
       recordedAt: s.value.instant,
       validAt: b.validAt,
@@ -67,6 +80,7 @@ export async function checkEntry(
       firstPullMs,
       firstPinnedRows: cold.triples.length,
       repeatedRoute: repeat.route,
+      firstCurrent,
       timePinnedRows: original.triples.length,
       splitRows: split.triples.length,
       ryow: 1,

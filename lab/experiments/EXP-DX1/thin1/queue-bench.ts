@@ -163,6 +163,11 @@ if (mode === "--cleanup") {
   process.exit(0);
 }
 assert.equal(run("git", ["status", "--porcelain"]), "");
+run("git", [
+  "cat-file",
+  "-e",
+  "03d86f3346cccd6794487b77293fb56077dd020e:lab/oracles/replay/cli.py",
+]);
 assert(
   Number.isFinite(deadline) && deadline - Date.now() > 600_000,
   "Reserve at least ten minutes",

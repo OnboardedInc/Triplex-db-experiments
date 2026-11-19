@@ -187,10 +187,10 @@ export class ThinRoster {
       throw Error("Unavailable activation cut");
     const release = W0.compileRelease(options.release.doc);
     if (release.hash !== options.release.hash) throw Error("Release content hash differs");
-    const roster = this;
+    const membersAtCut = this.scan(basis.tx);
     const coverage = rosterDigest(
       (function* () {
-        for (const row of roster.scan(basis.tx)) yield row.id;
+        for (const row of membersAtCut) yield row.id;
       })(),
     );
     if (coverage.count !== expected.count || coverage.sha256 !== expected.sha256)

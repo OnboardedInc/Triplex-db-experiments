@@ -12,16 +12,7 @@ import { outboxEntity } from "../../../bench/lib/w0-outbox.ts";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { W0, worldOf } from "../../../bench/lib/w0-world.ts";
 import type { ImportJournal } from "../../../bench/lib/thin-activation.ts";
-import {
-  clock,
-  firstValid,
-  fixture,
-  fixtureRows,
-  intent,
-  person,
-  seedHead,
-  txId,
-} from "./population.ts";
+import { clock, firstValid, fixture, fixtureRows, intent, seedHead, txId } from "./population.ts";
 
 export type Operation = ReturnType<typeof intent>[number];
 export async function trialStore(size: number, scope: string, live: boolean) {
