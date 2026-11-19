@@ -11,11 +11,12 @@ import {
 } from "../../../bench/lib/composition.ts";
 import { replicaReply, restoreReplicaReply } from "../../../bench/lib/replica-reads.ts";
 import { validatedSubjectReader } from "../../../bench/lib/touched-reads.ts";
+import { coldReadProfiler } from "./read-profile.ts";
 
-export function processSize() {
+export function processSize(collect = true) {
   const before = process.memoryUsage();
   const spaces = getHeapSpaceStatistics().map(s => ({ name: s.space_name, used: s.space_used_size, committed: s.physical_space_size }));
-  global.gc?.();
+  if (collect) global.gc?.();
   const mask = fs
     .readFileSync("/proc/self/status", "utf8")
     .match(/^Cpus_allowed_list:\s*(.+)$/m)![1]!;
@@ -89,10 +90,12 @@ export function startReader(binding: string, budget?: number) {
     });
   return {
     open: (scope: string) => ask("open", { scope }),
-    stats: () => ask("stats"),
+    stats: (collect = true) => ask("stats", { collect }),
     watermark: (scope: string) => ask("watermark", { scope }),
-    pull: async (scope: string, root: string, p: number, v: number) =>
-      restoreReplicaReply(await ask("pull", { scope, root, p, v })),
+    pull: async (scope: string, root: string, p: number, v: number, profile = false) => {
+      const reply = await ask("pull", { scope, root, p, v, profile });
+      return { ...restoreReplicaReply(reply), diagnostic: reply.diagnostic };
+    },
     close: async () => {
       try {
         await ask("close");
@@ -103,6 +106,7 @@ export function startReader(binding: string, budget?: number) {
   };
 }
 if (process.argv[2] === "--reader" && process.send) {
+  const profile = coldReadProfiler();
   const binding = process.argv[3],
     scopes = new Map<string, Pick<CompositionHandle, "pull" | "touchedUsage" | "close">>();
   const code = Object.fromEntries(
@@ -130,14 +134,19 @@ if (process.argv[2] === "--reader" && process.send) {
           scopes.set(m.scope, { pull: reader.pull, touchedUsage: reader.usage,
             async close() { reader.close(); await (await fallback)?.close(); } });
         } else scopes.set(m.scope, await openComposition("reach-touched", "datomic", m.scope));
-      } else if (m.op === "pull")
-        value = replicaReply(
+      } else if (m.op === "pull") {
+        const read = async () => replicaReply(
           await scopes.get(m.scope)!.pull(m.root, { recordedPosition: m.p, validAt: m.v } as Basis),
         );
+        if (m.profile && process.env.DX_TOUCHED_READ_MODE === "validated") {
+          const measured = await profile(read);
+          value = { ...measured.value, diagnostic: measured.diagnostic };
+        } else value = await read();
+      }
       else if (m.op === "watermark") value = scopes.get(m.scope)!.touchedUsage!().position;
       else if (m.op === "stats")
         value = {
-          ...processSize(),
+          ...processSize(m.collect !== false),
           code,
           scopes: Object.fromEntries([...scopes].map(([s, h]) => [s, h.touchedUsage!()])),
         };

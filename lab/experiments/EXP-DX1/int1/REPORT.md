@@ -3,7 +3,7 @@ At 2,000 deep people the read gateway charged 20.0 MB to Datomic’s object cach
 At 10,000 thin people the corresponding charges were 5.4 MB and 15.0 MB.
 After 2% of deep people were touched, the read gateway held another 9.2 MB of parsed rows and revisions and 0.27 MB of ID entries.
 An unopened reader’s resident memory stayed flat during both imports. The previous 225 and 1,718 bytes per person were measured with a reader already following writes.
-Among 40 deep first reads, the 34-task person took 243 ms. Opening the first scope took 1,194 ms including its read. Both exceeded 100 ms.
+Among 40 deep first reads, the 34-task person took 243 ms. With the bounded reader it took 81 ms. The first read opening a new scope took 1,194 ms before and 357 ms after.
 The four requested branches are integrated. The following table is the earlier full-population comparison while the bounded gateway runs are in progress.
 Capacity for ten deep accounts together or one 4.5-million-person account remains unmeasured.
 

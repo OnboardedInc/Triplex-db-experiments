@@ -181,6 +181,23 @@ async function batch(a: Account, active: boolean) {
   const cap = a.shape === "deep" ? 900 : 384;
   let group: number[] = [];
   let facts = 0;
+  let seeded = 0, sample = 1;
+  const coldCount = a.count - Math.ceil(a.count / 50);
+  const observeSlope = !active && spread && accounts.length === 1 && a.count >= 10000;
+  const flush = async () => {
+    await a.seed(group);
+    seeded += group.length;
+    if (observeSlope && seeded * 4 >= sample * coldCount) {
+      // [DX-THIN1] Why: intermediate RSS and V8 heap sizes reveal whether the import footprint keeps growing after caches fill. Rejected: forcing collection or touching a subject to sample its reader.
+      assert.equal(Number(a.db.prepare("SELECT count(*) AS n FROM people").get()!.n), seeded + Math.ceil(a.count / 50));
+      const reading = await reader.stats(false);
+      for (const [file, hash] of Object.entries(reading.code)) assert.equal(inputs[file], hash);
+      const value = { binding, slot: stack.prefix, scope: a.comp.scopeName, position: a.head,
+        cold: seeded, reader: reading, driver: processSize(false), native: await nativeMetrics(stack) };
+      fs.appendFileSync(path.join(dir!, "import-samples.jsonl"), JSON.stringify(value) + "\n");
+      sample++;
+    }
+  };
   for (let i = a.first; i < a.first + a.count; i++) {
     if (a.isTouched(i) !== active) continue;
     const next = a.shape === "deep" ? deepShape(i - a.first).facts : 8;
@@ -188,23 +205,24 @@ async function batch(a: Account, active: boolean) {
     // Rejected: a fixed number of people per command (six heavy deep worlds overflow the gateway transaction).
     if (group.length && facts + next > cap) {
       await lease.checkpoint();
-      await a.seed(group);
+      await flush();
       group = [];
       facts = 0;
     }
     group.push(i);
     facts += next;
   }
-  if (group.length) await a.seed(group);
+  if (group.length) await flush();
 }
-const firstReads: { subject: number; scope: string; position: number; tasks: number; rows: number; roundTrips: number; route: string; ms: number }[] = [];
+const firstReads: { subject: number; scope: string; position: number; tasks: number; rows: number; roundTrips: number; route: string; language: string; ms: number; diagnostic?: unknown }[] = [];
 async function pull(a: Account, i: number, p: number, v = V_W0, first = false) {
   const start = now();
-  const result = await reader.pull(a.comp.scopeName!, rootOf(a.shape, i), p, v);
+  const result = await reader.pull(a.comp.scopeName!, rootOf(a.shape, i), p, v, first);
   const ms = now() - start;
   a.verify(i, p, v, result);
   if (first) firstReads.push({ subject: i, scope: a.comp.scopeName!, position: p,
-    tasks: a.shape === "deep" ? deepShape(i - a.first).tasks : 0, rows: result.triples.length, roundTrips: result.roundTrips, route: result.route, ms });
+    tasks: a.shape === "deep" ? deepShape(i - a.first).tasks : 0, rows: result.triples.length, roundTrips: result.roundTrips, route: result.route, ms,
+    language: result.language, diagnostic: result.diagnostic });
   return ms;
 }
 async function caughtUp() {

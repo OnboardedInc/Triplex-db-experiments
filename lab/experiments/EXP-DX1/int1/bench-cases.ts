@@ -32,6 +32,13 @@ export function verifyLatencies(dir: string, r: any, binding: string, attempt: s
         assert(first && first.subject === account.first + local && first.scope === account.scope);
         assert(first.position > 0 && first.rows > 0 && first.roundTrips >= 1);
         assert.equal(first.tasks, deep ? deepTasks(local) : 0);
+        if (first.language === "revision-validated") {
+          const d = first.diagnostic;
+          assert(d && Number.isFinite(d.workerMs) && d.workerMs >= 0 && d.workerMs <= first.ms);
+          assert.equal(d.exchanges.length, first.roundTrips);
+          assert(d.exchanges.every((x: any) => ["reach", "reach-many"].includes(x.route) &&
+            x.bytes > 0 && x.responseMs >= x.toHeadersMs && x.toHeadersMs >= 0));
+        }
         assert.equal(first.ms, observed.samples.cold[n++]);
       }
     }
