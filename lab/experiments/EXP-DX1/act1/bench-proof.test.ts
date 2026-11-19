@@ -4,7 +4,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { checkSweep, programInputs, requestPath, sha } from "./bench-proof.ts";
+import { checkSweep, nativeScheduleNames, programInputs, requestPath, sha } from "./bench-proof.ts";
 
 test("bench collector binds stage, native schedules, source and complete coverage before exposing ratios", () => {
   const out = mkdtempSync(join(tmpdir(), "act1-proof-"));
@@ -20,14 +20,28 @@ test("bench collector binds stage, native schedules, source and complete coverag
     manifest = sha(readFileSync(file)) + "  " + file + "\n",
     build = sha(manifest);
   writeFileSync(join(out, "source.SHA256SUMS"), manifest);
-  writeFileSync(join(out, "act1-schedules.tap"), "synthetic collector input");
-  put("act1-schedules.json", {
-    source,
-    slot,
-    nonce,
-    request: sha(readFileSync(requestPath(slot))),
-    tap: sha("synthetic collector input"),
-  });
+  const tap = [
+    "TAP version 13",
+    ...nativeScheduleNames.map((name, i) => `ok ${i + 1} - ${name}`),
+    "1..23",
+    "# tests 23",
+    "# pass 23",
+    "# fail 0",
+    "# cancelled 0",
+    "# skipped 0",
+    "# todo 0",
+  ].join("\n");
+  const schedules = (text: string) => {
+    writeFileSync(join(out, "act1-schedules.tap"), text);
+    put("act1-schedules.json", {
+      source,
+      slot,
+      nonce,
+      request: sha(readFileSync(requestPath(slot))),
+      tap: sha(text),
+    });
+  };
+  schedules(tap);
   put("activation-attempt.json", {
     source,
     slot,
@@ -104,6 +118,9 @@ test("bench collector binds stage, native schedules, source and complete coverag
   assert.equal(valid.wallSeconds, 19.845);
   assert.equal(valid.coldWallSeconds, 34.845);
   assert.equal(valid.fullWindowAnd500PerSide, true);
+  schedules(tap.replace(nativeScheduleNames[0]!, "unrelated passing case"));
+  assert.throws(() => checkSweep(out, request), /Incomplete native schedule set/);
+  schedules(tap);
   for (const diff of [
     { nonce: randomUUID() },
     { roster: sha("short") },

@@ -3,20 +3,50 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { Replica, ReplicaSnapshot, packEntity } from "../../../../packages/datomic/dist/index.js";
 import { evaluateAll } from "../../../bench/lib/w0-replica.ts";
-import { W0, canonical, sha256, V_W0 } from "../../../bench/lib/w0-world.ts";
+import {
+  W0,
+  canonical,
+  sha256,
+  triplexValue,
+  V_W0,
+  type WorldRow,
+} from "../../../bench/lib/w0-world.ts";
 import { DomainOracle, emptyWireState } from "../../../bench/lib/w0-gates.ts";
 import { open, observe, oracleRecord } from "./check.ts";
 import { workerFinding, workerTrials } from "./bench-proof.ts";
 
-test("the evaluator ladder returns canonical roster order and commits the same ordered pages", async () => {
-  const ids = Array.from({ length: 514 }, (_, i) => W0.placementId(i)),
-    pos = 10,
+test("the evaluator ladder returns canonical roster order and commits the same ordered pages", async (t) => {
+  const rung = W0.rung(1000),
+    basis = W0.populationBasis(rung),
+    pos = basis.tx,
     release = W0.R1;
-  const basis = { tx: pos, validTime: W0.POPULATION_VALID_TIME };
+  const worlds = [...W0.population(rung, 0, 514)].map(({ world }, i) =>
+    i % 16 === 0 ? world : { subject: world.subject, facts: [] },
+  );
+  const ids = worlds.map((world) => world.subject);
+  const rows = new Map<string, WorldRow[]>(ids.map((id) => [id, []])),
+    seen = new Set<string>();
+  // [DX-ACT1] Why: real shared W0 facts and empty neighbors give worker pages unequal work and both delivery outcomes. Rejected: checking parallel order on identical empty worlds alone.
+  for (const world of worlds)
+    for (const f of world.facts) {
+      const key = canonical(f);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const entity = rows.get(f.e) ?? [];
+      entity.push({
+        id: String(seen.size),
+        entityId: f.e,
+        attribute: f.a,
+        value: triplexValue(f.a, f.v),
+        position: f.tx,
+        validFrom: 0,
+      });
+      rows.set(f.e, entity);
+    }
   const view = new ReplicaSnapshot({
     position: pos,
     validAt: V_W0,
-    entities: ids.map((id) => [id, packEntity(1, [])]),
+    entities: [...rows].map(([id, group]) => [id, packEntity(1, group)]),
   });
   const unavailable = async () => {
     throw Error("Unexpected mutable source read");
@@ -26,9 +56,10 @@ test("the evaluator ladder returns canonical roster order and commits the same o
     expected: string[] = [],
     states: string[] = [];
   try {
-    for (const subject of ids) {
+    let withDeliveries = 0;
+    for (const world of worlds) {
       const bytes = await oracle.call("evaluate", {
-        world: { subject, facts: [] },
+        world,
         release: "R1",
         basis,
       });
@@ -40,8 +71,10 @@ test("the evaluator ladder returns canonical roster order and commits the same o
         }),
       );
       states.push(canonical(published.state));
+      if (published.deliveries.length) withDeliveries++;
     }
-    for (const workers of [1, 2, 4, 5]) {
+    assert.ok(withDeliveries > 0 && withDeliveries < ids.length);
+    for (const workers of [1, 2, 3, 4, 5]) {
       const store = await open("act1-workers-" + randomUUID());
       try {
         const r = await evaluateAll({
@@ -76,6 +109,16 @@ test("the evaluator ladder returns canonical roster order and commits the same o
           (await observe(store, ids, 3, "page-cut")).map((s) => canonical(s)),
           states,
         );
+        t.diagnostic(
+          canonical({
+            workers,
+            scope: store.scopeName,
+            roster: p.coverage!.roster,
+            expectedStates: sha256(canonical(states)),
+            withDeliveries,
+            positions: p.responses.map((r: any) => r.position),
+          }),
+        );
       } finally {
         await store.close();
       }
@@ -85,8 +128,8 @@ test("the evaluator ladder returns canonical roster order and commits the same o
   }
 });
 test("worker choice excludes incomplete samples and either interference miss", () => {
-  const trials = workerTrials("1,2,4,5");
-  assert.equal(trials.filter((r) => r.arm === "standard-pages").length, 4);
+  const trials = workerTrials("1,2,3,4,5");
+  assert.equal(trials.filter((r) => r.arm === "standard-pages").length, 5);
   assert.throws(() => workerTrials("2,2"));
   assert.throws(() => workerTrials("6"));
   const point = (workers: number, adequate: boolean, read: number, commit: number) => ({

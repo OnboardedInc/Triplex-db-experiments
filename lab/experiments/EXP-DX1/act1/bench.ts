@@ -26,7 +26,7 @@ const mode = process.argv[2] ?? "--plan";
 const args = process.argv.slice(3),
   option = (key: string, def: string) => (args.includes(key) ? args[args.indexOf(key) + 1]! : def);
 if (args.length % 2 || args.some((v, i) => i % 2 === 0 && !["--workers", "--hours"].includes(v)))
-  throw Error("Use --workers 2,4,5 and optionally --hours N");
+  throw Error("Use --workers 1,2,3,4,5 and optionally --hours N");
 const trials = workerTrials(option("--workers", "2")),
   hours = Number(option("--hours", "3"));
 if (!Number.isFinite(hours) || hours <= 0) throw Error("A positive bench budget is required");
@@ -41,7 +41,7 @@ if (mode === "--plan") {
     "Default budget is three hours on the prepared 12-core BM1 server. Each fresh retained-seed clone runs the oracle restart schedules first, then 100,000 subjects with 256 live readers and the frozen writer trace.",
   );
   console.log(
-    "Run the EAD full/selector pair, standard guard-fact, fourth-arm page coverage and a fresh incorrect historical control. --workers 1,2,4,5 repeats the page arm on fresh clones; --hours 6 budgets the longer ladder.",
+    "Run the EAD full/selector pair, standard guard-fact, fourth-arm page coverage and a fresh incorrect historical control. --workers 1,2,3,4,5 repeats the page arm on fresh clones. --hours 6 budgets the longer ladder.",
   );
   console.log(
     JSON.stringify({ hours, trials, liveReaderCpus: [3, 5], evaluatorCpus: [7, 8, 9, 10, 11] }),

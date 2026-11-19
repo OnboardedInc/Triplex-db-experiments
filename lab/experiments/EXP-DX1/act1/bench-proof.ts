@@ -13,6 +13,47 @@ export const armNames = [
 ] as const;
 export type Arm = (typeof armNames)[number] | "standard-historical";
 export const sha = (data: string | Buffer) => createHash("sha256").update(data).digest("hex");
+const delayed = [
+  "held pay change",
+  "first item after empty evaluation",
+  "equal transaction with earlier valid time",
+];
+export const nativeScheduleNames = [
+  ...["historical", "full-state", "guard-fact", "page-cut"].flatMap((layout) =>
+    delayed.map((name) => layout + " / " + name),
+  ),
+  ...["full-state", "guard-fact", "page-cut"].flatMap((layout) => [
+    layout + " / lost ACK, rollback, retirement and restart",
+    layout + " / concurrent first writers and stalled older snapshot",
+  ]),
+  "partial pages, sparse membership, a newer live winner and lost page ACK survive restart",
+  "live same-page edits invalidate a stalled sweep including an equal-basis body replacement",
+  "coverage cannot close over a duplicate, foreign range, different release or cut",
+  "128 and 256 member writes use bounded native reads at a single position",
+  "ordinary outbox entry points reopen the named page layout for an unhinted live reconcile",
+];
+export function checkSchedules(tap: string) {
+  // [DX-ACT1] Why: the saved transcript must contain each native schedule at issue and at collection. Rejected: accepting a new hash of an incomplete transcript or an aggregate pass count.
+  const rows = tap.split(/\r?\n/);
+  const names = rows.flatMap((line) => {
+    const m = /^ok (\d+) - (.+)$/.exec(line);
+    return m ? [m[2]!] : [];
+  });
+  assert.deepEqual(names.sort(), [...nativeScheduleNames].sort(), "Incomplete native schedule set");
+  const n = nativeScheduleNames.length;
+  for (const line of [
+    "TAP version 13",
+    "1.." + n,
+    "# tests " + n,
+    "# pass " + n,
+    "# fail 0",
+    "# cancelled 0",
+    "# skipped 0",
+    "# todo 0",
+  ])
+    assert.ok(rows.includes(line), "Missing native schedule summary " + line);
+  assert.ok(!rows.some((line) => /^(not ok |Bail out!)/.test(line)));
+}
 const extraFiles = [
   "bench.ts",
   "bench-proof.ts",
@@ -59,6 +100,8 @@ export function benchArguments(argv: string[], slot: string, source: string, non
     [
       "--experimental-strip-types",
       "--test",
+      "--test-reporter=tap",
+      "--test-concurrency=1",
       "lab/experiments/EXP-DX1/act1/guard.test.ts",
       "lab/experiments/EXP-DX1/act1/page.test.ts",
     ],
@@ -71,9 +114,7 @@ export function benchArguments(argv: string[], slot: string, source: string, non
   );
   writeFileSync(join(dir, "act1-schedules.tap"), tap.stdout + tap.stderr, { flag: "wx" });
   assert.equal(tap.status, 0, "Native guard schedules failed");
-  assert.match(tap.stdout, /^# pass 23$/m);
-  assert.match(tap.stdout, /^# fail 0$/m);
-  assert.match(tap.stdout, /^# skipped 0$/m);
+  checkSchedules(tap.stdout);
   writeFileSync(
     join(dir, "act1-schedules.json"),
     JSON.stringify({ slot, source, nonce, request: sha(bytes), tap: sha(tap.stdout + tap.stderr) }),
@@ -127,7 +168,9 @@ export function checkSweep(
   assert.equal(gates.slot, a.slot);
   assert.equal(gates.nonce, a.nonce);
   assert.equal(gates.request, sha(requested));
-  assert.equal(gates.tap, sha(readFileSync(join(out, "act1-schedules.tap"))));
+  const transcript = readFileSync(join(out, "act1-schedules.tap"));
+  assert.equal(gates.tap, sha(transcript));
+  checkSchedules(transcript.toString());
   assert.equal(s.build, sha(readFileSync(join(out, "source.SHA256SUMS"))));
   assert.equal(s.build, a.sourceManifestSha256);
   assert.deepEqual(
