@@ -39,12 +39,16 @@ const sinkStore = await openComposition("reach", "datomic", "notice-sink-" + run
   oracle = new DomainOracle(new URL("./oracle.py", import.meta.url).pathname);
 const expected: any[] = [],
   originals: any[] = [];
+let payChangedAt: number | undefined;
 async function expect(release: string, tx: number, seed: number, mask?: number) {
   const worlds = ids.map((subject) => ({
     subject,
-    facts: facts(subject, seed).map((f) =>
-      mask && f.a === "ssn" ? { ...f, v: { erasedAt: v }, tx: seed } : f,
-    ),
+    facts: facts(subject, seed).map((f) => {
+      if (payChangedAt && f.e === s && f.a === "payRateCents")
+        return { ...f, v: 1500, tx: payChangedAt };
+      if (mask && f.a === "ssn") return { ...f, v: { erasedAt: v }, tx: seed };
+      return f;
+    }),
   }));
   expected.push(
     ...parse<any[]>(await oracle.call("fold", { worlds, release, basis: { tx, validTime: v } })),
@@ -65,7 +69,7 @@ async function checkEffects(src: Documents, epoch: string) {
   const pay = observed
     .filter((d) => d.subject === s && d.rule === "MINWAGE")
     .map((d) => Number(d.seq));
-  assert.deepEqual(pay, [1, 2, 3]);
+  assert.deepEqual(pay, [1, 2, 3, 4]);
   return {
     count: observed.length,
     orderedSha256: hash(observed),
@@ -126,6 +130,28 @@ try {
           feed = await lazyFeed(host, await host.head());
         await assert.rejects(
           drainHost(src, sink, feed, async () => {
+            const oldRate = seed.changes.find(
+              (row: any) => row.entityId === s && row.attribute === "payRateCents",
+            );
+            assert(oldRate?.assertionTxId === seed.txId);
+            const change = await host.input("save-during-delivery", { kind: "source", at: v }, [
+              { op: "retract", id: oldRate.tripleId },
+              {
+                op: "assert",
+                entityId: s,
+                attribute: "payRateCents",
+                value: triplexValue("payRateCents", 1500),
+                validFrom: 0,
+              },
+            ]);
+            payChangedAt = change.position;
+            const decision = await load("decision");
+            const q = await decision.propose(host, "w0", s);
+            const ordinary = await decision.admitLive(host, "w0", q, undefined, projection);
+            if (ordinary.status === "deferred") await projection.drain();
+            else assert(ordinary.status === "accepted" && ordinary.receipt.actor === "lazy/event");
+            originals.push(["save-during-delivery", change.position, change.txId, ordinary.status]);
+            await expect("R1", change.position, seed.position, loss.position);
             throw Error("drop ACK");
           }),
           /drop ACK/,
@@ -202,15 +228,24 @@ try {
       const feed = await deltaFeed(host, last.value.seq, (n) => dispatch.expand(host, n));
       await assert.rejects(
         drainHost(source, sink, feed, async () => {
+          // [DX-STG1] Why: a live save can commit after receipt application while the sender still waits for its ACK. Rejected: deriving the original packet again from the newest pay rate.
+          const change = await save.save(host, "save-during-delivery", [
+            { e: s, a: "payRateCents", from: v, values: [1500] },
+          ]);
+          const current = await host.head(change.position);
+          payChangedAt = current.value.basis.tx;
+          originals.push(["save-during-delivery", change.position, current.value.seq]);
+          await expect("R1", current.value.basis.tx, 1, after.value.basis.tx);
           throw Error("drop ACK");
         }),
         /drop ACK/,
       );
       const reopened = new lib.Account(new objects.Objects(comp, "target"), binding, keys);
+      const newest = await reopened.head(await comp.currentPosition());
       await drainHost(
         source,
         sink,
-        await deltaFeed(reopened, last.value.seq, (n) => dispatch.expand(reopened, n)),
+        await deltaFeed(reopened, newest.value.seq, (n) => dispatch.expand(reopened, n)),
       );
       proof = await checkEffects(source, feed.epoch);
     } finally {
