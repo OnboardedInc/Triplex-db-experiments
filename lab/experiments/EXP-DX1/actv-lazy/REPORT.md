@@ -19,7 +19,7 @@ The first paired population runs used source `9d2fa21f3`, fresh native Datomic v
 Each size had three switches, 72 misses, 72 hits, 48 ordinary no-change reconciles and eight real saves. All 33,000 pinned outputs matched Python. The backdated two-hop correction added another 1,000 checks.
 Every switch used 12 native HTTP requests and one 1,009–1,012-byte journal receipt. The first cold column includes process startup. No keep-warm work ran. R1 explicitly migrated all members. R2 sought qualifying locations and pay ranges. R3 examined zero release-only owners.
 At 1,000/10,000 the eight saves took median 39.2/44.8 ms plus 43.3/47.2 ms for index maintenance and publication. Four item states changed at each size. The account cursor also advances over no-change source inputs.
-Six isolated native admission schedules, reads across historical pins, unpaid rollback and reappearance, expiry despite a later correction, and the 23 unchanged ACT2 publication tests ran in the earlier small gate. The isolated admission fixture installed its own test cursor. The revised gate uses the real dispatcher for every transition.
+The final native proof at `eda1ed132` passed six admission schedules through the real cursor, 19 pinned reads and all 23 inherited publication schedules. Nine actual process kills covered the marker, cache, publisher, recipient and ACK. A raced location move, first local floor, equality retirement and two-hop correction produced all six independently expected notices. The rollback fixture applied seven ordered effects.
 
 ### What the new rule promises
 
@@ -36,7 +36,7 @@ The pilot covers the stock W0 releases. Protected E-Verify submission is exclude
 - `Projection.advance/Dispatcher.step` verify contiguous native source, original command bytes, sealed roster, ordered event and range, prior cursor and native commit. `Receiver.send/drain` verify generation, pending content, per-person order, original applied bytes and native acknowledgement.
 - `negative/projection/admission/read/dispatch/dependency/boundary/service/crash/pressure` use fresh fixtures. Their checks cover an independent 180-world index grid, three historical failures, delayed decisions, real races and restarts, changed dependency edges, native cursor binding, unpaid effects and the receiver.
 - `seed/price/local` bind the observed native population and roster to a fresh scope, source and built-module hashes, owner, slot, volume and image. Python checks every output, item delta and ordered delivery. Pricing checks the exact marker, zero roster visits, every normal reconcile and the final receiver database.
-- Durable raw evidence is under `evidence/DX-ACT1/actv-lazy/`. The first paired runs are `rung1000-b` and `rung10000-b`. Both native volumes were removed. No acceptance pin moved. [Evidence checksums](SHA256SUMS)
+- Durable raw evidence is under `evidence/DX-ACT1/actv-lazy/`. The first paired runs are `rung1000-b` and `rung10000-b`. The final functional receipts are in `proof-d`. Its volume and both priced volumes were removed. All 174 frozen W0 tests and five experiment tests passed. No acceptance pin moved. [Evidence checksums](SHA256SUMS)
 
 ### Dedicated bench
 
