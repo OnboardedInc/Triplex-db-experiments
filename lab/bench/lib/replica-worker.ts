@@ -1,8 +1,13 @@
-import { flushTracing, continueTrace } from "./tracing.ts";
+import { beginTrace, finishTrace, flushTracing, continueTrace, traceAsync, traceNow, withTrace } from "./tracing.ts";
 import fs from "node:fs";
 import { readObservation } from "./read-observation.ts";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { ReplicaReadHost, ReplicaReader, replicaReply } from "./replica-reads.ts";
+import { GatewayObserver } from "./gateway-observer.ts";
+import { ReceiptCapture } from "./receipt-capture.ts";
+import { PHASE_RYOW } from "./receipt-read.ts";
+import { ids } from "./world.ts";
+import type { Basis } from "./composition.ts";
 // [DX-R3] Why: a new public runtime after seed can advance the native basis without a journal position and poison clock admission.
 // Rejected: initializing another writer runtime inside the follower; reuse the parent's already-open head and exact fallback.
 let serial = 0;
@@ -14,6 +19,35 @@ try {
   // [DX-R3] Why: subscribe and publish the initial cut in one turn; no journal can fall between image and deltas.
   // Rejected: requesting a snapshot and subscribing in separate parent messages.
   const local = new ReplicaReader(cfg.historyBytes, host.index, cfg.worldCacheBytes ?? 32 * 1024 ** 2);
+  const fallback = (basis: Basis, started: number) => ({
+    waitedMs: performance.now() - started,
+    reason: !host.index.valid ? "copy-unavailable"
+      : basis.recordedPosition !== undefined && basis.recordedPosition < host.index.floor ? "outside-window"
+      : basis.recordedPosition !== undefined && basis.recordedPosition > host.index.position ? "watermark-timeout"
+      : basis.recordedPosition === undefined && host.index.isOpenClock(basis.recordedAt) ? "open-record-clock"
+      : "unmapped-clock-or-closure",
+  });
+  const gateway = cfg.receiptSpill ? new GatewayObserver(cfg.scope, cfg.receiptEndpoint) : undefined;
+  const receipts = gateway ? new ReceiptCapture(cfg.receiptSpill, cfg.receiptProgress, traceNow, async input => {
+    // [DX-DRV1] Why: keep the same replica and position-fenced fallback from the submitted basis through observation.
+    // Rejected: deciding a read from a later watermark or waiting for the observer inside ACK delivery.
+    const trace = beginTrace("read", "driver.ryow", { phase: PHASE_RYOW, commitTraceId: input.commitTraceId }, input.start);
+    try {
+      return await withTrace(trace, () => traceAsync("driver.ryow-capture", async () => {
+        const declined = Error("exact gateway fallback required"), started = performance.now();
+        const root = ids.placement(input.subject), basis = input.basis;
+        try {
+          return readObservation(await local.pullAt(root, basis, async () => { throw declined; }));
+        } catch (error) {
+          if (error !== declined) throw error;
+          const { waitedMs, reason } = fallback(basis, started);
+          return gateway.observe(root, basis, waitedMs, reason);
+        }
+      }));
+    } finally {
+      finishTrace(trace);
+    }
+  }) : undefined;
   const indexStats = () => ({ floor: host.index.floor, position: host.index.position, historyBytes: host.index.historyBytes, positions: host.index.positions, maxBytes: host.index.maxBytes });
   const readers = new Set<import("node:worker_threads").MessagePort>();
   let sharedReader = false;
@@ -29,6 +63,7 @@ try {
     port!.postMessage({ type: "progress", index: indexStats(), valid: delta.valid, bytes, at, timing: host.applied.at(-1) });
     for (const reader of readers) reader.postMessage({ type: "replica-delta", delta, sentAt: at });
   });
+  if (gateway) await gateway.ready;
   port!.postMessage({ type: "ready", index: indexStats(), bytes: host.replica.bytes });
   const handleMessage = async (m: any) => {
     if (m.type === "pull" || m.type === "observe") {
@@ -39,11 +74,13 @@ try {
         // Rejected: fabricating an empty triples array beside a nonempty cached digest.
         port!.postMessage({ type: "reply", id: m.id, value: m.type === "observe" ? readObservation(result) : replicaReply(result) });
       } catch (error) {
-        if (error === declined) port!.postMessage({ type: "reply", id: m.id, fallback: true, waitedMs: performance.now() - started,
-          reason: !host.index.valid ? "copy-unavailable" : m.basis.recordedPosition < host.index.floor ? "outside-window" : m.basis.recordedPosition > host.index.position ? "watermark-timeout" : m.basis.recordedPosition === undefined && host.index.isOpenClock(m.basis.recordedAt) ? "open-record-clock" : "unmapped-clock-or-closure" });
+        if (error === declined) port!.postMessage({ type: "reply", id: m.id, fallback: true, ...fallback(m.basis, started) });
         else port!.postMessage({ type: "reply", id: m.id, error: String(error) });
       }
     }
+    if (m.type === "capture-receipt") receipts!.add(m.id, m.input);
+    if (m.type === "drain-receipts")
+      port!.postMessage({ type: "receipt-drained", value: await receipts!.finish(m.count) });
     if (m.type === "connect") {
       // [DX-R3] Why: publish image then ordered deltas on the same port without writer-thread cloning.
       // Rejected: routing every reader's slab metadata through the commit issuer.
@@ -66,7 +103,15 @@ try {
         control.close();
       }
     }
-    if (m.type === "close") { await host.close(); if (appliedLog !== undefined) fs.closeSync(appliedLog); for (const reader of readers) reader.close(); await flushTracing(); port!.postMessage({ type: "closed" }); port!.close(); }
+    if (m.type === "close") {
+      const gatewayObserverStats = await gateway?.close();
+      await host.close();
+      if (appliedLog !== undefined) fs.closeSync(appliedLog);
+      for (const reader of readers) reader.close();
+      await flushTracing();
+      port!.postMessage({ type: "closed", gatewayObserverStats });
+      port!.close();
+    }
   };
   port!.on("message",m=>{void (["pull","observe"].includes(m.type)?continueTrace(m.trace,"worker.replica."+m.type,()=>handleMessage(m)):handleMessage(m));});
 } catch (error) { port!.postMessage({ type: "error", message: String(error) }); }

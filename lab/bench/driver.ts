@@ -63,7 +63,9 @@ import { FeedConsumer, openHostFeedClock, openPublicationWriter, openAsyncPublic
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
 import { ModelJournal } from "./lib/model-journal.ts";
+import { ModelJournalThread } from "./lib/model-journal-thread.ts";
 import { R, observe, type ReadRecord } from "./lib/observe.ts";
+import { MAX_RECEIPT_CAPTURES, PHASE_RYOW, countReceiptFallback, receiptReadRow } from "./lib/receipt-read.ts";
 import { ExpectationCache } from "./lib/expectation-cache.ts";
 import { splitTarget } from "./lib/split-target.ts";
 import { ReaderLifecycle } from "./lib/reader-lifecycle.ts";
@@ -171,7 +173,8 @@ const config = {
   rateScale: Number(opt("rate-scale", "1")),
   levelS: opt("level-s") ? Number(opt("level-s")) : null,
   compactModel: process.env.DX_MODEL_COMPACT === "1",
-  expectedStateRetention: opt("expected-state-retention", process.env.DX_EXPECTED_STATE_RETENTION || "heap") as "heap" | "journal",
+  expectedStateRetention: opt("expected-state-retention", process.env.DX_EXPECTED_STATE_RETENTION || "heap") as "heap" | "journal" | "worker-journal",
+  receiptCapture: opt("receipt-capture", "sender") as "sender" | "replica-worker",
   oracleSampleSubjects: Number(opt("oracle-subjects", "12")),
   oracleRate: Number(opt("oracle-rate", "0.01")),
   oracleMaxReads: Number(opt("oracle-max-reads", "24")),
@@ -207,7 +210,13 @@ if(opt("idle-warmup-commits") && !config.idleGapsMs) throw Error("One-time warmu
 if (profile === "v3" && (config.levelS || config.readerLadderOnly || config.legacyEmptyBasisBroadcast || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
   throw Error("v3 requires its full fixed phase plan and unchanged offered rate");
 if (profile === "v3") config.matchDurationS = V3_OFFER_SECONDS;
-if (!["heap", "journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
+if (!["heap", "journal", "worker-journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
+if (!["sender", "replica-worker"].includes(config.receiptCapture)) throw Error("Invalid receipt capture mode");
+if (config.receiptCapture === "replica-worker" &&
+    (lane !== "datomic" || !config.zeroReaders || config.readPath !== "replica" ||
+      config.replicaThread !== "worker" || config.replicaFallbackThread !== "worker" ||
+      config.roundPlan || config.idleGapsMs))
+  throw Error("Receipt capture worker requires zero readers and threaded Datomic replica and fallback");
 // [DX-T1-15] Why: the bounded reader trial admits one replica index copy and up to 64 logical readers.
 // Rejected: tuning caps for a short diagnostic while silently starting the normal four-worker ladder and sweeper.
 if (boundedMemoryTrial && (lane !== "datomic" || profile !== "smoke" || config.readPath !== "replica" ||
@@ -348,10 +357,13 @@ const cpuMarks: { t: number; cpu: NodeJS.CpuUsage }[] = [];
 // ---------------------------------------------------------------- shared state
 
 let model = new Model(rungSubjects);
-const modelJournal = config.expectedStateRetention === "journal" ? new ModelJournal(path.join(rawDir, `expected-model-${runTag}.bin`), {
+const modelJournalFile = path.join(rawDir, `expected-model-${runTag}.bin`);
+const modelJournalContext = {
   run: process.env.TRIPLEX_TRACE_RUN ?? runTag, source: process.env.TRIPLEX_TRACE_SOURCE ?? "local", slot: process.env.TRIPLEX_TRACE_SLOT ?? runTag, subjects: rungSubjects,
-}) : undefined;
-const modelWriter = modelJournal ?? model;
+};
+let modelJournal = config.expectedStateRetention === "journal" ? new ModelJournal(modelJournalFile, modelJournalContext) : undefined;
+const modelJournalThread = config.expectedStateRetention === "worker-journal" ? new ModelJournalThread(modelJournalFile, modelJournalContext) : undefined;
+const modelWriter = modelJournalThread ?? modelJournal ?? model;
 const accounts = accountsFor(rungSubjects);
 let expectations = new ExpectationCache(model);
 const ryowFallbackReasons: Record<string, number> = {};
@@ -403,7 +415,6 @@ const lostAck: any[] = [];
 const resends: any[] = [];
 const ryowPending = new Set<Promise<void>>();
 let latestInstant = 0;
-const PHASE_RYOW = -2;
 /** [EXP-M01] Open-loop read probe records (paired rounds). */
 const PHASE_PROBE = -3;
 const SWEEP_PHASE_OFFSET = 1000;
@@ -514,6 +525,9 @@ async function run() {
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
   const traceDurationS = idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
   const events = idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
+  if (config.receiptCapture === "replica-worker" &&
+      events.filter(e => e.stream === "background" && !e.resend).length > MAX_RECEIPT_CAPTURES)
+    throw Error("Frozen trace exceeds fixed receipt-capture capacity");
   const resendSequences = new Set(events.filter(e=>e.resend).map(e=>e.seq));
   verdictEvents = events;
   if (profile === "v3") { report.verdictPlan = checkV3Trace(events); log(`v3 scheduled counts: ${JSON.stringify(report.verdictPlan.counts)}`); }
@@ -530,12 +544,15 @@ async function run() {
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
       worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer,
       sharedReaderIndex: config.sharedReaderIndex,
+      receiptSpill: config.receiptCapture === "replica-worker" ? spill!.connect() : undefined,
       ...(config.sharedReaderIndex ? { worker: 0, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2 } : {}),
     }, aux)
     : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
       scopeName, Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
       config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer) : undefined;
+  const receiptThread = config.receiptCapture === "replica-worker" && replicaHost && "captureReceipt" in replicaHost
+    ? replicaHost : undefined;
   const mainReplicaHost = replicaHost && !("connect" in replicaHost) ? replicaHost : undefined;
   const replicaLocal = mainReplicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2, mainReplicaHost.index, config.replicaWorldCacheMiB * 1024 ** 2) : undefined;
   if (mainReplicaHost && replicaLocal) {
@@ -759,6 +776,12 @@ async function run() {
     if (oracleRecordSet.has(ev.subject))
       traceSync("driver.oracle-record", () => recordedCommands.push({ commandId: cmd.commandId, operations: cmd.operations, preconditions: cmd.preconditions, actor: ev.kind, receipt: { txId: receipt!.txId, position: receipt!.position, instant: receipt!.instant, assertionIds: alignAssertIds(cmd.operations, receipt!) } }));
     if (ev.stream === "background") traceSync("driver.ryow-dispatch", () => {
+      if (receiptThread) {
+        const start = now();
+        receiptThread.captureReceipt({ subject: ev.subject, start, commitTraceId: jobTraces.get(job)?.traceId ?? "off",
+          basis: { recordedAt: receipt.instant, recordedPosition: receipt.position, validAt: Math.floor(start) } });
+        return;
+      }
       const ryowTrace = beginTrace("read", "driver.ryow", { phase: -2, commitTraceId: jobTraces.get(job)?.traceId ?? "off" });
       const p = withTrace(ryowTrace, () => traceAsync("driver.ryow-capture", () => !replicaHost && feed instanceof SideThread ? feed.ryow(ev.subject, receipt, {recordedAt:receipt.instant,validAt:Math.floor(at)}, at).then((row: any)=>{ row[R.phase]=PHASE_RYOW; retainRead(row); }) : ryow(aux, ev.subject, receipt, !!replicaHost, replicaHost && "observe" in replicaHost ? replicaHost.observe.bind(replicaHost) : undefined))).finally(() => finishTrace(ryowTrace));
       ryowPending.add(p);
@@ -1127,7 +1150,11 @@ async function run() {
   const inFlightAtFeedTarget = scheduler.inFlightCount;
   report.writerSourceDiagnostics.end = datomicWriterDiagnostics();
   if (deferredPublications) report.deferredPublication = await deferredPublications.flush();
-  await Promise.race([Promise.all([...ryowPending]), sleep(30_000)]);
+  const receiptQueue = await receiptThread?.drainReceiptCaptures();
+  if (receiptQueue) {
+    mainReadCount += receiptQueue.retained;
+    Object.assign(ryowFallbackReasons, receiptQueue.fallbackReasons);
+  } else await Promise.race([Promise.all([...ryowPending]), sleep(30_000)]);
   for (const w of workers) w.postMessage({ type: "stop" });
   await Promise.race([Promise.all(stopped), sleep(40_000)]);
   for (const w of workers) await w.terminate();
@@ -1203,6 +1230,11 @@ async function run() {
   cpuProfileClock("end");
   // [DX-T1-7] Why: every receipt/commit must hydrate and verify before any expected-world verdict is computed.
   // Rejected: accepting a smaller heap by skipping the complete model or exposing an incompletely replayed model.
+  if (modelJournalThread) {
+    const sealed = await modelJournalThread.seal();
+    modelJournal = sealed.journal;
+    report.expectedStateJournalQueue = sealed.queue;
+  }
   if (modelJournal) {
     const restored = modelJournal.restore(); model = restored.model; expectations = new ExpectationCache(model);
     report.expectedStateJournal = await modelJournal.archive();
@@ -1212,6 +1244,22 @@ async function run() {
   report.finalPosition = finalPosition === null ? null : coordinate(finalPosition);
   if (feed && feed.uncheckedIntents) finalizationErrors.push(`${feed.uncheckedIntents} feed intent checks still lack ACK metadata`);
   if (ryowPending.size) finalizationErrors.push(`${ryowPending.size} read-your-own-write pulls did not finish`);
+  if (receiptQueue) {
+    // [DX-DRV1] Why: every spooled tuple must name its distinct live ACK even if two worlds have the same digest.
+    // Rejected: trusting a matching count or reusing a row from another receipt of the same subject.
+    const committed = writes.filter(w => w.stream === "background" && !w.resend && w.outcome === "committed" && !w.expired);
+    const expected = new Map<number, typeof committed[number]>(committed.map(w => [w.position, w]));
+    let matched = 0, mismatches = committed.length - expected.size;
+    visitPhase(PHASE_RYOW, row => {
+      const position = row[R.basisPosition], write = expected.get(position);
+      if (!write || row[R.subject] !== write.subject || row[R.recordedAt] !== ackOf.get(position)?.instant ||
+          row[R.validAt] !== Math.floor(row[R.start]) || row[R.start] < write.ackPublishedAt) mismatches++;
+      else { expected.delete(position); matched++; }
+    });
+    report.receiptCapture = { ...receiptQueue, matched, missing: expected.size, mismatches };
+    if (mismatches || expected.size || matched !== receiptQueue.retained)
+      finalizationErrors.push("Receipt capture rows differ from actual commit positions and bases");
+  }
   if (config.readPath === "replica") {
     report.rawLocalSamples = rawLocalCoverage(phases, oracleSamples);
     report.replicaRecordClockPolicies = readerFinalDiagnostics.map(x => ({ worker: x.worker, strictRecordClocks: x.diagnostics.strictRecordClocks }));
@@ -1479,11 +1527,10 @@ async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt, 
     const result = capture ? await capture(ids.placement(subject), basis) : await comp.pull(ids.placement(subject), basis);
     const latency = performance.now() - t;
     const pr = "observed" in result ? result : readObservation(result);
-    const o = pr.observed;
-    if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? "gateway"; ryowFallbackReasons[reason] = (ryowFallbackReasons[reason] ?? 0) + 1; }
-    retainRead([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, receipt.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
+    countReceiptFallback(ryowFallbackReasons, pr);
+    retainRead(receiptReadRow(subject, basis, receipt.position, start, latency, pr));
   } catch (error: any) {
-    retainRead([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, receipt.position, 0, -1, 0, "error", "", 0]);
+    retainRead(receiptReadRow(subject, basis, receipt.position, start, performance.now() - t, { error: String(error?._tag ?? "Error") }));
   }
 }
 /** Maintenance evidence (TARGETS 1.1 P1 item 3): engine log lines naming compaction, merge or rebuild. */

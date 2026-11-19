@@ -8,10 +8,16 @@ import { createHash } from "node:crypto";
 import { Model, type Commit } from "./model.ts";
 import type { Receipt } from "./composition.ts";
 
-type Context = Readonly<{ run: string; source: string; slot: string; subjects: number }>;
-type Entry =
-  | { seq: number; kind: "receipt"; operations: readonly any[]; receipt: Receipt; actor?: string }
-  | { seq: number; kind: "commit"; subject: number; commit: Commit };
+export type JournalContext = Readonly<{
+  run: string;
+  source: string;
+  slot: string;
+  subjects: number;
+}>;
+export type JournalSeal = Readonly<{ frames: number; bytes: number; sha256: string }>;
+export type JournalEntry =
+  | { kind: "receipt"; operations: readonly any[]; receipt: Receipt; actor?: string }
+  | { kind: "commit"; subject: number; commit: Commit };
 const OPTION_FIELDS = [
   "validTo",
   "createdBy",
@@ -40,18 +46,26 @@ function receiptOptions(receipt: Receipt, restore: boolean): Receipt {
 }
 const LIMIT = 128 * 1024 ** 2;
 
+export function journalReceipt(
+  operations: readonly any[],
+  receipt: Receipt,
+  actor?: string,
+): JournalEntry {
+  return { kind: "receipt", operations, receipt: receiptOptions(receipt, false), actor };
+}
+
 // [DX-T1-7] Why: the independent expectation model is read only after drain; keep its receipt graph off the timed writer heap.
 // Rejected: dropping observations, judging early, changing the acknowledgement timestamp, or weakening full-row comparison.
 export class ModelJournal {
-  private fd: number;
+  private fd: number | undefined;
   private frames = 0;
   private restored = false;
   private bytes = 0;
   private digest = createHash("sha256");
-  private sealed: { frames: number; bytes: number; sha256: string } | undefined;
+  private sealed: JournalSeal | undefined;
   readonly file: string;
-  readonly context: Context;
-  constructor(file: string, context: Context) {
+  readonly context: JournalContext;
+  constructor(file: string, context: JournalContext, seal?: JournalSeal) {
     if (
       !context.run ||
       !context.source ||
@@ -62,10 +76,14 @@ export class ModelJournal {
       throw Error("Invalid model journal identity");
     this.file = file;
     this.context = Object.freeze({ ...context });
-    this.fd = fs.openSync(file, "wx");
-    this.write({ schema: "triplex.expected-model/1", ...this.context });
+    if (seal) this.sealed = seal;
+    else {
+      this.fd = fs.openSync(file, "wx");
+      this.write({ schema: "triplex.expected-model/1", ...this.context });
+    }
   }
   private write(value: unknown) {
+    if (this.fd === undefined) throw Error("Model journal is closed");
     const body = serialize(value);
     if (body.length > LIMIT) throw Error("Model journal frame too large");
     const header = Buffer.allocUnsafe(4);
@@ -82,26 +100,22 @@ export class ModelJournal {
     }
   }
   bindReceipt(operations: readonly any[], receipt: Receipt, actor?: string) {
-    this.append({
-      seq: this.frames,
-      kind: "receipt",
-      operations,
-      receipt: receiptOptions(receipt, false),
-      actor,
-    });
+    this.append(journalReceipt(operations, receipt, actor));
   }
   addCommit(subject: number, commit: Commit) {
-    this.append({ seq: this.frames, kind: "commit", subject, commit });
+    this.append({ kind: "commit", subject, commit });
   }
-  private append(entry: Entry) {
+  append(entry: JournalEntry) {
     if (this.sealed) throw Error("Model journal is sealed");
-    this.write(entry);
+    this.write({ seq: this.frames, ...entry });
     this.frames++;
   }
   seal() {
     if (!this.sealed) {
+      if (this.fd === undefined) throw Error("Model journal is closed");
       fs.fsyncSync(this.fd);
       fs.closeSync(this.fd);
+      this.fd = undefined;
       // [DX-T1-7] Why: even a capture-manifest receipt must describe read-back bytes and immutable ownership.
       // Rejected: returning the hash of write buffers before checking the actual file content.
       const expected = this.digest.digest("hex"),
@@ -209,7 +223,7 @@ export class ModelJournal {
       )
         throw Error("Model journal identity mismatch");
       while (offset < seal.bytes) {
-        const row: Entry = frame();
+        const row: JournalEntry & { seq: number } = frame();
         if (row.seq !== frames++) throw Error("Model journal sequence mismatch");
         if (row.kind === "receipt")
           model.bindReceipt(row.operations, receiptOptions(row.receipt, true), row.actor);
