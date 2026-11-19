@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { memoryComposition } from "../../../bench/lib/memory.ts";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
@@ -97,15 +99,43 @@ test("owed batches survive two releases, a newer save, erasure, lost ACKs and re
         new Notices(fresh, "account", protectedInput),
         new Documents(freshSink, "sink"),
       );
-      await assert.rejects(
-        restarted.drain({
-          afterReceive: async () => {
-            throw Error("lost receiver acknowledgement");
-          },
-        }),
-        /lost receiver acknowledgement/,
-      );
-      await restarted.drain();
+      if (process.env.NOTIFY_NATIVE === "1") {
+        for (const action of ["effect-before-ack", "finish"]) {
+          const nonce = randomUUID(),
+            scope = "notify-" + epoch;
+          const receipt = JSON.parse(
+            execFileSync(
+              process.execPath,
+              [
+                "--experimental-strip-types",
+                fileURLToPath(new URL("./restart.ts", import.meta.url)),
+              ],
+              {
+                input: JSON.stringify({ nonce, scope, subject, erased: erased.position, action }),
+                encoding: "utf8",
+                timeout: 120000,
+              },
+            ),
+          );
+          assert(
+            receipt.scope === scope &&
+              receipt.nonce === nonce &&
+              receipt.action === action &&
+              receipt.position >= erased.position &&
+              receipt.receiver > 0,
+          );
+        }
+      } else {
+        await assert.rejects(
+          restarted.drain({
+            afterReceive: async () => {
+              throw Error("lost receiver acknowledgement");
+            },
+          }),
+          /lost receiver acknowledgement/,
+        );
+        await restarted.drain();
+      }
       const proof = await verify(
         restarted,
         await inputs.roster({ position: erased.position, validTime: v }),
@@ -129,7 +159,11 @@ test("owed batches survive two releases, a newer save, erasure, lost ACKs and re
           (await a.db.get("erase-proof:" + hash(subject) + ":1", erased.position)).value,
         ).includes("000000000"),
       );
-      assert.equal((await restarted.drain()).deliveries, restarted.metrics.deliveries);
+      const oldHead = await fresh.currentPosition(),
+        oldSink = await freshSink.currentPosition();
+      await restarted.drain();
+      assert.equal(await fresh.currentPosition(), oldHead);
+      assert.equal(await freshSink.currentPosition(), oldSink);
     } finally {
       await fresh.close();
       await freshSink.close();
@@ -144,17 +178,44 @@ test("a busy account stalled after delivery lets a quiet account finish", async 
     quiet = await setup(3);
   try {
     for (const t of [busy, quiet]) await t.a.append(await t.a.observe(), release("open", "R1"));
-    let resume!: () => void, quietFinished!: () => void;
+    let resume!: () => void, stuck!: () => void;
     const stalled = new Promise<void>((r) => (resume = r)),
-      done = new Promise<void>((r) => (quietFinished = r));
+      entered = new Promise<void>((r) => (stuck = r));
+    const quietDrain = quiet.worker.drain.bind(quiet.worker);
+    let finished!: () => void;
+    const quietComplete = new Promise<void>((r) => (finished = r));
+    quiet.worker.drain = async (opts) => {
+      await entered;
+      const result = await quietDrain(opts);
+      finished();
+      return result;
+    };
     const drain = drainAccounts([
-      { worker: busy.worker, afterReceive: () => stalled },
-      { worker: quiet.worker, afterReceive: async () => quietFinished() },
+      {
+        worker: busy.worker,
+        afterReceive: async () => {
+          stuck();
+          await stalled;
+        },
+      },
+      { worker: quiet.worker },
     ]);
-    await done;
     try {
+      await Promise.race([
+        quietComplete,
+        drain.then(() => {
+          throw Error("Quiet account failed to finish");
+        }),
+      ]);
       assert((await quiet.worker.effects()).length > 0);
-      assert((await busy.a.observe()).value.sequence === 1);
+      const cur = await quiet.a.db.get<{ pending: string | null; event: number }>(
+        "cursor",
+        await quiet.a.db.head(),
+      );
+      assert(cur.value.pending === null && cur.value.event === 2);
+      assert(
+        (await busy.a.db.get<{ pending: string }>("cursor", await busy.a.db.head())).value.pending,
+      );
     } finally {
       resume();
     }

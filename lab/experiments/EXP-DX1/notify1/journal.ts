@@ -108,8 +108,10 @@ export class Notices {
     return this.db.get<Tail>("tail", await this.db.head());
   }
   async event(n: number, at: number) {
-    const e = await this.db.get<Recipe>("event:" + n, at),
-      r = e.value;
+    return this.checkedEvent(await this.db.get<Recipe>("event:" + n, at), n);
+  }
+  checkedEvent(e: Event, n: number) {
+    const r = e.value;
     assert(
       r.version === 1 &&
         r.sequence === n &&

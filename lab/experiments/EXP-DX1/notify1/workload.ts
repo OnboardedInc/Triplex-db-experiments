@@ -16,6 +16,7 @@ export type Offer = {
 };
 export interface Profile {
   inputs: Inputs;
+  readWorlds?: Inputs["worlds"];
   ids: string[];
   validTime: string;
   offers: Offer[];
@@ -34,6 +35,7 @@ export async function runWindow(opts: {
   readers: number;
   duration?: number;
   pace: number;
+  priority?: boolean;
   phase?: (s: string) => void;
 }) {
   const { profile: p, source, receiver, epoch } = opts;
@@ -88,6 +90,24 @@ export async function runWindow(opts: {
   opts.phase?.(
     opts.duration === undefined ? "dispatching with live traffic" : "matched baseline traffic",
   );
+  let acknowledged = 0,
+    yieldingMs = 0,
+    yields = 0;
+  const grant = opts.priority
+    ? async () => {
+        const began = performance.now();
+        while (
+          (p.offers[acknowledged]?.atMs ?? Infinity) <= performance.now() - start &&
+          performance.now() - began < 500
+        )
+          await sleep(2);
+        const waited = performance.now() - began;
+        if (waited >= 1) {
+          yieldingMs += waited;
+          yields++;
+        }
+      }
+    : undefined;
   const writeLoop = async () => {
     for (const e of p.offers) {
       if (e.atMs >= duration) break;
@@ -113,6 +133,7 @@ export async function runWindow(opts: {
         prepared.set(e.seq, { req, ops: input.ops, checks: input.checks, initial: entry });
       } else assert.deepEqual(ack, cached.initial.receipt);
       if (e.ackLoss) assert.deepEqual(await a.append(t, req, input.ops, input.checks), ack);
+      acknowledged++;
       through = Math.max(through, ack.position);
       saves.push({
         seq: e.seq,
@@ -134,7 +155,10 @@ export async function runWindow(opts: {
         subject = p.ids[i]!,
         position = through;
       const t = performance.now(),
-        [world] = await p.inputs.worlds([subject], { position, validTime: p.validTime });
+        [world] = await (p.readWorlds ?? p.inputs.worlds.bind(p.inputs))([subject], {
+          position,
+          validTime: p.validTime,
+        });
       assert.equal(world?.subject, subject);
       const out = W0.evaluateWorld(world!, W0.R2, { tx: position, validTime: p.validTime });
       assert(!("error" in out));
@@ -156,7 +180,7 @@ export async function runWindow(opts: {
       return;
     }
     try {
-      await worker.drain({ through: 2, gapMs: opts.gapMs });
+      await worker.drain({ through: 2, gapMs: opts.gapMs, grant });
     } finally {
       duration = performance.now() - start;
       drainMs = duration;
@@ -217,6 +241,9 @@ export async function runWindow(opts: {
       journalBytes: Buffer.byteLength(JSON.stringify(claim.value.changes)),
     },
     dispatch,
+    priority: !!opts.priority,
+    yields,
+    yieldingMs,
     deliveriesPerSecond: drainMs ? (dispatch.deliveries * 1000) / drainMs : null,
     readP99: p99(reads.map((x) => x.latency)),
     saveP99: p99(saves.map((x) => x.ackMs)),

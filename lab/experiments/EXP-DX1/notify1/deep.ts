@@ -11,7 +11,12 @@ import type { Cut } from "./journal.ts";
 import type { Op } from "./store.ts";
 import type { Profile } from "./workload.ts";
 
-export async function deepProfile(store: CompositionHandle, n: number): Promise<Profile> {
+export async function deepProfile(
+  store: CompositionHandle,
+  n: number,
+  date: string,
+  reader: CompositionHandle = store,
+): Promise<Profile> {
   const account = { index: 0, key: keyFor(0), first: 0, people: n };
   const plan = makeDeepTrace(deepSeed(0), n, 7200),
     offers = plan.events,
@@ -27,14 +32,13 @@ export async function deepProfile(store: CompositionHandle, n: number): Promise<
     },
   };
   await seedAccounts(seeding, [account]);
-  const date = new Date().toISOString().replace(/Z$/, "000Z"),
-    v = Date.parse(date);
-  const worlds = async (s: string[], cut: Cut) => {
+  const v = Date.parse(date);
+  const project = (handle: CompositionHandle) => async (s: string[], cut: Cut) => {
     const result: W0.World[] = [];
     for (let j = 0; j < s.length; j += 32)
       result.push(
         ...(await readDeepWorlds(
-          store,
+          handle,
           s.slice(j, j + 32).map((id) => Number(id.slice(4))),
           { position: cut.position, validAt: Date.parse(cut.validTime) },
           account.key,
@@ -42,6 +46,7 @@ export async function deepProfile(store: CompositionHandle, n: number): Promise<
       );
     return result;
   };
+  const worlds = project(store);
   const input = {
     identity: "act2-native-deep-policy-v1",
     async roster(cut: Cut) {
@@ -57,6 +62,7 @@ export async function deepProfile(store: CompositionHandle, n: number): Promise<
   const by = new Map(offers.map((e) => [e.seq, e]));
   return {
     inputs: input,
+    readWorlds: project(reader),
     ids,
     validTime: date,
     offers,

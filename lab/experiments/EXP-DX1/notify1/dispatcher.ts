@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { setImmediate as yieldTurn, setTimeout as sleep } from "node:timers/promises";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { width } from "./census.ts";
-import { Notices, type Event, type Tail } from "./journal.ts";
+import { receiveOrdered } from "./receiver.ts";
+import { Notices, type Tail, type Recipe } from "./journal.ts";
 import { Conflict, Documents, hash, pack, unpack, type Row } from "./store.ts";
 
 interface Cursor {
@@ -53,8 +54,6 @@ const metrics = (): Metrics => ({
   conflicts: 0,
 });
 const ledger = (s: string) => "ledger:" + s;
-const inbox = (origin: string, s: string) => "receiver:" + origin + ":" + s;
-const empty = (p: Packet) => hash([p.account, p.epoch, "receiver-genesis"]);
 export class Dispatcher {
   readonly notices: Notices;
   readonly sink: Documents;
@@ -63,7 +62,13 @@ export class Dispatcher {
     this.notices = notices;
     this.sink = sink;
   }
-  async derive(tail: Row<Tail>, old: Row<Cursor> | undefined, at: number) {
+  async derive(
+    tail: Row<Tail>,
+    old: Row<Cursor> | undefined,
+    at: number,
+    grant?: () => Promise<void>,
+    throughEvent?: number,
+  ) {
     const a = this.notices,
       db = a.db,
       t = tail.value;
@@ -87,39 +92,78 @@ export class Dispatcher {
       size =
         e.value.selection.kind === "census" ? e.value.census.count : e.value.selection.ids.length;
     assert(ids.length === Math.min(width, size - cursor.start), "Incomplete delivery source range");
-    const [work, ledgers] = await Promise.all([
-      a.work(e, ids, at).catch(async (error) => {
+    const ranges = [{ event: e, ids }];
+    let visits = ids.length;
+    const ceiling = Math.min(throughEvent ?? t.sequence, t.sequence);
+    if (e.value.selection.kind === "subjects" && e.value.sequence < ceiling) {
+      const keys = Array.from(
+        { length: Math.min(16, ceiling - e.value.sequence) },
+        (_, i) => "event:" + (e.value.sequence + i + 1),
+      );
+      const rows = await db.rows<Recipe>(keys, at);
+      for (const [i, k] of keys.entries()) {
+        const row = rows.get(k);
+        assert(row, "Gap in live publication prefix");
+        const candidate = a.checkedEvent(row, e.value.sequence + i + 1);
+        if (
+          candidate.value.selection.kind !== "subjects" ||
+          visits + candidate.value.selection.ids.length > width
+        )
+          break;
+        assert(
+          candidate.value.epoch === t.epoch &&
+            candidate.value.parent === hash(ranges.at(-1)!.event.value),
+        );
+        ranges.push({ event: candidate, ids: candidate.value.selection.ids });
+        visits += candidate.value.selection.ids.length;
+      }
+    }
+    const subjects = [...new Set(ranges.flatMap((r) => r.ids))],
+      ledgers = await db.rows<string>(subjects.map(ledger), at);
+    const states = new Map<string, readonly W0.ItemState[]>(
+      subjects.map((s) => [
+        s,
+        ledgers.has(ledger(s)) ? unpack<W0.ItemState[]>(ledgers.get(ledger(s))!.value) : [],
+      ]),
+    );
+    const initial = new Map(states),
+      deliveries: W0.Delivery[] = [];
+    const work = await Promise.all(ranges.map((r) => a.work(r.event, r.ids, at))).catch(
+      async (error) => {
         if ((await db.get<number>("erasure", await db.head())).id !== guard.id)
           throw new Conflict("Erasure advanced during replay");
         throw error;
-      }),
-      db.rows<string>(ids.map(ledger), at),
-    ]);
-    const deliveries: W0.Delivery[] = [],
-      changes = [];
-    for (const [i, s] of ids.entries()) {
-      const prior = ledgers.get(ledger(s)),
-        items = prior ? unpack<W0.ItemState[]>(prior.value) : [];
-      const next = W0.publish({ items, subjects: [], pending: [] }, [
-        {
-          subject: s,
-          release: e.value.nextHash,
-          basis: { tx: BigInt(e.at), validTime: e.value.validTime },
-          workItems: work[i]!,
-        },
-      ]);
-      if (canonical(next.state.items) !== canonical(items))
-        changes.push(...db.change(ledger(s), prior, pack(next.state.items)));
-      deliveries.push(...next.deliveries);
+      },
+    );
+    // [DX-STG1] Why: a batch of ordinary saves can revisit a subject. Fold every transition into its predecessor before storing final items and the full delivery list. Rejected: coalescing to the last payload, which loses reversions.
+    for (const [r, range] of ranges.entries()) {
+      for (const [i, s] of range.ids.entries()) {
+        const result = W0.publish({ items: states.get(s)!, subjects: [], pending: [] }, [
+          {
+            subject: s,
+            release: range.event.value.nextHash,
+            basis: { tx: BigInt(range.event.at), validTime: range.event.value.validTime },
+            workItems: work[r]![i]!,
+          },
+        ]);
+        states.set(s, result.state.items);
+        deliveries.push(...result.deliveries);
+      }
     }
+    const changes = subjects.flatMap((s) =>
+      canonical(states.get(s)) === canonical(initial.get(s))
+        ? []
+        : db.change(ledger(s), ledgers.get(ledger(s)), pack(states.get(s))),
+    );
     this.metrics.evaluationMs += performance.now() - start;
-    const through = cursor.start + ids.length,
+    const last = ranges.at(-1)!.event,
+      through = cursor.start + ids.length,
       done = through === size;
     const next: Cursor = {
       ...cursor,
-      event: done ? cursor.event + 1 : cursor.event,
+      event: done ? last.value.sequence + 1 : cursor.event,
       start: done ? 0 : through,
-      parent: done ? hash(e.value) : cursor.parent,
+      parent: done ? hash(last.value) : cursor.parent,
     };
     if (deliveries.length) {
       const packet: Packet = {
@@ -129,7 +173,10 @@ export class Dispatcher {
         previous: cursor.previous,
         event: e.value.sequence,
         position: e.at,
-        recipe: hash(e.value),
+        recipe:
+          ranges.length === 1
+            ? hash(e.value)
+            : hash(ranges.map((r) => [r.event.at, hash(r.event.value)])),
         start: cursor.start,
         through,
         deliveries,
@@ -140,6 +187,7 @@ export class Dispatcher {
       next.pending = digest;
       changes.push(db.put("packet:" + packet.batch, pack(packet)));
     }
+    await grant?.();
     const commit = performance.now();
     // [DX-STG1] Why: this CAS advances the actual published item ledger, immutable packet and contiguous cursor in one write, even when only retirements changed. Rejected: allocating sequences from receiver ACKs or a release-private ledger.
     await db.commit(
@@ -152,60 +200,20 @@ export class Dispatcher {
       ],
     );
     this.metrics.visits++;
-    this.metrics.evaluations += ids.length;
+    this.metrics.evaluations += visits;
     this.metrics.sourceWrites++;
     this.metrics.progressMs += performance.now() - commit;
     return true;
   }
-  async receive(p: Packet, digest: string) {
-    assert.equal(hash(p), digest);
-    assert(p.account === this.notices.db.prefix && p.deliveries.length > 0);
-    const db = this.sink,
-      origin = hash([p.account, p.epoch]),
-      key = "received:" + origin,
-      id = key + ":" + p.batch;
-    const before = await db.original(id, digest);
-    if (before) return;
-    const at = await db.head(),
-      head = await db.row<Receipt>(key, at);
-    assert(
-      (head?.value.batch ?? 0) + 1 === p.batch && (head?.value.digest ?? empty(p)) === p.previous,
-      "Out-of-order receiver packet",
-    );
-    const subjects = [...new Set(p.deliveries.map((d) => d.subject))],
-      rows = await db.rows<string>(
-        subjects.map((s) => inbox(origin, s)),
-        at,
-      );
-    const by = new Map<string, W0.Delivery[]>();
-    for (const d of p.deliveries) {
-      if (!by.has(d.subject)) by.set(d.subject, []);
-      by.get(d.subject)!.push(d);
-    }
-    const ops = [];
-    for (const [subject, ds] of by) {
-      const k = inbox(origin, subject),
-        prior = rows.get(k),
-        state = prior ? unpack<W0.ReceiverState>(prior.value) : W0.EMPTY_RECEIVER;
-      const next = W0.receive(state, ds);
-      assert.equal(canonical(next.applied.effects), canonical(ds), "Gap or duplicate at receiver");
-      ops.push(...db.change(k, prior, pack(next.state)));
-    }
-    const ack = { batch: p.batch, digest };
-    // [DX-STG1] Why: a single receiver transaction stores the actual ordered effects with deduplication and progress. Rejected: acknowledging a non-idempotent external call whose result can be lost.
-    await db.commit(
-      id,
-      digest,
-      [
-        ...ops,
-        ...db.change(key, head, ack),
-        db.put("effects:" + origin + ":" + p.batch, pack(p.deliveries)),
-      ],
-      [db.guard(key, head)],
-    );
-    this.metrics.sinkWrites++;
+  async receive(p: Packet, digest: string, grant?: () => Promise<void>) {
+    if (await receiveOrdered(this.sink, this.notices.db.prefix, p, digest, grant))
+      this.metrics.sinkWrites++;
   }
-  async turn(afterReceive?: (p: Packet) => Promise<void>, through?: number) {
+  async turn(
+    afterReceive?: (p: Packet) => Promise<void>,
+    through?: number,
+    grant?: () => Promise<void>,
+  ) {
     const a = this.notices,
       db = a.db,
       at = await db.head();
@@ -215,14 +223,15 @@ export class Dispatcher {
     ]);
     if (!cursor?.value.pending) {
       if (through !== undefined && (cursor?.value.event ?? 1) > through) return false;
-      return this.derive(tail, cursor, at);
+      return this.derive(tail, cursor, at, grant, through);
     }
     const c = cursor.value,
       p = unpack<Packet>((await db.get<string>("packet:" + c.batch, at)).value),
       start = performance.now();
-    await this.receive(p, c.pending!);
+    await this.receive(p, c.pending!, grant);
     this.metrics.receiverMs += performance.now() - start;
     await afterReceive?.(p);
+    await grant?.();
     const ackTime = performance.now();
     await db.commit(
       "ack:" + c.batch,
@@ -237,11 +246,17 @@ export class Dispatcher {
     return true;
   }
   async drain(
-    opts: { afterReceive?: (p: Packet) => Promise<void>; gapMs?: number; through?: number } = {},
+    opts: {
+      afterReceive?: (p: Packet) => Promise<void>;
+      gapMs?: number;
+      through?: number;
+      grant?: () => Promise<void>;
+    } = {},
   ) {
     for (;;) {
       try {
-        if (!(await this.turn(opts.afterReceive, opts.through))) return this.metrics;
+        await opts.grant?.();
+        if (!(await this.turn(opts.afterReceive, opts.through, opts.grant))) return this.metrics;
       } catch (e) {
         if (!(e instanceof Conflict)) throw e;
         this.metrics.conflicts++;

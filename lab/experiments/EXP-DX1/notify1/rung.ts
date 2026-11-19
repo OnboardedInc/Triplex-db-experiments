@@ -21,6 +21,7 @@ export function inputPins() {
       "fixture.ts",
       "journal.ts",
       "oracle.py",
+      "receiver.ts",
       "rung.ts",
       "store.ts",
       "verify.ts",
@@ -76,6 +77,7 @@ export async function measuredPair(
   deep = false,
   gapMs = 0,
   readers = 4,
+  priority = false,
 ) {
   const pins = inputPins();
   const native = process.env.NOTIFY_NATIVE === "1" || deep;
@@ -84,14 +86,25 @@ export async function measuredPair(
       ? openComposition("reach", "datomic", name)
       : Promise.resolve(memoryComposition("datomic", name));
   const runs = [];
+  const commonTime = new Date().toISOString().replace(/Z$/, "000Z");
   let duration: number | undefined;
   for (const name of ["dispatch", "baseline"]) {
     const epoch = nonce + "-" + name,
       src = await open("notice-" + epoch),
       receiver = await open("effects-" + epoch);
+    let readPeer: CompositionHandle | undefined;
     try {
+      if (deep && process.env.DATOMIC_READ_URLS) {
+        const writerUrl = process.env.DATOMIC_URL!;
+        try {
+          process.env.DATOMIC_URL = process.env.DATOMIC_READ_URLS.split(",")[0]!;
+          readPeer = await open("notice-" + epoch);
+        } finally {
+          process.env.DATOMIC_URL = writerUrl;
+        }
+      }
       const profile = deep
-        ? await (await import("./deep.ts")).deepProfile(src, n)
+        ? await (await import("./deep.ts")).deepProfile(src, n, commonTime, readPeer)
         : await fixtureProfile(src, n);
       const run = await runWindow({
         profile,
@@ -101,6 +114,7 @@ export async function measuredPair(
         gapMs,
         readers,
         duration,
+        priority,
         pace: deep ? 0 : 60,
         phase: (s) =>
           console.log(JSON.stringify({ n, arm: name, phase: s, time: new Date().toISOString() })),
@@ -115,6 +129,7 @@ export async function measuredPair(
       runs.push(summary);
       fs.writeFileSync(path.join(dir, name + ".json"), JSON.stringify(summary), { flag: "wx" });
     } finally {
+      await readPeer?.close();
       await src.close();
       await receiver.close();
     }
@@ -166,7 +181,17 @@ if (process.argv[1] === import.meta.filename) {
     binding.source,
     execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   );
-  const r = await measuredPair(n, dir, binding.source, binding.slot, binding.nonce, false, gap);
+  const r = await measuredPair(
+    n,
+    dir,
+    binding.source,
+    binding.slot,
+    binding.nonce,
+    false,
+    gap,
+    4,
+    process.argv[4] === "priority",
+  );
   assert(fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!).equals(owner));
   console.log(
     JSON.stringify({

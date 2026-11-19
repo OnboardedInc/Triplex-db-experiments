@@ -94,7 +94,12 @@ export class Fixture implements Inputs {
     const rows = await this.rows([entity(s)], cut.position),
       r = rows.find((r) => r.attribute === "world");
     assert(r);
-    const [world] = await this.worlds([s], cut);
+    const stored = unpack<W0.World>(r.value.value);
+    assert.equal(stored.subject, s);
+    const world = {
+      subject: s,
+      facts: stored.facts.map((f) => ({ ...f, tx: f.tx || r.position })),
+    };
     const facts = world!.facts.filter((f) => f.e !== s || !(f.a in changes));
     for (const [a, v] of Object.entries(changes)) if (v !== null) facts.push({ e: s, a, v, tx: 0 });
     return {
