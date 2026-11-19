@@ -526,12 +526,21 @@ async function trial() {
     }
   }
   const replayResults = accounts.map((a) => replay(a));
+  const latencyFile = "latency-samples.json";
+  const samples = { cold, commit, resident: hot, ryow: own };
+  // [DX-INT1] Why: preserve every timed observation after the measurement window so the physical collector can recompute both percentiles.
+  // Rejected: accepting a plausible percentile and sample count without the durations that produced them.
+  save(latencyFile, { binding, attempt, samples });
   return {
     seedMs: totalSeedMs,
     seedPipelineMs: accounts.reduce((n, a) => n + a.seedWallMs, 0),
     seedAckMs: accounts.reduce((n, a) => n + a.seedAckMs, 0),
     coldSeedMs,
     latency: { cold: quant(cold), commit: quant(commit), resident: quant(hot), ryow: quant(own) },
+    latencyReceipt: {
+      file: latencyFile,
+      sha256: digest(fs.readFileSync(path.join(dir!, latencyFile))),
+    },
     accounts: accounts.map((a, n) => ({
       scope: a.comp.scopeName,
       first: a.first,

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { Account, policyId, seedFacts } from "./account.ts";
 import { activate, eadRelease } from "./activation.ts";
@@ -12,9 +12,31 @@ import { policyWorld } from "../../../bench/lib/deep-activation.ts";
 import { memoryComposition } from "../../../bench/lib/memory.ts";
 import { W0, V_W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { smallPeople } from "../scale1/small-plan.ts";
-import { cases, verifyPages } from "./bench-cases.ts";
+import { cases, verifyPages, verifyLatencies } from "./bench-cases.ts";
 import { regularDeepProof } from "./receipt-proof.ts";
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "int1-suite-"));
+test("latency collection recomputes the nearest-rank statistic and rejects another attempt", () => {
+  const dir = tmp(),
+    file = "latency-samples.json",
+    attempt = randomUUID(),
+    binding = randomUUID();
+  try {
+    const kinds = ["cold", "commit", "resident", "ryow"];
+    const samples = Object.fromEntries(kinds.map((kind) => [kind, [8, 1, 3, 2]]));
+    const bytes = JSON.stringify({ binding, attempt, samples });
+    fs.writeFileSync(path.join(dir, file), bytes);
+    const r = {
+      latencyReceipt: { file, sha256: createHash("sha256").update(bytes).digest("hex") },
+      latency: Object.fromEntries(kinds.map((kind) => [kind, { n: 4, p50: 2, p99: 8 }])),
+    };
+    verifyLatencies(dir, r, binding, attempt);
+    assert.throws(() => verifyLatencies(dir, r, binding, randomUUID()));
+    r.latency.cold.p99 = 3;
+    assert.throws(() => verifyLatencies(dir, r, binding, attempt));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
 test("the ordinary deep activation runs the page selector and Python oracle without fetching a cold person's closure", async () => {
   const dir = tmp();
   const comp = await memoryComposition("datomic", "deep-ordinary-" + randomUUID());

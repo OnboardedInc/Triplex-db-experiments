@@ -12,6 +12,24 @@ export const cases = [
 ] as const;
 export type BenchCase = (typeof cases)[number];
 const read = (file: string) => JSON.parse(fs.readFileSync(file, "utf8"));
+export function verifyLatencies(dir: string, r: any, binding: string, attempt: string) {
+  assert.equal(r.latencyReceipt.file, "latency-samples.json");
+  const durations = fs.readFileSync(path.join(dir, r.latencyReceipt.file));
+  assert.equal(createHash("sha256").update(durations).digest("hex"), r.latencyReceipt.sha256);
+  const observed = JSON.parse(durations.toString());
+  assert.equal(observed.binding, binding);
+  assert.equal(observed.attempt, attempt);
+  for (const kind of ["cold", "commit", "resident", "ryow"]) {
+    const values = observed.samples[kind] as number[];
+    assert(values.length && values.every((t) => Number.isFinite(t) && t >= 0));
+    values.sort((a, b) => a - b);
+    assert.deepEqual(r.latency[kind], {
+      n: values.length,
+      p50: values[Math.ceil(values.length / 2) - 1],
+      p99: values[Math.ceil((values.length * 99) / 100) - 1],
+    });
+  }
+}
 export async function verifyPages(dir: string, decision: any, first: number, count: number) {
   const { W0, canonical, sha256 } = await import("../../../bench/lib/w0-world.ts");
   const { eadRelease } = await import("../../../bench/lib/w0-selector.ts");
@@ -150,6 +168,7 @@ export async function verifyCase(
   assert.equal(r.mode, spec.mode);
   assert.equal(r.size, spec.size);
   assert.deepEqual(inputs.containers, stack.containers);
+  verifyLatencies(dir, r, binding, inputs.attempt);
   assert.equal(r.accounts.length, spec.accounts);
   assert.equal(new Set(r.accounts.map((a: any) => a.scope)).size, spec.scopes);
   assert.equal(r.activation.length, 2 * spec.accounts);

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { verifyLatencies } from "./bench-cases.ts";
 import { deepPopulation } from "../../../bench/lib/deep-world.ts";
 import { canonical } from "../../../bench/lib/w0-world.ts";
 const [thin, deep, idle] = process.argv.slice(2);
@@ -102,6 +103,7 @@ const population = [thin, deep].map((dir, i) => {
     a.replay.status === "PASS" && a.replay.entityQueries >= a.replay.reads && a.replay.reads > 0,
   );
   assert.equal(r.latency.cold.n, r.size / 100);
+  if (r.latencyReceipt) verifyLatencies(dir, r, bind, r.attempt);
   const before = p["fixed-hot"],
     after = p["after-cold-import"];
   const x = before.reader.scopes[a.scope],
@@ -130,6 +132,10 @@ const population = [thin, deep].map((dir, i) => {
     coldAdded: n,
     facts: a.facts,
     coldMs: r.latency.cold,
+    latencyEvidence: r.latencyReceipt ?? {
+      method: "nearest-rank computed in the original trial",
+      rawSamplesRetained: false,
+    },
     commitMs: r.latency.commit,
     reads: a.reads,
     ryow: a.ryow,
