@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { canonical, sha256, V_W0 } from "../../../bench/lib/w0-world.ts";
 import type { OutboxStore } from "../../../bench/lib/w0-outbox.ts";
-import type { WorldRow } from "../../../bench/lib/w0-world.ts";
 
 export type Cell<T = unknown> = { value: T; id: string; hash: string; position: number };
 export type Patch = { key: string; value: unknown; prior?: Cell };
@@ -86,6 +85,15 @@ export class Objects {
         throw new Conflict(result.tag);
       throw Error("DELTA commit rejected " + result.tag + " " + String(result.error?.message));
     }
+    const effect = (r: any) => canonical([r.entityId, r.attribute, r.value, r.validFrom]);
+    assert.deepEqual(
+      result.value.triples.map(effect).sort(),
+      ops
+        .filter((r) => r.op === "assert")
+        .map(effect)
+        .sort(),
+      "source or index assertions differ from the atomic request",
+    );
     const actual = new Map(
       result.value.triples
         .filter((r) => r.attribute === "delta/object")

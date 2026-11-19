@@ -30,7 +30,11 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
           "secrets",
           "store",
           "schedules.test",
-          ...(mode === "schedules" ? [] : ["audit", "deep", "traffic", "bench-rung", "v3"]),
+          ...(mode === "schedules"
+            ? []
+            : mode === "price"
+              ? ["v3"]
+              : ["audit", "deep", "traffic", "bench-rung", "v3"]),
         ].includes(path.basename(p).replace(/\.[^.]+$/, "")) ||
           path.basename(p) === mode + ".ts"),
     ),

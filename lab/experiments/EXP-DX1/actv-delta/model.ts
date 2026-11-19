@@ -2,7 +2,14 @@ import assert from "node:assert/strict";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { sha256 } from "../../../bench/lib/w0-world.ts";
 export const epoch = "2000-01-01T00:00:00.000000Z";
-export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from: string; until?: string };
+export type Edit = {
+  e: string;
+  a: string;
+  values: W0.Fact["v"][];
+  from: string;
+  until?: string;
+  append?: boolean;
+};
 export type Mutation = Edit & { tx: number };
 export type Body = {
   subject: string;
@@ -76,11 +83,26 @@ export function worldOf(body: Body, b: W0.Basis, mask?: Mask): W0.World {
   const visible = body.changes.filter(
     (c) => c.tx <= b.tx && c.from <= b.validTime && (!c.until || b.validTime < c.until),
   );
-  const active = new Map<string, Mutation>();
-  for (const c of visible) active.set(c.e + "\0" + c.a, c);
-  let facts = body.seed.filter((f) => !active.has(f.e + "\0" + f.a));
-  for (const c of active.values())
-    for (const v of c.values) facts.push({ e: c.e, a: c.a, v, tx: c.tx });
+  const active = new Map<string, W0.Fact[]>(),
+    keep = new Set<string>();
+  for (const c of visible) {
+    const key = c.e + "\0" + c.a;
+    let fs = active.get(key);
+    if (!c.append) {
+      fs = [];
+      keep.delete(key);
+    } else if (!fs) {
+      fs = [];
+      keep.add(key);
+    }
+    for (const v of c.values) fs.push({ e: c.e, a: c.a, v, tx: c.tx });
+    active.set(key, fs);
+  }
+  let facts = body.seed.filter((f) => {
+    const k = f.e + "\0" + f.a;
+    return !active.has(k) || keep.has(k);
+  });
+  for (const fs of active.values()) facts.push(...fs);
   if (mask) facts = facts.map((f) => (f.a === "ssn" ? { ...f, v: { erasedAt: mask.from } } : f));
   return { subject: body.subject, facts };
 }

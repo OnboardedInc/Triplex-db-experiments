@@ -28,6 +28,7 @@ export type SaveOptions = {
   nativeOps?: readonly unknown[];
   nativePreconditions?: readonly unknown[];
   originTx?: number;
+  trace?: { key: string; value: { token: string } };
 };
 export async function save(
   account: Account,
@@ -48,6 +49,7 @@ export async function save(
       options.nativeOps ?? [],
       options.nativePreconditions ?? [],
       options.originTx ?? null,
+      options.trace ?? null,
     ]);
   const result = await account.command(
     id,
@@ -59,7 +61,7 @@ export async function save(
       assert(Number.isSafeInteger(tx) && tx > h.basis.tx);
       const basis = { ...h.basis, tx },
         release = resolve(h.activations, basis.validTime),
-        patches: Patch[] = [];
+        patches: Patch[] = options.trace ? [options.trace] : [];
       if (options.erase) {
         for (let n = 0; n <= h.seq; n++) await expand(account, n);
       }
