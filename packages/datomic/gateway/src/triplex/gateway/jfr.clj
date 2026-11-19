@@ -16,7 +16,8 @@
 (def transaction-ids (java.util.concurrent.atomic.AtomicLong. (System/nanoTime)))
 (def transaction-factory (delay
   (EventFactory/create [(AnnotationElement. Name "triplex.TransactionFunction")]
-    [(ValueDescriptor. String "traceId") (ValueDescriptor. String "parentSpanId") (ValueDescriptor. String "spanId")])))
+    [(ValueDescriptor. String "traceId") (ValueDescriptor. String "parentSpanId") (ValueDescriptor. String "spanId")
+     (ValueDescriptor. String "historyRange")])))
 ;; [DX-T1-4] Why: native JFR records one causally bound interval without JSON or logging on the transaction thread.
 ;; Rejected: treating all concurrent transactor activity as work for the current gateway request.
 (defn start-transaction! [context]
@@ -109,7 +110,8 @@
               (let [detail (details event) transaction (= name "triplex.TransactionFunction") native (= name "triplex.NativeTransaction")
                     layer (cond transaction "transactor" (= name "jdk.GCPhasePause") (if (= process "tx") "transactor-gc" "gateway-gc")
                                 (str/includes? name "Safepoint") "jvm-safepoint" :else "jvm-event")]
-                (.write w (str (json/write-str (merge identity detail (when native (native-stats event)) (when transaction {:nativeType name :traceId (.getString event "traceId") :parent (.getString event "parentSpanId") :id (.getString event "spanId")}) {:type "event" :name (cond transaction "transactor.triplex-function" native "datomic.tx/process" :else name) :layer layer :process process
+                (.write w (str (json/write-str (merge identity detail (when native (native-stats event)) (when transaction {:nativeType name :traceId (.getString event "traceId") :parent (.getString event "parentSpanId") :id (.getString event "spanId")
+                  :historyRange (when (.hasField event "historyRange") (.getString event "historyRange"))}) {:type "event" :name (cond transaction "transactor.triplex-function" native "datomic.tx/process" :else name) :layer layer :process process
                              ;; [DX-T1-12] Why: JFR duration ticks survive wall steps; a discontinuous epoch anchor cannot locate an event on another process's trace.
                              ;; Rejected: stretch a pause across a guest clock step or infer a Mac/guest overlap without a clock bridge.
                              :clock (assoc (:clock identity) :uncertaintyMs (+ uncertainty 0.001) :crossProcessQualified (empty? discontinuities) :jfrAnchorStepsMs discontinuities)

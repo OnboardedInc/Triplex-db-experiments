@@ -7,6 +7,7 @@ import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
 import { encodeRowText, encodeRowTextFast } from "./rowText.js";
+import { historyIdentityBounds } from "./identityRange.js";
 import { enabledFastPaths, fastPathEnabled } from "./fastPaths.js";
 import { largeRequestBody, encodeLargeRequest } from "./requestEncoding.js";
 import http from "node:http";
@@ -875,8 +876,11 @@ export class DatomicClient {
             return Object.fromEntries(retirementColumns.map((column) => [column, encoded[column]]));
           })
       : input.rows.map(encodeRow);
+    const bounds =
+      compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
     const body = {
       ...wireInput,
+      ...(bounds ? { historyIdentityBounds: bounds } : {}),
       rows,
       ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
       rowTexts: Object.fromEntries(

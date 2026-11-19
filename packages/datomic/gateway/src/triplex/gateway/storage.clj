@@ -214,7 +214,7 @@
                (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                 :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
                                 :triplex.claim/tx-id (get claim "txId")}) claims))))]
-     [[:triplex/commit {:scope scope :source source :provisional position :span span
+     [[:triplex/commit (cond-> {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
                        :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
@@ -223,7 +223,9 @@
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))
                        :replay-safe (true? (get input "replaySafe")) :irregular irregular :position-irregular irregular
-                       :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}]])))
+                       :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}
+                       (and lean (get input "historyIdentityBounds"))
+                       (assoc :identity-bounds (get input "historyIdentityBounds")))]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
 ;; Rejected: a twenty-millisecond wait followed by overtaking.
 ;; [DX-M2] Why: hints prefetch the opaque commit function's reads before its serial turn.

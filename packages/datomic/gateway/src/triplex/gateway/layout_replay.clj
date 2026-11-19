@@ -4,7 +4,7 @@
             [datomic.measure.io-stats :as io-stats] [clojure.data.json :as json]
             [clojure.edn :as edn] [clojure.walk :as walk] [clojure.java.io :as io] [clojure.set :as set]
             [triplex.gateway.commit :as commit] [triplex.gateway.schema :as schema]
-            [triplex.gateway.lean :as lean] [triplex.gateway.slim :as slim])
+            [triplex.gateway.lean :as lean])
   (:import [java.util UUID] [java.nio ByteBuffer]))
 
 ;; [DX-T1-11] Why: these shapes exist only as pure peer replays, never as stored schemas or gateway route switches.
@@ -51,7 +51,7 @@
                              (json/write-str (json/write-str v)))))]
     (reduce (fn [s [i replacement]] (let [[a b] (nth ranges i)] (str (subs s 0 a) replacement (subs s b))))
             text (sort-by key > changes))))
-(def base-code (walk/postwalk-replace {'slim-row-code slim/encoder-code} commit/operation-code))
+(def base-code (commit/expand-code 'identity))
 (def c-code
   (walk/postwalk
     (fn [form]

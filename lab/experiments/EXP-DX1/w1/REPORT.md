@@ -5,7 +5,7 @@ One long save delayed seven later saves on the same subject by a combined 836 ms
 The transactor reported 1,165 logical SQL reads on 281 slow saves. Their combined read time was 0.54 seconds.
 Two changes worth testing are reducing sender allocation during bursts and checking new fact IDs together at the serial writer.
 The first could shorten pauses that delay whole bursts. The second targets the growing cost of checking history as an account gets larger.
-The 100,000-subject comparison on a bench remains outstanding.
+The range check passed local conflict tests. The 100,000-subject comparison on a bench remains outstanding.
 
 **North star.** P2 and P7, with exact atomic identity conflicts and durable receipts. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -18,3 +18,9 @@ The 100,000-subject comparison on a bench remains outstanding.
 **Evidence.** Reproduce with `node lab/experiments/EXP-DX1/w1/tail.ts DX-BM1 NEW_DIRECTORY`. The durable outputs are `DX-W1/tail-02/{chains.jsonl,summary.json}` under the evidence root. The latter lists each burst and the ten longest chains. [Input and output seals](SHA256SUMS)
 
 **Audit.** The tail analyzer checks each consumed file against its arm manifest, the frozen command cohort against both bookends, the scheduler's recorded predecessor/release, and the wire, native command and ACK joins against the same source, slot and boot clock. It recomputes the historical percentile and its interval and requires the exclusive partition to add to each ACK within 0.01 ms. It emits a diagnostic ledger for this replay.
+
+**Identity option.** Set `TRIPLEX_DATOMIC_FAST_PATHS=history-range` on a lean TypeScript client. It proposes the smallest and largest distinct 26-character uppercase alphanumeric IDs. The installed transaction rechecks every actual assertion and both endpoints, then seeks historical AVET from the first full prefix through the ASCII successor of the last. Anything in that interval, unsupported input or a duplicate preserves the ordinary checks and their order. Reader formats, schema and stored facts stay compatible.
+
+**Local proof.** In the small engine selftest, fresh writes took one bounded seek, an occupied interval took one plus the original individual seeks, and two writers racing on stale views produced one commit and one typed identity conflict in both modes. Byte comparisons used posted row deltas on one basis. Fixtures covered live, imported, retired, born-retired, same-save reassertion, narrow client bounds, uppercase endpoints, compact duplicates, CAS and missing-live precedence. Native JFR readback checked both decisions.
+
+**Gate audit.** The dedicated engine build bound the gateway tree to image sha256:66ea2b3417fa6f3a8580c576b806563a4f777400b69a9c3913f7273c1f067c23. `DX-W1/local-04` contains the input hashes and 26 native tests / 54,053 assertions with zero failures. The new tests checked Datomic results, prefix query arguments, actual JFR bytes, and exact typed errors on fresh scopes. TypeScript gates checked the transmitted payload in both modes and layouts (11/11 across three files). The first native run counted a Java iterable directly, and the first wire fixture had an invalid URL. Both first failures are indexed. No acceptance pin moved.
