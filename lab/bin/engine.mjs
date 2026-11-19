@@ -432,6 +432,13 @@ function exportsFor(info) {
   return lines.join('\n');
 }
 
+function checkIsolatedVolume(info, owner) {
+  const standard = info.container + '-data';
+  // [DX-THIN1] Why: both generations of private names require their exact owner. Rejected: a prefix check that misses a retained older mount or refuses a stock owner without volume metadata.
+  if ((info.volume !== standard || (owner?.volume && owner.volume !== standard)) && owner?.volume !== info.volume)
+    fail('REFUSED', 'Isolated volume requires its exact slot owner');
+}
+
 /** Acquire (or confirm) the persistent slot lock. dev is a shared resident; s* are exclusive. */
 function acquireSlot(info, holder, experiment) {
   fs.mkdirSync(path.dirname(info.lockDir), { recursive: true });
@@ -441,7 +448,7 @@ function acquireSlot(info, holder, experiment) {
     let owner = readOwner(info);
     for (let i = 0; !owner && i < 25; i++) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200); owner = readOwner(info); }
     if (!owner) fail('REFUSED', `${info.lockDir} exists without owner.json; inspect and remove it by hand if abandoned`);
-    if (owner.volume !== info.volume) fail('REFUSED', 'Existing slot owns a different volume');
+    checkIsolatedVolume(info, owner);
     if (owner.holder !== holder && info.mode !== 'resident')
       fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}" (${owner.experiment ?? 'no experiment'}) since ${owner.createdAt}`);
     return { owner, created: false };
@@ -541,8 +548,7 @@ async function up(config, info, opts) {
 async function down(config, info, opts) {
   const holder = defaultHolder(opts);
   const owner = readOwner(info);
-  if ((owner && owner.volume !== info.volume) || (!owner && (process.env.TX2_EXCLUSIVE_VOLUME_ID || info.attemptVolumeNonce)))
-    fail('REFUSED', 'Isolated volume cleanup requires its exact slot owner');
+  checkIsolatedVolume(info, owner);
   if (owner && owner.holder !== holder && !opts.force)
     fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; pass --force only if you own it`);
   // [EXP-X05] A follower outliving its writer would block the next writer start (volumeGuard) and keep

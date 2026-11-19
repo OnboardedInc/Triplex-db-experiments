@@ -176,10 +176,12 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   ];
   for (let item = 1; item <= 5; item++) {
     const modes = item === 1 ? ["zero", "reader"] : ["zero", "reader", "activation", "seed"];
-    for (const mode of modes) {
-      const s = recent(item, mode);
-      if (!s) continue;
-      const m = s.summary;
+    // [DX-SCALE1] Why: a corrected reader needs a matched new zero. Preserve earlier terminal attempts alongside their replacements so a control or incomplete arm never disappears from the record. Rejected: reporting only the last tag for each mode.
+    for (const s of stages.filter(
+      (s) => s.attempt.item === item && modes.includes(s.attempt.mode),
+    )) {
+      const mode = s.attempt.mode,
+        m = s.summary;
       const ids =
         mode === "activation"
           ? ["pooled"]

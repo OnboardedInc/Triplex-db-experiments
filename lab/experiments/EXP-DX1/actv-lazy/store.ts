@@ -13,6 +13,7 @@ export const RELEASE = "lazy/account/releases",
   CLOCK = "lazy/account/clock",
   MASK = "lazy/account/erasure",
   CURSOR = "lazy/account/dispatcher";
+export const membership = (s: string) => "lazy/member/" + s;
 export const epoch = "2000-01-01T00:00:00.000000Z";
 export function millis(v: string) {
   assert(W0.isInstant(v), "Invalid W0 business instant");
@@ -56,7 +57,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     const basis = { position, validAt: millis(validTime) };
     for (const id of ids) {
       if (id.startsWith("members/page/")) counters.rosterRoots++;
-      else if (id.startsWith("lazy/")) counters.accountReads++;
+      else if (id.startsWith("lazy/account/")) counters.accountReads++;
       else counters.subjectRoots++;
     }
     const page = await comp.sweepPage(ids, basis);
@@ -231,6 +232,17 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
           ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
           fact(CLOCK, "lazy/slot", event),
         ];
+        for (const op of ops)
+          if (op.op === "assert" && op.entityId.startsWith("members/page/")) {
+            const people: string[] = JSON.parse(op.value.value);
+            assert(
+              op.attribute === "lazy/members" &&
+                people.every((x) => typeof x === "string" && x.startsWith("pl:")),
+            );
+            assert.deepEqual(people, [...new Set(people)].sort());
+            for (const subject of people)
+              writes.push(fact(membership(subject), "lazy/member", { subject }));
+          }
         if (!p) writes.push(fact(ORIGIN, "lazy/generation", { profile }));
         if (event.kind === "erase") {
           assert(event.subject && event.attribute);
@@ -257,10 +269,64 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
       }
     }
   }
+  let verifiedEffects = 0;
+  let verifiedCursor: string | undefined;
+  async function cursorReceipt(row: WorldRow | undefined) {
+    if (!row) return false;
+    if (row.id === verifiedCursor) return true;
+    const cur = value(row),
+      t = (await comp.feedPage(row.position - 1, 1)).transactions[0];
+    if (
+      t?.actor !== "lazy/event" ||
+      t.position !== row.position ||
+      !t.changes.some(
+        (c: any) =>
+          c.op === "assert" &&
+          c.tripleId === row.id &&
+          c.entityId === CURSOR &&
+          c.value.value === canonical(cur),
+      ) ||
+      canonical(JSON.parse(t.correlationId).context.next) !== canonical(cur)
+    )
+      return false;
+    if (cur.done) {
+      const original = (await comp.feedPage(cur.done - 1, 1)).transactions[0];
+      if (
+        original?.actor !== "lazy/input" ||
+        original.position !== cur.done ||
+        original.txId !== cur.eventId ||
+        typeof cur.digest !== "string" ||
+        !/^[a-f0-9]{64}$/.test(cur.digest)
+      )
+        return false;
+    }
+    verifiedCursor = row.id;
+    return true;
+  }
+  async function effectsClear(cursorPosition: number, p: number) {
+    let at = Math.max(cursorPosition, Math.min(p, verifiedEffects));
+    while (at < p) {
+      const page = await comp.feedPage(at, 16);
+      assert(page.transactions.length, "Missing effect prefix");
+      for (const t of page.transactions) {
+        if (t.position > p) break;
+        assert.equal(t.position, ++at);
+        if (
+          !["lazy/ack", "lazy/live", "lazy/event"].includes(t.actor) ||
+          t.changes.some((c: any) => !c.entityId.startsWith("lazy/"))
+        )
+          return false;
+      }
+    }
+    verifiedEffects = Math.max(verifiedEffects, p);
+    return true;
+  }
   return {
     scope,
     profile,
     counters,
+    effectsClear,
+    cursorReceipt,
     comp,
     rows,
     lookup,

@@ -80,8 +80,11 @@ if (binding.mode === "--proof") {
     "admission-gate.ts",
     "read-gate.ts",
     "dispatch-gate.ts",
+    "dependency-gate.ts",
     "boundary-gate.ts",
     "crash.ts",
+    "service-gate.ts",
+    "pressure.ts",
   ])
     run(f, [dir]);
   const buf = execFileSync(
@@ -98,6 +101,8 @@ if (binding.mode === "--proof") {
   assert.match(buf, /# pass 23\b/);
   assert.match(buf, /# fail 0\b/);
   writeFileSync(join(dir, "legacy.tap"), buf, { flag: "wx" });
+} else if (binding.mode === "--smoke") {
+  run("bench.ts", ["--smoke", dir]);
 } else {
   assert(binding.mode === "--rung" && ["1000", "10000"].includes(binding.size!));
   run("price.ts", [dir, binding.size!]);
@@ -106,7 +111,9 @@ assert.equal(sha256(readFileSync(ownerPath)), binding.owner);
 assert.equal(sha256(readFileSync(cfg)), binding.config);
 for (const [f, h] of Object.entries(pins)) assert.equal(sha256(readFileSync(f)), h, f);
 const outputs: Record<string, string> = {};
-for (const f of readdirSync(dir)) {
+for (const entry of readdirSync(dir, { recursive: true, withFileTypes: true })) {
+  if (!entry.isFile()) continue;
+  const f = join(entry.parentPath, entry.name).slice(dir.length + 1);
   if (["env", "admissions.log", "output.log", "cleanup.log"].includes(f)) continue;
   const h = createHash("sha256");
   for await (const b of createReadStream(join(dir, f))) h.update(b);

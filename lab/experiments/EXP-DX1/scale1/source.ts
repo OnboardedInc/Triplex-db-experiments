@@ -30,12 +30,21 @@ export function stageReplay(repo: string, destination: string) {
   });
   return { revision: replayRevision, files };
 }
-export function sourceInventory(repo: string) {
+export function sourceInventory(repo: string, lazy = false) {
   const inputs = execFileSync(
     "git",
     [
       "ls-files",
       "-z",
+      ...(lazy
+        ? [
+            "lab/experiments/EXP-DX1/actv-lazy",
+            "lab/experiments/EXP-DX1/act1",
+            "lab/experiments/EXP-DX1/import1/source.ts",
+            "packages/datomic/src",
+            "packages/w0/src",
+          ]
+        : []),
       "lab/bench",
       "lab/trace",
       "lab/oracles/domain",

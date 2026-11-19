@@ -6,7 +6,8 @@ bench=${1:?SSH destination for the bench server}
 shift
 [[ $bench =~ ^ubuntu@[a-zA-Z0-9.:-]+$ && $# -gt 0 ]] || exit 2
 root=${DX_BM1_EVIDENCE:-$HOME/Claude/Projects/triplex-db-2/evidence}
-repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
+repo=${DX_BM1_CATALOG_ROOT:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel)}
+[[ -f $repo/lab/bin/trace-store.mjs ]] || exit 2
 # [DX-BM1] Why: every fetch must leave stdin with the checksum-list loop.
 # Rejected: letting the first SSH process consume the remaining manifest rows.
 ssh_bench=(ssh -n -F /dev/null -i "${DX_BENCH_KEY:-$HOME/.ssh/triplex_bench_ed25519}"
@@ -45,7 +46,8 @@ for tag in "$@"; do
     if [[ $compact == 1 ]]; then
       skip=(--exclude './trace.chrome.json' --exclude './driver/*.db' --exclude './driver/*.db-*'
         --exclude './driver/oracle-case.json' --exclude './driver/oracle-output.json'
-        --exclude './driver/observations-ns*-*.jsonl')
+        --exclude './driver/observations-ns*-*.jsonl' --exclude './oracle-bridge/*.case.gz'
+        --exclude './oracle-bridge/*.output.gz')
     fi
     zstd -dc "$stage/transfer/reports.tar.zst" | tar -xf - -C "$stage" \
       ${skip[@]+"${skip[@]}"} \
@@ -55,8 +57,10 @@ for tag in "$@"; do
       if [[ $compact == 1 ]]; then
         # [DX-BM1] Why: retain the checksum-verified raw bytes at the catalog location and avoid a second multi-GiB expansion.
         # Rejected: discarding raw evidence or trading the last free disk space for an identical unpacked copy.
-        mkdir -p "$stage/trace/raw"
-        ln "$stage/transfer/raw.tar.zst" "$stage/trace/raw/raw.tar.zst"
+        raw_dir=$stage/trace/raw
+        if [[ -f $stage/activation-attempt.json ]]; then raw_dir=$stage/state/trace/raw; fi
+        mkdir -p "$raw_dir" "$stage/trace/raw"
+        ln "$stage/transfer/raw.tar.zst" "$raw_dir/raw.tar.zst"
         zstd -dc "$stage/transfer/raw.tar.zst" | python3 -c '
 import pathlib,re,shutil,sys,tarfile
 with tarfile.open(fileobj=sys.stdin.buffer,mode="r|") as archive:
