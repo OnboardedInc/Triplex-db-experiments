@@ -9,7 +9,7 @@
 // other combination. Rejected: calling `codex exec` by hand per dispatch (the default effort would leak in on one forgotten flag).
 //
 // Usage:
-//   node lab/bin/agent.mjs launch --role builder|reviewer --id <ID> --prompt <file> [--cwd <dir>]
+//   node lab/bin/agent.mjs launch --role builder|reviewer|thinker --id <ID> --prompt <file> [--cwd <dir>]
 //        [--worktree <path> --branch <name> [--base <ref>]] [--add-dir <dir>]...
 //   node lab/bin/agent.mjs resume --id <ID> --prompt <file>        (continues the agent's Codex session, same role and effort)
 //   node lab/bin/agent.mjs list
@@ -33,7 +33,10 @@ const MODEL = 'gpt-6.2-astra';
 // [PROTOCOL 2026-11-12] Why: Sam on resuming, 2026-11-12: "only use codex sol agents on max effort to build things? you should
 // not use claude for things I want to save your usage". Both roles now run at max; no Claude agent is launched for this work.
 // Rejected: keeping medium for builders (the 2026-11-09 setting, superseded by this instruction).
-const EFFORT = { builder: 'max', reviewer: 'max' }; // the only allowed pairs since 2026-11-12
+// [PROTOCOL 2026-11-19] Why: Sam, 2026-11-19: "launch up to 4 astra 6.2 agents on XHIGH effort to brainstorm in repeated
+// waves to do research and think about things in areas you want to optimize". The `thinker` role is that: research and
+// experiment design at xhigh, no product code. Rejected: running idea work at max (not what he asked) or through Claude.
+const EFFORT = { builder: 'max', reviewer: 'max', thinker: 'xhigh' }; // the only allowed pairs
 // Shared state every agent must be able to write: the pnpm store, the durable project folder, git objects and worktree metadata
 // (commits from a worktree write into the main .git), and the main checkout's lock and engine ledgers (lab/bin/lib.mjs LOCKS,
 // ENGINE_DIR), so heavy.mjs and engine.mjs reservations work from inside the sandbox.
@@ -61,7 +64,7 @@ function parse(argv) {
 
 function run(role, id, promptFile, cwd, addDirs, resumeSession) { // promptFile is reassigned to the composed copy below
   const effort = EFFORT[role];
-  if (!effort) fail(`role must be builder or reviewer (got ${role}); planners and thinkers are Opus via the Agent tool`);
+  if (!effort) fail(`role must be builder, reviewer or thinker (got ${role})`);
   if (!existsSync(promptFile)) fail(`prompt file ${promptFile} does not exist`);
   const dir = join(DURABLE, id);
   mkdirSync(dir, { recursive: true });
@@ -69,7 +72,9 @@ function run(role, id, promptFile, cwd, addDirs, resumeSession) { // promptFile 
   const promptCopy = join(dir, `prompt-${stamp}.md`);
   // [PROTOCOL 2026-11-08] Why: the lab rules travel with every prompt, so no Codex agent can miss them (lab/PROTOCOL.md 1).
   const preamble = readFileSync(join(REPO, 'lab', 'agents', 'CODEX-PREAMBLE.md'), 'utf8');
-  const roleText = role === 'builder'
+  const roleText = role === 'thinker'
+    ? `\n## Your role: researcher and experiment designer (Codex ${MODEL}, ${effort} effort), id ${id}\nRead, search, reason and write the documents the brief asks for. You build no product code and run no containers.\n`
+    : role === 'builder'
     ? `\n## Your role: code builder (Codex ${MODEL}, ${effort} effort), id ${id}\nImplement the task in your worktree, run its gates, commit, report. A separate reviewer will try to break your work.\n`
     : `\n## Your role: adversarial reviewer (Codex ${MODEL}, ${effort} effort), id ${id}\nTry to break the claim; do not fix the code under review. Your own tools and results go under lab/verify/ on your branch. Verdict: ACCEPT, FIX-FIRST or REJECT, with findings (severity, file:line, reproduction, proposed fix).\n`;
   writeFileSync(promptCopy, `${preamble}${roleText}\n## Your task\n\n${readFileSync(promptFile, 'utf8')}`);
