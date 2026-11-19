@@ -3,7 +3,7 @@
 North star. Measure pinned reads, offer-to-ACK commits, feed lag, current worlds and verified release activation on one and ten independent deep accounts. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 <!-- state -->
-The dedicated server was delivered on November 19 with SMT enabled, the powersave governor, 93.4 GiB of memory and two 894.3 GiB NVMe devices. The operating system occupies one device and the other arrived unformatted. The delivery receipt was captured before enabling performance mode. Native prerequisites are installed. The first queued measurement is the one-scope 10k zero-reader arm.
+Item 1 zero-reader arm started at 18:35 UTC November 19. Its four-hour execution ceiling is 22:35 UTC, followed by bounded cleanup. The dedicated stack seeded 10,000 people and 1,604,464 verified facts. PostgreSQL grew by 953,516,032 bytes. The next measurement is the reader arm with this zero arm as its baseline.
 <!-- end state -->
 
 With `BENCH_SERVER` set from the private brief, this one read-only command shows every dedicated unit and each arm’s stage.

@@ -5,7 +5,7 @@ Ten accounts of 100,000 people — awaiting a completed bare-metal reader arm.
 Activation for one account is pending. Activation for ten accounts is pending.
 The first shared resource to reach its limit is still unknown.
 Three experiments could distinguish the limits. Give senders another physical core if offer delays dominate, enlarge the transactor object cache if storage misses dominate, and distribute databases across transactors if their JVM saturates.
-The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. Bytes per fact on the bench await the first completed seed measurement.
+The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack).
 
 **Bench measurements**
 
