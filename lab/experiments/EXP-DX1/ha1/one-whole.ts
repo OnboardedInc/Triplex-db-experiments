@@ -120,8 +120,18 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
       }
     }
     await setting(true);
-    await requestIndex(ac);
-    await receipts(ac, ac.inputs, ac.w);
+    const prepare = traffic(ac, "prepare-cut");
+    let destination: string, validatedBeforeCut: number;
+    try {
+      await s.gateway("read", s.b, "target", "moving");
+      destination = await s.ready("read");
+      await requestIndex(ac);
+      const previous = ac.inputs.filter((i) => ac.receipts.has(i.operationId));
+      validatedBeforeCut = await receipts(ac, previous, ac.w);
+    } finally {
+      await prepare.stop();
+    }
+    assert(prepare.samples.length > 0);
     const before = await ac.send(ac.intent("before-fence")),
       cursor = String(BigInt(before.t.v) + 1n);
     const p = await ackProxy(initial),
@@ -145,15 +155,13 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
       p.close();
       client.close();
     }
-    // [DX-HA1] Why: deploy the destination peer while business traffic pays for the live copy. Rejected: launching a cold gateway after fencing or polling it with synthetic transactions.
-    await s.gateway("read", s.b, "target", "moving");
-    const destination = await s.ready("read");
     let monitor: ReturnType<typeof pinnedLoop> | undefined;
     if (!measureSync) monitor = pinnedLoop(ac, old);
-    const frozen = clock();
+    const queued = ac.intent("new-site"),
+      offered = clock();
+    const frozen = offered;
     try {
-      if (measureSync) await s.sql("pg", "ALTER ROLE moving NOLOGIN");
-      else {
+      if (!measureSync) {
         await s.sql(
           "pg",
           "REVOKE ALL ON TABLE datomic_kvs FROM moving; GRANT SELECT ON TABLE datomic_kvs TO moving",
@@ -168,28 +176,19 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
           "t",
         );
       }
-      if (measureSync)
-        await s.sql(
-          "pg",
-          "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename='moving'",
-        );
-      if (measureSync)
-        assert.equal(
-          await s.sql("pg", "SELECT count(*) FROM pg_stat_activity WHERE usename='moving'"),
-          "0",
-        );
       const lsn = await s.sql("pg", "SELECT pg_current_wal_flush_lsn()");
       assert.match(lsn, /^[0-9A-F]+\/[0-9A-F]+$/);
-      await until(
-        "durable on target",
-        async () =>
-          (await s.sql(
-            "pg",
-            "SELECT flush_lsn >= '" +
-              lsn +
-              "' AND sync_state='sync' FROM pg_stat_replication WHERE application_name='ha1standby'",
-          )) === "t" || undefined,
-      );
+      if (!measureSync)
+        await until(
+          "durable on target",
+          async () =>
+            (await s.sql(
+              "pg",
+              "SELECT flush_lsn >= '" +
+                lsn +
+                "' AND sync_state='sync' FROM pg_stat_replication WHERE application_name='ha1standby'",
+            )) === "t" || undefined,
+        );
       const durable = clock();
       if (measureSync) {
         await s.kill("pg");
@@ -206,9 +205,8 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
         ),
         "t",
       );
-      // [DX-HA1] Why: the physical copy inherited NOLOGIN from the old writer fence. Rejected: enabling target writers before old-primary removal and confirmed replay.
-      if (measureSync) await s.sql("target", "ALTER ROLE moving LOGIN");
-      else await s.sql("target", "GRANT ALL ON TABLE datomic_kvs TO moving", "moving");
+      // [DX-HA1] Why: the physical copy inherited read-only table privileges from the source fence. Rejected: enabling target writers before old-primary removal and confirmed replay.
+      if (!measureSync) await s.sql("target", "GRANT ALL ON TABLE datomic_kvs TO moving", "moving");
       const promoted = clock();
       await s.tx("standby", s.b, "target", "moving");
       await healthyBroker(s, "standby");
@@ -222,7 +220,7 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
       const gateway = clock();
       assert.deepEqual(await ac.send(pending), original);
       await ac.pinned(old);
-      const fresh = await ac.send(ac.intent("new-site"));
+      const fresh = await ac.send(queued);
       const end = clock();
       const polls = monitor ? await monitor.finish() : [];
       if (monitor) {
@@ -259,7 +257,13 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
         txRecoveryMs: elected - promoted,
         gatewayMs: gateway - elected,
         clientMs: end - gateway,
-        validatedBeforeCut: ac.inputs.length - 3,
+        validatedBeforeCut,
+        livePrepareWrites: prepare.samples.length,
+        offered,
+        firstReceiptAt: end,
+        lossMode: measureSync
+          ? "abrupt primary removal after ACK"
+          : "planned fence with remote flush",
         pinnedPolls: polls.length,
         pinnedErrors: polls.filter((p) => p.code !== "ok").length,
         finalGateChecks: 2,
@@ -270,7 +274,14 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
         synchronous: cost(true),
         auditedReceipts: ac.receipts.size,
       };
-      s.e.write("whole-database", { nonce: s.e.nonce, result, blocks, copyWrites: live.samples });
+      s.e.write("whole-database", {
+        nonce: s.e.nonce,
+        result,
+        blocks,
+        polls,
+        copyWrites: live.samples,
+        prepareWrites: prepare.samples,
+      });
       return result;
     } finally {
       if (monitor) await monitor.finish();

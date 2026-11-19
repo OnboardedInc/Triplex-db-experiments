@@ -75,7 +75,9 @@
 (defn validate-body [tenant body]
   (let [rows (get body "rows") claims (get body "claims") tx (get-in claims [0 "txId"])
         ids (set (get body "newIds"))]
-    (check (and (= false (get body "scopeWide")) (nil? (get body "sourceK"))
+    (check (and (every? #{"sourceK" "scopeWide" "span" "position" "operationId" "rows" "newIds" "claims" "rowTexts" "assignRecordTime" "entities" "live"} (keys body))
+                (= ids (set (filter ids (map #(wire-value % "id") rows))))
+                (= false (get body "scopeWide")) (nil? (get body "sourceK"))
                 (= 1 (get body "position") (get body "span")) (= false (get body "assignRecordTime"))
                 (vector? rows) (<= 1 (count rows) 160) (= 1 (count claims)) (= (count rows) (count (set (map #(wire-value % "id") rows))))
                 (owned? tenant (get body "operationId")) (owned? tenant tx) (owned? tenant (get-in claims [0 "commandId"]))

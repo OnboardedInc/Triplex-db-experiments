@@ -96,25 +96,30 @@ export async function localDrill(opts: any, config: any, manager: any) {
               }).ok
             )
               return;
+            e = declare(info.slot);
             try {
               fs.mkdirSync(parentLease);
             } catch (err: any) {
               if (err.code === "EEXIST") return;
               throw err;
             }
-            measured = true;
-            e = declare(info.slot);
-            fs.writeFileSync(
-              path.join(parentLease, "owner.json"),
-              JSON.stringify({
-                id: "DX-HA1",
-                pid: process.pid,
-                nonce: e.nonce,
-                slot: info.slot,
-                at: new Date().toISOString(),
-              }),
-              { flag: "wx" },
-            );
+            try {
+              fs.writeFileSync(
+                path.join(parentLease, "owner.json"),
+                JSON.stringify({
+                  id: "DX-HA1",
+                  pid: process.pid,
+                  nonce: e.nonce,
+                  slot: info.slot,
+                  at: new Date().toISOString(),
+                }),
+                { flag: "wx" },
+              );
+              measured = true;
+            } catch (err) {
+              fs.rmdirSync(parentLease);
+              throw err;
+            }
             const slot = manager.acquireSlot(info, opts.holder, "DX-HA1");
             assert(slot.created);
             acquired = true;

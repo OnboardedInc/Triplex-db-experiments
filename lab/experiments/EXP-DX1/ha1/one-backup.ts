@@ -192,33 +192,30 @@ export async function oneBackup(s: Stack, people: number) {
     const walPayload = Number(
       await s.sql("pg", "SELECT pg_wal_lsn_diff('" + markLsn + "','" + walStart + "')"),
     );
-    await s.exec(
-      "target",
-      "sh",
-      "-ceu",
-      'kill -TERM "$(cat "$1/receiver.pid")"',
-      "stop-wal",
-      vault,
-    );
-    await until(
-      "archive stopped",
-      async () =>
-        (await s.sql(
-          "pg",
-          "SELECT count(*) FROM pg_stat_replication WHERE application_name='ha1archive'",
-        )) === "0" || undefined,
-    );
-    const walFiles = (
-      await s.exec("target", "sh", "-c", 'ls "$1" | grep -E "^[0-9A-F]{24}$"', "segments", wal)
-    ).split("\n");
-    assert(walFiles.includes(seg));
-    const walArchiveBytes = walFiles.length * 16777216;
+    // [DX-HA1] Why: capture loss with a live archiver and count only completed WAL segments in this recovery policy. Rejected: disconnecting the archive first or treating a partial file as a verified segment.
     for (let i = 0; i < 8; i++) await ac.send(ac.intent("after-archive-" + i));
+    const tailSeg = await s.sql("pg", "SELECT pg_walfile_name(pg_current_wal_lsn())");
+    assert(tailSeg !== seg);
+    const archiveWitness = await s.sql(
+      "pg",
+      "SELECT state,sync_state,coalesce(flush_lsn::text,'') FROM pg_stat_replication WHERE application_name='ha1archive'",
+    );
+    assert(/^streaming\|async\|[0-9A-F]+\/[0-9A-F]+$/.test(archiveWitness));
     const oldInputs = [...ac.inputs],
       loss = await s.kill("pg");
     await s.remove("write");
     await s.remove("active");
     await s.remove("pg");
+    const walFiles = (
+      await s.exec("target", "sh", "-c", 'ls "$1" | grep -E "^[0-9A-F]{24}$"', "segments", wal)
+    )
+      .split("\n")
+      .sort();
+    assert.equal(walFiles.at(-1), seg);
+    assert(!walFiles.includes(tailSeg));
+    const walArchiveBytes = walFiles.length * 16777216;
+    const archiveNames = await s.exec("target", "ls", wal);
+    assert(archiveNames.includes(tailSeg + ".partial"));
     const sourceIsolationMs = clock() - loss.from;
     const measureRestore = async (
       kind: "wal" | "datomic",
@@ -322,6 +319,9 @@ export async function oneBackup(s: Stack, people: number) {
     const result = {
       population,
       sourceIsolationMs,
+      archiveWitness,
+      tailSeg,
+      tailPolicy: "completed segments",
       datFullFacts: oldInputs
         .filter((i) => BigInt(ac.receipts.get(i.operationId)!.t.v) <= BigInt(baselineT))
         .reduce((n, i) => n + i.newIds.length, 0),
