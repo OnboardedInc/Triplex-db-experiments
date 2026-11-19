@@ -40,7 +40,8 @@ async function live(cmd: string) {
   }));
   const start = performance.now();
   const receipt = await store.transact(body, { commandId: cmd, actor: "act1-queue-probe" });
-  const serviceMs = performance.now() - start;
+  const ackAt = performance.now(),
+    serviceMs = ackAt - start;
   assert.ok(receipt.ok);
   const claim = await store.transactionByCommand(cmd);
   assert.ok(claim.ok);
@@ -54,7 +55,7 @@ async function live(cmd: string) {
     .map((r) => [r.attribute, r.value.value])
     .sort();
   assert.deepEqual(seen, body.map((r) => [r.attribute, r.value.value]).sort());
-  return { position: receipt.value.position, txId: receipt.value.txId, serviceMs };
+  return { position: receipt.value.position, txId: receipt.value.txId, ackAt, serviceMs };
 }
 try {
   let tx = 1;
@@ -134,7 +135,7 @@ try {
         baseline,
         save,
         waitMs,
-        offerToAckMs: waitMs + save.serviceMs,
+        offerToAckMs: save.ackAt - r.offered,
       });
     }
   }

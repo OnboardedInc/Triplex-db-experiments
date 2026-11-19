@@ -107,11 +107,13 @@ function storedBody(row: Pick<WorldRow, "attribute" | "value">) {
 }
 export async function publishPage(
   store: OutboxStore,
-  records: readonly W0.EvaluationRecord[],
-  span: PageSpan | undefined,
+  inputRecords: readonly W0.EvaluationRecord[],
+  inputSpan: PageSpan | undefined,
   beforeSubmit: () => Promise<void>,
   eventId?: string,
 ) {
+  const records = structuredClone(inputRecords),
+    span = inputSpan ? structuredClone(inputSpan) : undefined;
   const addresses = records.map((r) => pageAddress(r.subject)),
     owner = addresses[0];
   if (
@@ -143,7 +145,22 @@ export async function publishPage(
       eventId: eventId ?? null,
     }),
   );
-  const commandId = domain() + "c:" + input;
+  // [DX-ACT1] Why: a retried ordinal range must find its original claim even if a caller changes the frame geometry or supplies different output bytes. Rejected: giving divergent bytes a second sweep command.
+  const claimKey = span
+    ? sha256(
+        canonical({
+          scope: store.scopeName ?? "",
+          roster: span.roster,
+          size: span.size,
+          basis: span.basis,
+          release: span.release,
+          first: span.first,
+        }),
+      )
+    : eventId
+      ? sha256(canonical({ scope: store.scopeName ?? "", page: owner.page, eventId }))
+      : input;
+  const commandId = domain() + (span ? "range:" : "live:") + claimKey;
   let conflicts = 0,
     stateReads = 0,
     stateReadMs = 0,
@@ -361,7 +378,13 @@ export async function publishPages(
   ) => Promise<Awaited<ReturnType<typeof publishPage>>>,
 ) {
   const start = performance.now(),
-    roster = options.roster,
+    roster = options.roster
+      ? {
+          ...options.roster,
+          subjects: [...options.roster.subjects],
+          basis: { ...options.roster.basis },
+        }
+      : undefined,
     frameSize = options.frameSize ?? 256;
   if (
     roster &&

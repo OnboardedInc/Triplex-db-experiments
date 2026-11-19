@@ -146,6 +146,13 @@ test("partial pages, sparse membership, a newer live winner and lost page ACK su
     const again = await publishChanged(store, next, opts(next));
     assert.equal(await store.currentPosition(), head);
     assert.deepEqual(again.coverage, retry.coverage);
+    await assert.rejects(
+      publishChanged(store, next, { ...opts(next), frameSize: 1 }),
+      /receipt input mismatch/,
+    );
+    const divergent = [make(0, 20, "conflicting"), ...next.slice(1)];
+    await assert.rejects(publishChanged(store, divergent, opts(next)), /receipt input mismatch/);
+    assert.equal(await store.currentPosition(), head);
     t.diagnostic(
       canonical({
         scope,
@@ -238,6 +245,28 @@ test("coverage cannot close over a duplicate, foreign range, different release o
       /roster/,
     );
     assert.notEqual(pageAddress("pl:s1").page, pageAddress(W0.placementId(1)).page);
+    const newer = rows.map((_, i) => make([0, 1, 256][i]!, 30, "live"));
+    await publishChanged(s, newer, { layout });
+    const late = rows.map((_, i) => make([0, 1, 256][i]!, 19, "obsolete"));
+    const visible = await observe(
+      s,
+      newer.map((r) => r.subject),
+      await s.currentPosition(),
+      layout,
+    );
+    const covered = await publishChanged(s, late, opts(late));
+    assert.equal(covered.changed, 0);
+    assert.equal(covered.commits, 2);
+    assert.equal(covered.coverage?.size, 3);
+    assert.deepEqual(
+      await observe(
+        s,
+        newer.map((r) => r.subject),
+        await s.currentPosition(),
+        layout,
+      ),
+      visible,
+    );
   } finally {
     await s.close();
   }
