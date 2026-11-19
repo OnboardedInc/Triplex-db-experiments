@@ -2,7 +2,7 @@
 
 The old 73.78-second benchmark could undo a newer decision after restart. Its publisher and checker both missed progress for unchanged people. The W0 publication rule was correct.
 A page now remembers progress for up to 256 people in one transaction. At the measured 100,000-person mix, 391 pages and 9,798 changed item bodies cover everyone. The other 90,202 need no individual write.
-In two local Datomic runs, publishing for 1,000 people took 0.326 and 0.679 seconds with pages, versus 6.71 and 5.36 seconds with individual guards. Every reopened decision matched the independent oracle.
+In two local Datomic runs, publishing for 1,000 people took 0.326 and 0.679 seconds with pages, versus 6.71 and 5.36 seconds with individual guards. All 1,000 page states matched the independent oracle in both runs.
 With two evaluators, that projects to **61–78 seconds for 100,000 people** and **10.2–13.0 minutes for ten such accounts in series**. Part 1 projected 320 seconds per account with individual guards.
 The 100-second bar and the limits on live read and save latency still need a server run. Five evaluator cores fit with two cores reserved for readers.
 For the narrow document-deadline release, the selector skipped evaluation for 675 of 1,000 people. The standard release used for the cost figures evaluates everyone.
@@ -12,6 +12,7 @@ For the narrow document-deadline release, the selector skipped evaluation for 67
 Only committed page members advance. Readers can see a completed prefix and an older suffix. Each live or sweep update compares its member’s transaction and valid time, then atomically replaces the page fence and any changed bodies or pending deliveries. A live winner forces a reread. A newer live basis survives. An uncovered neighbor keeps its own basis.
 Completion needs contiguous transaction claims covering an independent sorted roster at one cut. Restart recovers each original claim and delivery sequence before publishing the suffix. A record at the wrong basis fails, as do different record bytes or conflicting segmentation on retry. The named page namespace routes ordinary live reconciles through the same fence on reopen. [Design, alternatives and write counts](DESIGN-2.md)
 All 13 original native publication cases ran again. Five variants exercised the new layout and five more covered partial visibility, lost page acknowledgements, competing live decisions, coverage rejection, bounded native reads and normal-entry restart. The latest run completed 23/23. Strict native reads now split frames over 64 roots while retaining one read position.
+The bench initializes a fresh page namespace at R1. A populated legacy outbox needs a separate migration. Live actions that recur at the same basis can supply distinct event IDs. An identified no-op records its original empty acknowledgement so its retry can survive a later equal-basis edit.
 
 ## Measured publication cost
 

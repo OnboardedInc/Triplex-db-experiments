@@ -222,6 +222,34 @@ test("live same-page edits invalidate a stalled sweep including an equal-basis b
     await publishChanged(b, [again], { layout, eventId: "next-equal-basis" });
     await oracleFold(oracle, model, [again]);
     await states(a, [again.subject], await a.currentPosition(), model);
+    const same = { layout, eventId: "unchanged-live-command" };
+    let original: { txId: string; position: number } | undefined;
+    const lost = {
+      ...b,
+      transact: async (...args: Parameters<OutboxStore["transact"]>) => {
+        const result = await b.transact(...args);
+        assert.ok(result.ok);
+        original = result.value;
+        throw Error("lost unchanged ACK");
+      },
+    };
+    await assert.rejects(publishChanged(lost, [again], same), /lost unchanged ACK/);
+    const replacement = make(1, 30, "D");
+    await publishChanged(b, [replacement], { layout, eventId: "another-equal-basis" });
+    await oracleFold(oracle, model, [replacement]);
+    const reopened = await open(scope);
+    try {
+      const before = await reopened.currentPosition();
+      const recovered = (await publishChanged(reopened, [again], same)).responses[0];
+      assert.ok(original);
+      assert.equal(recovered.txId, original.txId);
+      assert.equal(recovered.position, original.position);
+      assert.deepEqual(recovered.deliveries, []);
+      assert.equal(await reopened.currentPosition(), before);
+      await states(reopened, [again.subject], before, model);
+    } finally {
+      await reopened.close();
+    }
     t.diagnostic(canonical({ scope, attempts, receipts: result.coverage, states: [...model] }));
   } finally {
     await a.close();

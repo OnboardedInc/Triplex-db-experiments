@@ -167,7 +167,7 @@ export async function publishPage(
           first: span.first,
         }),
       )
-    : eventId
+    : eventId !== undefined
       ? sha256(canonical({ scope: store.scopeName ?? "", page: owner.page, eventId }))
       : input;
   const commandId = domain() + (span ? "range:" : "live:") + claimKey;
@@ -315,7 +315,8 @@ export async function publishPage(
         });
       }
     }
-    if (!advanced && !span)
+    // [DX-ACT1] Why: an identified no-op live command must recover its original empty delivery after a different equal-basis decision. Rejected: recomputing it on retry after the other decision commits.
+    if (!advanced && !span && eventId === undefined)
       return (
         (await lookup()) ?? {
           deliveries: [],
