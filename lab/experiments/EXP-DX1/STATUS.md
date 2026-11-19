@@ -2219,3 +2219,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   with two evaluators. The server run (first server, in progress) decides.
 - Production account mix recorded privately (259 live accounts; 12 wide accounts hold 13.3 of 13.8 million people;
   the deepest account has about a third of all tasks).
+
+## 2026-11-19 18:55 UTC (13:55 local): priorities 6 to 9 added; layout question opened; four builders on the next work
+
+- **Sam added priorities 6 to 9** (`lab/NORTH-STAR.md`, provisional bars in `lab/TARGETS.md` 1.2) and questioned one
+  database per account. Layout is now measured, not assumed: one scope holding many accounts' subjects against one
+  scope per account, at deep and at small sizes.
+- **DX-ACT1 part 2 done (`d2ebed26`, pushed):** page guards; 23 publication schedules pass; 1,000 subjects published in
+  0.326 and 0.679 s against 5.36 to 6.71 s with per-subject guards; projection 61 to 78 s per 100,000 subjects with
+  two evaluators; one to five evaluators give identical ordered results.
+- **DX-THIN1 part 1 done (`e758c440`, pushed):** `reach-touched` reader; 100,000 thin subjects at 2% touched: resident
+  209 against 603 MiB, 31 bytes per subject in the activation roster, cold first read 3.47 ms median and 38.55 ms p99,
+  13,000 pinned reads and 100,000 guarded outbox records exact on both paths.
+- **Launched or resumed 13:50 local (Codex gpt-6.2-astra, max):** DX-THIN1 part 2 (integration branch `exp/DX-INT1`,
+  touched reader with the deep population, many scopes and page guards, eviction, priority 7 numbers); DX-ACT1 part 3
+  (import lane, priority 8); DX-HA1 (transactor failure and moving a scope, priority 9); DX-W1 (what the 41.7 ms is
+  made of; one-lookup identity check for the serial-point reads).
+- Servers: first runs DX-ACT1's guard bench then the judged v3 pair (DX-BM1); second runs the deep and many-scope
+  campaign (DX-SCALE1).
