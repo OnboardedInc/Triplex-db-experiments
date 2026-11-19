@@ -35,7 +35,7 @@ export function metricEndpoint(address: string, endpoint: "/metrics" | "/sample-
 async function managedMetrics(stack: Stack) {
   const managed = stack.managed!;
   const { secret } = JSON.parse(fs.readFileSync(process.env.DX_THIN_CREDENTIAL!, "utf8"));
-  const roles: Record<string, { rssBytes: number }> = {},
+  const roles: Record<string, { rssBytes: number; threads?: number }> = {},
     gateways: Record<string, unknown> = {};
   let disk, limit;
   for (const peer of managed.peers) {
@@ -57,7 +57,7 @@ async function managedMetrics(stack: Stack) {
     assert.equal(data.source, stack.gatewaySourceSha256);
     for (const [name, bytes] of Object.entries(data.rssBytes)) {
       assert(Number(bytes) > 0);
-      roles[name] = { rssBytes: Number(bytes) };
+      roles[name] = { rssBytes: Number(bytes), threads: data.threads?.[name] };
     }
     if (peer.role === "write") {
       disk = data.disk;
@@ -117,6 +117,7 @@ export async function nativeMetrics(stack: Stack) {
     assert(cgroupBytes > 0 && peakBytes >= cgroupBytes);
     roles[role] = {
       container: c.id,
+      threads: docker(["top", c.id, "-eo", "nlwp"]).split("\n").slice(1).map(Number).reduce((a, b) => a + b, 0),
       rssBytes: rss.reduce((sum, value) => sum + value, 0) * 1024,
       cgroupBytes,
       peakBytes,

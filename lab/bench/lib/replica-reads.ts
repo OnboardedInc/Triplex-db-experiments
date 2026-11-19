@@ -391,7 +391,7 @@ export class ReplicaReadHost {
     this.times = times;
     this.clockEnds = clockEnds;
     this.timings = timings;
-    this.replica = new api.Replica(source, validAt, population);
+    this.replica = new api.Replica(source, validAt, population, population === "touched" ? Number(process.env.DX_TOUCHED_RETAIN_BYTES ?? 16 * 1024 ** 2) : Infinity);
     if (population === "touched") this.replica.onAdmission = (p: number, entries: ReadonlyMap<string, PackedEntity>) => {
       this.index.admit(p, new Map(Array.from(entries, ([id, entity]) => [id, prepareEntity(id, entity)])));
     };

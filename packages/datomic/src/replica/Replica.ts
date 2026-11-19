@@ -102,6 +102,24 @@ export class Replica {
   onUpdate: ((update: ReplicaUpdate) => void) | undefined;
   onAdmission: ((position: number, entries: ReadonlyMap<string, PackedEntity>) => void) | undefined;
   private applying = false;
+  private charged = 0;
+  private evictionCount = 0;
+  get retention() { return { bytes: this.charged, limit: this.byteBudget, evictions: this.evictionCount, entries: this.entities.delta.size }; }
+  private charge(entries: ReadonlyMap<string, PackedEntity>) {
+    let bytes = 0;
+    for (const [id, e] of entries) bytes += (e.byteLength ?? e.buffer.byteLength) + 256 + 2 * id.length;
+    return bytes;
+  }
+  // [DX-INT1] Why: drop a complete generation so a shared reference or retained predecessor cannot survive as a false hit.
+  // Rejected: retiring just the root while its history, prepared views and closure remain reachable.
+  private evictGeneration() {
+    this.entities = new OverlayTable(new Map());
+    this.baseImage = undefined;
+    this.slabs = new Slabs();
+    this.charged = 0;
+    this.evictionCount++;
+    this.onUpdate?.({ position: this.watermark, valid: true, reset: true, changes: [] });
+  }
   private entities = new OverlayTable(new Map<string, PackedEntity>());
   private baseImage: SharedIndexImage | undefined;
   private slabs = new Slabs();
@@ -135,7 +153,9 @@ export class Replica {
     readonly source: ReplicaSource,
     readonly validAt: number,
     readonly population: "all" | "touched" = "all",
+    readonly byteBudget: number = Infinity,
   ) {
+    if (byteBudget !== Infinity && (!Number.isSafeInteger(byteBudget) || byteBudget < 1 || population !== "touched")) throw new TypeError("Invalid touched reader byte budget");
     if (!Number.isFinite(validAt)) throw new TypeError("Explicit valid time required");
     if (population !== "all" && population !== "touched") throw new TypeError("Unknown replica population");
   }
@@ -308,7 +328,7 @@ export class Replica {
         previous ??
           (current?.revision === rev && equalBytes(current, packed)
             ? current
-            : this.slabs.put(packed)),
+            : this.byteBudget === Infinity ? this.slabs.put(packed) : packed),
       );
       received.add(id);
     }
@@ -355,6 +375,7 @@ export class Replica {
         if (unique.length !== roots.length) throw new ReplicaInvalid("Duplicate bootstrap root");
         this.roots = unique;
         this.configured = true;
+        this.charged = 0;
         this.slabs = new Slabs();
         const next = new Map<string, PackedEntity>();
         await this.load(unique, cut, next);
@@ -404,8 +425,18 @@ export class Replica {
       loaded.delete(id);
     }
     try {
-      for (const [id, entity] of loaded) table.set(id, entity);
-      if (loaded.size) this.onAdmission?.(p, loaded);
+      let add = loaded;
+      if (this.byteBudget !== Infinity) {
+        const whole = this.charge(reachable);
+        if (whole > this.byteBudget) return false;
+        if (this.charged + this.charge(add) > this.byteBudget) {
+          this.evictGeneration();
+          add = reachable;
+        }
+        this.charged += this.charge(add);
+      }
+      for (const [id, entity] of add) this.entities.set(id, entity);
+      if (add.size) this.onAdmission?.(p, add);
       return true;
     } catch (error) {
       return this.invalidate(error);
@@ -458,6 +489,13 @@ export class Replica {
             tx.replacement.incremental === true,
           );
         else await this.load(tx.entities, tx.position, changes, true);
+        if (this.byteBudget !== Infinity) {
+          const charge = this.charge(changes);
+          if (this.charged + charge > this.byteBudget) {
+            this.evictGeneration();
+            changes.clear();
+          } else this.charged += charge;
+        }
         const replaced = [...changes].map(([id, e]) => [id, this.entities.get(id), e] as const);
         for (const [id, e] of changes) this.entities.set(id, e);
         traceSync(

@@ -73,15 +73,14 @@ const sql = (query: string, database = db) =>
     ["-XAtq", "-v", "ON_ERROR_STOP=1", "-h", socket, "-U", "postgres", "-d", database, "-c", query],
     { encoding: "utf8", timeout: 20_000 },
   ).trim();
-const rss = (pid: number): number => {
+const processTotal = (pid: number, metric: "rss" | "threads"): number => {
   try {
     const file = "/proc/" + pid,
       children = fs.readFileSync(file + "/task/" + pid + "/children", "utf8").trim();
-    const kb = Number(
-      fs.readFileSync(file + "/status", "utf8").match(/^VmRSS:\s+(\d+)/m)?.[1] ?? 0,
-    );
+    const status = fs.readFileSync(file + "/status", "utf8");
+    const value = metric === "threads" ? Number(status.match(/^Threads:\s+(\d+)/m)?.[1] ?? 0) : Number(status.match(/^VmRSS:\s+(\d+)/m)?.[1] ?? 0) * 1024;
     return (
-      kb * 1024 + (children ? children.split(/\s+/).reduce((sum, c) => sum + rss(Number(c)), 0) : 0)
+      value + (children ? children.split(/\s+/).reduce((sum, c) => sum + processTotal(Number(c), metric), 0) : 0)
     );
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return 0;
@@ -294,7 +293,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   try {
-    const rssBytes = Object.fromEntries([...pids].map(([name, c]) => [name, rss(c.pid!)]));
+    const rssBytes = Object.fromEntries([...pids].map(([name, c]) => [name, processTotal(c.pid!, "rss")]));
     const disk =
       role === "write"
         ? JSON.parse(
@@ -311,6 +310,7 @@ const server = http.createServer(async (req, res) => {
         containerId,
         source: observerId,
         rssBytes,
+        threads: Object.fromEntries([...pids].map(([name, c]) => [name, processTotal(c.pid!, "threads")])),
         disk,
         objectCacheLimitBytes: role === "write" ? 192 * 1024 ** 2 : null,
         cgroupBytes: Number(fs.readFileSync("/sys/fs/cgroup/memory.current", "utf8")),

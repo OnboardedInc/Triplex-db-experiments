@@ -47,6 +47,7 @@ export function touchedPull(
 export function touchedComposition(base: CompositionHandle): CompositionHandle {
   const scope = base.scopeName;
   if (!scope) throw Error("A touched reader needs a named scope");
+  let live: ReplicaReadHost | undefined;
   const open = async (root: string) => {
     const position = await base.currentPosition();
     try {
@@ -64,6 +65,7 @@ export function touchedComposition(base: CompositionHandle): CompositionHandle {
       );
       const reader = new ReplicaReader(undefined, host.index);
       host.subscribe((delta) => reader.notify(delta.reset));
+      live = host;
       return { host, reader };
     } catch (error) {
       if (error instanceof Replica.UnsupportedScope) return undefined;
@@ -78,6 +80,7 @@ export function touchedComposition(base: CompositionHandle): CompositionHandle {
       ...base.assignments,
       current: { lane: "datomic", role: "read-admitted subject replica" },
     },
+    touchedUsage: () => live ? { ...live.replica.retention, packed: live.replica.bytes, position: live.replica.position, history: live.index.historyBytes } : { bytes: 0, limit: Number(process.env.DX_TOUCHED_RETAIN_BYTES ?? 16 * 1024 ** 2), evictions: 0, entries: 0, packed: 0, history: 0 },
     async pull(root, basis, between) {
       if (basis.recordedPosition === undefined && basis.recordedAt === undefined)
         return base.pull(root, basis, between);

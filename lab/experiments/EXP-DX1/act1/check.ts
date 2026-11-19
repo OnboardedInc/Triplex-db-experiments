@@ -11,7 +11,7 @@ import type { DomainOracle } from "../../../bench/lib/w0-gates.ts";
 
 export const open = async (scope: string) =>
   process.env.DX_ACT1_NATIVE === "1"
-    ? (await import("../../../bench/lib/composition.ts")).openComposition("reach", "datomic", scope)
+    ? (await import("../../../bench/lib/composition.ts")).openComposition(process.env.DX_INT1_GUARD_READER === "1" ? "reach-touched" : "reach", "datomic", scope)
     : process.env.DX_ACT1_SQLITE_DIR
       ? (await import("./sqlite.ts")).sqliteStore(process.env.DX_ACT1_SQLITE_DIR, scope)
       : memoryComposition("datomic", scope);

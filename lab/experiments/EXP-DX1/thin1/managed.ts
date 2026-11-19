@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
+const integrated = ["int1-thin", "int1-deep", "int1-proof", "int1-idle", "int1-pooled", "int1-isolated"].includes(mode ?? "");
 const repo = fileURLToPath(new URL("../../../../", import.meta.url)),
   dir = path.resolve(supplied ?? ".");
 assert(dir.startsWith(path.resolve(repo, "runs") + "/"));
@@ -178,7 +179,7 @@ function bind() {
   });
 }
 if (action === "--guest") {
-  assert(process.platform === "linux" && (mode === "all" || mode === "touched") && rung && out);
+  assert(process.platform === "linux" && (mode === "all" || mode === "touched" || integrated) && rung && out);
   const stack = read(manifest);
   Object.assign(process.env, {
     DATOMIC_URL: stack.writeUrl,
@@ -188,22 +189,25 @@ if (action === "--guest") {
     TRIPLEX_DATOMIC_LAYOUT: "lean",
   });
   if (process.argv[7]) {
+    const armRoot = integrated ? path.dirname(out) : out;
+    if (integrated) assert.equal(path.basename(armRoot), "int1");
     assert(
-      path.basename(path.dirname(out)) === "DX-THIN1" &&
-        path.basename(path.dirname(path.dirname(out))) === "evidence",
+      path.basename(path.dirname(armRoot)) === "DX-THIN1" &&
+        path.basename(path.dirname(path.dirname(armRoot))) === "evidence",
     );
     process.env.DX_THIN_HOST_PID = process.argv[7];
-    process.env.DX_THIN_MEASURE = path.resolve(out, "../../..", "locks", "measure");
+    process.env.DX_THIN_MEASURE = path.resolve(armRoot, "../../..", "locks", "measure");
   }
   process.argv = [process.execPath, run, "live", mode, rung, out];
-  await import("./trial.ts");
+  if (integrated) { process.chdir(repo); await import("../int1/trial.ts"); }
+  else await import("./trial.ts");
 } else {
   assert.equal(process.platform, "darwin");
   if (action === "--build") prepare();
   else if (action === "--bind") bind();
   else if (action === "--arm") {
     assert(
-      (mode === "all" || mode === "touched") &&
+      (mode === "all" || mode === "touched" || integrated) &&
         rung &&
         Number.isSafeInteger(Number(rung)) &&
         out &&
