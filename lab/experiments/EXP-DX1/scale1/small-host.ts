@@ -9,6 +9,7 @@ import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { canonicalWorld } from "../../../bench/lib/canonical.ts";
 import { ids } from "../../../bench/lib/world.ts";
+import { tenantAccounts, tenantScope, keyFor, type Topology } from "./tenants.ts";
 import { smallScope } from "./small-plan.ts";
 type Binding = { source: string; slot: string; nonce: string };
 type Engine = { id: string; address: string; cgroup: string };
@@ -98,6 +99,7 @@ function collectPoint(
   const point = {
     ...b,
     openScopes: count,
+    readerClient: process.memoryUsage(),
     at: Date.now(),
     postgres: snapshot(),
     engines: Object.fromEntries(
@@ -122,8 +124,23 @@ function clients(engines: Record<string, Engine>) {
 function closeClients(cs: DatomicClient[]) {
   for (const c of cs) c.close();
 }
-async function open(cs: DatomicClient[], b: Binding, i: number, mustBeNew: boolean) {
-  const name = smallScope(b.nonce, i),
+function nameOf(b: Binding, i: number, layout?: Topology) {
+  return layout
+    ? tenantScope(
+        { study: "small", topology: layout, physical: layout === "pooled" ? 0 : i },
+        b.nonce,
+      )
+    : smallScope(b.nonce, i);
+}
+async function open(
+  cs: DatomicClient[],
+  b: Binding,
+  i: number,
+  mustBeNew: boolean,
+  layout?: Topology,
+  probe = false,
+) {
+  const name = nameOf(b, i, layout) + (probe ? "-empty" : ""),
     key = runtimeApi.DatabaseScope.test(name),
     expected = "s2-" + Buffer.from(String(key)).toString("base64url"),
     start = performance.now();
@@ -161,6 +178,7 @@ export async function openSmallScopes(
   b: Binding,
   engines: Record<string, Engine>,
   snapshot: () => unknown,
+  layout?: Topology,
 ) {
   const md = path.join(dir, "scope-footprint");
   fs.mkdirSync(md);
@@ -174,12 +192,50 @@ export async function openSmallScopes(
     opened: Awaited<ReturnType<typeof open>>[] = [],
     points = [];
   let since = Date.now();
+  process.env.DATOMIC_URL = "http://" + engines["gw-w"]!.address + ":8080";
+  process.env.DATOMIC_READ_URLS = "http://" + engines["gw-r"]!.address + ":8080";
+  process.env.TRIPLEX_DATOMIC_LAYOUT = "lean";
+  let pool: Awaited<ReturnType<typeof openComposition>> | undefined;
+  const readerViews: { account: string; database: string; client: DatomicClient }[] = [];
+  let lastPosition = 0;
   try {
     for (const count of [0, 1, 10, 50, 100]) {
       while (opened.length < count) {
         const i = opened.length;
         try {
-          opened.push(await open(cs, b, i, true));
+          const pooled = layout === "pooled";
+          const o = await open(cs, b, i, !pooled || i === 0, layout, pooled);
+          if (pooled) {
+            pool ??= await openComposition("reach", "datomic", o.scope);
+            const key = keyFor(i);
+            const tx = await pool.transact(
+              [
+                {
+                  op: "assert",
+                  entityId: "tenant:catalog",
+                  attribute: ":tenant/account",
+                  value: { type: "string", value: key },
+                  validFrom: 0,
+                },
+              ],
+              { commandId: b.nonce + ":register:" + key, actor: "account-registry" },
+            );
+            assert(
+              tx.ok &&
+                tx.value.position === lastPosition + 1 &&
+                tx.value.triples.length === 1 &&
+                tx.value.triples[0]!.value.value === key,
+            );
+            lastPosition = tx.value.position;
+          }
+          const reader = pooled
+            ? cs[1]!
+            : new DatomicClient("http://" + engines["gw-r"]!.address + ":8080", 45000);
+          readerViews.push({ account: keyFor(i), database: o.database, client: reader });
+          const h = await reader.begin(o.database);
+          assert(h.position === lastPosition);
+          await reader.release(o.database, h.handle);
+          opened.push({ ...o, account: i });
         } catch (e) {
           if ((e as any)?.name === "AssertionError") throw e;
           const failure = {
@@ -199,7 +255,17 @@ export async function openSmallScopes(
           return false;
         }
       }
-      // Datomic reports native index usage on its metrics cadence. This is a measured idle interval with zero application writes.
+      if (pool && count) {
+        const basis = { position: lastPosition, validAt: Date.now() };
+        const out = await pool.sweepPage(["tenant:catalog"], basis);
+        assert.deepEqual(out.reportedBasis, basis);
+        assert.deepEqual(
+          out.rows.map((r) => r.value.value).sort(),
+          Array.from({ length: count }, (_, i) => keyFor(i)).sort(),
+        );
+      }
+      // [DX-SCALE1] Why: native memory-index counters arrive on a minute cadence. Rejected: sampling the prior account plateau immediately after opening another reader.
+
       await sleep(65000);
       points.push(collectPoint(dir, b, engines, count, since, snapshot));
       since = Date.now();
@@ -207,10 +273,28 @@ export async function openSmallScopes(
         JSON.stringify({ kind: "small-scope-open", count, source: b.source, nonce: b.nonce }),
       );
     }
-    assert.equal(new Set(opened.map((o) => o.database)).size, 100);
-    write(path.join(dir, "open-scopes.json"), { ...b, opened, points });
+    assert.equal(new Set(opened.map((o) => o.database)).size, layout === "pooled" ? 1 : 100);
+    write(path.join(dir, "open-scopes.json"), {
+      ...b,
+      layout: layout ?? "separate",
+      opened,
+      points,
+      registeredAt: lastPosition,
+      idleReaderViews: readerViews.length,
+    });
     return true;
   } finally {
+    for (const v of readerViews) if (v.client !== cs[1]) v.client.close();
+    if (pool) {
+      await pool.close();
+      const name = nameOf(b, 0, layout) + "-empty",
+        key = runtimeApi.DatabaseScope.test(name);
+      const retired = await cs[0]!.delete(key);
+      assert(
+        retired.deleted && retired.db === "s2-" + Buffer.from(String(key)).toString("base64url"),
+      );
+      write(path.join(md, "registry-cleanup.json"), { ...b, scope: name, database: retired.db });
+    }
     closeClients(cs);
   }
 }
@@ -222,8 +306,17 @@ type ReadProof = {
   rows: number;
   digest: string;
 };
-async function witness(b: Binding, account: number, prior?: ReadProof): Promise<ReadProof> {
-  const scope = smallScope(b.nonce, account),
+async function witness(
+  b: Binding,
+  account: number,
+  prior?: ReadProof,
+  layout?: Topology,
+): Promise<ReadProof> {
+  const subject =
+    layout === "pooled"
+      ? tenantAccounts({ study: "small", topology: "pooled", physical: 0 })[account]!.first
+      : 0;
+  const scope = nameOf(b, account, layout),
     c = await openComposition("reach", "datomic", scope);
   try {
     const position = await c.currentPosition();
@@ -231,7 +324,13 @@ async function witness(b: Binding, account: number, prior?: ReadProof): Promise<
     if (prior) assert.equal(position, prior.position);
     const time = Date.now(),
       basis = prior?.basis ?? { recordedAt: time, recordedPosition: position, validAt: time },
-      p = await c.pull(ids.placement(0), basis);
+      p = await c.pull(ids.placement(subject), basis);
+    if (layout)
+      assert(
+        p.triples.some(
+          (r) => r.attribute === ":subject/account" && r.value.value === keyFor(account),
+        ),
+      );
     assert(p.triples.length > 75);
     const r = {
       account,
@@ -256,7 +355,12 @@ async function batches<T>(fn: (i: number) => Promise<T>) {
   return out;
 }
 // [DX-SCALE1] Why: restored availability means newly opened clients get the exact pre-restart data for their own database. Rejected: a health response, a pre-existing connection or an empty recreate.
-export async function recoverSmallScopes(dir: string, b: Binding, engines: Record<string, Engine>) {
+export async function recoverSmallScopes(
+  dir: string,
+  b: Binding,
+  engines: Record<string, Engine>,
+  layout?: Topology,
+) {
   const setEndpoints = () => {
     for (const role of ["gw-w", "gw-r"]) {
       const addr = docker(
@@ -273,7 +377,7 @@ export async function recoverSmallScopes(dir: string, b: Binding, engines: Recor
     process.env.DX_STRICT_RECORD_CLOCKS = "1";
   };
   setEndpoints();
-  const before = await batches((i) => witness(b, i));
+  const before = await batches((i) => witness(b, i, undefined, layout));
   write(path.join(dir, "pre-restart.json"), { ...b, before });
   const stoppingAt = Date.now();
   for (const role of ["gw-r", "gw-w", "tx", "pg"])
@@ -309,8 +413,8 @@ export async function recoverSmallScopes(dir: string, b: Binding, engines: Recor
     const gatewayReady = Date.now(),
       results = await batches(async (i) => {
         const t = performance.now(),
-          o = await open(cs, b, i, false),
-          r = await witness(b, i, before[i]);
+          o = await open(cs, b, i, false, layout),
+          r = await witness(b, i, before[i], layout);
         return { ...o, proof: r, verifiedAt: Date.now(), ms: performance.now() - t };
       });
     assert.equal(results.length, 100);

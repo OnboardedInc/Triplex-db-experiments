@@ -152,7 +152,18 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     });
   };
 
-  function pickSubject(rng: Rng): { subject: number; hotPick: boolean } {
+  type TenantReader = {first:number;people:number;interReadMs:number;key:string};
+  let tenantSeats: TenantReader[] = [];
+  let tenantHot = new Map<string,number[]>();
+  const tenantSamples = new Map<string,number[]>();
+  const within = (s:number,a:TenantReader) => s >= a.first && s < a.first + a.people;
+  function pickSubject(rng: Rng, seat?: TenantReader): { subject: number; hotPick: boolean } {
+    if (seat) {
+      let choices = tenantHot.get(seat.key);
+      if (!choices) { choices=hot.filter(s => within(s,seat)); tenantHot.set(seat.key,choices); }
+      if (choices.length && rng.next()<0.6) return {subject:choices[rng.int(choices.length)]!,hotPick:true};
+      return {subject:seat.first+rng.int(seat.people),hotPick:false};
+    }
     if (mode === "sample" && cfg.historySample.length) return { subject: cfg.historySample[rng.int(cfg.historySample.length)]!, hotPick: false };
     if (mode === "weighted") {
       const u = rng.next();
@@ -260,17 +271,19 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         await observationCredit();
         if (replica && cfg.replicaYield !== "loop") await turn.enter();
         if (stopping || id >= wanted) break;
-        const oracle = cfg.sampleSubjects.length > 0 && rng.next() < cfg.oracleRate;
-        let picked = oracle ? { subject: cfg.sampleSubjects[rng.int(cfg.sampleSubjects.length)]!, hotPick: false } : pickSubject(rng);
+        const readPhase = phase, seat=tenantSeats[id];
+        let candidates = seat ? tenantSamples.get(seat.key) : cfg.sampleSubjects;
+        if (!candidates) { candidates=cfg.sampleSubjects.filter(s=>within(s,seat!)); tenantSamples.set(seat!.key,candidates); }
+        const oracle = candidates.length > 0 && rng.next() < cfg.oracleRate;
+        let picked = oracle ? { subject: candidates[rng.int(candidates.length)]!, hotPick: false } : pickSubject(rng, seat);
         const [basis, kind, position] = pickBasis(rng);
         let straddleSeq: number | undefined, assignedAt: number | undefined;
         if (!oracle && mode === "mixed" && rng.next() < cfg.splitShare) {
-          const assignment = await ask({ type: "split-request" }, 2_000);
+          const assignment = await ask({ type: "split-request", range:seat }, 2_000);
           if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; assignedAt = assignment.assignedAt; }
         }
         // [DX-R3] Why: each phase owes local raw comparisons even after the global extra-sample budget is spent.
         // Rejected: charging open-clock fallbacks against the local quota (never exercises the copy).
-        const readPhase = phase;
         let keepRows = false;
         if (oracle) {
           const owesLocal = replica !== undefined && (phases.get(readPhase)?.rawLocalSamples ?? 0) < (cfg.rawLocalMinimum ?? 1);
@@ -281,7 +294,8 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         try { await readOnce(picked.subject, basis, kind, position, readPhase, { keepRows, straddleSeq, assignedAt, hotPick: picked.hotPick }); }
         finally { if (keepRows) rawPending.delete(readPhase); }
         // [DX-SCALE1] Why: low-traffic accounts have a real reader without turning each small scope into a saturated read loop. Rejected: zero readers in active accounts or sleeping on the sentinel's comparison windows.
-        if(interReadMs) {const next=performance.now()+interReadMs;while(!stopping&&id<wanted&&phase===readPhase&&performance.now()<next) await new Promise<void>(resolve=>setTimeout(resolve,Math.min(250,next-performance.now())));}
+        const pace=seat?.interReadMs??interReadMs;
+        if(pace) {const next=performance.now()+pace;while(!stopping&&id<wanted&&phase===readPhase&&performance.now()<next) await new Promise<void>(resolve=>setTimeout(resolve,Math.min(250,next-performance.now())));}
         // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
         // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
         if (replica) {
@@ -344,12 +358,13 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       replica?.apply(msg.delta);
     } else if (msg.type === "level") {
       phase = msg.phase;
+      tenantSeats=msg.tenants??[];
       interReadMs=msg.interReadMs??0;
       mode = msg.mode ?? "mixed";
       setLevel(msg.readers);
     } else if (msg.type === "basis" || msg.type === "basis-delta") {
       acked = msg.type === "basis-delta" ? basisWindow.apply(msg.delta) : msg.acked;
-      hot = msg.hot;
+      hot = msg.hot; tenantHot.clear();
       if (wanted > loops.size) setLevel(wanted);
     } else if (msg.type === "split" || msg.type === "acked") {
       waiting.get(msg.token)?.(msg);

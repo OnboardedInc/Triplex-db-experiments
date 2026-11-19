@@ -4,6 +4,8 @@
  * This legacy driver remains an A0-control with direct-subject DIAGNOSTIC affected sets and
  * publication clocks must be supplied by a source observer; EXP-DI01 and EXP-P3M own lane integration.
  */
+import {installTenantViews} from "../../experiments/EXP-DX1/scale1/tenant-feed.ts";
+import type {Account} from "../../experiments/EXP-DX1/scale1/tenants.ts";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { inspect } from "node:util";
@@ -129,6 +131,7 @@ export class FeedConsumer {
     dir: string;
     epoch: string;
     startAfter: number;
+    tenants?: readonly Account[];
     now: () => number;
     pollTimeoutMs?: number;
     publicationWaitMs?: number;
@@ -153,6 +156,7 @@ export class FeedConsumer {
     this.storeFile = path.join(this.dir, "consumer.db");
     this.source = JSON.stringify({ route: "A0-control", dir: this.dir, epoch: this.epoch });
     this.store = new SqliteConsumerStore(this.storeFile);
+    if(opts.tenants) installTenantViews(this.storeFile,opts.tenants);
     this.checkpoint = opts.startAfter;
     this.lifeMax = opts.startAfter;
     if (!this.store.checkpoint(this.name))

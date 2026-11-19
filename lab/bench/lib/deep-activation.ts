@@ -103,7 +103,9 @@ export class DeepActivation {
   private readonly directory: string;
   private readonly subjects: number;
   private readonly run: string;
-  constructor(directory: string, people: number, run: string) {
+  private readonly firstSubject: number;
+  constructor(directory: string, people: number, run: string, firstSubject = 0) {
+    this.firstSubject = firstSubject;
     this.directory = directory;
     this.subjects = people;
     this.run = run;
@@ -161,12 +163,14 @@ export class DeepActivation {
       fd = fs.openSync(file, "wx"),
       sum = createHash("sha256");
     const records: W0.EvaluationRecord[] = [];
-    const roster = Array.from({ length: this.subjects }, (_, i) => W0.placementId(i));
+    const roster = Array.from({ length: this.subjects }, (_, i) =>
+      W0.placementId(this.firstSubject + i),
+    );
     try {
       for (let n = 0; n < this.subjects; n += pageSize) {
         const group = Array.from(
           { length: Math.min(pageSize, this.subjects - n) },
-          (_, j) => n + j,
+          (_, j) => this.firstSubject + n + j,
         );
         const page = await comp.sweepPage(group.map(ids.placement), {
           position: cut.position,
@@ -217,7 +221,7 @@ export class DeepActivation {
     assert(
       coverage &&
         coverage.size === this.subjects &&
-        coverage.pages === Math.ceil(this.subjects / 256) &&
+        coverage.pages === new Set(roster.map((s) => pageAddress(s).page)).size &&
         coverage.roster === hash(canonical(roster)),
     );
     assert(
@@ -313,6 +317,8 @@ export class DeepActivation {
       for (const { subject, position } of r2.mutations) {
         assert(
           Number.isSafeInteger(subject) &&
+            subject >= this.firstSubject &&
+            subject < this.firstSubject + this.subjects &&
             Number.isSafeInteger(position) &&
             position > sourceCuts[1].position,
         );
@@ -346,7 +352,7 @@ export class DeepActivation {
       for (let n = 0; n < this.subjects; n += pageSize) {
         const group = Array.from(
           { length: Math.min(pageSize, this.subjects - n) },
-          (_, j) => n + j,
+          (_, j) => this.firstSubject + n + j,
         );
         const pages = await Promise.all(
           sourceCuts.map((c) =>
@@ -375,7 +381,7 @@ export class DeepActivation {
           group.map(async (i) => {
             const worlds = sourceCuts.map((c, k) => policyWorld(i, by[k]!.get(i) ?? [], c));
             for (let k = 0; k < 2; k++) {
-              const line = JSON.parse(logs[k]![i]!);
+              const line = JSON.parse(logs[k]![i - this.firstSubject]!);
               assert.equal(line[0], i);
               assert.equal(line[1], hash(canonical(worlds[k])));
             }
@@ -392,7 +398,7 @@ export class DeepActivation {
               });
               const { basis, subject, workItems, release: releaseHash } = JSON.parse(output);
               assert.equal(subject, W0.placementId(i));
-              assert.equal(JSON.parse(logs[k]![i]!)[2], hash(output));
+              assert.equal(JSON.parse(logs[k]![i - this.firstSubject]!)[2], hash(output));
               const published = JSON.parse(
                 await oracle.call("publish", {
                   state: previous,

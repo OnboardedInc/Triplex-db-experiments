@@ -3,7 +3,6 @@ import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { catalog } from "./catalog.ts";
 import { updateReport } from "./owner-report.ts";
@@ -71,7 +70,13 @@ function updateHandoff(line: string) {
 function state() {
   const script =
     'date -u; systemctl list-units --all --no-pager "triplex-scale1-*"; test ! -d "$1" || find "$1" -mindepth 2 -maxdepth 2 -name STATUS.json -print -exec cat {} \\;';
-  return sudo("sh", "-c", script, "state", root);
+  return sudo(
+    "sh",
+    "-c",
+    script + '; for f in "$1"/queues/*/state.json; do test ! -f "$f" || cat "$f"; done',
+    "state",
+    root,
+  );
 }
 function source() {
   git("fetch", "origin", "refs/heads/exp/DX-BM1-bare-metal");
@@ -233,102 +238,51 @@ async function collect(tag: string) {
   );
   console.log(dir);
 }
-async function campaign(label: string) {
+function campaign(label: string) {
   const { sha } = source(),
-    script = fileURLToPath(import.meta.url),
-    build = `${root}/build-${sha}`;
-  const invoke = (...args: string[]) =>
-    new Promise<number | null>((resolve, reject) => {
-      const child = spawn(process.execPath, ["--import", "tsx", script, ...args], {
-        cwd: repo,
-        stdio: "inherit",
-        env: { ...process.env, DX_SCALE1_SOURCE: sha },
-      });
-      child.once("error", reject);
-      child.once("close", resolve);
-    });
-  const exists = (file: string) =>
-    sudo("sh", "-c", 'if test -f "$1"; then echo yes; else echo no; fi', "file", file) === "yes";
-  const until = async (predicate: () => boolean, deadline: number, failed?: () => boolean) => {
-    while (!predicate()) {
-      if (Date.now() >= deadline || failed?.())
-        throw Error("A bounded bench stage stopped without terminal evidence");
-      await sleep(45000);
-    }
-  };
-  const endedWithoutEvidence = (unit: string, since: number) => {
-    const status = remote("systemctl", "show", unit, "-p", "ActiveState", "--value");
-    return status === "failed" || (status === "inactive" && Date.now() - since > 90_000);
-  };
-  if (!exists(`${build}/results/bootstrap.exit`)) {
-    const submitted = Date.now();
-    assert.equal(await invoke("prepare"), 0);
-    await until(
-      () => exists(`${build}/results/bootstrap.exit`),
-      Date.now() + 36 * 60000,
-      () => endedWithoutEvidence("triplex-scale1-prepare-" + sha.slice(0, 12), submitted),
-    );
-  }
-  assert.equal(sudo("cat", `${build}/results/bootstrap.exit`), "0");
-  await until(
-    () =>
-      ["inactive", "failed"].includes(
-        remote(
-          "systemctl",
-          "show",
-          `triplex-scale1-prepare-${sha.slice(0, 12)}`,
-          "-p",
-          "ActiveState",
-          "--value",
-        ),
-      ),
-    Date.now() + 180000,
+    dir = root + "/queues/" + label;
+  const plan = JSON.parse(sudo("cat", dir + "/plan.json"));
+  assert(plan.label === label && plan.steps.length);
+  const units = remote(
+    "systemctl",
+    ...activeUnitArgs,
+    "triplex-scale1-queue-" + label + "*.service",
   );
-  const stage = async (item: number, mode: string, opts: string[]) => {
-    const tag = tags(`${label}-${item}-${mode}`),
-      base = `${root}/${tag}`;
-    if (!exists(`${base}/attempt.json`)) {
-      const code = await invoke("launch", String(item), tag, mode, ...opts);
-      if (code !== 0 && code !== 75) throw Error(`Stage ${tag} could not launch`);
-    }
-    const a = JSON.parse(sudo("cat", `${base}/attempt.json`));
-    assert(a.source === sha && a.item === item && a.mode === mode);
-    await until(
-      () => exists(`${base}/transfer.json`),
-      a.at + (a.ceiling + 3750) * 1000,
-      () => endedWithoutEvidence("triplex-scale1-" + tag, a.at),
-    );
-    assert.equal(await invoke("collect", tag), 0);
-    const terminal = JSON.parse(sudo("cat", `${base}/terminal.json`));
-    assert(terminal.cleanup && terminal.nonce === a.nonce && terminal.source === sha);
-    await until(
-      () =>
-        ["inactive", "failed"].includes(
-          remote("systemctl", "show", `triplex-scale1-${tag}`, "-p", "ActiveState", "--value"),
-        ),
-      Date.now() + 180000,
-    );
-    return { tag, terminal, capacity: a.capacity };
-  };
-  const singles: Record<number, string> = {};
-  for (const item of [1, 2, 3, 4]) {
-    const size = item === 4 ? (singles[2] ?? singles[1]) : singles[1],
-      opts = size ? ["--sizing", size] : [];
-    const zero = await stage(item, "zero", opts);
-    if (zero.terminal.service === "capacity-refused") {
-      if (zero.capacity.fitsSeed) await stage(item, "seed", opts);
-      continue;
-    }
-    if (item <= 2 && zero.terminal.scopeReports === 1) singles[item] = zero.tag;
-    assert(zero.terminal.scopeReports > 0, `Missing zero baseline for item ${item}`);
-    const loaded = await stage(item, "reader", [...opts, "--baseline", zero.tag]);
-    if (loaded.terminal.service === "capacity-refused") {
-      if (loaded.capacity.fitsSeed) await stage(item, "seed", opts);
-      continue;
-    }
-    if (item <= 2 && loaded.terminal.scopeReports === 1) singles[item] = loaded.tag;
-    if (item > 1) await stage(item, "activation", opts);
+  if (units) {
+    console.log(state());
+    return;
   }
+  const tool = root + "/build-" + plan.steps[0].source + "/tools/bin/node",
+    op = root + "/controller-" + sha;
+  const install =
+    'set -eu; if ! test -d "$1"; then git -c credential.helper= clone --no-checkout "$2" "$1"; git -C "$1" checkout --detach "$3"; fi; test "$(git -C "$1" rev-parse HEAD)" = "$3"; if ! test -e "$1/node_modules"; then ln -s "$4" "$1/node_modules"; fi';
+  sudo(
+    "env",
+    "GIT_TERMINAL_PROMPT=0",
+    "GIT_CONFIG_GLOBAL=/dev/null",
+    "GIT_CONFIG_NOSYSTEM=1",
+    "sh",
+    "-c",
+    install,
+    "stage",
+    op,
+    "https://github.com/OnboardedInc/Triplex-db-experiments.git",
+    sha,
+    root + "/build-" + plan.steps[0].source + "/repository/node_modules",
+  );
+  console.log(
+    sudo(
+      "systemd-run",
+      "--no-block",
+      "--unit=triplex-scale1-queue-" + label + "-" + sha.slice(0, 9),
+      "--property=Nice=15",
+      "--property=KillMode=control-group",
+      tool,
+      "--experimental-strip-types",
+      op + "/lab/experiments/EXP-DX1/scale1/remote-sequence.ts",
+      label,
+    ),
+  );
 }
 if (action === "status") console.log(state());
 else if (action === "campaign") await campaign(tags(args[0]));
@@ -381,8 +335,11 @@ else if (action === "prepare") {
       ["zero", "reader", "activation", "seed", "interference", "small"].includes(args[2] ?? ""),
   );
   for (let i = 0; i < opts.length; i += 2) {
-    assert(["--sizing", "--baseline"].includes(opts[i]!));
-    tags(opts[i + 1]);
+    if (opts[i] === "--account-layout") assert(["pooled", "separate"].includes(opts[i + 1]!));
+    else {
+      assert(["--sizing", "--baseline", "--seed-image"].includes(opts[i]!));
+      tags(opts[i + 1]);
+    }
   }
   try {
     console.log(

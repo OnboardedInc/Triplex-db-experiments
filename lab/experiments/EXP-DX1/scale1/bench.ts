@@ -6,6 +6,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 import { deepPopulation } from "../../../bench/lib/deep-world.ts";
+import { sealSeed, restoreSeed } from "./seed-image.ts";
+import {
+  campaignItem,
+  tenantRung,
+  tenantAccounts,
+  tenantFacts,
+  type TenantSpec,
+  type Topology,
+} from "./tenants.ts";
 import { smallPeople, smallRung } from "./small-plan.ts";
 import { deepSeed } from "../../../bench/lib/deep-trace.ts";
 import {
@@ -135,11 +144,14 @@ export function capacity(
     spillBytes: number;
   },
   arm = "reader",
+  physicalFacts?: number,
 ) {
   const small = arm === "small",
-    facts = small
-      ? (90 * deepPopulation(100).facts + 10 * deepPopulation(2000).facts) / 100
-      : deepPopulation(people).facts,
+    facts =
+      physicalFacts ??
+      (small
+        ? (90 * deepPopulation(100).facts + 10 * deepPopulation(2000).facts) / 100
+        : deepPopulation(people).facts),
     scale = facts / (observation?.facts ?? 1_604_464);
   // [DX-SCALE1] Why: one shared engine allocation plus N separate senders, replicas and lossless spills must fit. Rejected: multiplying the whole stack by ten or treating installed NVMe capacity as free space.
   const diskPerFact = observation ? observation.allocatedBytes / observation.facts : 1200;
@@ -373,10 +385,12 @@ function clean(dir: string, prefix: string) {
   );
 }
 async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
-  const spec = items[item - 1]!;
   const dir = path.join(root, tag),
     attempt = get(path.join(dir, "attempt.json"));
-  const small = mode === "small";
+  const spec = campaignItem(item, attempt.layout);
+  assert.deepEqual(attempt.spec, spec);
+  const small = mode === "small",
+    smallSeparate = small && attempt.layout !== "pooled";
   const prefix = attempt.slot,
     source = call("git", ["rev-parse", "HEAD"]);
   assert.equal(source, attempt.source);
@@ -388,7 +402,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   write(path.join(dir, "replay-source.json"), stageReplay(repo, oracleDir));
   write(path.join(dir, "source.json"), sourceInventory(repo));
   const budget = attempt.capacity;
-  assert(mode === "seed" ? budget.fitsSeed : budget.fitsLive);
+  assert(attempt.boundedTrial || (mode === "seed" ? budget.fitsSeed : budget.fitsLive));
   status(dir, "starting stack");
   const env = {
     ...process.env,
@@ -451,10 +465,22 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   write(path.join(dir, "placement.json"), engines);
   write(path.join(dir, "disk-before.json"), before);
   const binding = { source, slot: prefix, nonce: attempt.nonce };
+  const imageTrial = attempt.layout === "pooled" && item === 5;
+  if (imageTrial && mode !== "zero") {
+    const dest: DeepIdentity = {
+      ...binding,
+      account: 0,
+      people: spec.people,
+      arm: mode,
+      tenant: { study: "million", topology: "pooled", physical: 0 },
+    };
+    status(dir, "restoring the verified million-person seed", { tag: attempt.seedImageTag });
+    await restoreSeed(dir, attempt.seedImageTag, dest, engines);
+  }
   if (small) {
     status(dir, "measuring empty database opens");
     const { openSmallScopes } = await import("./small-host.ts");
-    if (!(await openSmallScopes(dir, binding, engines, () => snapshot(prefix)))) {
+    if (!(await openSmallScopes(dir, binding, engines, () => snapshot(prefix), attempt.layout))) {
       status(dir, "database open limit observed");
       return;
     }
@@ -475,9 +501,17 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     raw.push(out);
     const fd = fs.openSync(path.join(out, "driver.log"), "wx");
     exit.push(null);
+    const tenant: TenantSpec | undefined = attempt.layout
+      ? { study: attempt.spec.study, topology: attempt.layout, physical: i }
+      : undefined;
     const identity: DeepIdentity = {
+      ...(tenant ? { tenant } : {}),
       account: i,
-      people: small ? smallPeople(i) : spec.people,
+      people: tenant
+        ? tenantAccounts(tenant).reduce((n, a) => n + a.people, 0)
+        : small
+          ? smallPeople(i)
+          : spec.people,
       source,
       slot: prefix,
       nonce: attempt.nonce,
@@ -498,7 +532,13 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--profile",
       "deep",
       "--rung",
-      small ? smallRung(i) : spec.people === 10000 ? "deep-10k" : "deep-100k",
+      tenant
+        ? tenantRung(tenant)
+        : small
+          ? smallRung(i)
+          : spec.people === 10000
+            ? "deep-10k"
+            : "deep-100k",
       "--output",
       path.join(out, "ns-report.json"),
       "--oracle-root",
@@ -514,7 +554,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--read-path",
       "replica",
       "--reader-threads",
-      small && i !== 0 ? "1" : "6",
+      smallSeparate && i !== 0 ? "1" : "6",
       "--seed-batch-facts",
       "2000",
       "--replica-history-mib",
@@ -532,11 +572,20 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--receipt-capture",
       mode === "seed" ? "sender" : "replica-worker",
     ];
+    if (imageTrial && mode !== "zero")
+      args.push("--verified-seed-image", path.join(dir, "restored-seed.json"));
+    if (tenant) args.push("--tenant-study", tenant.study, "--tenant-topology", tenant.topology);
     if (small)
-      args.push("--deep-small-scopes", "--oracle-rate", "0.15", "--reader-entity-cache-mib", "8");
+      args.push(
+        ...(tenant ? [] : ["--deep-small-scopes"]),
+        "--oracle-rate",
+        "0.15",
+        "--reader-entity-cache-mib",
+        "8",
+      );
     if (mode === "zero") args.push("--zero-readers");
     if (mode === "activation") args.push("--deep-activation");
-    if (mode === "interference") args.push("--deep-interference");
+    if (mode === "interference" && !tenant) args.push("--deep-interference");
     if (mode === "seed") args.push("--deep-seed-only");
     if (mode === "reader")
       args.push(
@@ -544,7 +593,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         path.join(repo, "runs", "DX-SCALE1", refs, `s${i}`, "ns-writes.jsonl"),
       );
     // [DX-SCALE1] Why: the sentinel must have the same per-isolate heap in its one- and ten-account arms. Rejected: shrinking only the loaded account and attributing its extra GC to neighbor traffic.
-    const heapMiB = small
+    const heapMiB = smallSeparate
       ? i === 0
         ? 1536
         : 768
@@ -559,7 +608,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     write(path.join(out, "client-limits.json"), {
       heapMiB,
       sharedCgroupBytes: attempt.clientBudget,
-      readerWorkers: small && i !== 0 ? 1 : 6,
+      readerWorkers: smallSeparate && i !== 0 ? 1 : 6,
       cpus: planCpus,
     });
     const child = spawn("taskset", args, {
@@ -567,7 +616,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       stdio: ["ignore", fd, fd],
       env: {
         ...env,
-        ...(mode === "activation"
+        ...(mode === "activation" || tenant?.study === "interference"
           ? { TX2_W0_OUTBOX_NAMESPACE: "page-v1~deep-" + attempt.nonce + "-s" + i }
           : {}),
         TRIPLEX_TRACE_DIR: path.join(out, "trace"),
@@ -618,6 +667,9 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     simultaneousPeak = 0,
     lastAdvance = Date.now(),
     lastSignal = "";
+  let sealing: Promise<void> | undefined,
+    sealed = false,
+    imageError: unknown;
   try {
     while (exit.some((e) => e === null) || raw.length < scheduledScopes) {
       launchWaiting();
@@ -652,7 +704,13 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
             .join("/"),
         )
         .join("|");
-      const observed = signal + "|" + replayCpu(oracleDir, raw);
+      if (imageError) throw imageError;
+      const archiveProgress =
+        imageTrial && mode === "zero"
+          ? (fs.statSync(path.join(dir, "seed.pgdump.partial"), { throwIfNoEntry: false })?.size ??
+            0)
+          : 0;
+      const observed = signal + "|" + replayCpu(oracleDir, raw) + "|" + archiveProgress;
       if (observed !== lastSignal) {
         lastSignal = observed;
         lastAdvance = Date.now();
@@ -684,9 +742,20 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
           volumeBytesPerFact: (now.volumeBytes - before.volumeBytes) / facts,
         };
         write(path.join(dir, "seed-disk.json"), disk);
+        if (imageTrial && mode === "zero") {
+          status(dir, "sealing the verified PostgreSQL seed", { position: w[0].seed.position });
+          sealing = sealSeed(dir, prefix, w[0], engines.pg.id)
+            .then(() => {
+              sealed = true;
+            })
+            .catch((e) => {
+              imageError = e;
+            });
+        }
       }
       if (
         !commonStart &&
+        (!sealing || sealed) &&
         mode !== "seed" &&
         raw.length === scheduledScopes &&
         raw.every((_, i) => fs.existsSync(path.join(barrier, `s${i}.ready.json`)))
@@ -793,6 +862,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         expected = {
           account: i,
           people: spec.people,
+          ...(found[i]!.id.tenant ? { tenant: found[i]!.id.tenant } : {}),
           source,
           nonce: zero.nonce,
           slot: zero.slot,
@@ -809,7 +879,9 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   }
   if (small) {
     status(dir, "measuring recovery across 100 databases");
-    await (await import("./small-host.ts")).recoverSmallScopes(dir, binding, engines);
+    await (
+      await import("./small-host.ts")
+    ).recoverSmallScopes(dir, binding, engines, attempt.layout);
   }
   const measured = cohort(found, spec.scopes, previous, baselineInvalid);
   const spillBytes = Math.max(
@@ -887,7 +959,7 @@ function partial(dir: string, tag: string) {
   return { tag, scopes };
 }
 function budgetFor(item: number, dir: string, mode: string, prior?: string) {
-  const s = items[item - 1]!;
+  const s = campaignItem(item, getopt("account-layout") as Topology | undefined);
   let observed;
   if (prior) {
     assert(/^[a-z0-9-]{3,42}$/.test(prior));
@@ -914,12 +986,31 @@ function budgetFor(item: number, dir: string, mode: string, prior?: string) {
     { memory: memory(), disk: Math.min(available(dir), available(volumeRoot)) },
     observed,
     mode,
+    "facts" in s ? s.facts / s.scopes : undefined,
   );
 }
 async function terminal(dir: string, tag: string, prefix: string, refusal?: string) {
   const entry = get(path.join(dir, "attempt.json"));
   const service = refusal ?? process.env.SERVICE_RESULT ?? "unavailable";
   clean(dir, prefix);
+  const seedDir = path.join(repo, "runs", "DX-SCALE1", tag, "s0");
+  if (
+    entry.item === 5 &&
+    entry.layout === "pooled" &&
+    entry.mode === "zero" &&
+    fs.existsSync(path.join(seedDir, "identity.json"))
+  ) {
+    const identity = get(path.join(seedDir, "identity.json"));
+    assert(
+      identity.source === entry.source &&
+        identity.nonce === entry.nonce &&
+        identity.slot === prefix,
+    );
+    write(
+      path.join(dir, "seed-anatomy.json"),
+      await (await import("./seed-anatomy.ts")).seedAnatomy(dir, seedDir, identity),
+    );
+  }
   write(path.join(dir, "resource-summary.json"), await resources(dir, prefix, entry.source));
   const state = partial(dir, tag);
   write(path.join(dir, "partial.json"), state);
@@ -941,6 +1032,9 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     "resource-summary.json",
     "database-limit.json",
     "open-scopes.json",
+    "seed-anatomy.json",
+    "seed-image.json",
+    "restored-seed.json",
     "restart.json",
     "pre-restart.json",
     "partial.json",
@@ -961,6 +1055,7 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
         "seed-observed.json",
         "identity.json",
         "client-limits.json",
+        "tenant-observations.json",
       ])
         if (fs.existsSync(path.join(raw, name, file)))
           fs.copyFileSync(path.join(raw, name, file), path.join(sub, file));
@@ -1124,9 +1219,30 @@ async function main() {
     selected.every(Boolean) && new Set(selected).size === 12,
     "Placement needs 12 distinct physical cores",
   );
-  const spec = items[item - 1]!,
+  const layout = getopt("account-layout") as Topology | undefined;
+  const spec = campaignItem(item, layout),
     capacity = budgetFor(item, root, mode, getopt("sizing"));
-  const baselineTag = getopt("baseline");
+  const baselineTag = getopt("baseline"),
+    seedImageTag = getopt("seed-image");
+  if (item === 5 && layout === "pooled" && mode !== "zero") {
+    assert(seedImageTag && /^[a-z][a-z0-9-]{2,40}$/.test(seedImageTag));
+    const origin = get(path.join(root, seedImageTag, "attempt.json")),
+      seal = get(path.join(root, seedImageTag, "seed-image.json"));
+    assert(
+      origin.item === 5 &&
+        origin.mode === "zero" &&
+        origin.layout === layout &&
+        origin.source === source &&
+        seal.identity.nonce === origin.nonce &&
+        seal.identity.slot === origin.slot,
+    );
+  }
+  const canAttempt = capacity.host.memory > capacity.sharedReserve + 8 * GiB;
+  const diskFloor =
+    capacity.db * (item === 5 && layout === "pooled" && mode === "zero" ? 1.65 : 1) +
+    capacity.spillPer +
+    15 * GiB;
+  const boundedTrial = mode !== "seed" && item >= 2 && canAttempt && capacity.host.disk > diskFloor;
   if (mode === "reader") {
     assert(baselineTag && /^[a-z][a-z0-9-]{2,40}$/.test(baselineTag));
     const prior = get(path.join(root, baselineTag, "attempt.json"));
@@ -1136,7 +1252,14 @@ async function main() {
     assert(get(path.join(root, baselineTag, "terminal.json")).cleanup);
     assert(fs.existsSync(path.join(root, baselineTag, "summary.json")));
   }
-  const ceiling = (mode === "activation" ? 10 : spec.people === 100000 ? 8 : 4) * 3600;
+  const ceiling =
+    (item === 5 && layout === "pooled"
+      ? 24
+      : mode === "activation" || mode === "interference"
+        ? 10
+        : spec.people === 100000
+          ? 8
+          : 4) * 3600;
   const clientBudget = Math.floor(
     Math.max(1 * GiB, capacity.host.memory - capacity.sharedReserve - 5 * GiB),
   );
@@ -1154,11 +1277,14 @@ async function main() {
     originHeads,
     capacity,
     baselineTag,
+    layout,
+    boundedTrial,
+    seedImageTag,
     at: Date.now(),
     cpus: planCpus,
     topology,
   });
-  if (!(mode === "seed" ? capacity.fitsSeed : capacity.fitsLive)) {
+  if (!boundedTrial && !(mode === "seed" ? capacity.fitsSeed : capacity.fitsLive)) {
     status(dir, "capacity refused", { limits: capacity.limits, seedFits: capacity.fitsSeed });
     await terminal(dir, tag, prefix, "capacity-refused");
     console.log(JSON.stringify(capacity));

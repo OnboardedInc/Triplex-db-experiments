@@ -50,6 +50,9 @@ export function alignIds(operations: readonly any[], receipt: Receipt): (string 
 export async function seedRung(opts: {
   comp: CompositionHandle;
   deep?: DeepSeedWitness;
+  restoredRunTag?:string;
+  deepRows?: (subject:number)=>Fact[];
+  seedAddressOf?:(subject:number)=>string;
   deepProgress?: (subjects: number, facts: number, position: number) => void;
   onReceipt?: (operations: readonly any[], receipt: Receipt) => void;
   subjects: number;
@@ -75,11 +78,13 @@ export async function seedRung(opts: {
   let n = 0;
 
   const commit = async (operations: any[], label: string, record: boolean, preconditions: any[] = []) => {
-    const commandId = `${opts.runTag}:seed:${label}`;
+    const commandId = `${opts.restoredRunTag??opts.runTag}:seed:${label}`;
     const meta = { commandId, actor: "bulk-seed", ...(preconditions.length ? { preconditions } : {}) };
     for (let attempt = 1; ; attempt++) {
       const t0 = performance.now();
-      let out = await comp.transact(operations, meta);
+      const previous=opts.restoredRunTag ? await comp.transactionByCommand(commandId) : undefined;
+      if(opts.restoredRunTag && (!previous?.ok || !previous.value || previous.value.commandId!==commandId)) throw Error("Missing original seed transaction in restored database");
+      let out = previous?.ok ? {ok:true as const,value:receiptOfRecord(previous.value)} : await comp.transact(operations, meta);
       if (!out.ok && out.tag === "CommandAlreadyCommittedError") {
         const found = await comp.transactionByCommand(commandId);
         if (found.ok && found.value) out = { ok: true, value: receiptOfRecord(found.value) };
@@ -132,7 +137,7 @@ export async function seedRung(opts: {
         if (vIds.some((x) => !x)) throw new Error(`seed receipt lacks versioned ids for subject ${i}`);
         versionIds.set(i, vIds);
       }
-      state.set(i, { stamp: 0, stampId, stampValidFrom: SEED_VALID_FROM, address: seedAddress(i), addressId, addressValidFrom: SEED_VALID_FROM });
+      state.set(i, { stamp: 0, stampId, stampValidFrom: SEED_VALID_FROM, address: opts.seedAddressOf?.(i) ?? seedAddress(i), addressId, addressValidFrom: SEED_VALID_FROM });
     }
     n = members.at(-1)! + 1;
     batch = [];
@@ -140,7 +145,7 @@ export async function seedRung(opts: {
   };
   let stoppedEarly = false;
   for (let i = 0; i < opts.subjects; i++) {
-    const facts = opts.deep ? deepOwnFacts(i) : ownFacts(i, accounts);
+    const facts = opts.deepRows ? opts.deepRows(i) : opts.deep ? deepOwnFacts(i) : ownFacts(i, accounts);
     if (batch.length + facts.length > opts.batchFacts) {
       await flush();
       if (performance.now() - started > opts.budgetMs) { stoppedEarly = true; break; }
@@ -159,7 +164,7 @@ export async function seedRung(opts: {
     seededSubjects: seeded, complete: seeded === opts.subjects, commands, assertions, retractions, wallMs,
     factsPerS: assertions / (wallMs / 1000),
     commitMs: { p50: latencies[Math.floor(latencies.length / 2)] ?? 0, max: latencies.at(-1) ?? 0 },
-    failures, firstPosition: Math.min(...positions), lastPosition: Math.max(...positions), lastInstant, positions, state, versionIds, recorded,
+    failures, firstPosition: positions[0] ?? 0, lastPosition: positions.at(-1) ?? 0, lastInstant, positions, state, versionIds, recorded,
   };
 }
 
