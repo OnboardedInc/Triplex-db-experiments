@@ -34,13 +34,14 @@ done < <(bench 'sudo -n find /var/tmp/triplex-bm1/bundles -mindepth 2 -maxdepth 
 
 A terminal failure with missing bundles or a nonempty `remaining.txt` requires checking its corresponding `logs/<item>-cleanup/cleanup.log` and run output before release. The retained November 18 seed volume belongs to its original attempt and is outside the scoped day teardown.
 
-The deferred job is `g19r`, pinned to `c0ee7dc9f0b3198f28e0103eb2a5dfb692a2ce15`. At 14:21 EST the installer was active and waiting on the terminal `p3r-day-logs/TRANSFER.sha256`. It clones the pinned public commit after the pair is archived. Its second trigger waits for the handback after SCALE1 item 1. SCALE1 runs on its own allocation at present. Its zero tag is `arm-d19-i1-zero-a`. From the Mac, provide the actual collected reader tag after both arms have ended and this bench is free. The release command checks both terminal checksums, source, nonce, baseline tag and cleanups before it signals the waiting service. Only tags and digests cross the connection.
+The deferred job is `g19r`, pinned to `c0ee7dc9f0b3198f28e0103eb2a5dfb692a2ce15`. At 17:02 EST the replacement installer was active and waiting on the terminal `p3r-day-logs/TRANSFER.sha256`. It clones the pinned public commit after the pair is archived. Its second trigger waits for the handback after SCALE1 item 1. SCALE1 runs on its own allocation at present. The first reader produced zero complete scope reports. SCALE1 restarted item 1 on the matched B pair, whose zero tag is `arm-d19-i1-zero-b`. The Mac relay watches the B-pair evidence locally through 01:30 EST November 20. Once both transfers are complete and BM1 is FREE, it signals the waiting server service by SSH. It checks the two archive hashes, attempt and terminal bytes, nonces, source, baseline tag, end times and cleanups. Only the tags and terminal digests cross the connection. The manual release below can recover an expired relay.
 
 ```sh
-bench 'systemctl show triplex-bm1-g19r-install.path triplex-bm1-g19r-install.service -p ActiveState -p SubState -p Result'
+bench 'systemctl show triplex-bm1-g19r-install-b.path triplex-bm1-g19r-install-b.service -p ActiveState -p SubState -p Result'
 bench 'sudo -n cat /var/tmp/triplex-bm1/deferred-g19r/STATUS'
+launchctl print "gui/$(id -u)/org.triplex.dx-bm1.g19r-relay" | rg "state =|last exit code"
 bench 'systemctl status --no-pager triplex-bm1-g19r-after-scale1.path'
-bash lab/experiments/EXP-DX1/bm1/deferred.sh --release g19r "$BENCH_SERVER" arm-d19-i1-zero-a "$READER_TAG"
+bash lab/experiments/EXP-DX1/bm1/deferred.sh --release g19r "$BENCH_SERVER" arm-d19-i1-zero-b arm-d19-i1-reader-b
 bench 'sudo -n tail -n 12 /var/tmp/triplex-bm1/day-g19r/logs/queue.log'
 ```
 
