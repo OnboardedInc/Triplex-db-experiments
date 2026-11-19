@@ -672,6 +672,11 @@
                 (is (= [[(pfx (first bounds))
                          (str (subs (pfx (second bounds)) 0 30) (char (inc (int (last (second bounds))))))]] calls)))
               (is (= (delta old) (delta candidate)))
+              (let [owner-id (d/entid db [:triplex.entity/id "owner"])
+                    expected (set (map #(vector owner-id (row-text (assoc (row % "owner") :recorded_position 3)) true) ids))
+                    actual (set (for [datom (:tx-data candidate) :when (= (:a datom) (d/entid db :triplex.entity/row))]
+                                  [(:e datom) (:v datom) (:added datom)]))]
+                (is (= expected actual)))
               (is (= (set ids) (set (for [d (:tx-data candidate)
                                           :when (and (:added d) (= (:a d) (d/entid db :triplex.entity/row)))]
                                       (:id (lean/decode (:v d))))))))))
@@ -726,6 +731,32 @@
             (is (= {:committed 1 conflict 1} (frequencies [@left @right])))
             (is (= 1 (count (seq (d/index-range (d/db conn) :triplex.entity/row (pfx same) (str (pfx same) "~")))))))))
       (finally (gateway/delete-scope! base scope)))))
+
+;; [DX-W1] Why: exercise the compact bytes emitted by the public TS client through the gateway's normal request parser.
+;; Rejected: testing only internal expanded operations or treating a receipt alone as proof of the stored rows.
+(deftest compact-identity-range-route
+  (let [text (slurp "/opt/gateway/history-range-case.json") in (json/read-str text)]
+    (doseq [enabled [false true]]
+      (let [scope (json/write-str ["triplex-scope-v1" "test" "test" (str (java.util.UUID/randomUUID)) 0])
+            base "datomic:mem://" db-name (:db (gateway/create-scope! base scope "lean"))
+            route (str "/v1/db/" db-name "/transact")
+            send (fn [^String body]
+                   (let [r (gateway/route-handler {:request-method :post :uri route
+                                                   :body (java.io.ByteArrayInputStream. (.getBytes body "UTF-8"))})
+                         data (:body r)]
+                     [(:status r) (json/read-str (if (string? data) data (String. ^bytes data "UTF-8")))]))]
+        (try
+          (let [wire (if enabled in (dissoc in "historyIdentityBounds"))
+                [status ack] (send (if enabled text (json/write-str wire)))
+                db (gateway/sync-db (str base db-name)) owner (d/entid db [:triplex.entity/id "subject"])]
+            (is (= 200 status))
+            (is (= ["save" "1"] [(get ack "operationId") (get-in ack ["position" "v"])]))
+            (is (= (set (vals (get wire "rowTexts"))) (set (map :v (d/datoms db :eavt owner :triplex.entity/row)))))
+            (let [[status err] (send (json/write-str (assoc wire "operationId" "reused" "sourceK" 1 "position" 2)))]
+              (is (= 400 status))
+              (is (= "IdentityConflict" (get err "code")))
+              (is (= (d/basis-t db) (d/basis-t (gateway/sync-db (str base db-name)))))))
+          (finally (gateway/delete-scope! base scope)))))))
 
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]

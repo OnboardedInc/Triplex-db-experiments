@@ -25,7 +25,15 @@ const digest = (input: string) => createHash("sha256").update(input).digest("hex
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const raw = (name: string) => `trace/raw/${name}.jsonl.gz`;
 const origin = "4d1bdb6ed7c6de23f2532218218a9ef114b1897d";
-const arms = [],
+const arms: {
+    tag: string;
+    manifestSha256: string;
+    cohort: string;
+    n: number;
+    p99: number | null;
+    interval: ReturnType<typeof commitBar>["interval90"];
+    over50: number;
+  }[] = [],
   byId = new Map<string, any>();
 let cohort: string | undefined;
 for (const letter of ["a", "b", "c"]) {
@@ -167,7 +175,7 @@ for (const w of slow) {
 }
 const roots = new Map<string, any>(),
   gateways = new Map<string, any[]>(),
-  gc = [];
+  gc: any[] = [];
 for await (const r of records(file(raw("node-14-0")))) {
   if (r.type === "event" && r.layer === "typescript-gc") gc.push(bind(r));
   if (r.type !== "request" || r.name !== "driver.commit" || !wanted.has(r.traceId)) continue;
@@ -241,6 +249,9 @@ function partition(w: any) {
     ackAt: w.ackPublishedAt,
     released: w.finishedAt,
     predecessor: p?.traceId ?? null,
+    predecessorAfterAckMs: p
+      ? Math.max(0, p.finishedAt - Math.max(w.offeredAt, p.ackPublishedAt))
+      : 0,
     ack,
     times,
     dominant,
@@ -290,7 +301,11 @@ const chains = new Map<string, { root: string; followers: string[]; waitMs: numb
 for (const row of tail.filter((r) => r.predecessor)) {
   let first = row;
   while (first.predecessor) first = ledger.get(first.predecessor)!;
-  const c = chains.get(first.traceId) ?? { root: first.command, followers: [], waitMs: 0 };
+  const c = chains.get(first.traceId) ?? {
+    root: first.command,
+    followers: [] as string[],
+    waitMs: 0,
+  };
   c.followers.push(row.command);
   c.waitMs += row.times.subject;
   chains.set(first.traceId, c);
@@ -326,6 +341,8 @@ writeFileSync(
       tail: totals(tail),
       over50: totals(tail.filter((r) => r.ack > 50)),
       causalChainRows: chain.length,
+      atP99: tail.filter((r) => r.ack === arms[1]!.p99),
+      waitingAfterPredecessorAckMs: sum(tail.map((r) => r.predecessorAfterAckMs)),
       topChains: [...chains.values()].sort((a, b) => b.waitMs - a.waitMs).slice(0, 10),
       bursts,
       adoptionEvents: adoptions.length,

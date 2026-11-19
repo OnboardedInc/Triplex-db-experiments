@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { stringifyExact } from "../src/codec.js";
 import { test, vi } from "vitest";
 import { historyIdentityBounds } from "../src/identityRange.js";
 
@@ -65,6 +67,14 @@ test.each([
         claims: [],
       });
       assert.equal(captured.length, 1);
+      if (enabled)
+        assert.equal(
+          stringifyExact(captured[0]),
+          readFileSync(
+            new URL("../gateway/history-range-case.json", import.meta.url),
+            "utf8",
+          ).trimEnd(),
+        );
       assert.deepEqual(captured[0]!.historyIdentityBounds, enabled ? [ids[1], ids[0]] : undefined);
     } finally {
       client.close();
