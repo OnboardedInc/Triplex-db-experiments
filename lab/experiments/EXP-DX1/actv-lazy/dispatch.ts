@@ -18,6 +18,8 @@ import { Conflict, value, type Store } from "./store.ts";
 export class Dispatcher {
   private projection: Projection;
   private active?: Plan;
+  private lastClosed?: Pick<Plan, "event" | "id" | "digest">;
+  private checkedCursor?: string;
   readonly store: Store;
   readonly format: Format;
   readonly pageSize: number;
@@ -46,21 +48,46 @@ export class Dispatcher {
     // [DX-ACT1] Why: a real due event survives an offline reader or dispatcher. Rejected: using the wake-up head as the cut after a later correction (each input reconstructs every earlier crossed boundary first).
     if (due >= c.at) return this.store.input("lazy/due/" + due, { kind: "due", at: due, due });
   }
-  private async plan(done: number, head: number) {
-    if (this.active && this.active.event > done) return this.active;
+  private async plan(cur: { done: number; eventId?: string; digest?: string }, head: number) {
+    const done = cur.done;
+    assert(
+      Number.isSafeInteger(done) && done >= 0 && done <= head,
+      "Impossible dispatcher frontier",
+    );
+    const check = (plan: Pick<Plan, "event" | "id" | "digest"> | undefined) => {
+      if (done)
+        assert(
+          plan && plan.event === done && plan.id === cur.eventId && plan.digest === cur.digest,
+          "Unproved closed source prefix",
+        );
+    };
+    if (this.active?.event === done) {
+      check(this.active);
+      this.lastClosed = { event: done, id: this.active.id, digest: this.active.digest };
+    }
+    if (this.active && this.active.event > done) {
+      check(this.lastClosed);
+      return this.active;
+    }
     this.active = undefined;
     while (this.projection.seen < head) {
       const page = await this.store.comp.feedPage(this.projection.seen, 16);
       assert(page.transactions.length, "Source journal has a gap");
       for (const r of page.transactions) {
-        if (r.position > head) return;
+        if (r.position > head) break;
         const plan = this.projection.advance(r);
+        if (plan?.event === done) {
+          check(plan);
+          this.lastClosed = { event: done, id: plan.id, digest: plan.digest };
+        }
         if (plan && plan.event > done) {
+          check(this.lastClosed);
           this.active = plan;
           return plan;
         }
       }
     }
+    check(this.lastClosed);
   }
   async step(hook?: (where: "before-commit" | "after-commit", command: string) => Promise<void>) {
     for (;;) {
@@ -68,7 +95,23 @@ export class Dispatcher {
         p = await s.head(),
         c = await s.controls(p),
         cur = progress(c),
-        plan = await this.plan(cur.done, p);
+        plan = await this.plan(cur, p);
+      if (c.cursor && this.checkedCursor !== c.cursor.id) {
+        const t = (await s.comp.feedPage(c.cursor.position - 1, 1)).transactions[0];
+        assert(
+          t?.actor === "lazy/event" &&
+            t.position === c.cursor.position &&
+            t.changes.some(
+              (x: any) =>
+                x.op === "assert" &&
+                x.tripleId === c.cursor!.id &&
+                x.value.value === canonical(cur),
+            ),
+          "Unbound dispatcher cursor receipt",
+        );
+        assert.deepEqual(JSON.parse(t.correlationId).context.next, cur);
+        this.checkedCursor = c.cursor.id;
+      }
       if (!plan) {
         assert(!cur.open && cur.done >= c.input, "Unclosed source prefix");
         return;
@@ -112,6 +155,7 @@ export class Dispatcher {
         more || another
           ? {
               done: cur.done,
+              ...(cur.done ? { eventId: cur.eventId, digest: cur.digest } : {}),
               open: {
                 event: plan.event,
                 digest: plan.digest,
@@ -145,6 +189,13 @@ export class Dispatcher {
           p,
           context,
         );
+        const nextRow = receipt.changes.at(-1);
+        assert(
+          nextRow?.op === "assert" &&
+            nextRow.entityId === "lazy/account/dispatcher" &&
+            nextRow.value.value === canonical(next),
+        );
+        this.checkedCursor = nextRow.tripleId;
         await hook?.("after-commit", command);
         return {
           event: plan.event,
