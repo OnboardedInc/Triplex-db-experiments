@@ -1,4 +1,4 @@
-import { publishPages, publishPage } from "./w0-page-outbox.ts";
+import { pageLayout, publishPages, publishPage } from "./w0-page-outbox.ts";
 import { deserialize } from "node:v8";
 import { Worker } from "node:worker_threads";
 import { finishW0Worker } from "./w0-parallel.ts";
@@ -251,6 +251,8 @@ export async function publishChanged(
   records: Pick<readonly W0.EvaluationRecord[], "length" | "slice">,
   options: ReplicaEvaluationOptions["publication"] = {},
 ) {
+  const effective = pageLayout(options.layout);
+  if (effective !== options.layout) options = { ...options, layout: effective };
   const started = performance.now();
   let changed = 0,
     commits = 0;

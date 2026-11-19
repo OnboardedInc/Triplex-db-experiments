@@ -26,7 +26,7 @@ import { eadRelease } from "./w0-selector.ts";
 import { selectorOracle } from "./w0-selector-oracle.ts";
 import { evaluateSelected } from "./w0-selector-sweep.ts";
 import type { PublicationOptions } from "./w0-outbox.ts";
-import { pageRoots } from "./w0-page-outbox.ts";
+import { pageNamespace, pageRoots } from "./w0-page-outbox.ts";
 import { readOutboxAt } from "./w0-outbox-state.ts";
 import { pageWireState } from "./w0-page-check.ts";
 import { pinCoordinator, workerCount } from "./w0-cpus.ts";
@@ -169,6 +169,7 @@ export async function runReplicaDriver(argv: string[]) {
       : undefined;
   const paged = layout === "page-cut",
     historical = act1 === "standard-historical";
+  if (paged && publicationId) process.env.TX2_W0_OUTBOX_NAMESPACE = pageNamespace(publicationId);
   const expectedLayout = historical
     ? "historical"
     : act1 === "standard-pages"
@@ -1443,7 +1444,12 @@ export async function runReplicaDriver(argv: string[]) {
     report.postAckOracleWallMs = oracleWallMs - oracleBeforeExactness;
     console.log(
       JSON.stringify({
-        kind: candidateVerification ? "main-exactness-not-rerun" : "post-ack-equality",
+        kind: historical
+          ? "historical-guard-mismatches"
+          : candidateVerification
+            ? "main-exactness-not-rerun"
+            : "post-ack-equality",
+        guardMismatches,
         sourcePosition: cut,
         publishedStatePosition: report.publishedStatePosition,
         subjects: checked,
@@ -1544,6 +1550,11 @@ export async function runReplicaDriver(argv: string[]) {
       );
       fs.linkSync(dest + ".partial", dest);
       fs.unlinkSync(dest + ".partial");
+      if (historical) {
+        // [DX-ACT1] Why: the negative control has a priced diagnostic but cannot receive BM1's complete-exactness envelope. Rejected: reporting comparisons reached as equality for an incorrect publisher.
+        report.classification = "INCORRECT-HISTORICAL-CONTROL";
+        return report;
+      }
     }
     const references = argv.includes("--candidates")
       ? compactCandidateReferences(result.records, Boolean(publicationTrials.length))

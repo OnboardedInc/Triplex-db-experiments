@@ -17,6 +17,16 @@ export interface PageSpan {
 }
 const domain = () =>
   "p5:pages:v1:" + encodeURIComponent(process.env.TX2_W0_OUTBOX_NAMESPACE ?? "") + ":";
+// [DX-ACT1] Why: every ordinary publisher reopening the same named page namespace must consult its fence, including the first writer on an empty page. Rejected: making live callers remember to repeat a per-call layout hint.
+export function pageNamespace(id: string) {
+  if (!/^[a-z0-9-]+$/.test(id)) throw Error("Invalid page namespace");
+  return "page-v1~" + id;
+}
+export function pageLayout(layout: PublicationOptions["layout"]) {
+  if (!process.env.TX2_W0_OUTBOX_NAMESPACE?.startsWith("page-v1~")) return layout;
+  if (layout && layout !== "page-cut") throw Error("Conflicting layout for page namespace");
+  return "page-cut" as const;
+}
 export function pageAddress(subject: string) {
   const number = /^pl:s([0-9]{8})$/.exec(subject);
   const i = number ? Number(number[1]) : 0;

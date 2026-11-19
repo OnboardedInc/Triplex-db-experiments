@@ -118,6 +118,36 @@ test("bench collector binds stage, native schedules, source and complete coverag
   const fewer = { ...row, baseline: { ...row.baseline, count: 499 } };
   put("act1-sweep.json", { ...proof, matched: { ...proof.matched, commit: fewer } });
   assert.equal(checkSweep(out, request).fullWindowAnd500PerSide, false);
+  const standard = JSON.parse(readFileSync("lab/world/W0/releases/index.json", "utf8")).R2;
+  for (const arm of ["standard-pages", "standard-historical"] as const) {
+    const req = { ...request, arm },
+      historic = arm === "standard-historical";
+    writeFileSync(requestPath(slot), JSON.stringify(req));
+    const gates = JSON.parse(readFileSync(join(out, "act1-schedules.json"), "utf8"));
+    put("act1-schedules.json", { ...gates, request: sha(readFileSync(requestPath(slot))) });
+    const sample = {
+      ...proof,
+      changed: historic ? 9798 : 100000,
+      comparedSha256: historic ? sha("wrong guards") : proof.expectedSha256,
+      act1: {
+        ...proof.act1,
+        arm,
+        evalCpus: [7, 8],
+        releaseHash: standard,
+        activationFacts: proof.act1.activationFacts.map((m, i) =>
+          i === 1 ? { ...m, hash: standard } : m,
+        ),
+        outcome: historic ? "incorrect-historical-control" : "exact",
+        layout: historic ? "historical" : "page-cut",
+        guardMismatches: historic ? 90202 : 0,
+        pageCoverage: { roster, size: 100000, pages: 391, receipts: sha("receipts") },
+      },
+    };
+    put("act1-sweep.json", sample);
+    assert.equal(checkSweep(out, req).outcome, sample.act1.outcome);
+    put("act1-sweep.json", { ...sample, act1: { ...sample.act1, guardMismatches: 1 } });
+    assert.throws(() => checkSweep(out, req));
+  }
 });
 
 test("traffic ratios reproduce from both fresh raw windows and reject an edited sample", async () => {

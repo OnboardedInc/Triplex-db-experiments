@@ -163,7 +163,7 @@ if (action === "readback") {
   const modes = process.argv.includes("--page-cut")
     ? ([undefined, "full-state", "guard-fact", "page-cut"] as const)
     : ([undefined, "full-state", "guard-fact"] as const);
-  for (const layout of modes) {
+  for (const layout of process.argv.includes("--reverse") ? [...modes].reverse() : modes) {
     const paged = layout === "page-cut";
     const opts = (release: W0.CompiledRelease, cut: W0.Basis) => ({
       layout,
@@ -324,11 +324,13 @@ if (action === "readback") {
   for (const [path, digest] of Object.entries(sourceFiles))
     assert.equal(sha256(readFileSync(path)), digest);
   assert.deepEqual(slotBinding(), slot);
-  const historicalMs = arms[0]!.wallMs;
-  const projections = arms.slice(1).map((arm) => {
-    const seconds100k = 50.79 + (22.99 * arm.wallMs) / historicalMs;
-    return { layout: arm.name, seconds100k, secondsMillionSerial: 10 * seconds100k };
-  });
+  const historicalMs = arms.find((a) => a.name === "historical")!.wallMs;
+  const projections = arms
+    .filter((a) => a.name !== "historical")
+    .map((arm) => {
+      const seconds100k = 50.79 + (22.99 * arm.wallMs) / historicalMs;
+      return { layout: arm.name, seconds100k, secondsMillionSerial: 10 * seconds100k };
+    });
   writeFileSync(
     join(root, "price.json"),
     JSON.stringify({ ...binding, arms, projections }, null, 2) + "\n",

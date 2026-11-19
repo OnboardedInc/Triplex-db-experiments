@@ -71,7 +71,7 @@ export function benchArguments(argv: string[], slot: string, source: string, non
   );
   writeFileSync(join(dir, "act1-schedules.tap"), tap.stdout + tap.stderr, { flag: "wx" });
   assert.equal(tap.status, 0, "Native guard schedules failed");
-  assert.match(tap.stdout, /^# pass 22$/m);
+  assert.match(tap.stdout, /^# pass 23$/m);
   assert.match(tap.stdout, /^# fail 0$/m);
   assert.match(tap.stdout, /^# skipped 0$/m);
   writeFileSync(
@@ -82,6 +82,7 @@ export function benchArguments(argv: string[], slot: string, source: string, non
   const args = [...argv];
   args[args.indexOf("--baseline-ms") + 1] = "180000";
   args[args.indexOf("--workers") + 1] = String(workers);
+  args[args.indexOf("--r1-publication-inflight") + 1] = "1";
   const layout =
     request.arm === "standard-historical"
       ? "historical"

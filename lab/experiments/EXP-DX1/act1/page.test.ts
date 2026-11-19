@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 import test from "node:test";
 import { DomainOracle, emptyWireState, wireRecord } from "../../../bench/lib/w0-gates.ts";
 import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
-import { pageAddress } from "../../../bench/lib/w0-page-outbox.ts";
+import { pageAddress, pageNamespace } from "../../../bench/lib/w0-page-outbox.ts";
 import { publishChanged } from "../../../bench/lib/w0-replica.ts";
 import type { OutboxStore } from "../../../bench/lib/w0-outbox.ts";
 import { open, observe } from "./check.ts";
@@ -297,5 +297,51 @@ test("128 and 256 member writes use bounded native reads at a single position", 
     assert.equal(reads.length, 5);
   } finally {
     await s.close();
+  }
+});
+
+test("ordinary outbox entry points reopen the named page layout for an unhinted live reconcile", async () => {
+  const previous = process.env.TX2_W0_OUTBOX_NAMESPACE,
+    scope = "act1-routed-" + randomUUID();
+  process.env.TX2_W0_OUTBOX_NAMESPACE = pageNamespace(scope);
+  let s = await open(scope);
+  const oracle = new DomainOracle(),
+    model = new Map(),
+    records = [make(0, 20), make(256, 20, "A")];
+  try {
+    await s.publishOutbox(records);
+    await oracleFold(oracle, model, records);
+    const cut = await s.currentPosition();
+    await s.close();
+    s = await open(scope);
+    const held = make(0, 15, "stale");
+    if (process.env.DX_ACT1_NATIVE === "1" || process.env.DX_ACT1_SQLITE_DIR) {
+      const r = JSON.parse(
+        execFileSync(
+          process.execPath,
+          ["--experimental-strip-types", "lab/experiments/EXP-DX1/act1/deliver-held.ts"],
+          {
+            input: canonical({ nonce: scope, scope, publicEntry: true, layout, record: held }),
+            encoding: "utf8",
+          },
+        ),
+      );
+      assert.equal(r.after, cut);
+      assert.deepEqual(r.state, model.get(held.subject));
+    } else await s.publishOutbox([held]);
+    await publishChanged(s, [make(256, 15, "stale")]);
+    assert.equal(await s.currentPosition(), cut);
+    await states(
+      s,
+      records.map((r) => r.subject),
+      cut,
+      model,
+    );
+    await assert.rejects(publishChanged(s, [held], { layout: "guard-fact" }), /Conflicting layout/);
+  } finally {
+    await s.close();
+    oracle.close();
+    if (previous === undefined) delete process.env.TX2_W0_OUTBOX_NAMESPACE;
+    else process.env.TX2_W0_OUTBOX_NAMESPACE = previous;
   }
 });

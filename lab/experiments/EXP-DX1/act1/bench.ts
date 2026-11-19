@@ -228,7 +228,8 @@ if (mode === "--plan") {
           if (
             ["failed", "inactive"].includes(
               command("systemctl", ["show", unit, "-p", "ActiveState", "--value"]),
-            )
+            ) &&
+            !existsSync(join(out, "act1-sweep.json"))
           )
             throw Error(arm + " exited before guarded readback");
           await delay(2500);

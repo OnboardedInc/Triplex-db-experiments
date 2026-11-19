@@ -25,7 +25,8 @@ try {
       }),
     );
   } else {
-    await publishChanged(comp, [record], { layout });
+    if (request.publicEntry) await comp.publishOutbox([record]);
+    else await publishChanged(comp, [record], { layout });
     const after = await comp.currentPosition();
     console.log(
       JSON.stringify({
