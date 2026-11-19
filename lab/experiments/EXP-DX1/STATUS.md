@@ -2267,3 +2267,24 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   that is the bench or the product. The judged v3 pair (new sender, six reader cores) has run since 13:53 local.
 - Unrun bench commands now outnumber server hours: range check, group commit, import campaign, two-server failover,
   thin 1M/4M, correct activation.
+
+## 2026-11-19 21:30 UTC (16:30 local): activation target under one second; three designs in, three builders on them
+
+- **Sam's decisions since 15:30 local (SAM-decisions):** a second and last $100 of credit; priority 9 bars confirmed;
+  a release going to every account may finish account by account; writes are the focus; activation target is now
+  under one second. The provider caps the team at two bare-metal servers.
+- **DX-ACT2 part 1 (`a9eb03b0`):** the stopped 100,000-subject activation was the bench: two live windows minted the same
+  answer identities for subject 6011, Datomic stored what it was given, the oracle correctly returned
+  `W0.E_CARDINALITY`. Fixed with a regression test and a 1,000-subject preflight. Guards and page guards match every
+  subject at 1,000 and 10,000 with one to five evaluators; the historical publisher misses 201 and 5,503 R2 guards.
+- **Three max-effort designs for sub-second activation** (private folder `research/2026-11-19-activation-sub1s/`):
+  STAGED (prepare while the old release is live, one switch transaction), LAZY (activation is one fact, outputs
+  derived on read and admitted only if what they read is still current), DELTA (indexes over rule inputs give exactly
+  the changed set, applied in a constant number of writes). All three replace per-subject marks with one durable
+  account-level record, and all three say reads, stored changes and coverage can switch within a second while
+  deliveries trail (9,798 notices at an assumed 1,000 per second is about 9.8 s; the narrow release changes 418 flags
+  and owes no notice). All three ask Sam the same question: what "activated" must mean within the second.
+- **Builders launched 16:25 local (Codex gpt-6.2-astra, max):** DX-ACT1 part 4 on LAZY, DX-ACT2 part 2 on DELTA (with
+  lookups derived from rule declarations for all seven W0 parameter kinds), DX-STG1 on STAGED.
+- Servers: first on the judged v3 pair, then the write tests (`DX-BM1-resume3.md` ready); second on the deep and
+  one-database campaign (DX-SCALE1 part 4, with DX-ACT2's fix before its activation arm).
