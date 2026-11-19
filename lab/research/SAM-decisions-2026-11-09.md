@@ -583,3 +583,14 @@ Orchestrator's reading and actions:
 3. Priority 9 provisional time bars, my recommendation pending his confirmation: writes resume within 60 s of losing
    the active transactor with no acknowledged write lost and pinned reads continuing throughout; a planned move pauses
    one account's writes for at most 30 s.
+
+## 2026-11-19 about 15:40 local: a second $100 of credit, the last for a while
+
+Sam, verbatim: "I added more credits. I added another 100 but that's going to be the last for a bit so make that worth
+it."
+
+Orchestrator's reading: the budget is $200 in total and there is no more after it for now. A third server was refused
+by the provider (the team is capped at two bare-metal servers), so the plan is two servers kept continuously busy
+through Saturday midday (about $132 in total) and about $68 held back for a follow-up run on what the results show.
+Server hours are the scarce resource: every hour goes to a test that decides something for priorities 1 to 9 or for
+the one-database question, and an idle server is deleted.
