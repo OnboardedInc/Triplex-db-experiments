@@ -8,6 +8,7 @@ import { capacity, scaleHost, startScaleStack } from "../scale1/bench.ts";
 import { sourceInventory } from "../scale1/source.ts";
 import { preflight } from "./preflight.ts";
 import { inputPins, measuredPair } from "./rung.ts";
+import { inspectPair } from "./inspect.ts";
 
 const script = fileURLToPath(import.meta.url),
   repo = path.resolve(path.dirname(script), "../../../.."),
@@ -37,13 +38,23 @@ async function run() {
     const attempt = get(file);
     assert(attempt.source === source && attempt.tag === tag && attempt.slot === p.prefix);
     scaleHost.clean(p.dir, p.prefix);
-    write(path.join(p.dir, "terminal.json"), {
+    const terminal = {
       source,
       slot: p.prefix,
       nonce: attempt.nonce,
       service: process.env.SERVICE_RESULT,
-      hasResult: fs.existsSync(path.join(p.dir, "deep/result.json")),
-    });
+    };
+    const evidence = path.join(p.dir, "deep");
+    let result = null;
+    try {
+      // [DX-STG1] Why: a terminal measurement must recover the bound preflight, raw schedules, actual native receipts and oracle counts before reporting a rate. Rejected: treating a result filename as evidence of a finished trial.
+      result = fs.existsSync(path.join(evidence, "result.json")) ? inspectPair(evidence) : null;
+      if (terminal.service === "success") assert(result, "Missing completed deep measurement");
+    } catch (error) {
+      write(path.join(p.dir, "terminal.json"), { ...terminal, error: String(error) });
+      throw error;
+    }
+    write(path.join(p.dir, "terminal.json"), { ...terminal, result });
     return;
   }
   if (op === "launch") {
