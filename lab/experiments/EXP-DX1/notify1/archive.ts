@@ -17,9 +17,31 @@ const report = get("result.json"),
   r = report.dispatch,
   b = get("binding.json");
 const owner = fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!);
+const reopened = process.argv[3] === "--after-restart",
+  originalOwner = fs.readFileSync(path.join(attempt, "owner.json"));
+assert.equal(sha256(originalOwner), b.owner);
+if (reopened) {
+  const old = JSON.parse(originalOwner.toString()),
+    live = JSON.parse(owner.toString());
+  for (const k of [
+    "format",
+    "mode",
+    "lane",
+    "slot",
+    "holder",
+    "experiment",
+    "container",
+    "volume",
+    "endpoint",
+  ]) {
+    assert(old[k] && old[k] === live[k]);
+  }
+  assert(old.mode === "exclusive" && old.holder === "DX-STG1" && live.createdAt > old.createdAt);
+} else {
+  assert(owner.equals(originalOwner));
+}
 assert(
-  sha256(owner) === b.owner &&
-    report.source === b.source &&
+  report.source === b.source &&
     report.slot === b.slot &&
     report.nonce === b.nonce &&
     r.epoch === b.nonce + "-dispatch",
@@ -90,7 +112,14 @@ try {
     ledgers,
   };
   const bytes = gzipSync(canonical(captures));
-  fs.writeFileSync(path.join(attempt, "observed.json.gz"), bytes, { flag: "wx" });
+  if (reopened) {
+    // [DX-STG1] Why: the entire receipt, effect log and item state must survive reopening the same physical volume. Rejected: a row count or a replay on a freshly seeded account.
+    const before = fs.readFileSync(path.join(attempt, "observed.json.gz"));
+    assert.equal(sha256(before), get("archive.json").archiveSha256);
+    assert(bytes.equals(before));
+  } else {
+    fs.writeFileSync(path.join(attempt, "observed.json.gz"), bytes, { flag: "wx" });
+  }
   const out = {
     scope: r.scope,
     source: report.source,
@@ -102,8 +131,25 @@ try {
     archiveSha256: sha256(bytes),
     bytes: bytes.length,
   };
-  fs.writeFileSync(path.join(attempt, "archive.json"), JSON.stringify(out) + "\n", { flag: "wx" });
   assert(fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!).equals(owner));
+  if (reopened) {
+    const target = process.env.NOTIFY_DIR!,
+      witness = JSON.parse(fs.readFileSync(path.join(target, "binding.json"), "utf8"));
+    assert(witness.owner === sha256(owner) && witness.slot === b.slot && witness.nonce !== b.nonce);
+    fs.writeFileSync(
+      path.join(target, "reopened.json"),
+      JSON.stringify({
+        previousOwner: b.owner,
+        current: witness,
+        archive: out,
+      }) + "\n",
+      { flag: "wx" },
+    );
+  } else {
+    fs.writeFileSync(path.join(attempt, "archive.json"), JSON.stringify(out) + "\n", {
+      flag: "wx",
+    });
+  }
   console.log(out);
 } finally {
   await rx.close();
