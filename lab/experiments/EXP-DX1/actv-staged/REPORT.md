@@ -1,3 +1,7 @@
+Closed by the owner on 2026-11-19. Publish must accept a previously unseen release.
+The following is a historical prototype. Only the 65-person preparation check ran before the direction closed.
+The switch and per-effect dispatcher are unfinished and have no timing or acceptance result.
+
 A draft can be prepared while the old release is live.
 The builder stores the new answers and calculates each notice against the recipient’s actual live history.
 A change to a shared wage floor invalidated every one of 65 affected answers in the first diagnostic.

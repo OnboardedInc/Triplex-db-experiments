@@ -23,6 +23,7 @@ export type Release = "R1" | "R2" | "R3";
 export type SourceCut = { position: number; validTime: string };
 export type Pair = readonly [string, string];
 export interface Source {
+  contains?(subject: string, cut: SourceCut): Promise<boolean>;
   roster(cut: SourceCut): Promise<string[]>;
   worlds(ids: string[], cut: SourceCut): Promise<W0.World[]>;
   affected(pairs: Pair[], cut: SourceCut, releases: Release[]): Promise<string[]>;
@@ -283,6 +284,7 @@ export class Account {
   }
   async settle() {
     let evaluated = 0;
+    let expanded: { event: string; ids: string[] } | undefined;
     for (;;) {
       const at = await this.head(),
         control = await this.control(at),
@@ -290,7 +292,24 @@ export class Account {
       if (c.settled === c.input) return evaluated;
       const sequence = c.settled + 1,
         event = await this.db.must<Input>("input:" + sequence, at);
-      const affected = c.release ? await this.impact(event, [c.release]) : [];
+      if (expanded?.event !== event.id) {
+        const cut = { position: event.at, validTime: event.data.validTime };
+        const before = { position: event.data.before, validTime: event.data.previousTime };
+        const ids = c.release ? await this.impact(event, [c.release]) : [];
+        const [oldRoster, newRoster] = await Promise.all([
+          this.source.roster(before),
+          this.source.roster(cut),
+        ]);
+        const was = new Set(oldRoster),
+          now = new Set(newRoster);
+        expanded = {
+          event: event.id,
+          ids: [
+            ...new Set([...ids.filter((s) => now.has(s)), ...newRoster.filter((s) => !was.has(s))]),
+          ].sort(),
+        };
+      }
+      const affected = expanded.ids;
       const ids = affected.slice(c.offset, c.offset + 64);
       const cut = { position: event.at, validTime: event.data.validTime };
       const [worlds, prior] = await Promise.all([

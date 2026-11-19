@@ -31,7 +31,7 @@ export const absent = (key: string): Condition => ({
   tripleIds: [],
 });
 export const live = (cell: Cell<unknown>): Condition => ({ _tag: "TripleLive", id: cell.id });
-export const set = (key: string, value: unknown): Op => ({
+export const set = (key: string, value: unknown): Extract<Op, { op: "assert" }> => ({
   op: "assert",
   entityId: prefix + key,
   attribute: "staged/value",
