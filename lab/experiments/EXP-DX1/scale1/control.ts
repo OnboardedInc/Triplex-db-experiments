@@ -3,6 +3,7 @@ import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { catalog } from "./catalog.ts";
 import { updateReport } from "./owner-report.ts";
@@ -49,6 +50,19 @@ const tags = (tag: string | undefined): string => {
   return tag;
 };
 const [action, ...args] = process.argv.slice(2);
+function updateHandoff(line: string) {
+  const file = path.join(repo, "lab/experiments/EXP-DX1/scale1/HANDOFF.md"),
+    old = fs.readFileSync(file, "utf8"),
+    expression = /<!-- state -->[\s\S]*?<!-- end state -->/;
+  assert(expression.test(old));
+  fs.writeFileSync(
+    file,
+    old.replace(
+      expression,
+      `<!-- state -->\n${new Date().toISOString()} · ${line}\n<!-- end state -->`,
+    ),
+  );
+}
 function state() {
   const script =
     'date -u; systemctl show triplex-drv1-wait triplex-bm1-d19-queue -p Id -p ActiveState -p Result; test ! -f /var/tmp/triplex-bm1/STATUS || cat /var/tmp/triplex-bm1/STATUS; systemctl list-units --all --no-pager "triplex-scale1-*"; test ! -d "$1" || find "$1" -mindepth 2 -maxdepth 2 -name STATUS.json -print -exec cat {} \\;';
@@ -57,7 +71,21 @@ function state() {
 function source() {
   git("fetch", "origin", "refs/heads/exp/DX-BM1-bare-metal");
   const base = git("rev-parse", "FETCH_HEAD"),
-    sha = git("rev-parse", "HEAD");
+    head = git("rev-parse", "HEAD"),
+    sha = process.env.DX_SCALE1_SOURCE ?? head;
+  assert.match(sha, /^[a-f0-9]{40}$/);
+  git("merge-base", "--is-ancestor", sha, head);
+  git(
+    "diff",
+    "--quiet",
+    sha,
+    head,
+    "--",
+    ".",
+    ":(exclude)lab/experiments/EXP-DX1/scale1/REPORT.md",
+    ":(exclude)lab/experiments/EXP-DX1/scale1/HANDOFF.md",
+    ":(exclude)lab/experiments/EXP-DX1/scale1/SHA256SUMS",
+  );
   git("merge-base", "--is-ancestor", base, sha);
   const changed = git(
     "status",
@@ -90,7 +118,7 @@ function source() {
   ).trim();
   assert.equal(
     publicRef.split(/\s/)[0],
-    sha,
+    head,
     "The tested source is not published at the experiment ref",
   );
   return { sha, url, base };
@@ -174,9 +202,130 @@ async function collect(tag: string) {
   fs.writeFileSync(path.join(dir, "transfer.json"), JSON.stringify(entry, null, 2) + "\n");
   await catalog(evidence, dir, terminal, entry, repo);
   updateReport(path.join(evidence, "DX-SCALE1"));
+  updateHandoff(
+    `Collected ${tag}. The service result was ${terminal.service}, with ${terminal.scopeReports} scope reports. The terminal cleanup inventory was empty.`,
+  );
   console.log(dir);
 }
+async function campaign(label: string) {
+  const { sha } = source(),
+    script = fileURLToPath(import.meta.url),
+    build = `${root}/build-${sha}`;
+  const invoke = (...args: string[]) =>
+    new Promise<number | null>((resolve, reject) => {
+      const child = spawn(process.execPath, ["--import", "tsx", script, ...args], {
+        cwd: repo,
+        stdio: "inherit",
+        env: { ...process.env, DX_SCALE1_SOURCE: sha },
+      });
+      child.once("error", reject);
+      child.once("close", resolve);
+    });
+  const exists = (file: string) =>
+    sudo("sh", "-c", 'if test -f "$1"; then echo yes; else echo no; fi', "file", file) === "yes";
+  const until = async (predicate: () => boolean, deadline: number, failed?: () => boolean) => {
+    while (!predicate()) {
+      if (Date.now() >= deadline || failed?.())
+        throw Error("A bounded bench stage stopped without terminal evidence");
+      await sleep(45000);
+    }
+  };
+  // [DX-SCALE1] Why: poll locally until BM1 publishes terminal ownership and its service drains. Rejected: reserving the remote machine or installing a remote waiter during someone else's window.
+  await until(
+    () => {
+      if (!exists("/var/tmp/triplex-bm1/STATUS")) return false;
+      const status = sudo("cat", "/var/tmp/triplex-bm1/STATUS");
+      return (
+        /^item=queue state=(finished|finished-with-failures|setup-failed|archive-failed)\b/.test(
+          status,
+        ) &&
+        ["inactive", "failed"].includes(
+          remote("systemctl", "show", "triplex-bm1-d19-queue", "-p", "ActiveState", "--value"),
+        )
+      );
+    },
+    Date.now() + 24 * 3600000,
+  );
+  if (!exists(`${build}/results/bootstrap.exit`)) {
+    assert.equal(await invoke("prepare"), 0);
+    await until(
+      () => exists(`${build}/results/bootstrap.exit`),
+      Date.now() + 36 * 60000,
+      () =>
+        remote(
+          "systemctl",
+          "show",
+          `triplex-scale1-prepare-${sha.slice(0, 12)}`,
+          "-p",
+          "ActiveState",
+          "--value",
+        ) === "failed",
+    );
+  }
+  assert.equal(sudo("cat", `${build}/results/bootstrap.exit`), "0");
+  await until(
+    () =>
+      ["inactive", "failed"].includes(
+        remote(
+          "systemctl",
+          "show",
+          `triplex-scale1-prepare-${sha.slice(0, 12)}`,
+          "-p",
+          "ActiveState",
+          "--value",
+        ),
+      ),
+    Date.now() + 180000,
+  );
+  const stage = async (item: number, mode: string, opts: string[]) => {
+    const tag = tags(`${label}-${item}-${mode}`),
+      base = `${root}/${tag}`;
+    if (!exists(`${base}/attempt.json`)) {
+      const code = await invoke("launch", String(item), tag, mode, ...opts);
+      if (code !== 0 && code !== 75) throw Error(`Stage ${tag} could not launch`);
+    }
+    const a = JSON.parse(sudo("cat", `${base}/attempt.json`));
+    assert(a.source === sha && a.item === item && a.mode === mode);
+    await until(
+      () => exists(`${base}/transfer.json`),
+      a.at + (a.ceiling + 3750) * 1000,
+      () =>
+        remote("systemctl", "show", `triplex-scale1-${tag}`, "-p", "ActiveState", "--value") ===
+        "failed",
+    );
+    assert.equal(await invoke("collect", tag), 0);
+    const terminal = JSON.parse(sudo("cat", `${base}/terminal.json`));
+    assert(terminal.cleanup && terminal.nonce === a.nonce && terminal.source === sha);
+    await until(
+      () =>
+        ["inactive", "failed"].includes(
+          remote("systemctl", "show", `triplex-scale1-${tag}`, "-p", "ActiveState", "--value"),
+        ),
+      Date.now() + 180000,
+    );
+    return { tag, terminal, capacity: a.capacity };
+  };
+  const singles: Record<number, string> = {};
+  for (const item of [1, 2, 3, 4]) {
+    const size = singles[item === 4 ? 2 : 1],
+      opts = size ? ["--sizing", size] : [];
+    const zero = await stage(item, "zero", opts);
+    if (zero.terminal.service === "capacity-refused") {
+      if (zero.capacity.fitsSeed) await stage(item, "seed", opts);
+      continue;
+    }
+    assert(zero.terminal.scopeReports > 0, `Missing zero baseline for item ${item}`);
+    const loaded = await stage(item, "reader", [...opts, "--baseline", zero.tag]);
+    if (loaded.terminal.service === "capacity-refused") {
+      if (loaded.capacity.fitsSeed) await stage(item, "seed", opts);
+      continue;
+    }
+    if (item <= 2 && loaded.terminal.scopeReports === 1) singles[item] = loaded.tag;
+    if (item > 1) await stage(item, "activation", opts);
+  }
+}
 if (action === "status") console.log(state());
+else if (action === "campaign") await campaign(tags(args[0]));
 else if (action === "collect") await collect(tags(args[0]));
 else if (action === "prepare") {
   const { sha, url } = source();
@@ -208,6 +357,7 @@ else if (action === "prepare") {
       sha,
     ),
   );
+  updateHandoff(`Submitted native preparation for source ${sha}, with a 35-minute ceiling.`);
 } else if (action === "launch") {
   const { sha } = source();
   released();
@@ -221,23 +371,36 @@ else if (action === "prepare") {
     assert(["--sizing", "--baseline"].includes(opts[i]!));
     tags(opts[i + 1]);
   }
-  console.log(
-    sudo(
-      "env",
-      "DOCKER_HOST=unix:///var/run/docker.sock",
-      "GIT_CONFIG_NOSYSTEM=1",
-      "GIT_CONFIG_GLOBAL=/dev/null",
-      "GIT_TERMINAL_PROMPT=0",
-      `PATH=${build}/tools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`,
-      `${build}/tools/bin/node`,
-      "--experimental-strip-types",
-      `${build}/repository/${program}`,
-      "launch",
-      args[0]!,
-      tags(args[1]),
-      args[2]!,
-      ...opts,
-    ),
+  try {
+    console.log(
+      sudo(
+        "env",
+        "DOCKER_HOST=unix:///var/run/docker.sock",
+        "GIT_CONFIG_NOSYSTEM=1",
+        "GIT_CONFIG_GLOBAL=/dev/null",
+        "GIT_TERMINAL_PROMPT=0",
+        `PATH=${build}/tools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`,
+        `${build}/tools/bin/node`,
+        "--experimental-strip-types",
+        `${build}/repository/${program}`,
+        "launch",
+        args[0]!,
+        tags(args[1]),
+        args[2]!,
+        ...opts,
+      ),
+    );
+  } catch (e: any) {
+    if (e.status !== 75) throw e;
+    const refusal = JSON.parse(sudo("cat", `${root}/${tags(args[1])}/attempt.json`));
+    updateHandoff(
+      `Admission refused ${refusal.tag} on ${refusal.capacity.limits.join(" and ")}. The capacity calculation is in its terminal bundle. Measured seed scopes that fit: ${refusal.capacity.seedScopeLimit}.`,
+    );
+    process.exit(75);
+  }
+  const attempt = JSON.parse(sudo("cat", `${root}/${tags(args[1])}/attempt.json`));
+  updateHandoff(
+    `Submitted ${attempt.tag} for item ${attempt.item}, ${attempt.mode}, ${attempt.spec.scopes} scopes of ${attempt.spec.people} people. Its ceiling is ${Math.round(attempt.ceiling / 60)} minutes, source ${attempt.source}.`,
   );
 } else
   throw Error(

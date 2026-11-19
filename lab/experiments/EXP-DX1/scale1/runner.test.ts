@@ -1,3 +1,8 @@
+import { compressTraces } from "./archive.ts";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { capacity } from "./bench.ts";
@@ -58,4 +63,19 @@ test("a seed witness rejects a substituted value and a different run identity", 
   requireIdentity(id);
   assert.throws(() => requireIdentity({ ...id, people: 40 }));
   assert.throws(() => requireIdentity({ ...id, source: "unbound" }));
+});
+
+test("raw trace compression reproduces the exact bytes and keeps baseline inputs", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "scale1-archive-"));
+  try {
+    const source = Buffer.from('{"event":1}\n');
+    fs.writeFileSync(path.join(dir, "trace.jsonl"), source);
+    fs.writeFileSync(path.join(dir, "baseline.json"), "{}");
+    const seals = await compressTraces(dir);
+    assert.equal(seals.length, 1);
+    assert.deepEqual(execFileSync("zstd", ["-dc", path.join(dir, "trace.jsonl.zst")]), source);
+    assert(fs.existsSync(path.join(dir, "baseline.json")));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

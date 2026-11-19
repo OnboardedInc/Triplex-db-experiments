@@ -14,6 +14,7 @@ import {
   type Quantities,
   type ScopeMeasurement,
 } from "./measurements.ts";
+import { compressTraces } from "./archive.ts";
 import { resources } from "./resources.ts";
 import { stageReplay, sourceInventory } from "./source.ts";
 import type { DeepIdentity } from "../../../bench/lib/deep-profile.ts";
@@ -91,6 +92,18 @@ function released() {
       `Prior unit ${unit} is active`,
     );
   }
+  assert.equal(
+    call("systemctl", [
+      "list-units",
+      "--type=service",
+      "--state=activating,active,deactivating",
+      "--no-legend",
+      "--plain",
+      "triplex-scale1-*.service",
+    ]),
+    "",
+    "A previous scale unit is still active",
+  );
   assert.equal(docker("ps", "-q"), "", "Another stack is running");
 }
 function memory() {
@@ -128,16 +141,17 @@ export function capacity(
       512 * 1024 ** 2,
       (observation?.seedDriverPeakBytes ?? 2 * GiB) * scale * 1.15,
     );
+  const sharedReserve = Math.max(24 * GiB, shared);
   const driverPer = Math.max(seedPer, (observation?.driverPeakBytes ?? 14 * GiB) * scale * 1.15),
     seedDisk = db + 15 * GiB,
     liveDisk = seedDisk + spillPer * scopes;
-  const seedMemory = shared + seedPer * scopes + 5 * GiB,
-    liveMemory = shared + driverPer * scopes + 5 * GiB;
+  const seedMemory = sharedReserve + seedPer * scopes + 5 * GiB,
+    liveMemory = sharedReserve + driverPer * scopes + 5 * GiB;
   const fitsSeed = host.disk >= seedDisk && host.memory >= seedMemory,
     fitsLive = host.disk >= liveDisk && host.memory >= liveMemory;
   const seedParallelism = Math.max(
     0,
-    Math.min(scopes, Math.floor((host.memory - shared - 5 * GiB) / seedPer)),
+    Math.min(scopes, Math.floor((host.memory - sharedReserve - 5 * GiB) / seedPer)),
   );
   const seedScopeLimit = Math.max(
     0,
@@ -159,6 +173,7 @@ export function capacity(
     db,
     spillPer,
     shared,
+    sharedReserve,
     driverPer,
     seedPer,
     seedDisk,
@@ -264,6 +279,9 @@ function health(
     prefix,
     members,
     clients,
+    clientGroupBytes: Number(
+      fs.readFileSync(path.join(groupOf(process.pid), "memory.current"), "utf8"),
+    ),
     availableMemory: memory(),
     freeBytes: available(dir),
   };
@@ -379,7 +397,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--object-cache-max",
       "2560m",
       "--pg-settings",
-      "-c shared_buffers=1GB -c max_wal_size=8GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on",
+      "-c shared_buffers=1GB -c max_wal_size=8GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on -c track_wal_io_timing=on",
     ],
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
@@ -517,6 +535,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     peak = 0,
     seedPeak = 0,
     sharedPeak = 0,
+    clientGroupPeak = 0,
+    simultaneousPeak = 0,
     lastAdvance = Date.now(),
     lastSignal = "";
   try {
@@ -525,6 +545,11 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       const sample = health(dir, prefix, engines, pids);
       fs.appendFileSync(path.join(dir, "resources.jsonl"), JSON.stringify(sample) + "\n");
       peak = Math.max(peak, ...sample.clients);
+      clientGroupPeak = Math.max(clientGroupPeak, sample.clientGroupBytes);
+      simultaneousPeak = Math.max(
+        simultaneousPeak,
+        sample.clientGroupBytes + Object.values(sample.members).reduce((n, m) => n + m.current, 0),
+      );
       for (const [i, bytes] of sample.clients.entries())
         if (!fs.existsSync(path.join(raw[i]!, "seed-observed.json")))
           seedPeak = Math.max(seedPeak, bytes);
@@ -619,6 +644,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       seedPeak,
       sharedPeak,
       commonStart,
+      clientGroupPeak,
+      simultaneousPeak,
     });
   }
   if (
@@ -690,7 +717,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         disk.after.volumeBytes - disk.before.volumeBytes,
         disk.after.databaseBytes - disk.before.databaseBytes,
       ) / spec.scopes,
-    driverPeakBytes: peak,
+    driverPeakBytes: Math.max(peak, Math.ceil(clientGroupPeak / spec.scopes)),
+    simultaneousPeakBytes: simultaneousPeak,
     seedDriverPeakBytes: seedPeak,
     sharedPeakBytes: sharedPeak,
     spillBytes,
@@ -781,9 +809,9 @@ function budgetFor(item: number, dir: string, mode: string, prior?: string) {
     mode,
   );
 }
-async function terminal(dir: string, tag: string, prefix: string) {
+async function terminal(dir: string, tag: string, prefix: string, refusal?: string) {
   const entry = get(path.join(dir, "attempt.json"));
-  const service = process.env.SERVICE_RESULT ?? "unavailable";
+  const service = refusal ?? process.env.SERVICE_RESULT ?? "unavailable";
   clean(dir, prefix);
   write(path.join(dir, "resource-summary.json"), await resources(dir, prefix, entry.source));
   const state = partial(dir, tag);
@@ -825,13 +853,40 @@ async function terminal(dir: string, tag: string, prefix: string) {
   const engineEvidence = path.join(dir, "engines", prefix, "trace");
   if (fs.existsSync(engineEvidence)) sources.push("-C", path.dirname(engineEvidence), "trace");
   if (fs.existsSync(path.join(dir, "resources.jsonl"))) sources.push("-C", dir, "resources.jsonl");
-  let rawArchive = null;
-  if (sources.length) {
-    const f = path.join(dir, "raw.tar.zst");
-    call("tar", ["-I", "zstd -1 -T2", "-cf", f, ...sources], 3600000);
-    call("zstd", ["-tq", f], 3600000);
-    rawArchive = { name: "raw.tar.zst", bytes: fs.statSync(f).size, sha256: await fileHash(f) };
+  let rawArchive = null,
+    rawArchiveError: string | null = null;
+  const seals: Record<string, Awaited<ReturnType<typeof compressTraces>>> = {};
+  try {
+    if (fs.existsSync(raw))
+      for (const name of fs.readdirSync(raw).filter((n) => /^s[0-9]$/.test(n)))
+        seals[name] = await compressTraces(path.join(raw, name, "trace"));
+    seals.engines = await compressTraces(path.join(engineEvidence, "raw"));
+    if (sources.length) {
+      const f = path.join(dir, "raw.tar.zst"),
+        required = [raw, engineEvidence]
+          .filter((p) => fs.existsSync(p))
+          .reduce(
+            (n, p) => n + Number(call("du", ["-s", "--apparent-size", "-B1", p]).split(/\s/)[0]),
+            0,
+          );
+      assert(
+        available(dir) > required * 1.02 + 15 * GiB,
+        "Insufficient disk to duplicate the compressed raw data into a transfer archive",
+      );
+      call("tar", ["-I", "zstd -1 -T2", "-cf", f, ...sources], 3600000);
+      call("zstd", ["-tq", f], 3600000);
+      rawArchive = { name: "raw.tar.zst", bytes: fs.statSync(f).size, sha256: await fileHash(f) };
+    }
+  } catch (e) {
+    rawArchiveError = String(e);
   }
+  write(path.join(compact, "raw-retention.json"), {
+    source: entry.source,
+    nonce: entry.nonce,
+    seals,
+    rawArchive,
+    rawArchiveError,
+  });
   const summaryFile = path.join(dir, "summary.json"),
     sum = fs.existsSync(summaryFile) ? get(summaryFile) : null;
   const outcome = {
@@ -846,6 +901,7 @@ async function terminal(dir: string, tag: string, prefix: string) {
     scopeReports: sum?.scopeCount ?? 0,
     invalid: sum?.invalid ?? null,
     rawArchive,
+    rawArchiveError,
   };
   write(path.join(dir, "terminal.json"), outcome);
   write(path.join(compact, "terminal.json"), outcome);
@@ -941,7 +997,7 @@ async function main() {
   }
   const ceiling = (mode === "activation" ? 10 : spec.people === 100000 ? 8 : 4) * 3600;
   const clientBudget = Math.floor(
-    Math.max(1 * GiB, capacity.host.memory - capacity.shared - 5 * GiB),
+    Math.max(1 * GiB, capacity.host.memory - capacity.sharedReserve - 5 * GiB),
   );
   fs.mkdirSync(dir, { mode: 0o700 });
   write(path.join(dir, "attempt.json"), {
@@ -962,6 +1018,7 @@ async function main() {
   });
   if (!(mode === "seed" ? capacity.fitsSeed : capacity.fitsLive)) {
     status(dir, "capacity refused", { limits: capacity.limits, seedFits: capacity.fitsSeed });
+    await terminal(dir, tag, prefix, "capacity-refused");
     console.log(JSON.stringify(capacity));
     process.exitCode = 75;
     return;

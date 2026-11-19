@@ -62,14 +62,15 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     await Promise.all(Object.entries(files).map(async ([k, f]) => [k, await fileHash(f)])),
   );
   const duration = id.arm === "activation" ? report.writer.offeredUntilTraceS : V3_OFFER_SECONDS;
-  assert(duration > 0 && duration <= 7200);
+  assert(Number.isFinite(duration) && duration > 0);
   const expected = new Map(
     plan.events.filter((e) => e.atMs < duration * 1000).map((e) => [`${e.seq}/${e.resend}`, e]),
   );
   const offered = expected.size,
     values: Quantities = { all: [], L256: [], L1024: [], presweep: [], activation: [] };
   const seenPositions = new Set<number>(),
-    invalid: string[] = [];
+    invalid: string[] =
+      duration > 7200 ? ["Activation exceeded the frozen 7,200-second live traffic horizon"] : [];
   let primaries = 0,
     committed = 0,
     expired = 0,

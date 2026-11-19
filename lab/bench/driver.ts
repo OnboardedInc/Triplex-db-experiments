@@ -956,7 +956,7 @@ async function run() {
 
   // ---------------------------------------------------------------- feed consumer (P3)
   // [EXP-M01] Paired rounds measure the writer and the read probe; the P3 consumer and its crash injection stay in NS.
-  const lvl = (config.levelS ?? PROFILES[profile === "deep" ? "v3" : profile === "deep-smoke" ? "smoke" : profile].levelS) * 1000;
+  const lvl = (deepSmoke ? 5 : config.levelS ?? PROFILES[profile === "deep" ? "v3" : profile === "deep-smoke" ? "smoke" : profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = idle ? [] : (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
   // [DX-H1] Why: Datomic observes the native transact-result boundary before the driver ACK; other lanes still lack observers.
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
@@ -1067,7 +1067,7 @@ async function run() {
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
     { name: "warmup", readers: 1, seconds: 5, measured: false },
-    { name: "L4", readers: 4, seconds: 65, measured: true, ladder: true, mode: "mixed" },
+    { name: "L4", readers: 4, seconds: 25, measured: true, ladder: true, mode: "mixed" },
   ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   const phases: any[] = [];
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
@@ -1203,6 +1203,8 @@ async function run() {
 
   // ---------------------------------------------------------------- wind down
   const endAt = now();
+  const deepStage = (stage: string) => { if (deep) log(`deep finalization: ${stage}`); };
+  deepStage("stopping offers");
   if (idleKeep) report.idleKeep = await idleKeep.close();
   if (probeTimer) clearInterval(probeTimer);
   clearInterval(queueTimer);
@@ -1226,19 +1228,24 @@ async function run() {
   const inFlightDeadline = now() + 300_000;
   while (scheduler.inFlightCount > 0 && now() < inFlightDeadline) await sleep(250);
   const inFlightAtFeedTarget = scheduler.inFlightCount;
+  deepStage(`flushing publications with ${inFlightAtFeedTarget} writes in flight`);
   report.writerSourceDiagnostics.end = datomicWriterDiagnostics();
   if (deferredPublications) report.deferredPublication = await deferredPublications.flush();
+  deepStage("draining receipt reads");
   const receiptQueue = await receiptThread?.drainReceiptCaptures();
   if (receiptQueue) {
     mainReadCount += receiptQueue.retained;
     Object.assign(ryowFallbackReasons, receiptQueue.fallbackReasons);
   } else await Promise.race([Promise.all([...ryowPending]), sleep(30_000)]);
+  deepStage("stopping readers");
   for (const w of workers) w.postMessage({ type: "stop" });
   await Promise.race([Promise.all(stopped), sleep(40_000)]);
   for (const w of workers) await w.terminate();
   clearInterval(basisTimer);
   if (preparedSweeper) { preparedSweeper.worker.postMessage({ type: "stop" }); await preparedSweeper.worker.terminate(); }
+  deepStage("closing replica");
   await replicaHost?.close();
+  deepStage("sealing observations");
   if (spill) { records = await spill.finish(); spillFinished = true; }
   await splitWrites;
   if (splitWriteError) throw splitWriteError;
@@ -1261,16 +1268,19 @@ async function run() {
     for (const s of late.cmd.perSubject) modelWriter.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
   }
   lateGrowth.length = 0;
+  deepStage("draining the feed");
   const lastAcked = Math.max(acked.length ? Math.max(...acked.map((a) => a.position)) : seed.lastPosition, await writer.currentPosition().catch(() => 0));
   const feedDeadline = now() + 120_000;
   while (feed && !feedFailure && feed.checkpoint < lastAcked && now() < feedDeadline) await sleep(100);
   feedWind = feed ? { target: lastAcked, checkpointAtStop: feed.checkpoint, inFlightAtFeedTarget } : null;
+  deepStage("stopping feed consumer");
   feed?.stop();
   await feedDone.catch(() => {});
   clearInterval(feedTarget);
   let replay: any = feedFailure ? { exact: false, status: "NOT-RUN", reason: "feed consumer failed" } : null;
   // [EXP-M01R] Why: paired rounds have no P3 consumer; NS keeps main's post-drain target and replay. Rejected: restoring the old early feed target (misses late commits).
   if (feed && !feedFailure) {
+    deepStage("replaying the source journal");
     const replayHandle = await openComposition(config.composition, lane, scopeName);
     const firstCrash = feed.crashReport().find((c) => c.checkpoint !== null);
     replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
@@ -1279,29 +1289,42 @@ async function run() {
   report.readerLifecycle = readerLives.map(({ worker, life }) => ({ worker, stopped: life.stopped, failures: life.failures }));
   report.readerBasisBroadcast = { mode: config.readerBasisWire, messages: basisBroadcast.messages, ackItems: basisBroadcast.ackItems, ticks: basisBroadcast.ticks, wall: basisBroadcast.wall.summary() };
   const finalizationErrors: string[] = readerLives.flatMap(({ worker, life }) => [...life.failures, ...(life.stopped ? [] : ["missing drained stopped acknowledgement"])].map(error => `reader ${worker}: ${error}`));
+  deepStage("capturing terminal observations");
   const finalPosition = await observeFinalHead(() => writer.currentPosition(), finalizationErrors);
   const deepSamples: any[] = [];
+  deepStage(`terminal head ${finalPosition}, reading ${oracleSet.size} sample subjects at two cuts`);
   if (deep && finalPosition !== null) {
-    // [DX-SCALE1] Why: even the zero-reader arm needs independent observations of real saves and their old basis. Rejected: populating a zero-reader oracle with expected rows from the generator.
-    for (const subject of oracleSet) for (const recordedAt of [seed.lastInstant, latestInstant]) {
-      const basis = { recordedAt, validAt: Math.floor(now()) };
-      const result = await aux.pull(ids.placement(subject), basis);
-      assert(result.triples.some(t => t.entityId === ids.placement(subject) && t.attribute === ":placement/stamp"));
-      deepSamples.push({ subject, basis, observation: observe(result), rows: result.triples.map(t => [t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo?._tag === "Some" ? t.validTo.value : null, t.id]) });
+    // [DX-SCALE1] Why: query the live source runtime at both exact cuts after the replica has closed. Rejected: using the auxiliary pull routed to the retired replica, or using generated rows as observed evidence.
+    const cuts = [[seed.lastInstant, seed.lastPosition], [latestInstant, finalPosition]] as const;
+    try {
+      for (const subject of oracleSet) for (const [recordedAt, recordedPosition] of cuts) {
+        const basis = { recordedAt, recordedPosition, validAt: Math.floor(now()) };
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const result = await Promise.race([writer.pull(ids.placement(subject), basis), new Promise<never>((_,reject) => { timer=setTimeout(()=>reject(Error(`Terminal read at ${recordedPosition} exceeded 30 seconds`)),30000); })]).finally(()=>clearTimeout(timer));
+        if (deepSamples.length % 10 === 0) deepStage(`terminal gateway sample ${deepSamples.length + 1}`);
+        assert(result.triples.some(t => t.entityId === ids.placement(subject) && t.attribute === ":placement/stamp"));
+        deepSamples.push({ subject, basis, observation: observe(result), rows: result.triples.map(t => [t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo?._tag === "Some" ? t.validTo.value : null, t.id]) });
+      }
+    } catch (error) {
+      finalizationErrors.push(`Deep terminal samples ${deepSamples.length}/${2*oracleSet.size}: ${String(error)}`);
     }
   }
   samplersOn = false;
   clearInterval(eluTimer);
+  deepStage("reading maintenance evidence");
   const maintenance = await maintenanceEvents(traceStart);
   indexClient?.close();
+  deepStage("closing public runtimes");
   await writer.close().catch(() => {});
   await aux.close().catch(() => {});
   await growthComp.close().catch(() => {});
   await probeComp?.close().catch(() => {});
   await probeThread?.close();
+  deepStage("closing feed worker");
   if (feed instanceof SideThread) { report.sideThread = { elu: feed.elus }; await feed.close(); }
   observeDatomicPublication(undefined);
   if (deferredPublications) report.deferredPublication = await deferredPublications.flush();
+  deepStage("closing publication witness");
   publicationReader?.close();
   await publicationWriter?.close();
   log(`wind down: writer pending ${scheduler.pending}, probe pending ${probeScheduler?.pending ?? 0}, feed checkpoint ${feed?.checkpoint ?? "-"}/${lastAcked}, final position ${finalPosition}`);
@@ -1365,6 +1388,7 @@ async function run() {
   report.maintenance = maintenance;
   // [DX-R3-P8] Why: both checks consume immutable post-drain inputs; overlap them after the last measured phase.
   // Rejected: serial analysis plus oracle extending a 45-minute lease, or moving either check onto live read/write paths.
+  deepStage("comparing retained reads to the model and O-REPLAY");
   const independentOracle = (config.zeroReaders && !deep ? Promise.resolve({ status: "NOT-RUN", reason: "zero-reader baseline run" }) : pairPlan && pairPlan.readers === 0 ? Promise.resolve({ status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" }) : finalPosition === null ? Promise.resolve({ status: "NOT-RUN", reason: "final source position unavailable", observedAckFloor: coordinate(lastAcked) }) : runOracle(finalPosition, lastAcked, deepSamples))
     .catch(error => ({ status: "ORACLE-ERROR", stderr: String(error) }));
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });

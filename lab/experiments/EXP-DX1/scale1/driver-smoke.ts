@@ -22,6 +22,7 @@ fs.writeFileSync(
   path.join(dir, "source.json"),
   JSON.stringify({ source, tree, oracle: stageReplay(process.cwd(), oracle) }),
 );
+const activation = process.argv.includes("--activation");
 const clients = [0, 1].map((account) => {
   const out = path.join(dir, `s${account}`);
   fs.mkdirSync(out);
@@ -48,12 +49,17 @@ const clients = [0, 1].map((account) => {
       barrier,
       "--read-path",
       "replica",
+      "--replica-fallback-thread",
+      "worker",
+      "--reader-basis-wire",
+      "delta",
       "--reader-threads",
       "1",
       "--oracle-root",
       oracle,
       "--output",
       path.join(out, "ns-report.json"),
+      ...(activation ? ["--deep-activation"] : []),
       "--seed-batch-facts",
       "600",
     ],
@@ -107,7 +113,12 @@ try {
     JSON.stringify({ scopes, slot, nonce, source, start }),
   );
   fs.renameSync(path.join(barrier, "go.tmp"), path.join(barrier, "go.json"));
-  const codes = await Promise.race([Promise.all(endings),sleep(360000,undefined,{ref:false}).then(()=>{throw Error("Functional driver deadline exceeded");})]);
+  const codes = await Promise.race([
+    Promise.all(endings),
+    sleep(360000, undefined, { ref: false }).then(() => {
+      throw Error("Functional driver deadline exceeded");
+    }),
+  ]);
   const reports = [0, 1].map((i) =>
     JSON.parse(fs.readFileSync(path.join(dir, `s${i}/ns-report.json`), "utf8")),
   );
@@ -120,6 +131,7 @@ try {
     trace: r.deep.trace,
     commonStart: r.traceStartAbsMs,
     status: r.status,
+    activation: r.deep.activationOracle,
     oracle: r.oracle,
     correctness: r.correctness,
     feed: r.priorities?.P3?.bars,
@@ -127,6 +139,9 @@ try {
   }));
   fs.writeFileSync(path.join(dir, "scope-checks.json"), JSON.stringify(summary, null, 2));
   assert.deepEqual(codes, [0, 0]);
+  if (activation)
+    for (const r of reports)
+      assert(r.deep.activationOracle?.checked === 40 && r.deep.r2.mutations?.length === 10);
   for (const r of reports) {
     assert(
       r.traceStartAbsMs === start &&
