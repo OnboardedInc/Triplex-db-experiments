@@ -191,7 +191,13 @@ export async function admitLive(
   const evald = await calculate(store, format, q.subject, q.basis, c, latest);
   assert.equal(evald.witness, q.witness, "Untrusted or changed computation");
   if (W0.isFailure(evald.output)) return { status: "error", error: evald.output.error } as const;
-  if (progress(c).done < c.input || progress(c).open) return { status: "deferred" } as const;
+  if (
+    progress(c).done < c.input ||
+    progress(c).open ||
+    !c.cursor ||
+    !(await store.effectsClear(c.cursor.position, p))
+  )
+    return { status: "deferred" } as const;
   if (evald.output.workItems.some((w) => w.rule === "EVSUB"))
     throw Error("ProtectedSubscriberNeedsRuling");
   const { ops } = await changes(store, p, W0.recordOf(evald.output));

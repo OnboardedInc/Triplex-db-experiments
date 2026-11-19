@@ -1,5 +1,5 @@
-import {DomainOracle} from "../../../bench/lib/w0-gates.ts";
-import {parseOutbox} from "../../../bench/lib/w0-outbox-state.ts";
+import { DomainOracle } from "../../../bench/lib/w0-gates.ts";
+import { parseOutbox } from "../../../bench/lib/w0-outbox-state.ts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
@@ -141,32 +141,81 @@ for (const schedule of ["held", "first", "time", "two-hop", "aba", "serial"]) {
     assert.equal(noop.status, "unchanged");
     assert.equal(await s.head(), before);
     const stored = await s.rows([itemRoot(subject)], before);
-    const oracle=new DomainOracle();
-    let expected:any={subjects:[],items:[],pending:[]};
-    try{for(const q of [initialProposal,fresh]){
-      const source=new Map<string,any>(),activations=[];let cursor=0;const t=millis(q.basis.validTime);
-      while(cursor<q.basis.tx){
-        const page=await s.comp.feedPage(cursor,8);assert(page.transactions.length);
-        for(const tr of page.transactions){if(tr.position>q.basis.tx)break;assert.equal(tr.position,++cursor);
-          if(tr.actor!=="lazy/input")continue;
-          for(const c of tr.changes){
-            if(c.entityId==="lazy/account/releases" && c.op==="assert"){const r=JSON.parse(c.value.value);activations.push({tx:tr.position,from:r.from,release:r.release});}
-            if(![subject,"loc:fixture","jur:fixture"].includes(c.entityId))continue;
-            if(c.op==="retract"){source.delete(c.tripleId);continue;}
-            if(c.validFrom<=t && (c.validTo==null||t<c.validTo))source.set(c.tripleId,{e:c.entityId,a:c.attribute,v:c.value.type==="integer"?Number(c.value.value):c.value.value,tx:tr.position});
+    const oracle = new DomainOracle();
+    let expected: any = { subjects: [], items: [], pending: [] };
+    try {
+      for (const q of [initialProposal, fresh]) {
+        const source = new Map<string, any>(),
+          activations = [];
+        let cursor = 0;
+        const t = millis(q.basis.validTime);
+        while (cursor < q.basis.tx) {
+          const page = await s.comp.feedPage(cursor, 8);
+          assert(page.transactions.length);
+          for (const tr of page.transactions) {
+            if (tr.position > q.basis.tx) break;
+            assert.equal(tr.position, ++cursor);
+            if (tr.actor !== "lazy/input") continue;
+            for (const c of tr.changes) {
+              if (c.entityId === "lazy/account/releases" && c.op === "assert") {
+                const r = JSON.parse(c.value.value);
+                activations.push({ tx: tr.position, from: r.from, release: r.release });
+              }
+              if (![subject, "loc:fixture", "jur:fixture"].includes(c.entityId)) continue;
+              if (c.op === "retract") {
+                source.delete(c.tripleId);
+                continue;
+              }
+              if (c.validFrom <= t && (c.validTo == null || t < c.validTo))
+                source.set(c.tripleId, {
+                  e: c.entityId,
+                  a: c.attribute,
+                  v: c.value.type === "integer" ? Number(c.value.value) : c.value.value,
+                  tx: tr.position,
+                });
+            }
           }
         }
+        const out = JSON.parse(
+          await oracle.call("reconcile", {
+            world: { subject, facts: [...source.values()] },
+            activations,
+            basis: q.basis,
+          }),
+        );
+        expected = JSON.parse(
+          await oracle.call("publish", {
+            state: expected,
+            evaluations: [
+              { subject, release: out.release, basis: q.basis, workItems: out.workItems },
+            ],
+          }),
+        ).state;
       }
-      const out=JSON.parse(await oracle.call("reconcile",{world:{subject,facts:[...source.values()]},activations,basis:q.basis}));
-      expected=JSON.parse(await oracle.call("publish",{state:expected,evaluations:[{subject,release:out.release,basis:q.basis,workItems:out.workItems}]})).state;
-    }}finally{oracle.close();}
-    const toWire=(v:any)=>({...v,payload:JSON.parse(v.payload),seq:Number(v.seq)});
-    const actualItems=stored.flatMap(r=>parseOutbox(r.value.value)).map(toWire);
-    const pending=await s.rows([pendingRoot(subject)],before);
-    const actualPending=pending.map(r=>({p:r.position,d:toWire(parseOutbox(r.value.value))})).sort((a,b)=>a.p-b.p||a.d.id.localeCompare(b.d.id)).map(r=>r.d);
-    assert.deepEqual(actualItems,expected.items);assert.deepEqual(actualPending,expected.pending);
+    } finally {
+      oracle.close();
+    }
+    const toWire = (v: any) => ({ ...v, payload: JSON.parse(v.payload), seq: Number(v.seq) });
+    const actualItems = stored.flatMap((r) => parseOutbox(r.value.value)).map(toWire);
+    const pending = await s.rows([pendingRoot(subject)], before);
+    const actualPending = pending
+      .map((r) => ({ p: r.position, d: toWire(parseOutbox(r.value.value)) }))
+      .sort((a, b) => a.p - b.p || a.d.id.localeCompare(b.d.id))
+      .map((r) => r.d);
+    assert.deepEqual(actualItems, expected.items);
+    assert.deepEqual(actualPending, expected.pending);
+    if (schedule === "serial") {
+      const raw = await s.comp.transact([add("loc:unrelated", "localMinWageCents", 1400)], {
+        actor: "unclassified",
+        commandId: "raw-source",
+      });
+      assert(raw.ok);
+      assert.equal((await admitLive(s, "w0", await propose(s, "w0", subject))).status, "deferred");
+    }
     results.push({
-      schedule,legacySubjects:expected.subjects,pending:actualPending,
+      schedule,
+      legacySubjects: expected.subjects,
+      pending: actualPending,
       scope: name,
       activation: initial.txId,
       original: initial.position,

@@ -269,10 +269,30 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
       }
     }
   }
+  let verifiedEffects = 0;
+  async function effectsClear(cursorPosition: number, p: number) {
+    let at = Math.max(cursorPosition, Math.min(p, verifiedEffects));
+    while (at < p) {
+      const page = await comp.feedPage(at, 16);
+      assert(page.transactions.length, "Missing effect prefix");
+      for (const t of page.transactions) {
+        if (t.position > p) break;
+        assert.equal(t.position, ++at);
+        if (
+          !["lazy/ack", "lazy/live", "lazy/event"].includes(t.actor) ||
+          t.changes.some((c: any) => !c.entityId.startsWith("lazy/"))
+        )
+          return false;
+      }
+    }
+    verifiedEffects = Math.max(verifiedEffects, p);
+    return true;
+  }
   return {
     scope,
     profile,
     counters,
+    effectsClear,
     comp,
     rows,
     lookup,
