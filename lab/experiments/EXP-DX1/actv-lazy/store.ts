@@ -75,6 +75,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     expected: number,
     context: unknown = null,
     afterFence?: () => Promise<void>,
+    onAck?: (t: number) => void,
   ) {
     assert(id.length && Number.isSafeInteger(expected) && expected >= 0);
     const correlationId = canonical({ context, hash: sha256(wireBytes([scope, id, actor, ops])) });
@@ -131,6 +132,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     if (exit._tag === "Success") {
       counters.writes++;
       counters.ackObserved = performance.now();
+      onAck?.(counters.ackObserved);
     }
     const stored = await lookup(id);
     if (stored) return check(stored);
@@ -178,7 +180,12 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
       input,
     };
   }
-  async function input(id: string, event: Event, ops: readonly any[] = []) {
+  async function input(
+    id: string,
+    event: Event,
+    ops: readonly any[] = [],
+    onAck?: (t: number) => void,
+  ) {
     assert(
       W0.isInstant(event.at) &&
         ["activation", "source", "due", "erase", "baseline"].includes(event.kind),
@@ -231,7 +238,15 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
         }
       }
       try {
-        return await commit(id, "lazy/input", writes, p, { event, intent, profile });
+        return await commit(
+          id,
+          "lazy/input",
+          writes,
+          p,
+          { event, intent, profile },
+          undefined,
+          onAck,
+        );
       } catch (e) {
         if (!(e instanceof Conflict)) throw e;
         const won = await lookup(id);
@@ -261,5 +276,11 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
 }
 export type Store = Awaited<ReturnType<typeof openStore>>;
 export type Controls = Awaited<ReturnType<Store["controls"]>>;
-export const activation = (s: Store, id: string, r: W0.CompiledRelease, at: string, from = at) =>
-  s.input(id, { kind: "activation", at, from, release: r.hash });
+export const activation = (
+  s: Store,
+  id: string,
+  r: W0.CompiledRelease,
+  at: string,
+  from = at,
+  onAck?: (t: number) => void,
+) => s.input(id, { kind: "activation", at, from, release: r.hash }, [], onAck);

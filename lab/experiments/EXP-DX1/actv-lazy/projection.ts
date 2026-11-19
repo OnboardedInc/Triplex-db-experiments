@@ -346,6 +346,12 @@ export class Projection {
         delta = this.transition(old, current);
       if (event.kind === "erase" && event.subject)
         for (const s of this.affected(event.subject, event.at)) dirty.add(s);
+      if (current) {
+        assert(this.rosterSeal, "An active membership edit needs a verified roster");
+        const member = this.db.prepare("SELECT 1 AS found FROM roster WHERE s=?");
+        for (const s of [...dirty, ...delta.ids])
+          assert(member.get(s), "Unproved candidate membership");
+      }
       append(
         tx.position,
         event.at,
