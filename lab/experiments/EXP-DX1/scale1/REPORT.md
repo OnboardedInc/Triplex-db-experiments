@@ -38,6 +38,8 @@ Local Datomic functional checks drove two 40-person accounts through the zero-re
 
 **Audit of evidence and verdicts**
 
+- The merged ACT1 collector checks the full native schedule and page coverage from this attempt, then compares the sealed seed hash, worker count, clone nonce, source and slot. Its negative controls substitute a different snapshot and a different passing schedule.
+
 - `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file and physical database to its nonce, source, slot and account. Each scope stays live until every R2 completion marker agrees with that cohort.
 - The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The interference and small-account plans bind each scope’s business commands to a new frozen schedule. Their windows set the sentinel’s offers and reader counts before measuring.
 - `deep-activation.ts` binds each fresh release receipt to its cut, hashes each evaluated world/output, re-reads the same cut, and checks both release facts and the immutable roster, range, commit and receipt hash for each 256-person page. The independent decoder compares every person’s fenced state with O-DOMAIN at both cuts.

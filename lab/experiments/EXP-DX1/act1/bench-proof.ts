@@ -73,6 +73,7 @@ export const programInputs = () =>
       "lab/bench/lib/sweep.ts",
       "lab/bench/lib/trace.ts",
       "lab/experiments/EXP-DX1/bm1/queue-day.sh",
+      "lab/experiments/EXP-DX1/bm1/pristine-seed.py",
     ].map((f) => [f, sha(readFileSync(f))]),
   );
 
@@ -93,8 +94,13 @@ export function benchArguments(argv: string[], slot: string, source: string, non
   assert.equal(option("--publication-id"), slot);
   assert.equal(option("--rung"), "100000");
   assert.equal(option("--seed-position"), "4338757");
+  assert.ok(!argv.includes("--activation-at-seed"), "Guarded activation requires the fresh physical seed head");
   assert.ok(argv.includes("--live") && argv.includes("--post-capture"));
   const dir = join(option("--record-dir"), "..");
+  const origin = JSON.parse(readFileSync(join(dir, "seed-origin.json"), "utf8"));
+  assert.match(request.seedSha256, /^[a-f0-9]{64}$/);
+  assert.deepEqual([origin.seedSha256, origin.cloneSlot, origin.cloneNonce, origin.source],
+    [request.seedSha256, slot, nonce, source]);
   // [DX-ACT1] Why: exercise the current gateway's real claim and CAS paths before touching the retained population. Rejected: inferring gateway support from the host-only smoke.
   const tap = spawnSync(
     process.execPath,
@@ -145,7 +151,7 @@ export function benchArguments(argv: string[], slot: string, source: string, non
 
 export function checkSweep(
   out: string,
-  request: { slot: string; arm: Arm; source: string; workers?: number },
+  request: { slot: string; arm: Arm; source: string; workers?: number; seedSha256: string },
 ) {
   const load = (f: string) => JSON.parse(readFileSync(join(out, f), "utf8"));
   const a = load("activation-attempt.json"),
@@ -159,6 +165,10 @@ export function checkSweep(
   );
   assert.deepEqual(sealed.inputs, programInputs());
   assert.equal(sealed.workers ?? 2, request.workers ?? 2);
+  const origin = load("seed-origin.json");
+  assert.match(request.seedSha256, /^[a-f0-9]{64}$/);
+  assert.deepEqual([sealed.seedSha256, origin.seedSha256, origin.cloneSlot, origin.cloneNonce, origin.scope, origin.source],
+    [request.seedSha256, request.seedSha256, a.slot, a.nonce, a.scope, a.source]);
   assert.equal(s.slot, request.slot);
   assert.equal(s.slot, a.slot);
   assert.equal(a.run, a.slot);

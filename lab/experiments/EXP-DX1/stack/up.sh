@@ -327,7 +327,10 @@ fi
 docker network create "$prefix-net" >/dev/null
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
-if [[ -n $seed_volume ]];then
+if [[ $seed_volume == bm1-pristine-* ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $seed_volume == bm1-pristine-"${DX_BM1_PRISTINE_BATCH:?}" ]] || exit 2
+  python3 lab/experiments/EXP-DX1/bm1/pristine-seed.py clone "$DX_BM1_PRISTINE_BATCH" "$prefix" "$attempt"
+elif [[ -n $seed_volume ]];then
   [[ $prefix == tx2-dxt1-* ]] || exit 2
   case $seed_volume in
     tx2-dxh5-seed-1000-pg-data|tx2-dxh8-seed-10000-pg-data|tx2-dxs5-seed-100000-pg-data) ;;

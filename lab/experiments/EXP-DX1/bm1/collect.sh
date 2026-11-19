@@ -13,6 +13,8 @@ ssh_bench=(ssh -n -F /dev/null -i "${DX_BENCH_KEY:-$HOME/.ssh/triplex_bench_ed25
   -o IdentitiesOnly=yes -o ForwardAgent=no -o BatchMode=yes -o StrictHostKeyChecking=yes "$bench")
 umask 077
 mkdir -p "$root/DX-BM1"
+compact=${DX_BM1_COMPACT:-0}
+[[ $compact == 0 || $compact == 1 ]] || exit 2
 for tag in "$@"; do
   [[ $tag =~ ^[a-z0-9][a-z0-9-]*$ ]] || exit 2
   remote="/var/tmp/triplex-bm1/bundles/$tag"
@@ -39,11 +41,33 @@ for tag in "$@"; do
     fi
     # [DX-BM1] Why: the sealed archive already contains full observation chunks, oracle transport copies and the W0 HTTP corpus.
     # Rejected: expanding those bulky duplicates into the remaining Mac disk before collecting all three activations.
+    skip=()
+    if [[ $compact == 1 ]]; then
+      skip=(--exclude './trace.chrome.json' --exclude './driver/*.db' --exclude './driver/*.db-*'
+        --exclude './driver/oracle-case.json' --exclude './driver/oracle-output.json'
+        --exclude './driver/observations-ns*-*.jsonl')
+    fi
     zstd -dc "$stage/transfer/reports.tar.zst" | tar -xf - -C "$stage" \
+      ${skip[@]+"${skip[@]}"} \
       --exclude '*/observations-ns*/[0-9]*.f64' --exclude '*/observations-ns*/[0-9]*.json' \
       --exclude './http/*' --exclude './oracle-bridge/*.output' --exclude './oracle-bridge/*.case'
     if [[ -f $stage/transfer/raw.tar.zst ]]; then
-      zstd -dc "$stage/transfer/raw.tar.zst" | tar -xf - -C "$stage"
+      if [[ $compact == 1 ]]; then
+        # [DX-BM1] Why: retain the checksum-verified raw bytes at the catalog location and avoid a second multi-GiB expansion.
+        # Rejected: discarding raw evidence or trading the last free disk space for an identical unpacked copy.
+        mkdir -p "$stage/trace/raw"
+        ln "$stage/transfer/raw.tar.zst" "$stage/trace/raw/raw.tar.zst"
+        zstd -dc "$stage/transfer/raw.tar.zst" | python3 -c '
+import pathlib,re,shutil,sys,tarfile
+with tarfile.open(fileobj=sys.stdin.buffer,mode="r|") as archive:
+    for entry in archive:
+        if entry.isfile() and re.fullmatch(r"trace/raw/system-[a-z-]+\.jsonl\.gz",entry.name):
+            with (pathlib.Path(sys.argv[1])/entry.name).open("xb") as dest:
+                shutil.copyfileobj(archive.extractfile(entry),dest)
+' "$stage"
+      else
+        zstd -dc "$stage/transfer/raw.tar.zst" | tar -xf - -C "$stage"
+      fi
     fi
     mkdir "$stage/machine"
     for file in delivered.txt delivered-nvme.txt; do
