@@ -208,7 +208,7 @@ export async function serveTraffic(s: TrafficSpec) {
       }
     };
     const reading = Array.from({ length: s.readers }, (_, j) => read(j).catch(fail));
-    const mine = events.filter((e) => e.subject % s.scopes === s.index);
+    const mine = s.full ? events : events.filter((e) => e.subject % s.scopes === s.index);
     const write = async (e: TraceEvent, cycle: number, offset: number) => {
       const key = s.tag + "/" + cycle,
         cmd = key + ":t" + e.seq;

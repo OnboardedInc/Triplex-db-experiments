@@ -22,7 +22,7 @@ if (op === "--plan") {
         environment: ["BENCH_SERVER", "DX_BENCH_KEY"],
         stages: [
           "native oracle, history price and queue collision",
-          "four operating points at four million facts each",
+          "four operating points at one million facts each",
           "100000 deep subjects",
           "4500000 thin subjects",
         ],

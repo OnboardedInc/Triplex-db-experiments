@@ -72,7 +72,7 @@ async function arm(
     full,
     dir,
     tag: "traffic-" + id + "-" + i,
-    offset: 120000,
+    offset: full ? 0 : 120000,
     smallWindow: fixed,
   }));
   let run: ImportRun | undefined, target: Awaited<ReturnType<typeof openNative>> | undefined;
@@ -346,7 +346,7 @@ export async function campaign(
           ...p,
           profile: "thin",
           name: "p" + i,
-          subjects: full ? 500000 : 12000,
+          subjects: full ? 125000 : 12000,
         }))
       : [
           {

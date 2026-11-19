@@ -59,7 +59,11 @@ const available = (path: string) => {
   return s.bavail * s.bsize;
 };
 const run = (args: string[]) =>
-  execFileSync(process.execPath, ["--experimental-strip-types", ...args], { stdio: "inherit" });
+  execFileSync(
+    "taskset",
+    ["-c", "3,5,6,7,9,10,11", process.execPath, "--experimental-strip-types", ...args],
+    { stdio: "inherit" },
+  );
 async function hash(file: string) {
   const h = createHash("sha256");
   for await (const b of createReadStream(file)) h.update(b);
@@ -143,13 +147,13 @@ if (action === "--cleanup") {
       prefix = "tx2-dximport-" + nonce;
     const sizable = stage === "deep" || stage === "thin",
       planned =
-        stage === "thin" ? 36000000 : stage === "deep" ? deepPopulation(100000).facts : 4000000;
+        stage === "thin" ? 36000000 : stage === "deep" ? deepPopulation(100000).facts : 1000000;
     const footprint = planned + 2 * 10 * 1604464;
     const required = Math.max(12 * 1024 ** 3, Math.ceil(footprint * bytesPerFact * 1.45));
     const free = available(dockerRoot),
       scratch = available(root);
     put(join(dir, "capacity.json"), { planned, footprint, bytesPerFact, required, free, scratch });
-    if (sizable && (free < required || scratch < 12 * 1024 ** 3)) {
+    if (stage !== "proof" && (free < required || scratch < 12 * 1024 ** 3)) {
       stages.push({ stage, status: "capacity-refused", required, free, scratch });
       continue;
     }
@@ -217,7 +221,20 @@ if (action === "--cleanup") {
         run([bench + "price.ts", join(dir, "price"), "100"]);
         run([bench + "behind.ts", join(dir, "behind.json")]);
         run([bench + "fair.ts", join(dir, "fair")]);
+        const sizing = [];
+        for (const profile of ["deep", "thin"]) {
+          const path = join(dir, "sample-" + profile),
+            before = pgSize();
+          run([bench + "calibrate.ts", path, profile]);
+          const cal = get(join(path, "calibration.json")),
+            after = pgSize();
+          assert(cal.facts >= 900000 && cal.groups === cal.source.groups && after >= before);
+          bytesPerFact = Math.max(bytesPerFact, (after - before) / cal.facts);
+          sizing.push({ profile, before, after, ...cal });
+        }
         reading = {
+          sizing,
+          driverCpus: "3,5,6,7,9,10,11",
           oracle: await hash(join(dir, "oracle/history.readback.json")),
           snapshot: await hash(join(dir, "oracle/snapshot.readback.json")),
           price: get(join(dir, "price/price.json")),
@@ -226,7 +243,11 @@ if (action === "--cleanup") {
       } else {
         const n = Number(stage.slice(-1));
         const mode = sizable ? stage : "screen";
-        const choice = sizable ? choose(candidates) : undefined;
+        const choice = sizable
+          ? candidates.length === 4
+            ? choose(candidates)
+            : { index: 1, selection: "exploratory-incomplete-screen", observedMaxHoldMs: null }
+          : undefined;
         if (choice) chosen = choice.index;
         run([bench + "campaign.ts", mode, join(dir, "traffic"), String(sizable ? chosen : n), "0"]);
         const summary = get(join(dir, "traffic/comparison.json"));
@@ -238,7 +259,7 @@ if (action === "--cleanup") {
         const r = summary.rows[0];
         assert.equal(r.scopes.length, 10);
         assert.equal(r.complete, true);
-        assert.equal(r.groups, stage === "thin" ? 4500000 : stage === "deep" ? 100000 : 500000);
+        assert.equal(r.groups, stage === "thin" ? 4500000 : stage === "deep" ? 100000 : 125000);
         assert.equal(r.facts, planned);
         const endBytes = pgSize();
         const actual = r.facts + 2 * 10 * 1604464;
