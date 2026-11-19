@@ -8,17 +8,33 @@ import { Documents, hash, unpack } from "./store.ts";
 import { Fixture } from "./fixture.ts";
 import { Notices } from "./journal.ts";
 import { Dispatcher } from "./dispatcher.ts";
+import { deepInputs } from "./deep.ts";
 import { recipient } from "./worker.ts";
 import { wireDelivery, type Offered } from "./verify.ts";
 
 const attempt = path.resolve(process.argv[2]!),
   get = (s: string) => JSON.parse(fs.readFileSync(path.join(attempt, s), "utf8"));
 const report = get("result.json"),
-  r = report.dispatch,
-  b = get("binding.json");
+  r = report.dispatch;
+const deep = report.profile === "act2-native-deep-policy-v1";
+const authority = deep ? path.dirname(attempt) : attempt;
+const reservation = JSON.parse(fs.readFileSync(path.join(authority, "binding.json"), "utf8"));
+if (deep) {
+  const pre = JSON.parse(fs.readFileSync(path.join(authority, "preflight-receipt.json"), "utf8"));
+  assert.deepEqual(pre.binding, {
+    source: reservation.source,
+    slot: reservation.slot,
+    nonce: reservation.nonce,
+  });
+  assert(pre.noticeAttempt === report.nonce && pre.noticeDigest === r.proof.orderedEffectSha256);
+  assert.deepEqual(pre.inputPins, report.inputs);
+}
+const b = deep
+  ? { ...reservation, preflightNonce: reservation.nonce, nonce: report.nonce }
+  : reservation;
 const owner = fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!);
 const reopened = process.argv[3] === "--after-restart",
-  originalOwner = fs.readFileSync(path.join(attempt, "owner.json"));
+  originalOwner = fs.readFileSync(path.join(authority, "owner.json"));
 assert.equal(sha256(originalOwner), b.owner);
 if (reopened) {
   const old = JSON.parse(originalOwner.toString()),
@@ -51,7 +67,7 @@ const source = await openComposition("reach", "datomic", r.scope),
 try {
   const db = new Documents(source, "account"),
     sink = new Documents(rx, "effects"),
-    a = new Notices(source, "account", new Fixture(source)),
+    a = new Notices(source, "account", deep ? deepInputs(source, report.n) : new Fixture(source)),
     d = new Dispatcher(a, sink);
   const tail = (await a.observe()).value;
   assert.equal(tail.epoch, r.epoch);

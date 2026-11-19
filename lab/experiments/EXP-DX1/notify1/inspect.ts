@@ -85,7 +85,30 @@ export function inspectPair(dir: string) {
   assert.deepEqual(offers[0], offers[1]);
   const a = result.dispatch,
     b = result.baseline;
-  assert(a.scope !== b.scope && a.receiver !== b.receiver && a.duration === b.duration);
+  assert(a.scope !== b.scope && a.receiver !== b.receiver);
+  if (a.duration !== b.duration) {
+    // [DX-STG1] Why: the first paced runner recorded each realized timer wake. Establish that both windows contained precisely the same complete read and save schedule. Rejected: accepting an arbitrary tolerance between elapsed times.
+    const scheduled = (arm: string) => {
+      const rows = get(arm + "-raw.json").reads as { ordinal: number; atMs: number }[];
+      return Array.from({ length: a.readers }, (_, i) =>
+        rows
+          .filter((r) => r.ordinal === i)
+          .map((r) => r.atMs)
+          .sort((x, y) => x - y),
+      );
+    };
+    const series = scheduled("dispatch");
+    assert.deepEqual(series, scheduled("baseline"));
+    for (const times of series) {
+      const interval = times[1]! - times[0]!,
+        last = times.at(-1)!;
+      assert(interval > 0 && times.every((t, i) => t === times[0]! + i * interval));
+      assert(
+        last < Math.min(a.duration, b.duration) &&
+          last + interval >= Math.max(a.duration, b.duration),
+      );
+    }
+  }
   assert(a.proof.subjects === n && a.proof.receiverStates === n && a.proof.ledgerStates === n);
   assert(
     a.proof.eventCounts.reduce((s: number, v: number) => s + v, 0) === a.proof.effects &&
@@ -110,6 +133,7 @@ export function inspectPair(dir: string) {
     releaseNotices: a.dispatch.deliveries,
     noticesPerSecond: rate,
     elapsedMs: a.duration,
+    baselineElapsedMs: b.duration,
     readRatio: read,
     commitRatio: write,
     withinBoth: read <= 1.5 && write <= 1.5,
