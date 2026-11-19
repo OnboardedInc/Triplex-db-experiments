@@ -27,6 +27,7 @@ type Run = {
   open?: any;
   restart?: any;
   limit?: any;
+  groupSettings?: any;
 };
 const MI = 1024 ** 2;
 function windowTable(run: Run, lines: string[]) {
@@ -126,11 +127,61 @@ function memIndex(point: any) {
   return n ? { value: rows.reduce((a: number, s: any) => a + s.sum, 0) / n, n } : null;
 }
 // [DX-SCALE1] Why: the actual open and restart witnesses distinguish a database limit, JVM cost and application-reader cost. Rejected: attributing a client memory peak to the transactor or reporting a recovered health check as 100 reopened databases.
-export function scopeReport(reportFile: string, runs: Run[]) {
-  if (!runs.length) return null;
+export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = []) {
+  if (!runs.length && !releases.length) return null;
   const file = path.join(path.dirname(reportFile), "SCOPES.md"),
     lines = ["# Deep scope measurements", ""];
   let owner = "";
+  if (releases.length) {
+    lines.push(
+      "## Activation costs",
+      "",
+      "Each row is one verified release. Evaluation includes the pinned world reads and performs zero writes. Each guarded page commits atomically. The two commit-time columns distinguish pages containing changed items from pages containing guards alone. Changed facts count assertions and retractions. Queue rates cover the marker through the last acknowledged page and include live writers in that database.",
+      "",
+      "| Attempt / release | Wall s | Marker ms / commits | Evaluation ms | Changed people / roster | Body fact writes / preparation ms | Guard fact writes / preparation ms | Mixed page commits / ms | Guard-only commits / ms | Source receipts / native transactions / changed facts | Logical / native transactions/s | Changed facts/s |",
+      "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    );
+    for (const s of releases)
+      for (const scope of s.summary.perScope) {
+        const d = scope.deep;
+        for (const [i, name] of ["R1", "R2"].entries()) {
+          const r = i === 0 ? d.r1 : d.r2,
+            c = r?.cost;
+          if (!c) continue;
+          assert(
+            c.subjects === d.activationOracle.checked &&
+              c.changedSubjects === d.activationOracle.changedItemsByRelease[i],
+          );
+          assert(c.queue.first === r.cut.position && c.queue.last === r.publicationPosition);
+          const q = c.queue,
+            pair = (n: number, ms: number) => n + " / " + fmt(ms);
+          lines.push(
+            "| " +
+              [
+                s.tag + " / " + name,
+                fmt(r.wallMs / 1000),
+                fmt(c.markerMs) + " / " + c.markerCommits,
+                fmt(c.evaluationMs),
+                c.changedSubjects +
+                  " / " +
+                  c.subjects +
+                  " (" +
+                  fmt((100 * c.changedSubjects) / c.subjects) +
+                  "%)",
+                pair(c.bodyFacts, c.bodyPrepareMs),
+                pair(c.guardFacts, c.guardPrepareMs),
+                pair(c.mixedPages, c.mixedCommitMs),
+                pair(c.guardOnlyPages, c.guardOnlyCommitMs),
+                q.observed + " / " + q.physicalTransactions + " / " + q.changedFacts,
+                q.qualified ? fmt(q.logicalPerS) + " / " + fmt(q.physicalPerS) : "unjudged",
+                q.qualified ? fmt(q.changedFactsPerS) : "unjudged",
+              ].join(" | ") +
+              " |",
+          );
+        }
+      }
+    lines.push("");
+  }
   for (const s of runs) {
     const bind = (a: any) =>
       assert(
@@ -270,7 +321,13 @@ export function scopeReport(reportFile: string, runs: Run[]) {
   for (const item of [3, 4]) {
     const side = (name: string) =>
       runs
-        .filter((r) => r.attempt.item === item && r.attempt.layout === name && r.summary?.tenants)
+        .filter(
+          (r) =>
+            r.attempt.item === item &&
+            r.attempt.layout === name &&
+            !r.attempt.groupControl &&
+            r.summary?.tenants,
+        )
         .at(-1);
     const pooled = side("pooled"),
       separate = side("separate");
@@ -322,6 +379,65 @@ export function scopeReport(reportFile: string, runs: Run[]) {
     }
     lines.push("");
   }
+  for (const treatment of runs.filter((r) => r.attempt.groupControl && r.summary?.tenants)) {
+    const control = runs.find((r) => r.tag === treatment.attempt.groupControl);
+    assert(
+      control &&
+        control.attempt.source === treatment.attempt.source &&
+        !control.attempt.groupControl,
+    );
+    assert.deepEqual(control.attempt.cpus, treatment.attempt.cpus);
+    assert.deepEqual(
+      control.summary.perScope[0].deep.logicalTraces,
+      treatment.summary.perScope[0].deep.logicalTraces,
+    );
+    assert.equal(
+      control.summary.perScope[0].deep.seed.sha256,
+      treatment.summary.perScope[0].deep.seed.sha256,
+    );
+    lines.push(
+      "## Group commit with all ten accounts bursting",
+      "",
+      "Both arms replayed the same preceding windows. Native transaction IDs identify saves grouped into a single durable transaction. Commands carry the frozen profile’s subject and account identity. The gateway shares one scheduling class for unnamespaced entities without per-entity membership hints.",
+      "",
+      "| Gateway option | Logical ACKs / seconds | Saves/s | Native transactions/s | Multi-save transactions | Fact changes/s | Pooled commit p99 ms |",
+      "| --- | --- | ---: | ---: | ---: | ---: | --- |",
+    );
+    for (const s of [control, treatment]) {
+      const enable = Boolean(s.attempt.groupControl),
+        g = s.groupSettings;
+      assert(
+        g?.source === s.attempt.source &&
+          g.nonce === s.attempt.nonce &&
+          g.slot === s.attempt.slot &&
+          g.enabled === enable,
+      );
+      const w = s.summary.tenants.windows.find((v: any) => v.name === "all-burst"),
+        q = s.summary.perScope[0].deep.allBurstQueue;
+      assert(w && q && q.expected === w.acked && q.from === w.from && q.to === w.to);
+      const p = w.pooled.commit;
+      lines.push(
+        "| " +
+          [
+            enable ? "On" : "Off",
+            w.acked + " / " + fmt(w.seconds),
+            fmt(w.sustainedCommitsPerS),
+            q.qualified ? fmt(q.physicalPerS) : "unjudged",
+            q.qualified ? q.multiCommandTransactions : "unjudged",
+            q.qualified ? fmt(q.changedFactsPerS) : "unjudged",
+            metric({ value: p.p99Ms, n: p.n, interval90: p.interval90 }),
+          ].join(" | ") +
+          " |",
+      );
+    }
+    lines.push("");
+    owner = "The matched group-commit comparison completed for the ten-account burst.";
+  }
   fs.writeFileSync(file, lines.join("\n") + "\n");
-  return owner || "Scope-level interference observations are available.";
+  return (
+    owner ||
+    (runs.length
+      ? "Scope-level interference observations are available."
+      : "Activation write counts and measured durations are available for both releases.")
+  );
 }

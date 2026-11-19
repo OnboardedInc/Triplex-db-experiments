@@ -411,6 +411,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   status(dir, "starting stack");
   const env = {
     ...process.env,
+    DX_GROUP_COMMIT: attempt.groupControl ? "1" : "0",
+    DX_GROUP_QUEUE_CLOCK: "0",
     DX_BARE_METAL: "1",
     DX_BARE_METAL_ROOT: dir,
     DX_STACK_EVIDENCE: path.join(dir, "engines"),
@@ -459,6 +461,24 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
   const engines = placement(prefix);
+  if (item === 3 && attempt.layout === "pooled") {
+    const expected = Number(Boolean(attempt.groupControl));
+    const actual = JSON.parse(docker("inspect", engines["gw-w"].id))[0];
+    assert(
+      actual.Id === engines["gw-w"].id &&
+        actual.Config.Env.includes("TX2_GROUP_COMMIT=" + expected) &&
+        actual.Config.Env.includes("TX2_GROUP_QUEUE_CLOCK=0"),
+    );
+    write(path.join(dir, "group-settings.json"), {
+      source,
+      slot: prefix,
+      nonce: attempt.nonce,
+      databaseLayout: attempt.layout,
+      enabled: Boolean(expected),
+      gatewayImage: actual.Image,
+      queueClock: false,
+    });
+  }
   let before = snapshot(prefix);
   for (const [role, cpus] of Object.entries({
     pg: planCpus.postgres,
@@ -482,6 +502,12 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         TX2_SWEEP_STRICT: "1",
         TRIPLEX_TRACE_DIR: path.join(dir, "act2-preflight-trace"),
       });
+      const { inputs } = await import("../act2/preflight.ts");
+      assert.equal(
+        proof.sourceInputs,
+        inputs(),
+        "Activation preflight used different runtime bytes",
+      );
       write(path.join(dir, "preflight.json"), proof);
       // [DX-ACT2] Why: the probe writes a separate native database on the measured stack. Account for those bytes before a cold seed; restoration replaces the probe database. Rejected: attributing the probe to the deep population.
       const after = snapshot(prefix);
@@ -1055,6 +1081,7 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     "preflight.json",
     "preflight-stop.json",
     "preflight-disk.json",
+    "group-settings.json",
     "source.json",
     "placement.json",
     "disk-before.json",
@@ -1238,7 +1265,26 @@ async function main() {
   const sourceGit = ["-c", "credential.helper=", "-c", "http.extraHeader="];
   // [DX-SCALE1] Why: a reader must execute the identical public revision as its zero arm even if the other bench publishes during the 5,910-second trace. Rejected: mixing sender or guard versions inside a pair, or silently ignoring upstream changes.
   const originHeads: Record<string, { head: string; changes: string[] }> = {};
-  for (const ref of ["exp/DX-BM1-bare-metal", "exp/DX-ACT1-activation"]) {
+  const refs = ["exp/DX-BM1-bare-metal", "exp/DX-ACT1-activation"];
+  if (item >= 2) {
+    call("git", [
+      "merge-base",
+      "--is-ancestor",
+      "a9eb03b04f31d1679a2385bb80b87fa6d389b6d2",
+      source,
+    ]);
+    refs.push("exp/DX-ACT2-activation-100k");
+  }
+  if (item === 3 && getopt("account-layout") === "pooled") {
+    call("git", [
+      "merge-base",
+      "--is-ancestor",
+      "502c8897deb9af8233d72dfc6cc2d62f601f0fca",
+      source,
+    ]);
+    refs.push("exp/DX-W1-commit-tail-reads");
+  }
+  for (const ref of refs) {
     call("git", [...sourceGit, "fetch", "origin", "refs/heads/" + ref], 60000);
     const head = call("git", ["rev-parse", "FETCH_HEAD"]),
       ancestor = call("git", ["merge-base", head, source]);
@@ -1278,6 +1324,38 @@ async function main() {
     capacity = budgetFor(item, root, mode, getopt("sizing"));
   const baselineTag = getopt("baseline"),
     seedImageTag = getopt("seed-image");
+  const groupControl = getopt("group-control");
+  if (groupControl) {
+    assert(
+      item === 3 &&
+        layout === "pooled" &&
+        mode === "interference" &&
+        /^[a-z][a-z0-9-]{2,40}$/.test(groupControl),
+    );
+    const previous = get(path.join(root, groupControl, "attempt.json")),
+      result = get(path.join(root, groupControl, "terminal.json"));
+    const settings = get(path.join(root, groupControl, "transfer/group-settings.json"));
+    // [DX-SCALE1] Why: repeat the full control trace so all ten accounts reach the burst with the same prior offers and readers. Rejected: a separately seeded synthetic burst or an unverified gateway option.
+    assert(
+      previous.item === item &&
+        previous.mode === mode &&
+        previous.layout === layout &&
+        previous.source === source &&
+        !previous.groupControl,
+    );
+    assert(
+      result.cleanup &&
+        result.service === "success" &&
+        result.scopeReports === 1 &&
+        result.nonce === previous.nonce,
+    );
+    assert(
+      settings.source === source &&
+        settings.slot === previous.slot &&
+        settings.nonce === previous.nonce &&
+        settings.enabled === false,
+    );
+  }
   // [DX-ACT2] Why: a standalone guarded activation can seed its own pooled account scope after preflight. Rejected: borrowing the image of a zero arm from another build.
   if (
     item === 5 &&
@@ -1340,6 +1418,7 @@ async function main() {
     layout,
     boundedTrial,
     seedImageTag,
+    groupControl,
     at: Date.now(),
     cpus: planCpus,
     topology,

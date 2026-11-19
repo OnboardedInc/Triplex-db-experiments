@@ -76,7 +76,8 @@ import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
 import { alignAssertIds } from "./lib/receipt.ts";
 import { openLegacyPublicationWriter } from "./lib/legacy-publication.ts";
-import { datomicWriterDiagnostics, observeDatomicPublication } from "./lib/datomic-publication.ts";
+import { datomicWriterDiagnostics, observeDatomicPublication, observeNativeReceipt } from "./lib/datomic-publication.ts";
+import { DeepCommitMeter } from "./lib/deep-commit-meter.ts";
 import { FeedConsumer, openHostFeedClock, openPublicationWriter, openAsyncPublicationWriter, openPublicationReader, readProducerPublication, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
@@ -627,6 +628,10 @@ async function run() {
   const tenantReleasePhase = tenantSpec && (tenantSpec.study==="interference" || tenantSpec.study==="million" && activationOnly);
   const releaseTarget = tenantReleasePhase ? tenants!.find(a=>a.index===1) : undefined;
   const activation = releaseTarget ? new DeepActivation(rawDir,releaseTarget.people,runTag+":"+releaseTarget.key,releaseTarget.first,Number(opt("deep-evaluators") ?? 2),releaseTarget.key) : activationOnly && !tenantSpec ? new DeepActivation(rawDir, rungSubjects, runTag) : undefined;
+  const measureBurst = tenantSpec?.study === "interference" && tenantSpec.topology === "pooled";
+  const meter = (activation || measureBurst) && config.composition !== "memory"
+    ? new DeepCommitMeter("s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url")) : undefined;
+  if (meter) observeNativeReceipt(meter.observe.bind(meter));
   if (deepId) atomicWrite(path.join(rawDir, "seed-observed.json"), JSON.stringify({ identity: deepId, scope: scopeName, seed: report.deep.seed, trace: report.deep.trace }));
   if (seedOnly) {
     report.status = "SEEDED"; save(); samplersOn = false; clearInterval(eluTimer);
@@ -1566,6 +1571,23 @@ async function run() {
   if (activation) {
     const verifier = await openComposition(config.composition, lane, scopeName);
     try { report.deep.activationOracle = await activation.verify(verifier, report.deep.r1, report.deep.r2); } finally { await verifier.close(); }
+  }
+  if (meter && deepId) {
+    observeNativeReceipt(undefined);
+    assert.equal(report.deep.database, meter.database);
+    if (activation) {
+      for (const [k, name] of ["R1", "R2"].entries()) {
+        const r = k === 0 ? report.deep.r1 : report.deep.r2;
+        const command = runTag + (releaseTarget ? ":" + releaseTarget.key : "") + ":activate:" + name;
+        r.cost.queue = meter.release(r.cut.position, r.publicationPosition, r.wallMs, command);
+      }
+    }
+    if (measureBurst) {
+      const w = phases.find(p => p.name === "all-burst");
+      assert(w && w.end > w.start + config.settleS * 1000);
+      report.deep.allBurstQueue = meter.burst(writes, w.start + config.settleS * 1000, w.end);
+    }
+    report.deep.nativeReceipts = meter.seal(path.join(rawDir, "deep-native-commits.jsonl"), deepId);
   }
   const incompleteHistory = !tenantSpec && !deepSmoke && !interferenceOnly && !smallOnly && !activation && !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
   if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");

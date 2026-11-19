@@ -5,6 +5,7 @@ import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+import { validatePreflight } from "../act2/preflight-runner.ts";
 const root = "/var/tmp/triplex-scale1";
 const experiment = "lab/experiments/EXP-DX1/scale1/bench.ts";
 const read = (f: string) => JSON.parse(fs.readFileSync(f, "utf8"));
@@ -22,6 +23,7 @@ type Step = {
   sizingChoices?: string[];
   when?: { tag: string; action: "live" | "seed-only" };
   retryOf?: string;
+  groupControl?: string;
   bootstrapCache?: string;
 };
 type Plan = { label: string; steps: Step[]; final: boolean };
@@ -65,11 +67,14 @@ function identified(step: Step) {
     step.seedImage,
     step.sizing,
     step.retryOf,
+    step.groupControl,
     step.when?.tag,
     ...(step.sizingChoices ?? []),
   ])
     if (tag) assert(safe(tag));
   if (step.layout) assert(step.item >= 3 && ["pooled", "separate"].includes(step.layout));
+  if (step.groupControl)
+    assert(step.item === 3 && step.mode === "interference" && step.layout === "pooled");
   if (step.bootstrapCache) assert(sha(step.bootstrapCache));
 }
 async function prepare(step: Step) {
@@ -148,6 +153,7 @@ async function run(step: Step) {
       ...(step.layout ? ["--account-layout", step.layout] : []),
       ...(step.baseline ? ["--baseline", step.baseline] : []),
       ...(step.seedImage ? ["--seed-image", step.seedImage] : []),
+      ...(step.groupControl ? ["--group-control", step.groupControl] : []),
       ...(sizing ? ["--sizing", sizing] : []),
     ];
     const args = [
@@ -182,7 +188,8 @@ async function run(step: Step) {
       a.mode === step.mode &&
       a.source === step.source &&
       a.tag === step.tag &&
-      a.layout === step.layout,
+      a.layout === step.layout &&
+      a.groupControl === step.groupControl,
   );
   state({ stage: "running", step, ceilingUTC: new Date(a.at + a.ceiling * 1000).toISOString() });
   await wait(
@@ -200,6 +207,14 @@ async function run(step: Step) {
       t.cleanup === true,
   );
   await wait(() => ["inactive", "failed"].includes(unitState(unit)), Date.now() + 180000);
+  if (a.item >= 2 && a.spec.people * a.spec.scopes >= 100000 && t.service === "success") {
+    const proof = read(path.join(base, "transfer/preflight.json"));
+    const binding = { source: a.source, slot: a.slot, nonce: a.nonce };
+    validatePreflight(proof, binding);
+    const disk = read(path.join(base, "transfer/preflight-disk.json"));
+    assert.deepEqual(disk.binding, binding);
+    assert(disk.before.at >= a.at && disk.after.at >= disk.before.at);
+  }
   let verified = t.scopeReports === a.spec.scopes;
   if (step.mode === "seed" && exists(path.join(base, "seed-disk.json"))) {
     const d = read(path.join(base, "seed-disk.json")),
@@ -300,7 +315,9 @@ async function run(step: Step) {
           o.committed === o.primaries
         );
       })
-    : verified && t.scopeReports === 0 && (step.mode === "seed" || exists(path.join(base, "database-limit.json")));
+    : verified &&
+      t.scopeReports === 0 &&
+      (step.mode === "seed" || exists(path.join(base, "database-limit.json")));
   return {
     success: t.service === "success" && verified && correctness,
     capacity: t.service === "capacity-refused",
@@ -312,11 +329,20 @@ async function run(step: Step) {
 }
 // [DX-SCALE1] Why: a reader fix needs a fresh zero on the same source; both attempts remain in the item's failure count. Rejected: comparing different revisions or letting another item bypass a failure.
 export function resumesItem(failed: Step, retry: Step, next?: Step) {
-  if (retry.item !== failed.item || retry.layout !== failed.layout || retry.retryOf !== failed.tag) return false;
+  if (retry.item !== failed.item || retry.layout !== failed.layout || retry.retryOf !== failed.tag)
+    return false;
   if (retry.mode === failed.mode) return true;
-  return failed.mode === "reader" && retry.mode === "zero" && retry.source !== failed.source &&
-    next?.item === retry.item && next.mode === "reader" && next.layout === retry.layout && next.source === retry.source &&
-    next.baseline === retry.tag && next.retryOf === failed.tag;
+  return (
+    failed.mode === "reader" &&
+    retry.mode === "zero" &&
+    retry.source !== failed.source &&
+    next?.item === retry.item &&
+    next.mode === "reader" &&
+    next.layout === retry.layout &&
+    next.source === retry.source &&
+    next.baseline === retry.tag &&
+    next.retryOf === failed.tag
+  );
 }
 // [DX-SCALE1] Why: each phase must survive a disconnected Mac, release its systemd cgroup and retain an independently identifiable terminal attempt. Rejected: a background SSH stream or proceeding after a second failed experiment.
 async function main() {

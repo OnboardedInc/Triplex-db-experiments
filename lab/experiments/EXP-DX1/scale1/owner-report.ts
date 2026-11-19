@@ -24,6 +24,7 @@ type Stage = {
   open: any;
   restart: any;
   limit: any;
+  groupSettings: any;
 };
 const load = (dir: string, f: string) =>
   fs.existsSync(path.join(dir, f)) ? JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")) : null;
@@ -77,6 +78,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         open: load(dir, "open-scopes.json"),
         restart: load(dir, "restart.json"),
         limit: load(dir, "database-limit.json"),
+        groupSettings: load(dir, "group-settings.json"),
       });
     }
   stages.sort((a, b) => a.attempt.at - b.attempt.at);
@@ -98,17 +100,29 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       ? `${s.summary.perScope.map((p: any) => round(p.deep.r2.wallMs / 1000)).join(", ")} s across ${s.summary.scopeCount} sweeps, with ${s.summary.perScope.reduce((n: number, p: any) => n + (p.deep.activationOracle?.checked ?? 0), 0)} independently checked people`
       : "pending";
   const emptied = stages.find((s) => s.resources?.firstObservedEngineOOM);
-  const firstReader = stages.find(s => s.attempt.item === 1 && s.attempt.mode === "reader" && !s.summary);
+  const firstReader = stages.find(
+    (s) => s.attempt.item === 1 && s.attempt.mode === "reader" && !s.summary,
+  );
   let incompleteReader = "";
   if (firstReader) {
     const run = load(path.join(evidence, firstReader.tag, "summaries/s0"), "ns-report.json");
     if (run?.deep?.identity && Array.isArray(run.phases)) {
-      assert(run.deep.identity.source === firstReader.attempt.source && run.deep.identity.nonce === firstReader.attempt.nonce && run.deep.identity.slot === firstReader.attempt.slot);
+      assert(
+        run.deep.identity.source === firstReader.attempt.source &&
+          run.deep.identity.nonce === firstReader.attempt.nonce &&
+          run.deep.identity.slot === firstReader.attempt.slot,
+      );
       const missed = run.phases.filter((p: any) => {
         const observed = run.phaseProgress?.[p.idx];
-        return /^L[0-9]+$/.test(p.name) && p.actualEnd > p.actualStart && observed?.reads > 0 && observed.routes.fallback === observed.reads;
+        return (
+          /^L[0-9]+$/.test(p.name) &&
+          p.actualEnd > p.actualStart &&
+          observed?.reads > 0 &&
+          observed.routes.fallback === observed.reads
+        );
       });
-      if (missed.length) incompleteReader = ` The first reader attempt routed all ${missed.reduce((n: number,p: any)=>n+run.phaseProgress[p.idx].reads,0).toLocaleString("en-US")} reads at ${missed.map((p: any)=>p.name).join(", ")} through the gateway and failed replica coverage.`;
+      if (missed.length)
+        incompleteReader = ` The first reader attempt routed all ${missed.reduce((n: number, p: any) => n + run.phaseProgress[p.idx].reads, 0).toLocaleString("en-US")} reads at ${missed.map((p: any) => p.name).join(", ")} through the gateway and failed replica coverage.`;
     }
   }
   const refused = stages.find((s) => s.terminal.service === "capacity-refused");
@@ -123,19 +137,26 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   const detail = scopeReport(
     file,
     stages.filter((s) => s.attempt.mode === "interference" || s.attempt.mode === "small"),
+    stages.filter((s) =>
+      s.summary?.perScope?.some((p: any) => p.deep?.r2?.cost && p.deep?.activationOracle),
+    ),
   );
+  const breakdown = a1?.summary?.perScope?.find((p: any) => p.deep?.r2?.cost)?.deep.r2.cost;
+  const costLine = breakdown
+    ? ` R2 evaluated in ${round(breakdown.evaluationMs)} ms, changed ${breakdown.changedSubjects}/${breakdown.subjects} outputs and wrote ${breakdown.bodyFacts} body facts plus ${breakdown.guardFacts} guard facts across ${breakdown.mixedPages + breakdown.guardOnlyPages} pages. The queue carried ${round(breakdown.queue.physicalPerS)} native transactions/s and ${round(breakdown.queue.changedFactsPerS)} fact changes/s.`
+    : "";
   const lines = [
     "# DX-SCALE1 · deep accounts",
     "",
     `One account of 100,000 people — ${cost(one)}.`,
     `Ten accounts of 100,000 people sharing one database — ${cost(ten)}.${partialTen ? ` The bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} attempted databases.` : ""}`,
-    `Activation for one account is ${act(a1)}. Activation for one account among ten in one database is ${act(a10)}.`,
+    `The owner's release target is under one second. Activation for one account is ${act(a1)}. Activation among ten is ${act(a10)}.${costLine}`,
     emptied
       ? `First recorded engine memory-limit kill was in ${emptied.resources.firstObservedEngineOOM.role}, attempt ${emptied.tag}.`
       : refused
         ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
         : "The first shared resource to reach its limit is still unknown.",
-    "Three changes to test are another sender core for offer delays, a larger transactor cache for repeated SQL reads, and smaller per-save work at the serial commit point. Their effects are unmeasured.",
+    "Three changes to test are grouping queued saves, reducing per-save work at the serial commit point, and publishing a release with a constant number of writes. Their effects on the full account are unmeasured.",
     `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `PostgreSQL grew by ${round(base.disk.bytesPerFact)} bytes per fact and the volume including WAL grew by ${round(base.disk.volumeBytesPerFact)} bytes per fact (one seed).` : "The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack)."}`,
     "",
     ...(base?.summary
@@ -278,16 +299,18 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "",
     "- `deep-profile.ts` checks a fresh empty scope, consecutively acknowledged seed contents and IDs, the independent population count and the frozen seed and command hashes. The coordinator binds each ready file and physical database to its nonce, source, slot and account. Each scope stays live until every R2 completion marker agrees with that cohort.",
     "- The NS driver keeps the receipt-clock, full-row, feed/replay, old-basis, split-read, history and O-REPLAY checks. Deep terminal samples come from actual public reads at the seed and latest cut. The interference and small-account plans bind each scope’s business commands to a new frozen schedule. Their windows fix the sentinel’s offers and reader counts. After timed small-account traffic drains, `tenant-checks.ts` submits a tagged correction per account, loses its ACK and verifies the duplicate and original receipt against the durable tenant cursor.",
-    "- `deep-activation.ts` binds each fresh release receipt to its cut, hashes each evaluated world/output, re-reads the same cut, and checks both release facts and the immutable roster, range, commit and receipt hash for each 256-person page. The independent decoder compares every person’s fenced state with O-DOMAIN at both cuts.",
+    "- `deep-activation.ts` checks the observed release, each page receipt and its changed bodies against the source cut, roster hashes and O-DOMAIN. `deep-commit-meter.ts` binds native transaction IDs, members, datoms and logical change rows to actual source replies. `measurements.ts` opens the new attempt’s receipt ledger, rehashes its bytes, validates its source, nonce and database, and recomputes the reported release and burst rates.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
     "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes every transferred summary and binds source, scope and arm before rendering. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
-    "- The functional tests use new databases and real public receipts. They check replacement semantics, duplicate receipts, independent replay and publication. The first slot lacked the current write endpoint. A later terminal read timed out on a closed replica. The retry used the source-matched gateway and a live source read at each recorded position.",
+    "- The replacement feed check observed every committed page before the injected post-checkpoint crash. Two fresh local tenant layouts matched all 2,025,863 reads and four post-window correction receipts. Data from these small fixtures establish functional coverage. The integrated Datomic package passed 408 tests and skipped 52 opt-in tests. [Functional evidence](evidence/part4-functional.sha256)",
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
   );
   const interference = stages
-    .filter((s) => s.attempt.item === 3 && s.summary?.layout === "pooled")
+    .filter(
+      (s) => s.attempt.item === 3 && s.summary?.layout === "pooled" && !s.attempt.groupControl,
+    )
     .at(-1)?.summary?.tenants;
   if (interference) {
     const m = interference.firstSteadyMiss;
