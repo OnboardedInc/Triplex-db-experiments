@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline";
+import { fileURLToPath } from "node:url";
 export const cases = [
   { key: "thin-1m", mode: "int1-thin", size: 1_000_000, accounts: 1, scopes: 1 },
   { key: "thin-4m", mode: "int1-thin", size: 4_000_000, accounts: 1, scopes: 1 },
@@ -111,7 +112,10 @@ export async function verifyCase(
   tag: string,
   stack: any,
 ) {
-  const { canonical } = await import("../../../bench/lib/w0-world.ts");
+  const { W0, canonical, sha256 } = await import("../../../bench/lib/w0-world.ts");
+  const { eadRelease } = await import("../../../bench/lib/w0-selector.ts");
+  const { compareOracleOutput } = await import("../../../bench/lib/oracle.ts");
+  const { readOracleOutput } = await import("../../../bench/lib/oracle-output.ts");
   const inputs = read(path.join(dir, "inputs.json")),
     r = read(path.join(dir, "result.json"));
   const binding = createHash("sha256")
@@ -119,6 +123,19 @@ export async function verifyCase(
       canonical([head, inputs.inputs, inputs.attempt, spec.mode, spec.size, tag, stack.containers]),
     )
     .digest("hex");
+  const repo = fs.realpathSync(fileURLToPath(new URL("../../../../", import.meta.url)));
+  for (const file of [
+    "lab/experiments/EXP-DX1/int1/trial.ts",
+    "lab/experiments/EXP-DX1/int1/activation.ts",
+    "lab/bench/lib/touched-reads.ts",
+    "packages/datomic/dist/replica/Replica.js",
+  ])
+    assert(Object.hasOwn(inputs.inputs, file));
+  for (const [file, expected] of Object.entries(inputs.inputs)) {
+    const original = fs.realpathSync(path.join(repo, file));
+    assert(original.startsWith(repo + path.sep));
+    assert.equal(sha256(fs.readFileSync(original)), expected, file);
+  }
   assert.equal(inputs.binding, binding);
   assert.equal(inputs.source, head);
   assert.equal(inputs.slot, tag);
@@ -139,48 +156,69 @@ export async function verifyCase(
   const sizes = Array.from({ length: spec.accounts }, (_, n) =>
     spec.accounts === 1 ? spec.size : smallPeople(n),
   );
-  const rows = await Promise.all(
-    r.accounts.map(async (a: any, n: number) => {
-      const scopeName =
-        spec.accounts === 1 ? "population" : "account" + (spec.scopes === 1 ? 0 : n);
-      assert.equal(a.scope, "int1-" + inputs.attempt + "-" + scopeName);
-      assert.equal(
-        a.first,
-        sizes.slice(0, n).reduce((a, b) => a + b, 0),
-      );
-      assert.equal(a.people, sizes[n]);
-      assert.equal(a.facts, spec.accounts === 1 ? a.people * 8 : deepPopulation(a.people).facts);
-      assert.equal(a.active, a.people / 50);
-      assert.equal(a.ryow, a.active);
-      assert(
-        a.reads >= 4 * a.active &&
-          a.replay.entityQueries >= a.replay.reads &&
-          a.replay.reads > 0 &&
-          a.replay.status === "PASS",
-      );
-      const releases = r.activation.slice(2 * n, 2 * n + 2);
-      for (const decision of releases) {
-        assert.equal(decision.cut.scope, a.scope);
-        assert.equal(decision.roster, a.roster);
-        assert.equal(decision.covered, a.people);
-        assert.equal(decision.guardReadbacks, a.people);
-        assert.equal(decision.sourceWorldReads, a.active);
-        assert.equal(decision.certifiedWorlds, a.people - a.active);
-        assert.equal(decision.full + decision.candidates + decision.excluded, a.people);
-        assert(decision.oracle > 0 && decision.wallMs > 0 && decision.commits > 0);
-        assert.match(decision.logical, /^[a-f0-9]{64}$/);
-        await verifyPages(dir, decision, a.first, a.people);
-      }
-      return {
-        first: a.first,
-        people: a.people,
-        active: a.active,
-        facts: a.facts,
-        roster: a.roster,
-        outputs: releases.map((d: any) => d.logical),
-      };
-    }),
-  );
+  const rows = [];
+  for (const [n, a] of r.accounts.entries()) {
+    const scopeName = spec.accounts === 1 ? "population" : "account" + (spec.scopes === 1 ? 0 : n);
+    assert.equal(a.scope, "int1-" + inputs.attempt + "-" + scopeName);
+    assert.equal(
+      a.first,
+      sizes.slice(0, n).reduce((a, b) => a + b, 0),
+    );
+    assert.equal(a.people, sizes[n]);
+    assert.equal(a.facts, spec.accounts === 1 ? a.people * 8 : deepPopulation(a.people).facts);
+    assert.equal(a.active, a.people / 50);
+    assert.equal(a.ryow, a.active);
+    assert(
+      a.reads >= 4 * a.active &&
+        a.replay.entityQueries >= a.replay.reads &&
+        a.replay.reads > 0 &&
+        a.replay.status === "PASS",
+    );
+    const accountBinding = sha256(binding + "/" + a.scope + "/" + a.first);
+    const replay = path.join(dir, "replay-" + n);
+    const caseText = fs.readFileSync(path.join(replay, "oracle-case.json"), "utf8");
+    const caseDoc = JSON.parse(caseText);
+    assert.equal(caseDoc.caseId, "int1-" + accountBinding);
+    const checks = compareOracleOutput({
+      out: readOracleOutput(path.join(replay, "oracle-expected.json")),
+      caseText,
+      caseDoc,
+      reads: read(path.join(replay, "observed.json")),
+      exitCode: a.replay.exitCode,
+    });
+    assert.equal(checks.status, "PASS");
+    assert.equal(checks.entityQueries, a.replay.entityQueries);
+    assert.equal(checks.reads, a.replay.reads);
+    const releases = r.activation.slice(2 * n, 2 * n + 2);
+    assert.deepEqual(
+      releases.map((item: any) => item.release),
+      [W0.R1.hash, eadRelease().hash],
+    );
+    assert(releases[1].cut.frontier > releases[0].cut.frontier);
+    for (const decision of releases) {
+      assert.equal(decision.cut.scope, a.scope);
+      assert.equal(decision.cut.generation, accountBinding);
+      assert.equal(decision.cut.source, accountBinding);
+      assert.equal(decision.cut.frontier, decision.cut.basis.tx);
+      assert.equal(decision.roster, a.roster);
+      assert.equal(decision.covered, a.people);
+      assert.equal(decision.guardReadbacks, a.people);
+      assert.equal(decision.sourceWorldReads, a.active);
+      assert.equal(decision.certifiedWorlds, a.people - a.active);
+      assert.equal(decision.full + decision.candidates + decision.excluded, a.people);
+      assert(decision.oracle > 0 && decision.wallMs > 0 && decision.commits > 0);
+      assert.match(decision.logical, /^[a-f0-9]{64}$/);
+      await verifyPages(dir, decision, a.first, a.people);
+    }
+    rows.push({
+      first: a.first,
+      people: a.people,
+      active: a.active,
+      facts: a.facts,
+      roster: a.roster,
+      outputs: releases.map((d: any) => d.logical),
+    });
+  }
   assert(
     r.seedMs > 0 &&
       r.latency.commit.n === sizes.reduce((a, b) => a + b, 0) / 50 &&

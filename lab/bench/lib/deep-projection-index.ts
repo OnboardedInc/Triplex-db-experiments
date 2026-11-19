@@ -14,7 +14,14 @@ type Project = (i: number, rows: readonly WorldRow[], basis: PositionBasis) => W
 // Rejected: populating the live replica for a sweep, or assuming partial imports and later corrections preserve the certificate.
 export class DeepProjectionIndex {
   private readonly db: DatabaseSync;
-  private readonly binding: string;
+  readonly binding: string;
+  sourceWorldPulls = 0;
+  get diskBytes() {
+    return (
+      Number(this.db.prepare("PRAGMA page_count").get()!.page_count) *
+      Number(this.db.prepare("PRAGMA page_size").get()!.page_size)
+    );
+  }
   private readonly project: Project;
   constructor(file: string, binding: string, project: Project) {
     this.binding = binding;
@@ -35,7 +42,9 @@ export class DeepProjectionIndex {
   }
   async catchUp(comp: CompositionHandle, cut: PositionBasis) {
     const cursor = this.db.prepare("SELECT * FROM cursor").get()!;
-    let p = Number(cursor.p);
+    const from = Number(cursor.p);
+    let p = from,
+      certifiedImports = 0;
     if (p) {
       const page = await comp.feedPage(p - 1, 1),
         prior = page.transactions[0];
@@ -81,6 +90,7 @@ export class DeepProjectionIndex {
               new Set(rows.map((c) => c.tripleId)).size === rows.length &&
               canonical(rows.map(key).sort()) === canonical(expected.map(key).sort())
             ) {
+              certifiedImports++;
               policy = canonical(
                 this.project(
                   i,
@@ -104,6 +114,7 @@ export class DeepProjectionIndex {
         throw e;
       }
     }
+    return { from, through: p, certifiedImports };
   }
   async worlds(comp: CompositionHandle, group: readonly number[], cut: PositionBasis) {
     const worlds = new Map<number, W0.World>(),
@@ -125,6 +136,7 @@ export class DeepProjectionIndex {
     }
     for (let offset = 0; offset < missing.length; offset += 32) {
       const batch = missing.slice(offset, offset + 32);
+      this.sourceWorldPulls += batch.length;
       const page = await comp.sweepPage(batch.map(ids.placement), cut);
       assert.deepEqual(page.reportedBasis, cut);
       for (const i of batch)

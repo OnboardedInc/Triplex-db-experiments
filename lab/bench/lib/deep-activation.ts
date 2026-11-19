@@ -118,6 +118,31 @@ export class DeepActivation {
     this.subjects = people;
     this.run = run;
   }
+  private projection(comp: CompositionHandle) {
+    if (comp.name !== "reach-touched") return undefined;
+    const code = ["deep-activation", "deep-projection-index", "deep-world", "w0-selector"].map(
+      (name) => hash(fs.readFileSync(new URL("./" + name + ".ts", import.meta.url), "utf8")),
+    );
+    const binding = hash(
+      canonical([this.run, comp.scopeName, comp.backend.url, "deep/1", ...code]),
+    );
+    return new DeepProjectionIndex(
+      path.join(this.directory, "deep-policy.sqlite"),
+      binding,
+      policyWorld,
+    );
+  }
+  async finishImport(comp: CompositionHandle, cut: PositionBasis) {
+    const projection = this.projection(comp);
+    if (!projection) return;
+    const started = performance.now();
+    try {
+      const input = await projection.catchUp(comp, cut);
+      return { ...input, wallMs: performance.now() - started, diskBytes: projection.diskBytes };
+    } finally {
+      projection.close();
+    }
+  }
   async execute(
     comp: CompositionHandle,
     name: Release,
@@ -172,33 +197,14 @@ export class DeepActivation {
       sum = createHash("sha256");
     const records: W0.EvaluationRecord[] = [];
     const roster = Array.from({ length: this.subjects }, (_, i) => W0.placementId(i));
-    const binding =
-      comp.name === "reach-touched"
-        ? hash(
-            canonical([
-              this.run,
-              comp.scopeName,
-              comp.backend.url,
-              "deep/1",
-              ...["deep-activation", "deep-projection-index", "deep-world", "w0-selector"].map(
-                (name) =>
-                  hash(fs.readFileSync(new URL("./" + name + ".ts", import.meta.url), "utf8")),
-              ),
-            ]),
-          )
-        : undefined;
-    const projection = binding
-      ? new DeepProjectionIndex(
-          path.join(this.directory, "deep-policy.sqlite"),
-          binding,
-          policyWorld,
-        )
-      : undefined;
+    const projection = this.projection(comp);
+    const binding = projection?.binding;
     const selection = { full: 0, candidates: 0, excluded: 0 };
     const policyBasis = { tx: cut.position, validTime: businessTime(cut.validAt) };
     const basis = { position: cut.position, validAt: cut.validAt };
+    let changes;
     try {
-      if (projection) await projection.catchUp(comp, basis);
+      if (projection) changes = await projection.catchUp(comp, basis);
       // [DX-INT1] Why: ACT1 consumes dated policy inputs independently of demand admission. The ordinary deep trace retains its release and full-evaluation semantics.
       // Rejected: substituting the narrow release in the frozen workload or warming a reader to evaluate a release.
       const width = projection ? 256 : pageSize;
@@ -353,7 +359,9 @@ export class DeepActivation {
       publications: result.commits,
       publicationPosition,
       layout: "page-cut",
-      ...(projection ? { selection } : {}),
+      ...(projection
+        ? { selection, projection: changes, sourceWorldPulls: projection.sourceWorldPulls }
+        : {}),
       coverage,
       changed: result.changed,
       startedAt,

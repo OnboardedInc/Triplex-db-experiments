@@ -80,7 +80,9 @@ export function touchedComposition(base: CompositionHandle): CompositionHandle {
       ...base.assignments,
       current: { lane: "datomic", role: "read-admitted subject replica" },
     },
-    touchedUsage: () => live ? { ...live.replica.retention, packed: live.replica.bytes, position: live.replica.position, history: live.index.historyBytes } : { bytes: 0, limit: Number(process.env.DX_TOUCHED_RETAIN_BYTES ?? 16 * 1024 ** 2), evictions: 0, admissions:0, entries: 0, packed: 0, history: 0 },
+    touchedUsage: () => live
+      ? { ...live.replica.retention, packed: live.replica.bytes, position: live.replica.position, history: live.index.historyBytes }
+      : { bytes: 0, limit: Number(process.env.DX_TOUCHED_RETAIN_BYTES ?? 16 * 1024 ** 2), evictions: 0, admissions: 0, entries: 0, packed: 0, history: 0 },
     async pull(root, basis, between) {
       if (basis.recordedPosition === undefined && basis.recordedAt === undefined)
         return base.pull(root, basis, between);

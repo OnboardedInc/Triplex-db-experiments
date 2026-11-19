@@ -39,14 +39,15 @@ if (mode === "--plan") {
         mode: "reach-touched",
         stages: [
           "fresh SQL stack",
-          "eight-fact seed",
+          integrated ? "eight-fact wide or account-local deep seed" : "eight-fact seed",
           "2% real reads and writes",
           "pinned activation and outbox",
           "readback and oracle",
           "owned cleanup and checksums",
         ],
-        expected:
-          "Four times the import disk and roughly four times the active reader payload at 4M. Cold-read latency depends on real storage. The full roster still incurs coverage and publication work.",
+        expected: integrated
+          ? "At 4M, expect about four times the seed rows and coverage work of 1M. The charged reader generation should remain within its budget. The 100-scope case should add gateway and transactor threads. Both placements must publish the same logical decisions."
+          : "Four times the import disk and roughly four times the active reader payload at 4M. Cold-read latency depends on real storage. The full roster still incurs coverage and publication work.",
       },
       null,
       2,
@@ -97,8 +98,9 @@ for (const key of [
   "DX_NIGHT_WINDOW",
 ])
   delete process.env[key];
-const unit = "triplex-thin-" + batch,
-  prefix = "tx2-dxthin-" + batch;
+const holder = integrated ? "DX-INT1" : "DX-THIN1";
+const unit = (integrated ? "triplex-int1-" : "triplex-thin-") + batch,
+  prefix = (integrated ? "tx2-dxint1-" : "tx2-dxthin-") + batch;
 const owned = path.join(day, "active.json"),
   owner = path.join(lease, "owner.json");
 const json = (file: string) => JSON.parse(fs.readFileSync(file, "utf8"));
@@ -118,7 +120,7 @@ const inventory = (tag: string) =>
   ].filter((s) => s.startsWith(tag + "-"));
 const checkLease = () => {
   const l = json(owner);
-  assert(l.id === "DX-THIN1" && l.unit === unit && l.source === head && l.day === day);
+  assert(l.id === holder && l.unit === unit && l.source === head && l.day === day);
 };
 function cleanup() {
   if (!fs.existsSync(owned)) return;
@@ -128,6 +130,7 @@ function cleanup() {
     a.source === head &&
       a.unit === unit &&
       rungs.includes(a.size) &&
+      scenarios.some((s) => s.size === a.size && s.key === (a.key ?? String(a.size))) &&
       a.tag === prefix + "-" + (a.key ?? a.size) + "-" + a.nonce &&
       /^[0-9a-f]{12}$/.test(a.nonce),
   );
@@ -222,7 +225,7 @@ fs.mkdirSync(path.dirname(day), { recursive: true });
 fs.mkdirSync(day);
 fs.mkdirSync(path.dirname(lease), { recursive: true });
 fs.mkdirSync(lease);
-write(owner, { id: "DX-THIN1", pid: process.pid, unit, source: head, day });
+write(owner, { id: holder, pid: process.pid, unit, source: head, day });
 write(path.join(day, "batch.json"), { source: head, unit, utc, rungs });
 try {
   status("building");

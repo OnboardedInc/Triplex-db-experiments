@@ -578,6 +578,11 @@ async function run() {
     await Promise.all([writer.close(), aux.close(), growthComp.close()]); await flushTracing(); process.exit(0);
   }
   if (activation) {
+    // [DX-INT1] Why: charge the durable policy projection to the import and leave the reader empty until its first real request.
+    // Rejected: consuming an entire cold population's seed feed inside release activation.
+    if (config.composition === "reach-touched") {
+      report.deep.seedProjection = await activation.finishImport(writer, {position:seed.lastPosition, validAt:seed.lastInstant});
+    }
     report.deep.r1 = await activation.execute(writer, "R1", (receipt, ops, actor) => {
       modelWriter.bindReceipt(ops, receipt, actor);
       seed.lastPosition = receipt.position; seed.lastInstant = receipt.instant;

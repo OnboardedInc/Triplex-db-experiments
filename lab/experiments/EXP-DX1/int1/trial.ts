@@ -21,6 +21,7 @@ import { activate, eadRelease } from "./activation.ts";
 import { smallPeople } from "../scale1/small-plan.ts";
 import { deepShape } from "../../../bench/lib/deep-world.ts";
 import { pageNamespace } from "../../../bench/lib/w0-page-outbox.ts";
+import { checkSchedules, nativeScheduleNames, programInputs } from "../act1/bench-proof.ts";
 
 const [, mode, rung, dir] = process.argv.slice(2),
   size = Number(rung);
@@ -52,6 +53,8 @@ const paths = git(
   "lab/experiments/EXP-DX1/int1",
   "lab/experiments/EXP-DX1/scale1/small-plan.ts",
   "lab/experiments/EXP-DX1/scale1/small-pins.json",
+  "lab/experiments/EXP-DX1/act1",
+  "lab/world/W0/cases",
   "lab/experiments/EXP-DX1/thin1",
   "lab/bench/lib",
   "packages/datomic/src/replica",
@@ -60,7 +63,8 @@ const paths = git(
   "lab/oracles",
 )
   .split("\n")
-  .filter((f) => /\.(ts|py|json)$/.test(f));
+  .filter((f) => /\.(ts|mjs|py|json)$/.test(f));
+paths.push(...Object.keys(programInputs()));
 for (const pkg of ["datomic", "w0", "core", "qualification"]) {
   const p = "packages/" + pkg + "/dist";
   paths.push(
@@ -189,10 +193,10 @@ async function caughtUp() {
     }
   }
 }
-function replay(a: Account) {
+function replay(a: Account, key = String(accounts.indexOf(a))) {
   const samples = a.timeline;
   assert(samples.length);
-  const dest = path.join(dir!, "replay-" + accounts.indexOf(a));
+  const dest = path.join(dir!, "replay-" + key);
   fs.mkdirSync(dest);
   const command = a.db
     .prepare("SELECT body FROM tx WHERE body IS NOT NULL ORDER BY p")
@@ -227,6 +231,7 @@ function replay(a: Account) {
   assert.equal(result.status, "PASS");
   assert.equal(result.reads, samples.length);
   assert("entityQueries" in result && result.entityQueries === doc.queries.length);
+  fs.writeFileSync(path.join(dest, "observed.json"), JSON.stringify(samples), { flag: "wx" });
   return result;
 }
 async function release(a: Account, next: W0.CompiledRelease, afterCapture?: () => Promise<void>) {
@@ -249,6 +254,76 @@ async function release(a: Account, next: W0.CompiledRelease, afterCapture?: () =
   a.head = await a.comp.currentPosition();
   return decision;
 }
+// [DX-INT1] Why: verify the same live deep people and releases in a pooled scope and eight isolated scopes through one real reading process.
+// Rejected: counting unopened scopes as evidence of multi-account reads and guarded writes.
+async function placementProof() {
+  const arms = [];
+  for (const placement of ["pooled", "isolated"] as const) {
+    const logical: Account[] = [],
+      scopes = new Set<string>(),
+      outputs = [];
+    try {
+      for (let n = 0; n < 8; n++) {
+        await lease.checkpoint();
+        const shared = placement === "pooled" ? logical[0] : undefined;
+        const scope = shared?.comp.scopeName ?? "int1-" + attempt + "-" + placement + "-" + n;
+        const comp = shared?.comp ?? (await openComposition("reach", "datomic", scope));
+        if (!shared) {
+          handles.push(comp);
+          assert.equal(await comp.currentPosition(), 0);
+          await reader.open(scope);
+        }
+        scopes.add(scope);
+        const key = placement + "-" + n;
+        const a = new Account(
+          comp,
+          "deep",
+          digest(binding + "/" + key + "/" + scope),
+          n * 4,
+          4,
+          new DatabaseSync(path.join(dir!, key + ".sqlite")),
+          shared?.cursor,
+        );
+        logical.push(a);
+        await a.seed(Array.from({ length: 4 }, (_, j) => a.first + j));
+      }
+      for (const [n, a] of logical.entries()) {
+        const cut = a.head;
+        await pull(a, a.first + 1, cut);
+        await a.update(a.first);
+        await pull(a, a.first, a.head);
+        await pull(a, a.first, cut);
+        const before = (await readerStats()).scopes[a.comp.scopeName!];
+        const releases = [];
+        for (const next of [W0.R1, eadRelease()]) {
+          const decision = await release(a, next);
+          assert.equal(decision.guardReadbacks, 4);
+          assert.equal(decision.oracle, 4);
+          assert.equal(decision.sourceWorldReads, 1);
+          releases.push(decision);
+        }
+        const after = (await readerStats()).scopes[a.comp.scopeName!];
+        assert.equal(after.admissions, before.admissions);
+        outputs.push({
+          first: a.first,
+          roster: a.roster(),
+          scope: a.comp.scopeName,
+          releases,
+          replay: replay(a, placement + "-" + n),
+        });
+      }
+      assert.equal(scopes.size, placement === "pooled" ? 1 : 8);
+      arms.push({ placement, scopes: scopes.size, accounts: outputs });
+    } finally {
+      for (const a of logical) a.db.close();
+    }
+  }
+  const signatures = arms.map((arm) =>
+    arm.accounts.map((a) => [a.first, a.roster, a.releases.map((r) => r.logical)]),
+  );
+  assert.deepEqual(signatures[0], signatures[1]);
+  return arms;
+}
 async function trial() {
   await lease.checkpoint();
   await phase("empty");
@@ -262,6 +337,10 @@ async function trial() {
     return { idleScopes: size, phases: phases.map((p) => p.label) };
   }
   if (mode === "int1-proof") {
+    const scheduleInputs = programInputs();
+    for (const [file, hash] of Object.entries(scheduleInputs)) {
+      assert.equal(inputs[file], hash, "Unbound publication schedule input " + file);
+    }
     await open("thin", "thin", size);
     await open("deep", "deep", size);
   } else if (mode === "int1-isolated" || mode === "int1-pooled") {
@@ -312,7 +391,7 @@ async function trial() {
   }
   await caughtUp();
   const before = await phase("after-activity");
-  let sender, regularDeep;
+  let sender, regularDeep, placements;
   if (mode === "int1-proof") {
     const proofs = await import("./receipt-proof.ts");
     sender = await proofs.receiptProof(accounts[1]!, dir!);
@@ -414,8 +493,10 @@ async function trial() {
       { encoding: "utf8", env, maxBuffer: 16 << 20, timeout: 480000 },
     );
     fs.writeFileSync(path.join(dir!, "schedules.tap"), log, { flag: "wx" });
-    assert(/# fail 0\b/.test(log) && /# pass 23\b/.test(log));
-    schedules = 23;
+    checkSchedules(log);
+    for (const [file, hash] of Object.entries(programInputs())) assert.equal(inputs[file], hash);
+    schedules = nativeScheduleNames.length;
+    placements = await placementProof();
   }
   let moving;
   if (mode === "int1-thin" && size === 100000 && stack.managed) {
@@ -443,7 +524,7 @@ async function trial() {
       await independent.close();
     }
   }
-  const replayResults = accounts.map(replay);
+  const replayResults = accounts.map((a) => replay(a));
   return {
     seedMs: totalSeedMs,
     seedPipelineMs: accounts.reduce((n, a) => n + a.seedWallMs, 0),
@@ -464,6 +545,7 @@ async function trial() {
     activation,
     sender,
     regularDeep,
+    placements,
     schedules,
     moving,
   };

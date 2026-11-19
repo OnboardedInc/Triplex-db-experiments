@@ -35,10 +35,21 @@ export async function regularDeepProof(comp: CompositionHandle, dir: string) {
     },
   };
   const act = new DeepActivation(dir, size, scope, "ead90");
+  const imported = await act.finishImport(handle, { position: cut, validAt: seed.value.instant });
+  assert(
+    imported &&
+      imported.through === cut &&
+      imported.certifiedImports === size &&
+      imported.diskBytes > 0,
+  );
   const before = comp.touchedUsage?.();
   const first = await act.execute(handle, "R1", () => {});
   const second = await act.execute(handle, "R2", () => {});
   assert.deepEqual(sources, []);
+  for (const result of [first, second]) {
+    assert.equal(result.projection?.certifiedImports, 0);
+    assert.equal(result.sourceWorldPulls, 0);
+  }
   assert.deepEqual(first.selection, { full: size, candidates: 0, excluded: 0 });
   assert.deepEqual(second.selection, { full: 0, candidates: size, excluded: 0 });
   assert.equal(comp.touchedUsage?.().admissions, before?.admissions);
@@ -47,6 +58,7 @@ export async function regularDeepProof(comp: CompositionHandle, dir: string) {
   return {
     scope,
     seed: cut,
+    imported,
     sourcePulls: sources.length,
     selections: [first.selection, second.selection],
     ...verified,

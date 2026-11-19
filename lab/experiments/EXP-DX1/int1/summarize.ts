@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import { deepPopulation } from "../../../bench/lib/deep-world.ts";
 import { canonical } from "../../../bench/lib/w0-world.ts";
 const [thin, deep, idle] = process.argv.slice(2);
 assert(
@@ -38,6 +40,10 @@ function load(dir: string) {
   assert.equal(inputs.slot, r.slot);
   assert.equal(inputs.attempt, r.attempt);
   assert.equal(inputs.source, r.source);
+  assert.equal(inputs.size, r.size);
+  assert.equal(inputs.mode, r.mode);
+  assert.match(inputs.boot, /^[a-f0-9-]{36}$/);
+  assert.equal(new Set(inputs.containers.map((c: any) => c.id)).size, 2);
   const p = fs
     .readFileSync(path.join(dir, "phases.jsonl"), "utf8")
     .trim()
@@ -45,6 +51,17 @@ function load(dir: string) {
     .map((s) => JSON.parse(s));
   assert(p.length === new Set(p.map((x) => x.label)).size);
   assert(p.every((x) => x.binding === bind));
+  for (const [index, phase] of p.entries()) {
+    assert(
+      Number.isFinite(Date.parse(phase.at)) &&
+        (!index || Date.parse(phase.at) >= Date.parse(p[index - 1].at)),
+    );
+    const disk = phase.native.disk;
+    assert(disk.fsync === "on" && disk.synchronousCommit === "on" && disk.fullPageWrites === "on");
+    if (phase.reader.code)
+      for (const [file, hash] of Object.entries(phase.reader.code))
+        assert.equal(hash, inputs.inputs[file]);
+  }
   return { r, p: Object.fromEntries(p.map((x) => [x.label, x])), bind };
 }
 function count(p: any, role: (typeof roles)[number]) {
@@ -76,6 +93,8 @@ const population = [thin, deep].map((dir, i) => {
   assert.equal(r.size, i ? 10000 : 100000);
   const a = r.accounts[0];
   assert.equal(a.people, r.size);
+  assert.equal(a.scope, "int1-" + r.attempt + "-population");
+  assert.equal(a.facts, i ? deepPopulation(r.size).facts : 8 * r.size);
   assert.equal(a.active, r.size / 50);
   assert.equal(a.ryow, a.active);
   assert(
@@ -86,6 +105,20 @@ const population = [thin, deep].map((dir, i) => {
     after = p["after-cold-import"];
   const x = before.reader.scopes[a.scope],
     y = after.reader.scopes[a.scope];
+  // [DX-INT1] Why: attribute the RSS difference to the independently counted new imports between the two observed watermarks, with existing touches held fixed.
+  // Rejected: dividing an unconstrained process high-water mark by a configured population.
+  const db = new DatabaseSync(path.join(dir, "population.sqlite"), { readOnly: true });
+  try {
+    const at = db.prepare("SELECT count(*) AS n FROM people WHERE born<=?");
+    assert.equal(at.get(x.position)?.n, a.active);
+    assert.equal(at.get(y.position)?.n, r.size);
+    assert.equal(
+      db.prepare("SELECT count(*) AS n FROM people WHERE dirty IS NOT NULL").get()?.n,
+      a.active,
+    );
+  } finally {
+    db.close();
+  }
   assert.equal(x.entries, y.entries);
   assert.equal(x.packed, y.packed);
   const n = r.size - a.active;
