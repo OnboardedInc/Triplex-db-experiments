@@ -16,3 +16,5 @@ The failure drill holds real gateway replies off the wire, kills an identified p
 - The move records vendor backup, list, full verification and two restores into distinct offline storage. The release requires an observed source denial, closed SQL sessions, a refused fresh login, the expected old receipts, past facts and feed suffix on the destination, and independently verified neighbor writes within the pause. The first new destination ACK ends that pause.
 
 - The replication drill checks PostgreSQL 17, fsync, session commit mode, the named streaming standby, both system identifiers, its flush LSN and the promoted replay LSN. It fences the old primary before promotion and rereads the Datomic receipts, values and feed on the replacement. [PostgreSQL synchronous commit](https://www.postgresql.org/docs/17/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT)
+
+- Ordinary writers record the exact outstanding operations across fault dispatch. The two-site collector checks the transferred archive hash, the fresh campaign nonce, source revision, trial nonces, requested sizes and cleanup records before reporting a completed run.

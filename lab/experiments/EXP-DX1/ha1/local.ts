@@ -43,7 +43,15 @@ export async function localDrill(opts: any, config: any, manager: any) {
   try {
     for (;;) {
       const disk = fs.statfsSync(root);
-      assert(disk.bavail * disk.bsize >= 5 * 2 ** 30, "Host disk floor");
+      if (disk.bavail * disk.bsize < 5 * 2 ** 30) {
+        e.write("admission-refused", {
+          nonce: e.nonce,
+          freeBytes: disk.bavail * disk.bsize,
+          floorBytes: 5 * 2 ** 30,
+          rolesStarted: 0,
+        });
+        throw Error("Host disk floor");
+      }
       if (!fs.existsSync(info.lockDir) && !fs.existsSync(parentLease)) {
         try {
           await withPool((ledger: any) => {

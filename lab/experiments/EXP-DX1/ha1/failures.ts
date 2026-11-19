@@ -72,7 +72,20 @@ export async function failures(s: Stack, scopeCount: number, people = 0) {
             },
           ),
         );
-      let stop = false;
+      let stop = false,
+        offering = true;
+      type Live = {
+        scope: string;
+        op: string;
+        offered: number;
+        sent?: number;
+        resolved?: number;
+        receipt?: ReturnType<typeof immutable>;
+      };
+      const live: Live[] = [],
+        crossing: string[] = [];
+      const cuts = accounts.map((ac) => ac.attempts.length);
+      const workers: Promise<void>[] = [];
       const observations: {
         scope: string;
         kind: string;
@@ -136,6 +149,31 @@ export async function failures(s: Stack, scopeCount: number, people = 0) {
             observed.catch(() => {});
             observers.push(observed);
           }
+        // [DX-HA1] Why: keep ordinary writes outstanding at the kill as well as deliberately withheld replies. Rejected: treating transport-held successes as evidence that native writes were in flight.
+        for (const ac of accounts) {
+          const work = (async () => {
+            let n = 0;
+            while (offering) {
+              const input = ac.intent(fault + "-live-" + ++n, 10, "load-" + fault);
+              const v: Live = { scope: ac.key, op: input.operationId, offered: clock() };
+              live.push(v);
+              v.receipt = await ac.send(input, () => {
+                v.sent ??= clock();
+              });
+              v.resolved = clock();
+            }
+          })();
+          work.catch(() => {});
+          workers.push(work);
+        }
+        await until(
+          "normal writers active in every scope",
+          async () =>
+            accounts.every(
+              (ac) =>
+                live.filter((l) => l.scope === ac.key && l.resolved !== undefined).length >= 2,
+            ) || undefined,
+        );
         const lost = uncertain(first);
         await p.wait(
           first.map((i) => i.operationId),
@@ -156,14 +194,22 @@ export async function failures(s: Stack, scopeCount: number, people = 0) {
           "held requests",
           async () => stopped.every((i) => p.requests.has(i.operationId)) || undefined,
         );
-        const event = await s.kill(fault);
+        const event = await s.kill(fault, async () => {
+          await until("ordinary writes in flight", async () => {
+            const pending = live.filter((l) => l.sent !== undefined && l.resolved === undefined);
+            if (new Set(pending.map((l) => l.scope)).size !== accounts.length) return undefined;
+            crossing.push(...pending.map((l) => l.op));
+            return true;
+          });
+        });
+        offering = false;
         p.drop();
         await Promise.all([...lost, ...inflight, ...undelivered]);
         const replacement = fault === "active" ? Promise.resolve() : s.restart(fault);
         const scopes = await Promise.all(
           accounts.map(async (ac, i) => {
-            const prior = Math.max(...ac.arrivals.values());
-            const before = ac.attempts.length;
+            const prior = Math.max(...[...ac.arrivals.values()].filter((t) => t <= event.from));
+            const before = cuts[i]!;
             const fresh = ac.intent(fault + "-new", 1, "new-" + fault);
             const offered = [{ op: fresh.operationId, scheduled: clock() }];
             const freshAck = ac.send(fresh);
@@ -194,12 +240,17 @@ export async function failures(s: Stack, scopeCount: number, people = 0) {
             assert.equal((await ac.w.operation(ac.db, noSend.operationId)).status, "absent");
             const firstPublication = await ac.send(noSend);
             const newAck = ac.arrivals.get(fresh.operationId)!;
+            await Promise.all(workers);
+            const newestT = [...ac.receipts.values()].reduce(
+              (high, rec) => (BigInt(rec.t.v) > high ? BigInt(rec.t.v) : high),
+              0n,
+            );
             const audit = await until("read/feed caught up", async () => {
               try {
                 await ac.pinned([...ac.receipts.values()][0]!);
                 await ac.pinned(receipt);
                 const b = await ac.r.basis(ac.db);
-                if (BigInt(b.t.v) < BigInt(receipt.t.v)) return undefined;
+                if (BigInt(b.t.v) < newestT) return undefined;
                 return await ac.verify(cursors[i]);
               } catch (e) {
                 if (!errorCode(e)) throw e;
@@ -210,6 +261,7 @@ export async function failures(s: Stack, scopeCount: number, people = 0) {
               scope: ac.key,
               lastAckToFirstNewMs: newAck - prior,
               firstNewMs: [Math.max(0, newAck - event.to), newAck - event.from],
+              inFlight: live.filter((l) => l.scope === ac.key && crossing.includes(l.op)),
               offered: offered.map((o) => ({ ...o, ack: ac.arrivals.get(o.op) })),
               undelivered: firstPublication,
               withheld: original[i],
@@ -264,6 +316,7 @@ export async function failures(s: Stack, scopeCount: number, people = 0) {
           event,
           scopes,
           observations,
+          live,
           wire: [...p.requests].map(([op, v]) => ({
             op,
             requestBytes: v.requestBytes,
@@ -289,10 +342,11 @@ export async function failures(s: Stack, scopeCount: number, people = 0) {
         }
       } finally {
         stop = true;
+        offering = false;
         p.drop();
         p.close();
         transport.close();
-        await Promise.allSettled(observers);
+        await Promise.allSettled([...observers, ...workers]);
       }
     }
     return { faults: 4, scopes: scopeCount };

@@ -46,7 +46,7 @@ export async function ackProxy(endpoint: string) {
           state.responseBytes = Buffer.concat(out).toString("base64");
           state.reply = JSON.parse(Buffer.concat(out).toString());
         } catch {
-          /* An upstream reset has no receipt body. */
+          // [DX-HA1] Why: a reset can interrupt the upstream response body. Rejected: inventing an ACK for a partial response.
         }
       },
     );

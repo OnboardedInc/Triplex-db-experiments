@@ -8,7 +8,7 @@ import path from "node:path";
 import { drill } from "./run.ts";
 import type { Site } from "./stack.ts";
 
-const [mode, tag, sha, addrA, addrB, remoteImage, store, people] = process.argv.slice(2);
+const [mode, tag, sha, addrA, addrB, remoteImage, store, campaign, people] = process.argv.slice(2);
 assert(process.platform === "linux" && head() === sha && sha?.match(/^[a-f0-9]{40}$/));
 assert(tag && /^[a-z][a-z0-9-]{2,40}$/.test(tag) && mode && addrA !== addrB);
 export function privateAddress(s: string) {
@@ -21,7 +21,7 @@ export function privateAddress(s: string) {
   return s;
 }
 assert(remoteImage && /^sha256:[a-f0-9]{64}$/.test(remoteImage));
-assert(store);
+assert(store && campaign && /^[a-f0-9-]{36}$/.test(campaign));
 const waiters = new Map<number, { ok: (s: string) => void; fail: (err: Error) => void }>();
 let seq = 0;
 const stream = createInterface({ input: process.stdin });
@@ -70,6 +70,11 @@ try {
     mode === "move"
       ? (people ?? "500,2000,5000").split(",").map(Number)
       : [mode === "failures" ? Number(people ?? 2000) : 1];
+  fs.writeFileSync(
+    path.join(store, "campaign.json"),
+    JSON.stringify({ tag, sha, mode, campaign, sizes }) + "\n",
+    { flag: "wx" },
+  );
   const points: MovePoint[] = [];
   for (const n of sizes) {
     const e = new Evidence(store, modeOf(mode), tag);

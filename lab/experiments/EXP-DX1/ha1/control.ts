@@ -4,7 +4,7 @@ import { createReadStream, createWriteStream } from "node:fs";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
 import { pipeline } from "node:stream/promises";
 import { Satellite } from "./satellite.ts";
@@ -142,6 +142,8 @@ try {
     "--format",
     "{{.Id}}",
   );
+  const campaign = randomUUID(),
+    nonces: string[] = [];
   const store = base + "/" + tag,
     remoteArgs = [
       "sudo",
@@ -166,6 +168,7 @@ try {
       addrs[1]!,
       remoteImage,
       store,
+      campaign,
       ...(process.env["HA1_PEOPLE"] ? [process.env["HA1_PEOPLE"]] : []),
     ];
   const child = spawn("ssh", argv(0, remoteArgs), { stdio: ["pipe", "pipe", "inherit"] });
@@ -183,6 +186,8 @@ try {
           /^[a-f0-9-]{36}$/.test(attempt.nonce) &&
           attempt.prefix === "tx2-ha1-" + attempt.nonce.slice(0, 8),
       );
+      assert(!nonces.includes(attempt.nonce));
+      nonces.push(attempt.nonce);
       satellite = new Satellite(attempt.nonce, attempt.prefix, src, [pgImage, remoteImage]);
       continue;
     }
@@ -252,6 +257,37 @@ try {
   const digest = createHash("sha256");
   for await (const chunk of createReadStream(file)) digest.update(chunk);
   assert.equal(digest.digest("hex"), expected);
+  const member = (name: string) =>
+    JSON.parse(
+      execFileSync("tar", ["-xOzf", file, tag + "/" + name], {
+        encoding: "utf8",
+        maxBuffer: 4 * 2 ** 20,
+      }),
+    );
+  const declaration = member("campaign.json");
+  assert.deepEqual(
+    [declaration.tag, declaration.sha, declaration.mode, declaration.campaign],
+    [tag, sha, mode, campaign],
+  );
+  if (code === 0) {
+    assert(nonces.length > 0 && nonces.length === declaration.sizes.length);
+    for (const [i, nonce] of nonces.entries()) {
+      const sub = mode + "-" + nonce + "/",
+        attempt = member(sub + "attempt.json"),
+        summary = member(sub + "observations.json"),
+        clean = member(sub + "cleanup.json");
+      assert.equal(attempt.nonce, nonce);
+      assert.equal(attempt.source.git, sha);
+      assert.equal(attempt.slot, tag);
+      assert.equal(attempt.mode, mode);
+      assert.deepEqual(summary.source, attempt.source);
+      assert.equal(summary.slot, tag);
+      assert.equal(summary.nonce, nonce);
+      assert.equal(summary.profile.people, declaration.sizes[i]);
+      assert.equal(summary.profile.capacity, "two-host");
+      assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
+    }
+  }
   fs.writeFileSync(
     path.join(evidence, "transfer.json"),
     JSON.stringify({
@@ -262,6 +298,8 @@ try {
       sha256: expected,
       bytes: fs.statSync(file).size,
       hosts: ids,
+      campaign,
+      nonces,
     }) + "\n",
     { flag: "wx" },
   );

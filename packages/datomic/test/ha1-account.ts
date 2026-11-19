@@ -139,12 +139,12 @@ export class Account {
     }
     return receipt;
   }
-  async send(input: Input) {
+  async send(input: Input, onSent?: () => void) {
     const deadline = performance.now() + 150000;
     for (;;) {
       const start = performance.now();
       try {
-        const answer = await this.w.transact(this.db, { ...input });
+        const answer = await this.w.transact(this.db, { ...input }, onSent);
         this.attempts.push({ op: input.operationId, start, end: performance.now(), result: "ack" });
         return this.remember(input, answer);
       } catch (error) {

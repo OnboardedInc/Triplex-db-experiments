@@ -169,10 +169,11 @@ export class Stack {
     const m = this.members.get(role)!;
     return m.site.docker(["exec", m.id, ...args], { timeout: 1800000 });
   }
-  async kill(role: Role) {
+  async kill(role: Role, beforeDispatch?: () => Promise<void>) {
     const m = this.members.get(role)!,
       v = await this.view(role);
     assert(v.State.Running);
+    if (beforeDispatch) await beforeDispatch();
     const from = clock();
     await m.site.docker(["kill", "--signal", "KILL", m.id]);
     const to = clock();
