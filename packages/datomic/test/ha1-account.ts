@@ -268,18 +268,23 @@ export class Account {
       seen,
       expected.map((i) => i.operationId),
     );
+    const seedAudit = { subjects: 0, facts: 0, receiptAndClaimMs: 0, valueReadbackMs: 0 };
+    const isSeed = (op: string) => op.startsWith(this.key + "-seed-");
     for (const input of this.inputs) {
+      const started = performance.now();
       const receipt = this.receipts.get(input.operationId)!;
       assert.deepEqual(immutable(await this.r.operation(this.db, input.operationId)), receipt);
       assert.equal(
         await this.r.claim(this.db, input.claims[0]!.commandId, Number(receipt.position.v)),
         input.claims[0]!.txId,
       );
+      if (isSeed(input.operationId)) seedAudit.receiptAndClaimMs += performance.now() - started;
     }
     // [DX-HA1] Why: an intact claim and log entry alone cannot prove the fact value survived. Rejected: auditing only transaction metadata following a restore.
     const last = sorted.at(-1)!;
     const headReceipt = this.receipts.get(last.operationId)!;
     for (const [entity, operations] of this.bySubject) {
+      const started = performance.now();
       const expectedRows = operations.flatMap((i) =>
         i.rows.map((row) => ({
           ...row,
@@ -293,10 +298,21 @@ export class Account {
       });
       const order = (a: TripleRow, b: TripleRow) => a.id.localeCompare(b.id);
       assert.deepEqual([...actual].sort(order), expectedRows.sort(order));
+      if (operations.length === 1 && isSeed(operations[0]!.operationId)) {
+        seedAudit.subjects++;
+        seedAudit.facts += actual.length;
+        seedAudit.valueReadbackMs += performance.now() - started;
+      }
     }
     const basis = await this.r.basis(this.db);
     assert.equal(basis.schemaHash, this.schema);
     assert.equal(basis.position.v, this.receipts.get(sorted.at(-1)!.operationId)!.position.v);
-    return { from, next: cursor, operations: seen.length, acknowledged: this.receipts.size };
+    return {
+      from,
+      next: cursor,
+      operations: seen.length,
+      acknowledged: this.receipts.size,
+      seedAudit,
+    };
   }
 }

@@ -216,7 +216,11 @@ export async function move(s: Stack, people: number) {
     await a.pinned(old);
     const original = await a.send(pending);
     assert.deepEqual(original, withheld);
-    await a.verify(cursor);
+    const auditStart = clock();
+    const openingAudit = await a.verify(cursor);
+    const auditMs = clock() - auditStart;
+    assert.equal(openingAudit.seedAudit.subjects, people);
+    assert.equal(openingAudit.seedAudit.facts, people * 160);
     const newReceipt = await a.send(a.intent("destination-only"));
     const firstNew = a.arrivals.get(newReceipt.operationId)!;
     await a.pinned(old);
@@ -245,6 +249,7 @@ export async function move(s: Stack, people: number) {
       old,
       original,
       newReceipt,
+      beforeFirstWriteAudit: { auditMs, ...openingAudit.seedAudit },
       staleRejected: rejected,
       freshLoginDenied: denied,
       full,

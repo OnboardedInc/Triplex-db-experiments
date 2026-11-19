@@ -325,7 +325,17 @@ try {
       "--filter",
       "label=ha1.attempt",
     );
-    if (leftovers || nets)
+    const active = await remote(
+      0,
+      "systemctl",
+      "list-units",
+      "--type=service",
+      "--state=activating,active,deactivating",
+      "--no-legend",
+      "--plain",
+      "triplex-ha1-" + tag + ".service",
+    );
+    if (leftovers || nets || active)
       console.error("Bench lease retained; inspect attempt resources on site " + i);
     else await remote(i, "rmdir", lease);
   }

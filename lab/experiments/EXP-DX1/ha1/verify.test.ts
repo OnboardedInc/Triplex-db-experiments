@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Account } from "../../../../packages/datomic/test/ha1-account.ts";
+import { Satellite } from "./satellite.ts";
 import { projection } from "./projection.ts";
 import { backupCut, vendorResult } from "./move.ts";
 import { loopback } from "./common.ts";
@@ -79,5 +80,47 @@ test("vendor verification binds the cut and rejects unreadable segments even on 
       args,
       "s2-test",
     ),
+  );
+});
+
+test("second host only mutates the container created for this attempt", async () => {
+  const nonce = "new-attempt",
+    prefix = "tx2-ha1-test",
+    image = "sha256:" + "a".repeat(64),
+    id = "b".repeat(64),
+    net = "c".repeat(64);
+  const sat = new Satellite(nonce, prefix, "/trial", [image]);
+  await sat.call(["network", "create", "--label", "ha1.attempt=" + nonce, prefix], async () => net);
+  await sat.call(
+    [
+      "create",
+      "--pull",
+      "never",
+      "--name",
+      prefix + "-target",
+      "--network",
+      net,
+      "--label",
+      "ha1.attempt=" + nonce,
+      "--entrypoint",
+      "sh",
+      image,
+      "-c",
+      "true",
+    ],
+    async () => id,
+  );
+  await sat.call(["kill", "--signal", "KILL", id], async () => "done");
+  await assert.rejects(
+    sat.call(["rm", "-fv", "foreign", id], async () => {
+      throw Error("dispatched");
+    }),
+    { name: "AssertionError" },
+  );
+  await assert.rejects(
+    sat.call(["start", "foreign"], async () => {
+      throw Error("dispatched");
+    }),
+    { name: "AssertionError" },
   );
 });
