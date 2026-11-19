@@ -202,12 +202,25 @@ run_driver() {
   -e "DX_ACTIVATION_NONCE=$nonce" -e "DX_ACTIVATION_BUILD_SHA256=$build_sha" \
   -e TX2_W0_POINT_JOURNAL=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 -e "DX_R1_DEADLINE=$(node -e 'console.log(Date.parse(process.argv[1]))' "$DX_ACTIVATION_STOP_AT")" \
   python:3.13-slim /tool/node --expose-gc --experimental-strip-types "$@" > "$out/$log" 2>&1) & child=$!
-wait "$child";child=
+local rc=0
+wait "$child" || rc=$?;child=
+  ((rc == 0)) || return "$rc"
   progress "finished $log"
 }
 # [DX-ACT2] Why: qualify the two-window oracle on this gateway before the first large seed command. Rejected: a Mac receipt or a smoke after seeding.
 if [[ $subjects == 100000 && ( $operation == seed || $operation == seed-only ) ]]; then
-  run_driver preflight.log lab/experiments/EXP-DX1/act2/preflight-runner.ts "$out/act2-preflight" "$(cat "$out/head.txt")" "$prefix" "$nonce"
+  run_driver preflight.log lab/experiments/EXP-DX1/act2/preflight-runner.ts "$out/act2-preflight" "$(cat "$out/head.txt")" "$prefix" "$nonce" || {
+    rc=$?
+    python3 - "$out" "$rc" <<'PREFLIGHT_STATUS'
+import json, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+detail = root / "act2-preflight" / "STATUS.json"
+state = json.loads(detail.read_bytes()) if detail.is_file() else {}
+reason = state.get("reason") or f"Preflight driver exited {sys.argv[2]} during {state.get('stage', 'startup')}"
+(root / "STATUS.json").write_text(json.dumps({"stage": "large seed stopped", "reason": reason}) + "\n")
+PREFLIGHT_STATUS
+    exit "$rc"
+  }
 fi
 run_driver driver.log "${driver[@]}"
 if [[ $operation == seed || $operation == seed-only ]];then

@@ -471,10 +471,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   write(path.join(dir, "disk-before.json"), before);
   const binding = { source, slot: prefix, nonce: attempt.nonce };
   const imageTrial = attempt.layout === "pooled" && item === 5;
-  if (
-    spec.people >= 100000 ||
-    (attempt.layout === "pooled" && "facts" in spec && spec.facts >= 10000000)
-  ) {
+  if (spec.people * spec.scopes >= 100000) {
     status(dir, "checking 1000 subjects before the large seed");
     try {
       const proof = guardSeed(path.join(dir, "act2-preflight"), binding, {
