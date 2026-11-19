@@ -311,7 +311,7 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
           deltas.push(...r.deliveries);
         });
         const published = performance.now();
-        const delivered = await rx.drain(s),
+        const delivered:number = await rx.drain(s),
           end = performance.now();
         assert.equal(delivered, deltas.length);
         const b = { tx: source.position, validTime: valid };
