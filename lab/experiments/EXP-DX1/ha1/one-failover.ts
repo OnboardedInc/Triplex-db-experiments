@@ -10,6 +10,7 @@ import {
   receipts,
   verifySuffix,
 } from "./one-db.ts";
+import { hash } from "./common.ts";
 import type { Stack } from "./stack.ts";
 
 export async function oneFailover(s: Stack, people: number) {
@@ -129,8 +130,31 @@ export async function oneFailover(s: Stack, people: number) {
           other,
           "sh",
           "-c",
-          "grep -hE ':transactor/(standby|recovered|start|active)|:db/(load|recover)|:index/(install|load)|replay(ed)? [0-9]+' log/*.log | tail -35",
+          "grep -hE ':event :(log/(catchup|load-segments)|transactor/(standby|active)|indexer/create)' log/*.log | tail -35",
         );
+        assert.equal((await s.view(other)).Id, monitor.id);
+        const replay = [];
+        for (const line of native.split("\n").filter((v) => v.includes(":event :log/catchup,"))) {
+          const field = (key: string) => {
+            const v = line.match(new RegExp(":" + key + " (\\d+)(?=[,}])"))?.[1];
+            assert(v);
+            return v;
+          };
+          const tail = field("tail-t"),
+            index = field("index-t");
+          if (BigInt(tail) < BigInt(before.basis) || BigInt(tail) >= BigInt(ack.t.v)) continue;
+          const entry = (await ac.r.log(ac.db, tail, 1)).rows[0];
+          const bound = entry?.t === tail && entry.kind === "commit";
+          if (bound) ac.checkEntry(entry);
+          replay.push({
+            tail,
+            index,
+            bytes: Number(field("bytes")),
+            msec: Number(field("msec")),
+            lineSha256: hash(line),
+            boundOperation: bound ? entry.transaction.operationId : null,
+          });
+        }
         const preAcks = [...ac.arrivals.values()].filter(
           (t) => t >= loadStart && t <= fault.from,
         ).length;
@@ -148,6 +172,7 @@ export async function oneFailover(s: Stack, people: number) {
           unindexedFacts: unindexedInputs?.reduce((n, i) => n + i.newIds.length, 0),
           unindexedCommands: unindexedInputs?.length,
           cache: await cacheProbe,
+          replay,
           ordinaryAcksPerSecond: (preAcks * 1000) / (fault.from - loadStart),
           before,
           index,

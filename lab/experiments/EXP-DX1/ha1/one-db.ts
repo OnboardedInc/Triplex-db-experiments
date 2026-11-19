@@ -72,8 +72,11 @@ export async function receipts(ac: Account, list = ac.inputs, client = ac.r) {
   return list.length;
 }
 export async function populate(s: Stack, ac: Account, people: number, seedBudgetMs = 540000) {
+  const clusterBytes = async () =>
+    Number((await s.exec("pg", "sh", "-ceu", 'du -sk "$PGDATA"')).split(/\s/)[0]) * 1024;
   const start = clock(),
     initial = await pgBytes(s);
+  let allocated = await clusterBytes();
   let n = 0,
     reason = "requested size",
     bytes = initial;
@@ -92,14 +95,14 @@ export async function populate(s: Stack, ac: Account, people: number, seedBudget
       const f = fs.statfsSync(root);
       if (
         f.bavail * f.bsize < 5 * 2 ** 30 ||
-        bytes - initial > 700 * 2 ** 20 ||
+        allocated >= 2.25 * 2 ** 30 ||
         clock() - start > seedBudgetMs
       ) {
         reason =
           f.bavail * f.bsize < 5 * 2 ** 30
             ? "host disk floor"
-            : bytes - initial > 700 * 2 ** 20
-              ? "reserved SQL growth"
+            : allocated >= 2.25 * 2 ** 30
+              ? "reserved cluster disk including WAL"
               : "local measurement window";
         break;
       }
@@ -130,7 +133,8 @@ export async function populate(s: Stack, ac: Account, people: number, seedBudget
     }
     if (n % 256 === 0 || n === people) {
       bytes = await pgBytes(s);
-      s.e.log("seed-progress", { people: n, bytes, elapsed: clock() - start });
+      allocated = await clusterBytes();
+      s.e.log("seed-progress", { people: n, bytes, allocated, elapsed: clock() - start });
     }
   }
   assert(n > 0);
@@ -148,6 +152,7 @@ export async function populate(s: Stack, ac: Account, people: number, seedBudget
     tenantCount: Math.min(n, 10) + wide.filter((x) => x > 0).length + small.size,
     reason,
     seedMs: clock() - start,
+    clusterBytes: await clusterBytes(),
     bytes: await pgBytes(s),
     acknowledged: acks,
   };
