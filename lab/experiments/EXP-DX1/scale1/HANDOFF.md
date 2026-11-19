@@ -3,7 +3,7 @@
 Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
 
 <!-- state -->
-2026-11-19 19:30 UTC. Item 1 zero is live. It entered its first recovery window with zero pending writes. Its execution ceiling is 22:35 UTC, with the scheduled offers due to end at 20:22 UTC. Its reader arm is next on the same published runtime.
+2026-11-19 19:47 UTC. Item 1 zero is live. The 62-minute checkpoint had zero pending writes. Its execution ceiling is 22:35 UTC, with the scheduled offers due to end at 20:22 UTC. Its reader arm is next on the same published runtime.
 <!-- end state -->
 
 With the dedicated destination set in `BENCH_SERVER`, this command shows the queue, bounded units and stage files.
@@ -20,6 +20,6 @@ node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 | 4 | 90 accounts of 100 and ten of 2,000 in one database, then 100 databases | Idle footprint, sentinel load and restart | 4 h per layout |
 | 5 | Ten accounts of 100,000 in one database | Serial seed, zero, readers, one guarded release | 24 h per execution |
 
-Each detached arm has its own systemd unit, source, nonce, cgroup ceiling, disk floor and exact-prefix cleanup. The queue waits for terminal and transfer files and rechecks them before advancing. The immutable runtime for the first pair is `f0a80d99a748fcd9ccbe66eadcee50e84f5307a3`. The server clock is UTC. The first account on the ordered roster is the quiet sentinel. The second performs the release.
+Each detached arm has its own systemd unit, source, nonce, cgroup ceiling, disk floor and exact-prefix cleanup. The queue waits for terminal and transfer files and rechecks them before advancing. The immutable runtime for the first pair is `f0a80d99a748fcd9ccbe66eadcee50e84f5307a3`. A detached controller hands off to the published tenant runtime `15434b086120aa768998ac945c2ee4ead3b28f54` after the matched pair. Its plan includes both layouts for items 3 and 4 and a single million-person seed for item 5. Source preparation starts between timed arms. The server clock is UTC. The first account on the ordered roster is the quiet sentinel. The second performs the release.
 
 Use `control.ts collect TAG` after each terminal arm. Collection verifies manifest bytes, copies summaries and anatomy, and registers the attempt in the durable trace index. Raw traces stay compressed on the server when they exceed 2 GiB or the transfer would leave less than 5 GiB free locally. A capacity estimate and an observed resource limit are recorded separately. An item’s second failed attempt ends the campaign.
