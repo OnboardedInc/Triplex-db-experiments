@@ -1318,8 +1318,13 @@ async function main() {
       getopt("baseline") &&
       /^[a-z][a-z0-9-]{2,40}$/.test(getopt("baseline")!) &&
       get(path.join(root, getopt("baseline")!, "attempt.json")).source === source;
+    // [DX-SCALE1] Why: ACT2 and W1 are explicitly revision-pinned treatments. Their later independent experiments are recorded in originHeads. Rejected: blocking a verified page-guard or group-commit arm on an unrelated design branch advance.
+    const pinnedStudy =
+      ref === "exp/DX-ACT2-activation-100k" || ref === "exp/DX-W1-commit-tail-reads";
     assert(
-      paired || changes.every((n) => /\.md$|SHA256SUMS$|\.sha256$|\.test\.[cm]?ts$/.test(n)),
+      paired ||
+        pinnedStudy ||
+        changes.every((n) => /\.md$|SHA256SUMS$|\.sha256$|\.test\.[cm]?ts$/.test(n)),
       "New upstream executable inputs require an integrated source revision: " + ref,
     );
     originHeads[ref] = { head, changes };

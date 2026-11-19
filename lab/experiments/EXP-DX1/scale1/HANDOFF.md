@@ -3,7 +3,7 @@
 Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
 
 <!-- state -->
-2026-11-19 21:15 UTC. The replacement 10k zero control, `arm-d19-i1-zero-b`, began at 21:14:11 UTC using `69220f279`. Its ceiling is 01:14:11 UTC November 20, followed by scoped cleanup. Its matched reader follows with a four-hour ceiling. The first reader sent all 77,838 reads at four ladder levels to the gateway and was cleaned at 21:04:42 UTC. Both original attempts are indexed. A second failure of item 1 stops the queue.
+2026-11-19 22:02 UTC. The replacement 10k zero control, `arm-d19-i1-zero-b`, began at 21:14:11 UTC using `69220f279`. Its 5,910 seconds of offers started at 21:22:22 UTC and end at 23:00:52 UTC. Its ceiling is 01:14:11 UTC November 20, followed by scoped cleanup. Its matched reader follows with a four-hour ceiling. The first reader sent all 77,838 reads at four ladder levels to the gateway and was cleaned at 21:04:42 UTC. Both original attempts are indexed. A second failure of item 1 stops the queue.
 <!-- end state -->
 
 With the dedicated destination set in `BENCH_SERVER`, this command shows the queue, bounded units and stage files.
