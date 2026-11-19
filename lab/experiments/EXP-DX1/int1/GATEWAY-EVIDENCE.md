@@ -4,6 +4,7 @@ The paths in [GATEWAY-SHA256SUMS](GATEWAY-SHA256SUMS) are relative to the durabl
 
 | Raw directory | Population and observations |
 | --- | --- |
+| `p3-demand-thin-b` | Matched 10,000-person bounded JVM profile with 200 first reads. |
 | `p3-baseline-deep-a` | 2,000 deep people, 40 active. Both native gateway JVMs were sampled after the complete seed and again after all 40 reads and writes. |
 | `p3-census-thin-b` | 100,000 thin people, 2,000 active. Includes all 1,000 cold timings, actual HTTP exchanges and an 8,000-read moving-set run at 128 KiB. |
 | `p3-census-deep-b` | 10,000 deep people, 200 active. The four import samples retain unforced role RSS. All 100 measured cold reads have real HTTP timing and response sizes. |
@@ -24,3 +25,16 @@ At the original deep seed, both JVMs held exactly 27,889 live `datomic.db.Datum`
 The optional managed `DX_INT1_PEER_GC=elastic` comparison keeps the peer cache, row and session budgets identical and uses a 96 MiB soft heap target with generational ZGC. The default bounded profile uses G1. The JVM profile records the actual collector and charge.
 
 The diagnostic `DX_INT1_SEED_FEED=after-sampling` stores an ordered change digest from the issued operations and their assigned IDs. It measures a writer-only seed first and then reads and verifies every original feed position. A third sample measures the same JVMs after that replay with no intervening writes. The histogram checker requires the original attempt, scope, full seed fact count and matching feed proof. The default full-population comparisons run the feed verifier during import.
+
+| Population and policy | Stage | Read ID / rows / native / live MB | Write ID / rows / native / live MB |
+| --- | --- | ---: | ---: |
+| 10,000 thin, original | Seed only | 0.000 / 0.000 / 5.398 / 41.822 | 0.000 / 0.000 / 15.041 / 48.870 |
+| 10,000 thin, original | 2% touched | 0.154 / 3.473 / 20.432 / 54.045 | 0.000 / 0.000 / 18.024 / 51.287 |
+| 10,000 thin, bounded | Seed only | 0.000 / 0.000 / 0.063 / 34.506 | 0.000 / 0.000 / 29.845 / 58.001 |
+| 10,000 thin, bounded | 2% touched | 0.154 / 3.528 / 22.375 / 50.553 | 0.000 / 0.000 / 28.901 / 54.295 |
+| 2,000 deep, original | Seed only | 0.000 / 0.000 / 20.040 / 63.570 | 0.000 / 0.000 / 58.117 / 91.392 |
+| 2,000 deep, original | 2% touched | 0.274 / 9.212 / 44.977 / 82.509 | 0.000 / 0.000 / 58.142 / 91.619 |
+| 2,000 deep, bounded | Seed only | 0.000 / 0.000 / 0.063 / 34.487 | 0.000 / 0.000 / 30.173 / 58.763 |
+| 2,000 deep, bounded | 2% touched | 0.274 / 7.102 / 28.639 / 55.089 | 0.000 / 0.000 / 29.697 / 59.056 |
+
+ID counts the positive entity-name memo. Rows includes parsed rows, revisions and recent entries. Native is the Datomic object-cache weight. Live is the sum of the JVM class histogram. The live total includes objects in the other columns. The bounded read peer started both populations at the same 63 KB. The bounded write peer reached 29.845 MB in the thin seed and 30.173 MB in the deep seed.
