@@ -3,7 +3,7 @@
 Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
 
 <!-- state -->
-2026-11-19 23:09 UTC. The replacement 10k control completed with 56,505 acknowledged commands, 56,505 matching receipt reads and a commit p99 of 87.04 ms. Its stack was released at 23:07:35 UTC. The matched reader, `arm-d19-i1-reader-b`, started at 23:07:37 UTC on `69220f279`. Its four-hour ceiling is 03:07:37 UTC November 20, followed by scoped cleanup. All three terminal attempts are indexed. The two original raw archives were rehashed on the server and released from the Mac. [Retention hashes](evidence/original-archives-server-only.sha256)
+2026-11-19 23:59 UTC. The matched 10k reader, `arm-d19-i1-reader-b` on `69220f279`, completed all four eight-minute windows at 256 readers. The observed batches contain 203,645,158 reads in those windows. The latest checkpoint contains 223,993,286 reads across all phases (35.05 GiB of numeric observations). Full-row verification and O-REPLAY follow the timed traffic. The arm began at 23:07:37 UTC and has a four-hour ceiling at 03:07:37 UTC November 20, followed by scoped cleanup. The zero control acknowledged all 56,505 commands with commit p99 of 87.04 ms. Three terminal attempts are indexed. The original raw archives remain on the server. [Retention hashes](evidence/original-archives-server-only.sha256)
 <!-- end state -->
 
 With the dedicated destination set in `BENCH_SERVER`, this command shows the queue, bounded units and stage files.
