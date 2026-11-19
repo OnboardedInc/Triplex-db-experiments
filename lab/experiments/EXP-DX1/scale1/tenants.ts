@@ -271,14 +271,11 @@ export function tenantScope(spec: TenantSpec, nonce: string) {
 }
 export function campaignItem(item: number, topology?: Topology) {
   assert(Number.isInteger(item) && item >= 1 && item <= 5);
-  const legacy = [
-    { people: 10000, scopes: 1 },
-    { people: 100000, scopes: 1 },
-    { people: 10000, scopes: 10 },
-    { people: 290, scopes: 100 },
-    { people: 100000, scopes: 10 },
-  ];
-  if (!topology) return legacy[item - 1]!;
+  if (item < 3) {
+    assert(!topology);
+    return { people: item === 1 ? 10000 : 100000, scopes: 1 };
+  }
+  topology ??= "pooled";
   assert(
     item >= 3 && ["pooled", "separate"].includes(topology) && (item !== 5 || topology === "pooled"),
   );

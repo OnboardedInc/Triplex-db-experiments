@@ -35,13 +35,6 @@ import {
 } from "./source.ts";
 import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-profile.ts";
 
-export const items = [
-  { people: 10000, scopes: 1 },
-  { people: 100000, scopes: 1 },
-  { people: 10000, scopes: 10 },
-  { people: 290, scopes: 100 },
-  { people: 100000, scopes: 10 },
-] as const;
 const GiB = 1024 ** 3,
   script = fileURLToPath(import.meta.url),
   operatorRepo = path.resolve(path.dirname(script), "../../../.."),
@@ -155,10 +148,20 @@ export function capacity(
     scale = facts / (observation?.facts ?? 1_604_464);
   // [DX-SCALE1] Why: one shared engine allocation plus N separate senders, replicas and lossless spills must fit. Rejected: multiplying the whole stack by ten or treating installed NVMe capacity as free space.
   const diskPerFact = observation ? observation.allocatedBytes / observation.facts : 1200;
-  const db = Math.ceil(diskPerFact * facts * scopes * 1.35),
-    spillPer = small
-      ? Math.ceil(0.4 * GiB)
-      : Math.ceil(Math.max(2 * GiB, (observation?.spillBytes ?? 16 * GiB) * 1.35));
+  const db = Math.ceil(diskPerFact * facts * scopes * 1.35);
+  // [DX-SCALE1] Why: BM1 retained 57,229,420 L256 reads at 168 bytes per numeric tuple across only part of the run. Rejected: extrapolating the zero-reader receipt-only spill to the loaded arm, which caps a real measurement at 2 GiB.
+  const readerFloor = scopes === 1 ? 64 * GiB : Math.max(16 * GiB, (64 * GiB) / scopes);
+  const spillPer = small
+    ? scopes === 1
+      ? 32 * GiB
+      : Math.ceil(0.4 * GiB)
+    : Math.ceil(
+        Math.max(
+          arm === "zero" || arm === "seed" ? 2 * GiB : readerFloor,
+          (observation?.spillBytes ?? 16 * GiB) * 1.35,
+        ),
+      );
+  const sentinelSpill = small ? 32 * GiB : spillPer;
   const shared = Math.max(8 * GiB, (observation?.sharedPeakBytes ?? 14 * GiB) * 1.15),
     seedPer = Math.max(
       512 * 1024 ** 2,
@@ -167,7 +170,7 @@ export function capacity(
   const sharedReserve = Math.max(24 * GiB, shared);
   const driverPer = Math.max(seedPer, (observation?.driverPeakBytes ?? 14 * GiB) * scale * 1.15),
     seedDisk = db + 15 * GiB,
-    liveDisk = seedDisk + spillPer * scopes;
+    liveDisk = seedDisk + spillPer * (scopes - 1) + sentinelSpill;
   const seedMemory = sharedReserve + seedPer * scopes + 5 * GiB,
     liveMemory = sharedReserve + driverPer * scopes + 5 * GiB;
   const fitsSeed = host.disk >= seedDisk && host.memory >= seedMemory,
@@ -196,6 +199,7 @@ export function capacity(
     diskPerFact,
     db,
     spillPer,
+    sentinelSpill,
     shared,
     sharedReserve,
     driverPer,
@@ -633,7 +637,9 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         DX_STRICT_RECORD_CLOCKS: "1",
         TRIPLEX_NODE_MAIN_CPUS: planCpus.senders,
         TRIPLEX_NODE_WORKER_CPUS: planCpus.readers,
-        TRIPLEX_BENCH_SPILL_MAX_BYTES: String(Math.floor(budget.spillPer)),
+        TRIPLEX_BENCH_SPILL_MAX_BYTES: String(
+          Math.floor(i === 0 ? (budget.sentinelSpill ?? budget.spillPer) : budget.spillPer),
+        ),
         NODE_OPTIONS: `--max-old-space-size=${heapMiB}`,
       },
     });
@@ -986,7 +992,7 @@ function budgetFor(item: number, dir: string, mode: string, prior?: string) {
     { memory: memory(), disk: Math.min(available(dir), available(volumeRoot)) },
     observed,
     mode,
-    "facts" in s ? s.facts / s.scopes : undefined,
+    typeof s.facts === "number" ? s.facts / s.scopes : undefined,
   );
 }
 async function terminal(dir: string, tag: string, prefix: string, refusal?: string) {
@@ -1141,7 +1147,21 @@ async function main() {
     console.log(
       JSON.stringify(
         {
-          items,
+          items: [
+            { item: 1, layouts: [campaignItem(1)], arms: ["zero", "reader"] },
+            { item: 2, layouts: [campaignItem(2)], arms: ["zero", "reader", "activation"] },
+            ...([3, 4] as const).map((i) => ({
+              item: i,
+              layouts: [campaignItem(i, "pooled"), campaignItem(i, "separate")],
+              arms: [i === 3 ? "interference" : "small"],
+            })),
+            {
+              item: 5,
+              layouts: [campaignItem(5, "pooled")],
+              arms: ["zero", "reader", "activation"],
+              seedImages: 1,
+            },
+          ],
           placement: planCpus,
           burst: "50x for 60 s at 120 + 600k",
           readersPerScope: [1, 4, 16, 64, 256, 1024],
@@ -1219,7 +1239,9 @@ async function main() {
     selected.every(Boolean) && new Set(selected).size === 12,
     "Placement needs 12 distinct physical cores",
   );
-  const layout = getopt("account-layout") as Topology | undefined;
+  const layout = (getopt("account-layout") ?? (item >= 3 ? "pooled" : undefined)) as
+    | Topology
+    | undefined;
   const spec = campaignItem(item, layout),
     capacity = budgetFor(item, root, mode, getopt("sizing"));
   const baselineTag = getopt("baseline"),
@@ -1240,7 +1262,7 @@ async function main() {
   const canAttempt = capacity.host.memory > capacity.sharedReserve + 8 * GiB;
   const diskFloor =
     capacity.db * (item === 5 && layout === "pooled" && mode === "zero" ? 1.65 : 1) +
-    capacity.spillPer +
+    (capacity.liveDisk - capacity.seedDisk) +
     15 * GiB;
   const boundedTrial = mode !== "seed" && item >= 2 && canAttempt && capacity.host.disk > diskFloor;
   if (mode === "reader") {
