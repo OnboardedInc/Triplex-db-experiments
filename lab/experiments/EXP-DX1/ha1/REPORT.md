@@ -14,3 +14,5 @@ The failure drill holds real gateway replies off the wire, kills an identified p
 - Each fault observation requires the identified process to exit, all uncertain writes to resolve, a fresh post-fault receipt per scope and exact replay of the live cursor. The terminal file requires source readback and confirmed removal of owned resources. The lab scorecard has no new verdict.
 
 - The move records vendor backup, list, full verification and two restores into distinct offline storage. The release requires an observed source denial, closed SQL sessions, a refused fresh login, the expected old receipts, past facts and feed suffix on the destination, and independently verified neighbor writes within the pause. The first new destination ACK ends that pause.
+
+- The replication drill checks PostgreSQL 17, fsync, session commit mode, the named streaming standby, both system identifiers, its flush LSN and the promoted replay LSN. It fences the old primary before promotion and rereads the Datomic receipts, values and feed on the replacement. [PostgreSQL synchronous commit](https://www.postgresql.org/docs/17/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT)

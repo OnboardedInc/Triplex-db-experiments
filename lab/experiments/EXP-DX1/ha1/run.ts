@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { Evidence, inputs } from "./common.ts";
 import { Stack, type Site } from "./stack.ts";
+import { replication } from "./replication.ts";
 import { move } from "./move.ts";
 import { failures } from "./failures.ts";
 export async function drill(
@@ -17,7 +18,7 @@ export async function drill(
     await s.open();
     if (e.mode === "failures") result = await failures(s, profile.scopes);
     else if (e.mode === "move") result = await move(s, profile.people);
-    else throw Error("Unimplemented experiment");
+    else result = await replication(s);
   } catch (err: any) {
     e.write("failure", {
       name: err.name,
