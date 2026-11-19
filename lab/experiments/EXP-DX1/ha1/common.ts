@@ -23,6 +23,7 @@ export const modes = [
   "replication",
   "one-failover",
   "one-backup",
+  "one-sync",
   "one-whole",
   "one-account",
 ] as const;

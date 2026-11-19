@@ -3,6 +3,8 @@ import { Evidence, inputs } from "./common.ts";
 import { Stack, type Site } from "./stack.ts";
 import { replication } from "./replication.ts";
 import { move } from "./move.ts";
+import { oneBackup } from "./one-backup.ts";
+import { oneWhole } from "./one-whole.ts";
 import { oneFailover } from "./one-failover.ts";
 import { failures } from "./failures.ts";
 export async function drill(
@@ -30,6 +32,9 @@ export async function drill(
     else if (e.mode === "move") result = await move(s, profile.people);
     else if (e.mode === "replication") result = await replication(s);
     else if (e.mode === "one-failover") result = await oneFailover(s, profile.people);
+    else if (e.mode === "one-backup") result = await oneBackup(s, profile.people);
+    else if (e.mode === "one-whole" || e.mode === "one-sync")
+      result = await oneWhole(s, profile.people, e.mode === "one-sync");
     else throw Error("One-database experiment not installed");
   } catch (err: any) {
     e.write("failure", {
