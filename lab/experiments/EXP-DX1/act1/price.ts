@@ -74,6 +74,31 @@ if (action === "readback") {
   }
 } else {
   mkdirSync(root, { recursive: false });
+  // [DX-ACT1] Why: capture source and built bytes before the expensive population pass, then check them after the final native ACK. Rejected: a late manifest that can describe a different executable.
+  const paths = execFileSync("git", [
+    "ls-files",
+    "-co",
+    "--exclude-standard",
+    "--",
+    "lab/experiments/EXP-DX1/act1/*.ts",
+    "lab/bench/lib/*.ts",
+    "lab/bench/lib/w0-oracle.py",
+    "lab/oracles/domain/*.py",
+    "lab/world/W0/releases",
+    "pnpm-lock.yaml",
+    "lab/bin/engine.mjs",
+  ])
+    .toString()
+    .trim()
+    .split("\n");
+  const sourceFiles = Object.fromEntries(paths.map((f) => [f, sha256(readFileSync(f))]));
+  for (const pkg of ["core", "sql", "sqlite", "w0", "datomic"]) {
+    const { readdirSync } = await import("node:fs");
+    const dir = "packages/" + pkg + "/dist";
+    for (const f of readdirSync(dir, { recursive: true }) as string[])
+      if (f.endsWith(".js")) sourceFiles[dir + "/" + f] = sha256(readFileSync(join(dir, f)));
+  }
+  writeFileSync(join(root, "sources.json"), JSON.stringify(sourceFiles), { flag: "wx" });
   const nonce = randomUUID(),
     expected = [],
     a: W0.EvaluationRecord[] = [],
@@ -117,29 +142,6 @@ if (action === "readback") {
   const reference = canonical(expected);
   writeFileSync(join(root, "expected.json"), reference, { flag: "wx" });
   const inputs = sha256(canonical([a, b]));
-  const paths = execFileSync("git", [
-    "ls-files",
-    "-co",
-    "--exclude-standard",
-    "--",
-    "lab/experiments/EXP-DX1/act1/*.ts",
-    "lab/bench/lib/*.ts",
-    "lab/bench/lib/w0-oracle.py",
-    "lab/oracles/domain/*.py",
-    "lab/world/W0/releases",
-    "pnpm-lock.yaml",
-  ])
-    .toString()
-    .trim()
-    .split("\n");
-  const sourceFiles = Object.fromEntries(paths.map((f) => [f, sha256(readFileSync(f))]));
-  for (const pkg of ["core", "sql", "sqlite", "w0", "datomic"]) {
-    const { readdirSync } = await import("node:fs");
-    const dir = "packages/" + pkg + "/dist";
-    for (const f of readdirSync(dir, { recursive: true }) as string[])
-      if (f.endsWith(".js")) sourceFiles[dir + "/" + f] = sha256(readFileSync(join(dir, f)));
-  }
-  writeFileSync(join(root, "sources.json"), JSON.stringify(sourceFiles), { flag: "wx" });
   const binding = {
     nonce,
     sourceSha256: sha256(canonical(sourceFiles)),

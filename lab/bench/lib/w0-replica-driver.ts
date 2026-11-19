@@ -807,7 +807,7 @@ export async function runReplicaDriver(argv: string[]) {
             op: "assert",
             entityId: "p5:tenant" + (publicationId ? ":" + publicationId : ""),
             attribute: "p5/activation",
-            value: { type: "string", value: "R1" },
+            value: { type: "string", value: act1 ? W0.R1.hash : "R1" },
             validFrom: V_W0,
           },
         ],
@@ -1168,6 +1168,30 @@ export async function runReplicaDriver(argv: string[]) {
     const act1Comparisons = new Map<string, string>();
     const finalPosition = await comp.currentPosition();
     report.publishedStatePosition = finalPosition;
+    if (act1) {
+      const entityId = "p5:tenant:" + publicationId;
+      const activationFacts = [];
+      for (const [position, hash] of [
+        [r1Position, W0.R1.hash],
+        [cut, activeRelease.hash],
+      ] as const) {
+        const basis = { position, validAt: V_W0 };
+        const page = await recordedPage([entityId], basis);
+        const markers = page.rows.filter(
+          (r) => r.entityId === entityId && r.attribute === "p5/activation",
+        );
+        if (
+          canonical(page.reportedBasis) !== canonical(basis) ||
+          markers.length !== 1 ||
+          markers[0]!.position !== position ||
+          markers[0]!.value.type !== "string" ||
+          markers[0]!.value.value !== hash
+        )
+          throw Error("Stored activation differs from the release evaluated at this cut");
+        activationFacts.push({ id: markers[0]!.id, entityId, position, hash });
+      }
+      report.act1.activationFacts = activationFacts;
+    }
     const wireState = (state: any) => ({
       ...state,
       items: state.items.map((i: any) => ({

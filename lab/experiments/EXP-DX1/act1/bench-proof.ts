@@ -100,6 +100,22 @@ export function checkSweep(out: string, request: { slot: string; arm: Arm; sourc
   assert.ok(s.statePosition > s.cut && s.cut > s.r1Position && s.r1Position > s.initialPosition);
   assert.equal(s.act1.arm, request.arm);
   assert.equal(s.act1.layout, "guard-fact");
+  const releases = JSON.parse(readFileSync("lab/world/W0/releases/index.json", "utf8"));
+  const markers = s.act1.activationFacts;
+  assert.equal(markers.length, 2);
+  assert.notEqual(markers[0].id, markers[1].id);
+  for (const m of markers) {
+    assert.ok(m.id);
+    assert.equal(m.entityId, "p5:tenant:" + s.slot);
+  }
+  assert.deepEqual(
+    markers.map((m: { position: number; hash: string }) => [m.position, m.hash]),
+    [
+      [s.r1Position, releases.R1],
+      [s.cut, s.act1.releaseHash],
+    ],
+  );
+  if (request.arm === "standard-full") assert.equal(s.act1.releaseHash, releases.R2);
   assert.match(s.comparedSha256, /^[a-f0-9]{64}$/);
   assert.match(s.trace, /^[a-f0-9]{64}$/);
   assert.match(s.act1.releaseHash, /^sha256:[a-f0-9]{64}$/);

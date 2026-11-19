@@ -1,46 +1,42 @@
 # DX-ACT1 · Release activation
-Yes. Activation as measured could overwrite a newer decision. Three schedules reproduced it before the fix.
-At transaction 20 a person's pay notice still said 1,600 cents. After reopening the publisher, a delayed result from 15 replaced it with 1,500 and issued a second notice.
-The benchmark also admitted a first item after a newer empty decision, and an earlier valid time at the same transaction.
-The W0 product rule advances the guard correctly. The original benchmark skipped the durable write, and both of its checkers discarded the same part of the independent answer. The fixes are opt-in.
-On 1,000 W0 subjects the guard fix saved all 1,000 decisions and wrote 219 bytes of asserted values per person. Rewriting the whole state took 533 bytes.
-Two local trials project 111–140 seconds for the old 73.78-second run, or 18.4–23.4 minutes for ten such accounts in series. The server figure is unmeasured.
-Changing only the EAD document lead time skipped rule evaluation for 675 of 1,000 people. All 1,000 still received a durable decision.
+Yes. Activation as measured could overwrite a newer decision. All three delayed-result schedules reproduced the failure.
+At transaction 20 a person's pay notice still said 1,600 cents. A delayed result from 15 replaced it with 1,500 and issued another notice after restart.
+The W0 product publication rule is correct. The benchmark skipped a durable write, and both of its original checkers discarded the same part of the oracle's answer.
+On 1,000 W0 subjects, the historical publisher left 884 guards missing or stale. Both opt-in fixes recovered all 1,000 expected states on Datomic.
+Saving just the guard wrote 89 bytes per unchanged person, against 444 for a full rewrite. Across the whole release, guarded publication took 8.74 seconds locally.
+The native cost ratio projects the old 73.78-second run to about 320 seconds for 100,000 people, or 53 minutes for ten such accounts in series. The bench time is unmeasured.
+Changing only the EAD document lead time skipped rule evaluation for 675 of 1,000 people. Every person still received the correct durable decision.
 
-North star P5. The first experiment used real W0 evaluation records, a reopened in-process composition and the independent Python evaluate/publish operations. The durable regression holds a record from one coherent pay history, loses the newer ACK, then delivers the held bytes from a fresh OS process. Run `node --import tsx --test lab/experiments/EXP-DX1/act1/guard.test.ts` at commit `1d27933e` to reproduce all three failures.
-The historical run did not inject these schedules. Its 100,000 comparisons cannot establish durable guard correctness. [Benchmark report](../bm1/REPORT.md) · [W0 §8.8](../../../world/W0/SPEC.md) · [Targets](../../../TARGETS.md)
+North star P5. Commit `1d27933e` records the three failing tests before the fix. The historical checker accepted missing guards even after 100,000 comparisons. [Benchmark](../bm1/REPORT.md) · [W0 §8.8](../../../world/W0/SPEC.md) · [Targets](../../../TARGETS.md)
 
 ## Price of a correct activation
 
-The 1k R1→R2 fixture changed items for 116 people. A fresh reader process found 884 stale guards under the historical filter and zero full-state differences with either fix. Guard-only commits touch only the guard fact. SQLite WAL used full sync and 32-subject frames, one in flight, with no background traffic.
+The native trial evaluated the same 1,000 W0 worlds for R1 and R2 at successive bases. Items changed for 116 people. Each arm used a fresh database scope, 32-subject frames, one outstanding frame and no background traffic within its scope. Timings below cover publication. Commit time is amortized over the roster.
 
-| Per roster subject | Historical | Full state | Guard fact |
+| Per roster subject on local Datomic | Historical | Full state | Guard fact |
 | --- | ---: | ---: | ---: |
-| Asserted value bytes / database growth bytes after checkpoint | 141 / 1,130 | 533 / 7,172 | 219 / 4,174 |
-| State rows read / state page reads / claim reads | 1.10 / .016 / .004 | 2.00 / .032 / .032 | 2.10 / .032 / .032 |
-| Process CPU ms / durable commit ms / publication wall ms (second trial) | .154 / .086 / .113 | .800 / .674 / .749 | .470 / .383 / .439 |
-| Asserted bytes per guard-only advance (884 subjects) | 0 | 444 | 89 |
+| Asserted value bytes / bytes per guard-only subject | 141 / 0 | 533 / 444 | 219 / 89 |
+| State rows / state page reads / claim lookups | 1.10 / .016 / .004 | 2.00 / .032 / .032 | 2.10 / .032 / .032 |
+| HTTP requests / complete entity compare-and-sets | .048 / 0 | 1.192 / 1 | 1.192 / 1 |
+| Publisher CPU / engine container CPU, ms | .213 / 1.180 | 1.854 / 12.054 | 1.415 / 8.408 |
+| Commit / publication wall, ms | .494 / .746 | 10.113 / 10.908 | 7.840 / 8.737 |
 
-Each arm also read the head once per state page. The fixed arms checked 1,000 complete entity sets. Pricing inputs and builds are indexed in `price-1/` (source `59207808`) and `price-2/` (source `38e1ebee`). Physical index reads and engine-only CPU were not instrumented.
-Projection adds 50.79 s of evaluation to 22.99 s scaled by each local publication wall ratio. The two trials give 115–204 s for full state and 111–140 s for the guard. The model assumes the local slowdown transfers to the bench and ten accounts run serially. Local and bench item-change shares were 11.6% and 9.8%.
-The managed Datomic slot returned HTTP 404 on claim lookup and CAS preparation; it was released with its volume retained. The local costs and cross-process checks use the public SQLite adapter.
-
-Audit. guard.test.ts compares fresh scoped raw facts, receipts and receiver sequences to bare Python W0 after every reopen and both sides of a dropped ACK. price.ts binds its fresh database names, release pair, source/build/input digests and the entire independently folded roster to a separate process's durable readback; it preserves historical mismatches.
+Projection adds 50.79 s evaluation to 22.99 s scaled by the native publication wall ratio. Full-state rewrite projects to 387 s at 100k and 64.5 min at 1M. Guard-fact projects to 320 s and 53.4 min. This transfers a local idle-scope ratio to the loaded server and assumes linear serial scaling. Item-change shares were 11.6% locally and 9.8% on the bench.
+Three full-sync SQLite trials also matched both corrected arms and projected 111–140 s for the guard. SQLite file growth per roster subject was 1,130 / 7,172 / 4,174 bytes. Datomic per-scope physical growth and physical index reads were unavailable.
+The stock gateway returned HTTP 404. A source-pinned build on a managed exclusive slot ran all 13 publication schedules and the selector successfully. Both reservations for that build were released. The first native timing's source list was collected after a script edit. Only the repeat with 43 prelaunch files rehashed after exit supplies the native table. [Measurement code](price.ts)
 
 ## Narrow release
 
-The 0→90-day edit changed tasks or obligations for 239 subjects and changed work-item payloads for zero. Among 1,000 subjects, 325 owned a reachable EAD and 51 had no document link. The fixed-cut index stores a validated R1 result and reachable EAD membership for every subject on the independent seeded roster.
-Only a compiled R1→R2 document differing solely in the unscoped DOCEXP EAD lead-days constant qualifies. The selector regenerates release-dependent work versions for exclusions. Other edits (including standard R2), changed cut/valid time/erasure frontier, missing index or unproved page evaluate in full. A source validation error is surfaced.
-Each 256-ordinal page binds scope, generation, prior/new release, both clocks, source and index digests. Output lands before the cursor advances. Restart validates ordered IDs, both roster hashes and committed pages; an unclaimed page is recomputed. Interruptions at 10%, 50% and 90% and between output and cursor recovered exact coverage. Duplicate IDs, swapped pages and foreign checkpoints are rejected.
-Across two local comparisons full evaluation took 0.62/1.37 s, selection 0.45/0.60 s and index construction 0.77/1.43 s, including page checks in both paths. Recovering the build cost would take five/two comparable releases at the same cut, assuming zero intervening maintenance. Cold build plus selection was slower in both.
-Audit. selector.test.ts checks all output bytes and all reopened terminal outboxes against the independent Python release pair and recomputes eligibility from source edges. The checkpoint is specific to one attempt, cut, release and roster. Preview coverage alone provides no P5 verdict.
-Audit. The guarded replica driver uses the bare evaluate/publish oracle on every source world, compares complete public outputs and stored states at pinned positions, and writes an exclusive sweep record bound to its attempt, source/build, slot, roster, release, trace and live reader count.
+Only compiled R1→R2 edits confined to the unscoped DOCEXP EAD lead-days constant qualify. The index binds validated R1 outputs and reachable EAD membership to the source generation, both clocks and erasure frontier. A changed cut, missing index, unproved page or broader edit, including standard R2, takes the full path. Invalid source worlds surface their W0 error.
+At the 0→90-day edit, 325 people owned a reachable EAD and 51 had no document link. Tasks or obligations changed for 239. Work-item payloads changed for zero. Exclusions received the new release and recomputed work versions. All output bytes and all reopened outboxes matched the independent oracle.
+Each 256-ordinal page binds both roster hashes, release pair and source cut. Durable output precedes cursor advancement. Interruptions at 10%, 50%, 90% and between page write and checkpoint recovered exact coverage. A missing subject, duplicate ID, swapped page or foreign checkpoint was detected.
+In the native-store functional run, the local planner took 0.95 s full and 0.47 s selected, including page checks. Building the index took 0.71 s. Recovery of build cost would take two comparable releases at the same cut with zero intervening upkeep. The cold path took longer than full.
 
-## Bench handoff
+## Bench handoff and audit
 
-On a prepared BM1 checkout of this commit, run `node --experimental-strip-types lab/experiments/EXP-DX1/act1/bench.ts --execute`. The default `--plan` is portable.
-The three-hour controller runs native restart/race schedules first on each fresh retained-seed clone. It compares the same EAD edit in full and with the selector, then runs the standard three-edit release in full. All three use the guard, 256 live readers and matching frozen writer offsets. The selector must match the full path's roster, world, output and terminal-state digest.
-Expect the guard to exceed the old 100 s bar on the standard release. Expect the EAD edit to save evaluation work once its index exists. The script records both cold and reused-index time and recomputes absolute read/commit p99, ratios and counts from raw traffic. The 1.5× interference ratios are unmeasured.
-Each stage releases its isolated clone after verified P5 readback. BM1's separate whole-history audit and the throttled compaction case are outside this three-hour comparison. Coverage does not change the acceptance contract's full-evaluation rule.
-Audit. bench-proof.ts binds the independent checks, R1 and activation cuts, ordered roster, source/build manifest and trace to the fresh slot and nonce. The controller checks the matched arms and scoped cleanup. Archive root is `evidence/DX-ACT1/`. [Evidence manifest](SHA256SUMS)
-Final gates: 18 experiment tests, 15 existing publication/parallel/oracle tests, 139 W0 kernel checks and focused TypeScript compilation. Broad bench typing reports 32 errors in three untouched files. The Python cases loader read 133/136 fixtures; its raw-byte entry point returned the expected error for the other three. No acceptance pins moved. Dumped schedule witnesses retain each fresh scope, basis, expected state and reopened bytes in `final-schedules/gates.tap`.
+On a prepared BM1 checkout run `node --experimental-strip-types lab/experiments/EXP-DX1/act1/bench.ts --execute`. The three-hour controller runs native schedules, then the 100k narrow full/selector pair and the standard full release on fresh retained-seed clones, each with the guard and 256 live readers. [Runner](bench.ts)
+Expect standard activation to exceed 100 s and the narrow edit to save evaluation work once indexed. The runner reports both cold and reused-index costs. The live read/commit p99 ratios and the 1.5× bars await execution. Each clone is released after P5 readback. The separate whole-history audit, throttled compaction trial and a P5 acceptance verdict remain open.
+Publication audit. The schedules compare fresh scoped facts, original ACK identity, pending bytes and receiver sequences against bare Python W0. An independent process delivers the held record after a lost newer ACK. Pricing binds release/input/source/build digests, native owner and ordered readback from a second process. `native-repeat/price/price.json` uses source `b76f8ab3`.
+Selector audit. Source edges and roster ordinals independently check every candidate and exclusion. Checkpoints verify the attempt, cut and page bytes. The replica driver rereads both committed release markers, complete outputs and all terminal states at named cuts. The bench collector binds the nonce, source/build, slot and frozen trace, reproduces ratios from raw windows, and compares the narrow arms' ordered world/output/state digest.
+Local gates covered 18 experiment tests, 15 existing publication/parallel/oracle tests, 139 W0 kernel checks and focused TypeScript compilation. Broad bench typing reports 32 errors in three untouched files. The Python cases loader read 133/136 fixtures. Its raw-byte entry point returned the expected error for the remaining three. No acceptance pins moved.
+The evidence root is `evidence/DX-ACT1/`. It contains the initial red test (`initial/first-red.tap`), native delivery and receiver witnesses (`native/schedules.tap`), selector checkpoints (`native/selector-files/`), SQLite repetitions and independent native state bytes (`native-repeat/price/*.observed.json`). [SHA-256 manifest](SHA256SUMS)

@@ -59,6 +59,20 @@ test("bench collector binds stage, native schedules, source and complete coverag
     act1: {
       arm,
       layout: "guard-fact",
+      activationFacts: [
+        {
+          id: "first",
+          entityId: "p5:tenant:" + slot,
+          position: 4340000,
+          hash: JSON.parse(readFileSync("lab/world/W0/releases/index.json", "utf8")).R1,
+        },
+        {
+          id: "next",
+          entityId: "p5:tenant:" + slot,
+          position: 4350000,
+          hash: "sha256:" + sha("release"),
+        },
+      ],
       releaseHash: "sha256:" + sha("release"),
       selector: { candidates: 25000, excluded: 75000, full: 0, roster, buildMs: 15000 },
     },
@@ -88,6 +102,7 @@ test("bench collector binds stage, native schedules, source and complete coverag
     { roster: sha("short") },
     { statesCompared: 99999 },
     { cut: proof.r1Position },
+    { act1: { ...proof.act1, activationFacts: [...proof.act1.activationFacts].reverse() } },
     { matched: { ...proof.matched, commit: { ...row, p99Ratio: 0.1 } } },
   ]) {
     put("act1-sweep.json", { ...proof, ...diff });
