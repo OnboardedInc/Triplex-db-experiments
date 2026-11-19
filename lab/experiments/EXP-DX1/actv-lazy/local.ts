@@ -75,7 +75,7 @@ const run = (file: string, args: string[]) => {
     stdio: "inherit",
   });
 };
-if (binding.mode === "--proof") {
+if (binding.mode === "--proof" || binding.mode === "--functional") {
   for (const f of [
     "admission-gate.ts",
     "read-gate.ts",
@@ -84,7 +84,7 @@ if (binding.mode === "--proof") {
     "boundary-gate.ts",
     "crash.ts",
     "service-gate.ts",
-    "pressure.ts",
+    ...(binding.mode === "--proof" ? ["pressure.ts"] : []),
   ])
     run(f, [dir]);
   const buf = execFileSync(
@@ -101,6 +101,8 @@ if (binding.mode === "--proof") {
   assert.match(buf, /# pass 23\b/);
   assert.match(buf, /# fail 0\b/);
   writeFileSync(join(dir, "legacy.tap"), buf, { flag: "wx" });
+} else if (binding.mode === "--pressure") {
+  run("pressure.ts", [dir]);
 } else if (binding.mode === "--smoke") {
   run("bench.ts", ["--smoke", dir]);
 } else {
