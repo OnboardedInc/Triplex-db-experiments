@@ -540,6 +540,8 @@ async function up(config, info, opts) {
 async function down(config, info, opts) {
   const holder = defaultHolder(opts);
   const owner = readOwner(info);
+  // [DX-THIN1] Why: an attempt can own a disposable volume on a slot with retained data. Rejected: deleting the default volume when a different configuration stops the slot.
+  if (owner && owner.volume !== info.volume) fail('REFUSED', 'Volume differs from the acquired slot configuration');
   if (owner && owner.holder !== holder && !opts.force)
     fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; pass --force only if you own it`);
   // [EXP-X05] A follower outliving its writer would block the next writer start (volumeGuard) and keep

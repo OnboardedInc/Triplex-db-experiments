@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { activePerson } from "./cohort.ts";
 import { DatabaseSync } from "node:sqlite";
 import { Option } from "effect";
 import { canonicalWorld } from "../../../bench/lib/canonical.ts";
@@ -135,7 +136,8 @@ export class Account {
   ryow = 0;
   timeline: any[] = [];
   isTouched(i: number) {
-    return (i - this.first) % 50 === 0;
+    const local = i - this.first;
+    return local === activePerson(Math.floor(local / 50), this.count, process.env.DX_INT1_COHORT === "spread");
   }
   private original(i: number, rows: WorldRow[], p: number) {
     return this.shape === "deep"
@@ -201,7 +203,9 @@ export class Account {
     return (
       i === this.first ||
       i === this.first + 1 ||
-      i === this.first + Math.max(0, Math.floor((this.count - 1) / 50) * 50)
+      i === this.first + activePerson(Math.floor((this.count - 1) / 50), this.count, process.env.DX_INT1_COHORT === "spread") ||
+      (process.env.DX_INT1_COHORT === "spread" && this.shape === "deep" &&
+        i - this.first === activePerson(39, this.count, true) && this.count >= 2000)
     );
   }
   private saveTx(r: Receipt, cmd: string, ops: any[], ids: string[], keep: boolean) {

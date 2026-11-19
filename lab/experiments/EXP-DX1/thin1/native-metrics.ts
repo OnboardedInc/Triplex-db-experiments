@@ -22,7 +22,7 @@ export interface Stack {
     }[];
   };
 }
-export function metricEndpoint(address: string, endpoint: "/metrics" | "/sample-object-cache") {
+export function metricEndpoint(address: string, endpoint: "/metrics" | "/sample-object-cache" | "/gateway-profile") {
   const url = new URL(address);
   const [net, subnet] = url.hostname.split(".").map(Number);
   assert(url.protocol === "http:" && url.port === "8989" && isIPv4(url.hostname));

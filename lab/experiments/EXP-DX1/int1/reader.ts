@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { fork } from "node:child_process";
 import fs from "node:fs";
+import { getHeapSpaceStatistics } from "node:v8";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import {
@@ -11,6 +12,8 @@ import {
 import { replicaReply, restoreReplicaReply } from "../../../bench/lib/replica-reads.ts";
 
 export function processSize() {
+  const before = process.memoryUsage();
+  const spaces = getHeapSpaceStatistics().map(s => ({ name: s.space_name, used: s.space_used_size, committed: s.physical_space_size }));
   global.gc?.();
   const mask = fs
     .readFileSync("/proc/self/status", "utf8")
@@ -24,6 +27,7 @@ export function processSize() {
     });
   return {
     rssBytes: process.memoryUsage().rss,
+    before, after: process.memoryUsage(), spaces,
     threads: fs.readdirSync("/proc/self/task").length,
     cpus,
   };

@@ -21,6 +21,8 @@ import { activate, eadRelease } from "./activation.ts";
 import { keyFor } from "../scale1/tenants.ts";
 import { smallPeople } from "../scale1/small-plan.ts";
 import { deepShape } from "../../../bench/lib/deep-world.ts";
+import { activePerson } from "./cohort.ts";
+import { gatewayProfiles } from "./gateway-profile.ts";
 import { pageNamespace } from "../../../bench/lib/w0-page-outbox.ts";
 import { checkSchedules, nativeScheduleNames, programInputs } from "../act1/bench-proof.ts";
 
@@ -78,8 +80,10 @@ const inputs = Object.fromEntries(
   [...new Set(paths)].sort().map((f) => [f, digest(fs.readFileSync(f))]),
 );
 const attempt = randomUUID(),
+  spread = process.env.DX_INT1_COHORT === "spread",
+  seedOnly = process.env.DX_INT1_CENSUS === "seed-only",
   binding = digest(
-    canonical([source, inputs, attempt, mode, size, stack.prefix, stack.containers]),
+    canonical([source, inputs, attempt, mode, size, stack.prefix, stack.containers, spread, seedOnly]),
   );
 fs.mkdirSync(dir!);
 const save = (name: string, v: unknown) =>
@@ -93,6 +97,7 @@ save("inputs.json", {
   size,
   slot: stack.prefix,
   containers: stack.containers,
+  spread, seedOnly,
   managedSlots: stack.managed?.compact ? 1 : stack.managed ? 2 : undefined,
   boot: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
 });
@@ -182,11 +187,14 @@ async function batch(a: Account, active: boolean) {
   }
   if (group.length) await a.seed(group);
 }
-async function pull(a: Account, i: number, p: number, v = V_W0) {
+const firstReads: { subject: number; scope: string; position: number; tasks: number; rows: number; roundTrips: number; route: string; ms: number }[] = [];
+async function pull(a: Account, i: number, p: number, v = V_W0, first = false) {
   const start = now();
   const result = await reader.pull(a.comp.scopeName!, rootOf(a.shape, i), p, v);
   const ms = now() - start;
   a.verify(i, p, v, result);
+  if (first) firstReads.push({ subject: i, scope: a.comp.scopeName!, position: p,
+    tasks: a.shape === "deep" ? deepShape(i - a.first).tasks : 0, rows: result.triples.length, roundTrips: result.roundTrips, route: result.route, ms });
   return ms;
 }
 async function caughtUp() {
@@ -390,7 +398,8 @@ async function trial() {
   const seedStart = now();
   for (const a of accounts) {
     await batch(a, true);
-    for (let i = a.first; i < a.first + a.count; i += 100) await pull(a, i, a.head);
+    if (!seedOnly) for (let block = 0; block * 50 < a.count; block += 2)
+      await pull(a, a.first + activePerson(block, a.count, spread), a.head);
   }
   await caughtUp();
   await phase("fixed-hot");
@@ -400,14 +409,19 @@ async function trial() {
   await phase("after-cold-import");
   const coldSeedMs = now() - seedCold,
     totalSeedMs = now() - seedStart;
+  if (seedOnly) {
+    assert(accounts.every(a => a.reads === 0 && a.ryow === 0));
+    await gatewayProfiles(stack, dir!, "seed-only", binding);
+  }
   const cold: number[] = [],
     commit: number[] = [],
     hot: number[] = [],
     own: number[] = [];
   for (const a of accounts) {
-    for (let i = a.first; i < a.first + a.count; i += 50) {
+    for (let block = 0; block * 50 < a.count; block++) {
+      const i = a.first + activePerson(block, a.count, spread);
       await lease.checkpoint();
-      if ((i - a.first) % 100 === 50) cold.push(await pull(a, i, a.head));
+      if (seedOnly || block % 2) cold.push(await pull(a, i, a.head, V_W0, true));
       const before = a.head,
         ack = await a.update(i);
       commit.push(a.commits.at(-1)!);
@@ -419,6 +433,7 @@ async function trial() {
   }
   await caughtUp();
   const before = await phase("after-activity");
+  if (seedOnly) await gatewayProfiles(stack, dir!, "two-percent", binding);
   let sender, regularDeep, regularTenant, placements;
   if (mode === "int1-proof") {
     const proofs = await import("./receipt-proof.ts");
@@ -550,7 +565,8 @@ async function trial() {
     try {
       await independent.open(scope);
       for (let cycle = 0; cycle < 4; cycle++)
-        for (let i = a.first; i < a.first + a.count; i += 50) {
+        for (let block = 0; block * 50 < a.count; block++) {
+          const i = a.first + activePerson(block, a.count, spread);
           if (read % 128 === 0) await lease.checkpoint();
           const x = await independent.pull(scope, rootOf(a.shape, i), a.head, V_W0);
           a.verify(i, a.head, V_W0, x);
@@ -571,7 +587,7 @@ async function trial() {
   const samples = { cold, commit, resident: hot, ryow: own };
   // [DX-INT1] Why: preserve every timed observation after the measurement window so the physical collector can recompute both percentiles.
   // Rejected: accepting a plausible percentile and sample count without the durations that produced them.
-  save(latencyFile, { binding, attempt, samples });
+  save(latencyFile, { binding, attempt, samples, firstReads });
   return {
     seedMs: totalSeedMs,
     seedPipelineMs: accounts.reduce((n, a) => n + a.seedWallMs, 0),

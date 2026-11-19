@@ -127,8 +127,11 @@ export function slotInfo(config, lane, slot) {
   if (config.forbiddenPorts.includes(port)) fail('CONFIG', `Port ${port} is forbidden`);
   for (const range of config.reservedPortRanges) if (port >= range.from && port <= range.to) fail('CONFIG', `Port ${port} belongs to ${range.owner}`);
   const container = `tx2-${lane}-${slot}`;
+  const nonce = slotConf.attemptVolumeNonce;
+  if (nonce !== undefined && (lane !== 'datomic' || slotConf.mode !== 'exclusive' || !/^[a-f0-9]{20}$/.test(nonce)))
+    fail('CONFIG', 'Attempt volumes require an exclusive Datomic slot and a fresh nonce');
   return {
-    lane, slot, ...slotConf, laneConf, container, volume: `${container}-data`,
+    lane, slot, ...slotConf, laneConf, container, volume: nonce ? `${container}-${nonce}-data` : `${container}-data`,
     endpoint: laneConf.urlTemplate.replace('{port}', String(port)),
     lockDir: path.join(LOCKS, `${lane}-${slot}`),
     ownerFile: path.join(LOCKS, `${lane}-${slot}`, 'owner.json'),

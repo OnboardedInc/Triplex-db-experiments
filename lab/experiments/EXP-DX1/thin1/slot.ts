@@ -252,11 +252,31 @@ const gateway = (label: "write" | "read", secondary = false) => {
 };
 gateway(role);
 let sampling = false;
+function gatewayJvm(which: "write" | "read") {
+  const root = pids.get(which + "Gateway");
+  assert(root?.pid && root.exitCode === null);
+  const matches: number[] = [];
+  const visit = (pid: number) => {
+    const proc = "/proc/" + pid;
+    if (path.basename(fs.readlinkSync(proc + "/exe")) === "java") {
+      const args = fs.readFileSync(proc + "/cmdline", "utf8").split("\0");
+      assert(args.includes("clojure.main"));
+      assert(args.includes(compact && which === "read" ? path.join(dir, "read-port.clj") : "triplex.gateway.main"));
+      matches.push(pid);
+      return;
+    }
+    for (const child of fs.readFileSync(proc + "/task/" + pid + "/children", "utf8").trim().split(/\s+/).filter(Boolean))
+      visit(Number(child));
+  };
+  visit(root.pid);
+  assert.equal(matches.length, 1);
+  return matches[0]!;
+}
 const server = http.createServer(async (req, res) => {
   if (
     role === "write" &&
     req.method === "POST" &&
-    req.url === "/sample-object-cache" &&
+    (req.url === "/sample-object-cache" || req.url === "/gateway-profile") &&
     req.headers.authorization === "Bearer " + secret &&
     fs.existsSync("/opt/thin-jdk/bin/jcmd")
   ) {
@@ -268,33 +288,42 @@ const server = http.createServer(async (req, res) => {
     sampling = true;
     const file = path.join(dir, "cache-" + randomUUID() + ".hprof");
     try {
-      const tx = pids.get("transactor")!,
-        pid = tx.pid!;
-      assert(
-        tx.exitCode === null &&
-          fs
-            .readFileSync("/proc/" + pid + "/cmdline", "utf8")
-            .split("\0")
-            .includes("datomic.launcher") &&
-          fs
-            .readFileSync("/proc/" + pid + "/cmdline", "utf8")
-            .split("\0")
-            .includes(path.join(dir, "sql.properties")),
-      );
+      const profile = req.url === "/gateway-profile";
+      const requested = profile ? req.headers["x-thin-role"] : role;
+      assert(requested === "write" || (requested === "read" && compact));
+      const tx = pids.get("transactor")!;
+      const pid = profile ? gatewayJvm(requested) : tx.pid!;
+      if (!profile) {
+        const args = fs.readFileSync("/proc/" + pid + "/cmdline", "utf8").split("\0");
+        assert(tx.exitCode === null && args.includes("datomic.launcher") && args.includes(path.join(dir, "sql.properties")));
+      }
+      const jcmd = (...command: string[]) => execFileSync("/opt/thin-jdk/bin/jcmd", [String(pid), ...command],
+        { encoding: "utf8", timeout: 120000, maxBuffer: 8 << 20 });
+      const processStat = () => fs.readFileSync("/proc/" + pid + "/stat", "utf8").split(") ")[1]!.split(" ")[19]!;
+      const startTicks = processStat();
+      const before = profile ? {
+        rssBytes: processTotal(pid, "rss"),
+        heap: jcmd("GC.heap_info"),
+        smaps: fs.readFileSync("/proc/" + pid + "/smaps_rollup", "utf8").split("\n").slice(1).join("\n"),
+      } : undefined;
       const disk = fs.statfsSync(dir, { bigint: true });
       assert(disk.bavail * disk.bsize > 5n * 1024n ** 3n);
       execFileSync("/opt/thin-jdk/bin/jcmd", [String(pid), "GC.heap_dump", file], {
         timeout: 90000,
         stdio: ["ignore", "pipe", "pipe"],
       });
-      const values = cacheCharge(file, 192 * 1024 ** 2);
+      const limit = profile ? Number.parseInt(words.find((w) => w.startsWith("-Ddatomic.objectCacheMax="))!.split("=")[1]!, 10) : 192;
+      const values = cacheCharge(file, limit * 1024 ** 2);
+      const histogram = profile ? jcmd("GC.class_histogram") : undefined;
+      assert.equal(processStat(), startTicks);
       const h = createHash("sha256");
       for await (const block of fs.createReadStream(file)) h.update(block);
       res.setHeader("Content-Type", "application/json");
       res.end(
         JSON.stringify({
           nonce,
-          role,
+          role: requested,
+          ...(profile ? { pid, startTicks, before, histogram, afterHeap: jcmd("GC.heap_info"), limitMiB: limit } : {}),
           containerId,
           source: observerId,
           witness,

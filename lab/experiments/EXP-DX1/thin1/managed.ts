@@ -142,6 +142,7 @@ function setup(compact: boolean) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
     const settings = (cfg.slots.datomic[slot] = { ...original[slot] });
+    if (compact) settings.attemptVolumeNonce = nonce;
     settings.gatewayOpts =
       (compact ? "-Xms128m -Xmx600m -Ddxthin.compact=yes" : "-Xms160m -Xmx896m") +
       " -Ddatomic.objectCacheMax=192m -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
@@ -155,7 +156,9 @@ function setup(compact: boolean) {
     if (role === "read") settings.memBytes = Math.min(settings.memBytes, 1536 * 1024 ** 2);
   }
   write(file, cfg);
-  write(cred, { nonce, secret, slots, compact });
+  const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
+  assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
+  write(cred, { nonce, secret, slots, compact, census, cohort });
   return slots;
 }
 function witness(slot: string) {
@@ -216,6 +219,7 @@ function bind() {
     managed: {
       nonce: attempt.nonce,
       compact: !!attempt.compact,
+      census: attempt.census, cohort: attempt.cohort,
       peers,
       cacheDiagnostic: fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")),
     },
@@ -236,6 +240,8 @@ if (action === "--guest") {
     DX_THIN_STACK: manifest,
     DX_THIN_CREDENTIAL: cred,
     TRIPLEX_DATOMIC_LAYOUT: "lean",
+    DX_INT1_CENSUS: stack.managed.census ?? "held",
+    DX_INT1_COHORT: stack.managed.cohort ?? "stride",
   });
   if (stack.managed.compact) {
     let ready = false;
@@ -359,13 +365,10 @@ if (action === "--guest") {
             o.experiment === exp &&
             fs.realpathSync(o.worktree) === fs.realpathSync(repo)
           )
-            manager([
-              "down",
-              "--slot",
-              slot,
-              "--note",
-              "Retain the owned SQL attempt for measurement review",
-            ]);
+            if (compact) {
+              assert.equal(o.volume, o.container + "-" + read(cred).nonce + "-data");
+              manager(["down", "--slot", slot, "--remove-volume"]);
+            } else manager(["down", "--slot", slot, "--note", "Retain the owned SQL attempt"]);
         }
     }
   } else
