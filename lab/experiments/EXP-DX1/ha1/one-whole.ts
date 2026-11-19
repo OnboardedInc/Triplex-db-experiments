@@ -119,10 +119,30 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
         s.e.log("cost-block", { i, sync, stats: latency(ms) });
       }
     }
-    await setting(true);
     const prepare = traffic(ac, "prepare-cut");
     let destination: string, validatedBeforeCut: number;
+    let readyLagBytes = -1,
+      readyLsn = "",
+      catchupWhileLiveMs = 0;
     try {
+      // [DX-HA1] Why: enabling synchronous ACKs on a lagging target can quietly move the outage into precopy. Rejected: fencing a replica merely because it has begun streaming.
+      const catchupStart = clock();
+      readyLsn = await s.sql("pg", "SELECT pg_current_wal_flush_lsn()");
+      assert.match(readyLsn, /^[0-9A-F]+\/[0-9A-F]+$/);
+      await until("bounded standby replay during live writes", async () => {
+        const result = await s.sql(
+          "pg",
+          "SELECT replay_lsn >= '" +
+            readyLsn +
+            "',pg_wal_lsn_diff(pg_current_wal_flush_lsn(),replay_lsn) FROM pg_stat_replication WHERE application_name='ha1standby' AND state='streaming'",
+        );
+        const m = /^t\|(\d+)$/.exec(result);
+        if (!m || Number(m[1]) > 262144) return undefined;
+        readyLagBytes = Number(m[1]);
+        return true;
+      });
+      catchupWhileLiveMs = clock() - catchupStart;
+      await setting(true);
       await s.gateway("read", s.b, "target", "moving");
       destination = await s.ready("read");
       await requestIndex(ac);
@@ -259,6 +279,14 @@ export async function oneWhole(s: Stack, people: number, measureSync: boolean) {
         clientMs: end - gateway,
         validatedBeforeCut,
         livePrepareWrites: prepare.samples.length,
+        readyLsn,
+        readyLagBytes,
+        catchupWhileLiveMs,
+        maxPrepareCommitMs: Math.max(...prepare.samples.map((v) => v.end - v.start)),
+        maxPrepareGapMs: Math.max(
+          0,
+          ...prepare.samples.slice(1).map((v, i) => v.end - prepare.samples[i]!.end),
+        ),
         offered,
         firstReceiptAt: end,
         lossMode: measureSync

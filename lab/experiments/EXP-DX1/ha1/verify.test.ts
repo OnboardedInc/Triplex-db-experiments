@@ -4,7 +4,7 @@ import { Account } from "../../../../packages/datomic/test/ha1-account.ts";
 import { Satellite } from "./satellite.ts";
 import { projection } from "./projection.ts";
 import { backupCut, vendorResult } from "./move.ts";
-import { AccountEndpoint, AccountMove, readReceipt } from "./placement.ts";
+import { AccountEndpoint, AccountMove, readAtOrigin, readReceipt } from "./placement.ts";
 import { hash, loopback } from "./common.ts";
 test("recovery rejects a changed receipt, wrong tenant and corrupt feed interval", () => {
   const ac = new Account("test-run-scope", "http://" + loopback, "http://" + loopback);
@@ -243,5 +243,66 @@ test("logical migration refuses another physical database, stale generation or f
   } finally {
     src.close();
     dst.close();
+  }
+});
+
+test("an original read basis uses both cuts and resolves an empty account prefix", async () => {
+  const endpoint = new AccountEndpoint("red", {
+    db: "db",
+    generation: 2,
+    endpoint: "http://" + loopback,
+  });
+  const receipt = {
+    operationId: "red~a",
+    position: { t: "long", v: "4" },
+    t: { t: "long", v: "1050" },
+    recordedAt: { t: "double", v: 2 },
+  } as const;
+  let pageCalls = 0;
+  try {
+    endpoint.translate = async (origin, kind, n) => ({
+      account: origin === "other" ? "blue" : "red",
+      sequence: n === 0 ? 0 : kind === "t" ? 5 : 3,
+    });
+    endpoint.page = async (cursor) => {
+      assert.equal(cursor.after, 2);
+      pageCalls++;
+      return {
+        account: "red",
+        after: 2,
+        next: 3,
+        entries: [
+          {
+            account: "red",
+            sequence: 3,
+            prev: "p",
+            digest: "d",
+            receipt,
+            feed: {},
+            valueHash: "h",
+            observedFacts: 1,
+          },
+        ],
+      };
+    };
+    endpoint.read = async (pin, subject, valid) => {
+      assert.deepEqual(pin, { sequence: 3, receipt });
+      assert.equal(subject, "red~entity");
+      assert.equal(valid, 20);
+      return [];
+    };
+    await readAtOrigin(
+      endpoint,
+      { origin: "old", basisT: "1060", recordedPosition: 4, validAt: 20 },
+      "red~entity",
+    );
+    await readAtOrigin(endpoint, { origin: "old", recordedPosition: 0, validAt: 20 }, "red~entity");
+    assert.equal(pageCalls, 1);
+    await assert.rejects(
+      readAtOrigin(endpoint, { origin: "other", basisT: "1050", validAt: 20 }, "red~entity"),
+      { name: "AssertionError" },
+    );
+  } finally {
+    endpoint.close();
   }
 });

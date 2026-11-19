@@ -93,6 +93,7 @@ export class Evidence {
     readonly mode: Mode,
     readonly slot: string,
     readonly shape: "deep" | "mixed" = "deep",
+    readonly faultCell: "all" | "tail-burst" = "all",
   ) {
     fs.mkdirSync(parent, { recursive: true });
     this.dir = path.join(parent, mode + "-" + this.nonce);
@@ -102,6 +103,7 @@ export class Evidence {
       mode,
       slot,
       shape,
+      faultCell,
       source: this.source,
       utc: new Date().toISOString(),
     });

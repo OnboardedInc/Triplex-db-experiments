@@ -16,7 +16,9 @@ import type { Stack } from "./stack.ts";
 export async function oneFailover(s: Stack, people: number) {
   const ac = await openOne(s, true, true);
   try {
-    const population = await populate(s, ac, people);
+    // [DX-HA1] Why: a single saturated fault leaves more of the local measurement window for the largest safely allocated dataset. Rejected: holding the shared timer across successive leases.
+    const seedBudget = s.e.faultCell === "all" ? 540000 : Math.max(1, s.e.start + 795000 - clock());
+    const population = await populate(s, ac, people, seedBudget);
     const pin = ac.receipts.get(ac.inputs[0]!.operationId)!;
     const samples = [];
     let active: "active" | "standby" = "active",
@@ -27,6 +29,7 @@ export async function oneFailover(s: Stack, people: number) {
       "tail-light",
       "tail-burst",
     ].entries()) {
+      if (s.e.faultCell !== "all" && cell !== s.e.faultCell) continue;
       const index = await requestIndex(ac);
       const count = cell.startsWith("tail-") ? Math.min(128, population.people) : 0;
       for (let k = 0; k < count; k++)
@@ -188,6 +191,19 @@ export async function oneFailover(s: Stack, people: number) {
           pollErrors: during.filter((p) => p.code !== "ok").length,
           maxPollGapMs: Math.max(...polls.slice(1).map((p, k) => p.end - polls[k]!.end)),
           all,
+          pendingAtFault: ac.inputs.slice(startIndex).flatMap((input) => {
+            const attempts = ac.attempts.filter((row) => row.op === input.operationId);
+            return attempts.some((row) => row.start <= fault.from) &&
+              ac.arrivals.get(input.operationId)! >= fault.from
+              ? [
+                  {
+                    operationId: input.operationId,
+                    attempts,
+                    receipt: ac.receipts.get(input.operationId),
+                  },
+                ]
+              : [];
+          }),
           feed,
           freshState,
           native: s.redact(native),

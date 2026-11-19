@@ -32,7 +32,15 @@ export async function localDrill(opts: any, config: any, manager: any) {
   function declare(slot: string) {
     const shape = opts["population-shape"] ?? "deep";
     assert(shape === "deep" || shape === "mixed");
-    const attempt = new Evidence(path.join(folder, "evidence", "DX-HA1"), mode, slot, shape);
+    const faultCell = opts["fault-cell"] ?? "all";
+    assert(faultCell === "all" || (mode === "one-failover" && faultCell === "tail-burst"));
+    const attempt = new Evidence(
+      path.join(folder, "evidence", "DX-HA1"),
+      mode,
+      slot,
+      shape,
+      faultCell,
+    );
     console.log(attempt.dir);
     return attempt;
   }

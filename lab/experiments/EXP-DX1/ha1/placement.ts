@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   DatomicClient,
+  errorCode,
   immutable,
   type Input,
   type Receipt,
@@ -27,6 +28,7 @@ export type Snapshot = {
   sequence: number;
   digest: string;
   verified: number;
+  verifiedDigest?: string;
   sealT: number | null;
   sealP: number | null;
 };
@@ -178,8 +180,11 @@ export class AccountMove {
   }
   async fence(limit: number) {
     const target = await this.target.state(),
-      cursor = { account: this.target.account, after: Math.max(0, target.verified - 1) };
-    const digest = target.verified ? (await this.target.page(cursor, 1)).entries[0]!.digest : "";
+      digest = target.verifiedDigest;
+    assert(
+      typeof digest === "string" &&
+        (target.verified > 0 ? /^[0-9a-f]{64}$/.test(digest) : digest === ""),
+    );
     return this.source.post<Snapshot>(
       "fence",
       { verified: target.verified, digest, limit, dest: this.target.place.db },
@@ -267,4 +272,78 @@ export async function resumeOrigin(
   assert(Number.isSafeInteger(t));
   const translated = await endpoint.translate(origin, "t", t);
   return endpoint.page({ account: endpoint.account, after: translated.sequence }, limit);
+}
+
+export async function readAtOrigin(
+  endpoint: AccountEndpoint,
+  basis: { origin: string; recordedPosition?: number; basisT?: string; validAt: number },
+  subject: string,
+  history = false,
+) {
+  // [DX-HA1] Why: an original database pin can land in a neighboring tenant's transaction. Rejected: requiring that every held basis have an exact receipt for this account.
+  const coordinates: ["position" | "t", number][] = [];
+  if (basis.recordedPosition !== undefined) coordinates.push(["position", basis.recordedPosition]);
+  if (basis.basisT !== undefined) {
+    assert(/^\d+$/.test(basis.basisT));
+    coordinates.push(["t", Number(BigInt(basis.basisT))]);
+  }
+  assert(coordinates.length > 0 && Number.isFinite(basis.validAt));
+  assert(subject.startsWith(endpoint.account + "~"));
+  const cuts = await Promise.all(
+    coordinates.map(async ([kind, n]) => {
+      assert(Number.isSafeInteger(n) && n >= 0);
+      const cut = await endpoint.translate(basis.origin, kind, n);
+      assert.equal(cut.account, endpoint.account);
+      return cut.sequence;
+    }),
+  );
+  const sequence = Math.min(...cuts);
+  if (sequence === 0) return [];
+  const entry = (await endpoint.page({ account: endpoint.account, after: sequence - 1 }, 1))
+    .entries[0];
+  assert(entry?.sequence === sequence);
+  return endpoint.read({ sequence, receipt: entry.receipt }, subject, basis.validAt, history);
+}
+
+// [DX-HA1] Why: a client may receive the old route after the source has fenced. Rejected: minting a new operation identity or turning a lost response into a terminal rejection.
+export class RoutedAccount {
+  constructor(
+    readonly account: string,
+    readonly directory: Directory,
+    readonly resolve: (place: Place) => AccountEndpoint,
+  ) {}
+  private async current() {
+    const place = await this.directory.current(this.account),
+      endpoint = this.resolve(place);
+    assert.equal(endpoint.account, this.account);
+    assert.deepEqual(endpoint.place, place);
+    return endpoint;
+  }
+  async commit(input: Input, timeoutMs = 120000) {
+    assert(Number.isFinite(timeoutMs) && timeoutMs > 0);
+    const { onSent, ...body } = input;
+    const command = structuredClone(body);
+    const deadline = clock() + timeoutMs;
+    for (;;) {
+      const endpoint = await this.current();
+      try {
+        return await endpoint.commit(onSent ? { ...command, onSent } : command);
+      } catch (err) {
+        const code = err instanceof PlacementError ? err.code : errorCode(err);
+        if (code !== "AccountFenced" && code !== "OutcomeUnknown" && code !== "Transport")
+          throw err;
+        if (clock() >= deadline) throw new PlacementError("OutcomeUnknown", input.operationId);
+      }
+      await sleep(100);
+    }
+  }
+  async read(receipt: Receipt, subject: string, validAt = 10, history = false) {
+    return readReceipt(await this.current(), receipt, subject, validAt, history);
+  }
+  async at(basis: Parameters<typeof readAtOrigin>[1], subject: string, history = false) {
+    return readAtOrigin(await this.current(), basis, subject, history);
+  }
+  async resume(origin: string, nextT: string, limit: number) {
+    return resumeOrigin(await this.current(), origin, nextT, limit);
+  }
 }

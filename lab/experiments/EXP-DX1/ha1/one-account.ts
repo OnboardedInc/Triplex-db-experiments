@@ -9,13 +9,15 @@ import {
 import {
   AccountEndpoint,
   AccountMove,
+  RoutedAccount,
   PlacementError,
   readReceipt,
+  readAtOrigin,
   resumeOrigin,
   type Directory,
   type Place,
 } from "./placement.ts";
-import { clock, sleep, until, hash } from "./common.ts";
+import { clock, sleep, hash } from "./common.ts";
 import { ackProxy } from "./ack-proxy.ts";
 import { healthyBroker } from "./one-db.ts";
 import type { Stack } from "./stack.ts";
@@ -130,6 +132,7 @@ export async function oneAccount(s: Stack, people: number) {
   const blue = new AccountEndpoint("blue", a, s.admin),
     green = new AccountEndpoint("green", { ...b, generation: 1 }, s.admin),
     directory = new TestDirectory(s, a, b);
+  const routed = new RoutedAccount("red", directory, (place) => (place.db === a.db ? red : copy));
   let tick = 1000000;
   const incoming = (tenant: string, label: string, width = 1, subject?: string) =>
     intent(tenant, label, ++tick, width, subject);
@@ -157,9 +160,10 @@ export async function oneAccount(s: Stack, people: number) {
     await green.post("init", { mode: "serving", source: b.db }, true);
     await copy.post("init", { mode: "importing", source: a.db }, true);
     await typed(copy.commit(incoming("red", "not-active")), "AccountFenced");
+    await typed(copy.page({ account: "red", after: 0 }, 1), "TargetImporting");
     const first = incoming("red", "first"),
       subject = first.rows[0]!.entity_id,
-      pin = await commit(red, first);
+      pin = remember(first, await routed.commit(first));
     const neighborGap = await commit(blue, incoming("blue", "gap"));
     const r2 = incoming("red", "correct", 1, subject);
     const retired = {
@@ -170,6 +174,20 @@ export async function oneAccount(s: Stack, people: number) {
     };
     const correction = { ...r2, rows: [{ ...r2.rows[0]!, valid_from: 20 }, retired] };
     const edit = await commit(red, correction);
+    const linkRaw = incoming("red", "link"),
+      reference = {
+        ...linkRaw,
+        rows: [{ ...linkRaw.rows[0]!, value_type: "ref" as const, value_string: subject }],
+      };
+    const linkReceipt = await commit(red, reference);
+    const foreign = incoming("red", "foreign-link");
+    await typed(
+      red.commit({
+        ...foreign,
+        rows: [{ ...foreign.rows[0]!, value_type: "ref", value_string: "blue~other" }],
+      }),
+      "UnsupportedAccountCommand",
+    );
     const oldView = await readReceipt(red, pin, subject),
       valid10 = await readReceipt(red, edit, subject, 10),
       valid20 = await readReceipt(red, edit, subject, 20),
@@ -180,6 +198,13 @@ export async function oneAccount(s: Stack, people: number) {
     assert.equal(valid20.length, 1);
     assert.equal(valid20[0]!["value_string"].v, r2.rows[0]!.value_string);
     assert.equal(history.length, 2);
+    const gapBasis = {
+      origin: a.db,
+      basisT: neighborGap.t.v,
+      recordedPosition: Number(neighborGap.position.v),
+      validAt: 10,
+    };
+    assert.deepEqual(await readAtOrigin(red, gapBasis, subject), oldView);
     for (let k = 0; k < 7; k++) await commit(green, incoming("green", "offset-" + k));
     await typed(
       red.commit({ ...first, rows: [{ ...first.rows[0]!, value_string: "changed" }] }),
@@ -243,15 +268,10 @@ export async function oneAccount(s: Stack, people: number) {
     const attempted = clock();
     await typed(red.commit(finalInput), "AccountFenced");
     // [DX-HA1] Why: keep the same pending business operation across the physical endpoint change. Rejected: treating an activation ACK as resumed writes.
-    const pending = until("routed original command", async () => {
-      const dest = (await directory.current("red")).db === a.db ? red : copy;
-      try {
-        return { ack: await commit(dest, finalInput), at: clock() };
-      } catch (e) {
-        if (code(e) !== "AccountFenced") throw e;
-        return undefined;
-      }
-    });
+    const pending = routed
+      .commit(finalInput)
+      .then((ack) => ({ ack: remember(finalInput, ack), at: clock() }));
+    pending.catch(() => {});
     const canary = commit(blue, incoming("blue", "during-cut")).then((receipt) => ({
       receipt,
       end: clock(),
@@ -275,10 +295,14 @@ export async function oneAccount(s: Stack, people: number) {
     );
     assert.deepEqual(await restart().switch(await red.state()), { checked: 0, facts: 0 });
     assert.deepEqual(
-      await commit(copy, { ...lost, attemptId: lost.attemptId + "-retry" }),
+      await routed.commit({ ...lost, attemptId: lost.attemptId + "-retry" }),
       original,
     );
-    assert.deepEqual(await readReceipt(copy, pin, subject), oldView);
+    assert.deepEqual(await routed.read(pin, subject), oldView);
+    const link = await readReceipt(copy, linkReceipt, linkRaw.rows[0]!.entity_id);
+    assert.equal(link.length, 1);
+    assert.equal(link[0]!["value_type"].v, "ref");
+    assert.equal(link[0]!["value_string"].v, subject);
     assert.deepEqual(await readReceipt(copy, edit, subject, 10), valid10);
     assert.deepEqual(await readReceipt(copy, edit, subject, 20), valid20);
     assert.deepEqual(await readReceipt(copy, edit, subject, 20, true), history);
@@ -286,10 +310,24 @@ export async function oneAccount(s: Stack, people: number) {
       account: "red",
       sequence: cursor.after,
     });
-    assert.deepEqual(await copy.translate(a.db, "t", Number(firstNew.ack.t.v)), {
+    assert.deepEqual(await copy.translate(b.db, "t", Number(firstNew.ack.t.v)), {
       account: "red",
       sequence: seal.sequence + 1,
     });
+    assert.deepEqual(await routed.at(gapBasis, subject), oldView);
+    assert.deepEqual(await readAtOrigin(copy, { ...gapBasis, recordedPosition: 0 }, subject), []);
+    await typed(copy.translate("unrelated", "position", 1), "UnknownOrigin");
+    await typed(copy.translate(a.db, "t", Number(firstNew.ack.t.v)), "UnknownOrigin");
+    const lastNativeNext = String(BigInt(original.t.v) + 1n),
+      postLost = await routed.resume(a.db, lastNativeNext, 16);
+    assert.deepEqual(
+      postLost.entries.map((e) => e.receipt.operationId),
+      [
+        ...Array.from({ length: 4 }, (_, i) => "red~live-" + i),
+        "red~last-delta",
+        finalInput.operationId,
+      ],
+    );
     const resumed = await resumeOrigin(copy, a.db, originNext, 4);
     assert.deepEqual(resumed, await copy.page(cursor, 4));
     let after = 0,
@@ -367,6 +405,9 @@ export async function oneAccount(s: Stack, people: number) {
       oldPin: pin,
       oldCursor: cursor,
       oldNativeNext: originNext,
+      neighborGapBasis: gapBasis,
+      lastNativeNext,
+      resumedThrough: postLost.entries.at(-1)!.receipt.operationId,
       recoveredAck: original,
       seal,
       copyResumedAt: complete.verified,

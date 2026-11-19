@@ -55,5 +55,18 @@ export async function drill(
     }
   }
   assert.deepEqual(inputs(), e.source, "Executed inputs changed during drill");
-  e.write("observations", { nonce: e.nonce, source: e.source, slot: e.slot, profile, result });
+  e.write("observations", {
+    nonce: e.nonce,
+    source: e.source,
+    slot: e.slot,
+    profile: e.mode.startsWith("one-")
+      ? {
+          people: profile.people,
+          capacity: profile.capacity,
+          seedShape: e.shape,
+          sourceDatabases: 1,
+        }
+      : profile,
+    result,
+  });
 }

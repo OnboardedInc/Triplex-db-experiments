@@ -68,7 +68,7 @@
 (defn meta-state [db tenant]
   (let [e (d/entity db [:ha/account tenant])]
     {:account tenant :mode (:ha/mode e) :generation (:ha/generation e) :source (:ha/source e) :target (:ha/target e)
-     :sequence (:ha/sequence e) :digest (:ha/hash e) :verified (:ha/verified e) :sealT (some-> (:ha/seal e) :db/id d/tx->t) :sealP (when-let [ref (:ha/seal e)] (store/head-position (d/as-of db (d/tx->t (:db/id ref))))) :endT (:ha/end-t e) :endP (:ha/end-p e)}))
+     :sequence (:ha/sequence e) :digest (:ha/hash e) :verified (:ha/verified e) :verifiedDigest (if (pos? (long (or (:ha/verified e) 0))) (:ha/digest (d/entity db [:ha/key (key-at tenant (:ha/verified e))])) "") :sealT (some-> (:ha/seal e) :db/id d/tx->t) :sealP (when-let [ref (:ha/seal e)] (store/head-position (d/as-of db (d/tx->t (:db/id ref))))) :endT (:ha/end-t e) :endP (:ha/end-p e)}))
 (defn entry-at [db tenant seq] (let [e (d/entity db [:ha/key (key-at tenant seq)])] (check (= tenant (:ha/tenant e)) "UnknownPin") e))
 (defn owned? [tenant id] (and (string? id) (str/starts-with? id (str tenant "~"))))
 (defn wire-value [row k] (get-in row [k "v"]))
@@ -140,6 +140,8 @@
             db (d/db conn) admin (= secret (get-in req [:headers "x-ha1-admin"]))
             _ (check (and (or txn (and (= name (get input "haDatabase")) (= (:uri req) (str "/ha1/shared/" op)))) (string? tenant) (re-matches #"[a-z0-9-]{1,64}" tenant)) "UnsupportedRoute")
             _ (when (#{"init" "export" "import" "verify" "fence" "activate"} op) (check admin "AdminRequired"))
+            _ (when (#{"lookup" "read" "feed" "translate"} op)
+                (check (not= "importing" (:ha/mode (d/entity db [:ha/account tenant]))) "TargetImporting"))
             result (case op
              "state" (meta-state db tenant)
              "init" (let [mode (get input "mode")] (check (and (#{"importing" "serving"} mode) (= (= mode "serving") (= name (get input "source")))) "InvalidPlacement")
@@ -163,17 +165,21 @@
                                  {:account tenant :after after :next (+ after (count page)) :entries page})
              "translate" (let [origin (get input "origin") typ (get input "coordinate") n (get input "value")
                             _ (check (and (integer? n) (<= 0 n) (#{"t" "position"} typ)) "InvalidCursor")
-                            native? (= name origin) owner (d/entity db [:ha/account tenant]) activation (some-> (:ha/activation owner) :db/id d/tx->t)
+                            owner (d/entity db [:ha/account tenant])
+                            activation (some-> (:ha/activation owner) :db/id d/tx->t)
                             end (if (= typ "t") (:ha/end-t owner) (:ha/end-p owner))
-                            _ (check (if native? (<= n (if (= typ "t") (d/basis-t db) (store/head-position name db)))
-                                      (and (= origin (:ha/source owner)) end activation (<= n (+ end (if (= typ "t") (- (d/basis-t db) activation) (- (store/head-position db) (store/head-position (d/as-of db activation)))))))) "UnknownOrigin")
+                            current (if (= typ "t") (d/basis-t db) (store/head-position db))
+                            start (when activation (if (= typ "t") activation (store/head-position (d/as-of db activation))))
+                            public-head (if activation (+ end (- current start)) current)
+                            _ (check (if (= name origin) (<= n public-head)
+                                      (and activation (= origin (:ha/source owner)) (<= n end))) "UnknownOrigin")
                             attr (if (= typ "t") :ha/legacy-t :ha/legacy-p)
-                            seq (if (or native? (and end (> n end)))
-                                  (let [local (if native? n (+ (- n end) (if (= typ "t") activation (store/head-position (d/as-of db activation)))))]
-                                    (:ha/sequence (d/entity (if (= typ "t") (d/as-of db local) (store/at-position db local)) [:ha/account tenant])))
+                            seq (if (and activation (<= n end))
                                   (when-let [datom (first (d/rseek-datoms db :avet attr (key-at tenant n)))]
                                     (when (and (= (:a datom) (d/entid db attr)) (str/starts-with? (:v datom) (str tenant "/")))
-                                      (:ha/seq (d/entity db (:e datom))))))]
+                                      (:ha/seq (d/entity db (:e datom)))))
+                                  (let [local (if activation (+ start (- n end)) n)]
+                                    (:ha/sequence (d/entity (if (= typ "t") (d/as-of db local) (store/at-position db local)) [:ha/account tenant]))))]
                         {:account tenant :sequence (or seq 0)})
              "read" (let [e (entry-at db tenant (get input "sequence"))
                            _ (check (same-receipt? (get input "receipt") (receipt db e)) "PinMismatch")
