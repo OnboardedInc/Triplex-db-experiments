@@ -37,6 +37,7 @@ import { stagedInput } from "./protocol.js";
 import { databaseName } from "./scopeName.js";
 import {
   CurrentTransactions,
+  ImportClock,
   DatomicOptimisticRestart,
   type TransactionState,
 } from "./TransactionContext.js";
@@ -347,7 +348,7 @@ export const makeDatomicStorageAdapter = (
                 // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
                 // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
                 replaySafe:
-                  state.replaySafe === true &&
+                  state.replaySafe === true && state.importInstant === undefined &&
                   [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
                 sourceK: state.optimistic ? null : state.sourceK,
                 position: state.position,
@@ -953,8 +954,14 @@ export const makeDatomicStorageAdapter = (
     transactionInstant: (now) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
+        const imported = yield* ImportClock;
         const instant = yield* Effect.try({
           try: () => {
+            if (imported || state.importInstant !== undefined) {
+              if (!imported || imported.scope !== scopeKey || strictRecordClocks || (state.importInstant !== undefined && state.importInstant !== imported.instant)) throw new Error("Source record clock conflicts with target scope or transaction");
+              // [DX-ACT1] Why: historical source ordinals can share or reverse clocks. Rejected: the normal monotone allocation or gateway clock-replay flag, which rewrites those cuts.
+              return (state.importInstant = imported.instant);
+            }
             if (!state.serverRecordTime)
               return physicalInstant(scopeKey, now, state.order ?? {}, strictRecordClocks);
             if (!Number.isFinite(now)) throw new RangeError("Nonfinite submitted clock");
