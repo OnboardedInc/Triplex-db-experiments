@@ -10,7 +10,7 @@ import { runWindow, type Offer, type Profile } from "./workload.ts";
 import type { Cut } from "./journal.ts";
 import { hash } from "./store.ts";
 
-export function inputPins(revision?: string) {
+export function inputPins(revision?: string): Record<string, string> {
   const base = new URL("./", import.meta.url);
   const observed = Object.fromEntries(
     [
@@ -33,7 +33,7 @@ export function inputPins(revision?: string) {
   if (revision) {
     assert(/^[a-f0-9]{40}$/.test(revision));
     for (const [file, digest] of Object.entries(observed)) {
-      const original = execFileSync("git", [
+      const original: Buffer = execFileSync("git", [
         "show",
         revision + ":lab/experiments/EXP-DX1/notify1/" + file,
       ]);
