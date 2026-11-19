@@ -32,7 +32,7 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
     rx = new Receiver(join(dir, "receiver.sqlite"), s.scope, f.id);
     const stages: any[] = [],
       reader = new LazyReader(s, format, 4 << 20, () => valid);
-    let guardRows=0;
+    let guardRows = 0;
     let state: any = { items: [], subjects: [], pending: [] };
     for (const [i, release] of [W0.R1, W0.R2, W0.R3].entries()) {
       const old = await s.head(),
@@ -109,12 +109,17 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
         candidates: string[] = [],
         fractions: any[] = [];
       await d.drain((r) => {
-        for(const c of r.receipt.changes){
-          const allowed=c.entityId==="lazy/account/dispatcher"||r.changedSubjects.some(owner=>
-            c.entityId==="lazy/item/"+owner && c.attribute==="lazy/items" || c.entityId==="lazy/pending/"+owner && c.attribute==="lazy/delivery");
-          if(!allowed)guardRows++;
+        for (const c of r.receipt.changes) {
+          const allowed =
+            c.entityId === "lazy/account/dispatcher" ||
+            r.changedSubjects.some(
+              (owner) =>
+                (c.entityId === "lazy/item/" + owner && c.attribute === "lazy/items") ||
+                (c.entityId === "lazy/pending/" + owner && c.attribute === "lazy/delivery"),
+            );
+          if (!allowed) guardRows++;
         }
-        assert.equal(guardRows,0,"Unexpected subject or guard write");
+        assert.equal(guardRows, 0, "Unexpected subject or guard write");
 
         if (r.event === ack.position) {
           effects.push(...r.deliveries);
@@ -220,19 +225,134 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
       });
       disk(dir, "stage-" + i + ".json", stages.at(-1));
     }
-    if(n===1000 && format==="w0" && verifyAll){
-      const old=await s.head(),rows=await s.rows(["jur:g0"],old,valid),floor=rows.find(r=>r.attribute==="stateMinWageCents")!;
-      const change=await s.input("two-hop-correction",{kind:"source",at:valid},[{op:"retract",id:floor.id},{op:"assert",entityId:"jur:g0",attribute:"stateMinWageCents",value:{type:"integer",value:"1950"},validFrom:1}]);
-      const h=createHash("sha256"),records=[];
-      for(let lo=0;lo<n;lo+=32){const ids=f.roster.slice(lo,lo+32),actual=await reader.readMany(ids,change.position,valid);
-        for(const [j,id] of ids.entries()){
-          const world=f.world(lo+j);const expected=await oracle.call("evaluate",{world:{subject:id,facts:world.facts.map(f=>f.e==="jur:g0"&&f.a==="stateMinWageCents"?{...f,v:1950,tx:change.position}:f)},release:"R3",basis:{tx:change.position,validTime:valid}});
-          assert.equal(actual[j],expected);h.update(expected+"\n");const o=JSON.parse(expected);records.push({basis:o.basis,release:o.release,subject:id,workItems:o.workItems});
+    if (n === 1000 && format === "w0" && verifyAll) {
+      const old = await s.head(),
+        rows = await s.rows(["jur:g0"], old, valid),
+        floor = rows.find((r) => r.attribute === "stateMinWageCents")!;
+      const change = await s.input("two-hop-correction", { kind: "source", at: valid }, [
+        { op: "retract", id: floor.id },
+        {
+          op: "assert",
+          entityId: "jur:g0",
+          attribute: "stateMinWageCents",
+          value: { type: "integer", value: "1950" },
+          validFrom: 1,
+        },
+      ]);
+      const h = createHash("sha256"),
+        records = [];
+      for (let lo = 0; lo < n; lo += 32) {
+        const ids = f.roster.slice(lo, lo + 32),
+          actual = await reader.readMany(ids, change.position, valid);
+        for (const [j, id] of ids.entries()) {
+          const world = f.world(lo + j);
+          const expected = await oracle.call("evaluate", {
+            world: {
+              subject: id,
+              facts: world.facts.map((f) =>
+                f.e === "jur:g0" && f.a === "stateMinWageCents"
+                  ? { ...f, v: 1950, tx: change.position }
+                  : f,
+              ),
+            },
+            release: "R3",
+            basis: { tx: change.position, validTime: valid },
+          });
+          assert.equal(actual[j], expected);
+          h.update(expected + "\n");
+          const o = JSON.parse(expected);
+          records.push({ basis: o.basis, release: o.release, subject: id, workItems: o.workItems });
         }
       }
-      const wanted=JSON.parse(await oracle.call("publish",{state,evaluations:records})),observed:W0.Delivery[]=[];
-      await d.drain(r=>observed.push(...r.deliveries));assert.deepEqual(observed.map(wire),wanted.deliveries);
-      disk(dir,"mutation.json",{tx:change.txId,cut:change.position,prior:old,checked:n,outputs:h.digest("hex"),owed:observed.length});
+      const wanted = JSON.parse(await oracle.call("publish", { state, evaluations: records })),
+        observed: W0.Delivery[] = [];
+      await d.drain((r) => observed.push(...r.deliveries));
+      assert.deepEqual(observed.map(wire), wanted.deliveries);
+      disk(dir, "mutation.json", {
+        tx: change.txId,
+        cut: change.position,
+        prior: old,
+        checked: n,
+        outputs: h.digest("hex"),
+        owed: observed.length,
+      });
+    }
+    const maintenance = [];
+    if (format === "w0" && verifyAll) {
+      await rx.drain(s);
+      for (let sample = 0; sample < 8; sample++) {
+        const i = 1 + 10 * sample,
+          subject = f.roster[i]!,
+          world = f.world(i),
+          old = world.facts.find((x) => x.e === subject && x.a === "payRateCents")!;
+        const start = performance.now(),
+          native = (await s.rows([subject], await s.head(), valid)).find(
+            (r) => r.entityId === subject && r.attribute === "payRateCents",
+          )!;
+        assert.equal(Number(native.value.value), old.v);
+        const pay = sample % 2 ? (Number(old.v) < 1650 ? 1800 : 1400) : Number(old.v);
+        const source = await s.input("ordinary/" + i, { kind: "source", at: valid }, [
+          { op: "retract", id: native.id },
+          {
+            op: "assert",
+            entityId: subject,
+            attribute: "payRateCents",
+            value: { type: "integer", value: String(pay) },
+            validFrom: 0,
+          },
+        ]);
+        const saved = performance.now(),
+          deltas: W0.Delivery[] = [];
+        let cursorWrites = 0,
+          changed = 0;
+        await d.drain((r) => {
+          cursorWrites++;
+          changed += r.changedSubjects.length;
+          deltas.push(...r.deliveries);
+        });
+        const published = performance.now();
+        const delivered = await rx.drain(s),
+          end = performance.now();
+        assert.equal(delivered, deltas.length);
+        const b = { tx: source.position, validTime: valid };
+        const answer = JSON.parse(
+          await oracle.call("evaluate", {
+            world: {
+              subject,
+              facts: world.facts.map((x) =>
+                x === old ? { ...x, v: pay, tx: source.position } : x,
+              ),
+            },
+            release: "R3",
+            basis: b,
+          }),
+        );
+        const prior = {
+          items: state.items.filter((it: any) => it.subject === subject),
+          subjects: [],
+          pending: [],
+        };
+        const wanted = JSON.parse(
+          await oracle.call("publish", {
+            state: prior,
+            evaluations: [
+              { basis: b, subject, release: answer.release, workItems: answer.workItems },
+            ],
+          }),
+        );
+        assert.deepEqual(deltas.map(wire), wanted.deliveries);
+        assert.equal(changed, Number(canonical(prior.items) !== canonical(wanted.state.items)));
+        maintenance.push({
+          source: source.txId,
+          subject,
+          changed,
+          delivered,
+          cursorWrites,
+          saveMs: saved - start,
+          reconcileMs: published - saved,
+          receiverMs: end - published,
+        });
+      }
     }
     const result = {
       nonce,
@@ -246,6 +366,7 @@ export async function price(dir: string, n: number, format: Format = "w0", verif
       seedHash: f.sourceHash,
       oldGuards: verifyAll ? state.subjects.length : null,
       lazyGuards: guardRows,
+      maintenance,
       queryPlans: d.queryPlans,
       stages,
     };
