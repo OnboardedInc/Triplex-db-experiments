@@ -72,9 +72,9 @@ try {
     move: "500,2000,5000",
     replication: "1",
     "one-failover": "1000,10000,100000,1000000",
-    "one-backup": "1000,10000,100000",
-    "one-whole": "1000,10000,100000",
-    "one-account": "100,1000,10000",
+    "one-backup": "1000,10000,100000,1000000",
+    "one-whole": "1000,10000,100000,1000000",
+    "one-account": "100,1000,10000,100000",
     "one-sync": "1000",
   };
   assert(shape === "deep" || shape === "mixed");

@@ -24,3 +24,5 @@ At 2,078,720 seed facts, four elections recovered with intact receipts and pinne
 The account feed carries the original transaction positions in its events. Its independent tenant sequence drives pagination. Each copied event now checks both coordinates against the authored receipt, including gaps left by neighboring tenants.
 
 A replay gate caught the shipped TypeScript client's optional last-seen transaction hint on a blind append. The peer validates that hint and excludes it from the durable business identity. A separate client retries the identical correction without the hint and checks the original receipt. Both restore sizes completed, including a primary crash with the asynchronous WAL receiver still streaming.
+
+The final tenant client validates the operation, record time, tenant and generation at the public boundary. Its negative tests reject a valid-looking receipt from another command or clock. The shared admission code claims the free timer before hashing a candidate and releases it immediately when the pool declines the request. The full bench profiles reach a 160-million-fact store and a 16-million-fact account extraction.

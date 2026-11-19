@@ -306,3 +306,31 @@ test("an original read basis uses both cuts and resolves an empty account prefix
     endpoint.close();
   }
 });
+
+test("the routed client rejects a well-formed acknowledgement for another command or record time", async () => {
+  const endpoint = new AccountEndpoint("red", {
+    db: "db",
+    generation: 1,
+    endpoint: "http://" + loopback,
+  });
+  const factory = new Account("fixture", "http://" + loopback, "http://" + loopback);
+  try {
+    const input = { ...factory.intent("one"), operationId: "red~one" };
+    const receipt = {
+      operationId: input.operationId,
+      t: { t: "long", v: "1010" },
+      position: { t: "long", v: "2" },
+      recordedAt: { t: "double", v: input.claims[0]!.timestamp },
+    } as const;
+    endpoint.native.transact = async () => ({ ...receipt, operationId: "blue~one" });
+    await assert.rejects(endpoint.commit(input), { name: "AssertionError" });
+    endpoint.native.transact = async () => ({
+      ...receipt,
+      recordedAt: { t: "double", v: receipt.recordedAt.v + 1 },
+    });
+    await assert.rejects(endpoint.commit(input), { name: "AssertionError" });
+  } finally {
+    endpoint.close();
+    factory.close();
+  }
+});

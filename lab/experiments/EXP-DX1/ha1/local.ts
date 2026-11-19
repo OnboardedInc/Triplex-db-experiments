@@ -78,44 +78,46 @@ export async function localDrill(opts: any, config: any, manager: any) {
         try {
           await withPool((ledger: any) => {
             manager.assertMeasureAdmission(opts.holder);
-            if (fs.existsSync(parentLease)) return;
-            const live = listTx2Containers({ all: true });
-            const candidate = slots.find(
-              (slot) =>
-                !fs.existsSync(slot.lockDir) && !live.some((c: any) => c.name === slot.container),
-            );
-            if (!candidate) return;
-            info = candidate;
-            const req = {
-              container: "tx2-ha1-admission",
-              memBytes: bytes,
-              diskForecastBytes: forecastBytes,
-            };
-            const pol = {
-              ...config,
-              pool: {
-                ...config.pool,
-                memLimitBytes: Math.min(config.pool.memLimitBytes, 15 * 2 ** 30),
-              },
-            };
-            if (
-              !admission({
-                config: pol,
-                reservations: ledger.reservations,
-                running: live,
-                request: req,
-                diskUsedBytes: vmDisk(config).usedBytes,
-              }).ok
-            )
-              return;
-            e = declare(info.slot);
             try {
               fs.mkdirSync(parentLease);
             } catch (err: any) {
               if (err.code === "EEXIST") return;
               throw err;
             }
+            // [DX-HA1] Why: hold the measurement timer while checking capacity and binding the winning slot. Rejected: hashing a candidate before mkdir while a competing run can claim the timer.
+            const inode = fs.statSync(parentLease).ino;
+            let ownedFile = false;
             try {
+              const live = listTx2Containers({ all: true });
+              const candidate = slots.find(
+                (slot) =>
+                  !fs.existsSync(slot.lockDir) && !live.some((c: any) => c.name === slot.container),
+              );
+              if (!candidate) return;
+              info = candidate;
+              const req = {
+                container: "tx2-ha1-admission",
+                memBytes: bytes,
+                diskForecastBytes: forecastBytes,
+              };
+              const pol = {
+                ...config,
+                pool: {
+                  ...config.pool,
+                  memLimitBytes: Math.min(config.pool.memLimitBytes, 15 * 2 ** 30),
+                },
+              };
+              if (
+                !admission({
+                  config: pol,
+                  reservations: ledger.reservations,
+                  running: live,
+                  request: req,
+                  diskUsedBytes: vmDisk(config).usedBytes,
+                }).ok
+              )
+                return;
+              e = declare(info.slot);
               fs.writeFileSync(
                 path.join(parentLease, "owner.json"),
                 JSON.stringify({
@@ -127,27 +129,35 @@ export async function localDrill(opts: any, config: any, manager: any) {
                 }),
                 { flag: "wx" },
               );
+              ownedFile = true;
+              const slot = manager.acquireSlot(info, opts.holder, "DX-HA1");
+              assert(slot.created);
+              acquired = true;
+              for (const [role, mb] of wanted)
+                ledger.reservations.push({
+                  container: e.prefix + "-" + role,
+                  holder: opts.holder,
+                  lane: "datomic",
+                  slot: info.slot,
+                  pid: process.pid,
+                  state: "drill",
+                  memBytes: mb * 2 ** 20,
+                  cpus: 1.5,
+                  diskForecastBytes: role === "pg" ? req.diskForecastBytes : 0,
+                });
               measured = true;
-            } catch (err) {
-              fs.rmdirSync(parentLease);
-              throw err;
+              reserved = true;
+            } finally {
+              if (!measured) {
+                assert.equal(fs.statSync(parentLease).ino, inode);
+                if (ownedFile) {
+                  const file = path.join(parentLease, "owner.json");
+                  assert.equal(JSON.parse(fs.readFileSync(file, "utf8")).nonce, e!.nonce);
+                  fs.unlinkSync(file);
+                }
+                fs.rmdirSync(parentLease);
+              }
             }
-            const slot = manager.acquireSlot(info, opts.holder, "DX-HA1");
-            assert(slot.created);
-            acquired = true;
-            for (const [role, mb] of wanted)
-              ledger.reservations.push({
-                container: e.prefix + "-" + role,
-                holder: opts.holder,
-                lane: "datomic",
-                slot: info.slot,
-                pid: process.pid,
-                state: "drill",
-                memBytes: mb * 2 ** 20,
-                cpus: 1.5,
-                diskForecastBytes: role === "pg" ? req.diskForecastBytes : 0,
-              });
-            reserved = true;
           });
         } catch (err: any) {
           if (err.code !== "REFUSED" || measured) throw err;

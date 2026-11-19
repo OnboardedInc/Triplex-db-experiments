@@ -75,10 +75,22 @@ export class AccountEndpoint {
   }
   async commit(input: Input) {
     const payload = { ...input, haAccount: this.account, haGeneration: this.place.generation };
-    return immutable(await this.native.transact(this.place.db, payload));
+    const receipt = immutable(await this.native.transact(this.place.db, payload));
+    assert.equal(receipt.operationId, input.operationId);
+    assert.equal(receipt.recordedAt.v, input.claims[0]?.timestamp);
+    return receipt;
   }
-  state() {
-    return this.post<Snapshot>("state");
+  async state() {
+    const v = await this.post<Snapshot>("state");
+    assert(
+      v.account === this.account &&
+        v.generation === this.place.generation &&
+        Number.isSafeInteger(v.sequence) &&
+        Number.isSafeInteger(v.verified) &&
+        v.verified >= 0 &&
+        v.verified <= v.sequence,
+    );
+    return v;
   }
   lookup(operationId: string) {
     return this.post<{ found: boolean; sequence: number; receipt: Receipt }>("lookup", {
@@ -99,7 +111,11 @@ export class AccountEndpoint {
     let n = cursor.after;
     for (const r of page.entries) {
       assert(r.account === this.account && r.sequence === ++n);
-      immutable(r.receipt);
+      const receipt = immutable(r.receipt);
+      assert(
+        receipt.operationId.startsWith(this.account + "~") &&
+          r.feed.operationId === receipt.operationId,
+      );
     }
     return page;
   }
@@ -109,21 +125,31 @@ export class AccountEndpoint {
     validAt = 10,
     history = false,
   ) {
-    return (
-      await this.post<{ rows: Record<string, any>[] }>("read", {
-        ...pin,
-        subject,
-        validAt,
-        history,
-      })
-    ).rows.sort((a, b) => a["id"].v.localeCompare(b["id"].v));
+    const { rows } = await this.post<{ rows: Record<string, any>[] }>("read", {
+      ...pin,
+      subject,
+      validAt,
+      history,
+    });
+    assert(
+      rows.every(
+        (row) =>
+          row["entity_id"]?.v === subject &&
+          typeof row["id"]?.v === "string" &&
+          row["id"].v.startsWith(this.account + "~"),
+      ),
+    );
+    return rows.sort((a, b) => a["id"].v.localeCompare(b["id"].v));
   }
-  translate(origin: string, coordinate: "t" | "position", value: number) {
-    return this.post<{ account: string; sequence: number }>("translate", {
+  async translate(origin: string, coordinate: "t" | "position", value: number) {
+    assert(Number.isSafeInteger(value) && value >= 0);
+    const v = await this.post<{ account: string; sequence: number }>("translate", {
       origin,
       coordinate,
       value,
     });
+    assert(v.account === this.account && Number.isSafeInteger(v.sequence) && v.sequence >= 0);
+    return v;
   }
 }
 export interface Directory {
