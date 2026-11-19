@@ -123,10 +123,11 @@ export class DeepProjectionIndex {
       assert.equal(row.digest, hash([this.binding, i, Number(row.born), row.policy]));
       worlds.set(i, JSON.parse(String(row.policy)));
     }
-    if (missing.length) {
-      const page = await comp.sweepPage(missing.map(ids.placement), cut);
+    for (let offset = 0; offset < missing.length; offset += 32) {
+      const batch = missing.slice(offset, offset + 32);
+      const page = await comp.sweepPage(batch.map(ids.placement), cut);
       assert.deepEqual(page.reportedBasis, cut);
-      for (const i of missing)
+      for (const i of batch)
         worlds.set(
           i,
           this.project(

@@ -19,6 +19,7 @@ import { startReader, processSize } from "./reader.ts";
 import { Account, rootOf, digest, type Shape } from "./account.ts";
 import { activate, eadRelease } from "./activation.ts";
 import { smallPeople } from "../scale1/small-plan.ts";
+import { deepShape } from "../../../bench/lib/deep-world.ts";
 import { pageNamespace } from "../../../bench/lib/w0-page-outbox.ts";
 
 const [, mode, rung, dir] = process.argv.slice(2),
@@ -146,16 +147,22 @@ async function open(name: string, shape: Shape, count: number, first = 0, pooled
   return a;
 }
 async function batch(a: Account, active: boolean) {
-  const cap = a.shape === "deep" ? 6 : 48;
+  const cap = a.shape === "deep" ? 900 : 384;
   let group: number[] = [];
+  let facts = 0;
   for (let i = a.first; i < a.first + a.count; i++) {
     if (a.isTouched(i) !== active) continue;
-    group.push(i);
-    if (group.length === cap) {
+    const next = a.shape === "deep" ? deepShape(i - a.first).facts : 8;
+    // [DX-INT1] Why: a 34-task person can exceed five ordinary people in size. Keep each person's seed atomic and cap the aggregate command by facts.
+    // Rejected: a fixed number of people per command (six heavy deep worlds overflow the gateway transaction).
+    if (group.length && facts + next > cap) {
       await lease.checkpoint();
       await a.seed(group);
       group = [];
+      facts = 0;
     }
+    group.push(i);
+    facts += next;
   }
   if (group.length) await a.seed(group);
 }
@@ -305,7 +312,21 @@ async function trial() {
   }
   await caughtUp();
   const before = await phase("after-activity");
-  const sender = mode==='int1-proof'?await (await import('./receipt-proof.ts')).receiptProof(accounts[1]!,dir!):undefined;
+  let sender, regularDeep;
+  if (mode === "int1-proof") {
+    const proofs = await import("./receipt-proof.ts");
+    sender = await proofs.receiptProof(accounts[1]!, dir!);
+    const regular = await openComposition(
+      "reach-touched",
+      "datomic",
+      "int1-" + attempt + "-regular",
+    );
+    try {
+      regularDeep = await proofs.regularDeepProof(regular, path.join(dir!, "regular-deep"));
+    } finally {
+      await regular.close();
+    }
+  }
 
   const activation: any[] = [];
   let schedules = 0;
@@ -361,6 +382,11 @@ async function trial() {
     const after = await phase("after-publication");
     for (const a of accounts) {
       const s = a.comp.scopeName!;
+      assert.equal(
+        after.reader.scopes[s].admissions,
+        before.reader.scopes[s].admissions,
+        "Activation caused a demand admission",
+      );
       assert.equal(
         after.reader.scopes[s].entries,
         before.reader.scopes[s].entries,
@@ -420,6 +446,8 @@ async function trial() {
   const replayResults = accounts.map(replay);
   return {
     seedMs: totalSeedMs,
+    seedPipelineMs: accounts.reduce((n, a) => n + a.seedWallMs, 0),
+    seedAckMs: accounts.reduce((n, a) => n + a.seedAckMs, 0),
     coldSeedMs,
     latency: { cold: quant(cold), commit: quant(commit), resident: quant(hot), ryow: quant(own) },
     accounts: accounts.map((a, n) => ({
@@ -435,6 +463,7 @@ async function trial() {
     })),
     activation,
     sender,
+    regularDeep,
     schedules,
     moving,
   };

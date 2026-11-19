@@ -266,7 +266,7 @@ try {
     ],
     900,
   );
-  let pooled: unknown;
+  let pooled: Awaited<ReturnType<typeof verifyCase>> | undefined;
   for (const spec of scenarios) {
     const { size, key } = spec;
     assert(deadline - Date.now() > 600_000, "Insufficient time for another rung");
@@ -341,10 +341,13 @@ try {
         const observations = await verifyCase(dest, plan, head, tag, stack);
         if (key === "pooled-100") pooled = observations;
         if (key === "isolated-100") {
-          assert.deepEqual(observations, pooled);
+          assert(pooled);
+          assert.deepEqual(observations.accounts, pooled.accounts);
           write(path.join(day, "small-account-comparison.json"), {
             source: head,
-            accounts: observations,
+            accounts: observations.accounts,
+            pooled: pooled.summary,
+            isolated: observations.summary,
           });
         }
       } else {

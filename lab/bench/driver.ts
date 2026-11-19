@@ -568,7 +568,10 @@ async function run() {
     report.deep.trace = deepPlan.sha256;
     save();
   }
-  const activation = activationOnly ? new DeepActivation(rawDir, rungSubjects, runTag) : undefined;
+  const activation = activationOnly ? new DeepActivation(
+    rawDir, rungSubjects, runTag,
+    config.composition === "reach-touched" && process.env.DX_INT1_DEEP_RELEASE === "ead90" ? "ead90" : "standard",
+  ) : undefined;
   if (deepId) atomicWrite(path.join(rawDir, "seed-observed.json"), JSON.stringify({ identity: deepId, scope: scopeName, seed: report.deep.seed, trace: report.deep.trace }));
   if (seedOnly) {
     report.status = "SEEDED"; save(); samplersOn = false; clearInterval(eluTimer);

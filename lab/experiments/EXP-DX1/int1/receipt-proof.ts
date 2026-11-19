@@ -1,14 +1,57 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import path from "node:path";
 import { ReplicaThread } from "../../../bench/lib/replica-thread.ts";
 import { SpillThread } from "../../../bench/lib/spill-thread.ts";
 import { R, observe } from "../../../bench/lib/observe.ts";
-import { V_W0 } from "../../../bench/lib/w0-world.ts";
-import type { Basis } from "../../../bench/lib/composition.ts";
-import { Account, rootOf } from "./account.ts";
+import { V_W0, canonical } from "../../../bench/lib/w0-world.ts";
+import type { Basis, CompositionHandle } from "../../../bench/lib/composition.ts";
+import { Account, rootOf, seedFacts } from "./account.ts";
 import { DeepProjectionIndex } from "../../../bench/lib/deep-projection-index.ts";
-import { policyWorld } from "../../../bench/lib/deep-activation.ts";
-import { canonical } from "../../../bench/lib/w0-world.ts";
+import { DeepActivation, policyWorld } from "../../../bench/lib/deep-activation.ts";
+
+// [DX-INT1] Why: run SCALE1's ordinary activation entry on certified transaction-feed data and compare both published cuts to its full-world Python oracle.
+// Rejected: proving only the population experiment's separate paged workload.
+export async function regularDeepProof(comp: CompositionHandle, dir: string) {
+  assert.equal(await comp.currentPosition(), 0);
+  fs.mkdirSync(dir);
+  const size = 6;
+  const seed = await comp.transact(
+    Array.from({ length: size }, (_, i) => seedFacts("deep", i)).flat(),
+    {
+      actor: "import",
+      commandId: "regular-deep-seed",
+    },
+  );
+  assert(seed.ok);
+  const cut = seed.value.position;
+  const scope = comp.scopeName!;
+  const sources: string[] = [];
+  const handle = {
+    ...comp,
+    sweepPage: async (...args: Parameters<typeof comp.sweepPage>) => {
+      sources.push(...args[0].filter((root) => root.startsWith("pl:")));
+      return comp.sweepPage(...args);
+    },
+  };
+  const act = new DeepActivation(dir, size, scope, "ead90");
+  const before = comp.touchedUsage?.();
+  const first = await act.execute(handle, "R1", () => {});
+  const second = await act.execute(handle, "R2", () => {});
+  assert.deepEqual(sources, []);
+  assert.deepEqual(first.selection, { full: size, candidates: 0, excluded: 0 });
+  assert.deepEqual(second.selection, { full: 0, candidates: size, excluded: 0 });
+  assert.equal(comp.touchedUsage?.().admissions, before?.admissions);
+  const verified = await act.verify(comp, first, second);
+  assert.equal(verified.guardComparisons, size * 2);
+  return {
+    scope,
+    seed: cut,
+    sourcePulls: sources.length,
+    selections: [first.selection, second.selection],
+    ...verified,
+  };
+}
 // [DX-INT1] Why: exercise the real sender's off-thread receipt capture, on the same cut as an original deep-account receipt.
 // Rejected: declaring worker compatibility from a composition name or a successful RPC alone.
 export async function receiptProof(a: Account, dir: string) {

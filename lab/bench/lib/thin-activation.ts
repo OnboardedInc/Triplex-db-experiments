@@ -37,6 +37,8 @@ const answerIndependentReleases = new Set([
   "sha256:f345d9fe4291803259021ad30ff00afecc1f48af4d4b403860b3ace52315312e",
 ]);
 
+export const answerIndependent = (hash: string) => answerIndependentReleases.has(hash);
+
 export function rosterDigest(ids: Iterable<string>): Coverage {
   const hash = createHash("sha256").update("[");
   let count = 0,
@@ -49,7 +51,7 @@ export function rosterDigest(ids: Iterable<string>): Coverage {
   return { count, sha256: hash.update("]").digest("hex") };
 }
 
-function answersOnly(subject: string, changes: readonly ImportChange[], tx: number) {
+export function answersOnly(subject: string, changes: readonly ImportChange[], tx: number) {
   const facts: W0.World["facts"][number][] = [];
   for (const c of changes) {
     const v = c.value;
@@ -195,7 +197,7 @@ export class ThinRoster {
     );
     if (coverage.count !== expected.count || coverage.sha256 !== expected.sha256)
       throw Error("Activation coverage differs");
-    const known = answerIndependentReleases.has(release.hash);
+    const known = answerIndependent(release.hash);
     const hash = createHash("sha256");
     let dismissed = 0,
       evaluated = 0,

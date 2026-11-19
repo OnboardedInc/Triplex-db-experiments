@@ -104,7 +104,16 @@ export class Replica {
   private applying = false;
   private charged = 0;
   private evictionCount = 0;
-  get retention() { return { bytes: this.charged, limit: this.byteBudget, evictions: this.evictionCount, entries: this.entities.delta.size }; }
+  private admittedCount = 0;
+  get retention() {
+    return {
+      bytes: this.charged,
+      limit: this.byteBudget,
+      evictions: this.evictionCount,
+      admissions: this.admittedCount,
+      entries: this.entities.delta.size,
+    };
+  }
   private charge(entries: ReadonlyMap<string, PackedEntity>) {
     let bytes = 0;
     for (const [id, e] of entries) bytes += (e.byteLength ?? e.buffer.byteLength) + 256 + 2 * id.length;
@@ -436,7 +445,10 @@ export class Replica {
         this.charged += this.charge(add);
       }
       for (const [id, entity] of add) this.entities.set(id, entity);
-      if (add.size) this.onAdmission?.(p, add);
+      if (add.size) {
+        this.onAdmission?.(p, add);
+        this.admittedCount += add.size;
+      }
       return true;
     } catch (error) {
       return this.invalidate(error);

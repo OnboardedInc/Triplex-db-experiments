@@ -10,6 +10,7 @@ import { publishChanged } from "../../../bench/lib/w0-replica.ts";
 import { pageRoots } from "../../../bench/lib/w0-page-outbox.ts";
 import { pageWireState } from "../../../bench/lib/w0-page-check.ts";
 import { parseOutbox, readOutboxAt } from "../../../bench/lib/w0-outbox-state.ts";
+import { answerIndependent } from "../../../bench/lib/thin-activation.ts";
 import { Account, policyId, digest } from "./account.ts";
 
 const wire = (state: any) => ({
@@ -26,6 +27,10 @@ export async function activate(
   basisPosition: number,
   checkpoint: () => Promise<void>,
 ) {
+  assert.equal(W0.compileRelease(release.doc).hash, release.hash);
+  const needCompleteAnswers =
+    !answerIndependent(release.hash) && release.hash !== eadRelease().hash;
+  const priorSourceReads = account.sourceWorldReads;
   const roster = account.roster(),
     cut = {
       scope: account.comp.scopeName!,
@@ -70,7 +75,7 @@ export async function activate(
       for (let i = first; i < end; i++) {
         const id = policyId(i);
         ids.push(id);
-        worlds.set(id, await account.world(i, basisPosition));
+        worlds.set(id, await account.world(i, basisPosition, needCompleteAnswers));
       }
       const file = path.join(stem, "current-index.sqlite"),
         cursor = path.join(stem, "current-checkpoint.sqlite");
@@ -108,19 +113,17 @@ export async function activate(
           ack.coverage.roster === digest(canonical(ids)) &&
           ack.coverage.size === ids.length,
       );
-      const positions = ack.responses.map((r) => {
-        assert("txId" in r && r.txId && Number(r.position) > basisPosition);
-        return Number(r.position);
+      const claims = ack.responses.map((r) => {
+        assert("span" in r && r.span && r.txId && Number(r.position) > basisPosition);
+        return [r.span, r.input, r.txId, r.position, r.members] as const;
       });
+      const positions = claims.map((r) => Number(r[3]));
       assert(positions.length);
-      const receiptBytes =
-        canonical([
-          first,
-          seal,
-          selection.binding,
-          ack.coverage,
-          ack.responses.map((r) => ("txId" in r ? [r.txId, r.position] : null)),
-        ]) + "\n";
+      assert.equal(
+        ack.coverage.receipts,
+        digest(canonical(claims.map((r) => digest(canonical(r))))),
+      );
+      const receiptBytes = canonical([first, seal, selection.binding, ack.coverage, claims]) + "\n";
       fs.appendFileSync(path.join(dir, receiptFile), receiptBytes);
       pageHashes.update(receiptBytes);
       commits += ack.commits;
@@ -190,6 +193,13 @@ export async function activate(
   }
   assert.equal(rosterBytes.update("]").digest("hex"), roster);
   assert.equal(guards, account.count);
+  const sourceWorldReads = account.sourceWorldReads - priorSourceReads;
+  const required = Number(
+    account.db
+      .prepare("SELECT count(*) AS n FROM people WHERE born<=? AND dirty<=?")
+      .get(basisPosition, basisPosition)!.n,
+  );
+  assert.equal(sourceWorldReads, required, "A cold subject was read or a dirty world was missed");
   assert.equal(full + candidates + excluded, covered);
   return {
     cut,
@@ -197,6 +207,8 @@ export async function activate(
     covered,
     roster,
     guardReadbacks: guards,
+    sourceWorldReads,
+    certifiedWorlds: covered - sourceWorldReads,
     oracle: domain,
     candidates,
     excluded,

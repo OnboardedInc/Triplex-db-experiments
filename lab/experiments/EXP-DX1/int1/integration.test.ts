@@ -12,8 +12,23 @@ import { policyWorld } from "../../../bench/lib/deep-activation.ts";
 import { memoryComposition } from "../../../bench/lib/memory.ts";
 import { W0, V_W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { smallPeople } from "../scale1/small-plan.ts";
-import { cases } from "./bench-cases.ts";
+import { cases, verifyPages } from "./bench-cases.ts";
+import { regularDeepProof } from "./receipt-proof.ts";
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "int1-suite-"));
+test("the ordinary deep activation runs the page selector and Python oracle without fetching a cold person's closure", async () => {
+  const dir = tmp();
+  const comp = await memoryComposition("datomic", "deep-ordinary-" + randomUUID());
+  try {
+    const proof = await regularDeepProof(
+      { ...comp, name: "reach-touched" },
+      path.join(dir, "regular"),
+    );
+    assert.equal(proof.guardComparisons, 12);
+  } finally {
+    await comp.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
 test("certified deep worlds avoid a source pull, dirty worlds use it, and a changed committed prefix refuses restart", async () => {
   const dir = tmp(),
     comp = await memoryComposition("datomic", "deep-projection-" + randomUUID());
@@ -111,6 +126,15 @@ test("pooled and isolated deep accounts keep identical original intents, roster,
           const d = await activate(a, dir, r, a.head, async () => {});
           assert.equal(d.oracle, 4);
           assert.equal(d.guardReadbacks, 4);
+          await verifyPages(dir, d, a.first, a.count);
+          await assert.rejects(
+            verifyPages(
+              dir,
+              { ...d, cut: { ...d.cut, scope: "different-scope" } },
+              a.first,
+              a.count,
+            ),
+          );
           values.push(d.logical);
           a.head = await a.comp.currentPosition();
         }

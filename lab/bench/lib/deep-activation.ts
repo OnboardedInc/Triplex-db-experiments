@@ -10,6 +10,9 @@ import { pageWireState } from "./w0-page-check.ts";
 import { W0, canonical, type WorldRow, type PositionBasis } from "./w0-world.ts";
 import { ids, subjectOf } from "./world.ts";
 import { taskId } from "./deep-world.ts";
+import { DeepProjectionIndex } from "./deep-projection-index.ts";
+import { buildIndex, eadRelease, selectRelease, type SelectorCut } from "./w0-selector.ts";
+import { selectorOracle } from "./w0-selector-oracle.ts";
 
 const pageSize = 32;
 const businessTime = (ms: number) => new Date(ms).toISOString().replace(/Z$/, "000Z");
@@ -103,7 +106,14 @@ export class DeepActivation {
   private readonly directory: string;
   private readonly subjects: number;
   private readonly run: string;
-  constructor(directory: string, people: number, run: string) {
+  private readonly nextRelease: W0.CompiledRelease;
+  constructor(
+    directory: string,
+    people: number,
+    run: string,
+    next: "standard" | "ead90" = "standard",
+  ) {
+    this.nextRelease = next === "ead90" ? eadRelease() : W0.R2;
     this.directory = directory;
     this.subjects = people;
     this.run = run;
@@ -125,7 +135,7 @@ export class DeepActivation {
         return r;
       },
     };
-    const release = W0[name],
+    const release = name === "R1" ? W0.R1 : this.nextRelease,
       entity = `deep-release:${this.run}`,
       prior = this.cuts.get("R1");
     const ops = [
@@ -162,31 +172,105 @@ export class DeepActivation {
       sum = createHash("sha256");
     const records: W0.EvaluationRecord[] = [];
     const roster = Array.from({ length: this.subjects }, (_, i) => W0.placementId(i));
-    const projection = comp.name==='reach-touched' ? new (await import('./deep-projection-index.ts')).DeepProjectionIndex(path.join(this.directory,'deep-policy.sqlite'),hash(canonical([this.run,comp.scopeName,comp.backend.url,'deep/1',...['deep-activation','deep-projection-index','deep-world'].map(f=>hash(fs.readFileSync(new URL('./'+f+'.ts',import.meta.url),'utf8')))])),policyWorld) : undefined;
+    const binding =
+      comp.name === "reach-touched"
+        ? hash(
+            canonical([
+              this.run,
+              comp.scopeName,
+              comp.backend.url,
+              "deep/1",
+              ...["deep-activation", "deep-projection-index", "deep-world", "w0-selector"].map(
+                (name) =>
+                  hash(fs.readFileSync(new URL("./" + name + ".ts", import.meta.url), "utf8")),
+              ),
+            ]),
+          )
+        : undefined;
+    const projection = binding
+      ? new DeepProjectionIndex(
+          path.join(this.directory, "deep-policy.sqlite"),
+          binding,
+          policyWorld,
+        )
+      : undefined;
+    const selection = { full: 0, candidates: 0, excluded: 0 };
+    const policyBasis = { tx: cut.position, validTime: businessTime(cut.validAt) };
+    const basis = { position: cut.position, validAt: cut.validAt };
     try {
-      if(projection)await projection.catchUp(comp,{position:cut.position,validAt:cut.validAt});
-      for (let n = 0; n < this.subjects; n += pageSize) {
-        const group = Array.from(
-          { length: Math.min(pageSize, this.subjects - n) },
-          (_, j) => n + j,
-        );
-        const basis={position:cut.position,validAt:cut.validAt};
-        let worlds: Map<number,W0.World>;
-        if(projection) worlds=await projection.worlds(comp,group,basis);
-        else {
-          const page=await comp.sweepPage(group.map(ids.placement),basis);assert.deepEqual(page.reportedBasis,basis);
-          const rows=indexRows(page.rows);worlds=new Map(group.map(i=>[i,policyWorld(i,rows.get(i)??[],cut)]));
-        }
-        const lines:string[]=[];
-        for (const i of group) {
-          const world = worlds.get(i)!,
-            result = W0.sweepSubject(world, release, {
-              tx: cut.position,
-              validTime: businessTime(cut.validAt),
-            });
-          if ("error" in result) throw Error(`${name} evaluation failed: ${result.error}`);
-          lines.push(JSON.stringify([i, hash(canonical(world)), hash(result.json)]) + "\n");
-          records.push(result.record);
+      if (projection) await projection.catchUp(comp, basis);
+      // [DX-INT1] Why: ACT1 consumes dated policy inputs independently of demand admission. The ordinary deep trace retains its release and full-evaluation semantics.
+      // Rejected: substituting the narrow release in the frozen workload or warming a reader to evaluate a release.
+      const width = projection ? 256 : pageSize;
+      for (let n = 0; n < this.subjects; n += width) {
+        const group = Array.from({ length: Math.min(width, this.subjects - n) }, (_, j) => n + j);
+        const lines: string[] = [];
+        if (projection && binding) {
+          const worlds = await projection.worlds(comp, group, basis);
+          const members = group.map((i) => W0.placementId(i));
+          const byId = new Map(group.map((i) => [W0.placementId(i), worlds.get(i)!]));
+          const sealCut: SelectorCut = {
+            scope: comp.scopeName!,
+            generation: binding,
+            source: cut.txId,
+            basis: policyBasis,
+            frontier: cut.position,
+            erasure: this.run,
+          };
+          const file = path.join(this.directory, "deep-" + name + "-selector.sqlite");
+          const checkpoint = file + ".cursor";
+          const index =
+            release.hash === this.nextRelease.hash && release.hash !== W0.R2.hash
+              ? {
+                  file,
+                  seal: buildIndex(
+                    file,
+                    sealCut,
+                    members,
+                    members.map((id) => byId.get(id)!),
+                  ),
+                }
+              : undefined;
+          const page = selectRelease({
+            index,
+            checkpoint,
+            attempt: binding + "/" + cut.txId + "/" + n,
+            cut: sealCut,
+            roster: members,
+            release,
+            world: (id) => byId.get(id)!,
+            onPage: (rows) => {
+              for (const row of rows) {
+                const i = n + row.ordinal;
+                assert.equal(row.subject, W0.placementId(i));
+                lines.push(
+                  JSON.stringify([
+                    i,
+                    hash(canonical(worlds.get(i)!)),
+                    hash(W0.outputJson(row.output)),
+                  ]) + "\n",
+                );
+                records.push(W0.recordOf(row.output));
+              }
+            },
+          });
+          assert.equal(page.subjects, group.length);
+          selection.candidates += page.candidates;
+          selection.excluded += page.excluded;
+          selection.full += page.full;
+          fs.unlinkSync(checkpoint);
+          if (index) fs.unlinkSync(file);
+        } else {
+          const page = await comp.sweepPage(group.map(ids.placement), basis);
+          assert.deepEqual(page.reportedBasis, basis);
+          const rows = indexRows(page.rows);
+          for (const i of group) {
+            const world = policyWorld(i, rows.get(i) ?? [], cut);
+            const result = W0.sweepSubject(world, release, policyBasis);
+            if ("error" in result) throw Error(name + " evaluation failed: " + result.error);
+            lines.push(JSON.stringify([i, hash(canonical(world)), hash(result.json)]) + "\n");
+            records.push(result.record);
+          }
         }
         const bytes = lines.join("");
         fs.writeFileSync(fd, bytes);
@@ -216,6 +300,8 @@ export class DeepActivation {
         basis: { tx: BigInt(cut.position), validTime: businessTime(cut.validAt) },
       },
     });
+    if (projection)
+      assert.equal(selection.full + selection.candidates + selection.excluded, this.subjects);
     const coverage = result.coverage;
     assert(
       coverage &&
@@ -267,6 +353,7 @@ export class DeepActivation {
       publications: result.commits,
       publicationPosition,
       layout: "page-cut",
+      ...(projection ? { selection } : {}),
       coverage,
       changed: result.changed,
       startedAt,
@@ -299,7 +386,7 @@ export class DeepActivation {
       assert(
         rows[0]!.id === c.assertion &&
           rows[0]!.position === c.position &&
-          rows[0]!.value.value === [W0.R1.hash, W0.R2.hash][k],
+          rows[0]!.value.value === [W0.R1.hash, this.nextRelease.hash][k],
       );
     }
     const logs = ["R1", "R2"].map((release, k) => {
@@ -341,7 +428,11 @@ export class DeepActivation {
         );
       }
     }
-    const oracle = new DomainOraclePool(new URL("./w0-oracle.py", import.meta.url).pathname, 2);
+    const oracleFile =
+      this.nextRelease.hash === W0.R2.hash
+        ? new URL("./w0-oracle.py", import.meta.url).pathname
+        : selectorOracle(this.directory, this.nextRelease);
+    const oracle = new DomainOraclePool(oracleFile, 2);
     let checked = 0,
       itemChanges = 0;
     const changed = [0, 0];
@@ -439,7 +530,7 @@ export class DeepActivation {
       itemChanges,
       finalPosition: final,
       domain: "O-DOMAIN",
-      releaseHashes: [W0.R1.hash, W0.R2.hash],
+      releaseHashes: [W0.R1.hash, this.nextRelease.hash],
     };
   }
 }

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { Option } from "effect";
 import { canonicalWorld } from "../../../bench/lib/canonical.ts";
+import { answersOnly } from "../../../bench/lib/thin-activation.ts";
 import { seedOps } from "../../../bench/lib/commands.ts";
 import type {
   Basis,
@@ -47,7 +48,18 @@ export function seedFacts(shape: Shape, i: number, first = 0) {
   }));
 }
 const key = (r: any) =>
-  JSON.stringify([r.entityId, r.attribute, r.value.type, r.value.value, r.validFrom]);
+  JSON.stringify([
+    r.entityId,
+    r.attribute,
+    r.value.type,
+    r.value.value,
+    r.validFrom,
+    r.validTo?._tag === "Some"
+      ? r.validTo.value
+      : r.validTo?._tag === "None"
+        ? null
+        : (r.validTo ?? null),
+  ]);
 const publicRow = (op: any, id: string, r: Receipt) => ({
   id,
   entityId: op.entityId,
@@ -64,15 +76,29 @@ const publicRow = (op: any, id: string, r: Receipt) => ({
   retractTxId: Option.none(),
 });
 export class Account {
+  readonly comp: CompositionHandle;
+  readonly shape: Shape;
+  readonly binding: string;
+  readonly first: number;
+  readonly count: number;
+  readonly db: DatabaseSync;
+  readonly cursor: { position: number };
   constructor(
-    readonly comp: CompositionHandle,
-    readonly shape: Shape,
-    readonly binding: string,
-    readonly first: number,
-    readonly count: number,
-    readonly db: DatabaseSync,
-    readonly cursor = { position: 0 },
+    comp: CompositionHandle,
+    shape: Shape,
+    binding: string,
+    first: number,
+    count: number,
+    db: DatabaseSync,
+    cursor = { position: 0 },
   ) {
+    this.comp = comp;
+    this.shape = shape;
+    this.binding = binding;
+    this.first = first;
+    this.count = count;
+    this.db = db;
+    this.cursor = cursor;
     db.exec(
       "PRAGMA cache_size=-2048; PRAGMA journal_mode=WAL; CREATE TABLE people(i INTEGER PRIMARY KEY, born INTEGER NOT NULL, policy TEXT, dirty INTEGER, hash TEXT NOT NULL); CREATE TABLE wanted(i INTEGER,p INTEGER,body TEXT,PRIMARY KEY(i,p)); CREATE TABLE tx(p INTEGER PRIMARY KEY,cmd TEXT NOT NULL,instant REAL NOT NULL,body TEXT)",
     );
@@ -85,6 +111,9 @@ export class Account {
   }
   facts = 0;
   commits: number[] = [];
+  seedWallMs = 0;
+  seedAckMs = 0;
+  sourceWorldReads = 0;
   reads = 0;
   ryow = 0;
   timeline: any[] = [];
@@ -97,6 +126,7 @@ export class Account {
       : worldOf(policyId(i), rows);
   }
   async seed(members: number[]) {
+    const started = performance.now();
     const groups = members.map((i) => seedFacts(this.shape, i, this.first));
     const { receipt, assigned, ops, tx } = await this.issue(groups.flat(), true);
     this.db.exec("BEGIN");
@@ -112,8 +142,14 @@ export class Account {
           }));
         // [DX-INT1] Why: certify complete ordered source assertions before persisting the policy projection. Unknown later writes require a pinned source read.
         // Rejected: rebuilding a cold person's entire closure in every reader at activation.
-        const data =
-          this.shape === "thin" ? null : JSON.stringify(this.original(i, seen, receipt.position));
+        const certified =
+          this.shape === "thin" &&
+          answersOnly(
+            policyId(i),
+            seen.map((op) => ({ ...op, op: "assert" as const, tripleId: op.id })),
+            receipt.position,
+          );
+        const data = certified ? null : JSON.stringify(this.original(i, seen, receipt.position));
         add.run(
           i,
           receipt.position,
@@ -137,6 +173,7 @@ export class Account {
       throw e;
     }
     this.facts += ops.length;
+    this.seedWallMs += performance.now() - started;
   }
   sample(i: number) {
     return (
@@ -179,11 +216,18 @@ export class Account {
     const tx = this.binding.slice(0, 18) + "-" + (this.head + 1);
     const t = performance.now();
     const ack = await this.comp.transact(ops, { commandId: tx, actor: "import" });
-    assert(ack.ok, JSON.stringify(ack.ok ? "" : ack.tag));
+    if (!ack.ok) {
+      const cause = ack.error as { message?: string; cause?: { message?: string } };
+      throw Error(
+        `Import at position ${this.head + 1} with ${ops.length} operations: ${ack.tag} ${cause?.message ?? ""} ${cause?.cause?.message ?? ""}`,
+      );
+    }
     if (!seed) this.commits.push(performance.now() - t);
+    else this.seedAckMs += performance.now() - t;
     const receipt = ack.value;
     assert.equal(receipt.position, this.head + 1);
     assert(Number.isFinite(receipt.instant) && receipt.txId);
+    assert.equal(receipt.triples.length, ops.length);
     const ids = new Map(receipt.triples.map((r) => [key(r), r.id]));
     const assigned = ops.map((op) => {
       const id = ids.get(key(op));
@@ -292,12 +336,13 @@ export class Account {
       data = r.policy;
     assert.equal(r.hash, digest(JSON.stringify([this.binding, i, b, data])));
     if (r.dirty !== null && Number(r.dirty) <= p) {
+      this.sourceWorldReads++;
       const cut = { position: p, validAt: V_W0 };
       const page = await this.comp.sweepPage([rootOf(this.shape, i)], cut);
       assert.deepEqual(page.reportedBasis, cut);
       return this.original(i, [...page.rows], p);
     }
-    if (this.shape === "deep") return JSON.parse(String(data)) as W0.World;
+    if (data !== null) return JSON.parse(String(data)) as W0.World;
     if (original)
       return this.original(
         i,

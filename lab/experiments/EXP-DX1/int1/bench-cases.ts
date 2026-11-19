@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { createInterface } from "node:readline";
 export const cases = [
   { key: "thin-1m", mode: "int1-thin", size: 1_000_000, accounts: 1, scopes: 1 },
   { key: "thin-4m", mode: "int1-thin", size: 4_000_000, accounts: 1, scopes: 1 },
@@ -10,6 +11,99 @@ export const cases = [
 ] as const;
 export type BenchCase = (typeof cases)[number];
 const read = (file: string) => JSON.parse(fs.readFileSync(file, "utf8"));
+export async function verifyPages(dir: string, decision: any, first: number, count: number) {
+  const { W0, canonical, sha256 } = await import("../../../bench/lib/w0-world.ts");
+  const { eadRelease } = await import("../../../bench/lib/w0-selector.ts");
+  const stem =
+    "release-" +
+    first +
+    "-" +
+    sha256(decision.cut.scope + decision.release + decision.cut.basis.tx).slice(0, 16);
+  assert.equal(decision.receiptFile, path.join(stem, "page-receipts.jsonl"));
+  const file = path.join(dir, decision.receiptFile);
+  const sum = createHash("sha256"),
+    roster = createHash("sha256").update("[");
+  let through = first,
+    lastPosition = decision.cut.basis.tx,
+    pages = 0;
+  const narrow = decision.release === eadRelease().hash;
+  assert(narrow || decision.release === W0.R1.hash);
+  // [DX-INT1] Why: reconstruct each immutable range and its member mask from the requested cohort, release and source cut before accepting a rung.
+  // Rejected: comparing a file hash to another string emitted by the same publisher without inspecting its contents.
+  for await (const line of createInterface({
+    input: fs.createReadStream(file),
+    crlfDelay: Infinity,
+  })) {
+    const [start, seal, selector, coverage, claims] = JSON.parse(line);
+    assert.equal(start, through);
+    const end = Math.min(first + count, start + 256 - (start % 256));
+    assert(end > start);
+    const ids = Array.from({ length: end - start }, (_, j) => W0.placementId(start + j));
+    const ordered = createHash("sha256");
+    let mask = 0n;
+    for (const [j, id] of ids.entries()) {
+      roster.update((start + j > first ? "," : "") + JSON.stringify(id));
+      const bytes = Buffer.alloc(4);
+      bytes.writeUInt32BE(Buffer.byteLength(id));
+      ordered.update(bytes).update(id);
+      mask |= 1n << BigInt((start + j) % 256);
+    }
+    const hashes = { roster: sha256(canonical(ids)), ordered: ordered.digest("hex") };
+    assert.deepEqual(seal.cut, decision.cut);
+    assert.equal(seal.prior, W0.R1.hash);
+    assert.equal(seal.roster, hashes.roster);
+    assert.equal(seal.ordered, hashes.ordered);
+    assert.equal(seal.pages.length, 1);
+    assert.match(seal.pages[0], /^[a-f0-9]{64}$/);
+    assert.equal(
+      selector,
+      sha256(
+        canonical({
+          domain: "W0-1.1.2/subject-documents-docType/v1",
+          attempt: decision.cut.generation + "/" + start,
+          cut: decision.cut,
+          ...hashes,
+          prior: W0.R1.hash,
+          next: decision.release,
+          seal: narrow ? seal : null,
+        }),
+      ),
+    );
+    assert.equal(claims.length, 1);
+    const [span, input, tx, position, members] = claims[0];
+    assert.deepEqual(span, {
+      roster: hashes.roster,
+      size: ids.length,
+      first: 0,
+      count: ids.length,
+      basis: decision.cut.basis,
+      release: decision.release,
+    });
+    assert.match(input, /^[a-f0-9]{64}$/);
+    assert(
+      typeof tx === "string" &&
+        tx.length &&
+        Number.isSafeInteger(position) &&
+        position > lastPosition,
+    );
+    assert.equal(members, mask.toString(16));
+    assert.deepEqual(coverage, {
+      roster: hashes.roster,
+      size: ids.length,
+      pages: 1,
+      receipts: sha256(canonical(claims.map((c: unknown) => sha256(canonical(c))))),
+    });
+    assert.equal(line, canonical([start, seal, selector, coverage, claims]));
+    sum.update(line + "\n");
+    lastPosition = position;
+    through = end;
+    pages++;
+  }
+  assert.equal(through, first + count);
+  assert.equal(pages, decision.commits);
+  assert.equal(roster.update("]").digest("hex"), decision.roster);
+  assert.equal(sum.digest("hex"), decision.receipts);
+}
 export async function verifyCase(
   dir: string,
   spec: BenchCase,
@@ -26,6 +120,11 @@ export async function verifyCase(
     )
     .digest("hex");
   assert.equal(inputs.binding, binding);
+  assert.equal(inputs.source, head);
+  assert.equal(inputs.slot, tag);
+  assert.equal(inputs.mode, spec.mode);
+  assert.equal(inputs.size, spec.size);
+  assert.equal(r.attempt, inputs.attempt);
   assert.equal(r.binding, binding);
   assert.equal(r.source, head);
   assert.equal(r.slot, tag);
@@ -42,6 +141,9 @@ export async function verifyCase(
   );
   const rows = await Promise.all(
     r.accounts.map(async (a: any, n: number) => {
+      const scopeName =
+        spec.accounts === 1 ? "population" : "account" + (spec.scopes === 1 ? 0 : n);
+      assert.equal(a.scope, "int1-" + inputs.attempt + "-" + scopeName);
       assert.equal(
         a.first,
         sizes.slice(0, n).reduce((a, b) => a + b, 0),
@@ -62,13 +164,12 @@ export async function verifyCase(
         assert.equal(decision.roster, a.roster);
         assert.equal(decision.covered, a.people);
         assert.equal(decision.guardReadbacks, a.people);
+        assert.equal(decision.sourceWorldReads, a.active);
+        assert.equal(decision.certifiedWorlds, a.people - a.active);
         assert.equal(decision.full + decision.candidates + decision.excluded, a.people);
         assert(decision.oracle > 0 && decision.wallMs > 0 && decision.commits > 0);
         assert.match(decision.logical, /^[a-f0-9]{64}$/);
-        const sum = createHash("sha256");
-        for await (const data of fs.createReadStream(path.join(dir, decision.receiptFile)))
-          sum.update(data);
-        assert.equal(sum.digest("hex"), decision.receipts);
+        await verifyPages(dir, decision, a.first, a.people);
       }
       return {
         first: a.first,
@@ -115,5 +216,41 @@ export async function verifyCase(
       "after-publication",
     ],
   );
-  return rows;
+  const summary = {
+    binding,
+    source: head,
+    slot: tag,
+    people: sizes.reduce((a, b) => a + b, 0),
+    physicalScopes: spec.scopes,
+    logicalAccounts: spec.accounts,
+    seedPipelineMs: r.seedPipelineMs,
+    seedAckMs: r.seedAckMs,
+    seedEndToEndMs: r.seedMs,
+    latencyMs: r.latency,
+    phases: phases.map((p) => ({
+      name: p.label,
+      disk: p.native.disk,
+      roles: {
+        ...p.native.roles,
+        reader: { rssBytes: p.reader.rssBytes, threads: p.reader.threads },
+        driver: p.driver,
+      },
+    })),
+    releases: r.activation.map((d: any) => ({
+      scope: d.cut.scope,
+      hash: d.release,
+      wallMs: d.wallMs,
+      covered: d.covered,
+      sourceWorldReads: d.sourceWorldReads,
+      oracle: d.oracle,
+      guardReadbacks: d.guardReadbacks,
+      pageCommits: d.commits,
+      bodyWrites: d.bodies,
+    })),
+  };
+  assert(summary.seedPipelineMs > 0 && summary.seedAckMs > 0);
+  fs.writeFileSync(path.join(dir, "rung-summary.json"), JSON.stringify(summary, null, 2) + "\n", {
+    flag: "wx",
+  });
+  return { accounts: rows, summary };
 }
