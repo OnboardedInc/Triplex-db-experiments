@@ -148,9 +148,11 @@ test("one narrow release covers the independent 1k roster and survives page inte
     }
     assert.equal(result.candidates + result.excluded, roster.length);
     for (const [at, point] of [
-      [0, "bytes"],
-      [256, "checkpoint"],
-      [768, "bytes"],
+      [100, "ordinal"],
+      [500, "ordinal"],
+      [900, "ordinal"],
+      [256, "bytes"],
+      [512, "checkpoint"],
     ] as const) {
       const job = { ...base, checkpoint: join(dir, String(at) + ".sqlite"), onPage: check };
       assert.throws(
@@ -174,6 +176,7 @@ test("one narrow release covers the independent 1k roster and survives page inte
       });
       assert.deepEqual(seen, roster);
       assert.equal(resumed.replayed, point === "bytes" ? Math.min(256, roster.length - at) : 0);
+      assert.equal(resumed.reused, point === "checkpoint" ? at + 256 : Math.floor(at / 256) * 256);
       assert.equal(resumed.binding, result.binding);
     }
     assert.throws(

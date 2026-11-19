@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { DomainOracle, emptyWireState } from "../../../bench/lib/w0-gates.ts";
 import { publishChanged } from "../../../bench/lib/w0-replica.ts";
-import { W0 } from "../../../bench/lib/w0-world.ts";
+import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { evaluation, observe, open } from "./check.ts";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import type { GuardLayout } from "../../../bench/lib/w0-guarded.ts";
@@ -27,15 +28,36 @@ const schedules: Record<string, Input[]> = {
 };
 for (const layout of [undefined, "full-state", "guard-fact"] as const) {
   for (const [name, steps] of Object.entries(schedules)) {
-    test((layout ?? "historical") + " / " + name, async () => {
+    test((layout ?? "historical") + " / " + name, async (t) => {
       const scope = "act1-" + randomUUID(),
         oracle = new DomainOracle();
       let comp = await open(scope),
         expected = emptyWireState();
       const divergences = [];
       try {
+        // [DX-ACT1] Why: compute the held record before basis 20 from the visible version of one pay history. Rejected: inventing two payloads for one assertion at the same clocks.
+        const writes = [
+          { tx: 10, from: "2026-11-04T00:00:00.000000Z", rate: 1600 },
+          { tx: 15, from: "2026-11-04T00:00:00.000000Z", rate: 1500 },
+          {
+            tx: 20,
+            from: W0.POPULATION_VALID_TIME,
+            rate: name.startsWith("first item") ? 1650 : 1600,
+          },
+        ];
+        const held = new Map<Input, Awaited<ReturnType<typeof evaluation>>>();
+        for (const args of [...steps].sort(
+          (a, b) =>
+            a[0] - b[0] ||
+            (a[2] ?? W0.POPULATION_VALID_TIME).localeCompare(b[2] ?? W0.POPULATION_VALID_TIME),
+        )) {
+          const [tx, rate, validTime = W0.POPULATION_VALID_TIME] = args;
+          const fact = writes.filter((w) => w.tx <= tx && w.from <= validTime).at(-1)!;
+          assert.equal(fact.rate, rate);
+          held.set(args, await evaluation(oracle, tx, fact.rate, validTime, W0.R1, fact.tx));
+        }
         for (const [i, args] of steps.entries()) {
-          const { record, wire } = await evaluation(oracle, ...args);
+          const { record, wire } = held.get(args)!;
           expected = JSON.parse(
             await oracle.call("publish", { state: expected, evaluations: [wire] }),
           ).state;
@@ -55,10 +77,37 @@ for (const layout of [undefined, "full-state", "guard-fact"] as const) {
               (await publishChanged(comp, [record], { layout })).responses[0].retry,
               true,
             );
+          } else if (
+            i === steps.length - 1 &&
+            (process.env.DX_ACT1_NATIVE === "1" || process.env.DX_ACT1_SQLITE_DIR)
+          ) {
+            const prior = await comp.currentPosition(),
+              nonce = randomUUID();
+            await comp.close();
+            const bytes = execFileSync(
+              process.execPath,
+              ["--experimental-strip-types", "lab/experiments/EXP-DX1/act1/deliver-held.ts"],
+              {
+                input: canonical({ scope, nonce, record, ...(layout ? { layout } : {}) }),
+                encoding: "utf8",
+                timeout: 45000,
+              },
+            );
+            const fresh = JSON.parse(bytes.trim());
+            assert.equal(fresh.scope, scope);
+            assert.equal(fresh.nonce, nonce);
+            assert.equal(fresh.before, prior);
+            if (layout) {
+              assert.equal(fresh.after, prior);
+              assert.deepEqual(fresh.state, expected);
+            }
+            comp = await open(scope);
           } else await publishChanged(comp, [record], { layout });
           await comp.close();
           comp = await open(scope);
-          const [actual] = await observe(comp, [record.subject], await comp.currentPosition());
+          const position = await comp.currentPosition();
+          const [actual] = await observe(comp, [record.subject], position);
+          t.diagnostic(JSON.stringify({ scope, position, record: wire, expected, actual }));
           if (layout || process.env.DX_ACT1_RED === "1") assert.deepEqual(actual, expected);
           else if (JSON.stringify(actual) !== JSON.stringify(expected)) divergences.push(i);
           if (!layout && i === steps.length - 1) {
@@ -77,7 +126,7 @@ for (const layout of [undefined, "full-state", "guard-fact"] as const) {
 }
 
 for (const layout of ["full-state", "guard-fact"] satisfies GuardLayout[]) {
-  test(layout + " / lost ACK, rollback, retirement and restart", async () => {
+  test(layout + " / lost ACK, rollback, retirement and restart", async (t) => {
     const scope = "act1-" + randomUUID(),
       oracle = new DomainOracle();
     let comp = await open(scope),
@@ -147,7 +196,19 @@ for (const layout of ["full-state", "guard-fact"] satisfies GuardLayout[]) {
         assert.deepEqual(JSON.parse(W0.receiveJson(twice)), replay);
         actualReceiver = twice.state;
         receiver = received.state;
-        assert.deepEqual((await observe(comp, [record.subject], receipt.position))[0], next.state);
+        const [actual] = await observe(comp, [record.subject], receipt.position);
+        t.diagnostic(
+          JSON.stringify({
+            scope,
+            txId: retry.txId,
+            position: retry.position,
+            record: wire,
+            expected: next,
+            actual,
+            receiver: received.state,
+          }),
+        );
+        assert.deepEqual(actual, next.state);
         state = next.state;
       }
     } finally {
@@ -155,7 +216,7 @@ for (const layout of ["full-state", "guard-fact"] satisfies GuardLayout[]) {
       oracle.close();
     }
   });
-  test(layout + " / concurrent first writers and stalled older snapshot", async () => {
+  test(layout + " / concurrent first writers and stalled older snapshot", async (t) => {
     const scope = "act1-" + randomUUID(),
       oracle = new DomainOracle();
     const a = await open(scope),
@@ -194,10 +255,19 @@ for (const layout of ["full-state", "guard-fact"] satisfies GuardLayout[]) {
         next = JSON.parse(
           await oracle.call("publish", { state: next, evaluations: [fast.wire, slow.wire] }),
         ).state;
-        assert.deepEqual(
-          (await observe(b, [fast.record.subject], await b.currentPosition()))[0],
-          next,
+        const position = await b.currentPosition();
+        const [actual] = await observe(b, [fast.record.subject], position);
+        t.diagnostic(
+          JSON.stringify({
+            scope,
+            position,
+            winner: fast.wire,
+            held: slow.wire,
+            expected: next,
+            actual,
+          }),
         );
+        assert.deepEqual(actual, next);
       }
     } finally {
       oracle.close();

@@ -45,11 +45,12 @@ export async function evaluation(
   rate: number,
   validTime = W0.POPULATION_VALID_TIME,
   release = W0.R1,
+  assertionTx = tx,
 ) {
   const world = structuredClone(fixture.world);
   Object.assign(
     world.facts.find((f: W0.Fact) => f.a === "payRateCents"),
-    { v: rate },
+    { v: rate, tx: assertionTx },
   );
   world.facts.push({
     e: world.facts.find((f: W0.Fact) => f.a === "location").v,

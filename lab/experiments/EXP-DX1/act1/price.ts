@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { DomainOracle, emptyWireState } from "../../../bench/lib/w0-gates.ts";
+import { measureHttp } from "../../../bench/lib/http-counts.ts";
 import { publishChanged } from "../../../bench/lib/w0-replica.ts";
 import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { outboxEntity, type OutboxStore } from "../../../bench/lib/w0-outbox.ts";
@@ -14,7 +15,27 @@ const N = 1000,
 const [action, root, scope] = process.argv.slice(2);
 if (!root || !["measure", "readback"].includes(action ?? ""))
   throw Error("price.ts measure NEW_DIRECTORY");
-process.env.DX_ACT1_SQLITE_DIR = resolve(root);
+const native = process.env.DX_ACT1_NATIVE === "1";
+if (!native) process.env.DX_ACT1_SQLITE_DIR = resolve(root);
+function slotBinding() {
+  if (!native) return { slot: "local-sqlite-full-sync" };
+  const ownerBytes = readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!);
+  const owner = JSON.parse(ownerBytes.toString());
+  assert.equal(owner.holder, "DX-ACT1");
+  assert.equal(owner.mode, "exclusive");
+  assert.equal(owner.lane, "datomic");
+  assert.equal(owner.endpoint, process.env.DATOMIC_URL);
+  const config = readFileSync(join(process.env.TX2_CONFIG_DIR!, "lab/config/slots.json"));
+  const lane = JSON.parse(config.toString()).lanes.datomic;
+  return {
+    slot: owner.container,
+    ownerSha256: sha256(ownerBytes),
+    configSha256: sha256(config),
+    imageId: lane.imageId,
+    gatewayInputsSha256: lane.sourceInputsSha256,
+  };
+}
+const slot = slotBinding();
 if (action === "readback") {
   const expected = JSON.parse(readFileSync(join(root, "expected.json"), "utf8"));
   const comp = await open(scope!);
@@ -125,7 +146,7 @@ if (action === "readback") {
     basis,
     later,
     releases: [W0.R1.hash, W0.R2.hash],
-    slot: "local-sqlite-full-sync",
+    ...slot,
     node: process.version,
     itemChanges,
   };
@@ -137,7 +158,7 @@ if (action === "readback") {
     await publishChanged(store, a, { layout, inflight: 1, frameSize: 32 });
     await store.close();
     const fileBytes = () => statSync(join(root, scope + ".db")).size;
-    const initialBytes = fileBytes();
+    const initialBytes = native ? 0 : fileBytes();
     store = await open(scope);
     let statePages = 0,
       stateRows = 0,
@@ -195,7 +216,10 @@ if (action === "readback") {
     };
     const cpu = process.cpuUsage(),
       start = performance.now();
-    const result = await publishChanged(comp, b, { layout, frameSize: 32, inflight: 1 });
+    const transport = await measureHttp(() =>
+      publishChanged(comp, b, { layout, frameSize: 32, inflight: 1 }),
+    );
+    const result = transport.value;
     const wallMs = performance.now() - start,
       usage = process.cpuUsage(cpu);
     await store.close();
@@ -220,13 +244,14 @@ if (action === "readback") {
       statePages,
       stateRows,
       headReads,
+      httpRequests: transport.requests,
       claimReads,
       casSubjects,
       assertedBytes,
       opsBytes,
       guardOnlyValueBytes,
       guardOnlySubjects: N - itemChanges,
-      fileGrowth: fileBytes() - initialBytes,
+      fileGrowth: native ? null : fileBytes() - initialBytes,
       txCount,
       reopened,
     };
@@ -236,6 +261,7 @@ if (action === "readback") {
   }
   for (const [path, digest] of Object.entries(sourceFiles))
     assert.equal(sha256(readFileSync(path)), digest);
+  assert.deepEqual(slotBinding(), slot);
   const historicalMs = arms[0]!.wallMs;
   const projections = arms.slice(1).map((arm) => {
     const seconds100k = 50.79 + (22.99 * arm.wallMs) / historicalMs;

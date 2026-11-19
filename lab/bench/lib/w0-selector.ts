@@ -167,7 +167,7 @@ export interface SelectOptions {
   release: W0.CompiledRelease;
   world: (id: string) => W0.World;
   onPage: (rows: readonly Selection[]) => void;
-  interrupt?: (first: number, point: "bytes" | "checkpoint") => void;
+  interrupt?: (ordinal: number, point: "ordinal" | "bytes" | "checkpoint") => void;
 }
 export function selectRelease(o: SelectOptions) {
   const hashes = rosterHashes(o.roster);
@@ -193,6 +193,7 @@ export function selectRelease(o: SelectOptions) {
       seal: use ? seal : null,
     }),
   );
+  if (o.resume && !existsSync(o.checkpoint)) throw Error("Missing selector checkpoint");
   const index = use ? new DatabaseSync(o.index!.file, { readOnly: true }) : undefined;
   const db = o.resume ? new DatabaseSync(o.checkpoint, { open: true }) : fresh(o.checkpoint);
   let candidates = 0,
@@ -257,6 +258,7 @@ export function selectRelease(o: SelectOptions) {
         rows = o.roster.slice(start, end).map((subject, j) => {
           const ordinal = start + j,
             m = members?.[j];
+          o.interrupt?.(ordinal, "ordinal");
           if (
             m &&
             (m.ordinal !== ordinal || m.subject !== subject || matches.has(ordinal) !== !!m.ead)

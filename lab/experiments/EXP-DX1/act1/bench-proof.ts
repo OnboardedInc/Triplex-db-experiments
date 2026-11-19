@@ -7,9 +7,13 @@ import { spawnSync } from "node:child_process";
 export const armNames = ["narrow-full", "narrow-selector", "standard-full"] as const;
 export type Arm = (typeof armNames)[number];
 export const sha = (data: string | Buffer) => createHash("sha256").update(data).digest("hex");
-const extraFiles = ["bench.ts", "bench-proof.ts", "guard.test.ts", "check.ts"].map(
-  (f) => "lab/experiments/EXP-DX1/act1/" + f,
-);
+const extraFiles = [
+  "bench.ts",
+  "bench-proof.ts",
+  "guard.test.ts",
+  "deliver-held.ts",
+  "check.ts",
+].map((f) => "lab/experiments/EXP-DX1/act1/" + f);
 export const programInputs = () =>
   Object.fromEntries(
     [
