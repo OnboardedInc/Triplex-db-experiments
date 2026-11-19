@@ -112,13 +112,18 @@ const seedBytes = fs.readFileSync(path.join(seedDir!, "seed.json"));
 const seed = JSON.parse(seedBytes.toString());
 const ownerFile = process.env.TRIPLEX_LAB_SLOT_OWNER!,
   owner = fs.readFileSync(ownerFile);
-assert.equal(sha256(owner), seed.ownerSha256);
+const seedOwner = fs.readFileSync(path.join(seedDir!, "owner.json"));
+assert.equal(sha256(seedOwner), seed.ownerSha256);
+assert.equal(seed.scope, "act2-deep-" + seed.nonce);
 const slot = JSON.parse(owner.toString());
 assert(
   slot.holder === "DX-ACT2" &&
     slot.endpoint === process.env.DATOMIC_URL &&
     slot.container === seed.slot,
 );
+const original = JSON.parse(seedOwner.toString());
+for (const field of ["lane", "container", "volume", "mode", "endpoint", "holder"])
+  assert.equal(slot[field], original[field]);
 const n = seed.accounts[1].people,
   accounts = accountsAt(n),
   target = accounts[1]!;
@@ -138,6 +143,7 @@ const sourceInputs = inputs(),
     scope: seed.scope,
     slot: seed.slot,
     seed: sha256(seedBytes),
+    seedOwner: sha256(seedOwner),
     owner: sha256(owner),
   };
 emit("attempt.json", binding);
@@ -153,6 +159,23 @@ let prior: Awaited<ReturnType<typeof activateDeepRelease>> | undefined;
 const profiles = [];
 const closures = [];
 try {
+  // [DX-ACT2] Why: independent slot admissions can reopen the retained seed volume. Bind the original membership and both ends of the original receipt sequence before any new write. Rejected: trusting a reused port or an unchanged folder name.
+  assert((await reader.currentPosition()) >= seed.seed.position);
+  const seedCut = { position: seed.seed.position, validAt: Date.now() };
+  const opened = await tenantQueries(reader, accounts, seedCut);
+  assert.deepEqual(opened.counts, seed.seed.membership);
+  assert.deepEqual(
+    seed.seed.ends.map((e: { position: number }) => e.position),
+    [1, seed.seed.position],
+  );
+  for (const end of seed.seed.ends) {
+    const found = await reader.transactionByCommand(end.commandId);
+    assert(found.ok && found.value);
+    assert.deepEqual(
+      [found.value.commandId, found.value.txId, found.value.position],
+      [end.commandId, end.txId, end.position],
+    );
+  }
   for (const name of ["R1", "R2"] as const) {
     const prefix = run + "-" + name;
     const before = await liveSave(comp, target.first, prefix + "-before");

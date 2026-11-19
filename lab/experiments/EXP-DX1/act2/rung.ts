@@ -21,6 +21,7 @@ export async function seedAccounts(comp: CompositionHandle, accounts: Account[])
   let batch: { subject: number; rows: Fact[] }[] = [],
     size = 0;
   let receipts = 0;
+  const ends: { commandId: string; txId: string; position: number }[] = [];
   async function flush() {
     if (!size) return;
     const ops = batch.flatMap(({ rows }) =>
@@ -32,12 +33,14 @@ export async function seedAccounts(comp: CompositionHandle, accounts: Account[])
         validFrom: SEED_VALID_FROM,
       })),
     );
+    const commandId = "act2:seed:" + batch[0]!.subject;
     const r = await comp.transact(ops, {
-      commandId: "act2:seed:" + batch[0]!.subject,
+      commandId,
       actor: "act2-seed",
     });
     if (!r.ok) throw Error("Seed failed " + r.tag);
     witness.observe(batch, r.value, SEED_VALID_FROM);
+    ends[receipts === 0 ? 0 : 1] = { commandId, txId: r.value.txId, position: r.value.position };
     size = 0;
     batch = [];
     if (++receipts % 50 === 0)
@@ -61,7 +64,7 @@ export async function seedAccounts(comp: CompositionHandle, accounts: Account[])
     position: seen.position,
     validAt: Date.now(),
   });
-  return { ...seen, receipts, membership: membership.counts };
+  return { ...seen, receipts, ends, membership: membership.counts };
 }
 
 if (process.argv[1] === import.meta.filename) {
@@ -91,6 +94,7 @@ if (process.argv[1] === import.meta.filename) {
     ownerSha256: createHash("sha256").update(owner).digest("hex"),
   };
   fs.writeFileSync(path.join(dir!, "attempt.json"), JSON.stringify(attempt) + "\n", { flag: "wx" });
+  fs.writeFileSync(path.join(dir!, "owner.json"), owner, { flag: "wx" });
   const comp = await openComposition("reach", "datomic", scope);
   try {
     const seed = await seedAccounts(comp, accounts);

@@ -10,6 +10,7 @@ Priority 5 still needs a correct 100,000-person server measurement.
 The frozen generator and archived mapper at `f37731a7c` match all six stored assertions in each of the two saves, including valid time. All 12 assertion IDs were distinct. Sequence 2299 asserted both `ans:t2299-0` and `ans:t2299-1` at positions 4,341,356 and 4,344,665. The head was 4,346,080. [Original evidence manifest](../bm1/SHA256SUMS)
 A single subject and two minimum-size saves reproduce the cardinality error. A second regression first failed because the second window was recognized as a retry. BM1 had already added separate entity prefixes for its two named phases. [Regression](identity.test.ts)
 The first local attempt completed 23 native schedules. Its combined seed, preflight and matrix workload lost the gateway within a 3.5 GiB slot. The retained partial run provides no completed matrix.
+Separate seed and matrix reservations bind both owners, the same volume and scope, membership at the original seed cut and the original first and last transaction IDs.
 The reduced deep fixtures contain one target account and eight neighboring subjects. The matrix shares each release's immutable input across the evaluator counts and publishes each control in its own fresh namespace.
 
 **Prepared server command**
