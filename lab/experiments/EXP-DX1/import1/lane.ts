@@ -84,8 +84,8 @@ export class ImportLane {
     const j = this.queue.shift()!;
     this.active = true;
     const start = performance.now();
-    void j
-      .work()
+    void Promise.resolve()
+      .then(j.work)
       .then(j.resolve, j.reject)
       .finally(() => {
         const end = performance.now();

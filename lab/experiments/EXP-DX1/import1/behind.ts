@@ -34,7 +34,8 @@ agent.addRequest = function (req: http.ClientRequest, ...args: any[]) {
   return original.call(this, req, ...args);
 };
 try {
-  for (const width of [32, 160, 512])
+  const widths = [32, 160, 512, 904, 2000];
+  for (const width of widths)
     for (let repeat = 0; repeat < 3; repeat++)
       for (const ordering of ["concurrent", "fifo"] as const) {
         const key = [width, repeat, ordering].join("-"),
@@ -98,7 +99,7 @@ try {
           bytes: Buffer.byteLength(bytes(b.ops)),
         });
       }
-  assert.equal(rows.length, 18);
+  assert.equal(rows.length, widths.length * 6);
   writeFileSync(
     process.argv[2]!,
     bytes({ scope: target.scopeName, id, rows, hash: sha(bytes(rows)) }),
