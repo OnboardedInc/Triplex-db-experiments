@@ -52,7 +52,7 @@ for tag in "$@"; do
     # [DX-BM1] Why: the shared registry keys on the directory name; the copied report retains its original slot.
     # Rejected: renaming the scope in the evidence or indexing the archive without its observed trace summary.
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register "$dest"
-  elif [[ -f $dest/ACTIVATION-CHECK.json ]]; then
+  elif [[ -f $dest/activation-attempt.json || -f $dest/ACTIVATION-CHECK.json ]]; then
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register-activation "$dest"
   elif [[ -f $dest/trace-run.json ]]; then
     TRIPLEX_TRACE_EVIDENCE="$root" node "$repo/lab/bin/trace-store.mjs" register-incomplete-benchmark "$dest"

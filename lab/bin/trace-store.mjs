@@ -51,13 +51,39 @@ export function registerRun(dir) {
   });
 }
 
+// [DX-BM1] Why: an independently rerendered timeline still belongs to its original slot and raw traces.
+// Rejected: treating the output directory as a new run identity or replacing the original benchmark data.
+function registerRecoveredTrace(dir, original) {
+  dir = path.resolve(dir);
+  original = path.resolve(original);
+  const tag = path.basename(original);
+  const manifest = JSON.parse(fs.readFileSync(path.join(original, "trace-run.json"), "utf8"));
+  const summary = JSON.parse(fs.readFileSync(path.join(dir, "trace-summary.json"), "utf8"));
+  const report = JSON.parse(fs.readFileSync(path.join(original, "driver/ns-report.json"), "utf8"));
+  const html = path.join(dir, "trace.html");
+  if (manifest.tag !== tag || manifest.slot !== tag || !/^[a-f0-9]{40}$/.test(manifest.source) ||
+      manifest.source !== summary.source || summary.tag !== tag || summary.complete !== false ||
+      report.status !== "RUNNING" || !fs.statSync(html).size)
+    throw Error("Unbound recovered timeline");
+  return registerRow({
+    date: new Date().toISOString(),
+    tag,
+    source: manifest.source,
+    subjects: report.seed?.seededSubjects ?? null,
+    result: "Partial reader timeline recovered. Original benchmark remains incomplete.",
+    html,
+    raw: path.join(original, "trace/raw"),
+  });
+}
+
 // [DX-BM1] Why: W0 activation retains an independent check and raw phase traces under its own schema.
 // Rejected: manufacturing a North Star trace summary or dropping the activation from the shared index.
 export function registerActivation(dir) {
   dir = path.resolve(dir);
   const tag = path.basename(dir);
   const transfer = path.join(dir, "transfer", "collection-tag.txt");
-  if (!/^tx2-dxt1-bm1-[a-z0-9]+-activation$/.test(tag) || fs.readFileSync(transfer, "utf8").trim() !== tag)
+  if (!/^tx2-dxt1-bm1-[a-z0-9]+-(?:smoke|activation(?:-[ab])?)$/.test(tag) ||
+      fs.readFileSync(transfer, "utf8").trim() !== tag)
     throw Error("Unbound activation collection");
   const attemptFile = path.join(dir, "activation-attempt.json");
   const checkFile = path.join(dir, "ACTIVATION-CHECK.json");
@@ -69,10 +95,11 @@ export function registerActivation(dir) {
        !/^[a-f0-9]{40}$/.test(source ?? "") || !/^[a-f0-9-]{36}$/.test(attempt.nonce ?? "")))
     throw Error("Foreign activation attempt");
   const result = fs.existsSync(checkFile) ? JSON.parse(fs.readFileSync(checkFile, "utf8")) : null;
+  const logFile = path.join(dir, attempt?.sealedCut === undefined ? "activation.log" : "driver.log");
   if (result &&
       (!attempt || result.run !== tag || result.slot !== tag || result.source !== source ||
        result.nonce !== attempt.nonce || result.attemptSha256 !== hash(attemptFile) ||
-       result.logSha256 !== hash(path.join(dir, "activation.log"))))
+       result.logSha256 !== hash(logFile)))
     throw Error("Foreign activation check or changed source evidence");
   return registerRow({
     date: new Date().toISOString(),
@@ -161,6 +188,8 @@ export function archive(tag, to) {
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const [command, arg, ...rest] = process.argv.slice(2);
   if (command === "register") console.log(JSON.stringify(registerRun(arg)));
+  else if (command === "register-recovered" && rest.length === 1)
+    console.log(JSON.stringify(registerRecoveredTrace(arg, rest[0])));
   else if (command === "register-activation") console.log(JSON.stringify(registerActivation(arg)));
   else if (command === "register-incomplete-benchmark")
     console.log(JSON.stringify(registerIncompleteBenchmark(arg)));
@@ -174,5 +203,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     const i = rest.indexOf("--to");
     if (i < 0 || !rest[i + 1]) throw Error("archive TAG --to DIR");
     console.log(JSON.stringify(archive(arg, rest[i + 1])));
-  } else throw Error("trace-store.mjs list | archive TAG --to DIR | register RUN_DIR | register-activation RUN_DIR | register-incomplete-benchmark RUN_DIR");
+  } else throw Error("trace-store.mjs list | archive TAG --to DIR | register RUN_DIR | register-recovered RENDER_DIR ORIGINAL_RUN_DIR | register-activation RUN_DIR | register-incomplete-benchmark RUN_DIR");
 }
