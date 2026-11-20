@@ -33,3 +33,9 @@ Observed ingest cgroup peaks in GiB, from 42 progress snapshots.
 | Transactor | PostgreSQL | Write gateway | Read gateway |
 | ---: | ---: | ---: | ---: |
 | 4.85 | 6.00 | 0.28 | 2.80 |
+
+## arm-d7-single-zero
+
+100000 deep people per account, single layout, individual writer with zero readers. Source `daf289fab1bc94593a2a62f0999ceecff3600c84`. Audited write path.
+
+Terminal status exit-code. Cells with a sealed writer ledger 0. Matched decision unmeasured.
