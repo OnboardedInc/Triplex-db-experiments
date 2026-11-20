@@ -19,6 +19,7 @@
 | `p4-scopes` | The 1/8/32/128-scope census on `cfec11ea1`. The original ledgers and saved checks bind all 128 opens, the pinned reads, the four first writes and the managed cleanup. |
 | `p4/checks/scheduler-blocked.json` | At the 06:24 UTC check a live measurement lease had held all four heavy permits for 66 minutes. No DX-THIN1 slot was reserved and the repaired smoke and larger population directories were still absent. |
 | `p4/checks/scheduler-current.json` | At 10:24 UTC a live measurement held all four heavy permits. Both completed census volumes had been released. The next refresh gate and campaign preflight were still waiting, and the new campaign directory remained absent. |
+| `p4/checks/scheduler-remaining.json` | At 11:34 UTC another live measurement had held all four permits for more than an hour. W1, HA and ACT1 had reached origin. The staged activation, prepared writer and reader native gates and the campaign smoke remained queued. There was no DX-THIN1 slot or new campaign output. |
 | `p4/checks/cleanup/` | Fresh image-manager receipts for the 11 removed staged tags and refusals for any retained image checked in the same pass. |
 | `p4/checks/native/` | Source, installed image and source-input digests for each completed native gate. Raw build and selftest logs include the first failures. |
 | `p4/checks/*-focused.log` | Ten notice tests and nine loader and oracle tests completed. The first SDK run found a legacy byte-order difference. The corrected identity-range run passed all 11 checks against the original fixture. |

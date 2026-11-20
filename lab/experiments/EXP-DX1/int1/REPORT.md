@@ -5,7 +5,7 @@ A running gateway opened its first deep record in 132–144 ms. Fresh stacks too
 At 128 scopes the write gateway had 565 threads and the transactor had 1,097. The last 96 scopes added about four and eight threads each.
 The writer, loader and joined activation refreshes each passed all 54,079 native checks. The last three native gates are queued.
 The physical campaign uses two pairs at each deep size. The field-save tape uses measured per-account rates and the frozen tape keeps its original rules.
-Both memory sweeps finished. Three campaign smokes stopped before the paired trace. The latest seeded all 40 people before SQLite refused the shared filesystem.
+Both memory sweeps finished. The paired campaign comparison is still waiting for permits. The latest started smoke seeded all 40 people before SQLite refused its shared filesystem.
 
 ## Mac observations at fixed activity
 
@@ -47,4 +47,4 @@ The campaign keeps the bounded readers and gateways, exact history range, predec
 
 - The memory collector binds raw phase bytes and ledgers to the attempt, native image and live PIDs. It checks the original people and record positions, fixed admission and gateway counters, and exact first-read and first-save rows. The heap observer binds its challenge to the active slot. The retired-image receipt checks the configured image ID, live reservations and absence of its tag.
 - The combined runner validates the armed scope, seed and trace. The collector reopens native receipts, verifies the selected writer and joins each primary to its bound command. It checks the offered tape, sealed oracle input, slot, matched metrics, owned cleanup and producer bytes. Smoke also requires exact feed progress, corrections and resume. Eligibility requires the frozen checks. The field collector reports separately.
-- Prior full evidence is bound to the Part 3 report at `f06cd0a46`. The Mac observations are diagnostic. Both fixed-activity sweeps and the scope census closed their managed volumes. The combined native comparison is still pending. [Prior checksums](GATEWAY-SHA256SUMS)
+- Prior full evidence is bound to `f06cd0a46`. The Mac observations are diagnostic. Both population sweeps and the scope census removed their volumes. At 11:34 UTC the live shared lease still held all four permits. Staged activation, prepared writer and reader native gates and the combined campaign comparison remain queued. [Prior checksums](GATEWAY-SHA256SUMS)
