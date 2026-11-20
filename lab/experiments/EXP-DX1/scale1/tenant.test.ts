@@ -220,6 +220,9 @@ test("interference uses actual acknowledged throughput and keeps a missing quiet
     read: hist(n, x),
     feed: hist(n, 2),
     commit: hist(n, x),
+    fullOffered: n,
+    fullExpired: 0,
+    offered: n,
     acked: n,
     expired: 0,
     failed: 0,
@@ -240,9 +243,16 @@ test("interference uses actual acknowledged throughput and keeps a missing quiet
     checkpoint: 1,
   };
   const phases = [
-    { name: "one", from: 0, to: 350000, accounts: { "account-001": one, "account-002": empty } },
+    {
+      name: "one",
+      start: 0,
+      from: 0,
+      to: 350000,
+      accounts: { "account-001": one, "account-002": empty },
+    },
     {
       name: "two",
+      start: 360000,
       from: 360000,
       to: 710000,
       accounts: { "account-001": busy, "account-002": group(500, 1) },

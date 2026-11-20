@@ -1,3 +1,4 @@
+import { liveProfile, livePeakWindow } from "./deep-live.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -64,10 +65,13 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     expectedCount = id.tenant
       ? tenantFacts(tenantAccounts(id.tenant))
       : deepPopulation(id.people).facts;
-  assert.equal(report.deep.profile, DEEP_PROFILE);
+  assert.equal(report.deep.profile, id.tenant?.live ? liveProfile : DEEP_PROFILE);
   const fixture = id.tenant?.study === "smoke";
   if (fixture) assert(id.slot.startsWith("tx2-dxscale1-smoke-"));
-  assert.equal(report.config.profile, fixture ? "deep-smoke" : "deep");
+  assert.equal(
+    report.config.profile,
+    fixture ? "deep-smoke" : id.tenant?.live ? "deep-live" : "deep",
+  );
   assert.equal(report.config.receiptCapture, "replica-worker");
   assert.equal(report.config.expectedStateRetention, "worker-journal");
   assert.equal(report.deep.trace, plan.sha256);
@@ -97,7 +101,9 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   assert.equal(
     report.verdictPlanId,
     id.tenant
-      ? tenantTraceId + "/" + id.tenant.study
+      ? id.tenant.live
+        ? liveProfile + "/" + id.tenant.live
+        : tenantTraceId + "/" + id.tenant.study
       : id.arm === "activation"
         ? "deep-activation/1"
         : small
@@ -161,10 +167,25 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
         commonStart + (p.traceFromS + p.seconds) * 1000,
       ]),
     );
+  // [DX-SCALE1] Why: offered-rate thresholds and deadline losses must reproduce from the source-matched sender ledger, independently of the per-tenant histograms. Rejected: trusting an aggregate counter or using ACK time as the arrival time.
+  const liveCounts = id.tenant?.live
+    ? mixPhases.map((p) => ({
+        from: commonStart + p.traceFromS * 1000,
+        to: commonStart + (p.traceFromS + p.seconds) * 1000,
+        by: new Map(
+          tenantAccounts(id.tenant!).map((a) => [
+            a.index,
+            { fullOffered: 0, fullExpired: 0, acked: 0 },
+          ]),
+        ),
+      }))
+    : undefined;
   const challengeRows = new Map<string, any>();
   const allBurst =
     id.tenant?.study === "interference"
-      ? report.phases.find((p: any) => p.name === "all-burst")
+      ? report.phases.find(
+          (p: any) => p.name === (id.tenant?.live ? livePeakWindow(id.tenant.live) : "all-burst"),
+        )
       : undefined;
   const burstFrom = allBurst ? allBurst.start + report.config.settleS * 1000 : 0;
   const burstWrites: any[] = [];
@@ -215,11 +236,37 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
           report.runTag + ":account-" + String(e.tenant + 1).padStart(3, "0") + ":t" + e.localSeq,
         );
     }
+    if (id.tenant?.live && w.expired) {
+      assert(
+        w.outcome === "unaccounted" &&
+          w.reason === "not sent: writer deadline passed" &&
+          !w.position &&
+          w.startedAt - w.scheduledAt > report.config.writerDeadlineMs,
+      );
+    }
     if (w.resend) {
       resends++;
       continue;
     }
     primaries++;
+    if (liveCounts) {
+      const x = liveCounts
+        .find((p) => w.scheduledAt >= p.from && w.scheduledAt < p.to)
+        ?.by.get(w.tenant);
+      assert(x);
+      x.fullOffered++;
+      if (w.expired) x.fullExpired++;
+      if (!w.expired && w.outcome === "committed") {
+        const y = liveCounts
+          .find(
+            (p) =>
+              w.ackPublishedAt >= p.from + report.config.settleS * 1000 && w.ackPublishedAt < p.to,
+          )
+          ?.by.get(w.tenant);
+        if (y) y.acked++;
+      }
+    }
+
     if (w.expired || w.outcome !== "committed") {
       expired += Number(w.expired);
       continue;
@@ -537,11 +584,27 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
           r.basis.validAt === cross.proof.basis.validAt,
       ),
     );
+    if (liveCounts) {
+      assert.equal(tenantEvidence.windows.length, liveCounts.length);
+      for (const [i, window] of liveCounts.entries()) {
+        const saved: {
+          start: number;
+          to: number;
+          accounts: Record<string, { fullOffered: number; fullExpired: number; acked: number }>;
+        } = tenantEvidence.windows[i];
+        assert(saved.start === window.from && saved.to === window.to);
+        for (const a of actual) {
+          const counts = window.by.get(a.index)!;
+          for (const k of ["fullOffered", "fullExpired", "acked"] as const)
+            assert.equal(saved.accounts[a.key]![k], counts[k]);
+        }
+      }
+    }
     if (tenantEvidence.feed.missing || tenantEvidence.feed.matched !== committed)
       invalid.push("Durable account feed did not match every acknowledged primary");
     const target = actual.find((a) => a.index === 1);
     if (
-      id.tenant.study === "interference" ||
+      (id.tenant.study === "interference" && !id.tenant.live) ||
       (id.tenant.study === "million" && id.arm === "activation")
     ) {
       const done = report.deep.tenantActivation;
@@ -573,6 +636,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     ackMinutes: [...ackMinutes],
     committed,
     resends,
+    expired,
     missing: expected.size,
     invalid,
     values,
@@ -760,6 +824,7 @@ export function cohort(
       committed: s.committed,
       primaries: s.primaries,
       resends: s.resends,
+      expired: s.expired,
       missing: s.missing,
       correctness: s.report.correctness,
       oracle: s.report.oracle,
@@ -788,7 +853,27 @@ export function cohort(
             tenants: compareTenants(
               scopes.map((s) => s.tenantEvidence),
               tenantAccounts({ ...first.id.tenant, topology: "pooled", physical: 0 }),
-              reason,
+              first.id.tenant.live
+                ? scopes
+                    .flatMap((s) =>
+                      s.invalid.filter(
+                        (r) =>
+                          !(
+                            s.missing === 0 &&
+                            s.expired > 0 &&
+                            s.primaries === s.committed + s.expired &&
+                            r ===
+                              "0 missing offers, " +
+                                s.expired +
+                                " unsuccessful primaries, " +
+                                s.expired +
+                                " expired"
+                          ),
+                      ),
+                    )
+                    .join(", ") || null
+                : reason,
+              first.id.tenant.live,
             ),
             layout: first.id.tenant.topology,
             sourceCuts: scopes.map((s) => ({
@@ -799,7 +884,7 @@ export function cohort(
             })),
           }
         : {}),
-      profile: DEEP_PROFILE,
+      profile: first.id.tenant?.live ? liveProfile : DEEP_PROFILE,
       source: first.id.source,
       slot: first.id.slot,
       nonce: first.id.nonce,

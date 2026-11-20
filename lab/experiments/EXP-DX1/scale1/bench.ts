@@ -25,6 +25,7 @@ import {
   type Quantities,
   type ScopeMeasurement,
 } from "./measurements.ts";
+import { liveArms, type PeakAlignment } from "./deep-live.ts";
 import { compressTraces } from "./archive.ts";
 import { resources } from "./resources.ts";
 import {
@@ -651,7 +652,12 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     const fd = fs.openSync(path.join(out, "driver.log"), "wx");
     exit.push(null);
     const tenant: TenantSpec | undefined = attempt.layout
-      ? { study: attempt.spec.study, topology: attempt.layout, physical: i }
+      ? {
+          study: attempt.spec.study,
+          topology: attempt.layout,
+          physical: i,
+          ...(attempt.live ? { live: attempt.live } : {}),
+        }
       : undefined;
     const identity: DeepIdentity = {
       ...(tenant ? { tenant } : {}),
@@ -682,7 +688,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--composition",
       "reach",
       "--profile",
-      "deep",
+      attempt.live ? "deep-live" : "deep",
       "--rung",
       tenant
         ? tenantRung(tenant)
@@ -725,6 +731,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       mode === "seed" ? "sender" : "replica-worker",
     ];
     if (restoring) args.push("--verified-seed-image", path.join(dir, "restored-seed.json"));
+    if (attempt.live) args.push("--peak-alignment", attempt.live);
     if (tenant) args.push("--tenant-study", tenant.study, "--tenant-topology", tenant.topology);
     if (small)
       args.push(
@@ -1356,7 +1363,15 @@ async function main() {
               layouts: [campaignItem(i, "pooled"), campaignItem(i, "separate")],
               arms: [i === 3 ? "interference" : "small"],
               ...(i === 3
-                ? { additionalPooledArm: "group commit with the matched all-ten burst" }
+                ? {
+                    additionalPooledArm: "group commit with the matched all-ten burst",
+                    fieldSaves: {
+                      profile: "deep-live",
+                      trials: liveArms,
+                      alignments: ["staggered", "coincident"],
+                      comparisons: ["pooled ungrouped", "pooled grouped", "separate ungrouped"],
+                    },
+                  }
                 : {}),
             })),
             {
@@ -1486,6 +1501,14 @@ async function main() {
     capacity = budgetFor(item, root, mode, getopt("sizing"));
   const baselineTag = getopt("baseline"),
     seedImageTag = getopt("seed-image");
+  const live = getopt("peak-alignment") as PeakAlignment | undefined;
+  if (live || getopt("profile"))
+    assert(
+      item === 3 &&
+        mode === "interference" &&
+        getopt("profile") === "deep-live" &&
+        (live === "staggered" || live === "coincident"),
+    );
   const groupControl = getopt("group-control");
   if (groupControl) {
     assert(
@@ -1502,6 +1525,7 @@ async function main() {
       previous.item === item &&
         previous.mode === mode &&
         previous.layout === layout &&
+        previous.live === live &&
         previous.source === source &&
         !previous.groupControl,
     );
@@ -1590,6 +1614,7 @@ async function main() {
     boundedTrial,
     seedImageTag,
     groupControl,
+    ...(live ? { live, profile: "deep-live" } : {}),
     at: Date.now(),
     cpus: planCpus,
     topology,

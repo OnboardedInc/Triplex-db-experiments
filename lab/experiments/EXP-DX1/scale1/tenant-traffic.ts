@@ -9,6 +9,7 @@ import {
   type DeepEvent,
 } from "../../../bench/lib/deep-trace.ts";
 import { Rng, seedOf } from "../../../bench/lib/rng.ts";
+import { liveProfile, liveWindows, liveEdits, liveArrivals, geometryHash } from "./deep-live.ts";
 import { smallPhases } from "./small-plan.ts";
 import {
   tenantAccounts,
@@ -26,9 +27,14 @@ export type TenantWindow = {
   pattern: "steady" | "one-neighbor" | "nine-neighbors" | "all" | "activation" | "low" | "busy-low";
   readers: number;
   activated?: boolean;
+  rates?: number[];
 };
 export const tenantTraceId = "deep-tenants/1";
 export function tenantWindows(s: TenantSpec, arm: string): TenantWindow[] {
+  if (s.live) {
+    assert(s.study === "interference" && arm === "interference");
+    return liveWindows(s.live);
+  }
   const list: TenantWindow[] = [];
   if (s.study === "million" && arm === "seed") return list;
   let from = 0;
@@ -99,7 +105,7 @@ function perTenant(a: Account, s: TenantSpec, arm: string) {
   const plain = makeDeepTrace(
     deepSeed(a.index),
     a.people,
-    s.study === "smoke" || s.study === "small" ? 450 : 7200,
+    s.live ? 10800 : s.study === "smoke" || s.study === "small" ? 450 : 7200,
   );
   if (s.study === "million" && (arm === "zero" || arm === "reader"))
     return plain.events.filter((e) => e.atMs < V3_OFFER_SECONDS * 1000);
@@ -111,6 +117,7 @@ function perTenant(a: Account, s: TenantSpec, arm: string) {
     if (a.index >= w.active) continue;
     const low = w.pattern === "low" || (w.pattern === "busy-low" && a.index !== 0),
       burst =
+        (w.rates !== undefined && w.rates[a.index]! > 3.5) ||
         w.pattern === "all" ||
         (w.pattern === "one-neighbor" && a.index === 1) ||
         (w.pattern === "nine-neighbors" && a.index !== 0);
@@ -124,15 +131,21 @@ function perTenant(a: Account, s: TenantSpec, arm: string) {
       const base = originals[issued++]!;
       assert(base, "Insufficient frozen business intents");
       const atMs = w.from * 1000 + Math.round(seconds * 1e6) / 1000;
-      events.push({ ...base, atMs, burst });
+      const facts = s.live
+        ? 1 +
+          Number(base.correction) +
+          liveEdits(base.subject, base.seq, base.kind, base.deep).length
+        : base.facts;
+      events.push({ ...base, facts, atMs, burst });
       const r = resends.get(base.seq);
       if (r) {
         const retryAt = atMs + r.atMs - base.atMs;
         if (retryAt < (windows.at(-1)!.from + windows.at(-1)!.seconds) * 1000)
-          events.push({ ...r, atMs: retryAt, burst });
+          events.push({ ...r, facts, atMs: retryAt, burst });
       }
     };
-    if (low) {
+    if (w.rates) liveArrivals(a.index, w.rates[a.index]!, w.seconds, put);
+    else if (low) {
       for (let min = 0; min < w.seconds / 60; min++) put(min * 60 + 2 + rng.next() * 50);
     } else for (let t = rng.exp(rate); t < w.seconds; t += rng.exp(rate)) put(t);
   }
@@ -150,7 +163,10 @@ export function tenantPlan(spec: TenantSpec, arm: string, checkPin = true) {
     const dig = createHash("sha256");
     for (const e of perTenant(a, spec, arm)) {
       dig.update(
-        JSON.stringify([e, e.resend ? null : deepEdits(e.subject, e.seq, e.kind, e.deep)]) + "\n",
+        JSON.stringify([
+          e,
+          e.resend ? null : (spec.live ? liveEdits : deepEdits)(e.subject, e.seq, e.kind, e.deep),
+        ]) + "\n",
       );
       events.push({
         ...e,
@@ -171,7 +187,13 @@ export function tenantPlan(spec: TenantSpec, arm: string, checkPin = true) {
   h.update(
     JSON.stringify({ spec, arm: arm === "zero" || arm === "reader" ? "regular" : arm, logical }),
   );
-  if (checkPin) {
+  if (checkPin && spec.live) {
+    const pin = JSON.parse(
+      fs.readFileSync(new URL("./deep-live-pins.json", import.meta.url), "utf8"),
+    )[spec.live];
+    assert(pin.profile === liveProfile && pin.geometry === geometryHash(tenantWindows(spec, arm)));
+    for (const a of accounts) assert.equal(logical[a.key], pin.logical[a.key]);
+  } else if (checkPin) {
     const geometry = JSON.parse(
       fs.readFileSync(new URL("./tenant-windows.json", import.meta.url), "utf8"),
     );

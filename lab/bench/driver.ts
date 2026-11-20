@@ -13,6 +13,7 @@ import { smallId, smallPhases, smallTrace, smallSeconds, smallPeople } from "../
 import { interferenceId, interferencePhases, interferenceTrace, interferenceSeconds } from "../experiments/EXP-DX1/scale1/interference.ts";
 import assert from "node:assert/strict";
 import { DeepActivation } from "./lib/deep-activation.ts";
+import { liveProfile, livePeakWindow, type PeakAlignment } from "../experiments/EXP-DX1/scale1/deep-live.ts";
 import { DEEP_PROFILE, DEEP_RUNGS, deepCells, deepPopulation } from "./lib/deep-world.ts";
 import { DEEP_RATE, deepSeed, type DeepEvent } from "./lib/deep-trace.ts";
 import { DeepWriter } from "./lib/deep-command.ts";
@@ -127,8 +128,12 @@ const rung = opt("rung", "10k")!;
 const devSubjects = opt("subjects");
 if (!["xtdb", "qlever", "datomic"].includes(lane)) throw new Error("--lane xtdb|qlever|datomic is required");
 const deepSmoke = opt("profile") === "deep-smoke";
-const deep = opt("profile") === "deep" || deepSmoke;
+const deepLive = opt("profile") === "deep-live";
+const alignment = opt("peak-alignment") as PeakAlignment | undefined;
+if (deepLive || alignment) assert(deepLive && (alignment === "coincident" || alignment === "staggered") && opt("tenant-study") === "interference");
+const deep = opt("profile") === "deep" || deepSmoke || deepLive;
 const tenantSpec: TenantSpec | undefined = opt("tenant-study") ? {
+  ...(alignment ? {live:alignment}:{}),
   study: opt("tenant-study") as TenantSpec["study"],
   topology: opt("tenant-topology") as TenantSpec["topology"],
   physical: Number(opt("deep-account", "0")),
@@ -140,7 +145,7 @@ const tenantSize = tenants?.reduce((people, account) => people + account.people,
 const smallOnly = deep && flag("deep-small-scopes");
 const availableRungs: Record<string, number> = tenantSpec ? { [tenantRung(tenantSpec)]: tenantSize } : smallOnly ? {"deep-small-100":100,"deep-small-2000":2000} : deepSmoke ? { "deep-smoke-40": 40 } : deep ? DEEP_RUNGS : RUNGS;
 if (!devSubjects && !Object.hasOwn(availableRungs, rung)) throw new Error(`--rung must be one of ${Object.keys(availableRungs).join("|")}`);
-const profile = opt("profile", "smoke") as Profile | "deep" | "deep-smoke";
+const profile = opt("profile", "smoke") as Profile | "deep" | "deep-smoke" | "deep-live";
 const activationOnly = deep && flag("deep-activation"), seedOnly = deep && flag("deep-seed-only");
 const interferenceOnly = deep && flag("deep-interference");
 if (smallOnly && (activationOnly || seedOnly || interferenceOnly || deepSmoke || flag("zero-readers"))) throw Error("Small scope study requires its separate low-rate arm");
@@ -157,7 +162,7 @@ if (deepId) {
 }
 if(smallOnly) assert.equal(rungSubjects,smallPeople(deepAccount));
 const plannedTenants=tenantSpec&&deepId?tenantPlan(tenantSpec,deepId.arm):undefined;
-const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events) : undefined;
+const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events,deepLive) : undefined;
 const deepPlan = plannedTenants ?? (smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined);
 const deepWriter = deepPlan && !tenantSpec ? new DeepWriter(deepPlan.activeSubjects) : undefined;
 const deepWitness = deep ? new DeepSeedWitness() : undefined;
@@ -322,7 +327,7 @@ const log = (line: string) => {
   process.stderr.write(text + "\n");
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
-const tenantSources = tenantSpec ? fs.readdirSync(path.join(REPO,"lab/experiments/EXP-DX1/scale1")).filter(f=>(f.startsWith("tenant")&&!f.endsWith("test.ts"))||f==="seed-image.ts").map(f=>"lab/experiments/EXP-DX1/scale1/"+f) : [];
+const tenantSources = tenantSpec ? fs.readdirSync(path.join(REPO,"lab/experiments/EXP-DX1/scale1")).filter(f=>(f.startsWith("tenant")&&!f.endsWith("test.ts"))||f==="seed-image.ts"||f==="deep-live.ts"||f==="deep-live-pins.json").map(f=>"lab/experiments/EXP-DX1/scale1/"+f) : [];
 const BENCH_FILES = [...tenantSources,"lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 if(smallOnly||interferenceOnly) {
   const names=smallOnly?["small-plan.ts","small-pins.json"]:["interference.ts","interference-pins.json"];
@@ -335,13 +340,13 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: tenantSpec ? tenantTraceId+"/"+tenantSpec.study : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
+  verdictPlanId: tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
   runTag,
   scope: scopeName,
-  ...(deepId ? { deep: { profile: DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
+  ...(deepId ? { deep: { profile: deepLive ? liveProfile : DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
   generator: { traceSha256: sha256File(deep ? "lab/bench/lib/deep-trace.ts" : "lab/bench/lib/trace.ts"), worldSha256: sha256File(deep ? "lab/bench/lib/deep-world.ts" : "lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
@@ -625,7 +630,7 @@ async function run() {
     report.deep.trace = deepPlan.sha256;
     save();
   }
-  const tenantReleasePhase = tenantSpec && (tenantSpec.study==="interference" || tenantSpec.study==="million" && activationOnly);
+  const tenantReleasePhase = tenantSpec && !tenantSpec.live && (tenantSpec.study==="interference" || tenantSpec.study==="million" && activationOnly);
   const releaseTarget = tenantReleasePhase ? tenants!.find(a=>a.index===1) : undefined;
   const activation = releaseTarget ? new DeepActivation(rawDir,releaseTarget.people,runTag+":"+releaseTarget.key,releaseTarget.first,Number(opt("deep-evaluators") ?? 2),releaseTarget.key) : activationOnly && !tenantSpec ? new DeepActivation(rawDir, rungSubjects, runTag) : undefined;
   const measureBurst = tenantSpec?.study === "interference";
@@ -661,7 +666,7 @@ async function run() {
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
   const lastTenantWindow = tenantSpec && deepId ? tenantWindows(tenantSpec, deepId.arm).at(-1) : undefined;
   const traceDurationS = lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
-  if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: DEEP_RATE * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
+  if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: (deepLive ? 3.5 : DEEP_RATE) * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
   const events = deepPlan ? deepPlan.events : idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   if (!tenantSpec && config.receiptCapture === "replica-worker" &&
       events.filter(e => e.stream === "background" && !e.resend && (!deep || e.atMs < V3_OFFER_SECONDS * 1000)).length > MAX_RECEIPT_CAPTURES)
@@ -1057,7 +1062,7 @@ async function run() {
 
   // ---------------------------------------------------------------- feed consumer (P3)
   // [EXP-M01] Paired rounds measure the writer and the read probe; the P3 consumer and its crash injection stay in NS.
-  const lvl = (tenantSpec?.study==="smoke" ? 2 : deepSmoke ? 5 : config.levelS ?? PROFILES[profile === "deep" ? "v3" : profile === "deep-smoke" ? "smoke" : profile].levelS) * 1000;
+  const lvl = (tenantSpec?.study==="smoke" ? 2 : deepSmoke ? 5 : config.levelS ?? PROFILES[profile === "deep" || profile === "deep-live" ? "v3" : profile === "deep-smoke" ? "smoke" : profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = idle ? [] : (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
   // [DX-H1] Why: Datomic observes the native transact-result boundary before the driver ACK; other lanes still lack observers.
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
@@ -1169,7 +1174,7 @@ async function run() {
   ] : deepSmoke ? [
     { name: "warmup", readers: config.zeroReaders ? 0 : 1, seconds: 5, measured: false },
     { name: "L4", readers: config.zeroReaders ? 0 : 4, seconds: 25, measured: true, ladder: true, mode: "mixed" },
-  ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
+  ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-live" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   const phases: any[] = [];
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
   // Rejected: issuing maintenance after readers stop.
@@ -1583,7 +1588,7 @@ async function run() {
       }
     }
     if (measureBurst) {
-      const w = phases.find(p => p.name === "all-burst");
+      const w = phases.find(p => p.name === (alignment ? livePeakWindow(alignment) : "all-burst"));
       assert(w && w.end > w.start + config.settleS * 1000);
       report.deep.allBurstQueue = meter.burst(writes, w.start + config.settleS * 1000, w.end);
     }

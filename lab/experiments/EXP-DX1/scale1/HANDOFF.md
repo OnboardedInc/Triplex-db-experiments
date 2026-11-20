@@ -16,7 +16,7 @@ node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 | --- | --- | --- | --- |
 | 1 | 10,000 people in one database | Zero, then readers | 4 h each |
 | 2 | 100,000 people in one database | Zero, readers, guarded release | 8 h, 8 h, 10 h |
-| 3 | Ten accounts of 10,000 in one database, then ten databases | 1, 2, 5 and 10 live, neighbor bursts, all-ten burst and one release. A third pooled arm enables group commit for the matched all-ten burst. | 10 h per arm |
+| 3 | Ten accounts of 10,000 in one database, then ten databases | 1, 2, 5 and 10 live, neighbor bursts, all-ten burst and one release. A third pooled arm enables group commit for the matched all-ten burst. The six deep-live executions repeat the two peak alignments in pooled individual, pooled grouped and separate individual configurations. | 10 h per arm |
 | 4 | 90 accounts of 100 and ten of 2,000 in one database, then 100 databases | Idle footprint, sentinel load and restart | 4 h per layout |
 | 5 | Ten accounts of 100,000 in one database | Serial seed, zero, readers, one guarded release. If only seeding fits, the zero-offer fallback records growth and the resource limit. | 24 h per execution |
 
@@ -27,3 +27,5 @@ The detached `triplex-scale1-part4-handoff` unit checks both terminal receipts f
 Use `control.ts collect TAG` after each terminal arm. Collection verifies manifest bytes, transfers summaries and anatomy within a cumulative limit of 500 MiB per item, and registers the attempt in the durable trace index. Every raw archive stays compressed on the server. An item’s second failed attempt ends the campaign.
 
 ACT2 runs the 1,000-subject native preflight on each qualifying fresh stack before the large seed. Its release checks bind the public runtime, slot and attempt nonce. The two-account identity regression and 100,000-subject failure that prompted the preflight are documented in the [ACT2 report](../act2/REPORT.md).
+
+The before-run forecasts for items 2–5 and their verified observations are in [PREDICTIONS.md](PREDICTIONS.md). The six field-save executions belong to item 3.
