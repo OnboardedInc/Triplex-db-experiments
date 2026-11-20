@@ -1,30 +1,30 @@
-The first prepared writer moved much of its work into the database’s single write thread.
-The new option proves the group’s inputs against one database version on the gateway.
-The database compares that version once and uses the fixed writer if it changed.
-The Mac comparisons added under two milliseconds to apply a group of eight.
-The SQL restart recovered both original receipts without writing them again.
-The merged write fixes passed 98 database assertions.
+Most of a roughly 90 millisecond database stall was spent waiting.
+The new writer checks one database version for a group of saves.
+On the smaller database it added under two milliseconds to apply a group of eight.
+On the larger database it used the fast path twice in twelve batches and completed fewer saves per second.
+The writers matched on 216 receipts and 1,392 historical reads.
+After a restart both saves returned their original receipts.
 Lean erasure left values in the change feed and allowed ID reuse under either owner.
-The two writers matched on 216 receipts and 1,392 historical reads.
+The benefit so far is shorter bursts on small databases.
 
 **North star.** P2 durable saves, P1 exact cuts, P3 exact feed and P6 account isolation. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 **Part 1.** Git `0bcc9ec55` holds the original report. At 235 offered saves/s, full-group median native apply moved from 4.2/5.2 to 89.0/89.8 ms with the original prepared guard. `live-01/native-cost.json` contains the earlier joined results.
-**Profile.** Each timed and I/O group is joined to its receipt, native t and bracketed VM pressure and cgroup throttling. The first stacks failed at launcher initialization, and `guard-cheap-02` completed only the uninstrumented arms after its timed arm rejected the transported witness. Pinned-JVM checks reproduced the cast and unqualified I/O context errors, then verified the corrected observer. The depth-controlled profile distributes offers across the same 192,000 seeded facts as part 1.
+**Profile.** `guard-deep-01` drained all heavy lab slots and distributed 96 edits at 32 outstanding across 192,000 seeded facts, the part 1 depth. The one-CPU container still shared its limit among the writer, gateway, driver and PostgreSQL. Earlier diagnostic boot, transported-witness and I/O context failures are retained. Timing and I/O samples join the exact receipt to native t, VM pressure and cgroup throttling.
 **Measured floor.** Two shared ABBA windows at 32 outstanding and 15,360 seeded facts per arm each captured 11 eight-save appends per arm. W1/basis median apply was 2.14/2.94, 1.31/1.86, 2.62/4.35 and 1.76/3.05 ms. Matching median bracketed VM pressure was 52.8/50.8%, 43.4/51.2%, 64.8/58.8% and 54.7/54.0%. The observed increase was 0.07–0.22 ms per member. The uninstrumented full guard medians were 2.51 and 4.17 ms at 49.9% and 61.5% pressure. [Checksums](SHA256SUMS)
-**Where the long apply went.** The ten full prepared groups in `guard-cheap-03`'s timed arm had median 6.25 ms native apply and 1.36 ms guard elapsed, with 1.33 ms guard CPU at median 67.9% VM pressure. At t=1268, apply was 91.65 ms and the guard used 2.01 ms CPU over 83.82 ms elapsed. One member's history check accounted for 81.91 ms elapsed and 0.10 ms CPU. The bracket was at 70.1% VM pressure with all four periods throttled. W1 also spiked to 85 ms at 53.0% pressure. The deeper I/O run measures index and storage accesses separately.
-**Pending.** `guard-deep-01` is staged at `ce2b7d4bd` and waiting for the lab lease. The table contains measured timings and logical lookup counts. Storage fetch counts and paired native apply at 192,000 facts remain open.
+**Where the long apply went.** At depth, ten full prepared groups had median native apply 103.99 ms and guard elapsed 93.28 ms with 8.47 ms of writer CPU at 57.2% VM pressure. In the I/O arm at 57.8%, the guard made a median 13.5 SQL reads in 4.0 ms of counted SQL elapsed. Four groups spent 82–95 ms inside SQL calls at 51–62% pressure. At t=2486, one revision check took 86.29 ms with 0.81 ms CPU and 0.10 ms in SQL at 58.6% pressure. All sampled I/O group brackets throttled in every sampled period. The SQL counter includes time waiting to run. W1 also reached 85 ms at 53.0% pressure in the shallow burst.
+**Deep coverage.** W1 drained 19.94 saves/s at 46.1% median VM pressure. Basis drained 18.15 at 55.9%. Two of 12 multi-save batches certified, both through point checks, with zero submitted replays. The sole certified eight-save group took 5.67 ms native apply at 57.7%. W1's eleven full groups had a median of 11.44 ms at 46.1% pressure. The end-to-end result includes the cost of preparation followed by reference fallback.
 
-| Check at 67.9% median VM pressure | Sections/group | Elapsed / CPU ms per group | Logical index work per group |
-| --- | ---: | ---: | --- |
-| Scope and feed flags | 1 | 0.047 / 0.045 | 11 flag lookups |
-| Logical head and clock | 1 | 0.060 / 0.057 | 4 point calls plus the predecessor seek when needed |
-| Function revision | 8 | 0.070 / 0.048 | 8 function version lookups |
-| Subject revisions | 8 | 0.113 / 0.102 | 8 owner lookups and 8 revision reads |
-| Retirements | 8 | 0.227 / 0.221 | 26–40 exact row and retirement seeks |
-| Historical assertion IDs | 8 | 0.636 / 0.627 | 71–92 historical prefix seeks |
-| Journal absence | 8 | 0.052 / 0.044 | 8 journal lookups |
-| Native claim and operation uniqueness | 8 each | 0.014 / 0.008 and 0.013 / 0.007 | Uses shared prefetch |
-| Native uniqueness and redundancy prefetch | 2 | 0.023 / 0.016 | Shared with ordinary datoms |
+| Check | Sections/group | Elapsed / CPU ms per group at 57.2% | Elapsed / CPU ms per member | SQL reads per group / member at 57.8% |
+| --- | ---: | ---: | ---: | ---: |
+| Scope and feed flags | 1 | 0.045 / 0.044 | — | 0 / — |
+| Logical head and clock | 1 | 0.034 / 0.032 | — | 0 / — |
+| Function revision | 8 | 0.107 / 0.094 | 0.013 / 0.012 | 0 / 0 |
+| Subject revisions | 8 | 45.048 / 4.197 | 5.631 / 0.525 | 7.5 / 0.94 |
+| Retirements | 8 | 1.294 / 1.089 | 0.162 / 0.136 | 1 / 0.13 |
+| Historical assertion IDs | 8 | 3.774 / 2.970 | 0.472 / 0.371 | 6 / 0.75 |
+| Journal absence | 8 | 0.075 / 0.071 | 0.009 / 0.009 | 0 / 0 |
+| Native claim and operation uniqueness | 8 each | 0.008 / 0.005 and 0.009 / 0.005 | 0.001 / 0.001 each | 0 / 0 |
+| Shared uniqueness and redundancy prefetch | 2 | 0.013 / 0.011 | — | 0 / — |
 
 **Candidate.** `TX2_PARALLEL_PREPARE=1 TX2_PREPARE_GUARD=basis` validates all members against one physical database value. The existing W1 basis guard protects the exact data, even across non-Triplex appends. Workers reuse matching drafts or refresh them on that basis. A covering historical range can prove all new IDs unused, with exact point checks for an occupied range or unsupported keys. Normalized subject EIDs eliminate repeated owner upserts.
 
@@ -41,10 +41,10 @@ The two writers matched on 216 receipts and 1,392 historical reads.
 **Fix integration.** WFIX through `0f92704d2` carries ordered admission, scope-maintenance ownership, SDK duplicate recovery and readback. Both writers use the stored-row stamper, including compact journal rows. Same-subject chains continue through the reference writer. With the basis option enabled, `wfix-01` passed 98 native assertions, 12 SDK tests and two W1 readback/feed tests. `wfix-oracle-01` matched the full change feed and resumed read in all three layouts against pinned O-REPLAY.
 **SQL restart.** In `recovery-02`, a certified group committed at native t=1044. The process stopped with zero replies, and PostgreSQL and the transactor restarted on the same data. Both receipts returned at positions 9 and 10 and clocks 1008 and 1009. Replacements with the original operation ID or a fresh ID under the same claim resolved to their original receipts. The head stayed at 10, and pinned rows, stored retractions and the resumed feed matched the fixture.
 **Lean erasure failed.** In two independent scopes, the actual excision watermark reached t=1054. Certified data prepared before excision was refused and a fresh certificate declined. Native row history lost the marker, while the journal kept it. The first reuse of the ID under either owner committed at position 12. This reproduces the reference limitation and blocks lean promotion.
-**Evidence audit.** `manage.py` binds frozen files, image, slot and attempt. `observe.clj` captures native times and read counters by attempt. `probe.ts` checks receipt/feed and pinned rows, and `read_guard.py` joins them to native t, append and pressure. Its completed-arms summary requires the original failure, native observer shutdown and exact fresh successful arm events. `gate.py` checks fresh scope, source and JAR hashes and pinned O-REPLAY answers. `read_recovery.py` binds process stop, SQL durability, native t, original claims, pinned rows, feed and excision watermark. A prepared ACK matches operation, position, clock and t in the native report.
-**Evidence.** Attempt directories sit under `evidence/DX-PREP1` in the durable lab evidence root. Acceptance content hashes are unchanged. [Checksums](SHA256SUMS)
+**Evidence audit.** `manage.py` binds frozen files, image, slot and attempt. `observe.clj` binds times and read counters to the attempt. `probe.ts` checks receipt/feed and pinned rows, and `read_guard.py` joins them to native t, append and pressure. Completed-arms summaries require actual failure, observer shutdown and the fresh completed arm events. `gate.py` checks scope, source, JAR hashes and pinned O-REPLAY bytes. `read_recovery.py` binds process stop, durability settings, native t, original claims, pinned rows, feed and watermark. `live.ts` preflights the two fresh scopes, active function, options, source and launch nonce. A prepared ACK matches operation, position, clock and t in the actual native report. The SDK checks the recovered command and durable tuple on the attempted database. [WFIX audit](../wfix1/REPORT.md)
+**Evidence.** `guard-deep-01/guard-summary.json` holds per-member durations and reads. The table uses group medians and divides member totals by eight. The ten groups had 67 revision, 68 history and 11 retirement SQL reads. Attempts sit under `evidence/DX-PREP1`. Acceptance content hashes are unchanged. [Checksums](SHA256SUMS)
 
-**Capacity and server forecast.** The shallow Mac bursts drained at 46–68 saves/s on W1 and 60–79 on basis, under the VM pressure in the measurements above. Single saves use W1. At 50 offered/s, predict 49–50 ACKs/s in each arm and p99 of 25–55 ms. At 235/s, predict 210–235 on W1 and 225–235 on basis, with p99 of 60–160 ms and 45–150 ms when each keeps pace. Below that, worst-case queue p99 at the predicted rates is about 7 s and 3 s after a minute. At 394/s, predict 210–300 and 250–340 ACKs/s, about 19–52 s and 9–34 s of queued p99 if every offer is retained for a minute. These are bare-metal projections for disposable scopes.
+**Capacity and server forecast.** Shallow bursts drained at 46–68 saves/s on W1 and 60–79 on basis under the pressures above. Single saves use W1. The deep coverage and throughput give no measured case to spend server time on this as a capacity fix. Assuming that fallback mix, at 50 offered/s predict both arms at 49–50 ACKs/s and p99 of 25–55 ms. At 235/s predict W1/basis at 210–235/200–235 with p99 of 60–160/60–180 ms when they keep pace and up to about 7/10 s of queued p99 after one minute otherwise. At 394/s predict 210–300/200–300 ACKs/s and 19–52/19–58 s of queued p99 over one minute. These are bare-metal projections for disposable scopes.
 **Server comparison.** Run both disposable gateways from the same merged source, with verified source hash and a shared launch nonce. Set `TX2_WRITE_OPTIONS_ATTEMPT` to `DX_PREP1_OPTIONS_ATTEMPT` and `GATEWAY_SOURCE_SHA256` to `DX_PREP1_SOURCE_SHA256` on both gateways. The driver checks the installed function and options on each opened scope before measuring.
 Set `TX2_GROUP_COMMIT=1 TX2_LIVE_PRIORITY=1 TX2_GROUP_MAX_MEMBERS=8 TX2_PREDECESSOR_LOOKUP=1 TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_QUEUE_CLOCK=1 TX2_GROUP_STAGE_CLOCK=1 TX2_GROUP_FAST_REPLY=1 TX2_BULK_ROWS=2048 TX2_BULK_BYTES=1048576` on both. On B use `TX2_PARALLEL_PREPARE=1 TX2_PREPARE_GUARD=basis`. The foreground schema is strict lean V3.
 `node --import tsx lab/experiments/EXP-DX1/prep1/live.ts "$DX_W1_URL" "$DX_PREP1_URL" 60`
