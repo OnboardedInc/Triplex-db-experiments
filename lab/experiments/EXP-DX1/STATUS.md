@@ -3323,3 +3323,22 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   than one month of history, measured snapshot-against-load sizes, continuous compliance as a later TODO.
 - Open with Sam: which Cloudflare account holds the bucket and whether it may be publicly readable. Nothing is
   created or uploaded until he answers.
+
+## 2026-11-20 17:02 UTC (12:02 local, 2026-11-20): DX-TAIL1 part 2 in: the deep tail is a backlog behind Datomic's reply, not the gateway's pauses
+
+- **DX-TAIL1 part 2 (`cabdb286f`; `tail1/REPORT.md`, `OVERNIGHT.md`, `MAC.md`, `COLLECTORS.md`).** Server
+  matched run (39.4 saves per second, deep p99 170 to 179 ms against thin 19 ms): 49 of the 50 slowest deep saves
+  spent most of their time waiting for Datomic's reply outside their own transaction work, median 160.60 ms
+  unassigned, with a median of seven earlier replies outstanding (zero for thin); no write-gateway trace gap over
+  28.82 ms inside those waits; sender delay at most 0.75 ms; one save spent 150.60 ms on its own storage reads and
+  the three slowest were queued behind it. The bundle has no per-event pause, transaction-entry or storage-wait
+  timestamps, so the cause inside Datomic is not attributed (a transactor rollup shows 21 pauses per overlapping
+  minute, maxima 125 and 139 ms).
+- **Mac collector replay** (five arms, 5,110 verified saves each; 7 h 15 min spent waiting for the slot): write
+  gateway pause p99 146 to 175 ms on Serial, 121 ms with lower allocation, 63 to 70 ms one-core G1, 31 ms two-core
+  G1, 0.062 ms generational ZGC (diagnostic; Datomic documents ZGC on Java 25). Receipt reuse cut snapshot calls
+  from 996 to 406 on 3,638 matched saves; sixteen native tests pass; latency effect confounded on the Mac.
+- **Part 3 assigned (xhigh):** permanent per-event recording for all three Java processes and storage, joined per
+  save by native T, on by default on the merged branch; predictions and one server command of at most 40 minutes
+  to separate storage reads, transactor pauses and the serial apply; collector flags and receipt reuse rebased onto
+  `exp/DX-INT1` for the version 0.1 merge list.
