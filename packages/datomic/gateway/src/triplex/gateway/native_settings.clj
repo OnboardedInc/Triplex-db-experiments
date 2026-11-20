@@ -9,17 +9,20 @@
   (when (= "1" (System/getenv "TRIPLEX_NATIVE_SETTINGS_READBACK"))
     (let [dir (System/getenv "TRIPLEX_TRACE_DIR")
           process (System/getenv "TRIPLEX_TRACE_PROCESS")
+          object-cache (System/getProperty "datomic.objectCacheMax")
+          prefetch-probes (System/getProperty "datomic.prefetchProbes")
           row {:type "native-settings" :at (System/currentTimeMillis)
                :run (System/getenv "TRIPLEX_TRACE_RUN") :source (System/getenv "TRIPLEX_TRACE_SOURCE")
                :slot (System/getenv "TRIPLEX_TRACE_SLOT") :process process
                :configuration (System/getProperty "logback.configurationFile")
                ;; [DX-T1-12] Why: bind the effective compiler/heap policy without recording arbitrary JVM arguments or secrets. Rejected: an environment string as proof the VM accepted a flag.
-               :jvm {:compileThresholdScaling (try (.getValue (.getVMOption (ManagementFactory/getPlatformMXBean HotSpotDiagnosticMXBean) "CompileThresholdScaling")) (catch Throwable _ nil))
-                     :maxHeapBytes (.maxMemory (Runtime/getRuntime))
-                     :objectCacheMax (System/getProperty "datomic.objectCacheMax")
-                     :prefetchProbes (System/getProperty "datomic.prefetchProbes")
-                     :prefetchEnabled (when (= process "tx")
-                                        (boolean ((requiring-resolve 'datomic.config/prefetch-enabled?))))}
+               :jvm (cond-> {:compileThresholdScaling (try (.getValue (.getVMOption (ManagementFactory/getPlatformMXBean HotSpotDiagnosticMXBean) "CompileThresholdScaling")) (catch Throwable _ nil))
+                             :maxHeapBytes (.maxMemory (Runtime/getRuntime))}
+                      (and (= process "tx") object-cache)
+                      (assoc :objectCacheMax object-cache)
+                      (and (= process "tx") prefetch-probes)
+                      (assoc :prefetchProbes prefetch-probes
+                             :prefetchEnabled (boolean ((requiring-resolve 'datomic.config/prefetch-enabled?)))))
                :loggers (into {} (map (fn [name] [name (str (.getEffectiveLevel (LoggerFactory/getLogger name)))]) logger-names))}]
       (.mkdirs (File. dir))
       (spit (File. dir (str process "-native-settings.json")) (str (json/write-str row) "\n")))))

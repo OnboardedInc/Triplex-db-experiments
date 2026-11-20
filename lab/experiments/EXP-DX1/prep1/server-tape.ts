@@ -169,11 +169,11 @@ export function storagePrediction(arm: Arm, rate: number, quietOnly: boolean) {
   // Rejected: treating a 16 GiB cache or an attached hint as proof of a storage-free apply.
   const treatment = arm.prefetch
     ? {
-        delivery: [195, 155],
-        solo: [45, 14],
-        loaded: [810, 1070],
-        sql: [4.4, 4],
-        compute: [3, 4.6],
+        delivery: [125, 100],
+        solo: [73, 20],
+        loaded: [1320, 1690],
+        sql: [11.3, 10.3],
+        compute: [7, 8.7],
       }
     : arm.cacheGiB === 16
       ? {
