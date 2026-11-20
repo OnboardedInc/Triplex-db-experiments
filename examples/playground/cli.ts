@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -35,17 +35,22 @@ type Owner = {
   dockerHost: string;
   context?: string;
 };
-const pnpm = (argv: string[]) =>
-  execFileSync(
-    "pnpm",
-    [
-      ...(process.env["PLAYGROUND_PNPM_STORE"]
-        ? ["--store-dir", resolve(process.env["PLAYGROUND_PNPM_STORE"])]
-        : []),
-      ...argv,
-    ],
-    { cwd: repo, stdio: "inherit" },
-  );
+const pnpm = (argv: string[], signal: AbortSignal) =>
+  new Promise<void>((done, reject) => {
+    signal.throwIfAborted();
+    const store = process.env["PLAYGROUND_PNPM_STORE"];
+    const child = spawn("pnpm", [...(store ? ["--store-dir", resolve(store)] : []), ...argv], {
+      cwd: repo,
+      stdio: "inherit",
+      signal,
+    });
+    child.once("error", reject);
+    child.once("exit", (status, killedBy) =>
+      status === 0
+        ? done()
+        : reject(new Error("Playground workspace setup failed: " + (killedBy ?? status))),
+    );
+  });
 
 function pidExists(pid: number) {
   try {
@@ -117,24 +122,6 @@ async function start() {
   const explicit = Object.values(ports).filter(Boolean);
   if (new Set(explicit).size !== explicit.length)
     throw new Error("Use a different port for each listener");
-  // [DX-PLAY1] Why: the clean-clone path installs and builds only its committed workspace inputs.
-  // Rejected: needing generated dist files, a global tsx install or an unpublished package.
-  pnpm([
-    "--filter",
-    "triplex-monorepo",
-    "--filter",
-    "triplex-playground...",
-    "install",
-    "--frozen-lockfile",
-  ]);
-  pnpm([
-    "exec",
-    "turbo",
-    "run",
-    "build",
-    "--filter=@triplex-build/triplex-datomic...",
-    "--filter=@triplex-build/triplex-http...",
-  ]);
   const { openInstance } = await import("./instance.ts");
   const prefix = "tx2-dxplay1-" + randomBytes(6).toString("hex");
   const owner: Owner = {
@@ -157,6 +144,30 @@ async function start() {
     if (values.tier === "full" && !source)
       throw new Error("Set PLAYGROUND_DATA_URL or pass --data for the full tier");
     const fixture = async (signal: AbortSignal) => {
+      // [DX-PLAY1] Why: the clean-clone path installs and builds only its committed workspace inputs.
+      // Rejected: needing generated dist files, a global tsx install or an unpublished package.
+      await pnpm(
+        [
+          "--filter",
+          "triplex-monorepo",
+          "--filter",
+          "triplex-playground...",
+          "install",
+          "--frozen-lockfile",
+        ],
+        signal,
+      );
+      await pnpm(
+        [
+          "exec",
+          "turbo",
+          "run",
+          "build",
+          "--filter=@triplex-build/triplex-datomic...",
+          "--filter=@triplex-build/triplex-http...",
+        ],
+        signal,
+      );
       if (values.tier === "small") return loadFixture(values.larger);
       const bundle = await (
         await import("./bundle.ts")

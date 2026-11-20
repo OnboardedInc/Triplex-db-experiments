@@ -26,10 +26,13 @@ export async function openInstance(options: InstanceOptions) {
   });
   const stack = new Stack({ ...options, signal });
   let playground: import("./service.ts").Playground | undefined;
+  let attemptedStack = false;
   const ready = (async () => {
     const fixture =
       typeof options.fixture === "function" ? await options.fixture(signal) : options.fixture;
+    signal.throwIfAborted();
     const started = performance.now();
+    attemptedStack = true;
     const urls = await stack.start();
     const stackMs = performance.now() - started;
     const seedStart = performance.now();
@@ -54,7 +57,9 @@ export async function openInstance(options: InstanceOptions) {
         await ready.catch(() => {});
         await server.close();
         await playground?.close();
-        const empty = await stack.stop();
+        const empty = attemptedStack
+          ? await stack.stop()
+          : { ps: [], volume: [], network: [], image: [] };
         await rm(options.directory, { recursive: true, force: true });
         return empty;
       })()),
