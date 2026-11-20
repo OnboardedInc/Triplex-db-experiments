@@ -30,14 +30,10 @@ def ms(nanos):
     return nanos / 1_000_000
 
 
-def managed_events(out):
+def frozen_inputs(out):
     inputs = read(out / "inputs.json")
-    terminal = read(out / "terminal.json")
     image = read(out / "image.json")
     attempt = inputs["attempt"]
-    assert terminal["attempt"] == attempt and terminal["exit"] == 0
-    assert terminal["holder"] == "DX-PREP1" and terminal["slot"] == "tx2-datomic-selftest"
-    assert terminal["image"] == image["imageId"]
     for path, digest in inputs["stage"].items():
         assert sha(out / "stage" / path) == digest
     for key, root in [("config", "lab/config/datomic"), ("gateway", "packages/datomic/gateway")]:
@@ -45,9 +41,22 @@ def managed_events(out):
         assert actual == {p: digest for p, digest in inputs["stage"].items() if p.startswith(root + "/")}
     assert image["sources"]["codec"]["sha256"] == inputs["stage"]["packages/datomic/src/codec-spec.json"]
     assert (out / "stage/lab/config/datomic/attempt").read_text().strip() == attempt
+    return inputs, image
+
+
+def managed_events(out):
+    inputs, image = frozen_inputs(out)
+    terminal = read(out / "terminal.json")
+    assert terminal["attempt"] == inputs["attempt"] and terminal["exit"] == 0
+    assert terminal["holder"] == "DX-PREP1" and terminal["slot"] == "tx2-datomic-selftest"
+    assert terminal["image"] == image["imageId"]
     raw = out / terminal["log"]
     assert sha(raw) == terminal["sha256"]
-    lines = raw.read_text().splitlines()
+    return inputs, terminal, run_events(inputs, raw.read_text().splitlines())
+
+
+def run_events(inputs, lines):
+    attempt = inputs["attempt"]
     boots = 2 if inputs["mode"] == "recovery" else 1
     assert [line for line in lines if line.startswith("PREP1_SQL ")] == [
         f"PREP1_SQL {key} on" for key in ("fsync", "synchronous_commit", "full_page_writes")
@@ -59,7 +68,7 @@ def managed_events(out):
         return rows
 
     assert events("PREP1_NATIVE_END ") == [{"attempt": attempt, "dropped": 0}] * boots
-    return inputs, terminal, events
+    return events
 
 
 def extract(out):

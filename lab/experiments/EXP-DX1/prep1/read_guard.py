@@ -8,7 +8,7 @@ from pathlib import Path
 from statistics import median
 import sys
 
-from read_probe import managed_events, sha
+from read_probe import frozen_inputs, managed_events, run_events, sha
 
 
 def scoped_db(attempt, arm):
@@ -24,8 +24,22 @@ def ms(ns):
     return ns / 1e6
 
 
-def read(out):
-    inputs, terminal, events = managed_events(out)
+def failed_diagnostic(out):
+    # [DX-PREP1] Why: the first timed arm aborted after all uninstrumented arms finished.
+    # Rejected: dropping verified comparison data or creating a successful terminal record for the run.
+    inputs, image = frozen_inputs(out)
+    assert inputs["mode"] == "cheap" and not (out / "terminal.json").exists()
+    log = out / "selftest-1.log"
+    lines = log.read_text().splitlines()
+    assert "DatomicHttpError: Group durability is unknown" in lines
+    assert lines[-1] == "[lab] ENGINE: Datomic selftest failed"
+    assert not any(line.startswith("PREP1_GUARD ") for line in lines)
+    return inputs, {"log": log.name, "slot": "tx2-datomic-selftest", "image": image["imageId"],
+                    "sha256": sha(log)}, run_events(inputs, lines)
+
+
+def read(out, completed_only=False):
+    inputs, terminal, events = (failed_diagnostic if completed_only else managed_events)(out)
     attempt = inputs["attempt"]
     mode = inputs["mode"]
     assert mode in ("profile", "cheap")
@@ -58,7 +72,7 @@ def read(out):
             native[key] = (member, append)
 
     profile = {}
-    for entry in events("PREP1_GUARD "):
+    for entry in (() if completed_only else events("PREP1_GUARD ")):
         key = entry["scope"], entry["operation"]
         assert key not in profile
         profile[key] = entry
@@ -68,6 +82,9 @@ def read(out):
         by_arm[entry["arm"]].append((entry["kind"], entry["data"]))
     if mode == "profile":
         assert list(by_arm) == ["reference", "guard", "time", "reads"]
+    elif completed_only:
+        assert list(by_arm) == ["reference", "cheap", "cheap2", "reference2", "guard", "time"]
+        assert [kind for kind, _ in by_arm.pop("time")] == ["seed"]
     else:
         assert list(by_arm) == ["reference", "cheap", "cheap2", "reference2", "guard", "time", "reads"]
     results = {}
@@ -165,7 +182,8 @@ def read(out):
             "physical": physical, "samples": samples,
         }
     assert not profile
-    return {"attempt": attempt, "source": inputs["head"], "inputSha256": sha(out / "inputs.json"),
+    return {"attempt": attempt, "selftestCompleted": not completed_only,
+            "source": inputs["head"], "inputSha256": sha(out / "inputs.json"),
             "image": terminal["image"], "slot": terminal["slot"], "rawSha256": terminal["sha256"],
             "verifierSha256": sha(Path(__file__)), "lease": lease, "arms": results}
 
@@ -174,7 +192,9 @@ if __name__ == "__main__":
     if not __debug__:
         raise SystemExit("Verification requires enabled assertions")
     out = Path(sys.argv[1])
-    data = read(out)
+    args = sys.argv[2:]
+    assert args in ([], ["--completed-only"])
+    data = read(out, bool(args))
     with (out / "guard-summary.json").open("x") as stream:
         json.dump(data, stream, indent=2)
         stream.write("\n")
