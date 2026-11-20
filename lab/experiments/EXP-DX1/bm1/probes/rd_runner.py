@@ -41,12 +41,17 @@ def main(argv):
     assert action == "run" and stack.command("git","rev-parse","HEAD") == source
     assert not stack.command("git","status","--porcelain")
     assert not stack.command("docker","ps","-q")
+    packages=[]
     if not shutil.which("perf"):
         release = os.uname().release
         assert re.fullmatch(r"[a-z0-9.\-]+",release)
-        # [DX-BM1] Why: supply the release-matched PMU tool before any timed stack opens.
-        # Rejected: hardware counter discovery in the first measurement block.
-        stack.run("apt-get","install","-y","--no-install-recommends","linux-tools-"+release,
+        packages.append("linux-tools-"+release)
+    if not shutil.which("psql"):
+        packages.append("postgresql-client")
+    if packages:
+        # [DX-BM1] Why: verify the native PMU and WAL observation clients before any timed stack opens.
+        # Rejected: discovering that a required hardware or SQL reader is absent in the first block.
+        stack.run("apt-get","install","-y","--no-install-recommends",*packages,
                   env=dict(stack.BASE_ENV,DEBIAN_FRONTEND="noninteractive"),timeout=180)
     seed = stack.get(stack.INPUT)
     assert seed["kind"] == "scale1-single" and seed["seed"]["people"] == 100000
