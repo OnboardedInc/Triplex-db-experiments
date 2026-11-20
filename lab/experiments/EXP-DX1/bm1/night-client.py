@@ -197,7 +197,8 @@ def collect_thin_fixture():
     directory=ROOT.parent/"single-n20/thin-fixture"
     names=("request.json","stack-access.json","small/seed.json","small/verified.json","small/population.sqlite",
            "full/seed.json","full/verified.json","seal.json","cleanup.json","dump-toc.txt","worker.log",
-           "prepare.log","engine-logs.txt","seed.pgdump")
+           "prepare.log","engine-logs.txt","seed.pgdump","recovery/owner.json","recovery/result.json",
+           "recovery/cleanup.json","recovery/worker.log")
     # [DX-BM1] Why: collect a terminal small or full result from the exact native attempt, including failed ones.
     # Rejected: using the presence of a dump as proof that its seed verified or its stack exited.
     lines=remote(f"cd {seed.ROOT}; for f in {' '.join(names)}; do "
@@ -244,6 +245,14 @@ def collect_thin_fixture():
         assert seal["fullSha256"]==members["full/verified.json"]["sha256"]
         assert full["resultSha256"]==members["full/seed.json"]["sha256"]
         assert full["people"]==1_000_000 and full["facts"]==full["feed"]["facts"]==8_000_000
+        if "recoverySha256" in seal:
+            repaired, released, owner=map(read,("recovery/result.json","recovery/cleanup.json","recovery/owner.json"))
+            assert {key:repaired[key] for key in owner}==owner and released=={**owner,"remaining":[]}
+            assert owner["source"]==request["source"] and owner["slot"]==request["slot"]+"-restore"
+            assert owner["originalRequestSha256"]==seal["requestSha256"] and owner["sha256"]==snapshot["sha256"]
+            assert repaired["tocSha256"]==members["dump-toc.txt"]["sha256"]
+            assert repaired["restoredTable"]=="public.datomic_kvs" and repaired["physicalRows"]>0
+            assert 0<repaired["restoreSeconds"]<=720 and seal["recoverySha256"]==members["recovery/result.json"]["sha256"]
     if not manifest.is_file():
         with manifest.open("x") as stream:
             json.dump(transfer,stream,indent=2)

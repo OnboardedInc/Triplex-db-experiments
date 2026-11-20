@@ -392,8 +392,20 @@ export function registerThinFixture(dir) {
         full.resultSha256 !== transfer.files["full/seed.json"].sha256 ||
         seal.snapshot.sha256 !== transfer.snapshot?.sha256 || seal.snapshot.bytes !== transfer.snapshot?.bytes)
       throw Error("Unbound thin fixture seal");
+    if (seal.recoverySha256) {
+      const restore = read("recovery/result.json"), released = read("recovery/cleanup.json");
+      if (seal.recoverySha256 !== transfer.files["recovery/result.json"].sha256 ||
+          !Object.hasOwn(transfer.files, "recovery/cleanup.json") ||
+          restore.originalRequestSha256 !== seal.requestSha256 || restore.sha256 !== seal.snapshot.sha256 ||
+          restore.source !== request.source || restore.slot !== tag + "-restore" ||
+          restore.restoredTable !== "public.datomic_kvs" || restore.physicalRows <= 0 ||
+          released.source !== restore.source || released.slot !== restore.slot ||
+          released.originalRequestSha256 !== restore.originalRequestSha256 || released.remaining.length !== 0)
+        throw Error("Unbound thin fixture restoration");
+    }
   }
-  return registerRow({date:new Date(transfer.files["cleanup.json"].modified * 1000).toISOString(),
+  const clean = transfer.files["recovery/cleanup.json"] || transfer.files["cleanup.json"];
+  return registerRow({date:new Date(clean.modified * 1000).toISOString(),
     tag, source:request.source, subjects:sealed ? 1_000_000 : null,
     result:sealed ? "Sealed quiet INT1 seed with 8,000,000 verified facts." : "INT1 fixture incomplete. Native evidence retained.",
     html:path.join(dir, sealed ? "seal.json" : "worker.log"),

@@ -122,6 +122,22 @@ def clean():
     status("sealed" if (ROOT / "seal.json").is_file() else "incomplete", "review")
 
 
+def check_toc(file):
+    body = file.read_text()
+    assert re.search(r"(?m)^;\s+dbname: datomic$", body)
+    assert re.search(r"(?m)^\d+; \d+ \d+ TABLE DATA public datomic_kvs postgres$", body)
+
+
+def seal(request, postgres, dump, recovery=None):
+    result = {"source": SOURCE, "slot": request["slot"], "nonce": request["nonce"],
+              "requestSha256": digest(REQUEST),
+              "snapshot": {"bytes": dump.stat().st_size, "sha256": digest(dump)}, "postgresId": postgres,
+              "smallSha256": digest(ROOT / "small/verified.json"), "fullSha256": digest(ROOT / "full/verified.json")}
+    if recovery:
+        result["recoverySha256"] = digest(recovery)
+    write(ROOT / "seal.json", result)
+
+
 def build():
     assert shutil.disk_usage(ROOT).free >= 80*1024**3
     assert (BUILD / "results/bootstrap.exit").read_text().strip() == "0"
@@ -174,15 +190,90 @@ def build():
             timeout=1200, stdout=stream)
     with (ROOT / "seed.pgdump.incomplete").open("rb") as stream, (ROOT / "dump-toc.txt").open("x") as toc:
         run("docker", "exec", "-i", pg, "pg_restore", "--list", timeout=480, stdin=stream, stdout=toc)
-    assert "TABLE DATA public kvs " in (ROOT / "dump-toc.txt").read_text()
+    check_toc(ROOT / "dump-toc.txt")
     (ROOT / "seed.pgdump.incomplete").rename(dump)
-    write(ROOT / "seal.json", {"source": SOURCE, "slot": slot, "nonce": nonce, "requestSha256": digest(REQUEST),
-          "snapshot": {"bytes": dump.stat().st_size, "sha256": digest(dump)}, "postgresId": pg,
-          "smallSha256": digest(ROOT / "small/verified.json"), "fullSha256": digest(ROOT / "full/verified.json")})
+    seal(request, pg, dump)
+    lock.close()
+
+
+def recover(clean_only):
+    original = get(REQUEST)
+    assert original["source"] == SOURCE and original["slot"] == "tx2-dxbm1-thin-" + original["nonce"]
+    assert re.fullmatch(r"[0-9a-f]{12}", original["nonce"])
+    slot = original["slot"] + "-restore"
+    directory = ROOT / "recovery"
+    identity = directory / "owner.json"
+    ENV["DX_STACK_EVIDENCE"] = str(directory / "engines")
+    ENV["TRIPLEX_TRACE_SOURCE"], ENV["TRIPLEX_TRACE_SLOT"], ENV["TRIPLEX_TRACE_RUN"] = SOURCE, slot, slot
+    if clean_only:
+        if not identity.is_file():
+            return
+        owner = get(identity)
+        assert owner["slot"] == slot and owner["originalRequestSha256"] == digest(REQUEST)
+        run("bash", EXP / "stack/down.sh", slot, "--volumes", timeout=120)
+        assert not output("bash", EXP / "stack/up.sh", slot, "--inventory") and not output("docker", "ps", "-q")
+        write(directory / "cleanup.json", {**owner, "remaining": []})
+        status("sealed" if (ROOT / "seal.json").is_file() else "incomplete", "review")
+        return
+
+    assert output("git", "rev-parse", "HEAD") == SOURCE and not output("git", "status", "--porcelain")
+    assert not (ROOT / "seal.json").exists() and not output("docker", "ps", "-q")
+    assert get(ROOT / "cleanup.json") == dict(source=SOURCE, slot=original["slot"], nonce=original["nonce"], remaining=[])
+    # [DX-BM1] Why: an exact catalog refusal after pg_dump and pg_restore --list can retain a valid full image.
+    # Rejected: promoting a genuinely incomplete dump or repeating the million-person import.
+    assert 'assert "TABLE DATA public kvs " in' in (ROOT / "worker.log").read_text()
+    controller = "542d5a6abb780256acf42cf8e391d03767cd90a5"
+    assert original["controller"] == controller
+    previous_runner = subprocess.check_output(["git","show",controller+":"+str(EXP/"bm1/probes/thin-seed.py")],cwd=HERE)
+    assert hashlib.sha256(previous_runner).hexdigest() == original["runnerSha256"]
+    directory.mkdir()
+    draft = ROOT / "seed.pgdump.incomplete"
+    check_toc(ROOT / "dump-toc.txt")
+    assert draft.stat().st_size > 0 and draft.stat().st_mtime >= original["start"]
+    lock = (ROOT.parents[1] / "night-n19/campaign.lock").open("a")
+    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    assert STATUS.read_text().startswith("item=33 state=preflight-finished ")
+    forecast = next(row for row in (HERE.parent/"PREDICTIONS.md").read_text().splitlines()
+                    if row.startswith("| Thin snapshot restore,"))
+    write(identity, {"source":SOURCE, "slot":slot, "originalRequestSha256":digest(REQUEST),
+                     "sha256":digest(draft), "bytes":draft.stat().st_size, "start":time.time(), "prediction":forecast})
+    status("checking-snapshot", "cleanup")
+    access = ROOT / "stack-access.json"
+    for folder, people in (("small", 1000), ("full", 1000000)):
+        assert get(ROOT/folder/"verified.json") == reconcile(ROOT/folder, original, access, people)
+    source_stack = get(access)
+    original_pg, = [c["id"] for c in source_stack["containers"] if c["name"] == original["slot"] + "-pg"]
+    assert source_stack["engineSha256"] == digest(ROOT/"engines"/original["slot"]/"stack.json")
+    run("bash", EXP/"stack/up.sh", slot, "--no-publish", "--cpus-pg", "1,5,6,7", "--pg-memory", "4g",
+        "--cpus-tx", "0", "--cpus-gw-write", "2", "--cpus-gw-read", "4", "--tx-memory", "5g", timeout=360)
+    run("docker", "stop", "--time", "20", slot+"-gw-r", slot+"-gw-w", slot+"-tx", timeout=75)
+    pg = slot+"-pg"
+    restore_source = "/tmp/bm1-thin.pgdump"
+    run("docker", "cp", draft, pg+":"+restore_source, timeout=180)
+    expected = get(identity)
+    assert output("docker","exec",pg,"sha256sum",restore_source,timeout=80).split()[0] == expected["sha256"]
+    before = time.monotonic()
+    run("docker","exec",pg,"pg_restore","--jobs=4","-U","postgres","--exit-on-error","--clean","--if-exists",
+        "-d","datomic",restore_source,timeout=720)
+    seconds = time.monotonic() - before
+    sql = "SELECT count(*),current_setting('fsync'),current_setting('synchronous_commit'),current_setting('full_page_writes') FROM datomic_kvs"
+    count, *settings = output("docker","exec",pg,"psql","-X","-U","postgres","-d","datomic","-Atc",sql,timeout=180).split("|")
+    assert int(count) > 0 and settings == ["on"]*3
+    checked = directory/"result.json"
+    write(checked, {**expected, "postgresContainer":output("docker","inspect","--format","{{.Id}}",pg),
+                    "restoredTable":"public.datomic_kvs", "physicalRows":int(count), "restoreSeconds":seconds,
+                    "tocSha256":digest(ROOT/"dump-toc.txt")})
+    target = ROOT/"seed.pgdump"
+    os.link(draft, target)
+    seal(original, original_pg, target, checked)
     lock.close()
 
 
 if __name__ == "__main__":
     assert sys.platform == "linux" and os.getuid() == 0 and len(sys.argv) == 2
-    assert sys.argv[1] in ("run", "cleanup")
-    (build if sys.argv[1] == "run" else clean)()
+    action = sys.argv[1]
+    assert action in ("run", "cleanup", "restore", "restore-clean")
+    if action in ("run", "cleanup"):
+        (build if action == "run" else clean)()
+    else:
+        recover(action == "restore-clean")
