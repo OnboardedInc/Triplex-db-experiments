@@ -14,6 +14,7 @@ import time
 import uuid
 from producer_readings import capacity_rung, group_arm
 from import_reading import tail_attempt
+from activation_clock import activation_modes
 
 ROOT = Path("/var/tmp/triplex-bm1")
 NIGHT = ROOT / "night-n19"
@@ -157,7 +158,9 @@ def complete_output(r):
     if item==3:return (root/"results/arm-4/measurements.json").is_file()
     if item==4:return (root/"guard-output.json").is_file()
     if item==5:return any((root/"build/state/evidence/DX-INT1"/r["tag"]).glob("rung-thin-*/result.json"))
-    if item==6:return (Path("/var/tmp/triplex-scale1")/r["tag"]/"delta-measurement.json").is_file()
+    if item==6:
+        trial=Path("/var/tmp/triplex-scale1")/r["tag"]
+        return (trial/"delta-measurement.json").is_file() or any((trial/"delta").glob("*/*offers-*.json"))
     if item==13:return any((root/"run").glob("load-tail-*/arm-*.json")) or any((root/"run").glob("load-tail-*/*.offers.json"))
     return False
 
@@ -270,6 +273,7 @@ def preflight(r):
     documented=registered_sample(item,r["source"])
     if item==6:
         assert documented["reviewedFindings"]==[1,2] and documented["reportSha256"]==digest(directory/"builder-report.md")
+        assert documented["format"]=="activation-clock/2" and documented["smallOffers"]==8
     put(ready,{**documented,"item":item})
 
 
@@ -479,7 +483,7 @@ def worker(r):
     heavy=[node,"lab/bin/heavy.mjs","--label","DX-BM1-night-"+str(r["item"]),"--",node]
     if r["item"]==6:
         run(node,"--import","tsx",EXP/"scale1/bench.ts","launch","2",tag,
-            "activation","--activation-mode","delta",cwd=repo,env=env)
+            "activation","--activation-mode","delta","--delta-audit","2",cwd=repo,env=env)
     elif r["item"] in (1,3,8):
         args=[EXP/"w1/group/server.ts","run",root,source,tag] if r["item"]==1 else [EXP/"w1/bench.ts",root,source,tag]
         if r["item"]==8:args=[EXP/"w1/field/server.ts","run",root,source,tag,"pulse","--enhanced"]
@@ -832,7 +836,19 @@ def result(r):
             assert request["nonce"]==trial["nonce"]==outcome["nonce"] and outcome["cleanup"] is True
             assert trial["item"]==2 and trial["activationMode"]=="delta" and outcome["tag"]==r["tag"]
             releases=get(Path(r["repo"])/"lab/world/W0/releases/index.json")
+            assert proof["format"]=="activation-clock/2"
+            small=campaign/"delta-preflight/campaign"
+            smoke=activation_modes(small,delta_output(small,request,1000,8,releases),r["start"])
+            assert smoke==proof["reports"] and all(v["misses"]==v["stale"]==0 for v in smoke.values())
             assert result==delta_output(campaign/"delta",request,100000,90,releases)
+            reports=activation_modes(campaign/"delta",result,r["start"])
+            assert get(campaign/"delta-modes.json")==dict(binding=request,reports=reports)
+            missed=any(v["misses"] or v["stale"] for v in reports.values())
+            if missed:
+                stop=get(campaign/"delta-deadline.json")
+                assert stop["binding"]==request and stop["reports"]==reports
+                return "observed","Deadline or freshness miss. "+json.dumps(reports,sort_keys=True)
+            assert not (campaign/"delta-deadline.json").is_file()
             return "recorded",str(measurement)
     elif item==4:
         directory=guard_output(r)

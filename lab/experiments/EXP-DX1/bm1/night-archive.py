@@ -136,12 +136,16 @@ def seal(r,terminal):
     (folder/"summary-members.json").write_text(json.dumps(index,indent=2)+"\n")
     summaries.append(("summary-members.json",folder/"summary-members.json"))
     archive_summary=archive(folder/"summary.tar.zst",summaries,False)
+    assert archive_summary["bytes"]<LIMIT, "Summary archive exceeds the transfer limit"
     packed=None
     disposition="no raw members"
     if raw:
         try:
             packed=archive(folder/"raw.tar.zst",raw,True)
             disposition="transferred" if packed else "over limit; retained in original files"
+            if packed and archive_summary["bytes"]+packed["bytes"]>=LIMIT:
+                packed=None
+                disposition="combined transfer over limit; raw archive retained on server"
         except (OSError,RuntimeError,subprocess.SubprocessError) as error:
             disposition="raw compression failed; original files retained"
             (folder/"raw-compression-error.txt").write_text(repr(error)+"\n")

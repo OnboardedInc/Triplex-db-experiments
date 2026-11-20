@@ -73,11 +73,12 @@ def unpack(archive,stage,seal):
 
 
 def collect(name):
-    assert re.fullmatch(r"i(?:[1-9]|1[0-2])-[12]",name)
+    assert re.fullmatch(r"i(?:[1-9]|1[0-3])-[12]",name)
     directory=ROOT/name
     src=REMOTE+"/bundles/"+name
     original=remote("cat "+src+"/TRANSFER.json")
     seal=json.loads(original)
+    assert seal["summary"]["bytes"]+(seal.get("raw") or {}).get("bytes",0)<1024**3
     assert name==f"i{seal['item']}-{seal['attempt']}" and re.fullmatch(r"[0-9a-f]{40}",seal["source"])
     directory.mkdir(exist_ok=True)
     done=directory/"collected.json"
