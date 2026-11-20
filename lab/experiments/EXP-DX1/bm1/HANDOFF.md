@@ -129,3 +129,15 @@ RD1 writer attempt 2 independently reopened the deep seed and had working perf a
 STG1 `f3454b12e` is item `i32`. The four-hour outer ceiling includes a native copied-route 1k preflight. Its official producer and BM1 must agree before the named 100k native unit starts. The command is the published copied route with 16 pages, zero delay and four workers. Its own release hook plus the outer unit check both slot inventories. Collect `i32-1` through the BM1 client.
 
 The repaired RD1 1k pair completed on `ba07d040`. Its terminal reported 124 correct zero-arm checks and 18,320,932 correct loaded reads with the independent oracle accepted. The three 10k pairs use that identical pinned producer. The initial zero and loaded refusal remain available independently.
+
+### Fresh reader pairs
+
+RD1 `ba07d040` finished its three 115-second 10k comparisons at 04:06 EST. `overnight/i28-2` has the matched zero inputs, all reports and the original oracle evidence. The six reader workers were between 0.810 and 0.829 busy in the three 1,024-reader phases, above the 0.70 eligibility limit. The weighted phases lasted 18 seconds. Read errors and mismatches were zero. Independent replay checked 43 readings per loaded arm and 5,706 entity queries across all three.
+
+| History mode | Weighted correct pulls/s (n) | 1,024/256 goodput | Recovery correct reads/s | Writer p99 ratio at 256, n=17/17, 90% interval |
+| --- | ---: | ---: | ---: | ---: |
+| Global, 192 MiB | 31,732 (571,181) | 1.049 | 126,012 | 1.521 [0.468, 3.555] |
+| Closure, 192 MiB | 31,703 (570,659) | 1.043 | 120,963 | 0.820 [0.256, 1.428] |
+| Closure plus 32 MiB install | 32,448 (584,070) | 1.024 | 121,448 | 1.320 [0.366, 4.133] |
+
+Each weighted phase and both reader levels reported zero fallback share. The install lane handled 14 requests over its entire run. The fresh scopes stayed before the first scheduled burst, unlike the long Linux v3 run at 3,490 weighted pulls/s. The short tests show strong local-read capacity and did not excite the history path enough to price an old-cut treatment. All three writer ratios are unjudged with 17 saves per side. The revised supervisor launched HA1 shared SQL at 04:06 EST.
