@@ -131,6 +131,8 @@ export async function local(opts, config, manager) {
       "guard-prepared-smoke",
       "fast-smoke",
       "fast-neighbours-smoke",
+      "fast-cleanup-separate",
+      "fast-cleanup-folded",
       "fast",
     ].includes(mode),
   );
@@ -497,6 +499,9 @@ export async function local(opts, config, manager) {
       ),
       "on|on|17",
     );
+    const cleanupStudy = mode.startsWith("fast-cleanup-")
+      ? mode.slice("fast-cleanup-".length)
+      : undefined;
     run = {
       nonce,
       mode,
@@ -514,7 +519,8 @@ export async function local(opts, config, manager) {
       host: "mac-vm",
       timings: "diagnostic",
       guardComparison: mode === "guard-prepared-smoke",
-      neighbourCheck: mode === "fast-neighbours-smoke",
+      neighbourCheck: mode === "fast-neighbours-smoke" || cleanupStudy !== undefined,
+      cleanupStudy,
     };
     run.binding = sha256(JSON.stringify(run));
     write("native", run);

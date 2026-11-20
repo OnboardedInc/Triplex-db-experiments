@@ -9,7 +9,13 @@ import { verifiedTree } from "../../../bin/datomic-context.mjs";
 
 const [command, location, staged, control, ...extra] = process.argv.slice(2);
 const guardComparison = command === "check-guarded";
-const neighbourCheck = command === "check-neighbours";
+const cleanupStudy =
+  command === "check-cleanup-separate"
+    ? "separate"
+    : command === "check-cleanup-folded"
+      ? "folded"
+      : undefined;
+const neighbourCheck = command === "check-neighbours" || !!cleanupStudy;
 const authorityCost = command === "check-authority-cost";
 const seedRole = command === "stage-control" ? "control" : undefined;
 assert(
@@ -22,6 +28,8 @@ assert(
       "stage-control",
       "check-guarded",
       "check-neighbours",
+      "check-cleanup-separate",
+      "check-cleanup-folded",
       "check-authority-cost",
     ].includes(command),
 );
@@ -105,6 +113,7 @@ const attempt = {
   seedRole,
   guardComparison,
   neighbourCheck,
+  cleanupStudy,
   authorityCost,
 };
 const health = await fetch(new URL("/health", endpoint));

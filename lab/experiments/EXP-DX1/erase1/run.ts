@@ -38,6 +38,8 @@ type Layout =
   | "guard-prepared-smoke"
   | "fast"
   | "fast-neighbours-smoke"
+  | "fast-cleanup-separate"
+  | "fast-cleanup-folded"
   | "fast-smoke";
 type Attempt = {
   binding: string;
@@ -52,6 +54,7 @@ type Attempt = {
   seedRole?: "control";
   guardComparison?: boolean;
   neighbourCheck?: boolean;
+  cleanupStudy?: "separate" | "folded";
   authorityCost?: boolean;
 };
 type Row = Receipt["triples"][number];
@@ -947,7 +950,7 @@ async function scale() {
     }
     if (run.neighbourCheck) {
       const { quietNeighbours } = await import("./quiet.ts");
-      await quietNeighbours(f, run.nonce, diag, output, action === "check");
+      await quietNeighbours(f, run.nonce, diag, output, action === "check", run.cleanupStudy);
       return;
     }
     if (run.authorityCost) {

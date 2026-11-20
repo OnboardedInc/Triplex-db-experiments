@@ -13,7 +13,7 @@ The shared removal record survived gateway replacement and an old backup restore
 
 Part 3 started with one ordinary Mac token and paired diagnostic traces. Forced inline replies added about 38 KB and 5.21 ms of median SDK decoding. The save shift concentrated in first-byte and native commit waits. The median lock acquisition was 0.08 ms. Six local cache tests reproduced stale or mismatched reference use on the starting code. [Stage attribution, predictions and evidence audit](PREDICTIONS-PART3.md)
 
-The candidate binds cache references to the pin and erasure sequence, and verifies the save frontier once under the existing lock. The six cache checks, thirteen native checks and exact Reach reply-byte comparisons passed. Timing ratios and surrounding controls are diagnostic. The scheduled cleanup comparison remains open. [Guard change and evidence](GUARD-PART3.md)
+The candidate binds cache references to the pin and erasure sequence, and verifies the save frontier once under the existing lock. The six cache checks, thirteen native checks and exact Reach reply-byte comparisons passed. Timing ratios and surrounding controls are diagnostic. [Guard change and evidence](GUARD-PART3.md)
 
 Part 2. [Regression tests and red evidence](REGRESSIONS.md) · [Ledger implementation, latency and receipt audit](LEDGER.md). The guarded Mac run verified all thirteen checks, including the joined stage race, actual backup restore, and the erased-SSN task. Save request bodies stayed at 7,442 B. Save p99 rose 1.73× and pinned read p99 rose 5.28× in the matched Mac comparison. Forcing full read responses accounted for the increased wire bytes.
 
@@ -36,5 +36,7 @@ The Mac results are diagnostic. The original Part 1 paired scale blocks each con
 The one-database checks cover independent saves, removal and cleanup next to a quiet account, removed ID reuse, and work after a Publish receipt. The quiet smoke verified 40 save receipts in the native feed. File-backed sealed writes still use the file-key lock. The shared authority permits certified sealed saves on the per-person writer. Rebuild of refused archive work and general protected query semantics remain open. [Writer checks and evidence](WRITER-PART3.md)
 
 The shared PostgreSQL prototype preserves the removal record outside Datomic backups. The live SQL key disappeared while ciphertext remained. Rotation of the wrapping key from older SQL copies remains unverified. [Recovery checks, save costs and rotation price](AUTHORITY-PART3.md)
+
+The scheduled cleanup comparison removed exactly 100 bodies in either arm. On the Mac the separate jobs wrote 153 leaves and the folded job wrote 114. The rulings allow eventual ciphertext removal after key destruction. Quiet-account p99 and the automatic-index threshold mode remain open. [Cleanup study and admission rule](CLEANUP-PART3.md)
 
 The server launcher passed syntax, lint, focused typing and local argument preflights. The evidence hashes and removal of all three private stacks were verified. Acceptance files and hash-pinned paths are unchanged.

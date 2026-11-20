@@ -194,18 +194,47 @@
                       {:db/id (d/tempid :db.part/user) :db/excise e :db.excise/attrs [:triplex.private/body]})
                     selected)))
             t (d/basis-t (:db-after report))
-            asked (wall-ms)
-            requested (d/request-index conn)
-            after (until (d/sync-excise conn t))
-            finished (wall-ms)
-            _ (check! (and (>= (d/basis-t after) t)
-                           (every? #(zero? (history-count (d/history after) (second %))) selected))
-                      "Cleanup did not reach exact absence for the scheduled ciphertext")]
-        {:ids ids :matched matched :keysAbsent (count ids) :requestedIndex requested
-         :startedAt started :shreddedAt shred :indexAskedAt asked :finishedAt finished
-         :t (str t) :seq (:seq state)})
+            submitted {:ids ids :matched matched :keysAbsent (count ids) :startedAt started
+                       :shreddedAt shred :t (str t) :seq (:seq state)}]
+        (if (true? (get input "foldWithOrdinaryIndex"))
+          submitted
+          (let [asked (wall-ms) requested (d/request-index conn)
+                after (until (d/sync-excise conn t))
+                finished (wall-ms)]
+            (check! (and (>= (d/basis-t after) t)
+                         (every? #(zero? (history-count (d/history after) (second %))) selected))
+                    "Cleanup did not reach exact absence for the scheduled ciphertext")
+            (assoc submitted :requestedIndex requested :indexAskedAt asked :finishedAt finished))))
       {:ids ids :matched matched :keysAbsent (count ids)
        :startedAt started :shreddedAt shred :finishedAt (wall-ms) :seq (:seq state)})))
+
+(defn cleanup-barrier! [conn input]
+  (let [name (scope-name! input) ids (get input "ids")
+        before (d/db conn) state (privacy/cut name before)
+        t (parse-long (get input "t"))
+        _ (privacy/verify-data! state before)
+        _ (check! (and t (vector? ids) (<= 1 (count ids) 2000)
+                       (= (count ids) (count (set ids))) (every? (:erased state) ids))
+                  "Cleanup barrier requires its exact published identities")
+        entities (set (map #(d/entid before [:triplex.private/id %]) ids))
+        ;; [DX-ERASE1] Why: the barrier must name the exact body-only excision in this run.
+        ;; Rejected: accepting a recent index cut as evidence of this batch.
+        ops (vec (mapcat :data (d/tx-range (d/log conn) t (inc t))))
+        excises (filter #(= (:a %) (d/entid before :db/excise)) ops)
+        bodies (filter #(= (:a %) (d/entid before :db.excise/attrs)) ops)
+        body (d/entid before :triplex.private/body)
+        _ (check! (and (not (contains? entities nil))
+                       (= entities (set (map :v excises)))
+                       (= (set (map :e excises)) (set (map :e bodies)))
+                       (= (count entities) (count excises) (count bodies))
+                       (every? #(= body (:v %)) bodies))
+                  "Native cleanup transaction differs from its published body set")
+        after (until (d/sync-excise conn t))
+        history (d/history after)]
+    (check! (and (>= (d/basis-t after) t)
+                 (every? #(empty? (d/datoms history :eavt % :triplex.private/body)) entities))
+            "Ordinary index did not remove the exact scheduled bodies")
+    {:ids ids :t (str t) :finishedAt (wall-ms)}))
 
 (defn key-state! [conn input]
   (let [name (scope-name! input) id (get input "id")
@@ -266,6 +295,7 @@
                  "regression-excise" (regression-excise! conn input)
                  "ciphertext-inventory" (ciphertext-inventory! conn input)
                  "ciphertext-cleanup" (ciphertext-cleanup! conn input)
+                 "cleanup-barrier" (cleanup-barrier! conn input)
                  "key-state" (key-state! conn input)
                  "authority-kind" {:database (scope-name! input) :shared (envelope/shared?)}
                  "reach-parity" (reach-parity! conn input)
