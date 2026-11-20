@@ -735,11 +735,12 @@ async function scale() {
   let f = new Fixture(comp, fixtureName);
   let reader: CompositionHandle | undefined;
   try {
-    if (run.mode === "ledger-regression" || (run.mode.startsWith("fast") && action !== "check")) {
+    const sealedK = run.mode === "sealed-k-regression";
+    if (sealedK || run.mode === "ledger-regression" || (run.mode.startsWith("fast") && action !== "check")) {
       const authority = new DatomicClient(process.env.DATOMIC_URL!);
       try {
-        const sealed = run.mode.startsWith("fast");
-        await authority.declareProtection(f.db, sealed ? [":privacy/field"] : [field(0)], sealed);
+        const fastMode = run.mode.startsWith("fast");
+        await authority.declareProtection(f.db, fastMode ? [":privacy/field"] : [field(0)], fastMode || sealedK);
       } finally {
         authority.close();
       }
@@ -789,7 +790,8 @@ async function scale() {
         diag,
         getParent,
         output,
-        run.mode === "ledger-regression",
+        run.mode !== "regression",
+        sealedK,
       );
       return;
     }

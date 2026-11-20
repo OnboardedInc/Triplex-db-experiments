@@ -2,6 +2,7 @@
   (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
+            [triplex.gateway.write-wire :as write-wire]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy])
   (:gen-class))
@@ -308,7 +309,8 @@
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
           :else
-          (let [input (when (and (= :post request-method) (= action "transact")) (request-json body))
+          (let [[protected-wire input] (when (and (= :post request-method) (= action "transact"))
+                                        (write-wire/open name (request-json body)))
                 managed-write? (and input (trace/span "privacy/write-policy" "gateway" (privacy/managed? name db)))
                 source (get input "erasureSourceDatabase")
                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
@@ -331,6 +333,8 @@
                   (let [[current next] (trace/span "privacy/write-frontier" "gateway"
                                          (let [current (d/db conn)] [current (privacy/cut name current)]))]
                     (when (and managed-write? (nil? next)) (privacy/unavailable!))
+                    (when (and (:sealed next) (write-wire/required?) (not protected-wire))
+                      (privacy/failure! 400 "ProtectedWriteRequired" "Use the configured protected save transport"))
                     (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current))
                     (when (or source (contains? input "erasureSeq"))
                       (if source

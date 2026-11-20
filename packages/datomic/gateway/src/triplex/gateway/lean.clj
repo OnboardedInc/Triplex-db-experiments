@@ -12,8 +12,7 @@
 (defn enabled? [db]
   (contains? #{3 4} (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/rows-version)))
 (defn erasure-protected? [db]
-  (or (System/getenv "TRIPLEX_ERASURE_DIRECTORY")
-      (and (d/entid db :db/excise) (seq (d/datoms db :aevt :db/excise)))
+  (or (and (d/entid db :db/excise) (seq (d/datoms db :aevt :db/excise)))
       (and (d/entid db :triplex.scope/erasure-ledger)
            (some :v (d/datoms db :aevt :triplex.scope/erasure-ledger)))))
 (defn unsupported! [route]

@@ -212,13 +212,14 @@ async function selftestDatomic(config, opts) {
   }
 }
 
-// [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
+// [DX-W1] Why: release only a staged image in the calling experiment's namespace after its slots close.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
-async function removeThinImage(config, opts) {
-  if (opts.holder !== 'DX-THIN1' || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+async function removeDiagnosticImage(config, opts) {
+  const namespace = {'DX-THIN1': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/, 'DX-W1': /^tx2-datomic:dx-w1-[a-z0-9-]+-[a-f0-9]{8}$/};
+  if (!Object.hasOwn(namespace, opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   const info = slotInfo(config, 'datomic', 'dev');
   const tag = info.laneConf.image;
-  if (!/^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/.test(tag)) fail('REFUSED', 'Only staged DX-THIN1 image tags may be removed');
+  if (!namespace[opts.holder].test(tag)) fail('REFUSED', 'Only the holder’s staged diagnostic image tag may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
   await withPool(async ledger => {
     assertMeasureAdmission(opts.holder);
@@ -844,7 +845,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree });
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
-  if (options.lane === 'datomic' && command === 'image-remove') return removeThinImage(config, options);
+  if (options.lane === 'datomic' && command === 'image-remove') return removeDiagnosticImage(config, options);
   if (command === 'cpu-sample') {
     const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
     const owner = readOwner(info);

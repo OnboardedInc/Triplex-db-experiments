@@ -1,50 +1,15 @@
-The server branch is exp/DX-W1-commit-tail-reads. Run code head 9289362b1.
-The cursor regression failed at reader clock 100. A new page now pins the committed position without a clock filter.
-Both tests wrote 17 records per save. The Mac point-read median was 4.8 ms for Match and 89.6 ms for paged Datalog.
-A query for one named entity can seek to it. A broad query still has to read stored histories.
-Queries that return classic Datomic fact numbers need reified fact records.
-After erasure, an old ordinary read and the journal still returned the value. The new native routes refused.
-P remains an experiment because its packed journal rows are absent from ordinary queries.
-The cursor fix adds zero stored records. Existing cursors still resume at their original cut.
+Take the DX-W1 branch for INT1 review. The base is INT1 a79267191.
+A new page uses the recorded position, even when the reader's clock is behind a save.
+The page fix adds no stored records. Older cursors keep their original cut.
+K keeps the individual journal records queryable. P is informational.
+A configured protected save sends an encrypted request and stores a separate encrypted body.
+K's ordinary rows, replacement journals and writer references keep the assertion identity.
+Existing plaintext scopes refuse a policy conversion. A replay migration is still needed.
+The native route checks and point-read pricing are pending.
 
-| Surface | Lean K before and after | Test |
-| --- | --- | --- |
-| Match at current and held cuts | Stored change rows, changed-entity refs and application rows were already readable. | `query6.clj`, `query6.ts` compare full rows and earlier cuts. |
-| Datalog, complete reads, pages and plans | `/q` refused by default. Explain stayed available. `TX2_LEAN_NATIVE_QUERY=1` reads stored rows. An implicit page clock can still hide a durable save ahead of the reader's clock. | `query6.ts` captures that page basis and checks joins, logic, rules, aggregates, optional values, numerics, complete results, plans and both cursor forms at explicit cuts. [Datalog](../../../../docs/datalog.md) |
-| Dependency state | The existing history read finds assertion and retraction positions. The adapter still scans history for the requested attributes. | `query6.ts` checks the next valid-time edge before and after the retraction. |
-| Typed journal | The four routes were available. WFIX corrects retraction content. SQL found entity history omitting a durable save whose record clock had moved ahead of the reader. `recordedJournalReads` uses the recorded position alone. Classic seeks the changed-entity ref. Lean still scans candidate journals. | `query6.ts` checks command, ID, feed, entity page and resume under the clock skew. [Operational primitives](../../../../docs/operational-primitives.md) |
-| Native `/q` and `/log` | Both refused lean by default. Opt-in `/q` resolves stable Triplex IDs. Opt-in `/log` applies Q107c to both layouts by filtering journal rows. | `query6.clj` compares logical native queries, grouped interior cuts and log resume, and checks typed declines. |
+## Evidence audit
 
-`TX2_LEAN_NATIVE_LOG=1` projects identity, positions and valid intervals from committed datoms. Q107-S keeps the ordinary triples and Q107a specifies exact reconstruction for the broker. Lean never allocated classic fact entity IDs or their native assertion datoms. Projection or scalar use of physical IDs, raw bytes and arbitrary attribute selectors get a typed decline. Blob identities and logical transaction IDs remain available as public scalar values. Point lookup applies only when all patterns depend on named owners or assertions. [Datomic query relations](https://docs.datomic.com/query/query-data-reference.html)
-
-**Remaining read work.** Broad queries admit up to 100,000 input datoms or 16 Mi characters. An AVET journal index adds 3 or 7 datoms and an estimated 134 or 302 key bytes for one- and three-field replacements, before storage encoding. Indexed subject history needs one changed-owner ref per save or a proved complete existing index. Reifying just the way-2 journal needs at least 21 or 49 classic fact datoms. With eight-byte refs and clocks and one-byte type tags, those values use about 185 or 421 bytes plus the full change JSON, before optional fields and storage overhead. Lean seeds have no original classic fact numbers. Fixing implicit pages requires using the recorded cut without a wall-clock filter and adds no stored records.
-
-**Evidence audit.** The page cursor binds the validated query and order, original recorded position, valid time and scope. Older cursors retain their explicit clock. It adds no persisted records. The focused Core regression failed before the fix and 19 tests passed afterward. The historical native and SQL proofs bind results to their original source, image, slot and attempt. The SDK fixture now requires the latest acknowledged save in both layouts.
-
-**One writer.** Integrated DX-WFIX1 through `4331d6fe8`. The cross-run freezes DX-W1 `67bc5285c` and DX-WFIX1 `d83214271`. WFIX's first six native cases found 11 assertion failures on DX-W1, and its SDK cases found three. DX-W1's layout, packed, priority and predecessor cases and commit-order test passed on the other writer. The options witness lacked its API on the old DX-W1 source. Six DX-W1 controller cases then passed with a complete fixture export on `4331d6fe8`. [WFIX fixtures](../wfix1/REPORT.md)
-
-| Finding | Resolution on the combined branch |
-| --- | --- |
-| 1. Replacement resend | WFIX checks both durable identities before CAS on every serial path. Its SDK resolves an older gateway's CAS once through the same durable claim and operation. |
-| 2. Retraction content | WFIX uses the checked predecessor row for identity, value, assertion Tx ID, record clock and valid range. It retains DX-W1 packed-group coverage and fixes the separate layout replay splicer. |
-| 3. Scope maintenance | WFIX uses a separate system account and retains dependency keys for checkpoint and release frames. |
-| 4. Fair turns | WFIX preserves ready-member bypass and the eight-live-turn bulk grant, and resets the turn counter at idle. |
-| 5. Account owners | WFIX classifies actual authored owners with the persisted membership fallback. DX-W1's multi-account test remains. |
-| 6. Ordered byte cap | WFIX spends a sequence on dispatch and retains the established 400 `InvalidValue` response for a local UTF-8 preflight failure. |
-| 7. Writer proof | WFIX binds live function readback and request options to the exact reopened scope, source, slot and attempt. The older write5 readback remains for those comparisons. |
-| 8. Feed evidence | WFIX compares full change bodies, cut and command and tests deliberate mutations and resume. The DX-W1 full durable readback remains. |
-
-**Writer evidence audit.** Serial identity recovery and the SDK use the committed command and its original native operation, cut and clock. The group reply remains bound to the actual durable group. WFIX's launcher verifies the selected transaction definition from the reopened measured database. Its journal validator compares each measured command's complete changes from the committed position and its resumed page. Raw regression outcomes keep their source, attempt and hashes.
-
-**Erasure inventory.** K stores the protected body in the business row and in the assertion and retraction `:_tx/change` JSON. The row text is an indexed value. Historical indexes, database logs, WAL, backups, caches, and typed journal and replica responses can retain it. A claim, receipt, retirement marker and native application-feed entry carry identity, timing or interval metadata. Q49c needs a current, durable erasure marker per assertion and query semantics that preserve presence while excluding erased values from predicates. Physical excision alone loses that identity-to-value binding. [Datomic excision](https://docs.datomic.com/operation/excision.html)
-
-**Erasure regression.** Ported the gateway, retained-pin, journal and native feed checks and synchronized native excision from DX-ERASE1 `91cffd2c3`. The fresh K history omitted the excised row. The retained pin and journal returned the synthetic value. Query, recorded journal index and envelope, and native log at both offsets returned typed refusals. The verifier binds them to the assertion and excision t, nonce, source, image and slot. At `4b085177b` the upstream tests cover replica, import, Publish, notice and restore with detached ciphertext, an independent key store and the prepared subject writer. K needs those dependencies, opaque assertion references, current erasure checks and migration of retained plaintext.
-
-**Pulse.** `node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --pulse pulsew6a --write6`.
-**Field rates.** `node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --field-rates fldw6a --write6`.
-**Forecast.** K estimates 275–385 durable saves/s at saturation and a quiet-account p99 ratio of 2.4–5.0 at 235 offered saves/s. P estimates 205–330 and 3.0–8.5. Both use the same writer options. K is the eligible journal policy. P is informational. The writer proof checks a measured command's original operation and claim, its exact typed and ordinary journal rows, and its native log offset. The report seals that witness with source, slot, attempt, seed and forecast hashes. These are server handoffs. [Predictions](small/write6-predictions.json)
-
-**Local evidence.** The gateway passed 42 native assertions. SDK builds, TypeScript, seven controller tests and both launch plans passed. SQL matched classic and compact K against O-REPLAY `45bfa59b8` at the acknowledged cuts after decoding its JSON witness. Both returned an empty implicit numeric page at reader clock 100 after a durable save at 102. The fresh Core tarball matched the built interface bytes and an isolated consumer typechecked. The workspace-wide pack command rejected the required store flag. The acceptance files and pins are unchanged. [Evidence hashes](WRITE6-SHA256SUMS)
-**Mac diagnostic.** On 48 subjects, 64 exact point-read pairs alternated first reader at each acknowledged save. Match p50/p99 was 4.81/87.32 ms with 137/778 request/reply body bytes. Paged Datalog was 89.61/474.62 ms and 634/367 B across basis, snapshot, query and release. Saves with queries enabled were 94.63/374.96 ms. The separately staged control was 136.20/388.34 ms before a gateway restart interrupted its next block. Each completed 64-save block had 17 datoms per save and a 4,261 B median transaction body. The shared VM and separate control leave the save timing effect unresolved.
-
-The combined writer passed 1,747 native assertions and 12 SDK tests. A vector fixed lean's subject deduplication, and a conjunction in each disjunction branch stopped a third subject appearing. The next native run passed 33 of 34 checks. Classic had a null assertion time in the retraction journal. The writer now finds the original clock through `:f/id` when the explicit clock and reference are absent. A separate Datomic probe showed a physical-ID comparison losing a match. The lean query now rejects that program during preparation. The SDK package and declarations rebuilt successfully.
+- Pagination fingerprints the validated query and complete ordering, scope, valid time and exact recorded position. Version 1 cursors keep their original recorded time. The focused test failed before the change and passed afterward.
+- The protected request is authenticated against the named scope, operation and attempt. The stored identity is bound to the scope, owner, field and validity. The gateway and serialized writer both check the current removal sequence. Stored command and operation identities remain the receipt source.
+- The sealed K fixture uses a fresh scope and request key, captures each actual save envelope, checks exact live decode at the planted assertion and scans its native positions, retained row index and journal for the marker. It uses the matched native plain replacement as the size control. The ERASE1 fixture binds the inherited route witnesses to the current scope, image, source, logical position and removal sequence.
+- Part 6 measurements and write review proof remain at git revision `db11c8d04` and [the Part 6 manifest](WRITE6-SHA256SUMS). This report makes no Mac timing verdict.

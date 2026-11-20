@@ -175,6 +175,12 @@
                (throw (ex-info "TRIPLEX_OPERATION_DUPLICATE" {})))
            _ (when (some #(d/entid db [:triplex.claim/command-id %]) command-ids)
                (throw (ex-info "TRIPLEX_COMMAND_DUPLICATE" {})))
+           ;; [DX-W1] Why: an operation prepared before protection was enabled must fail at the serial cut.
+           ;; Rejected: trusting only the peer's request-time read of the policy.
+           _ (when (true? (value scope :triplex.scope/erasure-ledger))
+               (let [seq (value scope :triplex.scope/erasure-seq)]
+                 (when-not (some #(= [:db/cas scope :triplex.scope/erasure-seq seq seq] %) ops)
+                   (throw (ex-info "TRIPLEX_ERASURE_FRONTIER" {})))))
            head-v2 (= 2 (value scope :triplex.scope/head-version))
            latest (when head-v2 (newest-commit))
            h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)

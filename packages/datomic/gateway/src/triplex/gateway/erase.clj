@@ -10,6 +10,18 @@
     (when (= db ::timeout) (privacy/unavailable!))
     db))
 
+(def declare-code
+  ;; [DX-W1] Why: deciding that a scope has no plaintext history belongs at Datomic's serial cut.
+  ;; Rejected: relying on the gateway's earlier empty-head check during a concurrent first save.
+  '(let [value (fn [attr] (:v (first (d/datoms db :eavt entity attr))))]
+     (cond
+       (true? (value :triplex.scope/erasure-ledger)) []
+       (or (pos? (or (value :triplex.scope/position) 0))
+           (seq (d/datoms db :aevt :triplex.tx/position)))
+       (throw (ex-info "TRIPLEX_PROTECTION_MIGRATION_REQUIRED" {}))
+       :else [[:db/add entity :triplex.scope/erasure-ledger true]
+              [:db/add entity :triplex.scope/erasure-seq 0]])))
+
 (defn declare! [name conn db input]
   (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
     (when-not (and (lean/enabled? db) (or (privacy/enabled? db) (= 0 (scope/head-position db (scope/entity db)))))
@@ -17,10 +29,20 @@
     (privacy/register! name attrs sealed?)
     (privacy/guard name
       (fn []
-        (when-not (privacy/enabled? (sync! conn))
-          (let [written (deref (d/transact conn [[:db/add (scope/entity db) :triplex.scope/erasure-ledger true]
-                                      [:db/add (scope/entity db) :triplex.scope/erasure-seq 0]]) 5000 ::timeout)]
-            (when (= written ::timeout) (privacy/unavailable!))))))
+        (let [current (sync! conn) ident :triplex.privacy/declare-v1]
+          (when-not (privacy/enabled? current)
+            (try
+              (when-not (d/entid current ident)
+                (when (= ::timeout (deref (d/transact conn [{:db/ident ident
+                        :db/fn (d/function {:lang :clojure :params '[db entity]
+                                           :requires '[[datomic.api :as d]] :code declare-code})}]) 5000 ::timeout))
+                  (privacy/unavailable!)))
+              (when (= ::timeout (deref (d/transact conn [[ident (scope/entity current)]]) 5000 ::timeout))
+                (privacy/unavailable!))
+              (catch Exception e
+                (if (re-find #"TRIPLEX_PROTECTION_MIGRATION_REQUIRED" (str e))
+                  (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope")
+                  (throw e))))))))
     {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}}))
 
 (defn identity [row]

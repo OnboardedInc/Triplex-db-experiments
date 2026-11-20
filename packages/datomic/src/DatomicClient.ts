@@ -24,6 +24,7 @@ import { encodeRowText, encodeRowTextFast } from "./rowText.js";
 import { historyIdentityBounds } from "./identityRange.js";
 import { enabledFastPaths, fastPathEnabled } from "./fastPaths.js";
 import { largeRequestBody, encodeLargeRequest } from "./requestEncoding.js";
+import { protectWrite } from "./protectedWrite.js";
 import http from "node:http";
 import { stringifyExact, stringifyNativeExact, validateTagged, type TaggedValue } from "./codec.js";
 import {
@@ -57,6 +58,11 @@ export class DatomicHttpError extends Error {
 class DatomicRequestTooLarge extends DatomicHttpError {
   constructor() {
     super(400, "InvalidValue", "Request too large");
+  }
+}
+class DatomicProtectedWriteEncodingError extends DatomicHttpError {
+  constructor() {
+    super(400, "ProtectedWriteUnavailable", "The configured protected save transport could not encode this request");
   }
 }
 export class DatomicTransportError extends Error {
@@ -374,13 +380,27 @@ export class DatomicClient {
         body = { ...body, basisT: this.lastCommit.t };
     }
     const serializeStart = performance.now();
-    const bytes = largeRequestBody(body)
+    let bytes = largeRequestBody(body)
       ? await traceAsync("client.encode", () => encodeLargeRequest(body))
       : traceSync("client.encode", () =>
           body === undefined
             ? undefined
             : Buffer.from((fastPathEnabled("body") ? stringifyNativeExact : stringifyExact)(body)),
         );
+    const writeKey = path.endsWith("/transact") ? process.env["TRIPLEX_DATOMIC_WRITE_PUBLIC_KEY"] : undefined;
+    if (writeKey) {
+      const attemptId = (body as { attemptId?: string } | undefined)?.attemptId;
+      if (typeof attemptId !== "string" || operationId === undefined || bytes === undefined)
+        throw new DatomicProtectedWriteEncodingError();
+      const clear = bytes;
+      try {
+        bytes = traceSync("client.protect-write", () =>
+          protectWrite(writeKey, path.split("/")[3]!, operationId, attemptId, clear),
+        );
+      } catch {
+        throw new DatomicProtectedWriteEncodingError();
+      }
+    }
     const byteLength = typeof bytes === "string" ? Buffer.byteLength(bytes) : (bytes?.length ?? 0);
     // [DX-WFIX1] Why: validate the complete UTF-8 transaction after its final wire encoding and before opening a socket.
     // Rejected: estimating row sizes (JSON escaping, envelopes and row texts all count against the same body cap).
@@ -1226,7 +1246,7 @@ export class DatomicClient {
     try {
       response = await this.request("POST", `/v1/db/${db}/transact`, body, this.timeoutMs);
     } catch (error) {
-      dispatched = !(error instanceof DatomicRequestTooLarge);
+      dispatched = !(error instanceof DatomicRequestTooLarge || error instanceof DatomicProtectedWriteEncodingError);
       throw error;
     } finally {
       this.sentCallbacks.delete(sendKey);

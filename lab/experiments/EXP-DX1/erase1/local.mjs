@@ -1,7 +1,7 @@
 // @ts-nocheck -- [DX-ERASE1] Engine reservation dictionaries, Docker inspect JSON and child IPC are checked when read.
 import assert from "node:assert/strict";
 import { fork, execFileSync, spawnSync } from "node:child_process";
-import { randomBytes, randomUUID } from "node:crypto";
+import { generateKeyPairSync, randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -116,6 +116,7 @@ export async function local(opts, config, manager) {
       "overlap",
       "regression",
       "ledger-regression",
+      "sealed-k-regression",
       "ledger-overhead",
       "ledger-profile",
       "ledger-match",
@@ -140,6 +141,8 @@ export async function local(opts, config, manager) {
   const roles = Object.keys(caps);
   const names = Object.fromEntries(roles.map((r) => [r, prefix + "-" + r]));
   const regression = mode.endsWith("regression");
+  const sealedK = mode === "sealed-k-regression";
+  const transportKeys = sealedK ? generateKeyPairSync("rsa", { modulusLength: 2048 }) : undefined;
   // [DX-ERASE1] Why: stage evidence must join the peer and SDK from the same fresh attempt.
   // Rejected: comparing an aggregate HTTP span from an earlier run.
   const profile = mode === "ledger-profile";
@@ -393,10 +396,13 @@ export async function local(opts, config, manager) {
               }).flatMap(([k, v]) => ["-e", k + "=" + v]),
             ]
           : []),
-        ...(mode.startsWith("ledger-") || mode.startsWith("fast")
+        ...(mode.startsWith("ledger-") || mode.startsWith("fast") || sealedK
           ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
           : []),
         ...(mode.startsWith("fast") ? ["-e", "TRIPLEX_ERASURE_SHRED_GRACE_MS=0"] : []),
+        ...(transportKeys ? ["-e", "TX2_SAVE_LEDGER=1", "-e", "TX2_SMALL_ROWS=1",
+          "-e", "TX2_LEAN_NATIVE_LOG=1", "-e", "TX2_LEAN_NATIVE_QUERY=1", "-e",
+          "TRIPLEX_GATEWAY_WRITE_PRIVATE_KEY=" + transportKeys.privateKey.export({ type: "pkcs8", format: "der" }).toString("base64")] : []),
         "-p",
         new URL(endpoint).hostname + ":" + info.port + ":8080",
         "-e",
@@ -489,6 +495,7 @@ export async function local(opts, config, manager) {
         ...process.env,
         DATOMIC_URL: endpoint,
         TRIPLEX_DATOMIC_LAYOUT: "lean",
+        ...(transportKeys ? { TRIPLEX_DATOMIC_WRITE_PUBLIC_KEY: transportKeys.publicKey.export({ type: "spki", format: "pem" }) } : {}),
         TX2_W0_POINT_JOURNAL: "1",
         DX_ERASE_TOKEN: token,
         ...(profile
