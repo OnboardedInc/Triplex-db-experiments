@@ -8,6 +8,9 @@ import { SEED_VALID_FROM, ids, memberOf } from "../../../bench/lib/world.ts";
 
 const namespace = (id: string) => "incoming:" + id;
 const incomingAccount = "account-011";
+// [DX-THIN1] Why: the full legacy journal expands a business frame before its 4 MiB wire limit.
+// Rejected: sharing the larger lean-loader frame size with the legacy campaign.
+export const legacyFrameFacts = 400;
 const now = () => performance.timeOrigin + performance.now();
 const sha = (rows: readonly string[]) =>
   createHash("sha256")
@@ -19,7 +22,7 @@ export function* importFrames(people: number) {
   let frame: ReturnType<typeof importRows> = [];
   for (let i = 0; i < people; i++) {
     const rows = importRows(i);
-    if (frame.length && frame.length + rows.length > 1_600) {
+    if (frame.length && frame.length + rows.length > legacyFrameFacts) {
       yield frame;
       frame = [];
     }

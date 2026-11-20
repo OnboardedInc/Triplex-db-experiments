@@ -3,7 +3,20 @@ import test from "node:test";
 import { frozenDeep } from "../../../bench/lib/deep-profile.ts";
 import { V3_OFFER_SECONDS } from "../../../bench/lib/phases.ts";
 import { campaignCases, campaignTenant, treatment } from "./everything-plan.ts";
+import { importFrames, legacyFrameFacts } from "./pooled-import.ts";
 import { campaignWindows, tenantPlan } from "../scale1/tenant-traffic.ts";
+
+test("the legacy import splits at complete subjects within the campaign frame limit", () => {
+  const people = 256;
+  const frames = [...importFrames(people)];
+  assert(frames.length > 1);
+  const roots = frames.flatMap((frame) => {
+    assert(frame.length > 0 && frame.length <= legacyFrameFacts);
+    return frame.filter((r) => r.attribute === ":subject/account").map((r) => r.entityId);
+  });
+  assert.equal(roots.length, people);
+  assert.equal(new Set(roots).size, people);
+});
 
 test("the overnight frozen arm keeps the original events in one database with ten accounts", () => {
   const [zero, loaded] = campaignCases([10_000]);

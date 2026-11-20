@@ -32,7 +32,7 @@ The frozen comparison retains the original account-001 tape, reader ladder and v
 
 The option list is emitted by `node --experimental-transform-types lab/experiments/EXP-DX1/int1/everything.ts --plan`. It records the compatibility requirements for compact rows and identity history ranges, prepared and group reuse, scheduling and coalescing, alternate journals, historical replica install, gzip, the joined priority wrapper, the Java collectors and erasure envelopes. No keep-warm configuration is selected.
 
-The first pooled smoke stopped on the first 2,000-fact legacy seed frame. The owned volume was removed and the failed output remains available. The retry uses 400-fact legacy seed frames and records the native rejection details if another frame fails. [Attempt hashes](P5-SHA256SUMS)
+The first pooled smoke stopped on the first 2,000-fact legacy seed frame. Replaying its input through the same SDK encoder produced 6,106,388 wire bytes including the journal, above the 4,194,304-byte cap. The first 400-fact frame encoded to 1,147,505 bytes. That probe stopped before transport. The retry uses at most 400 facts per frame for both seed and import. The initial volume was removed and the failed output remains available. [Attempt and wire probe hashes](P5-SHA256SUMS)
 
 ## Evidence audit
 
