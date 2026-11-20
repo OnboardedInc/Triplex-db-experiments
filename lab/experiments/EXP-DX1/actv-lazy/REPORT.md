@@ -1,11 +1,11 @@
-Publish still records the new rules and what notices are owed in one write. The previous 10,000-person deep run measured 38 ms.
+Server candidate `5100afc528b8bf188532bc621c81a0fc332dd644` is pushed. The Mac settlement preflight is waiting for the shared lease.
+A single write records the new rules and what notices are owed. At 10,000 deep people that write took 38 ms on the Mac.
 A background worker writes the changed values and individual notices in short turns. The recipient can stay offline while it records them.
 Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
 On the server, 64 people took 34 ms to the quiet receipt and 47 ms to the first correct answer. All six cells agreed.
-The ten-thousand-person settlement timings and live-traffic ratios still need the reserved lab slot.
-The owner still needs to rule on whether the receipt counts as stored and what to do with an owed notice after erasure.
+The ten-thousand-person settlement timing and live-traffic ratios need a reserved slot. The receipt and erasure rulings remain open.
 
 ### Part 7
 
@@ -13,7 +13,14 @@ The value and notice archives are separate native scopes on the same writer. Fra
 
 The STG1 fallback from `fa53e50cd` keeps generic source edits at full-census coverage. Joined saves may use one person only when the original native command proves the namespace is private. The specific shared floor already took the census path in joined Publish, so that recipe did not omit a person. The previous general save recipe allowed an unproved narrow list. The companion's seven memory tests passed. The joined regression checks both sides of Publish and the unaffected complement before delivery.
 
-The seven ACTREVIEW2 findings have a written response. The revised format keeps the offer, durable component clocks, independent deadline samples, terminal status, oracle tape and exact outputs. The collector checks those bytes and clocks. The original BM1 collector is not compatible with the revised format. [Launch review](REVIEW2.md)
+### Second review
+
+- Finding 2 `8b0db230d`. The collector accepts the exact `i17-1` file set and rejects a copy that omits one terminal.
+- Finding 3 `8b0db230d`. `observations.test.ts` marks late starts, late native cuts and stale cuts as misses.
+- Finding 4 `8b0db230d`. The `i17-1` replay matched three distinct fresh deadline subjects per cell and 30 sampled answers.
+- Finding 5 `8b0db230d`. All six `i17-1` offer hashes compiled to the recorded release, were unique and were absent from the built-in set. The quiet staged offer was among them.
+
+The four producer and collector source files match byte for byte at `5100afc52` and the observed `i17-1` source `ec996c073`. The replay used the original source and slot owner, and all four focused tests passed at `5100afc52`. [Full review response](REVIEW2.md)
 
 ### Prior measurements
 
