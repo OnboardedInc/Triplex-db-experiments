@@ -23,7 +23,11 @@ for left, right in zip(measurements[::2], measurements[1::2]):
     roles = {}
     for role in left["gc"]:
         a, b = (m["gc"][role]["window"] for m in (left, right))
+        a_growth, b_growth = (m["betweenGcHeapGrowth"][role] or {} for m in (left, right))
         roles[role] = {
+            "heapGrowthPerAckRatio": ratio(a_growth.get("bytesPerCoveredAck"),
+                                          b_growth.get("bytesPerCoveredAck")),
+            "heapGrowthCoveredAcks": [a_growth.get("coveredAcks"), b_growth.get("coveredAcks")],
             "counts": [a["count"], b["count"]],
             "countRatio": ratio(a["count"], b["count"]),
             "macPauseP99Ms": [a["ms"]["p99"], b["ms"]["p99"]],

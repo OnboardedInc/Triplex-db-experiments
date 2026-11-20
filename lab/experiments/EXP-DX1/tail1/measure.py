@@ -61,6 +61,30 @@ def timed_gc(directory, role, start, stop, history, indexes, startup):
             "allocationStalls": {"count": len(allocation_stalls), "ms": quantiles(allocation_stalls)}}
 
 
+
+# [DX-JVM1] Why: price allocation pressure in all three roles even when a closed
+# JVM lacks a sampled allocation recording. Rejected: treating heap growth as exact allocated bytes.
+def heap_growth(directory, role, start, stop, saved):
+    sizes = []
+    scale = {"K": 1024, "M": 2**20, "G": 2**30}
+    occupancy = re.compile(r"\bPause .*?(\d+)([KMG])->(\d+)([KMG])\(\d+[KMG]\)\s+[\d.]+ms$")
+    for log in directory.glob(f"{role}.log*"):
+        for line in log.read_text().splitlines():
+            match = occupancy.search(line)
+            stamp = re.match(r"\[([^\]]+)\]", line)
+            if match and stamp:
+                at = datetime.fromisoformat(stamp[1]).timestamp() * 1000
+                if start <= at < stop:
+                    before, before_unit, after, after_unit = match.groups()
+                    sizes.append((at, int(before) * scale[before_unit], int(after) * scale[after_unit]))
+    sizes.sort()
+    if len(sizes) < 2:
+        return None
+    covered = sum(sizes[0][0] <= r["ackPublishedAt"] < sizes[-1][0] for r in saved.values())
+    growth = sum(max(0, b[1] - a[2]) for a, b in zip(sizes, sizes[1:]))
+    return {"bytesPerCoveredAck": growth / covered if covered else None,
+            "coveredAcks": covered, "occupancyEvents": len(sizes)}
+
 def measure(out, incomplete=False):
     attempt, report = load(out / "attempt.json"), load(out / "ns-report.json")
     identity = attempt["identity"]
@@ -231,6 +255,8 @@ def measure(out, incomplete=False):
                           "overlapAckMs": quantiles([r["verdictMs"] for r in in_index]),
                           "outsideAckMs": quantiles([r["verdictMs"] for r in outside_index])},
         "nativeIndexMetricBuckets": native_index,
+        "betweenGcHeapGrowth": {role: heap_growth(trace, role, start, stop, saved)
+                                for role in ("tx", "gw-w", "gw-r")},
         "driverStatus": report["status"], "sampleFloorMet": len(saved) >= 5000,
         "saves": len(saved), "primaryOutcomes": dict(primary_outcomes), "resendOutcomes": dict(resend_outcomes),
         "resolvedLostAcks": lost_ack["returnedOriginal"] if lost_ack else None,
