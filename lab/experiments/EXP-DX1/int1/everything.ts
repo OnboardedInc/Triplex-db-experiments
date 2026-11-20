@@ -9,7 +9,7 @@ import { checkImage, restoreSeed, sealSeed } from "../scale1/seed-image.ts";
 import { fileHash } from "../scale1/measurements.ts";
 import { measurementWindow } from "../thin1/measure.ts";
 import { canonical, sha256 } from "../../../bench/lib/w0-world.ts";
-import { atomicJson, createArm, executeArm } from "./everything-arm.ts";
+import { atomicJson, copyArtifact, createArm, executeArm } from "./everything-arm.ts";
 import { collect, openPlan } from "./everything-collect.ts";
 import { gatewayJvmOptions, planSummary, scorecardCases, treatment } from "./everything-plan.ts";
 
@@ -42,8 +42,8 @@ export async function localPreflight(dir: string) {
       // [DX-V01] Why: mount source read-only and use the oracle bytes staged on the Mac by the holder.
       // Rejected: exposing the shared Git checkout inside the slot.
       const prepared = path.join(path.dirname(dir), "oracle-input");
-      fs.cpSync(path.join(prepared, "oracle"), oracle, { recursive: true, errorOnExist: true, force: false });
-      fs.copyFileSync(path.join(prepared, "manifest.json"), path.join(dir, "oracle-source.json"), fs.constants.COPYFILE_EXCL);
+      await copyArtifact(path.join(prepared, "oracle"), oracle);
+      await copyArtifact(path.join(prepared, "manifest.json"), path.join(dir, "oracle-source.json"));
     } else atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
     atomicJson(path.join(dir, "physical-inputs.json"), {
       source,

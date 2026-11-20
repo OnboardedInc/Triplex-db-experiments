@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { pipeline } from "node:stream/promises";
 import { setTimeout as wait } from "node:timers/promises";
 import { deepSeed } from "../../../bench/lib/deep-trace.ts";
 import {
@@ -60,6 +61,21 @@ async function sameArtifact(a: string, b: string): Promise<void> {
   }
 }
 
+export async function copyArtifact(source: string, target: string): Promise<void> {
+  const entry = fs.lstatSync(source);
+  if (entry.isDirectory()) {
+    fs.mkdirSync(target);
+    for (const name of fs.readdirSync(source)) {
+      await copyArtifact(path.join(source, name), path.join(target, name));
+    }
+  } else {
+    // [DX-V01] Why: byte streams work across the private volume and the Mac output mount.
+    // Rejected: copying host ownership and mode metadata through the guest file sharing layer.
+    assert(entry.isFile(), "Expected a regular artifact");
+    await pipeline(fs.createReadStream(source), fs.createWriteStream(target, { flags: "wx", mode: 0o600 }));
+  }
+}
+
 async function archiveDriverOutput(staging: string, output: string) {
   // [DX-INT1] Why: the driver keeps its worktree output boundary and the collector sees the real saved bytes.
   // Rejected: relaxing the driver's directory guard or allowing a terminal record before archiving.
@@ -72,7 +88,7 @@ async function archiveDriverOutput(staging: string, output: string) {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EXDEV") throw error;
       const transfer = target + ".transfer";
-      fs.cpSync(original, transfer, { recursive: true, force: false, errorOnExist: true });
+      await copyArtifact(original, transfer);
       await sameArtifact(original, transfer);
       fs.renameSync(transfer, target);
       fs.rmSync(original, { recursive: true });

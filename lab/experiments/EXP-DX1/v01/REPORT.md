@@ -36,3 +36,5 @@ When `lab/locks/NO-MEASURE-LEASE` exists, compatibility callers get one ordinary
 The first ordinary-token Mac attempt reached source validation and exposed Git's default stdout limit on this repository's full index. The guard now accepts the larger listing and reads its NUL-delimited flags. It still rejects hidden entries.
 
 The clean clone built eight package tasks at `38476511b` and retained a 711-file output manifest. Its pinned image started PostgreSQL, Datomic and the gateway in the compact owned slot. That attempt stopped at a duplicate TypeScript binding before it seeded. The engine removed the attempted volume. The command now uses a distinct queue descriptor name. Native module compilation covered all twelve changed or reused entry points.
+
+The next owned run passed startup and stopped while copying the staged oracle into the Mac output mount. The guest file-copy primitive returned `EACCES` while transferring file metadata. The retry streams bytes into new files and retains the collector's content checks. The same change covers the driver's cross-device evidence transfer.
