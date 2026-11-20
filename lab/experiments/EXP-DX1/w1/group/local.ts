@@ -423,6 +423,7 @@ try {
   } else if (fieldStudy === "query6") {
     const proof = await gateway(false, {
       TX2_SAVE_LEDGER: "1",
+      TX2_SMALL_ROWS: "1",
       TX2_LEAN_NATIVE_QUERY: "1",
       TX2_LEAN_NATIVE_LOG: "1",
     });
@@ -432,6 +433,7 @@ try {
     for (const [i, covered] of [false, true, true, false].entries()) {
       const g = await gateway(false, {
         TX2_SAVE_LEDGER: "1",
+        TX2_SMALL_ROWS: "1",
         TX2_LEAN_NATIVE_QUERY: covered ? "1" : "0",
       });
       emit("query-cost", await queryCost(url, nonce + "-cost-" + i, "lean", covered));

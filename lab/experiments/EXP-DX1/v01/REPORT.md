@@ -42,3 +42,5 @@ The next owned run passed startup and stopped while copying the staged oracle in
 [Evidence index](EVIDENCE.md) lists the package and image receipts, first failures and capacity refusals. The ordinary-token fixture remains queued.
 
 The streamed native retry seeded 40 people and 4,890 facts into one Datomic database before the controller stopped at the start barrier. The driver and controller hashed equivalent campaign options in different JavaScript property orders. Both now use the driver's original field order. The fix preserves the seed and tape content and leaves the non-campaign digest unchanged. The engine removed the private volume on failure.
+
+The scorecard branch merged the newer INT1 snapshot to carry over its frozen-arm tenant feed evidence and following-mode oracle checks. See the readiness table for the three resolved files. The INT1 branch remained with its owner. The previous Mac attempt's verified seed and rejected barrier are retained separately.

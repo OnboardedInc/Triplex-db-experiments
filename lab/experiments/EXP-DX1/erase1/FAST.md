@@ -26,6 +26,36 @@ Two later jobs each matched and removed the exact bodies they were given, 128 an
 
 Earlier attempts are retained. The first hit a reserved Clojure symbol. The second was stopped while still waiting for admission. The third exposed a Datomic Iterable counting error. Its two log witnesses also resolved to the same native t. The final smoke checks distinct, acknowledged assertion and retirement positions. [Evidence checksums](P2-FAST-SHA256SUMS)
 
+## Matched scale measurements
+
+These are request-to-durable-acknowledgement times on the Mac, in milliseconds. Publication precedes the reply. The aged column reports the one owner with 416 protected versions and includes the old-pin marker follow-up. The p99 columns use 100 fresh assertions per one-person arm and 100 requests per 100-person arm. Each batch gives every target one new assertion, and earlier rounds leave retained identities.
+
+| Seed facts | One p50 / p99 | 100 p50 / p99 | Aged ACK / old-pin marker | Original key absent within (ms after aged ACK) |
+| ---: | ---: | ---: | ---: | ---: |
+| 94,848 | 13.4 / 79.7 | 44.7 / 114.2 | 55.0 / 64.6 | 15.7 |
+| 993,335 | 12.8 / 38.4 | 48.7 / 124.0 | 52.3 / 58.9 | 119.3 |
+| 3,988,500 | 22.3 / 51.8 | 73.6 / 211.1 | 256.8 / 267.2 | 579.2 |
+
+The first two attempts used `856c4c9ae`. The largest used `c2df2e3e1`. The manifests differ only in the Git revision and the prepared Linux launcher, which the local runner never loads. The raw transactor logs show all nonempty excisions after the final publication. Ordinary index activity may run concurrently. The API calls no index function before acknowledging. At 4M, the one aged owner took 257 ms. The one aged observation at each size leaves aged p99 open. [Evidence checksums](P2-FAST-SHA256SUMS)
+
+| Seed facts | Save p99 ratio before / after | Read p99 ratio before / after | Feed p99 ratio before / after | In-index saves / max ms |
+| ---: | ---: | ---: | ---: | ---: |
+| 94,848 | 1.25 / 2.61 | 0.80 / 1.61 | 0.78 / 1.74 | 71 / 59.9 |
+| 993,335 | 1.06 / 1.34 | 0.70 / 0.88 | 0.67 / 1.00 | 359 / 200.0 |
+| 3,988,500 | 1.50 / 1.28 | 0.55 / 0.65 | 0.55 / 0.72 | 407 / 388.6 |
+
+Each control, cleanup and protected-save block verified 500 saves on the native feed. Traffic cleanup used 128-body jobs and a 150 ms pause. In-index samples fit wholly inside the transactor's native build interval, with the clock uncertainty trimmed from both ends. All 10,516 bodies were eventually verified absent at each size. Later jobs matched up to 2,000 datoms. At 4M, three live jobs covered 384 bodies and six later jobs removed 10,132. The first 128-body native builds took 0.92, 2.97 and 5.68 s and wrote 181, 457 and 467 leaf segments. Each first build logged 49,125 datoms of index input. The 128-body cleanup limit bounds the matched ciphertext, while those builds also carry ordinary pending index work. At 4M, quiet save p99 was 50.0 and 58.6 ms in the controls and 75.1 ms in the cleanup block. The save ratio exceeded 1.25× against the later control at every size and against both controls at 4M. The different control tails make the magnitude uncertain.
+
+| Seed facts | Plain save p50 / p99 before and after (ms) | Protected save p50 / p99 (ms) | Extra SQL value bytes per save vs later control |
+| ---: | --- | ---: | ---: |
+| 94,848 | 6.95 / 28.04 and 6.66 / 13.42 | 9.55 / 22.55 | 262 |
+| 993,335 | 7.19 / 27.47 and 6.92 / 21.74 | 8.99 / 23.05 | 258 |
+| 3,988,500 | 13.00 / 49.97 and 12.97 / 58.63 | 15.90 / 48.87 | 262 |
+
+The protected replacement added five native datoms, about 260 aggregate SQL value bytes, and one separate file with 32 key bytes. The median save cost rose by 1.8–2.9 ms against the bracketing controls. The file adds its filesystem allocation and synchronous persistence cost. Median request bodies stayed within 2 B of 4,921 B. The SQL measurements count aggregate KVS values. Earlier quiet or indexed material can still affect the storage deltas. This is the cost of the file-based prototype.
+
+The full attempts are `p2-fast-700m`, `p2-fast-6250m` and `p2-fast-25000w`. Each used a fresh reserved stack and removed its two anonymous volumes. The admission logs and the independent metric derivation are under `p2-fast-admission` in the durable evidence. The comparison is diagnostic. Run a fresh local attempt with `node lab/bin/heavy.mjs --label DX-ERASE1 -- node lab/bin/engine.mjs erase1 --holder DX-ERASE1 --run fast --people 25000 --out fresh-detached-scale`.
+
 ## Evidence checks
 
 - `ciphertext-inventory!` verifies the original value through the real envelope, and checks the exact native assertion and retirement transactions for that identity. `key-state!` uses the current scope sequence and returns independent evidence about the key file and body.

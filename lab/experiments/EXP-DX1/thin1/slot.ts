@@ -7,6 +7,7 @@ import http from "node:http";
 import os from "node:os";
 import { randomUUID, createHash } from "node:crypto";
 import { cacheCharge } from "./cache-charge.ts";
+import { heapResidency, readResidentMappings } from "./heap-residency.ts";
 import path from "node:path";
 import process from "node:process";
 import { setTimeout as wait } from "node:timers/promises";
@@ -346,12 +347,14 @@ const server = http.createServer(async (req, res) => {
         { encoding: "utf8", timeout: 120000, maxBuffer: 8 << 20 });
       const processStat = () => fs.readFileSync("/proc/" + pid + "/stat", "utf8").split(") ")[1]!.split(" ")[19]!;
       const startTicks = processStat();
-      const memoryState = () => ({
-        rssBytes: processTotal(pid, "rss"),
-        heap: jcmd("GC.heap_info"),
-        smaps: fs.readFileSync("/proc/" + pid + "/smaps_rollup", "utf8").split("\n").slice(1).join("\n"),
-        ...(nativePools ? { nmt: jcmd("VM.native_memory", "summary", "scale=KB") } : {}),
-      });
+      const memoryState = () => {
+        const rssBytes = processTotal(pid, "rss"), heap = jcmd("GC.heap_info");
+        const smaps = fs.readFileSync("/proc/" + pid + "/smaps_rollup", "utf8").split("\n").slice(1).join("\n");
+        if (!nativePools) return { rssBytes, heap, smaps };
+        const mappings = readResidentMappings(fs.readFileSync("/proc/" + pid + "/smaps", "utf8"));
+        return { rssBytes, heap, smaps, mappings, residency: heapResidency(heap, mappings),
+          nmt: jcmd("VM.native_memory", "summary", "scale=KB") };
+      };
       const before = profile ? memoryState() : undefined;
       const disk = fs.statfsSync(dir, { bigint: true });
       assert(disk.bavail * disk.bsize > 5n * 1024n ** 3n);

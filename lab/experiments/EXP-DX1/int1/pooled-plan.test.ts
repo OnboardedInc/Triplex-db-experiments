@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { frozenDeep } from "../../../bench/lib/deep-profile.ts";
+import { deepPopulation } from "../../../bench/lib/deep-world.ts";
 import { V3_OFFER_SECONDS } from "../../../bench/lib/phases.ts";
 import { campaignCases, campaignTenant, treatment } from "./everything-plan.ts";
 import { importFrames, legacyFrameFacts } from "./pooled-import.ts";
@@ -25,6 +26,16 @@ test("the driver and controller bind the same campaign with differently ordered 
     const { campaign, study, topology, physical } = controller;
     const driver = { campaign, study, topology, physical };
     assert.equal(tenantPlan(controller, "zero").sha256, tenantPlan(driver, "reader").sha256);
+  }
+});
+
+test("the full import can complete at the 3,000 facts per second floor", () => {
+  for (const people of [10_000, 100_000]) {
+    const field = campaignCases([people]).find((c) => c.profile === "field" && c.load === "reader")!;
+    const windows = campaignWindows(campaignTenant(field, false), field.load);
+    const duration = windows.filter((w) => w.name === "import" || w.name === "import-tail")
+      .reduce((seconds, w) => seconds + w.seconds, 0);
+    assert(duration * 3000 > deepPopulation(people).facts + people);
   }
 });
 
@@ -58,6 +69,8 @@ test("the saved proof tapes bind all ten accounts and keep quiet offer slots and
   const campaign = campaignTenant(loaded!, true);
   const b = tenantPlan(campaign, "reader");
   assert.equal(b.sha256, tenantPlan(campaignTenant(zero!, true), "zero").sha256);
+  const driverOrder = { campaign: campaign.campaign, study: campaign.study, topology: campaign.topology, physical: campaign.physical };
+  assert.equal(b.sha256, tenantPlan(driverOrder, "reader").sha256);
   assert.deepEqual(
     b.accounts.map((a) => a.people),
     Array(10).fill(4),

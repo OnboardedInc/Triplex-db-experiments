@@ -73,7 +73,9 @@ export function campaignWindows(s: TenantSpec, arm: string): TenantWindow[] {
   add("neighbors-256", matched, smoke ? 8 : 256, smoke ? 1 : 8, smoke ? 3.5 : 39.4);
   add("publish-control", matched, smoke ? 4 : 64, smoke ? 1 : 8, 3.5);
   add("publish", matched, smoke ? 4 : 64, smoke ? 1 : 8, 3.5);
-  const importSeconds = smoke ? 12 : s.study === "million" ? 5100 : 720;
+  // [DX-INT1] Why: the full deep account needs about 90 minutes at the provisional import floor.
+  // Rejected: a shorter tail that would cut off an import meeting 3,000 facts/s.
+  const importSeconds = smoke ? 12 : s.study === "million" ? 6000 : 720;
   add("import-control", matched, smoke ? 4 : 64, smoke ? 1 : 8, 4.9);
   add("import", matched, smoke ? 4 : 64, smoke ? 1 : 8, 4.9);
   add("import-tail", importSeconds - matched, smoke ? 4 : 64, smoke ? 1 : 8, 4.9);
@@ -252,11 +254,11 @@ export function tenantPlan(spec: TenantSpec, arm: string, checkPin = true) {
     logical[a.key] = dig.digest("hex");
   }
   events.sort((a, b) => a.atMs - b.atMs || a.seq - b.seq || Number(a.resend) - Number(b.resend));
-  // [DX-V01] Why: the controller and driver build campaign options in different orders.
-  // Rejected: hashing the incidental insertion order of otherwise identical options.
-  const traceSpec = spec.campaign
-    ? { campaign: spec.campaign, study: spec.study, topology: spec.topology, physical: spec.physical }
-    : spec;
+  // [DX-THIN1] Why: the launcher and driver build the same campaign spec in different property orders.
+  // Rejected: changing archived tenant digests or accepting the driver's declared hash without rebuilding it.
+  const traceSpec = spec.campaign ? {
+    campaign: spec.campaign, study: spec.study, topology: spec.topology, physical: spec.physical,
+  } : spec;
   h.update(
     JSON.stringify({ spec: traceSpec, arm: arm === "zero" || arm === "reader" ? "regular" : arm, logical }),
   );

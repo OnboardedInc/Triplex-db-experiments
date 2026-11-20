@@ -26,7 +26,7 @@ const env = {
   DX_V01_MAC_FIXTURE: "1",
   DX_V01_LAB_RUNTIME: runtime,
   DX_INT1_GATEWAYS: "demand",
-  DX_TOUCHED_READ_MODE: "validated",
+  DX_TOUCHED_READ_MODE: "following",
 };
 const command = (bin: string, args: string[]) => execFileSync(bin, args, { env, stdio: "inherit" });
 if (action === "--packages") {

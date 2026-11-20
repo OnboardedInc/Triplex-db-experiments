@@ -44,3 +44,5 @@ The [updated v0.1 table](https://github.com/OnboardedInc/Triplex-db-experiments/
 | Playground dashboard, API and invented data | `exp/DX-PLAY1-playground` `4d393c7ce225bae895601fb77b70ceb11c50476c` | No | 14 | Clean | The branch-specific Datomic playground fixture and browser tests are pending integration. | The clean-clone start, local API and dashboard need a merged-branch gate alongside the small sample and the full hosted data. |
 
 Take the Mac admission marker independently as needed. After the core merges in the ordered list, integrate the playground alongside the scorecard. Run the playground's clean-clone gate on INT1 and run the merged scorecard at both ages.
+
+The later INT1 snapshot `d8c0af523ab5e25cd37e4126a1f9e292af6f68ac` includes the four previously outstanding ERASE1 commits. The scorecard branch trial with that snapshot conflicted in `int1/everything-arm.ts`, `int1/pooled-plan.test.ts` and `scale1/tenant-traffic.ts`. The merge on this branch keeps the streamed copy, combines the tests and takes INT1's canonical tape metadata and import duration.

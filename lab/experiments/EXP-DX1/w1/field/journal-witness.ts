@@ -26,7 +26,8 @@ export async function verifyJournalRead(
   const basis = { recordedPosition: position, validAt: 1e15 };
   const journal = await client.request<{ rows: string[] }>("POST", `/v2/db/${db}/journal`, {
     txId: tx,
-    basis,
+    basis: { recordedPosition: position },
+    recordedOnly: true,
   });
   assert(Array.isArray(journal.rows));
   const rows = journal.rows.map(decodeRowText);

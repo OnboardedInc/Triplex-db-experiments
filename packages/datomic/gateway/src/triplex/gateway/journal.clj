@@ -19,6 +19,12 @@
   (if-let [reason (:declined (ex-data e))]
     (let [out (StringBuilder.)] (stats/bump! [:journalDeclines reason] 1) (.append out "{\"declined\":") (reach/append-string! out reason) (.append out "}") (str out))
     (throw e)))
+(defn recorded-only! [db input]
+  (let [requested (true? (get input "recordedOnly"))]
+    (when (and requested (lean/erasure-protected? db))
+      (throw (ex-info "Recorded journal needs current erasure-aware values"
+                      {:status 409 :code "ErasureQueryUnsupported"})))
+    requested))
 ;; [DX-R2] Why: replacement rows must come from the journal cut, including retired entities and new reference closures.
 ;; Rejected: current-head rows (two journals in a page may change the same entity).
 (defn replica-supported! [db name]
@@ -104,7 +110,9 @@
 (defn build-entity [current name input]
   (try
     (supported! current name false)
-    (let [basis (get input "basis")
+    (let [basis (if (recorded-only! current input)
+                  (select-keys (get input "basis") ["recordedPosition"])
+                  (get input "basis"))
           [db _ _ _ inner] (if basis (reach/select-db name current basis) [current])
           e (d/entid db [:triplex.entity/id (get input "txId")])
           cut (if inner (assoc basis "recordedPosition" (:position inner)) basis)
@@ -119,31 +127,48 @@
       (.append out "]}") (str out))
     (catch Exception e (declined e))))
 
+(defn classic-entity-positions [db owner cut p before]
+  ;; [DX-W1] Why: classic already indexes the actual changed-entity reference.
+  ;; Rejected: searching row text or inferring journal membership from unrelated application writes.
+  (when-let [owner-id (d/entid db [:triplex.entity/id owner])]
+    (let [attribute (d/entid db [:triplex.attr/key ":_tx/changed-entity"])]
+      (for [x (d/datoms db :vaet owner-id :f.v/ref)
+            :when (= attribute (value db (:e x) :f/attr))
+            :let [r (storage/row db (:e x)) pos (:recorded_position r)]
+            :when (and (= "_Transaction" (:entity_type r)) (<= pos p) (< pos before)
+                       (storage/visible? r cut false))]
+        [(:entity_id r) pos]))))
+
 (defn entity-positions [current name input]
   ;; [DX-W1] Why: the typed history checks actual journal ownership in a pinned mixed layout.
   ;; Rejected: approximating imported journal ownership from the current business rows.
   (try
     (supported! current name false)
-    (when-not (lean/enabled? current) (reach/decline! "rows-version"))
-    (admission/execute admission/journals
-      (fn []
-        (let [limit (get input "limit") owner (get input "entityId")
-              cut (get input "basis") before (get input "beforePosition" Long/MAX_VALUE)
-              p (storage/safe-position (get cut "recordedPosition"))
-              _ (when-not (and (integer? limit) (<= 1 limit 1001) (string? owner)) (throw (ex-info "Invalid journal history request" {})))
-              [db _ _ _ inner] (reach/select-db name current cut)
-              p (or (:position inner) p)
-              kept (java.util.ArrayDeque.)]
-          (doseq [tx (d/index-range db :triplex.tx/position 1 nil)
-                  [e position] (sort-by second (ledger/journals db (:e tx)))
-                  :when (and (<= position p) (< position before)
-                             (some (fn [text] (let [r (lean/decode text)]
-                                      (and (= "_Transaction" (:entity_type r)) (= ":_tx/changed-entity" (:attribute r))
-                                           (= "ref" (:value_type r))
-                                           (= owner (:value_string r)) (storage/visible? r cut false)))) (row-texts db e)))]
-            (.addLast kept [(value db e :triplex.entity/id) position])
-            (when (> (.size kept) limit) (.removeFirst kept)))
-          (json/write-str {:positions (vec (reverse (seq kept)))}))))
+    (let [lean? (lean/enabled? current) recorded? (recorded-only! current input)]
+      (when-not (or lean? recorded?) (reach/decline! "rows-version"))
+      (admission/execute admission/journals
+        (fn []
+          (let [limit (get input "limit") owner (get input "entityId") before (get input "beforePosition" Long/MAX_VALUE)
+                cut (cond-> (get input "basis") recorded? (select-keys ["recordedPosition"]))
+                p (storage/safe-position (get cut "recordedPosition"))
+                _ (when-not (and (integer? limit) (<= 1 limit 1001) (string? owner)) (throw (ex-info "Invalid journal history request" {})))]
+            (if (and recorded? (zero? p))
+              (json/write-str {:positions []})
+              (let [[db _ _ _ inner] (reach/select-db name current cut)
+                    p (or (:position inner) p)]
+                (if-not lean?
+                  (json/write-str {:positions (vec (take limit (sort-by second > (distinct (classic-entity-positions db owner cut p before)))))})
+                  (let [kept (java.util.ArrayDeque.)]
+                    (doseq [tx (d/index-range db :triplex.tx/position 1 nil)
+                            [e position] (sort-by second (ledger/journals db (:e tx)))
+                            :when (and (<= position p) (< position before)
+                                       (some (fn [text] (let [r (lean/decode text)]
+                                                (and (= "_Transaction" (:entity_type r)) (= ":_tx/changed-entity" (:attribute r))
+                                                     (= "ref" (:value_type r))
+                                                     (= owner (:value_string r)) (storage/visible? r cut false)))) (row-texts db e)))]
+                      (.addLast kept [(value db e :triplex.entity/id) position])
+                      (when (> (.size kept) limit) (.removeFirst kept)))
+                    (json/write-str {:positions (vec (reverse (seq kept)))})))))))))
     (catch Exception e (declined e))))
 
 (defn command [db name input]
