@@ -786,7 +786,16 @@ const makeTriplesServices = Effect.gen(function* () {
           }),
         transaction,
         transactionAtPosition: (txId, recordedPosition) =>
-          Effect.flatMap(now, (validAt) => transactionAtBasis(txId, { validAt, recordedPosition })),
+          Effect.gen(function* () {
+            const rows = yield* (
+              adapter.getTransactionRowsAtPosition?.(txId, recordedPosition) ??
+                Effect.succeed(undefined)
+            );
+            if (rows !== undefined)
+              return transactionRecordFromTriples(txId, rows.map(rowToTriple));
+            const validAt = yield* now;
+            return yield* transactionAtBasis(txId, { validAt, recordedPosition });
+          }),
       },
       entityId,
       request,

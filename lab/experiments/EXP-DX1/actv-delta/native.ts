@@ -10,7 +10,7 @@ const owner = fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!),
   slot = JSON.parse(owner.toString()),
   identity = JSON.parse(fs.readFileSync(path.join(dir, "native.json"), "utf8"));
 assert(
-  slot.holder === "DX-ACT2" &&
+  (mode === "joined-integration" ? slot.holder === identity.holder : slot.holder === "DX-ACT2") &&
     slot.mode === "exclusive" &&
     slot.endpoint === process.env.DATOMIC_URL &&
     sha256(owner) === identity.ownerHash,
@@ -82,7 +82,18 @@ if (["schedules", "rungs", "crash"].includes(mode!)) {
     }
   }
 }
-if (mode === "joined-admission") {
+if (mode === "joined-integration") {
+  assert.equal(identity.source, attempt.source);
+  assert.equal(identity.timing, "diagnostic");
+  await (await import("../actv-lazy/join/admission-gate.ts")).run(dir!, attempt);
+  for (const file of ["settle-gate.ts", "gate.ts"]) {
+    execFileSync(
+      process.execPath,
+      ["--import", "tsx", path.join(import.meta.dirname, "../actv-lazy/join", file), dir!],
+      { stdio: "inherit", timeout: 180_000 },
+    );
+  }
+} else if (mode === "joined-admission") {
   await (await import("../actv-lazy/join/admission-gate.ts")).run(dir, attempt);
 } else if (mode === "joined-load") {
   await (await import("../actv-lazy/join/queue-study.ts")).run(dir, attempt);

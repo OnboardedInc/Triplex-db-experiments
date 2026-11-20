@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { frozenDeep } from "../../../bench/lib/deep-profile.ts";
+import { deepPopulation } from "../../../bench/lib/deep-world.ts";
 import { V3_OFFER_SECONDS } from "../../../bench/lib/phases.ts";
 import { campaignCases, campaignTenant, treatment } from "./everything-plan.ts";
 import { importFrames, legacyFrameFacts } from "./pooled-import.ts";
@@ -17,6 +18,16 @@ test("the legacy import splits at complete subjects within the campaign frame li
   });
   assert.equal(roots.length, people);
   assert.equal(new Set(roots).size, people);
+});
+
+test("the full import can complete at the 3,000 facts per second floor", () => {
+  for (const people of [10_000, 100_000]) {
+    const field = campaignCases([people]).find((c) => c.profile === "field" && c.load === "reader")!;
+    const windows = campaignWindows(campaignTenant(field, false), field.load);
+    const duration = windows.filter((w) => w.name === "import" || w.name === "import-tail")
+      .reduce((seconds, w) => seconds + w.seconds, 0);
+    assert(duration * 3000 > deepPopulation(people).facts + people);
+  }
 });
 
 test("the overnight frozen arm keeps the original events in one database with ten accounts", () => {

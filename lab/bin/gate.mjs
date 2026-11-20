@@ -719,9 +719,10 @@ async function gatePAIR(run, config, argv) {
   if (run.options['no-lease']) { if (!memory) fail('USAGE', '--no-lease is only for --composition memory (offline)'); departures.push('no measurement lease'); }
   else {
     lease = await acquireMeasureLease(`${run.runId} PAIR`, { holder: defaultHolder(run.options) });
-    process.stderr.write(`[lab] ${run.runId}: measurement lease held (${lease.tokens} heavy tokens, pool admission frozen) after ${(lease.waitedMs / 1000).toFixed(0)} s\n`);
+    if (lease.diagnostic) departures.push('measurement lease disabled; timings diagnostic');
+    else process.stderr.write(`[lab] ${run.runId}: measurement lease held (${lease.tokens} heavy tokens, pool admission frozen) after ${(lease.waitedMs / 1000).toFixed(0)} s\n`);
   }
-  result.lease = lease ? { holder: lease.owner?.holder ?? null, label: lease.owner?.label ?? null, waitedMs: lease.waitedMs, tokens: lease.tokens, at: lease.owner?.at ?? null } : null;
+  result.lease = lease && !lease.diagnostic ? { holder: lease.owner?.holder ?? null, label: lease.owner?.label ?? null, waitedMs: lease.waitedMs, tokens: lease.tokens, at: lease.owner?.at ?? null } : null;
   const out = run.raw('duet');
   fs.mkdirSync(out, { recursive: true });
   const placementFile = path.join(out, 'placement.json');

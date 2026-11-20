@@ -106,6 +106,27 @@ export async function regression(
   ledger: boolean,
 ) {
   const client = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
+  const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
+  if (subjectWriter !== undefined) {
+    // [DX-PREP1] Why: prove which writer setting actually reached the protected regression gateway.
+    // Rejected: trusting launcher flags or a readback from another scope.
+    const opts = await client.request<{
+      database: string;
+      subjectSave?: boolean;
+      subjectFunction?: string;
+      subjectFunctionTx?: string;
+    }>("GET", `/v1/db/${f.db}/write-options`);
+    assert.equal(opts.database, f.db);
+    assert.equal(Boolean(opts.subjectSave), subjectWriter === "1");
+    if (subjectWriter === "1") {
+      assert.match(opts.subjectFunction ?? "", /^:triplex\.subject\/v-[0-9a-f]{24}$/);
+      assert(Number(opts.subjectFunctionTx) > 0);
+    } else {
+      assert.equal(opts.subjectFunction, undefined);
+      assert.equal(opts.subjectFunctionTx, undefined);
+    }
+    output("subject-writer-options", { binding, ...opts });
+  }
   let observedSequence: number | undefined;
   client.onRequest = (r) => {
     if (r.path.endsWith("/read")) observedSequence = r.erasureSeq;
