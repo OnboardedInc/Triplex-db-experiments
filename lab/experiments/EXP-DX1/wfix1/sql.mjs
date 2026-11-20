@@ -208,16 +208,29 @@ try {
   assert(offered);
   const route = `/v1/db/${offered.database}`;
   const seed = request(route + "/transact", offered.offers[0]);
-  await until(originalGateway, () => witness("leader"), 3000);
+  await until(originalGateway, () => witness("leader"), 10000);
   const acknowledgements = [];
+  const earlyReplies = [];
   const pending = Promise.allSettled(
     offered.offers
       .slice(1)
-      .map((frame) =>
-        request(route + "/transact", frame, () => acknowledgements.push(frame.operationId)),
-      ),
+      .map(async (frame) => {
+        const response = await request(route + "/transact", frame, () =>
+          acknowledgements.push(frame.operationId),
+        );
+        earlyReplies.push({ id: frame.operationId, response });
+        return response;
+      }),
   );
-  const native = await until(originalGateway, () => witness("native"), 3900);
+  // [DX-WFIX1] Why: distinguish a slow native commit from a rejection before the stop boundary.
+  // Rejected: restarting over a missing witness (that cannot establish which requests committed).
+  const native = await until(originalGateway, () => {
+    if (earlyReplies.length) {
+      emit("premature-edit-reply", earlyReplies);
+      throw Error("An edit replied before the native stop witness");
+    }
+    return witness("native");
+  }, 15000);
   assert.equal(native.database, offered.database);
   assert.deepEqual(acknowledgements, []);
   const ended = await stop(originalGateway, "SIGKILL");

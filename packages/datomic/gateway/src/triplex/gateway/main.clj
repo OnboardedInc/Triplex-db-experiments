@@ -2,6 +2,7 @@
   (:require [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
+            [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy])
   (:gen-class))
 
@@ -167,7 +168,8 @@
      :ledger (boolean (or ledger/enabled packed/enabled)) :packedJournal (boolean packed/enabled)
      :packedJournalCount (if (d/entid db :triplex.journal/packed)
                            (reduce (fn [n _] (inc n)) 0 (d/datoms db :aevt :triplex.journal/packed)) 0)
-     :fastReply (boolean group/fast-reply)}))
+     :fastReply (boolean group/fast-reply)
+     :leanNativeQuery (boolean lean-query/enabled) :leanNativeLog (boolean lean-feed/enabled)}))
 (defn route-handler [{:keys [request-method uri body query-string]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
@@ -209,9 +211,12 @@
             params (into {} (map (fn [part] (let [[k v] (clojure.string/split part #"=" 2)]
                                              (let [^String encoded (or v "")] [k (java.net.URLDecoder/decode encoded "UTF-8")])))
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
-        (let [conn (connection (db-uri name))]
-          (when (lean/enabled? (trace/span "d/db" "peer-call" (d/db conn))) (lean/unsupported! "log"))
-          (response 200 (assoc (feed/log-page conn params) :database name))))
+        (let [conn (connection (db-uri name)) lean? (lean/enabled? (trace/span "d/db" "peer-call" (d/db conn)))]
+          (when (and lean? (not lean-feed/enabled)) (lean/unsupported! "log"))
+          (response 200 (assoc (feed/log-page conn params (cond lean? lean-feed/project
+                                                              lean-feed/enabled feed/project-application
+                                                              :else feed/project)
+                                             (when lean? lean-feed/assert-unprotected!)) :database name))))
       (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime) db-uri (db-uri name)]
         (try (timed start (response 200 (trace/span "storage/commit!" "gateway" (storage/commit! name (connection db-uri) (trace/span "d/db" "peer-call" (d/db (connection db-uri))) input))))
@@ -255,7 +260,10 @@
             "transact" (try (trace/span "storage/commit!" "gateway" (storage/commit! name conn db input))
                          (finally (when (get input "release") (storage/release! name (get input "handle")))))
             "read" (trace/span "storage/read-rows" "gateway" (storage/read-rows name db input))
-            "q" (do (when (lean/enabled? (or db (storage/held-db name (get input "handle")))) (lean/unsupported! "q")) (trace/span "query/run" "gateway" (query/run name db input)))
+            "q" (trace/span "query/run" "gateway"
+                  (do (when (and lean-query/enabled (lean/enabled? (or db (storage/held-db name (get input "handle")))))
+                        (lean-query/assert-unprotected! (or db (d/db (connection db-uri)))))
+                      (query/run name db input)))
             "operation" (storage/operation db id)
             "claim" (let [cut (storage/at-position db (get input "position"))
                           id (get input "commandId") claim (d/entid cut [:triplex.claim/command-id id])

@@ -1,0 +1,24 @@
+{
+  "schema": "dx-w1/write6-predictions/1",
+  "beforeServerRun": true,
+  "scope": "Ten deep accounts of 10000 subjects in one database",
+  "offerRatesPerSecond": [35, 49, 50, 100, 235, 394],
+  "arms": {
+    "journal-k": {
+      "journalAcceptanceEligible": true,
+      "saturationSavesPerSecond": [275, 385],
+      "quietP99RatioAt235": [2.4, 5.0],
+      "oneThreeSoloDatoms": [16, 24],
+      "extraSaveDatomsForQueryCoverage": 0
+    },
+    "journal-p": {
+      "journalAcceptanceEligible": false,
+      "saturationSavesPerSecond": [205, 330],
+      "quietP99RatioAt235": [3.0, 8.5],
+      "oneThreeSoloDatoms": [14, 18],
+      "extraSaveDatomsForQueryCoverage": 0
+    }
+  },
+  "mechanism": "The two arms use the same fair queue, predecessor lookup, prepared reuse, fast replies and narrow wire format. Query compatibility and the identity-only application log are read-side changes. P has fewer datoms but performs separate frame construction and reads, and pays for verbatim fallback where required.",
+  "interpretation": "K alone retains the journal facts required by way 2. The timed windows price writes and the isolated query witness checks routing. The projected quiet account misses 1.25 at 235 saves/s in both arms. Protected queries and unindexed whole-scope compatibility reads remain outside the forecast."
+}
