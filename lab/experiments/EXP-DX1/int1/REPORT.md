@@ -1,24 +1,24 @@
-The reader and gateways kept the same person-cache entries while thin imports grew to 600,000 people and the same 2,000 remained active.
+The reader and gateways kept the same person-cache entries through 600,000 thin people with 2,000 active and 40,000 deep people with 200 active.
 From 300,000 to 600,000 people, the reader added zero resident bytes per person, the read gateway shrank slightly, and the write gateway added nine.
-The transactor's cache was nearly full, while its memory still grew. The larger deep sweep is pending.
+For the last 10,000 deep people, the read gateway added 322 bytes per person and the write gateway shrank. The transactor's memory grew in both runs.
 A running gateway opened its first deep record in 132–144 ms. Fresh stacks took 342–491 ms. Most of that difference was inside the gateway.
 At 128 scopes the write gateway had 565 threads and the transactor had 1,097. The last 96 scopes added about four and eight threads each.
 The first merged native path passed all 54,079 checks. The latest notice and reader tests passed and the refreshed native gates are queued.
 The physical campaign uses two pairs at each deep size. The field-save tape uses measured per-account rates and the frozen tape keeps its original rules.
-The thin sweep finished. Three campaign smokes stopped before the paired trace. The latest seeded all 40 people before SQLite refused the shared filesystem.
+Both memory sweeps finished. Three campaign smokes stopped before the paired trace. The latest seeded all 40 people before SQLite refused the shared filesystem.
 
 ## Mac observations at fixed activity
 
-| Role | Thin RSS MiB at 100,000 / 300,000 / 600,000 | Last interval B/person | Early deep RSS MiB at 2,650 / 5,102 / 7,554 / 10,000 | Last interval B/person |
+| Role | Thin RSS MiB at 100,000 / 300,000 / 600,000 | Last interval B/person | Deep RSS MiB at 10,000 / 30,000 / 40,000 | Last interval B/person |
 | --- | ---: | ---: | ---: | ---: |
-| Reader | 140.68 / 140.68 / 140.68 | 0 | 138 / 138 / 138 / 138 | 0 |
-| Read gateway | 310.07 / 325.21 / 324.18 | −3.6 | 296 / 300 / 309 / 316 | 3,126 |
-| Write gateway | 325.52 / 322.20 / 324.68 | 8.7 | 309 / 319 / 321 / 317 | −1,670 |
-| Transactor | 773.46 / 916.64 / 1,038.64 | 426.4 | 712 / 729 / 825 / 864 | 17,015 |
-| PostgreSQL | 1,378.63 / 1,663.68 / 1,831.46 | 586.5 | 1,240 / 1,623 / 1,712 / 1,771 | 25,025 |
-| Driver | 227.68 / 235.13 / 237.45 | 8.1 | 234 / 244 / 254 / 281 | 11,635 |
+| Reader | 140.68 / 140.68 / 140.68 | 0 | 140.88 / 140.88 / 141.00 | 13.1 |
+| Read gateway | 310.07 / 325.21 / 324.18 | −3.6 | 314.78 / 326.00 / 329.07 | 321.5 |
+| Write gateway | 325.52 / 322.20 / 324.68 | 8.7 | 329.18 / 337.62 / 327.12 | −1,100.6 |
+| Transactor | 773.46 / 916.64 / 1,038.64 | 426.4 | 830.21 / 981.41 / 1,020.79 | 4,129.6 |
+| PostgreSQL | 1,378.63 / 1,663.68 / 1,831.46 | 586.5 | 1,785.60 / 1,873.73 / 1,868.75 | −523.1 |
+| Driver | 227.68 / 235.13 / 237.45 | 8.1 | 287.36 / 398.68 / 461.55 | 6,592.9 |
 
-The thin sweep on `cfec11ea1` held 2,000 touches fixed. Earlier deep snapshots on `d0a909ba4` held 100 fixed. Caps were 16 MiB per reader scope, 32 MiB per gateway peer and 8 MiB rows plus 1 MiB / 4,096 IDs per gateway scope. The transactor charged 180.42 of 181.19 MB at 600,000, against a configured 192 MiB object cache. Its 8/32 MiB index thresholds and 840 MiB heap ceiling did not establish an RSS plateau. PostgreSQL assigned all 96 MiB of shared buffers from 100,000 onward and summed RSS counts shared pages repeatedly. The thin reader and gateways met 64 B at the final interval. [Forecasts and refuters](PREDICTIONS.md)
+Both sweeps used `cfec11ea1`. Caps were 16 MiB per reader scope, 32 MiB per gateway peer and 8 MiB rows plus 1 MiB / 4,096 IDs per gateway scope. The thin reader and gateways met 64 B in the last interval. Deep read-gateway RSS still exceeded it. The transactor charged 180.42 MB thin and 180.43 MB deep against the same 181.19 MB effective cache limit. Its configured object cache was 192 MiB, index threshold and maximum 8/32 MiB, and heap ceiling 840 MiB. Total transactor RSS kept growing. PostgreSQL used all 96 MiB of shared buffers from the first rung. Its summed RSS counts shared pages repeatedly. [Forecasts and refuters](PREDICTIONS.md)
 
 ## Mostly idle scopes
 
@@ -47,4 +47,4 @@ The campaign keeps the bounded readers and gateways, exact history range, predec
 
 - The memory collector binds raw phase bytes and ledgers to the attempt, native image and live PIDs. It checks the original people and record positions, fixed admission and gateway counters, and exact first-read and first-save rows. The heap observer binds its challenge to the active slot. The retired-image receipt checks the configured image ID, live reservations and absence of its tag.
 - The combined runner validates the armed scope, seed and trace. The collector reopens native receipts, verifies the selected writer and joins each primary to its bound command. It checks the offered tape, sealed oracle input, slot, matched metrics, owned cleanup and producer bytes. Smoke also requires exact feed progress, corrections and resume. Eligibility requires the frozen checks. The field collector reports separately.
-- Prior full evidence is bound to the Part 3 report at `f06cd0a46`. Local resource observations are diagnostic. The thin sweep received a slot after the recorded contention. The deep census and the native campaign comparison still need results. [Prior checksums](GATEWAY-SHA256SUMS)
+- Prior full evidence is bound to the Part 3 report at `f06cd0a46`. The Mac observations are diagnostic. Both fixed-activity sweeps and the scope census closed their managed volumes. The combined native comparison is still pending. [Prior checksums](GATEWAY-SHA256SUMS)
