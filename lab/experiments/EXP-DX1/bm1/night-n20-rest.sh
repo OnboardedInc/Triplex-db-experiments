@@ -29,22 +29,35 @@ status() {
 if [[ $action == queue ]]; then
   exec 9<> "$base/night-n20-rest.lock"
   flock -n 9 || exit 75
-  wait_terminal bm1n20-night-next.service || exit 75
-  for item in erasure ha1-pipeline; do
-    # [DX-BM1] Why: preserve at least 90 minutes for the ready shared-database import before midday.
+  wait_terminal bm1n20-night-reordered.service || exit 75
+  # [DX-BM1] Why: give the fresh PREP1 handoff and the retained-roster check one bounded decision window.
+  # Rejected: allowing a missing publication to strand the ready erasure and import commands.
+  item=queue
+  status awaiting-writer-followup erasure
+  for ((i=0; i<60; i++)); do
+    next=$(systemctl show bm1n20-prep1-followup.service -p LoadState --value)
+    if [[ $next != not-found ]]; then
+      wait_terminal bm1n20-prep1-followup.service || exit 75
+      break
+    fi
+    [[ ! -f $base/night-n20-skip-writer-followup ]] || break
+    sleep 10
+  done
+  for item in erasure ha1-paced; do
+    # [DX-BM1] Why: preserve at least one hour for the ready shared-database import before midday.
     # Rejected: starting a 5.5-hour erasure stage too late to respect the release window.
     noon=$(date -u -d '2026-11-21T17:00:00Z' +%s)
     remaining=$((noon - $(date -u +%s)))
     case $item in
-      erasure) minimum=20100; ceiling=19800 ;;
-      ha1-pipeline) minimum=5400; ceiling=5100 ;;
+      erasure) minimum=18600; ceiling=19800 ;;
+      ha1-paced) minimum=3900; ceiling=3600 ;;
     esac
     if (( remaining < minimum + 300 )); then
       printf '%s %s deadline\n' "$(date -u +%FT%TZ)" "$item" >> "$base/night-n20-dispositions.txt"
       continue
     fi
     if [[ $item == erasure ]]; then
-      (( ceiling = remaining-5700 < ceiling ? remaining-5700 : ceiling ))
+      (( ceiling = remaining-4200 < ceiling ? remaining-4200 : ceiling ))
       if (( ceiling < 14400 )); then
         printf '%s %s insufficient-stage-window\n' "$(date -u +%FT%TZ)" "$item" >> "$base/night-n20-dispositions.txt"
         continue
@@ -67,7 +80,7 @@ fi
 
 case $item in
   erasure) branch=exp/DX-ERASE1-erasure-cost; pin=4054f548469e57b6aa82b06e93711c39b6867f7c ;;
-  ha1-pipeline) branch=exp/DX-HA1-failover-move; pin=324a329d741f524f61f708cf5a2158db196e518a ;;
+  ha1-paced) branch=exp/DX-HA1-failover-move; pin=e1b5d34d27249c330aa257a1d5fcc4298b578c56 ;;
   *) exit 2 ;;
 esac
 
@@ -93,7 +106,7 @@ cleanup() {
       fi
     done
   elif [[ -f $root/request.json ]]; then
-    python3 "$here/ha-micro-run.py" cleanup pipeline || return 1
+    python3 "$here/ha-micro-run.py" cleanup paced || return 1
   fi
 }
 
@@ -122,5 +135,5 @@ if [[ $item == erasure ]]; then
   cleanup
   status measured next-ready-item
 else
-  python3 "$here/ha-micro-run.py" run pipeline
+  python3 "$here/ha-micro-run.py" run paced
 fi

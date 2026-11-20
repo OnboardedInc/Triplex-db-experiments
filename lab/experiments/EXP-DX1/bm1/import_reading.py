@@ -148,6 +148,7 @@ def micro_output(directory, source, slot, start, *, capacity="one-host"):
 
 PIPELINE_ARMS = ("pipeline-0-a", "pipeline-16-2", "pipeline-24-2", "pipeline-16-1", "pipeline-24-1",
                  "pipeline-16-4", "pipeline-24-4", "pipeline-16-8", "pipeline-24-8", "pipeline-0-b")
+PACED_ARMS = ("pace-0-a","pace-32-feedback","pace-32-fixed","pace-0-b")
 
 
 def pipeline_output(directory, source, slot, start, *, small=False):
@@ -156,11 +157,13 @@ def pipeline_output(directory, source, slot, start, *, small=False):
     body = get(report)
     nonce = attempt["nonce"]
     width_duration = 18_000 if small else 108_000
-    assert directory.name == "load-pipeline-"+nonce and attempt["mode"] == "load-pipeline"
+    paced = attempt["mode"] == "load-paced"
+    assert paced or attempt["mode"] == "load-pipeline"
+    assert directory.name == attempt["mode"]+"-"+nonce
     assert (body["source"],body["slot"],body["nonce"]) == (attempt["source"],slot,nonce)
     assert attempt["source"]["git"] == source and attempt["slot"] == slot
     assert get(directory/"cleanup.json") == {"nonce":nonce,"containers":0,"networks":0}
-    names = ("pipeline-16-4", "pipeline-24-8") if small else PIPELINE_ARMS
+    names = PACED_ARMS if paced else ("pipeline-16-4", "pipeline-24-8") if small else PIPELINE_ARMS
     results = []
     for name, arm in zip(names, body["result"], strict=True):
         tape_path = directory/(name+".offers.json")
@@ -170,10 +173,11 @@ def pipeline_output(directory, source, slot, start, *, small=False):
         checked = read_arm(directory, attempt, name, arm["rate"], micro=True, duration=width_duration)
         assert checked["neighbors"] == arm["neighbors"]
         tape = get(tape_path)
-        assert tape["hz"] == 240 and arm["offeredFrames"] == width_duration * 240 // 1000
+        hz = 110 if paced else 240
+        assert tape["hz"] == hz and arm["offeredFrames"] == width_duration * hz // 1000
         width = int(name.split("-")[1])
         assert arm["width"] == width
-        assert tape["lostReplies"] == (2 if width else 0)
+        assert tape["lostReplies"] == ((1 if paced else 2) if width else 0)
         commands = sorted(tape["ordered"], key=lambda r: r["first"])
         seen = {r["position"]:r for r in commands}
         for i, frame in enumerate(commands):
@@ -185,12 +189,20 @@ def pipeline_output(directory, source, slot, start, *, small=False):
                 latest = max(latest, marker["end"])
             assert marker["end"] == seen[marker["position"]]["end"]
         assert arm["queryableFacts"] == latest*8
-        results.append(dict(arm=name, width=width, offers=sum(x["offered"] for values in checked["neighbors"].values() for x in values.values()),
+        result = dict(arm=name, width=width, offers=sum(x["offered"] for values in checked["neighbors"].values() for x in values.values()),
                             queryableFacts=latest*8, queryablePerSecond=latest*8000/width_duration,
-                            neighbors=checked["neighbors"], sha256=digest(tape_path)))
+                            neighbors=checked["neighbors"], sha256=digest(tape_path))
+        if paced:
+            assert tape["pace"]["decisions"] == arm["pacingDecisions"] and arm["peakBulk"] == bool(width)
+            if name.endswith("-feedback"):
+                assert tape["pace"]["baseline"] == body["result"][0]["neighbors"]
+            else:
+                assert not tape["pace"].get("baseline") and not tape["pace"]["decisions"]
+            result.update(pacingDecisions=arm["pacingDecisions"],nativeTiming=arm["pipelineTiming"])
+        results.append(result)
     def pairs(cells):
         before = cells[0]
-        after = cells[-1] if cells[-1]["arm"] == "pipeline-0-b" else None
+        after = cells[-1] if cells[-1]["arm"] == names[-1] else None
         def ratio(matched, account, kind, own):
             if matched is None:
                 return None
@@ -204,13 +216,13 @@ def pipeline_output(directory, source, slot, start, *, small=False):
             rows.append(dict(arm=cell["arm"],queryableFactsPerSecond=cell["queryablePerSecond"],accounts=accounts))
         return rows
     comparisons = []
-    if not small:
+    if not small or paced:
         # Use the producer's account row ordering and independently reconstructed per-account outcomes.
         for row,original in zip(results,body["result"],strict=True):
             row["neighbors"] = {key:row["neighbors"][key] for key in original["neighbors"]}
         comparisons = pairs(results)
-        assert get(directory/"load-pipeline-comparison.json") == comparisons
-        assert get(directory/"load-pipeline-early.json") == pairs(results[:3])
+        assert get(directory/(attempt["mode"]+"-comparison.json")) == comparisons
+        assert get(directory/(attempt["mode"]+"-early.json")) == pairs(results[:3])
     return dict(source=source, slot=slot, nonce=nonce, observationsSha256=digest(report), arms=results, comparisons=comparisons)
 
 

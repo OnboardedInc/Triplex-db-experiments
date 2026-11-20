@@ -22,6 +22,7 @@ SLOTS = {
                                         "guarded-transactor-gc.log", "guarded-gateway-gc.log", "transactor.log", "postgres.log", "gateway.log")),
     "erasure-small": ("night-n20-erasure-small", ("measured", "guarded", "stage", "control-stage", "checkpoint.json", "collector.json", "erase-clean.json")),
     "ha1-pipeline": ("night-n20-ha1-pipeline", ("run", "collector.json", "cleanup.json", "worker.log")),
+    "ha1-paced": ("night-n20-ha1-paced", ("run", "collector.json", "cleanup.json", "worker.log")),
     "jvm1": ("day-n20-jvm1", ("seed/seed.json", "seed/results", "small/results", "campaign/results",
                              "seed.log", "campaign.log", "retry.log", "retry-resumed.log", "failed-unit.txt",
                              "cold-postgres.json", "retry",

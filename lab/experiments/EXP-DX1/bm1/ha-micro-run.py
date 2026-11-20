@@ -16,13 +16,14 @@ from overnight import import_inventory
 from producer_readings import digest, get
 
 PIPELINED = sys.argv[2:] == ["pipeline"]
-ITEM = "ha1-pipeline" if PIPELINED else "ha1-micro"
-MODE = "load-pipeline" if PIPELINED else "load-micro"
-ROOT = Path("/var/tmp/triplex-bm1")/(("night-n20-" if PIPELINED else "day-n20-")+ITEM)
+PACED = sys.argv[2:] == ["paced"]
+ITEM = "ha1-paced" if PACED else "ha1-pipeline" if PIPELINED else "ha1-micro"
+MODE = "load-"+ITEM.removeprefix("ha1-")
+ROOT = Path("/var/tmp/triplex-bm1")/(("night-n20-" if PIPELINED or PACED else "day-n20-")+ITEM)
 REPO = ROOT/"build/repository"
 BIN = ROOT/"build/tools/bin"
-TAG = "bm1n20-pipeline" if PIPELINED else "bm1n20-microframes"
-SOURCE = "324a329d741f524f61f708cf5a2158db196e518a" if PIPELINED else "14174308fa1b1f6ade7f3e1fe3ce58ca4bc173ba"
+TAG = "bm1n20-paced" if PACED else "bm1n20-pipeline" if PIPELINED else "bm1n20-microframes"
+SOURCE = "e1b5d34d27249c330aa257a1d5fcc4298b578c56" if PACED else "324a329d741f524f61f708cf5a2158db196e518a" if PIPELINED else "14174308fa1b1f6ade7f3e1fe3ce58ca4bc173ba"
 ENV = {**os.environ, "PATH": str(BIN)+":"+os.environ["PATH"],
        "DX_BARE_METAL": "1", "DOCKER_HOST": "unix:///var/run/docker.sock"}
 
@@ -83,8 +84,8 @@ def run():
     local_gate = Path(__file__).resolve().parent/"SHA256SUMS"
     proof = "cd4c9abbe7137bc6f65fc101799dfb73fcdc6703bc6444ee168bdcdb08a9d0ff"
     sample = "day-n20/ha1-micro-agreement/collector.json"
-    if PIPELINED:
-        sample = "day-n20/ha1-pipeline-agreement/collector.json"
+    if PIPELINED or PACED:
+        sample = "day-n20/"+ITEM+"-agreement/collector.json"
         proof, = [line.split()[0] for line in local_gate.read_text().splitlines() if line.endswith("  "+sample)]
     assert f"{proof}  {sample}" in local_gate.read_text().splitlines()
     request = dict(root=str(ROOT), item=13, tag=TAG, source=SOURCE,
@@ -95,14 +96,14 @@ def run():
         call(BIN/"node", "lab/bin/heavy.mjs", "--label", "DX-BM1-"+ITEM, "--",
              BIN/"node", "--import", "tsx", "lab/experiments/EXP-DX1/ha1/bench.ts",
              MODE, TAG, SOURCE, "-", "-", "-", ROOT/"run", str(uuid.uuid4()), "50",
-             "deep", "one-host", timeout=5000 if PIPELINED else 6600, stdin=subprocess.DEVNULL)
+             "deep", "one-host", timeout=3600 if PACED else 5000 if PIPELINED else 6600, stdin=subprocess.DEVNULL)
     finally:
         cleanup()
     campaign = get(ROOT/"run/campaign.json")
     assert [campaign[k] for k in ("tag", "sha", "mode", "sizes", "shape", "layout")] == [
         TAG, SOURCE, MODE, [50], "deep", "one-host"]
     directory, = (ROOT/"run").glob(MODE+"-*")
-    check = pipeline_output if PIPELINED else micro_output
+    check = pipeline_output if PIPELINED or PACED else micro_output
     result = check(directory,SOURCE,TAG,request["start"])
     # The published launcher serves reads and writes from the same gateway in this mode.
     events = [json.loads(line) for line in (directory/"events.jsonl").read_text().splitlines()]
@@ -129,7 +130,7 @@ def run():
 
 
 if __name__ == "__main__":
-    assert sys.argv[1:] in (["run"],["cleanup"],["run","pipeline"],["cleanup","pipeline"])
+    assert sys.argv[1] in ("run","cleanup") and sys.argv[2:] in ([],["pipeline"],["paced"])
     if sys.argv[1] == "run":
         run()
     else:
