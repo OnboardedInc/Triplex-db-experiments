@@ -1508,9 +1508,17 @@ async function main() {
     // [DX-SCALE1] Why: ACT2 and W1 are explicitly revision-pinned treatments. Their later independent experiments are recorded in originHeads. Rejected: blocking a verified page-guard or group-commit arm on an unrelated design branch advance.
     const pinnedStudy =
       ref === "exp/DX-ACT2-activation-100k" || ref === "exp/DX-W1-commit-tail-reads";
+    // [DX-SCALE1] Why: keep one executable revision across matched bounded arms during changes to BM1's independent probes and Mac indexer. Rejected: moving the live sender or core placement between the control and treatment.
+    const independentProbe =
+      (bounded || (mode === "seed" && item >= 3)) &&
+      ref === "exp/DX-BM1-bare-metal" &&
+      changes.every(
+        (f) => f.startsWith("lab/experiments/EXP-DX1/bm1/") || f === "lab/bin/trace-store.mjs",
+      );
     assert(
       paired ||
         pinnedStudy ||
+        independentProbe ||
         (mode === "seed" && item === 3 && ref === "exp/DX-ACT1-activation") ||
         sameCampaignInputs(ref, changes, publication),
       "New upstream executable inputs require an integrated source revision: " + ref,

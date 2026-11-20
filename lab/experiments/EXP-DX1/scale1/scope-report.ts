@@ -1,4 +1,5 @@
 import { livePeakWindow } from "./deep-live.ts";
+import { keyFor } from "./tenants.ts";
 import assert from "node:assert/strict";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { histogramDistribution, ratioBar } from "../../../bench/lib/verdict-statistics.ts";
@@ -29,6 +30,7 @@ type Run = {
   restart?: any;
   limit?: any;
   groupSettings?: any;
+  resources?: any;
 };
 const MI = 1024 ** 2;
 function windowTable(run: Run, lines: string[]) {
@@ -60,10 +62,12 @@ function windowTable(run: Run, lines: string[]) {
     if (run.attempt.live) {
       lines.push(
         "",
-        "| Field-save load | Offered / s | Durable ACKs / s | Expiries | Quiet account at 3.5/s |",
-        "| --- | ---: | ---: | ---: | --- |",
+        "| Field-save load | Offered / s | Durable ACKs / s | Expiries | Quiet account at 3.5/s | Account 1 commit p99 ms | Account 1 read p99 ms | Account 1 feed lag p99 ms |",
+        "| --- | ---: | ---: | ---: | --- | --- | --- | --- |",
       );
-      for (const w of m.tenants.windows)
+      const sentinel = keyFor(0);
+      for (const w of m.tenants.windows) {
+        const account = w.accounts[sentinel];
         lines.push(
           "| " +
             [
@@ -72,9 +76,14 @@ function windowTable(run: Run, lines: string[]) {
               fmt(w.sustainedCommitsPerS) + " (" + w.acked + ")",
               w.fullExpired,
               w.sentinelRate === 3.5 ? "yes" : "no",
+              ...["commit", "read", "feed"].map((key) => {
+                const d = account[key];
+                return metric({ value: d.p99Ms, n: d.n, interval90: d.interval90 });
+              }),
             ].join(" | ") +
             " |",
         );
+      }
       for (const q of m.tenants.ninePeakQuiet)
         lines.push(
           "Three nine-neighbour peak minutes, " + q.id + ": " + metric(q) + " " + q.status + ".",
@@ -98,6 +107,20 @@ function windowTable(run: Run, lines: string[]) {
             : "unresolved") +
           ".",
       );
+      if (b.firstExpiry) {
+        const e = b.firstExpiry;
+        lines.push(
+          "First expiry was observed at " +
+            fmt(e.offeredPerS) +
+            " offered/s and " +
+            fmt(e.ackPerS) +
+            " durable ACKs/s in " +
+            e.window +
+            " (" +
+            e.expired +
+            " expiries).",
+        );
+      }
     }
     const miss = m.tenants.firstSteadyMiss;
     lines.push(
@@ -257,6 +280,33 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
       continue;
     }
     windowTable(s, lines);
+    if (s.resources?.engines) {
+      lines.push(
+        "",
+        "Peak cgroup memory and busiest three consecutive CPU samples across the execution (one core = 100%).",
+        "",
+        "| Role | Peak GiB | CPU % | Samples |",
+        "| --- | ---: | ---: | ---: |",
+      );
+      for (const [role, r] of Object.entries<any>(s.resources.engines))
+        lines.push(
+          "| " +
+            [role, fmt(r.maxBytes / 1024 ** 3), fmt(r.maxBusyThreeSamples), r.n].join(" | ") +
+            " |",
+        );
+      const tx = s.resources.jvms?.tx;
+      lines.push(
+        "",
+        "Transactor object cache " +
+          (tx?.cacheRequests
+            ? tx.cacheHits + " hits in " + tx.cacheRequests + " requests"
+            : "counters unavailable") +
+          ". Lowest free disk " +
+          fmt(s.resources.minimumFreeFilesystemBytes / 1024 ** 3) +
+          " GiB.",
+        "",
+      );
+    }
     if (s.open) {
       bind(s.open);
       assert(

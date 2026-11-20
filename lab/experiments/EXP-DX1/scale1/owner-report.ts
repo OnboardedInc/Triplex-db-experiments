@@ -26,6 +26,7 @@ type Stage = {
   restart: any;
   limit: any;
   groupSettings: any;
+  boundedLatency: { read: any; feedLag: any } | null;
 };
 const load = (dir: string, f: string) =>
   fs.existsSync(path.join(dir, f)) ? JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")) : null;
@@ -36,6 +37,30 @@ const metric = (b: any) =>
     : "—";
 const bar = (s: Stage, id: string, scope = false) =>
   (scope ? s.summary?.perScope?.[0]?.bars : s.summary?.pooledBars)?.find((b: any) => b.id === id);
+function boundedLatency(dir: string, attempt: any, summary: any) {
+  if (!attempt.bounded || attempt.mode !== "reader" || !summary) return null;
+  const bytes = fs.readFileSync(path.join(dir, "s0/ns-report.json"));
+  const scope = summary.perScope[0];
+  assert.equal(createHash("sha256").update(bytes).digest("hex"), scope.hashes.report);
+  const report = JSON.parse(bytes.toString("utf8"));
+  const identity = report.deep.identity;
+  assert(
+    identity.source === attempt.source &&
+      identity.slot === attempt.slot &&
+      identity.nonce === attempt.nonce &&
+      identity.bounded === true &&
+      identity.account === 0 &&
+      identity.arm === attempt.mode,
+  );
+  const distribution = (name: string) => {
+    const values = report.histograms["bounded-readers." + name];
+    if (!values) return null;
+    const key = attempt.tag + "/bounded-readers/" + name;
+    const d = histogramDistribution(Histogram.fromJSON(values), key);
+    return { value: percentile(d, 0.99), n: d.n, interval90: bootstrap90(d, 0.99, key) };
+  };
+  return { read: distribution("read"), feedLag: distribution("feedLag") };
+}
 export function updateReport(evidence: string, file = path.join(here, "REPORT.md")) {
   const stages: Stage[] = [];
   if (fs.existsSync(evidence))
@@ -80,22 +105,23 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         restart: load(dir, "restart.json"),
         limit: load(dir, "database-limit.json"),
         groupSettings: load(dir, "group-settings.json"),
+        boundedLatency: boundedLatency(dir, attempt, summary),
       });
     }
   stages.sort((a, b) => a.attempt.at - b.attempt.at);
   const recent = (item: number, mode: string) =>
     stages.filter((s) => s.attempt.item === item && s.attempt.mode === mode).at(-1);
-  const one = recent(2, "reader"),
-    ten = recent(5, "reader"),
+  const one = recent(2, "reader") ?? recent(2, "zero"),
+    ten = recent(5, "reader") ?? recent(5, "zero"),
     a1 = recent(2, "activation"),
     a10 = recent(5, "activation"),
     base = recent(1, "zero");
   const cost = (s: Stage | undefined) =>
     s?.summary
-      ? `${metric(s.summary.commit.p99)} ms commit p99, ${metric(bar(s, "NS-P1-READ-P99-256-MS"))} ms read p99, ${round(s.size?.simultaneousPeakBytes / 1024 ** 3)} GiB simultaneous client and engine cgroup peak, ${round(s.disk?.bytesPerFact)} database bytes per current fact${s.summary.invalid.length ? " (unjudged)" : ""}`
+      ? `${metric(s.summary.commit.p99)} ms commit p99, ${metric(s.boundedLatency?.read ?? bar(s, "NS-P1-READ-P99-256-MS"))} ms read p99, ${round(s.size?.simultaneousPeakBytes / 1024 ** 3)} GiB simultaneous client and engine cgroup peak, ${round(s.disk?.bytesPerFact)} database bytes per current fact${s.summary.invalid.length ? " (unjudged)" : ""}`
       : s?.terminal.service === "capacity-refused"
         ? `capacity refused on ${s.attempt.capacity.limits.join(" and ")}`
-        : "awaiting a completed bare-metal reader arm";
+        : "awaiting a completed bare-metal arm";
   const act = (s: Stage | undefined) =>
     s?.summary
       ? `${s.summary.perScope.map((p: any) => round(p.deep.r2.wallMs / 1000)).join(", ")} s across ${s.summary.scopeCount} sweeps, with ${s.summary.perScope.reduce((n: number, p: any) => n + (p.deep.activationOracle?.checked ?? 0), 0)} independently checked people`
@@ -171,6 +197,27 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       s.summary?.perScope?.some((p: any) => p.deep?.r2?.cost && p.deep?.activationOracle),
     ),
   );
+  const setup = stages.findLast(
+    (s) => s.tag.startsWith("arm-p6-i1-seed-") && s.terminal.service === "success" && s.disk?.facts,
+  );
+  const fieldTrials = stages.filter((s) => s.tag.startsWith("arm-p6-i1-") && s.attempt.live);
+  const thresholds = fieldTrials.flatMap((s) => {
+    const b = s.summary?.tenants?.loadBoundary;
+    if (!b || b.unjudged) return [];
+    const miss = b.lowestObservedFailure;
+    const on = s.attempt.groupControl ? "grouped" : "ungrouped";
+    return [
+      s.attempt.layout +
+        " " +
+        s.attempt.live +
+        " " +
+        on +
+        " " +
+        (miss
+          ? round(miss.offeredPerS) + " offered/s (" + miss.expired + " expiries)"
+          : "no observed failure"),
+    ];
+  });
   const breakdown = a1?.summary?.perScope?.find((p: any) => p.deep?.r2?.cost)?.deep.r2.cost;
   const costLine = breakdown
     ? ` R2 evaluated in ${round(breakdown.evaluationMs)} ms, changed ${breakdown.changedSubjects}/${breakdown.subjects} outputs and wrote ${breakdown.bodyFacts} body facts plus ${breakdown.guardFacts} guard facts across ${breakdown.mixedPages + breakdown.guardOnlyPages} pages. The queue carried ${round(breakdown.queue.physicalPerS)} native transactions/s and ${round(breakdown.queue.changedFactsPerS)} fact changes/s.`
@@ -183,18 +230,26 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
           "Deep reader goodput is unmeasured. Deep averaged 0.733 SQL reads per save versus 0.277 for thin. The largest increase in the slowest percentile was before gateway entry. [Commit anatomy](COMMIT-ANATOMY.md)",
         ]
       : []),
-    `One account of 100,000 people — ${ledgerLimit && !one ? "unmeasured because the campaign stopped at 10,000" : cost(one)}.`,
-    `Ten accounts of 100,000 people sharing one database — ${ledgerLimit && !ten ? "unmeasured. The field-save profile offers 35/s steady, 235/s at its five-minute plateau and 394/s when peaks coincide" : cost(ten)}.${partialTen ? ` The bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} attempted databases.` : ""}`,
+    `One account of 100,000 people — ${cost(one)}.`,
+    `Ten accounts of 100,000 people sharing one database — ${cost(ten)}.${partialTen?.partial ? ` The bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} attempted databases.` : ""}`,
     `The owner's release target is under one second. Activation for one account is ${ledgerLimit && !a1 ? "unmeasured" : act(a1)}. Activation among ten is ${ledgerLimit && !a10 ? "unmeasured" : act(a10)}.${costLine}`,
-    ledgerLimit
-      ? "The preceding 10,000-person ladder stopped on its second attempt. The benchmark’s 64 GiB observation allowance filled after " +
-        ledgerLimit.checkpointReads.toLocaleString("en-US") +
-        " reads had been checkpointed. Database capacity and tenant isolation remain unresolved. [Failure evidence](evidence/arm-d19-i1-reader-b-diagnostic.md)"
-      : emptied
-        ? `First recorded engine memory-limit kill was in ${emptied.resources.firstObservedEngineOOM.role}, attempt ${emptied.tag}.`
-        : refused
-          ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
-          : "The first shared resource to reach its limit is still unknown.",
+    emptied
+      ? `First recorded engine memory-limit kill was in ${emptied.resources.firstObservedEngineOOM.role}, attempt ${emptied.tag}.`
+      : refused
+        ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
+        : "The first shared resource to reach its limit is still unknown.",
+    thresholds.length
+      ? "First measured expiry or quiet p99 miss by arm: " +
+        thresholds.join(", ") +
+        ". [Scope measurements](SCOPES.md)"
+      : (setup
+          ? "Ten 10,000-person accounts seeded " +
+            setup.disk.facts.toLocaleString("en-US") +
+            " facts in one database (" +
+            round(setup.disk.bytesPerFact) +
+            " PostgreSQL bytes/fact, one seed). "
+          : "") +
+        "The field-save profile offers 35/s steady, 235/s at its five-minute plateau and 394/s at coincident peaks.",
     "Three changes to test are grouping queued saves, reducing per-save work at the serial commit point, and publishing a release with a constant number of writes. Their effects on the full account are unmeasured.",
     `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `PostgreSQL grew by ${round(base.disk.bytesPerFact)} bytes per fact and the volume including WAL grew by ${round(base.disk.volumeBytesPerFact)} bytes per fact (one seed).` : "The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack)."}`,
     "",
@@ -206,7 +261,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "",
     "**Bench measurements**",
     "",
-    "| Item and arm | Scope | Commit p50 ms | Commit p99 ms | L256 read p99 ms | L256 feed p99 ms | Status |",
+    "| Item and arm | Scope | Commit p50 ms | Commit p99 ms | Read p99 ms | Feed p99 ms | Status |",
     "| --- | --- | --- | --- | --- | --- | --- |",
   ];
   for (let item = 1; item <= 5; item++) {
@@ -227,7 +282,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         const sentinel = id === "account 1",
           c = sentinel ? m?.perScope?.[0]?.commit : m?.commit;
         lines.push(
-          `| ${item} ${mode} | ${id} | ${metric(c?.p50)} | ${metric(c?.p99)} | ${metric(bar(s, "NS-P1-READ-P99-256-MS", sentinel))} | ${metric(bar(s, "NS-P3 lag p99 ms at L256", sentinel))} | ${m?.invalid?.length ? "Unjudged" : m ? "Observed" : s.terminal.service === "success" ? "Incomplete" : s.terminal.service} · ${s.tag} |`,
+          `| ${item} ${mode} | ${id} | ${metric(c?.p50)} | ${metric(c?.p99)} | ${metric(s.boundedLatency?.read ?? bar(s, "NS-P1-READ-P99-256-MS", sentinel))} | ${metric(s.boundedLatency?.feedLag ?? bar(s, "NS-P3 lag p99 ms at L256", sentinel))} | ${m?.invalid?.length ? "Unjudged" : m ? "Observed" : s.terminal.service === "success" && s.disk?.facts ? s.disk.facts.toLocaleString("en-US") + " seeded facts" : s.terminal.service} · ${s.tag} |`,
         );
       }
     }
@@ -314,7 +369,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   );
   lines.push(
     "",
-    "Cells give estimate · n [90% interval] where available. The regular arms target 5,910 seconds of offers. Each transferred summary retains every per-account bar, pooled sample distributions and the count of accounts meeting each obligation.",
+    "Cells give estimate · n [90% interval] where available. The bounded read and feed latencies cover 64 readers on two cores for ten minutes. The earlier 10k ladder filled its 64 GiB observation allowance after 381,428,503 reads. [Failure evidence](evidence/arm-d19-i1-reader-b-diagnostic.md)",
     "",
     "The dedicated server arrived with 93.4 GiB RAM, 12 physical cores and two 894.3 GiB NVMe devices. The baseline uses the root device, SMT enabled, the performance governor and six reader cores. The second device arrived unformatted. [Assumptions](PROFILE.md)",
     "",
@@ -343,7 +398,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- `deep-activation.ts` checks the observed release, each page receipt and its changed bodies against the source cut, roster hashes and O-DOMAIN. `deep-commit-meter.ts` binds native transaction IDs, members, datoms and logical change rows to actual source replies. `measurements.ts` opens the new attempt’s receipt ledger, rehashes its bytes, validates its source, nonce and database, and recomputes the reported release and burst rates.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
-    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. The restarted queue advances past failed arms and retains them for retry. The bounded reader collector checks every observation against the complete receipt model in memory, seals the one-in-100 sample and every error and mismatch, and rechecks attempt identity, counts and bytes on collection. The zero comparison independently binds gateway and transactor spans and full receipt journal bytes to each historical attempt.",
+    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. The restarted queue advances past failed arms and retains them for retry. The bounded reader collector checks every observation against the complete receipt model in memory, seals the one-in-100 sample and every error and mismatch, and rechecks attempt identity, counts and bytes on collection. The zero comparison independently binds gateway and transactor spans and full receipt journal bytes to each historical attempt. Bounded latency summaries recheck the exact per-scope report bytes, nonce, source, slot, account and arm before reading histograms.",
     "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions and observations](PREDICTIONS.md) are recorded for each item. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
