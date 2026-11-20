@@ -32,24 +32,26 @@
 
 (defn compact-seed! [store people facts width collect?]
   (let [conn (:conn store) start (System/nanoTime)]
-    (loop [next 0 revs (transient {}) counts (zipmap f/accounts (repeat 0)) txs 0 sizes 0]
+    (loop [next 0 revs [] counts (zipmap f/accounts (repeat 0)) txs 0 sizes 0]
       (if (= next people)
-        {:revs (persistent! revs) :txs txs :bytes sizes :wallMs (floor/ms (- (System/nanoTime) start))}
+        {:revs revs :txs txs :bytes sizes :wallMs (floor/ms (- (System/nanoTime) start))}
         (let [cohort (vec (range next (min people (+ next width))))
               db (d/db conn)
               requests (mapv #(seed-request % facts) cohort)
               before (mapv #(store/prepare store db %) requests)
               {:keys [report outcomes]} (store/commit-ready! store before)
               last (:db-after report)
+              _ (assert (= (count outcomes) (count cohort)))
               p (reduce (fn [p [i req r]]
                           (let [account (f/account i) pos (inc (p account))]
                             (oracle/require-receipt req pos r)
                             (assert (= (mapv #(store/encode-add store account (f/root i) %) (:adds req))
                                        (:adds (store/event last (store/claim last account (:command req))))))
-                            (when collect? (assoc! revs i pos))
                             (assoc p account pos)))
                         counts (map vector cohort requests outcomes))]
-          (recur (+ next (count cohort)) revs p (inc txs)
+          ;; [DX-COMPACT1] Why: revision index i must refer to subject i across every cohort.
+          ;; Rejected: assuming assoc! keeps the transient array-map after its first eight entries.
+          (recur (+ next (count cohort)) (if collect? (into revs (map :position outcomes)) revs) p (inc txs)
                  (+ sizes (reduce + (map (comp store/utf8 :body) before)))))))))
 
 (defn correction [i serial width p]
@@ -60,6 +62,19 @@
   (let [rows (vec (d/tx-range (d/log conn) t (inc t)))]
     (assert (= [t] (mapv :t rows)))
     (:data (first rows))))
+
+(defn writer-witness! [conn name n]
+  ;; [DX-COMPACT1] Why: bind the native processor thread to this database before the measured arms.
+  ;; Rejected: treating peer io-context as a persistent transactor label (the native log normalizes it to :db/tx).
+  (let [values (mapv #(str "compact-witness-" name "-" %) (range n))
+        report (store/tx! conn (mapv #(vector :db/add % :db/doc %) values))
+        db (:db-after report) t (d/basis-t db) actual (durable-tx! conn t)
+        attr (d/entid db :db/doc) api (get-in report [:io-stats :api-ms])]
+    (assert (= (:tx-data report) actual))
+    (assert (= (set values) (set (map :v (filter #(= attr (:a %)) actual)))))
+    (assert (= (inc n) (count actual)))
+    (assert (number? api))
+    {:t t :datoms (count actual) :apiMs api}))
 
 (defn layout! []
   (let [store (open-compact! "layout" 32) conn (:conn store)
@@ -185,13 +200,7 @@
                                       {:receipt (legacy/save! legacy request)})]
                           (merge (dissoc job :request) reply)))) jobs)
         before (floor/pg-sample)
-        original d/transact-async
-        [elapsed outcomes] (if (= "compact" treatment)
-                             (timed #(closed-loop depth funcs))
-                             (with-redefs [d/transact-async
-                                           (fn [conn data & opts] (apply original conn data
-                                                                    (concat opts [:io-context :compact-legacy])))]
-                               (timed #(closed-loop depth funcs))))
+        [elapsed outcomes] (timed #(closed-loop depth funcs))
         after (floor/pg-sample)
         conn (:conn (if (= "compact" treatment) compact legacy))
         db (d/db conn)
@@ -221,10 +230,13 @@
         compact (open-compact! "test" 512) legacy (legacy/create!)
         {compact-revs :revs} (compact-seed! compact people 160 8 true)
         legacy-revs (legacy/seed! legacy people 160)
+        compact-writer (writer-witness! (:conn compact) "compact" 13)
+        incumbent-writer (writer-witness! (:conn legacy) "legacy" 17)
         start-c (floor/index! (:conn compact)) start-l (floor/index! (:conn legacy))
         w (writer compact)]
     (try
-      (floor/emit "benchmark-start" {:people people :factsPerPerson 160 :compactT start-c :legacyT start-l})
+      (floor/emit "benchmark-start" {:people people :factsPerPerson 160 :compactT start-c :legacyT start-l
+                                     :compactWriter compact-writer :incumbentWriter incumbent-writer})
       (cold! compact legacy compact-revs legacy-revs sampled)
       (doseq [block (range blocks)
               [di depth] (if (zero? block) (map-indexed vector depths) (reverse (map-indexed vector depths)))

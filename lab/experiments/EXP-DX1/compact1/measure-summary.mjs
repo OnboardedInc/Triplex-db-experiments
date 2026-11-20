@@ -35,19 +35,33 @@ function txLog() {
   const byTid = new Map();
   for (const line of read("tx.log").split("\n")) {
     if (!line.includes(":event :tx/process,")) continue;
-    const ctx = line.match(/:io-context :([a-z-]+)[, }]/)?.[1];
-    if (ctx !== "compact" && ctx !== "compact-legacy") continue;
-    const field = (name) => Number(line.match(new RegExp("(?:^|[ ,{]):" + name + " ([0-9.]+)"))?.[1]);
+    const field = (name) => Number(line.match(new RegExp("(?:^|[ ,{]):" + name + " ([0-9.]+(?:[eE][+-]?[0-9]+)?)"))?.[1]);
     const t = field("t"), tid = field("tid"), datoms = field("datom-count");
     const apply = field("apply-msec"), api = field("api-ms"), readToLog = field("msec");
     assert([t, tid, datoms, apply, api, readToLog].every(Number.isFinite));
-    const key = ctx + "/" + tid;
-    const byT = byTid.get(key) ?? new Map();
+    const byT = byTid.get(tid) ?? new Map();
     assert(!byT.has(t));
     byT.set(t, { apply, api, readToLog, datoms });
-    byTid.set(key, byT);
+    byTid.set(tid, byT);
   }
   return byTid;
+}
+
+function writerFor(streams, witness, transactions) {
+  const candidates = [...streams].filter(([, byT]) => {
+    if (witness) {
+      const row = byT.get(witness.t);
+      if (row?.datoms !== witness.datoms || row.api !== witness.apiMs) return false;
+    }
+    // [DX-COMPACT1] Why: older attempts lack the marker, but include the complete native transaction signature.
+    // Rejected: choosing a stream from one arm or allowing a different writer for successive arms.
+    return transactions.every((r) => {
+      const observed = byT.get(r.t);
+      return observed?.datoms === r.datoms && (r.applyMs === null || r.applyMs === undefined || observed.api === r.applyMs);
+    });
+  });
+  assert.equal(candidates.length, 1, "ambiguous native processor thread");
+  return candidates[0];
 }
 
 function bench(rows) {
@@ -67,6 +81,9 @@ function bench(rows) {
   }
   assert.deepEqual(arms.map((x) => [x.block, x.depth, x.arm]), expectedOrder);
   const streams = txLog();
+  const resolveWriter = (arm, witness) => writerFor(streams, witness, arms.filter((row) => row.arm === arm).flatMap((row) => row.native));
+  const writers = { compact: resolveWriter("compact", start.compactWriter), legacy: resolveWriter("legacy", start.incumbentWriter) };
+  assert.notEqual(writers.compact[0], writers.legacy[0]);
   const outputs = [];
   const last = new Map([["compact", start.compactT], ["legacy", start.legacyT]]);
   const positions = new Map([["legacy/_", Math.ceil(start.people / 8)]]);
@@ -113,18 +130,11 @@ function bench(rows) {
       last.set(arm.arm, row.t);
       assert.equal(arm.receipts.filter((r) => r.receipt.nativeT === row.t).length, row.members);
     }
-    const ctx = arm.arm === "compact" ? "compact/" : "compact-legacy/";
-    const candidates = [...streams.entries()].filter(([key, byT]) =>
-      key.startsWith(ctx) && arm.native.every((r) => {
-        const n = byT.get(r.t);
-        return n?.datoms === r.datoms && (r.applyMs === null || r.applyMs === undefined || Math.abs(n.api - r.applyMs) < 0.011);
-      }));
-    assert.equal(candidates.length, 1, "ambiguous native timing stream");
-    const writerStream = candidates[0][1];
+    const [writer, writerStream] = writers[arm.arm];
     const native = arm.native.map((r) => writerStream.get(r.t));
     const receiptMs = arm.receipts.map(({ receipt }) => receipt.nativeMicros / 1000).filter(Number.isFinite);
     outputs.push({
-      arm: arm.arm, block: arm.block, depth: arm.depth, saves: arm.observed, facts: arm.facts,
+      arm: arm.arm, block: arm.block, depth: arm.depth, writer, saves: arm.observed, facts: arm.facts,
       savesPerSecond: round(arm.observed * 1000 / arm.wallMs), physical: arm.native.length,
       maxMembers: Math.max(...arm.native.map((r) => r.members)), meanMembers: round(arm.observed / arm.native.length),
       datomsPerSave: round(sum(arm.native.map((r) => r.datoms)) / arm.observed),
@@ -190,6 +200,9 @@ if (binding.phase === "layout") {
 } else if (binding.phase === "load") {
   assert.notEqual(component, "benchmark");
   output.load = load(logRows(read("probe.log")));
-} else throw Error("expected layout, prototype or load");
+} else if (binding.phase === "benchmark") {
+  assert.notEqual(component, "load");
+  output.benchmark = bench(logRows(read("probe.log")));
+} else throw Error("expected layout, prototype, benchmark or load");
 
 console.log(JSON.stringify(output, null, 2));

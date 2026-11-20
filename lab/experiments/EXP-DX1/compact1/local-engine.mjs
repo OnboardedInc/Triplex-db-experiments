@@ -97,7 +97,7 @@ export async function runCompactProbe(opts, config, manager) {
   assert(!process.env.DOCKER_HOST || process.env.DOCKER_HOST === DOCKER_HOST);
   const phase = opts.run;
   const profile = opts.profile ?? "baseline";
-  assert(["floor", "layout", "prototype", "load"].includes(phase));
+  assert(["floor", "layout", "prototype", "benchmark", "load"].includes(phase));
   assert(["baseline", "large-index", "parallel-index"].includes(profile));
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
   const imageRef = opts.image ?? config.lanes.datomic.image;
@@ -108,7 +108,9 @@ export async function runCompactProbe(opts, config, manager) {
   const dir = path.join(parent, opts.out);
   fs.mkdirSync(dir);
   const write = (file, data) => fs.writeFileSync(path.join(dir, file), JSON.stringify(data, null, 2) + "\n", { flag: "wx" });
+  const sourceCommit = git(["rev-parse", "HEAD"]);
   const sources = copySources(dir, phase);
+  assert.equal(git(["rev-parse", "HEAD"]), sourceCommit);
   const sourceHash = sha256(JSON.stringify(sources));
   const attempt = randomUUID();
   const prefix = "tx2-dxcompact-" + attempt.slice(0, 12);
@@ -255,7 +257,7 @@ export async function runCompactProbe(opts, config, manager) {
     }
     assert.deepEqual(boundFiles, new Map(Object.entries(sources)));
     const binding = {
-      attempt, prefix, phase, profile, slot: slot.slot, source: git(["rev-parse", "HEAD"]), sourceHash, sources,
+      attempt, prefix, phase, profile, slot: slot.slot, source: sourceCommit, sourceHash, sources,
       image: datomicImage, pgImage, jars, peerSha1, durability: durable, roles: Object.fromEntries(created), caps, settings,
       owner: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString(),
     };
