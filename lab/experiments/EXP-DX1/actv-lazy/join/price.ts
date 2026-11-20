@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
-import { measureHttp } from "../../../../bench/lib/http-counts.ts";
+import { measureW0Http } from "../../../../bench/lib/w0-http.ts";
 import { bytes } from "../../import1/source.ts";
 import { Documents } from "../../notify1/store.ts";
 import { openStore } from "../store.ts";
@@ -18,6 +18,13 @@ const scope = "lazy-join-price-" + randomUUID(),
   sink = await openStore("lazy-join-price-sink-" + randomUUID()),
   a = new JoinedAccount(s),
   ref = new Reference();
+function nativeCost(samples: Record<string, unknown>[]) {
+  const [tx, ...others] = samples.filter((x) => String(x.path).endsWith("/transact"));
+  assert(
+    tx && !others.length && Number.isSafeInteger(tx.requestBytes) && Number(tx.requestBytes) > 0,
+  );
+  return { nativeRequestBytes: Number(tx.requestBytes), nativeRequestMs: Number(tx.wallMs) };
+}
 const save = (label: string, x: unknown) =>
   writeFileSync(join(dir, label + ".json"), JSON.stringify(x, null, 2) + "\n", { flag: "wx" });
 try {
@@ -48,7 +55,7 @@ try {
     const before = { ...a.stats },
       cpu = process.cpuUsage(),
       t = performance.now();
-    const m = await measureHttp(() => a.publish(id, doc, valid, mode)),
+    const m = await measureW0Http(() => a.publish(id, doc, valid, mode)),
       end = performance.now(),
       used = process.cpuUsage(cpu),
       r = m.value;
@@ -112,6 +119,7 @@ try {
       },
       cpu: used,
       http: m.requests,
+      ...nativeCost(m.samples),
       ...stats,
       physicalChanges: r.changes.length,
       noticeAndRelease: semantic.length,
@@ -137,7 +145,7 @@ try {
     const value = Number(prior.v) + (kind === 1 ? 1 : kind === 2 ? 0 : 5),
       t = performance.now(),
       cpu = process.cpuUsage();
-    const q = await measureHttp(() =>
+    const q = await measureW0Http(() =>
         a.save("edit-" + i, { e: sub, a: field, values: [value] }, valid),
       ),
       elapsed = performance.now() - t,
@@ -172,6 +180,7 @@ try {
       tx: r.txId,
       ms: elapsed,
       http: q.requests,
+      ...nativeCost(q.samples),
       cpu: used,
       changes: r.changes.length,
       indexChanges: index.length,
