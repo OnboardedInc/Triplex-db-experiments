@@ -24,6 +24,7 @@ export async function readErasure(source: Partial<ErasureSource>) {
 export async function recheckErasure(source: Partial<ErasureSource>, sequence: number | undefined) {
   const current = await readErasure(source);
   if (current?.seq !== sequence) throw new ErasureChanged("Discard the old protected input cut");
+  return current;
 }
 export function withErasure<A>(
   sequence: number | undefined,
