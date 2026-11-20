@@ -683,3 +683,16 @@ Orchestrator's reading: every Codex agent runs on `gpt-6.2-sol` at max effort fr
 is kept for the few problems that need the most creative thinking (launcher role `creative`), and I name the reason
 each time I use it. The sentence as dictated says "if you won't need a very creative solution"; I read the second half
 ("only do that for the most creative ones") as the rule. The launcher change is `a619d4eb4` on `main`.
+
+## 2026-11-19 about 20:25 local: use many agents; only Astra is the thing to hold back
+
+Sam, verbatim:
+- "No, no, no, don't treat things as finite. It's fine to launch a max number of agents. That's okay. I just shouldn't
+  have told you to use Astra because Astra uses so much more. Don't take this as 'don't use a lot of agents.' You
+  should be using a lot of agents because we need to figure this out. It's totally okay, use them. Just don't use
+  Astra unless you need to."
+
+Orchestrator's reading: a correction. I had told Sam and the restarted agents that Codex usage is finite and that I
+would not add agents beyond eight. That was the wrong lesson from the limit: the cause was Astra, not the number of
+agents. From now every open problem gets an agent on Sol at max as soon as it has no owner, with no cap on the count;
+Astra is used only when a problem needs it and I say why.

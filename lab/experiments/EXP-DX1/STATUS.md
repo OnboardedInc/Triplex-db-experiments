@@ -2376,3 +2376,18 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   DX-STG1, DX-THIN1. The ledger shows `gpt-6.2-sol` / `max` for all eight.
 - Both servers kept running their detached jobs through the 18-minute gap (four containers each at 20:09 local); neither
   sat idle.
+
+## 2026-11-20 01:35 UTC (20:35 local, 2026-11-19): six more agents on problems that had no owner (fourteen running)
+
+- Sam: use many agents; hold back only Astra (SAM-decisions). The "usage is finite" line in the eight restart notes is
+  withdrawn; it is dropped from every later brief.
+- Launched 01:33 UTC, all `gpt-6.2-sol` at max. Analysts (private folder `research/2026-11-20-wave2/`): **W2-CEILING**
+  (what sets one database's 150 to 200 saves per second against the 235 to 390 ten deep accounts need, and every way to
+  move it three times or more); **W2-DEEPTAIL** (why deep saves read 87.04 ms p99 against 36.11 thin, and the
+  prediction at 100,000 and 1,000,000 deep subjects); **W2-SIZE** (disk, memory, index jobs, erasure, backup and
+  Datomic's own limits at 160 million current facts plus history; machine and monthly cost). Reviewer: **W2-ACTAUDIT**
+  (adversarial audit of the activation tests and designs before the 100,000-subject server number is believed).
+  Builders: **DX-RD1** (`exp/DX-RD1-readers`: a test driver that cannot be the bottleneck, the 5,609 pulls sent to the
+  gateway, recovery, the four-block reader probe, goodput at 1,024 readers); **DX-HASYNC1**
+  (`exp/DX-HASYNC1-sync-failover`: scripted failover with a synchronous copy, zero-loss proof under kills and network
+  cuts, its cost per save, one two-server command with predictions).
