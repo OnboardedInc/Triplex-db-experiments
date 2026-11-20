@@ -55,6 +55,7 @@ export async function replacementProbe(pair: SyncPair, shared?: Account) {
     };
     let caller: Promise<string | undefined>;
     return {
+      acknowledged: old,
       async offer(proxy: Awaited<ReturnType<typeof ackProxy>>, client: DatomicClient) {
         // [DX-HASYNC1] Why: interrupt a real retire-and-replace after its durable receipt. Rejected: replaying an append that never names a stale predecessor.
         caller = client.transact(ac.db, input).then(() => "acknowledged", errorCode);

@@ -12,16 +12,20 @@ import { replayLive } from "../load1/live-evidence.ts";
 import { hash, head, modeOf, root, runFile, supportsSingleHost } from "./common.ts";
 import { benchTrials, seeds, subjects, workingMs } from "../hasync1/v2/bench-plan.ts";
 import { recountTraffic } from "../hasync1/offers.ts";
+import { measurements, score, type Identity } from "../p9/score.ts";
+import { priorityModes, verifyPriority9 } from "../p9/verify.ts";
+import { seedDirectory } from "../p9/seed.ts";
 
 const [action, tag, layout = "two-host", extra] = process.argv.slice(2),
   mode = modeOf(action ?? "");
-const sync = mode === "hasync-suite",
-  holder = sync ? "DX-HASYNC1" : "DX-HA1",
-  observerSite = sync ? 1 : 0,
-  satelliteSite = sync ? 0 : 1;
 assert(tag && /^[a-z][a-z0-9-]{2,40}$/.test(tag), "Expected experiment and a new attempt tag");
 assert(!extra && (layout === "two-host" || (layout === "one-host" && supportsSingleHost(mode))));
 const single = layout === "one-host";
+const p9 = mode === "hasync-p9";
+const sync = p9 || mode === "hasync-suite";
+const holder = sync ? "DX-HASYNC1" : "DX-HA1";
+const observerSite = sync && !single ? 1 : 0;
+const satelliteSite = observerSite === 1 ? 0 : 1;
 const sites = single ? [0] : [0, 1];
 const servers = single
     ? [process.env["BENCH_SERVER"]]
@@ -42,14 +46,33 @@ const sha = head(),
   build = base + "/build-" + sha,
   src = build + "/repository",
   bin = build + "/tools/bin/node";
+const p9Identity = () => {
+  const age = process.env["P9_AGE"] ?? "fresh";
+  const seedSha256 = process.env["P9_SEAL_SHA256"];
+  const policy = process.env["HA1_RECOVERY_POLICY"] ?? "B";
+  assert(age === "fresh" || age === "1B");
+  assert(
+    seedSha256 && /^[0-9a-f]{64}$/.test(seedSha256),
+    "Set the expected pooled seed manifest SHA256",
+  );
+  assert(policy === "A" || policy === "B");
+  return { tag, sha, layout, age, policy, seedSha256 } satisfies Identity;
+};
+const priority = p9 ? p9Identity() : undefined;
 const url = execFileSync("git", ["remote", "get-url", "origin"], {
   cwd: root,
   encoding: "utf8",
 }).trim();
 assert.equal(url, "https://github.com/OnboardedInc/Triplex-db-experiments.git");
-const branch = sync ? "exp/DX-HASYNC1-sync-failover" : "exp/DX-HA1-failover-move",
-  git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
-assert.equal(git("branch", "--show-current"), branch);
+const git = (...args: string[]) =>
+  execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
+const branch = git("branch", "--show-current");
+assert(
+  (sync
+    ? ["exp/DX-HASYNC1-sync-failover", "exp/DX-INT1", "exp/DX-V01-scorecard"]
+    : ["exp/DX-HA1-failover-move", "exp/DX-INT1"]
+  ).includes(branch),
+);
 assert.equal(
   git("status", "--porcelain", "--untracked-files=normal"),
   "",
@@ -131,7 +154,7 @@ try {
   await Promise.all(
     sites.map(async (i) => {
       const prepareScript =
-        'set -eu; if ! test -e "$2"; then git -c credential.helper= clone -q --no-checkout "$3" "$1"; git -C "$1" checkout -q --detach "$4"; cd "$1"; bash lab/experiments/EXP-DX1/t1/bare-metal.sh --prepare "$4" "$2"; fi; test "$(cat "$2/results/bootstrap.exit")" = 0; test "$(git -C "$2/repository" rev-parse HEAD)" = "$4"; test -z "$(git -C "$2/repository" status --porcelain)"; test -s "$2/repository/packages/datomic/dist/index.js"';
+        'set -eu; if ! test -e "$2"; then test "$5" = build; git -c credential.helper= clone -q --no-checkout "$3" "$1"; git -C "$1" checkout -q --detach "$4"; cd "$1"; bash lab/experiments/EXP-DX1/t1/bare-metal.sh --prepare "$4" "$2"; fi; test "$(cat "$2/results/bootstrap.exit")" = 0; test "$(git -C "$2/repository" rev-parse HEAD)" = "$4"; test -z "$(git -C "$2/repository" status --porcelain)"; test -s "$2/repository/packages/datomic/dist/index.js"';
       await remote(
         i,
         "env",
@@ -146,7 +169,15 @@ try {
         build,
         url,
         sha,
+        sync ? "prepared" : "build",
       );
+      if (priority) {
+        const dir = seedDirectory(base, priority.age);
+        assert.equal(
+          (await remote(i, "sha256sum", dir + "/p9-seed.json")).split(/\s/)[0],
+          priority.seedSha256,
+        );
+      }
     }),
   );
   const remoteImage = single
@@ -174,7 +205,7 @@ try {
   const campaign = randomUUID(),
     nonces: string[] = [];
   const trials = new Map<string, number>();
-  if (sync) {
+  if (sync && !p9) {
     await remote(satelliteSite, "mkdir", store);
     await remote(satelliteSite, "mkdir", "-m", "700", store + "/seed");
     seedDirCreated = true;
@@ -189,7 +220,7 @@ try {
     "--pipe",
     "--collect",
     "--unit=triplex-ha1-" + tag,
-    "--property=RuntimeMaxSec=" + (sync ? "89min" : hours + "h"),
+    "--property=RuntimeMaxSec=" + (p9 ? "26min" : sync ? "89min" : hours + "h"),
     "--property=KillMode=control-group",
     "--working-directory=" + src,
     bin,
@@ -204,9 +235,12 @@ try {
     remoteImage,
     store,
     campaign,
-    process.env["HA1_PEOPLE"] ?? "",
+    p9 ? "" : (process.env["HA1_PEOPLE"] ?? ""),
     process.env["HA1_BENCH_SHAPE"] ?? "deep",
     layout,
+    priority?.age ?? "",
+    priority?.seedSha256 ?? "",
+    priority?.policy ?? "B",
   ];
   const child = spawn("ssh", argv(observerSite, remoteArgs), {
     stdio: ["pipe", "pipe", "inherit"],
@@ -229,18 +263,22 @@ try {
       if (sync) {
         const sequence = attempt.sequence!;
         assert(Number.isSafeInteger(sequence) && ![...trials.values()].includes(sequence));
-        assert.equal(attempt.mode, benchTrials[sequence]?.mode);
+        assert.equal(attempt.mode, p9 ? priorityModes[sequence] : benchTrials[sequence]?.mode);
         trials.set(attempt.nonce, sequence);
       }
       nonces.push(attempt.nonce);
-      const key = sync ? benchTrials[attempt.sequence!]?.checkpoint : undefined;
+      const key = sync && !p9 ? benchTrials[attempt.sequence!]?.checkpoint : undefined;
       if (!single)
         satellite = new Satellite(
           attempt.nonce,
           attempt.prefix,
           src,
           [pgImage, remoteImage],
-          sync ? store + "/seed" + (key ? "/" + key : "") : undefined,
+          priority
+            ? seedDirectory(base, priority.age)
+            : sync
+              ? store + "/seed" + (key ? "/" + key : "")
+              : undefined,
           attempt.mode?.startsWith("hasync-fleet-") ?? false,
         );
       if (sync && satellite) trialSatellites.set(attempt.nonce, satellite);
@@ -364,7 +402,27 @@ try {
     }) + "\n",
     { flag: "wx" },
   );
-  if (sync) {
+  let p9Verified = false;
+  if (priority && trials.size === 2) {
+    const members = new Set(
+      execFileSync("tar", ["-tzf", file], { encoding: "utf8" }).trim().split("\n"),
+    );
+    const attemptFor = (sequence: number) => [...trials].find(([, n]) => n === sequence)![0];
+    const proof = verifyPriority9(
+      { has: (name) => members.has(tag + "/" + name), raw },
+      priority,
+      campaign,
+      expected,
+      { fault: attemptFor(0), move: attemptFor(1) },
+    );
+    const bytes = JSON.stringify(proof, null, 2) + "\n";
+    p9Verified = true;
+    fs.writeFileSync(path.join(evidence, "p9-verified.json"), bytes, { flag: "wx" });
+    for (const id of measurements) console.log(JSON.stringify(score(id, proof.metrics, priority)));
+  }
+  if (p9) {
+    assert(p9Verified, "Both priority 9 attempts are required; raw archive retained");
+  } else if (sync) {
     assert.deepEqual(declaration.trials, benchTrials);
     assert.deepEqual(
       declaration.sizes,

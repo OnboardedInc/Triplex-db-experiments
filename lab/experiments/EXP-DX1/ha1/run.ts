@@ -38,7 +38,10 @@ export async function drill(
     assert(
       Number.isSafeInteger(profile.people) &&
         profile.people > 0 &&
-        profile.people <= (e.mode.startsWith("one-") || e.mode === "load-quiet" ? 1500000 : 100000),
+        profile.people <=
+          (profile.pooled || e.mode.startsWith("one-") || e.mode === "load-quiet"
+            ? 1500000
+            : 100000),
     );
     await s.open();
     if (e.mode.startsWith("hasync-")) {

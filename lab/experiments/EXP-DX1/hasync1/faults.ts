@@ -20,7 +20,9 @@ import { walLink } from "./wal-link.ts";
 import { driveOffers } from "./offers.ts";
 import { historyRead } from "./v2/history.ts";
 import { replacementProbe } from "./v3/replacement.ts";
-import { auditPool, pooledRead, seedPooled, type PooledProof } from "./pooled.ts";
+import { auditPool, poolAt, pooledRead, seedPooled, type PooledProof } from "./pooled.ts";
+import { auditAcknowledged } from "../p9/ack-audit.ts";
+import { priorityOfferWindowMs } from "../p9/verify.ts";
 
 export const faultModes = [
   "hasync-commit",
@@ -260,7 +262,8 @@ export async function faultDrill(
   try {
     const copy = await pair.clone(link?.host, link?.port);
     await pair.service();
-    if (options.pooled) await auditPool(pair.s.e, ac, population as PooledProof, "before");
+    const pool = options.pooled ? poolAt(ac, population as PooledProof) : undefined;
+    if (pool) await auditPool(pair.s.e, ac, pool, "before");
     return await faultWork(
       pair,
       ac,
@@ -270,7 +273,7 @@ export async function faultDrill(
       link,
       options.auditSeed ?? true,
       options.policy ?? recoveryPolicy(),
-      options.pooled ? (population as PooledProof) : undefined,
+      pool,
     );
   } finally {
     link?.close();
@@ -350,6 +353,7 @@ async function faultWork(
       writer: pair.route!.url,
       reader: pair.reader,
       deepRead: pooled ? pooledRead(pooled) : historyRead(ac, pair.base?.checkpoint),
+      ...(pooled && pair.base?.checkpoint ? { horizonMs: priorityOfferWindowMs } : {}),
     });
     await offered.lead();
   };
@@ -471,6 +475,12 @@ async function faultWork(
     await control;
     assert(from !== undefined);
     const availability = await offered!.finish(marks(), true);
+    if (pooled)
+      await auditAcknowledged(e, ac, [
+        ...pooled.receipts,
+        ...ac.receipts.values(),
+        ...(replacement ? [replacement.acknowledged] : []),
+      ]);
     if (testDiskReturn && policy === "single-copy-after-fence") await checkDisk();
     let initialStatus: string | undefined;
     let resolution: Receipt | undefined;

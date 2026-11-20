@@ -53,6 +53,7 @@ export const modes = [
   "hasync-fleet-shared",
   "hasync-fleet-dedicated",
   "hasync-suite",
+  "hasync-p9",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
@@ -68,7 +69,12 @@ export type Role = keyof typeof roles | `fleet-${"a" | "b"}-${"pg" | "tx"}${numb
 // [DX-LOAD1] Why: peak-rate arms keep several fresh databases in one transactor process. Rejected: reusing the 560 MiB failure-drill cap after a measured cgroup OOM.
 // [DX-LOAD2] Why: the same bound campaign can reserve just one machine for a same-host comparison.
 export function supportsSingleHost(mode: Mode) {
-  return mode === "load-tail" || mode.startsWith("load-frontier-") || splitLoad(mode);
+  return (
+    mode === "hasync-p9" ||
+    mode === "load-tail" ||
+    mode.startsWith("load-frontier-") ||
+    splitLoad(mode)
+  );
 }
 export function splitLoad(mode: string) {
   return mode === "load-split-sql" || mode === "load-split-pg";
@@ -172,6 +178,8 @@ function treeCode(mode?: Mode) {
       paths.push(path.join(root, "lab/bench/lib", f + ".ts"));
     for (const f of ["tenants", "small-plan"])
       paths.push(path.join(root, "lab/experiments/EXP-DX1/scale1", f + ".ts"));
+    for (const f of ["ack-audit", "runner", "score", "seed", "verify"])
+      paths.push(path.join(root, "lab/experiments/EXP-DX1/p9", f + ".ts"));
   }
   return hash(
     JSON.stringify(paths.sort().map((f) => [path.relative(root, f), hash(fs.readFileSync(f))])),

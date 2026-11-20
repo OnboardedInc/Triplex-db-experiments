@@ -17,6 +17,7 @@ type Layout = "legacy" | "lean";
 type TripleRow = Input["rows"][number];
 export type Checkpoint = {
   key: string;
+  scope?: string;
   layout: Layout;
   basis: Awaited<ReturnType<DatomicClient["basis"]>>;
   cluster: string;

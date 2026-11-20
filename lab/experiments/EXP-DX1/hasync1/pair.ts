@@ -174,6 +174,7 @@ export class SyncPair {
       this.writer,
       cp?.key,
       options.writeTimeout,
+      cp?.scope,
     );
     this.account = ac;
     if (cp) {
@@ -362,7 +363,7 @@ export class SyncPair {
         "-ceu",
         (role === "active" ? guard : "") +
           'printf "%s\\n" "$HA_PROPERTIES" > /tmp/hasync.properties; exec bin/transactor -Xms96m -Xmx' +
-          (bench ? "1400" : "288") +
+          (process.platform === "linux" ? "1400" : "288") +
           "m -XX:ActiveProcessorCount=2 /tmp/hasync.properties",
       ],
       bench ? 4334 : undefined,
@@ -410,7 +411,7 @@ export class SyncPair {
         "TX2_GROUP_COMMIT=" + Number(grouped),
         "-e",
         "DATOMIC_JAVA_OPTS=-Xms96m -Xmx" +
-          (site.privateAddress ? "1600" : "320") +
+          (process.platform === "linux" ? "1600" : "320") +
           "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m",
       ],
       "/opt/datomic/bin/run",

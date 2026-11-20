@@ -178,9 +178,11 @@ export function recountTraffic(
   assert.deepEqual({ nonce, slot, source, database }, binding);
   assert.equal(plan.data.rates.save, fieldRate);
   assert.equal(plan.data.rates.read, fieldRate * 10);
-  assert.deepEqual(
-    [plan.data.callerMs, plan.data.requestMs, plan.data.horizonMs],
-    [callerMs, requestMs, maxWindowMs],
+  assert.deepEqual([plan.data.callerMs, plan.data.requestMs], [callerMs, requestMs]);
+  assert(
+    Number.isSafeInteger(plan.data.horizonMs) &&
+      plan.data.horizonMs >= maxWindowMs &&
+      plan.data.horizonMs <= 600000,
   );
   assert(
     [...lines, plan, stop].every(
@@ -233,6 +235,7 @@ export async function driveOffers(
     rate?: number;
     writer: string;
     reader: string;
+    horizonMs?: number;
     deepRead?:
       | ((ordinal: number) =>
           | {
@@ -261,7 +264,7 @@ export async function driveOffers(
     rates: { save: rate, read: 10 * rate },
     callerMs,
     requestMs,
-    horizonMs: maxWindowMs,
+    horizonMs: options.horizonMs ?? maxWindowMs,
   };
   const rawName = "traffic-" + label + ".jsonl";
   const fd = fs.openSync(path.join(e.dir, rawName), "wx");
@@ -363,12 +366,12 @@ export async function driveOffers(
     pending.add(work);
   }
   const tick = () => {
-    const limit = Math.min(stop ?? performance.now(), plan.start + maxWindowMs);
+    const limit = Math.min(stop ?? performance.now(), plan.start + plan.horizonMs);
     for (const kind of kinds) {
       while (dueAt(plan, kind, next[kind]) < limit)
         dispatch(kind, next[kind], dueAt(plan, kind, next[kind]++));
     }
-    if (stop === undefined && performance.now() < plan.start + maxWindowMs) {
+    if (stop === undefined && performance.now() < plan.start + plan.horizonMs) {
       const nextDue = Math.min(...kinds.map((kind) => dueAt(plan, kind, next[kind])));
       timer = setTimeout(tick, Math.max(1, Math.ceil(nextDue - performance.now())));
     }
@@ -379,7 +382,7 @@ export async function driveOffers(
     async finish(marks: Marks = {}, withRecoveryTail = false) {
       if (summary) return summary;
       if (withRecoveryTail) await sleep(recoveryTailMs);
-      stop = Math.min(performance.now(), plan.start + maxWindowMs);
+      stop = Math.min(performance.now(), plan.start + plan.horizonMs);
       clearTimeout(timer);
       tick();
       try {

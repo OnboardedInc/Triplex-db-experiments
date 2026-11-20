@@ -6,6 +6,7 @@ import { immutable, type Account, type Receipt } from "../ha1/one-db.ts";
 import type { DatomicClient } from "../../../../packages/datomic/test/ha1-account.ts";
 import { auditSeed } from "./seed.ts";
 import { deepRow } from "./v2/history.ts";
+import type { Checkpoint } from "./seed.ts";
 
 export const pooledAccounts = 10;
 type Basis = Awaited<ReturnType<DatomicClient["basis"]>>;
@@ -17,6 +18,19 @@ export type PooledProof = {
   basis: Basis;
   receipts: Receipt[];
 };
+
+export function poolAt(
+  ac: Account,
+  proof: Omit<PooledProof, "database"> | Checkpoint,
+): PooledProof {
+  return {
+    database: ac.db,
+    people: proof.people,
+    facts: proof.facts,
+    basis: proof.basis,
+    receipts: proof.receipts,
+  };
+}
 
 export async function seedPooled(e: Evidence, ac: Account, people: number): Promise<PooledProof> {
   assert(people >= pooledAccounts && people % pooledAccounts === 0);

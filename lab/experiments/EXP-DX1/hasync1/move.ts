@@ -6,7 +6,8 @@ import { lsn, timeouts, wait } from "./supervisor.ts";
 import { driveOffers } from "./offers.ts";
 import { auditFeed } from "./faults.ts";
 import { historyRead } from "./v2/history.ts";
-import { auditPool, pooledRead, seedPooled, type PooledProof } from "./pooled.ts";
+import { auditPool, poolAt, pooledRead, seedPooled, type PooledProof } from "./pooled.ts";
+import { priorityOfferWindowMs } from "../p9/verify.ts";
 
 export async function moveDrill(
   pair: SyncPair,
@@ -18,7 +19,7 @@ export async function moveDrill(
       options.seed ??
       ((a) => (options.pooled ? seedPooled(pair.s.e, a, people) : populate(pair.s, a, people))),
   });
-  const pooled = options.pooled ? (population as PooledProof) : undefined;
+  const pooled = options.pooled ? poolAt(ac, population as PooledProof) : undefined;
   const writer = traffic(ac, "precopy", 220);
   let copy: Awaited<ReturnType<SyncPair["clone"]>>;
   try {
@@ -40,6 +41,7 @@ export async function moveDrill(
     writer: pair.route!.url,
     reader: pair.reader,
     deepRead: pooled ? pooledRead(pooled) : historyRead(ac, pair.base?.checkpoint),
+    ...(pooled && pair.base?.checkpoint ? { horizonMs: priorityOfferWindowMs } : {}),
   });
   await offered.lead();
   const monitor = pinnedLoop(ac, old);

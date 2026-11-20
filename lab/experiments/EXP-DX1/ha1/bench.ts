@@ -20,6 +20,9 @@ const [
   people,
   shape = "deep",
   layout = "two-host",
+  age,
+  seedSha256,
+  policy = "B",
 ] = process.argv.slice(2);
 const single = layout === "one-host";
 assert(layout === "two-host" || (single && mode && supportsSingleHost(modeOf(mode))));
@@ -41,7 +44,8 @@ export function privateAddress(s: string) {
 }
 assert(remoteImage && (single ? remoteImage === "-" : /^sha256:[a-f0-9]{64}$/.test(remoteImage)));
 assert(store && campaign && /^[a-f0-9-]{36}$/.test(campaign));
-const sync = mode === "hasync-suite";
+const p9 = mode === "hasync-p9";
+const sync = p9 || mode === "hasync-suite";
 const waiters = new Map<number, { ok: (s: string) => void; fail: (err: Error) => void }>();
 let seq = 0;
 const stream = createInterface({ input: process.stdin });
@@ -86,8 +90,8 @@ const a: Site = {
   key: "a",
   repo: root,
   ...(single ? {} : { privateAddress: privateAddress(addrA!) }),
-  docker: sync ? manage() : local,
-  datomicId: sync ? remoteImage : localImage,
+  docker: sync && !single ? manage() : local,
+  datomicId: sync && !single ? remoteImage : localImage,
 };
 const b: Site = single
   ? a
@@ -100,7 +104,18 @@ const b: Site = single
     };
 fs.mkdirSync(store, { recursive: false });
 try {
-  if (sync) {
+  if (p9) {
+    assert((age === "fresh" || age === "1B") && seedSha256 && (policy === "A" || policy === "B"));
+    assert(shape === "deep" && !people);
+    process.env["HA1_RECOVERY_POLICY"] = policy;
+    const { runPriority9 } = await import("../p9/runner.ts");
+    await runPriority9(
+      store,
+      (nonce) => ({ a: single ? a : { ...a, docker: manage(nonce) }, b }),
+      { tag, sha: sha!, layout, age, seedSha256, policy },
+      campaign,
+    );
+  } else if (sync) {
     const { campaign: run } = await import("../hasync1/campaign.ts");
     assert(shape === "deep" && (!people || people === "100000"));
     await run(
