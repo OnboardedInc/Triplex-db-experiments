@@ -88,3 +88,12 @@ afbf2124e11b06af8973b4a0c999bbdd7edc14a3f411d4a8b31ac8af95abda3c  lazy-join/part
 33190fb88b48b792e42e404a508fb08a2638346a86de81ac117e3a447a0b89f2  lazy-join/part8-int-gateway/build.log
 6ca8688622ba547c20cd90c03d32308d4cfe315c3015bb0809f808f325b7ed41  lazy-join/part8-int-gateway/gateway-attempt
 5a8b9943e2311e6414d8ddbc51072f04114b40e6c6904375cd9c246336f3e50c  lazy-join/part8-merged-tests/retry.log
+8871c34eae88b8d7b12cf3d1b8a2b7bda2579ec6b1d4baafc5c6b720159bd3a1  lazy-join/part8-guarded-reach-types/source.txt
+770b0f7171df66169adbe863d2b2f35ac5908c0a932a8e532f2488934247366e  lazy-join/part8-guarded-reach-types/run.log
+650c3d4c987a0a77cde5bfda7e62bc9cf51d12a9923cb010267e3bd9ba58cc9f  lazy-join/part8-guarded-reach-types/typecheck-retry.log
+68ba81f16ab54154f4d323145cf1b350efd8cf4f354ab5121dcbaf00f4b75bbc  lazy-join/part8-peak-retry-v2-t1/admissions.log
+84b9bb077be0d8a29d0d01ef350d718b77c2ec5f40c3ab90502b1b4b5016c550  lazy-join/part8-peak-retry-v2-t1/exit.txt
+3a830e4265505dfcec46e38765e5522a320f757b63bdc447d9c14b5b30a520f8  lazy-join/part8-peak-retry-v2-t2/admissions.log
+84b9bb077be0d8a29d0d01ef350d718b77c2ec5f40c3ab90502b1b4b5016c550  lazy-join/part8-peak-retry-v2-t2/exit.txt
+ccc363d35ae389c749af5032b0c4e451ae9048b9724e0b0f7e0004187ca03441  lazy-join/part8-peak-retry-v2-t3/admissions.log
+84b9bb077be0d8a29d0d01ef350d718b77c2ec5f40c3ab90502b1b4b5016c550  lazy-join/part8-peak-retry-v2-t3/exit.txt
