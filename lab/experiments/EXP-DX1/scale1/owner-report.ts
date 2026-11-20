@@ -308,10 +308,10 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- `deep-activation.ts` checks the observed release, each page receipt and its changed bodies against the source cut, roster hashes and O-DOMAIN. `deep-commit-meter.ts` binds native transaction IDs, members, datoms and logical change rows to actual source replies. `measurements.ts` opens the new attempt’s receipt ledger, rehashes its bytes, validates its source, nonce and database, and recomputes the reported release and burst rates.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
-    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
+    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
     "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
-    "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
+    "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions and observations](PREDICTIONS.md) are recorded for each item. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
   );
   const interference = stages
     .filter(
@@ -358,6 +358,61 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   }
   if (lines.length > 60) lines.splice(lines.indexOf("**Bench measurements**"), 2);
   if (lines.length > 60) throw Error("Owner report exceeds 60 lines");
+  const predictionFile = path.join(path.dirname(file), "PREDICTIONS.md");
+  if (fs.existsSync(predictionFile)) {
+    const rows = fs.readFileSync(predictionFile, "utf8").split("\n");
+    for (const item of [1, 2, 3, 4, 5]) {
+      const attempts = stages.filter((s) => s.attempt.item === item);
+      if (!attempts.length) continue;
+      const actual =
+        attempts
+          .map((s) => {
+            const m = s.summary,
+              id = s.tag;
+            if (!m)
+              return (
+                id +
+                " · " +
+                (s.limit
+                  ? String(s.limit.opened) + "/" + s.limit.requested + " databases opened"
+                  : s.terminal.service === "capacity-refused"
+                    ? "capacity refused on " + s.attempt.capacity.limits.join(", ")
+                    : "incomplete")
+              );
+            const p = m.commit.p99,
+              boundary = m.tenants?.loadBoundary,
+              b = boundary?.lowestObservedFailure,
+              lo = boundary?.highestLowerObservedWithinBar;
+            return (
+              id +
+              " · " +
+              (m.invalid.length ? "unjudged, " : "") +
+              "commit p99 " +
+              metric(p) +
+              " ms" +
+              (boundary
+                ? ", lowest observed expiry or quiet miss " +
+                  (b ? round(b.offeredPerS) + " offered/s" : "unresolved") +
+                  ", highest lower measured within the bars " +
+                  (lo ? round(lo.offeredPerS) + " offered/s" : "unresolved")
+                : "") +
+              (s.disk ? ", " + round(s.disk.bytesPerFact) + " database B/current fact" : "") +
+              (s.restart ? ", " + s.restart.results.length + " reopened" : "") +
+              (m.perScope?.[0]?.deep?.r2?.wallMs
+                ? ", R2 " + round(m.perScope[0].deep.r2.wallMs / 1000) + " s"
+                : "")
+            );
+          })
+          .join(". ") + ".";
+      const idx = rows.findIndex((l) => l.startsWith("| " + item + " ·"));
+      assert(idx >= 0);
+      const cells = rows[idx]!.split("|");
+      assert(cells.length === 5);
+      cells[3] = " " + actual + " ";
+      rows[idx] = cells.join("|");
+    }
+    fs.writeFileSync(predictionFile, rows.join("\n"));
+  }
   fs.writeFileSync(file, lines.join("\n") + "\n");
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))

@@ -1,3 +1,4 @@
+import { FieldSaveWriter, type PeakAlignment } from "./deep-live.ts";
 import { MembershipProof } from "./tenant-proof.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -11,7 +12,12 @@ import { ids, subjectOf, type Fact } from "../../../bench/lib/world.ts";
 import { smallPeople } from "./small-plan.ts";
 export type TenantStudy = "interference" | "small" | "million" | "smoke";
 export type Topology = "pooled" | "separate";
-export type TenantSpec = { study: TenantStudy; topology: Topology; physical: number };
+export type TenantSpec = {
+  study: TenantStudy;
+  topology: Topology;
+  physical: number;
+  live?: PeakAlignment;
+};
 export type Account = { index: number; key: string; first: number; people: number };
 export type TenantEvent = DeepEvent & { tenant: number; localSubject: number; localSeq: number };
 export const keyFor = (i: number) => "account-" + String(i + 1).padStart(3, "0");
@@ -108,14 +114,18 @@ export function tenantSeedPin(spec: TenantSpec) {
 }
 export class TenantWriters {
   private readonly active: Set<number>;
-  private readonly writers = new Map<number, DeepWriter>();
-  constructor(privateAccounts: readonly Account[], events: readonly TenantEvent[]) {
+  private readonly writers = new Map<number, Pick<DeepWriter, "build" | "bind">>();
+  constructor(
+    privateAccounts: readonly Account[],
+    events: readonly TenantEvent[],
+    fieldSaves = false,
+  ) {
     this.accounts = privateAccounts;
     this.active = new Set(events.map((e) => e.subject));
     for (const a of this.accounts)
       this.writers.set(
         a.index,
-        new DeepWriter(
+        new (fieldSaves ? FieldSaveWriter : DeepWriter)(
           new Set(events.filter((e) => e.tenant === a.index).map((e) => e.localSubject)),
         ),
       );
@@ -262,7 +272,12 @@ export async function tenantQueries(
   };
 }
 export function tenantRung(spec: TenantSpec) {
-  return "tenant-" + spec.study + "-" + tenantAccounts(spec).reduce((s, a) => s + a.people, 0);
+  return (
+    (spec.live ? "deep-live-" + spec.live + "-" : "tenant-") +
+    spec.study +
+    "-" +
+    tenantAccounts(spec).reduce((s, a) => s + a.people, 0)
+  );
 }
 export function tenantScope(spec: TenantSpec, nonce: string) {
   return (

@@ -1,3 +1,4 @@
+import { livePeakWindow } from "./deep-live.ts";
 import assert from "node:assert/strict";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { histogramDistribution, ratioBar } from "../../../bench/lib/verdict-statistics.ts";
@@ -56,6 +57,48 @@ function windowTable(run: Run, lines: string[]) {
           ].join(" | ") +
           " |",
       );
+    if (run.attempt.live) {
+      lines.push(
+        "",
+        "| Field-save load | Offered / s | Durable ACKs / s | Expiries | Quiet account at 3.5/s |",
+        "| --- | ---: | ---: | ---: | --- |",
+      );
+      for (const w of m.tenants.windows)
+        lines.push(
+          "| " +
+            [
+              w.name,
+              fmt(w.fullOfferedPerS) + " (" + w.fullOffered + ")",
+              fmt(w.sustainedCommitsPerS) + " (" + w.acked + ")",
+              w.fullExpired,
+              w.sentinelRate === 3.5 ? "yes" : "no",
+            ].join(" | ") +
+            " |",
+        );
+      for (const q of m.tenants.ninePeakQuiet)
+        lines.push(
+          "Three nine-neighbour peak minutes, " + q.id + ": " + metric(q) + " " + q.status + ".",
+        );
+      const b = m.tenants.loadBoundary,
+        lo = b.highestLowerObservedWithinBar,
+        hi = b.lowestObservedFailure;
+      lines.push(
+        "",
+        "Highest lower measured rate within the quiet bars: " +
+          (lo ? fmt(lo.offeredPerS) + " offered/s in " + lo.window : "unresolved") +
+          ". Lowest measured expiry or judged quiet p99 miss: " +
+          (hi
+            ? fmt(hi.offeredPerS) +
+              " offered/s, " +
+              fmt(hi.ackPerS) +
+              " durable ACKs/s, " +
+              hi.expired +
+              " expiries in " +
+              hi.window
+            : "unresolved") +
+          ".",
+      );
+    }
     const miss = m.tenants.firstSteadyMiss;
     lines.push(
       "",
@@ -318,12 +361,18 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
     }
     lines.push("");
   }
-  for (const item of [3, 4]) {
+  for (const [item, alignment] of [
+    [3, undefined],
+    [3, "staggered"],
+    [3, "coincident"],
+    [4, undefined],
+  ] as const) {
     const side = (name: string) =>
       runs
         .filter(
           (r) =>
             r.attempt.item === item &&
+            r.attempt.live === alignment &&
             r.attempt.layout === name &&
             !r.attempt.groupControl &&
             r.summary?.tenants,
@@ -383,11 +432,13 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
     const control = runs.find((r) => r.tag === treatment.attempt.groupControl);
     assert(
       control &&
+        control.attempt.live === treatment.attempt.live &&
         control.attempt.source === treatment.attempt.source &&
         !control.attempt.groupControl,
     );
     assert.deepEqual(control.attempt.cpus, treatment.attempt.cpus);
     assert.deepEqual(control.attempt.spec, treatment.attempt.spec);
+    assert.equal(control.attempt.live, treatment.attempt.live);
     assert.equal(control.groupSettings?.gatewayImage, treatment.groupSettings?.gatewayImage);
     assert.deepEqual(
       control.summary.perScope[0].deep.logicalTraces,
@@ -398,13 +449,16 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
       treatment.summary.perScope[0].deep.seed.sha256,
     );
     lines.push(
-      "## Group commit with all ten accounts bursting",
+      treatment.attempt.live
+        ? "## Group commit with " + treatment.attempt.live + " field-save peaks"
+        : "## Group commit with all ten accounts bursting",
       "",
       "Both arms replayed the same preceding windows. Native transaction IDs identify saves grouped into a single durable transaction. Commands carry the frozen profile’s subject and account identity. The gateway shares one scheduling class for unnamespaced entities without per-entity membership hints.",
       "",
       "| Gateway option | Logical ACKs / seconds | Saves/s | Native transactions/s | Multi-save transactions | Fact changes/s | Pooled commit p99 ms | Judgement |",
       "| --- | --- | ---: | ---: | ---: | ---: | --- | --- |",
     );
+    const peakName = treatment.attempt.live ? livePeakWindow(treatment.attempt.live) : "all-burst";
     for (const s of [control, treatment]) {
       const enable = Boolean(s.attempt.groupControl),
         g = s.groupSettings;
@@ -414,7 +468,7 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
           g.slot === s.attempt.slot &&
           g.enabled === enable,
       );
-      const w = s.summary.tenants.windows.find((v: any) => v.name === "all-burst"),
+      const w = s.summary.tenants.windows.find((v: any) => v.name === peakName),
         q = s.summary.perScope[0].deep.allBurstQueue;
       assert(w && q && q.expected === w.acked && q.from === w.from && q.to === w.to);
       const p = w.pooled.commit;
@@ -435,13 +489,15 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
     }
     lines.push("");
     const speeds = [control, treatment].map((s) => {
-      const w = s.summary.tenants.windows.find((v: any) => v.name === "all-burst");
+      const w = s.summary.tenants.windows.find((v: any) => v.name === peakName);
       return (
         fmt(w.sustainedCommitsPerS) + " saves/s (" + w.acked + " ACKs in " + fmt(w.seconds) + " s)"
       );
     });
     owner =
-      "The ten-account burst sustained " +
+      (treatment.attempt.live
+        ? "The " + treatment.attempt.live + " field-save peak sustained "
+        : "The ten-account burst sustained ") +
       speeds[0] +
       " with grouping off and " +
       speeds[1] +

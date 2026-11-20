@@ -1,0 +1,15 @@
+# Predictions for the remaining deep-account campaign
+
+These forecasts were recorded during the 10,000-person reader retry and before items 2–5. Engineering ranges below are predictions. The measured tables use the existing sample counts and 90% intervals. Item 1 already had two completed zero-reader measurements, so it has no retrospective prediction.
+
+| Item | Forecast before execution | Observation |
+| --- | --- | --- |
+| 1 · 10,000 people | In progress when predictions were requested. | Commit p99 without readers was 69.12 and 87.04 ms across two runs of 56,505 primary saves each. Reader verification is pending. |
+| 2 · 100,000 people | Single-account commit p99 75–190 ms. GROWTH's narrower zero-reader estimate is 65–160 ms, with p50 5–9 ms, 0.9–2.6 SQL reads per acknowledged save and 520–850 PostgreSQL bytes per current fact. I expect the page-guard release to exceed one second. | Pending. |
+| 3 · ten accounts | I expect one queue to sustain about 150 saves/s ungrouped and 200 grouped under overload. My transfer ranges for the field-save trial are 120–185 and 160–250 respectively. At nine hot neighbours I predict quiet commit p99 at 12–30× its alone value ungrouped. I expect both modes to carry 35/s steady and neither to sustain a 394/s coincident peak for a full minute without backlog. I expect the staggered peak to disturb the quiet account less. | Pending for both profiles, both layouts and grouping. |
+| 4 · 100 small accounts | I expect 100/100 logical accounts to open in the pooled layout. Opening 100 separate databases is a risk under the shared heap cap. My prediction is a first refusal between 50 and 100 inclusive, or 100 successful opens refutes it. QUEUE forecasts 3.15–3.40 acknowledged saves/s and a quiet commit ratio of 0.90–1.25× in the pooled busy-with-low window. | Pending. |
+| 5 · one million people | LOAD forecasts 10.8 hours (9.7–12.7) to seed. GROWTH forecasts 520–850 PostgreSQL bytes/current fact, 1.5–4.5 SQL reads per acknowledged save, 25–65% primary expiry and surviving p99 of 25–34 s on the original synchronized schedule. I expect 6–45 s mean late index builds and 10–100 ms p95 adoption pauses. | Pending. |
+
+Ten accounts at the observed all-hours mean imply about 49 saves/s. The per-active-minute median gives 35/s, the sustained p99 minute gives 235/s and simultaneous peak minutes give 394/s. Capacity forecasts count distinct durable logical saves. An expired primary is an overload observation. Quiet commit, read and feed p99 ratios use the same account alone on the same source and group setting. Record observed offered rate and ACK goodput separately, and leave any threshold between measured levels as a bracket. Each prediction is refuted by a correctly bound result outside its stated range. A missing required observation leaves it unresolved.
+
+The ranges draw on the dated QUEUE, GROWTH and LOAD analyst forecasts. The capacity ranges transfer an eight-fact saturation experiment to a workload with smaller field edits. The 100-database opening range is my own estimate.

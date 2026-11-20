@@ -1,3 +1,4 @@
+import { FieldSaveWriter, liveEdits } from "./deep-live.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -89,12 +90,12 @@ test("deep population, nine weighted cells, daily/monthly activity, frozen offer
   );
 });
 
-async function exercise(scope: string, backend: string, account: number) {
+async function exercise(scope: string, backend: string, account: number, fieldSaves = false) {
   const comp = await openComposition(backend, "datomic", scope),
     tmp = fs.mkdtempSync(path.join(os.tmpdir(), "deep-functional-"));
   const people = 4,
     plan = makeDeepTrace(deepSeed(account), people, 130),
-    active = new DeepWriter(plan.activeSubjects),
+    active = new (fieldSaves ? FieldSaveWriter : DeepWriter)(plan.activeSubjects),
     witness = new DeepSeedWitness();
   try {
     assert.equal(await comp.currentPosition(), 0);
@@ -132,9 +133,14 @@ async function exercise(scope: string, backend: string, account: number) {
     };
     let last = seed.lastInstant;
     const includes = new Set<string>();
-    for (const ev of plan.events.filter((e) => !e.resend).slice(0, 70)) {
+    for (const original of plan.events.filter((e) => !e.resend).slice(0, 70)) {
+      const edits = liveEdits(original.subject, original.seq, original.kind, original.deep);
+      const ev = fieldSaves
+        ? { ...original, facts: 1 + Number(original.correction) + edits.length }
+        : original;
       const state = seed.state.get(ev.subject)!,
         cmd = active.build(scope, ev, state, Date.now());
+      if (fieldSaves) assert.deepEqual(cmd.added.slice(1 + Number(ev.correction)), edits);
       includes.add(ev.kind);
       const meta = { commandId: cmd.commandId, preconditions: cmd.preconditions, actor: ev.kind },
         rc = await comp.transact(cmd.operations, meta);
@@ -228,5 +234,20 @@ test(
     );
     assert.notEqual(results[0]!.scope, results[1]!.scope);
     console.log(JSON.stringify({ backend, results }));
+  },
+);
+
+test(
+  "field-level saves retain their full pinned worlds under independent replay and release checks",
+  { timeout: 180000 },
+  async () => {
+    const backend = process.env.DX_SCALE1_NATIVE_SMOKE === "1" ? "reach" : "memory";
+    console.log(
+      JSON.stringify({
+        profile: "deep-live",
+        backend,
+        ...(await exercise("field-save-" + randomUUID(), backend, 0, true)),
+      }),
+    );
   },
 );

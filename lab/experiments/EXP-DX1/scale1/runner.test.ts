@@ -115,6 +115,7 @@ test("pooling weights observed calls and binds independent databases and a commo
       primaries: values.length,
       committed: values.length,
       resends: 0,
+      expired: 0,
       missing: 0,
       ackMinutes: [],
       values: { all: values, L256: values },

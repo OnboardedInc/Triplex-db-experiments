@@ -24,6 +24,7 @@ type Step = {
   when?: { tag: string; action: "live" | "seed-only" };
   retryOf?: string;
   groupControl?: string;
+  live?: "staggered" | "coincident";
   bootstrapCache?: string;
 };
 type Plan = { label: string; steps: Step[]; final: boolean };
@@ -73,6 +74,12 @@ function identified(step: Step) {
   ])
     if (tag) assert(safe(tag));
   if (step.layout) assert(step.item >= 3 && ["pooled", "separate"].includes(step.layout));
+  if (step.live)
+    assert(
+      step.item === 3 &&
+        step.mode === "interference" &&
+        ["staggered", "coincident"].includes(step.live),
+    );
   if (step.groupControl)
     assert(step.item === 3 && step.mode === "interference" && step.layout === "pooled");
   if (step.bootstrapCache) assert(sha(step.bootstrapCache));
@@ -150,6 +157,7 @@ async function run(step: Step) {
     const sizing =
       step.sizing ?? step.sizingChoices?.find((t) => exists(path.join(root, t, "sizing.json")));
     const opts = [
+      ...(step.live ? ["--profile", "deep-live", "--peak-alignment", step.live] : []),
       ...(step.layout ? ["--account-layout", step.layout] : []),
       ...(step.baseline ? ["--baseline", step.baseline] : []),
       ...(step.seedImage ? ["--seed-image", step.seedImage] : []),
@@ -189,6 +197,7 @@ async function run(step: Step) {
       a.source === step.source &&
       a.tag === step.tag &&
       a.layout === step.layout &&
+      a.live === step.live &&
       a.groupControl === step.groupControl,
   );
   state({ stage: "running", step, ceilingUTC: new Date(a.at + a.ceiling * 1000).toISOString() });
@@ -306,14 +315,33 @@ async function run(step: Step) {
         );
         assert.equal(createHash("sha256").update(bytes).digest("hex"), s.hashes.report);
         const run = JSON.parse(bytes.toString("utf8"));
+        // [DX-SCALE1] Why: a deadline witnessed for a planned field save answers the capacity question while correctness still covers all ACKs, reads and feed effects. Rejected: calling missing offers, unbound losses or an oracle failure a saturation result.
+        const expiredLoad =
+          !!step.live &&
+          run.deep?.identity?.tenant?.live === step.live &&
+          summary.profile === "deep-live/1" &&
+          Number.isSafeInteger(o.expired) &&
+          o.expired > 0 &&
+          o.missing === 0 &&
+          o.committed + o.expired === o.primaries &&
+          run.writer?.expired === o.expired &&
+          run.writer?.pendingAtEnd === 0;
+
         return (
           run.status === "DONE" &&
           !run.finalizationErrors?.length &&
           !run.invalidReasons?.length &&
           s.invalid.every(
             (r: string) =>
-              r === "Attempt did not finish every check or a load generator saturated" &&
-              run.client?.invalid,
+              (r === "Attempt did not finish every check or a load generator saturated" &&
+                run.client?.invalid) ||
+              (expiredLoad &&
+                r ===
+                  "0 missing offers, " +
+                    o.expired +
+                    " unsuccessful primaries, " +
+                    o.expired +
+                    " expired"),
           ) &&
           o.correctness.reads > 0 &&
           o.correctness.reads === o.correctness.correct &&
@@ -326,7 +354,7 @@ async function run(step: Step) {
           o.oracle.reads > 0 &&
           o.oracle.reads === o.oracle.modelCorrectOnSameReads &&
           o.missing === 0 &&
-          o.committed === o.primaries
+          (o.committed === o.primaries || expiredLoad)
         );
       })
     : verified &&
@@ -343,7 +371,12 @@ async function run(step: Step) {
 }
 // [DX-SCALE1] Why: a reader fix needs a fresh zero on the same source; both attempts remain in the item's failure count. Rejected: comparing different revisions or letting another item bypass a failure.
 export function resumesItem(failed: Step, retry: Step, next?: Step) {
-  if (retry.item !== failed.item || retry.layout !== failed.layout || retry.retryOf !== failed.tag)
+  if (
+    retry.item !== failed.item ||
+    retry.layout !== failed.layout ||
+    retry.live !== failed.live ||
+    retry.retryOf !== failed.tag
+  )
     return false;
   if (retry.mode === failed.mode) return true;
   return (
