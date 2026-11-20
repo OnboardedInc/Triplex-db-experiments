@@ -30,7 +30,8 @@
 
 (defn pg-sample []
   (with-open [conn (DriverManager/getConnection
-                     (System/getenv "COMPACT_JDBC") "postgres" (System/getenv "COMPACT_SQL_PASSWORD"))
+                     (System/getenv "COMPACT_JDBC") (or (System/getenv "COMPACT_SQL_USER") "postgres")
+                     (System/getenv "COMPACT_SQL_PASSWORD"))
               statement (.createStatement conn)
               result (.executeQuery statement
                        (str "SELECT pg_wal_lsn_diff(pg_current_wal_insert_lsn(),'0/0'),"

@@ -15,3 +15,15 @@ The design census below uses ASCII value `edited-field-000000000`, W0 dictionary
 A timestamped assertion adds the explicit 27-character bound and its quoting. Ciphertext, wider IDs, activation and notice records change this price. A field edit fits under 2 kB with the W0 field lengths and this common shape. A 25-fact save can exceed that budget with long values or inclusive bounds converted to exact half-open intervals. PostgreSQL WAL and log-tree amplification require native measurement.
 
 Keeping the predecessor reference spends one datom on the established save. It lets a current reader apply only the known suffix and a pinned reader resolve the last visible event with the same structure. The original layout's per-row compression saved 1.67% of stored value bytes in the matched 1k Part 8 arm and produced higher latency and WAL. The compact layout targets repeated structural data instead of compressing its encoding. [Part 8 matched layout result](https://github.com/OnboardedInc/Triplex-db-experiments/blob/10a395386/lab/experiments/EXP-DX1/t1/SLIM-8.md)
+
+## Native readback
+
+The Mac SQL attempt `layout-a` used field fixture values whose ASCII lengths varied. Every transaction was read back by its acknowledged native coordinate, and both the additions and retirement coordinates were compared to the request.
+
+| Replaced facts | Native datoms | Body bytes | Value bytes | Canonical Fressian bytes |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 11 | 135 | 232 | 383 |
+| 3 | 11 | 247 | 344 | 495 |
+| 25 | 11 | 1,517 | 1,614 | 1,765 |
+
+Canonical Fressian uses the engine serializer with one fixed comparison UUID. It prices the measured datoms and headers. The separate WAL observation includes PostgreSQL page and log-tree writes. [Evidence hashes](SHA256SUMS)

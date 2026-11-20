@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] Runtime-checked reservation records and untyped native tool output.
 // [DX-COMPACT1] Why: reserve the three live processes against one exclusive lab slot.
 // Rejected: attaching a retained volume or running an unbudgeted Docker stack.
 import assert from "node:assert/strict";
@@ -6,6 +7,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import {
   DOCKER_HOST, GiB, REPO, admission, docker, dockerArgs, git, inspect, listTx2Containers,
   readOwner, sha256, sleep, slotInfo, vmDisk, withPool,
@@ -50,13 +52,17 @@ function copySources(dir, phase) {
     copy("packages/datomic/gateway/src", "src");
     copy("packages/datomic/src/codec-spec.json", "codec-spec.json");
     copy("lab/world/W0/schema.json", "schema.json");
-    if (phase === "prototype") copy("lab/world/W0/cases", "cases");
+    if (phase === "prototype") {
+      copy("lab/world/W0/cases", "cases");
+      for (const name of ["client.ts", "sdk-check.ts", "gate.ts"]) copy(path.join(experiment, name), name);
+    }
   }
   return sources;
 }
 
 async function measureLock(root, prefix, signal) {
   const dir = path.join(root, "locks", "measure");
+  let told = 0;
   for (;;) {
     signal.throwIfAborted();
     try {
@@ -71,7 +77,10 @@ async function measureLock(root, prefix, signal) {
       };
     } catch (error) {
       if (error.code !== "EEXIST") throw error;
-      console.log("[compact] waiting for the lab measurement window");
+      if (Date.now() - told > 30000) {
+        console.log("[compact] waiting for the lab measurement window");
+        told = Date.now();
+      }
       await sleep(5000);
     }
   }
@@ -85,7 +94,7 @@ export async function runCompactProbe(opts, config, manager) {
   const phase = opts.run;
   const profile = opts.profile ?? "baseline";
   assert(["floor", "layout", "prototype", "load"].includes(phase));
-  assert(["baseline", "pressure", "parallel-index"].includes(profile));
+  assert(["baseline", "large-index", "parallel-index"].includes(profile));
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
   const imageRef = opts.image ?? config.lanes.datomic.image;
   assert.match(imageRef, /^tx2-datomic:[a-z0-9][a-z0-9.-]{0,63}$/);
@@ -121,6 +130,7 @@ export async function runCompactProbe(opts, config, manager) {
     while (!slot) {
       abort.signal.throwIfAborted();
       floor();
+      releaseMeasure = await measureLock(root, prefix, abort.signal);
       try {
         await withPool((ledger) => {
           manager.assertMeasureAdmission(holder);
@@ -147,12 +157,13 @@ export async function runCompactProbe(opts, config, manager) {
         if (error.code !== "REFUSED") throw error;
       }
       if (!slot) {
+        releaseMeasure();
+        releaseMeasure = undefined;
         console.log("[compact] waiting for a pool-admitted exclusive Datomic slot");
         await sleep(5000);
       }
     }
 
-    releaseMeasure = await measureLock(root, prefix, abort.signal);
     deadline = setTimeout(() => abort.abort(Error("measurement window expired")), 14 * 60 * 1000);
     floor();
     const image = (reference) => docker(["image", "inspect", "--format", "{{.Id}}", reference]);
@@ -198,8 +209,8 @@ export async function runCompactProbe(opts, config, manager) {
       "postgres", "-c", "shared_buffers=48MB", "-c", "track_wal_io_timing=on",
     ]);
     const sql = (query) => docker(["exec", pgId, "psql", "-XAt", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-c", query]);
-    await ready(pgId, () => docker(["exec", pgId, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"], { allowFail: true })?.includes("accepting connections"));
-    const threshold = profile === "baseline" ? "32m" : "2m";
+    await ready(pgId, () => docker(["exec", pgId, "pg_isready", "-h", pg, "-U", "postgres"], { allowFail: true })?.includes("accepting connections"));
+    const threshold = profile === "large-index" ? "64m" : "32m";
     const indexParallelism = profile === "parallel-index" ? 2 : 1;
     const settings = { threshold, indexParallelism, max: "96m", cache: "64m" };
     const props = [
@@ -229,10 +240,16 @@ export async function runCompactProbe(opts, config, manager) {
       "-e", "COMPACT_SOURCE=" + sourceHash, "-e", "COMPACT_PROFILE=" + profile,
       "-e", "TX2_GROUP_COMMIT=1",
     ], "/bin/sleep", ["infinity"]);
-    const boundFiles = docker(["exec", peerId, "bash", "-ceu", "cd /compact; find . -type f -print0 | sort -z | xargs -0 sha256sum"]);
-    const expectedFiles = Object.entries(sources).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
-      .map(([file, hash]) => hash + "  ./" + file).join("\n");
-    assert.equal(boundFiles, expectedFiles);
+    // [DX-COMPACT1] Why: compare exact file membership and bytes independently of the VM's collation.
+    // Rejected: comparing a locale-sorted text listing to JavaScript's code-unit order.
+    const listing = docker(["exec", peerId, "bash", "-ceu", "cd /compact; find . -type f -print0 | xargs -0 sha256sum"]);
+    const boundFiles = new Map();
+    for (const line of listing.split("\n")) {
+      const entry = /^([a-f0-9]{64})  \.\/(.+)$/.exec(line);
+      assert(entry && !boundFiles.has(entry[2]), "invalid mounted file listing");
+      boundFiles.set(entry[2], entry[1]);
+    }
+    assert.deepEqual(boundFiles, new Map(Object.entries(sources)));
     const binding = {
       attempt, prefix, phase, profile, slot: slot.slot, source: git(["rev-parse", "HEAD"]), sourceHash, sources,
       image: datomicImage, pgImage, jars, peerSha1, durability: durable, roles: Object.fromEntries(created), caps, settings,
@@ -240,9 +257,33 @@ export async function runCompactProbe(opts, config, manager) {
     };
     write("binding.json", binding);
     const namespace = phase === "floor" ? "triplex.compact.floor" : "triplex.compact.probe";
-    await capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, phase], path.join(dir, "probe.log"), abort.signal);
-    if (phase === "prototype") {
-      await capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, "recovery"], path.join(dir, "recovery.log"), abort.signal);
+    const invoke = (step, file) =>
+      capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, step], path.join(dir, file), abort.signal);
+    if (phase !== "prototype") await invoke(phase, "probe.log");
+    else {
+      // [DX-COMPACT1] Why: an independent probe can still produce useful evidence after another probe fails.
+      // Rejected: losing the capacity and read measurements after a semantic failure, or mixing concurrent timed arms.
+      const steps = {};
+      const collect = async (name, f) => {
+        abort.signal.throwIfAborted();
+        try { await f(); steps[name] = "completed"; }
+        catch (error) { steps[name] = String(error); }
+      };
+      await collect("oracle", () => invoke("oracle", "probe.log"));
+      if (steps.oracle === "completed") await collect("recovery", () => invoke("recovery", "recovery.log"));
+      await collect("benchmark", () => invoke("benchmark", "benchmark.log"));
+      await collect("sdk", async () => {
+        const { checkSdk } = await import(pathToFileURL(path.join(source, "sdk-check.ts")).href);
+        const fd = fs.openSync(path.join(dir, "sdk-stderr.log"), "wx");
+        const rpc = spawn("docker", dockerArgs(["exec", "-i", peerId, "/opt/datomic/bin/run", "-m", "triplex.compact.rpc"]), {
+          stdio: ["pipe", "pipe", fd], signal: abort.signal,
+        });
+        fs.closeSync(fd);
+        write("sdk.json", await checkSdk(rpc, binding));
+      });
+      await collect("load", () => invoke("load", "load.log"));
+      write("steps.json", steps);
+      assert(Object.values(steps).every((step) => step === "completed"), "one or more independent prototype probes failed");
     }
   } finally {
     clearTimeout(deadline);
