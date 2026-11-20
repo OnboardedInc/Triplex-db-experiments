@@ -163,7 +163,64 @@ function erasure() {
   return { basis: last.head, ledger: last.ledgerHead, c07: hash(test.stdout), plain: perArm(false), protected: perArm(true) };
 }
 
-const reducers = { surface, history, erasure };
+function ablation() {
+  const head = rows[0];
+  assert.equal(head.kind, "ablation-start");
+  assert.equal(head.people, 192);
+  assert.equal(last.kind, "ablation-end");
+  assert.match(binding.incumbent ?? "", /^[0-9a-f]{40}$/);
+  assert(head.options.groupCommit && head.options.predecessorLookup && head.options.reusePrepared && head.options.smallRows);
+  const physical = new Map();
+  for (const line of read("tx.log").toString().split("\n").filter((line) => line.includes(":event :tx/process,"))) {
+    const num = (k) => Number(line.match(new RegExp("(?:^|[ ,{]):" + k + " ([0-9.]+(?:[eE][+-]?[0-9]+)?)"))?.[1]);
+    const record = { tid: num("tid"), t: num("t"), api: num("api-ms"), apply: num("apply-msec"),
+      guard: num("tx-fn-ms"), datoms: num("datom-count") };
+    assert(Object.values(record).every(Number.isFinite));
+    const thread = physical.get(record.tid) ?? new Map();
+    assert(!thread.has(record.t));
+    thread.set(record.t, record);
+    physical.set(record.tid, thread);
+  }
+  const modes = ["corrected", "compact", "journal", "direct"];
+  assert.deepEqual(last.modes, modes);
+  const samples = of("ablation-group");
+  assert.equal(samples.length, last.groups);
+  assert.deepEqual(samples.map((x) => [x.block, x.mode, x.batch]),
+    [modes, modes.slice().reverse()].flatMap((order, b) =>
+      order.flatMap((mode) => Array.from({ length: 12 }, (_, i) => [b, mode, i]))));
+  const groups = {};
+  for (const mode of modes) {
+    const { t, datoms, apiMs } = head.writers[mode];
+    const possible = [...physical].filter(([, thread]) => {
+      const seen = thread.get(t);
+      return seen?.datoms === datoms && seen.api === apiMs;
+    });
+    assert.equal(possible.length, 1);
+    const [writer, source] = possible[0];
+    const arm = samples.filter((v) => v.mode === mode).map((sample) => {
+      const observed = source.get(sample.t);
+      assert.equal(sample.members, 8);
+      assert.equal(observed.datoms, sample.datoms);
+      assert.equal(observed.api, sample.apiMs);
+      const fullMs = sample.prepareMs + sample.evaluateMs + sample.materializeMs + sample.appendMs;
+      return { ...sample, fullMs, applyMs: observed.apply, guardMs: observed.guard };
+    });
+    groups[mode] = {
+      writer,
+      perBlock: [0, 1].map((block) => {
+        const checked = arm.filter((a) => a.block === block);
+        return checked.length * 8000 / checked.reduce((sum, row) => sum + row.fullMs, 0);
+      }),
+      group: Object.fromEntries(["prepareMs", "speculativeMs", "evaluateMs", "materializeMs", "appendMs", "applyMs",
+        "guardMs", "fullMs", "receiptMs", "datoms", "valueBytes", "fressianBytes", "reused"]
+        .map((key) => [key, stats(arm.map((a) => a[key]))])),
+    };
+  }
+  assert.equal(new Set(Object.values(groups).map((v) => v.writer)).size, modes.length);
+  return { incumbent: binding.incumbent, options: head.options, modes: groups };
+}
+
+const reducers = { surface, history, erasure, ablation };
 assert(reducers[binding.phase], "unexpected probe phase");
 console.log(JSON.stringify({ attempt: binding.attempt, source: binding.sourceHash,
   raw: hash(read("probe.log")), ...reducers[binding.phase]() }, null, 2));

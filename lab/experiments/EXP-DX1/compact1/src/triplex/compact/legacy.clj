@@ -61,17 +61,20 @@
                          :retracted_at clock :retracted_position 1 :retract_tx_id tx)) (f/replace-ordinals width))
         stamp (fn [i a type v] (assoc (row (tagged (+ 10000000000 (* serial 1000) 250 i)) tx a type v tx 1)
                                      :entity_type "_Transaction"))
+        entities (sort (set (map :entity_id (concat adds olds))))
         journal (concat [(assoc (stamp 0 ":_tx/position" "number" nil) :value_number 1.0)
                          (assoc (stamp 1 ":_tx/instant" "datetime" nil) :value_datetime clock)
-                         (stamp 2 ":_tx/changed-entity" "string" (entity person (f/root person)))
-                         (stamp 3 ":_tx/command-id" "string" command)]
+                         (stamp 2 ":_tx/command-id" "string" command)]
+                       (map-indexed #(stamp (+ 3 %1) ":_tx/changed-entity" "ref" %2) entities)
                        (map (partial change-row serial tx) (range)
                             (concat
                               (for [r adds] {:op "assert" :entityId (:entity_id r) :attribute (:attribute r)
                                              :value {:type (:value_type r) :value (:value_string r)}
-                                             :tripleId (:id r) :validFrom (:valid_from r) :validTo nil})
+                                             :tripleId (:id r) :validFrom (:valid_from r) :recordedAt clock
+                                             :assertionTxId tx})
                               (for [r olds] {:op "retract" :entityId (:entity_id r) :attribute (:attribute r)
-                                             :tripleId (:id r) :recordedAt (:recorded_at r) :retractedAt clock}))))
+                                             :tripleId (:id r) :recordedAt (:recorded_at r) :retractedAt clock
+                                             :retractionTxId tx}))))
         fresh (into adds journal)]
     (fixture/row-input
       {"operationId" command "position" 1 "span" 1 "sourceK" nil "assignRecordTime" true

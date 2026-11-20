@@ -64,18 +64,25 @@ function copySources(dir, phase, tree = REPO) {
   return sources;
 }
 
-function pinnedSources(dir, phase, commit) {
+function pinnedSources(dir, phase, commit, incumbent) {
   // [DX-COMPACT1] Why: an admitted attempt must use the named revision even if the worktree advanced while queued.
   // Rejected: attaching the current working tree after a long semaphore wait.
   const tree = fs.mkdtempSync(path.join(dir, "stage-"));
+  const unpack = (revision, paths) => {
+    const archive = spawnSync("git", ["archive", "--format=tar", revision, ...paths], { cwd: REPO, maxBuffer: 32 * MiB });
+    assert.equal(archive.status, 0, archive.stderr?.toString());
+    const result = spawnSync("tar", ["-xf", "-", "-C", tree], { input: archive.stdout });
+    assert.equal(result.status, 0, result.stderr?.toString());
+  };
   try {
-    const args = ["archive", "--format=tar", commit, path.relative(REPO, import.meta.dirname), "lab/bin/engine.mjs"];
+    const args = [path.relative(REPO, import.meta.dirname), "lab/bin/engine.mjs"];
     if (phase !== "floor") args.push("packages/datomic/gateway/src", "packages/datomic/src/codec-spec.json", "lab/world/W0");
     if (["prototype", "surface", "erasure"].includes(phase)) args.push("lab/bench/lib/w0-oracle.py", "lab/oracles/domain/w0.py", "lab/oracles/domain/jsontok.py");
-    const archive = spawnSync("git", args, { cwd: REPO, maxBuffer: 32 * MiB });
-    assert.equal(archive.status, 0, archive.stderr?.toString());
-    const unpack = spawnSync("tar", ["-xf", "-", "-C", tree], { input: archive.stdout });
-    assert.equal(unpack.status, 0, unpack.stderr?.toString());
+    unpack(commit, args);
+    if (incumbent) {
+      fs.rmSync(path.join(tree, "packages/datomic/gateway/src"), { recursive: true });
+      unpack(incumbent, ["packages/datomic/gateway/src", "packages/datomic/src/codec-spec.json"]);
+    }
     return copySources(dir, phase, tree);
   } finally {
     fs.rmSync(tree, { recursive: true, force: true });
@@ -116,7 +123,9 @@ export async function runCompactProbe(opts, config, manager) {
   const phase = opts.run;
   const profile = opts.profile ?? "baseline";
   const loadPeople = Number(opts.people ?? "2000");
-  assert(["floor", "layout", "prototype", "benchmark", "load", "surface", "history", "erasure"].includes(phase));
+  const control = ["ablation", "mixed"].includes(phase);
+  assert(["floor", "layout", "prototype", "benchmark", "load", "surface", "history", "erasure", "ablation", "mixed"].includes(phase));
+  assert(control ? /^[a-f0-9]{40}$/.test(opts.incumbent ?? "") : !opts.incumbent);
   assert(["baseline", "large-index", "parallel-index"].includes(profile));
   assert(opts.people === undefined || (phase === "load" && [2000, 100000].includes(loadPeople)));
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
@@ -130,7 +139,8 @@ export async function runCompactProbe(opts, config, manager) {
   const write = (file, data) => fs.writeFileSync(path.join(dir, file), JSON.stringify(data, null, 2) + "\n", { flag: "wx" });
   assert(!opts.source || /^[a-f0-9]{40}$/.test(opts.source));
   const sourceCommit = git(["rev-parse", "--verify", (opts.source ?? "HEAD") + "^{commit}"]);
-  const sources = pinnedSources(dir, phase, sourceCommit);
+  const incumbent = control ? git(["rev-parse", "--verify", opts.incumbent + "^{commit}"]) : undefined;
+  const sources = pinnedSources(dir, phase, sourceCommit, incumbent);
   const sourceHash = sha256(JSON.stringify(sources));
   const attempt = randomUUID();
   const prefix = "tx2-dxcompact-" + attempt.slice(0, 12);
@@ -246,7 +256,13 @@ export async function runCompactProbe(opts, config, manager) {
       "memory-index-max=" + settings.max, "object-cache-max=" + settings.cache,
       "index-parallelism=" + indexParallelism,
     ].join("\n");
-    const mounted = ["-v", source + ":" + mounts + ":ro", "-e", "DATOMIC_EXT_CLASSPATH=/compact/src"];
+    const flags = control ? [
+      "TX2_SMALL_ROWS=1", "TX2_PREDECESSOR_LOOKUP=1", "TX2_GROUP_STAGE_CLOCK=1",
+      "TX2_GROUP_REUSE_PREPARED=1", "TX2_GROUP_FAST_REPLY=1", "TX2_LIVE_PRIORITY=1",
+      "TX2_GROUP_MAX_MEMBERS=8", "TX2_BULK_ROWS=512", "TX2_BULK_BYTES=1048576",
+    ] : [];
+    const mounted = ["-v", source + ":" + mounts + ":ro", "-e", "DATOMIC_EXT_CLASSPATH=/compact/src",
+      ...flags.flatMap((flag) => ["-e", flag])];
     const txId = run("tx", datomicImage, [...mounted, "-e", "COMPACT_PROPERTIES=" + props,
       "-e", "JAVA_OPTS=-Xms128m -Xmx512m -XX:ActiveProcessorCount=2 -Dlogback.configurationFile=/compact/logback.xml"],
     "/bin/sh", ["-ceu", 'while [ ! -f /tmp/compact.ready ]; do sleep 1; done; printenv COMPACT_PROPERTIES > /tmp/compact.properties; exec /opt/datomic/bin/transactor /tmp/compact.properties']);
@@ -264,6 +280,7 @@ export async function runCompactProbe(opts, config, manager) {
       "-e", "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?" + jdbc + "?user=postgres&password=" + password,
       "-e", "COMPACT_JDBC=" + jdbc, "-e", "COMPACT_SQL_PASSWORD=" + password, "-e", "COMPACT_ATTEMPT=" + attempt,
       "-e", "COMPACT_SOURCE=" + sourceHash, "-e", "COMPACT_PROFILE=" + profile,
+      "-e", "GATEWAY_SOURCE_SHA256=" + sourceHash, "-e", "TX2_WRITE_OPTIONS_ATTEMPT=" + attempt,
       "-e", "TX2_GROUP_COMMIT=1",
     ], "/bin/sleep", ["infinity"]);
     // [DX-COMPACT1] Why: compare exact file membership and bytes independently of the VM's collation.
@@ -277,13 +294,14 @@ export async function runCompactProbe(opts, config, manager) {
     }
     assert.deepEqual(boundFiles, new Map(Object.entries(sources)));
     const binding = {
-      attempt, prefix, phase, profile, slot: slot.slot, source: sourceCommit, sourceHash, sources,
+      attempt, prefix, phase, profile, slot: slot.slot, source: sourceCommit, sourceHash, sources, incumbent, flags,
       ...(phase === "load" ? { loadPeople } : {}),
       image: datomicImage, pgImage, jars, peerSha1, durability: durable, roles: Object.fromEntries(created), caps, settings,
       owner: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString(),
     };
     write("binding.json", binding);
-    const namespace = ["floor", "surface", "history", "erasure"].includes(phase) ? "triplex.compact." + phase : "triplex.compact.probe";
+    const namespace = ["floor", "surface", "history", "erasure", "ablation", "mixed"].includes(phase)
+      ? "triplex.compact." + phase : "triplex.compact.probe";
     const invoke = (step, file, args = []) =>
       capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, step, ...args], path.join(dir, file), abort.signal);
     if (phase === "history") {
