@@ -11,7 +11,7 @@ The completed BM1 replay at `48f55759494f6a6a04eeb6aa5284dde3e166d431` verified 
 
 INT1 merged the pinned candidate, ACT2 `bc01028b0` and STG1 `fa53e50cd`. The joined server command stays on its directly checked writer and observer. Publish has no fixed healthy-path grace and makes at most three predecessor attempts. A waiting save gets a turn after eight Publishes. Shared geography already used a full release census. The shared-save fix falls back to the same census when it cannot prove ownership. Its native check covered three edits, seven affected people and one untouched person per edit, a lost acknowledgement, three stops and 35 ordered effects.
 
-The original-selector 23.5 saves/s deep run reopened and verified the parked seed but reached the local time cap before both terminal cursors. Its volume was removed. The peak background timing is still open.
+The original-selector 23.5 saves/s deep run reopened and verified the parked seed. The local time cap arrived before either terminal cursor was verified. Its volume was removed. The peak background timing is still open.
 
 The first Mac native ordinary-token run verified settlement across worker stops and quicker smaller frames after a typed 413. It also checked a future-dated release, both orders of a same-person save, a pinned reader started before Publish, two publishers, and releases affecting everybody or nobody. The updated role probe passed six transactor and gateway suspensions before, during and after Publish. The original receipt matched on retry. The native priority gate recorded a save at 12, Publish at 13 and a waiting save at 14, then proved the opposite order and three bounded conflicts. [Independent proofs and audit](PART8.md)
 
@@ -21,7 +21,7 @@ The 45-second native v3 prefix used 64 readers per arm and matched 53,886 reads 
 
 Earlier 10,000-person deep Mac checks found 48.2 encoded notice-leaf bytes per person and about 101.3 address bytes. Three sampled thin pages used 10.3–10.4 leaf bytes and 100–104 address bytes. Both are storage counts. P7 measures resident memory outside Postgres. [Size price](PART6-PRICE.md) · [Read stages](STAGES.md) · [Retention choice](RETENTION.md)
 
-Fresh-reader size checks covered 10,000 thin and 1,000 deep people. Each wrote four changes with no subject visits. Sampled cold-read p99 was 61 and 69 ms on the Mac. The two JVM snapshots include index and heap activity and cannot isolate the 64-byte resident-memory bar.
+Fresh-reader checks covered 10,000 and 25,000 thin people and 1,000 deep people. Each wrote four changes with no subject visits. The 25,000-person receipt took 79 ms and the sampled cold-read p99 was 27 ms on the Mac. Its index used 10.46 leaf bytes and 101.72 address bytes per person. JVM snapshots include index and heap activity and cannot isolate the 64-byte resident-memory bar.
 
 The revised 64-person smoke used the pinned candidate. The cold observer started within 5 ms of the cutoff in all three cells. The peak Mac diagnostic still missed with 758 ms behind an active save and 317 ms from entry to durable. Quiet and 3.5 saves/s observed the new release in time. All 15 point samples and 379 effects replayed exactly.
 
