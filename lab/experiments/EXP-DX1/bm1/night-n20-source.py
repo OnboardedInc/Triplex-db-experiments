@@ -8,7 +8,7 @@ import sys
 
 BASE = Path("lab/experiments/EXP-DX1")
 PRODUCERS = {
-    "jvm25": ("608420dca067c93ef81a7595c65c8498836e5e35", BASE/"jvm1/server.ts"),
+    "jvm25": ("5a96527807fd646fbc866b33dc72565481c409e0", BASE/"jvm1/server.ts"),
     "tail-backlog": ("da4c34f48f3749afcacfe45ac51a727ab0a2160a", BASE/"tail1/backlog-server.ts"),
 }
 SEED_SOURCE = "46880aa47d7c580c400b457df0c8baf9e971e78a"

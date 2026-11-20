@@ -22,7 +22,7 @@ PROOF = ROOT/"cold-postgres.json"
 DOCKER = "/usr/bin/docker"
 ENV = dict(os.environ, DOCKER_HOST="unix:///var/run/docker.sock")
 NEXT = {
-    "jvm25": "608420dca067c93ef81a7595c65c8498836e5e35",
+    "jvm25": "5a96527807fd646fbc866b33dc72565481c409e0",
     "tail-backlog": "da4c34f48f3749afcacfe45ac51a727ab0a2160a",
 }
 
