@@ -8,6 +8,8 @@ A new peer reaches an account and subject through the uniqueness indexes. A cold
 
 A pinned pull selects the account's native transaction, skips later logical positions within a group, and folds the older subject chain. Retired rows are omitted from the visible world and retained in history with both clocks and valid bounds. A person with many years of edits can take proportionally longer to reconstruct. Add independently verifiable subject checkpoints before promising a history-depth tail. Such a checkpoint needs the exact source event, live assertion IDs and intervals, content checksum, erasure frontier, and replay from its successor. A corrupted or missing checkpoint can fall back to the Datomic chain. Checkpoints belong in a recoverable read projection with their own write budget.
 
+After the fresh Mac load, 87 untouched subjects returned their verified 160 facts with current-read p50 of 1.43 ms and p99 of 7.98 ms. The 128-subject projection sample added about 9.7 MiB of post-GC heap, or 77.7 KiB per touched subject. That delta includes peer cache growth. Each subject had one seed event. [Loader and projection evidence](SHA256SUMS)
+
 The incumbent local TypeScript replica reads a different representation with an already built projection. The matched native-gateway read comparison prices storage access and decoding. The replica needs its own update, bootstrap and retention test before replacing its feed source.
 
 ## Import and migration
@@ -15,6 +17,8 @@ The incumbent local TypeScript replica reads a different representation with an 
 One 160-fact subject image fits in an event envelope. The loader groups eight prepared images and validates each durable member before progressing. A full 16M-fact account needs 100,000 logical first saves and roughly 12,500 physical groups on this loader. Throughput with live traffic depends on the longest granted frame, current and pinned read latency, and index jobs. A bulk import should have a bounded grant, with explicit progress under sustained live traffic.
 
 The encoder sampled 256 evenly spaced synthetic subjects across the 100k ID range. Their 160-fact bodies averaged 6,844 B, which puts 16M facts at about 684 MB of event bodies. That figure excludes native datom headers, indexes, log tree and WAL.
+
+The owned SQL probe loaded 2,000 subjects and checked 320,000 facts in 250 acknowledged transactions over 6.54 seconds. It inserted 22.73 WAL bytes per fact by acknowledgement and 35.51 after the index caught up. The short-run slope projects to about 5.5 minutes and 568 MB of WAL for 16M facts. This run prices a fresh synthetic load with no concurrent traffic to its database. Larger indexes, key lengths, replicas and maintenance can change the slope. [Loader evidence](SHA256SUMS)
 
 At the lab's 3,000-fact/s mixed-traffic target the import takes about 89 minutes. Staging, receipt checks, indexing and readiness have to fit inside the real import measurement.
 

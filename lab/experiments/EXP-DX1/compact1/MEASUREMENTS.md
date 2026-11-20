@@ -10,6 +10,8 @@ The current read prices an already touched subject. The pinned read revisits the
 
 The domain checker runs both current and pinned worlds through unchanged independent O-DOMAIN. Some frozen cases put several owners at one supplied logical position. Those cases replay in the same prerequisite order on separate subject saves and are compared at their explicitly remapped positions. The remaining exact-position cases compare to the frozen output. A separate temporal fixture tests an interior physical group cut, two microsecond boundaries, durable duplicate resolution after a deliberately dropped native result, predecessor metadata in the feed, and the erased marker at a pre-erasure coordinate. The TypeScript driver calls the experimental gateway through its exact wire requests and checks command claims and both read paths.
 
+Mac SQL attempt `prototype-c` checked 71 W0 cases across evaluate, reconcile and affected. Both read paths produced the expected independent answer in all 213 oracle responses, with three frozen coordinates and 68 remapped cases. A new peer recovered the original grouped receipt, pinned value and erase marker. The separate SDK process checked 11 requests, including three distinct receipts at one native transaction across two accounts. The benchmark component stopped on a bad seed revision index. The corrected benchmark has its own fresh slot and attempt. [Attempt evidence](SHA256SUMS)
+
 [PASS audit and evidence binding](AUDIT.md) · [Checksums](SHA256SUMS)
 
 ## Reproduce the SQL comparison
@@ -20,4 +22,4 @@ node --experimental-strip-types lab/experiments/EXP-DX1/compact1/gate.ts "$attem
 node lab/experiments/EXP-DX1/compact1/measure-summary.mjs "$attempt_dir"
 ```
 
-Use the created durable attempt directory for `attempt_dir`. The runner keeps the domain, benchmark, recovery, SDK and loader logs separate and records their individual exits. A result used for comparison must include its complete arm sequence and cleanup record.
+Use the created durable attempt directory for `attempt_dir`. The runner keeps the domain, benchmark, recovery, SDK and loader logs separate and records their individual exits. `--run benchmark` runs the timing arms alone. `measure-summary.mjs` accepts `benchmark` or `load` after the attempt directory to reduce an individual completed component. A result used for comparison must include its complete arm sequence and cleanup record.
