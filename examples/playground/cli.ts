@@ -167,6 +167,8 @@ async function start() {
           "turbo",
           "run",
           "build",
+          "--cache-dir",
+          join(repo, ".turbo/playground"),
           "--filter=@triplex-build/triplex-datomic...",
           "--filter=@triplex-build/triplex-http...",
         ],

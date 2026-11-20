@@ -35,16 +35,17 @@ const boundedTail = 2 * 1024 ** 2;
 // [DX-PLAY1] Why: join only the gateway response to its parent trace span for the current attempt.
 // Rejected: attributing time-window Postgres samples or peer waits to an individual storage call.
 export class Timings {
-  readonly dir: string;
+  readonly dir: string | undefined;
   readonly run: string;
   readonly source: string;
-  constructor(dir: string, run: string, source: string) {
+  constructor(dir: string | undefined, run: string, source: string) {
     this.dir = dir;
     this.run = run;
     this.source = source;
   }
 
   async gateway(trace: RequestTrace) {
+    if (!this.dir) return [];
     const exchanges = new Set(
       trace.spans.filter((span) => span.name === "client.http").map((span) => span.id),
     );

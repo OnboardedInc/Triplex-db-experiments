@@ -154,7 +154,7 @@ export class Stack {
     this.traceDir = join(opts.directory, "traces");
   }
 
-  async start() {
+  async start(gatewaySpans = true) {
     const { docker, prefix, directory, ports, signal, cachedImage } = this.#opts;
     const pg = prefix + "-pg";
     const tx = prefix + "-tx";
@@ -319,7 +319,9 @@ export class Stack {
         ...sources,
         "-p",
         `${loopback}:${ports[role] || ""}:8080`,
-        ...mount(this.traceDir, "/trace"),
+        ...(gatewaySpans
+          ? [...mount(this.traceDir, "/trace"), "-e", "TRIPLEX_TRACE_DIR=/trace"]
+          : []),
         "-e",
         "DATOMIC_JAVA_OPTS=-Xms64m -Xmx352m -Ddatomic.objectCacheMax=32m -XX:+ExitOnOutOfMemoryError",
         "-e",
@@ -333,11 +335,9 @@ export class Stack {
         "-e",
         "TX2_REACH_SESSION_ENTRIES=4096",
         "-e",
-        "TRIPLEX_TRACE_LEVEL=full",
+        "TRIPLEX_TRACE_LEVEL=" + (gatewaySpans ? "full" : "off"),
         "-e",
         "TRIPLEX_TRACE_JFR=0",
-        "-e",
-        "TRIPLEX_TRACE_DIR=/trace",
         "-e",
         `TRIPLEX_TRACE_PROCESS=${role}`,
         "-e",

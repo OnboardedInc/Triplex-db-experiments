@@ -33,7 +33,10 @@ export async function openInstance(options: InstanceOptions) {
     signal.throwIfAborted();
     const started = performance.now();
     attemptedStack = true;
-    const urls = await stack.start();
+    // [DX-PLAY1] Why: a full replay can create millions of gateway logs before the UI is ready.
+    // Rejected: charging an unbounded trace archive to the dataset's local disk budget.
+    const gatewaySpans = !("manifest" in fixture && fixture.manifest.tier === "full");
+    const urls = await stack.start(gatewaySpans);
     const stackMs = performance.now() - started;
     const seedStart = performance.now();
     process.env["TRIPLEX_TRACE_LEVEL"] = "full";
@@ -42,7 +45,10 @@ export async function openInstance(options: InstanceOptions) {
     playground = new Playground(fixture, urls, options.prefix);
     await playground.seed(signal);
     signal.throwIfAborted();
-    invoke = actionService(playground, new Timings(stack.traceDir, options.prefix, urls.source));
+    invoke = actionService(
+      playground,
+      new Timings(gatewaySpans ? stack.traceDir : undefined, options.prefix, urls.source),
+    );
     return { stackMs, seedMs: performance.now() - seedStart, gatewaySource: urls.source, urls };
   })();
   let closing: Promise<Awaited<ReturnType<Stack["stop"]>>> | undefined;

@@ -4,7 +4,7 @@
 
 ## Inputs and choices
 
-The admitted Mac sample generated 45 objects in 2.46 seconds with an 87.7 MiB process peak RSS. Its 22,464 history frames occupied 2,160,335 compressed bytes. The two full schedules total 30,817,360 history saves. At the sampled compression and encoder rate, the history objects alone project to about 2.96 GB and 56 minutes of generation. The static graph, larger ID entropy and filesystem effects are additional. Allow 5 GB for generator output and measure the actual archive before upload. The full replay and snapshot storage and memory costs are still open. Evidence is in `evidence/DX-PLAY1/fixture-test-retry.txt`.
+The admitted Mac sample generated 45 objects in 2.46 seconds with an 87.7 MiB process peak RSS. Its 22,464 history frames occupied 2,160,335 compressed bytes. The two full schedules total 30,817,360 history saves. At the sampled compression and encoder rate, the history objects alone project to about 2.96 GB and 56 minutes of generation. The static graph, larger ID entropy and filesystem effects are additional. Allow 5 GB for generator output and measure the actual archive before upload. The full replay omits detailed gateway log files to bound disk use and still exposes available request timing headers. Full database expansion and restore memory remain open. Evidence is in `evidence/DX-PLAY1/fixture-test-retry.txt`.
 
 The Git fixture contains 16 deep people averaging 165.6 current facts, 160 wide people with four each, and small accounts of 4, 5 and 7 people. Run `node examples/playground/fixture.ts` at the repository root to regenerate the archive and SHA-256 manifest byte for byte. Use `pnpm playground start --larger` for a larger local small-tier profile.
 
