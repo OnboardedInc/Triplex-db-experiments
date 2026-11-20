@@ -170,17 +170,15 @@ const reportFiles = [
     ? ["COMMIT-ANATOMY.md", "commit-anatomy.json"]
     : []),
 ];
-const reportHashes =
-  reportFiles
-    .map(
-      (name) =>
-        `${createHash("sha256")
-          .update(fs.readFileSync(path.join(run, name)))
-          .digest("hex")}  ${name}`,
-    )
-    .join("\n") +
-  "\n" +
-  (await verifiedRawManifest(run));
+// [DX-BM1] Why: the Chrome export may exceed both the V8 string limit and the maximum contiguous Buffer size.
+// Rejected: allocating an entire exported timeline merely to seal its bytes.
+const hashes = [];
+for (const name of reportFiles) {
+  const digest = createHash("sha256");
+  for await (const chunk of fs.createReadStream(path.join(run, name))) digest.update(chunk);
+  hashes.push(digest.digest("hex") + "  " + name);
+}
+const reportHashes = hashes.join("\n") + "\n" + (await verifiedRawManifest(run));
 const indexText = `# ${result.tag}\n\nSource: ${result.source}. Trace collection complete: ${result.complete}. Derived render recovery: ${renderOnly}.\n\n${result.finding}\n\nCanonical files: ~/Claude/Projects/triplex-db-2/evidence/DX-T1/${result.tag}/.\nCompressed raw traces: ${result.rawBytes} bytes, under trace/raw; hashes in trace/SHA256SUMS.\nLarge viewers remain in the durable store and the local worktree copy; only this index, report and SHA256SUMS are committed.\n`;
 for (const destination of [run, ...(copy ? [copy] : [])]) {
   fs.writeFileSync(path.join(destination, "SHA256SUMS"), reportHashes);

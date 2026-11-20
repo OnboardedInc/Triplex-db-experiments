@@ -38,7 +38,11 @@ export interface Event {
   attribute?: string;
   due?: string;
 }
-export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0") {
+export async function openStore(
+  scope: string,
+  profile: "w0" | "act2-deep" = "w0",
+  access: "write" | "read" = "write",
+) {
   assert(/^lazy-[a-z0-9-]+$/.test(scope));
   const key = String(runtimeApi.DatabaseScope.test(scope)),
     client = new DatomicClient(process.env.DATOMIC_URL!);
@@ -50,7 +54,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
   } finally {
     client.close();
   }
-  const h = await openTriples("datomic", scope),
+  const h = access === "write" ? await openTriples("datomic", scope) : undefined,
     comp = await openComposition("reach", "datomic", scope);
   const counters = { writes: 0, accountReads: 0, subjectRoots: 0, rosterRoots: 0, ackObserved: 0 };
   const rows = async (ids: string[], position: number, validTime = epoch) => {
@@ -78,6 +82,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     afterFence?: () => Promise<void>,
     onAck?: (t: number) => void,
   ) {
+    assert(h, "A demand reader has no publication authority");
     assert(id.length && Number.isSafeInteger(expected) && expected >= 0);
     const correlationId = canonical({ context, hash: sha256(wireBytes([scope, id, actor, ops])) });
     const check = (r: any) => {
@@ -187,6 +192,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     ops: readonly any[] = [],
     onAck?: (t: number) => void,
   ) {
+    assert(h, "A demand reader has no source write authority");
     assert(
       W0.isInstant(event.at) &&
         ["activation", "source", "due", "erase", "baseline"].includes(event.kind),
@@ -201,6 +207,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     for (;;) {
       const p = await comp.currentPosition(),
         c = await controls(p, true);
+      assert(!c.clock || !value(c.clock).joined, "Use joined source admission");
       assert(event.at >= c.at, "Business slots must be monotone");
       let writes: any[];
       if (event.kind === "activation") {
@@ -336,7 +343,7 @@ export async function openStore(scope: string, profile: "w0" | "act2-deep" = "w0
     head: () => comp.currentPosition(),
     close: async () => {
       await comp.close();
-      await h.close();
+      await h?.close();
     },
   };
 }

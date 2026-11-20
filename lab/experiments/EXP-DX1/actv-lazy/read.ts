@@ -7,7 +7,7 @@ import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import assert from "node:assert/strict";
 import { canonical, sha256, W0, worldOf } from "../../../bench/lib/w0-world.ts";
 import {
-  calculate,
+  render,
   evaluate,
   worldsAt,
   kernel,
@@ -71,6 +71,16 @@ export async function captureDemand(s: Store, subject: string, p: number, v: str
     client.close();
   }
 }
+export type ReadStage =
+  | "head"
+  | "pin"
+  | "controls"
+  | "erasure-before"
+  | "memo"
+  | "world"
+  | "kernel"
+  | "erasure-after"
+  | "return";
 export class LazyReader {
   readonly store: Store;
   readonly format: Format;
@@ -84,13 +94,16 @@ export class LazyReader {
     this.replica = view;
   }
   private readonly now: () => string;
+  private readonly path: "legacy" | "shared-cut";
   constructor(
     store: Store,
     format: Format = "w0",
     byteLimit = 2 << 20,
     now = () => new Date().toISOString().replace("Z", "000Z"),
+    path: "legacy" | "shared-cut" = "legacy",
   ) {
     this.now = now;
+    this.path = path;
     this.store = store;
     this.format = format;
     this.limit = byteLimit;
@@ -99,17 +112,41 @@ export class LazyReader {
   get bytes() {
     return this.used;
   }
-  async readAt(subject: string, pin: Pin = {}, afterPull?: () => Promise<void>) {
+  async readAt(
+    subject: string,
+    pin: Pin = {},
+    afterPull?: () => Promise<void>,
+    stage?: (name: ReadStage) => void,
+  ) {
+    stage?.("head");
     const offered = this.now();
     const s = this.store,
-      head = await s.head(),
-      p = await resolvePin(s, pin, head);
+      head = await s.head();
+    stage?.("pin");
+    const p = await resolvePin(s, pin, head);
+    stage?.("controls");
     const c = await s.controls(p),
       b = { tx: p, validTime: pin.validTime ?? offered };
     assert(W0.isInstant(b.validTime));
+    const shared = this.path === "shared-cut";
+    let frontier = head;
     for (;;) {
-      const latest = await s.controls(await s.head()),
+      stage?.("erasure-before");
+      const latest = shared
+          ? frontier === p
+            ? c
+            : await s.controls(frontier)
+          : await s.controls(await s.head()),
         barrier = maskVersion(latest);
+      assert(!p || latest.generation === c.generation, "Read generation changed");
+      const stable = async () => {
+        const end = await s.head();
+        if (shared && end === frontier) return true;
+        frontier = end;
+        const after = await s.controls(end);
+        return barrier === maskVersion(after) && (!p || after.generation === c.generation);
+      };
+      stage?.("memo");
       if (barrier !== this.erased) {
         this.cache.clear();
         if (this.replica && this.replica.erasure !== barrier) this.replica = undefined;
@@ -128,8 +165,13 @@ export class LazyReader {
       ]);
       const saved = this.cache.get(key);
       if (saved !== undefined) {
+        if (shared) {
+          stage?.("erasure-after");
+          if (!(await stable())) continue;
+        }
         this.cache.delete(key);
         this.cache.set(key, saved);
+        stage?.("return");
         return { json: saved, basis: b, route: "exact-cache", subject };
       }
       const r = this.replica,
@@ -140,16 +182,20 @@ export class LazyReader {
           r.validTime === b.validTime &&
           r.subject === subject &&
           r.snapshot.position === b.tx;
-      const { json } = eligible
-        ? evaluate(s, this.format, worldOf(subject, r.snapshot.world(subject)), b, c, latest)
-        : await calculate(s, this.format, subject, b, c, latest);
+      stage?.("world");
+      const world = eligible
+        ? worldOf(subject, r.snapshot.world(subject))
+        : (await worldsAt(s, this.format, [subject], b))[0]!;
+      stage?.("kernel");
+      const { json } = (shared ? render : evaluate)(s, this.format, world, b, c, latest);
       const route = eligible ? "pinned-replica" : "authoritative-source";
       if (afterPull) {
         await afterPull();
         afterPull = undefined;
       }
       // [DX-ACT1] Why: erasure also changes old pins, including cache fills already in flight. Rejected: keying only by historical source position (a later request could reuse protected bytes).
-      if (maskVersion(await s.controls(await s.head())) !== barrier) continue;
+      stage?.("erasure-after");
+      if (!(await stable())) continue;
       const size = Buffer.byteLength(json) + Buffer.byteLength(key);
       if (size <= this.limit && !this.cache.has(key)) {
         while (this.used + size > this.limit) {
@@ -160,6 +206,7 @@ export class LazyReader {
         this.cache.set(key, json);
         this.used += size;
       }
+      stage?.("return");
       return { json, basis: b, route, subject };
     }
   }

@@ -23,7 +23,13 @@ const adds = [
 const acts: { release: string; from: string; tx: number }[] = [];
 const known: { e: string; a: string; v: any; tx: number; dead?: number; from?: number }[] = [];
 const results: { p: number; at: string; who: string; hash: string; route: string }[] = [];
-const reader = new LazyReader(s);
+const reader = new LazyReader(
+  s,
+  "w0",
+  2 << 20,
+  undefined,
+  process.env.DX_LAZY_READ_PATH === "shared-cut" ? "shared-cut" : "legacy",
+);
 async function check(p: number, at: string, who = subject) {
   const b = { tx: p, validTime: at };
   const world = {
