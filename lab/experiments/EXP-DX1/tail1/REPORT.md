@@ -1,11 +1,11 @@
-# DX-TAIL1
-Tonight's server test saw a 170–179 ms deep p99 after startup, against 19 ms thin.
-Forty-nine of the fifty slowest deep saves spent most of their time waiting for a reply outside their own transaction work.
-The write gateway kept working during those waits. Its longest gap in the trace was 29 ms.
-One deep save spent 151 ms reading from SQL. The three slowest saves were already waiting when that earlier write's reply arrived.
-Each subject was written once. The sender and the read gateway account for none of the slowest saves.
-A transactor pause could have contributed. Its log has minute totals, so individual waits remain unresolved.
-All 7,092 receipts join to their original traces. [Rankings and method](OVERNIGHT.md) · [Part 3 recording and audit](RECORDING.md)
+# DX-TAIL1 part 3
+The event recorder at `b9f4af923` joined all 192 saves on a fresh Mac stack to their native transaction IDs.
+All three Java recordings were sealed, and 2,305 PostgreSQL durations mapped to the guest clock.
+Fifteen PostgreSQL durations lacked a usable clock bracket and retain wall time only.
+The Mac used one ordinary heavy token. Its timing is diagnostic.
+The two-percent recorder cost still needs the quiet bare-metal comparison.
+The earlier physical deep tail was dominated by waiting on native replies. Per-save queue entry and WAL sync remain unresolved.
+The integration merge and renewed receipt gates follow the cache forecasts. [Recording and audit](RECORDING.md)
 
 North star P2 scheduled offer to durable ACK, including the 10 ms p50 and 50 ms p99 bars at the rated reader load, and P6 quiet-account p99 / alone p99 ≤1.25. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 

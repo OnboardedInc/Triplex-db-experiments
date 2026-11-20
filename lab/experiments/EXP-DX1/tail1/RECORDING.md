@@ -32,3 +32,7 @@ env DX_BARE_METAL=1 DOCKER_HOST=unix:///var/run/docker.sock node lab/bin/heavy.m
 ```
 
 The command uses the pinned stack and five-field commands from the correctness fixture. The control keeps the previous Node and gateway summary recording. This compares the incremental cost of the new recorders under a bounded physical campaign. Scorecard-scale recorder cost remains a separate observation. The comparison checks four fresh slots, exact source, matching input and placement, actual role IDs and cleanup, and each arm's sealed command ledger. Any incomplete arm stops the comparison.
+
+## Local correctness proof
+
+`part3-events/events-f2` used source `b9f4af923`, a signed Java 21 Datomic image, and an ordinary heavy token. The fixture matched all 192 SDK acknowledgements to the gateway and native database/t records and verified 960 assertion IDs at readback. Writer, reader and transactor exports contained 11,022, 5,938 and 17,403 events. PostgreSQL mapped 2,305 duration records to the guest clock and preserved 15 wall-only records. Its WAL samples spanned 523 syncs on the same statistics epoch. Each owned container and the SQL volume were released. The first attempt reached the native joins and exposed discarded PostgreSQL stderr. Its evidence remains indexed. [Evidence hashes](SHA256SUMS)
