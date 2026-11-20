@@ -30,17 +30,23 @@ export function port(value: string): number {
   return n;
 }
 
-export type Docker = (args: string[], settings?: { buildxDirectory: string }) => Promise<string>;
+export type Docker = (
+  args: string[],
+  settings?: { buildxDirectory?: string; timeoutMs?: number },
+) => Promise<string>;
+const archiveCommand = { timeoutMs: 2 * 60 * 60_000 };
 export function dockerClient(host?: string, context?: string): Docker {
   const args = context ? ["--context", context] : host ? ["--host", host] : [];
   return async (command, settings) => {
     try {
       return (
         await exec("docker", [...args, ...command], {
-          timeout: 10 * 60_000,
+          timeout: settings?.timeoutMs ?? 10 * 60_000,
           maxBuffer: 4 * 1024 ** 2,
           encoding: "utf8",
-          ...(settings ? { env: { ...process.env, BUILDX_CONFIG: settings.buildxDirectory } } : {}),
+          ...(settings?.buildxDirectory
+            ? { env: { ...process.env, BUILDX_CONFIG: settings.buildxDirectory } }
+            : {}),
         })
       ).stdout.trim();
     } catch (error) {
@@ -458,13 +464,16 @@ export class Stack {
       }
       signal?.throwIfAborted();
       // Concatenating in the container lets pg_restore stream one custom-format archive.
-      await docker([
-        "exec",
-        pg,
-        "sh",
-        "-c",
-        "set -eu; export LC_ALL=C; cat /tmp/playground-restore/postgres-*.dump-part | pg_restore --exit-on-error --single-transaction --clean --if-exists -U postgres -d datomic",
-      ]);
+      await docker(
+        [
+          "exec",
+          pg,
+          "sh",
+          "-c",
+          "set -eu; export LC_ALL=C; cat /tmp/playground-restore/postgres-*.dump-part | pg_restore --exit-on-error --single-transaction --clean --if-exists -U postgres -d datomic",
+        ],
+        archiveCommand,
+      );
       return performance.now() - start;
     } finally {
       await docker(["exec", pg, "rm", "-rf", stage]);
@@ -524,21 +533,11 @@ export class Stack {
     await docker(["stop", "--time", "10", ...roles]);
     const pg = prefix + "-pg";
     const file = "/tmp/playground-export.dump";
-    await docker([
-      "exec",
-      pg,
-      "pg_dump",
-      "-U",
-      "postgres",
-      "-Fc",
-      "-Z",
-      "6",
-      "-d",
-      "datomic",
-      "-f",
-      file,
-    ]);
-    await docker(["cp", pg + ":" + file, local]);
+    await docker(
+      ["exec", pg, "pg_dump", "-U", "postgres", "-Fc", "-Z", "6", "-d", "datomic", "-f", file],
+      archiveCommand,
+    );
+    await docker(["cp", pg + ":" + file, local], archiveCommand);
     await docker(["exec", pg, "rm", file]);
   }
 

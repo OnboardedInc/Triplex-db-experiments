@@ -23,6 +23,7 @@ type Options = Omit<StackOptions, "directory"> & {
   timingClass: string;
   slot?: string;
   beforeSeal?: () => void;
+  maxBytes?: number;
 };
 
 export async function runSnapshot(options: Options) {
@@ -60,6 +61,13 @@ export async function runSnapshot(options: Options) {
       checkpoint,
       codec: capture.urls.codec,
     });
+    const downloadBytes =
+      published.manifestBytes +
+      published.manifest.objects.reduce((total, obj) => total + obj.bytes, 0);
+    if (options.maxBytes !== undefined && downloadBytes > options.maxBytes)
+      throw new Error(
+        "Snapshot download exceeds the requested budget: " + downloadBytes + " bytes",
+      );
     const dumpMs = performance.now() - dumpStart;
     await rm(archive);
     const closed = await initial.close(true);
@@ -118,9 +126,7 @@ export async function runSnapshot(options: Options) {
       manifestSha256: published.checksum,
       gatewaySource: ready.gatewaySource,
       ...capture.seedCounts,
-      downloadBytes:
-        published.manifestBytes +
-        published.manifest.objects.reduce((total, obj) => total + obj.bytes, 0),
+      downloadBytes,
       sourceBytes,
       databaseBytes,
       buildMs,

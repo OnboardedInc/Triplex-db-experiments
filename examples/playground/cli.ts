@@ -11,6 +11,7 @@ import { dockerClient, loopback, port, repo, Stack } from "./stack.ts";
 
 const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--larger | --tier NAME --data SOURCE [--replay]]
 pnpm playground stop
+pnpm playground snapshot --tier NAME --deep N --daily N|real --out DIRECTORY [--max-bytes N]
 node examples/playground/cli.ts mcp [--port 4186]`;
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -22,6 +23,10 @@ const { values, positionals } = parseArgs({
     tier: { type: "string", default: "small" },
     data: { type: "string" },
     replay: { type: "boolean" },
+    deep: { type: "string" },
+    daily: { type: "string" },
+    out: { type: "string" },
+    "max-bytes": { type: "string" },
     help: { type: "boolean", short: "h" },
   },
 });
@@ -57,6 +62,35 @@ const pnpm = (argv: string[], signal: AbortSignal) =>
         : reject(new Error("Playground workspace setup failed: " + (killedBy ?? status))),
     );
   });
+
+async function prepareWorkspace(signal: AbortSignal) {
+  // [DX-PLAY1] Why: both portable commands start from their own frozen workspace inputs.
+  // Rejected: requiring generated dist files, a global tsx install or an unpublished package.
+  await pnpm(
+    [
+      "--filter",
+      "triplex-monorepo",
+      "--filter",
+      "triplex-playground...",
+      "install",
+      "--frozen-lockfile",
+    ],
+    signal,
+  );
+  await pnpm(
+    [
+      "exec",
+      "turbo",
+      "run",
+      "build",
+      "--cache-dir",
+      join(repo, ".turbo/playground"),
+      "--filter=@triplex-build/triplex-datomic...",
+      "--filter=@triplex-build/triplex-http...",
+    ],
+    signal,
+  );
+}
 
 function pidExists(pid: number) {
   try {
@@ -152,32 +186,7 @@ async function start() {
     if (values.tier !== "small" && !source)
       throw new Error("Set PLAYGROUND_DATA_URL or pass --data for the chosen tier");
     const fixture = async (signal: AbortSignal) => {
-      // [DX-PLAY1] Why: the clean-clone path installs and builds only its committed workspace inputs.
-      // Rejected: needing generated dist files, a global tsx install or an unpublished package.
-      await pnpm(
-        [
-          "--filter",
-          "triplex-monorepo",
-          "--filter",
-          "triplex-playground...",
-          "install",
-          "--frozen-lockfile",
-        ],
-        signal,
-      );
-      await pnpm(
-        [
-          "exec",
-          "turbo",
-          "run",
-          "build",
-          "--cache-dir",
-          join(repo, ".turbo/playground"),
-          "--filter=@triplex-build/triplex-datomic...",
-          "--filter=@triplex-build/triplex-http...",
-        ],
-        signal,
-      );
+      await prepareWorkspace(signal);
       if (values.tier === "small") return loadFixture(values.larger);
       const { manifestReader, readBundle } = await import("./bundle.ts");
       const reader = await manifestReader(source!, join(repo, ".cache/playground-data"), signal);
@@ -215,6 +224,67 @@ async function start() {
     process.removeListener("SIGTERM", stop);
     await instance?.close();
     await rm(state, { recursive: true, force: true });
+  }
+}
+
+async function makeSnapshot() {
+  const { checkPlan, tierName } = await import("./snapshot.ts");
+  const tier = values.tier;
+  const plan = {
+    deep: Number(values.deep),
+    daily: values.daily === "real" ? ("real" as const) : Number(values.daily),
+  };
+  checkPlan(plan);
+  const maxBytes = values["max-bytes"] === undefined ? undefined : Number(values["max-bytes"]);
+  if (
+    !tierName.test(tier) ||
+    tier === "small" ||
+    !values.out ||
+    (maxBytes !== undefined && (!Number.isSafeInteger(maxBytes) || maxBytes < 1))
+  )
+    throw new Error(usage);
+  const output = resolve(values.out);
+  const settings = dockerSettings();
+  checkPortableDocker(settings.dockerHost);
+  const git = (...argv: string[]) =>
+    execFileSync("git", argv, { cwd: repo, encoding: "utf8" }).trim();
+  if (git("status", "--porcelain"))
+    throw new Error("Build snapshots from a clean, committed checkout");
+  const sourceHead = git("rev-parse", "HEAD");
+  const abort = new AbortController();
+  const stop = () => abort.abort();
+  process.once("SIGINT", stop);
+  process.once("SIGTERM", stop);
+  try {
+    await prepareWorkspace(abort.signal);
+    const { runSnapshot } = await import("./snapshot-run.ts");
+    await mkdir(output);
+    const receipt = await runSnapshot({
+      out: output,
+      tier,
+      plan,
+      keepBundle: true,
+      sourceHead,
+      prefix: "tx2-dxplay1-" + randomBytes(6).toString("hex"),
+      timingClass: "standalone diagnostic",
+      signal: abort.signal,
+      docker: dockerClient(settings.dockerHost, settings.context),
+      ports: { write: 0, read: 0 },
+      ...(maxBytes === undefined ? {} : { maxBytes }),
+      beforeSeal: () => {
+        if (git("rev-parse", "HEAD") !== sourceHead || git("status", "--porcelain"))
+          throw new Error("Snapshot source changed; choose an output outside the checkout");
+      },
+    });
+    console.log(
+      "Snapshot ready",
+      join(output, "bundle"),
+      receipt.downloadBytes,
+      receipt.manifestSha256,
+    );
+  } finally {
+    process.removeListener("SIGINT", stop);
+    process.removeListener("SIGTERM", stop);
   }
 }
 
@@ -274,6 +344,7 @@ else {
   if (positionals.length !== 1) throw new Error(usage);
   if (cmd === "start") await start();
   else if (cmd === "stop") await stop();
+  else if (cmd === "snapshot") await makeSnapshot();
   else if (cmd === "mcp") await mcp();
   else throw new Error(usage);
 }
