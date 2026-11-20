@@ -298,6 +298,9 @@ async function removeThinImage(config, opts) {
 
 function recordDatomicJvms(info, eff) {
   if (info.lane !== 'datomic') return;
+  // [DX-V01] Why: the compact launcher records all three role processes inside its owned guest.
+  // Rejected: asking the canonical entrypoint's two-role recorder for files the compact launcher does not write.
+  if (/^tx2-dxthin-managed:/.test(info.laneConf.image)) return;
   const m = inspect(info.container);
   if (!m?.State.Running || m.Image !== eff.effective.imageId
     || m.Config.Labels?.['tx2.config-sha256'] !== eff.sha256)
@@ -358,7 +361,10 @@ export function effectiveConfig(config, info) {
     fs.copyFileSync(path.join(root, 'lab/config/datomic/transactor.properties'), transactor);
     // [DX-JVM1] Why: bind the launch script separately while keeping the legacy Java 21 image source pin.
     // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
-    fs.copyFileSync(path.join(REPO, 'lab/config/datomic/entrypoint.sh'), entrypoint);
+    // [DX-V01] Why: the staged compact image owns its PostgreSQL and two peer launcher.
+    // Rejected: mounting the resident entrypoint over a verified experiment launcher.
+    const launcherRoot = /^tx2-dxthin-managed:/.test(info.laneConf.image) ? root : REPO;
+    fs.copyFileSync(path.join(launcherRoot, 'lab/config/datomic/entrypoint.sh'), entrypoint);
     let reader, readerGateway;
     if (info.readerPort !== undefined) {
       const p = info.readerPort;
