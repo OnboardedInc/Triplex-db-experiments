@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { createReadStream, readFileSync, readdirSync, statfsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { sha256 } from "../../../bench/lib/w0-world.ts";
+import { macDiagnostic } from "./join/measure.ts";
 const dir = process.env.DX_LAZY_OUT!,
   ownerPath = process.env.TRIPLEX_LAB_SLOT_OWNER!;
 const git = (...args: string[]) =>
@@ -56,6 +57,23 @@ for (const pkg of ["core", "host", "qualification", "datomic", "w0"]) {
     if (f.endsWith(".js")) pins[join(root, f)] = sha256(readFileSync(join(root, f)));
 }
 const cfg = join(process.env.TX2_CONFIG_DIR!, "lab/config/slots.json");
+const mode = process.argv[2];
+let preparation: { source: string; seal: string; data: string } | undefined;
+if (mode === "--joined-settle-diagnostic") {
+  const seal = readFileSync(process.env.DX_JOIN_PREPARATION_VERIFIED!);
+  const data = sha256(readFileSync(process.env.DX_JOIN_PREPARATION!));
+  const old = JSON.parse(seal.toString());
+  assert(
+    macDiagnostic &&
+      old.mode === "--joined-settle-prepare" &&
+      old.size === process.argv[3] &&
+      old.slot === slot.container &&
+      old.volume === slot.volume &&
+      old.outputs["preparation.json"] === data,
+  );
+  execFileSync("git", ["merge-base", "--is-ancestor", old.source, source]);
+  preparation = { source: old.source, seal: sha256(seal), data };
+}
 const save = (file: string, x: unknown) =>
   writeFileSync(join(dir, file), JSON.stringify(x, null, 2) + "\n", { flag: "wx" });
 save("inputs.json", pins);
@@ -68,8 +86,10 @@ const binding = {
   owner: sha256(owner),
   config: sha256(readFileSync(cfg)),
   image: JSON.parse(readFileSync(cfg, "utf8")).lanes.datomic.imageId,
-  mode: process.argv[2],
+  mode,
   size: process.argv[3] ?? null,
+  ...(macDiagnostic ? { timing: "diagnostic" } : {}),
+  ...(preparation ? { preparation } : {}),
 };
 save("attempt.json", binding);
 const run = (file: string, args: string[]) => {
@@ -130,6 +150,15 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   ]);
 } else if (binding.mode === "--joined-server-smoke") {
   run("join/server.ts", ["64", dir, "--local"]);
+} else if (binding.mode === "--joined-priority-proof") {
+  const gatewayAttempt = process.env.TX2_WRITE_OPTIONS_ATTEMPT;
+  assert(gatewayAttempt);
+  const { run: checkAdmission } = await import("./join/admission-gate.ts");
+  await checkAdmission(
+    dir,
+    { source, nonce: binding.nonce, identity: binding.owner },
+    gatewayAttempt,
+  );
 } else if (binding.mode === "--joined-settle-proof") {
   run("join/settle-gate.ts", [dir]);
 } else if (binding.mode === "--joined-shared-proof") {
@@ -150,16 +179,25 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
 } else if (binding.mode === "--joined-settle-price") {
   assert(["64", "1000", "10000"].includes(binding.size!));
   run("join/settle-price.ts", [dir, binding.size!, binding.size === "64" ? "3" : "60"]);
-} else if (binding.mode === "--joined-settle-prepare" || binding.mode === "--joined-settle-block") {
+} else if (binding.mode === "--joined-settle-server") {
+  assert(process.platform === "linux" && !macDiagnostic && binding.size === "100000");
+  process.env.DX_ACT1_W1_GATE = "1";
+  run("join/settle-gate.ts", [dir]);
+  run("join/settle-price.ts", [dir, binding.size, "180", "64"]);
+} else if (
+  binding.mode === "--joined-settle-prepare" ||
+  binding.mode === "--joined-settle-block" ||
+  preparation
+) {
   const [n, rate] = binding.size!.split(":");
   assert(["64", "1000", "10000"].includes(n!) && ["3.5", "23.5"].includes(rate!));
   const prepare = binding.mode === "--joined-settle-prepare";
   run("join/settle-price.ts", [
     dir,
     n!,
-    n === "64" ? "3" : "180",
+    n === "64" ? "3" : preparation ? "45" : "180",
     "4",
-    prepare ? "--prepare" : "--resume",
+    prepare ? "--prepare" : preparation ? "--diagnostic-resume" : "--resume",
     prepare ? rate! : process.env.DX_JOIN_PREPARATION!,
   ]);
 } else if (binding.mode === "--joined-size") {

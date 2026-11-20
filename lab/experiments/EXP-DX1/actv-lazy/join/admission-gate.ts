@@ -30,6 +30,7 @@ export async function liveGateway(scope: string, nonce: string) {
 export async function run(
   dir: string,
   attempt: { source: string; nonce: string; identity: string },
+  gatewayAttempt = attempt.nonce,
 ) {
   const scope = "lazy-join-admission-" + attempt.nonce,
     source = await openStore(scope),
@@ -38,7 +39,7 @@ export async function run(
     other = new JoinedAccount(source),
     ref = new Reference();
   try {
-    const options = await liveGateway(scope, attempt.nonce),
+    const options = await liveGateway(scope, gatewayAttempt),
       seeded = await seed(source, 8);
     await a.install(seeded.roster, valid);
     await a.publish("baseline", W0.R1.doc, valid, "owed");

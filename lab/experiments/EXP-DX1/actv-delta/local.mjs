@@ -20,8 +20,13 @@ import {
 } from "../../../bin/lib.mjs";
 
 export async function local(opts, config, manager) {
+  // [DX-INT1] Why: recheck the merged Publish path on the caller's own slot.
+  // Rejected: using the experiment author's live slot or inherited output.
+  const integration = opts.run === "joined-integration";
   assert(
-    process.platform === "darwin" && opts.holder === "DX-ACT2" && dockerArgs([])[1] === DOCKER_HOST,
+    process.platform === "darwin" &&
+      (opts.holder === "DX-ACT2" || (integration && opts.holder === "DX-THIN1")) &&
+      dockerArgs([])[1] === DOCKER_HOST,
   );
   if (opts.run === "recover-slot") return recoverSlot(opts, config, manager);
   assert(
@@ -39,6 +44,7 @@ export async function local(opts, config, manager) {
       "audit-loaded",
       "audit-faults",
       "joined-admission",
+      "joined-integration",
       "joined-load",
       "joined-server-check",
     ].includes(opts.run),
@@ -51,7 +57,13 @@ export async function local(opts, config, manager) {
   const caps = { pg: 256, tx: 896, gw: 1024 },
     labels = ["--label", "delta.attempt=" + nonce],
     names = Object.keys(caps).map((r) => prefix + "-" + r);
-  const attempt = { nonce, run: opts.run, prefix, source: process.env.DELTA_SOURCE ?? null };
+  const attempt = {
+    nonce,
+    run: opts.run,
+    prefix,
+    source: process.env.DELTA_SOURCE ?? null,
+    ...(integration ? { holder: opts.holder, timing: "diagnostic" } : {}),
+  };
   const write = (name, obj) =>
     fs.writeFileSync(path.join(dir, name + ".json"), JSON.stringify(obj) + "\n", { flag: "wx" });
   let info, net, lease;
@@ -73,7 +85,7 @@ export async function local(opts, config, manager) {
     }
     while (!info) {
       const stat = fs.statfsSync(".");
-      assert(stat.bavail * stat.bsize >= 5 * 2 ** 30, "host disk below floor");
+      assert(stat.bavail * stat.bsize >= (integration ? 10 : 5) * 2 ** 30, "host disk below floor");
       try {
         await withPool((ledger) => {
           manager.assertMeasureAdmission(opts.holder);
@@ -295,7 +307,7 @@ export async function local(opts, config, manager) {
         ...process.env,
         DATOMIC_URL: info.endpoint,
         DX_ACT1_NATIVE: "1",
-        TRIPLEX_DATOMIC_LAYOUT: "lean",
+        TRIPLEX_DATOMIC_LAYOUT: integration ? "legacy" : "lean",
         TX2_SWEEP_STRICT: "1",
         TX2_W0_POINT_JOURNAL: "1",
         TRIPLEX_LAB_SLOT_OWNER: info.ownerFile,

@@ -1,9 +1,10 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
-            [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy])
+            [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
+            [triplex.gateway.subject-save :as subject])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -81,7 +82,7 @@
                        (do
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
-        current (group/install! conn (commit/install! conn scope schema-ready))]
+        current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -108,28 +109,24 @@
         entity (scope/entity db)
         selected (commit/entry db {} (lean/enabled? db))
         selected-id (d/entid db selected)
-        installed? (and selected-id (some? (storage/value db selected-id :db/fn)))
-        guard (when prepared/enabled
-                (if prepared/basis-enabled prepared/basis-ident (prepared/active-guard)))
-        guard-id (when guard (d/entid db guard))]
-    {:database name :attempt write-options-attempt
-     :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")
-     :t (str (d/basis-t db)) :position (storage/head-position name db)
-     :strictRecordClocks (true? (storage/value db entity :triplex.scope/strict-record-clocks))
-     :rowsVersion (storage/value db entity :triplex.scope/rows-version)
-     :commitFunction (str selected) :commitFunctionInstalled (boolean installed?)
-     :baseFunctionHash (storage/value db entity :triplex.scope/commit-fn-hash)
-     :preparedWriter (when guard {:mode (if prepared/basis-enabled "basis" "full")
-                                  :guard (str guard)
-                                  :installed (boolean (and guard-id (storage/value db guard-id :db/fn)))})
-     :options {:predecessorLookup pred/enabled :groupCommit group/enabled
-               :livePriority policy/priority? :fieldCoalesce policy/field-only?
-               :queueClock group/queue-clock :stageClock group/stage-clock
-               :smallRows small-row/enabled :reusePrepared group/reuse-prepared
-               :maxMembers group/batch-limit :budgetMicros policy/budget-us
-               :bulkRows policy/bulk-rows :bulkBytes policy/bulk-bytes
-               :ledger (boolean (or ledger/enabled packed/enabled))
-               :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)}}))
+        installed? (and selected-id (some? (storage/value db selected-id :db/fn)))]
+    (cond-> {:database name :attempt write-options-attempt
+             :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")
+             :t (str (d/basis-t db)) :position (storage/head-position name db)
+             :strictRecordClocks (true? (storage/value db entity :triplex.scope/strict-record-clocks))
+             :rowsVersion (storage/value db entity :triplex.scope/rows-version)
+             :commitFunction (str selected) :commitFunctionInstalled (boolean installed?)
+             :baseFunctionHash (storage/value db entity :triplex.scope/commit-fn-hash)
+             :options {:predecessorLookup pred/enabled :groupCommit group/enabled
+                       :livePriority policy/priority? :fieldCoalesce policy/field-only?
+                       :queueClock group/queue-clock :stageClock group/stage-clock
+                       :smallRows small-row/enabled :reusePrepared group/reuse-prepared
+                       :maxMembers group/batch-limit :budgetMicros policy/budget-us
+                       :bulkRows policy/bulk-rows :bulkBytes policy/bulk-bytes
+                       :ledger (boolean (or ledger/enabled packed/enabled))
+                       :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)}}
+      subject/enabled (assoc :subjectSave true :subjectFunction (when (subject/installed db) (str subject/ident))
+                             :subjectFunctionTx (some-> (subject/installed db) str)))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
@@ -308,6 +305,10 @@
                 source (get input "erasureSourceDatabase")
                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
                     (codec/invalid "Invalid source scope for protected delivery"))
+                independent (when (and managed-write? subject/enabled (nil? source)
+                                       (not (contains? input "erasureSeq"))
+                                       (not (true? (get input "erasureReplay"))))
+                              (let [cut (privacy/cut name db)] (when-not (:sealed cut) cut)))
                 request (cond-> request input (assoc :privacy-input input))
                 run (fn [cut]
                       (trace/attribute! :erasureGuarded (boolean cut))
@@ -318,7 +319,13 @@
                                                       :seq (or (:seq cut) 0) :erased (or (:erased cut) {})})
                                        (route-handler-base request))]
                           (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
-            (if (and input (or managed-write? source))
+            (cond
+              independent
+              ;; [DX-ERASE1] Why: the native transaction checks the verified sequence with the person's revision.
+              ;; Rejected: holding the scope's writer lock while preparing or saving an unrelated person.
+              (do (privacy/verify-data! independent db) (run independent))
+
+              (and input (or managed-write? source))
               ;; [DX-ERASE1] Why: the source cannot publish an erasure between validation and recipient commit.
               ;; Rejected: an HTTP recheck followed by an independent recipient write.
               (with-privacy-guards (sort (cond-> #{} managed-write? (conj name) source (conj source)))
@@ -337,6 +344,7 @@
                     (run next))))
               ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
               ;; Rejected: reading and hashing the authority twice on every guarded save.
+              :else
               (let [read-cut (when-not input
                                (trace/span "privacy/frontier" "gateway" (privacy/cut name db)))]
                 (when read-cut (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
@@ -348,7 +356,7 @@
     (route-handler-base request)))
 
 (defn handler [request] (trace/handler route-handler request))
-(defn -main [& _]
+(defn -main [& [port]]
   (envelope/start!)
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.
@@ -359,4 +367,5 @@
     (try (sync-db (db-uri name))
          (catch Exception e
            (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
-  (jetty/run-jetty handler {:port 8080 :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))
+  (jetty/run-jetty handler {:port (if port (Integer/parseInt port) 8080)
+                           :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))

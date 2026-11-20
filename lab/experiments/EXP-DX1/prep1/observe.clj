@@ -1,5 +1,6 @@
 (ns triplex.prep1.observe
   (:require [clojure.data.json :as json]
+            [clojure.java.io :as file]
             [clojure.string :as str]
             [datomic.db :as db]
             [datomic.io :as dio]
@@ -20,33 +21,40 @@
 (def appended (ThreadLocal.))
 (def attempt (System/getenv "PREP1_ATTEMPT"))
 (def mode (System/getenv "PREP1_MODE"))
+(def streaming? (= mode "subject-server"))
 (def diagnostic-events (ArrayBlockingQueue. 16384))
 (def ^ThreadMXBean cpu-bean (ManagementFactory/getThreadMXBean))
 (def ^:dynamic *profile* nil)
 (defn cpu [] (.getCurrentThreadCpuTime cpu-bean))
+(defn writer-database []
+  (second (re-matches #"writer-(.+)-[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}" (.getName (Thread/currentThread)))))
 (defn retain! [prefix event]
   (when-not (.offer diagnostic-events [prefix (assoc event :attempt attempt)])
     (.incrementAndGet dropped)))
 
 (defn portion! [profile read? check member f]
   (let [start (System/nanoTime) before (cpu)
-        stats (when read? (io/throw-if-ex! (io/with-io-stats f {:io-context check :api :guard-section})))
+        stats (when read?
+                (io/throw-if-ex!
+                  (io/with-io-stats f {:io-context (keyword "prep1" (name check)) :api :guard-section})))
         value (if read? (:ret stats) (f))
         tcpu (- (cpu) before) end (System/nanoTime)]
     (vswap! profile update :checks conj
             {:check check :member member :start start :end end :cpuNs tcpu :io (:io-stats stats)})
     value))
 
-(defn profile-guard [snapshot witness ops f]
+(defn measure-guard [snapshot witness ops f]
   ;; [DX-PREP1] Why: the launcher must initialize the transactor before loading the Peer API.
   ;; Rejected: requiring datomic.api when the observer is preloaded (initializes Peer mode first).
   (let [basis-t (requiring-resolve 'datomic.api/basis-t)
         entid (requiring-resolve 'datomic.api/entid)
         profile (or *profile* (volatile! {:checks []}))
         read? (= "reads" (:profile witness))
-        operation (some #(when (and (map? %) (= "datomic.tx" (:db/id %)))
-                           (:triplex.tx/operation-id %)) ops)]
-    (vswap! profile assoc :scope (get (into {} (:flags witness)) :triplex.scope/key)
+        operation (some #(when (= "datomic.tx" (get % :db/id)) (get % :triplex.tx/operation-id)) ops)
+        scope (some (fn [[a value]] (when (= a :triplex.scope/key) value)) (:flags witness))]
+    ;; [DX-PREP1] Why: transaction function parameters can contain Java collections after transport.
+    ;; Rejected: destructuring the outer map correctly but requiring Clojure vectors for its entries.
+    (vswap! profile assoc :scope scope
             :operation operation :basis (basis-t snapshot) :mode (:profile witness)
             :members (count (:members witness))
             :witnessCounts {:flags (count (:flags witness))
@@ -57,7 +65,7 @@
             :validators (into {}
                           (mapcat (fn [[attr key]]
                                     (let [a (entid snapshot attr)]
-                                      (map-indexed (fn [i value] [[a value] [key i]]) (keep #(when (map? %) (get % attr)) ops)))))
+                                      (map-indexed (fn [i value] [[a value] [key i]]) (keep #(get % attr) ops)))))
                           [[:triplex.claim/command-id :claim] [:triplex.tx/operation-id :operation]]))
     (let [start (System/nanoTime) tcpu (cpu)
           result (f #(portion! profile read? %1 %2 %3))
@@ -65,6 +73,14 @@
       (vswap! profile assoc :start start :end end :cpuNs cpu-ns)
       (when-not *profile* (retain! "PREP1_GUARD" (dissoc @profile :validators)))
       result)))
+
+(defn profile-guard [snapshot witness ops f]
+  (try (measure-guard snapshot witness ops f)
+       (catch Throwable failure
+         (retain! "PREP1_PROFILE_ERROR"
+                  {:mode (:profile witness)
+                   :causes (mapv #(select-keys % [:type :message :at]) (:via (Throwable->map failure)))})
+         (throw failure))))
 
 (defn proc-stat [path]
   ;; [DX-PREP1] Why: Linux PSI files support direct reads but no available-byte ioctl.
@@ -76,7 +92,7 @@
       (into {} (map #(str/split % #" " 2))
             (str/split-lines (String. buffer 0 n StandardCharsets/US_ASCII))))))
 
-(when (#{"profile" "cheap"} mode)
+(when (#{"profile" "cheap" "census" "subject-profile"} mode)
   ;; [DX-PREP1] Why: join samples to each native apply on the same VM monotonic clock.
   ;; Rejected: applying a whole-run CPU average to every group.
   (doto (Thread.
@@ -88,6 +104,23 @@
               (recur))))
     (.setDaemon true)
     (.start)))
+
+(when (= "subject-profile" mode)
+  ;; [DX-PREP1] Why: sample the native transaction application and bind its CPU time to db-after.
+  ;; Rejected: attributing process-wide CPU, storage waits or the gateway's speculative apply to this save.
+  (alter-var-root #'db/with-tx
+    (fn [apply-tx]
+      (fn [db dispatcher txdata]
+        (let [start (System/nanoTime) before (cpu)
+              result (apply-tx db dispatcher txdata)
+              end (System/nanoTime) cpu-ns (- (cpu) before)]
+          (when-let [database (writer-database)]
+            (if-let [after (:db-after result)]
+              (let [basis-t (requiring-resolve 'datomic.api/basis-t)]
+                (retain! "PREP1_SUBJECT_APPLY" {:db database :t (str (basis-t after))
+                                               :start start :end end :cpuNs cpu-ns}))
+              (retain! "PREP1_SUBJECT_APPLY_UNBOUND" {:db database :start start :end end})))
+          result)))))
 
 (when (#{"profile" "cheap"} mode)
   ;; [DX-PREP1] Why: measure native uniqueness and its shared prefetch, including reads after the authored function returns.
@@ -130,8 +163,7 @@
   (fn [complete]
     (fn [metadata]
       (let [append (.get appended)
-            thread (.getName (Thread/currentThread))
-            db (second (re-matches #"writer-(.+)-[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}" thread))]
+            db (writer-database)]
         (.remove appended)
         (when (and db append)
           (let [members (mapv (fn [m]
@@ -142,10 +174,27 @@
             (when-not (.offer pending event) (.incrementAndGet dropped))))
         (complete metadata)))))
 
-(.addShutdownHook
-  (Runtime/getRuntime)
-  (Thread.
-    (fn []
+(if streaming?
+  (let [stop (atom false)
+        drain (Thread.
+                (fn []
+                  ;; [DX-PREP1] Why: stream the whole arm without blocking the serialized append.
+                  ;; Rejected: retaining only the first 16,384 append blocks at shutdown.
+                  (with-open [out (file/writer "/trace/prep1-native.ndjson")]
+                    (loop []
+                      (if-let [event (.poll pending 100 java.util.concurrent.TimeUnit/MILLISECONDS)]
+                        (do (.write out (str (json/write-str event) "\n")) (recur))
+                        (when-not @stop (.flush out) (recur))))
+                    (.write out (str (json/write-str {:attempt attempt :dropped (.get dropped) :end true}) "\n"))))
+                "prep1-native-drain")]
+    (.setDaemon drain true)
+    (.start drain)
+    (.addShutdownHook (Runtime/getRuntime)
+      (Thread. (fn [] (reset! stop true) (.join drain 25000)))))
+  (.addShutdownHook
+    (Runtime/getRuntime)
+    (Thread.
+      (fn []
       (loop []
         (when-let [event (.poll pending)]
           (println "PREP1_NATIVE" (json/write-str event))
@@ -155,4 +204,4 @@
           (println prefix (json/write-str event))
           (recur)))
       (println "PREP1_NATIVE_END" (json/write-str {:attempt attempt :dropped (.get dropped)}))
-      (flush))))
+        (flush)))))
