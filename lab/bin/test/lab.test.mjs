@@ -247,6 +247,30 @@ test('measurement lease waits for every heavy token, then holds them all; others
   again.release();
 });
 
+test('disabled measurement lease uses one ordinary heavy token and never freezes admission', async () => {
+  const { acquireMeasureLease, readMeasureLease } = await import('../heavy-lock.mjs');
+  const marker = path.join(temp, 'locks', 'NO-MEASURE-LEASE');
+  const busy = await acquireHeavy('ordinary work');
+  fs.writeFileSync(marker, '');
+  try {
+    const lease = await acquireMeasureLease('diagnostic', { holder: 'diagnostic', pollMs: 20, timeoutMs: 200 });
+    try {
+      assert.equal(lease.tokens, 1);
+      assert.equal(lease.diagnostic, true);
+      assert.equal(lease.owner, null);
+      assert.equal(readMeasureLease(), null);
+      assert(!fs.existsSync(path.join(temp, 'locks', 'measure-lease')));
+      assert.equal(fs.readdirSync(path.join(temp, 'locks', 'heavy')).length, 2);
+    } finally {
+      lease.release();
+    }
+    assert.equal(fs.readdirSync(path.join(temp, 'locks', 'heavy')).length, 1);
+  } finally {
+    busy();
+    fs.unlinkSync(marker);
+  }
+});
+
 test('PAIR verdicts: departures INVALID, RED or over a third excluded INVALID_NOISE, decisive PAIRED_DECIDED; identity fails closed', async () => {
   const { pairVerdictOf, PAIR_DECISIVE } = await import('../receipt.mjs');
   const { DECISIVE } = await import('../../bench/lib/paired.ts');
@@ -418,17 +442,26 @@ test('isolated Datomic runs preserve the acquired mount across both naming conve
 });
 
 // [EXP-M01R] Why: production requires heavy.mjs around the gate; its parent permit must not deadlock an all-token lease. Rejected: testing an unwrapped lease only.
-test('wrapped measurement borrows only the direct parent heavy token and releases the other tokens', async () => {
-  const script = `
-    const { acquireMeasureLease } = await import(${JSON.stringify(new URL('../heavy-lock.mjs', import.meta.url).href)});
-    const lease = await acquireMeasureLease('wrapped', { holder: 'wrapped', pollMs: 20, timeoutMs: 1000 });
-    console.log('TOKENS=' + lease.tokens); lease.release();`;
-  const child = spawn(process.execPath, [new URL('../heavy.mjs', import.meta.url).pathname, '--label', 'wrapped-test', '--', process.execPath, '--input-type=module', '-e', script], { stdio: ['ignore', 'pipe', 'pipe'] });
-  let out = '', err = '';
-  child.stdout.on('data', d => { out += d; });
-  child.stderr.on('data', d => { err += d; });
-  const code = await new Promise(resolve => child.on('close', resolve));
-  assert.equal(code, 0, err);
-  assert.match(out, /TOKENS=2/);
-  assert.equal(fs.readdirSync(path.join(temp, 'locks', 'heavy')).length, 0);
-});
+for (const disabled of [false, true]) {
+  test(`wrapped measurement borrows the direct parent token (lease ${disabled ? 'disabled' : 'enabled'})`, async () => {
+    const marker = path.join(temp, 'locks', 'NO-MEASURE-LEASE');
+    if (disabled) fs.writeFileSync(marker, '');
+    try {
+      const script = `
+        const { acquireMeasureLease } = await import(${JSON.stringify(new URL('../heavy-lock.mjs', import.meta.url).href)});
+        const lease = await acquireMeasureLease('wrapped', { holder: 'wrapped', pollMs: 20, timeoutMs: 1000 });
+        console.log('TOKENS=' + lease.tokens); lease.release();`;
+      const child = spawn(process.execPath, [new URL('../heavy.mjs', import.meta.url).pathname, '--label', 'wrapped-test', '--', process.execPath, '--input-type=module', '-e', script], { stdio: ['ignore', 'pipe', 'pipe'] });
+      let out = '', err = '';
+      child.stdout.on('data', d => { out += d; });
+      child.stderr.on('data', d => { err += d; });
+      const code = await new Promise(resolve => child.on('close', resolve));
+      assert.equal(code, 0, err);
+      assert.equal(out.trim(), `TOKENS=${disabled ? 1 : 2}`);
+      if (disabled) assert.equal(err.trim(), '[lab] Measurement lease is disabled on this machine. Timings are diagnostic.');
+      assert.equal(fs.readdirSync(path.join(temp, 'locks', 'heavy')).length, 0);
+    } finally {
+      if (disabled) fs.unlinkSync(marker);
+    }
+  });
+}

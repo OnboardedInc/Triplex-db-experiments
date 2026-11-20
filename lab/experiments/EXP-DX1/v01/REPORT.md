@@ -28,3 +28,7 @@ Mac measurements are diagnostic.
 - The held SCALE1 decision image uses a different layout and operation identity scheme. INT1 needs compatible sealed fresh and 1B inputs. Aging in the measured Triplex scope changes the logical seed head and still needs a starting-state replay adapter. No physical runtime or budget result is claimed.
 - The two frozen windows consume 197 minutes of the allocation. Integrated P5/P6/P8 field work, the P7 census and P9 two-machine drill remain separate. The scorecard labels each gap and any unverified correctness gate.
 - The four conflicting branch trials were aborted after recording all conflicted paths. Their resolutions remain with the integration work.
+
+## Mac admission marker
+
+When `lab/locks/NO-MEASURE-LEASE` exists, compatibility callers get one ordinary token, or reuse their direct wrapper's token. They report diagnostic timings, create no lease directory and leave engine admission open. The PAIR gate records the missing lease as a departure instead of treating shared timings as verdict evidence. Four focused tests covered marker present/absent, wrapper reuse, admission and cleanup. The lease fallback itself emits no PASS or receipt.
