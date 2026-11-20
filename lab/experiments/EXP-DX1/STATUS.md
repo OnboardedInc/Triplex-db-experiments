@@ -3236,3 +3236,16 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   write gateway's collector arms, activation under load with Publish priority, thin 1,000,000 capacity, aged reader
   arms, small-frame imports in one database, the prepared subject save) and the rule that it ends its turn only when
   all are done or blocked on a named builder, leaving a useful seed running.
+
+## 2026-11-20 15:46 UTC (10:46 local, 2026-11-20): DX-PREP1 part 3 in: the per-person writer is built and passes its native correctness gate
+
+- **DX-PREP1 part 3 (`5a0875af8`; `prep1/REPORT.md`).** The opt-in prepared subject writer: rows prepared once, one
+  person's revision checked at commit, order and time assigned there, ordinary records and journal kept, other save
+  shapes on the existing writer. Native in-memory suite: 758 assertions pass, including the deep one-field
+  replacement, stale-write conflicts, and 96 disjoint saves through the prepared path with zero replans (15 of 96 on
+  the old guard). 12 SDK regressions pass. The saved census confirmed the design study's reading (13 physical
+  writes, 96 receipts, 15 prepared saves, zero submitted replays; the old trace cannot say why each group switched
+  paths). No capacity number: the fresh census, SQL restart and erasure gates and all timing are queued behind Mac
+  leases. Part 4 assigned: the server command first (present grouped writer against per-person writer; 50, 235, 394
+  and 620 saves per second; quiet account with matched windows; 1, 2 and 4 write gateways), then the owed gates,
+  fair turns for a quiet account.
