@@ -26,7 +26,7 @@ The audited base was the remote head `7a6a7e9ef` at dispatch. The exact review f
 
 **Integration** DX-W1 was merged through `6c0d81454`. The SDK and W1 regressions passed on the integrated source. The one- and three-fact narrow wire frames decoded byte for byte to the ordinary payloads. The downstream snapshots, per-finding results and tested merge steps are in [PORTS.md](PORTS.md).
 
-**Related writes** The import loader, joined Publish and notice sender recovered the original receipt when the relevant state advanced. The layout replay exposed a separate encoder that skipped the checked predecessor. Its native regression is queued.
+**Related writes** The import loader, joined Publish and notice sender recovered the original receipt when the relevant state advanced. The layout replay exposed a separate encoder that skipped the checked predecessor. Its native regression is queued. [RELATED.md](RELATED.md)
 
 **Mac SQL** Attempt `sql-01` started PostgreSQL 17 after 62m54s from image readiness. The staged gateway files match `cd2151749` byte for byte. The gateway died after the native commit at t=1014 with zero edit replies. Restart recovered the two exact receipts, head 3 and the pinned rows, changes and resumed page from O-REPLAY. Both wire profiles stored all 1,800 rows in solo and in real eight-member groups. The largest profile sent 4,194,304 bytes per member.
 
