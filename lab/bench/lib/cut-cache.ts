@@ -3,7 +3,7 @@ import type { PullResult } from "./composition.ts";
 type Selected = readonly (string | PackedEntity)[];
 type Reader = (selected: Selected, validAt: number) => PullResult["triples"];
 type Metadata = Omit<PullResult, "triples">;
-type Entry = { from: number; to: number; value: Metadata; selected: readonly (string | WeakRef<PackedEntity>)[]; bytes: number; read: Reader; promoted?: Selected };
+type Entry = { from: number; to: number; value: Metadata; selected: readonly (string | WeakRef<PackedEntity>)[]; bytes: number; read: Reader; promoted?: Selected | undefined };
 const handles = new WeakMap<PackedEntity, WeakRef<PackedEntity>>();
 // [DX-R3-P8] Why: exact-cut summaries can reuse immutable versions without retaining old backing slabs.
 // Rejected: root-revision keys (miss changed children), time rounding, and strong manifests (thrash or pin whole slabs).

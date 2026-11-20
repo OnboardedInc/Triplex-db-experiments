@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
-import { hash, type Evidence } from "../ha1/common.ts";
+import type { Evidence } from "../ha1/common.ts";
 import { recountTraffic } from "../hasync1/offers.ts";
 import { pooledRead, type PooledProof } from "../hasync1/pooled.ts";
 import { lsn } from "../hasync1/supervisor.ts";

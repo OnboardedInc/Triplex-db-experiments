@@ -175,9 +175,9 @@ function treeCode(mode?: Mode) {
       .readdirSync(path.join(root, "lab/oracles/replay"))
       .filter((name) => name.endsWith(".py")))
       paths.push(path.join(root, "lab/oracles/replay", f));
-    for (const f of ["deep-world", "world", "rng"])
+    for (const f of ["deep-command", "deep-trace", "deep-world", "world", "trace", "rng"])
       paths.push(path.join(root, "lab/bench/lib", f + ".ts"));
-    for (const f of ["tenants", "small-plan"])
+    for (const f of ["tenants", "small-plan", "deep-live", "tenant-proof"])
       paths.push(path.join(root, "lab/experiments/EXP-DX1/scale1", f + ".ts"));
     for (const f of ["ack-audit", "runner", "score", "seed", "suite", "verify"])
       paths.push(path.join(root, "lab/experiments/EXP-DX1/p9", f + ".ts"));

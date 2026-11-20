@@ -73,13 +73,16 @@ export async function seedPooled(e: Evidence, ac: Account, people: number): Prom
 
 export function pooledRead(proof: PooledProof) {
   assert.equal(proof.people % pooledAccounts, 0);
+  const cut = proof.basis.t;
+  assert(cut.t === "long");
+  const basisT = cut.v;
   return (ordinal: number) => {
     const index = ordinal % pooledAccounts;
     const subject = (proof.people / pooledAccounts) * index;
     const entity = ids.placement(subject);
     const values = [keyFor(index)];
     const pin = {
-      basisT: proof.basis.t.v,
+      basisT,
       basis: { recordedPosition: Number(proof.basis.position.v), validAt: SEED_VALID_FROM },
     };
     const expected = [[entity, "string", values[0]!]];
@@ -94,7 +97,7 @@ export function pooledRead(proof: PooledProof) {
     return {
       identity: {
         subject,
-        t: proof.basis.t.v,
+        t: basisT,
         sha256: hash(JSON.stringify([entity, values, pin])),
       },
       expected,
