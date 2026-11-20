@@ -1107,7 +1107,22 @@ def main():
     assert mode=="run"
     lock=(NIGHT/"campaign.lock").open("a");fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     assert (NIGHT/"i0/terminal").is_file()
+    # [DX-BM1] Why: a detached item can advance while the next supervisor is being published.
+    # Rejected: assuming the revised queue order describes the lease already held by the old supervisor.
+    in_flight=[]
     for item in ORDER:
+        folder=NIGHT/f"i{item}"
+        if (folder/"outcome.json").is_file() or item==7:
+            continue
+        if any(running(bind(get(request))) for request in folder.glob("*/request.json")):
+            in_flight.append(item)
+    assert len(in_flight)<=1,"Multiple items claim the bench"
+    order=(*in_flight,*(item for item in ORDER if item not in in_flight))
+    pending=[item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file()]
+    if in_flight and len(pending)>1:
+        item=in_flight[0]
+        NEXT[item]=ITEMS[pending[1]][4] if pending[1] in ITEMS else "readers"
+    for item in order:
         if (NIGHT/f"i{item}/outcome.json").is_file():
             continue
         if item!=1:

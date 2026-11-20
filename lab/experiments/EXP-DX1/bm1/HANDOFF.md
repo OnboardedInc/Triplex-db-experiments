@@ -52,10 +52,10 @@ bench 'sudo -n tail -12 /var/tmp/triplex-w1/grpw1a/campaign.log'
 bench 'systemctl show triplex-w1-grpw1a -p ActiveState -p Result -p ExecMainStatus'
 ```
 
-The overnight supervisor `bm1n19-campaign-v14.service` resumes the existing thin/deep unit and its original deadline. Next come the reviewed joined Publish at `95a1058d7` with writer `cd2151749`, the corrected enhanced pulse, SIZE, READERS, predecessor if its seed exists, HA1 and INT1. The old group run and old pulse are historical. Each later W1 command uses the WFIX branch and reads options on the opened gateway scope. A corrected pulse requiring more than four hours of fresh seeds stops after the reduced native option check. Every item has an overall deadline and a scoped cleanup check before the next one. The Mac collector checks sealed bundles every eleven minutes at a combined transfer of strictly under 1 GiB.
+The overnight supervisor `bm1n19-campaign-v15.service` adopts the currently running HA1 unit and its original deadline. Next come the reviewed joined Publish at `95a1058d7` with writer `cd2151749`, the corrected enhanced pulse, SIZE, READERS, predecessor if its seed exists, HA1 and INT1. The old group run and old pulse are historical. Each later W1 command uses the WFIX branch and reads options on the opened gateway scope. A corrected pulse requiring more than four hours of fresh seeds stops after the reduced native option check. Every item has an overall deadline and a scoped cleanup check before the next one. The Mac collector checks sealed bundles every eleven minutes at a combined transfer of strictly under 1 GiB.
 
 ```sh
-bench 'systemctl show bm1n19-campaign-v14.service -p ActiveState -p Result -p NRestarts'
+bench 'systemctl show bm1n19-campaign-v15.service -p ActiveState -p Result -p NRestarts'
 bench 'sudo -n tail -15 /var/tmp/triplex-bm1/night-n19/campaign.log'
 bench 'sudo -n find /var/tmp/triplex-bm1/night-n19/bundles -mindepth 2 -maxdepth 2 -name TRANSFER.json'
 BENCH_SERVER="$BENCH_SERVER" python3 lab/experiments/EXP-DX1/bm1/night-client.py collect i1-1
