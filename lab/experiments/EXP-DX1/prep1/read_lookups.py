@@ -22,7 +22,8 @@ def extract(out):
     inputs, terminal, events = managed_events(out)
     assert inputs["mode"] == "lookup-profile" and inputs["timings"] == "diagnostic"
     hint_comparison = inputs.get("prefetch", False)
-    assert inputs["numericOwner"] == hint_comparison
+    ordered_comparison = inputs.get("orderedIds", False)
+    assert inputs["numericOwner"] == (hint_comparison or ordered_comparison)
     attempt = inputs["attempt"]
     dispatcher = None
     if inputs.get("explicitProbes"):
@@ -32,6 +33,8 @@ def extract(out):
     for event in events("PREP1_PROBE "):
         probes[event["arm"]].append(event)
     arms = [("B1", "S"), ("C1", "S-prefetch")] if hint_comparison else [("A1", "K"), ("B1", "S")]
+    if ordered_comparison:
+        arms = [("B1", "S-numeric"), ("D1", "S-ordered")]
     assert list(probes) == [arm for arm, _ in arms]
     native = {}
     for block in events("PREP1_NATIVE "):
@@ -57,12 +60,13 @@ def extract(out):
         assert writer["options"]["groupCommit"] == (kind == "K")
         assert bool(writer.get("subjectSave")) == (kind != "K")
         assert bool(writer.get("subjectPrefetch")) == (arm == "C1")
-        assert bool(writer.get("subjectNumericOwner")) == hint_comparison
+        assert bool(writer.get("subjectOrderedIds")) == (arm == "D1")
+        assert bool(writer.get("subjectNumericOwner")) == (hint_comparison or ordered_comparison)
         assert idle["data"]["db"] == db and int(idle["data"]["elapsedNs"]) >= 8_000_000_000
         assert (block["db"], block["head"], block["outstanding"]) == (db, 144, 24)
         assert finish["data"] == {"db": db, "head": 240}
         receipts = defaultdict(list)
-        attached = 0
+        attached, ordered = 0, 0
         assert {row["index"] for row in block["rows"]} == set(range(96))
         assert len(block["rows"]) == 96
         for i, row in enumerate(block["rows"]):
@@ -72,13 +76,15 @@ def extract(out):
             assert not ack.get("subjectReplan")
             assert ack.get("subjectSave") == writer.get("subjectFunction")
             attached += bool(ack.get("subjectHintsAttached"))
+            ordered += bool(ack.get("subjectOrderedIds"))
             receipts[(db, ack["t"]["v"])].append(row)
         assert (attached > 0) == (arm == "C1")
+        assert ordered == (96 if arm == "D1" else 0)
 
         summary = defaultdict(lambda: {"calls": 0, "wallNs": 0, "sql": 0,
                                        "sqlMs": 0, "decodeMs": 0, "indexLoads": Counter()})
         total = {"saves": 0, "tx": 0, "wallNs": 0, "sql": 0, "sqlReported": 0,
-                 "hintsAttached": attached, "sqlMs": 0, "decodeMs": 0}
+                 "hintsAttached": attached, "orderedSaves": ordered, "sqlMs": 0, "decodeMs": 0}
         total["indexLoads"] = Counter()
         outside_sql = Counter()
         exact_profiles = []

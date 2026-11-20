@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
-import { DatomicClient, DatomicHttpError } from "../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient,
+  DatomicHttpError,
+  orderedSaveIdentity,
+} from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import type { Fact } from "../../../bench/lib/world.ts";
 import { command } from "../w1/group/workload.ts";
@@ -9,6 +13,7 @@ const mode = process.env.PREP1_MODE;
 const arm = process.env.PREP1_ARM;
 const subjectProfile = mode === "subject-profile";
 const lookupProfile = mode === "lookup-profile";
+const orderedIds = lookupProfile && arm === "D1";
 const subjectProbe = subjectProfile || lookupProfile;
 const deep = mode === "profile" || mode === "census";
 const guardProbe = deep || mode === "cheap";
@@ -61,6 +66,7 @@ type Ack = {
   subjectSave?: string;
   subjectReplan?: boolean;
   subjectHintsAttached?: boolean;
+  subjectOrderedIds?: boolean;
   requestBytes: number;
   nativeComputeMs: number;
   submitToNativeEntryMs: number;
@@ -165,6 +171,7 @@ try {
         position: number;
         subjectSave?: boolean;
         subjectPrefetch?: boolean;
+        subjectOrderedIds?: boolean;
         subjectFunction?: string;
         subjectFunctionTx?: string;
         options: { groupCommit: boolean; livePriority: boolean; fieldCoalesce: boolean };
@@ -174,6 +181,7 @@ try {
       assert.equal(peers.length, Number(arm![1]));
       assert.equal(!!observed.subjectSave, !arm!.startsWith("A"));
       assert.equal(!!observed.subjectPrefetch, arm === "C1");
+      assert.equal(!!observed.subjectOrderedIds, orderedIds);
       assert.equal(observed.options.groupCommit, arm!.startsWith("A"));
       assert.equal(observed.options.livePriority, arm!.startsWith("A"));
       assert.equal(observed.options.fieldCoalesce, false);
@@ -207,6 +215,9 @@ try {
         `edit-${i}`,
         facts(subject, width, "edited"),
         seeds[subject]!.slice(0, width),
+        true,
+        false,
+        orderedIds ? orderedSaveIdentity() : undefined,
       );
       return subjectProbe ? { ...edit, sourceK: seedHead.position } : edit;
     });
@@ -225,6 +236,7 @@ try {
             const { ack, recovered } = await censusWrite(peers[peer]!, db, input);
             const end = now();
             assert.equal(ack.operationId, input.operationId);
+            assert.equal("subjectOrderedIds" in ack && ack.subjectOrderedIds, orderedIds);
             recorded.push({
               index,
               begin,
