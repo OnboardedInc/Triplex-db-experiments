@@ -108,6 +108,7 @@ export function render(run: Run, destination: string) {
       assert.deepEqual(plan.cases.map((c: any) => c.key), ["100000-frozen-zero", "100000-frozen-reader"]);
     }
     settings.treatment = plan.treatment;
+    settings.admission = plan.placement;
     for (const item of verifiedResults) {
       assert(["measured", "diagnostic", "preflight"].includes(item.state));
       assert(item.binding === plan.binding && item.arm.source === run.source && item.arm.startedAt >= plan.createdAt);

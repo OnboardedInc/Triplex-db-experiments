@@ -62,10 +62,11 @@ test("only current evidence can judge a physical bar and toy reports never judge
   assert.match(rows(physical)[0]!, /\| PASS \|/);
   assert.match(rows(physical)[2]!, /\| NOT MEASURED \|/);
   assert.match(rows(physical)[3]!, /\| NOT MEASURED \|/);
-  write("campaign.json", { ...plan, smoke: true });
+  write("campaign.json", { ...plan, placement: "mac-diagnostic", smoke: true });
   write("comparison.json", { ...comparison, smoke: true });
   const toy = render({ ...run, toy: true }, root);
   assert.match(toy, /All numbers are diagnostic/);
+  assert.match(toy, /"admission": "mac-diagnostic"/);
   assert.doesNotMatch(toy, /\| PASS \||\| FAIL \|/);
   assert.throws(() => render({ ...run, toy: true, startedAt: "2026-11-21T00:00:00Z" }, root));
   fs.unlinkSync(path.join(root, "comparison.json"));

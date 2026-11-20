@@ -29,7 +29,7 @@ export function openPlan(
   dir: string,
   source: string,
   smoke: boolean,
-  placement: "leased-mac" | "physical",
+  placement: "leased-mac" | "mac-diagnostic" | "physical",
   overnight = false,
   heldSeal?: string,
 ) {
@@ -102,7 +102,7 @@ async function checkInputs(dir: string, plan: ReturnType<typeof read>) {
   assert(declared.has(base + "cli.py"));
   const observed = (await index(path.join(dir, "oracle"))).map(([f]) => f).sort();
   assert.deepEqual(observed, [...declared].sort());
-  if (plan.placement === "leased-mac") {
+  if (plan.placement !== "physical") {
     assert(placement.containers.length === 1 && /^[a-f0-9]{64}$/.test(placement.gatewaySource));
     assert(/^tx2-dxthin-/.test(placement.slot));
   }
@@ -327,7 +327,8 @@ export async function collect(dir: string, mode: "produce" | "verify") {
     assert.equal(await fileHash(path.join(dir, "held-seal.json")), plan.heldSeal);
   }
   assert.deepEqual(plan.treatment, treatment);
-  assert(plan.placement === "physical" || (plan.placement === "leased-mac" && plan.smoke));
+  const mac = ["leased-mac", "mac-diagnostic"].includes(plan.placement);
+  assert(plan.placement === "physical" || (mac && plan.smoke));
   await checkInputs(dir, plan);
   const seen = new Set<string>(),
     prior = new Map<string, ScopeMeasurement>();
@@ -343,7 +344,7 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       result = read(terminal),
       id = arm.identity;
     assert.deepEqual(result.arm, arm);
-    if (plan.placement === "leased-mac") assert.equal(id.slot, plan.placementInputs.slot);
+    if (mac) assert.equal(id.slot, plan.placementInputs.slot);
     assert(
       result.start > arm.startedAt &&
         result.endedAt > result.start &&
@@ -366,7 +367,7 @@ export async function collect(dir: string, mode: "produce" | "verify") {
     if (plan.heldSeal) {
       assert.deepEqual(raw.report.deep.restoredSeed?.origin, read(path.join(dir, "held-seal.json")));
     }
-    if (plan.placement === "leased-mac") {
+    if (mac) {
       assert.deepEqual(raw.report.harnessStorage, {
         requested: "owned-ext4",
         filesystemType: 0xef53,

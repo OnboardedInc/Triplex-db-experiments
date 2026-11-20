@@ -31,6 +31,9 @@ export async function localPreflight(dir: string) {
   assert(
     stack.writeUrl === process.env.DATOMIC_URL && stack.readUrl === process.env.DATOMIC_READ_URLS,
   );
+  // [DX-V01] Why: preserve the actual admission mode in the bound campaign record.
+  // Rejected: calling the owned ordinary-token fixture a leased Mac run.
+  if (fixtureSource) assert(!process.env.DX_THIN_MEASURE);
   const lease = measurementWindow(
     sha256(canonical([source, stack.containers, stack.prefix, "campaign-fixture"])),
     stack.prefix,
@@ -51,7 +54,7 @@ export async function localPreflight(dir: string) {
       containers: stack.containers,
       gatewaySource: stack.gatewaySourceSha256,
     });
-    const cases = openPlan(dir, source, true, "leased-mac");
+    const cases = openPlan(dir, source, true, process.env.DX_THIN_MEASURE ? "leased-mac" : "mac-diagnostic");
     for (const c of cases) {
       await lease.checkpoint();
       const out = path.join(dir, c.key);
