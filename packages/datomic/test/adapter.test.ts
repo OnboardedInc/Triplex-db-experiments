@@ -29,12 +29,14 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         client: DatomicClient,
         scope: string,
       ) => Promise<void>,
-      timeout = 1000,
+      // [DX-JVM1] Why: the correctness cases include the first SQL commit on a new scope.
+      // Rejected: imposing the deadline test's sub-second budget on ordinary transaction assertions.
+      resolutionTimeoutMs = 10_000,
     ) {
       const client = new DatomicClient(url, 5000);
       const scope = DatabaseScope.test(`da01-${randomUUID()}`);
       const adapter = makeDatomicStorageAdapter(client, scope, {
-        resolutionTimeoutMs: timeout,
+        resolutionTimeoutMs,
         layout: testLayout,
       });
       const create = client.create.bind(client);
