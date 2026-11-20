@@ -2,7 +2,7 @@
 Datomic already supports ZGC on Java 25. Our old image runs Java 21.
 This branch lets all three processes run on either Java version.
 Start with Java 21 and a two-core writer, Java 25 with G1, then Java 25 with ZGC.
-Use the integration merge on `exp/DX-JVM1-settings`. Budget 78 minutes for those three arms.
+Use `cda347c1140e8aac7849e2e8256c4f60a2d515cd` for the server. Budget 78 minutes for those three arms.
 A fourth arm brings the total to 104 minutes and gives G1 the same memory as ZGC.
 ZGC gets 13 GiB more reserved memory in this trial. The server still has to price the gain and check for stalls.
 The archived Mac result measured only the writer on ZGC. It cannot decide which setup should ship.
@@ -14,13 +14,14 @@ The archived Mac result measured only the writer on ZGC. It cannot decide which 
 - Official Temurin 25.0.5+8 and the Java 21 base are digest-pinned. The signed Datomic 1.0.7745 distribution includes Clojure 1.12.5 and SLF4J 2.0.17. Java 25 enables the documented Unsafe and peer native-access flags.
 - The shared Mac measurement lease has held the native suite, container build and SDK setup in the queue. The host accepted both Java 25 collectors and the role flag sets. Live SQL gates and startup memory are pending. No bench server was contacted.
 - JVM settings live in `launch.mjs`. The integrated runner and TAIL1 arm definition both import the measured writer G1 flags. A selected experiment can still supply its own settings. The acceptance contract and SQL durability are unchanged.
+- One initial push used Git's local author identity. The experiment branch tip was replaced with a commit that uses the generic Codex identity. The earlier remote object may still be retained.
 
 ## Evidence audit
 
 - Variant build receipt compares ZIP, signature and staging bytes, binds current source and the exact Java parent, and verifies the resulting image identity and labels. Launchers verify runtime flags from fresh process startup, bind container ID and start ticks, and capture collector and memory constraints.
 - `native-java25.sh` archives the exact source, verifies vendor bytes and Java version, and requires all 27 native tests and 54,079 assertions with zero failures or errors. The SQL inventory collects a fresh startup and checks stable JVM identities around the SDK command.
 - The Mac replay checks archive hash, schedules, source, reserved slot, distinct boots, receipts, oracle samples and owned cleanup. Its historical timings are shared-Mac diagnostics.
-- `server.ts` verifies the sealed seed, exact input digest and cut, W1 offers and durable results, and sampled reader contents before `field-summary.json`. The final result also checks fresh flags and GC log bytes, process identities, timings and owned cleanup. Counts and latency are measurements.
+- `server.ts` verifies the sealed seed and the digest of the bytes sent to `pg_restore`, the restored cut, W1 offers and durable results, and sampled reader contents before `field-summary.json`. The final result also checks fresh flags and GC log bytes, process identities, timings and owned cleanup. Counts and latency are measurements.
 - Image source changes from the integration base, old → new SHA-256:
   - `lab/config/datomic/Dockerfile` `de1947c60e1cd169a285a877ce113a5585633df7c8bccf1669f7e7dd6f79664a` → `aa80d3a2ae0984db6f39fadf3ccb3015f2deaac704dfb9ad2bb74683836a2167`
   - `lab/config/datomic/entrypoint.sh` `93ade9ed9cf4c741230b217b8c8a42b148a8d7152a1ee887ea7fca515cfe9c2d` → `8b762dbb668e91ae76b2121791671a04488eabf7666f59deb47d789824d265e3`
