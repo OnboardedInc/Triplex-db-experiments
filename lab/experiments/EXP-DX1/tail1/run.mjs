@@ -154,12 +154,9 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
     signal.throwIfAborted();
     diskFloor(REPO);
     const result = await withPool((ledger) => {
-      try {
-        manager.assertMeasureAdmission(holder);
-      } catch (error) {
-        if (error.code === "REFUSED") return error.message;
-        throw error;
-      }
+      // [DX-TAIL1] Why: a new lease can arrive between the wrapper's permit and reservation.
+      // Rejected: keeping a heavy token while the incoming lease is waiting for it.
+      manager.assertMeasureAdmission(holder);
       const existing = listTx2Containers({ all: true });
       const slot = ["s1", "s2", "s3"]
         .map((key) => slotInfo(config, "datomic", key))
