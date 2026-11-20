@@ -198,7 +198,7 @@ def collect_thin_fixture():
     names=("request.json","stack-access.json","small/seed.json","small/verified.json","small/population.sqlite",
            "full/seed.json","full/verified.json","seal.json","cleanup.json","dump-toc.txt","worker.log",
            "prepare.log","engine-logs.txt","seed.pgdump","recovery/owner.json","recovery/result.json",
-           "recovery/cleanup.json","recovery/worker.log")
+           "recovery/cleanup.json","restore-worker.log")
     # [DX-BM1] Why: collect a terminal small or full result from the exact native attempt, including failed ones.
     # Rejected: using the presence of a dump as proof that its seed verified or its stack exited.
     lines=remote(f"cd {seed.ROOT}; for f in {' '.join(names)}; do "
