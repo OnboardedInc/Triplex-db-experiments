@@ -118,3 +118,6 @@ a5a5117a2c73be9e0af46fd701f84c94c0050170a0b4bb6a66a6a11b7ed550b1  DX-W1/write5-r
 25cfd6f8858d311b0ea513535759ad21c3e50dcc99498d2b1df12dc05ac78774  DX-W1/write5-retention-pilot-02/selftest-1.log
 5418de7d3bd27217f554b1d56d3cd0302ea17f8615fa909bb6f8c12c5fe343a7  DX-W1/write5-retention-01/inputs.json
 b9590a50ff6952eacf4cac7c371c9b38ac71c9fa6ad9c0d8b0850776b1cd8175  DX-W1/write5-clocks-02/inputs.json
+1a8d619cda3ff26e81c0476e9179928a9a1321ee0f086622ff0939208bab1da2  DX-W1/write5-frame/recipe.clj
+7a7ef21c13e1bb3de16596b7a270429eb28eab96132dc46662acd736199637ff  DX-W1/write5-frame/value-bytes.jsonl
+ee58b3eb58d139e8d9bce5e71b456d5796ed5aa63d461ecad92d06fa3b1bceca  DX-W1/write5-frame/source.sha256
