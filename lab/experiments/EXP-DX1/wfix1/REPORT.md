@@ -22,7 +22,7 @@ The audited base was the remote head `7a6a7e9ef` at dispatch. The exact review f
 | 7. Predecessor arm disabled | Yes | `9d605bcd9` | `option-readback-requires-the-variant-on-the-opened-scope`, `write-options.test.mjs` |
 | 8. Changed journal accepted | Yes | `9a2d0938c` | `journal.test.mjs`, pinned O-REPLAY feed and resume comparisons |
 
-**Checks** The receipt and retraction fixture went from 10 failures to 64 successful assertions. Pinned O-REPLAY matched the decoded feed, resume and pinned rows in all three modes. Sixteen SDK and eight W1 tests passed, along with the Datomic and W1 typechecks.
+**Checks** The receipt and retraction fixture went from 10 failures to 64 successful assertions. The combined native run passed 98 assertions across seven tests. Pinned O-REPLAY matched the raw feed, resumed page, pinned rows and durable tuples in all three modes. Sixteen SDK and eight W1 tests passed, along with the Datomic and W1 typechecks.
 
 **Mac SQL** The first managed image built. The current attempt is queued for admission. Process-stop recovery, native submission size and erasure qualification are open until the stack runs.
 
