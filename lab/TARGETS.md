@@ -101,7 +101,15 @@ under one second** ("I want it to be sub-1 second. That's what we're looking to 
 floor until a build meets this. **Definition confirmed by Sam the same day:** one second after Publish every read
 returns the new release's answers, every changed output is durably stored and every owed notification is durably
 recorded; the notifications themselves go out over the following seconds. **No release is prepared in advance**
-("there's no preparing state"): the second starts when a release is first seen. Meanwhile it never lets a late older result replace a newer decision (the per-subject or per-page guard is part of the
+("there's no preparing state"): the second starts when a release is first seen. **What "durably stored" means
+(Sam, 2026-11-20: "yes for permanent record stuff Option A is totally fine"):** at the one-second mark the release is
+permanent (one durable record that fixes every person's answer and every owed notification exactly, surviving a
+crash) and every read returns the new release's answers; each person's changed values and the individual notice
+entries are written in the background afterwards, and a reader who asks before a value is written gets the identical
+answer worked out from the record. Writing every changed value before Publish counts as done (measured at 21.66 s for
+10,000 deep people, forecast 10 to 25 s for 100,000) is not required. The time the background writing takes is
+reported with every activation result; it has no bar yet. Notifications must go out quickly (Sam, same day); that
+bar is set later. Meanwhile it never lets a late older result replace a newer decision (the per-subject or per-page guard is part of the
 measured work since 2026-11-19).
 
 ## 2. The fixed workload (from the paste)
