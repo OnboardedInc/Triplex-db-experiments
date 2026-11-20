@@ -13,6 +13,7 @@ import { judgeReadCode, wasHot } from "../lib/read-judgment.ts";
 import { ReadWindow } from "../lib/read-window.ts";
 import { SplitFold } from "../lib/split-evidence.ts";
 import { StreamReads } from "../lib/stream-reads.ts";
+import { SpillThread } from "../lib/spill-thread.ts";
 import { ids, hopOf } from "../lib/world.ts";
 
 const record = (position: number, time: number, start: number): ReadRecord => [
@@ -149,4 +150,34 @@ test("the split join distinguishes delayed delivery, delayed application and mis
   assert.equal(result.acknowledgedBetween, 4);
   assert.equal(result.appliedBetween, 1);
   assert.equal(result.applicationUnknown, 2);
+});
+
+test("the real collector port verifies more rows than its byte allowance can spool", { timeout: 15_000 }, async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "dx-rd1-port-"));
+  const context = { run: "collector-port", source: "fixture", slot: "fixture", subjects: 1 };
+  const spill = new SpillThread(path.join(tmp, "spill"), 32_768, { file: path.join(tmp, "model"), context, deep: false });
+  try {
+    const cut = { position: 1, instant: 10, txId: "seed", triples: [] } as unknown as Receipt;
+    spill.bindReceipt([], cut);
+    await spill.beginPhase(0, 100, 0, { windows: [{name: "L256", from: 100, to: 200}], recovery: [] });
+    const port = spill.connect();
+    for (let id = 1; id <= 8; id++) {
+      const batch = new ReadBatch();
+      for (let i = 0; i < 1_024; i++) batch.push(record(1, 10, 150));
+      const packed = batch.take();
+      const ack = new Promise<{ id: number; buffer: ArrayBuffer }>(resolve => port.once("message", resolve));
+      port.postMessage({ id, packed }, [packed.values.buffer]);
+      const reply = await ack;
+      assert.equal(reply.id, id);
+      assert(reply.buffer.byteLength > 32_768);
+      spill.frontier(10, 150, []);
+    }
+    port.close();
+    const retained = await spill.finish({ through: 10, at: 200 });
+    assert.equal(retained.length, 0);
+    assert.equal(spill.checked?.compared, 8192);
+    assert.equal(spill.checked?.windows.L256?.correct, 8192);
+    assert.equal(spill.checked?.pending, 0);
+    assert(Number(spill.diskBudget?.peakBytes) < 32_768);
+  } finally { await spill.abort(); fs.rmSync(tmp, { recursive: true }); }
 });

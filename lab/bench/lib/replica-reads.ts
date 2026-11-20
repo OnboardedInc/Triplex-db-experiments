@@ -11,6 +11,7 @@ import type {
   ReadDelta,
   ReadImage,
   ReadBasis,
+  ReadHistoryCoverage,
 } from "../../../packages/datomic/dist/index.js";
 
 const api = await import(pathToFileURL(`${REPO}/packages/datomic/dist/index.js`).href);
@@ -113,15 +114,7 @@ export function prepareEntity(id: string, packed: PackedEntity, slabs?: Bootstra
     if (from >= to) continue;
     let part = rowParts.get(row);
     if (!part) {
-    const o = observe({
-      triples: [row.publicMetadata ? publicRow(row) : row],
-      entities: 1,
-      depth: 0,
-      roundTrips: 0,
-      route: "replica",
-      language: "packed",
-      waitedMs: 0,
-    });
+    const o = observe({ triples: [row.publicMetadata ? publicRow(row) : row] });
     part = {
       a: parseInt(o.digest.slice(0, 8), 16),
       b: parseInt(o.digest.slice(8, 16), 16),
@@ -189,8 +182,8 @@ export class ReplicaReader {
   private worlds = new CutCache();
   // [DX-R3] Why: the host proxy already validates/applies each cut; RYOW can share that same immutable-version index.
   // Rejected: a second main-thread copy of every current/history entry and duplicate per-commit validation/allocation.
-  constructor(historyBytes = 64 * 1024 ** 2, index?: InstanceType<typeof api.RecentReads>, worldCacheBytes = 32 * 1024 ** 2) {
-    this.index = index ?? new api.RecentReads(20_000, historyBytes);
+  constructor(historyBytes = 64 * 1024 ** 2, index?: InstanceType<typeof api.RecentReads>, worldCacheBytes = 32 * 1024 ** 2, historyCoverage: ReadHistoryCoverage = "global") {
+    this.index = index ?? new api.RecentReads(20_000, historyBytes, false, historyCoverage);
     // [DX-R3-P9] Why: measure the existing cache against a direct packed walk without changing any answer or basis rule.
     // Rejected: assuming that more weak manifests help a mostly-miss workload.
     this.worlds = new CutCache(worldCacheBytes); this.diagnostics.worldCache = this.worlds.diagnostics;
@@ -274,8 +267,10 @@ export class ReplicaReader {
     }
     const cut = this.index.resolve(basis);
     let missing: "missing-closure-entity" | "incomplete-public-metadata" = "missing-closure-entity";
-    if (!rows) {
-      const cached = cut === undefined ? undefined : this.worlds.get(root, cut, basis.validAt, waitedMs);
+    // [DX-RD1] Why: the exact time/position check already selected the cut, synchronously on this isolate.
+    // Rejected: using the caller's position hint or repeating the clock-map search before visiting entities.
+    if (!rows && cut !== undefined) {
+      const cached = this.worlds.get(root, cut, basis.validAt, waitedMs);
       if (cached) { this.diagnostics.local++; return cached; }
       let intervalFrom = -Infinity, intervalTo = Infinity;
       const total = { a: 0, b: 0, n: 0, bytes: 0, stamp: -1, stamps: 0 };
@@ -285,7 +280,7 @@ export class ReplicaReader {
       let materialized: PullResult["triples"] | undefined;
       const found = this.index.visit(
         root,
-        basis,
+        { recordedPosition: cut, validAt: basis.validAt },
         (id: string, packed: PackedEntity, validAt: number) => {
           selected.push(id, packed);
           const prepared = packed as Prepared;
@@ -344,12 +339,12 @@ export class ReplicaReader {
             bytes: total.bytes,
           },
         };
-        if (cut !== undefined) this.worlds.put(root, cut, intervalFrom, intervalTo, answer, selected, materializeWorld);
+        this.worlds.put(root, cut, intervalFrom, intervalTo, answer, selected, materializeWorld);
         return answer;
       }
       if (!complete) missing = "incomplete-public-metadata";
-    } else {
-      const found = this.index.pull(root, basis);
+    } else if (cut !== undefined) {
+      const found = this.index.pull(root, { recordedPosition: cut, validAt: basis.validAt });
       if (found && found.rows.every((row: any) => "publicMetadata" in row)) {
         this.diagnostics.local++;
         return {
@@ -403,9 +398,9 @@ export class ReplicaReadHost {
   private constructor(
     source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean,
     clockEnds = new Map<number, number>(), timings = new Map<number, { availableAt?: number; receivedAt: number }>(),
-    compactBootstrap = false, population: "all" | "touched" = "all", validAt = Date.now(),
+    compactBootstrap = false, population: "all" | "touched" = "all", validAt = Date.now(), historyCoverage: ReadHistoryCoverage = "global",
   ) {
-    this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks);
+    this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks, historyCoverage);
     this.times = times;
     this.clockEnds = clockEnds;
     this.timings = timings;
@@ -455,6 +450,7 @@ export class ReplicaReadHost {
     firstReadRoot?: string,
     validAt = Date.now(),
     afterReaderImages = false,
+    historyCoverage: ReadHistoryCoverage = "global",
   ) {
     const client = new api.DatomicClient(
       endpoint,
@@ -483,7 +479,7 @@ export class ReplicaReadHost {
     }
     const host = new ReplicaReadHost(source, times, historyBytes,
       capability.supported === true && capability.strictRecordClocks === true, clockEnds, timings,
-      afterReaderImages || roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population, validAt);
+      afterReaderImages || roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population, validAt, historyCoverage);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
     if (afterReaderImages) {

@@ -202,6 +202,7 @@ const config = {
   // Rejected: enlarging an unreported window or letting per-reader gateway caches consume 3 x 640 MiB beside the replica.
   replicaWorldCacheMiB: Number(opt("replica-world-cache-mib", "32")),
   replicaHistoryMiB: Number(opt("replica-history-mib", "64")),
+  replicaHistoryCoverage: opt("replica-history-coverage", "global") as "global" | "closure",
   replicaPeer: opt("replica-peer", "reader") as "reader" | "writer",
   // [DX-R3-P9] Why: retain the established fallback until the bounded worker passes native stress; the unbounded worker had 112 errors.
   // Rejected: promoting from zero-reader captures alone.
@@ -300,6 +301,8 @@ if (lane === "datomic" && (!Number.isSafeInteger(config.readerEntityCacheMiB) ||
   throw new Error(`Reader caches plus ${WRITER_CACHE_BUDGET_MIB} MiB writer cache budgets must total at most 4096 MiB`);
 if (!["pending", "mixed"].includes(config.splitTarget) || !Number.isSafeInteger(config.replicaHistoryMiB) || config.replicaHistoryMiB < 1 || config.replicaHistoryMiB > 1024)
   throw Error("invalid split-target or replica-history-mib");
+if (!["global", "closure"].includes(config.replicaHistoryCoverage) || config.replicaHistoryCoverage === "closure" && config.readPath !== "replica")
+  throw Error("Replica history coverage requires global, or closure with the replica reader");
 if (!["reader", "writer"].includes(config.replicaPeer) || !["main", "worker"].includes(config.replicaThread)) throw Error("invalid replica peer/thread");
 if (!["loop", "fair"].includes(config.replicaYield) || !["legacy", "inline"].includes(config.replicaFeed))
   throw Error("invalid replica-yield or replica-feed control");
@@ -716,7 +719,7 @@ async function run() {
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
       composition: config.composition, roots: demandReaders ? [] : Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
-      worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, peer: config.replicaPeer,
+      worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, historyCoverage: config.replicaHistoryCoverage, peer: config.replicaPeer,
       sharedReaderIndex: config.sharedReaderIndex, afterReaderImages,
       receiptSpill: config.receiptCapture === "replica-worker" ? spill!.connect() : undefined,
       ...(config.sharedReaderIndex ? { worker: 0, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2 } : {}),
@@ -724,7 +727,7 @@ async function run() {
     : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
       scopeName, demandReaders ? [] : Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
-      config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer, undefined, demandReaders ? "touched" : "all") : undefined;
+      config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer, undefined, demandReaders ? "touched" : "all", undefined, Date.now(), false, config.replicaHistoryCoverage) : undefined;
   const receiptThread = config.receiptCapture === "replica-worker" && replicaHost && "captureReceipt" in replicaHost
     ? replicaHost : undefined;
   let copyApplications: { position: number; at: number }[] = [];
@@ -744,7 +747,7 @@ async function run() {
       return remote.pull(root, basis);
     };
   }
-  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, traceEvery: config.readerTraceEvery, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: demandReaders ? "gateway" : config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: demandReaders ? undefined : mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, traceEvery: config.readerTraceEvery, replicaHistoryMiB: config.replicaHistoryMiB, replicaHistoryCoverage: config.replicaHistoryCoverage, replicaYield: config.replicaYield, readPath: demandReaders ? "gateway" : config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: demandReaders ? undefined : mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
@@ -917,7 +920,7 @@ async function run() {
     const trace = jobTraces.get(job);
     if (!streamReads) return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job)));
     activeModelWrites.set(job, latestInstant);
-    return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job))).catch(error => {
+    return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job))).catch((error: unknown) => {
       streamFault ??= `Writer ${job.ev.seq} threw before model publication: ${String(error)}`;
       throw error;
     }).finally(() => activeModelWrites.delete(job));
@@ -1443,7 +1446,7 @@ async function run() {
   await replicaHost?.close();
   if (replicaHost) report.replica = { copyBytes: replicaHost.replica.bytes, historyBytes: replicaHost.index.historyBytes,
     floor: replicaHost.index.floor, position: replicaHost.index.position, positionWindow: replicaHost.index.positions,
-    historyBudgetBytes: replicaHost.index.maxBytes, feedPeer: config.replicaPeer, feedEndpoint: "endpoint" in replicaHost ? replicaHost.endpoint : (await import("./lib/replica-reads.ts")).replicaEndpoint(process.env, config.replicaPeer), applyThread: config.replicaThread,
+    historyBudgetBytes: replicaHost.index.maxBytes, historyCoverage: config.replicaHistoryCoverage, feedPeer: config.replicaPeer, feedEndpoint: "endpoint" in replicaHost ? replicaHost.endpoint : (await import("./lib/replica-reads.ts")).replicaEndpoint(process.env, config.replicaPeer), applyThread: config.replicaThread,
     receiptGateway: "gatewayObserverStats" in replicaHost ? replicaHost.gatewayObserverStats : null,
     acknowledgementToApplied: "applied" in replicaHost ? (await import("./lib/replica-thread.ts")).appliedDelay(replicaHost.applied, ackOf) : null,
     peakProcessBytesBeforeAnalysis: process.resourceUsage().maxRSS * 1024 };

@@ -17,7 +17,7 @@ port!.on("message", m => { if (m.type === "head-reply") { const p = heads.get(m.
 const comp = { currentPosition: () => new Promise<number>((resolve, reject) => { const id = ++serial; heads.set(id, { resolve, reject }); port!.postMessage({ type: "head", id }); }) };
 try {
   const demand = cfg.composition === "reach-touched";
-  const host = await ReplicaReadHost.open(cfg.scope, demand ? [] : cfg.roots, comp, cfg.initial, cfg.feed, cfg.historyBytes, cfg.peer, cfg.sourceEndpoint, demand ? "touched" : "all", undefined, Date.now(), cfg.afterReaderImages === true);
+  const host = await ReplicaReadHost.open(cfg.scope, demand ? [] : cfg.roots, comp, cfg.initial, cfg.feed, cfg.historyBytes, cfg.peer, cfg.sourceEndpoint, demand ? "touched" : "all", undefined, Date.now(), cfg.afterReaderImages === true, cfg.historyCoverage);
   // [DX-R3] Why: subscribe and publish the initial cut in one turn; no journal can fall between image and deltas.
   // Rejected: requesting a snapshot and subscribing in separate parent messages.
   const local = new ReplicaReader(cfg.historyBytes, host.index, cfg.worldCacheBytes ?? 32 * 1024 ** 2);

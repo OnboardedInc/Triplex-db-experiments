@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { performance } from "node:perf_hooks";
 import { Option } from "effect";
+import { EntityId } from "../../../../packages/core/dist/index.js";
 import { packEntity, RecentReads, type ReplicaRow } from "../../../../packages/datomic/dist/index.js";
 import { prepareEntity, ReplicaReader } from "../../../bench/lib/replica-reads.ts";
 import { ExpectationCache } from "../../../bench/lib/expectation-cache.ts";
@@ -24,7 +25,8 @@ export function costFixture(subjects: number) {
   const entities = new Map<string, ReplicaRow[]>();
   const metadata = { recordedAt: 100, createdBy: "fixture", entityType: null, schemaVersion: 1, txId: "seed" };
   const triples = facts.map((f, i) => {
-    const stored = { id: `fixture-${i}`, entityId: f.e, attribute: f.a, value: f.v, validFrom: 0 };
+    const value = f.v.type === "ref" ? { type: "ref" as const, value: EntityId.make(f.v.value) } : f.v;
+    const stored = { id: `fixture-${i}`, entityId: f.e, attribute: f.a, value, validFrom: 0 };
     const rows = entities.get(f.e) ?? [];
     rows.push({ ...stored, position: 1, publicMetadata: metadata });
     entities.set(f.e, rows);

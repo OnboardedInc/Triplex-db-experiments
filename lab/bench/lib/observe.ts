@@ -19,7 +19,7 @@ export interface Observed {
 type MemberPart = { a: number; b: number; bytes: number; stamp: number; stamps: number };
 const members = new WeakMap<object, MemberPart>();
 
-export function observe(pr: PullResult): Observed {
+export function observe(pr: Pick<PullResult, "triples" | "observation">): Observed {
   // [DX-R3] Why: follower hashes every fact in each immutable version; readers add those exact contributions.
   // Rejected: sampling facts or replacing the independent expected-state comparison.
   if (pr.observation) return pr.observation;

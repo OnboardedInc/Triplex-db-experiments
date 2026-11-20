@@ -24,9 +24,12 @@ export interface ReadImage {
   readonly timeSafe: boolean;
   readonly clockEnds?: readonly (readonly [number, number])[];
   readonly strictRecordClocks?: boolean;
+  readonly historyCoverage?: ReadHistoryCoverage;
 }
-// [DX-R3] Why: evict whole cuts, so every entity resolves at every admitted position.
-// Rejected: independent per-entity LRUs (a global watermark would falsely certify missing history).
+export type ReadHistoryCoverage = "global" | "closure";
+
+// [DX-RD1] Why: separate the clock/position proof from availability of each entity required by a closure.
+// Rejected: assuming an admitted position by itself certifies a missing historical version.
 export class RecentReads {
   private current = new Map<string, { from: number; entity: PackedEntity }>();
   private history = new Map<string, Version[]>();
@@ -45,13 +48,15 @@ export class RecentReads {
     readonly positions = 20_000,
     readonly maxBytes = 64 * 1024 ** 2,
     strictRecordClocks = false,
+    readonly historyCoverage: ReadHistoryCoverage = "global",
   ) {
     this.strictClocks = strictRecordClocks === true;
     if (
       !Number.isSafeInteger(positions) ||
       positions < 0 ||
       !Number.isSafeInteger(maxBytes) ||
-      maxBytes < 0
+      maxBytes < 0 ||
+      (historyCoverage !== "global" && historyCoverage !== "closure")
     )
       throw new TypeError("Invalid recent-read budget");
   }
@@ -123,7 +128,9 @@ export class RecentReads {
     while (this.retiredStart < this.retired.length) {
       const item = this.retired[this.retiredStart]!;
       if (item.version.until > this.floor && this.retainedBytes <= this.maxBytes) break;
-      this.floor = Math.max(this.floor, item.version.until);
+      // [DX-RD1] Why: byte eviction only blocks a historical pull that needs the evicted version.
+      // Rejected: moving every root's clock floor, or answering the missing entity from current state.
+      if (this.historyCoverage === "global") this.floor = Math.max(this.floor, item.version.until);
       this.retainedBytes -= footprint(item.version.entity);
       const versions = this.history.get(item.id)!;
       versions.shift();
@@ -135,7 +142,10 @@ export class RecentReads {
       this.retired = this.retired.slice(this.retiredStart);
       this.retiredStart = 0;
     }
-    for (const [time, p] of this.times) if (p < this.floor) { this.times.delete(time); this.clockEnds.delete(time); }
+    for (const [time, p] of this.times) {
+      if (p >= this.floor) { if (this.strictClocks && this.timeSafe) break; }
+      else { this.times.delete(time); this.clockEnds.delete(time); }
+    }
     this.valid = delta.valid;
   }
   private noteTime(time: number, p: number, end?: number): void {
@@ -179,9 +189,10 @@ export class RecentReads {
       // [DX-R3-P8] Why: a strict applied clock above t proves the exact prefix for intervening double values too.
       // Rejected: rounding t to a clock or extrapolating beyond the newest applied journal.
       if (mapped === undefined && this.strictRecordClocks && this.timeSafe && basis.recordedAt < this.lastTime) {
-        let chosen = -Infinity;
-        for (const [time, at] of this.times) if (time <= basis.recordedAt && time > chosen) {
-          chosen = time;
+        const oldest = this.retainedClockFloor();
+        if (oldest === undefined || basis.recordedAt < oldest) return undefined;
+        for (const [time, at] of this.times) {
+          if (time > basis.recordedAt) break;
           mapped = at;
         }
       }
@@ -278,9 +289,12 @@ export class RecentReads {
       timeSafe: this.timeSafe,
       clockEnds: [...this.clockEnds],
       strictRecordClocks: this.strictRecordClocks,
+      historyCoverage: this.historyCoverage,
     };
   }
   install(image: ReadImage): void {
+    if (image.historyCoverage !== undefined && image.historyCoverage !== this.historyCoverage)
+      throw Error("Recent read image history coverage differs from the reader policy");
     const current = new Map<string, { from: number; entity: PackedEntity }>();
     for (const [id, from, entity] of image.entities) current.set(id, { from, entity });
     this.current = current;
@@ -291,8 +305,14 @@ export class RecentReads {
     this.retiredStart = 0;
     this.retainedBytes = this.retired.reduce((n, x) => n + footprint(x.version.entity), 0);
     this.times = new Map(image.times);
-    this.lastTime = Math.max(-Infinity, ...this.times.keys());
     this.timeSafe = image.timeSafe;
+    this.lastTime = -Infinity;
+    let lastPosition = -Infinity;
+    for (const [time, position] of this.times) {
+      if (!Number.isFinite(time) || time <= this.lastTime || position <= lastPosition) this.timeSafe = false;
+      if (Number.isFinite(time)) this.lastTime = Math.max(this.lastTime, time);
+      lastPosition = position;
+    }
     this.clockEnds = new Map(image.clockEnds);
     this.strictClocks = image.strictRecordClocks === true;
     this.floor = image.floor;

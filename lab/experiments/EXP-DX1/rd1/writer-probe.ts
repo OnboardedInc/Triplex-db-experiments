@@ -40,7 +40,7 @@ async function waitUntil(at: number) {
   while (now() < at) await sleep(Math.max(1, at - now()));
 }
 
-type Write = { seq: number; resend: boolean; request: string; offsetMs: number; verdictMs: number; traceId?: string; nativeT?: string; position?: number };
+type Write = { seq: number; resend: boolean; request: string; offsetMs: number; verdictMs: number; traceId?: string; nativeT?: string; position?: number; gatewayAwaitMs?: number };
 type Ready = { run: (at: number) => Promise<{ writes: Write[]; gateway: { subject: number; digest: string; requests: number }[]; maintenance: boolean | null }>; close: () => Promise<void> };
 
 async function prepare(arm: number): Promise<Ready> {
@@ -66,9 +66,11 @@ async function prepare(arm: number): Promise<Ready> {
   const maint = new DatomicClient(process.env.DATOMIC_URL);
   client.forceFullReach = true;
   const databaseScope = runtimeApi.DatabaseScope.test(scope);
+  const layout = process.env.TRIPLEX_DATOMIC_LAYOUT ?? "lean";
+  assert(layout === "lean" || layout === "legacy");
   const close = async () => { client.close(); maint.close(); await writer.close(); };
   try {
-    const db = await maint.create(databaseScope, process.env.TRIPLEX_DATOMIC_LAYOUT ?? "lean", true);
+    const db = await maint.create(databaseScope, layout, true);
     assert(db.strictRecordClocks && await writer.currentPosition() === 0, "Expected fresh strict scope before seed");
     const state = new Map<number, SubjectState>(), accountCount = accountsFor(subjects);
     const accounts = [...new Set(people.map(i => accountOfSubject(i, accountCount)))].sort((a,b) => a-b);
@@ -92,11 +94,11 @@ async function prepare(arm: number): Promise<Ready> {
     assert.equal(await writer.currentPosition(), position);
     const expected = new Map(people.map(i => [i, model.expected(i, instant, validAt)]));
     const original = new Map<number, { command: ReturnType<typeof buildTraceCommand>; logical: string; position: number; txId: string }>();
-    const native = new Map<string, { t: string; position: number }>();
+    const native = new Map<string, { t: string; position: number; gatewayAwaitMs: number }>();
     const bySubject = new Map<number, Promise<Write>>();
     return { close, run: async at => {
       observeNativeReceipt((name, _input, reply, p, commands) => {
-        if (name === db.db) for (const id of commands) native.set(id, { t: reply.t.v, position: p });
+        if (name === db.db) for (const id of commands) native.set(id, { t: reply.t.v, position: p, gatewayAwaitMs: reply.transactMicros / 1000 });
       });
       const issue = async (e: TraceEvent): Promise<Write> => {
         const scheduledAt = at + e.atMs - startOffset;
@@ -108,7 +110,7 @@ async function prepare(arm: number): Promise<Ready> {
         const logical = prev?.logical ?? sha({ added: command.added, removed: command.removed, from: command.addedValidFrom, range: command.validRange, scheduledOffset: e.atMs });
         const trace = beginTrace("commit", "rd1.writer", { arm, seq: e.seq, resend: e.resend }, scheduledAt);
         try {
-          const reply = await withTrace(trace, () => writer.transact(command.operations, { commandId: command.commandId, preconditions: command.preconditions, actor: e.kind }));
+          const reply: Awaited<ReturnType<typeof writer.transact>> = await withTrace(trace, () => writer.transact(command.operations, { commandId: command.commandId, preconditions: command.preconditions, actor: e.kind }));
           if (e.resend) {
             assert(!reply.ok && reply.tag === "CommandAlreadyCommittedError");
           } else {
@@ -129,9 +131,9 @@ async function prepare(arm: number): Promise<Ready> {
           }
           const ref = native.get(command.commandId);
           const bound = original.get(e.seq)!;
-          assert(ref?.position === bound.position && /^\d+$/.test(ref.t));
+          assert(ref?.position === bound.position && /^\d+$/.test(ref.t) && Number.isFinite(ref.gatewayAwaitMs) && ref.gatewayAwaitMs >= 0);
           return { seq: e.seq, resend: e.resend, request: logical, offsetMs: e.atMs-startOffset, verdictMs: now()-scheduledAt, traceId: trace?.traceId,
-            nativeT: ref.t, position: bound.position };
+            nativeT: ref.t, position: bound.position, ...(e.resend ? {} : { gatewayAwaitMs: ref.gatewayAwaitMs }) };
         } finally { finishTrace(trace); }
       };
       const writes = events.map(e => {
@@ -143,7 +145,7 @@ async function prepare(arm: number): Promise<Ready> {
         await waitUntil(at + r.offsetMs);
         const got = await client.readDemandWorld(String(databaseScope), ids.placement(r.subject), { recordedAt: instant, recordedPosition: position, validAt });
         assert(got && got.requests === 1);
-        const observed = observe({ triples: got.triples } as Parameters<typeof observe>[0]), exp = expected.get(r.subject)!;
+        const observed = observe({ triples: got.triples }), exp = expected.get(r.subject)!;
         assert(exp.fullRows && observed.digest === exp.digest && observed.facts === exp.facts && observed.stamp === exp.stamp, "Gateway tape returned a different world");
         return { subject: r.subject, digest: observed.digest, requests: got.requests };
       });
@@ -272,7 +274,8 @@ async function run(slot: string) {
       const native = readNative(file, offset, foreground.writes, slot);
       const perfResult = await perf;
       const block = { ...manifest, arm: i, on, at, until: at + seconds * 1000, controlHash, reads: noise?.reads ?? 0, replay: noise ?? null,
-        writerP90Ms: p90(foreground.writes.filter(w => !w.resend).map(w => w.verdictMs)), native, metrics, perf: perfResult };
+        writerP90Ms: p90(foreground.writes.filter(w => !w.resend).map(w => w.verdictMs)),
+        gatewayAwaitP90Ms: p90(foreground.writes.flatMap(w => w.gatewayAwaitMs === undefined ? [] : [w.gatewayAwaitMs])), native, metrics, perf: perfResult };
       store(`${folder}/observed.json`, { ...block, before, after, ...foreground });
       blocks.push(block);
     } finally { try { await replay.close(); } finally { await ready.close(); } }

@@ -22,7 +22,7 @@ export async function inLocalSlot<T>(slot: string, work: (slot: string) => Promi
     const { stdout, stderr } = await engine("up", ["--fresh"]);
     started = true;
     process.stderr.write(stderr);
-    const endpoint = /^export DATOMIC_URL='([^']+)'$/m.exec(stdout)?.[1];
+    const endpoint = /^export DATOMIC_(?:GATEWAY_)?URL='([^']+)'$/m.exec(stdout)?.[1];
     assert(endpoint, "Slot manager omitted the Datomic endpoint");
     process.env.DATOMIC_URL = endpoint;
     process.env.DATOMIC_READ_URLS = endpoint;

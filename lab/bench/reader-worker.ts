@@ -49,6 +49,7 @@ export type ReaderConfig = {
   readPath?: "gateway" | "replica";
   splitTarget?: "pending" | "mixed";
   replicaHistoryMiB?: number;
+  replicaHistoryCoverage?: "global" | "closure";
   replicaYield?: "loop" | "fair";
   traceEvery?: number;
   rawSampleLimit?: number;
@@ -87,7 +88,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
   const cells = cfg.deep ? deepCells(cfg.subjects) : undefined;
 
   let comp: CompositionHandle;
-  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, shared?.index, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2) : undefined;
+  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, shared?.index, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2, cfg.replicaHistoryCoverage) : undefined;
   if (replica && cfg.replicaImage) replica.install(cfg.replicaImage);
   const turn = new ReaderTurn();
   const loopDelay = monitorEventLoopDelay({ resolution: 1 });
