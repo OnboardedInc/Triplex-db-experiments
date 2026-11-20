@@ -1,10 +1,10 @@
 All accounts stay in one Datomic database.
-The one-billion server candidate is `f48a64c75`. The final Mac seed check is running.
-The existing ten-account seed is estimated at 430 million native records. The driver reads the actual count.
-At 24,000 records per second, the first billion is forecast at 9.60 hours and $10.46.
-The first rung stops within 9.9 hours. It continues after calibration only if the measured rate fits.
-Earlier Mac diagnostics put 57 extra seconds in the slower run's native write window.
-The model predicts more index segments and directories while the trees keep their depth.
+Use commit `2859d6b15` for the one-billion server run.
+The Mac check adopted a small copy made by the same loader and matched all 120 saves.
+At 24,000 records per second from the estimated 430 million, the run would take 9.60 hours and cost $10.46.
+The driver reads the real starting count and continues only if the observed rate fits the 9.9-hour cap.
+The rate needs to reach about 23,000 records per second if the starting count is 430 million.
+The model predicts bigger index directories while the lookup trees keep their depth.
 The successor drill erased a protected value across both eras, including views held before the move.
 
 # DX-AGE1 part 2
@@ -28,9 +28,10 @@ Part 1 at `e44ea53dc` matched 112 saves and reached 360,314 and 1,260,314 record
 
 ## Verification
 
-The SDK build, source parsing, rate and count tests, and historical log join completed. The pinned SCALE1 source produced five frames with 9,690 facts for 80 people, and the Clojure adopter validated that fixture manifest. The small SQL-backed gates use one ordinary heavy token per run. Any Mac timing is diagnostic. [Evidence manifest](P2-SHA256SUMS)
+The SDK build, source parsing, rate and count tests, and historical log join completed. The small SQL-backed gates used one ordinary heavy token per run. Any Mac timing is diagnostic. [Evidence manifest](P2-SHA256SUMS)
 
 - The larger load-settings arm verified 1,072 saves and 21,436 logical datoms and took a settled per-index census. Its slot, containers and volume were released. `p2-mac-d-fidelity-arms-load`
 - The standard arm verified burst and rolling log identity and W1 grouped log identity on the same tape. Grouping kept the logical behavior and increased the log count to 28,135. Its slot, containers and volume were released. `p2-mac-g-fidelity-arms`
+- The exact SCALE1 loader seeded 9,690 facts for 80 people in ten accounts. The adopted copy started with 26,385 native records. It matched 120 product saves, 2,400 added native records, current and pinned reads at six cuts, history, receipts and feed pages. Its slot, four containers and one volume were released. `p2-mac-k-adopted-fidelity`
 - The successor drill moved 14 accounts and verified 84 pinned and 28 current row comparisons, two held cuts and the feed before and after an interrupted erasure. It confirmed both sets of keys were gone and both stores still held ciphertext. Its slot, containers and volume were released. `p2-mac-f-erased-successor`
-- Retained failures cover the missing W0 build, an unavailable PostgreSQL image, the grouped revision-retraction census, the opaque-token probe, a misread reverse-index claim and the vendor's same-catalog restore collision. Setup and oracle failures remain distinct from completed comparisons.
+- Retained failures cover the missing W0 build, an unavailable PostgreSQL image, the grouped revision-retraction census, the opaque-token probe, a misread reverse-index claim, a same-catalog restore collision and an integral timestamp in the raw-row oracle. Setup and oracle failures remain distinct from completed comparisons.
