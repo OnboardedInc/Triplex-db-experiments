@@ -1,4 +1,4 @@
-Priority server candidate `acc0f5c39ed7dafc4c1539ce7353fa11750e6f9b`. Take `dda947e6e79dbca87e867d122971c5e1a85210e9` for integration.
+Priority server candidate `acc0f5c39ed7dafc4c1539ce7353fa11750e6f9b`. The code is merged on INT1 at `0196b9952e496c883a24b9ed05ef17fa886dfb00`.
 On bare metal, one write recorded the release and what notices it owed in 46 ms. The first correct answer came at 56 ms.
 At 3.5 saves per second the receipt and answer took 53 and 63 ms. At 23.5 saves per second they took 2.043 and 2.051 seconds.
 The busy receipt waited 2.020 seconds behind 50 saves. A new release can now pass waiting saves in its own account. The active save finishes first.
@@ -9,7 +9,7 @@ The 100,000-person priority path and common-database scorecard still need server
 
 The completed BM1 replay at `48f55759494f6a6a04eeb6aa5284dde3e166d431` verified all 16,045,255 seeded facts, 3,240 save receipts and 342,881 ordered notice effects across six windows. Each broad release changed about 490,000 values across all 100,000 people. Its separate background campaign was stopped after the release windows were proved. [Verified results and digests](PART8.md#server-observations-at-100000-people)
 
-The integration candidate includes ACT2 `bc01028b0`, STG1 `fa53e50cd` and INT1 `69d3b71da024d914a4d616c264424323a9e230a8`. The last merge also includes the opt-in per-person writer, while the server command keeps the native-checked writer and observer. The integration includes the guarded Reach and recorded-cut writer changes. The server candidate remains pinned to the earlier writer and its own evidence. It has no fixed grace on healthy Publish, retries at most three predecessor conflicts and gives waiting saves a turn after eight Publishes. The shared geography release already chose a full census. The repaired shared-save path now does the same when ownership cannot be proved. Its native regression covered three edits, seven affected and one unaffected person per edit, a lost acknowledgement, three stops and 35 ordered effects.
+INT1 merged the pinned candidate, ACT2 `bc01028b0` and STG1 `fa53e50cd`. The joined server command stays on its directly checked writer and observer. Publish has no fixed healthy-path grace and makes at most three predecessor attempts. A waiting save gets a turn after eight Publishes. Shared geography already used a full release census. The shared-save fix falls back to the same census when it cannot prove ownership. Its native check covered three edits, seven affected people and one untouched person per edit, a lost acknowledgement, three stops and 35 ordered effects.
 
 The original-selector 23.5 saves/s deep run reopened and verified the parked seed but reached the local time cap before both terminal cursors. Its volume was removed. The peak background timing is still open.
 
