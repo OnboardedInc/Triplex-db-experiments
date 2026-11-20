@@ -9,7 +9,13 @@ type Trial = {
   terminal: any;
   seed?: any;
   decision?: any;
+  restored?: any;
+  loaderProgress?: any;
+  decisionResources?: any[];
 };
+const roles = ["tx", "pg", "gw-w", "gw-r"] as const;
+const sameAttempt = (a: any, x: any) =>
+  x?.source === a.source && x.slot === a.slot && x.nonce === a.nonce;
 const fmt = (v: unknown, precision = 2) =>
   typeof v === "number" && Number.isFinite(v) ? v.toFixed(precision) : "unmeasured";
 const metric = (x: any, stem: "p50" | "p99") => {
@@ -138,12 +144,12 @@ export function placementReport(dir: string, trials: Trial[]) {
     "",
   ];
   const pooled: { tag: string; mode: string; summary: any }[] = [];
+  const single: Trial[] = [];
   for (const t of trials) {
     const d = t.decision,
       a = t.attempt,
       seed = t.seed;
-    const binding = (x: any) =>
-      assert(x.source === a.source && x.nonce === a.nonce && x.slot === a.slot);
+    const binding = (x: any) => assert(sameAttempt(a, x));
     binding(t.terminal);
     lines.push(
       "## " + t.tag,
@@ -188,6 +194,22 @@ export function placementReport(dir: string, trials: Trial[]) {
           " bytes per fact (one physical seed).",
         "",
       );
+      const ingest = t.loaderProgress?.records?.filter(
+        (s: any) => sameAttempt(a, s) && s.population === seed.population && s.at >= seed.started,
+      );
+      if (ingest?.length) {
+        const sampled = roles.map((role) =>
+          Math.max(...ingest.map((s: any) => s.resources?.[role]?.peak ?? 0)),
+        );
+        lines.push(
+          "Observed ingest cgroup peaks in GiB, from " + ingest.length + " progress snapshots.",
+          "",
+          "| Transactor | PostgreSQL | Write gateway | Read gateway |",
+          "| ---: | ---: | ---: | ---: |",
+          "| " + sampled.map((n) => (n > 0 ? fmt(n / 1024 ** 3) : "unmeasured")).join(" | ") + " |",
+          "",
+        );
+      }
     }
     if (!d || t.terminal.service !== "success") {
       if (!seed || t.terminal.service !== "success")
@@ -280,8 +302,80 @@ export function placementReport(dir: string, trials: Trial[]) {
       "Separate WAL latency is unmeasured. Per-cell cgroup, storage and sender dose records are in the compact evidence.",
       "",
     );
+    // [DX-SCALE1] Why: report per-role peaks only from the cell's sealed cgroup snapshots. Rejected: adding asynchronous role peaks or using heap caps as measured memory.
+    const samples = (t.decisionResources ?? []).filter(
+      (s) =>
+        sameAttempt(a, s) &&
+        s.population === d.population &&
+        s.start >= a.at &&
+        d.cells.some((c: any) => c.label === s.key && s.afterAt >= s.start + c.seconds * 1000),
+    );
+    if (samples.length) {
+      lines.push(
+        "Cgroup peaks in GiB through each sampled cell, including that arm's restore and startup.",
+        "",
+        "| Cell | Transactor | PostgreSQL | Write gateway | Read gateway |",
+        "| --- | ---: | ---: | ---: | ---: |",
+      );
+      for (const c of d.cells) {
+        const s = samples.find((x) => x.key === c.label);
+        lines.push(
+          "| " +
+            [
+              c.label,
+              ...roles.map((role) => fmt((s?.after?.[role]?.peak ?? NaN) / 1024 ** 3)),
+            ].join(" | ") +
+            " |",
+        );
+      }
+      lines.push("");
+    }
+    if (a.layout === "single") single.push(t);
     if (a.people === 100000 && a.layout === "pooled")
       pooled.push({ tag: t.tag, mode: a.mode, summary: d });
+  }
+  const reader = single.filter((t) => t.attempt.withReaders).at(-1);
+  const zero =
+    reader &&
+    single
+      .filter((t) => {
+        // [DX-SCALE1] Why: bracket the reader effect only across the sealed image and same frozen writer program. Rejected: comparing different sources or separately loaded seeds.
+        return (
+          !t.attempt.withReaders &&
+          t.attempt.source === reader.attempt.source &&
+          t.attempt.mode === reader.attempt.mode &&
+          t.attempt.from === reader.attempt.from &&
+          sameAttempt(t.attempt, t.restored?.identity) &&
+          sameAttempt(reader.attempt, reader.restored?.identity) &&
+          /^[a-f0-9]{64}$/.test(t.restored?.origin?.sha256 ?? "") &&
+          t.restored.origin.sha256 === reader.restored?.origin?.sha256 &&
+          t.decision.cells.every((c: any, i: number) => {
+            const r = reader.decision.cells[i];
+            return c.label === r.label && c.seconds === r.seconds && c.planned === r.planned;
+          })
+        );
+      })
+      .at(-1);
+  if (reader && zero) {
+    lines.push(
+      "## Matched single-account reader dose",
+      "",
+      "Latency differences compare the two restores of the sealed image from " +
+        zero.attempt.from +
+        ". Each condition ran once.",
+      "",
+      "| Offered/s | Save p99 with readers / zero (n / n) | Feed p99 with readers / zero (n / n) |",
+      "| ---: | --- | --- |",
+    );
+    for (const [i, r] of reader.decision.cells.entries()) {
+      const z = zero.decision.cells[i];
+      const compare = (key: "writes" | "feed") =>
+        Number.isFinite(r[key].p99) && z[key].p99 > 0
+          ? fmt(r[key].p99 / z[key].p99) + "× (" + r[key].n + " / " + z[key].n + ")"
+          : "unmeasured";
+      lines.push("| " + [r.offered, compare("writes"), compare("feed")].join(" | ") + " |");
+    }
+    lines.push("");
   }
   fs.writeFileSync(path.join(dir, "DECISION-RESULTS.md"), lines.join("\n").trimEnd() + "\n");
   recordPredictions(dir, trials);

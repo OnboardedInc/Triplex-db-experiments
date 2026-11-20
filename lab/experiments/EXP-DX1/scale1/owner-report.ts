@@ -31,6 +31,9 @@ type Stage = {
   seedAnatomy: any;
   seed: any;
   decision: any;
+  restored: any;
+  decisionResources: any[];
+  loaderProgress: any;
   boundedLatency: { read: any; feedLag: any } | null;
 };
 const load = (dir: string, f: string) =>
@@ -114,6 +117,11 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         seedAnatomy: load(dir, "seed-anatomy.json"),
         seed: load(dir, "seed.json"),
         decision: load(dir, "measurement.json"),
+        restored: load(dir, "restored.json"),
+        decisionResources: Object.keys(transfer.summaryFiles).flatMap((name) =>
+          /^r[01]-[a-z0-9]+-resources\.json$/.test(name) ? [load(dir, name)] : [],
+        ),
+        loaderProgress: load(dir, "seed-progress.json"),
         boundedLatency: boundedLatency(dir, attempt, summary),
       });
     }
@@ -267,6 +275,10 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       : [];
   });
   const singleDisk = single.find((s) => s.seed)?.seed;
+  const singleReadPeak = single
+    .filter((s) => s.attempt.withReaders)
+    .at(-1)
+    ?.decision?.cells.find((c: any) => c.cell === 39.4)?.read;
   const setup = stages
     .filter(
       (s) =>
@@ -355,9 +367,19 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     singlePeak.length
       ? "One account of 100,000 people had commit p99 " +
         singlePeak.join(" and ") +
+        "." +
+        (singleReadPeak?.n
+          ? " Read p99 was " +
+            metric({
+              value: singleReadPeak.p99,
+              n: singleReadPeak.n,
+              interval90: singleReadPeak.interval99,
+            }) +
+            " ms at that rate."
+          : "") +
         (singleDisk
-          ? " and " + round(singleDisk.disk.bytesPerFact) + " PostgreSQL bytes per fact."
-          : ".") +
+          ? " PostgreSQL added " + round(singleDisk.disk.bytesPerFact) + " bytes/fact."
+          : "") +
         " [Decision cells](DECISION-RESULTS.md)"
       : `One account of 100,000 people — ${cost(one)}.`,
     currentDecision ||
@@ -531,6 +553,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
     "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. The restarted queue advances past failed arms and retains them for retry. The bounded reader collector checks every observation against the complete receipt model in memory, seals the one-in-100 sample and every error and mismatch, and rechecks attempt identity, counts and bytes on collection. The zero comparison independently binds gateway and transactor spans and full receipt journal bytes to each historical attempt. Bounded latency summaries recheck the exact per-scope report bytes, nonce, source, slot, account and arm before reading histograms. DELTA verifies the source hash, slot, nonce, 1,000-subject native preflight, empty 100,000-person destination, independent broad and narrow rows, and retained read bytes before advancing. The bounded DELTA runner checks every reader invocation at its exact native cut and saves every hundredth plus errors and mismatches. The million seed estimate binds the prior volume and dump sizes, fresh terminal evidence and actual cgroup samples. The decision runner checks receipt, field and two-account bytes in fresh preflight. It verifies the active writer function and flags from each restored database against the source, slot, attempt nonce and seed cut. It compares the full typed journal changes including assertion and retirement clocks, valid ranges and exact values. The loader checks every original claim and feed row at the sealed cut. The decision checker independently replays planned field values and predecessors in native position order, verifies cold rows and before/after cuts, and binds every sample to the frozen tape, slot, source and nonce. Finalization rechecks timing, dispositions, seed/archive bindings and durability before the compact transfer. Packaging can retry the same native evidence.",
+    "- The single-account comparison checks both fresh attempt identities, the same sealed image hash and identical write-cell inputs. The cgroup table checks the same attempt and population with a snapshot taken after each named cell.",
     "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions and observations](PREDICTIONS.md) are recorded for each item. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
