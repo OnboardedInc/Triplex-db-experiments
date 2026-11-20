@@ -1,9 +1,9 @@
 All accounts stay in one Datomic database.
-The server candidate is `f07c4f8af`. The small Mac gates are pending.
+The one-billion server candidate is `3af0e981d`. The small Mac gates are pending.
 The existing ten-account seed is estimated at 430 million native records. The driver reads the actual count.
 At 24,000 records per second, the first billion is forecast at 9.60 hours and $10.46.
 The first rung stops within 9.9 hours. It continues after calibration only if the measured rate fits.
-The slower Mac run spent 57 more seconds with native writes outstanding for the same work.
+Earlier Mac diagnostics put 57 extra seconds in the slower run's native write window.
 The model predicts more index segments and directories while the trees keep their depth.
 The successor drill now checks one erasure across both eras, including views held before the move.
 

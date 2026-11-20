@@ -17,6 +17,13 @@ process.env.DATOMIC_URL = url;
 const { openComposition, runtimeApi } = await import(pathToFileURL(path.join(repo, "lab/bench/lib/composition.ts")))
   .then(async (lib) => ({ ...lib, ...(await import(pathToFileURL(path.join(repo, "lab/bench/lib/triplex.ts")))) }));
 const { DatomicClient } = await import(pathToFileURL(path.join(repo, "packages/datomic/dist/index.js")));
+const w0 = path.join(repo, "packages/w0/dist");
+const w0Build = Object.fromEntries(fs.readdirSync(w0, { recursive: true, withFileTypes: true })
+  .filter((entry) => entry.isFile())
+  .map((entry) => {
+    const file = path.join(entry.parentPath, entry.name);
+    return [path.relative(w0, file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")];
+  }));
 const people = 8;
 const { digest: population, factsPerAccount } = populationPins(people, "pooled");
 const name = "dx-scale-decision-" + nonce + "-0";
@@ -43,7 +50,7 @@ try {
       proofs: [{ ...proof, sourceSeal: snapshot.source }],
     }) + "\n";
     fs.writeFileSync(path.join(destination, "fixture.json"), bytes, { flag: "wx", flush: true });
-    console.log(JSON.stringify({ db: opened.db, cut: proof.cut, sha: createHash("sha256").update(bytes).digest("hex") }));
+    console.log(JSON.stringify({ db: opened.db, cut: proof.cut, sha: createHash("sha256").update(bytes).digest("hex"), w0Build }));
   } finally {
     snapshot.close();
   }

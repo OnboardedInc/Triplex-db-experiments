@@ -5,21 +5,16 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const hourlyRate = 1.09;
-const budget = 130;
-const calibrationReserveHours = 15;
-const serverRungs = [1e9, 2e9, 4e9, 8e9];
+const maxHours = 9.9;
+const calibrationReserveHours = 3;
+const serverTarget = 1e9;
 
-export function schedule(recordsPerSecond, seed = 820e6) {
-  assert(recordsPerSecond > 0 && seed >= 0 && seed < serverRungs[0]);
-  let previous = seed;
-  return serverRungs.map((target) => {
-    const delta = target - previous;
-    previous = target;
-    const hours = delta / recordsPerSecond / 3600;
-    const cumulativeHours = (target - seed) / recordsPerSecond / 3600;
-    return { target, delta, hours, dollars: hours * hourlyRate, cumulativeHours, cumulativeDollars: cumulativeHours * hourlyRate,
-      withinBudgetWithReserve: (cumulativeHours + calibrationReserveHours) * hourlyRate <= budget };
-  });
+export function schedule(recordsPerSecond, seed = 430e6) {
+  assert(recordsPerSecond > 0 && seed >= 0 && seed < serverTarget);
+  const delta = serverTarget - seed;
+  const hours = delta / recordsPerSecond / 3600;
+  return [{ target: serverTarget, delta, hours, dollars: hours * hourlyRate,
+    withinBudgetWithReserve: hours + calibrationReserveHours < maxHours }];
 }
 
 // [DX-AGE1] Why: size-law comparisons need the same observations and failed measures stay absent.
@@ -116,24 +111,22 @@ export function tapeRecords(saves, active) {
   return total;
 }
 
-export function targetSaves(seed, active, targets = serverRungs) {
-  assert(Number.isSafeInteger(seed) && seed > 0 && seed < targets[0]);
-  return targets.map((records) => {
-    let low = 0, high = Math.ceil((records - seed) / 16);
-    while (high > low) {
-      const mid = Math.floor((low + high) / 2);
-      if (seed + tapeRecords(mid, active) < records) low = mid + 1;
-      else high = mid;
-    }
-    return { targetRecords: records, targetSaves: low, expectedRecords: seed + tapeRecords(low, active) };
-  });
+export function targetSaves(seed, active) {
+  assert(Number.isSafeInteger(seed) && seed > 0 && seed < serverTarget);
+  let low = 0, high = Math.ceil((serverTarget - seed) / 16);
+  while (high > low) {
+    const mid = Math.floor((low + high) / 2);
+    if (seed + tapeRecords(mid, active) < serverTarget) low = mid + 1;
+    else high = mid;
+  }
+  return [{ targetRecords: serverTarget, targetSaves: low, expectedRecords: seed + tapeRecords(low, active) }];
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [mode, data, active] = process.argv.slice(2);
   assert(["rates", "measurements", "targets"].includes(mode));
   const result = mode === "rates"
-    ? (data ?? "10000,20000,50000,100000").split(",").map((rate) => ({ rate: Number(rate), rungs: schedule(Number(rate), active === undefined ? 820e6 : Number(active)) }))
+    ? (data ?? "12000,20000,24000,30000").split(",").map((rate) => ({ rate: Number(rate), rungs: schedule(Number(rate), active === undefined ? 430e6 : Number(active)) }))
     : mode === "targets" ? targetSaves(Number(data), Number(active)) : summarize(path.resolve(data));
   console.log(JSON.stringify(result, null, 2));
 }
