@@ -17,7 +17,11 @@ The first Mac native ordinary-token run verified settlement across worker stops 
 
 The 3.5 saves/s 10,000-person pair matched 78,548 reads, 49,297 values and 5,997 effects. It had 630 saves per block and scope. Full-block save/read ratios were 0.30/0.85 and 0.33/0.91 in the publishing account and neighbour. The first minute of control built a backlog. Ratios reversed in the last 90 seconds, with 315 saves per side. The deep pair waited 3 hours and 38 minutes across the earlier grants. The pilot waited 4 hours and 33 minutes, partly overlapping. The new Mac runs use one ordinary token per step. [Clock breakdown](PART8.md#deep-settlement-on-the-mac)
 
+The 45-second native v3 prefix used 64 readers per arm and matched 53,886 reads and 44 save receipts per arm. Its save/read p99 ratios were 1.10/1.67, with too few saves to qualify. The 180-second pair hit the local cap. The full interference trace remains open. [Trace evidence](PART8.md)
+
 Earlier 10,000-person deep Mac checks found 48.2 encoded notice-leaf bytes per person and about 101.3 address bytes. Three sampled thin pages used 10.3–10.4 leaf bytes and 100–104 address bytes. Both are storage counts. P7 measures resident memory outside Postgres. [Size price](PART6-PRICE.md) · [Read stages](STAGES.md) · [Retention choice](RETENTION.md)
+
+Fresh-reader size checks covered 10,000 thin and 1,000 deep people. Each wrote four changes with no subject visits. Sampled cold-read p99 was 61 and 69 ms on the Mac. The two JVM snapshots include index and heap activity and cannot isolate the 64-byte resident-memory bar.
 
 The revised 64-person smoke used the pinned candidate. The cold observer started within 5 ms of the cutoff in all three cells. The peak Mac diagnostic still missed with 758 ms behind an active save and 317 ms from entry to durable. Quiet and 3.5 saves/s observed the new release in time. All 15 point samples and 379 effects replayed exactly.
 
