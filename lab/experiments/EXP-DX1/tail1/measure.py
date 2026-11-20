@@ -17,21 +17,32 @@ def load(path):
     return json.loads(path.read_bytes())
 
 
-def timed_gc(directory, role, start, stop, history, indexes):
+def timed_gc(directory, role, start, stop, history, indexes, startup):
     files = sorted(directory.glob(f"{role}.log*"))
     assert files, f"Missing JVM log for {role}"
     log = "\n".join(p.read_text() for p in files)
-    collector = re.search(r"\[gc(?:,init)?\s*\] Using (.+)", log)
-    assert collector, f"Missing initial collector settings for {role}"
-    initialized = [line.rsplit("] ", 1)[-1] for line in log.splitlines() if "[gc,init]" in line]
+    collector = startup["collector"] if startup else None
+    if collector is None:
+        legacy = re.search(r"\[gc\s*\] Using (.+)", log)
+        assert legacy, f"Missing initial collector settings for {role}"
+        collector = legacy[1]
+    initialized = []
     events = []
     cohorts = {"history": [], "explicit-index": [], "outside-known-overlays": []}
     allocation_stalls = []
+    safepoints = defaultdict(list)
     for line in log.splitlines():
         stamp = re.match(r"\[([^\]]+)\]", line)
         if not stamp:
             continue
         at = datetime.fromisoformat(stamp[1]).timestamp() * 1000
+        if startup and at < startup["initializedAt"]:
+            continue
+        if "[gc,init]" in line:
+            initialized.append(line.rsplit("] ", 1)[-1])
+        safe = re.search(r'Safepoint "([^"]+)".*Total: (\d+) ns$', line)
+        if safe and start <= at < stop:
+            safepoints[safe[1]].append(int(safe[2]) / 1e6)
         stall = re.search(r"Allocation Stall .*? ([\d.]+)ms$", line)
         if stall and start <= at < stop:
             allocation_stalls.append(float(stall[1]))
@@ -44,8 +55,9 @@ def timed_gc(directory, role, start, stop, history, indexes):
                 cohort = ("history" if overlaps(history) else "explicit-index" if overlaps(indexes)
                           else "outside-known-overlays")
                 cohorts[cohort].append(event)
-    return {"collector": collector[1], "init": initialized, "window": describe(events),
+    return {"collector": collector, "init": initialized, "window": describe(events),
             "byKnownOverlay": {name: describe(group) for name, group in cohorts.items()},
+            "safepoints": {name: {"count": len(ms), "ms": quantiles(ms)} for name, ms in safepoints.items()},
             "allocationStalls": {"count": len(allocation_stalls), "ms": quantiles(allocation_stalls)}}
 
 
@@ -71,6 +83,9 @@ def measure(out, incomplete=False):
         locked_seconds = 240 if attempt["seconds"] == 5910 else attempt["seconds"]
         assert lock["closedAt"] >= start + locked_seconds * 1000
         assert 0 < lock["closedAt"] - lock["openedAt"] <= 900_000
+        if not incomplete:
+            assert lock["measurementLease"]["label"] == identity["slot"]
+            assert lock["measurementLease"]["holder"] == "DX-TAIL1"
     dir = out / "stack" / identity["slot"]
     trace = dir / "trace/raw"
     stack = load(dir / "stack.json")
@@ -184,7 +199,8 @@ def measure(out, incomplete=False):
         "resolvedLostAcks": lost_ack["returnedOriginal"] if lost_ack else None,
         "savesPerSecond": len(saved) / max(attempt["seconds"], (max(r["ackPublishedAt"] for r in saved.values()) - start) / 1000),
         "ackMs": quantiles([r["verdictMs"] for r in saved.values()]), "cpuMemory": cpu_memory,
-        "gc": {role: timed_gc(trace, role, start, stop, history, indexes) for role in ("gw-w", "gw-r", "tx")},
+        "gc": {role: timed_gc(trace, role, start, stop, history, indexes, effective.get("startupGc", {}).get(role))
+               for role in ("gw-w", "gw-r", "tx")},
         "gatewayRequests": dict(requests),
         "requestsPerSave": requests.total() / len(saved) if transact_join_missing == 0 else None,
         "transactJoinMissing": transact_join_missing,

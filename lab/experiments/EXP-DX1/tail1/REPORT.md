@@ -40,7 +40,7 @@ Sixteen native gateway tests and the protected-value erasure fixture passed. The
 ## Measurement audit
 
 - The archive extractor checks the compressed SHA-256, ledger identity and each primary ACK. The replay checks the frozen source, population, offers and spacing, and checks the newly populated seed before releasing the driver.
-- The replay binds its timing lock, reports and offers to source, slot and nonce. It checks collector and CPU count against the fresh JVM boot, exact receipt coverage and independent replay reads. PostgreSQL durability, ACK positions and resend receipts are checked. Resource samples bind the container IDs to their cleanup.
+- The replay binds both Mac locks, reports and offers to source, slot and nonce. It checks collector and CPU count against the fresh JVM boot, exact receipt coverage and independent replay reads. PostgreSQL durability, ACK positions and resend receipts are checked. Resource samples bind the container IDs to their cleanup.
 - The receipt oracle compares actual assertion IDs and values at five fresh pinned cuts against its hashed case, along with the observed conflict and receipt order. Captures are created in the newly allocated attempt directory.
 - The archive results are historical. The replay is a diagnostic, and the acceptance contract is unchanged.
 Image source pin changes under `packages/datomic/gateway/src/triplex/gateway/`, SHA-256 before → after.

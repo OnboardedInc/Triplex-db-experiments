@@ -21,6 +21,7 @@ import {
   vmDisk,
   withPool,
 } from "../../../bin/lib.mjs";
+import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { frozenDeep, releaseDeepStart } from "../../../bench/lib/deep-profile.ts";
 import { matchOffers } from "./replay-input.mjs";
 import { arms } from "./arms.mjs";
@@ -92,9 +93,15 @@ async function holdMacWindow(identity, signal, deadline) {
   // Rejected: holding it through the deep seed, or taking all four heavy tokens while seeding.
   const lock = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "locks", "measure");
   const owner = path.join(lock, "owner.json");
+  const waitingAt = Date.now();
   for (;;) {
     signal.throwIfAborted();
     assert(Date.now() < deadline, "Mac timing window unavailable before the replay deadline");
+    const current = readMeasureLease();
+    // [DX-TAIL1] Why: the incoming lease needs this job's heavy token to drain.
+    // Rejected: waiting for that lease while keeping our seed, slot and heavy token.
+    if (current && !current.stale)
+      throw new Error("DX-TAIL1 yielding the heavy token to an incoming measurement lease");
     try {
       fs.mkdirSync(lock);
       break;
@@ -113,6 +120,7 @@ async function holdMacWindow(identity, signal, deadline) {
   }
   return {
     record,
+    waitedMs: record.at - waitingAt,
     release() {
       assert.deepEqual(readJson(owner), record);
       fs.unlinkSync(owner);
@@ -295,9 +303,11 @@ export async function runTail(options, config, manager) {
   fs.mkdirSync(barrier, { recursive: true });
   const reportFile = path.join(raw, "ns-report.json");
   const archiveOut = path.join(out, "archive");
-  execFileSync("python3", [path.join(import.meta.dirname, "archive.py"), archive, archiveOut], {
-    timeout: 90_000,
-  });
+  execFileSync(
+    "python3",
+    [path.join(import.meta.dirname, "archive.py"), archive, archiveOut, "--offers-only"],
+    { timeout: 90_000 },
+  );
   const input = path.join(archiveOut, "offers.json");
   const plan = matchOffers(readJson(input), frozenDeep(0, 10000), seconds);
   const { stageReplay, sourceInventory } = await import("../scale1/source.ts");
@@ -392,9 +402,12 @@ export async function runTail(options, config, manager) {
   process.once("SIGINT", interrupt);
   process.once("SIGTERM", interrupt);
   const signal = controller.signal;
-  let reservation, driver, timer, macWindow, windowTimer;
+  let reservation, driver, timer, macWindow, windowTimer, measureLease;
   let measuredStart;
   const releaseMacWindow = () => {
+    const lease = measureLease;
+    measureLease = undefined;
+    lease?.release();
     if (!macWindow) return;
     const opened = macWindow;
     macWindow = undefined;
@@ -405,12 +418,16 @@ export async function runTail(options, config, manager) {
         identity,
         openedAt: opened.record.at,
         closedAt: Date.now(),
+        sharedLockWaitedMs: opened.waitedMs,
+        measurementLease: lease?.owner ?? null,
+        measurementLeaseWaitedMs: lease?.waitedMs ?? null,
       });
     } catch (error) {
       controller.abort(error);
     }
   };
   try {
+    const admissionRequestedAt = Date.now();
     if (mac) {
       const bytes = Object.fromEntries(roles.map((role) => [role, caps[role] * MiB]));
       reservation = await reserve(config, manager, names, bytes, cpus, signal, 6 * GiB);
@@ -431,6 +448,9 @@ export async function runTail(options, config, manager) {
       cpus,
       seconds,
       platform: process.platform,
+      invokedAt,
+      admissionRequestedAt,
+      admittedAt: Date.now(),
     });
     const stackProcess = spawnBound(
       "bash",
@@ -696,7 +716,24 @@ export async function runTail(options, config, manager) {
     assert.deepEqual(ready.identity, identity);
     assert.deepEqual(ready.seed, readJson(input).seed);
     assert.equal(ready.trace, frozenDeep(0, 10000).sha256);
-    if (mac) macWindow = await holdMacWindow(identity, signal, latest - seconds * 1000 - 135_000);
+    if (mac) {
+      macWindow = await holdMacWindow(identity, signal, latest - seconds * 1000 - 135_000);
+      // [DX-TAIL1] Why: keep the pool stable during offers using the lab's lease,
+      // while other timing users still honor the shared directory. Rejected: draining during seed.
+      const maxWaitMs = Math.min(120_000, latest - Date.now() - seconds * 1000 - 135_000);
+      assert(maxWaitMs > 0, "Insufficient time left to admit the measured window");
+      try {
+        measureLease = await acquireMeasureLease(slot, { holder, timeoutMs: maxWaitMs });
+      } catch (error) {
+        if (error.code === "LEASE_TIMEOUT")
+          throw new Error("DX-TAIL1 could not drain the heavy tokens for its measured window", {
+            cause: error,
+          });
+        throw error;
+      }
+      signal.throwIfAborted();
+      assert.equal(measureLease.owner.label, identity.slot);
+    }
     const { identity: _, ...readyBody } = ready;
     const start = Date.now() + 12_000;
     if (macWindow) {
@@ -761,10 +798,10 @@ export async function runTail(options, config, manager) {
       signal.throwIfAborted();
       write(path.join(out, "allocation-dump-error.json"), { error: String(error) });
     }
-    for (const file of ["ns-report.json", "oracle-case.json", "oracle-expected.json"]) {
+    for (const file of ["oracle-case.json", "oracle-expected.json", "ns-full-read-samples.jsonl"]) {
       const from = path.join(raw, file);
       if (fs.existsSync(from))
-        fs.copyFileSync(from, path.join(out, file), fs.constants.COPYFILE_EXCL);
+        output(path.join(out, file + ".zst"), "zstd", ["-q", "-T1", "-c", from]);
     }
     const writes = path.join(raw, "ns-writes.jsonl");
     if (fs.existsSync(writes))
@@ -789,7 +826,7 @@ export async function runTail(options, config, manager) {
       await driver.done;
     }
     releaseMacWindow();
-    if (fs.existsSync(reportFile) && !fs.existsSync(path.join(out, "ns-report.json")))
+    if (fs.existsSync(reportFile))
       fs.copyFileSync(reportFile, path.join(out, "ns-report.json"), fs.constants.COPYFILE_EXCL);
     for (const name of ["s0.ready.json", "s0.armed.json", "release.json"]) {
       const file = path.join(barrier, name);

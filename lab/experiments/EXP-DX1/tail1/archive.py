@@ -124,7 +124,7 @@ def archive_observations(report, settings, resources, writer_log, primary, histo
             "writerPausesByKnownBenchOverlap": {k: describe(v) for k, v in classification.items()}}
 
 
-def read_archive(archive, output):
+def read_archive(archive, output, offers_only=False):
     with archive.open("rb") as stream:
         actual = hashlib.file_digest(stream, "sha256").hexdigest()
     if actual != ARCHIVE:
@@ -153,7 +153,7 @@ def read_archive(archive, output):
                     assert resources is None and entry.isfile()
                     resources = [json.loads(line) for line in tar.extractfile(entry)]
                 for role in ROLES:
-                    if entry.name == f"trace/raw/{role}-gc.log.zst":
+                    if not offers_only and entry.name == f"trace/raw/{role}-gc.log.zst":
                         assert role not in logs and entry.isfile()
                         logs[role] = subprocess.run(["zstd", "-dc"], input=tar.extractfile(entry).read(),
                                                     capture_output=True, check=True).stdout.decode()
@@ -164,7 +164,7 @@ def read_archive(archive, output):
         while decoder.stdout.read(1024 * 1024):
             pass
         assert decoder.wait() == 0
-    assert set(logs) == set(ROLES) and report is not None and ledger_hash is not None
+    assert report is not None and ledger_hash is not None
     identity = report["deep"]["identity"]
     assert identity["source"] == SOURCE and identity["slot"] == SLOT
     assert report["status"] == "DONE" and report["config"]["zeroReaders"] and not report["finalizationErrors"]
@@ -178,6 +178,14 @@ def read_archive(archive, output):
         assert row["outcome"] == "committed" and not row["expired"]
         assert row["offsetMs"] == row["scheduledAt"] - start
         assert math.isclose(row["verdictMs"], row["ackPublishedAt"] - row["scheduledAt"], abs_tol=.001)
+    output.mkdir(parents=True)
+    write_json(output / "offers.json", {"archive": actual, "ledger": ledger_hash,
+               "source": SOURCE, "slot": SLOT, "start": start, "seconds": 5910,
+               "seed": report["deep"]["seed"], "trace": report["deep"]["trace"],
+               "offers": [{key: row[key] for key in OFFER_KEYS} for row in rows]})
+    if offers_only:
+        return
+    assert set(logs) == set(ROLES)
     history = [{"name": p["name"], "startMs": p["traceStartS"] * 1000, "endMs": p["traceEndS"] * 1000}
                for p in report["phases"] if p["name"].startswith(("p4h", "grow"))]
     # [DX-TAIL1] Why: preserve the analyst's writer clock fit and its exclusion gap.
@@ -194,14 +202,9 @@ def read_archive(archive, output):
         else:
             cohort = "outside-history"
         cohorts[cohort].append(event)
-    output.mkdir(parents=True)
     for role, log in logs.items():
         with (output / f"{role}.log").open("x") as file:
             file.write(log)
-    write_json(output / "offers.json", {"archive": actual, "ledger": ledger_hash,
-               "source": SOURCE, "slot": SLOT, "start": start, "seconds": 5910,
-               "seed": report["deep"]["seed"], "trace": report["deep"]["trace"],
-               "offers": [{key: row[key] for key in OFFER_KEYS} for row in rows]})
     write_json(output / "gc.json", {"archive": actual, "source": SOURCE, "slot": SLOT,
                "primarySaves": len(primary), "resends": len(rows) - len(primary),
                "prefixPrimary": {s: sum(r["offsetMs"] < s * 1000 for r in primary) for s in (180, 240, 300, 900)},
@@ -214,5 +217,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("archive", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--offers-only", action="store_true")
     arguments = parser.parse_args()
-    read_archive(arguments.archive, arguments.output)
+    read_archive(arguments.archive, arguments.output, arguments.offers_only)
