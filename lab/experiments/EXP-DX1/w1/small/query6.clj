@@ -90,9 +90,12 @@
                            "[(triplex.gateway.query/scalar $ ?aFact) ?actor]")
               current (str (pattern ":v") " [(triplex.gateway.query/visible $ ?f 1.0 nil 2)]")
               point (str (pattern ":_tx/change") " [?f :f/subject ?e] [?e :triplex.entity/id \"_tx/edit\"]")
-              disjunction (str (pattern ":_tx/change") " (or-join [?f] "
-                               "[?f :f/subject [:triplex.entity/id \"_tx/edit\"]] "
-                               "[?f :f/subject [:triplex.entity/id " (pr-str gt/root) "]])")
+              ;; [DX-W1] Why: classic Datomic resolves stable IDs through data clauses in the query body.
+              ;; Rejected: requiring the Datomic reference query to accept the lean shortcut syntax.
+              branch (fn [id] (if lean?
+                                (str "[?f :f/subject [:triplex.entity/id " (pr-str id) "]]")
+                                (str "(and [?f :f/subject ?owner] [?owner :triplex.entity/id " (pr-str id) "])")))
+              disjunction (str (pattern ":_tx/change") " (or-join [?f] " (branch "_tx/edit") " " (branch gt/root) ")")
               queries [(native name (pattern ":_tx/change") "?id ?value" edit-world)
                        (native name (pattern ":_tx/changed-entity") "?id ?value" edit-world)
                        (native name point "?id ?value" edit-world)
