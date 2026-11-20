@@ -12,6 +12,7 @@
 (def reuse-prepared (= "1" (System/getenv "TX2_GROUP_REUSE_PREPARED")))
 (def batch-limit (policy/limit "TX2_GROUP_MAX_MEMBERS" 8 128))
 (def pending-limit 256)
+(def max-live-turns 8)
 (def executor (Executors/newCachedThreadPool
   (reify ThreadFactory (newThread [_ r] (doto (Thread. r "triplex-group-writer") (.setDaemon true))))))
 (def lanes (WeakHashMap.))
@@ -201,19 +202,23 @@
                                                stages (assoc :group-stages stages))})
                     (complete! entry {:error (ex-info "Durable member receipt unavailable" {:status 503 :code "OutcomeUnknown"})})))))))))))
 
-(defn next-entry [{:keys [queue accounts rotation]}]
+(defn next-entry [{:keys [queue accounts rotation live-turns]}]
   (let [ready (fn [owners rank]
                 (some (fn [account]
-                    (let [e (first (filter #(and (= account (:account %)) (or (nil? rank) (= rank (:rank %)))) queue))]
-                      (when (and e (every? realized? (:predecessors e))) e))) owners))]
+                        (first (filter #(and (= account (:account %)) (or (nil? rank) (= rank (:rank %)))
+                                              (every? realized? (:predecessors %))) queue))) owners))]
+    ;; [DX-WFIX1] Why: explicit dependencies order related work; a bounded live burst also gives ready bulk a turn.
+    ;; Rejected: waiting on an account's first blocked entry or always preferring live under sustained offers.
     (if policy/priority?
-      (or (ready (:live rotation) :live) (ready (:bulk rotation) :bulk))
+      (or (when (>= (or live-turns 0) max-live-turns) (ready (:bulk rotation) :bulk))
+          (ready (:live rotation) :live)
+          (ready (:bulk rotation) :bulk))
       (ready accounts nil))))
 (defn rotate [owners account more?]
   (cond-> (filterv #(not= account %) owners) more? (conj account)))
 (defn join-turn [owners account]
   (if (some #{account} owners) owners (conj (or owners []) account)))
-(defn choose [state]
+(defn- choose-batch [state]
   (loop [{:keys [queue accounts tails] :as state} state out [] variable 0]
     (if (or (empty? queue) (= (count out) batch-limit)) [state out]
       (let [next (next-entry state) _ (assert next "Oldest pending command must be eligible")
@@ -240,6 +245,12 @@
                 taken (conj out (assoc entry :dispatch (System/nanoTime)))]
             (deliver (:token entry) true)
             (if solo [s taken] (recur s taken priced))))))))
+(defn choose [state]
+  (let [[next batch] (choose-batch state)]
+    [(if (and policy/priority? (seq batch))
+       (assoc next :live-turns (if (= :live (:rank (first batch)))
+                                 (min max-live-turns (inc (or (:live-turns state) 0))) 0))
+       next) batch]))
 (defn submit! [conn entry]
   (let [entry (merge {:rank :live} entry) lane (lane-for conn) p (promise) token (promise)
         launch (locking lane
@@ -264,7 +275,7 @@
           (try (execute! conn batch)
                (catch Throwable t (doseq [e batch] (complete! e {:error t}))))
           (when-let [next-batch (locking lane
-                                 (if (empty? (:queue @lane)) (do (swap! lane assoc :active false) nil)
+                                 (if (empty? (:queue @lane)) (do (swap! lane assoc :active false :live-turns 0) nil)
                                    (let [[s taken] (choose @lane)] (reset! lane s) taken)))]
             (recur next-batch))))))
     (outcome-future p)))

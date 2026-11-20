@@ -49,3 +49,29 @@
                                                                (get-in % ["value_number" "v"]))) (stored checkpoint)))))
            (is (= ["reference" config] (mapv #(get-in (first (stored ref)) [% "v"]) ["id" "value_string"])))
            (is (= "release-data" (get-in (first (stored config)) ["value_string" "v"])))))))))
+
+(deftest ready-live-and-all-bulk-classes-progress
+  (with-redefs [group/enabled true policy/priority? true policy/field-only? true]
+    (let [entry (fn [id account kind predecessors]
+                  {:id id :account account :subject id :rank (if (= kind "live") :live :bulk)
+                   :write-class kind :eligible true :keys #{} :predecessors predecessors :token (promise)})
+          import (entry "import" "a" "import" [])
+          activation (entry "activation" "a" "activation" [])
+          notice (entry "notice" "a" "notice" [])
+          dependent (entry "dependent" "a" "live" [(:token import)])
+          independent (entry "quiet" "a" "live" [])
+          busy #(entry (str "busy-" %) "b" "live" [])
+          initial {:queue [import dependent independent activation notice (busy 0)]
+                   :accounts ["a" "b"] :rotation {:live ["a" "b"] :bulk ["a"]} :tails {}}
+          taken (loop [state initial i 1 ids []]
+                  (if (> i 32) ids
+                    (let [[next batch] (group/choose state)]
+                      (recur (if (some #(= "b" (:account %)) batch)
+                               (-> next (update :queue conj (busy i))
+                                   (update :accounts group/join-turn "b")
+                                   (update-in [:rotation :live] group/join-turn "b")) next)
+                             (inc i) (into ids (map :id batch))))))]
+      (is (= "quiet" (first taken)))
+      (is (= ["quiet" "import" "dependent" "activation" "notice"]
+             (filterv #(#{"quiet" "import" "dependent" "activation" "notice"} %) taken)))
+      (is (< 0 (.indexOf taken "import") (.indexOf taken "dependent") (.indexOf taken "notice") 32)))))
