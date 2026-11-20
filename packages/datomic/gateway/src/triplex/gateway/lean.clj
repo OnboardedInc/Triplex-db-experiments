@@ -26,6 +26,12 @@
 (defn by-id [db id]
   (let [p (prefix id) datom (first (d/index-range db :triplex.entity/row p nil))]
     (when (and datom (.startsWith ^String (:v datom) p)) datom)))
+(defn retirement [^String text]
+  (let [end (+ 5 (Integer/parseInt text 1 5 16))]
+    {:id (subs text 5 end)
+     :retracted_position (Long/parseLong text end (+ end 16) 10)
+     :retracted_at (reach/bits text (+ end 16))
+     :retract_tx_id (subs text (+ end 32))}))
 (defn history-entity [db eid]
   (let [history (d/history db)
         markers (into {} (map (fn [datom]
@@ -36,10 +42,7 @@
            (let [row (decode text) retired (first (filter #(not (:added %)) datoms))
                  ^String marker (get markers (prefix (:id row)))]
              (cond
-               marker (let [start (.length ^String (prefix (:id row)))]
-                        (assoc row :retracted_position (Long/parseLong marker start (+ start 16) 10)
-                                   :retracted_at (reach/bits marker (+ start 16))
-                                   :retract_tx_id (subs marker (+ start 32))))
+               marker (merge row (retirement marker))
                retired (let [tx (:tx retired)]
                          (assoc row :retracted_at (ledger/clock db tx)
                                     :retracted_position (value db tx :triplex.tx/position)
