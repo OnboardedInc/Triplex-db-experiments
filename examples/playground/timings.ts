@@ -95,7 +95,7 @@ export class Timings {
     const value = await requestSamples.run(samples, () => withTrace(trace, work));
     const totalMs = performance.now() - started;
     finishTrace(trace);
-    const spans = trace?.spans.filter((s) => s.layer === "client" && s.synchronous) ?? [];
+    const spans = trace?.spans.filter((s) => s.layer === "typescript" && s.synchronous) ?? [];
     // Synchronous spans can nest. Bound each interval to the union of observed client work.
     const ranges = spans.map((s) => [s.start, s.end] as const).sort((a, b) => a[0] - b[0]);
     let end = -Infinity;

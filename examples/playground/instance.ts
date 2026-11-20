@@ -8,7 +8,7 @@ import { Stack, type StackOptions } from "./stack.ts";
 export type InstanceOptions = StackOptions & {
   apiPort: number;
   token?: string;
-  fixture: Source;
+  fixture: Source | ((signal: AbortSignal) => Promise<Source>);
 };
 
 export async function openInstance(options: InstanceOptions) {
@@ -27,6 +27,8 @@ export async function openInstance(options: InstanceOptions) {
   const stack = new Stack({ ...options, signal });
   let playground: import("./service.ts").Playground | undefined;
   const ready = (async () => {
+    const fixture =
+      typeof options.fixture === "function" ? await options.fixture(signal) : options.fixture;
     const started = performance.now();
     const urls = await stack.start();
     const stackMs = performance.now() - started;
@@ -34,7 +36,7 @@ export async function openInstance(options: InstanceOptions) {
     process.env["TRIPLEX_TRACE_LEVEL"] = "full";
     const { Playground } = await import("./service.ts");
     const { Timings } = await import("./timings.ts");
-    playground = new Playground(options.fixture, urls, options.prefix);
+    playground = new Playground(fixture, urls, options.prefix);
     await playground.seed(signal);
     signal.throwIfAborted();
     invoke = actionService(playground, new Timings(stack.traceDir, options.prefix, urls.source));

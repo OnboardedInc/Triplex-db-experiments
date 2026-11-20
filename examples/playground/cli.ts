@@ -123,14 +123,14 @@ async function start() {
     const source = values.data ?? process.env["PLAYGROUND_DATA_URL"];
     if (values.tier === "full" && !source)
       throw new Error("Set PLAYGROUND_DATA_URL or pass --data for the full tier");
-    const fixture =
-      values.tier === "full"
-        ? await (
-            await import("./bundle.ts")
-          ).openBundle(source!, join(repo, ".cache/playground-data"), abort.signal)
-        : loadFixture(values.larger);
-    if ("manifest" in fixture && fixture.manifest.tier !== "full")
-      throw new Error("Full tier requires a full manifest");
+    const fixture = async (signal: AbortSignal) => {
+      if (values.tier === "small") return loadFixture(values.larger);
+      const bundle = await (
+        await import("./bundle.ts")
+      ).openBundle(source!, join(repo, ".cache/playground-data"), signal);
+      if (bundle.manifest.tier !== "full") throw new Error("Full tier requires a full manifest");
+      return bundle;
+    };
     instance = await openInstance({
       prefix,
       token: owner.token,

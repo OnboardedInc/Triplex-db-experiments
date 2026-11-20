@@ -124,8 +124,7 @@ function nativeExamples(personId: string) {
   return [
     {
       label: "Person names",
-      query:
-        '[:find ?id ?name :in $ $rules :where [?f :f/attr ?attr] [?attr :triplex.attr/key ":person/name"] [?f :f/live ?p] [?p :triplex.entity/id ?id] [?f :f.v/string ?name]]',
+      query: `[:find ?id ?name :in $ $rules :where [?p :triplex.entity/id ${JSON.stringify(personId)}] [?p :triplex.entity/id ?id] [?f :f/live ?p] [?f :f/attr ?attr] [?attr :triplex.attr/key ":person/name"] [?f :f.v/string ?name]]`,
     },
     {
       label: "Person status assertions",

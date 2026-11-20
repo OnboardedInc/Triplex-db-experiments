@@ -241,7 +241,8 @@ async function followRelease(id: string, subject: Entry, rev: number) {
       " / " +
       p.total +
       " answers · first answer " +
-      millis(reply["firstAnswerMs"]);
+      millis(reply["firstAnswerMs"]) +
+      (p.backgroundMs === undefined ? "" : " · background " + millis(p.backgroundMs));
     if (p.state === "complete" || p.state === "failed") {
       if (rev === displayRevision) show("Materialized release answer", request, reply);
       return;
