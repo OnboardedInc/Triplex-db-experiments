@@ -1,15 +1,10 @@
 import assert from "node:assert/strict";
 import { traffic } from "../ha1/one-backup.ts";
-import {
-  pinnedLoop,
-  populate,
-  receipts,
-  requestIndex,
-  verifySuffix,
-  type Account,
-} from "../ha1/one-db.ts";
+import { pinnedLoop, populate, receipts, requestIndex, type Account } from "../ha1/one-db.ts";
 import type { SyncPair } from "./pair.ts";
 import { lsn, timeouts, wait } from "./supervisor.ts";
+import { driveOffers } from "./offers.ts";
+import { auditFeed } from "./faults.ts";
 
 export async function moveDrill(
   pair: SyncPair,
@@ -34,20 +29,33 @@ export async function moveDrill(
   const witness = await ac.send(ac.intent("old-receipt", 10, "move"));
   const prior = await receipts(ac);
   await ac.pinned(old);
+  const selected = ac.inputs.slice(-3);
+  const offered = await driveOffers(pair.s.e, ac, old, {
+    writer: pair.route!.url,
+    reader: pair.reader,
+  });
+  await offered.lead();
   const monitor = pinnedLoop(ac, old);
   const command = ac.intent("after-planned-cut", 10, "move");
   const run = pair.supervisor().run("planned", "two-copy");
   run.catch(() => {});
+  const marks = () =>
+    Object.fromEntries(
+      pair.transitions
+        .filter((s) => s.stage === "sealed" || s.stage === "routed")
+        .map((s) => [s.stage === "sealed" ? "fault" : "routed", s.at]),
+    );
   try {
     const sealed = await wait(
       "planned writer fence",
       timeouts.replay + timeouts.control,
       async () => pair.transitions.find((s) => s.stage === "sealed"),
     );
-    const offered = performance.now();
+    const sentAt = performance.now();
     const first = ac.send(command);
     first.catch(() => {});
     await run;
+    const availability = await offered.finish(marks(), true);
     const fresh = await first;
     const at = ac.arrivals.get(command.operationId)!;
     const samples = await monitor.finish();
@@ -69,12 +77,14 @@ export async function moveDrill(
     assert.deepEqual(await ac.send(command), fresh);
     await ac.pinned(old);
     await ac.pinned(fresh);
+    const traffic = await offered.resolve();
     const recovered = await receipts(ac);
     await pair.auditCheckpoint("after");
-    const verified =
-      options.auditSeed === false
-        ? await verifySuffix(ac, before.t.v, ac.inputs.slice(-4))
-        : await ac.verify();
+    const verified = await auditFeed(
+      ac,
+      options.auditSeed === false ? [...selected, command, ...traffic.inputs] : ac.inputs,
+      options.auditSeed === false ? before.t.v : ac.cursor,
+    );
     const result = {
       population,
       copy,
@@ -84,7 +94,9 @@ export async function moveDrill(
       fresh,
       stages: pair.transitions,
       firstWritePauseMs: at - sealed.at,
-      offerAfterSealMs: offered - sealed.at,
+      availability,
+      offersRetried: traffic.settlements.filter((s) => s.disposition === "retried").length,
+      offerAfterSealMs: sentAt - sealed.at,
       protectedLsn,
       prior,
       recovered,
@@ -96,6 +108,7 @@ export async function moveDrill(
     pair.s.e.write("move", result);
     return result;
   } finally {
+    await offered.finish(marks());
     await monitor.finish();
     await run.catch(() => undefined);
   }

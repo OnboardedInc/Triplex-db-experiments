@@ -16,6 +16,7 @@ import type { SyncPair } from "./pair.ts";
 import { replayEvidence } from "./replay.ts";
 import { lsn, timeouts, wait } from "./supervisor.ts";
 import { walLink } from "./wal-link.ts";
+import { driveOffers } from "./offers.ts";
 
 export const faultModes = [
   "hasync-commit",
@@ -149,7 +150,7 @@ async function checkOldRestart(pair: SyncPair) {
   return result;
 }
 
-async function auditFeed(ac: Account, inputs: typeof ac.inputs, from: string) {
+export async function auditFeed(ac: Account, inputs: typeof ac.inputs, from: string) {
   const order = inputs
     .slice()
     .sort((a, b) =>
@@ -291,11 +292,23 @@ async function faultWork(
   let withoutAck: DatomicClient | undefined;
   let trap: unknown;
   let restart: Awaited<ReturnType<typeof checkOldRestart>> | undefined;
-  let from: number;
+  let from: number | undefined;
   let indexWork: Promise<unknown> | undefined;
+  let offered: Awaited<ReturnType<typeof driveOffers>> | undefined;
+  const marks = () => ({
+    ...(from === undefined ? {} : { fault: from }),
+    ...Object.fromEntries(
+      pair.transitions.filter((s) => s.stage === "routed").map((s) => [s.stage, s.at]),
+    ),
+  });
+  const start = async () => {
+    offered = await driveOffers(e, ac, pin, { writer: pair.route!.url, reader: pair.reader });
+    await offered.lead();
+  };
   const monitor = pinnedLoop(ac, pin);
   const current = trackWitness(ac);
   try {
+    if (!logPod && mode !== "hasync-index") await start();
     if (mode !== "hasync-index" && mode !== "hasync-restart") {
       // The 2,000-fact import is one authored transaction across ten subjects.
       pending = ac.intent(
@@ -400,11 +413,14 @@ async function faultWork(
       control = detached(pair.supervisor().run("fault", "single-copy-after-fence"));
     } else {
       if (trap) e.log("fault-trap", trap);
+      if (!offered) await start();
       control = detached(pair.supervisor().run("fault", "single-copy-after-fence"));
       const killed = await pair.s.kill("pg");
       from = killed.from;
     }
     await control;
+    assert(from !== undefined);
+    const availability = await offered!.finish(marks(), true);
     if (mode === "hasync-restart") restart = await checkOldRestart(pair);
     let initialStatus: string | undefined;
     let resolution: Receipt | undefined;
@@ -423,26 +439,29 @@ async function faultWork(
       if (readOriginal) assert.deepEqual(resolution, readOriginal);
       assert.deepEqual(await ac.send(pending), resolution);
     }
-    const fresh = await ac.send(ac.intent("new-writer", 10, witness));
+    const freshInput = ac.intent("new-writer", 10, witness);
+    const fresh = await ac.send(freshInput);
     const firstNewAt =
       resolution && initialStatus === "absent"
         ? ac.arrivals.get(resolution.operationId)!
         : ac.arrivals.get(fresh.operationId)!;
-    selected.push(ac.inputs.at(-1)!);
+    selected.push(freshInput);
     const polls = await monitor.finish();
     const repeat = await current.finish(true);
-    const during = polls.filter((v) => v.start >= from && v.end <= firstNewAt);
+    const faultAt = from;
+    const during = polls.filter((v) => v.start >= faultAt && v.end <= firstNewAt);
     assert(
       during.length > 0 && during.every((v) => v.code === "ok"),
       "Read outage or missing in-window probe",
     );
     await ac.pinned(pin);
+    const traffic = await offered!.resolve();
     const recovered = await receipts(ac);
     await pair.auditCheckpoint("after");
     const replay = await replayEvidence(e, ac, selected);
     const feed = await auditFeed(
       ac,
-      auditSeed ? ac.inputs : selected,
+      auditSeed ? ac.inputs : [...selected, ...traffic.inputs],
       auditSeed ? ac.cursor : baseline.t.v,
     );
     const report = {
@@ -455,6 +474,8 @@ async function faultWork(
       fresh,
       restart,
       firstNewMs: firstNewAt - from,
+      availability,
+      offersRetried: traffic.settlements.filter((s) => s.disposition === "retried").length,
       polls,
       repeat,
       during: during.length,
@@ -468,6 +489,7 @@ async function faultWork(
     e.write("fault", report);
     return report;
   } finally {
+    await offered?.finish(marks());
     await monitor.finish();
     await current.finish(false);
     withheld?.drop();

@@ -41,3 +41,5 @@ node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9
 ```
 
 Scoped TypeScript, 16 focused tests and the latch/route checks passed. The broader oracle suite had three failures in unchanged contract coverage and the HAM source hash. All started Mac volumes were removed. No acceptance pin moved. [Evidence index](EVIDENCE.md) · [Checksums](SHA256SUMS)
+
+Part 2 records independent scheduled offers at five one-to-three-fact saves and 50 pinned reads per second per system. It seals the offer and outcome stream before resolving ambiguous saves under the original command IDs. Recovery clocks distinguish a newly offered on-time save from a recovered original or a late answer. [Schedule and recount](offers.ts)
