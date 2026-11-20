@@ -1,24 +1,24 @@
-The reader and gateways kept the same person-cache entries throughout the thin and deep imports.
-In the last 24,464 people of the earlier thin import, the read and write gateways added 14 and 25 resident bytes per person.
-The smaller deep import still shows large changes in resident pages. Growth at the account sizes in the physical queue remains open.
+The reader and gateways kept the same person-cache entries while thin imports grew to 600,000 people and the same 2,000 remained active.
+From 300,000 to 600,000 people, the reader added zero resident bytes per person, the read gateway shrank slightly, and the write gateway added nine.
+The transactor's cache was nearly full, while its memory still grew. The larger deep sweep is pending.
 A running gateway opened its first deep record in 132–144 ms. Fresh stacks took 342–491 ms. Most of that difference was inside the gateway.
 At 128 scopes the write gateway had 565 threads and the transactor had 1,097. The last 96 scopes added about four and eight threads each.
 The first merged native path passed all 54,079 checks. The latest notice and reader tests passed and the refreshed native gates are queued.
 The physical campaign uses two pairs at each deep size. The field-save tape uses measured per-account rates and the frozen tape keeps its original rules.
-The larger thin sweep has started. Three campaign smokes stopped before the paired trace. The latest seeded all 40 people before SQLite refused the shared filesystem.
+The thin sweep finished. Three campaign smokes stopped before the paired trace. The latest seeded all 40 people before SQLite refused the shared filesystem.
 
 ## Mac observations at fixed activity
 
-| Role | Thin RSS MiB at 26,528 / 51,008 / 75,536 / 100,000 | Last interval B/person | Deep RSS MiB at 2,650 / 5,102 / 7,554 / 10,000 | Last interval B/person |
+| Role | Thin RSS MiB at 100,000 / 300,000 / 600,000 | Last interval B/person | Early deep RSS MiB at 2,650 / 5,102 / 7,554 / 10,000 | Last interval B/person |
 | --- | ---: | ---: | ---: | ---: |
-| Reader | 168 / 168 / 168 / 168 | 0 | 138 / 138 / 138 / 138 | 0 |
-| Read gateway | 294 / 296 / 304 / 304 | 14 | 296 / 300 / 309 / 316 | 3,126 |
-| Write gateway | 308 / 318 / 320 / 321 | 25 | 309 / 319 / 321 / 317 | −1,670 |
-| Transactor | 635 / 706 / 773 / 779 | 274 | 712 / 729 / 825 / 864 | 17,015 |
-| PostgreSQL | 658 / 975 / 1,266 / 1,511 | 10,516 | 1,240 / 1,623 / 1,712 / 1,771 | 25,025 |
-| Driver | 197 / 198 / 200 / 201 | 25 | 234 / 244 / 254 / 281 | 11,635 |
+| Reader | 140.68 / 140.68 / 140.68 | 0 | 138 / 138 / 138 / 138 | 0 |
+| Read gateway | 310.07 / 325.21 / 324.18 | −3.6 | 296 / 300 / 309 / 316 | 3,126 |
+| Write gateway | 325.52 / 322.20 / 324.68 | 8.7 | 309 / 319 / 321 / 317 | −1,670 |
+| Transactor | 773.46 / 916.64 / 1,038.64 | 426.4 | 712 / 729 / 825 / 864 | 17,015 |
+| PostgreSQL | 1,378.63 / 1,663.68 / 1,831.46 | 586.5 | 1,240 / 1,623 / 1,712 / 1,771 | 25,025 |
+| Driver | 227.68 / 235.13 / 237.45 | 8.1 | 234 / 244 / 254 / 281 | 11,635 |
 
-The four samples in each series come from `d0a909ba4`, before any remaining activity. The same 1,000 thin or 100 deep readers had opened their worlds, with the full 2% already seeded. Cache limits were 16 MiB in the reader per touched scope, 32 MiB of native peer cache per gateway, 8 MiB of gateway rows and 1 MiB / 4,096 IDs per scope. The transactor had an 8 MiB index threshold, 32 MiB index maximum, 192 MiB object cache and 840 MiB JVM heap ceiling. PostgreSQL shared buffers were 96 MiB. Summed PostgreSQL RSS can count each shared page several times. The thin gateways' last slopes were below 64 B per person. The deep slopes and the native resident plateau remain unverified at production sizes. The 100/150/200 thin pilot verified one fixed working set, PostgreSQL buffer accounting and managed cleanup. [Forecasts and refuters](PREDICTIONS.md)
+The thin sweep on `cfec11ea1` held 2,000 touches fixed. Earlier deep snapshots on `d0a909ba4` held 100 fixed. Caps were 16 MiB per reader scope, 32 MiB per gateway peer and 8 MiB rows plus 1 MiB / 4,096 IDs per gateway scope. The transactor charged 180.42 of 181.19 MB at 600,000, against a configured 192 MiB object cache. Its 8/32 MiB index thresholds and 840 MiB heap ceiling did not establish an RSS plateau. PostgreSQL assigned all 96 MiB of shared buffers from 100,000 onward and summed RSS counts shared pages repeatedly. The thin reader and gateways met 64 B at the final interval. [Forecasts and refuters](PREDICTIONS.md)
 
 ## Mostly idle scopes
 
