@@ -344,7 +344,7 @@ export class SyncPair {
           "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m",
       ],
       "/opt/datomic/bin/run",
-      ["-m", "triplex.gateway.ha-observer", 8080],
+      ["-m", "triplex.gateway.ha-observer", "8080"],
       8080,
     );
     return s.ready(role);
@@ -411,7 +411,7 @@ export class SyncPair {
         transactor: s.members.get("active")!.id,
         method: "startup-latch-and-stop" as const,
       },
-      finalFlush,
+      ...(finalFlush === undefined ? {} : { finalFlush }),
     };
   }
   async promote() {

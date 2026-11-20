@@ -27,10 +27,15 @@ export async function drill(
     await s.open();
     if (e.mode.startsWith("hasync-")) {
       const { SyncPair } = await import("../hasync1/pair.ts");
-      const { smoke } = await import("../hasync1/smoke.ts");
       const pair = new SyncPair(s);
       cleanupShared = () => pair.cleanup();
-      result = await smoke(pair, profile.people);
+      if (e.mode === "hasync-smoke") {
+        const { smoke } = await import("../hasync1/smoke.ts");
+        result = await smoke(pair, profile.people);
+      } else {
+        const { faultDrill } = await import("../hasync1/faults.ts");
+        result = await faultDrill(pair, profile.people, e.mode);
+      }
     } else if (e.mode.startsWith("load-"))
       result = await (await import("../load1/run.ts")).load(s, profile.people);
     else if (e.mode === "failures")

@@ -85,6 +85,7 @@ export class Supervisor {
           mark("detected", { misses, sample, floor: this.#floor });
           return true;
         }
+        return undefined;
       });
     } else {
       const sample = await p.primary();
