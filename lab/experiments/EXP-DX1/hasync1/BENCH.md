@@ -18,9 +18,9 @@ A system receives five saves and 50 pinned reads per second. At scale, two read 
 | Cold reads and native log replay after failover | Read completion gap 0.1–1.0 s on healthy peers. Replay of a ≤40 MiB post-index tail should take 0.1–2.5 s. Gateway and broker timings are captured separately. |
 | Mid-commit, import, directional WAL cuts, and reboot | 11–40 s to a fresh save. No lost earlier receipt, duplicate command, changed pin or out-of-order feed entry. |
 | Planned move at 16M / 160M | 18–30 s / 21–40 s. Data precopy stays outside the pause. Heavy write tails or large rewind can cross the 30-second bar. The paired run measures 16M. |
-| Last system after shared PostgreSQL failure at 1 / 4 / 10 systems | 12–27 s / 15–34 s / 20–46 s. Shared SQL promotes once and each Datomic writer rejoins concurrently. |
-| Last system after dedicated PostgreSQL failure at 1 / 4 / 10 systems | 12–28 s / 16–38 s / 24–55 s. SQL and Datomic recovery run concurrently with more I/O and process overhead. |
-| Idle resources | Forecast each active or standby transactor 120–260 MiB and 0.005–0.05 core. Each small PostgreSQL member 30–100 MiB and under 0.05 core. Add one peer JVM per side. Measure deltas over two heartbeat rounds. |
+| Last system after shared PostgreSQL failure at 1 / 4 / 10 systems | 12–27 s / 11–34 s / 20–46 s. The Mac last-save diagnostics were 17.50 s and 12.02 s for one and four. Shared SQL promotes once and each Datomic writer rejoins concurrently. |
+| Last system after dedicated PostgreSQL failure at 1 / 4 / 10 systems | 12–28 s / 13–38 s / 24–55 s. The Mac last-save diagnostics were 19.87 s and 22.25 s for one and four. SQL and Datomic recovery can run concurrently and compete for I/O. |
+| Idle resources | Forecast each transactor at 120–260 MiB and 0.003–0.05 core. Small dedicated PostgreSQL members 30–100 MiB each and shared members 85–160 MiB each. Forecast 200–300 MiB for the gateway per side. Measure deltas over two heartbeat rounds. |
 | One-copy gap / fresh synchronous standby | 12–38 s to reopen on one copy when the fence works. Full replacement 45–180 s at 16M and 7–27 min at 160M at 75–150 MB/s effective copy plus catch-up. |
 | Synchronous save surcharge at depths 1 / 16 / 64 | +0.23–0.74 ms isolated or ungrouped. +0.03–0.19 ms per save in groups of four to eight. |
 | Paired run with prepared builds and 40 GB free per host | 75–85 min for the cells and up to four minutes for launch and collection at expected archive sizes. The worker stops starting cells at 85 min and the service ceiling is 89 min. |
