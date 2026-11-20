@@ -36,6 +36,7 @@ import { pooledPhase } from "./lib/pooled-phases.ts";
 import { applyCommitVerdicts, matchBaseline, refreshVerdictEligibility } from "./lib/verdict.ts";
 import { checkV3Trace, inIntervals, intervalMs, scheduledV3Windows, settledPhaseWindow, type Interval } from "./lib/verdict-plan.ts";
 import { V3_PLAN_ID, V3_OFFER_SECONDS } from "./lib/phases.ts";
+import { matchOffers } from "../experiments/EXP-DX1/tail1/replay-input.mjs";
 import { idlePlan, type IdleEvent } from "./lib/idle-plan.ts";
 import { IdleKeep } from "./lib/idle-keep.ts";
 /**
@@ -164,6 +165,17 @@ if(smallOnly) assert.equal(rungSubjects,smallPeople(deepAccount));
 const plannedTenants=tenantSpec&&deepId?tenantPlan(tenantSpec,deepId.arm):undefined;
 const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events,deepLive) : undefined;
 const deepPlan = plannedTenants ?? (smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined);
+// [DX-TAIL1] Why: a continuous diagnostic prefix preserves original arrival intervals and subject predecessors.
+// Rejected: shortening idle gaps, which changes heap aging and offered load.
+const tailOffers = opt("tail1-offers");
+const tailSeconds = opt("tail1-seconds");
+if ((tailOffers === undefined) !== (tailSeconds === undefined) ||
+    (tailOffers && (!fullLength || !deep || deepId?.arm !== "zero" || deepAccount !== 0 || rungSubjects !== 10000)))
+  throw Error("DX-TAIL1 requires the original zero-reader deep-10k account and a schedule");
+const tailReplay = tailOffers
+  ? matchOffers(JSON.parse(fs.readFileSync(tailOffers, "utf8")), frozenDeep(0, 10000), Number(tailSeconds))
+  : undefined;
+const shortTail = tailReplay && tailReplay.seconds !== V3_OFFER_SECONDS ? tailReplay : undefined;
 const deepWriter = deepPlan && !tenantSpec ? new DeepWriter(deepPlan.activeSubjects) : undefined;
 const deepWitness = deep ? new DeepSeedWitness() : undefined;
 const cells = deep ? deepCells(rungSubjects) : undefined;
@@ -172,6 +184,7 @@ if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--o
 const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
+if (tailReplay) devFlags.push("tail1-replay");
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 if (flag("legacy-empty-basis-broadcast")) devFlags.push("legacy-empty-basis-broadcast");
 const boundedMemoryTrial = process.env.DX_BOUNDED_MEMORY_TRIAL === "1";
@@ -265,7 +278,7 @@ if (config.idleKeep !== "none" || process.env.DX_IDLE_SENTINEL === "1" || proces
 if(opt("idle-warmup-commits") && !config.idleGapsMs) throw Error("One-time warmup count is currently a fixed-gap diagnostic control, not an adopted v3 policy");
 if (fullLength && (config.levelS || config.readerLadderOnly || config.legacyEmptyBasisBroadcast || config.maxReaders !== null || config.rateScale !== 1 || config.schedulerTiming !== "precise" || config.historyGrowthSubjects !== 4 || config.burstMultiplier !== TRACE_DEFAULTS.burstMultiplier || config.matchDurationS !== null && config.matchDurationS !== V3_OFFER_SECONDS))
   throw Error("v3 requires its full fixed phase plan and unchanged offered rate");
-if (fullLength) config.matchDurationS = V3_OFFER_SECONDS;
+if (fullLength) config.matchDurationS = tailReplay?.seconds ?? V3_OFFER_SECONDS;
 if (!["heap", "journal", "worker-journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
 if (!["sender", "replica-worker"].includes(config.receiptCapture)) throw Error("Invalid receipt capture mode");
 // [DX-BM1] Why: ladder readers and receipt captures have distinct sequenced spill ports and both drain before final accounting.
@@ -347,6 +360,7 @@ const report: Record<string, any> = latencyReceipt({
   runTag,
   scope: scopeName,
   ...(deepId ? { deep: { profile: deepLive ? liveProfile : DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
+  ...(tailReplay ? { tailReplay } : {}),
   generator: { traceSha256: sha256File(deep ? "lab/bench/lib/deep-trace.ts" : "lab/bench/lib/trace.ts"), worldSha256: sha256File(deep ? "lab/bench/lib/deep-world.ts" : "lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
@@ -886,7 +900,8 @@ async function run() {
     const st = state.get(ev.subject)!;
     const cmd = traceSync("driver.plan-and-encode-command", () => {
       if (ev.stream === "background" && tenantWriters) return tenantWriters.build(runTag, ev as TenantEvent, st, job.scheduledAt);
-      if (ev.stream === "background" && deepWriter) return deepWriter.build(runTag, ev as DeepEvent, st, job.scheduledAt);
+      if (ev.stream === "background" && deepWriter)
+        return deepWriter.build(runTag, ev as DeepEvent, st, tailReplay ? tailReplay.start + ev.atMs : job.scheduledAt);
       return buildTraceCommand({ runTag, event: ev, state: st, scheduledAbsMs: job.scheduledAt });
     });
     if (jobsByCommandId.has(cmd.commandId)) throw Error("Duplicate active writer command identity");
@@ -929,7 +944,7 @@ async function run() {
     const pl = ids.placement(ev.subject);
     st.stamp = cmd.newStamp;
     st.stampId = receipt.triples.find((t) => t.entityId === pl && t.attribute === ":placement/stamp")!.id;
-    st.stampValidFrom = Math.floor(job.scheduledAt);
+    st.stampValidFrom = Math.floor(tailReplay ? tailReplay.start + ev.atMs : job.scheduledAt);
     if (cmd.newAddress) {
       st.address = cmd.newAddress;
       st.addressId = receipt.triples.find((t) => t.entityId === ids.worker(ev.subject) && t.attribute === ":worker/address")!.id;
@@ -1181,13 +1196,17 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
-  const plan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
+  const completePlan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
     { name: "warmup", readers: config.zeroReaders ? 0 : 1, seconds: 5, measured: false },
     { name: "L4", readers: config.zeroReaders ? 0 : 4, seconds: 25, measured: true, ladder: true, mode: "mixed" },
   ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-live" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
+  const plan = shortTail ? completePlan.flatMap((phase) => {
+    if (phase.traceFromS === undefined || phase.traceFromS >= shortTail.seconds) return [];
+    return [{ ...phase, seconds: Math.min(phase.seconds!, shortTail.seconds - phase.traceFromS) }];
+  }) : completePlan;
   const phases: any[] = [];
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
   // Rejected: issuing maintenance after readers stop.
@@ -1201,7 +1220,7 @@ async function run() {
   }
   await sleep(Math.max(0, traceStart - now()));
   if (deep) void watermarkSampler(aux);
-  if (deep && (fullLength || interferenceOnly || smallOnly)) scheduler.setUntil(traceStart + (smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : V3_OFFER_SECONDS) * 1000);
+  if (deep && (fullLength || interferenceOnly || smallOnly)) scheduler.setUntil(traceStart + (smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : tailReplay?.seconds ?? V3_OFFER_SECONDS) * 1000);
   scheduler.start();
   probeScheduler?.start();
   if (config.probe10PerS > 0) probeTimer = setInterval(() => void overlay("probe10", probeRng.int(N), 10), 1000 / config.probe10PerS);

@@ -209,6 +209,13 @@ for port in "$port_w" "$port_r"; do
   [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 && "$port" != 15442 && "$port" != 17019 ]] || exit 2
 done
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
+stack_labels=()
+if [[ -n ${DX_TAIL1_ATTEMPT:-} ]]; then
+  # [DX-TAIL1] Why: bind the owned stack to the reservation and reject name reuse at cleanup.
+  # Rejected: inferring ownership from the slot number alone.
+  [[ $prefix == tx2-dxscale1-tail1-* && $DX_TAIL1_ATTEMPT =~ ^[a-f0-9-]{36}$ ]]
+  stack_labels=(--label tx2.holder=DX-TAIL1 --label "tx2.tail1=$DX_TAIL1_ATTEMPT")
+fi
 network_tuning=()
 if [[ ${DX_IDLE_TCP:-default} != default ]]; then
   # [DX-T1-10] Why: test slow-start-after-idle only in this attempt's endpoint namespaces, leaving guest/global settings alone.
@@ -263,7 +270,7 @@ print(hashlib.sha256(data).hexdigest())
 PY
 )
 # Copy only from the already-local image; never start its inherited entrypoint.
-docker create --name "$prefix-extract" --pull never tx2-datomic:1.0.7745-da00 >/dev/null
+docker create --name "$prefix-extract" ${stack_labels[@]+"${stack_labels[@]}"} --pull never tx2-datomic:1.0.7745-da00 >/dev/null
 trap 'docker rm -f "$prefix-extract" >/dev/null 2>&1 || true' EXIT
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   docker cp "$prefix-extract:/opt/datomic/bin/sql/$file" "$attempt/sql/$file"
@@ -341,7 +348,7 @@ if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
     -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" \
     --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
-docker network create "$prefix-net" >/dev/null
+docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
 if [[ $seed_volume == bm1-pristine-* ]]; then
@@ -364,7 +371,7 @@ CLONE_LEASE
   docker volume inspect "$seed_volume" > "$attempt/seed-source-volume.json"
   [[ -z $(docker ps -q --filter "volume=$seed_volume") ]] || { echo 'Seed source is active' >&2;exit 2; }
   if docker volume inspect "$prefix-pg-data" >/dev/null 2>&1;then echo 'Refusing an existing clone destination' >&2;exit 2;fi
-  docker volume create "$prefix-pg-data" >/dev/null
+  docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
   docker create --pull never --name "$prefix-seed-copy" --read-only --network none --memory 128m --memory-swap 128m \
     -v "$seed_volume:/from:ro" -v "$prefix-pg-data:/to" --entrypoint /bin/sh postgres:17-alpine -eu -c '
       test "$(cat /from/PG_VERSION)" = 17
@@ -388,9 +395,9 @@ CLONE_MOUNTS
   docker rm "$prefix-seed-copy" >/dev/null
   trap - EXIT
 else
-  docker volume create "$prefix-pg-data" >/dev/null
+  docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
 fi
-docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
+docker run -d --pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
   -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
@@ -423,7 +430,7 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$attempt/sql/$file" > "$attempt/sql/$file.log"
 done
 fi
-docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
+docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$trace_tx_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # [DX-BM1] Why: avoid probing catalog creation before the SQL transactor announces startup.
@@ -458,7 +465,7 @@ for role in w r; do
     debug_port=8506; [[ $role == w ]] || debug_port=8507
     role_trace_java="$role_trace_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debug_port"
   fi
-  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
+  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
     ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_GW_JFR" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \

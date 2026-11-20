@@ -722,6 +722,9 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
+  // [DX-TAIL1] Why: the split SQL replay needs one pool-admitted private reservation.
+  // Rejected: launching the diagnostic against a resident or managing containers in the benchmark.
+  if (command === 'tail1') return (await import('../experiments/EXP-DX1/tail1/run.mjs')).runTail(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   // [DX-HA1] Why: destructive process drills need an exclusive, pool-admitted SQL topology. Rejected: killing roles in a resident slot.
   if (command === 'ha1') {
     const { localDrill } = await import('../experiments/EXP-DX1/ha1/local.ts');
