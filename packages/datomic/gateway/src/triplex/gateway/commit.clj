@@ -199,7 +199,7 @@
                            (str text (if (= p provisional) final-digits (digits (shifted p)))
                                 (if (map? packed)
                                   (str (fill (:before packed))
-                                       (assign-change (:change packed) clock new-id-set @prior-rows)
+                                       (json/write-str (assign-change (:change packed) clock new-id-set @prior-rows))
                                        (fill (:after packed)))
                                   (fill packed)))))
                        (let [text (if (and (not= 0 delta) (< lower p (inc provisional)))
