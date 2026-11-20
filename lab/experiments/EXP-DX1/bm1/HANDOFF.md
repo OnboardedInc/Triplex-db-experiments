@@ -173,7 +173,7 @@ The next seed is ERASE1's separate aged target fixture at `856c4c9ae`, as its na
 
 ### Joined Publish at 100,000
 
-The `i29-2` ACT1 producer began the first offer at 07:59:47 EST after 112 min 4 s of seed preparation and enrolment. The last timed window wrote its terminal record at 08:04:39 EST. The independent seed readback checked 16,045,255 facts at cut 11,669. The Mac copy has 38 original checksummed files in `single-n20/recovered/activation-i29-2-components`. BM1 recomputed every offered-to-durable and first-correct interval and reconciled all 3,240 saves. The final ordered receiver replay is still running.
+The `i29-2` ACT1 producer began the first offer at 07:59:47 EST after 112 min 4 s of seed preparation and enrolment. The last timed window wrote its terminal record at 08:04:39 EST. The independent seed readback checked 16,045,255 facts at cut 11,669 and the final receiver matched 342,881 ordered effects. The Mac copy has the complete `overnight/i29-2` transfer and 38 original checksummed files in `single-n20/recovered/activation-i29-2-components`. Both copies agree on six offered-to-durable and first-correct intervals and all 3,240 save ACK rows.
 
 | Saves/s and mode | Durable / first correct | My forecast | One-second deadline |
 | --- | --- | --- | --- |
@@ -185,3 +185,5 @@ The `i29-2` ACT1 producer began the first offer at 07:59:47 EST after 112 min 4 
 | 23.5 staged | 18.616 / 18.625 s | 23 / 23.1 s | MISS |
 
 Each cell has one Publish. The loaded windows have 210 or 1,410 audited saves each, according to rate. The busy receipt waited 2,019.56 ms from ingress to entry. Its last older save finished 0.012 ms before that entry. Time from entry to the native ACK was 24.25 ms. The busy staged run had 89 older saves at ingress and waited 4,320.30 ms before entry. These observations include the benchmark's serial admission queue. The full v3 bars remain unjudged.
+
+The close hook initially compared the producer's writer-container slot to the stack prefix. The corrected match verified both names and the actual writer options. It stopped the separate settlement-price fixture at 09:01:01 EST after the requested measurements and receiver proof. Independent replay and cleanup completed at 09:01:06. The separate 100k settlement-price results remain open. ERASE1 began at 09:01:12 with a four-hour cutoff at 13:01:06.
