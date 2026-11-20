@@ -139,7 +139,7 @@ if (!smoke) {
 }
 const store = await openStore("lazy-join-server-" + attempt.nonce, "act2-deep");
 const readStore = await openStore(store.scope, "act2-deep", "read");
-const ref = new Reference();
+const ref = new Reference(oneSeed ? 4 : 1);
 type Change = { p: number; rows: WorldRow[] };
 const tape = new Map<number, Change[]>();
 const clock = () => performance.now();
@@ -743,7 +743,7 @@ try {
   throw error;
 } finally {
   clearTimeout(budget);
-  ref.oracle.close();
+  ref.close();
   await readStore.close();
   await store.close();
 }
