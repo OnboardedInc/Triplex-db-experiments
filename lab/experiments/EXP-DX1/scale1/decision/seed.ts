@@ -293,16 +293,37 @@ export async function seal(dir: string, seed: Awaited<ReturnType<typeof ingest>>
   write(path.join(dir, "image.json"), { ...seed, bytes, sha256 });
 }
 
-export async function restore(dir: string, from: string, id: Destination) {
-  const proof = read<SeedProof>(path.join(from, "image.json")),
-    dump = path.join(from, "seed.pgdump");
-  assert.equal(proof.source, id.source);
+export function verifiedOrigin(from: string, id: Destination, fromTransfer?: string): SeedProof {
+  const bytes = fs.readFileSync(path.join(from, "image.json"));
+  const proof = JSON.parse(bytes.toString("utf8")) as SeedProof;
+  // [DX-SCALE1] Why: an observer startup failure can reuse the original verified image with a fresh runtime.
+  // Rejected: relabeling the original seed with the retry source or repeating the durable load.
+  if (fromTransfer) {
+    assert.equal(id.layout, "single");
+    const receipt = fs.readFileSync(path.join(from, "transfer.json"));
+    assert.equal(createHash("sha256").update(receipt).digest("hex"), fromTransfer);
+    const t = JSON.parse(receipt.toString("utf8"));
+    assert.deepEqual(
+      [t.tag, t.source, t.nonce, t.result],
+      [path.basename(from), proof.source, proof.nonce, "success"],
+    );
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), t.summaryFiles["image.json"]);
+  } else assert.equal(proof.source, id.source);
   assert.equal(proof.layout, id.layout);
   assert.equal(proof.people, id.people);
   assert.equal(proof.population, id.population);
-  assert(proof.nonce !== id.nonce && proof.bytes === fs.statSync(dump).size);
+  assert.equal(proof.facts, layoutOf(id.layout).flat().length * factsFor(id.people));
+  assert(
+    proof.nonce !== id.nonce && proof.bytes === fs.statSync(path.join(from, "seed.pgdump")).size,
+  );
   const cleanup = read(path.join(from, "cleanup.json"));
   assert.deepEqual(cleanup, { containers: [], volumes: [], networks: [] });
+  return proof;
+}
+
+export async function restore(dir: string, from: string, id: Destination, fromTransfer?: string) {
+  const proof = verifiedOrigin(from, id, fromTransfer);
+  const dump = path.join(from, "seed.pgdump");
   const slot = id.slot;
   for (const role of ["gw-r", "gw-w", "tx"]) docker("stop", "--time", "20", slot + "-" + role);
   const restoredHash = await pgCopy(
@@ -354,6 +375,7 @@ export async function restore(dir: string, from: string, id: Destination) {
     write(path.join(dir, "restored.json"), {
       identity: id,
       origin: proof,
+      ...(fromTransfer ? { fromTransfer } : {}),
       reopenedAt: Date.now(),
       membership,
     });

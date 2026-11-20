@@ -24,4 +24,6 @@ The single-account queue has a seven-hour guard and a revised forecast of 110–
 
 Each audited timed arm reads its actual writer gateway configuration at the restored database cut and binds the options, installed function, source, slot, nonce and clock into the result. The native gate also checks retrievable receipts, full feed changes and pinned field lifetimes. The wider placement queue waits for the single-account result to be collected and reported. The existing Q106f tiered-storage ruling remains an input while the owner clarifies placement.
 
+The first zero-reader attempt stopped during observer startup because its inherited SDK environment named the retired `fresh-texts` flag. It recorded zero timed cells. Both replacement conditions use the verified `arm-d7-single-seed` image, whose original transfer and image digests are preserved. The corrected launcher passes the stack's selected paths to the observer processes.
+
 Use `control.ts collect TAG` after a terminal arm. Compact transfer files bind the exact source and attempt. Raw writer and observer files, original seed ledgers and images stay on the server. Packaging can retry against the same first attempt.

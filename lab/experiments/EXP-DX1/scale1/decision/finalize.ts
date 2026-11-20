@@ -21,7 +21,7 @@ import {
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { fieldPolicy } from "../../w1/field/bench-check.ts";
 import { verifyWriteOptions, type WriterReadback } from "../../w1/write-options.ts";
-import { read, write } from "./seed.ts";
+import { read, verifiedOrigin, write } from "./seed.ts";
 import type { Row } from "./writes.ts";
 import type { Request } from "./server.ts";
 
@@ -120,6 +120,11 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
   bound(raw);
   bound(restored.identity);
   assert(restored.reopenedAt >= a.at && restored.origin.nonce !== a.nonce);
+  assert.equal(restored.fromTransfer, a.fromTransfer);
+  assert.deepEqual(
+    restored.origin,
+    verifiedOrigin(path.join(path.dirname(dir), a.from!), restored.identity, a.fromTransfer),
+  );
   assert.deepEqual(raw.scopes, restored.origin.scopes);
   const readbacks = read(path.join(dir, "writer-readbacks.json"));
   bound(readbacks);

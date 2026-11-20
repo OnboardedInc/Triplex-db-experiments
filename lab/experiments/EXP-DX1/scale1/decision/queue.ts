@@ -77,9 +77,15 @@ function plan(): Plan {
     if (s.phase === "cells") {
       assert(["individual", "bounded", "prepared"].includes(s.mode));
       const earlier = p.steps.slice(0, i).find((q) => q.tag === s.from);
-      assert(
-        earlier?.phase === "seed" && earlier.people === s.people && earlier.layout === s.layout,
-      );
+      if (s.fromTransfer) {
+        assert(s.layout === "single" && !earlier);
+        assert.match(s.from ?? "", /^arm-d7-[a-z0-9-]{2,24}$/);
+        assert.match(s.fromTransfer, /^[a-f0-9]{64}$/);
+      } else {
+        assert(
+          earlier?.phase === "seed" && earlier.people === s.people && earlier.layout === s.layout,
+        );
+      }
     } else assert(s.phase === "seed" && s.mode === "individual" && !s.from);
   }
   return p;
@@ -102,8 +108,14 @@ async function run(p: Plan, s: Step, deadline: number, build: string) {
       "Campaign ceiling leaves too little time to start this arm",
     );
     const ceiling = Math.min(h * 3600, remaining);
-    const src = s.from ? read(path.join(attempts, s.from, "transfer.json")) : null;
-    if (src) assert(src.result === "success" && src.tag === s.from && src.source === p.source);
+    if (s.from) {
+      const receipt = fs.readFileSync(path.join(attempts, s.from, "transfer.json"));
+      const src = JSON.parse(receipt.toString("utf8"));
+      assert(src.result === "success" && src.tag === s.from);
+      if (s.fromTransfer)
+        assert.equal(createHash("sha256").update(receipt).digest("hex"), s.fromTransfer);
+      else assert.equal(src.source, p.source);
+    }
     const request: Request = { ...s, source: p.source, nonce: randomUUID(), review: p.review };
     const slot = "tx2-dxscale1-" + s.tag;
     const placement = layoutOf(s.layout);

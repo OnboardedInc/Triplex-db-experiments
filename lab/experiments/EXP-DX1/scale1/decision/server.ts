@@ -25,6 +25,7 @@ export type Request = {
   layout: Layout;
   mode: Mode;
   from?: string;
+  fromTransfer?: string;
   review: string;
   withReaders?: boolean;
 };
@@ -47,6 +48,10 @@ async function main(dir: string) {
   assert((typeof p.withReaders === "boolean") === (p.layout === "single" && p.phase === "cells"));
   assert(["individual", "bounded", "prepared"].includes(p.mode));
   assert(["seed", "cells"].includes(p.phase));
+  if (p.fromTransfer) {
+    assert(p.phase === "cells" && p.layout === "single");
+    assert.match(p.fromTransfer, /^[a-f0-9]{64}$/);
+  }
   assert(
     (p.phase === "seed" && !p.from && p.mode === "individual") ||
       (p.phase === "cells" &&
@@ -142,7 +147,9 @@ async function main(dir: string) {
         process.env.TRIPLEX_DATOMIC_LAYOUT = "lean";
         process.env.DX_STRICT_RECORD_CLOCKS = "1";
         process.env.DX_SERVER_RECORD_TIME = "1";
-        process.env.TRIPLEX_DATOMIC_FAST_PATHS = "row,body,fresh-texts";
+        // [DX-SCALE1] Why: observer workers import the current SDK in fresh processes.
+        // Rejected: passing the retired fresh-texts flag from the seed harness to the observers.
+        process.env.TRIPLEX_DATOMIC_FAST_PATHS = env.TRIPLEX_DATOMIC_FAST_PATHS ?? "";
         process.env.DATOMIC_URL = readUrl;
         const binding = env.DX_W1_WRITER_EXPECTATION;
         assert(binding);
@@ -157,7 +164,7 @@ async function main(dir: string) {
           await seal(dir, seed);
         } else {
           status("restoring verified seed");
-          const restored = await restore(dir, path.join(outputRoot, p.from!), id);
+          const restored = await restore(dir, path.join(outputRoot, p.from!), id, p.fromTransfer);
           const { runCells } = await import("./traffic.ts");
           await runCells(
             dir,
