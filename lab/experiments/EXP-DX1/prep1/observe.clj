@@ -107,9 +107,10 @@
 
 (def ^:dynamic *lookups* nil)
 (def ^:dynamic *inside-lookup* false)
+(def ^:dynamic *lookup-count* nil)
 
 (defn lookup! [check f]
-  (if (and *lookups* (not *inside-lookup*))
+  (if (and *lookups* (not *inside-lookup*) (<= (vswap! *lookup-count* inc) 128))
     (let [start (System/nanoTime)
           sample (binding [*inside-lookup* true]
                    (io/throw-if-ex!
@@ -168,28 +169,22 @@
     (alter-var-root #'db/with-tx
       (fn [apply-tx]
         (fn [snapshot dispatcher data]
-          (let [database (writer-database)
-                kinds (keep #(when (instance? java.util.List %) (first %)) data)
-                kind (some (fn [k] (cond
-                                     (= k :triplex.group/apply-v1) "K"
-                                     (and (keyword? k) (= "triplex.subject" (namespace k))) "S")) kinds)]
-            (if-not (and database kind)
-              (apply-tx snapshot dispatcher data)
-              (do
-                @api
-                (binding [*lookups* (volatile! {})]
-                  (let [basis-t (requiring-resolve 'datomic.api/basis-t)
-                        start (System/nanoTime) before (cpu)
-                        sample (io/throw-if-ex!
-                                 (io/with-io-stats #(apply-tx snapshot dispatcher data)
-                                   {:io-context :prep1/native-apply :api :native-apply}))
-                        end (System/nanoTime) cpu-ns (- (cpu) before)
-                        result (:ret sample)]
-                    (when-let [after (:db-after result)]
-                      (retain! "PREP1_LOOKUPS" {:db database :t (str (basis-t after)) :kind kind
-                                                :start start :end end :cpuNs cpu-ns :io (:io-stats sample)
-                                                :lookups @*lookups*}))
-                    result))))))))))
+          ;; [DX-PREP1] Why: the apply and append can run on different native threads.
+          ;; Rejected: requiring the appender's thread name on an apply worker. Join by t and clock containment.
+          @api
+          (binding [*lookups* (volatile! {}) *lookup-count* (volatile! 0)]
+            (let [basis-t (requiring-resolve 'datomic.api/basis-t)
+                  start (System/nanoTime) before (cpu)
+                  sample (io/throw-if-ex!
+                           (io/with-io-stats #(apply-tx snapshot dispatcher data)
+                             {:io-context :prep1/native-apply :api :native-apply}))
+                  end (System/nanoTime) cpu-ns (- (cpu) before)
+                  result (:ret sample)]
+              (when-let [after (:db-after result)]
+                (retain! "PREP1_LOOKUPS" {:t (str (basis-t after)) :lookupCount @*lookup-count*
+                                          :start start :end end :cpuNs cpu-ns :io (:io-stats sample)
+                                          :lookups @*lookups*}))
+              result)))))))
 
 (when (= "subject-profile" mode)
   ;; [DX-PREP1] Why: sample the native transaction application and bind its CPU time to db-after.

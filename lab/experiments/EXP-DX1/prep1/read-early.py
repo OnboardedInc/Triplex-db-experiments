@@ -77,6 +77,9 @@ def phases(root, arm, header, plan, members, official):
             metrics = {"compute": a["nativeComputeMs"], "sql": reads.get("sql", 0),
                        "decode": reads.get("deserialize-ms", 0), "sqlMs": reads.get("sql-ms", 0),
                        "avetLoad": reads.get("avet-load", 0), "datoms": a["datoms"], "group": width}
+            # [DX-PREP1] Why: price the largest possible saving on matching individual writes.
+            # Rejected: subtracting separate medians or treating this accounting residual as measured CPU.
+            metrics["applyLessSqlAndDecode"] = max(0, metrics["compute"] - metrics["decode"] - metrics["sqlMs"])
             for key, value in metrics.items():
                 per_tx[key].append(value)
                 if key != "group":

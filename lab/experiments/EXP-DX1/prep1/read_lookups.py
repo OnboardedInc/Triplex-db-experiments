@@ -29,11 +29,9 @@ def extract(out):
             key = (block["db"], str(member["t"]))
             assert key not in native
             native[key] = (member, block)
-    profiles = {}
+    profiles = defaultdict(list)
     for row in events("PREP1_LOOKUPS "):
-        key = (row["db"], row["t"])
-        assert key not in profiles
-        profiles[key] = row
+        profiles[row["t"]].append(row)
     cpu = events("PREP1_CPU ")
     result = {}
     for arm, kind in [("A1", "K"), ("B1", "S")]:
@@ -73,12 +71,11 @@ def extract(out):
                 assert int(row["begin"]) <= member["started-at"] <= member["applied-at"]
                 assert member["applied-at"] <= append["start"] <= append["end"] <= int(row["end"])
                 assert row["ack"]["datoms"] == member["datom-count"]
-            if kind == "K" and len(rows) == 1 and key not in profiles:
+            if kind == "K" and len(rows) == 1:
                 continue
             assert len(rows) == 1 or kind == "K"
-            profile = profiles[key]
-            assert profile["kind"] == kind
-            assert member["started-at"] <= profile["start"] <= profile["end"] <= member["applied-at"]
+            [profile] = [p for p in profiles[key[1]]
+                         if member["started-at"] <= p["start"] <= p["end"] <= member["applied-at"]]
             exact_profiles.append(profile)
             total["saves"] += len(rows)
             total["tx"] += 1
@@ -86,6 +83,8 @@ def extract(out):
             reported = rows[0]["ack"].get("nativeIoStats")
             assert reported and all(row["ack"]["nativeIoStats"] == reported for row in rows)
             native_sql = io(profile["io"], "sql")
+            if profile["lookupCount"] > 128:
+                total["cappedTransactions"] = total.get("cappedTransactions", 0) + 1
             total["sql"] += native_sql
             total["sqlReported"] += io(reported, "sql")
             attributed = 0
