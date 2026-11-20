@@ -12,6 +12,8 @@ The eight findings cover resend settlement (1), predecessor lifetime in the feed
 | `arm-p6-i1-pool-staggered-a` | Resend settlement (1) can change outcomes. The individual writer had no grouped/prepared policy or fair scheduling. Feed exactness and effective writer feature comparisons were unmeasured when the harness stopped. [Recovered windows](STAGGERED-CAPACITY.md) |
 | `arm-d7-small-seed` | CPU admission refused the setup before database open. There were zero saves. |
 
-The replay of old retries reports directly observed conflicts and identifies an original committed receipt where those source bytes are present. A missing ledger leaves the conflict count unmeasured. A general HTTP 409 cannot identify a typed resend conflict.
+Each zero-reader arm sent 1,633 planned resends. All 1,633 returned their original receipt via the already-committed path. The reports record zero unexpected typed conflicts in either run. Neither incomplete reader arm emitted the terminal retry ledger, so its count is unmeasured.
+
+The staggered archive contains 14,236 planned resend traces. Of those, 9,515 reached a transact route and 9,514 received HTTP 409. All 9,514 match an original acknowledgement by the end of that retry. Separately, 3,391 primary save traces had more than one transact and at least one HTTP 409. All 3,391 eventually acknowledged. No retained primary ended in a typed conflict. HTTP traces record status without the gateway error code, so CAS-only counts are unmeasured. [Retry evidence](evidence/write-audit-retries.sha256)
 
 The new gateway gate reads the active writer options and selected base or versioned function at the actual restored cut. It binds the gateway hash, attempt nonce, source, slot and scope before timing. Native preflight and the independent per-cell replay compare the entire typed change payload and positions. Exclusive runtime and source pinning give each result a fresh deployment.
