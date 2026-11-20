@@ -290,6 +290,8 @@ button("publish").onclick = async () => {
     void followRelease(result["releaseId"], subject, displayRevision).catch(() => {
       el("progress").textContent = "Progress request failed";
     });
+  } else if (result?.["error"]) {
+    el("progress").textContent = result["error"].message;
   }
 };
 button("native").onclick = () =>

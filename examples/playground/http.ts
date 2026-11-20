@@ -8,7 +8,11 @@ import type { Playground } from "./service.ts";
 import { loopback } from "./stack.ts";
 import type { Timings } from "./timings.ts";
 
-export function actionService(playground: Playground, clock: Timings): Invoke {
+export function actionService(
+  playground: Playground,
+  clock: Timings,
+  onFault?: (action: string, error: unknown) => void,
+): Invoke {
   return async (action, body) => {
     const { timings, value } = await clock.measure(action, async () => {
       try {
@@ -16,6 +20,7 @@ export function actionService(playground: Playground, clock: Timings): Invoke {
       } catch (error) {
         if (error instanceof ActionError)
           return { status: error.status, error: { code: error.code, message: error.message } };
+        onFault?.(action, error);
         console.error("Playground action failed", action, error instanceof Error ? error.name : "");
         return {
           status: 500,

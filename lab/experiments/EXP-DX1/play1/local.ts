@@ -222,6 +222,9 @@ export async function local(
       apiPort: 0,
       ports: { write: 0, read: 0 },
       signal: shutdown.signal,
+      // [DX-PLAY1] Why: record the synthetic gate's backend error before its isolated stack is removed.
+      // Rejected: exposing backend diagnostics to dashboard or agent clients.
+      onFault: (action: string, error: unknown) => console.error("Action fault", action, error),
       ...(!options.portable ? { cachedImage: image } : {}),
     };
     assert.deepEqual(await new Stack(stackOptions).inventory(), {
@@ -237,29 +240,33 @@ export async function local(
     await writeFile(join(out, "actions.json"), JSON.stringify(stats, null, 2) + "\n", {
       flag: "wx",
     });
-    if (options.browser) {
-      const browser = await run(
-        process.execPath,
-        [
-          "node_modules/@playwright/test/cli.js",
-          "test",
-          "--config=playwright.playground.config.ts",
-          "--output",
-          join(out, "browser"),
-        ],
-        {
-          cwd: repo,
-          timeout: 180_000,
-          env: { ...process.env, PLAYGROUND_TEST_URL: instance.server.url },
-        },
-      ).catch(async (error: { stdout?: string; stderr?: string }) => {
-        await writeFile(join(out, "browser.txt"), (error.stdout ?? "") + (error.stderr ?? ""), {
-          flag: "wx",
-        });
-        throw error;
-      });
-      await writeFile(join(out, "browser.txt"), browser.stdout + browser.stderr, { flag: "wx" });
-      console.log(browser.stdout);
+    const browser = options.browser
+      ? await run(
+          process.execPath,
+          [
+            "node_modules/@playwright/test/cli.js",
+            "test",
+            "--config=playwright.playground.config.ts",
+            "--output",
+            join(out, "browser"),
+          ],
+          {
+            cwd: repo,
+            timeout: 180_000,
+            env: { ...process.env, PLAYGROUND_TEST_URL: instance.server.url },
+          },
+        ).then(
+          (output) => ({ output }),
+          (error: Error & { stdout?: string; stderr?: string }) => ({ output: error, error }),
+        )
+      : undefined;
+    if (browser) {
+      await writeFile(
+        join(out, "browser.txt"),
+        (browser.output.stdout ?? "") + (browser.output.stderr ?? ""),
+        { flag: "wx" },
+      );
+      console.log(browser.output.stdout);
     }
     const snapshot = await dumpProbe(installed, prefix, out);
     await writeFile(
@@ -278,6 +285,7 @@ export async function local(
       ) + "\n",
       { flag: "wx" },
     );
+    if (browser && "error" in browser) throw browser.error;
     for (const [name, sha256] of Object.entries(sourceHashes))
       assert.equal(hash(await readFile(join(repo, name))), sha256, "Source drifted: " + name);
     await writeFile(

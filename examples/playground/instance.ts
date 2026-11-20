@@ -9,6 +9,7 @@ export type InstanceOptions = StackOptions & {
   apiPort: number;
   token?: string;
   fixture: Source | ((signal: AbortSignal) => Promise<Source>);
+  onFault?: (action: string, error: unknown) => void;
 };
 
 export async function openInstance(options: InstanceOptions) {
@@ -48,6 +49,7 @@ export async function openInstance(options: InstanceOptions) {
     invoke = actionService(
       playground,
       new Timings(gatewaySpans ? stack.traceDir : undefined, options.prefix, urls.source),
+      options.onFault,
     );
     return { stackMs, seedMs: performance.now() - seedStart, gatewaySource: urls.source, urls };
   })();
