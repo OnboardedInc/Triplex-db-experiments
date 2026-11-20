@@ -177,6 +177,19 @@ function checkPreflight(raw: ScopeMeasurement) {
       oracle.modelCorrectOnSameReads === oracle.reads &&
       oracle.mismatchCount === 0,
   );
+  // [DX-INT1] Why: the short tapes exercise resume and corrections, while the lost-ACK event lies outside their window.
+  // Rejected: letting matching archive bytes admit an incomplete feed or requiring an unoffered event.
+  const feed = raw.report.priorities.P3;
+  assert.equal(feed.notReachedAtStop.count, 0);
+  assert.equal(feed.counts.incompleteChanges, 0);
+  assert.deepEqual(
+    raw.invalid.filter(
+      (id) =>
+        id.startsWith("NS-P3 ") ||
+        (id.startsWith("NS-P2 ") && id !== "NS-P2 lost ACKs return the original receipt"),
+    ),
+    [],
+  );
 }
 
 // [DX-THIN1] Why: recompute from saved native evidence using the same code at production and collection. Rejected: accepting the producer's declared p99 or counting archives without checking their contents.
