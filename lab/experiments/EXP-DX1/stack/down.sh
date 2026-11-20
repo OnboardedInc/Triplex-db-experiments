@@ -7,7 +7,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
 roles=(gw-r gw-w tx pg)
 # [DX-T1] Why: interrupted startup may leave one of the runner's short-lived helpers behind.
 # Rejected: releasing a measurement lease while an owned client or writable volume survives.
-if [[ $prefix == tx2-dxt1-* ]]; then roles+=(driver health cgroups extract trace-check idle-sentinel seed-copy core-cache); fi
+if [[ $prefix == tx2-dxt1-* ]]; then roles+=(driver health cgroups extract selftest trace-check idle-sentinel seed-copy core-cache); fi
 for role in "${roles[@]}"; do
   docker rm -f "$prefix-$role" >/dev/null 2>&1 || true
 done

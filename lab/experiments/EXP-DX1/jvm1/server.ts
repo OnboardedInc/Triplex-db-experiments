@@ -11,7 +11,7 @@ import { fieldPlan, validateArm } from "../w1/field/bench-check.ts";
 import { quantile } from "../w1/field/schedule.ts";
 import { fieldPhase, scopeKey } from "../w1/field/traffic.ts";
 import { accounts, pooledDigest, tenantRows } from "../w1/group/population.ts";
-import { seedPooled } from "../w1/group/workload.ts";
+import { command as seedCommand, seedPooled } from "../w1/group/workload.ts";
 import { verifyPopulation } from "../w1/group/seed-readback.ts";
 import { fileHash } from "../scale1/measurements.ts";
 import { jvmPolicy, serverArms } from "./policy.mjs";
@@ -23,8 +23,16 @@ const [, , command, output, seedBase] = process.argv;
 const read = (file: string) => JSON.parse(fs.readFileSync(file, "utf8"));
 const write = (file: string, value: unknown) =>
   fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
-const call = (program: string, args: string[]) =>
-  execFileSync(program, args, { encoding: "utf8", timeout: 15_000 }).trim();
+function call(program: string, args: string[], timeout = 15_000) {
+  assert(timeout > 0, "Arm deadline expired");
+  return execFileSync(program, args, { encoding: "utf8", timeout, killSignal: "SIGKILL" }).trim();
+}
+
+type PinnedRow = Awaited<ReturnType<DatomicClient["rows"]>>[number];
+const pinnedValue = (row: PinnedRow) => JSON.stringify([
+  row.attribute, row.value_type, row.value_string, row.value_number, row.value_boolean,
+  row.value_datetime, row.value_json, row.valid_from, row.valid_to,
+]);
 
 async function pinnedReads(client: DatomicClient, db: string, cut: number, label: string) {
   // [DX-JVM1] Why: price the reader with verified untouched facts at the same historic cut in every window.
@@ -35,15 +43,15 @@ async function pinnedReads(client: DatomicClient, db: string, cut: number, label
     await wait(Math.max(0, start + i * 1000 - performance.now()));
     const local = 9000 + i;
     const root = ids.placement(account.first + local);
-    const expected = tenantRows(account, local).filter((fact) => fact.e === root)
-      .map((fact) => [fact.a, fact.v.value]).sort();
+    const facts = tenantRows(account, local).filter((fact) => fact.e === root);
+    const expected = seedCommand("probe-seed-shape", facts, [], false).rows.map(pinnedValue).sort();
     const due = performance.now();
     const observed = await client.rows(db, {
       entityIds: [root], basis: { recordedPosition: cut, validAt: SEED_VALID_FROM }, pattern: {},
     });
     const ms = performance.now() - due;
     assert(observed.every((row) => row.entity_id === root && Number(row.recorded_position) <= cut));
-    assert.deepEqual(observed.map((row) => [row.attribute, row.value_string]).sort(), expected);
+    assert.deepEqual(observed.map(pinnedValue).sort(), expected);
     samples.push({ entity: root, ms, rows: observed.length });
   }
   return { label, cut, samples, p99Ms: quantile(samples.map((sample) => sample.ms), 0.99) };
@@ -248,11 +256,13 @@ async function campaign(base: string, source: string, seedDirectory: string, par
       assert.deepEqual(result.arm, arm);
       const roles = read(path.join(dir, "placements.json")).engines;
       for (const role of roles) {
-        const current = call("docker", ["inspect", "--format", "{{.Id}} {{.State.Running}} {{.State.StartedAt}} {{.RestartCount}}", role.id]);
+        const current = call("docker", ["inspect", "--format", "{{.Id}} {{.State.Running}} {{.State.StartedAt}} {{.RestartCount}}", role.id],
+          Math.min(15_000, deadline - Date.now()));
         assert.equal(current, [role.id, true, role.startedAt, role.restarts].join(" "));
         if (activePart2 && role.role !== "pg") {
           const post = path.join(dir, "post-jvm");
-          call("bash", [path.join(import.meta.dirname, "readback.sh"), role.id, post, role.role]);
+          call("bash", [path.join(import.meta.dirname, "readback.sh"), role.id, post, role.role],
+            Math.min(15_000, deadline - Date.now()));
           const file = role.role + ".process.txt";
           assert.deepEqual(fs.readFileSync(path.join(post, file)),
             fs.readFileSync(path.join(dir, "engines", arm.slot, "config", file)));
@@ -276,7 +286,6 @@ async function campaign(base: string, source: string, seedDirectory: string, par
       return { name, arm, predictionHash, dumpSha256: seed.dumpSha256, seedReceiptSha256,
         evidenceSha256: await fileHash(file), summary: result.summary, jvm };
     }, false, "individual", false, { policy, deadline, seed: { dump, sha256: seed.dumpSha256 }, javaMajor: activePart2?.javaMajor });
-    assert.equal(await fileHash(dump), seed.dumpSha256, "The prepared seed changed");
     assert.equal(await fileHash(seedFile), seedReceiptSha256, "The seed receipt changed");
     const durationMs = Date.now() - startedAt;
     assert(durationMs < (part2 ? 26 : 29) * 60_000, "Arm exceeded its wall-clock budget");
