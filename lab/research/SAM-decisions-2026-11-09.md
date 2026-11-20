@@ -809,3 +809,25 @@ Orchestrator's reading: my message said ZGC was "not usable yet", which overstat
 Datomic's release notes: 1.0.7705 (2026-07-10) added support for Java 25 and for ZGC on Java 25; we run 1.0.7745 on
 a Java 21 image. The only thing missing is a Java 25 image and the test. DX-JVM1 resumed to build it, with three
 server arms (Java 21 with two-core G1 on the writer, Java 25 with G1, Java 25 with ZGC).
+
+## 2026-11-20 about 16:18 local: fewer agents; keep Codex usage for the weekend's runs; a cap on agents running at once
+
+Sam, verbatim:
+- "Okay I think you should not launch as many local agents for a bit. I want you to have Codex usage over the weekend
+  when you run things. Why don't you not launch any more agents for now until after the weekend? Don't launch things
+  unless they're things that you need to launch to prepare yourself for the runs or to help you get the runs to work,
+  etc. Just log all things that you want to do for next week.
+
+  You can switch and use Opus 5.5 on high for new agents. I take it back: you can continue to use Codex as you're
+  using them. When that runs out you can switch to using Opus 5.5 as your agents but I want you to cap all agents
+  running at one time to 6 agents. Don't turn off any current agents. Let those continue but let's go down to 8 at a
+  time for now, like after these"
+
+Orchestrator's reading (two numbers appear in the message; this is my reading, to be corrected by Sam):
+1. Nothing running is stopped. Twelve agents were running at the time of the message.
+2. From now, an agent is launched or resumed only if the weekend's server runs need it (the two server drivers,
+   and builders whose command, fix or merge a run is waiting on), and only while fewer than 8 are running.
+3. Codex stays the agent (gpt-6.2-sol at xhigh) while its usage lasts. When it runs out, new agents are Opus 5.5
+   at high, capped at 6 running at once.
+4. Everything else I would have launched is logged for next week in `lab/experiments/EXP-DX1/NEXT-WEEK.md`.
+This replaces the direction of 2026-11-19 20:25 ("It's fine to launch a max number of agents").

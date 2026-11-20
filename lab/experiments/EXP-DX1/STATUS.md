@@ -3554,3 +3554,16 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   effect on a quiet account; a follow-up arm at the newer commit is needed for that.
 - Server 1: the comparison is measuring (seed done, arms K and S under way since 15:36 local). A watcher wakes the
   orchestrator when the unit ends. DX-PREP1 is parked until then.
+
+## 2026-11-20 21:18 UTC (16:18 local, 2026-11-20): [PROTOCOL] agent cap; only run-critical launches over the weekend; backlog file
+
+- Sam's message is verbatim in the decisions file. Reading: nothing running is stopped (twelve agents: DX-BM1,
+  DX-SCALE1, DX-V01, DX-THIN1, DX-AGE1, DX-PREP1, DX-JVM1, DX-HA1, DX-ERASE1, DX-ACT1, DX-W1, DX-PLAY1); from now
+  an agent is launched or resumed only if the weekend's server runs need it and fewer than 8 are running; Codex
+  (gpt-6.2-sol xhigh) while its usage lasts, then Opus 5.5 at high with at most 6 running; everything else is
+  logged in `NEXT-WEEK.md`. Earlier status entries that said fifteen agents were running were miscounts: the
+  count was twelve to fourteen.
+- Run-critical set, in order of need: the two server drivers (DX-BM1, DX-SCALE1); DX-V01 (scorecard command);
+  DX-THIN1 (the merged branch the scorecard runs on); DX-PREP1 (reads the writer comparison, follow-up arm);
+  DX-AGE1 (1 billion rung support); DX-JVM1 (Java 25 arms tonight). When the others finish (DX-HA1, DX-ERASE1,
+  DX-ACT1, DX-W1, DX-PLAY1) they are not resumed unless a run is blocked on them.
