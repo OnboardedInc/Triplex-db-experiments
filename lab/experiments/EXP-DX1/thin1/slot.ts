@@ -20,6 +20,8 @@ assert(nonce && /^[a-f0-9]{20}$/.test(nonce) && secret && /^[a-f0-9]{40}$/.test(
 assert(role === "write" || role === "read");
 const compact = property("compact") === "yes";
 const demand = property("cache") === "demand";
+const memory = property("memory") === "yes";
+const campaign = property("campaign") === "yes";
 assert(!compact || role === "write");
 const address = Object.values(os.networkInterfaces())
   .flat()
@@ -96,6 +98,37 @@ const processTotal = (pid: number, metric: "rss" | "threads"): number => {
     throw error;
   }
 };
+// [DX-THIN1] Why: Postgres backends can map the same shared pages. Rejected: treating a sum of their RSS as unique memory.
+function proportionalBytes(pid: number): number {
+  const proc = "/proc/" + pid;
+  const map = fs.readFileSync(proc + "/smaps_rollup", "utf8");
+  const observed = map.match(/^Pss:\s+(\d+) kB$/m);
+  assert(observed);
+  const children = fs.readFileSync(proc + "/task/" + pid + "/children", "utf8").trim();
+  return Number(observed[1]) * 1024 + (children ? children.split(/\s+/).reduce((sum, child) => sum + proportionalBytes(Number(child)), 0) : 0);
+}
+const budgets = { "memory-index-threshold": demand ? "8m" : "32m", "memory-index-max": demand ? "32m" : "192m", "object-cache-max": "192m" };
+let sharedBufferCensus = false;
+function indexIntervals() {
+  const files = [dir, path.join(dir, "log"), path.join(dir, "logs")].filter(p => fs.existsSync(p))
+    .flatMap(p => fs.readdirSync(p).filter(name => name.endsWith(".log")).map(name => path.join(p, name)))
+    .filter(p => fs.statSync(p).isFile()).sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  const samples = [];
+  for (const file of files.slice(0, 3)) {
+    const fd = fs.openSync(file, "r");
+    try {
+      const size = fs.fstatSync(fd).size, tail = Buffer.alloc(Math.min(262_144, size));
+      fs.readSync(fd, tail, 0, tail.length, size - tail.length);
+      for (const line of tail.toString().split("\n")) {
+        const fields = line.includes(":event :metrics") && line.match(/:MemoryIndexMB \{([^}]+)\}/)?.[1];
+        if (!fields) continue;
+        const values = Object.fromEntries([...fields.matchAll(/:(lo|hi|sum|count) ([0-9.]+)/g)].map(m => [m[1], Number(m[2])]));
+        if (Object.keys(values).length === 4) samples.push({ time: line.slice(0, 23), ...values });
+      }
+    } finally { fs.closeSync(fd); }
+  }
+  return samples.sort((a, b) => a.time.localeCompare(b.time)).slice(-8);
+}
 process.once("SIGTERM", () => {
   closing = true;
   for (const child of [...pids.values()].reverse()) child.kill();
@@ -143,6 +176,10 @@ if (role === "write") {
   }
   sql("CREATE ROLE datomic LOGIN PASSWORD '" + secret + "'", "postgres");
   sql("CREATE DATABASE datomic TEMPLATE template0", "postgres");
+  if (memory && sql("SELECT count(*) FROM pg_available_extensions WHERE name='pg_buffercache'") === "1") {
+    sql("CREATE EXTENSION pg_buffercache");
+    sharedBufferCensus = true;
+  }
   execFileSync(
     pg + "psql",
     [
@@ -171,9 +208,7 @@ if (role === "write") {
     "sql-url": "jdbc:postgresql://" + primary + ":5432/datomic",
     "sql-user": "datomic",
     "sql-password": secret,
-    "memory-index-threshold": demand ? "8m" : "32m",
-    "memory-index-max": demand ? "32m" : "192m",
-    "object-cache-max": "192m",
+    ...budgets,
     "log-dir": dir,
     "pid-file": path.join(dir, "tx.pid"),
   };
@@ -250,6 +285,10 @@ const gateway = (label: "write" | "read", secondary = false) => {
       DATOMIC_URI_TEMPLATE: template,
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
         TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
+      ...(campaign && label === "write" ? {
+        TX2_INT1_WRITE_READBACK: "1", TX2_PREDECESSOR_LOOKUP: "1", TX2_SMALL_ROWS: "1", TX2_GROUP_STAGE_CLOCK: "1",
+        TX2_GROUP_COMMIT: "0", TX2_LIVE_PRIORITY: "0", TX2_FIELD_COALESCE: "0", TX2_GROUP_REUSE_PREPARED: "0",
+      } : {}),
     },
   );
 };
@@ -370,6 +409,23 @@ const server = http.createServer(async (req, res) => {
             ),
           )
         : null;
+    const observation = memory ? {
+      roles: Object.fromEntries(processes.map(([name, child]) => {
+        let pssBytes = null;
+        try { pssBytes = proportionalBytes(child.pid!); }
+        catch (error) {
+          if (!["EACCES", "EPERM", "ESRCH", "ENOENT"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error;
+        }
+        const ticks = fs.readFileSync(`/proc/${child.pid}/stat`, "utf8").split(") ")[1]!.split(" ")[19];
+        return [name, { pid: child.pid, ticks, pssBytes }];
+      })),
+      ...(requested === "write" ? {
+        budgets,
+        sharedBuffers: JSON.parse(sql(`SELECT json_build_object('limitBytes',pg_size_bytes(current_setting('shared_buffers')),'usedBytes',${sharedBufferCensus ? "(SELECT count(*) * current_setting('block_size')::bigint FROM pg_buffercache WHERE relfilenode IS NOT NULL)" : "NULL"})`)),
+        indexIntervals: indexIntervals(),
+        cgroup: Object.fromEntries([...fs.readFileSync("/sys/fs/cgroup/memory.stat", "utf8").matchAll(/^(anon|file|shmem|kernel) (\d+)$/gm)].map(m => [m[1], Number(m[2])])),
+      } : {}),
+    } : undefined;
     res.setHeader("Content-Type", "application/json");
     res.end(
       JSON.stringify({
@@ -383,6 +439,7 @@ const server = http.createServer(async (req, res) => {
           processes.map(([name, c]) => [name, processTotal(c.pid!, "threads")]),
         ),
         disk,
+        observation,
         objectCacheLimitBytes: requested === "write" ? 192 * 1024 ** 2 : null,
         cgroupBytes: Number(fs.readFileSync("/sys/fs/cgroup/memory.current", "utf8")),
       }),

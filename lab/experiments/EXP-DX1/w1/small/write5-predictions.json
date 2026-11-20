@@ -1,0 +1,29 @@
+{
+  "schema": "dx-w1/write5-predictions/1",
+  "beforeServerRun": true,
+  "scope": "Ten deep accounts of 10000 subjects in one database",
+  "offerRatesPerSecond": [35, 49, 50, 100, 235, 394],
+  "baseline": "The prepared arm estimates 260–350 durable saves/s at saturation from the prior work. These forecasts cover the writer and its existing per-member speculative evaluation.",
+  "arms": {
+    "indexed": { "saturationSavesPerSecond": [270, 365], "quietP99RatioAt235": [2.6, 5.2] },
+    "ledger": {
+      "saturationSavesPerSecond": [270, 375],
+      "quietP99RatioAt235": [2.5, 5.0],
+      "oneThreeSoloDatoms": [16, 24]
+    },
+    "packed": {
+      "informational": true,
+      "saturationSavesPerSecond": [205, 315],
+      "quietP99RatioAt235": [3.2, 9.0],
+      "oneThreeSoloDatoms": [14, 18]
+    },
+    "reply-wire": {
+      "saturationSavesPerSecond": [275, 385],
+      "quietP99RatioAt235": [2.4, 5.0],
+      "httpBodyReductionPercent": [8, 16]
+    }
+  },
+  "mechanism": "K shares the native receipt and journal metadata. P trades seven or fewer separately indexed journal facts for one frame and extra identity/restore seeks. Reply fan-out should use under 1 ms per physical group and narrower HTTP bodies cannot remove Datomic's native payload or per-member speculation.",
+  "timeBudget": "The estimated 8 ms arm is unchanged. At 235 offered saves/s, the predicted live-only isolation miss remains above 1.25 times quiet-alone p99.",
+  "fallback": "Every arm uses the same experiment-defined dense journal IDs. The packed arm charges fallback journals if exact byte reconstruction or ID reservation fails."
+}

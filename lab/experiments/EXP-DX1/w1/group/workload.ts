@@ -30,6 +30,10 @@ type Response = {
   position: { v: string };
   t: { v: string };
   recordedAt: { v: number };
+  requestBytes?: number;
+  preparedOps?: number;
+  nativeComputeMs?: number;
+  groupStages?: Record<string, number> | null;
   submitToNativeEntryMs: number;
   readyToNativeEntryMs: number;
   groupQueueMicros?: number;
@@ -65,7 +69,13 @@ const dist = (xs: number[]) => ({
   p99: quantile(xs, 0.99),
   max: Math.max(...xs),
 });
-export function command(id: string, facts: Fact[], old: Input["rows"] = [], publish = true): Input {
+export function command(
+  id: string,
+  facts: Fact[],
+  old: Input["rows"] = [],
+  publish = true,
+  denseJournalIds = false,
+): Input {
   const tx = txFor(id),
     subjects = [...new Set([...facts.map((f) => f.e), ...old.map((r) => r.entity_id)])];
   const rows = facts.map((f, i) =>
@@ -82,6 +92,7 @@ export function command(id: string, facts: Fact[], old: Input["rows"] = [], publ
       1,
     ),
   );
+  let packedOrdinal = 0;
   const journal = (
     suffix: string,
     a: string,
@@ -97,7 +108,9 @@ export function command(id: string, facts: Fact[], old: Input["rows"] = [], publ
       },
       tx,
       clock,
-      token(id + "/j" + suffix),
+      denseJournalIds && (a === "change" || a === "changed-entity")
+        ? token(id + "/journal-run").slice(0, 25) + String.fromCharCode(65 + packedOrdinal++)
+        : token(id + "/j" + suffix),
       1,
     );
   if (publish) {
@@ -108,12 +121,21 @@ export function command(id: string, facts: Fact[], old: Input["rows"] = [], publ
         attribute: f.a,
         value: f.v,
         tripleId: rows[i]!.id,
+        ...(denseJournalIds ? { validFrom: rows[i]!.valid_from, validTo: rows[i]!.valid_to } : {}),
       })),
       ...old.map((r) => ({
         op: "retract",
         entityId: r.entity_id,
         attribute: r.attribute,
         tripleId: r.id,
+        ...(denseJournalIds
+          ? {
+              recordedAt: r.recorded_at,
+              retractedAt: clock,
+              validFrom: r.valid_from,
+              validTo: r.valid_to,
+            }
+          : {}),
       })),
     ];
     rows.push(
@@ -333,59 +355,82 @@ export async function exact(url: string, nonce: string, grouped: boolean) {
     c.close();
   }
 }
-export async function runArm(url: string, nonce: string, grouped: boolean, server: boolean) {
-  const client = new DatomicClient(url, 35_000),
-    key = scope(nonce, "load");
-  try {
-    const { created, db, strictRecordClocks } = await client.create(key, "lean", true, 35_000);
-    assert(created && strictRecordClocks);
-    const expected = server ? deepPopulation(10000).facts + 20000 + Math.ceil(10000 / 256) + 1 : 0,
-      seeds = [];
-    const digest = createHash("sha256");
-    let head = 0;
-    if (server) {
-      for (let a = 0; a < 10; a++) {
-        let count = 0,
-          batch: Fact[] = [],
-          packed = 0;
-        const flush = async () => {
-          if (!batch.length) return;
-          const ack = await write(
-            client,
-            db,
-            command("seed-" + a + "-" + packed++, batch, [], false),
-          );
-          assert.equal(Number(ack.position.v), ++head);
-          count += batch.length;
-          batch = [];
-        };
-        for (let i = 0; i < 10000; i++) {
-          const rows = tenantRows(accounts[a]!, i);
-          digest.update(JSON.stringify(rows) + "\n");
-          if (batch.length + rows.length > 2000) await flush();
-          batch.push(...rows);
-        }
-        await flush();
-        assert.equal(count, expected);
-        const samples = [];
-        for (const i of [0, 4999, 9999]) {
-          const basis = { recordedPosition: head, validAt: SEED_VALID_FROM },
-            root = ids.placement(accounts[a]!.first + i);
-          const rows = await client.rows(db, { entityIds: [root], basis, pattern: {} });
-          const actual = rows.map((r) => [r.attribute, r.value_string]).sort();
-          const expectedRoot = tenantRows(accounts[a]!, i)
-            .filter((f) => f.e === root)
-            .map((f) => [f.a, f.v.value])
-            .sort();
-          assert.deepEqual(actual, expectedRoot);
-          samples.push(hash(actual));
-        }
-        seeds.push({ account: a, subjects: 10000, facts: count, samples });
-      }
-      assert.equal(digest.digest("hex"), pooledDigest);
+export async function seedPooled(client: DatomicClient, db: string) {
+  const expected = deepPopulation(10000).facts + 20000 + Math.ceil(10000 / 256) + 1,
+    seeds = [];
+  const digest = createHash("sha256");
+  let head = 0;
+
+  for (let a = 0; a < 10; a++) {
+    let count = 0,
+      batch: Fact[] = [],
+      packed = 0;
+    const flush = async () => {
+      if (!batch.length) return;
+      const ack = await write(client, db, command("seed-" + a + "-" + packed++, batch, [], false));
+      assert.equal(Number(ack.position.v), ++head);
+      count += batch.length;
+      batch = [];
+    };
+    for (let i = 0; i < 10000; i++) {
+      const rows = tenantRows(accounts[a]!, i);
+      digest.update(JSON.stringify(rows) + "\n");
+      if (batch.length + rows.length > 2000) await flush();
+      batch.push(...rows);
     }
+    await flush();
+    assert.equal(count, expected);
+    const samples = [];
+    for (const i of [0, 4999, 9999]) {
+      const basis = { recordedPosition: head, validAt: SEED_VALID_FROM },
+        root = ids.placement(accounts[a]!.first + i);
+      const rows = await client.rows(db, { entityIds: [root], basis, pattern: {} });
+      const actual = rows.map((r) => [r.attribute, r.value_string]).sort();
+      const expectedRoot = tenantRows(accounts[a]!, i)
+        .filter((f) => f.e === root)
+        .map((f) => [f.a, f.v.value])
+        .sort();
+      assert.deepEqual(actual, expectedRoot);
+      samples.push(hash(actual));
+    }
+    seeds.push({ account: a, subjects: 10000, facts: count, samples });
+  }
+  assert.equal(digest.digest("hex"), pooledDigest);
+  return { head, seeds };
+}
+export async function runArm(
+  url: string,
+  nonce: string,
+  grouped: boolean,
+  server: boolean,
+  options: {
+    pulse?: boolean;
+    smallPulse?: boolean;
+    bootstrapUrl?: string;
+    denseJournalIds?: boolean;
+    opened?: (client: DatomicClient, db: string) => Promise<void>;
+  } = {},
+) {
+  const client = new DatomicClient(url, 35_000),
+    key = scope(nonce, "load"),
+    bootstrap = options.bootstrapUrl ? new DatomicClient(options.bootstrapUrl, 35000) : client;
+  try {
+    const { created, db, strictRecordClocks } = await bootstrap.create(key, "lean", true, 35_000);
+    assert(created && strictRecordClocks);
+    const seed = server ? await seedPooled(bootstrap, db) : { head: 0, seeds: [] };
+    const seeds = seed.seeds;
+    let head = seed.head;
+    if (bootstrap !== client) {
+      const opened = await client.create(key, "lean", true, 35000);
+      assert(!opened.created && opened.db === db);
+    }
+    await options.opened?.(client, db);
     const phases = [];
-    for (const name of server ? ["alone", "one", "nine", "all"] : ["1", "4", "16", "64"]) {
+    for (const name of options.pulse
+      ? ["alone", "nine"]
+      : server
+        ? ["alone", "one", "nine", "all"]
+        : ["1", "4", "16", "64"]) {
       const startHead = head,
         depth = server ? 12 : Number(name),
         count = 128,
@@ -395,10 +440,10 @@ export async function runArm(url: string, nonce: string, grouped: boolean, serve
         const id = name + "-" + (probe ? "q-" : "") + a + "-" + i,
           root = server ? ids.placement(accounts[a]!.first + (i % 10000)) : rootFor(a, i % 128),
           start = performance.now();
-        const facts = Array.from({ length: 8 }, (_, j) =>
+        const facts = Array.from({ length: options.smallPulse ? 1 + (i % 3) : 8 }, (_, j) =>
           fact(root, ":save/field" + j, id + "-" + j),
         );
-        const input = command(id, facts);
+        const input = command(id, facts, [], true, options.denseJournalIds);
         if (server) Object.assign(input, { groupAccount: accounts[a]!.key });
         const ack = await write(client, db, input),
           end = performance.now();
@@ -412,6 +457,17 @@ export async function runArm(url: string, nonce: string, grouped: boolean, serve
             Number.isFinite(ack.readyToNativeEntryMs),
         );
         records.push({
+          ...(options.pulse
+            ? {
+                subject: root,
+                businessFacts: facts.length,
+                clock: ack.recordedAt.v,
+                bytes: ack.requestBytes,
+                ops: ack.preparedOps,
+                nativeComputeMs: ack.nativeComputeMs,
+                groupStages: ack.groupStages,
+              }
+            : {}),
           id,
           probe,
           account: a,
@@ -533,6 +589,7 @@ export async function runArm(url: string, nonce: string, grouped: boolean, serve
     assert.equal(Number(check.position?.v), sample.pos);
     return { nonce, grouped, scope: key, db, seeds, phases };
   } finally {
+    if (bootstrap !== client) bootstrap.close();
     client.close();
   }
 }

@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
+  (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger LongAdder]))
 (set! *warn-on-reflection* false)
 
@@ -173,8 +173,7 @@
                 ;; [DX-T1-8] Why: both JSON fragments and legacy text responses expose canonical logical rows.
                 ;; Rejected: emitting the compressed storage frame to replica/bootstrap or pinned read clients.
                 (let [body-start (+ ref-start ref-size 1)
-                      logical (if (.startsWith text "Z1" (int body-start))
-                                (str (subs text 0 body-start) (slim/body (subs text body-start))) text)]
+                      logical (if (= \2 (.charAt text 0)) (slim/logical-text text body-start) text)]
                 (.add texts logical)
                 (when (> (.size texts) row-limit) (decline! "row-budget"))
                 (if (= \1 (.charAt text 0)) (append-string! out logical)
@@ -203,7 +202,7 @@
         rev (if eid (if cached (:rev cached)
                       (long (cache/revision (:revision-view cfg) eid
                         (fn [] (let [revision (read-datom)] (vreset! witness revision)
-                                 (if revision (long (:v revision)) 0)))))) 0)
+                                 (long (or (:v revision) (ledger/implicit-position db eid) 0))))))) 0)
         value (if eid
                 (if (pos? rev)
                   (cache/lookup (cache/parsed-key name (:cache-generation cfg) eid rev) #(parse-entity db cfg eid rev (- 100000 (aget counts 0))))
@@ -222,7 +221,8 @@
 (defn read-entity-legacy [name db cfg id valid ^longs counts]
   (let [eid (entity-id db name id cfg) valid (double valid)
         rev (if eid (long (cache/revision (:revision-view cfg) eid
-                           (fn [] (long (or (:v (first (d/datoms db :eavt eid (:rev cfg)))) 0))))) 0)
+                           (fn [] (long (or (:v (first (d/datoms db :eavt eid (:rev cfg))))
+                                           (ledger/implicit-position db eid) 0))))) 0)
         value (if eid
                 (if (pos? rev)
                   (cache/lookup (cache/parsed-key name (:cache-generation cfg) eid rev)

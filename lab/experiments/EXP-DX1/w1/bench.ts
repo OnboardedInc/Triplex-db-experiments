@@ -11,6 +11,7 @@ import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-pro
 import { sourceInventory, stageReplay } from "../scale1/source.ts";
 import { fileHash } from "../scale1/measurements.ts";
 import { measure, type Arm } from "./measure.ts";
+import { fieldPolicy, type Mode } from "./field/bench-check.ts";
 
 const repo = path.resolve(import.meta.dirname, "../../../.."),
   GiB = 1024 ** 3;
@@ -207,6 +208,8 @@ export async function withStack<T>(
   arm: Arm,
   run: (env: NodeJS.ProcessEnv) => Promise<T>,
   grouped?: boolean,
+  fieldMode?: Mode,
+  enhanced = false,
 ) {
   const why = stopReason();
   assert(!why, why);
@@ -283,6 +286,27 @@ export async function withStack<T>(
       DX_TX_NATIVE_JFR: "0",
       DX_NATIVE_SETTINGS_READBACK: "0",
     });
+  const policy = fieldMode ? fieldPolicy(fieldMode, enhanced) : undefined;
+  if (policy) {
+    assert.equal(grouped, policy.grouping);
+    Object.assign(env, {
+      DX_LIVE_PRIORITY: String(Number(policy.priority)),
+      DX_FIELD_COALESCE: String(Number(policy.subjectOnly)),
+      DX_W1_EXTRA: String(Number(enhanced)),
+      DX_SMALL_ROWS: String(Number(policy.compact)),
+      DX_GROUP_REUSE_PREPARED: String(Number(policy.prepared)),
+      DX_W1_PREDECESSOR: String(Number(policy.predecessor)),
+      DX_W1_LEDGER: String(Number(policy.ledger)),
+      DX_W1_PACKED_JOURNAL: String(Number(policy.packedJournal)),
+      DX_W1_FAST_REPLY: String(Number(policy.fastReplyAndWire)),
+      DX_GROUP_MAX_MEMBERS: String(policy.maxMembers),
+      DX_WRITE_BUDGET_US: policy.budgetMicros === null ? "" : String(policy.budgetMicros),
+    });
+    if (policy.fastReplyAndWire)
+      env.TRIPLEX_DATOMIC_FAST_PATHS = [env.TRIPLEX_DATOMIC_FAST_PATHS, "save-wire"]
+        .filter(Boolean)
+        .join(",");
+  }
   write(path.join(dir, "identity.json"), arm);
   const args = [
     stack("up"),
@@ -365,6 +389,34 @@ export async function withStack<T>(
       const writer = JSON.parse(docker("inspect", slot + "-gw-w"))[0];
       assert(writer.Config.Env.includes("TX2_GROUP_COMMIT=" + Number(grouped)));
       assert(writer.Config.Env.includes("TX2_GROUP_QUEUE_CLOCK=1"));
+      if (fieldMode) {
+        assert(
+          writer.Config.Env.includes("TX2_LIVE_PRIORITY=" + Number(fieldMode !== "individual")),
+        );
+        assert(writer.Config.Env.includes("TX2_FIELD_COALESCE=" + Number(fieldMode === "subject")));
+        if (enhanced && policy) {
+          assert(writer.Config.Env.includes("TX2_GROUP_STAGE_CLOCK=1"));
+          assert(writer.Config.Env.includes("TX2_SMALL_ROWS=" + Number(policy.compact)));
+          assert(writer.Config.Env.includes("TX2_GROUP_REUSE_PREPARED=" + Number(policy.prepared)));
+          assert(
+            writer.Config.Env.includes("TX2_PREDECESSOR_LOOKUP=" + Number(policy.predecessor)),
+          );
+          assert(writer.Config.Env.includes("TX2_SAVE_LEDGER=" + Number(policy.ledger)));
+          assert(writer.Config.Env.includes("TX2_PACKED_JOURNAL=" + Number(policy.packedJournal)));
+          assert(
+            writer.Config.Env.includes("TX2_GROUP_FAST_REPLY=" + Number(policy.fastReplyAndWire)),
+          );
+          assert(writer.Config.Env.includes("TX2_GROUP_MAX_MEMBERS=" + policy.maxMembers));
+          const budget = writer.Config.Env.find((s: string) =>
+            s.startsWith("TX2_WRITE_BUDGET_US="),
+          );
+          assert.equal(
+            budget,
+            policy.budgetMicros === null ? undefined : "TX2_WRITE_BUDGET_US=" + policy.budgetMicros,
+          );
+          write(path.join(dir, "field-options.json"), policy);
+        }
+      }
     }
     env.TX2_ENGINE_CGROUPS = groups.join(",");
     env.TX2_ENGINE_CPUS = "5";

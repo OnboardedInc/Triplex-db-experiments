@@ -77,6 +77,9 @@ function bindingInputs(manager) {
     "lab/oracles",
     "lab/experiments/EXP-DX1/int1",
     "lab/experiments/EXP-DX1/import1",
+    "lab/experiments/EXP-DX1/notify1",
+    "lab/experiments/EXP-DX1/actv-lazy",
+    "lab/experiments/EXP-DX1/actv-delta",
     "pnpm-lock.yaml",
   )
     .split("\n")
@@ -103,7 +106,7 @@ export async function local(opts, config, manager) {
   assert.equal(opts.holder, holder);
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
-  assert(["smoke", "scale", "batch", "overlap"].includes(mode));
+  assert(["smoke", "scale", "batch", "overlap", "regression"].includes(mode));
   assert(Number.isSafeInteger(people) && people >= 12 && people <= 100_000);
   assert(typeof opts.out === "string" && /^[a-z0-9][a-z0-9-]{0,40}$/.test(opts.out));
   const vault = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
@@ -120,6 +123,8 @@ export async function local(opts, config, manager) {
   const token = randomBytes(24).toString("hex");
   const roles = Object.keys(caps);
   const names = Object.fromEntries(roles.map((r) => [r, prefix + "-" + r]));
+  const archiveDir = mode === "regression" ? path.join(dir, "archive") : undefined;
+  if (archiveDir) fs.mkdirSync(archiveDir);
   const owned = new Map();
   const volumes = new Set();
   const label = "dxerase.attempt";
@@ -214,14 +219,14 @@ export async function local(opts, config, manager) {
       password;
     const gateway = sha256(JSON.stringify(inputs.gateway));
 
-    function start(role, img, extra, entrypoint, args) {
+    function start(role, img, extra, entrypoint, args, memory = caps[role]) {
       // [DX-ERASE1] Why: match each cap and ID to a reservation before starting. Rejected: trusting slot names for cleanup.
       const id = docker([
         "create",
         "--pull",
         "never",
         "--name",
-        names[role],
+        names[role] ?? prefix + "-" + role,
         "--label",
         `${label}=${nonce}`,
         "--label",
@@ -229,9 +234,9 @@ export async function local(opts, config, manager) {
         "--network",
         network,
         "--memory",
-        `${caps[role]}m`,
+        `${memory}m`,
         "--memory-swap",
-        `${caps[role]}m`,
+        `${memory}m`,
         "--cpus",
         "2",
         "--ulimit",
@@ -249,7 +254,7 @@ export async function local(opts, config, manager) {
       owned.set(role, id);
       const m = inspect(id);
       assert(m?.Id === id && m.Image === img && m.Config.Labels[label] === nonce);
-      assert.equal(m.HostConfig.Memory, caps[role] * MiB);
+      assert.equal(m.HostConfig.Memory, memory * MiB);
       assert.equal(m.HostConfig.MemorySwap, m.HostConfig.Memory);
       assert.equal(m.HostConfig.NanoCpus, 2e9);
       for (const mount of m.Mounts) if (mount.Type === "volume") volumes.add(mount.Name);
@@ -321,22 +326,20 @@ export async function local(opts, config, manager) {
     );
     sql(docker(["exec", owned.get("tx"), "cat", "/opt/datomic/bin/sql/postgres-table.sql"]));
     docker(["exec", owned.get("tx"), "touch", "/tmp/erase1.ready"]);
-    await ready(
-      "tx",
-      () =>
-        docker(
-          [
-            "exec",
-            owned.get("tx"),
-            "bash",
-            "-c",
-            "(exec 3<>/dev/tcp/$1/4334) 2>/dev/null && echo ready",
-            "probe",
-            names.tx,
-          ],
-          { allowFail: true },
-        ) === "ready",
-    );
+    const txReady = () =>
+      docker(
+        [
+          "exec",
+          owned.get("tx"),
+          "bash",
+          "-c",
+          "(exec 3<>/dev/tcp/$1/4334) 2>/dev/null && echo ready",
+          "probe",
+          names.tx,
+        ],
+        { allowFail: true },
+      ) === "ready";
+    await ready("tx", txReady);
     start(
       "gw",
       image,
@@ -348,6 +351,7 @@ export async function local(opts, config, manager) {
           ":/opt/gateway/codec-spec.json:ro",
         "-v",
         import.meta.dirname + ":/erase1:ro",
+        ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
         "-p",
         new URL(endpoint).hostname + ":" + info.port + ":8080",
         "-e",
@@ -366,14 +370,15 @@ export async function local(opts, config, manager) {
       "/opt/datomic/bin/run",
       ["-m", "erase1", "gateway"],
     );
-    await ready("gw", async () => {
+    const gatewayReady = async () => {
       const r = await fetch(endpoint + "/health", { signal: AbortSignal.timeout(2000) }).catch(
         () => null,
       );
       if (!r?.ok) return false;
       assert.deepEqual(await r.json(), { datomicVersion: "1.0.7745", gatewaySourceHash: gateway });
       return true;
-    });
+    };
+    await ready("gw", gatewayReady);
     const mounted = docker([
       "exec",
       owned.get("gw"),
@@ -440,13 +445,15 @@ export async function local(opts, config, manager) {
         TRIPLEX_DATOMIC_LAYOUT: "lean",
         TX2_W0_POINT_JOURNAL: "1",
         DX_ERASE_TOKEN: token,
-        DX_ERASE_MEASURE: mode === "smoke" ? "" : path.join(vault, "locks", "measure"),
+        DX_ERASE_MEASURE: ["smoke", "regression"].includes(mode)
+          ? ""
+          : path.join(vault, "locks", "measure"),
       },
       stdio: ["ignore", "inherit", "inherit", "ipc"],
     });
     abort.signal.addEventListener("abort", () => child.kill("SIGTERM"), { once: true });
     if (abort.signal.aborted) child.kill("SIGTERM");
-    child.on("message", (msg) => {
+    child.on("message", async (msg) => {
       try {
         assert.equal(msg.binding, run.binding);
         let result;
@@ -469,7 +476,72 @@ export async function local(opts, config, manager) {
             ],
             { input: JSON.stringify(msg.plan) },
           );
-        else throw Error("Unknown owned-stack operation");
+        else if (msg.op === "archive") {
+          // [DX-ERASE1] Why: preserve a real pre-erasure data backup inside the owned stack.
+          // Rejected: constructing a replacement assertion as a stand-in for restore (it loses original history and IDs).
+          assert.equal(
+            msg.scope,
+            JSON.stringify(["triplex-scope-v1", "test", "test", `erase1-${nonce}`, 0]),
+          );
+          assert(archiveDir && ["backup", "restore"].includes(msg.action));
+          const db = "s2-" + Buffer.from(msg.scope).toString("base64url");
+          const uriCommand =
+            'uri=$(printf %s "$DATOMIC_URI_TEMPLATE" | sed "s/{db}/$DX_ERASE_DB/"); ';
+          if (msg.action === "backup") {
+            result = docker([
+              "exec",
+              "-e",
+              "DX_ERASE_DB=" + db,
+              owned.get("gw"),
+              "sh",
+              "-ceu",
+              uriCommand +
+                'exec bin/datomic -Xms64m -Xmx224m backup-db "$uri" file:/dx-archive/data',
+            ]);
+          } else {
+            // [DX-ERASE1] Why: PostgreSQL restores require the old Datomic peers and transactor down.
+            // Rejected: an in-place restore while their cache and indexing jobs can still write.
+            for (const role of ["gw", "tx"]) {
+              const id = owned.get(role);
+              assert(inspect(id).Config.Labels[label] === nonce);
+              docker(["stop", "--time", "12", id]);
+              assert(!inspect(id).State.Running);
+            }
+            start(
+              "restore",
+              image,
+              [
+                "-e",
+                "DATOMIC_URI_TEMPLATE=" + uri,
+                "-e",
+                "DX_ERASE_DB=" + db,
+                "-v",
+                archiveDir + ":/dx-archive:ro",
+              ],
+              "sh",
+              [
+                "-ceu",
+                uriCommand +
+                  'exec bin/datomic -Xms96m -Xmx800m restore-db file:/dx-archive/data "$uri"',
+              ],
+              caps.gw,
+            );
+            const id = owned.get("restore");
+            const exit = docker(["wait", id]);
+            result = docker(["logs", id]);
+            write("archive-restore", {
+              id,
+              code: Number(exit),
+              scope: msg.scope,
+              binding: run.binding,
+            });
+            assert.equal(exit, "0");
+            docker(["start", owned.get("tx")]);
+            await ready("tx", txReady);
+            docker(["start", owned.get("gw")]);
+            await ready("gw", gatewayReady);
+          }
+        } else throw Error("Unknown owned-stack operation");
         child.send({ id: msg.id, result });
       } catch (err) {
         child.send({ id: msg.id, error: String(err) });
@@ -480,8 +552,8 @@ export async function local(opts, config, manager) {
       child.once("exit", (code, signal) => ok({ code, signal }));
     });
     write("driver-exit", exit);
-    assert.deepEqual(exit, { code: 0, signal: null });
     assert.deepEqual(bindingInputs(manager), inputs, "Measured source drifted");
+    assert.deepEqual(exit, { code: 0, signal: null });
   } finally {
     const cleanup = {
       nonce,

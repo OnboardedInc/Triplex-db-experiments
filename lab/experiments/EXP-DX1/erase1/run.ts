@@ -15,7 +15,7 @@ import { deepOwnFacts, deepShape, taskId } from "../../../bench/lib/deep-world.t
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { ids, SEED_VALID_FROM, subjectOf } from "../../../bench/lib/world.ts";
 
-type Layout = "smoke" | "scale" | "batch" | "overlap";
+type Layout = "smoke" | "scale" | "batch" | "overlap" | "regression";
 type Attempt = {
   binding: string;
   nonce: string;
@@ -204,7 +204,8 @@ function blocks() {
     assert(run.people >= 250);
     return [makeGroup(mid - 25, 10, 32), makeGroup(mid, 100, 8)];
   }
-  return [makeGroup(mid - 1, 1, 0), makeGroup(mid, 1, run.mode === "smoke" ? 5 : 415)];
+  const history = ["smoke", "regression"].includes(run.mode) ? 5 : 415;
+  return [makeGroup(mid - 1, 1, 0), makeGroup(mid, 1, history)];
 }
 function makeGroup(first: number, n: number, depth: number): Acc {
   return {
@@ -729,6 +730,11 @@ async function scale() {
       const stage = JSON.parse(JSON.stringify(f.stage(groups))) as Staged;
       f = new Fixture(comp, fixtureName);
       await restoreFixture(f, stage);
+    }
+    if (run.mode === "regression") {
+      const { regression } = await import("./regression.ts");
+      await regression(f, groups[1]!.people[0]!, dir, run.binding, diag, getParent, output);
+      return;
     }
     if (run.mode === "overlap") {
       const { importWork, publishWork, replayErased } = await import("./scenarios.ts");

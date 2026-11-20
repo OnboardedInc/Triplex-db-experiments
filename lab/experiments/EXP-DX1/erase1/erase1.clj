@@ -53,6 +53,19 @@
      :atPin (marker-values old plan) :inHistory (mapv count (marker-values history plan))
      :domain (row-stat db (:domain plan)) :domainHistory (row-stat history (:domain plan))
      :journal (row-stat db (:journal plan)) :journalHistory (row-stat history (:journal plan))}))
+
+(defn regression-excise! [conn input]
+  ;; [DX-ERASE1] Why: the red gate must use the real current excision boundary and leave the real journal in place.
+  ;; Rejected: editing journal or reader outputs in the fixture (it would hide the missing publication contract).
+  (let [db (d/db conn) id (get input "assertionId") row (lean/by-id db id)]
+    (check! (and row (= (get input "entityId") (:entity_id (lean/decode (:v row))))) "Regression target missing")
+    (let [result (until (d/transact conn [{:db/id (d/tempid :db.part/user) :db/excise (:e row)
+                                          :db.excise/attrs [:triplex.entity/row]}]))
+          t (d/basis-t (:db-after result))
+          erased-at (.getTime ^Date (:db/txInstant (d/entity (:db-after result) (d/t->tx t))))]
+      (d/request-index conn)
+      (until (d/sync-excise conn t))
+      {:t (str t) :erasedAt erased-at :assertionId id})))
 (defn log-rows [conn plan]
   (let [ids (set (concat (:domain plan) (:journal plan))) a (:rowAttr plan)]
     (mapv (fn [t]
@@ -129,6 +142,7 @@
                (case op
                  "prepare" (prepare! conn input)
                  "erase" (erase! conn input)
+                 "regression-excise" (regression-excise! conn input)
                  "observe" (observe! conn input)
                  "drop-pin" (do (check! (= conn (:conn @plans)) "Wrong pin owner") (reset! plans nil) {:released true})
                  "index" (let [t (d/basis-t (d/db conn)) clock (System/nanoTime) req (d/request-index conn)

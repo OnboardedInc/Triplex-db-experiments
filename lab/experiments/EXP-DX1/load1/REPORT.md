@@ -1,19 +1,26 @@
-# Loading one shared Datomic database
-The original two server loads reached 4,578 and 4,669 facts per second.
-A full batch took about 413 milliseconds from the previous client return.
-About 72 milliseconds were spent applying it. Durable-write waiting overlapped parts of the transaction pipeline.
-The client waited for each reply before submitting its next batch.
-The first experiment measures how much of that interval can be removed without changing a receipt.
-Local and server measurements for the new loader are pending.
-The live-import target is 3,000 facts per second with each neighbour's read and write p99 within 1.5 times its own baseline.
+# Importing beside live traffic
+The earlier 4.72× result used only 60 quiet saves. The repeat had 540 per group.
+All ten of the slowest saves arrived while a bulk frame was still outstanding.
+The two slowest took about 132 milliseconds each. They spent 22 and 5 milliseconds waiting in the gateway queue.
+The longer run found slow saves behind both bulk frames and long garbage-collection pauses.
+The earlier fast loader still handles quiet loads and retries a lost receipt.
+The shared-database test will now reduce frame size when a commit consumes too much of the latency allowance.
+The Mac results are diagnostic. Server predictions and commands will be recorded before any server run.
 
-## Evidence audit
-- `profile.ts` joins each current public command to the actual native operation ID, HTTP position, source, attempt and slot. It checks exact source rows and IDs against a subsequent durable lookup. Each arm starts with a fresh physical database, verifies its final position and seals the actual expected-model journal bytes.
-- `oracle.ts` compares every ordered source fact, validity, stored clock, transaction ID and assertion ID. `run.ts` checks subprocess identity and equal source seals. The HA1 manager checks image, mounts, reservation, cleanup and unchanged executed inputs before emitting observations.
-- W1 is imported from `502c8897d`. Its native range proof rechecks all unique IDs and both bounds against actual ops and serialized history. Group evaluate/materialize/receipt and the client's transactCommand tie each logical receipt to the claimed operation, actual report and stored basis; ordinary writes remain the default. LOAD1 profile mode is solo and reads its metrics datom from that exact transaction.
-- `Snapshot.open/write/verify` binds a native manifest to destination, source generator and packing width, compares the public ACK with the input, and commits only contiguous source progress in SQLite FULL. Reopen verifies stored receipts; final verification reconstructs every frame from source, compares durable lookup and feed to the saved identities and checks the physical rows at one pin. The gap drill withholds a committed checkpoint and checks the exact original after reopen.
-- The named fresh-text wire format derives row IDs and order from the submitted canonical text. The peer repeats the ordinary identity/content validation and rejects duplicate prefixes. Only an empty historical range at the transactor permits skipping the individual history seeks. The existing seed entry point accepts `TX2_DATOMIC_SEED_IN_FLIGHT=1|2|4` for disjoint subject batches on Datomic.
-- The named W1 queue option, `TX2_GROUP_COMMIT=1 TX2_LOAD1_PRIORITY=1`, recognizes the actual claimed import journal. The writer grants bulk singly and chooses runnable live saves first while preserving earlier dependency tokens. Group ACKs are read from their native member records. A non-preemptible bulk commit already executing can still delay a save.
-- `live.ts` binds every native operation and logical position to the same physical database, checks its grant and the original source content, and reconciles the complete feed and pinned quiet reads. Rates include scheduled offers, capacity refusals, errors and drain; only confirmed facts inside the offered window count. The quiet account's baseline uses the same offered reads and writes. Local percentiles are diagnostics.
-- The first image preflight stopped before creating a database. A matched six-arm run then confirmed all 30 batches. A wire-fixture test subsequently caught an ordinary object's property-order change. The ordinary branch now keeps the original wire object and its golden bytes.
-- [Predictions and two-server commands](BENCH.md) were recorded before server access. No new bare-metal measurements have been made.
+In the archived 128-fact arm the client saw 269 frames with a median of 36.28 ms and a p99 of 170.39 ms. For nine of the ten slow saves, the outstanding frame's durable position preceded its save. One save committed before the outstanding frame. The historical native log was truncated to the final control arm.
+
+The new 108-second bookends preserve the 50 offered saves per second, plus five quiet saves and five quiet pinned reads per second. Every published command still reconciles its full receipt and feed, and the importer verifies physical rows at the resulting pin.
+- Audit. The historical analysis checks existing manifest hashes, source, nonce, slot and matching immutable receipt positions. Each new trace is produced by the live attempt's identified containers, checks the recording hash and run/source/slot, and keeps clock uncertainty for any host-to-guest overlap. The existing oracle and stack checks still guard claims, pins, physical rows, counts, identity and cleanup. No published contract pin moved.
+- [Earlier loader report](PART3.md) · [Earlier predictions and commands](BENCH.md) · [Earlier attempt index](EVIDENCE.md)
+
+The 108-second import produced 3,082 facts/s. Its quiet read/save p99 was 95.6/154.6 ms. The first control was 22.4/96.8 ms, and the post-import control changed sharply. Report the two controls separately. That drift made the pooled denominator misleading.
+Across 2,775 native frames, exclusive hold p50/p99 was 15.6/69.2 ms, native apply 4.4/39.8 ms, writer log-path parks ≥5 ms 0/13.8 ms, and native log completion to peer return about 3.3/13.3 ms.
+- Extended-tail examples. One 255 ms save overlapped a 228 ms bulk hold and 150 ms of transactor GC. A 248 ms save had no bulk hold and overlapped 145 ms of GC. Another 152 ms save overlapped a 119 ms bulk hold with 6.4 ms native work. The collector overflowed after preserving the native recording, all three offer tapes and completed row proofs. Gateway GC, preparation and precise index adoption could not be attributed from this attempt. Collection now transfers bounded chunks.
+- The time-budget arm keeps whole subjects and one bulk receipt in flight. It stores the exact chosen boundary before sending, keeps W1's 96 stored rows and 64 KiB as hard caps, and reduces the estimated width when a dispatch-to-peer interval exceeds budget. The budget cannot preempt work already accepted. It refuses more work if even the minimum often exceeds budget.
+- [Tail evidence checksums](PART4-SHA256SUMS)
+- Split layouts use independent Datomic writers and gateways. The first shares PostgreSQL with a different SQL database and role. The second runs another PostgreSQL. The bulk client has its own event loop. Every live account replays the same scheduled saves and pinned reads in the bookends and the candidate.
+- Split verification binds both physical destinations, checks the isolated cursor against original receipts and pinned rows, and recomputes the offered tape and p99 from the retained outcomes. Exactness is required before publishing an arm observation.
+
+The first 50/s shared run verified five cells. The 1/4/8 ms settings imported 0/0/596 facts/s. Its 11.06 ms budget came from half the matched no-import read p99 and imported 2,137 facts/s. Quiet read/save p99 reached 51.6/166.4 ms against 22.1/91.7 in the first control. This still missed both bars. A fractional Node deadline prevented the final control from starting. Each completed cell keeps its own checked tape and proof. The new allowance campaign has a dedicated quiet-alone reference.
+
+Separate PostgreSQL on the same Mac imported 5,167 facts/s at 50 offered saves/s. All 11,880 offers completed in each arm. Quiet read/save p99 was 76.3/412.4 ms against 53.7/197.1 and 77.9/205.6 in controls. The largest paired ratios were 3.46× read and 2.21× save. Two database stacks sharing this VM exceeded the isolation bar even with separate SQL.

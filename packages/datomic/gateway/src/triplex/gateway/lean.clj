@@ -1,5 +1,6 @@
 (ns triplex.gateway.lean
-  (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [clojure.data.json :as json] [triplex.gateway.reach :as reach]))
+  (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.reach :as reach]
+            [triplex.gateway.save-ledger :as ledger]))
 (set! *warn-on-reflection* false)
 ;; [DX-B5-L2] Why: only row text and native history contain lean facts; no reified fallback exists.
 ;; Rejected: empty answers from :f indexes, or decoding through d/entity/d/pull/d/q.
@@ -16,7 +17,7 @@
 (defn decode [^String text]
   (let [start (+ 5 (Integer/parseInt text 1 5 16)) ref-start (+ start 36)
         size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
-        values (json/read-str (slim/body (subs text (+ ref-start size 1))))
+        values (slim/columns text (+ ref-start size 1))
         row (into {:retracted_at nil :retracted_position nil :retract_tx_id nil}
                   (map (fn [column v] [column (cond (= column :recorded_position) (Long/parseLong v)
                                                    (and (numbers column) (= v "-0")) -0.0
@@ -40,9 +41,9 @@
                                    :retracted_at (reach/bits marker (+ start 16))
                                    :retract_tx_id (subs marker (+ start 32))))
                retired (let [tx (:tx retired)]
-                         (assoc row :retracted_at (value db tx :triplex.tx/recorded-at)
+                         (assoc row :retracted_at (ledger/clock db tx)
                                     :retracted_position (value db tx :triplex.tx/position)
-                                    :retract_tx_id (value db tx :triplex.tx/id)))
+                                    :retract_tx_id (ledger/tx-id db tx)))
                :else row))) grouped)))
 (defn live-texts [db eid]
   (let [retired (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))

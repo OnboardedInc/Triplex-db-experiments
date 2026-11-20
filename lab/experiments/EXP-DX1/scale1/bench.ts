@@ -400,29 +400,11 @@ function clean(dir: string, prefix: string) {
     JSON.stringify({ at: Date.now(), before, after }),
   );
 }
-async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
-  const dir = path.join(root, tag),
-    attempt = get(path.join(dir, "attempt.json"));
-  const spec = campaignItem(item, attempt.layout);
-  assert.deepEqual(attempt.spec, spec);
-  const small = mode === "small",
-    smallSeparate = small && attempt.layout !== "pooled";
-  const prefix = attempt.slot,
-    source = call("git", ["rev-parse", "HEAD"]);
-  assert.equal(source, attempt.source);
-  const rawRoot = path.join(repo, "runs", "DX-SCALE1", tag),
-    barrier = path.join(dir, "barrier");
-  fs.mkdirSync(rawRoot, { recursive: true });
-  fs.mkdirSync(barrier);
-  const oracleDir = path.join(dir, "oracle");
-  write(path.join(dir, "replay-source.json"), stageReplay(repo, oracleDir));
-  write(path.join(dir, "source.json"), sourceInventory(repo, attempt.publication === "lazy"));
-  const budget = attempt.capacity;
-  assert(attempt.boundedTrial || (mode === "seed" ? budget.fitsSeed : budget.fitsLive));
-  status(dir, "starting stack");
+// [DX-STG1] Why: notification trials use the same cold native stack, placement and cleanup as SCALE1. Rejected: a second server launcher with different durability settings.
+export function startScaleStack(dir: string, prefix: string, source: string, grouped = false, options: NodeJS.ProcessEnv = {}) {
   const env = {
     ...process.env,
-    DX_GROUP_COMMIT: attempt.groupControl ? "1" : "0",
+    DX_GROUP_COMMIT: grouped ? "1" : "0",
     DX_GROUP_QUEUE_CLOCK: "0",
     DX_BARE_METAL: "1",
     DX_BARE_METAL_ROOT: dir,
@@ -443,6 +425,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-w-gc.log",
     DX_GW_READ_JAVA_OPTS:
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-r-gc.log",
+    ...options,
   };
   execFileSync(
     "bash",
@@ -472,6 +455,29 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
   const engines = placement(prefix);
+  return { env, engines };
+}
+async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
+  const dir = path.join(root, tag),
+    attempt = get(path.join(dir, "attempt.json"));
+  const spec = campaignItem(item, attempt.layout);
+  assert.deepEqual(attempt.spec, spec);
+  const small = mode === "small",
+    smallSeparate = small && attempt.layout !== "pooled";
+  const prefix = attempt.slot,
+    source = call("git", ["rev-parse", "HEAD"]);
+  assert.equal(source, attempt.source);
+  const rawRoot = path.join(repo, "runs", "DX-SCALE1", tag),
+    barrier = path.join(dir, "barrier");
+  fs.mkdirSync(rawRoot, { recursive: true });
+  fs.mkdirSync(barrier);
+  const oracleDir = path.join(dir, "oracle");
+  write(path.join(dir, "replay-source.json"), stageReplay(repo, oracleDir));
+  write(path.join(dir, "source.json"), sourceInventory(repo, attempt.publication === "lazy"));
+  const budget = attempt.capacity;
+  assert(attempt.boundedTrial || (mode === "seed" ? budget.fitsSeed : budget.fitsLive));
+  status(dir, "starting stack");
+  const { env, engines } = startScaleStack(dir, prefix, source, Boolean(attempt.groupControl));
   if (item === 3 && attempt.layout === "pooled") {
     const expected = Number(Boolean(attempt.groupControl));
     const actual = JSON.parse(docker("inspect", engines["gw-w"].id))[0];
@@ -1843,6 +1849,7 @@ async function main() {
   ]);
   console.log(JSON.stringify({ unit, tag, ceiling, capacity }));
 }
+export const scaleHost = { physical, released, memory, available, childrenInventory, clean, snapshot, planCpus, root };
 if (process.argv[1] && path.resolve(process.argv[1]) === script)
   main().catch((e) => {
     console.error(e);

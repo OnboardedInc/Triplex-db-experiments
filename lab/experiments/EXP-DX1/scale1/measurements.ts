@@ -32,6 +32,7 @@ import { compareTenants } from "./tenant-metrics.ts";
 import { smallTrace, smallId, smallSeconds, smallPhases, smallScope } from "./small-plan.ts";
 import { deepPopulation, DEEP_PROFILE } from "../../../bench/lib/deep-world.ts";
 import { DeepCommitMeter } from "../../../bench/lib/deep-commit-meter.ts";
+import { fieldPlan, fieldProfile } from "../int1/field-plan.ts";
 
 export async function fileHash(file: string) {
   const h = createHash("sha256");
@@ -54,20 +55,21 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   assert.deepEqual(actualSeed.identity, id);
   assert.deepEqual(report.deep.seed, actualSeed.seed);
   const mix = id.arm === "interference",
-    small = id.arm === "small";
+    small = id.arm === "small",
+    compactFixture = id.people === 40 && !id.tenant;
   const plan = id.tenant
       ? tenantPlan(id.tenant, id.arm)
       : small
         ? smallTrace(id.account)
         : mix
           ? interferenceTrace(id.account)
-          : frozenDeep(id.account, id.people),
+          : id.field ? fieldPlan(id.account, id.people, compactFixture) : frozenDeep(id.account, id.people),
     expectedCount = id.tenant
       ? tenantFacts(tenantAccounts(id.tenant))
       : deepPopulation(id.people).facts;
-  assert.equal(report.deep.profile, id.tenant?.live ? liveProfile : DEEP_PROFILE);
-  const fixture = id.tenant?.study === "smoke";
-  if (fixture) assert(id.slot.startsWith("tx2-dxscale1-smoke-"));
+  assert.equal(report.deep.profile, id.field ? fieldProfile : id.tenant?.live ? liveProfile : DEEP_PROFILE);
+  const fixture = id.tenant?.study === "smoke" || compactFixture;
+  if (fixture && !compactFixture) assert(id.slot.startsWith("tx2-dxscale1-smoke-"));
   assert.equal(
     report.config.profile,
     fixture ? "deep-smoke" : id.tenant?.live ? "deep-live" : "deep",
@@ -94,13 +96,13 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       ? (report.deep.restoredSeed?.origin.scope ?? tenantScope(id.tenant, id.nonce))
       : small
         ? smallScope(id.nonce, id.account)
-        : `ns-datomic-deep${id.people === 10000 ? "10k" : "100k"}-deep-${id.nonce}-s${id.account}`,
+        : `ns-datomic-deep${compactFixture ? "smoke40" : id.people === 10000 ? "10k" : "100k"}-deep-${id.nonce}-s${id.account}`,
   );
   assert.equal(report.traceStartAbsMs, commonStart);
   assert.equal(report.verdictClock, VERDICT_CLOCK);
   assert.equal(
     report.verdictPlanId,
-    id.tenant
+    id.field ? fieldProfile : compactFixture ? "ns-deep-smoke/2" : id.tenant
       ? id.tenant.live
         ? liveProfile + "/" + id.tenant.live
         : tenantTraceId + "/" + id.tenant.study
@@ -117,7 +119,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   const hashes = Object.fromEntries(
     await Promise.all(Object.entries(files).map(async ([k, f]) => [k, await fileHash(f)])),
   );
-  const duration = id.tenant
+  const duration = compactFixture ? 30 : id.tenant
     ? tenantWindows(id.tenant, id.arm).at(-1)!.pattern === "activation"
       ? report.writer.offeredUntilTraceS
       : (report.phases.at(-1).end - commonStart) / 1000

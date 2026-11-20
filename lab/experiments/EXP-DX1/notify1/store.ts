@@ -7,7 +7,8 @@ import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 export type Store = Pick<
   CompositionHandle,
   "currentPosition" | "sweepPage" | "transactionByCommand" | "transact" | "scopeName"
->;
+> &
+  Partial<Pick<CompositionHandle, "feedPage">>;
 export type Op =
   | {
       op: "assert";

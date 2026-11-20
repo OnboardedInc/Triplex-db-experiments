@@ -127,6 +127,7 @@ export async function seed(store: Store, n: number) {
     facts,
     frames,
     cut: end,
+    seedPosition: (i: number) => cuts[i]!,
     roster,
     rosterHash: sha256(canonical(roster)),
     sourceHash: source.digest("hex"),

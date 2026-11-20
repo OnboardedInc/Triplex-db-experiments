@@ -1,9 +1,20 @@
 import assert from "node:assert/strict";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
-import { clock, Evidence, hash, loopback, roles, until, type Role } from "./common.ts";
+import { createGunzip } from "node:zlib";
+import {
+  clock,
+  Evidence,
+  hash,
+  localRoleMiB,
+  loopback,
+  roles,
+  splitLoad,
+  until,
+  type Role,
+} from "./common.ts";
 
 export interface Site {
   key: string;
@@ -14,6 +25,9 @@ export interface Site {
 }
 type Member = { site: Site; id: string; image: string; role: Role; volumes: string[] };
 const pgRoles = new Set<Role>(["pg", "target"]);
+const loadTraceDir = "/tmp/load2-trace";
+const javaRecording =
+  " -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0";
 export class Stack {
   readonly members = new Map<Role, Member>();
   readonly networks = new Map<Site, string>();
@@ -68,7 +82,10 @@ export class Stack {
     const image = pgRoles.has(role) ? this.pgIds.get(site)! : site.datomicId;
     const cross = this.a !== this.b;
     let published: string[] = [];
-    if (port && (cross || port === 8080)) {
+    if (!cross && port === 8080 && this.e.mode.startsWith("load-")) {
+      // [DX-LOAD1] Why: the VM assigns a free port at container start. Rejected: probing the Mac's socket table for a port used by the VM.
+      published = ["-p", loopback + "::" + port];
+    } else if (port && (cross || port === 8080)) {
       let hostPort = port;
       if (port === 8080) {
         if (cross) hostPort = role === "read" ? 28481 : 28480;
@@ -87,7 +104,8 @@ export class Stack {
       // [DX-HA1] Why: an explicit port survives a gateway container restart. Rejected: ephemeral Docker publication that silently moves the client endpoint.
       published = ["-p", (site.privateAddress ?? loopback) + ":" + hostPort + ":" + port];
     }
-    const mb = roles[role] * (cross ? 4 : 1);
+    const server = process.platform === "linux";
+    const mb = server ? roles[role] * 4 : localRoleMiB(this.e.mode, role);
     const mounts = pgRoles.has(role)
       ? []
       : [
@@ -95,6 +113,9 @@ export class Stack {
           site.repo + "/packages/datomic/gateway/src:/opt/gateway/src:ro",
           "-v",
           site.repo + "/packages/datomic/src/codec-spec.json:/opt/gateway/codec-spec.json:ro",
+          ...(this.e.mode === "load-tail" && role !== "tool"
+            ? ["-v", site.repo + "/packages/datomic/gateway/trace.jfc:/opt/gateway/trace.jfc:ro"]
+            : []),
         ];
     const id = await site.docker([
       "create",
@@ -113,7 +134,7 @@ export class Stack {
       "--memory-swap",
       mb + "m",
       "--cpus",
-      cross ? "3" : "1.5",
+      server ? "3" : "1.5",
       "--network",
       this.networks.get(site)!,
       ...published,
@@ -155,6 +176,14 @@ export class Stack {
         codec = (await this.exec(role, "sha256sum", "/opt/gateway/codec-spec.json")).split(" ")[0];
       assert.equal(gateway, this.e.source.gateway);
       assert.equal(codec, this.e.source.codec);
+      if (this.e.mode === "load-tail" && role !== "tool") {
+        const m = view.Mounts.find((m: any) => m.Destination === "/opt/gateway/trace.jfc");
+        assert(m?.Type === "bind" && !m.RW);
+        assert.equal(
+          (await this.exec(role, "sha256sum", m.Destination)).split(" ")[0],
+          this.e.source.traceSettings,
+        );
+      }
       this.e.log("mounted-inputs", { id, role, gateway, codec });
     }
   }
@@ -232,6 +261,108 @@ export class Stack {
   }
   redact(s: string) {
     return s.replaceAll(this.secret, "[redacted]").replaceAll(this.admin, "[redacted]");
+  }
+  private loadTraceArgs(process: string) {
+    return this.e.mode === "load-tail"
+      ? [
+          "-e",
+          "TX2_LOAD2_TIMING=1",
+          "-e",
+          "TRIPLEX_TRACE_DIR=" + loadTraceDir,
+          "-e",
+          "TRIPLEX_TRACE_PROCESS=" + process,
+          "-e",
+          "TRIPLEX_TRACE_JFR=1",
+          "-e",
+          "TRIPLEX_TRACE_TX_JFR=1",
+          "-e",
+          "TRIPLEX_TRACE_TX_NATIVE_JFR=1",
+          "-e",
+          "TRIPLEX_TRACE_RUN=" + this.e.nonce,
+          "-e",
+          "TRIPLEX_TRACE_SOURCE=" + this.e.source.git,
+          "-e",
+          "TRIPLEX_TRACE_SLOT=" + this.e.slot,
+        ]
+      : [];
+  }
+  // [DX-LOAD2] Why: copy native events and their original JFR from identified live JVMs.
+  // Rejected: interpreting vendor logs from the last arm as if they covered every arm.
+  async collectLoadTrace() {
+    const traceRoles = [
+      ["active", "tx"],
+      ["write", "gw-write"],
+    ] as const;
+    await Promise.all(
+      traceRoles.map(async ([role]) => {
+        await this.exec(role, "touch", loadTraceDir + "/.finish");
+      }),
+    );
+    for (const [role, process] of traceRoles) {
+      const marker = process + ".jfr-complete.jsonl";
+      const errorFile = loadTraceDir + "/" + process + "-jfr-error.txt";
+      const result = await until(
+        "load recordings " + role,
+        async () => {
+          const failure = await this.exec(role, "cat", errorFile).catch(() => "");
+          if (failure) throw Error(failure);
+          return (
+            (await this.exec(role, "cat", loadTraceDir + "/" + marker).catch(() => "")) || undefined
+          );
+        },
+        75000,
+      );
+      const completion = JSON.parse(result);
+      assert.deepEqual(
+        [completion.run, completion.source, completion.slot, completion.process],
+        [this.e.nonce, this.e.source.git, this.e.slot, process],
+      );
+      assert(completion.events > 0 && completion.clockSamples >= 2);
+      const files = [process + ".jfr", process + ".jfr.jsonl", process + ".jsonl"];
+      fs.writeFileSync(path.join(this.e.dir, marker), result + "\n", { flag: "wx" });
+      for (const name of files) {
+        const file = loadTraceDir + "/" + name;
+        const zipped = file + ".ha.gz";
+        await this.exec(role, "sh", "-ceu", 'gzip -c "$1" > "$2"', "pack", file, zipped);
+        const bytes = Number(await this.exec(role, "stat", "-c", "%s", zipped));
+        assert(Number.isSafeInteger(bytes) && bytes > 0);
+        const dest = path.join(this.e.dir, name + ".gz");
+        const blockBytes = 2 ** 20;
+        const fd = fs.openSync(dest, "wx");
+        const digest = createHash("sha256");
+        try {
+          // [DX-LOAD2] Why: transfer the closed recording in bounded management messages.
+          // Rejected: base64 of one long JFR export overflowing the shell reader after a completed run.
+          for (let offset = 0; offset < bytes; offset += blockBytes) {
+            const packed = await this.exec(
+              role,
+              "sh",
+              "-ceu",
+              'dd if="$1" bs=1048576 skip="$2" count=1 status=none | base64 -w0',
+              "copy",
+              zipped,
+              String(offset / blockBytes),
+            );
+            const raw = Buffer.from(packed, "base64");
+            assert.equal(raw.length, Math.min(blockBytes, bytes - offset));
+            assert.equal(fs.writeSync(fd, raw), raw.length);
+            digest.update(raw);
+          }
+          assert.equal(
+            digest.digest("hex"),
+            (await this.exec(role, "sha256sum", zipped)).split(" ")[0],
+          );
+        } finally {
+          fs.closeSync(fd);
+        }
+        if (name.endsWith(".jfr")) {
+          const uncompressed = createHash("sha256");
+          for await (const part of fs.createReadStream(dest).pipe(createGunzip()))
+            uncompressed.update(part);
+          assert.equal(uncompressed.digest("hex"), completion.fileSha256);
+        }
+      }
+    }
   }
   async tool() {
     await this.start("tool", this.a, [], "/bin/sh", ["-c", "exec sleep infinity"]);
@@ -322,13 +453,17 @@ export class Stack {
     await this.start(
       role,
       site,
-      ["-e", "HA1_PROPERTIES=" + opts.join("\n")],
+      ["-e", "HA1_PROPERTIES=" + opts.join("\n"), ...this.loadTraceArgs("tx")],
       "/bin/sh",
       [
         "-c",
         'printf "%s\n" "$HA1_PROPERTIES" > /tmp/ha1.properties; exec bin/transactor -Xms96m -Xmx' +
-          (site.privateAddress ? "1400" : "288") +
-          "m -XX:ActiveProcessorCount=2 /tmp/ha1.properties",
+          (process.platform === "linux" ? "1400" : "288") +
+          "m -XX:ActiveProcessorCount=2" +
+          (this.e.mode === "load-tail"
+            ? javaRecording + " -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+            : "") +
+          " /tmp/ha1.properties",
       ],
       this.a !== this.b &&
         (this.e.mode === "failures" ||
@@ -357,23 +492,39 @@ export class Stack {
     return "s2-" + Buffer.from(this.sharedScope(role)).toString("base64url");
   }
   async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string) {
-    const size = site.privateAddress ? "1600" : "320";
+    const size = process.platform === "linux" ? "1600" : "320";
+    const frontier = this.e.mode.startsWith("load-frontier-");
+    const split = splitLoad(this.e.mode);
+    const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
+    const grouping = priority || (split && role === "write");
     await this.start(
       role,
       site,
       [
+        ...this.loadTraceArgs("gw-" + role),
         "-e",
         ...(this.e.mode.startsWith("load-")
           ? [
-              "TRIPLEX_TRACE_LEVEL=" + (this.e.mode === "load-profile" ? "full" : "off"),
+              "TRIPLEX_TRACE_LEVEL=" +
+                (this.e.mode === "load-profile"
+                  ? "full"
+                  : this.e.mode === "load-tail"
+                    ? "summary"
+                    : "off"),
               "-e",
-              "TX2_GROUP_COMMIT=" + Number(this.e.mode === "load-live"),
+              "TX2_GROUP_COMMIT=" + Number(grouping),
               "-e",
-              "TX2_LOAD1_PRIORITY=" + Number(this.e.mode === "load-live"),
+              "TX2_LOAD2_TIMING=" + Number(this.e.mode === "load-tail" || frontier),
               "-e",
-              "TX2_GROUP_QUEUE_CLOCK=" + Number(this.e.mode === "load-live"),
+              "TX2_LOAD2_FRAME_CAPS=" + Number(frontier),
               "-e",
-              "TRIPLEX_TRACE_JFR=0",
+              "TX2_GROUP_REUSE_PREPARED=" + Number(frontier || split),
+              "-e",
+              "TX2_LOAD1_PRIORITY=" + Number(grouping),
+              "-e",
+              "TX2_GROUP_QUEUE_CLOCK=" + Number(this.a === this.b && priority),
+              "-e",
+              "TRIPLEX_TRACE_JFR=" + Number(this.e.mode === "load-tail"),
               "-e",
               "TX2_LOAD1_PROFILE=" + Number(this.e.mode === "load-profile"),
               "-e",
@@ -399,7 +550,8 @@ export class Stack {
         "-e",
         "DATOMIC_JAVA_OPTS=-Xms96m -Xmx" +
           size +
-          "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m",
+          "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m" +
+          (this.e.mode === "load-tail" ? javaRecording : ""),
       ],
       "/opt/datomic/bin/run",
       [

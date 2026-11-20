@@ -89,6 +89,7 @@ export class Account {
   readonly binding: string;
   readonly first: number;
   readonly count: number;
+  readonly activityPopulation: number;
   readonly db: DatabaseSync;
   readonly cursor: { position: number };
   readonly tenant?: TenantAccount;
@@ -108,6 +109,7 @@ export class Account {
     tenant?: TenantAccount,
     membership?: MembershipProof,
     deferSeedFeed = false,
+    activityPopulation = count,
   ) {
     this.deferSeedFeed = deferSeedFeed;
     this.tenant = tenant;
@@ -118,6 +120,7 @@ export class Account {
     this.binding = binding;
     this.first = first;
     this.count = count;
+    this.activityPopulation = activityPopulation;
     this.db = db;
     this.cursor = cursor;
     db.exec(
@@ -141,7 +144,7 @@ export class Account {
   timeline: any[] = [];
   isTouched(i: number) {
     const local = i - this.first;
-    return local === activePerson(Math.floor(local / 50), this.count, process.env.DX_INT1_COHORT === "spread");
+    return local < this.activityPopulation && local === activePerson(Math.floor(local / 50), this.activityPopulation, process.env.DX_INT1_COHORT === "spread");
   }
   private original(i: number, rows: WorldRow[], p: number) {
     return this.shape === "deep"

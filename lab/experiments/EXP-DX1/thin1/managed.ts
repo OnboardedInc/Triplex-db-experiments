@@ -4,12 +4,14 @@ import { createHash, randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { memoryPlan } from "../int1/memory-plan.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const integrated = [
   "int1-thin",
   "int1-deep",
   "int1-proof",
+  "int1-campaign-proof",
   "int1-cold-probe",
   "int1-idle",
   "int1-pooled",
@@ -160,6 +162,9 @@ function setup(compact: boolean) {
   assert(!smallHeap || (gwPolicy === "demand" && peerGc === "g1"));
   const seedFeed = process.env.DX_INT1_SEED_FEED ?? "immediate";
   const rowWire = process.env.DX_INT1_ROW_WIRE ?? "plain";
+  const memoryPoints = process.env.DX_INT1_MEMORY_POINTS;
+  const memory = memoryPlan(memoryPoints, mode ?? "", Number(rung));
+  if (memory) assert(compact && gwPolicy === "demand" && readMode === "validated");
   assert(rowWire === "plain" || (rowWire === "gzip" && readMode === "validated"));
   assert(["immediate","after-sampling"].includes(seedFeed));
   if (seedFeed === "after-sampling") assert(mode === "int1-deep" || mode === "int1-thin");
@@ -174,7 +179,8 @@ function setup(compact: boolean) {
         (peerGc === "elastic" ? "-Xms32m -XX:+UseZGC -XX:+ZGenerational -XX:SoftMaxHeapSize=96m -XX:ZUncommitDelay=1" :
           "-Xms64m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps")
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
-      (compact ? " -Ddxthin.compact=yes" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
+      (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
+      (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
       secret +
@@ -190,6 +196,7 @@ function setup(compact: boolean) {
   write(cred, {
     nonce, secret, slots, compact, census, cohort,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
+    memoryPoints,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
     isolatedVolume: compact,
   });
@@ -259,6 +266,7 @@ function bind() {
       smallHeap: attempt.smallHeap,
       seedFeed: attempt.seedFeed,
       rowWire: attempt.rowWire,
+      memoryPoints: attempt.memoryPoints,
       readerPages: attempt.readerPages,
       peers,
       cacheDiagnostic: fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")),
@@ -289,6 +297,7 @@ if (action === "--guest") {
     DX_INT1_SEED_FEED: stack.managed.seedFeed ?? "immediate",
     DX_INT1_ROW_WIRE: stack.managed.rowWire ?? "plain",
     DX_INT1_READER_PAGES: stack.managed.readerPages ? "1" : "0",
+    ...(stack.managed.memoryPoints ? { DX_INT1_MEMORY_POINTS: stack.managed.memoryPoints } : {}),
     TRIPLEX_DATOMIC_FAST_PATHS: [...(process.env.TRIPLEX_DATOMIC_FAST_PATHS ?? "").split(",").filter(x => x && x !== "demand-gzip"), ...(stack.managed.rowWire === "gzip" ? ["demand-gzip"] : [])].join(","),
   });
   if (stack.managed.compact) {
@@ -324,7 +333,10 @@ if (action === "--guest") {
     process.env.DX_THIN_MEASURE = path.resolve(armRoot, "../../..", "locks", "measure");
   }
   process.argv = [process.execPath, run, "live", mode, rung, out];
-  if (integrated) {
+  if (mode === "int1-campaign-proof") {
+    process.chdir(repo);
+    await (await import("../int1/everything.ts")).localPreflight(out);
+  } else if (integrated) {
     process.chdir(repo);
     await import("../int1/trial.ts");
   } else await import("./trial.ts");
