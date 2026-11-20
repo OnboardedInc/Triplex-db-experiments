@@ -1,6 +1,6 @@
 # Publish while saves are flowing
 
-North star P5 at the exact durable cut, with P1 reads and P2 saves running. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+North star P5 at the exact durable cut, with P1 reads and P2 saves running. The one-second definition is in `a619d4eb4:lab/TARGETS.md`. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md)
 
 ## What the earlier tape can attribute
 
@@ -12,7 +12,7 @@ Issuer-side native instrumentation covers six late offers. In those six, delay b
 
 Let `lambda` be offered saves per second, `s` their mean service in seconds, and `rho = lambda × s`. The FIFO queue is stable only for `rho < 1`. Under Poisson arrivals and exponentially distributed service, the queue has an atom `1-rho` at zero and tail `rho × exp(-(1/s-lambda) × t)`. Consequently its waiting p99 is `max(0, ln(rho / .01) / (1/s-lambda))` in the stable range. At `rho >= 1`, a finite FIFO observation depends on the duration and initial backlog. With constant service the saturated backlog adds about `(rho-1) × elapsed` seconds of waiting.
 
-With priority at the same-account admission point, ordinary waiting saves drop out of the Publish wait. Under independent offers and constant, nonpreemptible save service, the residual of the active save is uniform from zero to `s` when busy. Its unconditional p99 is `s × max(0, 1-.01/rho)` in the stable range. With variable service the residual is length-biased. Long saves and an already admitted native turn still affect the tail. At 3.5, 23.5 and 39.4 saves/s, FIFO needs mean service below 286, 42.6 and 25.4 ms respectively. These are model assumptions and thresholds. Report the p99 of complete offers and paired component clocks. Adding component p99s does not give the Publish p99.
+With priority at the same-account admission point, ordinary waiting saves drop out of the Publish wait. For independent arrival times and an otherwise stable nonpreemptible save queue, the chance of a residual exceeding `t` is `lambda × E[max(S-t,0)]`. For constant service `s`, the residual p99 is `s × max(0, 1-.01/rho)`. A burst of earlier Publishes, a fairness turn and an already admitted native turn can all add delay to that residual. At 3.5, 23.5 and 39.4 saves/s, FIFO needs mean save service below 286, 42.6 and 25.4 ms respectively, before accounting for Publishes. These are model assumptions and thresholds. Report the p99 of complete offers and paired component clocks. Adding component p99s does not give the Publish p99.
 
 ## One joined writer
 
@@ -33,6 +33,17 @@ The application writer owns one `AccountAdmission` per serviced scope and routes
 The joined runner uses 10,000 people in the publishing scope and two 96-person neighbour scopes on the same stack. Each neighbour offers 1.6 saves/s. The publishing scope is offered 3.5, 23.5 and 39.4 saves/s with 64 concurrent reads. Each rate has four 100-offer windows in FIFO, priority, priority, FIFO order. Publish offers arrive independently at four per second. Offered traffic and admitted traffic have separate clocks. The shared measurement lease drains other heavy jobs and blocks new stack admissions. Every cell records Mac load, VM CPU pressure and event-loop delay. Phase clocks and observed native HTTP stages are retained.
 
 The result checker keeps every scheduled offer, including misses. After timing it reopens each receipt by native command, checks the marker and predecessor cut, and compares the raw current answers with Python at the actual read cuts. Expected input comes from authored commands and their native positions. It requires one deadline read per route per offer and reports misses separately from latency. The native manager binds the attempt, source and build bytes, gateway settings and slot. A failed or incomplete comparison leaves the raw cells available as diagnostics.
+
+The completed low-rate ABBA windows at `3aee17a91` kept 200 native receipts per policy and independently checked 163,472 raw replies. Neighbours used separate database scopes on the same stack. The measurement lease excluded other lab timing arms. The host still had other work and the two repetitions had very different CPU pressure. The old DELTA experiment used one Publish per second and is an unpaired diagnostic.
+
+| Policy at 3.5 saves/s | Record and first exact read p50 / p99 / max (s) | Misses / offers | Late current replies | VM CPU stall across cells | Host load / 12 logical CPUs | Event loop p99 (ms) |
+| --- | --- | --- | --- | --- | --- | --- |
+| FIFO | 112.39 / 726.17 / 744.26 | 200 / 200 | 106,150 | 1.26–5.65% | up to 16.48 | 70–368 |
+| Priority | 84.99 / 262.89 / 267.87 | 200 / 200 | 53,638 | 1.83–2.26% | up to 14.97 | 149–259 |
+
+In the CPU windows above, median ingress-to-turn time attributable to saves fell from 64.76 s to 12.68 s. Time behind prior Publishes rose from 46.50 s to 69.66 s. Median admitted planning was 625 and 688 ms, and submission to native ACK was 727 and 712 ms. First-observation head lookup took 32 and 62 ms, then the reply took a further 436 and 458 ms. Both arms had zero retries, fence time and fixed grace. The reader eventually returned exact bytes at its recorded cut, including many cuts that were too old for the scheduled deadline.
+
+Saves completed entirely during reader traffic averaged 2.82 s across 188 FIFO saves and 2.64 s across 27 priority saves. That puts the observed save-only load near 9.9 and 9.2 at 3.5 saves/s in these windows. The later save drain took about 0.11 s per FIFO save across six saves and 0.10 s per priority save across 167. These magnitudes describe the four-Publishes-per-second stream. The native per-request split is missing in this attempt. The observer follows asynchronous context, and a queued Publish ran in the previous save's context. The attempt still carries deliberate native ACK timestamps and independently reopened receipts.
 
 ## One-seed server campaign
 

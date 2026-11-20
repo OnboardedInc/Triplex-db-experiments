@@ -1,9 +1,9 @@
-The server run is still on hold.
-The old loaded run took 2.65 seconds at the 99th percentile. Thirty-four of 204 offers missed one second.
-Only six of those late offers have complete writer timings. Waiting behind a save explains part of their delay.
-The joined path can give Publish a turn ahead of waiting saves. It lets a save already in progress finish first.
+The one-second target is still open. The server run remains on hold.
+On the Mac at 3.5 saves per second, prioritizing Publish cut the slow-end time from 726 to 263 seconds.
+All 400 offers missed one second in that test, which sent four Publishes per second and ran 64 readers.
+Publish waited less for saves and longer for earlier Publishes. The Mac was also under pressure.
+The joined path gives Publish a turn ahead of waiting saves and lets a save already in progress finish.
 Publish then reads the saved facts and records the release and what it owes in one write.
-Both timing arms use the same reader, rules and receipt. A save still gets a turn when releases keep arriving.
 The native race check passed. A save before Publish changed its answers. A save after it changed later reads.
 The proposed server command uses one large seed. Its ninety-minute finish still needs proof.
 
@@ -15,7 +15,7 @@ The existing DELTA record/stored audit, 23 native schedules, crash stops and +6.
 
 For DX-ACT1, take `9895f926b` for joined admission and the oracle race gate, `815e1c0e2` for the matched study and `1bdeab224` plus `7b6c45826` for the one-seed server command and ordered parallel proof. The tested comparison includes `0bc2aa3b3` for the existing lease and `3aee17a91` for save admission clocks. Integrate reviewed WFIX1 `882df5487` first. Keep the joined calendar, archive and NOTIFY1 dispatcher. Route the scope's semantic saves and Publish through the same `AccountAdmission` instance. The gateway continues to decide native live and bulk turns. [File-by-file comparison](PART4.md#one-joined-writer)
 
-The local comparison plans 200 offers per policy at each of 3.5, 23.5 and 39.4 saves/s, with 64 readers and two neighbouring scopes. Each observation retains scheduled ingress, application queue, durable and reader-head clocks. It rechecks raw answers against the authored history in Python and reopens every native release receipt. Every cell has an exclusive measurement lease and its own CPU-pressure samples. [Measurement details](PART4.md#matched-local-comparison)
+The first paired local test verified every receipt and read for 200 offers per policy at 3.5 saves/s. Neither arm met the deadline. The 23.5 and 39.4 arms have no verified result yet. The timing observer lost native request stages after the application queue. The independent receipts, public bytes and application clocks remain available. [Measurements and CPU pressure](PART4.md#matched-local-comparison)
 
 The server has one large seed and four cells covering record and stored output in quiet and loaded conditions. It budgets 83 minutes for work and seven for supervisor cleanup. The seed analogue was 56.6 minutes. The planning range is 70–100 minutes with proof and cleanup. The prior command's three cold seeds are out of this plan. [Command and forecast](PART4.md#one-seed-server-campaign)
 
