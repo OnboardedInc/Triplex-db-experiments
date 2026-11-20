@@ -1,5 +1,6 @@
-"""Run and collect the published joined Publish smoke on one owned Linux stack."""
+"""Run the published joined Publish measurement on one owned Linux stack."""
 
+import base64
 import json
 import os
 from pathlib import Path
@@ -7,6 +8,7 @@ import re
 import subprocess
 import sys
 import time
+from urllib.request import urlopen
 import uuid
 
 from producer_readings import digest, get
@@ -100,8 +102,11 @@ def joined_output(folder, owner, source, start, repo=None):
 def host(r, request, clean=False):
     root = Path(r["root"])
     tag, source = r["tag"], r["source"]
-    assert r["item"] == 14 and re.fullmatch(r"joinedn19b?", tag) and root == Path("/var/tmp/triplex-bm1/night-n19") / tag
+    revised = r["item"] == 15
+    assert r["item"] in (14, 15) and re.fullmatch(r"joined(?:v2)?n19b?", tag)
+    assert root == Path("/var/tmp/triplex-bm1/night-n19") / tag
     repo = root / "build/repository"
+    stack_repo = Path(r["writerRepo"]) if revised else repo
     marker = root / "stack-owner.json"
     prefix = "tx2-dxt1-bm1-" + tag
     env = dict(os.environ, DOCKER_HOST="unix:///var/run/docker.sock", DX_BARE_METAL="1",
@@ -112,13 +117,26 @@ def host(r, request, clean=False):
                DX_GW_READ_JAVA_OPTS="-Xms256m -Xmx4g", TX2_SWEEP_STRICT="1", TX2_W0_POINT_JOURNAL="1",
                TX2_W0_RESTORE_INDEXED_JOURNAL="1")
 
-    def command(*args, timeout=30):
-        return subprocess.check_output(list(map(str, args)), cwd=repo, env=env, text=True, timeout=timeout).strip()
+    if revised:
+        assert stack_repo == root.parent / ("source-" + r["writerSource"])
+        env.update(DX_LIVE_PRIORITY="1", DX_PREDECESSOR_LOOKUP="0",
+                   DX_WRITE_OPTIONS_ATTEMPT=str(uuid.uuid5(uuid.NAMESPACE_URL, digest(request))))
 
-    def run(*args, timeout):
-        subprocess.run(list(map(str, args)), cwd=repo, env=env, timeout=timeout, check=True)
+    def command(*args, timeout=30, cwd=repo):
+        return subprocess.check_output(list(map(str, args)), cwd=cwd, env=env, text=True, timeout=timeout).strip()
+
+    def run(*args, timeout, cwd=repo):
+        subprocess.run(list(map(str, args)), cwd=cwd, env=env, timeout=timeout, check=True)
+
+    def save(path, value):
+        with (root / path).open("x") as stream:
+            json.dump(value, stream, indent=2)
+            stream.write("\n")
 
     bound = dict(source=source, prefix=prefix, requestSha256=digest(request))
+    if revised:
+        bound["writerSource"] = r["writerSource"]
+        assert command("git", "rev-parse", "HEAD", cwd=stack_repo) == r["writerSource"]
     if clean:
         if not marker.is_file():
             return
@@ -129,18 +147,20 @@ def host(r, request, clean=False):
             with log.open("w") as stream:
                 subprocess.run(["bash", str(EXP / "stack/up.sh"), prefix, "--logs"], cwd=repo, env=env,
                                stdout=stream, stderr=subprocess.STDOUT, timeout=40)
-        run("bash", EXP / "stack/down.sh", prefix, "--volumes", timeout=120)
-        assert not command("bash", EXP / "stack/up.sh", prefix, "--inventory")
-        (root / "native-clean.json").write_text(json.dumps({**bound, "remaining": []}) + "\n")
+        run("bash", EXP / "stack/down.sh", prefix, "--volumes", cwd=stack_repo, timeout=120)
+        assert not command("bash", EXP / "stack/up.sh", prefix, "--inventory", cwd=stack_repo)
+        save("native-clean.json", {**bound, "remaining": []})
         marker.unlink()
         return
 
     assert command("git", "rev-parse", "HEAD") == source and not command("git", "status", "--porcelain")
-    assert not command("docker", "ps", "-q") and not command("bash", EXP / "stack/up.sh", prefix, "--inventory")
+    assert not command("git", "status", "--porcelain", cwd=stack_repo)
+    assert not command("docker", "ps", "-q") and not command("bash", EXP / "stack/up.sh", prefix, "--inventory", cwd=stack_repo)
     with marker.open("x") as stream:
         json.dump(bound, stream)
     run("bash", EXP / "stack/up.sh", prefix, "--no-publish", "--cpus-tx", "0", "--cpus-pg", "1", "--cpus-gw-write", "2", "--cpus-gw-read", "4",
-        "--pg-memory", "6g", "--tx-memory", "8g", "--tx-java-opts", "-Xms256m -Xmx6g -XX:+UseG1GC", timeout=420)
+        "--pg-memory", "6g", "--tx-memory", "8g", "--tx-java-opts", "-Xms256m -Xmx6g -XX:+UseG1GC",
+        cwd=stack_repo, timeout=420)
     roles = ("pg", "tx", "gw-w", "gw-r")
     peers = json.loads(command("docker", "inspect", *(prefix + "-" + r for r in roles)))
     assert len(peers) == len({a["Id"] for a in peers}) == 4
@@ -160,6 +180,70 @@ def host(r, request, clean=False):
     output = root / "smoke"
     output.mkdir()
     node = root / "build/tools/bin/node"
+    if revised:
+        from joined_reviewed import JOIN, collect, settlement
+
+        gateway_files = root / "engines/gateway-files.json"
+        gateway = stack_repo / "packages/datomic/gateway"
+        expected = {name: digest(gateway / name) for name in command(
+            "git", "ls-files", cwd=gateway).splitlines()}
+        expected["codec-spec.json"] = digest(stack_repo / "packages/datomic/src/codec-spec.json")
+        assert get(gateway_files) == expected
+        gateway_hash = digest(gateway_files)
+        for role in ("w", "r"):
+            assert get(root / f"engines/health-{role}.json")["gatewaySourceHash"] == gateway_hash
+
+        def writer_options(folder):
+            scope = get(folder / "server-observations.json")["scope"]
+            key = json.dumps(["triplex-scope-v1", "test", "test", scope, 0], separators=(",", ":")).encode()
+            db = "s2-" + base64.urlsafe_b64encode(key).decode().rstrip("=")
+            with urlopen(write_url + f"/v1/db/{db}/write-options", timeout=35) as response:
+                observed = json.load(response)
+            assert observed["database"] == db and observed["attempt"] == env["DX_WRITE_OPTIONS_ATTEMPT"]
+            assert observed["gatewaySourceHash"] == gateway_hash and observed["strictRecordClocks"] is True
+            assert observed["rowsVersion"] == 3 and observed["commitFunctionInstalled"] is True
+            assert observed["commitFunction"] == ":triplex/commit" and re.fullmatch(r"[a-f0-9]{64}", observed["baseFunctionHash"])
+            assert observed["options"] == dict(predecessorLookup=False, groupCommit=False, livePriority=True,
+                fieldCoalesce=False, queueClock=False, stageClock=False, smallRows=False, reusePrepared=False,
+                maxMembers=8, budgetMicros=None, bulkRows=96, bulkBytes=65536)
+            return observed
+
+        # [DX-BM1] Why: keep the application and live writer identities separately bound to the same slot.
+        # Rejected: assuming ACT1 contains W1 or enabling an unverified gateway from stale build output.
+        launch = (node, "lab/bin/heavy.mjs", "--label", "DX-BM1", "--", "taskset", "-c", "3,5,6,7,9,10,11",
+                  node, "--experimental-strip-types")
+        try:
+            run(*launch, JOIN / "server.ts", "64", output, "--local", timeout=720)
+            small = collect(output, owner, source, 64, r["start"], repo, node, env=env)
+            small["writerOptions"] = writer_options(output)
+            gate = root / "settlement-smoke"
+            gate.mkdir()
+            env["DX_ACT1_W1_GATE"] = "1"
+            run(*launch, JOIN / "settle-gate.ts", gate, timeout=300)
+            witness = get(gate / "settle-gate.json")
+            assert witness["nativeClass"] is True and witness["kills"] == 2 and witness["entries"] > 0
+            run(*launch, JOIN / "settle-price.ts", gate, "64", "4", "2", timeout=480)
+            small["settlement"] = settlement(gate, 64, 4, 2, r["start"])
+            small["settlement"]["gateSha256"] = digest(gate / "settle-gate.json")
+            save("collector.json", small)
+        except (AssertionError, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+            save("preflight-stop.json", dict(**bound, error=repr(error)))
+            raise
+
+        review = repo / EXP / "actv-lazy/REVIEW2.md"
+        assert digest(review) == r["reviewSha256"]
+        assert all(re.search(fr"(?m)^{i}\. \*\*.+\*\* Agreed\.", review.read_text()) for i in (2, 3, 4, 5))
+        scale = root / "scale"
+        scale.mkdir()
+        issued = time.time()
+        save("scale-admission.json", {**bound, "reviewSha256": r["reviewSha256"],
+                                     "collectorSha256": digest(root / "collector.json"), "issuedAt": issued})
+        remaining = int(r["deadline"] - time.time() - 40)
+        assert remaining >= 1800, "Less than 30 minutes remains after the reviewed native preflight"
+        run(*launch, JOIN / "server.ts", "100000", scale, "--settlement", timeout=remaining)
+        save("scale-writer-options.json", writer_options(scale))
+        return
+
     timeout = min(720, max(1, int(r["deadline"] - time.time() - 120)))
     run(node, "lab/bin/heavy.mjs", "--label", "DX-BM1", "--", "taskset", "-c", "3,5,6,7,9,10,11", node,
         "--experimental-strip-types", EXP / "actv-lazy/join/server.ts", "64", output, "--local", timeout=timeout)

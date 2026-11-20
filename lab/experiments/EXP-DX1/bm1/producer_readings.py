@@ -64,7 +64,7 @@ def group_arm(directory, arm, source, slot, start, *, pulse=False, small=False):
     assert json.loads(raw["scope"])[3]==identity["nonce"]+"-load"
     assert seed["seedCut"]+1==raw["phases"][0]["firstPosition"] and seed["digest"]==arm["seed"]
     if small:
-        assert seed["facts"]==10 and pulse
+        assert seed["facts"]==(12 if "writerOptions" in raw else 10) and pulse
     else:
         assert seed["facts"]==16_245_050 and seed["digest"]==POOL_DIGEST
         assert [(s["account"],s["subjects"],s["facts"]) for s in raw["seeds"]]==[(i,10000,1624505) for i in range(10)]
@@ -74,6 +74,31 @@ def group_arm(directory, arm, source, slot, start, *, pulse=False, small=False):
     for phase, observations in zip(arm["phases"],raw["phases"]):
         group_phase(phase,observations,baseline,3 if small else 600)
     return raw
+
+
+def writer_options(directory, arm, raw, policy, predecessor):
+    # [DX-BM1] Why: the active database function and scheduler controls must match the requested treatment.
+    # Rejected: trusting the launcher setting or the arm label without asking the running gateway.
+    file=directory/"writer-expectation.json"
+    expected=get(file)
+    observed=raw["writerOptions"]
+    assert observed==arm["writerOptions"] and arm["writerExpectationSha256"]==digest(file)
+    assert observed["expected"]==expected and observed["historyRange"] is predecessor
+    identity=arm["arm"]
+    assert (expected["source"],expected["slot"],expected["attempt"])==(identity["source"],identity["slot"],identity["nonce"])
+    assert expected["options"]==dict(predecessorLookup=predecessor,groupCommit=policy["grouping"],
+        livePriority=policy["priority"],fieldCoalesce=policy["subjectOnly"],queueClock=True,
+        stageClock=policy["stageClock"], smallRows=policy["compact"],reusePrepared=policy["prepared"],
+        maxMembers=policy["maxMembers"],budgetMicros=policy["budgetMicros"],bulkRows=96,bulkBytes=65536)
+    current=observed["observed"]
+    assert current["database"]==raw["db"] and current["attempt"]==identity["nonce"]
+    assert current["gatewaySourceHash"]==expected["gatewaySourceHash"]==digest(directory/"engines/gateway-files.json")
+    assert current["strictRecordClocks"] is True and current["rowsVersion"]==3 and current["commitFunctionInstalled"] is True
+    assert current["options"]==expected["options"]
+    assert re.fullmatch(r":triplex\.write/v-[a-f0-9]{24}" if predecessor else r":triplex/commit",current["commitFunction"])
+    assert re.fullmatch(r"[a-f0-9]{64}",current["baseFunctionHash"]) and re.fullmatch(r"[1-9][0-9]*",current["t"])
+    assert current["position"]==get(directory/"seed-readback.json")["seedCut"]
+    return current
 
 
 def capacity_rung(directory, source, size):

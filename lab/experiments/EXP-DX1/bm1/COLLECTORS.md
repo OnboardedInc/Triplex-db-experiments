@@ -1,6 +1,6 @@
 # Overnight collector audit
 
-The 100k DELTA reservation is held. The first group run continues from its original source and ceiling. The next command is the W1 quiet pulse after its small native collector check.
+The 100k DELTA reservation is held. The individual group arm is historical. The reviewed ACT1 preflight is next, followed by the corrected WFIX pulse and the remaining admitted probes.
 
 ## Activation review
 
@@ -53,3 +53,25 @@ ACTREVIEW2 replayed BM1 `3add57a70`. The collector already rejected the altered 
 INT1’s collector now also checks the named phase snapshots at the fixed 2% hot set and after the untouched population is imported. The Mac native 100k sample verified 98,000 added people, unchanged reader admissions and zero added charged reader bytes, so the test uses the same plane as the two physical rungs. Each physical result still needs the producer’s complete case, exact member checksums, matching stream identity and storage durability.
 
 The real joined preflight exposed six saves with negative schedule-to-entry offsets. The recovered collector keeps those measured offsets, checks ordered entry-to-completion, and reruns all 12 point reads against the original source, actual cut and write intents. The original bundle and worker error remain. The small 64-person proof cannot validate a full-population deadline. A matched PostgreSQL backup whose first catalog walk failed is retained in its own file. Recovery rebinds those bytes to the exact completed arm and requires a successful catalog and native restore before any follow-up timing.
+## Write path review
+
+The completed `502c8897d` arm used the individual path with additions only. It offers one measured save per operation, seeds before timing, runs zero timed readers and does not trigger interrupted settlement or resend. The group arm ended in seed creation. Its result establishes no grouped throughput or account-fairness effect.
+
+| Finding | Exposure in the completed individual arm |
+| --- | --- |
+| 1. Replacement resend | No timed replacements or replay after a lost ACK. |
+| 2. Retraction content | The timed commands add eight synthetic facts, with zero retractions. |
+| 3. Scope maintenance with a hint | The timed path sets account hints on business writes and runs no consumer checkpoints or release writes. |
+| 4. Blocked ready writes | There is no concurrent import or scheduled bulk frame. The measured quiet delay still includes ordinary writer queue time. |
+| 5. Shared queue for persisted accounts | The individual baseline deliberately shares a single native writer. The defect invalidates any old claim that this compared against fair grouped turns. |
+| 6. Ordered body-cap gap | No oversized bodies or rejected ordered sequence in the timed arm. |
+| 7. Disabled predecessor treatment | The individual baseline contains no predecessor lookup comparison and no timed replacements. |
+| 8. Incomplete journal comparison | The timed result checks exact receipts and seed readback. It cannot answer P3 field-by-field feed correctness or resume. |
+
+The corrected pulse uses `cd2151749` or a descendant. Its reduced native case persists each touched subject's account. The producer calls the gateway's writer option endpoint on the seeded database before offers. BM1 checks the exact option expectation and its hash against the actual source manifest, installed function, scope, seed position, counts and fresh attempt nonce, then recomputes quiet p99 from matched raw receipts. The full launch requires the same evidence per arm.
+
+## Joined format after ACTREVIEW2
+
+At ACT1 `95a1058d7`, `REVIEW2.md` answers findings 2–5. The earlier BM1 schema was wrong for this producer. `joined_reviewed.py` uses the pinned `join/collect.ts` to reproduce the producing collector's result from `server-inputs.json`, `server-observations.json`, `server-collected.json`, all six offer/terminal/window/proof/deadline/point-input sets, the native seed and the ordered effects. The producer's Python oracle checks exact returned bytes at each supplied cut. BM1 independently checks cut and terminal links, fresh-process roster, scheduled save counts and cutoff clocks. Missing offers or incomplete files keep the attempt uncollected. A late head or a cut before the release stays a miss. No recipe timing supplies an individual notice timestamp.
+
+The native smoke attaches the corrected writer on the same owned slot and binds both source revisions, the staged gateway manifest, database function and actual live-priority readback. `settle-gate.json` witnesses the gateway rejecting an oversized bulk frame, both worker kills and exact offline owed effects. BM1 reads both raw `settlement-*.json` files, reconciles native cuts and offer counts and recomputes each matched p99 ratio before accepting `settlement-price.json`. Reads in those settlement windows are closed loop. The independent peer path and mixed unchanged-subject deadline case remain open. The measured component and settlement endpoints cannot assign P5 by themselves.

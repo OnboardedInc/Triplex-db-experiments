@@ -50,8 +50,11 @@ async function checkReceipt(client, db, id, ack) {
   assert.equal(receipt.status, "committed");
 }
 
-async function pulseSmall() {
+async function pulseSmall(corrected = false) {
   const { modes, fieldPolicy } = await load("lab/experiments/EXP-DX1/w1/field/bench-check.ts");
+  const readWriteOptions = corrected
+    ? (await load("lab/experiments/EXP-DX1/w1/write-options.ts")).readWriteOptions
+    : null;
   const prediction = "lab/experiments/EXP-DX1/w1/small/predictions.json";
   const predictionSha256 = sha(prediction);
   fs.copyFileSync(prediction, path.join(results, "predictions.json"), fs.constants.COPYFILE_EXCL);
@@ -71,7 +74,12 @@ async function pulseSmall() {
           const init = await c.create(scope, "lean", true, 35000),
             db = init.db;
           assert(init.created && init.strictRecordClocks);
-          const seed = accounts.map((a) => fact(ids.placement(a.first), ":pulse/preflight", a.key));
+          // [DX-BM1] Why: use the same persisted ownership keys as the full producer.
+          // Rejected: accepting caller-provided account labels on subjects without stored owners.
+          const seed = corrected
+            ? accounts.flatMap((a) => Array.from({ length: a.index === 9 ? 3 : 1 }, (_, j) =>
+              fact(ids.placement(a.first + j), ":subject/account", a.key)))
+            : accounts.map((a) => fact(ids.placement(a.first), ":pulse/preflight", a.key));
           const issued = command("pulse-small-seed", seed, [], false);
           const initial = await c.transact(db, issued);
           await checkReceipt(c, db, issued.operationId, initial);
@@ -88,6 +96,10 @@ async function pulseSmall() {
           );
           const seedCut = through,
             digestSeed = digest(JSON.stringify(seed));
+          const writerOptions = corrected
+            ? await readWriteOptions(env.DATOMIC_URL, db, env.DX_W1_WRITER_EXPECTATION)
+            : undefined;
+          if (writerOptions) assert.equal(writerOptions.observed.position, seedCut);
           const phases = [];
           for (const name of ["alone", "nine"]) {
             const spec = Array.from({ length: 3 }, (_, j) => ({ account: 9, j, probe: true }));
@@ -148,7 +160,7 @@ async function pulseSmall() {
             });
             through += records.length;
           }
-          write(path.join(directory, "raw.json"), { nonce: arm.nonce, scope, db, grouped, phases });
+          write(path.join(directory, "raw.json"), { nonce: arm.nonce, scope, db, grouped, phases, writerOptions });
           write(path.join(directory, "seed-readback.json"), {
             seedCut,
             facts: recovered.length,
@@ -160,6 +172,10 @@ async function pulseSmall() {
             policy,
             scope,
             db,
+            ...(writerOptions ? {
+              writerOptions,
+              writerExpectationSha256: sha(path.join(directory, "writer-expectation.json")),
+            } : {}),
             predictionSha256,
             seed: digestSeed,
             seedFacts: recovered.length,
@@ -501,6 +517,7 @@ async function matched() {
 }
 
 if (mode === "pulse-small") await pulseSmall();
+if (mode === "wfix-pulse-small") await pulseSmall(true);
 else if (mode === "matched" || mode === "matched-small") await matched();
 else if (mode === "field-worker") {
   const [population, subjects, seconds, checkpoint] = process.argv.slice(6);

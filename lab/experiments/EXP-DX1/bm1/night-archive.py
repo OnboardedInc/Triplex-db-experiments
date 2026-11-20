@@ -41,13 +41,13 @@ def walk(root):
 def sources(r):
     root=Path(r["root"])
     parts={"control":Path(r["directory"])}
-    if r["item"] in (1,3,8,9,10,11,12):
+    if r["item"] in (1,3,8,9,10,11,12,16):
         parts["results"]=root/"results"
         parts["campaign.log"]=root/"campaign.log"
         parts["probes"]=NIGHT/"probes"/(r["tag"]+"-1")
         parts["second-probes"]=NIGHT/"probes"/(r["tag"]+"-2")
-        if r["item"] in (8,9):
-            smoke={8:"pulsesmk",9:"matchedsmk"}[r["item"]]+str(r["attempt"])
+        if r["item"] in (8,9,16):
+            smoke={8:"pulsesmk",9:"matchedsmk",16:"wfixsmk"}[r["item"]]+str(r["attempt"])
             parts["preflight"]=Path("/var/tmp/triplex-w1")/smoke/"results"
             if r["item"]==9:
                 parts["deep-checkpoint"]=NIGHT/"probes"/(r["tag"]+"-3")
@@ -69,10 +69,15 @@ def sources(r):
                 parts[slot]=ROOT/("day-"+batch)/"checkout/state/evidence/DX-T1"/slot
     elif r["item"]==5:parts["rungs"]=root/"build/state/evidence/DX-INT1"/r["tag"]
     elif r["item"]==13:parts["import"]=root/"run"
-    elif r["item"]==14:
+    elif r["item"] in (14,15):
         parts["joined-smoke"]=root/"smoke"
         for name in ("run-owner.json","collector.json","point-check.json","native-clean.json","startup-and-engine.log","engines"):
             parts["joined-setup/"+name]=root/name
+        if r["item"]==15:
+            parts["joined-scale"]=root/"scale"
+            parts["joined-settlement-smoke"]=root/"settlement-smoke"
+            for name in ("preflight-stop.json","scale-admission.json","scale-writer-options.json"):
+                parts["joined-setup/"+name]=root/name
     elif r["item"]==6:
         platform=Path("/var/tmp/triplex-scale1")
         trial=platform/r["tag"]
