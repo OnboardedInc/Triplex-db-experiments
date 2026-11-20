@@ -94,8 +94,7 @@
         loader (future (.await armed) (neighbor-import store writer offset stop))]
     (try
       (assert (.await armed 60 TimeUnit/SECONDS))
-      (workload)
-      (vreset! stop true)
+      (workload #(vreset! stop true))
       (let [reads (mapv #(.get % 30 TimeUnit/SECONDS) jobs)
             imports (deref loader 120000 ::timeout)]
         (assert (not= ::timeout imports))
@@ -104,7 +103,7 @@
                                         :maxReadMs (reduce max (map :maxMs reads)) :import imports}))
       (finally (vreset! stop true) (.shutdownNow threads) (future-cancel loader)))))
 
-(defn offered! [store writer offset rate seconds]
+(defn offered! [store writer offset rate seconds stop-neighbors]
   (let [total (* rate seconds)
         pool (ThreadPoolExecutor. 32 32 0 TimeUnit/SECONDS (ArrayBlockingQueue. 128))
         complete (CountDownLatch. total)
@@ -125,7 +124,7 @@
                         (try
                           (let [result ((:send writer) req)
                                 ack (System/nanoTime)]
-                            (aset results i {:request req :receipt (:receipt result) :ack ack :nativeApply (:applyMs result)
+                            (aset results i {:request req :receipt (:receipt result) :ack ack :nativeApiMs (:applyMs result)
                                              :ms (floor/ms (- ack due))}))
                           (catch Exception e (aset results i {:error (str (class e))}))
                           (finally (.countDown complete)))))
@@ -133,6 +132,7 @@
               (aset results i {:error "queue-full"})
               (.countDown complete)))))
       (assert (.await complete 120 TimeUnit/SECONDS) "open-loop phase did not drain")
+      (stop-neighbors)
       (let [after (floor/pg-sample) db (store/sync-view store)
             committed (filter #(some? (get-in % [:receipt :position])) results)
             errors (- total (count committed))
@@ -148,7 +148,7 @@
                                  :errors errors :allOfferP99 (when (zero? errors) (:p99 (probe/quantiles (map :ms committed))))
                                  :perAccount (into {} (map (fn [[a xs]] [a (assoc (probe/quantiles (map :ms xs)) :count (count xs))]) scopes))
                                  :physical (count native) :occupancy (frequencies (map count native))
-                                 :nativeApply (when (seq native) (probe/quantiles (map (comp :nativeApply first) native)))
+                                 :nativeApiMs (when (seq native) (probe/quantiles (map (comp :nativeApiMs first) native)))
                                  :inWindowPerSecond (/ (double in-window) seconds)
                                  :lateOrMissing (+ errors (count (filter #(> (:ms %) 50.0) committed)))
                                  :drainMs (floor/ms (max 0 (- last-ack window-end)))
@@ -156,12 +156,13 @@
         (assert (zero? errors) "open-loop phase did not acknowledge every offer"))
       (finally (.shutdownNow pool)))))
 
-(defn saturation! [store writer offset n]
+(defn saturation! [store writer offset n stop-neighbors]
   (let [jobs (mapv (fn [i]
                      (let [person (+ offset i)
                            request (live-request store person (inc (mod i 3)))]
                        (fn [] {:request request :receipt (:receipt ((:send writer) request))}))) (range n))
         [ms rows] (probe/timed #(probe/closed-loop 64 jobs))
+        _ (stop-neighbors)
         db (store/sync-view store)]
     (assert (= n (count rows)))
     (doseq [{:keys [request receipt]} rows]
@@ -196,9 +197,9 @@
             writer (probe/writer stage)]
         (try
           (floor/emit "fleet-retained" {:subjectEvents 415 :subjects (count (:aged stage)) :journal true :checkpoint 64})
-          (with-neighbors! stage writer readers people #(offered! stage writer 0 lower seconds))
-          (with-neighbors! stage writer readers (+ people 100000) #(offered! stage writer first-span higher seconds))
-          (with-neighbors! stage writer readers (+ people 200000) #(saturation! stage writer both saturated))
+          (with-neighbors! stage writer readers people #(offered! stage writer 0 lower seconds %))
+          (with-neighbors! stage writer readers (+ people 100000) #(offered! stage writer first-span higher seconds %))
+          (with-neighbors! stage writer readers (+ people 200000) #(saturation! stage writer both saturated %))
           (finally ((:close writer)) (d/release conn)))))))
 
 (defn -main [& sizes]
