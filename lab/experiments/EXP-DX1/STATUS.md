@@ -2377,11 +2377,11 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - Both servers kept running their detached jobs through the 18-minute gap (four containers each at 20:09 local); neither
   sat idle.
 
-## 2026-11-20 01:35 UTC (20:35 local, 2026-11-19): six more agents on problems that had no owner (fourteen running)
+## 2026-11-20 01:31 UTC (20:31 local, 2026-11-19): six more agents on problems that had no owner (fourteen running)
 
 - Sam: use many agents; hold back only Astra (SAM-decisions). The "usage is finite" line in the eight restart notes is
   withdrawn; it is dropped from every later brief.
-- Launched 01:33 UTC, all `gpt-6.2-sol` at max. Analysts (private folder `research/2026-11-20-wave2/`): **W2-CEILING**
+- Launched 01:28 UTC, all `gpt-6.2-sol` at max. Analysts (private folder `research/2026-11-20-wave2/`): **W2-CEILING**
   (what sets one database's 150 to 200 saves per second against the 235 to 390 ten deep accounts need, and every way to
   move it three times or more); **W2-DEEPTAIL** (why deep saves read 87.04 ms p99 against 36.11 thin, and the
   prediction at 100,000 and 1,000,000 deep subjects); **W2-SIZE** (disk, memory, index jobs, erasure, backup and
@@ -2392,7 +2392,7 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   (`exp/DX-HASYNC1-sync-failover`: scripted failover with a synchronous copy, zero-loss proof under kills and network
   cuts, its cost per save, one two-server command with predictions).
 
-## 2026-11-20 01:45 UTC (20:45 local, 2026-11-19): DX-W1 part 3 in; one database is short of the busy-minute load
+## 2026-11-20 01:36 UTC (20:36 local, 2026-11-19): DX-W1 part 3 in; one database is short of the busy-minute load
 
 - **DX-W1 part 3 (`9ce599309`, Mac VM; `w1/REPORT.md`).** Capacity estimate for one database: 150 to 200 saves per second
   today, 210 to 285 with already-waiting saves sharing a commit; ten deep accounts offer 49 averaged, 235 in aligned busy
@@ -2406,11 +2406,11 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   15.80/130.90 ms. Two server commands with predictions, not yet run: `control.ts --pulse pulsew1a` (quiet p99 ratio
   12 to 30 ungrouped, 2 to 6 grouped) and `control.ts --field-rates fldw1a` (drain at 235/s about 21 s ungrouped against
   at most 1 s grouped; at 394/s 74 against 34 s).
-- **Assigned 20:45 local, DX-W1 part 4:** itemise and cut the datoms and bytes of a 1 to 3 fact save (23 datoms and
+- **Assigned 20:36 local, DX-W1 part 4:** itemise and cut the datoms and bytes of a 1 to 3 fact save (23 datoms and
   7.2 kB measured; target half the native time); a time budget per transaction for the priority 6 ratio at 50, 100 and
   235 saves per second; what limits grouped throughput and the predicted ceiling.
 
-## 2026-11-20 02:05 UTC (21:05 local, 2026-11-19): DX-ACT1 part 5 in: the joined Publish works at 1,000 people
+## 2026-11-20 01:40 UTC (20:40 local, 2026-11-19): DX-ACT1 part 5 in: the joined Publish works at 1,000 people
 
 - **DX-ACT1 part 5 (`cff46335b`, Mac VM; `actv-lazy/REPORT.md`, `JOIN.md`, `COST.md`, `STAGES.md`, `RETENTION.md`).** The
   joined design (LAZY marker + owed-notice event and tail in one native transaction; DELTA's lookups only for
@@ -2429,11 +2429,11 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Lab VM disk:** the pool refused the builder's 10,000-person run on its disk forecast. Removed four seed volumes of
   closed experiments (DX-H8, DX-H5, DX-B9, DX-H1) and seven superseded DX-THIN1 image builds: VM 64 to 55 GB used,
   Mac free 27 to 37 GiB.
-- **Assigned 21:05 local, DX-ACT1 part 6:** the 10,000-person joined run; the deep profile; stored outputs inside one
+- **Assigned 20:40 local, DX-ACT1 part 6:** the 10,000-person joined run; the deep profile; stored outputs inside one
   second at 100,000 (output ranges for reader-only inputs, parallel evaluation, chunk transactions invisible until
   the marker); second release while settling; apply W2-ACTAUDIT's findings; one server command with predictions.
 
-## 2026-11-20 02:35 UTC (21:35 local, 2026-11-19): activation tests audited: three critical faults; deep tail is not depth
+## 2026-11-20 01:57 UTC (20:57 local, 2026-11-19): activation tests audited: three critical faults; deep tail is not depth
 
 - **W2-ACTAUDIT (reviewer; private folder `research/2026-11-20-wave2/ACTAUDIT/`, FINDINGS.md with file and line).**
   Verdict "fix first": treat the coming 100,000-subject DELTA number as a one-read measurement. Critical: (1) DELTA's
@@ -2447,7 +2447,7 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   two people under a raised local floor, one selected, one never notified); (9) NOTIFY1's 21 to 68 ms is recipe
   admission in a quiet window; (10) ACT1's guarded sweep and LAZY's stored trial measure different work from the
   headline. Medium: (11) the closed staged prototype can publish an expired certificate.
-- **Action 21:30 local:** DX-BM1, DX-ACT2 and DX-STG1 were stopped and resumed with the findings. Server 1 does not run
+- **Action 20:50 local (the stop notes say 21:30; that label is wrong):** DX-BM1, DX-ACT2 and DX-STG1 were stopped and resumed with the findings. Server 1 does not run
   the DELTA activation items until findings 1 and 2 are fixed and producer and collector pass on the same small saved
   output; it runs W1's quiet-account pulse, the matched thin against deep probe, imports, the predecessor arm, the
   analysts' probes and the thin 1,000,000 run meanwhile. Nothing had been spent on the faulty command: server 1 was
@@ -2459,7 +2459,7 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   rate, 28 to 48 ms with live priority, the sender fix and the predecessor lookup. The raw archive (281 MB) is being
   copied from server 2 to the Mac so the exact fifty slowest saves can be attributed; part 2 assigned.
 
-## 2026-11-20 03:05 UTC (22:05 local, 2026-11-19): the write ceiling modelled; two more write-path builders; two more reviewers
+## 2026-11-20 02:01 UTC (21:01 local, 2026-11-19): the write ceiling modelled; two more write-path builders; two more reviewers
 
 - **W2-CEILING (analyst; private folder `research/2026-11-20-wave2/CEILING/`).** Load: 49 to 50 saves per second averaged
   for ten deep accounts, 70.9 with one account at peak and nine at the median, 235 with aligned high minutes, 394 with
@@ -2473,7 +2473,7 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   two pools of five need 310 each; at 200 each the peak needs four pools; if W1's 90/s isolation threshold holds, five.
   Most valuable probe: CEIL-SERVER-LIVE10, ten minutes on a seeded server (field saves at 50, 235, 394 per second,
   current against fair grouped writer), to go to server 2's agent at its next handover.
-- **Launched 22:00 local, `gpt-6.2-sol` at max:** builders **DX-PREP1** (`exp/DX-PREP1-parallel-prepare`: confirm the
+- **Launched 20:55 to 21:00 local, `gpt-6.2-sol` at max:** builders **DX-PREP1** (`exp/DX-PREP1-parallel-prepare`: confirm the
   preparation share, parallel preparation with a minimal guard at the serial point, overlapping groups) and
   **DX-COMPACT1** (`exp/DX-COMPACT1-compact-save`: the measured floor of a Datomic transaction, a clean-slate compact
   exact layout, a prototype against the W0 oracle, verdict); reviewers **W2-SCALEAUDIT** (every other queued test on
