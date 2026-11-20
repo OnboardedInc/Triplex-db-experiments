@@ -24,13 +24,16 @@ A frame compiles before admission, carries whole subjects, and waits behind read
 | 50 | 4 ms | 0 | 16.2 / 57.3 | 0.73 / 0.63 |
 | 50 | 8 ms | 596 | 21.2 / 88.6 | 0.96 / 0.97 |
 | 50 | 11.06 ms | 2,137 | 51.6 / 166.4 | 2.33 / 1.82 |
+| 50 | Wider-budget control | 0 | 28.8 / 213.7 | 1.00 / 1.00 |
+| 50 | 16 ms | 401 | 48.7 / 211.7 | 1.69 / 0.99 |
+| 50 | 32 ms | 1,774 | 171.2 / 156.3 | 5.95 / 0.73 |
 | 100 | Control | 0 | 50.8 / 178.6 | 1.00 / 1.00 |
 | 100 | 16 ms | 1,477 | 110.2 / 247.6 | 2.17 / 1.39 |
 | 100 | 32 ms | 647 | 357.9 / 578.7 | 7.04 / 3.24 |
 
 The 1 and 4 ms plans stopped after the smallest group repeatedly exceeded budget. At 8 ms, 206/2,842 frames exceeded budget before the plan stopped. At 11.06 ms, 416/9,050 exceeded it. The latter budget came from half of the matched control’s quiet read p99. An integer deadline fix preserves the completed cells and allows the final control to start in subsequent runs. The dedicated allowance campaign uses a quiet-alone reference.
 
-At 100/s, 16 ms had 195/5,955 budget overruns with no missed offers. The 32 ms arm missed 385/17,280 offers despite verified quiet replies. The last control missed 50 and reached 263.7/302.1 ms quiet read/save p99. The common host and accumulated database work limit comparisons across those conditions.
+At 50/s, 16 ms stopped after 27 s and averaged 1,602 facts/s while active. The 32 ms arm had no misses, and the last control missed nine. At 100/s, 16 ms had 195/5,955 budget overruns with no missed offers. The 32 ms arm missed 385/17,280 offers despite verified quiet replies. The last control missed 50 and reached 263.7/302.1 ms quiet read/save p99. The common host and accumulated database work limit comparisons across those conditions.
 
 ## Independent Datomic database and transactor
 
