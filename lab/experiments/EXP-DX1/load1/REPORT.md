@@ -1,13 +1,13 @@
-# DX-HA1 · More small import frames in flight
+# DX-HA1 · Import pacing in one database
 
-At the 128-fact cap, server frames took 21.84 ms on average. Datomic applied the frame in 4.08 ms and the writer held its turn for about 11 ms.
-Several small frames can prepare and collect receipts at once. Only one import frame may hold the writer's turn, and ready saves go first.
-The first two server arms are 16 facts with two in flight, then 24 with two. The forecasts are 3,040 and 3,600 queryable facts per second.
-The forecasts put quiet reads outside the 1.5× allowance. [The server run](MICRO-SERVER.md) compares every account with two live-only controls.
-The Mac verified 13,936 facts, reached four and eight frames in flight, and checked order, original receipts and restart. Mac timings are diagnostic.
-The integrated code is `f5a3e90bf`. Allow 30–45 minutes on one server, with 90 minutes allocated for setup, tests and collection.
+On bare metal, 32 facts per frame loaded 3,983 facts per second. The quiet account's p99 rose to 37.59 ms for saves and 15.98 ms for reads.
+The quiet saves at p99 spent 18–25 ms in the writer queue. Many of the slowest reads overlapped a pause in the shared gateway.
+The two no-import controls differed by 1.9× for saves. Against the faster control, all three earlier frame sizes missed the neighbour limit.
+The next server run compares feedback with fixed pacing at 32 facts per frame. Both keep one frame outstanding in the same database.
+[Server command](MICRO-SERVER.md) · [Attribution and forecast](MICRO-ATTRIBUTION.md)
+Allow 15–25 minutes on one server. The allocation includes setup, tests and collection within 90 minutes.
 
-## Evidence and predictions
+## Evidence and earlier pipeline experiment
 
 - The archived means sum to 21.84 ms across 4,943 frame matches. The 8 ms required at 24 facts is a target. The [stage split and forecasts](PREDICTIONS-PART6.md) describe how to falsify the model.
 - The client counts every frame through the durable checkpoint. Pressure from two pending live saves halves the window, and four reduce it to one. The gateway schedules ready live saves ahead of queued bulk requests. It releases a bulk turn only when its peer future resolves.

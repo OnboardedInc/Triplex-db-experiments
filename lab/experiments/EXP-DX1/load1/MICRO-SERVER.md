@@ -1,4 +1,18 @@
-# Single-server test for small imports with several frames in flight
+# Single-server comparison of import pacing
+
+The [new bare-metal attribution](MICRO-ATTRIBUTION.md) supports one 32-fact frame outstanding and a bounded token rate. Plan 15–25 minutes on one server, including 7.2 minutes of offered activity. The campaign has a 60-minute runtime cap, a setup allowance of up to 25 minutes and a five-minute collection reserve. Run from the published revision with the assigned server and a fresh tag.
+
+```sh
+HA1_BENCH_HOURS=1 node --import tsx lab/experiments/EXP-DX1/ha1/control.ts load-paced load-paced-001 one-host
+```
+
+A live-only control leads. The first two import arms are live-latency feedback and a fixed 110 tokens/s cap, each with 32 facts per frame. The same leading baseline, ten neighbours at 50 saves/s combined, quiet account at 5 saves/s, 55 reads/s and one Datomic database apply to both. The trailing live-only control prices drift. The two import arms compare rate feedback with a fixed cap. Neither opens another Datomic database inside the arm or adds a peer.
+
+Expect 2,000–2,880 queryable facts/s and 14–24/7–11 ms quiet save/read p99 with feedback, and 3,200–3,450 and 22–33/9–13 ms at fixed pacing. Publish every account's p99 against each bookend, plus all missed offers, the measured hold tail and the independent queryable marker. The archived save target left just 3.42 ms of spare p99 against the faster control. See the [preregistered falsifiers](MICRO-ATTRIBUTION.md#preregistered-server-comparison).
+
+Use the paired native command under [P9 recovery](../ha1/BENCH.md#version-01-recovery-row-on-one-server). The scored P8 run needs the frozen workload and the selected fresh and billion-record populations on the integrated branch.
+
+## Superseded pipeline prediction and optional control
 
 Use the published branch with the [preregistered predictions](PREDICTIONS-PART6.md). Expect 30–45 minutes, with 18 minutes of offered activity. The runner caps the bare-metal campaign at 60 minutes and budgets up to 25 minutes to prepare, with 5 minutes reserved for collecting evidence. The controller binds the exact published revision and verifies the transferred archive.
 
