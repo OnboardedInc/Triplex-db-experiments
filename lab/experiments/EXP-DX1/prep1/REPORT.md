@@ -1,45 +1,30 @@
-The measured per-person writer has yet to reach 394 saves/s in one database. It reached 111.1 at that load with 8.62 ms native apply per save. [Server reading](SERVER-READING.md)
-Fair-turn follow-up source `5191435dc061a5abbed8f4e8f16abfa8174440aa`.
-Run `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-fair -- bash lab/experiments/EXP-DX1/prep1/server.sh fair "$OUT" 5191435dc061a5abbed8f4e8f16abfa8174440aa "$SEALED"`.
+The per-person design has yet to reach 394 saves/s in one database. It reached 111.1 at that load with 8.62 ms of native apply per save, against a 2.54 ms total serial budget.
+The next server command uses source `afd94a9fe0bc2e4485f200bab436c7cb58b289ed`.
+Run `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-owner -- bash lab/experiments/EXP-DX1/prep1/server.sh owner "$OUT" afd94a9fe0bc2e4485f200bab436c7cb58b289ed "$SEALED"`.
 Use the original comparison's sealed campaign directory as `SEALED` and a new absolute directory as `OUT`.
-Each of four runs starts from the same sealed database of ten accounts.
-One and two write gateways each run the prepared writer with fair turns off and on.
-Every run has a quiet account alone and beside nine neighbours at both 235 and 394 offered saves per second.
-The command stops within an hour, including the time allowed for cleanup.
+The command restores one ten-account database for each of three arms. One gateway serves grouped, original per-person, and fixed per-person in turn.
+Each arm measures the quiet account alone and with nine neighbours at 235 and 394 gross offers/s. The command allows at most one hour including forced exit.
+The fix sends the existing owner number. Datomic still checks the public identity and revision, and stores the same journal and feed.
+The fix removes one redundant lookup. The bigger costs still need to come down before 394 is credible.
 
-**North star.** Durable small saves and quiet-account tails under load, with exact stored history and the ordered feed. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+**North star.** P2 durable and exact small saves, P3 the ordered feed, and quiet-account tails in one database. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
-Use the same allocated native Linux host, pinned images, built workspace packages and physical CPU masks as the original command. The original seal is checked before use and each fresh arm validates the dump and reopens its cut. The order is off/on with one peer and on/off with two. Within a peer count both treatments see the same phase order. Two peers tie the four-peer capacity forecast and require fewer processes. Each 60-second quiet window has the same 210 offers. Loaded windows have 14,100 or 23,640 offers. The payloads and predecessors are prefixes of the sealed comparison tapes. Timing is lightly compressed per account where needed to finish the prefix within the window. Each arm has 830 seconds plus 20 seconds for forced exit, and the whole command has a 3,520-second deadline plus 40 seconds for forced exit.
+**Server finding.** The copied one-gateway run confirmed 179.5 versus 140.6 saves/s at 235 and 181.7 versus 111.1 at 394, grouped versus per-person. The 235 medians were 0.15 versus 6.15 ms of apply per save. Per-person at 50 offered had 136 replies over one second, all from seconds one through four. The median native entry wait in that tail was 1,360 ms. The early archive lacks all six JVM pause logs, so the underlying cause of that initial stall remains open. [Full server reading and candidate forecasts](SERVER-READING.md)
 
-**Follow-up forecasts.** Solo throughout is 3.5 saves/s, 1 save/append, p99 8.8 ms and ratio 1.00. Loaded p99 is unavailable for a cohort with missing acknowledgements. The one-credit forecast assumes an 8 ms mean submit-to-reply turn and therefore 125 saves/s with either peer count. These are predictions before the run.
+**Selected fix.** The peer already resolves the owner when it reads predecessor rows. `TX2_SUBJECT_NUMERIC_OWNER=1` drops just that existing owner's identity-upsert map and sends its new rows directly by entity number. An EAVT check binds that number to the public ID at the serialized cut, and the revision CAS still guards all business rows. The new journal still uses its tempid and retains its identity and all existing checks. The default prepared path still uses the original identity-upsert shape. The forecast saves at most one storage fetch and decode, or about 0.5 ms at 235. [Lookup audit](SERVER-READING.md#where-the-read-work-sits)
 
-| Peers and fair turns | Gross offers/s | Delivered/s | Saves/append | Worst-account p99 ms | Quiet p99 ms | Quiet / solo |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 off | 235 | 235 | 1 | 27.48 | 10.47 | 1.19× |
-| 1 off | 394 | 383 | 1 | unavailable | 10.74 | 1.22× |
-| 1 on | 235 | 125 | 1 | unavailable | 22 | 2.50× |
-| 1 on | 394 | 125 | 1 | unavailable | 25 | 2.84× |
-| 2 on | 235 | 125 | 1 | unavailable | 22 | 2.50× |
-| 2 on | 394 | 125 | 1 | unavailable | 25 | 2.84× |
-| 2 off | 235 | 235 | 2 | 27.48 | 10.47 | 1.19× |
-| 2 off | 394 | 394 | 2 | 28.00 | 10.74 | 1.22× |
+**Follow-up controls.** Use the allocated native Linux host with the same pinned images, workspace package builds and physical CPU masks. Each arm verifies the original SHA-256 seal and restores a new copy of the same dump. All use matching 60-second windows, 210 quiet offers per window and 14,100 or 23,640 total offers under load. Accompanying setup, collection and owned cleanup are inside the hour. The prior fair-turn experiment remains documented at `b1bbc9875`.
 
-**Original comparison.** Server source `7ca8525a9`. The corrected native admission matched 1,315 offers per writer. The original comparison has no fair-credit arm. [Server handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/da7eca837/lab/experiments/EXP-DX1/bm1/HANDOFF.md)
+| Arm | 235 / 394 loaded forecast in-window saves/s | Quiet p99 at 235 / 394, solo then loaded (ms) |
+| --- | --- | --- |
+| Grouped | 180 / 182 | 119 → 341 / 37 → 294 |
+| Original per-person | 141 / 111 | 63 → 1,169 / 17 → 1,474 |
+| Numeric-owner per-person | 146 / 115 | 63 → 1,120 / 17 → 1,430 |
 
-**Present writer baseline.** At 235 offered/s, JVM1 reported 138.6–188.5 saves/s across JVM settings over the offer window plus drain. Reopening the copied row clocks gives 143.5–196.6 saves/s inside the 60-second offer window, the denominator PREP1 uses. At 394 the corresponding ranges are 153.3–186.4 and 163.7–189.0. Separate JVM1 quiet-account windows were 215.0 and 358.1 gross offers/s and measured 8.56–20.48× and 7.23–21.54× solo p99. The re-read checks the published transfer manifest, pinned source, row counts and clock order. [Checksums](SHA256SUMS)
+All quiet solo cells forecast 3.5 saves/s. All loaded cells forecast expiries and therefore no complete-cohort p99. Each prediction is also in the bound server plan. The appends and full stage distributions will be measured.
 
-**Original forecasts, frozen before the run.** Cells are ordered 50 / 235 / 394 / 620 offered saves/s. Solo p99 is 10 ms for K and 8.8 ms for S. Above-capacity p99 projections assume a full queue. The measured complete-cohort tail is unavailable if any ACK is missing.
+**Local gates.** The numeric-owner PostgreSQL gate ran 7 tests and 744 assertions under an ordinary token. It checked the same-revision owner rename, original receipt across two synchronous database boots, journal routes and pinned queries. Seven TypeScript-side tests and strict type checking passed. The three simulated arms matched 1,911 durable receipts and append records. The collector rejected a changed numeric-owner arm. The server follow-up remains unrun here.
 
-| Writer and peers | Delivered/s | Worst p99 ms | Quiet / solo | S saves/append |
-| --- | --- | --- | --- | --- |
-| K, any | 50 / 235 / 255 / 255 | 30 / 30 / 77,739 / 204,086 | 4.20 / 13.76 / 14.53 / 22.00 | |
-| S, 1 | 50 / 235 / 383 / 383 | 27.34 / 27.48 / 4,122 / 88,244 | 1.11 / 1.19 / 1.22 / 1.26 | 1 |
-| S, 2 or 4 | 50 / 235 / 394 / 620 | 27.34 / 27.48 / 28.00 / 28.36 | 1.11 / 1.19 / 1.22 / 1.26 | 2 |
+**Evidence audit.** The archive reader checks member bytes, source, slot, tape, cut and matching ACK/receipt contents. The launcher checks the original and rerun seals and confirms its owned resources are gone before publishing each summary. The producer verifies live settings including numeric-owner mode, starting cut, receipt and stored journal. The collector binds those observations to the attempt, source, seed, tape, native append and JVM logs. The existing subject receipt verifier binds the logical position, operation, journal, clock and claim to the committed native transaction. The Mac race gate exercises exact emitted keys and proves an identity change at the same revision cannot commit. The SQL verifier checks mode, staged source, attempt, native transaction, replica flushes, original receipt and query results. [Checksums](SHA256SUMS)
 
-**Readout.** The verified one-gateway prefix measures 179.5 versus 140.6 saves/s for grouped and per-person at 235 offered. The copied per-person cells show native apply and storage reads as the next limit. [Server reading](SERVER-READING.md)
-
-**Candidate.** Remove the repeat native identity upsert by using the owner number already resolved on the gateway, with an exact identity and revision check. The forecast is 6.4–6.9 ms per save at 235 offered, with an apply-only ceiling of 145–156/s. [Lookup audit and candidate forecasts](SERVER-READING.md#predictions-before-implementation)
-
-**Evidence audit.** The existing subject receipt verifier still binds operation, claim, journal, position and clock to the same native report. The numeric-owner correctness fixture checks exact emitted keys and a renamed-owner race. Its SQL verifier binds mode, nonce, staged source, native transaction and replica flushes. The launcher verifies and rechecks the sealed bytes, binds the new plan to its commit, starts a fresh slot per arm, and waits for owned cleanup before publishing a summary. The producer reads back settings and the installed function on each gateway, verifies the restored cut, and checks receipt and stored journal content against each offer. The collector verifies those bindings, joins each receipt to the same-attempt native append, checks one append at most per one-credit turn, and retains raw hashes and pause logs. Six tests and strict TypeScript passed. The four source-bound fixtures joined 2,548 simulated saves to their append records and rejected a changed fair-credit setting. The follow-up used no physical server here. [Checksums](SHA256SUMS)
-
-Part 5's [gated handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/94b930a73/lab/experiments/EXP-DX1/prep1/REPORT.md) records the off/on writer gates, both original receipts after restart and all 13 erasure routes. No acceptance pins moved.
+Part 5's [gated handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/94b930a73/lab/experiments/EXP-DX1/prep1/REPORT.md) records the off/on writer gates, original receipts across restart and all 13 erasure routes. No acceptance pins moved.
