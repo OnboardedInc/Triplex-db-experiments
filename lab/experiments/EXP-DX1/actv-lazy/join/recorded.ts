@@ -69,7 +69,10 @@ export class RecordedNotices {
       previous: hash([a.db.prefix, t.epoch, "receiver-genesis"]),
     };
     assert(current.epoch === t.epoch);
-    if (current.event > through) return { current, at };
+    if (current.event > through) {
+      assert(prior);
+      return { current, at: prior.at };
+    }
     const e = await a.notices.event(current.event, sourceAt);
     assert(e.value.parent === current.parent && e.value.epoch === current.epoch);
     const { ids, size } = await this.page(e, current.start);

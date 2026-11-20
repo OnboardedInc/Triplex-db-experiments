@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { Archive } from "./archive.ts";
 import { RecordedNotices } from "./recorded.ts";
 import type { JoinedAccount } from "./account.ts";
@@ -29,13 +30,31 @@ export class Settlement {
     }
   }
   async settle(sequence: number, elapsedFrom: number = performance.now()) {
+    // [DX-ACT1] Why: price the native commit of the exact terminal cursor, and label an adopted cursor as readback. Rejected: choosing the last ACK from any batch or treating completion of verification as durability.
+    const timing = (archive: Archive, position: number, seen: number) => {
+      const ack = archive.store.counters.lastReceipt;
+      const current = ack?.position === position && ack.time >= elapsedFrom && ack.time <= seen;
+      return {
+        position,
+        ms: (current ? ack.time : seen) - elapsedFrom,
+        clock: current ? ack.clock : "readback",
+        tx: current ? ack.txId : null,
+      };
+    };
+    const store = async () => {
+      const state = await this.archive.runValues(sequence);
+      const seen = performance.now();
+      const row = await this.archive.values(sequence);
+      assert(row);
+      assert.deepEqual(row.value, state);
+      return { state, ...timing(this.archive, row.at, seen) };
+    };
     const [values, notices] = await Promise.all([
-      this.archive
-        .runValues(sequence)
-        .then((state) => ({ state, ms: performance.now() - elapsedFrom })),
-      this.recorder
-        .record(sequence)
-        .then((state) => ({ state, ms: performance.now() - elapsedFrom })),
+      store(),
+      this.recorder.record(sequence).then((state) => ({
+        state,
+        ...timing(this.recorder.archive, state.at, performance.now()),
+      })),
     ]);
     return { values, notices };
   }

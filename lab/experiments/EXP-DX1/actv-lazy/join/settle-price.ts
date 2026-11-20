@@ -18,7 +18,7 @@ import { rawDeep, replaceDeep } from "./deep.ts";
 import { measure } from "./measure.ts";
 
 type Fixture = Awaited<ReturnType<typeof seed>>;
-type Read = { subject: number; p: number; elapsed: number; digest: string };
+type Read = { subject: number; p: number; started: number; elapsed: number; digest: string };
 type Write = { subject: number; offered: number; ack: number; p: number; tx: string };
 const p99 = (ms: number[]) => {
   assert(ms.length);
@@ -100,7 +100,13 @@ async function traffic(
         p = await s.head();
       const value = await reader.readAt(f.roster[subject]!, { position: p, validTime: valid });
       assert.deepEqual(value.basis, { tx: p, validTime: valid });
-      reads.push({ subject, p, elapsed: performance.now() - started, digest: sha256(value.json) });
+      reads.push({
+        subject,
+        p,
+        started: started - start,
+        elapsed: performance.now() - started,
+        digest: sha256(value.json),
+      });
     }
   };
   await Promise.all([write(), ...Array.from({ length: readers }, (_, i) => read(i))]);
@@ -109,6 +115,18 @@ async function traffic(
     writes,
     saveP99: p99(writes.map((r) => r.ack - r.offered)),
     readP99: p99(reads.map((r) => r.elapsed)),
+  };
+}
+
+function activePercentiles(run: Awaited<ReturnType<typeof traffic>>, from: number, until: number) {
+  const within = (t: number) => t >= from && t < until;
+  const saves = run.writes.filter((x) => within(x.offered));
+  const reads = run.reads.filter((x) => within(x.started));
+  return {
+    saveN: saves.length,
+    readN: reads.length,
+    saveP99: saves.length ? p99(saves.map((x) => x.ack - x.offered)) : null,
+    readP99: reads.length ? p99(reads.map((x) => x.elapsed)) : null,
   };
 }
 
@@ -179,8 +197,8 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
         true,
         false,
       );
-      const { control, loaded, offer, visible, after, terminal, published, doc } = await measure(
-        async () => {
+      const { control, loaded, offer, visible, after, terminal, published, doc, charged } =
+        await measure(async () => {
           const start = performance.now() + 100;
           const control = await Promise.all([
             traffic(a, f, queue, rate, start, seconds, "main-base-" + i, readerCount),
@@ -201,9 +219,8 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
           const visible = performance.now(),
             after = services.length;
           const [terminal, loaded] = await Promise.all([settle.settle(seq + 1, offer), also]);
-          return { control, loaded, offer, visible, after, terminal, published, doc };
-        },
-      );
+          return { control, loaded, offer, visible, after, terminal, published, doc, charged };
+        });
       assert.equal(terminal.values.state.status, "stored");
       const proof = await ref.check(
         a,
@@ -255,6 +272,22 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
         save: loaded[index]!.saveP99 / control[index]!.saveP99,
         read: loaded[index]!.readP99 / control[index]!.readP99,
       }));
+      // [DX-ACT1] Why: match the intervals that actually contained unsettled work. Rejected: diluting a short burst of bulk traffic with idle time after the last durable page.
+      const activeFrom = visible - charged;
+      const activeUntil = Math.min(
+        seconds * 1000,
+        offer + Math.max(terminal.values.ms, terminal.notices.ms) - charged,
+      );
+      const active = [0, 1].map((index) => {
+        const base = activePercentiles(control[index]!, activeFrom, activeUntil),
+          work = activePercentiles(loaded[index]!, activeFrom, activeUntil);
+        return {
+          base,
+          work,
+          save: base.saveP99 && work.saveP99 ? work.saveP99 / base.saveP99 : null,
+          read: base.readP99 && work.readP99 ? work.readP99 / base.readP99 : null,
+        };
+      });
       const row = {
         rate,
         offer,
@@ -265,6 +298,9 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
         terminal,
         proof,
         pairs,
+        active,
+        activeFrom,
+        activeUntil,
         control,
         loaded,
         bulkService: services.slice(after),
@@ -289,8 +325,11 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
         markerMs: r.visible - r.offer,
         valuesMs: r.terminal.values.ms,
         noticeMs: r.terminal.notices.ms,
+        valuesClock: r.terminal.values.clock,
+        noticeClock: r.terminal.notices.clock,
         proof: r.proof,
         p99Ratios: r.pairs,
+        active: { from: r.activeFrom, until: r.activeUntil, ratios: r.active },
       })),
     });
   } finally {
