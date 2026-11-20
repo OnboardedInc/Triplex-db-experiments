@@ -27,7 +27,7 @@ Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regio
 
 The allocation arm keeps Serial and decodes the existing positional row vector into a transient map. It reuses the exact row wire format and removes per-prefix Formatter allocation. Speculative transaction hints stay off in these controls.
 
-The first Mac launch found the Datomic tag missing and released its slot before seeding. The retry asks the lab for the pinned image ID directly.
+The first Mac launch found the Datomic tag missing and released its slot before seeding. The old image ID was also absent. The retry uses the existing SCALE1 build receipt and checks the running peer JAR against the distribution pin.
 
 ## Measurement audit
 

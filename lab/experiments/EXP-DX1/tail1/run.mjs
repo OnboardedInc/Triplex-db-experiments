@@ -1,7 +1,7 @@
 // @ts-nocheck -- JS CLI options, engine manager callbacks and Docker JSON are checked on use.
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -28,6 +28,7 @@ const GiB = 2 ** 30,
   MiB = 2 ** 20;
 const holder = "DX-TAIL1";
 const nameLabel = "tx2.tail1";
+const peerJar = "peer-1.0.7745.jar";
 
 const write = (file, value) =>
   fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
@@ -170,18 +171,59 @@ export async function runTail(options, config, manager) {
   const arm = options.arm ?? "serial";
   assert(Object.hasOwn(arms, arm), "Unknown DX-TAIL1 arm");
   const variant = arms[arm];
-  // [DX-TAIL1] Why: the pinned local image may have no mutable tag.
-  // Rejected: retagging or rebuilding the image shared by other holders.
-  const image = docker([
-    "image",
-    "inspect",
-    mac ? config.lanes.datomic.imageId : config.lanes.datomic.image,
-    "--format",
-    "{{.Id}}",
-  ]);
+  const datomic = path.join(REPO, "lab/config/datomic");
+  const peerHash = fs
+    .readFileSync(path.join(datomic, "SHA256SUMS"), "utf8")
+    .split("\n")
+    .find((line) => line.endsWith("  " + peerJar))
+    ?.split(" ")[0];
+  assert.match(peerHash, /^[a-f0-9]{64}$/);
+  const buildFile = options["image-receipt"];
+  const build = buildFile ? readJson(buildFile) : undefined;
+  // [DX-TAIL1] Why: allow a still-present, sealed lab build when the original shared image is retired.
+  // Rejected: retagging another holder's image or choosing the newest mutable tag between arms.
+  if (build) {
+    const verification = readJson(path.join(datomic, "verification.json"));
+    assert.equal(build.verification.zipSha256, verification.zipSha256);
+    assert.equal(build.distribution.find((file) => file.path === peerJar)?.sha256, peerHash);
+    assert(build.gpg.stdout.includes("VALIDSIG " + verification.fingerprint + " "));
+    assert.equal(
+      createHash("sha256")
+        .update(
+          JSON.stringify({
+            sources: build.sources,
+            distribution: build.distribution,
+          }),
+        )
+        .digest("hex"),
+      build.buildInputsSha256,
+    );
+    assert.match(build.imageId, /^sha256:[a-f0-9]{64}$/);
+  }
+  const selector =
+    build?.imageId ?? (mac ? config.lanes.datomic.imageId : config.lanes.datomic.image);
+  const meta = JSON.parse(docker(["image", "inspect", selector]))[0];
+  const image = meta.Id;
   assert.match(image, /^sha256:[a-f0-9]{64}$/);
-  if (mac) assert.equal(image, config.lanes.datomic.imageId);
+  if (mac || build) assert.equal(image, selector);
+  const buildInputHash = meta.Config.Labels["tx2.build-inputs-sha256"];
+  assert.match(buildInputHash, /^[a-f0-9]{64}$/);
+  if (build) assert.equal(buildInputHash, build.buildInputsSha256);
+  if (options.preflight === true) {
+    const postgres = docker(["image", "inspect", "postgres:17-alpine", "--format", "{{.Id}}"]);
+    assert.match(postgres, /^sha256:[a-f0-9]{64}$/);
+    console.log(JSON.stringify({ image, postgres, peerHash, buildInputHash }));
+    return;
+  }
   const seconds = options.full === true ? 5910 : Number(options.seconds ?? 240);
+  const receiptPredecessors = options["receipt-predecessors"] === true;
+  if (receiptPredecessors)
+    assert(
+      fs
+        .readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8")
+        .includes("receiptPredecessorAttributes"),
+      "Build the Datomic runtime with the receipt path",
+    );
   assert(mac || seconds <= 900, "The server diagnostic is a bounded prefix");
   const out = path.resolve(options.out),
     archive = fs.realpathSync(options.archive);
@@ -223,6 +265,12 @@ export async function runTail(options, config, manager) {
       ),
     ),
     offers: { ...plan, bytes: sha256File(input) },
+    datomicImage: {
+      image,
+      buildInputHash,
+      peerHash,
+      buildReceiptSha256: buildFile ? sha256File(buildFile) : null,
+    },
   });
   const caps = mac
     ? { pg: 320, tx: 1056, "gw-w": 1280, "gw-r": 768 }
@@ -298,6 +346,7 @@ export async function runTail(options, config, manager) {
       identity,
       arm,
       collector: variant.collector,
+      receiptPredecessors,
       reservation: reservation?.slot ?? null,
       caps,
       heaps,
@@ -364,6 +413,10 @@ export async function runTail(options, config, manager) {
     }
     for (const key of ["fsync", "synchronous_commit", "full_page_writes"])
       assert.equal(stack.durability[key], "on");
+    assert.equal(
+      docker(["exec", ids.tx, "sha256sum", "/opt/datomic/" + peerJar]).split(/\s+/)[0],
+      peerHash,
+    );
     console.log("DX-TAIL1 stack ready, seeding 10,000 deep people");
     driver = spawnBound(
       process.execPath,
@@ -424,6 +477,7 @@ export async function runTail(options, config, manager) {
           DX_PUBLICATION_MODE: "worker",
           DX_SERVER_RECORD_TIME: "1",
           DX_STRICT_RECORD_CLOCKS: "1",
+          DX_TAIL1_RECEIPTS: receiptPredecessors ? "1" : "0",
         },
         log: path.join(out, "driver.log"),
         signal,
