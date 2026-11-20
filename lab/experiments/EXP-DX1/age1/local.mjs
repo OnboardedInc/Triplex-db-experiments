@@ -109,7 +109,8 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
     return;
   }
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
-  assert.match(opts.run ?? "", /^(fidelity|scale|successor)$/);
+  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|scale|successor)$/);
+  const adopting = opts.run === "adopted-fidelity";
   const measure = opts.run === "scale" ? await import("./measure.mjs") : null;
   const spec = measure?.scaleOptions(opts);
   const revision = git(["rev-parse", "HEAD"]);
@@ -212,7 +213,10 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
       assert.equal(meta.HostConfig.Memory, Number(mem));
       assert.equal(meta.HostConfig.MemorySwap, Number(mem));
       assert.equal(meta.HostConfig.NanoCpus, 2e9);
-      assert(!Object.keys(meta.HostConfig.PortBindings ?? {}).length);
+      const ports = meta.HostConfig.PortBindings ?? {};
+      if (role === "peer" && adopting) {
+        assert.deepEqual(ports, { "8080/tcp": [{ HostIp: "127.0.0.1", HostPort: "" }] });
+      } else assert(!Object.keys(ports).length);
       docker(["start", id]);
       return id;
     };
@@ -253,6 +257,7 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
     const durable = sql("select current_setting('fsync'),current_setting('synchronous_commit'),current_setting('full_page_writes')");
     assert.equal(durable, "on|on|on");
     const peer = run("peer", datomic, [...mounted,
+      ...(adopting ? ["-p", "127.0.0.1::8080"] : []),
       "-e", "DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=96m -Dtriplex.codec.spec=/age/packages/datomic/src/codec-spec.json -Dlogback.configurationFile=" + logback,
       "-e", "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?" + jdbc + "?user=postgres&password=" + password,
       "-e", "AGE_ATTEMPT=" + attempt, "-e", "AGE_SQL_JDBC=" + jdbc, "-e", "AGE_SQL_PASSWORD=" + password,
@@ -269,6 +274,52 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
       settings, flags, spec, measurementLease: lease?.owner ?? outer, roleImages: { datomic, postgres }, jars, peerSha1, durable, caps,
       roles: Object.fromEntries(created), ownerHash: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString() });
     if (measure) await measure.measure({ attempt, dir, peer, tx, pg, jdbc, password, capture, signal: controller.signal, floor, write }, spec);
+    else if (adopting) {
+      const loaderPin = "04e864ae07af65b952d015cb9907a35bc66ecf09";
+      const loader = path.join(dir, "loader-source");
+      fs.mkdirSync(loader);
+      const files = ["lab/bench/lib", "lab/experiments/EXP-DX1/scale1/decision/plan.ts",
+        "lab/experiments/EXP-DX1/load1"];
+      const archive = execFileSync("git", ["archive", loaderPin, ...files], { cwd: REPO, maxBuffer: 16 * MiB });
+      execFileSync("tar", ["-xf", "-", "-C", loader], { input: archive });
+      const loaderHashes = Object.fromEntries(hashTree(loader));
+      fs.symlinkSync(path.join(REPO, "node_modules"), path.join(loader, "node_modules"));
+      const builds = Object.fromEntries(["core", "datomic", "qualification", "testkit"].map((pkg) =>
+        [pkg, Object.fromEntries(hashTree(path.join(REPO, "packages", pkg, "dist")))]));
+      write("loader-binding.json", { attempt, loaderPin, loaderHashes, builds });
+      const server = capture(["exec", "-e", "TX2_SAVE_LEDGER=0", "-e", "TX2_SMALL_ROWS=0",
+        peer, "bash", "-ceu", 'echo $$ > /tmp/age-gw.pid; exec /opt/datomic/bin/run -m triplex.gateway.main'],
+        path.join(dir, "gateway.log"), controller.signal);
+      server.catch(() => {});
+      const peerPort = owned(peer).NetworkSettings.Ports["8080/tcp"]?.[0];
+      assert.equal(peerPort?.HostIp, "127.0.0.1");
+      assert(peerPort.HostPort && !["15442", "17019"].includes(peerPort.HostPort));
+      const url = "http://127.0.0.1:" + peerPort.HostPort;
+      for (let retry = 0; ; retry++) {
+        controller.signal.throwIfAborted();
+        assert(retry < 120, "Small loader gateway did not start");
+        if (await fetch(url + "/health", { signal: AbortSignal.timeout(500) }).then((r) => r.ok, () => false)) break;
+        await sleep(1000);
+      }
+      const fixture = JSON.parse(execFileSync(process.execPath, ["--import", "tsx",
+        path.join(source, experiment, "scale1-fixture.mjs"), loader, dir, attempt, url, REPO, loaderPin],
+        { cwd: REPO, encoding: "utf8", timeout: 180000, signal: controller.signal }));
+      docker(["exec", peer, "bash", "-ceu", 'kill "$(cat /tmp/age-gw.pid)"']);
+      await server.catch(() => {});
+      docker(["cp", path.join(dir, "fixture.json"), peer + ":/tmp/age-fixture.json"]);
+      const clone = "age-clone-" + attempt;
+      const uri = (name) => "datomic:sql://" + name + "?" + jdbc + "?user=postgres&password=" + password;
+      const command = async (file, ...args) => {
+        await capture(["exec", peer, "/opt/datomic/bin/datomic", "-Xms128m", "-Xmx640m", ...args],
+          path.join(dir, file), controller.signal);
+        assert(fs.readFileSync(path.join(dir, file), "utf8").split("\n").includes(":succeeded"));
+      };
+      const backup = "file:/tmp/age-fixture-backup";
+      await command("seed-backup.log", "backup-db", uri(fixture.db), backup);
+      await command("seed-clone.log", "restore-db", backup, uri(clone));
+      await capture(["exec", peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
+        opts.run, "/tmp/age-fixture.json", fixture.sha, clone], path.join(dir, "probe.log"), controller.signal);
+    }
     else {
       const ns = opts.run === "fidelity" ? "triplex.age.gate" : "triplex.age.successor";
       await capture(["exec", peer, "/opt/datomic/bin/run", "-m", ns, opts.run],

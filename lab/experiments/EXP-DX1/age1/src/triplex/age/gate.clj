@@ -1,6 +1,7 @@
 (ns triplex.age.gate
   (:require [clojure.data.json :as json]
             [datomic.api :as d]
+            [triplex.age.adopt :as adopt]
             [triplex.age.native :as native]
             [triplex.age.tape :as tape]
             [triplex.gateway.journal :as journal]
@@ -113,10 +114,56 @@
                                 :growth growth :people (:people pop) :cuts cuts
                                 :dbs [(:name product) (:name aged)]}))))
 
-(defn -main [& [mode]]
+(defn adopted-fidelity! [file pin clone]
+  (let [seal (adopt/read-seal! file pin true)
+        name (:name seal)
+        product (adopt/scope-db name name)
+        aged (adopt/scope-db name clone)
+        pop (adopt/read-population! aged seal 3 true)
+        seed (:seed-head pop)
+        saves (* 4 (:active pop))
+        cuts [0 1 (dec (:active pop)) (:active pop) (dec saves) saves]
+        select-fields #(filterv (comp adopt/fields :attribute) %)]
+    (equal! pop (adopt/read-population! product seal 3 true)
+            "Restored seed identities, values, clock or record count differ")
+    (doseq [n (range saves)
+            :let [c (tape/command pop n)
+                  reply (storage/commit! name (:conn product) (d/db (:conn product)) (tape/input c))]]
+      (equal! (str (:position c)) (get-in reply [:position "v"]) "Product position differs")
+      (equal! (:clock c) (get-in reply [:recordedAt "v"]) "Product clock differs"))
+    (let [growth (native/age! aged pop 0 saves 16)]
+      (doseq [n (range saves)
+              :let [p (read-receipt product n)
+                    q (read-receipt aged n)
+                    receipt-t #(Long/parseLong (get-in % [:t "v"]))]]
+        (equal! (dissoc p :t) (dissoc q :t) "Adopted logical receipt differs")
+        (equal! (normalized-log product (receipt-t p)) (normalized-log aged (receipt-t q))
+                "Adopted durable record bytes differ"))
+      (doseq [i (range (:people pop))
+              s (conj cuts nil)
+              :let [position (some-> s (+ seed))
+                    actual (person-view aged pop i position)]]
+        (equal! (oracle-person pop i (or s saves)) (select-fields actual)
+                "Adopted field oracle differs")
+        (equal! (person-view product pop i position) actual "Adopted pin or current rows differ"))
+      (doseq [[owner rows] (oracle-history pop saves)]
+        (equal! (set rows) (set (select-fields (person-history aged owner))) "Adopted history differs")
+        (equal! (set (person-history product owner)) (set (person-history aged owner))
+                "Adopted history differs between paths"))
+      (doseq [s (range 0 saves 7)
+              cut [nil (+ seed (min saves (+ s 5)))]]
+        (equal! (feed product (+ seed s) 7 cut) (feed aged (+ seed s) 7 cut)
+                "Adopted journal feed differs"))
+      (native/emit "adopted-fidelity"
+                   {:source (:source seal) :manifestSha pin :seedRecords (:seed-records pop)
+                    :facts (:facts seal) :seedT (:seed-t pop) :seedHead seed :saves saves
+                    :accounts 10 :sample (:people pop) :growth growth :cuts cuts :dbs [name clone]}))))
+
+(defn -main [mode & args]
   (try
     (case mode
       "fidelity" (fidelity!)
+      "adopted-fidelity" (apply adopted-fidelity! args)
       (throw (ex-info "Unknown gate" {:mode mode})))
     (shutdown-agents)
     (System/exit 0)

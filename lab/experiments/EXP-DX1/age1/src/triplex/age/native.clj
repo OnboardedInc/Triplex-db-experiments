@@ -78,7 +78,7 @@
                 (stamp [:triplex/row text position offset :row]))
               (stored-text row ids))) journal)))
 
-(defn render [{:keys [owner operation tx position clock fresh prior journal]}]
+(defn render [{:keys [owner operation tx position clock fresh prior journal prior-texts]}]
   (let [ids (set (map :id (concat fresh journal)))
         owner-ref [:triplex.entity/id owner]
         prior-ids (set (map :id prior))]
@@ -90,7 +90,10 @@
            [:db/add owner-ref :triplex.entity/rev position]]
           (concat (map (fn [value] [:db/add owner-ref :triplex.entity/row value]) (native-rows fresh ids))
                   (map (fn [value] [:db/retract owner-ref :triplex.entity/row value])
-                       (map #(if (.startsWith ^String (:id %) "A") (fixture/row-text %) (stored-text % prior-ids)) prior))))))
+                       (map (fn [r text]
+                              (or text (if (.startsWith ^String (:id r) "A")
+                                         (fixture/row-text r) (stored-text r prior-ids))))
+                            prior (or prior-texts (repeat nil))))))))
 
 (def attrs [:db/txInstant :triplex.tx/position :triplex.tx/operation-id :triplex.entity/id
             :triplex.claim/command-id :triplex.tx/max-recorded-at :triplex.entity/row :triplex.entity/rev])
@@ -99,8 +102,7 @@
   (let [{:keys [db-after tx-data]} result
         t (d/basis-t db-after) tx (d/t->tx t)
         owner (d/entid db-after [:triplex.entity/id (:owner command)])
-        n (:n command) previous (- n (:active pop))
-        prior-rev (if (neg? previous) (tape/seed-position (:i command)) (+ (tape/seed-head pop) (inc previous)))
+        prior-rev (:prior-rev command)
         header (first authored)
         expected (into #{[tx :db/txInstant :engine-time true] [owner :triplex.entity/rev prior-rev false]}
                        (concat
