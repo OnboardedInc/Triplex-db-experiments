@@ -51,7 +51,7 @@ export async function load(s: Stack, people: number) {
       hostCount: new Set([s.a, s.b]).size,
     });
   }
-  const server = s.a !== s.b;
+  const server = process.platform === "linux";
   const arms =
     e.mode === "load-profile"
       ? ["ordinary-a", "row-a", "range-a", "range-b", "row-b", "ordinary-b"]
@@ -60,7 +60,9 @@ export async function load(s: Stack, people: number) {
         : e.mode === "load-live"
           ? ["live-0-a", "live-128", "live-500", "live-2000", "live-0-b"]
           : e.mode === "load-tail"
-            ? ["tail-0-a", "tail-128", "tail-0-b"]
+            ? server
+              ? ["tail-0-a", "tail-128", "tail-500", "tail-2000", "tail-0-b"]
+              : ["tail-0-a", "tail-128", "tail-0-b"]
             : e.mode === "load-frontier-low"
               ? [
                   "frontier-0-a",

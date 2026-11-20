@@ -104,7 +104,8 @@ export class Stack {
       // [DX-HA1] Why: an explicit port survives a gateway container restart. Rejected: ephemeral Docker publication that silently moves the client endpoint.
       published = ["-p", (site.privateAddress ?? loopback) + ":" + hostPort + ":" + port];
     }
-    const mb = cross ? roles[role] * 4 : localRoleMiB(this.e.mode, role);
+    const server = process.platform === "linux";
+    const mb = server ? roles[role] * 4 : localRoleMiB(this.e.mode, role);
     const mounts = pgRoles.has(role)
       ? []
       : [
@@ -133,7 +134,7 @@ export class Stack {
       "--memory-swap",
       mb + "m",
       "--cpus",
-      cross ? "3" : "1.5",
+      server ? "3" : "1.5",
       "--network",
       this.networks.get(site)!,
       ...published,
@@ -457,7 +458,7 @@ export class Stack {
       [
         "-c",
         'printf "%s\n" "$HA1_PROPERTIES" > /tmp/ha1.properties; exec bin/transactor -Xms96m -Xmx' +
-          (site.privateAddress ? "1400" : "288") +
+          (process.platform === "linux" ? "1400" : "288") +
           "m -XX:ActiveProcessorCount=2" +
           (this.e.mode === "load-tail"
             ? javaRecording + " -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
@@ -491,7 +492,7 @@ export class Stack {
     return "s2-" + Buffer.from(this.sharedScope(role)).toString("base64url");
   }
   async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string) {
-    const size = site.privateAddress ? "1600" : "320";
+    const size = process.platform === "linux" ? "1600" : "320";
     const frontier = this.e.mode.startsWith("load-frontier-");
     const split = splitLoad(this.e.mode);
     const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
