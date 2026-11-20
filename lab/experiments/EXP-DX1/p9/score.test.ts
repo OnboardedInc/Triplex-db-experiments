@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { measurements, score, type Identity, type Metrics } from "./score.ts";
+import { verifyPriority9 } from "./verify.ts";
 
 const identity = {
   tag: "p9-fixture",
@@ -44,4 +45,18 @@ test("one-host rehearsal does not qualify as machine-loss evidence", () => {
   const row = score("lost-writes", metrics, { ...identity, layout: "one-host" });
   assert.equal(row.verdict, "PASS");
   assert.equal(row.qualifiesMachineLoss, false);
+});
+
+test("a different slot or source cannot reuse the campaign's score", () => {
+  const archive = {
+    has: () => true,
+    raw(name: string) {
+      assert.equal(name, "campaign.json");
+      return JSON.stringify({ p9: { ...identity, tag: "p9-older" }, campaign: "synthetic" });
+    },
+  };
+  assert.throws(
+    () => verifyPriority9(archive, identity, "synthetic", "", { fault: "", move: "" }),
+    /p9-older/,
+  );
 });

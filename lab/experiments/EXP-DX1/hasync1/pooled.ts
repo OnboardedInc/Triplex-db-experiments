@@ -82,20 +82,25 @@ export function pooledRead(proof: PooledProof) {
       basisT: proof.basis.t.v,
       basis: { recordedPosition: Number(proof.basis.position.v), validAt: SEED_VALID_FROM },
     };
+    const expected = [[entity, "string", values[0]!]];
+    async function read(client: DatomicClient) {
+      const rows = await client.rows(proof.database, { entityIds: [entity], ...pin });
+      const observed = rows
+        .filter((row) => row.attribute === ":subject/account")
+        .map((row) => [row.entity_id, row.value_type, row.value_string]);
+      assert.deepEqual(observed, expected);
+      return observed;
+    }
     return {
       identity: {
         subject,
         t: proof.basis.t.v,
         sha256: hash(JSON.stringify([entity, values, pin])),
       },
+      expected,
+      read,
       async query(client: DatomicClient) {
-        const rows = await client.rows(proof.database, { entityIds: [entity], ...pin });
-        assert.deepEqual(
-          rows
-            .filter((row) => row.attribute === ":subject/account")
-            .map((row) => [row.entity_id, row.value_type, row.value_string]),
-          [[entity, "string", values[0]]],
-        );
+        await read(client);
       },
     };
   };
@@ -125,7 +130,7 @@ export async function auditPool(
     accounts,
   );
   const sample = accounts.map((_, i) => pooledRead(proof)(i));
-  await Promise.all(sample.map(({ query }) => query(client)));
+  const memberships = await Promise.all(sample.map(({ read }) => read(client)));
   const receipts = await auditSeed(ac, proof.receipts, client);
   // [DX-HASYNC1] Why: prove all ten account memberships on one native database at the same original cut. Rejected: inferring shared placement from an engine count or subject prefixes.
   e.write("pooled-" + stage, {
@@ -135,6 +140,7 @@ export async function auditPool(
     ...proof,
     accounts,
     sample: sample.map(({ identity }) => identity),
+    memberships,
     checkedReceipts: receipts,
   });
 }

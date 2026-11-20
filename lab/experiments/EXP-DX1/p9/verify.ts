@@ -107,7 +107,10 @@ export function verifyPriority9(
       ).length;
       assert(metrics.acknowledged > cp.receipts.length);
     }
-    if (!archive.has(base + "observations.json")) continue;
+    if (!archive.has(base + "observations.json")) {
+      if (kind === "fault" && metrics.lost === 0) metrics.lost = null;
+      continue;
+    }
     const obs = parse(base + "observations.json");
     assert.deepEqual([obs.nonce, obs.slot, obs.source], [nonce, identity.tag, attempt.source]);
     assert.deepEqual(obs.profile, {
@@ -161,6 +164,11 @@ export function verifyPriority9(
         proof.sample,
         Array.from({ length: 10 }, (_, n) => pooledRead(pool)(n).identity),
       );
+      assert.deepEqual(
+        proof.memberships,
+        Array.from({ length: 10 }, (_, n) => pooledRead(pool)(n).expected),
+      );
+      assert.equal(proof.checkedReceipts, cp.receipts.length);
     }
     for (const row of stream.filter((row) => row.stage === "offer" && row.data.kind === "read"))
       assert.deepEqual(row.data.deep, pooledRead(pool)(row.data.ordinal).identity);

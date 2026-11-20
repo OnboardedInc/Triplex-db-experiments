@@ -1,6 +1,6 @@
 # Failover on the shared version 0.1 database
 
-Take the Priority 9 work from this branch on top of INT1 `897e39a05`. It includes the second copy, the fence, the move and the same-database resend check.
+Take the Priority 9 work from `49d4b8139` on top of INT1 `51d0aff35`. It includes the second copy, the fence, the move and the same-database resend check.
 All ten accounts use one Datomic database in the new drill. The independent replay checks the edit before and after the lost reply.
 Saves wait for a second copy by default. Set `HA1_RECOVERY_POLICY=A` to reopen on one copy with an alarm. [Owner decision](OWNER-DECISION.md)
 The first server phase runs the four Priority 9 checks. Fleet and size measurements can start after their evidence is collected. [Server run](BENCH.md)

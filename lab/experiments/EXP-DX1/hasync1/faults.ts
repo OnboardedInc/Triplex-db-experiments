@@ -178,7 +178,8 @@ export async function auditFeed(
       t = BigInt(row.t);
       if (row.kind === "skipped") continue;
       const expected = order[index++];
-      assert.equal(row.transaction.operationId, expected?.receipt.operationId);
+      assert(expected, "Unexpected feed entry");
+      assert.equal(row.transaction.operationId, expected.receipt.operationId);
       if (expected.entry) assert.deepEqual(row, expected.entry);
       else ac.checkEntry(row);
       const position = row.transaction.positions[0]!;
