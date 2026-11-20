@@ -268,6 +268,17 @@ export function effectiveConfig(config, info) {
   }
   if (info.lane === 'datomic') {
     const sources = datomicSources();
+    // [DX-TAIL1] Why: managed writer, reader and transactor launches keep the collector fixed
+    // when cpusets move. Rejected: choosing the collector from HotSpot's detected CPU count.
+    const javaOpts = (options, fallback) => {
+      const words = options.trim().split(/\s+/);
+      const collectors = words.filter(word => /^-XX:\+Use(?:Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC$/.test(word));
+      if (collectors.length > 1 || !words.some(word => word.startsWith('-Xms')) || !words.some(word => word.startsWith('-Xmx')))
+        fail('CONFIG', 'Datomic requires explicit heap sizes and at most one selected collector');
+      const selected = collectors[0] ?? fallback.split(' ')[0];
+      if (words.includes(selected.replace(':+', ':-'))) fail('CONFIG', 'Selected Datomic collector is disabled');
+      return collectors.length ? options : options + ' ' + fallback;
+    };
     const transactor = path.join(dir, 'transactor.properties');
     const entrypoint = path.join(dir, 'entrypoint.sh');
     fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/transactor.properties'), transactor);
@@ -309,7 +320,7 @@ export function effectiveConfig(config, info) {
       const gc = role => ' -Xlog:gc*,safepoint:file=/data/log/' + role + '-gc.log:time,uptimemillis,tags:filecount=0';
       readerGateway = {
         port: p, publish: `127.0.0.1:${p}:8081`, cpus: info.readerCpus,
-        opts: info.readerOpts + gc('reader'), writerGc: gc('writer'),
+        opts: javaOpts(info.readerOpts, '-XX:+UseG1GC') + gc('reader'), writerGc: gc('writer'),
         source: sha256(body), entrypoint: sha256(script),
       };
     }
@@ -333,7 +344,8 @@ export function effectiveConfig(config, info) {
       lane: 'datomic', slot: info.slot, image: info.laneConf.image, imageId: info.laneConf.imageId,
       buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
       gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
-      transactorOpts: info.transactorOpts + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: info.gatewayOpts + (readerGateway?.writerGc ?? ''),
+      transactorOpts: javaOpts(info.transactorOpts, '-XX:+UseG1GC -XX:MaxGCPauseMillis=50') + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''),
+      gatewayOpts: javaOpts(info.gatewayOpts, '-XX:+UseG1GC -XX:MaxGCPauseMillis=25') + (readerGateway?.writerGc ?? ''),
       ...(readerGateway ? { readerGateway } : {}),
       ...(trace ? { trace } : {}),
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
