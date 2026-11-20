@@ -217,7 +217,7 @@ export function checkAuditSolo(
         phase,
       );
       assert.deepEqual(scored, lit.reports[index]);
-      if (deadline) assertOnTime(scored);
+      if (deadline) assertOnTime(scored, phase);
       const proven = portion.filter(
         (o: any) => o.ack && o.owed && (phase === "record" ? !o.stored : o.stored),
       );

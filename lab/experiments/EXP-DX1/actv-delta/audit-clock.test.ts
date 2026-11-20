@@ -53,7 +53,10 @@ test("a stale pre-ACK read and late ingress are visible even when native work is
   const result = scoreClock([o], [first, stale], ["point"], "record");
   assert.equal(result.misses, 1);
   assert.equal(result.stale, 1);
-  assert.throws(() => assertOnTime(result), /deadline misses/);
+  assert.throws(
+    () => assertOnTime(result, "record"),
+    /record mode had activation deadline misses \(1 of 1 offers\)/,
+  );
 });
 
 test("an ordinary exact read can finish before the issuer receives the terminal ACK", () => {

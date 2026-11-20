@@ -11,7 +11,7 @@ The 1,000-person run recorded all four releases within 0.121 seconds. Storing th
 | --- | --- | --- | --- |
 | 1 Durable endpoints | Accepted | 0d85534c8, 5744dd0a4, f199db819, 5e56947a4 | ACK alone, an omitted notice, and a resumed commit without a new clock |
 | 2 Deadlines | Accepted | 5744dd0a4, f199db819, 5e56947a4 | Missing final probe, stale pre-ACK return, and stalled seal and verifier |
-| 3 Collector | Accepted | BM1 c07040e4b and DELTA 5744dd0a4 | Two references must fail and three exact ordered identities must agree |
+| 3 Collector | Accepted | BM1 c07040e4b and DELTA c4cf7d8d7 | Missing, reversed or repeated reference IDs fail independent collection |
 | 4 Effective time | Accepted | 0d85534c8 | Future wage release and midnight expiry without a save |
 | 5 Independent source basis | Accepted | 0d85534c8, 5744dd0a4, 5e56947a4 | Claimed ordinal differs from the terminal cut, and omitted native input |
 | 6 Cold arms | Accepted | 5744dd0a4 and f199db819 | The cold-witness check rejects an earlier read of the same person |

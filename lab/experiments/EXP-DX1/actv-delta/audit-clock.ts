@@ -120,7 +120,17 @@ export function scoreClock(
   return { offers: summary, stale, misses: summary.filter((o) => o.missed).length };
 }
 
-export function assertOnTime(result: ReturnType<typeof scoreClock>) {
-  assert.equal(result.misses, 0, "activation deadline misses");
-  assert.equal(result.stale, 0, "stale public answers after the activation deadline");
+export function assertOnTime(result: ReturnType<typeof scoreClock>, mode?: DurabilityMode) {
+  // [DX-ACT2] Why: the status reader needs the failing mode and denominator after the slot stops. Rejected: a generic deadline error that loses the distinction between record and stored mode.
+  const label = mode ? `The ${mode} mode` : "The campaign";
+  assert.equal(
+    result.misses,
+    0,
+    `${label} had activation deadline misses (${result.misses} of ${result.offers.length} offers)`,
+  );
+  assert.equal(
+    result.stale,
+    0,
+    `${label} returned ${result.stale} stale public answers after the activation deadline`,
+  );
 }
