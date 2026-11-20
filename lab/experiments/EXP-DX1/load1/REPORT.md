@@ -5,7 +5,11 @@ The quiet saves at p99 spent 18–25 ms in the writer queue. Many of the slowest
 The two no-import controls differed by 1.9× for saves. Against the faster control, all three earlier frame sizes missed the neighbour limit.
 The next server run compares feedback with fixed pacing at 32 facts per frame. Both keep one frame outstanding in the same database.
 [Server command](MICRO-SERVER.md) · [Attribution and forecast](MICRO-ATTRIBUTION.md)
-Allow 15–25 minutes on one server. The allocation includes setup, tests and collection within 90 minutes.
+The paced import ran locally at `633595994`. Allow 15–25 minutes on one server, within a 90-minute allocation.
+
+## Pace experiment
+
+- The merged Mac check verified 33,952 imported facts, original receipts, both in-window queryable prefixes and every live offer. It kept one frame outstanding. The two feedback reviews stayed at 110 tokens/s against the noisy leading control. The archived-offer replay and regression test exercise the slowdown. Mac timings are diagnostic.
 
 ## Evidence and earlier pipeline experiment
 
@@ -18,8 +22,7 @@ Allow 15–25 minutes on one server. The allocation includes setup, tests and co
 
 ## Version 0.1 intake
 
-- Merged INT1 revision `a08f20103`. Core passed 861 checks, Datomic passed 434 with 52 opt-in tests skipped, and the focused and retention checks passed 34. The managed import verified 11,472 facts on the merged code.
-- The shared database recovered in all four transactor fault cells. Every observed historical probe succeeded, 742 in total. These runs checked receipts and feed resume in addition to the reads. [Exact attempts and hashes](EVIDENCE6.md)
-
-- The planned whole-database move verified all 266 receipts and all 316 pinned-read probes. The shared Mac pause was 31.74 seconds, of which 21.17 seconds was transactor startup. The 30-second target remains open on bare metal.
+- Merged INT1 `0196b9952`. Core passed 861 tests, Datomic passed 434 with 52 opt-in tests skipped, and the focused and retention suites passed 36. The earlier pipeline proof checked 11,472 facts on the prior merged code.
+- The refreshed shared database recovered in all four transactor fault cells with all 780 pinned-read probes, receipts and feed checks verified. Mac recovery took 15.91–21.09 seconds.
+- The refreshed planned move verified 173 receipts and 250 pinned probes, with a 22.79-second Mac pause. The preceding merged run took 31.74 seconds. Both timings are diagnostic and the 30-second target remains open on bare metal.
 - P8 uses the [single-server import matrix](MICRO-SERVER.md) and its per-account comparison. P9 uses the [single-server shared-database fault command](../ha1/BENCH.md#version-01-recovery-row-on-one-server). Host loss, synchronous commit cost and whole-database relocation need the paired runs described there.
