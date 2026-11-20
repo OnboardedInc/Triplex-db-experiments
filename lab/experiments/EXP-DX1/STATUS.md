@@ -3139,3 +3139,32 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **DX-SCALE1 stopped and resumed (xhigh):** the split-layout arm comes out of the detached queue (one database is
   decided); every timed arm keeps garbage-collection logs for all three JVMs and per-save stage clocks; the
   full-size cells follow the isolation study's paired design.
+
+## 2026-11-20 12:00 UTC (07:00 local, 2026-11-20): Datomic's real limits; loaded Publish meets one second at the typical rate (Mac); three launches
+
+- **W3-LIMITS (private folder `research/2026-11-20-onedb/LIMITS/`; primary sources cited in ANALYSIS).** Datomic's guidance
+  warns of degradation beyond approximately ten billion total datoms (history included) and states no hard limit.
+  Public operation beyond it: one named production database at 15 billion datoms and about 20 TB (Cassandra
+  storage, about 40 peers); an operator with over 300 individual databases above ten billion; a first-person report
+  near 40 billion with slow, inconsistent queries; an operator that rolls open state forward to a successor database
+  at a named `t` and routes old as-of queries by cutoff. **The 72 and 87 day figures used overnight were the high
+  case** (one account's 29.8 sampled hours repeated across ten accounts for a whole year: 48.96 saves per second all
+  year). With variant K at 19.99 records per save from a 0.82 billion start: eight billion after 2.87 years (low
+  case, 125 million saves a year), 1.15 years (central, 312.5 million), 85 days (high). Routes that keep one live
+  database: fewer records per save; Datomic's own separation of current and historical access; sealed history
+  served by a native peer; a whole-database successor that carries all accounts forward at one cut while the old
+  database stays readable. Eleven one-line rulings drafted for Sam (ANALYSIS, "Owner rulings"). Sizing: one serving
+  pair about 1,450 to 2,000 USD a month; an eight-billion sealed era 0.34 to 0.67 TB.
+- **DX-ACT2 part 5 (`90bfa2136`, Mac VM).** One Publish at a time in steady state at 3.5 saves per second with two saving
+  neighbours and 64 readers, 10,000 people: all 800 Publishes met the one-second record deadline with zero stale
+  reads and zero retries; p99 382 ms (queue order) and 373 ms (priority) at one Publish every 5 s, 403 and 411 ms at
+  one per second. At 23.5 and 39.4 saves per second the Mac's queue grew before any Publish, so those cells were
+  dropped as the brief required. Conditional bare-metal estimate 140 to 169 ms p99. Commits for DX-ACT1 to merge:
+  `a52f7937c` (full joined study) or `bc01028b0` (priority and the order gate). DX-ACT2 is parked: its path is merged
+  into the joined one.
+- **Launched (xhigh):** **DX-AGE1** (`exp/DX-AGE1-aged-database`: a faithful, fast aging tool; measurements at the sizes
+  the Mac holds; a server campaign to 1, 2, 4 and 8 billion records with cost; a small successor rehearsal);
+  **DX-JVM1** (`exp/DX-JVM1-settings`: every JVM flag, core and memory allotment and Datomic property for the
+  transactor and both gateways, inventoried, chosen, measured, made explicit in every launcher). DX-TAIL1's newest
+  report: both server peers started on one core without a collector flag (so Serial); in the archived run the
+  transactor logged 1,397 pauses up to 251 ms and the read gateway 198 up to 169 ms.

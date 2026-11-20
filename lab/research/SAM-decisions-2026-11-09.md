@@ -739,3 +739,15 @@ release's answers; the per-person values and the individual notice entries follo
 who asks first gets the identical answer derived from the record. Written into `lab/TARGETS.md` section 1.2. The
 receipt-only path is the path that is judged; the time the background writing takes is reported and has no bar
 yet. This closes the question that was open since 2026-11-19 evening.
+
+## 2026-11-20 about 07:25 local: all Java settings; what the Rust candidate actually costs
+
+Sam, verbatim (quoting the orchestrator's four bullets on Rust back to it):
+- "we're addressing all the java settings too right? to maximize java performance for our use case? and how much time
+  does the thing you said we could write in rust actually take up in time/performance cost?"
+
+Orchestrator's reading: (1) Not all of them were being addressed: one builder had the write gateway's collector; no
+one had the other flags, the cores and memory per process, or Datomic's own settings for all three JVMs. DX-JVM1
+launched for exactly that. (2) The claim "about 100 KB of memory per person the reader has touched" was wrong: that
+figure was measured on the compact prototype's reader, not the product's. Corrected in the reply with the numbers
+that are measured for the product's reader.
