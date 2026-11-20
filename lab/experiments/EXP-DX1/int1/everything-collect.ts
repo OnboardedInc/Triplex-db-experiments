@@ -17,11 +17,13 @@ import {
   campaignCases,
   campaignTenant,
   gatewayJvmOptions,
+  transactorJvmOptions,
   treatment,
   type CampaignCase,
 } from "./everything-plan.ts";
 import { replayRevision } from "../scale1/source.ts";
 import { atomicJson, type Arm } from "./everything-arm.ts";
+import { pooledWriterCpus } from "../jvm1/launch.mjs";
 
 const read = (f: string) => JSON.parse(fs.readFileSync(f, "utf8"));
 export function openPlan(
@@ -395,6 +397,31 @@ export async function collect(dir: string, mode: "produce" | "verify") {
           "-Xmx384m",
         );
       }
+      const transactor = read(path.join(out, "transactor-jvm.json"));
+      assert.deepEqual(transactor.identity, id);
+      assert(transactor.capturedAt >= arm.startedAt && transactor.capturedAt <= result.start);
+      assert.equal(transactor.vm.container, placement.tx.id);
+      assert(transactorJvmOptions.every((flag) => transactor.vm.actual.includes(flag)));
+      const recording = read(path.join(out, "native-recording.json"));
+      assert.deepEqual(
+        [recording.source, recording.slot, recording.nonce],
+        [id.source, id.slot, id.nonce],
+      );
+      assert.equal(placement["gw-w"].cpus, pooledWriterCpus);
+      for (const role of ["tx", "gw-w", "gw-r", "pg"])
+        assert.equal(recording.processes[role].id, placement[role].id);
+      assert(recording.sqlCoverage.qualified > 0 && recording.mappedWalSamples >= 2);
+      for (const file of [
+        "tx.jfr",
+        "gw-w.jfr",
+        "gw-r.jfr",
+        "postgres-events.jsonl",
+        "postgres-wal.jsonl",
+      ])
+        assert.equal(
+          recording.traceBytes[file],
+          await fileHash(path.join(out, "engines", id.slot, "trace", "raw", file)),
+        );
     }
     const key = `${c.people}/${c.profile}`,
       zero = prior.get(key);

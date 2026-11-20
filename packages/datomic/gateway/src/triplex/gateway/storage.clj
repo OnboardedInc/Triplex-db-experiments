@@ -24,6 +24,7 @@
       (throw (ex-info "Snapshot expired or belongs to another database" {:status 409 :code "SnapshotExpired"})))
     (:db entry)))
 (defn decode-row [row] (into {} (map (fn [[k v]] [(keyword k) (when (some? v) (codec/decode-value v))]) row)))
+(def ^:private direct-row-decode? (= "1" (System/getenv "TX2_TAIL1_ROW_DECODE")))
 ;; [DX-B5-L6] Why: fresh lean rows already carry every column in their canonical text.
 ;; Rejected: decoding a second full tagged map per row after the client encoded both copies.
 (defn input-rows [input lean new-ids]
@@ -46,7 +47,7 @@
         (mapv (fn [id]
                 (if (new-ids id)
                   (let [text (get texts id) _ (when-not (string? text) (codec/invalid "Missing compact row text"))
-                        row (update (lean/decode text) :recorded_at double) retirement (get by-id id)]
+                        row (update (lean/decode text direct-row-decode?) :recorded_at double) retirement (get by-id id)]
                     (when-not (and (= id (:id row))
                                    (or (nil? retirement) (and (= (:entity_id row) (:entity_id retirement))
                                                               (= (:entity_type row) (:entity_type retirement)))))
@@ -100,7 +101,14 @@
            (when (:created_by row) {:f/created-by (:created_by row)})
            (when (:entity_type row) {:f/entity-type (:entity_type row)}) value)))
  ;; [EXP-DX1] Why: live row datoms are exact write-time wire values. Rejected: rebuilding values on every pull.
-(defn row-prefix [^String id] (str "2" (format "%04x" (.length id)) id))
+(defn row-prefix [^String id]
+  ;; [DX-TAIL1] Why: a fixed hex length prefix only needs left padding.
+  ;; Rejected: allocating a Formatter per row or truncating a length greater than four digits.
+  (let [n (.length id)]
+    (str "2" (if direct-row-decode?
+               (let [digits (Integer/toHexString n)]
+                 (str (subs "0000" 0 (max 0 (- 4 (.length ^String digits)))) digits))
+               (format "%04x" n)) id)))
 (defn ordered-row-texts [input]
   ;; [DX-W1] Why: the frame order and encoded identity provide both index keys from one wire array.
   ;; Rejected: inferring order from a JSON object or changing the meaning of an irregular SPI request.

@@ -154,7 +154,7 @@ INPUT_LEASE
     "$(node "$runtime_tool" image)" -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
   exit
 fi
-tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
+tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
 if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then
   # [DX-THIN1] Why: apply the same peer limits on ordinary stack launches and the physical queue. Rejected: tuning only the Mac diagnostic container.
   demand_peer='-Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps'
@@ -336,7 +336,7 @@ python3 - "$attempt/config" "$prefix" "$index_threshold" "$index_max" "$object_c
 import json,os,pathlib,sys
 root=pathlib.Path(sys.argv[1]); prefix=sys.argv[2]
 settings={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx',
-'sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic','sql-user':'datomic','sql-password':'datomic',
+'sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic?ApplicationName=triplex-tx','sql-user':'datomic','sql-password':'datomic',
 'write-concurrency':'4','read-concurrency':'8','index-parallelism':'1','heartbeat-interval-msec':'5000',
 'memory-index-threshold':sys.argv[3],'memory-index-max':sys.argv[4],'object-cache-max':sys.argv[5],'encrypt-channel':sys.argv[6]}
 # [DX-JVM1] Why: tune only approved non-durability properties in this experiment.
@@ -369,9 +369,12 @@ trace_mount=(-v "$attempt/trace/raw:/trace")
 # [DX-T1-2] Why: isolate collectors with an inspected effective configuration. Rejected: inferring enabled collectors from a tag.
 eval "$(node "$repo/lab/trace/components.mjs" --shell)"
 trace_native_jfr=0
-if [[ $TRIPLEX_TRACE_TX_JFR == 1 && ${DX_TX_NATIVE_JFR:-0} == 1 ]]; then trace_native_jfr=1;fi
+if [[ $TRIPLEX_TRACE_TX_JFR == 1 && ${DX_TX_NATIVE_JFR:-$TRIPLEX_TRACE_TX_NATIVE_JFR} == 1 ]]; then trace_native_jfr=1; fi
 trace_env+=(-e "TRIPLEX_TRACE_TX_NATIVE_JFR=$trace_native_jfr" -e "TRIPLEX_TRACE_TX_JFR=$TRIPLEX_TRACE_TX_JFR" -e "TRIPLEX_TRACE_JFR_PROFILE=${DX_JFR_PROFILE:-0}" -e "TRIPLEX_TRACE_GATEWAY=$TRIPLEX_TRACE_GATEWAY" -e "TRIPLEX_TRACE_NATIVE_LOGS=$TRIPLEX_TRACE_NATIVE_LOGS")
 trace_tx_java= trace_gw_java=
+# [DX-TAIL1] Why: preserve collector labels and JVM uptime alongside the anchored JFR events.
+# Rejected: attributing a minute GC rollup to one request or using a shared PID as the log filename.
+jvm_events() { printf ' -Xlog:gc*=info,safepoint*=info:file=/trace/%s-jvm.log:time,uptimenanos,level,tags:filecount=4,filesize=8m' "$1"; }
 if [[ $TRIPLEX_TRACE_NATIVE_LOGS == 1 ]]; then
   trace_tx_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml"
   trace_gw_java=" -Dlogback.configurationFile=/opt/gateway/trace-logback.xml -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
@@ -387,13 +390,17 @@ if [[ $native_readback == 1 && $TRIPLEX_TRACE_TX_JFR == 0 && $TRIPLEX_TRACE_NATI
   trace_tx_java+=' -Ddatomic.metricsCallback=triplex.gateway.native-settings/metrics'
 fi
 if [[ $TRIPLEX_TRACE_TX_JFR == 1 ]]; then
-  trace_tx_java+=" -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"
+  trace_tx_java+=" -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0$(jvm_events tx)"
 fi
 if [[ $TRIPLEX_TRACE_TX_JFR == 1 || $TRIPLEX_TRACE_NATIVE_LOGS == 1 || $TRIPLEX_TRACE_GATEWAY == 1 ]]; then
   trace_tx_java+=" -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
 fi
 if [[ $TRIPLEX_TRACE_POSTGRES == 1 ]]; then
-  pg_settings="$pg_settings -c track_io_timing=on -c track_wal_io_timing=on -c log_min_duration_statement=0 -c log_parameter_max_length=0 -c log_parameter_max_length_on_error=0 -c log_checkpoints=on -c log_autovacuum_min_duration=0 -c log_timezone=UTC"
+  pg_duration='-c log_min_duration_statement=0'
+  # [DX-TAIL1] Why: correlate duration-only SQL records by backend and role without retaining statement text.
+  # Rejected: per-statement SQL text in the permanent scorecard, and guessing a Datomic t from a backend PID.
+  if [[ $trace_level == summary ]]; then pg_duration='-c log_min_duration_statement=-1 -c log_duration=on -c log_line_prefix=dxpg|%m|%p|%c|%l|%a|'; fi
+  pg_settings="$pg_settings -c track_io_timing=on -c track_wal_io_timing=on $pg_duration -c log_parameter_max_length=0 -c log_parameter_max_length_on_error=0 -c log_checkpoints=on -c log_autovacuum_min_duration=0 -c log_timezone=UTC"
 fi
 if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
   trace_tx_java="$trace_tx_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8505"
@@ -404,13 +411,13 @@ if [[ ${DX_GATEWAY_SELFTEST:-0} == 1 ]]; then
   # [DX-JVM1] Why: the smoke preflight and the serving JVM must load the same tracked codec.
   # Rejected: copying the whole gateway tree just to put the codec next to its source.
   docker run --rm --pull never --name "$prefix-selftest" --network none --memory 1500m --memory-swap 1500m \
-    -e "DATOMIC_JAVA_OPTS=$(probe_options "-Xms128m -Xmx1g$spec_java")" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" "${spec_mount[@]}" \
+    -e "DATOMIC_JAVA_OPTS=$(probe_options "-Xms128m -Xmx1g$spec_java")" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
     --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.selftest > "$attempt/gateway-selftests.log" 2>&1
 fi
 if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
   mkdir -p "$attempt/trace/preflight"
   docker run --rm --pull never --name "$prefix-trace-check" --network none --memory 768m --memory-swap 768m \
-    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=$(probe_options "-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0$spec_java")" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" "${spec_mount[@]}" \
+    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=$(probe_options "-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0$spec_java")" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
     --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
 docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
@@ -535,8 +542,8 @@ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   tx_start=(--entrypoint /bin/bash "$datomic_image" -c
     'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -m datomic.launcher /dxh1/sql.properties')
 fi
-docker run -d --pull never --name "$prefix-tx" "${stack_labels[@]}" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
-  -e "JAVA_OPTS=$tx_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" "${prep_tx[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" "${tx_start[@]}" >/dev/null
+docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
+  -e "JAVA_OPTS=$tx_java$spec_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" ${prep_tx[@]+"${prep_tx[@]}"} -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} "${tx_start[@]}" >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # [DX-BM1] Why: avoid probing catalog creation before the SQL transactor announces startup.
 # Rejected: treating an early location read failure as a missing database, or unbounded health fetches.
@@ -608,13 +615,13 @@ for role in "${gateway_roles[@]}"; do
     if [[ $mode == w ]]; then field_policy+=(-e "TX2_SUBJECT_SAVE=${DX_PREP1_SUBJECT:-0}" -e TX2_SUBJECT_PROFILE=1); fi
   fi
   role_jfr=$TRIPLEX_TRACE_GW_JFR
-  if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} ]]; then
+  if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} && ${DX_TAIL1_EVENT_TRACE:-0} != 1 ]]; then
     # [DX-TAIL1] Why: dump the allocation recording from the owning live JVM.
     # Rejected: depending on bin/run to forward Docker shutdown to the Java child.
     role_jfr=1
     role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=profile,dumponexit=false,maxsize=32m"
   elif [[ $role_jfr == 1 ]]; then
-    role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"
+    role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0$(jvm_events "gw-$role")"
   fi
   if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
     debug_port=8506; [[ $role == w ]] || debug_port=8507
@@ -622,14 +629,14 @@ for role in "${gateway_roles[@]}"; do
   fi
   tail1_env=()
   if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} ]]; then
-    tail1_env=(-e TRIPLEX_TRACE_ALLOCATION_ONLY=1)
+    if [[ ${DX_TAIL1_EVENT_TRACE:-0} != 1 ]]; then tail1_env=(-e TRIPLEX_TRACE_ALLOCATION_ONLY=1); fi
     if [[ ${DX_TAIL1_LESS_ALLOCATION:-0} == 1 ]]; then
       tail1_env+=(-e TX2_TAIL1_ROW_DECODE=1)
     fi
   fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
     ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} "${trace_env[@]}" ${field_policy[@]+"${field_policy[@]}"} -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}${final_flags}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
-    -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
+    -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template&ApplicationName=triplex-gw-$role" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
     -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.main >/dev/null
@@ -666,6 +673,7 @@ PY_CHANNEL
 fi
 node "$repo/lab/trace/components.mjs" > "$attempt/trace-components.json"
 docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_min_duration_statement; SHOW track_io_timing; SHOW track_wal_io_timing;" > "$attempt/postgres-trace-settings.txt"
+docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_duration; SHOW log_line_prefix;" > "$attempt/postgres-event-settings.txt"
 docker inspect "$prefix-pg" "$prefix-tx" "${gateway_roles[@]/#/$prefix-gw-}" > "$attempt/containers.json"
 for role in pg tx "${gateway_roles[@]/#/gw-}"; do docker exec "$prefix-$role" cat /proc/sys/net/ipv4/tcp_slow_start_after_idle > "$attempt/tcp-idle-$role.txt"; done
 if [[ ${DX_IDLE_SENTINEL:-0} == 1 ]]; then

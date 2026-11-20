@@ -30,12 +30,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("distributed clock orde
         Array.from({ length: 4 }, (_, worker) =>
           exec(
             process.execPath,
-            [
-              "--experimental-strip-types",
-              clockWorker,
-              scope,
-              String(worker),
-            ],
+            ["--experimental-strip-types", clockWorker, scope, String(worker)],
             { env: process.env, maxBuffer: 8 * 1024 ** 2 },
           ).then((r) => {
             // [DX-T1-5] Why: permanent tracing can share stdout; bind one complete worker result and preserve the raw stream.

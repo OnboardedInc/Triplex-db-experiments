@@ -101,14 +101,14 @@ def measure(out, incomplete=False):
         assert report["oracle"]["modelCorrectOnSameReads"] == report["oracle"]["reads"] > 0
     start = report["traceStartAbsMs"]
     stop = start + attempt["seconds"] * 1000
-    if attempt["platform"] == "darwin":
+    if attempt["platform"] == "darwin" and attempt.get("timing") != "shared-mac-diagnostic":
         lock = load(out / "timing-window.json")
         assert lock["identity"] == identity and lock["openedAt"] <= start
         locked_seconds = 240 if attempt["seconds"] == 5910 else attempt["seconds"]
         assert lock["closedAt"] >= start + locked_seconds * 1000
         assert 0 < lock["closedAt"] - lock["openedAt"] <= 900_000
         if not incomplete:
-            assert lock["measurementLease"]["label"] == identity["slot"]
+            assert lock["measurementLease"]["label"] in (identity["slot"], "DX-TAIL1:" + identity["nonce"])
             assert lock["measurementLease"]["holder"] == ("DX-JVM1" if attempt.get("jvmArm") else "DX-TAIL1")
     dir = out / "stack" / identity["slot"]
     trace = dir / "trace/raw"
@@ -257,6 +257,7 @@ def measure(out, incomplete=False):
         "nativeIndexMetricBuckets": native_index,
         "betweenGcHeapGrowth": {role: heap_growth(trace, role, start, stop, saved)
                                 for role in ("tx", "gw-w", "gw-r")},
+        "timing": attempt.get("timing", "historical"),
         "driverStatus": report["status"], "sampleFloorMet": len(saved) >= 5000,
         "saves": len(saved), "primaryOutcomes": dict(primary_outcomes), "resendOutcomes": dict(resend_outcomes),
         "resolvedLostAcks": lost_ack["returnedOriginal"] if lost_ack else None,

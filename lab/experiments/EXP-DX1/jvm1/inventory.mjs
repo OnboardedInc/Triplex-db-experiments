@@ -1,11 +1,12 @@
 // @ts-nocheck -- Engine reservations, CLI options and Docker evidence are verified dynamically.
 import assert from "node:assert/strict";
-import { spawn, spawnSync, execFileSync } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { admission, docker, DOCKER_HOST, listTx2Containers, slotInfo, vmDisk, withPool } from "../../../bin/lib.mjs";
+import { finishNativeRecording, startWalSamples } from "../../../trace/native-recording.mjs";
 
 const holder = "DX-JVM1";
 const stack = path.join(import.meta.dirname, "../stack");
@@ -16,6 +17,8 @@ export async function inventory(options, config, manager) {
   assert.equal(process.env.DOCKER_HOST, DOCKER_HOST);
   assert.equal(options.holder, holder);
   const sdkGate = options["sdk-gate"] === true;
+  const recordEvents = options.events === true;
+  assert(!recordEvents || sdkGate, "Use --events with --sdk-gate");
   const sdkFiles = options["sdk-files"] === undefined ? [] : String(options["sdk-files"]).split(",");
   assert(!sdkFiles.length || (sdkGate && sdkFiles.every((file) => /^[a-z0-9-]+\.test\.ts$/.test(file))),
     "Use --sdk-files with --sdk-gate and comma-separated Datomic SDK test filenames");
@@ -57,6 +60,7 @@ export async function inventory(options, config, manager) {
     DX_GW_WRITE_JAVA_OPTS: "-Xms256m -Xmx896m " + gc("gw-w") + " -Ddatomic.objectCacheMax=32m",
     DX_GW_READ_JAVA_OPTS: "-Xms256m -Xmx416m " + gc("gw-r") + " -Ddatomic.objectCacheMax=32m",
     ...(sdkGate ? { DX_SERVER_RECORD_TIME: "1", DX_STRICT_RECORD_CLOCKS: "1", DX_GATEWAY_SELFTEST: "1" } : {}),
+    ...(recordEvents ? { TRIPLEX_TRACE_LEVEL: "summary", TRIPLEX_TRACE_COMPONENTS: "gateway,tx-jfr,gw-jfr,postgres" } : {}),
   });
   let slot;
   const admissionDeadline = Date.now() + 60_000;
@@ -97,7 +101,7 @@ export async function inventory(options, config, manager) {
     }
     const source = execFileSync("git", ["rev-parse", "HEAD"], {encoding:"utf8"}).trim();
     const files = [import.meta.filename, path.join(import.meta.dirname, "readback.sh"), path.join(import.meta.dirname, "launch.mjs"), path.join(stack, "up.sh"), ...sdkFiles.map((file) => path.join(pkg, "test", file))];
-    write("attempt.json", {prefix, source, slot:slot.slot, diagnostic: true, javaMajor, collectors, sdkGate, sdkFiles, sdkTestName, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.relative(root, file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
+    write("attempt.json", {prefix, source, slot:slot.slot, diagnostic: true, javaMajor, collectors, sdkGate, sdkFiles, sdkTestName, recordEvents, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.relative(root, file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
     const child = spawn("bash", [
       path.join(stack,"up.sh"), prefix,
       "--gateway-src", path.join(pkg, "gateway"), "--codec-spec", path.join(pkg, "src/codec-spec.json"),
@@ -134,7 +138,7 @@ export async function inventory(options, config, manager) {
       assert.match(rss, /^\d+$/);
       assert.match(memory, /^\d+$/);
       assert.equal(docker(["inspect", "--format", "{{.Id}} {{.State.StartedAt}} {{.RestartCount}} {{.State.Running}}", c.id]), before);
-      roles[role] = {id:c.id, imageId:c.imageId, pid:Number(pid), startedAt,
+      roles[role] = {id:c.id, imageId:c.imageId, pid:Number(pid), startedAt, restarts:Number(restarts),
         startupToAllReadyMs: readyAt - Date.parse(startedAt), processRssKiB:Number(rss), cgroupBytes:Number(memory)};
     }
     write("idle-boot.json", {prefix, source, slot:slot.slot, diagnostic: true, readyAt, sampledAt:Date.now(), roles});
@@ -143,23 +147,33 @@ export async function inventory(options, config, manager) {
       // Rejected: relying on legacy localhost fallbacks, which can select another stack.
       const writer = "http://127.0.0.1:" + slot.port;
       const log = fs.openSync(path.join(out, "sdk-sql.log"), "wx");
-      let test;
+      const identity = {source, slot:prefix, nonce:prefix.slice("tx2-dxt1-jvm1-".length)};
+      const pg = stackConfig.containers.find((c) => c.name === prefix + "-pg");
+      const stopWal = recordEvents ? startWalSamples(out, pg.id, identity) : undefined;
+      let status, failure;
       try {
-        // [DX-JVM1] Why: a focused shared-host run tests the SQL assertions within the outer four-minute budget.
-        // Rejected: treating Vitest's default five seconds as a performance bar for an individual SQL test.
-        test = spawnSync(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1",
+        // [DX-JVM1] Why: keep the exact SDK test budget and sample WAL while the child works.
+        // Rejected: treating Vitest's default five seconds as a performance bar or blocking the recorder's timer.
+        const test = spawn(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1",
           ...(sdkFiles.length ? ["--testTimeout=30000"] : []),
           ...(sdkTestName ? ["--testNamePattern", sdkTestName] : []),
           "--reporter=default", "--reporter=json", "--outputFile.json=" + path.join(out, "vitest.json"),
           ...sdkFiles.map((file) => "test/" + file)], {
-          cwd: pkg, timeout: sdkFiles.includes("clock-order.test.ts") ? 300_000 : 240_000,
+          cwd: pkg, signal: AbortSignal.any([controller.signal, AbortSignal.timeout(sdkFiles.includes("clock-order.test.ts") ? 300_000 : 240_000)]),
           stdio: ["ignore", log, log], env: {
             ...env, DATOMIC_INTEGRATION: "1", DATOMIC_URL: writer, DATOMIC_GATEWAY_URL: writer,
             DATOMIC_READ_URLS: "http://127.0.0.1:" + (slot.port + 10),
             ...(sdkFiles.includes("clock-order.test.ts") ? { DX_CLOCK_EVIDENCE_DIR: path.join(out, "clock") } : {}),
           },
         });
-      } finally { fs.closeSync(log); }
+        status = await new Promise((resolve) => {
+          test.once("error", (error) => { failure = error; });
+          test.once("close", resolve);
+        });
+      } finally {
+        fs.closeSync(log);
+        await stopWal?.();
+      }
       for (const [role, identity] of Object.entries(roles)) {
         const post = path.join(out, "post-sdk");
         execFileSync("bash", [path.join(import.meta.dirname, "readback.sh"), identity.id, post, role], { env, timeout: 30_000 });
@@ -168,8 +182,13 @@ export async function inventory(options, config, manager) {
       }
       assert.equal(execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(), source);
       // [DX-JVM1] Why: preserve runtime binding even for failed assertions. Rejected: skipping JVM readback when the SDK exits nonzero.
-      if (test.error) throw test.error;
-      assert.equal(test.status, 0, "SDK assertions did not complete successfully. See sdk-sql.log and vitest.json");
+      if (failure) throw failure;
+      assert.equal(status, 0, "SDK assertions did not complete successfully. See sdk-sql.log and vitest.json");
+      if (recordEvents) {
+        // [DX-JVM1] Why: exercise the production recorder against this owned SQL gate's role IDs and source.
+        // Rejected: counting trace files from a previous attempt or using the Mac timings as performance evidence.
+        await finishNativeRecording(out, path.join(out, prefix, "trace/raw"), identity, {...roles, pg: { id: pg.id }}, Date.now() + 45_000);
+      }
     }
   } finally {
     process.removeListener("SIGINT", stop);

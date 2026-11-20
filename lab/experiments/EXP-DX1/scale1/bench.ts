@@ -8,6 +8,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { guardSeed } from "../act2/preflight-runner.ts";
 import { deepPopulation } from "../../../bench/lib/deep-world.ts";
 import { sealSeed, restoreSeed } from "./seed-image.ts";
+import { pooledJvmOptions, pooledWriterCpus } from "../jvm1/launch.mjs";
 import {
   campaignItem,
   tenantRung,
@@ -299,6 +300,8 @@ function placement(prefix: string) {
         {
           id: s.Id,
           image: s.Image,
+          startedAt: s.State.StartedAt,
+          restarts: s.RestartCount,
           cpus: s.HostConfig.CpusetCpus,
           memory: s.HostConfig.Memory,
           cgroup: grp,
@@ -402,6 +405,17 @@ function clean(dir: string, prefix: string) {
 }
 // [DX-STG1] Why: notification trials use the same cold native stack, placement and cleanup as SCALE1. Rejected: a second server launcher with different durability settings.
 export function startScaleStack(dir: string, prefix: string, source: string, grouped = false, options: NodeJS.ProcessEnv = {}) {
+  const twoWriterCores = options.DX_TAIL1_TWO_WRITE_CORES === "1";
+  if (twoWriterCores) {
+    // [DX-TAIL1] Why: give the writer a separate physical core.
+    // Rejected: counting two sibling hardware threads as the two-core arm.
+    const writerKeys = pooledWriterCpus.split(",").map((cpu) =>
+      ["physical_package_id", "core_id"].map((id) =>
+        fs.readFileSync(path.join("/sys/devices/system/cpu", `cpu${cpu}`, "topology", id), "utf8").trim(),
+      ).join("/"),
+    );
+    assert.notEqual(writerKeys[0], writerKeys[1]);
+  }
   const env = {
     ...process.env,
     DX_GROUP_COMMIT: grouped ? "1" : "0",
@@ -438,7 +452,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       "--cpus-pg",
       planCpus.postgres,
       "--cpus-gw-write",
-      planCpus.writerGateway,
+      twoWriterCores ? pooledWriterCpus : planCpus.writerGateway,
       "--cpus-gw-read",
       planCpus.readerGateway,
       "--pg-memory",
@@ -446,7 +460,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       "--tx-memory",
       "6g",
       "--tx-java-opts",
-      "-Xms256m -Xmx5g -XX:+UseG1GC -Xlog:gc=info:file=/trace/tx-gc.log",
+      (options.DX_TX_JAVA_OPTS ?? pooledJvmOptions.tx.join(" ")) + " -Xlog:gc=info:file=/trace/tx-gc.log",
       "--object-cache-max",
       "2560m",
       "--pg-settings",

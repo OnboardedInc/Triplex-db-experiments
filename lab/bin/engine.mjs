@@ -358,8 +358,8 @@ export function effectiveConfig(config, info) {
     const sources = datomicSources(root);
     const transactor = path.join(dir, 'transactor.properties');
     const entrypoint = path.join(dir, 'entrypoint.sh');
-    const jvm = (role, options, cpus, control) => launchOptions(role, parseCpuset(cpus, config.vm.cpus).length,
-      options + ' ' + javaCompatibility(runtime.major).join(' '), control);
+    const jvm = (role, options, cpus) => launchOptions(role, parseCpuset(cpus, config.vm.cpus).length,
+      options + ' ' + javaCompatibility(runtime.major).join(' '));
     fs.copyFileSync(path.join(root, 'lab/config/datomic/transactor.properties'), transactor);
     // [DX-JVM1] Why: bind the launch script separately while keeping the legacy Java 21 image source pin.
     // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
@@ -426,7 +426,7 @@ export function effectiveConfig(config, info) {
       buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
       gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
       entrypointSha256: sha256File(entrypoint),
-      transactorOpts: jvm('tx', info.transactorOpts, info.txCpus) + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: jvm('gw-w', info.gatewayOpts, info.gwCpus, info.slot === 'dev' ? 'serial' : 'default') + (readerGateway?.writerGc ?? ''),
+      transactorOpts: jvm('tx', info.transactorOpts, info.txCpus) + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: jvm('gw-w', info.gatewayOpts, info.gwCpus) + (readerGateway?.writerGc ?? ''),
       ...(readerGateway ? { readerGateway } : {}),
       ...(trace ? { trace } : {}),
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
@@ -930,6 +930,9 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'status') return status(config);
   if (command === 'jvm-replay') fail('USAGE', 'Use jvm-inventory for a short Mac diagnostic and jvm1/server.ts for collector comparisons');
   if (command === 'jvm-inventory') return (await import('../experiments/EXP-DX1/jvm1/inventory.mjs')).inventory(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
+  // [DX-TAIL1] Why: the split SQL replay needs one pool-admitted private reservation.
+  // Rejected: launching the diagnostic against a resident or managing containers in the benchmark.
+  if (command === 'tail1') return (await import('../experiments/EXP-DX1/tail1/run.mjs')).runTail(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   // [DX-HA1] Why: destructive process drills need an exclusive, pool-admitted SQL topology. Rejected: killing roles in a resident slot.
   if (command === 'ha1') {
     const { localDrill } = await import('../experiments/EXP-DX1/ha1/local.ts');

@@ -463,11 +463,14 @@ for (const [i, arm] of arms.entries()) {
     .trim()
     .split("\n");
   if (
-    pg[0] !== (effective.requirePostgres ? "0" : "-1") ||
+    pg[0] !== (effective.requirePostgres && effective.level !== "summary" ? "0" : "-1") ||
     pg[1] !== (effective.requirePostgres ? "on" : "off") ||
     pg[2] !== (effective.requirePostgres ? "on" : "off")
   )
     throw Error("Postgres readback mismatch");
+  if (effective.requirePostgres && effective.level === "summary" &&
+      !fs.readFileSync(path.join(dir, "postgres-event-settings.txt"), "utf8").startsWith("on\ndxpg|"))
+    throw Error("Duration-only Postgres trace readback mismatch");
   if (
     effective.nodeEnabled ||
     effective.requiredJfr.length ||

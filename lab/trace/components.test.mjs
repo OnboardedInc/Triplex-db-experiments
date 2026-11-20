@@ -26,17 +26,28 @@ test("ablation enables exactly one recorder with common host sampling", () => {
   );
 });
 
-test("default summary keeps Node/gateway spans and excludes diagnostic collectors", () => {
+test("default summary records all JVMs, native transactions and Postgres without native text logging", () => {
   const c = configuration({ TRIPLEX_TRACE_LEVEL: "summary" });
-  assert.deepEqual(c.components, ["gateway", "node"]);
+  assert.deepEqual(c.components, ["gateway", "gw-jfr", "node", "postgres", "tx-jfr"]);
   assert.equal(c.flags.TRIPLEX_TRACE_NATIVE_LOGS, "0");
-  assert.deepEqual(c.requiredJfr, []);
-  assert.equal(c.requirePostgres, false);
+  assert.deepEqual(c.requiredJfr, ["tx", "gw-w", "gw-r"]);
+  assert.equal(c.requirePostgres, true);
+  assert.equal(c.requireTransactorStats, true);
+  const legacy = configuration({
+    TRIPLEX_TRACE_LEVEL: "summary",
+    TRIPLEX_TRACE_COMPONENTS: "node,gateway",
+  });
+  assert.equal(legacy.requireTransactorStats, false);
+  assert.deepEqual(legacy.requiredJfr, []);
 });
 
 test("native binary capture is explicit and cannot silently replace native file logging", () => {
   assert.equal(
-    configuration({ TRIPLEX_TRACE_LEVEL: "summary", DX_TX_NATIVE_JFR: "1" }).requireTransactorStats,
+    configuration({
+      TRIPLEX_TRACE_LEVEL: "summary",
+      TRIPLEX_TRACE_COMPONENTS: "node,gateway",
+      DX_TX_NATIVE_JFR: "1",
+    }).requireTransactorStats,
     false,
   );
   assert.equal(

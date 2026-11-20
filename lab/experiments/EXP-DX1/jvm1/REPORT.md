@@ -29,6 +29,8 @@ On the shared Mac, 99% of writer pauses were at most 0.062 ms with ZGC and 31 ms
 
 ## Evidence audit
 
+- Part 3 SQL runs bind a fresh attempt and test file hashes to pinned images, owned endpoints and unchanged JVM process identities. The assertions and clock worker receipts check test content. The archive manifest retains the starting failures and the fixes' reruns. [SQL runs](PART3-SQL.md)
+- The merged event check uses the same attempt's role IDs, source, recording hash, boot clock, PostgreSQL durations and stable WAL counters. Private image retirement checks the receipt's exact image, labels, private tags, no dependent containers and a fresh absence check. [TAIL1 recorder audit](../tail1/RECORDING.md#audit)
 - Variant build receipt compares ZIP, signature and staging bytes, binds current source and the exact Java parent, and verifies the resulting image identity and labels. Launchers verify runtime flags from fresh process startup, bind container ID and start ticks, and capture collector and memory constraints.
 - `native-java25.sh` archives the exact source, verifies vendor bytes and Java version, maps the three test fixture reads into that archive, and requires all 27 native tests and 54,079 assertions with zero failures or errors. The SQL inventory collects a fresh startup and checks stable JVM identities around the SDK command.
 - The Mac replay checks archive hash, schedules, source, reserved slot, distinct boots, receipts, oracle samples and owned cleanup. Its historical timings are shared-Mac diagnostics.

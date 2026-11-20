@@ -22,6 +22,18 @@ const baseline = {
   "gw-w": measuredWriterG1,
   "gw-r": ["-XX:+UseG1GC", "-XX:MaxGCPauseMillis=50"],
 };
+const pooledPeer = [
+  "-Xms64m", "-Xmx384m", "-Ddatomic.objectCacheMax=32m",
+  "-XX:MinHeapFreeRatio=15", "-XX:MaxHeapFreeRatio=30",
+];
+// [DX-JVM1] Why: give TAIL1 and INT1 the same collector and writer placement while keeping the pooled memory limits.
+// Rejected: applying the four-GiB peer heaps from the separate full-memory physical comparison to INT1.
+export const pooledWriterCpus = "2,5";
+export const pooledJvmOptions = Object.freeze({
+  tx: Object.freeze(["-Xms256m", "-Xmx5g", ...baseline.tx]),
+  "gw-w": Object.freeze([...pooledPeer, ...measuredWriterG1]),
+  "gw-r": Object.freeze([...pooledPeer, ...baseline["gw-r"]]),
+});
 const general = [
   "-XX:+ExitOnOutOfMemoryError", "-XX:-AlwaysPreTouch", "-XX:-UseLargePages",
   "-XX:-UseTransparentHugePages", "-Xshare:auto", "-XX:+TieredCompilation",
@@ -116,7 +128,7 @@ export function part2Policy(arm) {
   const javaMajor = arm === "j21-g1-writer2" ? "21" : "25";
   const collector = arm === "j25-zgc" ? "ZGC" : "G1";
   const large = arm === "j25-zgc" || arm === "j25-g1-zgc-memory";
-  const cpus = { tx: "0,9,10", pg: "1", "gw-w": "2,5", "gw-r": "4,8,11", sender: "3,6,7" };
+  const cpus = { tx: "0,9,10", pg: "1", "gw-w": pooledWriterCpus, "gw-r": "4,8,11", sender: "3,6,7" };
   const memory = large
     ? { pg: 6144, tx: 14336, "gw-w": 8192, "gw-r": 9216 }
     : { pg: 6144, tx: 6144, "gw-w": 6144, "gw-r": 6144 };
