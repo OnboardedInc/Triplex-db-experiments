@@ -27,6 +27,7 @@ def read_tail(a, raw_reads, rows):
 def price(a, obs, control_dir):
     b, raw = analysis.arm(control_dir)
     assert b["mode"] == "baseline" and a["duration"] <= b["duration"]
+    assert a.get("route","source") == b.get("route","source") and a.get("releases",1) == b.get("releases",1)
     assert a["shape"] == b["shape"] and a["n"] == b["n"] and a["readers"] == b["readers"]
     assert a["scope"] != b["scope"] and a["receiver"] != b["receiver"] and a["sourceClock"] == b["sourceClock"]
     assert a["pins"] == b["pins"] and a["binding"]["slot"] == b["binding"]["slot"]

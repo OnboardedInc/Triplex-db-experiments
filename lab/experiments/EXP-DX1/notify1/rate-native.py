@@ -1,11 +1,16 @@
 """Join a gateway submission and a native transaction function by trace, parent and guest clock."""
 import argparse
+import importlib.util
 import collections
 import gzip
 import hashlib
 import json
 import subprocess
 from pathlib import Path
+
+spec = importlib.util.spec_from_file_location("notice_analysis", Path(__file__).with_name("rate-analysis.py"))
+analysis = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(analysis)
 
 
 def get(p):
@@ -29,7 +34,8 @@ def coverage(spans):
 
 
 def native(d, trace):
-    a=get(d/"arm.json");cfg=get(d/"allocation.json")["slots"]["datomic"]["stg1"]
+    a,raw=analysis.arm(d)
+    cfg=get(d/"allocation.json")["slots"]["datomic"]["stg1"]
     binding=a["binding"]
     for component in ["lab/bin/engine.mjs","lab/config/datomic","packages/datomic/gateway"]:
         def object_id(revision):
@@ -48,6 +54,8 @@ def native(d, trace):
         for op in b["rows"]:
             if op["kind"]!="write" or op["role"]=="receiver":continue
             assert op["trace"] and op["trace"] not in wanted and op["txId"];wanted[op["trace"]]=(role,op)
+    assert {op["txId"] for role,op in wanted.values() if role=="live"}=={s["txId"] for s in raw["saves"]}
+    assert sum(role=="dispatch" for role,op in wanted.values())==a["dispatch"]["sourceWrites"]
     gateway={};fn={}
     for r in lines(trace/"gateway.jsonl"):
         if r.get("traceId") in wanted and r["name"].endswith("/transact") and r["attributes"].get("status")==200:
