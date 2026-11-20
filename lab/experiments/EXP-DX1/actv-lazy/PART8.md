@@ -1,6 +1,8 @@
-# Paired settlement timing
+# Activation handoff and evidence
 
-The Mac run keeps preparation and timing in separate reservations. A setup phase seeds and enrols the two accounts, publishes R1 and records its starting notice debt. It parks the private volume and releases the heavy token and engine slot. The measured phase reopens that exact volume and reserves a timing window with a finite deadline. Work on the offered release begins at its offer. The engine stops between phases, so there is no preloaded process memory across the reservation wait.
+## Earlier paired Mac diagnostic
+
+The earlier Mac run kept preparation and timing in separate reservations. A setup phase seeds and enrols the two accounts, publishes R1 and records its starting notice debt. It parks the private volume and releases the heavy token and engine slot. The measured phase reopens that exact volume and reserves a timing window with a finite deadline. Work on the offered release begins at its offer. The engine stops between phases, so there is no preloaded process memory across the reservation wait.
 
 Each rate uses an equivalent fresh deep fixture. The two 180-second blocks at each rate run control then settlement. The publishing scope receives 630 or 4,230 saves per block and the neighbour receives 630. The raw tape keeps offered and acknowledged clocks. Compare the common intervals with unfinished bulk work and report their sample counts as well as complete-block ratios. A short overlap can leave an individual ratio below the 500-save threshold even when the two complete blocks are large enough.
 
@@ -76,3 +78,9 @@ The `--receipt` campaign keeps the loaded receipt cells in the scored plan, incl
 - The receipt-only producer seals the exact declared plan, offered documents, native receipts, ordered effects and first and deadline answer bytes. Its collector checks the exact output list, current attempt times, source and slot owner. It replays the point answers independently, matches the recursive 1,000-person collector and rejects a different gateway policy, stale order scope, or different physical cuts. Order-gate answer hashes come from the live native responses compared to the independent oracle before the seal. They are bound to the campaign's new database and gateway attempt.
 - The role gate checks the managed physical slot, volume, role, stopped state and resumed PID. A transient rejection carries its cause forward. A failed attempt is reopened with the same command identity and compared with the existing receipt. A new acknowledgement while the required role is stopped still fails. Both recovered cuts are checked against the full small roster and sealed by `local.ts`.
 - The separate settlement runner checks both native terminal cursors, every concrete change, each ordered notice and every sampled read at its witnessed cut. The raw observations are retained before independent replay. The outer seal binds source, build, slot, volume, owner and exact result file bytes. Its full-block counts and same-interval counts remain distinct.
+
+### Native ordinary-token checkpoints
+
+The first matrix ran immutable `5413260436969bd070e0555a054ebb5846b25cdb` on one exclusive Datomic volume. The recovery and publisher receipts agree with their exact owner, configuration, input and output hashes. Recovery killed two workers, superseded unfinished value recording at the 16-person cursor, resumed on two automatic wakeups and matched 199 values and 118 individual notice entries. Future-release readbacks agreed for all 64 people at each of three cuts. One release changed all 12 people in the publisher gate and another changed none. The publisher gate verified two killed processes, both same-person save orders and an in-flight pinned read. The role probe separately failed at its old undifferentiated completion assertion. Cleanup removed only the owned volume. [Checksums](PART8-SHA256SUMS)
+
+The first peak-rate reopen did not start traffic. Its old build lacked the integrated erasure export. The preparation seal and native baseline are available for a compatible reopen. The failed startup and cleanup receipt are preserved by digest.
