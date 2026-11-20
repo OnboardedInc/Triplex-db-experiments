@@ -7,6 +7,7 @@ import test from "node:test";
 import { Histogram } from "../../../../bench/lib/hist.ts";
 import { pairedP99 } from "./paired.ts";
 import { summarizeCapture } from "./telemetry.ts";
+import { placementReport } from "./report.ts";
 import {
   cellOrder,
   isolationProfile,
@@ -171,6 +172,62 @@ test("stage coverage joins the received gateway root to the original native t", 
     assert.deepEqual([cell.acked, cell.gatewayJoined, cell.nativeJoined], [1, 1, 1]);
     assert(Math.abs(cell.slowQuiet[0]!.nativeDone! - 2030) < 0.001);
     await assert.rejects(summarizeCapture(dir, { ...id, nonce: "other-attempt" }));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("seed replay prices cgroup counter increments only within the observed span", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dx-scale1-seed-report-"));
+  try {
+    const population = JSON.parse(
+      fs.readFileSync(new URL("./isolation-pins.json", import.meta.url), "utf8"),
+    ).items[0].seed.digest;
+    const a = {
+      at: 1700000000000,
+      nonce: "test",
+      source: "a".repeat(40),
+      slot: "slot",
+      phase: "seed",
+      mode: "individual",
+      people: 100000,
+      layout: "pooled",
+    };
+    const records = Array.from({ length: 21 }, (_, i) => ({
+      ...a,
+      population,
+      scope: 0,
+      at: a.at + i * 60000,
+      persons: i,
+      facts: i * 160,
+      commands: i,
+      bytes: i * 100,
+      resources: {
+        tx: { peak: 1000, cpu: "usage_usec " + i * 57e6 },
+        pg: {
+          peak: 1500,
+          cpu: "usage_usec " + i * 9e6,
+          io: "8:0 rbytes=" + i * 2 ** 20 + " wbytes=" + i * 5 * 2 ** 20,
+        },
+      },
+    }));
+    placementReport(dir, [
+      {
+        tag: "fixture",
+        attempt: a,
+        terminal: {
+        ...a,
+          service: "ceiling",
+          endedAt: new Date(a.at + 21 * 60000).toISOString(),
+        },
+        loaderProgress: { records },
+      },
+    ]);
+    const report = fs.readFileSync(path.join(dir, "DECISION-RESULTS.md"), "utf8");
+    assert.match(
+      report,
+      /First ten intervals \| 2\.67 \(n=10 frames, 600\.0 s\) \| 95\.00 \| 15\.00 \| 10\.00 \/ 50\.00/,
+    );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

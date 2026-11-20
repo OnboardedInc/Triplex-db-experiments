@@ -24,7 +24,7 @@ type SeedSample = {
   commands: number;
   facts: number;
   bytes: number;
-  resources: Record<(typeof roles)[number], { peak: number }>;
+  resources: Record<(typeof roles)[number], { peak: number; cpu?: string; io?: string }>;
 };
 const fmt = (v: unknown, precision = 2) =>
   typeof v === "number" && Number.isFinite(v) ? v.toFixed(precision) : "unmeasured";
@@ -131,6 +131,52 @@ function seedProgress(t: Trial, lines: string[]) {
           fmt(last.bytes / 1024 ** 3),
         ].join(" | ") +
         " |",
+    );
+  }
+  if (a.people === 100000 && a.layout === "pooled" && records.length >= 21) {
+    // [DX-SCALE1] Why: these cumulative cgroup deltas price two measured ingest spans.
+    // Rejected: interpreting container I/O totals as SQL reads per native transaction.
+    const cpu = (text?: string) => Number(/^usage_usec (\d+)$/m.exec(text ?? "")?.[1]);
+    const bytes = (text: string | undefined, kind: "rbytes" | "wbytes") => {
+      const vals = [...(text ?? "").matchAll(/\b([rw]bytes)=(\d+)\b/g)];
+      return vals.length ? vals.reduce((n, m) => n + (m[1] === kind ? Number(m[2]) : 0), 0) : NaN;
+    };
+    const oneCore = (old: SeedSample, next: SeedSample, role: (typeof roles)[number]) => {
+      const delta = cpu(next.resources[role]?.cpu) - cpu(old.resources[role]?.cpu);
+      return delta >= 0 ? delta / (10 * (next.at - old.at)) : NaN;
+    };
+    const pgMiB = (old: SeedSample, next: SeedSample, kind: "rbytes" | "wbytes") => {
+      // A cgroup with no block I/O has an empty io.stat until its first access.
+      const val = (s: SeedSample) =>
+        s.resources.pg?.io === "" ? 0 : bytes(s.resources.pg?.io, kind);
+      const delta = val(next) - val(old);
+      return delta >= 0 ? delta / 2 ** 20 : NaN;
+    };
+    lines.push(
+      "",
+      "| Checkpoint span | Acknowledged facts/s | Transactor CPU (% of one core) | PostgreSQL CPU (%) | PostgreSQL read / written MiB |",
+      "| --- | --- | ---: | ---: | ---: |",
+    );
+    for (const [label, old, next] of [
+      ["First ten intervals", records[0]!, records[10]!],
+      ["Last ten intervals", records.at(-11)!, records.at(-1)!],
+    ] as const) {
+      lines.push(
+        "| " +
+          [
+            label,
+            rate(old, next),
+            fmt(oneCore(old, next, "tx")),
+            fmt(oneCore(old, next, "pg")),
+            fmt(pgMiB(old, next, "rbytes")) + " / " + fmt(pgMiB(old, next, "wbytes")),
+          ].join(" | ") +
+          " |",
+      );
+    }
+    lines.push(
+      "",
+      "The block totals include all PostgreSQL cgroup I/O during the span. Serial-point storage reads per native commit and their kinds are unmeasured in this seed.",
+      "",
     );
   }
   const peaks = roles.map((role) =>
