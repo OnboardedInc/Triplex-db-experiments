@@ -561,6 +561,11 @@ export class SyncPair {
     if (policy === "single-copy-after-fence") {
       await this.sql("target", "ALTER SYSTEM SET synchronous_standby_names=''");
       assert.equal(await this.sql("target", "select pg_reload_conf()"), "t");
+      this.mark("durability-alarm", {
+        cluster: this.cluster,
+        durableCopies: 1,
+        needsStandby: true,
+      });
     }
     assert.equal(
       await wait("promoted durability setting", timeouts.replay, async () => {
@@ -596,6 +601,133 @@ export class SyncPair {
     } finally {
       peer.close();
     }
+  }
+  async probeOldDiskBoot() {
+    const s = this.s;
+    const old = await s.view("pg");
+    assert(!old.State.Running);
+    assert(old.Mounts.some((m: { Name: string }) => m.Name === this.primaryData));
+    await s.remove("pg");
+    const probe =
+      'id=$(LC_ALL=C pg_controldata "$PGDATA" | awk -F ": *" \'$1=="Database system identifier" {print $2}\'); ' +
+      'test "$id" = "$EXPECTED_CLUSTER"; printf "old disk %s detected\\n" "$id"; ';
+    await s.start(
+      "pg",
+      s.a,
+      [...this.volume(), ...this.dataMount(), "-e", "EXPECTED_CLUSTER=" + this.cluster],
+      "/bin/sh",
+      ["-ceu", probe + guard + "exec docker-entrypoint.sh postgres"],
+    );
+    const after = await wait("returning old disk refused", timeouts.promote, async () => {
+      const v = await s.view("pg", timeouts.control);
+      return v.State.Running ? undefined : v;
+    });
+    assert(after.Id !== old.Id && after.State.ExitCode === 74);
+    assert(after.Mounts.some((m: { Name: string }) => m.Name === this.primaryData));
+    assert(after.Mounts.some((m: { Name: string; RW: boolean }) => m.Name === this.latch && !m.RW));
+    const logs = await this.docker("pg", "logs");
+    assert(
+      logs.includes("old disk " + this.cluster + " detected") && logs.includes("DX-HASYNC1-fenced"),
+    );
+    const result = {
+      old: old.Id,
+      rebooted: after.Id,
+      disk: this.primaryData,
+      cluster: this.cluster,
+      exit: after.State.ExitCode,
+      latch: this.latch,
+    };
+    s.e.write("old-disk-boot", { nonce: s.e.nonce, slot: s.e.slot, source: s.e.source, ...result });
+    return result;
+  }
+  async rebuildStandby() {
+    const s = this.s;
+    const ac = this.account!;
+    const old = await s.view("pg");
+    assert(!old.State.Running && old.State.ExitCode === 74);
+    await s.remove("pg");
+    const from = s.storageHost("target", s.a);
+    const conn =
+      "host=" +
+      from +
+      " port=5432 user=ha1stream password=" +
+      s.secret +
+      " application_name=sync_a connect_timeout=2 target_session_attrs=read-write";
+    const start = performance.now();
+    await s.start(
+      "pg",
+      s.a,
+      ["-e", "REPLACEMENT=" + conn],
+      "/bin/sh",
+      [
+        "-ceu",
+        drop +
+          'chown postgres:postgres "$PGDATA"; chmod 700 "$PGDATA"; ' +
+          '"$drop" postgres pg_basebackup -D "$PGDATA" -d "$REPLACEMENT" --checkpoint=fast -X stream -R --manifest-checksums=SHA256; ' +
+          'pg_verifybackup "$PGDATA"; du -sk "$PGDATA" | sed "s/^/backup-kib /"; test -f "$PGDATA/standby.signal"; ' +
+          'exec docker-entrypoint.sh postgres "$@"',
+        "replacement",
+        ...pgArgs,
+      ],
+      s.a === s.b ? undefined : 5432,
+    );
+    await this.pgReady("pg", true, this.base?.checkpoint ? 360000 : timeouts.setup);
+    const copiedMs = performance.now() - start;
+    assert.equal(
+      await this.sql("pg", "select system_identifier from pg_control_system()"),
+      this.cluster,
+    );
+    const expected = await this.sql("target", "select pg_current_wal_flush_lsn()");
+    await wait("replacement catches the survivor release prefix", timeouts.replay, async () => {
+      const v = await this.sql("pg", "select pg_last_wal_replay_lsn()").catch(() => "");
+      return v && lsn(v) >= lsn(expected) ? v : undefined;
+    });
+    await this.sql("target", "ALTER SYSTEM SET synchronous_standby_names='FIRST 1 (sync_a)'");
+    assert.equal(await this.sql("target", "select pg_reload_conf()"), "t");
+    await wait("replacement required for commits", timeouts.replay, async () => {
+      const row = await this.sql(
+        "target",
+        "select current_setting('fsync'),current_setting('synchronous_commit')," +
+          "current_setting('synchronous_standby_names'),state,sync_state from pg_stat_replication where application_name='sync_a'",
+      );
+      return row === "on|on|FIRST 1 (sync_a)|streaming|sync" ? row : undefined;
+    });
+    const receipt = await ac.send(ac.intent("first-reprotected", 3));
+    await ac.pinned(receipt);
+    const cut = await this.sql("target", "select pg_current_wal_flush_lsn()");
+    const flush = await wait(
+      "the protected save is durable on the fresh standby",
+      timeouts.replay,
+      async () => {
+        const v = await this.sql(
+          "target",
+          "select flush_lsn from pg_stat_replication where application_name='sync_a' and sync_state='sync'",
+        );
+        return v && lsn(v) >= lsn(cut) ? v : undefined;
+      },
+    );
+    const log = await this.docker("pg", "logs");
+    const m = /^backup-kib (\d+)\s/m.exec(log);
+    assert(m && log.includes("backup successfully verified"));
+    const result = {
+      old: old.Id,
+      new: s.members.get("pg")!.id,
+      cluster: this.cluster,
+      copiedMs,
+      protectedMs: performance.now() - start,
+      bytes: Number(m[1]) * 1024,
+      expected,
+      flush,
+      receipt,
+    };
+    s.e.write("standby-recreated", {
+      nonce: s.e.nonce,
+      slot: s.e.slot,
+      source: s.e.source,
+      ...result,
+    });
+    this.mark("durability-restored", { durableCopies: 2, flush, receipt });
+    return result;
   }
   mark(stage: string, data: unknown) {
     this.transitions.push({ stage, at: performance.now() });

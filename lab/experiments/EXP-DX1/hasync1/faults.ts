@@ -466,6 +466,8 @@ async function faultWork(
     );
     await ac.pinned(pin);
     const traffic = await offered!.resolve();
+    const returningDisk = mode === "hasync-restart" ? await pair.probeOldDiskBoot() : undefined;
+    const newStandby = mode === "hasync-restart" ? await pair.rebuildStandby() : undefined;
     const recovered = await receipts(ac);
     await pair.auditCheckpoint("after");
     const replay = await replayEvidence(e, ac, selected);
@@ -483,6 +485,8 @@ async function faultWork(
       resolution,
       fresh,
       restart,
+      returningDisk,
+      newStandby,
       firstNewMs: firstNewAt - from,
       availability,
       nativeReplay,

@@ -47,3 +47,5 @@ Part 2 records independent scheduled offers at five one-to-three-fact saves and 
 The edited deep rungs target 100,549, 1,000,464 and 2,704,806 active facts, with three retire-and-replace revisions on every fifth subject. Timings distinguish rewind, promotion, broker readiness, peer synchronization and first-touch exact reads. [Scale driver](v2/scale-local.ts)
 
 The fleet drill uses one active and one standby Datomic transactor per system. It compares one PostgreSQL pair with separate SQL schemas and roles against one SQL pair per system. Each system gets its own writer route, timed offers and oracle. The idle sample counts cgroup memory and CPU for every role. [Fleet driver](v2/fleet.ts)
+
+After a crash, the owner can reopen with a one-copy alarm, wait for another copy or provision a third data machine. Full standby replacement is forecast at 45–180 s for 16M facts and 7–27 min for 160M. The fence protocol rejects reboots independently of host clocks, with actual management hardware still to be qualified. [Policy and fence design](FENCE.md)
