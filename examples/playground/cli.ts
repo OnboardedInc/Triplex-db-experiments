@@ -27,7 +27,14 @@ const [cmd] = positionals;
 const state = join(repo, ".runtime/playground");
 const file = join(state, "owner.json");
 const directory = join(state, "stack");
-type Owner = { prefix: string; token: string; port: number; pid: number; dockerHost?: string };
+type Owner = {
+  prefix: string;
+  token: string;
+  port: number;
+  pid: number;
+  dockerHost: string;
+  context?: string;
+};
 const pnpm = (argv: string[]) =>
   execFileSync(
     "pnpm",
@@ -55,7 +62,8 @@ async function readOwner(): Promise<Owner | undefined> {
       !/^tx2-dxplay1-[a-f0-9]{12}$/.test(found.prefix) ||
       !/^[a-f0-9]{48}$/.test(found.token) ||
       !Number.isSafeInteger(found.pid) ||
-      found.pid < 1
+      found.pid < 1 ||
+      typeof found.dockerHost !== "string"
     )
       throw new Error("Invalid playground state");
     port(String(found.port));
@@ -66,10 +74,28 @@ async function readOwner(): Promise<Owner | undefined> {
   }
 }
 
-function checkPortableDocker(dockerHost?: string) {
+function checkPortableDocker(dockerHost: string) {
   // Lab execution is admitted by the engine adapter, which calls openInstance directly.
-  if (dockerHost?.includes("/.colima/triplex2/"))
+  if (dockerHost.includes("/.colima/triplex2/"))
     throw new Error("The private lab daemon requires the engine.mjs play1 gate");
+  if (!/^(?:unix:\/\/|npipe:\/\/|tcp:\/\/(?:127\.0\.0\.1|localhost):)/.test(dockerHost))
+    throw new Error("Choose a Docker daemon on this machine");
+}
+
+function dockerSettings() {
+  const explicitHost = process.env["DOCKER_HOST"];
+  const context = process.env["DOCKER_CONTEXT"];
+  if (explicitHost && !context) return { dockerHost: explicitHost };
+  const docker = (args: string[]) => execFileSync("docker", args, { encoding: "utf8" }).trim();
+  const selected = context ?? docker(["context", "show"]);
+  const dockerHost = docker([
+    "context",
+    "inspect",
+    selected,
+    "--format",
+    "{{.Endpoints.docker.Host}}",
+  ]);
+  return { dockerHost, context: selected };
 }
 
 async function start() {
@@ -81,8 +107,8 @@ async function start() {
     (values.data && values.tier !== "full")
   )
     throw new Error(usage);
-  const dockerHost = process.env["DOCKER_HOST"];
-  checkPortableDocker(dockerHost);
+  const settings = dockerSettings();
+  checkPortableDocker(settings.dockerHost);
   const ports = {
     api: port(values.port),
     write: port(values["write-port"]),
@@ -116,7 +142,7 @@ async function start() {
     token: randomBytes(24).toString("hex"),
     port: ports.api,
     pid: process.pid,
-    ...(dockerHost ? { dockerHost } : {}),
+    ...settings,
   };
   const abort = new AbortController();
   const stop = () => abort.abort();
@@ -141,7 +167,7 @@ async function start() {
     instance = await openInstance({
       prefix,
       token: owner.token,
-      docker: dockerClient(owner.dockerHost),
+      docker: dockerClient(owner.dockerHost, owner.context),
       directory,
       ports,
       apiPort: ports.api,
@@ -197,7 +223,7 @@ async function stop() {
       prefix: owner.prefix,
       directory,
       ports: { write: 0, read: 0 },
-      docker: dockerClient(owner.dockerHost),
+      docker: dockerClient(owner.dockerHost, owner.context),
     }).stop();
     await rm(state, { recursive: true, force: true });
   }

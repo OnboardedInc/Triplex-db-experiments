@@ -8,7 +8,6 @@ const button = (id: string) => el<HTMLButtonElement>(id);
 const note = input("note");
 let position: number | undefined;
 let stalePosition: number | undefined;
-let earlyPosition: number;
 let page = 0;
 let lastSelection = 0;
 let nextOffset: number | null = null;
@@ -146,6 +145,7 @@ async function current() {
 async function people(offset: number) {
   const version = ++lastSelection;
   position = stalePosition = undefined;
+  button("stale").disabled = true;
   historyCursor.snap = historyCursor.before = undefined;
   const reply = await call("people", { accountId: select("account").value, limit: 100, offset });
   if (version !== lastSelection) return;
@@ -160,11 +160,11 @@ async function people(offset: number) {
 }
 
 async function save(mode: "save" | "duplicate" | "stale") {
-  if (position === undefined) return;
+  if (position === undefined || (mode === "stale" && stalePosition === undefined)) return;
   const request = {
     ...person(),
     commandId: crypto.randomUUID(),
-    expectedPosition: mode === "stale" ? (stalePosition ?? earlyPosition) : position,
+    expectedPosition: mode === "stale" ? stalePosition : position,
     changes: mode === "stale" ? { ":person/note": "Stale trial" } : pendingChanges(),
   };
   const title =
@@ -176,6 +176,7 @@ async function save(mode: "save" | "duplicate" | "stale") {
   const reply = await action(mode === "duplicate" ? "duplicate" : "save", title, request);
   if (reply?.["ok"]) {
     stalePosition = position;
+    button("stale").disabled = false;
     position = reply["position"];
   }
 }
@@ -302,6 +303,7 @@ button("load").onclick = () =>
 select("account").onchange = () => void people(0);
 select("person").onchange = () => {
   stalePosition = undefined;
+  button("stale").disabled = true;
   historyCursor.snap = historyCursor.before = undefined;
   button("history").textContent = "Journal";
   void current();
@@ -318,12 +320,14 @@ async function initialize() {
     reply = await call("accounts");
   }
   if (!reply["ok"]) throw new Error(reply["error"].message);
-  earlyPosition = reply["earlyPosition"];
   el("basis").textContent =
     new Date(reply["earlyAt"]).toISOString().slice(0, 10) +
     " → " +
     new Date(reply["currentAt"]).toISOString().slice(0, 10);
   el("erase-reason").textContent = reply["eraseUnavailable"];
+  const baseline = reply["firstRelease"];
+  if (baseline?.schema?.label)
+    el("progress").textContent = "Seeded release · " + baseline.schema.label;
   select("account").replaceChildren(
     ...reply["records"].map((a: Entry) =>
       option(a["name"] + " · " + a["shape"] + " · " + a["people"], a["id"]),

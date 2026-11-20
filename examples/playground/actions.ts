@@ -250,7 +250,15 @@ export const outputSchema = {
   properties: {
     ok: { type: "boolean" },
     records: { type: "array", items: {} },
-    receipt: {},
+    receipt: {
+      type: ["object", "null"],
+      properties: {
+        txId: { type: "string" },
+        position: { type: "integer", minimum: 0 },
+        recordedAt: { type: "number" },
+        commandId: { type: "string" },
+      },
+    },
     position: { type: ["integer", "null"], minimum: 0 },
     timings: {
       type: "object",
@@ -301,6 +309,9 @@ export function openapi() {
               Object.entries({
                 200: "Action result",
                 400: "Invalid input or query",
+                403: "Origin refused",
+                413: "Request too large",
+                415: "Unsupported content type",
                 404: "Not found",
                 409: "Conflict",
                 503: "Unavailable",

@@ -30,8 +30,8 @@ export function port(value: string): number {
 }
 
 export type Docker = (args: string[]) => Promise<string>;
-export function dockerClient(host?: string): Docker {
-  const args = host ? ["--host", host] : [];
+export function dockerClient(host?: string, context?: string): Docker {
+  const args = context ? ["--context", context] : host ? ["--host", host] : [];
   return async (command) => {
     try {
       return (
