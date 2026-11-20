@@ -92,25 +92,6 @@
                  (some? to) (assoc "validTo" (number-field to))
                  entity-type (assoc "entityType" entity-type)
                  tx (assoc "assertionTxId" tx))))
-           (number-field [x] (if (= "-0" x) -0.0 x))
-           (assertion-meta [change datom]
-             ;; [DX-WFIX1] Why: the checked assertion can have been created by the last logical member.
-             ;; Rejected: copying the client's provisional clock, range or value into a durable retraction.
-             (let [[_ _ entity attr kind string number bool datetime data recorded from to _ entity-type _ tx]
-                   (lean-columns-code (:v datom))
-                   value {"type" kind "value" (case kind
-                           ("ref" "integer" "string" "blob") string
-                           "number" (number-field number)
-                           "boolean" (not (zero? bool))
-                           "datetime" (number-field datetime)
-                           "json" (json/read-str data))}
-                   value (if (= "blob" kind) (merge (json/read-str data) value) value)]
-               (cond-> (assoc (dissoc change "validTo" "entityType" "assertionTxId")
-                              "entityId" entity "attribute" attr "value" value
-                              "recordedAt" (number-field recorded) "validFrom" (number-field from))
-                 (some? to) (assoc "validTo" (number-field to))
-                 entity-type (assoc "entityType" entity-type)
-                 tx (assoc "assertionTxId" tx))))
            (assign-change [text clock new-ids prior-rows]
              (let [change (json/read-str text)
                    id (get change "tripleId")
