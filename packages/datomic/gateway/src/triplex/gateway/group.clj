@@ -6,7 +6,7 @@
 ;; Rejected: a collection timer or an unbounded burst queue.
 (def enabled (= "1" (System/getenv "TX2_GROUP_COMMIT")))
 (defn grouping? [] (or enabled policy/field-only?))
-(defn scheduling? [] (or (grouping?) policy/priority?))
+(defn scheduling? [] (or (grouping?) policy/priority? policy/budget-us))
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
 (def batch-limit 8)
 (def pending-limit 256)
@@ -189,7 +189,7 @@
 (defn join-turn [owners account]
   (if (some #{account} owners) owners (conj (or owners []) account)))
 (defn choose [state]
-  (loop [{:keys [queue accounts tails] :as state} state out []]
+  (loop [{:keys [queue accounts tails] :as state} state out [] variable 0]
     (if (or (empty? queue) (= (count out) batch-limit)) [state out]
       (let [next (next-entry state) _ (assert next "Oldest pending command must be eligible")
             first-member (first out)
@@ -200,9 +200,11 @@
                                              (= (:subject %) (:subject first-member)) (:eligible %)
                                              (every? realized? (:predecessors %))) queue)) next) next)
             a (:account entry) rank (:rank entry)
-            solo (or (not (:eligible entry)) (and policy/priority? (or (= rank :bulk) (not (grouping?)))))]
+            priced (+ variable (or (:variable-us entry) 0))
+            solo (or (not (:eligible entry))
+                     (and (or policy/priority? policy/budget-us) (or (= rank :bulk) (not (grouping?)))))]
         (if (and (seq out)
-                 (or solo (and policy/field-only?
+                 (or solo (not (policy/fits? priced)) (and policy/field-only?
                                (or (nil? (:subject entry)) (not= (:subject entry) (:subject first-member))
                                    (not= a (:account first-member)))))) [state out]
           (let [others (filterv #(not (identical? % entry)) queue)
@@ -212,7 +214,7 @@
                     policy/priority? (update-in [:rotation rank] rotate a (some #(and (same? %) (= rank (:rank %))) others)))
                 taken (conj out (assoc entry :dispatch (System/nanoTime)))]
             (deliver (:token entry) true)
-            (if solo [s taken] (recur s taken))))))))
+            (if solo [s taken] (recur s taken priced))))))))
 (defn submit! [conn entry]
   (let [entry (merge {:rank :live} entry) lane (lane-for conn) p (promise) token (promise)
         launch (locking lane

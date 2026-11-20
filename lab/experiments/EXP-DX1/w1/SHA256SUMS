@@ -89,3 +89,8 @@ ff3da490573d368a10c967209faf3537f98d199e16d8a334e1d4e5ce48a8e691  DX-W1/small4/l
 7efa20b610a91c5057dfa6d9bf5f6d363adba9c4dfe0dd7c16a5bf7ea69fd929  DX-W1/small4/layout-02/selftest-1.log
 53a70865f23d8704628e2e657e95b83ff64506fba9e3ec857f338662c78f7062  DX-W1/small4/layout-02/verified.json
 5ca736455835eb270f38395dc4367c312028f9c7c47f994e001c26706faed907  DX-W1/small4/engine-state/datomic-build/5ee86a488b362ad46c3ad9c8c0ec2c4beee8c1dcccd3fbd56132c97131a79b00-19964-1795139400528/build-receipt.json
+3a2dbf9edaaeda0fee078575dba8e43e1fdec6b0bc7e7bab1735675725558ac0  DX-W1/small4/budget-model-02.json
+a6fa711b38625803799cd6082cac438bd0a3dc83d96d7f22c9df2de0c67f2470  DX-W1/small4/budget-gate-01/gate.log
+e98b57b988ea9393fb977e0b0149b92b8cc7f8eaba535ad4dec539527c64efa3  DX-W1/small4/budget-gate-01/verified.json
+b2d8556d322fe05d1248d117df2dd0564ef63540901578e4279e9b2adf4bbaa9  DX-W1/small4/parity-03/gate.log
+ebebd92f6d71886b84d0d0e6bf0ad5eb81902d0c3b565e8a2fda87e7259a544d  DX-W1/small4/parity-03/verified.json

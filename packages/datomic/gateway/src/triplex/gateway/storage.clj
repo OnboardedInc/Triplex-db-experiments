@@ -272,7 +272,7 @@
                                        (throw e))))]
                    (swap! timeline assoc :submitted (System/nanoTime)) future))
         submit (if-not (group/scheduling?) solo
-                 (fn [] (try (let [p (second (first data)) current (d/db conn) work (when policy/priority? (policy/work p input)) class (group/classify current p input)]
+                 (fn [] (try (let [p (second (first data)) current (d/db conn) work (when (or policy/priority? policy/budget-us) (policy/work p input)) class (group/classify current p input)]
                    (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (and (not (and pred/diagnostic (true? (get input "readProfile")))) (group/eligible? current p))
                      :prepare (fn [view] (tx-data view input (:scope p))) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
