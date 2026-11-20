@@ -218,6 +218,8 @@ The retained thin million-person image uses the INT1 `0dd4cbb24` lean roster. Th
 
 The INT1 image is present on the bench by its original immutable ID. The supervisor `bm1n20-int1-capacity` waits for JVM1 and any higher-priority TAIL1 job to stop. `bm1n20-rd1-aged` waits for it, builds the pinned RD1 checkout and runs the 24-person native preflight. The full reader curve uses one 10,000-person database, 10,000 native saves between the older cuts and the head, and the same read gateway in the direct and worker arms. Read shares are 0%, 1% and 5%. A 24-root lookup cohort shares two old cuts to match RD1's original experiment. This diagnostic exposes the benefit of reuse for that workload.
 
+The HA1 microframe service follows RD1. PREP1's published report now names source `7ca8525a9` and the native command. Its detached service first checks a short real K/S tape against the native append and three JVMs. Only then can the unmodified producer prepare its ten-account field seed and start the 12 measured arms. The builder still has the SQL restart and erasure gates open. The separate ACT1 settlement-price producer currently puts the live neighbour in a different native database. The current one-database queue needs an ACT1 counterpart with both accounts in the same scope.
+
 Collect terminal run files from the Mac with the appropriate producer SHA. Both original files and the large snapshots remain in place on the bench.
 
 ```sh
@@ -225,4 +227,6 @@ export BENCH_SERVER
 python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect jvm1 46880aa47d7c580c400b457df0c8baf9e971e78a /var/tmp/triplex-bm1/day-n20-collector
 python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect int1-capacity 0dd4cbb24f10dad80e4263fd0c04159ce512b251 /var/tmp/triplex-bm1/day-n20-collector
 python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect rd1-aged 5f51de7d6ab09b884df61f5c260db7f6688726c1 /var/tmp/triplex-bm1/day-n20-collector
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect ha1-micro 14174308fa1b1f6ade7f3e1fe3ce58ca4bc173ba /var/tmp/triplex-bm1/day-n20-collector
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1 7ca8525a9ea0c3810c7af6ba0b5a0e15552dd534 /var/tmp/triplex-bm1/day-n20-collector
 ```
